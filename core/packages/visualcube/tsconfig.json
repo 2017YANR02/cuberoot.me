@@ -14,8 +14,8 @@
     //   useUnknownInCatchVariables, alwaysStrict.
     // (strictPropertyInitialization is technically on but dormant under
     // strictNullChecks: false.)
-    "noImplicitAny": false,
-    "strictNullChecks": false
+    "noImplicitAny": true,
+    "strictNullChecks": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }

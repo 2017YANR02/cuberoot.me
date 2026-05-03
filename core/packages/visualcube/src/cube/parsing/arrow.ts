@@ -17,10 +17,10 @@ export function parseArrows(raw: string): Arrow[] {
   return raw
     .split(',')
     .map(part => parseArrow(part))
-    .filter(arrow => !!arrow)
+    .filter((arrow): arrow is Arrow => !!arrow)
 }
 
-export function parseArrow(raw: string): Arrow {
+export function parseArrow(raw: string): Arrow | null {
   if (typeof raw !== 'string') {
     return null
   }
@@ -34,17 +34,17 @@ export function parseArrow(raw: string): Arrow {
 
   return <Arrow>{
     s1: {
-      face: Face[match[2]],
+      face: Face[match[2] as keyof typeof Face],
       n: parseInt(match[3]),
     },
     s2: {
-      face: Face[match[5]],
+      face: Face[match[5] as keyof typeof Face],
       n: parseInt(match[6]),
     },
     s3: !match[7]
       ? undefined
       : {
-          face: Face[match[8]],
+          face: Face[match[8] as keyof typeof Face],
           n: parseInt(match[9]),
         },
     color: match[15] ? parseColor(match[15]) : ColorCode.Gray,

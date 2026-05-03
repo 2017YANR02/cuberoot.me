@@ -23,7 +23,8 @@ const doubleTurn: FaceRotation = (stickerNumber, cubeSize) => {
   return cubeSize * cubeSize - stickerNumber + 1
 }
 
-const OppositeTurn = {
+const OppositeTurn: Record<TurnType, TurnType> = {
+  [TurnType.None]: TurnType.None,
   [TurnType.Clockwise]: TurnType.CounterClockwise,
   [TurnType.CounterClockwise]: TurnType.Clockwise,
   [TurnType.Double]: TurnType.Double,
@@ -37,7 +38,7 @@ const AxisMapping = {
 }
 
 // Face's orientation related to other faces on a given axis
-const AxisOrientation: { [axis: number]: { [face: number]: FaceRotation } } = {
+const AxisOrientation: { [axis: number]: { [face: number]: FaceRotation | null } } = {
   [Axis.X]: {
     [Face.U]: faceIdentity,
     [Face.B]: doubleTurn,
@@ -127,9 +128,9 @@ export class CubeData {
     this.counterClockwiseMapping = []
     this.doubleMapping = []
 
-    this.faces = initialValues
-
-    if (!this.faces) {
+    if (initialValues) {
+      this.faces = initialValues
+    } else {
       this.initValues()
     }
 
@@ -193,8 +194,9 @@ export class CubeData {
         for (let j = 0; j < faceOrder.length; j++) {
           const face = faceOrder[j]
           const nextFace = double ? faceOrder[(j + 2) % faceOrder.length] : faceOrder[(j + 1) % faceOrder.length]
-          const valueIndex = AxisOrientation[axis][face](stickerIndex + 1, this.cubeSize) - 1
-          const nextFaceValueIndex = AxisOrientation[axis][nextFace](stickerIndex + 1, this.cubeSize) - 1
+          // null entries in AxisOrientation correspond to faces not in this axis's faceOrder, so never reached.
+          const valueIndex = AxisOrientation[axis][face]!(stickerIndex + 1, this.cubeSize) - 1
+          const nextFaceValueIndex = AxisOrientation[axis][nextFace]!(stickerIndex + 1, this.cubeSize) - 1
           this.faces[face][valueIndex] =
             originalValues[(double ? j + 2 : j + 1) % originalValues.length][nextFaceValueIndex]
         }

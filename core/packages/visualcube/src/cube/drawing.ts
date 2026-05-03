@@ -3,7 +3,7 @@ import { FaceletToFace, FaceletDefinition, FaceletToColor } from './../constants
 import { CubeGeometry, FaceStickers, FaceRotations, rotateFaces } from './geometry'
 import { Vec3, transScale, scale, translate, radians2Degrees } from '../math'
 import { Face, AllFaces } from './constants'
-import { ICubeOptions } from './options'
+import { ResolvedCubeOptions } from './options'
 import { Arrow } from './models/arrow'
 import { parseArrows } from './parsing/arrow'
 
@@ -40,7 +40,7 @@ function attr(value: string | number): string {
  * Render a complete SVG document for the given cube options.
  * Pure function — no DOM access.
  */
-export function renderCubeSVG(geometry: CubeGeometry, options: ICubeOptions): string {
+export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptions): string {
   const faceRotations = rotateFaces(defaultFaceRotations, options.viewportRotations)
   const renderOrder = getRenderOrder(faceRotations)
 
@@ -109,7 +109,7 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ICubeOptions): st
  * Backwards-compatible imperative API. Mounts rendered SVG into a DOM
  * container. Use `renderCubeSVG` directly for SSR / pure-string output.
  */
-export function renderCube(container: HTMLElement | string, geometry: CubeGeometry, options: ICubeOptions) {
+export function renderCube(container: HTMLElement | string, geometry: CubeGeometry, options: ResolvedCubeOptions) {
   const el = typeof container === 'string' ? (document.querySelector(container) as HTMLElement) : container
   if (!el) return
   el.innerHTML = renderCubeSVG(geometry, options)
@@ -126,7 +126,7 @@ function getRenderOrder(faceRotations: FaceRotations): Face[] {
   return renderOrder
 }
 
-function renderBackground(options: ICubeOptions): string {
+function renderBackground(options: ResolvedCubeOptions): string {
   const { x, y, width, height } = options.viewbox
   if (!options.backgroundColor) {
     return `<rect x="${attr(x)}" y="${attr(y)}" width="${attr(width)}" height="${attr(height)}" fill="none" opacity="0"/>`
@@ -138,7 +138,7 @@ function faceVisible(face: Face, rotations: FaceRotations) {
   return rotations[face][2] < -0.105
 }
 
-function wrapCubeOutlineGroup(inner: string, options: ICubeOptions): string {
+function wrapCubeOutlineGroup(inner: string, options: ResolvedCubeOptions): string {
   return (
     `<g opacity="${attr(options.cubeOpacity / 100)}" stroke-width="0.1" stroke-linejoin="round">` +
     inner +
@@ -146,7 +146,7 @@ function wrapCubeOutlineGroup(inner: string, options: ICubeOptions): string {
   )
 }
 
-function wrapOllLayerGroup(inner: string, options: ICubeOptions): string {
+function wrapOllLayerGroup(inner: string, options: ResolvedCubeOptions): string {
   return (
     `<g opacity="${attr(options.stickerOpacity / 100)}" stroke-opacity="1" stroke-width="0.02" stroke-linejoin="round">` +
     inner +
@@ -167,7 +167,7 @@ function pointsAttr(points: number[][]): string {
   return points.map(p => `${p[0]},${p[1]}`).join(' ')
 }
 
-function renderCubeOutline(face: FaceStickers, options: ICubeOptions): string {
+function renderCubeOutline(face: FaceStickers, options: ResolvedCubeOptions): string {
   const cubeSize = face.length - 1
   const width = options.outlineWidth
   const outlinePoints = [
@@ -179,7 +179,7 @@ function renderCubeOutline(face: FaceStickers, options: ICubeOptions): string {
   return `<polygon points="${pointsAttr(outlinePoints)}" fill="${attr(options.cubeColor)}" stroke="${attr(options.cubeColor)}"/>`
 }
 
-function renderFaceStickers(face: Face, stickers: FaceStickers, options: ICubeOptions): string {
+function renderFaceStickers(face: Face, stickers: FaceStickers, options: ResolvedCubeOptions): string {
   const cubeSize = stickers.length - 1
   const inner: string[] = []
 
@@ -204,10 +204,8 @@ function renderFaceStickers(face: Face, stickers: FaceStickers, options: ICubeOp
     }
   }
 
-  // Note: original code wrote `'stoke-opacity'` (typo) — preserve to keep
-  // output byte-identical. Modern browsers ignore unknown attrs.
   return (
-    `<g opacity="${attr(options.stickerOpacity / 100)}" stoke-opacity="0.5" stroke-width="${attr(options.strokeWidth)}" stroke-linejoin="round">` +
+    `<g opacity="${attr(options.stickerOpacity / 100)}" stroke-opacity="0.5" stroke-width="${attr(options.strokeWidth)}" stroke-linejoin="round">` +
     inner.join('') +
     `</g>`
   )
@@ -243,7 +241,7 @@ function renderSticker(
  * An individual sticker's color is obtained by indexing
  * into the array of sticker colors by the number the sticker is
  */
-function getStickerColor(face: Face, row: number, col: number, options: ICubeOptions): string {
+function getStickerColor(face: Face, row: number, col: number, options: ResolvedCubeOptions): string {
   const faceIndex = AllFaces.indexOf(face)
   const stickerNumber = row * options.cubeSize + col
   const colorIndex = faceIndex * (options.cubeSize * options.cubeSize) + stickerNumber
@@ -276,7 +274,7 @@ export function renderOLLStickers(
   face: Face,
   stickers: FaceStickers,
   rotations: FaceRotations,
-  options: ICubeOptions
+  options: ResolvedCubeOptions
 ): string {
   // Translation vector, to move faces out
   const v1 = scale(rotations[face], 0)
@@ -333,7 +331,7 @@ export function renderArrow(geometry: CubeGeometry, arrow: Arrow): string {
   p1 = transScale(p1, center, arrow.scale / 10)
   p2 = transScale(p2, center, arrow.scale / 10)
 
-  let p3: Vec3
+  let p3: Vec3 | undefined
   if (arrow.s3) {
     const p3y = Math.floor(arrow.s3.n / cubeSize)
     const p3x = arrow.s3.n % cubeSize

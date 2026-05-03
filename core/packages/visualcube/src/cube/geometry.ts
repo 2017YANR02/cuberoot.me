@@ -1,4 +1,4 @@
-import { ICubeOptions } from './options'
+import { ICubeOptions, ResolvedCubeOptions } from './options'
 /**
  * Utlity Methods for creating 2D coodinates for svg polygons
  */
@@ -18,10 +18,10 @@ export type FaceRotations = { [face: number]: Vec3 }
  * Applies set of rotations to all face rotation vectors.
  */
 export function rotateFaces(faceRotations: FaceRotations, rotations: [Axis, number][]): FaceRotations {
-  return AllFaces.reduce((acc, face) => {
+  return AllFaces.reduce<FaceRotations>((acc, face) => {
     rotations.forEach(rotation => {
       if (!acc[face]) {
-        acc[face] = [...faceRotations[face]]
+        acc[face] = [...faceRotations[face]] as Vec3
       }
       acc[face] = rotate(acc[face], rotation[0], (Math.PI * rotation[1]) / 180)
     })
@@ -51,7 +51,7 @@ export function makeStickerPosition(face: Face, cubeSize: number, x: number, y: 
 /**
  * Creates 2D coordinates for stickers of a given face of the cube.
  */
-export function makeFaceStickers(face: Face, options: ICubeOptions): FaceStickers {
+export function makeFaceStickers(face: Face, options: ResolvedCubeOptions): FaceStickers {
   let stickers: Vec3[][] = makeMatrix<Vec3>(options.cubeSize + 1, options.cubeSize + 1)
 
   for (let row = 0; row <= options.cubeSize; row++) {
@@ -84,7 +84,7 @@ export function makeFaceStickers(face: Face, options: ICubeOptions): FaceSticker
  * Creates geometry for rubiks cube stickers. Contains 2D coordinates
  * for drawing svg polygons
  */
-export function makeCubeGeometry(options: ICubeOptions): CubeGeometry {
+export function makeCubeGeometry(options: ResolvedCubeOptions): CubeGeometry {
   if (options.view === 'plan') {
     options.viewportRotations = [[Axis.X, -90]]
   }

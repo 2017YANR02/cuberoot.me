@@ -1,4 +1,5 @@
 import { ICubeOptions } from '../options'
+import { Masking } from '../constants'
 import { parseRotationSequence } from './rotation'
 import { parseFaceletColors } from './faceletColors'
 import { parseColorScheme } from './colorScheme'
@@ -27,7 +28,7 @@ export function parseOptions(rawOptions: string): ICubeOptions {
         options.view = paramValue
         break
       case 'stage':
-        options.mask = paramValue
+        options.mask = paramValue as Masking
         break
       case 'r':
         options.viewportRotations = parseRotationSequence(paramValue)
@@ -74,9 +75,9 @@ export function parseOptions(rawOptions: string): ICubeOptions {
   return options
 }
 
-function parseQuery(url) {
+function parseQuery(url: string): { [key: string]: string } {
   let queryString = url.indexOf('?') > -1 ? url.substr(url.indexOf('?') + 1) : url
-  var query = {}
+  var query: { [key: string]: string } = {}
   var pairs = queryString.split('&')
   for (var i = 0; i < pairs.length; i++) {
     var pair = pairs[i].split('=')

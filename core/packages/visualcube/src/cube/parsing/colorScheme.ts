@@ -14,7 +14,7 @@ export function parseColorScheme(rawValue: string): ICubeColorScheme {
   }
 }
 
-function parseAbbreviations(rawValue) {
+function parseAbbreviations(rawValue: string): ICubeColorScheme {
   let scheme: ICubeColorScheme = {}
   if (rawValue.length < AllFaces.length) {
     return DefaultColorScheme
@@ -29,7 +29,7 @@ function parseAbbreviations(rawValue) {
   return scheme
 }
 
-function parseCommaSeparatedValues(rawValue) {
+function parseCommaSeparatedValues(rawValue: string): ICubeColorScheme {
   let scheme: ICubeColorScheme = {}
 
   // Parse as comma separated list of colors
