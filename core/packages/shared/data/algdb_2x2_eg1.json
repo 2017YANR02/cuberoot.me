@@ -1,0 +1,1248 @@
+{
+  "scrapedAt": "2026-05-03T13:40:44.116Z",
+  "source": "https://speedcubedb.com/a/2x2/EG1",
+  "puzzle": "2x2",
+  "set": "eg1",
+  "cases": [
+    {
+      "name": "EG1 AS 1",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ygbr",
+        "ub": "yogo",
+        "uf": "ygrg",
+        "ul": "brbb",
+        "ur": "yoor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U2 B U' R2 F2 U' F",
+            "altId": "6774"
+          },
+          {
+            "alg": "y R' F R2 U R' F' U' R U' R'",
+            "altId": "3023"
+          },
+          {
+            "alg": "y U' L' U' L U' F' L' U L2 F L'",
+            "altId": "21818"
+          },
+          {
+            "alg": "y L' U L2 F L' F' U' L F' L'",
+            "altId": "22435"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 AS 2",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yorb",
+        "ub": "ygbb",
+        "uf": "yror",
+        "ul": "ogrg",
+        "ur": "ybgo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' F' U' F2 R U' R'",
+            "altId": "3372"
+          },
+          {
+            "alg": "U2 L' U' L F2 U' F' L' U' L",
+            "altId": "21834"
+          },
+          {
+            "alg": "R U' F2 R U2 R U' F",
+            "altId": "3022"
+          },
+          {
+            "alg": "F R U' R' U R' F' R U F' R U R' U",
+            "altId": "24854"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 AS 3",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yogb",
+        "ub": "yrbb",
+        "uf": "yror",
+        "ul": "gorg",
+        "ur": "ybgo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' R U R' U' R U R2 F' R",
+            "altId": "6775"
+          },
+          {
+            "alg": "U' R U' R' U2 R' F R2 U2 R' F",
+            "altId": "21839"
+          },
+          {
+            "alg": "F' L F L' U' L F L2 U' L",
+            "altId": "22454"
+          },
+          {
+            "alg": "F' L F L' U' R U R' L' U' L",
+            "altId": "3021"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 AS 4",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yobg",
+        "ub": "yrbb",
+        "uf": "yoor",
+        "ul": "grrg",
+        "ur": "ybgo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' F' U' R U R' U' F",
+            "altId": "3020"
+          },
+          {
+            "alg": "U' R' F R F' U R U' R2 F' R F",
+            "altId": "3272"
+          },
+          {
+            "alg": "U2 F U' L' U L U' F' L' U' L",
+            "altId": "23368"
+          },
+          {
+            "alg": "U' R U R' U2 R' F' R F R' F R",
+            "altId": "3951"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 AS 5",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yrgo",
+        "ub": "ybrg",
+        "uf": "ybgo",
+        "ul": "roor",
+        "ur": "ygbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R U R' F' U' R U R' U' R U R'",
+            "altId": "3019"
+          },
+          {
+            "alg": "y' U2 R' F R U' R' F R U R U R' F'",
+            "altId": "24855"
+          },
+          {
+            "alg": "d U2 L' U L U' L' U L U L F L' F'",
+            "altId": "22620"
+          },
+          {
+            "alg": "y' U R' F2 R U' R U R' F' R U' R' U",
+            "altId": "25464"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 AS 6",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ygrb",
+        "ub": "yoor",
+        "uf": "yrbb",
+        "ul": "bggo",
+        "ur": "yorg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R U' R2 F R U' R' F R F'",
+            "altId": "3018"
+          },
+          {
+            "alg": "y2 L F' L2 U L U' L' U L F'",
+            "altId": "22457"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 H 1",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oorr",
+        "ub": "gbbb",
+        "uf": "bgor",
+        "ul": "yyrg",
+        "ur": "yygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R' F R2 U' R' F R U R' F'",
+            "altId": "3017"
+          },
+          {
+            "alg": "U' R' F R2 U' R2 U' F U R",
+            "altId": "3016"
+          },
+          {
+            "alg": "U R U' R2 F R F' R' F' R F",
+            "altId": "21269"
+          },
+          {
+            "alg": "F' R' F R F R' F' R2 U R'",
+            "altId": "20784"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 H 2",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgbg",
+        "ub": "rrbb",
+        "uf": "ooor",
+        "ul": "yyrg",
+        "ur": "yygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' U R U' R2 F2 R U' F",
+            "altId": "3013"
+          },
+          {
+            "alg": "y' R2 U' R U' R' U R' U' R U' R2",
+            "altId": "3011"
+          },
+          {
+            "alg": "F R U' R2 F U' F2 U R",
+            "altId": "3012"
+          },
+          {
+            "alg": "y' R2 U2 R U' R2 U R2 U' R2 U R2 U R2",
+            "altId": "24794"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 H 3",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogrg",
+        "ub": "rbbb",
+        "uf": "boor",
+        "ul": "yyrg",
+        "ur": "yygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R' F R F' U2 F R U2 R' F",
+            "altId": "3008"
+          },
+          {
+            "alg": "R' U' R' F2 U F' R F'",
+            "altId": "3010"
+          },
+          {
+            "alg": "U R U' R' F U2 x U' R' U2 R U'",
+            "altId": "3007"
+          },
+          {
+            "alg": "U' F U2 R U' R' F2 R' F2 R F'",
+            "altId": "3009"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 H 4",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgoo",
+        "ub": "rrbb",
+        "uf": "gbor",
+        "ul": "yyrg",
+        "ur": "yygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' F' R U R' U' R U R' U'",
+            "altId": "3006"
+          },
+          {
+            "alg": "F' U R' F R F' U F2",
+            "altId": "3005"
+          },
+          {
+            "alg": "U' R U R' F' R U R' U' R U R'",
+            "altId": "7480"
+          },
+          {
+            "alg": "R' F R F' R' F R U' R' F R F'",
+            "altId": "22422"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 L 1",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ryyo",
+        "ub": "oygo",
+        "uf": "gbrg",
+        "ul": "brbb",
+        "ur": "ygor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R U' R' U R U' R2 F' R F",
+            "altId": "3050"
+          },
+          {
+            "alg": "y U R U R' F' R U2 R' U2 R U R'",
+            "altId": "23339"
+          },
+          {
+            "alg": "y U F R U' R' F' R U R' F' R U R'",
+            "altId": "23679"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 L 2",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oyyr",
+        "ub": "byrg",
+        "uf": "rggo",
+        "ul": "gbor",
+        "ur": "yobb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U' R' F R U' R' F R2 U R' F' U2",
+            "altId": "20123"
+          },
+          {
+            "alg": "y' U' R' F R U' R' F R2 U R' F'",
+            "altId": "23242"
+          },
+          {
+            "alg": "y' U2 x R' U' R U' R' U' R U' R' U2 R",
+            "altId": "22869"
+          },
+          {
+            "alg": "y' U' L' U L U' L' U L2 F L' F'",
+            "altId": "22461"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 L 3",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oyyb",
+        "ub": "bygo",
+        "uf": "grrg",
+        "ul": "grbb",
+        "ur": "yoor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R' U R2 U' R2 U' F R2 U' R'",
+            "altId": "3048"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 L 4",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gyyo",
+        "ub": "rygo",
+        "uf": "obrg",
+        "ul": "rgbb",
+        "ur": "ybor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R' F R2 U R' F' R U2 R'",
+            "altId": "3047"
+          },
+          {
+            "alg": "y R U2 R' F R U' R2 F' R",
+            "altId": "20124"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 L 5",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oyyo",
+        "ub": "gyor",
+        "uf": "rbbb",
+        "ul": "gbgo",
+        "ur": "yrrg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R U R' F' R U R' U' F R' F' R",
+            "altId": "3046"
+          },
+          {
+            "alg": "y2 U' R U R' F' U R U R' U' R U R' U'",
+            "altId": "25099"
+          },
+          {
+            "alg": "y2 U F' R' F R U' R U R' U' R U R' U'",
+            "altId": "20125"
+          },
+          {
+            "alg": "y2 L' U L y' R U2 R U' R2",
+            "altId": "3045"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 L 6",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gyyg",
+        "ub": "byor",
+        "uf": "robb",
+        "ul": "rbgo",
+        "ur": "yorg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R' U2 F R U2 R U' R2 F",
+            "altId": "3035"
+          },
+          {
+            "alg": "y2 U' L' U' L F L' U' L U F' L F L'",
+            "altId": "21817"
+          },
+          {
+            "alg": "y2 U2 F R U' R' U R' F' R U R' F' R",
+            "altId": "20126"
+          },
+          {
+            "alg": "y2 R' F' R F U' R' F' R U R' F' R",
+            "altId": "25463"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 Pi 1",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogrg",
+        "ub": "ybgb",
+        "uf": "byoo",
+        "ul": "yyrg",
+        "ur": "robr"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 F2 R U R' U2 R U R' U' F",
+            "altId": "3033"
+          },
+          {
+            "alg": "y2 U' F U' R' F R U' F2 R U R'",
+            "altId": "3328"
+          },
+          {
+            "alg": "y2 R2 B2 R' U R' U' R U2 R U' R2",
+            "altId": "3034"
+          },
+          {
+            "alg": "U' R U' R2 F R2 U' R F2 R2 U'",
+            "altId": "23713"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 Pi 2",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gogr",
+        "ub": "yorg",
+        "uf": "rygo",
+        "ul": "yyor",
+        "ur": "bbbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R U' R2 F R2 U' R'",
+            "altId": "3329"
+          },
+          {
+            "alg": "y' R' F R2 U' R2 F R",
+            "altId": "3032"
+          },
+          {
+            "alg": "y' R U R2 F' R2 U R'",
+            "altId": "3031"
+          },
+          {
+            "alg": "y R' U R L U' L' R' U R",
+            "altId": "24793"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 Pi 3",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oror",
+        "ub": "ybrg",
+        "uf": "gygo",
+        "ul": "yyor",
+        "ur": "bgbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' F R' F U' F2 R U R",
+            "altId": "3028"
+          },
+          {
+            "alg": "y' F' R U2 R' F' U2 F R' F' R",
+            "altId": "23329"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 Pi 4",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gbbg",
+        "ub": "yorg",
+        "uf": "oygo",
+        "ul": "yyor",
+        "ur": "rrbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R U' R' U R U' R' F R U' R'",
+            "altId": "3027"
+          },
+          {
+            "alg": "y' F' R U R' U' R U R' F' R U R'",
+            "altId": "22073"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 Pi 5",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "boog",
+        "ub": "yrbb",
+        "uf": "gyor",
+        "ul": "yyrg",
+        "ur": "rbgo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R2 F R U R U' R' U' R' F R F'",
+            "altId": "3026"
+          },
+          {
+            "alg": "U' R U R' U R U' R2 F' R F R' F' R",
+            "altId": "21270"
+          },
+          {
+            "alg": "R' U' R' F2 U' R U2 F2 R",
+            "altId": "3025"
+          },
+          {
+            "alg": "U' L F' L' F L F' L2 U' L U L' U L U'",
+            "altId": "22764"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 Pi 6",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "brob",
+        "ub": "yrbb",
+        "uf": "gyor",
+        "ul": "yyrg",
+        "ur": "oggo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R' F' R U' R' F R2 U R' F' R U R'",
+            "altId": "21271"
+          },
+          {
+            "alg": "U' R' F R F' R' F R2 U R' U' R U' R'",
+            "altId": "21687"
+          },
+          {
+            "alg": "F R U' R' F R U2 R' U F'",
+            "altId": "3024"
+          },
+          {
+            "alg": "U' F R' F' R U R U R' U' R' F' R2 U R'",
+            "altId": "20178"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 S 1",
+      "subgroup": "S",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogyr",
+        "ub": "ryor",
+        "uf": "bybb",
+        "ul": "gogo",
+        "ur": "byrg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 U' L F' L2 U' L F U L' U L",
+            "altId": "21947"
+          },
+          {
+            "alg": "y2 R U R' U F R U' R2 F' R",
+            "altId": "3044"
+          },
+          {
+            "alg": "y2 U F' R B2 U2 R F' R2",
+            "altId": "25404"
+          },
+          {
+            "alg": "y U R' F R2 F' R2 U2 R U2",
+            "altId": "25405"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 S 2",
+      "subgroup": "S",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rgyo",
+        "ub": "rybb",
+        "uf": "byor",
+        "ul": "borg",
+        "ur": "gygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' F2 U F R U R'",
+            "altId": "3043"
+          },
+          {
+            "alg": "U F R' F' R F R U' R' U R' F' R",
+            "altId": "6778"
+          },
+          {
+            "alg": "U R' F R F U F2 R' F R",
+            "altId": "26136"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 S 3",
+      "subgroup": "S",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gbyr",
+        "ub": "oyor",
+        "uf": "oybb",
+        "ul": "rggo",
+        "ur": "byrg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 F R' F' R U R' F' R2 U R'",
+            "altId": "3042"
+          },
+          {
+            "alg": "y2 F L' U' L U L' U' L R U R'",
+            "altId": "25030"
+          },
+          {
+            "alg": "y2 U R' F R U2 R U' R2 F2 R F'",
+            "altId": "21688"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 S 4",
+      "subgroup": "S",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gbyo",
+        "ub": "oybb",
+        "uf": "ryor",
+        "ul": "rbrg",
+        "ur": "gygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' R' F R2 U R' U' F R' F' R U",
+            "altId": "19899"
+          },
+          {
+            "alg": "U F' R' F R2 U R' U' F R' F' R",
+            "altId": "21948"
+          },
+          {
+            "alg": "F' U R U' R' U F R U R'",
+            "altId": "3041"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 S 5",
+      "subgroup": "S",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "boyr",
+        "ub": "gygo",
+        "uf": "gyrg",
+        "ul": "orbb",
+        "ur": "byor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R U' R' U R U' R' U F R U' R'",
+            "altId": "3040"
+          },
+          {
+            "alg": "y U2 R2 F U' R U' R U' B2 U2",
+            "altId": "25465"
+          },
+          {
+            "alg": "y U2 L' U' L F U L' U' L U L' U' L",
+            "altId": "23455"
+          },
+          {
+            "alg": "y U2 R2 F U' R U' R U' F2",
+            "altId": "21689"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 S 6",
+      "subgroup": "S",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "obyg",
+        "ub": "oybb",
+        "uf": "ryor",
+        "ul": "gbrg",
+        "ur": "rygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' F R2 U' R' U R U' R' F",
+            "altId": "3038"
+          },
+          {
+            "alg": "L' U L2 F' L' U L F' L' F",
+            "altId": "26131"
+          },
+          {
+            "alg": "R' F R2 U' R' U L F' L' F",
+            "altId": "3039"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 T 1",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gryy",
+        "ub": "bobb",
+        "uf": "goor",
+        "ul": "yrrg",
+        "ur": "bygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U' R2 F' R U R' F' R",
+            "altId": "3037"
+          },
+          {
+            "alg": "F L F' L2 U' L U L' U' L",
+            "altId": "22517"
+          },
+          {
+            "alg": "U R2 U R U' R2 F R U2 R' F",
+            "altId": "19242"
+          },
+          {
+            "alg": "U2 R U2 R' U' R' F' R F R' F' R",
+            "altId": "23640"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 T 2",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogyy",
+        "ub": "rbbb",
+        "uf": "rgor",
+        "ul": "ybrg",
+        "ur": "oygo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' R' F R2 U R' U' R U R'",
+            "altId": "3036"
+          },
+          {
+            "alg": "U2 R U2 R' F R U' R' F' R U R'",
+            "altId": "17891"
+          },
+          {
+            "alg": "U2 R U' R' F R U' R' F R U R' F'",
+            "altId": "17892"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 T 3",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gbyy",
+        "ub": "oogo",
+        "uf": "gbrg",
+        "ul": "yrbb",
+        "ur": "ryor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R U' R2 F R U R U2 R'",
+            "altId": "3062"
+          },
+          {
+            "alg": "y R U2 R' U' R' F' R2 U R'",
+            "altId": "25092"
+          },
+          {
+            "alg": "y U2 R' F R2 U' R' U' R' F2 R",
+            "altId": "6779"
+          },
+          {
+            "alg": "y U2 L' U L2 F' L' U' L' U2 L U2",
+            "altId": "22765"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 T 4",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rryy",
+        "ub": "bgbr",
+        "uf": "oorg",
+        "ul": "yggb",
+        "ur": "byoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U2 R' F R F' U R U' R' U F R U' R'",
+            "altId": "25381"
+          },
+          {
+            "alg": "y' U' R' U F R2 U' R2 U' F U' R",
+            "altId": "17893"
+          },
+          {
+            "alg": "y' R2 B2 U' R' U' R U' R' U R'",
+            "altId": "3061"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 T 5",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rryy",
+        "ub": "bgrg",
+        "uf": "bggo",
+        "ul": "yoor",
+        "ur": "oybb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R' F' R2 U R' F' R U R'",
+            "altId": "3060"
+          },
+          {
+            "alg": "y' U2 R U R2 F' R F R' F' R",
+            "altId": "23332"
+          },
+          {
+            "alg": "y' U2 R U R2 F' R F R' F' R U2",
+            "altId": "19879"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 T 6",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gbyy",
+        "ub": "oorg",
+        "uf": "rrgo",
+        "ul": "ybor",
+        "ur": "gybb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U' R U' R' U2 F R U2 R' F",
+            "altId": "6780"
+          },
+          {
+            "alg": "y' U R' U' R U F2 U' F2 R U R",
+            "altId": "25497"
+          },
+          {
+            "alg": "y' U R' U' R U F2 U' F2 R U R",
+            "altId": "25498"
+          },
+          {
+            "alg": "y' R U R' F R U R' F U' R U' R'",
+            "altId": "3059"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 U 1",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rryy",
+        "ub": "yyob",
+        "uf": "bggo",
+        "ul": "borr",
+        "ur": "ogbg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U2 R U R' U R U' R2 F' R2 U R' U",
+            "altId": "24407"
+          },
+          {
+            "alg": "y U2 R U R' U R U R2 F R2 U' R'",
+            "altId": "3416"
+          },
+          {
+            "alg": "y U2 R U' R2 F R2 U R' U' R U' R' U",
+            "altId": "25278"
+          },
+          {
+            "alg": "y U2 R U R2 F' R2 U' R' U' R U' R'",
+            "altId": "23265"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 U 2",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oryy",
+        "ub": "yybb",
+        "uf": "bbor",
+        "ul": "gorg",
+        "ur": "rggo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 y R' U R' U' R U' R' U' F2 R2",
+            "altId": "6782"
+          },
+          {
+            "alg": "U' F R2 B R2 F U F2 R2",
+            "altId": "6783"
+          },
+          {
+            "alg": "U' F R U' R' F x F' L' U' L' U",
+            "altId": "24745"
+          },
+          {
+            "alg": "U' R U R' F' U' R U R' U' F R' F' R",
+            "altId": "21691"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 U 3",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bbyy",
+        "ub": "yybb",
+        "uf": "ggor",
+        "ul": "orrg",
+        "ur": "orgo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U2 R U2 R' U2 F",
+            "altId": "3056"
+          },
+          {
+            "alg": "U2 R U' R2 F2 R F' U R U R'",
+            "altId": "23894"
+          },
+          {
+            "alg": "U y' R U R' F R2 F' R U' R'",
+            "altId": "11509"
+          },
+          {
+            "alg": "R U R' U F' R U R' U' R U R2 F2 R",
+            "altId": "3054"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 U 4",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgyy",
+        "ub": "yygo",
+        "uf": "gbrg",
+        "ul": "orbb",
+        "ur": "roor"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R' F R F' R' F R2 U' R'",
+            "altId": "3053"
+          },
+          {
+            "alg": "y U2 R U' R' F R U' R2 F R",
+            "altId": "17890"
+          },
+          {
+            "alg": "y U2 L F' L' F L F' L2 U L",
+            "altId": "24742"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 U 5",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bryy",
+        "ub": "yybb",
+        "uf": "obor",
+        "ul": "ogrg",
+        "ur": "rggo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U' R' U R U' R' U' F R U' R'",
+            "altId": "3282"
+          },
+          {
+            "alg": "U R' F R F' U R U' R' F R U' R'",
+            "altId": "3280"
+          },
+          {
+            "alg": "U2 L F' L' U L F' L' U L' U' L F",
+            "altId": "21825"
+          },
+          {
+            "alg": "F U' R' F2 R F' U2 F'",
+            "altId": "21851"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EG1 U 6",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "goyy",
+        "ub": "yybg",
+        "uf": "obrr",
+        "ul": "rgob",
+        "ur": "rbgo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R' F R U' R' F R U' R U R' F' U2",
+            "altId": "19880"
+          },
+          {
+            "alg": "y2 R' F R2 U' R' U y' R U R'",
+            "altId": "3051"
+          },
+          {
+            "alg": "y2 U L F' L' F U' L' U L F' L' U L",
+            "altId": "23331"
+          },
+          {
+            "alg": "y2 U2 F' U L F2 L' F U2 F",
+            "altId": "24744"
+          }
+        ]
+      ]
+    }
+  ]
+}

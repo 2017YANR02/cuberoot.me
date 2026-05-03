@@ -13,6 +13,8 @@ export { Axis } from './math'
 export { StickerDefinition } from './cube/models/sticker'
 export { Arrow } from './cube/models/arrow'
 export type { ICubeOptions } from './cube/options'
+export { renderFromSimpleQuery, buildSimpleOptions } from './preset'
+export type { SimpleVisualCubeQuery } from './preset'
 
 const defaultOptions: ICubeOptions = {
   cubeSize: 3,

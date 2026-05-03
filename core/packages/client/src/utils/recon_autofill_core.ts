@@ -13,7 +13,7 @@ import {
 import { lookupF2lAlgs } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
-import type { AlgdbCategory } from '@cuberoot/shared/algdb';
+import type { Algdb3x3Set } from '@cuberoot/shared/algdb';
 
 /** Strip comments + paren grouping, return a string with only move tokens. */
 export function movesOnly(text: string): string {
@@ -51,7 +51,7 @@ export function lineRange(text: string, idx: number): { start: number; end: numb
 
 export interface AlgSuggestion {
   text: string;
-  category: AlgdbCategory;
+  category: Algdb3x3Set;
   caseName: string;
   score: number;
 }
@@ -84,7 +84,7 @@ export async function suggestAlg(
   const startState = await patternFromAlg(startStateAlg);
 
   const stageInfo = await detectStage(startState);
-  let category: AlgdbCategory;
+  let category: Algdb3x3Set;
   if (stageInfo.stage === 'solved') return { kind: 'empty', reasonKey: 'recon.autofill.empty.solved' };
   else if (stageInfo.stage === 'oll') category = 'pll';
   else if (stageInfo.stage === 'f2l') category = 'oll';

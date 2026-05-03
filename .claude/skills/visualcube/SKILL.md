@@ -1,41 +1,32 @@
 ---
 name: visualcube
-description: "Use whenever rendering a 3x3 cube state image anywhere in UI — F2L / OLL / PLL case previews, custom case thumbnails, scramble-state visualizations, recon step images, alg library cards. Single source: `<VisualCube>` (React) or `cubeSVG()` (imperative) from `@cuberoot/visualcube`. Hand-written `<rect>` SVG cubes are a bug (legacy `MiniCube.tsx` was removed). Triggers: \"魔方图片\", \"cube image\", \"VisualCube\", \"MiniCube\", \"F2L 图\", \"OLL 图\", \"PLL 图\", \"isometric cube\", \"立方体预览\", \"渲染 cube state\", \"sr-visualizer\", \"facelets\"."
+description: "Use whenever rendering a cube state image anywhere in UI — 3x3 + 2x2 / 4x4 / 5x5. Single source: `<VisualCube>` (React) or `cubeSVG()` / `renderCubeSVG()` from `@cuberoot/visualcube`. Hand-written `<rect>` SVG cubes are a bug (legacy `MiniCube.tsx` and `JcubeThumb.tsx` were removed). Triggers: \"魔方图片\", \"cube image\", \"VisualCube\", \"MiniCube\", \"JcubeThumb\", \"F2L 图\", \"OLL 图\", \"PLL 图\", \"ZBLL 图\", \"立方体预览\", \"facelets\", \"NxN cube\", \"2x2 / 4x4 / 5x5 thumbnail\"."
 ---
 
-# 渲染魔方图片
+## 入口
 
-## 唯一入口
+- React: `<VisualCube algorithm view size puzzleSize />`，`puzzleSize` 默认 3，支持 2..7
+- DOM: `cubeSVG(el, opts)` / 字符串: `renderCubeSVG(opts)` / query API: `renderFromSimpleQuery({alg, view, mask, size, cubeSize, ...})`（server + Vite middleware 共用）
 
-- React：`<VisualCube algorithm={alg} view={'f2l'|'oll'|'pll'} size={88} />`，在 `core/packages/client/src/components/VisualCube.tsx`
-- 命令式 / 复杂选项：`import { cubeSVG, Masking, Face, Axis, ICubeOptions } from '@cuberoot/visualcube'`，调 `cubeSVG(htmlEl, opts)`
+## view
 
-## 选 view / mask
+- `f2l` → isometric, LL 灰
+- `oll` → plan 顶视, 黄/灰朝向图（自动切 OLL scheme）
+- `pll` → plan 顶视 + 侧边 LL 贴纸（PLL/COLL/ZBLL/CLL/4x4 PLL Parity/5x5 L2E·L2C 都用这个）
+- `pll-iso` → isometric LL
+- 其他 mask → 直接 `Masking.X`（22 个核心 mask 全 size 工作；30+ 扩展 mask 仅 `cubeSize=3`，见 README）
 
-- F2L case 预览 → `view='f2l'`（isometric 3D，3 面可见）
-- OLL case 预览 → `view='oll'`（plan view，顶视）
-- PLL case 预览 → `view='pll'`（plan view + 完整 LL 侧边贴纸）
-- 不在以上三类（自定义 mask） → 直接 `cubeSVG()` + `Masking.X`（`Masking.F2L` / `Masking.OLL` / `Masking.LL` / ...）
-- 已有 facelet 字符串（solver / recon 出来的原始贴纸）→ `cubeSVG()` 传 `facelets` 选项
+## algorithm
 
-## 输入 algorithm
-
-- `case`：传"待解的 case"，库内部反转再应用
-- `algorithm`：传"从 solved 正向应用"
-- 空串 = 还原态
-
-## 配色
-
-默认黄朝上、黄十字（speedcubedb 风格）。**不要覆盖 `colorScheme`** 除非有具体理由。
+`<VisualCube algorithm>` 走 `case`（库内反转），传"待解 case"，空串=solved。
 
 ## 禁忌
 
-- 手写 `<rect>` 拼贴纸（之前的 `MiniCube.tsx` 140 行 = 反面教材，已删）
-- 静态缩略图用 cubing.js `TwistyPlayer`（重，是给动画的）
-- 自己再写一份 short-name → face 映射，已经在包里
+- 手写 `<rect>` 拼贴纸（删过 `MiniCube.tsx` / `JcubeThumb.tsx`）
+- 静态图用 cubing.js `TwistyPlayer`（重，是给动画用的）
+- 覆盖 `colorScheme`（除非有具体理由）
+- server / client 各写一份 view→mask 映射 —— 走 `renderFromSimpleQuery`
 
-## 包
+## 改包
 
-- `@cuberoot/visualcube` 是 workspace 包，从 npm `sr-visualizer` 移植（再上游是 Cride5 PHP visualcube），LGPL-3 vendored
-- bundle ≈ visualcube + svg.js@2 共 ~100KB；algdb 这种 lazy route 影响小
-- 新功能先看 `core/packages/visualcube/README.md` 的 PHP→TS roadmap，可能还没移植
+改 `packages/visualcube/src/` 后必须 `pnpm --filter @cuberoot/visualcube build`。Node 端消费者（vite.config.ts middleware、Hono server）走 `dist/index.js` 的 esbuild bundle；只跑 typecheck 出的 per-file `.js` 是 extensionless import，Node ESM 解析不了，会出"prod 还是 3x3"这种诡异 bug。

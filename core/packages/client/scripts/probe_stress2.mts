@@ -11,9 +11,9 @@ import { Alg } from 'cubing/alg';
 import { invertAlg, simplifyAlg, patternFromAlg } from '../src/utils/cube3';
 import { detectStage } from '../src/utils/stage_detect';
 import { suggestAlg } from '../src/utils/recon_autofill_core';
-import f2lDb from '../../shared/data/algdb_f2l.json' with { type: 'json' };
-import ollDb from '../../shared/data/algdb_oll.json' with { type: 'json' };
-import pllDb from '../../shared/data/algdb_pll.json' with { type: 'json' };
+import f2lDb from '../../shared/data/algdb_3x3_f2l.json' with { type: 'json' };
+import ollDb from '../../shared/data/algdb_3x3_oll.json' with { type: 'json' };
+import pllDb from '../../shared/data/algdb_3x3_pll.json' with { type: 'json' };
 
 interface Case { name: string; algs: Array<Array<{ alg: string }>> }
 const f2lCases = (f2lDb as { cases: Case[] }).cases;
