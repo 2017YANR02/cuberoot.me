@@ -59,7 +59,7 @@ interface ReconStoreState {
 interface ReconStoreActions {
   loadAll: (wcaId?: string) => Promise<void>;
   setFilter: <K extends keyof ReconFilters>(key: K, value: ReconFilters[K]) => void;
-  setSort: (key: SortKey) => void;
+  setSort: (key: SortKey, dir?: SortDir) => void;
   loadMore: () => void;
   resetPaging: () => void;
   getFilteredSolves: () => ReconSolve[];
@@ -144,8 +144,10 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     }));
   },
 
-  setSort: (key) => {
+  setSort: (key, dir) => {
     set((state) => {
+      // dir 显式指定 → 直接采用(用于 ColFilter popup 的"升序/降序"按钮)
+      if (dir) return { sortKey: key, sortDir: dir };
       if (state.sortKey === key) {
         return { sortDir: state.sortDir === 'asc' ? 'desc' : 'asc' };
       }

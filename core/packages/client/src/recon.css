@@ -123,6 +123,9 @@
 /* --- 表格 --- */
 .recon-table-wrap {
   /* NOTE: 不设 overflow——会困住 thead 的 position: sticky；过宽时由页面横滚 */
+  /* inline-block 让 wrap 收缩到 table 实际宽度,边框严丝合缝包住 table。
+     不用 block(默认 100% 父宽,table 比父窄时右边出空白 / table 比父宽时被切) */
+  display: inline-block;
   margin-bottom: 1rem;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
