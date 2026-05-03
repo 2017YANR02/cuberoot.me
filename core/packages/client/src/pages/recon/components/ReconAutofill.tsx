@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { getCaretRect } from '../../../utils/textarea_caret';
 import { patternFromAlg, countMoves } from '../../../utils/cube3';
 import { buildCommentSuggestions } from '../../../utils/popup_suggest';
+import { detectStage } from '../../../utils/stage_detect';
 import { suggestAlg, movesOnly, lineRange } from '../../../utils/recon_autofill_core';
 import type { AlgdbCategory } from '@cuberoot/shared/algdb';
 import './ReconAutofill.css';
@@ -58,6 +59,10 @@ interface CommentPopup {
    *  overwritten). */
   replaceFrom: number;
   caret: number;
+  /** Cube state after this line's moves is fully solved — used to suppress
+   *  the trailing newline on accept (no point landing on a fresh line when
+   *  there's nothing left to recon). */
+  solved: boolean;
 }
 
 interface AlgPopup {
@@ -82,6 +87,10 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const [popup, setPopup] = useState<Popup>(null);
   const [selected, setSelected] = useState(0);
   const lastBuildKeyRef = useRef<string>('');
+  // NOTE: 自动弹出 — 用户在某行 Esc / 点外部主动关闭后,记住该行的行号,直到 caret
+  // 移到别的行才允许自动重开;同行继续输入也不再骚扰。
+  const dismissedLineIdxRef = useRef<number | null>(null);
+  const lastAutoOpenKeyRef = useRef<string>('');
 
   const close = useCallback(() => {
     setPopup(null);
@@ -127,6 +136,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
 
     if (entries.length === 0) return null;
 
+    const currStage = await detectStage(currPattern);
     const rect = getCaretRect(ta, caret);
     return {
       kind: 'comment',
@@ -134,6 +144,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       entries,
       replaceFrom,
       caret,
+      solved: currStage.stage === 'solved',
     };
   }, [textareaRef, value, scramble]);
 
@@ -208,6 +219,54 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     close();
   }, [enabled, textareaRef, value, buildCommentPopup, buildAlgPopup, close]);
 
+  /**
+   * Auto-open popup as user types — matches cubedb.net behavior.
+   * - Comment popup: line has moves (or already has `//`).
+   * - Alg popup: empty line, and only if there are real suggestions
+   *   (suppress the empty-reason info popups; those are only worth
+   *   showing on explicit Tab).
+   * Skipped on a line the user just dismissed; reset when caret moves to
+   * a different line.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+    if (popup) return;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const caret = ta.selectionStart;
+
+    const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
+    if (dismissedLineIdxRef.current === lineIdx) return;
+    if (dismissedLineIdxRef.current !== null) dismissedLineIdxRef.current = null;
+
+    const { start, end } = lineRange(value, caret);
+    const lineUpToCaret = value.substring(start, caret);
+    const movesLineText = movesOnly(value.substring(start, end));
+    const hasSlash = lineUpToCaret.includes('//');
+    const hasMoves = movesLineText.length > 0;
+
+    const key = `${value}\x00${caret}`;
+    if (key === lastAutoOpenKeyRef.current) return;
+    lastAutoOpenKeyRef.current = key;
+
+    let cancelled = false;
+    (async () => {
+      let p: CommentPopup | AlgPopup | null = null;
+      if (hasSlash || hasMoves) {
+        p = await buildCommentPopup(caret);
+      } else {
+        const ap = await buildAlgPopup(caret);
+        if (ap && ap.entries.length > 0) p = ap;
+      }
+      if (cancelled) return;
+      if (p) {
+        setPopup(p);
+        setSelected(0);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [enabled, value, scramble, popup, textareaRef, buildCommentPopup, buildAlgPopup]);
+
   /** Live-update popup as user types (after it's open). */
   useEffect(() => {
     if (!popup) return;
@@ -262,6 +321,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       if (!popup) return;
       if (e.key === 'Escape') {
         e.preventDefault();
+        const caret = ta.selectionStart;
+        dismissedLineIdxRef.current = (ta.value.substring(0, caret).match(/\n/g) ?? []).length;
         close();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -303,18 +364,24 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     // space if needed (so `<moves>` becomes `<moves> // ...`). Position the
     // caret on the next line afterward — append a `\n` if there isn't one,
     // otherwise advance past the existing one. Matches cubedb behavior.
+    // EXCEPTION: when this line completes the solve, don't append `\n` and
+    // don't advance — the recon is finished, no point dropping the user on
+    // a fresh empty line that would only attract a "no algs left" popup.
     const before = value.substring(0, p.replaceFrom);
     const after = value.substring(p.caret);
     const needsSpace = p.replaceFrom > 0
       && before[p.replaceFrom - 1] !== ' '
       && before[p.replaceFrom - 1] !== '\n';
     const hasTrailingNewline = after.startsWith('\n');
-    const insertion = (needsSpace ? ' ' : '') + text + (hasTrailingNewline ? '' : '\n');
+    const appendNewline = !p.solved && !hasTrailingNewline;
+    const insertion = (needsSpace ? ' ' : '') + text + (appendNewline ? '\n' : '');
     const next = before + insertion + after;
     setValue(next);
-    // If there was already a `\n` right after, step past it so we land on the
-    // next line; otherwise our just-appended `\n` already does that.
-    const newCaret = p.replaceFrom + insertion.length + (hasTrailingNewline ? 1 : 0);
+    // If solved → land at end of comment (no advancement). Otherwise advance
+    // onto the next line (past the newline we just inserted, or past any that
+    // was already there).
+    const advancePastExisting = !p.solved && hasTrailingNewline;
+    const newCaret = p.replaceFrom + insertion.length + (advancePastExisting ? 1 : 0);
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(newCaret, newCaret);
