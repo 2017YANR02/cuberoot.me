@@ -48,7 +48,7 @@ jobs:
                    icon_timer.png cstimer_logo.png callback.html \
                    robots.txt sitemap.xml MediaInfoModule.wasm \
                    countries-110m.geojson cn_disputed_patches.geojson \
-                   beian-badge.png; do
+                   beian-badge.png sw.js; do
             [ -f "$f" ] && cp -f "$f" _deploy/ || true
           done
 
