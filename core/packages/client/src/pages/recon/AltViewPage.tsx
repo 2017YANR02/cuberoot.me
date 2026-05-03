@@ -12,7 +12,7 @@ import { getRecon } from '../../utils/recon_api';
 import { getPuzzleId } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
 import LangToggle from '../../components/LangToggle';
-import TwistySection from './components/TwistySection';
+import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import { computeAllStats } from '../../utils/recon_stats';

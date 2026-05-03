@@ -19,13 +19,14 @@ import {
 } from '../pages/timer/scramble/others';
 
 /**
- * Generate a scramble for the given recon-style event id (the '3x3' / '3bld'
- * / 'oh' / 'fmc' shapes used in EVENTS inside ReconSubmitPage). Returns null
- * for events we can't auto-generate (mbld) so callers can disable their UI.
+ * Generate a scramble for the given event id (the '3x3' / '3bld' / 'oh' /
+ * 'fmc' shapes used in EVENTS inside ReconSubmitPage; pass '3x3' for plain
+ * 3x3 needs like the analyze page). Returns null for events we can't
+ * auto-generate (mbld) so callers can disable their UI.
  */
-export function randomScrambleForReconEvent(reconEvent: string): string | null {
+export function randomScrambleForEvent(event: string): string | null {
   const r = Math.random;
-  switch (reconEvent) {
+  switch (event) {
     case '2x2':   return scramble222(r);
     case '3x3':   return scramble333(r);
     case '4x4':   return scramble444(r);
