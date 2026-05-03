@@ -9,7 +9,7 @@ import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Earth as GlobeIcon,
   Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
-  ImagePlus,
+  ImagePlus, Microscope,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -299,6 +299,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   blog:            { en: 'Blog', zh: '博客' },
   prediction:      { en: 'Prediction', zh: '预测' },
   visualcubeEditor:{ en: 'Cube Image', zh: '魔方图' },
+  analyze:         { en: 'Analyzer', zh: '打乱分析' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
 };
@@ -341,6 +342,7 @@ const CARDS: CardConfig[] = [
   { id: 'scramble',    href: '/scramble-stats',  internal: true,  tier: 'standard',  Icon: Shuffle,        nameKey: 'scramble' },
   { id: 'mosaic',      href: '/mosaic',          internal: true,  tier: 'standard',  Icon: Grid2x2,        nameKey: 'mosaic' },
   { id: 'visualcube',  href: '/visualcube',      internal: true,  tier: 'standard',  Icon: ImagePlus,      nameKey: 'visualcubeEditor' },
+  { id: 'analyze',     href: '/analyze',         internal: true,  tier: 'standard',  Icon: Microscope,     nameKey: 'analyze' },
   { id: 'wb',          href: '/wb',              internal: true,  tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
   { id: 'prediction',  href: '/prediction',      internal: true,  tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
   { id: 'blog',        href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'standard', Icon: BookOpen, nameKey: 'blog' },
