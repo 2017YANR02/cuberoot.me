@@ -150,8 +150,8 @@ function App() {
         <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/cstimer/" title="csTimer" /></Suspense>} />
         {/* Timer — 纯 TypeScript 速拧计时器 */}
         <Route path="/timer" element={<Suspense fallback={<div>Loading...</div>}><TimerPage /></Suspense>} />
-        {/* Cube — 单图魔方渲染 (URL query API) */}
-        <Route path="/cube" element={<Suspense fallback={<div>Loading...</div>}><CubePage /></Suspense>} />
+        {/* VisualCube — 单图魔方渲染 (URL query API)，参数透传到 /api/visualcube.svg */}
+        <Route path="/visualcube" element={<Suspense fallback={<div>Loading...</div>}><CubePage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}

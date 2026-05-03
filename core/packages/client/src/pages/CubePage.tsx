@@ -1,24 +1,14 @@
 /**
  * @module CubePage
- * /cube — 单个魔方图像渲染，参数走 URL query。灵感来自 visualcube.php API。
+ * /visualcube — 单个魔方图像渲染页，参数走 URL query。灵感来自 visualcube.php API。
  * 不在首页/导航暴露，仅供 share / embed 直链。
+ * 实际图片由 server `/api/visualcube.svg` 渲染，本页只是把 query 透传过去。
  */
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
-import { renderCubeSVG, Masking, type ICubeOptions } from '@cuberoot/visualcube';
 
 const DEFAULT_ALG = "R U R' U R U2 R'"; // Sune (OLL 27)
 const DEFAULT_SIZE = 256;
-
-function svgToDataUri(opts: ICubeOptions): string {
-  return 'data:image/svg+xml,' + encodeURIComponent(renderCubeSVG(opts));
-}
-
-function findMask(name?: string): Masking | undefined {
-  if (!name) return undefined;
-  const lookup = (Object.values(Masking) as string[]).find(v => v.toLowerCase() === name.toLowerCase());
-  return lookup as Masking | undefined;
-}
 
 export default function CubePage() {
   const [params] = useSearchParams();
@@ -29,23 +19,10 @@ export default function CubePage() {
   const bg = params.get('bg') ?? undefined;
 
   const src = useMemo(() => {
-    const opts: ICubeOptions = { case: alg, width: size, height: size };
-    // bg accepts: hex (with/without `#`), or any other string passed verbatim
-    // (CSS named colors like `red`, `transparent`). Only prepend `#` when it
-    // looks like a bare hex.
-    if (bg) opts.backgroundColor = bg.startsWith('#') ? bg : /^[0-9a-f]{3,8}$/i.test(bg) ? '#' + bg : bg;
-
-    // Pick mask: explicit `mask` param wins, else infer from `view`.
-    const explicitMask = findMask(maskParam);
-    if (explicitMask) opts.mask = explicitMask;
-    else if (view === 'f2l') opts.mask = Masking.F2L;
-    else if (view === 'oll') opts.mask = Masking.OLL;
-    else if (view === 'pll') opts.mask = Masking.LL;
-
-    // Pick view: plan or isometric (default)
-    if (view === 'plan' || view === 'oll' || view === 'pll') opts.view = 'plan';
-
-    return svgToDataUri(opts);
+    const qp = new URLSearchParams({ alg, view, size: String(size) });
+    if (maskParam) qp.set('mask', maskParam);
+    if (bg) qp.set('bg', bg);
+    return `/api/visualcube.svg?${qp}`;
   }, [alg, view, maskParam, size, bg]);
 
   return (
