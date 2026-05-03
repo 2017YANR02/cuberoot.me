@@ -108,6 +108,12 @@ export interface AlgsetCase {
 
 export interface CaseAlg {
   alg: string;
+  /**
+   * 渲染用 HTML 片段，仅含安全 inline 标签 (<u>/<s>/<em>/<strong>/<sub>/<sup>);
+   * 这些标签在 Word 源里是指法记号(下划线/删除线/斜体/上下标),前端必须显示。
+   * 与 alg 等价时省略以省字节。
+   */
+  algHtml?: string;
   /** 是否是此 case 的主公式（默认列表第一条） */
   primary: boolean;
   /** 作者/来源（可选，供 author-attribution color tag 用） */

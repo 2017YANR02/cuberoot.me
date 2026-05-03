@@ -36,7 +36,7 @@ export function CaseModal({ caseData, onClose, onPrev, onNext }: CaseModalProps)
               .filter(a => a.alg !== '(no alg found)')
               .map((a, i) => (
                 <div key={i} className="case-modal-tutorial-row">
-                  <AlgChip alg={a.alg} />
+                  <AlgChip alg={a.alg} algHtml={a.algHtml} />
                 </div>
               ))}
             {caseData.notes && (

@@ -9,13 +9,13 @@
     "subcategory": null,
     "topDir": "3x3",
     "thumb": "/stats/tutorial/media/cfop-tutorial/en/image4.svg",
-    "mtime": 1776914355127.0742,
+    "mtime": 1777427740876.142,
     "hasEn": true,
     "hasZh": false,
     "order": 1,
     "hidden": false,
     "quality": "ok",
-    "algCount": 369
+    "algCount": 377
   },
   {
     "slug": "pll",
@@ -438,7 +438,7 @@
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 372
+    "algCount": 384
   },
   {
     "slug": "3x3-easy-zbll",
@@ -690,7 +690,7 @@
     "order": 5,
     "hidden": false,
     "quality": "ok",
-    "algCount": 3
+    "algCount": 7
   },
   {
     "slug": "cuberoot-thumbnail",
@@ -834,7 +834,7 @@
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 3028
+    "algCount": 3039
   },
   {
     "slug": "6-9-htm-1lll",
@@ -1548,7 +1548,7 @@
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 11
+    "algCount": 13
   },
   {
     "slug": "multislotting",
@@ -1638,7 +1638,7 @@
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 148
+    "algCount": 153
   },
   {
     "slug": "cfop",
@@ -1731,7 +1731,7 @@
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 23
+    "algCount": 25
   },
   {
     "slug": "3x3-cll",
@@ -1876,7 +1876,7 @@
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 98
+    "algCount": 99
   },
   {
     "slug": "ocll-transformer",
@@ -2278,7 +2278,7 @@
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 1
+    "algCount": 2
   },
   {
     "slug": "optimizing-lbl",
@@ -2478,7 +2478,7 @@
     "order": 11,
     "hidden": false,
     "quality": "ok",
-    "algCount": 271
+    "algCount": 306
   },
   {
     "slug": "roux-cmll-rud",
@@ -2550,7 +2550,7 @@
     "order": 11,
     "hidden": false,
     "quality": "ok",
-    "algCount": 33
+    "algCount": 35
   },
   {
     "slug": "roux-f2b",
@@ -2568,7 +2568,7 @@
     "order": 11,
     "hidden": false,
     "quality": "ok",
-    "algCount": 752
+    "algCount": 771
   },
   {
     "slug": "roux-image",
@@ -2586,7 +2586,7 @@
     "order": 11,
     "hidden": false,
     "quality": "ok",
-    "algCount": 32
+    "algCount": 35
   },
   {
     "slug": "roux-eolrb",
@@ -2947,7 +2947,7 @@
     "order": 25,
     "hidden": false,
     "quality": "ok",
-    "algCount": 20
+    "algCount": 21
   },
   {
     "slug": "3bld-3bld-eo-2",
@@ -3292,7 +3292,7 @@
     "order": 30,
     "hidden": false,
     "quality": "ok",
-    "algCount": 51
+    "algCount": 52
   },
   {
     "slug": "2x2-eg",
@@ -3311,7 +3311,7 @@
     "order": 30,
     "hidden": false,
     "quality": "ok",
-    "algCount": 446
+    "algCount": 456
   },
   {
     "slug": "2x2-eg-pure",
@@ -3329,7 +3329,7 @@
     "order": 30,
     "hidden": false,
     "quality": "ok",
-    "algCount": 76
+    "algCount": 80
   },
   {
     "slug": "2x2-eg-recognition",
@@ -3713,7 +3713,7 @@
     "order": 35,
     "hidden": false,
     "quality": "ok",
-    "algCount": 17
+    "algCount": 18
   },
   {
     "slug": "4x4-4x4-yau",
@@ -3731,7 +3731,7 @@
     "order": 35,
     "hidden": false,
     "quality": "ok",
-    "algCount": 16
+    "algCount": 17
   },
   {
     "slug": "4x4-redux",
@@ -3750,7 +3750,7 @@
     "order": 35,
     "hidden": false,
     "quality": "ok",
-    "algCount": 26
+    "algCount": 27
   },
   {
     "slug": "4x4-4x4-half-centers",
@@ -3948,7 +3948,7 @@
     "order": 40,
     "hidden": false,
     "quality": "ok",
-    "algCount": 16
+    "algCount": 17
   },
   {
     "slug": "5x5-5x5-yau-l2e",
@@ -3966,7 +3966,7 @@
     "order": 40,
     "hidden": false,
     "quality": "ok",
-    "algCount": 16
+    "algCount": 17
   },
   {
     "slug": "5x5-5x5-l2e",
@@ -4092,7 +4092,7 @@
     "order": 45,
     "hidden": false,
     "quality": "ok",
-    "algCount": 12
+    "algCount": 16
   },
   {
     "slug": "big-redux",
@@ -5343,7 +5343,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 9
+    "algCount": 16
   },
   {
     "slug": "niss",
@@ -5433,7 +5433,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 119
+    "algCount": 131
   },
   {
     "slug": "dr-solves",
@@ -5523,7 +5523,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 9
+    "algCount": 10
   },
   {
     "slug": "fmc-hta",
@@ -5595,7 +5595,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 4
+    "algCount": 5
   },
   {
     "slug": "petrus",
@@ -5813,7 +5813,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 16
   },
   {
     "slug": "fmc-fake-222",
@@ -5903,7 +5903,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 43
+    "algCount": 45
   },
   {
     "slug": "zz",
@@ -6624,7 +6624,7 @@
     "order": 120,
     "hidden": false,
     "quality": "ok",
-    "algCount": 5
+    "algCount": 7
   },
   {
     "slug": "blogs-mixup-3x3-2",
@@ -7147,7 +7147,7 @@
     "order": 130,
     "hidden": false,
     "quality": "ok",
-    "algCount": 4
+    "algCount": 10
   },
   {
     "slug": "scur-si-chuan-da-xue-mo-fang-han-fei-guan-fang-bi-sai-xiao-ji-lu-jie-zhi-2024-12-2",
@@ -7255,7 +7255,7 @@
     "order": 130,
     "hidden": false,
     "quality": "ok",
-    "algCount": 6
+    "algCount": 7
   },
   {
     "slug": "most-difficult-case",
@@ -7273,7 +7273,7 @@
     "order": 130,
     "hidden": false,
     "quality": "ok",
-    "algCount": 20
+    "algCount": 23
   },
   {
     "slug": "xjtu-xi-an-jiao-tong-da-xue-xiao-ji-lu-24-8-18-gao-bo",
@@ -8336,7 +8336,7 @@
     "order": 150,
     "hidden": false,
     "quality": "ok",
-    "algCount": 230
+    "algCount": 237
   },
   {
     "slug": "ols05-x",
@@ -8354,7 +8354,7 @@
     "order": 150,
     "hidden": false,
     "quality": "ok",
-    "algCount": 447
+    "algCount": 450
   },
   {
     "slug": "rootalg-v18-2105",
@@ -8372,7 +8372,7 @@
     "order": 150,
     "hidden": false,
     "quality": "ok",
-    "algCount": 26
+    "algCount": 27
   },
   {
     "slug": "notes",
@@ -8930,7 +8930,7 @@
     "order": 150,
     "hidden": false,
     "quality": "ok",
-    "algCount": 9
+    "algCount": 10
   },
   {
     "slug": "best-cubes-2023",
@@ -9039,7 +9039,7 @@
     "order": 170,
     "hidden": false,
     "quality": "ok",
-    "algCount": 45
+    "algCount": 122
   },
   {
     "slug": "no-bar-patterns",
@@ -10443,7 +10443,7 @@
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 7
+    "algCount": 8
   },
   {
     "slug": "sq-cs",
@@ -10641,7 +10641,7 @@
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 167
+    "algCount": 169
   },
   {
     "slug": "fm-domino-cube",

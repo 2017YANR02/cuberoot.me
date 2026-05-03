@@ -1,12 +1,12 @@
 # alg-build report
 
-- 执行时间: 2026-04-24T10:57:19.626Z (138.2s)
+- 执行时间: 2026-05-03T17:43:18.287Z (158.3s)
 - 扫描 docx: **688**
 - slug groups: **627**
 - 成功提取: **609**
 - 跳过: **18**
 - mammoth 警告总数: 270
-- 识别 chip (可能重复): 40525
+- 识别 chip (可能重复): 40847
 - quality=degraded: 0
 - catalog.json 大小: 247.1 KB
 - posts/*.json 数: 609
