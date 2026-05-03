@@ -1,8 +1,39 @@
 import * as cheerio from 'cheerio';
 import type { DetectedAlg } from './types.js';
 
-/** 公式允许的字符集：魔方面字母 + 修饰符 + 常见括号/符号 */
-const CHAR_RE = /^[RUFLDBMESrulfdbmesxyz0-9'2w ,()[\]/+\-→↑↓←\n\t.]*$/;
+/** 与 extractAlgset 同步:文章视图里的 chip 保留这些指法记号标签 */
+const SAFE_INLINE_TAGS = new Set([
+  'u', 's', 'strike', 'del',
+  'em', 'i',
+  'strong', 'b',
+  'sub', 'sup',
+]);
+const TAG_NORMALIZE: Record<string, string> = {
+  i: 'em',
+  b: 'strong',
+  strike: 's',
+  del: 's',
+};
+
+function nodeToSafeMarkup(node: any): string {
+  if (!node) return '';
+  if (node.type === 'text') return String(node.data ?? '');
+  if (node.type !== 'tag') return '';
+  const tag = String(node.name ?? '').toLowerCase();
+  const inner = (node.children ?? []).map((c: any) => nodeToSafeMarkup(c)).join('');
+  if (tag === 'br') return ' ';
+  if (SAFE_INLINE_TAGS.has(tag)) {
+    const norm = TAG_NORMALIZE[tag] ?? tag;
+    const stripped = inner.replace(/<[^>]+>/g, '');
+    if (stripped.replace(/\s/g, '').length === 0) return inner;
+    return `<${norm}>${inner}</${norm}>`;
+  }
+  return inner;
+}
+
+/** 公式允许的字符集：魔方面字母 + 修饰符 + 常见括号/符号
+ *  · = 中间点(指法记号)、* = 推荐标(部分 docx 用)、↑↓←→ = 朝向调整记号 */
+const CHAR_RE = /^[RUFLDBMESrulfdbmesxyz0-9'2w ,()[\]/+\-→↑↓←·*\n\t.]*$/;
 const CUBE_LETTER_RE = /[RUFLDBMESruflmbes]/;
 const MODIFIER_RE = /['2w]/;
 /** 含中日韩汉字 → 不是公式 */
@@ -34,6 +65,10 @@ export interface DetectAlgsResult {
   detected: DetectedAlg[];
 }
 
+function stripTagsLocal(s: string): string {
+  return s.replace(/<[^>]+>/g, '');
+}
+
 /**
  * 扫描 HTML block 节点 (p / li / td)，如果整段文本是纯公式 → 包 AlgChip
  * 只对纯文本 block（无子 element 或仅 text-like inline）生效，避免破坏富文本结构。
@@ -50,17 +85,28 @@ export function detectAlgs(html: string, slugContext?: string): DetectAlgsResult
     const text = $el.text();
     if (!isAlgText(text)) return;
     const alg = text.replace(/\s+/g, ' ').trim();
+    // 抽出 chip 内部的安全 markup (保留 <u>/<s>/<em> 等指法记号),
+    // 同时存 plain text 到 data-alg 用于 clipboard.
+    const safeMarkup = ($el.contents().toArray() as any[])
+      .map(c => nodeToSafeMarkup(c))
+      .join('')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
     detected.push({
       alg,
       source: 'auto',
       context: slugContext ? `${slugContext}:${el.tagName}` : el.tagName,
     });
-    // 用 AlgChip 替换内部
     $el.empty();
     const chip = $('<span>')
       .addClass('tutorial-chip')
-      .attr('data-alg', alg)
-      .text(alg);
+      .attr('data-alg', alg);
+    // 如果 markup 与 plain 不同(说明含指法记号标签),用 html 否则 text 节省字节
+    if (safeMarkup && stripTagsLocal(safeMarkup) !== safeMarkup) {
+      chip.html(safeMarkup);
+    } else {
+      chip.text(alg);
+    }
     $el.append(chip);
   });
 

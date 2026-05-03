@@ -22,6 +22,8 @@ export interface CatalogEntry {
 
 export interface CaseAlg {
   alg: string;
+  /** Word 指法记号渲染用 HTML 片段(<u>/<s>/<em>/<strong>/<sub>/<sup>);省略时与 alg 等价 */
+  algHtml?: string;
   primary: boolean;
   author?: string;
   setup?: string;

@@ -19,7 +19,11 @@ export function CaseCard({ caseData, onClick }: CaseCardProps) {
       </div>
       <div className="case-card-label">{caseData.label}</div>
       {primaryAlg && primaryAlg.alg !== '(no alg found)' && (
-        <div className="case-card-alg">{primaryAlg.alg}</div>
+        primaryAlg.algHtml ? (
+          <div className="case-card-alg" dangerouslySetInnerHTML={{ __html: primaryAlg.algHtml }} />
+        ) : (
+          <div className="case-card-alg">{primaryAlg.alg}</div>
+        )
       )}
     </div>
   );
