@@ -601,33 +601,28 @@ export default function VisualCubeEditorPage() {
 
       {/* Controls */}
       <section className="vc-controls">
+        {/* Puzzle type + image size on the same row (both compact, save vertical space) */}
         <div className="vc-row">
           <label className="vc-label">{t('魔方阶数', 'Puzzle Type')}</label>
-          <div className="vc-row-controls">
-            <input
-              type="number"
-              className="vc-num"
-              value={state.cubeSize} min={1} max={10}
-              onChange={(e) => {
-                const n = parseInt(e.target.value, 10);
-                if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(10, n)));
-              }}
-            />
-          </div>
-        </div>
-        <div className="vc-row">
-          <label className="vc-label">{t('图片尺寸 (px)', 'Image Size (px)')}</label>
-          <div className="vc-row-controls">
-            <select
-              className="vc-select"
-              value={state.imageSize}
-              onChange={(e) => set('imageSize', parseInt(e.target.value, 10))}
-            >
-              {[64, 88, 128, 256, 512, 1000].map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+          <input
+            type="number"
+            className="vc-num"
+            value={state.cubeSize} min={1} max={10}
+            onChange={(e) => {
+              const n = parseInt(e.target.value, 10);
+              if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(10, n)));
+            }}
+          />
+          <label className="vc-label vc-label-secondary">{t('图片尺寸 (px)', 'Image Size (px)')}</label>
+          <select
+            className="vc-select"
+            value={state.imageSize}
+            onChange={(e) => set('imageSize', parseInt(e.target.value, 10))}
+          >
+            {[64, 88, 128, 256, 512, 1000].map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
         {/* Algorithm */}
@@ -996,6 +991,8 @@ const INLINE_CSS = `
   font-size: 12px; font-weight: 500; color: var(--vc-text-dim);
   text-transform: uppercase; letter-spacing: 0.5px;
 }
+/* Secondary label inside the same row (e.g. when two controls share a row) — natural width, no min */
+.vc-label-secondary { min-width: 0; padding-left: 16px; }
 
 /* sunken inputs: darker than panel, no border, focus shows a soft inset ring */
 .vc-num, .vc-text, .vc-num-sm, .vc-color-text, .vc-select, .vc-select-sm {
