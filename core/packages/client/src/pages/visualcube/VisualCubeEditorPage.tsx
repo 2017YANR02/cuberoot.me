@@ -485,6 +485,40 @@ export default function VisualCubeEditorPage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadPng = async () => {
+    // Rasterise the in-memory SVG via canvas. Encode as Blob URL (data: URLs
+    // crash Safari for non-trivial SVGs); decode through HTMLImageElement;
+    // draw to canvas at imageSize × imageSize; export as PNG blob.
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('SVG decode failed'));
+        img.src = svgUrl;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = state.imageSize;
+      canvas.height = state.imageSize;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, state.imageSize, state.imageSize);
+      canvas.toBlob((pngBlob) => {
+        if (!pngBlob) return;
+        const pngUrl = URL.createObjectURL(pngBlob);
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        a.download = `cube-${Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(pngUrl);
+      }, 'image/png');
+    } finally {
+      URL.revokeObjectURL(svgUrl);
+    }
+  };
+
   const apiUrl = useMemo(() => {
     // /api/visualcube.svg only supports a subset (alg/view/mask/size/bg/cc/co)
     const p = new URLSearchParams();
@@ -551,6 +585,9 @@ export default function VisualCubeEditorPage() {
         <CopyButton label={t('复制 API 链接', 'Copy API URL')} getValue={() => apiUrl} />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> {t('下载 SVG', 'Download SVG')}
+        </button>
+        <button type="button" className="vc-btn" onClick={downloadPng}>
+          <Download size={14} /> {t('下载 PNG', 'Download PNG')}
         </button>
         <CopyButton
           label={t('复制 <img> 标签', 'Copy <img> tag')}
