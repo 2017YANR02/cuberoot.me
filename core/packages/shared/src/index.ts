@@ -24,4 +24,4 @@ export {
   searchLocalPersons,
 } from './api/persons_index';
 export * from './nemesizer_format';
-export * from './algdb';
+export * from './alg';

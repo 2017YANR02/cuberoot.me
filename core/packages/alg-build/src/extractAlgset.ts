@@ -86,14 +86,14 @@ function inferGroup(label: string, slug: string): string {
   return 'default';
 }
 
-/** 把 `/stats/alg/media/<slug>/<lang>/<file>` 转成磁盘绝对路径并取字节数。
+/** 把 `/stats/tutorial/media/<slug>/<lang>/<file>` 转成磁盘绝对路径并取字节数。
  *  失败返回 0(fs 失败时不把图片当成有效).
  *  缓存:大 algset(如 1lll 3458 case)里同 src 会被多次 stat,cache 可省 ~60% I/O. */
 const imgSizeCache = new Map<string, number>();
 function getImgSize(src: string, outRoot: string): number {
   const cached = imgSizeCache.get(src);
   if (cached !== undefined) return cached;
-  const prefix = '/stats/alg/';
+  const prefix = '/stats/tutorial/';
   if (!src.startsWith(prefix)) {
     imgSizeCache.set(src, 0);
     return 0;

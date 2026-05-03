@@ -17,7 +17,7 @@ import {
   CORNER_STICKERS, EDGE_STICKERS,
   cornerStickerOnFace, edgeStickerOnFace,
 } from './sticker_tables';
-import { loadAlgdb } from '@cuberoot/shared/algdb';
+import { loadAlg } from '@cuberoot/shared/alg';
 
 export interface OllAlgEntry {
   /** Alg in canonical frame (already includes any pre-AUF wrap). */
@@ -59,7 +59,7 @@ let _tablePromise: Promise<Map<string, OllAlgEntry[]>> | null = null;
 async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
   if (_tablePromise) return _tablePromise;
   _tablePromise = (async () => {
-    const db = await loadAlgdb('3x3', 'oll');
+    const db = await loadAlg('3x3', 'oll');
     const kp = await getCube3();
     const solved = kp.defaultPattern();
     const t = new Map<string, OllAlgEntry[]>();

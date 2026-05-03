@@ -20,7 +20,7 @@ import {
   CORNER_STICKERS, EDGE_STICKERS,
   cornerStickerOnFace, edgeStickerOnFace,
 } from './sticker_tables';
-import { loadAlgdb } from '@cuberoot/shared/algdb';
+import { loadAlg } from '@cuberoot/shared/alg';
 
 export interface F2lAlgEntry {
   /** Alg in canonical frame. Prefix with canonRot for raw-frame execution. */
@@ -104,8 +104,8 @@ async function buildTable(): Promise<Map<string, F2lAlgEntry[]>> {
   if (_tablePromise) return _tablePromise;
   _tablePromise = (async () => {
     const [f2l, advF2l] = await Promise.all([
-      loadAlgdb('3x3', 'f2l'),
-      loadAlgdb('3x3', 'adv-f2l'),
+      loadAlg('3x3', 'f2l'),
+      loadAlg('3x3', 'adv-f2l'),
     ]);
     const kp = await getCube3();
     const solved = kp.defaultPattern();

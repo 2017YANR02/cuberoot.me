@@ -55,14 +55,14 @@ const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
 // NOTE: Scramble Stats — WCA 历史打乱难度分布
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
-// NOTE: Alg — 公式教程目录（docx 源迁移）
+// NOTE: Tutorial — 公式教程目录（docx 源迁移）
+const TutorialIndexPage = lazy(() => import('./pages/tutorial/TutorialIndexPage'));
+const TutorialCategoryPage = lazy(() => import('./pages/tutorial/TutorialCategoryPage'));
+const TutorialPostPage = lazy(() => import('./pages/tutorial/TutorialPostPage'));
+// NOTE: Alg — 公式库 (2x2/3x3/4x4/5x5,数据来自 speedcubedb)
 const AlgIndexPage = lazy(() => import('./pages/alg/AlgIndexPage'));
+const AlgPuzzlePage = lazy(() => import('./pages/alg/AlgPuzzlePage'));
 const AlgCategoryPage = lazy(() => import('./pages/alg/AlgCategoryPage'));
-const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
-// NOTE: AlgDb — 公式库 (2x2/3x3/4x4/5x5,数据来自 speedcubedb)
-const AlgDbIndexPage = lazy(() => import('./pages/algdb/AlgDbIndexPage'));
-const AlgDbPuzzlePage = lazy(() => import('./pages/algdb/AlgDbPuzzlePage'));
-const AlgDbCategoryPage = lazy(() => import('./pages/algdb/AlgDbCategoryPage'));
 // NOTE: Sites — 魔方网址导航
 const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 // NOTE: /prediction — 3x3 速拧极限预测
@@ -165,16 +165,16 @@ function App() {
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
         {/* Scramble — WCA 历史打乱难度分布 */}
         <Route path="/scramble-stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
-        {/* Alg — 公式教程目录 */}
+        {/* Tutorial — 公式教程目录（曾用 /alg） */}
+        <Route path="/tutorial" element={<Suspense fallback={<div>Loading...</div>}><TutorialIndexPage /></Suspense>} />
+        <Route path="/tutorial/c/:category" element={<Suspense fallback={<div>Loading...</div>}><TutorialCategoryPage /></Suspense>} />
+        <Route path="/tutorial/:slug" element={<Suspense fallback={<div>Loading...</div>}><TutorialPostPage /></Suspense>} />
+        {/* Alg — 公式库 (2x2/3x3/4x4/5x5, data from speedcubedb.com，曾用 /algdb) */}
+        {/* /alg/:puzzle handles BOTH new puzzle pages AND legacy single-segment 3x3 set slugs (redirects). */}
         <Route path="/alg" element={<Suspense fallback={<div>Loading...</div>}><AlgIndexPage /></Suspense>} />
-        <Route path="/alg/c/:category" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
-        <Route path="/alg/:slug" element={<Suspense fallback={<div>Loading...</div>}><AlgPostPage /></Suspense>} />
-        {/* AlgDb — 公式库 (2x2/3x3/4x4/5x5, data from speedcubedb.com) */}
-        {/* /algdb/:puzzle handles BOTH new puzzle pages AND legacy single-segment 3x3 set slugs (redirects). */}
-        <Route path="/algdb" element={<Suspense fallback={<div>Loading...</div>}><AlgDbIndexPage /></Suspense>} />
-        <Route path="/algdb/:puzzle" element={<Suspense fallback={<div>Loading...</div>}><AlgDbPuzzlePage /></Suspense>} />
-        <Route path="/algdb/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><AlgDbCategoryPage /></Suspense>} />
-        <Route path="/algdb/:puzzle/:set/:subgroup" element={<Suspense fallback={<div>Loading...</div>}><AlgDbCategoryPage /></Suspense>} />
+        <Route path="/alg/:puzzle" element={<Suspense fallback={<div>Loading...</div>}><AlgPuzzlePage /></Suspense>} />
+        <Route path="/alg/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
+        <Route path="/alg/:puzzle/:set/:subgroup" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         {/* Sites — 魔方网址导航 */}
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
         <Route path="/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />

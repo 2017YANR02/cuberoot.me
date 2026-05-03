@@ -9,7 +9,7 @@ await warmupF2lTable();
 import { F2L_SLOT_DEFS } from '../src/utils/stage_detect.ts';
 import { CORNER_STICKERS, EDGE_STICKERS, edgeStickerOnFace, cornerStickerOnFace } from '../src/utils/sticker_tables.ts';
 import { getCube3, simplifyAlg, invertAlg, patternFromAlg } from '../src/utils/cube3.ts';
-import { loadAlgdb } from '@cuberoot/shared/algdb';
+import { loadAlg } from '@cuberoot/shared/alg';
 
 function fpAt(p: any, slotIdx: number): string {
   const def = F2L_SLOT_DEFS[slotIdx];
@@ -46,7 +46,7 @@ function fpAt(p: any, slotIdx: number): string {
 }
 
 // Manually rebuild the table to get keys
-const [f2l, advF2l] = await Promise.all([loadAlgdb('3x3', 'f2l'), loadAlgdb('3x3', 'adv-f2l')]);
+const [f2l, advF2l] = await Promise.all([loadAlg('3x3', 'f2l'), loadAlg('3x3', 'adv-f2l')]);
 const kp = await getCube3();
 const solved = kp.defaultPattern();
 

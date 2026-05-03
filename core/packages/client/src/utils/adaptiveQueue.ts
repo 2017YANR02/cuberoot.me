@@ -2,7 +2,7 @@
  * @module adaptiveQueue
  * 自适应训练队列 — 基于上一轮表现分层重复（最慢→4次，次慢→3次…）。
  */
-import type { AlgCase } from '@cuberoot/shared';
+import type { TrainerCase } from '@cuberoot/shared';
 
 interface CaseResult {
   caseId: string;
@@ -22,9 +22,9 @@ interface CaseResult {
  * 最后打乱顺序返回
  */
 export function buildAdaptiveQueue(
-  allCases: AlgCase[],
+  allCases: TrainerCase[],
   results: CaseResult[],
-): AlgCase[] {
+): TrainerCase[] {
   if (results.length === 0) {
     // 首次训练，随机打乱全部选中 case
     return shuffle([...allCases]);
@@ -70,11 +70,11 @@ export function buildAdaptiveQueue(
     }
   }
 
-  // ID → AlgCase 映射
+  // ID → TrainerCase 映射
   const caseMap = new Map(allCases.map((c) => [c.id, c]));
   const result = queue
     .map((id) => caseMap.get(id))
-    .filter((c): c is AlgCase => c !== undefined);
+    .filter((c): c is TrainerCase => c !== undefined);
 
   return shuffle(result);
 }
