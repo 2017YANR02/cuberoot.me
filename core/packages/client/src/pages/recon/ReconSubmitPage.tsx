@@ -33,6 +33,7 @@ import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, autoSpaceMoves } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
+import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2 } from 'lucide-react';
 
 /** 折叠区段 — GitHub 设置式 */
@@ -102,7 +103,7 @@ function useIsMobile(): boolean {
 export default function ReconSubmitPage() {
   const { editId } = useParams<{ editId: string }>();
   const isEditing = !!editId;
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // NOTE: ?from=<id>&solveNum=<n>&suggestTime=<秒> — 从同轮次缺失 chip 跳转过来时预填共享字段 + 推荐成绩
   const fromId = !isEditing ? searchParams.get('from') : null;
   const fromSolveNum = !isEditing ? searchParams.get('solveNum') : null;
@@ -270,6 +271,50 @@ export default function ReconSubmitPage() {
       setLoadingEdit(false);
     }).catch(() => setLoadingEdit(false));
   }, [fromId, fromSolveNum, isEditing, authUser, suggestTime, suggestScramble]);
+
+  // NOTE: ?scramble= / ?optimal= / ?alg= — cubedb 风格,三段独立,只在 create 模式生效
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    const scramble = decodeUrlAlg(searchParams.get('scramble') || '');
+    const optimal = decodeUrlAlg(searchParams.get('optimal') || '');
+    const solution = decodeUrlAlg(searchParams.get('alg') || '');
+    if (!scramble && !optimal && !solution) return;
+    setForm(prev => ({
+      ...prev,
+      wcaScramble: scramble || prev.wcaScramble || '',
+      optimalScramble: optimal || prev.optimalScramble || '',
+      solution: solution || prev.solution || '',
+    }));
+    if (solutionRef.current && solution) {
+      solutionRef.current.value = solution;
+      autoResize(solutionRef.current);
+    }
+    // mount-only decode; never re-read URL afterwards (form state owns it)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // NOTE: 打乱 / 最优打乱 / 解法 → URL,debounce 300ms,history.replace 不污染回退栈
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    const timer = setTimeout(() => {
+      const scr = encodeUrlAlg((form.wcaScramble || '').trim());
+      const opt = encodeUrlAlg((form.optimalScramble || '').trim());
+      const sol = encodeUrlAlg(form.solution || '');
+      setSearchParams(prev => {
+        // 重建以保证顺序 lang ... -> scramble -> optimal -> alg(scramble / optimal 须排在 alg 前)
+        const next = new URLSearchParams();
+        for (const [k, v] of prev) {
+          if (k === 'scramble' || k === 'optimal' || k === 'alg') continue;
+          next.append(k, v);
+        }
+        if (scr) next.set('scramble', scr);
+        if (opt) next.set('optimal', opt);
+        if (sol) next.set('alg', sol);
+        return next;
+      }, { replace: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [form.wcaScramble, form.optimalScramble, form.solution, isEditing, fromId, setSearchParams]);
 
   // NOTE: 更新表单字段
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {

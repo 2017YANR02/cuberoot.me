@@ -54,13 +54,12 @@ async function evaluateTabPoint(
   const currMoves = movesOnly(linesUpToHere);
   const thisLineMovesText = movesOnly(fullLine);
   const moveCount = countMoves(thisLineMovesText);
-  const lineHasMoves = moveCount > 0;
   const prevAlg = [scramble, prevMoves].filter(Boolean).join(' ');
   const currAlg = [scramble, currMoves].filter(Boolean).join(' ');
   const prevPattern = await patternFromAlg(prevAlg);
   const currPattern = await patternFromAlg(currAlg);
   return buildCommentSuggestions({
-    prevPattern, currPattern, lineHasMoves, moveCount,
+    prevPattern, currPattern, lineMovesText: thisLineMovesText, moveCount,
   });
 }
 

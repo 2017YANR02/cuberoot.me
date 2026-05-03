@@ -22,12 +22,22 @@ import type { F2lSlotId, StageInfo } from './stage_detect';
 import { detectStage, F2L_SLOT_DEFS } from './stage_detect';
 import { EDGE_STICKERS } from './sticker_tables';
 
-/** Ordinal naming for F2L pairs by index 1..4 */
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th'];
-
-/** Detect WHICH F2L slot just became solved going prev → curr. */
+/**
+ * F2L slots in `curr` whose CUBIE PAIR wasn't already solved in `prev`.
+ *
+ * Slot IDs (FR/FL/BR/BL) are frame-relative — a `y2` between two recon lines
+ * shifts the canonical frame and the same physical cubie ends up at a
+ * different slot id. So we compare cubie identities (corner+edge piece IDs,
+ * which are home-slot-based and therefore frame-invariant) instead of slot IDs.
+ */
 function newlySolvedSlots(prev: StageInfo, curr: StageInfo): F2lSlotId[] {
-  return curr.solvedSlots.filter(s => !prev.solvedSlots.includes(s));
+  const prevKeys = new Set(prev.solvedPairs.map(([c, e]) => `${c}.${e}`));
+  const out: F2lSlotId[] = [];
+  for (let i = 0; i < curr.solvedSlots.length; i++) {
+    const [c, e] = curr.solvedPairs[i];
+    if (!prevKeys.has(`${c}.${e}`)) out.push(curr.solvedSlots[i]);
+  }
+  return out;
 }
 
 /**
@@ -36,6 +46,7 @@ function newlySolvedSlots(prev: StageInfo, curr: StageInfo): F2lSlotId[] {
  */
 type Transition =
   | { kind: 'inspection' }
+  | { kind: 'pscross' }
   | { kind: 'cross' }
   | { kind: 'xcross' }
   | { kind: 'xxcross' }
@@ -46,30 +57,37 @@ type Transition =
   | null;
 
 /**
- * Was the just-completed line the inspection rotation only (no real progress
- * made on the cube structurally)? Heuristic: prev and current both at 'none'
- * stage AND no new pieces solved.
+ * Was the just-completed line ONLY rotation moves (x/y/z, possibly with
+ * prime/2 modifiers)? The cube state alone can't distinguish "rotation +
+ * nothing" from "face turns that scrambled further without making progress",
+ * so we check the move text directly.
  */
-function isInspection(prev: StageInfo, curr: StageInfo, lineHasMoves: boolean): boolean {
-  if (!lineHasMoves) return false;
-  // Inspection moves are typically pure rotations. After applying them, cube
-  // is structurally still scrambled but in a different orientation. Both
-  // prev and curr will be 'none', and no F2L slots get solved.
-  return prev.stage === 'none' && curr.stage === 'none' && curr.solvedSlots.length === 0;
+function isInspectionMoves(lineMovesText: string): boolean {
+  const tokens = lineMovesText.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return false;
+  return tokens.every(t => /^[xyz]['2]?$/.test(t));
 }
 
 function classifyTransition(
   prev: StageInfo,
   curr: StageInfo,
-  lineHasMoves: boolean,
+  lineMovesText: string,
 ): Transition {
-  // Ordinal index = how many F2L pairs were already solved before this line.
-  // (Derived from the cube state, not from text labels — much more reliable.)
+  // Ordinal index = which F2L pair (1..4) the user just solved.
   const totalSolveCountBeforeLine = prev.solvedSlots.length;
-  if (isInspection(prev, curr, lineHasMoves)) return { kind: 'inspection' };
+  if (isInspectionMoves(lineMovesText)) return { kind: 'inspection' };
 
-  // Need at least cross solved for any meaningful transition.
-  const nowCrossOk = curr.stage !== 'none';
+  // Pscross: cube is one D move away from cross. Only meaningful when prev
+  // wasn't already at this state or further along.
+  if (curr.stage === 'pscross' && prev.stage !== 'pscross' && prev.stage !== 'cross'
+      && prev.stage !== 'xcross' && prev.stage !== 'xxcross' && prev.stage !== 'xxxcross'
+      && prev.stage !== 'f2l' && prev.stage !== 'oll' && prev.stage !== 'pll'
+      && prev.stage !== 'solved') {
+    return { kind: 'pscross' };
+  }
+
+  // Need at least cross solved for any further transition.
+  const nowCrossOk = curr.stage !== 'none' && curr.stage !== 'pscross';
   if (!nowCrossOk) return null;
 
   // Pair stage transitions
@@ -111,7 +129,7 @@ function classifyTransition(
 
   // F2L pair line (cross was already done before this line)
   if (newSlots.length >= 1 && prev.stage !== 'none') {
-    const ordinalIndex = totalSolveCountBeforeLine + 1; // approximate index
+    const ordinalIndex = totalSolveCountBeforeLine + 1;
     return { kind: 'pair', slots: newSlots, ordinalIndex };
   }
 
@@ -187,17 +205,17 @@ export interface SuggestArgs {
   prevPattern: KPattern;
   /** Cube pattern at end of current line. */
   currPattern: KPattern;
-  /** Whether the current line had any moves (false for purely-comment lines). */
-  lineHasMoves: boolean;
+  /** Move text on the current line (used to detect pure-rotation inspection). */
+  lineMovesText: string;
   /** Move count to display in `(N)` suffix. */
   moveCount: number;
 }
 
 export async function buildCommentSuggestions(args: SuggestArgs): Promise<string[]> {
-  const { prevPattern, currPattern, lineHasMoves, moveCount } = args;
+  const { prevPattern, currPattern, lineMovesText, moveCount } = args;
   const prev = await detectStage(prevPattern);
   const curr = await detectStage(currPattern);
-  const t = classifyTransition(prev, curr, lineHasMoves);
+  const t = classifyTransition(prev, curr, lineMovesText);
   if (!t) return [];
 
   const N = moveCount;
@@ -213,24 +231,32 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     return out;
   }
 
+  // Cross-stage labels: only `<COLOR> <stage>` form, where COLOR is the single
+  // letter (W/Y/R/O/B/G). 既不输出无色前缀的 `// cross`, 也不输出 `// Green cross`。
+  const colorLetter = curr.crossColor?.letter;
+  if (t.kind === 'pscross') {
+    if (colorLetter) pushPair(`${colorLetter} pscross`);
+    else pushPair('pscross');
+    return out;
+  }
   if (t.kind === 'cross') {
-    pushPair('cross');
-    if (curr.crossColor) pushPair(`${curr.crossColor.name} cross`);
+    if (colorLetter) pushPair(`${colorLetter} cross`);
+    else pushPair('cross');
     return out;
   }
   if (t.kind === 'xcross') {
-    pushPair('xcross');
-    if (curr.crossColor) pushPair(`${curr.crossColor.name} xcross`);
+    if (colorLetter) pushPair(`${colorLetter} xcross`);
+    else pushPair('xcross');
     return out;
   }
   if (t.kind === 'xxcross') {
-    pushPair('xxcross');
-    if (curr.crossColor) pushPair(`${curr.crossColor.name} xxcross`);
+    if (colorLetter) pushPair(`${colorLetter} xxcross`);
+    else pushPair('xxcross');
     return out;
   }
   if (t.kind === 'xxxcross') {
-    pushPair('xxxcross');
-    if (curr.crossColor) pushPair(`${curr.crossColor.name} xxxcross`);
+    if (colorLetter) pushPair(`${colorLetter} xxxcross`);
+    else pushPair('xxxcross');
     return out;
   }
   if (t.kind === 'oll') {
@@ -243,27 +269,21 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     return out;
   }
   if (t.kind === 'pair') {
-    // Pair color naming uses curr.canonicalPattern (post-bestOrientation),
-    // since slot ids are in canonical frame.
+    // Two label variants only: F2L<N> ordinal and 2-letter color-pair.
+    // (Full-name, "1st pair", and "Pair" suffix variants were dropped.)
     if (t.slots.length === 1) {
-      const slot = t.slots[0];
-      const colors = slotColors(curr.canonicalPattern, slot);
-      const ordinal = ORDINALS[t.ordinalIndex] ?? String(t.ordinalIndex);
-      pushPair(`${ordinal} pair`);
-      pushPair(`${colors.pair} Pair`);
-      pushPair(`${colors.full} Pair`);
+      const colors = slotColors(curr.canonicalPattern, t.slots[0]);
+      pushPair(colors.pair);
+      pushPair(`F2L${t.ordinalIndex}`);
       return out;
     }
     if (t.slots.length === 2) {
       const i1 = t.ordinalIndex;
       const i2 = t.ordinalIndex + 1;
-      const o1 = ORDINALS[i1] ?? String(i1);
-      const o2 = ORDINALS[i2] ?? String(i2);
-      pushPair(`${o1} & ${o2} pairs`);
       const c1 = slotColors(curr.canonicalPattern, t.slots[0]);
       const c2 = slotColors(curr.canonicalPattern, t.slots[1]);
-      pushPair(`${c1.pair} & ${c2.pair} Pairs`);
-      pushPair(`${c1.full} & ${c2.full} Pairs`);
+      pushPair(`${c1.pair} & ${c2.pair}`);
+      pushPair(`F2L${i1} & F2L${i2}`);
       return out;
     }
   }

@@ -30,11 +30,10 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { getCaretRect } from '../../../utils/textarea_caret';
-import { patternFromAlg, countMoves, isAlgPrefix, simplifyAlg } from '../../../utils/cube3';
-import { detectStage, bestOrientationAlg, evaluateCanonical, F2L_SLOT_DEFS } from '../../../utils/stage_detect';
+import { patternFromAlg, countMoves } from '../../../utils/cube3';
 import { buildCommentSuggestions } from '../../../utils/popup_suggest';
-import { lookupF2lAlgs } from '../../../utils/f2l_lookup';
-import { loadAlgdb, type AlgdbCategory, type AlgdbFile } from '@cuberoot/shared';
+import { suggestAlg, movesOnly, lineRange } from '../../../utils/recon_autofill_core';
+import type { AlgdbCategory } from '@cuberoot/shared/algdb';
 import './ReconAutofill.css';
 
 interface Props {
@@ -71,40 +70,6 @@ interface AlgPopup {
 
 type Popup = CommentPopup | AlgPopup | null;
 
-/** Parse "x' // insp\nL D R..." — return start/end of the line containing `idx`. */
-function lineRange(text: string, idx: number): { start: number; end: number } {
-  let s = idx;
-  while (s > 0 && text[s - 1] !== '\n') s--;
-  let e = idx;
-  while (e < text.length && text[e] !== '\n') e++;
-  return { start: s, end: e };
-}
-
-/** Strip comments + paren grouping, return a string with only move tokens. */
-function movesOnly(text: string): string {
-  return text
-    .split('\n')
-    .map(line => {
-      const i = line.indexOf('//');
-      return (i >= 0 ? line.substring(0, i) : line);
-    })
-    .join(' ')
-    .replace(/[()]/g, ' ')
-    // Strip non-move annotations (regrip arrows, etc.)
-    .replace(/[↑↓·]/g, ' ')
-    // cubing.js's Alg parser rejects merged tokens like `U'D`, `U2D`, `RD`,
-    // `R2'F`, `Rw'D`. A silent parse-fail downstream falls back to the solved
-    // cube and breaks autofill (sees "all slots solved" → 0 hints). Insert a
-    // space between two move letters, after `'` before letter, and after digit
-    // before letter. `w` is excluded from the letter set so wide moves (`Rw`,
-    // `Uw'`) stay intact.
-    .replace(/([UDFBLRMESxyzudfblr])(?=[UDFBLRMESxyzudfblr])/g, '$1 ')
-    .replace(/(')(?=[A-Za-z])/g, '$1 ')
-    .replace(/(\d)(?=[A-Za-z])/g, '$1 ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 /**
  * Main hook + JSX renderer. Always renders into a portal so positioning isn't
  * constrained by the textarea's containing layout.
@@ -114,7 +79,6 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const isZh = i18n.language.startsWith('zh');
   const [popup, setPopup] = useState<Popup>(null);
   const [selected, setSelected] = useState(0);
-  const dbCacheRef = useRef<Partial<Record<AlgdbCategory, AlgdbFile>>>({});
   const lastBuildKeyRef = useRef<string>('');
 
   const close = useCallback(() => {
@@ -145,7 +109,6 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     // Count how many move tokens are on JUST this line (for the (N) suffix).
     const thisLineMovesText = movesOnly(fullLine);
     const moveCount = countMoves(thisLineMovesText);
-    const lineHasMoves = moveCount > 0;
 
     // Apply scramble + prev moves → prevPattern; +current line moves → currPattern.
     const prevAlg = [scramble, prevMoves].filter(Boolean).join(' ');
@@ -156,7 +119,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const entries = await buildCommentSuggestions({
       prevPattern,
       currPattern,
-      lineHasMoves,
+      lineMovesText: thisLineMovesText,
       moveCount,
     });
 
@@ -176,134 +139,15 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const buildAlgPopup = useCallback(async (caret: number): Promise<AlgPopup | null> => {
     const ta = textareaRef.current;
     if (!ta) return null;
-    const { start } = lineRange(value, caret);
-    const lineUpToCaret = value.substring(start, caret);
-    if (lineUpToCaret.includes('//')) return null;
-
-    // Walk back to find the previous labeled line.
-    let p = start - 1;
-    let prevLabel: string | null = null;
-    while (p >= 0) {
-      const ls = (() => { let s = p; while (s > 0 && value[s - 1] !== '\n') s--; return s; })();
-      const line = value.substring(ls, p);
-      const m = line.match(/\/\/\s*(.+?)\s*$/);
-      if (m) { prevLabel = m[1]; break; }
-      p = ls - 1;
-    }
-    if (!prevLabel) return null;
-
-    // Determine target category
-    const lc = prevLabel.toLowerCase();
-    let category: AlgdbCategory;
-    if (/oll/.test(lc) || /cmll/.test(lc)) category = 'oll';
-    else if (/pll/.test(lc) || /epll/.test(lc)) category = 'pll';
-    else if (/pair/.test(lc) || /cross/.test(lc)) category = 'f2l';
-    else return null;
-
-    // Determine the cube state at start of current line
-    const linesBefore = value.substring(0, start);
-    const prevMoves = movesOnly(linesBefore);
-    const lineMovesUpToCaret = movesOnly(value.substring(start, caret));
-    const preStateAlg = [scramble, prevMoves, lineMovesUpToCaret].filter(Boolean).join(' ');
-    const preState = await patternFromAlg(preStateAlg);
-
-    const scored: { text: string; caseName: string; score: number }[] = [];
-
-    if (category === 'f2l') {
-      // F2L: case-identification path. For each unsolved slot, fingerprint
-      // its pair pieces and look up matching algdb cases. Each candidate is
-      // then verified by simulation — the fingerprint covers the pair only,
-      // so algs whose effect depends on the full center frame (e.g. ones
-      // with an embedded `y'` rotation) can produce false positives.
-      const canonRot = await bestOrientationAlg(preState);
-      const preCanonical = canonRot ? preState.applyAlg(canonRot) : preState;
-      const preEval = evaluateCanonical(preCanonical);
-      if (preEval.crossOk) {
-        const solvedSet = new Set(preEval.solvedSlots);
-        for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
-          const slotId = F2L_SLOT_DEFS[slotIdx].id;
-          if (solvedSet.has(slotId)) continue;
-          const entries = await lookupF2lAlgs(preCanonical, slotIdx);
-          for (const e of entries) {
-            const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
-            if (!rawAlg) continue;
-            if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
-            // Verify: applying this alg in the user's actual frame must solve
-            // the slot AND keep cross + previously-solved slots intact.
-            const post = preState.applyAlg(rawAlg);
-            const postInfo = await detectStage(post);
-            if (!postInfo.solvedSlots.includes(slotId)) continue;
-            let preserved = true;
-            for (const prevSlot of preEval.solvedSlots) {
-              if (!postInfo.solvedSlots.includes(prevSlot)) { preserved = false; break; }
-            }
-            if (!preserved) continue;
-            const score = 100 - rawAlg.length * 0.01;
-            scored.push({ text: rawAlg, caseName: e.caseName, score });
-          }
-        }
-      }
-    } else {
-      // OLL / PLL: keep the slow detectStage path (orientation/permutation
-      // checks outside the F2L slot system).
-      let db = dbCacheRef.current[category];
-      if (!db) {
-        db = await loadAlgdb(category);
-        dbCacheRef.current[category] = db;
-      }
-
-      const candidates: { text: string; caseName: string }[] = [];
-      const seen = new Set<string>();
-      for (const c of db.cases) {
-        if (c.standard && !seen.has(c.standard)) {
-          candidates.push({ text: c.standard, caseName: c.name });
-          seen.add(c.standard);
-        }
-        for (const ori of c.algs) {
-          for (const e of ori) {
-            if (!seen.has(e.alg)) {
-              candidates.push({ text: e.alg, caseName: c.name });
-              seen.add(e.alg);
-            }
-          }
-        }
-      }
-      const prefixFiltered = candidates.filter(c => isAlgPrefix(lineMovesUpToCaret, c.text));
-
-      for (const c of prefixFiltered) {
-        const post = preState.applyAlg(c.text);
-        const postInfo = await detectStage(post);
-        let score = 0;
-        if (category === 'oll') {
-          if (postInfo.stage === 'oll' || postInfo.stage === 'solved') score = 100;
-          else if (postInfo.solvedSlots.length === 4) score = 50;
-          else score = -50;
-        } else if (category === 'pll') {
-          if (postInfo.stage === 'solved') score = 100;
-          else score = -50;
-        }
-        score -= c.text.length * 0.01;
-        scored.push({ text: c.text, caseName: c.caseName, score });
-      }
-    }
-
-    // Show only candidates that actually make progress (positive score),
-    // de-duplicated by composed alg text (multiple cases can collapse to the
-    // same setup+alg).
-    const positive = scored.filter(c => c.score > 0);
-    positive.sort((a, b) => b.score - a.score);
-    const seenText = new Set<string>();
-    const top: { text: string; category: AlgdbCategory; caseName: string }[] = [];
-    for (const c of positive) {
-      if (seenText.has(c.text)) continue;
-      seenText.add(c.text);
-      top.push({ text: c.text, category, caseName: c.caseName });
-      if (top.length >= 12) break;
-    }
-    if (top.length === 0) return null;
-
+    const suggestions = await suggestAlg(scramble, value, caret);
+    if (!suggestions) return null;
     const rect = getCaretRect(ta, caret);
-    return { kind: 'alg', pos: rect, entries: top, insertAt: caret };
+    return {
+      kind: 'alg',
+      pos: rect,
+      entries: suggestions.map(s => ({ text: s.text, category: s.category, caseName: s.caseName })),
+      insertAt: caret,
+    };
   }, [textareaRef, value, scramble]);
 
   /** Open popup based on current caret state. Called from Tab handler. */
@@ -440,16 +284,21 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const ta = textareaRef.current;
     if (!ta) return;
     // Replace from `replaceFrom` to caret with the chosen text. Add a leading
-    // space if needed (so `<moves>` becomes `<moves> // ...`).
+    // space if needed (so `<moves>` becomes `<moves> // ...`). Position the
+    // caret on the next line afterward — append a `\n` if there isn't one,
+    // otherwise advance past the existing one. Matches cubedb behavior.
     const before = value.substring(0, p.replaceFrom);
     const after = value.substring(p.caret);
     const needsSpace = p.replaceFrom > 0
       && before[p.replaceFrom - 1] !== ' '
       && before[p.replaceFrom - 1] !== '\n';
-    const insertion = (needsSpace ? ' ' : '') + text;
+    const hasTrailingNewline = after.startsWith('\n');
+    const insertion = (needsSpace ? ' ' : '') + text + (hasTrailingNewline ? '' : '\n');
     const next = before + insertion + after;
     setValue(next);
-    const newCaret = p.replaceFrom + insertion.length;
+    // If there was already a `\n` right after, step past it so we land on the
+    // next line; otherwise our just-appended `\n` already does that.
+    const newCaret = p.replaceFrom + insertion.length + (hasTrailingNewline ? 1 : 0);
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(newCaret, newCaret);
@@ -460,12 +309,16 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const insertAlg = useCallback((alg: string, p: AlgPopup) => {
     const ta = textareaRef.current;
     if (!ta) return;
-    // Insert at caret, then continue typing.
-    const before = value.substring(0, p.insertAt);
+    // Suggestion is the FULL alg (including any prefix the user already
+    // typed). Replace from line-start through caret so the typed prefix is
+    // overwritten — otherwise selecting "R U R' U' L' U R U' L" while user
+    // typed "R U " would produce duplicated moves.
+    const { start } = lineRange(value, p.insertAt);
+    const before = value.substring(0, start);
     const after = value.substring(p.insertAt);
     const next = before + alg + after;
     setValue(next);
-    const newCaret = p.insertAt + alg.length;
+    const newCaret = start + alg.length;
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(newCaret, newCaret);

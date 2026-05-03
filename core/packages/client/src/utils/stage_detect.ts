@@ -52,6 +52,7 @@ const COLOR_LETTER_BY_PIECE: Record<number, string> = {
 };
 
 export type Stage =
+  | 'pscross'
   | 'cross'
   | 'xcross'
   | 'xxcross'
@@ -70,6 +71,14 @@ export interface StageInfo {
    * tells the caller WHICH slots got included beyond the bare cross.
    */
   solvedSlots: F2lSlotId[];
+  /**
+   * Frame-invariant identity of solved F2L pairs: `[cornerPieceId, edgePieceId]`.
+   * Cubies are identified by their HOME slot (cubing.js piece numbering), so
+   * this set survives canonical-frame shifts caused by user rotations between
+   * lines (otherwise comparing solvedSlots across two patterns would falsely
+   * report the same cubie as "newly solved" after a `y2` etc.).
+   */
+  solvedPairs: Array<[number, number]>;
   /** Cross (D-face) color in the normalised orientation. */
   crossColor?: { name: string; letter: string };
   /**
@@ -110,33 +119,6 @@ const ORIENTATION_ALGS: string[] = (() => {
   return out;
 })();
 
-/**
- * Find the orientation in which the most progress is "visible" on the bottom
- * (D face): cross solved, then count F2L pairs. We pick the rotation that
- * maximises (cross-solved-flag, F2L-pairs-solved). This way, regardless of the
- * user's inspection rotation (x' / x2 / y / etc.), we evaluate stage progress
- * in the direction the user is solving.
- */
-async function bestOrientation(pattern: KPattern): Promise<KPattern> {
-  await getCube3();
-  let best: { p: KPattern; score: number } | null = null;
-  for (const rot of ORIENTATION_ALGS) {
-    const t = rot ? pattern.applyAlg(rot) : pattern;
-    let score = 0;
-    if (crossSolved(t)) score += 100;
-    for (const s of F2L_SLOT_DEFS) {
-      if (slotSolved(t, s)) score += 5;
-    }
-    // OLL bonus: prefer the orientation in which the U-face shows U-color
-    // on all 4 top pieces (consistent with `ollSolved`).
-    if (score >= 100 && ollSolved(t)) score += 1;
-    if (!best || score > best.score) {
-      best = { p: t, score };
-    }
-  }
-  return best!.p;
-}
-
 /** Color (= KPattern face index) shown by the center at face F. */
 function centerColorAtFace(p: KPattern, face: number): number {
   return p.patternData.CENTERS.pieces[face];
@@ -167,6 +149,44 @@ function cornerFaceSolved(p: KPattern, slot: number): boolean {
 function crossSolved(p: KPattern): boolean {
   return edgeFaceSolved(p, 4) && edgeFaceSolved(p, 5)
       && edgeFaceSolved(p, 6) && edgeFaceSolved(p, 7);
+}
+
+/**
+ * Pseudo-cross: cross-solved-up-to-a-D-rotation. The 4 D-edges all show
+ * D-color on the D-face but the side stickers are off by D / D' / D2 from
+ * the centers. Common in solves where the user puts cross down without
+ * aligning to centers (then fixes with a single D move later or absorbs
+ * into F2L).
+ */
+function pscrossSolved(p: KPattern): boolean {
+  if (crossSolved(p)) return false;
+  for (const d of ['D', "D'", 'D2']) {
+    if (crossSolved(p.applyAlg(d))) return true;
+  }
+  return false;
+}
+
+/**
+ * Find a 24-orientation rotation that puts the cube's cross onto the D face.
+ * For yellow-cross solves this matches `defaultCentersRotation`. For
+ * color-neutral solves (white/red/etc. cross), centers will NOT be in default
+ * order after this rotation — but the cross IS on D, which is what F2L /
+ * fingerprint code requires.
+ *
+ * Falls back to `defaultCentersRotation` when no cross is solved (so callers
+ * still get a sensible canonical pattern for stage='none' states).
+ */
+export async function crossOnDRotation(pattern: KPattern): Promise<string> {
+  await getCube3();
+  for (const rot of ORIENTATION_ALGS) {
+    const t = rot ? pattern.applyAlg(rot) : pattern;
+    if (crossSolved(t)) return rot;
+  }
+  for (const rot of ORIENTATION_ALGS) {
+    const t = rot ? pattern.applyAlg(rot) : pattern;
+    if (pscrossSolved(t)) return rot;
+  }
+  return defaultCentersRotation(pattern);
 }
 
 /** F2L slot solved = its edge AND corner both look solved (sticker-wise). */
@@ -223,22 +243,44 @@ function colorsForSlot(p: KPattern, slotId: F2lSlotId): { pair: string; full: st
  *  > xcross > cross > none.
  */
 export async function detectStage(pattern: KPattern): Promise<StageInfo> {
-  const p = await bestOrientation(pattern);
-  const crossColor = (() => {
-    const piece = p.patternData.CENTERS.pieces[5];
-    return { name: COLOR_BY_PIECE[piece] ?? '?', letter: COLOR_LETTER_BY_PIECE[piece] ?? '?' };
-  })();
+  // Canonicalise to a cross-on-D frame so F2L slot definitions apply directly.
+  // For color-neutral solves the centers won't be in default order, but
+  // EDGE/CORNER STICKERS lookups are geometric — they work as long as cross
+  // sits on D.
+  const rot = await crossOnDRotation(pattern);
+  const p = rot ? pattern.applyAlg(rot) : pattern;
 
   if (fullySolved(p)) {
-    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], crossColor, canonicalPattern: p };
+    const cp = p.patternData.CENTERS.pieces[5];
+    const crossColor = { name: COLOR_BY_PIECE[cp] ?? '?', letter: COLOR_LETTER_BY_PIECE[cp] ?? '?' };
+    const allPairs: Array<[number, number]> = F2L_SLOT_DEFS.map(s => [
+      p.patternData.CORNERS.pieces[s.cornerSlot],
+      p.patternData.EDGES.pieces[s.edgeSlot],
+    ]);
+    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], solvedPairs: allPairs, crossColor, canonicalPattern: p };
   }
 
-  const crossOk = crossSolved(p);
-  if (!crossOk) return { stage: 'none', solvedSlots: [], crossColor, canonicalPattern: p };
+  // Cross color = the D-face center after rotation (cross piece).
+  const piece = p.patternData.CENTERS.pieces[5];
+  const crossColor = { name: COLOR_BY_PIECE[piece] ?? '?', letter: COLOR_LETTER_BY_PIECE[piece] ?? '?' };
+
+  if (!crossSolved(p)) {
+    if (pscrossSolved(p)) {
+      return { stage: 'pscross', solvedSlots: [], solvedPairs: [], crossColor, canonicalPattern: p };
+    }
+    return { stage: 'none', solvedSlots: [], solvedPairs: [], crossColor, canonicalPattern: p };
+  }
 
   const solvedSlots: F2lSlotId[] = [];
+  const solvedPairs: Array<[number, number]> = [];
   for (const s of F2L_SLOT_DEFS) {
-    if (slotSolved(p, s)) solvedSlots.push(s.id);
+    if (slotSolved(p, s)) {
+      solvedSlots.push(s.id);
+      solvedPairs.push([
+        p.patternData.CORNERS.pieces[s.cornerSlot],
+        p.patternData.EDGES.pieces[s.edgeSlot],
+      ]);
+    }
   }
 
   // F2L done → check OLL/PLL
@@ -248,18 +290,18 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
       for (let i = 0; i < 4; i++) {
         const test = i === 0 ? p : p.applyAlg(`U${i === 1 ? '' : i}`.replace('U3', "U'"));
         if (fullySolved(test)) {
-          return { stage: 'oll', solvedSlots, crossColor, canonicalPattern: p };
+          return { stage: 'oll', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
         }
       }
-      return { stage: 'oll', solvedSlots, crossColor, canonicalPattern: p };
+      return { stage: 'oll', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
     }
-    return { stage: 'f2l', solvedSlots, crossColor, canonicalPattern: p };
+    return { stage: 'f2l', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
   }
 
-  if (solvedSlots.length === 3) return { stage: 'xxxcross', solvedSlots, crossColor, canonicalPattern: p };
-  if (solvedSlots.length === 2) return { stage: 'xxcross', solvedSlots, crossColor, canonicalPattern: p };
-  if (solvedSlots.length === 1) return { stage: 'xcross', solvedSlots, crossColor, canonicalPattern: p };
-  return { stage: 'cross', solvedSlots: [], crossColor, canonicalPattern: p };
+  if (solvedSlots.length === 3) return { stage: 'xxxcross', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
+  if (solvedSlots.length === 2) return { stage: 'xxcross', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
+  if (solvedSlots.length === 1) return { stage: 'xcross', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
+  return { stage: 'cross', solvedSlots: [], solvedPairs: [], crossColor, canonicalPattern: p };
 }
 
 /**
@@ -306,6 +348,7 @@ export async function bestOrientationAlg(pattern: KPattern): Promise<string> {
     const t = rot ? pattern.applyAlg(rot) : pattern;
     let score = 0;
     if (crossSolved(t)) score += 100;
+    else if (pscrossSolved(t)) score += 50;
     for (const s of F2L_SLOT_DEFS) {
       if (slotSolved(t, s)) score += 5;
     }
@@ -313,6 +356,63 @@ export async function bestOrientationAlg(pattern: KPattern): Promise<string> {
     if (score > bestScore) {
       bestScore = score;
       bestRot = rot;
+    }
+  }
+  return bestRot;
+}
+
+/**
+ * Find the cube rotation that puts CENTERS in default order
+ * (U=0, R=1, F=2, L=3, B=4, D=5). Every valid 3×3 state's centers correspond
+ * to exactly one of the 24 cube rotations, so this always succeeds for valid
+ * inputs. For invalid/unreachable states, returns `""` as a fallback.
+ *
+ * Used for autofill canonicalisation: the F2L/OLL/PLL fingerprints are
+ * color-based and assume default centers; a state with shifted centers
+ * (from inspection rotations or slice/wide moves in earlier solve lines)
+ * needs to be re-rotated to default centers before lookup.
+ */
+export async function defaultCentersRotation(pattern: KPattern): Promise<string> {
+  await getCube3();
+  for (const rot of ORIENTATION_ALGS) {
+    const t = rot ? pattern.applyAlg(rot) : pattern;
+    const c = t.patternData.CENTERS.pieces;
+    if (c[0] === 0 && c[1] === 1 && c[2] === 2 && c[3] === 3 && c[4] === 4 && c[5] === 5) {
+      return rot;
+    }
+  }
+  return '';
+}
+
+/**
+ * Like `bestOrientationAlg` but returns ONLY the x/z rotation part — the y
+ * (AUF-axis) rotation is left for the caller to absorb via per-AUF lookup
+ * entries. Used by OLL/PLL autofill so the suggested alg doesn't carry an
+ * unnecessary `y` prefix when the user did a y inspection (the case lookup
+ * table already stores all 4 AUF variants and matches the rotated state
+ * directly).
+ */
+export async function bestTopRotationAlg(pattern: KPattern): Promise<string> {
+  await getCube3();
+  const TOPS = ['', 'x', 'x2', "x'", 'z', "z'"];
+  const YS = ['', 'y', 'y2', "y'"];
+  let bestRot = '';
+  let bestScore = -Infinity;
+  for (const top of TOPS) {
+    const tTop = top ? pattern.applyAlg(top) : pattern;
+    let maxScore = 0;
+    for (const y of YS) {
+      const ty = y ? tTop.applyAlg(y) : tTop;
+      let s = 0;
+      if (crossSolved(ty)) s += 100;
+      for (const slot of F2L_SLOT_DEFS) {
+        if (slotSolved(ty, slot)) s += 5;
+      }
+      if (s > maxScore) maxScore = s;
+    }
+    if (maxScore > bestScore) {
+      bestScore = maxScore;
+      bestRot = top;
     }
   }
   return bestRot;
