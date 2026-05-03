@@ -17,13 +17,17 @@ export default function CubePage() {
   const maskParam = params.get('mask') ?? undefined;
   const size = Math.max(32, Math.min(1000, parseInt(params.get('size') ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE));
   const bg = params.get('bg') ?? undefined;
+  const cc = params.get('cc') ?? undefined;
+  const co = params.get('co') ?? undefined;
 
   const src = useMemo(() => {
     const qp = new URLSearchParams({ alg, view, size: String(size) });
     if (maskParam) qp.set('mask', maskParam);
     if (bg) qp.set('bg', bg);
+    if (cc) qp.set('cc', cc);
+    if (co) qp.set('co', co);
     return `/api/visualcube.svg?${qp}`;
-  }, [alg, view, maskParam, size, bg]);
+  }, [alg, view, maskParam, size, bg, cc, co]);
 
   return (
     <div style={{

@@ -32,18 +32,37 @@ function findMask(name: string | null): Masking | undefined {
   return v as Masking | undefined;
 }
 
+function parseColorParam(raw: string | null): string | undefined {
+  if (!raw) return undefined;
+  if (/^#?[0-9a-f]{3,8}$/i.test(raw)) return raw.startsWith('#') ? raw : '#' + raw;
+  if (/^[a-z]+$/i.test(raw)) return raw;
+  return undefined;
+}
+
 function buildOpts(params: URLSearchParams): ICubeOptions {
   const alg = params.get('alg') ?? DEFAULT_ALG;
   const view = params.get('view') ?? 'iso';
   const maskParam = params.get('mask');
   const sizeRaw = parseInt(params.get('size') ?? String(DEFAULT_SIZE), 10);
   const size = Math.max(32, Math.min(1000, isNaN(sizeRaw) ? DEFAULT_SIZE : sizeRaw));
-  const bg = params.get('bg');
+  const bg = parseColorParam(params.get('bg'));
+  const cc = parseColorParam(params.get('cc'));
+  const coRaw = params.get('co');
+  const co = (() => {
+    if (coRaw === null) return undefined;
+    const n = parseInt(coRaw, 10);
+    return isNaN(n) || n < 0 || n > 100 ? undefined : n;
+  })();
 
   const opts: ICubeOptions = { case: alg, width: size, height: size };
-  if (bg) {
-    if (/^#?[0-9a-f]{3,8}$/i.test(bg)) opts.backgroundColor = bg.startsWith('#') ? bg : '#' + bg;
-    else if (/^[a-z]+$/i.test(bg)) opts.backgroundColor = bg;
+  if (bg) opts.backgroundColor = bg;
+  if (cc) opts.cubeColor = cc;
+  if (co !== undefined) opts.cubeOpacity = co;
+
+  // PHP visualcube view=trans preset (cc=silver, co=50). Explicit cc/co win.
+  if (view === 'trans') {
+    if (opts.cubeColor === undefined) opts.cubeColor = 'silver';
+    if (opts.cubeOpacity === undefined) opts.cubeOpacity = 50;
   }
 
   const explicitMask = findMask(maskParam);

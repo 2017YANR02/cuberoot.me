@@ -3,10 +3,13 @@
  *
  * URL 参数与客户端 /visualcube 路由保持一致：
  *   alg   WCA notation；默认 Sune
- *   view  iso | plan | f2l | oll | pll | pll-iso
+ *   view  iso | plan | f2l | oll | pll | pll-iso | trans
+ *         trans 是 PHP visualcube preset：cc=silver、co=50（半透明银壳，能透视背面）
  *   mask  显式 Masking 枚举值（覆盖 view 推断的 mask）
  *   size  32-1000；默认 256
  *   bg    hex（带不带 #）或 CSS 颜色名；默认透明
+ *   cc    塑料壳颜色，hex / 颜色名（同 PHP `cc`）
+ *   co    塑料壳不透明度 0-100（同 PHP `co`）
  *
  * 灵感源自 visualcube.php URL API，确定性输入故缓存 24h。
  */
@@ -34,6 +37,16 @@ function findMask(name?: string): Masking | undefined {
   return lookup as Masking | undefined;
 }
 
+// Whitelist: hex (with/without #) or named CSS color (alpha-only). Public
+// unauthenticated endpoint — defense in depth even though drawing.ts attr()
+// already escapes SVG-injection.
+function parseColorParam(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  if (/^#?[0-9a-f]{3,8}$/i.test(raw)) return raw.startsWith('#') ? raw : '#' + raw;
+  if (/^[a-z]+$/i.test(raw)) return raw;
+  return undefined;
+}
+
 export const cubeRoutes = new Hono();
 
 cubeRoutes.get('/api/visualcube.svg', (c) => {
@@ -45,18 +58,24 @@ cubeRoutes.get('/api/visualcube.svg', (c) => {
     32,
     Math.min(1000, Number.isNaN(sizeRaw) ? DEFAULT_SIZE : sizeRaw),
   );
-  const bg = c.req.query('bg');
+  const bg = parseColorParam(c.req.query('bg'));
+  const cc = parseColorParam(c.req.query('cc'));
+  const coRaw = c.req.query('co');
+  const co = (() => {
+    if (coRaw === undefined) return undefined;
+    const n = parseInt(coRaw, 10);
+    return Number.isNaN(n) || n < 0 || n > 100 ? undefined : n;
+  })();
 
   const opts: ICubeOptions = { case: alg, width: size, height: size };
-  if (bg) {
-    // Whitelist: hex (with/without #) or named CSS color (alpha-only).
-    // Anything else dropped — public unauthenticated endpoint, defense in
-    // depth even though drawing.ts attr() escaper handles SVG-injection.
-    if (/^#?[0-9a-f]{3,8}$/i.test(bg)) {
-      opts.backgroundColor = bg.startsWith('#') ? bg : '#' + bg;
-    } else if (/^[a-z]+$/i.test(bg)) {
-      opts.backgroundColor = bg;
-    }
+  if (bg) opts.backgroundColor = bg;
+  if (cc) opts.cubeColor = cc;
+  if (co !== undefined) opts.cubeOpacity = co;
+
+  // PHP visualcube view=trans preset (cc=silver, co=50). Explicit cc/co win.
+  if (view === 'trans') {
+    if (opts.cubeColor === undefined) opts.cubeColor = 'silver';
+    if (opts.cubeOpacity === undefined) opts.cubeOpacity = 50;
   }
 
   const explicitMask = findMask(maskParam);

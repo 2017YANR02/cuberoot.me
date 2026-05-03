@@ -77,6 +77,16 @@ export function parseOptions(rawOptions: string): ICubeOptions {
       }
     }
   })
+
+  // PHP visualcube `view=trans` is a preset (cc=silver, co=50). Explicit
+  // cc/co in the query still win — see _php_reference/index.php:356/365.
+  // Strip the view value because our renderer only recognises 'plan'.
+  if (params.view === 'trans') {
+    if (options.cubeColor === undefined) options.cubeColor = 'silver'
+    if (options.cubeOpacity === undefined) options.cubeOpacity = 50
+    options.view = undefined
+  }
+
   return options
 }
 
