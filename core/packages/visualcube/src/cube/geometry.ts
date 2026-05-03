@@ -1,10 +1,10 @@
-import { ICubeOptions, ResolvedCubeOptions } from './options'
+import { ICubeOptions, ResolvedCubeOptions } from './options.js'
 /**
  * Utlity Methods for creating 2D coodinates for svg polygons
  */
 
-import { Face, AllFaces } from './constants'
-import { Vec3, makeMatrix, translate, scale, rotate, project, Axis } from '../math'
+import { Face, AllFaces } from './constants.js'
+import { Vec3, makeMatrix, translate, scale, rotate, project, Axis } from '../math.js'
 
 export type FaceStickers = Vec3[][]
 export type CubeGeometry = { [face: number]: Vec3[][] }

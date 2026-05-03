@@ -1,4 +1,4 @@
-import { StickerDefinition } from './sticker'
+import { StickerDefinition } from './sticker.js'
 
 export class Arrow {
   s1!: StickerDefinition

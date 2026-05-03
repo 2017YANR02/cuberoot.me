@@ -1,6 +1,6 @@
-import { parseColor } from './color'
-import { ColorAbbreviationToCode } from '../../constants'
-import { expandRepeats } from './repeatExpand'
+import { parseColor } from './color.js'
+import { ColorAbbreviationToCode } from '../../constants.js'
+import { expandRepeats } from './repeatExpand.js'
 
 export function parseFaceletColors(rawValue: string): string[] {
   let colors = []

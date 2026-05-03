@@ -1,5 +1,5 @@
-import { ColorCode, ColorName, ColorAbbreviation } from './colors'
-import { Face } from './cube/constants'
+import { ColorCode, ColorName, ColorAbbreviation } from './colors.js'
+import { Face } from './cube/constants.js'
 
 export enum FaceletDefinition {
   Up = 'u',

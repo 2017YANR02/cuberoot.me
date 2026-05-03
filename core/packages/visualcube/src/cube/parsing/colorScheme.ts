@@ -1,9 +1,9 @@
-import { ColorCode } from './../../colors'
-import { ICubeColorScheme } from '../models/color-scheme'
-import { parseColor } from './color'
-import { ColorNameToCode, ColorAbbreviationToCode } from '../../constants'
-import { AllFaces, DefaultColorScheme } from '../constants'
-import { expandRepeats } from './repeatExpand'
+import { ColorCode } from './../../colors.js'
+import { ICubeColorScheme } from '../models/color-scheme.js'
+import { parseColor } from './color.js'
+import { ColorNameToCode, ColorAbbreviationToCode } from '../../constants.js'
+import { AllFaces, DefaultColorScheme } from '../constants.js'
+import { expandRepeats } from './repeatExpand.js'
 
 export function parseColorScheme(rawValue: string): ICubeColorScheme {
   if (rawValue.indexOf(',') > -1) {

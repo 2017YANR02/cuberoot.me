@@ -1,4 +1,4 @@
-import { Face } from '../constants'
+import { Face } from '../constants.js'
 
 export class StickerDefinition {
   face!: Face

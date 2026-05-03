@@ -1,7 +1,7 @@
-import { Axis } from './../math'
-import { Arrow } from './models/arrow'
-import { Masking } from './constants'
-import { FaceletDefinition } from '../constants'
+import { Axis } from './../math.js'
+import { Arrow } from './models/arrow.js'
+import { Masking } from './constants.js'
+import { FaceletDefinition } from '../constants.js'
 
 export interface ICubeOptions {
   dist?: number

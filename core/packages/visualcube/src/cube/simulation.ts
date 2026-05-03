@@ -1,6 +1,6 @@
-import { Axis } from './../math'
-import { AllFaces, Face, AlgorithmUnit } from './constants'
-import { Turn } from './parsing/algorithm'
+import { Axis } from './../math.js'
+import { AllFaces, Face, AlgorithmUnit } from './constants.js'
+import { Turn } from './parsing/algorithm.js'
 
 export enum TurnType {
   Clockwise,

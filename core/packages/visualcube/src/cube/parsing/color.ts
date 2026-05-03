@@ -1,5 +1,5 @@
-import { ColorCode } from './../../colors'
-import { ColorAbbreviationToCode, ColorNameToCode } from '../../constants'
+import { ColorCode } from './../../colors.js'
+import { ColorAbbreviationToCode, ColorNameToCode } from '../../constants.js'
 
 export function parseColor(raw: string): string | ColorCode {
   let colorcodeRegex = /^[0-9a-fA-F]{6}|[0-9a-fA-F]{3}/

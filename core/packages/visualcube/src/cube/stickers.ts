@@ -1,9 +1,9 @@
-import { ColorName, ColorCode } from './../colors'
-import { ResolvedCubeOptions } from './options'
-import { makeMasking } from './masking'
-import { CubeData } from './simulation'
-import { parseAlgorithm, parseCase, Turn } from './parsing/algorithm'
-import { AllFaces } from './constants'
+import { ColorName, ColorCode } from './../colors.js'
+import { ResolvedCubeOptions } from './options.js'
+import { makeMasking } from './masking.js'
+import { CubeData } from './simulation.js'
+import { parseAlgorithm, parseCase, Turn } from './parsing/algorithm.js'
+import { AllFaces } from './constants.js'
 
 export function makeStickerColors(options: ResolvedCubeOptions): string[] {
   let stickerColors = options.stickerColors
