@@ -16,7 +16,7 @@ import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import {
   Analyzer,
   CROSS_COLORS,
-  categorize,
+  matchesCategory,
   type CrossColor,
   type Howfar,
   type Solution,
@@ -51,20 +51,22 @@ export default function AnalyzePage() {
   useEffect(() => () => analyzerRef.current.terminate(), []);
 
   const counts = useMemo(() => {
+    // Inclusive counts: oll-skip and pll-skip both count solutions that skip the LL.
     let full = 0, ollSkip = 0, pllSkip = 0, llSkip = 0;
     for (const sol of solutions) {
-      const cat = categorize(sol[3]);
-      if (cat === 'full-step') full++;
-      else if (cat === 'oll-skip') ollSkip++;
-      else if (cat === 'pll-skip') pllSkip++;
-      else llSkip++;
+      const stages = sol[3];
+      const hasOll = stages.includes('OLL');
+      const hasPll = stages.includes('PLL');
+      if (hasOll && hasPll) full++;
+      if (!hasOll) ollSkip++;
+      if (!hasPll) pllSkip++;
+      if (!hasOll && !hasPll) llSkip++;
     }
     return { all: solutions.length, full, ollSkip, pllSkip, llSkip };
   }, [solutions]);
 
   const filtered = useMemo(() => {
-    if (filter === 'all') return solutions;
-    return solutions.filter((s) => categorize(s[3]) === filter);
+    return solutions.filter((s) => matchesCategory(s[3], filter));
   }, [solutions, filter]);
 
   const displayed = useMemo(() => {

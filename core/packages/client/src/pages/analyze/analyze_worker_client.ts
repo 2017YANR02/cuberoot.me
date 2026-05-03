@@ -78,11 +78,20 @@ export class Analyzer {
   }
 }
 
-export function categorize(stages: string[]): 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip' {
+export type Category = 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
+
+/**
+ * Match upstream speedcubedb counting: oll-skip / pll-skip are INCLUSIVE — a
+ * solution missing both stages counts toward all three of oll-skip, pll-skip,
+ * and ll-skip. So full + oll-skip-only + pll-skip-only + ll-skip = total, but
+ * the UI filter chips show oll-skip = oll-only + ll-skip and likewise for pll.
+ */
+export function matchesCategory(stages: string[], cat: Category | 'all'): boolean {
+  if (cat === 'all') return true;
   const hasOll = stages.includes('OLL');
   const hasPll = stages.includes('PLL');
-  if (hasOll && hasPll) return 'full-step';
-  if (!hasOll && hasPll) return 'oll-skip';
-  if (hasOll && !hasPll) return 'pll-skip';
-  return 'll-skip';
+  if (cat === 'full-step') return hasOll && hasPll;
+  if (cat === 'oll-skip') return !hasOll;
+  if (cat === 'pll-skip') return !hasPll;
+  return !hasOll && !hasPll;
 }
