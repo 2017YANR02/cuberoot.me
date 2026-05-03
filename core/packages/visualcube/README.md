@@ -44,23 +44,15 @@ renderCubeSVG('?pzl=3&alg=R+U+R%27+U%27&arw=U0U2-blue&ac=red&size=256')
 
 ### 2. HTTP — `GET /api/visualcube.svg` (server)
 
-Simplified URL API, returns `image/svg+xml` (cached 24h). Seven params:
-
-| Param  | Values | Default |
-|--------|--------|---------|
-| `alg`  | WCA notation. Renders the STATE produced by inverting the alg from solved (i.e. the case the alg solves) | Sune |
-| `view` | `iso` / `plan` / `f2l` / `oll` / `pll` / `pll-iso` (combinations of plan-view + LL/F2L mask) / `trans` (PHP visualcube preset: silver semi-transparent shell) | `iso` |
-| `mask` | Explicit `Masking` enum value, overrides view-derived mask | — |
-| `size` | Pixel dimension, clamped to [32, 1000] | 256 |
-| `bg`   | Hex (with/without `#`) or named CSS colour (alpha-only) | transparent |
-| `cc`   | Cube shell colour, hex or CSS name (PHP `cc`) | black (silver when `view=trans`) |
-| `co`   | Cube shell opacity 0-100 (PHP `co`) | 100 (50 when `view=trans`) |
+Simplified URL API (7 params: `alg / view / mask / size / bg / cc / co`), returns `image/svg+xml` (cached 24h).
 
 ```
 https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&size=128
 ```
 
-This endpoint does NOT accept the full PHP query API (no `arw` / `ac` / `sch` / `fc` / `fd`). For arbitrary configurations, use the programmatic API in your own server route.
+Full parameter table is rendered (collapsed) at the bottom of the [`/visualcube` page](https://www.cuberoot.me/visualcube). Source of truth: comments at the top of `packages/server/src/routes/cube.ts`.
+
+This endpoint does NOT accept the full PHP query API (no `arw` / `ac` / `sch` / `fc` / `fd`). For those, use the programmatic API or build your own server route.
 
 ### 3. React — `<VisualCube>` component (client)
 

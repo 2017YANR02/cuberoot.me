@@ -859,6 +859,42 @@ export default function VisualCubeEditorPage() {
           onReset={() => set('dist', DEFAULTS.dist)}
         />
       </section>
+
+      {/* API reference — for embedding cube images on other sites */}
+      <details className="vc-api-doc">
+        <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
+        <p>
+          {t(
+            '直接通过 GET /api/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），完整参数请用本页生成后复制分享链接。',
+            'GET /api/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for the full set, use this page and copy the share URL.'
+          )}
+        </p>
+        <pre className="vc-api-example">{`https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
+        <table className="vc-api-table">
+          <thead>
+            <tr>
+              <th>{t('参数', 'Param')}</th>
+              <th>{t('取值', 'Values')}</th>
+              <th>{t('默认', 'Default')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>alg</code></td><td>{t('WCA notation；返回的图是 alg 的逆作用于 solved（即 alg 能还原的 case）', 'WCA notation; rendered state is alg inverted from solved (the case the alg solves)')}</td><td>Sune</td></tr>
+            <tr><td><code>view</code></td><td><code>iso / plan / f2l / oll / pll / pll-iso / trans</code></td><td><code>iso</code></td></tr>
+            <tr><td><code>mask</code></td><td>{t('显式 Masking 枚举值（覆盖 view 推断）', 'Explicit Masking enum, overrides view-derived')}</td><td>—</td></tr>
+            <tr><td><code>size</code></td><td>{t('像素，clamped [32, 1000]', 'Pixels, clamped [32, 1000]')}</td><td>256</td></tr>
+            <tr><td><code>bg</code></td><td>{t('hex（带不带 #）或 CSS 颜色名', 'Hex (with/without #) or CSS colour name')}</td><td>{t('透明', 'transparent')}</td></tr>
+            <tr><td><code>cc</code></td><td>{t('壳体色（PHP cc）', 'Cube shell colour (PHP cc)')}</td><td>{t('黑（trans 时银）', 'black (silver when trans)')}</td></tr>
+            <tr><td><code>co</code></td><td>{t('壳体不透明度 0-100（PHP co）', 'Cube opacity 0-100 (PHP co)')}</td><td>{t('100（trans 时 50）', '100 (50 when trans)')}</td></tr>
+          </tbody>
+        </table>
+        <p className="vc-api-note">
+          {t(
+            '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数请用本页生成 SVG 后下载或复制 <img> 标签。',
+            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, generate via this page and download/copy.'
+          )}
+        </p>
+      </details>
     </div>
   );
 }
@@ -1010,11 +1046,45 @@ const INLINE_CSS = `
 .vc-face-cell input[type=color]::-webkit-color-swatch { border: none; border-radius: 2px; }
 .vc-face-cell input[type=color]::-moz-color-swatch { border: none; border-radius: 2px; }
 
+.vc-api-doc {
+  margin-top: 24px; padding: 14px 16px;
+  background: rgba(0,0,0,0.18); border-radius: 4px;
+  color: var(--vc-text-dim); font-size: 13px;
+}
+.vc-api-doc summary {
+  cursor: pointer; font-weight: 500; color: var(--vc-text); user-select: none;
+  padding: 2px 0;
+}
+.vc-api-doc summary::-webkit-details-marker { color: var(--vc-text-dim); }
+.vc-api-doc[open] summary { margin-bottom: 10px; }
+.vc-api-doc p { margin: 8px 0; line-height: 1.5; }
+.vc-api-example {
+  background: var(--vc-input); padding: 8px 10px; border-radius: 3px;
+  font-family: var(--font-mono, monospace); font-size: 11.5px;
+  color: var(--vc-text); overflow-x: auto; white-space: pre;
+  margin: 8px 0; word-break: break-all;
+}
+.vc-api-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.vc-api-table th, .vc-api-table td {
+  padding: 6px 10px; text-align: left; vertical-align: top;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.vc-api-table th { color: var(--vc-text); font-weight: 500; }
+.vc-api-table td { color: var(--vc-text-dim); }
+.vc-api-table code {
+  background: var(--vc-input); padding: 1px 5px; border-radius: 2px;
+  font-family: var(--font-mono, monospace); font-size: 11.5px; color: var(--vc-text);
+}
+.vc-api-note { font-size: 12px; opacity: 0.85; margin-top: 12px; }
+
 @media (max-width: 768px) {
   .vc-row { grid-template-columns: 1fr; gap: 6px; padding: 10px 0; }
   .vc-label { font-size: 11px; }
   .vc-num, .vc-text, .vc-num-sm { font-size: 12px; }
   .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
   .vc-preview-wrap { padding: 16px; }
+  .vc-api-table { font-size: 11px; }
+  .vc-api-table th, .vc-api-table td { padding: 5px 6px; }
+  .vc-api-example { white-space: pre-wrap; }
 }
 `;
