@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# SW 由 scripts/build_sw.mjs 在 build 时生成，不入 repo
+public/sw.js
