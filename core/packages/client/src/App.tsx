@@ -77,6 +77,16 @@ const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
 const VisualCubeEditorPage = lazy(() => import('./pages/visualcube/VisualCubeEditorPage'));
 // NOTE: Analyze — 3x3 CFOP 打乱分析器（port of speedcubedb.com/analyze）
 const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
+// NOTE: Average — 成绩计算器（粘 N 个时间，按 WCA 规则算 Ao5/Ao12/Mo3）
+const AveragePage = lazy(() => import('./pages/average/AveragePage'));
+// NOTE: Gen — 批量打乱生成器（覆盖 16 个 WCA 项目）
+const GenPage = lazy(() => import('./pages/gen/GenPage'));
+// NOTE: Notation — 公式记号沙盒（化简 / 逆向 / 镜像 + HTM/QTM 计数 + TwistyPlayer）
+const NotationPage = lazy(() => import('./pages/notation/NotationPage'));
+// NOTE: Patterns — 著名 3x3 图案集
+const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
+// NOTE: Today — 魔方上的今天（历年 MM-DD 举办的 WCA 比赛）
+const TodayPage = lazy(() => import('./pages/today/TodayPage'));
 
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
@@ -157,6 +167,16 @@ function App() {
         <Route path="/visualcube" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeEditorPage /></Suspense>} />
         {/* Analyze — 3x3 CFOP 打乱分析器 */}
         <Route path="/analyze" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
+        {/* Average — 成绩计算器 */}
+        <Route path="/average" element={<Suspense fallback={<div>Loading...</div>}><AveragePage /></Suspense>} />
+        {/* Gen — 批量打乱生成器 */}
+        <Route path="/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
+        {/* Notation — 公式记号沙盒 */}
+        <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
+        {/* Patterns — 著名 3x3 图案集 */}
+        <Route path="/patterns" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
+        {/* Today — 魔方上的今天 */}
+        <Route path="/today" element={<Suspense fallback={<div>Loading...</div>}><TodayPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
