@@ -6,13 +6,11 @@
  *   - 'ts' (default) — Vite-bundled TS port at worker/analyzer.worker.ts.
  *     Cube model + dictionaries still come from the legacy data files via
  *     importScripts so recognition stays byte-identical to upstream.
+ *     MUST be a classic worker (importScripts is classic-only); we use
+ *     `new Worker(new URL(...))` without `{type:'module'}` to ensure that.
  *   - 'legacy' — speedcubedb's original obfuscated worker, kept verbatim at
  *     /analyze-worker/ear.legacy.js for reference / fallback.
- *
- * A typed-array fast variant is planned but deferred — the move tables
- * need careful verification (B/F sticker cycles depend on convention).
  */
-import TsWorker from './worker/analyzer.worker?worker';
 
 export type CrossColor = 'Yellow' | 'White' | 'Blue' | 'Green' | 'Red' | 'Orange';
 
@@ -52,7 +50,11 @@ export type WorkerVariant = 'ts' | 'legacy';
 
 function spawnWorker(variant: WorkerVariant): Worker {
   if (variant === 'legacy') return new Worker('/analyze-worker/ear.legacy.js');
-  return new TsWorker();
+  // NOTE: classic worker (no `{type:'module'}`) — analyzer.js uses importScripts,
+  // and the legacy data files (boohoo.js et al.) rely on implicit-global assignment
+  // that only works in sloppy mode. The .js sits in public/ verbatim, NOT bundled
+  // through Vite, to avoid module-strict-mode interference.
+  return new Worker('/analyze-worker/analyzer.js');
 }
 
 export class Analyzer {

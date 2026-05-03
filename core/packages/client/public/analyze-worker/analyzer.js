@@ -1,139 +1,81 @@
-/// <reference lib="webworker" />
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * @module pages/analyze/worker/analyzer.worker
+ * 3x3 CFOP scramble analyzer Worker — TS-source-equivalent runtime artifact.
  *
- * **NOT the runtime artifact** — kept as a TS-typed reference / future migration
- * target. Runtime classic worker is the type-stripped twin at
- * `public/analyze-worker/analyzer.js`. Reason: Vite's worker bundling places
- * the worker into module-strict semantics that break the legacy data files
- * (boohoo.js et al.) which use implicit-global assignment.
+ * Type-stripped from src/pages/analyze/worker/analyzer.worker.ts. Lives in
+ * public/ rather than going through Vite's worker bundling because:
+ *   - importScripts() is a classic-worker-only API
+ *   - Vite's bundled "classic" workers still inherit module-strict-mode semantics
+ *     in some cases, breaking the legacy data files (boohoo.js et al.) which
+ *     assign implicit globals (no var/let/const)
+ *   - Plain JS in public/ is served verbatim by Vite + GH Pages and runs as
+ *     a pure classic worker, guaranteed sloppy mode at top level
  *
- * 3x3 CFOP scramble analyzer Worker — TS port of speedcubedb.com's
- * /earphones/ear.js. Cube model, hash tables, and alg dictionaries are
- * loaded verbatim from the legacy data files (boohoo / hs / zbh) via
- * importScripts so recognition keys + dictionary entries stay byte-identical
- * to the upstream reference implementation. Anything in *this* file is
- * pure control flow (cross IDA*, F2L queue, LL recognition pipeline).
+ * Keep this file in sync manually with analyzer.worker.ts (drop type annotations
+ * only — control flow MUST stay identical to preserve byte-identical totals).
  *
- * Verified to produce identical totals to speedcubedb for the canonical
- * scrambles: see commit history.
- *
- * The legacy obfuscated `ear.legacy.js` is preserved alongside the data
- * files and can be swapped in via `?worker=legacy` URL flag.
- *
- * ── Future optimization opportunities ──────────────────────────────────
- * The hottest path is `NxN.new_NxN_Data(parent) + ProcessMoves(child)`
- * called O(18 × pops) times in the cross planner. To go faster:
- *   1. Replace cube state with a 54-byte Uint8Array; precompute 18 move
- *      permutations (R/U/L/D/F/B × {1,2,'} ); applyMove becomes one tight
- *      typed-array index swap. Convert back to NxN_Data only at cross
- *      leaves (handed off to F2L planner).
- *   2. Skip cube state cloning by mutating a scratch + applying inverse
- *      after each child evaluation. Only clone when keeping the state.
- *   3. Skip BinaryHeap (constant-0 score in F2L/LL planners) — but the
- *      heap's exact pop order is load-bearing for total counts, so any
- *      replacement must preserve ordering exactly. Non-trivial.
- *
- * Each of these requires byte-identical verification (compare totals
- * against legacy worker for a battery of scrambles) before shipping.
- * Deferred until that verification harness exists.
+ * Reference test scramble: B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'
+ *   → 53 / 7457 / 42664 / 21380 (21022 / 96 / 262 / 0).
  */
 
-// NOTE: classic worker — NO import/export at top level (importScripts only
-// exists in classic workers; ES module syntax is a runtime SyntaxError here).
-// Type stubs are local since they can't cross the module boundary.
-declare const importScripts: (...urls: string[]) => void;
-declare const NxN: any;
-declare const NxN_AlgHandler: any;
-type NxNState = { mat: Record<'U' | 'D' | 'F' | 'B' | 'L' | 'R', string[][]>; [k: string]: unknown };
-type F2LOption = [string, string];
-
-// NOTE: load order matters — boohoo.js's top-level statements reference `let`
-// bindings (OLLHashTable, ZBLLHashTable etc.) defined by hs.js / zbh.js.
-// Must match legacy ear.js order: hs.js, zbh.js, boohoo.js.
+// NOTE: order matters — boohoo.js's top-level `NxN['OLLHashTable'] = OLLHashTable`
+// references `let` bindings created by hs.js (and ZBLL bindings from zbh.js).
+// `let` at script top creates a global lexical binding visible to subsequent
+// importScripts'd classic scripts but NOT a property on globalThis, so order
+// must be: dependencies first, boohoo.js last. Same order as legacy ear.js.
 importScripts(
   '/analyze-worker/hs.js',
   '/analyze-worker/zbh.js',
   '/analyze-worker/boohoo.js',
 );
 
-// ── Types ─────────────────────────────────────────────────────────────
-
-type CrossColor = 'Yellow' | 'White' | 'Blue' | 'Green' | 'Red' | 'Orange';
-type Howfar = 1 | 2 | 3 | 4;
-
-interface AnalyzeRequest {
-  scramble: string;
-  crosscolors: Record<CrossColor, boolean>;
-  howfar: Howfar;
-}
-
-type Solution = [etm: number, alg: string, state: NxNState, stages: string[]];
-
 // ── Queues ─────────────────────────────────────────────────────────────
 
 /**
- * Provably-equivalent O(1) replacement for BinaryHeap when scoreFn is constant.
- * Trace: with all scores equal, bubbleUp/sinkDown never swap (`0 >= 0` and
- * `0 < 0` are both false), so push degenerates to `array.push` and pop
- * degenerates to "return [0], copy last to [0], drop last". This class
- * preserves the exact pop order produced by the upstream BinaryHeap when
- * scores are constant. Used in F2LPlanner / LLPlanner where score is `() => 0`.
- *
- * ~10x faster than BinaryHeap for 7000+ pops on long scrambles, no
- * change to total counts.
+ * O(1) replacement for BinaryHeap when scoreFn is constant. With all scores
+ * equal, BinaryHeap's bubbleUp/sinkDown never swap, so push degenerates to
+ * array.push and pop degenerates to "return [0], copy last to [0], drop last".
+ * Provably equivalent pop order; ~10x faster for 7000+ pops.
  */
-class ConstScoreQueue<T> {
-  private content: T[] = [];
-  push(item: T): void { this.content.push(item); }
-  pop(): T {
+class ConstScoreQueue {
+  constructor() { this.content = []; }
+  push(item) { this.content.push(item); }
+  pop() {
     const top = this.content[0];
-    const last = this.content.pop()!;
+    const last = this.content.pop();
     if (this.content.length > 0) this.content[0] = last;
     return top;
   }
-  size(): number { return this.content.length; }
+  size() { return this.content.length; }
 }
 
-class BinaryHeap<T> {
-  private content: T[] = [];
-  private scoreFn: (item: T) => number;
-  constructor(scoreFn: (item: T) => number) { this.scoreFn = scoreFn; }
-  push(item: T): void {
-    this.content.push(item);
-    this.bubbleUp(this.content.length - 1);
-  }
-  pop(): T {
+class BinaryHeap {
+  constructor(scoreFn) { this.content = []; this.scoreFn = scoreFn; }
+  push(item) { this.content.push(item); this.bubbleUp(this.content.length - 1); }
+  pop() {
     const top = this.content[0];
-    const last = this.content.pop()!;
-    if (this.content.length > 0) {
-      this.content[0] = last;
-      this.sinkDown(0);
-    }
+    const last = this.content.pop();
+    if (this.content.length > 0) { this.content[0] = last; this.sinkDown(0); }
     return top;
   }
-  size(): number { return this.content.length; }
-  private bubbleUp(n: number): void {
+  size() { return this.content.length; }
+  bubbleUp(n) {
     const item = this.content[n];
     const score = this.scoreFn(item);
     while (n > 0) {
-      const parentN = Math.floor((n + 1) / 2) - 1;
-      const parent = this.content[parentN];
-      if (score >= this.scoreFn(parent)) break;
-      this.content[parentN] = item;
-      this.content[n] = parent;
-      n = parentN;
+      const pn = Math.floor((n + 1) / 2) - 1;
+      const p = this.content[pn];
+      if (score >= this.scoreFn(p)) break;
+      this.content[pn] = item; this.content[n] = p; n = pn;
     }
   }
-  private sinkDown(n: number): void {
+  sinkDown(n) {
     const len = this.content.length;
     const item = this.content[n];
     const score = this.scoreFn(item);
     while (true) {
       const r = (n + 1) * 2;
       const l = r - 1;
-      let swap: number | null = null;
+      let swap = null;
       let leftScore = 0;
       if (l < len) {
         leftScore = this.scoreFn(this.content[l]);
@@ -144,42 +86,32 @@ class BinaryHeap<T> {
         if (rightScore < (swap === null ? score : leftScore)) swap = r;
       }
       if (swap === null) break;
-      this.content[n] = this.content[swap];
-      this.content[swap] = item;
-      n = swap;
+      this.content[n] = this.content[swap]; this.content[swap] = item; n = swap;
     }
   }
 }
 
 // ── Cross planner ──────────────────────────────────────────────────────
 
-const CROSS_INSPECTION: Record<CrossColor, string> = {
-  Yellow: '',
-  White: 'z2',
-  Blue: 'x',
-  Green: "x'",
-  Red: 'z',
-  Orange: "z'",
+const CROSS_INSPECTION = {
+  Yellow: '', White: 'z2', Blue: 'x', Green: "x'", Red: 'z', Orange: "z'",
 };
 
-const FACES = ['R', 'U', 'L', 'D', 'F', 'B'] as const;
-const SUFFIXES = ['', "'", '2'] as const;
-
-type CrossNode = [scoreNeg: number, depth: number, alg: string, state: NxNState, lastFace: string];
-type CrossResult = [alg: string, state: NxNState, score: number];
+const FACES = ['R', 'U', 'L', 'D', 'F', 'B'];
+const SUFFIXES = ['', "'", '2'];
 
 let totalNumCross = 0;
 
 class NxNCrossPlanner {
-  readonly sides = CROSS_INSPECTION;
-  private maxDepth: Record<CrossColor, number> = {
-    Yellow: 7, White: 7, Blue: 7, Green: 7, Red: 7, Orange: 7,
-  };
-  private queues: Partial<Record<CrossColor, BinaryHeap<CrossNode>>> = {};
-
-  constructor(scramble: string) {
-    for (const color of Object.keys(this.sides) as CrossColor[]) {
+  constructor(scramble) {
+    this.sides = CROSS_INSPECTION;
+    this.maxDepth = { Yellow: 7, White: 7, Blue: 7, Green: 7, Red: 7, Orange: 7 };
+    this.queues = {};
+    for (const color of Object.keys(this.sides)) {
       // Build the post-scramble + post-inspection state, then push 4 AUF rotations as roots.
+      // Replicates upstream's bug-for-bug ordering: y-root state == identity (because
+      // startPuzzle gets mutated AFTER the y-root clone), y2-root state == post-y'
+      // (because subsequent clones happen post-mutation), y'-root state == identity.
       const start = NxN.new_NxN_Data(3);
       NxN.ProcessMoves(start, scramble);
       NxN.ProcessMoves(start, this.sides[color]);
@@ -188,7 +120,7 @@ class NxNCrossPlanner {
       this.push(color, [1000, 0, (this.sides[color] + ' // Inspection\n').trimStart(), root, ' ']);
 
       const rY = NxN.new_NxN_Data(start);
-      NxN.ProcessMoves(start, 'y'); // matches upstream ordering — see ear.legacy.js
+      NxN.ProcessMoves(start, 'y'); // mutates `start` after rY was cloned
       this.push(color, [1000, 0, (this.sides[color] + ' y // Inspection\n').trimStart(), rY, ' ']);
 
       const rY2 = NxN.new_NxN_Data(start);
@@ -201,15 +133,15 @@ class NxNCrossPlanner {
     }
   }
 
-  private push(color: CrossColor, item: CrossNode): void {
+  push(color, item) {
     if (!Object.prototype.hasOwnProperty.call(this.queues, color)) {
-      this.queues[color] = new BinaryHeap<CrossNode>((x) => x[0]);
+      this.queues[color] = new BinaryHeap((x) => x[0]);
     }
-    this.queues[color]!.push(item);
+    this.queues[color].push(item);
   }
 
-  processOptions(color: CrossColor, maxIter: number, maxFound: number): CrossResult[] {
-    const out: CrossResult[] = [];
+  processOptions(color, maxIter, maxFound) {
+    const out = [];
     const queue = this.queues[color];
     if (!queue) return out;
     for (let iter = 0; iter < maxIter; iter++) {
@@ -218,15 +150,14 @@ class NxNCrossPlanner {
       const cur = queue.pop();
       if (cur[1] + 1 > this.maxDepth[color]) continue;
       for (const face of FACES) {
-        // NOTE: upstream's opposite-face check is buggy (parallel-array indexed
-        // by string key always returns undefined). Only same-face actually prunes.
-        // Replicate bug-for-bug to match totals.
+        // NOTE: upstream has a buggy opposite-face check that always evaluates
+        // false (indexes a parallel-array with a string key). Only same-face is
+        // actually pruned. Replicate bug-for-bug to match totals.
         if (face === cur[4]) continue;
         for (const suf of SUFFIXES) {
           const move = face + suf;
           const p = NxN.new_NxN_Data(cur[3]);
           NxN.ProcessMoves(p, move);
-          // Cross petals = 4 means D-edges placed and oriented relative to centers.
           const m = p.mat;
           let petals = 0;
           if (m.D[1][1] === m.D[0][1] && m.F[1][1] === m.F[2][1]) petals++;
@@ -237,7 +168,6 @@ class NxNCrossPlanner {
             const pairsAfter = NxN.getAmountOfSolvedPairs(p);
             const xs = 'X'.repeat(pairsAfter);
             const alg = cur[2] + move + ' // ' + color + ' ' + xs + 'Cross';
-            // Dynamic prune: subsequent crosses must be at most 1 move worse, floor at 5.
             this.maxDepth[color] = Math.min(this.maxDepth[color], cur[1] + 2);
             this.maxDepth[color] = Math.max(5, this.maxDepth[color]);
             const score = pairsAfter * 10 - cur[1] + 1;
@@ -246,13 +176,12 @@ class NxNCrossPlanner {
             postMessage({ totalnumcross: totalNumCross });
             continue;
           }
-          // Heuristic: petals (5x) + center matches (3x) − depth penalty (10x).
           let centers = 0;
           if (m.D[1][1] === m.D[0][1]) centers++;
           if (m.D[1][1] === m.D[1][0]) centers++;
           if (m.D[1][1] === m.D[2][1]) centers++;
           if (m.D[1][1] === m.D[1][2]) centers++;
-          let h = petals * 5 + centers * 3 + (cur[1] + 1) * -10;
+          const h = petals * 5 + centers * 3 + (cur[1] + 1) * -10;
           this.push(color, [-h, cur[1] + 1, cur[2] + move + ' ', p, face]);
         }
       }
@@ -263,20 +192,17 @@ class NxNCrossPlanner {
 
 // ── F2L planner ────────────────────────────────────────────────────────
 
-type F2LNode = [alg: string, state: NxNState];
-
 class F2LPlanner {
-  private queue = new ConstScoreQueue<F2LNode | CrossResult>();
-  constructor(seeds: CrossResult[]) {
+  constructor(seeds) {
+    this.queue = new ConstScoreQueue();
     for (const c of seeds) this.queue.push(c);
   }
-  processOptions(howfar: Howfar): Solution[] {
-    const out: Solution[] = [];
+  processOptions(howfar) {
+    const out = [];
     let counter = 0;
     while (this.queue.size() !== 0) {
-      const cur = this.queue.pop() as F2LNode | CrossResult;
-      // CrossResult is [alg, state, score]; F2LNode is [alg, state] — both share index 0/1.
-      const opts: F2LOption[] = NxN.getF2LOptions(cur[1]);
+      const cur = this.queue.pop();
+      const opts = NxN.getF2LOptions(cur[1]);
       const solvedBefore = NxN.getAmountOfSolvedPairs(cur[1]);
       for (const opt of opts) {
         const p = NxN.new_NxN_Data(cur[1]);
@@ -287,7 +213,7 @@ class F2LPlanner {
         if (solvedAfter >= howfar) {
           out.push([NxN_AlgHandler.calculateETM(alg), alg, p, []]);
         } else {
-          this.queue.push([alg, p] as F2LNode);
+          this.queue.push([alg, p]);
         }
       }
       if (counter++ % 250 === 0) postMessage({ pairscovered: counter });
@@ -300,25 +226,24 @@ class F2LPlanner {
 // ── LL planner ─────────────────────────────────────────────────────────
 
 // Identical arrays — only the index expression differs (orientation vs (orientation+2)%4).
-const AUF_BEFORE = ['', "U' ", 'U2 ', 'U '] as const;
-const FACE_TO_AUF_AFTER_PLL: Record<string, string> = { F: '', B: '\nU2 // AUF', R: '\nU ', L: ' U' };
-const FACE_TO_AUF_LL_SKIP: Record<string, string> = { F: '', B: '\nU2 // AUF', R: "\nU' // AUF", L: '\nU // AUF' };
+const AUF_BEFORE = ['', "U' ", 'U2 ', 'U '];
+const FACE_TO_AUF_AFTER_PLL = { F: '', B: '\nU2 // AUF', R: '\nU ', L: ' U' };
+const FACE_TO_AUF_LL_SKIP = { F: '', B: '\nU2 // AUF', R: "\nU' // AUF", L: '\nU // AUF' };
 
 class LLPlanner {
-  private queue = new ConstScoreQueue<Solution>();
-  constructor(seeds: Solution[]) {
+  constructor(seeds) {
+    this.queue = new ConstScoreQueue();
     for (const s of seeds) this.queue.push(s);
   }
-  processOptions(): Solution[] {
-    const out: Solution[] = [];
+  processOptions() {
+    const out = [];
     let counter = 0;
     while (this.queue.size() !== 0) {
       const cur = this.queue.pop();
       const ollHash = NxN.getOLLHash(cur[2]);
       if (Object.prototype.hasOwnProperty.call(NxN.OLLHashTable, ollHash)) {
         const entry = NxN.OLLHashTable[ollHash];
-        for (const rawAlg0 of NxN_AlgHandler.OLLDictionary[entry.name]) {
-          let rawAlg = rawAlg0;
+        for (let rawAlg of NxN_AlgHandler.OLLDictionary[entry.name]) {
           const yPrefix = rawAlg.match(/^y[2]?'?/);
           let orientation = entry.orientation;
           if (yPrefix !== null) {
@@ -330,7 +255,7 @@ class LLPlanner {
           }
           let alg = AUF_BEFORE[orientation] + rawAlg;
           const flipped = AUF_BEFORE[(orientation + 2) % 4] + rawAlg;
-          // OLL 20 is 4-fold symmetric (skip AUF); OLL 1 is 2-fold (special switch).
+          // OLL 20 / OLL 1 are 4-fold / 2-fold symmetric respectively.
           if (entry.name === 'OLL 20') alg = rawAlg;
           if (entry.name === 'OLL 1') {
             if (orientation === 1 || orientation === 3) alg = flipped;
@@ -340,14 +265,13 @@ class LLPlanner {
           NxN.ProcessMoves(p, alg);
           const newAlg = cur[1] + '\n' + alg + ' // OLL';
           this.queue.push([NxN_AlgHandler.calculateETM(cur[1]), newAlg, p, ['OLL']]);
-          break; // upstream takes first dictionary entry only
+          break;
         }
       } else {
         const pllHash = NxN.getNewPLLHash(NxN.getNormalizedPuzzle(cur[2]));
         if (Object.prototype.hasOwnProperty.call(NxN.PLLnewHashTable, pllHash)) {
           const entry = NxN.PLLnewHashTable[pllHash];
-          for (const rawAlg0 of NxN_AlgHandler.PLLDictionary[entry.name]) {
-            let rawAlg = rawAlg0;
+          for (let rawAlg of NxN_AlgHandler.PLLDictionary[entry.name]) {
             const yPrefix = rawAlg.match(/^y[2]?'?/);
             let orientation = entry.orientation;
             if (yPrefix !== null) {
@@ -372,13 +296,12 @@ class LLPlanner {
             break;
           }
         } else {
-          // Already PLL skipped: just append final AUF based on F-face center color.
           const front = NxN.getNormalizedPuzzle(cur[2]).mat.F[0][1];
           let alg = cur[1];
           if (Object.prototype.hasOwnProperty.call(FACE_TO_AUF_LL_SKIP, front)) {
             alg = alg + FACE_TO_AUF_LL_SKIP[front];
           }
-          out.push([NxN_AlgHandler.calculateETM(alg), alg, cur[2], cur[3] ?? []]);
+          out.push([NxN_AlgHandler.calculateETM(alg), alg, cur[2], cur[3] || []]);
         }
       }
       if (counter++ % 250 === 0) postMessage({ llcovered: counter });
@@ -391,17 +314,17 @@ class LLPlanner {
 
 // ── Worker entry ───────────────────────────────────────────────────────
 
-let finalSolutions: Solution[] = [];
+let finalSolutions = [];
 let workingScramble = '';
 
-self.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
+self.onmessage = (e) => {
   finalSolutions = [];
   totalNumCross = 0;
   workingScramble = e.data.scramble;
   const howfar = e.data.howfar;
 
-  let crossPlanner: NxNCrossPlanner | undefined = new NxNCrossPlanner(workingScramble);
-  let crosses: CrossResult[] = [];
+  let crossPlanner = new NxNCrossPlanner(workingScramble);
+  let crosses = [];
 
   const initial = NxN.new_NxN_Data(3);
   NxN.ProcessMoves(initial, workingScramble);
@@ -409,9 +332,9 @@ self.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
     crosses = [['', initial, 0]];
   } else {
     while (crosses.length === 0) {
-      for (const color of Object.keys(crossPlanner!.sides) as CrossColor[]) {
+      for (const color of Object.keys(crossPlanner.sides)) {
         if (e.data.crosscolors[color] === false) continue;
-        const r = crossPlanner!.processOptions(color, 10000, 100);
+        const r = crossPlanner.processOptions(color, 10000, 100);
         crosses = crosses.concat(r);
       }
     }
@@ -421,12 +344,11 @@ self.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
   if (crosses.length > 0) {
     crosses.sort((a, b) => b[2] - a[2]);
     crosses = crosses.slice(0, 20);
-    const f2lPlanner = new F2LPlanner(crosses);
-    const f2lOut = f2lPlanner.processOptions(howfar);
-
+    const f2l = new F2LPlanner(crosses);
+    const f2lOut = f2l.processOptions(howfar);
     if (howfar > 3) {
-      const llPlanner = new LLPlanner(f2lOut);
-      finalSolutions = finalSolutions.concat(llPlanner.processOptions());
+      const ll = new LLPlanner(f2lOut);
+      finalSolutions = finalSolutions.concat(ll.processOptions());
     } else {
       finalSolutions = finalSolutions.concat(f2lOut);
     }
