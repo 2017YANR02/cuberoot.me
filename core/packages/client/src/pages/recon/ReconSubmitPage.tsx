@@ -27,7 +27,7 @@ import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
-import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
+import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
