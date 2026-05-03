@@ -902,6 +902,12 @@ export default function VisualCubeEditorPage() {
           )}
         </p>
         <pre className="vc-api-example">{`https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
+        <p className="vc-api-note">
+          {t(
+            '同样在镜像站可用：https://ruiminyan.github.io/api/visualcube.svg?…（GitHub 全球 CDN）。镜像站靠 Service Worker 在浏览器本地生成 SVG，访问过任一页面装好 SW 后即用。',
+            'Also available on the mirror: https://ruiminyan.github.io/api/visualcube.svg?… (GitHub global CDN). The mirror generates SVG locally via Service Worker — works after visiting any page on that site once (to register the SW).'
+          )}
+        </p>
         <table className="vc-api-table">
           <thead>
             <tr>
