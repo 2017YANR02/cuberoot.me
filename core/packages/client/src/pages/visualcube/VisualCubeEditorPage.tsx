@@ -571,12 +571,21 @@ export default function VisualCubeEditorPage() {
           onChange={(v) => set('cubeSize', v)}
           onReset={() => set('cubeSize', DEFAULTS.cubeSize)}
         />
-        <NumberRow
-          label={t('图片尺寸 (px)', 'Image Size (px)')}
-          value={state.imageSize} min={32} max={1000} step={8}
-          onChange={(v) => set('imageSize', v)}
-          onReset={() => set('imageSize', DEFAULTS.imageSize)}
-        />
+        <div className="vc-row">
+          <label className="vc-label">{t('图片尺寸 (px)', 'Image Size (px)')}</label>
+          <div className="vc-row-controls">
+            {[64, 88, 128, 256, 512, 1000].map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`vc-btn vc-btn-sm${state.imageSize === s ? ' vc-btn-active' : ''}`}
+                onClick={() => set('imageSize', s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Algorithm */}
         <div className="vc-row vc-row-block">
@@ -954,6 +963,8 @@ const INLINE_CSS = `
 .vc-btn:hover { background: var(--vc-hover); }
 .vc-btn:active { background: #404040; }
 .vc-btn-sm { padding: 5px 9px; font-size: 11px; }
+.vc-btn-active { background: var(--vc-accent); color: #fff; }
+.vc-btn-active:hover { background: var(--vc-accent); filter: brightness(1.1); }
 .vc-btn-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; padding: 0;
