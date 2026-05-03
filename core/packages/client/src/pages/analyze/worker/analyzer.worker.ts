@@ -3,6 +3,12 @@
 /**
  * @module pages/analyze/worker/analyzer.worker
  *
+ * **NOT the runtime artifact** — kept as a TS-typed reference / future migration
+ * target. Runtime classic worker is the type-stripped twin at
+ * `public/analyze-worker/analyzer.js`. Reason: Vite's worker bundling places
+ * the worker into module-strict semantics that break the legacy data files
+ * (boohoo.js et al.) which use implicit-global assignment.
+ *
  * 3x3 CFOP scramble analyzer Worker — TS port of speedcubedb.com's
  * /earphones/ear.js. Cube model, hash tables, and alg dictionaries are
  * loaded verbatim from the legacy data files (boohoo / hs / zbh) via
@@ -34,28 +40,36 @@
  * Deferred until that verification harness exists.
  */
 
-import type { NxNState, F2LOption } from './cube_globals';
-
+// NOTE: classic worker — NO import/export at top level (importScripts only
+// exists in classic workers; ES module syntax is a runtime SyntaxError here).
+// Type stubs are local since they can't cross the module boundary.
 declare const importScripts: (...urls: string[]) => void;
+declare const NxN: any;
+declare const NxN_AlgHandler: any;
+type NxNState = { mat: Record<'U' | 'D' | 'F' | 'B' | 'L' | 'R', string[][]>; [k: string]: unknown };
+type F2LOption = [string, string];
 
+// NOTE: load order matters — boohoo.js's top-level statements reference `let`
+// bindings (OLLHashTable, ZBLLHashTable etc.) defined by hs.js / zbh.js.
+// Must match legacy ear.js order: hs.js, zbh.js, boohoo.js.
 importScripts(
-  '/analyze-worker/boohoo.js',
   '/analyze-worker/hs.js',
   '/analyze-worker/zbh.js',
+  '/analyze-worker/boohoo.js',
 );
 
 // ── Types ─────────────────────────────────────────────────────────────
 
-export type CrossColor = 'Yellow' | 'White' | 'Blue' | 'Green' | 'Red' | 'Orange';
-export type Howfar = 1 | 2 | 3 | 4;
+type CrossColor = 'Yellow' | 'White' | 'Blue' | 'Green' | 'Red' | 'Orange';
+type Howfar = 1 | 2 | 3 | 4;
 
-export interface AnalyzeRequest {
+interface AnalyzeRequest {
   scramble: string;
   crosscolors: Record<CrossColor, boolean>;
   howfar: Howfar;
 }
 
-export type Solution = [etm: number, alg: string, state: NxNState, stages: string[]];
+type Solution = [etm: number, alg: string, state: NxNState, stages: string[]];
 
 // ── Queues ─────────────────────────────────────────────────────────────
 
@@ -149,7 +163,6 @@ const CROSS_INSPECTION: Record<CrossColor, string> = {
 };
 
 const FACES = ['R', 'U', 'L', 'D', 'F', 'B'] as const;
-const OPPOSITE_OF: Record<string, string> = { R: 'L', U: 'D', L: 'R', D: 'U', F: 'B', B: 'F' };
 const SUFFIXES = ['', "'", '2'] as const;
 
 type CrossNode = [scoreNeg: number, depth: number, alg: string, state: NxNState, lastFace: string];
@@ -205,7 +218,10 @@ class NxNCrossPlanner {
       const cur = queue.pop();
       if (cur[1] + 1 > this.maxDepth[color]) continue;
       for (const face of FACES) {
-        if (face === cur[4] || face === OPPOSITE_OF[cur[4]]) continue;
+        // NOTE: upstream's opposite-face check is buggy (parallel-array indexed
+        // by string key always returns undefined). Only same-face actually prunes.
+        // Replicate bug-for-bug to match totals.
+        if (face === cur[4]) continue;
         for (const suf of SUFFIXES) {
           const move = face + suf;
           const p = NxN.new_NxN_Data(cur[3]);
@@ -283,8 +299,8 @@ class F2LPlanner {
 
 // ── LL planner ─────────────────────────────────────────────────────────
 
+// Identical arrays — only the index expression differs (orientation vs (orientation+2)%4).
 const AUF_BEFORE = ['', "U' ", 'U2 ', 'U '] as const;
-const AUF_BEFORE_FLIPPED = ['', " U2", 'U2 ', 'U '] as const; // upstream uses this odd table for OLL 20 only
 const FACE_TO_AUF_AFTER_PLL: Record<string, string> = { F: '', B: '\nU2 // AUF', R: '\nU ', L: ' U' };
 const FACE_TO_AUF_LL_SKIP: Record<string, string> = { F: '', B: '\nU2 // AUF', R: "\nU' // AUF", L: '\nU // AUF' };
 
@@ -313,10 +329,10 @@ class LLPlanner {
             rawAlg = rawAlg.replace(/^y[2]?'?/, '').trim();
           }
           let alg = AUF_BEFORE[orientation] + rawAlg;
-          const flipped = AUF_BEFORE_FLIPPED[(orientation + 2) % 4] + rawAlg;
-          // OLL 1 / OLL 20 are 4-fold symmetric; force their canonical AUF.
-          if (entry.name === 'OLL 1') alg = rawAlg;
-          if (entry.name === 'OLL 20') {
+          const flipped = AUF_BEFORE[(orientation + 2) % 4] + rawAlg;
+          // OLL 20 is 4-fold symmetric (skip AUF); OLL 1 is 2-fold (special switch).
+          if (entry.name === 'OLL 20') alg = rawAlg;
+          if (entry.name === 'OLL 1') {
             if (orientation === 1 || orientation === 3) alg = flipped;
             else if (orientation === 2) alg = rawAlg;
           }
