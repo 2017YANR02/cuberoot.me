@@ -55,7 +55,7 @@ export enum AlgorithmUnit {
   Z = 'z',
 }
 
-export const AxisSymbolToAxis = {
+export const AxisSymbolToAxis: { [symbol: string]: Axis } = {
   x: Axis.X,
   y: Axis.Y,
   z: Axis.Z,

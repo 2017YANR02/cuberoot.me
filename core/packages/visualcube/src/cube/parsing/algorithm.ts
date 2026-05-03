@@ -10,7 +10,8 @@ export interface Turn {
 
 const turnRegex = /([2-9]+)?([UuFfRrDdLlBbMESxyz])(w)?(\d+\'|\'\d+|\d+|\')?/g
 
-const Opposite = {
+const Opposite: Record<TurnType, TurnType> = {
+  [TurnType.None]: TurnType.None,
   [TurnType.Clockwise]: TurnType.CounterClockwise,
   [TurnType.CounterClockwise]: TurnType.Clockwise,
   [TurnType.Double]: TurnType.Double,
@@ -168,7 +169,7 @@ export function parseCase(algorithm: string): Turn[] {
     .reverse()
 }
 
-function getSlices(rawSlices, outerBlockIndicator): number {
+function getSlices(rawSlices: string | undefined, outerBlockIndicator: string | undefined): number {
   if (outerBlockIndicator && !rawSlices) {
     return 2
   } else if (!outerBlockIndicator && rawSlices) {
@@ -176,7 +177,7 @@ function getSlices(rawSlices, outerBlockIndicator): number {
   } else if (!outerBlockIndicator && !rawSlices) {
     return 1
   } else {
-    return parseInt(rawSlices)
+    return parseInt(rawSlices!)
   }
 }
 

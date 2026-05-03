@@ -273,7 +273,7 @@ export function makeMasking(masking: Masking, cubeSize: number): FaceValues {
   }
 
   let numStickers = cubeSize * cubeSize
-  let faceValues = {
+  let faceValues: FaceValues = {
     [Face.U]: [],
     [Face.F]: [],
     [Face.R]: [],
