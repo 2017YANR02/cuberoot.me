@@ -92,6 +92,15 @@ function movesOnly(text: string): string {
     .replace(/[()]/g, ' ')
     // Strip non-move annotations (regrip arrows, etc.)
     .replace(/[↑↓·]/g, ' ')
+    // cubing.js's Alg parser rejects merged tokens like `U'D`, `U2D`, `RD`,
+    // `R2'F`, `Rw'D`. A silent parse-fail downstream falls back to the solved
+    // cube and breaks autofill (sees "all slots solved" → 0 hints). Insert a
+    // space between two move letters, after `'` before letter, and after digit
+    // before letter. `w` is excluded from the letter set so wide moves (`Rw`,
+    // `Uw'`) stay intact.
+    .replace(/([UDFBLRMESxyzudfblr])(?=[UDFBLRMESxyzudfblr])/g, '$1 ')
+    .replace(/(')(?=[A-Za-z])/g, '$1 ')
+    .replace(/(\d)(?=[A-Za-z])/g, '$1 ')
     .replace(/\s+/g, ' ')
     .trim();
 }
