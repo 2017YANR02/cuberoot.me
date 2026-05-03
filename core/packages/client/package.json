@@ -14,6 +14,7 @@
   "dependencies": {
     "@chenglou/pretext": "^0.0.3",
     "@cuberoot/shared": "workspace:*",
+    "@cuberoot/visualcube": "workspace:*",
     "@ffmpeg/core": "0.12.10",
     "@ffmpeg/core-mt": "0.12.10",
     "@ffmpeg/ffmpeg": "^0.12.15",

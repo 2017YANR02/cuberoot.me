@@ -24,5 +24,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../visualcube" }
+  ]
+  // Note: @cuberoot/shared isn't referenced even though it's composite — its
+  // source passes our strict checks, so descending into it from here is fine.
+  // visualcube needs the reference to isolate its relaxed (vendored) tsconfig.
 }
