@@ -1,0 +1,4464 @@
+{
+  "scrapedAt": "2026-05-03T16:52:55.513Z",
+  "source": "https://speedcubedb.com/a/sq1/SQ1CS",
+  "puzzle": "sq1",
+  "set": "cs",
+  "cases": [
+    {
+      "name": "Kite / Kite",
+      "subgroup": "1 Slice",
+      "setup": "/",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rrgggoRBBBOO",
+          "data-br": "OGGGRRoobbbr",
+          "data-t": "ececCECE",
+          "data-b": "CECEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/",
+            "altId": "11147"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Right fist",
+      "subgroup": "2 Slices",
+      "setup": "1,-1 / -3,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OOGGGRBBOrgg",
+          "data-br": "gooRRBobbbrr",
+          "data-t": "ECECECce",
+          "data-b": "ceECcece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,0/-1,1",
+            "altId": "11333",
+            "ytId": "nQ-lGmarodg"
+          },
+          {
+            "alg": "/-3,0/-1,1",
+            "altId": "19616"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Left fist",
+      "subgroup": "2 Slices",
+      "setup": "/ -3,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGGRRBOOrrg",
+          "data-br": "ggoRBBoobbbr",
+          "data-t": "CECECEec",
+          "data-b": "ecCEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,0/",
+            "altId": "11334",
+            "ytId": "p8y8PaVSNTQ"
+          },
+          {
+            "alg": "/-3,0/",
+            "altId": "19617"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Barrel",
+      "subgroup": "2 Slices",
+      "setup": "/ -3,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRRoobBOOrrg",
+          "data-br": "ggoRBBbbrOGG",
+          "data-t": "CEecCEec",
+          "data-b": "ecCEecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,3/",
+            "altId": "11130",
+            "ytId": "4KYyN65frZM"
+          },
+          {
+            "alg": "/-3,-3/",
+            "altId": "19618"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Square",
+      "subgroup": "3 Slices",
+      "setup": "/ -3,0 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggoRBBOrrgOG",
+          "data-br": "GGRRBOoobbbr",
+          "data-t": "ecCEEecC",
+          "data-b": "ECECecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/3,0/",
+            "altId": "11162",
+            "ytId": "welkhGkYo7o"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Muffin",
+      "subgroup": "3 Slices",
+      "setup": "/ 0,3 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obrrggRBBBOO",
+          "data-br": "bbrOGGgoGRRo",
+          "data-t": "ceceCECE",
+          "data-b": "ecCEcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/0,-3/",
+            "altId": "11163",
+            "ytId": "w_3yoyD7gHo"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Square",
+      "subgroup": "3 Slices",
+      "setup": "/ 3,0 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOOrrgRggoRB",
+          "data-br": "BOGGGRoobbbr",
+          "data-t": "CEecEecC",
+          "data-b": "ECECecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/-3,0/",
+            "altId": "11164",
+            "ytId": "UeX_VzBKkxc"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Shield",
+      "subgroup": "3 Slices",
+      "setup": "/ 0,-3 / 0,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgggobRBBBOO",
+          "data-br": "GRRoobbrOGGr",
+          "data-t": "ceceCECE",
+          "data-b": "CEeccCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,1/0,3/",
+            "altId": "11165",
+            "ytId": "qJl8b5VI5CY"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Left paw",
+      "subgroup": "3 Slices",
+      "setup": "/ 3,0 / -5,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brBOOrBOGGGR",
+          "data-br": "RggoRBrgoobb",
+          "data-t": "cCEeECEC",
+          "data-b": "EecCcece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,1/3,0/",
+            "altId": "11335",
+            "ytId": "aA--arK5_bA"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Right paw",
+      "subgroup": "3 Slices",
+      "setup": "/ 3,0 / 1,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgoobbRggoRB",
+          "data-br": "BOGGGRbrBOOr",
+          "data-t": "ceceEecC",
+          "data-b": "ECECcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,4/-3,0/",
+            "altId": "11336",
+            "ytId": "atPcXteJq9M"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Muffin",
+      "subgroup": "3 Slices",
+      "setup": "/ -3,-3 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggoRBBobBOOr",
+          "data-br": "rgGRRobbrOGG",
+          "data-t": "ecCEcCEe",
+          "data-b": "cCEeecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/3,3/",
+            "altId": "11088",
+            "ytId": "oCeakUU9EEc"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Shield",
+      "subgroup": "3 Slices",
+      "setup": "/ 3,3 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOOrrggoRBBb",
+          "data-br": "brOGGgGRRoob",
+          "data-t": "CEeccCEe",
+          "data-b": "cCEeCEec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/-3,-3/",
+            "altId": "11099",
+            "ytId": "3NQ5_RCsGxE"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Scallop",
+      "subgroup": "3 Slices",
+      "setup": "/ -3,-3 / 2,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GggoRBobBOOr",
+          "data-br": "rgGRRoBbbrOG",
+          "data-t": "EecCcCEe",
+          "data-b": "cCEeEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,2/-3,-3/",
+            "altId": "11114",
+            "ytId": "z3eYzVXdW48"
+          },
+          {
+            "alg": "/-2,-1/3,3/",
+            "altId": "11115"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Kite",
+      "subgroup": "3 Slices",
+      "setup": "/ 3,0 / 3,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOOrrgGRRggo",
+          "data-br": "RBBOGGoobbbr",
+          "data-t": "CEecCEec",
+          "data-b": "CECEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,0/-3,0/",
+            "altId": "11143",
+            "ytId": "p2JWV4QHpwQ"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Barrel",
+      "subgroup": "3 Slices",
+      "setup": "/ 0,-3 / 0,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggobbrRBBBOO",
+          "data-br": "GRRoobOGGrrg",
+          "data-t": "ececCECE",
+          "data-b": "CEecCEec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,3/0,3/",
+            "altId": "11144",
+            "ytId": "Q_M2OPQxP8g"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Kite",
+      "subgroup": "3 Slices",
+      "setup": "/ 3,0 / 1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brBOOrRggoRB",
+          "data-br": "BOGGGRrgoobb",
+          "data-t": "cCEeEecC",
+          "data-b": "ECECcece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,-2/-3,0/",
+            "altId": "11145",
+            "ytId": "-gndkvZ8uy4"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Scallop",
+      "subgroup": "3 Slices",
+      "setup": "/ 0,-3 / -2,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgggobBBOOGR",
+          "data-br": "RoobRBbrOGGr",
+          "data-t": "ceceECEC",
+          "data-b": "EecCcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,1/0,3/",
+            "altId": "11146",
+            "ytId": "VYrhWYnHHSc"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Star / 6-2",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / 4,-1 / -2,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRbrOGobRBrg",
+          "data-br": "ggobRoGrBBOO",
+          "data-t": "CcCcCc",
+          "data-b": "eceEeEeECE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,4/-4,1/0,3/",
+            "altId": "11171"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "6-2 / Star",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,-4 / 4,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OrBOGGoobbRg",
+          "data-br": "goRBrgGRbrBO",
+          "data-t": "EeECEeceEe",
+          "data-b": "cCcCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,-2/-1,4/-3,0/",
+            "altId": "11172"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Star / 8",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / -1,-2 / 4,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BObrOGrgGRgo",
+          "data-br": "RBBbOrGgRoob",
+          "data-t": "CcCcCc",
+          "data-b": "CEeEeEeEec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,-2/1,2/-3,-3/",
+            "altId": "11173"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "8 / Star",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 2,1 / -2,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RoBbbrBOOrGg",
+          "data-br": "goRBobOGrgGR",
+          "data-t": "EeEecCEeEe",
+          "data-b": "cCcCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,4/-2,-1/3,3/",
+            "altId": "11174"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Star / 4-4",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / -1,0 / 2,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obbrOGrggoRB",
+          "data-br": "BbBOOrGgGRRo",
+          "data-t": "ccCccC",
+          "data-b": "EeCEeEeCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,-2/1,0/-3,-3/",
+            "altId": "11175"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "4-4 / Star",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 0,1 / -2,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RoobBbOrrgGg",
+          "data-br": "goRBBObrOGGR",
+          "data-t": "EecEeEecEe",
+          "data-b": "cCCcCC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,2/0,-1/3,3/",
+            "altId": "11176"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left 4-2 / Parallel Edges",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / -2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGgobgooRrB",
+          "data-br": "BOrgGRbbrRBO",
+          "data-t": "CEecceEeE",
+          "data-b": "CcCecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,3/-2,-1/-3,0/-1,1",
+            "altId": "11036"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / Left 4-2",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,3 / 1,2 / -3,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brOGgoBBOobr",
+          "data-br": "rggGRBGRRoOb",
+          "data-t": "cCcECce",
+          "data-b": "ceECCEeEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,2/-1,-2/0,-3/",
+            "altId": "11037"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 4-2 / Parallel Edges",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obbBOGOrRggo",
+          "data-br": "RBbrBOGGRrgo",
+          "data-t": "ceECEeEec",
+          "data-b": "CcCECce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,-3/-1,-2/-3,0/",
+            "altId": "11038"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / Right 4-2 ",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,2 / -2,3 / -4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOOrRgbrobbB",
+          "data-br": "OGgoRBGGRrgo",
+          "data-t": "CEeEecceE",
+          "data-b": "CcCECce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/2,-3/-1,-2/-3,0/",
+            "altId": "11039"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 5-1 / Perpendicular Edges",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGrRoBBOOGR",
+          "data-br": "rgggobobRBbr",
+          "data-t": "CEeEeECEC",
+          "data-b": "cececCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-4/2,1/0,3/",
+            "altId": "11048"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / Right 5-1",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBOOGGBOrgGR",
+          "data-br": "gooRrBgobbbr",
+          "data-t": "CECECcC",
+          "data-b": "ceEeEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,0/-2,-1/-3,0/-1,1",
+            "altId": "11049"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left 5-1 / Perpendicular Edges",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 0,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bRrOOGRBBBOG",
+          "data-br": "ggoobrrgGRob",
+          "data-t": "eEeECCECE",
+          "data-b": "ececcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,4/1,2/0,3/-1,1",
+            "altId": "11050"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / Left 5-1",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,2 / -4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRRBbrBO",
+          "data-br": "OrRggorgoobb",
+          "data-t": "ECECCcC",
+          "data-b": "EeEeccece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/-1,-2/-3,0/",
+            "altId": "11051"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "4-1-1 / Perpendicular Edges",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,2 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRgoRBbr",
+          "data-br": "BOOrRgrgoobb",
+          "data-t": "ECECcCc",
+          "data-b": "CEeEecece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/-1,-2/-3,0/",
+            "altId": "11052"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / 4-1-1",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GrRoobBBOOGR",
+          "data-br": "rgggobRBbrOG",
+          "data-t": "EeEecECEC",
+          "data-b": "ceceCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/2,1/0,3/",
+            "altId": "11053"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-2-1 / Perpendicular Edges",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GrGRRoRBBBOO",
+          "data-br": "rgggobobbrOG",
+          "data-t": "EeCEeCECE",
+          "data-b": "cececcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/0,1/0,3/",
+            "altId": "11054"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / 3-2-1",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGGRogoRBBO",
+          "data-br": "OrrgRgobbbrB",
+          "data-t": "CECecCC",
+          "data-b": "EecEececE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,1/-1,0/-3,0/",
+            "altId": "11055"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-1-2 / Perpendicular Edges",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GrGRRobRBBBO",
+          "data-br": "OrgggoobbrOG",
+          "data-t": "EeCEeeCEC",
+          "data-b": "EcecccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,-2/0,1/0,3/",
+            "altId": "11056"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / 3-1-2",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRgoRBBO",
+          "data-br": "OrrgRgoobbbr",
+          "data-t": "ECECcCC",
+          "data-b": "EecEeecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/-1,0/-3,0/",
+            "altId": "11057"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-3 / Perpendicular Edges",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,-4 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OrBOGGRggoRB",
+          "data-br": "rgoobbGRbrBO",
+          "data-t": "EeECEEecC",
+          "data-b": "ceceCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/-1,4/-3,0/",
+            "altId": "11058"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / 3-3",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 0,-3 / 5,-2 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBBBOGbrGRob",
+          "data-br": "bRggoorOOGrg",
+          "data-t": "CECEcCc",
+          "data-b": "eEeceeECc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/-5,2/0,3/-1,1",
+            "altId": "11059"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 5-1 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,3 / 1,2 / -3,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RoObbrBBOobr",
+          "data-br": "rggGRBOGgoGR",
+          "data-t": "EeEecECce",
+          "data-b": "ceECCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,-2/-1,-2/0,-3/",
+            "altId": "11064"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / Right 5-1",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGgobrgGRgo",
+          "data-br": "oRrBBObbrRBO",
+          "data-t": "CEeccCc",
+          "data-b": "eEeECecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,3/-2,-1/-3,0/-1,1",
+            "altId": "11065"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left 5-1 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 0,3 / 2,1 / 3,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brrOoGggoOGR",
+          "data-br": "RBBbrgGRobBO",
+          "data-t": "ceEeEecCE",
+          "data-b": "CEecCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,2/-2,-1/0,-3/-1,1",
+            "altId": "11068",
+            "ytId": "ybJma8b7uxo"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / Left 5-1",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGgobrgGRgo",
+          "data-br": "oRrBBObbrRBO",
+          "data-t": "CEeccCc",
+          "data-b": "eEeECecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,3/-2,-1/-3,0 /-1,1",
+            "altId": "11069",
+            "ytId": "QcDuy7og32A"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "4-1-1 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 3,0 / -4,1 / 0,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oRgobbRBOOGG",
+          "data-br": "rBBOrgbrGRgo",
+          "data-t": "eEeceCECE",
+          "data-b": "eECccCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,4/4,-1/-3,0/-1,1",
+            "altId": "11070",
+            "ytId": "EljG0jW3YlQ"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / 4-1-1",
+      "subgroup": "4 Slices",
+      "setup": "1,-1 / 3,0 / -4,1 / 4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRgooRBOrgRB",
+          "data-br": "OOGGrBgobbbr",
+          "data-t": "CceECcC",
+          "data-b": "ECEeEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,0/4,-1/-3,0/-1,1",
+            "altId": "11071",
+            "ytId": "uACynx7p594"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "2-2-2 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 0,-1 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRRoobBbBOOr",
+          "data-br": "rggoRBbrOGGg",
+          "data-t": "CEecEeCEe",
+          "data-b": "ccCcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/0,1/3,3/",
+            "altId": "11072",
+            "ytId": "51rBgxQyEss"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / 2-2-2",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / 1,0 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brOGGRGggoRB",
+          "data-br": "BOOrrgRoobBb",
+          "data-t": "cCCEecC",
+          "data-b": "CEecEecEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/-1,0/-3,-3/",
+            "altId": "11073",
+            "ytId": "X4sSGO8ojM4"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left 4-2 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 2,1 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgGRRoBOOrGg",
+          "data-br": "goRBobBbbrOG",
+          "data-t": "cCEeCEeEe",
+          "data-b": "cCcEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/-2,-1/3,3/",
+            "altId": "11074",
+            "ytId": "lhFCv-EeKBs"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / Left 4-2",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / -2,-1 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obBObrOrrgGR",
+          "data-br": "goRBBbOGGgRo",
+          "data-t": "cCcEecC",
+          "data-b": "cCEeCEeEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/2,1/3,3/",
+            "altId": "11075"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 4-2 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / -1,0 / 0,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GgGRRogoRBBb",
+          "data-br": "BOOrrgobbrOG",
+          "data-t": "EeCEecCEe",
+          "data-b": "CEecccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,4/1,0/-3,-3/",
+            "altId": "11076"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / Right 4-2",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / -1,-2 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brOGGgGRgoRB",
+          "data-br": "BbOrrgRoobBO",
+          "data-t": "cCEeCcC",
+          "data-b": "EeEecEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/1,2/-3,-3/",
+            "altId": "11077",
+            "ytId": "XYxRsr5Zyp0"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "6 / Pair",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / -1,-2 / 0,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GgRoobgoRBBb",
+          "data-br": "OrrgGRBObrOG",
+          "data-t": "EeEeccCEe",
+          "data-b": "EecCCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,4/1,2/-3,-3/",
+            "altId": "11078"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / 6",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 2,1 / 4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgGRRogoRBob",
+          "data-br": "BOOrGgBbbrOG",
+          "data-t": "cCEecCc",
+          "data-b": "CEeEeEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,0/-2,-1/3,3/",
+            "altId": "11079"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Left paw",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGrGRRBBBOO",
+          "data-br": "rgggobRoobbr",
+          "data-t": "CEeCCECE",
+          "data-b": "ceceEecc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-4/0,1/0,3/",
+            "altId": "11339",
+            "ytId": "atPcXteJq9M"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Right fist",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,0 / -4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRRBBOOr",
+          "data-br": "rgRggooobbbr",
+          "data-t": "ECECCCEe",
+          "data-b": "cEececec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/-1,0/-3,0/",
+            "altId": "11340"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Right paw",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRRoobbRBBBO",
+          "data-br": "OrgggobrOGGr",
+          "data-t": "CEeceCEC",
+          "data-b": "EceccCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/0,1/0,3/",
+            "altId": "11341"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Left fist",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,0 / 1,0 / 0,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGGRoRggoRB",
+          "data-br": "BOOrrgobbbrB",
+          "data-t": "CECeEecC",
+          "data-b": "CEeccecE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,1/-1,0/-3,0/",
+            "altId": "11342"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Right paw",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 0,1 / -2,-2 / 1,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBBObrbOrrgG",
+          "data-br": "gRoobBOGGRgo",
+          "data-t": "CCceEecE",
+          "data-b": "eEecECCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,2/2,2/0,-1/3,3/",
+            "altId": "11343"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Shield",
+      "subgroup": "4 Slices",
+      "setup": "/ 0,3 / 1,2 / -3,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ObbrOGBBOobr",
+          "data-br": "rggGRBgoGRRo",
+          "data-t": "EecCECce",
+          "data-b": "ceECcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,0/-1,-2/0,-3/",
+            "altId": "11097"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Muffin",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,0 / -2,-1 / 0,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brgGGROrrgOG",
+          "data-br": "goRBBoRBOobb",
+          "data-t": "ceECEecC",
+          "data-b": "cCEeECce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-3/2,1/3,0/",
+            "altId": "11098"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Barrel",
+      "subgroup": "4 Slices",
+      "setup": "/ 3,3 / 1,0 / -4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BbbrOGRBBOOr",
+          "data-br": "rgGggoGRRoob",
+          "data-t": "EecCCCEe",
+          "data-b": "cEecCEec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/-1,0/-3,-3/",
+            "altId": "11128"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Scallop",
+      "subgroup": "4 Slices",
+      "setup": "/ -3,-3 / 0,-1 / 0,4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGgGRBOOrrg",
+          "data-br": "goRBBbRoobbr",
+          "data-t": "CEeCCEec",
+          "data-b": "cCEeEecc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-4/0,1/3,3/",
+            "altId": "11129"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Square",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,0 / -1,0 / 0,1",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBbrBOrRggoB",
+          "data-br": "bOGGGROrgoob",
+          "data-t": "CcCeEecE",
+          "data-b": "eCECEcec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "0,-1/1,0/-2,0/-1,-2/-3,0/",
+            "altId": "11156"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,-2 / 0,1 / -1,0",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgggoBBOOGRo",
+          "data-br": "obRBbrbOGGrR",
+          "data-t": "cecECECe",
+          "data-b": "cCceCEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "1,0/0,-1/0,2/2,1/0,3/",
+            "altId": "11157"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Square",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 2,0 / -2,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bbroRrGRgoRB",
+          "data-br": "OOGGrgBBOgob",
+          "data-t": "eceEeCcC",
+          "data-b": "ECEcECec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,-3/-2,0/-2,-1/-3,0/-1,1",
+            "altId": "11158"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 0,-2 / -3,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRggooBOGobb",
+          "data-br": "RrORBBbrOGrg",
+          "data-t": "CeceCEce",
+          "data-b": "EeECEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,-2/0,2/1,2/0,3/-1,1",
+            "altId": "11159"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Square",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / -3,0 / -1,-2 / 4,0 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rggOoRobBOOG",
+          "data-br": "GGRBRBbbrrgo",
+          "data-t": "ceEeEcCC",
+          "data-b": "ECECecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/-4,0/1,2/3,0/-1,1",
+            "altId": "11160"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,3 / 2,1 / 0,-4 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brbrggOGRRBB",
+          "data-br": "rOoGGRgoobBO",
+          "data-t": "ceceCECE",
+          "data-b": "eEeECccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/0,4/-2,-1/0,-3/-1,1",
+            "altId": "11161"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "4-1-1 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 0,-4 / -3,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obggooBOGbRr",
+          "data-br": "OOGRBBbrrgGR",
+          "data-t": "ceceCEeEe",
+          "data-b": "ECCEccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,-2/0,4/1,2/0,3/-1,1",
+            "altId": "11022"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / 4-1-1",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / -4,0 / 2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggorgoGRRBbr",
+          "data-br": "BOBOGGobbOrR",
+          "data-t": "ecceCCc",
+          "data-b": "CECEceEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,3/4,0/-1,-2/-3,0/",
+            "altId": "11023"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "6 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / -1,-2 / -2,-4 / -3,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRgoBObOrGgR",
+          "data-br": "oobRBBbrOGrg",
+          "data-t": "CcCeEeEeE",
+          "data-b": "ecCEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,2/2,4/1,2/-3,-3/",
+            "altId": "11024"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / 6",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / -1,-2 / -2,-4 / -3,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRgoBObOrGgR",
+          "data-br": "oobRBBbrOGrg",
+          "data-t": "CcCeEeEeE",
+          "data-b": "ecCEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,2/2,4/1,2/-3,-3/",
+            "altId": "11025"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-2-1 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,0 / -4,0 / 2,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bbrrgRGRRBBO",
+          "data-br": "OrBOGGggooob",
+          "data-t": "eccECCC",
+          "data-b": "EeECEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/2,-3/-1,-2/-3,0/",
+            "altId": "11026"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / 3-2-1",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / 1,2 / -2,0 / -4,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oBOOrGobBbbr",
+          "data-br": "OGgoRBgrgGRR",
+          "data-t": "eCEeEcEec",
+          "data-b": "CcCecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,-2/1,2/0,3/-1,1",
+            "altId": "11027"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-1-2 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / -1,-2 / 2,0 / 4,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bOrrgROGGgGR",
+          "data-br": "goRBbroobBOB",
+          "data-t": "eEecECEeC",
+          "data-b": "cCcecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,3/-2,-1/-3,0/-1,1",
+            "altId": "11028"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / 3-1-2",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,0 / 0,-1 / -2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rrgobbgoRBOG",
+          "data-br": "GGRoRgbrBBOO",
+          "data-t": "eccecCC",
+          "data-b": "ECeEecECE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,2/-1,-2/0,-3/",
+            "altId": "11029"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-3 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / -1,-2 / 2,0 / 2,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bOrrgRGgGRgo",
+          "data-br": "RBbrOGoobBOB",
+          "data-t": "eEecEEeCc",
+          "data-b": "CcCecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,1/-2,0/1,2/-3,-3/",
+            "altId": "11030"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / 3-3",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / 1,2 / 0,2 / -1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRobBOggoRBR",
+          "data-br": "oBbbrGOrOGrg",
+          "data-t": "CcCecCE",
+          "data-b": "eEecEEeCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,-2/0,-2/-1,-2/-3,-3/",
+            "altId": "11031"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left 5-1 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / 0,4 / 3,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obrrggoObGRB",
+          "data-br": "BBOGRRbrOGgo",
+          "data-t": "ceceeEeEC",
+          "data-b": "ECCEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,0/0,-4/-1,-2/0,-3/",
+            "altId": "11032"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / Left 5-1",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,-3 / 0,1 / 0,4 / 4,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggoRBROGGRBO",
+          "data-br": "OrrgbroobBbG",
+          "data-t": "ecCECCC",
+          "data-b": "EeccecEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,1/0,-4/0,-1/3,3/",
+            "altId": "11033"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 5-1 / Parallel Edges",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 0,-4 / -3,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggoobrBOGbRr",
+          "data-br": "OOGRBBrgGRob",
+          "data-t": "ececCEeEe",
+          "data-b": "ECCEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,0/0,4/1,2/0,3/-1,1",
+            "altId": "11034"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / Right 5-1",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / -4,0 / 0,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggorgoRBbrBO",
+          "data-br": "BOGGGRobbOrR",
+          "data-t": "ecceCcC",
+          "data-b": "ECECceEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,3/4,0/-1,-2/-3,0/",
+            "altId": "11035"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 4-2 / Perpendicular Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / 3,-2 / 4,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obrGRROGgorg",
+          "data-br": "gGRBbroObBBO",
+          "data-t": "ceCECcc",
+          "data-b": "eECceEeEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,3/-3,2/-1,-2/0,-3/",
+            "altId": "11042"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / Right 4-2",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / 3,-2 / 4,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obrGRROGgorg",
+          "data-br": "gGRBbroObBBO",
+          "data-t": "ceCECcc",
+          "data-b": "eECceEeEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,3/-3,2/-1,-2/0,-3/",
+            "altId": "11043"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right 4-2 / Perpendicular Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,-3 / 3,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOobbBrgoOrR",
+          "data-br": "ggoGGROGRBbr",
+          "data-t": "CceEceEeE",
+          "data-b": "ecECCCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,4/-2,3/-1,-2/-3,0/",
+            "altId": "11044"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / Left 4-2",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 4,-3 / 0,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBOgooBOrgGR",
+          "data-br": "OGGgobRrBbbr",
+          "data-t": "CEceCcC",
+          "data-b": "CEecEeEec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-3/-4,3/-2,-1/-3,0/-1,1",
+            "altId": "11045"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "6 / Perpendicular Edges",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,-3 / 3,4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bBOGRBrgoOrR",
+          "data-br": "ggoGGRbrBOob",
+          "data-t": "eECCceEeE",
+          "data-b": "ecECcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,-4/-2,3/-1,-2/-3,0/",
+            "altId": "11046"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / 6",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / -2,3 / 3,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obBOrgRBOgoo",
+          "data-br": "RrBbbrGROGGg",
+          "data-t": "cCcCEce",
+          "data-b": "EeEecCCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,-2/2,-3/-2,-1/-3,0/-1,1",
+            "altId": "11047"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-2-1 / Pair",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / 3,-2 / 0,-5 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rGRRoOrggGRB",
+          "data-br": "brOGgobBBOob",
+          "data-t": "eCEeEceEC",
+          "data-b": "cCceECc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,5/-3,2/-1,-2/0,-3/",
+            "altId": "11060"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / 3-2-1",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,0 / -2,-1 / 2,-3 / 5,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGgoRBBOobbB",
+          "data-br": "oOrrgRbrgGGR",
+          "data-t": "CcCCceE",
+          "data-b": "eEecEceEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-5,0/-2,3/2,1/3,0/",
+            "altId": "11061"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-1-2 / Pair",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / 3,-4 / 0,5 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oObbrBrggGRB",
+          "data-br": "OGgoGRBOobrR",
+          "data-t": "eEecEceEC",
+          "data-b": "CcCCceE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-5/-3,4/-1,-2/0,-3/",
+            "altId": "11062"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / 3-1-2",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,4 / 2,-2 / 0,-2",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggobobRoBBOO",
+          "data-br": "OGGrRBbrrgGR",
+          "data-t": "ececEeECE",
+          "data-b": "CEeCccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "0,2/-2,2/0,-4/2,1/0,3/",
+            "altId": "11063"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "3-3 / Pair",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / -3,0 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RorggGBBOobr",
+          "data-br": "ObbrOGRBgoGR",
+          "data-t": "EeceEECce",
+          "data-b": "EecCCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/3,0/-1,-2/0,-3/",
+            "altId": "11066"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pair / 3-3",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,0 / -2,-1 / 0,3 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "goRBBorgOGbr",
+          "data-br": "gGGROrRBOobb",
+          "data-t": "cCEecCc",
+          "data-b": "eECEeECce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/0,-3/2,1/3,0/",
+            "altId": "11067"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / 1,2 / 2,2 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBobBOrGggoR",
+          "data-br": "oBbbrOOGrgGR",
+          "data-t": "CcCeEecE",
+          "data-b": "eEecECcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/-2,-2/-1,-2/-3,-3/",
+            "altId": "11344"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / -5,2 / 0,4 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOOrgoBOGGGR",
+          "data-br": "oobbRgRBrgbr",
+          "data-t": "CEecECEC",
+          "data-b": "eceEeCcc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/0,-4/5,-2/-3,0/",
+            "altId": "11345"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Left fist",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / -2,5 / -4,0 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GrBBOORBGRbr",
+          "data-br": "OGRoobrgggob",
+          "data-t": "EeECECCc",
+          "data-b": "CEeccece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/4,0/2,-5/0,3/",
+            "altId": "11346"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,0 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRrgRggo",
+          "data-br": "RBBOOroobbbr",
+          "data-t": "ECECcEec",
+          "data-b": "CCEeecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/-1,0/-3,0/",
+            "altId": "11347"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Right fist",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RoobbrRBBBOO",
+          "data-br": "rgggobOGGrGR",
+          "data-t": "EeccCECE",
+          "data-b": "ceceCEeC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/0,1/0,3/",
+            "altId": "11348"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Muffin",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,-3 / 2,1 / -2,0 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "goRBoboBOOrG",
+          "data-br": "grgGRRBbbrOG",
+          "data-t": "cCceCEeE",
+          "data-b": "ecCEEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/2,0/-2,-1/3,3/",
+            "altId": "11084"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / -1,-2 / 0,-2 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OrrgGRogoRBB",
+          "data-br": "bOGGgRobBObr",
+          "data-t": "EecCecCE",
+          "data-b": "eCEeEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/0,2/1,2/-3,-3/",
+            "altId": "11085"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Muffin",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,-3 / -2,-1 / 2,0 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRgoRBbOrrgR",
+          "data-br": "oobBOBbrOGGg",
+          "data-t": "CcCeEecE",
+          "data-b": "ecCEcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/-2,0/2,1/3,3/",
+            "altId": "11086"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / 1,2 / 0,-2 / 0,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bobBOOGggoRB",
+          "data-br": "brOGrgrGRRoB",
+          "data-t": "ecCEEecC",
+          "data-b": "cCceCEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/0,2/-1,-2/-3,-3/",
+            "altId": "11087"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Shield",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / -2,3 / 0,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oBOOrRgoRBbr",
+          "data-br": "obbBOGgGGRrg",
+          "data-t": "eCEeEcCc",
+          "data-b": "ceECeECc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/2,-3/-1,-2/-3,0/",
+            "altId": "11089"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / -2,-1 / -3,2 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "gobBBOGRrggG",
+          "data-br": "rRoobORBbrOG",
+          "data-t": "ceECCceE",
+          "data-b": "eEecECcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/3,-2/2,1/0,3/",
+            "altId": "11090"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Shield",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,-3 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBbrBOrRggoG",
+          "data-br": "GRrgoOobbBOG",
+          "data-t": "CcCeEecE",
+          "data-b": "CceEceEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/-2,3/-1,-2/-3,0/",
+            "altId": "11091"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 3,-2 / 0,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oOGRrggobBBO",
+          "data-br": "obRBbrgOGGrR",
+          "data-t": "eECcceEC",
+          "data-b": "cCceCEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/-3,2/2,1/0,3/",
+            "altId": "11092"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Shield",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / 5,-2 / 0,-2 / 1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBggooOGRobb",
+          "data-br": "RBBOGrbrOGrg",
+          "data-t": "CeceECce",
+          "data-b": "EECEecCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,-2/0,2/-5,2/0,3/-1,1",
+            "altId": "11093"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Right fist",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / 5,-2 / 0,-2 / 1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBggooOGRobb",
+          "data-br": "RBBOGrbrOGrg",
+          "data-t": "CeceECce",
+          "data-b": "EECEecCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,-2/0,2/-5,2/0,3/-1,1",
+            "altId": "11094"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Shield",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / 5,-2 / 0,-2 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ggoobrOGRobb",
+          "data-br": "RBBOGrOGrgRB",
+          "data-t": "ececECce",
+          "data-b": "EECEeCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/0,2/-5,2/0,3/-1,1",
+            "altId": "11095"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Left fist",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,-5 / 2,0 / 0,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RgobbrbrGRgo",
+          "data-br": "RBOOGGBBOrgo",
+          "data-t": "EeceecCc",
+          "data-b": "CECEECce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,1/-2,0/-2,5/-3,0/-1,1",
+            "altId": "11096"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 3,-4 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GggorgobrRBB",
+          "data-br": "bRrOOGGRobBO",
+          "data-t": "EeccecCE",
+          "data-b": "eEeECCcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/-3,4/1,2/0,3/-1,1",
+            "altId": "11100"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Muffin",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 4,-3 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "gooRrBobBOrg",
+          "data-br": "GROGGgbbrRBO",
+          "data-t": "ceEeEcCc",
+          "data-b": "CCEeecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/-4,3/-2,-1/-3,0/-1,1",
+            "altId": "11101"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,-4 / 0,4 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "goGRRoRBBBOr",
+          "data-br": "rggObGbrOGob",
+          "data-t": "cCEeCECe",
+          "data-b": "ceEeEcCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/0,-4/-1,4/0,-3/",
+            "altId": "11102"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Left fist",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,0 / 4,-1 / -4,0 / 0,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "gBoGGRBOgoRB",
+          "data-br": "OrrgOGRobbbr",
+          "data-t": "eEeECCcC",
+          "data-b": "EecCEcec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/4,0/-4,1/3,0/",
+            "altId": "11103"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,4 / 0,-4 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rOOGrgoRBBBO",
+          "data-br": "GbRggobrGRob",
+          "data-t": "eECceCEC",
+          "data-b": "EeEeccCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/0,4/1,-4/0,3/-1,1",
+            "altId": "11104"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Right fist",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / -4,1 / 4,0 / 0,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGrBgBOrgRB",
+          "data-br": "GRgooRobbbrO",
+          "data-t": "CEeEeCcC",
+          "data-b": "CceEcecE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,1/-4,0/4,-1/-3,0/-1,1",
+            "altId": "11105"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 3,-2 / -3,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GggoOGRBBobb",
+          "data-br": "RrOobrrgGRBO",
+          "data-t": "EecCCEce",
+          "data-b": "EeEeccCC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,2/-3,2/1,2/0,3/-1,1",
+            "altId": "11106"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 2,-3 / 2,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBOoRrobrgGR",
+          "data-br": "goOGGgBBObbr",
+          "data-t": "CEeEeccC",
+          "data-b": "cCEeECec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,-3/-2,3/-2,-1/-3,0/-1,1",
+            "altId": "11107"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,3 / 1,2 / -3,2 / 3,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRrggGbbrBBO",
+          "data-br": "obrRoORBOGgo",
+          "data-t": "CceEecEC",
+          "data-b": "ceEeECCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,-2/3,-2/-1,-2/0,-3/",
+            "altId": "11108"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,0 / -2,-1 / -2,3 / -2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oOrRBOOGgobr",
+          "data-br": "gGGRrgobbRBB",
+          "data-t": "eEeECCcc",
+          "data-b": "eECcceCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,3/2,-3/2,1/3,0/",
+            "altId": "11109"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Scallop",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / 1,2 / 0,4 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOOrbrGggoRB",
+          "data-br": "GRRoBbOGrgob",
+          "data-t": "CEecEecC",
+          "data-b": "CEeEeCcc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/0,-4/-1,-2/-3,-3/",
+            "altId": "11110"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Scallop / Shield",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,-3 / -2,-1 / -4,0 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BbOrrgBOGRgo",
+          "data-br": "RBRoobbrOGGg",
+          "data-t": "EeEecCCc",
+          "data-b": "CEeccCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/4,0/2,1/3,3/",
+            "altId": "11111"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Barrel",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / 4,-3 / -2,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OgooRrrgGROG",
+          "data-br": "GgobBOBbbrRB",
+          "data-t": "EceEecCC",
+          "data-b": "EecCEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,-1/-4,3/-2,-1/-3,0/-1,1",
+            "altId": "11122"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / 3,-4 / -1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obBOGgbrRBBb",
+          "data-br": "RrOOGogorgGR",
+          "data-t": "cCEecCEe",
+          "data-b": "EeECeccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,-2/-3,4/1,2/0,3/-1,1",
+            "altId": "11123"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Barrel",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 0,-3 / -1,-2 / -3,4 / -2,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OobrRBGggoOG",
+          "data-br": "rgGRBOBobbRr",
+          "data-t": "EecCEecC",
+          "data-b": "cCCEceEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,-1/3,-4/1,2/0,3/-1,1",
+            "altId": "11124"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / -4,3 / -1,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obrgGRRrBBOb",
+          "data-br": "brRBOogoOGGg",
+          "data-t": "ccCEeECe",
+          "data-b": "cCEecCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,-2/4,-3/-2,-1/-3,0/-1,1",
+            "altId": "11125"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Barrel",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,3 / 1,0 / -2,0 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OrrgGgOGgoRB",
+          "data-br": "BOBbbrGRRoob",
+          "data-t": "EecEeCcC",
+          "data-b": "CEecCEec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/2,0/-1,0/-3,-3/",
+            "altId": "11126"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Shield",
+      "subgroup": "5 Slices",
+      "setup": "/ -3,-3 / 0,-1 / 0,2 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBBbobBOOrrg",
+          "data-br": "GgGRRobrOGgo",
+          "data-t": "CEecCEec",
+          "data-b": "EeCEecCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/0,-2/0,1/3,3/",
+            "altId": "11127"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left paw / Kite",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,0 / 0,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rrgRgogoRBBO",
+          "data-br": "BOGGGRobbbrO",
+          "data-t": "ecEeecCC",
+          "data-b": "ECECcecE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,1/2,0/-1,0/-3,0/",
+            "altId": "11137"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Left paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 1,2 / -1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OrgggoRBBBOG",
+          "data-br": "rGRRobobbrOG",
+          "data-t": "EcecCECE",
+          "data-b": "eCEeeccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/1,0/-1,-2/0,1/0,3/",
+            "altId": "11138"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Shield / Kite",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 1,2 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGOrggbRBBBO",
+          "data-br": "GrGRRogoobbr",
+          "data-t": "CEceeCEC",
+          "data-b": "EeCEeccc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/-1,-2/0,1/0,3/",
+            "altId": "11139"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Shield",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,0 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OrrgRgGRgoRB",
+          "data-br": "BOBOGGoobbbr",
+          "data-t": "EecEeCcC",
+          "data-b": "CECEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/2,0/-1,0/-3,0/",
+            "altId": "11140"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right paw / Kite",
+      "subgroup": "5 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,-1 / 0,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOrrgRgoRBBO",
+          "data-br": "OGGGRogobbbr",
+          "data-t": "EEecEcCC",
+          "data-b": "CECeecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/2,1/-1,0/-3,0/",
+            "altId": "11141"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Right paw",
+      "subgroup": "5 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,2 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgggoboRBBBO",
+          "data-br": "OGrGRRobbrOG",
+          "data-t": "ceceeCEC",
+          "data-b": "EEeCEccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/0,-2/0,1/0,3/",
+            "altId": "11142"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Square",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,0 / -1,-2 / 4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGGROBOrgrR",
+          "data-br": "ggoBbroobbRB",
+          "data-t": "CECECceE",
+          "data-b": "ecEceceC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-4,0/1,2/-2,0/-1,-2/-3,0/",
+            "altId": "11150"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Left fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,-2 / 2,1 / 0,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBbOGGbrBBOO",
+          "data-br": "orgggorRGRob",
+          "data-t": "CeCEcECE",
+          "data-b": "ececeECc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,4/-2,-1/0,2/2,1/0,3/",
+            "altId": "11151"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Square",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,2 / -2,0 / 2,1 / -4,0 / 0,-1",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brBOGGRBbBOO",
+          "data-br": "RGRgogrgoobr",
+          "data-t": "cECECeCE",
+          "data-b": "ECcecece"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "0,-1/0,1/4,0/-2,-1/2,0/-1,-2/-3,0/",
+            "altId": "11152"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Right fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,2 / -1,-2 / 0,4 / 1,0",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GOGrgrRBOOGR",
+          "data-br": "ggobRBoobBbr",
+          "data-t": "ECceECEC",
+          "data-b": "eceCecEc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "1,0/-1,0/0,-4/1,2/0,-2/2,1/0,3/",
+            "altId": "11153"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Square",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,3 / 1,0 / -2,-2 / 2,1 / -2,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brOGgRgoRBbO",
+          "data-br": "rrgGGRoobBBO",
+          "data-t": "cCeEcCeE",
+          "data-b": "ecECecEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,2/-2,-1/2,2/-1,0/-3,-3/",
+            "altId": "11154"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Barrel",
+      "subgroup": "6 Slices",
+      "setup": "/ -3,-3 / 0,1 / -2,-2 / 1,-2 / -2,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oobBOGrrgGRB",
+          "data-br": "BObrbOGRgogR",
+          "data-t": "ecECecEC",
+          "data-b": "CceECceE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,2/-1,2/2,2/0,-1/3,3/",
+            "altId": "11155"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Star / 7-1",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,3 / 1,2 / 3,-2 / 2,1 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "RBbrOGobgorg",
+          "data-br": "gGbBBOrGRRoO",
+          "data-t": "CcCccc",
+          "data-b": "eEeECeCEeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/-2,-1/-3,2/-1,-2/0,-3/",
+            "altId": "11167"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "7-1 / Star",
+      "subgroup": "6 Slices",
+      "setup": "1,-1 / 3,0 / 2,1 / -2,3 / 1,2 / 0,2 / -1,0",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "gBbbrOgooRrG",
+          "data-br": "obBOrgRBGROG",
+          "data-t": "eEecEceEeE",
+          "data-b": "cCcCCC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "1,0/0,-2/-1,-2/ 2,-3/-2,-1/-3,0/-1,1",
+            "altId": "11168"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Star / 5-3",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 3,-2 / 2,1 / 4,0 / 0,-3",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOobRBGRrgbr",
+          "data-br": "BoOgOGGrRgob",
+          "data-t": "CcCCcc",
+          "data-b": "EeEeCEeEce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "0,3/-4,0/-2,-1/-3,2/2,1/0,3/",
+            "altId": "11169"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "5-3 / Star",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,2 / 2,-3 / -1,-2 / 0,-4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oObBOGrRggoG",
+          "data-br": "brBOobRBGRrg",
+          "data-t": "eEeECeEecE",
+          "data-b": "cCcCCc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,4/1,2/-2,3/-1,-2/-3,0/",
+            "altId": "11170"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "2-2-2 / Parallel Edges",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,-1 / -2,0 / -6,3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brBGGROrrgRg",
+          "data-br": "RBBOOGogoobb",
+          "data-t": "cEECEecEe",
+          "data-b": "CCCecce"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/6,-3/2,0/2,1/-1,0/-3,0/",
+            "altId": "11020"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Parallel Edges / 2-2-2",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,-1 / -2,0 / 0,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "ogoobbRBBOOG",
+          "data-br": "OrrgRgbrBGGR",
+          "data-t": "ecceCCC",
+          "data-b": "EecEecEEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,3/2,0/2,1/-1,0/-3,0/",
+            "altId": "11021"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "2-2-2 / Perpendicular Edges",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,2 / -2,0 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "GRRoRBbBBOOG",
+          "data-br": "rrgggoobbrOG",
+          "data-t": "CEeCeECEE",
+          "data-b": "ececccC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/2,0/0,-2/0,1/0,3/",
+            "altId": "11040"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Perpendicular Edges / 2-2-2",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,-1 / 0,-2 / 0,1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rOGGGRgoRBBO",
+          "data-br": "rgRgobobbrBO",
+          "data-t": "eCECcCC",
+          "data-b": "cEeceecEE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-1/0,2/2,1/-1,0/-3,0/",
+            "altId": "11041"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Left fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,2 / 0,-2 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgGrGRRBBBOO",
+          "data-br": "ggobobRobrOG",
+          "data-t": "cEeCCECE",
+          "data-b": "ececEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/0,2/0,-2/0,1/0,3/",
+            "altId": "11337"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Right fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,0 / 2,0 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOBOGGgoRBOr",
+          "data-br": "rgRgGRoobbbr",
+          "data-t": "CECEcCEe",
+          "data-b": "cEeCecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/-2,0/2,0/-1,0/-3,0/",
+            "altId": "11338"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Muffin",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,-4 / -2,0 / 2,1 / -4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgBOGGRBroob",
+          "data-br": "bRGRgogbrBOO",
+          "data-t": "cECECeec",
+          "data-b": "eECcecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/-2,-1/2,0/-1,4/-3,0/",
+            "altId": "11080"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Right fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / 4,-1 / 0,2 / -1,-2 / 0,4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGrgrBoobRBG",
+          "data-br": "ggobGRBOORbr",
+          "data-t": "CceEecCE",
+          "data-b": "eceCCEEc"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-4/1,2/0,-2/-4,1/0,3/",
+            "altId": "11081"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Muffin",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,-4 / -2,0 / 0,1 / -4,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRrgroob",
+          "data-br": "bRgoRBgbrBOO",
+          "data-t": "ECECceec",
+          "data-b": "eEcCecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/4,0/0,-1/2,0/-1,4/-3,0/",
+            "altId": "11082"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Left fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / 4,-1 / 0,2 / -1,0 / 0,4 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "brOGrBoobRBG",
+          "data-br": "rgggobBOORGR",
+          "data-t": "cCeEecCE",
+          "data-b": "ceceCEEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-4/1,0/0,-2/-4,1/0,3/",
+            "altId": "11083"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Barrel",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,3 / -1,-2 / -2,0 / 1,0 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rbrOGGgogRBB",
+          "data-br": "bOrgGRRoobBO",
+          "data-t": "ecCEceCE",
+          "data-b": "eEcCEecC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/-1,0/2,0/1,2/-3,-3/",
+            "altId": "11116"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Right fist",
+      "subgroup": "6 Slices",
+      "setup": "/ -3,-3 / 2,1 / 0,2 / 0,-1 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgGRoBobBOOr",
+          "data-br": "ggoRBRbbrGOG",
+          "data-t": "cCeEcCEe",
+          "data-b": "ecCEecEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/0,1/0,-2/-2,-1/3,3/",
+            "altId": "11117"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Barrel",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,3 / 1,2 / 2,0 / -1,0 / -2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bbrOGOggoBRB",
+          "data-br": "obBOrGrgGRRo",
+          "data-t": "ecCEecEC",
+          "data-b": "cCeEcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,0/1,0/-2,0/-1,-2/-3,-3/",
+            "altId": "11118"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Left fist",
+      "subgroup": "6 Slices",
+      "setup": "/ -3,-3 / -2,-1 / 0,-2 / 0,1 / 0,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "gRobBOOrrgGR",
+          "data-br": "ogoRBBbrbOGG",
+          "data-t": "eEcCEecC",
+          "data-b": "ecCEceCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,-2/0,-1/0,2/2,1/3,3/",
+            "altId": "11119"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Barrel",
+      "subgroup": "6 Slices",
+      "setup": "1,-1 / -3,0 / -1,0 / 2,0 / -2,0 / -2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BRBobbrgOGgO",
+          "data-br": "gooRBObrrGGR",
+          "data-t": "ECcecCeE",
+          "data-b": "ceECceEC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,3/2,0/-2,0/1,0/3,0/-1,1",
+            "altId": "11120"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Barrel / Muffin",
+      "subgroup": "6 Slices",
+      "setup": "1,-1 / 0,3 / 0,1 / 0,-2 / 0,2 / 3,2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obrOOGrggRRB",
+          "data-br": "BBObrboGgoGR",
+          "data-t": "ceECceEC",
+          "data-b": "ECceeEcC"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-3,-2/0,-2/0,2/0,-1/0,-3/-1,1",
+            "altId": "11121"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Left fist / Kite",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,2 / -2,0 / 0,1 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRrRgoRB",
+          "data-br": "brbBOOgrgoob",
+          "data-t": "ECECeEcC",
+          "data-b": "ceCEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/0,-1/2,0/-1,-2/-3,0/",
+            "altId": "11131"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Left fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,3 / 1,2 / 0,2 / -1,0 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bbrGOGRBBBOR",
+          "data-br": "obrrgggoGRoO",
+          "data-t": "ecECCECE",
+          "data-b": "cececCeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/1,0/0,-2/-1,-2/0,-3/",
+            "altId": "11132"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Right fist / Kite",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,0 / 1,2 / -2,0 / 0,1 / 2,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "BOGGGRrRgoRB",
+          "data-br": "brbBOOgrgoob",
+          "data-t": "ECECeEcC",
+          "data-b": "ceCEecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-2,0/0,-1/2,0/-1,-2/-3,0/",
+            "altId": "11133"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Right fist",
+      "subgroup": "6 Slices",
+      "setup": "/ 0,-3 / -2,-1 / 0,2 / -1,0 / 0,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "oobBRBBOOGRG",
+          "data-br": "rgggobbrOGrR",
+          "data-t": "ecECCECE",
+          "data-b": "cececCeE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,2/1,0/0,-2/2,1/0,3/",
+            "altId": "11134"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Muffin / Kite",
+      "subgroup": "6 Slices",
+      "setup": "/ 3,3 / 1,0 / -2,0 / 2,0 / -2,-3 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "bbrGRRgoRBOr",
+          "data-br": "rgGgOGoobBOB",
+          "data-t": "ecCEcCEe",
+          "data-b": "cEeCecCE"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/2,3/-2,0/2,0/-1,0/-3,-3/",
+            "altId": "11135"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Muffin",
+      "subgroup": "6 Slices",
+      "setup": "/ -3,-3 / 0,1 / 0,-2 / 0,2 / -3,-2 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "obBbRBrrgGRG",
+          "data-br": "ggoBOObrOGRo",
+          "data-t": "cEeCecCE",
+          "data-b": "ecCEcCEe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/3,2/0,-2/0,2/0,-1/3,3/",
+            "altId": "11136"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Kite / Square",
+      "subgroup": "7 Slices",
+      "setup": "/ 3,0 / 1,0 / -2,0 / 2,0 / -2,0 / 1,0 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "rgRgGRGgoRBO",
+          "data-br": "rBOBOGoobbbr",
+          "data-t": "cEeCEcCE",
+          "data-b": "eCECecec"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/-1,0/2,0/-2,0/2,0/-1,0/-3,0/",
+            "altId": "11148"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Kite",
+      "subgroup": "7 Slices",
+      "setup": "/ 0,-3 / 0,-1 / 0,2 / 0,-2 / 0,2 / 0,-1 /",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "gobobRRBBBOO",
+          "data-br": "rgGrGRobrOGg",
+          "data-t": "cecECECE",
+          "data-b": "cEeCecCe"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "/0,1/0,-2/0,2/0,-2/0,1/0,3/",
+            "altId": "11149"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Square / Square",
+      "subgroup": "Solved",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "sqcube",
+        "attrs": {
+          "data-width": "75",
+          "data-height": "75",
+          "data-display": "2",
+          "data-tr": "OGGGRRRBBBOO",
+          "data-br": "rrgggooobbbr",
+          "data-t": "CECECECE",
+          "data-b": "ecececec"
+        }
+      },
+      "algs": [
+        []
+      ]
+    }
+  ]
+}

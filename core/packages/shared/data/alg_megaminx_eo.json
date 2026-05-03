@@ -1,0 +1,71 @@
+{
+  "scrapedAt": "2026-05-03T16:53:02.226Z",
+  "source": "https://speedcubedb.com/a/megaminx/MegaminxEO",
+  "puzzle": "megaminx",
+  "set": "eo",
+  "cases": [
+    {
+      "name": "EO1",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylllylllyly-lllllllllllllll----",
+          "src": "/template/renderers/cache/megacube/100/ylllylllyly-lllllllllllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' F'",
+            "altId": "9820"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EO2",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylllllyly-lllllllllllllll----",
+          "src": "/template/renderers/cache/megacube/100/ylylllllyly-lllllllllllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U R U' R' F'",
+            "altId": "9819"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "EO3",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylllllllyll-lllllllllllllll----",
+          "src": "/template/renderers/cache/megacube/100/ylllllllyll-lllllllllllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U2 R2' F R F' U2' F'",
+            "altId": "9821"
+          }
+        ]
+      ]
+    }
+  ]
+}

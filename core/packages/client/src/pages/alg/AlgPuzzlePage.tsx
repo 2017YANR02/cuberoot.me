@@ -15,10 +15,14 @@ import './alg.css';
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
 
 const PUZZLE_TITLE: Record<AlgPuzzle, { en: string; zh: string }> = {
-  '2x2': { en: '2x2 Algorithms', zh: '二阶公式' },
-  '3x3': { en: '3x3 Algorithms', zh: '三阶公式' },
-  '4x4': { en: '4x4 Algorithms', zh: '四阶公式' },
-  '5x5': { en: '5x5 Algorithms', zh: '五阶公式' },
+  '2x2':      { en: '2x2 Algorithms',      zh: '二阶公式' },
+  '3x3':      { en: '3x3 Algorithms',      zh: '三阶公式' },
+  '4x4':      { en: '4x4 Algorithms',      zh: '四阶公式' },
+  '5x5':      { en: '5x5 Algorithms',      zh: '五阶公式' },
+  'sq1':      { en: 'Square 1 Algorithms', zh: 'Square 1 公式' },
+  'megaminx': { en: 'Megaminx Algorithms', zh: '五魔方公式' },
+  'pyraminx': { en: 'Pyraminx Algorithms', zh: '金字塔公式' },
+  'skewb':    { en: 'Skewb Algorithms',    zh: '粽子公式' },
 };
 
 function isPuzzle(s: string): s is AlgPuzzle {
