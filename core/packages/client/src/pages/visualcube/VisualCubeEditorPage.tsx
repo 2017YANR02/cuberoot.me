@@ -25,6 +25,7 @@ import {
   Axis,
   type ICubeOptions,
 } from '@cuberoot/visualcube';
+import LangToggle from '../../components/LangToggle';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -532,13 +533,15 @@ export default function VisualCubeEditorPage() {
 
       <header className="vc-header">
         <h1>{t('VisualCube 编辑器', 'VisualCube Editor')}</h1>
+        <LangToggle variant="inline" />
       </header>
 
-      {/* Preview */}
+      {/* Preview — sticky so it stays on screen while scrolling controls.
+          imageSize controls the SVG file size (for download / share URL); the
+          preview is visually capped via CSS max-height to keep sticky usable. */}
       <section className="vc-preview-wrap">
         <div
           className="vc-preview"
-          style={{ width: state.imageSize, height: state.imageSize }}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </section>
@@ -871,18 +874,27 @@ const INLINE_CSS = `
   max-width: 960px; margin: 0 auto; padding: 16px;
   background: var(--vc-bg); color: var(--vc-text);
 }
-.vc-header { padding: 4px 0 14px; margin-bottom: 12px; }
+.vc-header {
+  padding: 4px 0 14px; margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
 .vc-header h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--vc-text); letter-spacing: 0.3px; }
 
 .vc-preview-wrap {
+  position: sticky; top: 0; z-index: 5;
   display: flex; justify-content: center; align-items: center;
-  padding: 32px; background: #161616; border-radius: 4px; min-height: 280px;
+  padding: 24px; background: #161616; border-radius: 4px;
+  /* Cap visible height so sticky stays usable when imageSize is large.
+     The SVG's intrinsic dimensions still match imageSize (for download). */
+  max-height: 45vh;
 }
 .vc-preview {
   display: inline-block;
   background: repeating-conic-gradient(rgba(255,255,255,0.025) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+  max-width: 100%; max-height: 100%;
+  overflow: hidden;
 }
-.vc-preview svg { display: block; }
+.vc-preview svg { display: block; max-width: 100%; max-height: calc(45vh - 48px); width: auto; height: auto; }
 
 .vc-exports { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
 
