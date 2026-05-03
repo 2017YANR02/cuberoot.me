@@ -581,8 +581,8 @@ export default function VisualCubeEditorPage() {
 
       {/* Export buttons */}
       <section className="vc-exports">
-        <CopyButton label={t('复制分享链接', 'Copy share URL')} getValue={() => shareUrl} />
-        <CopyButton label={t('复制 API 链接', 'Copy API URL')} getValue={() => apiUrl} />
+        <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
+        <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> {t('下载 SVG', 'Download SVG')}
         </button>
@@ -590,11 +590,11 @@ export default function VisualCubeEditorPage() {
           <Download size={14} /> {t('下载 PNG', 'Download PNG')}
         </button>
         <CopyButton
-          label={t('复制 <img> 标签', 'Copy <img> tag')}
+          label={t('<img> 标签', '<img> tag')}
           getValue={() => `<img src="${apiUrl}" alt="cube" width="${state.imageSize}" height="${state.imageSize}" />`}
         />
         <CopyButton
-          label={t('复制 Markdown', 'Copy Markdown')}
+          label="Markdown"
           getValue={() => `![cube](${apiUrl})`}
         />
       </section>
