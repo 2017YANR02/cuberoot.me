@@ -34,7 +34,8 @@ import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, autoSpaceMoves } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
-import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2 } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2, Shuffle } from 'lucide-react';
+import { randomScrambleForReconEvent } from '../../utils/scramble';
 
 /** 折叠区段 — GitHub 设置式 */
 function CollapsibleSection({ title, defaultOpen = false, children }: {
@@ -346,8 +347,13 @@ export default function ReconSubmitPage() {
 
   /** textarea 自适应高度——先收缩到最小再擑开到 scrollHeight */
   const autoResize = useCallback((el: HTMLTextAreaElement) => {
+    // 全局 * { box-sizing: border-box } 下,el.style.height 包含 padding+border,
+    // 而 scrollHeight 只含 content+padding,所以要补上 border 的高度,否则
+    // 内容会被边框上下各裁掉 1px,长内容时最后一行被吃掉。
     el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
+    void el.offsetHeight; // 强制 reflow,确保下面读到的是 'auto' 后的真实尺寸
+    const borderY = el.offsetHeight - el.clientHeight;
+    el.style.height = (el.scrollHeight + borderY) + 'px';
   }, []);
 
   // NOTE: 实时解法统计
@@ -859,61 +865,249 @@ export default function ReconSubmitPage() {
         {/* 右栏：表单 */}
         <div className="submit-form-pane">
       <div className="submit-form">
-        {/* === Hero 行：选手 / 项目 / 成绩 — 必填 3 项,大字号 === */}
-        <div className="submit-hero">
-          <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}`}>
-            <span className="submit-label">{t('recon.solver')} *</span>
-            {form.personId ? (
-              <div className={`submit-solver-pill${lockIdentity ? ' submit-solver-pill--locked' : ''}`}>
-                <Flag iso2={form.personCountry || ''} />
-                <span className="submit-solver-name">{displayCuberName(form.person || '', isZh)}</span>
-                {/* 锁定身份字段(edit 模式 / 从同轮次跳进来):不展示清除按钮 */}
-                {!lockIdentity && (
-                  <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
-                )}
-              </div>
-            ) : (
-              <WcaPersonPicker
-                mode="inline"
-                onSelect={handleSolverPick}
-                searchFn={solverSearchFn}
-                placeholder=""
-                autoConfirmExact
+        {/* === 比赛信息 — 默认展开 === */}
+        <CollapsibleSection
+          title={isZh ? '比赛信息' : 'Competition'}
+          defaultOpen
+        >
+          {/* === Hero 行：选手 / 项目 / 成绩 — 必填 3 项,大字号 === */}
+          <div className="submit-hero">
+            <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}`}>
+              <span className="submit-label">{t('recon.solver')} *</span>
+              {form.personId ? (
+                <div className={`submit-solver-pill${lockIdentity ? ' submit-solver-pill--locked' : ''}`}>
+                  <Flag iso2={form.personCountry || ''} />
+                  <span className="submit-solver-name">{displayCuberName(form.person || '', isZh)}</span>
+                  {/* 锁定身份字段(edit 模式 / 从同轮次跳进来):不展示清除按钮 */}
+                  {!lockIdentity && (
+                    <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
+                  )}
+                </div>
+              ) : (
+                <WcaPersonPicker
+                  mode="inline"
+                  onSelect={handleSolverPick}
+                  searchFn={solverSearchFn}
+                  placeholder=""
+                  autoConfirmExact
+                />
+              )}
+            </div>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.event')} *</span>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">
+                  {form.event ? <><EventIcon event={form.event} /> {eventDisplayName(form.event, isZh)}</> : ''}
+                </div>
+              ) : (
+                <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
+              )}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.time')}</span>
+              <input
+                type="text"
+                value={timeInput}
+                onChange={e => {
+                  setTimeInput(e.target.value);
+                  setTimeUserTouched(true);
+                  setTimeAutoSource(null);
+                  timeAutoFilledRef.current = false;
+                }}
+                readOnly={!!timeAutoSource}
+                className={timeAutoSource ? 'submit-input-locked' : undefined}
+                title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
               />
-            )}
+            </label>
           </div>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.event')} *</span>
-            {lockIdentity ? (
-              <div className="submit-readonly-text">
-                {form.event ? <><EventIcon event={form.event} /> {eventDisplayName(form.event, isZh)}</> : ''}
-              </div>
-            ) : (
-              <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
-            )}
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.time')}</span>
-            <input
-              type="text"
-              value={timeInput}
-              onChange={e => {
-                setTimeInput(e.target.value);
-                setTimeUserTouched(true);
-                setTimeAutoSource(null);
-                timeAutoFilledRef.current = false;
-              }}
-              readOnly={!!timeAutoSource}
-              className={timeAutoSource ? 'submit-input-locked' : undefined}
-              title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
-            />
-          </label>
-        </div>
 
+          <div className="submit-row">
+            <label className="submit-field submit-field-narrow">
+              <span className="submit-label">WCA</span>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">{form.official ? 'WCA' : t('recon.badge.nonWca')}</div>
+              ) : (
+                <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
+                  <option value="1">WCA</option>
+                  <option value="0">{t('recon.badge.nonWca')}</option>
+                </select>
+              )}
+            </label>
+            <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
+              <span className="submit-label">{t('recon.competition')}</span>
+              {form.compWcaId ? (
+                <div className={`submit-comp-pill${lockIdentity ? ' submit-comp-pill--locked' : ''}`}>
+                  <Flag iso2={form.country || ''} />
+                  <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
+                  {/* 锁定身份字段:不展示清除按钮 */}
+                  {!lockIdentity && (
+                    <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
+                  )}
+                </div>
+              ) : lockIdentity ? (
+                <div className="submit-readonly-text">{form.comp || ''}</div>
+              ) : (
+                <CompPicker
+                  value={form.comp || ''}
+                  onChange={(v) => setField('comp', v)}
+                  onPick={applyPickedComp}
+                  isZh={isZh}
+                  disableSuggestions={!form.official}
+                  presets={!form.official ? [
+                    { icon: <Home size={14} />, label: isZh ? '家' : 'Home', value: isZh ? '家' : 'Home' },
+                  ] : undefined}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="submit-row">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.round')}</span>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">{form.round ? localizeRound(form.round, t) : ''}</div>
+              ) : (
+                <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
+                  <option value="">{isZh ? '请选择' : 'Select…'}</option>
+                  {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
+                </select>
+              )}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">#</span>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">{form.solveNum ?? ''}</div>
+              ) : (
+                <select
+                  value={form.solveNum ?? ''}
+                  onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
+                >
+                  <option value="">{isZh ? '请选择' : 'Select…'}</option>
+                  {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              )}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.group')}</span>
+              <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
+                placeholder="A/B/C" maxLength={1} />
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.date')}</span>
+              <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
+                placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
+            </label>
+          </div>
+
+          <div className="submit-row">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.average')}</span>
+              <input
+                type="text"
+                value={avgInput}
+                onChange={e => {
+                  setAvgInput(e.target.value);
+                  setAvgUserTouched(true);
+                  setAvgAutoSource(null);
+                  avgAutoFilledRef.current = false;
+                }}
+                readOnly={lockIdentity || !!avgAutoSource}
+                className={(lockIdentity || avgAutoSource) ? 'submit-input-locked' : undefined}
+                title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
+                  : avgAutoSource ? (isZh ? '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取' : 'auto-filled, read-only; change person/comp/event/round to refetch')
+                  : undefined}
+              />
+              {avgLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.single')}</span>
+              <input
+                type="text"
+                value={form.value ?? ''}
+                onChange={e => {
+                  setField('value', e.target.value);
+                  setTimeUserTouched(true);
+                  setTimeAutoSource(null);
+                  timeAutoFilledRef.current = false;
+                }}
+                readOnly={lockIdentity || !!timeAutoSource}
+                className={(lockIdentity || timeAutoSource) ? 'submit-input-locked' : undefined}
+                title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
+                  : timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
+              />
+              {timeLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.badge.singleRecord')}</span>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">
+                  {form.regionalSingleRecord
+                    ? <RecordBadge record={form.regionalSingleRecord} variant="inline" iso2={form.personCountry} />
+                    : '—'}
+                </div>
+              ) : (
+                <RecordSelect
+                  value={form.regionalSingleRecord || ''}
+                  onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
+                  personIso2={form.personCountry}
+                />
+              )}
+              {recordLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.badge.averageRecord')}</span>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">
+                  {form.regionalAverageRecord
+                    ? <RecordBadge record={form.regionalAverageRecord} variant="inline" iso2={form.personCountry} />
+                    : '—'}
+                </div>
+              ) : (
+                <RecordSelect
+                  value={form.regionalAverageRecord || ''}
+                  onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
+                  personIso2={form.personCountry}
+                />
+              )}
+              {recordLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
+            </label>
+          </div>
+        </CollapsibleSection>
 
         {/* WCA 打乱 */}
         <label className="submit-field submit-block">
-          <span className="submit-label">{t('recon.wcaScramble')}</span>
+          <span className="submit-label submit-label-with-action">
+            <span>{t('recon.wcaScramble')}</span>
+            {(() => {
+              const ev = form.event ?? '';
+              const supported = randomScrambleForReconEvent(ev) !== null;
+              return (
+                <button
+                  type="button"
+                  className="submit-label-btn"
+                  disabled={!supported}
+                  onClick={() => {
+                    const s = randomScrambleForReconEvent(ev);
+                    if (s) setField('wcaScramble', s);
+                  }}
+                  title={supported
+                    ? (isZh ? '生成随机 WCA 打乱' : 'Generate random WCA scramble')
+                    : (isZh ? '该项目暂不支持随机生成' : 'Not supported for this event')}
+                  aria-label={isZh ? '生成随机打乱' : 'Generate random scramble'}
+                >
+                  <Shuffle size={12} />
+                </button>
+              );
+            })()}
+          </span>
           <textarea
             rows={1}
             value={form.wcaScramble || ''}
@@ -1067,173 +1261,6 @@ export default function ReconSubmitPage() {
             )}
           </>
         )}
-
-        {/* === 比赛信息 — 默认展开 === */}
-        <CollapsibleSection
-          title={isZh ? '比赛信息' : 'Competition'}
-          defaultOpen
-        >
-          <div className="submit-row">
-            <label className="submit-field submit-field-narrow">
-              <span className="submit-label">WCA</span>
-              {lockIdentity ? (
-                <div className="submit-readonly-text">{form.official ? 'WCA' : t('recon.badge.nonWca')}</div>
-              ) : (
-                <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
-                  <option value="1">WCA</option>
-                  <option value="0">{t('recon.badge.nonWca')}</option>
-                </select>
-              )}
-            </label>
-            <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
-              <span className="submit-label">{t('recon.competition')}</span>
-              {form.compWcaId ? (
-                <div className={`submit-comp-pill${lockIdentity ? ' submit-comp-pill--locked' : ''}`}>
-                  <Flag iso2={form.country || ''} />
-                  <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
-                  {/* 锁定身份字段:不展示清除按钮 */}
-                  {!lockIdentity && (
-                    <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
-                  )}
-                </div>
-              ) : lockIdentity ? (
-                <div className="submit-readonly-text">{form.comp || ''}</div>
-              ) : (
-                <CompPicker
-                  value={form.comp || ''}
-                  onChange={(v) => setField('comp', v)}
-                  onPick={applyPickedComp}
-                  isZh={isZh}
-                  disableSuggestions={!form.official}
-                  presets={!form.official ? [
-                    { icon: <Home size={14} />, label: isZh ? '家' : 'Home', value: isZh ? '家' : 'Home' },
-                  ] : undefined}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="submit-row">
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.round')}</span>
-              {lockIdentity ? (
-                <div className="submit-readonly-text">{form.round ? localizeRound(form.round, t) : ''}</div>
-              ) : (
-                <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
-                  <option value="">{isZh ? '请选择' : 'Select…'}</option>
-                  {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
-                </select>
-              )}
-            </label>
-            <label className="submit-field">
-              <span className="submit-label">#</span>
-              {lockIdentity ? (
-                <div className="submit-readonly-text">{form.solveNum ?? ''}</div>
-              ) : (
-                <select
-                  value={form.solveNum ?? ''}
-                  onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
-                >
-                  <option value="">{isZh ? '请选择' : 'Select…'}</option>
-                  {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
-              )}
-            </label>
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.group')}</span>
-              <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
-                placeholder="A/B/C" maxLength={1} />
-            </label>
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.date')}</span>
-              <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
-                placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
-            </label>
-          </div>
-
-          <div className="submit-row">
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.average')}</span>
-              <input
-                type="text"
-                value={avgInput}
-                onChange={e => {
-                  setAvgInput(e.target.value);
-                  setAvgUserTouched(true);
-                  setAvgAutoSource(null);
-                  avgAutoFilledRef.current = false;
-                }}
-                readOnly={lockIdentity || !!avgAutoSource}
-                className={(lockIdentity || avgAutoSource) ? 'submit-input-locked' : undefined}
-                title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
-                  : avgAutoSource ? (isZh ? '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取' : 'auto-filled, read-only; change person/comp/event/round to refetch')
-                  : undefined}
-              />
-              {avgLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
-                : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
-            </label>
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.single')}</span>
-              <input
-                type="text"
-                value={form.value ?? ''}
-                onChange={e => {
-                  setField('value', e.target.value);
-                  setTimeUserTouched(true);
-                  setTimeAutoSource(null);
-                  timeAutoFilledRef.current = false;
-                }}
-                readOnly={lockIdentity || !!timeAutoSource}
-                className={(lockIdentity || timeAutoSource) ? 'submit-input-locked' : undefined}
-                title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
-                  : timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch')
-                  : undefined}
-              />
-              {timeLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
-                : timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
-            </label>
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-              {lockIdentity ? (
-                <div className="submit-readonly-text">
-                  {form.regionalSingleRecord
-                    ? <RecordBadge record={form.regionalSingleRecord} variant="inline" iso2={form.personCountry} />
-                    : '—'}
-                </div>
-              ) : (
-                <RecordSelect
-                  value={form.regionalSingleRecord || ''}
-                  onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
-                  personIso2={form.personCountry}
-                />
-              )}
-              {recordLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
-                : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
-            </label>
-            <label className="submit-field">
-              <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-              {lockIdentity ? (
-                <div className="submit-readonly-text">
-                  {form.regionalAverageRecord
-                    ? <RecordBadge record={form.regionalAverageRecord} variant="inline" iso2={form.personCountry} />
-                    : '—'}
-                </div>
-              ) : (
-                <RecordSelect
-                  value={form.regionalAverageRecord || ''}
-                  onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
-                  personIso2={form.personCountry}
-                />
-              )}
-              {recordLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
-                : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
-            </label>
-          </div>
-        </CollapsibleSection>
 
         {/* === 元数据 — 默认折叠 === */}
         <CollapsibleSection title={isZh ? '元数据' : 'Metadata'}>

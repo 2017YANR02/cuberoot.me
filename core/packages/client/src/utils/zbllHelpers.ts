@@ -126,26 +126,6 @@ export const msToHumanReadable = (
   return `${hoursString}${minutesString}${secondsString}${millisecondsString}`;
 };
 
-// --- SVG 图片路径 ---
-
-const BASE = import.meta.env.BASE_URL; // Vite base: /
-
-/** OLL 组缩略图路径（如 H.svg） */
-export const getOllImg = (oll: string): string => {
-  return `${BASE}zbll_svg/${oll}.svg`;
-};
-
-/** COLL 缩略图路径（如 top/H-RLFF.svg） */
-export const getCollImg = (oll: string, coll: string, view: string): string => {
-  return `${BASE}zbll_svg/${view}/${oll}-${coll}.svg`;
-};
-
-/** 单个 ZBLL case 缩略图路径（如 top/H-RLFF-OsA.svg） */
-export const getZbllImg = (key: string, view: string): string => {
-  const keyWithDashes = key.replaceAll(' ', '-');
-  return `${BASE}zbll_svg/${view}/${keyWithDashes}.svg`;
-};
-
 // --- 类型定义 ---
 
 export interface ZbllEntry {
