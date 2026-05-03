@@ -21,6 +21,7 @@ import {
 } from '../utils/pllHelpers';
 import pllMap from '@cuberoot/shared/data/pll.json';
 import ollMap from '@cuberoot/shared/data/oll.json';
+import { VisualCube } from '../components/VisualCube';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 
@@ -60,9 +61,6 @@ export function TrainingPage() {
       ? inverseScramble(typedOllMap[currentCase.name]?.alg || '')
       : scrambleForCase(currentCase, pllMap as Record<string, Record<string, string>>)
     : '';
-
-  // OLL case 编号（"OLL 1" → "1"）
-  const ollNumber = currentCase?.name.startsWith('OLL ') ? currentCase.name.slice(4) : '';
 
   // 初始化
   useEffect(() => {
@@ -250,14 +248,14 @@ export function TrainingPage() {
       {/* 魔方图 */}
       <div style={{ margin: '1rem 0' }}>
         {algSetId === 'oll' ? (
-          // NOTE: OLL 使用原版 2D 顶面朝向 SVG 图片
-          <img
-            src={`${import.meta.env.BASE_URL}oll_pic/${ollNumber}.svg`}
-            alt={currentCase?.name}
-            width={200}
-            height={200}
-            style={{ filter: gameState === 'paused' ? 'brightness(0.15)' : 'none' }}
-          />
+          <div style={{ filter: gameState === 'paused' ? 'brightness(0.15)' : 'none' }}>
+            <VisualCube
+              algorithm={typedOllMap[currentCase?.name || '']?.alg || ''}
+              view="oll"
+              size={200}
+              alt={currentCase?.name}
+            />
+          </div>
         ) : (
           <CubeView
             scramble={scramble}

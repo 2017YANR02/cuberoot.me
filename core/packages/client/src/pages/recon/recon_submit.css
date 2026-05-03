@@ -188,6 +188,11 @@
   min-height: 48px;
   box-sizing: border-box;
 }
+/* WcaPersonPicker 默认 inline panel 是 width: 320px 写死的,放大或窄屏时
+   会溢出到隔壁 grid 列;在 recon 表单里强制跟父列宽走 */
+.recon-page .wca-pp-inline .wca-pp-panel {
+  width: 100%;
+}
 .recon-page .submit-hero .wca-pp-input {
   height: 46px;            /* 1px*2 边框 + 46 = 48 总高 */
   box-sizing: border-box;
@@ -265,6 +270,35 @@
   color: #737373;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.submit-label-with-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.submit-label-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.submit-label-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e5e5;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.submit-label-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .submit-field input,
@@ -350,7 +384,7 @@
    在 recon 暗色页里要覆盖成与其他表单字段一致的暗色样式 */
 .recon-page .wca-pp-inline {
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
 }
 
 .recon-page .wca-pp-inline .wca-pp-panel {

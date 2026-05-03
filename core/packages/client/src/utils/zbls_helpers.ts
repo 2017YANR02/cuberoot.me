@@ -14,7 +14,6 @@ export interface ZblsEntry {
 
 // --- 常量 ---
 
-const BASE = import.meta.env.BASE_URL; // Vite base: /
 
 /** 所有 case key 列表（按 F2L 组和变体排序） */
 export const allZblsKeys: string[] = Object.keys(zblsMap);
@@ -65,14 +64,6 @@ export const makeZblsScramble = (caseKey: string): string => {
 };
 
 // --- 图片路径 ---
-
-/**
- * 获取 ZBLS case 的 PNG 图片路径
- * 文件名格式: F2L_G-V.png（空格已替换为下划线）
- */
-export const getZblsImg = (caseKey: string): string => {
-  return `${BASE}zbls_img/F2L_${caseKey}.png`;
-};
 
 // --- 时间格式化（复用 zbllHelpers 中的逻辑） ---
 
