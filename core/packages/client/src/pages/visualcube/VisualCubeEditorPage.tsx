@@ -1118,8 +1118,8 @@ const INLINE_CSS = `
 .vc-api-note { font-size: 12px; opacity: 0.85; margin-top: 12px; }
 
 @media (max-width: 768px) {
-  .vc-row { grid-template-columns: 1fr; gap: 6px; padding: 10px 0; }
-  .vc-label { font-size: 11px; }
+  .vc-row { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
+  .vc-label { min-width: 0; font-size: 11px; }
   .vc-num, .vc-text, .vc-num-sm { font-size: 12px; }
   .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
   .vc-preview-wrap { padding: 16px; }
