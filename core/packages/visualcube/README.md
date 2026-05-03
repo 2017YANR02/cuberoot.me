@@ -11,6 +11,87 @@ LGPL-3, see COPYING and COPYING.LESSER. Original PHP visualcube (c) Cride5; sr-v
 - sr-visualizer (TS port we forked from): https://github.com/tdecker91/visualcube
 - Original PHP visualcube: https://github.com/Cride5/visualcube
 
+## Usage
+
+This package is `private: true` (monorepo only, not published). Three entry points:
+
+### 1. Programmatic — `renderCubeSVG(options)` → SVG string
+
+```ts
+import { renderCubeSVG } from '@cuberoot/visualcube'
+
+const svg = renderCubeSVG({
+  cubeSize: 3,
+  case: "R U R' U'",                    // STATE = solved after applying inverse
+  view: 'plan',
+  mask: 'oll' as any,                   // or import { Masking }
+  arrows: 'U0U2,U6U8',
+  defaultArrowColor: 'red',
+  width: 256,
+  height: 256,
+})
+// → '<svg xmlns="..." width="256" ...>...</svg>'
+```
+
+Pure function, no DOM, safe in Node (used server-side at `/api/visualcube.svg`).
+For DOM mounting use `cubeSVG(container, options)`; for canvas rasterisation `cubePNG(container, options)`.
+
+`renderCubeSVG` also accepts a PHP-style query string — handy for porting URLs:
+
+```ts
+renderCubeSVG('?pzl=3&alg=R+U+R%27+U%27&arw=U0U2-blue&ac=red&size=256')
+```
+
+### 2. HTTP — `GET /api/visualcube.svg` (server)
+
+Simplified URL API, returns `image/svg+xml` (cached 24h). Five params:
+
+| Param  | Values | Default |
+|--------|--------|---------|
+| `alg`  | WCA notation. Renders the STATE produced by inverting the alg from solved (i.e. the case the alg solves) | Sune |
+| `view` | `iso` / `plan` / `f2l` / `oll` / `pll` / `pll-iso` (combinations of plan-view + LL/F2L mask) | `iso` |
+| `mask` | Explicit `Masking` enum value, overrides view-derived mask | — |
+| `size` | Pixel dimension, clamped to [32, 1000] | 256 |
+| `bg`   | Hex (with/without `#`) or named CSS colour (alpha-only) | transparent |
+
+```
+https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&size=128
+```
+
+This endpoint does NOT accept the full PHP query API (no `arw` / `ac` / `sch` / `fc` / `fd`). For arbitrary configurations, use the programmatic API in your own server route.
+
+### 3. React — `<VisualCube>` component (client)
+
+```tsx
+import { VisualCube } from '@/components/VisualCube'
+
+<VisualCube algorithm="R U R' U R U2 R'" view="oll" size={88} />
+```
+
+Thin wrapper that emits an `<img src="/api/visualcube.svg?...">`. Use this anywhere a 3x3 case preview is needed (algdb, recon, training). Hand-written `<rect>` SVG cubes are a bug — see the project-level `visualcube` skill.
+
+## ICubeOptions ↔ PHP query parameters
+
+| `ICubeOptions` field | PHP param | Type / notes |
+|---|---|---|
+| `cubeSize` | `pzl` | NxN size (default 3) |
+| `width` / `height` | `size` | Pixels; PHP `size` sets both |
+| `view` | `view` | `'plan'` enables top-down + side-rim OLL stickers |
+| `mask` | `stage` | `Masking` enum — see "Implemented" stage list below |
+| `maskAlg` | `stage=cross-x2` suffix | Post-rotation applied to mask |
+| `viewportRotations` | `r` | `[Axis, deg][]` — viewport orientation |
+| `algorithm` | `alg` | WCA notation; renders the resulting state |
+| `case` | `case` | WCA notation; renders the *inverse* state (the case to solve) |
+| `stickerColors` | `fc` | Per-sticker colour (54 chars or comma list) |
+| `colorScheme` | `sch` | Face → colour map (6 chars / 6 colours) |
+| `facelets` | `fd` | Per-sticker `FaceletDefinition` (U/F/R/D/L/B/o/n/t) |
+| `backgroundColor` | `bg` | SVG background |
+| `cubeColor` | `cc` | Plastic colour |
+| `cubeOpacity` / `stickerOpacity` | `co` / `fo` | 0–100 |
+| `dist` | `dist` | Camera distance, default 5 |
+| `arrows` | `arw` | `Arrow[]` or `'U0U2-red,U6U8'` string |
+| `defaultArrowColor` | `ac` | Fallback colour for arrows without one (`ac=t` ignored) |
+
 ## PHP to TS Port Roadmap
 
 sr-visualizer (the TS source we forked) ports most of PHP visualcube but is missing some features. Priorities reflect the cuberoot.me use cases (algdb, recon, training preview). See `_php_reference/` for the spec.
@@ -61,7 +142,7 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 
 ### Modernization (separate from feature parity)
 - [x] svg.js@2 → native template-literal SVG strings (no library) — `cube/drawing.ts` builds output as plain strings, single function `renderCubeSVG(opts): string` is the new pure-string entry point. `cubeSVG(container, opts)` kept as a thin DOM shim (sets `innerHTML`). Zero runtime deps; works in Node (SSR-ready). Dropped ~80KB from any page that imports visualcube; collapsed the React `<VisualCube>` data-URI roundtrip into a single string build (consumers now call `renderCubeSVG()` and `encodeURIComponent` it directly — no detached `<div>`, no `querySelector`, no `XMLSerializer`).
-- [~] Tighten TS strict mode — `strict: true` now inherits from base; only `noImplicitAny: false` and `strictNullChecks: false` remain explicitly off. Five of the seven strict sub-flags (strictFunctionTypes, strictBindCallApply, noImplicitThis, useUnknownInCatchVariables, alwaysStrict) are on. Remaining gaps live in the older vendored files (parsing/, simulation/, geometry/, stickers/, drawing/), mostly because `ICubeOptions` has every field optional but consumers rely on the merged-with-defaults pattern — fixing properly needs a `ResolvedICubeOptions` (defaults applied) shape threaded through. Tighten file-by-file.
+- [x] Tighten TS strict mode — full `strict: true` inherited from base. Internal `ResolvedCubeOptions` type captures the merged-with-defaults shape so the renderer can use required fields without optional-chaining noise; public `ICubeOptions` keeps every field optional.
 - [ ] Export `Mask`/`Face`/`Axis` enum members as proper typed unions (currently `mask?: Masking` works but downstream callers pass raw strings)
 - [ ] `cubePNG` uses `setTimeout` with no delay — replace with proper await on svg load event
 - [ ] Replace `parseInt(paramValue) || N` patterns that swallow `0` as falsy in option parser

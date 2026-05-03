@@ -3,19 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    // Vendored from sr-visualizer (TS 4.x). Two of the seven `strict` flags
-    // are still relaxed because the older vendored files (parsing/, simulation/,
-    // geometry/, stickers/, drawing/) have many string-keyed object accesses
-    // and rely on the merged-with-defaults pattern that `ICubeOptions`'s
-    // all-optional shape can't express. Tighten progressively as files are
-    // rewritten. The other five strict flags ARE on:
-    //   strictFunctionTypes, strictBindCallApply, noImplicitThis,
-    //   useUnknownInCatchVariables, alwaysStrict.
-    // (strictPropertyInitialization is technically on but dormant under
-    // strictNullChecks: false.)
-    "noImplicitAny": true,
-    "strictNullChecks": true
+    "rootDir": "./src"
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }
