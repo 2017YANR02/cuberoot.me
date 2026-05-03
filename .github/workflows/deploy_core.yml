@@ -80,7 +80,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A _assets/ index.html 404.html favicon.svg CubeRoot-dark.png sw.js
-          git add -A oll_pic/ zbll_svg/ zbls_img/ vendor/ fonts/ ffmpeg/ icons/ textures/ donate/
+          git add -A vendor/ fonts/ ffmpeg/ icons/ textures/ donate/
           git add -A scramble_module.js icons.svg icon_timer.png cstimer_logo.png
           git add -A MediaInfoModule.wasm manifest.json countries-110m.geojson cn_disputed_patches.geojson beian-badge.png
           # 清理已删除的 app/ 目录（首次迁移后不存在则忽略）
