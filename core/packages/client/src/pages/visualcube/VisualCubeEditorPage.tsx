@@ -584,10 +584,10 @@ export default function VisualCubeEditorPage() {
         <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
         <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
-          <Download size={14} /> {t('下载 SVG', 'Download SVG')}
+          <Download size={14} /> SVG
         </button>
         <button type="button" className="vc-btn" onClick={downloadPng}>
-          <Download size={14} /> {t('下载 PNG', 'Download PNG')}
+          <Download size={14} /> PNG
         </button>
         <CopyButton
           label={t('<img> 标签', '<img> tag')}
@@ -986,13 +986,16 @@ const INLINE_CSS = `
 
 .vc-controls { display: flex; flex-direction: column; }
 .vc-row {
-  display: grid; grid-template-columns: 140px 1fr;
-  gap: 16px; align-items: center; padding: 10px 0;
+  display: flex; gap: 14px; align-items: center; padding: 10px 0;
 }
-.vc-row-block { align-items: start; }
-.vc-row-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.vc-row-block { align-items: flex-start; }
+.vc-row-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
 .vc-col { flex-direction: column; align-items: stretch; gap: 8px; }
-.vc-label { font-size: 12px; font-weight: 500; color: var(--vc-text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.vc-label {
+  flex: 0 0 auto; min-width: 100px;
+  font-size: 12px; font-weight: 500; color: var(--vc-text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
 
 /* sunken inputs: darker than panel, no border, focus shows a soft inset ring */
 .vc-num, .vc-text, .vc-num-sm, .vc-color-text, .vc-select, .vc-select-sm {
