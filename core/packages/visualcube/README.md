@@ -44,15 +44,35 @@ renderCubeSVG('?pzl=3&alg=R+U+R%27+U%27&arw=U0U2-blue&ac=red&size=256')
 
 ### 2. HTTP — `GET /api/visualcube.svg` (server)
 
-Simplified URL API (7 params: `alg / view / mask / size / bg / cc / co`), returns `image/svg+xml` (cached 24h).
+Simplified URL API (8 params: `alg / view / mask / size / cubeSize / bg / cc / co`; `cubeSize` also accepts PHP-style `pzl`), returns `image/svg+xml` (cached 24h).
 
 ```
 https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&size=128
+https://www.cuberoot.me/api/visualcube.svg?alg=Rw+U2+Rw+U2+Rw+U2+Rw%27+U2+Lw+U2+Rw%27+U2+Rw+U2+Rw%27+U2+Rw%27&cubeSize=4&view=oll&size=128
 ```
 
-Full parameter table is rendered (collapsed) at the bottom of the [`/visualcube` page](https://www.cuberoot.me/visualcube). Source of truth: comments at the top of `packages/server/src/routes/cube.ts`.
+Both server route + Vite dev middleware delegate to `renderFromSimpleQuery` for guaranteed parity (dev hits a local middleware in `vite.config.ts` `visualcubeDev()` plugin — no proxy roundtrip, no need to redeploy server before testing).
+
+Full parameter table is rendered (collapsed) at the bottom of the [`/visualcube` page](https://www.cuberoot.me/visualcube). Source of truth: `packages/visualcube/src/preset.ts`.
 
 This endpoint does NOT accept the full PHP query API (no `arw` / `ac` / `sch` / `fc` / `fd`). For those, use the programmatic API or build your own server route.
+
+### 4. Programmatic — `renderFromSimpleQuery(query)` → SVG string
+
+Same simplified-query mapping as the HTTP endpoint, callable from anywhere (Hono server, Vite middleware, client code):
+
+```ts
+import { renderFromSimpleQuery } from '@cuberoot/visualcube'
+
+const svg = renderFromSimpleQuery({
+  alg: "R U R' U R U2 R'",
+  view: 'oll',
+  size: 128,
+  cubeSize: 3,
+})
+```
+
+`buildSimpleOptions(query)` is also exported if you need the merged `ICubeOptions` without rendering (for testing / inspection).
 
 ### 3. React — `<VisualCube>` component (client)
 
@@ -92,8 +112,9 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 
 ### Implemented
 - [x] Core 3D cube projection + face render order (z-sort)
-- [x] NxN cube rendering (`cubeSize`, PHP `pzl`)
-- [x] Algorithm simulation (`algorithm` / `case`, PHP `alg` / `case`) — TS-only engine, not ported from PHP, supports SiGN wide-move `Rw`/`r` and slice `M E S`. Parser also accepts the four PHP `fcs_format_alg` extensions: backtick `` ` `` as prime alias, `(R U R' U')3` repeat groups, `2R` single inner-layer (uppercase, expands to `2r R'`), `2-5r` range slices (expands to `5r R'` etc). Inner-layer / range expansions are degenerate on `cubeSize=3` but accepted without error.
+- [x] NxN cube rendering (`cubeSize`, PHP `pzl`) — verified 2..7
+- [x] NxN algorithm simulation — wide moves (`Rw` / `r`) and inner-layer (`2r`, `2-5r`) operate on the right slice for any `cubeSize`. Verified via 4x4 OLL/PLL parity + 5x5 L2E/L2C scrapes producing visually correct LL state.
+- [x] Algorithm parser supports SiGN wide-move `Rw`/`r` and slice `M E S`. Accepts the four PHP `fcs_format_alg` extensions: backtick `` ` `` as prime alias, `(R U R' U')3` repeat groups, `2R` single inner-layer (uppercase, expands to `2r R'`), `2-5r` range slices (expands to `5r R'` etc). Inner-layer / range expansions are degenerate on `cubeSize=3` but accepted without error.
 - [x] Custom colour scheme (`colorScheme`, PHP `sch`) — abbreviation + comma-separated list + 3/6-digit hex
 - [x] Facelet Definition (`facelets` string, PHP `fd`) — `parseFaceletDefinitions` is wired up in `index.ts`; upstream README's "still to implement" note is stale
 - [x] Facelet Colours (`stickerColors`, PHP `fc`) via `parseFaceletColors`
@@ -123,8 +144,7 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 ### Pending — High priority
 
 ### Pending — Medium priority
-- [ ] Per-cube-size mask sets for 2x2 / 4x4 / 5x5 / 6x6 / 7x7 (PHP `index.php` lines 749+) — currently TS masks only fire for `cubeSize=3`
-- [ ] Algorithm support for cubes >3x3 — PHP comment says "Currently unavailable for 4x4 cubes or above" but Yan's `fcs_doperm` actually handles NxN; TS simulator should follow
+- [ ] Per-cube-size **extended** mask sets for 2x2 / 4x4 / 5x5 / 6x6 / 7x7 (PHP `index.php` lines 749+) — the 22 core stage masks (`Masking.F2L` / `OLL` / `LL` / etc) already fire for any `cubeSize` (verified via `algdb_2x2_*` / `algdb_4x4_*` / `algdb_5x5_*` thumbnails). Only the 30+ Yan/Kira extended masks (`xcross_fr`, `eolrb_r`, `dr_*`, `mehta_*`, `sq_rdf` etc) remain `cubeSize=3` only.
 - [ ] `oriented` (`o`) / `blank` (`n`) facelet definitions render colour: TS has the enum but check the silver/grey tones match PHP exactly
 - [ ] Configurable `outlineWidth` / `strokeWidth` / `viewbox` exposed as documented public options (already in interface, not in any preset)
 

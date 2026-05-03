@@ -1,0 +1,1328 @@
+{
+  "scrapedAt": "2026-05-03T13:40:42.909Z",
+  "source": "https://speedcubedb.com/a/2x2/CLL",
+  "puzzle": "2x2",
+  "set": "cll",
+  "cases": [
+    {
+      "name": "CLL AS 1",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yrob",
+        "ub": "ygbb",
+        "uf": "yrgg",
+        "ul": "obrr",
+        "ur": "ygoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R U2 R' U' R U' R'",
+            "altId": "2872"
+          },
+          {
+            "alg": "y2 L' U' L U' L' U2 L",
+            "altId": "2871"
+          },
+          {
+            "alg": "R' U' R U' R' U2 R",
+            "altId": "2873"
+          },
+          {
+            "alg": "U2 L' U' L U' L' U2 L",
+            "altId": "6531"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL AS 2",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ybgr",
+        "ub": "yobb",
+        "uf": "yggg",
+        "ul": "borr",
+        "ur": "yroo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' F R' F' R U' R U' R'",
+            "altId": "2870"
+          },
+          {
+            "alg": "y2 R' U R U' R2 F R F' R U R' U' R",
+            "altId": "2869"
+          },
+          {
+            "alg": "L' U' L U' L F' L' F L' U2 L",
+            "altId": "2867"
+          },
+          {
+            "alg": "y' R U' R2 U R U B U2 B' R",
+            "altId": "25482"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL AS 3",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yogb",
+        "ub": "yrgg",
+        "uf": "yrbb",
+        "ul": "gooo",
+        "ur": "ybrr"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 F' L F L' U2 L' U2 L",
+            "altId": "2866"
+          },
+          {
+            "alg": "R' U L U' R U L'",
+            "altId": "2842"
+          },
+          {
+            "alg": "y2 F' R U R' U2 R' F2 R",
+            "altId": "2865"
+          },
+          {
+            "alg": "y R' F R F' R U2 R' U' R' F R F'",
+            "altId": "24198"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL AS 4",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yobg",
+        "ub": "yrgg",
+        "uf": "yobb",
+        "ul": "groo",
+        "ur": "ybrr"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R' F R F' R U R'",
+            "altId": "2864"
+          },
+          {
+            "alg": "U2 L' U R U' L U R'",
+            "altId": "23832"
+          },
+          {
+            "alg": "y2 L' U L F' R U R'",
+            "altId": "2863"
+          },
+          {
+            "alg": "x' R' F R U' R U R'",
+            "altId": "7493"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL AS 5",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ybog",
+        "ub": "yrgg",
+        "uf": "yobb",
+        "ul": "gboo",
+        "ur": "yrrr"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R U2 R' U2 R' F R F'",
+            "altId": "2886"
+          },
+          {
+            "alg": "L U2 L' U2 x' L' U L U'",
+            "altId": "7494"
+          },
+          {
+            "alg": "x' R U2 R' F2 R' F R U'",
+            "altId": "24440"
+          },
+          {
+            "alg": "y' z F R2 F' R' U' R' U z' y' R U' R'",
+            "altId": "24455"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL AS 6",
+      "subgroup": "AS",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ygob",
+        "ub": "yrbb",
+        "uf": "yrgg",
+        "ul": "gbrr",
+        "ur": "yooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R U2 R' U' R U' R' F R' F' R U R U' R' U'",
+            "altId": "21255"
+          },
+          {
+            "alg": "R2 F R U2 R U' R' U2 F' R",
+            "altId": "2885"
+          },
+          {
+            "alg": "y R U R2 F' R F R U' R2 F R",
+            "altId": "3151"
+          },
+          {
+            "alg": "R2 F' U' R2 F' R2 U F R2",
+            "altId": "7495"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL H 1",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "robb",
+        "ub": "ggbb",
+        "uf": "orgg",
+        "ul": "yyrr",
+        "ur": "yyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R2 U' R2 U' R2 U R2 F'",
+            "altId": "2901"
+          },
+          {
+            "alg": "F R U' R' U R U2 R' U' R U R' U' F'",
+            "altId": "2898"
+          },
+          {
+            "alg": "y' R' U2 R y R' U R' U' R U' R",
+            "altId": "2900"
+          },
+          {
+            "alg": "y2 F R U R' U' R F' R U R' U' R'",
+            "altId": "2899"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL H 2",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bogo",
+        "ub": "grbb",
+        "uf": "rbgg",
+        "ul": "yyrr",
+        "ur": "yyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U R' F R' F' R",
+            "altId": "2905"
+          },
+          {
+            "alg": "y2 R' F' R U' R' F' R F' R U R'",
+            "altId": "2902"
+          },
+          {
+            "alg": "R U R' U R U L' U R' U' L",
+            "altId": "2904"
+          },
+          {
+            "alg": "y R U' R' F U2 R2 F R U' R",
+            "altId": "2903"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL H 3",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgbg",
+        "ub": "rroo",
+        "uf": "oorr",
+        "ul": "yybb",
+        "ur": "yygg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y F R U R' U' R U R' U' R U R' U' F'",
+            "altId": "2877"
+          },
+          {
+            "alg": "y x' U2 R U2 R2 F2 R U2 x",
+            "altId": "2876"
+          },
+          {
+            "alg": "R U' R' F R' F' R2 U' R' F R' F' R",
+            "altId": "7709"
+          },
+          {
+            "alg": "R2 F' U2 F2 R2 F' R2",
+            "altId": "4403"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL H 4",
+      "subgroup": "H",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bbgg",
+        "ub": "oroo",
+        "uf": "rorr",
+        "ul": "yybb",
+        "ur": "yygg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R2 U2 R' U2 R2",
+            "altId": "2880"
+          },
+          {
+            "alg": "y R2 U2 R U2 R2",
+            "altId": "2881"
+          },
+          {
+            "alg": "R U R' U R U' R' U R U2 R'",
+            "altId": "2878"
+          },
+          {
+            "alg": "y' R U2 R' U' R U R' U' R U' R'",
+            "altId": "2879"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL L 1",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "byyb",
+        "ub": "gybb",
+        "uf": "orgg",
+        "ul": "ogrr",
+        "ur": "yroo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R U2 R' F' R U2 R' U R' F2 R",
+            "altId": "2917"
+          },
+          {
+            "alg": "y R' U' R U2 R' F R' F' R U' R",
+            "altId": "2918"
+          },
+          {
+            "alg": "R' F' R U R' U' R' F R2 U' R' U2 R",
+            "altId": "2919"
+          },
+          {
+            "alg": "U' R U R' U R' F R F' U2 R' F R F'",
+            "altId": "19613"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL L 2",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "byyb",
+        "ub": "oybb",
+        "uf": "grgg",
+        "ul": "orrr",
+        "ur": "ygoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R U2 R2 F2 R U R' F2 R F'",
+            "altId": "3438"
+          },
+          {
+            "alg": "R U' R' U R U' R' F R' F' R2 U R'",
+            "altId": "2922"
+          },
+          {
+            "alg": "R' U2 R' U' F R2 F' U R2",
+            "altId": "7504"
+          },
+          {
+            "alg": "y2 R' F2 R2 U2 R' U R' F2 R F'",
+            "altId": "10566"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL L 3",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "byyr",
+        "ub": "oygg",
+        "uf": "rgbb",
+        "ul": "oboo",
+        "ur": "ygrr"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R' U R' U2 R U' R' U R U' R2",
+            "altId": "2943"
+          },
+          {
+            "alg": "y2 R2 U' R U2 R' U2 R U' R2",
+            "altId": "2924"
+          },
+          {
+            "alg": "y' R U R' U R U' R' U R U' R' U R U2 R'",
+            "altId": "2941"
+          },
+          {
+            "alg": "y R U' R U' R U2 R' U R' U R'",
+            "altId": "2942"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL L 4",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oyyb",
+        "ub": "byoo",
+        "uf": "grrr",
+        "ul": "grbb",
+        "ur": "yogg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y R U2 R2 F R F' R U2 R'",
+            "altId": "2889"
+          },
+          {
+            "alg": "R U2 R' F R' F' R2 U2 R'",
+            "altId": "22802"
+          },
+          {
+            "alg": "y2 R U R' L' U2 R U R' U2 L",
+            "altId": "25803"
+          },
+          {
+            "alg": "y' R' U' R U R' F' R U R' U' R' F R2",
+            "altId": "2888"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL L 5",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gyyb",
+        "ub": "oyoo",
+        "uf": "brrr",
+        "ul": "robb",
+        "ur": "yggg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y F R' F' R U R U' R'",
+            "altId": "2893"
+          },
+          {
+            "alg": "y F R' F' U' R' U R",
+            "altId": "3421"
+          },
+          {
+            "alg": "y F' U R U' R' F2 R U' R'",
+            "altId": "2890"
+          },
+          {
+            "alg": "y' R' F' L' F R F' L F",
+            "altId": "2891"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL L 6",
+      "subgroup": "L",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "byyg",
+        "ub": "gygg",
+        "uf": "robb",
+        "ul": "oboo",
+        "ur": "yrrr"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 F' R U R' U' R' F R",
+            "altId": "2897"
+          },
+          {
+            "alg": "y F R U' R' U' R U R' F'",
+            "altId": "2896"
+          },
+          {
+            "alg": "R U R U' R' F R' F'",
+            "altId": "4260"
+          },
+          {
+            "alg": "y R' F R U F U' F'",
+            "altId": "18537"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Pi 1",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gorg",
+        "ub": "yobb",
+        "uf": "bygg",
+        "ul": "yyrr",
+        "ur": "rboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y F R' F' R U2 R U' R' U R U2 R'",
+            "altId": "2930"
+          },
+          {
+            "alg": "R' F2 R F' U2 R U' R' U' F",
+            "altId": "2931"
+          },
+          {
+            "alg": "U F U R U' R' U R U' R2 F' R U R U' R'",
+            "altId": "22572"
+          },
+          {
+            "alg": "y2 L' U2 L U L' U' L U2 L F' L' F",
+            "altId": "2929"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Pi 2",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rbbo",
+        "ub": "ygbb",
+        "uf": "oygg",
+        "ul": "yyrr",
+        "ur": "groo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U R' U2 R' F R F'",
+            "altId": "2935"
+          },
+          {
+            "alg": "y F' R U R' U2 R' F R U' R' F2 R",
+            "altId": "22803"
+          },
+          {
+            "alg": "R U R' U' R' F R2 U R' U' R U R' U' F'",
+            "altId": "2932"
+          },
+          {
+            "alg": "R2 U' R' U' F R2 U2 F' R2 F",
+            "altId": "2933"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Pi 3",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "orro",
+        "ub": "ybrr",
+        "uf": "byoo",
+        "ul": "yygg",
+        "ur": "ggbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y F R2 U' R2 U R2 U R2 F'",
+            "altId": "2938"
+          },
+          {
+            "alg": "y' R U' R U' R' U R' F R2 F'",
+            "altId": "2939"
+          },
+          {
+            "alg": "y2 F R' F' R U2 F R' F' R2 U2 R'",
+            "altId": "2936"
+          },
+          {
+            "alg": "U' R' F R U F U' R U R' U' F'",
+            "altId": "6359"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Pi 4",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "roro",
+        "ub": "ygbb",
+        "uf": "bygg",
+        "ul": "yyrr",
+        "ur": "gboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R' F R F' R U' R' U' R U' R'",
+            "altId": "2906"
+          },
+          {
+            "alg": "R U' R' F R' F R U R' F R",
+            "altId": "2907"
+          },
+          {
+            "alg": "R U' R' F L' U L U L' U L",
+            "altId": "22100"
+          },
+          {
+            "alg": "y' R U' R2 D' R U R' D R2 U R'",
+            "altId": "5321"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Pi 5",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "brbo",
+        "ub": "yrrr",
+        "uf": "oyoo",
+        "ul": "yygg",
+        "ur": "ggbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R' U' R' F R F' R U' R' U2 R",
+            "altId": "2911"
+          },
+          {
+            "alg": "R2 U R' U' F R F' R U' R2",
+            "altId": "2910"
+          },
+          {
+            "alg": "U' R' U' R' F R F' R U' R' U2 R",
+            "altId": "6360"
+          },
+          {
+            "alg": "y' R U R' U R' F R F' R U' R' U R U2 R'",
+            "altId": "26127"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Pi 6",
+      "subgroup": "Pi",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bogo",
+        "ub": "yrbb",
+        "uf": "rygg",
+        "ul": "yyrr",
+        "ur": "gboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' R U R' U' F'",
+            "altId": "2915"
+          },
+          {
+            "alg": "R U' R2 U R2 U R2 U' R",
+            "altId": "2912"
+          },
+          {
+            "alg": "R' U R2 U' R2 U' R2 U R'",
+            "altId": "2914"
+          },
+          {
+            "alg": "R U2 R2 U' R2 U' R2 U2 R",
+            "altId": "2913"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Sune 1",
+      "subgroup": "Sune",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rgyb",
+        "ub": "rybb",
+        "uf": "oygg",
+        "ul": "bgrr",
+        "ur": "oyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U2 L U2 L F' L' F",
+            "altId": "2954"
+          },
+          {
+            "alg": "y2 R' U2 R U2 R B' R' B",
+            "altId": "2952"
+          },
+          {
+            "alg": "R' F2 R U2 R U' R' F",
+            "altId": "2953"
+          },
+          {
+            "alg": "R' F2 R U2 L F' L' F",
+            "altId": "19031"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Sune 2",
+      "subgroup": "Sune",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gryo",
+        "ub": "byrr",
+        "uf": "byoo",
+        "ul": "rogg",
+        "ur": "gybb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R' F R F' R U R' U R U2 R'",
+            "altId": "2957"
+          },
+          {
+            "alg": "R U2 R' F R U2 R' U R U' R' F",
+            "altId": "10123"
+          },
+          {
+            "alg": "y2 R U' R U' R' U R' U' y R U' R'",
+            "altId": "2958"
+          },
+          {
+            "alg": "R2 F' U' R2 F R2 U F R2",
+            "altId": "7499"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Sune 3",
+      "subgroup": "Sune",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgyr",
+        "ub": "rybb",
+        "uf": "oygg",
+        "ul": "ogrr",
+        "ur": "byoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' F R' F' R",
+            "altId": "2962"
+          },
+          {
+            "alg": "R U' R' F L' U' L",
+            "altId": "2961"
+          },
+          {
+            "alg": "L F' L' F L' U' L",
+            "altId": "10124"
+          },
+          {
+            "alg": "R U' L' U R' U' L",
+            "altId": "2960"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Sune 4",
+      "subgroup": "Sune",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gbyr",
+        "ub": "oybb",
+        "uf": "oygg",
+        "ul": "rgrr",
+        "ur": "byoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R' F' R U2 R U2 R'",
+            "altId": "2963"
+          },
+          {
+            "alg": "y2 x' U R' F' R F2 R U2 R'",
+            "altId": "24442"
+          },
+          {
+            "alg": "y R U' R' F R' F2 R U R U' R' F",
+            "altId": "24475"
+          },
+          {
+            "alg": "y' x' R U' R' U R' F2 R F R U' R' U x",
+            "altId": "24476"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Sune 5",
+      "subgroup": "Sune",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "obyr",
+        "ub": "oyrr",
+        "uf": "gyoo",
+        "ul": "grgg",
+        "ur": "bybb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 R U R' U R' F R F' R U2 R'",
+            "altId": "2966"
+          },
+          {
+            "alg": "y' R' F R2 F' U' R' U' R2 U R'",
+            "altId": "2965"
+          },
+          {
+            "alg": "U2 R U R' U R' F R F' R U2 R'",
+            "altId": "20749"
+          },
+          {
+            "alg": "R U R' U' R' F R F' R U' R' F R' F' R",
+            "altId": "18162"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL Sune 6",
+      "subgroup": "Sune",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogyr",
+        "ub": "rybb",
+        "uf": "bygg",
+        "ul": "gorr",
+        "ur": "byoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U2 R'",
+            "altId": "2927"
+          },
+          {
+            "alg": "R U R2 U' R2 U R",
+            "altId": "10567"
+          },
+          {
+            "alg": "y' R' U2 R U R' U R",
+            "altId": "2926"
+          },
+          {
+            "alg": "y L' U2 L U L' U L",
+            "altId": "2925"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL T 1",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogyy",
+        "ub": "rbrr",
+        "uf": "oboo",
+        "ul": "yggg",
+        "ur": "rybb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R U R' U' R' F R F'",
+            "altId": "2951"
+          },
+          {
+            "alg": "y2 R' U' R U F R F'",
+            "altId": "3420"
+          },
+          {
+            "alg": "U' x L U R' U' L' U R U' x'",
+            "altId": "6534"
+          },
+          {
+            "alg": "y R B R' U' R' U R F' z",
+            "altId": "24479"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL T 2",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gryy",
+        "ub": "booo",
+        "uf": "brrr",
+        "ul": "yobb",
+        "ur": "gygg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y L' U' L U L F' L' F",
+            "altId": "2950"
+          },
+          {
+            "alg": "y R' F' R U R U' R' F",
+            "altId": "2948"
+          },
+          {
+            "alg": "R U R' U' y L' U' L",
+            "altId": "19267"
+          },
+          {
+            "alg": "y' F R U' R' U R U R' F'",
+            "altId": "2947"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL T 3",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oryy",
+        "ub": "bbbb",
+        "uf": "orgg",
+        "ul": "ygrr",
+        "ur": "gyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U' R U2 R' U' F2 R U R'",
+            "altId": "2946"
+          },
+          {
+            "alg": "y R U2 R2 F R F' R U' R' U R U2 R'",
+            "altId": "2989"
+          },
+          {
+            "alg": "y2 R U F R' F' R U2 R U2 R2",
+            "altId": "21069"
+          },
+          {
+            "alg": "y' R U' B U2 B' U' R2 F R F'",
+            "altId": "18852"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL T 4",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ggyy",
+        "ub": "rooo",
+        "uf": "bbrr",
+        "ul": "yobb",
+        "ur": "rygg"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U R U2 R2 F' R U' R' F2 R2",
+            "altId": "3377"
+          },
+          {
+            "alg": "y R' U R' F U' R U F2 R2",
+            "altId": "2986"
+          },
+          {
+            "alg": "y2 R' U R' U2 R U2 R' U R2 U' R'",
+            "altId": "2985"
+          },
+          {
+            "alg": "u' R U R' U R U2 R' L' U' L U' L' U2 L U",
+            "altId": "22969"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL T 5",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "rryy",
+        "ub": "bgbb",
+        "uf": "bggg",
+        "ul": "yorr",
+        "ur": "oyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 F R U R' U' R U' R' U' R U R' F'",
+            "altId": "2982"
+          },
+          {
+            "alg": "y' R U R' U' R U' R' F' U' F R U R'",
+            "altId": "3440"
+          },
+          {
+            "alg": "y R U R' U2 R U R' U R' F R F'",
+            "altId": "2979"
+          },
+          {
+            "alg": "y R2 F' R U' R' F2 R F R' F' R2",
+            "altId": "11551"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL T 6",
+      "subgroup": "T",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "royy",
+        "ub": "ggbb",
+        "uf": "bbgg",
+        "ul": "yorr",
+        "ur": "ryoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U R U2 R2 F R F' R",
+            "altId": "2978"
+          },
+          {
+            "alg": "U2 y z R U R' U' R' F R2 U' R' U' R U R' F'",
+            "altId": "23051"
+          },
+          {
+            "alg": "y2 R U' R' U2 L2 F' L' U L'",
+            "altId": "22304"
+          },
+          {
+            "alg": "y2 R' F R U2 R2 F R U' R",
+            "altId": "2977"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL U 1",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ooyy",
+        "ub": "yyrr",
+        "uf": "gboo",
+        "ul": "grgg",
+        "ur": "rbbb"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' F R U R' U' F'",
+            "altId": "2975"
+          },
+          {
+            "alg": "y F U R U' R' F'",
+            "altId": "2974"
+          },
+          {
+            "alg": "R' F' U' F U R",
+            "altId": "22186"
+          },
+          {
+            "alg": "y' R' U' F R' F' R U R",
+            "altId": "22800"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL U 2",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgyy",
+        "ub": "yybb",
+        "uf": "rrgg",
+        "ul": "obrr",
+        "ur": "gooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U' R2 U R' U2 R U2 R' U R'",
+            "altId": "18455"
+          },
+          {
+            "alg": "y' R2 F2 R U R' F R2 U2 R' U' R",
+            "altId": "3441"
+          },
+          {
+            "alg": "R' F U' R U' R' U2 F2 R",
+            "altId": "18845"
+          },
+          {
+            "alg": "y2 R2 F2 R U R' F U' R U R2",
+            "altId": "2993"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL U 3",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bbyy",
+        "ub": "yybb",
+        "uf": "gggg",
+        "ul": "orrr",
+        "ur": "oroo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 F R U R' U2 F' R U' R' F",
+            "altId": "2970"
+          },
+          {
+            "alg": "R' F R U' R' U' R U R' F' R U R' U' R' F R F' R",
+            "altId": "2969"
+          },
+          {
+            "alg": "y' R U2 R U' R' F R' F2 U' F",
+            "altId": "6361"
+          },
+          {
+            "alg": "y' z' U2 R' U' R2 U' R' U' R U' R' U' x2",
+            "altId": "2971"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL U 4",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgyy",
+        "ub": "yybb",
+        "uf": "gbgg",
+        "ul": "orrr",
+        "ur": "rooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' F R' F' R U' R U' R' U2 R U' R'",
+            "altId": "3002"
+          },
+          {
+            "alg": "F R U' R' U R U R' U R U' R' F'",
+            "altId": "7263"
+          },
+          {
+            "alg": "R2 F R F' R' F2 R U R' F R2",
+            "altId": "3003"
+          },
+          {
+            "alg": "F' L' U' L U' L' U' L U L' U L F U'",
+            "altId": "25829"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL U 5",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "obyy",
+        "ub": "yybb",
+        "uf": "gogg",
+        "ul": "grrr",
+        "ur": "broo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R2 F R F' R U R' U' R U R'",
+            "altId": "3000"
+          },
+          {
+            "alg": "y2 R U2 R' U R' F2 R F' R' F2 R",
+            "altId": "2999"
+          },
+          {
+            "alg": "R2 D' R U2 R' D R U2 R",
+            "altId": "2998"
+          },
+          {
+            "alg": "y2 R2 U R2 F' R U R U' R' F R U' R2",
+            "altId": "18370"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CLL U 6",
+      "subgroup": "U",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "goyy",
+        "ub": "yybb",
+        "uf": "obgg",
+        "ul": "rgrr",
+        "ur": "rboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U R' F R F' R U2 R' U R",
+            "altId": "2996"
+          },
+          {
+            "alg": "L' U L2 F' L' F L' U' L U L' U' L",
+            "altId": "23104"
+          },
+          {
+            "alg": "y' R' U' R2 U' R' U2 R B' R2 F z'",
+            "altId": "20306"
+          },
+          {
+            "alg": "R F' U' R' U' R2 U R' U' R' F R",
+            "altId": "23895"
+          }
+        ]
+      ]
+    }
+  ]
+}

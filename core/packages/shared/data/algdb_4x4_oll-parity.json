@@ -1,0 +1,107 @@
+{
+  "scrapedAt": "2026-05-03T13:40:45.896Z",
+  "source": "https://speedcubedb.com/a/4x4/OLLParity",
+  "puzzle": "4x4",
+  "set": "oll-parity",
+  "cases": [
+    {
+      "name": "Basic",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yyyyyyyyyyyygggg",
+        "ub": "bbbbbbbbbbbbbbbb",
+        "uf": "yyyygggggggggggg",
+        "ul": "rooorrrrrrrrrrrr",
+        "ur": "rrrooooooooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+            "altId": "1081"
+          },
+          {
+            "alg": "Rw' U2' Rw U2 Rw U2' Rw2' F2 Rw' U2 Rw' U2' F2 Rw2 F2",
+            "altId": "4434"
+          },
+          {
+            "alg": "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2",
+            "altId": "1080"
+          },
+          {
+            "alg": "Rw2 B2 Rw' U2 Rw' U2 x' U2 Rw' U2 Rw U2 Rw' U2 Rw2 U2 x",
+            "altId": "5400"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pure",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "yyyyyyyyyyyyyggy",
+        "ub": "gbbbbbbbbbbbbbbb",
+        "uf": "byyggggggggggggg",
+        "ul": "rrrorrrrrrrrrrrr",
+        "ur": "oooroooooooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "2R' U2 2L F2 2L' F2 2R2 U2 2R U2 2R' U2 F2 2R2 F2",
+            "altId": "5120"
+          },
+          {
+            "alg": "y2 F R U R' U' F' U Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+            "altId": "1592"
+          },
+          {
+            "alg": "R' U2 Rw' U2 Rw U2 Rw2 U2 x' U2 Rw' U2 Rw U2 l' U2 Rw U2 Rw R",
+            "altId": "1083"
+          },
+          {
+            "alg": "R U2 R' U' Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw' F R' F' R",
+            "altId": "1089"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ybbyyyyyyyyygyyg",
+        "ub": "byybbbbbbbbbbbbb",
+        "uf": "yggygggggggggggg",
+        "ul": "rooorrrrrrrrrrrr",
+        "ur": "rrrooooooooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "M Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw' M'",
+            "altId": "3166"
+          },
+          {
+            "alg": "y2 2R2 U2 2R2 Uw2 2R2 Uw2 Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+            "altId": "18304"
+          },
+          {
+            "alg": "M Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2 M'",
+            "altId": "1088"
+          },
+          {
+            "alg": "M Rw' U2' Rw U2 Rw U2' Rw2' F2 Rw' U2 Rw' U2' F2 Rw2 F2 M'",
+            "altId": "10878"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -146,6 +146,135 @@
   letter-spacing: 0.04em;
   border-bottom: 1px solid var(--algdb-border);
   padding-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.algdb-subgroup-title.is-toggleable {
+  cursor: pointer;
+  user-select: none;
+}
+.algdb-subgroup-title.is-toggleable:hover {
+  color: var(--algdb-text);
+}
+.algdb-subgroup-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--algdb-text-faint);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── puzzle index (top-level /algdb) ── */
+.algdb-puzzle-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.algdb-puzzle-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  background: var(--algdb-bg-soft);
+  border: 1px solid var(--algdb-border);
+  border-radius: 12px;
+  text-decoration: none !important;
+  color: var(--algdb-text);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.algdb-puzzle-card:hover {
+  background: var(--algdb-bg-hover);
+  border-color: var(--algdb-accent);
+  transform: translateY(-1px);
+}
+.algdb-puzzle-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.algdb-puzzle-count {
+  font-size: 12px;
+  color: var(--algdb-text-muted);
+}
+.algdb-puzzle-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.algdb-puzzle-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--algdb-bg);
+  border: 1px solid var(--algdb-border);
+  border-radius: 999px;
+  color: var(--algdb-text-muted);
+  white-space: nowrap;
+}
+.algdb-puzzle-chip.is-more {
+  color: var(--algdb-text-faint);
+  font-style: italic;
+}
+
+.algdb-cat-puzzle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--algdb-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 4px;
+}
+.algdb-cat-subgroup {
+  color: var(--algdb-text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ── umbrella subgroup picker (e.g. ZBLL → U/L/T/H/Pi/S/AS) ── */
+.algdb-subgroup-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+.algdb-subgroup-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px 14px;
+  background: var(--algdb-bg-soft);
+  border: 1px solid var(--algdb-border);
+  border-radius: 10px;
+  text-decoration: none !important;
+  color: var(--algdb-text);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.algdb-subgroup-card:hover {
+  background: var(--algdb-bg-hover);
+  border-color: var(--algdb-accent);
+  transform: translateY(-1px);
+}
+.algdb-subgroup-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.algdb-subgroup-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.algdb-subgroup-card-count {
+  font-size: 12px;
+  color: var(--algdb-text-muted);
 }
 
 .algdb-case-list {

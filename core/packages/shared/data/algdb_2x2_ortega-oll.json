@@ -1,0 +1,239 @@
+{
+  "scrapedAt": "2026-05-03T13:40:41.275Z",
+  "source": "https://speedcubedb.com/a/2x2/OrtegaOLL",
+  "puzzle": "2x2",
+  "set": "ortega-oll",
+  "cases": [
+    {
+      "name": "Sune",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ogyr",
+        "ub": "rybb",
+        "uf": "bygg",
+        "ul": "gorr",
+        "ur": "byoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U2 R'",
+            "altId": "1093"
+          },
+          {
+            "alg": "R U R2 U' R2 U R",
+            "altId": "3178"
+          },
+          {
+            "alg": "R U' L' U R' U' L",
+            "altId": "5414"
+          },
+          {
+            "alg": "y' R' U2 R U R' U R",
+            "altId": "18091"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gyob",
+        "ub": "gobb",
+        "uf": "yrgg",
+        "ul": "ybrr",
+        "ur": "yroo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U' R'",
+            "altId": "1094"
+          },
+          {
+            "alg": "y L' U' L U' L' U2 L",
+            "altId": "2443"
+          },
+          {
+            "alg": "y' R' U' R U' R' U2 R",
+            "altId": "2442"
+          },
+          {
+            "alg": "R' F R F' R U R'",
+            "altId": "17753"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bogo",
+        "ub": "yrbb",
+        "uf": "rygg",
+        "ul": "yyrr",
+        "ur": "gboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' R U R' U' F'",
+            "altId": "1095"
+          },
+          {
+            "alg": "R U' R2 U R2 U R2 U' R",
+            "altId": "3273"
+          },
+          {
+            "alg": "R U2 R2 U' R2 U' R2 U2 R",
+            "altId": "4319"
+          },
+          {
+            "alg": "y' R' F R2 U' R2 F R",
+            "altId": "5429"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "oyoy",
+        "ub": "rbbb",
+        "uf": "grgg",
+        "ul": "yyrr",
+        "ur": "gboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' F'",
+            "altId": "1096"
+          },
+          {
+            "alg": "y2 F U R U' R' F'",
+            "altId": "4357"
+          },
+          {
+            "alg": "y' R2 D R' U2 R D' R' U2 R'",
+            "altId": "19237"
+          },
+          {
+            "alg": "y R2 D' R U2 R' D R U2 R",
+            "altId": "21861"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "ygby",
+        "ub": "rgbb",
+        "uf": "yogg",
+        "ul": "orrr",
+        "ur": "byoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "y F' R U R' U' R' F R",
+            "altId": "2439"
+          },
+          {
+            "alg": "F R U' R' U' R U R' F'",
+            "altId": "3375"
+          },
+          {
+            "alg": "F R' F' R U R U' R'",
+            "altId": "2440"
+          },
+          {
+            "alg": "F' R U R' U' R' F R",
+            "altId": "5381"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "gyoy",
+        "ub": "rybb",
+        "uf": "yggg",
+        "ul": "rbrr",
+        "ur": "oboo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R' F R F'",
+            "altId": "1097"
+          },
+          {
+            "alg": "R U2 R U2 R2",
+            "altId": "20202"
+          },
+          {
+            "alg": "U R U R' U' F' U' F",
+            "altId": "19710"
+          },
+          {
+            "alg": "y2 x U' L' U R' U' L U R",
+            "altId": "23555"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "bgbg",
+        "ub": "yybb",
+        "uf": "yygg",
+        "ul": "orrr",
+        "ur": "rooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R2 U2 R' U2 R2",
+            "altId": "3275"
+          },
+          {
+            "alg": "R2 U2 R U2 R2",
+            "altId": "2436"
+          },
+          {
+            "alg": "y R U R' U R U' R' U R U2 R'",
+            "altId": "4056"
+          },
+          {
+            "alg": "F R U R' U' R U R' U' R U R' U' F'",
+            "altId": "5319"
+          }
+        ]
+      ]
+    }
+  ]
+}

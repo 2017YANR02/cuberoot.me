@@ -46,7 +46,7 @@ function fpAt(p: any, slotIdx: number): string {
 }
 
 // Manually rebuild the table to get keys
-const [f2l, advF2l] = await Promise.all([loadAlgdb('f2l'), loadAlgdb('adv_f2l')]);
+const [f2l, advF2l] = await Promise.all([loadAlgdb('3x3', 'f2l'), loadAlgdb('3x3', 'adv-f2l')]);
 const kp = await getCube3();
 const solved = kp.defaultPattern();
 

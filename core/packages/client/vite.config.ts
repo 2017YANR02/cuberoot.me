@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import fs from 'fs'
+import { renderFromSimpleQuery } from '@cuberoot/visualcube'
 
 // ── 静态文件 MIME 映射 ────────────────────────────────────────────────────
 const MIME: Record<string, string> = {
@@ -85,9 +86,46 @@ function serveRepoRoot(): Plugin {
   };
 }
 
+/**
+ * 本地 dev 渲染 /api/visualcube.svg —— 不走 prod 代理，避开"prod 还没部署新参数"的 dev/prod 错位。
+ * Server cube.ts + 这个 plugin 共享同一个 renderFromSimpleQuery，永远同步。
+ */
+function visualcubeDev(): Plugin {
+  return {
+    name: 'visualcube-dev',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || '';
+        if (!url.startsWith('/api/visualcube.svg')) return next();
+        try {
+          const qs = new URL(url, 'http://localhost').searchParams;
+          const svg = renderFromSimpleQuery({
+            alg: qs.get('alg') ?? undefined,
+            view: qs.get('view') ?? undefined,
+            mask: qs.get('mask') ?? undefined,
+            size: qs.get('size') ?? undefined,
+            cubeSize: qs.get('cubeSize') ?? undefined,
+            pzl: qs.get('pzl') ?? undefined,
+            bg: qs.get('bg') ?? undefined,
+            cc: qs.get('cc') ?? undefined,
+            co: qs.get('co') ?? undefined,
+          });
+          res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.end(svg);
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(`visualcube render error: ${(err as Error).message}`);
+        }
+      });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), serveRepoRoot()],
+  plugins: [react(), tailwindcss(), serveRepoRoot(), visualcubeDev()],
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
   build: {

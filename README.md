@@ -120,6 +120,7 @@ This project stands on the shoulders of excellent open-source work:
 - [**huizhiLLL/WCA-Nemesizer-API**](https://github.com/huizhiLLL/WCA-Nemesizer-API) — nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))
 - [**roudai/VisualCubeEditor2**](https://github.com/roudai/VisualCubeEditor2) — Vue + sr-visualizer GUI cube image editor; UI replicated in React for the `/visualcube` page (renderer swapped to our `@cuberoot/visualcube` package)
 - [**cube.rider.biz/visualcube.php**](https://cube.rider.biz/visualcube.php) — PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`
+- [**speedcubedb.com**](https://speedcubedb.com/) — algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)
 
 ---
 

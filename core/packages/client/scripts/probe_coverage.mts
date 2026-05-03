@@ -1,6 +1,6 @@
-import f2l from '../../shared/data/algdb_f2l.json' with { type: 'json' };
-import oll from '../../shared/data/algdb_oll.json' with { type: 'json' };
-import pll from '../../shared/data/algdb_pll.json' with { type: 'json' };
+import f2l from '../../shared/data/algdb_3x3_f2l.json' with { type: 'json' };
+import oll from '../../shared/data/algdb_3x3_oll.json' with { type: 'json' };
+import pll from '../../shared/data/algdb_3x3_pll.json' with { type: 'json' };
 function ftOnly(a: string) {
   return a.split(/\s+/).filter(Boolean).every(t => /^[UDFBLR]['2]?$/.test(t));
 }

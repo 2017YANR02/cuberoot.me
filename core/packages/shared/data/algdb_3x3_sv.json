@@ -1,0 +1,711 @@
+{
+  "scrapedAt": "2026-05-03T13:38:23.309Z",
+  "source": "https://speedcubedb.com/a/3x3/SV",
+  "puzzle": "3x3",
+  "set": "sv",
+  "cases": [
+    {
+      "name": "SV 1",
+      "subgroup": "",
+      "setup": "R U R' U2' L U' R U R' L'",
+      "sticker": {
+        "kind": "face",
+        "us": "ygyyyyyyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R' D' r U2 r' D R",
+            "altId": "3931"
+          },
+          {
+            "alg": "L R U' R' U L' U2 R U' R'",
+            "altId": "3645"
+          },
+          {
+            "alg": "U2 R U R' U2 L U' R U R' L'",
+            "altId": "21148"
+          },
+          {
+            "alg": "R U R D R' U2 R D' R' U2 R'",
+            "altId": "24081"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 2",
+      "subgroup": "",
+      "setup": "R' U' R U' R' U2' R U' R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "ygyyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "llyrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R' D' R U R' D R U R U R'",
+            "altId": "23650"
+          },
+          {
+            "alg": "L' R U R' U L U R U2 L' U' L U2 R'",
+            "altId": "24571"
+          },
+          {
+            "alg": "R U R' U2 R U R' U R U2 R'",
+            "altId": "24084"
+          },
+          {
+            "alg": "R U R' U R' U2 R U R' U R",
+            "altId": "3644"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 3",
+      "subgroup": "",
+      "setup": "R U R D R' U' R D' R' U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "ygyyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "ylgggyggy",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R D R' U R D' R' U' R'",
+            "altId": "3643"
+          },
+          {
+            "alg": "U2 R L U' R' U' L' U' L U' L'",
+            "altId": "21149"
+          },
+          {
+            "alg": "R U' R' U' R2 D R' U' R D' R2",
+            "altId": "4192"
+          },
+          {
+            "alg": "M x D L U L' D' L R'",
+            "altId": "4193"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 4",
+      "subgroup": "",
+      "setup": "L U' R U R' L' U2'",
+      "sticker": {
+        "kind": "face",
+        "us": "lgyyyyyyo",
+        "ub": "loybbbbbb",
+        "uf": "llgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L R U' R' U L'",
+            "altId": "3642"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 5",
+      "subgroup": "",
+      "setup": "L' U' L R U2' L' U' L U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lgyyyylyo",
+        "ub": "loybbbbbb",
+        "uf": "llgggyggy",
+        "ul": "llyrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R' F R U R U' R' F'",
+            "altId": "7796"
+          },
+          {
+            "alg": "L' U2 L U L' U L R U2 R'",
+            "altId": "10558"
+          },
+          {
+            "alg": "R U' L' U L U2 R' L' U L",
+            "altId": "3641"
+          },
+          {
+            "alg": "U2 L U F2 r U2 r' U' L'",
+            "altId": "21150"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 6",
+      "subgroup": "",
+      "setup": "R U R' U R U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lgyyyylyo",
+        "ub": "loybbbbbb",
+        "uf": "ylgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U' R U' R'",
+            "altId": "3640"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 7",
+      "subgroup": "",
+      "setup": "R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lgyyyyyyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggy",
+        "ul": "yllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R'",
+            "altId": "3639"
+          },
+          {
+            "alg": "R U2 R' U R U' R' U R U' R' U R U' R' U R U' R' U R U' R' U R U' R' U R U' R' U R U' R' U R U' R' U",
+            "altId": "19780"
+          },
+          {
+            "alg": "R U' U' U' R'",
+            "altId": "22180"
+          },
+          {
+            "alg": "B' D' B2 R' U' B U B2 R D R U R'",
+            "altId": "25692"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 8",
+      "subgroup": "",
+      "setup": "L' R U R' U' L U R U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lgyyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "ylyrrrrrr",
+        "ur": "wlllooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U M' U R' U' r' F R F'",
+            "altId": "18233"
+          },
+          {
+            "alg": "U2 M' F' U2 F M",
+            "altId": "24567"
+          },
+          {
+            "alg": "R U2 R' U' L' U R U' R' L",
+            "altId": "3638"
+          },
+          {
+            "alg": "R U2 R' U' r' F R F' M'",
+            "altId": "7532"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 9",
+      "subgroup": "",
+      "setup": "R U R' U L' R U R' U' L R U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lgyyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "ylgggyggl",
+        "ul": "yllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' L' U R U' R' L U' R U' R'",
+            "altId": "3637"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 10",
+      "subgroup": "",
+      "setup": "R U2' R' U' R U' R' U R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "yglyyyyyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlylooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R U R' U R U2 R'",
+            "altId": "3636"
+          },
+          {
+            "alg": "U2 R' D' R U' R' D R U' R U R'",
+            "altId": "23651"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 11",
+      "subgroup": "",
+      "setup": "R U2' R' U' R U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "yglyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggy",
+        "ul": "llyrrrrrr",
+        "ur": "wlylooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "M F R' F' r",
+            "altId": "24582"
+          },
+          {
+            "alg": "L' R U R' U' L",
+            "altId": "18714"
+          },
+          {
+            "alg": "R U2 R' U R U2 R'",
+            "altId": "3635"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 12",
+      "subgroup": "",
+      "setup": "R2' U R' U R U' R2' U R U' R U' R2'",
+      "sticker": {
+        "kind": "face",
+        "us": "yglyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "ylgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlylooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U F' R U2 R' U2 R' F R",
+            "altId": "11378"
+          },
+          {
+            "alg": "R2 U R' U R' U' R2 U R' U' R U' R2",
+            "altId": "3634"
+          },
+          {
+            "alg": "R U R' U R U2 R2 U' R2 U' R2 U2 R",
+            "altId": "29033"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 13",
+      "subgroup": "",
+      "setup": "L' U2' R U R' U' R U' R' L U'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyyyyo",
+        "ub": "loybbbbbb",
+        "uf": "llgggyggy",
+        "ul": "lllrrrrrr",
+        "ur": "wlylooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U L' R U R' U R U' R' U2 L",
+            "altId": "3633"
+          },
+          {
+            "alg": "R U2 R2 D' R U R' D R2 U2 R'",
+            "altId": "28773"
+          },
+          {
+            "alg": "R U' R' U' R U' R' U' R U R' U R U2 R'",
+            "altId": "29085"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 14",
+      "subgroup": "",
+      "setup": "R' U L U' R2' U R' L' U2'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "loybbbbbb",
+        "uf": "llgggyggl",
+        "ul": "llyrrrrrr",
+        "ur": "wlylooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L R U' R2 U L' U' R",
+            "altId": "3632"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 15",
+      "subgroup": "",
+      "setup": "R U2' R' U' R U R' U' R U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "loybbbbbb",
+        "uf": "ylgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlylooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U R U' R' U R U2 R'",
+            "altId": "3631"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 16",
+      "subgroup": "",
+      "setup": "R2' D R' U2' R D' R' U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyyyyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "yllrrrrrr",
+        "ur": "wlylooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R D R' U2 R D' R2",
+            "altId": "3630"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 17",
+      "subgroup": "",
+      "setup": "R' U' R U' R' U2' R2' U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "ylyrrrrrr",
+        "ur": "wlylooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R2 U2 R U R' U R",
+            "altId": "3629"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 18",
+      "subgroup": "",
+      "setup": "R2' D R' U R D' R' U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "lolbbbbbb",
+        "uf": "ylgggyggy",
+        "ul": "yllrrrrrr",
+        "ur": "wlylooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R D R' U' R D' R2",
+            "altId": "3628"
+          },
+          {
+            "alg": "R U2 R' U R' D' R U' R' D R2 U' R'",
+            "altId": "28015"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 19",
+      "subgroup": "",
+      "setup": "L' U' L' U R U' L U L U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "yglyyyyyo",
+        "ub": "yolbbbbbb",
+        "uf": "llgggyggy",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R2 F' r U R U' r' F",
+            "altId": "27849"
+          },
+          {
+            "alg": "R U L' U' L' U R' U' L U L",
+            "altId": "3627"
+          },
+          {
+            "alg": "R U' R' F' R U2 R' U2 R' F R",
+            "altId": "28026"
+          },
+          {
+            "alg": "R U2 R' U' R' F' R U2 R U2 R' F",
+            "altId": "24568"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 20",
+      "subgroup": "",
+      "setup": "R U R' U R U' R' U R U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "yglyyylyo",
+        "ub": "yolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "llyrrrrrr",
+        "ur": "wlllooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U' R U R' U' R U' R'",
+            "altId": "3626"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 21",
+      "subgroup": "",
+      "setup": "R' U2' R2' U R2' U R2' U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "yglyyylyo",
+        "ub": "yolbbbbbb",
+        "uf": "ylgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R2 U' R2 U' R2 U2 R",
+            "altId": "3625"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 22",
+      "subgroup": "",
+      "setup": "R' U2' R U R' U R2' U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyyyyo",
+        "ub": "yoybbbbbb",
+        "uf": "llgggyggl",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R2 U' R U' R' U2 R",
+            "altId": "3624"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 23",
+      "subgroup": "",
+      "setup": "R' U2' R U R' U R2' U R' U R U R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "yoybbbbbb",
+        "uf": "llgggyggl",
+        "ul": "llyrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U' R U' R2 U' R U' R' U2 R",
+            "altId": "3623"
+          },
+          {
+            "alg": "R U2 R' U R U2 R2 U2 R U R' U R",
+            "altId": "28027"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 24",
+      "subgroup": "",
+      "setup": "R' U2' R U R' U R U' R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "yoybbbbbb",
+        "uf": "ylgggyggy",
+        "ul": "lllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R' U' R U' R' U2 R",
+            "altId": "3622"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 25",
+      "subgroup": "",
+      "setup": "R' U' R' D' R U R' D R' U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyyyyo",
+        "ub": "yolbbbbbb",
+        "uf": "llgggyggl",
+        "ul": "yllrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R D' R U' R' D R U R",
+            "altId": "3621"
+          },
+          {
+            "alg": "R U2 R' U R U' R' U R U' R' U R U2 R'",
+            "altId": "28029"
+          },
+          {
+            "alg": "R U' R' U' R U R' U' R U R' U' R U' R'",
+            "altId": "29086"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 26",
+      "subgroup": "",
+      "setup": "R2' D R' U' R D' R' U' R' U",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "yolbbbbbb",
+        "uf": "llgggyggy",
+        "ul": "ylyrrrrrr",
+        "ur": "wlllooloo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U R D R' U R D' R2",
+            "altId": "3620"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "SV 27",
+      "subgroup": "",
+      "setup": "L R U' R2' U L' U' R",
+      "sticker": {
+        "kind": "face",
+        "us": "lglyyylyo",
+        "ub": "yolbbbbbb",
+        "uf": "ylgggyggl",
+        "ul": "yllrrrrrr",
+        "ur": "wlllooyoo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U L U' R2 U R' L'",
+            "altId": "3619"
+          },
+          {
+            "alg": "R U R' U' R U2 R' U' R U' R'",
+            "altId": "21225"
+          },
+          {
+            "alg": "R U R' U2 R' U' R U' R' U2 R",
+            "altId": "21226"
+          }
+        ]
+      ]
+    }
+  ]
+}

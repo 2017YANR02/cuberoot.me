@@ -18,8 +18,8 @@ import { getCube3, invertAlg, simplifyAlg } from '../src/utils/cube3';
 import { ollFingerprint, lookupOllAlgs } from '../src/utils/oll_lookup';
 import { pllFingerprint, lookupPllAlgs } from '../src/utils/pll_lookup';
 import { detectStage } from '../src/utils/stage_detect';
-import ollDb from '../../shared/data/algdb_oll.json' with { type: 'json' };
-import pllDb from '../../shared/data/algdb_pll.json' with { type: 'json' };
+import ollDb from '../../shared/data/algdb_3x3_oll.json' with { type: 'json' };
+import pllDb from '../../shared/data/algdb_3x3_pll.json' with { type: 'json' };
 
 const AUFS = ['', 'U', 'U2', "U'"];
 
