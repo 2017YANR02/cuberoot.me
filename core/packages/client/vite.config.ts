@@ -34,7 +34,7 @@ const MIME: Record<string, string> = {
 /**
  * Vite 插件：从仓库根目录直接 serve /legacy/ 和 /stats/ 路径的静态文件。
  *
- * NOTE: 生产环境中这些文件由 deploy_mirror.yml rsync 到 ECS。
+ * NOTE: 生产环境中这些文件由 deploy_mirror.yml rsync 到云服务器。
  */
 function serveRepoRoot(): Plugin {
   const repoRoot = path.resolve(__dirname, '../../..');
@@ -122,7 +122,7 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
     },
     proxy: {
-      // NOTE: Hono API 代理到 ECS 线上后端（本地无 recon_db，无法运行 Hono 后端）
+      // NOTE: Hono API 代理到云服务器线上后端（本地无 recon_db，无法运行 Hono 后端）
       '/api': {
         target: 'https://www.cuberoot.me',
         changeOrigin: true,

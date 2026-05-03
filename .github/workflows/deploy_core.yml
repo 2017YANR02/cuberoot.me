@@ -1,7 +1,7 @@
-# 前端部署（GitHub Pages）+ 后端部署（ECS Hono API）
+# 前端部署（GitHub Pages）+ 后端部署（云服务器 Hono API）
 # 仅当 core/ 源码有变更时触发
 # 前端：构建 Vite 产物 → 提交到根目录 → GitHub Pages + deploy_mirror 自动 serve
-# 后端：构建 server dist → rsync 到 ECS → pm2 restart
+# 后端：构建 server dist → rsync 到 云服务器 → pm2 restart
 name: Deploy Core
 
 on:
@@ -90,7 +90,7 @@ jobs:
           git pull --rebase origin main
           git push
 
-      # ── 后端部署到 ECS ──
+      # ── 后端部署到 云服务器 ──
 
       - name: Setup SSH
         run: |
@@ -102,9 +102,9 @@ jobs:
       - name: Install rsync
         run: sudo apt-get update && sudo apt-get install -y rsync
 
-      - name: Deploy server to ECS
+      - name: Deploy server
         run: |
-          # NOTE: 不在根用 --delete（避免删 ECS 上的 .env / pm2 状态等）
+          # NOTE: 不在根用 --delete（避免删 云服务器 上的 .env / pm2 状态等）
           # 各子目录单独 --delete 保证清理旧内容
 
           # dist (compiled JS)

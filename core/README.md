@@ -59,7 +59,7 @@ cd packages/stats-ui
 .\build.ps1
 ```
 
-> **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`www.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
+> **注意**：Recon API 通过 Vite proxy 转发到 云服务器 线上后端（`www.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
 > 
 > Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/tools/` 和 `/stats/` 静态文件，无需额外服务器。
 
@@ -83,10 +83,10 @@ pnpm --filter @cuberoot/server dev
 | Workflow | 触发条件 | 执行内容 |
 |----------|----------|----------|
 | **Deploy Core** | push main 且 `core/` 有变更 | pnpm install → build client + server → rsync + pm2 restart |
-| **Deploy Mirror** | push main | 组装 _deploy/ 目录 → rsync 静态文件到 ECS |
+| **Deploy Mirror** | push main | 组装 _deploy/ 目录 → rsync 静态文件到 云服务器 |
 
 ```
-push core/ 变更 → GitHub Actions → build → rsync → ECS
+push core/ 变更 → GitHub Actions → build → rsync → 云服务器
   ├── www.cuberoot.me/          ← 前端 SPA
   └── www.cuberoot.me/api/      ← 后端 API
 ```
@@ -103,7 +103,7 @@ push core/ 变更 → GitHub Actions → build → rsync → ECS
 | 国际化 | react-i18next | 15.x |
 | 魔方渲染 | cubing.js | twisty-player Web Component |
 | 后端框架 | Hono | 4.x |
-| 数据库 | MariaDB | 10.5（复用 ECS 现有实例） |
+| 数据库 | MariaDB | 10.5（复用 云服务器 现有实例） |
 | 认证 | WCA OAuth + JWT | jsonwebtoken |
 | 包管理 | pnpm | 10.x |
 | CI/CD | GitHub Actions | rsync + pm2 |

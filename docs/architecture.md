@@ -35,7 +35,7 @@ ruiminyan.github.io/
 │
 ├── docs/                      # 📌 项目文档（本目录）
 ├── DEPLOYMENT.md              # CI/CD 概览与索引
-└── CUBEROOT_ME.md             # ECS 运维手册
+└── CUBEROOT_ME.md             # 云服务器 运维手册
 ```
 
 > 详细的文件级说明见各目录下的 README 或 `core/README.md`。
@@ -44,8 +44,8 @@ ruiminyan.github.io/
 
 | URL | 服务 | 说明 |
 |-----|------|------|
-| `cuberoot.me/` | React SPA | Vite 构建，GitHub Pages + ECS 双部署 |
-| `cuberoot.me/blog/` | WordPress | ECS 专有，符号链接到 `/www/wwwroot/wordpress/` |
+| `cuberoot.me/` | React SPA | Vite 构建，GitHub Pages + 云服务器 双部署 |
+| `cuberoot.me/blog/` | WordPress | 云服务器 专有，符号链接到 `/www/wwwroot/wordpress/` |
 | `cuberoot.me/tools/` | 静态文件 | 独立 HTML/JS 工具模块（iframe 嵌入 SPA） |
 | `cuberoot.me/wca-stats/` | React SPA | WCA 统计数据展示（SPA 路由） |
 | `cuberoot.me/stats/` | 静态 JSON | WCA 统计数据文件（SPA fetch） |

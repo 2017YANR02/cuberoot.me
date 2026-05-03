@@ -1,6 +1,6 @@
 ---
 name: server-deploy
-description: "Use when changing Hono server routes (`core/packages/server/**`) or DB schema (ALTER / new table / new column). Covers DB credentials location, schema-change ordering, ECS deploy via GitHub Actions (ECS itself has no GitHub access), pm2 process. Triggers: \"recon_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
+description: "Use when changing Hono server routes (`core/packages/server/**`) or DB schema (ALTER / new table / new column). Covers DB credentials location, schema-change ordering, 云服务器 deploy via GitHub Actions (云服务器 itself has no GitHub access), pm2 process. Triggers: \"recon_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
 ---
 
 # Recon server / DB 部署
@@ -9,7 +9,7 @@ description: "Use when changing Hono server routes (`core/packages/server/**`) o
 
 **`.password.md`**（gitignored，不在 repo 里）。实际 DB 是 `recon_db / recon_user`——**不是** `.env.example` 里的 `trainer_db`。
 
-ECS 上加列示例（用单引号包 SQL，避免 bash 解析括号）：
+云服务器 上加列示例（用单引号包 SQL，避免 bash 解析括号）：
 ```bash
 mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0;'
 ```
@@ -18,9 +18,9 @@ mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN 
 
 ## ⚠️ Schema 变更顺序
 
-**先在 ECS 跑 ALTER → 再 push 代码**。反过来会让部署上去的新版 server 在 SELECT 新列时直接 500，整个 `/api/recon/*` 挂掉。
+**先在 云服务器 跑 ALTER → 再 push 代码**。反过来会让部署上去的新版 server 在 SELECT 新列时直接 500，整个 `/api/recon/*` 挂掉。
 
-## ECS 没有 GitHub 访问
+## 云服务器 没有 GitHub 访问
 
 不要 SSH 上去 `git pull`——连不通。所有部署都走 GitHub Actions：
 
@@ -29,7 +29,7 @@ mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN 
 
 `deploy_core.yml` 已经包含 server：build → rsync `core/packages/server/dist/` → SSH `pm2 restart core-api`。
 
-## ECS 关键路径（CUBEROOT_ME.md 详）
+## 云服务器 关键路径（CUBEROOT_ME.md 详）
 
 | 项 | 值 |
 |---|---|

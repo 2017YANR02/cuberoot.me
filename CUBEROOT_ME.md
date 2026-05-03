@@ -6,7 +6,7 @@
 |------|-----|
 | **域名** | `cuberoot.me` → 301 到 `www.cuberoot.me` |
 | **服务器 IP** | `47.97.30.181` |
-| **托管** | ECS |
+| **托管** | 云服务器 |
 | **OS** | Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
 | **Web 服务器** | Nginx 1.26.2 |
 | **管理面板** | 宝塔面板（端口 8888） |
@@ -31,7 +31,7 @@ https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:300
 
 ### 概述
 
-ECS 上部署了 `ruiminyan.github.io` 的镜像。
+云服务器 上部署了 `ruiminyan.github.io` 的镜像。
 
 | 项目 | 值 |
 |------|-----|
@@ -51,7 +51,7 @@ push 到 main 分支
 GitHub Actions（deploy_mirror.yml）
       │
       ├── 1. 组装 _deploy/ 目录（静态文件）
-      ├── 2. SSH 连接ECS
+      ├── 2. SSH 连接云服务器
       └── 3. rsync 同步 _deploy/ → /www/wwwroot/toolkit/
       │
       ▼
@@ -191,7 +191,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
 | API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
-| 数据库备份 | 宝塔计划任务（Shell 脚本 `mysqldump`） | 每天 03:00 | ECS `/www/backup/recon_db_*.sql.gz`（保留 7 天） |
+| 数据库备份 | 宝塔计划任务（Shell 脚本 `mysqldump`） | 每天 03:00 | 云服务器 `/www/backup/recon_db_*.sql.gz`（保留 7 天） |
 
 > ⚠️ 宝塔内置的"备份数据库"任务**不会**备份命令行创建的数据库，必须用 Shell 脚本方式。
 
@@ -220,18 +220,18 @@ fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
 ## SSH 登录方式
 
 ```bash
-# 密码登录（密码在云控制台 → ECS → 重置密码）
+# 密码登录（密码在云控制台 → 云服务器 → 重置密码）
 ssh root@47.97.30.181
 
 # 或用云网页终端
-# 云控制台 → ECS → 实例列表 → 远程连接 → Workbench
+# 云控制台 → 云服务器 → 实例列表 → 远程连接 → Workbench
 ```
 
 ## 邮件发送（Postfix + Gmail SMTP 中继）
 
 PHP `mail()` 依赖 postfix 通过 Gmail SMTP 中继发送。用于复盘评论通知等场景。
 
-> ECS 封锁出站端口 25，必须通过 587 端口中继。
+> 云服务器 封锁出站端口 25，必须通过 587 端口中继。
 
 **迁移服务器时需重新执行以下命令：**
 

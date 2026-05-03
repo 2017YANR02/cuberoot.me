@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **根目录的静态 HTML/JS**（来自多个 fork）—— 只读，不改。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
    - `packages/client` — React 19 + Vite 8 SPA（主要工作区）
-   - `packages/server` — Hono + MariaDB（WCA OAuth + 训练数据，部署到 ECS）
+   - `packages/server` — Hono + MariaDB（WCA OAuth + 训练数据，部署到云服务器）
    - `packages/shared` — 共享类型 + 公式数据（PLL / ZBLL / ZBLS JSON）
    - `packages/stats-build` — WCA 统计生成管道（独立 CI 周更）
    - `packages/stats-ui` — 统计页 UI
@@ -61,7 +61,7 @@ pnpm --filter @cuberoot/client lint
 - Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
 - Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
 - `serveRepoRoot` Vite 插件从仓库根 serve `/tools/`、`/stats/`、以及 upstream 静态页
-- **凭据展开**：给用户 ECS / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
+- **凭据展开**：给用户云服务器 / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
 
 ## 代码风格
 

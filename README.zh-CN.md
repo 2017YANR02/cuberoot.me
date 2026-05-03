@@ -69,7 +69,7 @@ ruiminyan.github.io/
 ```
 
 - **前端**: React 19, Vite 8, TypeScript, react-i18next（中英双语），react-router
-- **后端**: Hono 部署在 ECS, MariaDB
+- **后端**: Hono 部署在云服务器, MariaDB
 - **数据管道**: TypeScript + MySQL, GitHub Actions 每周跑
 - **托管**: GitHub Pages 托管静态资源 + SPA
 
