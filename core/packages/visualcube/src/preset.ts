@@ -6,9 +6,9 @@
  *
  * Not the full PHP query API (no `arw`/`fc`/`fd`/...). For those, build `ICubeOptions` directly.
  */
-import { Face, Masking } from './cube/constants';
-import type { ICubeOptions } from './cube/options';
-import { renderCubeSVG } from './index';
+import { Face, Masking } from './cube/constants.js';
+import type { ICubeOptions } from './cube/options.js';
+import { renderCubeSVG } from './index.js';
 
 const DEFAULT_ALG = "R U R' U R U2 R'"; // Sune (OLL 27)
 const DEFAULT_SIZE = 256;

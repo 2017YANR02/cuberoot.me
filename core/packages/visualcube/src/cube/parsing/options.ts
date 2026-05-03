@@ -1,10 +1,10 @@
-import { ICubeOptions } from '../options'
-import { Masking } from '../constants'
-import { parseRotationSequence } from './rotation'
-import { parseFaceletColors } from './faceletColors'
-import { parseColorScheme } from './colorScheme'
-import { parseFaceletDefinitions } from './faceletDefinitions'
-import { parseColor } from './color'
+import { ICubeOptions } from '../options.js'
+import { Masking } from '../constants.js'
+import { parseRotationSequence } from './rotation.js'
+import { parseFaceletColors } from './faceletColors.js'
+import { parseColorScheme } from './colorScheme.js'
+import { parseFaceletDefinitions } from './faceletDefinitions.js'
+import { parseColor } from './color.js'
 
 /**
  * Utility methods for parsing the old query param style options

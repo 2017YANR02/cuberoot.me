@@ -1,5 +1,5 @@
-import { Axis } from '../../math'
-import { AxisSymbolToAxis } from '../constants'
+import { Axis } from '../../math.js'
+import { AxisSymbolToAxis } from '../constants.js'
 
 export function parseRotationSequence(rawSequence: string): [Axis, number][] {
   const rotationRegex = /([xyz]-?[0-9][0-9]?[0-9]?)/g

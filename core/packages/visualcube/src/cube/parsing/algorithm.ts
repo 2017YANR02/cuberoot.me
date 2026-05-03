@@ -1,6 +1,6 @@
-import { cubeRotations } from './../constants'
-import { TurnType } from '../simulation'
-import { TurnAbbreviation, AlgorithmUnit, possibleMoves } from '../constants'
+import { cubeRotations } from './../constants.js'
+import { TurnType } from '../simulation.js'
+import { TurnAbbreviation, AlgorithmUnit, possibleMoves } from '../constants.js'
 
 export interface Turn {
   move: AlgorithmUnit

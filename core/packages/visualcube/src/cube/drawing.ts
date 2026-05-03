@@ -1,11 +1,11 @@
-import { ColorCode, ColorName } from './../colors'
-import { FaceletToFace, FaceletDefinition, FaceletToColor } from './../constants'
-import { CubeGeometry, FaceStickers, FaceRotations, rotateFaces } from './geometry'
-import { Vec3, transScale, scale, translate, radians2Degrees } from '../math'
-import { Face, AllFaces } from './constants'
-import { ResolvedCubeOptions } from './options'
-import { Arrow } from './models/arrow'
-import { parseArrows } from './parsing/arrow'
+import { ColorCode, ColorName } from './../colors.js'
+import { FaceletToFace, FaceletDefinition, FaceletToColor } from './../constants.js'
+import { CubeGeometry, FaceStickers, FaceRotations, rotateFaces } from './geometry.js'
+import { Vec3, transScale, scale, translate, radians2Degrees } from '../math.js'
+import { Face, AllFaces } from './constants.js'
+import { ResolvedCubeOptions } from './options.js'
+import { Arrow } from './models/arrow.js'
+import { parseArrows } from './parsing/arrow.js'
 
 /**
  * Utility methods for rendering cube geometry as native SVG strings.
