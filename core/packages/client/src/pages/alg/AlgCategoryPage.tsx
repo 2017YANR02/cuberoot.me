@@ -14,13 +14,41 @@ import {
   type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
 } from '@cuberoot/shared';
 import { VisualCube } from '../../components/VisualCube';
+import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import LangToggle from '../../components/LangToggle';
 import './alg.css';
 
-const PUZZLE_SIZE: Record<AlgPuzzle, number> = { '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5 };
+const PUZZLE_SIZE: Record<AlgPuzzle, number> = { '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5, 'sq1': 3, 'megaminx': 3, 'pyraminx': 3, 'skewb': 3 };
+const SR_PUZZLES: AlgPuzzle[] = ['sq1', 'megaminx', 'pyraminx', 'skewb'];
+function srPuzzleKind(p: AlgPuzzle): PuzzleKind | null {
+  if (p === 'sq1')      return 'sq1-net';        // SQ1 top-down split (matches speedcubedb)
+  if (p === 'megaminx') return 'megaminx-top';   // Top pentagon view (LL-style)
+  if (p === 'pyraminx') return 'pyraminx';       // 3D iso (Pyraminx has no canonical "top")
+  if (p === 'skewb')    return 'skewb';          // 3D iso
+  return null;
+}
 
-/** Inline animated cube demo (3x3 only). Lazy-imports cubing/twisty. */
-function AlgPlayer({ alg }: { alg: string }) {
+/** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
+const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
+  '2x2': '2x2x2',
+  '3x3': '3x3x3',
+  '4x4': '4x4x4',
+  '5x5': '5x5x5',
+  'sq1': 'square1',
+  'megaminx': 'megaminx',
+  'pyraminx': 'pyraminx',
+  'skewb': 'skewb',
+};
+
+/** SQ1 alg `1,0/-1,0` → `(1,0)/(-1,0)`. cubing.js's parser requires parens
+ * around each `m,n` move; speedcubedb's data omits them. */
+function normalizeAlgForTwisty(puzzle: AlgPuzzle, alg: string): string {
+  if (puzzle !== 'sq1') return alg;
+  return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
+}
+
+/** Inline animated puzzle demo. Lazy-imports cubing/twisty. */
+function AlgPlayer({ alg, puzzle }: { alg: string; puzzle: AlgPuzzle }) {
   const hostRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const host = hostRef.current;
@@ -28,29 +56,35 @@ function AlgPlayer({ alg }: { alg: string }) {
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let player: any = null;
+    const normalized = normalizeAlgForTwisty(puzzle, alg);
     import('cubing/twisty').then((mod) => {
       if (cancelled || !host) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Ctor = (mod as any).TwistyPlayer || (mod as any).default;
-      player = new Ctor({
-        puzzle: '3x3x3',
-        experimentalSetupAlg: `(${alg})'`,
-        alg,
-        controlPanel: 'bottom-row',
-        background: 'none',
-        hintFacelets: 'none',
-        backView: 'none',
-      });
-      player.style.colorScheme = 'light';
-      player.style.width = '260px';
-      player.style.height = '260px';
-      host.appendChild(player);
+      try {
+        player = new Ctor({
+          puzzle: TWISTY_PUZZLE[puzzle],
+          experimentalSetupAlg: `(${normalized})'`,
+          alg: normalized,
+          controlPanel: 'bottom-row',
+          background: 'none',
+          hintFacelets: 'none',
+          backView: 'none',
+        });
+        player.style.colorScheme = 'light';
+        player.style.width = '260px';
+        player.style.height = '260px';
+        host.appendChild(player);
+      } catch (err) {
+        console.warn(`[AlgPlayer] ${puzzle} alg failed: ${alg}`, err);
+        host.innerHTML = `<div style="font-size:12px;color:#888;padding:8px">player unavailable</div>`;
+      }
     }).catch(err => console.warn('Failed to load cubing library:', err));
     return () => {
       cancelled = true;
       if (player && host.contains(player)) host.removeChild(player);
     };
-  }, [alg]);
+  }, [alg, puzzle]);
   return <div ref={hostRef} className="alg-twisty-host" />;
 }
 
@@ -59,7 +93,14 @@ function isPuzzle(s: string): s is AlgPuzzle {
 }
 
 /** Pick the right preview thumb based on puzzle + sticker kind. */
-function CaseThumb({ puzzle, set, sticker, alg }: { puzzle: AlgPuzzle; set: string; sticker: AlgSticker; alg: string }) {
+function CaseThumb({ puzzle, set, sticker, alg, setup }: { puzzle: AlgPuzzle; set: string; sticker: AlgSticker; alg: string; setup?: string }) {
+  if (SR_PUZZLES.includes(puzzle)) {
+    const kind = srPuzzleKind(puzzle)!;
+    // Prefer setup (forward) when available — matches speedcubedb's preview state.
+    // Fall back to inverting the canonical alg (case = solved.applyInverse(alg)).
+    const driver = setup && setup.trim() ? { alg: setup } : { case: alg };
+    return <PuzzleSVG kind={kind} {...driver} size={88} />;
+  }
   return <VisualCube algorithm={alg} view={pickView(puzzle, set, sticker)} size={88} puzzleSize={PUZZLE_SIZE[puzzle]} />;
 }
 
@@ -72,7 +113,7 @@ function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 
   return 'pll';
 }
 
-function AlgRow({ alg, expanded, onToggle, animatable }: { alg: string; expanded: boolean; onToggle: () => void; animatable: boolean }) {
+function AlgRow({ alg, expanded, onToggle, animatable, puzzle }: { alg: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle }) {
   const [copied, setCopied] = useState(false);
   return (
     <>
@@ -105,7 +146,7 @@ function AlgRow({ alg, expanded, onToggle, animatable }: { alg: string; expanded
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
       </div>
-      {expanded && animatable && <AlgPlayer alg={alg} />}
+      {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} />}
     </>
   );
 }
@@ -211,7 +252,8 @@ export default function AlgCategoryPage() {
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
 
-  const animatable = puzzleParam === '3x3';
+  // cubing.js TwistyPlayer supports all 8 of our puzzles natively.
+  const animatable = true;
   const showSubgroupPicker = !!meta.umbrella && !subgroupParam;
   const backTo = subgroupParam ? `/alg/${puzzleParam}/${set}` : `/alg/${puzzleParam}`;
 
@@ -285,6 +327,7 @@ export default function AlgCategoryPage() {
                             set={set}
                             sticker={c.sticker}
                             alg={firstAlg || c.setup || ''}
+                            setup={c.setup}
                           />
                         </div>
                         <div className="alg-case-info">
@@ -322,6 +365,7 @@ export default function AlgCategoryPage() {
                               expanded={expanded}
                               onToggle={() => setExpandedKey(expanded ? null : key)}
                               animatable={animatable}
+                              puzzle={puzzleParam}
                             />
                           );
                         })}

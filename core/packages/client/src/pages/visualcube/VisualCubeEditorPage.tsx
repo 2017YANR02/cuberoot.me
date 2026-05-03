@@ -27,6 +27,7 @@ import {
 } from '@cuberoot/visualcube';
 import LangToggle from '../../components/LangToggle';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
+import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -101,8 +102,24 @@ const MASK_ROTATIONS = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
 
 type AlgType = 'alg' | 'case';
 type SpecialView = 'normal' | 'plan' | 'trans';
+type PuzzleType = 'cube' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
+type PuzzleVariant = 'iso' | 'net' | 'top';
+
+/** Map (puzzleType, variant) → sr-puzzlegen kind. Cube uses our own renderer instead. */
+function srKindOf(type: PuzzleType, variant: PuzzleVariant): PuzzleKind | null {
+  if (type === 'cube') return null;
+  if (type === 'sq1') return variant === 'net' ? 'sq1-net' : 'sq1';
+  if (type === 'megaminx') return variant === 'top' ? 'megaminx-top' : variant === 'net' ? 'megaminx-net' : 'megaminx';
+  if (type === 'pyraminx') return variant === 'net' ? 'pyraminx-net' : 'pyraminx';
+  if (type === 'skewb') return variant === 'net' ? 'skewb-net' : 'skewb';
+  return null;
+}
 
 interface EditorState {
+  /** Top-level puzzle. 'cube' uses NxN ICubeOptions path; other 4 use sr-puzzlegen. */
+  puzzleType: PuzzleType;
+  /** View variant for non-cube puzzles. 'iso' = 3D iso, 'net' = unfolded, 'top' = top view (megaminx only). */
+  puzzleVariant: PuzzleVariant;
   cubeSize: number;
   imageSize: number;
   algType: AlgType;
@@ -140,6 +157,8 @@ interface EditorState {
 }
 
 const DEFAULTS: EditorState = {
+  puzzleType: 'cube',
+  puzzleVariant: 'iso',
   cubeSize: 3,
   imageSize: 256,
   algType: 'alg',
@@ -187,6 +206,10 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
     return n;
   };
   const s = { ...DEFAULTS };
+  const pt = get('puzzle');
+  if (pt === 'sq1' || pt === 'megaminx' || pt === 'pyraminx' || pt === 'skewb' || pt === 'cube') s.puzzleType = pt;
+  const pv = get('variant');
+  if (pv === 'iso' || pv === 'net' || pv === 'top') s.puzzleVariant = pv;
   s.cubeSize = num('pzl', DEFAULTS.cubeSize, 1, 10);
   s.imageSize = num('size', DEFAULTS.imageSize, 1, 1000);
 
@@ -248,6 +271,8 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
 
 function stateToParams(s: EditorState): URLSearchParams {
   const p = new URLSearchParams();
+  if (s.puzzleType !== DEFAULTS.puzzleType) p.set('puzzle', s.puzzleType);
+  if (s.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('variant', s.puzzleVariant);
   if (s.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(s.cubeSize));
   if (s.imageSize !== DEFAULTS.imageSize) p.set('size', String(s.imageSize));
   if (s.algorithm) p.set(s.algType, s.algorithm);
@@ -475,21 +500,34 @@ export default function VisualCubeEditorPage() {
     return `${window.location.origin}/visualcube${qs ? '?' + qs : ''}`;
   }, [state]);
 
+  // For non-cube puzzles the SVG is rendered into the live DOM by sr-puzzlegen
+  // (we don't have a string), so download/copy serializes that node.
+  const previewRef = useRef<HTMLElement | null>(null);
+  const getCurrentSvg = (): string => {
+    if (state.puzzleType === 'cube') return svg;
+    const node = previewRef.current?.querySelector('svg');
+    return node ? new XMLSerializer().serializeToString(node) : '';
+  };
+
   const downloadSvg = () => {
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const out = getCurrentSvg();
+    if (!out) return;
+    const blob = new Blob([out], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cube-${Date.now()}.svg`;
+    a.download = `${state.puzzleType}-${Date.now()}.svg`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const downloadPng = async () => {
+    const out = getCurrentSvg();
+    if (!out) return;
     // Rasterise the in-memory SVG via canvas. Encode as Blob URL (data: URLs
     // crash Safari for non-trivial SVGs); decode through HTMLImageElement;
     // draw to canvas at imageSize × imageSize; export as PNG blob.
-    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const svgBlob = new Blob([out], { type: 'image/svg+xml;charset=utf-8' });
     const svgUrl = URL.createObjectURL(svgBlob);
     try {
       const img = new Image();
@@ -510,7 +548,7 @@ export default function VisualCubeEditorPage() {
         const pngUrl = URL.createObjectURL(pngBlob);
         const a = document.createElement('a');
         a.href = pngUrl;
-        a.download = `cube-${Date.now()}.png`;
+        a.download = `${state.puzzleType}-${Date.now()}.png`;
         a.click();
         URL.revokeObjectURL(pngUrl);
       }, 'image/png');
@@ -571,12 +609,24 @@ export default function VisualCubeEditorPage() {
 
       {/* Preview — sticky so it stays on screen while scrolling controls.
           imageSize controls the SVG file size (for download / share URL); the
-          preview is visually capped via CSS max-height to keep sticky usable. */}
-      <section className="vc-preview-wrap">
-        <div
-          className="vc-preview"
-          dangerouslySetInnerHTML={{ __html: svg }}
-        />
+          preview is visually capped via CSS max-height to keep sticky usable.
+          For non-cube puzzles, render via sr-puzzlegen (PuzzleSVG) instead. */}
+      <section className="vc-preview-wrap" ref={previewRef as React.RefObject<HTMLElement>}>
+        {state.puzzleType === 'cube' ? (
+          <div
+            className="vc-preview"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        ) : (
+          <div className="vc-preview">
+            <PuzzleSVG
+              kind={srKindOf(state.puzzleType, state.puzzleVariant)!}
+              alg={state.algType === 'alg' ? state.algorithm : undefined}
+              case={state.algType === 'case' ? state.algorithm : undefined}
+              size={state.imageSize}
+            />
+          </div>
+        )}
       </section>
 
       {/* Export buttons */}
@@ -601,19 +651,59 @@ export default function VisualCubeEditorPage() {
 
       {/* Controls */}
       <section className="vc-controls">
-        {/* Puzzle type + image size on the same row (both compact, save vertical space) */}
+        {/* Puzzle picker — top-level switch between NxN cube and the 4 non-cube WCA puzzles */}
         <div className="vc-row">
-          <label className="vc-label">{t('魔方阶数', 'Puzzle Type')}</label>
-          <input
-            type="number"
-            className="vc-num"
-            value={state.cubeSize} min={1} max={10}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(10, n)));
-            }}
-          />
-          <label className="vc-label vc-label-secondary">{t('图片尺寸 (px)', 'Image Size (px)')}</label>
+          <label className="vc-label">{t('魔方', 'Puzzle')}</label>
+          <div className="vc-row-controls">
+            {(['cube', 'sq1', 'megaminx', 'pyraminx', 'skewb'] as PuzzleType[]).map((pt) => (
+              <button
+                key={pt}
+                type="button"
+                className={`vc-btn vc-btn-sm${state.puzzleType === pt ? ' vc-btn-active' : ''}`}
+                onClick={() => set('puzzleType', pt)}
+              >
+                {pt === 'cube' ? 'NxN' : pt === 'sq1' ? 'Sq1' : pt === 'megaminx' ? 'Minx' : pt === 'pyraminx' ? 'Pyra' : 'Skewb'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* View variant — only relevant for non-cube puzzles */}
+        {state.puzzleType !== 'cube' && (
+          <div className="vc-row">
+            <label className="vc-label">{t('视图', 'View')}</label>
+            <div className="vc-row-controls">
+              {(state.puzzleType === 'megaminx' ? (['iso', 'top', 'net'] as PuzzleVariant[]) : (['iso', 'net'] as PuzzleVariant[])).map((pv) => (
+                <button
+                  key={pv}
+                  type="button"
+                  className={`vc-btn vc-btn-sm${state.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
+                  onClick={() => set('puzzleVariant', pv)}
+                >
+                  {pv === 'iso' ? (isZh ? '立体' : 'Iso') : pv === 'top' ? (isZh ? '顶视' : 'Top') : (isZh ? '展开' : 'Net')}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Cube size + image size on one row. Cube size only matters for NxN. */}
+        <div className="vc-row">
+          {state.puzzleType === 'cube' && (
+            <>
+              <label className="vc-label">{t('阶数', 'NxN Size')}</label>
+              <input
+                type="number"
+                className="vc-num"
+                value={state.cubeSize} min={1} max={10}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value, 10);
+                  if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(10, n)));
+                }}
+              />
+            </>
+          )}
+          <label className={`vc-label${state.puzzleType === 'cube' ? ' vc-label-secondary' : ''}`}>{t('图片尺寸 (px)', 'Image Size (px)')}</label>
           <select
             className="vc-select"
             value={state.imageSize}
@@ -662,7 +752,8 @@ export default function VisualCubeEditorPage() {
           </div>
         </div>
 
-        {/* Arrow editor */}
+        {/* Arrow editor — uses NxN sticker indices, only relevant for cube. */}
+        {state.puzzleType === 'cube' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
           <div className="vc-row-controls vc-col">
@@ -735,49 +826,54 @@ export default function VisualCubeEditorPage() {
             />
           </div>
         </div>
+        )}
 
-        {/* Special view */}
-        <div className="vc-row">
-          <label className="vc-label">{t('视角', 'Special View')}</label>
-          <div className="vc-row-controls">
-            <div className="vc-radio-group">
-              {(['normal', 'plan', 'trans'] as SpecialView[]).map((v) => (
-                <label key={v}>
-                  <input
-                    type="radio"
-                    checked={state.cubeView === v}
-                    onChange={() => set('cubeView', v)}
-                  />
-                  {v}
-                </label>
-              ))}
+        {/* Special view + stage mask are NxN-cube specific (sr-puzzlegen has its own view variant picker above). */}
+        {state.puzzleType === 'cube' && (
+          <>
+            <div className="vc-row">
+              <label className="vc-label">{t('视角', 'Special View')}</label>
+              <div className="vc-row-controls">
+                <div className="vc-radio-group">
+                  {(['normal', 'plan', 'trans'] as SpecialView[]).map((v) => (
+                    <label key={v}>
+                      <input
+                        type="radio"
+                        checked={state.cubeView === v}
+                        onChange={() => set('cubeView', v)}
+                      />
+                      {v}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Stage Mask + Mask Alg */}
-        <div className="vc-row">
-          <label className="vc-label">{t('Mask', 'Stage Mask')}</label>
-          <div className="vc-row-controls">
-            <select className="vc-select" value={state.stageMask}
-              onChange={(e) => set('stageMask', e.target.value)}>
-              <optgroup label="Core">
-                {CORE_MASKS.map((m) => <option key={m.value || 'none'} value={m.value}>{m.label}</option>)}
-              </optgroup>
-              <optgroup label="Extended (3x3 only)">
-                {EXTENDED_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </optgroup>
-            </select>
-            <select className="vc-select" value={state.maskAlg}
-              onChange={(e) => set('maskAlg', e.target.value)}>
-              {MASK_ROTATIONS.map((r) => (
-                <option key={r || 'none'} value={r}>{r || '— rot —'}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+            <div className="vc-row">
+              <label className="vc-label">{t('Mask', 'Stage Mask')}</label>
+              <div className="vc-row-controls">
+                <select className="vc-select" value={state.stageMask}
+                  onChange={(e) => set('stageMask', e.target.value)}>
+                  <optgroup label="Core">
+                    {CORE_MASKS.map((m) => <option key={m.value || 'none'} value={m.value}>{m.label}</option>)}
+                  </optgroup>
+                  <optgroup label="Extended (3x3 only)">
+                    {EXTENDED_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </optgroup>
+                </select>
+                <select className="vc-select" value={state.maskAlg}
+                  onChange={(e) => set('maskAlg', e.target.value)}>
+                  {MASK_ROTATIONS.map((r) => (
+                    <option key={r || 'none'} value={r}>{r || '— rot —'}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </>
+        )}
 
-        {/* Color Schemes */}
+        {/* Color Schemes — only meaningful for NxN cube. */}
+        {state.puzzleType === 'cube' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('六面配色', 'Color Schemes')}</label>
           <div className="vc-row-controls vc-col">
@@ -815,8 +911,10 @@ export default function VisualCubeEditorPage() {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Rotation Sequence */}
+        {/* Rotation Sequence — only for NxN cube (sr-puzzlegen has its own variant picker). */}
+        {state.puzzleType === 'cube' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
           <div className="vc-row-controls vc-col">
@@ -855,8 +953,9 @@ export default function VisualCubeEditorPage() {
             })}
           </div>
         </div>
+        )}
 
-        {/* Background / Cube colour */}
+        {/* Background applies to both rendering paths (sr-puzzlegen also accepts background via SVG container CSS). */}
         <ColorRow
           label={t('背景色', 'Background Color')}
           value={state.backgroundColor}
@@ -864,32 +963,35 @@ export default function VisualCubeEditorPage() {
           onReset={() => set('backgroundColor', '')}
           allowEmpty
         />
-        <ColorRow
-          label={t('壳体色', 'Cube Color')}
-          value={state.cubeColor}
-          onChange={(v) => set('cubeColor', v)}
-          onReset={() => set('cubeColor', DEFAULTS.cubeColor)}
-        />
-
-        {/* Opacity / Distance */}
-        <NumberRow
-          label={t('壳体不透明度', 'Cube Opacity')}
-          value={state.cubeOpacity} min={0} max={100}
-          onChange={(v) => set('cubeOpacity', v)}
-          onReset={() => set('cubeOpacity', DEFAULTS.cubeOpacity)}
-        />
-        <NumberRow
-          label={t('贴纸不透明度', 'Sticker Opacity')}
-          value={state.stickerOpacity} min={0} max={100}
-          onChange={(v) => set('stickerOpacity', v)}
-          onReset={() => set('stickerOpacity', DEFAULTS.stickerOpacity)}
-        />
-        <NumberRow
-          label={t('投影距离', 'Projection Distance')}
-          value={state.dist} min={1} max={100}
-          onChange={(v) => set('dist', v)}
-          onReset={() => set('dist', DEFAULTS.dist)}
-        />
+        {/* Cube colour / opacity / projection distance are NxN-cube specific. */}
+        {state.puzzleType === 'cube' && (
+          <>
+            <ColorRow
+              label={t('壳体色', 'Cube Color')}
+              value={state.cubeColor}
+              onChange={(v) => set('cubeColor', v)}
+              onReset={() => set('cubeColor', DEFAULTS.cubeColor)}
+            />
+            <NumberRow
+              label={t('壳体不透明度', 'Cube Opacity')}
+              value={state.cubeOpacity} min={0} max={100}
+              onChange={(v) => set('cubeOpacity', v)}
+              onReset={() => set('cubeOpacity', DEFAULTS.cubeOpacity)}
+            />
+            <NumberRow
+              label={t('贴纸不透明度', 'Sticker Opacity')}
+              value={state.stickerOpacity} min={0} max={100}
+              onChange={(v) => set('stickerOpacity', v)}
+              onReset={() => set('stickerOpacity', DEFAULTS.stickerOpacity)}
+            />
+            <NumberRow
+              label={t('投影距离', 'Projection Distance')}
+              value={state.dist} min={1} max={100}
+              onChange={(v) => set('dist', v)}
+              onReset={() => set('dist', DEFAULTS.dist)}
+            />
+          </>
+        )}
       </section>
 
       {/* API reference — for embedding cube images on other sites */}
