@@ -332,7 +332,7 @@ const CARDS: CardConfig[] = [
   // Tier 3 — Standard
   { id: 'alg',         href: '/alg',             internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg', comingSoon: true },
   { id: 'algdb',       href: '/algdb',           internal: true,  tier: 'standard',  Icon: BookOpen,       nameKey: 'algdb' },
-  { id: 'timer',       href: '/timer',           internal: true,  tier: 'standard',  Icon: TimerIcon,      nameKey: 'timer' },
+  { id: 'timer',       href: '/timer',           internal: true,  tier: 'standard',  Icon: TimerIcon,      nameKey: 'timer', comingSoon: true },
   { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
   { id: 'upcoming',    href: '/calendar',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
   { id: 'globe',       href: '/globe',           internal: true,  tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },

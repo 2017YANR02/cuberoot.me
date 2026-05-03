@@ -8,7 +8,7 @@
  * Lazy-loaded: the 3x3 KPuzzle definition (~20 KB) is fetched on first use.
  * Both `getCube3` and downstream consumers should `await`.
  */
-import { Alg, type Move } from 'cubing/alg';
+import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 
 let _kpuzzle: Promise<KPuzzle> | null = null;
@@ -80,11 +80,24 @@ export function countMoves(alg: string): number {
   }
 }
 
-/** Cancel adjacent same-axis moves (e.g. "U' U" → "", "U' U2" → "U"). */
+/** Cancel adjacent same-axis moves (e.g. "U' U" → "", "U' U2" → "U") AND
+ *  fold each move's amount modulo 4 (`U3` → `U'`, `U4` → drop, `U5` → `U`).
+ *  cubing.js's experimentalSimplify cancels but leaves U-axis amounts > 2
+ *  alone, so we post-process to canonicalise. */
 export function simplifyAlg(alg: string): string {
   if (!alg) return '';
   try {
-    return new Alg(alg).experimentalSimplify({ cancel: true }).toString();
+    const simplified = new Alg(alg).experimentalSimplify({ cancel: true });
+    const out: string[] = [];
+    for (const m of simplified.experimentalLeafMoves()) {
+      const wrapped = ((m.amount % 4) + 4) % 4;
+      if (wrapped === 0) continue;
+      // Map 3 → -1 so cubing.js stringifies as `X'` rather than `X3`.
+      const newAmount = wrapped === 3 ? -1 : wrapped;
+      const newMove = m.amount === newAmount ? m : new Move(m.family, newAmount);
+      out.push(newMove.toString());
+    }
+    return out.join(' ');
   } catch {
     return alg;
   }

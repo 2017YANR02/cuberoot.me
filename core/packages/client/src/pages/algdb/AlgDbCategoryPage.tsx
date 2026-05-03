@@ -10,15 +10,14 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
 import { loadAlgdb, type AlgdbFile, type AlgdbCategory } from '@cuberoot/shared';
-import { MiniCube } from './MiniCube';
-import { cubeFromAlg, invertAlg } from '../../utils/cube3_sim';
+import { VisualCube } from '../../components/VisualCube';
 import './algdb.css';
 
-const CATEGORY_LABELS: Record<string, { en: string; zh: string; api: AlgdbCategory; view: 'll' | 'f2l' }> = {
+const CATEGORY_LABELS: Record<string, { en: string; zh: string; api: AlgdbCategory; view: 'f2l' | 'oll' | 'pll' }> = {
   'f2l':     { en: 'F2L',          zh: 'F2L (基础)',  api: 'f2l',     view: 'f2l' },
   'adv-f2l': { en: 'Advanced F2L', zh: 'F2L (进阶)',  api: 'adv_f2l', view: 'f2l' },
-  'oll':     { en: 'OLL',          zh: 'OLL',         api: 'oll',     view: 'll' },
-  'pll':     { en: 'PLL',          zh: 'PLL',         api: 'pll',     view: 'll' },
+  'oll':     { en: 'OLL',          zh: 'OLL',         api: 'oll',     view: 'oll' },
+  'pll':     { en: 'PLL',          zh: 'PLL',         api: 'pll',     view: 'pll' },
 };
 
 function CopyableAlg({ alg }: { alg: string }) {
@@ -92,16 +91,11 @@ export default function AlgDbCategoryPage() {
               const oriIdx = activeOri[c.name] ?? 0;
               const algsForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
               const firstAlg = algsForOri[0]?.alg ?? c.standard ?? '';
-              // Render the case state by applying alg^-1 from solved (if alg exists)
-              // Otherwise apply setup (best-effort fallback).
-              const state = firstAlg
-                ? cubeFromAlg(invertAlg(firstAlg))
-                : (c.setup ? cubeFromAlg(c.setup) : cubeFromAlg(''));
               return (
                 <article key={c.name} className="algdb-case">
                   <div className="algdb-case-head">
                     <div className="algdb-case-cube">
-                      <MiniCube state={state} view={meta.view} size={88} />
+                      <VisualCube algorithm={firstAlg || c.setup || ''} view={meta.view} size={88} />
                     </div>
                     <div className="algdb-case-info">
                       <div className="algdb-case-name">{c.name}</div>

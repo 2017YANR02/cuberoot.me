@@ -20,7 +20,7 @@ import {
   CORNER_STICKERS, EDGE_STICKERS,
   cornerStickerOnFace, edgeStickerOnFace,
 } from './sticker_tables';
-import { loadAlgdb } from '@cuberoot/shared';
+import { loadAlgdb } from '@cuberoot/shared/algdb';
 
 export interface F2lAlgEntry {
   /** Alg in canonical frame. Prefix with canonRot for raw-frame execution. */
@@ -147,13 +147,37 @@ async function buildTable(): Promise<Map<string, F2lAlgEntry[]>> {
 
 /**
  * Look up F2L algs that solve the given slot in the canonical-frame pattern.
- * Empty array if no algdb case matches the current pair shape (e.g., cross
- * broken, or pair already solved).
+ *
+ * The caller's `canonical` may not have default centers (bestOrientationAlg
+ * picks any rotation with cross-on-D, not necessarily the one with default
+ * centers). We try all 4 y-rotations and take the union: at one of them the
+ * pair's piece will be in the same slot as the canonical-frame DB entry for
+ * the matching case, and the fingerprint will match. For each match found at
+ * y-rotation `k`, the alg returned has `U^k` rolled into its prefix so it
+ * still solves the input frame correctly.
  */
 export async function lookupF2lAlgs(canonical: KPattern, slotIdx: number): Promise<F2lAlgEntry[]> {
   const t = await buildTable();
-  const fp = fingerprintAt(canonical, slotIdx);
-  return t.get(fp) ?? [];
+  const out: F2lAlgEntry[] = [];
+  const seen = new Set<string>();
+  for (let k = 0; k < 4; k++) {
+    const auf = AUFS[k];
+    const aufInv = AUF_INV[k];
+    const rotated = auf ? canonical.applyAlg(auf) : canonical;
+    const fp = fingerprintAt(rotated, slotIdx);
+    const entries = t.get(fp);
+    if (!entries) continue;
+    for (const e of entries) {
+      // Composed alg in the input frame: pre-AUF (aufInv) to undo the rotation
+      // we applied to match the fingerprint, then the stored canonical-frame alg.
+      const composed = simplifyAlg(aufInv ? `${aufInv} ${e.alg}` : e.alg);
+      if (!composed) continue;
+      if (seen.has(composed)) continue;
+      seen.add(composed);
+      out.push({ alg: composed, caseName: e.caseName, oriIdx: e.oriIdx });
+    }
+  }
+  return out;
 }
 
 /** Eagerly build the table. Useful for warmup if the page expects Tab presses soon. */
