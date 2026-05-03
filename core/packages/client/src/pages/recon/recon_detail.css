@@ -99,12 +99,12 @@
 }
 
 /* TwistySection fillPane 撑满左栏 */
-.detail-player-pane .detail-section--fill {
+.detail-player-pane .twisty-section--fill {
   width: 100%;
   height: 100%;
   margin-bottom: 0;
 }
-.detail-player-pane .detail-section--fill .detail-twisty-container {
+.detail-player-pane .twisty-section--fill .twisty-container {
   width: 100%;
   height: 100%;
   margin-bottom: 0;
@@ -437,11 +437,6 @@
   margin-top: 8px;
   font-size: 0.85rem;
   color: #a3a3a3;
-}
-
-/* --- Twisty 容器 --- */
-.detail-twisty-container {
-  margin-bottom: 12px;
 }
 
 /* --- 外部链接 --- */

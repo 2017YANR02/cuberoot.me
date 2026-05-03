@@ -30,7 +30,7 @@ import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '../../utils/
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
-import TwistySection from './components/TwistySection';
+import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { computeAllStats } from '../../utils/recon_stats';

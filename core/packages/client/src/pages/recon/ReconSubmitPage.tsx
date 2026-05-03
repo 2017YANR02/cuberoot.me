@@ -28,14 +28,14 @@ import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
-import TwistySection from './components/TwistySection';
+import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, autoSpaceMoves } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2, Shuffle } from 'lucide-react';
-import { randomScrambleForReconEvent } from '../../utils/scramble';
+import { randomScrambleForEvent } from '../../utils/scramble';
 
 /** 折叠区段 — GitHub 设置式 */
 function CollapsibleSection({ title, defaultOpen = false, children }: {
@@ -1088,14 +1088,14 @@ export default function ReconSubmitPage() {
             <span>{t('recon.wcaScramble')}</span>
             {(() => {
               const ev = form.event ?? '';
-              const supported = randomScrambleForReconEvent(ev) !== null;
+              const supported = randomScrambleForEvent(ev) !== null;
               return (
                 <button
                   type="button"
                   className="submit-label-btn"
                   disabled={!supported}
                   onClick={() => {
-                    const s = randomScrambleForReconEvent(ev);
+                    const s = randomScrambleForEvent(ev);
                     if (s) setField('wcaScramble', s);
                   }}
                   title={supported

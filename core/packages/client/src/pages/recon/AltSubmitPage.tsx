@@ -14,7 +14,7 @@ import { getRecon, addAlternative, updateAlternative } from '../../utils/recon_a
 import { getPuzzleId } from '../../utils/recon_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
-import TwistySection from './components/TwistySection';
+import TwistySection from '../../components/TwistySection';
 import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { computeAllStats } from '../../utils/recon_stats';

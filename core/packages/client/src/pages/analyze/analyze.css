@@ -22,11 +22,22 @@
     padding: 1.5rem 1.25rem 3rem;
 }
 
-.analyze-header h1 {
+.analyze-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     margin: 0 0 0.25rem 0;
+}
+
+.analyze-header h1 {
+    margin: 0;
     font-size: 1.5rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+}
+
+.analyze-lang-toggle {
+    margin-left: auto;
 }
 
 .analyze-sub {
@@ -51,7 +62,8 @@
     background: var(--az-surface);
     border: 1px solid var(--az-border-strong);
     border-right: 0;
-    border-radius: 6px 0 0 6px;
+    border-left: 0;
+    border-radius: 0;
     padding: 0.55rem 0.75rem;
     font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 0.9rem;
@@ -61,6 +73,29 @@
 
 .analyze-scramble:focus {
     border-color: var(--az-accent);
+}
+
+.analyze-shuffle {
+    background: var(--az-surface);
+    border: 1px solid var(--az-border-strong);
+    border-radius: 6px 0 0 6px;
+    padding: 0 0.7rem;
+    cursor: pointer;
+    color: var(--az-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.analyze-shuffle:hover:not(:disabled) {
+    background: var(--az-accent-soft);
+    border-color: var(--az-accent);
+    color: var(--az-accent);
+}
+
+.analyze-shuffle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .analyze-go {
@@ -438,6 +473,7 @@
     .analyze-sub { font-size: 0.82rem; }
     .analyze-scramble { font-size: 0.82rem; padding: 0.5rem 0.6rem; }
     .analyze-go { padding: 0 0.7rem; min-width: 4.5rem; font-size: 0.82rem; }
+    .analyze-shuffle { padding: 0 0.55rem; }
     .analyze-filter-chip { min-width: 4rem; padding: 0.45rem 0.65rem; }
     .analyze-filter-title { font-size: 0.8rem; }
     .analyze-stats, .analyze-filters { font-size: 0.85rem; }
