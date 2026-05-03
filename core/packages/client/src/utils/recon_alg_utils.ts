@@ -43,7 +43,9 @@ export function cleanForPlayer(text: string): string {
   let alg = cleaned.join('\n');
   // NOTE: 从 legacy cleanForPlayer 迁移——删除 twisty-player 无法解析的特殊字符
   // .·↑↓⅓⅔ 分别是卡顿标记、换手标记、分数标记等
-  alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+  // ​-‍﻿ 是零宽字符（cubedb 分享 / AI 输出 / 剪贴板会夹带），
+  // 不剥的话 cubing.js Alg parser 整段判错 → 动画停在打乱状态
+  alg = alg.replace(/[.·↑↓⅓⅔​‌‍﻿]/g, '');
   // NOTE: 保留重复标记 (...)N（twisty-player 支持），仅删除纯分组括号
   alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
   // NOTE: 在连写的步骤之间插入空格（如 UD → U D，twisty-player 无法解析连写步骤）
