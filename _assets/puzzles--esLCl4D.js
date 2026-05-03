@@ -1,1 +1,0 @@
-import{r as e}from"./chunk-Byb_VWJN.js";import{r as t}from"./chunk-FLK6AZKB-yCOe3-R0.js";var n=e({cube3x3x3:()=>t});export{n as t};
