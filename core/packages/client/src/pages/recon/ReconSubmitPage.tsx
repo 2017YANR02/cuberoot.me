@@ -1226,6 +1226,7 @@ export default function ReconSubmitPage() {
               }
             }}
             scramble={form.wcaScramble || form.optimalScramble || ''}
+            isMobile={isMobile}
           />
         )}
 

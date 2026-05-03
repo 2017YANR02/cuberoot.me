@@ -29,6 +29,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import { getCaretRect } from '../../../utils/textarea_caret';
 import { patternFromAlg, countMoves } from '../../../utils/cube3';
 import { buildCommentSuggestions } from '../../../utils/popup_suggest';
@@ -44,6 +45,8 @@ interface Props {
   /** WCA scramble — applied as the base before the user's moves. */
   scramble: string;
   enabled?: boolean;
+  /** 手机端在第一行 Tab hint 槽位上显示 ✕ 关闭按钮(桌面 Tab hint 与之互斥)。 */
+  isMobile?: boolean;
 }
 
 interface AnchorPos { left: number; top: number; lineHeight: number }
@@ -63,6 +66,8 @@ interface CommentPopup {
    *  the trailing newline on accept (no point landing on a fresh line when
    *  there's nothing left to recon). */
   solved: boolean;
+  /** 行号——光标移到不同行时关闭 popup(避免显示陈旧候选)。 */
+  lineIdx: number;
 }
 
 interface AlgPopup {
@@ -73,6 +78,8 @@ interface AlgPopup {
   insertAt: number;
   /** When entries is empty, render a single non-clickable info row with this i18n key. */
   emptyReasonKey?: string;
+  /** 行号——光标移到不同行时关闭 popup(避免显示陈旧候选)。 */
+  lineIdx: number;
 }
 
 type Popup = CommentPopup | AlgPopup | null;
@@ -81,7 +88,7 @@ type Popup = CommentPopup | AlgPopup | null;
  * Main hook + JSX renderer. Always renders into a portal so positioning isn't
  * constrained by the textarea's containing layout.
  */
-export default function ReconAutofill({ textareaRef, value, setValue, scramble, enabled = true }: Props) {
+export default function ReconAutofill({ textareaRef, value, setValue, scramble, enabled = true, isMobile = false }: Props) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [popup, setPopup] = useState<Popup>(null);
@@ -96,6 +103,16 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     setPopup(null);
     setSelected(0);
   }, []);
+
+  /** 关掉并记住当前行,跟 Esc 行为一致 — 同行不再骚扰,换行后才能重开。 */
+  const dismiss = useCallback(() => {
+    const ta = textareaRef.current;
+    if (ta) {
+      const caret = ta.selectionStart;
+      dismissedLineIdxRef.current = (ta.value.substring(0, caret).match(/\n/g) ?? []).length;
+    }
+    close();
+  }, [textareaRef, close]);
 
   /** Build a CommentPopup for the current line state. */
   const buildCommentPopup = useCallback(async (caret: number): Promise<CommentPopup | null> => {
@@ -138,6 +155,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
 
     const currStage = await detectStage(currPattern);
     const rect = getCaretRect(ta, caret);
+    const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
     return {
       kind: 'comment',
       pos: rect,
@@ -145,6 +163,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       replaceFrom,
       caret,
       solved: currStage.stage === 'solved',
+      lineIdx,
     };
   }, [textareaRef, value, scramble]);
 
@@ -155,6 +174,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const result = await suggestAlg(scramble, value, caret);
     if (!result) return null;
     const rect = getCaretRect(ta, caret);
+    const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
     if (result.kind === 'empty') {
       return {
         kind: 'alg',
@@ -162,6 +182,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
         entries: [],
         insertAt: caret,
         emptyReasonKey: result.reasonKey,
+        lineIdx,
       };
     }
     return {
@@ -169,6 +190,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       pos: rect,
       entries: result.suggestions.map(s => ({ text: s.text, category: s.category, caseName: s.caseName })),
       insertAt: caret,
+      lineIdx,
     };
   }, [textareaRef, value, scramble]);
 
@@ -240,10 +262,21 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (dismissedLineIdxRef.current !== null) dismissedLineIdxRef.current = null;
 
     const { start, end } = lineRange(value, caret);
+    const fullLine = value.substring(start, end);
     const lineUpToCaret = value.substring(start, caret);
-    const movesLineText = movesOnly(value.substring(start, end));
-    const hasSlash = lineUpToCaret.includes('//');
+    const movesLineText = movesOnly(fullLine);
+    const hasSlash = lineUpToCaret.includes('//'); // 光标已越过 //
+    const fullLineHasSlash = fullLine.includes('//'); // 整行已含 // (可能在光标后)
     const hasMoves = movesLineText.length > 0;
+
+    // 行已经写完注释、光标只是停在 moves 段中间 → 不自动弹(已经有完整解读了,
+    // 用户只是在浏览/光标定位)。光标越过 // 进入注释段时仍允许 auto-open 用于过滤。
+    if (fullLineHasSlash && !hasSlash) return;
+
+    // 光标必须停在行尾(后面只剩空白)才允许 auto-open —— 鼠标点到 moves 中间
+    // 是浏览/编辑既有内容,不需要建议。
+    const lineFromCaret = value.substring(caret, end);
+    if (!/^\s*$/.test(lineFromCaret)) return;
 
     const key = `${value}\x00${caret}`;
     if (key === lastAutoOpenKeyRef.current) return;
@@ -283,7 +316,10 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
         ? await buildCommentPopup(caret)
         : await buildAlgPopup(caret);
       if (cancelled) return;
-      if (next) {
+      // alg 空态(没匹配的提示文本)只在手动 Tab 触发时给反馈;边打边过滤遇到没
+      // 匹配就静默关掉,不要骚扰用户("没有公式以你输入的开头"半成品时无意义)
+      const isEmptyAlg = next && next.kind === 'alg' && next.entries.length === 0;
+      if (next && !isEmptyAlg) {
         setPopup(next);
         setSelected(s => Math.min(s, next.entries.length - 1));
       } else {
@@ -341,6 +377,28 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     ta.addEventListener('keydown', onKey);
     return () => ta.removeEventListener('keydown', onKey);
   }, [textareaRef, popup, selected, openPopup, close]);
+
+  // 光标在 textarea 内移动到不同行时(点击别处 / 方向键)关闭 popup —
+  // popup 锚定在打开时的那行,跨行候选已陈旧。同行内移动不关(用户可能在编辑当前行)。
+  useEffect(() => {
+    if (!popup) return;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const checkCaret = () => {
+      if (document.activeElement !== ta) return;
+      const caret = ta.selectionStart;
+      const v = ta.value;
+      const lineIdx = (v.substring(0, caret).match(/\n/g) ?? []).length;
+      if (lineIdx !== popup.lineIdx) { close(); return; }
+      // 同行内但光标离开行尾(后面有非空白) → 关掉 popup
+      let lineEnd = caret;
+      while (lineEnd < v.length && v[lineEnd] !== '\n') lineEnd++;
+      const tail = v.substring(caret, lineEnd);
+      if (!/^\s*$/.test(tail)) close();
+    };
+    document.addEventListener('selectionchange', checkCaret);
+    return () => document.removeEventListener('selectionchange', checkCaret);
+  }, [popup, textareaRef, close]);
 
   // Click outside / blur closes popup
   useEffect(() => {
@@ -454,7 +512,19 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
               {popup.kind === 'comment' ? (isZh ? '注释' : 'COMMENT') : (cat?.toUpperCase().replace('_', ' ') ?? 'F2L')}
             </span>
             <span className="recon-autofill-text">{text}</span>
-            {i === selected && <span className="recon-autofill-tab-hint">Tab</span>}
+            {/* 手机端第一行右侧给 ✕ 关闭按钮(占用 Tab hint 槽位);桌面保留原 Tab hint */}
+            {isMobile && i === 0 ? (
+              <span
+                role="button"
+                tabIndex={-1}
+                className="recon-autofill-close"
+                onMouseDown={e => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
+                aria-label={isZh ? '关闭自动补全' : 'Close suggestions'}
+                title={isZh ? '关闭(本行不再自动弹)' : 'Close (won\'t reopen on this line)'}
+              >
+                <X size={12} />
+              </span>
+            ) : (!isMobile && i === selected && <span className="recon-autofill-tab-hint">Tab</span>)}
           </button>
         );
       })}
