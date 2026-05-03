@@ -5,7 +5,7 @@
  * 效果：
  * - <img src="/api/visualcube.svg?..."> 浏览器右键 "Copy image address" 拿到干净 URL
  * - SW 激活后不发真网络请求（本地生成）
- * - 离线 / ECS 挂掉也能出图（除首次访问）
+ * - 离线 / 后端挂掉也能出图（除首次访问）
  * - 首次访问 SW 还没装好 → 走真 server (`@cuberoot/server` 路由)
  *
  * 这个文件被 scripts/build-sw.mjs 用 esbuild bundle 成 public/sw.js（visualcube 内联）。

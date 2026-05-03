@@ -1,6 +1,6 @@
 import * as mariadb from 'mariadb';
 
-// NOTE: MariaDB 连接池——复用 ECS 现有实例
+// NOTE: MariaDB 连接池——复用云服务器现有实例
 // 生产环境通过环境变量配置，本地开发通过 .env 文件
 const pool = mariadb.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
