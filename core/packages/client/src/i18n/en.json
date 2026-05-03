@@ -37,7 +37,9 @@
     "langToggleLabel": "中文",
     "clear": "Clear",
     "min": "Min",
-    "max": "Max"
+    "max": "Max",
+    "sortAsc": "Asc",
+    "sortDesc": "Desc"
   },
   "recon": {
     "title": "Solve Reconstructions",

@@ -2,7 +2,7 @@
  * 复盘列表页——1:1 对齐原版 recon/recon.js（718 行）
  * NOTE: 列结构、格式化、工具栏、交互完全忠于原版
  */
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { cloneElement, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useReconStore } from '../../stores/recon_store';
@@ -303,6 +303,9 @@ export default function ReconListPage() {
       setSort(col.key as SortKey);
     }
   }, [setSort]);
+
+  // ── 受控 popup ── 哪一列的统一菜单是打开的(同时只能开一个)
+  const [openColKey, setOpenColKey] = useState<string | null>(null);
 
   // ── 表头列过滤器（漏斗 popover）──
   const renderColFilter = (col: Column) => {
@@ -733,20 +736,39 @@ export default function ReconListPage() {
             <table className="recon-table">
               <thead>
                 <tr>
-                  {COLUMNS.map((col) => (
-                    <th
-                      key={col.key || col.labelKey}
-                      className={`${col.className || ''} ${
-                        col.sortable && col.key === sortKey
-                          ? `sort-${sortDir}`
-                          : ''
-                      }`}
-                      onClick={() => handleSort(col)}
-                    >
-                      <span className="col-label">{getColumnLabel(col)}</span>
-                      {renderColFilter(col)}
-                    </th>
-                  ))}
+                  {COLUMNS.map((col) => {
+                    const filterEl = renderColFilter(col);
+                    // 统一菜单: th 任意位置点击都打开此列的 popup;
+                    // ColFilter 受控,内部状态由 openColKey 决定;sort 按钮也合到 popup 里
+                    const ctrlFilterEl = filterEl ? cloneElement(filterEl, {
+                      open: openColKey === col.key,
+                      onOpenChange: (o: boolean) => setOpenColKey(o ? (col.key ?? null) : null),
+                      sortable: col.sortable,
+                      sortDir: col.sortable && col.key === sortKey ? sortDir : undefined,
+                      onSort: col.sortable && col.key
+                        ? (dir: 'asc' | 'desc') => setSort(col.key as SortKey, dir)
+                        : undefined,
+                    }) : null;
+                    const onThClick = () => {
+                      // 有 filter → 整列点击开 popup;无 filter 但 sortable → 老的 click-cycle 排序
+                      if (ctrlFilterEl) setOpenColKey(col.key ?? null);
+                      else if (col.sortable) handleSort(col);
+                    };
+                    return (
+                      <th
+                        key={col.key || col.labelKey}
+                        className={`${col.className || ''} ${
+                          col.sortable && col.key === sortKey
+                            ? `sort-${sortDir}`
+                            : ''
+                        }`}
+                        onClick={onThClick}
+                      >
+                        <span className="col-label">{getColumnLabel(col)}</span>
+                        {ctrlFilterEl}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
