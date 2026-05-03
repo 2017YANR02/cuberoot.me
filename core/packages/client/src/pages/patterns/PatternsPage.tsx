@@ -91,7 +91,7 @@ export default function PatternsPage() {
                 onClick={() => setOpenId(p.id)}
               >
                 <div className="pat-card-preview">
-                  <VisualCube algorithm={inverseOf(p.alg)} view="f2l" size={120} alt={p.name_en} />
+                  <VisualCube algorithm={inverseOf(p.alg)} view="iso" size={120} alt={p.name_en} />
                 </div>
                 <div className="pat-card-name">{lang === 'zh' ? p.name_zh : p.name_en}</div>
                 <div className="pat-card-meta">{CATEGORY_LABEL[p.category][lang]}</div>
