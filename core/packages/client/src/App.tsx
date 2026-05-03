@@ -72,6 +72,8 @@ const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
 const WbPage = lazy(() => import('./pages/wb/WbPage'));
 // NOTE: Timer — 纯 TypeScript 重写的速拧计时器（替代 cstimer iframe 的核心流程）
 const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
+// NOTE: VisualCube Editor — 全功能交互式魔方图生成器
+const VisualCubeEditorPage = lazy(() => import('./pages/visualcube/VisualCubeEditorPage'));
 
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
@@ -148,6 +150,8 @@ function App() {
         <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/cstimer/" title="csTimer" /></Suspense>} />
         {/* Timer — 纯 TypeScript 速拧计时器 */}
         <Route path="/timer" element={<Suspense fallback={<div>Loading...</div>}><TimerPage /></Suspense>} />
+        {/* VisualCube Editor — 交互式魔方图生成器（全 ICubeOptions 暴露 + URL 双向同步） */}
+        <Route path="/visualcube" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeEditorPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
