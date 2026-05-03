@@ -173,6 +173,19 @@
       "nonWca": "Non-WCA",
       "singleRecord": "Single Record",
       "averageRecord": "Average Record"
+    },
+    "autofill": {
+      "empty": {
+        "solved": "Cube already solved — nothing to suggest",
+        "no_cross": "Cross not solved yet",
+        "pscross": "Pseudo-cross — finish cross first (D / D' / D2)",
+        "prefix_no_match": "No alg starts with what you typed",
+        "no_algdb_match": {
+          "f2l": "No F2L alg in algdb for this case",
+          "oll": "No OLL alg in algdb for this case",
+          "pll": "No PLL alg in algdb for this case"
+        }
+      }
     }
   },
   "wcaStats": {

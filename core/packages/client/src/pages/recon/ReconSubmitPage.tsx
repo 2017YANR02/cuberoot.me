@@ -910,13 +910,6 @@ export default function ReconSubmitPage() {
           </label>
         </div>
 
-        {/* 实时统计 — 仅 STM / TPS,其它分项移到详情页统计区 */}
-        {stats && stats.stm > 0 && (
-          <div className="submit-stats-preview">
-            <span>{stats.stm} STM</span>
-            {stats.tps > 0 && <span>{stats.tps} TPS</span>}
-          </div>
-        )}
 
         {/* WCA 打乱 */}
         <label className="submit-field submit-block">
@@ -966,7 +959,16 @@ export default function ReconSubmitPage() {
         {/* 解法 — 用 div 而非 label,避免点击 SolutionView 时冒泡到 label 激活第一个 form control(toggle 按钮) */}
         <div className="submit-field submit-block">
           <span className="submit-label submit-label-row">
-            <span>{t('recon.solution')} *</span>
+            <span>
+              {t('recon.solution')} *
+              {stats && stats.stm > 0 && (
+                <span className="submit-label-stats">
+                  {' ('}{stats.stm} STM
+                  {stats.tps > 0 && `, ${stats.tps} TPS`}
+                  {')'}
+                </span>
+              )}
+            </span>
             {canNormalize && (
               <button
                 type="button"

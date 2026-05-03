@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./nemesizer-format": "./src/nemesizer_format.ts",
+    "./algdb": "./src/algdb.ts",
     "./data/*.json": "./data/*.json"
   },
   "scripts": {

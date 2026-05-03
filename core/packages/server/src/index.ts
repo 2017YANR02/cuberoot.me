@@ -5,6 +5,7 @@ import { authRoutes } from './routes/auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
 import { reconRoutes } from './routes/recon.js';
+import { cubeRoutes } from './routes/cube.js';
 
 const app = new Hono();
 
@@ -37,6 +38,7 @@ app.route('/', authRoutes);
 app.route('/', progressRoutes);
 app.route('/', healthRoutes);
 app.route('/', reconRoutes);
+app.route('/', cubeRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 

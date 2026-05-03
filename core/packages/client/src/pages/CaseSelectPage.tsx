@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CubeView from '../components/CubeView';
+import { VisualCube } from '../components/VisualCube';
 import { scrambleForCase, inverseScramble } from '../utils/scrambleGenerator';
 import { useSessionStore } from '../stores/sessionStore';
 import { allPllKeys, keysToCases, shuffle } from '../utils/pllHelpers';
@@ -164,12 +165,11 @@ export function CaseSelectPage() {
                     onClick={() => toggleCase(caseName)}
                   >
                     {algSetId === 'oll' ? (
-                      // NOTE: OLL 使用原版 2D 顶面朝向 SVG 图片（从 bestsiteever/oll/pic/ 复制）
-                      <img
-                        src={`${import.meta.env.BASE_URL}oll_pic/${displayName}.svg`}
+                      <VisualCube
+                        algorithm={typedOllMap[caseName]?.alg || ''}
+                        view="oll"
+                        size={60}
                         alt={caseName}
-                        width={60}
-                        height={60}
                       />
                     ) : (
                       <CubeView scramble={config.getScramble(caseName)} viewType="cube-top" size={60} />

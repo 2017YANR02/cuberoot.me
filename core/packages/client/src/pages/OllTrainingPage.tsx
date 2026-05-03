@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import ollInfo from '@cuberoot/shared/data/oll.json';
 import ollScrambles from '@cuberoot/shared/data/oll_scrambles.json';
 import { useSessionStore } from '../stores/sessionStore';
+import { VisualCube } from '../components/VisualCube';
 
 // --- 类型定义 ---
 interface OllCase {
@@ -439,11 +440,11 @@ export function OllTrainingPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={`${import.meta.env.BASE_URL}oll_pic/${hintCase}.svg`}
+            <VisualCube
+              algorithm={typedOllInfo[`OLL ${hintCase}`]?.alg || ''}
+              view="oll"
+              size={120}
               alt={`OLL ${hintCase}`}
-              width={120}
-              height={120}
             />
             <div>
               <h3 style={{ margin: '0 0 0.5rem' }}>

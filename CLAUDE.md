@@ -90,3 +90,4 @@ pnpm --filter @cuberoot/client lint
 | 重跑统计数据 | `stats-build` | 修改 `stats/*.json` 生成器；新增 stat |
 | 写 WCA SQL（本地 dump） | `wca-stats-db` | 任何写针对 `wca_statistics` MySQL 的 SQL — schema snake_case、persons.sub_id=1、events.rank<900、成绩值编码、records 标记 |
 | 重跑打乱分布 | `scramble-stats-build` | 修改 `stats/scramble/*.json`；WCA 配色 / 阶段-朝向 schema / pair CSV 特殊记号 |
+| 渲染魔方图片 / 3x3 立方体预览 | `visualcube` | 任何要画 3x3 魔方状态图的地方（F2L / OLL / PLL / 自定义 case 预览 / scramble 状态可视化）；走 `<VisualCube>` 或 `cubeSVG()`，**禁手写 SVG**（之前的 `MiniCube.tsx` 是反面教材） |

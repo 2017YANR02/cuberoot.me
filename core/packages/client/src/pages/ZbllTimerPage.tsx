@@ -10,10 +10,13 @@ import { useZbllSelectedStore } from '../stores/zbllSelectedStore';
 import { useZbllSettingsStore, FONTS_LIST } from '../stores/zbllSettingsStore';
 import { useZbllPresetStore, STARRED_NAME } from '../stores/zbllPresetStore';
 import { useZbllNotesStore } from '../stores/zbllNotesStore';
-import { msToHumanReadable, formatZbllKey, getZbllImg, inverseScramble } from '../utils/zbllHelpers';
+import { msToHumanReadable, formatZbllKey, inverseScramble } from '../utils/zbllHelpers';
 import zbllMap from '@cuberoot/shared/data/zbll.json';
 import type { ZbllEntry } from '../utils/zbllHelpers';
+import { VisualCube } from '../components/VisualCube';
 import '../zbll.css';
+
+const typedZbllMap = zbllMap as Record<string, ZbllEntry>;
 
 // ===== ZBLL 设置面板 =====
 function ZbllSettings({ onClose }: { onClose: () => void }) {
@@ -192,7 +195,12 @@ function ResultCard() {
         {t('zbll.result.selected')}
       </label>
       {result.key && (
-        <img className="zbll-result-img" src={getZbllImg(result.key, settings.pictureView)} alt={result.key} />
+        <VisualCube
+          algorithm={typedZbllMap[result.key]?.algs[0] || ''}
+          view={settings.pictureView === '3D' ? 'pll-iso' : 'pll'}
+          size={120}
+          alt={result.key}
+        />
       )}
       <SetupAndAlgs zbllKey={result.key} maxAmount={3} />
       <p className="zbll-result-scramble">{t('zbll.result.scramble')} {result.scramble}</p>
