@@ -11,8 +11,8 @@ import {
   CORNER_STICKERS, EDGE_STICKERS,
   cornerStickerOnFace, edgeStickerOnFace,
 } from '../src/utils/sticker_tables';
-import f2lDb from '../../shared/data/algdb_f2l.json' with { type: 'json' };
-import advF2lDb from '../../shared/data/algdb_adv_f2l.json' with { type: 'json' };
+import f2lDb from '../../shared/data/algdb_3x3_f2l.json' with { type: 'json' };
+import advF2lDb from '../../shared/data/algdb_3x3_adv-f2l.json' with { type: 'json' };
 import type { KPattern } from 'cubing/kpuzzle';
 import type { AlgdbFile } from '../../shared/src/algdb';
 

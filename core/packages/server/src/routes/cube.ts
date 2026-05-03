@@ -1,96 +1,36 @@
 /**
- * GET /api/visualcube.svg — 服务端渲染单个 3x3 SVG 图。
+ * GET /api/visualcube.svg — server-rendered cube SVG.
  *
- * URL 参数：
- *   alg   WCA notation；默认 Sune
- *   view  iso | plan | f2l | oll | pll | pll-iso | trans
- *         trans 是 PHP visualcube preset：cc=silver、co=50（半透明银壳，能透视背面）
- *   mask  显式 Masking 枚举值（覆盖 view 推断的 mask）
- *   size  32-1000；默认 256
- *   bg    hex（带不带 #）或 CSS 颜色名；默认透明
- *   cc    塑料壳颜色，hex / 颜色名（同 PHP `cc`）
- *   co    塑料壳不透明度 0-100（同 PHP `co`）
+ * URL params (forwarded to `renderFromSimpleQuery`):
+ *   alg       WCA notation; default Sune
+ *   view      iso | plan | f2l | oll | pll | pll-iso | trans
+ *             trans = PHP visualcube preset (cc=silver, co=50, semi-transparent shell)
+ *   mask      explicit Masking enum value (overrides view-implied mask)
+ *   size      32-1000; default 256
+ *   cubeSize  NxN puzzle, 2-7; default 3 (alias: pzl)
+ *   bg        hex / CSS color name; default transparent
+ *   cc        plastic color (PHP `cc`)
+ *   co        plastic opacity 0-100 (PHP `co`)
  *
- * 灵感源自 visualcube.php URL API，确定性输入故缓存 24h。
+ * Cached 24h since the response is deterministic from the inputs.
  */
 import { Hono } from 'hono';
-import { renderCubeSVG, Masking, Face, type ICubeOptions } from '@cuberoot/visualcube';
-
-const DEFAULT_ALG = "R U R' U R U2 R'"; // Sune (OLL 27)
-const DEFAULT_SIZE = 256;
-
-// PHP visualcube `stage=oll` 风格：U 黄、其他全灰 → 朝向二元图。
-const OLL_STAGE_SCHEME = {
-  [Face.U]: '#FFFF00',
-  [Face.D]: '#404040',
-  [Face.F]: '#404040',
-  [Face.B]: '#404040',
-  [Face.L]: '#404040',
-  [Face.R]: '#404040',
-};
-
-function findMask(name?: string): Masking | undefined {
-  if (!name) return undefined;
-  const lookup = (Object.values(Masking) as string[]).find(
-    (v) => v.toLowerCase() === name.toLowerCase(),
-  );
-  return lookup as Masking | undefined;
-}
-
-// Whitelist: hex (with/without #) or named CSS color (alpha-only). Public
-// unauthenticated endpoint — defense in depth even though drawing.ts attr()
-// already escapes SVG-injection.
-function parseColorParam(raw: string | undefined): string | undefined {
-  if (!raw) return undefined;
-  if (/^#?[0-9a-f]{3,8}$/i.test(raw)) return raw.startsWith('#') ? raw : '#' + raw;
-  if (/^[a-z]+$/i.test(raw)) return raw;
-  return undefined;
-}
+import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 
 export const cubeRoutes = new Hono();
 
 cubeRoutes.get('/api/visualcube.svg', (c) => {
-  const alg = c.req.query('alg') ?? DEFAULT_ALG;
-  const view = c.req.query('view') ?? 'iso';
-  const maskParam = c.req.query('mask');
-  const sizeRaw = parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10);
-  const size = Math.max(
-    32,
-    Math.min(1000, Number.isNaN(sizeRaw) ? DEFAULT_SIZE : sizeRaw),
-  );
-  const bg = parseColorParam(c.req.query('bg'));
-  const cc = parseColorParam(c.req.query('cc'));
-  const coRaw = c.req.query('co');
-  const co = (() => {
-    if (coRaw === undefined) return undefined;
-    const n = parseInt(coRaw, 10);
-    return Number.isNaN(n) || n < 0 || n > 100 ? undefined : n;
-  })();
-
-  const opts: ICubeOptions = { case: alg, width: size, height: size };
-  if (bg) opts.backgroundColor = bg;
-  if (cc) opts.cubeColor = cc;
-  if (co !== undefined) opts.cubeOpacity = co;
-
-  // PHP visualcube view=trans preset (cc=silver, co=50). Explicit cc/co win.
-  if (view === 'trans') {
-    if (opts.cubeColor === undefined) opts.cubeColor = 'silver';
-    if (opts.cubeOpacity === undefined) opts.cubeOpacity = 50;
-  }
-
-  const explicitMask = findMask(maskParam);
-  if (explicitMask) opts.mask = explicitMask;
-  else if (view === 'f2l') opts.mask = Masking.F2L;
-  else if (view === 'oll') opts.mask = Masking.OLL;
-  else if (view === 'pll') opts.mask = Masking.LL;
-  else if (view === 'pll-iso') opts.mask = Masking.LL;
-
-  if (view === 'plan' || view === 'oll' || view === 'pll') opts.view = 'plan';
-
-  // OLL 默认走朝向二元图 scheme（除非显式给了 mask 覆盖了 view 推断）
-  if (view === 'oll' && !explicitMask) opts.colorScheme = OLL_STAGE_SCHEME;
-
-  const svg = renderCubeSVG(opts);
+  const svg = renderFromSimpleQuery({
+    alg: c.req.query('alg'),
+    view: c.req.query('view'),
+    mask: c.req.query('mask'),
+    size: c.req.query('size'),
+    cubeSize: c.req.query('cubeSize'),
+    pzl: c.req.query('pzl'),
+    bg: c.req.query('bg'),
+    cc: c.req.query('cc'),
+    co: c.req.query('co'),
+  });
   c.header('Content-Type', 'image/svg+xml; charset=utf-8');
   c.header('Cache-Control', 'public, max-age=86400');
   return c.body(svg);

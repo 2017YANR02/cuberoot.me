@@ -104,8 +104,8 @@ async function buildTable(): Promise<Map<string, F2lAlgEntry[]>> {
   if (_tablePromise) return _tablePromise;
   _tablePromise = (async () => {
     const [f2l, advF2l] = await Promise.all([
-      loadAlgdb('f2l'),
-      loadAlgdb('adv_f2l'),
+      loadAlgdb('3x3', 'f2l'),
+      loadAlgdb('3x3', 'adv-f2l'),
     ]);
     const kp = await getCube3();
     const solved = kp.defaultPattern();

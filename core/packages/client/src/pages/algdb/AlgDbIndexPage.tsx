@@ -1,38 +1,23 @@
 /**
- * /algdb landing — bento cards for F2L / Advanced F2L / OLL / PLL.
+ * /algdb landing — 4 puzzle cards (2x2 / 3x3 / 4x4 / 5x5).
  *
- * Mirrors AlgIndexPage structure (which lives at /alg) but the algdb pages
- * are pure alg references scraped from speedcubedb (no tutorial markdown).
+ * Each puzzle card → /algdb/<puzzle> showing every set under that puzzle.
  */
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Library, Layers, Hexagon, Diamond } from 'lucide-react';
-import { loadAlgdb, type AlgdbCategory } from '@cuberoot/shared';
+import { ALGDB_PUZZLES, ALGDB_CATALOG, type AlgdbPuzzle } from '@cuberoot/shared';
 import './algdb.css';
 
-const CATEGORIES = [
-  { slug: 'f2l',     api: 'f2l'     as AlgdbCategory, icon: Library,  en: 'F2L',          zh: 'F2L (基础)' },
-  { slug: 'adv-f2l', api: 'adv_f2l' as AlgdbCategory, icon: Layers,   en: 'Advanced F2L', zh: 'F2L (进阶)' },
-  { slug: 'oll',     api: 'oll'     as AlgdbCategory, icon: Hexagon,  en: 'OLL',          zh: 'OLL' },
-  { slug: 'pll',     api: 'pll'     as AlgdbCategory, icon: Diamond,  en: 'PLL',          zh: 'PLL' },
-] as const;
+const PUZZLE_LABEL: Record<AlgdbPuzzle, { en: string; zh: string }> = {
+  '2x2': { en: '2x2',         zh: '二阶' },
+  '3x3': { en: '3x3',         zh: '三阶' },
+  '4x4': { en: '4x4',         zh: '四阶' },
+  '5x5': { en: '5x5',         zh: '五阶' },
+};
 
 export default function AlgDbIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const [counts, setCounts] = useState<Partial<Record<AlgdbCategory, number>>>({});
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all(CATEGORIES.map(c => loadAlgdb(c.api).then(d => [c.api, d.cases.length] as const))).then(pairs => {
-      if (cancelled) return;
-      const next: Partial<Record<AlgdbCategory, number>> = {};
-      for (const [k, n] of pairs) next[k] = n;
-      setCounts(next);
-    });
-    return () => { cancelled = true; };
-  }, []);
 
   return (
     <div className="algdb-root">
@@ -40,8 +25,8 @@ export default function AlgDbIndexPage() {
         <h1 className="algdb-index-title">{isZh ? '公式库' : 'Algorithm DB'}</h1>
         <p className="algdb-index-subtitle">
           {isZh
-            ? '3x3 公式速查 — F2L / OLL / PLL'
-            : '3x3 algorithm reference — F2L, OLL, PLL'}
+            ? '魔方公式速查 — 2x2 / 3x3 / 4x4 / 5x5'
+            : 'Cube algorithm reference — 2x2 / 3x3 / 4x4 / 5x5'}
         </p>
         <p className="algdb-index-credit">
           {isZh ? '数据来源: ' : 'Source: '}
@@ -49,21 +34,18 @@ export default function AlgDbIndexPage() {
         </p>
       </div>
 
-      <div className="algdb-bento">
-        {CATEGORIES.map(c => {
-          const Icon = c.icon;
+      <div className="algdb-puzzle-grid">
+        {ALGDB_PUZZLES.map(p => {
+          const sets = ALGDB_CATALOG[p];
           return (
-            <Link
-              key={c.slug}
-              to={`/algdb/${c.slug}`}
-              className="algdb-bento-card"
-            >
-              <div className="algdb-bento-icon">
-                <Icon size={36} strokeWidth={1.5} />
-              </div>
-              <div className="algdb-bento-title">{isZh ? c.zh : c.en}</div>
-              <div className="algdb-bento-count">
-                {counts[c.api] != null ? `${counts[c.api]} ${isZh ? '个' : 'cases'}` : '…'}
+            <Link key={p} to={`/algdb/${p}`} className="algdb-puzzle-card">
+              <div className="algdb-puzzle-name">{isZh ? PUZZLE_LABEL[p].zh : PUZZLE_LABEL[p].en}</div>
+              <div className="algdb-puzzle-count">{sets.length} {isZh ? '套公式' : 'sets'}</div>
+              <div className="algdb-puzzle-preview">
+                {sets.slice(0, 6).map(s => (
+                  <span key={s.slug} className="algdb-puzzle-chip">{isZh ? s.zh : s.en}</span>
+                ))}
+                {sets.length > 6 && <span className="algdb-puzzle-chip is-more">+{sets.length - 6}</span>}
               </div>
             </Link>
           );

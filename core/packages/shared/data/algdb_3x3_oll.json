@@ -1,7 +1,8 @@
 {
-  "scrapedAt": "2026-05-01T17:46:17.241Z",
+  "scrapedAt": "2026-05-03T13:38:14.248Z",
   "source": "https://speedcubedb.com/a/3x3/OLL",
-  "category": "oll",
+  "puzzle": "3x3",
+  "set": "oll",
   "cases": [
     {
       "name": "OLL 1",

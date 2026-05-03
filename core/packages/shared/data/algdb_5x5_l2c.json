@@ -1,0 +1,470 @@
+{
+  "scrapedAt": "2026-05-03T13:40:48.390Z",
+  "source": "https://speedcubedb.com/a/5x5/L2C",
+  "puzzle": "5x5",
+  "set": "l2c",
+  "cases": [
+    {
+      "name": "L2C 1",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllgyyllyyyllyyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllgggllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 Rw U Rw' U Rw U2 Rw'",
+            "altId": "3158"
+          },
+          {
+            "alg": "Rw U2 Rw' U' Rw U' Rw'",
+            "altId": "1543"
+          },
+          {
+            "alg": "U2 r U r' U r U2 r'",
+            "altId": "26693"
+          },
+          {
+            "alg": "U Rw U' Lw' U Rw' U' Lw",
+            "altId": "11616"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 2",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyyyllgyyllyyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllgggllggyllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U M' U2 M U Rw'",
+            "altId": "1542"
+          },
+          {
+            "alg": "Rw U' Rw' U2 Rw U2 Rw' U Rw U2 Rw'",
+            "altId": "3732"
+          },
+          {
+            "alg": "U Rw U Rw' U' Rw U Rw' U Rw U2' Rw'",
+            "altId": "5316"
+          },
+          {
+            "alg": "U2 Rw U' M' U Rw' U' M",
+            "altId": "5078"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 3",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllggyllyyyllyyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllgggllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U Rw'",
+            "altId": "1545"
+          },
+          {
+            "alg": "r U r'",
+            "altId": "24862"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 4",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyyyllyyyllggyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllgggllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U Rw' U' Rw U' Rw'",
+            "altId": "1540"
+          },
+          {
+            "alg": "U' r U r' U r U' r'",
+            "altId": "23338"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 5",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllygyllyyyllgyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllgggllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U' Rw' U' Rw U' Rw'",
+            "altId": "1539"
+          },
+          {
+            "alg": "U 3Rw U Rw' U' 3R'",
+            "altId": "3604"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 6",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllygyllyyyllyygllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllgggllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U2 Rw' U Rw U2 Rw'",
+            "altId": "1544"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 7",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyyyllyyyllggyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U' Rw'",
+            "altId": "1541"
+          },
+          {
+            "alg": "r U' r'",
+            "altId": "24941"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 8",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllggyllyyyllyyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U' Rw' U Rw U Rw'",
+            "altId": "1556"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 9",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllgyyllyyyllygyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U Rw' U Rw U Rw'",
+            "altId": "1555"
+          },
+          {
+            "alg": "U' 3Rw U' Rw' U 3R'",
+            "altId": "3605"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 10",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyygllyyyllygyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U2 Rw' U' Rw U2 Rw'",
+            "altId": "1554"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 11",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllgyyllyyyllgyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllgggllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 Rw U Rw' U' Rw U Rw' U' Rw U Rw' U'",
+            "altId": "3363"
+          },
+          {
+            "alg": "Rw U M' U2 M U' Rw'",
+            "altId": "1553"
+          },
+          {
+            "alg": "U2 Rw U' Rw' U Rw U' Rw' U Rw U' Rw'",
+            "altId": "3734"
+          },
+          {
+            "alg": "U Rw U' Rw' U' Rw U' Rw' U Rw U2 Rw'",
+            "altId": "7511"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 12",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyygllyyyllgyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllgggllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U' Rw' U2 Rw U' Rw'",
+            "altId": "1552"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 13",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllgyyllgyyllgyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U2 Rw'",
+            "altId": "1551"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 14",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyygllgyyllgyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U Rw' U' Rw U2 Rw'",
+            "altId": "4351"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 15",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyyyllyyyllyygllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllgggllgggllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U Rw' U Rw U2 Rw'",
+            "altId": "5228"
+          },
+          {
+            "alg": "Rw U' Rw' U Rw U2 Rw'",
+            "altId": "1549"
+          },
+          {
+            "alg": "U' F r U' r' U' r U2 r'",
+            "altId": "24509"
+          },
+          {
+            "alg": "U' Rw U' Lw' U Rw' U' Lw",
+            "altId": "11617"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 16",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllyyyllyygllgygllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U' Rw' U Rw U' Rw'",
+            "altId": "1548"
+          },
+          {
+            "alg": "U2 Rw U Lw' U Rw' U' Lw",
+            "altId": "7265"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 17",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllgygllyygllyyyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "Rw U Rw' U' Rw U Rw'",
+            "altId": "1547"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L2C 18",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "face",
+        "us": "llllllgygllyyyllygyllllll",
+        "ub": "llllllbbbllbbbllbbbllllll",
+        "uf": "llllllggyllggyllggyllllll",
+        "ul": "llllllrrrllrrrllrrrllllll",
+        "ur": "llllllooollooollooollllll"
+      },
+      "algs": [
+        [
+          {
+            "alg": "M' U2 M U Rw U2 Rw'",
+            "altId": "1546"
+          },
+          {
+            "alg": "r U2 r' U2 r U' r'",
+            "altId": "3602"
+          },
+          {
+            "alg": "U2 r U2 r' U2 r U r'",
+            "altId": "3603"
+          },
+          {
+            "alg": "U' Rw U' M' U' Rw' U M",
+            "altId": "3654"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1394 @@
+{
+  "scrapedAt": "2026-05-03T13:38:19.006Z",
+  "source": "https://speedcubedb.com/a/3x3/CMLL",
+  "puzzle": "3x3",
+  "set": "cmll",
+  "cases": [
+    {
+      "name": "O Adjacent",
+      "subgroup": "Solved",
+      "setup": "R U R2' F' R U R U' R' F R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "ylylllyly",
+        "ub": "globlbblb",
+        "uf": "rlgglgglg",
+        "ul": "blbrrrrrr",
+        "ur": "olroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+            "altId": "2640"
+          },
+          {
+            "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+            "altId": "2639"
+          },
+          {
+            "alg": "r U R' F' R U R' U' R' F R2 U' r'",
+            "altId": "2524"
+          },
+          {
+            "alg": "R U2 R' U' R U2 r' F R' F' r",
+            "altId": "3898"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "O Diagonal",
+      "subgroup": "Solved",
+      "setup": "F R' F' R U R U' R' F R U' R' U R U R' F'",
+      "sticker": {
+        "kind": "face",
+        "us": "ylylllyly",
+        "ub": "blgblbblb",
+        "uf": "glbglgglg",
+        "ul": "olrrrrrrr",
+        "ur": "rlooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+            "altId": "2638"
+          },
+          {
+            "alg": "R U' R2 F R F' R U' B U2 B' R'",
+            "altId": "3792"
+          },
+          {
+            "alg": "F R' F R2 U' R' U' R U R' F' R U R' U' F'",
+            "altId": "2518"
+          },
+          {
+            "alg": "r2 D' r U' r' D r2 F' r' U r F",
+            "altId": "3790"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H Columns",
+      "subgroup": "H",
+      "setup": "R U R' U R U' R' U R U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "rlolllrlo",
+        "ub": "ylyblbblb",
+        "uf": "ylyglgglg",
+        "ul": "blgrrrrrr",
+        "ur": "glboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U R' U R U' R' U R U2 R'",
+            "altId": "2536"
+          },
+          {
+            "alg": "R U2 R' U' R U R' U' R U' R'",
+            "altId": "2637"
+          },
+          {
+            "alg": "r U' r' U' r U r' U r U r'",
+            "altId": "2535"
+          },
+          {
+            "alg": "r U' r' U' r U' r' U r U r'",
+            "altId": "4330"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H Rows",
+      "subgroup": "H",
+      "setup": "F U R U' R' U R U' R' U R U' R' F'",
+      "sticker": {
+        "kind": "face",
+        "us": "blblllglg",
+        "ub": "ylyblbblb",
+        "uf": "ylyglgglg",
+        "ul": "olorrrrrr",
+        "ur": "rlroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' R U R' U' R U R' U' F'",
+            "altId": "2534"
+          },
+          {
+            "alg": "F U R U' R' U R U' R' U R U' R' F'",
+            "altId": "3544"
+          },
+          {
+            "alg": "F U' R2 D R' U2 R D' R2 U F'",
+            "altId": "3786"
+          },
+          {
+            "alg": "F R U r' U' R U R' U' R U R' M' U' F'",
+            "altId": "3971"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H Column",
+      "subgroup": "H",
+      "setup": "F U R U' R' U R U2' R' U' R U R' F' U'",
+      "sticker": {
+        "kind": "face",
+        "us": "olblllrlb",
+        "ub": "ylyblbblb",
+        "uf": "ylyglgglg",
+        "ul": "glgrrrrrr",
+        "ur": "olroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' F2 D R2 U R2 D' F2 R",
+            "altId": "3794"
+          },
+          {
+            "alg": "U R U2 R2 F R F' U2 R' F R F'",
+            "altId": "2532"
+          },
+          {
+            "alg": "U' F R U R' U' R U' R' U R U R' F'",
+            "altId": "3335"
+          },
+          {
+            "alg": "U F R U R' U' F' R U R' U' R' F R F'",
+            "altId": "3268"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H Row",
+      "subgroup": "H",
+      "setup": "r' F R F' r U' R' U' R U' R' U",
+      "sticker": {
+        "kind": "face",
+        "us": "glblllolo",
+        "ub": "ylyblbblb",
+        "uf": "ylyglgglg",
+        "ul": "rlbrrrrrr",
+        "ur": "glroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 r U' r2 D' r U' r' D r2 U r'",
+            "altId": "2530"
+          },
+          {
+            "alg": "U' R U R' U R U r' F R' F' r",
+            "altId": "2531"
+          },
+          {
+            "alg": "U' R U R' U R U L' U R' U' L",
+            "altId": "3269"
+          },
+          {
+            "alg": "U2 R U' R2 D' r U' r' D R2 U R'",
+            "altId": "3850"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi Right Bar",
+      "subgroup": "Pi",
+      "setup": "F U R U' R' U R U' R' F'",
+      "sticker": {
+        "kind": "face",
+        "us": "blolllglo",
+        "ub": "ylrblbblb",
+        "uf": "rlyglgglg",
+        "ul": "ylyrrrrrr",
+        "ur": "glboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' R U R' U' F'",
+            "altId": "2636"
+          },
+          {
+            "alg": "r' U r2 U' r2 U' r2 U r'",
+            "altId": "2556"
+          },
+          {
+            "alg": "U2 F U R U' R' U R U' R' F'",
+            "altId": "2526"
+          },
+          {
+            "alg": "R U2 R2 U' R2 U' R2 U2 R",
+            "altId": "2528"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi Down Slash",
+      "subgroup": "Pi",
+      "setup": "R U2 R' U' R U R' U2' R' F R F' U'",
+      "sticker": {
+        "kind": "face",
+        "us": "rlglllblr",
+        "ub": "ylgblbblb",
+        "uf": "olyglgglg",
+        "ul": "ylyrrrrrr",
+        "ur": "blooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F R' F' R U2 R U' R' U R U2 R'",
+            "altId": "2552"
+          },
+          {
+            "alg": "U F U R U' R2 F' R U2 R U2 R'",
+            "altId": "2655"
+          },
+          {
+            "alg": "U M F R' F' r U2 R U' R' U R U2 R'",
+            "altId": "3917"
+          },
+          {
+            "alg": "R' U2 R U R' U' R U2 R f' U' f",
+            "altId": "3727"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi X",
+      "subgroup": "Pi",
+      "setup": "F U R U' R' U F' U' R' F' R U",
+      "sticker": {
+        "kind": "face",
+        "us": "rlolllolr",
+        "ub": "ylgblbblb",
+        "uf": "glyglgglg",
+        "ul": "ylyrrrrrr",
+        "ur": "blboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' F2 D R2 U' R2 D' F2 R",
+            "altId": "2550"
+          },
+          {
+            "alg": "U' R' F R U F U' R U R' U' F'",
+            "altId": "2549"
+          },
+          {
+            "alg": "r' F2 D R2 U' R2 D' F2 r",
+            "altId": "3928"
+          },
+          {
+            "alg": "U' F R U' R' U' R U R' U R U' R' F'",
+            "altId": "2654"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi Up Slash",
+      "subgroup": "Pi",
+      "setup": "F R' F' R U2 R U' R' U R U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "rlblllblo",
+        "ub": "ylgblbblb",
+        "uf": "olyglgglg",
+        "ul": "ylyrrrrrr",
+        "ur": "glroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U R' U2 R' F R F'",
+            "altId": "2547"
+          },
+          {
+            "alg": "R U2 R' U2 R' F R2 U R' U' F'",
+            "altId": "3731"
+          },
+          {
+            "alg": "R U2 R' U' R U R' U2 r' F R F' M'",
+            "altId": "3916"
+          },
+          {
+            "alg": "R U R' U' R' F R2 U R' U' R U R' U' F'",
+            "altId": "2548"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi Columns",
+      "subgroup": "Pi",
+      "setup": "r U' r2' D' r U' r' D r2 U r' U",
+      "sticker": {
+        "kind": "face",
+        "us": "blglllblg",
+        "ub": "ylrblbblb",
+        "uf": "olyglgglg",
+        "ul": "ylyrrrrrr",
+        "ur": "rlooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' r U' r2 D' r U r' D r2 U r'",
+            "altId": "2544"
+          },
+          {
+            "alg": "U2 R' F R F' r U' r' U' R U' R'",
+            "altId": "3895"
+          },
+          {
+            "alg": "U2 R' F R F' r U' R' U' R U' r'",
+            "altId": "2651"
+          },
+          {
+            "alg": "U2 L' U R U' L U' R' U' R U' R'",
+            "altId": "3862"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Pi Left Bar",
+      "subgroup": "Pi",
+      "setup": "R' U2' R U R' F R' F' R U R U",
+      "sticker": {
+        "kind": "face",
+        "us": "blrlllblo",
+        "ub": "ylrblbblb",
+        "uf": "olyglgglg",
+        "ul": "ylyrrrrrr",
+        "ur": "glgoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R' U' R' F R F' R U' R' U2 R",
+            "altId": "2540"
+          },
+          {
+            "alg": "R' F' U' F U' R U R' U R",
+            "altId": "3336"
+          },
+          {
+            "alg": "U2 R U R' U R U' B U' B' R'",
+            "altId": "2650"
+          },
+          {
+            "alg": "U' r U R' U R' F R F' R U' R' U R U2 r'",
+            "altId": "3909"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U Up Slash",
+      "subgroup": "U",
+      "setup": "R U2' R D R' U2' R D' R2' U2'",
+      "sticker": {
+        "kind": "face",
+        "us": "glolllyly",
+        "ub": "ylyblbblb",
+        "uf": "olbglgglg",
+        "ul": "rlgrrrrrr",
+        "ur": "rlboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R2 D R' U2 R D' R' U2 R'",
+            "altId": "2572"
+          },
+          {
+            "alg": "U2 R r D r' U2 r D' r' U2 R'",
+            "altId": "3798"
+          },
+          {
+            "alg": "F R' F' U2 R U R U' R' U R' U R",
+            "altId": "27688"
+          },
+          {
+            "alg": "L2 D L' U2 L D' L' U2 L'",
+            "altId": "22367"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U Down Slash",
+      "subgroup": "U",
+      "setup": "R' U2' R' D' R U2' R' D R2",
+      "sticker": {
+        "kind": "face",
+        "us": "olblllyly",
+        "ub": "ylyblbblb",
+        "uf": "gloglgglg",
+        "ul": "glrrrrrrr",
+        "ur": "blroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R2 D' R U2 R' D R U2 R",
+            "altId": "2570"
+          },
+          {
+            "alg": "R' F R U R' F R U F U2 F'",
+            "altId": "2569"
+          },
+          {
+            "alg": "U2 L2 D' L U2 L' D L U2 L",
+            "altId": "5129"
+          },
+          {
+            "alg": "R U' R' U R U' R' U' F R' F' R2 U R'",
+            "altId": "27689"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U Bottom Row",
+      "subgroup": "U",
+      "setup": "R' F' R U R2' F2' U' F' U F' R2",
+      "sticker": {
+        "kind": "face",
+        "us": "rlolllyly",
+        "ub": "ylyblbblb",
+        "uf": "glgglgglg",
+        "ul": "blrrrrrrr",
+        "ur": "olboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U' R U' R' U2 R2 U R' U R U2 R'",
+            "altId": "2566"
+          },
+          {
+            "alg": "U' R2 F2 r U r' F R2 U2 r' U' r",
+            "altId": "3836"
+          },
+          {
+            "alg": "R2 F U' F U F2 R2 U' R' F R",
+            "altId": "2567"
+          },
+          {
+            "alg": "U2 R U R' U R U2 R2 U' R U' R' U2 R",
+            "altId": "3520"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U Rows",
+      "subgroup": "U",
+      "setup": "F U R2 D R' U' R D' R2' F' U",
+      "sticker": {
+        "kind": "face",
+        "us": "blblllyly",
+        "ub": "ylyblbblb",
+        "uf": "glgglgglg",
+        "ul": "olrrrrrrr",
+        "ur": "olroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F R2 D R' U R D' R2 U' F'",
+            "altId": "2564"
+          },
+          {
+            "alg": "F U R2 D R' U' R D' R2 F'",
+            "altId": "3737"
+          },
+          {
+            "alg": "U' R' U' R F R2 D' R U R' D R2 U' F'",
+            "altId": "3923"
+          },
+          {
+            "alg": "R' F R U' R' U' R U R' F' R U R' U' R' F R F' R",
+            "altId": "2565"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U X",
+      "subgroup": "U",
+      "setup": "r' D' r U r' D r U' r U r' U2'",
+      "sticker": {
+        "kind": "face",
+        "us": "rlolllyly",
+        "ub": "ylyblbblb",
+        "uf": "olrglgglg",
+        "ul": "blgrrrrrr",
+        "ur": "glboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 r U' r' U r' D' r U' r' D r",
+            "altId": "2562"
+          },
+          {
+            "alg": "F R U' R' U R U R' U R U' R' F'",
+            "altId": "2658"
+          },
+          {
+            "alg": "r' U r' D' r U r' D r U' r",
+            "altId": "2559"
+          },
+          {
+            "alg": "U' R' D R U' R U' R' U R' D' R",
+            "altId": "2560"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U Upper Row",
+      "subgroup": "U",
+      "setup": "F U R U' R' F' U",
+      "sticker": {
+        "kind": "face",
+        "us": "ololllyly",
+        "ub": "ylyblbblb",
+        "uf": "glbglgglg",
+        "ul": "glrrrrrrr",
+        "ur": "rlboooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F R U R' U' F'",
+            "altId": "2635"
+          },
+          {
+            "alg": "U F U R U' R' F'",
+            "altId": "2588"
+          },
+          {
+            "alg": "U' F U' R' U R U F' R' U2 R",
+            "altId": "3859"
+          },
+          {
+            "alg": "R' F' U' F U R",
+            "altId": "3337"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T Left Bar",
+      "subgroup": "T",
+      "setup": "F R' F' r U R U' r' U",
+      "sticker": {
+        "kind": "face",
+        "us": "olglllyly",
+        "ub": "rlbblbblb",
+        "uf": "olbglgglg",
+        "ul": "ylgrrrrrr",
+        "ur": "rlyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' U' R' F R F'",
+            "altId": "2587"
+          },
+          {
+            "alg": "U' r U R' U' r' F R F'",
+            "altId": "2632"
+          },
+          {
+            "alg": "y' R U R' U' R' F R F'",
+            "altId": "23085"
+          },
+          {
+            "alg": "U L U L' U' L' f U f'",
+            "altId": "22371"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T Right Bar",
+      "subgroup": "T",
+      "setup": "F' L F l' U' L' U l U'",
+      "sticker": {
+        "kind": "face",
+        "us": "glrlllyly",
+        "ub": "bloblbblb",
+        "uf": "blrglgglg",
+        "ul": "ylorrrrrr",
+        "ur": "glyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U L' U' L U L F' L' F",
+            "altId": "2586"
+          },
+          {
+            "alg": "U r' F' r U r U' r' F",
+            "altId": "3524"
+          },
+          {
+            "alg": "U' F R U' R' U R U R' F'",
+            "altId": "2585"
+          },
+          {
+            "alg": "U2 R' U' R' D' R U R' D R2",
+            "altId": "3800"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T Rows",
+      "subgroup": "T",
+      "setup": "F2' R U' R' U R U R2' F' R F'",
+      "sticker": {
+        "kind": "face",
+        "us": "rlrlllyly",
+        "ub": "blgblbblb",
+        "uf": "ologlgglg",
+        "ul": "ylgrrrrrr",
+        "ur": "blyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U' R2 U2 R U R' U R",
+            "altId": "2582"
+          },
+          {
+            "alg": "F R' F R2 U' R' U' R U R' F2",
+            "altId": "2583"
+          },
+          {
+            "alg": "r' U r U2 R2 F' r U' r' F2 R2",
+            "altId": "3841"
+          },
+          {
+            "alg": "U' R U R' U R U2 R2 F' r U' r' F2 R",
+            "altId": "3855"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T Bottom Row",
+      "subgroup": "T",
+      "setup": "R' F R' F' R2 U2 r' U' r",
+      "sticker": {
+        "kind": "face",
+        "us": "rlolllyly",
+        "ub": "glgblbblb",
+        "uf": "blbglgglg",
+        "ul": "ylorrrrrr",
+        "ur": "rlyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "r' U r U2 R2 F R F' R",
+            "altId": "2581"
+          },
+          {
+            "alg": "R U R2 F R F' U r U r'",
+            "altId": "3124"
+          },
+          {
+            "alg": "U2 r U' r' U' F R' F' R2 U' R'",
+            "altId": "5441"
+          },
+          {
+            "alg": "R' U r U2 R2 F R F' r",
+            "altId": "2630"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T Top Row",
+      "subgroup": "T",
+      "setup": "r U' r' U r' D' r U' r' D r",
+      "sticker": {
+        "kind": "face",
+        "us": "glglllyly",
+        "ub": "rloblbblb",
+        "uf": "rloglgglg",
+        "ul": "ylbrrrrrr",
+        "ur": "blyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "r' D' r U r' D r U' r U r'",
+            "altId": "2579"
+          },
+          {
+            "alg": "U R' D R U' R U R' U R' D' R",
+            "altId": "2578"
+          },
+          {
+            "alg": "U2 F R U R' U' R U' R' U' R U R' F'",
+            "altId": "2580"
+          },
+          {
+            "alg": "R F R' U' R F' R' U R' F' R",
+            "altId": "3722"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T Columns",
+      "subgroup": "T",
+      "setup": "R' U R2 D r' U2' r D' R2' U' R",
+      "sticker": {
+        "kind": "face",
+        "us": "olrlllyly",
+        "ub": "blbblbblb",
+        "uf": "olrglgglg",
+        "ul": "ylgrrrrrr",
+        "ur": "glyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 r U' r2 D' r U2 r' D r2 U r'",
+            "altId": "2574"
+          },
+          {
+            "alg": "U2 r2 D' r U r' D r2 U' r' U' r",
+            "altId": "2575"
+          },
+          {
+            "alg": "R' U R2 D r' U2 r D' R2 U' R",
+            "altId": "2576"
+          },
+          {
+            "alg": "U2 R' F R2 F R' U2 R F' R2 F' R",
+            "altId": "3723"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Sune Left Bar",
+      "subgroup": "Sune",
+      "setup": "R U2' R' U' R U' R' U'",
+      "sticker": {
+        "kind": "face",
+        "us": "glrllloly",
+        "ub": "blyblbblb",
+        "uf": "gloglgglg",
+        "ul": "rlyrrrrrr",
+        "ur": "blyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U R' U R U2 R'",
+            "altId": "2634"
+          },
+          {
+            "alg": "R' U2 R U R' U R",
+            "altId": "3338"
+          },
+          {
+            "alg": "U r U R' U R U2 r'",
+            "altId": "2573"
+          },
+          {
+            "alg": "U' L U L' U L U2 L'",
+            "altId": "22295"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Sune X",
+      "subgroup": "Sune",
+      "setup": "F' L F L' U2 L' U2' L U'",
+      "sticker": {
+        "kind": "face",
+        "us": "glblllrly",
+        "ub": "olyblbblb",
+        "uf": "blgglgglg",
+        "ul": "rlyrrrrrr",
+        "ur": "olyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U L' U2 L U2 r U' r' F",
+            "altId": "3127"
+          },
+          {
+            "alg": "U r' F2 r U2 r U' r' F",
+            "altId": "3541"
+          },
+          {
+            "alg": "U L' U2 L U2 L F' L' F",
+            "altId": "2609"
+          },
+          {
+            "alg": "U R' F2 R U2 R U' r' F M'",
+            "altId": "3814"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Sune Up Slash",
+      "subgroup": "Sune",
+      "setup": "R U2 R' U2' R' F R F' U'",
+      "sticker": {
+        "kind": "face",
+        "us": "blrlllgly",
+        "ub": "blyblbblb",
+        "uf": "rlgglgglg",
+        "ul": "olyrrrrrr",
+        "ur": "olyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F R' F' R U2 R U2 R'",
+            "altId": "2607"
+          },
+          {
+            "alg": "U M F R' F' R U2 R U2 r'",
+            "altId": "2608"
+          },
+          {
+            "alg": "U M F R' F' r U2 R U2 R'",
+            "altId": "3745"
+          },
+          {
+            "alg": "U F U R U' R2 F' R U R U' R'",
+            "altId": "3854"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Sune Columns",
+      "subgroup": "Sune",
+      "setup": "R2 D R' U R D' R' U R' U' R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "blglllrly",
+        "ub": "rlyblbblb",
+        "uf": "blgglgglg",
+        "ul": "olyrrrrrr",
+        "ur": "olyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U R' U' R' F R F' R U R' U R U2 R'",
+            "altId": "2606"
+          },
+          {
+            "alg": "R U R' U R U' R D R' U' R D' R2",
+            "altId": "2605"
+          },
+          {
+            "alg": "U2 r' F' r2 U R' F' r' F R2 U' R'",
+            "altId": "18873"
+          },
+          {
+            "alg": "F R' U2 R F' R' F U2 F' R",
+            "altId": "5442"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Sune Right Bar",
+      "subgroup": "Sune",
+      "setup": "R U2 R' F R' F' R U' R U' R' U",
+      "sticker": {
+        "kind": "face",
+        "us": "olblllgly",
+        "ub": "olyblbblb",
+        "uf": "rlbglgglg",
+        "ul": "glyrrrrrr",
+        "ur": "rlyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' U R' F R F' R U2 R'",
+            "altId": "2603"
+          },
+          {
+            "alg": "U' R U R' U r' F R F' r U2 R'",
+            "altId": "3834"
+          },
+          {
+            "alg": "U' R U R' F' R U R' U R U2 R' F R U' R'",
+            "altId": "3904"
+          },
+          {
+            "alg": "U' R U R' U L' U R U' L U2 R'",
+            "altId": "2604"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Sune Down Slash",
+      "subgroup": "Sune",
+      "setup": "L' U R U' L U R' U'",
+      "sticker": {
+        "kind": "face",
+        "us": "glrlllbly",
+        "ub": "blyblbblb",
+        "uf": "olgglgglg",
+        "ul": "rlyrrrrrr",
+        "ur": "olyoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U r U' r' F R' F' R",
+            "altId": "2601"
+          },
+          {
+            "alg": "U R U' r' F R' F' r",
+            "altId": "3742"
+          },
+          {
+            "alg": "U R U' L' U R' U' L",
+            "altId": "2602"
+          },
+          {
+            "alg": "U' L U' R' U L' U' R",
+            "altId": "2600"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune Right Bar",
+      "subgroup": "Anti Sune",
+      "setup": "R' U2 R U R' U R U'",
+      "sticker": {
+        "kind": "face",
+        "us": "rlblllylo",
+        "ub": "ylgblbblb",
+        "uf": "olbglgglg",
+        "ul": "ylgrrrrrr",
+        "ur": "ylroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R' U' R U' R' U2 R",
+            "altId": "2629"
+          },
+          {
+            "alg": "U2 R U2 R' U' R U' R'",
+            "altId": "2598"
+          },
+          {
+            "alg": "U' L' U' L U' L' U2 L",
+            "altId": "3741"
+          },
+          {
+            "alg": "U r' U' R U' R' U2 r",
+            "altId": "2599"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune Columns",
+      "subgroup": "Anti Sune",
+      "setup": "R U R' U R U' R D R' U' R D' R2' U",
+      "sticker": {
+        "kind": "face",
+        "us": "olrlllylb",
+        "ub": "ylbblbblb",
+        "uf": "olrglgglg",
+        "ul": "ylgrrrrrr",
+        "ur": "ylgoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U R2 F' r F R U' r2 F r",
+            "altId": "18874"
+          },
+          {
+            "alg": "U' R2 D R' U R D' R' U R' U' R U' R'",
+            "altId": "2597"
+          },
+          {
+            "alg": "U2 R' U' R U' R' U R' D' R U R' D R2",
+            "altId": "3290"
+          },
+          {
+            "alg": "U' R' F U2 F' R F R' U2 R F'",
+            "altId": "3345"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune Down Slash",
+      "subgroup": "Anti Sune",
+      "setup": "L' U2' L U2 L F' L' F U",
+      "sticker": {
+        "kind": "face",
+        "us": "olblllylg",
+        "ub": "ylbblbblb",
+        "uf": "gloglgglg",
+        "ul": "ylrrrrrrr",
+        "ur": "ylroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' L F L' U2 L' U2 L",
+            "altId": "2594"
+          },
+          {
+            "alg": "U' F' r U r' U2 r' F2 r",
+            "altId": "3539"
+          },
+          {
+            "alg": "U' F' r U r' U2 L' U2 L",
+            "altId": "3137"
+          },
+          {
+            "alg": "U2 F R U' R' U R U2 R' U' F'",
+            "altId": "3138"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune X",
+      "subgroup": "Anti Sune",
+      "setup": "F R' F' R U2' R U2 R' U",
+      "sticker": {
+        "kind": "face",
+        "us": "blglllylo",
+        "ub": "ylrblbblb",
+        "uf": "glbglgglg",
+        "ul": "ylrrrrrrr",
+        "ur": "ylooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U2 R' U2 R' F R F'",
+            "altId": "2592"
+          },
+          {
+            "alg": "U' R U2 R' U2 r' F R F' M'",
+            "altId": "2593"
+          },
+          {
+            "alg": "U' R U R' U' R' F R2 U R' U' F'",
+            "altId": "3853"
+          },
+          {
+            "alg": "U' r U2 R' U2 R' F R F' M'",
+            "altId": "3744"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune Up Slash",
+      "subgroup": "Anti Sune",
+      "setup": "R U' L' U R' U' L U",
+      "sticker": {
+        "kind": "face",
+        "us": "olglllylb",
+        "ub": "ylbblbblb",
+        "uf": "glrglgglg",
+        "ul": "ylrrrrrrr",
+        "ur": "ylooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R' F R F' r U r'",
+            "altId": "2590"
+          },
+          {
+            "alg": "U' r' F R F' r U R'",
+            "altId": "3743"
+          },
+          {
+            "alg": "U' L' U R U' L U R'",
+            "altId": "2591"
+          },
+          {
+            "alg": "U R' U L U' R U L'",
+            "altId": "2589"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Anti Sune Left Bar",
+      "subgroup": "Anti Sune",
+      "setup": "R' U' F R' F' R U' R U R' U R",
+      "sticker": {
+        "kind": "face",
+        "us": "rlglllylo",
+        "ub": "ylgblbblb",
+        "uf": "rlbglgglg",
+        "ul": "ylbrrrrrr",
+        "ur": "ylooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U2 R' F R' F' R U' R U' R'",
+            "altId": "3535"
+          },
+          {
+            "alg": "R' U' R U' R' U R' F R F' U R",
+            "altId": "2624"
+          },
+          {
+            "alg": "U R U2 r' F R' F' r U' R U' R'",
+            "altId": "3835"
+          },
+          {
+            "alg": "U L' U' L U' L F' L' F L' U2 L",
+            "altId": "5091"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L Best",
+      "subgroup": "L",
+      "setup": "R' U' R' D' R U R' D R2",
+      "sticker": {
+        "kind": "face",
+        "us": "ylrllloly",
+        "ub": "ylbblbblb",
+        "uf": "gloglgglg",
+        "ul": "rlyrrrrrr",
+        "ur": "blgoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' r U r' U' r' F r",
+            "altId": "2628"
+          },
+          {
+            "alg": "U2 F R U' R' U' R U R' F'",
+            "altId": "2622"
+          },
+          {
+            "alg": "R2 D' R U' R' D R U R",
+            "altId": "2623"
+          },
+          {
+            "alg": "U' F' L F L' U' L' U L",
+            "altId": "21683"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L Good",
+      "subgroup": "L",
+      "setup": "r U R' U' r' F R F' U2'",
+      "sticker": {
+        "kind": "face",
+        "us": "ylblllgly",
+        "ub": "ylgblbblb",
+        "uf": "rloglgglg",
+        "ul": "olyrrrrrr",
+        "ur": "blroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F R' F' R U R U' R'",
+            "altId": "2620"
+          },
+          {
+            "alg": "U2 F R' F' r U R U' r'",
+            "altId": "2627"
+          },
+          {
+            "alg": "U2 R U R' U' R' F R F' R U R' U' R' F R F'",
+            "altId": "24127"
+          },
+          {
+            "alg": "U' r U' r' U' F' U F",
+            "altId": "3781"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L Pure",
+      "subgroup": "L",
+      "setup": "R U R' U R U' R' U R U' R' U R U2' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "ylrlllbly",
+        "ub": "ylgblbblb",
+        "uf": "olbglgglg",
+        "ul": "olyrrrrrr",
+        "ur": "rlgoooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U' R' U R U' R' U R U2 R'",
+            "altId": "2617"
+          },
+          {
+            "alg": "R U2 R' U' R U R' U' R U R' U' R U' R'",
+            "altId": "2619"
+          },
+          {
+            "alg": "U' R' U2 R U R' U' R U R' U' R U R' U R",
+            "altId": "18159"
+          },
+          {
+            "alg": "R U R' U r U' R' U R U' R' U R U2 r'",
+            "altId": "3845"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L Front Commutator",
+      "subgroup": "L",
+      "setup": "F R' F' R U2' F R' F' R U' R U' R'",
+      "sticker": {
+        "kind": "face",
+        "us": "ylglllgly",
+        "ub": "yloblbblb",
+        "uf": "rlbglgglg",
+        "ul": "blyrrrrrr",
+        "ur": "rlooooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U2 R D R' U2 R D' R2",
+            "altId": "2616"
+          },
+          {
+            "alg": "U2 R U2 r D r' U2 r D' r' R'",
+            "altId": "3796"
+          },
+          {
+            "alg": "R U R' U R' F R F' U2 R' F R F'",
+            "altId": "2615"
+          },
+          {
+            "alg": "U r' D' r U2 r' D r U2 r U r'",
+            "altId": "22104"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L Diagonal",
+      "subgroup": "L",
+      "setup": "R2' F' R U R U' R' F R U' R' U R",
+      "sticker": {
+        "kind": "face",
+        "us": "ylbllloly",
+        "ub": "yloblbblb",
+        "uf": "glrglgglg",
+        "ul": "blyrrrrrr",
+        "ur": "glroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U2 R2 F R F' R U2 R'",
+            "altId": "2626"
+          },
+          {
+            "alg": "U2 r U2 R2 F R F' R U2 r'",
+            "altId": "2612"
+          },
+          {
+            "alg": "R' U' R U R' F' R U R' U' R' F R2",
+            "altId": "2613"
+          },
+          {
+            "alg": "U R U2 R' F R' F' R2 U2 R'",
+            "altId": "3143"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L Back Commutator",
+      "subgroup": "L",
+      "setup": "R2' D' R U2' R' D R U2' R U'",
+      "sticker": {
+        "kind": "face",
+        "us": "ylblllbly",
+        "ub": "ylgblbblb",
+        "uf": "olrglgglg",
+        "ul": "olyrrrrrr",
+        "ur": "glroooooo"
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R' U2 R' D' R U2 R' D R2",
+            "altId": "2611"
+          },
+          {
+            "alg": "U2 R U R' U' R' F R2 U' R' U R U R' F'",
+            "altId": "2610"
+          },
+          {
+            "alg": "U2 r D r' U2 r D' r' U2 r' U' r",
+            "altId": "22105"
+          },
+          {
+            "alg": "U R' U2 r' D' r U2 r' D r R",
+            "altId": "3795"
+          }
+        ]
+      ]
+    }
+  ]
+}

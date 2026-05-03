@@ -1,7 +1,8 @@
 {
-  "scrapedAt": "2026-05-01T17:46:16.404Z",
+  "scrapedAt": "2026-05-03T13:38:09.638Z",
   "source": "https://speedcubedb.com/a/3x3/F2L",
-  "category": "f2l",
+  "puzzle": "3x3",
+  "set": "f2l",
   "cases": [
     {
       "name": "F2L 1",
@@ -828,12 +829,12 @@
             "altId": "529"
           },
           {
-            "alg": "y' U R' U R U' f R f'",
-            "altId": "21808"
-          },
-          {
             "alg": "d R' U R d' R U R'",
             "altId": "530"
+          },
+          {
+            "alg": "y' U R' U R U' f R f'",
+            "altId": "21808"
           }
         ],
         [

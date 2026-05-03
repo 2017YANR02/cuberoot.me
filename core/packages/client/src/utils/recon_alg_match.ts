@@ -18,7 +18,7 @@
 
 import type { CubeState, Face } from './cube3_sim';
 import { cloneCube, applyAlg, FACES } from './cube3_sim';
-import type { AlgdbCase, AlgdbCategory } from '@cuberoot/shared';
+import type { AlgdbCase, Algdb3x3Set } from '@cuberoot/shared';
 
 export type Stage =
   | { kind: 'cross' }
@@ -106,7 +106,7 @@ export interface AlgSuggestion {
   /** Sticker state of the cube AFTER preMoves but BEFORE alg (for thumbnail). */
   preState: CubeState;
   /** Source category. */
-  category: AlgdbCategory;
+  category: Algdb3x3Set;
 }
 
 interface ScoreContext {
@@ -182,7 +182,7 @@ function flatAlgs(cases: AlgdbCase[]): Array<{ caseName: string; alg: string }> 
 export function rankAlgs(
   preState: CubeState,
   db: AlgdbCase[],
-  category: AlgdbCategory,
+  category: Algdb3x3Set,
   stage: Stage,
   topN = 12,
 ): AlgSuggestion[] {
