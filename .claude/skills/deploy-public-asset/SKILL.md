@@ -40,6 +40,7 @@ description: "Use when adding new public/static files to the site — images, fo
 - `countries-110m.geojson` 同样两处白名单 + 两处文件副本
 - `cn_disputed_patches.geojson` 漏掉 public/ 副本 → 线上 OK、本地 dev 404
 - workflow 自身 edit 不会重触发部署，除非把 `.github/workflows/deploy_core.yml` 加进 `paths:` 过滤
+- 一次 push >300 文件（批量 rename / asset / media）时，GitHub Actions 路径过滤只看前 300，`core/**` 可能被挤出导致 Deploy Core 不触发；push 完立刻补 `gh workflow run deploy_core.yml --ref main`
 
 ## 验证
 
