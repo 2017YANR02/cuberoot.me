@@ -57,15 +57,22 @@ export interface AlgSuggestion {
 }
 
 /**
- * Compute alg suggestions for the line containing `caret` in `value`.
- * Returns null when there's nothing to suggest (cube already solved, cross
- * not done, line already has a `//` comment, etc.).
+ * Result of `suggestAlg`. `kind: 'ok'` carries the suggestions; `kind: 'empty'`
+ * carries an i18n key explaining WHY no suggestion is available, so the popup
+ * can show that to the user instead of just silently doing nothing.
+ *
+ * `null` is reserved for "no popup at all" (e.g. caret is in a comment, so
+ * we shouldn't even try).
  */
+export type SuggestResult =
+  | { kind: 'ok'; suggestions: AlgSuggestion[] }
+  | { kind: 'empty'; reasonKey: string };
+
 export async function suggestAlg(
   scramble: string,
   value: string,
   caret: number,
-): Promise<AlgSuggestion[] | null> {
+): Promise<SuggestResult | null> {
   const { start } = lineRange(value, caret);
   const lineUpToCaret = value.substring(start, caret);
   if (lineUpToCaret.includes('//')) return null;
@@ -73,23 +80,20 @@ export async function suggestAlg(
   const linesBefore = value.substring(0, start);
   const prevMoves = movesOnly(linesBefore);
   const lineMovesUpToCaret = movesOnly(value.substring(start, caret));
-  // Stage / category detection uses the LINE-START state — what the user is
-  // about to solve, not the mid-typing state. The current line's typed moves
-  // serve only as a prefix filter (cubedb-style: suggestion shows the full alg
-  // and selecting it overwrites what was typed).
   const startStateAlg = [scramble, prevMoves].filter(Boolean).join(' ');
   const startState = await patternFromAlg(startStateAlg);
 
   const stageInfo = await detectStage(startState);
   let category: AlgdbCategory;
-  if (stageInfo.stage === 'solved') return null;
+  if (stageInfo.stage === 'solved') return { kind: 'empty', reasonKey: 'recon.autofill.empty.solved' };
   else if (stageInfo.stage === 'oll') category = 'pll';
   else if (stageInfo.stage === 'f2l') category = 'oll';
   else if (
     stageInfo.stage === 'cross' || stageInfo.stage === 'xcross'
     || stageInfo.stage === 'xxcross' || stageInfo.stage === 'xxxcross'
   ) category = 'f2l';
-  else return null;
+  else if (stageInfo.stage === 'pscross') return { kind: 'empty', reasonKey: 'recon.autofill.empty.pscross' };
+  else return { kind: 'empty', reasonKey: 'recon.autofill.empty.no_cross' };
 
   const scored: AlgSuggestion[] = [];
 
@@ -103,18 +107,24 @@ export async function suggestAlg(
   const canonRot = f2lRot;
   const startCanonical = canonRot ? startState.applyAlg(canonRot) : startState;
 
+  // Track WHY no candidates are produced so we can return a useful reason.
+  let lookupHadEntries = false;
+  let prefixFilteredOutAll = true;
+
   if (category === 'f2l') {
     const preEval = evaluateCanonical(startCanonical);
-    if (!preEval.crossOk) return null;
+    if (!preEval.crossOk) return { kind: 'empty', reasonKey: 'recon.autofill.empty.no_cross' };
     const solvedSet = new Set(preEval.solvedSlots);
     for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
       const slotId = F2L_SLOT_DEFS[slotIdx].id;
       if (solvedSet.has(slotId)) continue;
       const entries = await lookupF2lAlgs(startCanonical, slotIdx);
+      if (entries.length > 0) lookupHadEntries = true;
       for (const e of entries) {
         const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
         if (!rawAlg) continue;
         if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
+        prefixFilteredOutAll = false;
         let post: KPattern;
         try { post = startState.applyAlg(rawAlg); } catch { continue; }
         const postInfo = await detectStage(post);
@@ -131,11 +141,13 @@ export async function suggestAlg(
     const entries = category === 'oll'
       ? await lookupOllAlgs(startCanonical)
       : await lookupPllAlgs(startCanonical);
+    if (entries.length > 0) lookupHadEntries = true;
     const goalSolved = category === 'pll';
     for (const e of entries) {
       const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
       if (!rawAlg) continue;
       if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
+      prefixFilteredOutAll = false;
       let post: KPattern;
       try { post = startState.applyAlg(rawAlg); } catch { continue; }
       const postInfo = await detectStage(post);
@@ -157,6 +169,16 @@ export async function suggestAlg(
     top.push(c);
     if (top.length >= 12) break;
   }
-  if (top.length === 0) return null;
-  return top;
+  if (top.length === 0) {
+    let reasonKey: string;
+    if (!lookupHadEntries) {
+      reasonKey = `recon.autofill.empty.no_algdb_match.${category}`;
+    } else if (prefixFilteredOutAll && lineMovesUpToCaret.length > 0) {
+      reasonKey = 'recon.autofill.empty.prefix_no_match';
+    } else {
+      reasonKey = `recon.autofill.empty.no_algdb_match.${category}`;
+    }
+    return { kind: 'empty', reasonKey };
+  }
+  return { kind: 'ok', suggestions: top };
 }

@@ -66,6 +66,8 @@ interface AlgPopup {
   entries: { text: string; category: AlgdbCategory; caseName: string }[];
   /** Insertion point: where the chosen alg goes (caret position). */
   insertAt: number;
+  /** When entries is empty, render a single non-clickable info row with this i18n key. */
+  emptyReasonKey?: string;
 }
 
 type Popup = CommentPopup | AlgPopup | null;
@@ -75,7 +77,7 @@ type Popup = CommentPopup | AlgPopup | null;
  * constrained by the textarea's containing layout.
  */
 export default function ReconAutofill({ textareaRef, value, setValue, scramble, enabled = true }: Props) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [popup, setPopup] = useState<Popup>(null);
   const [selected, setSelected] = useState(0);
@@ -139,13 +141,22 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const buildAlgPopup = useCallback(async (caret: number): Promise<AlgPopup | null> => {
     const ta = textareaRef.current;
     if (!ta) return null;
-    const suggestions = await suggestAlg(scramble, value, caret);
-    if (!suggestions) return null;
+    const result = await suggestAlg(scramble, value, caret);
+    if (!result) return null;
     const rect = getCaretRect(ta, caret);
+    if (result.kind === 'empty') {
+      return {
+        kind: 'alg',
+        pos: rect,
+        entries: [],
+        insertAt: caret,
+        emptyReasonKey: result.reasonKey,
+      };
+    }
     return {
       kind: 'alg',
       pos: rect,
-      entries: suggestions.map(s => ({ text: s.text, category: s.category, caseName: s.caseName })),
+      entries: result.suggestions.map(s => ({ text: s.text, category: s.category, caseName: s.caseName })),
       insertAt: caret,
     };
   }, [textareaRef, value, scramble]);
@@ -240,6 +251,9 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
             const alg = typeof entry === 'string' ? entry : entry.text;
             insertAlg(alg, popup);
           }
+        } else if (popup && popup.kind === 'alg' && popup.emptyReasonKey) {
+          // Popup is in the empty-reason state — second Tab dismisses it.
+          close();
         } else {
           openPopup();
         }
@@ -251,9 +265,11 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
         close();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
+        if (popup.entries.length === 0) return;
         setSelected(s => (s + 1) % popup.entries.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
+        if (popup.entries.length === 0) return;
         setSelected(s => (s - 1 + popup.entries.length) % popup.entries.length);
       } else if (e.key === 'Enter') {
         // Cubedb behavior: Enter doesn't accept; it inserts newline (default).
@@ -339,12 +355,19 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   );
   const top = taRect.top + popup.pos.top - ta.offsetTop + popup.pos.lineHeight + 4;
 
+  const emptyReasonKey = popup.kind === 'alg' ? popup.emptyReasonKey : undefined;
+
   return createPortal(
     <div
       className="recon-autofill"
       data-recon-autofill="1"
       style={{ position: 'fixed', left, top, width: POPUP_WIDTH, maxHeight: 280 }}
     >
+      {popup.entries.length === 0 && emptyReasonKey && (
+        <div className="recon-autofill-empty">
+          {t(emptyReasonKey)}
+        </div>
+      )}
       {popup.entries.map((entry, i) => {
         const text = typeof entry === 'string' ? entry : entry.text;
         const cat = typeof entry === 'string' ? null : entry.category;

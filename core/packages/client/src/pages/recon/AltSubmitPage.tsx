@@ -184,13 +184,6 @@ export default function AltSubmitPage() {
         {/* 内容栏 */}
         <div className="submit-form-pane">
           <div className="submit-form alt-submit-form">
-            {stats.stm > 0 && (
-              <div className="submit-stats-preview">
-                <span>{stats.stm} STM</span>
-                {stats.tps > 0 && <span>{stats.tps} TPS</span>}
-              </div>
-            )}
-
             <label className="submit-field">
               <span className="submit-label">{t('recon.scramble')}</span>
               <textarea
@@ -216,7 +209,12 @@ export default function AltSubmitPage() {
             )}
 
             <div className="submit-field submit-block">
-              <span className="submit-label">{t('recon.solution')} *</span>
+              <span className="submit-label">
+                {t('recon.solution')} *
+                {stats.stm > 0 && (
+                  <span className="submit-label-stats"> ({stats.stm} STM)</span>
+                )}
+              </span>
               <textarea
                 ref={(el) => {
                   (solutionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;

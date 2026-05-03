@@ -12,10 +12,14 @@ import { useZblsSessionStore } from '../stores/zbls_session_store';
 import {
   F2L_GROUP_NUMS,
   ZBLS_BY_GROUP,
-  getZblsImg,
+  zblsData,
   areSetsEqual,
 } from '../utils/zbls_helpers';
+import { VisualCube } from '../components/VisualCube';
 import '../zbls.css';
+
+// 取代表性 alg：每个 ZBLS case 用第一条公式作 F2L 状态预览
+const algForZbls = (key: string): string => zblsData[key]?.algs[0] || '';
 
 // ===== 单个 Case 卡片 =====
 function ZblsCaseCard({
@@ -32,11 +36,11 @@ function ZblsCaseCard({
       className={`zbls-case-card ${isSelected ? 'zbls-case-selected' : ''}`}
       onClick={onToggle}
     >
-      <img
-        className="zbls-case-img"
-        src={getZblsImg(caseKey)}
+      <VisualCube
+        algorithm={algForZbls(caseKey)}
+        view="f2l"
+        size={88}
         alt={`F2L ${caseKey}`}
-        loading="lazy"
       />
     </div>
   );

@@ -57,6 +57,9 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/visualcube':
+        specifier: workspace:*
+        version: link:../visualcube
       '@ffmpeg/core':
         specifier: 0.12.10
         version: 0.12.10
@@ -221,6 +224,9 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/visualcube':
+        specifier: workspace:*
+        version: link:../visualcube
       '@hono/node-server':
         specifier: ^1.0.0
         version: 1.19.11(hono@4.12.9)
@@ -298,6 +304,12 @@ importers:
         version: 5.9.3
 
   packages/stats-ui:
+    devDependencies:
+      typescript:
+        specifier: ~5.7.0
+        version: 5.7.3
+
+  packages/visualcube:
     devDependencies:
       typescript:
         specifier: ~5.7.0

@@ -5,13 +5,48 @@
  * F2L cases have 4 orientation tabs (Front Right / Front Left / Back Left / Back Right).
  * Click an alg to copy it to clipboard.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
 import { loadAlgdb, type AlgdbFile, type AlgdbCategory } from '@cuberoot/shared';
 import { VisualCube } from '../../components/VisualCube';
 import './algdb.css';
+
+/** Inline animated cube demo. Lazy-imports cubing/twisty so initial page load stays light. */
+function AlgPlayer({ alg }: { alg: string }) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let player: any = null;
+    import('cubing/twisty').then((mod) => {
+      if (cancelled || !host) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Ctor = (mod as any).TwistyPlayer || (mod as any).default;
+      player = new Ctor({
+        puzzle: '3x3x3',
+        experimentalSetupAlg: `(${alg})'`,
+        alg,
+        controlPanel: 'bottom-row',
+        background: 'none',
+        hintFacelets: 'none',
+        backView: 'none',
+      });
+      player.style.colorScheme = 'light';
+      player.style.width = '260px';
+      player.style.height = '260px';
+      host.appendChild(player);
+    }).catch(err => console.warn('Failed to load cubing library:', err));
+    return () => {
+      cancelled = true;
+      if (player && host.contains(player)) host.removeChild(player);
+    };
+  }, [alg]);
+  return <div ref={hostRef} className="algdb-twisty-host" />;
+}
 
 const CATEGORY_LABELS: Record<string, { en: string; zh: string; api: AlgdbCategory; view: 'f2l' | 'oll' | 'pll' }> = {
   'f2l':     { en: 'F2L',          zh: 'F2L (基础)',  api: 'f2l',     view: 'f2l' },
@@ -20,23 +55,36 @@ const CATEGORY_LABELS: Record<string, { en: string; zh: string; api: AlgdbCatego
   'pll':     { en: 'PLL',          zh: 'PLL',         api: 'pll',     view: 'pll' },
 };
 
-function CopyableAlg({ alg }: { alg: string }) {
+function AlgRow({ alg, expanded, onToggle }: { alg: string; expanded: boolean; onToggle: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      type="button"
-      className="algdb-alg-row"
-      onClick={() => {
-        navigator.clipboard.writeText(alg).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        });
-      }}
-      title="copy"
-    >
-      <span className="algdb-alg-text">{alg}</span>
-      {copied ? <Check size={14} /> : <Copy size={14} className="algdb-alg-copy-icon" />}
-    </button>
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        className={`algdb-alg-row${expanded ? ' is-expanded' : ''}`}
+        onClick={onToggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+        title={expanded ? 'collapse' : 'play'}
+      >
+        <span className="algdb-alg-text">{alg}</span>
+        <button
+          type="button"
+          className="algdb-alg-copy-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(alg).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1200);
+            });
+          }}
+          title="copy"
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} className="algdb-alg-copy-icon" />}
+        </button>
+      </div>
+      {expanded && <AlgPlayer alg={alg} />}
+    </>
   );
 }
 
@@ -48,6 +96,8 @@ export default function AlgDbCategoryPage() {
   const [data, setData] = useState<AlgdbFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState<Record<string, number>>({});
+  /** Single expanded alg per page; key = `${caseName}::${oriIdx}::${algIdx}`. */
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!meta) { setError('unknown category'); return; }
@@ -123,9 +173,18 @@ export default function AlgDbCategoryPage() {
                     </div>
                   )}
                   <div className="algdb-case-algs">
-                    {algsForOri.map((entry, i) => (
-                      <CopyableAlg key={`${entry.altId ?? i}`} alg={entry.alg} />
-                    ))}
+                    {algsForOri.map((entry, i) => {
+                      const key = `${c.name}::${oriIdx}::${i}`;
+                      const expanded = expandedKey === key;
+                      return (
+                        <AlgRow
+                          key={`${entry.altId ?? i}`}
+                          alg={entry.alg}
+                          expanded={expanded}
+                          onToggle={() => setExpandedKey(expanded ? null : key)}
+                        />
+                      );
+                    })}
                   </div>
                 </article>
               );

@@ -477,21 +477,24 @@
   margin-bottom: 16px;
 }
 
-/* --- 实时统计预览 --- */
+/* --- 解法 label 后的 STM/TPS 内联显示 --- */
+.submit-label-stats {
+  font-weight: normal;
+  font-size: 0.85em;
+  color: #a3a3a3;
+  font-family: 'Roboto Mono', monospace;
+}
+/* legacy class kept for AltViewPage (read-only display) — no border */
 .submit-stats-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 10px 16px;
-  background: rgba(217, 119, 87, 0.08);
-  border: 1px solid rgba(217, 119, 87, 0.2);
-  border-radius: 8px;
-  margin-bottom: 16px;
+  padding: 4px 0;
+  margin-bottom: 8px;
   font-size: 0.82rem;
   color: #a3a3a3;
   font-family: 'Roboto Mono', monospace;
 }
-/* 另解页:STM/TPS 是纯展示,不可编辑 → 无框 */
 .alt-submit-form .submit-stats-preview {
   background: transparent;
   border: none;

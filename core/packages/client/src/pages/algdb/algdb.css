@@ -272,6 +272,27 @@
 }
 .algdb-alg-copy-icon { color: var(--algdb-text-faint); flex: 0 0 auto; }
 .algdb-alg-row:hover .algdb-alg-copy-icon { color: var(--algdb-accent); }
+.algdb-alg-row.is-expanded {
+  background: var(--algdb-accent-soft);
+  border-color: var(--algdb-accent);
+}
+.algdb-alg-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: inherit;
+  border-radius: 4px;
+}
+.algdb-alg-copy-btn:hover { background: var(--algdb-bg-hover); }
+.algdb-twisty-host {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
 
 @media (max-width: 480px) {
   .algdb-case-list { grid-template-columns: 1fr; }
