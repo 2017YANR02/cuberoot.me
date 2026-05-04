@@ -150,12 +150,12 @@ export async function suggestAlg(
             if (!postInfo.solvedSlots.includes(prevSlot)) { preserved = false; break; }
           }
           if (!preserved) continue;
-          // Only tag a result as ZBLS if it actually preserves/produces LL EO —
-          // otherwise it's just a F2L alg that came from the ZBLS DB by mistake.
-          const isZbls = cat === 'zbls' && topEdgesOriented(post);
-          if (cat === 'zbls' && !isZbls) continue;
-          // ZBLS suggestions get a small score boost when the user is at
-          // xxxcross and the alg produces an EO state — they save a future OLL.
+          // ZBLS labeling: at xxxcross, if the alg produces a state where all 4
+          // LL edges are oriented, it's effectively a ZBLS solve regardless of
+          // which DB it came from. Re-tag as 'zbls' so the badge reflects what
+          // the alg actually accomplishes, and give it a score boost (saves a
+          // future OLL — user can go straight to ZBLL).
+          const isZbls = stageInfo.stage === 'xxxcross' && topEdgesOriented(post);
           const bonus = isZbls ? 5 : 0;
           scored.push({ text: rawAlg, category: isZbls ? 'zbls' : cat, caseName: e.caseName, score: 100 + bonus - rawAlg.length * 0.01 });
         }
