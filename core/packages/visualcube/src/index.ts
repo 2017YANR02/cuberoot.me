@@ -20,7 +20,7 @@ const defaultOptions: ICubeOptions = {
   cubeSize: 3,
   width: 128,
   height: 128,
-  viewportRotations: [[Axis.Y, 45], [Axis.X, -34]],
+  viewportRotations: [[Axis.Y, 30], [Axis.X, -30]],
   colorScheme: DefaultColorScheme,
   cubeColor: ColorName.Black,
   cubeOpacity: 100,

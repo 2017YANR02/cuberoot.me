@@ -15,7 +15,7 @@ const DEFAULT_SIZE = 256;
 const SIZE_MIN = 32;
 const SIZE_MAX = 1000;
 const PUZZLE_SIZE_MIN = 2;
-const PUZZLE_SIZE_MAX = 7;
+const PUZZLE_SIZE_MAX = 10;
 
 // PHP visualcube `stage=oll` style — U yellow, everything else gray (orientation-only preview).
 const OLL_STAGE_SCHEME = {
@@ -85,9 +85,12 @@ export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
   if (co !== undefined) opts.cubeOpacity = co;
 
   // PHP visualcube view=trans preset (silver shell, 50% opaque). Explicit cc/co win.
+  // Also drop the mask fill so masked-out stickers show the silver shell through —
+  // matches PHP `view=trans` behavior (default sticker = Transparent, not Black).
   if (view === 'trans') {
     if (opts.cubeColor === undefined) opts.cubeColor = 'silver';
     if (opts.cubeOpacity === undefined) opts.cubeOpacity = 50;
+    opts.maskColor = 'transparent';
   }
 
   const explicitMask = findMask(q.mask);
