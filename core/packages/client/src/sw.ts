@@ -1,6 +1,6 @@
 /// <reference lib="WebWorker" />
 /**
- * Service Worker — 拦截 /api/visualcube.svg，本地用 renderCubeSVG 生成 SVG。
+ * Service Worker — 拦截 /api/visualcube.svg，本地用 renderFromSimpleQuery 生成 SVG。
  *
  * 效果：
  * - <img src="/api/visualcube.svg?..."> 浏览器右键 "Copy image address" 拿到干净 URL
@@ -8,83 +8,21 @@
  * - 离线 / 后端挂掉也能出图（除首次访问）
  * - 首次访问 SW 还没装好 → 走真 server (`@cuberoot/server` 路由)
  *
+ * view→mask / cubeSize / 颜色解析 全走 visualcube 包的 renderFromSimpleQuery，
+ * 跟 vite dev middleware 和 Hono server 共享同一份 preset 映射，避免重复实现漂移
+ * （历史上 SW 自己写了一份 buildOpts 漏读 pzl，4x4+ 预览全退化成 3x3）。
+ *
  * 这个文件被 scripts/build-sw.mjs 用 esbuild bundle 成 public/sw.js（visualcube 内联）。
  */
-import { renderCubeSVG, Masking, Face, type ICubeOptions } from '@cuberoot/visualcube';
+import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 
 declare const self: ServiceWorkerGlobalScope;
 
-const DEFAULT_ALG = "R U R' U R U2 R'";
-const DEFAULT_SIZE = 256;
-
-const OLL_STAGE_SCHEME = {
-  [Face.U]: '#FFFF00',
-  [Face.D]: '#404040',
-  [Face.F]: '#404040',
-  [Face.B]: '#404040',
-  [Face.L]: '#404040',
-  [Face.R]: '#404040',
-};
-
-function findMask(name: string | null): Masking | undefined {
-  if (!name) return undefined;
-  const v = (Object.values(Masking) as string[]).find(m => m.toLowerCase() === name.toLowerCase());
-  return v as Masking | undefined;
-}
-
-function parseColorParam(raw: string | null): string | undefined {
-  if (!raw) return undefined;
-  if (/^#?[0-9a-f]{3,8}$/i.test(raw)) return raw.startsWith('#') ? raw : '#' + raw;
-  if (/^[a-z]+$/i.test(raw)) return raw;
-  return undefined;
-}
-
-function buildOpts(params: URLSearchParams): ICubeOptions {
-  const alg = params.get('alg') ?? DEFAULT_ALG;
-  const view = params.get('view') ?? 'iso';
-  const maskParam = params.get('mask');
-  const sizeRaw = parseInt(params.get('size') ?? String(DEFAULT_SIZE), 10);
-  const size = Math.max(32, Math.min(1000, isNaN(sizeRaw) ? DEFAULT_SIZE : sizeRaw));
-  const bg = parseColorParam(params.get('bg'));
-  const cc = parseColorParam(params.get('cc'));
-  const coRaw = params.get('co');
-  const co = (() => {
-    if (coRaw === null) return undefined;
-    const n = parseInt(coRaw, 10);
-    return isNaN(n) || n < 0 || n > 100 ? undefined : n;
-  })();
-
-  const opts: ICubeOptions = { case: alg, width: size, height: size };
-  if (bg) opts.backgroundColor = bg;
-  if (cc) opts.cubeColor = cc;
-  if (co !== undefined) opts.cubeOpacity = co;
-
-  // PHP visualcube view=trans preset (cc=silver, co=50). Explicit cc/co win.
-  if (view === 'trans') {
-    if (opts.cubeColor === undefined) opts.cubeColor = 'silver';
-    if (opts.cubeOpacity === undefined) opts.cubeOpacity = 50;
-  }
-
-  const explicitMask = findMask(maskParam);
-  if (explicitMask) opts.mask = explicitMask;
-  else if (view === 'f2l') opts.mask = Masking.F2L;
-  else if (view === 'oll') opts.mask = Masking.OLL;
-  else if (view === 'pll') opts.mask = Masking.LL;
-  else if (view === 'pll-iso') opts.mask = Masking.LL;
-
-  if (view === 'plan' || view === 'oll' || view === 'pll') opts.view = 'plan';
-  if (view === 'oll' && !explicitMask) opts.colorScheme = OLL_STAGE_SCHEME;
-
-  return opts;
-}
-
 self.addEventListener('install', () => {
-  // 立即激活新版本，跳过等待旧 SW unload
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // 立即接管所有现存页面
   event.waitUntil(self.clients.claim());
 });
 
@@ -94,7 +32,18 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith((async () => {
     try {
-      const svg = renderCubeSVG(buildOpts(url.searchParams));
+      const qs = url.searchParams;
+      const svg = renderFromSimpleQuery({
+        alg: qs.get('alg') ?? undefined,
+        view: qs.get('view') ?? undefined,
+        mask: qs.get('mask') ?? undefined,
+        size: qs.get('size') ?? undefined,
+        cubeSize: qs.get('cubeSize') ?? undefined,
+        pzl: qs.get('pzl') ?? undefined,
+        bg: qs.get('bg') ?? undefined,
+        cc: qs.get('cc') ?? undefined,
+        co: qs.get('co') ?? undefined,
+      });
       return new Response(svg, {
         headers: {
           'Content-Type': 'image/svg+xml; charset=utf-8',
@@ -102,7 +51,6 @@ self.addEventListener('fetch', (event) => {
         },
       });
     } catch {
-      // 兜底：放行到真服务器
       return fetch(event.request);
     }
   })());

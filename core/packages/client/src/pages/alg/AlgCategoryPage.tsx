@@ -93,15 +93,21 @@ function isPuzzle(s: string): s is AlgPuzzle {
 }
 
 /** Pick the right preview thumb based on puzzle + sticker kind. */
-function CaseThumb({ puzzle, set, sticker, alg, setup }: { puzzle: AlgPuzzle; set: string; sticker: AlgSticker; alg: string; setup?: string }) {
+function CaseThumb({ puzzle, set, sticker, alg, setup, size = 88 }: { puzzle: AlgPuzzle; set: string; sticker: AlgSticker; alg: string; setup?: string; size?: number }) {
   if (SR_PUZZLES.includes(puzzle)) {
     const kind = srPuzzleKind(puzzle)!;
     // Prefer setup (forward) when available — matches speedcubedb's preview state.
     // Fall back to inverting the canonical alg (case = solved.applyInverse(alg)).
     const driver = setup && setup.trim() ? { alg: setup } : { case: alg };
-    return <PuzzleSVG kind={kind} {...driver} size={88} />;
+    return <PuzzleSVG kind={kind} {...driver} size={size} />;
   }
-  return <VisualCube algorithm={alg} view={pickView(puzzle, set, sticker)} size={88} puzzleSize={PUZZLE_SIZE[puzzle]} />;
+  // ZBLS preview uses VH mask (LL edges colored to show EO; LL corners grayed) —
+  // matches the F2L+EO pattern shown in CubeRoot's ZBLS docx.
+  const isZbls = puzzle === '3x3' && set === 'zbls';
+  if (isZbls) {
+    return <VisualCube algorithm={alg} view="iso" mask="vh" size={size} />;
+  }
+  return <VisualCube algorithm={alg} view={pickView(puzzle, set, sticker)} size={size} puzzleSize={PUZZLE_SIZE[puzzle]} />;
 }
 
 function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 'oll' | 'pll' | 'pll-iso' {
@@ -173,8 +179,11 @@ function SubgroupIndex({
     return Array.from(map.entries());
   }, [cases]);
 
+  // ZBLS thumbnails want F2L-style preview (LL EO visible) instead of OLL plan view.
+  const useF2lThumb = puzzle === '3x3' && set === 'zbls';
+
   return (
-    <div className="alg-subgroup-grid">
+    <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
       {groups.map(([topLabel, { sample, count }]) => {
         const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
         const slug = encodeURIComponent(topLabel.toLowerCase()) || '_';
@@ -185,9 +194,11 @@ function SubgroupIndex({
             className="alg-subgroup-card"
           >
             <div className="alg-subgroup-thumb">
-              <VisualCube algorithm={firstAlg} view="oll" size={120} />
+              {useF2lThumb
+                ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
+                : <VisualCube algorithm={firstAlg} view="oll" size={120} />}
             </div>
-            <div className="alg-subgroup-card-title">{set.toUpperCase()} {topLabel || (isZh ? '其他' : 'Other')}</div>
+            <div className="alg-subgroup-card-title">{useF2lThumb ? (topLabel || (isZh ? '其他' : 'Other')) : `${set.toUpperCase()} ${topLabel || (isZh ? '其他' : 'Other')}`}</div>
             <div className="alg-subgroup-card-count">{count} {isZh ? '个' : 'cases'}</div>
           </Link>
         );

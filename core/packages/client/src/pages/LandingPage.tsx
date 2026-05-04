@@ -10,7 +10,7 @@ import {
   Swords, Target, CalendarDays, Puzzle, BookOpen, Earth as GlobeIcon,
   Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
   ImagePlus, Microscope,
-  Sigma, Dices, Wand2, Sparkles, CalendarHeart,
+  Sigma, Dices, Wand2, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -305,7 +305,6 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   gen:             { en: 'Scrambles', zh: '生成打乱' },
   notation:        { en: 'Notation', zh: '记号沙盒' },
   patterns:        { en: 'Patterns', zh: '图案集' },
-  today:           { en: 'Today', zh: '魔方今天' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
 };
@@ -353,7 +352,6 @@ const CARDS: CardConfig[] = [
   { id: 'gen',         href: '/gen',             internal: true,  tier: 'standard',  Icon: Dices,          nameKey: 'gen' },
   { id: 'notation',    href: '/notation',        internal: true,  tier: 'standard',  Icon: Wand2,          nameKey: 'notation' },
   { id: 'patterns',    href: '/patterns',        internal: true,  tier: 'standard',  Icon: Sparkles,       nameKey: 'patterns' },
-  { id: 'today',       href: '/today',           internal: true,  tier: 'standard',  Icon: CalendarHeart,  nameKey: 'today' },
   { id: 'wb',          href: '/wb',              internal: true,  tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
   { id: 'prediction',  href: '/prediction',      internal: true,  tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
   { id: 'blog',        href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'standard', Icon: BookOpen, nameKey: 'blog' },
