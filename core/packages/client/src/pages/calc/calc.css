@@ -88,27 +88,6 @@ body {
     line-height: 1;
 }
 
-/* ── 比赛名称输入 ── */
-
-.comp-name {
-    display: block;
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 4px 16px;
-    font-size: 20px;
-    font-weight: 600;
-    text-align: center;
-    border: none;
-    background: transparent;
-    color: #000;
-    outline: none;
-}
-
-.comp-name:focus {
-    border-bottom-color: #FF8080;
-}
-
 /* ── 项目选择器（浅色主题适配） ── */
 
 .event-selector {
@@ -411,6 +390,14 @@ body {
 
 .sim-btn.sim-race:hover:not(:disabled) {
     background: linear-gradient(135deg, rgba(255, 128, 0, 1), rgba(50, 130, 255, 1));
+}
+
+.sim-btn.sim-load-wr {
+    background: rgba(120, 120, 120, 0.85);
+}
+
+.sim-btn.sim-load-wr:hover:not(:disabled) {
+    background: rgba(80, 80, 80, 1);
 }
 
 /* NOTE: 计数徽章 — 淡入动画 */
@@ -796,11 +783,6 @@ video {
     .player-toggle {
         width: 16px;
         height: 16px;
-    }
-
-    .comp-name {
-        font-size: 18px;
-        padding: 6px 8px;
     }
 
     .controls button {
