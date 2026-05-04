@@ -14,6 +14,7 @@ import { lookupF2lAlgs } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
 import { lookupZbllAlgs } from './zbll_lookup';
+import { lookupZblsAlgs } from './zbls_lookup';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 
 /** Strip comments + paren grouping, return a string with only move tokens. */
@@ -102,10 +103,10 @@ export async function suggestAlg(
 
   const scored: AlgSuggestion[] = [];
 
-  // F2L and ZBLL fingerprints are geometric and only require cross-on-D
+  // F2L / ZBLL fingerprints are geometric and only require cross-on-D
   // (color-neutral safe). OLL/PLL fingerprints use absolute face indices, so
   // they still need default centers (limits OLL/PLL suggestions to yellow-
-  // cross solves for now).
+  // cross solves for now). ZBLS uses the same geometric path as F2L.
   const canonRot = (category === 'f2l' || category === 'zbll')
     ? await crossOnDRotation(startState)
     : await defaultCentersRotation(startState);
@@ -119,26 +120,45 @@ export async function suggestAlg(
     const preEval = evaluateCanonical(startCanonical);
     if (!preEval.crossOk) return { kind: 'empty', reasonKey: 'recon.autofill.empty.no_cross' };
     const solvedSet = new Set(preEval.solvedSlots);
+    // At xxxcross (3 pairs done), the 4th pair may be solved with a normal F2L
+    // alg OR with a ZBLS alg that ALSO orients the LL edges. Query both DBs
+    // and tag each suggestion with the category that produced it — the badge
+    // labels the row "F2L" vs "ZBLS" so the user knows which they're choosing.
+    const tryZbls = stageInfo.stage === 'xxxcross';
     for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
       const slotId = F2L_SLOT_DEFS[slotIdx].id;
       if (solvedSet.has(slotId)) continue;
-      const entries = await lookupF2lAlgs(startCanonical, slotIdx);
-      if (entries.length > 0) lookupHadEntries = true;
-      for (const e of entries) {
-        const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
-        if (!rawAlg) continue;
-        if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
-        prefixFilteredOutAll = false;
-        let post: KPattern;
-        try { post = startState.applyAlg(rawAlg); } catch { continue; }
-        const postInfo = await detectStage(post);
-        if (!postInfo.solvedSlots.includes(slotId)) continue;
-        let preserved = true;
-        for (const prevSlot of preEval.solvedSlots) {
-          if (!postInfo.solvedSlots.includes(prevSlot)) { preserved = false; break; }
+      const f2lEntries = await lookupF2lAlgs(startCanonical, slotIdx);
+      const zblsEntries = tryZbls ? await lookupZblsAlgs(startCanonical, slotIdx) : [];
+      const sources: Array<{ entries: typeof f2lEntries; cat: Alg3x3Set }> = [
+        { entries: f2lEntries, cat: 'f2l' as const },
+        { entries: zblsEntries, cat: 'zbls' as const },
+      ];
+      for (const { entries, cat } of sources) {
+        if (entries.length > 0) lookupHadEntries = true;
+        for (const e of entries) {
+          const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
+          if (!rawAlg) continue;
+          if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
+          prefixFilteredOutAll = false;
+          let post: KPattern;
+          try { post = startState.applyAlg(rawAlg); } catch { continue; }
+          const postInfo = await detectStage(post);
+          if (!postInfo.solvedSlots.includes(slotId)) continue;
+          let preserved = true;
+          for (const prevSlot of preEval.solvedSlots) {
+            if (!postInfo.solvedSlots.includes(prevSlot)) { preserved = false; break; }
+          }
+          if (!preserved) continue;
+          // Only tag a result as ZBLS if it actually preserves/produces LL EO —
+          // otherwise it's just a F2L alg that came from the ZBLS DB by mistake.
+          const isZbls = cat === 'zbls' && topEdgesOriented(post);
+          if (cat === 'zbls' && !isZbls) continue;
+          // ZBLS suggestions get a small score boost when the user is at
+          // xxxcross and the alg produces an EO state — they save a future OLL.
+          const bonus = isZbls ? 5 : 0;
+          scored.push({ text: rawAlg, category: isZbls ? 'zbls' : cat, caseName: e.caseName, score: 100 + bonus - rawAlg.length * 0.01 });
         }
-        if (!preserved) continue;
-        scored.push({ text: rawAlg, category: 'f2l', caseName: e.caseName, score: 100 - rawAlg.length * 0.01 });
       }
     }
   } else {

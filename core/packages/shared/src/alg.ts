@@ -47,7 +47,7 @@ export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'py
 export type Alg3x3Set =
   | 'f2l' | 'adv-f2l' | 'oll' | 'pll'
   | 'coll' | 'wv' | 'cmll' | 'sbls' | 'eo4a' | 'anti-pll' | 'sv' | 'ell' | 'fruf'
-  | 'cls' | 'vls' | 'ollcp' | 'zbll' | '1lll';
+  | 'cls' | 'vls' | 'ollcp' | 'zbll' | '1lll' | 'zbls';
 
 /** Catalogue of available sets per puzzle (display name + slug). Drives the index pages. */
 export interface AlgSetMeta {
@@ -85,6 +85,7 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'ell',       scd: 'ELL',         en: 'Edges of the Last Layer (ELL)', zh: 'Edges of the Last Layer (ELL)' },
     { slug: 'fruf',      scd: 'FRUF',        en: "F <R,U> F'",           zh: "F <R,U> F'" },
     { slug: 'cls',       scd: 'CLS',         en: 'Corners Last Slot',    zh: 'Corners Last Slot' },
+    { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS' },
     { slug: 'vls',       scd: 'VLS',         en: 'VLS',                  zh: 'VLS',   umbrella: true },
     { slug: 'ollcp',     scd: 'OLLCP',       en: 'OLLCP',                zh: 'OLLCP', umbrella: true },
     { slug: 'zbll',      scd: 'ZBLL',        en: 'ZBLL',                 zh: 'ZBLL',  umbrella: true },
@@ -152,6 +153,7 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string): Promise<AlgFile> 
     case '3x3/ell':        return (await import('../data/alg_3x3_ell.json')).default as unknown as AlgFile;
     case '3x3/fruf':       return (await import('../data/alg_3x3_fruf.json')).default as unknown as AlgFile;
     case '3x3/cls':        return (await import('../data/alg_3x3_cls.json')).default as unknown as AlgFile;
+    case '3x3/zbls':       return (await import('../data/alg_3x3_zbls.json')).default as unknown as AlgFile;
     case '3x3/vls':        return (await import('../data/alg_3x3_vls.json')).default as unknown as AlgFile;
     case '3x3/ollcp':      return (await import('../data/alg_3x3_ollcp.json')).default as unknown as AlgFile;
     case '3x3/zbll':       return (await import('../data/alg_3x3_zbll.json')).default as unknown as AlgFile;
