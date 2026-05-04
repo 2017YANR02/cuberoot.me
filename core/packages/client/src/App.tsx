@@ -85,9 +85,6 @@ const GenPage = lazy(() => import('./pages/gen/GenPage'));
 const NotationPage = lazy(() => import('./pages/notation/NotationPage'));
 // NOTE: Patterns — 著名 3x3 图案集
 const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
-// NOTE: Today — 魔方上的今天（历年 MM-DD 举办的 WCA 比赛）
-const TodayPage = lazy(() => import('./pages/today/TodayPage'));
-
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -175,8 +172,6 @@ function App() {
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
         {/* Patterns — 著名 3x3 图案集 */}
         <Route path="/patterns" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
-        {/* Today — 魔方上的今天 */}
-        <Route path="/today" element={<Suspense fallback={<div>Loading...</div>}><TodayPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}

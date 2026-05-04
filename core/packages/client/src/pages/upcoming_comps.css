@@ -420,7 +420,25 @@
     font-weight: 700;
     color: var(--text-sub);
     text-align: center;
-    padding: 0 2px;
+    padding: 1px 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    width: fit-content;
+    margin: 0 auto;
+    font-family: inherit;
+}
+
+.upcoming-page .day-number:hover {
+    background: var(--accent-soft, rgba(193, 95, 60, 0.08));
+    border-color: var(--accent, #C15F3C);
+    color: var(--accent, #C15F3C);
+}
+
+.upcoming-page .day-cell.is-today .day-number {
+    border-color: var(--accent, #C15F3C);
 }
 
 /* ── Event Bar ── */

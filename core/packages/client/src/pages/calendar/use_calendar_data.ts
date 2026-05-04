@@ -2,7 +2,7 @@
  * Loads all_past_comps.json once (cached at the module level for the session)
  * and filters to competitions whose start..end window includes a given MM-DD.
  *
- * Fetched lazily so /today only pays the ~5MB cost when actually visited.
+ * Fetched lazily so /calendar only pays the ~5MB cost when actually visited.
  */
 import { useEffect, useState } from 'react';
 
@@ -46,7 +46,7 @@ function fetchRecordsSummary(): Promise<CompRecordsSummary> {
   return recordsPromise;
 }
 
-export interface TodayMatch {
+export interface DayMatch {
   comp: PastComp;
   yearsAgo: number;
   recordTier: 'WR' | 'CR' | 'NR' | null;
@@ -68,8 +68,8 @@ function withinWindow(target: string, startMmdd: string, endMmdd: string): boole
   return target >= startMmdd || target <= endMmdd;
 }
 
-export function useTodayMatches(date: Date) {
-  const [matches, setMatches] = useState<TodayMatch[] | null>(null);
+export function useDayMatches(date: Date) {
+  const [matches, setMatches] = useState<DayMatch[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const target = mmdd(date);
@@ -82,7 +82,7 @@ export function useTodayMatches(date: Date) {
     Promise.all([fetchPastComps(), fetchRecordsSummary().catch((): CompRecordsSummary => ({}))])
       .then(([past, records]) => {
         if (cancelled) return;
-        const out: TodayMatch[] = [];
+        const out: DayMatch[] = [];
         for (const c of past) {
           const startYear = Number(c.start_date.slice(0, 4));
           const startMmdd = c.start_date.slice(5, 10);

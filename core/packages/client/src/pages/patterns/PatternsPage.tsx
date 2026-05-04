@@ -1,15 +1,19 @@
 /**
- * /patterns — gallery of famous 3×3 pretty patterns. Click a card to open a
- * modal with TwistyPlayer playback (solved → pattern animation).
+ * /patterns — gallery of famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7.
+ * Top tabs switch puzzle size; second row filters by category. Click a card to
+ * open a modal with TwistyPlayer playback (solved → pattern animation).
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, X, Copy, Check } from 'lucide-react';
 import { Alg } from 'cubing/alg';
 import LangToggle from '../../components/LangToggle';
 import { VisualCube } from '../../components/VisualCube';
 import TwistySection from '../../components/TwistySection';
-import { PATTERNS, CATEGORY_LABEL, type Category, type Pattern } from './patterns_data';
+import {
+  PATTERNS, CATEGORY_LABEL, PUZZLE_SIZES, PUZZLE_LABEL, patternPuzzle,
+  type Category, type Pattern, type PuzzleSize,
+} from './patterns_data';
 import './patterns.css';
 
 const ALL: 'all' = 'all';
@@ -24,20 +28,31 @@ export default function PatternsPage() {
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
+  const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');
   const [filter, setFilter] = useState<Filter>(ALL);
   const [openId, setOpenId] = useState<string | null>(null);
 
+  const puzzlePatterns = useMemo(
+    () => PATTERNS.filter((p) => patternPuzzle(p) === puzzle),
+    [puzzle],
+  );
+
   const visiblePatterns = useMemo(
-    () => filter === ALL ? PATTERNS : PATTERNS.filter((p) => p.category === filter),
-    [filter],
+    () => filter === ALL ? puzzlePatterns : puzzlePatterns.filter((p) => p.category === filter),
+    [filter, puzzlePatterns],
   );
 
   const categories: Category[] = useMemo(() => {
     const seen = new Set<Category>();
-    for (const p of PATTERNS) seen.add(p.category);
+    for (const p of puzzlePatterns) seen.add(p.category);
     const order: Category[] = ['symmetry', 'cube-in-cube', 'dots', 'stripes', 'crosses', 'twists', 'other'];
     return order.filter((c) => seen.has(c));
-  }, []);
+  }, [puzzlePatterns]);
+
+  // Reset category filter when switching to a puzzle size that lacks the current category.
+  useEffect(() => {
+    if (filter !== ALL && !categories.includes(filter)) setFilter(ALL);
+  }, [filter, categories]);
 
   const openPattern: Pattern | null = openId
     ? PATTERNS.find((p) => p.id === openId) ?? null
@@ -49,8 +64,17 @@ export default function PatternsPage() {
         <div className="pat-title">
           <Sparkles size={20} className="pat-title-icon" />
           <h1>{t('图案集', 'Cube Patterns')}</h1>
-          <span className="pat-title-sub">{PATTERNS.length} {t('个图案', 'patterns')}</span>
         </div>
+        <select
+          className="pat-puzzle-select"
+          aria-label={t('阶数', 'Puzzle size')}
+          value={puzzle}
+          onChange={(e) => setPuzzle(e.target.value as PuzzleSize)}
+        >
+          {PUZZLE_SIZES.filter((sz) => PATTERNS.some((p) => patternPuzzle(p) === sz)).map((sz) => (
+            <option key={sz} value={sz}>{PUZZLE_LABEL[sz]}</option>
+          ))}
+        </select>
         <LangToggle variant="inline" />
       </header>
 
@@ -63,23 +87,18 @@ export default function PatternsPage() {
             onClick={() => setFilter(ALL)}
           >
             {t('全部', 'All')}
-            <span className="pat-filter-count">{PATTERNS.length}</span>
           </button>
-          {categories.map((c) => {
-            const count = PATTERNS.filter((p) => p.category === c).length;
-            return (
-              <button
-                key={c}
-                type="button"
-                role="tab"
-                className={`pat-filter${filter === c ? ' is-active' : ''}`}
-                onClick={() => setFilter(c)}
-              >
-                {CATEGORY_LABEL[c][lang]}
-                <span className="pat-filter-count">{count}</span>
-              </button>
-            );
-          })}
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="tab"
+              className={`pat-filter${filter === c ? ' is-active' : ''}`}
+              onClick={() => setFilter(c)}
+            >
+              {CATEGORY_LABEL[c][lang]}
+            </button>
+          ))}
         </nav>
 
         <ul className="pat-grid">
@@ -91,7 +110,13 @@ export default function PatternsPage() {
                 onClick={() => setOpenId(p.id)}
               >
                 <div className="pat-card-preview">
-                  <VisualCube algorithm={inverseOf(p.alg)} view="iso" size={120} alt={p.name_en} />
+                  <VisualCube
+                    algorithm={inverseOf(p.alg)}
+                    view="iso"
+                    size={120}
+                    puzzleSize={Number(patternPuzzle(p)[0])}
+                    alt={p.name_en}
+                  />
                 </div>
                 <div className="pat-card-name">{lang === 'zh' ? p.name_zh : p.name_en}</div>
                 <div className="pat-card-meta">{CATEGORY_LABEL[p.category][lang]}</div>
@@ -146,7 +171,7 @@ function PatternModal({
         </div>
         <div className="pat-modal-twisty">
           {/* setupAlg empty → starts solved; alg plays the pattern animation. */}
-          <TwistySection puzzle="3x3x3" scramble="" alg={pattern.alg} />
+          <TwistySection puzzle={patternPuzzle(pattern)} scramble="" alg={pattern.alg} />
         </div>
         <div className="pat-modal-alg-row">
           <code className="pat-modal-alg">{pattern.alg}</code>

@@ -42,6 +42,24 @@
     padding: 1.25rem 1.5rem 3rem;
 }
 
+.pat-puzzle-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 6px 28px 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--pat-border);
+    background: var(--pat-surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236F6E6B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
+    color: var(--pat-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+
+.pat-puzzle-select:hover { border-color: var(--pat-border-strong); }
+.pat-puzzle-select:focus-visible { outline: 2px solid var(--pat-accent); outline-offset: 1px; }
+
 .pat-filters {
     display: flex;
     flex-wrap: wrap;
@@ -73,20 +91,6 @@
     background: var(--pat-accent-soft);
     color: var(--pat-accent);
     font-weight: 600;
-}
-
-.pat-filter-count {
-    color: var(--pat-text-mute);
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.75rem;
-    padding: 1px 6px;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 4px;
-}
-
-.pat-filter.is-active .pat-filter-count {
-    background: rgba(193, 95, 60, 0.15);
-    color: var(--pat-accent);
 }
 
 .pat-grid {
