@@ -128,25 +128,37 @@ export function SimButtons() {
         {/* NOTE: 隐藏 clear-all 按钮 — Numpad 长按 ⌫ 联动触发 */}
         <button id="clear-all" style={{ display: 'none' }} onClick={clearAll}>{isZh ? '清空' : 'Clear'}</button>
 
-        <button className="sim-btn sim-a" onClick={() => handleSimPlayer(0)}>
-          🎯 A
-        </button>
-        {badgeA && (
-          <span className="sim-count visible" style={{ color: badgeA.color }}>{badgeA.text}</span>
+        {state.playerEnabled[0] && (
+          <>
+            <button className="sim-btn sim-a" onClick={() => handleSimPlayer(0)}>
+              🎯 A
+            </button>
+            {badgeA && (
+              <span className="sim-count visible" style={{ color: badgeA.color }}>{badgeA.text}</span>
+            )}
+          </>
         )}
 
-        <button className="sim-btn sim-b" onClick={() => handleSimPlayer(1)}>
-          🎯 B
-        </button>
-        {badgeB && (
-          <span className="sim-count visible" style={{ color: badgeB.color }}>{badgeB.text}</span>
+        {state.playerEnabled[1] && (
+          <>
+            <button className="sim-btn sim-b" onClick={() => handleSimPlayer(1)}>
+              🎯 B
+            </button>
+            {badgeB && (
+              <span className="sim-count visible" style={{ color: badgeB.color }}>{badgeB.text}</span>
+            )}
+          </>
         )}
 
-        <button className="sim-btn sim-race" onClick={handleRace}>
-          ⚔️ Race
-        </button>
-        {badgeRace && (
-          <span className="sim-count visible" style={{ color: badgeRace.color }}>{badgeRace.text}</span>
+        {state.playerEnabled[0] && state.playerEnabled[1] && (
+          <>
+            <button className="sim-btn sim-race" onClick={handleRace}>
+              ⚔️ Race
+            </button>
+            {badgeRace && (
+              <span className="sim-count visible" style={{ color: badgeRace.color }}>{badgeRace.text}</span>
+            )}
+          </>
         )}
 
         {/* NOTE: ⓘ 信息按钮 — 原版 index.html#45 */}

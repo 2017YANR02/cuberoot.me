@@ -99,9 +99,21 @@ export async function loadDefaults(
   eventId: string,
   onReady?: (players: (PlayerInfo | null)[]) => void,
 ): Promise<void> {
-  // NOTE: 已有缓存直接回调
+  // NOTE: 已有缓存 → 重新建立 playerOverride 后回调
+  // 用户可能曾用人物搜索覆盖过 override,再次"加载世界 TOP 2"必须把 override 重置回 WR 数据
   if (wrData[eventId]?.['_loaded']) {
-    onReady?.(wrData[eventId]._players || []);
+    const cached = wrData[eventId]._players || [];
+    for (let i = 0; i < cached.length; i++) {
+      const p = cached[i];
+      if (!p) continue;
+      const times = wrData[eventId][i === 0 ? 'times_1' : 'times_2'];
+      const ao100 = wrData[eventId][i === 0 ? 'ao100_1' : 'ao100_2'];
+      const averagePR = i === 0 ? wrData[eventId].average : wrData[eventId].average_2;
+      if (times && ao100) {
+        setPlayerOverride(i, { times, ao100, name: p.name, country: p.country, averagePR });
+      }
+    }
+    onReady?.(cached);
     return;
   }
 
