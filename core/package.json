@@ -10,6 +10,7 @@
     "lint": "turbo lint"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "turbo": "^2.5.0"
   }
 }
