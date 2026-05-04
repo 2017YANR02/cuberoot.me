@@ -19,7 +19,7 @@
  */
 import type { KPattern } from 'cubing/kpuzzle';
 import type { F2lSlotId, StageInfo } from './stage_detect';
-import { detectStage, F2L_SLOT_DEFS } from './stage_detect';
+import { detectStage, F2L_SLOT_DEFS, topEdgesOriented } from './stage_detect';
 import { EDGE_STICKERS } from './sticker_tables';
 
 /**
@@ -51,7 +51,7 @@ type Transition =
   | { kind: 'xcross' }
   | { kind: 'xxcross' }
   | { kind: 'xxxcross' }
-  | { kind: 'pair'; slots: F2lSlotId[]; ordinalIndex: number }
+  | { kind: 'pair'; slots: F2lSlotId[]; ordinalIndex: number; eoDone: boolean }
   | { kind: 'oll' }
   | { kind: 'pll' }
   | null;
@@ -130,7 +130,10 @@ function classifyTransition(
   // F2L pair line (cross was already done before this line)
   if (newSlots.length >= 1 && prev.stage !== 'none') {
     const ordinalIndex = totalSolveCountBeforeLine + 1;
-    return { kind: 'pair', slots: newSlots, ordinalIndex };
+    // If this line completes F2L AND leaves LL EO done, the user effectively
+    // did ZBLS (or EOLS) — surface that as an additional label option.
+    const eoDone = curr.stage === 'f2l' && topEdgesOriented(curr.canonicalPattern);
+    return { kind: 'pair', slots: newSlots, ordinalIndex, eoDone };
   }
 
   return null;
@@ -271,6 +274,11 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       const colors = slotColors(curr.canonicalPattern, t.slots[0]);
       pushPair(colors.pair);
       pushPair(`F2L${t.ordinalIndex}`);
+      // Last F2L slot (ordinal 4) AND EO done — user did ZBLS / EOLS. Surface
+      // it as an extra label so the recon log records the technique used.
+      if (t.eoDone && t.ordinalIndex === 4) {
+        pushPair('ZBLS');
+      }
       return out;
     }
     if (t.slots.length === 2) {
@@ -280,6 +288,9 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       const c2 = slotColors(curr.canonicalPattern, t.slots[1]);
       pushPair(`${c1.pair} & ${c2.pair}`);
       pushPair(`F2L${i1} & F2L${i2}`);
+      if (t.eoDone && i2 === 4) {
+        pushPair('ZBLS');
+      }
       return out;
     }
   }
