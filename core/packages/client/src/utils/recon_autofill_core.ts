@@ -14,7 +14,8 @@ import { lookupF2lAlgs } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
 import { lookupZbllAlgs } from './zbll_lookup';
-import { lookupZblsAlgs } from './zbls_lookup';
+import { lookupZblsAlgs, lookupZblsAlgsBrute } from './zbls_lookup';
+import { F2L_SLOT_DEFS as _SLOTS_FOR_BRUTE } from './stage_detect';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 
 /** Strip comments + paren grouping, return a string with only move tokens. */
@@ -129,7 +130,19 @@ export async function suggestAlg(
       const slotId = F2L_SLOT_DEFS[slotIdx].id;
       if (solvedSet.has(slotId)) continue;
       const f2lEntries = await lookupF2lAlgs(startCanonical, slotIdx);
-      const zblsEntries = tryZbls ? await lookupZblsAlgs(startCanonical, slotIdx) : [];
+      let zblsEntries = tryZbls ? await lookupZblsAlgs(startCanonical, slotIdx) : [];
+      // Brute-force fallback: when the fingerprint lookup misses (most cases
+      // where EO isn't already done), iterate the whole ZBLS DB and verify
+      // each alg actually solves slot+EO from the user's state. This catches
+      // EOLS-style algs that the fingerprint table doesn't index.
+      if (tryZbls && zblsEntries.length === 0) {
+        const prevSolvedEdgeSlots: number[] = [];
+        for (const id of preEval.solvedSlots) {
+          const def = _SLOTS_FOR_BRUTE.find(d => d.id === id);
+          if (def) prevSolvedEdgeSlots.push(def.edgeSlot);
+        }
+        zblsEntries = await lookupZblsAlgsBrute(startCanonical, slotIdx, prevSolvedEdgeSlots);
+      }
       const sources: Array<{ entries: typeof f2lEntries; cat: Alg3x3Set }> = [
         { entries: f2lEntries, cat: 'f2l' as const },
         { entries: zblsEntries, cat: 'zbls' as const },

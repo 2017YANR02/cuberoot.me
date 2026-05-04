@@ -222,3 +222,75 @@ export async function lookupZblsAlgs(canonical: KPattern, slotIdx: number): Prom
 export function warmupZblsTable(): Promise<void> {
   return buildTable().then(() => undefined);
 }
+
+/** Flat list of every (alg, caseName) in the ZBLS DB, built once and cached.
+ *  Used by the brute-force fallback below. */
+let _flatAlgsPromise: Promise<Array<{ alg: string; caseName: string }>> | null = null;
+async function getFlatAlgs(): Promise<Array<{ alg: string; caseName: string }>> {
+  if (_flatAlgsPromise) return _flatAlgsPromise;
+  _flatAlgsPromise = (async () => {
+    const zbls = await loadAlg('3x3', 'zbls');
+    const out: Array<{ alg: string; caseName: string }> = [];
+    for (const c of zbls.cases) {
+      for (const v of c.algs[0] ?? []) {
+        if (v.alg) out.push({ alg: v.alg, caseName: c.name });
+      }
+    }
+    return out;
+  })();
+  return _flatAlgsPromise;
+}
+
+const PRE_AUFS = ['', 'U', 'U2', "U'"] as const;
+const PRE_YS = ['', 'y', 'y2', "y'"] as const;
+
+/** Brute-force ZBLS fallback. Iterates every alg in the DB × 16 (auf × y)
+ *  pre-modifiers and verifies each yields a state where:
+ *  (1) the queried slot's E-slice piece is in its home with orient=0
+ *  (2) all 4 LL edges have U-color on U face (EO done)
+ *  (3) all previously solved slots are still solved
+ *
+ *  Cost: ~324 algs × 16 mods = ~5000 KPattern.applyAlg calls per query.
+ *  Worst case ~150ms on a modern machine; fine for an interactive autofill.
+ *  Use ONLY when the fingerprint lookup returns empty — it does.
+ */
+export async function lookupZblsAlgsBrute(canonical: KPattern, slotIdx: number, prevSolvedEdgeSlots: number[]): Promise<ZblsAlgEntry[]> {
+  const algs = await getFlatAlgs();
+  const def = F2L_SLOT_DEFS[slotIdx];
+  const out: ZblsAlgEntry[] = [];
+  const seen = new Set<string>();
+  const c = canonical.patternData.CENTERS.pieces;
+  const uColor = c[0];
+
+  function checkSolveAndEo(post: KPattern): boolean {
+    const ep = post.patternData.EDGES.pieces;
+    const eo = post.patternData.EDGES.orientation;
+    // Target slot's E-slice edge must be home + oriented.
+    if (ep[def.edgeSlot] !== def.edgeSlot || eo[def.edgeSlot] !== 0) return false;
+    // Previously solved E-slice slots must still be home + oriented.
+    for (const s of prevSolvedEdgeSlots) {
+      if (ep[s] !== s || eo[s] !== 0) return false;
+    }
+    // All 4 LL edges show U-color on U face.
+    for (let i = 0; i < 4; i++) {
+      if (edgeStickerOnFace(post, i, 0) !== uColor) return false;
+    }
+    return true;
+  }
+
+  for (const { alg, caseName } of algs) {
+    for (const yRot of PRE_YS) {
+      for (const auf of PRE_AUFS) {
+        const composed = simplifyAlg([yRot, auf, alg].filter(Boolean).join(' '));
+        if (!composed) continue;
+        if (seen.has(composed)) continue;
+        let post: KPattern;
+        try { post = canonical.applyAlg(composed); } catch { continue; }
+        if (!checkSolveAndEo(post)) continue;
+        seen.add(composed);
+        out.push({ alg: composed, caseName, oriIdx: slotIdx });
+      }
+    }
+  }
+  return out;
+}
