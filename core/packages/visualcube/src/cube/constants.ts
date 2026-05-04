@@ -22,13 +22,14 @@ export class FaceRotationVectors {
   static B = [0, 0, 1]
 }
 
+// sch=ygrwbo — 黄顶红前
 export const DefaultColorScheme: ICubeColorScheme = {
   [Face.U]: ColorCode.Yellow,
-  [Face.R]: ColorCode.Red,
-  [Face.F]: ColorCode.Blue,
+  [Face.R]: ColorCode.Green,
+  [Face.F]: ColorCode.Red,
   [Face.D]: ColorCode.White,
-  [Face.L]: ColorCode.Orange,
-  [Face.B]: ColorCode.Green,
+  [Face.L]: ColorCode.Blue,
+  [Face.B]: ColorCode.Orange,
 }
 
 export const JapaneseColorScheme: ICubeColorScheme = {
@@ -175,4 +176,56 @@ export enum Masking {
   MEHTA_BELT2 = 'mehta_belt2',
   MEHTA_EOLE2 = 'mehta_eole2',
   MEHTA_TDR = 'mehta_tdr',
+  // Extra 3x3
+  OLLCP = 'ollcp',
+  CLL_FULL = 'cll_full',
+
+  // 2x2
+  FF = 'ff',
+
+  // NxN — multi-size; mask string keyed by cubeSize. Reused across sizes when mask differs but name matches PHP.
+  // 4x4
+  F1C = 'f1c',
+  F2C = 'f2c',
+  F1E = 'f1e',
+  LCE = 'lce',
+  NO_CORNER = 'no_corner',
+  HOYA = 'hoya',
+  YAU = 'yau',
+  MEYER = 'meyer',
+  HALF_CENTER = 'half_center',
+  // 4x4 / 5x5 / 6x6 / 7x7
+  L2C = 'l2c',
+  CENTER = 'center',
+  // 5x5 / 6x6 / 7x7
+  L2E = 'l2e',
+  L1E = 'l1e',
+  // 5x5 / 6x6
+  T = 't',
+  // 5x5
+  ONE_BY_THREE = '1x3',
+  TWO_BY_THREE = '2x3',
+  THREE_BY_THREE = '3x3', // also 6x6/7x7
+  TWO_BY_TWO = '2x2',     // also 6x6/7x7
+  MIDGE = 'midge',
+  T_CENTER = 't_center',
+  X_CENTER = 'x_center',
+  WING = 'wing',
+  // 6x6
+  ONE_BY_FOUR = '1x4',
+  TWO_BY_FOUR = '2x4',
+  THREE_BY_FOUR = '3x4',
+  FOUR_BY_FOUR = '4x4', // also 7x7
+  THREE_ONE_BY_FOUR = '3_1x4',
+  OBLIQUE = 'oblique',
+  // 7x7
+  ONE_BY_FIVE = '1x5',
+  TWO_BY_FIVE = '2x5',
+  THREE_BY_FIVE = '3x5',
+  FOUR_BY_FIVE = '4x5',
+  FIVE_BY_FIVE = '5x5',
+  // 9x9
+  UF = 'uf',
+  DF = 'df',
+  UB = 'ub',
 }
