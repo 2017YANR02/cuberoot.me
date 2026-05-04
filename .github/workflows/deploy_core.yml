@@ -87,8 +87,18 @@ jobs:
           git add -A app/ 2>/dev/null || true
           # 仅在有变化时才提交
           git diff --cached --quiet || git commit -m "ci: rebuild SPA from core/"
-          git pull --rebase origin main
-          git push
+          # NOTE: race-safe push — main 可能被 README/手动 commit 等 in-flight push 挤走，
+          # 失败就 fetch + rebase + 重试，最多 5 次。
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; exit 1; }
+            if git push origin main; then
+              echo "push succeeded on attempt $attempt"
+              break
+            fi
+            echo "push attempt $attempt rejected, retrying..."
+            sleep $((attempt * 3))
+          done
 
       # ── 后端部署到 云服务器 ──
 
