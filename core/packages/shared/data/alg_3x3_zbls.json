@@ -1,0 +1,5257 @@
+{
+  "scrapedAt": "2026-05-04T00:13:11.000Z",
+  "source": "D:/cube/CubeRoot/3x3/ZBLS.docx + external sheets",
+  "puzzle": "3x3",
+  "set": "zbls",
+  "cases": [
+    {
+      "name": "Solved Pair I",
+      "subgroup": "Solved Pair",
+      "setup": "F R U R' U' F'",
+      "standard": "F U R U' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U R U' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Solved Pair V",
+      "subgroup": "Solved Pair",
+      "setup": "F U R U' R' F'",
+      "standard": "F R U R' U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U R' U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Solved Pair D",
+      "subgroup": "Solved Pair",
+      "setup": "S' R U R' S U' R' F R F'",
+      "standard": "F R' F' R U S' R U' R' S",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R' F' R U S' R U' R' S"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A EO",
+      "subgroup": "A",
+      "setup": "R U' R'",
+      "standard": "R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R'"
+          }
+        ]
+      ],
+      "trainerKey": "4-1"
+    },
+    {
+      "name": "A EO'",
+      "subgroup": "A",
+      "setup": "L' U L",
+      "standard": "L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A Line",
+      "subgroup": "A",
+      "setup": "F' L' U' L F",
+      "standard": "F' L' U L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' L' U L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A Line'",
+      "subgroup": "A",
+      "setup": "F R U R' F'",
+      "standard": "F R U' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A VP",
+      "subgroup": "A",
+      "setup": "R B U' B' R'",
+      "standard": "R B U B' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R B U B' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A VP'",
+      "subgroup": "A",
+      "setup": "L' B' U B L",
+      "standard": "L' B' U' B L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' B' U' B L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A VM",
+      "subgroup": "A",
+      "setup": "R' F R F'",
+      "standard": "F R' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R' F' R"
+          }
+        ]
+      ],
+      "trainerKey": "2-2"
+    },
+    {
+      "name": "A VM'",
+      "subgroup": "A",
+      "setup": "L F' L' F",
+      "standard": "F' L F L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' L F L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A IF",
+      "subgroup": "A",
+      "setup": "S' R U' R' S",
+      "standard": "S' R U R' S",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S' R U R' S"
+          }
+        ]
+      ],
+      "trainerKey": "4-5"
+    },
+    {
+      "name": "A IF'",
+      "subgroup": "A",
+      "setup": "S L' U L S'",
+      "standard": "S L' U' L S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S L' U' L S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A IL",
+      "subgroup": "A",
+      "setup": "R' F R2' U R' U' F'",
+      "standard": "F U R U' R2 F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U R U' R2 F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A IL'",
+      "subgroup": "A",
+      "setup": "L F' L2' U' L U F",
+      "standard": "F' U' L' U L2 F L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' L' U L2 F L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A IZ",
+      "subgroup": "A",
+      "setup": "L D l' U l D' L'",
+      "standard": "L D l' U' l D' L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L D l' U' l D' L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A IZ'",
+      "subgroup": "A",
+      "setup": "R' D' r U' r' D R",
+      "standard": "R' D' r U r' D R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' D' r U r' D R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A D",
+      "subgroup": "A",
+      "setup": "R' F' R U2' M' U' M",
+      "standard": "M' U M U2 R' F R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "M' U M U2 R' F R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "A D'",
+      "subgroup": "A",
+      "setup": "r U r' U2' M' U M",
+      "standard": "M' U' M U2 r U' r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "M' U' M U2 r U' r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B EO",
+      "subgroup": "B",
+      "setup": "R U R'",
+      "standard": "R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B EO'",
+      "subgroup": "B",
+      "setup": "L' U' L",
+      "standard": "L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B Line",
+      "subgroup": "B",
+      "setup": "L F' L' U' L F L'",
+      "standard": "L F' L' U L F L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L F' L' U L F L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B Line'",
+      "subgroup": "B",
+      "setup": "R' F R U R' F' R",
+      "standard": "R' F R U' R' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' F R U' R' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B VP",
+      "subgroup": "B",
+      "setup": "S R U R' U' S'",
+      "standard": "S U R U' R' S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S U R U' R' S'"
+          }
+        ]
+      ],
+      "trainerKey": "3-2"
+    },
+    {
+      "name": "B VP'",
+      "subgroup": "B",
+      "setup": "S U R U' R' S'",
+      "standard": "S R U R' U' S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S R U R' U' S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B VM",
+      "subgroup": "B",
+      "setup": "F' U2 F U R U' R'",
+      "standard": "R U R' U' F' U2' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' F' U2' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B VM'",
+      "subgroup": "B",
+      "setup": "R U2 R' U' F' U F",
+      "standard": "F' U' F U R U2' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' F U R U2' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B IP",
+      "subgroup": "B",
+      "setup": "R U2' B U' B' R'",
+      "standard": "R B U B' U2 R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R B U B' U2 R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B IP'",
+      "subgroup": "B",
+      "setup": "L' U2' B' U B L",
+      "standard": "L' B' U' B U2 L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' B' U' B U2 L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B IZ",
+      "subgroup": "B",
+      "setup": "F U R U' R' U' F'",
+      "standard": "F U R U R' U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U R U R' U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B IZ'",
+      "subgroup": "B",
+      "setup": "F' U' L' U L U F",
+      "standard": "F' U' L' U' L U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' L' U' L U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B IY",
+      "subgroup": "B",
+      "setup": "S' R U R' S",
+      "standard": "S' R U' R' S",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S' R U' R' S"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B IY'",
+      "subgroup": "B",
+      "setup": "F' U' L' U' L U F",
+      "standard": "F' U' L' U L U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' L' U L U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B D",
+      "subgroup": "B",
+      "setup": "L' M U L M' U2 M U M'",
+      "standard": "M U' M' U2' ML' U' M'L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "M U' M' U2' ML' U' M'L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "B D'",
+      "subgroup": "B",
+      "setup": "R M U' R' M' U2' M U' M'",
+      "standard": "M U M' U2 MR U M'R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "M U M' U2 MR U M'R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "C T",
+      "subgroup": "C",
+      "setup": "(B U' B' R2')' (R U' R U)'",
+      "standard": "(↓R U' R U) (B U' B' R2')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(↓R U' R U) (B U' B' R2')"
+          },
+          {
+            "alg": "(R U' R U) (f R' f' R2)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "C T'",
+      "subgroup": "C",
+      "setup": "(B' U B L2)' (L' U L' U')'",
+      "standard": "(↓L' U L' U') (B' U B L2)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(↓L' U L' U') (B' U B L2)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "C I",
+      "subgroup": "C",
+      "setup": "(F R U2' R' F')' L' U' L",
+      "standard": "L' U L (F R U2' R' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U L (F R U2' R' F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "C I'",
+      "subgroup": "C",
+      "setup": "(F' L' U2 L F)' R U R'",
+      "standard": "R U' R' (F' L' U2 L F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' (F' L' U2 L F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D T",
+      "subgroup": "D",
+      "setup": "R U2' R (R' U' R U')' U2 R2'",
+      "standard": "↓R2 U2' (R' U' R U') R' U2 R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "↓R2 U2' (R' U' R U') R' U2 R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D T'",
+      "subgroup": "D",
+      "setup": "L' U2 L' (L U L' U)' U2' L2",
+      "standard": "↓L2' U2 (L U L' U) L U2' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "↓L2' U2 (L U L' U) L U2' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D L",
+      "subgroup": "D",
+      "setup": "F' (L' U2 L U')2' F",
+      "standard": "F' (L' U2 L U')2 F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' (L' U2 L U')2 F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D F (U' R U2 R')2 F'",
+      "subgroup": "D",
+      "setup": "F (R U2' R' U)2' F'",
+      "standard": "F (R U2' R' U)2 F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F (R U2' R' U)2 F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D V",
+      "subgroup": "D",
+      "setup": "(L' U2 L2 F' L' F)' (L' U L U')'",
+      "standard": "(L' U L U') (L' U2 L2 F' L' F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U L U') (L' U2 L2 F' L' F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D V'",
+      "subgroup": "D",
+      "setup": "(R U2' R2' F R F')' (R U' R' U)'",
+      "standard": "(R U' R' U) (R U2' R2' F R F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U' R' U) (R U2' R2' F R F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D D",
+      "subgroup": "D",
+      "setup": "(R2' F R F')' (r' U' r B')' B2' U2 R'",
+      "standard": "R U2' B2 (r' U' r B') (R2' F R F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2' B2 (r' U' r B') (R2' F R F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "D D'",
+      "subgroup": "D",
+      "setup": "(L2 F' L' F)' (l U l' B)' B2 U2' L",
+      "standard": "L' U2 B2' (l U l' B) (L2 F' L' F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U2 B2' (l U l' B) (L2 F' L' F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E T",
+      "subgroup": "E",
+      "setup": "R' E R (R' E R U')'",
+      "standard": "(R' E R U') R' E' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R' E R U') R' E' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E T'",
+      "subgroup": "E",
+      "setup": "R S' R' (R S' R' U)'",
+      "standard": "(R S' R' U) R S R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R S' R' U) R S R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E L",
+      "subgroup": "E",
+      "setup": "R U' R' (R' F R F')' U",
+      "standard": "U' (R' F R F') R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R' F R F') R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E L'",
+      "subgroup": "E",
+      "setup": "L' U L (L F' L' F)' U'",
+      "standard": "U (L F' L' F) L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L F' L' F) L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E V",
+      "subgroup": "E",
+      "setup": "F U' F' (L' U' L U)' U",
+      "standard": "U' (L' U' L U) F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L' U' L U) F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E V'",
+      "subgroup": "E",
+      "setup": "F' U F (R U R' U')' U'",
+      "standard": "U (R U R' U') F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R U R' U') F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E V",
+      "subgroup": "E",
+      "setup": "F U F' (L' U L U)' U",
+      "standard": "U' (L' U L U) F U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L' U L U) F U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E V'",
+      "subgroup": "E",
+      "setup": "F' U' F (R U' R' U')' U'",
+      "standard": "U (R U' R' U') F' U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R U' R' U') F' U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E IV",
+      "subgroup": "E",
+      "setup": "U f' U2' L' U L U2' f",
+      "standard": "f' U2 L' U' L U2 f [U']",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f' U2 L' U' L U2 f [U']"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E IV'",
+      "subgroup": "E",
+      "setup": "U' f U2' R U' R' U2 f'",
+      "standard": "f U2' R U R' U2 f' [U]",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f U2' R U R' U2 f' [U]"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E II",
+      "subgroup": "E",
+      "setup": "f' (L' U' L U2')' U2 f",
+      "standard": "f' U2' (L' U' L U2') f",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f' U2' (L' U' L U2') f"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E II'",
+      "subgroup": "E",
+      "setup": "f (R U R' U2)' U2' f'",
+      "standard": "f U2 (R U R' U2) f'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f U2 (R U R' U2) f'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E IB",
+      "subgroup": "E",
+      "setup": "U2' F U2' R U2 R' U2 F'",
+      "standard": "F U2' R U2' R' U2 F' [U2]",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U2' R U2' R' U2 F' [U2]"
+          },
+          {
+            "alg": "[U2] F U2 (R U2' R' U2) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E IB'",
+      "subgroup": "E",
+      "setup": "U2' F' U2 L' U2' L U2' F",
+      "standard": "F' U2 L' U2 L U2' F [U2]",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U2 L' U2 L U2' F [U2]"
+          },
+          {
+            "alg": "U2 F' U2' (L' U2 L U2') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E D",
+      "subgroup": "E",
+      "setup": "U S' F' R U R' S U' F'",
+      "standard": "F U S' R U' R' FS [U']",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U S' R U' R' FS [U']"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "E D'",
+      "subgroup": "E",
+      "setup": "U' S F L' U' L S' U F",
+      "standard": "F' U' S L' U L F'S' [U]",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' S L' U L F'S' [U]"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "F T",
+      "subgroup": "F",
+      "setup": "(U2' R' U R')' (R2' U2' F R2 F')'",
+      "standard": "(↑R2' U2' F R2 F') (U2' R' U R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(↑R2' U2' F R2 F') (U2' R' U R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "F I",
+      "subgroup": "F",
+      "setup": "F2 R' F' (R2 U R2' U)' U2 R F' U y'",
+      "standard": "y U' F R' U2' (R2 U R2' U) F R F2'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U' F R' U2' (R2 U R2' U) F R F2'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G T",
+      "subgroup": "G",
+      "setup": "R2 (R' U' R U')' U2 R2' U2'",
+      "standard": "U2 R2 U2' (R' U' R U') R2'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R2 U2' (R' U' R U') R2'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G L2' U' L U' L' U2' L2",
+      "subgroup": "G",
+      "setup": "L2' (L U L' U)' U2' L2 U2'",
+      "standard": "U2 L2' U2 (L U L' U) L2",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L2' U2 (L U L' U) L2"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G L",
+      "subgroup": "G",
+      "setup": "L' U L (f U R U' R' f')' U",
+      "standard": "U' (f U R U' R' f') L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (f U R U' R' f') L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G R U' R' f' L' U' L U f",
+      "subgroup": "G",
+      "setup": "R U' R' (f' U' L' U L f)' U'",
+      "standard": "U (f' U' L' U L f) R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (f' U' L' U L f) R U R'"
+          },
+          {
+            "alg": "U B' R' U' R U B R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G VP",
+      "subgroup": "G",
+      "setup": "L' U L (F R U' R' F')' U",
+      "standard": "U' (F R U' R' F') L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F R U' R' F') L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G VP'",
+      "subgroup": "G",
+      "setup": "R U' R' (F' L' U L F)' U'",
+      "standard": "U (F' L' U L F) R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (F' L' U L F) R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G VM",
+      "subgroup": "G",
+      "setup": "f' L2' (F' U' L' U L S')' U y2'",
+      "standard": "y2 U' (F' U' L' U L S') L2 f",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 U' (F' U' L' U L S') L2 f"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G VM'",
+      "subgroup": "G",
+      "setup": "f R2 (F U R U' R' S)' U' y2'",
+      "standard": "y2 U (F U R U' R' S) R2' f'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 U (F U R U' R' S) R2' f'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G IO",
+      "subgroup": "G",
+      "setup": "L' U L (F U' R U' R' F')' U",
+      "standard": "U' (F U' R U' R' F') L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F U' R U' R' F') L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G IO'",
+      "subgroup": "G",
+      "setup": "R U' R' (F' U L' U L F)' U'",
+      "standard": "U (F' U L' U L F) R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (F' U L' U L F) R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G IL",
+      "subgroup": "G",
+      "setup": "L U2 (L F' L' F)' U' L' y2'",
+      "standard": "y2↑L U (L F' L' F) U2' L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2↑L U (L F' L' F) U2' L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G IL'",
+      "subgroup": "G",
+      "setup": "R' U2' (R' F R F')' U R y2'",
+      "standard": "y2↑R' U' (R' F R F') U2 R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2↑R' U' (R' F R F') U2 R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G IZ",
+      "subgroup": "G",
+      "setup": "(U R U R')' (F R' F' R)' U'",
+      "standard": "U (F R' F' R) (U R U R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (F R' F' R) (U R U R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G IZ'",
+      "subgroup": "G",
+      "setup": "(U' L' U' L)' (F' L F L')' U",
+      "standard": "U' (F' L F L') (U' L' U' L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F' L F L') (U' L' U' L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G D",
+      "subgroup": "G",
+      "setup": "F U (R U' R' S)' S F'",
+      "standard": "FS' (R U' R' S) U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "FS' (R U' R' S) U' F'"
+          },
+          {
+            "alg": "U2 (S L' U' L S')F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "G D'",
+      "subgroup": "G",
+      "setup": "F' U' (L' U L S')' S' F",
+      "standard": "F'S (L' U L S') U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F'S (L' U L S') U F"
+          },
+          {
+            "alg": "U2 (S' R U R' S)F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H T",
+      "subgroup": "H",
+      "setup": "R U' R' (R U2' R' U')'",
+      "standard": "(R U2' R' U') R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U2' R' U') R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H L' U L U' L' U2 L",
+      "subgroup": "H",
+      "setup": "L' U L (L' U2 L U)'",
+      "standard": "(L' U2 L U) L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U2 L U) L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H L",
+      "subgroup": "H",
+      "setup": "R' (F R U R' U' F')' U2 R y",
+      "standard": "y' R' U2' (F R U R' U' F') R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' R' U2' (F R U R' U' F') R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H L F' U' L' U L F U2 L'",
+      "subgroup": "H",
+      "setup": "L (F' L' U' L U F)' U2' L' y'",
+      "standard": "y L U2 (F' L' U' L U F) L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y L U2 (F' L' U' L U F) L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H VP",
+      "subgroup": "H",
+      "setup": "(S' R U R' S)' (R U2' R' U')'",
+      "standard": "(R U2' R' U') (S' R U R' S)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U2' R' U') (S' R U R' S)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H VP'",
+      "subgroup": "H",
+      "setup": "(S L' U' L S')' (L' U2 L U)'",
+      "standard": "(L' U2 L U) (S L' U' L S')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U2 L U) (S L' U' L S')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H VM",
+      "subgroup": "H",
+      "setup": "(F R' F' R2 U R')' (R U R' U')'",
+      "standard": "(R U R' U') (F R' F' R2 U R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U R' U') (F R' F' R2 U R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H VM'",
+      "subgroup": "H",
+      "setup": "(F' L F L2' U' L)' (L' U' L U)'",
+      "standard": "(L' U' L U) (F' L F L2' U' L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U' L U) (F' L F L2' U' L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H IO",
+      "subgroup": "H",
+      "setup": "(R' F R U2' F')' (R U2' R' U2)' U2'",
+      "standard": "U2 (R U2' R' U2) (R' F R U2' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (R U2' R' U2) (R' F R U2' F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H IO'",
+      "subgroup": "H",
+      "setup": "(L F' L' U2 F)' (L' U2 L U2')' U2'",
+      "standard": "U2 (L' U2 L U2') (L F' L' U2 F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (L' U2 L U2') (L F' L' U2 F)"
+          },
+          {
+            "alg": "U F' U2 F U (R U R' F') U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H IL",
+      "subgroup": "H",
+      "setup": "(L F' L F L2')' (L U2 L' U')' U y2'",
+      "standard": "y2 U' (L U2 L' U') (L F' L F L2')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 U' (L U2 L' U') (L F' L F L2')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H IL'",
+      "subgroup": "H",
+      "setup": "(R' F R' F' R2)' (R' U2' R U)' U' y2'",
+      "standard": "y2 U (R' U2' R U) (R' F R' F' R2)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y2 U (R' U2' R U) (R' F R' F' R2)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H IZ",
+      "subgroup": "H",
+      "setup": "(R U M' R')' (R U2' r' U')'",
+      "standard": "(R U2' r' U') (R U M'R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U2' r' U') (R U M'R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H IZ'",
+      "subgroup": "H",
+      "setup": "(L' U' M' L)' (L' U2 l U)'",
+      "standard": "(L' U2 l U) (L' U' M'L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U2 l U) (L' U' M'L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H D",
+      "subgroup": "H",
+      "setup": "F (R U' B U' B' R')' U F' U",
+      "standard": "U' F U' (R U' B U' B' R') F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F U' (R U' B U' B' R') F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "H D'",
+      "subgroup": "H",
+      "setup": "F' (L' U B' U B L)' U' F U'",
+      "standard": "U F' U (L' U B' U B L) F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' U (L' U B' U B L) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I T",
+      "subgroup": "I",
+      "setup": "R U (U R' U' R F')' F' R'",
+      "standard": "R F (U R' U' R F') U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R F (U R' U' R F') U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I L' U' F' L U' L' U F L",
+      "subgroup": "I",
+      "setup": "L' U' (U' L U L' F)' F L",
+      "standard": "L' F' (U' L U L' F) U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' F' (U' L U L' F) U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IP",
+      "subgroup": "I",
+      "setup": "M (r U' r' U')' U' M'",
+      "standard": "M U (r U' r' U') M'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "M U (r U' r' U') M'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I M U' R' F' R U M'",
+      "subgroup": "I",
+      "setup": "M (R' F R U)' U M'",
+      "standard": "M U' (R' F R U) M'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "M U' (R' F R U) M'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I VP",
+      "subgroup": "I",
+      "setup": "f (F U R U' R' F')' f'",
+      "standard": "f (F U R U' R' F') f'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f (F U R U' R' F') f'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I VP'",
+      "subgroup": "I",
+      "setup": "f' (F' U' L' U L F)' f",
+      "standard": "f' (F' U' L' U L F) f",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f' (F' U' L' U L F) f"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I VY",
+      "subgroup": "I",
+      "setup": "F U' F' (L' U L U2')'",
+      "standard": "(L' U L U2') F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U L U2') F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I VY'",
+      "subgroup": "I",
+      "setup": "F' U F (R U' R' U2)'",
+      "standard": "(R U' R' U2) F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U' R' U2) F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IO",
+      "subgroup": "I",
+      "setup": "F U2' (R' F R F')' U' F'",
+      "standard": "F U (R' F R F') U2 F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U (R' F R F') U2 F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IO'",
+      "subgroup": "I",
+      "setup": "F' U2 (L F' L' F)' U F",
+      "standard": "F' U' (L F' L' F) U2' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' (L F' L' F) U2' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IL",
+      "subgroup": "I",
+      "setup": "(S' R U R' S)' (F' U F U2)'",
+      "standard": "(F' U F U2) (S' R U R' S)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F' U F U2) (S' R U R' S)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IL'",
+      "subgroup": "I",
+      "setup": "(S L' U' L S')' (F U' F' U2')'",
+      "standard": "(F U' F' U2') (S L' U' L S')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F U' F' U2') (S L' U' L S')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IZ",
+      "subgroup": "I",
+      "setup": "(F R U2' R' F')' L' U L U2'",
+      "standard": "U2 L' U' L (F R U2' R' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L' U' L (F R U2' R' F')"
+          },
+          {
+            "alg": "F R U' R' U2 R U2 R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I IZ'",
+      "subgroup": "I",
+      "setup": "(F' L' U2 L F)' R U' R' U2'",
+      "standard": "U2 R U R' (F' L' U2 L F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U R' (F' L' U2 L F)"
+          },
+          {
+            "alg": "F' L' U L U2 L' U2 L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I ID",
+      "subgroup": "I",
+      "setup": "(F R U2 R' F')' L' U2' L U",
+      "standard": "U' L' U2 L (F R U2 R' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' L' U2 L (F R U2 R' F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "I ID'",
+      "subgroup": "I",
+      "setup": "(F' L' U2 L F)' R U2 R' U'",
+      "standard": "U R U2' R' (F' L' U2 L F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U2' R' (F' L' U2 L F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J T",
+      "subgroup": "J",
+      "setup": "R U R' (R U' R' U)'",
+      "standard": "(R U' R' U) R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U' R' U) R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J L' U' L U L' U' L",
+      "subgroup": "J",
+      "setup": "L' U' L (L' U L U')'",
+      "standard": "(L' U L U') L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U L U') L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J L",
+      "subgroup": "J",
+      "setup": "R U2 R' (F' U' F U')'",
+      "standard": "(F' U' F U') R U2' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F' U' F U') R U2' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J L' U2 L U' F U' F'",
+      "subgroup": "J",
+      "setup": "L' U2' L (F U F' U)'",
+      "standard": "(F U F' U) L' U2 L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F U F' U) L' U2 L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J VB",
+      "subgroup": "J",
+      "setup": "F U2' F' (L' U2 L)'",
+      "standard": "(L' U2 L) F U2 F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U2 L) F U2 F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J VB'",
+      "subgroup": "J",
+      "setup": "F' U2 F (R U2' R')'",
+      "standard": "(R U2' R') F' U2' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U2' R') F' U2' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J V",
+      "subgroup": "J",
+      "setup": "R' (R' F R F')' U2 R y",
+      "standard": "y'↑R' U2' (R' F R F') R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y'↑R' U2' (R' F R F') R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J V'",
+      "subgroup": "J",
+      "setup": "L (L F' L' F)' U2' L' y'",
+      "standard": "y↑L U2 (L F' L' F) L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y↑L U2 (L F' L' F) L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J IF",
+      "subgroup": "J",
+      "setup": "F (R U R' U)' U' F' U2'",
+      "standard": "U2 F U (R U R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F U (R U R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J IF'",
+      "subgroup": "J",
+      "setup": "F' (L' U' L U')' U F U2'",
+      "standard": "U2 F' U' (L' U' L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' U' (L' U' L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J IB",
+      "subgroup": "J",
+      "setup": "F R' F' R2 U R'",
+      "standard": "R U' R2' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R2' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J IB'",
+      "subgroup": "J",
+      "setup": "F' L F L2' U' L",
+      "standard": "L' U L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J II",
+      "subgroup": "J",
+      "setup": "(F' L' U' L F)' (R U' R' U)'",
+      "standard": "(R U' R' U) (F' L' U' L F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U' R' U) (F' L' U' L F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J II'",
+      "subgroup": "J",
+      "setup": "(F R U R' F')' (L' U L U')'",
+      "standard": "(L' U L U') (F R U R' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U L U') (F R U R' F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J D",
+      "subgroup": "J",
+      "setup": "(S' R U' R' S)' (F' U2' F U')'",
+      "standard": "(F' U2' F U') (S' R U' R' S)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F' U2' F U') (S' R U' R' S)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "J D'",
+      "subgroup": "J",
+      "setup": "(S L' U L S')' (F U2 F' U)'",
+      "standard": "(F U2 F' U) (S L' U L S')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F U2 F' U) (S L' U L S')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K T",
+      "subgroup": "K",
+      "setup": "R U' R' (R U' R' U)' U",
+      "standard": "U' (R U' R' U) R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U' R' U) R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K L' U L U L' U' L",
+      "subgroup": "K",
+      "setup": "L' U L (L' U L U')' U'",
+      "standard": "U (L' U L U') L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U L U') L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K L",
+      "subgroup": "K",
+      "setup": "R' F R (R' F R2 U R' U')' U",
+      "standard": "U' (R' F R2 U R' U') R' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R' F R2 U R' U') R' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K L F' L' U' L' U L2 F L'",
+      "subgroup": "K",
+      "setup": "L F' L' (L F' L2' U' L U)' U'",
+      "standard": "U (L F' L2' U' L U) L F L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L F' L2' U' L U) L F L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K VP",
+      "subgroup": "K",
+      "setup": "(r' F2 R F2')' (r U R' U')'",
+      "standard": "(r U R' U') (r' F2 R F2')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(r U R' U') (r' F2 R F2')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K VP'",
+      "subgroup": "K",
+      "setup": "(R U2' r' F2)' (R' F' r U)'",
+      "standard": "(R' F' r U) (R U2' r' F2)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R' F' r U) (R U2' r' F2)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K VY",
+      "subgroup": "K",
+      "setup": "(S' R U R' S)' (R U' R' U)' U",
+      "standard": "U' (R U' R' U) (S' R U R' S)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U' R' U) (S' R U R' S)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K VY'",
+      "subgroup": "K",
+      "setup": "(S L' U' L S')' (L' U L U')' U'",
+      "standard": "U (L' U L U') (S L' U' L S')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U L U') (S L' U' L S')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K IO",
+      "subgroup": "K",
+      "setup": "l F2 U2' L' U' L U' l'",
+      "standard": "l U L' U L U2 F2' l'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "l U L' U L U2 F2' l'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K IO'",
+      "subgroup": "K",
+      "setup": "r' F2' U2 R U R' U r",
+      "standard": "r' U' R U' R' U2' F2 r",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "r' U' R U' R' U2' F2 r"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K IL",
+      "subgroup": "K",
+      "setup": "F' U2' (F' S L' U' L S')' U2'",
+      "standard": "U2 (F'S L' U' L S') U2 F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (F'S L' U' L S') U2 F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K IL'",
+      "subgroup": "K",
+      "setup": "F U2 (F S' R U R' S)' U2'",
+      "standard": "U2 (FS' R U R' S) U2' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (FS' R U R' S) U2' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K IZ",
+      "subgroup": "K",
+      "setup": "R U' R2' F' U' F U R U",
+      "standard": "U' R' U' F' U↓F R2 U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R' U' F' U↓F R2 U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K IZ'",
+      "subgroup": "K",
+      "setup": "L' U L2 F U F' U' L' U'",
+      "standard": "U L U F U'↓F' L2' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U L U F U'↓F' L2' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K D",
+      "subgroup": "K",
+      "setup": "r U' R' U2' M (r U' r' U)' U2'",
+      "standard": "U2 (r U' r' U) M' U2 R U r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (r U' r' U) M' U2 R U r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "K D'",
+      "subgroup": "K",
+      "setup": "R' F r U2' M (R' F R U')' U2'",
+      "standard": "U2 (R' F R U') M' U2 r' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (R' F R U') M' U2 r' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L T",
+      "subgroup": "L",
+      "setup": "R U' R' (R U R' U')'",
+      "standard": "(R U R' U') R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U R' U') R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L L' U L U' L' U L",
+      "subgroup": "L",
+      "setup": "L' U L (L' U' L U)'",
+      "standard": "(L' U' L U) L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U' L U) L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L L",
+      "subgroup": "L",
+      "setup": "F U' F' L' U' L U2'",
+      "standard": "U2 L' U L F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L' U L F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L L'",
+      "subgroup": "L",
+      "setup": "F' U F R U R' U2'",
+      "standard": "U2 R U' R' F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U' R' F' U' F"
+          }
+        ]
+      ],
+      "trainerKey": "29-2"
+    },
+    {
+      "name": "L VB",
+      "subgroup": "L",
+      "setup": "(U' L' U L)' (S L' U L S')' U2'",
+      "standard": "U2 (S L' U L S') (U' L' U L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (S L' U L S') (U' L' U L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L VB'",
+      "subgroup": "L",
+      "setup": "(U R U' R')' (S' R U' R' S)' U2'",
+      "standard": "U2 (S' R U' R' S) (U R U' R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (S' R U' R' S) (U R U' R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L VF",
+      "subgroup": "L",
+      "setup": "(L F' L' F)2'",
+      "standard": "(L F' L' F)2",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L F' L' F)2"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L VF'",
+      "subgroup": "L",
+      "setup": "(R' F R F')2'",
+      "standard": "(R' F R F')2",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R' F R F')2"
+          },
+          {
+            "alg": "x (R' U R U')2 x'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L IF",
+      "subgroup": "L",
+      "setup": "(R U M' R')' (R U r' U')'",
+      "standard": "(R U r' U') (R U M'R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U r' U') (R U M'R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L IF'",
+      "subgroup": "L",
+      "setup": "(L' U' M' L)' (L' U' l U)'",
+      "standard": "(L' U' l U) (L' U' M'L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U' l U) (L' U' M'L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L IB",
+      "subgroup": "L",
+      "setup": "R U' R2' F R F' U",
+      "standard": "U' F R' F' R2 U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F R' F' R2 U R'"
+          }
+        ]
+      ],
+      "trainerKey": "30-5"
+    },
+    {
+      "name": "L IB'",
+      "subgroup": "L",
+      "setup": "L' U L2 F' L' F U'",
+      "standard": "U F' L F L2' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' L F L2' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L II",
+      "subgroup": "L",
+      "setup": "R B U2 B' U R' U",
+      "standard": "U' R U' B U2' B' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U' B U2' B' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L II'",
+      "subgroup": "L",
+      "setup": "L' B' U2' B U' L U'",
+      "standard": "U L' U B' U2 B L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U L' U B' U2 B L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L D",
+      "subgroup": "L",
+      "setup": "F U' F' (S L' U L S')' U",
+      "standard": "U' (S L' U L S')F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (S L' U L S')F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "L D'",
+      "subgroup": "L",
+      "setup": "F' U F (S' R U' R' S)' U'",
+      "standard": "U (S' R U' R' S)F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (S' R U' R' S)F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M T",
+      "subgroup": "M",
+      "setup": "R U R' (R U2' R' U2)' U",
+      "standard": "U' (R U2' R' U2) R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U2' R' U2) R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M L' U' L U2 L' U2 L",
+      "subgroup": "M",
+      "setup": "L' U' L (L' U2 L U2')' U'",
+      "standard": "U (L' U2 L U2') L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U2 L U2') L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M L",
+      "subgroup": "M",
+      "setup": "F (R U2' R' U)' U' F'",
+      "standard": "F U (R U2' R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U (R U2' R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M F' U L' U2 L U F",
+      "subgroup": "M",
+      "setup": "F' (L' U2 L U')' U F",
+      "standard": "F' U' (L' U2 L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' (L' U2 L U') F"
+          },
+          {
+            "alg": "B' R' U' R2 U R' B"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M VP",
+      "subgroup": "M",
+      "setup": "l U L2' U L2 U2' l'",
+      "standard": "l U2 L2' U' L2 U' l'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "l U2 L2' U' L2 U' l'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M VP'",
+      "subgroup": "M",
+      "setup": "r' U' R2 U' R2' U2 r",
+      "standard": "r' U2' R2 U R2' U r",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "r' U2' R2 U R2' U r"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M VM",
+      "subgroup": "M",
+      "setup": "F R' F' (r U2 r' D)' D R",
+      "standard": "R' D' (r U2 r' D) F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' D' (r U2 r' D) F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M VM'",
+      "subgroup": "M",
+      "setup": "F' L F (l' U2' l D')' D' L'",
+      "standard": "L D (l' U2' l D') F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L D (l' U2' l D') F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M IL",
+      "subgroup": "M",
+      "setup": "F (R U' R' U)' U2' F' U",
+      "standard": "U' F U2 (R U' R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F U2 (R U' R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M IL'",
+      "subgroup": "M",
+      "setup": "F' (L' U L U')' U2' F U'",
+      "standard": "U F' U2 (L' U L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' U2 (L' U L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M IZ",
+      "subgroup": "M",
+      "setup": "f R (F U R U' R' S)' U2' y",
+      "standard": "y' U2 (F U R U' R' S) R' f'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U2 (F U R U' R' S) R' f'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M IZ'",
+      "subgroup": "M",
+      "setup": "f' L' (F' U' L' U L S')' U2' y'",
+      "standard": "y U2 (F' U' L' U L S') L f",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U2 (F' U' L' U L S') L f"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M IY",
+      "subgroup": "M",
+      "setup": "(F' U' F U R U R')' (R U' R' U)' U'",
+      "standard": "U (R U' R' U) (F' U' F U R U R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R U' R' U) (F' U' F U R U R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M IY'",
+      "subgroup": "M",
+      "setup": "(F U F' U' L' U' L)' (L' U L U')' U",
+      "standard": "U' (L' U L U') (F U F' U' L' U' L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L' U L U') (F U F' U' L' U' L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M D",
+      "subgroup": "M",
+      "setup": "r U r' (M' U' M U2)'",
+      "standard": "(M' U' M U2) r U' r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(M' U' M U2) r U' r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "M D'",
+      "subgroup": "M",
+      "setup": "R' F' R (M' U M U2')'",
+      "standard": "(M' U M U2') R' F R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(M' U M U2') R' F R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P T",
+      "subgroup": "P",
+      "setup": "R U R' (R U R' U)' U2'",
+      "standard": "U2 (R U R' U) R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (R U R' U) R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P R' U R U2 R' U' R",
+      "subgroup": "P",
+      "setup": "L' U' L (L' U' L U')' U2'",
+      "standard": "U2 (L' U' L U') L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (L' U' L U') L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P L",
+      "subgroup": "P",
+      "setup": "F U' F' L' U L U2'",
+      "standard": "U2 L' U' L F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L' U' L F U F'"
+          },
+          {
+            "alg": "F R U' R' U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P L' U L F U' F'",
+      "subgroup": "P",
+      "setup": "F' U F R U' R' U2'",
+      "standard": "U2 R U R' F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U R' F' U' F"
+          },
+          {
+            "alg": "F' (L' U L U) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P VP",
+      "subgroup": "P",
+      "setup": "(R' F R F')' U' (R' F R F')' U'",
+      "standard": "U (R' F R F') U (R' F R F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R' F R F') U (R' F R F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P VP'",
+      "subgroup": "P",
+      "setup": "(L F' L' F)' U (L F' L' F)' U",
+      "standard": "U' (L F' L' F) U' (L F' L' F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L F' L' F) U' (L F' L' F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P VM",
+      "subgroup": "P",
+      "setup": "F R' F' R2 U' R' U2'",
+      "standard": "U2 R U R2' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U R2' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P VM'",
+      "subgroup": "P",
+      "setup": "F' L F L2' U L U2'",
+      "standard": "U2 L' U' L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L' U' L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P IP",
+      "subgroup": "P",
+      "setup": "F (R U R' U)' F' U'",
+      "standard": "U F (R U R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F (R U R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P IP'",
+      "subgroup": "P",
+      "setup": "F' (L' U' L U')' F U",
+      "standard": "U' F' (L' U' L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' (L' U' L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P IZ",
+      "subgroup": "P",
+      "setup": "R' U' F U R2 U' R' F' U'",
+      "standard": "U F R U R2' U' F' U R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F R U R2' U' F' U R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P IZ'",
+      "subgroup": "P",
+      "setup": "L U F' U' L2' U L F U",
+      "standard": "U' F' L' U' L2 U F U' L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' L' U' L2 U F U' L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P IY",
+      "subgroup": "P",
+      "setup": "R B U2 B' R'",
+      "standard": "R B U2' B' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R B U2' B' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P IY'",
+      "subgroup": "P",
+      "setup": "L' B' U2' B L",
+      "standard": "L' B' U2 B L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' B' U2 B L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P D",
+      "subgroup": "P",
+      "setup": "(L' U2 L2 F' L' F2)' F U2'",
+      "standard": "U2 F' (L' U2 L2 F' L' F2)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' (L' U2 L2 F' L' F2)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "P D'",
+      "subgroup": "P",
+      "setup": "(R U2' R2' F R F2')' F' U2'",
+      "standard": "U2 F (R U2' R2' F R F2')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F (R U2' R2' F R F2')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q T",
+      "subgroup": "Q",
+      "setup": "R U R' (R U2' R' U)' U'",
+      "standard": "U (R U2' R' U) R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R U2' R' U) R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q R' U' R U R' U2 R",
+      "subgroup": "Q",
+      "setup": "L' U' L (L' U2 L U')' U",
+      "standard": "U' (L' U2 L U') L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L' U2 L U') L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q L",
+      "subgroup": "Q",
+      "setup": "(F' L' U' L F)' (R U2' R' U)' U'",
+      "standard": "U (R U2' R' U) (F' L' U' L F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R U2' R' U) (F' L' U' L F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q F R U' R' F' U L' U2 L",
+      "subgroup": "Q",
+      "setup": "(F R U R' F')' (L' U2 L U')' U",
+      "standard": "U' (L' U2 L U') (F R U R' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L' U2 L U') (F R U R' F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q VP",
+      "subgroup": "Q",
+      "setup": "(F' L' F L' U L)' (L' U L2)' U'",
+      "standard": "U (L' U L2) (F' L' F L' U L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U L2) (F' L' F L' U L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q VP'",
+      "subgroup": "Q",
+      "setup": "(F R F' R U' R')' (R U' R2')' U",
+      "standard": "U' (R U' R2') (F R F' R U' R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U' R2') (F R F' R U' R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q VM",
+      "subgroup": "Q",
+      "setup": "f' U F (S2 R U2' R' S)' U'",
+      "standard": "U (S2 R U2' R' S)F' U' f",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (S2 R U2' R' S)F' U' f"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q VM'",
+      "subgroup": "Q",
+      "setup": "f U' F' (S2' L' U2 L S')' U",
+      "standard": "U' (S2' L' U2 L S')F U f'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (S2' L' U2 L S')F U f'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q IP",
+      "subgroup": "Q",
+      "setup": "R U' R' (F R U R' U' F')' U'",
+      "standard": "U (F R U R' U' F') R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (F R U R' U' F') R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q IP'",
+      "subgroup": "Q",
+      "setup": "L' U L (F' L' U' L U F)' U",
+      "standard": "U' (F' L' U' L U F) L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F' L' U' L U F) L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q IZ",
+      "subgroup": "Q",
+      "setup": "F R' F' R2 U2 R' U'",
+      "standard": "U R U2' R2' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U2' R2' F R F'"
+          },
+          {
+            "alg": "U R U B' R B R2'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q IZ'",
+      "subgroup": "Q",
+      "setup": "F' L F L2' U2' L U",
+      "standard": "U' L' U2 L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' L' U2 L2 F' L' F"
+          },
+          {
+            "alg": "U' L' U' B L' B' L2"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q IY",
+      "subgroup": "Q",
+      "setup": "(R B U' B' R')' (R U2' R' U)' U'",
+      "standard": "U (R U2' R' U) (R B U' B' R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R U2' R' U) (R B U' B' R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q IY'",
+      "subgroup": "Q",
+      "setup": "(L' B' U B L)' (L' U2 L U')' U",
+      "standard": "U' (L' U2 L U') (L' B' U B L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (L' U2 L U') (L' B' U B L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q D",
+      "subgroup": "Q",
+      "setup": "F (F2 R' F' R2 U2' R')' U",
+      "standard": "U' (F2 R' F' R2 U2' R') F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F2 R' F' R2 U2' R') F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Q D'",
+      "subgroup": "Q",
+      "setup": "F' (F2' L F L2' U2 L)' U'",
+      "standard": "U (F2' L F L2' U2 L) F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (F2' L F L2' U2 L) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R RT",
+      "subgroup": "R",
+      "setup": "R U' R' (R U R' U)' U",
+      "standard": "U' (R U R' U) R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U R' U) R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R L' U L U L' U L",
+      "subgroup": "R",
+      "setup": "L' U L (L' U' L U')' U'",
+      "standard": "U (L' U' L U') L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U' L U') L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R RL",
+      "subgroup": "R",
+      "setup": "L' U' L (F' L' U' L U F)'",
+      "standard": "(F' L' U' L U F) L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F' L' U' L U F) L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R R U R' F U R U' R' F'",
+      "subgroup": "R",
+      "setup": "R U R' (F R U R' U' F')'",
+      "standard": "(F R U R' U' F') R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(F R U R' U' F') R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R VP",
+      "subgroup": "R",
+      "setup": "r U' R' (r U' R' U')' U2'",
+      "standard": "U2 (r U' R' U') R U r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (r U' R' U') R U r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R VP'",
+      "subgroup": "R",
+      "setup": "l' U L (l' U L U)' U2'",
+      "standard": "U2 (l' U L U) L' U' l",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (l' U L U) L' U' l"
+          },
+          {
+            "alg": "U2 R' F r U r' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R VM",
+      "subgroup": "R",
+      "setup": "(M L' U L)' (l' U' L U)' U",
+      "standard": "U' (l' U' L U) (ML' U L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (l' U' L U) (ML' U L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R VM'",
+      "subgroup": "R",
+      "setup": "(M R U' R')' (r U R' U')' U'",
+      "standard": "U (r U R' U') (MR U' R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (r U R' U') (MR U' R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R IZ",
+      "subgroup": "R",
+      "setup": "F (R U R' U2)' U F'",
+      "standard": "F U' (R U R' U2) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U' (R U R' U2) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R IZ'",
+      "subgroup": "R",
+      "setup": "F' (L' U' L U2')' U' F",
+      "standard": "F' U (L' U' L U2') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U (L' U' L U2') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R IL",
+      "subgroup": "R",
+      "setup": "F' U' (L' B' U2 B L)' F U",
+      "standard": "U' F' (L' B' U2 B L) U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' (L' B' U2 B L) U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R IL'",
+      "subgroup": "R",
+      "setup": "F U (R B U2' B' R')' F' U'",
+      "standard": "U F (R B U2' B' R') U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F (R B U2' B' R') U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R IY",
+      "subgroup": "R",
+      "setup": "F' U (F' S L' U L S')' U'",
+      "standard": "U (F'S L' U L S') U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (F'S L' U L S') U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R IY'",
+      "subgroup": "R",
+      "setup": "F U' (F S' R U' R' S)' U",
+      "standard": "U' (FS' R U' R' S) U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (FS' R U' R' S) U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R D",
+      "subgroup": "R",
+      "setup": "(M' U R U r')' (r U' r' U2)' U2'",
+      "standard": "U2 (r U' r' U2) (M' U R U r')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (r U' r' U2) (M' U R U r')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "R D'",
+      "subgroup": "R",
+      "setup": "(M' U' L' U' l)' (l' U l U2')' U2'",
+      "standard": "U2 (l' U l U2') (M' U' L' U' l)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (l' U l U2') (M' U' L' U' l)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S T",
+      "subgroup": "S",
+      "setup": "R2 U2 R2' U' R2 U' R2'",
+      "standard": "↓R2 U R2' U R2 U2' R2'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "↓R2 U R2' U R2 U2' R2'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S VO",
+      "subgroup": "S",
+      "setup": "S U F (R U R' U)' U f' U2'",
+      "standard": "U2 f U' (R U R' U) F' U' S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 f U' (R U R' U) F' U' S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S VY",
+      "subgroup": "S",
+      "setup": "F (R B U' B' R')' U' F' U2'",
+      "standard": "U2 F U (R B U' B' R') F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F U (R B U' B' R') F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S D",
+      "subgroup": "S",
+      "setup": "F U R B U2 B' U R' F'",
+      "standard": "F R U' B U2' B' R' U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U' B U2' B' R' U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S L",
+      "subgroup": "S",
+      "setup": "F (R U2' R' U)' U F' U'",
+      "standard": "U F U' (R U2' R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F U' (R U2' R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S L'",
+      "subgroup": "S",
+      "setup": "F' (L' U2 L U')' U' F U",
+      "standard": "U' F' U (L' U2 L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' U (L' U2 L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S VZ",
+      "subgroup": "S",
+      "setup": "F (R U R' U)' U F' U2'",
+      "standard": "U2 F U' (R U R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F U' (R U R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "S VZ'",
+      "subgroup": "S",
+      "setup": "F' (L' U' L U')' U' F U2'",
+      "standard": "U2 F' U (L' U' L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' U (L' U' L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T TP",
+      "subgroup": "T",
+      "setup": "R U R' (R' F R F')' U",
+      "standard": "U' (R' F R F') R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R' F R F') R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T L' U' L F' L F L'",
+      "subgroup": "T",
+      "setup": "L' U' L (L F' L' F)' U'",
+      "standard": "U (L F' L' F) L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L F' L' F) L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T TM",
+      "subgroup": "T",
+      "setup": "F' U2' F R U R'",
+      "standard": "R U' R' F' U2 F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' F' U2 F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T TM'",
+      "subgroup": "T",
+      "setup": "F U2 F' L' U' L",
+      "standard": "L' U L F U2' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U L F U2' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T IF",
+      "subgroup": "T",
+      "setup": "F' U (F' S L' U' L S')' U",
+      "standard": "U' (F'S L' U' L S') U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F'S L' U' L S') U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T IF'",
+      "subgroup": "T",
+      "setup": "F U' (F S' R U R' S)' U'",
+      "standard": "U (FS' R U R' S) U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (FS' R U R' S) U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T IB",
+      "subgroup": "T",
+      "setup": "F' U (R U2' R2' F R F2')' U2'",
+      "standard": "U2 (R U2' R2' F R F2') U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (R U2' R2' F R F2') U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "T IB'",
+      "subgroup": "T",
+      "setup": "F U' (L' U2 L2 F' L' F2)' U2'",
+      "standard": "U2 (L' U2 L2 F' L' F2) U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (L' U2 L2 F' L' F2) U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U T",
+      "subgroup": "U",
+      "setup": "R U R' (R U' R' U2)' U",
+      "standard": "U' (R U' R' U2) R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U' R' U2) R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U L' U' L U2 L' U' L",
+      "subgroup": "U",
+      "setup": "L' U' L (L' U L U2')' U'",
+      "standard": "U (L' U L U2') L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U L U2') L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U D",
+      "subgroup": "U",
+      "setup": "F' U' (S L' U' L S')' U F",
+      "standard": "F' U' (S L' U' L S') U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' (S L' U' L S') U F"
+          },
+          {
+            "alg": "U2 F' U' (S L' U' L S') U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U D'",
+      "subgroup": "U",
+      "setup": "F U (S' R U R' S)' U' F'",
+      "standard": "F U (S' R U R' S) U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U (S' R U R' S) U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U L",
+      "subgroup": "U",
+      "setup": "F' (L' U L U)' U2' F U",
+      "standard": "U' F' U2 (L' U L U) F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' U2 (L' U L U) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U L'",
+      "subgroup": "U",
+      "setup": "F (R U' R' U')' U2' F' U'",
+      "standard": "U F U2 (R U' R' U') F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F U2 (R U' R' U') F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U L",
+      "subgroup": "U",
+      "setup": "F' (L' U' L U D)' D F U",
+      "standard": "U'↓F' D' (L' U' L UD) F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U'↓F' D' (L' U' L UD) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U L'",
+      "subgroup": "U",
+      "setup": "F (R U R' U' D')' D' F' U'",
+      "standard": "U↓F D (R U R' U'D') F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U↓F D (R U R' U'D') F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VZ",
+      "subgroup": "U",
+      "setup": "F (R U R' U2)' U' F' U'",
+      "standard": "U F U (R U R' U2) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F U (R U R' U2) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VZ'",
+      "subgroup": "U",
+      "setup": "F' (L' U' L U2)' U F U",
+      "standard": "U' F' U' (L' U' L U2) F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' U' (L' U' L U2) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VZ",
+      "subgroup": "U",
+      "setup": "F (R U' R' U)' U F' U",
+      "standard": "U' F U' (R U' R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F U' (R U' R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VZ'",
+      "subgroup": "U",
+      "setup": "F' (L' U L U')' U' F U'",
+      "standard": "U F' U (L' U L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' U (L' U L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VO",
+      "subgroup": "U",
+      "setup": "F (R U2' R' U2)' F' U2'",
+      "standard": "U2 F (R U2' R' U2) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F (R U2' R' U2) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VO'",
+      "subgroup": "U",
+      "setup": "F' (L' U2 L U2')' F U2'",
+      "standard": "U2 F' (L' U2 L U2') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' (L' U2 L U2') F"
+          },
+          {
+            "alg": "U R U2 B U2 B' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VY",
+      "subgroup": "U",
+      "setup": "R S (U' R' U R)' S' R' U'",
+      "standard": "U R S (U'↑R' U R) S' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R S (U'↑R' U R) S' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "U VY'",
+      "subgroup": "U",
+      "setup": "L' S' (U L U' L')' S L U",
+      "standard": "U' L' S' (U↑L U' L') S L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' L' S' (U↑L U' L') S L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V T",
+      "subgroup": "V",
+      "setup": "F' U F (R U R' U)' U",
+      "standard": "U' (R U R' U) F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U R' U) F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V R U' R' U F' U F",
+      "subgroup": "V",
+      "setup": "F U' F' (L' U' L U')' U'",
+      "standard": "U (L' U' L U') F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U' L U') F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V T",
+      "subgroup": "V",
+      "setup": "F' U F (R U' R' U')' U2'",
+      "standard": "U2 (R U' R' U') F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (R U' R' U') F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V R U' R' U' F' U' F",
+      "subgroup": "V",
+      "setup": "F U' F' (L' U L U)' U2'",
+      "standard": "U2 (L' U L U) F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (L' U L U) F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V T",
+      "subgroup": "V",
+      "setup": "(F R' F' R)' R U' R' U2'",
+      "standard": "U2 R U R' (F R' F' R)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U R' (F R' F' R)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V T'",
+      "subgroup": "V",
+      "setup": "(F' L F L')' L' U L U2",
+      "standard": "U2' L' U' L (F' L F L')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' L' U' L (F' L F L')"
+          },
+          {
+            "alg": "U2 L' U' L (F' L F L')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V T",
+      "subgroup": "V",
+      "setup": "F' U' F (R U R' U')' U2'",
+      "standard": "U2 (R U R' U') F' U↓F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (R U R' U') F' U↓F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V T'",
+      "subgroup": "V",
+      "setup": "F U F' (L' U' L U)' U2'",
+      "standard": "U2 (L' U' L U) F U'↓F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (L' U' L U) F U'↓F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I",
+      "subgroup": "V",
+      "setup": "(R' F R F2' U' F)' (R U R' U)'",
+      "standard": "(R U R' U) (R' F R F2' U' F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U R' U) (R' F R F2' U' F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I'",
+      "subgroup": "V",
+      "setup": "(L F' L' F2 U F')' (L' U' L U')'",
+      "standard": "(L' U' L U') (L F' L' F2 U F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U' L U') (L F' L' F2 U F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I",
+      "subgroup": "V",
+      "setup": "F (S' R U' R' S)' U F' U2'",
+      "standard": "U2 F U' (S' R U' R' S)F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F U' (S' R U' R' S)F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I'",
+      "subgroup": "V",
+      "setup": "F' (S L' U L S')' U' F U2'",
+      "standard": "U2 F' U (S L' U L S')F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' U (S L' U L S')F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I",
+      "subgroup": "V",
+      "setup": "F' U2' (S L' U' L S')' U' F",
+      "standard": "F' U (S L' U' L S') U2 F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U (S L' U' L S') U2 F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I'",
+      "subgroup": "V",
+      "setup": "F U2 (S' R U R' S)' U F'",
+      "standard": "F U' (S' R U R' S) U2' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U' (S' R U R' S) U2' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I",
+      "subgroup": "V",
+      "setup": "(S L' U L S')' (F U F' U')' U2'",
+      "standard": "U2 (F U F' U') (S L' U L S')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (F U F' U') (S L' U L S')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "V I'",
+      "subgroup": "V",
+      "setup": "(S' R U' R' S)' (F' U' F U)' U2'",
+      "standard": "U2 (F' U' F U) (S' R U' R' S)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (F' U' F U) (S' R U' R' S)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W T",
+      "subgroup": "W",
+      "setup": "R U R' (R U R' U2)' U",
+      "standard": "U' (R U R' U2) R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U R' U2) R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W L' U' L U2 L' U L",
+      "subgroup": "W",
+      "setup": "L' U' L (L' U' L U2')' U'",
+      "standard": "U (L' U' L U2') L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U' L U2') L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W L",
+      "subgroup": "W",
+      "setup": "F' U' (F R U R' U' F2)' U2'",
+      "standard": "U2 (↓F R U R' U' F2) U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 (↓F R U R' U' F2) U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W F U F2 U' L' U L F",
+      "subgroup": "W",
+      "setup": "F U (F' L' U' L U F2')' U2",
+      "standard": "U2' (↓F' L' U' L U F2') U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' (↓F' L' U' L U F2') U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W VP",
+      "subgroup": "W",
+      "setup": "l' (L U' L' U')' U' l U'",
+      "standard": "U l' U (L U' L' U') l",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U l' U (L U' L' U') l"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W VP'",
+      "subgroup": "W",
+      "setup": "r (R' U R U)' U r' U",
+      "standard": "U' r U' (R' U R U) r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' r U' (R' U R U) r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W VY",
+      "subgroup": "W",
+      "setup": "f' (F' L' U' L U F)' f",
+      "standard": "f' (F' L' U' L U F) f",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f' (F' L' U' L U F) f"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W VY'",
+      "subgroup": "W",
+      "setup": "f (F R U R' U' F')' f'",
+      "standard": "f (F R U R' U' F') f'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "f (F R U R' U' F') f'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W IL",
+      "subgroup": "W",
+      "setup": "F (R U R' U2)' F' U2'",
+      "standard": "U2 F (R U R' U2) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F (R U R' U2) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W IL'",
+      "subgroup": "W",
+      "setup": "F' (L' U' L U2)' F U2'",
+      "standard": "U2 F' (L' U' L U2) F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' (L' U' L U2) F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W IZ",
+      "subgroup": "W",
+      "setup": "(M R U2' R')' (r U R' U')' U",
+      "standard": "U' (r U R' U') (MR U2' R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (r U R' U') (MR U2' R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W IZ'",
+      "subgroup": "W",
+      "setup": "(M L' U2 L)' (l' U' L U)' U'",
+      "standard": "U (l' U' L U) (ML' U2 L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (l' U' L U) (ML' U2 L)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W IY",
+      "subgroup": "W",
+      "setup": "F (R U' R' U)' U' F' U",
+      "standard": "U' F U (R U' R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F U (R U' R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W IY'",
+      "subgroup": "W",
+      "setup": "F' (L' U L U')' U F U'",
+      "standard": "U F' U' (L' U L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' U' (L' U L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W D",
+      "subgroup": "W",
+      "setup": "(F R U2' R' U F')' L' U' L U",
+      "standard": "U' L' U L (F R U2' R' U F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' L' U L (F R U2' R' U F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "W D'",
+      "subgroup": "W",
+      "setup": "(F' L' U2 L U' F)' R U R' U'",
+      "standard": "U R U' R' (F' L' U2 L U' F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' (F' L' U2 L U' F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X T",
+      "subgroup": "X",
+      "setup": "R' U' R2 U' R2' U2 R",
+      "standard": "R' U2' R2 U R2' U R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U2' R2 U R2' U R"
+          }
+        ]
+      ],
+      "trainerKey": "12-1"
+    },
+    {
+      "name": "X L U L2 U L2 U2 L'",
+      "subgroup": "X",
+      "setup": "L U L2' U L2 U2' L'",
+      "standard": "L U2 L2' U' L2 U' L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L U2 L2' U' L2 U' L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X L",
+      "subgroup": "X",
+      "setup": "F U F' (L U L2' U L2 U2 L')'",
+      "standard": "(L U L2' U L2 U2 L') F U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L U L2' U L2 U2 L') F U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X F' U' F R' U2 R2 U R2 U R",
+      "subgroup": "X",
+      "setup": "F' U' F (R' U' R2 U' R2' U2' R)'",
+      "standard": "(R' U' R2 U' R2' U2' R) F' U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R' U' R2 U' R2' U2' R) F' U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X VP",
+      "subgroup": "X",
+      "setup": "F U' F' (L' U2 L U')' U'",
+      "standard": "U (L' U2 L U') F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (L' U2 L U') F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X VP'",
+      "subgroup": "X",
+      "setup": "F' U F (R U2' R' U)' U",
+      "standard": "U' (R U2' R' U) F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (R U2' R' U) F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X VY",
+      "subgroup": "X",
+      "setup": "S' (R' U2' R2 U R2' U R)' S",
+      "standard": "S' (R' U2' R2 U R2' U R) S",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S' (R' U2' R2 U R2' U R) S"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X VY'",
+      "subgroup": "X",
+      "setup": "S (L U2 L2' U' L2 U' L')' S'",
+      "standard": "S (L U2 L2' U' L2 U' L') S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "S (L U2 L2' U' L2 U' L') S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X IO",
+      "subgroup": "X",
+      "setup": "(F R U2' R' F')' (L' U2 L U)'",
+      "standard": "(L' U2 L U) (F R U2' R' F')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(L' U2 L U) (F R U2' R' F')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X IO'",
+      "subgroup": "X",
+      "setup": "(F' L' U2 L F)' (R U2' R' U')'",
+      "standard": "(R U2' R' U') (F' L' U2 L F)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(R U2' R' U') (F' L' U2 L F)"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X IZ",
+      "subgroup": "X",
+      "setup": "F (R U' R' U)' (R U R' U)' F'",
+      "standard": "F (R U R' U) (R U' R' U) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F (R U R' U) (R U' R' U) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X IZ'",
+      "subgroup": "X",
+      "setup": "F' (L' U L U')' (L' U' L U')' F",
+      "standard": "F' (L' U' L U') (L' U L U') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' (L' U' L U') (L' U L U') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X IP",
+      "subgroup": "X",
+      "setup": "F (R U2' R' U2)' U F'",
+      "standard": "F U' (R U2' R' U2) F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F U' (R U2' R' U2) F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X IP'",
+      "subgroup": "X",
+      "setup": "F' (L' U2 L U2')' U' F",
+      "standard": "F' U (L' U2 L U2') F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U (L' U2 L U2') F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X D",
+      "subgroup": "X",
+      "setup": "(M R U M' R')' (M U M' U2)' U'",
+      "standard": "U (M U M' U2) (MR U M'R')",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (M U M' U2) (MR U M'R')"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "X D'",
+      "subgroup": "X",
+      "setup": "(M L' U' M' L)' (M U' M' U2')' U",
+      "standard": "U' (M U' M' U2') (ML' U' M'L)",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (M U' M' U2') (ML' U' M'L)"
+          }
+        ]
+      ]
+    }
+  ]
+}
