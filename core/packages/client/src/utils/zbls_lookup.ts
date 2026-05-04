@@ -242,7 +242,19 @@ async function getFlatAlgs(): Promise<Array<{ alg: string; caseName: string }>> 
 }
 
 const PRE_AUFS = ['', 'U', 'U2', "U'"] as const;
-const PRE_YS = ['', 'y', 'y2', "y'"] as const;
+// All 24 cube orientations — needed because Geng's algs (and many others)
+// were captured in a specific cube-rotation frame (e.g. yellow-on-D vs
+// white-on-D). The lookup brute-forces all rotations to find a match.
+const PRE_ROTS = [
+  '',     'x',    'x2',   "x'",
+  'y',    'y2',   "y'",
+  'z',    'z2',   "z'",
+  'x y',  'x y2', "x y'",
+  "x' y", "x' y2", "x' y'",
+  'x2 y', 'x2 y2', "x2 y'",
+  'y x',  'y x2', "y x'",
+  "y' x", "y' x'",
+] as const;
 
 /** Brute-force ZBLS fallback. Iterates every alg in the DB × 16 (auf × y)
  *  pre-modifiers and verifies each yields a state where:
@@ -254,34 +266,35 @@ const PRE_YS = ['', 'y', 'y2', "y'"] as const;
  *  Worst case ~150ms on a modern machine; fine for an interactive autofill.
  *  Use ONLY when the fingerprint lookup returns empty — it does.
  */
-export async function lookupZblsAlgsBrute(canonical: KPattern, slotIdx: number, prevSolvedEdgeSlots: number[]): Promise<ZblsAlgEntry[]> {
+export async function lookupZblsAlgsBrute(canonical: KPattern, slotIdx: number, _prevSolvedEdgeSlots: number[]): Promise<ZblsAlgEntry[]> {
   const algs = await getFlatAlgs();
-  const def = F2L_SLOT_DEFS[slotIdx];
   const out: ZblsAlgEntry[] = [];
   const seen = new Set<string>();
-  const c = canonical.patternData.CENTERS.pieces;
-  const uColor = c[0];
 
   function checkSolveAndEo(post: KPattern): boolean {
+    // After the alg + pre-rotation, the cube may be in a different orientation
+    // frame, but it must still be at "F2L done + LL EO done" state. Check
+    // generic invariants: ALL 4 E-slice slots have their home edge oriented
+    // (so all F2L slots are solved), AND the 4 LL slots have LL pieces with
+    // their U-color sticker on the post-state's U face.
     const ep = post.patternData.EDGES.pieces;
     const eo = post.patternData.EDGES.orientation;
-    // Target slot's E-slice edge must be home + oriented.
-    if (ep[def.edgeSlot] !== def.edgeSlot || eo[def.edgeSlot] !== 0) return false;
-    // Previously solved E-slice slots must still be home + oriented.
-    for (const s of prevSolvedEdgeSlots) {
+    for (let s = 8; s < 12; s++) {
       if (ep[s] !== s || eo[s] !== 0) return false;
     }
-    // All 4 LL edges show U-color on U face.
+    // Determine post-state's U color from its centers (rotation may have moved it).
+    const postU = post.patternData.CENTERS.pieces[0];
     for (let i = 0; i < 4; i++) {
-      if (edgeStickerOnFace(post, i, 0) !== uColor) return false;
+      if (ep[i] > 3) return false;
+      if (edgeStickerOnFace(post, i, 0) !== postU) return false;
     }
     return true;
   }
 
   for (const { alg, caseName } of algs) {
-    for (const yRot of PRE_YS) {
+    for (const rot of PRE_ROTS) {
       for (const auf of PRE_AUFS) {
-        const composed = simplifyAlg([yRot, auf, alg].filter(Boolean).join(' '));
+        const composed = simplifyAlg([rot, auf, alg].filter(Boolean).join(' '));
         if (!composed) continue;
         if (seen.has(composed)) continue;
         let post: KPattern;

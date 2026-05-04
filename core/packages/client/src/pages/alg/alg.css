@@ -287,6 +287,11 @@
   color: var(--alg-text-muted);
 }
 
+/* ZBLS subgroup-picker grid — denser than ZBLL (more groups, smaller cards). */
+.alg-subgroup-grid.is-f2l-thumb {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
 .alg-case-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

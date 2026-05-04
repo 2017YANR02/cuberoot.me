@@ -28,10 +28,15 @@ const Opposite: Record<TurnType, TurnType> = {
  *   2. Repeat groups `(R U R' U')3` → `R U R' U' R U R' U' R U R' U'`.
  *      Trailing count optional; without it the parens are dropped (count = 1).
  *      Nested groups not supported (matches PHP).
+ *   2.5. Uppercase-wide range `m-NUw[mods]` (cubing.js notation) →
+ *      lowercase form `m-Nu[mods]` so Pass 3 handles it. Special-cases:
+ *        `1-NUw` → `NUw` (1-N is just N-layer wide).
+ *        `1-2Uw` → `Uw` (default 2-layer wide).
  *   3. Range slices `2-Nf` (lower 2..N, lowercase wide-face) → ` Nf F'` /
  *      `m-Nr` for m>2 → ` Nr (m-1)r'`. Prime / 2 variants follow PHP.
- *   4. Single inner-layer `2R` (uppercase, NOT wide) → ` 2r R'`.
+ *   4. Single inner-layer `2R` (uppercase, NOT followed by `w`) → ` 2r R'`.
  *      `mR` for m>2 → ` mr (m-1)r'`. Prime / 2 variants follow PHP.
+ *      Negative-lookahead `(?!w)` keeps this from consuming `3Rw` notation.
  *
  * After these passes the string contains only tokens the regex understands
  * (wide moves and outer-block moves like `Nrw`/`Nr`). For cubeSize=3 most of
@@ -68,6 +73,20 @@ function preprocessAlgorithm(algorithm: string): string {
     return ' ' + pieces.join(' ') + ' '
   })
 
+  // Pass 2.5: Normalize uppercase-wide range notation `m-NUw[mods]` (cubing.js
+  // style) into lowercase `m-Nu[mods]` so Pass 3 can handle it. `1-N` is a
+  // special case (lower bound is the outer layer) — it's just N-layer wide.
+  r = r.replace(/(?<=^|[\s()'])(\d+)-(\d+)([UDLRFB])w([23]?'?)/g, (_m, lo: string, hi: string, face: string, mod: string) => {
+    const lower = parseInt(lo, 10);
+    const upper = parseInt(hi, 10);
+    if (lower === 1) {
+      // `1-N` = N-layer wide. `1-2Xw` collapses to default `Xw`.
+      if (upper === 2) return ` ${face}w${mod}`;
+      return ` ${upper}${face}w${mod}`;
+    }
+    return ` ${lower}-${upper}${face.toLowerCase()}${mod}`;
+  });
+
   // Pass 3: range slices `m-Nr` for lowercase wide faces (PHP fcs_format_alg).
   // Examples: `2-4r` → ` 4r R'`; `3-5r` → ` 5r 2r'`; `2-4r'` → ` 4r' R`;
   // `2-4r2` → ` 4r2 R2` (already normalized to `4r2 R2`).
@@ -91,11 +110,12 @@ function preprocessAlgorithm(algorithm: string): string {
 
   // Pass 4: single inner-layer `mU/D/L/R/F/B` (uppercase, NOT followed by `w`).
   // `2R` → ` 2r R'`; `2R'` → ` 2r' R`; `mR` (m>2) → ` mr (m-1)r'`.
-  // We must not match `Nrw`/`Nuw` etc — those are already handled. The
-  // uppercase set guarantees we only catch outer-face notation.
+  // The `(?!w)` negative lookahead prevents this from matching `3Rw` (which is
+  // outer-block notation handled by the main turnRegex). The uppercase set
+  // guarantees we only catch single-layer notation, not slice/rotation.
   // Lookbehind `(?<=^|[\s()'])` ensures the leading digit starts a token —
   // otherwise `U2R` (no space) would be mis-rewritten by the leading `2R`.
-  r = r.replace(/(?<=^|[\s()'])([2-9][0-9]?)([UDLRFB])([23]?'?)/g, (_m, layers: string, face: string, mod: string) => {
+  r = r.replace(/(?<=^|[\s()'])([2-9][0-9]?)([UDLRFB])(?!w)([23]?'?)/g, (_m, layers: string, face: string, mod: string) => {
     const lowerFace = face.toLowerCase()
     const hasPrime = mod.indexOf("'") >= 0
     const power = mod.replace("'", '')
@@ -144,10 +164,16 @@ export function parseAlgorithm(algorithm: string): Turn[] {
         rawFace = rawFace.toUpperCase()
       }
 
+      // Lowercase wide-face moves (`r` `u` `f` …) default to 2 slices, but
+      // honor an explicit leading digit so Pass 3/4 expansions like `3r 2r'`
+      // (produced from `2-3r` / `3R`) actually do 3-layer-wide and 2-layer-wide
+      // turns instead of both collapsing to `Rw`.
       let turn: Turn = {
         move: getMove(rawFace),
         turnType: getTurnType(rawType),
-        slices: isLowerCaseMove ? 2 : getSlices(rawSlices, outerBlockIndicator),
+        slices: isLowerCaseMove
+          ? (rawSlices ? parseInt(rawSlices, 10) : 2)
+          : getSlices(rawSlices, outerBlockIndicator),
       }
 
       turns.push(turn)

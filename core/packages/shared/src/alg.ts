@@ -85,7 +85,7 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'ell',       scd: 'ELL',         en: 'Edges of the Last Layer (ELL)', zh: 'Edges of the Last Layer (ELL)' },
     { slug: 'fruf',      scd: 'FRUF',        en: "F <R,U> F'",           zh: "F <R,U> F'" },
     { slug: 'cls',       scd: 'CLS',         en: 'Corners Last Slot',    zh: 'Corners Last Slot' },
-    { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS' },
+    { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS',  umbrella: true },
     { slug: 'vls',       scd: 'VLS',         en: 'VLS',                  zh: 'VLS',   umbrella: true },
     { slug: 'ollcp',     scd: 'OLLCP',       en: 'OLLCP',                zh: 'OLLCP', umbrella: true },
     { slug: 'zbll',      scd: 'ZBLL',        en: 'ZBLL',                 zh: 'ZBLL',  umbrella: true },

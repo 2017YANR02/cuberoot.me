@@ -37,6 +37,7 @@ import { fetchCompRounds } from '../utils/comp_wcif';
 import { CuberSearchInput } from '../components/CuberSearchInput';
 import { ClearButton } from '../components/ClearButton';
 import { fetchUserUpcoming, type WcaPersonLite } from '../utils/wca_api';
+import OnThisDayModal from './calendar/OnThisDayModal';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -902,6 +903,8 @@ export default function UpcomingCompsPage() {
   const [viewDate, setViewDate] = useState<Date>(() => readMonthFromUrl() ?? new Date());
   const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
   const [dayListDate, setDayListDate] = useState<Date | null>(null);
+  // 点日历格子日期数字 → 打开"历年此日"模态(查跨年 MM-DD 比赛历史)
+  const [onThisDayDate, setOnThisDayDate] = useState<Date | null>(null);
   const [mode, setMode] = useState<'top' | 'all'>('all');
   const [allComps, setAllComps] = useState<Competition[] | null>(null);
   const [allLoading, setAllLoading] = useState(false);
@@ -1214,7 +1217,7 @@ export default function UpcomingCompsPage() {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (viewMode !== 'calendar') return;
-      if (selectedComp || dayListDate || pickerOpen != null) return;
+      if (selectedComp || dayListDate || onThisDayDate || pickerOpen != null) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       const editable = (e.target as HTMLElement | null)?.isContentEditable;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable) return;
@@ -1223,7 +1226,7 @@ export default function UpcomingCompsPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selectedComp, dayListDate, pickerOpen]);
+  }, [selectedComp, dayListDate, onThisDayDate, pickerOpen]);
 
   // NOTE: 手机端日历区横向滑动换月。touchstart/end 距离阈值 60px、水平占优、500ms 内即视为 swipe；
   // swipe 后用 onClickCapture 吞掉合成 click，避免触发底下 event-bar 的弹窗。
@@ -1571,7 +1574,16 @@ export default function UpcomingCompsPage() {
                   className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''}`}
                   style={{ gridColumn: di + 1, gridRow: 1 }}
                 >
-                  {inView && <span className="day-number">{day.getDate()}</span>}
+                  {inView && (
+                    <button
+                      type="button"
+                      className="day-number"
+                      onClick={() => setOnThisDayDate(day)}
+                      title={isZh ? '历年此日的比赛' : 'On this day across all years'}
+                    >
+                      {day.getDate()}
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1706,6 +1718,14 @@ export default function UpcomingCompsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {onThisDayDate && (
+        <OnThisDayModal
+          date={onThisDayDate}
+          isZh={isZh}
+          onClose={() => setOnThisDayDate(null)}
+        />
       )}
 
     </div>
