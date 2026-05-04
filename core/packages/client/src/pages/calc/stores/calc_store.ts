@@ -31,21 +31,12 @@ export function isMbfForEvent(event: string): boolean {
   return event === '333mbf' || event === '333mbo';
 }
 
-// NOTE: 根据 URL ?lang= 参数决定默认标题语言
-const DEFAULT_TITLES = new Set(['Result Calculator', '成绩计算器']);
-
-function getDefaultCompName(): string {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('lang') === 'zh' ? '成绩计算器' : 'Result Calculator';
-}
-
 // ── Store 类型 ──
 
 export interface CalcState {
   // ── 数据 ──
   times: number[][];         // [seedOn..seedOn+maxPlayers][0..solveCount-1]
   names: string[];           // 选手名称
-  compName: string;          // 比赛名称
   event: string;             // 当前项目 ID
   seedOn: number;            // 当前 seed 偏移量
   timeLive: [number, number];// 秒表激活的 [player, solve]
@@ -66,7 +57,6 @@ export interface CalcState {
   updateTime: (playerIdx: number, solveIdx: number, value: number) => void;
   updateSort: () => void;
   setEvent: (id: string) => void;
-  setCompName: (name: string) => void;
   setNames: (idx: number, name: string) => void;
   togglePlayer: (p: number) => void;
   setSeedOn: (seed: number) => void;
@@ -99,7 +89,6 @@ export const useCalcStore = create<CalcState>((set, get) => ({
   // ── 初始数据 ──
   times: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
   names: ['Name A', 'Name B'],
-  compName: getDefaultCompName(),
   event: '333',
   seedOn: 0,
   timeLive: [-1, -1],
@@ -139,7 +128,6 @@ export const useCalcStore = create<CalcState>((set, get) => ({
   },
 
   setEvent: (id) => set({ event: id }),
-  setCompName: (name) => set({ compName: name }),
   setNames: (idx, name) => {
     set(s => {
       const newNames = [...s.names];
@@ -181,7 +169,6 @@ export const useCalcStore = create<CalcState>((set, get) => ({
     set({
       times: [new Array(sc).fill(0) as number[], new Array(sc).fill(0) as number[]],
       names: ['Name A', 'Name B'],
-      compName: getDefaultCompName(),
       seedOn: 0,
       timeLive: [-1, -1],
       timeLiveStart: -1,
@@ -224,7 +211,6 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       // NOTE: 保留现有的 lang 参数
       const curLang = new URLSearchParams(window.location.search).get('lang');
       if (curLang) params.set('lang', curLang);
-      params.set('comp', s.compName);
       if (s.event) params.set('event', s.event);
 
       // NOTE: 保存 Target Avg（centiseconds），替代原来的 n0/n1 名字
@@ -248,14 +234,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
 
   loadFromUrl: () => {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has('comp') && !params.has('t0')) return;
-
-    // NOTE: 如果 URL 的 comp 是默认标题，用当前语言的默认值替换
-    let compName = get().compName;
-    if (params.has('comp')) {
-      const comp = params.get('comp')!;
-      compName = DEFAULT_TITLES.has(comp) ? getDefaultCompName() : comp;
-    }
+    if (!params.has('event') && !params.has('t0')) return;
 
     // 恢复事件
     let event = get().event;
@@ -273,7 +252,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       j++;
     }
 
-    set({ compName, event, times });
+    set({ event, times });
 
     // NOTE: 恢复 Target Avg（centiseconds）
     const seedOn = get().seedOn;

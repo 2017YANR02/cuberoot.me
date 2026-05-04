@@ -127,7 +127,12 @@ function tryAutoAdvance(rawVal: string, p: number, t: number) {
   }
 }
 
-export function Numpad() {
+interface NumpadProps {
+  /** 按"随机"键时调用 — CalcPage 用它在没有 override 时按需加载世界 TOP 2 KDE 数据 */
+  onEnsureWrTop2Loaded?: () => Promise<void>;
+}
+
+export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const state = useCalcStore();
@@ -295,30 +300,34 @@ export function Numpad() {
   }, [state, getFocusedPT, getFocusedInput, updateTarget]);
 
   // ── Rand ──
-  const pressRand = useCallback(() => {
+  // NOTE: 用户没指定选手时,自动 fall back 到世界 TOP 2 — 等 onEnsureWrTop2Loaded 拉数据后再采样
+  const pressRand = useCallback(async () => {
     if (navigator.vibrate) navigator.vibrate(10);
-    const sc = state.solveCount();
+    if (onEnsureWrTop2Loaded) await onEnsureWrTop2Loaded();
+    // 拿最新 state — 上面 await 期间 store 可能已被 setTargetAvg 等改过
+    const s = useCalcStore.getState();
+    const sc = s.solveCount();
     let allFilled = true;
     for (let p = 0; p < 2; p++) {
-      if (!state.playerEnabled[p]) continue;
+      if (!s.playerEnabled[p]) continue;
       for (let t = 0; t < sc; t++) {
-        if (!state.times[state.seedOn + p][t]) { allFilled = false; break; }
+        if (!s.times[s.seedOn + p][t]) { allFilled = false; break; }
       }
       if (!allFilled) break;
     }
     for (let p = 0; p < 2; p++) {
-      if (!state.playerEnabled[p]) continue;
+      if (!s.playerEnabled[p]) continue;
       for (let t = 0; t < sc; t++) {
-        if (!allFilled && state.times[state.seedOn + p][t]) continue;
-        const val = sampleKDE(state.event, p);
+        if (!allFilled && s.times[s.seedOn + p][t]) continue;
+        const val = sampleKDE(s.event, p);
         if (val && val > 0) {
-          state.updateTime(state.seedOn + p, t, val);
+          s.updateTime(s.seedOn + p, t, val);
         }
       }
     }
-    state.saveToUrl();
+    s.saveToUrl();
     setTimeout(updateTarget, 50);
-  }, [state, updateTarget]);
+  }, [onEnsureWrTop2Loaded, updateTarget]);
 
   // ── Enter ──
   const pressEnter = useCallback(() => {

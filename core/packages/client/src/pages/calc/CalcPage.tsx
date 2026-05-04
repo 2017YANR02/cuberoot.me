@@ -40,10 +40,7 @@ export function CalcPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const event = useCalcStore(s => s.event);
-  const compName = useCalcStore(s => s.compName);
-  const setCompName = useCalcStore(s => s.setCompName);
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
-  const saveToUrl = useCalcStore(s => s.saveToUrl);
   const initDone = useRef(false);
   // NOTE: 防止 event useEffect 在首次挂载时清空 URL 恢复的数据
   const eventInitRef = useRef(false);
@@ -59,8 +56,10 @@ export function CalcPage() {
   // NOTE: 当前搜索目标 player 索引（0 或 1）
   const pickerTargetRef = useRef(0);
 
-  // NOTE: 初始化 — 加载 URL 参数 + WR 数据 + 初始 rand-fill
-  // CDN CSS（cubing-icons + flag-icons）已移至 index.html 静态加载，
+  // NOTE: 初始化 — 加载 URL 参数 + 预加载 WR 值（用于 isWR 高亮）
+  // 默认进入"空白"状态:不自动填 Target、不 rand-fill、不激活头像。
+  // 用户点 "🎲 World TOP 2" 按钮才走完整 loadDefaults + 填充流程。
+  // CDN CSS（cubing-icons + flag-icons）已移至 index.html 静态加载,
   // 避免 React StrictMode 下 initDone 守卫导致 cleanup 后不再注入的 bug
   useEffect(() => {
     if (initDone.current) return;
@@ -73,48 +72,9 @@ export function CalcPage() {
     setMoveCntMode(eventId === '333fm');
     setMbfMode(eventId === '333mbf' || eventId === '333mbo');
 
-    loadWrIds().then(() => {
-      loadDefaults(eventId, (players) => {
-        // NOTE: 用 WR Average #1/#2 填充空的 Target（原版 app.js#425-435）
-        const wr12 = getAvgWR12(eventId);
-        if (wr12) {
-          const s0 = useCalcStore.getState();
-          for (let p = 0; p < 2; p++) {
-            if (s0.getTargetAvg(s0.seedOn + p) === 0) {
-              s0.setTargetAvg(s0.seedOn + p, wr12[p]);
-            }
-          }
-        }
-        // NOTE: URL 无数据时自动随机填充（原版 app.js#272-286）
-        if (!window.location.search.includes('t0=')) {
-          const s = useCalcStore.getState();
-          const sc = s.solveCount();
-          for (let p = 0; p < 2; p++) {
-            for (let t = 0; t < sc; t++) {
-              if (!s.times[s.seedOn + p][t]) {
-                s.updateTime(s.seedOn + p, t, sampleOneSolve(p));
-              }
-            }
-          }
-        }
-        // NOTE: 加载世界前 2 选手头像 — 原版 app.js#90-99
-        if (players) {
-          players.forEach((pl, i) => {
-            if (!pl) return;
-            fetchAvatar(pl.wca_id).then(url => {
-              const ov = getPlayerOverride(i);
-              if (ov && ov.name === pl.name) {
-                setAvatarState(prev => {
-                  const next = [...prev];
-                  next[i] = { active: true, avatarUrl: url || '' };
-                  return next;
-                });
-              }
-            });
-          });
-        }
-      });
-    });
+    // NOTE: 仅预加载 wr_ids.json(同源静态文件,极快)以支持 isWR 标记;
+    // 不调 loadDefaults,避免拉取选手 100 把 + 设置 override
+    loadWrIds();
 
     // NOTE: Wake Lock 防息屏 — 原版 app.js#318-323
     requestWakeLock();
@@ -151,6 +111,8 @@ export function CalcPage() {
     }
 
     // NOTE: 清空成绩并 resize — 原版 app.js#147-152
+    // 切项目 = 回到空白状态,不再 auto rand-fill / 填 Target / 激活头像;
+    // 用户需要 demo 数据再点 "🎲 World TOP 2" 按钮
     const s0 = useCalcStore.getState();
     const sc = solveCountForEvent(event);
     for (let p = 0; p < s0.times.length; p++) {
@@ -158,50 +120,48 @@ export function CalcPage() {
     }
     s0.resizeTimes(sc);
     s0.clearTargetAvgs();
-
-    // NOTE: 加载 WR 默认数据 + 填充 Target + rand-fill
-    loadDefaults(event, (players) => {
-      // 填充 Target
-      const wr12 = getAvgWR12(event);
-      if (wr12) {
-        const s = useCalcStore.getState();
-        for (let p = 0; p < 2; p++) {
-          if (s.getTargetAvg(s.seedOn + p) === 0) {
-            s.setTargetAvg(s.seedOn + p, wr12[p]);
-          }
-        }
-      }
-      // NOTE: rand-fill — 原版 app.js#157
-      const s = useCalcStore.getState();
-      const sc2 = s.solveCount();
-      for (let p = 0; p < 2; p++) {
-        for (let t = 0; t < sc2; t++) {
-          if (!s.times[s.seedOn + p][t]) {
-            s.updateTime(s.seedOn + p, t, sampleOneSolve(p));
-          }
-        }
-      }
-
-      // NOTE: 加载世界前 2 选手头像
-      if (players) {
-        players.forEach((pl, i) => {
-          if (!pl) return;
-          fetchAvatar(pl.wca_id).then(url => {
-            const ov = getPlayerOverride(i);
-            if (ov && ov.name === pl.name) {
-              setAvatarState(prev => {
-                const next = [...prev];
-                next[i] = { active: true, avatarUrl: url || '' };
-                return next;
-              });
-            }
-          });
-        });
-      }
-    });
     // NOTE: 同步 URL 中的 event= 参数
     useCalcStore.getState().saveToUrl();
   }, [event]);
+
+  // NOTE: 按需加载世界 TOP 2 — 当两侧都没有 override 时,首次"随机"会触发这个;
+  // 拉 KDE 数据 + 填 Target(仅当为 0)+ 激活头像。返回 Promise 给 Numpad await。
+  const ensureWrTop2Loaded = useCallback((): Promise<void> => {
+    if (getPlayerOverride(0) || getPlayerOverride(1)) return Promise.resolve();
+    const eventId = useCalcStore.getState().event;
+    return loadWrIds().then(() => new Promise<void>((resolve) => {
+      loadDefaults(eventId, (players) => {
+        const s = useCalcStore.getState();
+        // 填 Target = WR Average #1/#2 (仅当用户未手动设置)
+        const wr12 = getAvgWR12(eventId);
+        if (wr12) {
+          for (let p = 0; p < 2; p++) {
+            if (s.getTargetAvg(s.seedOn + p) === 0) {
+              s.setTargetAvg(s.seedOn + p, wr12[p]);
+            }
+          }
+        }
+        // 激活头像 — 让用户知道 KDE 数据来源是世界 #1/#2
+        if (players) {
+          players.forEach((pl, i) => {
+            if (!pl) return;
+            fetchAvatar(pl.wca_id).then(url => {
+              const ov = getPlayerOverride(i);
+              if (ov && ov.name === pl.name) {
+                setAvatarState(prev => {
+                  const next = [...prev];
+                  next[i] = { active: true, avatarUrl: url || '' };
+                  return next;
+                });
+              }
+            });
+          });
+        }
+        s.saveToUrl();
+        resolve();
+      });
+    }));
+  }, []);
 
   // ── 秒表 — 原版 app.js#441-503 ──
 
@@ -392,16 +352,6 @@ export function CalcPage() {
 
   return (
     <div className="hth-app calc-page">
-      {/* 比赛名称 */}
-      <input
-        className="comp-name"
-        type="text"
-        value={compName}
-        onChange={(e) => setCompName(e.target.value)}
-        onBlur={() => saveToUrl()}
-        placeholder={isZh ? '成绩计算器' : 'Result Calculator'}
-      />
-
       {/* SVG 图表 */}
       <Chart />
 
@@ -426,7 +376,7 @@ export function CalcPage() {
       <ProgressSliders />
 
       {/* 数字键盘 */}
-      <Numpad />
+      <Numpad onEnsureWrTop2Loaded={ensureWrTop2Loaded} />
 
       {/* 项目选择器 — 原版位于 numpad 和统计表之间 */}
       <EventSelector />
