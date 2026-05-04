@@ -5252,6 +5252,1468 @@
           }
         ]
       ]
+    },
+    {
+      "name": "Geng 1063",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R' F' R2 U2 R2' F R F' U'",
+      "standard": "U F R' F' R2 U2' R2' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F R' F' R2 U2' R2' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1064",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L F L' U L' U' L y",
+      "standard": "y' L' U L U' L F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' L' U L U' L F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1065",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R U2 R' F' U' L' U2' L y' U' y'",
+      "standard": "y U y L' U2 L U F R U2' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U y L' U2 L U F R U2' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1066",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "S U R U' R' S' U R U2 R' U2' y",
+      "standard": "y' U2 R U2' R' U' S R U R' U' S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U2 R U2' R' U' S R U R' U' S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1074",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U2 L' U L U' F",
+      "standard": "F' U L' U' L U2' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U L' U' L U2' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1076",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U' L U' F R U2 R' y U d'",
+      "standard": "d U' y' R U2' R' F' U L' U L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "d U' y' R U2' R' F' U L' U L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1078",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "r U' r' U2' r U r' R U R' U'",
+      "standard": "U R U' R' r U' r' U2 r U r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' r U' r' U2 r U r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1113",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "U' F R' F' R U' R U' R' U'",
+      "standard": "U R U R' U R' F R F' U",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U R' U R' F R F' U"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1117",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L F' L' U' L F L' U2' R' F R F' (U' U)'",
+      "standard": "(U' U) F R' F' R U2 L F' L' U L F L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U' U) F R' F' R U2 L F' L' U L F L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1118",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U' L U F R U R' U F' (U' U2)'",
+      "standard": "(U' U2) F U' R U' R' F' U' L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U' U2) F U' R U' R' F' U' L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1128",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L F' L' U' L' U L2 F L' U' y'",
+      "standard": "y U L F' L2' U' L U L F L'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U L F' L2' U' L U L F L'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1129",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U2 R' F' R U2 L F L' (U2 U)' y",
+      "standard": "y' (U2 U) L F' L' U2' R' F R U2' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' (U2 U) L F' L' U2' R' F R U2' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1130",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U L F U2' R U2 R' U'",
+      "standard": "U R U2' R' U2 F' L' U' L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U2' R' U2 F' L' U' L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1145",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U F U R U' (U' U)' R' U y'",
+      "standard": "y U' R (U' U) U R' U' F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U' R (U' U) U R' U' F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1146",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R' F' R2 U2 R' U2' R U R' U .",
+      "standard": ". U' R U' R' U2 R U2' R2' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": ". U' R U' R' U2 R U2' R2' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1147",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U L F U' L F' L' U' L F L' (U U2)'",
+      "standard": "(U U2) L F' L' U L F L' U F' L' U' L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U U2) L F' L' U L F L' U F' L' U' L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1148",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R' F R' F' R U' R' F R F' U y",
+      "standard": "y' U' F R' F' R U R' F R F' R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U' F R' F' R U R' F R F' R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1221",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U L U' l' U L (L' L)' U r' (r r')' F' R (U' U2')'",
+      "standard": "(U' U2') R' F (r r') r U' (L' L) L' U' l U L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U' U2') R' F (r r') r U' (L' L) L' U' l U L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1223",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' F R' F' R2 U R' U2'",
+      "standard": "U2 R U' R2' F R F' R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U' R2' F R F' R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1224",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U2' L' U L U' L' U L F U",
+      "standard": "U' F' L' U' L U L' U' L U2 F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F' L' U' L U L' U' L U2 F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1383",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U2' L F R U R' U",
+      "standard": "U' R U' R' F' L' U2 L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U' R' F' L' U2 L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1384",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U2' L F R U2 R'",
+      "standard": "R U2' R' F' L' U2 L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2' R' F' L' U2 L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1385",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "r U r' U r U2 r' U' r U' r' U",
+      "standard": "U' r U r' U r U2' r' U' r U' r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' r U r' U r U2' r' U' r U' r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1386",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R U R' U2 F' U' L' U' L (U y' U2)'",
+      "standard": "(U y' U2) L' U L U F U2' R U' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U y' U2) L' U L U F U2' R U' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1443",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L F L2' U2' L2 F' L' F U' y U'",
+      "standard": "U y' U F' L F L2' U2 L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U y' U F' L F L2' U2 L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1453",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "r U' r' U r U r' U R U' R' U U y'",
+      "standard": "y U' U' R U R' U' r U' r' U' r U r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U' U' R U R' U' r U' r' U' r U r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1586",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L F L2' U2' L2 F' L' F",
+      "standard": "F' L F L2' U2 L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' L F L2' U2 L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1587",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U2 F' L F L' U F",
+      "standard": "F' U' L F' L' F U2' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' U' L F' L' F U2' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1588",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U2' F R U R' (F' F)' U' d",
+      "standard": "d' U (F' F) R U' R' F' U2 F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "d' U (F' F) R U' R' F' U2 F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1589",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "(R' F R F')2' U'",
+      "standard": "U (R' F R F')2",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U (R' F R F')2"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1590",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F U' R U R' U F' U y",
+      "standard": "y' U' F U' R U' R' U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U' F U' R U' R' U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 179",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "S' R U' R' S U R U2 R'",
+      "standard": "R U2' R' U' S' R U R' S",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2' R' U' S' R U R' S"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1846",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R' U2' R' F R F' R U R' (U' U)'",
+      "standard": "(U' U) R U' R' F R' F' R U2 R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U' U) R U' R' F R' F' R U2 R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1847",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U' L' U' L F",
+      "standard": "F' L' U L U F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F' L' U L U F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1848",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U' L U2 F R U R' U F' U2 (U' U)'",
+      "standard": "(U' U) U2' F U' R U' R' F' U2' L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "(U' U) U2' F U' R U' R' F' U2' L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1850",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U L' U L F U2' y'",
+      "standard": "y U2 F' L' U' L U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U2 F' L' U' L U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1861",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' F R' F' R2 U R' U' R U R' U'",
+      "standard": "U R U' R' U R U' R2' F R F' R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' U R U' R2' F R F' R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1862",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' F' L F L2' U2' L F U2'",
+      "standard": "U2 F' L' U2 L2 F' L' F F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' L' U2 L2 F' L' F F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1863",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L F L2' U2' L U L' U L U2'",
+      "standard": "U2 L' U' L U' L' U2 L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 L' U' L U' L' U2 L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1864",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U L' U2' L F R U' R' U",
+      "standard": "U' R U R' F' L' U2 L U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' F' L' U2 L U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 1865",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R' F' R2 U R' F R' F' R U'",
+      "standard": "U R' F R F' R U' R2' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R' F R F' R U' R2' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2045",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R' F' L' U' L F U'",
+      "standard": "U F' L' U L F R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F' L' U L F R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2048",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R' F R F' U R' F R F' U'",
+      "standard": "U F R' F' R U' F R' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U F R' F' R U' F R' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2049",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R U R' U R U' R' U F' y",
+      "standard": "y' F U' R U R' U' R U' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' F U' R U R' U' R U' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2138",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "U' R U2 R' F' L' U' L U' F U2",
+      "standard": "U2' F' U L' U L F R U2' R' U",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' F' U L' U L F R U2' R' U"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2188",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U L F (U' U')' F' U L' U' L U",
+      "standard": "U' L' U L U' F (U' U') F' L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' L' U L U' F (U' U') F' L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2190",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R' F R' F' R U R U' R'",
+      "standard": "R U R' U' R' F R F' R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R' F R F' R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2191",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R' D' r U' r' D R U' R U R' U2'",
+      "standard": "U2 R U' R' U R' D' r U r' D R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U' R' U R' D' r U r' D R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2193",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R' F U R U' (U U')' R' F' U y'",
+      "standard": "y U' F R (U U') U R' U' F' R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U' F R (U U') U R' U' F' R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2195",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R2' D' r U r' D R U2'",
+      "standard": "U2 R' D' r U' r' D R2 U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R' D' r U' r' D R2 U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2198",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U' L U' F' L F L' U' L' U L U",
+      "standard": "U' L' U' L U L F' L' F U L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' L' U' L U L F' L' F U L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2200",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' F U R U' R' F' U2'",
+      "standard": "U2 F R U R' U' F' R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F R U R' U' F' R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2203",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L F L2' U2' L",
+      "standard": "L' U2 L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U2 L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2205",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R' F' R U2 r R' U' R r' U'",
+      "standard": "U r R' U R r' U2' R' F R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U r R' U R r' U2' R' F R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2212",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U2' L F R U' R' U' y",
+      "standard": "y' U R U R' F' L' U2 L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U R U R' F' L' U2 L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2213",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "l' U' l U2 L l' U' l L2' U' L U' y",
+      "standard": "y' U L' U L2 l' U l L' U2' l' U l",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U L' U L2 l' U l L' U2' l' U l"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2216",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "r U' r' U' r U r' U'",
+      "standard": "U r U' r' U r U r'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U r U' r' U r U r'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2239",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R' F R F' U' R U' R' U",
+      "standard": "U' R U R' U F R' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' U F R' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2242",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F U' F' U2 F' L F L'",
+      "standard": "L F' L' F U2' F U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L F' L' F U2' F U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2244",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U2' L U' L' U L U' L F' L' F U2' y",
+      "standard": "y' U2 F' L F L' U L' U' L U L' U2 L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U2 F' L F L' U L' U' L U L' U2 L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2246",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F U R U' R2' F' R U' R U2 R' U2",
+      "standard": "U2' R U2' R' U R' F R2 U R' U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' R U2' R' U R' F R2 U R' U' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2248",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L F L2' U L F' L F L' U' y",
+      "standard": "y' U L F' L' F L' U' L2 F' L' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' U L F' L' F L' U' L2 F' L' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2249",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R2' F R F' R U R'",
+      "standard": "R U' R' F R' F' R2 U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U' R' F R' F' R2 U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2250",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R U R' U F' L' U2' L",
+      "standard": "L' U2 L F U' R U' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U2 L F U' R U' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2253",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R U2 R' F'",
+      "standard": "F R U2' R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U2' R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2255",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U' L U L' U' L U' L F' L' F U2",
+      "standard": "U2' F' L F L' U L' U L U' L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' F' L F L' U L' U L U' L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2257",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' U F R' F' R U'",
+      "standard": "U R' F R F' U' R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R' F R F' U' R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2281",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "S U R U' R' S' U R U' R' U' y'",
+      "standard": "y U R U R' U' S R U R' U' S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U R U R' U' S R U R' U' S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2300",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R U' R' F' U L' U2' L",
+      "standard": "L' U2 L U' F R U R' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U2 L U' F R U R' F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2301",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R' F' R U2 R U' R' U' R U2 R' U'",
+      "standard": "U R U2' R' U R U R' U2' R' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U2' R' U R U R' U2' R' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2302",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' U' R' D' R U R' D R",
+      "standard": "R' D' R U' R' D R U R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' D' R U' R' D R U R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 2303",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U' L U F L' U L U U",
+      "standard": "U' U' L' U' L F' U' L' U L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' U' L' U' L F' U' L' U L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 71",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U' R' U R U' R' U2' F R' F' R U2",
+      "standard": "U2' R' F R F' U2 R U R' U' R U R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' R' F R F' U2 R U R' U' R U R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 72",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R' F' R U' R U' R' U'",
+      "standard": "U R U R' U R' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U R U R' U R' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 73",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R' F r U2' M U R' F' R U2",
+      "standard": "U2' R' F R U' M' U2 r' F' R",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' R' F R U' M' U2 r' F' R"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 74",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' U' R U' R2' F R F' U2",
+      "standard": "U2' F R' F' R2 U R' U R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' F R' F' R2 U R' U R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 75",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R U R' U' F' L' U' L U' F (F' F)' U",
+      "standard": "U' (F' F) F' U L' U L F U R U' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' (F' F) F' U L' U L F U R U' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 76",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F U' R U' R' U' F' (U' F U' U F' U2')' y",
+      "standard": "y' (U' F U' U F' U2') F U R U R' U F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' (U' F U' U F' U2') F U R U R' U F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 77",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "R M U' R' U r U2 R' U2'",
+      "standard": "U2 R U2' r' U' R U M' R'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 R U2' r' U' R U M' R'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 79",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "S L' U L S' U' L' U2' L",
+      "standard": "L' U2 L U S L' U' L S'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "L' U2 L U S L' U' L S'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 833",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U L F R U R' U F' U y'",
+      "standard": "y U' F U' R U' R' F' L' U' L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y U' F U' R U' R' F' L' U' L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 834",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F R' F' R U' R U2 R' d' y",
+      "standard": "y' d R U2' R' U R' F R F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y' d R U2' R' U R' F R F'"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 944",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' L' U2' L F U2'",
+      "standard": "U2 F' L' U2 L F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2 F' L' U2 L F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 945",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "L' U' L F' L F L' y'",
+      "standard": "y L F' L' F L' U L",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "y L F' L' F L' U L"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 946",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F' U F U R U R' U2",
+      "standard": "U2' R U' R' U' F' U' F",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U2' R U' R' U' F' U' F"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "Geng 947",
+      "subgroup": "Geng (耿暄一)",
+      "setup": "F U R U R' U2 F' U",
+      "standard": "U' F U2' R U' R' U' F'",
+      "sticker": {
+        "kind": "f2l",
+        "fl": ""
+      },
+      "algs": [
+        [
+          {
+            "alg": "U' F U2' R U' R' U' F'"
+          }
+        ]
+      ]
     }
   ]
 }
