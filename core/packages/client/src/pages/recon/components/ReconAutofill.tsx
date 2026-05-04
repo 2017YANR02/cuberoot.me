@@ -508,9 +508,16 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
             }}
             onMouseEnter={() => setSelected(i)}
           >
-            <span className="recon-autofill-badge">
-              {popup.kind === 'comment' ? (isZh ? '注释' : 'COMMENT') : (cat?.toUpperCase().replace('_', ' ') ?? 'F2L')}
-            </span>
+            {popup.kind === 'comment' ? (
+              <span className="recon-autofill-badge">{isZh ? '注释' : 'COMMENT'}</span>
+            ) : cat === 'zbls' ? (
+              <>
+                <span className="recon-autofill-badge">F2L</span>
+                <span className="recon-autofill-badge">ZBLS</span>
+              </>
+            ) : (
+              <span className="recon-autofill-badge">{cat?.toUpperCase().replace('_', ' ') ?? 'F2L'}</span>
+            )}
             <span className="recon-autofill-text">{text}</span>
             {/* 手机端第一行右侧给 ✕ 关闭按钮(占用 Tab hint 槽位);桌面保留原 Tab hint */}
             {isMobile && i === 0 ? (
