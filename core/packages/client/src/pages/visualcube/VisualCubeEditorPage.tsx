@@ -16,7 +16,7 @@
  * 5-param simplified surface; this page needs the full ICubeOptions.
  */
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import {
@@ -34,13 +34,14 @@ import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 const FACE_LIST = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
 type FaceKey = (typeof FACE_LIST)[number];
 
+// sch=ygrwbo — 黄顶红前
 const FACE_DEFAULTS: Record<FaceKey, string> = {
   U: '#fefe00',
-  R: '#ee0000',
-  F: '#0000f2',
+  R: '#00d800',
+  F: '#ee0000',
   D: '#ffffff',
-  L: '#ffa100',
-  B: '#00d800',
+  L: '#0000f2',
+  B: '#ffa100',
 };
 
 // PHP visualcube core 22 stage masks (well-supported on NxN; some on 3x3 only)
@@ -87,13 +88,115 @@ const EXTENDED_MASKS: { value: string; label: string }[] = [
   { value: Masking.XCROSS_BL, label: 'XCross BL' },
   { value: Masking.XXCROSS, label: 'XXCross' },
   { value: Masking.DEC, label: 'DEC' },
+  { value: Masking.TEC_FR, label: 'TEC FR' },
+  { value: Masking.TEC_FL, label: 'TEC FL' },
+  { value: Masking.TEC_BL, label: 'TEC BL' },
+  { value: Masking.TEC_BR, label: 'TEC BR' },
   { value: Masking.PAIR, label: 'Pair' },
   { value: Masking.EO_ORBIT, label: 'EO orbit' },
+  { value: Masking.EO_OUTER_ORBIT, label: 'EO outer orbit' },
+  { value: Masking.EOLRB_R, label: 'EOLRb R' },
+  { value: Masking.EOLRB_L, label: 'EOLRb L' },
+  { value: Masking.EOLRB_F, label: 'EOLRb F' },
+  { value: Masking.EOLRB_B, label: 'EOLRb B' },
   { value: Masking.FB, label: 'Roux FB' },
   { value: Masking.SB, label: 'Roux SB' },
+  { value: Masking.FB1, label: 'Roux FB1' },
+  { value: Masking.FB2, label: 'Roux FB2' },
+  { value: Masking.SB1, label: 'Roux SB1' },
+  { value: Masking.SB2, label: 'Roux SB2' },
+  { value: Masking.ROUX_CO, label: 'Roux CO' },
+  { value: Masking.ROUX_DR, label: 'Roux DR' },
+  { value: Masking.ROUX_DR_ONLY, label: 'Roux DR-only' },
+  { value: Masking.TWO_TWO_TWO_FL, label: '2x2x2 FL' },
+  { value: Masking.TWO_TWO_TWO_BL, label: '2x2x2 BL' },
+  { value: Masking.TWO_TWO_TWO_BR, label: '2x2x2 BR' },
+  { value: Masking.SQ_RDF, label: 'SQ RDF' },
+  { value: Masking.SQ_FDR, label: 'SQ FDR' },
+  { value: Masking.SQ_DFR, label: 'SQ DFR' },
   { value: Masking.DR, label: 'DR' },
+  { value: Masking.DR_R, label: 'DR R' },
+  { value: Masking.DR_R_U2_RP, label: "DR R U2 R'" },
+  { value: Masking.DR_R_U_RP, label: "DR R U R'" },
+  { value: Masking.DR_R_UP_RP, label: "DR R U' R'" },
+  { value: Masking.DR_U, label: 'DR U' },
+  { value: Masking.MEHTA_SQ, label: 'Mehta Sq' },
+  { value: Masking.MEHTA_BELT2, label: 'Mehta Belt2' },
+  { value: Masking.MEHTA_EOLE2, label: 'Mehta EOLE2' },
+  { value: Masking.MEHTA_TDR, label: 'Mehta TDR' },
   { value: Masking.EOLS, label: 'EOLS' },
   { value: Masking.L5EF, label: 'L5EF' },
+  { value: Masking.OLLCP, label: 'OLLCP' },
+  { value: Masking.CLL_FULL, label: 'CLL (full)' },
+];
+
+const SIZE2_MASKS: { value: string; label: string }[] = [
+  { value: Masking.FF, label: 'FF (First Face)' },
+];
+
+const SIZE4_MASKS: { value: string; label: string }[] = [
+  { value: Masking.F1C, label: 'F1C' },
+  { value: Masking.F2C, label: 'F2C' },
+  { value: Masking.L2C, label: 'L2C' },
+  { value: Masking.CENTER, label: 'Center' },
+  { value: Masking.F1E, label: 'F1E' },
+  { value: Masking.LCE, label: 'LCE' },
+  { value: Masking.NO_CORNER, label: 'No Corner' },
+  { value: Masking.HOYA, label: 'Hoya' },
+  { value: Masking.YAU, label: 'Yau' },
+  { value: Masking.MEYER, label: 'Meyer' },
+  { value: Masking.HALF_CENTER, label: 'Half Center' },
+];
+
+const SIZE5_MASKS: { value: string; label: string }[] = [
+  { value: Masking.ONE_BY_THREE, label: '1x3' },
+  { value: Masking.TWO_BY_THREE, label: '2x3' },
+  { value: Masking.THREE_BY_THREE, label: '3x3' },
+  { value: Masking.TWO_BY_TWO, label: '2x2' },
+  { value: Masking.T, label: 'T' },
+  { value: Masking.L2C, label: 'L2C' },
+  { value: Masking.L2E, label: 'L2E' },
+  { value: Masking.L1E, label: 'L1E' },
+  { value: Masking.CENTER, label: 'Center' },
+  { value: Masking.MIDGE, label: 'Midge' },
+  { value: Masking.T_CENTER, label: 'T Center' },
+  { value: Masking.X_CENTER, label: 'X Center' },
+  { value: Masking.WING, label: 'Wing' },
+];
+
+const SIZE6_MASKS: { value: string; label: string }[] = [
+  { value: Masking.ONE_BY_FOUR, label: '1x4' },
+  { value: Masking.TWO_BY_FOUR, label: '2x4' },
+  { value: Masking.THREE_BY_FOUR, label: '3x4' },
+  { value: Masking.FOUR_BY_FOUR, label: '4x4' },
+  { value: Masking.TWO_BY_TWO, label: '2x2' },
+  { value: Masking.THREE_BY_THREE, label: '3x3' },
+  { value: Masking.T, label: 'T' },
+  { value: Masking.THREE_ONE_BY_FOUR, label: '3+1x4' },
+  { value: Masking.L2C, label: 'L2C' },
+  { value: Masking.L2E, label: 'L2E' },
+  { value: Masking.L1E, label: 'L1E' },
+  { value: Masking.OBLIQUE, label: 'Oblique' },
+  { value: Masking.CENTER, label: 'Center' },
+];
+
+const SIZE7_MASKS: { value: string; label: string }[] = [
+  { value: Masking.ONE_BY_FIVE, label: '1x5' },
+  { value: Masking.TWO_BY_FIVE, label: '2x5' },
+  { value: Masking.THREE_BY_FIVE, label: '3x5' },
+  { value: Masking.FOUR_BY_FIVE, label: '4x5' },
+  { value: Masking.FIVE_BY_FIVE, label: '5x5' },
+  { value: Masking.TWO_BY_TWO, label: '2x2' },
+  { value: Masking.THREE_BY_THREE, label: '3x3' },
+  { value: Masking.FOUR_BY_FOUR, label: '4x4' },
+  { value: Masking.L2C, label: 'L2C' },
+  { value: Masking.L2E, label: 'L2E' },
+  { value: Masking.L1E, label: 'L1E' },
+  { value: Masking.CENTER, label: 'Center' },
+];
+
+const SIZE9_MASKS: { value: string; label: string }[] = [
+  { value: Masking.UB, label: 'UB' },
 ];
 
 const MASK_ROTATIONS = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
@@ -177,8 +280,8 @@ const DEFAULTS: EditorState = {
   rotateAxis1: 'y',
   rotateAxis2: 'x',
   rotateAxis3: 'z',
-  rotateAngle1: 45,
-  rotateAngle2: -34,
+  rotateAngle1: 30,
+  rotateAngle2: -30,
   rotateAngle3: 0,
   backgroundColor: '',
   cubeColor: '#000000',
@@ -252,7 +355,7 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
     if (parts[5]) s.faceB = parts[5];
   }
 
-  // r=y45x-34z0  (axis-letter then signed degrees, repeating)
+  // r=y30x-30z0  (axis-letter then signed degrees, repeating)
   const r = get('r');
   if (r) {
     const matches = [...r.matchAll(/([xyz])(-?\d{1,3})/g)];
@@ -317,11 +420,14 @@ function stateToOpts(s: EditorState): ICubeOptions {
   if (s.arrows) opts.arrows = s.arrows;
   if (s.defaultArrowColor) opts.defaultArrowColor = s.defaultArrowColor;
 
-  // Special view: trans is a preset (cc=silver + co=50, explicit overrides win)
+  // Special view: trans is a preset (cc=silver + co=50, explicit overrides win).
+  // Also drop the mask fill so masked-out stickers show the silver shell through —
+  // matches PHP `view=trans` behavior (default sticker = Transparent, not Black).
   if (s.cubeView === 'plan') opts.view = 'plan';
   if (s.cubeView === 'trans') {
     if (s.cubeColor === DEFAULTS.cubeColor) opts.cubeColor = 'silver';
     if (s.cubeOpacity === DEFAULTS.cubeOpacity) opts.cubeOpacity = 50;
+    opts.maskColor = 'transparent';
   }
 
   if (s.stageMask) opts.mask = s.stageMask as Masking;
@@ -604,7 +710,12 @@ export default function VisualCubeEditorPage() {
 
       <header className="vc-header">
         <h1>{t('VisualCube 编辑器', 'VisualCube Editor')}</h1>
-        <LangToggle variant="inline" />
+        <div className="vc-header-right">
+          <Link className="vc-header-link" to="/visualcube/stages">
+            {t('Stage 速查', 'Stages')}
+          </Link>
+          <LangToggle variant="inline" />
+        </div>
       </header>
 
       {/* Preview — sticky so it stays on screen while scrolling controls.
@@ -857,9 +968,41 @@ export default function VisualCubeEditorPage() {
                   <optgroup label="Core">
                     {CORE_MASKS.map((m) => <option key={m.value || 'none'} value={m.value}>{m.label}</option>)}
                   </optgroup>
-                  <optgroup label="Extended (3x3 only)">
-                    {EXTENDED_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                  </optgroup>
+                  {state.cubeSize === 2 && (
+                    <optgroup label="2x2">
+                      {SIZE2_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
+                  {state.cubeSize === 3 && (
+                    <optgroup label="Extended (3x3)">
+                      {EXTENDED_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
+                  {state.cubeSize === 4 && (
+                    <optgroup label="4x4">
+                      {SIZE4_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
+                  {state.cubeSize === 5 && (
+                    <optgroup label="5x5">
+                      {SIZE5_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
+                  {state.cubeSize === 6 && (
+                    <optgroup label="6x6">
+                      {SIZE6_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
+                  {state.cubeSize === 7 && (
+                    <optgroup label="7x7">
+                      {SIZE7_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
+                  {state.cubeSize === 9 && (
+                    <optgroup label="9x9">
+                      {SIZE9_MASKS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </optgroup>
+                  )}
                 </select>
                 <select className="vc-select" value={state.maskAlg}
                   onChange={(e) => set('maskAlg', e.target.value)}>
@@ -1019,7 +1162,9 @@ export default function VisualCubeEditorPage() {
             </tr>
           </thead>
           <tbody>
-            <tr><td><code>alg</code></td><td>{t('WCA notation；返回的图是 alg 的逆作用于 solved（即 alg 能还原的 case）', 'WCA notation; rendered state is alg inverted from solved (the case the alg solves)')}</td><td>Sune</td></tr>
+            <tr><td><code>alg</code></td><td>{t('WCA notation；alg 直接作用到 solved（forward）。和 case 互斥，case 优先', 'WCA notation; applied DIRECTLY to solved (forward). Mutually exclusive with case (case wins)')}</td><td>Sune</td></tr>
+            <tr><td><code>case</code></td><td>{t('WCA notation；alg 的逆作用到 solved，即"该 alg 能还原的 case"。覆盖 alg', 'WCA notation; alg INVERTED on solved — "the case this alg solves". Overrides alg')}</td><td>—</td></tr>
+            <tr><td><code>setup</code></td><td>{t('alg 的别名（forward）；语义上是 case 的预置打乱', 'Alias of alg (forward); semantic hint that the string is a case-setup scramble')}</td><td>—</td></tr>
             <tr><td><code>view</code></td><td><code>iso / plan / f2l / oll / pll / pll-iso / trans</code></td><td><code>iso</code></td></tr>
             <tr><td><code>mask</code></td><td>{t('显式 Masking 枚举值（覆盖 view 推断）', 'Explicit Masking enum, overrides view-derived')}</td><td>—</td></tr>
             <tr><td><code>size</code></td><td>{t('像素，clamped [32, 1000]', 'Pixels, clamped [32, 1000]')}</td><td>256</td></tr>
@@ -1068,6 +1213,12 @@ const INLINE_CSS = `
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
 }
 .vc-header h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--vc-text); letter-spacing: 0.3px; }
+.vc-header-right { display: flex; align-items: center; gap: 12px; }
+.vc-header-link {
+  color: #9ec5ff; text-decoration: none; font-size: 13px;
+  padding: 4px 10px; border: 1px solid var(--vc-divider); border-radius: 6px;
+}
+.vc-header-link:hover { background: var(--vc-row-bg, #1a1a1a); }
 
 .vc-preview-wrap {
   position: sticky; top: 0; z-index: 5;

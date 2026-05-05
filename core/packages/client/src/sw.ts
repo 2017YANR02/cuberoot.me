@@ -35,6 +35,8 @@ self.addEventListener('fetch', (event) => {
       const qs = url.searchParams;
       const svg = renderFromSimpleQuery({
         alg: qs.get('alg') ?? undefined,
+        case: qs.get('case') ?? undefined,
+        setup: qs.get('setup') ?? undefined,
         view: qs.get('view') ?? undefined,
         mask: qs.get('mask') ?? undefined,
         size: qs.get('size') ?? undefined,

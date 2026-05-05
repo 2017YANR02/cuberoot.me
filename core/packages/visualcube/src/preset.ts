@@ -44,7 +44,16 @@ function parseColorParam(raw: string | undefined): string | undefined {
 }
 
 export interface SimpleVisualCubeQuery {
+  /** WCA notation, applied DIRECTLY (forward). `?alg=R` shows the cube AFTER R from solved.
+   *  Matches the visualcube editor's `alg` field semantics. */
   alg?: string;
+  /** WCA notation, applied INVERTED — `?case=R` shows the cube state that `R` solves
+   *  (i.e. `R'` applied from solved). Use this for OLL/PLL/F2L "case rendered as solved-by-this-alg"
+   *  thumbnails. Takes precedence over `alg`/`setup`. */
+  case?: string;
+  /** Alias of `alg` — forward apply. Kept as a separate name for code-level clarity when the
+   *  source of the string is a clean case-setup scramble (e.g. speedcubedb's `setup` field). */
+  setup?: string;
   /** iso | plan | f2l | oll | pll | pll-iso | trans */
   view?: string;
   /** Explicit Masking enum value; overrides the view-implied mask. */
@@ -67,14 +76,18 @@ function intParam(raw: string | number | undefined): number | undefined {
 
 /** Build the merged ICubeOptions for a simple-query request. Public for testing. */
 export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
-  const alg = q.alg ?? DEFAULT_ALG;
   const view = q.view ?? 'iso';
   const sizeN = intParam(q.size) ?? DEFAULT_SIZE;
   const size = Math.max(SIZE_MIN, Math.min(SIZE_MAX, sizeN));
   const cubeSizeN = intParam(q.cubeSize) ?? intParam(q.pzl) ?? 3;
   const cubeSize = (cubeSizeN < PUZZLE_SIZE_MIN || cubeSizeN > PUZZLE_SIZE_MAX) ? 3 : cubeSizeN;
 
-  const opts: ICubeOptions = { case: alg, width: size, height: size, cubeSize };
+  const opts: ICubeOptions = { width: size, height: size, cubeSize };
+  // Precedence: `case` (inverse) > `setup` (forward alias) > `alg` (forward, default).
+  // `alg` and `setup` are both forward — the dual name is just to keep call sites self-documenting.
+  if (q.case !== undefined) opts.case = q.case;
+  else if (q.setup !== undefined) opts.algorithm = q.setup;
+  else opts.algorithm = q.alg ?? DEFAULT_ALG;
 
   const bg = parseColorParam(q.bg);
   const cc = parseColorParam(q.cc);

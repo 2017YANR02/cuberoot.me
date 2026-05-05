@@ -32,3 +32,5 @@ description: "Use whenever rendering a cube state image anywhere in UI — 3x3 +
 改 `packages/visualcube/src/` 后必须 `pnpm --filter @cuberoot/visualcube build`。Node 端消费者（vite.config.ts middleware、Hono server）走 `dist/index.js` 的 esbuild bundle；只跑 typecheck 出的 per-file `.js` 是 extensionless import，Node ESM 解析不了，会出"prod 还是 3x3"这种诡异 bug。
 
 新加 `.ts` 文件 / 新 import 必须带 `.js` 扩展名（`from './foo.js'`），Node ESM 严格要求；漏写会导致 CI 上 vite.config.ts 加载 visualcube 时 `ERR_MODULE_NOT_FOUND`。
+
+还得 `pnpm --filter @cuberoot/client build-sw` + 浏览器硬刷。`<VisualCube>` 走 `public/sw.js` 拦截本地渲染，SW 把包内联了；不 rebuild 静默用旧代码（图不更新、无报错）。`/visualcube` 编辑器自己内联渲染，不走 SW。
