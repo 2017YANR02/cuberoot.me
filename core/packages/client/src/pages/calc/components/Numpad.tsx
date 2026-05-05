@@ -48,21 +48,29 @@ function nextCell(p: number, t: number): [number, number] | null {
   return null;
 }
 
-/** 上一个单元格 — 反向 zigzag */
+/** 上一个单元格 — 反向 zigzag。t = -1 表示 tavg 槽位（在 #1 左边） */
 function prevCell(p: number, t: number): [number, number] | null {
   const s = useCalcStore.getState();
   const both = s.playerEnabled[0] && s.playerEnabled[1];
   if (both) {
     if (p === 1) return [0, t];
-    if (t > 0) return [1, t - 1];
+    if (t > -1) return [1, t - 1];
     return null;
   }
-  if (t > 0) return [p, t - 1];
+  if (t > -1) return [p, t - 1];
   return null;
 }
 
-/** 导航到指定单元格 DOM */
+/** 导航到指定单元格 DOM。t < 0 → tavg 单元格 */
 function navigateToCell(p: number, t: number) {
+  if (t < 0) {
+    const tavgs = document.querySelectorAll<HTMLInputElement>('.input-row .tavg-cell');
+    if (tavgs[p]) {
+      tavgs[p].focus();
+      tavgs[p].select();
+    }
+    return;
+  }
   const s = useCalcStore.getState();
   const sc = s.solveCount();
   const cells = document.querySelectorAll<HTMLInputElement>('.input-row .time-cell:not(.tavg-cell)');
@@ -77,53 +85,45 @@ function navigateToCell(p: number, t: number) {
 // NOTE: 原版仅限 333，用户要求扩展到所有项目
 // 规则基于数字位数和格式自动判断输入完成
 
-function tryAutoAdvance(rawVal: string, p: number, t: number) {
-  const s = useCalcStore.getState();
-  // NOTE: 多盲得分模式下禁用（得分通常 1~2 位数）
-  if (isMbfForEvent(s.event)) return;
+/** 自动跳格触发条件（纯函数,无副作用） */
+function shouldAutoAdvance(rawVal: string): boolean {
   const val = rawVal.trim();
-  let shouldAdvance = false;
-
   // 规则 1: 小数点后已输入 2 位数字（如 "4.42"、"12.35"）
   const dotIdx = val.indexOf('.');
   if (dotIdx >= 0) {
     const afterDot = val.substring(dotIdx + 1);
-    if (afterDot.length >= 2 && /^\d{2}$/.test(afterDot)) {
-      shouldAdvance = true;
-    }
+    if (afterDot.length >= 2 && /^\d{2}$/.test(afterDot)) return true;
   }
-
   // 规则 2: 首位 ≥ 3 的 3 位纯数字（如 "354"→3.54s）
-  if (!shouldAdvance && /^\d{3}$/.test(val) && parseInt(val[0], 10) >= 3) {
-    shouldAdvance = true;
-  }
-
+  if (/^\d{3}$/.test(val) && parseInt(val[0], 10) >= 3) return true;
   // 规则 3: 4 位纯数字 1000~5959（如 "1234"→12.34s, "5959"→59.59s）
-  if (!shouldAdvance && /^\d{4}$/.test(val)) {
+  if (/^\d{4}$/.test(val)) {
     const num = parseInt(val, 10);
-    if (num >= 1000 && num <= 5959) shouldAdvance = true;
+    if (num >= 1000 && num <= 5959) return true;
   }
-
   // 规则 4: 冒号格式完成 — X:XX.XX（如 "1:23.45"）
-  if (!shouldAdvance && val.includes(':') && dotIdx >= 0) {
+  if (val.includes(':') && dotIdx >= 0) {
     const afterDot2 = val.substring(dotIdx + 1);
-    if (afterDot2.length >= 2 && /^\d{2}$/.test(afterDot2)) {
-      shouldAdvance = true;
-    }
+    if (afterDot2.length >= 2 && /^\d{2}$/.test(afterDot2)) return true;
   }
+  return false;
+}
 
-  if (shouldAdvance) {
-    // 保存当前格
-    const absIdx = s.seedOn + p;
-    const isMbf = isMbfForEvent(s.event);
-    const parsed = isMbf ? textToMbfScore(val) : textToTime(val);
-    recordAndUpdate(absIdx, t, parsed);
-    s.saveToUrl();
-    // 跳到下一格
-    const nxt = nextCell(p, t);
-    if (nxt) {
-      navigateToCell(nxt[0], nxt[1]);
-    }
+function tryAutoAdvance(rawVal: string, p: number, t: number) {
+  const s = useCalcStore.getState();
+  // NOTE: 多盲得分模式下禁用（得分通常 1~2 位数）
+  if (isMbfForEvent(s.event)) return;
+  if (!shouldAutoAdvance(rawVal)) return;
+
+  const val = rawVal.trim();
+  const absIdx = s.seedOn + p;
+  const isMbf = isMbfForEvent(s.event);
+  const parsed = isMbf ? textToMbfScore(val) : textToTime(val);
+  recordAndUpdate(absIdx, t, parsed);
+  s.saveToUrl();
+  const nxt = nextCell(p, t);
+  if (nxt) {
+    navigateToCell(nxt[0], nxt[1]);
   }
 }
 
@@ -160,10 +160,10 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
     return null;
   }, []);
 
-  // NOTE: 从聚焦 input 获取 [p, t]
+  // NOTE: 从聚焦 input 获取 [p, t]。t = -1 表示 tavg-cell，也算 valid。
   const getFocusedPT = useCallback((): [number, number] => {
     const [fp, ft] = useCalcStore.getState().focusedCell;
-    if (fp >= 0 && ft >= 0) return [fp, ft];
+    if (fp >= 0 && ft >= -1) return [fp, ft];
     return target;
   }, [target]);
 
@@ -195,7 +195,20 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
     }
     // NOTE: 自动跳格
     const [p, t] = getFocusedPT();
-    if (p >= 0 && !input.classList.contains('tavg-cell')) {
+    if (p < 0) return;
+    if (t < 0) {
+      // tavg：与 #1~#5 同样的触发规则,提交到 targetAvg
+      if (shouldAutoAdvance(input.value)) {
+        const s = useCalcStore.getState();
+        const isMbf2 = isMbfForEvent(s.event);
+        if (isMbf2) return;
+        const parsed = textToTime(input.value);
+        s.setTargetAvg(s.seedOn + p, parsed);
+        s.saveToUrl();
+        const nxt = nextCell(p, -1);
+        if (nxt) navigateToCell(nxt[0], nxt[1]);
+      }
+    } else {
       tryAutoAdvance(input.value, p, t);
     }
   }, [getFocusedInput, getFocusedPT]);
@@ -247,7 +260,8 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
       const [p, t] = getFocusedPT();
       if (p >= 0) {
         const absIdx = state.seedOn + p;
-        state.updateTime(absIdx, t, 0);
+        if (t < 0) state.setTargetAvg(absIdx, 0);
+        else state.updateTime(absIdx, t, 0);
         state.saveToUrl();
         const prv = prevCell(p, t);
         if (prv) {
@@ -287,7 +301,9 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
     const [p, t] = getFocusedPT();
     if (p < 0) return;
     if (navigator.vibrate) navigator.vibrate(10);
-    recordAndUpdate(state.seedOn + p, t, DNF_VALUE);
+    const absIdx = state.seedOn + p;
+    if (t < 0) state.setTargetAvg(absIdx, DNF_VALUE);
+    else recordAndUpdate(absIdx, t, DNF_VALUE);
     state.saveToUrl();
     const input = getFocusedInput();
     if (input) input.value = 'DNF';
@@ -338,15 +354,13 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
     const [p, t] = getFocusedPT();
     if (p < 0) return;
     const absIdx = state.seedOn + p;
-    if (raw === '' || raw === '-') {
-      recordAndUpdate(absIdx, t, 0);
-    } else if (raw.toUpperCase() === 'DNF') {
-      recordAndUpdate(absIdx, t, DNF_VALUE);
-    } else if (isMbf) {
-      recordAndUpdate(absIdx, t, textToMbfScore(raw));
-    } else {
-      recordAndUpdate(absIdx, t, textToTime(raw));
-    }
+    let parsed: number;
+    if (raw === '' || raw === '-') parsed = 0;
+    else if (raw.toUpperCase() === 'DNF') parsed = DNF_VALUE;
+    else if (isMbf) parsed = textToMbfScore(raw);
+    else parsed = textToTime(raw);
+    if (t < 0) state.setTargetAvg(absIdx, parsed);
+    else recordAndUpdate(absIdx, t, parsed);
     state.saveToUrl();
     // zigzag 跳格
     const nxt = nextCell(p, t);
@@ -561,5 +575,5 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
   );
 }
 
-export { undoStack, recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance };
+export { undoStack, recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance };
 export default Numpad;

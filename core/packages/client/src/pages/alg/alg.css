@@ -324,6 +324,38 @@
 .alg-case-name {
   font-size: 16px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Per-case ori cycler — small italic "y" + current ori label, advances on click. */
+.alg-case-y-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  background: var(--alg-bg);
+  border: 1px solid var(--alg-border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--alg-text-muted);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+.alg-case-y-btn:hover {
+  color: var(--alg-accent);
+  border-color: var(--alg-accent);
+}
+.alg-case-y-current {
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--alg-text-faint);
+}
+.alg-case-y-btn:hover .alg-case-y-current {
+  color: var(--alg-accent);
 }
 .alg-case-subgroup {
   font-size: 12px;
@@ -331,11 +363,20 @@
 }
 .alg-case-standard {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   margin-top: 4px;
   font-size: 12px;
   color: var(--alg-text-muted);
+}
+.alg-case-standard .alg-pill {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.alg-case-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--alg-text-faint);
 }
 .alg-case-standard code {
   font-family: 'JetBrains Mono', Consolas, monospace;
@@ -343,8 +384,10 @@
   color: var(--alg-text);
   background: none;
   padding: 0;
-  white-space: nowrap;
-  overflow-x: auto;
+  white-space: normal;
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
 }
 .alg-pill {
   display: inline-block;
@@ -363,6 +406,22 @@
   border-bottom: 1px solid var(--alg-border);
   padding-bottom: 4px;
   flex-wrap: wrap;
+}
+/* Global page-level ori switcher (above all cases). Larger hit area, denser layout. */
+.alg-ori-tabs-global {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 24px 0;
+  border-bottom: none;
+  gap: 6px;
+}
+.alg-ori-tabs-global .alg-ori-tab {
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--alg-border);
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 .alg-ori-tab {
   background: transparent;

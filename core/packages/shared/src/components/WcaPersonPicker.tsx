@@ -67,13 +67,13 @@ export function WcaPersonPicker({
     loadPersonsIndex().catch(() => { /* 失败时 fallback 到 WCA API */ });
   }, [open, searchFn]);
 
-  // NOTE: 面板打开时自动聚焦搜索框
+  // NOTE: 面板打开时自动聚焦搜索框 — 立即 focus 一次（避免漏掉首次输入）
+  // 100ms 兜底：移动端动画期间立即 focus 可能被打断
   useEffect(() => {
-    if (open && inputRef.current) {
-      // NOTE: 延迟聚焦 — 等 CSS 动画开始后再 focus，避免移动端键盘弹出导致动画卡顿
-      const t = setTimeout(() => inputRef.current?.focus(), 100);
-      return () => clearTimeout(t);
-    }
+    if (!open) return;
+    inputRef.current?.focus();
+    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
   }, [open]);
 
   // NOTE: Esc 键关闭（仅 modal 模式）

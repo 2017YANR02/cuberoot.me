@@ -75,6 +75,7 @@ const WbPage = lazy(() => import('./pages/wb/WbPage'));
 const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
 // NOTE: VisualCube Editor — 全功能交互式魔方图生成器
 const VisualCubeEditorPage = lazy(() => import('./pages/visualcube/VisualCubeEditorPage'));
+const VisualCubeStagesPage = lazy(() => import('./pages/visualcube/VisualCubeStagesPage'));
 // NOTE: Analyze — 3x3 CFOP 打乱分析器（port of speedcubedb.com/analyze）
 const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
 // NOTE: Average — 成绩计算器（粘 N 个时间，按 WCA 规则算 Ao5/Ao12/Mo3）
@@ -162,6 +163,8 @@ function App() {
         <Route path="/timer" element={<Suspense fallback={<div>Loading...</div>}><TimerPage /></Suspense>} />
         {/* VisualCube Editor — 交互式魔方图生成器（全 ICubeOptions 暴露 + URL 双向同步） */}
         <Route path="/visualcube" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeEditorPage /></Suspense>} />
+        {/* VisualCube Stages — 所有 mask / stage 速查 */}
+        <Route path="/visualcube/stages" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeStagesPage /></Suspense>} />
         {/* Analyze — 3x3 CFOP 打乱分析器 */}
         <Route path="/analyze" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
         {/* Average — 成绩计算器 */}

@@ -529,6 +529,14 @@ export function useFrameBuffer(
       ? new OffscreenCanvas(thumbW, thumbH)
       : null;
     const resizeCtx = resizeCanvas?.getContext('2d', { alpha: false }) ?? null;
+    // iOS Safari (≥17.4, 含 iOS 26): fresh OffscreenCanvas 第一次 drawImage(VideoFrame) →
+    // transferToImageBitmap 有 GPU surface upload race, 产物可能是空 bitmap → timeline 第一张
+    // 缩略图全黑. 提前 fillRect + transferToImageBitmap().close() 走一次让 backing surface commit,
+    // 后续真正的帧画图就走稳定路径.
+    if (resizeCanvas && resizeCtx) {
+      resizeCtx.fillRect(0, 0, 1, 1);
+      resizeCanvas.transferToImageBitmap().close();
+    }
 
     // 通用 output handler 工厂,按是否跳过已缓存索引来控制阶段 2
     const makeOutputHandler = (filter: (pIdx: number) => boolean) =>
@@ -541,9 +549,16 @@ export function useFrameBuffer(
         }
         try {
           let bmp: ImageBitmap;
+          let isBlack = false;
           if (resizeCanvas && resizeCtx) {
             // canvas 路径: 保证真实尺寸下采样, 用 transferToImageBitmap 同步快照避免并发竞态
             resizeCtx.drawImage(frame, 0, 0, thumbW, thumbH);
+            // iOS Safari 兜底: 即便有 warmup, 偶发性 race 仍可能产出全黑 thumb. 中心像素采样,
+            // luma<8 视为黑帧丢弃, 让 phase 2 (decoder 已暖) 之后再填.
+            const probe = resizeCtx.getImageData(thumbW >> 1, thumbH >> 1, 1, 1).data;
+            const luma = probe[0] + probe[1] + probe[2];
+            isBlack = luma < 8;
+            console.log('[FCLog] thumb pIdx=' + pIdx + ' luma=' + luma + (isBlack ? ' BLACK-DROP' : ''));
             bmp = resizeCanvas.transferToImageBitmap();
           } else {
             bmp = await createImageBitmap(frame, {
@@ -552,7 +567,7 @@ export function useFrameBuffer(
               resizeQuality: 'medium',
             });
           }
-          if (cancelled) { bmp.close(); frame.close(); return; }
+          if (cancelled || isBlack) { bmp.close(); frame.close(); return; }
           thumbs.set(pIdx, bmp);
           insertIdx(pIdx);
         } catch {
