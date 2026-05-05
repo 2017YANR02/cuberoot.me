@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import fs from 'fs'
 import { renderFromSimpleQuery } from '@cuberoot/visualcube'
+// (touch to force vite restart after visualcube bundle rebuild)
 
 // ── 静态文件 MIME 映射 ────────────────────────────────────────────────────
 const MIME: Record<string, string> = {
@@ -101,6 +102,8 @@ function visualcubeDev(): Plugin {
           const qs = new URL(url, 'http://localhost').searchParams;
           const svg = renderFromSimpleQuery({
             alg: qs.get('alg') ?? undefined,
+            case: qs.get('case') ?? undefined,
+            setup: qs.get('setup') ?? undefined,
             view: qs.get('view') ?? undefined,
             mask: qs.get('mask') ?? undefined,
             size: qs.get('size') ?? undefined,
@@ -111,7 +114,7 @@ function visualcubeDev(): Plugin {
             co: qs.get('co') ?? undefined,
           });
           res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.setHeader('Cache-Control', 'no-store');
           res.end(svg);
         } catch (err) {
           res.statusCode = 500;

@@ -53,9 +53,15 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 15px;
+  color: #333;
+  background: #fff;
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
+}
+
+.wca-pp-input::placeholder {
+  color: #999;
 }
 
 .wca-pp-input:focus {

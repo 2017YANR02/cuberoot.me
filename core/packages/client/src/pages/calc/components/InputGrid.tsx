@@ -11,7 +11,7 @@ import {
   CalcEngine,
 } from '../engine/calc_engine';
 import { isWR } from '../engine/wr_data';
-import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance } from './Numpad';
+import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance } from './Numpad';
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
@@ -79,21 +79,40 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     wheelHandlers.current.set(el, handler);
   }, [state]);
 
-  // NOTE: 键盘导航 — Enter/Tab zigzag、数字输入 + autoAdvance（inputMode="none" 需手动处理）
-  const handleKeyDown = useCallback((e: React.KeyboardEvent, p: number, t: number) => {
+  // NOTE: tavg 提交（无小数点也按 textToTime 解析，1234 → 12.34）
+  const commitTavg = useCallback((p: number, raw: string) => {
+    const absIdx = state.seedOn + p;
+    const v = raw.trim();
+    if (v === '' || v === '-') state.setTargetAvg(absIdx, 0);
+    else state.setTargetAvg(absIdx, textToTime(v));
+    state.saveToUrl();
+  }, [state]);
+
+  // NOTE: 键盘导航 — time-cell zigzag + autoAdvance；tavg-cell 写到 targetAvg、不跳格
+  // inputMode="none" 不会触发原生输入，所以数字/小数点/退格/DNF 全要手动处理
+  const handleKeyDown = useCallback((
+    e: React.KeyboardEvent,
+    p: number,
+    t: number,
+    kind: 'time' | 'tavg' = 'time',
+  ) => {
     const input = e.target as HTMLInputElement;
     const absIdx = state.seedOn + p;
+    const isTavg = kind === 'tavg';
+
+    // tavg 走 t = -1 让 nextCell/prevCell 的 zigzag 公式直接覆盖（target_A → target_B → #1_A → ...）
+    const curT = isTavg ? -1 : t;
 
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      handleBlur(p, t, input.value);
-      const nxt = nextCell(p, t);
+      if (isTavg) commitTavg(p, input.value);
+      else handleBlur(p, t, input.value);
+      const nxt = nextCell(p, curT);
       if (nxt) navigateToCell(nxt[0], nxt[1]);
       else input.blur();
       return;
     }
 
-    // NOTE: 数字键 — inputMode="none" 不会自动输入，需手动写入
     if (/^[0-9]$/.test(e.key)) {
       e.preventDefault();
       const start = input.selectionStart ?? input.value.length;
@@ -107,14 +126,19 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
         input.value = input.value.slice(0, start) + e.key + input.value.slice(end);
         input.selectionStart = input.selectionEnd = start + 1;
       }
-      // NOTE: 自动跳格
-      if (!input.classList.contains('tavg-cell')) {
+      if (isTavg) {
+        // tavg 自动跳格 — 与 #1~#5 同样的触发规则
+        if (shouldAutoAdvance(input.value)) {
+          commitTavg(p, input.value);
+          const nxt = nextCell(p, -1);
+          if (nxt) navigateToCell(nxt[0], nxt[1]);
+        }
+      } else {
         tryAutoAdvance(input.value, p, t);
       }
       return;
     }
 
-    // 小数点 / 冒号
     if (e.key === '.' || e.code === 'NumpadDecimal') {
       e.preventDefault();
       if (!input.value.includes('.')) {
@@ -136,21 +160,17 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
       return;
     }
 
-    // NOTE: Backspace — 全选/空格时一步清空+跳前一格
     if (e.key === 'Backspace') {
       e.preventDefault();
-      e.stopPropagation(); // 阻止冒泡到 Numpad 全局 handler
+      e.stopPropagation();
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? input.value.length;
       const isFullSel = start === 0 && end === input.value.length && input.value.length > 0;
       if (isFullSel || input.value.length === 0) {
-        // NOTE: 手动保存空值到 store（而非等 onBlur，避免异步竞争）
-        handleBlur(p, t, '');
-        const prv = prevCell(p, t);
-        if (prv) {
-          // NOTE: 延迟导航 — 等 React re-render（key 变化重建 input）完成后再 focus
-          requestAnimationFrame(() => navigateToCell(prv[0], prv[1]));
-        }
+        if (isTavg) commitTavg(p, '');
+        else handleBlur(p, t, '');
+        const prv = prevCell(p, curT);
+        if (prv) requestAnimationFrame(() => navigateToCell(prv[0], prv[1]));
       } else {
         input.value = input.value.slice(0, start > 0 ? start - 1 : 0) + input.value.slice(end);
         input.selectionStart = input.selectionEnd = Math.max(0, start - 1);
@@ -171,19 +191,23 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
       return;
     }
 
-    // NOTE: D → DNF + 自动跳格
     if (e.key === 'd' || e.key === 'D') {
       e.preventDefault();
-      recordAndUpdate(absIdx, t, DNF_VALUE);
+      if (isTavg) {
+        state.setTargetAvg(absIdx, DNF_VALUE);
+      } else {
+        recordAndUpdate(absIdx, t, DNF_VALUE);
+      }
       state.saveToUrl();
       input.value = 'DNF';
-      const nxt = nextCell(p, t);
+      const nxt = nextCell(p, curT);
       if (nxt) navigateToCell(nxt[0], nxt[1]);
+      else input.blur();
       return;
     }
 
     // Arrow/Escape/Ctrl+Z 由 Numpad 的全局 keydown 处理
-  }, [state, handleBlur]);
+  }, [state, handleBlur, commitTavg]);
 
   // NOTE: ghost bar 状态（用于 emoji 显示）
   // 原版 input_grid.js#861-875 Target Avg 状态 emoji
@@ -262,6 +286,51 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
               onChange={() => state.togglePlayer(p)}
             />
 
+            {/* 头像按钮 — 原版 input_grid.js#118-136 */}
+            <button
+              className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
+              title={avatarState?.[p]?.active
+                ? (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`)
+                : (isZh ? '搜索选手' : 'Search for a player')}
+              data-loading={avatarState?.[p]?.loading && !avatarState[p].active
+                ? avatarState[p].loading
+                : undefined}
+              onClick={() => onPlayerOverride?.(p)}
+            >
+              {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
+              <img
+                className="me-avatar"
+                src={avatarState?.[p]?.active
+                  ? (avatarState[p].avatarUrl || DEFAULT_AVATAR)
+                  : DEFAULT_AVATAR}
+                alt="avatar"
+                style={avatarState?.[p]?.loading && !avatarState[p].active
+                  ? { display: 'none' }
+                  : undefined}
+              />
+            </button>
+
+            {/* Target Avg 输入框 — 每行独立（原版 input_grid.js 行 103-107）*/}
+            <div className="time-cell-wrapper">
+              <span className="tavg-emoji">{getGhostEmoji(p)}</span>
+              <input
+                className="time-cell tavg-cell"
+                type="text"
+                inputMode="none"
+                disabled={!enabled}
+                placeholder={isZh ? '目标' : 'Target'}
+                defaultValue={(() => {
+                  const ta = state.getTargetAvg(state.seedOn + p);
+                  return ta > 0 ? formatTime(ta, false, isMove, true) : '';
+                })()}
+                key={`tavg_${absIdx}_${state.getTargetAvg(absIdx)}_${enabled}`}
+                style={!enabled ? { opacity: 0.3 } : undefined}
+                onBlur={(e) => commitTavg(p, e.target.value)}
+                onFocus={(e) => { state.setFocusedCell(p, -1); e.target.select(); }}
+                onKeyDown={(e) => handleKeyDown(e, p, 0, 'tavg')}
+              />
+            </div>
+
             {/* 成绩输入框 */}
             {Array.from({ length: sc }, (_, t) => {
               const val = row[t];
@@ -323,57 +392,6 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 </div>
               );
             })}
-
-            {/* Target Avg 输入框 — 每行独立（原版 input_grid.js 行 103-107）*/}
-            <div className="time-cell-wrapper">
-              <span className="tavg-emoji">{getGhostEmoji(p)}</span>
-              <input
-                className="time-cell tavg-cell"
-                type="text"
-                inputMode="none"
-                disabled={!enabled}
-                placeholder={isZh ? '目标' : 'Target'}
-                defaultValue={(() => {
-                  const ta = state.getTargetAvg(state.seedOn + p);
-                  return ta > 0 ? formatTime(ta, false, isMove, true) : '';
-                })()}
-                key={`tavg_${absIdx}_${state.getTargetAvg(absIdx)}_${enabled}`}
-                style={!enabled ? { opacity: 0.3 } : undefined}
-                onBlur={(e) => {
-                  const raw = e.target.value.trim();
-                  if (raw === '') {
-                    state.setTargetAvg(absIdx, 0);
-                  } else {
-                    state.setTargetAvg(absIdx, textToTime(raw));
-                  }
-                  state.saveToUrl();
-                }}
-              />
-            </div>
-
-            {/* 头像按钮 — 原版 input_grid.js#118-136 */}
-            <button
-              className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
-              title={avatarState?.[p]?.active
-                ? (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`)
-                : (isZh ? '搜索选手' : 'Search for a player')}
-              data-loading={avatarState?.[p]?.loading && !avatarState[p].active
-                ? avatarState[p].loading
-                : undefined}
-              onClick={() => onPlayerOverride?.(p)}
-            >
-              {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
-              <img
-                className="me-avatar"
-                src={avatarState?.[p]?.active
-                  ? (avatarState[p].avatarUrl || DEFAULT_AVATAR)
-                  : DEFAULT_AVATAR}
-                alt="avatar"
-                style={avatarState?.[p]?.loading && !avatarState[p].active
-                  ? { display: 'none' }
-                  : undefined}
-              />
-            </button>
           </div>
         );
       })}

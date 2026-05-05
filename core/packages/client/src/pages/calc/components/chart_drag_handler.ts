@@ -371,7 +371,7 @@ function positionHandle(): void {
 
 function syncInputHighlight(bar: SelectedBar, on: boolean): void {
   // NOTE: 找到对应的 input 元素并添加/移除高亮 class
-  const inputs = document.querySelectorAll('.time-cell');
+  const inputs = document.querySelectorAll('.time-cell:not(.tavg-cell)');
   const state = useCalcStore.getState();
   const sc = solveCountForEvent(state.event);
   const inputIdx = bar.playerIdx * sc + bar.solveIdx;

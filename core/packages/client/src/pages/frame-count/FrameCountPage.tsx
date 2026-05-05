@@ -533,7 +533,12 @@ export default function FrameCountPage() {
   }, [activeSolveIdx]);
 
   // ── WebCodecs 帧缓冲 ──
-  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFile, videoFps);
+  // iOS Safari (尤其首次上传) 同时让 <video> 元素和 mp4box 读同一个 blob 会出现并发读 race,
+  // 表现为主画面和缩略图全黑、第二次重传同文件才正常. Gate: 等 <video> 元素 loadeddata 后再
+  // 把 file 交给 WebCodecs, 避免抢读. videoFirstFrameReady 在下面声明, 但 React hooks 顺序无所谓
+  // (useState 一次性返回, 不在乎彼此声明位置).
+  const [videoFirstFrameReady, setVideoFirstFrameReady] = useState(false);
+  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFirstFrameReady ? videoFile : null, videoFps);
 
   // ── 从 mp4box samples 反推 fps —— iOS Safari 上 MediaInfo WASM 加载失败时的兜底 ──
   // FrameBuffer READY 后 samples 里每一帧都有精确 timestamp, 比 MediaInfo 读容器元数据更可靠。
@@ -1160,6 +1165,9 @@ export default function FrameCountPage() {
   const loadFile = useCallback(async (file: File, initialSolves?: Solve[], initialFps?: number) => {
     if (videoSrc) URL.revokeObjectURL(videoSrc);
     const url = URL.createObjectURL(file);
+    // 同步重置: 在 setVideoFile 同一批次里把 firstFrameReady 设为 false,
+    // 否则 useFrameBuffer 会用 stale=true 抢在 <video> 元素之前去读 blob → iOS Safari 黑屏.
+    setVideoFirstFrameReady(false);
     setVideoSrc(url);
     setVideoFile(file);
 
@@ -2035,9 +2043,9 @@ export default function FrameCountPage() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [videoFile, useCanvasDisplay, currentFrame, showToast, t]);
 
-  // 总帧数 + 首帧到达信号 (用于隐藏 loading overlay)
-  const [videoFirstFrameReady, setVideoFirstFrameReady] = useState(false);
-  useEffect(() => { setVideoFirstFrameReady(false); }, [videoSrc]);
+  // 总帧数 + 首帧到达信号 (用于隐藏 loading overlay + gate WebCodecs ingestion).
+  // state 已在文件顶部声明 (gate useFrameBuffer 用), 这里只挂 videoSrc 变更时的兜底重置.
+  // loadFile 已经同步调了 setVideoFirstFrameReady(false), 这个 effect 是防御性的 (其他路径改 src).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -2256,6 +2264,9 @@ export default function FrameCountPage() {
                     ref={videoRef}
                     src={videoSrc}
                     preload="auto"
+                    playsInline
+                    muted
+                    disableRemotePlayback
                     style={{
                       ...getVideoStyle(),
                       ...(useCanvasDisplay ? { visibility: 'hidden' as const } : {}),

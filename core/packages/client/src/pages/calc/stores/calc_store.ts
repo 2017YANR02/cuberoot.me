@@ -329,3 +329,8 @@ export const useCalcStore = create<CalcState>((set, get) => ({
 
 // NOTE: 初始化排序
 useCalcStore.getState().updateSort();
+
+// NOTE: dev 模式暴露到 window 给 playwright 自动化测试用（tests/calc-interactions.ts）
+if (import.meta.env.DEV) {
+  (globalThis as unknown as { __calcStore?: typeof useCalcStore }).__calcStore = useCalcStore;
+}

@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle } from 'lucide-react';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
@@ -40,6 +40,24 @@ const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
   'skewb': 'skewb',
 };
 
+/** F2L `c.setup` is canonical (FR slot disturbed). For other oris, append a `y`-rotation
+ *  so the disturbed slot ends up at the right visual position (cube also rotates with it,
+ *  so non-FR thumbs aren't red-front — that's expected). */
+const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
+function oriAdjustSetup(setup: string, oriIdx: number): string {
+  if (!setup || oriIdx === 0) return setup;
+  return `${setup} ${ORI_SUFFIX[oriIdx]}`;
+}
+
+/** speedcubedb labels F2L oris "Front Right / Front Left / Back Left / Back Right".
+ *  Cubers universally use the short FR/FL/BL/BR — no translation, both langs. */
+function shortOriName(name: string): string {
+  const map: Record<string, string> = {
+    'Front Right': 'FR', 'Front Left': 'FL', 'Back Left': 'BL', 'Back Right': 'BR',
+  };
+  return map[name] ?? name;
+}
+
 /** SQ1 alg `1,0/-1,0` → `(1,0)/(-1,0)`. cubing.js's parser requires parens
  * around each `m,n` move; speedcubedb's data omits them. */
 function normalizeAlgForTwisty(puzzle: AlgPuzzle, alg: string): string {
@@ -47,8 +65,32 @@ function normalizeAlgForTwisty(puzzle: AlgPuzzle, alg: string): string {
   return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
 }
 
+/** Map our (puzzle, set) to a cubing.js `experimentalStickering` value (LL/LS grayed out).
+ *  Stickering is only well-supported on 3x3 and megaminx; returns undefined elsewhere
+ *  (TwistyPlayer falls back to fully colored). */
+function pickStickering(puzzle: AlgPuzzle, set: string): string | undefined {
+  if (puzzle !== '3x3') return undefined;
+  switch (set) {
+    case 'f2l': case 'adv-f2l':                   return 'F2L';
+    case 'oll': case 'ollcp':                     return 'OLL';
+    case 'pll': case 'anti-pll':                  return 'PLL';
+    case 'coll':                                  return 'COLL';
+    case 'cmll':                                  return 'CMLL';
+    case 'ell':                                   return 'ELL';
+    case 'cls':                                   return 'CLS';
+    case 'zbls':                                  return 'ZBLS';
+    case 'vls':                                   return 'VLS';
+    case 'wv':                                    return 'WVLS';
+    case 'zbll':                                  return 'ZBLL';
+    case '1lll':                                  return 'LL';
+    case 'eo4a':                                  return 'EO';
+    case 'sv': case 'sbls': case 'fruf':          return 'LS';
+    default:                                      return undefined;
+  }
+}
+
 /** Inline animated puzzle demo. Lazy-imports cubing/twisty. */
-function AlgPlayer({ alg, puzzle }: { alg: string; puzzle: AlgPuzzle }) {
+function AlgPlayer({ alg, puzzle, set, setup }: { alg: string; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const host = hostRef.current;
@@ -57,20 +99,29 @@ function AlgPlayer({ alg, puzzle }: { alg: string; puzzle: AlgPuzzle }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let player: any = null;
     const normalized = normalizeAlgForTwisty(puzzle, alg);
+    const stickering = pickStickering(puzzle, set);
+    // Prefer the canonical `setup` (rotation-free, matches static thumb) over inverting alg —
+    // some algs start with `d`/`y` and the inverse leaves the cube body rotated.
+    const setupForTwisty = setup && setup.trim()
+      ? normalizeAlgForTwisty(puzzle, setup)
+      : `(${normalized})'`;
     import('cubing/twisty').then((mod) => {
       if (cancelled || !host) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Ctor = (mod as any).TwistyPlayer || (mod as any).default;
       try {
-        player = new Ctor({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const opts: any = {
           puzzle: TWISTY_PUZZLE[puzzle],
-          experimentalSetupAlg: `(${normalized})'`,
+          experimentalSetupAlg: setupForTwisty,
           alg: normalized,
           controlPanel: 'bottom-row',
           background: 'none',
           hintFacelets: 'none',
           backView: 'none',
-        });
+        };
+        if (stickering) opts.experimentalStickering = stickering;
+        player = new Ctor(opts);
         player.style.colorScheme = 'light';
         player.style.width = '260px';
         player.style.height = '260px';
@@ -105,9 +156,11 @@ function CaseThumb({ puzzle, set, sticker, alg, setup, size = 88 }: { puzzle: Al
   // matches the F2L+EO pattern shown in CubeRoot's ZBLS docx.
   const isZbls = puzzle === '3x3' && set === 'zbls';
   if (isZbls) {
-    return <VisualCube algorithm={alg} view="iso" mask="vh" size={size} />;
+    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} />;
   }
-  return <VisualCube algorithm={alg} view={pickView(puzzle, set, sticker)} size={size} puzzleSize={PUZZLE_SIZE[puzzle]} />;
+  // Prefer `setup` (rotation-free, canonical red-front) over inverting `alg` —
+  // alg may start with `d`/`y` etc. and leave the cube rotated.
+  return <VisualCube algorithm={alg} setup={setup} view={pickView(puzzle, set, sticker)} size={size} puzzleSize={PUZZLE_SIZE[puzzle]} />;
 }
 
 function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 'oll' | 'pll' | 'pll-iso' {
@@ -119,7 +172,7 @@ function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 
   return 'pll';
 }
 
-function AlgRow({ alg, expanded, onToggle, animatable, puzzle }: { alg: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle }) {
+function AlgRow({ alg, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <>
@@ -152,7 +205,7 @@ function AlgRow({ alg, expanded, onToggle, animatable, puzzle }: { alg: string; 
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
       </div>
-      {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} />}
+      {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
   );
 }
@@ -215,7 +268,10 @@ export default function AlgCategoryPage() {
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
   const [data, setData] = useState<AlgFile | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeOri, setActiveOri] = useState<Record<string, number>>({});
+  const [activeOri, setActiveOri] = useState(0);
+  // Per-case override (lets user cycle one case's ori for side-by-side comparison while
+  // the rest of the page stays on `activeOri`). Clicking the global tabs clears overrides.
+  const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -297,6 +353,27 @@ export default function AlgCategoryPage() {
         <LangToggle variant="inline" className="alg-lang-toggle" />
       </div>
 
+      {/* Page-level ori switcher — only for sets where every case has the same 4 oris (F2L family).
+          One click here switches all case thumbs + alg lists at once. */}
+      {data && !showSubgroupPicker && (() => {
+        const oriNames = data.cases[0]?.oriNames;
+        if (!oriNames || oriNames.length <= 1) return null;
+        return (
+          <div className="alg-ori-tabs alg-ori-tabs-global">
+            {oriNames.map((name, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`alg-ori-tab${activeOri === i ? ' is-active' : ''}`}
+                onClick={() => { setActiveOri(i); setCaseOri({}); }}
+              >
+                {shortOriName(name)}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
       {error && <div className="alg-empty">{error}</div>}
       {!data && !error && <div className="alg-empty">{isZh ? '加载中…' : 'Loading…'}</div>}
 
@@ -326,8 +403,11 @@ export default function AlgCategoryPage() {
             {!collapsed && (
               <div className="alg-case-list">
                 {cases.map(c => {
-                  const oriIdx = activeOri[c.name] ?? 0;
+                  // Per-case override > global. Clamped to this case's actual ori count.
+                  const rawOri = caseOri[c.name] ?? activeOri;
+                  const oriIdx = rawOri < c.algs.length ? rawOri : 0;
                   const algsForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
+                  const oriCount = c.algs.length;
                   const firstAlg = algsForOri[0]?.alg ?? c.standard ?? '';
                   return (
                     <article key={c.name} className="alg-case">
@@ -338,11 +418,30 @@ export default function AlgCategoryPage() {
                             set={set}
                             sticker={c.sticker}
                             alg={firstAlg || c.setup || ''}
-                            setup={c.setup}
+                            setup={oriAdjustSetup(c.setup, oriIdx)}
                           />
                         </div>
                         <div className="alg-case-info">
-                          <div className="alg-case-name">{c.name}</div>
+                          <div className="alg-case-name">
+                            {c.name}
+                            {oriCount > 1 && (
+                              <button
+                                type="button"
+                                className="alg-case-y-btn"
+                                onClick={() => setCaseOri(prev => ({ ...prev, [c.name]: (oriIdx + 1) % oriCount }))}
+                                title={`${shortOriName(c.oriNames?.[oriIdx] ?? '')} → ${shortOriName(c.oriNames?.[(oriIdx + 1) % oriCount] ?? '')}`}
+                              >
+                                y
+                                <span className="alg-case-y-current">{shortOriName(c.oriNames?.[oriIdx] ?? '')}</span>
+                              </button>
+                            )}
+                          </div>
+                          {c.setup && (
+                            <div className="alg-case-standard">
+                              <Shuffle size={13} className="alg-case-icon" aria-label={isZh ? '打乱' : 'Setup'} />
+                              <code>{c.setup}</code>
+                            </div>
+                          )}
                           {c.standard && (
                             <div className="alg-case-standard">
                               <span className="alg-pill">{isZh ? '标准' : 'Std'}</span>
@@ -351,20 +450,6 @@ export default function AlgCategoryPage() {
                           )}
                         </div>
                       </div>
-                      {c.oriNames && c.oriNames.length > 1 && (
-                        <div className="alg-ori-tabs">
-                          {c.oriNames.map((name, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              className={`alg-ori-tab${oriIdx === i ? ' is-active' : ''}`}
-                              onClick={() => setActiveOri(prev => ({ ...prev, [c.name]: i }))}
-                            >
-                              {name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                       <div className="alg-case-algs">
                         {algsForOri.map((entry, i) => {
                           const key = `${c.name}::${oriIdx}::${i}`;
@@ -377,6 +462,8 @@ export default function AlgCategoryPage() {
                               onToggle={() => setExpandedKey(expanded ? null : key)}
                               animatable={animatable}
                               puzzle={puzzleParam}
+                              set={set}
+                              setup={oriAdjustSetup(c.setup, oriIdx)}
                             />
                           );
                         })}
