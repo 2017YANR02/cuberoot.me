@@ -6,6 +6,7 @@ import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
 import { reconRoutes } from './routes/recon.js';
 import { cubeRoutes } from './routes/cube.js';
+import { algRoutes } from './routes/alg.js';
 
 const app = new Hono();
 
@@ -39,6 +40,7 @@ app.route('/', progressRoutes);
 app.route('/', healthRoutes);
 app.route('/', reconRoutes);
 app.route('/', cubeRoutes);
+app.route('/', algRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 

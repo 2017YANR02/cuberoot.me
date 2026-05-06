@@ -5,24 +5,28 @@ description: "Use when changing Hono server routes (`core/packages/server/**`) o
 
 # Recon server / DB 部署
 
+## SSH 到云服务器
+
+用户机器已配好 SSH 公钥 + `~/.ssh/config` 别名,在 pwsh 直接 `ssh root@cuberoot` 即可登入,**无需密码**。给命令时直接写 `ssh root@cuberoot '...'` 而不是 IP / 密码 / `-p` 端口。
+
 ## DB 凭据
 
-**`.password.md`**（gitignored，不在 repo 里）。实际 DB 是 `recon_db / recon_user`——**不是** `.env.example` 里的 `trainer_db`。
+**`.password.md`**(gitignored,不在 repo 里)。实际 DB 是 `recon_db / recon_user`——**不是** `.env.example` 里的 `trainer_db`。
 
-云服务器 上加列示例（用单引号包 SQL，避免 bash 解析括号）：
+云服务器上加列示例(用单引号包 SQL,避免 bash 解析括号):
 ```bash
-mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0;'
+ssh root@cuberoot "mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0;'"
 ```
 
-给用户的命令：从 `.password.md` 嵌真密码（别留 `<password>`）；SQL 压**一行**，多张表多条命令（多行 heredoc 粘贴常被截断卡 `>`）。
+给用户的命令:从 `.password.md` 嵌真密码(别留 `<password>`);SQL 压**一行**,多张表多条命令(多行 heredoc 粘贴常被截断卡 `>`)。
 
 ## ⚠️ Schema 变更顺序
 
 **先在 云服务器 跑 ALTER → 再 push 代码**。反过来会让部署上去的新版 server 在 SELECT 新列时直接 500，整个 `/api/recon/*` 挂掉。
 
-## 云服务器 没有 GitHub 访问
+## 云服务器没有 GitHub 出站访问
 
-不要 SSH 上去 `git pull`——连不通。所有部署都走 GitHub Actions：
+SSH 进得去(`ssh root@cuberoot`),但云服务器自己访问不到 `github.com`,所以**别在云服务器上 `git pull`**——会卡。所有代码部署都走 GitHub Actions:
 
 - push `main` 且 `core/**` 有变更 → `deploy_core.yml` 自动跑
 - 文件 >300（path filter trap）或想强制重跑 → `gh workflow run deploy_core.yml`

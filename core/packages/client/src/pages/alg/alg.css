@@ -369,10 +369,6 @@
   font-size: 12px;
   color: var(--alg-text-muted);
 }
-.alg-case-standard .alg-pill {
-  flex-shrink: 0;
-  margin-top: 1px;
-}
 .alg-case-icon {
   flex-shrink: 0;
   margin-top: 2px;
@@ -389,17 +385,6 @@
   flex: 1;
   min-width: 0;
 }
-.alg-pill {
-  display: inline-block;
-  padding: 1px 6px;
-  background: var(--alg-accent-soft);
-  color: var(--alg-accent);
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
 .alg-ori-tabs {
   display: flex;
   gap: 4px;
@@ -495,6 +480,132 @@
   display: flex;
   justify-content: center;
   padding: 8px 0 4px;
+}
+
+/* ── Community-submitted algs ───────────────────────────────────────────── */
+.alg-community {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-top: 1px dashed var(--alg-border);
+  font-size: 12px;
+}
+.alg-community-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 24px;
+}
+.alg-community-author {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--alg-accent);
+  background: var(--alg-accent-soft);
+  padding: 1px 6px;
+  border-radius: 3px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.alg-community-alg {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  color: var(--alg-text);
+  background: none;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.alg-community-notes {
+  font-size: 11px;
+  color: var(--alg-text-muted);
+  font-style: italic;
+}
+.alg-community-actions {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.alg-community-actions button,
+.alg-community-edit button,
+.alg-community-add button {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: var(--alg-text-muted);
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+}
+.alg-community-actions button:hover,
+.alg-community-edit button:hover,
+.alg-community-add button:hover {
+  background: var(--alg-bg-hover);
+  color: var(--alg-text);
+}
+.alg-community-edit,
+.alg-community-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.alg-community-textarea {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid var(--alg-border);
+  border-radius: 4px;
+  background: var(--alg-bg);
+  color: var(--alg-text);
+  resize: vertical;
+}
+.alg-community-notes-input,
+.alg-community-case-input {
+  flex: 1 1 140px;
+  min-width: 0;
+  font-size: 11px;
+  padding: 4px 6px;
+  border: 1px solid var(--alg-border);
+  border-radius: 4px;
+  background: var(--alg-bg);
+  color: var(--alg-text);
+}
+.alg-community-case-input {
+  /* admin-only: highlight to make obvious it edits case grouping, not just text */
+  flex: 0 0 auto;
+  border-style: dashed;
+  font-weight: 600;
+}
+.alg-community-add-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  background: transparent;
+  border: 1px dashed var(--alg-border);
+  color: var(--alg-text-muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.alg-community-add-btn:hover {
+  background: var(--alg-bg-hover);
+  color: var(--alg-text);
+  border-style: solid;
+}
+.alg-community-login-hint {
+  font-size: 11px;
+  color: var(--alg-text-faint);
+  font-style: italic;
 }
 
 @media (max-width: 480px) {

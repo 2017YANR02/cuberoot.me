@@ -72,13 +72,13 @@ authRoutes.get('/api/auth/callback', async (c) => {
   // 缓存到数据库
   await query(
     `INSERT INTO wca_users (wca_id, name, avatar_url, access_token, refresh_token, token_expires_at)
-     VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? SECOND))
-     ON DUPLICATE KEY UPDATE
-       name = VALUES(name),
-       avatar_url = VALUES(avatar_url),
-       access_token = VALUES(access_token),
-       refresh_token = VALUES(refresh_token),
-       token_expires_at = VALUES(token_expires_at),
+     VALUES (?, ?, ?, ?, ?, NOW() + make_interval(secs => ?))
+     ON CONFLICT (wca_id) DO UPDATE SET
+       name = EXCLUDED.name,
+       avatar_url = EXCLUDED.avatar_url,
+       access_token = EXCLUDED.access_token,
+       refresh_token = EXCLUDED.refresh_token,
+       token_expires_at = EXCLUDED.token_expires_at,
        updated_at = NOW()`,
     [wcaId, user.name, user.avatar?.url, tokenData.access_token, tokenData.refresh_token, tokenData.expires_in],
   );
@@ -145,12 +145,12 @@ authRoutes.post('/api/auth/exchange', async (c) => {
     // 缓存用户信息到数据库
     await query(
       `INSERT INTO wca_users (wca_id, name, avatar_url, access_token, token_expires_at)
-       VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 7200 SECOND))
-       ON DUPLICATE KEY UPDATE
-         name = VALUES(name),
-         avatar_url = VALUES(avatar_url),
-         access_token = VALUES(access_token),
-         token_expires_at = VALUES(token_expires_at),
+       VALUES (?, ?, ?, ?, NOW() + INTERVAL '7200 seconds')
+       ON CONFLICT (wca_id) DO UPDATE SET
+         name = EXCLUDED.name,
+         avatar_url = EXCLUDED.avatar_url,
+         access_token = EXCLUDED.access_token,
+         token_expires_at = EXCLUDED.token_expires_at,
          updated_at = NOW()`,
       [user.wca_id, user.name, user.avatar?.url, accessToken],
     );
