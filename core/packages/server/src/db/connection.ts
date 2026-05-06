@@ -12,6 +12,17 @@ const sql = postgres({
   idle_timeout: 60,
   // mariadb 之前对 undefined 视同 null,这里对齐
   transform: { undefined: null },
+  // DATE 列 (oid 1082) 是无时区的日历日,driver 默认转 JS Date 会染上 UTC midnight
+  // 然后 JSON.stringify 又输出 'YYYY-MM-DDT00:00:00.000Z' —— 前端拿到时刻而非日历日。
+  // 这里强制 DATE 返原样字符串 'YYYY-MM-DD',跟 WCA 比赛日期当地时间语义一致。
+  types: {
+    date: {
+      to: 1082,
+      from: [1082],
+      serialize: (x: string) => x,
+      parse: (x: string) => x,
+    },
+  },
 });
 
 function rewriteQ(s: string): string {
