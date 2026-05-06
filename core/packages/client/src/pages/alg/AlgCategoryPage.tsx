@@ -8,14 +8,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Pencil, Plus } from 'lucide-react';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
   type AlgSubmission,
 } from '@cuberoot/shared';
 import { listSubmissions } from '../../utils/alg_api';
+import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import CommunityAlgs from './CommunityAlgs';
+import AdminCaseEditor, { type AdminEditorState } from './AdminCaseEditor';
 import { VisualCube } from '../../components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import LangToggle from '../../components/LangToggle';
@@ -278,6 +280,9 @@ export default function AlgCategoryPage() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
+  const user = useAuthStore(s => s.user);
+  const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
 
   useEffect(() => {
     if (!validPuzzle || !meta) return;
@@ -371,6 +376,16 @@ export default function AlgCategoryPage() {
         {data && !showSubgroupPicker && (
           <span className="alg-cat-count">{visibleCases.length} {isZh ? '个' : 'cases'}</span>
         )}
+        {isAdmin && data && !showSubgroupPicker && (
+          <button
+            type="button"
+            className="alg-admin-add-btn"
+            onClick={() => setEditorState({ mode: 'add' })}
+            title={isZh ? '新增 case (admin)' : 'Add case (admin)'}
+          >
+            <Plus size={14} /> {isZh ? '新增 case' : 'Add case'}
+          </button>
+        )}
         <LangToggle variant="inline" className="alg-lang-toggle" />
       </div>
 
@@ -400,6 +415,28 @@ export default function AlgCategoryPage() {
 
       {data && showSubgroupPicker && (
         <SubgroupIndex puzzle={puzzleParam} set={set} cases={data.cases} isZh={isZh} />
+      )}
+
+      {editorState && (
+        <AdminCaseEditor
+          puzzle={puzzleParam}
+          setSlug={set}
+          state={editorState}
+          onClose={() => setEditorState(null)}
+          onSaved={(action) => {
+            if (!data) return;
+            if (action.type === 'add') {
+              setData({ ...data, cases: [...data.cases, action.created] });
+            } else if (action.type === 'update') {
+              setData({
+                ...data,
+                cases: data.cases.map(c => c.id === action.updated.id ? action.updated : c),
+              });
+            } else {
+              setData({ ...data, cases: data.cases.filter(c => c.id !== action.id) });
+            }
+          }}
+        />
       )}
 
       {data && !showSubgroupPicker && grouped.map(([subgroup, cases]) => {
@@ -445,6 +482,16 @@ export default function AlgCategoryPage() {
                         <div className="alg-case-info">
                           <div className="alg-case-name">
                             {c.name}
+                            {isAdmin && c.id != null && (
+                              <button
+                                type="button"
+                                className="alg-admin-edit-btn"
+                                onClick={() => setEditorState({ mode: 'edit', existing: c })}
+                                title={isZh ? '编辑 case (admin)' : 'Edit case (admin)'}
+                              >
+                                <Pencil size={12} />
+                              </button>
+                            )}
                             {oriCount > 1 && (
                               <button
                                 type="button"
