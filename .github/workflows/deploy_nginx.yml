@@ -1,0 +1,74 @@
+# 部署 nginx vhost conf 到 cuberoot.me。
+# 改 ops/nginx/*.conf → push → 自动 scp + nginx -t + reload。
+# 失败自动回滚到 .bak。
+name: Deploy Nginx Config
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/nginx/**'
+      - '.github/workflows/deploy_nginx.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp conf to staging
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/id ops/nginx/www.cuberoot.me.conf \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/www.cuberoot.me.conf.new"
+
+      - name: Apply + validate + reload (with rollback on failure)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -e
+          VHOST=/www/server/panel/vhost/nginx/www.cuberoot.me.conf
+          STAGING=/tmp/www.cuberoot.me.conf.new
+          BACKUP="${VHOST}.bak-$(date +%s)"
+
+          if [ ! -f "$STAGING" ]; then
+            echo "ERROR: staging file $STAGING not found"; exit 1
+          fi
+
+          # cmp first — if no changes, skip everything
+          if cmp -s "$VHOST" "$STAGING"; then
+            echo "no-op: live conf already matches new conf"
+            rm -f "$STAGING"
+            exit 0
+          fi
+
+          cp "$VHOST" "$BACKUP"
+          cp "$STAGING" "$VHOST"
+
+          if ! nginx -t 2>&1; then
+            echo "ERROR: nginx -t failed on new conf, rolling back from $BACKUP"
+            cp "$BACKUP" "$VHOST"
+            nginx -t 2>&1 || echo "WARN: rollback validation also failed!"
+            rm -f "$STAGING"
+            exit 1
+          fi
+
+          nginx -s reload
+          rm -f "$STAGING"
+          echo "OK: nginx reloaded; backup at $BACKUP"
+          REMOTE
