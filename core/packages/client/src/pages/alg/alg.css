@@ -704,3 +704,33 @@
   border-color: rgba(220, 80, 80, 0.4) !important;
   color: #ff8888 !important;
 }
+
+.alg-admin-algs-text {
+  font-family: ui-monospace, "Consolas", monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.5 !important;
+}
+.alg-admin-advanced {
+  margin-top: 4px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+}
+.alg-admin-advanced-toggle {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: none;
+  color: var(--text-muted, #888);
+  cursor: pointer; padding: 4px 0;
+  font-size: 0.82rem;
+}
+.alg-admin-advanced-toggle:hover { color: var(--text, #ddd); }
+.alg-admin-advanced-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 165, 80, 0.85);
+  margin-left: 4px;
+}
+.alg-admin-advanced-body {
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: 6px;
+}

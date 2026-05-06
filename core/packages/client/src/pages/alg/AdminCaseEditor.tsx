@@ -1,14 +1,13 @@
 /**
  * Admin-only modal for editing / adding / deleting one alg case.
  *
- * Most fields use plain inputs. `sticker` / `algs` / `oriNames` are JSON
- * blobs — we render them as textareas with parse-on-save. Bad JSON shows
- * an inline error and blocks submit.
+ * 普通 case: 用户填 caseName / subgroup / setup + 一行一条公式即可,sticker
+ * 自动推断默认值。多 orientation (F2L) / 自定义 sticker 等放在"高级"区。
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Save, Trash2 } from 'lucide-react';
-import type { AlgCase } from '@cuberoot/shared';
+import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import type { AlgCase, AlgEntry, AlgSticker } from '@cuberoot/shared';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '../../utils/alg_sets_api';
 
 export type AdminEditorState =
@@ -20,15 +19,47 @@ interface Props {
   setSlug: string;
   state: AdminEditorState;
   onClose: () => void;
-  onSaved: (action: { type: 'add'; created: AlgCase } | { type: 'update'; updated: AlgCase } | { type: 'delete'; id: number }) => void;
+  onSaved: (action:
+    | { type: 'add'; created: AlgCase }
+    | { type: 'update'; updated: AlgCase }
+    | { type: 'delete'; id: number }
+  ) => void;
 }
 
-function blankCase(): AlgCase {
+/** Default sticker for new cases — depends on puzzle/set; rendering needs SOMETHING. */
+function defaultStickerFor(puzzle: string, set: string): AlgSticker {
+  // ZBLS / F2L-shaped sets use the f2l kind (single fl-pattern key)
+  if (puzzle === '3x3' && (set === 'zbls' || set === 'f2l' || set === 'adv-f2l' || set === 'sbls')) {
+    return { kind: 'f2l', fl: '' };
+  }
+  // 3x3 OLL/PLL/COLL/etc. use the face kind (5 face strings)
+  if (puzzle === '3x3') {
+    return { kind: 'face', us: 'yyyyyyyyy', ub: '', uf: '', ul: '', ur: '' };
+  }
+  // 2x2/4x4/5x5 — face kind too
+  if (puzzle === '2x2' || puzzle === '4x4' || puzzle === '5x5') {
+    return { kind: 'face', us: 'yyyyyyyyy', ub: '', uf: '', ul: '', ur: '' };
+  }
+  // sq1/megaminx/pyraminx/skewb — raw kind, admin needs to fill from elsewhere
+  return { kind: 'raw', tag: '', attrs: {} };
+}
+
+/** Flatten 2D algs into one-per-line text (only for the first orientation). */
+function algs2dToText(algs: AlgEntry[][]): string {
+  const first = algs[0] ?? [];
+  return first.map(e => e.alg).filter(Boolean).join('\n');
+}
+function textTo2dAlgs(text: string): AlgEntry[][] {
+  const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  return [lines.map(alg => ({ alg }))];
+}
+
+function blankCase(puzzle: string, set: string): AlgCase {
   return {
     name: '',
     subgroup: '',
     setup: '',
-    sticker: { kind: 'face', us: 'yyyyyyyyy', ub: '', uf: '', ul: '', ur: '' } as AlgCase['sticker'],
+    sticker: defaultStickerFor(puzzle, set),
     algs: [[{ alg: '' }]],
   };
 }
@@ -36,43 +67,77 @@ function blankCase(): AlgCase {
 export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSaved }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const initial = state.mode === 'edit' ? state.existing : blankCase();
+  const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
+
+  // 多 orientation (F2L 风格) 的 case 强制走 advanced (2D JSON),普通 case 走 simple (一行一公式)
+  const isMultiOri = initial.algs.length > 1;
 
   const [caseName, setCaseName] = useState(initial.name);
   const [subgroup, setSubgroup] = useState(initial.subgroup);
   const [setup, setSetup] = useState(initial.setup);
+  const [algsText, setAlgsText] = useState(isMultiOri ? '' : algs2dToText(initial.algs));
+  const [advancedOpen, setAdvancedOpen] = useState(isMultiOri);
   const [standard, setStandard] = useState(initial.standard ?? '');
   const [stickerJson, setStickerJson] = useState(JSON.stringify(initial.sticker, null, 2));
-  const [algsJson, setAlgsJson] = useState(JSON.stringify(initial.algs, null, 2));
+  const [algsJson, setAlgsJson] = useState(isMultiOri ? JSON.stringify(initial.algs, null, 2) : '');
   const [oriNamesJson, setOriNamesJson] = useState(initial.oriNames ? JSON.stringify(initial.oriNames) : '');
   const [trainerKey, setTrainerKey] = useState(initial.trainerKey ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const advancedDirty = useMemo(() => {
+    if (algsJson.trim() && algsJson !== JSON.stringify(initial.algs, null, 2)) return true;
+    if (stickerJson !== JSON.stringify(initial.sticker, null, 2)) return true;
+    if (oriNamesJson) return true;
+    return false;
+  }, [algsJson, stickerJson, oriNamesJson, initial]);
+
   const handleSave = async () => {
     setError(null);
     if (!caseName.trim()) { setError(isZh ? 'Case 名不能为空' : 'caseName required'); return; }
-    let sticker: unknown, algs: unknown, oriNames: string[] | null = null;
-    try { sticker = JSON.parse(stickerJson); }
-    catch { setError(isZh ? 'sticker JSON 格式错' : 'sticker JSON invalid'); return; }
-    try { algs = JSON.parse(algsJson); }
-    catch { setError(isZh ? 'algs JSON 格式错' : 'algs JSON invalid'); return; }
-    if (!Array.isArray(algs)) { setError('algs must be an array'); return; }
+
+    // Algs: prefer advanced JSON if user filled it; else use one-per-line text
+    let algs: AlgEntry[][];
+    if (advancedOpen && algsJson.trim()) {
+      try {
+        const parsed = JSON.parse(algsJson);
+        if (!Array.isArray(parsed)) throw new Error('not array');
+        algs = parsed as AlgEntry[][];
+      } catch {
+        setError(isZh ? '高级 algs JSON 格式错' : 'Advanced algs JSON invalid'); return;
+      }
+    } else {
+      algs = textTo2dAlgs(algsText);
+      if (algs[0].length === 0) {
+        setError(isZh ? '至少要写一条公式' : 'At least one alg required'); return;
+      }
+    }
+
+    // Sticker: parse advanced JSON, default to existing/inferred if empty
+    let sticker: AlgSticker;
+    try { sticker = JSON.parse(stickerJson) as AlgSticker; }
+    catch { setError(isZh ? 'Sticker JSON 格式错' : 'Sticker JSON invalid'); return; }
+
+    let oriNames: string[] | null = null;
     if (oriNamesJson.trim()) {
-      try { oriNames = JSON.parse(oriNamesJson) as string[]; }
-      catch { setError(isZh ? 'oriNames JSON 格式错' : 'oriNames JSON invalid'); return; }
-      if (!Array.isArray(oriNames)) { setError('oriNames must be an array'); return; }
+      try {
+        const v = JSON.parse(oriNamesJson);
+        if (!Array.isArray(v)) throw new Error('not array');
+        oriNames = v as string[];
+      } catch {
+        setError(isZh ? 'oriNames JSON 格式错' : 'oriNames JSON invalid'); return;
+      }
     }
 
     const body: AlgCaseInput = {
       caseName: caseName.trim(),
       subgroup: subgroup.trim(),
       setup: setup.trim(),
-      standard: standard.trim() ? standard.trim() : null,
+      standard: standard.trim() || null,
       sticker,
       algs,
       oriNames,
-      trainerKey: trainerKey.trim() ? trainerKey.trim() : null,
+      trainerKey: trainerKey.trim() || null,
     };
 
     setBusy(true);
@@ -124,38 +189,73 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
 
         <div className="alg-admin-modal-body">
           <label>
-            <span>Case Name *</span>
-            <input value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} />
+            <span>{isZh ? 'Case 名' : 'Case Name'} *</span>
+            <input value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus />
           </label>
           <label>
-            <span>Subgroup</span>
-            <input value={subgroup} onChange={e => setSubgroup(e.target.value)} maxLength={64} />
+            <span>{isZh ? '子分组' : 'Subgroup'}</span>
+            <input value={subgroup} onChange={e => setSubgroup(e.target.value)} maxLength={64}
+              placeholder={isZh ? '例如 Geng / U / Adj Swap' : 'e.g. Geng / U / Adj Swap'} />
           </label>
           <label>
-            <span>Setup</span>
-            <input value={setup} onChange={e => setSetup(e.target.value)} />
+            <span>{isZh ? '打乱 (Setup)' : 'Setup'}</span>
+            <input value={setup} onChange={e => setSetup(e.target.value)}
+              placeholder={isZh ? '把魔方变成此 case 的公式' : 'scramble that produces this case'} />
           </label>
-          <label>
-            <span>{isZh ? 'Standard 公式 (可选)' : 'Standard alg (optional)'}</span>
-            <input value={standard} onChange={e => setStandard(e.target.value)} />
-          </label>
-          <label>
-            <span>Sticker (JSON) *</span>
-            <textarea value={stickerJson} onChange={e => setStickerJson(e.target.value)} rows={4} spellCheck={false} />
-          </label>
-          <label>
-            <span>Algs (JSON, 2D array) *</span>
-            <textarea value={algsJson} onChange={e => setAlgsJson(e.target.value)} rows={6} spellCheck={false} />
-          </label>
-          <label>
-            <span>{isZh ? 'oriNames (F2L 才用,JSON 数组)' : 'oriNames (F2L only, JSON array)'}</span>
-            <textarea value={oriNamesJson} onChange={e => setOriNamesJson(e.target.value)} rows={2} spellCheck={false}
-              placeholder='e.g. ["Front Right","Front Left","Back Left","Back Right"]' />
-          </label>
-          <label>
-            <span>{isZh ? 'trainerKey (ZBLS 才用)' : 'trainerKey (ZBLS only)'}</span>
-            <input value={trainerKey} onChange={e => setTrainerKey(e.target.value)} maxLength={32} />
-          </label>
+
+          {!isMultiOri && (
+            <label>
+              <span>{isZh ? '公式 (一行一条)' : 'Algs (one per line)'} *</span>
+              <textarea
+                className="alg-admin-algs-text"
+                value={algsText}
+                onChange={e => setAlgsText(e.target.value)}
+                rows={Math.max(3, algsText.split('\n').length)}
+                spellCheck={false}
+                placeholder={"R U R' U'\ny' R U R' U' R U R'"}
+              />
+            </label>
+          )}
+
+          {/* Advanced 区:sticker / 多 orientation algs / oriNames / standard / trainerKey */}
+          <div className="alg-admin-advanced">
+            <button
+              type="button"
+              className="alg-admin-advanced-toggle"
+              onClick={() => setAdvancedOpen(o => !o)}
+            >
+              {advancedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              {isZh ? '高级' : 'Advanced'}
+              {!advancedOpen && advancedDirty && <span className="alg-admin-advanced-dot" title="modified" />}
+            </button>
+            {advancedOpen && (
+              <div className="alg-admin-advanced-body">
+                <label>
+                  <span>{isZh ? 'Standard 公式 (可选,展示给 trainer)' : 'Standard alg (optional)'}</span>
+                  <input value={standard} onChange={e => setStandard(e.target.value)} />
+                </label>
+                {isMultiOri && (
+                  <label>
+                    <span>{isZh ? 'Algs 2D JSON (多 orientation 时用)' : 'Algs 2D JSON (multi-orientation)'} *</span>
+                    <textarea value={algsJson} onChange={e => setAlgsJson(e.target.value)} rows={6} spellCheck={false} />
+                  </label>
+                )}
+                <label>
+                  <span>{isZh ? 'Sticker JSON (魔方图渲染数据)' : 'Sticker JSON (cube preview data)'}</span>
+                  <textarea value={stickerJson} onChange={e => setStickerJson(e.target.value)} rows={4} spellCheck={false} />
+                </label>
+                <label>
+                  <span>{isZh ? 'oriNames (F2L 4 个朝向名,JSON 数组)' : 'oriNames (F2L 4-orientation labels, JSON)'}</span>
+                  <textarea value={oriNamesJson} onChange={e => setOriNamesJson(e.target.value)} rows={2} spellCheck={false}
+                    placeholder='["Front Right","Front Left","Back Left","Back Right"]' />
+                </label>
+                <label>
+                  <span>{isZh ? 'trainerKey (ZBLS 才用)' : 'trainerKey (ZBLS only)'}</span>
+                  <input value={trainerKey} onChange={e => setTrainerKey(e.target.value)} maxLength={32} />
+                </label>
+              </div>
+            )}
+          </div>
 
           {error && <div className="alg-admin-modal-error">{error}</div>}
         </div>
