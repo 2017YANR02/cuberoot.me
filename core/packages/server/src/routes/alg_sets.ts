@@ -26,7 +26,8 @@ interface AlgCaseRow {
   puzzle: string;
   set_slug: string;
   position: number;
-  case_name: string;
+  name: string;
+  number: number | null;
   subgroup: string;
   setup: string;
   standard: string | null;
@@ -40,12 +41,13 @@ interface AlgCaseRow {
 function caseRowToJson(c: AlgCaseRow): Record<string, unknown> {
   const out: Record<string, unknown> = {
     id: Number(c.id),
-    name: c.case_name,
+    name: c.name,
     subgroup: c.subgroup,
     setup: c.setup,
     sticker: c.sticker,
     algs: c.algs,
   };
+  if (c.number !== null) out.number = c.number;
   if (c.standard !== null) out.standard = c.standard;
   if (c.ori_names) out.oriNames = c.ori_names;
   if (c.trainer_key) out.trainerKey = c.trainer_key;
@@ -149,7 +151,7 @@ algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
 
   const inserted = await query<AlgCaseRow>(
     `INSERT INTO alg_cases (
-      puzzle, set_slug, position, case_name, subgroup, setup, standard,
+      puzzle, set_slug, position, name, subgroup, setup, standard,
       sticker, algs, ori_names, trainer_key
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?)
     RETURNING *`,
@@ -185,7 +187,7 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
 
   const updated = await query<AlgCaseRow>(
     `UPDATE alg_cases SET
-       case_name = ?, subgroup = ?, setup = ?, standard = ?,
+       name = ?, subgroup = ?, setup = ?, standard = ?,
        sticker = ?::jsonb, algs = ?::jsonb,
        ori_names = ?::jsonb, trainer_key = ?
      WHERE id = ? AND puzzle = ? AND set_slug = ?

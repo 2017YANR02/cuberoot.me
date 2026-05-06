@@ -23,6 +23,8 @@ export interface AlgCase {
   /** PG `alg_cases.id` — populated by API responses; absent in legacy code paths. */
   id?: number;
   name: string;
+  /** Per-set business 编号 (F2L 1..41 = CFOP 文献规范);其它 set 为 undefined。跟 排序的 position 解耦。 */
+  number?: number;
   subgroup: string;
   setup: string;
   standard?: string;
