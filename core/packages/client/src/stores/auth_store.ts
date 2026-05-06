@@ -41,7 +41,7 @@ const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
 
 // NOTE: 管理员列表（前端仅控制 UI 显示，后端独立校验）
-const ADMIN_WCA_IDS = ['2017YANR02'];
+export const ADMIN_WCA_IDS = ['2017YANR02'];
 
 // ── 工具函数 ──
 

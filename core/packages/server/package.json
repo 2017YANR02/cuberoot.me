@@ -16,7 +16,7 @@
     "@types/ws": "^8.18.1",
     "hono": "^4.0.0",
     "jsonwebtoken": "^9.0.0",
-    "mariadb": "^3.4.0",
+    "postgres": "^3.4.9",
     "ws": "^8.20.0"
   },
   "devDependencies": {

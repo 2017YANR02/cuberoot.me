@@ -225,6 +225,20 @@ export interface ReconAlternative {
   createdAt: number;
 }
 
+/** 用户提交的算法——挂在 (puzzle, set, case_name) 上;任何登录用户能投,作者+admin 可改/删 */
+export interface AlgSubmission {
+  id: number;
+  puzzle: string;
+  setSlug: string;
+  caseName: string;
+  alg: string;
+  notes: string | null;
+  authorId: string;
+  authorName: string;
+  /** ISO timestamp from DB */
+  createdAt: string;
+}
+
 /** 评论 */
 export interface ReconComment {
   id: number;

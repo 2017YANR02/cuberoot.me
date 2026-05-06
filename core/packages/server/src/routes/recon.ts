@@ -74,10 +74,10 @@ reconRoutes.get('/api/recon/check-duplicate', async (c) => {
 
   // NOTE: 优先用 person_id（WCA ID）匹配
   if (personId) {
-    sql = 'SELECT id FROM recons WHERE comp = ? AND event = ? AND person_id = ? AND `round` = ? AND solve_num = ?';
+    sql = 'SELECT id FROM recons WHERE comp = ? AND event = ? AND person_id = ? AND "round" = ? AND solve_num = ?';
     params.push(comp, event, personId, round, Number(solveNum));
   } else {
-    sql = 'SELECT id FROM recons WHERE comp = ? AND event = ? AND person = ? AND `round` = ? AND solve_num = ?';
+    sql = 'SELECT id FROM recons WHERE comp = ? AND event = ? AND person = ? AND "round" = ? AND solve_num = ?';
     params.push(comp, event, person, round, Number(solveNum));
   }
 
@@ -195,12 +195,13 @@ reconRoutes.post('/api/recon/comments', async (c) => {
     parentId = Number(body.parentId);
   }
 
-  const result = await query(
+  const result = await query<{ id: number }>(
     `INSERT INTO comments (recon_id, author_id, author_name, content, created_at, parent_id)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?)
+     RETURNING id`,
     [body.reconId, authUser.wcaId, authUser.name, content, Math.floor(Date.now() / 1000), parentId]
-  ) as unknown as { insertId: bigint };
-  return c.json({ ok: true, id: Number(result.insertId) });
+  );
+  return c.json({ ok: true, id: Number(result[0].id) });
 });
 
 // PUT /api/recon/comments/:id
@@ -285,14 +286,14 @@ reconRoutes.put('/api/recon/comments/:id/pin', async (c) => {
 
 // GET /api/recon/edits
 reconRoutes.get('/api/recon/edits', async (c) => {
-  const rows = await query<{ solve_id: string; fields: string }>(
+  const rows = await query<{ solve_id: string; fields: Record<string, unknown> | string }>(
     'SELECT solve_id, fields FROM edits'
   );
-  // NOTE: 返回 {solveId: fields} 的 map（空时返回 {} 而非 []）
+  // NOTE: 返回 {solveId: fields} 的 map (空时返回 {} 而非 []);PG JSONB 列由 driver 直接反序列化
   const edits: Record<string, unknown> = {};
   for (const row of rows) {
     try {
-      edits[row.solve_id] = JSON.parse(String(row.fields));
+      edits[row.solve_id] = typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields;
     } catch {
       // NOTE: fields 损坏时跳过该条，不阻塞整个请求
       console.warn(`edits parse failed for solve_id=${row.solve_id}`);
@@ -316,10 +317,12 @@ reconRoutes.post('/api/recon/save-edit', async (c) => {
   const enriched = { ...fields, _editedAt: now };
   const fieldsJson = JSON.stringify(enriched);
 
-  // NOTE: JSON_MERGE_PATCH 实现字段级合并（MariaDB 10.5+）
+  // 字段级合并:PG jsonb || 是浅合并,右覆盖左(等价 MariaDB JSON_MERGE_PATCH 的扁平场景)
   await query(
-    `INSERT INTO edits (solve_id, fields, edited_at) VALUES (?, ?, ?)
-     ON DUPLICATE KEY UPDATE fields = JSON_MERGE_PATCH(fields, VALUES(fields)), edited_at = VALUES(edited_at)`,
+    `INSERT INTO edits (solve_id, fields, edited_at) VALUES (?, ?::jsonb, ?)
+     ON CONFLICT (solve_id) DO UPDATE SET
+       fields = edits.fields || EXCLUDED.fields,
+       edited_at = EXCLUDED.edited_at`,
     [solveId, fieldsJson, now]
   );
 
@@ -459,7 +462,7 @@ reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
     const rows = await query<{ attempts: string }>(
       `SELECT attempts FROM cubing_attempts_cache
         WHERE slug = ? AND event = ? AND round = ? AND person_id = ?
-          AND fetched_at > NOW() - INTERVAL ${CUBING_CACHE_TTL_DAYS} DAY`,
+          AND fetched_at > NOW() - INTERVAL '${CUBING_CACHE_TTL_DAYS} days'`,
       [slug, event, round, personId],
     );
     if (rows[0]?.attempts) {
@@ -487,7 +490,9 @@ reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
       await query(
         `INSERT INTO cubing_attempts_cache (slug, event, round, person_id, attempts)
          VALUES (?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE attempts = VALUES(attempts), fetched_at = CURRENT_TIMESTAMP`,
+         ON CONFLICT (slug, event, round, person_id) DO UPDATE SET
+           attempts = EXCLUDED.attempts,
+           fetched_at = NOW()`,
         [slug, event, round, personId, JSON.stringify(attempts)],
       );
     } catch (err) {
@@ -518,7 +523,7 @@ reconRoutes.get('/api/recon/wca-results', async (c) => {
     const rows = await query<{ payload: string }>(
       `SELECT payload FROM wca_results_cache
         WHERE comp_id = ? AND wca_event = ?
-          AND fetched_at > NOW() - INTERVAL ${WCA_CACHE_TTL_DAYS} DAY`,
+          AND fetched_at > NOW() - INTERVAL '${WCA_CACHE_TTL_DAYS} days'`,
       [compId, wcaEvent],
     );
     if (rows[0]?.payload) {
@@ -556,7 +561,9 @@ reconRoutes.get('/api/recon/wca-results', async (c) => {
       await query(
         `INSERT INTO wca_results_cache (comp_id, wca_event, payload)
          VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE payload = VALUES(payload), fetched_at = CURRENT_TIMESTAMP`,
+         ON CONFLICT (comp_id, wca_event) DO UPDATE SET
+           payload = EXCLUDED.payload,
+           fetched_at = NOW()`,
         [compId, wcaEvent, payload],
       );
     } catch (err) {
@@ -579,7 +586,7 @@ reconRoutes.get('/api/recon/wca-scrambles', async (c) => {
     const rows = await query<{ payload: string }>(
       `SELECT payload FROM wca_scrambles_cache
         WHERE comp_id = ?
-          AND fetched_at > NOW() - INTERVAL ${WCA_CACHE_TTL_DAYS} DAY`,
+          AND fetched_at > NOW() - INTERVAL '${WCA_CACHE_TTL_DAYS} days'`,
       [compId],
     );
     if (rows[0]?.payload) {
@@ -612,7 +619,9 @@ reconRoutes.get('/api/recon/wca-scrambles', async (c) => {
       await query(
         `INSERT INTO wca_scrambles_cache (comp_id, payload)
          VALUES (?, ?)
-         ON DUPLICATE KEY UPDATE payload = VALUES(payload), fetched_at = CURRENT_TIMESTAMP`,
+         ON CONFLICT (comp_id) DO UPDATE SET
+           payload = EXCLUDED.payload,
+           fetched_at = NOW()`,
         [compId, payload],
       );
     } catch (err) {
@@ -720,7 +729,9 @@ reconRoutes.post('/api/recon/timer-sync', async (c) => {
   await query(
     `INSERT INTO timer_sessions (wca_id, session_id, puzzle_id, solves, updated_at)
      VALUES (?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE solves = VALUES(solves), updated_at = VALUES(updated_at)`,
+     ON CONFLICT (wca_id, session_id, puzzle_id) DO UPDATE SET
+       solves = EXCLUDED.solves,
+       updated_at = EXCLUDED.updated_at`,
     [authUser.wcaId, body.sessionId, body.puzzleId, solvesJson, now]
   );
   return c.json({ ok: true, updatedAt: now });
@@ -740,21 +751,15 @@ reconRoutes.get('/api/recon/:id', async (c) => {
 
   const result = rowToJson(rows[0] as Record<string, unknown>);
 
-  // NOTE: 合并编辑覆盖层（与 PHP get action 一致）
-  const edits = await query<{ fields: string }>(
+  // 合并编辑覆盖层(PG JSONB driver 已经反序列化为 JS object)
+  const edits = await query<{ fields: Record<string, unknown> }>(
     'SELECT fields FROM edits WHERE solve_id = ?', [id]
   );
-  if (edits.length > 0) {
-    try {
-      const fields = JSON.parse(String(edits[0].fields)) as Record<string, unknown>;
-      for (const [k, v] of Object.entries(fields)) {
-        if (!k.startsWith('_')) result[k] = v;
-      }
-      result._edited = true;
-    } catch {
-      // NOTE: edits.fields 解析失败——跳过覆盖层，不阻塞主数据
-      console.warn(`edits parse failed for solve_id=${id}`);
+  if (edits.length > 0 && edits[0].fields && typeof edits[0].fields === 'object') {
+    for (const [k, v] of Object.entries(edits[0].fields)) {
+      if (!k.startsWith('_')) result[k] = v;
     }
+    result._edited = true;
   }
 
   return c.json(result);
@@ -779,8 +784,8 @@ reconRoutes.post('/api/recon', async (c) => {
   }
 
   const { sql, values } = buildInsert('recons', row);
-  const result = await query(sql, values) as unknown as { insertId: bigint };
-  body.id = Number(result.insertId);
+  const inserted = await query<{ id: number }>(sql + ' RETURNING id', values);
+  body.id = Number(inserted[0].id);
   return c.json(body);
 });
 
