@@ -13,9 +13,7 @@ description: "Use when changing Hono server routes (`core/packages/server/**`) o
 
 ## DB 凭据(PostgreSQL 13)
 
-**`.password.md`**(gitignored,不在 repo 里)。生产 DB 是 PG 13 跑在 cuberoot,`recon_db / recon_user / 314159`。**不是** MariaDB —— 2026-05-06 已迁完。
-
-> ⚠️ **MariaDB 服务还得让它跑着**:同实例还托管 `wordpress` 库,`https://www.cuberoot.me/blog/` 在用。**绝不要 stop/disable mysqld 也不要卸载 mariadb**(2026-05-06 试过一次,blog 立刻 504)。要清 recon_db 残留只能 `DROP DATABASE recon_db;`,详见 `core/docs/RECON_DB_DROP.md`。
+**`.password.md`**(gitignored,不在 repo 里)。生产 DB 是 PG 13 跑在 cuberoot,`recon_db / recon_user / 314159`。**不是** MariaDB —— 2026-05-06 已迁完,MariaDB 服务 + 数据已完整卸载(blog 已切静态,见 memory `reference_post_baota.md`)。
 
 云服务器上跑 SQL 示例(密码用 `PGPASSWORD` env,避免 quoting 嵌套):
 ```bash
