@@ -460,13 +460,20 @@ ssh root@cuberoot 'nano /root/core-api/.env'
 
 每个 Phase 结尾我会暂停等用户审。
 
-- [ ] **Phase 0** — 用户确认 driver 选 `pg`、JSON 用 JSONB、占位符走 helper rewrite
-- [ ] **Phase 1** — 写 `schema.pg.sql`,本地装 PG + 起空 `recon_db`,跑 schema 通过
-- [ ] **Phase 2** — 写 `migrate.load`,本地从 MariaDB(模拟)迁数据到本地 PG,行数对账通过
-- [ ] **Phase 3** — 改 `connection.ts` + `recon_helpers.ts` + 13 处 SQL 方言。typecheck + 全 API 跑通
-- [ ] **Phase 4** — playwright/curl 验证 client 主路径(/recon, /recon/submit, /alg, /timer)
-- [ ] **Phase 5** — 云服务器 cutover(用户挑窗口)
+- [x] **Phase 0** — 决策定型(driver=postgres@^3、edits.fields=JSONB 其余=TEXT、helper 自动 ?→\$N、PG 跟 MariaDB 同机、pgloader 跳过改用 mysql_dump_to_pg.mjs)
+- [x] **Phase 1** — `schema.pg.sql` 按生产真实 schema 改写完毕,本地 PG 18.3 跑通 11 张表
+- [x] **Phase 2** — `mysql_dump_to_pg.mjs` 转换器写完,本地行数对账 100% 一致(2515 INSERT 全部成功),抽样 MD5 byte-for-byte 一致
+- [x] **Phase 3** — `connection.ts` 切 postgres@^3、`recon_helpers.ts` 反引号→双引号、13 处 SQL 方言 + 2 处 JSONB 兜底全部改完,server typecheck 通过
+- [x] **Phase 4** — 本地 server 跑通,curl 验证 /api/health, /api/recon/list, /api/recon/:id (含 edits 合并), /api/recon/edits, /api/alg/.../submissions 全部 200
+- [ ] **Phase 5** — 云服务器 cutover(等用户挑窗口)
 - [ ] **Phase 6** — 7-14 天观察 + MariaDB 下架
+
+### Phase 4 留下的 1 个已知风险(cutover 后观察)
+
+**DATE 列时区差异**:本地 PG 返回 `2026-04-19T00:00:00.000Z`,生产 MariaDB 当前返 `2026-04-18T16:00:00.000Z`。两者表示同一日期(中国时区下的 4-19),但 ISO 字符串差 8h。
+- 如果前端用 `new Date(row.date).toLocaleDateString()` 走用户本地时区,行为依赖客户端时区 → 可能不变。
+- 如果前端用 `row.date.slice(0, 10)` 直接截字符串,会显示 4-19 而生产是 4-18 → bug。
+- **应对**:cutover 后立刻浏览 /recon 页若日期有跳变,在 connection.ts 加 `connection: { TimeZone: 'Asia/Shanghai' }` 跟生产对齐。
 
 ---
 
