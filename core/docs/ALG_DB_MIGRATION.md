@@ -1,8 +1,8 @@
 # Alg 公式库 JSON → PostgreSQL 迁移 Plan (B3)
 
-> **状态**: Draft, 等用户审
-> **拟订时间**: 2026-05-06
-> **目标**: 把 `core/packages/shared/data/alg_*.json`(41 个文件 / 152k 行 / ~5 MB)全部迁到 PG `recon_db`,client 通过 API 读 alg。Admin 可在网页直接编辑任何 case 的 caseName / setup / standard / algs / sticker。
+> **状态**: ✅ **完成**(2026-05-06)
+> **目标**: 把 `core/packages/shared/data/alg_*.json`(41 文件 / 152k 行 / ~5 MB)全部迁到 PG `recon_db`,client 通过 API 读 alg。Admin 可在网页直接编辑任何 case 的 caseName / setup / standard / algs / sticker。
+> **结果**: 41 sets / 6010 cases 在生产 PG 上;client `loadAlg` 走 fetch;admin 编辑 UI 上线;41 个 JSON + 一次性脚本已删除。MariaDB 已 stop+disable,/root/backups/recon_db_mariadb_final_2026-05-06.sql.gz + 本地 .tmp/ 双备份保留。
 
 ---
 
@@ -202,15 +202,15 @@ header: `Cache-Control: public, max-age=3600`, `ETag: <hash of updatedAt>`
 
 ## 5. Phase 工作分解
 
-- [ ] **Phase 0** — 用户审 plan + 答 § 1 6 个决策
-- [ ] **Phase 1** — schema.pg.sql 加表,本地跑通
-- [ ] **Phase 2** — `import_alg_json.mts` 一次性导入工具,本地灌 41 个 JSON 进 PG
-- [ ] **Phase 3** — server `routes/alg_sets.ts`(注意跟现有 `routes/alg.ts` 区分,后者管 community submissions)
-- [ ] **Phase 4** — client `loadAlg` 改 fetch
-- [ ] **Phase 5** — admin 编辑 UI:`AlgCategoryPage` case 卡片右上铅笔(admin only),弹 modal 编辑所有字段
-- [ ] **Phase 6** — 本地端到端测试(41 set 全开 + admin CRUD)
-- [ ] **Phase 7** — 生产部署:scp schema + import,push code,curl 验证
-- [ ] **Phase 8** — 清理(删 JSON 文件 + loadAlg switch-case)
+- [x] **Phase 0** — 决策定型(2 表 / 删 JSON / 调 cuberoot.me API / 铅笔按钮 / 一并实现新增删除)
+- [x] **Phase 1** — schema.pg.sql 加 `alg_sets` + `alg_cases`,本地跑通
+- [x] **Phase 2** — `import_alg_json.mts` 灌 41 sets / 6010 cases 进本地 PG
+- [x] **Phase 3** — server `routes/alg_sets.ts` 4 端点(GET list / GET set / PUT/POST/DELETE case)
+- [x] **Phase 4** — client `loadAlg` 改 fetch(`/api/alg/sets/:p/:s`,GH Pages 跨域调 cuberoot.me)
+- [x] **Phase 5** — `AdminCaseEditor` modal:常规字段 input,sticker / oriNames JSON 折到"高级",一行一公式输入
+- [x] **Phase 6** — 本地 + 生产端到端验证(GET 41 set / 抽样 case 内容跟 JSON 一致 / admin UI 铅笔可见)
+- [x] **Phase 7** — 生产 cutover:`scp schema + alg_data.sql` 灌生产 PG (sets=41 / cases=6010 对账一致)+ push code + Actions deploy + curl 验证
+- [x] **Phase 8** — 清理:`git rm` 41 个 alg_*.json + `fix_zbls_setup.mjs` + `mysql_dump_to_pg.mjs` + `match_geng.mts` + `import_alg_json.mts`;CLAUDE.md / server-deploy skill / memory 更新
 
 ---
 
