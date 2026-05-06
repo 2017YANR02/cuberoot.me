@@ -606,7 +606,7 @@
     {
       "name": "C T",
       "subgroup": "C",
-      "setup": "(B U' B' R2')' (R U' R U)'",
+      "setup": "R2 B U B' U' R' U R'",
       "standard": "(↓R U' R U) (B U' B' R2')",
       "sticker": {
         "kind": "f2l",
@@ -626,7 +626,7 @@
     {
       "name": "C T'",
       "subgroup": "C",
-      "setup": "(B' U B L2)' (L' U L' U')'",
+      "setup": "L2 B' U' B U L U' L",
       "standard": "(↓L' U L' U') (B' U B L2)",
       "sticker": {
         "kind": "f2l",
@@ -643,7 +643,7 @@
     {
       "name": "C I",
       "subgroup": "C",
-      "setup": "(F R U2' R' F')' L' U' L",
+      "setup": "F R U2 R' F' L' U' L",
       "standard": "L' U L (F R U2' R' F')",
       "sticker": {
         "kind": "f2l",
@@ -660,7 +660,7 @@
     {
       "name": "C I'",
       "subgroup": "C",
-      "setup": "(F' L' U2 L F)' R U R'",
+      "setup": "F' L' U2 L F R U R'",
       "standard": "R U' R' (F' L' U2 L F)",
       "sticker": {
         "kind": "f2l",
@@ -677,7 +677,7 @@
     {
       "name": "D T",
       "subgroup": "D",
-      "setup": "R U2' R (R' U' R U')' U2 R2'",
+      "setup": "R U2 R U R' U R U2 R2",
       "standard": "↓R2 U2' (R' U' R U') R' U2 R'",
       "sticker": {
         "kind": "f2l",
@@ -694,7 +694,7 @@
     {
       "name": "D T'",
       "subgroup": "D",
-      "setup": "L' U2 L' (L U L' U)' U2' L2",
+      "setup": "L' U2 L' U' L U' L' U2 L2",
       "standard": "↓L2' U2 (L U L' U) L U2' L",
       "sticker": {
         "kind": "f2l",
@@ -745,7 +745,7 @@
     {
       "name": "D V",
       "subgroup": "D",
-      "setup": "(L' U2 L2 F' L' F)' (L' U L U')'",
+      "setup": "F' L F L2 U2 L U L' U' L",
       "standard": "(L' U L U') (L' U2 L2 F' L' F)",
       "sticker": {
         "kind": "f2l",
@@ -762,7 +762,7 @@
     {
       "name": "D V'",
       "subgroup": "D",
-      "setup": "(R U2' R2' F R F')' (R U' R' U)'",
+      "setup": "F R' F' R2 U2 R' U' R U R'",
       "standard": "(R U' R' U) (R U2' R2' F R F')",
       "sticker": {
         "kind": "f2l",
@@ -779,7 +779,7 @@
     {
       "name": "D D",
       "subgroup": "D",
-      "setup": "(R2' F R F')' (r' U' r B')' B2' U2 R'",
+      "setup": "F R' F' R2 B r' U r B2 U2 R'",
       "standard": "R U2' B2 (r' U' r B') (R2' F R F')",
       "sticker": {
         "kind": "f2l",
@@ -796,7 +796,7 @@
     {
       "name": "D D'",
       "subgroup": "D",
-      "setup": "(L2 F' L' F)' (l U l' B)' B2 U2' L",
+      "setup": "F' L F L2 B' l U' l' B2 U2 L",
       "standard": "L' U2 B2' (l U l' B) (L2 F' L' F)",
       "sticker": {
         "kind": "f2l",
@@ -813,7 +813,7 @@
     {
       "name": "E T",
       "subgroup": "E",
-      "setup": "R' E R (R' E R U')'",
+      "setup": "R' E R U R' E' R",
       "standard": "(R' E R U') R' E' R",
       "sticker": {
         "kind": "f2l",
@@ -830,7 +830,7 @@
     {
       "name": "E T'",
       "subgroup": "E",
-      "setup": "R S' R' (R S' R' U)'",
+      "setup": "R S' R' U' R S R'",
       "standard": "(R S' R' U) R S R'",
       "sticker": {
         "kind": "f2l",
@@ -847,7 +847,7 @@
     {
       "name": "E L",
       "subgroup": "E",
-      "setup": "R U' R' (R' F R F')' U",
+      "setup": "R U' R' F R' F' R U",
       "standard": "U' (R' F R F') R U R'",
       "sticker": {
         "kind": "f2l",
@@ -864,7 +864,7 @@
     {
       "name": "E L'",
       "subgroup": "E",
-      "setup": "L' U L (L F' L' F)' U'",
+      "setup": "L' U L F' L F L' U'",
       "standard": "U (L F' L' F) L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -881,7 +881,7 @@
     {
       "name": "E V",
       "subgroup": "E",
-      "setup": "F U' F' (L' U' L U)' U",
+      "setup": "F U' F' U' L' U L U",
       "standard": "U' (L' U' L U) F U F'",
       "sticker": {
         "kind": "f2l",
@@ -898,7 +898,7 @@
     {
       "name": "E V'",
       "subgroup": "E",
-      "setup": "F' U F (R U R' U')' U'",
+      "setup": "F' U F U R U' R' U'",
       "standard": "U (R U R' U') F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -915,7 +915,7 @@
     {
       "name": "E V",
       "subgroup": "E",
-      "setup": "F U F' (L' U L U)' U",
+      "setup": "F U F' U' L' U' L U",
       "standard": "U' (L' U L U) F U' F'",
       "sticker": {
         "kind": "f2l",
@@ -932,7 +932,7 @@
     {
       "name": "E V'",
       "subgroup": "E",
-      "setup": "F' U' F (R U' R' U')' U'",
+      "setup": "F' U' F U R U R' U'",
       "standard": "U (R U' R' U') F' U F",
       "sticker": {
         "kind": "f2l",
@@ -983,7 +983,7 @@
     {
       "name": "E II",
       "subgroup": "E",
-      "setup": "f' (L' U' L U2')' U2 f",
+      "setup": "f' U2 L' U L U2 f",
       "standard": "f' U2' (L' U' L U2') f",
       "sticker": {
         "kind": "f2l",
@@ -1000,7 +1000,7 @@
     {
       "name": "E II'",
       "subgroup": "E",
-      "setup": "f (R U R' U2)' U2' f'",
+      "setup": "f U2 R U' R' U2 f'",
       "standard": "f U2 (R U R' U2) f'",
       "sticker": {
         "kind": "f2l",
@@ -1091,7 +1091,7 @@
     {
       "name": "F T",
       "subgroup": "F",
-      "setup": "(U2' R' U R')' (R2' U2' F R2 F')'",
+      "setup": "R U' R U2 F R2 F' U2 R2",
       "standard": "(↑R2' U2' F R2 F') (U2' R' U R')",
       "sticker": {
         "kind": "f2l",
@@ -1108,7 +1108,7 @@
     {
       "name": "F I",
       "subgroup": "F",
-      "setup": "F2 R' F' (R2 U R2' U)' U2 R F' U y'",
+      "setup": "F2 R' F' U' R2 U' R2 U2 R F' U y'",
       "standard": "y U' F R' U2' (R2 U R2' U) F R F2'",
       "sticker": {
         "kind": "f2l",
@@ -1125,7 +1125,7 @@
     {
       "name": "G T",
       "subgroup": "G",
-      "setup": "R2 (R' U' R U')' U2 R2' U2'",
+      "setup": "R2 U R' U R U2 R2 U2",
       "standard": "U2 R2 U2' (R' U' R U') R2'",
       "sticker": {
         "kind": "f2l",
@@ -1142,7 +1142,7 @@
     {
       "name": "G L2' U' L U' L' U2' L2",
       "subgroup": "G",
-      "setup": "L2' (L U L' U)' U2' L2 U2'",
+      "setup": "L2 U' L U' L' U2 L2 U2",
       "standard": "U2 L2' U2 (L U L' U) L2",
       "sticker": {
         "kind": "f2l",
@@ -1159,7 +1159,7 @@
     {
       "name": "G L",
       "subgroup": "G",
-      "setup": "L' U L (f U R U' R' f')' U",
+      "setup": "L' U L f R U R' U' f' U",
       "standard": "U' (f U R U' R' f') L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -1176,7 +1176,7 @@
     {
       "name": "G R U' R' f' L' U' L U f",
       "subgroup": "G",
-      "setup": "R U' R' (f' U' L' U L f)' U'",
+      "setup": "R U' R' f' L' U' L U f U'",
       "standard": "U (f' U' L' U L f) R U R'",
       "sticker": {
         "kind": "f2l",
@@ -1196,7 +1196,7 @@
     {
       "name": "G VP",
       "subgroup": "G",
-      "setup": "L' U L (F R U' R' F')' U",
+      "setup": "L' U L F R U R' F' U",
       "standard": "U' (F R U' R' F') L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -1213,7 +1213,7 @@
     {
       "name": "G VP'",
       "subgroup": "G",
-      "setup": "R U' R' (F' L' U L F)' U'",
+      "setup": "R U' R' F' L' U' L F U'",
       "standard": "U (F' L' U L F) R U R'",
       "sticker": {
         "kind": "f2l",
@@ -1230,7 +1230,7 @@
     {
       "name": "G VM",
       "subgroup": "G",
-      "setup": "f' L2' (F' U' L' U L S')' U y2'",
+      "setup": "f' L2 S L' U' L U F U y2",
       "standard": "y2 U' (F' U' L' U L S') L2 f",
       "sticker": {
         "kind": "f2l",
@@ -1247,7 +1247,7 @@
     {
       "name": "G VM'",
       "subgroup": "G",
-      "setup": "f R2 (F U R U' R' S)' U' y2'",
+      "setup": "f R2 S' R U R' U' F' U' y2",
       "standard": "y2 U (F U R U' R' S) R2' f'",
       "sticker": {
         "kind": "f2l",
@@ -1264,7 +1264,7 @@
     {
       "name": "G IO",
       "subgroup": "G",
-      "setup": "L' U L (F U' R U' R' F')' U",
+      "setup": "L' U L F R U R' U F' U",
       "standard": "U' (F U' R U' R' F') L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -1281,7 +1281,7 @@
     {
       "name": "G IO'",
       "subgroup": "G",
-      "setup": "R U' R' (F' U L' U L F)' U'",
+      "setup": "R U' R' F' L' U' L U' F U'",
       "standard": "U (F' U L' U L F) R U R'",
       "sticker": {
         "kind": "f2l",
@@ -1298,7 +1298,7 @@
     {
       "name": "G IL",
       "subgroup": "G",
-      "setup": "L U2 (L F' L' F)' U' L' y2'",
+      "setup": "L U2 F' L F L' U' L' y2",
       "standard": "y2↑L U (L F' L' F) U2' L'",
       "sticker": {
         "kind": "f2l",
@@ -1315,7 +1315,7 @@
     {
       "name": "G IL'",
       "subgroup": "G",
-      "setup": "R' U2' (R' F R F')' U R y2'",
+      "setup": "R' U2 F R' F' R U R y2",
       "standard": "y2↑R' U' (R' F R F') U2 R",
       "sticker": {
         "kind": "f2l",
@@ -1332,7 +1332,7 @@
     {
       "name": "G IZ",
       "subgroup": "G",
-      "setup": "(U R U R')' (F R' F' R)' U'",
+      "setup": "R U' R' U' R' F R F' U'",
       "standard": "U (F R' F' R) (U R U R')",
       "sticker": {
         "kind": "f2l",
@@ -1349,7 +1349,7 @@
     {
       "name": "G IZ'",
       "subgroup": "G",
-      "setup": "(U' L' U' L)' (F' L F L')' U",
+      "setup": "L' U L U L F' L' F U",
       "standard": "U' (F' L F L') (U' L' U' L)",
       "sticker": {
         "kind": "f2l",
@@ -1366,7 +1366,7 @@
     {
       "name": "G D",
       "subgroup": "G",
-      "setup": "F U (R U' R' S)' S F'",
+      "setup": "F U S' R U R' FS",
       "standard": "FS' (R U' R' S) U' F'",
       "sticker": {
         "kind": "f2l",
@@ -1386,7 +1386,7 @@
     {
       "name": "G D'",
       "subgroup": "G",
-      "setup": "F' U' (L' U L S')' S' F",
+      "setup": "F' U' S L' U' L F'S'",
       "standard": "F'S (L' U L S') U F",
       "sticker": {
         "kind": "f2l",
@@ -1406,7 +1406,7 @@
     {
       "name": "H T",
       "subgroup": "H",
-      "setup": "R U' R' (R U2' R' U')'",
+      "setup": "R U' R' U R U2 R'",
       "standard": "(R U2' R' U') R U R'",
       "sticker": {
         "kind": "f2l",
@@ -1423,7 +1423,7 @@
     {
       "name": "H L' U L U' L' U2 L",
       "subgroup": "H",
-      "setup": "L' U L (L' U2 L U)'",
+      "setup": "L' U L U' L' U2 L",
       "standard": "(L' U2 L U) L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -1440,7 +1440,7 @@
     {
       "name": "H L",
       "subgroup": "H",
-      "setup": "R' (F R U R' U' F')' U2 R y",
+      "setup": "R' F U R U' R' F' U2 R y",
       "standard": "y' R' U2' (F R U R' U' F') R",
       "sticker": {
         "kind": "f2l",
@@ -1457,7 +1457,7 @@
     {
       "name": "H L F' U' L' U L F U2 L'",
       "subgroup": "H",
-      "setup": "L (F' L' U' L U F)' U2' L' y'",
+      "setup": "L F' U' L' U L F U2 L' y'",
       "standard": "y L U2 (F' L' U' L U F) L'",
       "sticker": {
         "kind": "f2l",
@@ -1474,7 +1474,7 @@
     {
       "name": "H VP",
       "subgroup": "H",
-      "setup": "(S' R U R' S)' (R U2' R' U')'",
+      "setup": "S' R U' R' S U R U2 R'",
       "standard": "(R U2' R' U') (S' R U R' S)",
       "sticker": {
         "kind": "f2l",
@@ -1491,7 +1491,7 @@
     {
       "name": "H VP'",
       "subgroup": "H",
-      "setup": "(S L' U' L S')' (L' U2 L U)'",
+      "setup": "S L' U L S' U' L' U2 L",
       "standard": "(L' U2 L U) (S L' U' L S')",
       "sticker": {
         "kind": "f2l",
@@ -1508,7 +1508,7 @@
     {
       "name": "H VM",
       "subgroup": "H",
-      "setup": "(F R' F' R2 U R')' (R U R' U')'",
+      "setup": "R U' R2 F R F' U R U' R'",
       "standard": "(R U R' U') (F R' F' R2 U R')",
       "sticker": {
         "kind": "f2l",
@@ -1525,7 +1525,7 @@
     {
       "name": "H VM'",
       "subgroup": "H",
-      "setup": "(F' L F L2' U' L)' (L' U' L U)'",
+      "setup": "L' U L2 F' L' F U' L' U L",
       "standard": "(L' U' L U) (F' L F L2' U' L)",
       "sticker": {
         "kind": "f2l",
@@ -1542,7 +1542,7 @@
     {
       "name": "H IO",
       "subgroup": "H",
-      "setup": "(R' F R U2' F')' (R U2' R' U2)' U2'",
+      "setup": "F U2 R' F' R U2 R U2 R' U2",
       "standard": "U2 (R U2' R' U2) (R' F R U2' F')",
       "sticker": {
         "kind": "f2l",
@@ -1559,7 +1559,7 @@
     {
       "name": "H IO'",
       "subgroup": "H",
-      "setup": "(L F' L' U2 F)' (L' U2 L U2')' U2'",
+      "setup": "F' U2 L F L' U2 L' U2 L U2",
       "standard": "U2 (L' U2 L U2') (L F' L' U2 F)",
       "sticker": {
         "kind": "f2l",
@@ -1579,7 +1579,7 @@
     {
       "name": "H IL",
       "subgroup": "H",
-      "setup": "(L F' L F L2')' (L U2 L' U')' U y2'",
+      "setup": "L2 F' L' F L' U L U2 L' U y2",
       "standard": "y2 U' (L U2 L' U') (L F' L F L2')",
       "sticker": {
         "kind": "f2l",
@@ -1596,7 +1596,7 @@
     {
       "name": "H IL'",
       "subgroup": "H",
-      "setup": "(R' F R' F' R2)' (R' U2' R U)' U' y2'",
+      "setup": "R2 F R F' R U' R' U2 R U' y2",
       "standard": "y2 U (R' U2' R U) (R' F R' F' R2)",
       "sticker": {
         "kind": "f2l",
@@ -1613,7 +1613,7 @@
     {
       "name": "H IZ",
       "subgroup": "H",
-      "setup": "(R U M' R')' (R U2' r' U')'",
+      "setup": "M'R U' R' U r U2 R'",
       "standard": "(R U2' r' U') (R U M'R')",
       "sticker": {
         "kind": "f2l",
@@ -1630,7 +1630,7 @@
     {
       "name": "H IZ'",
       "subgroup": "H",
-      "setup": "(L' U' M' L)' (L' U2 l U)'",
+      "setup": "M'L' U L U' l' U2 L",
       "standard": "(L' U2 l U) (L' U' M'L)",
       "sticker": {
         "kind": "f2l",
@@ -1647,7 +1647,7 @@
     {
       "name": "H D",
       "subgroup": "H",
-      "setup": "F (R U' B U' B' R')' U F' U",
+      "setup": "F R B U B' U R' U F' U",
       "standard": "U' F U' (R U' B U' B' R') F'",
       "sticker": {
         "kind": "f2l",
@@ -1664,7 +1664,7 @@
     {
       "name": "H D'",
       "subgroup": "H",
-      "setup": "F' (L' U B' U B L)' U' F U'",
+      "setup": "F' L' B' U' B U' L U' F U'",
       "standard": "U F' U (L' U B' U B L) F",
       "sticker": {
         "kind": "f2l",
@@ -1681,7 +1681,7 @@
     {
       "name": "I T",
       "subgroup": "I",
-      "setup": "R U (U R' U' R F')' F' R'",
+      "setup": "R U F R' U R U' F' R'",
       "standard": "R F (U R' U' R F') U' R'",
       "sticker": {
         "kind": "f2l",
@@ -1698,7 +1698,7 @@
     {
       "name": "I L' U' F' L U' L' U F L",
       "subgroup": "I",
-      "setup": "L' U' (U' L U L' F)' F L",
+      "setup": "L' U' F' L U' L' U F L",
       "standard": "L' F' (U' L U L' F) U L",
       "sticker": {
         "kind": "f2l",
@@ -1715,7 +1715,7 @@
     {
       "name": "I IP",
       "subgroup": "I",
-      "setup": "M (r U' r' U')' U' M'",
+      "setup": "M U r U r' U' M'",
       "standard": "M U (r U' r' U') M'",
       "sticker": {
         "kind": "f2l",
@@ -1732,7 +1732,7 @@
     {
       "name": "I M U' R' F' R U M'",
       "subgroup": "I",
-      "setup": "M (R' F R U)' U M'",
+      "setup": "M U' R' F' R U M'",
       "standard": "M U' (R' F R U) M'",
       "sticker": {
         "kind": "f2l",
@@ -1749,7 +1749,7 @@
     {
       "name": "I VP",
       "subgroup": "I",
-      "setup": "f (F U R U' R' F')' f'",
+      "setup": "f F R U R' U' F' f'",
       "standard": "f (F U R U' R' F') f'",
       "sticker": {
         "kind": "f2l",
@@ -1766,7 +1766,7 @@
     {
       "name": "I VP'",
       "subgroup": "I",
-      "setup": "f' (F' U' L' U L F)' f",
+      "setup": "f' F' L' U' L U F f",
       "standard": "f' (F' U' L' U L F) f",
       "sticker": {
         "kind": "f2l",
@@ -1783,7 +1783,7 @@
     {
       "name": "I VY",
       "subgroup": "I",
-      "setup": "F U' F' (L' U L U2')'",
+      "setup": "F U' F' U2 L' U' L",
       "standard": "(L' U L U2') F U F'",
       "sticker": {
         "kind": "f2l",
@@ -1800,7 +1800,7 @@
     {
       "name": "I VY'",
       "subgroup": "I",
-      "setup": "F' U F (R U' R' U2)'",
+      "setup": "F' U F U2 R U R'",
       "standard": "(R U' R' U2) F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -1817,7 +1817,7 @@
     {
       "name": "I IO",
       "subgroup": "I",
-      "setup": "F U2' (R' F R F')' U' F'",
+      "setup": "F U2 F R' F' R U' F'",
       "standard": "F U (R' F R F') U2 F'",
       "sticker": {
         "kind": "f2l",
@@ -1834,7 +1834,7 @@
     {
       "name": "I IO'",
       "subgroup": "I",
-      "setup": "F' U2 (L F' L' F)' U F",
+      "setup": "F' U2 F' L F L' U F",
       "standard": "F' U' (L F' L' F) U2' F",
       "sticker": {
         "kind": "f2l",
@@ -1851,7 +1851,7 @@
     {
       "name": "I IL",
       "subgroup": "I",
-      "setup": "(S' R U R' S)' (F' U F U2)'",
+      "setup": "S' R U' R' S U2 F' U' F",
       "standard": "(F' U F U2) (S' R U R' S)",
       "sticker": {
         "kind": "f2l",
@@ -1868,7 +1868,7 @@
     {
       "name": "I IL'",
       "subgroup": "I",
-      "setup": "(S L' U' L S')' (F U' F' U2')'",
+      "setup": "S L' U L S' U2 F U F'",
       "standard": "(F U' F' U2') (S L' U' L S')",
       "sticker": {
         "kind": "f2l",
@@ -1885,7 +1885,7 @@
     {
       "name": "I IZ",
       "subgroup": "I",
-      "setup": "(F R U2' R' F')' L' U L U2'",
+      "setup": "F R U2 R' F' L' U L U2",
       "standard": "U2 L' U' L (F R U2' R' F')",
       "sticker": {
         "kind": "f2l",
@@ -1905,7 +1905,7 @@
     {
       "name": "I IZ'",
       "subgroup": "I",
-      "setup": "(F' L' U2 L F)' R U' R' U2'",
+      "setup": "F' L' U2 L F R U' R' U2",
       "standard": "U2 R U R' (F' L' U2 L F)",
       "sticker": {
         "kind": "f2l",
@@ -1925,7 +1925,7 @@
     {
       "name": "I ID",
       "subgroup": "I",
-      "setup": "(F R U2 R' F')' L' U2' L U",
+      "setup": "F R U2 R' F' L' U2 L U",
       "standard": "U' L' U2 L (F R U2 R' F')",
       "sticker": {
         "kind": "f2l",
@@ -1942,7 +1942,7 @@
     {
       "name": "I ID'",
       "subgroup": "I",
-      "setup": "(F' L' U2 L F)' R U2 R' U'",
+      "setup": "F' L' U2 L F R U2 R' U'",
       "standard": "U R U2' R' (F' L' U2 L F)",
       "sticker": {
         "kind": "f2l",
@@ -1959,7 +1959,7 @@
     {
       "name": "J T",
       "subgroup": "J",
-      "setup": "R U R' (R U' R' U)'",
+      "setup": "R U R' U' R U R'",
       "standard": "(R U' R' U) R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -1976,7 +1976,7 @@
     {
       "name": "J L' U' L U L' U' L",
       "subgroup": "J",
-      "setup": "L' U' L (L' U L U')'",
+      "setup": "L' U' L U L' U' L",
       "standard": "(L' U L U') L' U L",
       "sticker": {
         "kind": "f2l",
@@ -1993,7 +1993,7 @@
     {
       "name": "J L",
       "subgroup": "J",
-      "setup": "R U2 R' (F' U' F U')'",
+      "setup": "R U2 R' U F' U F",
       "standard": "(F' U' F U') R U2' R'",
       "sticker": {
         "kind": "f2l",
@@ -2010,7 +2010,7 @@
     {
       "name": "J L' U2 L U' F U' F'",
       "subgroup": "J",
-      "setup": "L' U2' L (F U F' U)'",
+      "setup": "L' U2 L U' F U' F'",
       "standard": "(F U F' U) L' U2 L",
       "sticker": {
         "kind": "f2l",
@@ -2027,7 +2027,7 @@
     {
       "name": "J VB",
       "subgroup": "J",
-      "setup": "F U2' F' (L' U2 L)'",
+      "setup": "F U2 F' L' U2 L",
       "standard": "(L' U2 L) F U2 F'",
       "sticker": {
         "kind": "f2l",
@@ -2044,7 +2044,7 @@
     {
       "name": "J VB'",
       "subgroup": "J",
-      "setup": "F' U2 F (R U2' R')'",
+      "setup": "F' U2 F R U2 R'",
       "standard": "(R U2' R') F' U2' F",
       "sticker": {
         "kind": "f2l",
@@ -2061,7 +2061,7 @@
     {
       "name": "J V",
       "subgroup": "J",
-      "setup": "R' (R' F R F')' U2 R y",
+      "setup": "R' F R' F' R U2 R y",
       "standard": "y'↑R' U2' (R' F R F') R",
       "sticker": {
         "kind": "f2l",
@@ -2078,7 +2078,7 @@
     {
       "name": "J V'",
       "subgroup": "J",
-      "setup": "L (L F' L' F)' U2' L' y'",
+      "setup": "L F' L F L' U2 L' y'",
       "standard": "y↑L U2 (L F' L' F) L'",
       "sticker": {
         "kind": "f2l",
@@ -2095,7 +2095,7 @@
     {
       "name": "J IF",
       "subgroup": "J",
-      "setup": "F (R U R' U)' U' F' U2'",
+      "setup": "F U' R U' R' U' F' U2",
       "standard": "U2 F U (R U R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -2112,7 +2112,7 @@
     {
       "name": "J IF'",
       "subgroup": "J",
-      "setup": "F' (L' U' L U')' U F U2'",
+      "setup": "F' U L' U L U F U2",
       "standard": "U2 F' U' (L' U' L U') F",
       "sticker": {
         "kind": "f2l",
@@ -2163,7 +2163,7 @@
     {
       "name": "J II",
       "subgroup": "J",
-      "setup": "(F' L' U' L F)' (R U' R' U)'",
+      "setup": "F' L' U L F U' R U R'",
       "standard": "(R U' R' U) (F' L' U' L F)",
       "sticker": {
         "kind": "f2l",
@@ -2180,7 +2180,7 @@
     {
       "name": "J II'",
       "subgroup": "J",
-      "setup": "(F R U R' F')' (L' U L U')'",
+      "setup": "F R U' R' F' U L' U' L",
       "standard": "(L' U L U') (F R U R' F')",
       "sticker": {
         "kind": "f2l",
@@ -2197,7 +2197,7 @@
     {
       "name": "J D",
       "subgroup": "J",
-      "setup": "(S' R U' R' S)' (F' U2' F U')'",
+      "setup": "S' R U R' S U F' U2 F",
       "standard": "(F' U2' F U') (S' R U' R' S)",
       "sticker": {
         "kind": "f2l",
@@ -2214,7 +2214,7 @@
     {
       "name": "J D'",
       "subgroup": "J",
-      "setup": "(S L' U L S')' (F U2 F' U)'",
+      "setup": "S L' U' L S' U' F U2 F'",
       "standard": "(F U2 F' U) (S L' U L S')",
       "sticker": {
         "kind": "f2l",
@@ -2231,7 +2231,7 @@
     {
       "name": "K T",
       "subgroup": "K",
-      "setup": "R U' R' (R U' R' U)' U",
+      "setup": "R U' R' U' R U R' U",
       "standard": "U' (R U' R' U) R U R'",
       "sticker": {
         "kind": "f2l",
@@ -2248,7 +2248,7 @@
     {
       "name": "K L' U L U L' U' L",
       "subgroup": "K",
-      "setup": "L' U L (L' U L U')' U'",
+      "setup": "L' U L U L' U' L U'",
       "standard": "U (L' U L U') L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -2265,7 +2265,7 @@
     {
       "name": "K L",
       "subgroup": "K",
-      "setup": "R' F R (R' F R2 U R' U')' U",
+      "setup": "R' F R U R U' R2 F' R U",
       "standard": "U' (R' F R2 U R' U') R' F' R",
       "sticker": {
         "kind": "f2l",
@@ -2282,7 +2282,7 @@
     {
       "name": "K L F' L' U' L' U L2 F L'",
       "subgroup": "K",
-      "setup": "L F' L' (L F' L2' U' L U)' U'",
+      "setup": "L F' L' U' L' U L2 F L' U'",
       "standard": "U (L F' L2' U' L U) L F L'",
       "sticker": {
         "kind": "f2l",
@@ -2299,7 +2299,7 @@
     {
       "name": "K VP",
       "subgroup": "K",
-      "setup": "(r' F2 R F2')' (r U R' U')'",
+      "setup": "F2 R' F2 r U R U' r'",
       "standard": "(r U R' U') (r' F2 R F2')",
       "sticker": {
         "kind": "f2l",
@@ -2316,7 +2316,7 @@
     {
       "name": "K VP'",
       "subgroup": "K",
-      "setup": "(R U2' r' F2)' (R' F' r U)'",
+      "setup": "F2 r U2 R' U' r' F R",
       "standard": "(R' F' r U) (R U2' r' F2)",
       "sticker": {
         "kind": "f2l",
@@ -2333,7 +2333,7 @@
     {
       "name": "K VY",
       "subgroup": "K",
-      "setup": "(S' R U R' S)' (R U' R' U)' U",
+      "setup": "S' R U' R' S U' R U R' U",
       "standard": "U' (R U' R' U) (S' R U R' S)",
       "sticker": {
         "kind": "f2l",
@@ -2350,7 +2350,7 @@
     {
       "name": "K VY'",
       "subgroup": "K",
-      "setup": "(S L' U' L S')' (L' U L U')' U'",
+      "setup": "S L' U L S' U L' U' L U'",
       "standard": "U (L' U L U') (S L' U' L S')",
       "sticker": {
         "kind": "f2l",
@@ -2401,7 +2401,7 @@
     {
       "name": "K IL",
       "subgroup": "K",
-      "setup": "F' U2' (F' S L' U' L S')' U2'",
+      "setup": "F' U2 S L' U L F'S' U2",
       "standard": "U2 (F'S L' U' L S') U2 F",
       "sticker": {
         "kind": "f2l",
@@ -2418,7 +2418,7 @@
     {
       "name": "K IL'",
       "subgroup": "K",
-      "setup": "F U2 (F S' R U R' S)' U2'",
+      "setup": "F U2 S' R U' R' FS U2",
       "standard": "U2 (FS' R U R' S) U2' F'",
       "sticker": {
         "kind": "f2l",
@@ -2469,7 +2469,7 @@
     {
       "name": "K D",
       "subgroup": "K",
-      "setup": "r U' R' U2' M (r U' r' U)' U2'",
+      "setup": "r U' R' U2 M U' r U r' U2",
       "standard": "U2 (r U' r' U) M' U2 R U r'",
       "sticker": {
         "kind": "f2l",
@@ -2486,7 +2486,7 @@
     {
       "name": "K D'",
       "subgroup": "K",
-      "setup": "R' F r U2' M (R' F R U')' U2'",
+      "setup": "R' F r U2 M U R' F' R U2",
       "standard": "U2 (R' F R U') M' U2 r' F' R",
       "sticker": {
         "kind": "f2l",
@@ -2503,7 +2503,7 @@
     {
       "name": "L T",
       "subgroup": "L",
-      "setup": "R U' R' (R U R' U')'",
+      "setup": "R U' R' U R U' R'",
       "standard": "(R U R' U') R U R'",
       "sticker": {
         "kind": "f2l",
@@ -2520,7 +2520,7 @@
     {
       "name": "L L' U L U' L' U L",
       "subgroup": "L",
-      "setup": "L' U L (L' U' L U)'",
+      "setup": "L' U L U' L' U L",
       "standard": "(L' U' L U) L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -2572,7 +2572,7 @@
     {
       "name": "L VB",
       "subgroup": "L",
-      "setup": "(U' L' U L)' (S L' U L S')' U2'",
+      "setup": "L' U' L U S L' U' L S' U2",
       "standard": "U2 (S L' U L S') (U' L' U L)",
       "sticker": {
         "kind": "f2l",
@@ -2589,7 +2589,7 @@
     {
       "name": "L VB'",
       "subgroup": "L",
-      "setup": "(U R U' R')' (S' R U' R' S)' U2'",
+      "setup": "R U R' U' S' R U R' S U2",
       "standard": "U2 (S' R U' R' S) (U R U' R')",
       "sticker": {
         "kind": "f2l",
@@ -2643,7 +2643,7 @@
     {
       "name": "L IF",
       "subgroup": "L",
-      "setup": "(R U M' R')' (R U r' U')'",
+      "setup": "M'R U' R' U r U' R'",
       "standard": "(R U r' U') (R U M'R')",
       "sticker": {
         "kind": "f2l",
@@ -2660,7 +2660,7 @@
     {
       "name": "L IF'",
       "subgroup": "L",
-      "setup": "(L' U' M' L)' (L' U' l U)'",
+      "setup": "M'L' U L U' l' U L",
       "standard": "(L' U' l U) (L' U' M'L)",
       "sticker": {
         "kind": "f2l",
@@ -2746,7 +2746,7 @@
     {
       "name": "L D",
       "subgroup": "L",
-      "setup": "F U' F' (S L' U L S')' U",
+      "setup": "F U' F' S L' U' L S' U",
       "standard": "U' (S L' U L S')F U F'",
       "sticker": {
         "kind": "f2l",
@@ -2763,7 +2763,7 @@
     {
       "name": "L D'",
       "subgroup": "L",
-      "setup": "F' U F (S' R U' R' S)' U'",
+      "setup": "F' U F S' R U R' S U'",
       "standard": "U (S' R U' R' S)F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -2780,7 +2780,7 @@
     {
       "name": "M T",
       "subgroup": "M",
-      "setup": "R U R' (R U2' R' U2)' U",
+      "setup": "R U R' U2 R U2 R' U",
       "standard": "U' (R U2' R' U2) R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -2797,7 +2797,7 @@
     {
       "name": "M L' U' L U2 L' U2 L",
       "subgroup": "M",
-      "setup": "L' U' L (L' U2 L U2')' U'",
+      "setup": "L' U' L U2 L' U2 L U'",
       "standard": "U (L' U2 L U2') L' U L",
       "sticker": {
         "kind": "f2l",
@@ -2814,7 +2814,7 @@
     {
       "name": "M L",
       "subgroup": "M",
-      "setup": "F (R U2' R' U)' U' F'",
+      "setup": "F U' R U2 R' U' F'",
       "standard": "F U (R U2' R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -2831,7 +2831,7 @@
     {
       "name": "M F' U L' U2 L U F",
       "subgroup": "M",
-      "setup": "F' (L' U2 L U')' U F",
+      "setup": "F' U L' U2 L U F",
       "standard": "F' U' (L' U2 L U') F",
       "sticker": {
         "kind": "f2l",
@@ -2885,7 +2885,7 @@
     {
       "name": "M VM",
       "subgroup": "M",
-      "setup": "F R' F' (r U2 r' D)' D R",
+      "setup": "F R' F' D' r U2 r' D R",
       "standard": "R' D' (r U2 r' D) F R F'",
       "sticker": {
         "kind": "f2l",
@@ -2902,7 +2902,7 @@
     {
       "name": "M VM'",
       "subgroup": "M",
-      "setup": "F' L F (l' U2' l D')' D' L'",
+      "setup": "F' L F D l' U2 l D' L'",
       "standard": "L D (l' U2' l D') F' L' F",
       "sticker": {
         "kind": "f2l",
@@ -2919,7 +2919,7 @@
     {
       "name": "M IL",
       "subgroup": "M",
-      "setup": "F (R U' R' U)' U2' F' U",
+      "setup": "F U' R U R' U2 F' U",
       "standard": "U' F U2 (R U' R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -2936,7 +2936,7 @@
     {
       "name": "M IL'",
       "subgroup": "M",
-      "setup": "F' (L' U L U')' U2' F U'",
+      "setup": "F' U L' U' L U2 F U'",
       "standard": "U F' U2 (L' U L U') F",
       "sticker": {
         "kind": "f2l",
@@ -2953,7 +2953,7 @@
     {
       "name": "M IZ",
       "subgroup": "M",
-      "setup": "f R (F U R U' R' S)' U2' y",
+      "setup": "f R S' R U R' U' F' U2 y",
       "standard": "y' U2 (F U R U' R' S) R' f'",
       "sticker": {
         "kind": "f2l",
@@ -2970,7 +2970,7 @@
     {
       "name": "M IZ'",
       "subgroup": "M",
-      "setup": "f' L' (F' U' L' U L S')' U2' y'",
+      "setup": "f' L' S L' U' L U F U2 y'",
       "standard": "y U2 (F' U' L' U L S') L f",
       "sticker": {
         "kind": "f2l",
@@ -2987,7 +2987,7 @@
     {
       "name": "M IY",
       "subgroup": "M",
-      "setup": "(F' U' F U R U R')' (R U' R' U)' U'",
+      "setup": "R U' R' U' F' U F U' R U R' U'",
       "standard": "U (R U' R' U) (F' U' F U R U R')",
       "sticker": {
         "kind": "f2l",
@@ -3004,7 +3004,7 @@
     {
       "name": "M IY'",
       "subgroup": "M",
-      "setup": "(F U F' U' L' U' L)' (L' U L U')' U",
+      "setup": "L' U L U F U' F' U L' U' L U",
       "standard": "U' (L' U L U') (F U F' U' L' U' L)",
       "sticker": {
         "kind": "f2l",
@@ -3021,7 +3021,7 @@
     {
       "name": "M D",
       "subgroup": "M",
-      "setup": "r U r' (M' U' M U2)'",
+      "setup": "r U r' U2 M' U M",
       "standard": "(M' U' M U2) r U' r'",
       "sticker": {
         "kind": "f2l",
@@ -3038,7 +3038,7 @@
     {
       "name": "M D'",
       "subgroup": "M",
-      "setup": "R' F' R (M' U M U2')'",
+      "setup": "R' F' R U2 M' U' M",
       "standard": "(M' U M U2') R' F R",
       "sticker": {
         "kind": "f2l",
@@ -3055,7 +3055,7 @@
     {
       "name": "P T",
       "subgroup": "P",
-      "setup": "R U R' (R U R' U)' U2'",
+      "setup": "R U R' U' R U' R' U2",
       "standard": "U2 (R U R' U) R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -3072,7 +3072,7 @@
     {
       "name": "P R' U R U2 R' U' R",
       "subgroup": "P",
-      "setup": "L' U' L (L' U' L U')' U2'",
+      "setup": "L' U' L U L' U L U2",
       "standard": "U2 (L' U' L U') L' U L",
       "sticker": {
         "kind": "f2l",
@@ -3129,7 +3129,7 @@
     {
       "name": "P VP",
       "subgroup": "P",
-      "setup": "(R' F R F')' U' (R' F R F')' U'",
+      "setup": "F R' F' R U' F R' F' R U'",
       "standard": "U (R' F R F') U (R' F R F')",
       "sticker": {
         "kind": "f2l",
@@ -3146,7 +3146,7 @@
     {
       "name": "P VP'",
       "subgroup": "P",
-      "setup": "(L F' L' F)' U (L F' L' F)' U",
+      "setup": "F' L F L' U F' L F L' U",
       "standard": "U' (L F' L' F) U' (L F' L' F)",
       "sticker": {
         "kind": "f2l",
@@ -3197,7 +3197,7 @@
     {
       "name": "P IP",
       "subgroup": "P",
-      "setup": "F (R U R' U)' F' U'",
+      "setup": "F U' R U' R' F' U'",
       "standard": "U F (R U R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -3214,7 +3214,7 @@
     {
       "name": "P IP'",
       "subgroup": "P",
-      "setup": "F' (L' U' L U')' F U",
+      "setup": "F' U L' U L F U",
       "standard": "U' F' (L' U' L U') F",
       "sticker": {
         "kind": "f2l",
@@ -3299,7 +3299,7 @@
     {
       "name": "P D",
       "subgroup": "P",
-      "setup": "(L' U2 L2 F' L' F2)' F U2'",
+      "setup": "F2 L F L2 U2 L F U2",
       "standard": "U2 F' (L' U2 L2 F' L' F2)",
       "sticker": {
         "kind": "f2l",
@@ -3316,7 +3316,7 @@
     {
       "name": "P D'",
       "subgroup": "P",
-      "setup": "(R U2' R2' F R F2')' F' U2'",
+      "setup": "F2 R' F' R2 U2 R' F' U2",
       "standard": "U2 F (R U2' R2' F R F2')",
       "sticker": {
         "kind": "f2l",
@@ -3333,7 +3333,7 @@
     {
       "name": "Q T",
       "subgroup": "Q",
-      "setup": "R U R' (R U2' R' U)' U'",
+      "setup": "R U R' U' R U2 R' U'",
       "standard": "U (R U2' R' U) R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -3350,7 +3350,7 @@
     {
       "name": "Q R' U' R U R' U2 R",
       "subgroup": "Q",
-      "setup": "L' U' L (L' U2 L U')' U",
+      "setup": "L' U' L U L' U2 L U",
       "standard": "U' (L' U2 L U') L' U L",
       "sticker": {
         "kind": "f2l",
@@ -3367,7 +3367,7 @@
     {
       "name": "Q L",
       "subgroup": "Q",
-      "setup": "(F' L' U' L F)' (R U2' R' U)' U'",
+      "setup": "F' L' U L F U' R U2 R' U'",
       "standard": "U (R U2' R' U) (F' L' U' L F)",
       "sticker": {
         "kind": "f2l",
@@ -3384,7 +3384,7 @@
     {
       "name": "Q F R U' R' F' U L' U2 L",
       "subgroup": "Q",
-      "setup": "(F R U R' F')' (L' U2 L U')' U",
+      "setup": "F R U' R' F' U L' U2 L U",
       "standard": "U' (L' U2 L U') (F R U R' F')",
       "sticker": {
         "kind": "f2l",
@@ -3401,7 +3401,7 @@
     {
       "name": "Q VP",
       "subgroup": "Q",
-      "setup": "(F' L' F L' U L)' (L' U L2)' U'",
+      "setup": "L' U' L F' L F L2 U' L U'",
       "standard": "U (L' U L2) (F' L' F L' U L)",
       "sticker": {
         "kind": "f2l",
@@ -3418,7 +3418,7 @@
     {
       "name": "Q VP'",
       "subgroup": "Q",
-      "setup": "(F R F' R U' R')' (R U' R2')' U",
+      "setup": "R U R' F R' F' R2 U R' U",
       "standard": "U' (R U' R2') (F R F' R U' R')",
       "sticker": {
         "kind": "f2l",
@@ -3435,7 +3435,7 @@
     {
       "name": "Q VM",
       "subgroup": "Q",
-      "setup": "f' U F (S2 R U2' R' S)' U'",
+      "setup": "f' U F S' R U2 R' S2 U'",
       "standard": "U (S2 R U2' R' S)F' U' f",
       "sticker": {
         "kind": "f2l",
@@ -3452,7 +3452,7 @@
     {
       "name": "Q VM'",
       "subgroup": "Q",
-      "setup": "f U' F' (S2' L' U2 L S')' U",
+      "setup": "f U' F' S L' U2 L S2 U",
       "standard": "U' (S2' L' U2 L S')F U f'",
       "sticker": {
         "kind": "f2l",
@@ -3469,7 +3469,7 @@
     {
       "name": "Q IP",
       "subgroup": "Q",
-      "setup": "R U' R' (F R U R' U' F')' U'",
+      "setup": "R U' R' F U R U' R' F' U'",
       "standard": "U (F R U R' U' F') R U R'",
       "sticker": {
         "kind": "f2l",
@@ -3486,7 +3486,7 @@
     {
       "name": "Q IP'",
       "subgroup": "Q",
-      "setup": "L' U L (F' L' U' L U F)' U",
+      "setup": "L' U L F' U' L' U L F U",
       "standard": "U' (F' L' U' L U F) L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -3543,7 +3543,7 @@
     {
       "name": "Q IY",
       "subgroup": "Q",
-      "setup": "(R B U' B' R')' (R U2' R' U)' U'",
+      "setup": "R B U B' R' U' R U2 R' U'",
       "standard": "U (R U2' R' U) (R B U' B' R')",
       "sticker": {
         "kind": "f2l",
@@ -3560,7 +3560,7 @@
     {
       "name": "Q IY'",
       "subgroup": "Q",
-      "setup": "(L' B' U B L)' (L' U2 L U')' U",
+      "setup": "L' B' U' B L U L' U2 L U",
       "standard": "U' (L' U2 L U') (L' B' U B L)",
       "sticker": {
         "kind": "f2l",
@@ -3577,7 +3577,7 @@
     {
       "name": "Q D",
       "subgroup": "Q",
-      "setup": "F (F2 R' F' R2 U2' R')' U",
+      "setup": "F R U2 R2 F R F2 U",
       "standard": "U' (F2 R' F' R2 U2' R') F'",
       "sticker": {
         "kind": "f2l",
@@ -3594,7 +3594,7 @@
     {
       "name": "Q D'",
       "subgroup": "Q",
-      "setup": "F' (F2' L F L2' U2 L)' U'",
+      "setup": "F' L' U2 L2 F' L' F2 U'",
       "standard": "U (F2' L F L2' U2 L) F",
       "sticker": {
         "kind": "f2l",
@@ -3611,7 +3611,7 @@
     {
       "name": "R RT",
       "subgroup": "R",
-      "setup": "R U' R' (R U R' U)' U",
+      "setup": "R U' R' U' R U' R' U",
       "standard": "U' (R U R' U) R U R'",
       "sticker": {
         "kind": "f2l",
@@ -3628,7 +3628,7 @@
     {
       "name": "R L' U L U L' U L",
       "subgroup": "R",
-      "setup": "L' U L (L' U' L U')' U'",
+      "setup": "L' U L U L' U L U'",
       "standard": "U (L' U' L U') L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -3645,7 +3645,7 @@
     {
       "name": "R RL",
       "subgroup": "R",
-      "setup": "L' U' L (F' L' U' L U F)'",
+      "setup": "L' U' L F' U' L' U L F",
       "standard": "(F' L' U' L U F) L' U L",
       "sticker": {
         "kind": "f2l",
@@ -3662,7 +3662,7 @@
     {
       "name": "R R U R' F U R U' R' F'",
       "subgroup": "R",
-      "setup": "R U R' (F R U R' U' F')'",
+      "setup": "R U R' F U R U' R' F'",
       "standard": "(F R U R' U' F') R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -3679,7 +3679,7 @@
     {
       "name": "R VP",
       "subgroup": "R",
-      "setup": "r U' R' (r U' R' U')' U2'",
+      "setup": "r U' R' U R U r' U2",
       "standard": "U2 (r U' R' U') R U r'",
       "sticker": {
         "kind": "f2l",
@@ -3696,7 +3696,7 @@
     {
       "name": "R VP'",
       "subgroup": "R",
-      "setup": "l' U L (l' U L U)' U2'",
+      "setup": "l' U L U' L' U' l U2",
       "standard": "U2 (l' U L U) L' U' l",
       "sticker": {
         "kind": "f2l",
@@ -3716,7 +3716,7 @@
     {
       "name": "R VM",
       "subgroup": "R",
-      "setup": "(M L' U L)' (l' U' L U)' U",
+      "setup": "L' U' ML U' L' U l U",
       "standard": "U' (l' U' L U) (ML' U L)",
       "sticker": {
         "kind": "f2l",
@@ -3733,7 +3733,7 @@
     {
       "name": "R VM'",
       "subgroup": "R",
-      "setup": "(M R U' R')' (r U R' U')' U'",
+      "setup": "R U MR' U R U' r' U'",
       "standard": "U (r U R' U') (MR U' R')",
       "sticker": {
         "kind": "f2l",
@@ -3750,7 +3750,7 @@
     {
       "name": "R IZ",
       "subgroup": "R",
-      "setup": "F (R U R' U2)' U F'",
+      "setup": "F U2 R U' R' U F'",
       "standard": "F U' (R U R' U2) F'",
       "sticker": {
         "kind": "f2l",
@@ -3767,7 +3767,7 @@
     {
       "name": "R IZ'",
       "subgroup": "R",
-      "setup": "F' (L' U' L U2')' U' F",
+      "setup": "F' U2 L' U L U' F",
       "standard": "F' U (L' U' L U2') F",
       "sticker": {
         "kind": "f2l",
@@ -3784,7 +3784,7 @@
     {
       "name": "R IL",
       "subgroup": "R",
-      "setup": "F' U' (L' B' U2 B L)' F U",
+      "setup": "F' U' L' B' U2 B L F U",
       "standard": "U' F' (L' B' U2 B L) U F",
       "sticker": {
         "kind": "f2l",
@@ -3801,7 +3801,7 @@
     {
       "name": "R IL'",
       "subgroup": "R",
-      "setup": "F U (R B U2' B' R')' F' U'",
+      "setup": "F U R B U2 B' R' F' U'",
       "standard": "U F (R B U2' B' R') U' F'",
       "sticker": {
         "kind": "f2l",
@@ -3818,7 +3818,7 @@
     {
       "name": "R IY",
       "subgroup": "R",
-      "setup": "F' U (F' S L' U L S')' U'",
+      "setup": "F' U S L' U' L F'S' U'",
       "standard": "U (F'S L' U L S') U' F",
       "sticker": {
         "kind": "f2l",
@@ -3835,7 +3835,7 @@
     {
       "name": "R IY'",
       "subgroup": "R",
-      "setup": "F U' (F S' R U' R' S)' U",
+      "setup": "F U' S' R U R' FS U",
       "standard": "U' (FS' R U' R' S) U F'",
       "sticker": {
         "kind": "f2l",
@@ -3852,7 +3852,7 @@
     {
       "name": "R D",
       "subgroup": "R",
-      "setup": "(M' U R U r')' (r U' r' U2)' U2'",
+      "setup": "r U' R' U' M U2 r U r' U2",
       "standard": "U2 (r U' r' U2) (M' U R U r')",
       "sticker": {
         "kind": "f2l",
@@ -3869,7 +3869,7 @@
     {
       "name": "R D'",
       "subgroup": "R",
-      "setup": "(M' U' L' U' l)' (l' U l U2')' U2'",
+      "setup": "l' U L U M U2 l' U' l U2",
       "standard": "U2 (l' U l U2') (M' U' L' U' l)",
       "sticker": {
         "kind": "f2l",
@@ -3903,7 +3903,7 @@
     {
       "name": "S VO",
       "subgroup": "S",
-      "setup": "S U F (R U R' U)' U f' U2'",
+      "setup": "S U F U' R U' R' U f' U2",
       "standard": "U2 f U' (R U R' U) F' U' S'",
       "sticker": {
         "kind": "f2l",
@@ -3920,7 +3920,7 @@
     {
       "name": "S VY",
       "subgroup": "S",
-      "setup": "F (R B U' B' R')' U' F' U2'",
+      "setup": "F R B U B' R' U' F' U2",
       "standard": "U2 F U (R B U' B' R') F'",
       "sticker": {
         "kind": "f2l",
@@ -3954,7 +3954,7 @@
     {
       "name": "S L",
       "subgroup": "S",
-      "setup": "F (R U2' R' U)' U F' U'",
+      "setup": "F U' R U2 R' U F' U'",
       "standard": "U F U' (R U2' R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -3971,7 +3971,7 @@
     {
       "name": "S L'",
       "subgroup": "S",
-      "setup": "F' (L' U2 L U')' U' F U",
+      "setup": "F' U L' U2 L U' F U",
       "standard": "U' F' U (L' U2 L U') F",
       "sticker": {
         "kind": "f2l",
@@ -3988,7 +3988,7 @@
     {
       "name": "S VZ",
       "subgroup": "S",
-      "setup": "F (R U R' U)' U F' U2'",
+      "setup": "F U' R U' R' U F' U2",
       "standard": "U2 F U' (R U R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -4005,7 +4005,7 @@
     {
       "name": "S VZ'",
       "subgroup": "S",
-      "setup": "F' (L' U' L U')' U' F U2'",
+      "setup": "F' U L' U L U' F U2",
       "standard": "U2 F' U (L' U' L U') F",
       "sticker": {
         "kind": "f2l",
@@ -4022,7 +4022,7 @@
     {
       "name": "T TP",
       "subgroup": "T",
-      "setup": "R U R' (R' F R F')' U",
+      "setup": "R U R' F R' F' R U",
       "standard": "U' (R' F R F') R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -4039,7 +4039,7 @@
     {
       "name": "T L' U' L F' L F L'",
       "subgroup": "T",
-      "setup": "L' U' L (L F' L' F)' U'",
+      "setup": "L' U' L F' L F L' U'",
       "standard": "U (L F' L' F) L' U L",
       "sticker": {
         "kind": "f2l",
@@ -4090,7 +4090,7 @@
     {
       "name": "T IF",
       "subgroup": "T",
-      "setup": "F' U (F' S L' U' L S')' U",
+      "setup": "F' U S L' U L F'S' U",
       "standard": "U' (F'S L' U' L S') U' F",
       "sticker": {
         "kind": "f2l",
@@ -4107,7 +4107,7 @@
     {
       "name": "T IF'",
       "subgroup": "T",
-      "setup": "F U' (F S' R U R' S)' U'",
+      "setup": "F U' S' R U' R' FS U'",
       "standard": "U (FS' R U R' S) U F'",
       "sticker": {
         "kind": "f2l",
@@ -4124,7 +4124,7 @@
     {
       "name": "T IB",
       "subgroup": "T",
-      "setup": "F' U (R U2' R2' F R F2')' U2'",
+      "setup": "F' U F2 R' F' R2 U2 R' U2",
       "standard": "U2 (R U2' R2' F R F2') U' F",
       "sticker": {
         "kind": "f2l",
@@ -4141,7 +4141,7 @@
     {
       "name": "T IB'",
       "subgroup": "T",
-      "setup": "F U' (L' U2 L2 F' L' F2)' U2'",
+      "setup": "F U' F2 L F L2 U2 L U2",
       "standard": "U2 (L' U2 L2 F' L' F2) U F'",
       "sticker": {
         "kind": "f2l",
@@ -4158,7 +4158,7 @@
     {
       "name": "U T",
       "subgroup": "U",
-      "setup": "R U R' (R U' R' U2)' U",
+      "setup": "R U R' U2 R U R' U",
       "standard": "U' (R U' R' U2) R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -4175,7 +4175,7 @@
     {
       "name": "U L' U' L U2 L' U' L",
       "subgroup": "U",
-      "setup": "L' U' L (L' U L U2')' U'",
+      "setup": "L' U' L U2 L' U' L U'",
       "standard": "U (L' U L U2') L' U L",
       "sticker": {
         "kind": "f2l",
@@ -4192,7 +4192,7 @@
     {
       "name": "U D",
       "subgroup": "U",
-      "setup": "F' U' (S L' U' L S')' U F",
+      "setup": "F' U' S L' U L S' U F",
       "standard": "F' U' (S L' U' L S') U F",
       "sticker": {
         "kind": "f2l",
@@ -4212,7 +4212,7 @@
     {
       "name": "U D'",
       "subgroup": "U",
-      "setup": "F U (S' R U R' S)' U' F'",
+      "setup": "F U S' R U' R' S U' F'",
       "standard": "F U (S' R U R' S) U' F'",
       "sticker": {
         "kind": "f2l",
@@ -4229,7 +4229,7 @@
     {
       "name": "U L",
       "subgroup": "U",
-      "setup": "F' (L' U L U)' U2' F U",
+      "setup": "F' U' L' U' L U2 F U",
       "standard": "U' F' U2 (L' U L U) F",
       "sticker": {
         "kind": "f2l",
@@ -4246,7 +4246,7 @@
     {
       "name": "U L'",
       "subgroup": "U",
-      "setup": "F (R U' R' U')' U2' F' U'",
+      "setup": "F U R U R' U2 F' U'",
       "standard": "U F U2 (R U' R' U') F'",
       "sticker": {
         "kind": "f2l",
@@ -4263,7 +4263,7 @@
     {
       "name": "U L",
       "subgroup": "U",
-      "setup": "F' (L' U' L U D)' D F U",
+      "setup": "F' UD' L' U L D F U",
       "standard": "U'↓F' D' (L' U' L UD) F",
       "sticker": {
         "kind": "f2l",
@@ -4280,7 +4280,7 @@
     {
       "name": "U L'",
       "subgroup": "U",
-      "setup": "F (R U R' U' D')' D' F' U'",
+      "setup": "F U'D R U' R' D' F' U'",
       "standard": "U↓F D (R U R' U'D') F'",
       "sticker": {
         "kind": "f2l",
@@ -4297,7 +4297,7 @@
     {
       "name": "U VZ",
       "subgroup": "U",
-      "setup": "F (R U R' U2)' U' F' U'",
+      "setup": "F U2 R U' R' U' F' U'",
       "standard": "U F U (R U R' U2) F'",
       "sticker": {
         "kind": "f2l",
@@ -4314,7 +4314,7 @@
     {
       "name": "U VZ'",
       "subgroup": "U",
-      "setup": "F' (L' U' L U2)' U F U",
+      "setup": "F' U2 L' U L U F U",
       "standard": "U' F' U' (L' U' L U2) F",
       "sticker": {
         "kind": "f2l",
@@ -4331,7 +4331,7 @@
     {
       "name": "U VZ",
       "subgroup": "U",
-      "setup": "F (R U' R' U)' U F' U",
+      "setup": "F U' R U R' U F' U",
       "standard": "U' F U' (R U' R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -4348,7 +4348,7 @@
     {
       "name": "U VZ'",
       "subgroup": "U",
-      "setup": "F' (L' U L U')' U' F U'",
+      "setup": "F' U L' U' L U' F U'",
       "standard": "U F' U (L' U L U') F",
       "sticker": {
         "kind": "f2l",
@@ -4365,7 +4365,7 @@
     {
       "name": "U VO",
       "subgroup": "U",
-      "setup": "F (R U2' R' U2)' F' U2'",
+      "setup": "F U2 R U2 R' F' U2",
       "standard": "U2 F (R U2' R' U2) F'",
       "sticker": {
         "kind": "f2l",
@@ -4382,7 +4382,7 @@
     {
       "name": "U VO'",
       "subgroup": "U",
-      "setup": "F' (L' U2 L U2')' F U2'",
+      "setup": "F' U2 L' U2 L F U2",
       "standard": "U2 F' (L' U2 L U2') F",
       "sticker": {
         "kind": "f2l",
@@ -4402,7 +4402,7 @@
     {
       "name": "U VY",
       "subgroup": "U",
-      "setup": "R S (U' R' U R)' S' R' U'",
+      "setup": "R S R' U' R U S' R' U'",
       "standard": "U R S (U'↑R' U R) S' R'",
       "sticker": {
         "kind": "f2l",
@@ -4419,7 +4419,7 @@
     {
       "name": "U VY'",
       "subgroup": "U",
-      "setup": "L' S' (U L U' L')' S L U",
+      "setup": "L' S' L U L' U' S L U",
       "standard": "U' L' S' (U↑L U' L') S L",
       "sticker": {
         "kind": "f2l",
@@ -4436,7 +4436,7 @@
     {
       "name": "V T",
       "subgroup": "V",
-      "setup": "F' U F (R U R' U)' U",
+      "setup": "F' U F U' R U' R' U",
       "standard": "U' (R U R' U) F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -4453,7 +4453,7 @@
     {
       "name": "V R U' R' U F' U F",
       "subgroup": "V",
-      "setup": "F U' F' (L' U' L U')' U'",
+      "setup": "F U' F' U L' U L U'",
       "standard": "U (L' U' L U') F U F'",
       "sticker": {
         "kind": "f2l",
@@ -4470,7 +4470,7 @@
     {
       "name": "V T",
       "subgroup": "V",
-      "setup": "F' U F (R U' R' U')' U2'",
+      "setup": "F' U F U R U R' U2",
       "standard": "U2 (R U' R' U') F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -4487,7 +4487,7 @@
     {
       "name": "V R U' R' U' F' U' F",
       "subgroup": "V",
-      "setup": "F U' F' (L' U L U)' U2'",
+      "setup": "F U' F' U' L' U' L U2",
       "standard": "U2 (L' U L U) F U F'",
       "sticker": {
         "kind": "f2l",
@@ -4504,7 +4504,7 @@
     {
       "name": "V T",
       "subgroup": "V",
-      "setup": "(F R' F' R)' R U' R' U2'",
+      "setup": "R' F R F' R U' R' U2",
       "standard": "U2 R U R' (F R' F' R)",
       "sticker": {
         "kind": "f2l",
@@ -4521,7 +4521,7 @@
     {
       "name": "V T'",
       "subgroup": "V",
-      "setup": "(F' L F L')' L' U L U2",
+      "setup": "L F' L' F L' U L U2",
       "standard": "U2' L' U' L (F' L F L')",
       "sticker": {
         "kind": "f2l",
@@ -4541,7 +4541,7 @@
     {
       "name": "V T",
       "subgroup": "V",
-      "setup": "F' U' F (R U R' U')' U2'",
+      "setup": "F' U' F U R U' R' U2",
       "standard": "U2 (R U R' U') F' U↓F",
       "sticker": {
         "kind": "f2l",
@@ -4558,7 +4558,7 @@
     {
       "name": "V T'",
       "subgroup": "V",
-      "setup": "F U F' (L' U' L U)' U2'",
+      "setup": "F U F' U' L' U L U2",
       "standard": "U2 (L' U' L U) F U'↓F'",
       "sticker": {
         "kind": "f2l",
@@ -4575,7 +4575,7 @@
     {
       "name": "V I",
       "subgroup": "V",
-      "setup": "(R' F R F2' U' F)' (R U R' U)'",
+      "setup": "F' U F2 R' F' R U' R U' R'",
       "standard": "(R U R' U) (R' F R F2' U' F)",
       "sticker": {
         "kind": "f2l",
@@ -4592,7 +4592,7 @@
     {
       "name": "V I'",
       "subgroup": "V",
-      "setup": "(L F' L' F2 U F')' (L' U' L U')'",
+      "setup": "F U' F2 L F L' U L' U L",
       "standard": "(L' U' L U') (L F' L' F2 U F')",
       "sticker": {
         "kind": "f2l",
@@ -4609,7 +4609,7 @@
     {
       "name": "V I",
       "subgroup": "V",
-      "setup": "F (S' R U' R' S)' U F' U2'",
+      "setup": "F S' R U R' S U F' U2",
       "standard": "U2 F U' (S' R U' R' S)F'",
       "sticker": {
         "kind": "f2l",
@@ -4626,7 +4626,7 @@
     {
       "name": "V I'",
       "subgroup": "V",
-      "setup": "F' (S L' U L S')' U' F U2'",
+      "setup": "F' S L' U' L S' U' F U2",
       "standard": "U2 F' U (S L' U L S')F",
       "sticker": {
         "kind": "f2l",
@@ -4643,7 +4643,7 @@
     {
       "name": "V I",
       "subgroup": "V",
-      "setup": "F' U2' (S L' U' L S')' U' F",
+      "setup": "F' U2 S L' U L S' U' F",
       "standard": "F' U (S L' U' L S') U2 F",
       "sticker": {
         "kind": "f2l",
@@ -4660,7 +4660,7 @@
     {
       "name": "V I'",
       "subgroup": "V",
-      "setup": "F U2 (S' R U R' S)' U F'",
+      "setup": "F U2 S' R U' R' S U F'",
       "standard": "F U' (S' R U R' S) U2' F'",
       "sticker": {
         "kind": "f2l",
@@ -4677,7 +4677,7 @@
     {
       "name": "V I",
       "subgroup": "V",
-      "setup": "(S L' U L S')' (F U F' U')' U2'",
+      "setup": "S L' U' L S' U F U' F' U2",
       "standard": "U2 (F U F' U') (S L' U L S')",
       "sticker": {
         "kind": "f2l",
@@ -4694,7 +4694,7 @@
     {
       "name": "V I'",
       "subgroup": "V",
-      "setup": "(S' R U' R' S)' (F' U' F U)' U2'",
+      "setup": "S' R U R' S U' F' U F U2",
       "standard": "U2 (F' U' F U) (S' R U' R' S)",
       "sticker": {
         "kind": "f2l",
@@ -4711,7 +4711,7 @@
     {
       "name": "W T",
       "subgroup": "W",
-      "setup": "R U R' (R U R' U2)' U",
+      "setup": "R U R' U2 R U' R' U",
       "standard": "U' (R U R' U2) R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -4728,7 +4728,7 @@
     {
       "name": "W L' U' L U2 L' U L",
       "subgroup": "W",
-      "setup": "L' U' L (L' U' L U2')' U'",
+      "setup": "L' U' L U2 L' U L U'",
       "standard": "U (L' U' L U2') L' U L",
       "sticker": {
         "kind": "f2l",
@@ -4745,7 +4745,7 @@
     {
       "name": "W L",
       "subgroup": "W",
-      "setup": "F' U' (F R U R' U' F2)' U2'",
+      "setup": "F' U' F2 U R U' R' F' U2",
       "standard": "U2 (↓F R U R' U' F2) U F",
       "sticker": {
         "kind": "f2l",
@@ -4762,7 +4762,7 @@
     {
       "name": "W F U F2 U' L' U L F",
       "subgroup": "W",
-      "setup": "F U (F' L' U' L U F2')' U2",
+      "setup": "F U F2 U' L' U L F U2",
       "standard": "U2' (↓F' L' U' L U F2') U' F'",
       "sticker": {
         "kind": "f2l",
@@ -4779,7 +4779,7 @@
     {
       "name": "W VP",
       "subgroup": "W",
-      "setup": "l' (L U' L' U')' U' l U'",
+      "setup": "l' U L U L' U' l U'",
       "standard": "U l' U (L U' L' U') l",
       "sticker": {
         "kind": "f2l",
@@ -4796,7 +4796,7 @@
     {
       "name": "W VP'",
       "subgroup": "W",
-      "setup": "r (R' U R U)' U r' U",
+      "setup": "r U' R' U' R U r' U",
       "standard": "U' r U' (R' U R U) r'",
       "sticker": {
         "kind": "f2l",
@@ -4813,7 +4813,7 @@
     {
       "name": "W VY",
       "subgroup": "W",
-      "setup": "f' (F' L' U' L U F)' f",
+      "setup": "f' F' U' L' U L F f",
       "standard": "f' (F' L' U' L U F) f",
       "sticker": {
         "kind": "f2l",
@@ -4830,7 +4830,7 @@
     {
       "name": "W VY'",
       "subgroup": "W",
-      "setup": "f (F R U R' U' F')' f'",
+      "setup": "f F U R U' R' F' f'",
       "standard": "f (F R U R' U' F') f'",
       "sticker": {
         "kind": "f2l",
@@ -4847,7 +4847,7 @@
     {
       "name": "W IL",
       "subgroup": "W",
-      "setup": "F (R U R' U2)' F' U2'",
+      "setup": "F U2 R U' R' F' U2",
       "standard": "U2 F (R U R' U2) F'",
       "sticker": {
         "kind": "f2l",
@@ -4864,7 +4864,7 @@
     {
       "name": "W IL'",
       "subgroup": "W",
-      "setup": "F' (L' U' L U2)' F U2'",
+      "setup": "F' U2 L' U L F U2",
       "standard": "U2 F' (L' U' L U2) F",
       "sticker": {
         "kind": "f2l",
@@ -4881,7 +4881,7 @@
     {
       "name": "W IZ",
       "subgroup": "W",
-      "setup": "(M R U2' R')' (r U R' U')' U",
+      "setup": "R U2 MR' U R U' r' U",
       "standard": "U' (r U R' U') (MR U2' R')",
       "sticker": {
         "kind": "f2l",
@@ -4898,7 +4898,7 @@
     {
       "name": "W IZ'",
       "subgroup": "W",
-      "setup": "(M L' U2 L)' (l' U' L U)' U'",
+      "setup": "L' U2 ML U' L' U l U'",
       "standard": "U (l' U' L U) (ML' U2 L)",
       "sticker": {
         "kind": "f2l",
@@ -4915,7 +4915,7 @@
     {
       "name": "W IY",
       "subgroup": "W",
-      "setup": "F (R U' R' U)' U' F' U",
+      "setup": "F U' R U R' U' F' U",
       "standard": "U' F U (R U' R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -4932,7 +4932,7 @@
     {
       "name": "W IY'",
       "subgroup": "W",
-      "setup": "F' (L' U L U')' U F U'",
+      "setup": "F' U L' U' L U F U'",
       "standard": "U F' U' (L' U L U') F",
       "sticker": {
         "kind": "f2l",
@@ -4949,7 +4949,7 @@
     {
       "name": "W D",
       "subgroup": "W",
-      "setup": "(F R U2' R' U F')' L' U' L U",
+      "setup": "F U' R U2 R' F' L' U' L U",
       "standard": "U' L' U L (F R U2' R' U F')",
       "sticker": {
         "kind": "f2l",
@@ -4966,7 +4966,7 @@
     {
       "name": "W D'",
       "subgroup": "W",
-      "setup": "(F' L' U2 L U' F)' R U R' U'",
+      "setup": "F' U L' U2 L F R U R' U'",
       "standard": "U R U' R' (F' L' U2 L U' F)",
       "sticker": {
         "kind": "f2l",
@@ -5018,7 +5018,7 @@
     {
       "name": "X L",
       "subgroup": "X",
-      "setup": "F U F' (L U L2' U L2 U2 L')'",
+      "setup": "F U F' L U2 L2 U' L2 U' L'",
       "standard": "(L U L2' U L2 U2 L') F U' F'",
       "sticker": {
         "kind": "f2l",
@@ -5035,7 +5035,7 @@
     {
       "name": "X F' U' F R' U2 R2 U R2 U R",
       "subgroup": "X",
-      "setup": "F' U' F (R' U' R2 U' R2' U2' R)'",
+      "setup": "F' U' F R' U2 R2 U R2 U R",
       "standard": "(R' U' R2 U' R2' U2' R) F' U F",
       "sticker": {
         "kind": "f2l",
@@ -5052,7 +5052,7 @@
     {
       "name": "X VP",
       "subgroup": "X",
-      "setup": "F U' F' (L' U2 L U')' U'",
+      "setup": "F U' F' U L' U2 L U'",
       "standard": "U (L' U2 L U') F U F'",
       "sticker": {
         "kind": "f2l",
@@ -5069,7 +5069,7 @@
     {
       "name": "X VP'",
       "subgroup": "X",
-      "setup": "F' U F (R U2' R' U)' U",
+      "setup": "F' U F U' R U2 R' U",
       "standard": "U' (R U2' R' U) F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -5086,7 +5086,7 @@
     {
       "name": "X VY",
       "subgroup": "X",
-      "setup": "S' (R' U2' R2 U R2' U R)' S",
+      "setup": "S' R' U' R2 U' R2 U2 R S",
       "standard": "S' (R' U2' R2 U R2' U R) S",
       "sticker": {
         "kind": "f2l",
@@ -5103,7 +5103,7 @@
     {
       "name": "X VY'",
       "subgroup": "X",
-      "setup": "S (L U2 L2' U' L2 U' L')' S'",
+      "setup": "S L U L2 U L2 U2 L' S'",
       "standard": "S (L U2 L2' U' L2 U' L') S'",
       "sticker": {
         "kind": "f2l",
@@ -5120,7 +5120,7 @@
     {
       "name": "X IO",
       "subgroup": "X",
-      "setup": "(F R U2' R' F')' (L' U2 L U)'",
+      "setup": "F R U2 R' F' U' L' U2 L",
       "standard": "(L' U2 L U) (F R U2' R' F')",
       "sticker": {
         "kind": "f2l",
@@ -5137,7 +5137,7 @@
     {
       "name": "X IO'",
       "subgroup": "X",
-      "setup": "(F' L' U2 L F)' (R U2' R' U')'",
+      "setup": "F' L' U2 L F U R U2 R'",
       "standard": "(R U2' R' U') (F' L' U2 L F)",
       "sticker": {
         "kind": "f2l",
@@ -5154,7 +5154,7 @@
     {
       "name": "X IZ",
       "subgroup": "X",
-      "setup": "F (R U' R' U)' (R U R' U)' F'",
+      "setup": "F U' R U R' U' R U' R' F'",
       "standard": "F (R U R' U) (R U' R' U) F'",
       "sticker": {
         "kind": "f2l",
@@ -5171,7 +5171,7 @@
     {
       "name": "X IZ'",
       "subgroup": "X",
-      "setup": "F' (L' U L U')' (L' U' L U')' F",
+      "setup": "F' U L' U' L U L' U L F",
       "standard": "F' (L' U' L U') (L' U L U') F",
       "sticker": {
         "kind": "f2l",
@@ -5188,7 +5188,7 @@
     {
       "name": "X IP",
       "subgroup": "X",
-      "setup": "F (R U2' R' U2)' U F'",
+      "setup": "F U2 R U2 R' U F'",
       "standard": "F U' (R U2' R' U2) F'",
       "sticker": {
         "kind": "f2l",
@@ -5205,7 +5205,7 @@
     {
       "name": "X IP'",
       "subgroup": "X",
-      "setup": "F' (L' U2 L U2')' U' F",
+      "setup": "F' U2 L' U2 L U' F",
       "standard": "F' U (L' U2 L U2') F",
       "sticker": {
         "kind": "f2l",
@@ -5222,7 +5222,7 @@
     {
       "name": "X D",
       "subgroup": "X",
-      "setup": "(M R U M' R')' (M U M' U2)' U'",
+      "setup": "M'R U' MR' U2 M U' M' U'",
       "standard": "U (M U M' U2) (MR U M'R')",
       "sticker": {
         "kind": "f2l",
@@ -5239,7 +5239,7 @@
     {
       "name": "X D'",
       "subgroup": "X",
-      "setup": "(M L' U' M' L)' (M U' M' U2')' U",
+      "setup": "M'L' U ML U2 M U M' U",
       "standard": "U' (M U' M' U2') (ML' U' M'L)",
       "sticker": {
         "kind": "f2l",
@@ -5392,7 +5392,7 @@
     {
       "name": "Geng 1117",
       "subgroup": "Geng (耿暄一)",
-      "setup": "L F' L' U' L F L' U2' R' F R F' (U' U)'",
+      "setup": "L F' L' U' L F L' U2 R' F R F' U' U",
       "standard": "(U' U) F R' F' R U2 L F' L' U L F L'",
       "sticker": {
         "kind": "f2l",
@@ -5409,7 +5409,7 @@
     {
       "name": "Geng 1118",
       "subgroup": "Geng (耿暄一)",
-      "setup": "L' U' L U F R U R' U F' (U' U2)'",
+      "setup": "L' U' L U F R U R' U F' U2 U",
       "standard": "(U' U2) F U' R U' R' F' U' L' U L",
       "sticker": {
         "kind": "f2l",
@@ -5443,7 +5443,7 @@
     {
       "name": "Geng 1129",
       "subgroup": "Geng (耿暄一)",
-      "setup": "F' U2 R' F' R U2 L F L' (U2 U)' y",
+      "setup": "F' U2 R' F' R U2 L F L' U' U2 y",
       "standard": "y' (U2 U) L F' L' U2' R' F R U2' F",
       "sticker": {
         "kind": "f2l",
@@ -5477,7 +5477,7 @@
     {
       "name": "Geng 1145",
       "subgroup": "Geng (耿暄一)",
-      "setup": "F' U F U R U' (U' U)' R' U y'",
+      "setup": "F' U F U R U' U' U R' U y'",
       "standard": "y U' R (U' U) U R' U' F' U' F",
       "sticker": {
         "kind": "f2l",
@@ -5511,7 +5511,7 @@
     {
       "name": "Geng 1147",
       "subgroup": "Geng (耿暄一)",
-      "setup": "F' L' U L F U' L F' L' U' L F L' (U U2)'",
+      "setup": "F' L' U L F U' L F' L' U' L F L' U2 U'",
       "standard": "(U U2) L F' L' U L F L' U F' L' U' L F",
       "sticker": {
         "kind": "f2l",
@@ -5545,7 +5545,7 @@
     {
       "name": "Geng 1221",
       "subgroup": "Geng (耿暄一)",
-      "setup": "L' U L U' l' U L (L' L)' U r' (r r')' F' R (U' U2')'",
+      "setup": "L' U L U' l' U L L' L U r' r r' F' R U2 U",
       "standard": "(U' U2') R' F (r r') r U' (L' L) L' U' l U L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -5647,7 +5647,7 @@
     {
       "name": "Geng 1386",
       "subgroup": "Geng (耿暄一)",
-      "setup": "F R U R' U2 F' U' L' U' L (U y' U2)'",
+      "setup": "F R U R' U2 F' U' L' U' L U2 y U'",
       "standard": "(U y' U2) L' U L U F U2' R U' R' F'",
       "sticker": {
         "kind": "f2l",
@@ -5732,7 +5732,7 @@
     {
       "name": "Geng 1588",
       "subgroup": "Geng (耿暄一)",
-      "setup": "F' U2' F R U R' (F' F)' U' d",
+      "setup": "F' U2 F R U R' F' F U' d",
       "standard": "d' U (F' F) R U' R' F' U2 F",
       "sticker": {
         "kind": "f2l",
@@ -5800,7 +5800,7 @@
     {
       "name": "Geng 1846",
       "subgroup": "Geng (耿暄一)",
-      "setup": "R U' R' U2' R' F R F' R U R' (U' U)'",
+      "setup": "R U' R' U2 R' F R F' R U R' U' U",
       "standard": "(U' U) R U' R' F R' F' R U2 R U R'",
       "sticker": {
         "kind": "f2l",
@@ -5834,7 +5834,7 @@
     {
       "name": "Geng 1848",
       "subgroup": "Geng (耿暄一)",
-      "setup": "L' U' L U2 F R U R' U F' U2 (U' U)'",
+      "setup": "L' U' L U2 F R U R' U F' U2 U' U",
       "standard": "(U' U) U2' F U' R U' R' F' U2' L' U L",
       "sticker": {
         "kind": "f2l",
@@ -6021,7 +6021,7 @@
     {
       "name": "Geng 2188",
       "subgroup": "Geng (耿暄一)",
-      "setup": "L' U L F (U' U')' F' U L' U' L U",
+      "setup": "L' U L F U U F' U L' U' L U",
       "standard": "U' L' U L U' F (U' U') F' L' U' L",
       "sticker": {
         "kind": "f2l",
@@ -6072,7 +6072,7 @@
     {
       "name": "Geng 2193",
       "subgroup": "Geng (耿暄一)",
-      "setup": "R U' R' F U R U' (U U')' R' F' U y'",
+      "setup": "R U' R' F U R U' U U' R' F' U y'",
       "standard": "y U' F R (U U') U R' U' F' R U R'",
       "sticker": {
         "kind": "f2l",
@@ -6548,7 +6548,7 @@
     {
       "name": "Geng 75",
       "subgroup": "Geng (耿暄一)",
-      "setup": "R U R' U' F' L' U' L U' F (F' F)' U",
+      "setup": "R U R' U' F' L' U' L U' F F' F U",
       "standard": "U' (F' F) F' U L' U L F U R U' R'",
       "sticker": {
         "kind": "f2l",
@@ -6565,7 +6565,7 @@
     {
       "name": "Geng 76",
       "subgroup": "Geng (耿暄一)",
-      "setup": "F U' R U' R' U' F' (U' F U' U F' U2')' y",
+      "setup": "F U' R U' R' U' F' U2 F U' U F' U y",
       "standard": "y' (U' F U' U F' U2') F U R U R' U F'",
       "sticker": {
         "kind": "f2l",

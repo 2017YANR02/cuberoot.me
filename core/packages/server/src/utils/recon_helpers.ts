@@ -321,12 +321,12 @@ export function checkRateLimit(ip: string): void {
 // ── SQL 构建工具 ──
 
 /**
- * 构建 INSERT 语句（列名反引号包裹，防 SQL 保留字冲突）
+ * 构建 INSERT 语句(列名双引号包裹,PG 兼容)
  */
 export function buildInsert(table: string, row: Record<string, unknown>): {
   sql: string; values: unknown[];
 } {
-  const cols = Object.keys(row).map(c => `\`${c}\``).join(', ');
+  const cols = Object.keys(row).map(c => `"${c}"`).join(', ');
   const placeholders = Object.keys(row).map(() => '?').join(', ');
   return {
     sql: `INSERT INTO ${table} (${cols}) VALUES (${placeholders})`,
@@ -340,10 +340,10 @@ export function buildInsert(table: string, row: Record<string, unknown>): {
 export function buildUpdate(table: string, row: Record<string, unknown>, whereCol: string, whereVal: unknown): {
   sql: string; values: unknown[];
 } {
-  const setParts = Object.keys(row).map(c => `\`${c}\` = ?`);
+  const setParts = Object.keys(row).map(c => `"${c}" = ?`);
   const values = [...Object.values(row), whereVal];
   return {
-    sql: `UPDATE ${table} SET ${setParts.join(', ')} WHERE \`${whereCol}\` = ?`,
+    sql: `UPDATE ${table} SET ${setParts.join(', ')} WHERE "${whereCol}" = ?`,
     values,
   };
 }

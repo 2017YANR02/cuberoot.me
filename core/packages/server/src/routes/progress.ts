@@ -50,10 +50,11 @@ progressRoutes.post('/api/progress/:algSetId', async (c) => {
 
   // 批量插入
   const sql = `INSERT INTO train_results (user_id, alg_set_id, case_id, time_ms, correct, created_at)
-               VALUES (?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000))`;
+               VALUES (?, ?, ?, ?, ?, to_timestamp(?::numeric / 1000.0) AT TIME ZONE 'UTC')`;
 
   for (const r of results) {
-    await query(sql, [userId, algSetId, r.caseId, r.timeMs, r.correct, r.timestamp]);
+    // correct 列 PG 端是 SMALLINT,driver 不接 boolean,前端来的 true/false → 1/0
+    await query(sql, [userId, algSetId, r.caseId, r.timeMs, r.correct ? 1 : 0, r.timestamp]);
   }
 
   return c.json({ success: true, count: results.length });

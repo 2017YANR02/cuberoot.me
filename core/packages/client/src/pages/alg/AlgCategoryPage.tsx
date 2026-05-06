@@ -12,7 +12,10 @@ import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle } from 'luci
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
+  type AlgSubmission,
 } from '@cuberoot/shared';
+import { listSubmissions } from '../../utils/alg_api';
+import CommunityAlgs from './CommunityAlgs';
 import { VisualCube } from '../../components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import LangToggle from '../../components/LangToggle';
@@ -274,6 +277,24 @@ export default function AlgCategoryPage() {
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
+
+  useEffect(() => {
+    if (!validPuzzle || !meta) return;
+    listSubmissions(puzzleParam, set)
+      .then(setSubmissions)
+      .catch(e => { console.warn('[alg] failed to load submissions', e); setSubmissions([]); });
+  }, [puzzleParam, set, validPuzzle, meta]);
+
+  const submissionsByCase = useMemo(() => {
+    const map = new Map<string, AlgSubmission[]>();
+    for (const s of submissions) {
+      const arr = map.get(s.caseName) ?? [];
+      arr.push(s);
+      map.set(s.caseName, arr);
+    }
+    return map;
+  }, [submissions]);
 
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
@@ -442,12 +463,6 @@ export default function AlgCategoryPage() {
                               <code>{c.setup}</code>
                             </div>
                           )}
-                          {c.standard && (
-                            <div className="alg-case-standard">
-                              <span className="alg-pill">{isZh ? '标准' : 'Std'}</span>
-                              <code>{c.standard}</code>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="alg-case-algs">
@@ -468,6 +483,19 @@ export default function AlgCategoryPage() {
                           );
                         })}
                       </div>
+                      <CommunityAlgs
+                        puzzle={puzzleParam}
+                        setSlug={set}
+                        caseName={c.name}
+                        submissions={submissionsByCase.get(c.name) ?? []}
+                        onPatch={(action) => {
+                          setSubmissions(prev => {
+                            if (action.type === 'add') return [...prev, action.submission];
+                            if (action.type === 'update') return prev.map(s => s.id === action.submission.id ? action.submission : s);
+                            return prev.filter(s => s.id !== action.id);
+                          });
+                        }}
+                      />
                     </article>
                   );
                 })}

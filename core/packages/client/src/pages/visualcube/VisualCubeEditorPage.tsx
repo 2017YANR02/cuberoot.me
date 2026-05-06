@@ -664,9 +664,9 @@ export default function VisualCubeEditorPage() {
   };
 
   const apiUrl = useMemo(() => {
-    // /api/visualcube.svg only supports a subset (alg/view/mask/size/bg/cc/co)
+    // /api/visualcube.svg only supports a subset (alg/case/view/mask/size/bg/cc/co)
     const p = new URLSearchParams();
-    if (state.algorithm) p.set('alg', state.algorithm);  // endpoint always treats as case
+    if (state.algorithm) p.set(state.algType, state.algorithm);
     if (state.cubeView !== 'normal') p.set('view', state.cubeView);
     if (state.stageMask) p.set('mask', state.stageMask);
     if (state.imageSize !== DEFAULTS.imageSize) p.set('size', String(state.imageSize));
