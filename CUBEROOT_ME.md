@@ -1,133 +1,118 @@
 # cuberoot.me 服务器环境
 
+> 2026-05-06 完成 post-宝塔 改造:卸 PHP/MariaDB/WordPress/宝塔 panel,blog 切静态,
+> nginx vhost 入 git,SSL 走 systemd timer。详见 memory `reference_post_baota.md`。
+
 ## 服务器信息
 
 | 项目 | 值 |
 |------|-----|
 | **域名** | `cuberoot.me` → 301 到 `www.cuberoot.me` |
-| **服务器 IP** | `47.97.30.181` |
 | **托管** | 云服务器 |
-| **OS** | Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
-| **Web 服务器** | Nginx 1.26.2 |
-| **管理面板** | 宝塔面板（端口 8888） |
-| **WordPress 路径** | `/www/wwwroot/wordpress/`（通过 `/blog/` 符号链接访问） |
-| **Nginx 主配置** | `/www/server/nginx/conf/nginx.conf` |
-| **HTTPS** | ✅ 已启用（HSTS + QUIC/h3，certbot Let's Encrypt，expires 2026-06-30） |
-| **多语言** | Polylang 插件（中/英双语，`/zh/` 路径） |
-| **磁盘** | 40GB 总量，约 17GB 可用 |
-| **Node.js** | v24.14.0（通过 nvm 安装，路径 `~/.nvm/versions/node/v24.14.0/`） |
+| **OS** | Linux 3.2104 U10(基于 CentOS/RHEL,包管理用 `dnf`) |
+| **Web 服务器** | Nginx 1.26.2(宝塔装的二进制 `/www/server/nginx/`,vhost 走 git) |
+| **HTTPS** | certbot Let's Encrypt(`certbot-renew.timer` systemd 自动续期,expires 2026-06-30) |
+| **磁盘** | 40GB 总量,约 19GB 可用 |
+| **Node.js** | v24.14.0(nvm,`~/.nvm/versions/node/v24.14.0/`) |
 | **npm** | v11.9.0 |
-| **pm2** | v6.0.14（进程守护，`pm2 startup` 已配置开机自启） |
-| **pnpm** | v10.32.1（monorepo 包管理器） |
+| **pm2** | v6.0.14(`pm2 startup` 已配置开机自启) |
+| **pnpm** | v10.32.1 |
 
 ### URL 架构
 
 ```
-https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/wwwroot/cuberoot-spa/）
-https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
-https://www.cuberoot.me/tools/       → 静态文件镜像（/www/wwwroot/toolkit/tools/）
-https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:3001）
+https://www.cuberoot.me/             → React SPA(/www/wwwroot/cuberoot-spa/)
+https://www.cuberoot.me/blog/        → 静态镜像(/www/wwwroot/blog-static/,WordPress 已下架)
+https://www.cuberoot.me/tools/       → 静态文件镜像(/www/wwwroot/toolkit/tools/)
+https://www.cuberoot.me/api/         → Hono API(Nginx 反代到 127.0.0.1:3001)
+https://www.cuberoot.me/stats/       → WCA 统计页面
 ```
 
 ### 概述
 
-云服务器 上部署了 `ruiminyan.github.io` 的镜像。
+云服务器上部署了 `ruiminyan.github.io` 的镜像 + Hono API。
 
 | 项目 | 值 |
 |------|-----|
 | **地址** | [www.cuberoot.me](https://www.cuberoot.me) |
-| **SPA 根目录** | `/www/wwwroot/cuberoot-spa/`（入口 `index.html` + `_assets/`） |
-| **镜像根目录** | `/www/wwwroot/toolkit/`（deploy_mirror rsync 同步产物） |
-| **Nginx 站点配置** | `/www/server/panel/vhost/nginx/www.cuberoot.me.conf` |
-| **SSL 证书** | `/etc/letsencrypt/live/cuberoot.me/`（certbot，expires 2026-06-30） |
-| **CI 配置** | `.github/workflows/deploy_mirror.yml` |
+| **SPA 根目录** | `/www/wwwroot/cuberoot-spa/`(入口 `index.html` + `_assets/`) |
+| **镜像根目录** | `/www/wwwroot/toolkit/`(deploy_mirror rsync 同步产物) |
+| **Blog 静态根** | `/www/wwwroot/blog-static/`(2026-05-06 wget 镜像,内容冻结) |
+| **Nginx 站点配置** | `/www/server/panel/vhost/nginx/www.cuberoot.me.conf`(source 在 `ops/nginx/`) |
+| **SSL 证书** | `/etc/letsencrypt/live/cuberoot.me/`(certbot 标准位置) |
+| **CI 部署** | `.github/workflows/deploy_mirror.yml`(SPA/static)、`deploy_core.yml`(Hono)、`deploy_nginx.yml`(vhost) |
 
 ### 同步机制
 
 ```
 push 到 main 分支
       │
-      ▼
-GitHub Actions（deploy_mirror.yml）
-      │
-      ├── 1. 组装 _deploy/ 目录（静态文件）
-      ├── 2. SSH 连接云服务器
-      └── 3. rsync 同步 _deploy/ → /www/wwwroot/toolkit/
-      │
-      ▼
-www.cuberoot.me 更新（约 15 秒）
+      ├── 改 SPA / 静态(client) → deploy_mirror.yml → rsync /www/wwwroot/toolkit/
+      ├── 改 Hono server         → deploy_core.yml   → rsync /root/core-api/ + pm2 restart
+      └── 改 ops/nginx/*.conf    → deploy_nginx.yml  → scp + nginx -t + reload
 ```
 
-**自动触发条件**：
-| 事件 | 说明 |
+**自动触发条件**:
+
+| Workflow | 触发 |
 |------|------|
-| `push` 到 main | 手动推代码/数据时触发 |
-| Update Stats CI 完成 | 每周统计更新后自动同步 |
-| Update Upcoming Comps CI 完成 | 每日比赛数据更新后自动同步 |
+| `deploy_mirror.yml` | push main(任何前端/static 改动)、Update Stats CI 完成、Update Upcoming Comps CI 完成 |
+| `deploy_core.yml` | push main 且 `core/**` 有变更(>300 文件 path filter 失效需手动 `gh workflow run`) |
+| `deploy_nginx.yml` | push main 且 `ops/nginx/**` 有变更 |
 
-### GitHub Secrets（部署凭据）
+### GitHub Secrets(部署凭据)
 
-存储在 [仓库 Settings → Secrets](https://github.com/RuiminYan/ruiminyan.github.io/settings/secrets/actions)：
+存储在 [仓库 Settings → Secrets](https://github.com/RuiminYan/ruiminyan.github.io/settings/secrets/actions):
 
 | Secret | 用途 |
 |--------|------|
-| `DEPLOY_SSH_KEY` | SSH 私钥（服务器 `/root/.ssh/github_deploy`） |
+| `DEPLOY_SSH_KEY` | SSH 私钥(服务器 `/root/.ssh/github_deploy`) |
 | `DEPLOY_HOST` | 服务器 IP |
-| `DEPLOY_USER` | SSH 用户名（`root`） |
-| `DEPLOY_PATH` | 部署目录（`/www/wwwroot/toolkit`） |
+| `DEPLOY_USER` | SSH 用户名(`root`) |
+| `DEPLOY_PATH` | 部署目录(`/www/wwwroot/toolkit`) |
 
 > 对应的公钥已加入服务器 `/root/.ssh/authorized_keys`。
 
 ### Nginx 关键配置
 
-www.cuberoot.me 的站点配置在 `/www/server/panel/vhost/nginx/www.cuberoot.me.conf`：
+**Source of truth 在 git**:`ops/nginx/www.cuberoot.me.conf`,push → `deploy_nginx.yml` 自动 scp + 校验 + reload + 失败回滚。**不要在服务器上手改**;改了下次 deploy 会被覆盖。
+
+主要 location 块:
 
 ```nginx
-# React SPA — 根路径 fallback 到 index.html
-root /www/wwwroot/cuberoot-spa;
+# React SPA — 根路径 fallback
+root /www/wwwroot/toolkit;
 location / {
     try_files $uri $uri/ /index.html;
 }
 
-# Hono API 反代（^~ 防止 regex location 拦截）
+# certbot ACME challenge(走 cuberoot-spa webroot)
+location ^~ /.well-known/acme-challenge/ {
+    root /www/wwwroot/cuberoot-spa;
+    try_files $uri =404;
+}
+
+# Blog 静态镜像(2026-05-06 切静态)
+location ^~ /blog/ {
+    alias /www/wwwroot/blog-static/;
+    try_files $uri $uri/ $uri/index.html =404;
+}
+
+# Hono API 反代
 location ^~ /api/ {
     proxy_pass http://127.0.0.1:3001/api/;
-    proxy_http_version 1.1;
     proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_cache off;
 }
 
-# WordPress 博客（符号链接 cuberoot-spa/blog → /www/wwwroot/wordpress）
-location ^~ /blog {
-    index index.php index.html;
-    try_files $uri $uri/ /blog/index.php?$args;
-    location ~ \.php$ {
-        if (!-f $request_filename) { return 404; }
-        fastcgi_pass unix:/tmp/php-cgi-80.sock;
-        fastcgi_index index.php;
-        include fastcgi.conf;
-    }
-}
-
-# 工具模块静态镜像（^~ 防止 regex location 拦截静态资源）
-location ^~ /tools/ {
-    root /www/wwwroot/toolkit;
-    try_files $uri $uri/ $uri.html $uri/index.html =404;
-}
-
-# Stats 页面（^~ 防止 regex location 拦截静态资源）
-location ^~ /stats/ {
-    root /www/wwwroot/toolkit;
-    try_files $uri $uri/ $uri.html $uri/index.html =404;
-}
+# 工具/统计静态
+location ^~ /tools/ { root /www/wwwroot/toolkit; ... }
+location ^~ /stats/ { root /www/wwwroot/toolkit; ... }
 ```
 
+完整 conf 见 `ops/nginx/www.cuberoot.me.conf`。
 
-
-> 如果通过宝塔面板重新配置站点（如改 SSL），可能会覆盖此文件，需要重新加上这些规则。
-
-### rsync 参数说明
+### rsync 参数说明(`deploy_mirror.yml`)
 
 ```bash
 rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
@@ -137,129 +122,80 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 |------|------|
 | `-rltz` | 递归(r) + 保留软链接(l) + 保留时间戳(t) + 压缩传输(z) |
 | `--delete` | 删除远程有但本地 `_deploy/` 中没有的文件 |
-| `--exclude='.user.ini'` | 排除宝塔自动创建的不可删除文件（设了 `chattr +i`） |
-| `--chmod=D755,F644` | 目录 755、文件 644，避免权限错误 |
+| `--exclude='.user.ini'` | 历史遗留(宝塔时代有 chattr +i),保留无害 |
+| `--chmod=D755,F644` | 目录 755、文件 644 |
 
-> 不用 `-a`（archive）是因为 `-a` 会尝试同步 owner/group/perms，在 CI 环境下会导致 code 23 错误。
+> 不用 `-a`(archive)是因为 `-a` 会同步 owner/group/perms,在 CI 环境下会 code 23 错误。
 
 ## 故障排除
 
-### 镜像未更新？
-1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) → "Deploy Mirror to cuberoot" 是否全绿
-2. 如果红叉，查看日志定位错误（通常是 SSH 连接或 rsync 问题）
+### 镜像未更新?
+1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) 对应 workflow 是否全绿
+2. 红叉看日志(SSH 连接 / rsync / nginx -t 失败)
 
-### 页面 404？
-- 检查 Nginx 配置是否包含 `$uri.html`（见上方 Nginx 关键配置）
-- 宝塔面板修改站点后可能覆盖配置，需要重新添加
+### nginx 配置回滚?
+线上 `/www/server/panel/vhost/nginx/www.cuberoot.me.conf.bak-<unix-ts>` 是历次部署前的备份。
+```bash
+ssh root@cuberoot 'cd /www/server/panel/vhost/nginx/ && ls -t www.cuberoot.me.conf.bak-* | head'
+ssh root@cuberoot 'cp /www/server/panel/vhost/nginx/www.cuberoot.me.conf.bak-<ts> /www/server/panel/vhost/nginx/www.cuberoot.me.conf && nginx -t && nginx -s reload'
+```
+或本地 `git revert` 改动 commit,push 后 workflow 重新部上去。
 
-### SSH 连接失败？
-- 检查云安全组是否放行了 22 端口
+### SSL 证书过期?
+- `certbot-renew.timer` 每 12h 跑一次,< 30 天才真续。
+- 手动 dry-run:`ssh root@cuberoot 'certbot renew --dry-run --no-random-sleep-on-renew'`
+- 续后 deploy hook(`/etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh`)自动 reload nginx。
+
+### SSH 连接失败?
+- 安全组放行 22
 - 确认 `/root/.ssh/authorized_keys` 包含部署公钥
-- 如果密钥丢失，在服务器重新生成并更新 GitHub Secret `DEPLOY_SSH_KEY`
+- 密钥丢失:服务器重新生成并更新 GitHub Secret `DEPLOY_SSH_KEY`
 
-### SSL 证书过期？
-- 宝塔默认自动续签，通常无需操作
-- 手动续签：宝塔面板 → 网站 → `www.cuberoot.me` → SSL → 续签
-
-## Hono 后端（Trainer API）
-
-| 项目 | 值 |
-|------|------|
-| **框架** | Hono 4.x + @hono/node-server |
-| **部署目录** | `/root/core-api/` |
-| **端口** | 3001 |
-| **进程管理** | PM2（`core-api`，`pm2 startup` 已配置开机自启） |
-| **凭据文件** | `/root/core-api/.env`（DB_*, JWT_SECRET） |
-| **API 入口** | `https://www.cuberoot.me/api/recon/list` 等 |
-| **CORS** | 允许 `ruiminyan.github.io`、`www.cuberoot.me`、`localhost:5173` |
-| **CI 部署** | `deploy_mirror.yml` rsync 后手动更新（非自动） |
-
-> Nginx 反代配置：`location /api/` → `proxy_pass http://127.0.0.1:3001/api/`
-
-## MariaDB 数据库（Recon 复盘）
+## Hono 后端(Recon API + WCA OAuth + alg)
 
 | 项目 | 值 |
 |------|-----|
-| **数据库** | MariaDB 10.5.27 |
-| **数据库名** | `recon_db` |
-| **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
-| **凭据文件** | Hono：`/root/core-api/.env`；本地：`.secrets.md`（均不在 git 中） |
-| **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史）、`wca_users`（认证）、`timer_sessions`（计时器同步）、`train_results`（训练记录） |
+| **框架** | Hono 4.x + @hono/node-server |
+| **部署目录** | `/root/core-api/` |
+| **端口** | 3001 |
+| **进程管理** | pm2(`core-api`,`pm2 startup` 已配置开机自启) |
+| **凭据文件** | `/root/core-api/.env`(DB_*, JWT_SECRET, WCA_OAUTH_*) |
+| **API 入口** | `https://www.cuberoot.me/api/health` 等 |
+| **CORS** | 允许 `ruiminyan.github.io`、`www.cuberoot.me`、`localhost:5173` |
+| **CI 部署** | `deploy_core.yml`(rsync `dist/` + `pm2 restart core-api`) |
+
+> 健康检查:`curl https://www.cuberoot.me/api/health` → `{"status":"ok","db":"connected"}`
+
+## PostgreSQL 13(recon_db)
+
+2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载。
+
+| 项目 | 值 |
+|------|-----|
+| **DB** | PostgreSQL 13 |
+| **库名** | `recon_db` |
+| **用户** | `recon_user`(仅限 localhost) |
+| **数据目录** | `/var/lib/pgsql/data/` |
+| **服务** | `systemctl {start,stop,restart} postgresql` |
+| **Schema** | `core/packages/server/src/db/schema.pg.sql`(repo,11 张表) |
+
+**ALTER 顺序**:先在云服务器跑 ALTER → 再 push 代码。反过来部署上去 SELECT 新列直接 500。
+
+详细 PG 方言 / 部署细节见 `.claude/skills/server-deploy/SKILL.md`。
 
 ### 备份策略
 
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
 | API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
-| 数据库备份 | 宝塔计划任务（Shell 脚本 `mysqldump`） | 每天 03:00 | 云服务器 `/www/backup/recon_db_*.sql.gz`（保留 7 天） |
-
-> ⚠️ 宝塔内置的"备份数据库"任务**不会**备份命令行创建的数据库，必须用 Shell 脚本方式。
-
-### 数据库列重命名
-
-列重命名通过 `index.php` 中的临时管理员端点 `renameColumns2` 执行。流程：
-
-1. **修改代码**：更新 `db.php`（映射表、白名单、MAX_FIELD_LENGTHS、CREATE TABLE）和前端 JS 中的字段引用
-2. **更新迁移 SQL**：在 `index.php` 的 `renameColumns2` case 中添加/替换 `ALTER TABLE` 语句
-3. **Push 并等 CI 部署**（约 40 秒）
-4. **在已登录的 Recon 页面控制台执行**：
-
-```javascript
-fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
-  method: 'GET',
-  headers: { 'Authorization': 'Bearer ' + WcaAuth.getAccessToken() }
-}).then(r => r.json()).then(console.log)
-```
-
-> 必须先在页面上登录 WCA 账号（管理员），`WcaAuth.getAccessToken()` 从 `localStorage` 读取 token。localhost 和线上均可，只要已登录。
-
-> 获取 WCA access token（用于脚本/API 调用）：在已登录的 Recon 页面控制台执行 `console.log(localStorage.getItem('wca_access_token'))`。Token 有效期约 2 小时（WCA Doorkeeper 默认配置）。
-
-> 已执行过的 ALTER TABLE 会报错但不影响新增的 SQL（`try/catch` 逐条执行）。
+| DB dump | (待补 — 旧宝塔 cron 已清,需新写 systemd timer 或 pg_dump cron) | — | — |
 
 ## SSH 登录方式
 
 ```bash
-# 密码登录（密码在云控制台 → 云服务器 → 重置密码）
-ssh root@47.97.30.181
-
-# 或用云网页终端
-# 云控制台 → 云服务器 → 实例列表 → 远程连接 → Workbench
+# 已配 ~/.ssh/config 别名(本机)
+ssh root@cuberoot
 ```
 
-## 邮件发送（Postfix + Gmail SMTP 中继）
-
-PHP `mail()` 依赖 postfix 通过 Gmail SMTP 中继发送。用于复盘评论通知等场景。
-
-> 云服务器 封锁出站端口 25，必须通过 587 端口中继。
-
-**迁移服务器时需重新执行以下命令：**
-
-```bash
-# 1. 安装
-dnf install -y postfix cyrus-sasl-plain
-
-# 2. 配置 Gmail 中继
-cat >> /etc/postfix/main.cf << 'EOF'
-relayhost = [smtp.gmail.com]:587
-smtp_sasl_auth_enable = yes
-smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
-smtp_sasl_security_options = noanonymous
-smtp_tls_security_level = encrypt
-smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt
-EOF
-
-# 3. 创建密码文件（密码从 Google App Passwords 生成，去掉空格）
-echo "[smtp.gmail.com]:587 yrmfxc@gmail.com:APP_PASSWORD_HERE" > /etc/postfix/sasl_passwd
-chmod 600 /etc/postfix/sasl_passwd
-postmap /etc/postfix/sasl_passwd
-
-# 4. 启动
-systemctl enable postfix
-systemctl restart postfix
-
-# 5. 测试
-echo "Test" | mail -s "Postfix Test" yrmfxc@gmail.com
-```
-
+服务器 IP / 密码见云控制台,不放 repo。
 
