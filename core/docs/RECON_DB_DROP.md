@@ -94,7 +94,7 @@ mysql -u recon_user -pRecon2026!Cube -e "SHOW DATABASES" 2>/dev/null
 mysql -u recon_user -pRecon2026!Cube -e "DROP DATABASE recon_db;"
 
 # 顺便清掉 recon_user 账号(不再用,但需要 root 或 DROP USER 权限)
-# 通常 recon_user 自己没权限,可以走宝塔面板 → 数据库 → 删除用户
+# recon_user 自己没 DROP USER 权限,需要 root 或 sudo unix_socket 接 root
 # 或者 sudo mysql (如果 unix_socket 配了 root):
 #   sudo mysql -e "DROP USER 'recon_user'@'localhost';"
 ```
@@ -154,7 +154,7 @@ mysql -u root -e "
   CREATE USER 'recon_user'@'localhost' IDENTIFIED BY 'Recon2026!Cube';
   GRANT ALL ON recon_db.* TO 'recon_user'@'localhost';
 "
-# 用宝塔 root 密码,或宝塔面板 → 数据库 → 添加。
+# 服务器原本配的 root 密码,或 sudo mysql 直连。
 
 # 2. restore dump
 gunzip -c /root/backups/recon_db_mariadb_final_2026-05-06.sql.gz \
