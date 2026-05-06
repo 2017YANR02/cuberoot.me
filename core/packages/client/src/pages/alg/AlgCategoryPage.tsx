@@ -341,6 +341,7 @@ export default function AlgCategoryPage() {
     return Array.from(map.entries());
   }, [visibleCases]);
 
+
   if (!validPuzzle || !meta) {
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
@@ -481,7 +482,8 @@ export default function AlgCategoryPage() {
                         </div>
                         <div className="alg-case-info">
                           <div className="alg-case-name">
-                            {c.name}
+                            <span className="alg-case-letter">{c.name}</span>
+                            {c.number != null && <span className="alg-case-index">#{c.number}</span>}
                             {isAdmin && c.id != null && (
                               <button
                                 type="button"
