@@ -42,7 +42,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
           set -e
-          VHOST=/www/server/panel/vhost/nginx/www.cuberoot.me.conf
+          VHOST=/etc/nginx/vhost.d/www.cuberoot.me.conf
           STAGING=/tmp/www.cuberoot.me.conf.new
           BACKUP="${VHOST}.bak-$(date +%s)"
 
