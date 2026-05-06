@@ -20,6 +20,8 @@ export type AlgSticker =
   | { kind: 'raw'; tag: string; attrs: Record<string, string> };
 
 export interface AlgCase {
+  /** PG `alg_cases.id` — populated by API responses; absent in legacy code paths. */
+  id?: number;
   name: string;
   subgroup: string;
   setup: string;
@@ -29,6 +31,8 @@ export interface AlgCase {
   algs: AlgEntry[][];
   /** F2L only — names of each orientation tab (e.g. "Front Right") */
   oriNames?: string[];
+  /** ZBLS only — links cases into the trainer's grid layout. */
+  trainerKey?: string;
 }
 
 export interface AlgFile {
@@ -128,60 +132,20 @@ export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | und
   return ALG_CATALOG[puzzle]?.find(s => s.slug === slug);
 }
 
-/** Lazy load — Vite code-splits each JSON. Throws on unknown (puzzle, set). */
+/**
+ * Load an alg set from the server.
+ *
+ * Source of truth lives in the `alg_sets` / `alg_cases` PG tables; the 41 JSON
+ * files that used to be code-split via Vite are gone. Browser caches per
+ * `Cache-Control` header (1 hour by default).
+ */
 export async function loadAlg(puzzle: AlgPuzzle, set: string): Promise<AlgFile> {
-  const key = `${puzzle}/${set}`;
-  switch (key) {
-    // 2x2
-    case '2x2/ortega-oll': return (await import('../data/alg_2x2_ortega-oll.json')).default as unknown as AlgFile;
-    case '2x2/ortega-pbl': return (await import('../data/alg_2x2_ortega-pbl.json')).default as unknown as AlgFile;
-    case '2x2/cll':        return (await import('../data/alg_2x2_cll.json')).default as unknown as AlgFile;
-    case '2x2/eg1':        return (await import('../data/alg_2x2_eg1.json')).default as unknown as AlgFile;
-    case '2x2/eg2':        return (await import('../data/alg_2x2_eg2.json')).default as unknown as AlgFile;
-    // 3x3
-    case '3x3/f2l':        return (await import('../data/alg_3x3_f2l.json')).default as unknown as AlgFile;
-    case '3x3/adv-f2l':    return (await import('../data/alg_3x3_adv-f2l.json')).default as unknown as AlgFile;
-    case '3x3/oll':        return (await import('../data/alg_3x3_oll.json')).default as unknown as AlgFile;
-    case '3x3/pll':        return (await import('../data/alg_3x3_pll.json')).default as unknown as AlgFile;
-    case '3x3/coll':       return (await import('../data/alg_3x3_coll.json')).default as unknown as AlgFile;
-    case '3x3/wv':         return (await import('../data/alg_3x3_wv.json')).default as unknown as AlgFile;
-    case '3x3/cmll':       return (await import('../data/alg_3x3_cmll.json')).default as unknown as AlgFile;
-    case '3x3/sbls':       return (await import('../data/alg_3x3_sbls.json')).default as unknown as AlgFile;
-    case '3x3/eo4a':       return (await import('../data/alg_3x3_eo4a.json')).default as unknown as AlgFile;
-    case '3x3/anti-pll':   return (await import('../data/alg_3x3_anti-pll.json')).default as unknown as AlgFile;
-    case '3x3/sv':         return (await import('../data/alg_3x3_sv.json')).default as unknown as AlgFile;
-    case '3x3/ell':        return (await import('../data/alg_3x3_ell.json')).default as unknown as AlgFile;
-    case '3x3/fruf':       return (await import('../data/alg_3x3_fruf.json')).default as unknown as AlgFile;
-    case '3x3/cls':        return (await import('../data/alg_3x3_cls.json')).default as unknown as AlgFile;
-    case '3x3/zbls':       return (await import('../data/alg_3x3_zbls.json')).default as unknown as AlgFile;
-    case '3x3/vls':        return (await import('../data/alg_3x3_vls.json')).default as unknown as AlgFile;
-    case '3x3/ollcp':      return (await import('../data/alg_3x3_ollcp.json')).default as unknown as AlgFile;
-    case '3x3/zbll':       return (await import('../data/alg_3x3_zbll.json')).default as unknown as AlgFile;
-    case '3x3/1lll':       return (await import('../data/alg_3x3_1lll.json')).default as unknown as AlgFile;
-    // 4x4
-    case '4x4/oll-parity': return (await import('../data/alg_4x4_oll-parity.json')).default as unknown as AlgFile;
-    case '4x4/pll-parity': return (await import('../data/alg_4x4_pll-parity.json')).default as unknown as AlgFile;
-    // 5x5
-    case '5x5/l2e':        return (await import('../data/alg_5x5_l2e.json')).default as unknown as AlgFile;
-    case '5x5/l2c':        return (await import('../data/alg_5x5_l2c.json')).default as unknown as AlgFile;
-    // sq1
-    case 'sq1/cs':         return (await import('../data/alg_sq1_cs.json')).default as unknown as AlgFile;
-    case 'sq1/co':         return (await import('../data/alg_sq1_co.json')).default as unknown as AlgFile;
-    case 'sq1/eo':         return (await import('../data/alg_sq1_eo.json')).default as unknown as AlgFile;
-    case 'sq1/cp':         return (await import('../data/alg_sq1_cp.json')).default as unknown as AlgFile;
-    case 'sq1/ep':         return (await import('../data/alg_sq1_ep.json')).default as unknown as AlgFile;
-    case 'sq1/parity':     return (await import('../data/alg_sq1_parity.json')).default as unknown as AlgFile;
-    // megaminx
-    case 'megaminx/eo':    return (await import('../data/alg_megaminx_eo.json')).default as unknown as AlgFile;
-    case 'megaminx/co':    return (await import('../data/alg_megaminx_co.json')).default as unknown as AlgFile;
-    case 'megaminx/ep':    return (await import('../data/alg_megaminx_ep.json')).default as unknown as AlgFile;
-    case 'megaminx/cp':    return (await import('../data/alg_megaminx_cp.json')).default as unknown as AlgFile;
-    // pyraminx
-    case 'pyraminx/l3e':   return (await import('../data/alg_pyraminx_l3e.json')).default as unknown as AlgFile;
-    case 'pyraminx/l4e':   return (await import('../data/alg_pyraminx_l4e.json')).default as unknown as AlgFile;
-    // skewb
-    case 'skewb/sarahs-advanced': return (await import('../data/alg_skewb_sarahs-advanced.json')).default as unknown as AlgFile;
-    default:
-      throw new Error(`unknown alg set: ${key}`);
+  const base = (typeof window !== 'undefined' && window.location.hostname === 'ruiminyan.github.io')
+    ? 'https://www.cuberoot.me/api/alg/sets'
+    : '/api/alg/sets';
+  const res = await fetch(`${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`);
+  if (!res.ok) {
+    throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
   }
+  return (await res.json()) as AlgFile;
 }
