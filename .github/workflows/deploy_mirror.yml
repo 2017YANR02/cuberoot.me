@@ -67,6 +67,6 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-          rsync -rltz --delete --exclude='.user.ini' --exclude='blog' --chmod=D755,F644 \
+          rsync -rltz --delete --exclude='blog' --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             _deploy/ "${USER}@${HOST}:${PATH_REMOTE}/"
