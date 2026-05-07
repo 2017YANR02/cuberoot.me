@@ -10,6 +10,7 @@
   "dependencies": {
     "adm-zip": "^0.5.16",
     "cheerio": "^1.0.0",
+    "cubing": "^0.63.3",
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
     "mammoth": "^1.8.0",
