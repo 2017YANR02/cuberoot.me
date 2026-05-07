@@ -178,12 +178,16 @@ function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 
 }
 
 /** Whitelist of inline tags allowed in algHtml — finger-trick notation only.
- *  Anything else is stripped. Output is safe to set via dangerouslySetInnerHTML. */
+ *  `<u class="wavy">` keeps its class for wavy-underline rendering; everything else loses attrs. */
 const ALG_HTML_TAG_WHITELIST = new Set(['u', 's', 'em', 'strong', 'sub', 'sup']);
 function sanitizeAlgHtml(html: string): string {
-  return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (_, tag) =>
-    ALG_HTML_TAG_WHITELIST.has(tag.toLowerCase()) ? `<${_.startsWith('</') ? '/' : ''}${tag.toLowerCase()}>` : ''
-  );
+  return html.replace(/<(\/?)([a-z][a-z0-9]*)\b([^>]*)>/gi, (_full, slash, tag, attrs) => {
+    const t = tag.toLowerCase();
+    if (!ALG_HTML_TAG_WHITELIST.has(t)) return '';
+    if (slash) return `</${t}>`;
+    if (t === 'u' && /\bclass\s*=\s*["']?wavy["']?/i.test(attrs)) return '<u class="wavy">';
+    return `<${t}>`;
+  });
 }
 
 function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; algHtml?: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {

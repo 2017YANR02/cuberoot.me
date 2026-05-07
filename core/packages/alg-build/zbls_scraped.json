@@ -64,13 +64,15 @@
     "setup": "F' L' U L F",
     "algs": [
       {
-        "alg": "U F' L' U' L F"
+        "alg": "U F' L' U' L F",
+        "algHtml": "U </strong><strong>F' </strong><strong>L' U' L F"
       },
       {
         "alg": "=y U r' U' F' U r"
       },
       {
-        "alg": "=y2 U f' U' L' U f"
+        "alg": "=y2 U f' U' L' U f",
+        "algHtml": "=y2 U <u>f'</u> U' L' U f"
       }
     ]
   },
@@ -81,10 +83,12 @@
     "setup": "F R U' R' F'",
     "algs": [
       {
-        "alg": "U' F R U R' F'"
+        "alg": "U' F R U R' F'",
+        "algHtml": "U' </strong><strong>F </strong><strong>R U R' F'"
       },
       {
-        "alg": "=y2 U' f U R U' f'"
+        "alg": "=y2 U' f U R U' f'",
+        "algHtml": "=y2 U' <u>f</u> U R U' f'"
       }
     ]
   },
@@ -101,7 +105,8 @@
         "alg": "=y U F R U' R' F'"
       },
       {
-        "alg": "=y2 U L F U' F' L'"
+        "alg": "=y2 U L F U' F' L'",
+        "algHtml": "=y2 U L <u>F U'</u> F' L'"
       },
       {
         "alg": "y U (R' F R U') R' F' R"
@@ -127,7 +132,8 @@
         "alg": "=y' U' F' L' U L F"
       },
       {
-        "alg": "=y2 U' R' F' U F R"
+        "alg": "=y2 U' R' F' U F R",
+        "algHtml": "=y2 U' R' <u>F' U</u> F R"
       },
       {
         "alg": "y' U' r U' r' U r U r'"
@@ -230,7 +236,8 @@
         "alg": "R' F R2 U R' U' F'"
       },
       {
-        "alg": "= y F' L F2' U F' U' L'"
+        "alg": "= y F' L F2' U F' U' L'",
+        "algHtml": "= y F' L F2' U F' <u>U'</u> L'"
       },
       {
         "alg": "(=R' F R F' F R U R' U' F')"
@@ -251,7 +258,7 @@
       },
       {
         "alg": "= y' F R' F2 U' F U R",
-        "algHtml": "= y' <em>F</em> R' F2 U' F U R"
+        "algHtml": "= y' <em>F</em> R' F2 U' F <u>U</u> R"
       }
     ]
   },
@@ -296,7 +303,8 @@
     "setup": "M' U M U2 R' F R",
     "algs": [
       {
-        "alg": "y' (U2' R' F R F')2"
+        "alg": "y' (U2' R' F R F')2",
+        "algHtml": "y</strong><strong>' (U2' R' F R F')2"
       },
       {
         "alg": "(R' F' R U2) M' U' M"
@@ -344,7 +352,8 @@
     "setup": "L' U L",
     "algs": [
       {
-        "alg": "L' U' L"
+        "alg": "L' U' L",
+        "algHtml": "L</strong><strong>' U' </strong><strong>L"
       }
     ]
   },
@@ -355,7 +364,8 @@
     "setup": "L F' L' U L F L'",
     "algs": [
       {
-        "alg": "U2 (L F' L' U') L F L'"
+        "alg": "U2 (L F' L' U') L F L'",
+        "algHtml": "U2 </strong><strong>(L F' L' U') L F L'"
       },
       {
         "alg": "(R U' R' U2') (R' F R F')"
@@ -392,10 +402,12 @@
         "alg": "y' S (R U R' U') S'"
       },
       {
-        "alg": "=U' M(L' U L U') M'"
+        "alg": "=U' M(L' U L U') M'",
+        "algHtml": "=U' <u>M</u>(L' U L U') M'"
       },
       {
-        "alg": "=y' U M (U' R U R')M'"
+        "alg": "=y' U M (U' R U R')M'",
+        "algHtml": "=y' U <u>M</u> (U' R U R')M'"
       },
       {
         "alg": "y' (R U2' R' U') (R' F R F')"
@@ -415,10 +427,12 @@
         "alg": "S (U R U' R') S'"
       },
       {
-        "alg": "=U M(R U' R' U) M'"
+        "alg": "=U M(R U' R' U) M'",
+        "algHtml": "=U <u>M</u>(R U' R' U) M'"
       },
       {
-        "alg": "=y U' M (U L' U' L)M'"
+        "alg": "=y U' M (U L' U' L)M'",
+        "algHtml": "=y U' <u>M</u> (U L' U' L)M'"
       },
       {
         "alg": "y2 (L' U2 L U) (r U' r F)"
@@ -442,7 +456,8 @@
         "algHtml": "=U' (L' U2 L U) F <s>U'</s> F'"
       },
       {
-        "alg": "=*y U' (f' L2' f) (U L U' L')"
+        "alg": "=*y U' (f' L2' f) (U L U' L')",
+        "algHtml": "=*y U' (f' L2' f) (U L <u>U'</u> L')"
       },
       {
         "alg": "y' (R U R2') (U' F' U F R)"
@@ -466,7 +481,8 @@
         "algHtml": "=U (R U2' R' U') <em>F'</em> <s>U</s> F"
       },
       {
-        "alg": "=*y' U (f R2 f') (U' R' U R)"
+        "alg": "=*y' U (f R2 f') (U' R' U R)",
+        "algHtml": "=*y' U (f R2 f') (U' R' <u>U</u> R)"
       }
     ]
   },
@@ -477,13 +493,15 @@
     "setup": "R B U B' U2 R'",
     "algs": [
       {
-        "alg": "R U2' B U' B' R'"
+        "alg": "R U2' B U' B' R'",
+        "algHtml": "R U2' B U' </strong><u><strong>B'</strong></u><strong> R'"
       },
       {
         "alg": "=y F U2 R U' R' F'"
       },
       {
-        "alg": "= y2 L U2 F U' F' L'"
+        "alg": "= y2 L U2 F U' F' L'",
+        "algHtml": "= y2 L U2 <u>F U'</u> F' L'"
       },
       {
         "alg": "=y'↓f R2 U R' U' f'",
@@ -501,13 +519,15 @@
     "setup": "L' B' U' B U2 L",
     "algs": [
       {
-        "alg": "L' U2 B' U B L"
+        "alg": "L' U2 B' U B L",
+        "algHtml": "L' U2 B' U </strong><u><strong>B</strong></u><strong> L"
       },
       {
         "alg": "=y' F' U2 L' U L F"
       },
       {
-        "alg": "=y2 R' U2' F' U F R"
+        "alg": "=y2 R' U2' F' U F R",
+        "algHtml": "=y2 R' U2' <u>F' U</u> F R"
       },
       {
         "alg": "y f'↓L2' U' L U f",
@@ -522,7 +542,8 @@
     "setup": "F U R U R' U' F'",
     "algs": [
       {
-        "alg": "y' U2 R U (B U' B' U') R'"
+        "alg": "y' U2 R U (B U' B' U') R'",
+        "algHtml": "y' </strong><strong>U2 R U </strong><strong>(</strong><strong>B U' B' U'</strong><strong>)</strong><strong> R'"
       },
       {
         "alg": "=U2 F U (R U' R' U') F'"
@@ -531,7 +552,8 @@
         "alg": "y' R U2' R' (F' L' U' L F)"
       },
       {
-        "alg": "U' M U' (R' F2 R U) M'"
+        "alg": "U' M U' (R' F2 R U) M'",
+        "algHtml": "U' <u>M</u> U' (R' F2 R U) M'"
       }
     ]
   },
@@ -599,10 +621,12 @@
         "alg": "y' R' D' (r U' r' D) R2 U R'"
       },
       {
-        "alg": "U' (ML' U M'L U2') (M U M')"
+        "alg": "U' (ML' U M'L U2') (M U M')",
+        "algHtml": "U' (<u>M</u>L' U M'L U2') (<u>M</u> U M')"
       },
       {
-        "alg": "y' R' D' (r U r' D) R2 U R'"
+        "alg": "y' R' D' (r U r' D) R2 U R'",
+        "algHtml": "y' R' <u>D'</u> (r U r' D) R2 U R'"
       },
       {
         "alg": "=y L' D' (l U l' D) L2 U L'"
@@ -616,10 +640,12 @@
     "setup": "M U M' U2 MR U M'R'",
     "algs": [
       {
-        "alg": "y L D (l' U' l D') L2' U' L"
+        "alg": "y L D (l' U' l D') L2' U' L",
+        "algHtml": "y L </strong><u><strong>D</strong></u><strong> (l' U' l D') L2' U' L"
       },
       {
-        "alg": "U (MR U' M'R' U2) (M U' M')"
+        "alg": "U (MR U' M'R' U2) (M U' M')",
+        "algHtml": "U (<u>M</u>R U' M'R' U2) (<u>M</u> U' M')"
       },
       {
         "alg": "=y' R D (r' U r D') R2' U' R"
@@ -878,7 +904,8 @@
     "setup": "T",
     "algs": [
       {
-        "alg": "(↑R2' U2' F R2 F') (U2' R' U R')"
+        "alg": "(↑R2' U2' F R2 F') (U2' R' U R')",
+        "algHtml": "(</strong><strong>↑</strong><strong>R2</strong><strong>'</strong><strong> U2</strong><strong>'</strong><strong> F R2 F'</strong><strong>)</strong> <strong>(</strong><strong>U2</strong><strong>'</strong><strong> R' U R'</strong><strong>)"
       },
       {
         "alg": "(R U2' R' U)2 y' R' U' R"
@@ -892,7 +919,8 @@
     "setup": "I",
     "algs": [
       {
-        "alg": "y U' F R' U2' (R2 U R2' U) F R F2'"
+        "alg": "y U' F R' U2' (R2 U R2' U) F R F2'",
+        "algHtml": "<strong>y U' F R' </strong><u class=\"wavy\"><strong>U2</strong></u><u class=\"wavy\"><strong>'</strong></u><strong> (</strong><strong>R2 U R2</strong><strong>'</strong> <u><strong>U</strong></u><strong>)</strong><strong> F R </strong><u class=\"wavy\"><strong>F2</strong></u><u class=\"wavy\"><strong>'</strong></u>"
       },
       {
         "alg": "(R' F R F') (U F' U2 F) (U' R U R')",

@@ -467,6 +467,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.alg-alg-text u {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.alg-alg-text u.wavy {
+  text-decoration: underline wavy;
+  text-decoration-thickness: 1px;
+}
+.alg-alg-text s {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
 .alg-alg-copy-icon { color: var(--alg-text-faint); flex: 0 0 auto; }
 .alg-alg-row:hover .alg-alg-copy-icon { color: var(--alg-accent); }
 .alg-alg-row.is-expanded {
