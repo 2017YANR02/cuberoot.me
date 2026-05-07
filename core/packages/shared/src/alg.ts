@@ -8,7 +8,14 @@
  */
 
 export interface AlgEntry {
+  /** Plain-text alg, used for clipboard copy (no HTML, but `[OH]` prefix and
+   *  finger-trick UTF-8 chars like `·` `↑` `↓` `←` `→` are kept inline). */
   alg: string;
+  /** Optional HTML markup for display, with whitelist tags `<u> <s> <em>
+   *  <strong> <sub> <sup>` preserving docx finger-trick notation
+   *  (underline / strike / italic-wave / bold / sub / sup). When absent,
+   *  display falls back to plain `alg`. */
+  algHtml?: string;
   altId?: string;
   /** YouTube finger-tricks tutorial id (no full URL — caller composes) */
   ytId?: string;
