@@ -184,8 +184,9 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, submissions, 
             </button>
           </div>
         ) : (
-          <button type="button" className="alg-community-add-btn" onClick={() => setAdding(true)}>
-            <Plus size={12} /> {isZh ? '添加我的算法' : 'Add my alg'}
+          <button type="button" className="alg-community-add-btn" onClick={() => setAdding(true)}
+            title={isZh ? '添加我的算法' : 'Add my alg'} aria-label={isZh ? '添加我的算法' : 'Add my alg'}>
+            <Plus size={14} />
           </button>
         )
       ) : (
