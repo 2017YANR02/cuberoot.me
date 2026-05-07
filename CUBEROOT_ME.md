@@ -188,8 +188,9 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
-| API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
-| DB dump | (TODO — 写 systemd timer 跑 pg_dump 到 `/root/archive/`) | — | — |
+| API 备份(recon 表) | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
+
+> 不做 pg_dump 全库快照(2026-05-06 用户决定)。其它 10 张表(edits / alg_sets / wca_users / timer_sessions / ...)无独立备份;DB 挂了的话 alg 公式可从 git 历史 JSON 恢复,wca_users 重登即可,edits / 训练数据则丢失。
 
 ## SSH 登录方式
 
