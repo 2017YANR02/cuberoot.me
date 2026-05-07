@@ -859,7 +859,7 @@ export default function VisualCubeEditorPage() {
                 <Trash2 size={14} />
               </button>
             </div>
-            <CubeVirtualKeyboard textareaRef={algRef} onInput={syncAlgFromDom} />
+            <CubeVirtualKeyboard target={algRef} onInput={syncAlgFromDom} />
           </div>
         </div>
 

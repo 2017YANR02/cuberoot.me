@@ -3,10 +3,14 @@
  *
  * Each puzzle card → /alg/<puzzle> showing every set under that puzzle.
  */
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ShieldCheck } from 'lucide-react';
 import { ALG_PUZZLES, ALG_CATALOG, type AlgPuzzle } from '@cuberoot/shared';
 import LangToggle from '../../components/LangToggle';
+import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
+import ValidationReportModal from './ValidationReportModal';
 import './alg.css';
 
 const PUZZLE_LABEL: Record<AlgPuzzle, { en: string; zh: string }> = {
@@ -23,12 +27,26 @@ const PUZZLE_LABEL: Record<AlgPuzzle, { en: string; zh: string }> = {
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  const navigate = useNavigate();
+  const user = useAuthStore(s => s.user);
+  const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const [validationOpen, setValidationOpen] = useState(false);
 
   return (
     <div className="alg-root">
       <div className="alg-index-header">
         <div className="alg-index-header-row">
           <h1 className="alg-index-title">{isZh ? '公式库' : 'Algorithm DB'}</h1>
+          {isAdmin && (
+            <button
+              type="button"
+              className="alg-admin-add-btn"
+              onClick={() => setValidationOpen(true)}
+              title={isZh ? '校验全库公式' : 'Validate all sets'}
+            >
+              <ShieldCheck size={14} /> {isZh ? '校验全库' : 'Validate all'}
+            </button>
+          )}
           <LangToggle variant="inline" />
         </div>
         <p className="alg-index-subtitle">
@@ -59,6 +77,19 @@ export default function AlgIndexPage() {
           );
         })}
       </div>
+
+      {validationOpen && (
+        <ValidationReportModal
+          scope={{ kind: 'all' }}
+          isZh={isZh}
+          onClose={() => setValidationOpen(false)}
+          onPickCase={(p, s) => {
+            // 全库 modal 不直接打开 case editor;关闭后跳到该 set 详情页,admin 自己再点编辑
+            setValidationOpen(false);
+            navigate(`/alg/${p}/${s}`);
+          }}
+        />
+      )}
     </div>
   );
 }

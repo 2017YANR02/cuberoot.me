@@ -31,7 +31,8 @@ import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
-import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, autoSpaceMoves } from '../../utils/recon_alg_utils';
+import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
+import FormulaInput from '../../components/FormulaInput';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2, Shuffle } from 'lucide-react';
@@ -1182,32 +1183,19 @@ export default function ReconSubmitPage() {
               crossNormalized={true}
             />
           ) : (
-            <textarea
-              ref={el => {
-                (solutionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
-                if (el) autoResize(el);
-              }}
-              rows={1}
-              defaultValue={form.solution || ''}
-              onInput={e => {
-                const el = e.target as HTMLTextAreaElement;
-                // 手敲 RU/R'U/R2U... 时自动加空格;paste / IME / 删除不动
-                const native = e.nativeEvent as InputEvent;
-                const adj = autoSpaceMoves(el.value, el.selectionStart, native.inputType ?? '');
-                if (adj.value !== el.value) {
-                  el.value = adj.value;
-                  el.setSelectionRange(adj.cursor, adj.cursor);
-                }
-                setField('solution', el.value);
-                autoResize(el);
-                handleCursorSync(el);
-              }}
-              onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-              onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+            <FormulaInput
+              elementRef={solutionRef}
+              initialText={form.solution || ''}
+              autoSpace
+              autoResize
               className="submit-solution-textarea"
               style={{ overflow: 'hidden', resize: 'none' }}
               // NOTE: 手机端用站内虚拟键盘,屏蔽系统软键盘(保留 focus / 光标定位)
               inputMode={isMobile ? 'none' : undefined}
+              onChange={text => setField('solution', text)}
+              onCaretChange={() => {
+                if (solutionRef.current) handleCursorSync(solutionRef.current);
+              }}
             />
           )}
         </div>
@@ -1250,7 +1238,7 @@ export default function ReconSubmitPage() {
             )}
             {(isMobile || showKeyboard) && (
               <CubeVirtualKeyboard
-                textareaRef={solutionRef}
+                target={solutionRef}
                 onInput={() => {
                   if (solutionRef.current) {
                     setField('solution', solutionRef.current.value);

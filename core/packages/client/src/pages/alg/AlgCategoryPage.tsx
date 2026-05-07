@@ -5,10 +5,10 @@
  * For umbrella sets (ZBLL/1LLL/OLLCP/VLS) without :sub, render a subgroup picker
  * with OLL-style pattern previews (matches speedcubedb's ZBLL landing page).
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Pencil, Plus, ShieldCheck } from 'lucide-react';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
@@ -18,9 +18,11 @@ import { listSubmissions } from '../../utils/alg_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import CommunityAlgs from './CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from './AdminCaseEditor';
+import ValidationReportModal from './ValidationReportModal';
 import { VisualCube } from '../../components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import LangToggle from '../../components/LangToggle';
+import AlgPlayer from '../../components/AlgPlayer';
 import './alg.css';
 
 const PUZZLE_SIZE: Record<AlgPuzzle, number> = { '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5, 'sq1': 3, 'megaminx': 3, 'pyraminx': 3, 'skewb': 3 };
@@ -32,18 +34,6 @@ function srPuzzleKind(p: AlgPuzzle): PuzzleKind | null {
   if (p === 'skewb')    return 'skewb';          // 3D iso
   return null;
 }
-
-/** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
-const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
-  '2x2': '2x2x2',
-  '3x3': '3x3x3',
-  '4x4': '4x4x4',
-  '5x5': '5x5x5',
-  'sq1': 'square1',
-  'megaminx': 'megaminx',
-  'pyraminx': 'pyraminx',
-  'skewb': 'skewb',
-};
 
 /** F2L `c.setup` is canonical (FR slot disturbed). For other oris, append a `y`-rotation
  *  so the disturbed slot ends up at the right visual position (cube also rotates with it,
@@ -61,87 +51,6 @@ function shortOriName(name: string): string {
     'Front Right': 'FR', 'Front Left': 'FL', 'Back Left': 'BL', 'Back Right': 'BR',
   };
   return map[name] ?? name;
-}
-
-/** SQ1 alg `1,0/-1,0` → `(1,0)/(-1,0)`. cubing.js's parser requires parens
- * around each `m,n` move; speedcubedb's data omits them. */
-function normalizeAlgForTwisty(puzzle: AlgPuzzle, alg: string): string {
-  if (puzzle !== 'sq1') return alg;
-  return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
-}
-
-/** Map our (puzzle, set) to a cubing.js `experimentalStickering` value (LL/LS grayed out).
- *  Stickering is only well-supported on 3x3 and megaminx; returns undefined elsewhere
- *  (TwistyPlayer falls back to fully colored). */
-function pickStickering(puzzle: AlgPuzzle, set: string): string | undefined {
-  if (puzzle !== '3x3') return undefined;
-  switch (set) {
-    case 'f2l': case 'adv-f2l':                   return 'F2L';
-    case 'oll': case 'ollcp':                     return 'OLL';
-    case 'pll': case 'anti-pll':                  return 'PLL';
-    case 'coll':                                  return 'COLL';
-    case 'cmll':                                  return 'CMLL';
-    case 'ell':                                   return 'ELL';
-    case 'cls':                                   return 'CLS';
-    case 'zbls':                                  return 'ZBLS';
-    case 'vls':                                   return 'VLS';
-    case 'wv':                                    return 'WVLS';
-    case 'zbll':                                  return 'ZBLL';
-    case '1lll':                                  return 'LL';
-    case 'eo4a':                                  return 'EO';
-    case 'sv': case 'sbls': case 'fruf':          return 'LS';
-    default:                                      return undefined;
-  }
-}
-
-/** Inline animated puzzle demo. Lazy-imports cubing/twisty. */
-function AlgPlayer({ alg, puzzle, set, setup }: { alg: string; puzzle: AlgPuzzle; set: string; setup?: string }) {
-  const hostRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    let cancelled = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let player: any = null;
-    const normalized = normalizeAlgForTwisty(puzzle, alg);
-    const stickering = pickStickering(puzzle, set);
-    // Prefer the canonical `setup` (rotation-free, matches static thumb) over inverting alg —
-    // some algs start with `d`/`y` and the inverse leaves the cube body rotated.
-    const setupForTwisty = setup && setup.trim()
-      ? normalizeAlgForTwisty(puzzle, setup)
-      : `(${normalized})'`;
-    import('cubing/twisty').then((mod) => {
-      if (cancelled || !host) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Ctor = (mod as any).TwistyPlayer || (mod as any).default;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const opts: any = {
-          puzzle: TWISTY_PUZZLE[puzzle],
-          experimentalSetupAlg: setupForTwisty,
-          alg: normalized,
-          controlPanel: 'bottom-row',
-          background: 'none',
-          hintFacelets: 'none',
-          backView: 'none',
-        };
-        if (stickering) opts.experimentalStickering = stickering;
-        player = new Ctor(opts);
-        player.style.colorScheme = 'light';
-        player.style.width = '260px';
-        player.style.height = '260px';
-        host.appendChild(player);
-      } catch (err) {
-        console.warn(`[AlgPlayer] ${puzzle} alg failed: ${alg}`, err);
-        host.innerHTML = `<div style="font-size:12px;color:#888;padding:8px">player unavailable</div>`;
-      }
-    }).catch(err => console.warn('Failed to load cubing library:', err));
-    return () => {
-      cancelled = true;
-      if (player && host.contains(player)) host.removeChild(player);
-    };
-  }, [alg, puzzle]);
-  return <div ref={hostRef} className="alg-twisty-host" />;
 }
 
 function isPuzzle(s: string): s is AlgPuzzle {
@@ -298,6 +207,8 @@ export default function AlgCategoryPage() {
   const user = useAuthStore(s => s.user);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
+  const [validationOpen, setValidationOpen] = useState(false);
+  const [validationRefreshKey, setValidationRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!validPuzzle || !meta) return;
@@ -393,14 +304,24 @@ export default function AlgCategoryPage() {
           <span className="alg-cat-count">{visibleCases.length} {isZh ? '个' : 'cases'}</span>
         )}
         {isAdmin && data && !showSubgroupPicker && (
-          <button
-            type="button"
-            className="alg-admin-add-btn"
-            onClick={() => setEditorState({ mode: 'add' })}
-            title={isZh ? '新增 case (admin)' : 'Add case (admin)'}
-          >
-            <Plus size={14} /> {isZh ? '新增 case' : 'Add case'}
-          </button>
+          <>
+            <button
+              type="button"
+              className="alg-admin-add-btn"
+              onClick={() => setEditorState({ mode: 'add' })}
+              title={isZh ? '新增 case (admin)' : 'Add case (admin)'}
+            >
+              <Plus size={14} /> {isZh ? '新增 case' : 'Add case'}
+            </button>
+            <button
+              type="button"
+              className="alg-admin-add-btn"
+              onClick={() => setValidationOpen(true)}
+              title={isZh ? '校验此 set 所有公式' : 'Validate this set'}
+            >
+              <ShieldCheck size={14} /> {isZh ? '校验' : 'Validate'}
+            </button>
+          </>
         )}
         <LangToggle variant="inline" className="alg-lang-toggle" />
       </div>
@@ -451,7 +372,19 @@ export default function AlgCategoryPage() {
             } else {
               setData({ ...data, cases: data.cases.filter(c => c.id !== action.id) });
             }
+            // 若校验报告打开,case saved 后让它重跑一遍刷新结果
+            if (validationOpen) setValidationRefreshKey(k => k + 1);
           }}
+        />
+      )}
+
+      {validationOpen && (
+        <ValidationReportModal
+          scope={{ kind: 'set', puzzle: puzzleParam, set }}
+          isZh={isZh}
+          onClose={() => setValidationOpen(false)}
+          onPickCase={(_p, _s, c) => setEditorState({ mode: 'edit', existing: c })}
+          refreshKey={validationRefreshKey}
         />
       )}
 

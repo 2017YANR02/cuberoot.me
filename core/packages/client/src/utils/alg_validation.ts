@@ -1,0 +1,143 @@
+/**
+ * 校验 alg case 的"setup + alg" 是否真的完成了对应阶段。
+ *
+ * 支持的 puzzle:2x2 / 3x3 / 4x4 / 5x5 / sq1 / megaminx / pyraminx / skewb。
+ *
+ * 校验规则按 sticker.kind:
+ *  - 'face' (LL 类:PLL/OLL/COLL/EO/ZBLL/CMLL/2x2 CLL/...): setup + alg 后整体还原。
+ *      cube 系列(2x2~5x5)允许整体 rotation 末尾(24 个);其它 puzzle 严格 equal default。
+ *  - 'f2l' (3x3 F2L/SBLS/adv-F2L/ZBLS): D 层 + 中层棱 + D 层棱 全 piece+ori 归位 (LL 任意)。
+ *      仅 3x3 启用,其它 puzzle 不出现 F2L kind。
+ *  - 'raw': 跳过(自定义 sticker,语义不明)。
+ *
+ * 对 LL 类 set (face/f2l) 还会检查公式末尾的 leaf 是否是 U-family(算多余 AUF)。
+ */
+import { Alg, Move } from 'cubing/alg';
+import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
+import type { AlgSticker } from '@cuberoot/shared';
+
+export interface ValidateAlgResult {
+  ok: boolean;
+  reason?: string;
+}
+
+const PUZZLE_TO_CUBINGJS_ID: Record<string, string> = {
+  '2x2': '2x2x2',
+  '3x3': '3x3x3',
+  '4x4': '4x4x4',
+  '5x5': '5x5x5',
+  'sq1': 'square1',
+  'megaminx': 'megaminx',
+  'pyraminx': 'pyraminx',
+  'skewb': 'skewb',
+};
+
+const CUBE_LIKE = new Set(['2x2', '3x3', '4x4', '5x5']);
+
+/** 24 整体 rotation,允许 cube 类公式末尾带 y/x/z 一类整体调整 */
+const CUBE_ORIENTATIONS: string[] = (() => {
+  const out: string[] = [];
+  const tops = ['', 'x', 'x2', "x'", 'z', "z'"];
+  const ys = ['', 'y', 'y2', "y'"];
+  for (const t of tops) for (const y of ys) {
+    out.push([t, y].filter(Boolean).join(' '));
+  }
+  return out;
+})();
+
+const _kpuzzleCache: Record<string, Promise<KPuzzle>> = {};
+
+function loadKpuzzle(puzzle: string): Promise<KPuzzle> | null {
+  const id = PUZZLE_TO_CUBINGJS_ID[puzzle];
+  if (!id) return null;
+  if (!_kpuzzleCache[puzzle]) {
+    _kpuzzleCache[puzzle] = import('cubing/puzzles').then(m => m.puzzles[id].kpuzzle());
+  }
+  return _kpuzzleCache[puzzle];
+}
+
+export async function validateAlgCase(
+  setup: string,
+  alg: string,
+  sticker: AlgSticker,
+  puzzle: string,
+): Promise<ValidateAlgResult> {
+  const loader = loadKpuzzle(puzzle);
+  if (!loader) return { ok: true };
+  if (!alg.trim()) return { ok: true };
+
+  // NOTE: cubedb / SpeedCubeDB 的 alg 里有 `=y` / `=y2` / `=R'` / `=U2` 这种
+  // "orientation hint" 标记,= 字符 cubing.js 不识别,直接 strip 即可(后跟的 token 仍执行)。
+  const cleanAlg = alg.replace(/=/g, '');
+  const cleanSetup = setup.replace(/=/g, '');
+
+  let pattern: KPattern;
+  let leafMoves: Move[];
+  let kp: KPuzzle;
+  try {
+    kp = await loader;
+    leafMoves = [...new Alg(cleanAlg).experimentalLeafMoves()];
+    if (cleanSetup) new Alg(cleanSetup);
+    const combined = (cleanSetup ? cleanSetup + ' ' : '') + cleanAlg;
+    pattern = kp.defaultPattern().applyAlg(combined);
+  } catch (e) {
+    return { ok: false, reason: `公式语法错误: ${(e as Error).message}` };
+  }
+
+  // 末尾 AUF 检查:LL 类 (face/f2l) 不应有末尾 U-family move
+  if (sticker.kind === 'face' || sticker.kind === 'f2l') {
+    const trailing = trailingUFamilyMove(leafMoves);
+    if (trailing) {
+      return { ok: false, reason: `公式末尾的 ${trailing.toString()} 是多余的 AUF` };
+    }
+  }
+
+  if (sticker.kind === 'face') {
+    return validateFullSolved(pattern, kp, puzzle);
+  }
+  if (sticker.kind === 'f2l') {
+    if (puzzle !== '3x3') return { ok: true };
+    return validateF2LSolved(pattern);
+  }
+  return { ok: true };
+}
+
+function validateFullSolved(pattern: KPattern, kp: KPuzzle, puzzle: string): ValidateAlgResult {
+  const def = kp.defaultPattern();
+  if (patternsEqual(pattern, def)) return { ok: true };
+  // cube 类容忍整体 rotation(公式末尾带 y 等)
+  if (CUBE_LIKE.has(puzzle)) {
+    for (const r of CUBE_ORIENTATIONS) {
+      try {
+        const t = r ? pattern.applyAlg(r) : pattern;
+        if (patternsEqual(t, def)) return { ok: true };
+      } catch { /* skip */ }
+    }
+  }
+  return { ok: false, reason: '执行 setup + alg 后没有还原魔方' };
+}
+
+function validateF2LSolved(pattern: KPattern): ValidateAlgResult {
+  const cp = pattern.patternData.CORNERS;
+  const ep = pattern.patternData.EDGES;
+  for (let i = 4; i < 8; i++) {
+    if (cp.pieces[i] !== i) return { ok: false, reason: 'F2L 没还原(D 层角块未归位)' };
+    if ((cp.orientation[i] ?? 0) !== 0) return { ok: false, reason: 'F2L 没还原(D 层角块朝向错)' };
+  }
+  for (let i = 4; i < 12; i++) {
+    if (ep.pieces[i] !== i) return { ok: false, reason: 'F2L 没还原(棱块未归位)' };
+    if ((ep.orientation[i] ?? 0) !== 0) return { ok: false, reason: 'F2L 没还原(棱块朝向错)' };
+  }
+  return { ok: true };
+}
+
+/** 公式最后一个 leaf 若 family === 'U',视为多余 AUF */
+function trailingUFamilyMove(moves: Move[]): Move | null {
+  if (moves.length === 0) return null;
+  const last = moves[moves.length - 1];
+  return last.family === 'U' ? last : null;
+}
+
+function patternsEqual(a: KPattern, b: KPattern): boolean {
+  return JSON.stringify(a.patternData) === JSON.stringify(b.patternData);
+}
