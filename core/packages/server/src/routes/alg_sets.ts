@@ -149,6 +149,9 @@ algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
   );
   const nextPos = (maxPos[0].max ?? -1) + 1;
 
+  // postgres@3 自带 jsonb 序列化器 (jsonb 列 / 强 cast 时调 JSON.stringify),
+  // 这里直接传对象,driver 单次 stringify 后 PG 解析成 jsonb 对象。
+  // 之前手动 JSON.stringify 会被 driver 再编码一次,落地变 jsonb 字符串字面量。
   const inserted = await query<AlgCaseRow>(
     `INSERT INTO alg_cases (
       puzzle, set_slug, position, name, subgroup, setup, standard,
@@ -158,8 +161,8 @@ algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
     [
       puzzle, set, nextPos,
       body.caseName!.trim(), body.subgroup ?? '', body.setup ?? '', body.standard ?? null,
-      JSON.stringify(body.sticker), JSON.stringify(body.algs),
-      body.oriNames ? JSON.stringify(body.oriNames) : null,
+      body.sticker, body.algs,
+      body.oriNames ?? null,
       body.trainerKey ?? null,
     ],
   );
@@ -185,6 +188,7 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   const v = validateCaseInput(body);
   if (v.error) return c.json({ error: v.error }, 400);
 
+  // 见 POST 注释:对象直接传给 ?::jsonb,driver 序列化一次就够了
   const updated = await query<AlgCaseRow>(
     `UPDATE alg_cases SET
        name = ?, subgroup = ?, setup = ?, standard = ?,
@@ -194,8 +198,8 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
      RETURNING *`,
     [
       body.caseName!.trim(), body.subgroup ?? '', body.setup ?? '', body.standard ?? null,
-      JSON.stringify(body.sticker), JSON.stringify(body.algs),
-      body.oriNames ? JSON.stringify(body.oriNames) : null,
+      body.sticker, body.algs,
+      body.oriNames ?? null,
       body.trainerKey ?? null,
       id, puzzle, set,
     ],
