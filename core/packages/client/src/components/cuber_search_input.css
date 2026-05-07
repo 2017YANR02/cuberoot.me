@@ -1,4 +1,4 @@
-/* 外层 div 在 toolbar flex 流里对齐 .search-box —— 跟 .upcoming-page .search-box 同步保持
+/* 外层 div 在 toolbar flex 流里对齐 .search-box —— 跟 .calendar-page .search-box 同步保持
    flex/min/max,但不重复 input 的视觉样式。视觉样式由内层 input.search-box 自带(继承父页 CSS)。 */
 .cuber-search {
   position: relative;

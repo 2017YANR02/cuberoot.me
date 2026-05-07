@@ -2,7 +2,7 @@
  * 顶尖选手近期比赛追踪页 — 日历视图
  * 数据源: stats/upcoming_comps.json（Top 模式） + stats/all_upcoming_comps.json（All 模式）
  */
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid } from 'lucide-react';
@@ -38,7 +38,7 @@ import { CuberSearchInput } from '../components/CuberSearchInput';
 import { ClearButton } from '../components/ClearButton';
 import { fetchUserUpcoming, type WcaPersonLite } from '../utils/wca_api';
 import OnThisDayModal from './calendar/OnThisDayModal';
-import './upcoming_comps.css';
+import './calendar_page.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -824,7 +824,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   outerRef?: React.Ref<HTMLDivElement>;
   /** 已取消比赛的 end_date 阈值（ISO 字符串） */
   cancelledCutoffIso: string;
-  /** .upcoming-page 根元素 ref —— 用来按当前可视行最长 name+city 写 --cl-name-width */
+  /** .calendar-page 根元素 ref —— 用来按当前可视行最长 name+city 写 --cl-name-width */
   pageRef: React.RefObject<HTMLDivElement | null>;
 }) {
   // 倒序排列；不再插入"年份分隔"行，年份显示在 chip 行的左侧 sticky cell 里
@@ -890,10 +890,33 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     onYearChange({ year, count: yearCounts.get(year) ?? 0 });
   }, [range.top, items, yearCounts, onYearChange]);
 
+  // 视口内 upcoming 比赛(无静态 rounds)自动 WCIF 预取 — 让用户不用 hover 也能看到轮次数。
+  // fetchCompRounds 内部有 inflight + cache 去重,浏览器同 host 并发上限 6,自然节流。
+  // 拉到后直接 mutate c.rounds(WCA eventId → short eid 映射),bump 一次状态触发 re-render。
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    let cancelled = false;
+    const window = items.slice(range.start, range.end);
+    for (const it of window) {
+      const c = it.comp;
+      if (c.rounds && Object.keys(c.rounds).length > 0) continue;
+      fetchCompRounds(c.id).then((wcif) => {
+        if (cancelled) return;
+        const mapped: Record<string, number> = {};
+        for (const [eid, formats] of Object.entries(wcif)) {
+          mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = formats.length;
+        }
+        c.rounds = mapped;
+        forceUpdate();
+      });
+    }
+    return () => { cancelled = true; };
+  }, [range.start, range.end, items]);
+
   // 视口自适应 name+city 列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）max name+city，写到
-  // .upcoming-page 的 --cl-name-width。滚动到长名行时 cell 扩、滚出再收，
+  // .calendar-page 的 --cl-name-width。滚动到长名行时 cell 扩、滚出再收，
   // chips 表头跟着同步。LIST_BUFFER=8 让长名进视口前几行就提前测到，平滑视觉抖动。
-  // 视口可用宽度作为 cap，避免 cell 撑爆 .upcoming-page 引起 chips header 横向溢出。
+  // 视口可用宽度作为 cap，避免 cell 撑爆 .calendar-page 引起 chips header 横向溢出。
   useEffect(() => {
     const el = pageRef.current;
     if (!el) return;
@@ -970,7 +993,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 
 // ── 主组件 ────────────────────────────────────────────────────────────────
 
-export default function UpcomingCompsPage() {
+export default function CalendarPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
@@ -1224,7 +1247,7 @@ export default function UpcomingCompsPage() {
     [activeComps, isMatch],
   );
 
-  // .upcoming-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width
+  // .calendar-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width
   const pageRef = useRef<HTMLDivElement>(null);
 
   const weeks = useMemo(() => {
@@ -1390,7 +1413,7 @@ export default function UpcomingCompsPage() {
 
   if (error) {
     return (
-      <div className="upcoming-page">
+      <div className="calendar-page">
         <div className="state-message state-error">{error}</div>
       </div>
     );
@@ -1398,7 +1421,7 @@ export default function UpcomingCompsPage() {
 
   if (!data) {
     return (
-      <div className="upcoming-page">
+      <div className="calendar-page">
         <div className="state-message">{t('upcoming.loading')}</div>
       </div>
     );
@@ -1412,7 +1435,7 @@ export default function UpcomingCompsPage() {
   return (
     <div
       ref={pageRef}
-      className={`upcoming-page${viewMode === 'list' ? ' upcoming-page--list' : ''}${viewMode === 'compact' ? ' upcoming-page--compact' : ''}`}
+      className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}`}
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
@@ -1586,8 +1609,8 @@ export default function UpcomingCompsPage() {
       </div>
 
       <div
-        className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}
-        ref={viewMode === 'list' ? chipsHeaderRef : undefined}
+        className={`event-chips${viewMode === 'list' && displayedComps.length > 0 ? ' event-chips--list-header' : ''}`}
+        ref={viewMode === 'list' && displayedComps.length > 0 ? chipsHeaderRef : undefined}
       >
         {(() => {
           const chips = EVENT_ORDER.map((eid) => {
@@ -1628,7 +1651,9 @@ export default function UpcomingCompsPage() {
               </button>
             );
           });
-          if (viewMode !== 'list') return chips;
+          // 列表模式但 0 匹配时也走默认 flex-wrap — 表格列对齐(年份 cell + spacer + chips on the right)
+          // 在手机端会让 chips 落到 scrollLeft=460+ 视觉上消失。
+          if (viewMode !== 'list' || displayedComps.length === 0) return chips;
           return (
             <div className="event-chips-grid">
               <span className="cl-year-cell" aria-live="polite">

@@ -1,8 +1,8 @@
 /* ==========================================================================
- * UpcomingCompsPage — 浅色日历视图（Claude 风配色）
+ * CalendarPage — 浅色日历视图(Claude 风配色)
  * ========================================================================== */
 
-.upcoming-page {
+.calendar-page {
     --bg: #FAF9F5;
     --surface: #FFFFFF;
     --surface-alt: #F5F4EE;
@@ -29,7 +29,7 @@
 }
 
 /* ── Back + Header ── */
-.upcoming-page .back-link {
+.calendar-page .back-link {
     display: inline-flex;
     align-items: center;
     color: var(--text-sub);
@@ -38,12 +38,12 @@
     margin-bottom: 1rem;
     transition: color 0.15s;
 }
-.upcoming-page .back-link:hover { color: var(--accent); }
+.calendar-page .back-link:hover { color: var(--accent); }
 
-.upcoming-page .upcoming-header {
+.calendar-page .upcoming-header {
     margin-bottom: 1.25rem;
 }
-.upcoming-page .upcoming-title {
+.calendar-page .upcoming-title {
     font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: clamp(1.75rem, 4vw, 2.5rem);
     font-weight: 500;
@@ -51,13 +51,13 @@
     margin: 0 0 0.25rem;
     color: var(--text);
 }
-.upcoming-page .upcoming-meta {
+.calendar-page .upcoming-meta {
     font-size: 0.8rem;
     color: var(--text-sub);
 }
 
 /* ── Toolbar ── */
-.upcoming-page .toolbar {
+.calendar-page .toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -72,11 +72,11 @@
 }
 /* 列表模式下 toolbar 不 sticky —— 它的 stacking context 会困住国家下拉，让 chip 行 z:11 把它挡掉。
  * chip 行本身就是列表的持久表头，toolbar 滚出视口对功能无影响。 */
-.upcoming-page--list .toolbar {
+.calendar-page--list .toolbar {
     position: static;
 }
 
-.upcoming-page .search-box {
+.calendar-page .search-box {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
@@ -90,28 +90,28 @@
     min-width: 180px;
     max-width: 320px;
 }
-.upcoming-page .search-box:focus {
+.calendar-page .search-box:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 /* 比赛搜索框 + 一键清空 ×（遵循全局规则：选择/搜索型输入有非空值时必出 ×） */
-.upcoming-page .search-box-wrap {
+.calendar-page .search-box-wrap {
     position: relative;
     display: flex;
     flex: 1;
     min-width: 180px;
     max-width: 320px;
 }
-.upcoming-page .search-box-wrap .search-box {
+.calendar-page .search-box-wrap .search-box {
     flex: 1;
     min-width: 0;
     max-width: none;
     padding-right: 28px;
 }
 /* NOTE: CountryInput 自带 padding/border/focus 样式，这里仅控宽 */
-.upcoming-page .country-filter { min-width: 160px; }
+.calendar-page .country-filter { min-width: 160px; }
 
-.upcoming-page .mode-toggle {
+.calendar-page .mode-toggle {
     display: inline-flex;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -119,7 +119,7 @@
     padding: 2px;
     gap: 2px;
 }
-.upcoming-page .mode-btn {
+.calendar-page .mode-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -134,13 +134,13 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.upcoming-page .mode-btn:hover { color: var(--text); }
-.upcoming-page .mode-btn.is-active {
+.calendar-page .mode-btn:hover { color: var(--text); }
+.calendar-page .mode-btn.is-active {
     background: var(--accent-soft);
     color: var(--accent);
 }
 
-.upcoming-page .cancelled-toggle {
+.calendar-page .cancelled-toggle {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -155,17 +155,17 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.upcoming-page .cancelled-toggle:hover {
+.calendar-page .cancelled-toggle:hover {
     border-color: #C97A5C;
     color: #A04A2E;
 }
-.upcoming-page .cancelled-toggle.is-active {
+.calendar-page .cancelled-toggle.is-active {
     background: #FCE9E3;
     border-color: #C97A5C;
     color: #A04A2E;
 }
 
-.upcoming-page .mode-status {
+.calendar-page .mode-status {
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.5rem;
     border-radius: 8px;
@@ -174,18 +174,18 @@
     font-size: 0.8rem;
     text-align: center;
 }
-.upcoming-page .mode-status.is-error {
+.calendar-page .mode-status.is-error {
     background: #FCE9E3;
     color: #A04A2E;
 }
 
-.upcoming-page .event-chips {
+.calendar-page .event-chips {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 4px;
 }
-.upcoming-page .event-chip {
+.calendar-page .event-chip {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
@@ -201,19 +201,19 @@
     line-height: 1;
     gap: 2px;
 }
-.upcoming-page .event-chip:hover {
+.calendar-page .event-chip:hover {
     border-color: var(--accent);
     background: var(--accent-soft);
 }
-.upcoming-page .event-chip.is-active {
+.calendar-page .event-chip.is-active {
     border-color: var(--accent);
     background: var(--accent-soft);
     box-shadow: 0 0 0 2px var(--accent-soft);
 }
-.upcoming-page .event-chip .cubing-icon {
+.calendar-page .event-chip .cubing-icon {
     font-size: 1.1rem;
 }
-.upcoming-page .event-chip-rounds {
+.calendar-page .event-chip-rounds {
     font-size: 0.6rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -221,9 +221,9 @@
     line-height: 1;
     min-height: 0.7rem; /* 保留位置避免 chip 高度抖动 */
 }
-.upcoming-page .event-chip-rounds.is-empty { visibility: hidden; }
+.calendar-page .event-chip-rounds.is-empty { visibility: hidden; }
 /* 列表模式下：chip 行同时承担表头 — 外层 sticky 到视口顶；内层 grid 与列表列对齐 */
-.upcoming-page .event-chips--list-header {
+.calendar-page .event-chips--list-header {
     /* month-bar 是 flex-wrap 容器，强占整行 */
     flex-basis: 100%;
     width: 100%;
@@ -240,8 +240,8 @@
     overflow-y: hidden;
     scrollbar-width: none;
 }
-.upcoming-page .event-chips--list-header::-webkit-scrollbar { display: none; }
-.upcoming-page .event-chips-grid {
+.calendar-page .event-chips--list-header::-webkit-scrollbar { display: none; }
+.calendar-page .event-chips-grid {
     display: grid;
     grid-template-columns: var(--cl-cols);
     align-items: center;
@@ -253,18 +253,18 @@
     padding: 4px 12px;
     box-sizing: border-box;
 }
-.upcoming-page .event-chips--list-header .event-chip {
+.calendar-page .event-chips--list-header .event-chip {
     width: auto;
     min-height: 32px;
     justify-self: center;
 }
-.upcoming-page .event-chips--list-header .cl-h-spacer {
+.calendar-page .event-chips--list-header .cl-h-spacer {
     /* 占位列：date / flag / name / city / cubers，无内容；
      * height 0 让 chip 行决定整体高度 */
     height: 0;
 }
 
-.upcoming-page .globe-link {
+.calendar-page .globe-link {
     display: inline-flex;
     align-items: center;
     gap: 3px;
@@ -272,21 +272,21 @@
     text-decoration: none;
     font-weight: 500;
 }
-.upcoming-page .globe-link:hover { text-decoration: underline; }
+.calendar-page .globe-link:hover { text-decoration: underline; }
 
-.upcoming-page .month-bar {
+.calendar-page .month-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
     margin: 0.5rem 0 0.75rem;
 }
-.upcoming-page .month-nav {
+.calendar-page .month-nav {
     display: flex;
     align-items: center;
     gap: 0.35rem;
 }
-.upcoming-page .nav-btn {
+.calendar-page .nav-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -299,12 +299,12 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.upcoming-page .nav-btn:hover {
+.calendar-page .nav-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
     background: var(--accent-soft);
 }
-.upcoming-page .nav-today {
+.calendar-page .nav-today {
     padding: 0.35rem 0.75rem;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -315,19 +315,19 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.upcoming-page .nav-today:hover {
+.calendar-page .nav-today:hover {
     border-color: var(--accent);
     color: var(--accent);
     background: var(--accent-soft);
 }
-.upcoming-page .month-label {
+.calendar-page .month-label {
     display: inline-flex;
     align-items: baseline;
     gap: 0.35rem;
     margin-left: 0.75rem;
     line-height: 1;
 }
-.upcoming-page .month-label-btn {
+.calendar-page .month-label-btn {
     background: transparent;
     border: none;
     padding: 2px 6px;
@@ -335,20 +335,20 @@
     cursor: pointer;
     transition: background 0.15s;
 }
-.upcoming-page .month-label-btn:hover,
-.upcoming-page .month-label-btn:focus-visible,
-.upcoming-page .month-label-btn[aria-expanded="true"] {
+.calendar-page .month-label-btn:hover,
+.calendar-page .month-label-btn:focus-visible,
+.calendar-page .month-label-btn[aria-expanded="true"] {
     background: var(--accent-soft);
     outline: none;
 }
-.upcoming-page .month-label-year {
+.calendar-page .month-label-year {
     font-size: 0.72rem;
     font-weight: 500;
     letter-spacing: 0.12em;
     color: var(--text-sub);
     text-transform: uppercase;
 }
-.upcoming-page .month-label-month {
+.calendar-page .month-label-month {
     font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1.65rem;
     font-weight: 500;
@@ -358,19 +358,19 @@
 }
 
 /* ── Calendar Grid ── */
-.upcoming-page .calendar {
+.calendar-page .calendar {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
 }
-.upcoming-page .weekday-header {
+.calendar-page .weekday-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     border-bottom: 1px solid var(--border);
     background: var(--surface-alt);
 }
-.upcoming-page .weekday-cell {
+.calendar-page .weekday-cell {
     padding: 0.5rem 0.5rem;
     font-size: 0.72rem;
     font-weight: 600;
@@ -380,7 +380,7 @@
     text-align: center;
 }
 
-.upcoming-page .week-row {
+.calendar-page .week-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     /* 第一行固定 day-number；track 行 minmax(22px, auto) —— 名字短保持 22px,某列名字长自动撑高 */
@@ -392,9 +392,9 @@
     min-height: 120px;
     position: relative;
 }
-.upcoming-page .week-row:last-child { border-bottom: none; }
+.calendar-page .week-row:last-child { border-bottom: none; }
 
-.upcoming-page .day-cell {
+.calendar-page .day-cell {
     padding: 4px 6px 2px;
     grid-row: 1 / -1;
     /* NOTE: day-cell 占满整行（layer 1 背景），事件条叠加在上方 */
@@ -402,14 +402,14 @@
     position: relative;
     min-width: 0;
 }
-.upcoming-page .day-cell.out-of-month {
+.calendar-page .day-cell.out-of-month {
     background: transparent;
 }
-.upcoming-page .day-cell.is-today {
+.calendar-page .day-cell.is-today {
     z-index: 1;
 }
 
-.upcoming-page .day-number {
+.calendar-page .day-number {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -430,26 +430,26 @@
     font-family: inherit;
 }
 
-.upcoming-page .day-number:hover {
+.calendar-page .day-number:hover {
     background: var(--accent-soft, rgba(193, 95, 60, 0.08));
     border-color: var(--accent, #C15F3C);
     color: var(--accent, #C15F3C);
 }
 
 /* today: 实心红色圆,白色数字 — 取代之前 cell 外层 outline + 小框双重指示 */
-.upcoming-page .day-cell.is-today .day-number {
+.calendar-page .day-cell.is-today .day-number {
     background: #dc2626;
     color: #fff;
     border-color: #dc2626;
 }
-.upcoming-page .day-cell.is-today .day-number:hover {
+.calendar-page .day-cell.is-today .day-number:hover {
     background: #b91c1c;
     border-color: #b91c1c;
     color: #fff;
 }
 
 /* ── Event Bar ── */
-.upcoming-page .event-bar {
+.calendar-page .event-bar {
     /* 始终用 block + inline-block 子元素：徽章/国旗顶部对齐，名字以 inline 流动，
      * 名字超长时第二行起从 bar 左边缘开始（不缩进）。track 行高 minmax(22px, auto)
      * 让窄列长名字自动撑高所在 track 行（同周其它列也跟着高，但视觉一致）。 */
@@ -474,39 +474,39 @@
     z-index: 2;
     position: relative;
 }
-.upcoming-page .event-bar > * {
+.calendar-page .event-bar > * {
     vertical-align: top;
 }
-.upcoming-page .event-bar > .flag-span,
-.upcoming-page .event-bar > .flag-img,
-.upcoming-page .event-bar > .record-badge {
+.calendar-page .event-bar > .flag-span,
+.calendar-page .event-bar > .flag-img,
+.calendar-page .event-bar > .record-badge {
     display: inline-block;
     margin-right: 5px;
 }
-.upcoming-page .event-bar:hover {
+.calendar-page .event-bar:hover {
     background: var(--accent-soft-strong);
 }
-.upcoming-page .event-bar.is-clash {
+.calendar-page .event-bar.is-clash {
     background: var(--accent);
     color: #FFF;
 }
-.upcoming-page .event-bar.is-clash:hover { background: #AE5434; }
-.upcoming-page .event-bar.is-none-top {
+.calendar-page .event-bar.is-clash:hover { background: #AE5434; }
+.calendar-page .event-bar.is-none-top {
     background: #EDECE8;
     color: var(--text-sub);
 }
-.upcoming-page .event-bar.is-none-top:hover { background: #E0DED9; }
-.upcoming-page .event-bar.continues-prev {
+.calendar-page .event-bar.is-none-top:hover { background: #E0DED9; }
+.calendar-page .event-bar.continues-prev {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     margin-left: 0;
 }
-.upcoming-page .event-bar.continues-next {
+.calendar-page .event-bar.continues-next {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     margin-right: 0;
 }
-.upcoming-page .event-bar-name {
+.calendar-page .event-bar-name {
     display: inline;
     white-space: normal;
     word-break: break-word;
@@ -516,14 +516,14 @@
 }
 
 /* ── Flag ── */
-.upcoming-page .flag-span {
+.calendar-page .flag-span {
     display: inline-block;
     width: 14px;
     height: 10.5px;
     border-radius: 2px;
     flex-shrink: 0;
 }
-.upcoming-page .flag-img {
+.calendar-page .flag-img {
     width: 14px;
     height: 10.5px;
     object-fit: cover;
@@ -532,7 +532,7 @@
 }
 
 /* ── +N more ── */
-.upcoming-page .more-btn {
+.calendar-page .more-btn {
     margin: 1px 3px;
     padding: 0 6px;
     height: 22px;
@@ -547,27 +547,27 @@
     z-index: 2;
     position: relative;
 }
-.upcoming-page .more-btn:hover {
+.calendar-page .more-btn:hover {
     color: var(--accent);
     border-color: var(--accent);
     background: var(--accent-soft);
 }
 
 /* ── Month Stats + Legend ── */
-.upcoming-page .month-stats {
+.calendar-page .month-stats {
     display: inline-flex;
     align-items: center;
     gap: 0.85rem;
     font-size: 0.82rem;
     color: var(--text-sub);
 }
-.upcoming-page .month-stats > span {
+.calendar-page .month-stats > span {
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
-.upcoming-page .legend {
+.calendar-page .legend {
     display: flex;
     flex-wrap: wrap;
     gap: 1.25rem;
@@ -575,32 +575,32 @@
     color: var(--text-sub);
     margin-bottom: 1.5rem;
 }
-.upcoming-page .legend-item {
+.calendar-page .legend-item {
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
-.upcoming-page .legend-swatch {
+.calendar-page .legend-swatch {
     display: inline-block;
     width: 18px;
     height: 12px;
     border-radius: 3px;
 }
-.upcoming-page .legend-swatch.swatch-default { background: var(--accent-soft); }
-.upcoming-page .legend-swatch.swatch-clash { background: var(--accent); }
-.upcoming-page .legend-swatch.swatch-none-top { background: #EDECE8; }
+.calendar-page .legend-swatch.swatch-default { background: var(--accent-soft); }
+.calendar-page .legend-swatch.swatch-clash { background: var(--accent); }
+.calendar-page .legend-swatch.swatch-none-top { background: #EDECE8; }
 
 /* ── State Messages ── */
-.upcoming-page .state-message {
+.calendar-page .state-message {
     text-align: center;
     color: var(--text-sub);
     padding: 3rem 1rem;
     font-size: 0.9rem;
 }
-.upcoming-page .state-error { color: var(--accent); }
+.calendar-page .state-error { color: var(--accent); }
 
 /* ── Modal ── */
-.upcoming-page .modal-overlay {
+.calendar-page .modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(24, 23, 22, 0.35);
@@ -615,7 +615,7 @@
 }
 @keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
 
-.upcoming-page .modal-panel {
+.calendar-page .modal-panel {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -631,7 +631,7 @@
     to { transform: translateY(0); opacity: 1; }
 }
 
-.upcoming-page .modal-close {
+.calendar-page .modal-close {
     position: absolute;
     top: 12px;
     right: 14px;
@@ -645,12 +645,12 @@
     border-radius: 6px;
     transition: all 0.15s;
 }
-.upcoming-page .modal-close:hover {
+.calendar-page .modal-close:hover {
     color: var(--accent);
     background: var(--accent-soft);
 }
 
-.upcoming-page .modal-title {
+.calendar-page .modal-title {
     font-family: 'Fraunces', serif;
     font-size: 1.4rem;
     font-weight: 500;
@@ -659,36 +659,36 @@
     color: var(--text);
     line-height: 1.25;
 }
-.upcoming-page .modal-title a {
+.calendar-page .modal-title a {
     color: inherit;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 10px;
 }
-.upcoming-page .modal-title a:hover { color: var(--accent); }
-.upcoming-page .modal-title .flag-span,
-.upcoming-page .modal-title .flag-img {
+.calendar-page .modal-title a:hover { color: var(--accent); }
+.calendar-page .modal-title .flag-span,
+.calendar-page .modal-title .flag-img {
     width: 24px;
     height: 18px;
 }
-.upcoming-page .day-list-panel .modal-title {
+.calendar-page .day-list-panel .modal-title {
     display: inline-flex;
     align-items: center;
     gap: 10px;
 }
-.upcoming-page .day-list-country-name {
+.calendar-page .day-list-country-name {
     color: var(--text-sub);
     font-size: 1.05rem;
     font-weight: 400;
 }
 
-.upcoming-page .modal-meta {
+.calendar-page .modal-meta {
     font-size: 0.88rem;
     color: var(--text-sub);
     margin-bottom: 0.75rem;
 }
-.upcoming-page .modal-events {
+.calendar-page .modal-events {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 6px 10px;
@@ -696,25 +696,25 @@
     font-size: 1rem;
     margin-bottom: 1.25rem;
 }
-.upcoming-page .modal-event {
+.calendar-page .modal-event {
     display: flex;
     flex-direction: column;
     align-items: center;
     line-height: 1;
     gap: 2px;
 }
-.upcoming-page .modal-event-rounds {
+.calendar-page .modal-event-rounds {
     font-size: 0.7rem;
     font-weight: 600;
     color: var(--text-sub);
     font-variant-numeric: tabular-nums;
     line-height: 1;
 }
-.upcoming-page .modal-event-rounds--placeholder {
+.calendar-page .modal-event-rounds--placeholder {
     opacity: 0.3;
 }
 
-.upcoming-page .modal-cubers-title {
+.calendar-page .modal-cubers-title {
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-sub);
@@ -723,10 +723,10 @@
     margin-bottom: 0.5rem;
 }
 
-.upcoming-page .modal-records {
+.calendar-page .modal-records {
     margin-bottom: 1.25rem;
 }
-.upcoming-page .modal-records-title {
+.calendar-page .modal-records-title {
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-sub);
@@ -734,7 +734,7 @@
     text-transform: uppercase;
     margin-bottom: 0.5rem;
 }
-.upcoming-page .modal-record-list {
+.calendar-page .modal-record-list {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -742,7 +742,7 @@
     flex-direction: column;
     gap: 4px;
 }
-.upcoming-page .modal-record-item {
+.calendar-page .modal-record-item {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -751,21 +751,21 @@
     background: var(--surface-alt);
     font-size: 0.82rem;
 }
-.upcoming-page .modal-record-item .cubing-icon {
+.calendar-page .modal-record-item .cubing-icon {
     font-size: 18px;
     color: var(--text-sub);
 }
-.upcoming-page .modal-record-item .record-kind {
+.calendar-page .modal-record-item .record-kind {
     color: var(--text-sub);
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.upcoming-page .modal-record-item .record-value {
+.calendar-page .modal-record-item .record-value {
     font-weight: 600;
     font-family: 'Roboto Mono', monospace;
 }
-.upcoming-page .modal-record-item .record-person {
+.calendar-page .modal-record-item .record-person {
     margin-left: auto;
     display: inline-flex;
     align-items: center;
@@ -773,16 +773,16 @@
     color: inherit;
     text-decoration: none;
 }
-.upcoming-page .modal-record-item .record-person:hover {
+.calendar-page .modal-record-item .record-person:hover {
     color: var(--accent);
 }
-.upcoming-page .modal-cuber-list {
+.calendar-page .modal-cuber-list {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
-.upcoming-page .cuber-tag {
+.calendar-page .cuber-tag {
     display: inline-flex;
     align-items: center;
     flex-wrap: wrap;
@@ -796,55 +796,55 @@
     text-decoration: none;
     transition: all 0.15s;
 }
-.upcoming-page .cuber-tag:hover {
+.calendar-page .cuber-tag:hover {
     border-color: var(--accent);
     background: var(--accent-soft-strong);
 }
-.upcoming-page .cuber-tag .event-label {
+.calendar-page .cuber-tag .event-label {
     font-size: 0.7rem;
     color: var(--text-sub);
     margin-left: 2px;
     display: inline-flex;
     gap: 2px;
 }
-.upcoming-page .cuber-tag .event-label .cubing-icon {
+.calendar-page .cuber-tag .event-label .cubing-icon {
     font-size: 13px;
     vertical-align: middle;
 }
 
-.upcoming-page .wr-current { color: var(--wr-current); }
-.upcoming-page .wr-former { color: var(--wr-former); }
+.calendar-page .wr-current { color: var(--wr-current); }
+.calendar-page .wr-former { color: var(--wr-former); }
 
-.upcoming-page .wr-legend {
+.calendar-page .wr-legend {
     display: flex;
     gap: 1rem;
     font-size: 0.7rem;
     color: var(--text-sub);
     margin-bottom: 0.6rem;
 }
-.upcoming-page .wr-legend-item {
+.calendar-page .wr-legend-item {
     display: inline-flex;
     align-items: center;
     gap: 5px;
 }
-.upcoming-page .wr-swatch {
+.calendar-page .wr-swatch {
     display: inline-block;
     width: 10px;
     height: 10px;
     border-radius: 2px;
 }
-.upcoming-page .wr-swatch.wr-current { background: var(--wr-current); }
-.upcoming-page .wr-swatch.wr-former { background: var(--wr-former); }
-.upcoming-page .wr-swatch.wr-top10 { background: var(--text-sub); }
+.calendar-page .wr-swatch.wr-current { background: var(--wr-current); }
+.calendar-page .wr-swatch.wr-former { background: var(--wr-former); }
+.calendar-page .wr-swatch.wr-top10 { background: var(--text-sub); }
 
 /* ── Day List Panel ── */
-.upcoming-page .day-list-panel {
+.calendar-page .day-list-panel {
     max-width: 440px;
     max-height: calc(100vh - 10vh);
     display: flex;
     flex-direction: column;
 }
-.upcoming-page .day-list {
+.calendar-page .day-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -852,7 +852,7 @@
     min-height: 0;
     flex: 1 1 auto;
 }
-.upcoming-page .day-list-item {
+.calendar-page .day-list-item {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -867,18 +867,18 @@
     color: var(--text);
     text-align: left;
 }
-.upcoming-page .day-list-item:hover {
+.calendar-page .day-list-item:hover {
     border-color: var(--accent);
     background: var(--accent-soft);
 }
-.upcoming-page .day-list-item .day-list-item-name {
+.calendar-page .day-list-item .day-list-item-name {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
 }
-.upcoming-page .day-list-count {
+.calendar-page .day-list-count {
     font-size: 0.75rem;
     color: var(--text-sub);
     background: var(--surface-alt);
@@ -887,7 +887,7 @@
 }
 
 /* ── View toggle (Calendar / List) ── */
-.upcoming-page .view-toggle {
+.calendar-page .view-toggle {
     display: inline-flex;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -895,7 +895,7 @@
     padding: 2px;
     gap: 2px;
 }
-.upcoming-page .view-btn {
+.calendar-page .view-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -910,8 +910,8 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.upcoming-page .view-btn:hover { color: var(--text); }
-.upcoming-page .view-btn.is-active {
+.calendar-page .view-btn:hover { color: var(--text); }
+.calendar-page .view-btn.is-active {
     background: var(--accent-soft);
     color: var(--accent);
 }
@@ -922,16 +922,16 @@
  * 默认 fallback 28rem。这样筛选短名（如"北京"）时 city 紧贴 events，不留多余空白；
  * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
  * 同时供 .comp-list-row（行）和 .event-chips--list-header（chip 行兼表头）使用 */
-.upcoming-page {
+.calendar-page {
     --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) repeat(21, 1.3rem);
     --cl-min-width: 65rem;
 }
-.upcoming-page .comp-list {
+.calendar-page .comp-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
-.upcoming-page .comp-list-empty {
+.calendar-page .comp-list-empty {
     text-align: center;
     color: var(--text-sub);
     font-size: 0.85rem;
@@ -941,26 +941,26 @@
     border-radius: 12px;
 }
 /* 虚拟滚动容器 */
-.upcoming-page .comp-list-virtual {
+.calendar-page .comp-list-virtual {
     position: relative;
     width: 100%;
     min-width: var(--cl-min-width);
 }
-.upcoming-page .comp-list-row {
+.calendar-page .comp-list-row {
     position: absolute;
     left: 0;
     right: 0;
     box-sizing: border-box;
 }
 /* chip 行最左侧的 sticky 年份 cell（替代 date 列占位） */
-.upcoming-page .cl-year-cell {
+.calendar-page .cl-year-cell {
     display: inline-flex;
     align-items: baseline;
     gap: 6px;
     overflow: hidden;
     white-space: nowrap;
 }
-.upcoming-page .cl-year-num {
+.calendar-page .cl-year-num {
     font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1.15rem;
     font-weight: 500;
@@ -969,14 +969,14 @@
     font-feature-settings: "tnum" 1;
     line-height: 1;
 }
-.upcoming-page .cl-year-count {
+.calendar-page .cl-year-count {
     font-size: 0.7rem;
     color: var(--text-sub);
     background: var(--surface-alt);
     padding: 2px 7px;
     border-radius: 10px;
 }
-.upcoming-page .comp-list-row {
+.calendar-page .comp-list-row {
     display: grid;
     grid-template-columns: var(--cl-cols);
     align-items: center;
@@ -993,22 +993,22 @@
     overflow: hidden;
     transition: border-color 0.12s, background 0.12s;
 }
-.upcoming-page .comp-list-row:hover {
+.calendar-page .comp-list-row:hover {
     border-color: var(--accent);
     background: var(--accent-soft);
 }
-.upcoming-page .comp-list-date {
+.calendar-page .comp-list-date {
     color: var(--text-sub);
     font-size: 0.78rem;
 }
 /* 跨年比赛日期: 两半各自 nowrap, 用 block 强制 ~ 后换行 */
-.upcoming-page .cl-date-half {
+.calendar-page .cl-date-half {
     display: block;
     white-space: nowrap;
 }
 /* name + city 合并成一个 grid 列；内部用 flex 让 city 紧跟 name，多余空间留给 event chips。
  * name 优先伸缩占空间，过长截断；city 在 name 之后短间距渲染。 */
-.upcoming-page .comp-list-name-cell {
+.calendar-page .comp-list-name-cell {
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
@@ -1017,7 +1017,7 @@
     /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
     margin-left: -6px;
 }
-.upcoming-page .comp-list-name {
+.calendar-page .comp-list-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1025,7 +1025,7 @@
     font-weight: 500;
     flex: 0 1 auto;
 }
-.upcoming-page .comp-list-city {
+.calendar-page .comp-list-city {
     color: var(--text-sub);
     font-size: 0.78rem;
     overflow: hidden;
@@ -1034,7 +1034,7 @@
     flex: 0 1 auto;
     min-width: 0;
 }
-.upcoming-page .cl-event-cell {
+.calendar-page .cl-event-cell {
     text-align: center;
     font-size: 0.7rem;
     font-weight: 600;
@@ -1044,30 +1044,30 @@
 }
 
 /* ── 已取消比赛 — 列表 / 日历 / day-list / modal 共享样式 ── */
-.upcoming-page .comp-list-row.is-cancelled {
+.calendar-page .comp-list-row.is-cancelled {
     opacity: 0.55;
 }
-.upcoming-page .comp-list-row.is-cancelled .comp-list-name,
-.upcoming-page .comp-list-row.is-cancelled .comp-list-date {
+.calendar-page .comp-list-row.is-cancelled .comp-list-name,
+.calendar-page .comp-list-row.is-cancelled .comp-list-date {
     text-decoration: line-through;
     text-decoration-thickness: 1px;
 }
-.upcoming-page .event-bar.is-cancelled {
+.calendar-page .event-bar.is-cancelled {
     opacity: 0.55;
 }
-.upcoming-page .event-bar.is-cancelled .event-bar-name {
+.calendar-page .event-bar.is-cancelled .event-bar-name {
     text-decoration: line-through;
 }
-.upcoming-page .day-list-item.is-cancelled {
+.calendar-page .day-list-item.is-cancelled {
     opacity: 0.6;
 }
-.upcoming-page .day-list-item.is-cancelled .day-list-item-name {
+.calendar-page .day-list-item.is-cancelled .day-list-item-name {
     text-decoration: line-through;
 }
-.upcoming-page .modal-title-name.is-cancelled {
+.calendar-page .modal-title-name.is-cancelled {
     text-decoration: line-through;
 }
-.upcoming-page .modal-cancelled-tag {
+.calendar-page .modal-cancelled-tag {
     display: inline-block;
     margin-left: 8px;
     padding: 2px 8px;
@@ -1081,12 +1081,12 @@
 }
 
 /* ── 列表视图 · 年月范围过滤 ── */
-.upcoming-page .date-range-nav {
+.calendar-page .date-range-nav {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
 }
-.upcoming-page .date-range-pick {
+.calendar-page .date-range-pick {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
@@ -1100,21 +1100,21 @@
     text-align: center;
     transition: all 0.15s;
 }
-.upcoming-page .date-range-pick:hover,
-.upcoming-page .date-range-pick[aria-expanded="true"] {
+.calendar-page .date-range-pick:hover,
+.calendar-page .date-range-pick[aria-expanded="true"] {
     border-color: var(--accent);
     background: var(--accent-soft);
     color: var(--accent);
 }
-.upcoming-page .date-range-pick.is-empty {
+.calendar-page .date-range-pick.is-empty {
     color: var(--text-sub);
     font-family: inherit;
 }
-.upcoming-page .date-range-sep {
+.calendar-page .date-range-sep {
     color: var(--text-sub);
     font-size: 0.85rem;
 }
-.upcoming-page .date-range-summary {
+.calendar-page .date-range-summary {
     margin-left: 0.5rem;
     color: var(--text-sub);
     font-size: 0.8rem;
@@ -1144,54 +1144,54 @@
     from { transform: scale(0.6); opacity: 0; }
     to   { transform: scale(1);   opacity: 1; }
 }
-.upcoming-page .calendar--slide-forward {
+.calendar-page .calendar--slide-forward {
     animation: calSlideForward 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.upcoming-page .calendar--slide-back {
+.calendar-page .calendar--slide-back {
     animation: calSlideBack 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.upcoming-page .calendar--slide-forward .week-row,
-.upcoming-page .calendar--slide-back .week-row {
+.calendar-page .calendar--slide-forward .week-row,
+.calendar-page .calendar--slide-back .week-row {
     animation-duration: 460ms;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     animation-fill-mode: backwards;
 }
-.upcoming-page .calendar--slide-forward .week-row { animation-name: cellSlideForward; }
-.upcoming-page .calendar--slide-back    .week-row { animation-name: cellSlideBack; }
+.calendar-page .calendar--slide-forward .week-row { animation-name: cellSlideForward; }
+.calendar-page .calendar--slide-back    .week-row { animation-name: cellSlideBack; }
 /* 每周再 stagger 一点点 — 视觉上像浪一样从上往下涌 */
-.upcoming-page .calendar--slide-forward .week-row:nth-child(2),
-.upcoming-page .calendar--slide-back    .week-row:nth-child(2) { animation-delay: 30ms; }
-.upcoming-page .calendar--slide-forward .week-row:nth-child(3),
-.upcoming-page .calendar--slide-back    .week-row:nth-child(3) { animation-delay: 60ms; }
-.upcoming-page .calendar--slide-forward .week-row:nth-child(4),
-.upcoming-page .calendar--slide-back    .week-row:nth-child(4) { animation-delay: 90ms; }
-.upcoming-page .calendar--slide-forward .week-row:nth-child(5),
-.upcoming-page .calendar--slide-back    .week-row:nth-child(5) { animation-delay: 120ms; }
-.upcoming-page .calendar--slide-forward .week-row:nth-child(6),
-.upcoming-page .calendar--slide-back    .week-row:nth-child(6) { animation-delay: 150ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(2),
+.calendar-page .calendar--slide-back    .week-row:nth-child(2) { animation-delay: 30ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(3),
+.calendar-page .calendar--slide-back    .week-row:nth-child(3) { animation-delay: 60ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(4),
+.calendar-page .calendar--slide-back    .week-row:nth-child(4) { animation-delay: 90ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(5),
+.calendar-page .calendar--slide-back    .week-row:nth-child(5) { animation-delay: 120ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(6),
+.calendar-page .calendar--slide-back    .week-row:nth-child(6) { animation-delay: 150ms; }
 /* 旗子在 cell 内 pop in,延迟比所在行再多 80ms,形成纵深 */
-.upcoming-page .calendar--slide-forward .compact-flag-tile,
-.upcoming-page .calendar--slide-back    .compact-flag-tile {
+.calendar-page .calendar--slide-forward .compact-flag-tile,
+.calendar-page .calendar--slide-back    .compact-flag-tile {
     animation: flagPopIn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
     animation-delay: 200ms;
 }
-.upcoming-page .calendar--slide-forward .event-bar,
-.upcoming-page .calendar--slide-back    .event-bar {
+.calendar-page .calendar--slide-forward .event-bar,
+.calendar-page .calendar--slide-back    .event-bar {
     animation: flagPopIn 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
     animation-delay: 200ms;
 }
 /* prefers-reduced-motion: 全部退化为简单 fade,不滑不弹 */
 @media (prefers-reduced-motion: reduce) {
-    .upcoming-page .calendar--slide-forward,
-    .upcoming-page .calendar--slide-back {
+    .calendar-page .calendar--slide-forward,
+    .calendar-page .calendar--slide-back {
         animation: none;
     }
-    .upcoming-page .calendar--slide-forward .week-row,
-    .upcoming-page .calendar--slide-back .week-row,
-    .upcoming-page .calendar--slide-forward .compact-flag-tile,
-    .upcoming-page .calendar--slide-back .compact-flag-tile,
-    .upcoming-page .calendar--slide-forward .event-bar,
-    .upcoming-page .calendar--slide-back .event-bar {
+    .calendar-page .calendar--slide-forward .week-row,
+    .calendar-page .calendar--slide-back .week-row,
+    .calendar-page .calendar--slide-forward .compact-flag-tile,
+    .calendar-page .calendar--slide-back .compact-flag-tile,
+    .calendar-page .calendar--slide-forward .event-bar,
+    .calendar-page .calendar--slide-back .event-bar {
         animation: none;
     }
 }
@@ -1199,7 +1199,7 @@
 /* ── 紧凑日历(国旗模式) ──
    仅按 start_date 把比赛归到日格,不分 track,每个比赛 = 一个国旗 tile。
    day-cell 直接 flex-wrap 排列旗子,一格能塞 24 面(桌面)/9 面(手机)。 */
-.upcoming-page--compact .calendar--compact .week-row {
+.calendar-page--compact .calendar--compact .week-row {
     /* 紧凑模式不需要 track 行;让 day-cell 自然撑高 */
     grid-template-rows: auto;
     min-height: 80px;
@@ -1207,10 +1207,10 @@
      * compactColTemplate 在 React 里算出后通过 --compact-cols CSS 变量传进来。 */
     grid-template-columns: var(--compact-cols, repeat(7, 1fr));
 }
-.upcoming-page--compact .calendar--compact .weekday-header {
+.calendar-page--compact .calendar--compact .weekday-header {
     grid-template-columns: var(--compact-cols, repeat(7, 1fr));
 }
-.upcoming-page--compact .calendar--compact .day-cell {
+.calendar-page--compact .calendar--compact .day-cell {
     grid-row: 1;
     padding: 4px 4px 6px;
     display: flex;
@@ -1218,17 +1218,17 @@
     gap: 4px;
 }
 /* 紧凑模式下整个日格可点击 → 历年此日。空白 / day-number / flex 间隙都是 hit area。 */
-.upcoming-page--compact .calendar--compact .day-cell.is-clickable {
+.calendar-page--compact .calendar--compact .day-cell.is-clickable {
     cursor: pointer;
 }
-.upcoming-page--compact .calendar--compact .day-cell.is-clickable:hover {
+.calendar-page--compact .calendar--compact .day-cell.is-clickable:hover {
     background: color-mix(in srgb, var(--accent) 4%, var(--surface));
 }
-.upcoming-page--compact .calendar--compact .day-cell.is-clickable:focus-visible {
+.calendar-page--compact .calendar--compact .day-cell.is-clickable:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
 }
-.upcoming-page--compact .calendar--compact .day-number {
+.calendar-page--compact .calendar--compact .day-number {
     /* 紧凑模式 day-number 改 span,样式继承 .day-number 但去掉 button 状态 */
     pointer-events: none;
 }
@@ -1296,47 +1296,47 @@
 }
 /* ── 响应式 ── */
 @media (max-width: 768px) {
-    .upcoming-page .toolbar { gap: 0.4rem; }
-    .upcoming-page .search-box { min-width: 100%; }
-    .upcoming-page .search-box-wrap { min-width: 100%; max-width: 100%; }
-    .upcoming-page .country-filter { flex: 1; min-width: 0; }
-    .upcoming-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
-    .upcoming-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
-    .upcoming-page .week-row { min-height: 90px; }
-    .upcoming-page .day-number { font-size: 0.7rem; }
-    .upcoming-page .event-bar { font-size: 0.65rem; min-height: 18px; padding: 0 4px; gap: 3px; }
-    .upcoming-page .event-bar .flag-span,
-    .upcoming-page .event-bar .flag-img { width: 11px; height: 8px; }
-    .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
-    .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
+    .calendar-page .toolbar { gap: 0.4rem; }
+    .calendar-page .search-box { min-width: 100%; }
+    .calendar-page .search-box-wrap { min-width: 100%; max-width: 100%; }
+    .calendar-page .country-filter { flex: 1; min-width: 0; }
+    .calendar-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
+    .calendar-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
+    .calendar-page .week-row { min-height: 90px; }
+    .calendar-page .day-number { font-size: 0.7rem; }
+    .calendar-page .event-bar { font-size: 0.65rem; min-height: 18px; padding: 0 4px; gap: 3px; }
+    .calendar-page .event-bar .flag-span,
+    .calendar-page .event-bar .flag-img { width: 11px; height: 8px; }
+    .calendar-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
+    .calendar-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
     /* 紧凑模式手机端:旗子缩小到 16×12,行高随当日国家数自然增长 */
-    .upcoming-page--compact .calendar--compact .week-row { min-height: 70px; }
-    .upcoming-page--compact .calendar--compact .day-cell { padding: 3px 3px 4px; }
-    .upcoming-page--compact .compact-flag-grid { gap: 2px; }
-    .upcoming-page--compact .compact-flag-tile { width: 16px; height: 12px; }
+    .calendar-page--compact .calendar--compact .week-row { min-height: 70px; }
+    .calendar-page--compact .calendar--compact .day-cell { padding: 3px 3px 4px; }
+    .calendar-page--compact .compact-flag-grid { gap: 2px; }
+    .calendar-page--compact .compact-flag-tile { width: 16px; height: 12px; }
     /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐 */
-    .upcoming-page {
+    .calendar-page {
         --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.1rem);
         --cl-min-width: 53rem;
     }
-    .upcoming-page .comp-list { overflow-x: auto; }
-    .upcoming-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
-    .upcoming-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
-    .upcoming-page .comp-list-name-cell { margin-left: -4px; }
-    .upcoming-page .comp-list-date { font-size: 0.7rem; }
-    .upcoming-page .cl-event-cell { font-size: 0.65rem; }
-    .upcoming-page .cl-year-num { font-size: 1rem; }
-    .upcoming-page .date-range-pick { font-size: 0.72rem; padding: 0.3rem 0.5rem; min-width: 5.4rem; }
+    .calendar-page .comp-list { overflow-x: auto; }
+    .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
+    .calendar-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
+    .calendar-page .comp-list-name-cell { margin-left: -4px; }
+    .calendar-page .comp-list-date { font-size: 0.7rem; }
+    .calendar-page .cl-event-cell { font-size: 0.65rem; }
+    .calendar-page .cl-year-num { font-size: 1rem; }
+    .calendar-page .date-range-pick { font-size: 0.72rem; padding: 0.3rem 0.5rem; min-width: 5.4rem; }
 }
 
 /* ── 年月选择浮层 ── */
-.upcoming-page .ym-popover-overlay {
+.calendar-page .ym-popover-overlay {
     position: fixed;
     inset: 0;
     z-index: 50;
     background: transparent;
 }
-.upcoming-page .ym-popover-panel {
+.calendar-page .ym-popover-panel {
     position: fixed;
     display: flex;
     gap: 8px;
@@ -1347,7 +1347,7 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 /* NOTE: 浅色主题覆盖（默认 dark） */
-.upcoming-page .ym-popover-panel .wheel-picker {
+.calendar-page .ym-popover-panel .wheel-picker {
     --wp-bg: var(--surface);
     --wp-text: #a8a69c;
     --wp-text-active: var(--text);
