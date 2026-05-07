@@ -154,6 +154,28 @@
     color: #007AFF !important;
 }
 
+/* CubeKeyboardSection 桌面端 toggle 按钮 — 展开/收起虚拟键盘 */
+.vkb-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #a3a3a3;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.vkb-toggle:hover { background: rgba(255, 255, 255, 0.06); color: #d4d4d4; }
+.vkb-toggle.active {
+    background: rgba(217, 119, 87, 0.15);
+    border-color: rgba(217, 119, 87, 0.4);
+    color: #e8a27a;
+}
+
 /* NOTE: 记号入口按钮——space 左侧 ✎ 图标,iOS 蓝 */
 .vkb-marks-trigger {
     color: #007AFF !important;

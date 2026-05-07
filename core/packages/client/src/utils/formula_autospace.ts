@@ -15,6 +15,43 @@ export const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;
 // move 末尾字符:面 / w / ' / 2
 export const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'2]/;
 
+// 中文标点 → 英文等价物。公式不允许中文标点,IME 输入要强制转。
+// 所有都是单字符替单字符,length 不变,caret 自然保留。
+export const PUNCT_MAP: Record<string, string> = {
+  '‘': "'", '’': "'",  // ' '
+  '“': "'", '”': "'",  // " "
+  '"': "'",                       // 全角直引号 → 单引号(公式里只用单引号)
+  '（': '(', '）': ')',  // ( )
+  '，': ',', '。': '.',  // , 。
+  '：': ':', '；': ';',  // : ;
+  '？': '?', '！': '!',  // ? !
+  '／': '/', '［': '[',  // / [
+  '］': ']',                  // ]
+};
+export const PUNCT_RE = /[‘’“”"（），。：；？！／［］]/g;
+
+/** textarea 模式:全文替换中文标点;长度不变,caret 不挪 */
+export function normalizePunctuationTA(el: HTMLTextAreaElement): void {
+  const v = el.value;
+  if (!PUNCT_RE.test(v)) return;
+  const s = el.selectionStart;
+  const e = el.selectionEnd;
+  el.value = v.replace(PUNCT_RE, ch => PUNCT_MAP[ch] ?? ch);
+  el.setSelectionRange(s, e);
+}
+
+/** contenteditable 模式:遍历 text node,只改 .data 字符,inline 标签和 caret 不动 */
+export function normalizePunctuationCE(root: HTMLElement): void {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n: Node | null;
+  while ((n = walker.nextNode())) {
+    const t = n as Text;
+    if (PUNCT_RE.test(t.data)) {
+      t.data = t.data.replace(PUNCT_RE, ch => PUNCT_MAP[ch] ?? ch);
+    }
+  }
+}
+
 /** 判断给定文本中,从 lineStart 到 pos 之间是否已进入注释 (//) */
 export function inComment(text: string, pos: number): boolean {
   const lineStart = text.lastIndexOf('\n', pos - 1) + 1;

@@ -105,5 +105,12 @@ export default function AlgPlayer({ alg, puzzle, set, setup, size = 260 }: Props
       if (player && host.contains(player)) host.removeChild(player);
     };
   }, [alg, puzzle, set, setup, size]);
-  return <div ref={hostRef} className="alg-twisty-host" />;
+  // NOTE: 固定 host 尺寸,player 重 mount 时容器占位不丢,父布局不抖
+  return (
+    <div
+      ref={hostRef}
+      className="alg-twisty-host"
+      style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    />
+  );
 }
