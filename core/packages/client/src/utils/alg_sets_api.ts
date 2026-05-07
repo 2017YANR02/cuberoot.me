@@ -4,11 +4,9 @@
  * users can call PUT/POST/DELETE; the server enforces.
  */
 import type { AlgCase } from '@cuberoot/shared';
+import { API_ORIGIN } from './api_base';
 
-const API_BASE = import.meta.env.VITE_RECON_API_BASE
-  || (window.location.hostname === 'ruiminyan.github.io'
-    ? 'https://www.cuberoot.me/api/alg/sets'
-    : '/api/alg/sets');
+const API_BASE = API_ORIGIN + '/api/alg/sets';
 
 function getToken(): string | null {
   return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { apiUrl } from '../utils/api_base';
 
 interface Props {
   /** WCA notation alg. Treated as a SOLUTION — cube renders the case state that `algorithm`
@@ -39,7 +40,7 @@ export function VisualCube({ algorithm, setup, view, mask, size = 88, puzzleSize
     else params.set('case', algorithm);
     if (mask) params.set('mask', mask);
     if (puzzleSize !== 3) params.set('pzl', String(puzzleSize));
-    return `/api/visualcube.svg?${params}`;
+    return apiUrl(`/api/visualcube.svg?${params}`);
   }, [algorithm, setup, view, mask, size, puzzleSize]);
 
   return <img src={src} width={size} height={size} alt={alt} />;

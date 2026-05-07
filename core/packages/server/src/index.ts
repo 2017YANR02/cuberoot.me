@@ -12,13 +12,16 @@ import { algSetsRoutes } from './routes/alg_sets.js';
 const app = new Hono();
 
 // CORS 配置——允许前端跨域请求
+// NOTE: GH Pages 服务的 cuberoot.me 跨域调 api.cuberoot.me,所以页面 origin 是 cuberoot.me。
+// maxAge 缓存 preflight 一天,减少海外用户的 OPTIONS 来回。
 app.use('*', cors({
   origin: [
     'http://localhost:5173',              // Vite dev server
     'https://www.cuberoot.me',            // 生产环境（SPA）
-    'https://cuberoot.me',                // 裸域
-    'https://ruiminyan.github.io',        // GitHub Pages
+    'https://cuberoot.me',                // 裸域 (含 GH Pages 海外线路)
+    'https://ruiminyan.github.io',        // GitHub Pages 直接访问
   ],
+  maxAge: 86400,
 }));
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式

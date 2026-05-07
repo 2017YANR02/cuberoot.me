@@ -3,11 +3,9 @@
  * 任何登录用户都能给 (puzzle, set, case_name) 投 alg;作者 + admin 可改/删。
  */
 import type { AlgSubmission } from '@cuberoot/shared';
+import { API_ORIGIN } from './api_base';
 
-const API_BASE = import.meta.env.VITE_RECON_API_BASE
-  || (window.location.hostname === 'ruiminyan.github.io'
-    ? 'https://www.cuberoot.me/api/alg'
-    : '/api/alg');
+const API_BASE = API_ORIGIN + '/api/alg';
 
 function getToken(): string | null {
   return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
