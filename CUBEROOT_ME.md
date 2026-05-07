@@ -189,8 +189,19 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
 | API 备份(recon 表) | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
+| PG 全库 dump | `pg-dump-recon.timer` (systemd) | 每天 03:00 UTC + 10min random | `/root/archive/pg-recon-YYYY-MM-DD.sql.gz`(留 30 天) |
 
-> 不做 pg_dump 全库快照(2026-05-06 用户决定)。其它 10 张表(edits / alg_sets / wca_users / timer_sessions / ...)无独立备份;DB 挂了的话 alg 公式可从 git 历史 JSON 恢复,wca_users 重登即可,edits / 训练数据则丢失。
+**全库 dump 实现**(2026-05-06 加):
+- 脚本 `/usr/local/bin/pg-dump-recon.sh`(pg_dump → gzip,< 1KB 失败 abort,过期 mtime+30 自动删)
+- service `/etc/systemd/system/pg-dump-recon.service`(After=postgresql.service)
+- timer `/etc/systemd/system/pg-dump-recon.timer`(OnCalendar=*-*-* 03:00 UTC)
+- 防的: 人为 SQL 错误 / PG 升级失败 / OOM corruption / 误删数据库目录
+- 不防: 整盘损坏(备份和原数据同盘)。要异地备份再加 daily push 到 GitHub repo / OSS。
+
+**手动恢复 recon_db:**
+```bash
+ssh root@cuberoot 'gunzip -c /root/archive/pg-recon-<DATE>.sql.gz | PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db'
+```
 
 ## SSH 登录方式
 
