@@ -57,6 +57,14 @@ export async function updateCase(puzzle: string, set: string, id: number, body: 
   return handle<AlgCase>(r);
 }
 
+export async function reorderCases(puzzle: string, set: string, ids: number[]): Promise<{ ok: boolean }> {
+  const r = await fetch(
+    `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/order`,
+    { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) },
+  );
+  return handle<{ ok: boolean }>(r);
+}
+
 export async function deleteCase(puzzle: string, set: string, id: number): Promise<{ ok: boolean }> {
   const r = await fetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/${id}`,

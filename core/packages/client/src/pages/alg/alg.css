@@ -574,6 +574,26 @@
   padding: 4px 0;
 }
 
+/* === DnD case-card 拖动 handle (admin) === */
+.alg-case-drag-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  padding: 3px;
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.alg-case-drag-handle:hover { color: var(--alg-accent, #6aa9ff); border-color: var(--alg-accent, #6aa9ff); }
+.alg-case-drag-handle:active { cursor: grabbing; }
+
 /* === Validation report modal === */
 .alg-validation-modal {
   max-width: 720px;
