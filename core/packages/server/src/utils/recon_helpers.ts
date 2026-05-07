@@ -297,6 +297,20 @@ export async function requireAdmin(c: Context): Promise<WcaUser> {
   return user;
 }
 
+/**
+ * 要求管理员权限,但允许通过 X-Admin-Key header 走 API key 通道(给 AI / 脚本用)。
+ * key 在 server `.env` 里 `ADMIN_API_KEY=xxx`,匹配则视为 admin,绕开 OAuth。
+ * 不影响普通 admin 用户走 OAuth 的正常流程。
+ */
+export async function requireAdminOrApiKey(c: Context): Promise<WcaUser> {
+  const key = c.req.header('X-Admin-Key');
+  const expected = process.env.ADMIN_API_KEY;
+  if (key && expected && key === expected) {
+    return { wcaId: '__api_key__', name: 'API Key' };
+  }
+  return requireAdmin(c);
+}
+
 // ── 速率限制 ──
 
 // NOTE: 内存速率限制——每 IP 每分钟 30 次写操作

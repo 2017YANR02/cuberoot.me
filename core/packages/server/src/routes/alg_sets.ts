@@ -10,7 +10,7 @@
  */
 import { Hono } from 'hono';
 import { query, sql } from '../db/connection.js';
-import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
+import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
 export const algSetsRoutes = new Hono();
 
@@ -125,8 +125,7 @@ algSetsRoutes.get('/api/alg/sets/:puzzle/:set', async (c) => {
 algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
-  const user = await requireAuth(c);
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) return c.json({ error: 'Admin required' }, 403);
+  await requireAdminOrApiKey(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -173,8 +172,7 @@ algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
 algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
-  const user = await requireAuth(c);
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) return c.json({ error: 'Admin required' }, 403);
+  await requireAdminOrApiKey(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -214,8 +212,7 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
 algSetsRoutes.put('/api/alg/sets/:puzzle/:set/reorder', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
-  const user = await requireAuth(c);
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) return c.json({ error: 'Admin required' }, 403);
+  await requireAdminOrApiKey(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -255,8 +252,7 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/reorder', async (c) => {
 algSetsRoutes.delete('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
-  const user = await requireAuth(c);
-  if (!ADMIN_WCA_IDS.includes(user.wcaId)) return c.json({ error: 'Admin required' }, 403);
+  await requireAdminOrApiKey(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
