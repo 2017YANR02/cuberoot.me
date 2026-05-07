@@ -481,108 +481,174 @@
   text-decoration-thickness: 2px;
 }
 
-/* === Token chip editor (admin simple-mode) === */
-.alg-token-editor {
+/* === Admin AlgEditor === */
+.alg-admin-algs-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.alg-admin-algs-label {
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+}
+.alg-editor {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.alg-token-row {
+.alg-editor-ori {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px 8px;
-  border: 1px solid var(--alg-border);
+  padding: 6px;
+  border: 1px solid var(--alg-border, rgba(255,255,255,0.1));
   border-radius: 6px;
-  background: var(--alg-bg-soft);
+  background: var(--alg-bg-soft, rgba(255,255,255,0.03));
 }
-.alg-token-input-line {
+.alg-editor-ori-name {
+  font-size: 0.78rem;
+  color: var(--text-muted, #999);
+  letter-spacing: 0.04em;
+}
+.alg-editor-row {
   display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.alg-token-input {
-  flex: 1;
-  padding: 6px 8px;
-  background: var(--alg-bg);
-  color: var(--alg-text);
-  border: 1px solid var(--alg-border);
-  border-radius: 4px;
-  font-family: ui-monospace, monospace;
-  font-size: 14px;
-}
-.alg-token-input:focus {
-  outline: none;
-  border-color: var(--alg-accent);
-}
-.alg-token-delete {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--alg-border);
-  color: var(--alg-text-faint);
-  border-radius: 4px;
-  padding: 4px;
-  cursor: pointer;
-}
-.alg-token-delete:hover {
-  color: #ef4444;
-  border-color: #ef4444;
-}
-.alg-token-chips {
-  display: flex;
-  flex-wrap: wrap;
   gap: 4px;
+  align-items: center;
 }
-.alg-token-chip {
-  background: var(--alg-bg);
-  color: var(--alg-text);
-  border: 1px solid var(--alg-border);
+.alg-editor-input {
+  flex: 1;
+  min-height: 32px;
+  padding: 6px 8px;
+  background: var(--alg-bg, #1a1a1a);
+  color: var(--alg-text, #f0ebe3);
+  border: 1px solid var(--alg-border, rgba(255,255,255,0.12));
   border-radius: 4px;
-  padding: 4px 8px;
-  font-family: ui-monospace, monospace;
-  font-size: 13px;
-  cursor: pointer;
-  min-width: 28px;
-  text-align: center;
-  user-select: none;
+  font-family: ui-monospace, "Consolas", monospace;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
-.alg-token-chip:active { background: var(--alg-accent-soft); }
-.alg-token-chip-none {}
-.alg-token-chip-u {
+.alg-editor-input:focus {
+  border-color: var(--alg-accent, #6aa9ff);
+}
+.alg-editor-input:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted, #666);
+  pointer-events: none;
+}
+/* contenteditable 内的记号样式 — 与 .alg-alg-text 对齐 */
+.alg-editor-input u {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
-  border-color: var(--alg-accent);
 }
-.alg-token-chip-wavy {
+.alg-editor-input u.wavy {
   text-decoration: underline wavy;
   text-decoration-thickness: 1px;
-  border-color: var(--alg-accent);
 }
-.alg-token-chip-s {
+.alg-editor-input s {
   text-decoration: line-through;
   text-decoration-thickness: 2px;
-  border-color: var(--alg-accent);
 }
-.alg-token-add {
-  align-self: flex-start;
+.alg-editor-del,
+.alg-editor-add {
+  background: none;
+  border: 1px dashed var(--alg-border, rgba(255,255,255,0.15));
+  color: var(--text-muted, #888);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+}
+.alg-editor-del { padding: 4px; }
+.alg-editor-del:hover { color: #ff8888; border-color: rgba(220,80,80,0.4); }
+.alg-editor-add:hover { color: var(--alg-accent, #6aa9ff); border-color: var(--alg-accent, #6aa9ff); }
+.alg-editor-player {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+/* === Validation report modal === */
+.alg-validation-modal {
+  max-width: 720px;
+}
+.alg-validation-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.alg-validation-progress {
+  font-size: 0.85rem;
+  color: var(--text-muted, #aaa);
+}
+.alg-validation-summary {
+  font-size: 0.92rem;
+  color: var(--alg-text, #f0ebe3);
+  padding: 4px 0;
+}
+.alg-validation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  background: transparent;
-  color: var(--alg-text-faint);
-  border: 1px dashed var(--alg-border);
-  border-radius: 4px;
-  padding: 4px 10px;
+}
+.alg-validation-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,80,80,0.25);
+  border-radius: 6px;
+  background: rgba(255,80,80,0.05);
   cursor: pointer;
-  font-size: 13px;
+  transition: background 0.1s, border-color 0.1s;
 }
-.alg-token-add:hover {
-  color: var(--alg-accent);
-  border-color: var(--alg-accent);
+.alg-validation-row:hover {
+  background: rgba(255,80,80,0.1);
+  border-color: rgba(255,80,80,0.5);
 }
+.alg-validation-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+.alg-validation-tag {
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+.alg-validation-name {
+  font-weight: 600;
+  color: var(--alg-text, #f0ebe3);
+}
+.alg-validation-link {
+  margin-left: auto;
+  color: var(--text-muted, #888);
+}
+.alg-validation-alg {
+  font-family: ui-monospace, "Consolas", monospace;
+  font-size: 0.86rem;
+  color: var(--alg-text, #f0ebe3);
+  word-break: break-word;
+}
+.alg-validation-reason {
+  font-size: 0.78rem;
+  color: #ff8888;
+}
+
 .alg-alg-copy-icon { color: var(--alg-text-faint); flex: 0 0 auto; }
 .alg-alg-row:hover .alg-alg-copy-icon { color: var(--alg-accent); }
 .alg-alg-row.is-expanded {
@@ -768,6 +834,10 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000;
+}
+/* 嵌套场景:admin editor 通过 validate report 触发打开时要叠在 report 上方 */
+.alg-admin-modal-backdrop.alg-admin-modal-backdrop-top {
+  z-index: 1100;
 }
 .alg-admin-modal {
   background: var(--card-bg, #1f1f1f);
