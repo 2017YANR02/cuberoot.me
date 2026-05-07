@@ -315,15 +315,16 @@ reconRoutes.post('/api/recon/save-edit', async (c) => {
 
   const now = Math.floor(Date.now() / 1000);
   const enriched = { ...fields, _editedAt: now };
-  const fieldsJson = JSON.stringify(enriched);
 
   // 字段级合并:PG jsonb || 是浅合并,右覆盖左(等价 MariaDB JSON_MERGE_PATCH 的扁平场景)
+  // postgres@3 自带 jsonb 序列化器,这里直接传对象,driver 单次 stringify 即可。
+  // 之前手动 JSON.stringify 会被 driver 再编码一次,落地变 jsonb 字符串字面量。
   await query(
     `INSERT INTO edits (solve_id, fields, edited_at) VALUES (?, ?::jsonb, ?)
      ON CONFLICT (solve_id) DO UPDATE SET
        fields = edits.fields || EXCLUDED.fields,
        edited_at = EXCLUDED.edited_at`,
-    [solveId, fieldsJson, now]
+    [solveId, enriched, now]
   );
 
   // NOTE: 同步更新 recons 主表——只写非内部字段
