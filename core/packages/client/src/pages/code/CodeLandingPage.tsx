@@ -1,0 +1,285 @@
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LangToggle from '../../components/LangToggle';
+import './code_landing.css';
+
+interface Topic {
+  slug: string;
+  href: string;
+  zh: { title: string; sub: string; tagline: string };
+  en: { title: string; sub: string; tagline: string };
+  accent: string;
+  logo: React.ReactNode;
+  available: boolean;
+}
+
+const TS_LOGO = (
+  <svg viewBox="0 0 256 256" aria-hidden="true">
+    <rect width="256" height="256" rx="28" fill="#3178C6" />
+    <path
+      fill="#fff"
+      d="M56 116v12h28v82h14v-82h28v-12zm120 76c-9 0-16-3-21-9l11-7c3 4 8 6 12 6s9-2 9-7c0-4-3-6-10-9-13-5-19-11-19-22 0-13 10-21 23-21 9 0 16 3 21 10l-10 7c-3-4-7-6-11-6-5 0-8 3-8 6 0 4 3 6 11 9 12 4 19 11 19 21 0 14-11 22-27 22z"
+    />
+  </svg>
+);
+
+const TOPICS: Topic[] = [
+  {
+    slug: 'ts',
+    href: '/code/ts',
+    zh: {
+      title: 'TypeScript',
+      sub: 'JavaScript 的工程化升级',
+      tagline: '从 2010 年立项到 2025 年成为 GitHub 第一语言、AI 工具链母语，14 年里发生了什么',
+    },
+    en: {
+      title: 'TypeScript',
+      sub: 'JavaScript, engineered',
+      tagline: 'From 2010 inception to 2025: GitHub #1 language, native tongue of the AI tool chain',
+    },
+    accent: '#3178C6',
+    logo: TS_LOGO,
+    available: true,
+  },
+  {
+    slug: 'rust',
+    href: '/code/rust',
+    zh: {
+      title: 'Rust',
+      sub: '系统编程的现代答卷',
+      tagline: '从 2006 年 Graydon 的副业到 2025 年 Linux 内核接受 Rust 模块、AI 时代工具链被它重写一遍',
+    },
+    en: {
+      title: 'Rust',
+      sub: 'Systems, refined',
+      tagline: 'From a 2006 side project by Graydon to Linux kernel modules in 2025 and a wholesale rewrite of the AI-era tool chain',
+    },
+    accent: '#CE422B',
+    logo: <span className="topic-glyph">R</span>,
+    available: true,
+  },
+  {
+    slug: 'go',
+    href: '/code/go',
+    zh: {
+      title: 'Go',
+      sub: '简洁与并发',
+      tagline: '从 2007 年 Google 的午饭后讨论到 Docker / K8s 撑起整个云原生底层、再到 2025 年 TypeScript 7 用它重写',
+    },
+    en: {
+      title: 'Go',
+      sub: 'Simplicity meets concurrency',
+      tagline: 'From a 2007 Google lunch discussion to powering Docker / Kubernetes — and now the language Microsoft picked to rewrite TypeScript itself',
+    },
+    accent: '#00ADD8',
+    logo: <span className="topic-glyph">Go</span>,
+    available: true,
+  },
+  {
+    slug: 'python',
+    href: '/code/python',
+    zh: {
+      title: 'Python',
+      sub: 'AI 时代的胶水语言',
+      tagline: '1991 年 Guido 圣诞假期写的副业，35 年后是 PyTorch / Hugging Face / Jupyter 的母语，AI 研究界的事实标准',
+    },
+    en: {
+      title: 'Python',
+      sub: 'Glue of the AI era',
+      tagline: 'A 1991 Christmas-break side project by Guido — 35 years on, the native tongue of PyTorch / Hugging Face / Jupyter and the AI research world',
+    },
+    accent: '#3776AB',
+    logo: <span className="topic-glyph">Py</span>,
+    available: true,
+  },
+  {
+    slug: 'c',
+    href: '/code/c',
+    zh: {
+      title: 'C',
+      sub: '一切系统语言的祖宗',
+      tagline: '1972 年 Bell Labs / Dennis Ritchie。Unix 的母语，Linux 内核 33M 行，AI 时代每个 GPU kernel 最终也是 C 调用',
+    },
+    en: {
+      title: 'C',
+      sub: 'Mother of all systems languages',
+      tagline: 'Bell Labs / Dennis Ritchie, 1972. Unix\'s native tongue, 33M lines of Linux, and the language under every GPU kernel call in the AI era',
+    },
+    accent: '#03579B',
+    logo: <span className="topic-glyph">C</span>,
+    available: true,
+  },
+  {
+    slug: 'cpp',
+    href: '/code/cpp',
+    zh: {
+      title: 'C++',
+      sub: 'AI 内核的母语',
+      tagline: '1979 年 Stroustrup 的 "C with Classes"。现代 C++ 11/20/26 一路复兴。PyTorch / TensorFlow / Chrome / V8 / Unreal 全是 C++',
+    },
+    en: {
+      title: 'C++',
+      sub: 'Mother tongue of AI kernels',
+      tagline: 'Stroustrup\'s "C with Classes," 1979. Modern C++ 11/20/26 keeps reviving. PyTorch / TensorFlow / Chrome / V8 / Unreal all C++ underneath',
+    },
+    accent: '#00599C',
+    logo: <span className="topic-glyph">C++</span>,
+    available: true,
+  },
+  {
+    slug: 'zig',
+    href: '/code/zig',
+    zh: {
+      title: 'Zig',
+      sub: '系统编程的另一条路',
+      tagline: '2016 年 Andrew Kelley 启动，0.16 仍未到 1.0。Bun / TigerBeetle / Ghostty 撑起一个新生态，2025 ZSF 拿到 $512K 史上最大产业捐款',
+    },
+    en: {
+      title: 'Zig',
+      sub: 'Another road for systems',
+      tagline: 'Started by Andrew Kelley in 2016, still pre-1.0 at 0.16. Bun, TigerBeetle and Ghostty hold up a fresh ecosystem; ZSF pulled $512K — its largest industry pledge ever — in 2025',
+    },
+    accent: '#F7A41D',
+    logo: <span className="topic-glyph">Zig</span>,
+    available: true,
+  },
+  {
+    slug: 'swift',
+    href: '/code/swift',
+    zh: {
+      title: 'Swift',
+      sub: 'Apple 的现代答卷',
+      tagline: '2014 WWDC，Chris Lattner 主推。从替代 Objective-C 到 visionOS 钦定语言，再到 Embedded Swift / 服务端进军',
+    },
+    en: {
+      title: 'Swift',
+      sub: 'Apple\'s modern answer',
+      tagline: 'WWDC 2014, led by Chris Lattner. From an Objective-C replacement to visionOS\'s anointed language, with Embedded Swift and server-side now in play',
+    },
+    accent: '#F05138',
+    logo: <span className="topic-glyph">Sw</span>,
+    available: true,
+  },
+  {
+    slug: 'kotlin',
+    href: '/code/kotlin',
+    zh: {
+      title: 'Kotlin',
+      sub: 'JetBrains 的 Java 革命',
+      tagline: '2010 圣彼得堡 Kotlin 岛起步，2016 1.0，2019 Android Kotlin-first，2024 Compose Multiplatform iOS 稳定 — 一份代码跑四端',
+    },
+    en: {
+      title: 'Kotlin',
+      sub: 'JetBrains\' Java revolution',
+      tagline: 'Started near Kotlin Island in 2010, 1.0 in 2016, Android Kotlin-first in 2019, Compose Multiplatform stable on iOS in 2024 — one codebase, four targets',
+    },
+    accent: '#7F52FF',
+    logo: <span className="topic-glyph">Kt</span>,
+    available: true,
+  },
+];
+
+export default function CodeLandingPage() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+
+  useEffect(() => {
+    document.title = lang === 'zh' ? '编程语言导览 — CubeRoot' : 'Programming Languages — CubeRoot';
+  }, [lang]);
+
+  return (
+    <div className="code-landing">
+      <div className="code-landing-bg" />
+
+      <header className="code-landing-head">
+        <div className="code-landing-topbar">
+          <Link to="/" className="code-landing-back">
+            ← {lang === 'zh' ? '回首页' : 'Home'}
+          </Link>
+          <LangToggle variant="inline" />
+        </div>
+        <h1 className="code-landing-title">
+          <span className="code-landing-prefix">/</span>code
+          <span className="code-landing-cursor">_</span>
+        </h1>
+        <p className="code-landing-sub">
+          {lang === 'zh'
+            ? '编程语言 · 长篇导览。一门语言一篇深度，含历史、特性、生态、当下处境。'
+            : 'Programming languages · long-form guides. One language per page — history, features, ecosystem, current state.'}
+        </p>
+        <div className="code-landing-meta">
+          <span>{lang === 'zh' ? '最近更新' : 'Latest'}</span>
+          <span className="code-landing-meta-dot">•</span>
+          <span>2026.05 · TypeScript</span>
+        </div>
+      </header>
+
+      <Link to="/code/compare" className="code-landing-banner">
+        <div className="code-landing-banner-glyph">∑</div>
+        <div className="code-landing-banner-body">
+          <div className="code-landing-banner-tag">
+            // {lang === 'zh' ? '横向对比' : 'Side-by-side'}
+          </div>
+          <h2 className="code-landing-banner-title">
+            {lang === 'zh' ? '九种语言,一个 Ao5 算法' : 'One Ao5, nine languages'}
+          </h2>
+          <p className="code-landing-banner-sub">
+            {lang === 'zh'
+              ? '同一个 WCA Average-of-5 写 9 遍,看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样'
+              : 'The same WCA Average-of-5, written nine times — watch how each language handles DNF / Optional / sorting / type systems'}
+          </p>
+        </div>
+        <div className="code-landing-banner-arrow">→</div>
+      </Link>
+
+      <main className="code-landing-grid">
+        {TOPICS.map((t) => {
+          const text = t[lang];
+          const className = `topic-card${t.available ? '' : ' is-soon'}`;
+          const inner = (
+            <>
+              <div className="topic-logo" style={{ background: t.available ? t.accent : '#222' }}>
+                {t.logo}
+              </div>
+              <div className="topic-body">
+                <div className="topic-title-row">
+                  <h2 className="topic-title">{text.title}</h2>
+                  {!t.available && (
+                    <span className="topic-soon">{lang === 'zh' ? '即将上线' : 'Soon'}</span>
+                  )}
+                </div>
+                <div className="topic-sub" style={{ color: t.available ? t.accent : 'var(--ts-faint, #4A5772)' }}>
+                  {text.sub}
+                </div>
+                <p className="topic-tagline">{text.tagline}</p>
+              </div>
+              {t.available && (
+                <div className="topic-arrow" aria-hidden="true">
+                  →
+                </div>
+              )}
+            </>
+          );
+          return t.available ? (
+            <Link key={t.slug} to={t.href} className={className} style={{ ['--accent' as string]: t.accent }}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={t.slug} className={className} aria-disabled="true">
+              {inner}
+            </div>
+          );
+        })}
+      </main>
+
+      <footer className="code-landing-foot">
+        <div className="code-landing-foot-line">
+          <span>{lang === 'zh' ? '更多语言陆续添加' : 'More languages coming'}</span>
+          <span className="code-landing-meta-dot">·</span>
+          <Link to="/">CubeRoot</Link>
+        </div>
+      </footer>
+    </div>
+  );
+}
