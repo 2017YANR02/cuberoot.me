@@ -1120,6 +1120,82 @@
     font-size: 0.8rem;
 }
 
+/* ── 月切换卷帘 + parallax 动画 ──
+   外层 .calendar 整体水平滑入,内部 day-cell 错峰跟进(parallax 慢一拍),
+   旗子再多延迟 80ms,形成"网格→cells→flags"的层叠纵深感。
+   只在 navDir 切换时触发(依赖 key remount),静止状态零开销。 */
+@keyframes calSlideForward {
+    from { transform: translateX(40px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes calSlideBack {
+    from { transform: translateX(-40px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes cellSlideForward {
+    from { transform: translateX(24px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes cellSlideBack {
+    from { transform: translateX(-24px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes flagPopIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+.upcoming-page .calendar--slide-forward {
+    animation: calSlideForward 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.upcoming-page .calendar--slide-back {
+    animation: calSlideBack 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.upcoming-page .calendar--slide-forward .week-row,
+.upcoming-page .calendar--slide-back .week-row {
+    animation-duration: 460ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: backwards;
+}
+.upcoming-page .calendar--slide-forward .week-row { animation-name: cellSlideForward; }
+.upcoming-page .calendar--slide-back    .week-row { animation-name: cellSlideBack; }
+/* 每周再 stagger 一点点 — 视觉上像浪一样从上往下涌 */
+.upcoming-page .calendar--slide-forward .week-row:nth-child(2),
+.upcoming-page .calendar--slide-back    .week-row:nth-child(2) { animation-delay: 30ms; }
+.upcoming-page .calendar--slide-forward .week-row:nth-child(3),
+.upcoming-page .calendar--slide-back    .week-row:nth-child(3) { animation-delay: 60ms; }
+.upcoming-page .calendar--slide-forward .week-row:nth-child(4),
+.upcoming-page .calendar--slide-back    .week-row:nth-child(4) { animation-delay: 90ms; }
+.upcoming-page .calendar--slide-forward .week-row:nth-child(5),
+.upcoming-page .calendar--slide-back    .week-row:nth-child(5) { animation-delay: 120ms; }
+.upcoming-page .calendar--slide-forward .week-row:nth-child(6),
+.upcoming-page .calendar--slide-back    .week-row:nth-child(6) { animation-delay: 150ms; }
+/* 旗子在 cell 内 pop in,延迟比所在行再多 80ms,形成纵深 */
+.upcoming-page .calendar--slide-forward .compact-flag-tile,
+.upcoming-page .calendar--slide-back    .compact-flag-tile {
+    animation: flagPopIn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    animation-delay: 200ms;
+}
+.upcoming-page .calendar--slide-forward .event-bar,
+.upcoming-page .calendar--slide-back    .event-bar {
+    animation: flagPopIn 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: 200ms;
+}
+/* prefers-reduced-motion: 全部退化为简单 fade,不滑不弹 */
+@media (prefers-reduced-motion: reduce) {
+    .upcoming-page .calendar--slide-forward,
+    .upcoming-page .calendar--slide-back {
+        animation: none;
+    }
+    .upcoming-page .calendar--slide-forward .week-row,
+    .upcoming-page .calendar--slide-back .week-row,
+    .upcoming-page .calendar--slide-forward .compact-flag-tile,
+    .upcoming-page .calendar--slide-back .compact-flag-tile,
+    .upcoming-page .calendar--slide-forward .event-bar,
+    .upcoming-page .calendar--slide-back .event-bar {
+        animation: none;
+    }
+}
+
 /* ── 紧凑日历(国旗模式) ──
    仅按 start_date 把比赛归到日格,不分 track,每个比赛 = 一个国旗 tile。
    day-cell 直接 flex-wrap 排列旗子,一格能塞 24 面(桌面)/9 面(手机)。 */
@@ -1127,6 +1203,12 @@
     /* 紧凑模式不需要 track 行;让 day-cell 自然撑高 */
     grid-template-rows: auto;
     min-height: 80px;
+    /* 列宽随月内每列最大场数 sqrt 加权(周末更宽,工作日更窄)。
+     * compactColTemplate 在 React 里算出后通过 --compact-cols CSS 变量传进来。 */
+    grid-template-columns: var(--compact-cols, repeat(7, 1fr));
+}
+.upcoming-page--compact .calendar--compact .weekday-header {
+    grid-template-columns: var(--compact-cols, repeat(7, 1fr));
 }
 .upcoming-page--compact .calendar--compact .day-cell {
     grid-row: 1;
@@ -1181,10 +1263,6 @@
     z-index: 3;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
-.compact-flag-tile.is-clash {
-    box-shadow: 0 0 0 1.5px var(--swatch-clash, #C15F3C);
-    border-radius: 2px;
-}
 .compact-flag-tile.is-cancelled { opacity: 0.4; }
 .compact-flag-tile.is-cancelled::after {
     /* 取消比赛叠一道斜线 */
@@ -1196,14 +1274,6 @@
         var(--text-sub) calc(50% - 0.5px),
         var(--text-sub) calc(50% + 0.5px),
         transparent calc(50% + 0.5px));
-    pointer-events: none;
-}
-.compact-flag-tile .record-badge {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    transform: scale(0.7);
-    transform-origin: top right;
     pointer-events: none;
 }
 /* 同国家当日 >1 场,右下角 N 提示 */
