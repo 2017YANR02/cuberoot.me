@@ -177,7 +177,16 @@ function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 
   return 'pll';
 }
 
-function AlgRow({ alg, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
+/** Whitelist of inline tags allowed in algHtml — finger-trick notation only.
+ *  Anything else is stripped. Output is safe to set via dangerouslySetInnerHTML. */
+const ALG_HTML_TAG_WHITELIST = new Set(['u', 's', 'em', 'strong', 'sub', 'sup']);
+function sanitizeAlgHtml(html: string): string {
+  return html.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (_, tag) =>
+    ALG_HTML_TAG_WHITELIST.has(tag.toLowerCase()) ? `<${_.startsWith('</') ? '/' : ''}${tag.toLowerCase()}>` : ''
+  );
+}
+
+function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; algHtml?: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <>
@@ -194,7 +203,9 @@ function AlgRow({ alg, expanded, onToggle, animatable, puzzle, set, setup }: { a
         }}
         title={animatable ? (expanded ? 'collapse' : 'play') : 'copy'}
       >
-        <span className="alg-alg-text">{alg}</span>
+        {algHtml
+          ? <span className="alg-alg-text" dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
+          : <span className="alg-alg-text">{alg}</span>}
         <button
           type="button"
           className="alg-alg-copy-btn"
@@ -522,6 +533,7 @@ export default function AlgCategoryPage() {
                             <AlgRow
                               key={`${entry.altId ?? i}`}
                               alg={entry.alg}
+                              algHtml={entry.algHtml}
                               expanded={expanded}
                               onToggle={() => setExpandedKey(expanded ? null : key)}
                               animatable={animatable}
