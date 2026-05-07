@@ -59,7 +59,7 @@ export async function updateCase(puzzle: string, set: string, id: number, body: 
 
 export async function reorderCases(puzzle: string, set: string, ids: number[]): Promise<{ ok: boolean }> {
   const r = await fetch(
-    `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/order`,
+    `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/reorder`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) },
   );
   return handle<{ ok: boolean }>(r);
