@@ -4,9 +4,9 @@
 
 ```
 Hono API 后端（www.cuberoot.me/api/recon/）
-    │  MariaDB recon_db.recons（全量数据，AUTO_INCREMENT ID）
-    │  MariaDB recon_db.edits（编辑覆盖层，JSON 字段）
-    │  MariaDB recon_db.edit_history（编辑历史记录）
+    │  PostgreSQL 13 recon_db.recons（全量数据，SERIAL ID）
+    │  PostgreSQL 13 recon_db.edits（编辑覆盖层，JSONB 字段）
+    │  PostgreSQL 13 recon_db.edit_history（编辑历史记录）
     ↓
 React SPA（/recon 路由，Zustand 状态管理）
     ↓ 中文模式时
@@ -16,7 +16,6 @@ comp_names_zh.json（英文→中文比赛名映射，CI 每日更新）
 ## API 接口
 
 基址：`https://www.cuberoot.me/api/recon/`（Hono RESTful）
-旧 PHP 基址：`https://www.cuberoot.me/legacy/recon/api/?action=`
 
 | Action | 方法 | 权限 | 说明 |
 |--------|------|------|------|
