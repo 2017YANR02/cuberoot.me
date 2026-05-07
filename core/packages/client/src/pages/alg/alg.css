@@ -480,6 +480,109 @@
   text-decoration: line-through;
   text-decoration-thickness: 2px;
 }
+
+/* === Token chip editor (admin simple-mode) === */
+.alg-token-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.alg-token-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--alg-border);
+  border-radius: 6px;
+  background: var(--alg-bg-soft);
+}
+.alg-token-input-line {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.alg-token-input {
+  flex: 1;
+  padding: 6px 8px;
+  background: var(--alg-bg);
+  color: var(--alg-text);
+  border: 1px solid var(--alg-border);
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+}
+.alg-token-input:focus {
+  outline: none;
+  border-color: var(--alg-accent);
+}
+.alg-token-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--alg-border);
+  color: var(--alg-text-faint);
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+}
+.alg-token-delete:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+.alg-token-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.alg-token-chip {
+  background: var(--alg-bg);
+  color: var(--alg-text);
+  border: 1px solid var(--alg-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 28px;
+  text-align: center;
+  user-select: none;
+}
+.alg-token-chip:active { background: var(--alg-accent-soft); }
+.alg-token-chip-none {}
+.alg-token-chip-u {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  border-color: var(--alg-accent);
+}
+.alg-token-chip-wavy {
+  text-decoration: underline wavy;
+  text-decoration-thickness: 1px;
+  border-color: var(--alg-accent);
+}
+.alg-token-chip-s {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  border-color: var(--alg-accent);
+}
+.alg-token-add {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  color: var(--alg-text-faint);
+  border: 1px dashed var(--alg-border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.alg-token-add:hover {
+  color: var(--alg-accent);
+  border-color: var(--alg-accent);
+}
 .alg-alg-copy-icon { color: var(--alg-text-faint); flex: 0 0 auto; }
 .alg-alg-row:hover .alg-alg-copy-icon { color: var(--alg-accent); }
 .alg-alg-row.is-expanded {
