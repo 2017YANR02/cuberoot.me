@@ -65,6 +65,8 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
     transition,
     opacity: isDragging ? 0.5 : 1,
     position: 'relative',
+    // 让 wrapper 撑满 grid cell,内部 article 同高
+    height: '100%',
   };
   return (
     <div ref={setNodeRef} style={style}>
@@ -262,7 +264,8 @@ export default function AlgCategoryPage() {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     setError(null);
     setData(null);
-    loadAlg(puzzleParam, set).then(d => {
+    // admin 看到的列表必须最新(否则点 delete 时 server 找不到旧 case → Not found)
+    loadAlg(puzzleParam, set, { fresh: isAdmin }).then(d => {
       setData(d);
       // For non-umbrella big sets (>100 cases), default-collapse subgroup sections.
       // Umbrella sets always navigate via the subgroup picker, no need to collapse.
@@ -274,7 +277,7 @@ export default function AlgCategoryPage() {
         setCollapsedGroups(new Set());
       }
     }).catch(e => setError(String(e)));
-  }, [puzzleParam, set, validPuzzle, meta]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin]);
 
   // Cases visible after subgroup filtering (subgroupParam, when set, narrows the umbrella).
   const visibleCases = useMemo(() => {

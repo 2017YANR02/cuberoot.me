@@ -208,9 +208,10 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   return c.json(caseRowToJson(updated[0]));
 });
 
-// PUT /api/alg/sets/:puzzle/:set/cases/order — admin 重排 case 顺序
+// PUT /api/alg/sets/:puzzle/:set/reorder — admin 重排 case 顺序
 // body: { ids: number[] } —— 必须是该 set 下的全部 case id,新顺序。server 把 position 重写为 0..N-1。
-algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/order', async (c) => {
+// NOTE: 故意放 /reorder 而非 /cases/order,避免被 PUT /cases/:id 路由捕获(id="order"→NaN→invalid id 400)。
+algSetsRoutes.put('/api/alg/sets/:puzzle/:set/reorder', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);

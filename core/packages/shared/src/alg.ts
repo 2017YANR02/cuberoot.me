@@ -148,11 +148,15 @@ export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | und
  * files that used to be code-split via Vite are gone. Browser caches per
  * `Cache-Control` header (1 hour by default).
  */
-export async function loadAlg(puzzle: AlgPuzzle, set: string): Promise<AlgFile> {
+export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
   const base = (typeof window !== 'undefined' && window.location.hostname === 'ruiminyan.github.io')
     ? 'https://www.cuberoot.me/api/alg/sets'
     : '/api/alg/sets';
-  const res = await fetch(`${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`);
+  // NOTE: fresh=true 给 admin 用,绕开 1 小时 Cache-Control。
+  // 通过 query 时间戳 cache-bust + cache:'no-cache' header,跨浏览器最稳。
+  const url = `${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`
+    + (opts?.fresh ? `?_=${Date.now()}` : '');
+  const res = await fetch(url, opts?.fresh ? { cache: 'no-cache' } : undefined);
   if (!res.ok) {
     throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
   }
