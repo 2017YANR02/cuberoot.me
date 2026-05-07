@@ -9,7 +9,7 @@
  * 路径前缀 /api/alg/sets/... 跟现有 /api/alg/:puzzle/:set/submissions 不冲突。
  */
 import { Hono } from 'hono';
-import { query } from '../db/connection.js';
+import { query, sql } from '../db/connection.js';
 import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 
 export const algSetsRoutes = new Hono();
@@ -206,6 +206,48 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   );
   if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
   return c.json(caseRowToJson(updated[0]));
+});
+
+// PUT /api/alg/sets/:puzzle/:set/cases/order — admin 重排 case 顺序
+// body: { ids: number[] } —— 必须是该 set 下的全部 case id,新顺序。server 把 position 重写为 0..N-1。
+algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/order', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  if (!ADMIN_WCA_IDS.includes(user.wcaId)) return c.json({ error: 'Admin required' }, 403);
+
+  const puzzle = c.req.param('puzzle');
+  const set = c.req.param('set');
+  const body = await c.req.json<{ ids?: unknown }>();
+  if (!Array.isArray(body.ids)) return c.json({ error: 'ids must be array' }, 400);
+  const ids: number[] = [];
+  for (const x of body.ids) {
+    const n = Number(x);
+    if (!Number.isInteger(n) || n <= 0) return c.json({ error: 'ids must be positive integers' }, 400);
+    ids.push(n);
+  }
+  if (new Set(ids).size !== ids.length) return c.json({ error: 'ids must be unique' }, 400);
+
+  // 校验:ids 必须正好等于该 set 的全部 case id 集合(避免漏 case)
+  const existing = await query<{ id: number | string }>(
+    'SELECT id FROM alg_cases WHERE puzzle = ? AND set_slug = ?',
+    [puzzle, set],
+  );
+  const existingSet = new Set(existing.map(r => Number(r.id)));
+  if (existingSet.size !== ids.length) {
+    return c.json({ error: `expected ${existingSet.size} ids, got ${ids.length}` }, 400);
+  }
+  for (const id of ids) {
+    if (!existingSet.has(id)) return c.json({ error: `id ${id} not in this set` }, 400);
+  }
+
+  await sql.begin(async (tx) => {
+    for (let i = 0; i < ids.length; i++) {
+      await tx`UPDATE alg_cases SET position = ${i} WHERE id = ${ids[i]} AND puzzle = ${puzzle} AND set_slug = ${set}`;
+    }
+  });
+
+  return c.json({ ok: true });
 });
 
 // DELETE /api/alg/sets/:puzzle/:set/cases/:id — admin 删 case
