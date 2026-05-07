@@ -12,8 +12,9 @@
 | Workflow | 触发条件 | 内容 | 耗时 |
 |----------|----------|------|------|
 | **Update Stats** | 定时（每周）/ 手动 | TS 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
-| **Deploy Core** | push main 且 `core/` 有变更 / 手动 | pnpm build → commit dist → rsync 云服务器 | ~1 分钟 |
+| **Deploy Core** | push main 且 `core/` 有变更 / 手动 | pnpm build → commit dist → rsync 云服务器 + pm2 restart | ~1 分钟 |
 | **Deploy Mirror** | push main / 其他 CI 完成 | 组装静态文件 + rsync 到云 | ~15 秒 |
+| **Deploy Nginx** | push main 且 `ops/nginx/**` 有变更 / 手动 | scp + nginx -t + reload（失败自动回滚） | ~30 秒 |
 | **Backup Recon** | 定时（每周一凌晨 4:00）/ 手动 | API 拉取复盘备份 + 增量 WCA 成绩 | ~10 秒 |
 | **Update Upcoming** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
 
@@ -23,8 +24,9 @@
 
 ```
 push main
-  ├── core/ 有变更 → Deploy Core → build + rsync 云服务器 → pm2 restart core-api
-  └── 任何 push  → Deploy Mirror → 组装 _deploy/ → rsync 云服务器
+  ├── core/** 有变更      → Deploy Core   → build + rsync 云服务器 → pm2 restart core-api
+  ├── ops/nginx/** 有变更 → Deploy Nginx  → scp + nginx -t + reload (失败回滚)
+  └── 任何 push           → Deploy Mirror → 组装 _deploy/ → rsync 云服务器
 ```
 
 ## GitHub Secrets
@@ -40,12 +42,12 @@ push main
 
 | 主题 | 文件 |
 |------|------|
-| 项目结构与目录树 | [docs/architecture.md](docs/architecture.md) |
 | 本地开发环境搭建 | [docs/development.md](docs/development.md) |
 | 统计数据管道 | [docs/stats-pipeline.md](docs/stats-pipeline.md) |
 | Recon 复盘 API | [docs/recon-api.md](docs/recon-api.md) |
 | 故障排除 | [docs/troubleshooting.md](docs/troubleshooting.md) |
-| 云服务器 运维手册 | [CUBEROOT_ME.md](CUBEROOT_ME.md) |
-| Monorepo 开发 | [core/README.md](core/README.md) |
+| 云服务器运维手册 | [CUBEROOT_ME.md](CUBEROOT_ME.md) |
+| nginx vhost 部署 | [ops/nginx/README.md](ops/nginx/README.md) |
+| Monorepo 概览 | [core/README.md](core/README.md) |
 
 

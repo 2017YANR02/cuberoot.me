@@ -13,15 +13,15 @@
 
 ### 页面 404？
 - 检查 Nginx 配置是否包含 `$uri.html`
-- 宝塔面板修改站点后可能覆盖配置，需要重新添加 `^~` location 块
+- vhost source 在 `ops/nginx/www.cuberoot.me.conf`,push main 自动部署
 
 ### SSH 连接失败？
 - 检查阿某里某云安全组 22 端口
 - 确认 `/root/.ssh/authorized_keys` 包含部署公钥
 
 ### SSL 证书过期？
-- 宝塔默认自动续签
-- 手动：宝塔面板 → 网站 → SSL → 续签
+- `certbot-renew.timer` (systemd) 每 12h 检查，<30 天自动续，续后 deploy hook reload nginx
+- 手动 dry-run：`ssh root@cuberoot 'certbot renew --dry-run --no-random-sleep-on-renew'`
 
 ## 常见开发问题
 

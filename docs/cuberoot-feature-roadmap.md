@@ -100,7 +100,7 @@ Top 3 surprises from peer research:
 #### C1. Cuber 个人主页 (选手主页 / Cuber Profile Pages)
 - **Description**: `/cuber/:wcaId` 路由：基础信息 + PR 时间线 + 参赛地图 + Kinch + sum-of-ranks + 同期同国家排名变化。WCA 官网有但很丑、没图。
 - **Reference sites**: [WCA 官方](https://www.worldcubeassociation.org/persons)、[wcadb.org](https://wcadb.org)、[cubingapp ranks](https://cubingapp.com)。
-- **Implementation sketch**: 新页 `pages/cuber/CuberProfile.tsx`；数据走 stats-build 预生成 per-person JSON 或 server 实时查 MariaDB。复用 `<EventIcon>` `<Flag>` `displayCuberName`。
+- **Implementation sketch**: 新页 `pages/cuber/CuberProfile.tsx`；数据走 stats-build 预生成 per-person JSON 或 server 实时查 PostgreSQL。复用 `<EventIcon>` `<Flag>` `displayCuberName`。
 - **Priority**: P0
 - **Effort**: M
 
