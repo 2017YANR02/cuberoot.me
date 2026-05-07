@@ -361,12 +361,8 @@ interface CompactDayTile {
   rep: Competition;
   /** 同国家当日总场数 */
   count: number;
-  /** 该国家当日是否任一场扎堆(任一 top_cubers≥3) */
-  anyClash: boolean;
   /** 该国家当日是否全部已取消 */
   allCancelled: boolean;
-  /** 该国家当日代表性纪录(取第一个非 null) */
-  topRecord: string | null;
 }
 
 interface CompactWeekRow {
@@ -419,27 +415,17 @@ function computeCompactWeeks(
         continue;
       }
       const sorted = [...list].sort(sortFn);
-      // 按国家分桶,代表是排序后第一个；保留代表的相对顺序
+      // 按国家分桶,代表是排序后第一个
       const tilesByCountry = new Map<string, CompactDayTile>();
       for (const c of sorted) {
         const country = c.country.toLowerCase();
         const cancelled = isCancelledComp(c, cancelledCutoffIso);
-        const clash = c.top_cubers.length >= 3;
-        const rec = getCompRecordTop(c.id);
         const ex = tilesByCountry.get(country);
         if (!ex) {
-          tilesByCountry.set(country, {
-            rep: c,
-            count: 1,
-            anyClash: clash,
-            allCancelled: cancelled,
-            topRecord: rec ?? null,
-          });
+          tilesByCountry.set(country, { rep: c, count: 1, allCancelled: cancelled });
         } else {
           ex.count++;
-          if (clash) ex.anyClash = true;
           if (!cancelled) ex.allCancelled = false;
-          if (!ex.topRecord && rec) ex.topRecord = rec;
         }
       }
       // 国家 tile 按当日场数降序;同场数走代表 comp 已有的 priority(top_cubers / id)
@@ -1256,6 +1242,20 @@ export default function UpcomingCompsPage() {
     );
   }, [viewMode, displayedComps, viewDate, countryFilterSet, cancelledCutoffIso]);
 
+  /** 紧凑模式列宽：取每列(周一~周日)月内最大场数,sqrt 软化后作 fr。
+   * 周末扎堆(20+)/工作日 0~2 → sqrt 把 20:1 拉到 ~4.5:1,周末更宽但工作日不至于消失。
+   * minmax(40px,…fr) 保证空列不被挤到不可读。 */
+  const compactColTemplate = useMemo(() => {
+    if (!compactWeeks) return null;
+    const max = [0, 0, 0, 0, 0, 0, 0];
+    for (const w of compactWeeks) {
+      for (let i = 0; i < 7; i++) {
+        if (w.byDay[i].length > max[i]) max[i] = w.byDay[i].length;
+      }
+    }
+    return max.map((n) => `minmax(40px, ${Math.max(1, Math.sqrt(n)).toFixed(2)}fr)`).join(' ');
+  }, [compactWeeks]);
+
   // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
   const yearMonthsMap = useMemo(() => {
     const map = new Map<number, Set<number>>();
@@ -1291,12 +1291,28 @@ export default function UpcomingCompsPage() {
     return { comps: inMonth.length, countries: countries.size, cubers: cubers.size, soon };
   }, [displayedComps, viewDate]);
 
-  const gotoMonth = (delta: number) => {
-    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + delta, 1));
-  };
+  /** 月份切换方向 — 触发 calendar 卷帘动画 */
+  const [navDir, setNavDir] = useState<'forward' | 'back' | null>(null);
+  const setMonth = useCallback((next: Date) => {
+    setViewDate((cur) => {
+      const curMs = cur.getFullYear() * 12 + cur.getMonth();
+      const nextMs = next.getFullYear() * 12 + next.getMonth();
+      if (nextMs === curMs) return cur;
+      setNavDir(nextMs > curMs ? 'forward' : 'back');
+      return next;
+    });
+  }, []);
+  /** functional setter — 避免读闭包里 stale 的 viewDate(键盘 handler 因 deps 不全曾跳错月) */
+  const gotoMonth = useCallback((delta: number) => {
+    setViewDate((cur) => {
+      const next = new Date(cur.getFullYear(), cur.getMonth() + delta, 1);
+      setNavDir(delta > 0 ? 'forward' : 'back');
+      return next;
+    });
+  }, []);
   const gotoToday = () => {
     const now = new Date();
-    setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
+    setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
   // 列表模式 + 移动端：chip 表头与列表外层各自横向滚动，双向同步 scrollLeft
@@ -1483,30 +1499,30 @@ export default function UpcomingCompsPage() {
             aria-selected={viewMode === 'calendar'}
             className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
             onClick={() => setViewMode('calendar')}
+            aria-label={isZh ? '日历' : 'Calendar'}
             title={isZh ? '日历' : 'Calendar'}
           >
-            <CalendarDays size={14} strokeWidth={1.75} />
-            <span>{isZh ? '日历' : 'Calendar'}</span>
+            <CalendarDays size={16} strokeWidth={1.75} />
           </button>
           <button
             role="tab"
             aria-selected={viewMode === 'compact'}
             className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
             onClick={() => setViewMode('compact')}
+            aria-label={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
             title={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
           >
-            <LayoutGrid size={14} strokeWidth={1.75} />
-            <span>{isZh ? '紧凑' : 'Compact'}</span>
+            <LayoutGrid size={16} strokeWidth={1.75} />
           </button>
           <button
             role="tab"
             aria-selected={viewMode === 'list'}
             className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
             onClick={() => { setViewMode('list'); setMode('all'); }}
+            aria-label={isZh ? '列表' : 'List'}
             title={isZh ? '列表' : 'List'}
           >
-            <List size={14} strokeWidth={1.75} />
-            <span>{isZh ? '列表' : 'List'}</span>
+            <List size={16} strokeWidth={1.75} />
           </button>
         </div>
         {(viewMode === 'calendar' || viewMode === 'compact') && (
@@ -1640,14 +1656,22 @@ export default function UpcomingCompsPage() {
 
       {(viewMode === 'calendar' || viewMode === 'compact') && (
         <div className="legend">
-          {mode === 'all' && (
+          {viewMode === 'calendar' && mode === 'all' && (
             <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
           )}
-          <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
-          <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
-          <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
-          <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
-          <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
+          {viewMode === 'calendar' && (
+            <>
+              <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+            </>
+          )}
+          {viewMode === 'calendar' && (
+            <>
+              <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
+              <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
+              <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
+            </>
+          )}
           <span className="month-stats">
             <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
             <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
@@ -1668,7 +1692,9 @@ export default function UpcomingCompsPage() {
       )}
 
       {viewMode === 'calendar' && <div
-        className="calendar"
+        key={`cal-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
+        className={`calendar${navDir ? ` calendar--slide-${navDir}` : ''}`}
+        onAnimationEnd={() => setNavDir(null)}
         onTouchStart={onCalendarTouchStart}
         onTouchEnd={onCalendarTouchEnd}
         onClickCapture={onCalendarClickCapture}
@@ -1759,7 +1785,10 @@ export default function UpcomingCompsPage() {
       </div>}
 
       {viewMode === 'compact' && compactWeeks && <div
-        className="calendar calendar--compact"
+        key={`compact-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
+        className={`calendar calendar--compact${navDir ? ` calendar--slide-${navDir}` : ''}`}
+        style={compactColTemplate ? { ['--compact-cols' as string]: compactColTemplate } : undefined}
+        onAnimationEnd={() => setNavDir(null)}
         onTouchStart={onCalendarTouchStart}
         onTouchEnd={onCalendarTouchEnd}
         onClickCapture={onCalendarClickCapture}
@@ -1792,15 +1821,12 @@ export default function UpcomingCompsPage() {
                       {day.getDate()}
                     </span>
                   )}
-                  {tiles.length > 0 && (
+                  {inView && tiles.length > 0 && (
                     <div className="compact-flag-grid">
                       {tiles.map((tile) => {
                         const c = tile.rep;
-                        const hasTop = c.top_cubers.length > 0;
                         const cls = [
                           'compact-flag-tile',
-                          tile.anyClash ? 'is-clash' : '',
-                          !hasTop ? 'is-none-top' : '',
                           tile.allCancelled ? 'is-cancelled' : '',
                         ].filter(Boolean).join(' ');
                         const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
@@ -1825,7 +1851,6 @@ export default function UpcomingCompsPage() {
                             title={titleText}
                           >
                             <Flag iso2={c.country} />
-                            {tile.topRecord && <RecordBadge record={tile.topRecord} />}
                             {tile.count > 1 && (
                               <span className="compact-flag-count" aria-label={titleText}>{tile.count}</span>
                             )}
@@ -1858,7 +1883,7 @@ export default function UpcomingCompsPage() {
           yearMonthsMap={yearMonthsMap}
           anchor={monthBtnRef.current?.getBoundingClientRect() ?? null}
           onCommit={(y, m) => {
-            setViewDate(new Date(y, m - 1, 1));
+            setMonth(new Date(y, m - 1, 1));
             setPickerOpen(null);
           }}
           isZh={isZh}
