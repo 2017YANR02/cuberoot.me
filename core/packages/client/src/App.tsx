@@ -16,7 +16,7 @@ import { ZbllTimerPage } from './pages/ZbllTimerPage';
 import { ZblsSelectPage } from './pages/ZblsSelectPage';
 import { ZblsTimerPage } from './pages/ZblsTimerPage';
 
-// NOTE: LandingPage 懒加载 — Toolkit 全站入口页（粒子系统 + 9 卡片）
+// NOTE: LandingPage 懒加载 — 全站入口页（粒子系统 + 卡片）
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 // NOTE: Calc 模块懒加载 — 体积较大，按需加载
@@ -86,6 +86,18 @@ const GenPage = lazy(() => import('./pages/gen/GenPage'));
 const NotationPage = lazy(() => import('./pages/notation/NotationPage'));
 // NOTE: Patterns — 著名 3x3 图案集
 const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
+// NOTE: /code — 编程语言长篇导览（TS / Rust / Go / Python ...）
+const CodeLandingPage = lazy(() => import('./pages/code/CodeLandingPage'));
+const TsIntroPage = lazy(() => import('./pages/code/TsIntroPage'));
+const RustIntroPage = lazy(() => import('./pages/code/RustIntroPage'));
+const GoIntroPage = lazy(() => import('./pages/code/GoIntroPage'));
+const PythonIntroPage = lazy(() => import('./pages/code/PythonIntroPage'));
+const CIntroPage = lazy(() => import('./pages/code/CIntroPage'));
+const CppIntroPage = lazy(() => import('./pages/code/CppIntroPage'));
+const ZigIntroPage = lazy(() => import('./pages/code/ZigIntroPage'));
+const SwiftIntroPage = lazy(() => import('./pages/code/SwiftIntroPage'));
+const KotlinIntroPage = lazy(() => import('./pages/code/KotlinIntroPage'));
+const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -107,7 +119,7 @@ function App() {
     <BrowserRouter basename="/">
       <LangParamGuard />
       <Routes>
-        {/* NOTE: 全站入口页（复刻原版 index.html 的 9 卡片 Toolkit 主页） */}
+        {/* NOTE: 全站入口页（卡片网格） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
         {/* NOTE: Trainer 首页（原来的 /，PLL/OLL/ZBLL/ZBLS 选择页） */}
         <Route path="/trainer" element={<HomePage />} />
@@ -175,6 +187,18 @@ function App() {
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
         {/* Patterns — 著名 3x3 图案集 */}
         <Route path="/patterns" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
+        {/* Code — 编程语言长篇导览 */}
+        <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
+        <Route path="/code/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
+        <Route path="/code/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />
+        <Route path="/code/go" element={<Suspense fallback={<div>Loading...</div>}><GoIntroPage /></Suspense>} />
+        <Route path="/code/python" element={<Suspense fallback={<div>Loading...</div>}><PythonIntroPage /></Suspense>} />
+        <Route path="/code/c" element={<Suspense fallback={<div>Loading...</div>}><CIntroPage /></Suspense>} />
+        <Route path="/code/cpp" element={<Suspense fallback={<div>Loading...</div>}><CppIntroPage /></Suspense>} />
+        <Route path="/code/zig" element={<Suspense fallback={<div>Loading...</div>}><ZigIntroPage /></Suspense>} />
+        <Route path="/code/swift" element={<Suspense fallback={<div>Loading...</div>}><SwiftIntroPage /></Suspense>} />
+        <Route path="/code/kotlin" element={<Suspense fallback={<div>Loading...</div>}><KotlinIntroPage /></Suspense>} />
+        <Route path="/code/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
