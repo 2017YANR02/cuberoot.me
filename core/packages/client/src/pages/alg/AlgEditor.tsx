@@ -4,11 +4,14 @@
  * 形态: 2D AlgEntry[][] (外层 ori,内层条数)。多 ori 时按 ori 分组显示。
  * 每行用 FormulaInput markable 模式,内部 contenteditable,可有 inline 标签。
  * 提交时:alg = getText(), algHtml = getHtml()(若含标签)。
+ *
+ * 关键: layout 内部为每行配 stable uid,React key 用 uid 而非数组下标,
+ * 否则删中间行后 React 会复用旁边 DOM,FormulaInput uncontrolled 内容不刷新 → 视觉错位。
  */
 import { Fragment, useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import type { AlgEntry, AlgPuzzle } from '@cuberoot/shared';
-import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
+import CubeKeyboardSection from '../../components/CubeKeyboardSection';
 import FormulaInput, { type FormulaInputHandle } from '../../components/FormulaInput';
 import AlgPlayer from '../../components/AlgPlayer';
 
@@ -26,36 +29,45 @@ interface Props {
   setup: string;
 }
 
+type Row = AlgEntry & { uid: string };
+
+let _uidCounter = 0;
+function newUid(): string {
+  _uidCounter += 1;
+  return `r${Date.now().toString(36)}_${_uidCounter}`;
+}
+
 const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, isZh, puzzle, setSlug, setup }, ref) => {
-  const [layout, setLayout] = useState<AlgEntry[][]>(() => {
-    if (initialValue.length === 0) return [[{ alg: '' }]];
-    return initialValue.map(ori => (ori.length === 0 ? [{ alg: '' }] : ori));
+  const [layout, setLayout] = useState<Row[][]>(() => {
+    const src = initialValue.length === 0
+      ? [[{ alg: '' }]]
+      : initialValue.map(ori => (ori.length === 0 ? [{ alg: '' }] : ori));
+    return src.map(ori => ori.map(e => ({ ...e, uid: newUid() })));
   });
 
+  // NOTE: 用 row.uid 作 key,删行不会让别的 row 的 handle 漂移
   const handles = useRef<Map<string, FormulaInputHandle>>(new Map());
   const elements = useRef<Map<string, HTMLTextAreaElement | HTMLDivElement>>(new Map());
-  const refKey = (oi: number, ai: number) => `${oi}:${ai}`;
 
-  const [focusedKey, setFocusedKey] = useState<string | null>(null);
+  const [focusedUid, setFocusedUid] = useState<string | null>(null);
   /** 实时跟踪当前 focused 行的纯文本,给 AlgPlayer 用 */
   const [currentAlg, setCurrentAlg] = useState('');
   const keyboardTargetRef = useMemo(
-    () => ({ current: focusedKey ? (elements.current.get(focusedKey) ?? null) : null }),
-    [focusedKey],
+    () => ({ current: focusedUid ? (elements.current.get(focusedUid) ?? null) : null }),
+    [focusedUid],
   );
 
-  // NOTE: focused 行变化时,同步 currentAlg 给 player
   useEffect(() => {
-    if (!focusedKey) { setCurrentAlg(''); return; }
-    const h = handles.current.get(focusedKey);
+    if (!focusedUid) { setCurrentAlg(''); return; }
+    const h = handles.current.get(focusedUid);
     if (h) setCurrentAlg(h.getText());
-  }, [focusedKey]);
+  }, [focusedUid]);
 
   useImperativeHandle(ref, () => ({
     getValue: (): AlgEntry[][] =>
-      layout.map((ori, oi) =>
-        ori.map((_, ai) => {
-          const h = handles.current.get(refKey(oi, ai));
+      layout.map(ori =>
+        ori.map(row => {
+          const h = handles.current.get(row.uid);
           if (!h) return { alg: '' };
           const text = h.getText();
           const html = h.getHtml();
@@ -67,34 +79,24 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
   }), [layout]);
 
   const addAlg = (oi: number) => {
-    const newAi = layout[oi].length;
-    const newKey = refKey(oi, newAi);
-    setLayout(L => L.map((ori, i) => (i === oi ? [...ori, { alg: '' }] : ori)));
-    // NOTE: 新行渲染完后 focus 它,player + keyboard 立即出现
+    const newRow: Row = { alg: '', uid: newUid() };
+    setLayout(L => L.map((ori, i) => (i === oi ? [...ori, newRow] : ori)));
     requestAnimationFrame(() => {
-      const el = elements.current.get(newKey);
-      if (el) { el.focus(); setFocusedKey(newKey); }
-    });
-  };
-  const removeAlg = (oi: number, ai: number) => {
-    setLayout(L => {
-      const ori = L[oi];
-      if (ori.length <= 1) return L;
-      handles.current.delete(refKey(oi, ai));
-      elements.current.delete(refKey(oi, ai));
-      // NOTE: 重排:被删行之后的索引也要前移
-      for (let j = ai + 1; j < ori.length; j++) {
-        const oldH = handles.current.get(refKey(oi, j));
-        const oldE = elements.current.get(refKey(oi, j));
-        handles.current.delete(refKey(oi, j));
-        elements.current.delete(refKey(oi, j));
-        if (oldH) handles.current.set(refKey(oi, j - 1), oldH);
-        if (oldE) elements.current.set(refKey(oi, j - 1), oldE);
-      }
-      return L.map((o, i) => (i === oi ? o.filter((_, k) => k !== ai) : o));
+      const el = elements.current.get(newRow.uid);
+      if (el) { el.focus(); setFocusedUid(newRow.uid); }
     });
   };
 
+  const removeAlg = (oi: number, uid: string) => {
+    setLayout(L => {
+      const ori = L[oi];
+      if (ori.length <= 1) return L;
+      handles.current.delete(uid);
+      elements.current.delete(uid);
+      return L.map((o, i) => (i === oi ? o.filter(r => r.uid !== uid) : o));
+    });
+    if (focusedUid === uid) setFocusedUid(null);
+  };
 
   return (
     <div className="alg-editor">
@@ -103,11 +105,10 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
           {oriNames && oriNames[oi] && (
             <div className="alg-editor-ori-name">{oriNames[oi]}</div>
           )}
-          {ori.map((entry, ai) => {
-            const k = refKey(oi, ai);
-            const isFocused = focusedKey === k;
+          {ori.map(row => {
+            const isFocused = focusedUid === row.uid;
             return (
-              <Fragment key={k}>
+              <Fragment key={row.uid}>
                 {isFocused && (
                   <div className="alg-editor-player">
                     <AlgPlayer alg={currentAlg} puzzle={puzzle} set={setSlug} setup={setup} size={220} />
@@ -117,41 +118,33 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
                 <FormulaInput
                   ref={(h: FormulaInputHandle | null) => {
                     if (h) {
-                      handles.current.set(k, h);
+                      handles.current.set(row.uid, h);
                       const el = h.getElement();
-                      if (el) elements.current.set(k, el);
+                      if (el) elements.current.set(row.uid, el);
                     } else {
-                      handles.current.delete(k);
-                      elements.current.delete(k);
+                      handles.current.delete(row.uid);
+                      elements.current.delete(row.uid);
                     }
                   }}
                   markable
                   multiline={false}
                   autoSpace
-                  initialText={entry.alg || ''}
-                  initialHtml={entry.algHtml}
+                  initialText={row.alg || ''}
+                  initialHtml={row.algHtml}
                   placeholder={isZh ? "如 R U R' U'" : "e.g. R U R' U'"}
                   className="alg-editor-input"
                   spellCheck={false}
-                  onFocus={() => setFocusedKey(k)}
+                  onFocus={() => setFocusedUid(row.uid)}
                   onBlur={e => {
-                    // NOTE: focus 仍在 AlgEditor 内(切到另一行 / 键盘按钮)不清;
-                    // 只有跳出整个 editor 才隐藏 player + keyboard
                     const next = e.relatedTarget as HTMLElement | null;
                     if (next && next.closest('.alg-editor')) return;
-                    setFocusedKey(prev => (prev === k ? null : prev));
+                    setFocusedUid(prev => (prev === row.uid ? null : prev));
                   }}
-                  onChange={text => { if (focusedKey === k) setCurrentAlg(text); }}
+                  onChange={text => { if (focusedUid === row.uid) setCurrentAlg(text); }}
                   onKeyDown={e => {
-                    // NOTE: Enter 不换行,而是加新公式行 + 焦点跳过去
                     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                       e.preventDefault();
                       addAlg(oi);
-                      requestAnimationFrame(() => {
-                        const nk = refKey(oi, ai + 1);
-                        const next = elements.current.get(nk);
-                        if (next) { next.focus(); setFocusedKey(nk); }
-                      });
                     }
                   }}
                 />
@@ -159,7 +152,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
                   <button
                     type="button"
                     className="alg-editor-del"
-                    onClick={() => removeAlg(oi, ai)}
+                    onClick={() => removeAlg(oi, row.uid)}
                     title={isZh ? '删此条' : 'Remove'}
                     tabIndex={-1}
                   >
@@ -168,7 +161,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
                 )}
               </div>
                 {isFocused && (
-                  <CubeVirtualKeyboard target={keyboardTargetRef} enableMarks />
+                  <CubeKeyboardSection target={keyboardTargetRef} enableMarks />
                 )}
               </Fragment>
             );

@@ -576,6 +576,15 @@
   padding: 4px 0;
 }
 
+/* setup label 里的 textarea 强制看起来像普通 input(单行、不可拉伸、跟 input 同字体字号) */
+.alg-admin-setup-label textarea {
+  resize: none;
+  overflow: hidden;
+  font-family: inherit !important;
+  font-size: 0.85rem !important;
+  white-space: nowrap;
+}
+
 /* === DnD case-card 拖动 handle (admin) === */
 .alg-case-drag-handle {
   position: absolute;

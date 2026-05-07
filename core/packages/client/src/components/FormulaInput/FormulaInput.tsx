@@ -21,7 +21,8 @@ import {
   useEffect,
   type RefObject,
 } from 'react';
-import { autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret } from '../../utils/formula_autospace';
+import { autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret, normalizePunctuationTA, normalizePunctuationCE } from '../../utils/formula_autospace';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 export interface FormulaInputHandle {
   /** 纯文本(去标签、去零宽空格、trim) */
@@ -96,6 +97,10 @@ const FormulaInput = forwardRef<FormulaInputHandle, FormulaInputProps>(function 
     inputMode,
     style,
   } = props;
+
+  // 移动端默认屏蔽系统键盘 (改用站内虚拟键盘);caller 显式传 inputMode 优先
+  const isMobile = useIsMobile();
+  const effectiveInputMode = inputMode ?? (isMobile ? 'none' : undefined);
 
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const ceRef = useRef<HTMLDivElement | null>(null);
@@ -182,10 +187,12 @@ const FormulaInput = forwardRef<FormulaInputHandle, FormulaInputProps>(function 
         placeholder={placeholder}
         className={className}
         style={style}
-        inputMode={inputMode}
+        inputMode={effectiveInputMode}
         onInput={e => {
           const el = e.target as HTMLTextAreaElement;
           const native = e.nativeEvent as InputEvent;
+          // 强制英文标点(IME 中文标点立即转)
+          normalizePunctuationTA(el);
           if (autoSpace) {
             const adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, native.inputType ?? '');
             if (adj.value !== el.value) {
@@ -222,10 +229,13 @@ const FormulaInput = forwardRef<FormulaInputHandle, FormulaInputProps>(function 
       className={className}
       style={style}
       spellCheck={spellCheck}
+      inputMode={effectiveInputMode}
       data-placeholder={placeholder}
       onInput={e => {
         const el = e.target as HTMLDivElement;
         const native = e.nativeEvent as InputEvent;
+        // 强制英文标点(IME 中文标点立即转)
+        normalizePunctuationCE(el);
         if (autoSpace) {
           autoSpaceMovesCE(el, native.inputType ?? '');
         }

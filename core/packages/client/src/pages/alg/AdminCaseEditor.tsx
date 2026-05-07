@@ -11,6 +11,9 @@ import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared'
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '../../utils/alg_sets_api';
 import { validateAlgCase } from '../../utils/alg_validation';
 import AlgEditor, { type AlgEditorHandle } from './AlgEditor';
+import FormulaInput from '../../components/FormulaInput';
+import AlgPlayer from '../../components/AlgPlayer';
+import CubeKeyboardSection from '../../components/CubeKeyboardSection';
 
 export type AdminEditorState =
   | { mode: 'edit'; existing: AlgCase }
@@ -65,6 +68,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
   const [subgroup, setSubgroup] = useState(initial.subgroup);
   const [setup, setSetup] = useState(initial.setup);
   const algEditorRef = useRef<AlgEditorHandle>(null);
+  const setupElRef = useRef<HTMLTextAreaElement | HTMLDivElement | null>(null);
+  const [setupFocused, setSetupFocused] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [standard, setStandard] = useState(initial.standard ?? '');
   const [stickerJson, setStickerJson] = useState(JSON.stringify(initial.sticker, null, 2));
@@ -212,10 +217,30 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
             <input value={subgroup} onChange={e => setSubgroup(e.target.value)} maxLength={64}
               placeholder={isZh ? '例如 Geng / U / Adj Swap' : 'e.g. Geng / U / Adj Swap'} />
           </label>
-          <label>
+          <label className="alg-admin-setup-label">
             <span>{isZh ? '打乱 (Setup)' : 'Setup'}</span>
-            <input value={setup} onChange={e => setSetup(e.target.value)}
-              placeholder={isZh ? '把魔方变成此 case 的公式' : 'scramble that produces this case'} />
+            {setupFocused && setup.trim() && (
+              <div className="alg-editor-player">
+                <AlgPlayer alg="" puzzle={puzzle} set={setSlug} setup={setup} size={220} />
+              </div>
+            )}
+            <FormulaInput
+              elementRef={setupElRef}
+              initialText={initial.setup}
+              autoSpace
+              multiline={false}
+              placeholder={isZh ? '把魔方变成此 case 的公式' : 'scramble that produces this case'}
+              onChange={t => setSetup(t)}
+              onFocus={() => setSetupFocused(true)}
+              onBlur={e => {
+                const next = e.relatedTarget as HTMLElement | null;
+                if (next && next.closest('.alg-admin-setup-label')) return;
+                setSetupFocused(false);
+              }}
+            />
+            {setupFocused && (
+              <CubeKeyboardSection target={setupElRef} />
+            )}
           </label>
 
           <div className="alg-admin-algs-block">
