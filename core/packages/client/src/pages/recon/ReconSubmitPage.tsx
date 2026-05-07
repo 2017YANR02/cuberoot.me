@@ -27,7 +27,7 @@ import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
-import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
+import CubeKeyboardSection from '../../components/CubeKeyboardSection';
 import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
@@ -35,7 +35,7 @@ import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../..
 import FormulaInput from '../../components/FormulaInput';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
-import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2, Shuffle } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Loader2, Shuffle } from 'lucide-react';
 import { randomScrambleForEvent } from '../../utils/scramble';
 
 /** 折叠区段 — GitHub 设置式 */
@@ -187,7 +187,6 @@ export default function ReconSubmitPage() {
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   // NOTE: 桌面端用户可 toggle;移动端强制显示键盘(toggle 按钮也藏掉)
   const isMobile = useIsMobile();
-  const [showKeyboard, setShowKeyboard] = useState(false);
 
   // NOTE: 编辑模式加载数据
   useEffect(() => {
@@ -1191,7 +1190,6 @@ export default function ReconSubmitPage() {
               className="submit-solution-textarea"
               style={{ overflow: 'hidden', resize: 'none' }}
               // NOTE: 手机端用站内虚拟键盘,屏蔽系统软键盘(保留 focus / 光标定位)
-              inputMode={isMobile ? 'none' : undefined}
               onChange={text => setField('solution', text)}
               onCaretChange={() => {
                 if (solutionRef.current) handleCursorSync(solutionRef.current);
@@ -1220,35 +1218,16 @@ export default function ReconSubmitPage() {
 
         {/* NOTE: 虚拟键盘 — 标准化视图(只读)不显示;桌面端 toggle,移动端强制显示 */}
         {!normalized && (
-          <>
-            {!isMobile && (
-              <button
-                type="button"
-                className={`submit-keyboard-toggle${showKeyboard ? ' active' : ''}`}
-                onClick={() => setShowKeyboard(s => !s)}
-                aria-label={isZh
-                  ? (showKeyboard ? '隐藏虚拟键盘' : '显示虚拟键盘')
-                  : (showKeyboard ? 'Hide keyboard' : 'Show keyboard')}
-                title={isZh
-                  ? (showKeyboard ? '隐藏虚拟键盘' : '显示虚拟键盘')
-                  : (showKeyboard ? 'Hide keyboard' : 'Show keyboard')}
-              >
-                <Keyboard size={14} />
-              </button>
-            )}
-            {(isMobile || showKeyboard) && (
-              <CubeVirtualKeyboard
-                target={solutionRef}
-                onInput={() => {
-                  if (solutionRef.current) {
-                    setField('solution', solutionRef.current.value);
-                    autoResize(solutionRef.current);
-                    handleCursorSync(solutionRef.current);
-                  }
-                }}
-              />
-            )}
-          </>
+          <CubeKeyboardSection
+            target={solutionRef}
+            onInput={() => {
+              if (solutionRef.current) {
+                setField('solution', solutionRef.current.value);
+                autoResize(solutionRef.current);
+                handleCursorSync(solutionRef.current);
+              }
+            }}
+          />
         )}
 
         {/* === 元数据 — 默认折叠 === */}
