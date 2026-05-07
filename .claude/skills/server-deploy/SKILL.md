@@ -40,17 +40,25 @@ ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db
 - `INTERVAL 'N days'` / `make_interval(secs => ?)`(原 `INTERVAL N DAY` / `DATE_ADD(NOW(), INTERVAL ? SECOND)`)
 - `to_timestamp(? / 1000.0)`(原 `FROM_UNIXTIME(? / 1000)`)
 - `INSERT ... RETURNING id` 拿自增 id,**不是** `result.insertId`
-- `JSONB` 列 (目前只 `edits.fields`):合并用 `||` 操作符;driver 自动反序列化,**不要** `JSON.parse` 它
-- 其它 JSON 数据(`alternatives`, `attempts`, `payload`, `solves`, `before_snapshot`, `after_fields`)留 `TEXT`,driver 返字符串需手动 `JSON.parse`
+- **JSONB 列**(`alg_cases.{sticker,algs,ori_names}` / `edits.fields`):写时**直接传 JS 对象**(driver 会自己 `JSON.stringify` 一次,手动再来 = 双重编码 → 落地 jsonb-string → 前端 `.map()` 在字符串上炸 = React 卸树黑屏);读时 driver 也自动反序列化,**不要** `JSON.parse`;合并用 `||` 操作符
+- **TEXT 列存 JSON**(`alternatives` / `attempts` / `payload` / `solves` / `before_snapshot` / `after_fields`):写**必须** `JSON.stringify`,读 driver 返字符串**必须** `JSON.parse`
+- 两套规则反着来,**先 grep `schema.pg.sql` 看目标列是 JSONB 还是 TEXT 再下手**,别照抄相邻代码(同一文件里两种列都有)
 - `tinyint(1)` 在 PG 是 `SMALLINT`,代码传 0/1 不是 boolean(`jsonToRow` 已处理 `official`)
 - DATE 列驱动配了 `types.date` override 直接返字符串 `'YYYY-MM-DD'`(不是 ISO 时刻),前端用 `slice(0,10)` 兼容
 
 `schema.pg.sql` 是 source of truth,改任何 schema 同步改这个文件 + 跑 ALTER 上线。
 
-## 云服务器没有 GitHub 出站访问
+## 部署走 GitHub Actions 不在服务器 git pull
 
-SSH 进得去(`ssh root@cuberoot`),但云服务器自己访问不到 `github.com`,所以**别在云服务器上 `git pull`** —— 会卡。所有代码部署都走 GitHub Actions:
+云服务器**能**访问 github.com(2026-05-06 验证: HTTPS 200 < 1s、SSH 通、git ls-remote 0.8s),但**代码部署仍走 Actions**,服务器不要 `git pull`,理由:
 
+- repo 4 GB,服务器 SSD 不必要
+- build 要 pnpm + Vite + tsc 全套,服务器无开发环境
+- Actions 已配好 build → rsync → pm2 restart 流水
+
+服务器**主动出站到 github 的合法用法**:`git push`/`gh` 推备份产物到外部 repo(参考 `pg-dump-recon` 同款 systemd timer)。
+
+代码部署:
 - push `main` 且 `core/**` 有变更 → `deploy_core.yml` 自动跑
 - 文件 >300(path filter trap)或想强制重跑 → `gh workflow run deploy_core.yml`
 
