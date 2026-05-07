@@ -14,12 +14,13 @@
  * For F/T/S (singular subgroups), no +/- split — all 4 cols same subgroup.
  * Chinese descriptive rows (like "横黄远槽, f流") between sections — ignored.
  */
-import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
 import { writeFileSync } from 'node:fs';
+import { docxToTablesHtml } from './docx_tables.mjs';
 
-const r = await mammoth.convertToHtml({path: 'D:/cube/CubeRoot/3x3/ZBLS.docx'});
-const html = r.value.replace(/<img[^>]*>/g, '');
+// Custom docx parser preserves underline subtypes (single → <u>, wave → <u class="wavy">),
+// which mammoth flattens. Bold / italic / strikethrough / sub / sup also pass through.
+const html = docxToTablesHtml('D:/cube/CubeRoot/3x3/ZBLS.docx');
 const $ = cheerio.load(html, null, false);
 
 const SAFE_INLINE = new Set(['u','s','strike','del','em','i','strong','b','sub','sup']);
@@ -40,6 +41,9 @@ function nodeToMarkup(node) {
   if (SAFE_INLINE.has(tag)) {
     const norm = TAG_NORMALIZE[tag] ?? tag;
     if (inner.replace(/<[^>]+>/g, '').trim() === '') return inner;
+    // Preserve `class="wavy"` on <u> for wavy-underline finger-trick notation.
+    const cls = node.attribs?.class;
+    if (norm === 'u' && cls === 'wavy') return `<u class="wavy">${inner}</u>`;
     return `<${norm}>${inner}</${norm}>`;
   }
   return inner;

@@ -12,6 +12,8 @@
     "cheerio": "^1.0.0",
     "cubing": "^0.63.3",
     "fast-glob": "^3.3.2",
+    "fast-xml-parser": "^5.7.3",
+    "fflate": "^0.8.2",
     "fs-extra": "^11.2.0",
     "mammoth": "^1.8.0",
     "pinyin-pro": "^3.26.0"
