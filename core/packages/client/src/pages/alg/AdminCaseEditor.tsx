@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import type { AlgCase, AlgEntry, AlgSticker } from '@cuberoot/shared';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '../../utils/alg_sets_api';
+import AlgsTokenEditor from './AlgsTokenEditor';
 
 export type AdminEditorState =
   | { mode: 'edit'; existing: AlgCase }
@@ -44,14 +45,10 @@ function defaultStickerFor(puzzle: string, set: string): AlgSticker {
   return { kind: 'raw', tag: '', attrs: {} };
 }
 
-/** Flatten 2D algs into one-per-line text (only for the first orientation). */
-function algs2dToText(algs: AlgEntry[][]): string {
+/** Pull first-orientation entries (for simple-mode token editor). */
+function firstOriEntries(algs: AlgEntry[][]): AlgEntry[] {
   const first = algs[0] ?? [];
-  return first.map(e => e.alg).filter(Boolean).join('\n');
-}
-function textTo2dAlgs(text: string): AlgEntry[][] {
-  const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  return [lines.map(alg => ({ alg }))];
+  return first.length ? first : [{ alg: '' }];
 }
 
 function blankCase(puzzle: string, set: string): AlgCase {
@@ -75,7 +72,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
   const [caseName, setCaseName] = useState(initial.name);
   const [subgroup, setSubgroup] = useState(initial.subgroup);
   const [setup, setSetup] = useState(initial.setup);
-  const [algsText, setAlgsText] = useState(isMultiOri ? '' : algs2dToText(initial.algs));
+  const [algEntries, setAlgEntries] = useState<AlgEntry[]>(isMultiOri ? [] : firstOriEntries(initial.algs));
   const [advancedOpen, setAdvancedOpen] = useState(isMultiOri);
   const [standard, setStandard] = useState(initial.standard ?? '');
   const [stickerJson, setStickerJson] = useState(JSON.stringify(initial.sticker, null, 2));
@@ -96,7 +93,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
     setError(null);
     if (!caseName.trim()) { setError(isZh ? 'Case 名不能为空' : 'caseName required'); return; }
 
-    // Algs: prefer advanced JSON if user filled it; else use one-per-line text
+    // Algs: prefer advanced JSON if user filled it; else build from token editor
     let algs: AlgEntry[][];
     if (advancedOpen && algsJson.trim()) {
       try {
@@ -107,10 +104,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
         setError(isZh ? '高级 algs JSON 格式错' : 'Advanced algs JSON invalid'); return;
       }
     } else {
-      algs = textTo2dAlgs(algsText);
-      if (algs[0].length === 0) {
+      const cleaned = algEntries.filter(e => e.alg.trim());
+      if (cleaned.length === 0) {
         setError(isZh ? '至少要写一条公式' : 'At least one alg required'); return;
       }
+      algs = [cleaned];
     }
 
     // Sticker: parse advanced JSON, default to existing/inferred if empty
@@ -205,15 +203,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
 
           {!isMultiOri && (
             <label>
-              <span>{isZh ? '公式 (一行一条)' : 'Algs (one per line)'} *</span>
-              <textarea
-                className="alg-admin-algs-text"
-                value={algsText}
-                onChange={e => setAlgsText(e.target.value)}
-                rows={Math.max(3, algsText.split('\n').length)}
-                spellCheck={false}
-                placeholder={"R U R' U'\ny' R U R' U' R U R'"}
-              />
+              <span>{isZh ? '公式 (点 token 切换 下划/波浪/删除)' : 'Algs (tap a token to mark)'} *</span>
+              <AlgsTokenEditor value={algEntries} onChange={setAlgEntries} isZh={isZh} />
             </label>
           )}
 
