@@ -18,8 +18,10 @@ import {
 import { VisualCube } from '../components/VisualCube';
 import '../zbls.css';
 
-// 取代表性 alg：每个 ZBLS case 用第一条公式作 F2L 状态预览
-const algForZbls = (key: string): string => zblsData[key]?.algs[0] || '';
+// 用第一条 scramble 作为 case 状态预览(直接 forward 应用,不需要 invert)。
+// 早期版本退到 alg 反推 + view="f2l",后果是 LL 一律 gray,8 个 LL EO 状态看起来一模一样。
+// ZBLS 的判定全在 LL EO 上,必须用 mask="vh" 露出 LL 棱块色,case 之间才能区分。
+const setupForZbls = (key: string): string => zblsData[key]?.scrambles[0] || '';
 
 // ===== 单个 Case 卡片 =====
 function ZblsCaseCard({
@@ -37,8 +39,10 @@ function ZblsCaseCard({
       onClick={onToggle}
     >
       <VisualCube
-        algorithm={algForZbls(caseKey)}
-        view="f2l"
+        algorithm=""
+        setup={setupForZbls(caseKey)}
+        view="iso"
+        mask="vh"
         size={88}
         alt={`F2L ${caseKey}`}
       />
