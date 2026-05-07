@@ -118,17 +118,29 @@ function validateFullSolved(pattern: KPattern, kp: KPuzzle, puzzle: string): Val
 }
 
 function validateF2LSolved(pattern: KPattern): ValidateAlgResult {
+  // 容忍整体 rotation:公式可能含 y/y2/x 等,patternData 里 piece id 跟着旋转,
+  // 严格 piece===slot 检查会假阴性。试 24 个 rotation,任一让 F2L 严格完整即过。
+  for (const r of CUBE_ORIENTATIONS) {
+    try {
+      const t = r ? pattern.applyAlg(r) : pattern;
+      if (isF2LStrict(t)) return { ok: true };
+    } catch { /* skip */ }
+  }
+  return { ok: false, reason: 'F2L 没还原(setup + alg 后 D 层 / 中层 / 底层未完成)' };
+}
+
+function isF2LStrict(pattern: KPattern): boolean {
   const cp = pattern.patternData.CORNERS;
   const ep = pattern.patternData.EDGES;
   for (let i = 4; i < 8; i++) {
-    if (cp.pieces[i] !== i) return { ok: false, reason: 'F2L 没还原(D 层角块未归位)' };
-    if ((cp.orientation[i] ?? 0) !== 0) return { ok: false, reason: 'F2L 没还原(D 层角块朝向错)' };
+    if (cp.pieces[i] !== i) return false;
+    if ((cp.orientation[i] ?? 0) !== 0) return false;
   }
   for (let i = 4; i < 12; i++) {
-    if (ep.pieces[i] !== i) return { ok: false, reason: 'F2L 没还原(棱块未归位)' };
-    if ((ep.orientation[i] ?? 0) !== 0) return { ok: false, reason: 'F2L 没还原(棱块朝向错)' };
+    if (ep.pieces[i] !== i) return false;
+    if ((ep.orientation[i] ?? 0) !== 0) return false;
   }
-  return { ok: true };
+  return true;
 }
 
 /** 公式最后一个 leaf 若 family === 'U',视为多余 AUF */

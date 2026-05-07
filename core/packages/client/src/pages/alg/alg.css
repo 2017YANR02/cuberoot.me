@@ -465,9 +465,9 @@
 }
 .alg-alg-text {
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .alg-alg-text u {
   text-decoration: underline;
@@ -710,7 +710,6 @@
   flex-direction: column;
   gap: 4px;
   padding: 8px 12px;
-  border-top: 1px dashed var(--alg-border);
   font-size: 12px;
 }
 .alg-community-row {
