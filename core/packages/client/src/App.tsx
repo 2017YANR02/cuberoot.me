@@ -41,8 +41,8 @@ const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
-// NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
-const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
+// NOTE: Calendar 懒加载 — 比赛日历(原 /upcoming-comps,2026-05 改名)
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 // NOTE: Calendar Stats — 比赛随时间分布的可视化
 const CalendarStatsPage = lazy(() => import('./pages/calendar_stats/CalendarStatsPage'));
 // NOTE: Globe 懒加载 — 3D 地球 WCA 比赛地理分布（含 react-globe.gl + three ~500KB）
@@ -138,7 +138,7 @@ function App() {
         <Route path="/recon/:parentId/alt/:altIdx/edit" element={<Suspense fallback={<div>Loading...</div>}><AltSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
         {/* Calendar — 顶尖选手近期比赛追踪（路由曾叫 /upcoming-comps，旧链接重定向） */}
-        <Route path="/calendar" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
+        <Route path="/calendar" element={<Suspense fallback={<div>Loading...</div>}><CalendarPage /></Suspense>} />
         <Route path="/calendar/stats" element={<Suspense fallback={<div>Loading...</div>}><CalendarStatsPage /></Suspense>} />
         <Route path="/upcoming-comps" element={<Navigate to="/calendar" replace />} />
         {/* Globe — 3D 地球 WCA 比赛地理分布 */}
