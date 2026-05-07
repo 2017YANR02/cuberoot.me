@@ -154,6 +154,37 @@
     color: #007AFF !important;
 }
 
+/* NOTE: 记号入口按钮——space 左侧 ✎ 图标,iOS 蓝 */
+.vkb-marks-trigger {
+    color: #007AFF !important;
+    font-size: 1.05rem !important;
+}
+
+/* NOTE: 记号弹层——比长按弹层略大,复用白底圆角面板 */
+.vkb-marks-popup .vkb-popup-item {
+    padding: 10px 16px;
+    font-size: 1.2rem;
+    user-select: none;
+}
+.vkb-marks-popup .vkb-popup-item:active {
+    background: #007AFF;
+    color: #fff;
+}
+/* NOTE: 让面板内 <u>/<u.wavy>/<s> 渲染对(项目约定的 finger-trick 标签) */
+.vkb-marks-popup u {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+.vkb-marks-popup u.wavy {
+    text-decoration: underline wavy;
+    text-decoration-thickness: 1.5px;
+}
+.vkb-marks-popup s {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+}
+
 /* --- 长按弹出气泡——iOS 风格白色圆角面板 --- */
 .vkb-popup {
     position: fixed;

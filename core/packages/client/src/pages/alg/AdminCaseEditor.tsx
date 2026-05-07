@@ -4,19 +4,20 @@
  * 普通 case: 用户填 caseName / subgroup / setup + 一行一条公式即可,sticker
  * 自动推断默认值。多 orientation (F2L) / 自定义 sticker 等放在"高级"区。
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
-import type { AlgCase, AlgEntry, AlgSticker } from '@cuberoot/shared';
+import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '../../utils/alg_sets_api';
-import AlgsTokenEditor from './AlgsTokenEditor';
+import { validateAlgCase } from '../../utils/alg_validation';
+import AlgEditor, { type AlgEditorHandle } from './AlgEditor';
 
 export type AdminEditorState =
   | { mode: 'edit'; existing: AlgCase }
   | { mode: 'add' };
 
 interface Props {
-  puzzle: string;
+  puzzle: AlgPuzzle;
   setSlug: string;
   state: AdminEditorState;
   onClose: () => void;
@@ -45,12 +46,6 @@ function defaultStickerFor(puzzle: string, set: string): AlgSticker {
   return { kind: 'raw', tag: '', attrs: {} };
 }
 
-/** Pull first-orientation entries (for simple-mode token editor). */
-function firstOriEntries(algs: AlgEntry[][]): AlgEntry[] {
-  const first = algs[0] ?? [];
-  return first.length ? first : [{ alg: '' }];
-}
-
 function blankCase(puzzle: string, set: string): AlgCase {
   return {
     name: '',
@@ -66,17 +61,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
   const isZh = i18n.language.startsWith('zh');
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
 
-  // 多 orientation (F2L 风格) 的 case 强制走 advanced (2D JSON),普通 case 走 simple (一行一公式)
-  const isMultiOri = initial.algs.length > 1;
-
   const [caseName, setCaseName] = useState(initial.name);
   const [subgroup, setSubgroup] = useState(initial.subgroup);
   const [setup, setSetup] = useState(initial.setup);
-  const [algEntries, setAlgEntries] = useState<AlgEntry[]>(isMultiOri ? [] : firstOriEntries(initial.algs));
-  const [advancedOpen, setAdvancedOpen] = useState(isMultiOri);
+  const algEditorRef = useRef<AlgEditorHandle>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [standard, setStandard] = useState(initial.standard ?? '');
   const [stickerJson, setStickerJson] = useState(JSON.stringify(initial.sticker, null, 2));
-  const [algsJson, setAlgsJson] = useState(isMultiOri ? JSON.stringify(initial.algs, null, 2) : '');
+  const [algsJson, setAlgsJson] = useState('');
   const [oriNamesJson, setOriNamesJson] = useState(initial.oriNames ? JSON.stringify(initial.oriNames) : '');
   const [trainerKey, setTrainerKey] = useState(initial.trainerKey ?? '');
   const [busy, setBusy] = useState(false);
@@ -93,7 +85,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
     setError(null);
     if (!caseName.trim()) { setError(isZh ? 'Case 名不能为空' : 'caseName required'); return; }
 
-    // Algs: prefer advanced JSON if user filled it; else build from token editor
+    // Algs: prefer advanced JSON if user filled it; else read from AlgEditor
     let algs: AlgEntry[][];
     if (advancedOpen && algsJson.trim()) {
       try {
@@ -104,11 +96,12 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
         setError(isZh ? '高级 algs JSON 格式错' : 'Advanced algs JSON invalid'); return;
       }
     } else {
-      const cleaned = algEntries.filter(e => e.alg.trim());
-      if (cleaned.length === 0) {
+      const raw = algEditorRef.current?.getValue() ?? [];
+      algs = raw.map(ori => ori.filter(e => e.alg.trim()));
+      const total = algs.reduce((n, ori) => n + ori.length, 0);
+      if (total === 0) {
         setError(isZh ? '至少要写一条公式' : 'At least one alg required'); return;
       }
-      algs = [cleaned];
     }
 
     // Sticker: parse advanced JSON, default to existing/inferred if empty
@@ -139,6 +132,30 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
     };
 
     setBusy(true);
+
+    // 校验每条公式 setup + alg 后是否完成对应阶段(3x3 face/f2l 启用,其它先放过)
+    try {
+      const checks = await Promise.all(
+        algs.flatMap((ori, oi) => ori.map((entry, ai) =>
+          validateAlgCase(body.setup, entry.alg, sticker, puzzle)
+            .then(r => ({ oi, ai, alg: entry.alg, ...r }))
+        ))
+      );
+      const bad = checks.filter(c => !c.ok);
+      if (bad.length > 0) {
+        setError(
+          (isZh ? '以下公式没通过校验:\n' : 'Validation failed:\n') +
+          bad.map(b => `• "${b.alg}" — ${b.reason}`).join('\n')
+        );
+        setBusy(false);
+        return;
+      }
+    } catch (e) {
+      setError((isZh ? '校验出错: ' : 'Validation error: ') + (e as Error).message);
+      setBusy(false);
+      return;
+    }
+
     try {
       if (state.mode === 'add') {
         const created = await createCase(puzzle, setSlug, body);
@@ -176,7 +193,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
     : (isZh ? '新增 case' : 'Add new case');
 
   return (
-    <div className="alg-admin-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" onClick={onClose} role="dialog" aria-modal="true">
       <div className="alg-admin-modal" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
@@ -201,12 +218,20 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
               placeholder={isZh ? '把魔方变成此 case 的公式' : 'scramble that produces this case'} />
           </label>
 
-          {!isMultiOri && (
-            <label>
-              <span>{isZh ? '公式 (点 token 切换 下划/波浪/删除)' : 'Algs (tap a token to mark)'} *</span>
-              <AlgsTokenEditor value={algEntries} onChange={setAlgEntries} isZh={isZh} />
-            </label>
-          )}
+          <div className="alg-admin-algs-block">
+            <span className="alg-admin-algs-label">
+              {isZh ? '公式 (Enter 加新行,记号键 ✎ 切下划/波浪/删除)' : 'Algs (Enter to add row; ✎ for marks)'} *
+            </span>
+            <AlgEditor
+              ref={algEditorRef}
+              initialValue={initial.algs}
+              oriNames={initial.oriNames}
+              isZh={isZh}
+              puzzle={puzzle}
+              setSlug={setSlug}
+              setup={setup}
+            />
+          </div>
 
           {/* Advanced 区:sticker / 多 orientation algs / oriNames / standard / trainerKey */}
           <div className="alg-admin-advanced">
@@ -225,12 +250,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
                   <span>{isZh ? 'Standard 公式 (可选,展示给 trainer)' : 'Standard alg (optional)'}</span>
                   <input value={standard} onChange={e => setStandard(e.target.value)} />
                 </label>
-                {isMultiOri && (
-                  <label>
-                    <span>{isZh ? 'Algs 2D JSON (多 orientation 时用)' : 'Algs 2D JSON (multi-orientation)'} *</span>
-                    <textarea value={algsJson} onChange={e => setAlgsJson(e.target.value)} rows={6} spellCheck={false} />
-                  </label>
-                )}
+                <label>
+                  <span>{isZh ? 'Algs 2D JSON (覆盖上方编辑器,空则忽略)' : 'Algs 2D JSON (overrides editor when filled)'}</span>
+                  <textarea value={algsJson} onChange={e => setAlgsJson(e.target.value)} rows={6} spellCheck={false}
+                    placeholder={JSON.stringify(initial.algs, null, 2)} />
+                </label>
                 <label>
                   <span>{isZh ? 'Sticker JSON (魔方图渲染数据)' : 'Sticker JSON (cube preview data)'}</span>
                   <textarea value={stickerJson} onChange={e => setStickerJson(e.target.value)} rows={4} spellCheck={false} />
