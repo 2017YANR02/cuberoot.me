@@ -8,13 +8,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Pencil, Plus, ShieldCheck, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
   type AlgSubmission,
 } from '@cuberoot/shared';
 import { listSubmissions } from '../../utils/alg_api';
+import { reorderCases } from '../../utils/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import CommunityAlgs from './CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from './AdminCaseEditor';
@@ -51,6 +55,33 @@ function shortOriName(name: string): string {
     'Front Right': 'FR', 'Front Left': 'FL', 'Back Left': 'BL', 'Back Right': 'BR',
   };
   return map[name] ?? name;
+}
+
+/** dnd-kit sortable wrapper:admin 模式下渲染拖动 handle,普通模式下退化成裸 div */
+function SortableCaseCard({ id, draggable, children }: { id: number; draggable: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {draggable && (
+        <button
+          type="button"
+          className="alg-case-drag-handle"
+          {...attributes}
+          {...listeners}
+          title="drag to reorder"
+        >
+          <GripVertical size={14} />
+        </button>
+      )}
+      {children}
+    </div>
+  );
 }
 
 function isPuzzle(s: string): s is AlgPuzzle {
@@ -274,6 +305,27 @@ export default function AlgCategoryPage() {
 
   // cubing.js TwistyPlayer supports all 8 of our puzzles natively.
   const animatable = true;
+
+  // dnd-kit sensors:鼠标按住超过 5px 才认作 drag,避免误触发(普通点击不被吞)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    if (!data) return;
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const all = data.cases;
+    const oldIdx = all.findIndex(c => c.id === Number(active.id));
+    const newIdx = all.findIndex(c => c.id === Number(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(all, oldIdx, newIdx);
+    setData({ ...data, cases: reordered });
+    const ids = reordered.map(c => c.id).filter((x): x is number => typeof x === 'number');
+    reorderCases(puzzleParam, set, ids).catch(err => {
+      console.error('reorder failed', err);
+      alert(`Reorder failed: ${err.message}`);
+      setData(d => d ? { ...d, cases: all } : d);
+    });
+  };
   const showSubgroupPicker = !!meta.umbrella && !subgroupParam;
   const backTo = subgroupParam ? `/alg/${puzzleParam}/${set}` : `/alg/${puzzleParam}`;
 
@@ -408,6 +460,11 @@ export default function AlgCategoryPage() {
               </h2>
             )}
             {!collapsed && (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
+                  strategy={rectSortingStrategy}
+                >
               <div className="alg-case-list">
                 {cases.map(c => {
                   // Per-case override > global. Clamped to this case's actual ori count.
@@ -417,7 +474,8 @@ export default function AlgCategoryPage() {
                   const oriCount = c.algs.length;
                   const firstAlg = algsForOri[0]?.alg ?? c.standard ?? '';
                   return (
-                    <article key={c.name} className="alg-case">
+                    <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
+                    <article className="alg-case">
                       <div className="alg-case-head">
                         <div className="alg-case-cube">
                           <CaseThumb
@@ -495,9 +553,12 @@ export default function AlgCategoryPage() {
                         }}
                       />
                     </article>
+                    </SortableCaseCard>
                   );
                 })}
               </div>
+                </SortableContext>
+              </DndContext>
             )}
           </section>
         );
