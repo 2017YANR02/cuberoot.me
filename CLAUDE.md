@@ -30,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Trainer（PLL/OLL/ZBLL/ZBLS 识别） | `/trainer` | `core/packages/client/src/pages/` (Zbll*/Zbls*/OllTraining/CaseSelect) | 自有 | ✅ |
 | Frame Count | `/frame-count` | `core/packages/client/src/pages/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
 | Distribution | `/viz` | `core/packages/client/src/pages/viz/` | 自有 | ✅ |
-| Upcoming Comps | `/upcoming-comps` | `core/packages/client/src/pages/UpcomingCompsPage.tsx` | 自有 | ✅ |
+| Calendar (比赛日历) | `/calendar` | `core/packages/client/src/pages/CalendarPage.tsx` | 自有 | ✅ |
 | Scramble（打乱难度分布） | `/scramble-stats` | `core/packages/client/src/pages/scramble_stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client/src/pages/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ 已 port 为 React |
 | Blog | `cuberoot.me/blog/` | 不在本仓库 | 外部托管 | — |
@@ -76,7 +76,7 @@ pnpm --filter @cuberoot/client lint
 - WCA 历史时间锚点：第 1 场比赛 1982-06-05（WC1982），第 2 场 2003-08-23~24（WC2003）；任何"时间序列展示"（折线 / 热力图 / 时间轴 / bar chart race）默认视图从 **2003-08-22** 起步（WC2003 前夜：第 0 帧 = 1982 那场的全部成绩快照，再往后才是 WCA 复办之后的逐日演化），但**统计聚合（总数 / 国家排行 / 项目场次等）必须包含 1982 那场**（用户没主动缩放时口径=全时段，不要把"默认视图≠全数据"的不一致带到数字上）
 - 调试时不主动 `git log` / `git status`;删文件 / 配置前先确认
 - UI 验证走项目内 Playwright MCP,不 `npm install playwright`;fixtures 跑全集别采样
-- 新路由 / 新顶层 page 前先 grep routes config 防撞名(`/calendar` 曾撞 `UpcomingCompsPage`)
+- 新路由 / 新顶层 page 前先 grep routes config 防撞名
 
 ## 专题知识 — 查对应 Skill
 
