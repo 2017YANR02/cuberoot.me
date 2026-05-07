@@ -1,0 +1,1 @@
+var e=(()=>{let e=typeof window<`u`?window.location.hostname:``;return e===`localhost`||e===`127.0.0.1`?``:`https://api.cuberoot.me`})();function t(t){return e+t}export{t as n,e as t};
