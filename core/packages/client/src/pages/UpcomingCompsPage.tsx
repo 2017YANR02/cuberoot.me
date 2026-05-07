@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import {
   fetchAllUpcomingCompsJson,
@@ -353,6 +353,104 @@ function computeWeeks(
     weeks.push({ days, bars, overflowByCol, maxTrack });
   }
 
+  return weeks;
+}
+
+interface CompactDayTile {
+  /** 代表比赛(同国家当日 top-priority)。count==1 时点击进 CompModal,>1 时进 day-list */
+  rep: Competition;
+  /** 同国家当日总场数 */
+  count: number;
+  /** 该国家当日是否任一场扎堆(任一 top_cubers≥3) */
+  anyClash: boolean;
+  /** 该国家当日是否全部已取消 */
+  allCancelled: boolean;
+  /** 该国家当日代表性纪录(取第一个非 null) */
+  topRecord: string | null;
+}
+
+interface CompactWeekRow {
+  days: Date[];
+  byDay: CompactDayTile[][];
+}
+
+/** 紧凑模式布局：仅按 start_date 把比赛归到日格,同国家当天去重为一面旗。 */
+function computeCompactWeeks(
+  viewYear: number,
+  viewMonth: number,
+  comps: Competition[],
+  priorityCountries: Set<string>,
+  cancelledCutoffIso: string,
+): CompactWeekRow[] {
+  const gridStart = monthGridStart(viewYear, viewMonth);
+  const monthEnd = new Date(viewYear, viewMonth + 1, 0);
+
+  const byDate = new Map<string, Competition[]>();
+  for (const c of comps) {
+    const arr = byDate.get(c.start_date);
+    if (arr) arr.push(c);
+    else byDate.set(c.start_date, [c]);
+  }
+
+  const sortFn = (a: Competition, b: Competition) => {
+    if (priorityCountries.size > 0) {
+      const am = priorityCountries.has(a.country.toUpperCase()) ? 0 : 1;
+      const bm = priorityCountries.has(b.country.toUpperCase()) ? 0 : 1;
+      if (am !== bm) return am - bm;
+    }
+    const tcDiff = b.top_cubers.length - a.top_cubers.length;
+    if (tcDiff !== 0) return tcDiff;
+    return a.id.localeCompare(b.id);
+  };
+
+  const weeks: CompactWeekRow[] = [];
+  for (let w = 0; w < 6; w++) {
+    const weekStart = addDays(gridStart, w * 7);
+    if (w >= 4 && weekStart > monthEnd) break;
+    const days: Date[] = [];
+    const byDay: CompactDayTile[][] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(weekStart, i);
+      days.push(d);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const list = byDate.get(key);
+      if (!list || list.length === 0) {
+        byDay.push([]);
+        continue;
+      }
+      const sorted = [...list].sort(sortFn);
+      // 按国家分桶,代表是排序后第一个；保留代表的相对顺序
+      const tilesByCountry = new Map<string, CompactDayTile>();
+      for (const c of sorted) {
+        const country = c.country.toLowerCase();
+        const cancelled = isCancelledComp(c, cancelledCutoffIso);
+        const clash = c.top_cubers.length >= 3;
+        const rec = getCompRecordTop(c.id);
+        const ex = tilesByCountry.get(country);
+        if (!ex) {
+          tilesByCountry.set(country, {
+            rep: c,
+            count: 1,
+            anyClash: clash,
+            allCancelled: cancelled,
+            topRecord: rec ?? null,
+          });
+        } else {
+          ex.count++;
+          if (clash) ex.anyClash = true;
+          if (!cancelled) ex.allCancelled = false;
+          if (!ex.topRecord && rec) ex.topRecord = rec;
+        }
+      }
+      // 国家 tile 按当日场数降序;同场数走代表 comp 已有的 priority(top_cubers / id)
+      const tiles = [...tilesByCountry.values()].sort((a, b) => {
+        if (a.count !== b.count) return b.count - a.count;
+        return sortFn(a.rep, b.rep);
+      });
+      byDay.push(tiles);
+    }
+    weeks.push({ days, byDay });
+  }
   return weeks;
 }
 
@@ -903,6 +1001,8 @@ export default function UpcomingCompsPage() {
   const [viewDate, setViewDate] = useState<Date>(() => readMonthFromUrl() ?? new Date());
   const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
   const [dayListDate, setDayListDate] = useState<Date | null>(null);
+  /** 紧凑模式下点击国旗 tile 时,把 modal 限定到该国家(iso2 小写)。其他场景为 null。 */
+  const [dayListCountry, setDayListCountry] = useState<string | null>(null);
   // 点日历格子日期数字 → 打开"历年此日"模态(查跨年 MM-DD 比赛历史)
   const [onThisDayDate, setOnThisDayDate] = useState<Date | null>(null);
   const [mode, setMode] = useState<'top' | 'all'>('all');
@@ -913,7 +1013,7 @@ export default function UpcomingCompsPage() {
   // 缺 key = 不过滤此项目。chip 单击循环：undefined → 1 → ... → max → 'any' → undefined。
   // 'any' 状态在 UI 上仅通过 is-active 边框体现（badge 空），不显式写"≥1"等文字。
   const [eventFilters, setEventFilters] = useState<Record<string, 'any' | 1 | 2 | 3 | 4>>({});
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'compact' | 'list'>('calendar');
   // 列表视图下的年月范围过滤（YYYY-MM 字符串；不合规或空 = 不参与过滤）
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -1145,6 +1245,17 @@ export default function UpcomingCompsPage() {
     return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), displayedComps, countryFilterSet);
   }, [displayedComps, viewDate, countryFilterSet]);
 
+  const compactWeeks = useMemo(() => {
+    if (viewMode !== 'compact') return null;
+    return computeCompactWeeks(
+      viewDate.getFullYear(),
+      viewDate.getMonth(),
+      displayedComps,
+      countryFilterSet,
+      cancelledCutoffIso,
+    );
+  }, [viewMode, displayedComps, viewDate, countryFilterSet, cancelledCutoffIso]);
+
   // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
   const yearMonthsMap = useMemo(() => {
     const map = new Map<number, Set<number>>();
@@ -1216,7 +1327,7 @@ export default function UpcomingCompsPage() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (viewMode !== 'calendar') return;
+      if (viewMode !== 'calendar' && viewMode !== 'compact') return;
       if (selectedComp || dayListDate || onThisDayDate || pickerOpen != null) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       const editable = (e.target as HTMLElement | null)?.isContentEditable;
@@ -1285,7 +1396,7 @@ export default function UpcomingCompsPage() {
   return (
     <div
       ref={pageRef}
-      className={`upcoming-page${viewMode === 'list' ? ' upcoming-page--list' : ''}`}
+      className={`upcoming-page${viewMode === 'list' ? ' upcoming-page--list' : ''}${viewMode === 'compact' ? ' upcoming-page--compact' : ''}`}
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
@@ -1379,6 +1490,16 @@ export default function UpcomingCompsPage() {
           </button>
           <button
             role="tab"
+            aria-selected={viewMode === 'compact'}
+            className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
+            onClick={() => setViewMode('compact')}
+            title={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
+          >
+            <LayoutGrid size={14} strokeWidth={1.75} />
+            <span>{isZh ? '紧凑' : 'Compact'}</span>
+          </button>
+          <button
+            role="tab"
             aria-selected={viewMode === 'list'}
             className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
             onClick={() => { setViewMode('list'); setMode('all'); }}
@@ -1388,7 +1509,7 @@ export default function UpcomingCompsPage() {
             <span>{isZh ? '列表' : 'List'}</span>
           </button>
         </div>
-        {viewMode === 'calendar' && (
+        {(viewMode === 'calendar' || viewMode === 'compact') && (
           <div className="month-nav">
             <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
               <ChevronLeft size={16} strokeWidth={1.75} />
@@ -1517,7 +1638,7 @@ export default function UpcomingCompsPage() {
         <div className="mode-status is-error">{allError}</div>
       )}
 
-      {viewMode === 'calendar' && (
+      {(viewMode === 'calendar' || viewMode === 'compact') && (
         <div className="legend">
           {mode === 'all' && (
             <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
@@ -1628,11 +1749,94 @@ export default function UpcomingCompsPage() {
                 key={`of-${col}`}
                 className="more-btn"
                 style={{ gridColumn: col, gridRow: Math.min(MAX_TRACKS, week.maxTrack + 1) + 2 }}
-                onClick={() => setDayListDate(week.days[col - 1])}
+                onClick={() => { setDayListCountry(null); setDayListDate(week.days[col - 1]); }}
               >
                 +{overflowComps.length}
               </button>
             ))}
+          </div>
+        ))}
+      </div>}
+
+      {viewMode === 'compact' && compactWeeks && <div
+        className="calendar calendar--compact"
+        onTouchStart={onCalendarTouchStart}
+        onTouchEnd={onCalendarTouchEnd}
+        onClickCapture={onCalendarClickCapture}
+      >
+        <div className="weekday-header">
+          {weekdays.map((d, i) => (
+            <div key={i} className="weekday-cell">
+              {d}
+            </div>
+          ))}
+        </div>
+        {compactWeeks.map((week, wi) => (
+          <div key={wi} className="week-row">
+            {week.days.map((day, di) => {
+              const inView = day.getMonth() === viewDate.getMonth();
+              const isToday = inView && sameDay(day, today);
+              const tiles = week.byDay[di];
+              return (
+                <div
+                  key={di}
+                  className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''}${inView ? ' is-clickable' : ''}`}
+                  onClick={inView ? () => setOnThisDayDate(day) : undefined}
+                  role={inView ? 'button' : undefined}
+                  tabIndex={inView ? 0 : undefined}
+                  onKeyDown={inView ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOnThisDayDate(day); } } : undefined}
+                  title={inView ? (isZh ? '历年此日的比赛' : 'On this day across all years') : undefined}
+                >
+                  {inView && (
+                    <span className="day-number">
+                      {day.getDate()}
+                    </span>
+                  )}
+                  {tiles.length > 0 && (
+                    <div className="compact-flag-grid">
+                      {tiles.map((tile) => {
+                        const c = tile.rep;
+                        const hasTop = c.top_cubers.length > 0;
+                        const cls = [
+                          'compact-flag-tile',
+                          tile.anyClash ? 'is-clash' : '',
+                          !hasTop ? 'is-none-top' : '',
+                          tile.allCancelled ? 'is-cancelled' : '',
+                        ].filter(Boolean).join(' ');
+                        const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
+                        const titleText = tile.count > 1
+                          ? `${countryName(c.country, isZh)} — ${tile.count}${isZh ? ' 场' : ' comps'}`
+                          : `${localizeName(c, isZh)} — ${c.top_cubers.length} cubers`;
+                        return (
+                          <button
+                            key={`${c.country.toLowerCase()}-${c.id}`}
+                            className={cls}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (tile.count > 1) {
+                                setDayListCountry(c.country.toLowerCase());
+                                setDayListDate(day);
+                              } else {
+                                setSelectedComp(c);
+                              }
+                            }}
+                            onMouseEnter={prefetchRounds}
+                            onFocus={prefetchRounds}
+                            title={titleText}
+                          >
+                            <Flag iso2={c.country} />
+                            {tile.topRecord && <RecordBadge record={tile.topRecord} />}
+                            {tile.count > 1 && (
+                              <span className="compact-flag-count" aria-label={titleText}>{tile.count}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>}
@@ -1684,13 +1888,26 @@ export default function UpcomingCompsPage() {
       })()}
 
       {dayListDate && (
-        <div className="modal-overlay" onClick={() => setDayListDate(null)}>
+        <div className="modal-overlay" onClick={() => { setDayListDate(null); setDayListCountry(null); }}>
           <div className="modal-panel day-list-panel" onClick={(ev) => ev.stopPropagation()}>
-            <button className="modal-close" onClick={() => setDayListDate(null)} aria-label="Close">×</button>
-            <h2 className="modal-title">{toIsoDate(dayListDate)}</h2>
+            <button className="modal-close" onClick={() => { setDayListDate(null); setDayListCountry(null); }} aria-label="Close">×</button>
+            <h2 className="modal-title">
+              {dayListCountry && (
+                <Flag iso2={dayListCountry} />
+              )}
+              <span>{toIsoDate(dayListDate)}</span>
+              {dayListCountry && (
+                <span className="day-list-country-name">{countryName(dayListCountry, isZh)}</span>
+              )}
+            </h2>
             <div className="day-list">
               {displayedComps
                 .filter((c) => {
+                  if (dayListCountry) {
+                    // 紧凑模式国旗点击:仅当日 start_date 命中且国家匹配
+                    return c.country.toLowerCase() === dayListCountry
+                      && c.start_date === toIsoDate(dayListDate);
+                  }
                   const s = parseLocalDate(c.start_date);
                   const e = parseLocalDate(c.end_date || c.start_date);
                   return s <= dayListDate && dayListDate <= e;
@@ -1704,7 +1921,7 @@ export default function UpcomingCompsPage() {
                     <button
                       key={c.id}
                       className={`day-list-item${cancelled ? ' is-cancelled' : ''}`}
-                      onClick={() => { setSelectedComp(c); setDayListDate(null); }}
+                      onClick={() => { setSelectedComp(c); setDayListDate(null); setDayListCountry(null); }}
                       onMouseEnter={prefetchRounds}
                       onFocus={prefetchRounds}
                     >

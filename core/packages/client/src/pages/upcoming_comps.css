@@ -406,24 +406,23 @@
     background: transparent;
 }
 .upcoming-page .day-cell.is-today {
-    box-shadow: inset 0 0 0 2px var(--accent);
     z-index: 1;
-}
-.upcoming-page .day-cell.is-today .day-number {
-    color: var(--accent);
-    font-weight: 700;
 }
 
 .upcoming-page .day-number {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--text-sub);
     text-align: center;
-    padding: 1px 4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: 999px;
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s, color 0.12s;
     width: fit-content;
@@ -437,8 +436,16 @@
     color: var(--accent, #C15F3C);
 }
 
+/* today: 实心红色圆,白色数字 — 取代之前 cell 外层 outline + 小框双重指示 */
 .upcoming-page .day-cell.is-today .day-number {
-    border-color: var(--accent, #C15F3C);
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+.upcoming-page .day-cell.is-today .day-number:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
 }
 
 /* ── Event Bar ── */
@@ -664,6 +671,16 @@
 .upcoming-page .modal-title .flag-img {
     width: 24px;
     height: 18px;
+}
+.upcoming-page .day-list-panel .modal-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.upcoming-page .day-list-country-name {
+    color: var(--text-sub);
+    font-size: 1.05rem;
+    font-weight: 400;
 }
 
 .upcoming-page .modal-meta {
@@ -1103,6 +1120,110 @@
     font-size: 0.8rem;
 }
 
+/* ── 紧凑日历(国旗模式) ──
+   仅按 start_date 把比赛归到日格,不分 track,每个比赛 = 一个国旗 tile。
+   day-cell 直接 flex-wrap 排列旗子,一格能塞 24 面(桌面)/9 面(手机)。 */
+.upcoming-page--compact .calendar--compact .week-row {
+    /* 紧凑模式不需要 track 行;让 day-cell 自然撑高 */
+    grid-template-rows: auto;
+    min-height: 80px;
+}
+.upcoming-page--compact .calendar--compact .day-cell {
+    grid-row: 1;
+    padding: 4px 4px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+/* 紧凑模式下整个日格可点击 → 历年此日。空白 / day-number / flex 间隙都是 hit area。 */
+.upcoming-page--compact .calendar--compact .day-cell.is-clickable {
+    cursor: pointer;
+}
+.upcoming-page--compact .calendar--compact .day-cell.is-clickable:hover {
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+.upcoming-page--compact .calendar--compact .day-cell.is-clickable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+.upcoming-page--compact .calendar--compact .day-number {
+    /* 紧凑模式 day-number 改 span,样式继承 .day-number 但去掉 button 状态 */
+    pointer-events: none;
+}
+.compact-flag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-content: flex-start;
+    justify-content: center;
+}
+.compact-flag-tile {
+    position: relative;
+    width: 22px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    /* tile 自身不裁剪;flag 由 utils/flag.tsx 渲染为 22×16 */
+}
+.compact-flag-tile .flag-span,
+.compact-flag-tile .flag-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    display: block;
+}
+.compact-flag-tile:hover {
+    transform: scale(1.25);
+    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.compact-flag-tile.is-clash {
+    box-shadow: 0 0 0 1.5px var(--swatch-clash, #C15F3C);
+    border-radius: 2px;
+}
+.compact-flag-tile.is-cancelled { opacity: 0.4; }
+.compact-flag-tile.is-cancelled::after {
+    /* 取消比赛叠一道斜线 */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom right,
+        transparent calc(50% - 0.5px),
+        var(--text-sub) calc(50% - 0.5px),
+        var(--text-sub) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px));
+    pointer-events: none;
+}
+.compact-flag-tile .record-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    transform: scale(0.7);
+    transform-origin: top right;
+    pointer-events: none;
+}
+/* 同国家当日 >1 场,右下角 N 提示 */
+.compact-flag-count {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    min-width: 11px;
+    height: 11px;
+    padding: 0 2px;
+    border-radius: 6px;
+    background: var(--text, #222);
+    color: var(--surface, #fff);
+    font-size: 0.55rem;
+    font-weight: 700;
+    line-height: 11px;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 0 0 1px var(--surface, #fff);
+}
 /* ── 响应式 ── */
 @media (max-width: 768px) {
     .upcoming-page .toolbar { gap: 0.4rem; }
@@ -1118,6 +1239,11 @@
     .upcoming-page .event-bar .flag-img { width: 11px; height: 8px; }
     .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
     .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
+    /* 紧凑模式手机端:旗子缩小到 16×12,行高随当日国家数自然增长 */
+    .upcoming-page--compact .calendar--compact .week-row { min-height: 70px; }
+    .upcoming-page--compact .calendar--compact .day-cell { padding: 3px 3px 4px; }
+    .upcoming-page--compact .compact-flag-grid { gap: 2px; }
+    .upcoming-page--compact .compact-flag-tile { width: 16px; height: 12px; }
     /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐 */
     .upcoming-page {
         --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.1rem);
