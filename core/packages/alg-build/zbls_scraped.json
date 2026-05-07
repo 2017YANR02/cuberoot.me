@@ -1,0 +1,2793 @@
+[
+  {
+    "subgroup": "Solved Pair",
+    "name": "I",
+    "col": 0,
+    "setup": "F U R U' R' F'",
+    "algs": [
+      {
+        "alg": "F R U R' U' F'"
+      }
+    ]
+  },
+  {
+    "subgroup": "Solved Pair",
+    "name": "V",
+    "col": 1,
+    "setup": "F R U R' U' F'",
+    "algs": [
+      {
+        "alg": "F U R U' R' F'"
+      },
+      {
+        "alg": "U2 f R U R' U' f'"
+      }
+    ]
+  },
+  {
+    "subgroup": "Solved Pair",
+    "name": "D",
+    "col": 2,
+    "setup": "F R' F' R U S' R U' R' S",
+    "algs": [
+      {
+        "alg": "S' R U R' S U' R' F R F'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "EO",
+    "col": 0,
+    "setup": "R U R'",
+    "algs": [
+      {
+        "alg": "U R U' R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "EO",
+    "col": 1,
+    "setup": "L' U' L",
+    "algs": [
+      {
+        "alg": "U' L' U L"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "Line",
+    "col": 2,
+    "setup": "F' L' U L F",
+    "algs": [
+      {
+        "alg": "U F' L' U' L F"
+      },
+      {
+        "alg": "=y U r' U' F' U r"
+      },
+      {
+        "alg": "=y2 U f' U' L' U f"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "Line",
+    "col": 3,
+    "setup": "F R U' R' F'",
+    "algs": [
+      {
+        "alg": "U' F R U R' F'"
+      },
+      {
+        "alg": "=y2 U' f U R U' f'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "VP",
+    "col": 0,
+    "setup": "R B U B' R'",
+    "algs": [
+      {
+        "alg": "U R B U' B' R'"
+      },
+      {
+        "alg": "=y U F R U' R' F'"
+      },
+      {
+        "alg": "=y2 U L F U' F' L'"
+      },
+      {
+        "alg": "y U (R' F R U') R' F' R"
+      },
+      {
+        "alg": "y' U r' U r U' r' U' r"
+      },
+      {
+        "alg": "y' U2 R2' F R F' R"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "VP",
+    "col": 1,
+    "setup": "L' B' U' B L",
+    "algs": [
+      {
+        "alg": "U' L' B' U B L"
+      },
+      {
+        "alg": "=y' U' F' L' U L F"
+      },
+      {
+        "alg": "=y2 U' R' F' U F R"
+      },
+      {
+        "alg": "y' U' r U' r' U r U r'"
+      },
+      {
+        "alg": "y' U' F R' F' R2 U' R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "VM",
+    "col": 2,
+    "setup": "F R' F' R",
+    "algs": [
+      {
+        "alg": "R' F R F'"
+      },
+      {
+        "alg": "=y F' r U r'"
+      },
+      {
+        "alg": "M' U R U' r'"
+      },
+      {
+        "alg": "y' r' U' R U M'"
+      },
+      {
+        "alg": "y' f' U f R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "VM",
+    "col": 3,
+    "setup": "F' L F L'",
+    "algs": [
+      {
+        "alg": "L F' L' F"
+      },
+      {
+        "alg": "=r U' r' F"
+      },
+      {
+        "alg": "y' F R' F' R"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "IF",
+    "col": 0,
+    "setup": "S' R U R' S",
+    "algs": [
+      {
+        "alg": "U S' R U' R' S"
+      },
+      {
+        "alg": "y U S' L U L' U' L' S"
+      },
+      {
+        "alg": "U2 R d' R U' R' F'"
+      },
+      {
+        "alg": "=U2 R U' B U' B' R'"
+      },
+      {
+        "alg": "d R D r' U' r D' R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "IF",
+    "col": 1,
+    "setup": "S L' U' L S'",
+    "algs": [
+      {
+        "alg": "U' S L' U L S'"
+      },
+      {
+        "alg": "y' U' S R' U' R U R S'"
+      },
+      {
+        "alg": "y' U' R' D' (r U r' D) R"
+      },
+      {
+        "alg": "U2 r' F U' F U r"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "IL",
+    "col": 2,
+    "setup": "F U R U' R2 F' R",
+    "algs": [
+      {
+        "alg": "R' F R2 U R' U' F'"
+      },
+      {
+        "alg": "= y F' L F2' U F' U' L'"
+      },
+      {
+        "alg": "(=R' F R F' F R U R' U' F')"
+      },
+      {
+        "alg": "U2 (R U' R' U') (R' F R F')"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "IL",
+    "col": 3,
+    "setup": "F' U' L' U L2 F L'",
+    "algs": [
+      {
+        "alg": "L F' L2' U' L U F"
+      },
+      {
+        "alg": "= y' F R' F2 U' F U R",
+        "algHtml": "= y' <em>F</em> R' F2 U' F U R"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "IZ",
+    "col": 0,
+    "setup": "L D l' U' l D' L'",
+    "algs": [
+      {
+        "alg": "y' U (R U R' U2) (R' F R F')"
+      },
+      {
+        "alg": "U' L D (l' U l D') L'"
+      },
+      {
+        "alg": "=y2 U' R D (r' U r D') R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "IZ",
+    "col": 1,
+    "setup": "R' D' r U r' D R",
+    "algs": [
+      {
+        "alg": "y U' (L' U' L U2) (L F' L' F)"
+      },
+      {
+        "alg": "U R' D' (r U' r' D) R"
+      },
+      {
+        "alg": "=y2 U L' D' (l U' l' D) L"
+      }
+    ]
+  },
+  {
+    "subgroup": "A+",
+    "name": "D",
+    "col": 2,
+    "setup": "M' U M U2 R' F R",
+    "algs": [
+      {
+        "alg": "y' (U2' R' F R F')2"
+      },
+      {
+        "alg": "(R' F' R U2) M' U' M"
+      },
+      {
+        "alg": "=y2 (r' U' r U2') M U' M'"
+      },
+      {
+        "alg": "y' (R' F R S) (R U R' U' f')"
+      }
+    ]
+  },
+  {
+    "subgroup": "A-",
+    "name": "D",
+    "col": 3,
+    "setup": "M' U' M U2 r U' r'",
+    "algs": [
+      {
+        "alg": "y (U2 L F' L' F)2"
+      },
+      {
+        "alg": "(r U r' U2) M' U M"
+      },
+      {
+        "alg": "(U2 F R' F' R)2"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "EO",
+    "col": 0,
+    "setup": "R U' R'",
+    "algs": [
+      {
+        "alg": "R U R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "EO",
+    "col": 1,
+    "setup": "L' U L",
+    "algs": [
+      {
+        "alg": "L' U' L"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "Line",
+    "col": 2,
+    "setup": "L F' L' U L F L'",
+    "algs": [
+      {
+        "alg": "U2 (L F' L' U') L F L'"
+      },
+      {
+        "alg": "(R U' R' U2') (R' F R F')"
+      },
+      {
+        "alg": "d2 R B' R' U' R B R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "Line",
+    "col": 3,
+    "setup": "R' F R U' R' F' R",
+    "algs": [
+      {
+        "alg": "U2 (R' F R U) R' F' R"
+      },
+      {
+        "alg": "y2 U2 r' U r U r' U' r"
+      },
+      {
+        "alg": "(L' U L) U2 (r U' r' F)"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "VP",
+    "col": 0,
+    "setup": "S U R U' R' S'",
+    "algs": [
+      {
+        "alg": "y' S (R U R' U') S'"
+      },
+      {
+        "alg": "=U' M(L' U L U') M'"
+      },
+      {
+        "alg": "=y' U M (U' R U R')M'"
+      },
+      {
+        "alg": "y' (R U2' R' U') (R' F R F')"
+      },
+      {
+        "alg": "U2 F (U R U2' R') F'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "VP",
+    "col": 1,
+    "setup": "S R U R' U' S'",
+    "algs": [
+      {
+        "alg": "S (U R U' R') S'"
+      },
+      {
+        "alg": "=U M(R U' R' U) M'"
+      },
+      {
+        "alg": "=y U' M (U L' U' L)M'"
+      },
+      {
+        "alg": "y2 (L' U2 L U) (r U' r F)"
+      },
+      {
+        "alg": "y2 (R' U2' R U) (R f' U' f)"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "VM",
+    "col": 2,
+    "setup": "R U R' U' F' U2' F",
+    "algs": [
+      {
+        "alg": "y' U' (F' U2 F U) R U' R'"
+      },
+      {
+        "alg": "=U' (L' U2 L U) F U' F'",
+        "algHtml": "=U' (L' U2 L U) F <s>U'</s> F'"
+      },
+      {
+        "alg": "=*y U' (f' L2' f) (U L U' L')"
+      },
+      {
+        "alg": "y' (R U R2') (U' F' U F R)"
+      },
+      {
+        "alg": "y' U' (R U' r' U) (R U' R' U') r U' R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "VM",
+    "col": 3,
+    "setup": "F' U' F U R U2' R'",
+    "algs": [
+      {
+        "alg": "y U (F U2' F' U') L' U L"
+      },
+      {
+        "alg": "=U (R U2' R' U') F' U F",
+        "algHtml": "=U (R U2' R' U') <em>F'</em> <s>U</s> F"
+      },
+      {
+        "alg": "=*y' U (f R2 f') (U' R' U R)"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "IP",
+    "col": 0,
+    "setup": "R B U B' U2 R'",
+    "algs": [
+      {
+        "alg": "R U2' B U' B' R'"
+      },
+      {
+        "alg": "=y F U2 R U' R' F'"
+      },
+      {
+        "alg": "= y2 L U2 F U' F' L'"
+      },
+      {
+        "alg": "=y'↓f R2 U R' U' f'",
+        "algHtml": "=y'<strong>↓</strong>f R2 U R' U' f'"
+      },
+      {
+        "alg": "U F U R U' R2' F' R"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "IP",
+    "col": 1,
+    "setup": "L' B' U' B U2 L",
+    "algs": [
+      {
+        "alg": "L' U2 B' U B L"
+      },
+      {
+        "alg": "=y' F' U2 L' U L F"
+      },
+      {
+        "alg": "=y2 R' U2' F' U F R"
+      },
+      {
+        "alg": "y f'↓L2' U' L U f",
+        "algHtml": "y f'<strong>↓</strong>L2' U' L U f"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "IZ",
+    "col": 2,
+    "setup": "F U R U R' U' F'",
+    "algs": [
+      {
+        "alg": "y' U2 R U (B U' B' U') R'"
+      },
+      {
+        "alg": "=U2 F U (R U' R' U') F'"
+      },
+      {
+        "alg": "y' R U2' R' (F' L' U' L F)"
+      },
+      {
+        "alg": "U' M U' (R' F2 R U) M'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "IZ",
+    "col": 3,
+    "setup": "F' U' L' U' L U F",
+    "algs": [
+      {
+        "alg": "y U2 L' U' (B' U B U) L"
+      },
+      {
+        "alg": "=y' U2 R' U' (F' U F U) R"
+      },
+      {
+        "alg": "=U2 F' U' (L' U L U) F"
+      },
+      {
+        "alg": "y L' U2 L (F R U R' F')"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "IY",
+    "col": 0,
+    "setup": "S' R U' R' S",
+    "algs": [
+      {
+        "alg": "S' R U R' S"
+      },
+      {
+        "alg": "=y2 S L U L' S'"
+      },
+      {
+        "alg": "=y F U (R U R' U') F'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "IY",
+    "col": 1,
+    "setup": "F' U' L' U L U F",
+    "algs": [
+      {
+        "alg": "S L' U' L S'"
+      },
+      {
+        "alg": "=y2 S' R' U' R S"
+      },
+      {
+        "alg": "y' F' U' L' U' L U F"
+      }
+    ]
+  },
+  {
+    "subgroup": "B+",
+    "name": "D",
+    "col": 2,
+    "setup": "M U' M' U2' ML' U' M'L",
+    "algs": [
+      {
+        "alg": "y' R' D' (r U' r' D) R2 U R'"
+      },
+      {
+        "alg": "U' (ML' U M'L U2') (M U M')"
+      },
+      {
+        "alg": "y' R' D' (r U r' D) R2 U R'"
+      },
+      {
+        "alg": "=y L' D' (l U l' D) L2 U L'"
+      }
+    ]
+  },
+  {
+    "subgroup": "B-",
+    "name": "D",
+    "col": 3,
+    "setup": "M U M' U2 MR U M'R'",
+    "algs": [
+      {
+        "alg": "y L D (l' U' l D') L2' U' L"
+      },
+      {
+        "alg": "U (MR U' M'R' U2) (M U' M')"
+      },
+      {
+        "alg": "=y' R D (r' U r D') R2' U' R"
+      },
+      {
+        "alg": "y' R D (r' U' r D') R2' U' R"
+      }
+    ]
+  },
+  {
+    "subgroup": "C+",
+    "name": "CT",
+    "col": 0,
+    "setup": "->",
+    "algs": []
+  },
+  {
+    "subgroup": "C-",
+    "name": "CT",
+    "col": 1,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "C+",
+    "name": "CI",
+    "col": 2,
+    "setup": "->",
+    "algs": []
+  },
+  {
+    "subgroup": "C-",
+    "name": "CI",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "D+",
+    "name": "DT",
+    "col": 0,
+    "setup": "->",
+    "algs": []
+  },
+  {
+    "subgroup": "D-",
+    "name": "DT",
+    "col": 1,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "D+",
+    "name": "DL",
+    "col": 2,
+    "setup": "F' (U L' U2' L)2 F",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "D-",
+    "name": "DL",
+    "col": 3,
+    "setup": "F (U' R U2 R')2 F'",
+    "algs": []
+  },
+  {
+    "subgroup": "D+",
+    "name": "DV",
+    "col": 0,
+    "setup": "->",
+    "algs": []
+  },
+  {
+    "subgroup": "D-",
+    "name": "DV",
+    "col": 1,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "D+",
+    "name": "DD",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "D-",
+    "name": "DD",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "E+",
+    "name": "ET",
+    "col": 0,
+    "setup": "T",
+    "algs": [
+      {
+        "alg": "(R' E R U') R' E' R"
+      },
+      {
+        "alg": "y' (R' F' R U) (R U' R' F)"
+      },
+      {
+        "alg": "y' U' F' (R U R' U') R' F R"
+      }
+    ]
+  },
+  {
+    "subgroup": "E-",
+    "name": "ET",
+    "col": 1,
+    "setup": "",
+    "algs": [
+      {
+        "alg": "(R S' R' U) R S R'"
+      },
+      {
+        "alg": "y (r U r' U) (r' F r F')"
+      }
+    ]
+  },
+  {
+    "subgroup": "E+",
+    "name": "EL",
+    "col": 2,
+    "setup": "L",
+    "algs": [
+      {
+        "alg": "U' (R' F R F') R U R'"
+      },
+      {
+        "alg": "y (U' L' U L) (F' L F L')"
+      },
+      {
+        "alg": "U' (M' U R U' M) U R'"
+      }
+    ]
+  },
+  {
+    "subgroup": "E-",
+    "name": "EL",
+    "col": 3,
+    "setup": "",
+    "algs": [
+      {
+        "alg": "U (L F' L' F) L' U' L"
+      },
+      {
+        "alg": "y' (U R U' R') (F R' F' R)"
+      },
+      {
+        "alg": "y' U R U' M' U R' U' M"
+      }
+    ]
+  },
+  {
+    "subgroup": "E+",
+    "name": "EVB",
+    "col": 0,
+    "setup": "F U' F' U' L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "E-",
+    "name": "EVB",
+    "col": 1,
+    "setup": "F' U F U R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "E+",
+    "name": "EVF",
+    "col": 2,
+    "setup": "F U F' U' L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "E-",
+    "name": "EVF",
+    "col": 3,
+    "setup": "F' U' F U R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "E+",
+    "name": "EIV",
+    "col": 0,
+    "setup": "f' U2' L' U' L U2' f",
+    "algs": []
+  },
+  {
+    "subgroup": "E-",
+    "name": "EIV",
+    "col": 1,
+    "setup": "f U2 R U R' U2 f'",
+    "algs": []
+  },
+  {
+    "subgroup": "E+",
+    "name": "EII",
+    "col": 2,
+    "setup": "f' U2' L' U L U2' f",
+    "algs": []
+  },
+  {
+    "subgroup": "E-",
+    "name": "EII",
+    "col": 3,
+    "setup": "f U2 R U' R' U2 f'",
+    "algs": []
+  },
+  {
+    "subgroup": "E+",
+    "name": "EIB",
+    "col": 0,
+    "setup": "",
+    "algs": [
+      {
+        "alg": "IB"
+      }
+    ]
+  },
+  {
+    "subgroup": "E+",
+    "name": "ED",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "E-",
+    "name": "ED",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "F",
+    "name": "FT",
+    "col": 1,
+    "setup": "T",
+    "algs": [
+      {
+        "alg": "(↑R2' U2' F R2 F') (U2' R' U R')"
+      },
+      {
+        "alg": "(R U2' R' U)2 y' R' U' R"
+      }
+    ]
+  },
+  {
+    "subgroup": "F",
+    "name": "FI",
+    "col": 2,
+    "setup": "I",
+    "algs": [
+      {
+        "alg": "y U' F R' U2' (R2 U R2' U) F R F2'"
+      },
+      {
+        "alg": "(R' F R F') (U F' U2 F) (U' R U R')",
+        "algHtml": "(R' F R F') (U <em>F'</em> U2 <em>F</em>) (U' R U R')"
+      },
+      {
+        "alg": "U' (R U' R' U) y (L' U2 L U') (L F' L' F)"
+      },
+      {
+        "alg": "U' r U' M U R' U r U' M U R'"
+      },
+      {
+        "alg": "y' U (R' U R) (S' U' S U2') (F R' F')"
+      }
+    ]
+  },
+  {
+    "subgroup": "G+",
+    "name": "GT",
+    "col": 0,
+    "setup": "R2 U R' U R U2 R2'",
+    "algs": []
+  },
+  {
+    "subgroup": "G-",
+    "name": "GT",
+    "col": 1,
+    "setup": "L2' U' L U' L' U2' L2",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GL",
+    "col": 2,
+    "setup": "L' U L f R U R' U' f'",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "G-",
+    "name": "GL",
+    "col": 3,
+    "setup": "R U' R' f' L' U' L U f",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GVP",
+    "col": 0,
+    "setup": "L' U L F R U R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "G-",
+    "name": "GVP",
+    "col": 1,
+    "setup": "R U' R' F' L' U' L F",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GVM",
+    "col": 2,
+    "setup": "f' L2' S L' U' L U F",
+    "algs": [
+      {
+        "alg": "VM"
+      }
+    ]
+  },
+  {
+    "subgroup": "G-",
+    "name": "GVM",
+    "col": 3,
+    "setup": "f R2 S' R U R' U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GIO",
+    "col": 0,
+    "setup": "L' U L F R U R' U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "G-",
+    "name": "GIO",
+    "col": 1,
+    "setup": "R U' R' F' L' U' L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GIL",
+    "col": 2,
+    "setup": "L U2 F' L F L' U' L'",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "G-",
+    "name": "GIL",
+    "col": 3,
+    "setup": "R' U2 F R' F' R U R",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GIZ",
+    "col": 0,
+    "setup": "R U' R' U' R' F R F'",
+    "algs": []
+  },
+  {
+    "subgroup": "G-",
+    "name": "GIZ",
+    "col": 1,
+    "setup": "L' U L U L F' L' F",
+    "algs": []
+  },
+  {
+    "subgroup": "G+",
+    "name": "GD",
+    "col": 2,
+    "setup": "F U S' R U R' SF'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "G-",
+    "name": "GD",
+    "col": 3,
+    "setup": "F' U' S L' U' L S'F",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HT",
+    "col": 0,
+    "setup": "R U' R' U R U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "H-",
+    "name": "HT",
+    "col": 1,
+    "setup": "L' U L U' L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HL",
+    "col": 2,
+    "setup": "R' F U R U' R' F' U2 R",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "H-",
+    "name": "HL",
+    "col": 3,
+    "setup": "L F' U' L' U L F U2 L'",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HVP",
+    "col": 0,
+    "setup": "S' R U' R' S U R U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "H-",
+    "name": "HVP",
+    "col": 1,
+    "setup": "S L' U L S' U' L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HVM",
+    "col": 2,
+    "setup": "R U' R2' F R F' U R U' R'",
+    "algs": [
+      {
+        "alg": "VM"
+      }
+    ]
+  },
+  {
+    "subgroup": "H-",
+    "name": "HVM",
+    "col": 3,
+    "setup": "L' U L2 F' L' F U' L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HIO",
+    "col": 0,
+    "setup": "F U2 R' F' R U2 R U2' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "H-",
+    "name": "HIO",
+    "col": 1,
+    "setup": "F' U2 L F L' U2' L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HIL",
+    "col": 2,
+    "setup": "L2 F' L' F L' U L U2 L'",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "H-",
+    "name": "HIL",
+    "col": 3,
+    "setup": "R2' F R F' R U' R' U2 R",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HIZ",
+    "col": 0,
+    "setup": "MR U' R' U r U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "H-",
+    "name": "HIZ",
+    "col": 1,
+    "setup": "M L' U L U' l' U2' L",
+    "algs": []
+  },
+  {
+    "subgroup": "H+",
+    "name": "HD",
+    "col": 2,
+    "setup": "F R B U B' U R' U F'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "H-",
+    "name": "HD",
+    "col": 3,
+    "setup": "F' L' B' U' B U' L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IT",
+    "col": 0,
+    "setup": "R U F R' U R U' F' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "I-",
+    "name": "IT",
+    "col": 1,
+    "setup": "L' U' F' L U' L' U F L",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IL",
+    "col": 2,
+    "setup": "M U r U r' U' M'",
+    "algs": []
+  },
+  {
+    "subgroup": "I-",
+    "name": "IL",
+    "col": 3,
+    "setup": "M U' R' F' R U M'",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IVP",
+    "col": 0,
+    "setup": "f F R U R' U' F' f'",
+    "algs": []
+  },
+  {
+    "subgroup": "I-",
+    "name": "IVP",
+    "col": 1,
+    "setup": "f' F' L' U' L U F f",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IVY",
+    "col": 2,
+    "setup": "R U' R' U2 F' U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "I-",
+    "name": "IVY",
+    "col": 3,
+    "setup": "F' U F U2 R U R' y",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IIO",
+    "col": 0,
+    "setup": "F U2 F R' F' R U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "I-",
+    "name": "IIO",
+    "col": 1,
+    "setup": "F' U2 F' L F L' U F",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IIL",
+    "col": 2,
+    "setup": "S' R U' R' S U2' F' U' F",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "I-",
+    "name": "IIL",
+    "col": 3,
+    "setup": "S L' U L S' U2 F U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "IIZ",
+    "col": 0,
+    "setup": "F R U2 R' F' L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "I-",
+    "name": "IIZ",
+    "col": 1,
+    "setup": "F' L' U2 L F R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "I+",
+    "name": "ID",
+    "col": 2,
+    "setup": "F R U2 R' F' L' U2 L",
+    "algs": [
+      {
+        "alg": "ID"
+      }
+    ]
+  },
+  {
+    "subgroup": "I-",
+    "name": "ID",
+    "col": 3,
+    "setup": "F' L' U2' L F R U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JT",
+    "col": 0,
+    "setup": "R U R' U' R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "J-",
+    "name": "JT",
+    "col": 1,
+    "setup": "L' U' L U L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JL",
+    "col": 2,
+    "setup": "R U2' R' U F' U F",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "J-",
+    "name": "JL",
+    "col": 3,
+    "setup": "L' U2 L U' F U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JVB",
+    "col": 0,
+    "setup": "R U2' R' F' U2' F",
+    "algs": [
+      {
+        "alg": "VB"
+      }
+    ]
+  },
+  {
+    "subgroup": "J-",
+    "name": "JVB",
+    "col": 1,
+    "setup": "L' U2 L F U2 F'",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JVF",
+    "col": 2,
+    "setup": "R' F R' F' R U2 R",
+    "algs": []
+  },
+  {
+    "subgroup": "J-",
+    "name": "JVF",
+    "col": 3,
+    "setup": "L F' L F L' U2' L'",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JIF",
+    "col": 0,
+    "setup": "F U' R U' R' U' F'",
+    "algs": [
+      {
+        "alg": "IF"
+      }
+    ]
+  },
+  {
+    "subgroup": "J-",
+    "name": "JIF",
+    "col": 1,
+    "setup": "F' U L' U L U F",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JIB",
+    "col": 2,
+    "setup": "F R' F' R2 U R'",
+    "algs": [
+      {
+        "alg": "IB"
+      }
+    ]
+  },
+  {
+    "subgroup": "J-",
+    "name": "JIB",
+    "col": 3,
+    "setup": "F' L F L2' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JII",
+    "col": 0,
+    "setup": "F' L' U L F U' R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "J-",
+    "name": "JII",
+    "col": 1,
+    "setup": "F R U' R' F' U L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "J+",
+    "name": "JD",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "J-",
+    "name": "JD",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KT",
+    "col": 0,
+    "setup": "R U' R' U' R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "K-",
+    "name": "KT",
+    "col": 1,
+    "setup": "L' U L U L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KL",
+    "col": 2,
+    "setup": "R' F R U R U' R2' F' R",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "K-",
+    "name": "KL",
+    "col": 3,
+    "setup": "L F' L' U' L' U L2 F L'",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KVP",
+    "col": 0,
+    "setup": "F2 R' F2' r U R U' r'",
+    "algs": []
+  },
+  {
+    "subgroup": "K-",
+    "name": "KVP",
+    "col": 1,
+    "setup": "F2' r U2 R' U' r' F R",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KVY",
+    "col": 2,
+    "setup": "S' R U' R' S U' R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "K-",
+    "name": "KVY",
+    "col": 3,
+    "setup": "S L' U L S' U L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KIO",
+    "col": 0,
+    "setup": "l F2' U2 L' U' L U' l'",
+    "algs": []
+  },
+  {
+    "subgroup": "K-",
+    "name": "KIO",
+    "col": 1,
+    "setup": "r' F2 U2' R U R' U r",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KIL",
+    "col": 2,
+    "setup": "F' U2 S L' U L S'F",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "K-",
+    "name": "KIL",
+    "col": 3,
+    "setup": "F U2 S' R U' R' SF'",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KIZ",
+    "col": 0,
+    "setup": "R U' R2' F' U' F U R",
+    "algs": []
+  },
+  {
+    "subgroup": "K-",
+    "name": "KIZ",
+    "col": 1,
+    "setup": "L' U L2 F U F' U' L'",
+    "algs": []
+  },
+  {
+    "subgroup": "K+",
+    "name": "KD",
+    "col": 2,
+    "setup": "r U' R' U2' M U' r U r'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "K-",
+    "name": "KD",
+    "col": 3,
+    "setup": "R' F r U2' M U R' F' R",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LT",
+    "col": 0,
+    "setup": "R U' R' U R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "L-",
+    "name": "LT",
+    "col": 1,
+    "setup": "L' U L U' L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LL",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "L-",
+    "name": "LL",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LVB",
+    "col": 0,
+    "setup": "L' U' L U S L' U' L S'",
+    "algs": [
+      {
+        "alg": "VB"
+      }
+    ]
+  },
+  {
+    "subgroup": "L-",
+    "name": "LVB",
+    "col": 1,
+    "setup": "R U R' U' S' R U R' S",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LVF",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "VF"
+      }
+    ]
+  },
+  {
+    "subgroup": "L-",
+    "name": "LVF",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LIF",
+    "col": 0,
+    "setup": "MR U' R' U r U' R'",
+    "algs": [
+      {
+        "alg": "IF"
+      }
+    ]
+  },
+  {
+    "subgroup": "L-",
+    "name": "LIF",
+    "col": 1,
+    "setup": "ML' U L U' l' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LIB",
+    "col": 2,
+    "setup": "R U' R2' F R F'",
+    "algs": [
+      {
+        "alg": "IB"
+      }
+    ]
+  },
+  {
+    "subgroup": "L-",
+    "name": "LIB",
+    "col": 3,
+    "setup": "L' U L2 F' L' F",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LII",
+    "col": 0,
+    "setup": "R B U2 B' U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "L-",
+    "name": "LII",
+    "col": 1,
+    "setup": "L' B' U2 B U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "L+",
+    "name": "LD",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "L-",
+    "name": "LD",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MT",
+    "col": 0,
+    "setup": "R U R' U2 R U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "M-",
+    "name": "MT",
+    "col": 1,
+    "setup": "L' U' L U2 L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "ML",
+    "col": 2,
+    "setup": "F U' R U2 R' U' F'",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "M-",
+    "name": "ML",
+    "col": 3,
+    "setup": "F' U L' U2 L U F",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MVP",
+    "col": 0,
+    "setup": "l U L2 U L2 U2 l'",
+    "algs": []
+  },
+  {
+    "subgroup": "M-",
+    "name": "MVP",
+    "col": 1,
+    "setup": "r' U' R2 U' R2 U2 r",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MVM",
+    "col": 2,
+    "setup": "F R' F' D' r U2 r' D R",
+    "algs": [
+      {
+        "alg": "VM"
+      }
+    ]
+  },
+  {
+    "subgroup": "M-",
+    "name": "MVM",
+    "col": 3,
+    "setup": "F' L F D l' U2 l D' L'",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MIL",
+    "col": 0,
+    "setup": "F U' R U R' U2 F'",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "M-",
+    "name": "MIL",
+    "col": 1,
+    "setup": "F' U L' U' L U2 F",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MIZ",
+    "col": 2,
+    "setup": "f R S' R U R' U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "M-",
+    "name": "MIZ",
+    "col": 3,
+    "setup": "f' L' S L' U' L U F",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MIY",
+    "col": 0,
+    "setup": "R U' R' U' F' U F U' R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "M-",
+    "name": "MIY",
+    "col": 1,
+    "setup": "L' U L U F U' F' U L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "M+",
+    "name": "MD",
+    "col": 2,
+    "setup": "r U r' U2 M' U M",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "M-",
+    "name": "MD",
+    "col": 3,
+    "setup": "R' F' R U2 M' U' M",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PT",
+    "col": 0,
+    "setup": "R U R' U' R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "P-",
+    "name": "PT",
+    "col": 1,
+    "setup": "R' U R U2 R' U' R",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PL",
+    "col": 2,
+    "setup": "R U' R' F' U F",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "P-",
+    "name": "PL",
+    "col": 3,
+    "setup": "L' U L F U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PVP",
+    "col": 0,
+    "setup": "F R' F' R U' F R' F' R",
+    "algs": []
+  },
+  {
+    "subgroup": "P-",
+    "name": "PVP",
+    "col": 1,
+    "setup": "F' L F L' U F' L F L'",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PVM",
+    "col": 2,
+    "setup": "F R' F' R2 U' R'",
+    "algs": [
+      {
+        "alg": "VM"
+      }
+    ]
+  },
+  {
+    "subgroup": "P-",
+    "name": "PVM",
+    "col": 3,
+    "setup": "F' L F L2 U L",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PIP",
+    "col": 0,
+    "setup": "F U' R U' R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "P-",
+    "name": "PIP",
+    "col": 1,
+    "setup": "F' U L' U L F",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PIZ",
+    "col": 2,
+    "setup": "R' U' F U R2 U' R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "P-",
+    "name": "PIZ",
+    "col": 3,
+    "setup": "L U F' U' L2 U L F",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PIY",
+    "col": 0,
+    "setup": "F R U2 R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "P-",
+    "name": "PIY",
+    "col": 1,
+    "setup": "F' L' U2 L F",
+    "algs": []
+  },
+  {
+    "subgroup": "P+",
+    "name": "PD",
+    "col": 2,
+    "setup": "F2 L F L2 U2 L F",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "P-",
+    "name": "PD",
+    "col": 3,
+    "setup": "F2 R' F' R2 U2' R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QT",
+    "col": 0,
+    "setup": "R U R' U' R U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QT",
+    "col": 1,
+    "setup": "R' U' R U R' U2 R",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QL",
+    "col": 2,
+    "setup": "F' L' U L F U' R U2 R'",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QL",
+    "col": 3,
+    "setup": "F R U' R' F' U L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QVP",
+    "col": 0,
+    "setup": "L' U' L F' L F L2' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QVP",
+    "col": 1,
+    "setup": "R U R' F R' F' R2 U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QVM",
+    "col": 2,
+    "setup": "f' U FS' R U2' R' S2",
+    "algs": [
+      {
+        "alg": "VM"
+      }
+    ]
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QVM",
+    "col": 3,
+    "setup": "f U' F'S L' U2 L S2",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QIP",
+    "col": 0,
+    "setup": "F U R U' R2 F' R2 U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QIP",
+    "col": 1,
+    "setup": "F' U' L' U L2 F L2 U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QIZ",
+    "col": 2,
+    "setup": "F R' F' R2 U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QIZ",
+    "col": 3,
+    "setup": "F' L F L2 U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QIY",
+    "col": 0,
+    "setup": "L' U L U' F R U2 R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QIY",
+    "col": 1,
+    "setup": "R U' R' U F' L' U2 L F",
+    "algs": []
+  },
+  {
+    "subgroup": "Q+",
+    "name": "QD",
+    "col": 2,
+    "setup": "F R U2' R2' F R F2'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "Q-",
+    "name": "QD",
+    "col": 3,
+    "setup": "F' L' U2 L2 F' L' F2",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RT",
+    "col": 0,
+    "setup": "R U' R' U' R U' R'",
+    "algs": [
+      {
+        "alg": "RT"
+      }
+    ]
+  },
+  {
+    "subgroup": "R-",
+    "name": "RT",
+    "col": 1,
+    "setup": "L' U L U L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RL",
+    "col": 2,
+    "setup": "L' U' L F' U' L' U L F",
+    "algs": [
+      {
+        "alg": "RL"
+      }
+    ]
+  },
+  {
+    "subgroup": "R-",
+    "name": "RL",
+    "col": 3,
+    "setup": "R U R' F U R U' R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RVP",
+    "col": 0,
+    "setup": "r U' R' U R U r'",
+    "algs": []
+  },
+  {
+    "subgroup": "R-",
+    "name": "RVP",
+    "col": 1,
+    "setup": "l' U L U' L' U' l",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RVM",
+    "col": 2,
+    "setup": "L' U' LM' U' L' U l",
+    "algs": [
+      {
+        "alg": "VM"
+      }
+    ]
+  },
+  {
+    "subgroup": "R-",
+    "name": "RVM",
+    "col": 3,
+    "setup": "R U R'M' U R U' r'",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RIZ",
+    "col": 0,
+    "setup": "F U2 R U' R' U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "R-",
+    "name": "RIZ",
+    "col": 1,
+    "setup": "F' U2' L' U L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RIL",
+    "col": 2,
+    "setup": "F' U' L' B' U2 B L F",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "R-",
+    "name": "RIL",
+    "col": 3,
+    "setup": "F U R B U2' B' R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RIY",
+    "col": 0,
+    "setup": "F' U S L' U' L S'F",
+    "algs": []
+  },
+  {
+    "subgroup": "R-",
+    "name": "RIY",
+    "col": 1,
+    "setup": "F U' S' R U R' SF'",
+    "algs": []
+  },
+  {
+    "subgroup": "R+",
+    "name": "RD",
+    "col": 2,
+    "setup": "r U' R' U' M U2 r U r'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "R-",
+    "name": "RD",
+    "col": 3,
+    "setup": "l' U L U M U2 l' U' l",
+    "algs": []
+  },
+  {
+    "subgroup": "S",
+    "name": "ST",
+    "col": 0,
+    "setup": "",
+    "algs": []
+  },
+  {
+    "subgroup": "S",
+    "name": "SVO",
+    "col": 1,
+    "setup": "S U F U' R U' R' U f'",
+    "algs": []
+  },
+  {
+    "subgroup": "S",
+    "name": "SVY",
+    "col": 2,
+    "setup": "F R B U B' R' U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "S",
+    "name": "SD",
+    "col": 3,
+    "setup": "F R U' B U2 B' R' U' F'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "S",
+    "name": "SL",
+    "col": 0,
+    "setup": "F U' R U2 R' U F'",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "S",
+    "name": "SL",
+    "col": 1,
+    "setup": "F' U L' U2 L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "S",
+    "name": "SVZ",
+    "col": 2,
+    "setup": "F U' R U' R' U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "S",
+    "name": "SVZ",
+    "col": 3,
+    "setup": "F' U L' U L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "T",
+    "name": "TTP",
+    "col": 0,
+    "setup": "R U R' F R' F' R",
+    "algs": []
+  },
+  {
+    "subgroup": "T",
+    "name": "TTP",
+    "col": 1,
+    "setup": "L' U' L F' L F L'",
+    "algs": []
+  },
+  {
+    "subgroup": "T",
+    "name": "TTM",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "TM"
+      }
+    ]
+  },
+  {
+    "subgroup": "T",
+    "name": "TTM",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "T",
+    "name": "TIF",
+    "col": 0,
+    "setup": "F' U S L' U L S'F",
+    "algs": [
+      {
+        "alg": "IF"
+      }
+    ]
+  },
+  {
+    "subgroup": "T",
+    "name": "TIF",
+    "col": 1,
+    "setup": "F U' S' R U' R' SF'",
+    "algs": []
+  },
+  {
+    "subgroup": "T",
+    "name": "TIB",
+    "col": 2,
+    "setup": "->",
+    "algs": [
+      {
+        "alg": "IB"
+      }
+    ]
+  },
+  {
+    "subgroup": "T",
+    "name": "TIB",
+    "col": 3,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UT",
+    "col": 0,
+    "setup": "R U R' U2 R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "U-",
+    "name": "UT",
+    "col": 1,
+    "setup": "L' U' L U2 L' U' L",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UD",
+    "col": 2,
+    "setup": "",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "U+",
+    "name": "UL",
+    "col": 0,
+    "setup": "F' U' L' U' L U2 F",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "U-",
+    "name": "UL",
+    "col": 1,
+    "setup": "F U R U R' U2 F'",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UL",
+    "col": 2,
+    "setup": "F' U'D' L' U L D F",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "U-",
+    "name": "UL",
+    "col": 3,
+    "setup": "F UD R U' R' D' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UVZ",
+    "col": 0,
+    "setup": "F U2 R U' R' U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "U-",
+    "name": "UVZ",
+    "col": 1,
+    "setup": "F' U2' L' U L U F",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UVZ",
+    "col": 2,
+    "setup": "F U' R U R' U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "U-",
+    "name": "UVZ",
+    "col": 3,
+    "setup": "F' U L' U' L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UVO",
+    "col": 0,
+    "setup": "->",
+    "algs": []
+  },
+  {
+    "subgroup": "U-",
+    "name": "UVO",
+    "col": 1,
+    "setup": "<-",
+    "algs": []
+  },
+  {
+    "subgroup": "U+",
+    "name": "UVY",
+    "col": 2,
+    "setup": "R S R' U' R U S' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "U-",
+    "name": "UVY",
+    "col": 3,
+    "setup": "L' S' L U L' U' S L",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VT",
+    "col": 0,
+    "setup": "F' U F U' R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VT",
+    "col": 1,
+    "setup": "R U' R' U F' U F",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VT",
+    "col": 2,
+    "setup": "F' U F U R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VT",
+    "col": 3,
+    "setup": "R U' R' U' F' U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VT",
+    "col": 0,
+    "setup": "R' F R F' R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VT",
+    "col": 1,
+    "setup": "F R' F' R F' U F",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VT",
+    "col": 2,
+    "setup": "F' U' F U R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VT",
+    "col": 3,
+    "setup": "R U R' U' F' U F",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VI",
+    "col": 0,
+    "setup": "F' U F2 R' F' R U' R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VI",
+    "col": 1,
+    "setup": "F U' F2' L F L' U L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VI",
+    "col": 2,
+    "setup": "FS' R U R' S U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VI",
+    "col": 3,
+    "setup": "F'S L' U' L S' U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VI",
+    "col": 0,
+    "setup": "F' U2' S L' U L S' U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VI",
+    "col": 1,
+    "setup": "F U2 S' R U' R' S U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "V+",
+    "name": "VI",
+    "col": 2,
+    "setup": "S' R U R' S U' F' U F",
+    "algs": []
+  },
+  {
+    "subgroup": "V-",
+    "name": "VI",
+    "col": 3,
+    "setup": "S L' U' L S' U F U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WT",
+    "col": 0,
+    "setup": "R U R' U2 R U' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "W-",
+    "name": "WT",
+    "col": 1,
+    "setup": "L' U' L U2 L' U L",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WL",
+    "col": 2,
+    "setup": "F' U' F2 U R U' R' F'",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "W-",
+    "name": "WL",
+    "col": 3,
+    "setup": "F U F2 U' L' U L F",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WVP",
+    "col": 0,
+    "setup": "r' U R U R' U' r",
+    "algs": []
+  },
+  {
+    "subgroup": "W-",
+    "name": "WVP",
+    "col": 1,
+    "setup": "r U' R' U' R U r'",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WVY",
+    "col": 2,
+    "setup": "f' F' U' L' U L F f",
+    "algs": []
+  },
+  {
+    "subgroup": "W-",
+    "name": "WVY",
+    "col": 3,
+    "setup": "f F U R U' R' F' f'",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WIL",
+    "col": 0,
+    "setup": "F U2 R U' R' F'",
+    "algs": [
+      {
+        "alg": "IL"
+      }
+    ]
+  },
+  {
+    "subgroup": "W-",
+    "name": "WIL",
+    "col": 1,
+    "setup": "F' U2' L' U L F",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WIZ",
+    "col": 2,
+    "setup": "R U2 R'M' U R U' r'",
+    "algs": []
+  },
+  {
+    "subgroup": "W-",
+    "name": "WIZ",
+    "col": 3,
+    "setup": "L' U2 LM' U' L' U l",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WIY",
+    "col": 0,
+    "setup": "F U' R U R' U' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "W-",
+    "name": "WIY",
+    "col": 1,
+    "setup": "F' U L' U' L U F",
+    "algs": []
+  },
+  {
+    "subgroup": "W+",
+    "name": "WD",
+    "col": 2,
+    "setup": "F U' R U2' R' F' L' U' L",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "W-",
+    "name": "WD",
+    "col": 3,
+    "setup": "F' U L' U2 L F R U R'",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XT",
+    "col": 0,
+    "setup": "R' U' R2 U' R2 U2 R",
+    "algs": []
+  },
+  {
+    "subgroup": "X-",
+    "name": "XT",
+    "col": 1,
+    "setup": "L U L2 U L2 U2 L'",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XL",
+    "col": 2,
+    "setup": "F U F' L U2 L2 U' L2 U' L'",
+    "algs": [
+      {
+        "alg": "L"
+      }
+    ]
+  },
+  {
+    "subgroup": "X-",
+    "name": "XL",
+    "col": 3,
+    "setup": "F' U' F R' U2 R2 U R2 U R",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XVP",
+    "col": 0,
+    "setup": "F U' F' U L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "X-",
+    "name": "XVP",
+    "col": 1,
+    "setup": "F' U F U' R U2 R'",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XVY",
+    "col": 2,
+    "setup": "S' R' U' R2 U' R2' U2' R S",
+    "algs": []
+  },
+  {
+    "subgroup": "X-",
+    "name": "XVY",
+    "col": 3,
+    "setup": "S L U L2' U L2 U2' L' S'",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XIO",
+    "col": 0,
+    "setup": "F R U2' R' F' U' L' U2 L",
+    "algs": []
+  },
+  {
+    "subgroup": "X-",
+    "name": "XIO",
+    "col": 1,
+    "setup": "F' L' U2 L F U R U2' R'",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XIZ",
+    "col": 2,
+    "setup": "F U' R U R' U' R U' R' F'",
+    "algs": []
+  },
+  {
+    "subgroup": "X-",
+    "name": "XIZ",
+    "col": 3,
+    "setup": "F' U L' U' L U L' U L F",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XIP",
+    "col": 0,
+    "setup": "F U2 R U2' R' U F'",
+    "algs": []
+  },
+  {
+    "subgroup": "X-",
+    "name": "XIP",
+    "col": 1,
+    "setup": "F' U2' L' U2 L U' F",
+    "algs": []
+  },
+  {
+    "subgroup": "X+",
+    "name": "XD",
+    "col": 2,
+    "setup": "MR U' R'M' U2 M U' M'",
+    "algs": [
+      {
+        "alg": "D"
+      }
+    ]
+  },
+  {
+    "subgroup": "X-",
+    "name": "XD",
+    "col": 3,
+    "setup": "ML' U LM' U2' M U M'",
+    "algs": []
+  }
+]
