@@ -10,7 +10,7 @@
 | **域名** | `cuberoot.me` → 301 到 `www.cuberoot.me` |
 | **托管** | 云服务器 |
 | **OS** | Linux 3.2104 U10(基于 CentOS/RHEL,包管理用 `dnf`) |
-| **Web 服务器** | Nginx 1.26.2(宝塔装的二进制 `/www/server/nginx/`,vhost 走 git) |
+| **Web 服务器** | Nginx 1.26.2(原宝塔装的二进制 `/www/server/nginx/`,vhost 走 git) |
 | **HTTPS** | certbot Let's Encrypt(`certbot-renew.timer` systemd 自动续期,expires 2026-06-30) |
 | **磁盘** | 40GB 总量,约 19GB 可用 |
 | **Node.js** | v24.14.0(nvm,`~/.nvm/versions/node/v24.14.0/`) |
@@ -38,7 +38,7 @@ https://www.cuberoot.me/stats/       → WCA 统计页面
 | **SPA 根目录** | `/www/wwwroot/cuberoot-spa/`(入口 `index.html` + `_assets/`) |
 | **镜像根目录** | `/www/wwwroot/toolkit/`(deploy_mirror rsync 同步产物) |
 | **Blog 静态根** | `/www/wwwroot/blog-static/`(2026-05-06 wget 镜像,内容冻结) |
-| **Nginx 站点配置** | `/www/server/panel/vhost/nginx/www.cuberoot.me.conf`(source 在 `ops/nginx/`) |
+| **Nginx 站点配置** | `/etc/nginx/vhost.d/www.cuberoot.me.conf`(source 在 `ops/nginx/`,Phase F 从 panel 迁出) |
 | **SSL 证书** | `/etc/letsencrypt/live/cuberoot.me/`(certbot 标准位置) |
 | **CI 部署** | `.github/workflows/deploy_mirror.yml`(SPA/static)、`deploy_core.yml`(Hono)、`deploy_nginx.yml`(vhost) |
 
@@ -134,11 +134,12 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 2. 红叉看日志(SSH 连接 / rsync / nginx -t 失败)
 
 ### nginx 配置回滚?
-线上 `/www/server/panel/vhost/nginx/www.cuberoot.me.conf.bak-<unix-ts>` 是历次部署前的备份。
+线上 `/etc/nginx/vhost.d/www.cuberoot.me.conf.bak-<unix-ts>` 是历次部署前的备份。
 ```bash
-ssh root@cuberoot 'cd /www/server/panel/vhost/nginx/ && ls -t www.cuberoot.me.conf.bak-* | head'
-ssh root@cuberoot 'cp /www/server/panel/vhost/nginx/www.cuberoot.me.conf.bak-<ts> /www/server/panel/vhost/nginx/www.cuberoot.me.conf && nginx -t && nginx -s reload'
+ssh root@cuberoot 'cd /etc/nginx/vhost.d/ && ls -t www.cuberoot.me.conf.bak-* | head'
+ssh root@cuberoot 'cp /etc/nginx/vhost.d/www.cuberoot.me.conf.bak-<ts> /etc/nginx/vhost.d/www.cuberoot.me.conf && nginx -t && nginx -s reload'
 ```
+Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/nginx-vhost-backups/`。
 或本地 `git revert` 改动 commit,push 后 workflow 重新部上去。
 
 ### SSL 证书过期?
@@ -188,7 +189,7 @@ ssh root@cuberoot 'cp /www/server/panel/vhost/nginx/www.cuberoot.me.conf.bak-<ts
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
 | API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
-| DB dump | (待补 — 旧宝塔 cron 已清,需新写 systemd timer 或 pg_dump cron) | — | — |
+| DB dump | (TODO — 写 systemd timer 跑 pg_dump 到 `/root/archive/`) | — | — |
 
 ## SSH 登录方式
 

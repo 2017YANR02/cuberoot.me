@@ -10,7 +10,6 @@
 
 Mirrored at [cuberoot.me](https://cuberoot.me/) for users in mainland China — same site, same content.
 
-[English](./README.md) · [简体中文](./README.zh-CN.md)
 
 </div>
 
@@ -59,7 +58,7 @@ ruiminyan.github.io/
 ├── core/                          # pnpm + Turbo monorepo (all new work lives here)
 │   └── packages/
 │       ├── client/                # React 19 + Vite 8 SPA
-│       ├── server/                # Hono + MariaDB (WCA OAuth + user data)
+│       ├── server/                # Hono + PostgreSQL 13 (WCA OAuth + user data)
 │       ├── shared/                # Shared types + algorithm datasets
 │       ├── stats-build/           # WCA statistics pipeline (weekly CI)
 │       └── stats-ui/              # Stats page UI
@@ -69,8 +68,8 @@ ruiminyan.github.io/
 ```
 
 - **Frontend**: React 19, Vite 8, TypeScript, react-i18next (EN/ZH), react-router
-- **Backend**: Hono on a cloud VPS, MariaDB
-- **Pipeline**: TypeScript + MySQL via GitHub Actions, weekly refresh
+- **Backend**: Hono on a cloud VPS, PostgreSQL 13
+- **Pipeline**: TypeScript + MySQL (WCA dump) via GitHub Actions, weekly refresh
 - **Hosting**: GitHub Pages for static assets + SPA
 
 ---
