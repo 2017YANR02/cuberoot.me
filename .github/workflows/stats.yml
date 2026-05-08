@@ -6,8 +6,9 @@ on:
     paths:
       - 'core/packages/stats-build/src/**/*.ts'
   schedule:
-    # UTC 周日 20:00
-    - cron: '0 20 * * 0'
+    # 每周五 18:00 UTC = Fri 11:00 AM PDT
+    # (冬令时 PST 期间会变成 10:00 AM,GH cron 不识别 TZ)
+    - cron: '0 18 * * 5'
   workflow_dispatch:
     inputs:
       stats_filter:
@@ -134,6 +135,39 @@ jobs:
 
       - name: Fetch upcoming comps
         run: python scripts/fetch_upcoming_comps.py --refresh
+
+      # ── 历史排名 snapshot:复用上面已经导入的 MySQL,算完 scp + ssh 灌进 prod PG ──
+      - name: Build historical ranks snapshot
+        working-directory: core/packages/stats-build
+        env:
+          NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
+        run: npx tsx src/bin/historical_ranks_build.ts
+
+      - name: Setup SSH for historical ranks deploy
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/hr_id
+          chmod 600 ~/.ssh/hr_id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Upload historical ranks TSVs to server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        working-directory: core/packages/stats-build/output/historical_ranks
+        run: |
+          ssh -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_import && rm -rf /tmp/wca_import/*'
+          scp -i ~/.ssh/hr_id load.sql wca_continents.copy.tsv wca_countries.copy.tsv wca_persons.copy.tsv historical_ranks_snapshot.copy.tsv \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_import/"
+
+      - name: Apply historical ranks on server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: ssh -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/historical_ranks_apply.sh'
 
       - name: Commit and push
         run: |
