@@ -9,6 +9,7 @@ import { cubeRoutes } from './routes/cube.js';
 import { algRoutes } from './routes/alg.js';
 import { algSetsRoutes } from './routes/alg_sets.js';
 import { historicalRanksRoutes } from './routes/historical_ranks.js';
+import { wcaStatsExtraRoutes } from './routes/wca_stats_extra.js';
 
 const app = new Hono();
 
@@ -48,6 +49,7 @@ app.route('/v1', cubeRoutes);
 app.route('/v1', algRoutes);
 app.route('/v1', algSetsRoutes);
 app.route('/v1', historicalRanksRoutes);
+app.route('/v1', wcaStatsExtraRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 
