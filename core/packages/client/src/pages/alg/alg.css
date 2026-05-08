@@ -307,6 +307,7 @@
   gap: 8px;
   height: 100%;
   box-sizing: border-box;
+  position: relative;
 }
 .alg-case-head {
   display: flex;
@@ -859,6 +860,15 @@
 .alg-admin-edit-btn {
   margin-left: 6px; padding: 2px 4px;
 }
+.alg-admin-edit-btn-corner {
+  position: absolute;
+  top: 6px; right: 6px;
+  margin-left: 0;
+  z-index: 2;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+}
+.alg-case:hover .alg-admin-edit-btn-corner { opacity: 1; }
 .alg-admin-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -875,6 +885,57 @@
   border-radius: 10px;
   width: min(640px, 95vw); max-height: 90vh;
   display: flex; flex-direction: column;
+}
+.alg-admin-modal.alg-admin-modal-fullscreen {
+  width: 100vw; height: 100vh;
+  max-width: 100vw; max-height: 100vh;
+  border-radius: 0; border: none;
+}
+.alg-admin-modal-main {
+  flex: 1; min-height: 0;
+  display: flex;
+}
+.alg-admin-modal-side {
+  flex: 0 0 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+}
+.alg-admin-modal-side > .alg-twisty-host {
+  width: 100%;
+  height: 100%;
+}
+.alg-admin-modal-side-empty {
+  color: var(--text-muted, #888);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 40px 12px;
+}
+.alg-admin-modal-fullscreen .alg-admin-modal-body {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+/* 虚拟键盘 toggle 在 column-flex 容器里默认会被 stretch 撑满宽,仅缩到自身大小 */
+.alg-admin-modal-body .vkb-toggle,
+.alg-admin-setup-label .vkb-toggle,
+.alg-editor .vkb-toggle {
+  align-self: flex-start;
+}
+@media (max-width: 1023px) {
+  .alg-admin-modal-main { flex-direction: column; }
+  .alg-admin-modal-side {
+    flex: 0 0 380px;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+@media (max-width: 480px) {
+  .alg-admin-modal-side { flex: 0 0 280px; }
 }
 .alg-admin-modal-head {
   display: flex; justify-content: space-between; align-items: center;

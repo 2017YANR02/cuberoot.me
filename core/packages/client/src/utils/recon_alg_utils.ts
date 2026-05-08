@@ -215,6 +215,6 @@ export function syncPlayerToMoveCount(player: any, moveCount: number) {
   }
 }
 
-// 公式自动加空格 — 实现已挪到 utils/formula_autospace.ts,这里 re-export 保持向后兼容
-export { autoSpaceMoves } from './formula_autospace';
+// 公式自动加空格 — 实现已挪到 utils/alg_autospace.ts,这里 re-export 保持向后兼容
+export { autoSpaceMoves } from './alg_autospace';
 
