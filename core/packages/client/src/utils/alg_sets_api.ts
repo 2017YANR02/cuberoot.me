@@ -6,7 +6,7 @@
 import type { AlgCase } from '@cuberoot/shared';
 import { API_ORIGIN } from './api_base';
 
-const API_BASE = API_ORIGIN + '/api/alg/sets';
+const API_BASE = API_ORIGIN + '/v1/alg/sets';
 
 function getToken(): string | null {
   return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');

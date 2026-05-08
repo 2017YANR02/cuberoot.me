@@ -1,5 +1,5 @@
 /**
- * GET /api/visualcube.svg — server-rendered cube SVG.
+ * GET /v1/visualcube.svg — server-rendered cube SVG.
  *
  * URL params (forwarded to `renderFromSimpleQuery`):
  *   alg       WCA notation, applied DIRECTLY (forward) — cube state AFTER alg from solved
@@ -21,7 +21,7 @@ import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 
 export const cubeRoutes = new Hono();
 
-cubeRoutes.get('/api/visualcube.svg', (c) => {
+cubeRoutes.get('/visualcube.svg', (c) => {
   const svg = renderFromSimpleQuery({
     alg: c.req.query('alg'),
     case: c.req.query('case'),

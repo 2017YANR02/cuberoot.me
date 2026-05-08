@@ -24,7 +24,7 @@
 https://www.cuberoot.me/             → React SPA(/www/wwwroot/cuberoot-spa/)
 https://www.cuberoot.me/blog/        → 静态镜像(/www/wwwroot/blog-static/,WordPress 已下架)
 https://www.cuberoot.me/tools/       → 静态文件镜像(/www/wwwroot/toolkit/tools/)
-https://www.cuberoot.me/api/         → Hono API(Nginx 反代到 127.0.0.1:3001)
+https://api.cuberoot.me/v1/          → Hono API(Nginx 反代到 127.0.0.1:3001)
 https://www.cuberoot.me/stats/       → WCA 统计页面
 ```
 
@@ -161,11 +161,11 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 | **端口** | 3001 |
 | **进程管理** | pm2(`core-api`,`pm2 startup` 已配置开机自启) |
 | **凭据文件** | `/root/core-api/.env`(DB_*, JWT_SECRET, WCA_OAUTH_*) |
-| **API 入口** | `https://www.cuberoot.me/api/health` 等 |
-| **CORS** | 允许 `ruiminyan.github.io`、`www.cuberoot.me`、`localhost:5173` |
+| **API 入口** | `https://api.cuberoot.me/v1/health` 等 |
+| **CORS** | 允许 `cuberoot.me`、`www.cuberoot.me`、`ruiminyan.github.io`、`localhost:5173` |
 | **CI 部署** | `deploy_core.yml`(rsync `dist/` + `pm2 restart core-api`) |
 
-> 健康检查:`curl https://www.cuberoot.me/api/health` → `{"status":"ok","db":"connected"}`
+> 健康检查:`curl https://api.cuberoot.me/v1/health` → `{"status":"ok","db":"connected"}`
 
 ## PostgreSQL 13(recon_db)
 

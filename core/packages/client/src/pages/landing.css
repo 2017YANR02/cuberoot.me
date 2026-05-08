@@ -291,27 +291,6 @@
     color: var(--border);
 }
 
-/* ── 镜像站点提示 ── */
-.landing-page .mirror-notice {
-    margin-top: 2rem;
-    font-size: 0.875rem;
-    color: var(--text-sub);
-    text-align: center;
-    padding: 0 1rem;
-}
-
-.landing-page .mirror-notice a {
-    color: var(--text);
-    text-decoration: none;
-    border-bottom: 1px dashed var(--border);
-    transition: color 0.15s, border-color 0.15s;
-}
-
-.landing-page .mirror-notice a:hover {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-}
-
 /* ── 致谢 ── */
 .landing-page .credits {
     margin-top: 0.5rem;

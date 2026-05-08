@@ -47,8 +47,8 @@ function getIp(c: { req: { header: (n: string) => string | undefined } }): strin
 const ALG_MAX_BYTES = 4096;
 const NOTES_MAX_BYTES = 1024;
 
-// GET /api/alg/:puzzle/:set/submissions — 列出该 set 下全部用户提交
-algRoutes.get('/api/alg/:puzzle/:set/submissions', async (c) => {
+// GET /v1/alg/:puzzle/:set/submissions — 列出该 set 下全部用户提交
+algRoutes.get('/alg/:puzzle/:set/submissions', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const puzzle = c.req.param('puzzle');
   const setSlug = c.req.param('set');
@@ -59,8 +59,8 @@ algRoutes.get('/api/alg/:puzzle/:set/submissions', async (c) => {
   return c.json(rows.map(rowToJson));
 });
 
-// POST /api/alg/:puzzle/:set/:case/submit — 追加一条
-algRoutes.post('/api/alg/:puzzle/:set/:case/submit', async (c) => {
+// POST /v1/alg/:puzzle/:set/:case/submit — 追加一条
+algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
@@ -83,8 +83,8 @@ algRoutes.post('/api/alg/:puzzle/:set/:case/submit', async (c) => {
   return c.json(rowToJson(inserted[0]));
 });
 
-// PUT /api/alg/submissions/:id — 改自己的(或 admin)。caseName 仅 admin 可改。
-algRoutes.put('/api/alg/submissions/:id', async (c) => {
+// PUT /v1/alg/submissions/:id — 改自己的(或 admin)。caseName 仅 admin 可改。
+algRoutes.put('/alg/submissions/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
@@ -120,8 +120,8 @@ algRoutes.put('/api/alg/submissions/:id', async (c) => {
   return c.json(rowToJson(updated[0]));
 });
 
-// DELETE /api/alg/submissions/:id — 删自己的(或 admin)
-algRoutes.delete('/api/alg/submissions/:id', async (c) => {
+// DELETE /v1/alg/submissions/:id — 删自己的(或 admin)
+algRoutes.delete('/alg/submissions/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);

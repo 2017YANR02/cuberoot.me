@@ -74,7 +74,7 @@ function simplifyAlgStart(algStr) {
 }
 
 async function fetchZblsCases() {
-  const r = await fetch('https://www.cuberoot.me/api/alg/sets/3x3/zbls');
+  const r = await fetch('https://api.cuberoot.me/v1/alg/sets/3x3/zbls');
   if (!r.ok) throw new Error(`fetch failed: ${r.status}`);
   return await r.json();
 }

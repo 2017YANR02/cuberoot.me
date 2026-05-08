@@ -37,6 +37,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。
 
+## 部署拓扑
+
+- **静态 SPA**：GitHub Pages 服 `cuberoot.me`（apex）；`ruiminyan.github.io` 自动 301 → `cuberoot.me`。
+- **后端 API**：Hono 服 `api.cuberoot.me`（永远走源站，不上 GH）。
+- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`（跨域到 `api.cuberoot.me`），不要硬编码 origin。CORS allowlist 在 `core/packages/server/src/index.ts`。
+
 ## 开发命令
 
 包管理用 **pnpm 10**（不是 npm）。Windows 下按全局规则用 `pwsh`。

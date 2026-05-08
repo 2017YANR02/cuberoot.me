@@ -5,7 +5,7 @@
 import type { AlgSubmission } from '@cuberoot/shared';
 import { API_ORIGIN } from './api_base';
 
-const API_BASE = API_ORIGIN + '/api/alg';
+const API_BASE = API_ORIGIN + '/v1/alg';
 
 function getToken(): string | null {
   return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');

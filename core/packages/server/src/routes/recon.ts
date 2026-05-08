@@ -21,12 +21,12 @@ function getIp(c: { req: { header: (name: string) => string | undefined } }): st
   return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
-// ==================== GET /api/recon/list ====================
+// ==================== GET /v1/recon/list ====================
 
 // NOTE: 列表页只用以下字段（含搜索匹配 optimal_scramble/oll/pll/note）。
 //       之前 SELECT * 把 solution（最大的字段，每条几百字节）等全拉过来，
 //       响应 ~800 KB / 590 KB gzip，国内用户加载 10–30s。
-//       瘦身后预计减半以上。详情页仍走 GET /api/recon/:id 拿全字段。
+//       瘦身后预计减半以上。详情页仍走 GET /v1/recon/:id 拿全字段。
 const LIST_COLUMNS = [
   'id', 'official', 'event', 'method', 'date',
   'comp', 'comp_wca_id', 'country',
@@ -39,7 +39,7 @@ const LIST_COLUMNS = [
   'optimal_scramble', 'oll', 'pll', 'note',
 ].join(', ');
 
-reconRoutes.get('/api/recon/list', async (c) => {
+reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
 
@@ -53,10 +53,10 @@ reconRoutes.get('/api/recon/list', async (c) => {
   return c.json(rows.map(rowToJson));
 });
 
-// ==================== GET /api/recon/check-duplicate ====================
+// ==================== GET /v1/recon/check-duplicate ====================
 // NOTE: 放在 /:id 之前，否则 'check-duplicate' 会被当作 :id 参数
 
-reconRoutes.get('/api/recon/check-duplicate', async (c) => {
+reconRoutes.get('/recon/check-duplicate', async (c) => {
   const comp = c.req.query('comp');
   const event = c.req.query('event');
   const personId = c.req.query('personId');
@@ -96,9 +96,9 @@ reconRoutes.get('/api/recon/check-duplicate', async (c) => {
   return c.json({ exists: false });
 });
 
-// ==================== GET /api/recon/search-solvers ====================
+// ==================== GET /v1/recon/search-solvers ====================
 
-reconRoutes.get('/api/recon/search-solvers', async (c) => {
+reconRoutes.get('/recon/search-solvers', async (c) => {
   const q = (c.req.query('q') ?? '').trim();
   if (q.length < 2) return c.json([]);
 
@@ -131,8 +131,8 @@ reconRoutes.get('/api/recon/search-solvers', async (c) => {
 
 // ==================== 阶段 2：评论系统 ==
 
-// GET /api/recon/comments?reconId=xxx
-reconRoutes.get('/api/recon/comments', async (c) => {
+// GET /v1/recon/comments?reconId=xxx
+reconRoutes.get('/recon/comments', async (c) => {
   const reconId = c.req.query('reconId');
   if (!reconId) {
     return c.json({ error: 'reconId is required' }, 400);
@@ -159,8 +159,8 @@ reconRoutes.get('/api/recon/comments', async (c) => {
   })));
 });
 
-// POST /api/recon/comments
-reconRoutes.post('/api/recon/comments', async (c) => {
+// POST /v1/recon/comments
+reconRoutes.post('/recon/comments', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -204,8 +204,8 @@ reconRoutes.post('/api/recon/comments', async (c) => {
   return c.json({ ok: true, id: Number(result[0].id) });
 });
 
-// PUT /api/recon/comments/:id
-reconRoutes.put('/api/recon/comments/:id', async (c) => {
+// PUT /v1/recon/comments/:id
+reconRoutes.put('/recon/comments/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -234,8 +234,8 @@ reconRoutes.put('/api/recon/comments/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// DELETE /api/recon/comments/:id —— 删顶层评论时级联删所有回复
-reconRoutes.delete('/api/recon/comments/:id', async (c) => {
+// DELETE /v1/recon/comments/:id —— 删顶层评论时级联删所有回复
+reconRoutes.delete('/recon/comments/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -254,8 +254,8 @@ reconRoutes.delete('/api/recon/comments/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// PUT /api/recon/comments/:id/pin —— 管理员置顶 / 取消置顶（每条 recon 只允许一条置顶）
-reconRoutes.put('/api/recon/comments/:id/pin', async (c) => {
+// PUT /v1/recon/comments/:id/pin —— 管理员置顶 / 取消置顶（每条 recon 只允许一条置顶）
+reconRoutes.put('/recon/comments/:id/pin', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -284,8 +284,8 @@ reconRoutes.put('/api/recon/comments/:id/pin', async (c) => {
 
 // ==================== 阶段 3：编辑覆盖 + 历史 ====================
 
-// GET /api/recon/edits
-reconRoutes.get('/api/recon/edits', async (c) => {
+// GET /v1/recon/edits
+reconRoutes.get('/recon/edits', async (c) => {
   const rows = await query<{ solve_id: string; fields: Record<string, unknown> | string }>(
     'SELECT solve_id, fields FROM edits'
   );
@@ -302,8 +302,8 @@ reconRoutes.get('/api/recon/edits', async (c) => {
   return c.json(edits);
 });
 
-// POST /api/recon/save-edit
-reconRoutes.post('/api/recon/save-edit', async (c) => {
+// POST /v1/recon/save-edit
+reconRoutes.post('/recon/save-edit', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdmin(c);
   const body = await c.req.json<{ solveId?: string; fields?: Record<string, unknown> }>();
@@ -345,16 +345,16 @@ reconRoutes.post('/api/recon/save-edit', async (c) => {
   return c.json({ ok: true });
 });
 
-// DELETE /api/recon/edit/:id
-reconRoutes.delete('/api/recon/edit/:id', async (c) => {
+// DELETE /v1/recon/edit/:id
+reconRoutes.delete('/recon/edit/:id', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdmin(c);
   await query('DELETE FROM edits WHERE solve_id = ?', [c.req.param('id')]);
   return c.json({ ok: true });
 });
 
-// POST /api/recon/save-history
-reconRoutes.post('/api/recon/save-history', async (c) => {
+// POST /v1/recon/save-history
+reconRoutes.post('/recon/save-history', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdmin(c);
   const body = await c.req.json<{
@@ -373,8 +373,8 @@ reconRoutes.post('/api/recon/save-history', async (c) => {
   return c.json({ ok: true });
 });
 
-// GET /api/recon/history?id=xxx
-reconRoutes.get('/api/recon/history', async (c) => {
+// GET /v1/recon/history?id=xxx
+reconRoutes.get('/recon/history', async (c) => {
   const solveId = c.req.query('id') ?? '';
   const rows = await query<{
     id: string; solve_id: string; before_snapshot: string | null;
@@ -401,8 +401,8 @@ reconRoutes.get('/api/recon/history', async (c) => {
 
 // ==================== 阶段 4：代理 + 统计 + Timer ====================
 
-// GET /api/recon/wca-attempts?compId=xxx&personId=xxx
-reconRoutes.get('/api/recon/wca-attempts', async (c) => {
+// GET /v1/recon/wca-attempts?compId=xxx&personId=xxx
+reconRoutes.get('/recon/wca-attempts', async (c) => {
   const compId = c.req.query('compId');
   const personId = c.req.query('personId');
   if (!compId || !personId) {
@@ -440,13 +440,13 @@ reconRoutes.get('/api/recon/wca-attempts', async (c) => {
   }
 });
 
-// GET /api/recon/cubing-attempts?slug=&event=&round=&personId= — 代理 cubing.com 实时直播成绩
+// GET /v1/recon/cubing-attempts?slug=&event=&round=&personId= — 代理 cubing.com 实时直播成绩
 // NOTE: 经验观察:cubing.com 数据要么全空要么全填,极少卡在中间态。所以
 //   "attempts 全部非 null" 即可作为"该选手该轮已完赛"的判据,可安全长 TTL 缓存到 DB,
 //   让第二位用户/设备在 WCA post 之前秒加载。
 const CUBING_CACHE_TTL_DAYS = 7;
 
-reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
+reconRoutes.get('/recon/cubing-attempts', async (c) => {
   const slug = c.req.query('slug') ?? '';
   const event = c.req.query('event') ?? '';
   const round = c.req.query('round') ?? '';
@@ -510,8 +510,8 @@ reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
 // 让"同轮次还原"在第二位用户/设备上秒加载。30 天 TTL 兼顾偶发的赛后修订(罚时/DNF 调整)。
 const WCA_CACHE_TTL_DAYS = 30;
 
-// GET /api/recon/wca-results?compId=&wcaEvent= — 缓存式代理 WCA results,client 替代直拉
-reconRoutes.get('/api/recon/wca-results', async (c) => {
+// GET /v1/recon/wca-results?compId=&wcaEvent= — 缓存式代理 WCA results,client 替代直拉
+reconRoutes.get('/recon/wca-results', async (c) => {
   const compId = c.req.query('compId') ?? '';
   const wcaEvent = c.req.query('wcaEvent') ?? '';
   if (!compId || !wcaEvent) return c.json({ error: 'compId/wcaEvent required' }, 400);
@@ -577,8 +577,8 @@ reconRoutes.get('/api/recon/wca-results', async (c) => {
   return c.body(payload, 200, { 'Content-Type': 'application/json' });
 });
 
-// GET /api/recon/wca-scrambles?compId= — 缓存式代理 WCA scrambles
-reconRoutes.get('/api/recon/wca-scrambles', async (c) => {
+// GET /v1/recon/wca-scrambles?compId= — 缓存式代理 WCA scrambles
+reconRoutes.get('/recon/wca-scrambles', async (c) => {
   const compId = c.req.query('compId') ?? '';
   if (!compId) return c.json({ error: 'compId required' }, 400);
   if (!/^[A-Za-z0-9_-]+$/.test(compId)) return c.json({ error: 'invalid compId' }, 400);
@@ -635,8 +635,8 @@ reconRoutes.get('/api/recon/wca-scrambles', async (c) => {
   return c.body(payload, 200, { 'Content-Type': 'application/json' });
 });
 
-// GET /api/recon/bili-cover?bvid=xxx
-reconRoutes.get('/api/recon/bili-cover', async (c) => {
+// GET /v1/recon/bili-cover?bvid=xxx
+reconRoutes.get('/recon/bili-cover', async (c) => {
   const bvid = c.req.query('bvid') ?? '';
   if (!bvid || !/^BV[A-Za-z0-9]+$/.test(bvid)) {
     return c.json({ error: 'Invalid bvid' }, 400);
@@ -666,8 +666,8 @@ reconRoutes.get('/api/recon/bili-cover', async (c) => {
   }
 });
 
-// GET /api/recon/user-stats?wcaId=xxx
-reconRoutes.get('/api/recon/user-stats', async (c) => {
+// GET /v1/recon/user-stats?wcaId=xxx
+reconRoutes.get('/recon/user-stats', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim();
   if (!wcaId) return c.json({ reconCount: 0, addedCount: 0 });
 
@@ -681,8 +681,8 @@ reconRoutes.get('/api/recon/user-stats', async (c) => {
   });
 });
 
-// GET /api/recon/list-persons
-reconRoutes.get('/api/recon/list-persons', async (c) => {
+// GET /v1/recon/list-persons
+reconRoutes.get('/recon/list-persons', async (c) => {
   const rows = await query(
     `SELECT person, person_id, MAX(person_country) AS person_country
      FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL
@@ -692,8 +692,8 @@ reconRoutes.get('/api/recon/list-persons', async (c) => {
   return c.json(rows);
 });
 
-// GET /api/recon/timer-sync (拉取) + POST /api/recon/timer-sync (写入)
-reconRoutes.get('/api/recon/timer-sync', async (c) => {
+// GET /v1/recon/timer-sync (拉取) + POST /v1/recon/timer-sync (写入)
+reconRoutes.get('/recon/timer-sync', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const authUser = await requireAuth(c);
   const rows = await query<{
@@ -710,7 +710,7 @@ reconRoutes.get('/api/recon/timer-sync', async (c) => {
   })));
 });
 
-reconRoutes.post('/api/recon/timer-sync', async (c) => {
+reconRoutes.post('/recon/timer-sync', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -739,10 +739,10 @@ reconRoutes.post('/api/recon/timer-sync', async (c) => {
 });
 
 // ==================== 动态参数路由（必须在所有具名路由之后注册） ====================
-// NOTE: /:id 会匹配任何 /api/recon/xxx 路径，所以具名路由必须先注册
+// NOTE: /:id 会匹配任何 /v1/recon/xxx 路径，所以具名路由必须先注册
 
-// GET /api/recon/:id — 获取单条复盘
-reconRoutes.get('/api/recon/:id', async (c) => {
+// GET /v1/recon/:id — 获取单条复盘
+reconRoutes.get('/recon/:id', async (c) => {
   const id = c.req.param('id');
 
   const rows = await query('SELECT * FROM recons WHERE id = ?', [id]);
@@ -766,8 +766,8 @@ reconRoutes.get('/api/recon/:id', async (c) => {
   return c.json(result);
 });
 
-// POST /api/recon — 新增复盘
-reconRoutes.post('/api/recon', async (c) => {
+// POST /v1/recon — 新增复盘
+reconRoutes.post('/recon', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -790,8 +790,8 @@ reconRoutes.post('/api/recon', async (c) => {
   return c.json(body);
 });
 
-// PUT /api/recon/:id — 更新复盘
-reconRoutes.put('/api/recon/:id', async (c) => {
+// PUT /v1/recon/:id — 更新复盘
+reconRoutes.put('/recon/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -824,8 +824,8 @@ reconRoutes.put('/api/recon/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// DELETE /api/recon/:id — 删除复盘
-reconRoutes.delete('/api/recon/:id', async (c) => {
+// DELETE /v1/recon/:id — 删除复盘
+reconRoutes.delete('/recon/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -876,8 +876,8 @@ async function saveAlternatives(id: string, alts: AlternativeEntry[]): Promise<v
   await query('UPDATE recons SET alternatives = ? WHERE id = ?', [JSON.stringify(alts), id]);
 }
 
-// POST /api/recon/:id/alternatives — 追加一条另解
-reconRoutes.post('/api/recon/:id/alternatives', async (c) => {
+// POST /v1/recon/:id/alternatives — 追加一条另解
+reconRoutes.post('/recon/:id/alternatives', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -900,8 +900,8 @@ reconRoutes.post('/api/recon/:id/alternatives', async (c) => {
   return c.json({ alternatives: alts });
 });
 
-// PUT /api/recon/:id/alternatives/:idx — 改某条另解
-reconRoutes.put('/api/recon/:id/alternatives/:idx', async (c) => {
+// PUT /v1/recon/:id/alternatives/:idx — 改某条另解
+reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -926,8 +926,8 @@ reconRoutes.put('/api/recon/:id/alternatives/:idx', async (c) => {
   return c.json({ alternatives: alts });
 });
 
-// DELETE /api/recon/:id/alternatives/:idx — 删某条另解
-reconRoutes.delete('/api/recon/:id/alternatives/:idx', async (c) => {
+// DELETE /v1/recon/:id/alternatives/:idx — 删某条另解
+reconRoutes.delete('/recon/:id/alternatives/:idx', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
