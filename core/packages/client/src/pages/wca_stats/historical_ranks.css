@@ -273,7 +273,8 @@
   cursor: not-allowed;
 }
 
-.hr-pagination select {
+.hr-pagination select,
+.hr-pagination .paginator-input {
   padding: 4px 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
@@ -282,6 +283,14 @@
   height: 28px;
   font-size: 13px;
 }
+.hr-pagination .paginator-input {
+  width: 64px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.hr-pagination .paginator-input::-webkit-outer-spin-button,
+.hr-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* 国旗 .country-flag / .country-flag-ct 统一规则在 index.css (全局),此处不再重复 */
 
