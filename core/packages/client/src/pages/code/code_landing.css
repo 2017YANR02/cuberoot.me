@@ -226,6 +226,7 @@
   color: #fff;
   letter-spacing: -.02em;
 }
+.topic-glyph.topic-glyph-dark { color: #1a1a1a; }
 
 .topic-body { min-width: 0; }
 .topic-title-row {

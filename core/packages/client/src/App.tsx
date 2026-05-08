@@ -97,7 +97,11 @@ const CppIntroPage = lazy(() => import('./pages/code/CppIntroPage'));
 const ZigIntroPage = lazy(() => import('./pages/code/ZigIntroPage'));
 const SwiftIntroPage = lazy(() => import('./pages/code/SwiftIntroPage'));
 const KotlinIntroPage = lazy(() => import('./pages/code/KotlinIntroPage'));
+const JavaIntroPage = lazy(() => import('./pages/code/JavaIntroPage'));
+const JavaScriptIntroPage = lazy(() => import('./pages/code/JavaScriptIntroPage'));
+const MojoIntroPage = lazy(() => import('./pages/code/MojoIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
+const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -198,7 +202,11 @@ function App() {
         <Route path="/code/zig" element={<Suspense fallback={<div>Loading...</div>}><ZigIntroPage /></Suspense>} />
         <Route path="/code/swift" element={<Suspense fallback={<div>Loading...</div>}><SwiftIntroPage /></Suspense>} />
         <Route path="/code/kotlin" element={<Suspense fallback={<div>Loading...</div>}><KotlinIntroPage /></Suspense>} />
+        <Route path="/code/java" element={<Suspense fallback={<div>Loading...</div>}><JavaIntroPage /></Suspense>} />
+        <Route path="/code/javascript" element={<Suspense fallback={<div>Loading...</div>}><JavaScriptIntroPage /></Suspense>} />
+        <Route path="/code/mojo" element={<Suspense fallback={<div>Loading...</div>}><MojoIntroPage /></Suspense>} />
         <Route path="/code/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
+        <Route path="/code/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}

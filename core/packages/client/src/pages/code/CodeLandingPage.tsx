@@ -178,6 +178,57 @@ const TOPICS: Topic[] = [
     logo: <span className="topic-glyph">Kt</span>,
     available: true,
   },
+  {
+    slug: 'java',
+    href: '/code/java',
+    zh: {
+      title: 'Java',
+      sub: 'JVM 三十年的常青树',
+      tagline: '1991 年 Sun 的 Oak 项目到 2026 仍是企业级 top 3，Java 21 虚拟线程让它在高并发服务端再次锋利',
+    },
+    en: {
+      title: 'Java',
+      sub: 'The JVM\'s evergreen',
+      tagline: 'From Sun\'s 1991 Oak project to a top-3 enterprise language in 2026 — Java 21\'s virtual threads make it sharp again on high-concurrency servers',
+    },
+    accent: '#E76F00',
+    logo: <span className="topic-glyph">Ja</span>,
+    available: true,
+  },
+  {
+    slug: 'javascript',
+    href: '/code/javascript',
+    zh: {
+      title: 'JavaScript',
+      sub: 'web 的母语',
+      tagline: '1995 年 Brendan Eich 十天写出来的副业，30 年后是 GitHub 并列第一、AI 工具链生成最多的语言',
+    },
+    en: {
+      title: 'JavaScript',
+      sub: 'Native tongue of the web',
+      tagline: 'A 10-day side project by Brendan Eich in 1995 — 30 years on, tied for #1 on GitHub and the most-generated language by AI tools',
+    },
+    accent: '#F7DF1E',
+    logo: <span className="topic-glyph topic-glyph-dark">JS</span>,
+    available: true,
+  },
+  {
+    slug: 'mojo',
+    href: '/code/mojo',
+    zh: {
+      title: 'Mojo',
+      sub: 'AI 时代的 Python 加速出口',
+      tagline: 'Chris Lattner 的第三门语言（LLVM → Swift → Mojo），2023 出生，2026 已是 CUDA 垄断的第一个可信挑战者',
+    },
+    en: {
+      title: 'Mojo',
+      sub: 'Python\'s acceleration off-ramp',
+      tagline: 'Chris Lattner\'s third language (LLVM → Swift → Mojo). Born 2023, already the first credible challenger to the CUDA monopoly by 2026',
+    },
+    accent: '#FF4B00',
+    logo: <span className="topic-glyph">Mo</span>,
+    available: true,
+  },
 ];
 
 export default function CodeLandingPage() {
@@ -222,12 +273,30 @@ export default function CodeLandingPage() {
             // {lang === 'zh' ? '横向对比' : 'Side-by-side'}
           </div>
           <h2 className="code-landing-banner-title">
-            {lang === 'zh' ? '九种语言,一个 Ao5 算法' : 'One Ao5, nine languages'}
+            {lang === 'zh' ? '十二种语言,一个 Ao5 算法' : 'One Ao5, twelve languages'}
           </h2>
           <p className="code-landing-banner-sub">
             {lang === 'zh'
-              ? '同一个 WCA Average-of-5 写 9 遍,看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样'
-              : 'The same WCA Average-of-5, written nine times — watch how each language handles DNF / Optional / sorting / type systems'}
+              ? '同一个 WCA Average-of-5 写 12 遍,看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样'
+              : 'The same WCA Average-of-5, written twelve times — watch how each language handles DNF / Optional / sorting / type systems'}
+          </p>
+        </div>
+        <div className="code-landing-banner-arrow">→</div>
+      </Link>
+
+      <Link to="/code/scramble" className="code-landing-banner">
+        <div className="code-landing-banner-glyph">⟲</div>
+        <div className="code-landing-banner-body">
+          <div className="code-landing-banner-tag">
+            // {lang === 'zh' ? '横向对比' : 'Side-by-side'}
+          </div>
+          <h2 className="code-landing-banner-title">
+            {lang === 'zh' ? '十二种语言,一个打乱解析器' : 'One scramble parser, twelve languages'}
+          </h2>
+          <p className="code-landing-banner-sub">
+            {lang === 'zh'
+              ? '同一个 3x3 WCA 打乱串解析,12 种语言写一遍,看 sum types / Result / Optional / 异常 谁更顺手'
+              : 'The same 3x3 WCA scramble parser, written twelve times — sum types vs Result vs Optional vs exceptions, head to head'}
           </p>
         </div>
         <div className="code-landing-banner-arrow">→</div>

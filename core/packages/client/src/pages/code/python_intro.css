@@ -1234,5 +1234,9 @@ main { position: relative; z-index: 1; }
 .fade-up { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
 .fade-up.visible { opacity: 1; transform: none; }
 
+.ts-card, .ts-card > *, .def-card, .why-card,
+.compare-col, .compare-col > *, .future-card,
+.logo-card, .ai-tool { min-width: 0; }
+
 }
 /* end @scope (.python-intro-root) */
