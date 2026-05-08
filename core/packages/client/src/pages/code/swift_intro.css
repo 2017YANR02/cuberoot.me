@@ -1236,5 +1236,9 @@ main { position: relative; z-index: 1; }
   line-height: 1.75;
 }
 .ai-takeaway strong { color: var(--ts-bright); }
+.ts-card, .ts-card > *, .def-card, .why-card,
+.compare-col, .compare-col > *, .future-card,
+.logo-card, .ai-tool { min-width: 0; }
+
 }
 /* end @scope (.swift-intro-root) */

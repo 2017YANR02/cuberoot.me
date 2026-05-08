@@ -1256,5 +1256,9 @@ main { position: relative; z-index: 1; }
 .footer-grid { grid-template-columns: 1fr 1fr 1fr 1fr 1.4fr; }
 @media (max-width: 1100px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } }
+.ts-card, .ts-card > *, .def-card, .why-card,
+.compare-col, .compare-col > *, .future-card,
+.logo-card, .ai-tool { min-width: 0; }
+
 }
 /* end @scope (.c-intro-root) */
