@@ -534,7 +534,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   }
 
   // 子集:CTE 算每个选中项目的参赛人数(scope 内有 rank>0 的 cuber 数),
-  // 缺项 rank=0 时回退到该项目的"倒数第一名次"= 参赛人数.
+  // 缺项 rank=0 时回退到该项目的"参赛人数+1"(比倒数第一再差一名).
   // 注意 ep CTE 不应用 hidePodium 过滤(参赛人数是项目固有属性,跟当前显示过滤无关).
   const cteWhere: string[] = [`is_avg = ?`];
   const cteParams: unknown[] = [isAvg];
@@ -544,7 +544,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     `SUM(CASE WHEN ${ranksCol}[${i + 1}] > 0 THEN 1 ELSE 0 END)::INTEGER AS p${i}`
   ).join(', ');
   const sumExpr = eventIdxs!.map(i =>
-    `(CASE WHEN pr.${ranksCol}[${i + 1}] > 0 THEN pr.${ranksCol}[${i + 1}] ELSE ep.p${i} END)`
+    `(CASE WHEN pr.${ranksCol}[${i + 1}] > 0 THEN pr.${ranksCol}[${i + 1}] ELSE ep.p${i} + 1 END)`
   ).join(' + ');
 
   const offset = (page - 1) * size;
