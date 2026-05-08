@@ -1,19 +1,18 @@
 /**
- * 多个 FormulaInput 公式行 + 共享虚拟键盘。
+ * 多个 AlgInput 公式行 + 共享虚拟键盘。
  *
  * 形态: 2D AlgEntry[][] (外层 ori,内层条数)。多 ori 时按 ori 分组显示。
- * 每行用 FormulaInput markable 模式,内部 contenteditable,可有 inline 标签。
+ * 每行用 AlgInput markable 模式,内部 contenteditable,可有 inline 标签。
  * 提交时:alg = getText(), algHtml = getHtml()(若含标签)。
  *
  * 关键: layout 内部为每行配 stable uid,React key 用 uid 而非数组下标,
- * 否则删中间行后 React 会复用旁边 DOM,FormulaInput uncontrolled 内容不刷新 → 视觉错位。
+ * 否则删中间行后 React 会复用旁边 DOM,AlgInput uncontrolled 内容不刷新 → 视觉错位。
  */
 import { Fragment, useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
-import type { AlgEntry, AlgPuzzle } from '@cuberoot/shared';
+import type { AlgEntry } from '@cuberoot/shared';
 import CubeKeyboardSection from '../../components/CubeKeyboardSection';
-import FormulaInput, { type FormulaInputHandle } from '../../components/FormulaInput';
-import AlgPlayer from '../../components/AlgPlayer';
+import AlgInput, { type AlgInputHandle } from '../../components/AlgInput';
 
 export interface AlgEditorHandle {
   getValue(): AlgEntry[][];
@@ -23,10 +22,16 @@ interface Props {
   initialValue: AlgEntry[][];
   oriNames?: string[] | null;
   isZh: boolean;
-  /** 给 AlgPlayer 预览用 — case 所属 puzzle / set / setup */
-  puzzle: AlgPuzzle;
-  setSlug: string;
-  setup: string;
+  /** 当前聚焦行的纯文本(无聚焦则空)—— 父组件用来驱动左侧 AlgPlayer */
+  onCurrentAlgChange?: (alg: string) => void;
+  /** 聚焦行内 caret 之前的 token 数(光标 sync 用) */
+  onCursorMoveCount?: (n: number) => void;
+}
+
+/** caret 之前的 token 数(空白拆分,过滤空 token) */
+function tokenCountBeforeCaret(text: string, caret: number): number {
+  const prefix = text.slice(0, Math.max(0, caret));
+  return prefix.trim().split(/\s+/).filter(Boolean).length;
 }
 
 type Row = AlgEntry & { uid: string };
@@ -37,7 +42,7 @@ function newUid(): string {
   return `r${Date.now().toString(36)}_${_uidCounter}`;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, isZh, puzzle, setSlug, setup }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, isZh, onCurrentAlgChange, onCursorMoveCount }, ref) => {
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
       ? [[{ alg: '' }]]
@@ -46,7 +51,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
   });
 
   // NOTE: 用 row.uid 作 key,删行不会让别的 row 的 handle 漂移
-  const handles = useRef<Map<string, FormulaInputHandle>>(new Map());
+  const handles = useRef<Map<string, AlgInputHandle>>(new Map());
   const elements = useRef<Map<string, HTMLTextAreaElement | HTMLDivElement>>(new Map());
 
   const [focusedUid, setFocusedUid] = useState<string | null>(null);
@@ -58,10 +63,15 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
   );
 
   useEffect(() => {
-    if (!focusedUid) { setCurrentAlg(''); return; }
+    // blur 不清空,保留最后一次 alg —— 父组件左侧 player 可以一直播放
+    if (!focusedUid) return;
     const h = handles.current.get(focusedUid);
     if (h) setCurrentAlg(h.getText());
   }, [focusedUid]);
+
+  useEffect(() => {
+    onCurrentAlgChange?.(currentAlg);
+  }, [currentAlg, onCurrentAlgChange]);
 
   useImperativeHandle(ref, () => ({
     getValue: (): AlgEntry[][] =>
@@ -109,14 +119,9 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
             const isFocused = focusedUid === row.uid;
             return (
               <Fragment key={row.uid}>
-                {isFocused && (
-                  <div className="alg-editor-player">
-                    <AlgPlayer alg={currentAlg} puzzle={puzzle} set={setSlug} setup={setup} size={220} />
-                  </div>
-                )}
               <div className="alg-editor-row">
-                <FormulaInput
-                  ref={(h: FormulaInputHandle | null) => {
+                <AlgInput
+                  ref={(h: AlgInputHandle | null) => {
                     if (h) {
                       handles.current.set(row.uid, h);
                       const el = h.getElement();
@@ -141,6 +146,10 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
                     setFocusedUid(prev => (prev === row.uid ? null : prev));
                   }}
                   onChange={text => { if (focusedUid === row.uid) setCurrentAlg(text); }}
+                  onCaretChange={(text, caret) => {
+                    if (focusedUid !== row.uid) return;
+                    onCursorMoveCount?.(tokenCountBeforeCaret(text, caret));
+                  }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                       e.preventDefault();

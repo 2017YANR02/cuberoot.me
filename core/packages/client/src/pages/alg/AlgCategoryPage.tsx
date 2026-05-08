@@ -479,6 +479,16 @@ export default function AlgCategoryPage() {
                   return (
                     <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <article className="alg-case">
+                      {isAdmin && c.id != null && (
+                        <button
+                          type="button"
+                          className="alg-admin-edit-btn alg-admin-edit-btn-corner"
+                          onClick={() => setEditorState({ mode: 'edit', existing: c })}
+                          title={isZh ? '编辑 case (admin)' : 'Edit case (admin)'}
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      )}
                       <div className="alg-case-head">
                         <div className="alg-case-cube">
                           <CaseThumb
@@ -493,16 +503,6 @@ export default function AlgCategoryPage() {
                           <div className="alg-case-name">
                             <span className="alg-case-letter">{c.name}</span>
                             {c.number != null && <span className="alg-case-index">#{c.number}</span>}
-                            {isAdmin && c.id != null && (
-                              <button
-                                type="button"
-                                className="alg-admin-edit-btn"
-                                onClick={() => setEditorState({ mode: 'edit', existing: c })}
-                                title={isZh ? '编辑 case (admin)' : 'Edit case (admin)'}
-                              >
-                                <Pencil size={12} />
-                              </button>
-                            )}
                             {oriCount > 1 && (
                               <button
                                 type="button"

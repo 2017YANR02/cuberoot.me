@@ -4,16 +4,17 @@
  * 普通 case: 用户填 caseName / subgroup / setup + 一行一条公式即可,sticker
  * 自动推断默认值。多 orientation (F2L) / 自定义 sticker 等放在"高级"区。
  */
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '../../utils/alg_sets_api';
 import { validateAlgCase } from '../../utils/alg_validation';
 import AlgEditor, { type AlgEditorHandle } from './AlgEditor';
-import FormulaInput from '../../components/FormulaInput';
-import AlgPlayer from '../../components/AlgPlayer';
+import AlgInput from '../../components/AlgInput';
+import AlgPlayer, { type AlgPlayerHandle } from '../../components/AlgPlayer';
 import CubeKeyboardSection from '../../components/CubeKeyboardSection';
+import { syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 
 export type AdminEditorState =
   | { mode: 'edit'; existing: AlgCase }
@@ -78,6 +79,35 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
   const [trainerKey, setTrainerKey] = useState(initial.trainerKey ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewAlg, setPreviewAlg] = useState(() => initial.algs[0]?.[0]?.alg ?? '');
+  const handlePreviewAlg = useCallback((a: string) => {
+    if (a.trim()) setPreviewAlg(a);
+  }, []);
+  // Debounce previewAlg → debouncedPreviewAlg(给 AlgPlayer);避免每次按键都重建 TwistyPlayer
+  const [debouncedPreviewAlg, setDebouncedPreviewAlg] = useState(previewAlg);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedPreviewAlg(previewAlg), 400);
+    return () => clearTimeout(t);
+  }, [previewAlg]);
+
+  // 光标 sync:AlgEditor 上报 prefix token 数,这里转成 player.timestamp
+  const playerHandleRef = useRef<AlgPlayerHandle>(null);
+  const lastMoveCountRef = useRef(0);
+  const handleCursorMoveCount = useCallback((n: number) => {
+    lastMoveCountRef.current = n;
+    const p = playerHandleRef.current?.getPlayer();
+    if (p) syncPlayerToMoveCount(p, n);
+  }, []);
+  // alg 重建后 player ready 也要再 sync 一次到当前 caret(否则停在 0)
+  useEffect(() => {
+    const tries = [50, 200, 500].map(d =>
+      setTimeout(() => {
+        const p = playerHandleRef.current?.getPlayer();
+        if (p) syncPlayerToMoveCount(p, lastMoveCountRef.current);
+      }, d),
+    );
+    return () => tries.forEach(clearTimeout);
+  }, [debouncedPreviewAlg, setup]);
 
   const advancedDirty = useMemo(() => {
     if (algsJson.trim() && algsJson !== JSON.stringify(initial.algs, null, 2)) return true;
@@ -199,7 +229,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
 
   return (
     <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="alg-admin-modal" onClick={e => e.stopPropagation()}>
+      <div className="alg-admin-modal alg-admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
           <button type="button" onClick={onClose} title={isZh ? '关闭' : 'Close'}>
@@ -207,7 +237,18 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
           </button>
         </div>
 
-        <div className="alg-admin-modal-body">
+        <div className="alg-admin-modal-main">
+          <aside className="alg-admin-modal-side">
+            {setup.trim() ? (
+              <AlgPlayer ref={playerHandleRef} alg={debouncedPreviewAlg} puzzle={puzzle} set={setSlug} setup={setup} fillPane />
+            ) : (
+              <div className="alg-admin-modal-side-empty">
+                {isZh ? '填入 Setup 公式后,左侧会显示动画演示' : 'Enter a setup to preview here'}
+              </div>
+            )}
+          </aside>
+
+          <div className="alg-admin-modal-body">
           <label>
             <span>{isZh ? 'Case 名' : 'Case Name'} *</span>
             <input value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus />
@@ -219,12 +260,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
           </label>
           <label className="alg-admin-setup-label">
             <span>{isZh ? '打乱 (Setup)' : 'Setup'}</span>
-            {setupFocused && setup.trim() && (
-              <div className="alg-editor-player">
-                <AlgPlayer alg="" puzzle={puzzle} set={setSlug} setup={setup} size={220} />
-              </div>
-            )}
-            <FormulaInput
+            <AlgInput
               elementRef={setupElRef}
               initialText={initial.setup}
               autoSpace
@@ -252,9 +288,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
               initialValue={initial.algs}
               oriNames={initial.oriNames}
               isZh={isZh}
-              puzzle={puzzle}
-              setSlug={setSlug}
-              setup={setup}
+              onCurrentAlgChange={handlePreviewAlg}
+              onCursorMoveCount={handleCursorMoveCount}
             />
           </div>
 
@@ -298,6 +333,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
           </div>
 
           {error && <div className="alg-admin-modal-error">{error}</div>}
+          </div>
         </div>
 
         <div className="alg-admin-modal-foot">
