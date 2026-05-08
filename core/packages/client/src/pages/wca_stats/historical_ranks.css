@@ -264,24 +264,7 @@
   font-size: 13px;
 }
 
-/* 国旗 — TW 走 SVG <img>,必须显式约束尺寸,否则原始 SVG 撑爆布局.
-   这两条规则跟 wca_stats.css 一样全局,不加页面前缀 (避免 specificity 翻车). */
-.country-flag {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 5px;
-  border-radius: 2px;
-  width: 1.25em !important;
-  line-height: 1em !important;
-}
-.country-flag-ct {
-  display: inline-block !important;
-  vertical-align: middle;
-  margin-right: 5px;
-  width: 1.25em !important;
-  height: 0.9em !important;
-  border-radius: 2px;
-}
+/* 国旗 .country-flag / .country-flag-ct 统一规则在 index.css (全局),此处不再重复 */
 
 /* Mobile */
 @media (max-width: 600px) {

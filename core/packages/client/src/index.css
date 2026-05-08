@@ -26,6 +26,23 @@ img[src$="ChineseTaipei.svg"] {
   border-radius: 0 !important;
 }
 
+/* `<Flag spanClassName="country-flag" imgClassName="country-flag-ct" />` 标准尺寸约束.
+   TW 走 SVG <img>,没尺寸约束会撑爆布局——这里全局约束,任何 page 用即开即用,无需各页重复 CSS. */
+.country-flag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+  width: 1.25em !important;
+  line-height: 1em !important;
+}
+.country-flag-ct {
+  display: inline-block !important;
+  vertical-align: middle;
+  margin-right: 5px;
+  width: 1.25em !important;
+  height: 0.9em !important;
+}
+
 /* 通用清空 ×（components/ClearButton.tsx 共享样式）—— 所有搜索/选择型输入的 × 一个出处 */
 .clear-btn {
   position: absolute;
