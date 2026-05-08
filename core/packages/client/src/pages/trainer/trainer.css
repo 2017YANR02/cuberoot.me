@@ -86,10 +86,49 @@
 .trainer-subgroup-header {
   display: flex; align-items: center; gap: 8px;
   font-weight: 600; font-size: 0.95rem;
-  margin-bottom: 10px; cursor: pointer; user-select: none;
+  margin-bottom: 10px; user-select: none;
 }
 .trainer-subgroup-header input[type=checkbox] {
   width: 14px; height: 14px; accent-color: #4a90e2; cursor: pointer;
+}
+.trainer-chevron-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  background: transparent; border: none; color: #aaa;
+  cursor: pointer; padding: 0;
+}
+.trainer-chevron-btn:hover { color: #fff; }
+/* Sub-subgroup row container — horizontal flex-wrap of sub chips
+   (e.g. ZBLL U → U1..U6 in one or two rows). Expanded sub takes full row. */
+.trainer-sub-subgroup-row {
+  display: flex; flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 8px 0 8px 24px;
+}
+.trainer-sub-subgroup {
+  flex: 0 1 auto;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.015);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  min-width: 150px;
+}
+.trainer-sub-subgroup.is-expanded {
+  flex: 1 0 100%;
+  background: rgba(255,255,255,0.025);
+  border-color: rgba(255,255,255,0.12);
+}
+.trainer-sub-subgroup-header {
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 500; font-size: 0.85rem;
+  cursor: pointer; user-select: none;
+  color: #ccc;
+}
+.trainer-sub-subgroup.is-expanded .trainer-sub-subgroup-header {
+  margin-bottom: 8px;
+}
+.trainer-sub-subgroup-header input[type=checkbox] {
+  width: 13px; height: 13px; accent-color: #4a90e2; cursor: pointer;
 }
 .trainer-case-grid {
   display: flex; flex-wrap: wrap; gap: 10px;
@@ -138,6 +177,12 @@
 .trainer-stage {
   text-align: center;
   padding: 40px 20px;
+  /* iOS Safari 长按会触发文本选择 / 放大镜,影响计时手感;
+     stage(打乱+按钮+大计时数字)整块禁掉。sidebar 不动以便复制成绩 scramble。 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 .trainer-scramble-label {
   font-size: 1rem; color: #aaa; margin-bottom: 8px;
@@ -252,4 +297,53 @@
 /* ─── landing (puzzle dropdown only — landing layout same as select with no sidebar) ─── */
 .trainer-landing-empty {
   color: #888; padding: 60px 0; text-align: center;
+}
+
+/* Bento grid of set cards on trainer landing */
+.trainer-set-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+.trainer-set-card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px;
+  padding: 18px 14px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  text-decoration: none;
+  color: #ECEAE3;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.trainer-set-card:hover {
+  background: rgba(217,119,87,0.06);
+  border-color: rgba(217,119,87,0.4);
+  transform: translateY(-1px);
+}
+.trainer-set-card-thumb {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 88px;
+}
+.trainer-set-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+.trainer-set-card-recognize {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(74,144,226,0.12);
+  border: 1px solid rgba(74,144,226,0.4);
+  color: #87b4eb;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.trainer-set-card-recognize:hover {
+  background: rgba(74,144,226,0.2);
+  color: #fff;
 }

@@ -82,30 +82,49 @@
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Country dropdown */
+/* Country dropdown — 单格外观,× 浮在右侧像 search clear */
 .hr-country { position: relative; }
 
 .hr-country-trigger {
   display: flex;
   align-items: center;
-  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  height: 34px;
+  overflow: hidden;
+}
+.hr-country-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
-.hr-country-trigger button {
+.hr-country-trigger > button {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   text-align: left;
+  /* 重置 .hr-filter button 默认样式,trigger 自己接管外观 */
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+  padding: 6px 10px !important;
+  border-radius: 0 !important;
 }
 
 .hr-country-clear {
   width: 28px !important;
   padding: 0 !important;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
+  color: var(--text-sub, #888);
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  height: auto !important;
 }
+.hr-country-clear:hover { color: var(--text-color, #f0ebe3); }
 
 .hr-country-popup {
   position: absolute;

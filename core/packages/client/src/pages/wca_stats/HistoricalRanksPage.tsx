@@ -5,7 +5,7 @@
  * API: GET /v1/wca/historical-ranks 返回当年末累积最佳排名(分页).
  * 数据每天 GH Actions 灌一次,nginx 缓存 1 day.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
@@ -80,6 +80,19 @@ export default function HistoricalRanksPage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [countryQuery, setCountryQuery] = useState('');
   const [countryOpen, setCountryOpen] = useState(false);
+  const countryRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭国家下拉
+  useEffect(() => {
+    if (!countryOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (countryRef.current && !countryRef.current.contains(e.target as Node)) {
+        setCountryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [countryOpen]);
 
   // 加载国家列表(只一次,nginx 缓存)
   useEffect(() => {
@@ -163,7 +176,7 @@ export default function HistoricalRanksPage() {
           </select>
         </div>
 
-        <div className="hr-filter hr-country">
+        <div className="hr-filter hr-country" ref={countryRef}>
           <label>{isZh ? '国家' : 'Country'}</label>
           <div className="hr-country-trigger">
             <button type="button" onClick={() => setCountryOpen(o => !o)}>

@@ -27,7 +27,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Score Calculator (HTH) | `/calc` | `core/packages/client/src/pages/calc/` | ported from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) | ✅ 已 port 为 React |
 | 1v1 Battle | `/battle` | `core/packages/client/src/pages/battle/` | ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) | ✅ 已 port 为 React |
 | Recon | `/recon` | `core/packages/client/src/pages/recon/` | 自有 | ✅ |
-| Trainer（PLL/OLL/ZBLL/ZBLS 识别） | `/trainer` | `core/packages/client/src/pages/` (Zbll*/Zbls*/OllTraining/CaseSelect) | 自有 | ✅ |
+| Trainer（公式计时训练，全 41 套） | `/trainer` | `core/packages/client/src/pages/trainer/` (Landing/Select/Run + components + trainer.css) | 自有 | ✅ |
+| Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client/src/pages/TrainingPage.tsx` | 自有 | ✅ |
 | Frame Count | `/frame-count` | `core/packages/client/src/pages/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
 | Distribution | `/viz` | `core/packages/client/src/pages/viz/` | 自有 | ✅ |
 | Calendar (比赛日历) | `/calendar` | `core/packages/client/src/pages/CalendarPage.tsx` | 自有 | ✅ |

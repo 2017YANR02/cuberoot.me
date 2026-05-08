@@ -68,6 +68,9 @@ const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 const PredictionPage = lazy(() => import('./pages/prediction/PredictionPage'));
 // NOTE: Mosaic — 魔方马赛克生成器（port of Roman-/mosaic）
 const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
+// NOTE: Memo — 记忆类工具子区
+//   /memo/colpi — UI 复刻 bestsiteever.net/colpi（盲拧字母对图像数据库,Roman Strakhov 原作,非开源,本页只复刻 UI）
+const ColpiPage = lazy(() => import('./pages/memo/colpi/ColpiPage'));
 // NOTE: WB — 非官方世界纪录（port of speedsolving.com wiki UWR list）
 const WbPage = lazy(() => import('./pages/wb/WbPage'));
 // NOTE: Timer — 纯 TypeScript 重写的速拧计时器（替代 cstimer iframe 的核心流程）
@@ -222,12 +225,13 @@ function App() {
         <Route path="/alg/:puzzle" element={<Suspense fallback={<div>Loading...</div>}><AlgPuzzlePage /></Suspense>} />
         <Route path="/alg/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         <Route path="/alg/:puzzle/:set/:subgroup" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
-        <Route path="/alg/:puzzle/:set/:subgroup/:subgroup2" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         {/* Sites — 魔方网址导航 */}
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
         <Route path="/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
         {/* Mosaic — 魔方马赛克生成器 */}
         <Route path="/mosaic" element={<Suspense fallback={<div>Loading...</div>}><MosaicPage /></Suspense>} />
+        {/* Memo — 记忆类工具子区(/memo/colpi: 字母对图像 UI 复刻) */}
+        <Route path="/memo/colpi" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
         {/* WB — 非官方世界纪录 */}
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}

@@ -11,7 +11,7 @@ import {
   Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
   ImagePlus, Microscope,
   Sigma, Dices, Wand2, Sparkles,
-  Code as CodeIcon,
+  Code as CodeIcon, Brain,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -306,6 +306,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   gen:             { en: 'Scrambles', zh: '生成打乱' },
   notation:        { en: 'Notation', zh: '记号沙盒' },
   patterns:        { en: 'Patterns', zh: '图案集' },
+  colpi:           { en: 'CoLPI', zh: '字母对' },
   code:            { en: 'Code', zh: '编程' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
@@ -348,6 +349,7 @@ const CARDS: CardConfig[] = [
   { id: 'globe',       href: '/globe',           internal: true,  tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },
   { id: 'scramble',    href: '/scramble-stats',  internal: true,  tier: 'standard',  Icon: Shuffle,        nameKey: 'scramble' },
   { id: 'mosaic',      href: '/mosaic',          internal: true,  tier: 'standard',  Icon: Grid2x2,        nameKey: 'mosaic' },
+  { id: 'colpi',       href: '/memo/colpi',      internal: true,  tier: 'standard',  Icon: Brain,          nameKey: 'colpi' },
   { id: 'visualcube',  href: '/visualcube',      internal: true,  tier: 'standard',  Icon: ImagePlus,      nameKey: 'visualcubeEditor' },
   { id: 'analyze',     href: '/analyze',         internal: true,  tier: 'standard',  Icon: Microscope,     nameKey: 'analyze' },
   { id: 'average',     href: '/average',         internal: true,  tier: 'standard',  Icon: Sigma,          nameKey: 'average' },
