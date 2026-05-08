@@ -8,13 +8,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, Search } from 'lucide-react';
 import { EventSelect } from '../../components/EventSelect';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
+import Paginator from './Paginator';
 import './historical_ranks.css';
 
 const EVENTS = [
@@ -289,26 +290,16 @@ export default function HistoricalRanksPage() {
             </table>
 
             {data.total > size && (
-              <div className="hr-pagination">
-                <button
-                  disabled={page <= 1}
-                  onClick={() => updateParam('page', String(page - 1), false)}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <span>
-                  {isZh ? '第' : 'Page'} {page} / {totalPages}
-                </span>
-                <button
-                  disabled={page >= totalPages}
-                  onClick={() => updateParam('page', String(page + 1), false)}
-                >
-                  <ChevronRight size={14} />
-                </button>
-                <select value={size} onChange={(e) => updateParam('size', e.target.value)}>
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}/{isZh ? '页' : 'pg'}</option>)}
-                </select>
-              </div>
+              <Paginator
+                className="hr-pagination"
+                page={page}
+                totalPages={totalPages}
+                size={size}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                isZh={isZh}
+                onPageChange={(p) => updateParam('page', String(p), false)}
+                onSizeChange={(s) => updateParam('size', String(s))}
+              />
             )}
           </>
         )}

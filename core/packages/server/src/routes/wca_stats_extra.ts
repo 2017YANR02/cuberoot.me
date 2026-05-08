@@ -475,11 +475,12 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
   const isCountryMode = !!cn.id;
   const orderCol = eventIdxs ? null : (isCountryMode ? 'pr.total_country_rank' : 'pr.total_world_rank');
-  const ranksCol = isCountryMode ? 'pr.ranks_country' : 'pr.ranks_world';
+  const ranksCol = isCountryMode ? 'ranks_country' : 'ranks_world';
+  const isAvg = type === 'average';
 
-  // 构造 WHERE
+  // 构造 WHERE(主查询)
   const where: string[] = [`pr.is_avg = ?`];
-  const params: unknown[] = [type === 'average'];
+  const params: unknown[] = [isAvg];
   if (isCountryMode) { where.push(`pr.country_id = ?`); params.push(cn.id); }
   if (hidePodium) where.push(`pr.has_podium = FALSE`);
 
@@ -532,11 +533,23 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     });
   }
 
-  // 子集:用 PG 表达式即时算 SUM,索引 1-based
-  const sumExpr = eventIdxs!.map(i => `COALESCE(${ranksCol}[${i + 1}], 0)`).join(' + ');
+  // 子集:CTE 算每个选中项目的参赛人数(scope 内有 rank>0 的 cuber 数),
+  // 缺项 rank=0 时回退到该项目的"倒数第一名次"= 参赛人数.
+  // 注意 ep CTE 不应用 hidePodium 过滤(参赛人数是项目固有属性,跟当前显示过滤无关).
+  const cteWhere: string[] = [`is_avg = ?`];
+  const cteParams: unknown[] = [isAvg];
+  if (isCountryMode) { cteWhere.push(`country_id = ?`); cteParams.push(cn.id); }
+
+  const epSelect = eventIdxs!.map(i =>
+    `SUM(CASE WHEN ${ranksCol}[${i + 1}] > 0 THEN 1 ELSE 0 END)::INTEGER AS p${i}`
+  ).join(', ');
+  const sumExpr = eventIdxs!.map(i =>
+    `(CASE WHEN pr.${ranksCol}[${i + 1}] > 0 THEN pr.${ranksCol}[${i + 1}] ELSE ep.p${i} END)`
+  ).join(' + ');
+
   const offset = (page - 1) * size;
+  const dataParams = [...cteParams, ...params, size, offset];
   const totalParams = [...params];
-  params.push(size, offset);
 
   const rows = await query<{
     wca_id: string; country_id: string;
@@ -546,6 +559,11 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     person_name: string;
   }>(
     `
+    WITH ep AS (
+      SELECT ${epSelect}
+      FROM wca_person_ranks
+      WHERE ${cteWhere.join(' AND ')}
+    )
     SELECT pr.wca_id, pr.country_id,
            co.iso2 AS iso2,
            pr.events_done,
@@ -553,13 +571,14 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
            pr.ranks_world, pr.ranks_country,
            p.name AS person_name
     FROM wca_person_ranks pr
+    CROSS JOIN ep
     JOIN wca_persons p ON p.wca_id = pr.wca_id
     LEFT JOIN wca_countries co ON co.id = pr.country_id
     WHERE ${where.join(' AND ')}
     ORDER BY subset_total ASC, pr.wca_id ASC
     LIMIT ? OFFSET ?
     `,
-    params,
+    dataParams,
   );
   const totalRow = await query<{ n: string }>(
     `SELECT COUNT(*) AS n FROM wca_person_ranks pr WHERE ${where.join(' AND ')}`,

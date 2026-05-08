@@ -5,7 +5,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+import Paginator from './Paginator';
 import { EventIcon } from '../../components/EventIcon';
 import { Flag } from '../../utils/flag';
 import { displayCuberName } from '../../utils/name_utils';
@@ -90,7 +91,7 @@ export default function SumOfRanksPage() {
           <LangToggle />
         </div>
         <h1>{isZh ? '全项目排行' : 'Sum of Ranks'}</h1>
-        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以"参赛人数+1"计入' : 'Sum of (world / country) ranks across selected events; missing events default to (participants+1)'}</p>
+        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"全球倒数第一的名次"计入' : 'Sum of (world / country) ranks across selected events; missing events default to "last rank in scope"'}</p>
       </header>
 
       <div className="wse-filters">
@@ -177,14 +178,15 @@ export default function SumOfRanksPage() {
               </tbody>
             </table>
             {data.total > size && (
-              <div className="wse-pagination">
-                <button disabled={page <= 1} onClick={() => update('page', String(page - 1), false)}><ChevronLeft size={14} /></button>
-                <span>{isZh ? '第' : 'Page'} {page} / {totalPages}</span>
-                <button disabled={page >= totalPages} onClick={() => update('page', String(page + 1), false)}><ChevronRight size={14} /></button>
-                <select value={size} onChange={e => update('size', e.target.value)}>
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}/{isZh ? '页' : 'pg'}</option>)}
-                </select>
-              </div>
+              <Paginator
+                page={page}
+                totalPages={totalPages}
+                size={size}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                isZh={isZh}
+                onPageChange={(p) => update('page', String(p), false)}
+                onSizeChange={(s) => update('size', String(s))}
+              />
             )}
           </>
         )}
