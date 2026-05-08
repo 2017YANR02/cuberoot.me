@@ -1,0 +1,1 @@
+import{r as e}from"./chunk-Byb_VWJN.js";var t=e({API_ORIGIN:()=>n,apiUrl:()=>r}),n=(()=>{let e=typeof window<`u`?window.location.hostname:``;return e===`localhost`||e===`127.0.0.1`?``:`https://api.cuberoot.me`})();function r(e){return n+e}export{r as n,t as r,n as t};
