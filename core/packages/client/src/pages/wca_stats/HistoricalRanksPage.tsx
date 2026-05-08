@@ -15,6 +15,7 @@ import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
+import './wca_stats.css';
 import './historical_ranks.css';
 
 const EVENTS = [
