@@ -6,15 +6,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
 import i18n from './i18n';
-import { HomePage } from './pages/HomePage';
-import { CaseSelectPage } from './pages/CaseSelectPage';
 import { TrainingPage } from './pages/TrainingPage';
-import { OllTrainingPage } from './pages/OllTrainingPage';
-import { StatsPage } from './pages/StatsPage';
-import { ZbllSelectPage } from './pages/ZbllSelectPage';
-import { ZbllTimerPage } from './pages/ZbllTimerPage';
-import { ZblsSelectPage } from './pages/ZblsSelectPage';
-import { ZblsTimerPage } from './pages/ZblsTimerPage';
+
+// NOTE: 新统一公式训练器（PLL/OLL/ZBLL/ZBLS,扩展中）
+const TrainerLandingPage = lazy(() => import('./pages/trainer/TrainerLandingPage'));
+const TrainerSelectPage = lazy(() => import('./pages/trainer/TrainerSelectPage'));
+const TrainerRunPage = lazy(() => import('./pages/trainer/TrainerRunPage'));
 
 // NOTE: LandingPage 懒加载 — 全站入口页（粒子系统 + 卡片）
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -125,19 +122,12 @@ function App() {
       <Routes>
         {/* NOTE: 全站入口页（卡片网格） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
-        {/* NOTE: Trainer 首页（原来的 /，PLL/OLL/ZBLL/ZBLS 选择页） */}
-        <Route path="/trainer" element={<HomePage />} />
-        <Route path="/select/:algSetId" element={<CaseSelectPage />} />
-        {/* NOTE: OLL 走专用计时器训练页，PLL 走识别训练页 */}
-        <Route path="/train/oll" element={<OllTrainingPage />} />
-        <Route path="/train/:algSetId" element={<TrainingPage />} />
-        <Route path="/stats/:algSetId" element={<StatsPage />} />
-        {/* ZBLL Trainer — 独立的选择+计时页面 */}
-        <Route path="/select/zbll" element={<ZbllSelectPage />} />
-        <Route path="/train/zbll" element={<ZbllTimerPage />} />
-        {/* ZBLS Trainer — 独立的选择+计时页面 */}
-        <Route path="/select/zbls" element={<ZblsSelectPage />} />
-        <Route path="/train/zbls" element={<ZblsTimerPage />} />
+        {/* 统一公式训练器 — 所有 set 走同一套页面+组件 */}
+        <Route path="/trainer" element={<Suspense fallback={<div>Loading...</div>}><TrainerLandingPage /></Suspense>} />
+        <Route path="/trainer/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><TrainerSelectPage /></Suspense>} />
+        <Route path="/trainer/:puzzle/:set/run" element={<Suspense fallback={<div>Loading...</div>}><TrainerRunPage /></Suspense>} />
+        {/* PLL 识别训练（输入字母回答，独立于公式计时训练） */}
+        <Route path="/recognize/:algSetId" element={<TrainingPage />} />
         {/* Calc — 成绩计算器 */}
         <Route path="/calc" element={<Suspense fallback={<div>Loading...</div>}><CalcPage /></Suspense>} />
         {/* Viz — 分布演变可视化 */}

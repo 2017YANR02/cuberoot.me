@@ -75,7 +75,7 @@
 .alg-bento-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   padding: 24px;
   background: var(--alg-bg-soft);
@@ -83,6 +83,7 @@
   border-radius: 12px;
   text-decoration: none !important;
   color: var(--alg-text);
+  text-align: center;
   transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 .alg-bento-card:hover {
@@ -92,6 +93,12 @@
 }
 .alg-bento-icon {
   color: var(--alg-accent);
+}
+.alg-bento-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
 }
 .alg-bento-title {
   font-size: 18px;
