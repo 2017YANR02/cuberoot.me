@@ -226,6 +226,61 @@ fn ao5(times: [5]Time) Time {
         .sum() / 3
 }`,
   },
+  {
+    slug: 'java', name: 'Java', href: '/code/java', accent: '#E76F00', commentToken: '//',
+    zhFlavor: 'Comparator.nullsLast + 装箱 Integer',
+    enFlavor: 'Comparator.nullsLast + boxed Integer',
+    code: `import java.util.*;
+
+// WCA Ao5: DNF = null. Drop best & worst, mean of middle 3.
+
+public static Integer ao5(Integer[] times) {
+    long dnfs = Arrays.stream(times)
+        .filter(Objects::isNull).count();
+    if (dnfs >= 2) return null;
+
+    Integer[] s = times.clone();
+    Arrays.sort(s, Comparator.nullsLast(Integer::compare));
+    return (s[1] + s[2] + s[3]) / 3;
+}`,
+  },
+  {
+    slug: 'js', name: 'JavaScript', href: '/code/javascript', accent: '#E5C100', commentToken: '//',
+    zhFlavor: '和 TS 同源,但没类型把门',
+    enFlavor: 'Same shape as TS, no types at the door',
+    code: `// WCA Ao5: DNF = null.
+// No type system to remind you DNF is unhandled — write defensively.
+
+const ao5 = (times) => {
+  if (times.filter(t => t == null).length >= 2) return null;
+
+  const s = [...times].sort((a, b) =>
+    a == null ? 1 : b == null ? -1 : a - b
+  );
+
+  return Math.round((s[1] + s[2] + s[3]) / 3);
+};`,
+  },
+  {
+    slug: 'mojo', name: 'Mojo', href: '/code/mojo', accent: '#FF4B00', commentToken: '#',
+    zhFlavor: 'fn 严格 + Optional + MLIR 后端',
+    enFlavor: 'Strict fn + Optional + MLIR backend',
+    code: `# Mojo: fn = strict typed (vs Python's loose def).
+# Same shape as Python, but compiles to native via MLIR.
+
+fn ao5(times: List[Optional[Int]]) -> Optional[Int]:
+    var dnfs = 0
+    for t in times:
+        if not t: dnfs += 1
+    if dnfs >= 2: return None
+
+    var s = sorted(
+        times,
+        key=fn(t: Optional[Int]) -> Int:
+            return t.value() if t else Int.MAX,
+    )
+    return (s[1].value() + s[2].value() + s[3].value()) // 3`,
+  },
 ];
 
 function highlightComments(code: string, token: string) {
@@ -249,8 +304,8 @@ export default function CompareAo5Page() {
 
   useEffect(() => {
     document.title = lang === 'zh'
-      ? '九种语言,一个 Ao5 — CubeRoot'
-      : 'One Ao5, Nine Languages — CubeRoot';
+      ? '十二种语言,一个 Ao5 — CubeRoot'
+      : 'One Ao5, Twelve Languages — CubeRoot';
   }, [lang]);
 
   return (
@@ -267,18 +322,18 @@ export default function CompareAo5Page() {
           </div>
 
           <div className="compare-tag">
-            <L zh="// WCA Ao5 · 9 Languages · 1 Algorithm" en="// WCA Ao5 · 9 Languages · 1 Algorithm" />
+            <L zh="// WCA Ao5 · 12 Languages · 1 Algorithm" en="// WCA Ao5 · 12 Languages · 1 Algorithm" />
           </div>
           <h1 className="compare-title">
             <L
-              zh={<>九种语言<span className="compare-comma">,</span> 一个 <span className="compare-hl">Ao5</span></>}
-              en={<>One <span className="compare-hl">Ao5</span><span className="compare-comma">,</span> Nine Languages</>}
+              zh={<>十二种语言<span className="compare-comma">,</span> 一个 <span className="compare-hl">Ao5</span></>}
+              en={<>One <span className="compare-hl">Ao5</span><span className="compare-comma">,</span> Twelve Languages</>}
             />
           </h1>
           <p className="compare-sub">
             <L
-              zh={<>同一个 <strong>WCA Average-of-5</strong> 算法,九种语言写一遍。看每门语言怎么处理"DNF"——这个"成绩不存在"的情况是每个语言类型系统的试金石。</>}
-              en={<>The same <strong>WCA Average-of-5</strong> algorithm, written in nine languages. Watch each language handle "DNF" — that "value doesn't exist" case is a litmus test for any type system.</>}
+              zh={<>同一个 <strong>WCA Average-of-5</strong> 算法,十二种语言写一遍。看每门语言怎么处理"DNF"——这个"成绩不存在"的情况是每个语言类型系统的试金石。</>}
+              en={<>The same <strong>WCA Average-of-5</strong> algorithm, written in twelve languages. Watch each language handle "DNF" — that "value doesn't exist" case is a litmus test for any type system.</>}
             />
           </p>
         </header>
@@ -350,8 +405,8 @@ export default function CompareAo5Page() {
             <div>
               <h3><L zh={'DNF 这个"空值"'} en="The DNF empty value" /></h3>
               <p><L
-                zh={<>9 种语言对"成绩不存在"给出 4 种不同答案:<strong>类型联合</strong>(TS <code>number | null</code>)、<strong>Option/Optional</strong>(Rust / C++ / Swift / Kotlin / Zig / Python)、<strong>哨兵值</strong>(C / Go 用 -1)。AI agent 写代码时,前两类编译期就能查出 DNF 没处理;后一类要靠测试才发现。</>}
-                en={<>Nine languages, four distinct answers to "value doesn't exist": <strong>union types</strong> (TS <code>number | null</code>), <strong>Option/Optional</strong> (Rust / C++ / Swift / Kotlin / Zig / Python), and <strong>sentinel values</strong> (C / Go using -1). When an AI agent writes code, the first two surface unhandled DNFs at compile time; the last needs tests to catch.</>}
+                zh={<>12 种语言对"成绩不存在"给出 4 种不同答案:<strong>类型联合</strong>(TS <code>number | null</code>)、<strong>Option/Optional</strong>(Rust / C++ / Swift / Kotlin / Zig / Python / Java 的 boxed null / Mojo 的 <code>Optional[Int]</code>)、<strong>哨兵值</strong>(C / Go 用 -1)、<strong>无类型把门</strong>(JS)。AI agent 写代码时,前两类编译期就能查出 DNF 没处理;后两类要靠测试才发现——JS 这一栏是 TS 的反衬。</>}
+                en={<>Twelve languages, four distinct answers to "value doesn't exist": <strong>union types</strong> (TS <code>number | null</code>), <strong>Option/Optional</strong> (Rust / C++ / Swift / Kotlin / Zig / Python / Java's boxed null / Mojo's <code>Optional[Int]</code>), <strong>sentinel values</strong> (C / Go using -1), and <strong>no type guard at all</strong> (JS). When an AI agent writes code, the first two surface unhandled DNFs at compile time; the last two need tests to catch — JS is the foil to TS here.</>}
               /></p>
             </div>
             <div>
@@ -386,8 +441,8 @@ export default function CompareAo5Page() {
           </div>
           <p className="compare-foot-note">
             <L
-              zh={<>下一组想加什么:打乱反演 <code>R U R' → R U' R'</code>?颜色还原比对?随便提。</>}
-              en={<>Next batch ideas — scramble inversion <code>R U R' → R U' R'</code>? Sticker matching? Tell me.</>}
+              zh={<>第二篇横向对比已经上了:<Link to="/code/scramble">打乱解析器,十一种语言</Link>。</>}
+              en={<>The second comparison is live: <Link to="/code/scramble">scramble parser, eleven languages</Link>.</>}
             />
           </p>
         </footer>

@@ -1244,5 +1244,9 @@ main { position: relative; z-index: 1; }
 }
 .ai-takeaway strong { color: var(--zig-bright); }
 
+.ts-card, .ts-card > *, .def-card, .why-card,
+.compare-col, .compare-col > *, .future-card,
+.logo-card, .ai-tool { min-width: 0; }
+
 }
 /* end @scope (.zig-intro-root) */
