@@ -20,9 +20,9 @@ flagHtml(iso2, { spanClassName: 'flag-span', imgClassName: 'flag-img' }) // inne
 
 - 手写 `iso2 === 'tw' ? <img .../> : <span .../>` —— 就是要消灭这个
 - 直接写 `/tools/assets/images/ChineseTaipei.svg` —— 路径只应出现在 `flag.tsx`
-- **裸 `<SharedFlag iso2={...} />` 不带 className**：TW 走 SVG `<img>`，没尺寸约束会撑爆布局。
-- **`.country-flag` / `.country-flag-ct` 是项目标准 className** —— 直接传 `<Flag spanClassName="country-flag" imgClassName="country-flag-ct" />`,**尺寸规则已在全局 `index.css` 里**,新 page **不要重写**(2026-05 之前散落在 wca_stats.css 等处的副本是历史遗留,新建别学)。
-- **debug TW 撑爆布局**：先 playwright 拿那个 `<img>` 元素看 `getComputedStyle.width` 和它继承自哪条 rule(`.cssRules` 列出 `.country-flag-ct` 命中情况)。常见踩坑:页面没用约束 className(写了 `country-flag` 给 img、`country-flag-ct` 给 span,反了);或者用了页面前缀 `.my-page .country-flag-ct`,被全局规则平起平坐时反而失效。
+- **裸 Flag 不带 className**：TW 走 SVG `<img>`,会撑爆布局。
+- **标准 className**：`spanClassName="country-flag" imgClassName="country-flag-ct"`,尺寸规则在全局 `index.css`,**新 page 别重写**。
+- **TW 还是大** → playwright 看 `<img>` computed width;90% 是 className 写反或加了页面前缀。
 
 ## popup CSS 作用域
 
