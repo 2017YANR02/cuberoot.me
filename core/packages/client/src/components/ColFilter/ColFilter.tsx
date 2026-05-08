@@ -75,17 +75,23 @@ export function ColFilter({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
-    // NOTE: 滚动 / resize 时关掉,避免 popover 漂移与 anchor 脱钩
-    const onScrollResize = () => setOpen(false);
+    // NOTE: 外部滚动 / resize 时关掉,避免 popover 漂移与 anchor 脱钩;
+    // 但 popover 内部滚动(如 ListSelect 列表拖滚动条)要忽略
+    const onScroll = (e: Event) => {
+      const target = e.target as Node | null;
+      if (target && popRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onResize = () => setOpen(false);
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
-    window.addEventListener('scroll', onScrollResize, true);
-    window.addEventListener('resize', onScrollResize);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onResize);
     return () => {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
-      window.removeEventListener('scroll', onScrollResize, true);
-      window.removeEventListener('resize', onScrollResize);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onResize);
     };
   }, [open]);
 

@@ -8,7 +8,6 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import CubeView from '../components/CubeView';
 import OnScreenKeyboard from '../components/OnScreenKeyboard';
 import { useSessionStore } from '../stores/sessionStore';
 import { scrambleForCase, inverseScramble } from '../utils/scrambleGenerator';
@@ -257,11 +256,15 @@ export function TrainingPage() {
             />
           </div>
         ) : (
-          <CubeView
-            scramble={scramble}
-            viewType={mistake ? 'cube-pll' : 'cube'}
-            size={350}
-          />
+          <div style={{ filter: gameState === 'paused' ? 'brightness(0.15)' : 'none' }}>
+            <VisualCube
+              algorithm=""
+              setup={scramble}
+              view={mistake ? 'pll-iso' : 'iso'}
+              size={350}
+              alt={currentCase?.name}
+            />
+          </div>
         )}
       </div>
 
