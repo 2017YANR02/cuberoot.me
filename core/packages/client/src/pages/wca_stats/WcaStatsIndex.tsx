@@ -180,6 +180,9 @@ export default function WcaStatsIndex() {
               <Link to={`/nemesizer${langQuery}`} className="wca-stats-index-card">
                 {isZh ? '宿敌' : 'Nemesizer'}
               </Link>
+              <Link to={`/wca-stats/historical${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '历史排名（任意年/国家/项目切片）' : 'Historical Ranks (any year × country × event)'}
+              </Link>
             </div>
           </section>
         )}
