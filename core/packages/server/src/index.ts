@@ -8,6 +8,7 @@ import { reconRoutes } from './routes/recon.js';
 import { cubeRoutes } from './routes/cube.js';
 import { algRoutes } from './routes/alg.js';
 import { algSetsRoutes } from './routes/alg_sets.js';
+import { historicalRanksRoutes } from './routes/historical_ranks.js';
 
 const app = new Hono();
 
@@ -46,6 +47,7 @@ app.route('/v1', reconRoutes);
 app.route('/v1', cubeRoutes);
 app.route('/v1', algRoutes);
 app.route('/v1', algSetsRoutes);
+app.route('/v1', historicalRanksRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 

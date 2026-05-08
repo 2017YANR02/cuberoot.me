@@ -50,3 +50,6 @@ core/packages/alg-build/data/alg_detections.log
 # 临时/本地工作目录（本地调试/解压/中间产物用 + 删除前的"后悔药"暂存区）
 tmp/
 .tmp/
+
+# stats-build 中间产物 (historical_ranks 等)
+core/packages/stats-build/output/
