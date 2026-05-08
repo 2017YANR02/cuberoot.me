@@ -1,22 +1,29 @@
 // NOTE: 最长连续世界纪录
 // 与 Ruby _stats_build/statistics/longest_streak_of_world_records.rb 1:1 对应
-import { Statistic } from '../core/statistic.js';
+import { Statistic, type StatJson } from '../core/statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
+import { query as dbQuery } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
 
+// NOTE: WCA 已停办项目（脚拧 / 八板 / 十二板 / 旧多盲）
+// 这些项目的最后一次 WR streak 截止于该项目最后一场比赛，而非"至今"
+const DISCONTINUED_EVENTS: readonly string[] = ['333ft', 'magic', 'mmagic', '333mbo'];
+
 export class LongestStreakOfWorldRecords extends Statistic {
+  private lastCompByEvent: Record<string, { compLink: string; date: Date }> = {};
+
   constructor() {
     super();
     this.title = 'Longest streak of world records of the same type in the given event';
     this.titleZh = '同一项目同一类型最长连续世界纪录';
     this.tableHeader = {
+      'Years': 'right',
       'Records': 'right',
       'Event': 'left',
       'Type': 'left',
       'Person': 'left',
       'Started at': 'left',
       'Ended at': 'left',
-      'Years': 'right',
     };
   }
 
@@ -38,10 +45,32 @@ export class LongestStreakOfWorldRecords extends Statistic {
     `;
   }
 
+  // NOTE: 在 transform 之前预取停办项目的最后一场比赛
+  async toJson(): Promise<StatJson> {
+    const list = DISCONTINUED_EVENTS.map(e => `'${e}'`).join(',');
+    const rows = await dbQuery<RowDataPacket[]>(`
+      SELECT DISTINCT r.event_id, c.id AS comp_id, c.cell_name, c.start_date
+      FROM results r
+      JOIN competitions c ON c.id = r.competition_id
+      WHERE r.event_id IN (${list})
+      ORDER BY r.event_id, c.start_date DESC
+    `);
+    for (const row of rows) {
+      const eid = row['event_id'] as string;
+      if (!this.lastCompByEvent[eid]) {
+        this.lastCompByEvent[eid] = {
+          compLink: `[${row['cell_name']}](https://www.worldcubeassociation.org/competitions/${row['comp_id']})`,
+          date: new Date(row['start_date'] as Date),
+        };
+      }
+    }
+    return super.toJson();
+  }
+
   // NOTE: 与 Ruby transform 1:1 对应——按(项目, 类型)追踪同一选手连续 WR 数
   transform(rows: RowDataPacket[]): unknown[][] {
     interface WrStreak {
-      count: number; event: string; type: string; personLink: string;
+      count: number; eventId: string; event: string; type: string; personLink: string;
       startDate: Date; endDate: Date;
       firstCompetition: string; lastCompetition: string | null;
     }
@@ -77,6 +106,7 @@ export class LongestStreakOfWorldRecords extends Statistic {
             }
             wrStreaks.push({
               count: 1,
+              eventId,
               event: eventName,
               type: type.charAt(0).toUpperCase() + type.slice(1),
               personLink: result['person_link'] as string,
@@ -94,10 +124,27 @@ export class LongestStreakOfWorldRecords extends Statistic {
 
     return allStreaks
       .filter(s => s.count > 1)
-      .sort((a, b) => b.count - a.count)
       .map(s => {
-        const years = (s.endDate.getTime() - s.startDate.getTime()) / (365.25 * 24 * 3600 * 1000);
-        return [s.count, s.event, s.type, s.personLink, s.firstCompetition, s.lastCompetition, years.toFixed(2)];
-      });
+        // NOTE: 进行中的 streak（无后续 WR）—— 停办项目截到该项目最后一场比赛；现役项目标"至今"
+        let lastComp: string;
+        let endDate = s.endDate;
+        if (s.lastCompetition === null) {
+          if (DISCONTINUED_EVENTS.includes(s.eventId) && this.lastCompByEvent[s.eventId]) {
+            const last = this.lastCompByEvent[s.eventId];
+            lastComp = last.compLink;
+            endDate = last.date;
+          } else {
+            lastComp = 'Still active';
+          }
+        } else {
+          lastComp = s.lastCompetition;
+        }
+        const years = (endDate.getTime() - s.startDate.getTime()) / (365.25 * 24 * 3600 * 1000);
+        return { s, lastComp, years };
+      })
+      .sort((a, b) => b.years - a.years)
+      .map(({ s, lastComp, years }) => [
+        years.toFixed(2), s.count, s.event, s.type, s.personLink, s.firstCompetition, lastComp,
+      ]);
   }
 }

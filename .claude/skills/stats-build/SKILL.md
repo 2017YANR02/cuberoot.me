@@ -46,9 +46,19 @@ Get-Service | Where-Object Name -match mysql  # 服务状态
 `src/core/statistic.ts`：
 - 子类实现 `query()` 返回 SQL 字符串
 - 基类 `toJson()` 执行查询并按 `tableHeader` 构造 `{header, rows}` 输出
-- 复杂结构可覆盖 `toJson()`（如 `world_records_by_country.ts` 加了 `years` + `cumulative`）
+- 复杂结构覆盖 `toJson()`（如 `world_records_by_country.ts` 加 `years` + `cumulative`）
+- `transform` 同步——要副查询 override `async toJson()`：`dbQuery` → 存 instance → `super.toJson()`
 
-`StatJson` interface（已有的可选字段）：`rows` / `sections` / `panels` / `metricPanels`，时间序列数据用 `years` + `cumulative`。
+## 前端 row 渲染
+
+`WcaStatsPage.renderCell`：
+- row 里 `null` 字面渲染成 "null"——别塞 null
+- 想要中英差异显示（如 `"Still active"` → `"至今"`）：往 `wca_translations.ts` 的 `VALUE_ZH` 加映射
+- `event` 列自动前置 `<EventIcon>`，SQL 直接输出 events.name 即可
+
+## 已停办项目
+
+`333ft / magic / mmagic / 333mbo`。"持续到现在"类 stat 的最后一段不能默认 endDate=today——查该项目最后一场比赛作终止点；现役还持续的用 `"Still active"` 哨兵字符串。否则 years 失真。
 
 ## CI 自动刷新
 

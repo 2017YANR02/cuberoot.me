@@ -18,6 +18,14 @@ const SHORT_TO_WCA: Record<string, string> = {
   'mbo': '333mbo', 'mag': 'magic', 'mmag': 'mmagic',
   // 全名（数据库中可能存"Pyraminx" / "Megaminx" / "Square-1" 等）
   'pyraminx': 'pyram', 'megaminx': 'minx', 'square1': 'sq1', 'square-1': 'sq1',
+  // WCA 标准全名（stats-build SQL 输出 events.name 形如 "5x5x5 Cube" / "Rubik's Cube"）
+  "rubik's cube": '333', "2x2x2 cube": '222', "3x3x3 cube": '333',
+  "4x4x4 cube": '444', "5x5x5 cube": '555', "6x6x6 cube": '666', "7x7x7 cube": '777',
+  "3x3x3 blindfolded": '333bf', "3x3x3 fewest moves": '333fm', "3x3x3 one-handed": '333oh',
+  "rubik's clock": 'clock', "4x4x4 blindfolded": '444bf', "5x5x5 blindfolded": '555bf',
+  "3x3x3 multi-blind": '333mbf', "3x3x3 with feet": '333ft',
+  "rubik's magic": 'magic', "master magic": 'mmagic',
+  "rubik's cube: multiple blind old style": '333mbo',
 };
 
 /** 把任何短名 / 标准 id 归一化为 WCA 标准 id（如 '3x3' / '3' / '333' → '333'）；找不到映射就原样返回。 */

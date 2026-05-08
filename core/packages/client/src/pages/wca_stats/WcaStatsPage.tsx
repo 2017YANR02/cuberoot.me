@@ -13,6 +13,8 @@ import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
 import { translateCellText, translatePersonLink, stripChineseParens } from './wca_translations';
+import { EventIcon } from '../../components/EventIcon/EventIcon';
+import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import LangToggle from '../../components/LangToggle';
 import Top10HistoryPage from './Top10HistoryPage';
 import './wca_stats.css';
@@ -156,6 +158,11 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
   if (columnKey === 'details' && typeof value === 'string' && value.trim()) {
     const items = value.trim().split(/\s+/);
     if (items.length > 1) return renderSolves(items);
+  }
+
+  // NOTE: 项目列只显示 cubing-icon —— 不带文字
+  if (columnKey === 'event' && !str.includes('[') && isWcaEvent(str.trim())) {
+    return <EventIcon event={str.trim()} className="wca-stats-event-icon" title={eventDisplayName(str.trim(), !!isZh)} />;
   }
 
   // NOTE: 中英文模式均尝试翻译（中文：项目名/类型，英文：event 列去 Cube 后缀）

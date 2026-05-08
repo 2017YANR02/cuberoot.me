@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search, Swords,
+  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search,
   type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '../../i18n';
@@ -170,25 +170,15 @@ export default function WcaStatsIndex() {
         {(q === '' && activeCat === ALL) && (
           <section className="wca-stats-index-section">
             <div className="wca-stats-index-section-header">
-              <UserRound size={18} strokeWidth={1.75} />
-              <h2>{isZh ? '选手查询' : 'Persons'}</h2>
+              <Search size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '查询' : 'Lookup'}</h2>
             </div>
             <div className="wca-stats-index-grid">
               <Link to={`/wca-stats/persons${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '查 WCA 个人成绩 / PR / 比赛历史' : 'Look up WCA results / PRs / competition history'}
+                {isZh ? '查 WCA 个人成绩 / PR / 比赛历史' : 'WCA results / PRs / competition history'}
               </Link>
-            </div>
-          </section>
-        )}
-        {(q === '' && (activeCat === ALL || activeCat === 'Nemesizer')) && (
-          <section className="wca-stats-index-section">
-            <div className="wca-stats-index-section-header">
-              <Swords size={18} strokeWidth={1.75} />
-              <h2>Nemesizer</h2>
-            </div>
-            <div className="wca-stats-index-grid">
               <Link to={`/nemesizer${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '宿敌查询（Nemesizer）' : 'Nemesizer — find your nemeses'}
+                {isZh ? '宿敌' : 'Nemesizer'}
               </Link>
             </div>
           </section>

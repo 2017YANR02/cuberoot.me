@@ -56,6 +56,12 @@ export const EVENT_EN: Record<string, string> = {
 export const VALUE_ZH: Record<string, string> = {
   "Single": "单次", "Average": "平均", "Mean": "平均",
   "Mo3": "三次平均",
+  "Still active": "至今",
+};
+
+// NOTE: 英文模式简写——Type 列等
+export const VALUE_EN: Record<string, string> = {
+  "Average": "Avg",
 };
 
 // NOTE: 选手名处理工具已抽到 src/utils/name_utils.ts，这里重新导出保持兼容
@@ -71,11 +77,11 @@ export function translateCellText(text: string, columnKey: string, isZh?: boolea
   }
   if (columnKey === 'type' || columnKey === 'wr_metric') {
     if (isZh) return VALUE_ZH[text] ?? null;
-    return null;  // 英文模式 type 列不翻译
+    return VALUE_EN[text] ?? null;
   }
   // 通用：任何列都可能出现 Single/Average/event
   if (isZh) return VALUE_ZH[text] ?? EVENT_ZH[text] ?? null;
-  return EVENT_EN[text] ?? null;
+  return VALUE_EN[text] ?? EVENT_EN[text] ?? null;
 }
 
 // NOTE: 中文模式——Markdown 链接中提取括号内中文
