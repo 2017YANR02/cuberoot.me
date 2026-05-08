@@ -91,7 +91,7 @@ export default function SumOfRanksPage() {
           <LangToggle />
         </div>
         <h1>{isZh ? '全项目排行' : 'Sum of Ranks'}</h1>
-        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"全球倒数第一的名次"计入' : 'Sum of (world / country) ranks across selected events; missing events default to "last rank in scope"'}</p>
+        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last)'}</p>
       </header>
 
       <div className="wse-filters">
