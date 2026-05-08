@@ -38,6 +38,8 @@ const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
+// NOTE: 历史排名 — 任意 (event, year, country, type) 切片
+const HistoricalRanksPage = lazy(() => import('./pages/wca_stats/HistoricalRanksPage'));
 // NOTE: Calendar 懒加载 — 比赛日历(原 /upcoming-comps,2026-05 改名)
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 // NOTE: Calendar Stats — 比赛随时间分布的可视化
@@ -202,6 +204,7 @@ function App() {
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
         <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
+        <Route path="/wca-stats/historical" element={<Suspense fallback={<div>Loading...</div>}><HistoricalRanksPage /></Suspense>} />
 <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
@@ -219,6 +222,7 @@ function App() {
         <Route path="/alg/:puzzle" element={<Suspense fallback={<div>Loading...</div>}><AlgPuzzlePage /></Suspense>} />
         <Route path="/alg/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         <Route path="/alg/:puzzle/:set/:subgroup" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
+        <Route path="/alg/:puzzle/:set/:subgroup/:subgroup2" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         {/* Sites — 魔方网址导航 */}
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
         <Route path="/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
