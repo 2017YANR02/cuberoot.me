@@ -43,12 +43,14 @@ jobs:
 
           # 5. 根目录散落的静态文件
           # NOTE: beian-badge.png — cuberoot.me 域名下显示中国 ICP/公安备案小图标
+          # NOTE: bf2b302...txt — WeChat 域名审核 verification token,删除会导致解封状态丢失
           for f in favicon.svg CubeRoot-dark.png manifest.json \
                    scramble_module.js icons.svg \
                    icon_timer.png cstimer_logo.png callback.html \
                    robots.txt sitemap.xml MediaInfoModule.wasm \
                    countries-110m.geojson cn_disputed_patches.geojson \
-                   beian-badge.png sw.js; do
+                   beian-badge.png sw.js \
+                   bf2b302cee273ba35e5f50c3dffffdd0.txt; do
             [ -f "$f" ] && cp -f "$f" _deploy/ || true
           done
 
