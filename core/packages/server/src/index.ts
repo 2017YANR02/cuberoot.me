@@ -38,14 +38,14 @@ app.onError((err, c) => {
   return c.json({ error: msg }, status);
 });
 
-// 注册路由
-app.route('/', authRoutes);
-app.route('/', progressRoutes);
-app.route('/', healthRoutes);
-app.route('/', reconRoutes);
-app.route('/', cubeRoutes);
-app.route('/', algRoutes);
-app.route('/', algSetsRoutes);
+// 注册路由 — 全部挂在 /v1 下，对外即 https://api.cuberoot.me/v1/*
+app.route('/v1', authRoutes);
+app.route('/v1', progressRoutes);
+app.route('/v1', healthRoutes);
+app.route('/v1', reconRoutes);
+app.route('/v1', cubeRoutes);
+app.route('/v1', algRoutes);
+app.route('/v1', algSetsRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 

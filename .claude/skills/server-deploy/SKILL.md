@@ -82,7 +82,7 @@ ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db
 
 1. 改 schema 时先 ALTER + `\d <table>` 确认列加上了
 2. push 后 Actions tab 看 `Deploy Core` 跑通
-3. 线上 `https://www.cuberoot.me/api/health` → `{"status":"ok","db":"connected"}` 即活
+3. 线上 `https://api.cuberoot.me/v1/health` → `{"status":"ok","db":"connected"}` 即活
 
 ## ⚠️ Server 新引入 workspace 包:必须 esbuild bundle
 

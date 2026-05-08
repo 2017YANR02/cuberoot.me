@@ -1,6 +1,6 @@
 /**
  * Recon API 客户端
- * NOTE: 对齐 Hono 后端 RESTful 路由（/api/recon/xxx）
+ * NOTE: 对齐 Hono 后端 RESTful 路由（/v1/recon/xxx）
  */
 import type {
   ReconSolve, ReconComment, EditHistoryItem, ReconAlternative,
@@ -8,7 +8,7 @@ import type {
 import { getWcaId } from '../stores/auth_store';
 import { API_ORIGIN } from './api_base';
 
-const API_BASE = API_ORIGIN + '/api/recon';
+const API_BASE = API_ORIGIN + '/v1/recon';
 
 // ── 认证 ──
 
@@ -91,31 +91,31 @@ async function apiDelete<T>(path: string): Promise<T> {
 // NOTE: 对齐 Hono routes/recon.ts 的 RESTful 路由
 
 /** 获取全部复盘（可按选手 WCA ID 筛选） */
-// 后端: GET /api/recon/list
+// 后端: GET /v1/recon/list
 export async function listRecons(wcaId?: string): Promise<ReconSolve[]> {
   return apiGet<ReconSolve[]>('/list', wcaId ? { wcaId } : {});
 }
 
 /** 获取单条复盘（含编辑覆盖层合并） */
-// 后端: GET /api/recon/:id
+// 后端: GET /v1/recon/:id
 export async function getRecon(id: number): Promise<ReconSolve> {
   return apiGet<ReconSolve>(`/${id}`);
 }
 
 /** 新增复盘 */
-// 后端: POST /api/recon
+// 后端: POST /v1/recon
 export async function addRecon(solve: Partial<ReconSolve>): Promise<ReconSolve> {
   return apiPost<ReconSolve>('', solve);
 }
 
 /** 更新复盘指定字段 */
-// 后端: PUT /api/recon/:id
+// 后端: PUT /v1/recon/:id
 export async function updateRecon(id: number, fields: Partial<ReconSolve>): Promise<{ ok: boolean }> {
   return apiPut<{ ok: boolean }>(`/${id}`, fields);
 }
 
 /** 删除复盘 */
-// 后端: DELETE /api/recon/:id
+// 后端: DELETE /v1/recon/:id
 export async function deleteRecon(id: number): Promise<{ ok: boolean }> {
   return apiDelete<{ ok: boolean }>(`/${id}`);
 }
@@ -145,19 +145,19 @@ export async function deleteAlternative(reconId: number, idx: number): Promise<R
 // ── 编辑覆盖层 ──
 
 /** 加载所有编辑覆盖 */
-// 后端: GET /api/recon/edits
+// 后端: GET /v1/recon/edits
 export async function loadEdits(): Promise<Record<string, Record<string, unknown>>> {
   return apiGet('/edits');
 }
 
 /** 保存编辑覆盖 */
-// 后端: POST /api/recon/save-edit
+// 后端: POST /v1/recon/save-edit
 export async function saveEdit(solveId: string, fields: Record<string, unknown>): Promise<{ ok: boolean }> {
   return apiPost('/save-edit', { solveId, fields });
 }
 
 /** 删除编辑覆盖 */
-// 后端: DELETE /api/recon/edit/:id
+// 后端: DELETE /v1/recon/edit/:id
 export async function deleteEdit(solveId: string): Promise<{ ok: boolean }> {
   return apiDelete(`/edit/${solveId}`);
 }
@@ -165,7 +165,7 @@ export async function deleteEdit(solveId: string): Promise<{ ok: boolean }> {
 // ── 编辑历史 ──
 
 /** 保存编辑历史快照 */
-// 后端: POST /api/recon/save-history
+// 后端: POST /v1/recon/save-history
 export async function saveEditHistory(
   solveId: string,
   before: Record<string, unknown>,
@@ -180,7 +180,7 @@ export async function saveEditHistory(
 }
 
 /** 获取编辑历史 */
-// 后端: GET /api/recon/history?id=xxx
+// 后端: GET /v1/recon/history?id=xxx
 export async function getEditHistory(solveId: string): Promise<EditHistoryItem[]> {
   return apiGet<EditHistoryItem[]>('/history', { id: solveId });
 }
@@ -188,31 +188,31 @@ export async function getEditHistory(solveId: string): Promise<EditHistoryItem[]
 // ── 评论 ──
 
 /** 获取复盘的评论列表 */
-// 后端: GET /api/recon/comments?reconId=xxx
+// 后端: GET /v1/recon/comments?reconId=xxx
 export async function listComments(reconId: number): Promise<ReconComment[]> {
   return apiGet<ReconComment[]>('/comments', { reconId: String(reconId) });
 }
 
 /** 新增评论；parentId 非 null 则为回复（单层 YouTube 风格） */
-// 后端: POST /api/recon/comments
+// 后端: POST /v1/recon/comments
 export async function addComment(reconId: number, content: string, parentId: number | null = null): Promise<{ ok: boolean; id: number }> {
   return apiPost('/comments', { reconId, content, parentId });
 }
 
 /** 更新评论 */
-// 后端: PUT /api/recon/comments/:id
+// 后端: PUT /v1/recon/comments/:id
 export async function updateComment(commentId: number, content: string): Promise<{ ok: boolean }> {
   return apiPut(`/comments/${commentId}`, { content });
 }
 
 /** 置顶 / 取消置顶评论（仅管理员） */
-// 后端: PUT /api/recon/comments/:id/pin
+// 后端: PUT /v1/recon/comments/:id/pin
 export async function pinComment(commentId: number, pinned: boolean): Promise<{ ok: boolean }> {
   return apiPut(`/comments/${commentId}/pin`, { pinned });
 }
 
 /** 删除评论 */
-// 后端: DELETE /api/recon/comments/:id
+// 后端: DELETE /v1/recon/comments/:id
 export async function deleteComment(commentId: number): Promise<{ ok: boolean }> {
   return apiDelete(`/comments/${commentId}`);
 }
@@ -225,7 +225,7 @@ interface DuplicateResult {
 }
 
 /** 检查是否存在重复复盘 */
-// 后端: GET /api/recon/check-duplicate
+// 后端: GET /v1/recon/check-duplicate
 export async function checkDuplicate(params: {
   comp: string;
   event: string;
@@ -256,7 +256,7 @@ interface SolverResult {
 }
 
 /** 搜索选手（通过后端代理 WCA API） */
-// 后端: GET /api/recon/search-solvers
+// 后端: GET /v1/recon/search-solvers
 export async function searchSolvers(query: string): Promise<SolverResult[]> {
   if (query.length < 2) return [];
   return apiGet<SolverResult[]>('/search-solvers', { q: query });
@@ -269,13 +269,13 @@ interface PersonRecord {
 }
 
 /** 获取已有选手列表（数据库中有 WCA ID 的选手） */
-// 后端: GET /api/recon/list-persons
+// 后端: GET /v1/recon/list-persons
 export async function listPersons(): Promise<PersonRecord[]> {
   return apiGet<PersonRecord[]>('/list-persons');
 }
 
 /** 获取用户统计 */
-// 后端: GET /api/recon/user-stats
+// 后端: GET /v1/recon/user-stats
 export async function getUserStats(wcaId: string): Promise<{ reconCount: number; addedCount: number }> {
   return apiGet('/user-stats', { wcaId });
 }
@@ -283,7 +283,7 @@ export async function getUserStats(wcaId: string): Promise<{ reconCount: number;
 // ── WCA 代理 ──
 
 /** 获取同轮次成绩（通过后端代理 WCA API） */
-// 后端: GET /api/recon/wca-attempts
+// 后端: GET /v1/recon/wca-attempts
 export async function getWcaAttempts(
   compId: string,
   personId: string,
@@ -292,7 +292,7 @@ export async function getWcaAttempts(
 }
 
 /** 获取 Bilibili 视频封面（通过后端代理） */
-// 后端: GET /api/recon/bili-cover
+// 后端: GET /v1/recon/bili-cover
 export async function getBiliCover(bvid: string): Promise<{ pic: string }> {
   return apiGet('/bili-cover', { bvid });
 }

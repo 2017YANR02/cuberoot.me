@@ -26,7 +26,7 @@ KEY=$(grep -oP 'ADMIN_API_KEY\*\* \| `\K[^`]+' D:/cube/ruiminyan.github.io/.pass
 
 ## 4 个 admin 端点
 
-base = `https://www.cuberoot.me/api/alg/sets`(prod)。
+base = `https://api.cuberoot.me/v1/alg/sets`(prod)。
 
 | 操作 | 方法 | 路径 | body |
 |---|---|---|---|
@@ -42,12 +42,12 @@ base = `https://www.cuberoot.me/api/alg/sets`(prod)。
 ```bash
 # 删 case
 curl -X DELETE -H "X-Admin-Key: $KEY" \
-  https://www.cuberoot.me/api/alg/sets/3x3/zbls/cases/6051
+  https://api.cuberoot.me/v1/alg/sets/3x3/zbls/cases/6051
 
 # 重排(必须传该 set 全部 case id)
 curl -X PUT -H "X-Admin-Key: $KEY" -H 'Content-Type: application/json' \
   -d '{"ids":[6049,6053,6055,...]}' \
-  https://www.cuberoot.me/api/alg/sets/3x3/zbls/reorder
+  https://api.cuberoot.me/v1/alg/sets/3x3/zbls/reorder
 ```
 
 ## 常见数据治理操作(直查 PG)

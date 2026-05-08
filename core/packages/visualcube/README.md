@@ -33,7 +33,7 @@ const svg = renderCubeSVG({
 // → '<svg xmlns="..." width="256" ...>...</svg>'
 ```
 
-Pure function, no DOM, safe in Node (used server-side at `/api/visualcube.svg`).
+Pure function, no DOM, safe in Node (used server-side at `/v1/visualcube.svg`).
 For DOM mounting use `cubeSVG(container, options)`; for canvas rasterisation `cubePNG(container, options)`.
 
 `renderCubeSVG` also accepts a PHP-style query string — handy for porting URLs:
@@ -47,8 +47,8 @@ renderCubeSVG('?pzl=3&alg=R+U+R%27+U%27&arw=U0U2-blue&ac=red&size=256')
 Simplified URL API (8 params: `alg / view / mask / size / cubeSize / bg / cc / co`; `cubeSize` also accepts PHP-style `pzl`), returns `image/svg+xml` (cached 24h).
 
 ```
-https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&size=128
-https://www.cuberoot.me/api/visualcube.svg?alg=Rw+U2+Rw+U2+Rw+U2+Rw%27+U2+Lw+U2+Rw%27+U2+Rw+U2+Rw%27+U2+Rw%27&cubeSize=4&view=oll&size=128
+https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&size=128
+https://api.cuberoot.me/v1/visualcube.svg?alg=Rw+U2+Rw+U2+Rw+U2+Rw%27+U2+Lw+U2+Rw%27+U2+Rw+U2+Rw%27+U2+Rw%27&cubeSize=4&view=oll&size=128
 ```
 
 Both server route + Vite dev middleware delegate to `renderFromSimpleQuery` for guaranteed parity (dev hits a local middleware in `vite.config.ts` `visualcubeDev()` plugin — no proxy roundtrip, no need to redeploy server before testing).
@@ -82,7 +82,7 @@ import { VisualCube } from '@/components/VisualCube'
 <VisualCube algorithm="R U R' U R U2 R'" view="oll" size={88} />
 ```
 
-Thin wrapper that emits an `<img src="/api/visualcube.svg?...">`. Use this anywhere a 3x3 case preview is needed (algdb, recon, training). Hand-written `<rect>` SVG cubes are a bug — see the project-level `visualcube` skill.
+Thin wrapper that emits an `<img src="https://api.cuberoot.me/v1/visualcube.svg?...">`. Use this anywhere a 3x3 case preview is needed (algdb, recon, training). Hand-written `<rect>` SVG cubes are a bug — see the project-level `visualcube` skill.
 
 ## ICubeOptions ↔ PHP query parameters
 

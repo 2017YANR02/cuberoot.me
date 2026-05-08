@@ -10,14 +10,14 @@ const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:5173/
 /**
  * WCA OAuth + JWT 认证路由
  *
- * GET  /api/auth/login    — 重定向到 WCA OAuth 授权页
- * GET  /api/auth/callback — WCA 回调，换取 token，签发 JWT
- * GET  /api/auth/me       — 验证 JWT，返回用户信息
+ * GET  /v1/auth/login    — 重定向到 WCA OAuth 授权页
+ * GET  /v1/auth/callback — WCA 回调，换取 token，签发 JWT
+ * GET  /v1/auth/me       — 验证 JWT，返回用户信息
  */
 export const authRoutes = new Hono();
 
 // 跳转到 WCA OAuth
-authRoutes.get('/api/auth/login', (c) => {
+authRoutes.get('/auth/login', (c) => {
   const url = `https://www.worldcubeassociation.org/oauth/authorize?`
     + `client_id=${WCA_CLIENT_ID}`
     + `&redirect_uri=${encodeURIComponent(WCA_REDIRECT_URI)}`
@@ -27,7 +27,7 @@ authRoutes.get('/api/auth/login', (c) => {
 });
 
 // WCA 回调
-authRoutes.get('/api/auth/callback', async (c) => {
+authRoutes.get('/auth/callback', async (c) => {
   const code = c.req.query('code');
 
   // 用 code 换取 access_token
@@ -97,7 +97,7 @@ authRoutes.get('/api/auth/callback', async (c) => {
 });
 
 // 验证 JWT 获取用户信息
-authRoutes.get('/api/auth/me', async (c) => {
+authRoutes.get('/auth/me', async (c) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return c.json({ error: 'No token provided' }, 401);
@@ -116,7 +116,7 @@ authRoutes.get('/api/auth/me', async (c) => {
 
 // WCA access_token → 自签 JWT（365 天有效期）
 // NOTE: WCA Implicit Grant 的 token 2 小时过期，用此端点换取长效 JWT
-authRoutes.post('/api/auth/exchange', async (c) => {
+authRoutes.post('/auth/exchange', async (c) => {
   const body = await c.req.json<{ accessToken?: string }>();
   const accessToken = body.accessToken;
 

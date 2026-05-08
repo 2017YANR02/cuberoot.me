@@ -664,7 +664,7 @@ export default function VisualCubeEditorPage() {
   };
 
   const apiUrl = useMemo(() => {
-    // /api/visualcube.svg only supports a subset (alg/case/view/mask/size/bg/cc/co)
+    // /v1/visualcube.svg only supports a subset (alg/case/view/mask/size/bg/cc/co)
     const p = new URLSearchParams();
     if (state.algorithm) p.set(state.algType, state.algorithm);
     if (state.cubeView !== 'normal') p.set('view', state.cubeView);
@@ -673,7 +673,7 @@ export default function VisualCubeEditorPage() {
     if (state.backgroundColor) p.set('bg', state.backgroundColor);
     if (state.cubeColor !== DEFAULTS.cubeColor) p.set('cc', state.cubeColor);
     if (state.cubeOpacity !== DEFAULTS.cubeOpacity) p.set('co', String(state.cubeOpacity));
-    return `${window.location.origin}/api/visualcube.svg${p.toString() ? '?' + p.toString() : ''}`;
+    return `https://api.cuberoot.me/v1/visualcube.svg${p.toString() ? '?' + p.toString() : ''}`;
   }, [state]);
 
   // ── Arrow builder ─────────────────────────────────────────────────────────
@@ -1142,17 +1142,11 @@ export default function VisualCubeEditorPage() {
         <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
         <p>
           {t(
-            '直接通过 GET /api/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），完整参数请用本页生成后复制分享链接。',
-            'GET /api/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for the full set, use this page and copy the share URL.'
+            '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），完整参数请用本页生成后复制分享链接。',
+            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for the full set, use this page and copy the share URL.'
           )}
         </p>
-        <pre className="vc-api-example">{`https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
-        <p className="vc-api-note">
-          {t(
-            '同样在镜像站可用：https://ruiminyan.github.io/api/visualcube.svg?…（GitHub 全球 CDN）。镜像站靠 Service Worker 在浏览器本地生成 SVG，访问过任一页面装好 SW 后即用。',
-            'Also available on the mirror: https://ruiminyan.github.io/api/visualcube.svg?… (GitHub global CDN). The mirror generates SVG locally via Service Worker — works after visiting any page on that site once (to register the SW).'
-          )}
-        </p>
+        <pre className="vc-api-example">{`https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
         <table className="vc-api-table">
           <thead>
             <tr>

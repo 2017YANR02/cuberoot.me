@@ -4,13 +4,13 @@ import { query } from '../db/connection.js';
 /**
  * 训练进度 API 路由
  *
- * GET  /api/progress/:algSetId  — 获取某公式集的所有训练记录
- * POST /api/progress/:algSetId  — 批量上传训练记录
+ * GET  /v1/progress/:algSetId  — 获取某公式集的所有训练记录
+ * POST /v1/progress/:algSetId  — 批量上传训练记录
  */
 export const progressRoutes = new Hono();
 
 // 获取训练记录
-progressRoutes.get('/api/progress/:algSetId', async (c) => {
+progressRoutes.get('/progress/:algSetId', async (c) => {
   const algSetId = c.req.param('algSetId');
   const userId = c.req.query('userId');
 
@@ -31,7 +31,7 @@ progressRoutes.get('/api/progress/:algSetId', async (c) => {
 });
 
 // 批量上传训练记录
-progressRoutes.post('/api/progress/:algSetId', async (c) => {
+progressRoutes.post('/progress/:algSetId', async (c) => {
   const algSetId = c.req.param('algSetId');
   const body = await c.req.json<{
     userId: string;

@@ -3,7 +3,7 @@
 ## 数据流
 
 ```
-Hono API 后端（www.cuberoot.me/api/recon/）
+Hono API 后端（api.cuberoot.me/v1/recon/）
     │  PostgreSQL 13 recon_db.recons（全量数据，SERIAL ID）
     │  PostgreSQL 13 recon_db.edits（编辑覆盖层，JSONB 字段）
     │  PostgreSQL 13 recon_db.edit_history（编辑历史记录）
@@ -15,7 +15,7 @@ comp_names_zh.json（英文→中文比赛名映射，CI 每日更新）
 
 ## API 接口
 
-基址：`https://www.cuberoot.me/api/recon/`（Hono RESTful）
+基址：`https://api.cuberoot.me/v1/recon/`（Hono RESTful）
 
 | Action | 方法 | 权限 | 说明 |
 |--------|------|------|------|
@@ -46,7 +46,7 @@ comp_names_zh.json（英文→中文比赛名映射，CI 每日更新）
 
 ```javascript
 // 在已登录的 Recon 页面控制台执行
-fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
+fetch('https://api.cuberoot.me/v1/recon/renameColumns2', {
   method: 'GET',
   headers: { 'Authorization': 'Bearer ' + WcaAuth.getAccessToken() }
 }).then(r => r.json()).then(console.log)

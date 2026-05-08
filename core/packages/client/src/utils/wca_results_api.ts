@@ -51,7 +51,7 @@ export function fetchWcaResults(compId: string, wcaEventId: string): Promise<Wca
   const key = `${compId}|${wcaEventId}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const proxyUrl = apiUrl(`/api/recon/wca-results?compId=${encodeURIComponent(compId)}&wcaEvent=${encodeURIComponent(wcaEventId)}`);
+  const proxyUrl = apiUrl(`/v1/recon/wca-results?compId=${encodeURIComponent(compId)}&wcaEvent=${encodeURIComponent(wcaEventId)}`);
   const directUrl = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/results/${encodeURIComponent(wcaEventId)}`;
   const parse = (j: unknown): WcaResultsResponse | null =>
     (j && typeof j === 'object' && Array.isArray((j as WcaResultsResponse).rounds)) ? j as WcaResultsResponse : null;
@@ -152,7 +152,7 @@ const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();
 function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
   const hit = scrambleCache.get(compId);
   if (hit) return hit;
-  const proxyUrl = apiUrl(`/api/recon/wca-scrambles?compId=${encodeURIComponent(compId)}`);
+  const proxyUrl = apiUrl(`/v1/recon/wca-scrambles?compId=${encodeURIComponent(compId)}`);
   const directUrl = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
   const parse = (j: unknown): WcaScrambleRow[] | null => Array.isArray(j) ? j as WcaScrambleRow[] : null;
   const p = fetch(proxyUrl)
@@ -205,7 +205,7 @@ export async function fetchCubingAttempts(
 ): Promise<(number | null)[] | null> {
   const slug = wcaIdToCubingSlug(compWcaId);
   const wcaEventId = toWcaEventId(reconEvent);
-  const url = apiUrl(`/api/recon/cubing-attempts?slug=${encodeURIComponent(slug)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`);
+  const url = apiUrl(`/v1/recon/cubing-attempts?slug=${encodeURIComponent(slug)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`);
   try {
     const res = await fetch(url);
     if (!res.ok) return null;

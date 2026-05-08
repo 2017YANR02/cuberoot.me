@@ -75,7 +75,7 @@ export default function AuthCallbackPage() {
       // NOTE: 用 WCA access_token 换取长效 JWT（365 天有效期）
       // WCA token 2 小时过期，JWT 可以长期使用
       try {
-        const exchangeRes = await fetch(apiUrl('/api/auth/exchange'), {
+        const exchangeRes = await fetch(apiUrl('/v1/auth/exchange'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken }),

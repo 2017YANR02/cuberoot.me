@@ -29,7 +29,7 @@ interface Props {
   alt?: string;
 }
 
-// `<img src="/api/visualcube.svg?...">` — 干净 URL，右键 "Copy image address" 拿得到。
+// `<img src="https://api.cuberoot.me/v1/visualcube.svg?...">` — 干净 URL，右键 "Copy image address" 拿得到。
 // 实际请求由 src/sw.ts (public/sw.js) 拦截，本地用 renderFromSimpleQuery 生成 SVG 返回，
 // 不打真后端。包源码改动后必须 rebuild SW (`pnpm --filter @cuberoot/client build-sw`)
 // 才会让所有 <VisualCube> 取到新代码（SW 内联了包，dev middleware 是 fallback）。
@@ -40,7 +40,7 @@ export function VisualCube({ algorithm, setup, view, mask, size = 88, puzzleSize
     else params.set('case', algorithm);
     if (mask) params.set('mask', mask);
     if (puzzleSize !== 3) params.set('pzl', String(puzzleSize));
-    return apiUrl(`/api/visualcube.svg?${params}`);
+    return apiUrl(`/v1/visualcube.svg?${params}`);
   }, [algorithm, setup, view, mask, size, puzzleSize]);
 
   return <img src={src} width={size} height={size} alt={alt} />;
