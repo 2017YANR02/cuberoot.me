@@ -184,7 +184,8 @@ function SubgroupIndex({
 }
 
 export default function AlgCategoryPage() {
-  const { puzzle: puzzleParam = '', set = '', subgroup: subgroupParam } = useParams<{ puzzle: string; set: string; subgroup?: string }>();
+  const { puzzle: puzzleParam = '', set = '', subgroup: subgroupParam } =
+    useParams<{ puzzle: string; set: string; subgroup?: string }>();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const validPuzzle = isPuzzle(puzzleParam);
@@ -240,16 +241,40 @@ export default function AlgCategoryPage() {
     }).catch(e => setError(String(e)));
   }, [puzzleParam, set, validPuzzle, meta, isAdmin]);
 
-  // Cases visible after subgroup filtering (subgroupParam, when set, narrows the umbrella).
+  // URL is flat: /alg/3x3/zbll/u (top OLL group) or /alg/3x3/zbll/u1 (sub COLL).
+  // Detect which level the slug refers to by scanning case data — top-level slugs
+  // and sub-level slugs are disjoint in current sets (U vs U1).
+  const subgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
+  const slugLevel: 'top' | 'sub' | null = useMemo(() => {
+    if (!subgroupSlug || !data) return null;
+    for (const c of data.cases) {
+      const parts = (c.subgroup || '').toLowerCase().split('/');
+      if (parts[0] === subgroupSlug) return 'top';
+      if (parts[1] === subgroupSlug) return 'sub';
+    }
+    return null;
+  }, [data, subgroupSlug]);
+
+  // Find the parent (top-level) slug for a sub-level slug — used for back nav and titles.
+  const subParentSlug = useMemo(() => {
+    if (!data || slugLevel !== 'sub' || !subgroupSlug) return null;
+    for (const c of data.cases) {
+      const parts = (c.subgroup || '').toLowerCase().split('/');
+      if (parts[1] === subgroupSlug) return parts[0];
+    }
+    return null;
+  }, [data, slugLevel, subgroupSlug]);
+
   const visibleCases = useMemo(() => {
     if (!data) return [];
-    if (!subgroupParam) return data.cases;
-    const wanted = decodeURIComponent(subgroupParam).toLowerCase();
+    if (!subgroupSlug) return data.cases;
     return data.cases.filter(c => {
-      const top = (c.subgroup || '').split('/', 1)[0].toLowerCase();
-      return top === wanted;
+      const parts = (c.subgroup || '').toLowerCase().split('/');
+      if (slugLevel === 'top') return parts[0] === subgroupSlug;
+      if (slugLevel === 'sub') return parts[1] === subgroupSlug;
+      return false;
     });
-  }, [data, subgroupParam]);
+  }, [data, subgroupSlug, slugLevel]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof visibleCases>();
@@ -291,12 +316,38 @@ export default function AlgCategoryPage() {
     });
   };
   const showSubgroupPicker = !!meta.umbrella && !subgroupParam;
-  const backTo = subgroupParam ? `/alg/${puzzleParam}/${set}` : `/alg/${puzzleParam}`;
 
-  // Header subtitle for umbrella subgroup pages: "ZBLL · U", etc.
-  const subgroupDisplay = subgroupParam
-    ? decodeURIComponent(subgroupParam).toUpperCase()
-    : '';
+  // Second-level (sub-sub) picker — only at umbrella top-level drill-in
+  // (e.g. /alg/3x3/zbll/u shows U1..U6 cards). Sub-level pages skip this.
+  const subSubgroups = useMemo(() => {
+    if (!meta.umbrella || slugLevel !== 'top') return [];
+    const map = new Map<string, { sample: AlgCase; count: number }>();
+    for (const c of visibleCases) {
+      const parts = (c.subgroup || '').split('/');
+      if (parts.length < 2) continue;
+      const sub = parts[1];
+      const e = map.get(sub);
+      if (e) e.count++;
+      else map.set(sub, { sample: c, count: 1 });
+    }
+    return Array.from(map.entries());
+  }, [visibleCases, slugLevel, meta.umbrella]);
+  const showSubSubgroupPicker = subSubgroups.length > 1;
+
+  const backTo = slugLevel === 'sub' && subParentSlug
+    ? `/alg/${puzzleParam}/${set}/${subParentSlug}`
+    : subgroupParam
+      ? `/alg/${puzzleParam}/${set}`
+      : `/alg/${puzzleParam}`;
+
+  // Header subtitle: "U" or "U · U1" (when at sub-level, also show parent OLL group)
+  const subgroupDisplay = (
+    slugLevel === 'sub' && subParentSlug && subgroupSlug
+      ? `${subParentSlug.toUpperCase()} · ${subgroupSlug.toUpperCase()}`
+      : subgroupSlug
+        ? subgroupSlug.toUpperCase()
+        : ''
+  );
 
   const toggleGroup = (g: string) => setCollapsedGroups(prev => {
     const next = new Set(prev);
@@ -370,6 +421,45 @@ export default function AlgCategoryPage() {
         <SubgroupIndex puzzle={puzzleParam} set={set} cases={data.cases} isZh={isZh} />
       )}
 
+      {data && showSubSubgroupPicker && (() => {
+        // For umbrella sets where second-level groups by corner permutation
+        // (ZBLL/1LLL/OLLCP), preview at this level shows COLL-style mask
+        // (corners visible, LL edges grayed). Other umbrellas use default thumb.
+        const LEVEL2_PICKER_MASK: Record<string, string> = {
+          zbll: 'coll', '1lll': 'coll', ollcp: 'coll',
+        };
+        const pickerMask = LEVEL2_PICKER_MASK[set];
+        return (
+          <div className="alg-subgroup-grid">
+            {subSubgroups.map(([subLabel, { sample, count }]) => {
+              const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
+              const sub2Slug = encodeURIComponent(subLabel.toLowerCase());
+              return (
+                <Link
+                  key={subLabel}
+                  to={`/alg/${puzzleParam}/${set}/${sub2Slug}`}
+                  className="alg-subgroup-card"
+                >
+                  <div className="alg-subgroup-thumb">
+                    <CaseThumb
+                      puzzle={puzzleParam}
+                      set={set}
+                      sticker={sample.sticker}
+                      alg={firstAlg}
+                      setup={sample.setup}
+                      size={120}
+                      mask={pickerMask}
+                    />
+                  </div>
+                  <div className="alg-subgroup-card-title">{subLabel}</div>
+                  <div className="alg-subgroup-card-count">{count} {isZh ? '个' : 'cases'}</div>
+                </Link>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       {editorState && (
         <AdminCaseEditor
           puzzle={puzzleParam}
@@ -404,10 +494,10 @@ export default function AlgCategoryPage() {
         />
       )}
 
-      {data && !showSubgroupPicker && grouped.map(([subgroup, cases]) => {
+      {data && !showSubgroupPicker && !showSubSubgroupPicker && grouped.map(([subgroup, cases]) => {
         const collapsed = collapsedGroups.has(subgroup);
         // Subgroup headers visible when we have multiple groups, or when subgroup label is non-empty
-        // and this isn't a single-subgroup umbrella view (which already has the label in the page header).
+        // and this isn't a single-subgroup view (header already in page title).
         const showHeader = !subgroupParam && (grouped.length > 1 || subgroup !== '');
         return (
           <section key={subgroup || '_root_'} className="alg-subgroup">
