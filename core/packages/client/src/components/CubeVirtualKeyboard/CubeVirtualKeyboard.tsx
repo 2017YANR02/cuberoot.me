@@ -59,15 +59,15 @@ const FACE_KEYS: Record<string, boolean> = {
 };
 
 // NOTE: 公式联想触发器表
-const SUGGEST_FORMULAS = [
-  { label: "R U R' U'", formula: "R U R' U' " },
-  { label: "R U' R' U", formula: "R U' R' U " },
-  { label: "R' F R F'", formula: "R' F R F' " },
-  { label: "F R' F' R", formula: "F R' F' R " },
-  { label: "L' U' L U", formula: "L' U' L U " },
-  { label: "L' U L U'", formula: "L' U L U' " },
-  { label: "L F' L' F", formula: "L F' L' F " },
-  { label: "F' L F L'", formula: "F' L F L' " },
+const SUGGEST_ALGS = [
+  { label: "R U R' U'", alg: "R U R' U' " },
+  { label: "R U' R' U", alg: "R U' R' U " },
+  { label: "R' F R F'", alg: "R' F R F' " },
+  { label: "F R' F' R", alg: "F R' F' R " },
+  { label: "L' U' L U", alg: "L' U' L U " },
+  { label: "L' U L U'", alg: "L' U L U' " },
+  { label: "L F' L' F", alg: "L F' L' F " },
+  { label: "F' L F L'", alg: "F' L F L' " },
 ];
 
 // NOTE: 自动替换非标准标点
@@ -81,7 +81,7 @@ const PUNCT_MAP: Record<string, string> = {
 const PUNCT_RE = /[‘’“”"（），。]/g;
 
 /** 词法解析——把魔方公式字符串切成 token 数组 */
-function tokenizeFormula(str: string): string[] {
+function tokenizeAlg(str: string): string[] {
   const re = /([UDFBRLMESxyz]w?['2]?)/g;
   const tokens: string[] = [];
   let m: RegExpExecArray | null;
@@ -91,16 +91,16 @@ function tokenizeFormula(str: string): string[] {
 
 /** 前缀匹配——从光标前 N 个 token 中找出匹配的公式建议 */
 function getSuggestions(inputStr: string) {
-  const inputTokens = tokenizeFormula(inputStr);
-  const results: Array<{ label: string; formula: string; prefixLen: number }> = [];
-  for (const def of SUGGEST_FORMULAS) {
-    const defTokens = tokenizeFormula(def.formula);
+  const inputTokens = tokenizeAlg(inputStr);
+  const results: Array<{ label: string; alg: string; prefixLen: number }> = [];
+  for (const def of SUGGEST_ALGS) {
+    const defTokens = tokenizeAlg(def.alg);
     const maxCheck = Math.min(inputTokens.length, defTokens.length - 1);
     for (let n = maxCheck; n >= 1; n--) {
       const tail = inputTokens.slice(-n);
       const prefix = defTokens.slice(0, n);
       if (tail.join(' ') === prefix.join(' ')) {
-        results.push({ label: def.label, formula: def.formula, prefixLen: n });
+        results.push({ label: def.label, alg: def.alg, prefixLen: n });
         break;
       }
     }
@@ -157,7 +157,7 @@ function deleteBack(el: EditorTarget, n = 1) {
   for (let i = 0; i < n; i++) document.execCommand('delete', false);
 }
 
-/** 找 caret 前最后一个 token 的边界,返回 {token, len} 或 null;边界靠 tokenizeFormula 判 */
+/** 找 caret 前最后一个 token 的边界,返回 {token, len} 或 null;边界靠 tokenizeAlg 判 */
 function findPrevTokenInfo(el: EditorTarget): { token: string; offsetFromCaret: number } | null {
   const before = getTextBeforeCaret(el);
   // NOTE: 取最后一个 token + 它和 caret 之间的空白长度
@@ -283,7 +283,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
   const { t } = useTranslation();
   const [activePage, setActivePage] = useState(0);
   const [shiftState, setShiftState] = useState<ShiftState>('off');
-  const [suggestions, setSuggestions] = useState<Array<{ label: string; formula: string; prefixLen: number }>>([]);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; alg: string; prefixLen: number }>>([]);
   const [modifierDisabled, setModifierDisabled] = useState(true);
 
   // NOTE: 长按/手势相关 ref
@@ -681,14 +681,14 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     e.preventDefault();
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.vkb-suggest-btn');
     if (!btn) return;
-    const formula = btn.dataset.formula ?? '';
+    const alg = btn.dataset.alg ?? '';
     const prefixLen = parseInt(btn.dataset.prefixLen ?? '0', 10);
 
     const el = target.current;
     if (!el) return;
     const before = getTextBeforeCaret(el);
     const line = before.split('\n').pop() || '';
-    const tokens = tokenizeFormula(line);
+    const tokens = tokenizeAlg(line);
     const prefixTokens = tokens.slice(-prefixLen);
 
     // NOTE: 从字符串末尾找到前缀 token 序列的起始位置
@@ -698,7 +698,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     );
     const match = re.exec(searchIn);
     if (!match) {
-      vkbInsert(formula);
+      vkbInsert(alg);
       setSuggestions([]);
       return;
     }
@@ -709,12 +709,12 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       const pos = el.selectionStart ?? 0;
       el.focus();
       el.setSelectionRange(pos - deleteCount, pos);
-      document.execCommand('insertText', false, formula);
+      document.execCommand('insertText', false, alg);
     } else {
       // NOTE: contenteditable——倒退 deleteCount 字符然后插入
       focusTarget(el);
       deleteBack(el, deleteCount);
-      document.execCommand('insertText', false, formula);
+      document.execCommand('insertText', false, alg);
     }
     normAndNotify();
     updateModifierState();
@@ -785,7 +785,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             key={s.label}
             type="button"
             className="vkb-suggest-btn"
-            data-formula={s.formula}
+            data-alg={s.alg}
             data-prefix-len={s.prefixLen}
           >
             {s.label}

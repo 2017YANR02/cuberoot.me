@@ -8,8 +8,14 @@
  *  - AlgCategoryPage:用户点击公式行展开后播放
  *  - AlgEditor (admin):编辑时显示当前 focused 行的预览,核对公式
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
 import type { AlgPuzzle } from '@cuberoot/shared';
+
+export interface AlgPlayerHandle {
+  /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getPlayer(): any | null;
+}
 
 /** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
 export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
@@ -56,18 +62,24 @@ interface Props {
   puzzle: AlgPuzzle;
   set: string;
   setup?: string;
-  /** 自定义尺寸,默认 260px */
+  /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
   size?: number;
+  /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
+  fillPane?: boolean;
 }
 
-export default function AlgPlayer({ alg, puzzle, set, setup, size = 260 }: Props) {
+const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer({ alg, puzzle, set, setup, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
+  useImperativeHandle(ref, () => ({ getPlayer: () => playerRef.current }), []);
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let player: any = null;
+    let ro: ResizeObserver | null = null;
     const normalized = normalizeAlgForTwisty(puzzle, alg);
     const stickering = pickStickering(puzzle, set);
     // 优先用 setup(rotation-free),否则用 alg 的 inverse(可能带 rotation)
@@ -92,9 +104,25 @@ export default function AlgPlayer({ alg, puzzle, set, setup, size = 260 }: Props
         if (stickering) opts.experimentalStickering = stickering;
         player = new Ctor(opts);
         player.style.colorScheme = 'light';
-        player.style.width = size + 'px';
-        player.style.height = size + 'px';
+        if (fillPane) {
+          // ResizeObserver 把 host 像素尺寸写到 player,WebGL canvas 才会重绘
+          const syncSize = () => {
+            const w = host.offsetWidth;
+            const h = host.offsetHeight;
+            if (w > 0 && h > 0) {
+              player.style.width = `${w}px`;
+              player.style.height = `${h}px`;
+            }
+          };
+          syncSize();
+          ro = new ResizeObserver(syncSize);
+          ro.observe(host);
+        } else {
+          player.style.width = size + 'px';
+          player.style.height = size + 'px';
+        }
         host.appendChild(player);
+        playerRef.current = player;
       } catch (err) {
         console.warn(`[AlgPlayer] ${puzzle} alg failed: ${alg}`, err);
         host.innerHTML = `<div style="font-size:12px;color:#888;padding:8px">player unavailable</div>`;
@@ -102,15 +130,16 @@ export default function AlgPlayer({ alg, puzzle, set, setup, size = 260 }: Props
     }).catch(err => console.warn('Failed to load cubing library:', err));
     return () => {
       cancelled = true;
+      if (ro) ro.disconnect();
       if (player && host.contains(player)) host.removeChild(player);
+      if (playerRef.current === player) playerRef.current = null;
     };
-  }, [alg, puzzle, set, setup, size]);
+  }, [alg, puzzle, set, setup, size, fillPane]);
   // NOTE: 固定 host 尺寸,player 重 mount 时容器占位不丢,父布局不抖
-  return (
-    <div
-      ref={hostRef}
-      className="alg-twisty-host"
-      style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    />
-  );
-}
+  const hostStyle: CSSProperties = fillPane
+    ? { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+    : { width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' };
+  return <div ref={hostRef} className="alg-twisty-host" style={hostStyle} />;
+});
+
+export default AlgPlayer;

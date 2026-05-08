@@ -8,8 +8,8 @@
  *
  * 用法:
  *   const el = useRef<HTMLTextAreaElement | HTMLDivElement | null>(null);
- *   const handle = useRef<FormulaInputHandle>(null);
- *   <FormulaInput ref={handle} elementRef={el} markable autoSpace ... />
+ *   const handle = useRef<AlgInputHandle>(null);
+ *   <AlgInput ref={handle} elementRef={el} markable autoSpace ... />
  *   <CubeVirtualKeyboard target={el} />
  *   ...
  *   handle.current?.getText()  // 提交时取文本
@@ -21,10 +21,10 @@ import {
   useEffect,
   type RefObject,
 } from 'react';
-import { autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret, normalizePunctuationTA, normalizePunctuationCE } from '../../utils/formula_autospace';
+import { autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret, normalizePunctuationTA, normalizePunctuationCE } from '../../utils/alg_autospace';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
-export interface FormulaInputHandle {
+export interface AlgInputHandle {
   /** 纯文本(去标签、去零宽空格、trim) */
   getText(): string;
   /** HTML(含 inline 标签;markable=false 时 = text) */
@@ -38,7 +38,7 @@ export interface FormulaInputHandle {
   getElement(): HTMLTextAreaElement | HTMLDivElement | null;
 }
 
-export interface FormulaInputProps {
+export interface AlgInputProps {
   initialText?: string;
   /** markable=true 时若提供则按 HTML 初始化;否则用 initialText */
   initialHtml?: string;
@@ -75,7 +75,7 @@ function autoResizeTextarea(el: HTMLTextAreaElement) {
   el.style.height = el.scrollHeight + 'px';
 }
 
-const FormulaInput = forwardRef<FormulaInputHandle, FormulaInputProps>(function FormulaInput(props, ref) {
+const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(props, ref) {
   const {
     initialText = '',
     initialHtml,
@@ -270,4 +270,4 @@ const FormulaInput = forwardRef<FormulaInputHandle, FormulaInputProps>(function 
   );
 });
 
-export default FormulaInput;
+export default AlgInput;

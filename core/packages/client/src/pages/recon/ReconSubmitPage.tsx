@@ -32,7 +32,7 @@ import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
-import FormulaInput from '../../components/FormulaInput';
+import AlgInput from '../../components/AlgInput';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Loader2, Shuffle } from 'lucide-react';
@@ -1182,7 +1182,7 @@ export default function ReconSubmitPage() {
               crossNormalized={true}
             />
           ) : (
-            <FormulaInput
+            <AlgInput
               elementRef={solutionRef}
               initialText={form.solution || ''}
               autoSpace
