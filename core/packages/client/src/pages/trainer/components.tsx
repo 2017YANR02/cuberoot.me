@@ -7,10 +7,11 @@
  * - StatsList: chip list of completed times + clear button
  * - CaseTreePicker: the subgroup tree on the selection page
  */
-import type { ReactNode } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '../alg/CaseThumb';
+import { VisualCube } from '../../components/VisualCube';
 import { TimerState } from '../../stores/trainerStore';
 import type { TrainerSolve } from '../../stores/trainerStore';
 import { caseKey } from '../../utils/trainerCaseKey';
@@ -151,6 +152,27 @@ export function StatsList({
 
 /* ─────────── CaseTreePicker ─────────── */
 
+/** Tri-state checkbox (checked / unchecked / indeterminate). */
+function TriCheckbox({ checked, indeterminate }: { checked: boolean; indeterminate: boolean }) {
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      ref={el => { if (el) el.indeterminate = indeterminate; }}
+      readOnly
+    />
+  );
+}
+
+interface TopGroup {
+  label: string;
+  /** Sub label "" means "no second level" (flat set). */
+  subs: Map<string, AlgCase[]>;
+  allCases: AlgCase[];
+  /** First case in this top group — drives the OLL-pattern thumbnail. */
+  sample: AlgCase;
+}
+
 export function CaseTreePicker({
   puzzle, set, cases, selected, onChange, isZh,
 }: {
@@ -162,16 +184,54 @@ export function CaseTreePicker({
   onChange: (next: Set<string>) => void;
   isZh: boolean;
 }) {
-  // Group by top-level subgroup label
-  const groups = new Map<string, AlgCase[]>();
-  for (const c of cases) {
-    const top = (c.subgroup || '').split('/', 1)[0];
-    const arr = groups.get(top) ?? [];
-    arr.push(c);
-    groups.set(top, arr);
-  }
+  // Build hierarchy: top → sub → cases. For flat sets, sub key is "".
+  const { tops, hasSubLevel } = useMemo(() => {
+    const map = new Map<string, TopGroup>();
+    let hasSub = false;
+    for (const c of cases) {
+      const parts = (c.subgroup || '').split('/');
+      const top = parts[0] || '';
+      const sub = parts.slice(1).join('/');
+      if (sub) hasSub = true;
+      let g = map.get(top);
+      if (!g) {
+        g = { label: top, subs: new Map(), allCases: [], sample: c };
+        map.set(top, g);
+      }
+      g.allCases.push(c);
+      const arr = g.subs.get(sub) ?? [];
+      arr.push(c);
+      g.subs.set(sub, arr);
+    }
+    return { tops: Array.from(map.values()), hasSubLevel: hasSub };
+  }, [cases]);
 
-  const allSelected = cases.length > 0 && cases.every(c => selected.has(caseKey(c)));
+  // Top-level expansion. Default-collapsed for umbrella sets (ZBLL).
+  const [expanded, setExpanded] = useState<Set<string>>(() => {
+    if (hasSubLevel) return new Set();
+    return new Set(tops.map(t => t.label));
+  });
+  const toggleTop = (label: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(label)) next.delete(label);
+    else next.add(label);
+    return next;
+  });
+
+  // Sub-level expansion (only relevant when hasSubLevel). Default-collapsed —
+  // expanding a top reveals sub-cards (COLL preview), expanding a sub reveals
+  // the actual case cells. Key format: "${topLabel}/${subLabel}".
+  const [expandedSubs, setExpandedSubs] = useState<Set<string>>(new Set());
+  const toggleSub = (key: string) => setExpandedSubs(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    return next;
+  });
+
+  const totalSelected = cases.filter(c => selected.has(caseKey(c))).length;
+  const allSelected = cases.length > 0 && totalSelected === cases.length;
+  const noneSelected = totalSelected === 0;
   const toggleAll = () => {
     const next = new Set(selected);
     if (allSelected) {
@@ -182,79 +242,178 @@ export function CaseTreePicker({
     onChange(next);
   };
 
+  /** Toggle a bulk set of cases — adds all if any unselected, else removes all. */
+  const toggleBulk = (bulk: AlgCase[]) => {
+    const allOn = bulk.every(c => selected.has(caseKey(c)));
+    const next = new Set(selected);
+    if (allOn) {
+      for (const c of bulk) next.delete(caseKey(c));
+    } else {
+      for (const c of bulk) next.add(caseKey(c));
+    }
+    onChange(next);
+  };
+
+  /** Top-level thumb: OLL pattern (yellow/gray) for hierarchical sets, full case
+   *  preview otherwise. Sized small (44px) to keep the row compact. */
+  function TopThumb({ g }: { g: TopGroup }) {
+    if (hasSubLevel && puzzle === '3x3') {
+      const firstAlg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
+      return <VisualCube algorithm={firstAlg} view="oll" size={44} />;
+    }
+    return (
+      <CaseThumb
+        puzzle={puzzle}
+        set={set}
+        sticker={g.sample.sticker}
+        alg={g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? ''}
+        setup={g.sample.setup}
+        size={44}
+      />
+    );
+  }
+
   return (
     <div className="trainer-set-block">
       <div className="trainer-set-header" onClick={toggleAll}>
-        <input type="checkbox" checked={allSelected} readOnly />
+        <TriCheckbox checked={allSelected} indeterminate={!allSelected && !noneSelected} />
         <span>{isZh ? '全选' : 'Select all'}</span>
         <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
-          ({cases.filter(c => selected.has(caseKey(c))).length}/{cases.length})
+          ({totalSelected}/{cases.length})
         </span>
       </div>
 
-      {[...groups.entries()].map(([label, groupCases]) => {
-        const groupAll = groupCases.every(c => selected.has(caseKey(c)));
-        const groupNone = groupCases.every(c => !selected.has(caseKey(c)));
-        const indeterminate = !groupAll && !groupNone;
-        const toggleGroup = () => {
-          const next = new Set(selected);
-          if (groupAll) {
-            for (const c of groupCases) next.delete(caseKey(c));
-          } else {
-            for (const c of groupCases) next.add(caseKey(c));
-          }
-          onChange(next);
-        };
+      {tops.map(top => {
+        const isExpanded = expanded.has(top.label);
+        const topSelectedCount = top.allCases.filter(c => selected.has(caseKey(c))).length;
+        const topAll = topSelectedCount === top.allCases.length && top.allCases.length > 0;
+        const topNone = topSelectedCount === 0;
         return (
-          <div className="trainer-subgroup" key={label || '_root'}>
-            {label && (
-              <div className="trainer-subgroup-header" onClick={toggleGroup}>
-                <input
-                  type="checkbox"
-                  checked={groupAll}
-                  ref={el => { if (el) el.indeterminate = indeterminate; }}
-                  readOnly
-                />
-                <span>{label}</span>
-                <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
-                  ({groupCases.filter(c => selected.has(caseKey(c))).length}/{groupCases.length})
+          <div className="trainer-subgroup" key={top.label || '_root'}>
+            {top.label && (
+              <div className="trainer-subgroup-header">
+                <button
+                  type="button"
+                  className="trainer-chevron-btn"
+                  onClick={(e) => { e.stopPropagation(); toggleTop(top.label); }}
+                  title={isExpanded ? (isZh ? '折叠' : 'Collapse') : (isZh ? '展开' : 'Expand')}
+                >
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+                <span
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }}
+                  onClick={() => toggleBulk(top.allCases)}
+                >
+                  <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
+                  <TopThumb g={top} />
+                  <span>{set.toUpperCase()} {top.label}</span>
+                  <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
+                    ({topSelectedCount}/{top.allCases.length})
+                  </span>
                 </span>
               </div>
             )}
-            <div className="trainer-case-grid">
-              {groupCases.map(c => {
-                const k = caseKey(c);
-                const isOn = selected.has(k);
-                const toggleCase = () => {
-                  const next = new Set(selected);
-                  if (isOn) next.delete(k);
-                  else next.add(k);
-                  onChange(next);
-                };
-                return (
-                  <div
-                    key={k}
-                    className={`trainer-case-cell${isOn ? ' is-selected' : ''}`}
-                    onClick={toggleCase}
-                  >
-                    <div className="trainer-case-cell-thumb">
-                      <CaseThumb
-                        puzzle={puzzle}
-                        set={set}
-                        sticker={c.sticker}
-                        alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-                        setup={c.setup}
-                        size={64}
-                      />
-                    </div>
-                    <div className="trainer-case-cell-name">{c.name}</div>
-                  </div>
-                );
-              })}
-            </div>
+
+            {isExpanded && (
+              hasSubLevel ? (
+                // 3-level: sub-subgroups laid out horizontally (flex-wrap row). Each
+                // sub starts collapsed showing only the COLL preview chip; clicking
+                // its chevron grows it to full row-width and reveals its case cells.
+                <div className="trainer-sub-subgroup-row">
+                  {Array.from(top.subs.entries()).map(([subLabel, subCases]) => {
+                    const subKey = `${top.label}/${subLabel}`;
+                    const subExpanded = expandedSubs.has(subKey);
+                    const subSelectedCount = subCases.filter(c => selected.has(caseKey(c))).length;
+                    const subAll = subSelectedCount === subCases.length;
+                    const subNone = subSelectedCount === 0;
+                    const subSampleAlg = subCases[0]?.algs.flat()[0]?.alg ?? subCases[0]?.standard ?? '';
+                    // ZBLL/1LLL/OLLCP second-level groups by COLL recognition — show COLL mask.
+                    const useCollMask = puzzle === '3x3' && (set === 'zbll' || set === '1lll' || set === 'ollcp');
+                    return (
+                      <div
+                        className={`trainer-sub-subgroup${subExpanded ? ' is-expanded' : ''}`}
+                        key={subLabel || '_sub_root'}
+                      >
+                        {subLabel && (
+                          <div className="trainer-sub-subgroup-header">
+                            <button
+                              type="button"
+                              className="trainer-chevron-btn"
+                              onClick={(e) => { e.stopPropagation(); toggleSub(subKey); }}
+                              title={subExpanded ? (isZh ? '折叠' : 'Collapse') : (isZh ? '展开' : 'Expand')}
+                            >
+                              {subExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            </button>
+                            <span
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }}
+                              onClick={() => toggleBulk(subCases)}
+                            >
+                              <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
+                              {useCollMask
+                                ? <VisualCube algorithm={subSampleAlg} setup={subCases[0].setup} view="pll" mask="coll" size={36} />
+                                : <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
+                                    alg={subSampleAlg} setup={subCases[0].setup} size={36} />}
+                              <span>{subLabel}</span>
+                              <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
+                                ({subSelectedCount}/{subCases.length})
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                        {subExpanded && (
+                          <div className="trainer-case-grid">
+                            {subCases.map(c => <CaseCell key={caseKey(c)}
+                              c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange} />)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                // Flat: cases directly inside top
+                <div className="trainer-case-grid">
+                  {top.allCases.map(c => <CaseCell key={caseKey(c)}
+                    c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange} />)}
+                </div>
+              )
+            )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CaseCell({
+  c, puzzle, set, selected, onChange,
+}: {
+  c: AlgCase;
+  puzzle: AlgPuzzle;
+  set: string;
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const k = caseKey(c);
+  const isOn = selected.has(k);
+  const toggle = () => {
+    const next = new Set(selected);
+    if (isOn) next.delete(k); else next.add(k);
+    onChange(next);
+  };
+  return (
+    <div className={`trainer-case-cell${isOn ? ' is-selected' : ''}`} onClick={toggle}>
+      <div className="trainer-case-cell-thumb">
+        <CaseThumb
+          puzzle={puzzle}
+          set={set}
+          sticker={c.sticker}
+          alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+          setup={c.setup}
+          size={64}
+        />
+      </div>
+      <div className="trainer-case-cell-name">{c.name}</div>
     </div>
   );
 }

@@ -6,9 +6,8 @@ on:
     paths:
       - 'core/packages/stats-build/src/**/*.ts'
   schedule:
-    # 每周五 18:00 UTC = Fri 11:00 AM PDT
-    # (冬令时 PST 期间会变成 10:00 AM,GH cron 不识别 TZ)
-    - cron: '0 18 * * 5'
+    # UTC 周日 20:00
+    - cron: '0 20 * * 0'
   workflow_dispatch:
     inputs:
       stats_filter:
