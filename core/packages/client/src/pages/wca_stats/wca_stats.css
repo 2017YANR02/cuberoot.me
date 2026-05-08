@@ -1,5 +1,11 @@
 /* NOTE: WCA 统计页样式 — 暗色主题 + 现代表格 */
 
+/* 项目列：仅 cubing-icon */
+.wca-stats-table .wca-stats-event-icon {
+  font-size: 18px;
+  color: var(--text-sub, #aaa);
+}
+
 .wca-stats-page {
   width: fit-content;
   min-width: min(100%, 800px);
