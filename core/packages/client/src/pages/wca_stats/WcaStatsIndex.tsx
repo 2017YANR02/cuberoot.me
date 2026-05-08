@@ -183,6 +183,27 @@ export default function WcaStatsIndex() {
               <Link to={`/wca-stats/historical${langQuery}`} className="wca-stats-index-card">
                 {isZh ? '历史排名（任意年/国家/项目切片）' : 'Historical Ranks (any year × country × event)'}
               </Link>
+              <Link to={`/wca-stats/grand-slam${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '大满贯（WC + 洲际 + 国家赛领奖台 + WR）' : 'Grand Slam (WC + Continental + National podium + WR)'}
+              </Link>
+              <Link to={`/wca-stats/all-results${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '全部成绩排行' : 'All Results Ranking'}
+              </Link>
+              <Link to={`/wca-stats/year-results${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '当年成绩排行' : 'Current Year Ranking'}
+              </Link>
+              <Link to={`/wca-stats/cohort-ranks${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '参赛届别排行' : 'Cohort Ranks'}
+              </Link>
+              <Link to={`/wca-stats/success-rate${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '项目成功率' : 'Event Success Rate'}
+              </Link>
+              <Link to={`/wca-stats/all-events-done${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '全项目达成排行榜' : 'All Events Achievement'}
+              </Link>
+              <Link to={`/wca-stats/sum-of-ranks${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '全项目排行（名次总和）' : 'Sum of Ranks'}
+              </Link>
             </div>
           </section>
         )}

@@ -40,6 +40,14 @@ const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDeta
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: 历史排名 — 任意 (event, year, country, type) 切片
 const HistoricalRanksPage = lazy(() => import('./pages/wca_stats/HistoricalRanksPage'));
+// NOTE: WCA 6 个 cubing.pro 风格统计 tab
+const GrandSlamPage = lazy(() => import('./pages/wca_stats/GrandSlamPage'));
+const AllResultsPage = lazy(() => import('./pages/wca_stats/AllResultsPage'));
+const YearResultsPage = lazy(() => import('./pages/wca_stats/YearResultsPage'));
+const CohortRanksPage = lazy(() => import('./pages/wca_stats/CohortRanksPage'));
+const SuccessRatePage = lazy(() => import('./pages/wca_stats/SuccessRatePage'));
+const AllEventsDonePage = lazy(() => import('./pages/wca_stats/AllEventsDonePage'));
+const SumOfRanksPage = lazy(() => import('./pages/wca_stats/SumOfRanksPage'));
 // NOTE: Calendar 懒加载 — 比赛日历(原 /upcoming-comps,2026-05 改名)
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 // NOTE: Calendar Stats — 比赛随时间分布的可视化
@@ -208,6 +216,13 @@ function App() {
         <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
         <Route path="/wca-stats/historical" element={<Suspense fallback={<div>Loading...</div>}><HistoricalRanksPage /></Suspense>} />
+        <Route path="/wca-stats/grand-slam" element={<Suspense fallback={<div>Loading...</div>}><GrandSlamPage /></Suspense>} />
+        <Route path="/wca-stats/all-results" element={<Suspense fallback={<div>Loading...</div>}><AllResultsPage /></Suspense>} />
+        <Route path="/wca-stats/year-results" element={<Suspense fallback={<div>Loading...</div>}><YearResultsPage /></Suspense>} />
+        <Route path="/wca-stats/cohort-ranks" element={<Suspense fallback={<div>Loading...</div>}><CohortRanksPage /></Suspense>} />
+        <Route path="/wca-stats/success-rate" element={<Suspense fallback={<div>Loading...</div>}><SuccessRatePage /></Suspense>} />
+        <Route path="/wca-stats/all-events-done" element={<Suspense fallback={<div>Loading...</div>}><AllEventsDonePage /></Suspense>} />
+        <Route path="/wca-stats/sum-of-ranks" element={<Suspense fallback={<div>Loading...</div>}><SumOfRanksPage /></Suspense>} />
 <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />

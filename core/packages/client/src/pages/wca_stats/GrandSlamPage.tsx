@@ -1,0 +1,152 @@
+/**
+ * 大满贯 - WC + Continental + National 领奖台 + WR(任一类型)的人.
+ * /wca-stats/grand-slam
+ */
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ChevronLeft } from 'lucide-react';
+import { EventSelect } from '../../components/EventSelect';
+import { Flag } from '../../utils/flag';
+import { formatWcaResult } from '../../utils/wca_format_result';
+import { displayCuberName } from '../../utils/name_utils';
+import { apiUrl } from '../../utils/api_base';
+import LangToggle from '../../components/LangToggle';
+import './wca_stats_extra.css';
+
+const EVENTS = [
+  '333','222','444','555','666','777',
+  '333bf','333fm','333oh',
+  'minx','pyram','clock','skewb','sq1',
+  '444bf','555bf','333mbf',
+];
+
+interface ChampInfo { compId: string; name: string | null; pos: number | null }
+interface GsRow {
+  wcaId: string; name: string; eventId: string;
+  single: number | null; average: number | null;
+  countryId: string; iso2: string | null;
+  hasWr: boolean; isOnlyFirst: boolean;
+  worldChamp: ChampInfo | null;
+  continentalChamp: ChampInfo | null;
+  nationalChamp: ChampInfo | null;
+}
+
+export default function GrandSlamPage() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const [params, setParams] = useSearchParams();
+  const event = params.get('event') ?? '';
+  const onlyFirst = params.get('onlyFirst') === '1';
+
+  const setParam = (k: string, v: string) => {
+    const next = new URLSearchParams(params);
+    if (v) next.set(k, v); else next.delete(k);
+    setParams(next, { replace: false });
+  };
+
+  const [rows, setRows] = useState<GsRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const url = new URL(apiUrl('/v1/wca/grand-slam'), window.location.origin);
+    if (event) url.searchParams.set('event', event);
+    if (onlyFirst) url.searchParams.set('onlyFirst', '1');
+    fetch(url.toString().replace(window.location.origin, ''))
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then((j: { rows: GsRow[] }) => setRows(j.rows))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [event, onlyFirst]);
+
+  return (
+    <div className="wse-page">
+      <header className="wse-header">
+        <div className="wse-header-row">
+          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back">
+            <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
+          </Link>
+          <LangToggle />
+        </div>
+        <h1>{isZh ? '大满贯' : 'Grand Slam'}</h1>
+        <p className="wse-subtitle">
+          {isZh
+            ? '同时获得世锦赛、洲际赛、国家赛领奖台,并打破过该项目 WR 的选手'
+            : 'Cubers who podiumed at World + Continental + National championships and broke a WR for that event'}
+        </p>
+      </header>
+
+      <div className="wse-filters">
+        <div className="wse-filter">
+          <label>{isZh ? '项目' : 'Event'}</label>
+          <EventSelect events={EVENTS} value={event} onChange={v => setParam('event', v)} allLabel={isZh ? '全部' : 'All'} />
+        </div>
+        <div className="wse-filter">
+          <label>{isZh ? '筛选' : 'Filter'}</label>
+          <label className="wse-toggle" style={{ height: 34, alignItems: 'center', display: 'flex' }}>
+            <input type="checkbox" checked={onlyFirst} onChange={e => setParam('onlyFirst', e.target.checked ? '1' : '')} />
+            {isZh ? '仅全部第一' : 'Only all gold'}
+          </label>
+        </div>
+      </div>
+
+      <div className="wse-table-wrapper">
+        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {error && <div className="wse-state wse-state-error">Error: {error}</div>}
+        {!loading && !error && (
+          <>
+            <div className="wse-result-meta">
+              {isZh ? `共 ${rows.length} 项达成` : `${rows.length} achievements`}
+            </div>
+            <table className="wse-table">
+              <thead>
+                <tr>
+                  <th className="wse-rank-col">#</th>
+                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th>{isZh ? '项目' : 'Event'}</th>
+                  <th className="wse-value-col">{isZh ? '单次' : 'Single'}</th>
+                  <th className="wse-value-col">{isZh ? '平均' : 'Average'}</th>
+                  <th>WR</th>
+                  <th>{isZh ? '世锦赛' : 'World'}</th>
+                  <th>{isZh ? '洲际赛' : 'Continental'}</th>
+                  <th>{isZh ? '国家赛' : 'National'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={`${r.wcaId}-${r.eventId}`}>
+                    <td className="wse-rank-col">{i + 1}</td>
+                    <td>
+                      {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">
+                        {displayCuberName(r.name, isZh)}
+                      </a>
+                    </td>
+                    <td>{r.eventId}</td>
+                    <td className="wse-value-col">{r.single != null ? formatWcaResult(r.single, r.eventId, 'single') : '—'}</td>
+                    <td className="wse-value-col">{r.average != null ? formatWcaResult(r.average, r.eventId, 'average') : '—'}</td>
+                    <td>{r.hasWr ? <span style={{ color: '#ffc107' }}>WR</span> : ''}</td>
+                    <td className="wse-detail-cell">{champCell(r.worldChamp)}</td>
+                    <td className="wse-detail-cell">{champCell(r.continentalChamp)}</td>
+                    <td className="wse-detail-cell">{champCell(r.nationalChamp)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function champCell(c: { compId: string; name: string | null; pos: number | null } | null) {
+  if (!c) return '';
+  const medal = c.pos === 1 ? '🥇' : c.pos === 2 ? '🥈' : c.pos === 3 ? '🥉' : '';
+  return (
+    <span><strong>{c.name ?? c.compId}</strong> {medal}</span>
+  );
+}
