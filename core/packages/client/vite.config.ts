@@ -97,7 +97,7 @@ function visualcubeDev(): Plugin {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url || '';
-        if (!url.startsWith('/api/visualcube.svg')) return next();
+        if (!url.startsWith('/v1/visualcube.svg')) return next();
         try {
           const qs = new URL(url, 'http://localhost').searchParams;
           const svg = renderFromSimpleQuery({
@@ -163,9 +163,9 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
     },
     proxy: {
-      // NOTE: Hono API 代理到云服务器线上后端（本地无 recon_db，无法运行 Hono 后端）
-      '/api': {
-        target: 'https://www.cuberoot.me',
+      // NOTE: Hono API 代理到线上后端（本地无 recon_db，无法运行 Hono 后端）
+      '/v1': {
+        target: 'https://api.cuberoot.me',
         changeOrigin: true,
         secure: true,
       },

@@ -1,9 +1,9 @@
 /// <reference lib="WebWorker" />
 /**
- * Service Worker — 拦截 /api/visualcube.svg，本地用 renderFromSimpleQuery 生成 SVG。
+ * Service Worker — 拦截 /v1/visualcube.svg，本地用 renderFromSimpleQuery 生成 SVG。
  *
  * 效果：
- * - <img src="/api/visualcube.svg?..."> 浏览器右键 "Copy image address" 拿到干净 URL
+ * - <img src="/v1/visualcube.svg?..."> 浏览器右键 "Copy image address" 拿到干净 URL
  * - SW 激活后不发真网络请求（本地生成）
  * - 离线 / 后端挂掉也能出图（除首次访问）
  * - 首次访问 SW 还没装好 → 走真 server (`@cuberoot/server` 路由)
@@ -28,7 +28,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (url.pathname !== '/api/visualcube.svg') return;
+  if (url.pathname !== '/v1/visualcube.svg') return;
 
   event.respondWith((async () => {
     try {

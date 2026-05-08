@@ -4,11 +4,9 @@
 
 ### Solve · Train · Analyze
 
-**A modern Rubik's Cube toolkit — solvers, trainers, analytics, and stats, all in your browser.**
+**Solvers, trainers, analytics, and stats for the Rubik's Cube — all in your browser.**
 
-[**🌐 Open the site →**](https://ruiminyan.github.io/)
-
-Mirrored at [cuberoot.me](https://cuberoot.me/) for users in mainland China — same site, same content.
+[**🌐 Open the site →**](https://cuberoot.me/)
 
 
 </div>
@@ -23,31 +21,31 @@ A growing suite of speedcubing tools, organized as a single SPA on top of a pnpm
 
 | Tool | Path | What it does |
 |---|---|---|
-| **Trainer** | [`/trainer`](https://ruiminyan.github.io/trainer) | PLL / OLL / ZBLL / ZBLS recognition trainers |
-| **Frame Count** | [`/frame-count`](https://ruiminyan.github.io/frame-count) | Frame-accurate timing from solve videos (WebCodecs + mp4box) |
-| **Recon** | [`/recon`](https://ruiminyan.github.io/recon) | Solve reconstruction with step-by-step playback |
-| **Calculator** | [`/calc`](https://ruiminyan.github.io/calc) | Head-to-Head Ao5 projection & visualization |
-| **Distribution** | [`/viz`](https://ruiminyan.github.io/viz) | Watch result distributions evolve over time |
-| **Battle** | [`/battle`](https://ruiminyan.github.io/battle) | 1v1 head-to-head timer with penalties & best-of-N |
+| **Trainer** | [`/trainer`](https://cuberoot.me/trainer) | PLL / OLL / ZBLL / ZBLS recognition trainers |
+| **Frame Count** | [`/frame-count`](https://cuberoot.me/frame-count) | Frame-accurate timing from solve videos (WebCodecs + mp4box) |
+| **Recon** | [`/recon`](https://cuberoot.me/recon) | Solve reconstruction with step-by-step playback |
+| **Calculator** | [`/calc`](https://cuberoot.me/calc) | Head-to-Head Ao5 projection & visualization |
+| **Distribution** | [`/viz`](https://cuberoot.me/viz) | Watch result distributions evolve over time |
+| **Battle** | [`/battle`](https://cuberoot.me/battle) | 1v1 head-to-head timer with penalties & best-of-N |
 
 ### 🏆 Competition data
 
 | Tool | Path | What it does |
 |---|---|---|
-| **WCA Stats** | [`/wca-stats`](https://ruiminyan.github.io/wca-stats) | 80+ auto-generated rankings from the WCA database, updated weekly |
-| **Upcoming Comps** | [`/upcoming-comps`](https://ruiminyan.github.io/upcoming-comps) | Worldwide competition calendar with event filters |
-| **Globe** | [`/globe`](https://ruiminyan.github.io/globe) | 3D globe view of past & upcoming competitions |
-| **Scramble** | [`/scramble-stats`](https://ruiminyan.github.io/scramble-stats) | Difficulty distribution of WCA scrambles by event & stage |
+| **WCA Stats** | [`/wca-stats`](https://cuberoot.me/wca-stats) | 80+ auto-generated rankings from the WCA database, updated weekly |
+| **Upcoming Comps** | [`/upcoming-comps`](https://cuberoot.me/upcoming-comps) | Worldwide competition calendar with event filters |
+| **Globe** | [`/globe`](https://cuberoot.me/globe) | 3D globe view of past & upcoming competitions |
+| **Scramble** | [`/scramble-stats`](https://cuberoot.me/scramble-stats) | Difficulty distribution of WCA scrambles by event & stage |
 
 ### 🛠️ Classics
 
 | Tool | Path | Source |
 |---|---|---|
-| **Solver** | [`/solver`](https://ruiminyan.github.io/solver/) | Cross / XCross / F2L pair / EOCross / LL — fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) |
-| **Alg Trainer** | [`/alg-trainers`](https://ruiminyan.github.io/alg-trainers) | Cross / XCross / Pseudo / EOCross — fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) |
-| **csTimer** | [`/cstimer`](https://ruiminyan.github.io/cstimer/) | Integrated [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) |
-| **Mosaic** | [`/mosaic`](https://ruiminyan.github.io/mosaic) | Rubik's Cube mosaic generator — ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) |
-| **Web Directory** | [`/site`](https://ruiminyan.github.io/site) | Curated links to the wider cubing web |
+| **Solver** | [`/solver`](https://cuberoot.me/solver/) | Cross / XCross / F2L pair / EOCross / LL — fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) |
+| **Alg Trainer** | [`/alg-trainers`](https://cuberoot.me/alg-trainers) | Cross / XCross / Pseudo / EOCross — fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) |
+| **csTimer** | [`/cstimer`](https://cuberoot.me/cstimer/) | Integrated [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) |
+| **Mosaic** | [`/mosaic`](https://cuberoot.me/mosaic) | Rubik's Cube mosaic generator — ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) |
+| **Web Directory** | [`/site`](https://cuberoot.me/site) | Curated links to the wider cubing web |
 
 ---
 

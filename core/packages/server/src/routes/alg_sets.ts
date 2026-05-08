@@ -6,7 +6,7 @@
  *   - 这里(alg_sets.ts):**标准 case**(name / setup / standard / sticker / algs)
  *   - alg.ts(community submissions):**用户额外投稿**叠加在标准 case 之上
  *
- * 路径前缀 /api/alg/sets/... 跟现有 /api/alg/:puzzle/:set/submissions 不冲突。
+ * 路径前缀 /v1/alg/sets/... 跟现有 /v1/alg/:puzzle/:set/submissions 不冲突。
  */
 import { Hono } from 'hono';
 import { query, sql } from '../db/connection.js';
@@ -79,8 +79,8 @@ function validateCaseInput(body: {
   return {};
 }
 
-// GET /api/alg/sets — 列所有 (puzzle, set_slug)
-algSetsRoutes.get('/api/alg/sets', async (c) => {
+// GET /v1/alg/sets — 列所有 (puzzle, set_slug)
+algSetsRoutes.get('/alg/sets', async (c) => {
   c.header('Cache-Control', 'public, max-age=3600');
   const rows = await query<AlgSetRow>(
     'SELECT puzzle, set_slug, source, scraped_at, updated_at FROM alg_sets ORDER BY puzzle, set_slug'
@@ -94,8 +94,8 @@ algSetsRoutes.get('/api/alg/sets', async (c) => {
   })));
 });
 
-// GET /api/alg/sets/:puzzle/:set — 完整 AlgFile JSON(跟旧 JSON 文件 1:1)
-algSetsRoutes.get('/api/alg/sets/:puzzle/:set', async (c) => {
+// GET /v1/alg/sets/:puzzle/:set — 完整 AlgFile JSON(跟旧 JSON 文件 1:1)
+algSetsRoutes.get('/alg/sets/:puzzle/:set', async (c) => {
   c.header('Cache-Control', 'public, max-age=3600');
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -121,8 +121,8 @@ algSetsRoutes.get('/api/alg/sets/:puzzle/:set', async (c) => {
   });
 });
 
-// POST /api/alg/sets/:puzzle/:set/cases — admin 新增 case (append 到末尾)
-algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
+// POST /v1/alg/sets/:puzzle/:set/cases — admin 新增 case (append 到末尾)
+algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
@@ -168,8 +168,8 @@ algSetsRoutes.post('/api/alg/sets/:puzzle/:set/cases', async (c) => {
   return c.json(caseRowToJson(inserted[0]));
 });
 
-// PUT /api/alg/sets/:puzzle/:set/cases/:id — admin 编辑 case
-algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
+// PUT /v1/alg/sets/:puzzle/:set/cases/:id — admin 编辑 case
+algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
@@ -206,10 +206,10 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   return c.json(caseRowToJson(updated[0]));
 });
 
-// PUT /api/alg/sets/:puzzle/:set/reorder — admin 重排 case 顺序
+// PUT /v1/alg/sets/:puzzle/:set/reorder — admin 重排 case 顺序
 // body: { ids: number[] } —— 必须是该 set 下的全部 case id,新顺序。server 把 position 重写为 0..N-1。
 // NOTE: 故意放 /reorder 而非 /cases/order,避免被 PUT /cases/:id 路由捕获(id="order"→NaN→invalid id 400)。
-algSetsRoutes.put('/api/alg/sets/:puzzle/:set/reorder', async (c) => {
+algSetsRoutes.put('/alg/sets/:puzzle/:set/reorder', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
@@ -248,8 +248,8 @@ algSetsRoutes.put('/api/alg/sets/:puzzle/:set/reorder', async (c) => {
   return c.json({ ok: true });
 });
 
-// DELETE /api/alg/sets/:puzzle/:set/cases/:id — admin 删 case
-algSetsRoutes.delete('/api/alg/sets/:puzzle/:set/cases/:id', async (c) => {
+// DELETE /v1/alg/sets/:puzzle/:set/cases/:id — admin 删 case
+algSetsRoutes.delete('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
