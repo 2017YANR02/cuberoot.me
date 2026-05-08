@@ -5,7 +5,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+import Paginator from './Paginator';
 import { EventSelect } from '../../components/EventSelect';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
@@ -131,14 +132,15 @@ export default function AllResultsPage() {
               </tbody>
             </table>
             {data.total > size && (
-              <div className="wse-pagination">
-                <button disabled={page <= 1} onClick={() => update('page', String(page - 1), false)}><ChevronLeft size={14} /></button>
-                <span>{isZh ? '第' : 'Page'} {page} / {totalPages}</span>
-                <button disabled={page >= totalPages} onClick={() => update('page', String(page + 1), false)}><ChevronRight size={14} /></button>
-                <select value={size} onChange={e => update('size', e.target.value)}>
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}/{isZh ? '页' : 'pg'}</option>)}
-                </select>
-              </div>
+              <Paginator
+                page={page}
+                totalPages={totalPages}
+                size={size}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                isZh={isZh}
+                onPageChange={(p) => update('page', String(p), false)}
+                onSizeChange={(s) => update('size', String(s))}
+              />
             )}
           </>
         )}

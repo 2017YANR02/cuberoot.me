@@ -250,7 +250,8 @@
   cursor: pointer;
 }
 .wse-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
-.wse-pagination select {
+.wse-pagination select,
+.wse-pagination .paginator-input {
   padding: 4px 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
@@ -259,6 +260,14 @@
   height: 28px;
   font-size: 13px;
 }
+.wse-pagination .paginator-input {
+  width: 64px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.wse-pagination .paginator-input::-webkit-outer-spin-button,
+.wse-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* sum-of-ranks 项目复选框 */
 .wse-events-grid {
