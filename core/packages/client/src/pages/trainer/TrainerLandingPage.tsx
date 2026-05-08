@@ -1,14 +1,15 @@
 /**
- * /trainer landing — pick puzzle (dropdown), then click a set card.
+ * /trainer landing — pick puzzle, then click a set card.
  *
- * Top: puzzle dropdown. Below: bento grid of set cards (one per alg-DB set
- * for that puzzle). Click card → /trainer/:puzzle/:set selection page.
- * Sets that also have a recognize trainer get a small Recognize chip.
+ * Top: puzzle dropdown.
+ * Section "公式训练": bento grid of set cards (alg timer training, all sets).
+ * Section "识别训练": separate grid (only sets with recognize support).
+ * Card click → /trainer/:puzzle/:set or /recognize/:set respectively.
  */
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye } from 'lucide-react';
+import { Flag, Eye } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '../alg/CaseThumb';
 import LangToggle from '../../components/LangToggle';
@@ -37,7 +38,6 @@ const RECOGNIZE_SETS: Record<AlgPuzzle, string[]> = {
 };
 
 export default function TrainerLandingPage() {
-  const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
@@ -45,7 +45,7 @@ export default function TrainerLandingPage() {
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
 
   const trainableSets = ALG_CATALOG[puzzle].filter(s => TRAINABLE_SETS[puzzle].includes(s.slug));
-  const recognizeSlugs = new Set(RECOGNIZE_SETS[puzzle]);
+  const recognizeSets = ALG_CATALOG[puzzle].filter(s => RECOGNIZE_SETS[puzzle].includes(s.slug));
 
   // Load first case for each set's thumbnail
   useEffect(() => {
@@ -86,48 +86,73 @@ export default function TrainerLandingPage() {
       )}
 
       {trainableSets.length > 0 && (
-        <div className="trainer-set-grid">
-          {trainableSets.map(s => {
-            const first = firstCases[s.slug];
-            const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
-            const hasRecognize = recognizeSlugs.has(s.slug);
-            return (
-              <Link
-                key={s.slug}
-                to={`/trainer/${puzzle}/${s.slug}`}
-                className="trainer-set-card"
-              >
-                <div className="trainer-set-card-thumb">
-                  {first && (
-                    <CaseThumb
-                      puzzle={puzzle}
-                      set={s.slug}
-                      sticker={first.sticker}
-                      alg={firstAlg}
-                      setup={first.setup}
-                      size={88}
-                    />
-                  )}
-                </div>
-                <div className="trainer-set-card-title">{isZh ? s.zh : s.en}</div>
-                {hasRecognize && (
-                  <button
-                    type="button"
-                    className="trainer-set-card-recognize"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      navigate(`/recognize/${s.slug}`);
-                    }}
-                    title={isZh ? '识别训练' : 'Recognition'}
-                  >
-                    <Eye size={12} /> {isZh ? '识别' : 'Recognize'}
-                  </button>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+        <>
+          <h2 className="trainer-section-title">
+            <Flag size={16} /> {isZh ? '公式训练' : 'Alg Training'}
+          </h2>
+          <div className="trainer-set-grid">
+            {trainableSets.map(s => {
+              const first = firstCases[s.slug];
+              const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
+              return (
+                <Link
+                  key={s.slug}
+                  to={`/trainer/${puzzle}/${s.slug}`}
+                  className="trainer-set-card"
+                >
+                  <div className="trainer-set-card-thumb">
+                    {first && (
+                      <CaseThumb
+                        puzzle={puzzle}
+                        set={s.slug}
+                        sticker={first.sticker}
+                        alg={firstAlg}
+                        setup={first.setup}
+                        size={88}
+                      />
+                    )}
+                  </div>
+                  <div className="trainer-set-card-title">{isZh ? s.zh : s.en}</div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {recognizeSets.length > 0 && (
+        <>
+          <h2 className="trainer-section-title">
+            <Eye size={16} /> {isZh ? '识别训练' : 'Recognition Training'}
+          </h2>
+          <div className="trainer-set-grid">
+            {recognizeSets.map(s => {
+              const first = firstCases[s.slug];
+              const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
+              return (
+                <Link
+                  key={s.slug}
+                  to={`/recognize/${s.slug}`}
+                  className="trainer-set-card is-recognize"
+                >
+                  <div className="trainer-set-card-thumb">
+                    {first && (
+                      <CaseThumb
+                        puzzle={puzzle}
+                        set={s.slug}
+                        sticker={first.sticker}
+                        alg={firstAlg}
+                        setup={first.setup}
+                        size={88}
+                      />
+                    )}
+                  </div>
+                  <div className="trainer-set-card-title">{isZh ? s.zh : s.en}</div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
