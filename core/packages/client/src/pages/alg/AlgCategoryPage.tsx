@@ -14,7 +14,7 @@ import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@d
 import { CSS } from '@dnd-kit/utilities';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
-  type AlgCase, type AlgFile, type AlgPuzzle, type AlgSticker,
+  type AlgCase, type AlgFile, type AlgPuzzle,
   type AlgSubmission,
 } from '@cuberoot/shared';
 import { listSubmissions } from '../../utils/alg_api';
@@ -24,20 +24,10 @@ import CommunityAlgs from './CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from './AdminCaseEditor';
 import ValidationReportModal from './ValidationReportModal';
 import { VisualCube } from '../../components/VisualCube';
-import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import LangToggle from '../../components/LangToggle';
 import AlgPlayer from '../../components/AlgPlayer';
+import { CaseThumb } from './CaseThumb';
 import './alg.css';
-
-const PUZZLE_SIZE: Record<AlgPuzzle, number> = { '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5, 'sq1': 3, 'megaminx': 3, 'pyraminx': 3, 'skewb': 3 };
-const SR_PUZZLES: AlgPuzzle[] = ['sq1', 'megaminx', 'pyraminx', 'skewb'];
-function srPuzzleKind(p: AlgPuzzle): PuzzleKind | null {
-  if (p === 'sq1')      return 'sq1-net';        // SQ1 top-down split (matches speedcubedb)
-  if (p === 'megaminx') return 'megaminx-top';   // Top pentagon view (LL-style)
-  if (p === 'pyraminx') return 'pyraminx';       // 3D iso (Pyraminx has no canonical "top")
-  if (p === 'skewb')    return 'skewb';          // 3D iso
-  return null;
-}
 
 /** F2L `c.setup` is canonical (FR slot disturbed). For other oris, append a `y`-rotation
  *  so the disturbed slot ends up at the right visual position (cube also rotates with it,
@@ -88,35 +78,6 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
 
 function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
-}
-
-/** Pick the right preview thumb based on puzzle + sticker kind. */
-function CaseThumb({ puzzle, set, sticker, alg, setup, size = 88 }: { puzzle: AlgPuzzle; set: string; sticker: AlgSticker; alg: string; setup?: string; size?: number }) {
-  if (SR_PUZZLES.includes(puzzle)) {
-    const kind = srPuzzleKind(puzzle)!;
-    // Prefer setup (forward) when available — matches speedcubedb's preview state.
-    // Fall back to inverting the canonical alg (case = solved.applyInverse(alg)).
-    const driver = setup && setup.trim() ? { alg: setup } : { case: alg };
-    return <PuzzleSVG kind={kind} {...driver} size={size} />;
-  }
-  // ZBLS preview uses VH mask (LL edges colored to show EO; LL corners grayed) —
-  // matches the F2L+EO pattern shown in CubeRoot's ZBLS docx.
-  const isZbls = puzzle === '3x3' && set === 'zbls';
-  if (isZbls) {
-    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} />;
-  }
-  // Prefer `setup` (rotation-free, canonical red-front) over inverting `alg` —
-  // alg may start with `d`/`y` etc. and leave the cube rotated.
-  return <VisualCube algorithm={alg} setup={setup} view={pickView(puzzle, set, sticker)} size={size} puzzleSize={PUZZLE_SIZE[puzzle]} />;
-}
-
-function pickView(puzzle: AlgPuzzle, set: string, sticker: AlgSticker): 'f2l' | 'oll' | 'pll' | 'pll-iso' {
-  // 3x3 F2L isometric (LL grayed). Other puzzles' f2l-shaped stickers fall through to plan view.
-  if (puzzle === '3x3' && sticker.kind === 'f2l') return 'f2l';
-  // Yellow-vs-gray orientation preview for OLL-style sets across all sizes.
-  if (set === 'oll' || set === 'oll-parity') return 'oll';
-  // Default: planar top-down with full LL ring stickers — works for PLL / COLL / CMLL / ZBLL / 1LLL / OLLCP / VLS / 2x2 CLL / EG / 4x4 PLL Parity / 5x5 L2E / L2C.
-  return 'pll';
 }
 
 /** Whitelist of inline tags allowed in algHtml — finger-trick notation only.

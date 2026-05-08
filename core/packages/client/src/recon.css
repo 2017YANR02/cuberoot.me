@@ -315,11 +315,11 @@ img.recon-inline-flag {
 .recon-type-toggle {
   display: flex;
   gap: 0;
-  margin-bottom: 0.8rem;
 }
 
 .toggle-btn {
-  padding: 5px 14px;
+  height: 36px;
+  padding: 0 14px;
   font-size: 0.82rem;
   font-family: 'Inter', Arial, sans-serif;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -328,6 +328,7 @@ img.recon-inline-flag {
   cursor: pointer;
   transition: all 0.15s ease;
   outline: none;
+  box-sizing: border-box;
 }
 
 .toggle-btn:first-child {

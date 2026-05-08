@@ -1,0 +1,255 @@
+/* Trainer — SpeedCubeDB-style training UI.
+   Shared by /trainer (landing), /trainer/:p/:s (select), /trainer/:p/:s/run.
+   Dark theme. Mobile (<480) collapses sidebar below timer. */
+
+.trainer-root {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  color: var(--text-color, #ECEAE3);
+}
+
+/* ─── header (top bar) ─── */
+.trainer-topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.trainer-topbar .trainer-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.9rem; color: #aaa; text-decoration: none;
+}
+.trainer-topbar .trainer-back:hover { color: #fff; }
+.trainer-topbar .trainer-spacer { flex: 1; }
+
+.trainer-puzzle-select,
+.trainer-set-select {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ECEAE3;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  min-width: 130px;
+}
+.trainer-start-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(217,119,87,0.2);
+  border: 1px solid rgba(217,119,87,0.5);
+  color: #e8b49a;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.trainer-start-btn:hover { background: rgba(217,119,87,0.3); color: #fff; }
+.trainer-start-btn:disabled,
+.trainer-start-btn.is-disabled {
+  opacity: 0.4; cursor: not-allowed; pointer-events: none;
+}
+
+/* ─── selection page (subgroup tree) ─── */
+.trainer-set-block {
+  margin-bottom: 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.trainer-set-header {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1.1rem; font-weight: 600;
+  margin-bottom: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.trainer-set-header input[type=checkbox] {
+  width: 16px; height: 16px;
+  accent-color: #4a90e2;
+  cursor: pointer;
+}
+.trainer-set-header .trainer-set-title-thumb {
+  display: inline-flex; align-items: center;
+}
+.trainer-subgroup {
+  margin: 12px 0;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.trainer-subgroup-header {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 0.95rem;
+  margin-bottom: 10px; cursor: pointer; user-select: none;
+}
+.trainer-subgroup-header input[type=checkbox] {
+  width: 14px; height: 14px; accent-color: #4a90e2; cursor: pointer;
+}
+.trainer-case-grid {
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.trainer-case-cell {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px;
+  padding: 6px 8px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s;
+  min-width: 92px;
+}
+.trainer-case-cell:hover {
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.05);
+}
+.trainer-case-cell.is-selected {
+  border-color: rgba(74,144,226,0.6);
+  background: rgba(74,144,226,0.08);
+}
+.trainer-case-cell-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+.trainer-case-cell-thumb {
+  pointer-events: none;
+}
+/* Hidden checkbox; whole cell click toggles. */
+.trainer-case-cell input { display: none; }
+
+/* ─── run page (timer) ─── */
+.trainer-run {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .trainer-run { grid-template-columns: 1fr; }
+}
+
+.trainer-stage {
+  text-align: center;
+  padding: 40px 20px;
+}
+.trainer-scramble-label {
+  font-size: 1rem; color: #aaa; margin-bottom: 8px;
+}
+.trainer-scramble-text {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 24px;
+  color: #ECEAE3;
+}
+.trainer-stage-actions {
+  display: flex; justify-content: center; gap: 12px;
+  margin: 16px 0 24px;
+}
+.trainer-stage-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ECEAE3;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.trainer-stage-btn:hover { background: rgba(255,255,255,0.06); }
+
+.trainer-timer {
+  font-family: 'Inter', monospace;
+  font-weight: 700;
+  font-size: 6rem;
+  line-height: 1.1;
+  margin: 28px 0 12px;
+  font-style: italic;
+}
+.trainer-timer.is-awaiting { color: #ffc107; }
+.trainer-timer.is-ready    { color: #4caf50; }
+.trainer-timer.is-running  { color: #ECEAE3; }
+.trainer-timer.is-stopping,
+.trainer-timer.is-idle     { color: #ECEAE3; }
+
+.trainer-help {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 12px;
+}
+
+/* ─── sidebar (solve card + stats) ─── */
+.trainer-sidebar {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.trainer-solve-card,
+.trainer-stats-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.trainer-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.95rem; font-weight: 600;
+  margin-bottom: 10px;
+}
+.trainer-card-header .trainer-icon-btn {
+  background: transparent; border: none; color: #aaa; cursor: pointer;
+  padding: 4px;
+}
+.trainer-card-header .trainer-icon-btn:hover { color: #f44; }
+.trainer-card-divider {
+  border: none; border-top: 1px solid rgba(255,255,255,0.08);
+  margin: 0 0 10px;
+}
+.trainer-solve-thumb {
+  display: flex; justify-content: center;
+  margin: 8px 0 12px;
+}
+.trainer-solve-row {
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+.trainer-solve-row > span:first-child {
+  color: #888;
+  margin-right: 4px;
+}
+.trainer-solve-scramble {
+  font-family: 'Inter', monospace;
+  font-size: 0.78rem;
+  color: #ccc;
+  word-break: break-word;
+}
+
+.trainer-stats-list {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.trainer-stats-list .trainer-stat-time {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.trainer-stats-list .trainer-stat-time.is-active {
+  background: rgba(74,144,226,0.15);
+  border-color: rgba(74,144,226,0.5);
+  color: #fff;
+}
+.trainer-stats-empty {
+  color: #777; font-size: 0.85rem;
+}
+
+/* ─── landing (puzzle dropdown only — landing layout same as select with no sidebar) ─── */
+.trainer-landing-empty {
+  color: #888; padding: 60px 0; text-align: center;
+}

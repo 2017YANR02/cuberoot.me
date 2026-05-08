@@ -7,8 +7,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgPuzzle } from '@cuberoot/shared';
+import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import LangToggle from '../../components/LangToggle';
+import { CaseThumb } from './CaseThumb';
 import './alg.css';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
@@ -34,6 +35,7 @@ export default function AlgPuzzlePage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
 
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
@@ -43,12 +45,19 @@ export default function AlgPuzzlePage() {
     if (!valid) return;
     let cancelled = false;
     Promise.all(sets.map(s =>
-      loadAlg(puzzle, s.slug).then(d => [s.slug, d.cases.length] as const).catch(() => [s.slug, -1] as const)
-    )).then(pairs => {
+      loadAlg(puzzle, s.slug)
+        .then(d => ({ slug: s.slug, count: d.cases.length, first: d.cases[0] ?? null }))
+        .catch(() => ({ slug: s.slug, count: -1, first: null }))
+    )).then(rows => {
       if (cancelled) return;
-      const next: Record<string, number> = {};
-      for (const [k, n] of pairs) next[k] = n;
-      setCounts(next);
+      const nextCounts: Record<string, number> = {};
+      const nextFirst: Record<string, AlgCase | null> = {};
+      for (const { slug, count, first } of rows) {
+        nextCounts[slug] = count;
+        nextFirst[slug] = first;
+      }
+      setCounts(nextCounts);
+      setFirstCases(nextFirst);
     });
     return () => { cancelled = true; };
   }, [puzzle, valid, sets]);
@@ -79,8 +88,22 @@ export default function AlgPuzzlePage() {
       <div className="alg-bento">
         {sets.map(s => {
           const n = counts[s.slug];
+          const first = firstCases[s.slug];
+          const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
           return (
             <Link key={s.slug} to={`/alg/${puzzle}/${s.slug}`} className="alg-bento-card">
+              <div className="alg-bento-thumb">
+                {first && (
+                  <CaseThumb
+                    puzzle={puzzle}
+                    set={s.slug}
+                    sticker={first.sticker}
+                    alg={firstAlg}
+                    setup={first.setup}
+                    size={96}
+                  />
+                )}
+              </div>
               <div className="alg-bento-title">{isZh ? s.zh : s.en}</div>
               <div className="alg-bento-count">
                 {n == null ? '…' : n < 0 ? '!' : `${n} ${isZh ? '个' : 'cases'}`}
