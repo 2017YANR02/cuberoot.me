@@ -5,8 +5,9 @@ name: Update Historical Ranks
 
 on:
   schedule:
-    # 每天 UTC 06:00 跑(WCA dump 一般 UTC 0~5 点发布,留余量;避开 03:00 pg-dump-recon)
-    - cron: '0 6 * * *'
+    # 每周五 18:00 UTC = Fri 11:00 AM PDT (夏令时 3-11 月)
+    # 冬令时 (PST, 11-3 月) 这个时间会变成 10:00 AM 早一小时,GH cron 不支持 TZ
+    - cron: '0 18 * * 5'
   workflow_dispatch:
 
 permissions:
