@@ -192,23 +192,33 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const totalParams = [...params];
   const dataParams = [...params, size, offset];
 
+  // 派生表 + late join 走 id PK 回表:
+  // 内子查询只 SELECT (id, value, wca_id) — 三列都覆盖在 wrt_main INCLUDE (id) 索引里,
+  // OFFSET 1M 走纯 Index Only Scan, ~250ms (Heap Fetches: 0,需 VACUUM 让 visibility map up-to-date).
+  // 外层用 id PK 回表+三张字典表 join,只 enrich 100 行 ~10ms.
+  // 直查 + LIMIT/OFFSET + 三 JOIN 的写法会让 PG 先 join 后 OFFSET,深页 ~10s+.
   const rows = await query<{
     value: number; wca_id: string; person_country_id: string;
     iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
     attempts: number[] | null; person_name: string;
   }>(
     `
-    SELECT t.value, t.wca_id, t.person_country_id,
+    SELECT q.value, q.wca_id, t.person_country_id,
            co.iso2 AS iso2,
            t.comp_id, c.name AS comp_name, t.comp_date,
            t.attempts, p.name AS person_name
-    FROM wca_results_top t
+    FROM (
+      SELECT t.id, t.value, t.wca_id
+      FROM wca_results_top t
+      WHERE ${where.join(' AND ')}
+      ORDER BY t.value ASC, t.wca_id ASC
+      LIMIT ? OFFSET ?
+    ) q
+    JOIN wca_results_top t ON t.id = q.id
     JOIN wca_persons p ON p.wca_id = t.wca_id
     LEFT JOIN wca_countries co ON co.id = t.person_country_id
     LEFT JOIN wca_competitions c ON c.id = t.comp_id
-    WHERE ${where.join(' AND ')}
-    ORDER BY t.value ASC, t.wca_id ASC
-    LIMIT ? OFFSET ?
+    ORDER BY q.value ASC, q.wca_id ASC
     `,
     dataParams,
   );
@@ -258,24 +268,30 @@ wcaStatsExtraRoutes.get('/wca/year-results', async (c) => {
   const totalParams = [...params];
   params.push(size, offset);
 
+  // 派生表 + late join, 见 all-results 注释
   const rows = await query<{
     rank_in_scope: number; value: number; wca_id: string; person_country_id: string;
     iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
     comp_month: number; attempts: number[] | null; person_name: string;
   }>(
     `
-    SELECT t.rank_in_scope, t.value, t.wca_id, t.person_country_id,
+    SELECT q.rank_in_scope, q.value, q.wca_id, q.person_country_id,
            co.iso2 AS iso2,
-           t.comp_id, c.name AS comp_name, c.start_date AS comp_date,
-           t.comp_month, t.attempts, p.name AS person_name
-    FROM wca_year_results_top t
-    JOIN wca_persons p ON p.wca_id = t.wca_id
-    LEFT JOIN wca_countries co ON co.id = t.person_country_id
-    LEFT JOIN wca_competitions c ON c.id = t.comp_id
-    WHERE t.year = ? AND t.event_id = ? AND t.is_avg = ? AND t.country_filter = ?
-      ${monthCond}
-    ORDER BY t.rank_in_scope ASC
-    LIMIT ? OFFSET ?
+           q.comp_id, c.name AS comp_name, c.start_date AS comp_date,
+           q.comp_month, q.attempts, p.name AS person_name
+    FROM (
+      SELECT t.rank_in_scope, t.value, t.wca_id, t.person_country_id,
+             t.comp_id, t.comp_month, t.attempts
+      FROM wca_year_results_top t
+      WHERE t.year = ? AND t.event_id = ? AND t.is_avg = ? AND t.country_filter = ?
+        ${monthCond}
+      ORDER BY t.rank_in_scope ASC
+      LIMIT ? OFFSET ?
+    ) q
+    JOIN wca_persons p ON p.wca_id = q.wca_id
+    LEFT JOIN wca_countries co ON co.id = q.person_country_id
+    LEFT JOIN wca_competitions c ON c.id = q.comp_id
+    ORDER BY q.rank_in_scope ASC
     `,
     params,
   );
