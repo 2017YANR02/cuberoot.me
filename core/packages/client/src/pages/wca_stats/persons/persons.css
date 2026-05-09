@@ -51,8 +51,11 @@
     color: var(--wp-text-sub); text-decoration: none; font-size: 0.85rem;
 }
 .wp-back:hover { color: var(--wp-text); background: var(--wp-accent-soft); }
-.wp-source-link {
+.wp-header-right {
     margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+}
+.wp-source-link {
     padding: 4px 10px; border-radius: 6px;
     border: 1px solid var(--wp-border);
     color: var(--wp-text-sub); text-decoration: none;
