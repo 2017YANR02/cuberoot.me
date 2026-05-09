@@ -48,9 +48,8 @@ CREATE INDEX IF NOT EXISTS gs_event ON wca_grand_slam (event_id);
 -- 一行 = 一次 valid (best 或 average) 成绩.同人同 comp 多 round 可能重复.
 -- 客户端按 (event, is_avg) 过滤后 ORDER BY value 翻页,可叠加 country / year / month / 选手 / 比赛搜索.
 --
--- 2026-05 schema 重构(删 country_filter / rank_in_scope,加 comp_date):
--- 旧表无法 IF NOT EXISTS 增量迁移,先 DROP 再重建;反正 load.sql 总会 COPY 全量数据.
-DROP TABLE IF EXISTS wca_results_top CASCADE;
+-- 重要:此文件只是 schema 参考,apply.sh 不调它.每周 CI 实际是 load.sql 里 DROP+CREATE+COPY,
+-- 所以 schema 改动要同步到 wca_stats_extra_build.ts 里 loadSql 模板.
 CREATE TABLE IF NOT EXISTS wca_results_top (
   event_id           VARCHAR(20) NOT NULL,
   is_avg             BOOLEAN NOT NULL,

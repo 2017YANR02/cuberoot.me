@@ -100,7 +100,7 @@ interface ResultRow {
   regAvgRecord: string | null;
   roundTypeId: string;
   pos: number;
-  attempts: (number | null)[];  // 5 attempts inline(主 SQL LEFT JOIN result_values)
+  attempts: (number | null)[];  // 5 attempts inline(主 SQL 走 result_attempts GROUP_CONCAT 子查询)
 }
 
 // 维护 top-K 候选(简单全量收集后 sort 截断;K 小;比 heap 简单)
@@ -778,9 +778,26 @@ async function main() {
 
 BEGIN;
 
+-- 2026-05 wca_results_top schema 重构: 旧表有 country_filter NOT NULL 列,新 COPY 列名不一致.
+-- apply.sh 不调 schema 文件,所以在这里 DROP+CREATE 自包含一次性迁移.以后日常重灌不再触发改动.
+DROP TABLE IF EXISTS wca_results_top CASCADE;
+CREATE TABLE wca_results_top (
+  event_id           VARCHAR(20) NOT NULL,
+  is_avg             BOOLEAN NOT NULL,
+  value              INTEGER NOT NULL,
+  wca_id             VARCHAR(20) NOT NULL,
+  person_country_id  VARCHAR(50) NOT NULL,
+  comp_id            VARCHAR(50) NOT NULL,
+  comp_date          DATE NOT NULL,
+  attempts           INTEGER[]
+);
+CREATE INDEX wrt_main      ON wca_results_top (event_id, is_avg, value, wca_id);
+CREATE INDEX wrt_country   ON wca_results_top (event_id, is_avg, person_country_id, value);
+CREATE INDEX wrt_wca_id    ON wca_results_top (event_id, is_avg, wca_id, value);
+CREATE INDEX wrt_comp_id   ON wca_results_top (event_id, is_avg, comp_id, value);
+
 TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;
-TRUNCATE wca_results_top;
 TRUNCATE wca_year_results_top;
 TRUNCATE wca_cohort_ranks;
 TRUNCATE wca_success_rate;
