@@ -128,7 +128,7 @@ export default function TrainerRunPage() {
   };
 
   return (
-    <div className="trainer-root" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div className="trainer-root">
       <div className="trainer-topbar">
         <Link to={`/trainer/${puzzleParam}/${setSlug}`} className="trainer-back">
           <ArrowLeft size={14} /> {isZh ? '选 case' : 'Select Algs'}
@@ -141,7 +141,7 @@ export default function TrainerRunPage() {
       </div>
 
       <div className="trainer-run">
-        <div className="trainer-stage">
+        <div className="trainer-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <ScrambleHeader
             scramble={currentScramble || ''}
             label={isZh ? '打乱:' : 'Scramble:'}
