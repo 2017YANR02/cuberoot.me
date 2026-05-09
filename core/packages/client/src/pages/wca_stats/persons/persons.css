@@ -432,6 +432,21 @@
     white-space: nowrap;
 }
 .wp-bycomp-table tbody tr:last-child td { border-bottom: none; }
+/* per-event 全部成绩 表格内的 comp 单元格:比赛名 + 日期 stacked,首行加顶部分隔线 */
+.wp-bycomp-table .wp-cell-comp {
+    display: table-cell; min-width: 0;
+    vertical-align: top;
+    padding-top: 10px;
+}
+.wp-bycomp-table .wp-cell-comp-date {
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.74rem; color: var(--wp-text-mute);
+}
+.wp-bycomp-table tbody tr.wp-row-comp-first td {
+    border-top: 1px solid var(--wp-border-strong);
+}
+.wp-bycomp-table tbody tr.wp-row-comp-first:first-child td { border-top: none; }
 
 .wp-round-tag {
     display: inline-block;

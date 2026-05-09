@@ -174,13 +174,15 @@ function EventRoundsList({
 
   if (sorted.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
+  // 同一比赛只在首行展示比赛名 + 日期(stacked).
+  let lastCompId = '';
+
   return (
     <div className="wp-table-scroll">
       <table className="wp-bycomp-table">
         <thead>
           <tr>
             <th>{t('比赛', 'Competition')}</th>
-            <th>{t('日期', 'Date')}</th>
             <th>{t('轮次', 'Round')}</th>
             <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
             <th>{t('单次', 'Single')}</th>
@@ -192,18 +194,23 @@ function EventRoundsList({
           {sorted.map((r) => {
             const cmp = compById.get(r.competition_id);
             const pf = progress.get(r.id);
+            const showComp = r.competition_id !== lastCompId;
+            lastCompId = r.competition_id;
             return (
-              <tr key={r.id}>
-                <td className="wp-cell-event">
-                  {cmp ? (
-                    <a
-                      href={`https://www.worldcubeassociation.org/competitions/${cmp.id}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="wp-bycomp-name"
-                    >{localizeCompName(cmp.id, cmp.name, isZh)}</a>
-                  ) : r.competition_id}
+              <tr key={r.id} className={showComp ? 'wp-row-comp-first' : ''}>
+                <td className="wp-cell-comp">
+                  {showComp && cmp && (
+                    <>
+                      <a
+                        href={`https://www.worldcubeassociation.org/competitions/${cmp.id}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="wp-bycomp-name"
+                      >{localizeCompName(cmp.id, cmp.name, isZh)}</a>
+                      <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>
+                    </>
+                  )}
+                  {showComp && !cmp && r.competition_id}
                 </td>
-                <td className="wp-cell-date">{cmp ? formatDateRangeIso(cmp.start_date, cmp.end_date) : ''}</td>
                 <td>
                   <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
                     {roundLabel(r.round_type_id, isZh)}
