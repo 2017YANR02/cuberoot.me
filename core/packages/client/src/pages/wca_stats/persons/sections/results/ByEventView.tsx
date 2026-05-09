@@ -1,11 +1,14 @@
-// 按项目:单项目详情.三块:
+// 按项目:单项目详情.四块:
 //   1. 最佳成绩 折线 (single + average,X = comp index)
 //   2. 单次成绩分布 直方图
 //   3. 历史成绩排名曲线 (年度 NR / WR × single / avg)
+//   4. 全部成绩 (按比赛倒序的轮次表,attempts 列)
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { localizeCompName } from '../../../../../utils/comp_localize';
+import { formatDateRangeIso } from '../../../../../utils/date_range';
+import { computeProgress } from '../../logic/progress';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
 
 interface Props {
@@ -81,6 +84,163 @@ export default function ByEventView({ profile, results, comps, eventId, isZh }: 
       {!histLoading && !hist && (
         <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server')}</div>
       )}
+
+      <h3 className="wp-section-h">{t('全部成绩', 'All Results')}</h3>
+      <EventRoundsList
+        rows={eventResults}
+        compById={compById}
+        results={results}
+        comps={comps}
+        eventId={eventId}
+        isZh={isZh}
+      />
+    </div>
+  );
+}
+
+// ─── 全部成绩 (按比赛倒序的轮次表) ───────────────────────────────────────
+const ROUND_ORDER: Record<string, number> = {
+  'f': 0, 'c': 1, 'b': 2,
+  '3': 3,
+  '2': 4, 'g': 4,
+  '1': 5, 'd': 5,
+  'h': 6,
+};
+function roundLabel(rt: string, isZh: boolean): string {
+  const zh: Record<string, string> = {
+    'f': '决赛', 'c': '决赛', 'b': '决赛',
+    '3': '半决赛',
+    '2': '复赛', 'g': '复赛',
+    '1': '初赛', 'd': '初赛',
+    'h': '初赛',
+  };
+  const en: Record<string, string> = {
+    'f': 'Final', 'c': 'C-Final', 'b': 'B-Final',
+    '3': 'Semifinal',
+    '2': 'Second', 'g': 'C-Second',
+    '1': 'First', 'd': 'C-First',
+    'h': 'First',
+  };
+  return (isZh ? zh[rt] : en[rt]) ?? rt;
+}
+function roundClass(rt: string): string {
+  if (rt === 'f' || rt === 'c' || rt === 'b') return 'wp-round-final';
+  if (rt === '3') return 'wp-round-semi';
+  if (rt === '2' || rt === 'g') return 'wp-round-quarter';
+  return 'wp-round-first';
+}
+function recordClass(rec: string): string {
+  if (rec === 'WR') return 'wp-rec-wr';
+  if (rec === 'NR') return 'wp-rec-nr';
+  return 'wp-rec-cr';
+}
+function isBracketed(att: number[], idx: number): boolean {
+  if (att.length !== 5) return false;
+  const valid = att.map((v, i) => ({ v, i })).filter(({ v }) => v > 0);
+  if (valid.length === 0) return false;
+  const fail = att.findIndex((v) => v === -1 || v === -2);
+  let worstIdx: number;
+  if (fail >= 0) worstIdx = fail;
+  else worstIdx = att.indexOf(Math.max(...valid.map((x) => x.v)));
+  const bestIdx = att.indexOf(Math.min(...valid.map((x) => x.v)));
+  return idx === worstIdx || idx === bestIdx;
+}
+
+function EventRoundsList({
+  rows, compById, results, comps, eventId, isZh,
+}: {
+  rows: WcaResultRow[];
+  compById: Map<string, WcaCompetition>;
+  results: WcaResultRow[];
+  comps: WcaCompetition[];
+  eventId: string;
+  isZh: boolean;
+}) {
+  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const progress = useMemo(() => computeProgress(results, comps), [results, comps]);
+
+  // 按比赛日期倒序,组内按 round_type 顺序(决赛在上).
+  const sorted = useMemo(() => {
+    return rows.slice().sort((a, b) => {
+      const ca = compById.get(a.competition_id);
+      const cb = compById.get(b.competition_id);
+      const da = ca?.start_date ?? '';
+      const db = cb?.start_date ?? '';
+      if (da !== db) return db.localeCompare(da);
+      if (a.competition_id !== b.competition_id) return a.competition_id.localeCompare(b.competition_id);
+      return (ROUND_ORDER[a.round_type_id] ?? 99) - (ROUND_ORDER[b.round_type_id] ?? 99);
+    });
+  }, [rows, compById]);
+
+  if (sorted.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
+
+  return (
+    <div className="wp-table-scroll">
+      <table className="wp-bycomp-table">
+        <thead>
+          <tr>
+            <th>{t('比赛', 'Competition')}</th>
+            <th>{t('日期', 'Date')}</th>
+            <th>{t('轮次', 'Round')}</th>
+            <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
+            <th>{t('单次', 'Single')}</th>
+            <th>{t('平均', 'Avg')}</th>
+            <th colSpan={5}>{t('详细成绩', 'Attempts')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((r) => {
+            const cmp = compById.get(r.competition_id);
+            const pf = progress.get(r.id);
+            return (
+              <tr key={r.id}>
+                <td className="wp-cell-event">
+                  {cmp ? (
+                    <a
+                      href={`https://www.worldcubeassociation.org/competitions/${cmp.id}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="wp-bycomp-name"
+                    >{localizeCompName(cmp.id, cmp.name, isZh)}</a>
+                  ) : r.competition_id}
+                </td>
+                <td className="wp-cell-date">{cmp ? formatDateRangeIso(cmp.start_date, cmp.end_date) : ''}</td>
+                <td>
+                  <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
+                    {roundLabel(r.round_type_id, isZh)}
+                  </span>
+                </td>
+                <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
+                  {r.pos > 0 ? r.pos : '—'}
+                </td>
+                <td className={`wp-cell-result ${pf?.bestIsPb ? 'wp-result-pb' : ''}`}>
+                  {formatWcaResult(r.best, eventId, 'single')}
+                  {r.regional_single_record && (
+                    <span className={`wp-rec-tag ${recordClass(r.regional_single_record)}`}>{r.regional_single_record}</span>
+                  )}
+                </td>
+                <td className={`wp-cell-result ${pf?.averageIsPb ? 'wp-result-pb' : ''}`}>
+                  {formatWcaResult(r.average, eventId, 'average')}
+                  {r.regional_average_record && (
+                    <span className={`wp-rec-tag ${recordClass(r.regional_average_record)}`}>{r.regional_average_record}</span>
+                  )}
+                </td>
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const a = r.attempts[i];
+                  if (a === undefined) return <td key={i} className="wp-cell-attempt"></td>;
+                  const validNums = r.attempts.filter((x) => x > 0);
+                  const isBest = validNums.length > 0 && a > 0 && a === Math.min(...validNums) && a === r.best;
+                  const formatted = formatWcaResult(a, eventId, 'single');
+                  return (
+                    <td key={i} className={`wp-cell-attempt ${isBest ? 'wp-att-best' : ''}`}>
+                      {isBracketed(r.attempts, i) ? `(${formatted})` : formatted}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
