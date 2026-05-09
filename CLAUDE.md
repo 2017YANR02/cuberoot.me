@@ -93,7 +93,7 @@ pnpm --filter @cuberoot/client lint
 |---|---|---|
 | 选手名渲染（括号中文） | `cuber-name-display` | 任何展示 WCA person 名的地方 |
 | 国旗渲染 | `country-flag` | 任何展示国旗的地方（JSX / popup innerHTML）；统一走 `utils/flag.tsx` 的 `<Flag>` 或 `flagHtml`；TW 特判只在这一处 |
-| WCA 项目图标 | `wca-event-icon` | 任何渲染 WCA 项目名的地方（卡片 / 表格 / 条形 / chip）；项目名前必须有 `<EventIcon>`，纯文字是 bug |
+| WCA 项目图标 / 选择器 | `wca-event` | 渲染 WCA 项目名(必须有 `<EventIcon>`),或在 wca-stats 子页加单项目选择器(用 `<WcaEventSelector>` 图标行,不要下拉) |
 | WCA 成绩值格式化 | `wca-format-result` | 任何把 raw WCA 数值（centiseconds / FMC moves / MBLD encoding）→ 字符串的地方；统一走 `utils/wca_format_result.ts` |
 | 比赛日期区间展示 | `comp-date-range` | 任何显示 `start_date` / `end_date` 对的地方；紧凑格式 `2026-06-06~07` |
 | 中国比赛名中文化 | `cn-comp-names` | 中文模式下比赛名；`comp_names_zh.json` 数据问题 |

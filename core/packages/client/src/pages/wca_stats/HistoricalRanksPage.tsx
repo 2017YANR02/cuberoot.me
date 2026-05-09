@@ -12,6 +12,7 @@ import { ChevronLeft, Search } from 'lucide-react';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
+import { countryName } from '../../utils/country_name';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import Paginator from './Paginator';
@@ -104,11 +105,18 @@ export default function HistoricalRanksPage() {
       .catch(() => setCountries([]));
   }, []);
 
+  const displayCountry = (c: { iso2: string | null; name: string }) => c.iso2 ? countryName(c.iso2, isZh) : c.name;
+
   const filteredCountries = useMemo(() => {
     if (!countryQuery) return countries;
     const q = countryQuery.toLowerCase();
-    return countries.filter(c => c.name.toLowerCase().includes(q) || (c.iso2 ?? '').toLowerCase().includes(q));
-  }, [countries, countryQuery]);
+    return countries.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      displayCountry(c).toLowerCase().includes(q) ||
+      (c.iso2 ?? '').toLowerCase().includes(q),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries, countryQuery, isZh]);
 
   const selectedCountry = useMemo(() => {
     if (!country) return null;
@@ -187,7 +195,7 @@ export default function HistoricalRanksPage() {
               {selectedCountry ? (
                 <>
                   {selectedCountry.iso2 && <Flag iso2={selectedCountry.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                  <span>{selectedCountry.name}</span>
+                  <span>{displayCountry(selectedCountry)}</span>
                 </>
               ) : (
                 <span>{isZh ? '全球' : 'Worldwide'}</span>
@@ -229,7 +237,7 @@ export default function HistoricalRanksPage() {
                     onClick={() => { updateParam('country', c.id); setCountryOpen(false); setCountryQuery(''); }}
                   >
                     {c.iso2 && <Flag iso2={c.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                    <span>{c.name}</span>
+                    <span>{displayCountry(c)}</span>
                   </button>
                 ))}
               </div>

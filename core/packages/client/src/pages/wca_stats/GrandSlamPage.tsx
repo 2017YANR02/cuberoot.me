@@ -6,7 +6,9 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
-import { EventSelect } from '../../components/EventSelect';
+import WcaEventSelector from './WcaEventSelector';
+import PillToggle from './PillToggle';
+import { RecordBadge } from '../../components/RecordBadge/RecordBadge';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
@@ -20,6 +22,7 @@ const EVENTS = [
   'minx','pyram','clock','skewb','sq1',
   '444bf','555bf','333mbf',
 ];
+const EVENTS_SET = new Set(EVENTS);
 
 interface ChampInfo { compId: string; name: string | null; pos: number | null }
 interface GsRow {
@@ -38,6 +41,7 @@ export default function GrandSlamPage() {
   const [params, setParams] = useSearchParams();
   const event = params.get('event') ?? '';
   const onlyFirst = params.get('onlyFirst') === '1';
+  const hasWr = params.get('hasWr') === '1';
 
   const setParam = (k: string, v: string) => {
     const next = new URLSearchParams(params);
@@ -55,12 +59,13 @@ export default function GrandSlamPage() {
     const url = new URL(apiUrl('/v1/wca/grand-slam'), window.location.origin);
     if (event) url.searchParams.set('event', event);
     if (onlyFirst) url.searchParams.set('onlyFirst', '1');
+    if (hasWr) url.searchParams.set('hasWr', '1');
     fetch(url.toString().replace(window.location.origin, ''))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: { rows: GsRow[] }) => setRows(j.rows))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [event, onlyFirst]);
+  }, [event, onlyFirst, hasWr]);
 
   return (
     <div className="wse-page">
@@ -74,22 +79,37 @@ export default function GrandSlamPage() {
         <h1>{isZh ? '大满贯' : 'Grand Slam'}</h1>
         <p className="wse-subtitle">
           {isZh
-            ? '同时获得世锦赛、洲际赛、国家赛领奖台,并打破过该项目 WR 的选手'
-            : 'Cubers who podiumed at World + Continental + National championships and broke a WR for that event'}
+            ? '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。'
+            : 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.'}
         </p>
       </header>
 
+      <WcaEventSelector
+        availableEvents={EVENTS_SET}
+        selectedEvent={event}
+        onSelect={v => setParam('event', v)}
+        isZh={isZh}
+        allowAll
+      />
+
       <div className="wse-filters">
         <div className="wse-filter">
-          <label>{isZh ? '项目' : 'Event'}</label>
-          <EventSelect events={EVENTS} value={event} onChange={v => setParam('event', v)} allLabel={isZh ? '全部' : 'All'} />
+          <label>{isZh ? '筛选' : 'Filter'}</label>
+          <PillToggle
+            value={onlyFirst}
+            onChange={v => setParam('onlyFirst', v ? '1' : '')}
+            offLabel={isZh ? '全部' : 'All'}
+            onLabel={isZh ? '仅全部第一' : 'Only all gold'}
+          />
         </div>
         <div className="wse-filter">
-          <label>{isZh ? '筛选' : 'Filter'}</label>
-          <label className="wse-toggle" style={{ height: 34, alignItems: 'center', display: 'flex' }}>
-            <input type="checkbox" checked={onlyFirst} onChange={e => setParam('onlyFirst', e.target.checked ? '1' : '')} />
-            {isZh ? '仅全部第一' : 'Only all gold'}
-          </label>
+          <label>{isZh ? '破 WR' : 'Broke WR'}</label>
+          <PillToggle
+            value={hasWr}
+            onChange={v => setParam('hasWr', v ? '1' : '')}
+            offLabel={isZh ? '全部' : 'All'}
+            onLabel={isZh ? '是' : 'Yes'}
+          />
         </div>
       </div>
 
@@ -128,7 +148,7 @@ export default function GrandSlamPage() {
                     <td>{r.eventId}</td>
                     <td className="wse-value-col">{r.single != null ? formatWcaResult(r.single, r.eventId, 'single') : '—'}</td>
                     <td className="wse-value-col">{r.average != null ? formatWcaResult(r.average, r.eventId, 'average') : '—'}</td>
-                    <td>{r.hasWr ? <span style={{ color: '#ffc107' }}>WR</span> : ''}</td>
+                    <td>{r.hasWr ? <RecordBadge record="WR" /> : ''}</td>
                     <td className="wse-detail-cell">{champCell(r.worldChamp)}</td>
                     <td className="wse-detail-cell">{champCell(r.continentalChamp)}</td>
                     <td className="wse-detail-cell">{champCell(r.nationalChamp)}</td>
