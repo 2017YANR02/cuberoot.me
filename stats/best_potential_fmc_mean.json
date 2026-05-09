@@ -38,6 +38,13 @@
   ],
   "rows": [
     [
+      "18.00",
+      17,
+      18,
+      19,
+      "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026/results/all#e333fm_1)"
+    ],
+    [
       "19.33",
       18,
       21,
@@ -50,6 +57,13 @@
       19,
       21,
       "[FMCanton Nansha 2026](https://www.worldcubeassociation.org/competitions/FMCantonNansha2026/results/all#e333fm_f)"
+    ],
+    [
+      "19.33",
+      21,
+      19,
+      18,
+      "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)"
     ],
     [
       "19.33",
@@ -722,20 +736,6 @@
       21,
       21,
       "[Gniezno Side Open 2025](https://www.worldcubeassociation.org/competitions/GnieznoSideOpen2025/results/all#e333fm_f)"
-    ],
-    [
-      "21.00",
-      21,
-      21,
-      21,
-      "[Góraszka FMC Sunday 2024](https://www.worldcubeassociation.org/competitions/GoraszkaFMCSunday2024/results/all#e333fm_1)"
-    ],
-    [
-      "21.00",
-      19,
-      22,
-      22,
-      "[Great Lakes Championship 2025](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2025/results/all#e333fm_f)"
     ]
   ]
 }
