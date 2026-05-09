@@ -212,7 +212,7 @@
     border-radius: 10px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 28px auto 1fr auto;
+    grid-template-columns: 28px 1fr auto auto;
     align-items: center;
     gap: 12px;
     transition: border-color 0.15s;
@@ -263,7 +263,7 @@
 
 @media (max-width: 480px) {
     .gen-item {
-        grid-template-columns: 24px auto 1fr auto;
+        grid-template-columns: 24px 1fr auto auto;
         gap: 8px;
         padding: 8px;
     }
