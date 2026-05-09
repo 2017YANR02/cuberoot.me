@@ -8,7 +8,7 @@
  * Phase 3 adds PDF.
  */
 import { useMemo, useState } from 'react';
-import { Plus, Minus, RefreshCw } from 'lucide-react';
+import { Plus, Minus, RefreshCw, Download } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import { eventDisplayName } from '../../utils/wca_events';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
@@ -18,6 +18,9 @@ import {
   defaultEventConfig, defaultRoundConfig,
   type EventConfig, type WcaFormat,
 } from './wca_round';
+import type { RoundSheetInput } from './tnoodle_pdf';
+
+const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 interface Props {
   t: (zh: string, en: string) => string;
@@ -50,6 +53,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
   });
   const [sheets, setSheets] = useState<RoundSheet[] | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [pdfBuilding, setPdfBuilding] = useState(false);
 
   const enabledEvents = useMemo(
     () => TNOODLE_WCA_EVENTS.filter((e) => events[e]),
@@ -136,6 +140,44 @@ export default function TNoodleMode({ t, isZh }: Props) {
     }
   };
 
+  const downloadPdf = async () => {
+    if (!sheets || sheets.length === 0) return;
+    setPdfBuilding(true);
+    try {
+      const { generateTnoodlePdf } = await import('./tnoodle_pdf');
+      const sheetInputs: RoundSheetInput[] = sheets.map((s) => ({
+        event: s.event,
+        roundIdx: s.roundIdx,
+        groupIdx: s.groupIdx,
+        format: s.format,
+        attempts: s.attempts.map((a) => ({
+          label: a.label,
+          isExtra: a.isExtra,
+          scramble: a.lines.length === 1 ? a.lines[0] : '',
+          mbldLines: a.lines.length > 1 ? a.lines : undefined,
+        })),
+      }));
+      const blob = await generateTnoodlePdf(sheetInputs, {
+        competitionTitle: compName,
+        generatorTag: GENERATOR_TAG,
+        isZh,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${compName.replace(/[^\w一-龥-]+/g, '_')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      console.error('[tnoodle] pdf failed', err);
+      alert(`PDF generation failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setPdfBuilding(false);
+    }
+  };
+
   const totalAttempts = useMemo(() => {
     let n = 0;
     for (const ev of enabledEvents) {
@@ -172,6 +214,16 @@ export default function TNoodleMode({ t, isZh }: Props) {
                 ? t('生成中…', 'Generating…')
                 : t(`生成打乱 (${totalAttempts})`, `Generate (${totalAttempts})`)}
             </span>
+          </button>
+          <button
+            type="button"
+            className="gen-btn"
+            onClick={downloadPdf}
+            disabled={!sheets || sheets.length === 0 || pdfBuilding}
+            title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
+          >
+            <Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />
+            <span>{pdfBuilding ? t('PDF 生成中…', 'Building PDF…') : 'PDF'}</span>
           </button>
         </div>
       </div>
