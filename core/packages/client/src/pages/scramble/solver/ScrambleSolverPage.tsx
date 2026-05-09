@@ -100,6 +100,16 @@ export default function ScrambleSolverPage() {
   const [showPaint, setShowPaint] = useState(false);
   const [paintFacelet, setPaintFacelet] = useState(SOLVED_FACELET);
   const [paintColor, setPaintColor] = useState<FaceLetter>('U');
+  // 用户点 Solve 时若 prun 表还没就绪,记下这个意图,等表 ready 后自动接着 solve
+  const pendingSolveRef = useRef(false);
+  // 生成表后自动下载到本地;下次访问可 Upload 秒级跳过几十秒生成
+  const [autoDownloadTable, setAutoDownloadTable] = useState(() => {
+    const v = localStorage.getItem('cubeopt.autoDownload');
+    return v === null ? true : v === '1';
+  });
+  useEffect(() => { localStorage.setItem('cubeopt.autoDownload', autoDownloadTable ? '1' : '0'); }, [autoDownloadTable]);
+  // 标记当前 ready 是 generate 刚完成 → 触发自动下载(避免 Upload 完成时也触发)
+  const justGeneratedRef = useRef(false);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -193,6 +203,7 @@ export default function ScrambleSolverPage() {
           setReadyState(d.code === 0 ? 'ready' : 'need-init');
         }
       } else if (d.cmd === 'generate table') {
+        if (d.code === 0) justGeneratedRef.current = true;
         setReadyState(d.code === 0 ? 'ready' : 'need-init');
         setProgress(-1);
       } else if (d.cmd === 'upload table') {
@@ -233,6 +244,7 @@ export default function ScrambleSolverPage() {
     setReadyState('busy');
     setLogs('');
     setProgress(-1);
+    pendingSolveRef.current = false;  // 切 solver 取消任何 pending solve
     workerRef.current.postMessage({ cmd: 'select solver', data: solverName });
   }, [solverName]);
 
@@ -274,8 +286,7 @@ export default function ScrambleSolverPage() {
     e.target.value = '';
   };
 
-  const startSolve = () => {
-    if (readyState !== 'ready') return;
+  const doSolveNow = () => {
     const cleaned = scrambles
       .split('\n').map(s => s.trim()).filter(s => s.length > 0).join('\n');
     if (!cleaned) { alert(t('打乱不能为空', 'No scrambles')); return; }
@@ -290,6 +301,39 @@ export default function ScrambleSolverPage() {
       debug: 1,
     });
   };
+
+  const startSolve = () => {
+    if (readyState === 'ready') {
+      doSolveNow();
+      return;
+    }
+    if (readyState === 'need-init') {
+      // prun 表还没生成 — 自动 generate-then-solve
+      const cleaned = scrambles.split('\n').map(s => s.trim()).filter(Boolean).join('\n');
+      if (!cleaned) { alert(t('打乱不能为空', 'No scrambles')); return; }
+      pendingSolveRef.current = true;
+      generateTable();
+    }
+  };
+
+  // 状态走到 ready 时:
+  //   1) 如果是 generate 刚结束 + 用户开了自动下载 → 触发下载
+  //   2) 否则若有 pending solve(级联自 Solve 按钮) → 跑 solve
+  useEffect(() => {
+    if (readyState !== 'ready') return;
+    if (justGeneratedRef.current && autoDownloadTable) {
+      justGeneratedRef.current = false;
+      // 让 React 把 state 落地后再发 download(避免 readyState 与 worker 并发)
+      const id = setTimeout(() => downloadTable(), 0);
+      return () => clearTimeout(id);
+    }
+    justGeneratedRef.current = false;
+    if (pendingSolveRef.current) {
+      pendingSolveRef.current = false;
+      doSolveNow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readyState]);
 
   const genRandom = () => {
     const out: string[] = [];
@@ -371,6 +415,10 @@ export default function ScrambleSolverPage() {
         <div className="row">
           <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
           <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
+          <label className="auto-dl">
+            <input type="checkbox" checked={autoDownloadTable} onChange={(e) => setAutoDownloadTable(e.target.checked)} />
+            <span>{t('生成后自动下载', 'Auto-download after gen')}</span>
+          </label>
           {readyState === 'need-init' && (
             <>
               <button className="btn" onClick={generateTable}>{t('生成表', 'Generate Table')}</button>
@@ -463,10 +511,18 @@ export default function ScrambleSolverPage() {
           </select>
           <button
             className="btn-primary"
-            disabled={readyState !== 'ready' || !stateOk}
+            disabled={readyState === 'busy' || readyState === 'no-solver' || !stateOk}
             onClick={startSolve}
+            title={readyState === 'need-init' ? t(
+              '会先自动生成 prun 表(几十秒)再求解',
+              'Will auto-generate the prun table (tens of seconds) then solve',
+            ) : undefined}
           >
-            {readyState === 'busy' ? <><Loader2 size={14} className="spinning" /> Solving…</> : 'Solve'}
+            {readyState === 'busy'
+              ? <><Loader2 size={14} className="spinning" /> {t('求解中', 'Solving')}…</>
+              : readyState === 'need-init'
+              ? <><Sparkles size={14} /> {t('生成表+求解', 'Gen Table + Solve')}</>
+              : <>Solve</>}
           </button>
         </div>
       </section>
@@ -595,6 +651,12 @@ const INLINE_CSS = `
   border-top: 1px dashed var(--border, #333);
   display: flex; justify-content: center;
 }
+.auto-dl {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.8rem; color: var(--text-muted, #aaa); cursor: pointer;
+  user-select: none;
+}
+.auto-dl input { margin: 0; cursor: pointer; }
 @media (max-width: 480px) {
   .cubeopt-header h1 { font-size: 1.3rem; }
   .lbl { min-width: 4rem; }
