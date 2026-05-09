@@ -19,7 +19,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
 import CubingPreview from '../../timer/cube/CubingPreview';
 import { faceletToCubie, validateFacelet } from './facelet';
@@ -144,6 +144,16 @@ export default function ScrambleSolverPage() {
   // logs 默认折叠,大多数用户只关心 Solutions 面板;调试者可展开看 raw wasm 输出
   const [showLogs, setShowLogs] = useState(() => localStorage.getItem('cubeopt.showLogs') === '1');
   useEffect(() => { localStorage.setItem('cubeopt.showLogs', showLogs ? '1' : '0'); }, [showLogs]);
+  // 输入方式 tab — 三选一,占用一个完整 card 的页面空间;其它两个不渲染
+  type InputMode = 'paint' | 'random' | 'paste';
+  const [inputMode, setInputMode] = useState<InputMode>(() => {
+    const v = localStorage.getItem('cubeopt.inputMode');
+    return (v === 'random' || v === 'paste') ? v : 'paint';
+  });
+  useEffect(() => { localStorage.setItem('cubeopt.inputMode', inputMode); }, [inputMode]);
+  // Solver / Prun 表 / 线程 / 并发块 折叠在"高级"下,默认收起 — 99% 用户不动这些
+  const [showAdvanced, setShowAdvanced] = useState(() => localStorage.getItem('cubeopt.showAdvanced') === '1');
+  useEffect(() => { localStorage.setItem('cubeopt.showAdvanced', showAdvanced ? '1' : '0'); }, [showAdvanced]);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -509,12 +519,6 @@ export default function ScrambleSolverPage() {
         <h1>{t('最优解 (cubeopt)', 'Optimal Solver (cubeopt)')}</h1>
         <LangToggle variant="inline" />
       </header>
-      <p className="cubeopt-lead">
-        {t(
-          '复刻 cs0x7f/cubeopt-wasm: 给定打乱(或状态),用 cube48opt 系列 wasm 求 HTM 最少步解。',
-          'A React port of cs0x7f/cubeopt-wasm. Given a scramble (or state), find the optimal HTM solution.',
-        )}
-      </p>
 
       {!sabAvailable && (
         <div className="cubeopt-warn">
@@ -536,33 +540,53 @@ export default function ScrambleSolverPage() {
         </div>
       )}
 
-      <section className="cubeopt-card">
-        <div className="row paint-toggle-row">
-          <span className="lbl">{t('从状态', 'From state')}</span>
-          <span className="paint-hint">
-            {t(
-              '点击格子 → 上色 → "求 scramble" → 自动填到下面打乱框,再点 Solve 求最优。',
-              'Click stickers → paint → "Derive scramble" → fills the box below, then Solve for optimal.',
-            )}
-          </span>
-        </div>
-        <div className="paint-wrap">
-          <InteractiveCubeNet
-            facelet={paintFacelet}
-            onChange={setPaintFacelet}
-            activeColor={paintColor}
-            onActiveColorChange={setPaintColor}
-            pixelSize={paintCanvasSize}
-            solveLabel={{ zh: '求 scramble', en: 'Derive scramble' }}
-            onSolve={(fc) => {
-              if (kociembaBusy) return;
-              runKociembaForState(fc).catch((e: Error) => {
-                setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
-              });
-            }}
-          />
-        </div>
-      </section>
+      {/* 输入方式 tabs */}
+      <div className="cubeopt-tabs" role="tablist">
+        <button role="tab" aria-selected={inputMode === 'paint'} className={`tab${inputMode === 'paint' ? ' is-active' : ''}`} onClick={() => setInputMode('paint')}>
+          {t('从状态画', 'Paint state')}
+        </button>
+        <button role="tab" aria-selected={inputMode === 'random'} className={`tab${inputMode === 'random' ? ' is-active' : ''}`} onClick={() => setInputMode('random')}>
+          {t('随机生成', 'Random')}
+        </button>
+        <button role="tab" aria-selected={inputMode === 'paste'} className={`tab${inputMode === 'paste' ? ' is-active' : ''}`} onClick={() => setInputMode('paste')}>
+          {t('直接粘贴', 'Paste')}
+        </button>
+      </div>
+
+      {inputMode === 'paint' && (
+        <section className="cubeopt-card">
+          <div className="paint-wrap">
+            <InteractiveCubeNet
+              facelet={paintFacelet}
+              onChange={setPaintFacelet}
+              activeColor={paintColor}
+              onActiveColorChange={setPaintColor}
+              pixelSize={paintCanvasSize}
+              solveLabel={{ zh: '求打乱', en: 'Derive scramble' }}
+              onSolve={(fc) => {
+                if (kociembaBusy) return;
+                runKociembaForState(fc).catch((e: Error) => {
+                  setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
+                });
+              }}
+            />
+          </div>
+        </section>
+      )}
+
+      {inputMode === 'random' && (
+        <section className="cubeopt-card">
+          <div className="row">
+            <select className="ctl-sm" value={scrLen} onChange={(e) => setScrLen(parseInt(e.target.value, 10))}>
+              {SCR_LEN_OPTS.map(n => <option key={n} value={n}>{n} {t('步', 'moves')}</option>)}
+            </select>
+            <select className="ctl-sm" value={scrNum} onChange={(e) => setScrNum(parseInt(e.target.value, 10))}>
+              {SCR_NUM_OPTS.map(n => <option key={n} value={n}>{n} {t('个', 'cubes')}</option>)}
+            </select>
+            <button className="btn-primary" onClick={genRandom}>{t('生成到打乱框', 'Generate')}</button>
+          </div>
+        </section>
+      )}
 
       {stateInfo && (
         <div className="cubeopt-info">
@@ -576,99 +600,24 @@ export default function ScrambleSolverPage() {
         </div>
       )}
 
+      {/* 打乱 + Solve — 始终显示,所有 input mode 都填到这里 */}
       <section className="cubeopt-card">
         <div className="row">
-          <span className="lbl">Solver</span>
-          <select className="ctl" value={solverName} disabled={readyState === 'busy'}
-            onChange={(e) => setSolverName(e.target.value)}>
-            {SOLVER_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>
-                {o.value} ({o.size})
-              </option>
-            ))}
-          </select>
-          <span className="size-badge">{SOLVER_OPTIONS.find(o => o.value === solverName)?.size}</span>
-        </div>
-        <div className="row">
-          <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
-          <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
-          <label className="auto-dl">
-            <input type="checkbox" checked={autoDownloadTable} onChange={(e) => setAutoDownloadTable(e.target.checked)} />
-            <span>{t('生成后自动下载', 'Auto-download after gen')}</span>
-          </label>
-          {readyState === 'need-init' && (
-            <>
-              <button className="btn" onClick={generateTable}>{t('生成表', 'Generate Table')}</button>
-              <button className="btn" onClick={onUploadClick}><Upload size={14} /> {t('上传表', 'Upload Table')}</button>
-            </>
-          )}
-          {readyState === 'ready' && (
-            <button className="btn" onClick={downloadTable}><Download size={14} /> {t('下载表', 'Download Table')}</button>
-          )}
-          {readyState === 'busy' && <span className="busy-marker"><Loader2 size={14} className="spinning" /> {t('忙', 'busy')}…</span>}
-          <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={onUploadFile} />
-        </div>
-        {progress >= 0 && (
-          <div className="progress">
-            <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
-          </div>
-        )}
-      </section>
-
-      <section className="cubeopt-card">
-        <div className="row">
-          <span className="lbl">{t('随机', 'Random')}</span>
-          <select className="ctl-sm" value={scrLen} onChange={(e) => setScrLen(parseInt(e.target.value, 10))}>
-            {SCR_LEN_OPTS.map(n => <option key={n} value={n}>{n} {t('步', 'moves')}</option>)}
-          </select>
-          <select className="ctl-sm" value={scrNum} onChange={(e) => setScrNum(parseInt(e.target.value, 10))}>
-            {SCR_NUM_OPTS.map(n => <option key={n} value={n}>{n} {t('个', 'cubes')}</option>)}
-          </select>
-          <button className="btn" onClick={genRandom}>{t('生成', 'Random')}</button>
+          <span className="lbl">{t('打乱', 'Scramble')}</span>
           <button className="btn-icon" onClick={inverseScrambles} title={t('每行反向', 'Invert each line')}>
             <Sparkles size={14} />
           </button>
           <button
             className={`btn-icon${showScramblePreview ? ' is-active' : ''}`}
             onClick={() => setShowScramblePreview(v => !v)}
-            title={t('打乱图预览(显示第一行打乱产生的状态)', 'Show preview of the first scramble')}
+            title={t('显示第一行打乱产生的状态', 'Show state after the first scramble')}
           >
             {showScramblePreview ? <Eye size={14} /> : <EyeOff size={14} />}
           </button>
-          <button className="btn-icon" onClick={() => setScrambles('')} title="Clear">
+          <button className="btn-icon" onClick={() => setScrambles('')} title={t('清空', 'Clear')}>
             <Trash2 size={14} />
           </button>
-        </div>
-        <textarea
-          className="scramble-area"
-          rows={5}
-          placeholder="R U R' U' R' F R2 U' R' U' R U R' F'"
-          value={scrambles}
-          onChange={(e) => setScrambles(e.target.value)}
-        />
-        {showScramblePreview && previewScramble && (
-          <div className="scramble-preview">
-            <CubingPreview
-              event="333"
-              scramble={previewScramble}
-              visualization="2D"
-              size={28}
-              className="scramble-preview-svg"
-            />
-            <span className="scramble-preview-label">{t('应用第一行打乱后的状态', 'State after the first scramble')}</span>
-          </div>
-        )}
-        <div className="row">
-          <span className="lbl">{t('线程', 'Threads')}</span>
-          <select className="ctl-sm" value={nThreads} onChange={(e) => setNThreads(parseInt(e.target.value, 10))}>
-            {Array.from({ length: navigator.hardwareConcurrency || 4 }, (_, i) => i + 1).map(n => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-          <span className="lbl">{t('并发块', 'Concurrent')}</span>
-          <select className="ctl-sm" value={nGroup} onChange={(e) => setNGroup(parseInt(e.target.value, 10))}>
-            {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
+          <span className="row-spacer" />
           {readyState === 'busy' ? (
             <button className="btn-cancel" onClick={cancelCubeopt} title={t(
               '终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
@@ -682,16 +631,37 @@ export default function ScrambleSolverPage() {
               disabled={readyState === 'no-solver' || !stateOk}
               onClick={startSolve}
               title={readyState === 'need-init' ? t(
-                '会先自动生成 prun 表(几十秒)再求解',
+                '会先自动生成 prun 表(几十秒)再求最优解',
                 'Will auto-generate the prun table (tens of seconds) then solve',
-              ) : undefined}
+              ) : t('用 cubeopt 求 HTM 最少步解', 'Solve optimally with cubeopt')}
             >
               {readyState === 'need-init'
-                ? <><Sparkles size={14} /> {t('生成表+求解', 'Gen Table + Solve')}</>
+                ? <><Sparkles size={14} /> {t('生成表+求最优', 'Gen Table + Solve')}</>
                 : <>Solve</>}
             </button>
           )}
         </div>
+        <textarea
+          className="scramble-area"
+          rows={inputMode === 'paste' ? 6 : 4}
+          placeholder={inputMode === 'paste'
+            ? t('把 cubedb / cstimer / WCA scramble 粘到这里,每行一个,然后 Solve。',
+                'Paste scrambles here (one per line), then Solve.')
+            : "R U R' U' R' F R2 U' R' U' R U R' F'"}
+          value={scrambles}
+          onChange={(e) => setScrambles(e.target.value)}
+        />
+        {showScramblePreview && previewScramble && (
+          <div className="scramble-preview-mini">
+            <CubingPreview
+              event="333"
+              scramble={previewScramble}
+              visualization="2D"
+              size={14}
+              className="scramble-preview-svg"
+            />
+          </div>
+        )}
       </section>
 
       {solveResults.size > 0 && (
@@ -726,6 +696,69 @@ export default function ScrambleSolverPage() {
           </ol>
         </section>
       )}
+
+      {/* 高级:Solver 大小 / Prun 表 / 线程 / 并发块 — 默认收起 */}
+      <section className="cubeopt-card cubeopt-advanced">
+        <button className="advanced-toggle" onClick={() => setShowAdvanced(v => !v)}>
+          {showAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span>{t('高级设置', 'Advanced')}</span>
+          <span className="advanced-summary">
+            {solverName} · {nThreads}{t('线程', 'threads')}
+            {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
+            {readyState === 'need-init' && <> · {t('表未生成', 'table not built')}</>}
+            {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
+          </span>
+        </button>
+        {showAdvanced && (
+          <>
+            <div className="row">
+              <span className="lbl">Solver</span>
+              <select className="ctl" value={solverName} disabled={readyState === 'busy'}
+                onChange={(e) => setSolverName(e.target.value)}>
+                {SOLVER_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.value} ({o.size})</option>
+                ))}
+              </select>
+              <span className="size-badge">{SOLVER_OPTIONS.find(o => o.value === solverName)?.size}</span>
+            </div>
+            <div className="row">
+              <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
+              <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
+              <label className="auto-dl">
+                <input type="checkbox" checked={autoDownloadTable} onChange={(e) => setAutoDownloadTable(e.target.checked)} />
+                <span>{t('生成后自动下载', 'Auto-download after gen')}</span>
+              </label>
+              {readyState === 'need-init' && (
+                <>
+                  <button className="btn" onClick={generateTable}>{t('生成表', 'Generate Table')}</button>
+                  <button className="btn" onClick={onUploadClick}><Upload size={14} /> {t('上传表', 'Upload Table')}</button>
+                </>
+              )}
+              {readyState === 'ready' && (
+                <button className="btn" onClick={downloadTable}><Download size={14} /> {t('下载表', 'Download Table')}</button>
+              )}
+              <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={onUploadFile} />
+            </div>
+            {progress >= 0 && (
+              <div className="progress">
+                <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
+              </div>
+            )}
+            <div className="row">
+              <span className="lbl">{t('线程', 'Threads')}</span>
+              <select className="ctl-sm" value={nThreads} onChange={(e) => setNThreads(parseInt(e.target.value, 10))}>
+                {Array.from({ length: navigator.hardwareConcurrency || 4 }, (_, i) => i + 1).map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span className="lbl">{t('并发块', 'Concurrent')}</span>
+              <select className="ctl-sm" value={nGroup} onChange={(e) => setNGroup(parseInt(e.target.value, 10))}>
+                {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+          </>
+        )}
+      </section>
 
       <section className="cubeopt-card">
         <div className="row">
@@ -766,7 +799,43 @@ const INLINE_CSS = `
   margin-bottom: 0.25rem;
 }
 .cubeopt-header h1 { margin: 0; font-size: 1.6rem; font-weight: 600; }
-.cubeopt-lead { color: var(--text-muted, #aaa); margin: 0 0 1rem; line-height: 1.55; }
+.cubeopt-tabs {
+  display: flex; gap: 0.25rem;
+  margin: 0.75rem 0;
+  border-bottom: 1px solid var(--border, #333);
+}
+.cubeopt-tabs .tab {
+  background: transparent; border: none; color: var(--text-muted, #aaa);
+  padding: 0.45rem 0.9rem; font-size: 0.9rem; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.cubeopt-tabs .tab:hover { color: var(--text); }
+.cubeopt-tabs .tab.is-active {
+  color: var(--accent, #ff8800);
+  border-bottom-color: var(--accent, #ff8800);
+}
+.row-spacer { flex: 1; }
+.advanced-toggle {
+  display: flex; align-items: center; gap: 0.4rem;
+  width: 100%; background: transparent; border: none; color: var(--text);
+  padding: 0.25rem 0; font-size: 0.9rem; cursor: pointer; text-align: left;
+}
+.advanced-toggle:hover { color: var(--accent, #ff8800); }
+.advanced-summary {
+  margin-left: auto; color: var(--text-muted, #888); font-size: 0.8rem;
+  display: inline-flex; align-items: center; gap: 0.3rem;
+}
+.cubeopt-advanced { padding-bottom: 0.25rem; }
+.scramble-preview-mini {
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.4rem;
+  background: var(--panel-sub, #181818);
+  border-radius: 5px;
+  border: 1px dashed var(--border, #333);
+}
 .cubeopt-warn {
   background: #3a2912; border: 1px solid #ff8800; color: #ffcc88;
   padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.75rem;
@@ -835,14 +904,7 @@ const INLINE_CSS = `
 }
 .btn-icon { padding: 0.35rem 0.45rem; }
 .btn-icon.is-active { border-color: var(--accent, #ff8800); color: var(--accent, #ff8800); }
-.scramble-preview {
-  margin: 0.5rem 0; padding: 0.5rem;
-  display: flex; align-items: center; gap: 0.75rem;
-  background: var(--panel-sub, #181818); border-radius: 5px;
-  border: 1px dashed var(--border, #333);
-}
 .scramble-preview-svg { flex-shrink: 0; }
-.scramble-preview-label { font-size: 0.8rem; color: var(--text-muted, #888); }
 .solutions-list {
   list-style: none; margin: 0.25rem 0 0; padding: 0;
   display: flex; flex-direction: column; gap: 0.2rem;
@@ -896,16 +958,12 @@ const INLINE_CSS = `
   margin-top: 1rem; color: var(--text-muted, #888); font-size: 0.8rem;
 }
 .cubeopt-foot a { color: var(--accent, #ff8800); }
-.paint-toggle-row { gap: 0.5rem; }
-.paint-toggle-row .btn.is-active { border-color: var(--accent, #ff8800); }
 .paint-hint {
   flex: 1; min-width: 12rem;
   font-size: 0.8rem; color: var(--text-muted, #888);
   line-height: 1.4;
 }
 .paint-wrap {
-  margin-top: 0.5rem; padding-top: 0.5rem;
-  border-top: 1px dashed var(--border, #333);
   display: flex; justify-content: center;
 }
 .auto-dl {
@@ -917,7 +975,6 @@ const INLINE_CSS = `
 @media (max-width: 480px) {
   .cubeopt-page { padding: 0.75rem 0.5rem 2rem; }
   .cubeopt-header h1 { font-size: 1.2rem; flex: 1; min-width: 0; }
-  .cubeopt-lead { font-size: 0.85rem; }
   .lbl { min-width: 3.5rem; font-size: 0.78rem; }
   .ctl, .ctl-sm { font-size: 0.8rem; padding: 0.25rem 0.35rem; }
   .size-badge, .table-name, .auto-dl { font-size: 0.75rem; }
@@ -925,6 +982,5 @@ const INLINE_CSS = `
   .btn, .btn-primary, .btn-cancel { font-size: 0.78rem; padding: 0.3rem 0.5rem; }
   .row { gap: 0.35rem; }
   .paint-hint { font-size: 0.72rem; line-height: 1.3; }
-  .paint-wrap { padding-top: 0.25rem; }
 }
 `;
