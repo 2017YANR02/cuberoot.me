@@ -1,21 +1,29 @@
 /// <reference lib="WebWorker" />
 /**
- * Service Worker — 两件事:
+ * Service Worker — 三件事:
  *   1. 拦截 /v1/visualcube.svg → 本地 renderFromSimpleQuery 出图(免后端)
- *   2. 给所有同源响应注入 COOP/COEP 让 SharedArrayBuffer 可用 — 这样
- *      cubeopt-wasm (pthread) 在 GH Pages 上也跑得起来。
+ *   2. 给同源响应注入 COOP/COEP 让 SharedArrayBuffer 可用 — cubeopt-wasm 需要
+ *   3. (Safari only) 跨源响应补 CORP=cross-origin,因为 Safari 不支持 COEP=credentialless
  *
- * COI = Cross-Origin Isolation。GH Pages 不让自定义 HTTP headers,
- * 只能走 service-worker 拦截响应再加头(coi-serviceworker 通行做法)。
+ * COEP 选型:
+ *   - Chrome / Firefox / Edge:credentialless — 允许跨源 no-CORP 资源(Google Fonts 等)
+ *   - Safari:不支持 credentialless,只能用 require-corp。这要求所有跨源资源带 CORP,
+ *     否则会被 block。SW 拦截跨源 GET、强制 mode='cors' 重 fetch、加 CORP 后回。
  *
- * 跨源请求(api.cuberoot.me 等)不在本 SW scope 内,直接走原生 fetch,
- * 所以 API 调用不会被这层影响。
+ * 通过 SW 拦截 = 不需要改 server / 不需要 self-host fonts,跟 coi-serviceworker
+ * 的 require-corp 模式一致。代价是 Safari 跨源资源走双跳 fetch(浏览器 → SW → 网),
+ * 首次稍慢,但加了浏览器缓存后无感。
  *
- * 这个文件被 scripts/build-sw.mjs 用 esbuild bundle 成 public/sw.js。
+ * 这个文件被 scripts/build_sw.mjs 用 esbuild bundle 成 public/sw.js。
  */
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 
 declare const self: ServiceWorkerGlobalScope;
+
+// 检测 Safari(在 SW 全局 navigator 上;这是浏览器进程层面的常量,不会变)
+const ua = self.navigator.userAgent;
+const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg\//.test(ua);
+const COEP_VALUE = isSafari ? 'require-corp' : 'credentialless';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -28,8 +36,10 @@ self.addEventListener('activate', (event) => {
 function addCoiHeaders(response: Response): Response {
   if (response.status === 0) return response;
   const headers = new Headers(response.headers);
-  headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
+  headers.set('Cross-Origin-Embedder-Policy', COEP_VALUE);
   headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  // 同源响应也带 CORP=same-origin,Safari 在 require-corp 模式下要求
+  headers.set('Cross-Origin-Resource-Policy', 'same-origin');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -37,11 +47,34 @@ function addCoiHeaders(response: Response): Response {
   });
 }
 
+/**
+ * Safari 专用:跨源响应改写。强制走 CORS fetch 拿到完整 body(原 no-cors 请求会
+ * 返回 opaque,无法重组),加 CORP=cross-origin 让 require-corp 文档接受。
+ *
+ * 失败兜底:CORS fetch 抛错(目标服务器不支持 CORS)→ 透传原请求,资源可能仍被
+ * COEP block,但至少不破坏其它逻辑。
+ */
+async function rewriteCrossOrigin(req: Request): Promise<Response> {
+  try {
+    const r = await fetch(req.url, { mode: 'cors', credentials: 'omit' });
+    if (r.status === 0) return r;
+    const headers = new Headers(r.headers);
+    headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    return new Response(r.body, {
+      status: r.status,
+      statusText: r.statusText,
+      headers,
+    });
+  } catch {
+    return fetch(req);
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // /v1/visualcube.svg — local SVG render (existing).
+  // /v1/visualcube.svg — local SVG render (existing)
   if (url.pathname === '/v1/visualcube.svg') {
     event.respondWith((async () => {
       try {
@@ -72,16 +105,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // COI 透传 — 仅同源 GET。其他请求(POST / 跨源)走原生网络,不动。
   if (req.method !== 'GET') return;
-  if (url.origin !== self.location.origin) return;
-  if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
 
-  event.respondWith(
-    fetch(req)
-      .then(addCoiHeaders)
-      .catch(() => fetch(req)),
-  );
+  if (url.origin === self.location.origin) {
+    // 同源:加 COI headers
+    if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
+    event.respondWith(
+      fetch(req)
+        .then(addCoiHeaders)
+        .catch(() => fetch(req)),
+    );
+    return;
+  }
+
+  // 跨源:Safari 必须改写(加 CORP),其它浏览器 credentialless 模式不需要
+  if (isSafari) {
+    event.respondWith(rewriteCrossOrigin(req));
+  }
 });
 
 export {};
