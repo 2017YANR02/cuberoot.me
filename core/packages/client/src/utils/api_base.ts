@@ -7,8 +7,10 @@
 export const API_ORIGIN = (() => {
   const override = import.meta.env.VITE_API_ORIGIN as string | undefined;
   if (override) return override;
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (host === 'localhost' || host === '127.0.0.1') return ''; // dev: vite proxy 接 /v1/*
+  // Vite dev → 走相对路径(被 vite middleware/proxy 接住),避免 host=LAN IP 时
+  // 跨域到 api.cuberoot.me。手机连 PC 的 dev server (192.168.x.x:5173) 跑的也是 dev,
+  // 之前只判 localhost/127 会导致手机端 visualcube IMG 跨域失败 → 空图。
+  if (import.meta.env.DEV) return '';
   return 'https://api.cuberoot.me';
 })();
 

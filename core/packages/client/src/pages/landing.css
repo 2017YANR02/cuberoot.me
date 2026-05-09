@@ -2,7 +2,10 @@
  * LandingPage — Claude 风浅色主题 + Bento Grid
  * ========================================================================== */
 
-:root {
+/* NOTE: 这些变量原来定义在 :root,会污染所有页面 — 比如 /scramble hub 用了
+   var(--text) 当卡片字色,从 / 导航过去后 --text=#181716(landing 浅色字)落
+   在暗主题卡片上,文字就消失了。改 scope 到 .landing-page,只在 landing 内生效。 */
+.landing-page {
     --bg: #FAF9F5;
     --surface: #FFFFFF;
     --text: #181716;
