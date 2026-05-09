@@ -28,11 +28,11 @@ interface Props {
 }
 
 interface AttemptScramble {
-  /** Display label, e.g. "1", "2", "E1", "E2" or "Attempt 1 of 8" for MBLD lines */
+  /** Display label, e.g. "1", "2", "E1", "E2". For MBLD this is the cube number. */
   label: string;
-  /** Scramble move sequence(s). For MBLD an attempt has N lines (one per cube). */
-  lines: string[];
-  /** Whether this is an extra-scramble (E1/E2 …) */
+  /** Single scramble move sequence (one row in the PDF). */
+  scramble: string;
+  /** Whether this is an extra-scramble (E1/E2 …); always false for MBLD. */
   isExtra: boolean;
 }
 
@@ -41,6 +41,8 @@ interface RoundSheet {
   roundIdx: number;     // 0-based
   groupIdx: number;     // 0-based (for scrambleSets > 1)
   format: WcaFormat;
+  /** MBLD only — 0-based attempt index. Adds "Attempt N+1" to the sheet title. */
+  attemptNumber?: number;
   attempts: AttemptScramble[];
 }
 
@@ -53,7 +55,9 @@ export default function TNoodleMode({ t, isZh }: Props) {
   });
   const [sheets, setSheets] = useState<RoundSheet[] | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
 
   const enabledEvents = useMemo(
     () => TNOODLE_WCA_EVENTS.filter((e) => events[e]),
@@ -99,6 +103,17 @@ export default function TNoodleMode({ t, isZh }: Props) {
 
   const generate = async () => {
     setGenerating(true);
+    let done = 0;
+    const total = totalAttempts;
+    setGenProgress({ done: 0, total });
+    // Yield to React so the progress bar paints before the heavy loop starts.
+    const yieldToUi = () => new Promise<void>((r) => setTimeout(r, 0));
+    const tick = async () => {
+      done += 1;
+      setGenProgress({ done, total });
+      // yield every few attempts so the UI can repaint
+      if (done % 2 === 0) await yieldToUi();
+    };
     try {
       const out: RoundSheet[] = [];
       for (const ev of enabledEvents) {
@@ -107,28 +122,46 @@ export default function TNoodleMode({ t, isZh }: Props) {
           const round = cfg.rounds[ri];
           const mainCount = formatAttempts(round.format);
           for (let g = 0; g < Math.max(1, round.scrambleSets); g++) {
-            const attempts: AttemptScramble[] = [];
-            for (let i = 0; i < mainCount; i++) {
-              attempts.push({
-                label: String(i + 1),
-                lines: await genAttempt(ev, cfg.mbldCubes),
-                isExtra: false,
+            if (ev === '333mbf') {
+              // Tnoodle MBLD: each attempt becomes its OWN sheet, with N
+              // separate cube scrambles as rows. No extras for MBLD.
+              const cubesPerAttempt = cfg.mbldCubes ?? 8;
+              for (let a = 0; a < mainCount; a++) {
+                const cubeRows: AttemptScramble[] = [];
+                for (let c = 0; c < cubesPerAttempt; c++) {
+                  const s = await tnoodleRandomScramble('333bf');
+                  cubeRows.push({
+                    label: String(c + 1),
+                    scramble: s ?? '',
+                    isExtra: false,
+                  });
+                  await tick();
+                }
+                out.push({
+                  event: ev, roundIdx: ri, groupIdx: g,
+                  format: round.format,
+                  attemptNumber: a,
+                  attempts: cubeRows,
+                });
+              }
+            } else {
+              const attempts: AttemptScramble[] = [];
+              for (let i = 0; i < mainCount; i++) {
+                const s = await tnoodleRandomScramble(ev);
+                attempts.push({ label: String(i + 1), scramble: s ?? '', isExtra: false });
+                await tick();
+              }
+              for (let i = 0; i < DEFAULT_EXTRA_COUNT; i++) {
+                const s = await tnoodleRandomScramble(ev);
+                attempts.push({ label: `E${i + 1}`, scramble: s ?? '', isExtra: true });
+                await tick();
+              }
+              out.push({
+                event: ev, roundIdx: ri, groupIdx: g,
+                format: round.format,
+                attempts,
               });
             }
-            for (let i = 0; i < DEFAULT_EXTRA_COUNT; i++) {
-              attempts.push({
-                label: `E${i + 1}`,
-                lines: await genAttempt(ev, cfg.mbldCubes),
-                isExtra: true,
-              });
-            }
-            out.push({
-              event: ev,
-              roundIdx: ri,
-              groupIdx: g,
-              format: round.format,
-              attempts,
-            });
           }
         }
       }
@@ -137,12 +170,14 @@ export default function TNoodleMode({ t, isZh }: Props) {
       console.error('[tnoodle] generate failed', err);
     } finally {
       setGenerating(false);
+      setGenProgress(null);
     }
   };
 
   const downloadPdf = async () => {
     if (!sheets || sheets.length === 0) return;
     setPdfBuilding(true);
+    setPdfProgress({ done: 0, total: 1 });
     try {
       const { generateTnoodlePdf } = await import('./tnoodle_pdf');
       const sheetInputs: RoundSheetInput[] = sheets.map((s) => ({
@@ -150,17 +185,18 @@ export default function TNoodleMode({ t, isZh }: Props) {
         roundIdx: s.roundIdx,
         groupIdx: s.groupIdx,
         format: s.format,
+        attemptNumber: s.attemptNumber,
         attempts: s.attempts.map((a) => ({
           label: a.label,
           isExtra: a.isExtra,
-          scramble: a.lines.length === 1 ? a.lines[0] : '',
-          mbldLines: a.lines.length > 1 ? a.lines : undefined,
+          scramble: a.scramble,
         })),
       }));
       const blob = await generateTnoodlePdf(sheetInputs, {
         competitionTitle: compName,
         generatorTag: GENERATOR_TAG,
         isZh,
+        onProgress: (done, total) => setPdfProgress({ done, total }),
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -175,6 +211,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
       alert(`PDF generation failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setPdfBuilding(false);
+      setPdfProgress(null);
     }
   };
 
@@ -183,7 +220,13 @@ export default function TNoodleMode({ t, isZh }: Props) {
     for (const ev of enabledEvents) {
       const cfg = events[ev];
       for (const r of cfg.rounds) {
-        n += (formatAttempts(r.format) + DEFAULT_EXTRA_COUNT) * Math.max(1, r.scrambleSets);
+        const sets = Math.max(1, r.scrambleSets);
+        if (ev === '333mbf') {
+          // MBLD: per attempt = `cubesPerAttempt` rows, no extras
+          n += formatAttempts(r.format) * (cfg.mbldCubes ?? 8) * sets;
+        } else {
+          n += (formatAttempts(r.format) + DEFAULT_EXTRA_COUNT) * sets;
+        }
       }
     }
     return n;
@@ -202,29 +245,28 @@ export default function TNoodleMode({ t, isZh }: Props) {
           />
         </div>
         <div className="gen-control-group gen-control-actions">
-          <button
-            type="button"
-            className="gen-btn gen-btn-primary"
+          <ProgressButton
+            primary
+            icon={<RefreshCw size={14} className={generating ? 'gen-spin' : ''} />}
+            label={generating
+              ? t(`生成中 (${genProgress?.done ?? 0}/${genProgress?.total ?? totalAttempts})`,
+                  `Generating (${genProgress?.done ?? 0}/${genProgress?.total ?? totalAttempts})`)
+              : t(`生成打乱 (${totalAttempts})`, `Generate (${totalAttempts})`)}
+            progress={genProgress}
             onClick={generate}
             disabled={enabledEvents.length === 0 || generating}
-          >
-            <RefreshCw size={14} className={generating ? 'gen-spin' : ''} />
-            <span>
-              {generating
-                ? t('生成中…', 'Generating…')
-                : t(`生成打乱 (${totalAttempts})`, `Generate (${totalAttempts})`)}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="gen-btn"
+          />
+          <ProgressButton
+            icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
+            label={pdfBuilding
+              ? t(`PDF (${pdfProgress?.done ?? 0}/${pdfProgress?.total ?? 1})`,
+                  `PDF (${pdfProgress?.done ?? 0}/${pdfProgress?.total ?? 1})`)
+              : 'PDF'}
+            progress={pdfProgress}
             onClick={downloadPdf}
             disabled={!sheets || sheets.length === 0 || pdfBuilding}
             title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
-          >
-            <Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />
-            <span>{pdfBuilding ? t('PDF 生成中…', 'Building PDF…') : 'PDF'}</span>
-          </button>
+          />
         </div>
       </div>
 
@@ -318,23 +360,12 @@ export default function TNoodleMode({ t, isZh }: Props) {
   );
 }
 
-async function genAttempt(event: string, mbldCubes?: number): Promise<string[]> {
-  if (event === '333mbf') {
-    const n = mbldCubes ?? 8;
-    const lines: string[] = [];
-    for (let i = 0; i < n; i++) {
-      const s = await tnoodleRandomScramble('333bf');
-      if (s) lines.push(s);
-    }
-    return lines;
-  }
-  const s = await tnoodleRandomScramble(event);
-  return s ? [s] : [];
-}
-
 function SheetView({ sheet, isZh, t }: { sheet: RoundSheet; isZh: boolean; t: Props['t'] }) {
-  const { event, roundIdx, groupIdx, format, attempts } = sheet;
+  const { event, roundIdx, groupIdx, format, attemptNumber, attempts } = sheet;
   const groupSuffix = groupIdx > 0 ? ` · ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}` : '';
+  const attemptSuffix = attemptNumber !== undefined
+    ? ` · ${t('第', 'Attempt')} ${attemptNumber + 1}${t('次', '')}`
+    : '';
   const rows: React.ReactNode[] = [];
   attempts.forEach((a, i) => {
     const showExtraDivider = a.isExtra && (i === 0 || !attempts[i - 1].isExtra);
@@ -349,13 +380,11 @@ function SheetView({ sheet, isZh, t }: { sheet: RoundSheet; isZh: boolean; t: Pr
       <tr key={i} className={a.isExtra ? 'is-extra' : ''}>
         <td className="gen-tn-attempt-num">{a.label}</td>
         <td className="gen-tn-attempt-scramble">
-          {a.lines.map((line, li) => (
-            <code key={li} className="gen-tn-attempt-line">{line}</code>
-          ))}
+          <code className="gen-tn-attempt-line">{a.scramble}</code>
         </td>
         <td className="gen-tn-attempt-preview">
-          {eventHasScramblePreview(event) && a.lines.length > 0 && (
-            <ScramblePreview2D event={event} scramble={a.lines[0]} size={48} />
+          {eventHasScramblePreview(event) && a.scramble && (
+            <ScramblePreview2D event={event} scramble={a.scramble} size={48} />
           )}
         </td>
       </tr>,
@@ -365,9 +394,43 @@ function SheetView({ sheet, isZh, t }: { sheet: RoundSheet; isZh: boolean; t: Pr
     <div className="gen-tn-sheet">
       <div className="gen-tn-sheet-header">
         <EventIcon event={event} />
-        <span>{eventDisplayName(event, isZh)} · {t('第', 'Round')} {roundIdx + 1}{t('轮', '')} · {FORMAT_LABEL[format]}{groupSuffix}</span>
+        <span>{eventDisplayName(event, isZh)} · {t('第', 'Round')} {roundIdx + 1}{t('轮', '')} · {FORMAT_LABEL[format]}{groupSuffix}{attemptSuffix}</span>
       </div>
       <table className="gen-tn-sheet-table"><tbody>{rows}</tbody></table>
     </div>
+  );
+}
+
+interface ProgressButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  /** When non-null, a thin determinate bar fills the button bottom edge. */
+  progress: { done: number; total: number } | null;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+  primary?: boolean;
+}
+function ProgressButton({ icon, label, progress, onClick, disabled, title, primary }: ProgressButtonProps) {
+  const pct = progress && progress.total > 0
+    ? Math.max(0, Math.min(100, (progress.done / progress.total) * 100))
+    : 0;
+  const showBar = progress !== null;
+  return (
+    <button
+      type="button"
+      className={`gen-btn${primary ? ' gen-btn-primary' : ''} gen-btn-progress`}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+    >
+      {icon}
+      <span>{label}</span>
+      {showBar && (
+        <span className="gen-btn-bar" aria-hidden="true">
+          <span className="gen-btn-bar-fill" style={{ width: `${pct}%` }} />
+        </span>
+      )}
+    </button>
   );
 }
