@@ -56,12 +56,6 @@ export default function ScrambleHubPage() {
         <h1>{t('打乱', 'Scramble')}</h1>
         <LangToggle variant="inline" />
       </header>
-      <p className="hub-lead">
-        {t(
-          '4 个围绕"打乱"的工具:难度分布、批量生成、CFOP 分析、最优解(cubeopt)。',
-          'Four tools around scrambles: distribution, batch generation, CFOP analysis, optimal solver (cubeopt).',
-        )}
-      </p>
       <div className="hub-grid">
         {CARDS.map((c) => (
           <Link key={c.to} to={c.to} className="hub-card">
