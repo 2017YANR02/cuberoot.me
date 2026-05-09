@@ -101,6 +101,14 @@ export default function ScrambleSolverPage() {
   const [showPaint, setShowPaint] = useState(false);
   const [paintFacelet, setPaintFacelet] = useState(SOLVED_FACELET);
   const [paintColor, setPaintColor] = useState<FaceLetter>('U');
+  // Net 编辑器宽度自适应:窄屏取整 viewport - padding,宽屏封顶 360
+  const [paintCanvasSize, setPaintCanvasSize] = useState(360);
+  useEffect(() => {
+    const upd = () => setPaintCanvasSize(Math.min(360, Math.max(200, window.innerWidth - 64)));
+    upd();
+    window.addEventListener('resize', upd);
+    return () => window.removeEventListener('resize', upd);
+  }, []);
   // 打乱预览图开关 — 取 textarea 第一行,渲染对应魔方状态(net 视图)
   const [showScramblePreview, setShowScramblePreview] = useState(() => {
     const v = localStorage.getItem('cubeopt.showPreview');
@@ -550,7 +558,7 @@ export default function ScrambleSolverPage() {
               onChange={setPaintFacelet}
               activeColor={paintColor}
               onActiveColorChange={setPaintColor}
-              pixelSize={360}
+              pixelSize={paintCanvasSize}
               solveLabel={{ zh: '求 scramble', en: 'Derive scramble' }}
               onSolve={(fc) => {
                 if (kociembaBusy) return;
@@ -666,6 +674,7 @@ const INLINE_CSS = `
   margin: 0 auto;
   padding: 1.25rem 1rem 3rem;
   color: var(--text);
+  overflow-x: hidden;
 }
 .cubeopt-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -711,9 +720,10 @@ const INLINE_CSS = `
 .ctl, .ctl-sm {
   background: var(--panel-sub, #2a2a2a); border: 1px solid var(--border, #444);
   color: var(--text); padding: 0.3rem 0.5rem; border-radius: 5px; font-size: 0.9rem;
+  max-width: 100%; box-sizing: border-box;
 }
-.ctl { flex: 1; min-width: 12rem; }
-.ctl-sm { min-width: 6rem; }
+.ctl { flex: 1; min-width: 0; }
+.ctl-sm { min-width: 0; flex: 1 1 6rem; }
 .size-badge {
   background: var(--panel-sub, #2a2a2a); padding: 0.3rem 0.6rem;
   border-radius: 5px; font-size: 0.85rem; color: var(--text-muted, #aaa);
@@ -793,8 +803,16 @@ const INLINE_CSS = `
 }
 .auto-dl input { margin: 0; cursor: pointer; }
 @media (max-width: 480px) {
-  .cubeopt-header h1 { font-size: 1.3rem; }
-  .lbl { min-width: 4rem; }
-  .ctl { min-width: 8rem; }
+  .cubeopt-page { padding: 0.75rem 0.5rem 2rem; }
+  .cubeopt-header h1 { font-size: 1.2rem; flex: 1; min-width: 0; }
+  .cubeopt-lead { font-size: 0.85rem; }
+  .lbl { min-width: 3.5rem; font-size: 0.78rem; }
+  .ctl, .ctl-sm { font-size: 0.8rem; padding: 0.25rem 0.35rem; }
+  .size-badge, .table-name, .auto-dl { font-size: 0.75rem; }
+  .auto-dl span { white-space: nowrap; }
+  .btn, .btn-primary, .btn-cancel { font-size: 0.78rem; padding: 0.3rem 0.5rem; }
+  .row { gap: 0.35rem; }
+  .paint-hint { font-size: 0.72rem; line-height: 1.3; }
+  .paint-wrap { padding-top: 0.25rem; }
 }
 `;
