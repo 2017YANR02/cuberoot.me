@@ -146,9 +146,9 @@ export default function YearResultsPage() {
                   <th className="wse-rank-col">#</th>
                   <th>{isZh ? '选手' : 'Person'}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
                   <th>{isZh ? '比赛' : 'Competition'}</th>
                   <th>{isZh ? '日期' : 'Date'}</th>
+                  <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,9 +160,9 @@ export default function YearResultsPage() {
                       <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
-                    <td className="wse-attempts-col">{formatAttempts(r.attempts, event, type, r.value)}</td>
                     <td><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></td>
                     <td className="wse-detail-cell">{r.compDate ?? ''}</td>
+                    <td className="wse-attempts-col">{formatAttempts(r.attempts, event, type, r.value)}</td>
                   </tr>
                 ))}
               </tbody>
