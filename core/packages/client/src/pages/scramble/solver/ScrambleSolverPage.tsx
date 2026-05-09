@@ -142,6 +142,9 @@ export default function ScrambleSolverPage() {
   useEffect(() => { localStorage.setItem('cubeopt.autoDownload', autoDownloadTable ? '1' : '0'); }, [autoDownloadTable]);
   // 标记当前 ready 是 generate 刚完成 → 触发自动下载(避免 Upload 完成时也触发)
   const justGeneratedRef = useRef(false);
+  // logs 默认折叠,大多数用户只关心 Solutions 面板;调试者可展开看 raw wasm 输出
+  const [showLogs, setShowLogs] = useState(() => localStorage.getItem('cubeopt.showLogs') === '1');
+  useEffect(() => { localStorage.setItem('cubeopt.showLogs', showLogs ? '1' : '0'); }, [showLogs]);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -735,11 +738,19 @@ export default function ScrambleSolverPage() {
       <section className="cubeopt-card">
         <div className="row">
           <span className="lbl">Logs</span>
-          <button className="btn-icon" onClick={() => setLogs('')} title="Clear logs">
-            <Trash2 size={14} />
+          <button className="btn" onClick={() => setShowLogs(v => !v)}>
+            {showLogs ? t('收起', 'Hide') : t('展开 raw 输出', 'Show raw output')}
+            {logs ? ` (${logs.split('\n').length - 1})` : ''}
           </button>
+          {showLogs && (
+            <button className="btn-icon" onClick={() => setLogs('')} title="Clear logs">
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
-        <textarea ref={logsRef} className="logs-area" rows={10} value={logs} readOnly />
+        {showLogs && (
+          <textarea ref={logsRef} className="logs-area" rows={10} value={logs} readOnly />
+        )}
       </section>
 
       <p className="cubeopt-foot">
