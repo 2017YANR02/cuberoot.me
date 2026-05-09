@@ -271,6 +271,34 @@
     .gen-controls { padding: 10px 12px; }
 }
 
+/* ───────── EventSelect on light theme ─────────
+   The shared EventSelect component is styled for the dark-theme pages
+   (color: #e5e5e5 on translucent white bg). On /scramble/gen's light
+   surface that came out almost invisible. Re-skin it locally. */
+.gen-page .event-select-trigger {
+    color: var(--gen-text);
+    background: var(--gen-surface);
+    border-color: var(--gen-border);
+}
+.gen-page .event-select-trigger:hover { border-color: var(--gen-border-strong); }
+.gen-page .event-select-trigger:focus-visible {
+    border-color: var(--gen-accent);
+    box-shadow: 0 0 0 3px var(--gen-accent-soft);
+}
+.gen-page .event-select-chevron { color: var(--gen-text-mute); }
+.gen-page .event-select-empty { color: var(--gen-text-mute); }
+.gen-page .event-select-popup {
+    background: var(--gen-surface);
+    border-color: var(--gen-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.gen-page .event-select-item { color: var(--gen-text); }
+.gen-page .event-select-item:hover { background: var(--gen-accent-soft); }
+.gen-page .event-select-item--active {
+    background: var(--gen-accent-soft);
+    color: var(--gen-accent);
+}
+
 /* ───────── mode chips (Quick / TNoodle) ───────── */
 .gen-mode-chips {
     display: inline-flex;
