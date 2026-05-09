@@ -48,10 +48,14 @@ export interface InteractiveCubeNetProps {
   activeColor: FaceLetter;
   onActiveColorChange: (c: FaceLetter) => void;
   pixelSize: number;           // 整图宽度(像素),用于自适应 sticker 大小
+  /** 自定义 "Solve" 行为。默认导航到 /scramble/solver?state=... */
+  onSolve?: (facelet: string) => void;
+  /** 自定义 Solve 按钮文案。 */
+  solveLabel?: { zh: string; en: string };
 }
 
 export default function InteractiveCubeNet({
-  facelet, onChange, activeColor, onActiveColorChange, pixelSize,
+  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel,
 }: InteractiveCubeNetProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -86,7 +90,8 @@ export default function InteractiveCubeNet({
 
   const goSolver = () => {
     if (validErr) return;
-    navigate(`/scramble/solver?state=${facelet}`);
+    if (onSolve) onSolve(facelet);
+    else navigate(`/scramble/solver?state=${facelet}`);
   };
 
   return (
@@ -148,7 +153,7 @@ export default function InteractiveCubeNet({
           title={validErr ?? t('用 cubeopt 求最优解', 'Solve optimally with cubeopt')}
         >
           <Sparkles size={14} />
-          <span>{t('求最优解', 'Solve')}</span>
+          <span>{solveLabel ? (isZh ? solveLabel.zh : solveLabel.en) : t('求最优解', 'Solve')}</span>
         </button>
       </div>
 
