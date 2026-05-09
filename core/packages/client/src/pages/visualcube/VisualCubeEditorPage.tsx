@@ -30,6 +30,8 @@ import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import CubingPreview from '../timer/cube/CubingPreview';
 import { invertAlg } from '../notation/alg_ops';
+import InteractiveCubeNet, { type FaceLetter } from './InteractiveCubeNet';
+import { SOLVED_FACELET } from '../scramble/solver/facelet';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -271,6 +273,9 @@ interface EditorState {
   arrowScale: number | null;
   arrowInfluence: number | null;
   arrowColor: string;
+  // Interactive net paint (3x3 only) — 仅 view=net 模式下激活
+  paintedFacelet: string;        // 54-char URFDLB
+  netActiveColor: FaceLetter;    // 当前 swatch 选中色
 }
 
 const DEFAULTS: EditorState = {
@@ -309,6 +314,8 @@ const DEFAULTS: EditorState = {
   arrowScale: null,
   arrowInfluence: null,
   arrowColor: '#808080',
+  paintedFacelet: SOLVED_FACELET,
+  netActiveColor: 'U',
 };
 
 function readInitialFromUrl(params: URLSearchParams): EditorState {
@@ -760,6 +767,20 @@ export default function VisualCubeEditorPage() {
           // so 'case' mode passes the inverse alg.
           const isCubeNet = state.puzzleType === 'cube' && state.cubeView === 'net';
           const isOtherNet = state.puzzleType !== 'cube' && state.puzzleVariant === 'net';
+          // 3x3 net 走可填色编辑器 — 其他 size / 非 cube 仍走 scramble-display
+          if (isCubeNet && state.cubeSize === 3) {
+            return (
+              <div className="vc-preview vc-preview-net-paint">
+                <InteractiveCubeNet
+                  facelet={state.paintedFacelet}
+                  onChange={(next) => set('paintedFacelet', next)}
+                  activeColor={state.netActiveColor}
+                  onActiveColorChange={(c) => set('netActiveColor', c)}
+                  pixelSize={state.imageSize}
+                />
+              </div>
+            );
+          }
           if (isCubeNet || isOtherNet) {
             const event = isCubeNet
               ? (() => { const n = Math.max(2, Math.min(7, state.cubeSize)); return `${n}${n}${n}`; })()
