@@ -1366,7 +1366,8 @@
     }
 }
 
-.globe-page .cuber-speed {
+.globe-page .cuber-speed,
+.globe-page .cuber-view-toggle {
     display: inline-flex;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -1374,6 +1375,23 @@
     padding: 2px;
     gap: 2px;
     flex-shrink: 0;
+}
+.globe-page .cuber-view-toggle .view-btn {
+    padding: 0.2rem 0.55rem;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.globe-page .cuber-view-toggle .view-btn:hover { color: var(--text); }
+.globe-page .cuber-view-toggle .view-btn.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
 }
 .globe-page .cuber-speed .speed-btn {
     padding: 0.2rem 0.5rem;
