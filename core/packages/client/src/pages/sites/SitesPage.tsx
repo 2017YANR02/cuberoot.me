@@ -19,6 +19,7 @@ import Fuse from 'fuse.js';
 import { SITES } from './data/sites';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
+import LangToggle from '../../components/LangToggle';
 import './sites.css';
 
 type GroupFilter = GroupId;
@@ -199,12 +200,6 @@ export default function SitesPage() {
     return () => clearTimeout(t);
   }, [inputValue, composing, query, params, setParams]);
 
-  const toggleLang = useCallback(() => {
-    const n = lang === 'zh' ? 'en' : 'zh';
-    i18n.changeLanguage(n);
-    localStorage.setItem('trainer-lang', n);
-  }, [lang, i18n]);
-
   // 分组计数
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -213,17 +208,27 @@ export default function SitesPage() {
   }, []);
 
   // Fuse 实例（全体，按 group 过滤在外层处理）
+  // tags 在数据里是 "Skewb 斜转" 这种 EN+ZH 拼合串,getFn 拆成独立 token 单独索引,
+  // 否则 "斜转" 搜 "Skewb 斜转" 命中得分被空格 / 英文部分稀释
   const fuse = useMemo(
     () =>
       new Fuse(SITES, {
         keys: [
-          { name: 'name', weight: 0.3 },
-          { name: 'name_zh', weight: 0.3 },
-          { name: 'name_en', weight: 0.2 },
-          { name: 'desc_zh', weight: 0.15 },
-          { name: 'desc_en', weight: 0.1 },
+          { name: 'name', weight: 0.25 },
+          { name: 'name_zh', weight: 0.25 },
+          { name: 'name_en', weight: 0.18 },
+          { name: 'desc_zh', weight: 0.12 },
+          { name: 'desc_en', weight: 0.08 },
           { name: 'author', weight: 0.05 },
-          { name: 'tags', weight: 0.05 },
+          {
+            name: 'tagTokens',
+            weight: 0.3,
+            getFn: (s: Site) =>
+              (s.tags ?? []).flatMap((t) => {
+                const { en, zh } = splitLangTag(t);
+                return [en, zh].filter(Boolean);
+              }),
+          },
           { name: 'url', weight: 0.05 },
         ],
         threshold: 0.35,
@@ -277,9 +282,7 @@ export default function SitesPage() {
           ))}
         </nav>
 
-        <button className="sites-lang" onClick={toggleLang}>
-          {lang === 'zh' ? 'English' : '中文'}
-        </button>
+        <LangToggle variant="inline" className="sites-lang" />
       </aside>
 
       <main className="sites-main">
