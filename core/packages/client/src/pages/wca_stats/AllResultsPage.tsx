@@ -7,7 +7,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
-import { EventSelect } from '../../components/EventSelect';
+import WcaEventSelector from './WcaEventSelector';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
@@ -23,6 +23,7 @@ const EVENTS = [
   '444bf','555bf','333mbf',
   '333ft','magic','mmagic','333mbo',
 ];
+const EVENTS_SET = new Set(EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
 interface Row {
@@ -81,11 +82,14 @@ export default function AllResultsPage() {
         <p className="wse-subtitle">{isZh ? '所有成绩按值排序(每个国家保留 top 500、全球保留 top 5000)' : 'Top 500/country, top 5000 worldwide per event/type'}</p>
       </header>
 
+      <WcaEventSelector
+        availableEvents={EVENTS_SET}
+        selectedEvent={event}
+        onSelect={v => update('event', v)}
+        isZh={isZh}
+      />
+
       <div className="wse-filters">
-        <div className="wse-filter">
-          <label>{isZh ? '项目' : 'Event'}</label>
-          <EventSelect events={EVENTS} value={event} onChange={v => update('event', v)} />
-        </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{isZh ? '类型' : 'Type'}</label>

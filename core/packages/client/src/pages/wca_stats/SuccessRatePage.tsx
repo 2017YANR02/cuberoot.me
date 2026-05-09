@@ -7,7 +7,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
-import { EventSelect } from '../../components/EventSelect';
+import WcaEventSelector from './WcaEventSelector';
 import { Flag } from '../../utils/flag';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
@@ -20,6 +20,7 @@ const EVENTS = [
   '222','444','555','666','777','333oh',
   'minx','pyram','clock','skewb','sq1',
 ];
+const EVENTS_SET = new Set(EVENTS);
 const MIN_OPTIONS = [3, 5, 12, 50, 100, 200, 500];
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -77,11 +78,14 @@ export default function SuccessRatePage() {
         <p className="wse-subtitle">{isZh ? '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)' : 'Per-cuber success rate per event (most relevant for BLD / FMC)'}</p>
       </header>
 
+      <WcaEventSelector
+        availableEvents={EVENTS_SET}
+        selectedEvent={event}
+        onSelect={v => update('event', v)}
+        isZh={isZh}
+      />
+
       <div className="wse-filters">
-        <div className="wse-filter">
-          <label>{isZh ? '项目' : 'Event'}</label>
-          <EventSelect events={EVENTS} value={event} onChange={v => update('event', v)} />
-        </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{isZh ? '最小尝试数' : 'Min attempts'}</label>
