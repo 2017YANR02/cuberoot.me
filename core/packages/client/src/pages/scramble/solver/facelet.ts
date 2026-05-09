@@ -143,12 +143,61 @@ export function cubieToFacelet(c: CubieCube): string {
   return f.join('');
 }
 
+/**
+ * 校验 CubieCube 物理合法性。颜色数对 + 角棱片段都能识别还不够 — 还有
+ * 三个不变量:
+ *   - cp / ep 是 0..7 / 0..11 的排列(每个片段恰好一份)
+ *   - sum(co) ≡ 0 (mod 3) — 全 8 角扭转角和必须 ≡0
+ *   - sum(eo) ≡ 0 (mod 2) — 全 12 棱翻转和必须 ≡0
+ *   - sgn(cp 排列) === sgn(ep 排列) — 角棱排列奇偶性必须相同
+ *
+ * 用户随便涂的状态大概率违反其中之一 → kociemba two-phase 搜不到解会无限
+ * 搜下去。在送到 worker 前提前判掉。
+ */
+export function validateCubie(c: import('../../timer/scramble/kociemba/cube').CubieCube): string | null {
+  const seenC = new Set(c.cp);
+  if (seenC.size !== 8) return 'corner permutation not bijective (some piece appears twice)';
+  const seenE = new Set(c.ep);
+  if (seenE.size !== 12) return 'edge permutation not bijective (some piece appears twice)';
+
+  let coSum = 0;
+  for (const v of c.co) coSum += v;
+  if (coSum % 3 !== 0) return `corner orientation sum ${coSum} not divisible by 3 (one corner is twisted)`;
+
+  let eoSum = 0;
+  for (const v of c.eo) eoSum += v;
+  if (eoSum % 2 !== 0) return `edge orientation sum ${eoSum} not divisible by 2 (one edge is flipped)`;
+
+  if (permParity(c.cp) !== permParity(c.ep)) {
+    return 'corner/edge permutation parity mismatch (single 2-cycle swap is impossible)';
+  }
+  return null;
+}
+
+function permParity(p: number[]): number {
+  let parity = 0;
+  const visited = new Array<boolean>(p.length).fill(false);
+  for (let i = 0; i < p.length; i++) {
+    if (visited[i]) continue;
+    let j = i;
+    let cycleLen = 0;
+    while (!visited[j]) {
+      visited[j] = true;
+      j = p[j];
+      cycleLen++;
+    }
+    if (cycleLen > 0) parity ^= (cycleLen - 1) & 1;
+  }
+  return parity;
+}
+
 /** 校验合法性 — 不抛错,返回 null 表示合法,否则错误信息。 */
 export function validateFacelet(s: string): string | null {
+  let cube;
   try {
-    faceletToCubie(s);
-    return null;
+    cube = faceletToCubie(s);
   } catch (e) {
     return (e as Error).message;
   }
+  return validateCubie(cube);
 }

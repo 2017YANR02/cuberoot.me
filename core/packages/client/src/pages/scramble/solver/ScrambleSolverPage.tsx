@@ -19,7 +19,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Trash2, Upload, Download, Sparkles } from 'lucide-react';
+import { Loader2, Trash2, Upload, Download, Sparkles, X } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
 import { faceletToCubie, validateFacelet, SOLVED_FACELET } from './facelet';
 import {
@@ -114,6 +114,9 @@ export default function ScrambleSolverPage() {
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const logsRef = useRef<HTMLTextAreaElement | null>(null);
+  // worker.onmessage 的 closure 只在 mount 时建一次,会捕获初始 solverInfo=null
+  // → 生成表后下载用的是 fallback 文件名。用 ref 让 handler 永远拿到最新值。
+  const solverInfoRef = useRef<SolverInfo | null>(null);
 
   const sabAvailable = useMemo(
     () => typeof window !== 'undefined' && typeof SharedArrayBuffer !== 'undefined' && window.crossOriginIsolated,
@@ -122,6 +125,9 @@ export default function ScrambleSolverPage() {
 
   // Kociemba 子 worker(只在 ?state= 时按需开)
   const kociembaRef = useRef<Worker | null>(null);
+  const [kociembaBusy, setKociembaBusy] = useState(false);
+  // 当前 kociemba 取消句柄(超时 / Cancel 按钮触发)
+  const kociembaCancelRef = useRef<(() => void) | null>(null);
 
   // URL 预填 — scramble 直接进 textarea;state → kociemba 求解 → 反向 → 填入
   useEffect(() => {
@@ -145,37 +151,66 @@ export default function ScrambleSolverPage() {
       setStateInfo(t(`非法状态:${errMsg}`, `Invalid state: ${errMsg}`));
       return;
     }
-    setStateInfo(t('状态合法,Kociemba 求解中…', 'State valid, solving with Kociemba…'));
     const state = faceletToCubie(facelet);
     if (isSolvedCubie(state)) {
       setStateInfo(t('状态已是还原态,无需打乱。', 'State is already solved.'));
       setScrambles('');
       return;
     }
+    setStateInfo(t('状态合法,Kociemba 求解中(首次需 ~3s 建表)…', 'State valid, solving with Kociemba (first call needs ~3s to build tables)…'));
+    setKociembaBusy(true);
     if (!kociembaRef.current) kociembaRef.current = new KociembaWorker();
     const w = kociembaRef.current;
     const id = Date.now();
-    const sol: string = await new Promise((resolve, reject) => {
-      const onMsg = (ev: MessageEvent) => {
-        if (ev.data?.id !== id) return;
-        w.removeEventListener('message', onMsg);
-        if (ev.data.ok && typeof ev.data.sol === 'string') resolve(ev.data.sol);
-        else reject(new Error(ev.data.err || 'kociemba failed'));
-      };
-      w.addEventListener('message', onMsg);
-      w.postMessage({ id, op: 'solve', state });
-    });
-    setScrambles(sol);
-    setStateInfo(t(
-      `Kociemba 求出 ${sol.split(/\s+/).length} 步打乱(非最优)。点击 Solve 求最优解。`,
-      `Kociemba scramble: ${sol.split(/\s+/).length} moves (non-optimal). Click Solve for optimal.`,
-    ));
+    try {
+      const sol: string = await new Promise((resolve, reject) => {
+        // 30s 超时 — 正常 <5s,超过说明状态有问题或 worker 卡死
+        const TIMEOUT = 30_000;
+        let tid: ReturnType<typeof setTimeout> | null = null;
+        const cleanup = () => {
+          if (tid) clearTimeout(tid);
+          w.removeEventListener('message', onMsg);
+          kociembaCancelRef.current = null;
+        };
+        const onMsg = (ev: MessageEvent) => {
+          if (ev.data?.id !== id) return;
+          cleanup();
+          if (ev.data.ok && typeof ev.data.sol === 'string') resolve(ev.data.sol);
+          else reject(new Error(ev.data.err || 'kociemba failed'));
+        };
+        w.addEventListener('message', onMsg);
+        kociembaCancelRef.current = () => {
+          cleanup();
+          w.terminate();
+          kociembaRef.current = null;
+          reject(new Error('cancelled'));
+        };
+        tid = setTimeout(() => {
+          cleanup();
+          w.terminate();
+          kociembaRef.current = null;
+          reject(new Error('timeout — 状态可能不可解'));
+        }, TIMEOUT);
+        w.postMessage({ id, op: 'solve', state });
+      });
+      setScrambles(sol);
+      setStateInfo(t(
+        `Kociemba 求出 ${sol.split(/\s+/).length} 步打乱(非最优)。点击 Solve 求最优解。`,
+        `Kociemba scramble: ${sol.split(/\s+/).length} moves (non-optimal). Click Solve for optimal.`,
+      ));
+    } finally {
+      setKociembaBusy(false);
+    }
   }
 
-  // 一次性创建 worker + 选默认 solver
-  useEffect(() => {
-    const w = new Worker('/cubeopt/wasm-worker.js');
-    workerRef.current = w;
+  const cancelKociemba = () => {
+    kociembaCancelRef.current?.();
+    setKociembaBusy(false);
+    setStateInfo(t('已取消。', 'Cancelled.'));
+  };
+
+  // worker.onmessage handler — 抽出来好让 cancelCubeopt 重建 worker 时能复用
+  const bindCubeoptWorker = (w: Worker) => {
     w.onmessage = (e) => {
       const d = e.data;
       if (d.code === -1) {
@@ -194,12 +229,15 @@ export default function ScrambleSolverPage() {
         if (d.code === 1) {
           setReadyState('no-solver');
           setSolverInfo(null);
+          solverInfoRef.current = null;
         } else {
-          setSolverInfo({
+          const info: SolverInfo = {
             name: d.solver,
             table_name: d.table_name,
             table_size: Number(d.table_size),
-          });
+          };
+          setSolverInfo(info);
+          solverInfoRef.current = info;
           setReadyState(d.code === 0 ? 'ready' : 'need-init');
         }
       } else if (d.cmd === 'generate table') {
@@ -223,13 +261,20 @@ export default function ScrambleSolverPage() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = solverInfo?.table_name || 'cubeopt-table.dat';
+          a.download = solverInfoRef.current?.table_name || 'cubeopt-table.dat';
           a.click();
           URL.revokeObjectURL(url);
         }
         setReadyState('ready');
       }
     };
+  };
+
+  // 一次性创建 worker + 选默认 solver
+  useEffect(() => {
+    const w = new Worker('/cubeopt/wasm-worker.js');
+    workerRef.current = w;
+    bindCubeoptWorker(w);
     w.postMessage({ cmd: 'select solver', data: solverName });
     return () => {
       w.terminate();
@@ -237,6 +282,22 @@ export default function ScrambleSolverPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 取消正在跑的 cubeopt(generate / solve / download) — wasm 同步调用没法软中断,
+  // 只能 terminate worker 整个重建。prun 表会丢,需要重新生成或上传。
+  const cancelCubeopt = () => {
+    if (!workerRef.current) return;
+    workerRef.current.terminate();
+    pendingSolveRef.current = false;
+    justGeneratedRef.current = false;
+    setProgress(-1);
+    setLogs((prev) => prev + '[cancelled by user]\n');
+    const w = new Worker('/cubeopt/wasm-worker.js');
+    workerRef.current = w;
+    bindCubeoptWorker(w);
+    setReadyState('busy');
+    w.postMessage({ cmd: 'select solver', data: solverName });
+  };
 
   // 切换 solver
   useEffect(() => {
@@ -397,7 +458,17 @@ export default function ScrambleSolverPage() {
         </div>
       )}
 
-      {stateInfo && <div className="cubeopt-info">{stateInfo}</div>}
+      {stateInfo && (
+        <div className="cubeopt-info">
+          {kociembaBusy && <Loader2 size={14} className="spinning" />}
+          <span>{stateInfo}</span>
+          {kociembaBusy && (
+            <button className="btn-cancel-sm" onClick={cancelKociemba}>
+              <X size={12} /> {t('取消', 'Cancel')}
+            </button>
+          )}
+        </div>
+      )}
 
       <section className="cubeopt-card">
         <div className="row">
@@ -465,6 +536,7 @@ export default function ScrambleSolverPage() {
               pixelSize={360}
               solveLabel={{ zh: '求 scramble', en: 'Derive scramble' }}
               onSolve={(fc) => {
+                if (kociembaBusy) return;
                 runKociembaForState(fc).catch((e: Error) => {
                   setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
                 });
@@ -509,21 +581,28 @@ export default function ScrambleSolverPage() {
           <select className="ctl-sm" value={nGroup} onChange={(e) => setNGroup(parseInt(e.target.value, 10))}>
             {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
           </select>
-          <button
-            className="btn-primary"
-            disabled={readyState === 'busy' || readyState === 'no-solver' || !stateOk}
-            onClick={startSolve}
-            title={readyState === 'need-init' ? t(
-              '会先自动生成 prun 表(几十秒)再求解',
-              'Will auto-generate the prun table (tens of seconds) then solve',
-            ) : undefined}
-          >
-            {readyState === 'busy'
-              ? <><Loader2 size={14} className="spinning" /> {t('求解中', 'Solving')}…</>
-              : readyState === 'need-init'
-              ? <><Sparkles size={14} /> {t('生成表+求解', 'Gen Table + Solve')}</>
-              : <>Solve</>}
-          </button>
+          {readyState === 'busy' ? (
+            <button className="btn-cancel" onClick={cancelCubeopt} title={t(
+              '终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
+              'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.',
+            )}>
+              <X size={14} /> {t('取消', 'Cancel')}
+            </button>
+          ) : (
+            <button
+              className="btn-primary"
+              disabled={readyState === 'no-solver' || !stateOk}
+              onClick={startSolve}
+              title={readyState === 'need-init' ? t(
+                '会先自动生成 prun 表(几十秒)再求解',
+                'Will auto-generate the prun table (tens of seconds) then solve',
+              ) : undefined}
+            >
+              {readyState === 'need-init'
+                ? <><Sparkles size={14} /> {t('生成表+求解', 'Gen Table + Solve')}</>
+                : <>Solve</>}
+            </button>
+          )}
         </div>
       </section>
 
@@ -567,7 +646,18 @@ const INLINE_CSS = `
   background: #18242a; border: 1px solid #2b6a8a; color: #88d4ff;
   padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.75rem;
   font-size: 0.9rem;
+  display: flex; align-items: center; gap: 0.5rem;
 }
+.cubeopt-info > span { flex: 1; }
+.btn-cancel, .btn-cancel-sm {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: #4a1f1f; border: 1px solid #8a3a3a; color: #ffaaaa;
+  border-radius: 5px; cursor: pointer;
+  font-weight: 600;
+}
+.btn-cancel { padding: 0.35rem 0.8rem; font-size: 0.85rem; }
+.btn-cancel-sm { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
+.btn-cancel:hover, .btn-cancel-sm:hover { background: #5a2a2a; border-color: #c14747; }
 .cubeopt-card {
   background: var(--panel, #1a1a1a);
   border: 1px solid var(--border, #333);
