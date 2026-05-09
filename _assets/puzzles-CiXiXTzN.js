@@ -1,1 +1,0 @@
-import{r as e}from"./chunk-Byb_VWJN.js";import{n as t,r as n}from"./chunk-FLK6AZKB-yCOe3-R0.js";var r=e({cube3x3x3:()=>n,puzzles:()=>t});export{r as t};
