@@ -8,13 +8,15 @@ import { makeStickerColors } from './cube/stickers.js'
 import { parseOptions } from './cube/parsing/options.js'
 import { parseFaceletDefinitions } from './cube/parsing/faceletDefinitions.js'
 
-export { Masking, Face } from './cube/constants.js'
+export { Masking, Face, AllFaces } from './cube/constants.js'
 export { Axis } from './math.js'
 export { StickerDefinition } from './cube/models/sticker.js'
 export { Arrow } from './cube/models/arrow.js'
 export type { ICubeOptions } from './cube/options.js'
 export { renderFromSimpleQuery, buildSimpleOptions } from './preset.js'
 export type { SimpleVisualCubeQuery } from './preset.js'
+export { CubeData } from './cube/simulation.js'
+export { parseAlgorithm, parseCase } from './cube/parsing/algorithm.js'
 
 const defaultOptions: ICubeOptions = {
   cubeSize: 3,
