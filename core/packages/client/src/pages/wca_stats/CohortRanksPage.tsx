@@ -7,7 +7,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
-import { EventSelect } from '../../components/EventSelect';
+import WcaEventSelector from './WcaEventSelector';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
@@ -23,6 +23,7 @@ const EVENTS = [
   '444bf','555bf','333mbf',
   '333ft','magic','mmagic','333mbo',
 ];
+const EVENTS_SET = new Set(EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
 interface Row {
@@ -87,16 +88,19 @@ export default function CohortRanksPage() {
         <p className="wse-subtitle">{isZh ? '按选手首次参赛年份分组,组内 PB 排名' : 'PB ranking among cubers whose first WCA competition was in the chosen year'}</p>
       </header>
 
+      <WcaEventSelector
+        availableEvents={EVENTS_SET}
+        selectedEvent={event}
+        onSelect={v => update('event', v)}
+        isZh={isZh}
+      />
+
       <div className="wse-filters">
         <div className="wse-filter">
           <label>{isZh ? '届别(首参赛年)' : 'Cohort year'}</label>
           <select value={cohort} onChange={e => update('cohort', e.target.value)}>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-        </div>
-        <div className="wse-filter">
-          <label>{isZh ? '项目' : 'Event'}</label>
-          <EventSelect events={EVENTS} value={event} onChange={v => update('event', v)} />
         </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
