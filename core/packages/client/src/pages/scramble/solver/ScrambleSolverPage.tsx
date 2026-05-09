@@ -84,7 +84,13 @@ export default function ScrambleSolverPage() {
 
   const [searchParams] = useSearchParams();
 
-  const [solverName, setSolverName] = useState('cube48opt3');
+  const [solverName, setSolverName] = useState(() => {
+    // 手机端默认 opt1(30M);桌面默认 opt3(243M)。可手动切换。
+    if (typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      return 'cube48opt1';
+    }
+    return 'cube48opt3';
+  });
   const [solverInfo, setSolverInfo] = useState<SolverInfo | null>(null);
   const [readyState, setReadyState] = useState<ReadyState>('no-solver');
   const [progress, setProgress] = useState(-1);
@@ -92,10 +98,21 @@ export default function ScrambleSolverPage() {
   const [scrambles, setScrambles] = useState('');
   const [scrLen, setScrLen] = useState(15);
   const [scrNum, setScrNum] = useState(10);
+  // 手机端 UA 检测:wasm 内存上限紧 (iOS Safari ~1GB),默认降到 cube48opt1。
+  const isMobile = useMemo(
+    () => typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+    [],
+  );
   const [nThreads, setNThreads] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4,
   );
   const [nGroup, setNGroup] = useState(1);
+  // multi-cube 时 cubeopt 是按完成顺序而非输入顺序输出的。前端实时 parse,按
+  // FIFO 把每条 "Solution found!:" 配给最早未配对的 "Cube N finished",最终按 N 排序展示。
+  // 解析放进 onmessage 的 -1 log 分支里,O(n) 流式,不影响性能。
+  const pendingSolutionsRef = useRef<string[]>([]);     // 已收到、待配 cube 序号的 Solution
+  const [solveResults, setSolveResults] = useState<Map<number, string>>(new Map());
+  const solveResultsRef = useRef<Map<number, string>>(new Map());
   const [stateInfo, setStateInfo] = useState<string | null>(null);
   // 内置 net 填色编辑器 — 折叠在按钮后,点开才显示
   const [showPaint, setShowPaint] = useState(false);
@@ -233,6 +250,23 @@ export default function ScrambleSolverPage() {
         setLogs((prev) => prev + line + '\n');
         const m = /handled (\d+)%,/.exec(line);
         if (m) setProgress(parseInt(m[1], 10) / 100);
+        // FIFO 配对:Solution 行入队,Cube N finished 出队 → 排序展示
+        const solMatch = /^Solution found!:\s*(.+)$/i.exec(line);
+        if (solMatch) {
+          const alg = solMatch[1].trim().replace(/\s+/g, ' ');
+          pendingSolutionsRef.current.push(alg);
+          return;
+        }
+        const finMatch = /^Cube(\d+)\s+finished\s+in\s/i.exec(line);
+        if (finMatch) {
+          const idx = parseInt(finMatch[1], 10);  // 1-based
+          const alg = pendingSolutionsRef.current.shift();
+          if (alg !== undefined) {
+            solveResultsRef.current.set(idx, alg);
+            // batch 一次 setState 避免逐 cube 触发 rerender
+            setSolveResults(new Map(solveResultsRef.current));
+          }
+        }
         return;
       }
       if (d.code === -2) {
@@ -369,6 +403,10 @@ export default function ScrambleSolverPage() {
     setScrambles(cleaned);
     setReadyState('busy');
     setLogs('');
+    // 清掉上轮 solve 的 result + pending 队列
+    solveResultsRef.current = new Map();
+    setSolveResults(new Map());
+    pendingSolutionsRef.current = [];
     workerRef.current?.postMessage({
       cmd: 'start solve',
       scramble: cleaned,
@@ -480,6 +518,17 @@ export default function ScrambleSolverPage() {
             '当前页面没有 SharedArrayBuffer/COI,wasm 多线程跑不起来。如果是首次访问,刷新页面让 service worker 注入 COOP/COEP。',
             'SharedArrayBuffer / cross-origin isolation not active — multithreaded wasm wont run. On first visit, reload after the service worker installs.',
           )}
+        </div>
+      )}
+
+      {isMobile && (
+        <div className="cubeopt-info">
+          <span>
+            {t(
+              '检测到手机端 — 已默认 cube48opt1 (30M)。手机 wasm 内存有限,opt2/3 视机型可能 OK,opt4 起容易 OOM 崩页;生成时长是桌面的 3-5 倍,期间不要切到后台。',
+              'Mobile detected — defaulted to cube48opt1 (30M). Mobile wasm memory is tight; opt2/3 may work on flagship phones, opt4+ likely OOM. Gen takes 3-5× longer than desktop; don\'t background the tab during gen.',
+            )}
+          </span>
         </div>
       )}
 
@@ -650,6 +699,39 @@ export default function ScrambleSolverPage() {
         </div>
       </section>
 
+      {solveResults.size > 0 && (
+        <section className="cubeopt-card">
+          <div className="row">
+            <span className="lbl">{t('解 (按输入顺序)', 'Solutions (input order)')}</span>
+            <span className="paint-hint">
+              {t(
+                'cubeopt 是按完成顺序输出的;此处按输入序号 1..N 排好,并标注步数。',
+                'cubeopt outputs in finish order; this panel re-sorts by input index 1..N with move counts.',
+              )}
+            </span>
+            <button className="btn-icon" onClick={() => {
+              const txt = Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0])
+                .map(([n, alg]) => `${n}. ${alg}`).join('\n');
+              navigator.clipboard?.writeText(txt);
+            }} title={t('复制全部', 'Copy all')}>
+              <Sparkles size={14} />
+            </button>
+          </div>
+          <ol className="solutions-list">
+            {Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0]).map(([n, alg]) => {
+              const moveCount = alg.split(/\s+/).filter(Boolean).length;
+              return (
+                <li key={n}>
+                  <span className="sol-idx">{n}.</span>
+                  <code className="sol-alg">{alg}</code>
+                  <span className="sol-count">({moveCount})</span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
       <section className="cubeopt-card">
         <div className="row">
           <span className="lbl">Logs</span>
@@ -758,6 +840,33 @@ const INLINE_CSS = `
 }
 .scramble-preview-svg { flex-shrink: 0; }
 .scramble-preview-label { font-size: 0.8rem; color: var(--text-muted, #888); }
+.solutions-list {
+  list-style: none; margin: 0.25rem 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+.solutions-list li {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--panel-sub, #181818);
+  border-radius: 4px;
+}
+.sol-idx {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #888);
+  min-width: 1.8rem; text-align: right;
+  font-size: 0.8rem;
+}
+.sol-alg {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  flex: 1; min-width: 0;
+  word-break: break-all;
+}
+.sol-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, #ff8800);
+  font-size: 0.78rem;
+}
 .busy-marker {
   display: inline-flex; align-items: center; gap: 0.35rem;
   color: var(--text-muted, #aaa); font-size: 0.85rem;
