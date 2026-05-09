@@ -1,6 +1,7 @@
 // 顶部 hero:头像 + 姓名 + 信息表(国家/性别/WCA ID/比赛次数/复原次数 / 尝试次数).
 // 截图样式:头像居中,名字大字,下面 1 行 5 列的信息条.
 
+import { ExternalLink } from 'lucide-react';
 import { Flag } from '../../../../utils/flag';
 import { displayCuberName } from '../../../../utils/name_utils';
 import { countryName } from '../../../../utils/country_name';
@@ -62,14 +63,12 @@ export default function PersonHero({ profile, results, isZh }: Props) {
         <div className="wp-hero-cell">
           <div className="wp-hero-cell-label">{t('WCA ID', 'WCA ID')}</div>
           <div className="wp-hero-cell-value">
+            <span className="wp-hero-id">{p.wca_id}</span>
             <a
               href={`https://www.worldcubeassociation.org/persons/${p.wca_id}`}
               target="_blank" rel="noopener noreferrer"
               className="wp-hero-id-link" title="WCA"
-            >
-              <img src="https://assets.worldcubeassociation.org/assets/favicon.svg" alt="WCA" width={14} height={14} className="wp-hero-id-favicon" />
-            </a>
-            <span className="wp-hero-id">{p.wca_id}</span>
+            ><ExternalLink size={12} /></a>
           </div>
         </div>
         <div className="wp-hero-cell">

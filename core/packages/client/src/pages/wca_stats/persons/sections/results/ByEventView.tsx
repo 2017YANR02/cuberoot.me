@@ -102,11 +102,14 @@ function BestChart({
   const isMbld = eventId === '333mbf';
   const isFmc = eventId === '333fm';
 
-  const points = rows.map((r, i) => {
+  // i 是 filter 之后的稠密索引(原 rows 的 index 留在 origIdx 仅 debug 用),
+  // 否则 X 轴会因为间隔的 null 行被映射到 [0, xN-1] 之外,点位错位.
+  const points = rows.map((r, origIdx) => {
     const single = r.best > 0 ? toAxisValue(r.best, eventId, 'single') : null;
     const avg = r.average > 0 ? toAxisValue(r.average, eventId, 'average') : null;
-    return { i, r, single, avg };
-  }).filter((p) => p.single !== null || p.avg !== null);
+    return { origIdx, r, single, avg };
+  }).filter((p) => p.single !== null || p.avg !== null)
+    .map((p, i) => ({ ...p, i }));
 
   if (points.length === 0) {
     return <div className="wp-empty">{t('暂无成绩', 'No data')}</div>;
