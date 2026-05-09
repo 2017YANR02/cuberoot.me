@@ -60,7 +60,7 @@ export default function PersonTabs({ profile, results, comps, isZh }: Props) {
           {active === 'comps' && <CompsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {active === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
           {active === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}
-          {active === 'cities' && <LitCitiesTab comps={comps} isZh={isZh} />}
+          {active === 'cities' && <LitCitiesTab profile={profile} comps={comps} isZh={isZh} />}
         </Suspense>
       </div>
     </section>
