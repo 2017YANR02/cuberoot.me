@@ -450,14 +450,12 @@
 
 .wp-round-tag {
     display: inline-block;
-    padding: 2px 8px; border-radius: 4px;
-    font-size: 0.72rem; font-weight: 600;
-    border: 1px solid;
+    font-size: 0.78rem; font-weight: 600;
 }
-.wp-round-final { color: var(--wp-green); border-color: var(--wp-green); background: var(--wp-green-soft); }
-.wp-round-semi  { color: var(--wp-purple); border-color: var(--wp-purple); background: rgba(119,87,168,0.08); }
-.wp-round-quarter { color: var(--wp-blue); border-color: var(--wp-blue); background: var(--wp-blue-soft); }
-.wp-round-first { color: var(--wp-text-sub); border-color: var(--wp-border-strong); background: var(--wp-bg); }
+.wp-round-final { color: var(--wp-green); }
+.wp-round-semi  { color: var(--wp-purple); }
+.wp-round-quarter { color: var(--wp-blue); }
+.wp-round-first { color: var(--wp-text-sub); }
 
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
