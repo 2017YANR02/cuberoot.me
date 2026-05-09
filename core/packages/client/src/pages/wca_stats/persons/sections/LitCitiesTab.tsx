@@ -1,90 +1,59 @@
-// 点亮城市 tab:react-globe.gl 3D 地球(已在依赖)+ 列表视图.
-// lat/lng 来自 stats/all_past_comps.json,加载一次缓存(浏览器 fetch + localStorage).
+// 点亮城市 tab:列表 + 跳到 /globe(maplibre 矢量地球,已支持 ?wcaId= 进入 cuber 模式).
+// 之前内嵌 react-globe.gl 的 3D 球已废弃 — 体验和 /globe 重复且贴图丑.
 
-import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { Globe2 } from 'lucide-react';
 import { Flag } from '../../../../utils/flag';
 import { countryName } from '../../../../utils/country_name';
-import { buildLitFromComps, type CompGeoIndex } from '../logic/lit_cities';
-import type { WcaCompetition } from '../wca_api';
-
-const Globe = lazy(async () => {
-  const mod = await import('react-globe.gl');
-  return { default: mod.default };
-});
+import { buildLitFromComps } from '../logic/lit_cities';
+import type { WcaCompetition, WcaPersonProfile } from '../wca_api';
 
 interface Props {
+  profile: WcaPersonProfile;
   comps: WcaCompetition[] | null;
   isZh: boolean;
 }
 
-interface PastComp {
-  id: string;
-  city: string;
-  country: string;
-  latitude_degrees?: number;
-  longitude_degrees?: number;
-}
-
-type View = 'globe' | 'list';
-
-export default function LitCitiesTab({ comps, isZh }: Props) {
+export default function LitCitiesTab({ profile, comps, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const [view, setView] = useState<View>('globe');
-  const [geo, setGeo] = useState<CompGeoIndex | null>(null);
 
-  useEffect(() => {
-    let cancel = false;
-    const KEY = 'wca:past-comp-geo:v1';
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) {
-        const idx = parseGeo(JSON.parse(raw));
-        if (!cancel) setGeo(idx);
-      }
-    } catch { /* ignore */ }
-    fetch('/stats/all_past_comps.json')
-      .then((r) => r.json())
-      .then((arr: PastComp[]) => {
-        if (cancel) return;
-        try { localStorage.setItem(KEY, JSON.stringify(arr.map((c) => ({
-          id: c.id, lat: c.latitude_degrees, lng: c.longitude_degrees, country: c.country, city: c.city,
-        })))); } catch { /* quota */ }
-        setGeo(parseGeo(arr));
-      })
-      .catch(() => { /* network — leave geo null,city map shows count only */ });
-    return () => { cancel = true; };
-  }, []);
-
-  const lit = useMemo(() => {
-    if (!comps) return null;
-    return buildLitFromComps(comps, geo);
-  }, [comps, geo]);
+  const lit = useMemo(() => comps ? buildLitFromComps(comps, null) : null, [comps]);
 
   if (!comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
-  if (lit && lit.cities.length === 0) return <div className="wp-empty">{t('暂无比赛足迹', 'No competition footprint')}</div>;
+  if (lit && lit.cities.length === 0) {
+    return <div className="wp-empty">{t('暂无比赛足迹', 'No competition footprint')}</div>;
+  }
 
   return (
     <div className="wp-lit">
-      <div className="wp-lit-toolbar">
-        <button
-          className={`wp-toggle-btn ${view === 'globe' ? 'is-active' : ''}`}
-          onClick={() => setView('globe')}
-        >{t('地图', 'Map')}</button>
-        <button
-          className={`wp-toggle-btn ${view === 'list' ? 'is-active' : ''}`}
-          onClick={() => setView('list')}
-        >{t('列表', 'List')}</button>
+      <div className="wp-lit-banner">
+        <Globe2 size={18} className="wp-lit-banner-icon" />
+        <span className="wp-lit-banner-text">
+          {t(
+            '想看 3D 地球 + 时间轴轨迹?',
+            'Want a 3D globe with time-axis trail?',
+          )}
+        </span>
+        <Link
+          to={`/globe?wcaId=${encodeURIComponent(profile.person.wca_id)}${isZh ? '&lang=zh' : ''}`}
+          className="wp-lit-banner-cta"
+        >
+          {t('在地球上查看', 'Open on Globe')}
+        </Link>
       </div>
 
-      {view === 'globe' && lit && (
-        <div className="wp-lit-globe">
-          <Suspense fallback={<div className="wp-loading-inline">{t('加载地球…', 'Loading globe…')}</div>}>
-            <CitiesGlobe cities={lit.cities} />
-          </Suspense>
+      {lit && (
+        <div className="wp-lit-stats">
+          <span><strong>{lit.countries.length}</strong> {t('个国家 / 地区', 'countries')}</span>
+          <span className="wp-text-mute">·</span>
+          <span><strong>{lit.cities.length}</strong> {t('座城市', 'cities')}</span>
+          <span className="wp-text-mute">·</span>
+          <span><strong>{comps.length}</strong> {t('场比赛', 'competitions')}</span>
         </div>
       )}
 
-      {view === 'list' && lit && (
+      {lit && (
         <div className="wp-table-scroll">
           <table className="wp-lit-table">
             <thead>
@@ -101,7 +70,7 @@ export default function LitCitiesTab({ comps, isZh }: Props) {
                     <Flag iso2={c.iso2} className="wp-flag-sm" />
                     <span>{c.iso2 ? countryName(c.iso2, isZh) : '—'}</span>
                   </td>
-                  <td>{c.city}</td>
+                  <td>{c.city || '—'}</td>
                   <td className="wp-cell-num">{c.count}</td>
                 </tr>
               ))}
@@ -109,55 +78,6 @@ export default function LitCitiesTab({ comps, isZh }: Props) {
           </table>
         </div>
       )}
-    </div>
-  );
-}
-
-function parseGeo(arr: { id: string; lat?: number; lng?: number; latitude_degrees?: number; longitude_degrees?: number; country?: string; city?: string }[]): CompGeoIndex {
-  const idx = new Map<string, { lat: number; lng: number; country_iso2: string; city: string }>();
-  for (const c of arr) {
-    const lat = c.lat ?? c.latitude_degrees ?? Number.NaN;
-    const lng = c.lng ?? c.longitude_degrees ?? Number.NaN;
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-    idx.set(c.id, {
-      lat, lng,
-      country_iso2: '',  // 这里只用 lat/lng;iso2 直接走 comps 自身
-      city: c.city ?? '',
-    });
-  }
-  return { index: idx };
-}
-
-interface GlobeCity { iso2: string; city: string; count: number; lat: number; lng: number }
-
-function CitiesGlobe({ cities }: { cities: GlobeCity[] }) {
-  const points = cities
-    .filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lng))
-    .map((c) => ({
-      lat: c.lat, lng: c.lng,
-      label: `${c.city} · ${c.count}`,
-      mag: Math.log2(c.count + 1),
-    }));
-  const maxMag = Math.max(0.5, ...points.map((p) => p.mag));
-  // dynamic import for ssr-safety
-  const G = Globe as unknown as React.ComponentType<Record<string, unknown>>;
-  return (
-    <div style={{ width: '100%', height: 480, position: 'relative' }}>
-      <G
-        width={960}
-        height={480}
-        backgroundColor="rgba(0,0,0,0)"
-        showAtmosphere
-        atmosphereColor="#76a8d8"
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-day.jpg"
-        pointsData={points}
-        pointLat="lat"
-        pointLng="lng"
-        pointAltitude={(d: { mag: number }) => 0.02 + (d.mag / maxMag) * 0.18}
-        pointRadius={0.4}
-        pointColor={() => '#C15F3C'}
-        pointLabel="label"
-      />
     </div>
   );
 }
