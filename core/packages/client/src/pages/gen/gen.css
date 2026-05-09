@@ -159,6 +159,22 @@
     color: #FFF;
 }
 
+.gen-loading {
+    text-align: center;
+    color: var(--gen-text-mute);
+    padding: 2rem 0;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+}
+
+.gen-spin {
+    animation: gen-spin 0.9s linear infinite;
+}
+@keyframes gen-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
 .gen-list {
     list-style: none;
     margin: 0;
