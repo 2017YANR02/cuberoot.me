@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Flag } from '../../utils/flag';
+import { countryName } from '../../utils/country_name';
 
 export interface CountryOption {
   id: string;
@@ -34,11 +35,18 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  const display = (c: CountryOption) => c.iso2 ? countryName(c.iso2, isZh) : c.name;
+
   const filtered = useMemo(() => {
     if (!query) return countries;
     const q = query.toLowerCase();
-    return countries.filter(c => c.name.toLowerCase().includes(q) || (c.iso2 ?? '').toLowerCase().includes(q));
-  }, [countries, query]);
+    return countries.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      display(c).toLowerCase().includes(q) ||
+      (c.iso2 ?? '').toLowerCase().includes(q),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries, query, isZh]);
 
   const selected = useMemo(() => countries.find(c => c.id === value) ?? null, [countries, value]);
 
@@ -50,7 +58,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
           {selected ? (
             <>
               {selected.iso2 && <Flag iso2={selected.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-              <span>{selected.name}</span>
+              <span>{display(selected)}</span>
             </>
           ) : (
             <span>{isZh ? '全球' : 'Worldwide'}</span>
@@ -88,7 +96,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
                 onClick={() => { onChange(c.id); setOpen(false); setQuery(''); }}
               >
                 {c.iso2 && <Flag iso2={c.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                <span>{c.name}</span>
+                <span>{display(c)}</span>
               </button>
             ))}
           </div>

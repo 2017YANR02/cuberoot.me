@@ -52,6 +52,65 @@ body {
     padding: 0 8px;
 }
 
+/* ── 项目选择器 + 简易版 toggle 同行 ── */
+.calc-event-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 900px;
+    margin: 0 auto 12px;
+    padding: 0 4px;
+}
+
+.calc-event-row .event-selector {
+    flex: 1;
+    margin: 0;
+    min-width: 0;
+}
+
+.calc-mode-toggle {
+    flex-shrink: 0;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.04);
+    color: #6e6050;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.calc-mode-toggle:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #332e28;
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.calc-mode-toggle-active {
+    background: #2e7d32;
+    border-color: #4caf50;
+    color: #f0ebe3;
+}
+
+.calc-mode-toggle-active:hover {
+    background: #246627;
+    color: #f0ebe3;
+}
+
+@media (max-width: 600px) {
+    .calc-mode-toggle span {
+        display: none;
+    }
+    .calc-mode-toggle {
+        padding: 0 10px;
+    }
+}
+
 
 /* ── 语言切换按钮 ── */
 /* NOTE: 设计参考 i18n/i18n.js 的 .lang-toggle-fixed，浅色主题适配，定位改为右上角 */
@@ -143,11 +202,11 @@ body {
     color: #f0ebe3;
 }
 
-/* NOTE: CSS tooltip 悬浮提示 */
+/* NOTE: CSS tooltip 悬浮提示 — 朝下显示,避免被浏览器顶部 chrome (书签栏) 遮挡 */
 .event-btn::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: calc(100% + 8px);
+    top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
     background: #332e28;

@@ -8,6 +8,7 @@ import { reconRoutes } from './routes/recon.js';
 import { cubeRoutes } from './routes/cube.js';
 import { algRoutes } from './routes/alg.js';
 import { algSetsRoutes } from './routes/alg_sets.js';
+import { colpiRoutes } from './routes/colpi.js';
 import { historicalRanksRoutes } from './routes/historical_ranks.js';
 import { wcaStatsExtraRoutes } from './routes/wca_stats_extra.js';
 
@@ -48,6 +49,7 @@ app.route('/v1', reconRoutes);
 app.route('/v1', cubeRoutes);
 app.route('/v1', algRoutes);
 app.route('/v1', algSetsRoutes);
+app.route('/v1', colpiRoutes);
 app.route('/v1', historicalRanksRoutes);
 app.route('/v1', wcaStatsExtraRoutes);
 

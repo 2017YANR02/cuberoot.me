@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Sigma } from 'lucide-react';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './stores/calc_store';
 import { setCurrentEvent, setMoveCntMode, setMbfMode } from './engine/calc_engine';
 import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './engine/wr_data';
@@ -19,7 +20,10 @@ import { CalcTable } from './components/CalcTable';
 import { EventSelector } from './components/EventSelector';
 import { SimButtons } from './components/SimButtons';
 import { ProgressSliders } from './components/ProgressSliders';
+import AverageMode from './average_mode/AverageMode';
 import './calc.css';
+
+type CalcTab = 'compare' | 'average';
 
 
 
@@ -44,6 +48,22 @@ export function CalcPage() {
   const initDone = useRef(false);
   // NOTE: 防止 event useEffect 在首次挂载时清空 URL 恢复的数据
   const eventInitRef = useRef(false);
+
+  // NOTE: tab 初值优先读 ?tab=average,默认 compare(H2H)
+  const [tab, setTab] = useState<CalcTab>(() => {
+    if (typeof window === 'undefined') return 'compare';
+    return new URLSearchParams(window.location.search).get('tab') === 'average' ? 'average' : 'compare';
+  });
+
+  // NOTE: tab 切换同步到 URL（不进历史，刷新可恢复）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (tab === 'average') params.set('tab', 'average');
+    else params.delete('tab');
+    const qs = params.toString();
+    const newUrl = `${window.location.pathname}${qs ? '?' + qs : ''}${window.location.hash}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [tab]);
 
   // NOTE: 头像按钮状态 — 原版 input_grid.js 的 setMeButtonState 逻辑转为 React state
   const [avatarState, setAvatarState] = useState<AvatarState[]>([
@@ -352,37 +372,69 @@ export function CalcPage() {
 
   return (
     <div className="hth-app calc-page">
-      {/* SVG 图表 */}
-      <Chart />
+      {tab === 'average' ? (
+        <>
+          {/* 简易版顶部一行: 项目选择器 + 切回对比版 toggle */}
+          <div className="calc-event-row">
+            <EventSelector />
+            <button
+              type="button"
+              className="calc-mode-toggle calc-mode-toggle-active"
+              onClick={() => setTab('compare')}
+              title={isZh ? '切到对比版' : 'Switch to Compare'}
+            >
+              <Sigma size={14} />
+              <span>{isZh ? '简易版' : 'Simple'}</span>
+            </button>
+          </div>
+          <AverageMode event={event} />
+        </>
+      ) : (
+        <>
+          {/* SVG 图表 */}
+          <Chart />
 
-      {/* 输入网格 */}
-      <InputGrid
-        avatarState={avatarState}
-        onPlayerOverride={handlePlayerOverride}
-      />
+          {/* 输入网格 */}
+          <InputGrid
+            avatarState={avatarState}
+            onPlayerOverride={handlePlayerOverride}
+          />
 
-      {/* WCA 选手搜索 modal — 原版 app.js#327-364 */}
-      <WcaPersonPicker
-        mode="modal"
-        open={pickerOpen}
-        onSelect={handlePersonSelect}
-        onClose={handlePickerClose}
-      />
+          {/* WCA 选手搜索 modal — 原版 app.js#327-364 */}
+          <WcaPersonPicker
+            mode="modal"
+            open={pickerOpen}
+            onSelect={handlePersonSelect}
+            onClose={handlePickerClose}
+          />
 
-      {/* 控制按钮 */}
-      <SimButtons />
+          {/* 控制按钮 */}
+          <SimButtons />
 
-      {/* 进步幅度滑杆 */}
-      <ProgressSliders />
+          {/* 进步幅度滑杆 */}
+          <ProgressSliders />
 
-      {/* 数字键盘 */}
-      <Numpad onEnsureWrTop2Loaded={ensureWrTop2Loaded} />
+          {/* 数字键盘 */}
+          <Numpad onEnsureWrTop2Loaded={ensureWrTop2Loaded} />
 
-      {/* 项目选择器 — 原版位于 numpad 和统计表之间 */}
-      <EventSelector />
+          {/* 项目选择器 + 简易版 toggle 同一行 */}
+          <div className="calc-event-row">
+            <EventSelector />
+            <button
+              type="button"
+              className="calc-mode-toggle"
+              onClick={() => setTab('average')}
+              title={isZh ? '切到简易版' : 'Switch to Simple'}
+            >
+              <Sigma size={14} />
+              <span>{isZh ? '简易版' : 'Simple'}</span>
+            </button>
+          </div>
 
-      {/* 指标表格 */}
-      <CalcTable />
+          {/* 指标表格 */}
+          <CalcTable />
+        </>
+      )}
     </div>
   );
 }

@@ -6,16 +6,26 @@ import './WcaEventSelector.css';
 
 interface WcaEventSelectorProps {
   availableEvents: Set<string>;   // 有数据的项目 ID 集合
-  selectedEvent: string;           // 当前选中的项目 ID
+  selectedEvent: string;           // 当前选中的项目 ID('' = 全部,需 allowAll)
   onSelect: (id: string) => void;  // 选中回调
   isZh: boolean;                    // 中英文切换
+  allowAll?: boolean;              // 在最前加"全部"按钮(对应 selectedEvent === '')
 }
 
 export default function WcaEventSelector({
-  availableEvents, selectedEvent, onSelect, isZh
+  availableEvents, selectedEvent, onSelect, isZh, allowAll
 }: WcaEventSelectorProps) {
   return (
     <div className="wca-stats-event-selector">
+      {allowAll && (
+        <button
+          className={`event-btn event-btn-all${selectedEvent === '' ? ' active' : ''}`}
+          data-tooltip={isZh ? '全部' : 'All'}
+          onClick={() => onSelect('')}
+        >
+          <span className="event-all-label">{isZh ? '全部' : 'All'}</span>
+        </button>
+      )}
       {ALL_EVENT_IDS.map(id => {
         const isDisabled = !availableEvents.has(id);
         const isActive = id === selectedEvent;
