@@ -84,13 +84,18 @@ export default function ScrambleSolverPage() {
 
   const [searchParams] = useSearchParams();
 
-  const [solverName, setSolverName] = useState(() => {
-    // 手机端默认 opt1(30M);桌面默认 opt3(243M)。可手动切换。
-    if (typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      return 'cube48opt1';
-    }
-    return 'cube48opt3';
-  });
+  // 手机/平板端 UA 检测:wasm 内存上限紧 (iOS Safari ~1GB),默认降到 cube48opt1。
+  // 不能只看 UA(iPad iPadOS 13+ 默认伪装 Mac UA、Safari 隐私模式有时也会清 iPhone),
+  // 加 maxTouchPoints + pointer:coarse 兜底。
+  const isMobile = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) return true;
+    if (navigator.maxTouchPoints > 1) return true;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches) return true;
+    return false;
+  }, []);
+
+  const [solverName, setSolverName] = useState(() => isMobile ? 'cube48opt1' : 'cube48opt3');
   const [solverInfo, setSolverInfo] = useState<SolverInfo | null>(null);
   const [readyState, setReadyState] = useState<ReadyState>('no-solver');
   const [progress, setProgress] = useState(-1);
@@ -98,11 +103,6 @@ export default function ScrambleSolverPage() {
   const [scrambles, setScrambles] = useState('');
   const [scrLen, setScrLen] = useState(15);
   const [scrNum, setScrNum] = useState(10);
-  // 手机端 UA 检测:wasm 内存上限紧 (iOS Safari ~1GB),默认降到 cube48opt1。
-  const isMobile = useMemo(
-    () => typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-    [],
-  );
   const [nThreads, setNThreads] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4,
   );
@@ -322,12 +322,14 @@ export default function ScrambleSolverPage() {
     };
   };
 
-  // 一次性创建 worker + 选默认 solver
+  // 一次性创建 worker;初始 select solver 由下面 [solverName] effect 在 mount 时 post,
+  // 不要在这里也 post 一次 — 重复 post 会让 worker 双倍 import .mjs/.wasm,
+  // iOS Safari (~1GB wasm 上限) 在 opt3+ 上几乎必 OOM,且 upstream wasm-worker.js
+  // 的 promise 链没 .catch,会静默卡死 UI 在 'busy'。
   useEffect(() => {
     const w = new Worker('/cubeopt/wasm-worker.js');
     workerRef.current = w;
     bindCubeoptWorker(w);
-    w.postMessage({ cmd: 'select solver', data: solverName });
     return () => {
       w.terminate();
       workerRef.current = null;

@@ -361,7 +361,6 @@
 .colpi-cell.active {
   background: var(--c-active) !important;
   color: #fff;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c-active);
 }
 
 .colpi-grid-legend {
