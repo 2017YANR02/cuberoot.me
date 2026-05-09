@@ -156,20 +156,43 @@ const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
 const CUBER_SOURCE_ARC_TIP = 'cuber-arc-tip';
 const CUBER_SOURCE_DENSITY = 'cuber-density';
+const CUBER_SOURCE_PILLAR = 'cuber-pillar';
 const CUBER_LAYER_DOT = 'cuber-points-dot';
 const CUBER_LAYER_CITY = 'cuber-points-city';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
 const CUBER_LAYER_ARC_ARROW = 'cuber-arcs-arrow';
 const CUBER_LAYER_DENSITY = 'cuber-density-circle';
 const CUBER_LAYER_DENSITY_LABEL = 'cuber-density-label';
+const CUBER_LAYER_PILLAR_FILL = 'cuber-pillar-fill';
 
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
-const CUBER_LAYERS = [
-  CUBER_LAYER_DENSITY, CUBER_LAYER_DENSITY_LABEL,
+// 用于 mode 切换时一键 hide/show.两种 cuber 子视图共用一份 label.
+const CUBER_LAYERS_ARC_VIEW = [
+  CUBER_LAYER_DENSITY,
   CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW,
   CUBER_LAYER_DOT, CUBER_LAYER_CITY,
 ];
+const CUBER_LAYERS_PILLAR_VIEW = [CUBER_LAYER_PILLAR_FILL];
+const CUBER_LAYERS = [
+  ...CUBER_LAYERS_ARC_VIEW,
+  ...CUBER_LAYERS_PILLAR_VIEW,
+  CUBER_LAYER_DENSITY_LABEL,
+];
+
+// 给定中心点 + 米半径,返回近似圆形 polygon 顶点(用于 fill-extrusion).
+function buildCirclePolygon(lng: number, lat: number, radiusMeters: number, n = 24): [number, number][] {
+  const earthR = 6378137;
+  const latRad = lat * Math.PI / 180;
+  const dLat = (radiusMeters / earthR) * 180 / Math.PI;
+  const dLng = (radiusMeters / (earthR * Math.cos(latRad))) * 180 / Math.PI;
+  const out: [number, number][] = [];
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    out.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]);
+  }
+  return out;
+}
 
 // ── 密度可视化 A 模式：log10(count) 连续色 + 连续半径（感知均匀 YlOrRd 色带）──
 // 用作 'clusters' / 'unclustered-point' 的 paint；属性名由 makeCountRamp 注入
@@ -651,6 +674,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(1);
+  // cuber 模式子视图:'arc' = 大圆弧轨迹 + 密度泡泡;'pillar' = 隐藏轨迹,纯立体柱状
+  const [cuberView, setCuberView] = useState<'arc' | 'pillar'>('arc');
   const [pickerOpen, setPickerOpen] = useState(false);
 
   // ── 自定义控件 state ──
@@ -1301,9 +1326,9 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     })),
   }), [cuberComps, isZh]);
 
-  // 按城市聚合的"已去过"次数密度 —— 跟时间轴 currentIndex 联动:
-  // 已经播到的 comp 才计入,泡泡随播放进度逐步长大,与原 react-globe.gl 柱状版语义一致.
-  const cuberDensityGeojson = useMemo(() => {
+  // 按城市聚合的"已去过"次数 —— 跟时间轴 currentIndex 联动,
+  // 同时供 density-circle(轨迹模式)和 pillar(柱状模式)两套渲染共用.
+  const cuberCityCounts = useMemo(() => {
     const byKey = new Map<string, { lng: number; lat: number; city: string; iso2: string; count: number }>();
     const upTo = Math.min(currentIndex + 1, cuberComps.length);
     for (let i = 0; i < upTo; i++) {
@@ -1317,15 +1342,34 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         city: c.city, iso2: c.country_iso2, count: 1,
       });
     }
-    return {
-      type: 'FeatureCollection' as const,
-      features: [...byKey.values()].map((v) => ({
-        type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: [v.lng, v.lat] },
-        properties: { count: v.count, city: v.city, country_iso2: v.iso2 },
-      })),
-    };
+    return [...byKey.values()];
   }, [cuberComps, currentIndex]);
+
+  const cuberDensityGeojson = useMemo(() => ({
+    type: 'FeatureCollection' as const,
+    features: cuberCityCounts.map((v) => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [v.lng, v.lat] },
+      properties: { count: v.count, city: v.city, country_iso2: v.iso2 },
+    })),
+  }), [cuberCityCounts]);
+
+  // 柱状(fill-extrusion)版本.
+  // height 单位 = 米;一根 1 场的柱 100km 起步,√count 拉伸 → 70 场 ~836km.
+  const cuberPillarGeojson = useMemo(() => ({
+    type: 'FeatureCollection' as const,
+    features: cuberCityCounts.map((v) => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Polygon' as const,
+        coordinates: [buildCirclePolygon(v.lng, v.lat, 4000)],
+      },
+      properties: {
+        count: v.count, city: v.city, country_iso2: v.iso2,
+        height: 100000 * Math.sqrt(v.count),
+      },
+    })),
+  }), [cuberCityCounts]);
 
   // NOTE: 预计算每对相邻 comp 的大圆弧全量坐标（动画 slice 用）
   const cuberArcFullCoords = useMemo<Array<[number, number][]>>(() => {
@@ -1726,6 +1770,25 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           'text-color': '#FFFFFF',
           'text-halo-color': '#8B3E1F',
           'text-halo-width': 1.5,
+        },
+      });
+      // 柱状(fill-extrusion)模式 — 每个城市一个圆形 polygon,height 按 √count 拉高
+      map.addSource(CUBER_SOURCE_PILLAR, { type: 'geojson', data: empty });
+      map.addLayer({
+        id: CUBER_LAYER_PILLAR_FILL, type: 'fill-extrusion', source: CUBER_SOURCE_PILLAR,
+        layout: { 'visibility': 'none' },
+        paint: {
+          'fill-extrusion-color': [
+            'interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', 'count'], 1]]],
+            0, '#FFEDA0',   // 1 场 — 柔黄
+            0.5, '#FEB24C', // 3 场
+            1, '#F03B20',   // 10 场
+            1.5, '#BD0026', // 32 场
+            2, '#7A0023',   // 100+
+          ] as unknown as string,
+          'fill-extrusion-opacity': 0.85,
+          'fill-extrusion-height': ['get', 'height'] as unknown as number,
+          'fill-extrusion-base': 0,
         },
       });
       map.addSource(CUBER_SOURCE_ARCS, { type: 'geojson', data: empty });
@@ -2235,11 +2298,13 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     const arcSrc = map.getSource(CUBER_SOURCE_ARCS) as GeoJSONSource | undefined;
     const tipSrc = map.getSource(CUBER_SOURCE_ARC_TIP) as GeoJSONSource | undefined;
     const denSrc = map.getSource(CUBER_SOURCE_DENSITY) as GeoJSONSource | undefined;
+    const pilSrc = map.getSource(CUBER_SOURCE_PILLAR) as GeoJSONSource | undefined;
     if (ptsSrc) ptsSrc.setData(cuberPointsGeojson as unknown as GeoJSON.FeatureCollection);
     if (arcSrc) arcSrc.setData(cuberArcsGeojson as unknown as GeoJSON.FeatureCollection);
     if (tipSrc) tipSrc.setData(cuberArcTipGeojson as unknown as GeoJSON.FeatureCollection);
     if (denSrc) denSrc.setData(cuberDensityGeojson as unknown as GeoJSON.FeatureCollection);
-  }, [cuberPointsGeojson, cuberArcsGeojson, cuberArcTipGeojson, cuberDensityGeojson, mapLoaded]);
+    if (pilSrc) pilSrc.setData(cuberPillarGeojson as unknown as GeoJSON.FeatureCollection);
+  }, [cuberPointsGeojson, cuberArcsGeojson, cuberArcTipGeojson, cuberDensityGeojson, cuberPillarGeojson, mapLoaded]);
 
   // ── cuber 弧线渐变上色（按 year_progress）──
   // 独立 effect 便于 HMR 调色，且确保 layer 存在后再 set
@@ -2296,11 +2361,14 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     show(UPCOMING_LAYERS, mode === 'upcoming');
     // past 已经合并进 upcoming source，past-* 图层不再单独显示
     show(PAST_LAYERS, false);
-    show(CUBER_LAYERS, mode === 'cuber');
+    // cuber 子视图按 cuberView 区分;count 标签两种模式都显示.
+    show(CUBER_LAYERS_ARC_VIEW, mode === 'cuber' && cuberView === 'arc');
+    show(CUBER_LAYERS_PILLAR_VIEW, mode === 'cuber' && cuberView === 'pillar');
+    show([CUBER_LAYER_DENSITY_LABEL], mode === 'cuber');
     // country-fill：在 upcoming + country style 或 wr 模式下可见
     show(['country-fill'], (mode === 'upcoming' && densityStyle === 'country') || mode === 'wr');
     show(['country-wr-count'], mode === 'wr');
-  }, [mode, densityStyle, includePast, mapLoaded]);
+  }, [mode, cuberView, densityStyle, includePast, mapLoaded]);
 
   // ── cuber 模式下：dot/label filter（按 index 显示）+ 高亮当前点 + flyTo ──
   // NOTE: 动画中（arc 未到达终点）时，终点 B 还未显示，等弧线到达时才出现
@@ -2810,6 +2878,16 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                     setCurrentIndex(Number(e.target.value));
                   }}
                 />
+                <div className="cuber-view-toggle" title={isZh ? '视图切换' : 'View'}>
+                  <button
+                    className={`view-btn ${cuberView === 'arc' ? 'is-active' : ''}`}
+                    onClick={() => setCuberView('arc')}
+                  >{isZh ? '轨迹' : 'Trail'}</button>
+                  <button
+                    className={`view-btn ${cuberView === 'pillar' ? 'is-active' : ''}`}
+                    onClick={() => setCuberView('pillar')}
+                  >{isZh ? '柱状' : 'Pillar'}</button>
+                </div>
                 <div className="cuber-speed">
                   {([0.5, 1, 2] as Speed[]).map((s) => (
                     <button
