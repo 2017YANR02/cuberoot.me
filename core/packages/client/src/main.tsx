@@ -17,21 +17,31 @@ import App from './App.tsx'
 // 所以 crossOriginIsolated=false。SW activate 后 reload 让 document 走 SW headers。
 // Safari 用户老 sw.js 升级时也走这条路径(controllerchange / 普通 update)。
 // sessionStorage 防 reload 循环 — 一个 session 最多 reload 一次。
+//
+// DEV 跳过:vite server.headers 已发 COOP/COEP,SW 多余;且 Safari 上 SW 重 wrap
+// vite 动态 module 响应会让 ES module import 失败(整个 React 崩成白屏)。
+// 同时主动注销老 sw,清掉手机端残留(手机经 Funnel 接进来时尤其重要)。
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      await navigator.serviceWorker.register('/sw.js');
-      await navigator.serviceWorker.ready;
-      if (!window.crossOriginIsolated) {
-        if (sessionStorage.getItem('coi-reloaded') !== '1') {
-          sessionStorage.setItem('coi-reloaded', '1');
-          window.location.reload();
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', async () => {
+      try {
+        await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        if (!window.crossOriginIsolated) {
+          if (sessionStorage.getItem('coi-reloaded') !== '1') {
+            sessionStorage.setItem('coi-reloaded', '1');
+            window.location.reload();
+          }
+        } else {
+          sessionStorage.removeItem('coi-reloaded');
         }
-      } else {
-        sessionStorage.removeItem('coi-reloaded');
-      }
-    } catch { /* ignore */ }
-  });
+      } catch { /* ignore */ }
+    });
+  } else {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.unregister());
+    }).catch(() => { /* ignore */ });
+  }
 }
 
 createRoot(document.getElementById('root')!).render(

@@ -149,7 +149,12 @@ export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | und
  * `Cache-Control` header (1 hour by default).
  */
 export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
-  const base = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+  // NOTE: 用 import.meta.env.DEV 而不是 hostname 检查 — 走 LAN IP / Tailscale ts.net
+  // 等其它 dev host 时,hostname 检查会错判成 prod 直接打 api.cuberoot.me 跨域,
+  // 而 api 的 CORS allowlist 没那些 host → 浏览器拦截。vite 在 client build 时
+  // 替换 import.meta.env.DEV;server 端 loadAlg 不被调,?.DEV undefined 走 prod 分支也无害。
+  const isDev = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
+  const base = isDev
     ? '/v1/alg/sets'  // dev: vite proxy
     : 'https://api.cuberoot.me/v1/alg/sets';  // prod: 跨域到 API 子域
   // NOTE: fresh=true 给 admin 用,绕开 1 小时 Cache-Control。

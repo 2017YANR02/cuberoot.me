@@ -191,7 +191,9 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: ssh -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/wca_stats_extra_apply.sh'
+        # NOTE: -T -n + ServerAlive 防 ssh 半连卡死(2026-05-09 一次 FIN 丢了卡 1h+);
+        # 远端正常退出 → 立刻断;sshd 没回 FIN → 90s 内 keepalive 探活失败强断.
+        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/wca_stats_extra_apply.sh'
 
       - name: Commit and push
         run: |
