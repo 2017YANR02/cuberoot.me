@@ -13,7 +13,6 @@ import { Shuffle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import QuickMode from './QuickMode';
 import TNoodleMode from './TNoodleMode';
-import { TNOODLE_WCA_EVENTS } from '../../utils/cubingScramble';
 import './gen.css';
 
 type Mode = 'quick' | 'tnoodle';
@@ -31,9 +30,6 @@ export default function GenPage() {
         <div className="gen-title">
           <Shuffle size={20} className="gen-title-icon" />
           <h1>{t('打乱生成器', 'Scramble Generator')}</h1>
-          <span className="gen-title-sub">
-            WCA · {TNOODLE_WCA_EVENTS.length} {t('项目', 'events')} · cubing.js (tnoodle)
-          </span>
         </div>
         <div className="gen-mode-chips">
           <button
