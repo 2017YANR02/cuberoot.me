@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-CVfOIazI.js";import{r as t}from"./wca_events-BVWIq2PL.js";var n=e();function r({event:e,className:r,title:i}){let a=t(e);return(0,n.jsx)(`span`,{className:`cubing-icon event-${a}${r?` ${r}`:``}`,title:i,"aria-label":a})}export{r as t};
