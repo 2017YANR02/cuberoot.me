@@ -126,9 +126,38 @@ function visualcubeDev(): Plugin {
   };
 }
 
+/**
+ * Dev 模式下用一个自注销的空 sw 覆盖 public/sw.js — 否则手机端老 sw 会继续拦截
+ * vite 的动态 module 请求(Safari 上 wrap stream 后 ES module import 直接挂 → 白屏)。
+ * Browser 看到 sw.js 内容变了会自动 install 新版 → activate 时 unregister + 让客户端 reload。
+ */
+function devUnregisterSw(): Plugin {
+  return {
+    name: 'dev-unregister-sw',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if ((req.url || '').split('?')[0] !== '/sw.js') return next();
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(`// dev-mode self-unregister sw
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => {
+  e.waitUntil((async () => {
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll();
+    clients.forEach((c) => c.navigate(c.url));
+  })());
+});
+`);
+      });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), serveRepoRoot(), visualcubeDev()],
+  plugins: [react(), tailwindcss(), serveRepoRoot(), visualcubeDev(), devUnregisterSw()],
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
   build: {
@@ -158,6 +187,17 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
+    // 经 cloudflared tunnel 进来的请求 Host: dev.cuberoot.me,Vite 6+ 默认 allowedHosts
+    // 只放 localhost / 127.0.0.1 / 显式 IP,要把开发隧道域名加进来。`.cuberoot.me` 写成
+    // 子域通配,以后再开 staging.cuberoot.me 之类不用回来改。
+    allowedHosts: ['.cuberoot.me', '.ts.net'],
+    // HMR ws 走 wss:443 让 PC + 手机都通过 Tailscale Funnel 的 SSL termination 接入 ws。
+    // 前提:两端都用 https://alienware.tail171d80.ts.net/ 访问 (PC 不再用 localhost:5173)。
+    // 这样 page 协议/端口跟 ws 一致,HMR 两端都热重载。
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss',
+    },
     headers: {
       // NOTE: @ffmpeg/ffmpeg 多线程需要 SharedArrayBuffer。
       // 用 credentialless 而不是 require-corp —— 前者允许跨源图片（flagcdn / WCA 头像）

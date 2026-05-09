@@ -43,6 +43,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **静态 SPA**：GitHub Pages 服 `cuberoot.me`（apex）；`ruiminyan.github.io` 自动 301 → `cuberoot.me`。
 - **后端 API**：Hono 服 `api.cuberoot.me`（永远走源站，不上 GH）。
 - 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`（跨域到 `api.cuberoot.me`），不要硬编码 origin。CORS allowlist 在 `core/packages/server/src/index.ts`。
+- 切 dev/prod API base 永远用 `import.meta.env.DEV`，**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配，会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils，直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 
 ## 开发命令
 
