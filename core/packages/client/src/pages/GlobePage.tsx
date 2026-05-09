@@ -155,14 +155,21 @@ const popupFlagHtml = (iso2: string): string => flagHtml(iso2, { spanClassName: 
 const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
 const CUBER_SOURCE_ARC_TIP = 'cuber-arc-tip';
+const CUBER_SOURCE_DENSITY = 'cuber-density';
 const CUBER_LAYER_DOT = 'cuber-points-dot';
 const CUBER_LAYER_CITY = 'cuber-points-city';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
 const CUBER_LAYER_ARC_ARROW = 'cuber-arcs-arrow';
+const CUBER_LAYER_DENSITY = 'cuber-density-circle';
+const CUBER_LAYER_DENSITY_LABEL = 'cuber-density-label';
 
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
-const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW, CUBER_LAYER_DOT, CUBER_LAYER_CITY];
+const CUBER_LAYERS = [
+  CUBER_LAYER_DENSITY, CUBER_LAYER_DENSITY_LABEL,
+  CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW,
+  CUBER_LAYER_DOT, CUBER_LAYER_CITY,
+];
 
 // ── 密度可视化 A 模式：log10(count) 连续色 + 连续半径（感知均匀 YlOrRd 色带）──
 // 用作 'clusters' / 'unclustered-point' 的 paint；属性名由 makeCountRamp 注入
@@ -1294,6 +1301,32 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     })),
   }), [cuberComps, isZh]);
 
+  // 按城市聚合的"已去过"次数密度 —— 跟时间轴 currentIndex 联动:
+  // 已经播到的 comp 才计入,泡泡随播放进度逐步长大,与原 react-globe.gl 柱状版语义一致.
+  const cuberDensityGeojson = useMemo(() => {
+    const byKey = new Map<string, { lng: number; lat: number; city: string; iso2: string; count: number }>();
+    const upTo = Math.min(currentIndex + 1, cuberComps.length);
+    for (let i = 0; i < upTo; i++) {
+      const c = cuberComps[i];
+      // 同城市可能稍微偏 lat/lng,精度截断到 1 位 ~ 11 km 视为同点
+      const key = `${c.longitude_degrees.toFixed(1)},${c.latitude_degrees.toFixed(1)}`;
+      const cur = byKey.get(key);
+      if (cur) cur.count++;
+      else byKey.set(key, {
+        lng: c.longitude_degrees, lat: c.latitude_degrees,
+        city: c.city, iso2: c.country_iso2, count: 1,
+      });
+    }
+    return {
+      type: 'FeatureCollection' as const,
+      features: [...byKey.values()].map((v) => ({
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [v.lng, v.lat] },
+        properties: { count: v.count, city: v.city, country_iso2: v.iso2 },
+      })),
+    };
+  }, [cuberComps, currentIndex]);
+
   // NOTE: 预计算每对相邻 comp 的大圆弧全量坐标（动画 slice 用）
   const cuberArcFullCoords = useMemo<Array<[number, number][]>>(() => {
     const out: Array<[number, number][]> = [];
@@ -1655,6 +1688,46 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       });
       // cuber source & layers
       map.addSource(CUBER_SOURCE_POINTS, { type: 'geojson', data: empty });
+      map.addSource(CUBER_SOURCE_DENSITY, { type: 'geojson', data: empty });
+      // 按城市聚合的"参赛次数"密度泡泡 — 半径 ∝ log10(count),压在所有 cuber 视觉之下做底
+      map.addLayer({
+        id: CUBER_LAYER_DENSITY, type: 'circle', source: CUBER_SOURCE_DENSITY,
+        layout: { 'visibility': 'none' },
+        paint: {
+          'circle-color': '#E07752',
+          'circle-opacity': 0.42,
+          'circle-radius': [
+            'interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', 'count'], 1]]],
+            0, 8,    // 1 场
+            0.5, 14, // ~3 场
+            1, 22,   // 10 场
+            1.5, 32, // ~32 场
+            2, 44,   // 100+
+          ],
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-width': 1,
+          'circle-stroke-opacity': 0.55,
+        },
+      });
+      map.addLayer({
+        id: CUBER_LAYER_DENSITY_LABEL, type: 'symbol', source: CUBER_SOURCE_DENSITY,
+        layout: {
+          'visibility': 'none',
+          'text-field': ['to-string', ['get', 'count']],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': [
+            'interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', 'count'], 1]]],
+            0, 10, 1, 13, 2, 16,
+          ],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: {
+          'text-color': '#FFFFFF',
+          'text-halo-color': '#8B3E1F',
+          'text-halo-width': 1.5,
+        },
+      });
       map.addSource(CUBER_SOURCE_ARCS, { type: 'geojson', data: empty });
       map.addLayer({
         id: CUBER_LAYER_ARC, type: 'line', source: CUBER_SOURCE_ARCS,
@@ -2161,10 +2234,12 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     const ptsSrc = map.getSource(CUBER_SOURCE_POINTS) as GeoJSONSource | undefined;
     const arcSrc = map.getSource(CUBER_SOURCE_ARCS) as GeoJSONSource | undefined;
     const tipSrc = map.getSource(CUBER_SOURCE_ARC_TIP) as GeoJSONSource | undefined;
+    const denSrc = map.getSource(CUBER_SOURCE_DENSITY) as GeoJSONSource | undefined;
     if (ptsSrc) ptsSrc.setData(cuberPointsGeojson as unknown as GeoJSON.FeatureCollection);
     if (arcSrc) arcSrc.setData(cuberArcsGeojson as unknown as GeoJSON.FeatureCollection);
     if (tipSrc) tipSrc.setData(cuberArcTipGeojson as unknown as GeoJSON.FeatureCollection);
-  }, [cuberPointsGeojson, cuberArcsGeojson, cuberArcTipGeojson, mapLoaded]);
+    if (denSrc) denSrc.setData(cuberDensityGeojson as unknown as GeoJSON.FeatureCollection);
+  }, [cuberPointsGeojson, cuberArcsGeojson, cuberArcTipGeojson, cuberDensityGeojson, mapLoaded]);
 
   // ── cuber 弧线渐变上色（按 year_progress）──
   // 独立 effect 便于 HMR 调色，且确保 layer 存在后再 set
