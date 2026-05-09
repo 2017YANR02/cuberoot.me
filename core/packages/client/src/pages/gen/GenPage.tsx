@@ -11,31 +11,11 @@ import { useTranslation } from 'react-i18next';
 import { Shuffle, Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import { EventSelect } from '../../components/EventSelect';
-import { VisualCube } from '../../components/VisualCube';
-import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
+import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
 import './gen.css';
 
 const COUNT_PRESETS = [1, 5, 12, 25, 50];
-
-type Preview = { kind: 'visualcube'; puzzleSize: number } | { kind: 'puzzle-svg'; pkind: PuzzleKind } | null;
-
-function getPreview(event: string): Preview {
-  switch (event) {
-    case '222': return { kind: 'visualcube', puzzleSize: 2 };
-    case '333': case '333oh': case '333bf': case '333fm': case '333mbf':
-      return { kind: 'visualcube', puzzleSize: 3 };
-    case '444': case '444bf': return { kind: 'visualcube', puzzleSize: 4 };
-    case '555': case '555bf': return { kind: 'visualcube', puzzleSize: 5 };
-    case '666': return { kind: 'visualcube', puzzleSize: 6 };
-    case '777': return { kind: 'visualcube', puzzleSize: 7 };
-    case 'pyram':  return { kind: 'puzzle-svg', pkind: 'pyraminx' };
-    case 'skewb': return { kind: 'puzzle-svg', pkind: 'skewb' };
-    case 'sq1':   return { kind: 'puzzle-svg', pkind: 'sq1' };
-    case 'minx':  return { kind: 'puzzle-svg', pkind: 'megaminx' };
-    default:      return null;
-  }
-}
 
 export default function GenPage() {
   const { i18n } = useTranslation();
@@ -76,7 +56,7 @@ export default function GenPage() {
     });
   }, [event, count, tick]);
 
-  const preview = useMemo(() => getPreview(event), [event]);
+  const hasPreview = useMemo(() => eventHasScramblePreview(event), [event]);
   const allText = useMemo(
     () => scrambles.map((s, i) => `${i + 1}. ${s}`).join('\n'),
     [scrambles],
@@ -156,7 +136,7 @@ export default function GenPage() {
               {copiedAll ? <Check size={14} /> : <Copy size={14} />}
               <span>{copiedAll ? t('已复制', 'Copied') : t('全部复制', 'Copy all')}</span>
             </button>
-            {preview && (
+            {hasPreview && (
               <button
                 type="button"
                 className="gen-btn gen-btn-toggle"
@@ -177,13 +157,9 @@ export default function GenPage() {
             {scrambles.map((s, i) => (
               <li key={`${i}-${s.slice(0, 4)}`} className="gen-item">
                 <span className="gen-num">{i + 1}</span>
-                {preview && showPreview && (
+                {hasPreview && showPreview && (
                   <div className="gen-preview">
-                    {preview.kind === 'visualcube' ? (
-                      <VisualCube algorithm={s} view="iso" puzzleSize={preview.puzzleSize} size={56} />
-                    ) : (
-                      <PuzzleSVG kind={preview.pkind} alg={s} size={56} />
-                    )}
+                    <ScramblePreview2D event={event} scramble={s} size={48} />
                   </div>
                 )}
                 <code className="gen-scramble">{s}</code>
