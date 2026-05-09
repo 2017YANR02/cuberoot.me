@@ -19,8 +19,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Trash2, Upload, Download, Sparkles, X } from 'lucide-react';
+import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
+import CubingPreview from '../../timer/cube/CubingPreview';
 import { faceletToCubie, validateFacelet, SOLVED_FACELET } from './facelet';
 import {
   formatMoves,
@@ -100,6 +101,12 @@ export default function ScrambleSolverPage() {
   const [showPaint, setShowPaint] = useState(false);
   const [paintFacelet, setPaintFacelet] = useState(SOLVED_FACELET);
   const [paintColor, setPaintColor] = useState<FaceLetter>('U');
+  // 打乱预览图开关 — 取 textarea 第一行,渲染对应魔方状态(net 视图)
+  const [showScramblePreview, setShowScramblePreview] = useState(() => {
+    const v = localStorage.getItem('cubeopt.showPreview');
+    return v === null ? true : v === '1';
+  });
+  useEffect(() => { localStorage.setItem('cubeopt.showPreview', showScramblePreview ? '1' : '0'); }, [showScramblePreview]);
   // 用户点 Solve 时若 prun 表还没就绪,记下这个意图,等表 ready 后自动接着 solve
   const pendingSolveRef = useRef(false);
   // 生成表后自动下载到本地;下次访问可 Upload 秒级跳过几十秒生成
@@ -435,6 +442,16 @@ export default function ScrambleSolverPage() {
     });
   })();
 
+  // 取 textarea 第一条合法打乱用作预览
+  const previewScramble = useMemo(() => {
+    const first = scrambles.split('\n').map(s => s.trim()).find(Boolean);
+    if (!first) return null;
+    try {
+      parseMoves(first);
+      return first;
+    } catch { return null; }
+  }, [scrambles]);
+
   return (
     <div className="cubeopt-page">
       <style>{INLINE_CSS}</style>
@@ -559,6 +576,13 @@ export default function ScrambleSolverPage() {
           <button className="btn-icon" onClick={inverseScrambles} title={t('每行反向', 'Invert each line')}>
             <Sparkles size={14} />
           </button>
+          <button
+            className={`btn-icon${showScramblePreview ? ' is-active' : ''}`}
+            onClick={() => setShowScramblePreview(v => !v)}
+            title={t('打乱图预览(显示第一行打乱产生的状态)', 'Show preview of the first scramble')}
+          >
+            {showScramblePreview ? <Eye size={14} /> : <EyeOff size={14} />}
+          </button>
           <button className="btn-icon" onClick={() => setScrambles('')} title="Clear">
             <Trash2 size={14} />
           </button>
@@ -570,6 +594,18 @@ export default function ScrambleSolverPage() {
           value={scrambles}
           onChange={(e) => setScrambles(e.target.value)}
         />
+        {showScramblePreview && previewScramble && (
+          <div className="scramble-preview">
+            <CubingPreview
+              event="333"
+              scramble={previewScramble}
+              visualization="2D"
+              size={28}
+              className="scramble-preview-svg"
+            />
+            <span className="scramble-preview-label">{t('应用第一行打乱后的状态', 'State after the first scramble')}</span>
+          </div>
+        )}
         <div className="row">
           <span className="lbl">{t('线程', 'Threads')}</span>
           <select className="ctl-sm" value={nThreads} onChange={(e) => setNThreads(parseInt(e.target.value, 10))}>
@@ -703,6 +739,15 @@ const INLINE_CSS = `
   opacity: 0.45; cursor: not-allowed;
 }
 .btn-icon { padding: 0.35rem 0.45rem; }
+.btn-icon.is-active { border-color: var(--accent, #ff8800); color: var(--accent, #ff8800); }
+.scramble-preview {
+  margin: 0.5rem 0; padding: 0.5rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--panel-sub, #181818); border-radius: 5px;
+  border: 1px dashed var(--border, #333);
+}
+.scramble-preview-svg { flex-shrink: 0; }
+.scramble-preview-label { font-size: 0.8rem; color: var(--text-muted, #888); }
 .busy-marker {
   display: inline-flex; align-items: center; gap: 0.35rem;
   color: var(--text-muted, #aaa); font-size: 0.85rem;
