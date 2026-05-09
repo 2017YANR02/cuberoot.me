@@ -321,10 +321,31 @@
 .wse-sor-evcell.podium-3 { color: #cd7f32; font-weight: 600; }
 .wse-sor-evcell.empty { color: #555; }
 
+/* Search input (with × clear button) */
+.wse-filter-q { min-width: 200px; flex: 1; }
+.wse-q-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.wse-q-wrap input {
+  flex: 1;
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 34px;
+}
+.wse-q-wrap input:hover { border-color: rgba(255, 255, 255, 0.25); }
+
 /* Mobile */
 @media (max-width: 600px) {
   .wse-page { padding: 16px 8px; }
   .wse-filters { padding: 12px; gap: 10px; }
   .wse-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
+  .wse-filter-q { flex: 1 0 100%; }
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
 }

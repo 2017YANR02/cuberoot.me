@@ -44,22 +44,31 @@ CREATE TABLE IF NOT EXISTS wca_grand_slam (
 );
 CREATE INDEX IF NOT EXISTS gs_event ON wca_grand_slam (event_id);
 
--- ── wca_results_top: 全部成绩排行 (~3-5M 行) ──
--- 一行 = (event, is_avg, country_filter, rank) 的具体一次成绩.
--- country_filter='' 表示全球榜(top 5000),否则 country_id(top 500/国).
--- 同一人可能多次出现(多次刷出同样好的成绩).
+-- ── wca_results_top: 全部成绩排行 (~11M 行,无 cap) ──
+-- 一行 = 一次 valid (best 或 average) 成绩.同人同 comp 多 round 可能重复.
+-- 客户端按 (event, is_avg) 过滤后 ORDER BY value 翻页,可叠加 country / year / month / 选手 / 比赛搜索.
+--
+-- 2026-05 schema 重构(删 country_filter / rank_in_scope,加 comp_date):
+-- 旧表无法 IF NOT EXISTS 增量迁移,先 DROP 再重建;反正 load.sql 总会 COPY 全量数据.
+DROP TABLE IF EXISTS wca_results_top CASCADE;
 CREATE TABLE IF NOT EXISTS wca_results_top (
   event_id           VARCHAR(20) NOT NULL,
   is_avg             BOOLEAN NOT NULL,
-  country_filter     VARCHAR(50) NOT NULL,    -- '' = 全球榜
-  rank_in_scope      INTEGER NOT NULL,
   value              INTEGER NOT NULL,
   wca_id             VARCHAR(20) NOT NULL,
-  person_country_id  VARCHAR(50) NOT NULL,    -- 持件人国籍(国旗用)
+  person_country_id  VARCHAR(50) NOT NULL,    -- 持件人当时国籍(国旗用)
   comp_id            VARCHAR(50) NOT NULL,
-  attempts           INTEGER[],                 -- 5 次 raw 值(WCA 编码,客户端格式化)
-  PRIMARY KEY (event_id, is_avg, country_filter, rank_in_scope)
+  comp_date          DATE NOT NULL,           -- 比赛 start_date,用于 year/month 过滤(无需 join)
+  attempts           INTEGER[]                -- 5 次 raw 值(WCA 编码)
 );
+-- 主索引: ORDER BY value LIMIT/OFFSET — 全量翻页主路径
+CREATE INDEX IF NOT EXISTS wrt_main ON wca_results_top (event_id, is_avg, value, wca_id);
+-- 国家过滤路径(走索引按 value 排序)
+CREATE INDEX IF NOT EXISTS wrt_country ON wca_results_top (event_id, is_avg, person_country_id, value);
+-- 选手 / 比赛搜索路径(IN list);q 命中条数少,走该索引比 main + filter 快
+CREATE INDEX IF NOT EXISTS wrt_wca_id ON wca_results_top (event_id, is_avg, wca_id, value);
+CREATE INDEX IF NOT EXISTS wrt_comp_id ON wca_results_top (event_id, is_avg, comp_id, value);
+-- 年份/月份: 走 main 索引 + comp_date 过滤(不专门索引,跳过 cap=2GB 索引膨胀)
 
 -- ── wca_year_results_top: 当年成绩排行 (~5M 行) ──
 -- 一行 = (year, event, is_avg, country_filter, rank) 的具体一次成绩.

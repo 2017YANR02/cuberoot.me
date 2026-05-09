@@ -9,22 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import LangToggle from '../../components/LangToggle';
+import { EventIcon } from '../../components/EventIcon';
+import { eventDisplayName } from '../../utils/wca_events';
 import { CaseThumb } from './CaseThumb';
 import './alg.css';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
-
-const PUZZLE_TITLE: Record<AlgPuzzle, { en: string; zh: string }> = {
-  '2x2':      { en: '2x2 Algorithms',      zh: '二阶公式' },
-  '3x3':      { en: '3x3 Algorithms',      zh: '三阶公式' },
-  '4x4':      { en: '4x4 Algorithms',      zh: '四阶公式' },
-  '5x5':      { en: '5x5 Algorithms',      zh: '五阶公式' },
-  'sq1':      { en: 'Square 1 Algorithms', zh: 'Square 1 公式' },
-  'megaminx': { en: 'Megaminx Algorithms', zh: '五魔方公式' },
-  'pyraminx': { en: 'Pyraminx Algorithms', zh: '金字塔公式' },
-  'skewb':    { en: 'Skewb Algorithms',    zh: '粽子公式' },
-};
 
 function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
@@ -80,7 +71,10 @@ export default function AlgPuzzlePage() {
         <Link to="/alg" className="alg-back">
           <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
         </Link>
-        <h1 className="alg-cat-title">{isZh ? PUZZLE_TITLE[puzzle].zh : PUZZLE_TITLE[puzzle].en}</h1>
+        <h1 className="alg-cat-title">
+          <EventIcon event={puzzle} className="alg-cat-title-icon" />
+          <span>{eventDisplayName(puzzle, isZh)} {isZh ? '公式' : 'Algorithms'}</span>
+        </h1>
         <span className="alg-cat-count">{sets.length} {isZh ? '套' : 'sets'}</span>
         <LangToggle variant="inline" className="alg-lang-toggle" />
       </div>

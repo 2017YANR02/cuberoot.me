@@ -1,8 +1,9 @@
 /**
- * 全部成绩排行 — top 5000 ww + top 500/country per (event, type)
+ * 全部成绩排行 — 全量(无 cap),server 端 ORDER BY value 翻页;
+ * 可叠加 country / year / month / 选手或比赛搜索过滤.
  * /wca-stats/all-results
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
@@ -11,6 +12,7 @@ import WcaEventSelector from './WcaEventSelector';
 import { Flag } from '../../utils/flag';
 import { loadFlagData } from '../../utils/country_flags';
 import { CompCell } from '../../components/CompCell/CompCell';
+import { ClearButton } from '../../components/ClearButton';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
@@ -42,6 +44,9 @@ export default function AllResultsPage() {
   const event = params.get('event') ?? '333';
   const type = (params.get('type') ?? 'single') as 'single' | 'average';
   const country = params.get('country') ?? '';
+  const year = parseInt(params.get('year') ?? '0', 10);
+  const month = parseInt(params.get('month') ?? '0', 10);
+  const qFromUrl = params.get('q') ?? '';
   const page = parseInt(params.get('page') ?? '1', 10);
   const size = parseInt(params.get('size') ?? '100', 10);
 
@@ -51,6 +56,23 @@ export default function AllResultsPage() {
     if (resetPage) next.delete('page');
     setParams(next, { replace: false });
   };
+
+  // q debounced —— 输入 300ms 静默后才 commit 到 URL,避免每次按键都查询
+  const [qInput, setQInput] = useState(qFromUrl);
+  useEffect(() => { setQInput(qFromUrl); }, [qFromUrl]);
+  useEffect(() => {
+    if (qInput === qFromUrl) return;
+    const t = setTimeout(() => update('q', qInput), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qInput]);
+
+  const currentYear = new Date().getUTCFullYear();
+  const years = useMemo(() => {
+    const ys: number[] = [];
+    for (let y = currentYear; y >= 2003; y--) ys.push(y);
+    return ys;
+  }, [currentYear]);
 
   const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,10 +91,13 @@ export default function AllResultsPage() {
     url.searchParams.set('page', String(page));
     url.searchParams.set('size', String(size));
     if (country) url.searchParams.set('country', country);
+    if (year > 0) url.searchParams.set('year', String(year));
+    if (month > 0) url.searchParams.set('month', String(month));
+    if (qFromUrl) url.searchParams.set('q', qFromUrl);
     fetch(url.toString().replace(window.location.origin, ''))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [event, type, country, page, size]);
+  }, [event, type, country, year, month, qFromUrl, page, size]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
 
@@ -84,7 +109,9 @@ export default function AllResultsPage() {
           <LangToggle />
         </div>
         <h1>{isZh ? '全部成绩排行' : 'All Results Ranking'}</h1>
-        <p className="wse-subtitle">{isZh ? '所有成绩按值排序(每个国家保留 top 500、全球保留 top 5000)' : 'Top 500/country, top 5000 worldwide per event/type'}</p>
+        <p className="wse-subtitle">{isZh
+          ? '全部 valid 成绩按值升序;可叠加国家 / 年份 / 月份 / 选手或比赛搜索'
+          : 'All valid results sorted by value; filter by country / year / month / person or competition search'}</p>
       </header>
 
       <WcaEventSelector
@@ -97,11 +124,45 @@ export default function AllResultsPage() {
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
+          <label>{isZh ? '年份' : 'Year'}</label>
+          <select value={year} onChange={e => update('year', e.target.value === '0' ? '' : e.target.value)}>
+            <option value={0}>{isZh ? '全部年份' : 'All years'}</option>
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+        <div className="wse-filter">
+          <label>{isZh ? '月份' : 'Month'}</label>
+          <select value={month} onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}>
+            <option value={0}>{isZh ? '全年' : 'All months'}</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div className="wse-filter">
           <label>{isZh ? '类型' : 'Type'}</label>
           <select value={type} onChange={e => update('type', e.target.value)}>
             <option value="single">{isZh ? '单次' : 'Single'}</option>
             {allowAvg && <option value="average">{isZh ? '平均' : 'Average'}</option>}
           </select>
+        </div>
+        <div className="wse-filter wse-filter-q">
+          <label>{isZh ? '搜索' : 'Search'}</label>
+          <div className="wse-q-wrap">
+            <input
+              type="search"
+              value={qInput}
+              onChange={e => setQInput(e.target.value)}
+              placeholder={isZh ? '选手或比赛名' : 'Person or competition'}
+            />
+            {qInput && (
+              <ClearButton
+                onClick={() => { setQInput(''); update('q', ''); }}
+                isZh={isZh}
+                preserveFocus
+              />
+            )}
+          </div>
         </div>
       </div>
 
