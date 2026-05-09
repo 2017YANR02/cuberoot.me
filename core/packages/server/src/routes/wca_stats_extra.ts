@@ -1,8 +1,9 @@
 /**
- * WCA stats extra — 6 个 cubing.pro 风格统计 tab 的查询路由.
+ * WCA stats extra — 7 + 2 个 cubing.pro 风格统计 tab / 选手页查询路由.
  *
  * 数据源: wca_grand_slam / wca_results_top / wca_year_results_top
  *         wca_cohort_ranks / wca_success_rate / wca_all_events_done / wca_person_ranks
+ *         + historical_ranks_snapshot(选手页 PR 历史 + 排名折线)
  * 每周由 GH Actions 重灌(同 historical_ranks).
  *
  * 端点:
@@ -13,6 +14,8 @@
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
  *   GET /v1/wca/sum-of-ranks?type=&country=&events=&hidePodium=&page=&size=
+ *   GET /v1/wca/person-best-ranks?wcaId=
+ *   GET /v1/wca/person-rank-history?wcaId=&eventId=
  *
  * 所有端点 Cache-Control: 1 day —— 每周才变.
  */
@@ -670,6 +673,106 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
       eventsDone: r.events_done,
       subsetTotal: r.subset_total,
       ranks: isCountryMode ? r.ranks_country : r.ranks_world,
+    })),
+  });
+});
+
+// ── 8. /v1/wca/person-best-ranks ──
+// 选手个人 "历史最佳排名":每个项目 single / average 在 historical_ranks_snapshot 全年区间里取得过的最低
+// world_rank / country_rank,以及取得该 rank 时的年份和成绩值.PR 表 "历史最佳排名" 切换用.
+wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
+    return c.json({ error: 'Invalid wcaId' }, 400);
+  }
+
+  // 一次取出该选手全部年份/项目的 snapshot,服务端 in-memory 聚合.
+  const rows = await query<{
+    event_id: string;
+    year: number;
+    single: number | null;
+    average: number | null;
+    single_world_rank: number | null;
+    single_country_rank: number | null;
+    avg_world_rank: number | null;
+    avg_country_rank: number | null;
+  }>(
+    `
+    SELECT event_id, year, single, average,
+           single_world_rank, single_country_rank,
+           avg_world_rank, avg_country_rank
+    FROM historical_ranks_snapshot
+    WHERE wca_id = ?
+    `,
+    [wcaId],
+  );
+
+  type Best = { rank: number; year: number; value: number | null };
+  const out: Record<string, {
+    single?: { world?: Best; country?: Best };
+    average?: { world?: Best; country?: Best };
+  }> = {};
+
+  for (const r of rows) {
+    const e = (out[r.event_id] ??= {});
+    const upd = (cur: Best | undefined, rank: number | null, value: number | null): Best | undefined => {
+      if (rank === null || rank <= 0) return cur;
+      if (!cur || rank < cur.rank) return { rank, year: r.year, value };
+      return cur;
+    };
+    e.single ??= {};
+    e.average ??= {};
+    e.single.world = upd(e.single.world, r.single_world_rank, r.single);
+    e.single.country = upd(e.single.country, r.single_country_rank, r.single);
+    e.average.world = upd(e.average.world, r.avg_world_rank, r.average);
+    e.average.country = upd(e.average.country, r.avg_country_rank, r.average);
+  }
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({ wcaId, events: out });
+});
+
+// ── 9. /v1/wca/person-rank-history ──
+// 选手 (wcaId, eventId) 每年年末的 single/average × world/country rank.折线图源数据.
+// continent rank 不在 snapshot 中(stats-build 还没产),先省略;v1 显示 4 条线即可.
+wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  const eventId = (c.req.query('eventId') ?? '').toLowerCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
+    return c.json({ error: 'Invalid wcaId' }, 400);
+  }
+  if (!VALID_EVENTS.has(eventId)) {
+    return c.json({ error: 'Invalid event' }, 400);
+  }
+
+  const rows = await query<{
+    year: number;
+    single: number | null;
+    average: number | null;
+    single_world_rank: number | null;
+    single_country_rank: number | null;
+    avg_world_rank: number | null;
+    avg_country_rank: number | null;
+  }>(
+    `
+    SELECT year, single, average,
+           single_world_rank, single_country_rank,
+           avg_world_rank, avg_country_rank
+    FROM historical_ranks_snapshot
+    WHERE wca_id = ? AND event_id = ?
+    ORDER BY year ASC
+    `,
+    [wcaId, eventId],
+  );
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    wcaId, eventId,
+    rows: rows.map(r => ({
+      year: r.year,
+      single: r.single, average: r.average,
+      singleWorldRank: r.single_world_rank, singleCountryRank: r.single_country_rank,
+      avgWorldRank: r.avg_world_rank, avgCountryRank: r.avg_country_rank,
     })),
   });
 });
