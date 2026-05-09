@@ -136,12 +136,12 @@ export default function QuickMode({ t }: Props) {
           {scrambles.map((s, i) => (
             <li key={`${i}-${s.slice(0, 4)}`} className="gen-item">
               <span className="gen-num">{i + 1}</span>
+              <code className="gen-scramble">{s}</code>
               {hasPreview && showPreview && (
                 <div className="gen-preview">
                   <ScramblePreview2D event={event} scramble={s} size={48} />
                 </div>
               )}
-              <code className="gen-scramble">{s}</code>
               <button
                 type="button"
                 className="gen-copy-btn"
