@@ -248,3 +248,243 @@
     .gen-scramble { font-size: 0.84rem; }
     .gen-controls { padding: 10px 12px; }
 }
+
+/* ───────── mode chips (Quick / TNoodle) ───────── */
+.gen-mode-chips {
+    display: inline-flex;
+    background: var(--gen-surface);
+    border: 1px solid var(--gen-border);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+}
+.gen-mode-chip {
+    border: none;
+    background: transparent;
+    color: var(--gen-text-sub);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gen-mode-chip:hover { color: var(--gen-text); }
+.gen-mode-chip.is-active {
+    background: var(--gen-accent);
+    color: #FFF;
+}
+
+/* ───────── TNoodle mode ───────── */
+.gen-tn-controls {
+    background: var(--gen-surface);
+    border: 1px solid var(--gen-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 1.25rem;
+}
+@media (max-width: 700px) {
+    .gen-tn-controls { grid-template-columns: 1fr; }
+}
+.gen-tn-comp-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--gen-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--gen-text);
+    background: var(--gen-surface);
+    outline: none;
+}
+.gen-tn-comp-input:focus { border-color: var(--gen-accent); }
+
+.gen-tn-event-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+}
+.gen-tn-event-card {
+    background: var(--gen-surface);
+    border: 1px solid var(--gen-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s, background 0.15s;
+}
+.gen-tn-event-card.is-on { border-color: var(--gen-accent); background: var(--gen-accent-soft); }
+.gen-tn-event-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--gen-text);
+    text-align: left;
+}
+.gen-tn-event-card.is-on .gen-tn-event-header { color: var(--gen-accent); font-weight: 600; }
+.gen-tn-event-name { flex: 1; }
+.gen-tn-event-toggle {
+    display: inline-flex;
+    align-items: center;
+    color: var(--gen-text-mute);
+}
+.gen-tn-event-card.is-on .gen-tn-event-toggle { color: var(--gen-accent); }
+.gen-tn-event-body {
+    padding: 0 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.gen-tn-rounds-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.gen-tn-rounds-label {
+    font-size: 0.78rem;
+    color: var(--gen-text-mute);
+    margin-right: 4px;
+}
+.gen-tn-round-chip {
+    width: 28px;
+    height: 26px;
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    background: var(--gen-surface);
+    color: var(--gen-text-sub);
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    cursor: pointer;
+}
+.gen-tn-round-chip:hover { border-color: var(--gen-border-strong); }
+.gen-tn-round-chip.is-active {
+    border-color: var(--gen-accent);
+    background: var(--gen-surface);
+    color: var(--gen-accent);
+    font-weight: 600;
+}
+.gen-tn-round-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.gen-tn-round-num {
+    width: 28px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gen-text-sub);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.gen-tn-format-select {
+    padding: 4px 8px;
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    background: var(--gen-surface);
+    color: var(--gen-text);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.gen-tn-mini-num {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--gen-text-mute);
+}
+.gen-tn-mini-num input {
+    width: 48px;
+    padding: 3px 6px;
+    border: 1px solid var(--gen-border);
+    border-radius: 5px;
+    font-size: 0.85rem;
+    color: var(--gen-text);
+    background: var(--gen-surface);
+}
+.gen-tn-mbld-cubes {
+    width: 64px;
+    padding: 4px 8px;
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--gen-text);
+    background: var(--gen-surface);
+}
+
+/* ───────── TNoodle on-screen sheets ───────── */
+.gen-tn-sheets {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+.gen-tn-sheet-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--gen-text);
+    margin: 0 0 0.5rem;
+}
+.gen-tn-sheet {
+    background: var(--gen-surface);
+    border: 1px solid var(--gen-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.gen-tn-sheet-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--gen-bg);
+    border-bottom: 1px solid var(--gen-border);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gen-text);
+}
+.gen-tn-sheet-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.gen-tn-sheet-table tr { border-bottom: 1px solid var(--gen-border); }
+.gen-tn-sheet-table tr:last-child { border-bottom: none; }
+.gen-tn-sheet-table td { padding: 8px 12px; vertical-align: middle; }
+.gen-tn-attempt-num {
+    width: 36px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: var(--gen-text-mute);
+    font-weight: 600;
+    text-align: right;
+}
+.gen-tn-sheet-table tr.is-extra .gen-tn-attempt-num { color: var(--gen-accent); }
+.gen-tn-attempt-scramble { width: auto; }
+.gen-tn-attempt-line {
+    display: block;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.88rem;
+    color: var(--gen-text);
+    word-break: break-word;
+    line-height: 1.5;
+    user-select: text;
+}
+.gen-tn-attempt-line + .gen-tn-attempt-line { margin-top: 2px; }
+.gen-tn-attempt-preview { width: 110px; }
+.gen-tn-extras-divider td {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--gen-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--gen-bg);
+    padding: 4px 12px;
+}
