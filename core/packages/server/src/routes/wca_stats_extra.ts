@@ -296,9 +296,10 @@ wcaStatsExtraRoutes.get('/wca/year-results', async (c) => {
     params,
   );
 
+  // alias `t` 必须保留 — monthCond 写的是 `AND t.comp_month = ?`
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_year_results_top
-     WHERE year = ? AND event_id = ? AND is_avg = ? AND country_filter = ? ${monthCond}`,
+    `SELECT COUNT(*) AS n FROM wca_year_results_top t
+     WHERE t.year = ? AND t.event_id = ? AND t.is_avg = ? AND t.country_filter = ? ${monthCond}`,
     totalParams,
   );
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
