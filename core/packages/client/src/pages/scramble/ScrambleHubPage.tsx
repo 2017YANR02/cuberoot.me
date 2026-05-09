@@ -21,26 +21,26 @@ const CARDS: Card[] = [
   {
     to: '/scramble/stats',
     Icon: BarChart3,
-    zh: { title: '打乱难度分布', desc: 'WCA 历史 1,200,000 条三阶打乱阶段最优步数分布' },
-    en: { title: 'Difficulty Distribution', desc: 'Stage-optimal HTM distribution over 1.2M WCA 3x3 scrambles' },
+    zh: { title: '分布', desc: 'WCA 历史 1,200,000 条三阶打乱阶段最优步数分布' },
+    en: { title: 'Distribution', desc: 'Stage-optimal HTM distribution over 1.2M WCA 3x3 scrambles' },
   },
   {
     to: '/scramble/gen',
     Icon: Dices,
-    zh: { title: '批量生成', desc: '16 个 WCA 项目的随机状态打乱,带预览图' },
-    en: { title: 'Batch Generator', desc: 'Random-state scrambles for 16 WCA events with preview' },
+    zh: { title: '生成', desc: '17 个 WCA 项目的随机状态打乱,tnoodle 风格 PDF' },
+    en: { title: 'Generate', desc: 'Random-state scrambles for 17 WCA events, tnoodle-style PDF' },
   },
   {
     to: '/scramble/analyzer',
     Icon: Microscope,
-    zh: { title: 'CFOP 分析器', desc: '3x3 打乱 → 6 色 cross / F2L / OLL / PLL 完整 CFOP 解' },
-    en: { title: 'CFOP Analyzer', desc: '3x3 scramble → all-color cross / F2L / OLL / PLL CFOP paths' },
+    zh: { title: '分析', desc: '3x3 打乱 → 6 色 cross / F2L / OLL / PLL 完整 CFOP 解' },
+    en: { title: 'Analyze', desc: '3x3 scramble → all-color cross / F2L / OLL / PLL CFOP paths' },
   },
   {
     to: '/scramble/solver',
     Icon: Sparkles,
-    zh: { title: '最优解 (cubeopt)', desc: '3x3 任意状态最少步公式 — wasm 多线程' },
-    en: { title: 'Optimal Solver (cubeopt)', desc: 'Optimal HTM solution for any 3x3 state — multithreaded wasm' },
+    zh: { title: '求解', desc: '3x3 任意状态最少步公式 — wasm 多线程' },
+    en: { title: 'Solve', desc: 'Optimal HTM solution for any 3x3 state — multithreaded wasm' },
   },
 ];
 
