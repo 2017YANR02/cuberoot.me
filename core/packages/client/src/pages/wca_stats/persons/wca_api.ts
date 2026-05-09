@@ -66,6 +66,9 @@ export interface WcaResultRow {
   average: number;
   pos: number;
   attempts: number[];
+  /** WR / NR / AfR / AsR / ER / NAR / OcR / SAR — null if not a regional record. */
+  regional_single_record?: string | null;
+  regional_average_record?: string | null;
   date?: string;            // not in raw API; we backfill from comp lookup if needed
 }
 
@@ -86,6 +89,8 @@ export async function fetchWcaPersonResults(wcaId: string): Promise<WcaResultRow
     average: r.average,
     pos: r.pos,
     attempts: Array.isArray(r.attempts) ? r.attempts : [],
+    regional_single_record: r.regional_single_record ?? null,
+    regional_average_record: r.regional_average_record ?? null,
   }));
   cacheSet(key, out);
   return out;
@@ -98,6 +103,64 @@ export interface WcaCompetition {
   country_iso2: string;
   start_date: string;
   end_date: string;
+}
+
+// ── Server endpoints (历史排名快照) ──────────────────────────────────────
+// /v1/wca/person-best-ranks 与 /v1/wca/person-rank-history 由本仓库的
+// core/packages/server/src/routes/wca_stats_extra.ts 提供,数据源是
+// historical_ranks_snapshot 表(每天 GH Actions 灌一次,nginx 1d cache).
+import { apiUrl } from '../../../utils/api_base';
+
+export interface PersonBestRankCell {
+  rank: number;
+  year: number;
+  value: number | null;
+}
+
+export interface PersonBestRanksResponse {
+  wcaId: string;
+  events: Record<string, {
+    single?: { world?: PersonBestRankCell; country?: PersonBestRankCell };
+    average?: { world?: PersonBestRankCell; country?: PersonBestRankCell };
+  }>;
+}
+
+export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRanksResponse> {
+  const key = `wca:bestRanks:${wcaId}`;
+  const cached = cacheGet<PersonBestRanksResponse>(key);
+  if (cached) return cached;
+  const res = await fetch(apiUrl(`/v1/wca/person-best-ranks?wcaId=${encodeURIComponent(wcaId)}`));
+  if (!res.ok) throw new Error(`person-best-ranks ${res.status}`);
+  const json = (await res.json()) as PersonBestRanksResponse;
+  cacheSet(key, json);
+  return json;
+}
+
+export interface PersonRankHistoryRow {
+  year: number;
+  single: number | null;
+  average: number | null;
+  singleWorldRank: number | null;
+  singleCountryRank: number | null;
+  avgWorldRank: number | null;
+  avgCountryRank: number | null;
+}
+
+export interface PersonRankHistoryResponse {
+  wcaId: string;
+  eventId: string;
+  rows: PersonRankHistoryRow[];
+}
+
+export async function fetchPersonRankHistory(wcaId: string, eventId: string): Promise<PersonRankHistoryResponse> {
+  const key = `wca:rankHist:${wcaId}:${eventId}`;
+  const cached = cacheGet<PersonRankHistoryResponse>(key);
+  if (cached) return cached;
+  const res = await fetch(apiUrl(`/v1/wca/person-rank-history?wcaId=${encodeURIComponent(wcaId)}&eventId=${encodeURIComponent(eventId)}`));
+  if (!res.ok) throw new Error(`person-rank-history ${res.status}`);
+  const json = (await res.json()) as PersonRankHistoryResponse;
+  cacheSet(key, json);
+  return json;
 }
 
 export async function fetchWcaPersonCompetitions(wcaId: string): Promise<WcaCompetition[]> {
