@@ -1,0 +1,1 @@
+import{n as e}from"./api_base-BXCFxsoY.js";export{e as apiUrl};
