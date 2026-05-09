@@ -14,8 +14,10 @@
     "@cuberoot/visualcube": "workspace:*",
     "@hono/node-server": "^1.0.0",
     "@types/ws": "^8.18.1",
+    "cubing": "^0.63.3",
     "hono": "^4.0.0",
     "jsonwebtoken": "^9.0.0",
+    "linkedom": "^0.18.12",
     "postgres": "^3.4.9",
     "ws": "^8.20.0"
   },

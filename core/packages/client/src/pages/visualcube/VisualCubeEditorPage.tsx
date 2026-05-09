@@ -687,10 +687,17 @@ export default function VisualCubeEditorPage() {
   };
 
   const apiUrl = useMemo(() => {
-    // /v1/visualcube.svg only supports a subset (alg/case/view/mask/size/bg/cc/co)
+    // /v1/visualcube.svg supports: alg/case/setup/view/mask/size/bg/cc/co (cube renderer),
+    // plus puzzle/variant (cubing.js net renderer for sq1/megaminx/pyraminx/skewb + cube net).
     const p = new URLSearchParams();
     if (state.algorithm) p.set(state.algType, state.algorithm);
-    if (state.cubeView !== 'normal') p.set('view', state.cubeView);
+    if (state.puzzleType !== 'cube') {
+      p.set('puzzle', state.puzzleType);
+      if (state.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('variant', state.puzzleVariant);
+    } else {
+      if (state.cubeView !== 'normal') p.set('view', state.cubeView);
+      if (state.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(state.cubeSize));
+    }
     if (state.stageMask) p.set('mask', state.stageMask);
     if (state.imageSize !== DEFAULTS.imageSize) p.set('size', String(state.imageSize));
     if (state.backgroundColor) p.set('bg', state.backgroundColor);
