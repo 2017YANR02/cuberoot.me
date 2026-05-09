@@ -74,9 +74,15 @@ export async function getScramble2DSvg(event: string, scramble: string, timeoutM
 
     const svg = await waitForSvg(player, timeoutMs);
     if (!svg) return null;
-    // Ensure xmlns is present so the standalone SVG parses outside the document
-    if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    return new XMLSerializer().serializeToString(svg);
+    // svg2pdf.js can't see styles applied via shadow-root adoptedStyleSheets,
+    // and cubing.js wires its 2D paints through them. Solution: clone the SVG,
+    // inline fill/stroke/opacity from getComputedStyle onto every element, AND
+    // pull adoptedStyleSheets cssText into a <style> child as belt-and-braces.
+    const cloned = svg.cloneNode(true) as SVGSVGElement;
+    inlinePaintStyles(svg, cloned);
+    embedAdoptedStyleSheets(svg, cloned);
+    if (!cloned.getAttribute('xmlns')) cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    return new XMLSerializer().serializeToString(cloned);
   } finally {
     try { wrap.remove(); } catch { /* swallow */ }
   }
@@ -85,19 +91,100 @@ export async function getScramble2DSvg(event: string, scramble: string, timeoutM
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function waitForSvg(player: any, timeoutMs: number): Promise<SVGSVGElement | null> {
   const deadline = Date.now() + timeoutMs;
-  // First, wait for shadowRoot to have an svg
   while (Date.now() < deadline) {
-    const root: ShadowRoot | null = player.shadowRoot ?? null;
-    const svg = root?.querySelector?.('svg') ?? null;
+    const svg = findSvgDeep(player);
     if (svg) {
       // Give cubing.js one more frame to apply setupAlg state
       await raf();
       await raf();
-      return svg as SVGSVGElement;
+      return svg;
     }
     await raf();
   }
   return null;
+}
+
+/** TwistyPlayer's SVG lives inside nested shadow roots
+ *  (player → scene-wrapper → 2D-puzzle → svg). Walk all shadow roots. */
+function findSvgDeep(node: Node | null): SVGSVGElement | null {
+  if (!node) return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const root: ShadowRoot | null = (node as any).shadowRoot ?? null;
+  if (root) {
+    const direct = root.querySelector('svg');
+    if (direct) return direct as SVGSVGElement;
+    // recurse into every element in the shadow root
+    for (const el of Array.from(root.querySelectorAll('*'))) {
+      const found = findSvgDeep(el);
+      if (found) return found;
+    }
+  }
+  // also check light DOM children (TwistyPlayer rarely needs this but cheap)
+  if (node instanceof Element) {
+    for (const el of Array.from(node.children)) {
+      const found = findSvgDeep(el);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/** Walk live + clone in lockstep, inline paint props from getComputedStyle. */
+function inlinePaintStyles(live: Element, clone: Element): void {
+  const liveKids = live.children;
+  const cloneKids = clone.children;
+  if (liveKids.length !== cloneKids.length) return;
+  copyPaintStyle(live, clone);
+  for (let i = 0; i < liveKids.length; i++) {
+    inlinePaintStyles(liveKids[i], cloneKids[i]);
+  }
+}
+
+const SVG_PAINT_PROPS = [
+  'fill', 'fill-opacity',
+  'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linejoin', 'stroke-linecap',
+  'opacity',
+];
+
+function copyPaintStyle(live: Element, clone: Element): void {
+  const cs = window.getComputedStyle(live);
+  const parts: string[] = [];
+  for (const prop of SVG_PAINT_PROPS) {
+    const v = cs.getPropertyValue(prop);
+    if (!v) continue;
+    if (clone.hasAttribute(prop)) continue;  // attribute already wins
+    parts.push(`${prop}:${v}`);
+  }
+  if (parts.length) {
+    const existing = clone.getAttribute('style') ?? '';
+    const sep = existing && !existing.endsWith(';') ? ';' : '';
+    clone.setAttribute('style', existing + sep + parts.join(';'));
+  }
+}
+
+/** Find every shadow root from the live SVG up to the document; concatenate
+ *  their adoptedStyleSheets' cssText into a `<style>` prepended to the clone. */
+function embedAdoptedStyleSheets(live: SVGSVGElement, clone: SVGSVGElement): void {
+  const sheetsCss: string[] = [];
+  let node: Node | null = live;
+  while (node) {
+    const root = node.getRootNode?.() as ShadowRoot | Document | null;
+    if (root && 'adoptedStyleSheets' in root) {
+      const sheets = (root as ShadowRoot).adoptedStyleSheets ?? [];
+      for (const sheet of sheets) {
+        try {
+          for (const rule of Array.from(sheet.cssRules)) {
+            sheetsCss.push(rule.cssText);
+          }
+        } catch { /* cross-origin or detached */ }
+      }
+    }
+    node = (root as ShadowRoot)?.host ?? null;
+  }
+  if (sheetsCss.length === 0) return;
+  const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  styleEl.textContent = sheetsCss.join('\n');
+  clone.insertBefore(styleEl, clone.firstChild);
 }
 
 function raf(): Promise<void> {
