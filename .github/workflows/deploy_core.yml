@@ -135,3 +135,8 @@ jobs:
           # pm2 重启（首次用 start，已有则 restart）
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
             'cd /root/core-api && (pm2 restart core-api 2>/dev/null || pm2 start dist/index.js --name core-api --node-args="--env-file=.env") && pm2 save'
+
+          # nginx api_cache 24h TTL,server schema/SQL 一改老响应顽固活着 → 部署后清空
+          # (memory: reference_nginx_proxy_cache.md)
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
+            'rm -rf /var/cache/nginx/api/* && nginx -s reload'

@@ -195,6 +195,14 @@ jobs:
         # 远端正常退出 → 立刻断;sshd 没回 FIN → 90s 内 keepalive 探活失败强断.
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/wca_stats_extra_apply.sh'
 
+      # 重灌后 nginx 24h api_cache 仍持着老数据 → 清掉,新 id 排序立刻生效
+      # (memory: reference_nginx_proxy_cache.md)
+      - name: Purge nginx api cache
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: ssh -T -n -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'rm -rf /var/cache/nginx/api/* && nginx -s reload'
+
       - name: Commit and push
         run: |
           git config user.name 'github-actions[bot]'
