@@ -30,7 +30,7 @@ import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import CubingPreview from '../timer/cube/CubingPreview';
 import { invertAlg } from '../notation/alg_ops';
-import InteractiveCubeNet, { type FaceLetter } from './InteractiveCubeNet';
+import InteractiveCubeNet, { type PaintColor } from './InteractiveCubeNet';
 import { SOLVED_FACELET } from '../scramble/solver/facelet';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -275,7 +275,7 @@ interface EditorState {
   arrowColor: string;
   // Interactive net paint (3x3 only) — 仅 view=net 模式下激活
   paintedFacelet: string;        // 54-char URFDLB
-  netActiveColor: FaceLetter;    // 当前 swatch 选中色
+  netActiveColor: PaintColor;    // 当前 swatch 选中色
 }
 
 const DEFAULTS: EditorState = {
