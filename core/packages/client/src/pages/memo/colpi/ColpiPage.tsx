@@ -26,7 +26,7 @@ import {
 import LanguagePicker, { LangPopup } from './LanguagePicker';
 import { LANG_MAP, langDisplay } from './langs';
 
-type LangFilter = string;   // 'all' | any of LANGS code
+type LangFilter = string;   // any of LANGS codes
 type ViewMode = 'all' | 'mine';
 
 const LANG_FILTER_KEY = 'colpi_lang_filter_v1';
@@ -34,12 +34,12 @@ const VIEW_MODE_KEY = 'colpi_view_mode_v1';
 
 function readLangFilter(): LangFilter {
   const v = localStorage.getItem(LANG_FILTER_KEY) ?? 'en';
-  return v === 'all' || LANG_MAP[v] ? v : 'en';
+  return LANG_MAP[v] ? v : 'en';
 }
 function readViewMode(): ViewMode {
   return localStorage.getItem(VIEW_MODE_KEY) === 'mine' ? 'mine' : 'all';
 }
-import { ALPHABET } from './data';
+import { getAlphabet, defaultPairFor } from './data';
 import './colpi.css';
 
 const CATEGORY_DOT: Record<Category, string> = {
@@ -62,15 +62,19 @@ const CATEGORY_LABEL: Record<Category, { en: string; zh: string }> = {
 
 // Allow letters (any script — incl. CJK), numbers, marks, punctuation, whitespace.
 const VALID_WORD_RE = /^[\p{L}\p{N}\p{M}\p{P}\s]+$/u;
-const DEFAULT_PAIR = 'AA';
 
 function isValidPair(s: string, alphabet: readonly string[]): boolean {
   const chars = [...s];
   return chars.length === 2 && chars.every(c => alphabet.includes(c));
 }
 
-function normalizeWord(raw: string): string {
-  return raw.trim().toUpperCase();
+/** Uppercase user input only when the alphabet has any A-Z chars (Latin + diacritics).
+ *  CJK/Cyrillic/Arabic/Hebrew/Hindi/Thai/Korean alphabets don't have a case concept. */
+function shouldUppercase(alphabet: readonly string[]): boolean {
+  return alphabet.some(c => /[A-Z]/.test(c));
+}
+function normalizeWord(raw: string, alphabet: readonly string[]): string {
+  return shouldUppercase(alphabet) ? raw.trim().toUpperCase() : raw.trim();
 }
 
 function validateWordInput(word: string, isZh: boolean): string | null {
@@ -87,25 +91,6 @@ export default function ColpiPage() {
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const navigate = useNavigate();
   const { pair: urlPair } = useParams<{ pair?: string }>();
-
-  // URL → activePair.
-  const decoded = urlPair ? (() => {
-    try { return decodeURIComponent(urlPair).toUpperCase(); } catch { return ''; }
-  })() : '';
-  const activePair: string | null = decoded && isValidPair(decoded, ALPHABET) ? decoded : null;
-
-  useEffect(() => {
-    if (urlPair === undefined) {
-      navigate(`/memo/colpi/${DEFAULT_PAIR}`, { replace: true });
-    } else if (decoded && !isValidPair(decoded, ALPHABET)) {
-      navigate(`/memo/colpi/${DEFAULT_PAIR}`, { replace: true });
-    }
-  }, [urlPair, decoded, navigate]);
-
-  const setActivePair = (p: string | null) => {
-    if (p === null) navigate('/memo/colpi', { replace: true });
-    else navigate(`/memo/colpi/${encodeURIComponent(p)}`, { replace: true });
-  };
 
   // ── data state ──
   const [wordsByPair, setWordsByPair] = useState<Record<string, ColpiWord[]>>({});
@@ -146,6 +131,32 @@ export default function ColpiPage() {
   useEffect(() => {
     if (!user && viewMode === 'mine') setViewModeState('all');
   }, [user, viewMode]);
+
+  // ── current alphabet (per language, mirrors upstream behavior) ──
+  const ALPHABET = getAlphabet(langFilter);
+  const DEFAULT_PAIR = defaultPairFor(langFilter);
+
+  // URL → activePair
+  const decoded = urlPair ? (() => {
+    try {
+      const raw = decodeURIComponent(urlPair);
+      return shouldUppercase(ALPHABET) ? raw.toUpperCase() : raw;
+    } catch { return ''; }
+  })() : '';
+  const activePair: string | null = decoded && isValidPair(decoded, ALPHABET) ? decoded : null;
+
+  useEffect(() => {
+    if (urlPair === undefined) {
+      navigate(`/memo/colpi/${encodeURIComponent(DEFAULT_PAIR)}`, { replace: true });
+    } else if (decoded && !isValidPair(decoded, ALPHABET)) {
+      navigate(`/memo/colpi/${encodeURIComponent(DEFAULT_PAIR)}`, { replace: true });
+    }
+  }, [urlPair, decoded, navigate, DEFAULT_PAIR, ALPHABET]);
+
+  const setActivePair = (p: string | null) => {
+    if (p === null) navigate('/memo/colpi', { replace: true });
+    else navigate(`/memo/colpi/${encodeURIComponent(p)}`, { replace: true });
+  };
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [langPickerOpen, setLangPickerOpen] = useState(false);
   const cornerRef = useRef<HTMLTableCellElement | null>(null);
@@ -182,7 +193,7 @@ export default function ColpiPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formWord, setFormWord] = useState('');
   const [formCategory, setFormCategory] = useState<Category>('unspecified');
-  const [formLang, setFormLang] = useState<string>(() => langFilter !== 'all' ? langFilter : 'en');
+  const [formLang, setFormLang] = useState<string>(() => langFilter);
   useEffect(() => {
     setSubmitOpen(false);
     setEditingId(null);
@@ -191,7 +202,7 @@ export default function ColpiPage() {
   }, [activePair]);
   // Default new submissions to whatever lang the user is browsing.
   useEffect(() => {
-    if (!editingId && langFilter !== 'all') setFormLang(langFilter);
+    if (!editingId) setFormLang(langFilter);
   }, [langFilter, editingId]);
 
   // ── derived ──
@@ -203,9 +214,9 @@ export default function ColpiPage() {
   }, [activePair]);
 
   const onSearch = () => {
-    const q = search.trim().toUpperCase();
+    const q = shouldUppercase(ALPHABET) ? search.trim().toUpperCase() : search.trim();
     if (isValidPair(q, ALPHABET)) setActivePair(q);
-    else showToast(isZh ? '请输入两个英文字母 (A-Z)' : 'Enter exactly 2 letters (A-Z)');
+    else showToast(isZh ? '不在当前语言字母表里' : 'Not in current alphabet');
   };
 
   // Apply all filters once into a derived map; everything (grid cell fill,
@@ -216,7 +227,7 @@ export default function ColpiPage() {
     for (const pair of Object.keys(wordsByPair)) {
       let arr = wordsByPair[pair];
       if (hideOffensive) arr = arr.filter(w => !w.offensive);
-      if (langFilter !== 'all') arr = arr.filter(w => w.language === langFilter);
+      arr = arr.filter(w => w.language === langFilter);
       if (viewMode === 'mine' && wcaId) {
         arr = arr.filter(w => w.myVote === 1 || w.submitter?.wcaId === wcaId);
       }
@@ -280,7 +291,7 @@ export default function ColpiPage() {
   };
   const handleSubmitConfirm = async () => {
     if (!user || !activePair) return;
-    const word = normalizeWord(formWord);
+    const word = normalizeWord(formWord, getAlphabet(formLang));
     const err = validateWordInput(word, isZh);
     if (err) { showToast(err); return; }
     if (activeWords.some(w => w.word === word)) {
@@ -312,7 +323,7 @@ export default function ColpiPage() {
   };
   const handleEditConfirm = async () => {
     if (editingId === null) return;
-    const word = normalizeWord(formWord);
+    const word = normalizeWord(formWord, getAlphabet(formLang));
     const err = validateWordInput(word, isZh);
     if (err) { showToast(err); return; }
     try {
@@ -450,8 +461,8 @@ export default function ColpiPage() {
       <section className="colpi-grid-wrap">
         <div className="colpi-section-h">
           {isZh
-            ? `字母对网格 (${langFilter === 'all' ? '全部语言' : langDisplay(langFilter, true)})`
-            : `Language table (${langFilter === 'all' ? 'all' : langDisplay(langFilter, false).toLowerCase()} scheme)`}
+            ? `字母对网格 (${langDisplay(langFilter, true)})`
+            : `Language table (${langDisplay(langFilter, false).toLowerCase()} scheme)`}
         </div>
         <div className="colpi-grid-scroll">
           <table className="colpi-grid">
@@ -463,9 +474,7 @@ export default function ColpiPage() {
                   onClick={() => setLangPickerOpen(o => !o)}
                   title={isZh ? '切换语言' : 'Switch language'}
                 >
-                  {langFilter === 'all'
-                    ? 'ALL'
-                    : (LANG_MAP[langFilter]?.code ?? langFilter).toUpperCase()}
+                  {(LANG_MAP[langFilter]?.code ?? langFilter).toUpperCase()}
                   <span className="colpi-grid-corner-caret">▾</span>
                 </th>
                 {ALPHABET.map(c => <th key={c} className="colpi-grid-h">{c}</th>)}
@@ -500,7 +509,6 @@ export default function ColpiPage() {
             value={langFilter}
             onChange={(v) => setLangFilter(v)}
             isZh={isZh}
-            includeAll
             onClose={() => setLangPickerOpen(false)}
             popupClassName="colpi-langpicker-popup--corner"
           />
