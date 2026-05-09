@@ -914,17 +914,17 @@
         ],
         [
           "0.04",
-          "[Alessandro Calzoni](https://www.worldcubeassociation.org/persons/2021CALZ01)",
-          "2.90",
-          "2.94",
-          "[Ticino Open 2023](https://www.worldcubeassociation.org/competitions/TicinoOpen2023/results/by_person#2021CALZ01)"
-        ],
-        [
-          "0.04",
           "[Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03)",
           "2.90",
           "2.94",
           "[You May Open 2018](https://www.worldcubeassociation.org/competitions/YouMayOpen2018/results/by_person#2016CAIY03)"
+        ],
+        [
+          "0.04",
+          "[Alessandro Calzoni](https://www.worldcubeassociation.org/persons/2021CALZ01)",
+          "2.90",
+          "2.94",
+          "[Ticino Open 2023](https://www.worldcubeassociation.org/competitions/TicinoOpen2023/results/by_person#2021CALZ01)"
         ],
         [
           "0.04",
@@ -1044,6 +1044,13 @@
           "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021/results/by_person#2013LINK01)"
         ],
         [
+          "1.01",
+          "[Gabriele Bacchieri](https://www.worldcubeassociation.org/persons/2014BACC01)",
+          "4:41.58",
+          "4:42.59",
+          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/by_person#2014BACC01)"
+        ],
+        [
           "1.05",
           "[Abhijeet Ghodgaonkar (अभिजीत घोडगावकर)](https://www.worldcubeassociation.org/persons/2013GHOD01)",
           "3:21.39",
@@ -1091,13 +1098,6 @@
           "1:36.94",
           "1:39.39",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2021TRIP01)"
-        ],
-        [
-          "2.56",
-          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
-          "59.76",
-          "1:02.32",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2016CHAP04)"
         ]
       ]
     },
@@ -1308,17 +1308,17 @@
         ],
         [
           "0.01",
-          "[Justin Badua](https://www.worldcubeassociation.org/persons/2010BADU01)",
-          "1.16",
-          "1.17",
-          "[Dixon Open 2012](https://www.worldcubeassociation.org/competitions/DixonOpen2012/results/by_person#2010BADU01)"
-        ],
-        [
-          "0.01",
           "[Quentin Lefebvre](https://www.worldcubeassociation.org/persons/2009LEFE01)",
           "1.16",
           "1.17",
           "[Toulouse Open 2010](https://www.worldcubeassociation.org/competitions/ToulouseOpen2010/results/by_person#2009LEFE01)"
+        ],
+        [
+          "0.01",
+          "[Justin Badua](https://www.worldcubeassociation.org/persons/2010BADU01)",
+          "1.16",
+          "1.17",
+          "[Dixon Open 2012](https://www.worldcubeassociation.org/competitions/DixonOpen2012/results/by_person#2010BADU01)"
         ],
         [
           "0.01",
