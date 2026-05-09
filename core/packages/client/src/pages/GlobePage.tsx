@@ -1355,18 +1355,19 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   }), [cuberCityCounts]);
 
   // 柱状(fill-extrusion)版本.
-  // height 单位 = 米;一根 1 场的柱 100km 起步,√count 拉伸 → 70 场 ~836km.
+  // height 单位 = 米.线性放大让差异醒目:base 300km + 100km/场,clamp 6000km(~半地球).
+  // 1 场 = 400km;10 场 = 1300km;50 场 = 5300km;70 场 = clamp 6000km.柱子半径 7km(粗一点更显).
   const cuberPillarGeojson = useMemo(() => ({
     type: 'FeatureCollection' as const,
     features: cuberCityCounts.map((v) => ({
       type: 'Feature' as const,
       geometry: {
         type: 'Polygon' as const,
-        coordinates: [buildCirclePolygon(v.lng, v.lat, 4000)],
+        coordinates: [buildCirclePolygon(v.lng, v.lat, 7000)],
       },
       properties: {
         count: v.count, city: v.city, country_iso2: v.iso2,
-        height: 100000 * Math.sqrt(v.count),
+        height: Math.min(6_000_000, 300_000 + v.count * 100_000),
       },
     })),
   }), [cuberCityCounts]);
