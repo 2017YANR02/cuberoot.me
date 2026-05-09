@@ -10,7 +10,8 @@ export type PuzzleKind =
   | 'sq1' | 'sq1-net'
   | 'megaminx' | 'megaminx-net' | 'megaminx-top'
   | 'pyraminx' | 'pyraminx-net'
-  | 'skewb' | 'skewb-net';
+  | 'skewb' | 'skewb-net'
+  | 'cube-net' | 'cube-top';
 
 const TYPE_MAP: Record<PuzzleKind, string> = {
   'sq1':           'square1',
@@ -22,6 +23,8 @@ const TYPE_MAP: Record<PuzzleKind, string> = {
   'pyraminx-net':  'pyraminx-net',
   'skewb':         'skewb',
   'skewb-net':     'skewb-net',
+  'cube-net':      'cube-net',
+  'cube-top':      'cube-top',
 };
 
 export interface PuzzleSVGProps {
@@ -40,11 +43,13 @@ export interface PuzzleSVGProps {
   miny?: number;
   svgWidth?: number;
   svgHeight?: number;
+  /** NxN dimension. Only honored for `cube-net` / `cube-top` (and `megaminx-*` where puzzle-gen accepts size=2). */
+  cubeSize?: number;
 }
 
 export function PuzzleSVG({
   kind, alg, case: caseAlg, size = 88, strokeWidth, className,
-  minx, miny, svgWidth, svgHeight,
+  minx, miny, svgWidth, svgHeight, cubeSize,
 }: PuzzleSVGProps) {
   const hostRef = useRef<HTMLDivElement>(null);
 
@@ -56,9 +61,12 @@ export function PuzzleSVG({
     import('sr-puzzlegen').then((mod) => {
       if (cancelled || !host) return;
       host.innerHTML = '';
-      const puzzle: { alg?: string; case?: string } = {};
+      const puzzle: { alg?: string; case?: string; size?: number } = {};
       if (caseAlg && caseAlg.trim()) puzzle.case = caseAlg;
       else if (alg && alg.trim()) puzzle.alg = alg;
+      if (cubeSize !== undefined && (kind === 'cube-net' || kind === 'cube-top')) {
+        puzzle.size = cubeSize;
+      }
       try {
         mod.SVG(host, TYPE_MAP[kind] as never, {
           width: size, height: size,
@@ -78,7 +86,7 @@ export function PuzzleSVG({
     });
 
     return () => { cancelled = true; };
-  }, [kind, alg, caseAlg, size, strokeWidth, minx, miny, svgWidth, svgHeight]);
+  }, [kind, alg, caseAlg, size, strokeWidth, minx, miny, svgWidth, svgHeight, cubeSize]);
 
   return (
     <div

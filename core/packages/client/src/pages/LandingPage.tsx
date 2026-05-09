@@ -491,7 +491,8 @@ export default function LandingPage() {
         <a href="https://github.com/MeigenChou/DCTimer-Android" target="_blank" rel="noopener noreferrer">MeigenChou</a> ·{' '}
         <a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">Roman-</a> ·{' '}
         <a href="https://nemesizer.com" target="_blank" rel="noopener noreferrer">nemesizer.com</a> ·{' '}
-        <a href="https://cubing.pro/" target="_blank" rel="noopener noreferrer">cubing.pro</a>
+        <a href="https://cubing.pro/" target="_blank" rel="noopener noreferrer">cubing.pro</a> ·{' '}
+        <a href="https://github.com/tdecker91/puzzle-gen" target="_blank" rel="noopener noreferrer">tdecker91</a>
       </div>
 
       <div className="footer">

@@ -204,7 +204,8 @@ const MASK_ROTATIONS = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
 // ── State ────────────────────────────────────────────────────────────────────
 
 type AlgType = 'alg' | 'case';
-type SpecialView = 'normal' | 'plan' | 'trans';
+// 'net' is delegated to puzzle-gen (sr-puzzlegen) — our @cuberoot/visualcube does not render unfolded NxN.
+type SpecialView = 'normal' | 'plan' | 'trans' | 'net';
 type PuzzleType = 'cube' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
 type PuzzleVariant = 'iso' | 'net' | 'top';
 
@@ -327,9 +328,9 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
   if (get('arw') != null) s.arrows = get('arw') ?? '';
   if (get('ac') != null) s.defaultArrowColor = get('ac') ?? '';
 
-  // view: 'plan' / 'trans' / (anything else → 'normal')
+  // view: 'plan' / 'trans' / 'net' / (anything else → 'normal')
   const view = get('view');
-  if (view === 'plan' || view === 'trans') s.cubeView = view;
+  if (view === 'plan' || view === 'trans' || view === 'net') s.cubeView = view;
 
   // stage=mask-rotation
   const stage = get('stage');
@@ -723,7 +724,18 @@ export default function VisualCubeEditorPage() {
           preview is visually capped via CSS max-height to keep sticky usable.
           For non-cube puzzles, render via sr-puzzlegen (PuzzleSVG) instead. */}
       <section className="vc-preview-wrap" ref={previewRef as React.RefObject<HTMLElement>}>
-        {state.puzzleType === 'cube' ? (
+        {state.puzzleType === 'cube' && state.cubeView === 'net' ? (
+          // NxN unfolded net — delegated to puzzle-gen since our renderer has no net layout.
+          <div className="vc-preview">
+            <PuzzleSVG
+              kind="cube-net"
+              alg={state.algType === 'alg' ? state.algorithm : undefined}
+              case={state.algType === 'case' ? state.algorithm : undefined}
+              size={state.imageSize}
+              cubeSize={state.cubeSize}
+            />
+          </div>
+        ) : state.puzzleType === 'cube' ? (
           <div
             className="vc-preview"
             dangerouslySetInnerHTML={{ __html: svg }}
@@ -740,24 +752,32 @@ export default function VisualCubeEditorPage() {
         )}
       </section>
 
-      {/* Export buttons */}
+      {/* Export buttons. /v1/visualcube.svg simplified API does NOT support the puzzle-gen
+          paths (cube net + non-cube puzzles), so hide the API / <img> / Markdown copies there
+          and steer users to the SVG/PNG downloads (rendered locally from puzzle-gen). */}
       <section className="vc-exports">
         <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
-        <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
+          <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
+        )}
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> SVG
         </button>
         <button type="button" className="vc-btn" onClick={downloadPng}>
           <Download size={14} /> PNG
         </button>
-        <CopyButton
-          label={t('<img> 标签', '<img> tag')}
-          getValue={() => `<img src="${apiUrl}" alt="cube" width="${state.imageSize}" height="${state.imageSize}" />`}
-        />
-        <CopyButton
-          label="Markdown"
-          getValue={() => `![cube](${apiUrl})`}
-        />
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
+          <>
+            <CopyButton
+              label={t('<img> 标签', '<img> tag')}
+              getValue={() => `<img src="${apiUrl}" alt="cube" width="${state.imageSize}" height="${state.imageSize}" />`}
+            />
+            <CopyButton
+              label="Markdown"
+              getValue={() => `![cube](${apiUrl})`}
+            />
+          </>
+        )}
       </section>
 
       {/* Controls */}
@@ -863,8 +883,9 @@ export default function VisualCubeEditorPage() {
           </div>
         </div>
 
-        {/* Arrow editor — uses NxN sticker indices, only relevant for cube. */}
-        {state.puzzleType === 'cube' && (
+        {/* Arrow editor — NxN sticker indices, only used by our @cuberoot/visualcube renderer
+            (not the puzzle-gen net path). */}
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
           <div className="vc-row-controls vc-col">
@@ -946,7 +967,7 @@ export default function VisualCubeEditorPage() {
               <label className="vc-label">{t('视角', 'Special View')}</label>
               <div className="vc-row-controls">
                 <div className="vc-radio-group">
-                  {(['normal', 'plan', 'trans'] as SpecialView[]).map((v) => (
+                  {(['normal', 'plan', 'trans', 'net'] as SpecialView[]).map((v) => (
                     <label key={v}>
                       <input
                         type="radio"
@@ -960,6 +981,9 @@ export default function VisualCubeEditorPage() {
               </div>
             </div>
 
+            {/* Stage mask is implemented in our @cuberoot/visualcube renderer only — irrelevant for the
+                puzzle-gen unfolded-net path. */}
+            {state.cubeView !== 'net' && (
             <div className="vc-row">
               <label className="vc-label">{t('Mask', 'Stage Mask')}</label>
               <div className="vc-row-controls">
@@ -1012,11 +1036,12 @@ export default function VisualCubeEditorPage() {
                 </select>
               </div>
             </div>
+            )}
           </>
         )}
 
-        {/* Color Schemes — only meaningful for NxN cube. */}
-        {state.puzzleType === 'cube' && (
+        {/* Color Schemes — wired into our @cuberoot/visualcube renderer (not the puzzle-gen net path). */}
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('六面配色', 'Color Schemes')}</label>
           <div className="vc-row-controls vc-col">
@@ -1056,8 +1081,8 @@ export default function VisualCubeEditorPage() {
         </div>
         )}
 
-        {/* Rotation Sequence — only for NxN cube (sr-puzzlegen has its own variant picker). */}
-        {state.puzzleType === 'cube' && (
+        {/* Rotation Sequence — only for NxN cube 3D (puzzle-gen net path is fixed-layout). */}
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
           <div className="vc-row-controls vc-col">
@@ -1106,8 +1131,8 @@ export default function VisualCubeEditorPage() {
           onReset={() => set('backgroundColor', '')}
           allowEmpty
         />
-        {/* Cube colour / opacity / projection distance are NxN-cube specific. */}
-        {state.puzzleType === 'cube' && (
+        {/* Cube colour / opacity / projection distance — our @cuberoot/visualcube only. */}
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
           <>
             <ColorRow
               label={t('壳体色', 'Cube Color')}
