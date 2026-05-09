@@ -1,20 +1,29 @@
 /**
- * /memo/colpi/ — UI clone of bestsiteever.net/colpi (by Roman Strakhov, not open source).
+ * /memo/colpi/ — collaborative letter-pair word database (UI clone of
+ * bestsiteever.net/colpi by Roman Strakhov).
  *
- * Word data mirrored from the upstream site via scripts/fetch_colpi_words.mjs
- * (729 pairs, ~11.5k words with categories). Logged-in WCA users can append
- * their own words; submissions persist via localStorage on this device only (no
- * backend yet). Vote buttons still require login but only register locally.
+ * Word data lives in PG (colpi_words / colpi_votes) on api.cuberoot.me. The
+ * initial ~11.7k rows are seeded from the upstream site (submitter NULL =
+ * mirrored). Logged-in WCA users can submit / edit / delete their own words
+ * and vote; admins can edit / delete any word, including upstream entries.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Eye, EyeOff, ThumbsUp, ThumbsDown, Flag as FlagIcon, X } from 'lucide-react';
+import {
+  Search, Eye, EyeOff, ThumbsUp, ThumbsDown, Flag as FlagIcon, X,
+  Pencil, Trash2,
+} from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
 import WcaAuth from '../../../components/WcaAuth';
-import { useAuthStore } from '../../../stores/auth_store';
-import { ALPHABET, PAIRS, RECENT_SUBMISSIONS } from './data';
-import type { Category, PairWord, RecentSubmission } from './data';
+import { Flag } from '../../../utils/flag';
+import { displayCuberName } from '../../../utils/name_utils';
+import { useAuthStore, ADMIN_WCA_IDS } from '../../../stores/auth_store';
+import {
+  fetchWords, fetchRecent, submitWord, patchWord, deleteWord, setVote, clearVote,
+  type ColpiWord, type Category,
+} from '../../../utils/colpi_api';
+import { ALPHABET } from './data';
 import './colpi.css';
 
 const CATEGORY_DOT: Record<Category, string> = {
@@ -35,68 +44,40 @@ const CATEGORY_LABEL: Record<Category, { en: string; zh: string }> = {
   other:       { en: 'other',       zh: '其它' },
 };
 
-// Allow letters (any script — incl. CJK), numbers, marks (combining diacritics),
-// punctuation, and whitespace. Blocks control chars / oddball symbols, but mixed
-// English + 中文 + 全角标点 all pass.
+// Allow letters (any script — incl. CJK), numbers, marks, punctuation, whitespace.
 const VALID_WORD_RE = /^[\p{L}\p{N}\p{M}\p{P}\s]+$/u;
 const DEFAULT_PAIR = 'AA';
 
-/** Validate pair against ALPHABET (handles ʧ multi-char letter correctly). */
 function isValidPair(s: string, alphabet: readonly string[]): boolean {
   const chars = [...s];
   return chars.length === 2 && chars.every(c => alphabet.includes(c));
 }
-const SUBMITTED_KEY = 'colpi_submitted_v1';
-const VOTES_KEY = 'colpi_votes_v1';
 
-type Vote = 1 | -1;
-const voteKey = (pair: string, word: string) => `${pair}|${word}`;
-
-interface SubmittedWord {
-  pair: string;
-  word: string;
-  category: Category;
-  by: string;       // wcaId
-  at: number;       // timestamp ms
+function normalizeWord(raw: string): string {
+  return raw.trim().toUpperCase();
 }
 
-function readSubmitted(): SubmittedWord[] {
-  try {
-    const raw = localStorage.getItem(SUBMITTED_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function writeSubmitted(items: SubmittedWord[]) {
-  try { localStorage.setItem(SUBMITTED_KEY, JSON.stringify(items)); } catch { /* quota / disabled */ }
-}
-
-function readVotes(): Record<string, Vote> {
-  try {
-    const raw = localStorage.getItem(VOTES_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-}
-
-function writeVotes(items: Record<string, Vote>) {
-  try { localStorage.setItem(VOTES_KEY, JSON.stringify(items)); } catch { /* quota / disabled */ }
+function validateWordInput(word: string, isZh: boolean): string | null {
+  if (!word) return isZh ? '请输入一个词' : 'Enter a word';
+  if (word.length > 40) return isZh ? '词太长了' : 'Word too long';
+  if (!VALID_WORD_RE.test(word)) return isZh ? '请输入正常文字' : 'Invalid characters';
+  return null;
 }
 
 export default function ColpiPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const user = useAuthStore(s => s.user);
+  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const navigate = useNavigate();
   const { pair: urlPair } = useParams<{ pair?: string }>();
 
-  // URL is the source of truth for the active pair: /memo/colpi/AA → activePair = 'AA'.
-  // /memo/colpi (no param) defaults to AA via the redirect effect below.
+  // URL → activePair.
   const decoded = urlPair ? (() => {
     try { return decodeURIComponent(urlPair).toUpperCase(); } catch { return ''; }
   })() : '';
   const activePair: string | null = decoded && isValidPair(decoded, ALPHABET) ? decoded : null;
 
-  // Redirect /memo/colpi (no param) → /memo/colpi/AA, and any invalid pair → AA.
   useEffect(() => {
     if (urlPair === undefined) {
       navigate(`/memo/colpi/${DEFAULT_PAIR}`, { replace: true });
@@ -106,60 +87,60 @@ export default function ColpiPage() {
   }, [urlPair, decoded, navigate]);
 
   const setActivePair = (p: string | null) => {
-    if (p === null) {
-      navigate('/memo/colpi', { replace: true });
-    } else {
-      navigate(`/memo/colpi/${encodeURIComponent(p)}`, { replace: true });
-    }
+    if (p === null) navigate('/memo/colpi', { replace: true });
+    else navigate(`/memo/colpi/${encodeURIComponent(p)}`, { replace: true });
   };
 
+  // ── data state ──
+  const [wordsByPair, setWordsByPair] = useState<Record<string, ColpiWord[]>>({});
+  const [recent, setRecent] = useState<ColpiWord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const refetchAll = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [bulk, rec] = await Promise.all([fetchWords(), fetchRecent(20)]);
+      setWordsByPair(bulk);
+      setRecent(rec);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void refetchAll(); }, [refetchAll, user?.wcaId]);
+
+  // ── ui state ──
   const [search, setSearch] = useState('');
   const [hideOffensive, setHideOffensive] = useState(true);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
-
-  // Local-only user submissions, layered on top of curated PAIRS.
-  const [submitted, setSubmitted] = useState<SubmittedWord[]>(() => readSubmitted());
-  const [submitOpen, setSubmitOpen] = useState(false);
-  const [submitWord, setSubmitWord] = useState('');
-  const [submitCategory, setSubmitCategory] = useState<Category>('unspecified');
-
-  // Local-only votes (this device, no backend yet).
-  const [votes, setVotes] = useState<Record<string, Vote>>(() => readVotes());
-
-  const handleVote = (pair: string, word: string, dir: Vote) => {
-    if (!user) {
-      showToast(isZh ? '请先登录' : 'Please log in first');
-      return;
-    }
-    const key = voteKey(pair, word);
-    const next: Record<string, Vote> = { ...votes };
-    if (next[key] === dir) delete next[key];
-    else next[key] = dir;
-    setVotes(next);
-    writeVotes(next);
-  };
-
   const showToast = (msg: string) => {
     if (toastTimer.current !== undefined) window.clearTimeout(toastTimer.current);
     setToast(msg);
     toastTimer.current = window.setTimeout(() => setToast(null), 1800);
   };
-
   useEffect(() => () => {
     if (toastTimer.current !== undefined) window.clearTimeout(toastTimer.current);
   }, []);
 
-  // Reset inline submit form when active pair changes.
+  // submit / edit form state (single shared form for both new + edit)
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formWord, setFormWord] = useState('');
+  const [formCategory, setFormCategory] = useState<Category>('unspecified');
   useEffect(() => {
     setSubmitOpen(false);
-    setSubmitWord('');
-    setSubmitCategory('unspecified');
+    setEditingId(null);
+    setFormWord('');
+    setFormCategory('unspecified');
   }, [activePair]);
 
-  // On narrow screens (stacked layout) auto-scroll the detail panel into view
-  // when a pair is opened — desktop side-by-side doesn't need it.
+  // ── derived ──
   const detailRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!activePair) return;
@@ -167,93 +148,147 @@ export default function ColpiPage() {
     detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [activePair]);
 
-  const onCellClick = (pair: string) => setActivePair(pair);
   const onSearch = () => {
     const q = search.trim().toUpperCase();
     if (isValidPair(q, ALPHABET)) setActivePair(q);
     else showToast(isZh ? '请输入两个英文字母 (A-Z)' : 'Enter exactly 2 letters (A-Z)');
   };
 
-  // Combined view: scraped PAIRS + user submissions for the active pair (deduped),
-  // with offensive entries filtered out when hideOffensive is on.
-  const wordsForPair = (pair: string): PairWord[] => {
-    const seen = new Set<string>();
-    const out: PairWord[] = [];
-    for (const w of (PAIRS[pair] ?? [])) {
-      if (hideOffensive && w.offensive) continue;
-      if (!seen.has(w.word)) { seen.add(w.word); out.push(w); }
-    }
-    for (const s of submitted) {
-      if (s.pair === pair && !seen.has(s.word)) {
-        seen.add(s.word);
-        out.push({ word: s.word, category: s.category });
-      }
-    }
-    return out;
+  const wordsForPair = (pair: string): ColpiWord[] => {
+    const arr = wordsByPair[pair] ?? [];
+    return hideOffensive ? arr.filter(w => !w.offensive) : arr;
   };
   const activeWords = activePair ? wordsForPair(activePair) : [];
 
-  // Recent submissions = user's local submissions (newest first) + curated samples.
-  const recentList: RecentSubmission[] = (() => {
-    const fromUser: RecentSubmission[] = [...submitted]
-      .sort((a, b) => b.at - a.at)
-      .map((s, i) => ({ id: 100000 + i, pair: s.pair, word: s.word, category: s.category }));
-    return [...fromUser, ...RECENT_SUBMISSIONS].slice(0, 12);
-  })();
-
-  const filledPairs = (() => {
-    const set = new Set(Object.keys(PAIRS));
-    for (const s of submitted) set.add(s.pair);
-    return set.size;
-  })();
-
+  const filledPairs = Object.keys(wordsByPair).length;
   const totalEnglishWords = (() => {
     let n = 0;
-    for (const k of Object.keys(PAIRS)) n += PAIRS[k].length;
-    // Count user submissions that aren't already in curated PAIRS.
-    for (const s of submitted) {
-      const curated = PAIRS[s.pair] ?? [];
-      if (!curated.some(w => w.word === s.word)) n++;
-    }
+    for (const k of Object.keys(wordsByPair)) n += wordsByPair[k].length;
     return n;
   })();
 
-  const handleAddClick = () => {
-    if (!user) {
-      showToast(isZh ? '请先登录后再提交' : 'Please log in to submit');
-      return;
-    }
-    setSubmitOpen(true);
+  // Helpers to mutate local state after API success.
+  const upsertWordLocal = (w: ColpiWord) => {
+    setWordsByPair(prev => {
+      const next = { ...prev };
+      const list = (next[w.pair] ?? []).filter(x => x.id !== w.id);
+      next[w.pair] = [w, ...list];
+      return next;
+    });
+    setRecent(prev => {
+      const without = prev.filter(x => x.id !== w.id);
+      // Only show user-submitted words in the "recent" list (mirroring the API).
+      if (w.submitter) return [w, ...without].slice(0, 20);
+      return without;
+    });
+  };
+  const removeWordLocal = (pair: string, id: number) => {
+    setWordsByPair(prev => {
+      const next = { ...prev };
+      next[pair] = (next[pair] ?? []).filter(x => x.id !== id);
+      if (next[pair].length === 0) delete next[pair];
+      return next;
+    });
+    setRecent(prev => prev.filter(x => x.id !== id));
+  };
+  const updateScoreLocal = (id: number, score: number, myVote: 1 | -1 | null) => {
+    const apply = (arr: ColpiWord[]) => arr.map(w => w.id === id
+      ? { ...w, score, myVote: myVote ?? undefined }
+      : w);
+    setWordsByPair(prev => {
+      const next = { ...prev };
+      for (const k of Object.keys(next)) next[k] = apply(next[k]);
+      return next;
+    });
+    setRecent(prev => apply(prev));
   };
 
-  const handleAddConfirm = () => {
+  // ── submit (new word) ──
+  const handleAddClick = () => {
+    if (!user) { showToast(isZh ? '请先登录后再提交' : 'Please log in to submit'); return; }
+    setEditingId(null);
+    setFormWord('');
+    setFormCategory('unspecified');
+    setSubmitOpen(true);
+  };
+  const handleSubmitConfirm = async () => {
     if (!user || !activePair) return;
-    const word = submitWord.trim().toUpperCase();
-    if (!word) { showToast(isZh ? '请输入一个词' : 'Enter a word'); return; }
-    if (word.length > 40) { showToast(isZh ? '词太长了' : 'Word too long'); return; }
-    if (!VALID_WORD_RE.test(word)) {
-      showToast(isZh ? '请输入正常文字' : 'Invalid characters');
-      return;
+    const word = normalizeWord(formWord);
+    const err = validateWordInput(word, isZh);
+    if (err) { showToast(err); return; }
+    if (activeWords.some(w => w.word === word)) {
+      showToast(isZh ? '这个词已存在' : 'Word already exists'); return;
     }
-    const existing = wordsForPair(activePair);
-    if (existing.some(w => w.word === word)) {
-      showToast(isZh ? '这个词已存在' : 'Word already exists');
-      return;
+    try {
+      const created = await submitWord({
+        pair: activePair, word, category: formCategory,
+        country: user.country ?? null,
+      });
+      upsertWordLocal(created);
+      setSubmitOpen(false);
+      setFormWord('');
+      setFormCategory('unspecified');
+      showToast(isZh ? '已提交' : 'Submitted');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : String(e));
     }
-    const next: SubmittedWord = {
-      pair: activePair,
-      word,
-      category: submitCategory,
-      by: user.wcaId,
-      at: Date.now(),
-    };
-    const list = [next, ...submitted];
-    setSubmitted(list);
-    writeSubmitted(list);
+  };
+
+  // ── edit (existing word) ──
+  const canEdit = (w: ColpiWord) => isAdmin || (!!user && w.submitter?.wcaId === user.wcaId);
+  const handleEditClick = (w: ColpiWord) => {
     setSubmitOpen(false);
-    setSubmitWord('');
-    setSubmitCategory('unspecified');
-    showToast(isZh ? '已提交' : 'Submitted');
+    setEditingId(w.id);
+    setFormWord(w.word);
+    setFormCategory(w.category);
+  };
+  const handleEditConfirm = async () => {
+    if (editingId === null) return;
+    const word = normalizeWord(formWord);
+    const err = validateWordInput(word, isZh);
+    if (err) { showToast(err); return; }
+    try {
+      const updated = await patchWord(editingId, { word, category: formCategory });
+      upsertWordLocal(updated);
+      setEditingId(null);
+      setFormWord('');
+      setFormCategory('unspecified');
+      showToast(isZh ? '已保存' : 'Saved');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  // ── delete ──
+  const handleDelete = async (w: ColpiWord) => {
+    if (!canEdit(w)) return;
+    const confirmMsg = isZh
+      ? `确认删除"${w.word}"?`
+      : `Delete "${w.word}"?`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      await deleteWord(w.id);
+      removeWordLocal(w.pair, w.id);
+      showToast(isZh ? '已删除' : 'Deleted');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  // ── vote ──
+  const handleVote = async (w: ColpiWord, dir: 1 | -1) => {
+    if (!user) { showToast(isZh ? '请先登录' : 'Please log in first'); return; }
+    try {
+      if (w.myVote === dir) {
+        const r = await clearVote(w.id);
+        updateScoreLocal(w.id, r.score, r.myVote);
+      } else {
+        const r = await setVote(w.id, dir);
+        updateScoreLocal(w.id, r.score, r.myVote);
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : String(e));
+    }
   };
 
   return (
@@ -314,8 +349,8 @@ export default function ColpiPage() {
             </p>
             <p className="colpi-welcome-disclaimer">
               {isZh
-                ? '词条数据镜像自原站 (bestsiteever.net/colpi,Roman Strakhov 维护);本站为 UI 复刻,登录后可在本机追加自己的关联词。'
-                : 'Word data mirrored from the original site (bestsiteever.net/colpi by Roman Strakhov). This is a UI clone — logged-in users can add their own associations locally.'}
+                ? '初始词条镜像自原站 (bestsiteever.net/colpi,Roman Strakhov 维护);本站为 UI 复刻,登录后可提交、编辑自己的词,管理员可改任何词。'
+                : 'Initial entries mirrored from bestsiteever.net/colpi (Roman Strakhov). UI clone — logged-in users can submit/edit their own words; admins can edit any.'}
             </p>
           </div>
           <button className="colpi-welcome-close" onClick={() => setWelcomeOpen(false)} aria-label="Close">
@@ -344,14 +379,14 @@ export default function ColpiPage() {
                   <th className="colpi-grid-h">{r}</th>
                   {ALPHABET.map(c => {
                     const pair = `${r}${c}`;
-                    const words = PAIRS[pair];
+                    const words = wordsByPair[pair];
                     const filled = !!words && words.length > 0;
                     return (
                       <td
                         key={pair}
                         className={`colpi-cell ${filled ? 'filled' : 'empty'} ${activePair === pair ? 'active' : ''}`}
                         title={filled ? words!.slice(0, 3).map(w => w.word).join(', ') : ''}
-                        onClick={() => onCellClick(pair)}
+                        onClick={() => setActivePair(pair)}
                       >
                         {pair}
                       </td>
@@ -366,12 +401,18 @@ export default function ColpiPage() {
           <span className="colpi-legend-swatch filled" /> {isZh ? '已有词' : 'Has words'}
           <span className="colpi-legend-swatch empty" /> {isZh ? '空缺' : 'Empty'}
           <span className="colpi-legend-meta">
-            {isZh ? `共 ${filledPairs} 个字母对有词` : `${filledPairs} pairs with words`}
+            {loading
+              ? (isZh ? '加载中…' : 'Loading…')
+              : loadError
+                ? (isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`)
+                : isZh
+                  ? `共 ${filledPairs} 对 / ${totalEnglishWords} 个词`
+                  : `${filledPairs} pairs / ${totalEnglishWords} words`}
           </span>
         </div>
       </section>
 
-      {/* === Active pair detail (sidebar on desktop, stacked on mobile) === */}
+      {/* === Active pair detail === */}
       {activePair && (
         <section className="colpi-detail" ref={detailRef}>
           <div className="colpi-detail-head">
@@ -386,31 +427,65 @@ export default function ColpiPage() {
             </p>
           ) : (
             <ul className="colpi-detail-list">
-              {activeWords.map(w => {
-                const v = votes[voteKey(activePair!, w.word)];
-                return (
-                  <li key={w.word}>
+              {activeWords.map(w => editingId === w.id ? (
+                <li key={w.id} className="colpi-detail-edit-row">
+                  <FormFields
+                    isZh={isZh}
+                    word={formWord} setWord={setFormWord}
+                    category={formCategory} setCategory={setFormCategory}
+                    onConfirm={handleEditConfirm}
+                    onCancel={() => { setEditingId(null); setFormWord(''); }}
+                    confirmLabel={isZh ? '保存' : 'Save'}
+                  />
+                </li>
+              ) : (
+                <li key={w.id}>
+                  <span
+                    className="colpi-pao-dot"
+                    style={{ background: CATEGORY_DOT[w.category] }}
+                    title={isZh ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en}
+                  />
+                  <span className="colpi-detail-word">{w.word}</span>
+                  {w.submitter && (
                     <span
-                      className="colpi-pao-dot"
-                      style={{ background: CATEGORY_DOT[w.category] }}
-                      title={isZh ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en}
-                    />
-                    <span className="colpi-detail-word">{w.word}</span>
-                    <span className="colpi-detail-vote">
-                      <button
-                        className={v === 1 ? 'is-voted-up' : ''}
-                        onClick={() => handleVote(activePair!, w.word, 1)}
-                        title={isZh ? '有用' : 'Useful'}
-                      ><ThumbsUp size={12} /></button>
-                      <button
-                        className={v === -1 ? 'is-voted-down' : ''}
-                        onClick={() => handleVote(activePair!, w.word, -1)}
-                        title={isZh ? '不合适' : 'Misused'}
-                      ><ThumbsDown size={12} /></button>
+                      className="colpi-submitter"
+                      title={(w.submitter.name && displayCuberName(w.submitter.name, isZh)) || w.submitter.wcaId}
+                    >
+                      {w.submitter.country && <Flag iso2={w.submitter.country} className="colpi-submitter-flag" />}
+                      <span className="colpi-submitter-name">
+                        {(w.submitter.name && displayCuberName(w.submitter.name, isZh)) || w.submitter.wcaId}
+                      </span>
                     </span>
-                  </li>
-                );
-              })}
+                  )}
+                  {w.score !== 0 && (
+                    <span className={`colpi-score ${w.score > 0 ? 'pos' : 'neg'}`}>
+                      {w.score > 0 ? `+${w.score}` : w.score}
+                    </span>
+                  )}
+                  <span className="colpi-detail-vote">
+                    <button
+                      className={w.myVote === 1 ? 'is-voted-up' : ''}
+                      onClick={() => handleVote(w, 1)}
+                      title={isZh ? '有用' : 'Useful'}
+                    ><ThumbsUp size={12} /></button>
+                    <button
+                      className={w.myVote === -1 ? 'is-voted-down' : ''}
+                      onClick={() => handleVote(w, -1)}
+                      title={isZh ? '不合适' : 'Misused'}
+                    ><ThumbsDown size={12} /></button>
+                  </span>
+                  {canEdit(w) && (
+                    <span className="colpi-owner-actions">
+                      <button onClick={() => handleEditClick(w)} title={isZh ? '编辑' : 'Edit'}>
+                        <Pencil size={12} />
+                      </button>
+                      <button onClick={() => handleDelete(w)} title={isZh ? '删除' : 'Delete'}>
+                        <Trash2 size={12} />
+                      </button>
+                    </span>
+                  )}
+                </li>
+              ))}
             </ul>
           )}
           {!submitOpen ? (
@@ -423,97 +498,82 @@ export default function ColpiPage() {
             </button>
           ) : (
             <div className="colpi-detail-submit">
-              <input
-                type="text"
-                value={submitWord}
-                onChange={(e) => setSubmitWord(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddConfirm();
-                  if (e.key === 'Escape') { setSubmitOpen(false); setSubmitWord(''); }
-                }}
-                placeholder={isZh ? '输入一个词 (例如 ROCKET / 苹果)' : 'Enter a word (e.g. ROCKET, 苹果)'}
-                maxLength={40}
-                autoFocus
+              <FormFields
+                isZh={isZh}
+                word={formWord} setWord={setFormWord}
+                category={formCategory} setCategory={setFormCategory}
+                onConfirm={handleSubmitConfirm}
+                onCancel={() => { setSubmitOpen(false); setFormWord(''); }}
+                confirmLabel={isZh ? '提交' : 'Submit'}
               />
-              <select
-                value={submitCategory}
-                onChange={(e) => setSubmitCategory(e.target.value as Category)}
-                aria-label={isZh ? '类别' : 'Category'}
-              >
-                <option value="unspecified">{CATEGORY_LABEL.unspecified[isZh ? 'zh' : 'en']}</option>
-                <option value="object">{CATEGORY_LABEL.object[isZh ? 'zh' : 'en']}</option>
-                <option value="person">{CATEGORY_LABEL.person[isZh ? 'zh' : 'en']}</option>
-                <option value="action">{CATEGORY_LABEL.action[isZh ? 'zh' : 'en']}</option>
-                <option value="place">{CATEGORY_LABEL.place[isZh ? 'zh' : 'en']}</option>
-                <option value="other">{CATEGORY_LABEL.other[isZh ? 'zh' : 'en']}</option>
-              </select>
-              <button className="colpi-detail-add" onClick={handleAddConfirm}>
-                {isZh ? '提交' : 'Submit'}
-              </button>
-              <button
-                className="colpi-detail-cancel"
-                onClick={() => { setSubmitOpen(false); setSubmitWord(''); }}
-              >
-                {isZh ? '取消' : 'Cancel'}
-              </button>
             </div>
           )}
         </section>
       )}
       </div>
 
-      {/* === Recently submitted: vote === */}
+      {/* === Recently submitted === */}
       <section className="colpi-recent">
         <div className="colpi-section-h">
-          {isZh ? '为最近提交的词投票' : 'Vote for recently submitted images'}
+          {isZh ? '最近提交' : 'Recent submissions'}
         </div>
-        <table className="colpi-recent-table">
-          <tbody>
-            {recentList.map(s => {
-              const v = votes[voteKey(s.pair, s.word)];
-              return (
-                <tr key={s.id}>
+        {recent.length === 0 ? (
+          <p className="colpi-detail-empty">
+            {isZh ? '还没有用户提交。来提交第一个吧!' : 'No user submissions yet. Be the first!'}
+          </p>
+        ) : (
+          <table className="colpi-recent-table">
+            <tbody>
+              {recent.map(w => (
+                <tr key={w.id}>
                   <td>
-                    <button type="button" className="colpi-pair-chip" onClick={() => setActivePair(s.pair)}>{s.pair}</button>
+                    <button type="button" className="colpi-pair-chip" onClick={() => setActivePair(w.pair)}>{w.pair}</button>
                   </td>
                   <td>
                     <span
                       className="colpi-pao-dot"
-                      style={{ background: CATEGORY_DOT[s.category] }}
-                      title={isZh ? CATEGORY_LABEL[s.category].zh : CATEGORY_LABEL[s.category].en}
+                      style={{ background: CATEGORY_DOT[w.category] }}
+                      title={isZh ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en}
                     />
                   </td>
                   <td className="colpi-recent-word">
-                    {s.word}
-                    <button
-                      className="colpi-flag-btn"
-                      onClick={() => showToast(isZh ? '已标记为不雅' : 'Marked as offensive')}
-                      title={isZh ? '标记为不雅' : 'Mark as offensive'}
-                    >
-                      <FlagIcon size={11} />
-                    </button>
+                    {w.word}
+                    {w.submitter && (
+                      <span className="colpi-submitter" title={w.submitter.name || w.submitter.wcaId}>
+                        {w.submitter.country && <Flag iso2={w.submitter.country} className="colpi-submitter-flag" />}
+                        <span className="colpi-submitter-name">{w.submitter.name || w.submitter.wcaId}</span>
+                      </span>
+                    )}
+                    {w.offensive && (
+                      <button
+                        className="colpi-flag-btn"
+                        title={isZh ? '已被标记为不雅' : 'Flagged offensive'}
+                      >
+                        <FlagIcon size={11} />
+                      </button>
+                    )}
                   </td>
                   <td className="colpi-recent-vote">
                     <button
-                      className={v === 1 ? 'is-voted-up' : ''}
-                      onClick={() => handleVote(s.pair, s.word, 1)}
+                      className={w.myVote === 1 ? 'is-voted-up' : ''}
+                      onClick={() => handleVote(w, 1)}
                       title={isZh ? '有用' : 'Useful'}
                     >
                       <ThumbsUp size={12} />
                     </button>
                     <button
-                      className={v === -1 ? 'is-voted-down' : ''}
-                      onClick={() => handleVote(s.pair, s.word, -1)}
+                      className={w.myVote === -1 ? 'is-voted-down' : ''}
+                      onClick={() => handleVote(w, -1)}
                       title={isZh ? '不合适' : 'Misused'}
                     >
                       <ThumbsDown size={12} />
                     </button>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       {/* === Footer === */}
@@ -529,15 +589,57 @@ export default function ColpiPage() {
           </a>
           .
         </p>
-        <p className="colpi-footer-stats">
-          {isZh
-            ? `英文词条 ${totalEnglishWords} (本地)`
-            : `${totalEnglishWords} English words (local)`}
-        </p>
       </footer>
 
       {/* === Toast === */}
       {toast && <div className="colpi-toast">{toast}</div>}
     </div>
+  );
+}
+
+// ── shared input form for submit + edit ──
+function FormFields({
+  isZh, word, setWord, category, setCategory, onConfirm, onCancel, confirmLabel,
+}: {
+  isZh: boolean;
+  word: string;
+  setWord: (s: string) => void;
+  category: Category;
+  setCategory: (c: Category) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  confirmLabel: string;
+}) {
+  return (
+    <>
+      <input
+        type="text"
+        value={word}
+        onChange={(e) => setWord(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onConfirm();
+          if (e.key === 'Escape') onCancel();
+        }}
+        placeholder={isZh ? '输入一个词 (例如 ROCKET / 苹果)' : 'Enter a word (e.g. ROCKET, 苹果)'}
+        maxLength={40}
+        autoFocus
+      />
+      <select
+        value={category}
+        onChange={(e) => setCategory(e.target.value as Category)}
+        aria-label={isZh ? '类别' : 'Category'}
+      >
+        <option value="unspecified">{CATEGORY_LABEL.unspecified[isZh ? 'zh' : 'en']}</option>
+        <option value="object">{CATEGORY_LABEL.object[isZh ? 'zh' : 'en']}</option>
+        <option value="person">{CATEGORY_LABEL.person[isZh ? 'zh' : 'en']}</option>
+        <option value="action">{CATEGORY_LABEL.action[isZh ? 'zh' : 'en']}</option>
+        <option value="place">{CATEGORY_LABEL.place[isZh ? 'zh' : 'en']}</option>
+        <option value="other">{CATEGORY_LABEL.other[isZh ? 'zh' : 'en']}</option>
+      </select>
+      <button className="colpi-detail-add" onClick={onConfirm}>{confirmLabel}</button>
+      <button className="colpi-detail-cancel" onClick={onCancel}>
+        {isZh ? '取消' : 'Cancel'}
+      </button>
+    </>
   );
 }

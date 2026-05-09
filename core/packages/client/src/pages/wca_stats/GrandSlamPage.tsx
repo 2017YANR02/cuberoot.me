@@ -7,9 +7,11 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import WcaEventSelector from './WcaEventSelector';
-import PillToggle from './PillToggle';
+import PillToggle from '../../components/PillToggle/PillToggle';
 import { RecordBadge } from '../../components/RecordBadge/RecordBadge';
+import { CompCell } from '../../components/CompCell/CompCell';
 import { Flag } from '../../utils/flag';
+import { loadFlagData } from '../../utils/country_flags';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
@@ -52,6 +54,9 @@ export default function GrandSlamPage() {
   const [rows, setRows] = useState<GsRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [, setFlagBust] = useState(0);
+
+  useEffect(() => { loadFlagData().then(v => setFlagBust(v)); }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -149,9 +154,9 @@ export default function GrandSlamPage() {
                     <td className="wse-value-col">{r.single != null ? formatWcaResult(r.single, r.eventId, 'single') : '—'}</td>
                     <td className="wse-value-col">{r.average != null ? formatWcaResult(r.average, r.eventId, 'average') : '—'}</td>
                     <td>{r.hasWr ? <RecordBadge record="WR" /> : ''}</td>
-                    <td className="wse-detail-cell">{champCell(r.worldChamp)}</td>
-                    <td className="wse-detail-cell">{champCell(r.continentalChamp)}</td>
-                    <td className="wse-detail-cell">{champCell(r.nationalChamp)}</td>
+                    <td className="wse-detail-cell">{champCell(r.worldChamp, isZh)}</td>
+                    <td className="wse-detail-cell">{champCell(r.continentalChamp, isZh)}</td>
+                    <td className="wse-detail-cell">{champCell(r.nationalChamp, isZh)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,10 +168,10 @@ export default function GrandSlamPage() {
   );
 }
 
-function champCell(c: { compId: string; name: string | null; pos: number | null } | null) {
+function champCell(c: { compId: string; name: string | null; pos: number | null } | null, isZh: boolean) {
   if (!c) return '';
   const medal = c.pos === 1 ? '🥇' : c.pos === 2 ? '🥈' : c.pos === 3 ? '🥉' : '';
   return (
-    <span><strong>{c.name ?? c.compId}</strong> {medal}</span>
+    <span><CompCell compId={c.compId} compName={c.name} isZh={isZh} /> {medal}</span>
   );
 }

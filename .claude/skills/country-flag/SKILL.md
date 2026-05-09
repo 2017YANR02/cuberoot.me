@@ -34,3 +34,9 @@ MapLibre popup 挂在 map 容器外，**页面前缀 CSS（`.globe-page .flag-sp
 - `country_flags.countryToIso2(wcaCountry)` / `personFlagIso2(wcaId)` / `compFlagIso2(compId)` → 从 WCA 文本或 id 反查 iso2
 
 拿到 iso2 后仍然走 `<Flag>` / `flagHtml` 渲染（统一处理 TW）。
+
+## 渲染选手 / 比赛名:必须带国旗
+
+任何渲染 **WCA 比赛名** 的地方,前面必须有该比赛举办国国旗,走 `<CompCell compId compName isZh />`(`components/CompCell/`),内部 `compFlagIso2` + `localizeCompName`。页面挂载时必须 `loadFlagData()` 一次,否则旗 / 中文名都 miss。裸 `c.name` / `compId` 直显是 bug。
+
+选手名同理:本页含 person 列必须 iso2 + `<Flag>`,见 `cuber-name-display`。
