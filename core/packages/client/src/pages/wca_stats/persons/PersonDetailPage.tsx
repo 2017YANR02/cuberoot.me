@@ -12,6 +12,7 @@ import {
   fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions,
   type WcaPersonProfile, type WcaResultRow, type WcaCompetition,
 } from './wca_api';
+import { loadFlagData } from '../../../utils/country_flags';
 import PersonHero from './sections/PersonHero';
 import PersonPRTable from './sections/PersonPRTable';
 import PersonTabs from './sections/PersonTabs';
@@ -32,6 +33,8 @@ export default function PersonDetailPage() {
     setProfile(null); setResults(null); setComps(null); setError(null);
     if (!wcaId) { setError('Missing WCA ID'); return; }
     let cancelled = false;
+    // localizeCompName 依赖 comp_names_zh.json 提前加载;不 await 也无所谓,只是 ensure.
+    loadFlagData().catch(() => { /* fallback to en */ });
     fetchWcaPerson(wcaId)
       .then((p) => { if (!cancelled) setProfile(p); })
       .catch((e) => { if (!cancelled) setError(String(e?.message ?? e)); });

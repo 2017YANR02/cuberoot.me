@@ -650,6 +650,69 @@
     overflow: hidden;
 }
 
+/* ── Search page ────────────────────────────────────────────────── */
+.wp-search-card {
+    max-width: 520px;
+    margin: 56px auto 0;
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 16px;
+    box-shadow: var(--wp-shadow);
+    padding: 36px 32px 28px;
+    text-align: center;
+}
+.wp-search-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--wp-accent-soft);
+    color: var(--wp-accent);
+    margin-bottom: 12px;
+}
+.wp-search-title {
+    margin: 0 0 6px;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.5rem; font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--wp-text);
+}
+.wp-search-hint {
+    margin: 0 0 20px;
+    color: var(--wp-text-sub); font-size: 0.88rem;
+}
+/* WcaPersonPicker inline 模式 panel 是 absolute → 撑不开父高度.
+ * 给容器 min-height 保证 absolute 浮层下面的 examples 不会被压上去. */
+.wp-search-picker {
+    position: relative;
+    min-height: 64px;
+    margin-bottom: 18px;
+}
+.wp-search-picker .wca-pp-panel {
+    width: 100% !important;
+    left: 0 !important;
+}
+.wp-search-examples {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; align-items: center;
+    font-size: 0.78rem;
+    margin-top: 4px;
+}
+.wp-search-examples-label { color: var(--wp-text-mute); margin-right: 4px; }
+.wp-search-example {
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--wp-border);
+    background: var(--wp-bg);
+    color: var(--wp-text-sub);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.wp-search-example:hover {
+    border-color: var(--wp-accent);
+    color: var(--wp-accent);
+    background: var(--wp-accent-soft);
+}
+
 /* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
     .wp-header { padding: 10px 12px; }
