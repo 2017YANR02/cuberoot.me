@@ -32,6 +32,19 @@
   transition: color 0.2s;
 }
 
+/* "全部" 按钮:文字代替图标,宽度自适应 */
+.wca-stats-event-selector .event-btn-all {
+  width: auto;
+  padding: 0 12px;
+}
+.wca-stats-event-selector .event-btn-all .event-all-label {
+  font-size: 13px;
+  color: #aaa;
+  transition: color 0.2s;
+}
+.wca-stats-event-selector .event-btn-all:hover .event-all-label { color: #ddd; }
+.wca-stats-event-selector .event-btn-all.active .event-all-label { color: #fff; }
+
 .wca-stats-event-selector .event-btn:hover {
   background: rgba(255, 255, 255, 0.10);
   border-color: rgba(255, 235, 220, 0.12);

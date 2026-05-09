@@ -36,6 +36,20 @@ interface IndexData {
 }
 
 const ALL = '__all__';
+const LOOKUP = '__lookup__';
+
+const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
+  { path: '/wca-stats/persons',         zh: '选手查询',     en: 'Persons' },
+  { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
+  { path: '/wca-stats/historical',       zh: '历史排名',     en: 'Historical Ranks' },
+  { path: '/wca-stats/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
+  { path: '/wca-stats/all-results',      zh: '全部成绩排行', en: 'All Results' },
+  { path: '/wca-stats/year-results',     zh: '当年成绩排行', en: 'Year Results' },
+  { path: '/wca-stats/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
+  { path: '/wca-stats/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
+  { path: '/wca-stats/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
+  { path: '/wca-stats/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
+];
 
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
@@ -68,6 +82,7 @@ export default function WcaStatsIndex() {
   // NOTE: 搜索模式忽略 tab，全库匹配；否则按 tab 过滤
   const visible = useMemo(() => {
     if (!data) return [];
+    if (activeCat === LOOKUP && q === '') return [];
     return data.categories
       .filter(c => q !== '' || activeCat === ALL || c.nameEn === activeCat)
       .map(c => ({
@@ -79,6 +94,13 @@ export default function WcaStatsIndex() {
       }))
       .filter(c => c.stats.length > 0);
   }, [data, activeCat, q]);
+
+  const lookupVisible = useMemo(() => {
+    if (q === '') return LOOKUP_ITEMS;
+    return LOOKUP_ITEMS.filter(it =>
+      it.zh.toLowerCase().includes(q) || it.en.toLowerCase().includes(q),
+    );
+  }, [q]);
 
   if (loading) {
     return (
@@ -101,7 +123,7 @@ export default function WcaStatsIndex() {
 
   const langQuery = getLangQuery();
   const totalCount = data.categories.reduce((s, c) => s + c.stats.length, 0);
-  const visibleCount = visible.reduce((s, c) => s + c.stats.length, 0);
+  const visibleCount = visible.reduce((s, c) => s + c.stats.length, 0) + lookupVisible.length;
 
   return (
     <div className="wca-stats-index">
@@ -143,7 +165,13 @@ export default function WcaStatsIndex() {
               onClick={() => setActiveCat(ALL)}
             >
               <span>{isZh ? '全部' : 'All'}</span>
-              <span className="wca-stats-index-tab-count">{totalCount}</span>
+            </button>
+            <button
+              className={`wca-stats-index-tab ${activeCat === LOOKUP ? 'active' : ''}`}
+              onClick={() => setActiveCat(LOOKUP)}
+            >
+              <Search size={14} strokeWidth={1.75} />
+              <span>{isZh ? '查询' : 'Lookup'}</span>
             </button>
             {data.categories.map(cat => {
               const iconKey = cat.iconName || '';
@@ -158,7 +186,6 @@ export default function WcaStatsIndex() {
                 >
                   {Icon && <Icon size={14} strokeWidth={1.75} />}
                   <span>{isZh ? cat.nameZh : cat.nameEn}</span>
-                  <span className="wca-stats-index-tab-count">{cat.stats.length}</span>
                 </button>
               );
             })}
@@ -167,43 +194,18 @@ export default function WcaStatsIndex() {
       </div>
 
       <div className="wca-stats-index-body">
-        {(q === '' && activeCat === ALL) && (
+        {((q === '' && (activeCat === ALL || activeCat === LOOKUP)) || (q !== '' && lookupVisible.length > 0)) && (
           <section className="wca-stats-index-section">
             <div className="wca-stats-index-section-header">
               <Search size={18} strokeWidth={1.75} />
               <h2>{isZh ? '查询' : 'Lookup'}</h2>
             </div>
             <div className="wca-stats-index-grid">
-              <Link to={`/wca-stats/persons${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '查 WCA 个人成绩 / PR / 比赛历史' : 'WCA results / PRs / competition history'}
-              </Link>
-              <Link to={`/nemesizer${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '宿敌' : 'Nemesizer'}
-              </Link>
-              <Link to={`/wca-stats/historical${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '历史排名（任意年/国家/项目切片）' : 'Historical Ranks (any year × country × event)'}
-              </Link>
-              <Link to={`/wca-stats/grand-slam${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '大满贯（WC + 洲际 + 国家赛领奖台 + WR）' : 'Grand Slam (WC + Continental + National podium + WR)'}
-              </Link>
-              <Link to={`/wca-stats/all-results${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '全部成绩排行' : 'All Results Ranking'}
-              </Link>
-              <Link to={`/wca-stats/year-results${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '当年成绩排行' : 'Current Year Ranking'}
-              </Link>
-              <Link to={`/wca-stats/cohort-ranks${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '参赛届别排行' : 'Cohort Ranks'}
-              </Link>
-              <Link to={`/wca-stats/success-rate${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '项目成功率' : 'Event Success Rate'}
-              </Link>
-              <Link to={`/wca-stats/all-events-done${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '全项目达成排行榜' : 'All Events Achievement'}
-              </Link>
-              <Link to={`/wca-stats/sum-of-ranks${langQuery}`} className="wca-stats-index-card">
-                {isZh ? '全项目排行（名次总和）' : 'Sum of Ranks'}
-              </Link>
+              {lookupVisible.map(it => (
+                <Link key={it.path} to={`${it.path}${langQuery}`} className="wca-stats-index-card">
+                  {isZh ? it.zh : it.en}
+                </Link>
+              ))}
             </div>
           </section>
         )}
@@ -215,7 +217,6 @@ export default function WcaStatsIndex() {
               <div className="wca-stats-index-section-header">
                 {Icon && <Icon size={18} strokeWidth={1.75} />}
                 <h2>{isZh ? cat.nameZh : cat.nameEn}</h2>
-                <span className="wca-stats-index-section-count">{cat.stats.length}</span>
               </div>
               <div className="wca-stats-index-grid">
                 {cat.stats.map(s => (
@@ -232,7 +233,7 @@ export default function WcaStatsIndex() {
           );
         })}
 
-        {visible.length === 0 && (
+        {visible.length === 0 && activeCat !== LOOKUP && !(q !== '' && lookupVisible.length > 0) && (
           <div className="wca-stats-index-empty">
             {isZh ? '未找到匹配的统计项' : 'No stats match your search.'}
           </div>

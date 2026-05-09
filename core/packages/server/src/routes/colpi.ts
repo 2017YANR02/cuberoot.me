@@ -1,0 +1,292 @@
+/**
+ * /memo/colpi 后端路由 — 字母对 → 关联词的协作数据库。
+ *
+ * Source of truth: colpi_words (~11.7k 行 seed 自上游 bestsiteever.net/colpi,
+ * submitter_wca_id=NULL = 上游) + colpi_votes (每用户每词一票)。
+ *
+ * 权限矩阵:
+ *   提交新词 / 投自己的票  → 任意已登录 WCA 用户
+ *   编辑/删除自己提交的词    → owner
+ *   编辑/删除任意词(含上游) → admin (ADMIN_WCA_IDS / X-Admin-Key)
+ */
+import { Hono } from 'hono';
+import { query } from '../db/connection.js';
+import {
+  ADMIN_WCA_IDS, requireAuth, authenticateUser, checkRateLimit,
+} from '../utils/recon_helpers.js';
+
+export const colpiRoutes = new Hono();
+
+const CATEGORIES = new Set(['unspecified', 'object', 'person', 'action', 'place', 'other']);
+const ALPHABET = new Set([
+  'A','B','C','D','E','F','G','H','I','J','K','L','M',
+  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+  'ʧ',
+]);
+
+function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
+  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
+}
+
+function isValidPair(s: unknown): s is string {
+  if (typeof s !== 'string') return false;
+  const chars = [...s];
+  return chars.length === 2 && chars.every(c => ALPHABET.has(c));
+}
+
+const WORD_RE = /^[\p{L}\p{N}\p{M}\p{P}\s]+$/u;
+function validateWord(w: unknown): { ok: true; word: string } | { ok: false; error: string } {
+  if (typeof w !== 'string') return { ok: false, error: 'word must be string' };
+  const trimmed = w.trim().toUpperCase();
+  if (!trimmed) return { ok: false, error: 'word required' };
+  if (trimmed.length > 128) return { ok: false, error: 'word too long' };
+  if (!WORD_RE.test(trimmed)) return { ok: false, error: 'word contains invalid chars' };
+  return { ok: true, word: trimmed };
+}
+
+interface WordRow {
+  id: number | string;
+  pair: string;
+  word: string;
+  category: string;
+  offensive: boolean;
+  submitter_wca_id: string | null;
+  submitter_name: string | null;
+  submitter_country: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+}
+
+interface WordWithMetaRow extends WordRow {
+  score: number | string;
+  my_vote: number | string | null;
+}
+
+function rowToJson(r: WordWithMetaRow): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    id: Number(r.id),
+    pair: r.pair,
+    word: r.word,
+    category: r.category,
+    offensive: r.offensive,
+    score: Number(r.score),
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+  if (r.submitter_wca_id) {
+    out.submitter = {
+      wcaId: r.submitter_wca_id,
+      name: r.submitter_name ?? '',
+      country: r.submitter_country ?? null,
+    };
+  }
+  if (r.my_vote !== null && r.my_vote !== undefined) {
+    out.myVote = Number(r.my_vote);
+  }
+  return out;
+}
+
+// ── GET /v1/colpi/words — bulk fetch grouped by pair ──
+// Auth optional: if authed, includes myVote per word. nginx caches 60s.
+colpiRoutes.get('/colpi/words', async (c) => {
+  c.header('Cache-Control', 'public, max-age=60');
+  const user = await authenticateUser(c.req.header('Authorization'));
+  const wcaId = user?.wcaId ?? null;
+
+  const rows = await query<WordWithMetaRow>(
+    `SELECT w.*,
+       COALESCE((SELECT SUM(dir)::int FROM colpi_votes WHERE word_id = w.id), 0) AS score,
+       (SELECT dir FROM colpi_votes WHERE word_id = w.id AND voter_wca_id = ?) AS my_vote
+     FROM colpi_words w
+     ORDER BY w.pair ASC, score DESC, w.id ASC`,
+    [wcaId],
+  );
+
+  // Group by pair for compact transfer.
+  const grouped: Record<string, Record<string, unknown>[]> = {};
+  for (const r of rows) {
+    const p = r.pair;
+    if (!grouped[p]) grouped[p] = [];
+    grouped[p].push(rowToJson(r));
+  }
+  return c.json(grouped);
+});
+
+// ── GET /v1/colpi/recent — last N user submissions, newest first ──
+colpiRoutes.get('/colpi/recent', async (c) => {
+  c.header('Cache-Control', 'public, max-age=60');
+  const limit = Math.min(50, Math.max(1, Number(c.req.query('limit')) || 20));
+  const user = await authenticateUser(c.req.header('Authorization'));
+  const wcaId = user?.wcaId ?? null;
+
+  const rows = await query<WordWithMetaRow>(
+    `SELECT w.*,
+       COALESCE((SELECT SUM(dir)::int FROM colpi_votes WHERE word_id = w.id), 0) AS score,
+       (SELECT dir FROM colpi_votes WHERE word_id = w.id AND voter_wca_id = ?) AS my_vote
+     FROM colpi_words w
+     WHERE submitter_wca_id IS NOT NULL
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [wcaId, limit],
+  );
+  return c.json(rows.map(rowToJson));
+});
+
+// ── POST /v1/colpi/words — submit new word (requires login) ──
+colpiRoutes.post('/colpi/words', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+
+  const body = await c.req.json<{
+    pair?: unknown; word?: unknown; category?: unknown; country?: unknown;
+  }>();
+  if (!isValidPair(body.pair)) return c.json({ error: 'invalid pair' }, 400);
+  const v = validateWord(body.word);
+  if (!v.ok) return c.json({ error: v.error }, 400);
+  const cat = typeof body.category === 'string' && CATEGORIES.has(body.category)
+    ? body.category : 'unspecified';
+  const country = typeof body.country === 'string' && body.country.length <= 8
+    ? body.country : null;
+
+  try {
+    const inserted = await query<WordRow>(
+      `INSERT INTO colpi_words (pair, word, category, submitter_wca_id, submitter_name, submitter_country)
+       VALUES (?, ?, ?, ?, ?, ?)
+       RETURNING *`,
+      [body.pair as string, v.word, cat, user.wcaId, user.name, country],
+    );
+    return c.json({ ...rowToJson({ ...inserted[0], score: 0, my_vote: null }) });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('duplicate') || msg.includes('uq_colpi_words_pair_word')) {
+      return c.json({ error: 'word already exists for this pair' }, 409);
+    }
+    throw e;
+  }
+});
+
+// ── PATCH /v1/colpi/words/:id — edit own (or any if admin) ──
+colpiRoutes.patch('/colpi/words/:id', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const existing = await query<WordRow>('SELECT * FROM colpi_words WHERE id = ?', [id]);
+  if (existing.length === 0) return c.json({ error: 'not found' }, 404);
+  const row = existing[0];
+  if (!isAdmin && row.submitter_wca_id !== user.wcaId) {
+    return c.json({ error: 'Cannot edit others\' submissions' }, 403);
+  }
+
+  const body = await c.req.json<{ word?: unknown; category?: unknown; offensive?: unknown }>();
+  let nextWord = row.word;
+  let nextCat = row.category;
+  let nextOffensive = row.offensive;
+
+  if (body.word !== undefined) {
+    const v = validateWord(body.word);
+    if (!v.ok) return c.json({ error: v.error }, 400);
+    nextWord = v.word;
+  }
+  if (body.category !== undefined) {
+    if (typeof body.category !== 'string' || !CATEGORIES.has(body.category)) {
+      return c.json({ error: 'invalid category' }, 400);
+    }
+    nextCat = body.category;
+  }
+  // 仅 admin 可改 offensive 标记
+  if (body.offensive !== undefined) {
+    if (!isAdmin) return c.json({ error: 'Admin access required for offensive flag' }, 403);
+    nextOffensive = Boolean(body.offensive);
+  }
+
+  try {
+    await query(
+      `UPDATE colpi_words SET word = ?, category = ?, offensive = ? WHERE id = ?`,
+      [nextWord, nextCat, nextOffensive, id],
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('duplicate') || msg.includes('uq_colpi_words_pair_word')) {
+      return c.json({ error: 'another row with this pair+word already exists' }, 409);
+    }
+    throw e;
+  }
+
+  const updated = await query<WordWithMetaRow>(
+    `SELECT w.*,
+       COALESCE((SELECT SUM(dir)::int FROM colpi_votes WHERE word_id = w.id), 0) AS score,
+       (SELECT dir FROM colpi_votes WHERE word_id = w.id AND voter_wca_id = ?) AS my_vote
+     FROM colpi_words w WHERE id = ?`,
+    [user.wcaId, id],
+  );
+  return c.json(rowToJson(updated[0]));
+});
+
+// ── DELETE /v1/colpi/words/:id — delete own (or any if admin) ──
+colpiRoutes.delete('/colpi/words/:id', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  const isAdmin = ADMIN_WCA_IDS.includes(user.wcaId);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const existing = await query<WordRow>('SELECT * FROM colpi_words WHERE id = ?', [id]);
+  if (existing.length === 0) return c.json({ error: 'not found' }, 404);
+  if (!isAdmin && existing[0].submitter_wca_id !== user.wcaId) {
+    return c.json({ error: 'Cannot delete others\' submissions' }, 403);
+  }
+
+  await query('DELETE FROM colpi_words WHERE id = ?', [id]);
+  return c.json({ ok: true });
+});
+
+// ── PUT /v1/colpi/words/:id/vote — set my vote (1 or -1) ──
+colpiRoutes.put('/colpi/words/:id/vote', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const body = await c.req.json<{ dir?: unknown }>();
+  const dir = Number(body.dir);
+  if (dir !== 1 && dir !== -1) return c.json({ error: 'dir must be 1 or -1' }, 400);
+
+  const exists = await query<{ id: number | string }>('SELECT id FROM colpi_words WHERE id = ?', [id]);
+  if (exists.length === 0) return c.json({ error: 'not found' }, 404);
+
+  await query(
+    `INSERT INTO colpi_votes (word_id, voter_wca_id, dir) VALUES (?, ?, ?)
+     ON CONFLICT (word_id, voter_wca_id) DO UPDATE SET dir = EXCLUDED.dir`,
+    [id, user.wcaId, dir],
+  );
+  const score = await query<{ score: number | string }>(
+    `SELECT COALESCE(SUM(dir)::int, 0) AS score FROM colpi_votes WHERE word_id = ?`,
+    [id],
+  );
+  return c.json({ ok: true, score: Number(score[0].score), myVote: dir });
+});
+
+// ── DELETE /v1/colpi/words/:id/vote — clear my vote ──
+colpiRoutes.delete('/colpi/words/:id/vote', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  await query('DELETE FROM colpi_votes WHERE word_id = ? AND voter_wca_id = ?', [id, user.wcaId]);
+  const score = await query<{ score: number | string }>(
+    `SELECT COALESCE(SUM(dir)::int, 0) AS score FROM colpi_votes WHERE word_id = ?`,
+    [id],
+  );
+  return c.json({ ok: true, score: Number(score[0].score), myVote: null });
+});

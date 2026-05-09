@@ -77,7 +77,9 @@ const PredictionPage = lazy(() => import('./pages/prediction/PredictionPage'));
 // NOTE: Mosaic — 魔方马赛克生成器（port of Roman-/mosaic）
 const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
 // NOTE: Memo — 记忆类工具子区
+//   /memo        — 子区入口卡片页（未来扩展更多记忆类工具）
 //   /memo/colpi — UI 复刻 bestsiteever.net/colpi（盲拧字母对图像数据库,Roman Strakhov 原作,非开源,本页只复刻 UI）
+const MemoLandingPage = lazy(() => import('./pages/memo/MemoLandingPage'));
 const ColpiPage = lazy(() => import('./pages/memo/colpi/ColpiPage'));
 // NOTE: WB — 非官方世界纪录（port of speedsolving.com wiki UWR list）
 const WbPage = lazy(() => import('./pages/wb/WbPage'));
@@ -88,8 +90,6 @@ const VisualCubeEditorPage = lazy(() => import('./pages/visualcube/VisualCubeEdi
 const VisualCubeStagesPage = lazy(() => import('./pages/visualcube/VisualCubeStagesPage'));
 // NOTE: Analyze — 3x3 CFOP 打乱分析器（port of speedcubedb.com/analyze）
 const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
-// NOTE: Average — 成绩计算器（粘 N 个时间，按 WCA 规则算 Ao5/Ao12/Mo3）
-const AveragePage = lazy(() => import('./pages/average/AveragePage'));
 // NOTE: Gen — 批量打乱生成器（覆盖 16 个 WCA 项目）
 const GenPage = lazy(() => import('./pages/gen/GenPage'));
 // NOTE: Notation — 公式记号沙盒（化简 / 逆向 / 镜像 + HTM/QTM 计数 + TwistyPlayer）
@@ -186,8 +186,8 @@ function App() {
         <Route path="/visualcube/stages" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeStagesPage /></Suspense>} />
         {/* Analyze — 3x3 CFOP 打乱分析器 */}
         <Route path="/analyze" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
-        {/* Average — 成绩计算器 */}
-        <Route path="/average" element={<Suspense fallback={<div>Loading...</div>}><AveragePage /></Suspense>} />
+        {/* /average 已并入 /calc 的"成绩计算器" tab — 兼容旧链接 */}
+        <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
         {/* Gen — 批量打乱生成器 */}
         <Route path="/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
         {/* Notation — 公式记号沙盒 */}
@@ -245,8 +245,10 @@ function App() {
         <Route path="/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
         {/* Mosaic — 魔方马赛克生成器 */}
         <Route path="/mosaic" element={<Suspense fallback={<div>Loading...</div>}><MosaicPage /></Suspense>} />
-        {/* Memo — 记忆类工具子区(/memo/colpi: 字母对图像 UI 复刻) */}
+        {/* Memo — 记忆类工具子区(/memo: 子区入口, /memo/colpi: 字母对图像 UI 复刻) */}
+        <Route path="/memo" element={<Suspense fallback={<div>Loading...</div>}><MemoLandingPage /></Suspense>} />
         <Route path="/memo/colpi" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
+        <Route path="/memo/colpi/:pair" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
         {/* WB — 非官方世界纪录 */}
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}

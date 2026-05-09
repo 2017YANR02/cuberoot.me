@@ -190,14 +190,17 @@
   padding: 4px 8px 12px;
 }
 .wse-table {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
+.wse-table th, .wse-table td { white-space: nowrap; }
 .wse-table th, .wse-table td {
-  padding: 8px 12px;
+  padding: 4px 12px;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.4;
 }
 .wse-table th {
   font-weight: 500;

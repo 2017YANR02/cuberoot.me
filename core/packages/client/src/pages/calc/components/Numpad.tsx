@@ -10,6 +10,7 @@ import {
   DNF_VALUE, formatTime, textToTime, textToMbfScore, clampValue,
 } from '../engine/calc_engine';
 import { sampleKDE } from '../engine/wr_data';
+import { shouldAutoAdvance } from '../engine/auto_advance';
 import { Drum } from './Drum';
 
 // ── 撤销栈（模块级，跨渲染保持）──
@@ -83,31 +84,7 @@ function navigateToCell(p: number, t: number) {
 
 // ── 自动跳格 ──
 // NOTE: 原版仅限 333，用户要求扩展到所有项目
-// 规则基于数字位数和格式自动判断输入完成
-
-/** 自动跳格触发条件（纯函数,无副作用） */
-function shouldAutoAdvance(rawVal: string): boolean {
-  const val = rawVal.trim();
-  // 规则 1: 小数点后已输入 2 位数字（如 "4.42"、"12.35"）
-  const dotIdx = val.indexOf('.');
-  if (dotIdx >= 0) {
-    const afterDot = val.substring(dotIdx + 1);
-    if (afterDot.length >= 2 && /^\d{2}$/.test(afterDot)) return true;
-  }
-  // 规则 2: 首位 ≥ 3 的 3 位纯数字（如 "354"→3.54s）
-  if (/^\d{3}$/.test(val) && parseInt(val[0], 10) >= 3) return true;
-  // 规则 3: 4 位纯数字 1000~5959（如 "1234"→12.34s, "5959"→59.59s）
-  if (/^\d{4}$/.test(val)) {
-    const num = parseInt(val, 10);
-    if (num >= 1000 && num <= 5959) return true;
-  }
-  // 规则 4: 冒号格式完成 — X:XX.XX（如 "1:23.45"）
-  if (val.includes(':') && dotIdx >= 0) {
-    const afterDot2 = val.substring(dotIdx + 1);
-    if (afterDot2.length >= 2 && /^\d{2}$/.test(afterDot2)) return true;
-  }
-  return false;
-}
+// 规则基于数字位数和格式自动判断输入完成 — 实现迁到 engine/auto_advance.ts(简易版 textarea 共用)
 
 function tryAutoAdvance(rawVal: string, p: number, t: number) {
   const s = useCalcStore.getState();

@@ -57,6 +57,7 @@ async function resolveCountry(input: string): Promise<{ ok: true; id: string } |
 wcaStatsExtraRoutes.get('/wca/grand-slam', async (c) => {
   const event = c.req.query('event') ?? '';   // '' = all events
   const onlyFirst = c.req.query('onlyFirst') === '1' || c.req.query('onlyFirst') === 'true';
+  const hasWr = c.req.query('hasWr') === '1' || c.req.query('hasWr') === 'true';
 
   const where: string[] = [];
   const params: unknown[] = [];
@@ -66,6 +67,7 @@ wcaStatsExtraRoutes.get('/wca/grand-slam', async (c) => {
     params.push(event);
   }
   if (onlyFirst) where.push(`gs.is_only_first = TRUE`);
+  if (hasWr) where.push(`gs.has_wr = TRUE`);
 
   const sql = `
     SELECT gs.wca_id, gs.event_id, gs.best_value, gs.avg_value,

@@ -124,17 +124,3 @@ export function summarize(values: number[]): SummaryStats {
   };
 }
 
-/** Centiseconds → display string. Mirrors utils/wca_format_result. */
-export function fmtCs(v: number): string {
-  if (v === DNF) return 'DNF';
-  if (v === DNS) return 'DNS';
-  if (!Number.isFinite(v)) return '—';
-  const total = v / 100;
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total - h * 3600 - m * 60;
-  const padSec = (x: number) => (x < 10 ? `0${x.toFixed(2)}` : x.toFixed(2));
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${padSec(s)}`;
-  if (m > 0) return `${m}:${padSec(s)}`;
-  return s.toFixed(2);
-}
