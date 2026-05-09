@@ -468,8 +468,18 @@ function lineFor(a: AttemptInput): string {
 
 function svgStringToElement(svgStr: string): SVGSVGElement {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(svgStr, 'image/svg+xml');
-  return doc.documentElement as unknown as SVGSVGElement;
+  const parsed = parser.parseFromString(svgStr, 'image/svg+xml');
+  return parsed.documentElement as unknown as SVGSVGElement;
+}
+
+let svgRenderHost: HTMLDivElement | null = null;
+function getSvgRenderHost(): HTMLDivElement {
+  if (svgRenderHost && svgRenderHost.isConnected) return svgRenderHost;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;left:-99999px;top:-99999px;width:600px;height:450px;visibility:hidden;pointer-events:none;';
+  document.body.appendChild(div);
+  svgRenderHost = div;
+  return div;
 }
 
 async function embedSvg(
@@ -477,7 +487,18 @@ async function embedSvg(
   el: SVGSVGElement,
   x: number, y: number, w: number, h: number,
 ): Promise<void> {
-  // svg2pdf.js: jsPDF.svg(element, options)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (doc as any).svg(el, { x, y, width: w, height: h });
+  // svg2pdf.js calls getBBox / getComputedStyle, which only work for
+  // *attached* elements. Briefly attach to an off-screen host.
+  const host = getSvgRenderHost();
+  el.setAttribute('width', String(w));
+  el.setAttribute('height', String(h));
+  host.appendChild(el);
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (doc as any).svg(el, { x, y, width: w, height: h });
+  } catch (err) {
+    console.warn('[tnoodle_pdf] svg2pdf failed', err);
+  } finally {
+    try { el.remove(); } catch { /* swallow */ }
+  }
 }
