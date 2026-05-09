@@ -18,6 +18,21 @@ import {
 export const colpiRoutes = new Hono();
 
 const CATEGORIES = new Set(['unspecified', 'object', 'person', 'action', 'place', 'other']);
+// 41 ISO codes mirrored from bestsiteever.net/colpi (+ 'other' fallback for own submissions)
+const LANGUAGES = new Set([
+  'af', 'ar', 'bg', 'ca', 'cz', 'da', 'de', 'en', 'es', 'eu',
+  'fa', 'fi', 'fr', 'gu', 'he', 'hi', 'hr', 'hu', 'id', 'it',
+  'ja', 'kr', 'lt', 'mk', 'ms', 'nl', 'no', 'pl', 'pt', 'ro',
+  'ru', 'se', 'sk', 'sl', 'th', 'tr', 'uk', 'uz', 'vi', 'zh', 'zu',
+  'other',
+]);
+
+/** Auto-detect language from word characters. Han ideograph → zh, ASCII Latin → en, else other. */
+function detectLang(word: string): string {
+  if (/[一-鿿㐀-䶿豈-﫿]/.test(word)) return 'zh';
+  if (/^[A-Z0-9 \-&.()'!?,]+$/.test(word)) return 'en';
+  return 'other';
+}
 const ALPHABET = new Set([
   'A','B','C','D','E','F','G','H','I','J','K','L','M',
   'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
@@ -49,6 +64,7 @@ interface WordRow {
   pair: string;
   word: string;
   category: string;
+  language: string;
   offensive: boolean;
   submitter_wca_id: string | null;
   submitter_name: string | null;
@@ -68,6 +84,7 @@ function rowToJson(r: WordWithMetaRow): Record<string, unknown> {
     pair: r.pair,
     word: r.word,
     category: r.category,
+    language: r.language,
     offensive: r.offensive,
     score: Number(r.score),
     createdAt: r.created_at,
@@ -86,23 +103,36 @@ function rowToJson(r: WordWithMetaRow): Record<string, unknown> {
   return out;
 }
 
-// ── GET /v1/colpi/words — bulk fetch grouped by pair ──
+// ── GET /v1/colpi/words?lang=<code|all> — bulk fetch grouped by pair ──
+// Default lang=en (mirrors upstream UX). lang=all returns every language.
 // Auth optional: if authed, includes myVote per word. nginx caches 60s.
 colpiRoutes.get('/colpi/words', async (c) => {
   c.header('Cache-Control', 'public, max-age=60');
   const user = await authenticateUser(c.req.header('Authorization'));
   const wcaId = user?.wcaId ?? null;
+  const langParam = c.req.query('lang') ?? 'en';
+  const langFilter = langParam === 'all' ? null
+    : (LANGUAGES.has(langParam) ? langParam : 'en');
 
-  const rows = await query<WordWithMetaRow>(
-    `SELECT w.*,
-       COALESCE((SELECT SUM(dir)::int FROM colpi_votes WHERE word_id = w.id), 0) AS score,
-       (SELECT dir FROM colpi_votes WHERE word_id = w.id AND voter_wca_id = ?) AS my_vote
-     FROM colpi_words w
-     ORDER BY w.pair ASC, score DESC, w.id ASC`,
-    [wcaId],
-  );
+  const rows = langFilter === null
+    ? await query<WordWithMetaRow>(
+        `SELECT w.*,
+           COALESCE((SELECT SUM(dir)::int FROM colpi_votes WHERE word_id = w.id), 0) AS score,
+           (SELECT dir FROM colpi_votes WHERE word_id = w.id AND voter_wca_id = ?) AS my_vote
+         FROM colpi_words w
+         ORDER BY w.pair ASC, score DESC, w.id ASC`,
+        [wcaId],
+      )
+    : await query<WordWithMetaRow>(
+        `SELECT w.*,
+           COALESCE((SELECT SUM(dir)::int FROM colpi_votes WHERE word_id = w.id), 0) AS score,
+           (SELECT dir FROM colpi_votes WHERE word_id = w.id AND voter_wca_id = ?) AS my_vote
+         FROM colpi_words w
+         WHERE w.language = ?
+         ORDER BY w.pair ASC, score DESC, w.id ASC`,
+        [wcaId, langFilter],
+      );
 
-  // Group by pair for compact transfer.
   const grouped: Record<string, Record<string, unknown>[]> = {};
   for (const r of rows) {
     const p = r.pair;
@@ -110,6 +140,17 @@ colpiRoutes.get('/colpi/words', async (c) => {
     grouped[p].push(rowToJson(r));
   }
   return c.json(grouped);
+});
+
+// ── GET /v1/colpi/lang-counts — # rows per language for picker UI ──
+colpiRoutes.get('/colpi/lang-counts', async (c) => {
+  c.header('Cache-Control', 'public, max-age=300');
+  const rows = await query<{ language: string; n: number | string }>(
+    `SELECT language, COUNT(*)::int AS n FROM colpi_words GROUP BY language ORDER BY n DESC`,
+  );
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.language] = Number(r.n);
+  return c.json(out);
 });
 
 // ── GET /v1/colpi/recent — last N user submissions, newest first ──
@@ -139,28 +180,32 @@ colpiRoutes.post('/colpi/words', async (c) => {
   const user = await requireAuth(c);
 
   const body = await c.req.json<{
-    pair?: unknown; word?: unknown; category?: unknown; country?: unknown;
+    pair?: unknown; word?: unknown; category?: unknown;
+    language?: unknown; country?: unknown;
   }>();
   if (!isValidPair(body.pair)) return c.json({ error: 'invalid pair' }, 400);
   const v = validateWord(body.word);
   if (!v.ok) return c.json({ error: v.error }, 400);
   const cat = typeof body.category === 'string' && CATEGORIES.has(body.category)
     ? body.category : 'unspecified';
+  // Language: client may pass override; otherwise auto-detect from chars.
+  const lang = typeof body.language === 'string' && LANGUAGES.has(body.language)
+    ? body.language : detectLang(v.word);
   const country = typeof body.country === 'string' && body.country.length <= 8
     ? body.country : null;
 
   try {
     const inserted = await query<WordRow>(
-      `INSERT INTO colpi_words (pair, word, category, submitter_wca_id, submitter_name, submitter_country)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO colpi_words (pair, word, category, language, submitter_wca_id, submitter_name, submitter_country)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [body.pair as string, v.word, cat, user.wcaId, user.name, country],
+      [body.pair as string, v.word, cat, lang, user.wcaId, user.name, country],
     );
     return c.json({ ...rowToJson({ ...inserted[0], score: 0, my_vote: null }) });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('duplicate') || msg.includes('uq_colpi_words_pair_word')) {
-      return c.json({ error: 'word already exists for this pair' }, 409);
+    if (msg.includes('duplicate') || msg.includes('uq_colpi_words_pair_word_lang')) {
+      return c.json({ error: 'word already exists for this pair + language' }, 409);
     }
     throw e;
   }
@@ -183,14 +228,19 @@ colpiRoutes.patch('/colpi/words/:id', async (c) => {
     return c.json({ error: 'Cannot edit others\' submissions' }, 403);
   }
 
-  const body = await c.req.json<{ word?: unknown; category?: unknown; offensive?: unknown }>();
+  const body = await c.req.json<{
+    word?: unknown; category?: unknown; language?: unknown; offensive?: unknown;
+  }>();
   let nextWord = row.word;
   let nextCat = row.category;
+  let nextLang = row.language;
   let nextOffensive = row.offensive;
+  let wordChanged = false;
 
   if (body.word !== undefined) {
     const v = validateWord(body.word);
     if (!v.ok) return c.json({ error: v.error }, 400);
+    if (v.word !== row.word) wordChanged = true;
     nextWord = v.word;
   }
   if (body.category !== undefined) {
@@ -198,6 +248,15 @@ colpiRoutes.patch('/colpi/words/:id', async (c) => {
       return c.json({ error: 'invalid category' }, 400);
     }
     nextCat = body.category;
+  }
+  if (body.language !== undefined) {
+    if (typeof body.language !== 'string' || !LANGUAGES.has(body.language)) {
+      return c.json({ error: 'invalid language' }, 400);
+    }
+    nextLang = body.language;
+  } else if (wordChanged) {
+    // Re-detect when word text changes and client didn't override.
+    nextLang = detectLang(nextWord);
   }
   // 仅 admin 可改 offensive 标记
   if (body.offensive !== undefined) {
@@ -207,12 +266,12 @@ colpiRoutes.patch('/colpi/words/:id', async (c) => {
 
   try {
     await query(
-      `UPDATE colpi_words SET word = ?, category = ?, offensive = ? WHERE id = ?`,
-      [nextWord, nextCat, nextOffensive, id],
+      `UPDATE colpi_words SET word = ?, category = ?, language = ?, offensive = ? WHERE id = ?`,
+      [nextWord, nextCat, nextLang, nextOffensive, id],
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('duplicate') || msg.includes('uq_colpi_words_pair_word')) {
+    if (msg.includes('duplicate') || msg.includes('uq_colpi_words_pair_word_lang')) {
       return c.json({ error: 'another row with this pair+word already exists' }, 409);
     }
     throw e;

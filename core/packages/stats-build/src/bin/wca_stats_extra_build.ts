@@ -8,7 +8,7 @@
 //   NODE_OPTIONS='--expose-gc --max-old-space-size=12288' npx tsx src/bin/wca_stats_extra_build.ts
 
 import mysql from 'mysql2/promise';
-import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, type WriteStream } from 'fs';
+import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
@@ -29,8 +29,7 @@ const CURRENT_YEAR = new Date().getUTCFullYear();
 const YEAR_RANGE_START = 2003;
 
 // caps —— 控制 TSV 大小
-const ALL_RESULTS_WW_CAP = 5000;
-const ALL_RESULTS_PER_COUNTRY_CAP = 500;
+// wca_results_top 已无 cap(全量 ~11M),country_filter 列也已删
 const YEAR_RESULTS_WW_CAP = 200;
 const YEAR_RESULTS_PER_COUNTRY_CAP = 30;
 const SUCCESS_RATE_MIN_ATTEMPTED = 3;
@@ -90,7 +89,7 @@ interface Acc {
   avgCompId: string;
 }
 interface ResultRow {
-  id: number;           // results.id (用于 lazy-fetch attempts)
+  id: number;           // results.id
   pid: string;          // person_id
   best: number;
   average: number;
@@ -101,8 +100,8 @@ interface ResultRow {
   regAvgRecord: string | null;
   roundTypeId: string;
   pos: number;
+  attempts: (number | null)[];  // 5 attempts inline(主 SQL LEFT JOIN result_values)
 }
-type TopHeap = { value: number; row: ResultRow }[];
 
 // 维护 top-K 候选(简单全量收集后 sort 截断;K 小;比 heap 简单)
 class TopK {
@@ -347,11 +346,15 @@ async function main() {
     const tev = Date.now();
     console.log(`[${eventId}] loading results...`);
 
+    // attempts 通过 result_attempts 子查询(GROUP_CONCAT 拼一个 csv);
+    // update_database.ts 已建 idx_ra_covering(result_id, attempt_number, value),per-row 走索引 seek.
     const [rows] = await conn.query<mysql.RowDataPacket[]>(`
       SELECT r.id, r.person_id, r.best, r.average, r.country_id, r.competition_id,
              r.regional_single_record, r.regional_average_record,
              r.round_type_id, r.pos,
-             c.start_date AS sd
+             c.start_date AS sd,
+             (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
+              FROM result_attempts ra WHERE ra.result_id = r.id) AS attempts_csv
       FROM results r
       JOIN competitions c ON c.id = r.competition_id
       WHERE r.event_id = ? AND c.start_date IS NOT NULL
@@ -359,20 +362,27 @@ async function main() {
     `, [eventId]);
     console.log(`  ${rows.length.toLocaleString()} results loaded (${Date.now() - tev}ms)`);
 
-    // 转成精简 ResultRow
-    const results: ResultRow[] = rows.map(r => ({
-      id: r['id'] as number,
-      pid: r['person_id'] as string,
-      best: r['best'] as number,
-      average: r['average'] as number,
-      countryId: r['country_id'] as string,
-      compId: r['competition_id'] as string,
-      compDate: (r['sd'] as string).slice(0, 10),
-      regSingleRecord: r['regional_single_record'] as string | null,
-      regAvgRecord: r['regional_average_record'] as string | null,
-      roundTypeId: r['round_type_id'] as string,
-      pos: r['pos'] as number,
-    }));
+    // 转成精简 ResultRow(attempts inline,无需后续 lazy-fetch)
+    const results: ResultRow[] = rows.map(r => {
+      const csv = r['attempts_csv'] as string | null;
+      const attempts: (number | null)[] = csv
+        ? csv.split(',').map(s => s === '' ? null : parseInt(s, 10))
+        : [];
+      return {
+        id: r['id'] as number,
+        pid: r['person_id'] as string,
+        best: r['best'] as number,
+        average: r['average'] as number,
+        countryId: r['country_id'] as string,
+        compId: r['competition_id'] as string,
+        compDate: (r['sd'] as string).slice(0, 10),
+        regSingleRecord: r['regional_single_record'] as string | null,
+        regAvgRecord: r['regional_average_record'] as string | null,
+        roundTypeId: r['round_type_id'] as string,
+        pos: r['pos'] as number,
+        attempts,
+      };
+    });
     // 释放原始 rows
     (rows as unknown as { length: number }).length = 0;
 
@@ -385,22 +395,8 @@ async function main() {
     // ── (b) success_rate counters (only for active events) ──
     const sr = isActive ? successAcc.get(eventId)! : null;
 
-    // ── (c) all_results_top + year_results_top ──
-    // 用 per-key TopK 收集
-    // key 形式: `${is_avg}|${country_filter}` for all-time
-    // key 形式: `${year}|${is_avg}|${country_filter}` for yearly
-    const allTopByKey = new Map<string, TopK>();
+    // ── (c) all_results_top: 全量流式 / year_results_top: 仍 TopK ──
     const yearTopByKey = new Map<string, TopK>();
-    function getOrCreateAll(isAvg: boolean, country: string): TopK {
-      const k = `${isAvg ? 1 : 0}|${country}`;
-      let t = allTopByKey.get(k);
-      if (!t) {
-        const cap = country === '' ? ALL_RESULTS_WW_CAP : ALL_RESULTS_PER_COUNTRY_CAP;
-        t = new TopK(cap, isAvg);
-        allTopByKey.set(k, t);
-      }
-      return t;
-    }
     function getOrCreateYear(year: number, isAvg: boolean, country: string): TopK {
       const k = `${year}|${isAvg ? 1 : 0}|${country}`;
       let t = yearTopByKey.get(k);
@@ -455,17 +451,21 @@ async function main() {
         s.add(r.compId);
       }
 
-      // all_results_top: 收集 single + avg 候选(只 valid)
+      // all_results_top: 全量流式写 ; year_results_top: 仍按 (year, country) 取 TopK
       if (r.best > 0) {
-        getOrCreateAll(false, '').add(r);
-        getOrCreateAll(false, r.countryId).add(r);
+        allTopStream.write(
+          `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\n`,
+        );
+        allTopCount++;
         const yr = parseInt(r.compDate.slice(0, 4), 10);
         getOrCreateYear(yr, false, '').add(r);
         getOrCreateYear(yr, false, r.countryId).add(r);
       }
       if (r.average > 0) {
-        getOrCreateAll(true, '').add(r);
-        getOrCreateAll(true, r.countryId).add(r);
+        allTopStream.write(
+          `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\n`,
+        );
+        allTopCount++;
         const yr = parseInt(r.compDate.slice(0, 4), 10);
         getOrCreateYear(yr, true, '').add(r);
         getOrCreateYear(yr, true, r.countryId).add(r);
@@ -517,69 +517,27 @@ async function main() {
       }
     }
 
-    // ── 收集所有要写的 result_id 然后批量取 attempts ──
-    const neededIds = new Set<number>();
-    function collectIds(topMap: Map<string, TopK>) {
-      for (const tk of topMap.values()) for (const r of tk.finalize()) neededIds.add(r.id);
-    }
-    collectIds(allTopByKey);
-    collectIds(yearTopByKey);
-    // 批量取(分批,每批 5000;避免 IN 列表过大)
-    const attemptsMap = new Map<number, (number | null)[]>();
-    if (neededIds.size > 0) {
-      const idArr = Array.from(neededIds);
-      const BATCH = 5000;
-      for (let i = 0; i < idArr.length; i += BATCH) {
-        const slice = idArr.slice(i, i + BATCH);
-        const [vs] = await conn.query<mysql.RowDataPacket[]>(
-          `SELECT result_id, v1, v2, v3, v4, v5 FROM result_values WHERE result_id IN (${slice.map(() => '?').join(',')})`,
-          slice,
+    // ── 写 wca_year_results_top(all-results 已在主迭代里流式写完) ──
+    let nYear = 0;
+    for (const [k, tk] of yearTopByKey) {
+      const parts = k.split('|');
+      const yearStr = parts[0]!;
+      const isAvg = parts[1]! === '1';
+      const country = parts[2]!;
+      const arr = tk.finalize();
+      for (let i = 0; i < arr.length; i++) {
+        const r = arr[i]!;
+        const month = parseInt(r.compDate.slice(5, 7), 10);
+        const value = isAvg ? r.average : r.best;
+        yearTopStream.write(
+          `${yearStr}\t${eventId}\t${bool(isAvg)}\t${pgEsc(country)}\t${i + 1}\t${value}\t` +
+          `${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${month}\t` +
+          `${intArr(r.attempts)}\n`,
         );
-        for (const v of vs) {
-          attemptsMap.set(v['result_id'] as number, [
-            v['v1'] as number | null, v['v2'] as number | null,
-            v['v3'] as number | null, v['v4'] as number | null, v['v5'] as number | null,
-          ]);
-        }
+        nYear++;
       }
     }
-
-    // ── 写 wca_all_results_top + wca_year_results_top ──
-    function writeTops(stream: WriteStream, topMap: Map<string, TopK>, isYear: boolean): number {
-      let n = 0;
-      for (const [k, tk] of topMap) {
-        const parts = k.split('|');
-        const yearStr = isYear ? parts[0]! : '';
-        const isAvgStr = isYear ? parts[1]! : parts[0]!;
-        const country = isYear ? parts[2]! : parts[1]!;
-        const isAvg = isAvgStr === '1';
-        const arr = tk.finalize();
-        for (let i = 0; i < arr.length; i++) {
-          const r = arr[i]!;
-          const month = parseInt(r.compDate.slice(5, 7), 10);
-          const value = isAvg ? r.average : r.best;
-          const attempts = attemptsMap.get(r.id) ?? [null, null, null, null, null];
-          if (isYear) {
-            stream.write(
-              `${yearStr}\t${eventId}\t${bool(isAvg)}\t${pgEsc(country)}\t${i + 1}\t${value}\t` +
-              `${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${month}\t` +
-              `${intArr(attempts)}\n`,
-            );
-          } else {
-            stream.write(
-              `${eventId}\t${bool(isAvg)}\t${pgEsc(country)}\t${i + 1}\t${value}\t` +
-              `${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t` +
-              `${intArr(attempts)}\n`,
-            );
-          }
-          n++;
-        }
-      }
-      return n;
-    }
-    const nAll = writeTops(allTopStream, allTopByKey, false);
-    const nYear = writeTops(yearTopStream, yearTopByKey, true);
-    allTopCount += nAll; yearTopCount += nYear;
+    yearTopCount += nYear;
 
     // ── 写 wca_cohort_ranks(per cohort_year × event × is_avg) ──
     // 把 acc(每人当前累积 PB)按 cohort_year 分组,组内排名
@@ -624,9 +582,7 @@ async function main() {
     // 保存 acc 给 grand_slam(后期填 best/avg)
     accByEvent.set(eventId, acc);
 
-    console.log(`  ${eventId} done. acc=${acc.size} top_all=${nAll} top_year=${nYear} (${Date.now() - tev}ms)`);
-    // 单 event 的临时 top 已写流;清掉
-    allTopByKey.clear();
+    console.log(`  ${eventId} done. acc=${acc.size} top_year=${nYear} (allTopCount=${allTopCount}) (${Date.now() - tev}ms)`);
     yearTopByKey.clear();
     if (global.gc) global.gc();
   }
@@ -833,7 +789,7 @@ TRUNCATE wca_person_ranks;
 
 \\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
 \\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
-\\copy wca_results_top (event_id, is_avg, country_filter, rank_in_scope, value, wca_id, person_country_id, comp_id, attempts) FROM 'wca_results_top.copy.tsv';
+\\copy wca_results_top (event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts) FROM 'wca_results_top.copy.tsv';
 \\copy wca_year_results_top (year, event_id, is_avg, country_filter, rank_in_scope, value, wca_id, person_country_id, comp_id, comp_month, attempts) FROM 'wca_year_results_top.copy.tsv';
 \\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
 \\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';

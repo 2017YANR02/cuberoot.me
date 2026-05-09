@@ -21,8 +21,24 @@ import { displayCuberName } from '../../../utils/name_utils';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../../stores/auth_store';
 import {
   fetchWords, fetchRecent, submitWord, patchWord, deleteWord, setVote, clearVote,
-  type ColpiWord, type Category,
+  type ColpiWord, type Category, type Language,
 } from '../../../utils/colpi_api';
+import LanguagePicker, { LangPopup } from './LanguagePicker';
+import { LANG_MAP, langDisplay } from './langs';
+
+type LangFilter = string;   // 'all' | any of LANGS code
+type ViewMode = 'all' | 'mine';
+
+const LANG_FILTER_KEY = 'colpi_lang_filter_v1';
+const VIEW_MODE_KEY = 'colpi_view_mode_v1';
+
+function readLangFilter(): LangFilter {
+  const v = localStorage.getItem(LANG_FILTER_KEY) ?? 'en';
+  return v === 'all' || LANG_MAP[v] ? v : 'en';
+}
+function readViewMode(): ViewMode {
+  return localStorage.getItem(VIEW_MODE_KEY) === 'mine' ? 'mine' : 'all';
+}
 import { ALPHABET } from './data';
 import './colpi.css';
 
@@ -116,7 +132,40 @@ export default function ColpiPage() {
   // ── ui state ──
   const [search, setSearch] = useState('');
   const [hideOffensive, setHideOffensive] = useState(true);
+  const [langFilter, setLangFilterState] = useState<LangFilter>(() => readLangFilter());
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => readViewMode());
+  const setLangFilter = (v: LangFilter) => {
+    setLangFilterState(v);
+    try { localStorage.setItem(LANG_FILTER_KEY, v); } catch { /* quota */ }
+  };
+  const setViewMode = (v: ViewMode) => {
+    setViewModeState(v);
+    try { localStorage.setItem(VIEW_MODE_KEY, v); } catch { /* quota */ }
+  };
+  // 未登录强制 'all',登录回 localStorage 选择
+  useEffect(() => {
+    if (!user && viewMode === 'mine') setViewModeState('all');
+  }, [user, viewMode]);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const cornerRef = useRef<HTMLTableCellElement | null>(null);
+  // close popup on outside click / Escape
+  useEffect(() => {
+    if (!langPickerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (cornerRef.current?.contains(t)) return; // trigger toggles itself
+      if ((t as HTMLElement)?.closest?.('.colpi-langpicker-popup')) return;
+      setLangPickerOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLangPickerOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [langPickerOpen]);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
   const showToast = (msg: string) => {
@@ -133,12 +182,17 @@ export default function ColpiPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formWord, setFormWord] = useState('');
   const [formCategory, setFormCategory] = useState<Category>('unspecified');
+  const [formLang, setFormLang] = useState<string>(() => langFilter !== 'all' ? langFilter : 'en');
   useEffect(() => {
     setSubmitOpen(false);
     setEditingId(null);
     setFormWord('');
     setFormCategory('unspecified');
   }, [activePair]);
+  // Default new submissions to whatever lang the user is browsing.
+  useEffect(() => {
+    if (!editingId && langFilter !== 'all') setFormLang(langFilter);
+  }, [langFilter, editingId]);
 
   // ── derived ──
   const detailRef = useRef<HTMLElement | null>(null);
@@ -154,16 +208,29 @@ export default function ColpiPage() {
     else showToast(isZh ? '请输入两个英文字母 (A-Z)' : 'Enter exactly 2 letters (A-Z)');
   };
 
-  const wordsForPair = (pair: string): ColpiWord[] => {
-    const arr = wordsByPair[pair] ?? [];
-    return hideOffensive ? arr.filter(w => !w.offensive) : arr;
-  };
+  // Apply all filters once into a derived map; everything (grid cell fill,
+  // active-pair list, totals) reads from this so filters stay in sync.
+  const filteredByPair: Record<string, ColpiWord[]> = (() => {
+    const out: Record<string, ColpiWord[]> = {};
+    const wcaId = user?.wcaId;
+    for (const pair of Object.keys(wordsByPair)) {
+      let arr = wordsByPair[pair];
+      if (hideOffensive) arr = arr.filter(w => !w.offensive);
+      if (langFilter !== 'all') arr = arr.filter(w => w.language === langFilter);
+      if (viewMode === 'mine' && wcaId) {
+        arr = arr.filter(w => w.myVote === 1 || w.submitter?.wcaId === wcaId);
+      }
+      if (arr.length > 0) out[pair] = arr;
+    }
+    return out;
+  })();
+  const wordsForPair = (pair: string): ColpiWord[] => filteredByPair[pair] ?? [];
   const activeWords = activePair ? wordsForPair(activePair) : [];
 
-  const filledPairs = Object.keys(wordsByPair).length;
-  const totalEnglishWords = (() => {
+  const filledPairs = Object.keys(filteredByPair).length;
+  const totalWordCount = (() => {
     let n = 0;
-    for (const k of Object.keys(wordsByPair)) n += wordsByPair[k].length;
+    for (const k of Object.keys(filteredByPair)) n += filteredByPair[k].length;
     return n;
   })();
 
@@ -221,7 +288,7 @@ export default function ColpiPage() {
     }
     try {
       const created = await submitWord({
-        pair: activePair, word, category: formCategory,
+        pair: activePair, word, category: formCategory, language: formLang as Language,
         country: user.country ?? null,
       });
       upsertWordLocal(created);
@@ -241,6 +308,7 @@ export default function ColpiPage() {
     setEditingId(w.id);
     setFormWord(w.word);
     setFormCategory(w.category);
+    setFormLang(w.language);
   };
   const handleEditConfirm = async () => {
     if (editingId === null) return;
@@ -248,7 +316,7 @@ export default function ColpiPage() {
     const err = validateWordInput(word, isZh);
     if (err) { showToast(err); return; }
     try {
-      const updated = await patchWord(editingId, { word, category: formCategory });
+      const updated = await patchWord(editingId, { word, category: formCategory, language: formLang as Language });
       upsertWordLocal(updated);
       setEditingId(null);
       setFormWord('');
@@ -324,6 +392,24 @@ export default function ColpiPage() {
         </div>
 
         <div className="colpi-actions">
+          <div className="colpi-pill-group" role="tablist" aria-label={isZh ? '视图' : 'View'}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'all'}
+              className={viewMode === 'all' ? 'on' : ''}
+              onClick={() => setViewMode('all')}
+            >{isZh ? '全部' : 'All'}</button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'mine'}
+              className={viewMode === 'mine' ? 'on' : ''}
+              disabled={!user}
+              onClick={() => setViewMode('mine')}
+              title={user ? '' : (isZh ? '需要登录' : 'Login required')}
+            >{isZh ? '我的' : 'Mine'}</button>
+          </div>
           <button
             className={`colpi-toggle-btn ${hideOffensive ? 'on' : ''}`}
             onClick={() => setHideOffensive(v => !v)}
@@ -363,13 +449,25 @@ export default function ColpiPage() {
       {/* === Letter-pair grid === */}
       <section className="colpi-grid-wrap">
         <div className="colpi-section-h">
-          {isZh ? '字母对网格 (英文方案)' : 'Language table (english scheme)'}
+          {isZh
+            ? `字母对网格 (${langFilter === 'all' ? '全部语言' : langDisplay(langFilter, true)})`
+            : `Language table (${langFilter === 'all' ? 'all' : langDisplay(langFilter, false).toLowerCase()} scheme)`}
         </div>
         <div className="colpi-grid-scroll">
           <table className="colpi-grid">
             <thead>
               <tr>
-                <th className="colpi-grid-corner">EN</th>
+                <th
+                  className="colpi-grid-corner clickable"
+                  ref={cornerRef}
+                  onClick={() => setLangPickerOpen(o => !o)}
+                  title={isZh ? '切换语言' : 'Switch language'}
+                >
+                  {langFilter === 'all'
+                    ? 'ALL'
+                    : (LANG_MAP[langFilter]?.code ?? langFilter).toUpperCase()}
+                  <span className="colpi-grid-corner-caret">▾</span>
+                </th>
                 {ALPHABET.map(c => <th key={c} className="colpi-grid-h">{c}</th>)}
               </tr>
             </thead>
@@ -379,7 +477,7 @@ export default function ColpiPage() {
                   <th className="colpi-grid-h">{r}</th>
                   {ALPHABET.map(c => {
                     const pair = `${r}${c}`;
-                    const words = wordsByPair[pair];
+                    const words = filteredByPair[pair];
                     const filled = !!words && words.length > 0;
                     return (
                       <td
@@ -397,6 +495,16 @@ export default function ColpiPage() {
             </tbody>
           </table>
         </div>
+        {langPickerOpen && (
+          <LangPopup
+            value={langFilter}
+            onChange={(v) => setLangFilter(v)}
+            isZh={isZh}
+            includeAll
+            onClose={() => setLangPickerOpen(false)}
+            popupClassName="colpi-langpicker-popup--corner"
+          />
+        )}
         <div className="colpi-grid-legend">
           <span className="colpi-legend-swatch filled" /> {isZh ? '已有词' : 'Has words'}
           <span className="colpi-legend-swatch empty" /> {isZh ? '空缺' : 'Empty'}
@@ -406,8 +514,8 @@ export default function ColpiPage() {
               : loadError
                 ? (isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`)
                 : isZh
-                  ? `共 ${filledPairs} 对 / ${totalEnglishWords} 个词`
-                  : `${filledPairs} pairs / ${totalEnglishWords} words`}
+                  ? `共 ${filledPairs} 对 / ${totalWordCount} 个词`
+                  : `${filledPairs} pairs / ${totalWordCount} words`}
           </span>
         </div>
       </section>
@@ -433,6 +541,7 @@ export default function ColpiPage() {
                     isZh={isZh}
                     word={formWord} setWord={setFormWord}
                     category={formCategory} setCategory={setFormCategory}
+                    lang={formLang} setLang={setFormLang}
                     onConfirm={handleEditConfirm}
                     onCancel={() => { setEditingId(null); setFormWord(''); }}
                     confirmLabel={isZh ? '保存' : 'Save'}
@@ -502,6 +611,7 @@ export default function ColpiPage() {
                 isZh={isZh}
                 word={formWord} setWord={setFormWord}
                 category={formCategory} setCategory={setFormCategory}
+                lang={formLang} setLang={setFormLang}
                 onConfirm={handleSubmitConfirm}
                 onCancel={() => { setSubmitOpen(false); setFormWord(''); }}
                 confirmLabel={isZh ? '提交' : 'Submit'}
@@ -599,13 +709,16 @@ export default function ColpiPage() {
 
 // ── shared input form for submit + edit ──
 function FormFields({
-  isZh, word, setWord, category, setCategory, onConfirm, onCancel, confirmLabel,
+  isZh, word, setWord, category, setCategory, lang, setLang,
+  onConfirm, onCancel, confirmLabel,
 }: {
   isZh: boolean;
   word: string;
   setWord: (s: string) => void;
   category: Category;
   setCategory: (c: Category) => void;
+  lang: string;
+  setLang: (l: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
   confirmLabel: string;
@@ -636,6 +749,7 @@ function FormFields({
         <option value="place">{CATEGORY_LABEL.place[isZh ? 'zh' : 'en']}</option>
         <option value="other">{CATEGORY_LABEL.other[isZh ? 'zh' : 'en']}</option>
       </select>
+      <LanguagePicker value={lang} onChange={setLang} isZh={isZh} />
       <button className="colpi-detail-add" onClick={onConfirm}>{confirmLabel}</button>
       <button className="colpi-detail-cancel" onClick={onCancel}>
         {isZh ? '取消' : 'Cancel'}

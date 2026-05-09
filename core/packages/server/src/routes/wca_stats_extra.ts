@@ -7,7 +7,7 @@
  *
  * 端点:
  *   GET /v1/wca/grand-slam?event=&onlyFirst=
- *   GET /v1/wca/all-results?event=&type=&country=&page=&size=
+ *   GET /v1/wca/all-results?event=&type=&country=&year=&month=&q=&page=&size=
  *   GET /v1/wca/year-results?year=&month=&event=&type=&country=&page=&size=
  *   GET /v1/wca/cohort-ranks?cohort=&event=&type=&country=&page=&size=
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
@@ -124,10 +124,16 @@ wcaStatsExtraRoutes.get('/wca/grand-slam', async (c) => {
 });
 
 // ── 2. /v1/wca/all-results ──
+// 全量(无 cap):11M 行,WHERE 用 event_id + is_avg + 可选 country / year / month / q,
+// ORDER BY value 走 wrt_main / wrt_country / wrt_wca_id / wrt_comp_id 索引.
+// q 在 wca_persons.name 和 wca_competitions.name 上 ILIKE,各 LIMIT 200.
 wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const event = (c.req.query('event') ?? '333').toLowerCase();
   const type = (c.req.query('type') ?? 'single').toLowerCase();
   const country = c.req.query('country') ?? '';
+  const year = parseInt(c.req.query('year') ?? '0', 10);   // 0 = 全部
+  const month = parseInt(c.req.query('month') ?? '0', 10); // 0 = 全部
+  const q = (c.req.query('q') ?? '').trim();
   const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
   const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
 
@@ -136,40 +142,88 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   if (event === '333mbf' && type === 'average') return c.json({ error: 'No average for 333mbf' }, 400);
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
+  if (year && (year < 2003 || year > new Date().getUTCFullYear() + 1)) {
+    return c.json({ error: 'Invalid year' }, 400);
+  }
+  if (month && (month < 1 || month > 12)) {
+    return c.json({ error: 'Invalid month' }, 400);
+  }
+
+  const where: string[] = [`t.event_id = ?`, `t.is_avg = ?`];
+  const params: unknown[] = [event, type === 'average'];
+
+  if (cn.id) { where.push(`t.person_country_id = ?`); params.push(cn.id); }
+  if (year) {
+    where.push(`t.comp_date >= ? AND t.comp_date <= ?`);
+    params.push(`${year}-01-01`, `${year}-12-31`);
+  }
+  if (month) { where.push(`EXTRACT(MONTH FROM t.comp_date) = ?`); params.push(month); }
+
+  if (q) {
+    const [personRows, compRows] = await Promise.all([
+      query<{ wca_id: string }>(
+        `SELECT wca_id FROM wca_persons WHERE name ILIKE ? LIMIT 200`,
+        [`%${q}%`],
+      ),
+      query<{ id: string }>(
+        `SELECT id FROM wca_competitions WHERE name ILIKE ? LIMIT 200`,
+        [`%${q}%`],
+      ),
+    ]);
+    const personIds = personRows.map(r => r.wca_id);
+    const compIds = compRows.map(r => r.id);
+    if (personIds.length === 0 && compIds.length === 0) {
+      c.header('Cache-Control', CACHE_HEADER);
+      return c.json({ event, type, country: cn.id, year, month, q, page, size, total: 0, rows: [] });
+    }
+    const conds: string[] = [];
+    if (personIds.length > 0) {
+      conds.push(`t.wca_id IN (${personIds.map(() => '?').join(',')})`);
+      params.push(...personIds);
+    }
+    if (compIds.length > 0) {
+      conds.push(`t.comp_id IN (${compIds.map(() => '?').join(',')})`);
+      params.push(...compIds);
+    }
+    where.push(`(${conds.join(' OR ')})`);
+  }
 
   const offset = (page - 1) * size;
+  const totalParams = [...params];
+  const dataParams = [...params, size, offset];
+
   const rows = await query<{
-    rank_in_scope: number; value: number; wca_id: string; person_country_id: string;
+    value: number; wca_id: string; person_country_id: string;
     iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
     attempts: number[] | null; person_name: string;
   }>(
     `
-    SELECT t.rank_in_scope, t.value, t.wca_id, t.person_country_id,
+    SELECT t.value, t.wca_id, t.person_country_id,
            co.iso2 AS iso2,
-           t.comp_id, c.name AS comp_name, c.start_date AS comp_date,
+           t.comp_id, c.name AS comp_name, t.comp_date,
            t.attempts, p.name AS person_name
     FROM wca_results_top t
     JOIN wca_persons p ON p.wca_id = t.wca_id
     LEFT JOIN wca_countries co ON co.id = t.person_country_id
     LEFT JOIN wca_competitions c ON c.id = t.comp_id
-    WHERE t.event_id = ? AND t.is_avg = ? AND t.country_filter = ?
-    ORDER BY t.rank_in_scope ASC
+    WHERE ${where.join(' AND ')}
+    ORDER BY t.value ASC, t.wca_id ASC
     LIMIT ? OFFSET ?
     `,
-    [event, type === 'average', cn.id, size, offset],
+    dataParams,
   );
 
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_results_top WHERE event_id = ? AND is_avg = ? AND country_filter = ?`,
-    [event, type === 'average', cn.id],
+    `SELECT COUNT(*) AS n FROM wca_results_top t WHERE ${where.join(' AND ')}`,
+    totalParams,
   );
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    event, type, country: cn.id, page, size, total,
-    rows: rows.map(r => ({
-      rank: r.rank_in_scope, value: r.value,
+    event, type, country: cn.id, year, month, q, page, size, total,
+    rows: rows.map((r, i) => ({
+      rank: offset + i + 1, value: r.value,
       wcaId: r.wca_id, name: r.person_name,
       countryId: r.person_country_id, iso2: r.iso2,
       compId: r.comp_id, compName: r.comp_name, compDate: r.comp_date,

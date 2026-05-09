@@ -2,7 +2,7 @@
  * /site — 魔方网址导航页
  * sidebar 分组 + 右侧单行密集列表；搜索用 Fuse.js。
  */
-import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, AlertTriangle } from 'lucide-react';
@@ -53,7 +53,6 @@ const TEXTS = {
   sites:       { en: 'sites',            zh: '个站点' },
   dead:        { en: 'Offline',          zh: '不可访问' },
   resultsFor:  { en: 'Results for',      zh: '搜索' },
-  crossGroup:  { en: 'Search all groups',zh: '跨分类搜索' },
   altLink:     { en: 'mirrors',          zh: '其他镜像' },
   noResults:   { en: 'No matches.',      zh: '没有匹配结果。' },
   colName:     { en: 'Name',             zh: '名称' },
@@ -165,7 +164,6 @@ export default function SitesPage() {
   const [params, setParams] = useSearchParams();
   const group = ((params.get('g') as GroupId) || DEFAULT_GROUP) as GroupFilter;
   const query = params.get('q') || '';
-  const crossGroup = params.get('cross') === '1';
 
   const setGroup = useCallback(
     (g: GroupFilter) => {
@@ -179,7 +177,7 @@ export default function SitesPage() {
 
   // 本地输入 state:避免每次按键都 setParams 导致中文 IME 组词错乱
   const [inputValue, setInputValue] = useState(query);
-  const composingRef = useRef(false);
+  const [composing, setComposing] = useState(false);
 
   // URL 外部变化(例如浏览器返回)同步回本地 state
   useEffect(() => {
@@ -187,9 +185,11 @@ export default function SitesPage() {
   }, [query]);
 
   // 本地输入变更 → 延迟写回 URL;组词期间不写
+  // composing 必须是 state(不是 ref)— compositionEnd 时 inputValue 常和组词中的中间态相同,
+  // 不会触发 re-render,要靠 composing 翻转重跑 effect 才能 flush
   useEffect(() => {
     if (inputValue === query) return;
-    if (composingRef.current) return;
+    if (composing) return;
     const t = setTimeout(() => {
       const next = new URLSearchParams(params);
       if (inputValue) next.set('q', inputValue);
@@ -197,14 +197,7 @@ export default function SitesPage() {
       setParams(next, { replace: true });
     }, 150);
     return () => clearTimeout(t);
-  }, [inputValue, query, params, setParams]);
-
-  const toggleCross = useCallback(() => {
-    const next = new URLSearchParams(params);
-    if (crossGroup) next.delete('cross');
-    else next.set('cross', '1');
-    setParams(next, { replace: true });
-  }, [params, setParams, crossGroup]);
+  }, [inputValue, composing, query, params, setParams]);
 
   const toggleLang = useCallback(() => {
     const n = lang === 'zh' ? 'en' : 'zh';
@@ -241,15 +234,11 @@ export default function SitesPage() {
   );
 
   const filtered = useMemo(() => {
-    let list: Site[] = SITES;
     if (query.trim()) {
-      const hits = fuse.search(query.trim()).map((r) => r.item);
-      list = crossGroup ? hits : hits.filter((s) => s.group === group);
-    } else {
-      list = SITES.filter((s) => s.group === group);
+      return fuse.search(query.trim()).map((r) => r.item);
     }
-    return list;
-  }, [query, group, crossGroup, fuse]);
+    return SITES.filter((s) => s.group === group);
+  }, [query, group, fuse]);
 
   const headerLabel = query.trim()
     ? `${TEXTS.resultsFor[lang]} "${query.trim()}"`
@@ -267,20 +256,13 @@ export default function SitesPage() {
             placeholder={TEXTS.searchPh[lang]}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onCompositionStart={() => { composingRef.current = true; }}
+            onCompositionStart={() => setComposing(true)}
             onCompositionEnd={(e) => {
-              composingRef.current = false;
+              setComposing(false);
               setInputValue((e.target as HTMLInputElement).value);
             }}
           />
         </div>
-
-        {query.trim() && (
-          <label className="sites-cross">
-            <input type="checkbox" checked={crossGroup} onChange={toggleCross} />
-            <span>{TEXTS.crossGroup[lang]}</span>
-          </label>
-        )}
 
         <nav className="sites-nav">
           {GROUPS.map((g) => (

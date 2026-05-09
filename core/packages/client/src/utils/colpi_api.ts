@@ -9,6 +9,14 @@ const BASE = API_ORIGIN + '/v1/colpi';
 export type Category =
   | 'unspecified' | 'object' | 'person' | 'action' | 'place' | 'other';
 
+/** All 41 codes mirrored from upstream + 'other' fallback. Server is authoritative. */
+export type Language =
+  | 'af' | 'ar' | 'bg' | 'ca' | 'cz' | 'da' | 'de' | 'en' | 'es' | 'eu'
+  | 'fa' | 'fi' | 'fr' | 'gu' | 'he' | 'hi' | 'hr' | 'hu' | 'id' | 'it'
+  | 'ja' | 'kr' | 'lt' | 'mk' | 'ms' | 'nl' | 'no' | 'pl' | 'pt' | 'ro'
+  | 'ru' | 'se' | 'sk' | 'sl' | 'th' | 'tr' | 'uk' | 'uz' | 'vi' | 'zh' | 'zu'
+  | 'other';
+
 export interface Submitter {
   wcaId: string;
   name: string;
@@ -20,6 +28,7 @@ export interface ColpiWord {
   pair: string;
   word: string;
   category: Category;
+  language: Language;
   offensive: boolean;
   score: number;
   submitter?: Submitter;     // 缺省 = 上游镜像
@@ -60,6 +69,7 @@ export interface SubmitInput {
   pair: string;
   word: string;
   category: Category;
+  language?: Language;       // 服务端 auto-detect, 客户端可覆盖
   country?: string | null;
 }
 
@@ -72,6 +82,7 @@ export async function submitWord(body: SubmitInput): Promise<ColpiWord> {
 export interface PatchInput {
   word?: string;
   category?: Category;
+  language?: Language;
   offensive?: boolean;       // 仅 admin 可改
 }
 

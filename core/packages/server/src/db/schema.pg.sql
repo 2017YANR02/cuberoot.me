@@ -237,6 +237,7 @@ CREATE TABLE colpi_words (
   pair                VARCHAR(8)  NOT NULL,           -- 2 字符 (含 'ʧ' 多字节字母)
   word                VARCHAR(128) NOT NULL,          -- 已大写化 (英文) / 原样 (中文等)
   category            VARCHAR(16) NOT NULL,           -- unspecified|object|person|action|place|other
+  language            VARCHAR(8)  NOT NULL DEFAULT 'en', -- ISO 2~3 letter, 上游 41 codes (af/ar/bg/ca/cz/da/de/en/es/eu/fa/fi/fr/gu/he/hi/hr/hu/id/it/ja/kr/lt/mk/ms/nl/no/pl/pt/ro/ru/se/sk/sl/th/tr/uk/uz/vi/zh/zu)
   offensive           BOOLEAN NOT NULL DEFAULT FALSE, -- 上游 wlOffensive 标记
   submitter_wca_id    VARCHAR(20),                    -- NULL = 上游镜像
   submitter_name      VARCHAR(128),
@@ -244,8 +245,10 @@ CREATE TABLE colpi_words (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE UNIQUE INDEX uq_colpi_words_pair_word ON colpi_words(pair, word);
+-- 跨语言可能撞同串 (e.g. "AS" 在 en 和 es 都是合法词),unique 必须含 language
+CREATE UNIQUE INDEX uq_colpi_words_pair_word_lang ON colpi_words(pair, word, language);
 CREATE INDEX idx_colpi_words_pair ON colpi_words(pair);
+CREATE INDEX idx_colpi_words_language ON colpi_words(language);
 CREATE INDEX idx_colpi_words_submitter ON colpi_words(submitter_wca_id) WHERE submitter_wca_id IS NOT NULL;
 CREATE INDEX idx_colpi_words_recent ON colpi_words(created_at DESC) WHERE submitter_wca_id IS NOT NULL;
 CREATE TRIGGER colpi_words_updated_at BEFORE UPDATE ON colpi_words
