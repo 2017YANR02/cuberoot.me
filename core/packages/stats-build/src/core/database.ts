@@ -22,10 +22,13 @@ export interface DbConfig {
 // NOTE: 导出配置供 update_database.ts 复用
 export const DB_CONFIG: DbConfig = parseYaml(readFileSync(CONFIG_PATH, 'utf-8'));
 
-// NOTE: 与 Ruby Database::REQUIRED_TABLES 一致——CI 导入时仅保留这 15 张表
+// NOTE: CI 导入时仅保留这些表;改一处影响整个 stats build / wca_stats_extra build.
+// `eligible_country_iso2s_for_championship`(2026-05 加):wca_stats_extra_build 用来
+// 判 greater_china 等多国共享 championship 在 grand_slam 中匹配选手国籍.
 export const REQUIRED_TABLES = [
   'championships', 'competitions', 'competition_delegates', 'continents',
-  'countries', 'events', 'formats', 'persons', 'preferred_formats',
+  'countries', 'eligible_country_iso2s_for_championship',
+  'events', 'formats', 'persons', 'preferred_formats',
   'ranks_single', 'ranks_average', 'result_attempts', 'results',
   'round_types', 'users',
 ] as const;

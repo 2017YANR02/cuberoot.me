@@ -54,18 +54,29 @@ export default function AllResultsPage() {
     const next = new URLSearchParams(params);
     if (v) next.set(k, v); else next.delete(k);
     if (resetPage) next.delete('page');
+    // 切到 333mbf 但 type=average → 该项目无平均,自动归 single 避免 server 400
+    if (k === 'event' && v === '333mbf' && next.get('type') === 'average') {
+      next.delete('type');
+    }
     setParams(next, { replace: false });
   };
 
-  // q debounced —— 输入 300ms 静默后才 commit 到 URL,避免每次按键都查询
+  // q debounced —— 输入 300ms 静默后才 commit 到 URL,避免每次按键都查询.
+  // setParams 用函数式 prev,timer 触发时拿最新 URL,避免闭包旧 params 把 year/month 等覆盖丢.
   const [qInput, setQInput] = useState(qFromUrl);
   useEffect(() => { setQInput(qFromUrl); }, [qFromUrl]);
   useEffect(() => {
     if (qInput === qFromUrl) return;
-    const t = setTimeout(() => update('q', qInput), 300);
+    const t = setTimeout(() => {
+      setParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (qInput) next.set('q', qInput); else next.delete('q');
+        next.delete('page');
+        return next;
+      }, { replace: false });
+    }, 300);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qInput]);
+  }, [qInput, qFromUrl, setParams]);
 
   const currentYear = new Date().getUTCFullYear();
   const years = useMemo(() => {

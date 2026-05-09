@@ -66,6 +66,8 @@ Get-Service | Where-Object Name -match mysql  # 服务状态
 
 **改 build 步骤顺序时，把动了的那步往前挪** —— 否则用户得等 30+ min 跑完无关的 64 stats 才看到改动那步报错。
 
+**写 bin/ SQL 前先 grep 表名是否在 `core/database.ts` REQUIRED_TABLES 里** —— CI 只导白名单内的表，本地全量 dump 跑得通 ≠ CI 通过，已被 `result_values`(根本没这表)和 `eligible_country_iso2s_for_championship`(漏白)各坑一次。
+
 ## 验证新 stat
 
 1. 本地跑 `npx tsx src/bin/compute.ts <stat_name>` 检查输出 JSON 结构
