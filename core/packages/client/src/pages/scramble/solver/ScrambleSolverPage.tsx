@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
 import CubingPreview from '../../timer/cube/CubingPreview';
-import { faceletToCubie, validateFacelet, SOLVED_FACELET } from './facelet';
+import { faceletToCubie, validateFacelet } from './facelet';
 import {
   formatMoves,
   invertSequence,
@@ -33,7 +33,7 @@ import {
   type CubieCube,
 } from '../../timer/scramble/kociemba/cube';
 import KociembaWorker from '../../timer/scramble/kociemba/kociemba.worker.ts?worker';
-import InteractiveCubeNet, { type FaceLetter } from '../../visualcube/InteractiveCubeNet';
+import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from '../../visualcube/InteractiveCubeNet';
 
 interface SolverInfo {
   name: string;
@@ -114,10 +114,9 @@ export default function ScrambleSolverPage() {
   const [solveResults, setSolveResults] = useState<Map<number, string>>(new Map());
   const solveResultsRef = useRef<Map<number, string>>(new Map());
   const [stateInfo, setStateInfo] = useState<string | null>(null);
-  // 内置 net 填色编辑器 — 折叠在按钮后,点开才显示
-  const [showPaint, setShowPaint] = useState(false);
-  const [paintFacelet, setPaintFacelet] = useState(SOLVED_FACELET);
-  const [paintColor, setPaintColor] = useState<FaceLetter>('U');
+  // 内置 net 填色编辑器 — 始终显示;默认全空,用户从零开始填
+  const [paintFacelet, setPaintFacelet] = useState(EMPTY_FACELET);
+  const [paintColor, setPaintColor] = useState<PaintColor>('U');
   // Net 编辑器宽度自适应:窄屏取整 viewport - padding,宽屏封顶 360
   const [paintCanvasSize, setPaintCanvasSize] = useState(360);
   useEffect(() => {
@@ -537,6 +536,34 @@ export default function ScrambleSolverPage() {
         </div>
       )}
 
+      <section className="cubeopt-card">
+        <div className="row paint-toggle-row">
+          <span className="lbl">{t('从状态', 'From state')}</span>
+          <span className="paint-hint">
+            {t(
+              '点击格子 → 上色 → "求 scramble" → 自动填到下面打乱框,再点 Solve 求最优。',
+              'Click stickers → paint → "Derive scramble" → fills the box below, then Solve for optimal.',
+            )}
+          </span>
+        </div>
+        <div className="paint-wrap">
+          <InteractiveCubeNet
+            facelet={paintFacelet}
+            onChange={setPaintFacelet}
+            activeColor={paintColor}
+            onActiveColorChange={setPaintColor}
+            pixelSize={paintCanvasSize}
+            solveLabel={{ zh: '求 scramble', en: 'Derive scramble' }}
+            onSolve={(fc) => {
+              if (kociembaBusy) return;
+              runKociembaForState(fc).catch((e: Error) => {
+                setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
+              });
+            }}
+          />
+        </div>
+      </section>
+
       {stateInfo && (
         <div className="cubeopt-info">
           {kociembaBusy && <Loader2 size={14} className="spinning" />}
@@ -584,43 +611,6 @@ export default function ScrambleSolverPage() {
         {progress >= 0 && (
           <div className="progress">
             <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
-          </div>
-        )}
-      </section>
-
-      <section className="cubeopt-card">
-        <div className="row paint-toggle-row">
-          <span className="lbl">{t('从状态', 'From state')}</span>
-          <button
-            className={`btn${showPaint ? ' is-active' : ''}`}
-            onClick={() => setShowPaint(v => !v)}
-            title={t('画一个魔方状态,自动求出对应打乱', 'Paint a cube state, auto-derive a scramble')}
-          >
-            {showPaint ? t('收起', 'Hide') : t('展开填色', 'Open paint')}
-          </button>
-          <span className="paint-hint">
-            {t(
-              '点击格子 → 上色 → "求 scramble" → 自动填到下面打乱框,再点 Solve 求最优。',
-              'Click stickers → paint → "Derive scramble" → fills the box below, then Solve for optimal.',
-            )}
-          </span>
-        </div>
-        {showPaint && (
-          <div className="paint-wrap">
-            <InteractiveCubeNet
-              facelet={paintFacelet}
-              onChange={setPaintFacelet}
-              activeColor={paintColor}
-              onActiveColorChange={setPaintColor}
-              pixelSize={paintCanvasSize}
-              solveLabel={{ zh: '求 scramble', en: 'Derive scramble' }}
-              onSolve={(fc) => {
-                if (kociembaBusy) return;
-                runKociembaForState(fc).catch((e: Error) => {
-                  setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
-                });
-              }}
-            />
           </div>
         )}
       </section>

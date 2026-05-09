@@ -43,6 +43,27 @@ const FACES = 'URFDLB';
 export const SOLVED_FACELET =
   'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
 
+/**
+ * 每个 sticker idx 的同块伙伴 idx:
+ *   - 中心(idx % 9 === 4):无伙伴
+ *   - 棱:1 个伙伴
+ *   - 角:2 个伙伴
+ * 用于 painting 时拒绝同块重复色 / 相对面色。
+ */
+export const STICKER_SIBLINGS: ReadonlyArray<readonly number[]> = (() => {
+  const out: number[][] = Array.from({ length: 54 }, () => []);
+  for (const [a, b, c] of CORNER_FACELET) {
+    out[a] = [b, c];
+    out[b] = [a, c];
+    out[c] = [a, b];
+  }
+  for (const [a, b] of EDGE_FACELET) {
+    out[a] = [b];
+    out[b] = [a];
+  }
+  return out;
+})();
+
 /** 标准化为 54 大写字母,并校验长度。失败抛错。 */
 export function normalizeFacelet(s: string): string {
   const cleaned = s.replace(/\s+/g, '').toUpperCase();
