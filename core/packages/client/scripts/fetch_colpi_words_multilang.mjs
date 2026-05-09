@@ -38,11 +38,16 @@ const LANGS = [
   { id: 19, code: 'zh' }, { id: 36, code: 'zu' },
 ];
 
-const ALPHABET = [
-  'A','B','C','D','E','F','G','H','I','J','K','L','M',
-  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-  'ʧ',
-];
+// Per-lang alphabet from extract_lang_alphabets.mjs. Loaded at runtime.
+function loadAlphabets() {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const file = path.join(__dirname, '..', '..', '..', '..', '.tmp', 'colpi_alphabets.json');
+  if (!fs.existsSync(file)) {
+    throw new Error(`Run extract_lang_alphabets.mjs first → ${file} missing`);
+  }
+  return JSON.parse(fs.readFileSync(file, 'utf-8'));
+}
 
 const PAO_MAP = {
   '0': 'unspecified', '1': 'object', '2': 'person',
@@ -139,14 +144,20 @@ async function main() {
     ? LANGS.filter(l => args.only.includes(l.code))
     : LANGS;
 
-  const pairs = [];
-  for (const a of ALPHABET) for (const b of ALPHABET) pairs.push(a + b);
-
+  const alphabets = loadAlphabets();
   const overallStart = Date.now();
   const grandStats = {};
 
   for (const { id, code } of langs) {
     const tLang = Date.now();
+    const alphabet = alphabets[code];
+    if (!alphabet || alphabet.length === 0) {
+      console.warn(`[${code}] no alphabet, skipping`);
+      continue;
+    }
+    const pairs = [];
+    for (const a of alphabet) for (const b of alphabet) pairs.push(a + b);
+
     let cookie;
     try { cookie = await getLangCookie(id); }
     catch (e) {
@@ -181,7 +192,7 @@ async function main() {
     }
     const dt = ((Date.now() - tLang) / 1000).toFixed(1);
     const totalDt = ((Date.now() - overallStart) / 60000).toFixed(1);
-    console.log(`[${code}] ${pairsHit} pairs / ${words} words / ${dt}s  (cumulative ${totalDt}m)`);
+    console.log(`[${code}] alphabet=${alphabet.length} ${pairsHit} pairs / ${words} words / ${dt}s  (cumulative ${totalDt}m)`);
     if (failures.length > 0) console.warn(`  ${failures.length} failures (showing 3): ${failures.slice(0, 3).map(([p, e]) => `${p}:${e}`).join(', ')}`);
     grandStats[code] = { pairsHit, words, failures: failures.length };
   }
