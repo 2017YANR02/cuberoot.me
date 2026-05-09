@@ -35,12 +35,12 @@ export interface Milestone {
 
 const FINAL_ROUND_TYPES = new Set(['f', 'c', 'b']);
 
-const ACTIVE_18_EVENTS = new Set([
+// 2024+ WCA 现役 17 项(2023 起退役 333ft / magic / mmagic).
+const ACTIVE_EVENTS = new Set([
   '333','222','444','555','666','777',
   '333bf','333fm','333oh',
   'minx','pyram','clock','skewb','sq1',
   '444bf','555bf','333mbf',
-  '333oh',
 ]);
 const BLIND_EVENTS = new Set(['333bf', '444bf', '555bf', '333mbf']);
 
@@ -245,14 +245,14 @@ export function buildMilestones(
     const doneAt = new Map<string, { date: string; compId: string }>();
     const sorted = sortResultsByDate(results, compById);
     for (const r of sorted) {
-      if (!ACTIVE_18_EVENTS.has(r.event_id)) continue;
+      if (!ACTIVE_EVENTS.has(r.event_id)) continue;
       if (r.best <= 0) continue;
       if (doneAt.has(r.event_id)) continue;
       const c = compById.get(r.competition_id);
       if (!c) continue;
       doneAt.set(r.event_id, { date: c.start_date, compId: c.id });
     }
-    if (doneAt.size === ACTIVE_18_EVENTS.size) {
+    if (doneAt.size === ACTIVE_EVENTS.size) {
       let latest = { date: '', compId: '' };
       for (const v of doneAt.values()) {
         if (v.date > latest.date) latest = v;
@@ -260,8 +260,8 @@ export function buildMilestones(
       list.push({
         type: 'grand_slam',
         date: latest.date,
-        zh: '大满贯 — 完成全部 18 个现役项目',
-        en: 'Grand Slam — completed all 18 active events',
+        zh: '大满贯 — 完成全部 17 个现役项目',
+        en: 'Grand Slam — completed all 17 active events',
         tags: [{ kind: 'comp', label: compName(latest.compId) }],
       });
     }
