@@ -47,6 +47,7 @@
     "scramble-display": "^0.59.1",
     "sr-puzzlegen": "^1.0.4",
     "sr-puzzlegen-pll": "1.0.4",
+    "svg2pdf.js": "^2.7.0",
     "three": "^0.183.2",
     "vt-pbf": "^3.1.3",
     "zustand": "^5.0.0"
