@@ -213,6 +213,24 @@
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.alg-puzzle-icon {
+  font-size: 28px;
+  color: var(--alg-text-muted);
+  line-height: 1;
+}
+.alg-cat-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.alg-cat-title-icon {
+  font-size: 28px;
+  color: var(--alg-text-muted);
+  line-height: 1;
 }
 .alg-puzzle-count {
   font-size: 12px;
