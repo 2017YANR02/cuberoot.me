@@ -790,32 +790,27 @@ export default function VisualCubeEditorPage() {
         })()}
       </section>
 
-      {/* Export buttons. /v1/visualcube.svg simplified API does NOT support the puzzle-gen
-          paths (cube net + non-cube puzzles), so hide the API / <img> / Markdown copies there
-          and steer users to the SVG/PNG downloads (rendered locally from puzzle-gen). */}
+      {/* Export buttons. The simplified /v1/visualcube.svg endpoint does not yet render
+          unfolded-net or non-cube puzzles server-side — for those the URL falls back to
+          our 3D renderer. Buttons are shown anyway so users get shareable embeds today
+          (and the same URLs Just Work once the server gains net support). */}
       <section className="vc-exports">
         <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
-        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
-          <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
-        )}
+        <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> SVG
         </button>
         <button type="button" className="vc-btn" onClick={downloadPng}>
           <Download size={14} /> PNG
         </button>
-        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
-          <>
-            <CopyButton
-              label={t('<img> 标签', '<img> tag')}
-              getValue={() => `<img src="${apiUrl}" alt="cube" width="${state.imageSize}" height="${state.imageSize}" />`}
-            />
-            <CopyButton
-              label="Markdown"
-              getValue={() => `![cube](${apiUrl})`}
-            />
-          </>
-        )}
+        <CopyButton
+          label={t('<img> 标签', '<img> tag')}
+          getValue={() => `<img src="${apiUrl}" alt="cube" width="${state.imageSize}" height="${state.imageSize}" />`}
+        />
+        <CopyButton
+          label="Markdown"
+          getValue={() => `![cube](${apiUrl})`}
+        />
       </section>
 
       {/* Controls */}
