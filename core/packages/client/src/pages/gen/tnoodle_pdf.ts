@@ -52,13 +52,11 @@ const NBSP = ' ';
 
 // ─── Public types ─────────────────────────────────────────────────────────
 export interface AttemptInput {
-  /** Display label, e.g. "1", "E1" */
+  /** Display label, e.g. "1", "E1". For MBLD this is the cube number. */
   label: string;
-  /** One scramble (NxN/sq1/mega/...) — for MBLD see `mbldLines` */
+  /** Single scramble move sequence; one row in the PDF. */
   scramble: string;
   isExtra: boolean;
-  /** MBLD: array of 3BLD scrambles, one per cube; takes precedence over `scramble`. */
-  mbldLines?: string[];
 }
 
 export interface RoundSheetInput {
@@ -66,6 +64,8 @@ export interface RoundSheetInput {
   roundIdx: number;
   groupIdx: number;
   format: WcaFormat;
+  /** MBLD only — 0-based attempt index. Adds " Attempt N+1" to the title. */
+  attemptNumber?: number;
   attempts: AttemptInput[];
 }
 
@@ -76,6 +76,8 @@ export interface PdfOptions {
   isZh: boolean;
   /** Optional cancellation hook for very long runs. */
   signal?: AbortSignal;
+  /** Called per page after rendering completes. (done, total) where total = page count. */
+  onProgress?: (done: number, total: number) => void;
 }
 
 // ─── Font loading (cached) ────────────────────────────────────────────────
@@ -239,14 +241,15 @@ function splitToFixedSizeLines(
 
 // ─── Round detail string ─────────────────────────────────────────────────
 /** Mirror tnoodle's `activityCode.compileTitleString(locale, true, hasGroupId)`:
- *  `<event> Round N` (Group X appended only when >1 group). Format is NOT
- *  included — tnoodle keeps it implicit (visible from attempt count). */
+ *  `<event> Round N` (+ Attempt M for MBLD, + Scramble Set X if >1 group).
+ *  Format is NOT included — tnoodle keeps it implicit. */
 function roundDetailString(sheet: RoundSheetInput, isZh: boolean): string {
   void isZh;
   const evName = tnoodleEventTitle(sheet.event) ?? eventDisplayName(sheet.event, false);
   const round = `Round ${sheet.roundIdx + 1}`;
-  const grp = sheet.groupIdx > 0 ? ` Group ${String.fromCharCode(65 + sheet.groupIdx)}` : '';
-  return `${evName} ${round}${grp}`;
+  const grp = sheet.groupIdx > 0 ? ` Scramble Set ${String.fromCharCode(65 + sheet.groupIdx)}` : '';
+  const att = sheet.attemptNumber !== undefined ? ` Attempt ${sheet.attemptNumber + 1}` : '';
+  return `${evName} ${round}${grp}${att}`;
 }
 
 /** Mirror tnoodle's wcif EventModel descriptions for the title line. */
@@ -255,7 +258,7 @@ function tnoodleEventTitle(event: string): string | null {
     '222': '2x2x2', '333': '3x3x3', '444': '4x4x4', '555': '5x5x5',
     '666': '6x6x6', '777': '7x7x7',
     '333bf': '3x3x3 Blindfolded', '444bf': '4x4x4 Blindfolded', '555bf': '5x5x5 Blindfolded',
-    '333oh': '3x3x3 One-Handed', '333fm': '3x3x3 Fewest Moves', '333mbf': '3x3x3 Multi-Blind',
+    '333oh': '3x3x3 One-Handed', '333fm': '3x3x3 Fewest Moves', '333mbf': '3x3x3 Multiple Blindfolded',
     'pyram': 'Pyraminx', 'minx': 'Megaminx', 'sq1': 'Square-1',
     'skewb': 'Skewb', 'clock': 'Clock',
   };
@@ -307,6 +310,9 @@ export async function generateTnoodlePdf(
   });
   const totalPages = pagePlan.length;
 
+  // Initial 0/N tick so the UI shows "0/N" before the first page.
+  opts.onProgress?.(0, totalPages);
+
   for (let p = 0; p < pagePlan.length; p++) {
     if (opts.signal?.aborted) throw new Error('aborted');
     const plan = pagePlan[p];
@@ -322,6 +328,9 @@ export async function generateTnoodlePdf(
       todayIso: today,
       generatorTag: opts.generatorTag,
     });
+    opts.onProgress?.(p + 1, totalPages);
+    // yield to the event loop so React can repaint the bar
+    await new Promise((r) => setTimeout(r, 0));
   }
 
   return doc.output('blob');
@@ -426,10 +435,7 @@ async function renderPage(
       // Scramble text
       const textBoxW = textColW - 2 * DEFAULT_CELL_PADDING;
       const textBoxH = rowH - 2 * DEFAULT_CELL_PADDING;
-      const display = a.mbldLines && a.mbldLines.length > 0
-        ? a.mbldLines.join(' ⏎ ')
-        : a.scramble;
-      const phrase = computePhrase(doc, display, textBoxW, textBoxH);
+      const phrase = computePhrase(doc, a.scramble, textBoxW, textBoxH);
       const useHL = phrase.lines.length >= MIN_LINES_HIGHLIGHTING;
       doc.setFont(FONT_MONO, 'normal');
       doc.setFontSize(phrase.fontSize);
@@ -454,8 +460,8 @@ async function renderPage(
       // (slow but rare). isExtra param unused because state computation is
       // identical for main vs extras.
       void isExtra;
-      const svgStr = renderUnfoldedSvgForEvent(sheet.event, lineFor(a))
-        ?? await getScramble2DSvg(sheet.event, lineFor(a));
+      const svgStr = renderUnfoldedSvgForEvent(sheet.event, a.scramble)
+        ?? await getScramble2DSvg(sheet.event, a.scramble);
       if (svgStr) {
         const svgEl = svgStringToElement(svgStr);
         await embedSvg(doc, svgEl, imgX + DEFAULT_CELL_PADDING, rowTop + DEFAULT_CELL_PADDING,
@@ -477,11 +483,6 @@ async function renderPage(
     currentY += 2 * EXTRA_SCRAMBLE_LABEL_SIZE;
     await renderRows(extraAttempts, true);
   }
-}
-
-function lineFor(a: AttemptInput): string {
-  if (a.mbldLines && a.mbldLines.length > 0) return a.mbldLines[0];
-  return a.scramble;
 }
 
 function svgStringToElement(svgStr: string): SVGSVGElement {

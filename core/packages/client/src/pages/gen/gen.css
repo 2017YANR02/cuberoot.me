@@ -159,6 +159,28 @@
     color: #FFF;
 }
 
+.gen-btn-progress {
+    position: relative;
+    overflow: hidden;
+}
+.gen-btn-bar {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+}
+.gen-btn-bar-fill {
+    display: block;
+    height: 100%;
+    background: var(--gen-accent);
+    transition: width 80ms linear;
+}
+.gen-btn-primary .gen-btn-bar { background: rgba(255, 255, 255, 0.25); }
+.gen-btn-primary .gen-btn-bar-fill { background: #FFF; }
+
 .gen-loading {
     text-align: center;
     color: var(--gen-text-mute);
