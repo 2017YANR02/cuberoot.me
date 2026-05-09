@@ -781,7 +781,11 @@ BEGIN;
 -- 2026-05 wca_results_top schema 重构: 旧表有 country_filter NOT NULL 列,新 COPY 列名不一致.
 -- apply.sh 不调 schema 文件,所以在这里 DROP+CREATE 自包含一次性迁移.以后日常重灌不再触发改动.
 DROP TABLE IF EXISTS wca_results_top CASCADE;
+-- id BIGSERIAL: PG 深分页 late-join 模式专用. 内子查询 SELECT id 走 wrt_main 的 INCLUDE,
+-- 外层用 PK 回表只 enrich 100 行. 见 routes/wca_stats_extra.ts /all-results.
+-- 重灌后必须 VACUUM(visibility map 干净 → Index Only Scan 真生效, Heap Fetches: 0).
 CREATE TABLE wca_results_top (
+  id                 BIGSERIAL PRIMARY KEY,
   event_id           VARCHAR(20) NOT NULL,
   is_avg             BOOLEAN NOT NULL,
   value              INTEGER NOT NULL,
@@ -791,7 +795,7 @@ CREATE TABLE wca_results_top (
   comp_date          DATE NOT NULL,
   attempts           INTEGER[]
 );
-CREATE INDEX wrt_main      ON wca_results_top (event_id, is_avg, value, wca_id);
+CREATE INDEX wrt_main      ON wca_results_top (event_id, is_avg, value, wca_id) INCLUDE (id);
 CREATE INDEX wrt_country   ON wca_results_top (event_id, is_avg, person_country_id, value);
 CREATE INDEX wrt_wca_id    ON wca_results_top (event_id, is_avg, wca_id, value);
 CREATE INDEX wrt_comp_id   ON wca_results_top (event_id, is_avg, comp_id, value);
@@ -818,9 +822,11 @@ INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_im
 
 COMMIT;
 
+-- VACUUM (ANALYZE) 而非纯 ANALYZE — wca_results_top 用 Index Only Scan 跑深分页,
+-- 必须更新 visibility map 才能真正跳过 heap fetch (重灌后 1.7M 行所有页都 dirty).
+VACUUM (ANALYZE) wca_results_top;
 ANALYZE wca_competitions;
 ANALYZE wca_grand_slam;
-ANALYZE wca_results_top;
 ANALYZE wca_year_results_top;
 ANALYZE wca_cohort_ranks;
 ANALYZE wca_success_rate;
