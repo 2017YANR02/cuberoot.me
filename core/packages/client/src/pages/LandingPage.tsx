@@ -292,7 +292,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   timer:           { en: 'Timer', zh: '计时器' },
   frameCount:      { en: 'Frame Count', zh: '数帧' },
-  scramble:        { en: 'Scramble', zh: '打乱(分析/生成/最优)' },
+  scramble:        { en: 'Scramble', zh: '打乱' },
   alg:             { en: 'Tutorial',   zh: '教程' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   sitesDirectory:  { en: 'Web', zh: '网站' },

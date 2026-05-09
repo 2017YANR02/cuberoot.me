@@ -57,8 +57,8 @@ async function handle<T>(r: Response): Promise<T> {
   return r.json();
 }
 
-export async function fetchWords(): Promise<Record<string, ColpiWord[]>> {
-  return handle(await fetch(`${BASE}/words`, { headers: headers(false) }));
+export async function fetchWords(lang: string = 'all'): Promise<Record<string, ColpiWord[]>> {
+  return handle(await fetch(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: headers(false) }));
 }
 
 export async function fetchRecent(limit = 20): Promise<ColpiWord[]> {

@@ -98,11 +98,13 @@ export default function ColpiPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const [langFilter, setLangFilterState] = useState<LangFilter>(() => readLangFilter());
+
   const refetchAll = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [bulk, rec] = await Promise.all([fetchWords(), fetchRecent(20)]);
+      const [bulk, rec] = await Promise.all([fetchWords(langFilter), fetchRecent(20)]);
       setWordsByPair(bulk);
       setRecent(rec);
     } catch (e) {
@@ -110,14 +112,13 @@ export default function ColpiPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [langFilter]);
 
   useEffect(() => { void refetchAll(); }, [refetchAll, user?.wcaId]);
 
   // ── ui state ──
   const [search, setSearch] = useState('');
   const [hideOffensive, setHideOffensive] = useState(true);
-  const [langFilter, setLangFilterState] = useState<LangFilter>(() => readLangFilter());
   const [viewMode, setViewModeState] = useState<ViewMode>(() => readViewMode());
   const setLangFilter = (v: LangFilter) => {
     setLangFilterState(v);
@@ -533,9 +534,6 @@ export default function ColpiPage() {
         <section className="colpi-detail" ref={detailRef}>
           <div className="colpi-detail-head">
             <span className="colpi-detail-pair">{activePair}</span>
-            <button className="colpi-detail-close" onClick={() => setActivePair(null)} aria-label="Close">
-              <X size={16} />
-            </button>
           </div>
           {activeWords.length === 0 ? (
             <p className="colpi-detail-empty">

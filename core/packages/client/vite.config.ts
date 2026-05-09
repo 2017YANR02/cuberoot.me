@@ -152,7 +152,10 @@ export default defineConfig({
     },
   },
   server: {
-    host: '127.0.0.1',
+    // host: true → 同时绑 127.0.0.1 + 局域网 IP,手机连同 WiFi 可用 http://<PC-IP>:5173 访问。
+    // 之前固定 '127.0.0.1' 是因为 Windows Chrome 解析 ::1 不稳定;true 在 Vite 里会展开成所有
+    // IPv4 网卡(含 127.0.0.1),不会回退到 IPv6,所以也安全。
+    host: true,
     port: 5173,
     strictPort: true,
     headers: {
