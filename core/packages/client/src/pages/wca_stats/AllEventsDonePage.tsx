@@ -7,6 +7,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
+import { loadFlagData } from '../../utils/country_flags';
+import { CompCell } from '../../components/CompCell/CompCell';
 import { Flag } from '../../utils/flag';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
@@ -45,7 +47,10 @@ export default function AllEventsDonePage() {
   const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [, setFlagBust] = useState(0);
   const countries = useCountries();
+
+  useEffect(() => { loadFlagData().then(v => setFlagBust(v)); }, []);
 
   useEffect(() => {
     setLoading(true); setError(null);
@@ -109,7 +114,7 @@ export default function AllEventsDonePage() {
                       <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
                     </td>
                     <td className="wse-value-col">{r.daysToComplete != null ? `${r.daysToComplete.toLocaleString()} ${isZh ? '天' : 'd'}` : '—'}</td>
-                    <td>{r.achievementCompName ?? r.achievementCompId ?? ''}</td>
+                    <td>{r.achievementCompId ? <CompCell compId={r.achievementCompId} compName={r.achievementCompName} isZh={isZh} /> : ''}</td>
                     <td className="wse-value-col">{r.totalCompCount}</td>
                     {!onlyDone && <td className="wse-value-col">{r.doneCount}/17</td>}
                     <td>

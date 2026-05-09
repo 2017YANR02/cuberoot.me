@@ -312,7 +312,33 @@
   border-radius: 4px;
 }
 .colpi-detail-word { font-weight: 600; }
-.colpi-detail-vote { display: flex; gap: 4px; }
+/* Vote buttons in the detail panel: hidden until row hover (matches the
+ * submitter-name hover-reveal behavior). Owner / admin actions follow suit
+ * — keeps each row visually quiet by default. */
+.colpi-detail-vote {
+  display: inline-flex;
+  gap: 4px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.18s ease, opacity 0.12s ease;
+}
+.colpi-detail-list li:hover .colpi-detail-vote,
+.colpi-detail-list li:focus-within .colpi-detail-vote {
+  max-width: 80px;
+  opacity: 1;
+}
+.colpi-owner-actions {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.18s ease, opacity 0.12s ease;
+}
+.colpi-detail-list li:hover .colpi-owner-actions,
+.colpi-detail-list li:focus-within .colpi-owner-actions {
+  max-width: 80px;
+  opacity: 1;
+}
 .colpi-detail-vote button,
 .colpi-recent-vote button,
 .colpi-flag-btn {
@@ -381,7 +407,12 @@
   font-size: 13px;
   font-family: inherit;
 }
-.colpi-detail-submit .colpi-detail-add { margin-top: 0; }
+.colpi-detail-submit .colpi-detail-add,
+.colpi-detail-edit-row .colpi-detail-add {
+  margin-top: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+}
 .colpi-detail-cancel {
   padding: 6px 12px;
   background: #fff;
@@ -392,6 +423,72 @@
   font-size: 13px;
 }
 .colpi-detail-cancel:hover { background: var(--c-grey); }
+
+/* === Submitter chip ===
+ * Default: only the country flag is visible (subtle hint that a user
+ * submitted the word). Hover: name slides in. Tooltip (`title`) is the
+ * authoritative copy for keyboard / a11y users.
+ */
+.colpi-submitter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--c-muted);
+  font-weight: 400;
+  margin-left: 4px;
+  white-space: nowrap;
+  cursor: help;
+}
+.colpi-submitter-flag { width: 14px; flex-shrink: 0; }
+.colpi-submitter-name {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: max-width 0.18s ease, opacity 0.12s ease;
+}
+.colpi-submitter:hover .colpi-submitter-name,
+.colpi-submitter:focus-within .colpi-submitter-name {
+  max-width: 140px;
+  opacity: 1;
+}
+
+/* === Score badge === */
+.colpi-score {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.colpi-score.pos { background: var(--c-active); color: #fff; }
+.colpi-score.neg { background: var(--c-text); color: #fff; }
+
+/* === Owner / admin edit-delete buttons === */
+.colpi-owner-actions { display: inline-flex; gap: 2px; margin-left: 2px; }
+.colpi-owner-actions button {
+  border: 1px solid var(--c-border);
+  background: #fff;
+  border-radius: 3px;
+  padding: 3px 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-muted);
+}
+.colpi-owner-actions button:hover { background: var(--c-grey); color: var(--c-text); }
+
+/* === Inline edit form (replaces a word row) === */
+.colpi-detail-edit-row {
+  flex-basis: 100%;
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--c-empty) !important;
+  padding: 8px !important;
+}
 
 /* === Recent submissions table === */
 .colpi-recent { margin-top: 12px; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 14px; }

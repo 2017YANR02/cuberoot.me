@@ -9,6 +9,8 @@ import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
 import WcaEventSelector from './WcaEventSelector';
 import { Flag } from '../../utils/flag';
+import { loadFlagData } from '../../utils/country_flags';
+import { CompCell } from '../../components/CompCell/CompCell';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
@@ -53,8 +55,11 @@ export default function AllResultsPage() {
   const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [, setFlagBust] = useState(0);
   const countries = useCountries();
   const allowAvg = event !== '333mbf';
+
+  useEffect(() => { loadFlagData().then(v => setFlagBust(v)); }, []);
 
   useEffect(() => {
     setLoading(true); setError(null);
@@ -129,7 +134,7 @@ export default function AllResultsPage() {
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
                     <td className="wse-attempts-col">{formatAttempts(r.attempts, event, type, r.value)}</td>
-                    <td>{r.compName ?? r.compId}</td>
+                    <td><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></td>
                     <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                   </tr>
                 ))}
