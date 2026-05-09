@@ -60,8 +60,10 @@ const IframePage = lazy(() => import('./pages/IframePage'));
 const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 // NOTE: Frame Count 数帧工具懒加载
 const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
-// NOTE: Scramble Stats — WCA 历史打乱难度分布
+// NOTE: Scramble Hub + sub-tools (stats / gen / analyzer / solver)
+const ScrambleHubPage = lazy(() => import('./pages/scramble/ScrambleHubPage'));
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
+const ScrambleSolverPage = lazy(() => import('./pages/scramble/solver/ScrambleSolverPage'));
 // NOTE: Tutorial — 公式教程目录（docx 源迁移）
 const TutorialIndexPage = lazy(() => import('./pages/tutorial/TutorialIndexPage'));
 const TutorialCategoryPage = lazy(() => import('./pages/tutorial/TutorialCategoryPage'));
@@ -184,12 +186,18 @@ function App() {
         <Route path="/visualcube" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeEditorPage /></Suspense>} />
         {/* VisualCube Stages — 所有 mask / stage 速查 */}
         <Route path="/visualcube/stages" element={<Suspense fallback={<div>Loading...</div>}><VisualCubeStagesPage /></Suspense>} />
-        {/* Analyze — 3x3 CFOP 打乱分析器 */}
-        <Route path="/analyze" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
+        {/* Scramble — 打乱 hub + 4 个子工具 (stats / gen / analyzer / solver) */}
+        <Route path="/scramble" element={<Suspense fallback={<div>Loading...</div>}><ScrambleHubPage /></Suspense>} />
+        <Route path="/scramble/stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
+        <Route path="/scramble/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
+        <Route path="/scramble/analyzer" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
+        <Route path="/scramble/solver" element={<Suspense fallback={<div>Loading...</div>}><ScrambleSolverPage /></Suspense>} />
+        {/* 旧链接兼容重定向 */}
+        <Route path="/scramble-stats" element={<Navigate to="/scramble/stats" replace />} />
+        <Route path="/analyze" element={<Navigate to="/scramble/analyzer" replace />} />
+        <Route path="/gen" element={<Navigate to="/scramble/gen" replace />} />
         {/* /average 已并入 /calc 的"成绩计算器" tab — 兼容旧链接 */}
         <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
-        {/* Gen — 批量打乱生成器 */}
-        <Route path="/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
         {/* Notation — 公式记号沙盒 */}
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
         {/* Patterns — 著名 3x3 图案集 */}
@@ -228,8 +236,6 @@ function App() {
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
-        {/* Scramble — WCA 历史打乱难度分布 */}
-        <Route path="/scramble-stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
         {/* Tutorial — 公式教程目录（曾用 /alg） */}
         <Route path="/tutorial" element={<Suspense fallback={<div>Loading...</div>}><TutorialIndexPage /></Suspense>} />
         <Route path="/tutorial/c/:category" element={<Suspense fallback={<div>Loading...</div>}><TutorialCategoryPage /></Suspense>} />
