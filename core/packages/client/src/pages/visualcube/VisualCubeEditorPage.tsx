@@ -28,6 +28,8 @@ import {
 import LangToggle from '../../components/LangToggle';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
+import CubingPreview from '../timer/cube/CubingPreview';
+import { invertAlg } from '../notation/alg_ops';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -209,13 +211,24 @@ type SpecialView = 'normal' | 'plan' | 'trans' | 'net';
 type PuzzleType = 'cube' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
 type PuzzleVariant = 'iso' | 'net' | 'top';
 
-/** Map (puzzleType, variant) → sr-puzzlegen kind. Cube uses our own renderer instead. */
+/** Map (puzzleType, variant) → sr-puzzlegen kind. Cube uses our own renderer instead.
+ *  Net variants are NOT routed here — they go through <CubingPreview> (cubing.js scramble-display)
+ *  for visual parity with /battle and /timer. */
 function srKindOf(type: PuzzleType, variant: PuzzleVariant): PuzzleKind | null {
   if (type === 'cube') return null;
-  if (type === 'sq1') return variant === 'net' ? 'sq1-net' : 'sq1';
-  if (type === 'megaminx') return variant === 'top' ? 'megaminx-top' : variant === 'net' ? 'megaminx-net' : 'megaminx';
-  if (type === 'pyraminx') return variant === 'net' ? 'pyraminx-net' : 'pyraminx';
-  if (type === 'skewb') return variant === 'net' ? 'skewb-net' : 'skewb';
+  if (type === 'sq1') return 'sq1';
+  if (type === 'megaminx') return variant === 'top' ? 'megaminx-top' : 'megaminx';
+  if (type === 'pyraminx') return 'pyraminx';
+  if (type === 'skewb') return 'skewb';
+  return null;
+}
+
+/** Map a non-cube puzzle type to a scramble-display event id (for unfolded-net rendering). */
+function cubingNetEventOf(type: PuzzleType): string | null {
+  if (type === 'sq1') return 'sq1';
+  if (type === 'megaminx') return 'minx';
+  if (type === 'pyraminx') return 'pyram';
+  if (type === 'skewb') return 'skewb';
   return null;
 }
 
@@ -611,6 +624,15 @@ export default function VisualCubeEditorPage() {
   // (we don't have a string), so download/copy serializes that node.
   const previewRef = useRef<HTMLElement | null>(null);
   const getCurrentSvg = (): string => {
+    // Any net path renders via <scramble-display>, which mounts its <svg> inside a Shadow Root —
+    // a plain querySelector('svg') misses it.
+    const isCubeNet = state.puzzleType === 'cube' && state.cubeView === 'net';
+    const isOtherNet = state.puzzleType !== 'cube' && state.puzzleVariant === 'net';
+    if (isCubeNet || isOtherNet) {
+      const sd = previewRef.current?.querySelector('scramble-display');
+      const inShadow = sd?.shadowRoot?.querySelector('svg');
+      return inShadow ? new XMLSerializer().serializeToString(inShadow) : '';
+    }
     if (state.puzzleType === 'cube') return svg;
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
@@ -724,32 +746,48 @@ export default function VisualCubeEditorPage() {
           preview is visually capped via CSS max-height to keep sticky usable.
           For non-cube puzzles, render via sr-puzzlegen (PuzzleSVG) instead. */}
       <section className="vc-preview-wrap" ref={previewRef as React.RefObject<HTMLElement>}>
-        {state.puzzleType === 'cube' && state.cubeView === 'net' ? (
-          // NxN unfolded net — delegated to puzzle-gen since our renderer has no net layout.
-          <div className="vc-preview">
-            <PuzzleSVG
-              kind="cube-net"
-              alg={state.algType === 'alg' ? state.algorithm : undefined}
-              case={state.algType === 'case' ? state.algorithm : undefined}
-              size={state.imageSize}
-              cubeSize={state.cubeSize}
-            />
-          </div>
-        ) : state.puzzleType === 'cube' ? (
-          <div
-            className="vc-preview"
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        ) : (
-          <div className="vc-preview">
-            <PuzzleSVG
-              kind={srKindOf(state.puzzleType, state.puzzleVariant)!}
-              alg={state.algType === 'alg' ? state.algorithm : undefined}
-              case={state.algType === 'case' ? state.algorithm : undefined}
-              size={state.imageSize}
-            />
-          </div>
-        )}
+        {(() => {
+          // Unfolded-net path (every puzzle: NxN cube + sq1 + megaminx + pyraminx + skewb)
+          // delegates to <CubingPreview> (scramble-display / cubing.js) so we share one
+          // renderer with /battle and /timer. scramble-display takes a FORWARD scramble,
+          // so 'case' mode passes the inverse alg.
+          const isCubeNet = state.puzzleType === 'cube' && state.cubeView === 'net';
+          const isOtherNet = state.puzzleType !== 'cube' && state.puzzleVariant === 'net';
+          if (isCubeNet || isOtherNet) {
+            const event = isCubeNet
+              ? (() => { const n = Math.max(2, Math.min(7, state.cubeSize)); return `${n}${n}${n}`; })()
+              : cubingNetEventOf(state.puzzleType)!;
+            return (
+              <div className="vc-preview vc-preview-cubing">
+                <CubingPreview
+                  event={event}
+                  scramble={state.algType === 'case' ? invertAlg(state.algorithm) : state.algorithm}
+                  visualization="2D"
+                  size={Math.max(8, Math.round(state.imageSize / 12))}
+                  className="scramble-svg-img"
+                />
+              </div>
+            );
+          }
+          if (state.puzzleType === 'cube') {
+            return (
+              <div
+                className="vc-preview"
+                dangerouslySetInnerHTML={{ __html: svg }}
+              />
+            );
+          }
+          return (
+            <div className="vc-preview">
+              <PuzzleSVG
+                kind={srKindOf(state.puzzleType, state.puzzleVariant)!}
+                alg={state.algType === 'alg' ? state.algorithm : undefined}
+                case={state.algType === 'case' ? state.algorithm : undefined}
+                size={state.imageSize}
+              />
+            </div>
+          );
+        })()}
       </section>
 
       {/* Export buttons. /v1/visualcube.svg simplified API does NOT support the puzzle-gen
