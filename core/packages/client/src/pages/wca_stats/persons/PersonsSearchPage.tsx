@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search } from 'lucide-react';
 import { WcaPersonPicker } from '@cuberoot/shared';
+import LangToggle from '../../../components/LangToggle';
 import './persons.css';
 
 export default function PersonsSearchPage() {
@@ -17,6 +18,9 @@ export default function PersonsSearchPage() {
           <ChevronLeft size={16} />
           <span>{t('WCA 统计', 'WCA Stats')}</span>
         </Link>
+        <div className="wp-header-right">
+          <LangToggle />
+        </div>
       </header>
 
       <main className="wp-main">

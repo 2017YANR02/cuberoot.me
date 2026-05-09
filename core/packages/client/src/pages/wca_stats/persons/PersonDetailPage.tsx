@@ -13,6 +13,7 @@ import {
   type WcaPersonProfile, type WcaResultRow, type WcaCompetition,
 } from './wca_api';
 import { loadFlagData } from '../../../utils/country_flags';
+import LangToggle from '../../../components/LangToggle';
 import PersonHero from './sections/PersonHero';
 import PersonPRTable from './sections/PersonPRTable';
 import PersonTabs from './sections/PersonTabs';
@@ -94,13 +95,16 @@ function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId
         <ChevronLeft size={16} />
         <span>{t('选手搜索', 'Search')}</span>
       </Link>
-      {wcaId && (
-        <a
-          href={`https://www.worldcubeassociation.org/persons/${wcaId}`}
-          target="_blank" rel="noopener noreferrer"
-          className="wp-source-link"
-        >WCA</a>
-      )}
+      <div className="wp-header-right">
+        <LangToggle />
+        {wcaId && (
+          <a
+            href={`https://www.worldcubeassociation.org/persons/${wcaId}`}
+            target="_blank" rel="noopener noreferrer"
+            className="wp-source-link"
+          >WCA</a>
+        )}
+      </div>
     </header>
   );
 }
