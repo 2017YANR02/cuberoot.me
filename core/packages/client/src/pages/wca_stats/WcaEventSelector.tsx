@@ -2,6 +2,7 @@
 // 对标 Legacy event_selector.ts 的 createSelector()
 
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from './event_constants';
+import './WcaEventSelector.css';
 
 interface WcaEventSelectorProps {
   availableEvents: Set<string>;   // 有数据的项目 ID 集合

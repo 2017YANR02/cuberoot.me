@@ -9,13 +9,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search } from 'lucide-react';
-import { EventSelect } from '../../components/EventSelect';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import Paginator from './Paginator';
+import WcaEventSelector from './WcaEventSelector';
 import './historical_ranks.css';
 
 const EVENTS = [
@@ -25,6 +25,7 @@ const EVENTS = [
   '444bf','555bf','333mbf',
   '333ft','magic','mmagic','333mbo',
 ];
+const EVENTS_SET = new Set(EVENTS);
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -164,12 +165,14 @@ export default function HistoricalRanksPage() {
         </p>
       </header>
 
-      <div className="hr-filters">
-        <div className="hr-filter">
-          <label>{isZh ? '项目' : 'Event'}</label>
-          <EventSelect events={EVENTS} value={event} onChange={(v) => updateParam('event', v)} />
-        </div>
+      <WcaEventSelector
+        availableEvents={EVENTS_SET}
+        selectedEvent={event}
+        onSelect={(v) => updateParam('event', v)}
+        isZh={isZh}
+      />
 
+      <div className="hr-filters">
         <div className="hr-filter">
           <label>{isZh ? '年份' : 'Year'}</label>
           <select value={year} onChange={(e) => updateParam('year', e.target.value)}>
