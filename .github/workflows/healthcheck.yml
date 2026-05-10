@@ -6,11 +6,26 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+    inputs:
+      test_bark:
+        description: '强制推一条 Bark 测试通知 (验证 GH Actions → Bark 链)'
+        type: boolean
+        default: false
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - name: Bark 通路测试 (test_bark=true 时)
+        if: inputs.test_bark
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: |
+          curl -sS -m 10 -X POST "https://api.day.app/$BARK_KEY" \
+            --data-urlencode "title=Bark 通路测试" \
+            --data-urlencode "body=GH Actions → Bark 链工作正常 ($(date -u +'%H:%M UTC'))" \
+            --data-urlencode "group=cuberoot-monitor"
+
       - name: Probe api.cuberoot.me/v1/health
         run: |
           for i in 1 2; do
