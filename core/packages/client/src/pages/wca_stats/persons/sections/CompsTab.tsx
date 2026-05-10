@@ -2,11 +2,10 @@
 // 项目图标:选手在该比赛参加过 → 实色;比赛设了但选手没参 → 灰色.
 
 import { useMemo, useState } from 'react';
-import { Flag } from '../../../../utils/flag';
-import { localizeCompName } from '../../../../utils/comp_localize';
 import { formatDateRangeIso } from '../../../../utils/date_range';
 import { ALL_EVENT_IDS } from '../../event_constants';
 import { EventIcon } from '../../../../components/EventIcon';
+import { CompCell } from '../../../../components/CompCell/CompCell';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '../wca_api';
 
@@ -82,12 +81,11 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
                 <td className="wp-cell-narrow wp-cell-mono">{idx}</td>
                 <td className="wp-cell-mono wp-cell-date">{formatDateRangeIso(c.start_date, c.end_date)}</td>
                 <td className="wp-cell-comp">
-                  <Flag iso2={c.country_iso2} className="wp-flag-sm" />
                   <a
                     href={`https://www.worldcubeassociation.org/competitions/${c.id}`}
                     target="_blank" rel="noopener noreferrer"
                     className="wp-link-comp"
-                  >{localizeCompName(c.id, c.name, isZh)}</a>
+                  ><CompCell compId={c.id} compName={c.name} isZh={isZh} /></a>
                 </td>
                 <td className="wp-cell-events">
                   <span className="wp-event-strip">

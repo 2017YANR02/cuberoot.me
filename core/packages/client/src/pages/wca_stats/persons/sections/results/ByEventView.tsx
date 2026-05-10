@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { localizeCompName } from '../../../../../utils/comp_localize';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
+import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { computeProgress } from '../../logic/progress';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
 
@@ -220,7 +221,7 @@ function EventRoundsList({
                         href={`https://www.worldcubeassociation.org/competitions/${cmp.id}`}
                         target="_blank" rel="noopener noreferrer"
                         className="wp-bycomp-name"
-                      >{localizeCompName(cmp.id, cmp.name, isZh)}</a>
+                      ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} /></a>
                       <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>
                     </>
                   )}
