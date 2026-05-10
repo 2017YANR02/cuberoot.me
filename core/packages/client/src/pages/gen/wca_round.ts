@@ -58,6 +58,10 @@ export const ALLOWED_FORMATS: Record<string, WcaFormat[]> = {
 /** Default extra-scramble count per round (tnoodle WCA convention). */
 export const DEFAULT_EXTRA_COUNT = 2;
 
+/** Default locales for FMC translations. Mirrors tnoodle's defaults (English only). */
+import type { TnoodleLocale } from './tnoodle_translate';
+export const DEFAULT_FMC_LOCALES: readonly TnoodleLocale[] = ['en'];
+
 /** MBLD-specific: number of cubes per attempt. WCA min 2, no upper limit. tnoodle defaults to 8. */
 export const MBLD_DEFAULT_CUBES = 8;
 
@@ -68,6 +72,11 @@ export interface RoundConfig {
   scrambleSets: number;
   /** Print copies — affects PDF only, not scramble generation. */
   copies: number;
+  /**
+   * FMC-only — locales for which to emit a translated solution sheet per
+   * attempt. Ignored for non-FMC events (their PDFs have no localized text).
+   */
+  locales?: TnoodleLocale[];
 }
 
 export interface EventConfig {
@@ -89,6 +98,7 @@ export function defaultRoundConfig(event: string): RoundConfig {
     format: ALLOWED_FORMATS[event]?.[0] ?? '1',
     scrambleSets: 1,
     copies: 1,
+    locales: event === '333fm' ? [...DEFAULT_FMC_LOCALES] : undefined,
   };
 }
 

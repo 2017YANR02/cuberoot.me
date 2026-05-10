@@ -49,7 +49,7 @@
     padding: 14px 16px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     display: grid;
-    grid-template-columns: minmax(180px, max-content) 1fr auto;
+    grid-template-columns: 1fr auto;
     gap: 16px;
     align-items: end;
     margin-bottom: 1.25rem;
@@ -288,6 +288,29 @@
     .gen-controls { padding: 10px 12px; }
 }
 
+/* WcaEventSelector 默认深色主题(wca-stats),在 /scramble/gen 的奶白底上需要重皮 */
+.gen-page .wca-stats-event-selector {
+    background: var(--gen-surface);
+    border-color: var(--gen-border);
+    margin: 0 0 1rem;
+}
+.gen-page .wca-stats-event-selector .event-btn {
+    background: transparent;
+    border-color: transparent;
+}
+.gen-page .wca-stats-event-selector .event-btn .cubing-icon { color: var(--gen-text-sub); }
+.gen-page .wca-stats-event-selector .event-btn:hover {
+    background: var(--gen-accent-soft);
+    border-color: var(--gen-border);
+}
+.gen-page .wca-stats-event-selector .event-btn:hover .cubing-icon { color: var(--gen-text); }
+.gen-page .wca-stats-event-selector .event-btn.active {
+    background: var(--gen-accent);
+    border-color: var(--gen-accent);
+}
+.gen-page .wca-stats-event-selector .event-btn.active .cubing-icon { color: #fff; }
+.gen-page .wca-stats-event-selector .event-btn.disabled { opacity: 0.3; }
+
 /* ───────── EventSelect on light theme ─────────
    The shared EventSelect component is styled for the dark-theme pages
    (color: #e5e5e5 on translucent white bg). On /scramble/gen's light
@@ -370,11 +393,17 @@
 }
 .gen-tn-comp-input:focus { border-color: var(--gen-accent); }
 
-.gen-tn-event-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.gen-tn-event-list {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
     margin-bottom: 1.5rem;
+}
+.gen-tn-empty {
+    color: var(--gen-text-mute);
+    text-align: center;
+    padding: 1.25rem 0 1.75rem;
+    font-size: 0.88rem;
 }
 .gen-tn-event-card {
     background: var(--gen-surface);
@@ -386,8 +415,6 @@
     flex-direction: column;
 }
 .gen-tn-event-card.is-on { border-color: var(--gen-accent); background: var(--gen-accent-soft); }
-/* 未开启时 header 撑满整张卡 → 卡片内任意位置点击都能 toggle (grid 行高被相邻已开启卡拉高,空卡也得是大片可点击区) */
-.gen-tn-event-card:not(.is-on) .gen-tn-event-header { flex: 1; align-items: flex-start; }
 .gen-tn-event-header {
     width: 100%;
     display: flex;
@@ -402,22 +429,14 @@
     text-align: left;
 }
 .gen-tn-event-card.is-on .gen-tn-event-header { color: var(--gen-accent); font-weight: 600; }
+.gen-tn-event-header--static { cursor: default; }
 .gen-tn-event-name { flex: 1; }
-.gen-tn-event-toggle {
-    display: inline-flex;
-    align-items: center;
-    color: var(--gen-text-mute);
-}
-.gen-tn-event-card.is-on .gen-tn-event-toggle { color: var(--gen-accent); }
 .gen-tn-event-body {
     padding: 0 14px 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 1; /* 撑满 grid 行剩余高度,让底下空白区也归 body 管 → 点空白区可 toggle off */
-    cursor: pointer; /* 提示空白可点 */
 }
-.gen-tn-event-body > * { cursor: auto; } /* 行内交互控件保持自己的指针 */
 .gen-tn-rounds-row {
     display: flex;
     align-items: center;
@@ -468,6 +487,12 @@
     font-size: 0.85rem;
     cursor: pointer;
 }
+.gen-tn-format-static {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gen-text);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
 .gen-tn-mini-num {
     display: inline-flex;
     align-items: center;
@@ -492,6 +517,80 @@
     font-size: 0.85rem;
     color: var(--gen-text);
     background: var(--gen-surface);
+}
+
+/* ───────── FMC translations picker ───────── */
+.gen-tn-translations {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+.gen-tn-translations-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    background: var(--gen-surface);
+    color: var(--gen-text-sub);
+    font-size: 0.85rem;
+    cursor: pointer;
+    align-self: flex-start;
+}
+.gen-tn-translations-summary:hover {
+    border-color: var(--gen-border-strong);
+    color: var(--gen-text);
+}
+.gen-tn-translations-label { font-weight: 600; }
+.gen-tn-translations-count {
+    color: var(--gen-text-mute);
+    font-size: 0.78rem;
+}
+.gen-tn-translations-body {
+    border: 1px solid var(--gen-border);
+    border-radius: 8px;
+    padding: 10px;
+    background: var(--gen-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.gen-tn-translations-actions {
+    display: flex;
+    gap: 8px;
+}
+.gen-tn-translations-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    background: var(--gen-surface);
+    color: var(--gen-text-sub);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.gen-tn-translations-btn:hover {
+    border-color: var(--gen-accent);
+    color: var(--gen-accent);
+}
+.gen-tn-translations-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px 12px;
+}
+.gen-tn-translations-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--gen-text);
+    cursor: pointer;
+    padding: 2px 0;
+}
+.gen-tn-translations-cell input { cursor: pointer; }
+@media (max-width: 600px) {
+    .gen-tn-translations-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ───────── Clock color picker (tnoodle-style chips) ───────── */

@@ -1,0 +1,40 @@
+# 每 5 分钟 curl api.cuberoot.me/v1/health, 失败两次连续则 Bark 推送 iPhone
+# Bark device key 在 GitHub Secrets BARK_KEY
+name: Healthcheck
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe api.cuberoot.me/v1/health
+        run: |
+          for i in 1 2; do
+            response=$(curl -sS -m 10 https://api.cuberoot.me/v1/health 2>&1) || response="CURL_EXIT_$?"
+            if echo "$response" | grep -q connected; then
+              echo "attempt $i OK: $response"
+              exit 0
+            fi
+            echo "attempt $i failed: $response"
+            [ $i -lt 2 ] && sleep 30
+          done
+          echo "::error::API health check failed twice"
+          echo "LAST_RESPONSE=$response" >> $GITHUB_ENV
+          exit 1
+
+      - name: Bark push on failure
+        if: failure()
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: |
+          curl -sS -m 10 -X POST "https://api.day.app/$BARK_KEY" \
+            --data-urlencode "title=cuberoot.me API 挂了" \
+            --data-urlencode "body=health check failed twice at $(date -u +'%Y-%m-%d %H:%M UTC'). last response: ${LAST_RESPONSE:-unknown}" \
+            --data-urlencode "group=cuberoot-monitor" \
+            --data-urlencode "level=timeSensitive" \
+            --data-urlencode "url=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            || echo "Bark notify also failed (workflow still marked failed, GH email fallback works)"

@@ -222,6 +222,13 @@
   color: var(--alg-text-muted);
   line-height: 1;
 }
+.alg-bracket-icon {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  display: inline-block;
+}
 .alg-cat-title {
   display: inline-flex;
   align-items: center;

@@ -106,3 +106,5 @@ pnpm --filter @cuberoot/client lint
 | 重跑打乱分布 | `scramble-stats-build` | 修改 `stats/scramble/*.json`；WCA 配色 / 阶段-朝向 schema / pair CSV 特殊记号 |
 | 渲染魔方图片 / 3x3 立方体预览 | `visualcube` | 任何要画 3x3 魔方状态图的地方（F2L / OLL / PLL / 自定义 case 预览 / scramble 状态可视化）；走 `<VisualCube>` 或 `cubeSVG()`，**禁手写 SVG**（之前的 `MiniCube.tsx` 是反面教材） |
 | AI/脚本管理公式库（admin） | `alg-admin-api` | 增删改 case、reorder、批量校验、清 dup；走 `X-Admin-Key` 通道免 OAuth,key 在 `.password.md` |
+| 改 server 路由 / 改 DB schema / 加列 / 加表 | `server-deploy` | 任何改 `core/packages/server/**` 或 PG schema 的地方；DB 凭据、PG 方言关键、schema 变更走 `migrations/*.sql` 文件而**非** ssh ALTER、pm2 / nginx purge |
+| 改 stats 数据管道 / 加新 .copy.tsv / 改 stats.yml | `stats-pipeline-dry-run` | 改 `stats-build/src/bin/*` 或 stats.yml 时;builder/scp/load.sql 三处必须一致;ssh 远端长任务必须带 keepalive triple |
