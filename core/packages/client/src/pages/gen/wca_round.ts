@@ -74,6 +74,11 @@ export interface EventConfig {
   rounds: RoundConfig[];
   /** MBLD only: cubes per attempt */
   mbldCubes?: number;
+  /**
+   * tnoodle-style per-part color override. Currently only `clock` reads this.
+   * Absent ⇒ use the puzzle's default scheme.
+   */
+  colors?: Record<string, string>;
 }
 
 export function defaultRoundConfig(event: string): RoundConfig {

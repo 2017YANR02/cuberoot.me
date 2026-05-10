@@ -694,13 +694,15 @@ wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
     average: number | null;
     single_world_rank: number | null;
     single_country_rank: number | null;
+    single_continent_rank: number | null;
     avg_world_rank: number | null;
     avg_country_rank: number | null;
+    avg_continent_rank: number | null;
   }>(
     `
     SELECT event_id, year, single, average,
-           single_world_rank, single_country_rank,
-           avg_world_rank, avg_country_rank
+           single_world_rank, single_country_rank, single_continent_rank,
+           avg_world_rank, avg_country_rank, avg_continent_rank
     FROM historical_ranks_snapshot
     WHERE wca_id = ?
     `,
@@ -709,8 +711,8 @@ wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
 
   type Best = { rank: number; year: number; value: number | null };
   const out: Record<string, {
-    single?: { world?: Best; country?: Best };
-    average?: { world?: Best; country?: Best };
+    single?: { world?: Best; continent?: Best; country?: Best };
+    average?: { world?: Best; continent?: Best; country?: Best };
   }> = {};
 
   for (const r of rows) {
@@ -723,8 +725,10 @@ wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
     e.single ??= {};
     e.average ??= {};
     e.single.world = upd(e.single.world, r.single_world_rank, r.single);
+    e.single.continent = upd(e.single.continent, r.single_continent_rank, r.single);
     e.single.country = upd(e.single.country, r.single_country_rank, r.single);
     e.average.world = upd(e.average.world, r.avg_world_rank, r.average);
+    e.average.continent = upd(e.average.continent, r.avg_continent_rank, r.average);
     e.average.country = upd(e.average.country, r.avg_country_rank, r.average);
   }
 
@@ -733,8 +737,7 @@ wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
 });
 
 // ── 9. /v1/wca/person-rank-history ──
-// 选手 (wcaId, eventId) 每年年末的 single/average × world/country rank.折线图源数据.
-// continent rank 不在 snapshot 中(stats-build 还没产),先省略;v1 显示 4 条线即可.
+// 选手 (wcaId, eventId) 每年年末的 single/average × world/continent/country rank.折线图源数据.
 wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   const eventId = (c.req.query('eventId') ?? '').toLowerCase();
@@ -751,13 +754,15 @@ wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
     average: number | null;
     single_world_rank: number | null;
     single_country_rank: number | null;
+    single_continent_rank: number | null;
     avg_world_rank: number | null;
     avg_country_rank: number | null;
+    avg_continent_rank: number | null;
   }>(
     `
     SELECT year, single, average,
-           single_world_rank, single_country_rank,
-           avg_world_rank, avg_country_rank
+           single_world_rank, single_country_rank, single_continent_rank,
+           avg_world_rank, avg_country_rank, avg_continent_rank
     FROM historical_ranks_snapshot
     WHERE wca_id = ? AND event_id = ?
     ORDER BY year ASC
@@ -771,8 +776,12 @@ wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
     rows: rows.map(r => ({
       year: r.year,
       single: r.single, average: r.average,
-      singleWorldRank: r.single_world_rank, singleCountryRank: r.single_country_rank,
-      avgWorldRank: r.avg_world_rank, avgCountryRank: r.avg_country_rank,
+      singleWorldRank: r.single_world_rank,
+      singleCountryRank: r.single_country_rank,
+      singleContinentRank: r.single_continent_rank,
+      avgWorldRank: r.avg_world_rank,
+      avgCountryRank: r.avg_country_rank,
+      avgContinentRank: r.avg_continent_rank,
     })),
   });
 });
