@@ -19,6 +19,7 @@ import {
   type EventConfig, type WcaFormat,
 } from './wca_round';
 import type { RoundSheetInput } from './tnoodle_pdf';
+import ClockColorPicker from './ClockColorPicker';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -98,6 +99,14 @@ export default function TNoodleMode({ t, isZh }: Props) {
       const cfg = prev[e];
       if (!cfg) return prev;
       return { ...prev, [e]: { ...cfg, mbldCubes: cubes } };
+    });
+  };
+
+  const setEventColors = (e: string, colors: Record<string, string> | undefined) => {
+    setEvents((prev) => {
+      const cfg = prev[e];
+      if (!cfg) return prev;
+      return { ...prev, [e]: { ...cfg, colors } };
     });
   };
 
@@ -192,11 +201,17 @@ export default function TNoodleMode({ t, isZh }: Props) {
           scramble: a.scramble,
         })),
       }));
+      const eventColors: Record<string, Record<string, string>> = {};
+      for (const ev of Object.keys(events)) {
+        const c = events[ev].colors;
+        if (c) eventColors[ev] = c;
+      }
       const blob = await generateTnoodlePdf(sheetInputs, {
         competitionTitle: compName,
         generatorTag: GENERATOR_TAG,
         isZh,
         onProgress: (done, total) => setPdfProgress({ done, total }),
+        eventColors,
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -286,7 +301,13 @@ export default function TNoodleMode({ t, isZh }: Props) {
                 <span className="gen-tn-event-toggle">{enabled ? <Minus size={14} /> : <Plus size={14} />}</span>
               </button>
               {enabled && (
-                <div className="gen-tn-event-body">
+                <div
+                  className="gen-tn-event-body"
+                  onClick={(e) => {
+                    // 仅当点的是 body 容器本身(padding / gap / 底部 flex 空白),不是子控件,才 toggle off
+                    if (e.target === e.currentTarget) toggleEvent(ev);
+                  }}
+                >
                   <div className="gen-tn-rounds-row">
                     <span className="gen-tn-rounds-label">{t('轮数', 'Rounds')}</span>
                     {[1, 2, 3, 4].map((n) => (
@@ -341,6 +362,13 @@ export default function TNoodleMode({ t, isZh }: Props) {
                       />
                     </div>
                   )}
+                  {ev === 'clock' && (
+                    <ClockColorPicker
+                      colors={cfg.colors}
+                      onChange={(c) => setEventColors(ev, c)}
+                      t={t}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -352,7 +380,13 @@ export default function TNoodleMode({ t, isZh }: Props) {
         <div className="gen-tn-sheets">
           <h2 className="gen-tn-sheet-title">{compName}</h2>
           {sheets.map((sh, i) => (
-            <SheetView key={i} sheet={sh} isZh={isZh} t={t} />
+            <SheetView
+              key={i}
+              sheet={sh}
+              isZh={isZh}
+              t={t}
+              clockColors={events[sh.event]?.colors}
+            />
           ))}
         </div>
       )}
@@ -360,7 +394,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
   );
 }
 
-function SheetView({ sheet, isZh, t }: { sheet: RoundSheet; isZh: boolean; t: Props['t'] }) {
+function SheetView({ sheet, isZh, t, clockColors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string> }) {
   const { event, roundIdx, groupIdx, format, attemptNumber, attempts } = sheet;
   const groupSuffix = groupIdx > 0 ? ` · ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}` : '';
   const attemptSuffix = attemptNumber !== undefined
@@ -384,7 +418,7 @@ function SheetView({ sheet, isZh, t }: { sheet: RoundSheet; isZh: boolean; t: Pr
         </td>
         <td className="gen-tn-attempt-preview">
           {eventHasScramblePreview(event) && a.scramble && (
-            <ScramblePreview2D event={event} scramble={a.scramble} size={48} />
+            <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} />
           )}
         </td>
       </tr>,

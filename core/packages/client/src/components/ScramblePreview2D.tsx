@@ -6,8 +6,13 @@
  *
  * Used by /scramble/gen for the per-scramble thumbnail. Lazy-imports
  * cubing/twisty so the bundle cost is paid once.
+ *
+ * Clock special case: when `event === 'clock'` we bypass TwistyPlayer and
+ * render via `renderClockScrambleSvg` (tnoodle ClockPuzzle.java port),
+ * because cubing.js's clock visualization isn't recolorable per-part.
  */
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from '../pages/gen/clock_svg';
 
 const EVENT_TO_PUZZLE: Record<string, string> = {
   '222': '2x2x2',
@@ -34,6 +39,12 @@ interface Props {
   scramble: string;
   /** Width/height in px. The 2D net naturally has ~2:1.5 aspect; cubing.js scales to fit. */
   size?: number;
+  /**
+   * Clock-only: tnoodle-style per-part color override.
+   * When event === 'clock', pass to recolor the rendered SVG. Falls back to
+   * `DEFAULT_CLOCK_COLORS` when omitted.
+   */
+  clockColors?: Record<string, string>;
 }
 
 /** sq1 plain `1,0/-1,0` → `(1,0)/(-1,0)` for cubing.js parser. */
@@ -42,11 +53,23 @@ function normalizeAlg(puzzle: string, alg: string): string {
   return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
 }
 
-export function ScramblePreview2D({ event, scramble, size = 60 }: Props) {
+export function ScramblePreview2D({ event, scramble, size = 60, clockColors }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const puzzle = EVENT_TO_PUZZLE[event];
 
+  // Clock branch — synchronous custom SVG with tnoodle colors. Returns early.
+  const clockSvg = useMemo(() => {
+    if (event !== 'clock') return null;
+    try {
+      return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
+    } catch (err) {
+      console.warn('[ScramblePreview2D] clock render failed', err);
+      return null;
+    }
+  }, [event, scramble, clockColors]);
+
   useEffect(() => {
+    if (event === 'clock') return; // handled above
     const host = hostRef.current;
     if (!host || !puzzle) return;
     let cancelled = false;
@@ -93,5 +116,15 @@ export function ScramblePreview2D({ event, scramble, size = 60 }: Props) {
     justifyContent: 'center',
     flexShrink: 0,
   };
+
+  if (event === 'clock' && clockSvg) {
+    return (
+      <div
+        style={hostStyle}
+        // SVG content is generated locally from a small whitelisted template, no user HTML.
+        dangerouslySetInnerHTML={{ __html: clockSvg }}
+      />
+    );
+  }
   return <div ref={hostRef} style={hostStyle} />;
 }

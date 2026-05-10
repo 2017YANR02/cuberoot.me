@@ -492,7 +492,10 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
   const xMin = rows[0]!.year, xMax = rows[rows.length - 1]!.year;
   const allRanks: number[] = [];
   for (const r of rows) {
-    for (const k of [r.singleWorldRank, r.singleCountryRank, r.avgWorldRank, r.avgCountryRank]) {
+    for (const k of [
+      r.singleWorldRank, r.singleContinentRank, r.singleCountryRank,
+      r.avgWorldRank, r.avgContinentRank, r.avgCountryRank,
+    ]) {
       if (k !== null && k > 0) allRanks.push(k);
     }
   }
@@ -506,10 +509,12 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
   const yScale = (rk: number) => P.t + ((rk - 1) / Math.max(1, yMax - 1)) * (H - P.t - P.b);
 
   const series: { key: keyof typeof rows[0]; label: string; cls: string }[] = [
-    { key: 'singleCountryRank', label: t('单次-NR', 'Single-NR'), cls: 'wp-rank-line-snr' },
-    { key: 'singleWorldRank',   label: t('单次-WR', 'Single-WR'), cls: 'wp-rank-line-swr' },
-    { key: 'avgCountryRank',    label: t('平均-NR', 'Avg-NR'),    cls: 'wp-rank-line-anr' },
-    { key: 'avgWorldRank',      label: t('平均-WR', 'Avg-WR'),    cls: 'wp-rank-line-awr' },
+    { key: 'singleCountryRank',   label: t('单次-NR', 'Single-NR'), cls: 'wp-rank-line-snr' },
+    { key: 'singleContinentRank', label: t('单次-CR', 'Single-CR'), cls: 'wp-rank-line-scr' },
+    { key: 'singleWorldRank',     label: t('单次-WR', 'Single-WR'), cls: 'wp-rank-line-swr' },
+    { key: 'avgCountryRank',      label: t('平均-NR', 'Avg-NR'),    cls: 'wp-rank-line-anr' },
+    { key: 'avgContinentRank',    label: t('平均-CR', 'Avg-CR'),    cls: 'wp-rank-line-acr' },
+    { key: 'avgWorldRank',        label: t('平均-WR', 'Avg-WR'),    cls: 'wp-rank-line-awr' },
   ];
 
   const linePath = (key: keyof typeof rows[0]) => {

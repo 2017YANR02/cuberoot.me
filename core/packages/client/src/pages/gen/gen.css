@@ -365,8 +365,12 @@
     border-radius: 10px;
     overflow: hidden;
     transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
 }
 .gen-tn-event-card.is-on { border-color: var(--gen-accent); background: var(--gen-accent-soft); }
+/* 未开启时 header 撑满整张卡 → 卡片内任意位置点击都能 toggle (grid 行高被相邻已开启卡拉高,空卡也得是大片可点击区) */
+.gen-tn-event-card:not(.is-on) .gen-tn-event-header { flex: 1; align-items: flex-start; }
 .gen-tn-event-header {
     width: 100%;
     display: flex;
@@ -393,7 +397,10 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1; /* 撑满 grid 行剩余高度,让底下空白区也归 body 管 → 点空白区可 toggle off */
+    cursor: pointer; /* 提示空白可点 */
 }
+.gen-tn-event-body > * { cursor: auto; } /* 行内交互控件保持自己的指针 */
 .gen-tn-rounds-row {
     display: flex;
     align-items: center;
@@ -469,6 +476,76 @@
     color: var(--gen-text);
     background: var(--gen-surface);
 }
+
+/* ───────── Clock color picker (tnoodle-style chips) ───────── */
+.gen-tn-clock-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+.gen-tn-clock-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.gen-tn-clock-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    user-select: none;
+    line-height: 1.2;
+    min-width: 64px;
+}
+.gen-tn-clock-chip input[type="color"] {
+    /* Native color input is tiny + ugly across browsers; cover the chip
+     * with an invisible input so the chip itself is the click target. */
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    border: 0;
+    padding: 0;
+    background: none;
+}
+.gen-tn-clock-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.gen-tn-clock-reset {
+    padding: 4px 10px;
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    background: var(--gen-surface);
+    color: var(--gen-text-sub);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.gen-tn-clock-reset:hover:not(:disabled) {
+    border-color: var(--gen-accent);
+    color: var(--gen-accent);
+}
+.gen-tn-clock-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.gen-tn-clock-preview {
+    width: 120px;
+    height: 60px;
+    flex-shrink: 0;
+}
+.gen-tn-clock-preview svg { width: 100%; height: 100%; }
 
 /* ───────── TNoodle on-screen sheets ───────── */
 .gen-tn-sheets {

@@ -24,6 +24,7 @@ import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
 import { renderUnfoldedSvgForEvent, eventToCubeSize } from './cube_unfolded_svg';
 import { getScramble2DSvg } from './cubing_2d_svg';
+import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './clock_svg';
 import type { WcaFormat } from './wca_round';
 import { eventDisplayName } from '../../utils/wca_events';
 
@@ -78,6 +79,8 @@ export interface PdfOptions {
   signal?: AbortSignal;
   /** Called per page after rendering completes. (done, total) where total = page count. */
   onProgress?: (done: number, total: number) => void;
+  /** tnoodle-style per-event color override. Currently only `clock` is honored. */
+  eventColors?: Record<string, Record<string, string>>;
 }
 
 // ─── Font loading (cached) ────────────────────────────────────────────────
@@ -327,6 +330,7 @@ export async function generateTnoodlePdf(
       totalPages,
       todayIso: today,
       generatorTag: opts.generatorTag,
+      eventColors: opts.eventColors,
     });
     opts.onProgress?.(p + 1, totalPages);
     // yield to the event loop so React can repaint the bar
@@ -343,6 +347,8 @@ interface PageHeader {
   totalPages: number;
   todayIso: string;
   generatorTag: string;
+  /** Per-event color overrides (currently only `clock` is honored). */
+  eventColors?: Record<string, Record<string, string>>;
 }
 
 async function renderPage(
@@ -456,11 +462,15 @@ async function renderPage(
       });
 
       // Image — fast path: NxN cube → synchronous unfolded SVG renderer.
-      // Non-cube (sq1/mega/pyra/skewb/clock) → fall back to cubing.js 2D
-      // (slow but rare). isExtra param unused because state computation is
-      // identical for main vs extras.
+      // Clock → tnoodle ClockPuzzle.java port (recolorable, synchronous).
+      // Other non-cube (sq1/mega/pyra/skewb) → cubing.js 2D fallback (slow).
+      // isExtra unused because state computation is identical for main vs extras.
       void isExtra;
-      const svgStr = renderUnfoldedSvgForEvent(sheet.event, a.scramble)
+      const clockSvgStr = sheet.event === 'clock'
+        ? renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS)
+        : null;
+      const svgStr = clockSvgStr
+        ?? renderUnfoldedSvgForEvent(sheet.event, a.scramble)
         ?? await getScramble2DSvg(sheet.event, a.scramble);
       if (svgStr) {
         const svgEl = svgStringToElement(svgStr);

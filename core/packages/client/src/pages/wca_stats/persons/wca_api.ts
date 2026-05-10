@@ -121,13 +121,14 @@ export interface PersonBestRankCell {
 export interface PersonBestRanksResponse {
   wcaId: string;
   events: Record<string, {
-    single?: { world?: PersonBestRankCell; country?: PersonBestRankCell };
-    average?: { world?: PersonBestRankCell; country?: PersonBestRankCell };
+    single?: { world?: PersonBestRankCell; continent?: PersonBestRankCell; country?: PersonBestRankCell };
+    average?: { world?: PersonBestRankCell; continent?: PersonBestRankCell; country?: PersonBestRankCell };
   }>;
 }
 
 export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRanksResponse> {
-  const key = `wca:bestRanks:${wcaId}`;
+  // v2: 加 continent rank 列
+  const key = `wca:bestRanks:v2:${wcaId}`;
   const cached = cacheGet<PersonBestRanksResponse>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/person-best-ranks?wcaId=${encodeURIComponent(wcaId)}`));
@@ -143,8 +144,10 @@ export interface PersonRankHistoryRow {
   average: number | null;
   singleWorldRank: number | null;
   singleCountryRank: number | null;
+  singleContinentRank: number | null;
   avgWorldRank: number | null;
   avgCountryRank: number | null;
+  avgContinentRank: number | null;
 }
 
 export interface PersonRankHistoryResponse {
@@ -154,7 +157,8 @@ export interface PersonRankHistoryResponse {
 }
 
 export async function fetchPersonRankHistory(wcaId: string, eventId: string): Promise<PersonRankHistoryResponse> {
-  const key = `wca:rankHist:${wcaId}:${eventId}`;
+  // v2: 加 continent rank 列
+  const key = `wca:rankHist:v2:${wcaId}:${eventId}`;
   const cached = cacheGet<PersonRankHistoryResponse>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/person-rank-history?wcaId=${encodeURIComponent(wcaId)}&eventId=${encodeURIComponent(eventId)}`));
