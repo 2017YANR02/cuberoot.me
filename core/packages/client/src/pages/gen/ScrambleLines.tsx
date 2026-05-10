@@ -70,13 +70,11 @@ function buildLines(scramble: string): string[] {
     if (cur.length) out.push(cur.join(' '));
     return out;
   }
-  const out: string[] = [];
-  for (let i = 0; i < allTokens.length; i += TOKENS_PER_LINE_GENERIC) {
-    out.push(
-      allTokens.slice(i, i + TOKENS_PER_LINE_GENERIC).map(pad).join(' '),
-    );
-  }
-  return out;
+  // 通用 NxN/pyra/skewb/clock:不再预分块。整段 NBSP-padded tokens 给浏览器自然换行,
+  // 这样窄屏 cell 不会出现"半行尾部留白"(写死 12 token/行 在手机上撑爆 → 浏览器二次
+  // wrap → 后半截只剩 3-4 个 token 留一片空白)。
+  void TOKENS_PER_LINE_GENERIC;
+  return [allTokens.map(pad).join(' ')];
 }
 
 export default function ScrambleLines({ scramble, className }: Props) {

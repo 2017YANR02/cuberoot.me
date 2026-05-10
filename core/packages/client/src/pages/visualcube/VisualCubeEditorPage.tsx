@@ -221,7 +221,7 @@ function srKindOf(type: PuzzleType, variant: PuzzleVariant): PuzzleKind | null {
   if (type === 'sq1') return 'sq1';
   if (type === 'megaminx') return variant === 'top' ? 'megaminx-top' : 'megaminx';
   if (type === 'pyraminx') return 'pyraminx';
-  if (type === 'skewb') return 'skewb';
+  if (type === 'skewb') return variant === 'top' ? 'skewb-top' : 'skewb';
   return null;
 }
 
@@ -318,6 +318,42 @@ const DEFAULTS: EditorState = {
   netActiveColor: 'U',
 };
 
+/** Variant-specific rotation defaults. Skewb-top wants the upstream mihlefeld
+ *  pose (Rz45 ∘ Rx30) so the slider midpoint matches the canonical look; every
+ *  other puzzle uses our NxN iso pose. */
+function rotationDefaultsFor(args: { puzzleType: PuzzleType; puzzleVariant: PuzzleVariant }) {
+  if (args.puzzleType === 'skewb' && args.puzzleVariant === 'top') {
+    return { axis1: 'z', angle1: 45, axis2: 'x', angle2: 30, axis3: 'y', angle3: 0 };
+  }
+  return {
+    axis1: DEFAULTS.rotateAxis1, angle1: DEFAULTS.rotateAngle1,
+    axis2: DEFAULTS.rotateAxis2, angle2: DEFAULTS.rotateAngle2,
+    axis3: DEFAULTS.rotateAxis3, angle3: DEFAULTS.rotateAngle3,
+  };
+}
+
+function rotationsMatchDefault(s: EditorState): boolean {
+  const d = rotationDefaultsFor(s);
+  return s.rotateAxis1 === d.axis1 && s.rotateAngle1 === d.angle1 &&
+         s.rotateAxis2 === d.axis2 && s.rotateAngle2 === d.angle2 &&
+         s.rotateAxis3 === d.axis3 && s.rotateAngle3 === d.angle3;
+}
+
+/** When user crosses the skewb-top boundary (entering or leaving), if their
+ *  rotation is still at the OLD variant's defaults, snap to the NEW variant's
+ *  defaults so the slider midpoint stays meaningful. Custom rotations are
+ *  preserved across the boundary. */
+function snapRotationOnVariantBoundary(s: EditorState, partial: Partial<EditorState>): EditorState {
+  const next = { ...s, ...partial };
+  if (rotationsMatchDefault(s)) {
+    const d = rotationDefaultsFor(next);
+    next.rotateAxis1 = d.axis1; next.rotateAngle1 = d.angle1;
+    next.rotateAxis2 = d.axis2; next.rotateAngle2 = d.angle2;
+    next.rotateAxis3 = d.axis3; next.rotateAngle3 = d.angle3;
+  }
+  return next;
+}
+
 function readInitialFromUrl(params: URLSearchParams): EditorState {
   const get = (k: string) => params.get(k);
   const num = (k: string, fallback: number, min?: number, max?: number) => {
@@ -376,6 +412,13 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
     if (parts[5]) s.faceB = parts[5];
   }
 
+  // Apply variant-specific rotation defaults (skewb-top uses mihlefeld pose).
+  // r= overrides below if present.
+  const rotDef = rotationDefaultsFor(s);
+  s.rotateAxis1 = rotDef.axis1; s.rotateAngle1 = rotDef.angle1;
+  s.rotateAxis2 = rotDef.axis2; s.rotateAngle2 = rotDef.angle2;
+  s.rotateAxis3 = rotDef.axis3; s.rotateAngle3 = rotDef.angle3;
+
   // r=y30x-30z0  (axis-letter then signed degrees, repeating)
   const r = get('r');
   if (r) {
@@ -415,9 +458,7 @@ function stateToParams(s: EditorState): URLSearchParams {
     p.set('sch', [s.faceU, s.faceR, s.faceF, s.faceD, s.faceL, s.faceB].join(','));
   }
   // r: emit when not default
-  if (s.rotateAxis1 !== DEFAULTS.rotateAxis1 || s.rotateAngle1 !== DEFAULTS.rotateAngle1 ||
-      s.rotateAxis2 !== DEFAULTS.rotateAxis2 || s.rotateAngle2 !== DEFAULTS.rotateAngle2 ||
-      s.rotateAxis3 !== DEFAULTS.rotateAxis3 || s.rotateAngle3 !== DEFAULTS.rotateAngle3) {
+  if (!rotationsMatchDefault(s)) {
     p.set('r', `${s.rotateAxis1}${s.rotateAngle1}${s.rotateAxis2}${s.rotateAngle2}${s.rotateAxis3}${s.rotateAngle3}`);
   }
   if (s.backgroundColor) p.set('bg', s.backgroundColor);
@@ -467,9 +508,7 @@ function stateToOpts(s: EditorState): ICubeOptions {
 
   // Rotation sequence
   const axisEnum = (a: string): Axis => (a === 'x' ? Axis.X : a === 'y' ? Axis.Y : Axis.Z);
-  if (s.rotateAxis1 !== DEFAULTS.rotateAxis1 || s.rotateAngle1 !== DEFAULTS.rotateAngle1 ||
-      s.rotateAxis2 !== DEFAULTS.rotateAxis2 || s.rotateAngle2 !== DEFAULTS.rotateAngle2 ||
-      s.rotateAxis3 !== DEFAULTS.rotateAxis3 || s.rotateAngle3 !== DEFAULTS.rotateAngle3) {
+  if (!rotationsMatchDefault(s)) {
     opts.viewportRotations = [
       [axisEnum(s.rotateAxis1), s.rotateAngle1],
       [axisEnum(s.rotateAxis2), s.rotateAngle2],
@@ -805,13 +844,26 @@ export default function VisualCubeEditorPage() {
               />
             );
           }
+          // Only override sr-puzzlegen's per-puzzle iso defaults when the user
+          // has actually changed rotation from our cube-defaults — otherwise we'd
+          // wedge sq1/pyra/minx into NxN's (y30, x-30) which doesn't suit them.
+          // *-net is always 2D (no rotation). skewb-top renders via the
+          // parametric mihlefeld renderer which natively supports rotation.
+          const srKind = srKindOf(state.puzzleType, state.puzzleVariant)!;
+          const rotSupported = state.puzzleVariant !== 'net';
+          const rotations = rotSupported && !rotationsMatchDefault(state) ? [
+            { [state.rotateAxis1]: state.rotateAngle1 },
+            { [state.rotateAxis2]: state.rotateAngle2 },
+            { [state.rotateAxis3]: state.rotateAngle3 },
+          ] as { x?: number; y?: number; z?: number }[] : undefined;
           return (
             <div className="vc-preview">
               <PuzzleSVG
-                kind={srKindOf(state.puzzleType, state.puzzleVariant)!}
+                kind={srKind}
                 alg={state.algType === 'alg' ? state.algorithm : undefined}
                 case={state.algType === 'case' ? state.algorithm : undefined}
                 size={state.imageSize}
+                rotations={rotations}
               />
             </div>
           );
@@ -852,7 +904,7 @@ export default function VisualCubeEditorPage() {
                 key={pt}
                 type="button"
                 className={`vc-btn vc-btn-sm${state.puzzleType === pt ? ' vc-btn-active' : ''}`}
-                onClick={() => set('puzzleType', pt)}
+                onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleType: pt }))}
               >
                 {pt === 'cube' ? 'NxN' : pt === 'sq1' ? 'Sq1' : pt === 'megaminx' ? 'Minx' : pt === 'pyraminx' ? 'Pyra' : 'Skewb'}
               </button>
@@ -865,12 +917,12 @@ export default function VisualCubeEditorPage() {
           <div className="vc-row">
             <label className="vc-label">{t('视图', 'View')}</label>
             <div className="vc-row-controls">
-              {(state.puzzleType === 'megaminx' ? (['iso', 'top', 'net'] as PuzzleVariant[]) : (['iso', 'net'] as PuzzleVariant[])).map((pv) => (
+              {((state.puzzleType === 'megaminx' || state.puzzleType === 'skewb') ? (['iso', 'top', 'net'] as PuzzleVariant[]) : (['iso', 'net'] as PuzzleVariant[])).map((pv) => (
                 <button
                   key={pv}
                   type="button"
                   className={`vc-btn vc-btn-sm${state.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
-                  onClick={() => set('puzzleVariant', pv)}
+                  onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
                 >
                   {pv === 'iso' ? (isZh ? '立体' : 'Iso') : pv === 'top' ? (isZh ? '顶视' : 'Top') : (isZh ? '展开' : 'Net')}
                 </button>
@@ -1142,8 +1194,12 @@ export default function VisualCubeEditorPage() {
         </div>
         )}
 
-        {/* Rotation Sequence — only for NxN cube 3D (puzzle-gen net path is fixed-layout). */}
-        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
+        {/* Rotation Sequence — for NxN cube 3D, sr-puzzlegen iso/top, and skewb-top.
+            Hidden for net layouts (cubing.js / puzzle-gen, fixed 2D). */}
+        {(
+          (state.puzzleType === 'cube' && state.cubeView !== 'net') ||
+          (state.puzzleType !== 'cube' && state.puzzleVariant !== 'net')
+        ) && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
           <div className="vc-row-controls vc-col">
@@ -1172,8 +1228,11 @@ export default function VisualCubeEditorPage() {
                   />
                   <button type="button" className="vc-btn-icon" title="Reset"
                     onClick={() => {
-                      set(axisKey, DEFAULTS[axisKey] as never);
-                      set(angleKey, DEFAULTS[angleKey] as never);
+                      const d = rotationDefaultsFor(state);
+                      const axisVal = i === 1 ? d.axis1 : i === 2 ? d.axis2 : d.axis3;
+                      const angleVal = i === 1 ? d.angle1 : i === 2 ? d.angle2 : d.angle3;
+                      set(axisKey, axisVal as never);
+                      set(angleKey, angleVal as never);
                     }}>
                     <RotateCcw size={14} />
                   </button>

@@ -93,6 +93,10 @@ export interface RoundSheetInput {
   attempts: AttemptInput[];
   /** FMC only — list of locales for which to emit a translated solution sheet. */
   locales?: TnoodleLocale[];
+  /** Print copies — render the same scrambles N times in the PDF (defaults to 1). */
+  copies?: number;
+  /** scrambleSets count for this round; "Scramble Set A/B/..." renders only when >1. */
+  totalGroups?: number;
 }
 
 export interface PdfOptions {
@@ -306,7 +310,7 @@ function roundDetailString(sheet: RoundSheetInput, isZh: boolean): string {
   void isZh;
   const evName = tnoodleEventTitle(sheet.event) ?? eventDisplayName(sheet.event, false);
   const round = `Round ${sheet.roundIdx + 1}`;
-  const grp = sheet.groupIdx > 0 ? ` Scramble Set ${String.fromCharCode(65 + sheet.groupIdx)}` : '';
+  const grp = (sheet.totalGroups ?? 1) > 1 ? ` Scramble Set ${String.fromCharCode(65 + sheet.groupIdx)}` : '';
   const att = sheet.attemptNumber !== undefined ? ` Attempt ${sheet.attemptNumber + 1}` : '';
   return `${evName} ${round}${grp}${att}`;
 }
@@ -364,23 +368,29 @@ export async function generateTnoodlePdf(
     | { kind: 'fmc'; sheetIdx: number; attemptIdx: number; locale: TnoodleLocale };
   const pagePlan: Plan[] = [];
   sheets.forEach((s, sheetIdx) => {
+    const copies = Math.max(1, s.copies ?? 1);
     if (s.event === '333fm') {
       const locales = (s.locales && s.locales.length > 0)
         ? s.locales
         : (['en'] as TnoodleLocale[]);
       for (const locale of locales) {
         for (let ai = 0; ai < s.attempts.length; ai++) {
-          pagePlan.push({ kind: 'fmc', sheetIdx, attemptIdx: ai, locale });
+          for (let c = 0; c < copies; c++) {
+            pagePlan.push({ kind: 'fmc', sheetIdx, attemptIdx: ai, locale });
+          }
         }
       }
     } else {
       for (let i = 0; i < s.attempts.length; i += MAX_SCRAMBLES_PER_PAGE) {
-        pagePlan.push({
-          kind: 'standard',
+        const plan = {
+          kind: 'standard' as const,
           sheetIdx,
           chunkStart: i,
           chunkLen: Math.min(MAX_SCRAMBLES_PER_PAGE, s.attempts.length - i),
-        });
+        };
+        for (let c = 0; c < copies; c++) {
+          pagePlan.push(plan);
+        }
       }
     }
   });
@@ -684,7 +694,9 @@ async function renderFmcPage(
   // Comp title block (compTitle / activityTitle / Scramble X of Y)
   const titles: string[] = [opts.compTitle];
   const evName = tFmc('event', locale);
-  const setSuffix = sheet.groupIdx > 0 ? ` ${tFmc('scramble', locale)} ${tnoodleSetLabel(sheet.groupIdx)}` : '';
+  const setSuffix = (sheet.totalGroups ?? 1) > 1
+    ? ` ${tFmc('scramble', locale)} ${tnoodleSetLabel(sheet.groupIdx)}`
+    : '';
   const roundLabel = `${evName} ${tFmc('round', locale)} ${sheet.roundIdx + 1}${setSuffix}`;
   titles.push(roundLabel);
   if (opts.totalAttemptsInRound > 1) {

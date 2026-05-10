@@ -8,7 +8,7 @@
  * Phase 3 adds PDF.
  */
 import { useMemo, useState } from 'react';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download, X, Trash2, Edit3 } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { eventDisplayName } from '../../utils/wca_events';
@@ -54,6 +54,10 @@ interface RoundSheet {
   attempts: AttemptScramble[];
   /** FMC only — locales for which to emit a translated solution sheet. */
   locales?: TnoodleLocale[];
+  /** Print copies — same scrambles repeated N times in the PDF (per round.copies). */
+  copies?: number;
+  /** scrambleSets count for this round; used to render "Group A/B/..." only when >1. */
+  totalGroups?: number;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -64,6 +68,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
     '333': defaultEventConfig('333'),
   });
   const [sheets, setSheets] = useState<RoundSheet[] | null>(null);
+  const [viewedEvent, setViewedEvent] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
@@ -160,6 +165,8 @@ export default function TNoodleMode({ t, isZh }: Props) {
                   format: round.format,
                   attemptNumber: a,
                   attempts: cubeRows,
+                  copies: round.copies,
+                  totalGroups: round.scrambleSets,
                 });
               }
             } else if (ev === '333fm') {
@@ -174,6 +181,8 @@ export default function TNoodleMode({ t, isZh }: Props) {
                   attemptNumber: a,
                   attempts: [{ label: '1', scramble: s ?? '', isExtra: false }],
                   locales: round.locales,
+                  copies: round.copies,
+                  totalGroups: round.scrambleSets,
                 });
               }
             } else {
@@ -192,12 +201,16 @@ export default function TNoodleMode({ t, isZh }: Props) {
                 event: ev, roundIdx: ri, groupIdx: g,
                 format: round.format,
                 attempts,
+                copies: round.copies,
+                totalGroups: round.scrambleSets,
               });
             }
           }
         }
       }
       setSheets(out);
+      // Default the on-screen view filter to the first event we just generated.
+      setViewedEvent(out[0]?.event ?? null);
     } catch (err) {
       console.error('[tnoodle] generate failed', err);
     } finally {
@@ -224,6 +237,8 @@ export default function TNoodleMode({ t, isZh }: Props) {
           scramble: a.scramble,
         })),
         locales: s.locales,
+        copies: s.copies,
+        totalGroups: s.totalGroups,
       }));
       const eventColors: Record<string, Record<string, string>> = {};
       for (const ev of Object.keys(events)) {
@@ -278,48 +293,106 @@ export default function TNoodleMode({ t, isZh }: Props) {
     <>
       <div className="gen-tn-controls">
         <div className="gen-control-group">
-          <label className="gen-label">{t('比赛名', 'Competition Name')}</label>
           <input
             type="text"
             className="gen-tn-comp-input"
             value={compName}
             onChange={(e) => setCompName(e.target.value)}
+            readOnly={!!sheets && sheets.length > 0}
+            placeholder={t('比赛名', 'Competition Name')}
           />
         </div>
         <div className="gen-control-group gen-control-actions">
-          <ProgressButton
-            primary
-            icon={<RefreshCw size={14} className={generating ? 'gen-spin' : ''} />}
-            label={generating
-              ? t(`生成中 (${genProgress?.done ?? 0}/${genProgress?.total ?? totalAttempts})`,
-                  `Generating (${genProgress?.done ?? 0}/${genProgress?.total ?? totalAttempts})`)
-              : t(`生成打乱 (${totalAttempts})`, `Generate (${totalAttempts})`)}
-            progress={genProgress}
-            onClick={generate}
-            disabled={enabledEvents.length === 0 || generating}
-          />
-          <ProgressButton
-            icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
-            label={pdfBuilding
-              ? t(`PDF (${pdfProgress?.done ?? 0}/${pdfProgress?.total ?? 1})`,
-                  `PDF (${pdfProgress?.done ?? 0}/${pdfProgress?.total ?? 1})`)
-              : 'PDF'}
-            progress={pdfProgress}
-            onClick={downloadPdf}
-            disabled={!sheets || sheets.length === 0 || pdfBuilding}
-            title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
-          />
+          {sheets && sheets.length > 0 ? (
+            <button
+              type="button"
+              className="gen-btn"
+              onClick={() => {
+                setSheets(null);
+                setViewedEvent(null);
+              }}
+              title={t('重新配置', 'Reconfigure')}
+              aria-label={t('重新配置', 'Reconfigure')}
+            >
+              <Edit3 size={14} />
+            </button>
+          ) : (
+            <ProgressButton
+              primary
+              icon={<RefreshCw size={14} className={generating ? 'gen-spin' : ''} />}
+              label={generating
+                ? <span className="gen-btn-progress-num">{`${genProgress?.done ?? 0}/${genProgress?.total ?? totalAttempts}`}</span>
+                : t(`生成 (${totalAttempts})`, `Generate (${totalAttempts})`)}
+              progress={genProgress}
+              onClick={generate}
+              disabled={enabledEvents.length === 0 || generating}
+              title={t('生成打乱', 'Generate scrambles')}
+            />
+          )}
+          {sheets && sheets.length > 0 && (
+            <ProgressButton
+              icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
+              label={pdfBuilding
+                ? <span className="gen-btn-progress-num">{`${pdfProgress?.done ?? 0}/${pdfProgress?.total ?? 1}`}</span>
+                : ''}
+              progress={pdfProgress}
+              onClick={downloadPdf}
+              disabled={pdfBuilding}
+              title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
+            />
+          )}
+          {!(sheets && sheets.length > 0) && Object.keys(events).length > 0 && (
+            <button
+              type="button"
+              className="gen-btn"
+              onClick={() => setEvents({})}
+              title={t('清空所有项目', 'Clear all events')}
+              aria-label={t('清空所有项目', 'Clear all events')}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       </div>
 
-      <WcaEventSelector
-        availableEvents={TNOODLE_EVENT_SET}
-        selectedEvents={new Set(Object.keys(events))}
-        onToggle={toggleEvent}
-        isZh={isZh}
-      />
+      {sheets && sheets.length > 0 ? (
+        // ── 视图模式:已生成,顶端 selector 单选,只能切视图;不允许增删项目 ──
+        (() => {
+          const eventsInSheets = Array.from(new Set(sheets.map((s) => s.event)));
+          const activeView = viewedEvent && eventsInSheets.includes(viewedEvent)
+            ? viewedEvent
+            : eventsInSheets[0];
+          return (
+            <WcaEventSelector
+              availableEvents={new Set(eventsInSheets)}
+              selectedEvent={activeView}
+              onSelect={setViewedEvent}
+              onlyAvailable
+              isZh={isZh}
+            />
+          );
+        })()
+      ) : (
+        // ── 配置模式:多选 toggle + 点击循环轮数(清空按钮在顶部 actions 区) ──
+        <WcaEventSelector
+          availableEvents={TNOODLE_EVENT_SET}
+          selectedEvents={new Set(Object.keys(events))}
+          badges={Object.fromEntries(Object.entries(events).map(([ev, cfg]) => [ev, cfg.rounds.length]))}
+          onToggle={(ev) => {
+            // 循环:0(未启用) → 1 → 2 → 3 → 4 → 0
+            if (!events[ev]) {
+              toggleEvent(ev);                  // 0 → 1
+            } else {
+              const cur = events[ev].rounds.length;
+              if (cur >= 4) toggleEvent(ev);    // 4 → 0(取消启用)
+              else setRoundCount(ev, cur + 1);  // 1/2/3 → +1
+            }
+          }}
+          isZh={isZh}
+        />
+      )}
 
-      {enabledEvents.length === 0 ? (
+      {sheets && sheets.length > 0 ? null : enabledEvents.length === 0 ? (
         <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
       ) : (
         <div className="gen-tn-event-list">
@@ -330,21 +403,17 @@ export default function TNoodleMode({ t, isZh }: Props) {
                 <div className="gen-tn-event-header gen-tn-event-header--static">
                   <EventIcon event={ev} />
                   <span className="gen-tn-event-name">{eventDisplayName(ev, isZh)}</span>
+                  <button
+                    type="button"
+                    className="gen-tn-event-remove"
+                    onClick={() => toggleEvent(ev)}
+                    title={t('移除项目', 'Remove event')}
+                    aria-label={t('移除项目', 'Remove event')}
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
                 <div className="gen-tn-event-body">
-                  <div className="gen-tn-rounds-row">
-                    <span className="gen-tn-rounds-label">{t('轮数', 'Rounds')}</span>
-                    {[1, 2, 3, 4].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        className={`gen-tn-round-chip${cfg.rounds.length === n ? ' is-active' : ''}`}
-                        onClick={() => setRoundCount(ev, n)}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
                   {cfg.rounds.map((r, ri) => (
                     <div key={ri} className="gen-tn-round-row">
                       <span className="gen-tn-round-num">R{ri + 1}</span>
@@ -412,31 +481,40 @@ export default function TNoodleMode({ t, isZh }: Props) {
         </div>
       )}
 
-      {sheets && sheets.length > 0 && (
-        <div className="gen-tn-sheets">
-          <h2 className="gen-tn-sheet-title">{compName}</h2>
-          {sheets.map((sh, i) => (
-            <SheetView
-              key={i}
-              sheet={sh}
-              isZh={isZh}
-              t={t}
-              clockColors={sh.event === 'clock' ? events[sh.event]?.colors : undefined}
-              sq1Colors={sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
-              megaColors={sh.event === 'minx' ? events[sh.event]?.colors : undefined}
-            />
-          ))}
-        </div>
-      )}
+      {sheets && sheets.length > 0 && (() => {
+        const eventsInSheets = Array.from(new Set(sheets.map((s) => s.event)));
+        const activeView = viewedEvent && eventsInSheets.includes(viewedEvent)
+          ? viewedEvent
+          : eventsInSheets[0];
+        const visible = sheets.filter((s) => s.event === activeView);
+        return (
+          <div className="gen-tn-sheets">
+            {visible.map((sh, i) => (
+              <SheetView
+                key={i}
+                sheet={sh}
+                isZh={isZh}
+                t={t}
+                clockColors={sh.event === 'clock' ? events[sh.event]?.colors : undefined}
+                sq1Colors={sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
+                megaColors={sh.event === 'minx' ? events[sh.event]?.colors : undefined}
+              />
+            ))}
+          </div>
+        );
+      })()}
     </>
   );
 }
 
 function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string>; sq1Colors?: Record<string, string>; megaColors?: Record<string, string> }) {
-  const { event, roundIdx, groupIdx, format, attemptNumber, attempts } = sheet;
-  const groupSuffix = groupIdx > 0 ? ` · ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}` : '';
+  const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
+  // 多组(scrambleSets > 1)时所有组都标 A/B/...;只 1 组时不写组号
+  const groupSuffix = (totalGroups ?? 1) > 1
+    ? ` ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}`
+    : '';
   const attemptSuffix = attemptNumber !== undefined
-    ? ` · ${t('第', 'Attempt')} ${attemptNumber + 1}${t('次', '')}`
+    ? ` ${t('第', 'Attempt')} ${attemptNumber + 1}${t('次', '')}`
     : '';
   const rows: React.ReactNode[] = [];
   attempts.forEach((a, i) => {
@@ -466,7 +544,7 @@ function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors }: { she
     <div className="gen-tn-sheet">
       <div className="gen-tn-sheet-header">
         <EventIcon event={event} />
-        <span>{eventDisplayName(event, isZh)} · {t('第', 'Round')} {roundIdx + 1}{t('轮', '')} · {FORMAT_LABEL[format]}{groupSuffix}{attemptSuffix}</span>
+        <span>{eventDisplayName(event, isZh)} {t('第', 'Round')} {roundIdx + 1}{t('轮', '')}{groupSuffix}{attemptSuffix}</span>
       </div>
       <table className="gen-tn-sheet-table"><tbody>{rows}</tbody></table>
     </div>

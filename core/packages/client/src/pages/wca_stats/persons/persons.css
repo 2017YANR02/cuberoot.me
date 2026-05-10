@@ -316,6 +316,7 @@
     padding: 16px 24px 0;
     border-bottom: 1px solid var(--wp-border);
     overflow-x: auto;
+    overflow-y: hidden; /* 显式禁 vertical;否则 overflow-x:auto 会隐式让 y 也变 auto → sub-pixel 误差触发 scrollbar */
 }
 .wp-tab-btn {
     background: transparent; border: none;

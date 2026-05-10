@@ -6,7 +6,7 @@ import type React from 'react';
 
 export interface ProgressButtonProps {
   icon: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   /** When non-null, a thin determinate bar fills the button bottom edge. */
   progress: { done: number; total: number } | null;
   onClick: () => void;
@@ -31,7 +31,7 @@ export default function ProgressButton({
       title={title}
     >
       {icon}
-      <span>{label}</span>
+      {label && <span>{label}</span>}
       {showBar && (
         <span className="gen-btn-bar" aria-hidden="true">
           <span className="gen-btn-bar-fill" style={{ width: `${pct}%` }} />

@@ -14,13 +14,20 @@ interface WcaEventSelectorProps {
   // 多选 API(同时传 selectedEvents+onToggle 即进入多选)
   selectedEvents?: ReadonlySet<string>;
   onToggle?: (id: string) => void;
+  /** 在每个图标右下角渲染一个小角标(用于显示轮数等附加信息)。 */
+  badges?: Record<string, string | number>;
+  /** 只渲染 availableEvents 集合里的图标(隐藏其它,而非灰显)。 */
+  onlyAvailable?: boolean;
 }
 
 export default function WcaEventSelector({
   availableEvents, selectedEvent, onSelect, isZh, allowAll,
-  selectedEvents, onToggle,
+  selectedEvents, onToggle, badges, onlyAvailable,
 }: WcaEventSelectorProps) {
   const isMulti = !!(selectedEvents && onToggle);
+  const renderedIds = onlyAvailable
+    ? ALL_EVENT_IDS.filter(id => availableEvents.has(id))
+    : ALL_EVENT_IDS;
   return (
     <div className="wca-stats-event-selector">
       {allowAll && !isMulti && (
@@ -32,7 +39,7 @@ export default function WcaEventSelector({
           <span className="event-all-label">{isZh ? '全部' : 'All'}</span>
         </button>
       )}
-      {ALL_EVENT_IDS.map(id => {
+      {renderedIds.map(id => {
         const isDisabled = !availableEvents.has(id);
         const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
         const tooltip = isZh ? (EVENT_ZH[id] || id) : (EVENT_EN[id] || id);
@@ -49,6 +56,9 @@ export default function WcaEventSelector({
             onClick={handleClick}
           >
             <span className={`cubing-icon event-${id}`} />
+            {badges?.[id] !== undefined && (
+              <span className="event-btn-badge">{badges[id]}</span>
+            )}
           </button>
         );
       })}

@@ -1,5 +1,25 @@
 /* /gen — batch scramble generator */
 
+/* Same TTFs that tnoodle_pdf.ts loads into jsPDF — keep web sheet fonts
+   identical to the PDF. wqy-microhei covers CJK (sheet headers like
+   "三阶 · 第1轮 · Ao5") since LiberationMono / NotoSans are Latin-only. */
+@font-face {
+    font-family: 'LiberationMono';
+    src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+    font-display: block;
+}
+@font-face {
+    font-family: 'NotoSans';
+    src: url('/fonts/NotoSans-Regular.ttf') format('truetype');
+    font-display: block;
+}
+@font-face {
+    font-family: 'WQYMicroHei';
+    src: url('/fonts/wqy-microhei.ttf') format('truetype');
+    font-display: block;
+}
+
+
 .gen-page {
     --gen-bg: #FAF9F5;
     --gen-surface: #FFFFFF;
@@ -22,7 +42,8 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1.25rem 2rem 1rem;
+    /* sticky bar 背景拉满视口宽度,但内容用动态 padding 锁在 ≤980px 中央 */
+    padding: 1.25rem max(2rem, calc((100vw - 980px) / 2)) 1rem;
     border-bottom: 1px solid var(--gen-border);
     background: rgba(255, 255, 255, 0.85);
     position: sticky;
@@ -95,7 +116,7 @@
     background: var(--gen-surface);
     color: var(--gen-text-sub);
     font-size: 0.85rem;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     cursor: pointer;
     transition: all 0.15s;
 }
@@ -114,7 +135,7 @@
     padding: 4px 10px;
     border: 1px solid var(--gen-border);
     border-radius: 6px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: 0.85rem;
     color: var(--gen-text);
     background: var(--gen-surface);
@@ -181,6 +202,12 @@
 .gen-btn-primary .gen-btn-bar { background: rgba(255, 255, 255, 0.25); }
 .gen-btn-primary .gen-btn-bar-fill { background: #FFF; }
 
+/* 生成中按钮显示 done/total —— 用等宽字体让数字位宽稳定 */
+.gen-btn-progress-num {
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+}
+
 .gen-loading {
     text-align: center;
     color: var(--gen-text-mute);
@@ -232,7 +259,7 @@
 }
 
 .gen-num {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: 0.8rem;
     color: var(--gen-text-mute);
     text-align: right;
@@ -245,7 +272,7 @@
 }
 
 .gen-scramble {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: 0.92rem;
     color: var(--gen-text);
     word-break: break-word;
@@ -288,10 +315,38 @@
     .gen-controls { padding: 10px 12px; }
 }
 
-/* WcaEventSelector 默认深色主题(wca-stats),在 /scramble/gen 的奶白底上需要重皮 */
-.gen-page .wca-stats-event-selector {
+/* 顶端 selector + "清空" 按钮一行 */
+.gen-tn-event-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.gen-tn-event-row .wca-stats-event-selector { flex: 1; }
+.gen-tn-clear-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border: 1px solid var(--gen-border);
+    border-radius: 7px;
     background: var(--gen-surface);
-    border-color: var(--gen-border);
+    color: var(--gen-text-mute);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.gen-tn-clear-all:hover {
+    border-color: var(--gen-accent);
+    color: var(--gen-accent);
+    background: var(--gen-accent-soft);
+}
+
+/* WcaEventSelector 默认深色主题(wca-stats),在 /scramble/gen 奶白底上去掉外框 */
+.gen-page .wca-stats-event-selector {
+    background: transparent;
+    border-color: transparent;
+    padding: 0;
     margin: 0 0 1rem;
 }
 .gen-page .wca-stats-event-selector .event-btn {
@@ -304,6 +359,7 @@
     border-color: var(--gen-border);
 }
 .gen-page .wca-stats-event-selector .event-btn:hover .cubing-icon { color: var(--gen-text); }
+/* 已选 / 当前查看 = 深橙 */
 .gen-page .wca-stats-event-selector .event-btn.active {
     background: var(--gen-accent);
     border-color: var(--gen-accent);
@@ -367,23 +423,20 @@
 
 /* ───────── TNoodle mode ───────── */
 .gen-tn-controls {
-    background: var(--gen-surface);
-    border: 1px solid var(--gen-border);
-    border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 16px;
     align-items: end;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 @media (max-width: 700px) {
     .gen-tn-controls { grid-template-columns: 1fr; }
 }
 .gen-tn-comp-input {
     width: 100%;
-    padding: 8px 12px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 12px;
     border: 1px solid var(--gen-border);
     border-radius: 8px;
     font-size: 0.95rem;
@@ -391,13 +444,29 @@
     background: var(--gen-surface);
     outline: none;
 }
+/* 与比赛名输入框等高 */
+.gen-tn-controls .gen-btn,
+.gen-tn-controls .gen-btn-primary {
+    height: 38px;
+    box-sizing: border-box;
+}
 .gen-tn-comp-input:focus { border-color: var(--gen-accent); }
+.gen-tn-comp-input:read-only {
+    background: transparent;
+    border-color: transparent;
+    color: var(--gen-text);
+    cursor: default;
+    padding: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
 
 .gen-tn-event-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
     gap: 10px;
     margin-bottom: 1.5rem;
+    /* 默认 align-items: stretch — 同一 grid 行的卡片高度自动对齐到最高那个 */
 }
 .gen-tn-empty {
     color: var(--gen-text-mute);
@@ -431,6 +500,21 @@
 .gen-tn-event-card.is-on .gen-tn-event-header { color: var(--gen-accent); font-weight: 600; }
 .gen-tn-event-header--static { cursor: default; }
 .gen-tn-event-name { flex: 1; }
+.gen-tn-event-remove {
+    border: none;
+    background: transparent;
+    color: var(--gen-text-mute);
+    padding: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.15s;
+}
+.gen-tn-event-remove:hover {
+    color: var(--gen-accent);
+    background: var(--gen-accent-soft);
+}
 .gen-tn-event-body {
     padding: 0 14px 12px;
     display: flex;
@@ -455,7 +539,7 @@
     background: var(--gen-surface);
     color: var(--gen-text-sub);
     font-size: 0.85rem;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     cursor: pointer;
 }
 .gen-tn-round-chip:hover { border-color: var(--gen-border-strong); }
@@ -476,7 +560,7 @@
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--gen-text-sub);
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
 }
 .gen-tn-format-select {
     padding: 4px 8px;
@@ -491,7 +575,7 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--gen-text);
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
 }
 .gen-tn-mini-num {
     display: inline-flex;
@@ -576,19 +660,47 @@
 }
 .gen-tn-translations-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px 12px;
+    /* 卡内宽 ~262px,自动按 110px 列宽放 2 列;窄时回落 1 列 */
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 4px 8px;
 }
 .gen-tn-translations-cell {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 0.82rem;
-    color: var(--gen-text);
+    color: var(--gen-text-mute);
     cursor: pointer;
     padding: 2px 0;
+    min-width: 0;                       /* allow inner text to shrink/wrap */
+    overflow-wrap: anywhere;            /* break long names like "Português (BR)" */
 }
-.gen-tn-translations-cell input { cursor: pointer; }
+.gen-tn-translations-cell > span {
+    min-width: 0;
+    line-height: 1.2;
+}
+/* 隐藏原生 checkbox,选中态全部由国旗描边/文字色表达 */
+.gen-tn-translations-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.gen-tn-translations-cell.is-selected { color: var(--gen-text); font-weight: 600; }
+/* 国旗描边(span 版 + TW SVG img 版都覆盖) */
+.gen-tn-translations-cell.is-selected .country-flag,
+.gen-tn-translations-cell.is-selected .country-flag-ct {
+    box-shadow: 0 0 0 2px var(--gen-accent);
+    border-radius: 2px;
+}
+/* 没国旗的语言(Breton/Esperanto)用 cell 外圈描边兜底 */
+.gen-tn-translations-cell.no-flag.is-selected {
+    box-shadow: inset 0 0 0 2px var(--gen-accent);
+    border-radius: 4px;
+    padding: 2px 6px;
+}
 @media (max-width: 600px) {
     .gen-tn-translations-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -600,10 +712,23 @@
     gap: 8px;
     margin-top: 4px;
 }
+.gen-tn-clock-details {
+    margin-top: 4px;
+}
+.gen-tn-clock-details > summary {
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--gen-text-sub);
+    padding: 4px 0;
+    user-select: none;
+}
+.gen-tn-clock-details > summary:hover { color: var(--gen-accent); }
+.gen-tn-clock-details[open] > summary { color: var(--gen-text); }
 .gen-tn-clock-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
+    margin-top: 6px;
 }
 .gen-tn-clock-chip {
     position: relative;
@@ -671,6 +796,7 @@
     margin-top: 1.5rem;
 }
 .gen-tn-sheet-title {
+    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 1.25rem;
     font-weight: 600;
     text-align: center;
@@ -678,42 +804,57 @@
     margin: 0 0 0.5rem;
 }
 .gen-tn-sheet {
-    background: var(--gen-surface);
-    border: 1px solid var(--gen-border);
-    border-radius: 10px;
-    overflow: hidden;
+    /* Shrink to content so the right side doesn't have a wide empty band. */
+    align-self: flex-start;
+    max-width: 100%;
 }
 .gen-tn-sheet-header {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 10px 14px;
-    background: var(--gen-bg);
-    border-bottom: 1px solid var(--gen-border);
+    padding: 6px 0;
+    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--gen-text);
 }
+/* Table mirrors tnoodle PDF layout (see image 9): tight cell grid, mono
+   scramble cell, fixed-width gray-bg preview cell. We drop `width: 100%` so
+   the table shrinks to its content width — otherwise a 970px main column
+   stretches the scramble cell and shoves the preview to the far right. */
 .gen-tn-sheet-table {
-    width: 100%;
     border-collapse: collapse;
+    /* 表级 border 不要 —— 否则 Extra Scrambles 那行(left/right border:none)
+       仍然能看到表自身的左右黑线穿过。改由每个 td 自己出 border,外缘
+       自然由最左/最右单元格拼出来。 */
 }
-.gen-tn-sheet-table tr { border-bottom: 1px solid var(--gen-border); }
-.gen-tn-sheet-table tr:last-child { border-bottom: none; }
-.gen-tn-sheet-table td { padding: 8px 12px; vertical-align: middle; }
+.gen-tn-sheet-table td {
+    padding: 6px 10px;
+    vertical-align: middle;
+    border: 1px solid #000;
+}
 .gen-tn-attempt-num {
-    width: 36px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    /* PDF renders the row label with NotoSans (FONT_SANS), not the mono. */
+    width: 32px;
+    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 0.85rem;
-    color: var(--gen-text-mute);
-    font-weight: 600;
-    text-align: right;
+    color: #000;
+    font-weight: 400;
+    text-align: center;
 }
-.gen-tn-sheet-table tr.is-extra .gen-tn-attempt-num { color: var(--gen-accent); }
-.gen-tn-attempt-scramble { width: auto; }
+.gen-tn-attempt-scramble {
+    /* width auto + no table-width = scramble cell sizes to content (NBSP-padded
+       tokens force a natural grid). */
+    width: auto;
+    max-width: 560px;       /* matches the ~550pt scramble column on A4 */
+}
 .gen-tn-attempt-line {
     display: block;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    /* 打乱步骤永远是 ASCII,不要把 WQYMicroHei 放进 fallback ——
+       否则 LiberationMono 没装好时会被 CJK 字体接管 ASCII,字重明显变粗。 */
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
+    font-weight: 400;
     font-size: 0.88rem;
     color: var(--gen-text);
     word-break: break-word;
@@ -721,15 +862,42 @@
     user-select: text;
     /* Mega scrambles carry '\n' between face cycles; preserve them here. */
     white-space: pre-wrap;
+    /* PDF MIN_LINES_HIGHLIGHTING:每隔一行用浅灰底纹。我们用 repeating gradient
+       直接按 line-height (1.5em) 切条纹,wrap 后视觉自动对齐,不需要 JS 分行。
+       1.5em 对应 line-height: 1.5 与 font-size 的乘积,刚好 1 行高度。 */
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 1.5em,
+        #e6e6e6 1.5em,
+        #e6e6e6 3em
+    );
 }
 .gen-tn-attempt-line + .gen-tn-attempt-line { margin-top: 2px; }
-.gen-tn-attempt-preview { width: 110px; }
+.gen-tn-attempt-preview {
+    background: #C0C0C0;    /* tnoodle SCRAMBLE_BACKGROUND_COLOR */
+    text-align: center;
+    /* 让 cell 按图天然宽高比撑开:行越高(7x7 八行打乱)图越大 → cell 自然变宽。
+       小技巧:外层 table 显式 height:1px,td height:100% 才能让子元素读到行高。 */
+    height: 100%;
+    padding: 0;
+    min-width: 96px;
+}
+.gen-tn-sheet-table { height: 1px; }
+.gen-tn-attempt-preview svg {
+    display: block;
+    margin: 0 auto;
+    height: 100%;
+    width: auto;
+}
 .gen-tn-extras-divider td {
     text-align: center;
+    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 0.78rem;
-    color: var(--gen-text-mute);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-weight: 400;
+    color: #000;
     background: var(--gen-bg);
     padding: 4px 12px;
+    border-left: none;
+    border-right: none;
 }
