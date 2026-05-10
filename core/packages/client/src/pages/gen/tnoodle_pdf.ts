@@ -27,6 +27,8 @@ import { getScramble2DSvg } from './cubing_2d_svg';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './clock_svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from './sq1_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './mega_svg';
+import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from './pyraminx_svg';
+import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from './skewb_svg';
 import type { WcaFormat } from './wca_round';
 import { eventDisplayName } from '../../utils/wca_events';
 import { tFmc, fontForLocale, type TnoodleLocale } from './tnoodle_translate';
@@ -556,6 +558,10 @@ async function renderPage(
         portedSvg = renderSq1ScrambleSvg(a.scramble, hdr.eventColors?.sq1 ?? DEFAULT_SQ1_COLORS);
       } else if (sheet.event === 'minx') {
         portedSvg = renderMegaScrambleSvg(a.scramble, hdr.eventColors?.minx ?? DEFAULT_MEGA_COLORS);
+      } else if (sheet.event === 'pyram') {
+        portedSvg = renderPyraScrambleSvg(a.scramble, hdr.eventColors?.pyram ?? PYRA_DEFAULT_COLORS);
+      } else if (sheet.event === 'skewb') {
+        portedSvg = renderSkewbScrambleSvg(a.scramble, hdr.eventColors?.skewb ?? SKEWB_DEFAULT_COLORS);
       }
       const svgStr = portedSvg
         ?? renderUnfoldedSvgForEvent(sheet.event, a.scramble)

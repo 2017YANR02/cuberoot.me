@@ -18,20 +18,23 @@
  */
 import { CubeData, parseAlgorithm, Face, AllFaces } from '@cuberoot/visualcube';
 
-// WCA colour scheme (white-top, green-front, red-right, blue-back, orange-left, yellow-bottom).
-// Hexes match visualcube's existing palette so other parts of the app stay consistent.
+// Tnoodle CubePuzzle.java defaultColorScheme — pure WCA hexes.
+// (Java Color.WHITE/RED/GREEN/etc are #ffffff/#ff0000/#00ff00 etc, plus
+//  L = new Color(255, 128, 0) "orange heraldic tincture".)
 const WCA_COLORS: Record<number, string> = {
   [Face.U]: '#FFFFFF',
-  [Face.D]: '#FEFE00',
-  [Face.F]: '#00D800',
-  [Face.B]: '#0000F2',
-  [Face.L]: '#FFA100',
-  [Face.R]: '#EE0000',
+  [Face.D]: '#FFFF00',
+  [Face.F]: '#00FF00',
+  [Face.B]: '#0000FF',
+  [Face.L]: '#FF8000',
+  [Face.R]: '#FF0000',
 };
 
-const BG_COLOR = '#C0C0C0';      // matches tnoodle SCRAMBLE_BACKGROUND_COLOR
+// Tnoodle CubePuzzle: cubieSize=10, gap=2 → gap-as-fraction-of-cubie = 0.2.
+// Stickers stroke is svglite default (1px on cubieSize=10) → 0.1 of a cubie.
 const STROKE_COLOR = '#000000';
-const STROKE_W = 0.04;            // relative to 1×1 cell
+const GAP = 0.2;                  // gap between faces, in cell units (matches tnoodle 2/10)
+const STROKE_W = 0.1;             // sticker outline, relative to 1×1 cell (matches tnoodle 1/10)
 
 const PUZZLE_TO_N: Record<string, number> = {
   '2x2x2': 2, '3x3x3': 3, '4x4x4': 4, '5x5x5': 5, '6x6x6': 6, '7x7x7': 7,
@@ -75,20 +78,30 @@ export function renderUnfoldedSvg(N: number, scramble: string): string {
     console.warn('[cube_unfolded_svg] parseAlgorithm failed', scramble, e);
   }
 
-  const w = 4 * N;
-  const h = 3 * N;
+  // Tnoodle CubePuzzle layout (CubePuzzle.java getCubeViewWidth/Height):
+  //   total width  = (size*cubie + gap)*4 + gap = 4*N + 5*GAP   (cell units)
+  //   total height = (size*cubie + gap)*3 + gap = 3*N + 4*GAP
+  // Face origins (in cell units):
+  //   L = (gap, 2*gap + N)
+  //   U = (2*gap + N, gap)
+  //   F = (2*gap + N, 2*gap + N)
+  //   R = (3*gap + 2N, 2*gap + N)
+  //   B = (4*gap + 3N, 2*gap + N)
+  //   D = (2*gap + N, 3*gap + 2N)
+  const w = 4 * N + 5 * GAP;
+  const h = 3 * N + 4 * GAP;
   const parts: string[] = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">`);
-  parts.push(`<rect width="${w}" height="${h}" fill="${BG_COLOR}"/>`);
+  // Tnoodle's puzzle SVG is transparent; the gray cell background is drawn by
+  // the PDF renderer behind the image, and shows through the face gaps.
 
-  // [Face]: [offsetX, offsetY] in cell units within the 4N × 3N grid.
   const offsets: Record<number, [number, number]> = {
-    [Face.U]: [N, 0],
-    [Face.L]: [0, N],
-    [Face.F]: [N, N],
-    [Face.R]: [2 * N, N],
-    [Face.B]: [3 * N, N],
-    [Face.D]: [N, 2 * N],
+    [Face.U]: [2 * GAP + N, GAP],
+    [Face.L]: [GAP, 2 * GAP + N],
+    [Face.F]: [2 * GAP + N, 2 * GAP + N],
+    [Face.R]: [3 * GAP + 2 * N, 2 * GAP + N],
+    [Face.B]: [4 * GAP + 3 * N, 2 * GAP + N],
+    [Face.D]: [2 * GAP + N, 3 * GAP + 2 * N],
   };
 
   for (const f of AllFaces) {

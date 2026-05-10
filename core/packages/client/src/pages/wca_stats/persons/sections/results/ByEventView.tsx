@@ -486,6 +486,7 @@ function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRo
 // 月级 (默认) 或年级数据.X 轴用 (year + (month-1)/12) 浮点,跨月连续.
 function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: boolean }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  const [hover, setHover] = useState<number | null>(null);
   const W = 760, H = 280, P = { l: 48, r: 16, t: 24, b: 32 };
 
   // 月→浮点(年.月分数);年级数据 month=undefined 时用整年
@@ -542,22 +543,33 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
   // y ticks
   const ticks = [1, Math.ceil(yMax / 4), Math.ceil(yMax / 2), Math.ceil((3 * yMax) / 4), yMax];
 
-  // x ticks:跨度 < 2 年用月份 (YYYY-MM),否则用年份
-  const span = xMax - xMin;
+  // x ticks: 选合适的月间隔,目标 ≈ 6 个 tick
+  const spanMonths = (xMax - xMin) * 12;
+  let intervalMonths: number;
+  if      (spanMonths <= 12) intervalMonths = 2;   // ≤ 1 年: 每 2 月
+  else if (spanMonths <= 36) intervalMonths = 6;   // ≤ 3 年: 每 6 月
+  else if (spanMonths <= 60) intervalMonths = 12;  // ≤ 5 年: 每年
+  else                       intervalMonths = 24;  // > 5 年: 每 2 年
+  const useMonth = intervalMonths < 12;
+  // 起点对齐到 intervalMonths 的整数倍(让 tick 落在干净的月份上)
+  const startYM = Math.ceil(xMin * 12 / intervalMonths) * intervalMonths;
+  const endYM   = Math.floor(xMax * 12);
   const xTicks: { x: number; label: string }[] = [];
-  const tickCount = Math.min(8, Math.max(2, Math.round(span < 2 ? span * 4 : span)));
-  for (let k = 0; k <= tickCount; k++) {
-    const xv = xMin + (k / tickCount) * span;
+  for (let ym = startYM; ym <= endYM; ym += intervalMonths) {
+    const xv = ym / 12;
     const yr = Math.floor(xv);
-    const mo = Math.round((xv - yr) * 12) + 1;
-    const label = span < 2
-      ? `${yr}-${String(mo).padStart(2, '0')}`
-      : (k % 2 === 0 ? String(yr) : ''); // 跨度大时隔一个标
-    if (label) xTicks.push({ x: xScale(xv), label });
+    const mo = (ym % 12) + 1;
+    const label = useMonth ? `${yr}-${String(mo).padStart(2, '0')}` : String(yr);
+    xTicks.push({ x: xScale(xv), label });
   }
 
+  // hover band 宽度: 让相邻 band 不重叠;最少 8px,最多 32px
+  const bandW = rows.length > 1
+    ? Math.max(8, Math.min(32, (W - P.l - P.r) / rows.length))
+    : 24;
+
   return (
-    <div className="wp-chart-wrap">
+    <div className="wp-chart-wrap" onMouseLeave={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} className="wp-chart-svg">
         {ticks.map((rk) => (
           <g key={rk}>
@@ -586,14 +598,54 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
                   key={ri}
                   cx={xScale(toX(r))}
                   cy={yScale(v)}
-                  r={2}
+                  r={hover === ri ? 3.5 : 2}
                   className={s.cls}
                 />
               );
             })}
           </g>
         ))}
+        {/* hover 高亮垂直虚线 */}
+        {hover !== null && rows[hover] && (
+          <line
+            x1={xScale(toX(rows[hover]!))} y1={P.t}
+            x2={xScale(toX(rows[hover]!))} y2={H - P.b}
+            className="wp-chart-hover-line"
+          />
+        )}
+        {/* hover band: 每行一条,鼠标进 band 触发 setHover */}
+        {rows.map((r, ri) => (
+          <rect
+            key={`band-${ri}`}
+            x={xScale(toX(r)) - bandW / 2} y={P.t}
+            width={bandW} height={H - P.t - P.b}
+            fill="transparent"
+            onMouseEnter={() => setHover(ri)}
+          />
+        ))}
       </svg>
+      {hover !== null && rows[hover] && (() => {
+        const r = rows[hover]!;
+        const cx = xScale(toX(r));
+        const place = cx > W / 2 ? 'left' : 'right';
+        const dateLabel = r.month !== undefined
+          ? `${r.year}-${String(r.month).padStart(2, '0')}`
+          : `${r.year}`;
+        return (
+          <div className={`wp-chart-tip wp-chart-tip-${place}`} style={{ left: `${(cx / W) * 100}%` }}>
+            <div className="wp-chart-tip-title">{dateLabel}</div>
+            {series.map((s) => {
+              const v = r[s.key];
+              if (v === null || v <= 0) return null;
+              return (
+                <div key={s.key}>
+                  <span className="wp-chart-tip-k">{s.label}:</span> {v}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }

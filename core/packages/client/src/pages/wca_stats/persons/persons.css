@@ -567,14 +567,16 @@
 
 .wp-dist-bar { fill: var(--wp-blue); opacity: 0.85; }
 
-/* 同时设 stroke (path / rect 用) + fill (circle dot 用),legend rect 因 fill=color 也显色 */
+/* 同时设 stroke (path / rect 用) + fill (circle dot / legend rect 用) */
 .wp-rank-line-snr { stroke: #1f3f78; fill: #1f3f78; }
 .wp-rank-line-scr { stroke: #6ab15a; fill: #6ab15a; }
 .wp-rank-line-swr { stroke: #c39316; fill: #c39316; }
 .wp-rank-line-anr { stroke: #b71234; fill: #b71234; }
 .wp-rank-line-acr { stroke: #5fa3c7; fill: #5fa3c7; }
 .wp-rank-line-awr { stroke: #2c7a4b; fill: #2c7a4b; }
-/* path 仍要 fill: none(否则曲线下被填色) — wp-chart-line 已设 */
+/* path 强制 fill: none — selector specificity (0,2,0) 高于上面单一 class (0,1,0),
+   覆盖 .wp-rank-line-* 的 fill,防止曲线下方被填色变成大色块 */
+.wp-chart-svg .wp-chart-line { fill: none; }
 
 /* ── Milestones ─────────────────────────────────────────────────── */
 .wp-milestones { display: flex; flex-direction: column; gap: 16px; }
