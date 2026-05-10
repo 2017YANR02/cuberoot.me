@@ -163,6 +163,10 @@ export default defineConfig({
   build: {
     // NOTE: 使用 _assets 避免与根目录 assets/（stats CSS 等）冲突
     assetsDir: '_assets',
+    // NOTE: 关掉 __vitePreload helper —— Vite 会把它注进 cubing.js 的 search worker chunk,
+    // 而 worker 里没有 `document`,prod 一调 randomScrambleForEvent 就 ReferenceError 死。
+    // 关掉对主 bundle 只是微小的预加载收益损失,但救活了所有 module-worker 库。
+    modulePreload: false,
   },
   optimizeDeps: {
     exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util', '@ffmpeg/core-mt'],
