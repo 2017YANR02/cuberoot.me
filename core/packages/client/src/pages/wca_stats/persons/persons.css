@@ -152,7 +152,14 @@
     color: var(--wp-text);
     font-variant-numeric: tabular-nums;
 }
-.wp-hero-id { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; }
+/* Claude.ai 标题用的是付费 Copernicus,取项目已加载的 Fraunces 作免费近似(opsz 变重轴) */
+.wp-hero-id {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    font-variation-settings: 'opsz' 144;
+}
 .wp-hero-id-link { display: inline-flex; }
 .wp-hero-id-favicon { display: inline-block; vertical-align: middle; }
 
