@@ -192,16 +192,16 @@ function App() {
         <Route path="/scramble/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
         <Route path="/scramble/analyzer" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
         <Route path="/scramble/solver" element={<Suspense fallback={<div>Loading...</div>}><ScrambleSolverPage /></Suspense>} />
+        <Route path="/scramble/pattern" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
         {/* 旧链接兼容重定向 */}
         <Route path="/scramble-stats" element={<Navigate to="/scramble/stats" replace />} />
         <Route path="/analyze" element={<Navigate to="/scramble/analyzer" replace />} />
         <Route path="/gen" element={<Navigate to="/scramble/gen" replace />} />
+        <Route path="/patterns" element={<Navigate to="/scramble/pattern" replace />} />
         {/* /average 已并入 /calc 的"成绩计算器" tab — 兼容旧链接 */}
         <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
         {/* Notation — 公式记号沙盒 */}
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
-        {/* Patterns — 著名 3x3 图案集 */}
-        <Route path="/patterns" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
         {/* Code — 编程语言长篇导览 */}
         <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
         <Route path="/code/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
