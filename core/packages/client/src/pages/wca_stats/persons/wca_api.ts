@@ -73,7 +73,8 @@ export interface WcaResultRow {
 }
 
 export async function fetchWcaPersonResults(wcaId: string): Promise<WcaResultRow[]> {
-  const key = `wca:results:${wcaId}`;
+  // v2: 加了 regional_single_record / regional_average_record 字段,需让旧缓存 miss
+  const key = `wca:results:v2:${wcaId}`;
   const cached = cacheGet<WcaResultRow[]>(key);
   if (cached) return cached;
   const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/results`);
