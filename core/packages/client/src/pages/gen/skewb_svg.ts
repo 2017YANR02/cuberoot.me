@@ -32,7 +32,16 @@ const GAP = 3;
 const SQ3D2 = Math.sqrt(3) / 2;
 const STROKE_W = 1;             // svglite default stroke
 
-class SkewbState {
+/**
+ * Skewb state — TNOODLE convention (matches tnoodle SkewbPuzzle.java exactly).
+ * Used for ScramblePreview2D + tnoodle_pdf, since tnoodle is the WCA scrambler
+ * and its printed scramble image must match the state that tnoodle simulates.
+ *
+ * Tnoodle's 4 named axis corners: R=DRF, U=URB, L=DLB, B=DRB.
+ * (Differs from WCA Regulations #12h reading — for that, see SkewbStateWCA in
+ * skewb_pyramid_svg.ts which the visualcube top view uses.)
+ */
+export class SkewbState {
   // image[face][sticker], face 0..5 = U R F D L B; sticker 0..4 (0=center, 1..4=corners)
   image: number[][] = Array.from({ length: 6 }, (_, i) => Array(5).fill(i));
 

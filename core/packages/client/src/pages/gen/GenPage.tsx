@@ -22,7 +22,7 @@ export default function GenPage() {
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const [mode, setMode] = useState<Mode>('quick');
+  const [mode, setMode] = useState<Mode>('tnoodle');
 
   return (
     <div className="gen-page">
@@ -34,17 +34,17 @@ export default function GenPage() {
         <div className="gen-mode-chips">
           <button
             type="button"
-            className={`gen-mode-chip${mode === 'quick' ? ' is-active' : ''}`}
-            onClick={() => setMode('quick')}
-          >
-            {t('快速', 'Quick')}
-          </button>
-          <button
-            type="button"
             className={`gen-mode-chip${mode === 'tnoodle' ? ' is-active' : ''}`}
             onClick={() => setMode('tnoodle')}
           >
-            TNoodle
+            {t('比赛', 'Comp')}
+          </button>
+          <button
+            type="button"
+            className={`gen-mode-chip${mode === 'quick' ? ' is-active' : ''}`}
+            onClick={() => setMode('quick')}
+          >
+            {t('练习', 'Practice')}
           </button>
         </div>
         <LangToggle variant="inline" />

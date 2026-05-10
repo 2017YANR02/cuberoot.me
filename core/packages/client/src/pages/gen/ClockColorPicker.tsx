@@ -88,23 +88,26 @@ export default function ClockColorPicker({ colors, onChange, t }: Props) {
           {t('恢复默认配色', 'Reset to default')}
         </button>
       </div>
-      <div className="gen-tn-clock-chips">
-        {CLOCK_COLOR_KEYS.map((k) => (
-          <label
-            key={k}
-            className="gen-tn-clock-chip"
-            style={{ backgroundColor: effective[k], color: textForBg(effective[k]) }}
-            title={k}
-          >
-            {isZh ? ZH_LABEL[k] : k}
-            <input
-              type="color"
-              value={effective[k]}
-              onChange={(e) => update(k, e.target.value)}
-            />
-          </label>
-        ))}
-      </div>
+      <details className="gen-tn-clock-details">
+        <summary>{t('自定义配色', 'Customize colors')}</summary>
+        <div className="gen-tn-clock-chips">
+          {CLOCK_COLOR_KEYS.map((k) => (
+            <label
+              key={k}
+              className="gen-tn-clock-chip"
+              style={{ backgroundColor: effective[k], color: textForBg(effective[k]) }}
+              title={k}
+            >
+              {isZh ? ZH_LABEL[k] : k}
+              <input
+                type="color"
+                value={effective[k]}
+                onChange={(e) => update(k, e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }
