@@ -25,6 +25,7 @@ import 'svg2pdf.js';
 import { renderUnfoldedSvgForEvent, eventToCubeSize } from './cube_unfolded_svg';
 import { getScramble2DSvg } from './cubing_2d_svg';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './clock_svg';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from './sq1_svg';
 import type { WcaFormat } from './wca_round';
 import { eventDisplayName } from '../../utils/wca_events';
 
@@ -277,7 +278,7 @@ function nonCubeAspect(event: string): number | null {
   switch (event) {
     case 'pyram': return 1.16;   // tnoodle PyraminxPuzzleImageInfo
     case 'minx': return 2.0;     // megaminx unfolded is wide
-    case 'sq1': return 1.0;
+    case 'sq1': return 0.5;     // sq1_svg native viewBox W:H ≈ 122:244 (portrait)
     case 'skewb': return 4 / 3;
     case 'clock': return 1.0;
     default: return null;
@@ -461,15 +462,19 @@ async function renderPage(
         doc.text(line, textLeft, lineY, { baseline: 'alphabetic' });
       });
 
-      // Image — fast path: NxN cube → synchronous unfolded SVG renderer.
-      // Clock → tnoodle ClockPuzzle.java port (recolorable, synchronous).
-      // Other non-cube (sq1/mega/pyra/skewb) → cubing.js 2D fallback (slow).
-      // isExtra unused because state computation is identical for main vs extras.
+      // Image rendering priority:
+      //   NxN cube → synchronous unfolded SVG renderer (fast)
+      //   clock / sq1 → tnoodle puzzle port (recolorable, synchronous)
+      //   mega / pyra / skewb → cubing.js TwistyPlayer 2D extraction (slow)
+      // isExtra unused — state computation identical for main vs extras.
       void isExtra;
-      const clockSvgStr = sheet.event === 'clock'
-        ? renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS)
-        : null;
-      const svgStr = clockSvgStr
+      let portedSvg: string | null = null;
+      if (sheet.event === 'clock') {
+        portedSvg = renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS);
+      } else if (sheet.event === 'sq1') {
+        portedSvg = renderSq1ScrambleSvg(a.scramble, hdr.eventColors?.sq1 ?? DEFAULT_SQ1_COLORS);
+      }
+      const svgStr = portedSvg
         ?? renderUnfoldedSvgForEvent(sheet.event, a.scramble)
         ?? await getScramble2DSvg(sheet.event, a.scramble);
       if (svgStr) {
