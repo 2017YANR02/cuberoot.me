@@ -1,13 +1,11 @@
 #!/bin/bash
-# wca_stats_extra_apply.sh — 由 GH Actions 触发,从 /tmp/wca_stats_extra/ 灌进 PG
-# 输入:/tmp/wca_stats_extra/{load.sql, *.copy.tsv}
-# 输出:替换 wca_competitions/wca_grand_slam/... 等 8 张表;清空 /tmp/wca_stats_extra
-#
-# 部署:scp 此文件到 /usr/local/bin/wca_stats_extra_apply.sh; chmod +x.
+# historical_ranks_apply.sh — 由 GH Actions 触发,从 /tmp/wca_import/ 灌进 PG
+# 输入:/tmp/wca_import/{load.sql, *.copy.tsv}
+# 输出:replaced historical_ranks_snapshot etc; 清空 /tmp/wca_import
 set -euo pipefail
 
-IMPORT_DIR="/tmp/wca_stats_extra"
-LOG_TAG="wca_stats_extra_apply"
+IMPORT_DIR="/tmp/wca_import"
+LOG_TAG="historical_ranks_apply"
 
 if [ ! -f "$IMPORT_DIR/load.sql" ]; then
   echo "[$LOG_TAG] load.sql missing in $IMPORT_DIR; abort" >&2
@@ -15,16 +13,14 @@ if [ ! -f "$IMPORT_DIR/load.sql" ]; then
   exit 1
 fi
 
+# 必备文件预检 — 任一缺失立即 abort,避免 \copy 静默跳过
 REQUIRED=(
   load.sql
-  wca_competitions.copy.tsv
-  wca_grand_slam.copy.tsv
-  wca_results_top.copy.tsv
-  wca_year_results_top.copy.tsv
-  wca_cohort_ranks.copy.tsv
-  wca_success_rate.copy.tsv
-  wca_all_events_done.copy.tsv
-  wca_person_ranks.copy.tsv
+  wca_continents.copy.tsv
+  wca_countries.copy.tsv
+  wca_persons.copy.tsv
+  historical_ranks_snapshot.copy.tsv
+  historical_ranks_monthly_snapshot.copy.tsv
 )
 for f in "${REQUIRED[@]}"; do
   if [ ! -s "$IMPORT_DIR/$f" ]; then
