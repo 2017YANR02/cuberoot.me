@@ -13,7 +13,7 @@ import { formatWcaResult, type ResultKind } from '../../utils/wca_format_result'
 import { axisFor, tickLabel, type Metric } from './top10_axis';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
 import LangToggle from '../../components/LangToggle';
-import WcaEventSelector from './WcaEventSelector';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { EVENT_ZH, EVENT_EN } from './event_constants';
 import { COUNTRY_TO_CONTINENT, type Continent } from './country_continents';
 import { exportTop10Video, type ExportProgress } from './top10_export';

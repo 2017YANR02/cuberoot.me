@@ -29,6 +29,7 @@ import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from './sq1_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './mega_svg';
 import type { WcaFormat } from './wca_round';
 import { eventDisplayName } from '../../utils/wca_events';
+import { tFmc, fontForLocale, type TnoodleLocale } from './tnoodle_translate';
 
 // ─── Tnoodle constants (verbatim) ─────────────────────────────────────────
 const MAX_SCRAMBLES_PER_PAGE = 7;
@@ -46,6 +47,24 @@ const A4_WIDTH = 595.28;   // pt
 const A4_HEIGHT = 841.89;  // pt
 const FONT_MONO = 'LiberationMono';
 const FONT_SANS = 'NotoSans';
+const FONT_CJK = 'wqy-microhei';
+// FMC sheet (FmcSolutionSheet.kt companion)
+const FMC_MARGIN = 35;                       // all 4 sides for FMC page
+const FMC_RIGHT_PCT = 0.45;                  // SCRAMBLE_IMAGE_WIDTH_PERCENT
+const FMC_RATIO_LARGE = 8;                   // UPPER_RIGHT_INFO_BOX_RATIO_LARGE
+const FMC_RATIO_MEDIUM = 10;                 // UPPER_RIGHT_INFO_BOX_RATIO_MEDIUM
+const FMC_RATIO_SMALL = 12;                  // UPPER_RIGHT_INFO_BOX_RATIO_SMALL
+const FMC_RULES_RATIO = 3;                   // UPPER_LEFT_RULES_RATIO
+const FMC_TITLE_RATIO = 10;                  // UPPER_LEFT_TITLE_RATIO
+const FMC_MOVE_BARS_PER_LINE = 10;           // FewestMovesSheet.MOVE_BARS_PER_LINE
+const FMC_MOVE_BAR_LINES = 8;                // FewestMovesSheet.MOVE_BAR_LINES
+const FMC_MAX_MOVES = FMC_MOVE_BARS_PER_LINE * FMC_MOVE_BAR_LINES; // 80
+const FMC_SHORT_FILL = ': ____';
+const FMC_LONG_FILL = ': __________________';
+const FMC_WCA_ID_FILL = ': __ __ __ __  __ __ __ __  __ __';
+const FMC_FACE_MOVES = ['R', 'U', 'F', 'L', 'D', 'B'];
+const FMC_ROTATIONS = ['x', 'y', 'z'];
+const FMC_DIRECTION_MODIFIERS = ['', "'", '2'];
 
 // ScrambleStringUtil constants
 const MIN_ONE_LINE_FONT_SIZE = 15;
@@ -67,9 +86,11 @@ export interface RoundSheetInput {
   roundIdx: number;
   groupIdx: number;
   format: WcaFormat;
-  /** MBLD only — 0-based attempt index. Adds " Attempt N+1" to the title. */
+  /** MBLD/FMC — 0-based attempt index. Adds " Attempt N+1" / "Scramble X of Y" to the title. */
   attemptNumber?: number;
   attempts: AttemptInput[];
+  /** FMC only — list of locales for which to emit a translated solution sheet. */
+  locales?: TnoodleLocale[];
 }
 
 export interface PdfOptions {
@@ -88,6 +109,8 @@ export interface PdfOptions {
 // ─── Font loading (cached) ────────────────────────────────────────────────
 let monoB64: Promise<string> | null = null;
 let sansB64: Promise<string> | null = null;
+let cjkB64: Promise<string> | null = null;
+const cjkLoadedDocs = new WeakSet<jsPDF>();
 
 async function fetchFontBase64(url: string): Promise<string> {
   const res = await fetch(url);
@@ -112,6 +135,21 @@ async function loadFonts(doc: jsPDF): Promise<void> {
   doc.addFileToVFS('NotoSans-Regular.ttf', sans);
   doc.addFont('NotoSans-Regular.ttf', FONT_SANS, 'normal');
   doc.addFont('NotoSans-Regular.ttf', FONT_SANS, 'bold');  // bold simulated by jsPDF
+}
+
+/** Lazy-load wqy-microhei into a doc; cheap noop if already loaded. */
+async function ensureCjkFont(doc: jsPDF): Promise<void> {
+  if (cjkLoadedDocs.has(doc)) return;
+  cjkB64 ??= fetchFontBase64('/fonts/wqy-microhei.ttf');
+  const cjk = await cjkB64;
+  doc.addFileToVFS('wqy-microhei.ttf', cjk);
+  doc.addFont('wqy-microhei.ttf', FONT_CJK, 'normal');
+  doc.addFont('wqy-microhei.ttf', FONT_CJK, 'bold');
+  cjkLoadedDocs.add(doc);
+}
+
+function fontForLocaleName(locale: TnoodleLocale): string {
+  return fontForLocale(locale) === 'wqy-microhei' ? FONT_CJK : FONT_SANS;
 }
 
 // ─── Tnoodle ScrambleStringUtil port ──────────────────────────────────────
@@ -316,15 +354,32 @@ export async function generateTnoodlePdf(
   const today = new Date().toISOString().slice(0, 10);
   let pageCounter = 0;
 
-  // Pre-compute total pages for "n/m" header
-  const pagePlan: Array<{ sheetIdx: number; chunkStart: number; chunkLen: number }> = [];
+  // Pre-compute pages.
+  //   FMC: 1 page per attempt × locale (each is a self-contained solution sheet).
+  //   Other: chunk into MAX_SCRAMBLES_PER_PAGE attempt rows per page.
+  type Plan =
+    | { kind: 'standard'; sheetIdx: number; chunkStart: number; chunkLen: number }
+    | { kind: 'fmc'; sheetIdx: number; attemptIdx: number; locale: TnoodleLocale };
+  const pagePlan: Plan[] = [];
   sheets.forEach((s, sheetIdx) => {
-    for (let i = 0; i < s.attempts.length; i += MAX_SCRAMBLES_PER_PAGE) {
-      pagePlan.push({
-        sheetIdx,
-        chunkStart: i,
-        chunkLen: Math.min(MAX_SCRAMBLES_PER_PAGE, s.attempts.length - i),
-      });
+    if (s.event === '333fm') {
+      const locales = (s.locales && s.locales.length > 0)
+        ? s.locales
+        : (['en'] as TnoodleLocale[]);
+      for (const locale of locales) {
+        for (let ai = 0; ai < s.attempts.length; ai++) {
+          pagePlan.push({ kind: 'fmc', sheetIdx, attemptIdx: ai, locale });
+        }
+      }
+    } else {
+      for (let i = 0; i < s.attempts.length; i += MAX_SCRAMBLES_PER_PAGE) {
+        pagePlan.push({
+          kind: 'standard',
+          sheetIdx,
+          chunkStart: i,
+          chunkLen: Math.min(MAX_SCRAMBLES_PER_PAGE, s.attempts.length - i),
+        });
+      }
     }
   });
   const totalPages = pagePlan.length;
@@ -338,16 +393,27 @@ export async function generateTnoodlePdf(
     const sheet = sheets[plan.sheetIdx];
     if (pageCounter > 0) doc.addPage();
     pageCounter++;
-    const chunk = sheet.attempts.slice(plan.chunkStart, plan.chunkStart + plan.chunkLen);
-    await renderPage(doc, sheet, chunk, {
-      compTitle: opts.competitionTitle,
-      roundDetail: roundDetailString(sheet, opts.isZh),
-      pageNum: p + 1,
-      totalPages,
-      todayIso: today,
-      generatorTag: opts.generatorTag,
-      eventColors: opts.eventColors,
-    });
+    if (plan.kind === 'fmc') {
+      const totalAttemptsForSheet = sheets
+        .filter((s) => s.event === '333fm' && s.roundIdx === sheet.roundIdx && s.groupIdx === sheet.groupIdx)
+        .length;
+      await renderFmcPage(doc, sheet, sheet.attempts[plan.attemptIdx], plan.locale, {
+        compTitle: opts.competitionTitle,
+        totalAttemptsInRound: totalAttemptsForSheet,
+        eventColors: opts.eventColors,
+      });
+    } else {
+      const chunk = sheet.attempts.slice(plan.chunkStart, plan.chunkStart + plan.chunkLen);
+      await renderPage(doc, sheet, chunk, {
+        compTitle: opts.competitionTitle,
+        roundDetail: roundDetailString(sheet, opts.isZh),
+        pageNum: p + 1,
+        totalPages,
+        todayIso: today,
+        generatorTag: opts.generatorTag,
+        eventColors: opts.eventColors,
+      });
+    }
     opts.onProgress?.(p + 1, totalPages);
     // yield to the event loop so React can repaint the bar
     await new Promise((r) => setTimeout(r, 0));
@@ -551,5 +617,279 @@ async function embedSvg(
     console.warn('[tnoodle_pdf] svg2pdf failed', err);
   } finally {
     try { el.remove(); } catch { /* swallow */ }
+  }
+}
+
+// ─── FMC Solution Sheet ──────────────────────────────────────────────────
+// Port of FmcSolutionSheet.kt — one self-contained sheet per (attempt × locale).
+// Layout: top half = info table (rules+notation left, comp+competitor+grading+cube right),
+//         middle = "Scramble: ..." line, bottom half = 8×10 underscore writing grid.
+
+interface FmcOpts {
+  compTitle: string;
+  /** Total FMC attempts in this round/group (drives "Scramble X of Y"). */
+  totalAttemptsInRound: number;
+  eventColors?: Record<string, Record<string, string>>;
+}
+
+async function renderFmcPage(
+  doc: jsPDF,
+  sheet: RoundSheetInput,
+  attempt: AttemptInput,
+  locale: TnoodleLocale,
+  opts: FmcOpts,
+): Promise<void> {
+  // Locale-aware font for all SANS text on the sheet
+  const isCjk = fontForLocale(locale) === 'wqy-microhei';
+  if (isCjk) await ensureCjkFont(doc);
+  const localFont = fontForLocaleName(locale);
+
+  // Page frame ──
+  const M = FMC_MARGIN;
+  const W = A4_WIDTH - 2 * M;
+  const H = A4_HEIGHT - 2 * M;
+  const x0 = M;
+  const y0 = M;
+
+  // Two-column top half ──
+  const topH = H / 2;
+  const leftW = W * (1 - FMC_RIGHT_PCT);
+  const rightW = W * FMC_RIGHT_PCT;
+  const leftX = x0;
+  const rightX = x0 + leftW;
+  const topY = y0;
+
+  // Outer borders for top section
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.5);
+  doc.rect(leftX, topY, leftW, topH);
+  doc.rect(rightX, topY, rightW, topH);
+
+  // ── Right column: 4 stacked cells ──
+  // Heights derived from tnoodle ratios:
+  //   compTitle ≈ topH/MEDIUM, competitor ≈ topH/LARGE, grading ≈ topH/SMALL,
+  //   cube image fills remainder.
+  const titleH = topH / FMC_RATIO_MEDIUM;
+  const compInfoH = topH / FMC_RATIO_LARGE;
+  const gradingH = topH / FMC_RATIO_SMALL;
+  const imageH = topH - titleH - compInfoH - gradingH;
+
+  let ry = topY;
+  // Comp title block (compTitle / activityTitle / Scramble X of Y)
+  const titles: string[] = [opts.compTitle];
+  const evName = tFmc('event', locale);
+  const setSuffix = sheet.groupIdx > 0 ? ` ${tFmc('scramble', locale)} ${tnoodleSetLabel(sheet.groupIdx)}` : '';
+  const roundLabel = `${evName} ${tFmc('round', locale)} ${sheet.roundIdx + 1}${setSuffix}`;
+  titles.push(roundLabel);
+  if (opts.totalAttemptsInRound > 1) {
+    titles.push(tFmc('scrambleXofY', locale, {
+      scrambleIndex: String((sheet.attemptNumber ?? 0) + 1),
+      scrambleCount: String(opts.totalAttemptsInRound),
+    }));
+  }
+  doc.setFont(localFont, 'normal');
+  const titleLineH = titleH / titles.length;
+  const titleFontSize = clamp(titleLineH * 0.55, 7, 12);
+  doc.setFontSize(titleFontSize);
+  for (let i = 0; i < titles.length; i++) {
+    drawCenteredText(doc, titles[i], rightX + rightW / 2, ry + titleLineH * (i + 0.5), rightW - 6, titleFontSize, localFont);
+  }
+  doc.line(rightX, ry + titleH, rightX + rightW, ry + titleH);
+  ry += titleH;
+
+  // Competitor info (Competitor / WCA ID / Registrant ID)
+  const competitorLines = [
+    tFmc('competitor', locale) + FMC_LONG_FILL,
+    'WCA ID' + FMC_WCA_ID_FILL,
+    tFmc('registrantId', locale) + FMC_SHORT_FILL,
+  ];
+  doc.setFont(localFont, 'normal');
+  const compFontSize = clamp(compInfoH / 5, 7, 10);
+  doc.setFontSize(compFontSize);
+  const compLineH = compInfoH / competitorLines.length;
+  for (let i = 0; i < competitorLines.length; i++) {
+    doc.text(competitorLines[i], rightX + 6, ry + compLineH * (i + 0.65));
+  }
+  doc.line(rightX, ry + compInfoH, rightX + rightW, ry + compInfoH);
+  ry += compInfoH;
+
+  // Grading box ("DO NOT FILL..." + "Graded by: ___ Result: ___")
+  const warning = tFmc('warning', locale);
+  const gradingLine = `${tFmc('graded', locale)}${FMC_LONG_FILL}  ${tFmc('result', locale)}${FMC_SHORT_FILL}`;
+  const gradingFontSize = clamp(gradingH / 4, 6, 9);
+  doc.setFont(localFont, 'normal');
+  doc.setFontSize(gradingFontSize);
+  drawCenteredText(doc, warning, rightX + rightW / 2, ry + gradingH * 0.32, rightW - 6, gradingFontSize, localFont);
+  drawCenteredText(doc, gradingLine, rightX + rightW / 2, ry + gradingH * 0.78, rightW - 6, gradingFontSize, localFont);
+  doc.line(rightX, ry + gradingH, rightX + rightW, ry + gradingH);
+  ry += gradingH;
+
+  // Cube preview (3x3 unfolded net)
+  const imgPad = 4;
+  const svgStr = renderUnfoldedSvgForEvent('333', attempt.scramble);
+  if (svgStr) {
+    const svgEl = svgStringToElement(svgStr);
+    await embedSvg(doc, svgEl,
+      rightX + imgPad, ry + imgPad,
+      rightW - 2 * imgPad, imageH - 2 * imgPad);
+  }
+
+  // ── Left column: title + rules + notation tables ──
+  let ly = topY + 6;
+  const lContentW = leftW - 12;
+  const lContentX = leftX + 6;
+
+  // Event title (big)
+  const evTitleH = topH / FMC_TITLE_RATIO;
+  const evTitleFontSize = clamp(evTitleH * 0.65, 14, 26);
+  doc.setFont(localFont, 'bold');
+  doc.setFontSize(evTitleFontSize);
+  drawCenteredText(doc, evName, leftX + leftW / 2, ly + evTitleH * 0.7, lContentW, evTitleFontSize, localFont);
+  ly += evTitleH;
+
+  // Rules block
+  const rulesH = topH / FMC_RULES_RATIO;
+  const rules: string[] = [
+    tFmc('rule1', locale),
+    tFmc('rule2', locale),
+    tFmc('rule3', locale),
+    tFmc('rule4', locale, { maxMoves: String(FMC_MAX_MOVES) }),
+    tFmc('rule5', locale),
+    tFmc('rule6', locale),
+  ];
+  doc.setFont(localFont, 'normal');
+  // Wrap each rule, count total lines, then pick a font size that fits all of them
+  let ruleFontSize = clamp(rulesH / 12, 6, 10);
+  for (let iter = 0; iter < 6; iter++) {
+    doc.setFontSize(ruleFontSize);
+    const totalLines = rules.reduce((acc, r) => acc + doc.splitTextToSize('• ' + r, lContentW).length, 0);
+    if (totalLines * ruleFontSize * 1.25 <= rulesH) break;
+    ruleFontSize *= 0.92;
+  }
+  doc.setFontSize(ruleFontSize);
+  let ruleLineY = ly + ruleFontSize;
+  for (const r of rules) {
+    const wrapped = doc.splitTextToSize('• ' + r, lContentW) as string[];
+    for (const wln of wrapped) {
+      doc.text(wln, lContentX, ruleLineY);
+      ruleLineY += ruleFontSize * 1.25;
+      // hard cap so we never spill into the notation block
+      if (ruleLineY > ly + rulesH) break;
+    }
+    if (ruleLineY > ly + rulesH) break;
+  }
+  ly += rulesH;
+
+  // Notation tables: Face Moves + Rotations
+  const notationH = topH - (ly - topY);
+  const notationCellH = notationH / 8;        // (header + 3 dirs) × 2 sections = 8 rows
+  const notationFontSize = clamp(notationCellH * 0.5, 6, 10);
+  drawNotationTable(doc, lContentX, ly, lContentW, notationCellH * 4,
+    tFmc('faceMoves', locale), FMC_FACE_MOVES,
+    [tFmc('clockwise', locale), tFmc('counterClockwise', locale), tFmc('double', locale)],
+    notationFontSize, localFont);
+  drawNotationTable(doc, lContentX, ly + notationCellH * 4, lContentW, notationCellH * 4,
+    tFmc('rotations', locale), FMC_ROTATIONS,
+    [tFmc('clockwise', locale), tFmc('counterClockwise', locale), tFmc('double', locale)],
+    notationFontSize, localFont);
+
+  // ── Middle: "Scramble: ..." line ──
+  const scrambleY = topY + topH;
+  const scrambleH = 32;
+  doc.rect(x0, scrambleY, W, scrambleH);
+  doc.setFont(localFont, 'normal');
+  const scrambleLabelSize = 10;
+  doc.setFontSize(scrambleLabelSize);
+  const scrambleLabel = tFmc('scramble', locale) + ': ';
+  const labelWidth = doc.getStringUnitWidth(scrambleLabel) * scrambleLabelSize;
+  doc.text(scrambleLabel, x0 + 8, scrambleY + scrambleH / 2 + scrambleLabelSize / 3);
+  // Scramble itself in mono, sized to fit remaining width
+  const scrAvailW = W - 8 - labelWidth - 8;
+  const scrSize = fitOneLine(doc, attempt.scramble, scrAvailW, scrambleH - 8);
+  doc.setFont(FONT_MONO, 'normal');
+  doc.setFontSize(Math.min(scrSize, 14));
+  doc.text(attempt.scramble, x0 + 8 + labelWidth, scrambleY + scrambleH / 2 + Math.min(scrSize, 14) / 3);
+
+  // ── Bottom: 8×10 writing grid ──
+  const gridY = scrambleY + scrambleH + 10;
+  const gridH = (y0 + H) - gridY;
+  const lineH = gridH / FMC_MOVE_BAR_LINES;
+  const writingLine = Array(FMC_MOVE_BARS_PER_LINE).fill('_').join(' ');
+  const barFontSize = clamp(lineH * 0.55, 12, 24);
+  doc.setFont(FONT_MONO, 'normal');
+  // shrink to fit width
+  doc.setFontSize(barFontSize);
+  let actualBarSize = barFontSize;
+  while (doc.getStringUnitWidth(writingLine) * actualBarSize > W && actualBarSize > 8) {
+    actualBarSize -= 1;
+  }
+  doc.setFontSize(actualBarSize);
+  for (let i = 0; i < FMC_MOVE_BAR_LINES; i++) {
+    const baselineY = gridY + lineH * (i + 0.65);
+    doc.text(writingLine, x0 + W / 2, baselineY, { align: 'center', baseline: 'alphabetic' });
+  }
+}
+
+/** Tnoodle Set label (A/B/...) for the activityCode "Scramble Set X" suffix. */
+function tnoodleSetLabel(groupIdx: number): string {
+  return String.fromCharCode(65 + groupIdx);
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+/** Center text horizontally; auto-shrink font if it overflows. */
+function drawCenteredText(
+  doc: jsPDF,
+  text: string,
+  cx: number,
+  y: number,
+  maxW: number,
+  fontSize: number,
+  fontName: string,
+): void {
+  doc.setFont(fontName, 'normal');
+  let size = fontSize;
+  doc.setFontSize(size);
+  while (doc.getStringUnitWidth(text) * size > maxW && size > 5) {
+    size -= 0.5;
+  }
+  doc.setFontSize(size);
+  doc.text(text, cx, y, { align: 'center', baseline: 'alphabetic' });
+}
+
+/** Draw a notation table (title row + 3 direction rows). */
+function drawNotationTable(
+  doc: jsPDF,
+  x: number, y: number, w: number, h: number,
+  title: string,
+  moves: string[],
+  directionLabels: string[],   // [clockwise, counter, double]
+  fontSize: number,
+  fontName: string,
+): void {
+  const rowH = h / 4;
+  // Right-align direction labels in column 0; columns 1.. for moves.
+  const labelColW = w * 0.32;
+  const moveColW = (w - labelColW) / moves.length;
+
+  // Title row (bold, right-aligned in label col, no moves)
+  doc.setFont(fontName, 'bold');
+  doc.setFontSize(fontSize);
+  doc.text(title, x + labelColW - 4, y + rowH * 0.7, { align: 'right' });
+
+  // Direction rows
+  doc.setFontSize(fontSize);
+  for (let r = 0; r < 3; r++) {
+    const ry = y + rowH * (r + 1);
+    doc.setFont(fontName, 'normal');
+    doc.text(directionLabels[r], x + labelColW - 4, ry + rowH * 0.7, { align: 'right' });
+    doc.setFont(FONT_MONO, 'normal');
+    for (let mi = 0; mi < moves.length; mi++) {
+      const cellX = x + labelColW + moveColW * mi;
+      const moveStr = moves[mi] + FMC_DIRECTION_MODIFIERS[r];
+      doc.text(moveStr, cellX + moveColW / 2, ry + rowH * 0.7, { align: 'center' });
+    }
   }
 }

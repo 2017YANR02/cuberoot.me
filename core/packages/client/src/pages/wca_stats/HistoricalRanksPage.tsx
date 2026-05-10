@@ -16,7 +16,7 @@ import { countryName } from '../../utils/country_name';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import Paginator from './Paginator';
-import WcaEventSelector from './WcaEventSelector';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import './historical_ranks.css';
 
 const EVENTS = [

@@ -8,20 +8,25 @@
  * Phase 3 adds PDF.
  */
 import { useMemo, useState } from 'react';
-import { Plus, Minus, RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { eventDisplayName } from '../../utils/wca_events';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
+
+const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
 import {
   ALLOWED_FORMATS, FORMAT_LABEL, formatAttempts, DEFAULT_EXTRA_COUNT,
   defaultEventConfig, defaultRoundConfig,
   type EventConfig, type WcaFormat,
 } from './wca_round';
 import type { RoundSheetInput } from './tnoodle_pdf';
+import type { TnoodleLocale } from './tnoodle_translate';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
+import TranslationsPicker from './TranslationsPicker';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -44,9 +49,11 @@ interface RoundSheet {
   roundIdx: number;     // 0-based
   groupIdx: number;     // 0-based (for scrambleSets > 1)
   format: WcaFormat;
-  /** MBLD only — 0-based attempt index. Adds "Attempt N+1" to the sheet title. */
+  /** MBLD/FMC — 0-based attempt index. Adds "Attempt N+1" / "Scramble X of Y" to the title. */
   attemptNumber?: number;
   attempts: AttemptScramble[];
+  /** FMC only — locales for which to emit a translated solution sheet. */
+  locales?: TnoodleLocale[];
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -155,6 +162,20 @@ export default function TNoodleMode({ t, isZh }: Props) {
                   attempts: cubeRows,
                 });
               }
+            } else if (ev === '333fm') {
+              // Tnoodle FMC: each attempt is its own sheet (Scramble 1 of N) with
+              // a single scramble per page, no extras. WCA regs forbid extras for FMC.
+              for (let a = 0; a < mainCount; a++) {
+                const s = await tnoodleRandomScramble(ev);
+                await tick();
+                out.push({
+                  event: ev, roundIdx: ri, groupIdx: g,
+                  format: round.format,
+                  attemptNumber: a,
+                  attempts: [{ label: '1', scramble: s ?? '', isExtra: false }],
+                  locales: round.locales,
+                });
+              }
             } else {
               const attempts: AttemptScramble[] = [];
               for (let i = 0; i < mainCount; i++) {
@@ -202,6 +223,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
           isExtra: a.isExtra,
           scramble: a.scramble,
         })),
+        locales: s.locales,
       }));
       const eventColors: Record<string, Record<string, string>> = {};
       for (const ev of Object.keys(events)) {
@@ -241,6 +263,9 @@ export default function TNoodleMode({ t, isZh }: Props) {
         if (ev === '333mbf') {
           // MBLD: per attempt = `cubesPerAttempt` rows, no extras
           n += formatAttempts(r.format) * (cfg.mbldCubes ?? 8) * sets;
+        } else if (ev === '333fm') {
+          // FMC: one scramble per attempt sheet, no extras
+          n += formatAttempts(r.format) * sets;
         } else {
           n += (formatAttempts(r.format) + DEFAULT_EXTRA_COUNT) * sets;
         }
@@ -287,29 +312,26 @@ export default function TNoodleMode({ t, isZh }: Props) {
         </div>
       </div>
 
-      <div className="gen-tn-event-grid">
-        {TNOODLE_WCA_EVENTS.map((ev) => {
-          const cfg = events[ev];
-          const enabled = !!cfg;
-          return (
-            <div key={ev} className={`gen-tn-event-card${enabled ? ' is-on' : ''}`}>
-              <button
-                type="button"
-                className="gen-tn-event-header"
-                onClick={() => toggleEvent(ev)}
-              >
-                <EventIcon event={ev} />
-                <span className="gen-tn-event-name">{eventDisplayName(ev, isZh)}</span>
-                <span className="gen-tn-event-toggle">{enabled ? <Minus size={14} /> : <Plus size={14} />}</span>
-              </button>
-              {enabled && (
-                <div
-                  className="gen-tn-event-body"
-                  onClick={(e) => {
-                    // 仅当点的是 body 容器本身(padding / gap / 底部 flex 空白),不是子控件,才 toggle off
-                    if (e.target === e.currentTarget) toggleEvent(ev);
-                  }}
-                >
+      <WcaEventSelector
+        availableEvents={TNOODLE_EVENT_SET}
+        selectedEvents={new Set(Object.keys(events))}
+        onToggle={toggleEvent}
+        isZh={isZh}
+      />
+
+      {enabledEvents.length === 0 ? (
+        <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
+      ) : (
+        <div className="gen-tn-event-list">
+          {enabledEvents.map((ev) => {
+            const cfg = events[ev];
+            return (
+              <div key={ev} className="gen-tn-event-card is-on">
+                <div className="gen-tn-event-header gen-tn-event-header--static">
+                  <EventIcon event={ev} />
+                  <span className="gen-tn-event-name">{eventDisplayName(ev, isZh)}</span>
+                </div>
+                <div className="gen-tn-event-body">
                   <div className="gen-tn-rounds-row">
                     <span className="gen-tn-rounds-label">{t('轮数', 'Rounds')}</span>
                     {[1, 2, 3, 4].map((n) => (
@@ -326,15 +348,19 @@ export default function TNoodleMode({ t, isZh }: Props) {
                   {cfg.rounds.map((r, ri) => (
                     <div key={ri} className="gen-tn-round-row">
                       <span className="gen-tn-round-num">R{ri + 1}</span>
-                      <select
-                        className="gen-tn-format-select"
-                        value={r.format}
-                        onChange={(e) => updateRound(ev, ri, { format: e.target.value as WcaFormat })}
-                      >
-                        {ALLOWED_FORMATS[ev].map((f) => (
-                          <option key={f} value={f}>{FORMAT_LABEL[f]}</option>
-                        ))}
-                      </select>
+                      {ALLOWED_FORMATS[ev].length > 1 ? (
+                        <select
+                          className="gen-tn-format-select"
+                          value={r.format}
+                          onChange={(e) => updateRound(ev, ri, { format: e.target.value as WcaFormat })}
+                        >
+                          {ALLOWED_FORMATS[ev].map((f) => (
+                            <option key={f} value={f}>{FORMAT_LABEL[f]}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="gen-tn-format-static">{FORMAT_LABEL[r.format]}</span>
+                      )}
                       <label className="gen-tn-mini-num">
                         <span>{t('组', 'Sets')}</span>
                         <input
@@ -352,6 +378,14 @@ export default function TNoodleMode({ t, isZh }: Props) {
                         />
                       </label>
                     </div>
+                  ))}
+                  {ev === '333fm' && cfg.rounds.map((r, ri) => (
+                    <TranslationsPicker
+                      key={`tx-${ri}`}
+                      selected={r.locales ?? ['en']}
+                      onChange={(next) => updateRound(ev, ri, { locales: next })}
+                      isZh={isZh}
+                    />
                   ))}
                   {ev === '333mbf' && (
                     <div className="gen-tn-round-row">
@@ -372,11 +406,11 @@ export default function TNoodleMode({ t, isZh }: Props) {
                     />
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {sheets && sheets.length > 0 && (
         <div className="gen-tn-sheets">

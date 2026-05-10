@@ -15,6 +15,7 @@
 
 const MIN_LINES_HIGHLIGHTING = 4;       // tnoodle constant
 const TOKENS_PER_LINE_GENERIC = 12;     // chunk size for NxN / pyra / skewb / clock
+const SQ1_TURNS_PER_LINE = 4;           // sq1 turns ((x,y) /) per line — matches tnoodle PDF
 const NBSP = ' ';
 
 interface Props {
@@ -50,13 +51,20 @@ function buildLines(scramble: string): string[] {
     return lineSegments.map((toks) => toks.map(pad).join(' '));
   }
   if (allTokens.includes('/')) {
+    // sq1: tokens look like  (x,y) / (x,y) / ...  → group N turns per line.
+    // A "turn" ends at each '/'. Pack SQ1_TURNS_PER_LINE turns per line.
     const out: string[] = [];
     let cur: string[] = [];
+    let turnCount = 0;
     for (const tok of allTokens) {
       cur.push(pad(tok));
       if (tok === '/') {
-        out.push(cur.join(' '));
-        cur = [];
+        turnCount += 1;
+        if (turnCount >= SQ1_TURNS_PER_LINE) {
+          out.push(cur.join(' '));
+          cur = [];
+          turnCount = 0;
+        }
       }
     }
     if (cur.length) out.push(cur.join(' '));
