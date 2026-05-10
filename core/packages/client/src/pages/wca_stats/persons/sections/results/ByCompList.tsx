@@ -24,22 +24,16 @@ const ROUND_ORDER: Record<string, number> = {
   'h': 6,
 };
 
-function roundLabel(rt: string, isZh: boolean): string {
-  const zh: Record<string, string> = {
-    'f': '决赛', 'c': '决赛', 'b': '决赛',
-    '3': '半决赛',
-    '2': '复赛', 'g': '复赛',
-    '1': '初赛', 'd': '初赛',
-    'h': '初赛',
+function roundLabel(rt: string, _isZh: boolean): string {
+  // 用 Fi / R3 / R2 / R1 缩写,中英文一致
+  const map: Record<string, string> = {
+    'f': 'Fi', 'c': 'C-Fi', 'b': 'B-Fi',
+    '3': 'R3',
+    '2': 'R2', 'g': 'C-R2',
+    '1': 'R1', 'd': 'C-R1',
+    'h': 'R1',
   };
-  const en: Record<string, string> = {
-    'f': 'Final', 'c': 'C-Final', 'b': 'B-Final',
-    '3': 'Semifinal',
-    '2': 'Second', 'g': 'C-Second',
-    '1': 'First', 'd': 'C-First',
-    'h': 'First',
-  };
-  return (isZh ? zh[rt] : en[rt]) ?? rt;
+  return map[rt] ?? rt;
 }
 
 function roundClass(rt: string): string {
