@@ -1,11 +1,20 @@
 /**
  * /site — 魔方网址导航页
- * sidebar 分组 + 右侧单行密集列表；搜索用 Fuse.js。
+ * sidebar 分组 + 右侧单行密集列表;搜索用 Fuse.js;数据源 /v1/nav/sites。
+ * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + 每个 group 顶端 + Add。
  */
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertTriangle } from 'lucide-react';
+import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import Fuse from 'fuse.js';
+import { GROUPS } from './data/categories';
+import type { GroupId, Site } from './data/types';
+import LangToggle from '../../components/LangToggle';
+import { isAdmin } from '../../stores/auth_store';
+import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
+import SiteEditor from './SiteEditor';
+import './sites.css';
 
 function YouTubeBadge() {
   return (
@@ -15,17 +24,10 @@ function YouTubeBadge() {
     </svg>
   );
 }
-import Fuse from 'fuse.js';
-import { SITES } from './data/sites';
-import { GROUPS } from './data/categories';
-import type { GroupId, Site } from './data/types';
-import LangToggle from '../../components/LangToggle';
-import './sites.css';
 
 type GroupFilter = GroupId;
 const DEFAULT_GROUP: GroupId = 'competition';
 
-// 按分组给字母头像配色（hue 保证彼此有区分度）
 const GROUP_COLOR: Record<GroupId, string> = {
   competition: '#2f6fd8',
   timer:       '#0a8a6b',
@@ -42,14 +44,12 @@ const GROUP_COLOR: Record<GroupId, string> = {
 function firstGlyph(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return '?';
-  // 优先取首字母（含中日韩）
   const cp = trimmed.codePointAt(0) ?? 63;
   return String.fromCodePoint(cp).toUpperCase();
 }
 
 const TEXTS = {
   title:       { en: 'Web Directory', zh: '魔方导航' },
-  subtitle:    { en: 'Curated cube-related sites',       zh: '精选魔方相关网站' },
   searchPh:    { en: 'Search name / description / URL…', zh: '搜索名称 / 描述 / 网址…' },
   sites:       { en: 'sites',            zh: '个站点' },
   dead:        { en: 'Offline',          zh: '不可访问' },
@@ -59,13 +59,16 @@ const TEXTS = {
   colName:     { en: 'Name',             zh: '名称' },
   colAuthor:   { en: 'Author',           zh: '作者' },
   colDesc:     { en: 'Description',      zh: '简介' },
+  loading:     { en: 'Loading…',         zh: '加载中…' },
+  err:         { en: 'Failed to load',   zh: '加载失败' },
+  add:         { en: 'Add',              zh: '新增' },
+  confirmDel:  { en: 'Delete this site?', zh: '确认删除此站点?' },
 } as const;
 
-// tag 字符串里 EN 和 ZH 拼在一起（如 "Timer 计时器"），按首个 CJK 字符切开
 function splitLangTag(s: string): { en: string; zh: string } {
-  const idx = s.search(/[㐀-鿿豈-﫿]/);
-  if (idx < 0) return { en: s, zh: s }; // 纯 EN（"Stat" / "FMC"）
-  if (idx === 0) return { en: s, zh: s }; // 纯 ZH（"拼图"）
+  const idx = s.search(/[㐀-鿿豈-﫿]/);
+  if (idx < 0) return { en: s, zh: s };
+  if (idx === 0) return { en: s, zh: s };
   return { en: s.slice(0, idx).trim(), zh: s.slice(idx).trim() };
 }
 
@@ -79,35 +82,31 @@ function hostOf(url: string): string {
 
 function LetterAvatar({ name, group }: { name: string; group: GroupId }) {
   return (
-    <span
-      className="site-avatar"
-      style={{ backgroundColor: GROUP_COLOR[group] }}
-      aria-hidden
-    >
+    <span className="site-avatar" style={{ backgroundColor: GROUP_COLOR[group] }} aria-hidden>
       {firstGlyph(name)}
     </span>
   );
 }
 
-function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
-  const name =
-    lang === 'zh'
-      ? site.name_zh || site.name
-      : site.name_en || site.name;
-  const desc =
-    lang === 'zh'
-      ? site.desc_zh || site.desc_en
-      : site.desc_en || site.desc_zh;
+interface RowProps {
+  site: Site;
+  lang: 'en' | 'zh';
+  admin: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onEdit: (s: Site) => void;
+  onDelete: (s: Site) => void;
+  onMove: (s: Site, dir: -1 | 1) => void;
+}
+
+function SiteRow({ site, lang, admin, canMoveUp, canMoveDown, onEdit, onDelete, onMove }: RowProps) {
+  const name = lang === 'zh' ? site.name_zh || site.name : site.name_en || site.name;
+  const desc = lang === 'zh' ? site.desc_zh || site.desc_en : site.desc_en || site.desc_zh;
   const dead = site.status === 'dead';
 
   return (
-    <div className={`site-row${dead ? ' is-dead' : ''}`}>
-      <a
-        href={site.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="site-row-main"
-      >
+    <div className={`site-row${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}`}>
+      <a href={site.url} target="_blank" rel="noopener noreferrer" className="site-row-main">
         <div className="site-row-icon">
           {dead ? <AlertTriangle size={20} className="site-dead-icon" /> : <LetterAvatar name={name} group={site.group} />}
         </div>
@@ -119,38 +118,30 @@ function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
           ))}
           {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
         </div>
-        <div className="site-row-author" title={site.author || ''}>
-          {site.author || ''}
-        </div>
-        <div className="site-row-desc" title={desc || ''}>
-          {desc || ''}
-        </div>
+        <div className="site-row-author" title={site.author || ''}>{site.author || ''}</div>
+        <div className="site-row-desc" title={desc || ''}>{desc || ''}</div>
       </a>
+
       {site.youtube && (
-        <a
-          href={site.youtube}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="site-row-yt"
-          title="YouTube"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <a href={site.youtube} target="_blank" rel="noopener noreferrer" className="site-row-yt" title="YouTube" onClick={(e) => e.stopPropagation()}>
           <YouTubeBadge />
         </a>
       )}
+
+      {admin && (
+        <div className="site-row-admin">
+          <button className="site-admin-btn" disabled={!canMoveUp} title="up" onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
+          <button className="site-admin-btn" disabled={!canMoveDown} title="down" onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
+          <button className="site-admin-btn" title="edit" onClick={() => onEdit(site)}><Pencil size={14} /></button>
+          <button className="site-admin-btn site-admin-del" title="delete" onClick={() => onDelete(site)}><Trash2 size={14} /></button>
+        </div>
+      )}
+
       {site.alt_urls && site.alt_urls.length > 0 && (
         <div className="site-row-alts">
           <span className="site-row-alts-label">{TEXTS.altLink[lang]}:</span>
           {site.alt_urls.map((u) => (
-            <a
-              key={u}
-              href={u}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="site-row-alt"
-            >
-              {hostOf(u)}
-            </a>
+            <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="site-row-alt">{hostOf(u)}</a>
           ))}
         </div>
       )}
@@ -161,58 +152,61 @@ function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
 export default function SitesPage() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const admin = isAdmin();
 
   const [params, setParams] = useSearchParams();
   const group = ((params.get('g') as GroupId) || DEFAULT_GROUP) as GroupFilter;
   const query = params.get('q') || '';
 
+  const [sites, setSites] = useState<Site[] | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Site | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    listSites()
+      .then((rows) => { if (!cancel) setSites(rows); })
+      .catch((e) => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
+    return () => { cancel = true; };
+  }, []);
+
   const setGroup = useCallback(
     (g: GroupFilter) => {
       const next = new URLSearchParams(params);
-      if (g === DEFAULT_GROUP) next.delete('g');
-      else next.set('g', g);
+      if (g === DEFAULT_GROUP) next.delete('g'); else next.set('g', g);
       setParams(next, { replace: true });
     },
     [params, setParams],
   );
 
-  // 本地输入 state:避免每次按键都 setParams 导致中文 IME 组词错乱
   const [inputValue, setInputValue] = useState(query);
   const [composing, setComposing] = useState(false);
 
-  // URL 外部变化(例如浏览器返回)同步回本地 state
   useEffect(() => {
     setInputValue((prev) => (prev === query ? prev : query));
   }, [query]);
 
-  // 本地输入变更 → 延迟写回 URL;组词期间不写
-  // composing 必须是 state(不是 ref)— compositionEnd 时 inputValue 常和组词中的中间态相同,
-  // 不会触发 re-render,要靠 composing 翻转重跑 effect 才能 flush
   useEffect(() => {
     if (inputValue === query) return;
     if (composing) return;
     const t = setTimeout(() => {
       const next = new URLSearchParams(params);
-      if (inputValue) next.set('q', inputValue);
-      else next.delete('q');
+      if (inputValue) next.set('q', inputValue); else next.delete('q');
       setParams(next, { replace: true });
     }, 150);
     return () => clearTimeout(t);
   }, [inputValue, composing, query, params, setParams]);
 
-  // 分组计数
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const s of SITES) c[s.group] = (c[s.group] || 0) + 1;
+    if (sites) for (const s of sites) c[s.group] = (c[s.group] || 0) + 1;
     return c;
-  }, []);
+  }, [sites]);
 
-  // Fuse 实例（全体，按 group 过滤在外层处理）
-  // tags 在数据里是 "Skewb 斜转" 这种 EN+ZH 拼合串,getFn 拆成独立 token 单独索引,
-  // 否则 "斜转" 搜 "Skewb 斜转" 命中得分被空格 / 英文部分稀释
   const fuse = useMemo(
     () =>
-      new Fuse(SITES, {
+      new Fuse(sites ?? [], {
         keys: [
           { name: 'name', weight: 0.25 },
           { name: 'name_zh', weight: 0.25 },
@@ -235,19 +229,67 @@ export default function SitesPage() {
         minMatchCharLength: 2,
         ignoreLocation: true,
       }),
-    [],
+    [sites],
   );
 
   const filtered = useMemo(() => {
-    if (query.trim()) {
-      return fuse.search(query.trim()).map((r) => r.item);
-    }
-    return SITES.filter((s) => s.group === group);
-  }, [query, group, fuse]);
+    if (!sites) return [];
+    if (query.trim()) return fuse.search(query.trim()).map((r) => r.item);
+    return sites.filter((s) => s.group === group);
+  }, [sites, query, group, fuse]);
 
   const headerLabel = query.trim()
     ? `${TEXTS.resultsFor[lang]} "${query.trim()}"`
     : GROUPS.find((g) => g.id === group)?.[lang === 'zh' ? 'label_zh' : 'label_en'] || group;
+
+  function applySaved(saved: Site) {
+    setSites((prev) => {
+      if (!prev) return [saved];
+      const i = prev.findIndex((s) => s.id === saved.id);
+      if (i >= 0) {
+        const copy = prev.slice();
+        copy[i] = saved;
+        return copy;
+      }
+      return [...prev, saved];
+    });
+    setEditing(null);
+    setCreating(false);
+  }
+
+  async function handleDelete(s: Site) {
+    if (!window.confirm(TEXTS.confirmDel[lang])) return;
+    try {
+      await deleteSite(s.id);
+      setSites((prev) => prev?.filter((x) => x.id !== s.id) ?? null);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function handleMove(s: Site, dir: -1 | 1) {
+    if (!sites) return;
+    const groupRows = sites.filter((x) => x.group === s.group);
+    const idx = groupRows.findIndex((x) => x.id === s.id);
+    const j = idx + dir;
+    if (idx < 0 || j < 0 || j >= groupRows.length) return;
+    const newOrder = groupRows.slice();
+    [newOrder[idx], newOrder[j]] = [newOrder[j], newOrder[idx]];
+    const ids = newOrder.map((x) => x.id);
+    // 乐观更新:先动本地,失败回滚
+    setSites((prev) => {
+      if (!prev) return prev;
+      const others = prev.filter((x) => x.group !== s.group);
+      return [...others, ...newOrder];
+    });
+    try {
+      await reorderGroup(s.group, ids);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+      // 回滚:重拉
+      listSites().then(setSites).catch(() => {});
+    }
+  }
 
   return (
     <div className="sites-page">
@@ -291,9 +333,18 @@ export default function SitesPage() {
           <span className="sites-main-count">
             {filtered.length} {TEXTS.sites[lang]}
           </span>
+          {admin && !query.trim() && (
+            <button className="sites-add-btn" onClick={() => setCreating(true)}>
+              <Plus size={14} /> {TEXTS.add[lang]}
+            </button>
+          )}
         </header>
 
-        {filtered.length === 0 ? (
+        {loadErr ? (
+          <div className="sites-empty">{TEXTS.err[lang]}: {loadErr}</div>
+        ) : !sites ? (
+          <div className="sites-empty">{TEXTS.loading[lang]}</div>
+        ) : filtered.length === 0 ? (
           <div className="sites-empty">{TEXTS.noResults[lang]}</div>
         ) : (
           <div className="sites-list">
@@ -303,12 +354,32 @@ export default function SitesPage() {
               <span>{TEXTS.colAuthor[lang]}</span>
               <span>{TEXTS.colDesc[lang]}</span>
             </div>
-            {filtered.map((s) => (
-              <SiteRow key={s.id} site={s} lang={lang} />
+            {filtered.map((s, i) => (
+              <SiteRow
+                key={s.id}
+                site={s}
+                lang={lang}
+                admin={admin && !query.trim()}
+                canMoveUp={i > 0 && filtered[i - 1].group === s.group}
+                canMoveDown={i < filtered.length - 1 && filtered[i + 1].group === s.group}
+                onEdit={setEditing}
+                onDelete={handleDelete}
+                onMove={handleMove}
+              />
             ))}
           </div>
         )}
       </main>
+
+      {(editing || creating) && (
+        <SiteEditor
+          initial={editing}
+          defaultGroup={group}
+          lang={lang}
+          onClose={() => { setEditing(null); setCreating(false); }}
+          onSaved={applySaved}
+        />
+      )}
     </div>
   );
 }

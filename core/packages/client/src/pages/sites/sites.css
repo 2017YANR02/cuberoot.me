@@ -311,6 +311,184 @@
   color: var(--sites-text-faint);
 }
 
+/* ── Admin: + Add 按钮 + 行内 ✏/🗑/⬆⬇ ─────────────────── */
+.sites-add-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--sites-border);
+  background: var(--sites-bg);
+  color: var(--sites-text);
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.sites-add-btn:hover {
+  background: var(--sites-accent-soft);
+  color: var(--sites-accent);
+  border-color: var(--sites-accent);
+}
+
+.site-row-admin {
+  position: absolute;
+  top: 50%;
+  right: 36px;        /* 让位 yt 角标(无 yt 时 right:10 也够,稍微偏左统一) */
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  background: var(--sites-bg);
+  padding: 2px 4px;
+  border: 1px solid var(--sites-border);
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.12s;
+  pointer-events: none;
+}
+.site-row.is-admin:hover .site-row-admin,
+.site-row-admin:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+.site-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--sites-text-muted);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.site-admin-btn:hover { background: var(--sites-accent-soft); color: var(--sites-accent); }
+.site-admin-btn:disabled { opacity: 0.35; cursor: default; }
+.site-admin-btn:disabled:hover { background: transparent; color: var(--sites-text-muted); }
+.site-admin-del:hover { background: var(--sites-danger-soft); color: var(--sites-danger); }
+
+/* admin 行右侧腾出空间给按钮组(~110px) */
+.site-row.is-admin .site-row-main { padding-right: 130px; }
+
+/* ── Editor modal ───────────────────────────────────── */
+.site-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 25, 35, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.site-editor {
+  background: var(--sites-bg);
+  border-radius: 8px;
+  width: min(640px, 100%);
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.site-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sites-border);
+}
+.site-editor-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.site-editor-close {
+  border: 0;
+  background: transparent;
+  color: var(--sites-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 3px;
+}
+.site-editor-close:hover { background: var(--sites-row-hover); }
+
+.site-editor-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.site-editor-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sites-text-muted);
+}
+.site-editor-row > input,
+.site-editor-row > select,
+.site-editor-row > textarea,
+.site-editor-row-2 input {
+  border: 1px solid var(--sites-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--sites-text);
+  background: var(--sites-bg);
+}
+.site-editor-row > textarea { resize: vertical; min-height: 50px; }
+.site-editor-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.site-editor-row-2 label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sites-text-muted);
+}
+.site-editor-row-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--sites-text);
+}
+.site-editor-err {
+  color: var(--sites-danger);
+  background: var(--sites-danger-soft);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+.site-editor-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 10px 16px;
+  border-top: 1px solid var(--sites-border);
+}
+.site-editor-cancel,
+.site-editor-save {
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.site-editor-cancel {
+  border: 1px solid var(--sites-border);
+  background: var(--sites-bg);
+  color: var(--sites-text);
+}
+.site-editor-cancel:hover { background: var(--sites-row-hover); }
+.site-editor-save {
+  border: 0;
+  background: var(--sites-accent);
+  color: #fff;
+}
+.site-editor-save:disabled { opacity: 0.6; cursor: default; }
+
 /* ── Responsive ─────────────────────────────────────── */
 @media (max-width: 720px) {
   .sites-page {

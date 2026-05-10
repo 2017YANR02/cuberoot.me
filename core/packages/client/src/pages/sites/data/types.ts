@@ -11,7 +11,8 @@ export type GroupId =
   | 'shop';
 
 export interface Site {
-  id: string;
+  id: number;
+  position?: number;
   name: string;
   name_en?: string;
   name_zh?: string;
