@@ -460,12 +460,14 @@
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
 .wp-cell-attempt { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
-/* 详细成绩单元格 — H2H 等 5+ 次的格式:每行 5 个,多了自动换行 */
+/* 详细成绩单元格 — H2H 等 5+ 次的格式:每行 5 个,多了自动换行;
+   每行各自 grid 不能自动跨行对齐,所以列宽给定值用 ch 让行间对齐 */
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-attempts-flow {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, max-content));
-    gap: 4px 16px;
+    grid-template-columns: repeat(5, 7ch);
+    gap: 4px 12px;
+    justify-content: start;
 }
 .wp-att { text-align: right; }
 .wp-att-best { color: var(--wp-text); font-weight: 600; }
