@@ -774,15 +774,6 @@
                 ],
                 [
                   5,
-                  "[Yiwei Liu (刘伊玮)](https://www.worldcubeassociation.org/persons/2012LIUY03)",
-                  "17",
-                  "China",
-                  "2021-06-20",
-                  "[Tianjin Summer Solstice 2021](https://www.worldcubeassociation.org/competitions/TianjinSummerSolstice2021)",
-                  "25 23 17"
-                ],
-                [
-                  6,
                   "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
                   "17",
                   "USA",
@@ -791,7 +782,7 @@
                   "17 18 22"
                 ],
                 [
-                  7,
+                  6,
                   "[Harry Savage](https://www.worldcubeassociation.org/persons/2013SAVA01)",
                   "17",
                   "United Kingdom",
@@ -800,7 +791,7 @@
                   "27 31 17"
                 ],
                 [
-                  8,
+                  7,
                   "[Mark Boyanowski](https://www.worldcubeassociation.org/persons/2014BOYA01)",
                   "17",
                   "USA",
@@ -809,7 +800,7 @@
                   "17 28 22"
                 ],
                 [
-                  9,
+                  8,
                   "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
                   "17",
                   "Indonesia",
@@ -818,13 +809,22 @@
                   "22 17 22"
                 ],
                 [
-                  10,
-                  "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)",
+                  9,
+                  "[Anuar Miguel Abib Onofre](https://www.worldcubeassociation.org/persons/2015ONOF01)",
                   "17",
-                  "Korea",
-                  "2024-02-29",
-                  "[WCC FMC Leap Day 2024](https://www.worldcubeassociation.org/competitions/WCCFMCLeapDay2024)",
-                  "24 17 22"
+                  "Brazil",
+                  "2025-07-13",
+                  "[Campeonato Brasileiro FMC 2025](https://www.worldcubeassociation.org/competitions/CampeonatoBrasileiroFMC2025)",
+                  "24 25 17"
+                ],
+                [
+                  10,
+                  "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+                  "17",
+                  "Poland",
+                  "2025-03-01",
+                  "[5BLD Masters Opole 2025](https://www.worldcubeassociation.org/competitions/5BLDMastersOpole2025)",
+                  "22 20 17"
                 ]
               ]
             },
@@ -21400,11 +21400,11 @@
                 [
                   3,
                   "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
-                  "26.69",
+                  "26.62",
                   "Argentina",
-                  "2026-03-28",
-                  "[Pascuas en la Di Tella 2026](https://www.worldcubeassociation.org/competitions/PascuasenlaDiTella2026)",
-                  "24.45 27.58 24.97 27.52 24.24"
+                  "2026-05-02",
+                  "[MilaNxNesas en La MataNxNza 2026](https://www.worldcubeassociation.org/competitions/MilaNxNesasenLaMataNxNza2026)",
+                  "25.65 27.53 26.37 24.40 25.97"
                 ],
                 [
                   4,
@@ -38623,21 +38623,21 @@
                 ],
                 [
                   6,
-                  "[Alexei Sinyavin](https://www.worldcubeassociation.org/persons/2016SINY01)",
-                  "26.80",
-                  "USA",
-                  "2026-04-05",
-                  "[Side Events in Palisades 2026](https://www.worldcubeassociation.org/competitions/SideEventsinPalisades2026)",
-                  "26.80 32.65 25.92 31.90 26.65"
-                ],
-                [
-                  7,
                   "[Aidan Grainger](https://www.worldcubeassociation.org/persons/2018GRAI01)",
                   "26.80",
                   "United Kingdom",
                   "2025-08-22",
                   "[Rubik's UK Championship 2025](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2025)",
                   "25.40 31.21 26.70 26.80 35.30"
+                ],
+                [
+                  7,
+                  "[Alexei Sinyavin](https://www.worldcubeassociation.org/persons/2016SINY01)",
+                  "26.80",
+                  "USA",
+                  "2026-04-05",
+                  "[Side Events in Palisades 2026](https://www.worldcubeassociation.org/competitions/SideEventsinPalisades2026)",
+                  "26.80 32.65 25.92 31.90 26.65"
                 ],
                 [
                   8,
@@ -38845,9 +38845,9 @@
                   "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
                   "2.52",
                   "Poland",
-                  "2025-08-02",
-                  "[Silesian Minx Fest 2025](https://www.worldcubeassociation.org/competitions/SilesianMinxFest2025)",
-                  "2.48 3.01 2.52 3.52 2.36"
+                  "2024-04-20",
+                  "[Cube4fun Lublin on WEII 2024](https://www.worldcubeassociation.org/competitions/Cube4funLublinonWEII2024)",
+                  "2.44 3.36 2.59 2.40 2.52"
                 ],
                 [
                   10,
@@ -43508,12 +43508,12 @@
                 ],
                 [
                   10,
-                  "[Fiona Bao](https://www.worldcubeassociation.org/persons/2022BAOF01)",
+                  "[Baptiste Bery](https://www.worldcubeassociation.org/persons/2021BERY01)",
                   "2.38",
-                  "USA",
-                  "2026-03-28",
-                  "[Williamsburg Open Spring 2026](https://www.worldcubeassociation.org/competitions/WilliamsburgOpenSpring2026)",
-                  "2.38 4.82 3.78 2.21 2.85"
+                  "France",
+                  "2026-02-21",
+                  "[Chelles Open 2026](https://www.worldcubeassociation.org/competitions/ChellesOpen2026)",
+                  "2.38 5.27 DNF 4.96 2.35"
                 ]
               ]
             },
@@ -52075,21 +52075,21 @@
                 ],
                 [
                   6,
-                  "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
-                  "2.96",
-                  "USA",
-                  "2024-09-14",
-                  "[Grand Forks 2024](https://www.worldcubeassociation.org/competitions/GrandForks2024)",
-                  "2.96 2.46 2.24 2.29 2.43"
-                ],
-                [
-                  7,
                   "[Aaron Jake Wong](https://www.worldcubeassociation.org/persons/2021WONG02)",
                   "2.96",
                   "USA",
                   "2026-04-04",
                   "[PBs in Palisades Spring 2026](https://www.worldcubeassociation.org/competitions/PBsinPalisadesSpring2026)",
                   "2.29 2.79 2.47 2.96 2.48"
+                ],
+                [
+                  7,
+                  "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
+                  "2.96",
+                  "USA",
+                  "2024-09-14",
+                  "[Grand Forks 2024](https://www.worldcubeassociation.org/competitions/GrandForks2024)",
+                  "2.96 2.46 2.24 2.29 2.43"
                 ],
                 [
                   8,

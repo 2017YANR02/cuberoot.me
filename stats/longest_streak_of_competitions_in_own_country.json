@@ -45,7 +45,7 @@
       null
     ],
     [
-      105,
+      106,
       "[Chia-Leo Lin (林珈樂)](https://www.worldcubeassociation.org/persons/2006LINC01)",
       "Chinese Taipei",
       "[Maru Cube Day 2016](https://www.worldcubeassociation.org/competitions/MaruCubeDay2016)",
@@ -451,6 +451,13 @@
       null
     ],
     [
+      30,
+      "[Egdar Castillo](https://www.worldcubeassociation.org/persons/2017CAST48)",
+      "Panama",
+      "[Panamá Open 2017](https://www.worldcubeassociation.org/competitions/PanamaOpen2017)",
+      null
+    ],
+    [
       29,
       "[Sébastien Auroux](https://www.worldcubeassociation.org/persons/2008AURO01)",
       "Germany",
@@ -462,13 +469,6 @@
       "[Malte Oliver Bøgh Kjøller](https://www.worldcubeassociation.org/persons/2018KJOL01)",
       "Denmark",
       "[Østerhøj NxNxN 2019](https://www.worldcubeassociation.org/competitions/OsterhojNxNxN2019)",
-      null
-    ],
-    [
-      29,
-      "[Egdar Castillo](https://www.worldcubeassociation.org/persons/2017CAST48)",
-      "Panama",
-      "[Panamá Open 2017](https://www.worldcubeassociation.org/competitions/PanamaOpen2017)",
       null
     ],
     [
@@ -592,13 +592,6 @@
     ],
     [
       26,
-      "[Rafael de Andrade Cinoto](https://www.worldcubeassociation.org/persons/2007CINO01)",
-      "Brazil",
-      "[Torneio DRACO 2012](https://www.worldcubeassociation.org/competitions/TorneioDraco2012)",
-      null
-    ],
-    [
-      26,
       "[Aleksa Radovanović](https://www.worldcubeassociation.org/persons/2016RADO01)",
       "Serbia",
       "[Serbian Open 2016](https://www.worldcubeassociation.org/competitions/SerbianOpen2016)",
@@ -609,6 +602,13 @@
       "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
       "Hungary",
       "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
+      null
+    ],
+    [
+      25,
+      "[Rafael de Andrade Cinoto](https://www.worldcubeassociation.org/persons/2007CINO01)",
+      "Brazil",
+      "[Torneio DRACO 2012](https://www.worldcubeassociation.org/competitions/TorneioDraco2012)",
       null
     ],
     [

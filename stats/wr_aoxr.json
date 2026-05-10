@@ -11635,6 +11635,18 @@
                 ],
                 [
                   2,
+                  "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
+                  "1.62",
+                  "Poland",
+                  "2026-05-09",
+                  "[Podlaskie Tour Suwałki 2026](https://www.worldcubeassociation.org/competitions/PodlaskieTourSuwalki2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1.56,1.68"
+                  }
+                ],
+                [
+                  3,
                   "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
                   "1.73",
                   "USA",
@@ -11646,7 +11658,7 @@
                   }
                 ],
                 [
-                  3,
+                  4,
                   "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
                   "1.76",
                   "Czech Republic",
@@ -11658,7 +11670,7 @@
                   }
                 ],
                 [
-                  4,
+                  5,
                   "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
                   "1.81",
                   "Poland",
@@ -11667,18 +11679,6 @@
                   {
                     "_type": "solves",
                     "csv": "1.75,1.86"
-                  }
-                ],
-                [
-                  5,
-                  "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
-                  "1.81",
-                  "Poland",
-                  "2026-04-18",
-                  "[Cube Factory League Jeżów 2026](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueJezow2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "1.80,1.81"
                   }
                 ],
                 [
@@ -20474,6 +20474,18 @@
                 ],
                 [
                   6,
+                  "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
+                  "1:50.80",
+                  "Ireland",
+                  "2026-05-09",
+                  "[Manchester Megaminx Day 2026](https://www.worldcubeassociation.org/competitions/ManchesterMegaminxDay2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1:49.07,1:51.97,1:51.37"
+                  }
+                ],
+                [
+                  7,
                   "[DongSoo Park (박동수)](https://www.worldcubeassociation.org/persons/2017PARK05)",
                   "1:51.18",
                   "Korea",
@@ -20485,7 +20497,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Omar Ellabban](https://www.worldcubeassociation.org/persons/2018ELLA01)",
                   "1:51.31",
                   "Canada",
@@ -20497,7 +20509,7 @@
                   }
                 ],
                 [
-                  8,
+                  9,
                   "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
                   "1:52.31",
                   "Russia",
@@ -20509,7 +20521,7 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Anyu Zhang (张安宇)](https://www.worldcubeassociation.org/persons/2012ZHAN08)",
                   "1:54.92",
                   "China",
@@ -20518,18 +20530,6 @@
                   {
                     "_type": "solves",
                     "csv": "1:58.94,1:55.13,1:50.70"
-                  }
-                ],
-                [
-                  10,
-                  "[Mark Zimmermann](https://www.worldcubeassociation.org/persons/2018ZIMM02)",
-                  "1:54.96",
-                  "Germany",
-                  "2025-10-09",
-                  "[Rhein-Neckar Breakdown 2025](https://www.worldcubeassociation.org/competitions/RheinNeckarBreakdown2025)",
-                  {
-                    "_type": "solves",
-                    "csv": "1:52.24,1:53.96,1:58.68"
                   }
                 ]
               ]
