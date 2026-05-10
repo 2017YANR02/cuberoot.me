@@ -10,7 +10,7 @@ import {
   Swords, Target, CalendarDays, Puzzle, BookOpen, Earth as GlobeIcon,
   Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
   ImagePlus,
-  Wand2, Sparkles,
+  Wand2,
   Code as CodeIcon, Brain,
   type LucideIcon,
 } from 'lucide-react';
@@ -304,11 +304,16 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   analyze:         { en: 'Analyzer', zh: '打乱分析' },
   gen:             { en: 'Scrambles', zh: '生成打乱' },
   notation:        { en: 'Notation', zh: '记号沙盒' },
-  patterns:        { en: 'Patterns', zh: '图案集' },
   memo:            { en: 'Memo', zh: '记忆' },
   code:            { en: 'Code', zh: '编程' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
+  // Section titles
+  secTrain:        { en: 'Train',  zh: '训练' },
+  secLearn:        { en: 'Learn',  zh: '学习' },
+  secWca:          { en: 'Compete', zh: '比赛' },
+  secTools:        { en: 'Tools',  zh: '工具' },
+  secOther:        { en: 'Other',  zh: '其他' },
 };
 
 // ── 卡片配置 ──────────────────────────────────────────────────────────────
@@ -329,38 +334,64 @@ interface CardConfig {
   comingSoon?: boolean;
 }
 
-// NOTE: 按 Bento tier 顺序排列，渲染顺序决定 grid 布局
-const CARDS: CardConfig[] = [
-  // Tier 1 — Hero / Hero-side
-  { id: 'cuberoot',    href: '/trainer',         internal: true,  tier: 'hero',      nameKey: 'cuberootTrainer' },
-  { id: 'stats',       href: '/wca-stats',       internal: true,  tier: 'hero-side', Icon: BarChart3,   nameKey: 'wcaStats' },
-  { id: 'frame-count', href: '/frame-count',     internal: true,  tier: 'hero-side', Icon: Film,        nameKey: 'frameCount' },
-  // Tier 2 — Medium
-  { id: 'recon',       href: '/recon',           internal: true,  tier: 'medium',    Icon: ScanSearch,     nameKey: 'recon' },
-  { id: 'hth',         href: '/calc',            internal: true,  tier: 'medium',    Icon: CalculatorIcon, nameKey: 'hthGrapher' },
-  { id: 'viz',         href: '/viz',             internal: true,  tier: 'medium',    Icon: LineChart,      nameKey: 'viz' },
-  // Tier 3 — Standard
-  { id: 'alg',         href: '/tutorial',        internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg', comingSoon: true },
-  { id: 'algdb',       href: '/alg',             internal: true,  tier: 'standard',  Icon: BookMarked,     nameKey: 'algdb' },
-  { id: 'timer',       href: '/timer',           internal: true,  tier: 'standard',  Icon: TimerIcon,      nameKey: 'timer', comingSoon: true },
-  { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
-  { id: 'upcoming',    href: '/calendar',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
-  { id: 'globe',       href: '/globe',           internal: true,  tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },
-  { id: 'scramble',    href: '/scramble',        internal: true,  tier: 'standard',  Icon: Shuffle,        nameKey: 'scramble' },
-  { id: 'mosaic',      href: '/mosaic',          internal: true,  tier: 'standard',  Icon: Grid2x2,        nameKey: 'mosaic' },
-  { id: 'memo',        href: '/memo',            internal: true,  tier: 'standard',  Icon: Brain,          nameKey: 'memo' },
-  { id: 'visualcube',  href: '/visualcube',      internal: true,  tier: 'standard',  Icon: ImagePlus,      nameKey: 'visualcubeEditor' },
-  { id: 'notation',    href: '/notation',        internal: true,  tier: 'standard',  Icon: Wand2,          nameKey: 'notation' },
-  { id: 'patterns',    href: '/patterns',        internal: true,  tier: 'standard',  Icon: Sparkles,       nameKey: 'patterns' },
-  { id: 'code',        href: '/code',            internal: true,  tier: 'standard',  Icon: CodeIcon,       nameKey: 'code' },
-  { id: 'wb',          href: '/wb',              internal: true,  tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
-  { id: 'prediction',  href: '/prediction',      internal: true,  tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
-  { id: 'blog',        href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'standard', Icon: BookOpen, nameKey: 'blog' },
-  { id: 'site',        href: '/site',            internal: true,  tier: 'standard',  Icon: Compass,        nameKey: 'sitesDirectory' },
-  { id: 'solver',      href: '/solver',          internal: true,  tier: 'standard',  Icon: Puzzle,         nameKey: 'solver' },
-  { id: 'trainer',     href: '/alg-trainers',    internal: true,  tier: 'standard',  Icon: Target,         nameKey: 'algTrainer' },
-  // Tier 4 — Utility
-  { id: 'cstimer',     href: '/cstimer',         internal: true,  tier: 'utility',   nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
+// NOTE: 落地页按 5 大类分组渲染。每个 section 是独立 12 列 grid；
+// 卡片 tier 调整成让每个 section 行尾对齐(标准卡 3 列 / medium 4 列 / hero-side 6 列 / hero 6 列 × 2 行)。
+interface Section {
+  titleKey: keyof typeof TEXTS;
+  cards: CardConfig[];
+}
+
+const SECTIONS: Section[] = [
+  {
+    titleKey: 'secTrain',
+    cards: [
+      { id: 'cuberoot', href: '/trainer',      internal: true, tier: 'hero',     nameKey: 'cuberootTrainer' },
+      { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer', comingSoon: true },
+      { id: 'battle',   href: '/battle',       internal: true, tier: 'standard', Icon: Swords,    nameKey: 'battle' },
+      { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
+      { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', Icon: Target,    nameKey: 'algTrainer' },
+      { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'utility',  nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
+    ],
+  },
+  {
+    titleKey: 'secLearn',
+    cards: [
+      { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
+      { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
+      { id: 'notation', href: '/notation', internal: true, tier: 'medium', Icon: Wand2,      nameKey: 'notation' },
+    ],
+  },
+  {
+    titleKey: 'secWca',
+    cards: [
+      { id: 'stats',      href: '/wca-stats',  internal: true, tier: 'hero-side', Icon: BarChart3,      nameKey: 'wcaStats' },
+      { id: 'upcoming',   href: '/calendar',   internal: true, tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
+      { id: 'globe',      href: '/globe',      internal: true, tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },
+      { id: 'viz',        href: '/viz',        internal: true, tier: 'standard',  Icon: LineChart,      nameKey: 'viz' },
+      { id: 'hth',        href: '/calc',       internal: true, tier: 'standard',  Icon: CalculatorIcon, nameKey: 'hthGrapher' },
+      { id: 'wb',         href: '/wb',         internal: true, tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
+      { id: 'prediction', href: '/prediction', internal: true, tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
+    ],
+  },
+  {
+    titleKey: 'secTools',
+    cards: [
+      { id: 'recon',       href: '/recon',       internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
+      { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
+      { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
+      { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
+      { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', Icon: Puzzle,     nameKey: 'solver' },
+      { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
+    ],
+  },
+  {
+    titleKey: 'secOther',
+    cards: [
+      { id: 'code', href: '/code', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
+      { id: 'blog', href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
+      { id: 'site', href: '/site', internal: true, tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
+    ],
+  },
 ];
 
 // ── 组件 ─────────────────────────────────────────────────────────────────
@@ -410,71 +441,57 @@ export default function LandingPage() {
       </div>
       <h1 className="landing-tagline">{t('tagline')}</h1>
 
-      <div className="cards-container">
-        {CARDS.map((card) => {
-          // NOTE: 不同 tier 图标尺寸不同（tier-hero 无图标，由 LandingCubeHero 接管）
-          const iconSize = card.tier === 'hero-side' ? 32
-            : card.tier === 'medium' ? 28
-            : card.tier === 'utility' ? 20
-            : 24;
-          const content = (
-            <>
-              <div className="card-icon">
-                {card.tier === 'hero'
-                  ? <LandingCubeHero />
-                  : card.iconImg
-                    ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="cstimer-logo" />
-                    : card.Icon
-                      ? <card.Icon size={iconSize} strokeWidth={1.5} />
-                      : null}
-              </div>
-              <div className="card-name">{t(card.nameKey)}</div>
-            </>
-          );
-
-          const className = `card tier-${card.tier}${card.comingSoon ? ' is-disabled' : ''}`;
-          // NOTE: 即将上线的卡渲染为 div，禁止跳转
-          if (card.comingSoon) {
-            return (
-              <div
-                key={card.id}
-                className={className}
-                id={`card-${card.id}`}
-                title={t('comingSoon')}
-                aria-disabled="true"
-                role="link"
-              >
-                {content}
-                <span className="coming-soon-badge">{t('comingSoon')}</span>
-              </div>
-            );
-          }
-          // NOTE: 已迁移模块用 React Router Link（SPA 导航），外链用 <a>
-          if (card.internal) {
-            return (
-              <Link
-                key={card.id}
-                to={card.href}
-                className={className}
-                id={`card-${card.id}`}
-              >
-                {content}
-              </Link>
-            );
-          }
-          return (
-            <a
-              key={card.id}
-              href={card.href}
-              className={className}
-              id={`card-${card.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {content}
-            </a>
-          );
-        })}
+      <div className="cards-sections">
+        {SECTIONS.map((sec) => (
+          <section key={sec.titleKey} className="cards-section">
+            <h2 className="section-title">{t(sec.titleKey)}</h2>
+            <div className="cards-container">
+              {sec.cards.map((card) => {
+                const iconSize = card.tier === 'hero-side' ? 32
+                  : card.tier === 'medium' ? 28
+                  : card.tier === 'utility' ? 20
+                  : 24;
+                const content = (
+                  <>
+                    <div className="card-icon">
+                      {card.tier === 'hero'
+                        ? <LandingCubeHero />
+                        : card.iconImg
+                          ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="cstimer-logo" />
+                          : card.Icon
+                            ? <card.Icon size={iconSize} strokeWidth={1.5} />
+                            : null}
+                    </div>
+                    <div className="card-name">{t(card.nameKey)}</div>
+                  </>
+                );
+                const className = `card tier-${card.tier}${card.comingSoon ? ' is-disabled' : ''}`;
+                if (card.comingSoon) {
+                  return (
+                    <div key={card.id} className={className} id={`card-${card.id}`}
+                      title={t('comingSoon')} aria-disabled="true" role="link">
+                      {content}
+                      <span className="coming-soon-badge">{t('comingSoon')}</span>
+                    </div>
+                  );
+                }
+                if (card.internal) {
+                  return (
+                    <Link key={card.id} to={card.href} className={className} id={`card-${card.id}`}>
+                      {content}
+                    </Link>
+                  );
+                }
+                return (
+                  <a key={card.id} href={card.href} className={className} id={`card-${card.id}`}
+                    target="_blank" rel="noopener noreferrer">
+                    {content}
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
 
       {/* NOTE: 致谢：列出上游开源项目作者 */}
