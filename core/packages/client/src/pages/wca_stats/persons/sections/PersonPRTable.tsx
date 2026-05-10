@@ -120,10 +120,10 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               const showHist = mode === 'historical';
 
               const sRank = showHist
-                ? { world: histEv?.single?.world?.rank ?? null, continent: null, country: histEv?.single?.country?.rank ?? null }
+                ? { world: histEv?.single?.world?.rank ?? null, continent: histEv?.single?.continent?.rank ?? null, country: histEv?.single?.country?.rank ?? null }
                 : { world: cur?.single?.world_rank ?? null, continent: cur?.single?.continent_rank ?? null, country: cur?.single?.country_rank ?? null };
               const aRank = showHist
-                ? { world: histEv?.average?.world?.rank ?? null, continent: null, country: histEv?.average?.country?.rank ?? null }
+                ? { world: histEv?.average?.world?.rank ?? null, continent: histEv?.average?.continent?.rank ?? null, country: histEv?.average?.country?.rank ?? null }
                 : { world: cur?.average?.world_rank ?? null, continent: cur?.average?.continent_rank ?? null, country: cur?.average?.country_rank ?? null };
 
               const sValue = showHist

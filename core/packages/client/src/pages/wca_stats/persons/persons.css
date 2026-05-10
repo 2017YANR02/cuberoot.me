@@ -568,8 +568,10 @@
 .wp-dist-bar { fill: var(--wp-blue); opacity: 0.85; }
 
 .wp-rank-line-snr { stroke: #1f3f78; }
+.wp-rank-line-scr { stroke: #6ab15a; }
 .wp-rank-line-swr { stroke: #c39316; }
 .wp-rank-line-anr { stroke: #b71234; }
+.wp-rank-line-acr { stroke: #5fa3c7; }
 .wp-rank-line-awr { stroke: #2c7a4b; }
 
 /* ── Milestones ─────────────────────────────────────────────────── */
