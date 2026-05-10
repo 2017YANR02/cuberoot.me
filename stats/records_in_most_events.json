@@ -221,6 +221,11 @@
           "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 3x3x3 One-Handed, Clock, Square-1, Magic, Master Magic"
         ],
         [
+          8,
+          "[Theo Goluboff](https://www.worldcubeassociation.org/persons/2017GOLU01)",
+          "2x2x2 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed, Clock, Pyraminx"
+        ],
+        [
           7,
           "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
           "3x3x3 One-Handed, Clock, Megaminx, 5x5x5 Blindfolded, Magic, Master Magic, 3x3x3 Multi-Blind Old Style"
@@ -229,11 +234,6 @@
           6,
           "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
           "3x3x3 Cube, 4x4x4 Cube, 3x3x3 Blindfolded, 3x3x3 Fewest Moves, 3x3x3 One-Handed, 4x4x4 Blindfolded"
-        ],
-        [
-          6,
-          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "3x3x3 Cube, 4x4x4 Cube, 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, 3x3x3 One-Handed"
         ]
       ]
     },
