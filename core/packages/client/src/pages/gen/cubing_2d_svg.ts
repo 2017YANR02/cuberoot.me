@@ -24,8 +24,12 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
 };
 
 function normalizeAlg(puzzle: string, alg: string): string {
-  if (puzzle !== 'square1') return alg;
-  return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
+  // Mega scrambles now carry injected '\n' between cycles for the on-screen /
+  // PDF text layout. cubing.js's alg parser is stricter than HTML — collapse
+  // all whitespace to plain spaces before handing it to TwistyPlayer.
+  const flat = alg.replace(/\s+/g, ' ').trim();
+  if (puzzle !== 'square1') return flat;
+  return flat.replace(/(-?\d+,-?\d+)/g, '($1)');
 }
 
 let hiddenHost: HTMLDivElement | null = null;
@@ -43,7 +47,7 @@ function getHiddenHost(): HTMLDivElement {
  * SVG outerHTML once stable. Returns null if the puzzle isn't supported by
  * cubing.js's 2D visualization.
  */
-export async function getScramble2DSvg(event: string, scramble: string, timeoutMs = 4000): Promise<string | null> {
+export async function getScramble2DSvg(event: string, scramble: string, timeoutMs = 15000): Promise<string | null> {
   const puzzle = EVENT_TO_PUZZLE[event];
   if (!puzzle) return null;
 

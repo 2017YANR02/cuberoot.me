@@ -21,6 +21,7 @@ import {
 import type { RoundSheetInput } from './tnoodle_pdf';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
+import ScrambleLines from './ScrambleLines';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -388,6 +389,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
               t={t}
               clockColors={sh.event === 'clock' ? events[sh.event]?.colors : undefined}
               sq1Colors={sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
+              megaColors={sh.event === 'minx' ? events[sh.event]?.colors : undefined}
             />
           ))}
         </div>
@@ -396,7 +398,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
   );
 }
 
-function SheetView({ sheet, isZh, t, clockColors, sq1Colors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string>; sq1Colors?: Record<string, string> }) {
+function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string>; sq1Colors?: Record<string, string>; megaColors?: Record<string, string> }) {
   const { event, roundIdx, groupIdx, format, attemptNumber, attempts } = sheet;
   const groupSuffix = groupIdx > 0 ? ` · ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}` : '';
   const attemptSuffix = attemptNumber !== undefined
@@ -416,11 +418,11 @@ function SheetView({ sheet, isZh, t, clockColors, sq1Colors }: { sheet: RoundShe
       <tr key={i} className={a.isExtra ? 'is-extra' : ''}>
         <td className="gen-tn-attempt-num">{a.label}</td>
         <td className="gen-tn-attempt-scramble">
-          <code className="gen-tn-attempt-line">{a.scramble}</code>
+          <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
         </td>
         <td className="gen-tn-attempt-preview">
           {eventHasScramblePreview(event) && a.scramble && (
-            <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} />
+            <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />
           )}
         </td>
       </tr>,
