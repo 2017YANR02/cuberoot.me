@@ -11,6 +11,7 @@ import { algSetsRoutes } from './routes/alg_sets.js';
 import { colpiRoutes } from './routes/colpi.js';
 import { historicalRanksRoutes } from './routes/historical_ranks.js';
 import { wcaStatsExtraRoutes } from './routes/wca_stats_extra.js';
+import { navSitesRoutes } from './routes/nav_sites.js';
 
 const app = new Hono();
 
@@ -52,6 +53,7 @@ app.route('/v1', algSetsRoutes);
 app.route('/v1', colpiRoutes);
 app.route('/v1', historicalRanksRoutes);
 app.route('/v1', wcaStatsExtraRoutes);
+app.route('/v1', navSitesRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 
