@@ -8,6 +8,7 @@ import { EventSelect } from '../../components/EventSelect';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
 import ProgressButton from './ProgressButton';
+import ScrambleLines from './ScrambleLines';
 
 const COUNT_PRESETS = [1, 5, 12, 25, 50];
 
@@ -164,7 +165,7 @@ export default function QuickMode({ t }: Props) {
               title={t('点击复制', 'Click to copy')}
             >
               <span className="gen-num">{i + 1}</span>
-              <code className="gen-scramble">{s}</code>
+              <ScrambleLines scramble={s} className="gen-scramble" />
               {hasPreview && showPreview && (
                 <div className="gen-preview">
                   <ScramblePreview2D event={event} scramble={s} size={48} />

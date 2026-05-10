@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from '../pages/gen/clock_svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '../pages/gen/sq1_svg';
+import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '../pages/gen/mega_svg';
 
 const EVENT_TO_PUZZLE: Record<string, string> = {
   '222': '2x2x2',
@@ -40,18 +41,20 @@ interface Props {
   scramble: string;
   /** Width/height in px. The 2D net naturally has ~2:1.5 aspect; cubing.js scales to fit. */
   size?: number;
-  /** Tnoodle-style per-part color override. Honored when event ∈ {clock, sq1}. */
+  /** Tnoodle-style per-part color override. Honored when event ∈ {clock, sq1, minx}. */
   clockColors?: Record<string, string>;
   sq1Colors?: Record<string, string>;
+  megaColors?: Record<string, string>;
 }
 
-/** sq1 plain `1,0/-1,0` → `(1,0)/(-1,0)` for cubing.js parser. */
+/** Strip injected '\n' (mega cycles) and convert sq1 plain `1,0/-1,0` → `(1,0)/(-1,0)`. */
 function normalizeAlg(puzzle: string, alg: string): string {
-  if (puzzle !== 'square1') return alg;
-  return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
+  const flat = alg.replace(/\s+/g, ' ').trim();
+  if (puzzle !== 'square1') return flat;
+  return flat.replace(/(-?\d+,-?\d+)/g, '($1)');
 }
 
-export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1Colors }: Props) {
+export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1Colors, megaColors }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const puzzle = EVENT_TO_PUZZLE[event];
 
@@ -59,16 +62,17 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1
   const customSvg = useMemo(() => {
     try {
       if (event === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
-      if (event === 'sq1') return renderSq1ScrambleSvg(scramble, sq1Colors ?? DEFAULT_SQ1_COLORS);
+      if (event === 'sq1')   return renderSq1ScrambleSvg(scramble,   sq1Colors   ?? DEFAULT_SQ1_COLORS);
+      if (event === 'minx')  return renderMegaScrambleSvg(scramble,  megaColors  ?? DEFAULT_MEGA_COLORS);
       return null;
     } catch (err) {
       console.warn(`[ScramblePreview2D] ${event} render failed`, err);
       return null;
     }
-  }, [event, scramble, clockColors, sq1Colors]);
+  }, [event, scramble, clockColors, sq1Colors, megaColors]);
 
   useEffect(() => {
-    if (event === 'clock' || event === 'sq1') return; // handled above
+    if (event === 'clock' || event === 'sq1' || event === 'minx') return; // handled above
     const host = hostRef.current;
     if (!host || !puzzle) return;
     let cancelled = false;
