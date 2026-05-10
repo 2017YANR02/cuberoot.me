@@ -132,6 +132,17 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             /tmp/server-deploy/package.json "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/package.json"
 
+          # migrations/ — schema 改动放这里,apply_migrations.sh 自动跑没跑过的
+          # 必须在 pm2 restart 之前!否则新代码部上去查不到列 → /api/* 全 500
+          rsync -rltz --delete --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            core/packages/server/migrations/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/migrations/"
+
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+            -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            '/usr/local/bin/apply_migrations.sh /root/core-api/migrations'
+
           # pm2 重启（首次用 start，已有则 restart）
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
             'cd /root/core-api && (pm2 restart core-api 2>/dev/null || pm2 start dist/index.js --name core-api --node-args="--env-file=.env") && pm2 save'

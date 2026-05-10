@@ -26,9 +26,20 @@ scp /tmp/migration.sql root@cuberoot:/tmp/
 ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db -f /tmp/migration.sql && rm /tmp/migration.sql'
 ```
 
-## ⚠️ Schema 变更顺序
+## Schema 变更:走 migration 文件,不要手动 ALTER
 
-**先在云服务器跑 ALTER → 再 push 代码**。反过来会让部署上去的新版 server 在 SELECT 新列时直接 500,整个 `/api/recon/*` 挂掉。
+**新流程**(2026-05-10 起):
+
+1. 写 `core/packages/server/migrations/NNNN_short_desc.sql`(纯 ALTER/CREATE,不要包 BEGIN/COMMIT — runner 自己包)
+2. 同步改 `src/db/schema.pg.sql`(人读快照 — 必须自觉同步,不然两份脱节)
+3. 改业务代码(server 路由 / 类型)
+4. `git push`
+
+`deploy_core.yml` 在 pm2 restart **之前** ssh 跑 `apply_migrations.sh`,扫 `migrations/*.sql` 跑没跑过的;每个 migration 一个事务 + `ON_ERROR_STOP=1`,失败 abort + 后续不跑。详细规则见 `core/packages/server/migrations/README.md`。
+
+**已应用的 migration 不可改** — runner 校验 sha256,改了已 push 过的 migration 文件 = abort + 报错。要回滚或修正请写新 migration 反向操作。
+
+**老流程(已废弃)**:之前是 "先 ssh ALTER → 再 push 代码",顺序反过来会让新版 server 在 SELECT 新列时直接 500。现在 push 即可,Actions 自动按"先 migrate 后 pm2 restart"顺序跑。
 
 ## PG 方言关键(写 SQL / 改 server 路由前必看)
 
