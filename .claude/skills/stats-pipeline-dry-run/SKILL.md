@@ -51,24 +51,23 @@ WCA Stats Extra 管道同模式,把上面三处替换:
 2. **`.github/workflows/stats.yml`**: 对应 pipeline 的 `scp -i ~/.ssh/hr_id ...` 清单加文件名
 3. **server schema**(可选): 是否要加新 PG 表 / 索引?改 `core/packages/server/src/db/schema_*.pg.sql`,先在云服务器 ALTER 再 push(参考 `server-deploy` skill)
 
-## 服务器侧 apply 脚本(只读,别改)
+## 服务器侧 apply 脚本
 
-- `/usr/local/bin/historical_ranks_apply.sh` — `psql -f /tmp/wca_import/load.sql`
-- `/usr/local/bin/wca_stats_extra_apply.sh` — 同样 pattern,在 `/tmp/wca_stats_extra/`
-- 都是 `set -e`,**但 psql 默认不 ON_ERROR_STOP** → `\copy` 找不到文件**不会** abort 事务,COMMIT 照样过 → 服务器存量数据正常,新表静默 0 行。这是 silent failure 的根源。
+- `/usr/local/bin/apply_load.sh` — 通用 PG 加载器,接受 `<import_dir> <log_tag>` 两参数。source 在 `ops/bin/apply_load.sh`,push 触发 `deploy_ops_bin.yml` 自动同步。
+- `psql -e -v ON_ERROR_STOP=1 -f load.sql` + `tee >(logger)`:`-e` 让每条 SQL 回显到 ssh client(GitHub Actions 实时日志);`ON_ERROR_STOP=1` 任何 \copy 失败立即 abort 事务(防 silent failure)。
 
 ## ⚠️ ssh 跑远端长任务**必须**带 keepalive triple
 
-stats.yml 里所有 `ssh ... '/usr/local/bin/*_apply.sh'` 调用都**必须**写成:
+stats.yml 里所有 `ssh ... '/usr/local/bin/apply_load.sh ...'` 调用都**必须**写成:
 
 ```yaml
-run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/xxx_apply.sh'
+run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/<dir> <tag>'
 ```
 
 裸 `ssh -i ...` 形式 = **远端 apply 早完成,客户端等 FIN 卡 1-6h**。两次踩坑(2026-05-09 wca_stats_extra、2026-05-10 historical_ranks)。改任一处加 keepalive 时**立刻 grep 整个 yml** 找同 pattern 的其他 ssh 调用统一加上 —— 别只补报错那一行。
 
 ```bash
-grep -n "ssh.*hr_id.*apply" .github/workflows/stats.yml
+grep -n "ssh.*hr_id" .github/workflows/stats.yml
 ```
 所有匹配行都得有 `ServerAliveInterval=30`。
 

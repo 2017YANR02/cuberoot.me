@@ -169,7 +169,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         # NOTE: -T -n + ServerAlive 防 ssh 半挂死(2026-05-10 run #222 远端 apply 早完成,
         # 客户端等 FIN 卡 2h+)。同 wca_stats_extra apply。
-        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/historical_ranks_apply.sh'
+        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
 
       # ── WCA stats extra:6 个 cubing.pro 风格 stats(grand_slam / all_results 等) ──
       - name: Build WCA stats extra
@@ -196,7 +196,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         # NOTE: -T -n + ServerAlive 防 ssh 半连卡死(2026-05-09 一次 FIN 丢了卡 1h+);
         # 远端正常退出 → 立刻断;sshd 没回 FIN → 90s 内 keepalive 探活失败强断.
-        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/wca_stats_extra_apply.sh'
+        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_stats_extra wca_stats_extra_apply'
 
       # 重灌后 nginx 24h api_cache 仍持着老数据 → 清掉,新 id 排序立刻生效
       # (memory: reference_nginx_proxy_cache.md)
