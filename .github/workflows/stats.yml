@@ -159,7 +159,8 @@ jobs:
         working-directory: core/packages/stats-build/output/historical_ranks
         run: |
           ssh -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_import && rm -rf /tmp/wca_import/*'
-          scp -i ~/.ssh/hr_id load.sql wca_continents.copy.tsv wca_countries.copy.tsv wca_persons.copy.tsv historical_ranks_snapshot.copy.tsv \
+          scp -i ~/.ssh/hr_id load.sql wca_continents.copy.tsv wca_countries.copy.tsv wca_persons.copy.tsv \
+            historical_ranks_snapshot.copy.tsv historical_ranks_monthly_snapshot.copy.tsv \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_import/"
 
       - name: Apply historical ranks on server
