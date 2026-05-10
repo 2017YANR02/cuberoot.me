@@ -1,15 +1,19 @@
 // NOTE: 历史排名 snapshot builder
-// 读本机 / CI runner 上的 MySQL WCA dump,按年累积每人最佳,输出 PG-format COPY TSV.
+// 读本机 / CI runner 上的 MySQL WCA dump,按年/月累积每人最佳,输出 PG-format COPY TSV.
 // 用法:
 //   NODE_OPTIONS='--expose-gc --max-old-space-size=12288' npx tsx src/bin/historical_ranks_build.ts
 // 输出:
 //   output/historical_ranks/wca_continents.copy.tsv
 //   output/historical_ranks/wca_countries.copy.tsv
 //   output/historical_ranks/wca_persons.copy.tsv
-//   output/historical_ranks/wca_ranks_single.copy.tsv
-//   output/historical_ranks/wca_ranks_average.copy.tsv
-//   output/historical_ranks/historical_ranks_snapshot.copy.tsv
-//   output/historical_ranks/load.sql           ← server 端 psql -f 灌进 PG
+//   output/historical_ranks/historical_ranks_snapshot.copy.tsv          ← 年级,emit 全量
+//   output/historical_ranks/historical_ranks_monthly_snapshot.copy.tsv  ← 月级,smart-emit (只有更新的 cuber)
+//   output/historical_ranks/load.sql                                    ← server 端 psql -f 灌进 PG
+//
+// 月级 smart-emit 策略(参考 cubing.pro 但收紧 emit 范围避免数据量爆炸):
+//   - 月循环遇到该月有 result 才 emit
+//   - emit 范围 = 该月本人有 result 的 cuber(不 emit 全量,跳过 rank decay)
+//   - rank 仍是相对全量 cuber 算的,值正确
 //
 // server 端跑法(scp 上述文件到 /tmp/wca_import 后):
 //   cd /tmp/wca_import && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d recon_db -f load.sql
@@ -182,10 +186,27 @@ async function main() {
   // 释放 reference 内存
   if (global.gc) global.gc();
 
-  // ── 2. 主任务:逐个项目算每年快照
+  // ── 2. 主任务:逐个项目算每年/每月快照
   const snapPath = resolve(outDir, 'historical_ranks_snapshot.copy.tsv');
+  const monthSnapPath = resolve(outDir, 'historical_ranks_monthly_snapshot.copy.tsv');
   const snapStream = createWriteStream(snapPath);
-  let totalRows = 0;
+  const monthSnapStream = createWriteStream(monthSnapPath);
+  let totalYearRows = 0;
+  let totalMonthRows = 0;
+
+  // 计算 rank 的辅助函数(给定 acc 算 single + avg 三档 rank)
+  const computeRanks = (acc: Map<string, Acc>) => {
+    const singles: Array<{ wcaId: string; val: number; country: string; continent: string }> = [];
+    const averages: Array<{ wcaId: string; val: number; country: string; continent: string }> = [];
+    for (const [wcaId, v] of acc) {
+      const continent = continentOf.get(v.country) ?? '_World';
+      if (v.best > 0) singles.push({ wcaId, val: v.best, country: v.country, continent });
+      if (v.avg > 0) averages.push({ wcaId, val: v.avg, country: v.country, continent });
+    }
+    singles.sort((a, b) => a.val - b.val);
+    averages.sort((a, b) => a.val - b.val);
+    return { singleRanks: assignRanks(singles), avgRanks: assignRanks(averages) };
+  };
 
   for (const eventId of EVENTS) {
     const t0 = Date.now();
@@ -194,8 +215,8 @@ async function main() {
     // 拉本项目所有 result(只取需要的列),按比赛日期升序
     const [rows] = await conn.query<mysql.RowDataPacket[]>(`
       SELECT r.person_id, r.best, r.average, r.country_id,
-             YEAR(c.start_date) AS comp_year,
-             c.start_date AS sd
+             YEAR(c.start_date)  AS comp_year,
+             MONTH(c.start_date) AS comp_month
       FROM results r
       JOIN competitions c ON c.id = r.competition_id
       WHERE r.event_id = ? AND c.start_date IS NOT NULL
@@ -209,55 +230,81 @@ async function main() {
     // 累积每人最佳
     const acc = new Map<string, Acc>();
     let idx = 0;
+    let monthEmits = 0;
 
     for (let year = START_YEAR; year <= CURRENT_YEAR; year++) {
-      while (idx < rows.length && (rows[idx]!['comp_year'] as number) <= year) {
-        const r = rows[idx++]!;
-        const pid = r['person_id'] as string;
-        const best = r['best'] as number;
-        const avg = r['average'] as number;
-        const country = r['country_id'] as string;
-        let cur = acc.get(pid);
-        if (!cur) {
-          cur = { best: 0, avg: 0, country };
-          acc.set(pid, cur);
+      for (let month = 1; month <= 12; month++) {
+        // 跳过未来月份
+        const now = new Date();
+        if (year > now.getUTCFullYear() ||
+            (year === now.getUTCFullYear() && month > now.getUTCMonth() + 1)) {
+          break;
         }
-        if (best > 0 && (cur.best === 0 || best < cur.best)) cur.best = best;
-        if (avg > 0 && (cur.avg === 0 || avg < cur.avg)) cur.avg = avg;
-        cur.country = country; // 跟新到最近一次比赛国籍
+
+        // 消费本月所有 result
+        const updatedThisMonth = new Set<string>();
+        while (idx < rows.length) {
+          const r = rows[idx]!;
+          const ry = r['comp_year'] as number;
+          const rm = r['comp_month'] as number;
+          if (ry > year || (ry === year && rm > month)) break;
+          const pid = r['person_id'] as string;
+          const best = r['best'] as number;
+          const avg = r['average'] as number;
+          const country = r['country_id'] as string;
+          let cur = acc.get(pid);
+          if (!cur) {
+            cur = { best: 0, avg: 0, country };
+            acc.set(pid, cur);
+          }
+          if (best > 0 && (cur.best === 0 || best < cur.best)) cur.best = best;
+          if (avg > 0 && (cur.avg === 0 || avg < cur.avg)) cur.avg = avg;
+          cur.country = country;
+          // 即使本人最佳没刷新,只要本月有 result 就算"参加" → 月级 emit
+          // (跟 cubing.pro 行为对齐:每场比赛后该月都要有快照点)
+          updatedThisMonth.add(pid);
+          idx++;
+        }
+
+        if (updatedThisMonth.size === 0) continue;
+
+        // smart-emit 月级:rank 全量算,但只 emit 本月活跃的 cuber
+        const { singleRanks, avgRanks } = computeRanks(acc);
+        for (const wcaId of updatedThisMonth) {
+          const v = acc.get(wcaId)!;
+          const sr = singleRanks.get(wcaId);
+          const ar = avgRanks.get(wcaId);
+          const single = v.best > 0 ? v.best : null;
+          const average = v.avg > 0 ? v.avg : null;
+          monthSnapStream.write(
+            `${eventId}\t${year}\t${month}\t${wcaId}\t${num(single)}\t${num(average)}\t${pgEsc(v.country)}\t` +
+            `${sr?.wr ?? 0}\t${sr?.cr ?? 0}\t${sr?.cor ?? 0}\t` +
+            `${ar?.wr ?? 0}\t${ar?.cr ?? 0}\t${ar?.cor ?? 0}\n`,
+          );
+          totalMonthRows++;
+        }
+        monthEmits++;
       }
 
-      if (acc.size === 0) continue;
-
-      // 收集 single 排序输入
-      const singles: Array<{ wcaId: string; val: number; country: string; continent: string }> = [];
-      const averages: Array<{ wcaId: string; val: number; country: string; continent: string }> = [];
-      for (const [wcaId, v] of acc) {
-        const continent = continentOf.get(v.country) ?? '_World';
-        if (v.best > 0) singles.push({ wcaId, val: v.best, country: v.country, continent });
-        if (v.avg > 0) averages.push({ wcaId, val: v.avg, country: v.country, continent });
-      }
-      singles.sort((a, b) => a.val - b.val);
-      averages.sort((a, b) => a.val - b.val);
-      const singleRanks = assignRanks(singles);
-      const avgRanks = assignRanks(averages);
-
-      // 输出该 (event, year) 所有人的快照行
-      for (const [wcaId, v] of acc) {
-        const sr = singleRanks.get(wcaId);
-        const ar = avgRanks.get(wcaId);
-        const single = v.best > 0 ? v.best : null;
-        const average = v.avg > 0 ? v.avg : null;
-        snapStream.write(
-          `${eventId}\t${year}\t${wcaId}\t${num(single)}\t${num(average)}\t${pgEsc(v.country)}\t` +
-          `${sr?.wr ?? 0}\t${sr?.cr ?? 0}\t${sr?.cor ?? 0}\t` +
-          `${ar?.wr ?? 0}\t${ar?.cr ?? 0}\t${ar?.cor ?? 0}\n`,
-        );
-        totalRows++;
+      // 年级 emit:年末全量(沿用旧行为,选手页 PR 历史最佳还在用这张表)
+      if (acc.size > 0) {
+        const { singleRanks, avgRanks } = computeRanks(acc);
+        for (const [wcaId, v] of acc) {
+          const sr = singleRanks.get(wcaId);
+          const ar = avgRanks.get(wcaId);
+          const single = v.best > 0 ? v.best : null;
+          const average = v.avg > 0 ? v.avg : null;
+          snapStream.write(
+            `${eventId}\t${year}\t${wcaId}\t${num(single)}\t${num(average)}\t${pgEsc(v.country)}\t` +
+            `${sr?.wr ?? 0}\t${sr?.cr ?? 0}\t${sr?.cor ?? 0}\t` +
+            `${ar?.wr ?? 0}\t${ar?.cr ?? 0}\t${ar?.cor ?? 0}\n`,
+          );
+          totalYearRows++;
+        }
       }
     }
 
-    console.log(`  ${eventId} done. acc.size=${acc.size}, total snapshot rows so far: ${totalRows.toLocaleString()}`);
+    console.log(`  ${eventId} done. acc=${acc.size} monthEmits=${monthEmits} year=${totalYearRows.toLocaleString()} month=${totalMonthRows.toLocaleString()}`);
 
     // 显式释放,准备下一个项目
     acc.clear();
@@ -265,6 +312,7 @@ async function main() {
   }
 
   await new Promise<void>((res, rej) => snapStream.end((err: unknown) => err ? rej(err) : res()));
+  await new Promise<void>((res, rej) => monthSnapStream.end((err: unknown) => err ? rej(err) : res()));
 
   await conn.end();
 
@@ -279,11 +327,13 @@ TRUNCATE wca_continents CASCADE;
 TRUNCATE wca_countries  CASCADE;
 TRUNCATE wca_persons    CASCADE;
 TRUNCATE historical_ranks_snapshot;
+TRUNCATE historical_ranks_monthly_snapshot;
 
 \\copy wca_continents (id, name) FROM 'wca_continents.copy.tsv';
 \\copy wca_countries (id, iso2, name, continent_id) FROM 'wca_countries.copy.tsv';
 \\copy wca_persons (wca_id, name, country_id) FROM 'wca_persons.copy.tsv';
 \\copy historical_ranks_snapshot (event_id, year, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank) FROM 'historical_ranks_snapshot.copy.tsv';
+\\copy historical_ranks_monthly_snapshot (event_id, year, month, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank) FROM 'historical_ranks_monthly_snapshot.copy.tsv';
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('last_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
@@ -292,15 +342,17 @@ COMMIT;
 
 ANALYZE wca_persons;
 ANALYZE historical_ranks_snapshot;
+ANALYZE historical_ranks_monthly_snapshot;
 `;
   writeFileSync(resolve(outDir, 'load.sql'), loadSql);
 
   // ── 4. 总结
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const snapMb = (statSync(snapPath).size / 1024 / 1024).toFixed(1);
+  const monthMb = (statSync(monthSnapPath).size / 1024 / 1024).toFixed(1);
   console.log(`\n=== Done in ${elapsed}s ===`);
-  console.log(`Total snapshot rows: ${totalRows.toLocaleString()}`);
-  console.log(`Snapshot file size: ${snapMb} MB`);
+  console.log(`Year snapshot rows:  ${totalYearRows.toLocaleString()}  (${snapMb} MB)`);
+  console.log(`Month snapshot rows: ${totalMonthRows.toLocaleString()}  (${monthMb} MB)`);
   console.log(`Output dir: ${outDir}`);
 }
 

@@ -58,6 +58,33 @@ CREATE INDEX IF NOT EXISTS hrs_avg_wr ON historical_ranks_snapshot (event_id, ye
 CREATE INDEX IF NOT EXISTS hrs_single_cr ON historical_ranks_snapshot (event_id, year, country_id, single_country_rank) WHERE single_country_rank > 0;
 CREATE INDEX IF NOT EXISTS hrs_avg_cr ON historical_ranks_snapshot (event_id, year, country_id, avg_country_rank) WHERE avg_country_rank > 0;
 
+-- ── 4b. historical_ranks_monthly_snapshot: 每月末的累积最佳快照 ──
+-- 跟 4. snapshot 同结构,但分辨率到月.smart-emit:仅当该月本人有 result 时才 emit 一行.
+-- 用途:选手页"历史成绩排名曲线"按月画点,跟 cubing.pro 视觉对齐.
+-- 估容量:~8M 行 / ~2GB 含索引 (vs 年级表 7.5M / 1.7GB).
+CREATE TABLE IF NOT EXISTS historical_ranks_monthly_snapshot (
+  event_id              VARCHAR(20) NOT NULL,
+  year                  SMALLINT NOT NULL,
+  month                 SMALLINT NOT NULL,           -- 1..12
+  wca_id                VARCHAR(20) NOT NULL,
+  single                INTEGER,
+  average               INTEGER,
+  country_id            VARCHAR(50) NOT NULL,
+  single_world_rank     INTEGER NOT NULL DEFAULT 0,
+  single_country_rank   INTEGER NOT NULL DEFAULT 0,
+  single_continent_rank INTEGER NOT NULL DEFAULT 0,
+  avg_world_rank        INTEGER NOT NULL DEFAULT 0,
+  avg_country_rank      INTEGER NOT NULL DEFAULT 0,
+  avg_continent_rank    INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (event_id, year, month, wca_id)
+);
+
+-- 选手页查询索引:按 (wca_id, event) 拉出整条时间序列(主索引就足够,wca_id 在 PK 末尾不利)
+CREATE INDEX IF NOT EXISTS hrms_person ON historical_ranks_monthly_snapshot (wca_id, event_id, year, month);
+-- (event, year, month) 查每月榜单,跟年级表索引同 pattern
+CREATE INDEX IF NOT EXISTS hrms_single_wr ON historical_ranks_monthly_snapshot (event_id, year, month, single_world_rank) WHERE single_world_rank > 0;
+CREATE INDEX IF NOT EXISTS hrms_avg_wr    ON historical_ranks_monthly_snapshot (event_id, year, month, avg_world_rank)    WHERE avg_world_rank > 0;
+
 -- ── 5. meta_historical: 元信息(导入时间戳等) ──
 CREATE TABLE IF NOT EXISTS meta_historical (
   key        VARCHAR(50) PRIMARY KEY,

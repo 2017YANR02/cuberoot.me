@@ -140,6 +140,8 @@ export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRan
 
 export interface PersonRankHistoryRow {
   year: number;
+  /** 月级数据有 month (1..12),年级数据没有 */
+  month?: number;
   single: number | null;
   average: number | null;
   singleWorldRank: number | null;
@@ -153,15 +155,16 @@ export interface PersonRankHistoryRow {
 export interface PersonRankHistoryResponse {
   wcaId: string;
   eventId: string;
+  granularity?: 'month' | 'year';
   rows: PersonRankHistoryRow[];
 }
 
 export async function fetchPersonRankHistory(wcaId: string, eventId: string): Promise<PersonRankHistoryResponse> {
-  // v2: 加 continent rank 列
-  const key = `wca:rankHist:v2:${wcaId}:${eventId}`;
+  // v3: 切月级 (granularity=month, response 加 month 字段)
+  const key = `wca:rankHist:v3:${wcaId}:${eventId}`;
   const cached = cacheGet<PersonRankHistoryResponse>(key);
   if (cached) return cached;
-  const res = await fetch(apiUrl(`/v1/wca/person-rank-history?wcaId=${encodeURIComponent(wcaId)}&eventId=${encodeURIComponent(eventId)}`));
+  const res = await fetch(apiUrl(`/v1/wca/person-rank-history?wcaId=${encodeURIComponent(wcaId)}&eventId=${encodeURIComponent(eventId)}&granularity=month`));
   if (!res.ok) throw new Error(`person-rank-history ${res.status}`);
   const json = (await res.json()) as PersonRankHistoryResponse;
   cacheSet(key, json);
