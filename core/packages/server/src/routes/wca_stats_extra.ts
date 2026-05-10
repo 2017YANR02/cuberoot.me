@@ -737,19 +737,66 @@ wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
 });
 
 // ── 9. /v1/wca/person-rank-history ──
-// 选手 (wcaId, eventId) 每年年末的 single/average × world/continent/country rank.折线图源数据.
+// 选手 (wcaId, eventId) 的 single/average × world/continent/country rank 时间序列.
+// granularity=month (默认) → 月级表 (smart-emit,只在选手有比赛的月份有点)
+// granularity=year         → 年级表 (年末快照,每年一个点,含 rank decay)
 wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   const eventId = (c.req.query('eventId') ?? '').toLowerCase();
+  const granularity = (c.req.query('granularity') ?? 'month').toLowerCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
     return c.json({ error: 'Invalid wcaId' }, 400);
   }
   if (!VALID_EVENTS.has(eventId)) {
     return c.json({ error: 'Invalid event' }, 400);
   }
+  if (granularity !== 'month' && granularity !== 'year') {
+    return c.json({ error: 'Invalid granularity' }, 400);
+  }
 
+  if (granularity === 'year') {
+    const rows = await query<{
+      year: number;
+      single: number | null;
+      average: number | null;
+      single_world_rank: number | null;
+      single_country_rank: number | null;
+      single_continent_rank: number | null;
+      avg_world_rank: number | null;
+      avg_country_rank: number | null;
+      avg_continent_rank: number | null;
+    }>(
+      `
+      SELECT year, single, average,
+             single_world_rank, single_country_rank, single_continent_rank,
+             avg_world_rank, avg_country_rank, avg_continent_rank
+      FROM historical_ranks_snapshot
+      WHERE wca_id = ? AND event_id = ?
+      ORDER BY year ASC
+      `,
+      [wcaId, eventId],
+    );
+
+    c.header('Cache-Control', CACHE_HEADER);
+    return c.json({
+      wcaId, eventId, granularity,
+      rows: rows.map(r => ({
+        year: r.year,
+        single: r.single, average: r.average,
+        singleWorldRank: r.single_world_rank,
+        singleCountryRank: r.single_country_rank,
+        singleContinentRank: r.single_continent_rank,
+        avgWorldRank: r.avg_world_rank,
+        avgCountryRank: r.avg_country_rank,
+        avgContinentRank: r.avg_continent_rank,
+      })),
+    });
+  }
+
+  // 月级
   const rows = await query<{
     year: number;
+    month: number;
     single: number | null;
     average: number | null;
     single_world_rank: number | null;
@@ -760,21 +807,21 @@ wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
     avg_continent_rank: number | null;
   }>(
     `
-    SELECT year, single, average,
+    SELECT year, month, single, average,
            single_world_rank, single_country_rank, single_continent_rank,
            avg_world_rank, avg_country_rank, avg_continent_rank
-    FROM historical_ranks_snapshot
+    FROM historical_ranks_monthly_snapshot
     WHERE wca_id = ? AND event_id = ?
-    ORDER BY year ASC
+    ORDER BY year ASC, month ASC
     `,
     [wcaId, eventId],
   );
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    wcaId, eventId,
+    wcaId, eventId, granularity,
     rows: rows.map(r => ({
-      year: r.year,
+      year: r.year, month: r.month,
       single: r.single, average: r.average,
       singleWorldRank: r.single_world_rank,
       singleCountryRank: r.single_country_rank,
