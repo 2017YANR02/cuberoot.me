@@ -10,6 +10,7 @@ IMPORT_DIR="/tmp/wca_stats_extra"
 LOG_TAG="wca_stats_extra_apply"
 
 if [ ! -f "$IMPORT_DIR/load.sql" ]; then
+  echo "[$LOG_TAG] load.sql missing in $IMPORT_DIR; abort" >&2
   logger -t "$LOG_TAG" "load.sql missing in $IMPORT_DIR; abort"
   exit 1
 fi
@@ -26,20 +27,29 @@ REQUIRED=(
   wca_person_ranks.copy.tsv
 )
 for f in "${REQUIRED[@]}"; do
-  if [ ! -f "$IMPORT_DIR/$f" ]; then
-    logger -t "$LOG_TAG" "$f missing; abort"
+  if [ ! -s "$IMPORT_DIR/$f" ]; then
+    echo "[$LOG_TAG] $f missing or empty; abort" >&2
+    logger -t "$LOG_TAG" "$f missing or empty; abort"
     exit 1
   fi
 done
 
+echo "[$LOG_TAG] preflight OK; files in $IMPORT_DIR:"
+ls -lh "$IMPORT_DIR"
+echo "[$LOG_TAG] applying load.sql"
 logger -t "$LOG_TAG" "applying load.sql"
 START_TS=$(date +%s)
 
 cd "$IMPORT_DIR"
-PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db -f load.sql -v ON_ERROR_STOP=1 2>&1 | logger -t "$LOG_TAG"
+# psql -e 回显 server 收到的每条 SQL(\copy / TRUNCATE / CREATE INDEX 等)
+# tee >(logger) 让 stdout 走 ssh client 同时 syslog 留备份
+PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db \
+  -e -v ON_ERROR_STOP=1 -f load.sql 2>&1 \
+  | tee >(logger -t "$LOG_TAG")
 
 END_TS=$(date +%s)
 ELAPSED=$((END_TS - START_TS))
+echo "[$LOG_TAG] psql done in ${ELAPSED}s; cleaning up"
 logger -t "$LOG_TAG" "psql done in ${ELAPSED}s; cleaning up"
 
 rm -rf "$IMPORT_DIR"

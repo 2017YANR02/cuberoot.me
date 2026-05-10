@@ -57,6 +57,21 @@ WCA Stats Extra 管道同模式,把上面三处替换:
 - `/usr/local/bin/wca_stats_extra_apply.sh` — 同样 pattern,在 `/tmp/wca_stats_extra/`
 - 都是 `set -e`,**但 psql 默认不 ON_ERROR_STOP** → `\copy` 找不到文件**不会** abort 事务,COMMIT 照样过 → 服务器存量数据正常,新表静默 0 行。这是 silent failure 的根源。
 
+## ⚠️ ssh 跑远端长任务**必须**带 keepalive triple
+
+stats.yml 里所有 `ssh ... '/usr/local/bin/*_apply.sh'` 调用都**必须**写成:
+
+```yaml
+run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/xxx_apply.sh'
+```
+
+裸 `ssh -i ...` 形式 = **远端 apply 早完成,客户端等 FIN 卡 1-6h**。两次踩坑(2026-05-09 wca_stats_extra、2026-05-10 historical_ranks)。改任一处加 keepalive 时**立刻 grep 整个 yml** 找同 pattern 的其他 ssh 调用统一加上 —— 别只补报错那一行。
+
+```bash
+grep -n "ssh.*hr_id.*apply" .github/workflows/stats.yml
+```
+所有匹配行都得有 `ServerAliveInterval=30`。
+
 ## 验证服务器是否灌进去了
 
 ```bash

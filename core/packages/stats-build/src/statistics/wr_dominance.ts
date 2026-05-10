@@ -122,10 +122,8 @@ export class WrDominance extends Statistic {
 
     // NOTE: Single 基于所有 individual attempts
     for (const [eventId, eventName] of EVENTS_ENTRIES) {
-      const t = Date.now();
-      process.stdout.write(`  Dominance single: ${eventId}...`);
       let rows = await this.fetchSingleAttemptsFor(eventId);
-      if (rows.length === 0) { console.log(' skip'); continue; }
+      if (rows.length === 0) continue;
 
       const dom = this.computeDominance(rows, 'value');
       rows = null as unknown as RowDataPacket[];
@@ -134,17 +132,12 @@ export class WrDominance extends Statistic {
       if (dom.history.length > 0) singleHistRaw.push([eventName, dom.history]);
       if (dom.ranking.length > 0) singleRankRaw.push([eventName, dom.ranking]);
       collectIds(dom.history, dom.ranking);
-
-      const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
-      console.log(` ${dom.history.length} records (${((Date.now() - t) / 1000).toFixed(1)}s) [${mem}MB]`);
     }
 
     // NOTE: Average 基于每轮的 average 值
     for (const [eventId, eventName] of EVENTS_ENTRIES) {
-      const t = Date.now();
-      process.stdout.write(`  Dominance average: ${eventId}...`);
       let rows = await this.fetchAverageResultsFor(eventId);
-      if (rows.length === 0) { console.log(' skip'); continue; }
+      if (rows.length === 0) continue;
 
       const dom = this.computeDominance(rows, 'average');
       rows = null as unknown as RowDataPacket[];
@@ -153,9 +146,6 @@ export class WrDominance extends Statistic {
       if (dom.history.length > 0) avgHistRaw.push([eventName, dom.history]);
       if (dom.ranking.length > 0) avgRankRaw.push([eventName, dom.ranking]);
       collectIds(dom.history, dom.ranking);
-
-      const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
-      console.log(` ${dom.history.length} records (${((Date.now() - t) / 1000).toFixed(1)}s) [${mem}MB]`);
     }
 
     // NOTE: 所有 event 完成后，一次性查出链接（几十个 person + 几十个 comp）
