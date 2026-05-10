@@ -1,0 +1,89 @@
+# 部署 ops/bin/ 下的 shell 脚本到 cuberoot.me /usr/local/bin/。
+# 改 ops/bin/*.sh → push → 自动 scp + chmod + bash -n 语法检查。
+# 失败自动回滚到 .bak。
+name: Deploy ops/bin scripts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/bin/**'
+      - '.github/workflows/deploy_ops_bin.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp scripts to staging
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+            ops/bin/*.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+
+      - name: Apply + bash -n + rollback on failure
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -e
+          DEST=/usr/local/bin
+          TS=$(date +%s)
+
+          # bash -n 语法检查所有 staging 脚本(语法错就 abort,不动现网)
+          for f in /tmp/*.sh; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            # 只接受我们认得的脚本名,防止误传别的 .sh
+            case "$base" in
+              historical_ranks_apply.sh|wca_stats_extra_apply.sh) ;;
+              *) echo "SKIP unknown $base"; rm -f "$f"; continue ;;
+            esac
+            if ! bash -n "$f"; then
+              echo "ERROR: bash -n failed on $base, abort"
+              rm -f /tmp/*.sh
+              exit 1
+            fi
+          done
+
+          # cmp 跳过无变化 + 备份现网 + 替换 + chmod
+          for f in /tmp/*.sh; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            case "$base" in
+              historical_ranks_apply.sh|wca_stats_extra_apply.sh) ;;
+              *) continue ;;
+            esac
+            target="$DEST/$base"
+            if [ -f "$target" ] && cmp -s "$target" "$f"; then
+              echo "no-op: $base unchanged"
+              rm -f "$f"
+              continue
+            fi
+            if [ -f "$target" ]; then
+              cp "$target" "${target}.bak-${TS}"
+              echo "backup: ${target}.bak-${TS}"
+            fi
+            cp "$f" "$target"
+            chmod +x "$target"
+            rm -f "$f"
+            echo "deployed: $base"
+          done
+          echo "OK"
+          REMOTE
