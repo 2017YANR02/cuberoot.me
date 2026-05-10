@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useRef, type JSX } from 'react';
 import 'scramble-display';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '../../gen/sq1_svg';
+import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '../../gen/mega_svg';
 
 interface CubingPreviewProps {
   /** Either a timer EventId or a scramble-display event id (e.g. 'minx', 'pyram'). */
@@ -66,7 +67,7 @@ function dimensionsFor(eventId: string, size: number): { w: number; h: number } 
     case '555bf': return { w: size * 20, h: size * 15 };
     case '666':   return { w: size * 24, h: size * 18 };
     case '777':   return { w: size * 28, h: size * 21 };
-    case 'minx':  return { w: size * 18, h: size * 14 };
+    case 'minx':  return { w: size * 17, h: size * 8 };  // tnoodle mega aspect ≈ 2.087:1 (wide unfolded)
     case 'pyram': return { w: size * 12, h: size * 10 };
     case 'skewb': return { w: size * 12, h: size * 9 };
     case 'sq1':   return { w: size * 7,  h: size * 14 }; // tnoodle SquareOnePuzzle is portrait (~1:2)
@@ -84,20 +85,22 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const eventId = normalizeEvent(event);
 
-  // sq1 uses our tnoodle SquareOnePuzzle.java port (portrait SVG with WCA
-  // colors). Bypasses scramble-display entirely.
-  const sq1Svg = useMemo(() => {
-    if (eventId !== 'sq1' || !scramble) return null;
+  // sq1 / mega use our tnoodle puzzle ports (sq1: portrait, mega: wide
+  // unfolded with all 12 face colors). Bypasses scramble-display entirely.
+  const portedSvg = useMemo(() => {
+    if (!scramble) return null;
     try {
-      return renderSq1ScrambleSvg(scramble, DEFAULT_SQ1_COLORS);
+      if (eventId === 'sq1')  return renderSq1ScrambleSvg(scramble, DEFAULT_SQ1_COLORS);
+      if (eventId === 'minx') return renderMegaScrambleSvg(scramble, DEFAULT_MEGA_COLORS);
+      return null;
     } catch (err) {
-      console.warn('[CubingPreview] sq1 render failed', err);
+      console.warn(`[CubingPreview] ${eventId} render failed`, err);
       return null;
     }
   }, [eventId, scramble]);
 
   useEffect(() => {
-    if (eventId === 'sq1') return; // handled inline
+    if (eventId === 'sq1' || eventId === 'minx') return; // handled inline
     const host = hostRef.current;
     if (!host || !eventId) return;
 
@@ -120,14 +123,14 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   }
 
   const { w, h } = dimensionsFor(eventId, size);
-  if (sq1Svg) {
+  if (portedSvg) {
     return (
       <div
         className={className}
         style={{ width: w, height: h, display: 'block' }}
         role="img"
         aria-label={`${event} scramble preview`}
-        dangerouslySetInnerHTML={{ __html: sq1Svg }}
+        dangerouslySetInnerHTML={{ __html: portedSvg }}
       />
     );
   }

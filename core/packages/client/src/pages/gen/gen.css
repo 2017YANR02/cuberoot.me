@@ -254,6 +254,13 @@
     /* Preserve injected '\n' for megaminx 7-line layout; spaces still wrap on narrow screens. */
     white-space: pre-wrap;
 }
+/* Per-line spans for multi-line scrambles (mega) — mirrors tnoodle PDF
+   alternating-row highlighting (#E6E6E6, MIN_LINES_HIGHLIGHTING=4). */
+.gen-scramble-line, .gen-tn-attempt-line .gen-scramble-line {
+    display: block;
+    padding: 0 4px;
+}
+.gen-scramble-line.is-hl { background: #e6e6e6; }
 
 .gen-copy-btn {
     padding: 6px;
