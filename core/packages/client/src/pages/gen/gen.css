@@ -212,10 +212,23 @@
     border-bottom: 1px solid var(--gen-border);
     border-radius: 0;
     padding: 14px 12px;
-    display: grid;
-    grid-template-columns: 28px 1fr auto auto;
+    display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
+}
+.gen-item .gen-num { width: 28px; flex-shrink: 0; }
+.gen-item .gen-scramble {
+    flex: 0 1 auto;   /* 不抢空间;太长时允许收缩→换行 */
+    min-width: 0;     /* flex 收缩时让 word-break 真正生效 */
+}
+.gen-item .gen-preview { flex-shrink: 0; }
+
+.gen-item-clickable { cursor: pointer; transition: background-color 0.15s; }
+.gen-item-clickable:hover { background-color: rgba(0, 0, 0, 0.025); }
+/* 复制后:行号变成强调色,持续 ~1.2s 内提示;不再用浮层避免压住魔方图 */
+.gen-item-clickable.is-copied .gen-num {
+    color: var(--gen-accent);
+    font-weight: 700;
 }
 
 .gen-num {
@@ -238,6 +251,8 @@
     word-break: break-word;
     line-height: 1.45;
     user-select: text;
+    /* Preserve injected '\n' for megaminx 7-line layout; spaces still wrap on narrow screens. */
+    white-space: pre-wrap;
 }
 
 .gen-copy-btn {
@@ -260,11 +275,8 @@
 }
 
 @media (max-width: 480px) {
-    .gen-item {
-        grid-template-columns: 24px 1fr auto auto;
-        gap: 8px;
-        padding: 10px 8px;
-    }
+    .gen-item { gap: 8px; padding: 10px 8px; }
+    .gen-item .gen-num { width: 24px; }
     .gen-scramble { font-size: 0.84rem; }
     .gen-controls { padding: 10px 12px; }
 }
@@ -601,6 +613,8 @@
     word-break: break-word;
     line-height: 1.5;
     user-select: text;
+    /* Mega scrambles carry '\n' between face cycles; preserve them here. */
+    white-space: pre-wrap;
 }
 .gen-tn-attempt-line + .gen-tn-attempt-line { margin-top: 2px; }
 .gen-tn-attempt-preview { width: 110px; }

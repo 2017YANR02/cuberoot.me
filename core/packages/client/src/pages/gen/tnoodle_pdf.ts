@@ -181,6 +181,20 @@ function computePhrase(
   boxWidthPt: number,
   boxHeightPt: number,
 ): PhraseLayout {
+  // Megaminx: tnoodle hard-wraps at every face-cycle boundary (each line ends
+  // with U or U'). Skip the one-line / fit-loop path entirely so we don't
+  // collapse two cycles onto one line. Detection: cubing.js emits literal '\n'
+  // between cycles (only mega does this).
+  const isMegaminx = scramble.includes('\n');
+  if (isMegaminx) {
+    const breakChunks = paddedTokens(scramble);
+    const lines = breakChunks.map((c) => c.join(MOVES_DELIMITER));
+    const lineHeight = boxHeightPt / Math.max(1, lines.length);
+    const widestSize = Math.min(
+      ...lines.map((l) => fitOneLine(doc, l, boxWidthPt, lineHeight)),
+    );
+    return { lines, fontSize: Math.min(widestSize, MAX_PHRASE_FONT_SIZE) };
+  }
   // First try one-line at max font (tnoodle "is it readable on one line?")
   const oneLinePadded = NBSP + scramble.replace(/\n/g, ' ') + NBSP;
   const oneLineSize = fitOneLine(doc, oneLinePadded, boxWidthPt, boxHeightPt);
