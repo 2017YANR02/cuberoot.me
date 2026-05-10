@@ -460,6 +460,10 @@
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
 .wp-cell-attempt { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+/* 详细成绩单元格 — H2H 等 5+ 次的格式也能放下;flex-wrap 保证窄屏折行 */
+.wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+.wp-attempts-flow { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }
+.wp-att { display: inline-block; }
 .wp-att-best { color: var(--wp-text); font-weight: 600; }
 .wp-rec-tag {
     display: inline-block;
