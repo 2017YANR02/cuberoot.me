@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import WcaEventSelector from './WcaEventSelector';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryToIso2, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
 import { stripWcaPrefix } from '../../utils/comp_localize';

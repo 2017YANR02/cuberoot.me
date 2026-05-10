@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
-import WcaEventSelector from './WcaEventSelector';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import PillToggle from '../../components/PillToggle/PillToggle';
 import { RecordBadge } from '../../components/RecordBadge/RecordBadge';
 import { CompCell } from '../../components/CompCell/CompCell';

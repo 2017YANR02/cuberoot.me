@@ -3,12 +3,15 @@
  * Extracted from the original GenPage when TNoodle mode was added.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react';
-import { EventSelect } from '../../components/EventSelect';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
+
+const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
 
 const COUNT_PRESETS = [1, 5, 12, 25, 50];
 
@@ -17,6 +20,8 @@ interface Props {
 }
 
 export default function QuickMode({ t }: Props) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   const [event, setEvent] = useState<string>('333');
   const [count, setCount] = useState<number>(5);
   const [showPreview, setShowPreview] = useState(true);
@@ -90,12 +95,14 @@ export default function QuickMode({ t }: Props) {
 
   return (
     <>
-      <div className="gen-controls">
-        <div className="gen-control-group">
-          <label className="gen-label">{t('项目', 'Event')}</label>
-          <EventSelect events={TNOODLE_WCA_EVENTS as unknown as string[]} value={event} onChange={setEvent} />
-        </div>
+      <WcaEventSelector
+        availableEvents={TNOODLE_EVENT_SET}
+        selectedEvent={event}
+        onSelect={setEvent}
+        isZh={isZh}
+      />
 
+      <div className="gen-controls">
         <div className="gen-control-group">
           <label className="gen-label">{t('数量', 'Count')}</label>
           <div className="gen-count-row">

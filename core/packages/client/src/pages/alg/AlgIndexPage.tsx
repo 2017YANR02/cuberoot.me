@@ -69,6 +69,18 @@ export default function AlgIndexPage() {
             </Link>
           );
         })}
+        <Link to="/alg/commutator" className="alg-puzzle-card">
+          <div className="alg-puzzle-name">
+            <span className="alg-puzzle-icon alg-bracket-icon" aria-hidden="true">[,]</span>
+            <span>{isZh ? '换位子' : 'Commutator'}</span>
+          </div>
+          <div className="alg-puzzle-count">{isZh ? '换位子分解工具' : 'Commutator decomposer'}</div>
+          <div className="alg-puzzle-preview">
+            <span className="alg-puzzle-chip">{isZh ? '分解' : 'Decompose'}</span>
+            <span className="alg-puzzle-chip">{isZh ? '展开' : 'Expand'}</span>
+            <span className="alg-puzzle-chip">Excel</span>
+          </div>
+        </Link>
       </div>
 
       {validationOpen && (

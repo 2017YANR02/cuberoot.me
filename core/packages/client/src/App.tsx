@@ -72,6 +72,8 @@ const TutorialPostPage = lazy(() => import('./pages/tutorial/TutorialPostPage'))
 const AlgIndexPage = lazy(() => import('./pages/alg/AlgIndexPage'));
 const AlgPuzzlePage = lazy(() => import('./pages/alg/AlgPuzzlePage'));
 const AlgCategoryPage = lazy(() => import('./pages/alg/AlgCategoryPage'));
+// NOTE: Commutator — 换位子分解工具 (port of nbwzx/commutator)
+const CommutatorPage = lazy(() => import('./pages/alg/commutator/CommutatorPage'));
 // NOTE: Sites — 魔方网址导航
 const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 // NOTE: /prediction — 3x3 速拧极限预测
@@ -243,6 +245,8 @@ function App() {
         {/* Alg — 公式库 (2x2/3x3/4x4/5x5, data from speedcubedb.com，曾用 /algdb) */}
         {/* /alg/:puzzle handles BOTH new puzzle pages AND legacy single-segment 3x3 set slugs (redirects). */}
         <Route path="/alg" element={<Suspense fallback={<div>Loading...</div>}><AlgIndexPage /></Suspense>} />
+        {/* NOTE: /alg/commutator must precede /alg/:puzzle so the catch-all doesn't swallow it. */}
+        <Route path="/alg/commutator" element={<Suspense fallback={<div>Loading...</div>}><CommutatorPage /></Suspense>} />
         <Route path="/alg/:puzzle" element={<Suspense fallback={<div>Loading...</div>}><AlgPuzzlePage /></Suspense>} />
         <Route path="/alg/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         <Route path="/alg/:puzzle/:set/:subgroup" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />

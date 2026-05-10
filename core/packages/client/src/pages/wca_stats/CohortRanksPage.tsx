@@ -7,7 +7,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
-import WcaEventSelector from './WcaEventSelector';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { Flag } from '../../utils/flag';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';

@@ -8,7 +8,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import Paginator from './Paginator';
-import WcaEventSelector from './WcaEventSelector';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { Flag } from '../../utils/flag';
 import { loadFlagData } from '../../utils/country_flags';
 import { CompCell } from '../../components/CompCell/CompCell';

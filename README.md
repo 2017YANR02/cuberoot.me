@@ -119,6 +119,7 @@ This project stands on the shoulders of excellent open-source work:
 - [**tdecker91/puzzle-gen**](https://github.com/tdecker91/puzzle-gen) (`sr-puzzlegen` on npm) — non-cube WCA puzzle SVG renderer (Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by `/visualcube`
 - [**cube.rider.biz/visualcube.php**](https://cube.rider.biz/visualcube.php) — PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`
 - [**speedcubedb.com**](https://speedcubedb.com/) — algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)
+- [**nbwzx/commutator**](https://github.com/nbwzx/commutator) — commutator decomposition / expansion engine (Zixing Wang) re-wrapped as ES module for the `/alg/commutator` tool; algorithm code unchanged from upstream, UI rebuilt in React
 - [**speedsolving.com/wiki: Pretty Pattern**](https://www.speedsolving.com/wiki/index.php/Pretty_pattern) and [**ruwix.com Rubik's Cube Patterns**](https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/) — pattern algorithms compiled into `/patterns`
 - [**cubing.pro**](https://cubing.pro/) — UI/概念参考来源:`/wca-stats` 子页(历史排名 / 大满贯 / 全部成绩排行 / 当年成绩排行 / 参赛届别排行 / 项目成功率 / 全项目达成 / 全项目排行)+ `/wca-stats/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)
 
