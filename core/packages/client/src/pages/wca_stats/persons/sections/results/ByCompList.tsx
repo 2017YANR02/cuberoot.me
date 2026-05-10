@@ -112,7 +112,7 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                     <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
                     <th>{t('单次', 'Single')}</th>
                     <th>{t('平均', 'Avg')}</th>
-                    <th colSpan={5}>{t('详细成绩', 'Attempts')}</th>
+                    <th>{t('详细成绩', 'Attempts')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -148,20 +148,9 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                             <span className={`wp-rec-tag ${recordClass(r.regional_average_record)}`}>{r.regional_average_record}</span>
                           )}
                         </td>
-                        {[0,1,2,3,4].map((i) => {
-                          const a = r.attempts[i];
-                          if (a === undefined) return <td key={i} className="wp-cell-attempt"></td>;
-                          // 标注最佳/最差(WCA: 平均忽略最佳与最差)
-                          const validNums = r.attempts.filter((x) => x > 0);
-                          const isBest = validNums.length > 0 && a > 0 && a === Math.min(...validNums) && a === r.best;
-                          const isWorstParen = isBracketed(r.attempts, i);
-                          const formatted = formatWcaResult(a, r.event_id, 'single');
-                          return (
-                            <td key={i} className={`wp-cell-attempt ${isBest ? 'wp-att-best' : ''}`}>
-                              {isWorstParen ? `(${formatted})` : formatted}
-                            </td>
-                          );
-                        })}
+                        <td className="wp-cell-attempts">
+                          <AttemptsList attempts={r.attempts} best={r.best} eventId={r.event_id} />
+                        </td>
                       </tr>
                     );
                   })}
@@ -172,6 +161,27 @@ export default function ByCompList({ results, comps, isZh }: Props) {
         );
       })}
     </div>
+  );
+}
+
+// 把 attempts 渲染为可折行 inline 列表(支持 H2H 等 5+ 次的格式).
+function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
+  if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
+  const validNums = attempts.filter((x) => x > 0);
+  const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
+  return (
+    <span className="wp-attempts-flow">
+      {attempts.map((a, i) => {
+        if (a === undefined) return null;
+        const formatted = formatWcaResult(a, eventId, 'single');
+        const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
+        return (
+          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''}`}>
+            {isBracketed(attempts, i) ? `(${formatted})` : formatted}
+          </span>
+        );
+      })}
+    </span>
   );
 }
 
