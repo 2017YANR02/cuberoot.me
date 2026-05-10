@@ -7,6 +7,7 @@ import { Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { EventSelect } from '../../components/EventSelect';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
+import ProgressButton from './ProgressButton';
 
 const COUNT_PRESETS = [1, 5, 12, 25, 50];
 
@@ -20,6 +21,7 @@ export default function QuickMode({ t }: Props) {
   const [showPreview, setShowPreview] = useState(true);
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
 
@@ -32,18 +34,32 @@ export default function QuickMode({ t }: Props) {
     setScrambles([]);
     setCopiedIdx(null);
     setCopiedAll(false);
+    let done = 0;
+    setGenProgress({ done: 0, total: count });
+
+    // Per-promise tick so the progress bar advances as each scramble lands
+    // (random-state generators for big NxN are not uniformly fast).
+    const promises = Array.from({ length: count }, () =>
+      tnoodleRandomScramble(event).then((s) => {
+        if (reqIdRef.current === myId) {
+          done += 1;
+          setGenProgress({ done, total: count });
+        }
+        return s;
+      }),
+    );
 
     (async () => {
-      const out = await Promise.all(
-        Array.from({ length: count }, () => tnoodleRandomScramble(event)),
-      );
+      const out = await Promise.all(promises);
       if (reqIdRef.current !== myId) return;
       setScrambles(out.filter((s): s is string => !!s));
       setLoading(false);
+      setGenProgress(null);
     })().catch((e) => {
       if (reqIdRef.current !== myId) return;
       console.error('[gen/quick] scramble failed', e);
       setLoading(false);
+      setGenProgress(null);
     });
   }, [event, count, tick]);
 
@@ -107,10 +123,17 @@ export default function QuickMode({ t }: Props) {
         </div>
 
         <div className="gen-control-group gen-control-actions">
-          <button type="button" className="gen-btn gen-btn-primary" onClick={regenerate} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'gen-spin' : ''} />
-            <span>{loading ? t('生成中…', 'Generating…') : t('重新生成', 'Regenerate')}</span>
-          </button>
+          <ProgressButton
+            primary
+            icon={<RefreshCw size={14} className={loading ? 'gen-spin' : ''} />}
+            label={loading
+              ? t(`生成中 (${genProgress?.done ?? 0}/${genProgress?.total ?? count})`,
+                  `Generating (${genProgress?.done ?? 0}/${genProgress?.total ?? count})`)
+              : t('重新生成', 'Regenerate')}
+            progress={genProgress}
+            onClick={regenerate}
+            disabled={loading}
+          />
           <button type="button" className="gen-btn" onClick={copyAll} disabled={scrambles.length === 0}>
             {copiedAll ? <Check size={14} /> : <Copy size={14} />}
             <span>{copiedAll ? t('已复制', 'Copied') : t('全部复制', 'Copy all')}</span>

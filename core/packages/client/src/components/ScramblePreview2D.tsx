@@ -13,6 +13,7 @@
  */
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from '../pages/gen/clock_svg';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '../pages/gen/sq1_svg';
 
 const EVENT_TO_PUZZLE: Record<string, string> = {
   '222': '2x2x2',
@@ -39,12 +40,9 @@ interface Props {
   scramble: string;
   /** Width/height in px. The 2D net naturally has ~2:1.5 aspect; cubing.js scales to fit. */
   size?: number;
-  /**
-   * Clock-only: tnoodle-style per-part color override.
-   * When event === 'clock', pass to recolor the rendered SVG. Falls back to
-   * `DEFAULT_CLOCK_COLORS` when omitted.
-   */
+  /** Tnoodle-style per-part color override. Honored when event ∈ {clock, sq1}. */
   clockColors?: Record<string, string>;
+  sq1Colors?: Record<string, string>;
 }
 
 /** sq1 plain `1,0/-1,0` → `(1,0)/(-1,0)` for cubing.js parser. */
@@ -53,23 +51,24 @@ function normalizeAlg(puzzle: string, alg: string): string {
   return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
 }
 
-export function ScramblePreview2D({ event, scramble, size = 60, clockColors }: Props) {
+export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1Colors }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const puzzle = EVENT_TO_PUZZLE[event];
 
-  // Clock branch — synchronous custom SVG with tnoodle colors. Returns early.
-  const clockSvg = useMemo(() => {
-    if (event !== 'clock') return null;
+  // tnoodle-port branches — synchronous custom SVGs. Returns early.
+  const customSvg = useMemo(() => {
     try {
-      return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
+      if (event === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
+      if (event === 'sq1') return renderSq1ScrambleSvg(scramble, sq1Colors ?? DEFAULT_SQ1_COLORS);
+      return null;
     } catch (err) {
-      console.warn('[ScramblePreview2D] clock render failed', err);
+      console.warn(`[ScramblePreview2D] ${event} render failed`, err);
       return null;
     }
-  }, [event, scramble, clockColors]);
+  }, [event, scramble, clockColors, sq1Colors]);
 
   useEffect(() => {
-    if (event === 'clock') return; // handled above
+    if (event === 'clock' || event === 'sq1') return; // handled above
     const host = hostRef.current;
     if (!host || !puzzle) return;
     let cancelled = false;
@@ -117,12 +116,12 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors }: P
     flexShrink: 0,
   };
 
-  if (event === 'clock' && clockSvg) {
+  if (customSvg) {
     return (
       <div
         style={hostStyle}
         // SVG content is generated locally from a small whitelisted template, no user HTML.
-        dangerouslySetInnerHTML={{ __html: clockSvg }}
+        dangerouslySetInnerHTML={{ __html: customSvg }}
       />
     );
   }
