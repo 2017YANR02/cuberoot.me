@@ -40,10 +40,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 部署拓扑
 
-- **静态 SPA**：GitHub Pages 服 `cuberoot.me`（apex）；`ruiminyan.github.io` 自动 301 → `cuberoot.me`。
-- **后端 API**：Hono 服 `api.cuberoot.me`（永远走源站，不上 GH）。
-- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`（跨域到 `api.cuberoot.me`），不要硬编码 origin。CORS allowlist 在 `core/packages/server/src/index.ts`。
-- 切 dev/prod API base 永远用 `import.meta.env.DEV`，**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配，会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils，直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
+- **静态 SPA**:云服务器 nginx 服 `cuberoot.me` + `www.cuberoot.me`(apex 301 → www),vhost 见 `ops/nginx/www.cuberoot.me.conf`,root `/www/wwwroot/toolkit`。`ruiminyan.github.io` 是 GH Pages 镜像(deploy_mirror.yml),纯兜底,自动 301 → `cuberoot.me`。改 nginx 走 `deploy_nginx.yml`(push `ops/nginx/**` 触发,scp + `nginx -t` + reload + 失败回滚 .bak)。
+- **后端 API**:Hono 服 `api.cuberoot.me`(同一台云服务器,nginx 反代到 127.0.0.1:3001)。
+- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(跨域到 `api.cuberoot.me`),不要硬编码 origin。CORS allowlist 在 `core/packages/server/src/index.ts`。
+- 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
+- **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/(solver|analyzer)` 由 nginx 发 `COOP=same-origin` + `COEP=require-corp`(map `$request_uri` 控制,见 vhost),进 cross-origin isolated context;其它 24 张卡完全干净,登录回调 /me 不受影响。新增需要 SAB 的页面要更新 nginx map regex。SW (`src/sw.ts`) **不再注入 COI headers**,只剩 `/v1/visualcube.svg` 拦截那一条。
 
 ## 开发命令
 
