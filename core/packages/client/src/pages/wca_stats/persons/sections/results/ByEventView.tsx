@@ -11,7 +11,7 @@ import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computeProgress } from '../../logic/progress';
-import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
+import { fetchPersonRankHistory, type PersonRankHistoryResponse, type PersonRankHistoryRow, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -483,13 +483,18 @@ function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRo
 }
 
 // ─── 历史成绩排名 折线图 ──────────────────────────────────────────────
+// 月级 (默认) 或年级数据.X 轴用 (year + (month-1)/12) 浮点,跨月连续.
 function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: boolean }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const W = 760, H = 280, P = { l: 48, r: 16, t: 24, b: 32 };
 
-  const rows = hist.rows.slice().sort((a, b) => a.year - b.year);
+  // 月→浮点(年.月分数);年级数据 month=undefined 时用整年
+  const toX = (r: PersonRankHistoryRow): number =>
+    r.month !== undefined ? r.year + (r.month - 1) / 12 : r.year;
+
+  const rows = hist.rows.slice().sort((a, b) => toX(a) - toX(b));
   if (rows.length === 0) return null;
-  const xMin = rows[0]!.year, xMax = rows[rows.length - 1]!.year;
+  const xMin = toX(rows[0]!), xMax = toX(rows[rows.length - 1]!);
   const allRanks: number[] = [];
   for (const r of rows) {
     for (const k of [
@@ -502,13 +507,16 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
   if (allRanks.length === 0) return <div className="wp-empty">{t('暂无排名数据', 'No rank data')}</div>;
   const yMax = Math.max(...allRanks);
 
-  const xScale = (yr: number) => xMax === xMin
+  const xScale = (xv: number) => xMax === xMin
     ? (P.l + W) / 2
-    : P.l + ((yr - xMin) / (xMax - xMin)) * (W - P.l - P.r);
+    : P.l + ((xv - xMin) / (xMax - xMin)) * (W - P.l - P.r);
   // Rank 越小越好 → 顶部画 1,底部画 yMax (反向)
   const yScale = (rk: number) => P.t + ((rk - 1) / Math.max(1, yMax - 1)) * (H - P.t - P.b);
 
-  const series: { key: keyof typeof rows[0]; label: string; cls: string }[] = [
+  type RankKey =
+    | 'singleCountryRank' | 'singleContinentRank' | 'singleWorldRank'
+    | 'avgCountryRank'    | 'avgContinentRank'    | 'avgWorldRank';
+  const series: { key: RankKey; label: string; cls: string }[] = [
     { key: 'singleCountryRank',   label: t('单次-NR', 'Single-NR'), cls: 'wp-rank-line-snr' },
     { key: 'singleContinentRank', label: t('单次-CR', 'Single-CR'), cls: 'wp-rank-line-scr' },
     { key: 'singleWorldRank',     label: t('单次-WR', 'Single-WR'), cls: 'wp-rank-line-swr' },
@@ -517,14 +525,14 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
     { key: 'avgWorldRank',        label: t('平均-WR', 'Avg-WR'),    cls: 'wp-rank-line-awr' },
   ];
 
-  const linePath = (key: keyof typeof rows[0]) => {
+  const linePath = (key: RankKey) => {
     let path = '';
     let pen = false;
     for (const r of rows) {
       const v = r[key];
       if (v === null || (typeof v === 'number' && v <= 0)) { pen = false; continue; }
-      const x = xScale(r.year);
-      const y = yScale(v as number);
+      const x = xScale(toX(r));
+      const y = yScale(v);
       path += (pen ? ' L' : ' M') + x.toFixed(1) + ',' + y.toFixed(1);
       pen = true;
     }
@@ -533,6 +541,20 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
 
   // y ticks
   const ticks = [1, Math.ceil(yMax / 4), Math.ceil(yMax / 2), Math.ceil((3 * yMax) / 4), yMax];
+
+  // x ticks:跨度 < 2 年用月份 (YYYY-MM),否则用年份
+  const span = xMax - xMin;
+  const xTicks: { x: number; label: string }[] = [];
+  const tickCount = Math.min(8, Math.max(2, Math.round(span < 2 ? span * 4 : span)));
+  for (let k = 0; k <= tickCount; k++) {
+    const xv = xMin + (k / tickCount) * span;
+    const yr = Math.floor(xv);
+    const mo = Math.round((xv - yr) * 12) + 1;
+    const label = span < 2
+      ? `${yr}-${String(mo).padStart(2, '0')}`
+      : (k % 2 === 0 ? String(yr) : ''); // 跨度大时隔一个标
+    if (label) xTicks.push({ x: xScale(xv), label });
+  }
 
   return (
     <div className="wp-chart-wrap">
@@ -543,19 +565,32 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
             <text x={P.l - 6} y={yScale(rk) + 3} className="wp-chart-axis" textAnchor="end">{rk}</text>
           </g>
         ))}
-        {/* x ticks */}
-        {Array.from({ length: Math.min(rows.length, 8) }, (_, k) => {
-          const idx = Math.round((k * (rows.length - 1)) / Math.max(1, Math.min(rows.length, 8) - 1));
-          const r = rows[idx]!;
-          return (
-            <text key={k} x={xScale(r.year)} y={H - P.b + 14} className="wp-chart-axis" textAnchor="middle">{r.year}</text>
-          );
-        })}
+        {xTicks.map((tk, k) => (
+          <text key={k} x={tk.x} y={H - P.b + 14} className="wp-chart-axis" textAnchor="middle">{tk.label}</text>
+        ))}
         {series.map((s, i) => (
           <g key={s.key}>
             <path d={linePath(s.key)} className={`wp-chart-line ${s.cls}`} />
             <rect x={P.l + 8 + i * 100} y={P.t - 12} width={10} height={2} className={s.cls} rx={1} />
             <text x={P.l + 22 + i * 100} y={P.t - 9} className="wp-chart-legend">{s.label}</text>
+          </g>
+        ))}
+        {/* dots — 月级数据点比较稀,标出来更清楚 */}
+        {series.map((s) => (
+          <g key={`dot-${s.key}`}>
+            {rows.map((r, ri) => {
+              const v = r[s.key];
+              if (v === null || v <= 0) return null;
+              return (
+                <circle
+                  key={ri}
+                  cx={xScale(toX(r))}
+                  cy={yScale(v)}
+                  r={2}
+                  className={s.cls}
+                />
+              );
+            })}
           </g>
         ))}
       </svg>
