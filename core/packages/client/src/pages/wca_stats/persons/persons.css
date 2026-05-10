@@ -478,15 +478,7 @@
 }
 .wp-att { text-align: right; }
 .wp-att-best { color: var(--wp-text); font-weight: 600; }
-.wp-rec-tag {
-    display: inline-block;
-    margin-left: 6px; padding: 1px 6px; border-radius: 3px;
-    font-size: 0.7rem; font-weight: 700;
-    color: white;
-}
-.wp-rec-wr { background: var(--wp-pink); }
-.wp-rec-cr { background: var(--wp-orange); }
-.wp-rec-nr { background: var(--wp-green); }
+/* 区域记录徽章统一走 RecordBadge / record_badge.css,本页不再覆写 */
 
 /* ── Comps tab table ─────────────────────────────────────────────── */
 .wp-comps-table, .wp-event-stats-table, .wp-lit-table {

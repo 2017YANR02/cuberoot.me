@@ -6,6 +6,7 @@ import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { EventIcon } from '../../../../../components/EventIcon';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
+import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computeProgress } from '../../logic/progress';
 import type { WcaResultRow, WcaCompetition } from '../../wca_api';
 
@@ -41,12 +42,6 @@ function roundClass(rt: string): string {
   if (rt === '3') return 'wp-round-semi';
   if (rt === '2' || rt === 'g') return 'wp-round-quarter';
   return 'wp-round-first';
-}
-
-function recordClass(t: string): string {
-  if (t === 'WR') return 'wp-rec-wr';
-  if (t === 'NR') return 'wp-rec-nr';
-  return 'wp-rec-cr';
 }
 
 export default function ByCompList({ results, comps, isZh }: Props) {
@@ -133,13 +128,13 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                         <td className={`wp-cell-result ${pf?.bestIsPb ? 'wp-result-pb' : ''}`}>
                           {formatWcaResult(r.best, r.event_id, 'single')}
                           {r.regional_single_record && (
-                            <span className={`wp-rec-tag ${recordClass(r.regional_single_record)}`}>{r.regional_single_record}</span>
+                            <> <RecordBadge record={r.regional_single_record} variant="inline" /></>
                           )}
                         </td>
                         <td className={`wp-cell-result ${pf?.averageIsPb ? 'wp-result-pb' : ''}`}>
                           {formatWcaResult(r.average, r.event_id, 'average')}
                           {r.regional_average_record && (
-                            <span className={`wp-rec-tag ${recordClass(r.regional_average_record)}`}>{r.regional_average_record}</span>
+                            <> <RecordBadge record={r.regional_average_record} variant="inline" /></>
                           )}
                         </td>
                         <td className="wp-cell-attempts">
