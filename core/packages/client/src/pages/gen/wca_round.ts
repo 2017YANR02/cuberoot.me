@@ -6,9 +6,10 @@
  * for sub-DNF / pop / cube damage replacements.
  */
 
-export type WcaFormat = 'a' | 'm' | '3' | '2' | '1';
+export type WcaFormat = 'a' | 'm' | '5' | '3' | '2' | '1';
 //  a = Average of 5 (Ao5)   →  5 attempts
 //  m = Mean of 3 (Mo3)      →  3 attempts (FMC, MBLD)
+//  5 = Best of 5 (Bo5)      →  5 attempts (3bld 训练专用,非 WCA 标准)
 //  3 = Best of 3 (Bo3)      →  3 attempts
 //  2 = Best of 2 (Bo2)      →  2 attempts
 //  1 = Best of 1 (Bo1)      →  1 attempt
@@ -16,6 +17,7 @@ export type WcaFormat = 'a' | 'm' | '3' | '2' | '1';
 export const FORMAT_LABEL: Record<WcaFormat, string> = {
   'a': 'Ao5',
   'm': 'Mo3',
+  '5': 'Bo5',
   '3': 'Bo3',
   '2': 'Bo2',
   '1': 'Bo1',
@@ -25,31 +27,32 @@ export function formatAttempts(f: WcaFormat): number {
   switch (f) {
     case 'a': return 5;
     case 'm': return 3;
+    case '5': return 5;
     case '3': return 3;
     case '2': return 2;
     case '1': return 1;
   }
 }
 
-/** WCA-allowed formats per event (tnoodle whitelist). First entry is the per-event default. */
+/** Allowed formats per event. First entry is the per-event default. */
 export const ALLOWED_FORMATS: Record<string, WcaFormat[]> = {
-  '222':    ['a', '3', '2', '1'],
-  '333':    ['a', '3', '2', '1'],
-  '444':    ['a', '3', '2', '1'],
-  '555':    ['a', '3', '2', '1'],
-  '666':    ['m', '3', '2', '1'],
-  '777':    ['m', '3', '2', '1'],
-  '333bf':  ['3', '2', '1', 'm'],
-  '333fm':  ['m', '2', '1'],
-  '333oh':  ['a', '3', '2', '1'],
+  '222':    ['a'],
+  '333':    ['a'],
+  '444':    ['a'],
+  '555':    ['a'],
+  '666':    ['m'],
+  '777':    ['m'],
+  '333bf':  ['5', '3'],
+  '333fm':  ['m'],
+  '333oh':  ['a'],
   '333mbf': ['1', '2', '3'],
-  'clock':  ['a', '3', '2', '1'],
-  'minx':   ['m', '3', '2', '1'],
-  'pyram':  ['a', '3', '2', '1'],
-  'skewb':  ['a', '3', '2', '1'],
-  'sq1':    ['a', '3', '2', '1'],
-  '444bf':  ['3', '2', '1', 'm'],
-  '555bf':  ['3', '2', '1', 'm'],
+  'clock':  ['a'],
+  'minx':   ['a'],
+  'pyram':  ['a'],
+  'skewb':  ['a'],
+  'sq1':    ['a'],
+  '444bf':  ['3'],
+  '555bf':  ['3'],
 };
 
 /** Default extra-scramble count per round (tnoodle WCA convention). */
