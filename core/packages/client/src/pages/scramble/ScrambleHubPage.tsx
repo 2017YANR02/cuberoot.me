@@ -1,13 +1,14 @@
 /**
- * /scramble — hub for the 4 打乱-相关 子工具
+ * /scramble — hub for the 5 打乱-相关 子工具
  *   /scramble/stats     —— 打乱难度分布(WCA 1.2M 历史样本)
  *   /scramble/gen       —— 批量生成打乱
  *   /scramble/analyzer  —— 3x3 CFOP 打乱分析
  *   /scramble/solver    —— cubeopt 最优解 + 状态求解
+ *   /scramble/pattern   —— 著名 NxN 图案集
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Dices, Microscope, Sparkles } from 'lucide-react';
+import { BarChart3, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 
 interface Card {
@@ -41,6 +42,12 @@ const CARDS: Card[] = [
     Icon: BarChart3,
     zh: { title: '分布', desc: 'WCA 历史 1,200,000 条三阶打乱阶段最优步数分布' },
     en: { title: 'Distribution', desc: 'Stage-optimal HTM distribution over 1.2M WCA 3x3 scrambles' },
+  },
+  {
+    to: '/scramble/pattern',
+    Icon: Wand2,
+    zh: { title: '图案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 图案集 (棋盘 / 十字 / 立方体中立方等)' },
+    en: { title: 'Pattern', desc: 'Famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7 (checkerboard, cross, cube-in-cube, …)' },
   },
 ];
 

@@ -1,5 +1,5 @@
 /**
- * /patterns — gallery of famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7.
+ * /scramble/pattern — gallery of famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7.
  * Top tabs switch puzzle size; second row filters by category. Click a card to
  * open a modal with TwistyPlayer playback (solved → pattern animation).
  */
