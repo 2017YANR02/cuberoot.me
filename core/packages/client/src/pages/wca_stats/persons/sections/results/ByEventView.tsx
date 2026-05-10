@@ -5,13 +5,14 @@
 //   4. 全部成绩 (按比赛倒序的轮次表,attempts 列)
 
 import { useState, useEffect, useMemo } from 'react';
+import ReactECharts from 'echarts-for-react';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { localizeCompName } from '../../../../../utils/comp_localize';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computeProgress } from '../../logic/progress';
-import { fetchPersonRankHistory, type PersonRankHistoryResponse, type PersonRankHistoryRow, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
+import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -265,136 +266,117 @@ function BestChart({
   isZh: boolean;
 }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const [hover, setHover] = useState<number | null>(null);
-  const W = 760, H = 320, P = { l: 56, r: 16, t: 16, b: 36 };
-
-  // 把 result.best / .average 抽出来,转秒(FMC: moves;MBLD: score 不参与曲线).
   const isMbld = eventId === '333mbf';
-  const isFmc = eventId === '333fm';
+  const isFmc  = eventId === '333fm';
 
-  // i 是 filter 之后的稠密索引(原 rows 的 index 留在 origIdx 仅 debug 用),
-  // 否则 X 轴会因为间隔的 null 行被映射到 [0, xN-1] 之外,点位错位.
-  const points = rows.map((r, origIdx) => {
-    const single = r.best > 0 ? toAxisValue(r.best, eventId, 'single') : null;
-    const avg = r.average > 0 ? toAxisValue(r.average, eventId, 'average') : null;
-    return { origIdx, r, single, avg };
-  }).filter((p) => p.single !== null || p.avg !== null)
-    .map((p, i) => ({ ...p, i }));
+  // PR 检测 + axis 值映射(toAxisValue 把 FMC moves / MBLD score 转成统一刻度)
+  let bestSingle = Infinity;
+  let bestAvg = Infinity;
+  const points = rows.map((r) => {
+    const sAxis = r.best > 0 ? toAxisValue(r.best, eventId, 'single') : null;
+    const aAxis = r.average > 0 ? toAxisValue(r.average, eventId, 'average') : null;
+    let prS = false, prA = false;
+    if (sAxis !== null && sAxis < bestSingle) { prS = true; bestSingle = sAxis; }
+    if (aAxis !== null && aAxis < bestAvg)    { prA = true; bestAvg = aAxis; }
+    return { r, sAxis, aAxis, prS, prA };
+  }).filter((p) => p.sAxis !== null || p.aAxis !== null);
 
-  if (points.length === 0) {
-    return <div className="wp-empty">{t('暂无成绩', 'No data')}</div>;
-  }
+  if (points.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No data')}</div>;
 
-  const yVals: number[] = [];
-  for (const p of points) {
-    if (p.single !== null) yVals.push(p.single);
-    if (p.avg !== null) yVals.push(p.avg);
-  }
-  const yMin = Math.min(...yVals);
-  const yMax = Math.max(...yVals);
-  const yPad = (yMax - yMin) * 0.06 || 1;
-  const yLo = yMin - yPad, yHi = yMax + yPad;
-  const xN = points.length;
+  const xData = points.map((_, i) => String(i + 1));
+  const interval = points.length > 12 ? Math.ceil(points.length / 10) : 0;
+  const singleLabel = t('单次', 'Single');
+  const avgLabel    = t('平均', 'Avg');
 
-  const xScale = (i: number) => P.l + (i / Math.max(1, xN - 1)) * (W - P.l - P.r);
-  const yScale = (v: number) => P.t + (1 - (v - yLo) / (yHi - yLo)) * (H - P.t - P.b);
-
-  const linePath = (key: 'single' | 'avg') => {
-    let path = '';
-    let pen = false;
-    for (const p of points) {
+  const PR_RED = '#ef4444';
+  const SINGLE_COLOR = '#3b82f6';
+  const AVG_COLOR    = '#22c55e';
+  // 用 markPoint 单独叠加 PR 红 dot — echarts 在 data 多时自动隐藏 line symbol
+  const mkPRMarks = (key: 'sAxis' | 'aAxis', prKey: 'prS' | 'prA') =>
+    points.flatMap((p, i) => {
       const v = p[key];
-      if (v === null) { pen = false; continue; }
-      const x = xScale(p.i), y = yScale(v);
-      path += (pen ? ' L' : ' M') + x.toFixed(1) + ',' + y.toFixed(1);
-      pen = true;
-    }
-    return path.trim();
-  };
+      return p[prKey] && v !== null ? [{ coord: [i, v] }] : [];
+    });
 
-  // y-axis ticks: 5 evenly spaced
-  const ticks: number[] = [];
-  for (let k = 0; k <= 4; k++) ticks.push(yLo + (yHi - yLo) * (k / 4));
-
-  const yLabel = (v: number) => {
-    if (isFmc) return v.toFixed(0);
-    if (isMbld) return v.toFixed(0);
-    return formatTime(v);
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: Array<{ dataIndex: number }>) => {
+        if (!params || params.length === 0) return '';
+        const p = points[params[0]!.dataIndex];
+        if (!p) return '';
+        const cmp = compById.get(p.r.competition_id);
+        let tip = cmp ? `<strong>${localizeCompName(cmp.id, cmp.name, isZh)}</strong><br/>` : '';
+        if (p.sAxis !== null) {
+          const pr = p.prS ? ` <span style="color:${PR_RED}">PR</span>` : '';
+          tip += `<span style="display:inline-block;width:10px;height:10px;background:${SINGLE_COLOR};border-radius:50%;margin-right:6px;vertical-align:middle"></span>${singleLabel}: ${formatWcaResult(p.r.best, eventId, 'single')}${pr}<br/>`;
+        }
+        if (p.aAxis !== null) {
+          const pr = p.prA ? ` <span style="color:${PR_RED}">PR</span>` : '';
+          tip += `<span style="display:inline-block;width:10px;height:10px;background:${AVG_COLOR};border-radius:50%;margin-right:6px;vertical-align:middle"></span>${avgLabel}: ${formatWcaResult(p.r.average, eventId, 'average')}${pr}<br/>`;
+        }
+        return tip;
+      },
+    },
+    legend: { data: [singleLabel, avgLabel], top: 0 },
+    grid: { left: '3%', right: '4%', bottom: 70, top: 40, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: xData,
+      axisLabel: { interval, show: false }, // 比赛序号意义不大
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        formatter: (val: number) => {
+          if (isFmc || isMbld) return String(val.toFixed(0));
+          return formatTime(val);
+        },
+      },
+    },
+    dataZoom: [
+      { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
+      { type: 'slider', xAxisIndex: 0, height: 20, bottom: 20, start: 0, end: 100 },
+    ],
+    series: [
+      {
+        name: singleLabel,
+        type: 'line', smooth: true,
+        showSymbol: false,
+        itemStyle: { color: SINGLE_COLOR },
+        lineStyle: { color: SINGLE_COLOR },
+        data: points.map((p) => p.sAxis),
+        connectNulls: false,
+        // single PR: 实心红圆
+        markPoint: {
+          symbol: 'circle', symbolSize: 9,
+          itemStyle: { color: PR_RED, borderColor: '#fff', borderWidth: 1.5 },
+          label: { show: false },
+          data: mkPRMarks('sAxis', 'prS'),
+        },
+      },
+      {
+        name: avgLabel,
+        type: 'line', smooth: true,
+        showSymbol: false,
+        itemStyle: { color: AVG_COLOR },
+        lineStyle: { color: AVG_COLOR },
+        data: points.map((p) => p.aAxis),
+        connectNulls: false,
+        // avg PR: 红色钻石,跟 single 圆形区分,即使位置重叠也认得出
+        markPoint: {
+          symbol: 'diamond', symbolSize: 11,
+          itemStyle: { color: PR_RED, borderColor: '#fff', borderWidth: 1.5 },
+          label: { show: false },
+          data: mkPRMarks('aAxis', 'prA'),
+        },
+      },
+    ],
   };
 
   return (
-    <div className="wp-chart-wrap" onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="wp-chart-svg">
-        {/* y grid + labels */}
-        {ticks.map((tv) => (
-          <g key={tv}>
-            <line x1={P.l} y1={yScale(tv)} x2={W - P.r} y2={yScale(tv)} className="wp-chart-grid" />
-            <text x={P.l - 8} y={yScale(tv) + 3} className="wp-chart-axis" textAnchor="end">{yLabel(tv)}</text>
-          </g>
-        ))}
-        {/* x axis */}
-        <line x1={P.l} y1={H - P.b} x2={W - P.r} y2={H - P.b} className="wp-chart-grid" />
-
-        {/* lines */}
-        <path d={linePath('single')} className="wp-chart-line wp-chart-line-single" />
-        <path d={linePath('avg')} className="wp-chart-line wp-chart-line-avg" />
-
-        {/* dots */}
-        {points.map((p) => (
-          <g key={p.i}>
-            {p.single !== null && (
-              <circle cx={xScale(p.i)} cy={yScale(p.single)} r={2.5} className="wp-chart-dot wp-chart-dot-single" />
-            )}
-            {p.avg !== null && (
-              <circle cx={xScale(p.i)} cy={yScale(p.avg)} r={2.5} className="wp-chart-dot wp-chart-dot-avg" />
-            )}
-            {/* hover hit area */}
-            <rect
-              x={xScale(p.i) - 6} y={P.t} width={12} height={H - P.t - P.b}
-              fill="transparent"
-              onMouseEnter={() => setHover(p.i)}
-            />
-          </g>
-        ))}
-
-        {/* hover marker */}
-        {hover !== null && (() => {
-          const p = points.find((q) => q.i === hover);
-          if (!p) return null;
-          const cx = xScale(p.i);
-          return (
-            <g>
-              <line x1={cx} y1={P.t} x2={cx} y2={H - P.b} className="wp-chart-hover-line" />
-            </g>
-          );
-        })()}
-
-        {/* legend */}
-        <g>
-          <rect x={P.l + 8} y={P.t + 4} width={10} height={2} className="wp-chart-line-single" rx={1} />
-          <text x={P.l + 22} y={P.t + 9} className="wp-chart-legend">{t('单次', 'Single')}</text>
-          <rect x={P.l + 80} y={P.t + 4} width={10} height={2} className="wp-chart-line-avg" rx={1} />
-          <text x={P.l + 94} y={P.t + 9} className="wp-chart-legend">{t('平均', 'Average')}</text>
-        </g>
-      </svg>
-      {hover !== null && (() => {
-        const p = points.find((q) => q.i === hover);
-        if (!p) return null;
-        const cmp = compById.get(p.r.competition_id);
-        const cx = xScale(p.i);
-        const place = cx > W / 2 ? 'left' : 'right';
-        return (
-          <div className={`wp-chart-tip wp-chart-tip-${place}`} style={{ left: `${(cx / W) * 100}%` }}>
-            {cmp && <div className="wp-chart-tip-title">{localizeCompName(cmp.id, cmp.name, isZh)}</div>}
-            {p.single !== null && (
-              <div><span className="wp-chart-tip-k">{t('单次', 'Single')}:</span> {formatWcaResult(p.r.best, eventId, 'single')}</div>
-            )}
-            {p.avg !== null && (
-              <div><span className="wp-chart-tip-k">{t('平均', 'Avg')}:</span> {formatWcaResult(p.r.average, eventId, 'average')}</div>
-            )}
-          </div>
-        );
-      })()}
+    <div style={{ height: 400 }}>
+      <ReactECharts option={option} style={{ height: '100%', width: '100%' }} opts={{ renderer: 'canvas' }} />
     </div>
   );
 }
@@ -483,169 +465,105 @@ function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRo
 }
 
 // ─── 历史成绩排名 折线图 ──────────────────────────────────────────────
-// 月级 (默认) 或年级数据.X 轴用 (year + (month-1)/12) 浮点,跨月连续.
+// echarts 版,直接 fork 自 cubing.pro `ResultWIthEventRankingTimers.tsx` (GPL-3.0)
+// 6 条 series (NR/CR/WR × single/avg) + dataZoom slider + 触摸 + tooltip
 function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: boolean }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const [hover, setHover] = useState<number | null>(null);
-  const W = 760, H = 280, P = { l: 48, r: 16, t: 24, b: 32 };
 
-  // 月→浮点(年.月分数);年级数据 month=undefined 时用整年
-  const toX = (r: PersonRankHistoryRow): number =>
-    r.month !== undefined ? r.year + (r.month - 1) / 12 : r.year;
-
-  const rows = hist.rows.slice().sort((a, b) => toX(a) - toX(b));
+  const rows = hist.rows.slice().sort(
+    (a, b) => (a.year * 12 + (a.month ?? 0)) - (b.year * 12 + (b.month ?? 0))
+  );
   if (rows.length === 0) return null;
-  const xMin = toX(rows[0]!), xMax = toX(rows[rows.length - 1]!);
-  const allRanks: number[] = [];
-  for (const r of rows) {
-    for (const k of [
-      r.singleWorldRank, r.singleContinentRank, r.singleCountryRank,
-      r.avgWorldRank, r.avgContinentRank, r.avgCountryRank,
-    ]) {
-      if (k !== null && k > 0) allRanks.push(k);
-    }
-  }
-  if (allRanks.length === 0) return <div className="wp-empty">{t('暂无排名数据', 'No rank data')}</div>;
-  const yMax = Math.max(...allRanks);
 
-  const xScale = (xv: number) => xMax === xMin
-    ? (P.l + W) / 2
-    : P.l + ((xv - xMin) / (xMax - xMin)) * (W - P.l - P.r);
-  // Rank 越小越好 → 顶部画 1,底部画 yMax (反向)
-  const yScale = (rk: number) => P.t + ((rk - 1) / Math.max(1, yMax - 1)) * (H - P.t - P.b);
+  const xData = rows.map((r) =>
+    r.month !== undefined ? `${r.year}-${String(r.month).padStart(2, '0')}` : String(r.year)
+  );
 
-  type RankKey =
-    | 'singleCountryRank' | 'singleContinentRank' | 'singleWorldRank'
-    | 'avgCountryRank'    | 'avgContinentRank'    | 'avgWorldRank';
-  const series: { key: RankKey; label: string; cls: string }[] = [
-    { key: 'singleCountryRank',   label: t('单次-NR', 'Single-NR'), cls: 'wp-rank-line-snr' },
-    { key: 'singleContinentRank', label: t('单次-CR', 'Single-CR'), cls: 'wp-rank-line-scr' },
-    { key: 'singleWorldRank',     label: t('单次-WR', 'Single-WR'), cls: 'wp-rank-line-swr' },
-    { key: 'avgCountryRank',      label: t('平均-NR', 'Avg-NR'),    cls: 'wp-rank-line-anr' },
-    { key: 'avgContinentRank',    label: t('平均-CR', 'Avg-CR'),    cls: 'wp-rank-line-acr' },
-    { key: 'avgWorldRank',        label: t('平均-WR', 'Avg-WR'),    cls: 'wp-rank-line-awr' },
-  ];
+  const series = [
+    { key: 'singleCountryRank',   label: t('单次-NR', 'Single-NR'), color: '#1f3f78' },
+    { key: 'singleContinentRank', label: t('单次-CR', 'Single-CR'), color: '#6ab15a' },
+    { key: 'singleWorldRank',     label: t('单次-WR', 'Single-WR'), color: '#c39316' },
+    { key: 'avgCountryRank',      label: t('平均-NR', 'Avg-NR'),    color: '#b71234' },
+    { key: 'avgContinentRank',    label: t('平均-CR', 'Avg-CR'),    color: '#5fa3c7' },
+    { key: 'avgWorldRank',        label: t('平均-WR', 'Avg-WR'),    color: '#2c7a4b' },
+  ] as const;
+  type RankKey = typeof series[number]['key'];
 
-  const linePath = (key: RankKey) => {
-    let path = '';
-    let pen = false;
-    for (const r of rows) {
+  const seriesData = (key: RankKey) =>
+    rows.map((r) => {
       const v = r[key];
-      if (v === null || (typeof v === 'number' && v <= 0)) { pen = false; continue; }
-      const x = xScale(toX(r));
-      const y = yScale(v);
-      path += (pen ? ' L' : ' M') + x.toFixed(1) + ',' + y.toFixed(1);
-      pen = true;
-    }
-    return path.trim();
+      return v !== null && v > 0 ? v : null;
+    });
+
+  const interval = rows.length > 12 ? Math.ceil(rows.length / 10) : 0;
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: Array<{ dataIndex: number; name: string }>) => {
+        if (!params || params.length === 0) return '';
+        const idx = params[0]!.dataIndex;
+        const getPrev = (key: RankKey, currIdx: number): number | null => {
+          for (let i = currIdx - 1; i >= 0; i--) {
+            const v = rows[i]![key];
+            if (v !== null && v > 0) return v;
+          }
+          return null;
+        };
+        let tip = `<strong>${params[0]!.name}</strong><br/>`;
+        for (const s of series) {
+          const v = rows[idx]![s.key];
+          if (v === null || v <= 0) continue;
+          const prev = getPrev(s.key, idx);
+          let change = '';
+          if (prev !== null) {
+            const diff = prev - v;
+            if (diff > 0)      change = ` <span style="color:#22c55e">↑${diff}</span>`;
+            else if (diff < 0) change = ` <span style="color:#ef4444">↓${-diff}</span>`;
+          }
+          tip += `<span style="display:inline-block;width:10px;height:10px;background:${s.color};border-radius:50%;margin-right:6px;vertical-align:middle"></span>${s.label}: ${v}${change}<br/>`;
+        }
+        return tip;
+      },
+    },
+    legend: {
+      data: series.map((s) => s.label),
+      top: 0,
+      type: 'scroll',
+    },
+    grid: { left: '3%', right: '4%', bottom: 70, top: 40, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: xData,
+      axisLabel: { rotate: -45, interval },
+    },
+    yAxis: {
+      type: 'value',
+      name: t('排名', 'Rank'),
+      inverse: false, // 0 在底,大数在顶 — 同 cubing.pro
+      min: 0,
+      max: (val: { max: number }) => Math.ceil(val.max * 1.1),
+    },
+    dataZoom: [
+      { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
+      { type: 'slider', xAxisIndex: 0, height: 20, bottom: 20, start: 0, end: 100 },
+    ],
+    series: series.map((s) => ({
+      name: s.label,
+      type: 'line',
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 5,
+      itemStyle: { color: s.color },
+      lineStyle: { color: s.color },
+      data: seriesData(s.key),
+      connectNulls: false,
+    })),
   };
 
-  // y ticks
-  const ticks = [1, Math.ceil(yMax / 4), Math.ceil(yMax / 2), Math.ceil((3 * yMax) / 4), yMax];
-
-  // x ticks: 选合适的月间隔,目标 ≈ 6 个 tick
-  const spanMonths = (xMax - xMin) * 12;
-  let intervalMonths: number;
-  if      (spanMonths <= 12) intervalMonths = 2;   // ≤ 1 年: 每 2 月
-  else if (spanMonths <= 36) intervalMonths = 6;   // ≤ 3 年: 每 6 月
-  else if (spanMonths <= 60) intervalMonths = 12;  // ≤ 5 年: 每年
-  else                       intervalMonths = 24;  // > 5 年: 每 2 年
-  const useMonth = intervalMonths < 12;
-  // 起点对齐到 intervalMonths 的整数倍(让 tick 落在干净的月份上)
-  const startYM = Math.ceil(xMin * 12 / intervalMonths) * intervalMonths;
-  const endYM   = Math.floor(xMax * 12);
-  const xTicks: { x: number; label: string }[] = [];
-  for (let ym = startYM; ym <= endYM; ym += intervalMonths) {
-    const xv = ym / 12;
-    const yr = Math.floor(xv);
-    const mo = (ym % 12) + 1;
-    const label = useMonth ? `${yr}-${String(mo).padStart(2, '0')}` : String(yr);
-    xTicks.push({ x: xScale(xv), label });
-  }
-
-  // hover band 宽度: 让相邻 band 不重叠;最少 8px,最多 32px
-  const bandW = rows.length > 1
-    ? Math.max(8, Math.min(32, (W - P.l - P.r) / rows.length))
-    : 24;
-
   return (
-    <div className="wp-chart-wrap" onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="wp-chart-svg">
-        {ticks.map((rk) => (
-          <g key={rk}>
-            <line x1={P.l} y1={yScale(rk)} x2={W - P.r} y2={yScale(rk)} className="wp-chart-grid" />
-            <text x={P.l - 6} y={yScale(rk) + 3} className="wp-chart-axis" textAnchor="end">{rk}</text>
-          </g>
-        ))}
-        {xTicks.map((tk, k) => (
-          <text key={k} x={tk.x} y={H - P.b + 14} className="wp-chart-axis" textAnchor="middle">{tk.label}</text>
-        ))}
-        {series.map((s, i) => (
-          <g key={s.key}>
-            <path d={linePath(s.key)} className={`wp-chart-line ${s.cls}`} />
-            <rect x={P.l + 8 + i * 100} y={P.t - 12} width={10} height={2} className={s.cls} rx={1} />
-            <text x={P.l + 22 + i * 100} y={P.t - 9} className="wp-chart-legend">{s.label}</text>
-          </g>
-        ))}
-        {/* dots — 月级数据点比较稀,标出来更清楚 */}
-        {series.map((s) => (
-          <g key={`dot-${s.key}`}>
-            {rows.map((r, ri) => {
-              const v = r[s.key];
-              if (v === null || v <= 0) return null;
-              return (
-                <circle
-                  key={ri}
-                  cx={xScale(toX(r))}
-                  cy={yScale(v)}
-                  r={hover === ri ? 3.5 : 2}
-                  className={s.cls}
-                />
-              );
-            })}
-          </g>
-        ))}
-        {/* hover 高亮垂直虚线 */}
-        {hover !== null && rows[hover] && (
-          <line
-            x1={xScale(toX(rows[hover]!))} y1={P.t}
-            x2={xScale(toX(rows[hover]!))} y2={H - P.b}
-            className="wp-chart-hover-line"
-          />
-        )}
-        {/* hover band: 每行一条,鼠标进 band 触发 setHover */}
-        {rows.map((r, ri) => (
-          <rect
-            key={`band-${ri}`}
-            x={xScale(toX(r)) - bandW / 2} y={P.t}
-            width={bandW} height={H - P.t - P.b}
-            fill="transparent"
-            onMouseEnter={() => setHover(ri)}
-          />
-        ))}
-      </svg>
-      {hover !== null && rows[hover] && (() => {
-        const r = rows[hover]!;
-        const cx = xScale(toX(r));
-        const place = cx > W / 2 ? 'left' : 'right';
-        const dateLabel = r.month !== undefined
-          ? `${r.year}-${String(r.month).padStart(2, '0')}`
-          : `${r.year}`;
-        return (
-          <div className={`wp-chart-tip wp-chart-tip-${place}`} style={{ left: `${(cx / W) * 100}%` }}>
-            <div className="wp-chart-tip-title">{dateLabel}</div>
-            {series.map((s) => {
-              const v = r[s.key];
-              if (v === null || v <= 0) return null;
-              return (
-                <div key={s.key}>
-                  <span className="wp-chart-tip-k">{s.label}:</span> {v}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
+    <div style={{ height: 400 }}>
+      <ReactECharts option={option} style={{ height: '100%', width: '100%' }} opts={{ renderer: 'canvas' }} />
     </div>
   );
 }

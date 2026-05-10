@@ -1,18 +1,23 @@
 /**
  * /scramble/gen — "Quick" mode: pick one event, pick a count, get a list.
- * Extracted from the original GenPage when TNoodle mode was added.
+ * Renders a single tnoodle-style sheet (EventIcon header + scramble/preview
+ * table) so the visual matches TNoodle mode; no extra scrambles, no rounds.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { RefreshCw, Download } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
+import { eventDisplayName } from '../../utils/wca_events';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
+import type { RoundSheetInput } from './tnoodle_pdf';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
 
-const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
+const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
+const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
 const COUNT_PRESETS = [1, 5, 12, 25, 50];
 
 interface Props {
@@ -24,12 +29,12 @@ export default function QuickMode({ t }: Props) {
   const isZh = i18n.language.startsWith('zh');
   const [event, setEvent] = useState<string>('333');
   const [count, setCount] = useState<number>(5);
-  const [showPreview, setShowPreview] = useState(true);
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const [copiedAll, setCopiedAll] = useState(false);
+  const [pdfBuilding, setPdfBuilding] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
 
   const reqIdRef = useRef(0);
   const [tick, setTick] = useState(0);
@@ -39,12 +44,9 @@ export default function QuickMode({ t }: Props) {
     setLoading(true);
     setScrambles([]);
     setCopiedIdx(null);
-    setCopiedAll(false);
     let done = 0;
     setGenProgress({ done: 0, total: count });
 
-    // Per-promise tick so the progress bar advances as each scramble lands
-    // (random-state generators for big NxN are not uniformly fast).
     const promises = Array.from({ length: count }, () =>
       tnoodleRandomScramble(event).then((s) => {
         if (reqIdRef.current === myId) {
@@ -70,12 +72,50 @@ export default function QuickMode({ t }: Props) {
   }, [event, count, tick]);
 
   const hasPreview = useMemo(() => eventHasScramblePreview(event), [event]);
-  const allText = useMemo(
-    () => scrambles.map((s, i) => `${i + 1}. ${s}`).join('\n'),
-    [scrambles],
-  );
-
   const regenerate = () => setTick((n) => n + 1);
+
+  const downloadPdf = async () => {
+    if (scrambles.length === 0) return;
+    setPdfBuilding(true);
+    setPdfProgress({ done: 0, total: 1 });
+    try {
+      const { generateTnoodlePdf } = await import('./tnoodle_pdf');
+      const today = new Date().toISOString().slice(0, 10);
+      const sheet: RoundSheetInput = {
+        event,
+        roundIdx: 0,
+        groupIdx: 0,
+        // 多个独立 Bo1 打乱(无 Ao5/Mo3 概念) → format='1';PDF 不会因此印 "Bo1" 标题
+        // 因为我们不传 attemptNumber 也不分轮,header 只显示项目名 + Round 1
+        format: '1',
+        attempts: scrambles.map((s, i) => ({
+          label: String(i + 1),
+          scramble: s,
+          isExtra: false,
+        })),
+      };
+      const blob = await generateTnoodlePdf([sheet], {
+        competitionTitle: `Scrambles for ${today}`,
+        generatorTag: GENERATOR_TAG,
+        isZh,
+        onProgress: (done, total) => setPdfProgress({ done, total }),
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${eventDisplayName(event, false)}-${today}.pdf`.replace(/[^\w一-龥-]+/g, '_');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      console.error('[gen/quick] pdf failed', err);
+      alert(`PDF generation failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setPdfBuilding(false);
+      setPdfProgress(null);
+    }
+  };
 
   const copyOne = async (idx: number) => {
     try {
@@ -85,26 +125,10 @@ export default function QuickMode({ t }: Props) {
     } catch { /* swallow */ }
   };
 
-  const copyAll = async () => {
-    try {
-      await navigator.clipboard.writeText(allText);
-      setCopiedAll(true);
-      setTimeout(() => setCopiedAll(false), 1200);
-    } catch { /* swallow */ }
-  };
-
   return (
     <>
-      <WcaEventSelector
-        availableEvents={TNOODLE_EVENT_SET}
-        selectedEvent={event}
-        onSelect={setEvent}
-        isZh={isZh}
-      />
-
-      <div className="gen-controls">
-        <div className="gen-control-group">
-          <label className="gen-label">{t('数量', 'Count')}</label>
+      <div className="gen-tn-controls">
+        <div className="gen-control-group gen-control-actions">
           <div className="gen-count-row">
             {COUNT_PRESETS.map((n) => (
               <button
@@ -129,58 +153,70 @@ export default function QuickMode({ t }: Props) {
             />
           </div>
         </div>
-
         <div className="gen-control-group gen-control-actions">
           <ProgressButton
             primary
             icon={<RefreshCw size={14} className={loading ? 'gen-spin' : ''} />}
             label={loading
-              ? t(`生成中 (${genProgress?.done ?? 0}/${genProgress?.total ?? count})`,
-                  `Generating (${genProgress?.done ?? 0}/${genProgress?.total ?? count})`)
-              : t('重新生成', 'Regenerate')}
+              ? <span className="gen-btn-progress-num">{`${genProgress?.done ?? 0}/${genProgress?.total ?? count}`}</span>
+              : t(`生成 (${count})`, `Generate (${count})`)}
             progress={genProgress}
             onClick={regenerate}
             disabled={loading}
+            title={t('重新生成', 'Regenerate')}
           />
-          <button type="button" className="gen-btn" onClick={copyAll} disabled={scrambles.length === 0}>
-            {copiedAll ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copiedAll ? t('已复制', 'Copied') : t('全部复制', 'Copy all')}</span>
-          </button>
-          {hasPreview && (
-            <button
-              type="button"
-              className="gen-btn gen-btn-toggle"
-              onClick={() => setShowPreview((s) => !s)}
-              title={t('切换预览', 'Toggle preview')}
-            >
-              {showPreview ? <Eye size={14} /> : <EyeOff size={14} />}
-              <span>{t('预览', 'Preview')}</span>
-            </button>
+          {scrambles.length > 0 && (
+            <ProgressButton
+              icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
+              label={pdfBuilding
+                ? <span className="gen-btn-progress-num">{`${pdfProgress?.done ?? 0}/${pdfProgress?.total ?? 1}`}</span>
+                : ''}
+              progress={pdfProgress}
+              onClick={downloadPdf}
+              disabled={pdfBuilding}
+              title={t('下载 PDF', 'Download PDF')}
+            />
           )}
         </div>
       </div>
 
-      {loading && scrambles.length === 0 ? (
-        <div className="gen-loading">{t('生成中…', 'Generating…')}</div>
-      ) : (
-        <ul className="gen-list">
-          {scrambles.map((s, i) => (
-            <li
-              key={`${i}-${s.slice(0, 4)}`}
-              className={`gen-item gen-item-clickable${copiedIdx === i ? ' is-copied' : ''}`}
-              onClick={() => copyOne(i)}
-              title={t('点击复制', 'Click to copy')}
-            >
-              <span className="gen-num">{i + 1}</span>
-              <ScrambleLines scramble={s} className="gen-scramble" />
-              {hasPreview && showPreview && (
-                <div className="gen-preview">
-                  <ScramblePreview2D event={event} scramble={s} size={48} />
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+      <WcaEventSelector
+        availableEvents={TNOODLE_EVENT_SET}
+        selectedEvent={event}
+        onSelect={setEvent}
+        isZh={isZh}
+      />
+
+      {scrambles.length > 0 && (
+        <div className="gen-tn-sheets">
+          <div className="gen-tn-sheet">
+            <div className="gen-tn-sheet-header">
+              <EventIcon event={event} />
+              <span>{eventDisplayName(event, isZh)} {scrambles.length} {t('个打乱', 'scrambles')}</span>
+            </div>
+            <table className="gen-tn-sheet-table"><tbody>
+              {scrambles.map((s, i) => (
+                <tr
+                  key={`${i}-${s.slice(0, 4)}`}
+                  className={copiedIdx === i ? 'is-copied' : ''}
+                  onClick={() => copyOne(i)}
+                  title={t('点击复制', 'Click to copy')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td className="gen-tn-attempt-num">{i + 1}</td>
+                  <td className="gen-tn-attempt-scramble">
+                    <ScrambleLines scramble={s} className="gen-tn-attempt-line" />
+                  </td>
+                  <td className="gen-tn-attempt-preview">
+                    {hasPreview && (
+                      <ScramblePreview2D event={event} scramble={s} size={48} />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody></table>
+          </div>
+        </div>
       )}
     </>
   );
