@@ -157,7 +157,12 @@ export default function QuickMode({ t }: Props) {
       ) : (
         <ul className="gen-list">
           {scrambles.map((s, i) => (
-            <li key={`${i}-${s.slice(0, 4)}`} className="gen-item">
+            <li
+              key={`${i}-${s.slice(0, 4)}`}
+              className={`gen-item gen-item-clickable${copiedIdx === i ? ' is-copied' : ''}`}
+              onClick={() => copyOne(i)}
+              title={t('点击复制', 'Click to copy')}
+            >
               <span className="gen-num">{i + 1}</span>
               <code className="gen-scramble">{s}</code>
               {hasPreview && showPreview && (
@@ -165,14 +170,6 @@ export default function QuickMode({ t }: Props) {
                   <ScramblePreview2D event={event} scramble={s} size={48} />
                 </div>
               )}
-              <button
-                type="button"
-                className="gen-copy-btn"
-                onClick={() => copyOne(i)}
-                title={t('复制', 'Copy')}
-              >
-                {copiedIdx === i ? <Check size={14} /> : <Copy size={14} />}
-              </button>
             </li>
           ))}
         </ul>

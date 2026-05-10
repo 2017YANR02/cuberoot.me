@@ -25,5 +25,24 @@ export async function tnoodleRandomScramble(event: string): Promise<string | nul
   const wcaId = toWcaEventId(event);
   if (!SUPPORTED.has(wcaId)) return null;
   const alg = await randomScrambleForEvent(wcaId);
-  return alg.toString();
+  let str = alg.toString();
+  // Megaminx: WCA-spec scrambles are 7 face cycles (~11 moves each) ending
+  // with U or U'. Tnoodle prints one cycle per line. cubing.js's toString()
+  // joins them with spaces, so we inject '\n' after each U-prefixed token to
+  // restore the canonical layout. PDF + screen renderers honor '\n'.
+  if (wcaId === 'minx' && !str.includes('\n')) {
+    const tokens = str.split(/\s+/).filter(Boolean);
+    const lines: string[] = [];
+    let cur: string[] = [];
+    for (const tok of tokens) {
+      cur.push(tok);
+      if (/^U['+]?$/.test(tok)) {
+        lines.push(cur.join(' '));
+        cur = [];
+      }
+    }
+    if (cur.length) lines.push(cur.join(' '));
+    str = lines.join('\n');
+  }
+  return str;
 }
