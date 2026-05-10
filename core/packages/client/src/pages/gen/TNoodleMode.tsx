@@ -20,6 +20,7 @@ import {
 } from './wca_round';
 import type { RoundSheetInput } from './tnoodle_pdf';
 import ClockColorPicker from './ClockColorPicker';
+import ProgressButton from './ProgressButton';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -385,7 +386,8 @@ export default function TNoodleMode({ t, isZh }: Props) {
               sheet={sh}
               isZh={isZh}
               t={t}
-              clockColors={events[sh.event]?.colors}
+              clockColors={sh.event === 'clock' ? events[sh.event]?.colors : undefined}
+              sq1Colors={sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
             />
           ))}
         </div>
@@ -394,7 +396,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
   );
 }
 
-function SheetView({ sheet, isZh, t, clockColors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string> }) {
+function SheetView({ sheet, isZh, t, clockColors, sq1Colors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string>; sq1Colors?: Record<string, string> }) {
   const { event, roundIdx, groupIdx, format, attemptNumber, attempts } = sheet;
   const groupSuffix = groupIdx > 0 ? ` · ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}` : '';
   const attemptSuffix = attemptNumber !== undefined
@@ -418,7 +420,7 @@ function SheetView({ sheet, isZh, t, clockColors }: { sheet: RoundSheet; isZh: b
         </td>
         <td className="gen-tn-attempt-preview">
           {eventHasScramblePreview(event) && a.scramble && (
-            <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} />
+            <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} />
           )}
         </td>
       </tr>,
@@ -435,36 +437,3 @@ function SheetView({ sheet, isZh, t, clockColors }: { sheet: RoundSheet; isZh: b
   );
 }
 
-interface ProgressButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  /** When non-null, a thin determinate bar fills the button bottom edge. */
-  progress: { done: number; total: number } | null;
-  onClick: () => void;
-  disabled?: boolean;
-  title?: string;
-  primary?: boolean;
-}
-function ProgressButton({ icon, label, progress, onClick, disabled, title, primary }: ProgressButtonProps) {
-  const pct = progress && progress.total > 0
-    ? Math.max(0, Math.min(100, (progress.done / progress.total) * 100))
-    : 0;
-  const showBar = progress !== null;
-  return (
-    <button
-      type="button"
-      className={`gen-btn${primary ? ' gen-btn-primary' : ''} gen-btn-progress`}
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-    >
-      {icon}
-      <span>{label}</span>
-      {showBar && (
-        <span className="gen-btn-bar" aria-hidden="true">
-          <span className="gen-btn-bar-fill" style={{ width: `${pct}%` }} />
-        </span>
-      )}
-    </button>
-  );
-}

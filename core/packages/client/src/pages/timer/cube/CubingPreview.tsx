@@ -9,8 +9,9 @@
  * Side-effect import registers the custom element via customElements.define.
  */
 
-import { useEffect, useRef, type JSX } from 'react';
+import { useEffect, useMemo, useRef, type JSX } from 'react';
 import 'scramble-display';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '../../gen/sq1_svg';
 
 interface CubingPreviewProps {
   /** Either a timer EventId or a scramble-display event id (e.g. 'minx', 'pyram'). */
@@ -68,7 +69,7 @@ function dimensionsFor(eventId: string, size: number): { w: number; h: number } 
     case 'minx':  return { w: size * 18, h: size * 14 };
     case 'pyram': return { w: size * 12, h: size * 10 };
     case 'skewb': return { w: size * 12, h: size * 9 };
-    case 'sq1':   return { w: size * 14, h: size * 8 };
+    case 'sq1':   return { w: size * 7,  h: size * 14 }; // tnoodle SquareOnePuzzle is portrait (~1:2)
     case 'clock': return { w: size * 14, h: size * 7 };
     case 'fto':   return { w: size * 16, h: size * 12 };
     case 'kilominx': return { w: size * 18, h: size * 14 };
@@ -83,7 +84,20 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const eventId = normalizeEvent(event);
 
+  // sq1 uses our tnoodle SquareOnePuzzle.java port (portrait SVG with WCA
+  // colors). Bypasses scramble-display entirely.
+  const sq1Svg = useMemo(() => {
+    if (eventId !== 'sq1' || !scramble) return null;
+    try {
+      return renderSq1ScrambleSvg(scramble, DEFAULT_SQ1_COLORS);
+    } catch (err) {
+      console.warn('[CubingPreview] sq1 render failed', err);
+      return null;
+    }
+  }, [eventId, scramble]);
+
   useEffect(() => {
+    if (eventId === 'sq1') return; // handled inline
     const host = hostRef.current;
     if (!host || !eventId) return;
 
@@ -106,6 +120,17 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   }
 
   const { w, h } = dimensionsFor(eventId, size);
+  if (sq1Svg) {
+    return (
+      <div
+        className={className}
+        style={{ width: w, height: h, display: 'block' }}
+        role="img"
+        aria-label={`${event} scramble preview`}
+        dangerouslySetInnerHTML={{ __html: sq1Svg }}
+      />
+    );
+  }
   return (
     <div
       ref={hostRef}

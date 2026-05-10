@@ -20,6 +20,21 @@ interface Props {
   t: (zh: string, en: string) => string;
 }
 
+const ZH_LABEL: Record<ClockColorKey, string> = {
+  Front:           '正面',
+  FrontClock:      '正面表盘',
+  FrontTopClock:   '正面 12 点',
+  FrontHand:       '正面指针',
+  FrontHandBorder: '正面指针描边',
+  FrontPin:        '正面立柱',
+  Back:            '背面',
+  BackClock:       '背面表盘',
+  BackTopClock:    '背面 12 点',
+  BackHand:        '背面指针',
+  BackHandBorder: '背面指针描边',
+  BackPin:         '背面立柱',
+};
+
 /** Pick black/white text foreground based on luminance. */
 function textForBg(hex: string): string {
   const m = hex.match(/^#?([0-9a-f]{6})$/i);
@@ -52,26 +67,18 @@ export default function ClockColorPicker({ colors, onChange, t }: Props) {
     onChange(allDefault ? undefined : next);
   };
 
+  const isZh = t('zh', 'en') === 'zh';
+
   return (
     <div className="gen-tn-clock-colors">
-      <div className="gen-tn-clock-chips">
-        {CLOCK_COLOR_KEYS.map((k) => (
-          <label
-            key={k}
-            className="gen-tn-clock-chip"
-            style={{ backgroundColor: effective[k], color: textForBg(effective[k]) }}
-            title={k}
-          >
-            {k}
-            <input
-              type="color"
-              value={effective[k]}
-              onChange={(e) => update(k, e.target.value)}
-            />
-          </label>
-        ))}
-      </div>
+      {/* Preview + reset on top so the native color picker (pops downward
+          from the clicked chip) never covers them. */}
       <div className="gen-tn-clock-actions">
+        <div
+          className="gen-tn-clock-preview"
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: previewSvg }}
+        />
         <button
           type="button"
           className="gen-tn-clock-reset"
@@ -80,11 +87,23 @@ export default function ClockColorPicker({ colors, onChange, t }: Props) {
         >
           {t('恢复默认配色', 'Reset to default')}
         </button>
-        <div
-          className="gen-tn-clock-preview"
-          aria-hidden="true"
-          dangerouslySetInnerHTML={{ __html: previewSvg }}
-        />
+      </div>
+      <div className="gen-tn-clock-chips">
+        {CLOCK_COLOR_KEYS.map((k) => (
+          <label
+            key={k}
+            className="gen-tn-clock-chip"
+            style={{ backgroundColor: effective[k], color: textForBg(effective[k]) }}
+            title={k}
+          >
+            {isZh ? ZH_LABEL[k] : k}
+            <input
+              type="color"
+              value={effective[k]}
+              onChange={(e) => update(k, e.target.value)}
+            />
+          </label>
+        ))}
       </div>
     </div>
   );

@@ -203,22 +203,20 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    border-top: 1px solid var(--gen-border);
 }
 
 .gen-item {
-    background: var(--gen-surface);
-    border: 1px solid var(--gen-border);
-    border-radius: 10px;
-    padding: 8px 12px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--gen-border);
+    border-radius: 0;
+    padding: 14px 12px;
     display: grid;
     grid-template-columns: 28px 1fr auto auto;
     align-items: center;
     gap: 12px;
-    transition: border-color 0.15s;
 }
-
-.gen-item:hover { border-color: var(--gen-border-strong); }
 
 .gen-num {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -265,7 +263,7 @@
     .gen-item {
         grid-template-columns: 24px 1fr auto auto;
         gap: 8px;
-        padding: 8px;
+        padding: 10px 8px;
     }
     .gen-scramble { font-size: 0.84rem; }
     .gen-controls { padding: 10px 12px; }
