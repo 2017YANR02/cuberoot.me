@@ -1682,7 +1682,12 @@ export default function FrameCountPage() {
         const clampedFrame = Math.max(trimStart, Math.min(f, effEnd));
         ph.style.left = `${(clampedFrame / totalFrames) * 100}%`;
       }
-      if (tip && videoFps > 0) tip.textContent = `${formatTime(f / videoFps)} (${f})`;
+      if (tip && videoFps > 0) {
+        // 不能用 textContent —— 会把 React 跟踪的 text node 替换掉,之后 React 的 setState 更新写到 detached node,DOM 卡死
+        const text = `${formatTime(f / videoFps)} (${f})`;
+        if (tip.firstChild) tip.firstChild.nodeValue = text;
+        else tip.textContent = text;
+      }
 
       if (side === 'seek' && IS_MOBILE) {
         // 移动端 seek 拖动: <video> 硬件路径 (iOS Safari 硬件 H264 解码 + 合成, 丝滑)
@@ -2423,7 +2428,7 @@ export default function FrameCountPage() {
                   const pct = (clampedFrame / totalFrames) * 100;
                   return (
                     <div ref={playheadRef} className="fc-timeline-playhead" style={{ left: `${pct}%` }}>
-                      <span ref={playheadTooltipRef} className="fc-playhead-tooltip">{formatTime(currentFrame / videoFps)} ({currentFrame})</span>
+                      <span ref={playheadTooltipRef} className="fc-playhead-tooltip">{`${formatTime(currentFrame / videoFps)} (${currentFrame})`}</span>
                     </div>
                   );
                 })()}

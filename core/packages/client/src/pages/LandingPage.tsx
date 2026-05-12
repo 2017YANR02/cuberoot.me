@@ -312,7 +312,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   secTrain:        { en: 'Train',  zh: '训练' },
   secLearn:        { en: 'Learn',  zh: '学习' },
   secWca:          { en: 'Compete', zh: '比赛' },
-  secTools:        { en: 'Tools',  zh: '工具' },
+  secTools:        { en: 'Tool',   zh: '工具' },
   secOther:        { en: 'Other',  zh: '其他' },
 };
 
