@@ -390,6 +390,8 @@ const SCRIPT_TOPICS: Topic[] = [
   },
 ];
 
+const EXTRA_TOPICS: Topic[] = [...MARKUP_TOPICS, ...SCRIPT_TOPICS];
+
 function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
   const text = t[lang];
   const className = `topic-card${t.available ? '' : ' is-soon'}`;
@@ -522,7 +524,7 @@ export default function CodeLandingPage() {
           </p>
         </div>
         <div className="code-landing-grid">
-          {[...MARKUP_TOPICS, ...SCRIPT_TOPICS].map((t) => renderTopicCard(t, lang))}
+          {EXTRA_TOPICS.map((t) => renderTopicCard(t, lang))}
         </div>
       </section>
 

@@ -9,7 +9,7 @@ description: "Use when user wants to fill in /code/architecture 第 11 节的日
 
 `/code/architecture` 第 11 节有两个视图, 数据源不同:
 - **日历视图** (默认) → `core/packages/client/src/pages/code/timeline_commits.json` (按日 1 行 zh+en, 含琐碎)
-- **列表视图** → `core/packages/client/src/pages/code/CodeArchitecturePage.tsx` 里的 `TIMELINE` 数组 (人工 curate 的 14 件大事件, 每条带 expand 详情)
+- **列表视图** → `core/packages/client/src/pages/code/ArchitecturePage.tsx` 里的 `TIMELINE` 数组 (人工 curate 的 14 件大事件, 每条带 expand 详情)
 
 这个 skill 流程化两件事:
 1. **必做**: 把日历 JSON 补到当天 (逐日总结)
@@ -129,7 +129,7 @@ git log --format='%ai|%s' --since=<LAST_DATE+1day>
 
 ### Step 8: TIMELINE 数组 schema (若 Step 7 有命中)
 
-`TIMELINE: TLEntry[]` 在 `CodeArchitecturePage.tsx`, schema:
+`TIMELINE: TLEntry[]` 在 `ArchitecturePage.tsx`, schema:
 
 ```ts
 interface TLEntry {
@@ -182,7 +182,7 @@ interface TLEntry {
 3. `Write` 整个文件
 
 #### 10b. TIMELINE 数组 (若有)
-1. `Edit` `CodeArchitecturePage.tsx`, 在 `const TIMELINE: TLEntry[] = [` 之后**最顶端**插入新条目 (newest first)
+1. `Edit` `ArchitecturePage.tsx`, 在 `const TIMELINE: TLEntry[] = [` 之后**最顶端**插入新条目 (newest first)
 2. 留意逗号 / 缩进 / TypeScript 类型对齐
 3. 跑 `pnpm --filter @cuberoot/client typecheck` 兜底 (改 TSX 一定要跑)
 

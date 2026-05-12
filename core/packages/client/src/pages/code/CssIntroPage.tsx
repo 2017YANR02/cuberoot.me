@@ -548,7 +548,7 @@ export default function CssIntroPage() {
       cancelAnimationFrame(raf);
       anchors.forEach((a) => a.removeEventListener('click', onAnchorClick));
     };
-  }, [lang]);
+  }, []);
 
   /* Before/After content */
   const BA_CONTENT: Record<typeof baTab, {
