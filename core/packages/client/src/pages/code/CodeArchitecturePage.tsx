@@ -245,7 +245,7 @@ export default function CodeArchitecturePage() {
             <LangToggle variant="inline" />
           </div>
           <h1 className="arch-title">
-            <span className="arch-title-prefix">/</span>code<span className="arch-title-prefix">/</span>architecture
+            <span className="arch-title-prefix">/</span>architecture
             <span className="arch-title-cursor">_</span>
           </h1>
           <p className="arch-sub">
