@@ -27,7 +27,7 @@ const TS_LOGO = (
 const TOPICS: Topic[] = [
   {
     slug: 'ts',
-    href: '/code/ts',
+    href: '/code/language/ts',
     zh: {
       title: 'TypeScript',
       sub: 'JavaScript 的工程化升级',
@@ -44,7 +44,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'rust',
-    href: '/code/rust',
+    href: '/code/language/rust',
     zh: {
       title: 'Rust',
       sub: '系统编程的现代答卷',
@@ -61,7 +61,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'go',
-    href: '/code/go',
+    href: '/code/language/go',
     zh: {
       title: 'Go',
       sub: '简洁与并发',
@@ -78,7 +78,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'python',
-    href: '/code/python',
+    href: '/code/language/python',
     zh: {
       title: 'Python',
       sub: 'AI 时代的胶水语言',
@@ -95,7 +95,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'c',
-    href: '/code/c',
+    href: '/code/language/c',
     zh: {
       title: 'C',
       sub: '一切系统语言的祖宗',
@@ -112,7 +112,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'cpp',
-    href: '/code/cpp',
+    href: '/code/language/cpp',
     zh: {
       title: 'C++',
       sub: 'AI 内核的母语',
@@ -129,7 +129,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'zig',
-    href: '/code/zig',
+    href: '/code/language/zig',
     zh: {
       title: 'Zig',
       sub: '系统编程的另一条路',
@@ -146,7 +146,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'swift',
-    href: '/code/swift',
+    href: '/code/language/swift',
     zh: {
       title: 'Swift',
       sub: 'Apple 的现代答卷',
@@ -163,7 +163,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'kotlin',
-    href: '/code/kotlin',
+    href: '/code/language/kotlin',
     zh: {
       title: 'Kotlin',
       sub: 'JetBrains 的 Java 革命',
@@ -180,7 +180,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'java',
-    href: '/code/java',
+    href: '/code/language/java',
     zh: {
       title: 'Java',
       sub: 'JVM 三十年的常青树',
@@ -197,7 +197,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'javascript',
-    href: '/code/javascript',
+    href: '/code/language/javascript',
     zh: {
       title: 'JavaScript',
       sub: 'web 的母语',
@@ -214,7 +214,7 @@ const TOPICS: Topic[] = [
   },
   {
     slug: 'mojo',
-    href: '/code/mojo',
+    href: '/code/language/mojo',
     zh: {
       title: 'Mojo',
       sub: 'AI 时代的 Python 加速出口',
@@ -245,8 +245,8 @@ export default function CodeLandingPage() {
 
       <header className="code-landing-head">
         <div className="code-landing-topbar">
-          <Link to="/" className="code-landing-back">
-            ← {lang === 'zh' ? '回首页' : 'Home'}
+          <Link to="/code" className="code-landing-back">
+            ← /code
           </Link>
           <LangToggle variant="inline" />
         </div>
@@ -270,7 +270,7 @@ export default function CodeLandingPage() {
         </div>
       </header>
 
-      <Link to="/code/compare" className="code-landing-banner">
+      <Link to="/code/language/compare" className="code-landing-banner">
         <div className="code-landing-banner-glyph">∑</div>
         <div className="code-landing-banner-body">
           <div className="code-landing-banner-tag">
@@ -288,7 +288,7 @@ export default function CodeLandingPage() {
         <div className="code-landing-banner-arrow">→</div>
       </Link>
 
-      <Link to="/code/scramble" className="code-landing-banner">
+      <Link to="/code/language/scramble" className="code-landing-banner">
         <div className="code-landing-banner-glyph">⟲</div>
         <div className="code-landing-banner-body">
           <div className="code-landing-banner-tag">

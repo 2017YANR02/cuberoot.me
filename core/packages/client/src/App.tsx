@@ -100,7 +100,8 @@ const GenPage = lazy(() => import('./pages/gen/GenPage'));
 const NotationPage = lazy(() => import('./pages/notation/NotationPage'));
 // NOTE: Patterns — 著名 3x3 图案集
 const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
-// NOTE: /code — 编程语言长篇导览（TS / Rust / Go / Python ...） + 站点架构
+// NOTE: /code — hub (架构 + 语言两张卡片) + 子页面
+const CodeIndexPage = lazy(() => import('./pages/code/CodeIndexPage'));
 const CodeLandingPage = lazy(() => import('./pages/code/CodeLandingPage'));
 const CodeArchitecturePage = lazy(() => import('./pages/code/CodeArchitecturePage'));
 const TsIntroPage = lazy(() => import('./pages/code/TsIntroPage'));
@@ -205,24 +206,39 @@ function App() {
         <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
         {/* Notation — 公式记号沙盒 */}
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
-        {/* Code — 编程语言长篇导览 + 站点架构 */}
-        <Route path="/code" element={<Navigate to="/code/language" replace />} />
-        <Route path="/code/language" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
+        {/* Code — hub (架构 + 语言) + 子页面 */}
+        <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeIndexPage /></Suspense>} />
         <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><CodeArchitecturePage /></Suspense>} />
-        <Route path="/code/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
-        <Route path="/code/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />
-        <Route path="/code/go" element={<Suspense fallback={<div>Loading...</div>}><GoIntroPage /></Suspense>} />
-        <Route path="/code/python" element={<Suspense fallback={<div>Loading...</div>}><PythonIntroPage /></Suspense>} />
-        <Route path="/code/c" element={<Suspense fallback={<div>Loading...</div>}><CIntroPage /></Suspense>} />
-        <Route path="/code/cpp" element={<Suspense fallback={<div>Loading...</div>}><CppIntroPage /></Suspense>} />
-        <Route path="/code/zig" element={<Suspense fallback={<div>Loading...</div>}><ZigIntroPage /></Suspense>} />
-        <Route path="/code/swift" element={<Suspense fallback={<div>Loading...</div>}><SwiftIntroPage /></Suspense>} />
-        <Route path="/code/kotlin" element={<Suspense fallback={<div>Loading...</div>}><KotlinIntroPage /></Suspense>} />
-        <Route path="/code/java" element={<Suspense fallback={<div>Loading...</div>}><JavaIntroPage /></Suspense>} />
-        <Route path="/code/javascript" element={<Suspense fallback={<div>Loading...</div>}><JavaScriptIntroPage /></Suspense>} />
-        <Route path="/code/mojo" element={<Suspense fallback={<div>Loading...</div>}><MojoIntroPage /></Suspense>} />
-        <Route path="/code/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
-        <Route path="/code/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
+        <Route path="/code/language" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
+        <Route path="/code/language/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
+        <Route path="/code/language/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />
+        <Route path="/code/language/go" element={<Suspense fallback={<div>Loading...</div>}><GoIntroPage /></Suspense>} />
+        <Route path="/code/language/python" element={<Suspense fallback={<div>Loading...</div>}><PythonIntroPage /></Suspense>} />
+        <Route path="/code/language/c" element={<Suspense fallback={<div>Loading...</div>}><CIntroPage /></Suspense>} />
+        <Route path="/code/language/cpp" element={<Suspense fallback={<div>Loading...</div>}><CppIntroPage /></Suspense>} />
+        <Route path="/code/language/zig" element={<Suspense fallback={<div>Loading...</div>}><ZigIntroPage /></Suspense>} />
+        <Route path="/code/language/swift" element={<Suspense fallback={<div>Loading...</div>}><SwiftIntroPage /></Suspense>} />
+        <Route path="/code/language/kotlin" element={<Suspense fallback={<div>Loading...</div>}><KotlinIntroPage /></Suspense>} />
+        <Route path="/code/language/java" element={<Suspense fallback={<div>Loading...</div>}><JavaIntroPage /></Suspense>} />
+        <Route path="/code/language/javascript" element={<Suspense fallback={<div>Loading...</div>}><JavaScriptIntroPage /></Suspense>} />
+        <Route path="/code/language/mojo" element={<Suspense fallback={<div>Loading...</div>}><MojoIntroPage /></Suspense>} />
+        <Route path="/code/language/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
+        <Route path="/code/language/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
+        {/* 旧路径 → 新路径 兼容 */}
+        <Route path="/code/ts" element={<Navigate to="/code/language/ts" replace />} />
+        <Route path="/code/rust" element={<Navigate to="/code/language/rust" replace />} />
+        <Route path="/code/go" element={<Navigate to="/code/language/go" replace />} />
+        <Route path="/code/python" element={<Navigate to="/code/language/python" replace />} />
+        <Route path="/code/c" element={<Navigate to="/code/language/c" replace />} />
+        <Route path="/code/cpp" element={<Navigate to="/code/language/cpp" replace />} />
+        <Route path="/code/zig" element={<Navigate to="/code/language/zig" replace />} />
+        <Route path="/code/swift" element={<Navigate to="/code/language/swift" replace />} />
+        <Route path="/code/kotlin" element={<Navigate to="/code/language/kotlin" replace />} />
+        <Route path="/code/java" element={<Navigate to="/code/language/java" replace />} />
+        <Route path="/code/javascript" element={<Navigate to="/code/language/javascript" replace />} />
+        <Route path="/code/mojo" element={<Navigate to="/code/language/mojo" replace />} />
+        <Route path="/code/compare" element={<Navigate to="/code/language/compare" replace />} />
+        <Route path="/code/scramble" element={<Navigate to="/code/language/scramble" replace />} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}

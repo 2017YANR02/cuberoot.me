@@ -25,7 +25,7 @@ interface Snippet {
 
 const SNIPPETS: Snippet[] = [
   {
-    slug: 'ts', name: 'TypeScript', href: '/code/ts', accent: '#3178C6', commentToken: '//',
+    slug: 'ts', name: 'TypeScript', href: '/code/language/ts', accent: '#3178C6', commentToken: '//',
     zhFlavor: '字面量联合 + discriminated Result',
     enFlavor: 'String literal union + discriminated Result',
     code: `type Token = 'U'|'D'|'L'|'R'|'F'|'B'|'M'|'E'|'S'|'x'|'y'|'z';
@@ -51,7 +51,7 @@ export function parse(s: string): Result {
 }`,
   },
   {
-    slug: 'rust', name: 'Rust', href: '/code/rust', accent: '#CE422B', commentToken: '//',
+    slug: 'rust', name: 'Rust', href: '/code/language/rust', accent: '#CE422B', commentToken: '//',
     zhFlavor: 'enum + Result + 穷尽 match',
     enFlavor: 'enum + Result + exhaustive match',
     code: `#[derive(Debug, Clone, Copy)]
@@ -80,7 +80,7 @@ pub fn parse(s: &str) -> Result<Vec<Move>, String> {
 }`,
   },
   {
-    slug: 'go', name: 'Go', href: '/code/go', accent: '#00ADD8', commentToken: '//',
+    slug: 'go', name: 'Go', href: '/code/language/go', accent: '#00ADD8', commentToken: '//',
     zhFlavor: '(value, error) + strings.Fields',
     enFlavor: '(value, error) + strings.Fields',
     code: `package scramble
@@ -117,7 +117,7 @@ func Parse(s string) ([]Move, error) {
 }`,
   },
   {
-    slug: 'python', name: 'Python', href: '/code/python', accent: '#3776AB', commentToken: '#',
+    slug: 'python', name: 'Python', href: '/code/language/python', accent: '#3776AB', commentToken: '#',
     zhFlavor: 'dataclass + match/case 守卫',
     enFlavor: 'dataclass + match/case with guards',
     code: `from dataclasses import dataclass
@@ -145,7 +145,7 @@ def parse(s: str) -> list[Move]:
     return out`,
   },
   {
-    slug: 'c', name: 'C', href: '/code/c', accent: '#03579B', commentToken: '//',
+    slug: 'c', name: 'C', href: '/code/language/c', accent: '#03579B', commentToken: '//',
     zhFlavor: '输出参数 + 返回 int 错误码',
     enFlavor: 'Out param + int error code',
     code: `#include <string.h>
@@ -174,7 +174,7 @@ int parse(const char *s, Move *out, int cap, int *n_out) {
 }`,
   },
   {
-    slug: 'cpp', name: 'C++', href: '/code/cpp', accent: '#00599C', commentToken: '//',
+    slug: 'cpp', name: 'C++', href: '/code/language/cpp', accent: '#00599C', commentToken: '//',
     zhFlavor: 'enum class + std::expected',
     enFlavor: 'enum class + std::expected (C++23)',
     code: `#include <expected>
@@ -204,7 +204,7 @@ std::expected<std::vector<Move>, std::string> parse(std::string_view s) {
 }`,
   },
   {
-    slug: 'zig', name: 'Zig', href: '/code/zig', accent: '#F7A41D', commentToken: '//',
+    slug: 'zig', name: 'Zig', href: '/code/language/zig', accent: '#F7A41D', commentToken: '//',
     zhFlavor: 'error{} + !T 错误联合',
     enFlavor: 'error{} set + !T error union',
     code: `const std = @import("std");
@@ -235,7 +235,7 @@ pub fn parse(alloc: std.mem.Allocator, s: []const u8) ![]Move {
 }`,
   },
   {
-    slug: 'swift', name: 'Swift', href: '/code/swift', accent: '#F05138', commentToken: '//',
+    slug: 'swift', name: 'Swift', href: '/code/language/swift', accent: '#F05138', commentToken: '//',
     zhFlavor: 'enum + throws + Result builder',
     enFlavor: 'enum + throws + raw-value init',
     code: `enum Token: Character {
@@ -265,7 +265,7 @@ func parse(_ s: String) throws -> [Move] {
 }`,
   },
   {
-    slug: 'kotlin', name: 'Kotlin', href: '/code/kotlin', accent: '#7F52FF', commentToken: '//',
+    slug: 'kotlin', name: 'Kotlin', href: '/code/language/kotlin', accent: '#7F52FF', commentToken: '//',
     zhFlavor: 'sealed class + Result + when',
     enFlavor: 'sealed class + Result + when',
     code: `enum class Token { U, D, L, R, F, B, M, E, S, x, y, z }
@@ -287,7 +287,7 @@ fun parse(s: String): Result<List<Move>> = runCatching {
 }`,
   },
   {
-    slug: 'java', name: 'Java', href: '/code/java', accent: '#E76F00', commentToken: '//',
+    slug: 'java', name: 'Java', href: '/code/language/java', accent: '#E76F00', commentToken: '//',
     zhFlavor: 'enum + record + checked exception',
     enFlavor: 'enum + record + checked exception',
     code: `import java.util.*;
@@ -322,7 +322,7 @@ public class Scramble {
 }`,
   },
   {
-    slug: 'js', name: 'JavaScript', href: '/code/javascript', accent: '#E5C100', commentToken: '//',
+    slug: 'js', name: 'JavaScript', href: '/code/language/javascript', accent: '#E5C100', commentToken: '//',
     zhFlavor: '无类型 + throw,纯运行时检查',
     enFlavor: 'No types + throw; runtime checks only',
     code: `// no Token enum, no Move type — just objects and strings.
@@ -346,7 +346,7 @@ export function parse(s) {
 }`,
   },
   {
-    slug: 'mojo', name: 'Mojo', href: '/code/mojo', accent: '#FF4B00', commentToken: '#',
+    slug: 'mojo', name: 'Mojo', href: '/code/language/mojo', accent: '#FF4B00', commentToken: '#',
     zhFlavor: '@value struct + Optional[List[Move]]',
     enFlavor: '@value struct + Optional[List[Move]]',
     code: `# Mojo: @value auto-derives copy/init/del.
@@ -530,7 +530,7 @@ export default function CompareScramblePage() {
           <div className="compare-foot-line">
             <L zh="想看更多对比示例?" en="Want more comparison examples?" />
             <span className="compare-meta-dot">·</span>
-            <Link to="/code/compare"><L zh="去 Ao5 对比" en="See the Ao5 comparison" /></Link>
+            <Link to="/code/language/compare"><L zh="去 Ao5 对比" en="See the Ao5 comparison" /></Link>
             <span className="compare-meta-dot">·</span>
             <Link to="/code/language"><L zh="回 /code/language 主页" en="Back to /code/language" /></Link>
           </div>

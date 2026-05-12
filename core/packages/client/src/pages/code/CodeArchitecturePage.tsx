@@ -239,8 +239,8 @@ export default function CodeArchitecturePage() {
 
         <header className="arch-head">
           <div className="arch-topbar">
-            <Link to="/" className="arch-back">
-              ← <L zh="回首页" en="Home" />
+            <Link to="/code" className="arch-back">
+              ← /code
             </Link>
             <LangToggle variant="inline" />
           </div>
