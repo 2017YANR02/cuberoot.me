@@ -25,7 +25,7 @@ interface Snippet {
 
 const SNIPPETS: Snippet[] = [
   {
-    slug: 'ts', name: 'TypeScript', href: '/code/ts', accent: '#3178C6', commentToken: '//',
+    slug: 'ts', name: 'TypeScript', href: '/code/language/ts', accent: '#3178C6', commentToken: '//',
     zhFlavor: '联合类型 number | null + filter 链',
     enFlavor: 'Union number | null + filter chain',
     code: `type Time = number | null; // null = DNF, value in centiseconds
@@ -45,7 +45,7 @@ function ao5(times: Time[]): Time {
 }`,
   },
   {
-    slug: 'rust', name: 'Rust', href: '/code/rust', accent: '#CE422B', commentToken: '//',
+    slug: 'rust', name: 'Rust', href: '/code/language/rust', accent: '#CE422B', commentToken: '//',
     zhFlavor: 'Option<T> + tuple match',
     enFlavor: 'Option<T> + tuple match',
     code: `type Time = Option<u32>;
@@ -68,7 +68,7 @@ fn ao5(times: &[Time; 5]) -> Time {
 }`,
   },
   {
-    slug: 'go', name: 'Go', href: '/code/go', accent: '#00ADD8', commentToken: '//',
+    slug: 'go', name: 'Go', href: '/code/language/go', accent: '#00ADD8', commentToken: '//',
     zhFlavor: '-1 哨兵值 + sort.Slice',
     enFlavor: '-1 sentinel + sort.Slice',
     code: `package main
@@ -99,7 +99,7 @@ func ao5(times [5]int) int {
 }`,
   },
   {
-    slug: 'python', name: 'Python', href: '/code/python', accent: '#3776AB', commentToken: '#',
+    slug: 'python', name: 'Python', href: '/code/language/python', accent: '#3776AB', commentToken: '#',
     zhFlavor: '类型注解 + sorted key lambda',
     enFlavor: 'Type hints + sorted key lambda',
     code: `from typing import Optional
@@ -115,7 +115,7 @@ def ao5(times: list[Optional[int]]) -> Optional[int]:
     return sum(s[1:4]) // 3`,
   },
   {
-    slug: 'c', name: 'C', href: '/code/c', accent: '#03579B', commentToken: '//',
+    slug: 'c', name: 'C', href: '/code/language/c', accent: '#03579B', commentToken: '//',
     zhFlavor: '宏定义 + qsort 自定义比较器',
     enFlavor: '#define + qsort with custom comparator',
     code: `#include <stdlib.h>
@@ -143,7 +143,7 @@ int ao5(int t[5]) {
 }`,
   },
   {
-    slug: 'cpp', name: 'C++', href: '/code/cpp', accent: '#00599C', commentToken: '//',
+    slug: 'cpp', name: 'C++', href: '/code/language/cpp', accent: '#00599C', commentToken: '//',
     zhFlavor: 'std::optional + ranges::sort',
     enFlavor: 'std::optional + ranges::sort',
     code: `#include <array>
@@ -166,7 +166,7 @@ Time ao5(std::array<Time, 5> t) {
 }`,
   },
   {
-    slug: 'zig', name: 'Zig', href: '/code/zig', accent: '#F7A41D', commentToken: '//',
+    slug: 'zig', name: 'Zig', href: '/code/language/zig', accent: '#F7A41D', commentToken: '//',
     zhFlavor: '?T 可空类型 + 内联结构体函数',
     enFlavor: '?T optional + struct-wrapped fn',
     code: `const std = @import("std");
@@ -191,7 +191,7 @@ fn ao5(times: [5]Time) Time {
 }`,
   },
   {
-    slug: 'swift', name: 'Swift', href: '/code/swift', accent: '#F05138', commentToken: '//',
+    slug: 'swift', name: 'Swift', href: '/code/language/swift', accent: '#F05138', commentToken: '//',
     zhFlavor: 'Optional + 元组 switch',
     enFlavor: 'Optional + tuple switch',
     code: `func ao5(_ times: [Int?]) -> Int? {
@@ -211,7 +211,7 @@ fn ao5(times: [5]Time) Time {
 }`,
   },
   {
-    slug: 'kotlin', name: 'Kotlin', href: '/code/kotlin', accent: '#7F52FF', commentToken: '//',
+    slug: 'kotlin', name: 'Kotlin', href: '/code/language/kotlin', accent: '#7F52FF', commentToken: '//',
     zhFlavor: 'compareBy(nullsLast()) + filterNotNull',
     enFlavor: 'compareBy(nullsLast()) + filterNotNull',
     code: `fun ao5(times: List<Int?>): Int? {
@@ -227,7 +227,7 @@ fn ao5(times: [5]Time) Time {
 }`,
   },
   {
-    slug: 'java', name: 'Java', href: '/code/java', accent: '#E76F00', commentToken: '//',
+    slug: 'java', name: 'Java', href: '/code/language/java', accent: '#E76F00', commentToken: '//',
     zhFlavor: 'Comparator.nullsLast + 装箱 Integer',
     enFlavor: 'Comparator.nullsLast + boxed Integer',
     code: `import java.util.*;
@@ -245,7 +245,7 @@ public static Integer ao5(Integer[] times) {
 }`,
   },
   {
-    slug: 'js', name: 'JavaScript', href: '/code/javascript', accent: '#E5C100', commentToken: '//',
+    slug: 'js', name: 'JavaScript', href: '/code/language/javascript', accent: '#E5C100', commentToken: '//',
     zhFlavor: '和 TS 同源,但没类型把门',
     enFlavor: 'Same shape as TS, no types at the door',
     code: `// WCA Ao5: DNF = null.
@@ -262,7 +262,7 @@ const ao5 = (times) => {
 };`,
   },
   {
-    slug: 'mojo', name: 'Mojo', href: '/code/mojo', accent: '#FF4B00', commentToken: '#',
+    slug: 'mojo', name: 'Mojo', href: '/code/language/mojo', accent: '#FF4B00', commentToken: '#',
     zhFlavor: 'fn 严格 + Optional + MLIR 后端',
     enFlavor: 'Strict fn + Optional + MLIR backend',
     code: `# Mojo: fn = strict typed (vs Python's loose def).
@@ -441,8 +441,8 @@ export default function CompareAo5Page() {
           </div>
           <p className="compare-foot-note">
             <L
-              zh={<>第二篇横向对比已经上了:<Link to="/code/scramble">打乱解析器,十一种语言</Link>。</>}
-              en={<>The second comparison is live: <Link to="/code/scramble">scramble parser, eleven languages</Link>.</>}
+              zh={<>第二篇横向对比已经上了:<Link to="/code/language/scramble">打乱解析器,十一种语言</Link>。</>}
+              en={<>The second comparison is live: <Link to="/code/language/scramble">scramble parser, eleven languages</Link>.</>}
             />
           </p>
         </footer>
