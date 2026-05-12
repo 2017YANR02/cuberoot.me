@@ -116,6 +116,15 @@ const KotlinIntroPage = lazy(() => import('./pages/code/KotlinIntroPage'));
 const JavaIntroPage = lazy(() => import('./pages/code/JavaIntroPage'));
 const JavaScriptIntroPage = lazy(() => import('./pages/code/JavaScriptIntroPage'));
 const MojoIntroPage = lazy(() => import('./pages/code/MojoIntroPage'));
+const CsharpIntroPage = lazy(() => import('./pages/code/CsharpIntroPage'));
+const RubyIntroPage = lazy(() => import('./pages/code/RubyIntroPage'));
+const PhpIntroPage = lazy(() => import('./pages/code/PhpIntroPage'));
+const LuaIntroPage = lazy(() => import('./pages/code/LuaIntroPage'));
+const HaskellIntroPage = lazy(() => import('./pages/code/HaskellIntroPage'));
+const HtmlIntroPage = lazy(() => import('./pages/code/HtmlIntroPage'));
+const CssIntroPage = lazy(() => import('./pages/code/CssIntroPage'));
+const BashIntroPage = lazy(() => import('./pages/code/BashIntroPage'));
+const SqlIntroPage = lazy(() => import('./pages/code/SqlIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
 
@@ -222,6 +231,15 @@ function App() {
         <Route path="/code/language/java" element={<Suspense fallback={<div>Loading...</div>}><JavaIntroPage /></Suspense>} />
         <Route path="/code/language/javascript" element={<Suspense fallback={<div>Loading...</div>}><JavaScriptIntroPage /></Suspense>} />
         <Route path="/code/language/mojo" element={<Suspense fallback={<div>Loading...</div>}><MojoIntroPage /></Suspense>} />
+        <Route path="/code/language/csharp" element={<Suspense fallback={<div>Loading...</div>}><CsharpIntroPage /></Suspense>} />
+        <Route path="/code/language/ruby" element={<Suspense fallback={<div>Loading...</div>}><RubyIntroPage /></Suspense>} />
+        <Route path="/code/language/php" element={<Suspense fallback={<div>Loading...</div>}><PhpIntroPage /></Suspense>} />
+        <Route path="/code/language/lua" element={<Suspense fallback={<div>Loading...</div>}><LuaIntroPage /></Suspense>} />
+        <Route path="/code/language/haskell" element={<Suspense fallback={<div>Loading...</div>}><HaskellIntroPage /></Suspense>} />
+        <Route path="/code/language/html" element={<Suspense fallback={<div>Loading...</div>}><HtmlIntroPage /></Suspense>} />
+        <Route path="/code/language/css" element={<Suspense fallback={<div>Loading...</div>}><CssIntroPage /></Suspense>} />
+        <Route path="/code/language/bash" element={<Suspense fallback={<div>Loading...</div>}><BashIntroPage /></Suspense>} />
+        <Route path="/code/language/sql" element={<Suspense fallback={<div>Loading...</div>}><SqlIntroPage /></Suspense>} />
         <Route path="/code/language/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
         <Route path="/code/language/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
         {/* 旧路径 → 新路径 兼容 */}
