@@ -10,7 +10,7 @@ import {
   ChartColumn, Video, MessageCircle, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork,
+  GitFork, PlayCircle,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, deleteAlternative } from '../../utils/recon_api';
@@ -342,28 +342,30 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const ollShort = computed?.ollShort || solve.ollShort || solve.oll;
   const pllShort = computed?.pllShort || solve.pllShort || solve.pll;
 
+  // NOTE: 盲拧项目隐藏 CFOP 专属派生项(Cross/F2L/LL/?x/cross color/OLL/PLL/freePair/yRot)— 对 BLD 解法没意义
+  const isBld = isBldEvent(solve.event);
   const items: [string, React.ReactNode | undefined][] = [
     [t('recon.method'), solve.method],
     [t('recon.stm'), stm],
     [t('recon.tps'), tps],
-    [t('recon.exec'), isBldEvent(solve.event) && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
-    [t('recon.memo'), isBldEvent(solve.event) && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
-    ['Cross', crossStm != null ? `${crossStm}` : undefined],
-    ['F2L', f2l != null ? `${f2l}` : undefined],
-    [t('recon.ll'), ll != null ? `${ll}` : undefined],
-    ['?x', crossType != null ? (CROSS_LABELS[crossType as number] || String(crossType)) : undefined],
-    [t('recon.freePair'), freePair],
-    [t('recon.yRot'), yRot],
+    [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
+    [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
+    ['Cross', !isBld && crossStm != null ? `${crossStm}` : undefined],
+    ['F2L', !isBld && f2l != null ? `${f2l}` : undefined],
+    [t('recon.ll'), !isBld && ll != null ? `${ll}` : undefined],
+    ['?x', !isBld && crossType != null ? (CROSS_LABELS[crossType as number] || String(crossType)) : undefined],
+    [t('recon.freePair'), isBld ? undefined : freePair],
+    [t('recon.yRot'), isBld ? undefined : yRot],
     [t('recon.regrip'), regrip],
     [t('recon.lockup'), lockup],
     [t('recon.sMove'), sMove],
-    [t('recon.crossColor'), crossColor ? (
+    [t('recon.crossColor'), !isBld && crossColor ? (
       FACE_COLORS[crossColor as string]
         ? <span style={{ color: FACE_COLORS[crossColor as string], fontWeight: 600 }}>{String(crossColor)}</span>
         : String(crossColor)
     ) : undefined],
-    ['OLL', ollShort],
-    ['PLL', pllShort],
+    ['OLL', isBld ? undefined : ollShort],
+    ['PLL', isBld ? undefined : pllShort],
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
@@ -469,26 +471,17 @@ function VideoEmbed({ url }: { url: string }) {
         <iframe
           src={`https://www.youtube.com/embed/${ytId}?autoplay=1${tParam.replace('?', '&')}`}
           allow="autoplay; encrypted-media" allowFullScreen title="YouTube video"
+          {...({ credentialless: '' } as Record<string, string>)}
         />
       </div>
     );
   }
 
-  // NOTE: Bilibili — 异步获取封面图 + 品牌 logo overlay
+  // NOTE: Bilibili — 不嵌 iframe,点击 facade 跳到 B 站网页(手机系统会自动唤起 B 站 app)
   const bvMatch = url.match(/(BV[A-Za-z0-9]+)/);
   if (bvMatch) {
     const bvId = bvMatch[1];
-    if (!loaded) {
-      return <BilibiliFacade bvId={bvId} onLoad={() => setLoaded(true)} />;
-    }
-    return (
-      <div className="detail-video-wrap">
-        <iframe
-          src={`https://player.bilibili.com/player.html?bvid=${bvId}&autoplay=1&high_quality=1`}
-          allow="autoplay" allowFullScreen title="Bilibili video"
-        />
-      </div>
-    );
+    return <BilibiliFacade bvId={bvId} href={`https://www.bilibili.com/video/${bvId}`} />;
   }
 
   // NOTE: 其他链接——显示为普通超链接
@@ -706,7 +699,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 }
 
 /** B站视频 facade——异步获取封面图 */
-function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) {
+function BilibiliFacade({ bvId, href }: { bvId: string; href: string }) {
   const [cover, setCover] = useState<string | null>(null);
 
   // NOTE: 组件加载时异步获取封面
@@ -717,25 +710,32 @@ function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) 
   }, [bvId]);
 
   return (
-    <div className="detail-video-wrap detail-video-facade" onClick={onLoad}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="detail-video-wrap detail-video-facade"
+      style={{ display: 'block', textDecoration: 'none' }}
+    >
       <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {/* NOTE: 有封面则显示缩略图，无则纯黑背景 */}
+        {/* NOTE: 有封面则显示缩略图，无则纯黑背景;referrerPolicy=no-referrer 绕 hdslb.com 防盗链 */}
         {cover && (
           <img
             src={cover}
             alt=""
+            referrerPolicy="no-referrer"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
           />
         )}
-        {/* B站品牌 logo overlay */}
-        <img
-          className="detail-video-play-bili"
-          src="/recon/assets/bilibili_logo.png"
-          alt="Bilibili"
-          style={{ position: 'relative', width: 68, height: 68, opacity: 0.85, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+        {/* play 按钮 — 点击 facade 在新窗口打开 B 站 (手机会唤起 app) */}
+        <PlayCircle
+          size={68}
+          color="#fff"
+          strokeWidth={1.5}
+          style={{ position: 'relative', opacity: 0.9, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
         />
       </div>
-    </div>
+    </a>
   );
 }
 

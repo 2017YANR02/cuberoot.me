@@ -10,7 +10,7 @@ import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers, listRecons } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
-import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound, localizeRound } from '../../utils/recon_utils';
+import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound, localizeRound, isBldEvent } from '../../utils/recon_utils';
 import { fetchAttempts, fetchCubingAttempts, fetchResultRow } from '../../utils/wca_results_api';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
@@ -161,6 +161,8 @@ export default function ReconSubmitPage() {
   // NOTE: 搜索状态由 WcaPersonPicker 内部管理；form.personId 为空时显示 picker，已选时显示 pill
   const [timeInput, setTimeInput] = useState('');
   const [avgInput, setAvgInput] = useState('');
+  // NOTE: bld 项目专用 — exec 用户手填,memo = rawTime - execTime 自动派生
+  const [execInput, setExecInput] = useState('');
   const [dupWarning, setDupWarning] = useState('');
   // NOTE: avg 自动填充 — 用户一旦手动改过就再也不覆盖；avgAutoSource 是字段下方的来源 hint
   const [avgUserTouched, setAvgUserTouched] = useState(false);
@@ -207,6 +209,7 @@ export default function ReconSubmitPage() {
       loadedRecordKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
       if (solve.rawTime != null) setTimeInput(formatTimeInput(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTimeInput(solve.average));
+      if (solve.execTime != null) setExecInput(formatTimeInput(solve.execTime));
       // NOTE: 同步 textarea DOM——defaultValue 只在 mount 时生效，编辑模式 API 返回后需手动同步
       if (solutionRef.current && solve.solution) {
         solutionRef.current.value = solve.solution;
@@ -356,12 +359,13 @@ export default function ReconSubmitPage() {
     el.style.height = (el.scrollHeight + borderY) + 'px';
   }, []);
 
-  // NOTE: 实时解法统计
+  // NOTE: 实时解法统计 — 盲拧 TPS 用 execTime 作分母(只算操作阶段,排除 memo);非盲走 rawTime
   const stats = useMemo(() => {
     if (!form.solution) return null;
-    const time = form.rawTime ?? 0;
+    const isBld = isBldEvent(form.event ?? '');
+    const time = (isBld ? form.execTime : form.rawTime) ?? 0;
     return computeAllStats(form.solution, time);
-  }, [form.solution, form.rawTime]);
+  }, [form.solution, form.rawTime, form.execTime, form.event]);
 
   // NOTE: 成绩解析
   useEffect(() => {
@@ -373,6 +377,38 @@ export default function ReconSubmitPage() {
     const parsed = parseTimeInput(avgInput);
     if (!isNaN(parsed)) setField('average', parsed);
   }, [avgInput, setField]);
+
+  // NOTE: 盲拧 exec 解析 — 空串 → 清 execTime + memoTime;有值 → 解析并由下方 effect 自动派生 memoTime
+  useEffect(() => {
+    if (!isBldEvent(form.event ?? '')) return;
+    if (execInput.trim() === '') {
+      setField('execTime', undefined);
+      return;
+    }
+    const parsed = parseTimeInput(execInput);
+    if (!isNaN(parsed)) setField('execTime', parsed);
+  }, [execInput, form.event, setField]);
+
+  // NOTE: memoTime = rawTime - execTime;任一缺失或差为负 → 不设
+  useEffect(() => {
+    if (!isBldEvent(form.event ?? '')) return;
+    const raw = form.rawTime;
+    const exec = form.execTime;
+    if (raw == null || exec == null) {
+      setField('memoTime', undefined);
+      return;
+    }
+    const memo = raw - exec;
+    setField('memoTime', memo >= 0 ? Number(memo.toFixed(3)) : undefined);
+  }, [form.rawTime, form.execTime, form.event, setField]);
+
+  // NOTE: 切到非盲项目 → 清掉 exec/memo,避免脏数据落库
+  useEffect(() => {
+    if (isBldEvent(form.event ?? '')) return;
+    if (execInput !== '') setExecInput('');
+    if (form.execTime != null) setField('execTime', undefined);
+    if (form.memoTime != null) setField('memoTime', undefined);
+  }, [form.event, execInput, form.execTime, form.memoTime, setField]);
 
   // NOTE: 比赛切换 → 拉 WCIF 轮次结构(localStorage 缓存 24h,实际很少 fetch)
   useEffect(() => {
@@ -919,6 +955,28 @@ export default function ReconSubmitPage() {
                 title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
               />
             </label>
+            {isBldEvent(form.event ?? '') && (
+              <>
+                <label className="submit-field">
+                  <span className="submit-label">{t('recon.memo')}</span>
+                  <input
+                    type="text"
+                    value={form.memoTime != null ? formatTimeInput(form.memoTime) : ''}
+                    readOnly
+                    className="submit-input-locked"
+                    title={isZh ? '自动派生 = 成绩 − 操作' : 'auto-derived = result − exec'}
+                  />
+                </label>
+                <label className="submit-field">
+                  <span className="submit-label">{t('recon.exec')}</span>
+                  <input
+                    type="text"
+                    value={execInput}
+                    onChange={e => setExecInput(e.target.value)}
+                  />
+                </label>
+              </>
+            )}
           </div>
 
           <div className="submit-row">
@@ -1247,9 +1305,15 @@ export default function ReconSubmitPage() {
           <div className="submit-row">
             <label className="submit-field">
               <span className="submit-label">{t('recon.method')}</span>
-              <select value={form.method} onChange={e => setField('method', e.target.value)}>
-                {METHODS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
+              <input
+                type="text"
+                list="recon-method-options"
+                value={form.method || ''}
+                onChange={e => setField('method', e.target.value)}
+              />
+              <datalist id="recon-method-options">
+                {METHODS.map(m => <option key={m} value={m} />)}
+              </datalist>
             </label>
             <label className="submit-field">
               <span className="submit-label">{t('recon.cube')}</span>
