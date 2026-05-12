@@ -251,7 +251,7 @@ export default function CodeLandingPage() {
           <LangToggle variant="inline" />
         </div>
         <h1 className="code-landing-title">
-          <span className="code-landing-prefix">/</span>code
+          <span className="code-landing-prefix">/</span>code<span className="code-landing-prefix">/</span>language
           <span className="code-landing-cursor">_</span>
         </h1>
         <p className="code-landing-sub">
@@ -263,6 +263,10 @@ export default function CodeLandingPage() {
           <span>{lang === 'zh' ? '最近更新' : 'Latest'}</span>
           <span className="code-landing-meta-dot">•</span>
           <span>2026.05 · TypeScript</span>
+          <span className="code-landing-meta-dot">•</span>
+          <Link to="/code/architecture" className="code-landing-meta-link">
+            {lang === 'zh' ? '看站点架构 →' : 'Site architecture →'}
+          </Link>
         </div>
       </header>
 
