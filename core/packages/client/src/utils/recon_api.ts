@@ -296,3 +296,9 @@ export async function getWcaAttempts(
 export async function getBiliCover(bvid: string): Promise<{ pic: string }> {
   return apiGet('/bili-cover', { bvid });
 }
+
+/** 把 b23.tv 短链展开成完整 bilibili.com URL(通过后端代理 follow redirect) */
+// 后端: GET /v1/recon/resolve-shorturl
+export async function resolveShortUrl(url: string): Promise<{ url: string }> {
+  return apiGet('/resolve-shorturl', { url });
+}

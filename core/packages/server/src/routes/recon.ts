@@ -666,6 +666,34 @@ reconRoutes.get('/recon/bili-cover', async (c) => {
   }
 });
 
+// GET /v1/recon/resolve-shorturl?url=https://b23.tv/xxx
+// 服务端 fetch 不 follow redirect,读 Location 头返回真实 URL
+// client 端没法跨域 follow,所以必须服务端代理
+reconRoutes.get('/recon/resolve-shorturl', async (c) => {
+  const shortUrl = c.req.query('url') ?? '';
+  // 只允许 b23.tv (B 站短链);别的短链服务以后要支持再加白名单
+  if (!shortUrl || !/^https?:\/\/b23\.tv\//i.test(shortUrl)) {
+    return c.json({ error: 'Invalid short url' }, 400);
+  }
+
+  try {
+    const res = await fetch(shortUrl, {
+      method: 'HEAD',
+      redirect: 'manual',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const location = res.headers.get('location');
+    if (!location) {
+      return c.json({ error: 'No redirect' }, 502);
+    }
+    c.header('Cache-Control', 'public, max-age=86400');
+    return c.json({ url: location });
+  } catch {
+    return c.json({ error: 'Resolve failed' }, 502);
+  }
+});
+
 // GET /v1/recon/user-stats?wcaId=xxx
 reconRoutes.get('/recon/user-stats', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim();

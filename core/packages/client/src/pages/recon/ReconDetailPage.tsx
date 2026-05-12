@@ -10,9 +10,11 @@ import {
   ChartColumn, Video, MessageCircle, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork, PlayCircle,
+  GitFork,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
+import youtubeLogo from '../../assets/youtube_logo.svg';
+import bilibiliLogo from '../../assets/bilibili_logo.svg';
 import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, deleteAlternative } from '../../utils/recon_api';
 import {
   formatTime, flagClass,
@@ -348,8 +350,8 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
     [t('recon.method'), solve.method],
     [t('recon.stm'), stm],
     [t('recon.tps'), tps],
-    [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
     [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
+    [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
     ['Cross', !isBld && crossStm != null ? `${crossStm}` : undefined],
     ['F2L', !isBld && f2l != null ? `${f2l}` : undefined],
     [t('recon.ll'), !isBld && ll != null ? `${ll}` : undefined],
@@ -396,7 +398,7 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
   const otherUrls: string[] = [];
   for (const u of urls) {
     if (/youtu\.?be/i.test(u)) ytUrls.push(u);
-    else if (/BV[A-Za-z0-9]+/.test(u) || /bilibili\.com/i.test(u)) biliUrls.push(u);
+    else if (/BV[A-Za-z0-9]+/.test(u) || /bilibili\.com/i.test(u) || /b23\.tv/i.test(u)) biliUrls.push(u);
     else otherUrls.push(u);
   }
 
@@ -435,9 +437,11 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
   return (
     <div className="detail-section">
       <div className="detail-section-label">{t('recon.video')}</div>
-      {embedUrls.map((url, i) => (
-        <VideoEmbed key={`e${i}`} url={url} />
-      ))}
+      <div className="detail-video-row">
+        {embedUrls.map((url, i) => (
+          <VideoEmbed key={`e${i}`} url={url} />
+        ))}
+      </div>
       {linkUrls.map((url, i) => (
         <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
           <Video size={16} /> {url}
@@ -447,41 +451,49 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
   );
 }
 
-/** 单个视频嵌入 */
+/** 单个视频嵌入 — 点击 facade 跳到对应平台网页(手机会唤起 app),不再 iframe 嵌入 */
 function VideoEmbed({ url }: { url: string }) {
-  const [loaded, setLoaded] = useState(false);
-
   // NOTE: YouTube
   const ytMatch = url.match(/youtu\.?be(?:\.com)?\/(?:watch\?.*v=|embed\/|shorts\/|live\/|v\/|)([A-Za-z0-9_-]+)/);
   if (ytMatch) {
     const ytId = ytMatch[1];
     const tMatch = url.match(/[?&]t=(\d+)/);
-    const tParam = tMatch ? `?start=${tMatch[1]}` : '';
-    if (!loaded) {
-      return (
-        <div className="detail-video-wrap detail-video-facade" onClick={() => setLoaded(true)}>
-          <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="YouTube video" />
-          <img className="detail-video-play-yt"
-            src="https://www.youtube.com/s/desktop/28b0985e/img/favicon_144x144.png" alt="Play" />
-        </div>
-      );
-    }
+    const tSuffix = tMatch ? `&t=${tMatch[1]}s` : '';
     return (
-      <div className="detail-video-wrap">
-        <iframe
-          src={`https://www.youtube.com/embed/${ytId}?autoplay=1${tParam.replace('?', '&')}`}
-          allow="autoplay; encrypted-media" allowFullScreen title="YouTube video"
-          {...({ credentialless: '' } as Record<string, string>)}
-        />
-      </div>
+      <a
+        href={`https://www.youtube.com/watch?v=${ytId}${tSuffix}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="detail-video-wrap detail-video-facade"
+        style={{ display: 'block', textDecoration: 'none' }}
+      >
+        <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+            alt=""
+            referrerPolicy="no-referrer"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+          />
+          <img
+            src={youtubeLogo}
+            alt="YouTube"
+            style={{ position: 'relative', width: 68, height: 'auto', opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+          />
+        </div>
+      </a>
     );
   }
 
-  // NOTE: Bilibili — 不嵌 iframe,点击 facade 跳到 B 站网页(手机系统会自动唤起 B 站 app)
+  // NOTE: Bilibili — 同样跳到 B 站网页,手机系统会自动唤起 B 站 app
+  // 支持两种:标准 URL 带 BV id(能取封面);b23.tv 短链(没有 BV id,facade 用纯色背景)
   const bvMatch = url.match(/(BV[A-Za-z0-9]+)/);
+  const isB23 = /b23\.tv/i.test(url);
   if (bvMatch) {
     const bvId = bvMatch[1];
     return <BilibiliFacade bvId={bvId} href={`https://www.bilibili.com/video/${bvId}`} />;
+  }
+  if (isB23) {
+    return <BilibiliFacade bvId={null} href={url} />;
   }
 
   // NOTE: 其他链接——显示为普通超链接
@@ -699,11 +711,12 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 }
 
 /** B站视频 facade——异步获取封面图 */
-function BilibiliFacade({ bvId, href }: { bvId: string; href: string }) {
+function BilibiliFacade({ bvId, href }: { bvId: string | null; href: string }) {
   const [cover, setCover] = useState<string | null>(null);
 
-  // NOTE: 组件加载时异步获取封面
+  // NOTE: 组件加载时异步获取封面;b23.tv 短链没有 bvId 跳过(显示纯色 facade)
   useEffect(() => {
+    if (!bvId) return;
     getBiliCover(bvId).then(res => {
       if (res.pic) setCover(res.pic);
     }).catch(() => { /* 封面获取失败静默忽略，依然显示 logo */ });
@@ -727,12 +740,11 @@ function BilibiliFacade({ bvId, href }: { bvId: string; href: string }) {
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
           />
         )}
-        {/* play 按钮 — 点击 facade 在新窗口打开 B 站 (手机会唤起 app) */}
-        <PlayCircle
-          size={68}
-          color="#fff"
-          strokeWidth={1.5}
-          style={{ position: 'relative', opacity: 0.9, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+        {/* B 站 logo — 点击 facade 在新窗口打开 B 站 (手机会唤起 app) */}
+        <img
+          src={bilibiliLogo}
+          alt="Bilibili"
+          style={{ position: 'relative', width: 68, height: 68, opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
         />
       </div>
     </a>
