@@ -272,8 +272,25 @@
   border: none;
 }
 
+.detail-video-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .detail-video-facade {
   cursor: pointer;
+  width: 360px;
+  padding-top: 202.5px; /* 16:9 of 360 */
+  margin-bottom: 0; /* gap handled by parent flex */
+}
+
+@media (max-width: 768px) {
+  .detail-video-facade {
+    width: 100%;
+    padding-top: 56.25%;
+  }
 }
 
 .detail-video-facade img:not(.detail-video-play-yt):not(.detail-video-play-bili) {

@@ -7,7 +7,7 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
-import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers, listRecons } from '../../utils/recon_api';
+import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers, listRecons, resolveShortUrl } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound, localizeRound, isBldEvent } from '../../utils/recon_utils';
@@ -1296,6 +1296,27 @@ export default function ReconSubmitPage() {
               <textarea
                 value={form.videoUrl || ''}
                 onChange={e => setField('videoUrl', e.target.value)}
+                onBlur={async () => {
+                  // 失焦时把 b23.tv 短链整行替换为后端 resolve 出来的完整 URL
+                  const cur = form.videoUrl || '';
+                  if (!/b23\.tv/i.test(cur)) return;
+                  const lines = cur.split('\n');
+                  let changed = false;
+                  const resolved = await Promise.all(lines.map(async line => {
+                    const trimmed = line.trim();
+                    const m = trimmed.match(/https?:\/\/b23\.tv\/\S+/i);
+                    if (!m) return line;
+                    try {
+                      const res = await resolveShortUrl(m[0]);
+                      if (res.url) {
+                        changed = true;
+                        return line.replace(m[0], res.url.split('?')[0]); // 去掉 B 站 redirect 后挂的 tracking 参数
+                      }
+                    } catch { /* resolve 失败保留原短链 */ }
+                    return line;
+                  }));
+                  if (changed) setField('videoUrl', resolved.join('\n'));
+                }}
                 placeholder="https://www.youtube.com/watch?v=...&#10;https://www.bilibili.com/video/BV..."
                 rows={2}
               />
