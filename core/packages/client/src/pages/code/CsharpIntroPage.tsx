@@ -572,7 +572,7 @@ export default function CsharpIntroPage() {
       cancelAnimationFrame(raf);
       anchors.forEach((a) => a.removeEventListener('click', onAnchorClick));
     };
-  }, [lang]);
+  }, []);
 
   return (
     <LangCtx.Provider value={lang}>

@@ -103,7 +103,7 @@ const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
 // NOTE: /code — hub (架构 + 语言两张卡片) + 子页面
 const CodeIndexPage = lazy(() => import('./pages/code/CodeIndexPage'));
 const CodeLandingPage = lazy(() => import('./pages/code/CodeLandingPage'));
-const CodeArchitecturePage = lazy(() => import('./pages/code/CodeArchitecturePage'));
+const ArchitecturePage = lazy(() => import('./pages/code/ArchitecturePage'));
 const TsIntroPage = lazy(() => import('./pages/code/TsIntroPage'));
 const RustIntroPage = lazy(() => import('./pages/code/RustIntroPage'));
 const GoIntroPage = lazy(() => import('./pages/code/GoIntroPage'));
@@ -217,7 +217,7 @@ function App() {
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
         {/* Code — hub (架构 + 语言) + 子页面 */}
         <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeIndexPage /></Suspense>} />
-        <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><CodeArchitecturePage /></Suspense>} />
+        <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><ArchitecturePage /></Suspense>} />
         <Route path="/code/language" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
         <Route path="/code/language/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
         <Route path="/code/language/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />
