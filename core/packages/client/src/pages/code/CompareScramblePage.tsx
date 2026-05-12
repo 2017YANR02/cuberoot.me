@@ -408,8 +408,8 @@ export default function CompareScramblePage() {
 
         <header className="compare-head">
           <div className="compare-topbar">
-            <Link to="/code" className="compare-back">
-              ← <L zh="回 /code" en="Back to /code" />
+            <Link to="/code/language" className="compare-back">
+              ← <L zh="回 /code/language" en="Back to /code/language" />
             </Link>
             <LangToggle variant="inline" />
           </div>
@@ -532,7 +532,7 @@ export default function CompareScramblePage() {
             <span className="compare-meta-dot">·</span>
             <Link to="/code/compare"><L zh="去 Ao5 对比" en="See the Ao5 comparison" /></Link>
             <span className="compare-meta-dot">·</span>
-            <Link to="/code"><L zh="回 /code 主页" en="Back to /code" /></Link>
+            <Link to="/code/language"><L zh="回 /code/language 主页" en="Back to /code/language" /></Link>
           </div>
           <p className="compare-foot-note">
             <L

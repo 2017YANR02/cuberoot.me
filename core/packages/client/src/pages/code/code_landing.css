@@ -90,6 +90,19 @@
   letter-spacing: .04em;
 }
 .code-landing-meta-dot { opacity: .5; }
+.code-landing-meta-link {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: .04em;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color .2s, border-color .2s;
+}
+.code-landing-meta-link:hover {
+  color: #5BA8FF;
+  border-bottom-color: rgba(91, 168, 255, .5);
+}
 
 .code-landing-banner {
   max-width: 1200px;
