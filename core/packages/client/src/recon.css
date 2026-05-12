@@ -219,6 +219,28 @@
   font-size: 0.75rem;
 }
 
+/* 单输入框范围 filter 旁边的 ~ 按钮 (iOS Safari decimal 键盘缺 ~) */
+.recon-range-tilde-btn {
+  flex: 0 0 auto;
+  min-width: 28px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  color: #d4d4d4;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.recon-range-tilde-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.recon-range-tilde-btn:active {
+  background: rgba(232, 162, 122, 0.25);
+}
+
 /* --- 表格行 --- */
 .recon-table tbody tr {
   cursor: pointer;

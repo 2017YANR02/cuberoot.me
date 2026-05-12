@@ -278,7 +278,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           reconId={solve.id}
           alts={alts}
           setAlts={setAlts}
-          solveRawTime={solve.rawTime}
+          solveTime={(isBldEvent(solve.event) ? solve.execTime : solve.rawTime)}
         />
 
         {/* 评论 */}
@@ -324,11 +324,13 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
   // NOTE: 客户端从 solution 文本重算可推导字段，覆盖 DB 里的（旧版/坏算法的）缓存值
   // 这样老 solve 不用重新提交也能正确显示 cross/F2L/LL 等
+  // 盲拧 TPS 用 execTime 当分母(跟 submit 页 ReconSubmitPage 一致),非盲走 rawTime
   const computed = useMemo(() => {
     const text = solve.solution || solve.recon || '';
     if (!text) return null;
-    return computeAllStats(text, solve.rawTime ?? 0);
-  }, [solve.solution, solve.recon, solve.rawTime]);
+    const time = (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0;
+    return computeAllStats(text, time);
+  }, [solve.solution, solve.recon, solve.rawTime, solve.execTime, solve.event]);
   const stm = computed ? computed.stm : solve.stm;
   const tps = computed ? computed.tps : solve.tps;
   const crossStm = computed ? computed.crossStm : solve.crossStm;
@@ -752,12 +754,12 @@ function BilibiliFacade({ bvId, href }: { bvId: string | null; href: string }) {
 }
 
 /** 另解区——任何登录用户都能投自己的解法,挂在原 solve 下,不创建新行 */
-function AlternativesSection({ reconId, alts, setAlts, solveRawTime }: {
+function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
   reconId: number;
   alts: ReconAlternative[];
   setAlts: (alts: ReconAlternative[]) => void;
   /** 原 solve 单次成绩(秒);用于计算另解 TPS */
-  solveRawTime?: number;
+  solveTime?: number;
 }) {
   const user = useAuthStore(s => s.user);
   const currentWcaId = user?.wcaId || '';
@@ -801,7 +803,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveRawTime }: {
             const isOwn = !!currentWcaId && currentWcaId === alt.addedById;
             const canEdit = isOwn;
             const canDelete = isOwn || isAdminUser;
-            const stats = computeAllStats(alt.solution, solveRawTime ?? 0);
+            const stats = computeAllStats(alt.solution, solveTime ?? 0);
             return (
               <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
                 <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} />

@@ -1,8 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, createContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Filter, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Filter, X, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
 import './ColFilter.css';
+
+/** 给 popover children 用的关闭函数 — 比如 input 内按 Enter / iOS ✓ 时关掉 popover */
+export const ColFilterCloseContext = createContext<(() => void) | null>(null);
 
 interface Props {
   active: boolean;
@@ -18,6 +21,8 @@ interface Props {
   sortDir?: 'asc' | 'desc';
   /** 用户在 popup 里点了排序按钮时回调,sortDir 会被显式设置。 */
   onSort?: (dir: 'asc' | 'desc') => void;
+  /** 恢复默认排序回调(可选);传入则在 sort 按钮组显示 ↺ */
+  onSortReset?: () => void;
 }
 
 function useIsMobile(): boolean {
@@ -33,7 +38,7 @@ function useIsMobile(): boolean {
 export function ColFilter({
   active, onClear, children, align = 'right',
   open: openProp, onOpenChange,
-  sortable, sortDir, onSort,
+  sortable, sortDir, onSort, onSortReset,
 }: Props) {
   const { t } = useTranslation();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -75,8 +80,10 @@ export function ColFilter({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
-    // NOTE: 外部滚动 / resize 时关掉,避免 popover 漂移与 anchor 脱钩;
-    // 但 popover 内部滚动(如 ListSelect 列表拖滚动条)要忽略
+    // NOTE: 桌面端外部滚动 / resize 时关 popover(避免漂移与 anchor 脱钩);
+    // 手机端跳过这两个监听 —— iOS Safari 软键盘弹出会同时触发 scroll(自动滚到 input)
+    // 和 resize(viewport 高度变),activeElement check 在 focus 时机上不稳,直接跳过最稳。
+    // 手机端 popover 通常居中/全屏,用户主动点 X 或外部空白关即可。
     const onScroll = (e: Event) => {
       const target = e.target as Node | null;
       if (target && popRef.current?.contains(target)) return;
@@ -85,15 +92,19 @@ export function ColFilter({
     const onResize = () => setOpen(false);
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
-    window.addEventListener('scroll', onScroll, true);
-    window.addEventListener('resize', onResize);
+    if (!isMobile) {
+      window.addEventListener('scroll', onScroll, true);
+      window.addEventListener('resize', onResize);
+    }
     return () => {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
-      window.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('resize', onResize);
+      if (!isMobile) {
+        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('resize', onResize);
+      }
     };
-  }, [open]);
+  }, [open, isMobile, setOpen]);
 
   const popover = open ? (
     <div
@@ -109,19 +120,38 @@ export function ColFilter({
             type="button"
             className={`col-filter-sort-btn${sortDir === 'asc' ? ' active' : ''}`}
             onClick={() => { onSort('asc'); setOpen(false); }}
+            aria-label={t('common.sortAsc')}
+            title={t('common.sortAsc')}
           >
-            <ArrowUp size={12} /> {t('common.sortAsc')}
+            <ArrowUp size={14} />
           </button>
           <button
             type="button"
             className={`col-filter-sort-btn${sortDir === 'desc' ? ' active' : ''}`}
             onClick={() => { onSort('desc'); setOpen(false); }}
+            aria-label={t('common.sortDesc')}
+            title={t('common.sortDesc')}
           >
-            <ArrowDown size={12} /> {t('common.sortDesc')}
+            <ArrowDown size={14} />
           </button>
+          {onSortReset && (
+            <button
+              type="button"
+              className="col-filter-sort-btn"
+              onClick={() => { onSortReset(); setOpen(false); }}
+              aria-label={t('common.sortReset')}
+              title={t('common.sortReset')}
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
         </div>
       )}
-      <div className="col-filter-body">{children}</div>
+      <div className="col-filter-body">
+        <ColFilterCloseContext.Provider value={() => setOpen(false)}>
+          {children}
+        </ColFilterCloseContext.Provider>
+      </div>
       {active && onClear && (
         <button
           type="button"

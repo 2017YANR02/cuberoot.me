@@ -39,7 +39,8 @@
     "min": "Min",
     "max": "Max",
     "sortAsc": "Asc",
-    "sortDesc": "Desc"
+    "sortDesc": "Desc",
+    "sortReset": "Reset to default"
   },
   "recon": {
     "title": "Solve Reconstructions",
