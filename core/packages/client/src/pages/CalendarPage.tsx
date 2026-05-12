@@ -3,6 +3,7 @@
  * 数据源: stats/upcoming_comps.json（Top 模式） + stats/all_upcoming_comps.json（All 模式）
  */
 import { useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
+import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid } from 'lucide-react';
@@ -39,6 +40,7 @@ import { CuberSearchInput } from '../components/CuberSearchInput';
 import { ClearButton } from '../components/ClearButton';
 import { fetchUserUpcoming, type WcaPersonLite } from '../utils/wca_api';
 import OnThisDayModal from './calendar/OnThisDayModal';
+import MonthGrid from '../components/MonthGrid';
 import './calendar_page.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -103,13 +105,6 @@ const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
 
 // ── 工具函数 ──────────────────────────────────────────────────────────────
-
-/** 两个日期是否同一天（忽略时间） */
-function sameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
-}
 
 /** 把 YYYY-MM-DD 字符串解析为本地 Date（00:00 本地时间，避免 UTC 偏移） */
 function parseLocalDate(s: string): Date {
@@ -1704,180 +1699,166 @@ export default function CalendarPage() {
         />
       )}
 
-      {viewMode === 'calendar' && <div
-        key={`cal-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
-        className={`calendar${navDir ? ` calendar--slide-${navDir}` : ''}`}
-        onAnimationEnd={() => setNavDir(null)}
-        onTouchStart={onCalendarTouchStart}
-        onTouchEnd={onCalendarTouchEnd}
-        onClickCapture={onCalendarClickCapture}
-      >
-        <div className="weekday-header">
-          {weekdays.map((d, i) => (
-            <div key={i} className="weekday-cell">
-              {d}
-            </div>
-          ))}
-        </div>
-        {weeks.map((week, wi) => (
-          <div
-            key={wi}
-            className="week-row"
-            style={{ ['--tracks' as string]: Math.max(1, week.maxTrack + 1 + (week.overflowByCol.size > 0 ? 1 : 0)) }}
-          >
-            {week.days.map((day, di) => {
-              const inView = day.getMonth() === viewDate.getMonth();
-              const isToday = inView && sameDay(day, today);
-              return (
-                <div
-                  key={di}
-                  className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''}`}
-                  style={{ gridColumn: di + 1, gridRow: 1 }}
-                >
-                  {inView && (
-                    <button
-                      type="button"
-                      className="day-number"
-                      onClick={() => setOnThisDayDate(day)}
-                      title={isZh ? '历年此日的比赛' : 'On this day across all years'}
-                    >
-                      {day.getDate()}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            {week.bars.map((bar) => {
-              const isClash = bar.comp.top_cubers.length >= 3;
-              const hasTop = bar.comp.top_cubers.length > 0;
-              const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
-              const displayName = localizeName(bar.comp, isZh);
-              const classes = [
-                'event-bar',
-                isClash ? 'is-clash' : '',
-                !hasTop ? 'is-none-top' : '',
-                cancelled ? 'is-cancelled' : '',
-                bar.continuesFromPrev ? 'continues-prev' : '',
-                bar.continuesToNext ? 'continues-next' : '',
-              ].filter(Boolean).join(' ');
-              const prefetchRounds = bar.comp.rounds ? undefined : () => { void fetchCompRounds(bar.comp.id); };
-              return (
-                <button
-                  key={bar.key}
-                  className={classes}
-                  style={{
-                    gridColumn: `${bar.startCol} / span ${bar.span}`,
-                    gridRow: `${bar.track + 2} / span ${bar.rowSpan}`,
-                  }}
-                  onClick={() => setSelectedComp(bar.comp)}
-                  onMouseEnter={prefetchRounds}
-                  onFocus={prefetchRounds}
-                  title={`${displayName} — ${bar.comp.top_cubers.length} cubers`}
-                >
-                  {(() => {
-                    const top = getCompRecordTop(bar.comp.id);
-                    return top ? <RecordBadge record={top} /> : null;
-                  })()}
-                  <Flag iso2={bar.comp.country} />
-                  <span className="event-bar-name">{displayName}</span>
-                </button>
-              );
-            })}
-            {Array.from(week.overflowByCol.entries()).map(([col, overflowComps]) => (
+      {viewMode === 'calendar' && (
+        <MonthGrid
+          key={`cal-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
+          year={viewDate.getFullYear()}
+          month={viewDate.getMonth() + 1}
+          weekdays={weekdays}
+          today={today}
+          className={navDir ? `calendar--slide-${navDir}` : undefined}
+          outerProps={{
+            onAnimationEnd: () => setNavDir(null),
+            onTouchStart: onCalendarTouchStart,
+            onTouchEnd: onCalendarTouchEnd,
+            onClickCapture: onCalendarClickCapture,
+          }}
+          weekRowStyle={(_w, wi) => {
+            const week = weeks[wi];
+            if (!week) return undefined;
+            return { ['--tracks' as string]: Math.max(1, week.maxTrack + 1 + (week.overflowByCol.size > 0 ? 1 : 0)) };
+          }}
+          renderDay={(day, { inView }) => (
+            inView && (
               <button
-                key={`of-${col}`}
-                className="more-btn"
-                style={{ gridColumn: col, gridRow: Math.min(MAX_TRACKS, week.maxTrack + 1) + 2 }}
-                onClick={() => { setDayListCountry(null); setDayListDate(week.days[col - 1]); }}
+                type="button"
+                className="day-number"
+                onClick={() => setOnThisDayDate(day)}
+                title={isZh ? '历年此日的比赛' : 'On this day across all years'}
               >
-                +{overflowComps.length}
+                {day.getDate()}
               </button>
-            ))}
-          </div>
-        ))}
-      </div>}
+            )
+          )}
+          renderWeekOverlay={(_w, wi) => {
+            const week = weeks[wi];
+            if (!week) return null;
+            return (
+              <>
+                {week.bars.map((bar) => {
+                  const isClash = bar.comp.top_cubers.length >= 3;
+                  const hasTop = bar.comp.top_cubers.length > 0;
+                  const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
+                  const displayName = localizeName(bar.comp, isZh);
+                  const classes = [
+                    'event-bar',
+                    isClash ? 'is-clash' : '',
+                    !hasTop ? 'is-none-top' : '',
+                    cancelled ? 'is-cancelled' : '',
+                    bar.continuesFromPrev ? 'continues-prev' : '',
+                    bar.continuesToNext ? 'continues-next' : '',
+                  ].filter(Boolean).join(' ');
+                  const prefetchRounds = bar.comp.rounds ? undefined : () => { void fetchCompRounds(bar.comp.id); };
+                  return (
+                    <button
+                      key={bar.key}
+                      className={classes}
+                      style={{
+                        gridColumn: `${bar.startCol} / span ${bar.span}`,
+                        gridRow: `${bar.track + 2} / span ${bar.rowSpan}`,
+                      }}
+                      onClick={() => setSelectedComp(bar.comp)}
+                      onMouseEnter={prefetchRounds}
+                      onFocus={prefetchRounds}
+                      title={`${displayName} — ${bar.comp.top_cubers.length} cubers`}
+                    >
+                      {(() => {
+                        const top = getCompRecordTop(bar.comp.id);
+                        return top ? <RecordBadge record={top} /> : null;
+                      })()}
+                      <Flag iso2={bar.comp.country} />
+                      <span className="event-bar-name">{displayName}</span>
+                    </button>
+                  );
+                })}
+                {Array.from(week.overflowByCol.entries()).map(([col, overflowComps]) => (
+                  <button
+                    key={`of-${col}`}
+                    className="more-btn"
+                    style={{ gridColumn: col, gridRow: Math.min(MAX_TRACKS, week.maxTrack + 1) + 2 }}
+                    onClick={() => { setDayListCountry(null); setDayListDate(week.days[col - 1]); }}
+                  >
+                    +{overflowComps.length}
+                  </button>
+                ))}
+              </>
+            );
+          }}
+        />
+      )}
 
-      {viewMode === 'compact' && compactWeeks && <div
-        key={`compact-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
-        className={`calendar calendar--compact${navDir ? ` calendar--slide-${navDir}` : ''}`}
-        style={compactColTemplate ? { ['--compact-cols' as string]: compactColTemplate } : undefined}
-        onAnimationEnd={() => setNavDir(null)}
-        onTouchStart={onCalendarTouchStart}
-        onTouchEnd={onCalendarTouchEnd}
-        onClickCapture={onCalendarClickCapture}
-      >
-        <div className="weekday-header">
-          {weekdays.map((d, i) => (
-            <div key={i} className="weekday-cell">
-              {d}
-            </div>
-          ))}
-        </div>
-        {compactWeeks.map((week, wi) => (
-          <div key={wi} className="week-row">
-            {week.days.map((day, di) => {
-              const inView = day.getMonth() === viewDate.getMonth();
-              const isToday = inView && sameDay(day, today);
-              const tiles = week.byDay[di];
-              return (
-                <div
-                  key={di}
-                  className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''}${inView ? ' is-clickable' : ''}`}
-                  onClick={inView ? () => setOnThisDayDate(day) : undefined}
-                  role={inView ? 'button' : undefined}
-                  tabIndex={inView ? 0 : undefined}
-                  onKeyDown={inView ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOnThisDayDate(day); } } : undefined}
-                  title={inView ? (isZh ? '历年此日的比赛' : 'On this day across all years') : undefined}
-                >
-                  {inView && (
-                    <span className="day-number">
-                      {day.getDate()}
-                    </span>
-                  )}
-                  {inView && tiles.length > 0 && (
-                    <div className="compact-flag-grid">
-                      {tiles.map((tile) => {
-                        const c = tile.rep;
-                        const cls = [
-                          'compact-flag-tile',
-                          tile.allCancelled ? 'is-cancelled' : '',
-                        ].filter(Boolean).join(' ');
-                        const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
-                        const titleText = tile.count > 1
-                          ? `${countryName(c.country, isZh)} — ${tile.count}${isZh ? ' 场' : ' comps'}`
-                          : `${localizeName(c, isZh)} — ${c.top_cubers.length} cubers`;
-                        return (
-                          <button
-                            key={`${c.country.toLowerCase()}-${c.id}`}
-                            className={cls}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (tile.count > 1) {
-                                setDayListCountry(c.country.toLowerCase());
-                                setDayListDate(day);
-                              } else {
-                                setSelectedComp(c);
-                              }
-                            }}
-                            onMouseEnter={prefetchRounds}
-                            onFocus={prefetchRounds}
-                            title={titleText}
-                          >
-                            <Flag iso2={c.country} />
-                            {tile.count > 1 && (
-                              <span className="compact-flag-count" aria-label={titleText}>{tile.count}</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>}
+      {viewMode === 'compact' && compactWeeks && (
+        <MonthGrid
+          key={`compact-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
+          year={viewDate.getFullYear()}
+          month={viewDate.getMonth() + 1}
+          weekdays={weekdays}
+          today={today}
+          className={`calendar--compact${navDir ? ` calendar--slide-${navDir}` : ''}`}
+          outerProps={{
+            onAnimationEnd: () => setNavDir(null),
+            onTouchStart: onCalendarTouchStart,
+            onTouchEnd: onCalendarTouchEnd,
+            onClickCapture: onCalendarClickCapture,
+            style: compactColTemplate ? ({ ['--compact-cols' as string]: compactColTemplate } as CSSProperties) : undefined,
+          }}
+          dayCellProps={(day, { inView }) => inView ? {
+            className: 'is-clickable',
+            onClick: () => setOnThisDayDate(day),
+            role: 'button',
+            tabIndex: 0,
+            onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOnThisDayDate(day); } },
+            title: isZh ? '历年此日的比赛' : 'On this day across all years',
+          } : undefined}
+          renderDay={(day, { inView, weekIdx, dayIdx }) => {
+            if (!inView) return null;
+            const tiles = compactWeeks[weekIdx]?.byDay[dayIdx] ?? [];
+            return (
+              <>
+                <span className="day-number">{day.getDate()}</span>
+                {tiles.length > 0 && (
+                  <div className="compact-flag-grid">
+                    {tiles.map((tile) => {
+                      const c = tile.rep;
+                      const cls = [
+                        'compact-flag-tile',
+                        tile.allCancelled ? 'is-cancelled' : '',
+                      ].filter(Boolean).join(' ');
+                      const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
+                      const titleText = tile.count > 1
+                        ? `${countryName(c.country, isZh)} — ${tile.count}${isZh ? ' 场' : ' comps'}`
+                        : `${localizeName(c, isZh)} — ${c.top_cubers.length} cubers`;
+                      return (
+                        <button
+                          key={`${c.country.toLowerCase()}-${c.id}`}
+                          className={cls}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (tile.count > 1) {
+                              setDayListCountry(c.country.toLowerCase());
+                              setDayListDate(day);
+                            } else {
+                              setSelectedComp(c);
+                            }
+                          }}
+                          onMouseEnter={prefetchRounds}
+                          onFocus={prefetchRounds}
+                          title={titleText}
+                        >
+                          <Flag iso2={c.country} />
+                          {tile.count > 1 && (
+                            <span className="compact-flag-count" aria-label={titleText}>{tile.count}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            );
+          }}
+        />
+      )}
 
       {selectedComp && (
         <CompModal

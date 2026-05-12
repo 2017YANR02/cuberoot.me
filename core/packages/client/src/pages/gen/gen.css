@@ -492,6 +492,51 @@
     gap: 8px;
 }
 
+/* Import → 从文本子模式 */
+.gen-tn-paste-hint {
+    color: var(--gen-text-mute);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    padding: 8px 0;
+}
+.gen-tn-paste-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1rem;
+}
+.gen-tn-paste-block {
+    background: var(--gen-surface);
+    border: 1px solid var(--gen-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+.gen-tn-paste-block-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--gen-text);
+}
+.gen-tn-paste-area {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--gen-border);
+    border-radius: 8px;
+    font-family: 'LiberationMono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--gen-text);
+    background: var(--gen-surface);
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+}
+.gen-tn-paste-area:focus { border-color: var(--gen-accent); }
+.gen-tn-paste-area::placeholder { color: var(--gen-text-mute); white-space: pre; }
+
 .gen-tn-event-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));

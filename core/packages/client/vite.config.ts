@@ -195,13 +195,6 @@ export default defineConfig({
     // 只放 localhost / 127.0.0.1 / 显式 IP,要把开发隧道域名加进来。`.cuberoot.me` 写成
     // 子域通配,以后再开 staging.cuberoot.me 之类不用回来改。
     allowedHosts: ['.cuberoot.me', '.ts.net'],
-    // HMR ws 走 wss:443 让 PC + 手机都通过 Tailscale Funnel 的 SSL termination 接入 ws。
-    // 前提:两端都用 https://alienware.tail171d80.ts.net/ 访问 (PC 不再用 localhost:5173)。
-    // 这样 page 协议/端口跟 ws 一致,HMR 两端都热重载。
-    hmr: {
-      clientPort: 443,
-      protocol: 'wss',
-    },
     headers: {
       // NOTE: @ffmpeg/ffmpeg 多线程需要 SharedArrayBuffer。
       // 用 credentialless 而不是 require-corp —— 前者允许跨源图片（flagcdn / WCA 头像）
