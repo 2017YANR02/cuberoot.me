@@ -31,6 +31,44 @@ function cacheSet(id: string, v: Record<string, RoundFormat[]>): void {
 
 const inflight = new Map<string, Promise<Record<string, RoundFormat[]>>>();
 
+const NAME_URL = (id: string) =>
+  `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}`;
+const NAME_CACHE_PREFIX = 'wca-comp-name-v1-';
+const nameInflight = new Map<string, Promise<string | null>>();
+
+/** 拿比赛人类可读名(如 "Odd Day in Hong Kong 2026")。失败返回 null。24h localStorage 缓存。 */
+export async function fetchCompName(compId: string): Promise<string | null> {
+  if (!compId) return null;
+  try {
+    const raw = localStorage.getItem(NAME_CACHE_PREFIX + compId);
+    if (raw) {
+      const { t, v } = JSON.parse(raw) as { t: number; v: string };
+      if (Date.now() - t <= CACHE_TTL_MS) return v;
+    }
+  } catch { /* ignore */ }
+  const existing = nameInflight.get(compId);
+  if (existing) return existing;
+  const p = (async () => {
+    try {
+      const res = await fetch(NAME_URL(compId));
+      if (!res.ok) return null;
+      const data = await res.json() as { name?: string };
+      const name = typeof data.name === 'string' ? data.name : null;
+      if (name) {
+        try { localStorage.setItem(NAME_CACHE_PREFIX + compId, JSON.stringify({ t: Date.now(), v: name })); }
+        catch { /* quota / private mode */ }
+      }
+      return name;
+    } catch {
+      return null;
+    } finally {
+      nameInflight.delete(compId);
+    }
+  })();
+  nameInflight.set(compId, p);
+  return p;
+}
+
 /** eventId（WCA 标准短码 333/222/...）→ 每轮的 format 数组（数组长度 = rounds 数）。失败返回 {}。 */
 export async function fetchCompRounds(compId: string): Promise<Record<string, RoundFormat[]>> {
   if (!compId) return {};

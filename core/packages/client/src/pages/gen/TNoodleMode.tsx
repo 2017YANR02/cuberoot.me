@@ -12,7 +12,6 @@ import { RefreshCw, Download, X, Trash2, Edit3 } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { eventDisplayName } from '../../utils/wca_events';
-import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
 
 const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
@@ -22,42 +21,16 @@ import {
   type EventConfig, type WcaFormat,
 } from './wca_round';
 import type { RoundSheetInput } from './tnoodle_pdf';
-import type { TnoodleLocale } from './tnoodle_translate';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
-import ScrambleLines from './ScrambleLines';
 import TranslationsPicker from './TranslationsPicker';
+import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 interface Props {
   t: (zh: string, en: string) => string;
   isZh: boolean;
-}
-
-interface AttemptScramble {
-  /** Display label, e.g. "1", "2", "E1", "E2". For MBLD this is the cube number. */
-  label: string;
-  /** Single scramble move sequence (one row in the PDF). */
-  scramble: string;
-  /** Whether this is an extra-scramble (E1/E2 …); always false for MBLD. */
-  isExtra: boolean;
-}
-
-interface RoundSheet {
-  event: string;
-  roundIdx: number;     // 0-based
-  groupIdx: number;     // 0-based (for scrambleSets > 1)
-  format: WcaFormat;
-  /** MBLD/FMC — 0-based attempt index. Adds "Attempt N+1" / "Scramble X of Y" to the title. */
-  attemptNumber?: number;
-  attempts: AttemptScramble[];
-  /** FMC only — locales for which to emit a translated solution sheet. */
-  locales?: TnoodleLocale[];
-  /** Print copies — same scrambles repeated N times in the PDF (per round.copies). */
-  copies?: number;
-  /** scrambleSets count for this round; used to render "Group A/B/..." only when >1. */
-  totalGroups?: number;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -291,7 +264,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
 
   return (
     <>
-      <div className="gen-tn-controls">
+      <div className={`gen-tn-controls${sheets && sheets.length > 0 ? ' is-loaded' : ''}`}>
         <div className="gen-control-group">
           <input
             type="text"
@@ -507,47 +480,4 @@ export default function TNoodleMode({ t, isZh }: Props) {
   );
 }
 
-function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors }: { sheet: RoundSheet; isZh: boolean; t: Props['t']; clockColors?: Record<string, string>; sq1Colors?: Record<string, string>; megaColors?: Record<string, string> }) {
-  const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
-  // 多组(scrambleSets > 1)时所有组都标 A/B/...;只 1 组时不写组号
-  const groupSuffix = (totalGroups ?? 1) > 1
-    ? ` ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}`
-    : '';
-  const attemptSuffix = attemptNumber !== undefined
-    ? ` ${t('第', 'Attempt')} ${attemptNumber + 1}${t('次', '')}`
-    : '';
-  const rows: React.ReactNode[] = [];
-  attempts.forEach((a, i) => {
-    const showExtraDivider = a.isExtra && (i === 0 || !attempts[i - 1].isExtra);
-    if (showExtraDivider) {
-      rows.push(
-        <tr key={`div-${i}`} className="gen-tn-extras-divider">
-          <td colSpan={3}>{t('Extra Scrambles', 'Extra Scrambles')}</td>
-        </tr>,
-      );
-    }
-    rows.push(
-      <tr key={i} className={a.isExtra ? 'is-extra' : ''}>
-        <td className="gen-tn-attempt-num">{a.label}</td>
-        <td className="gen-tn-attempt-scramble">
-          <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
-        </td>
-        <td className="gen-tn-attempt-preview">
-          {eventHasScramblePreview(event) && a.scramble && (
-            <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />
-          )}
-        </td>
-      </tr>,
-    );
-  });
-  return (
-    <div className="gen-tn-sheet">
-      <div className="gen-tn-sheet-header">
-        <EventIcon event={event} />
-        <span>{eventDisplayName(event, isZh)} {t('第', 'Round')} {roundIdx + 1}{t('轮', '')}{groupSuffix}{attemptSuffix}</span>
-      </div>
-      <table className="gen-tn-sheet-table"><tbody>{rows}</tbody></table>
-    </div>
-  );
-}
 

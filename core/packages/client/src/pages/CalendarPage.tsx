@@ -30,6 +30,7 @@ import {
 import { formatWcaResult } from '../utils/wca_format_result';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
+import { defaultCancelledCutoffIso, isCancelledComp } from '../utils/comp_search';
 import { localizeCity } from '../utils/city_localize';
 import { countryName } from '../utils/country_name';
 import { expandCountrySelection } from '../utils/continent';
@@ -80,15 +81,6 @@ interface UpcomingData {
 
 const SOON_DAYS = 7;
 const MAX_TRACKS = 3;
-// 启发式：past comp 结束 60+ 天仍 0 results ⇒ 实际没办成 ⇒ 视为已取消。
-// 60 天 buffer 是为了避免最近结束、results 还没传到 WCA dump 里的真比赛被误标。
-const CANCELLED_BUFFER_DAYS = 60;
-
-/** 给定 cutoff（today - buffer 的 ISO 日期），判断比赛是否应被显示为已取消 */
-function isCancelledComp(c: { end_date?: string; start_date: string; events?: string[] }, cutoffIso: string): boolean {
-  const endIso = c.end_date || c.start_date;
-  return !!endIso && endIso < cutoffIso && (c.events ?? []).length === 0;
-}
 
 // NOTE: 后端短名 → WCA eventId（用于 cubing-icon CSS class）
 const SHORT_TO_EVENT_ID: Record<string, string> = {
@@ -1040,12 +1032,8 @@ export default function CalendarPage() {
   const listScrollRef = useRef<HTMLDivElement>(null);
   const [recordsVer, setRecordsVer] = useState(0);
 
-  // 已取消判定 cutoff：今天 - 60 天的 ISO 字符串。今日固定一次（每次 mount 重算），mount 期间不变。
-  const cancelledCutoffIso = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - CANCELLED_BUFFER_DAYS);
-    return d.toISOString().slice(0, 10);
-  }, []);
+  // 已取消判定 cutoff:每次 mount 固定一次,mount 期间不变。
+  const cancelledCutoffIso = useMemo(() => defaultCancelledCutoffIso(), []);
 
   useEffect(() => {
     loadCompRecordsSummary().then((v) => setRecordsVer(v));
