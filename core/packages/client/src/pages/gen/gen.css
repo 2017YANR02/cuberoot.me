@@ -348,6 +348,7 @@
     border-color: transparent;
     padding: 0;
     margin: 0 0 1rem;
+    justify-content: center;
 }
 .gen-page .wca-stats-event-selector .event-btn {
     background: transparent;
@@ -432,7 +433,20 @@
 @media (max-width: 700px) {
     .gen-tn-controls { grid-template-columns: 1fr; }
 }
-.gen-tn-comp-input {
+/* 加载完(.is-loaded):按钮脱出 grid 流右浮,输入框独占整行让比赛名真居中 */
+@media (min-width: 701px) {
+    .gen-tn-controls.is-loaded {
+        position: relative;
+        grid-template-columns: 1fr;
+    }
+    .gen-tn-controls.is-loaded .gen-control-actions {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+    }
+}
+.gen-tn-comp-input,
+.gen-tn-comp-picker > input {
     width: 100%;
     height: 38px;
     box-sizing: border-box;
@@ -450,7 +464,8 @@
     height: 38px;
     box-sizing: border-box;
 }
-.gen-tn-comp-input:focus { border-color: var(--gen-accent); }
+.gen-tn-comp-input:focus,
+.gen-tn-comp-picker > input:focus { border-color: var(--gen-accent); }
 .gen-tn-comp-input:read-only {
     background: transparent;
     border-color: transparent;
@@ -459,6 +474,22 @@
     padding: 0;
     font-size: 1.05rem;
     font-weight: 600;
+    text-align: center;
+}
+/* Import / Comp loaded 状态:比赛名展示块(国旗 + 本地化名),沿用 readonly input 的字号/粗细/居中 */
+.gen-tn-comp-display {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--gen-text);
+}
+.gen-tn-comp-display .comp-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .gen-tn-event-list {
@@ -520,34 +551,6 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-}
-.gen-tn-rounds-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.gen-tn-rounds-label {
-    font-size: 0.78rem;
-    color: var(--gen-text-mute);
-    margin-right: 4px;
-}
-.gen-tn-round-chip {
-    width: 28px;
-    height: 26px;
-    border: 1px solid var(--gen-border);
-    border-radius: 6px;
-    background: var(--gen-surface);
-    color: var(--gen-text-sub);
-    font-size: 0.85rem;
-    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-    cursor: pointer;
-}
-.gen-tn-round-chip:hover { border-color: var(--gen-border-strong); }
-.gen-tn-round-chip.is-active {
-    border-color: var(--gen-accent);
-    background: var(--gen-surface);
-    color: var(--gen-accent);
-    font-weight: 600;
 }
 .gen-tn-round-row {
     display: flex;
@@ -790,10 +793,39 @@
 
 /* ───────── TNoodle on-screen sheets ───────── */
 .gen-tn-sheets {
-    display: flex;
-    flex-direction: column;
+    /* 单列 grid + max-content:列宽 = 当前所有 sheet 中最宽那张的天然宽度,
+       其余 sheet 通过 width:100% 拉到同宽。和 flex column 不同,grid 这里
+       是关键 —— flex 无法做"按最宽兄弟节点同宽"。 */
+    display: grid;
+    grid-template-columns: max-content;
+    justify-content: center;
     gap: 1.25rem;
     margin-top: 1.5rem;
+}
+
+.gen-tn-round-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 0.75rem;
+}
+.gen-tn-round-chip {
+    border: 1px solid var(--gen-border);
+    background: var(--gen-surface);
+    color: var(--gen-text-sub);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gen-tn-round-chip:hover { color: var(--gen-text); border-color: var(--gen-border-strong); }
+.gen-tn-round-chip.is-active {
+    background: var(--gen-accent);
+    border-color: var(--gen-accent);
+    color: #FFF;
 }
 .gen-tn-sheet-title {
     font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
@@ -804,9 +836,9 @@
     margin: 0 0 0.5rem;
 }
 .gen-tn-sheet {
-    /* Shrink to content so the right side doesn't have a wide empty band. */
-    align-self: flex-start;
+    /* grid item:撑满列宽,从而和同 event 其它 sheet 同宽。 */
     max-width: 100%;
+    min-width: 0;
 }
 .gen-tn-sheet-header {
     display: flex;
@@ -828,6 +860,7 @@
     /* 表级 border 不要 —— 否则 Extra Scrambles 那行(left/right border:none)
        仍然能看到表自身的左右黑线穿过。改由每个 td 自己出 border,外缘
        自然由最左/最右单元格拼出来。 */
+    width: 100%;       /* 撑满 .gen-tn-sheet → 撑满 grid 列(=最宽 sheet 宽度) */
 }
 .gen-tn-sheet-table td {
     padding: 6px 10px;
