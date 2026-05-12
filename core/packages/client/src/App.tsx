@@ -100,8 +100,9 @@ const GenPage = lazy(() => import('./pages/gen/GenPage'));
 const NotationPage = lazy(() => import('./pages/notation/NotationPage'));
 // NOTE: Patterns — 著名 3x3 图案集
 const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
-// NOTE: /code — 编程语言长篇导览（TS / Rust / Go / Python ...）
+// NOTE: /code — 编程语言长篇导览（TS / Rust / Go / Python ...） + 站点架构
 const CodeLandingPage = lazy(() => import('./pages/code/CodeLandingPage'));
+const CodeArchitecturePage = lazy(() => import('./pages/code/CodeArchitecturePage'));
 const TsIntroPage = lazy(() => import('./pages/code/TsIntroPage'));
 const RustIntroPage = lazy(() => import('./pages/code/RustIntroPage'));
 const GoIntroPage = lazy(() => import('./pages/code/GoIntroPage'));
@@ -204,8 +205,10 @@ function App() {
         <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
         {/* Notation — 公式记号沙盒 */}
         <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
-        {/* Code — 编程语言长篇导览 */}
-        <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
+        {/* Code — 编程语言长篇导览 + 站点架构 */}
+        <Route path="/code" element={<Navigate to="/code/language" replace />} />
+        <Route path="/code/language" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
+        <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><CodeArchitecturePage /></Suspense>} />
         <Route path="/code/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
         <Route path="/code/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />
         <Route path="/code/go" element={<Suspense fallback={<div>Loading...</div>}><GoIntroPage /></Suspense>} />
