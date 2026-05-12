@@ -60,6 +60,7 @@ interface ReconStoreActions {
   loadAll: (wcaId?: string) => Promise<void>;
   setFilter: <K extends keyof ReconFilters>(key: K, value: ReconFilters[K]) => void;
   setSort: (key: SortKey, dir?: SortDir) => void;
+  resetSort: () => void;
   loadMore: () => void;
   resetPaging: () => void;
   getFilteredSolves: () => ReconSolve[];
@@ -156,6 +157,8 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       return { sortKey: key, sortDir: defaultAsc ? 'asc' : 'desc' };
     });
   },
+
+  resetSort: () => set({ sortKey: 'id', sortDir: 'desc' }),
 
   loadMore: () => {
     set((state) => ({

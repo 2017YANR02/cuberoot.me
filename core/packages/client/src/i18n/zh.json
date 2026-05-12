@@ -39,7 +39,8 @@
     "min": "下限",
     "max": "上限",
     "sortAsc": "升序",
-    "sortDesc": "降序"
+    "sortDesc": "降序",
+    "sortReset": "恢复默认排序"
   },
   "recon": {
     "title": "还原复盘",
@@ -137,7 +138,7 @@
     "saveChanges": "保存",
     "submitRecon": "提交复盘",
     "stm": "步数",
-    "tps": "手速",
+    "tps": "TPS",
     "exec": "操作",
     "memo": "记忆",
     "ll": "顶层",
