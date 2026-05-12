@@ -31,6 +31,7 @@ export interface ColpiWord {
   language: Language;
   offensive: boolean;
   score: number;
+  note: string | null;       // 用户解释 word 与 pair 的对应 (e.g. word=苹果 note=APPLE)
   submitter?: Submitter;     // 缺省 = 上游镜像
   myVote?: -1 | 1;           // 仅当用户已登录且投过票
   createdAt: string;
@@ -71,6 +72,7 @@ export interface SubmitInput {
   category: Category;
   language?: Language;       // 服务端 auto-detect, 客户端可覆盖
   country?: string | null;
+  note?: string | null;
 }
 
 export async function submitWord(body: SubmitInput): Promise<ColpiWord> {
@@ -84,6 +86,7 @@ export interface PatchInput {
   category?: Category;
   language?: Language;
   offensive?: boolean;       // 仅 admin 可改
+  note?: string | null;
 }
 
 export async function patchWord(id: number, body: PatchInput): Promise<ColpiWord> {

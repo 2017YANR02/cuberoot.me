@@ -242,6 +242,7 @@ CREATE TABLE colpi_words (
   submitter_wca_id    VARCHAR(20),                    -- NULL = 上游镜像
   submitter_name      VARCHAR(128),
   submitter_country   VARCHAR(8),                     -- ISO2 (如 'US') 用于显示国旗
+  note                TEXT,                           -- 用户解释 word 与 pair 的对应 (e.g. word=苹果 note=APPLE)
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

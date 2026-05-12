@@ -59,6 +59,16 @@ function validateWord(w: unknown): { ok: true; word: string } | { ok: false; err
   return { ok: true, word: trimmed };
 }
 
+/** Optional explanation field; empty/whitespace → null. */
+function normalizeNote(n: unknown): { ok: true; note: string | null } | { ok: false; error: string } {
+  if (n === undefined || n === null) return { ok: true, note: null };
+  if (typeof n !== 'string') return { ok: false, error: 'note must be string' };
+  const trimmed = n.trim();
+  if (!trimmed) return { ok: true, note: null };
+  if (trimmed.length > 500) return { ok: false, error: 'note too long' };
+  return { ok: true, note: trimmed };
+}
+
 interface WordRow {
   id: number | string;
   pair: string;
@@ -69,6 +79,7 @@ interface WordRow {
   submitter_wca_id: string | null;
   submitter_name: string | null;
   submitter_country: string | null;
+  note: string | null;
   created_at: string | Date;
   updated_at: string | Date;
 }
@@ -87,6 +98,7 @@ function rowToJson(r: WordWithMetaRow): Record<string, unknown> {
     language: r.language,
     offensive: r.offensive,
     score: Number(r.score),
+    note: r.note ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -181,11 +193,13 @@ colpiRoutes.post('/colpi/words', async (c) => {
 
   const body = await c.req.json<{
     pair?: unknown; word?: unknown; category?: unknown;
-    language?: unknown; country?: unknown;
+    language?: unknown; country?: unknown; note?: unknown;
   }>();
   if (!isValidPair(body.pair)) return c.json({ error: 'invalid pair' }, 400);
   const v = validateWord(body.word);
   if (!v.ok) return c.json({ error: v.error }, 400);
+  const n = normalizeNote(body.note);
+  if (!n.ok) return c.json({ error: n.error }, 400);
   const cat = typeof body.category === 'string' && CATEGORIES.has(body.category)
     ? body.category : 'unspecified';
   // Language: client may pass override; otherwise auto-detect from chars.
@@ -196,10 +210,10 @@ colpiRoutes.post('/colpi/words', async (c) => {
 
   try {
     const inserted = await query<WordRow>(
-      `INSERT INTO colpi_words (pair, word, category, language, submitter_wca_id, submitter_name, submitter_country)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO colpi_words (pair, word, category, language, submitter_wca_id, submitter_name, submitter_country, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [body.pair as string, v.word, cat, lang, user.wcaId, user.name, country],
+      [body.pair as string, v.word, cat, lang, user.wcaId, user.name, country, n.note],
     );
     return c.json({ ...rowToJson({ ...inserted[0], score: 0, my_vote: null }) });
   } catch (e) {
@@ -229,12 +243,13 @@ colpiRoutes.patch('/colpi/words/:id', async (c) => {
   }
 
   const body = await c.req.json<{
-    word?: unknown; category?: unknown; language?: unknown; offensive?: unknown;
+    word?: unknown; category?: unknown; language?: unknown; offensive?: unknown; note?: unknown;
   }>();
   let nextWord = row.word;
   let nextCat = row.category;
   let nextLang = row.language;
   let nextOffensive = row.offensive;
+  let nextNote: string | null = row.note;
   let wordChanged = false;
 
   if (body.word !== undefined) {
@@ -263,11 +278,16 @@ colpiRoutes.patch('/colpi/words/:id', async (c) => {
     if (!isAdmin) return c.json({ error: 'Admin access required for offensive flag' }, 403);
     nextOffensive = Boolean(body.offensive);
   }
+  if (body.note !== undefined) {
+    const n = normalizeNote(body.note);
+    if (!n.ok) return c.json({ error: n.error }, 400);
+    nextNote = n.note;
+  }
 
   try {
     await query(
-      `UPDATE colpi_words SET word = ?, category = ?, language = ?, offensive = ? WHERE id = ?`,
-      [nextWord, nextCat, nextLang, nextOffensive, id],
+      `UPDATE colpi_words SET word = ?, category = ?, language = ?, offensive = ?, note = ? WHERE id = ?`,
+      [nextWord, nextCat, nextLang, nextOffensive, nextNote, id],
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
