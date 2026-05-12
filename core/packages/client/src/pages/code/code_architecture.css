@@ -1021,34 +1021,7 @@
 .cal-stack {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-}
-
-.cal-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--bg-elev);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  font-family: var(--mono);
-  font-size: 11px;
-}
-.cal-legend-item {
-  white-space: nowrap;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-.cal-legend-note {
-  flex: 1 1 240px;
-  font-family: var(--serif);
-  font-size: 12.5px;
-  color: var(--ink-mute);
-  font-style: italic;
-  margin-left: 8px;
+  gap: 12px;
 }
 
 .cal-month {
@@ -1057,27 +1030,83 @@
   overflow: hidden;
   background: var(--bg-elev);
 }
-.cal-month-head {
+
+/* nav bar:prev / latest / next + 月份标签 + 当月活跃天数 + 键盘提示 */
+.cal-month-nav {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 12px 18px 10px;
-  background: rgba(244, 240, 229, 0.5);
-  border-bottom: 1px solid var(--rule);
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px 14px;
+  flex-wrap: wrap;
 }
-.cal-month-title {
-  margin: 0;
+.cal-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: border-color .12s, color .12s, background .12s;
+  flex-shrink: 0;
+}
+.cal-nav-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cal-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.cal-nav-latest {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0 12px;
+  height: 32px;
   font-family: var(--sans);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -.01em;
-  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: border-color .12s, color .12s, background .12s;
+  flex-shrink: 0;
 }
-.cal-month-stat {
+.cal-nav-latest:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cal-nav-latest:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.cal-nav-label {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -.01em;
+  margin-left: 12px;
+}
+.cal-nav-stat {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--ink-mute);
   letter-spacing: -.01em;
+}
+.cal-nav-hint {
+  margin-left: auto;
+  font-family: var(--serif);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-mute);
+}
+@media (max-width: 720px) {
+  .cal-nav-label { font-size: 18px; margin-left: 6px; }
+  .cal-nav-hint { display: none; }
 }
 
 /* MonthGrid 内部结构 — 在 arch-page 下重写, 跟 /calendar 不冲突 (它走 .calendar-page 作用域) */
@@ -1130,168 +1159,61 @@
   font-weight: 700;
   color: var(--ink-dim);
   line-height: 1.1;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
-.cal-chip {
-  display: block;
-  width: 100%;
-  text-align: left;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1.3;
-  padding: 2px 5px;
-  border-radius: 3px;
-  border: 1px solid transparent;
-  white-space: nowrap;
+.cal-note {
+  font-family: var(--serif);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+  word-break: break-word;
+  hyphens: auto;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 7;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  letter-spacing: -.01em;
-  cursor: pointer;
-  transition: filter .12s, transform .08s;
 }
-button.cal-chip { font-family: var(--mono); }
-.cal-chip:hover { filter: brightness(0.94); }
-.cal-chip:active { transform: scale(0.98); }
-span.cal-chip { cursor: default; }
-span.cal-chip:hover { filter: none; }
-.cal-chip-feat     { background: rgba(31, 58, 110, 0.10); color: var(--accent); border-color: rgba(31, 58, 110, 0.18); }
-.cal-chip-refactor { background: rgba(217, 119, 87, 0.12); color: var(--hot);    border-color: rgba(217, 119, 87, 0.22); }
-.cal-chip-perf     { background: rgba(74, 122, 74, 0.12);  color: var(--green);  border-color: rgba(74, 122, 74, 0.22); }
-.cal-chip-i18n     { background: rgba(126, 91, 174, 0.10); color: #7E5BAE;       border-color: rgba(126, 91, 174, 0.22); }
-.cal-chip-birth    { background: #FFF6E0; color: #8A6A1E; border-color: #D9C57E; font-weight: 700; }
-.cal-chip-other,
-.cal-chip-fix      { background: var(--bg); color: var(--ink-mute); border-color: var(--rule); }
+
+/* 可点 + 展开 */
+.arch-page .cal-grid .day-cell.cal-cell-has-entry {
+  cursor: pointer;
+  transition: background-color .12s, box-shadow .12s;
+}
+.arch-page .cal-grid .day-cell.cal-cell-has-entry:hover {
+  background: #F6F1E7;
+}
+.arch-page .cal-grid .day-cell.cal-cell-has-entry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.arch-page .cal-grid .day-cell.cal-cell-expanded {
+  background: #F4ECEA;
+  box-shadow: 0 0 0 2px var(--hot) inset;
+  z-index: 2;
+}
+.arch-page .cal-grid .day-cell.cal-cell-expanded .cal-note {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  color: var(--ink);
+}
+
+.arch-page .cal-grid .week-row { min-height: 120px; }
 
 @media (max-width: 720px) {
-  .arch-page .cal-grid .week-row { min-height: 72px; }
+  .arch-page .cal-grid .week-row { min-height: 92px; }
   .arch-page .cal-grid .day-cell { padding: 4px 3px 5px; gap: 2px; }
   .cal-day { font-size: 10.5px; }
-  .cal-chip { font-size: 9px; padding: 1px 3px; }
+  .cal-note { font-size: 10px; -webkit-line-clamp: 5; }
   .cal-month-head { padding: 10px 14px 8px; }
   .cal-month-title { font-size: 15px; }
-  .cal-legend { padding: 10px 12px; font-size: 10px; gap: 6px; }
-  .cal-legend-item { padding: 2px 6px; }
-  .cal-legend-note { font-size: 11.5px; margin-left: 0; flex-basis: 100%; }
   .history-tab { padding: 8px 12px; font-size: 13px; }
 }
 @media (max-width: 480px) {
-  .arch-page .cal-grid .week-row { min-height: 56px; }
+  .arch-page .cal-grid .week-row { min-height: 72px; }
   .arch-page .cal-grid .weekday-cell { font-size: 9px; padding: 4px 0; }
-  .cal-chip { font-size: 8.5px; }
-}
-
-/* ── Commit modal ────────────────────────────── */
-
-.commit-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(26, 26, 26, 0.55);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 16px;
-  animation: commit-modal-fade .12s ease-out;
-}
-@keyframes commit-modal-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.commit-modal {
-  background: var(--bg-elev);
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  padding: 22px 24px 20px;
-  max-width: 600px;
-  width: 100%;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
-  animation: commit-modal-rise .18s cubic-bezier(.16,.84,.44,1);
-}
-@keyframes commit-modal-rise {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-.commit-modal-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rule);
-}
-.commit-modal-tag {
-  width: auto;
-  flex-shrink: 0;
-  padding: 3px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  cursor: default;
-}
-.commit-modal-date {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: var(--ink-dim);
-  font-weight: 600;
-}
-.commit-modal-sha {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--ink-mute);
-  background: var(--bg);
-  border: 1px solid var(--rule);
-  padding: 2px 7px;
-  border-radius: 3px;
-}
-.commit-modal-close {
-  margin-left: auto;
-  background: transparent;
-  border: 0;
-  font-size: 22px;
-  line-height: 1;
-  color: var(--ink-mute);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background .12s, color .12s;
-}
-.commit-modal-close:hover { background: var(--bg); color: var(--ink); }
-.commit-modal-msg {
-  font-family: var(--mono);
-  font-size: 13.5px;
-  line-height: 1.65;
-  color: var(--ink);
-  margin: 0 0 18px;
-  padding: 14px 16px;
-  background: var(--bg);
-  border-radius: 6px;
-  border-left: 3px solid var(--accent);
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-.commit-modal-link {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--accent);
-  text-decoration: none;
-  padding: 8px 14px;
-  border: 1px solid var(--accent);
-  border-radius: 5px;
-  font-weight: 600;
-  transition: background .12s, color .12s;
-}
-.commit-modal-link:hover {
-  background: var(--accent);
-  color: #FFF;
-}
-@media (max-width: 480px) {
-  .commit-modal { padding: 18px 18px 16px; }
-  .commit-modal-msg { font-size: 12.5px; padding: 12px 14px; }
-  .commit-modal-link { font-size: 12px; padding: 7px 12px; }
+  .cal-note { font-size: 9px; line-height: 1.35; -webkit-line-clamp: 4; }
 }

@@ -1,4 +1,5 @@
-import { useEffect, useContext, createContext, useState, useMemo } from 'react';
+import { useEffect, useContext, createContext, useState, useMemo, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -815,136 +816,139 @@ function Timeline() {
 
 // ─── 交互组件:每日日历视图 ───────────────────────
 
-interface CommitEntry { sha: string; date: string; msg: string; tag: string; }
-const COMMITS = COMMITS_DATA as CommitEntry[];
-const REPO_URL = 'https://github.com/ruiminyan/ruiminyan.github.io';
+interface DayEntry { date: string; zh: string; en: string; }
+const DAYS = COMMITS_DATA as DayEntry[];
 
 // 项目寿命:2025-12-13 诞生 → 现在。6 个月铺满。
 const CAL_MONTHS = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05'];
 
 function CommitsCalendar() {
   const lang = useLang();
-  const [selected, setSelected] = useState<CommitEntry | null>(null);
   const byDate = useMemo(() => {
-    const m: Record<string, CommitEntry[]> = {};
-    for (const c of COMMITS) (m[c.date] ||= []).push(c);
+    const m: Record<string, DayEntry> = {};
+    for (const d of DAYS) m[d.date] = d;
     return m;
   }, []);
-  const tagCounts = useMemo(() => {
-    const t: Record<string, number> = {};
-    for (const c of COMMITS) t[c.tag] = (t[c.tag] || 0) + 1;
-    return t;
+  const [idx, setIdx] = useState(CAL_MONTHS.length - 1);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const gotoIdx = useCallback((delta: number) => {
+    setIdx((cur) => Math.max(0, Math.min(CAL_MONTHS.length - 1, cur + delta)));
   }, []);
-  return (
-    <div className="cal-stack">
-      <div className="cal-legend">
-        <span className={`cal-chip cal-chip-feat cal-legend-item`}>feat · {tagCounts.feat ?? 0}</span>
-        <span className={`cal-chip cal-chip-refactor cal-legend-item`}>refactor · {tagCounts.refactor ?? 0}</span>
-        <span className={`cal-chip cal-chip-perf cal-legend-item`}>perf · {tagCounts.perf ?? 0}</span>
-        <span className={`cal-chip cal-chip-i18n cal-legend-item`}>i18n · {tagCounts.i18n ?? 0}</span>
-        <span className={`cal-chip cal-chip-birth cal-legend-item`}>birth · {tagCounts.birth ?? 0}</span>
-        <span className="cal-legend-note">
-          {lang === 'zh'
-            ? '每天最多展示 3 条;点任意一条看完整 commit msg + GitHub 链接;空格 = 那天没"重要"提交'
-            : 'Up to 3 per day; click any chip to see the full commit message + GitHub link; blank = no substantive commit that day'}
-        </span>
-      </div>
-      {CAL_MONTHS.map((ym) => (
-        <CalMonth key={ym} ym={ym} byDate={byDate} lang={lang} onChipClick={setSelected} />
-      ))}
-      {selected && <CommitModal commit={selected} onClose={() => setSelected(null)} lang={lang} />}
-    </div>
-  );
-}
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'ArrowLeft') gotoIdx(-1);
+      else if (e.key === 'ArrowRight') gotoIdx(1);
+      else if (e.key === 'Escape') setExpanded(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [gotoIdx]);
 
-function CalMonth({ ym, byDate, lang, onChipClick }: {
-  ym: string;
-  byDate: Record<string, CommitEntry[]>;
-  lang: Lang;
-  onChipClick: (c: CommitEntry) => void;
-}) {
+  const ym = CAL_MONTHS[idx];
   const [y, m] = ym.split('-').map(Number);
   const daysInMonth = new Date(y, m, 0).getDate();
-
   let activeDays = 0;
-  let totalCommits = 0;
   for (let d = 1; d <= daysInMonth; d++) {
     const date = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const list = byDate[date];
-    if (list && list.length > 0) {
-      activeDays++;
-      totalCommits += list.length;
-    }
+    if (byDate[date]) activeDays++;
   }
-
   const monthLabel = lang === 'zh' ? `${y} 年 ${m} 月` : `${y}-${String(m).padStart(2, '0')}`;
-  const dows = lang === 'zh' ? ['一','二','三','四','五','六','日'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
   return (
-    <div className="cal-month">
-      <header className="cal-month-head">
-        <h3 className="cal-month-title">{monthLabel}</h3>
-        <span className="cal-month-stat">
-          {lang === 'zh' ? `${activeDays} 天有提交  ·  ${totalCommits} 次` : `${activeDays} active days  ·  ${totalCommits} commits`}
-        </span>
-      </header>
-      <MonthGrid
-        year={y}
-        month={m}
-        weekdays={dows}
-        className="cal-grid"
-        renderDay={(day, { inView }) => {
-          if (!inView) return null;
-          const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-          const commits = byDate[date] || [];
-          return (
-            <>
-              <div className="cal-day">{day.getDate()}</div>
-              {commits.map((cm) => (
-                <button
-                  key={cm.sha}
-                  type="button"
-                  className={`cal-chip cal-chip-${cm.tag}`}
-                  title={cm.msg}
-                  onClick={() => onChipClick(cm)}
-                >
-                  {cm.msg}
-                </button>
-              ))}
-            </>
-          );
-        }}
+    <div className="cal-stack">
+      <div className="cal-month-nav" role="navigation" aria-label={lang === 'zh' ? '月份切换' : 'Month nav'}>
+        <button
+          type="button"
+          className="cal-nav-btn"
+          onClick={() => gotoIdx(-1)}
+          disabled={idx === 0}
+          aria-label={lang === 'zh' ? '上一月' : 'Previous month'}
+        >
+          <ChevronLeft size={16} strokeWidth={1.75} />
+        </button>
+        <button
+          type="button"
+          className="cal-nav-latest"
+          onClick={() => setIdx(CAL_MONTHS.length - 1)}
+          disabled={idx === CAL_MONTHS.length - 1}
+        >
+          {lang === 'zh' ? '最新' : 'Latest'}
+        </button>
+        <button
+          type="button"
+          className="cal-nav-btn"
+          onClick={() => gotoIdx(1)}
+          disabled={idx === CAL_MONTHS.length - 1}
+          aria-label={lang === 'zh' ? '下一月' : 'Next month'}
+        >
+          <ChevronRight size={16} strokeWidth={1.75} />
+        </button>
+        <span className="cal-nav-label">{monthLabel}</span>
+        <span className="cal-nav-stat">{lang === 'zh' ? `${activeDays} 天有动静` : `${activeDays} active days`}</span>
+        <span className="cal-nav-hint">{lang === 'zh' ? '键盘 ← → 切换  ·  点格子展开' : '← → keys  ·  click to expand'}</span>
+      </div>
+      <CalMonth
+        key={ym}
+        ym={ym}
+        byDate={byDate}
+        lang={lang}
+        expanded={expanded}
+        onToggle={(d) => setExpanded((cur) => cur === d ? null : d)}
       />
     </div>
   );
 }
 
-function CommitModal({ commit, onClose, lang }: { commit: CommitEntry; onClose: () => void; lang: Lang }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [onClose]);
-  const url = `${REPO_URL}/commit/${commit.sha}`;
+function CalMonth({ ym, byDate, lang, expanded, onToggle }: {
+  ym: string;
+  byDate: Record<string, DayEntry>;
+  lang: Lang;
+  expanded: string | null;
+  onToggle: (date: string) => void;
+}) {
+  const [y, m] = ym.split('-').map(Number);
+  const dows = lang === 'zh' ? ['一','二','三','四','五','六','日'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
   return (
-    <div className="commit-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-        <header className="commit-modal-head">
-          <span className={`cal-chip cal-chip-${commit.tag} commit-modal-tag`}>{commit.tag}</span>
-          <span className="commit-modal-date">{commit.date}</span>
-          <code className="commit-modal-sha">{commit.sha}</code>
-          <button type="button" className="commit-modal-close" onClick={onClose} aria-label={lang === 'zh' ? '关闭' : 'Close'}>×</button>
-        </header>
-        <p className="commit-modal-msg">{commit.msg}</p>
-        <a href={url} target="_blank" rel="noreferrer" className="commit-modal-link">
-          {lang === 'zh' ? '在 GitHub 查看这条提交  →' : 'View on GitHub  →'}
-        </a>
-      </div>
+    <div className="cal-month">
+      <MonthGrid
+        year={y}
+        month={m}
+        weekdays={dows}
+        className="cal-grid"
+        dayCellProps={(day, { inView }) => {
+          if (!inView) return undefined;
+          const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+          if (!byDate[date]) return undefined;
+          const isExpanded = expanded === date;
+          return {
+            className: `cal-cell-has-entry${isExpanded ? ' cal-cell-expanded' : ''}`,
+            onClick: () => onToggle(date),
+            onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onToggle(date);
+              }
+            },
+            role: 'button',
+            tabIndex: 0,
+            'aria-expanded': isExpanded,
+          };
+        }}
+        renderDay={(day, { inView }) => {
+          if (!inView) return null;
+          const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+          const entry = byDate[date];
+          return (
+            <>
+              <div className="cal-day">{day.getDate()}</div>
+              {entry && <div className="cal-note">{lang === 'zh' ? entry.zh : entry.en}</div>}
+            </>
+          );
+        }}
+      />
     </div>
   );
 }
@@ -971,7 +975,7 @@ function HistoryView() {
           onClick={() => setMode('calendar')}
           aria-selected={mode === 'calendar'}
         >
-          {lang === 'zh' ? `日历  ·  每天都看 (${COMMITS.length} 条)` : `Calendar  ·  every commit (${COMMITS.length})`}
+          {lang === 'zh' ? `日历  ·  逐日总结 (${DAYS.length} 天)` : `Calendar  ·  per-day summary (${DAYS.length} days)`}
         </button>
       </div>
       {mode === 'list' ? <Timeline /> : <CommitsCalendar />}
