@@ -16,6 +16,24 @@ export interface Comp {
   events?: string[];
 }
 
+/** 启发式:past comp 结束 60+ 天仍 0 events ⇒ 实际没办成 ⇒ 视为已取消。
+ *  60 天 buffer 避免最近结束、results 还没传到 WCA dump 的真比赛被误标。 */
+export const CANCELLED_BUFFER_DAYS = 60;
+
+export function defaultCancelledCutoffIso(): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - CANCELLED_BUFFER_DAYS);
+  return d.toISOString().slice(0, 10);
+}
+
+export function isCancelledComp(
+  c: { end_date?: string; start_date: string; events?: string[] },
+  cutoffIso: string = defaultCancelledCutoffIso(),
+): boolean {
+  const endIso = c.end_date || c.start_date;
+  return !!endIso && endIso < cutoffIso && (c.events ?? []).length === 0;
+}
+
 let cache: Comp[] | null = null;
 let inflight: Promise<Comp[]> | null = null;
 

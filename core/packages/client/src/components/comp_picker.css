@@ -48,6 +48,13 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* 已取消比赛(60 天后仍 0 events):name/date/city 都划线 + 淡化,id 保留可读以便手敲。 */
+.comp-picker-item.is-cancelled .comp-picker-name,
+.comp-picker-item.is-cancelled .comp-picker-meta {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
 /* TW 特判走 <img>，没有 class 时会显示原始 SVG 尺寸（巨大）；锁住所有旗子的尺寸 */
 .comp-picker-item > .fi,
 .comp-picker-item > img {

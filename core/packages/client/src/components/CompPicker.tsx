@@ -2,7 +2,7 @@
 // 选中时通过 onPick 回调把整条 Comp 记录给父组件（父决定回填哪些字段）。
 import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Flag } from '../utils/flag';
-import { loadComps, searchComps, type Comp } from '../utils/comp_search';
+import { loadComps, searchComps, isCancelledComp, type Comp } from '../utils/comp_search';
 import { compNameZh } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
 import { localizeCity } from '../utils/city_localize';
@@ -113,8 +113,14 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
           ))}
           {!disableSuggestions && results.map(c => {
             const zh = isZh ? compNameZh(c.name) : '';
+            const cancelled = isCancelledComp(c);
             return (
-              <button key={c.id} type="button" className="comp-picker-item" onClick={() => handlePick(c)}>
+              <button
+                key={c.id}
+                type="button"
+                className={`comp-picker-item${cancelled ? ' is-cancelled' : ''}`}
+                onClick={() => handlePick(c)}
+              >
                 <Flag iso2={c.country} />
                 <span className="comp-picker-main">
                   <span className="comp-picker-name">{stripWcaPrefix(zh || c.name)}</span>

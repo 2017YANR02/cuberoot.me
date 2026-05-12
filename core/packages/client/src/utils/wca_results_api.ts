@@ -137,7 +137,7 @@ export function wcaIdToCubingSlug(wcaId: string): string {
     .replace(/([a-zA-Z])(\d)/g, '$1-$2');
 }
 
-interface WcaScrambleRow {
+export interface WcaScrambleRow {
   event_id: string;
   round_type_id: string;
   group_id: string;
@@ -149,7 +149,7 @@ interface WcaScrambleRow {
 const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();
 
 // NOTE: 同 fetchWcaResults —— server proxy 优先 + 直拉 fallback
-function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
+export function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
   const hit = scrambleCache.get(compId);
   if (hit) return hit;
   const proxyUrl = apiUrl(`/v1/recon/wca-scrambles?compId=${encodeURIComponent(compId)}`);
