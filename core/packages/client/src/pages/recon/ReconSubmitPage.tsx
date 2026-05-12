@@ -31,7 +31,7 @@ import CubeKeyboardSection from '../../components/CubeKeyboardSection';
 import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import ReconAutofill from './components/ReconAutofill';
-import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
+import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes } from '../../utils/recon_alg_utils';
 import AlgInput from '../../components/AlgInput';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
@@ -1251,6 +1251,18 @@ export default function ReconSubmitPage() {
               onChange={text => setField('solution', text)}
               onCaretChange={() => {
                 if (solutionRef.current) handleCursorSync(solutionRef.current);
+              }}
+              onBlur={() => {
+                // 失焦时逐行规范化 `//`:前后各**恰好**一个空格(收缩多空格 + 补全无空格)
+                // 行首注释 `// comment` 保持无前导空格;行内 `R//x` / `R  //  x` 都变 `R // x`
+                const el = solutionRef.current;
+                if (!el) return;
+                const next = normalizeSolutionSlashes(el.value);
+                if (next !== el.value) {
+                  el.value = next;
+                  setField('solution', next);
+                  autoResize(el);
+                }
               }}
             />
           )}
