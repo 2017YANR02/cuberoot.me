@@ -229,7 +229,204 @@ const TOPICS: Topic[] = [
     logo: <span className="topic-glyph">Mo</span>,
     available: true,
   },
+  {
+    slug: 'csharp',
+    href: '/code/language/csharp',
+    zh: {
+      title: 'C#',
+      sub: '.NET 与 Unity 的双子语言',
+      tagline: '2000 年 Anders Hejlsberg（Turbo Pascal / Delphi / 后来 TypeScript 同一人）回应 Java。从 Windows-only 到 .NET Core 开源，再到 Unity ~70% 游戏底层',
+    },
+    en: {
+      title: 'C#',
+      sub: 'Twin language of .NET and Unity',
+      tagline: 'Anders Hejlsberg\'s 2000 answer to Java (same person behind Turbo Pascal, Delphi, and later TypeScript). From Windows-only to open-source .NET Core, plus ~70% of all games via Unity',
+    },
+    accent: '#512BD4',
+    logo: <span className="topic-glyph">C#</span>,
+    available: true,
+  },
+  {
+    slug: 'ruby',
+    href: '/code/language/ruby',
+    zh: {
+      title: 'Ruby',
+      sub: '为程序员幸福而生',
+      tagline: '1995 年 Matz 在日本发布，2004 年 DHH 抽出 Rails 推开 Web 2.0 黄金十年。2026 年 GitHub / Shopify / Stripe 仍跑在上面，YJIT 让它再次锋利',
+    },
+    en: {
+      title: 'Ruby',
+      sub: 'Optimised for programmer happiness',
+      tagline: 'Matz released Ruby in Japan in 1995; in 2004 DHH extracted Rails and kicked off the Web 2.0 decade. GitHub / Shopify / Stripe still run on it in 2026, and YJIT has it sharp again',
+    },
+    accent: '#CC342D',
+    logo: <span className="topic-glyph">Rb</span>,
+    available: true,
+  },
+  {
+    slug: 'php',
+    href: '/code/language/php',
+    zh: {
+      title: 'PHP',
+      sub: '半个互联网的后端',
+      tagline: '1994 Rasmus 的个人主页脚本，30 年后 WordPress 占 40% 网站、Wikipedia 跑在它上面。PHP 7 性能 2 倍、8 JIT，从"fractal of bad design"翻身成熟语言',
+    },
+    en: {
+      title: 'PHP',
+      sub: 'Half the web\'s backend',
+      tagline: 'Rasmus\'s 1994 personal-homepage script, 30 years later still powering ~40% of websites via WordPress plus Wikipedia. PHP 7 doubled perf, PHP 8 added a JIT — from "fractal of bad design" to mature platform',
+    },
+    accent: '#777BB4',
+    logo: <span className="topic-glyph">Ph</span>,
+    available: true,
+  },
+  {
+    slug: 'lua',
+    href: '/code/language/lua',
+    zh: {
+      title: 'Lua',
+      sub: '嵌入语言之王',
+      tagline: '1993 巴西 PUC-Rio，200KB 解释器 + 0 依赖。WoW / Roblox / Neovim / Redis / Nginx 全靠它，Mike Pall 一人撑起的 LuaJIT 性能直追 V8',
+    },
+    en: {
+      title: 'Lua',
+      sub: 'King of embedded languages',
+      tagline: 'Born 1993 at PUC-Rio in Brazil. 200KB interpreter, zero dependencies. WoW / Roblox / Neovim / Redis / Nginx all run on it; Mike Pall\'s LuaJIT, written single-handed, rivals V8',
+    },
+    accent: '#2C2D72',
+    logo: <span className="topic-glyph">Lu</span>,
+    available: true,
+  },
+  {
+    slug: 'haskell',
+    href: '/code/language/haskell',
+    zh: {
+      title: 'Haskell',
+      sub: '纯函数式的母语',
+      tagline: '1987 Portland 委员会立项，monad / typeclass / lazy eval 的源头。Rust trait / Swift protocol / TS HKT 讨论都欠它一份血脉',
+    },
+    en: {
+      title: 'Haskell',
+      sub: 'Native tongue of pure FP',
+      tagline: '1987 Portland committee. The wellspring of monads, type classes and lazy evaluation. Rust traits, Swift protocols, and TS HKT debates all owe Haskell a debt',
+    },
+    accent: '#5E5086',
+    logo: <span className="topic-glyph">Hs</span>,
+    available: true,
+  },
 ];
+
+const MARKUP_TOPICS: Topic[] = [
+  {
+    slug: 'html',
+    href: '/code/language/html',
+    zh: {
+      title: 'HTML',
+      sub: 'web 的骨架',
+      tagline: '1991 Tim Berners-Lee 在 CERN 发布第一个网站。35 年里 XHTML 试错、WHATWG vs W3C、HTML5 成 Living Standard，2024+ 持续重新吸收 JS 表面积',
+    },
+    en: {
+      title: 'HTML',
+      sub: 'Skeleton of the web',
+      tagline: 'Tim Berners-Lee shipped the first website at CERN in 1991. 35 years of XHTML detours, WHATWG vs W3C, HTML5 becoming a Living Standard, and recent years quietly re-absorbing JS surface area',
+    },
+    accent: '#E34F26',
+    logo: <span className="topic-glyph">Ht</span>,
+    available: true,
+  },
+  {
+    slug: 'css',
+    href: '/code/language/css',
+    zh: {
+      title: 'CSS',
+      sub: 'web 的造型语言',
+      tagline: '1996 Håkon Wium Lie 提案。从 IE6 黑暗期到 2017 Grid 落地、2023 :has() / 容器查询。CSS-in-JS 退潮，"平台追上来了"',
+    },
+    en: {
+      title: 'CSS',
+      sub: 'Styling language of the web',
+      tagline: 'Håkon Wium Lie\'s 1996 proposal. From the IE6 dark age to Grid in 2017 and :has() / container queries in 2023. CSS-in-JS receded — "the platform caught up"',
+    },
+    accent: '#1572B6',
+    logo: <span className="topic-glyph">Cs</span>,
+    available: true,
+  },
+];
+
+const SCRIPT_TOPICS: Topic[] = [
+  {
+    slug: 'bash',
+    href: '/code/language/bash',
+    zh: {
+      title: 'Bash',
+      sub: '运维的胶水',
+      tagline: '1989 Brian Fox 的 GNU "Bourne again"。35 年了仍是 CI / Dockerfile / 启动脚本的默认语言。人人讨厌、人人都写',
+    },
+    en: {
+      title: 'Bash',
+      sub: 'Glue of ops',
+      tagline: 'Brian Fox\'s 1989 GNU "Bourne again". 35 years on, still the default of CI runners, Dockerfiles and bootstrap scripts. Everyone hates it; everyone writes it',
+    },
+    accent: '#4EAA25',
+    logo: <span className="topic-glyph">$_</span>,
+    available: true,
+  },
+  {
+    slug: 'sql',
+    href: '/code/language/sql',
+    zh: {
+      title: 'SQL',
+      sub: '数据的通用查询语',
+      tagline: '1970 Codd 提关系模型，1974 IBM System R 设计 SEQUEL。50+ 年穿越 NoSQL 浪潮回归——DuckDB / ClickHouse / 分布式 SQL 在 2026 全面复兴',
+    },
+    en: {
+      title: 'SQL',
+      sub: 'Lingua franca of data',
+      tagline: 'Codd\'s 1970 relational model, IBM System R\'s 1974 SEQUEL design. 50+ years through the NoSQL wave and back — DuckDB, ClickHouse and distributed SQL all surging by 2026',
+    },
+    accent: '#336791',
+    logo: <span className="topic-glyph">Sq</span>,
+    available: true,
+  },
+];
+
+function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
+  const text = t[lang];
+  const className = `topic-card${t.available ? '' : ' is-soon'}`;
+  const inner = (
+    <>
+      <div className="topic-logo" style={{ background: t.available ? t.accent : '#222' }}>
+        {t.logo}
+      </div>
+      <div className="topic-body">
+        <div className="topic-title-row">
+          <h2 className="topic-title">{text.title}</h2>
+          {!t.available && (
+            <span className="topic-soon">{lang === 'zh' ? '即将上线' : 'Soon'}</span>
+          )}
+        </div>
+        <div className="topic-sub" style={{ color: t.available ? t.accent : 'var(--ts-faint, #4A5772)' }}>
+          {text.sub}
+        </div>
+        <p className="topic-tagline">{text.tagline}</p>
+      </div>
+      {t.available && (
+        <div className="topic-arrow" aria-hidden="true">
+          →
+        </div>
+      )}
+    </>
+  );
+  return t.available ? (
+    <Link key={t.slug} to={t.href} className={className} style={{ ['--accent' as string]: t.accent }}>
+      {inner}
+    </Link>
+  ) : (
+    <div key={t.slug} className={className} aria-disabled="true">
+      {inner}
+    </div>
+  );
+}
 
 export default function CodeLandingPage() {
   const { i18n } = useTranslation();
@@ -307,44 +504,27 @@ export default function CodeLandingPage() {
       </Link>
 
       <main className="code-landing-grid">
-        {TOPICS.map((t) => {
-          const text = t[lang];
-          const className = `topic-card${t.available ? '' : ' is-soon'}`;
-          const inner = (
-            <>
-              <div className="topic-logo" style={{ background: t.available ? t.accent : '#222' }}>
-                {t.logo}
-              </div>
-              <div className="topic-body">
-                <div className="topic-title-row">
-                  <h2 className="topic-title">{text.title}</h2>
-                  {!t.available && (
-                    <span className="topic-soon">{lang === 'zh' ? '即将上线' : 'Soon'}</span>
-                  )}
-                </div>
-                <div className="topic-sub" style={{ color: t.available ? t.accent : 'var(--ts-faint, #4A5772)' }}>
-                  {text.sub}
-                </div>
-                <p className="topic-tagline">{text.tagline}</p>
-              </div>
-              {t.available && (
-                <div className="topic-arrow" aria-hidden="true">
-                  →
-                </div>
-              )}
-            </>
-          );
-          return t.available ? (
-            <Link key={t.slug} to={t.href} className={className} style={{ ['--accent' as string]: t.accent }}>
-              {inner}
-            </Link>
-          ) : (
-            <div key={t.slug} className={className} aria-disabled="true">
-              {inner}
-            </div>
-          );
-        })}
+        {TOPICS.map((t) => renderTopicCard(t, lang))}
       </main>
+
+      <section className="code-landing-section">
+        <div className="code-landing-section-head">
+          <div className="code-landing-section-tag">
+            // {lang === 'zh' ? '标记 / 脚本 / 查询' : 'Markup / script / query'}
+          </div>
+          <h2 className="code-landing-section-title">
+            {lang === 'zh' ? '不是编程语言,但绕不开' : 'Not programming languages — but unavoidable'}
+          </h2>
+          <p className="code-landing-section-sub">
+            {lang === 'zh'
+              ? 'HTML / CSS 是声明式标记与样式;Bash / SQL 是脚本与查询。每天都写,但通常不在"编程语言"的清单里'
+              : 'HTML / CSS are declarative markup and styling; Bash and SQL are scripting and query. Daily tools, rarely on the "programming language" list'}
+          </p>
+        </div>
+        <div className="code-landing-grid">
+          {[...MARKUP_TOPICS, ...SCRIPT_TOPICS].map((t) => renderTopicCard(t, lang))}
+        </div>
+      </section>
 
       <footer className="code-landing-foot">
         <div className="code-landing-foot-line">
