@@ -2,7 +2,7 @@
  * 复盘列表页——1:1 对齐原版 recon/recon.js（718 行）
  * NOTE: 列结构、格式化、工具栏、交互完全忠于原版
  */
-import { cloneElement, useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { cloneElement, useEffect, useMemo, useState, useRef, useCallback, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useReconStore } from '../../stores/recon_store';
@@ -24,7 +24,7 @@ import { EventSelect } from '../../components/EventSelect';
 import { ListSelect, type ListSelectItem } from '../../components/ListSelect';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventIcon } from '../../components/EventIcon';
-import { ColFilter } from '../../components/ColFilter/ColFilter';
+import { ColFilter, ColFilterCloseContext } from '../../components/ColFilter/ColFilter';
 import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import { Plus } from 'lucide-react';
 import '../../recon.css';
@@ -72,29 +72,87 @@ interface RangeFilterProps {
 }
 
 function RangeFilter({ min, max, onChange }: RangeFilterProps) {
-  const { t } = useTranslation();
-  const parse = (v: string): number | null => {
-    if (!v.trim()) return null;
-    const n = parseFloat(v);
-    return isNaN(n) ? null : n;
+  // 单输入框 + 智能解析:
+  //   `12.71`  → 精确 (min=max=12.71)
+  //   `12~13`  → 范围
+  //   `12~`    → ≥ 12
+  //   `~13`    → ≤ 13
+  //   空       → 无过滤
+  // 反向显示:min==max 时只显示数字(精确);min/max 缺一就显示半开区间。
+  // 旁边的 ~ 按钮:iOS Safari decimal 键盘没 ~,提供 touch 入口插入到光标位置。
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const placeholder = isZh ? '12.71 或 12~13' : '12.71 or 12~13';
+  const closePopover = useContext(ColFilterCloseContext);
+  const display = (() => {
+    if (min == null && max == null) return '';
+    if (min != null && max != null && min === max) return String(min);
+    return `${min ?? ''}~${max ?? ''}`;
+  })();
+  const [text, setText] = useState(display);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // min/max 从外部变(清除按钮),同步回 text
+  useEffect(() => { setText(display); }, [display]);
+
+  const commit = (v: string) => {
+    const s = v.trim();
+    if (!s) { onChange(null, null); return; }
+    const parseNum = (x: string): number | null => {
+      const t = x.trim();
+      if (!t) return null;
+      const n = parseFloat(t);
+      return isNaN(n) ? null : n;
+    };
+    if (s.includes('~')) {
+      const [lo, hi] = s.split('~');
+      onChange(parseNum(lo), parseNum(hi));
+    } else {
+      const n = parseNum(s);
+      onChange(n, n);
+    }
   };
+
+  const insertTilde = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? text.length;
+    const end = el.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + '~' + text.slice(end);
+    setText(next);
+    // 下一帧把光标放在 ~ 之后,保持 input focus 不让软键盘消失
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + 1, start + 1);
+    });
+  };
+
   return (
     <div className="recon-range-filter">
       <input
-        type="number"
-        step="0.01"
-        placeholder={t('common.min')}
-        value={min ?? ''}
-        onChange={(e) => onChange(parse(e.target.value), max)}
+        ref={inputRef}
+        type="text"
+        inputMode="decimal"
+        placeholder={placeholder}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            commit((e.target as HTMLInputElement).value);
+            // iOS Safari 软键盘 ✓ 按下 → keydown Enter,顺手关 popover(同时收键盘 = input blur)
+            (e.target as HTMLInputElement).blur();
+            closePopover?.();
+          }
+        }}
       />
-      <span className="recon-range-sep">~</span>
-      <input
-        type="number"
-        step="0.01"
-        placeholder={t('common.max')}
-        value={max ?? ''}
-        onChange={(e) => onChange(min, parse(e.target.value))}
-      />
+      {/* 数字键盘没 ~,提供按钮入口;onMouseDown preventDefault 防止 input 失焦关 popover */}
+      <button
+        type="button"
+        className="recon-range-tilde-btn"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={insertTilde}
+        aria-label="insert tilde"
+      >~</button>
     </div>
   );
 }
@@ -125,7 +183,7 @@ export default function ReconListPage() {
     loading, error, filters,
     sortKey, sortDir,
     displayCount,
-    loadAll, setFilter, setSort,
+    loadAll, setFilter, setSort, resetSort,
     getFilteredSolves, getAvailableEvents, getAvailableMethods, getAvailableSolvers,
     getAvailableReconers,
     getAvailableComps, getAvailableRecords, getAvailableRounds, getAvailableAoTypes,
@@ -748,6 +806,7 @@ export default function ReconListPage() {
                       onSort: col.sortable && col.key
                         ? (dir: 'asc' | 'desc') => setSort(col.key as SortKey, dir)
                         : undefined,
+                      onSortReset: col.sortable ? resetSort : undefined,
                     }) : null;
                     const onThClick = () => {
                       // 有 filter → 整列点击开 popup;无 filter 但 sortable → 老的 click-cycle 排序
