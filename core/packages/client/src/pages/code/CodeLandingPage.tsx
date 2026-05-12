@@ -251,7 +251,7 @@ export default function CodeLandingPage() {
           <LangToggle variant="inline" />
         </div>
         <h1 className="code-landing-title">
-          <span className="code-landing-prefix">/</span>code<span className="code-landing-prefix">/</span>language
+          <span className="code-landing-prefix">/</span>language
           <span className="code-landing-cursor">_</span>
         </h1>
         <p className="code-landing-sub">
