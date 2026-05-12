@@ -532,7 +532,7 @@ export default function JavaIntroPage() {
       cancelAnimationFrame(raf);
       anchors.forEach((a) => a.removeEventListener('click', onAnchorClick));
     };
-  }, [lang]);
+  }, []);
 
   return (
     <LangCtx.Provider value={lang}>

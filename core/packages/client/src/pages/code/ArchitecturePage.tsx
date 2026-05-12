@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
 import COMMITS_DATA from './timeline_commits.json';
 import MonthGrid from '../../components/MonthGrid';
-import './code_architecture.css';
+import './architecture.css';
 
 type Lang = 'zh' | 'en';
 const LangCtx = createContext<Lang>('zh');
@@ -985,7 +985,7 @@ function HistoryView() {
 
 // ─── 主组件 ───────────────────────────────────────
 
-export default function CodeArchitecturePage() {
+export default function ArchitecturePage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 

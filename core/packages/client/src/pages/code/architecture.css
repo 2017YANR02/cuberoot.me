@@ -568,8 +568,9 @@
   color: var(--accent);
 }
 @media (max-width: 720px) {
-  .arch-tbl { font-size: 13px; }
+  .arch-tbl { font-size: 13px; display: block; overflow-x: auto; }
   .arch-tbl th, .arch-tbl td { padding: 10px 12px; }
+  .arch-tbl-topic, .arch-tbl-pick, .arch-tbl-alt { white-space: normal; }
 }
 
 /* ── 08 Detail cards ───────────────────────────── */
