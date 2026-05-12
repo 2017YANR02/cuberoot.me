@@ -193,12 +193,14 @@ export default function ColpiPage() {
   const [submitOpen, setSubmitOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formWord, setFormWord] = useState('');
+  const [formNote, setFormNote] = useState('');
   const [formCategory, setFormCategory] = useState<Category>('unspecified');
   const [formLang, setFormLang] = useState<string>(() => langFilter);
   useEffect(() => {
     setSubmitOpen(false);
     setEditingId(null);
     setFormWord('');
+    setFormNote('');
     setFormCategory('unspecified');
   }, [activePair]);
   // Default new submissions to whatever lang the user is browsing.
@@ -287,6 +289,7 @@ export default function ColpiPage() {
     if (!user) { showToast(isZh ? '请先登录后再提交' : 'Please log in to submit'); return; }
     setEditingId(null);
     setFormWord('');
+    setFormNote('');
     setFormCategory('unspecified');
     setSubmitOpen(true);
   };
@@ -302,10 +305,12 @@ export default function ColpiPage() {
       const created = await submitWord({
         pair: activePair, word, category: formCategory, language: formLang as Language,
         country: user.country ?? null,
+        note: formNote.trim() || null,
       });
       upsertWordLocal(created);
       setSubmitOpen(false);
       setFormWord('');
+      setFormNote('');
       setFormCategory('unspecified');
       showToast(isZh ? '已提交' : 'Submitted');
     } catch (e) {
@@ -319,6 +324,7 @@ export default function ColpiPage() {
     setSubmitOpen(false);
     setEditingId(w.id);
     setFormWord(w.word);
+    setFormNote(w.note ?? '');
     setFormCategory(w.category);
     setFormLang(w.language);
   };
@@ -328,10 +334,14 @@ export default function ColpiPage() {
     const err = validateWordInput(word, isZh);
     if (err) { showToast(err); return; }
     try {
-      const updated = await patchWord(editingId, { word, category: formCategory, language: formLang as Language });
+      const updated = await patchWord(editingId, {
+        word, category: formCategory, language: formLang as Language,
+        note: formNote.trim() || null,
+      });
       upsertWordLocal(updated);
       setEditingId(null);
       setFormWord('');
+      setFormNote('');
       setFormCategory('unspecified');
       showToast(isZh ? '已保存' : 'Saved');
     } catch (e) {
@@ -546,10 +556,11 @@ export default function ColpiPage() {
                   <FormFields
                     isZh={isZh}
                     word={formWord} setWord={setFormWord}
+                    note={formNote} setNote={setFormNote}
                     category={formCategory} setCategory={setFormCategory}
                     lang={formLang} setLang={setFormLang}
                     onConfirm={handleEditConfirm}
-                    onCancel={() => { setEditingId(null); setFormWord(''); }}
+                    onCancel={() => { setEditingId(null); setFormWord(''); setFormNote(''); }}
                     confirmLabel={isZh ? '保存' : 'Save'}
                   />
                 </li>
@@ -561,6 +572,7 @@ export default function ColpiPage() {
                     title={isZh ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en}
                   />
                   <span className="colpi-detail-word">{w.word}</span>
+                  {w.note && <span className="colpi-detail-note">{w.note}</span>}
                   {w.submitter && (
                     <span
                       className="colpi-submitter"
@@ -616,10 +628,11 @@ export default function ColpiPage() {
               <FormFields
                 isZh={isZh}
                 word={formWord} setWord={setFormWord}
+                note={formNote} setNote={setFormNote}
                 category={formCategory} setCategory={setFormCategory}
                 lang={formLang} setLang={setFormLang}
                 onConfirm={handleSubmitConfirm}
-                onCancel={() => { setSubmitOpen(false); setFormWord(''); }}
+                onCancel={() => { setSubmitOpen(false); setFormWord(''); setFormNote(''); }}
                 confirmLabel={isZh ? '提交' : 'Submit'}
               />
             </div>
@@ -654,6 +667,7 @@ export default function ColpiPage() {
                   </td>
                   <td className="colpi-recent-word">
                     {w.word}
+                    {w.note && <span className="colpi-detail-note">{w.note}</span>}
                     {w.submitter && (
                       <span className="colpi-submitter" title={w.submitter.name || w.submitter.wcaId}>
                         {w.submitter.country && <Flag iso2={w.submitter.country} className="colpi-submitter-flag" />}
@@ -715,12 +729,14 @@ export default function ColpiPage() {
 
 // ── shared input form for submit + edit ──
 function FormFields({
-  isZh, word, setWord, category, setCategory, lang, setLang,
+  isZh, word, setWord, note, setNote, category, setCategory, lang, setLang,
   onConfirm, onCancel, confirmLabel,
 }: {
   isZh: boolean;
   word: string;
   setWord: (s: string) => void;
+  note: string;
+  setNote: (s: string) => void;
   category: Category;
   setCategory: (c: Category) => void;
   lang: string;
@@ -742,6 +758,18 @@ function FormFields({
         placeholder={isZh ? '输入一个词 (例如 ROCKET / 苹果)' : 'Enter a word (e.g. ROCKET, 苹果)'}
         maxLength={40}
         autoFocus
+      />
+      <input
+        type="text"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onConfirm();
+          if (e.key === 'Escape') onCancel();
+        }}
+        placeholder={isZh ? '备注 (可选,例如 APPLE)' : 'Note (optional, e.g. APPLE)'}
+        maxLength={500}
+        className="colpi-form-note"
       />
       <select
         value={category}

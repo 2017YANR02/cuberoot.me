@@ -469,6 +469,16 @@
   border-radius: 4px;
 }
 .colpi-detail-word { font-weight: 600; }
+.colpi-detail-note {
+  margin-left: 6px;
+  color: #888;
+  font-size: 0.85em;
+  font-style: italic;
+}
+.colpi-form-note {
+  flex: 1 1 100%;
+  min-width: 0;
+}
 /* Vote buttons in the detail panel: hidden until row hover (matches the
  * submitter-name hover-reveal behavior). Owner / admin actions follow suit
  * — keeps each row visually quiet by default. */
