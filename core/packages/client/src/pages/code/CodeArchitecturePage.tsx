@@ -13,216 +13,342 @@ function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
   return <>{useLang() === 'zh' ? zh : en}</>;
 }
 
-interface Stat {
-  value: string;
-  zh: string;
-  en: string;
+// ─── SVG 1: 系统全景图 ────────────────────────────
+function SystemTopoSVG() {
+  return (
+    <svg viewBox="0 0 880 480" className="diagram-svg" role="img" aria-label="System topology">
+      <g className="d-box d-box-ext">
+        <rect x="340" y="20" width="200" height="60" rx="6" />
+        <text x="440" y="46" className="d-title">GitHub Actions</text>
+        <text x="440" y="64" className="d-sub">CI · 周更 · deploy</text>
+      </g>
+
+      <g className="d-box d-box-ext">
+        <rect x="80" y="400" width="180" height="60" rx="6" />
+        <text x="170" y="426" className="d-title">WCA Public Dump</text>
+        <text x="170" y="444" className="d-sub">每周 · .sql + .tsv</text>
+      </g>
+
+      <g className="d-box d-box-user">
+        <rect x="20" y="200" width="180" height="80" rx="10" />
+        <text x="110" y="230" className="d-title">User Browser</text>
+        <text x="110" y="248" className="d-sub">Chrome / Safari / Edge</text>
+        <text x="110" y="266" className="d-sub d-mono">cuberoot.me</text>
+      </g>
+
+      <g className="d-box d-box-server">
+        <rect x="320" y="130" width="240" height="230" rx="10" />
+        <text x="440" y="160" className="d-title d-title-lg">Cloud VM</text>
+        <text x="440" y="180" className="d-sub d-mono">one box, three services</text>
+        <line x1="340" y1="200" x2="540" y2="200" className="d-divider" />
+
+        <g>
+          <rect x="340" y="214" width="200" height="36" rx="4" className="d-inner d-inner-a" />
+          <text x="440" y="237" className="d-inner-text">nginx <tspan className="d-port">:443</tspan></text>
+        </g>
+        <g>
+          <rect x="340" y="258" width="200" height="36" rx="4" className="d-inner d-inner-b" />
+          <text x="440" y="281" className="d-inner-text">Hono API <tspan className="d-port">:3001</tspan></text>
+        </g>
+        <g>
+          <rect x="340" y="302" width="200" height="36" rx="4" className="d-inner d-inner-c" />
+          <text x="440" y="325" className="d-inner-text">PostgreSQL 13 <tspan className="d-port">:5432</tspan></text>
+        </g>
+      </g>
+
+      <g className="d-box d-box-ext">
+        <rect x="680" y="200" width="180" height="80" rx="10" />
+        <text x="770" y="230" className="d-title">GH Pages</text>
+        <text x="770" y="248" className="d-sub">fallback mirror</text>
+        <text x="770" y="266" className="d-sub d-mono">ruiminyan.github.io</text>
+      </g>
+
+      <g className="d-arrow d-arrow-hot">
+        <line x1="200" y1="240" x2="320" y2="240" />
+        <polygon points="320,240 312,236 312,244" />
+        <text x="260" y="232" className="d-label">HTTPS</text>
+      </g>
+
+      <g className="d-arrow d-arrow-cold">
+        <line x1="680" y1="240" x2="560" y2="240" />
+        <polygon points="560,240 568,236 568,244" />
+        <text x="620" y="232" className="d-label">301</text>
+      </g>
+
+      <g className="d-arrow d-arrow-cold">
+        <line x1="440" y1="80" x2="440" y2="130" />
+        <polygon points="440,130 436,122 444,122" />
+        <text x="455" y="110" className="d-label">scp · ssh</text>
+      </g>
+
+      <g className="d-arrow d-arrow-cold">
+        <line x1="200" y1="400" x2="380" y2="80" />
+        <polygon points="380,80 372,80 376,86" />
+        <text x="290" y="240" className="d-label" transform="rotate(-60 290 240)">pull weekly</text>
+      </g>
+    </svg>
+  );
 }
-const STATS: Stat[] = [
-  { value: '5', zh: '个 monorepo 包', en: 'monorepo packages' },
-  { value: '14', zh: '个独立模块', en: 'modules' },
-  { value: '80+', zh: '个 WCA 统计页', en: 'WCA stat pages' },
-  { value: '41', zh: '套 alg 公式库', en: 'algorithm sets' },
-  { value: '24+', zh: '个工具页面', en: 'tool pages' },
-];
+
+// ─── SVG 2: 包依赖图 ──────────────────────────────
+function PackageDepsSVG() {
+  return (
+    <svg viewBox="0 0 760 320" className="diagram-svg" role="img" aria-label="Monorepo packages">
+      <g className="d-pkg d-pkg-shared">
+        <rect x="320" y="130" width="120" height="60" rx="8" />
+        <text x="380" y="158" className="d-title">shared</text>
+        <text x="380" y="176" className="d-sub d-mono">types only</text>
+      </g>
+
+      <g className="d-pkg d-pkg-app">
+        <rect x="80" y="40" width="160" height="64" rx="8" />
+        <text x="160" y="68" className="d-title">client</text>
+        <text x="160" y="86" className="d-sub d-mono">React 19 + Vite</text>
+      </g>
+
+      <g className="d-pkg d-pkg-app">
+        <rect x="80" y="220" width="160" height="64" rx="8" />
+        <text x="160" y="248" className="d-title">server</text>
+        <text x="160" y="266" className="d-sub d-mono">Hono + PG</text>
+      </g>
+
+      <g className="d-pkg d-pkg-app">
+        <rect x="520" y="40" width="160" height="64" rx="8" />
+        <text x="600" y="68" className="d-title">stats-ui</text>
+        <text x="600" y="86" className="d-sub d-mono">consumed by client</text>
+      </g>
+
+      <g className="d-pkg d-pkg-iso">
+        <rect x="520" y="220" width="160" height="64" rx="8" />
+        <text x="600" y="248" className="d-title">stats-build</text>
+        <text x="600" y="266" className="d-sub d-mono">CLI · 独立</text>
+      </g>
+
+      <g className="d-edge">
+        <line x1="240" y1="86" x2="320" y2="146" />
+        <polygon points="320,146 313,142 315,150" />
+      </g>
+      <g className="d-edge">
+        <line x1="240" y1="240" x2="320" y2="172" />
+        <polygon points="320,172 314,176 313,168" />
+      </g>
+      <g className="d-edge">
+        <line x1="240" y1="72" x2="520" y2="72" />
+        <polygon points="520,72 512,68 512,76" />
+        <text x="380" y="62" className="d-edge-label">imports</text>
+      </g>
+
+      <text x="380" y="306" className="d-caption">
+        client / server 都依赖 shared (纯类型) · stats-ui 被 client 引 · stats-build 独立 CLI
+      </text>
+    </svg>
+  );
+}
+
+// ─── SVG 3: 请求生命周期 ─────────────────────────
+function RequestLifecycleSVG() {
+  const steps = [
+    { x: 30,  label: 'click',      t: '0 ms' },
+    { x: 150, label: 'JS handler', t: '~2 ms' },
+    { x: 280, label: 'fetch()',    t: '~5 ms' },
+    { x: 420, label: 'nginx',      t: '~15 ms' },
+    { x: 540, label: 'Hono',       t: '~18 ms' },
+    { x: 660, label: 'PG query',   t: '~25 ms' },
+    { x: 790, label: 'JSON → DOM', t: '~40 ms' },
+  ];
+  return (
+    <svg viewBox="0 0 880 200" className="diagram-svg" role="img" aria-label="Request lifecycle">
+      <line x1="20" y1="100" x2="860" y2="100" className="d-axis" />
+      <polygon points="860,100 850,95 850,105" className="d-axis-arrow" />
+      {steps.map((s, i) => (
+        <g key={i} className="d-step">
+          <circle cx={s.x + 20} cy="100" r="7" />
+          <line x1={s.x + 20} y1="100" x2={s.x + 20} y2={i % 2 === 0 ? 50 : 150} className="d-step-line" />
+          <text x={s.x + 20} y={i % 2 === 0 ? 38 : 174} className="d-step-label">{s.label}</text>
+          <text x={s.x + 20} y={i % 2 === 0 ? 22 : 190} className="d-step-time">{s.t}</text>
+        </g>
+      ))}
+      <text x="20" y="194" className="d-caption">典型读请求 · 端到端 &lt; 50ms · 缓存命中 &lt; 10ms</text>
+    </svg>
+  );
+}
+
+// ─── SVG 4: WCA 统计管道流程 ─────────────────────
+function StatsPipelineSVG() {
+  const nodes = [
+    { x: 20,  label: 'WCA dump',      sub: '每周公开',                tone: 'ext' },
+    { x: 180, label: 'MySQL',         sub: '本机 :3306',              tone: 'work' },
+    { x: 340, label: 'stats-build',   sub: '80+ SQL · 1 TS process',  tone: 'core' },
+    { x: 500, label: 'JSON + TSV',    sub: 'artifacts/',              tone: 'work' },
+    { x: 660, label: 'scp → VM',      sub: '~6 MB',                   tone: 'work' },
+    { x: 820, label: 'PG / API / UI', sub: 'nginx cache 24h',         tone: 'ext' },
+  ];
+  return (
+    <svg viewBox="0 0 980 200" className="diagram-svg" role="img" aria-label="Stats pipeline">
+      {nodes.map((n, i) => (
+        <g key={i} className={`d-pl d-pl-${n.tone}`}>
+          <rect x={n.x} y="60" width="140" height="76" rx="8" />
+          <text x={n.x + 70} y="88" className="d-title">{n.label}</text>
+          <text x={n.x + 70} y="108" className="d-sub">{n.sub}</text>
+          {i < nodes.length - 1 && (
+            <g className="d-arrow d-arrow-pipeline">
+              <line x1={n.x + 140} y1="98" x2={n.x + 160} y2="98" />
+              <polygon points={`${n.x + 160},98 ${n.x + 152},94 ${n.x + 152},102`} />
+            </g>
+          )}
+        </g>
+      ))}
+      <text x="20" y="180" className="d-caption">
+        三处必须同步:builder.ts (写 TSV) · stats.yml (scp 清单) · load.sql (\copy 引)
+      </text>
+    </svg>
+  );
+}
+
+// ─── 内容数据 ─────────────────────────────────────
 
 interface Layer {
-  tag: string;
-  accent: string;
-  zh: { title: string; tech: string; desc: string };
-  en: { title: string; tech: string; desc: string };
+  num: string;
+  zh: { name: string; one: string; tech: ReactNode };
+  en: { name: string; one: string; tech: ReactNode };
 }
 const LAYERS: Layer[] = [
   {
-    tag: 'Frontend',
-    accent: '#61DAFB',
-    zh: {
-      title: '客户端 SPA',
-      tech: 'React 19 · Vite 8 · TypeScript',
-      desc: '全部 24+ 个工具页面跑在同一个 SPA 里，React Router 切路由。Vite 8 dev 启动 < 1 秒，HMR 即时。tsc -b 增量类型检查，~12 秒首次、之后秒级。',
-    },
-    en: {
-      title: 'Client SPA',
-      tech: 'React 19 · Vite 8 · TypeScript',
-      desc: 'All 24+ tool pages live in one SPA, React Router for routing. Vite 8 dev server boots in < 1s with instant HMR. Incremental typecheck via tsc -b: ~12s cold, sub-second after.',
-    },
+    num: '01',
+    zh: { name: '边缘',     one: 'TLS 终止 + 静态文件 + 反向代理',      tech: <>nginx · CloudFlare DNS · Let's Encrypt</> },
+    en: { name: 'Edge',     one: 'TLS termination + static + reverse proxy', tech: <>nginx · CloudFlare DNS · Let's Encrypt</> },
   },
   {
-    tag: 'Backend',
-    accent: '#5BA8FF',
-    zh: {
-      title: 'API 服务',
-      tech: 'Hono · PostgreSQL 13 · WCA OAuth',
-      desc: 'Hono 跑在 Node + pm2 上,反代到 api.cuberoot.me。PG 13 存 recon 数据、alg 公式库、WCA 统计衍生表。2026-05 从 MariaDB 整体迁过来,一刀切。',
-    },
-    en: {
-      title: 'API service',
-      tech: 'Hono · PostgreSQL 13 · WCA OAuth',
-      desc: 'Hono on Node + pm2, reverse-proxied to api.cuberoot.me. PG 13 holds recon data, the alg library, and derived WCA statistics. Migrated wholesale from MariaDB in 2026-05.',
-    },
+    num: '02',
+    zh: { name: '前端',     one: '一个 SPA, 24+ 工具页, React Router 切路由', tech: <>React 19 · Vite 8 · TypeScript · cubing.js</> },
+    en: { name: 'Frontend', one: 'One SPA, 24+ tool pages, React Router',     tech: <>React 19 · Vite 8 · TypeScript · cubing.js</> },
   },
   {
-    tag: 'Build',
-    accent: '#F69220',
-    zh: {
-      title: '工作区与构建',
-      tech: 'pnpm 10 · Turbo · GitHub Actions',
-      desc: 'core/ 是 pnpm + Turbo monorepo。CI 每次只跑改动到的 package。WCA 统计管道独立运行，每周从 dump 全量重算 80+ 个 stats JSON。',
-    },
-    en: {
-      title: 'Workspace & build',
-      tech: 'pnpm 10 · Turbo · GitHub Actions',
-      desc: 'core/ is a pnpm + Turbo monorepo. CI only re-runs packages that changed. The WCA stats pipeline runs on its own weekly cadence, regenerating 80+ stat JSONs from the dump.',
-    },
+    num: '03',
+    zh: { name: 'API',      one: '小而轻的 Hono, 跑在 pm2 上',           tech: <>Hono · Node 22 · pm2</> },
+    en: { name: 'API',      one: 'Small, light Hono, run under pm2',     tech: <>Hono · Node 22 · pm2</> },
   },
   {
-    tag: 'Deploy',
-    accent: '#76B900',
-    zh: {
-      title: '部署拓扑',
-      tech: '云服务器 nginx · GH Pages 镜像 · CloudFlare DNS',
-      desc: '主站 cuberoot.me 由云服务器 nginx 直接服。ruiminyan.github.io 是 GH Pages 兜底镜像，自动 301 → cuberoot.me。nginx vhost 入 git，改完 push 自动 scp + reload。',
-    },
-    en: {
-      title: 'Deploy topology',
-      tech: 'Cloud nginx · GH Pages mirror · CloudFlare DNS',
-      desc: 'Primary site cuberoot.me is served by nginx on a cloud VM. ruiminyan.github.io is a GitHub Pages fallback mirror, auto-301 to cuberoot.me. nginx vhost lives in git — push triggers scp + reload.',
-    },
+    num: '04',
+    zh: { name: '存储',     one: 'recon · alg 公式库 · 训练数据 · WCA stats 衍生', tech: <>PostgreSQL 13 · pg_dump nightly</> },
+    en: { name: 'Storage',  one: 'recon · alg library · training data · WCA stats derivatives', tech: <>PostgreSQL 13 · pg_dump nightly</> },
   },
 ];
 
 interface Pkg {
   name: string;
-  zh: { role: string; detail: string };
-  en: { role: string; detail: string };
+  size: string;
+  zh: { role: string; bullet: string[] };
+  en: { role: string; bullet: string[] };
 }
 const PACKAGES: Pkg[] = [
   {
-    name: 'client',
-    zh: { role: 'React SPA — 全部 UI', detail: 'pages/ 一页一目录,components/ 共享组件,utils/ 工具(api_base / flag / format_result 等)' },
-    en: { role: 'React SPA — all UI', detail: 'pages/ one folder per page; components/ shared widgets; utils/ helpers (api_base / flag / format_result …)' },
+    name: 'client', size: '~120k LOC',
+    zh: { role: 'React SPA — 整个前端',     bullet: ['pages/ 一个工具一目录', 'components/ 跨页复用', 'utils/ 工具函数 (apiUrl / flag / format_result)'] },
+    en: { role: 'React SPA — the whole frontend', bullet: ['pages/ — one folder per tool', 'components/ — shared widgets', 'utils/ — helpers (apiUrl / flag / format_result)'] },
   },
   {
-    name: 'server',
-    zh: { role: 'Hono API + PG', detail: 'WCA OAuth、recon CRUD、alg 公式库 CRUD、训练数据上报、跨域 allowlist' },
-    en: { role: 'Hono API + PG', detail: 'WCA OAuth, recon CRUD, alg library CRUD, training-data ingest, CORS allowlist' },
+    name: 'server', size: '~8k LOC',
+    zh: { role: 'Hono API + PG 访问',       bullet: ['WCA OAuth + 会话', 'recon / alg / 训练数据 CRUD', '跨域 allowlist 白名单'] },
+    en: { role: 'Hono API + PG access',     bullet: ['WCA OAuth + sessions', 'recon / alg / training-data CRUD', 'CORS allowlist'] },
   },
   {
-    name: 'shared',
-    zh: { role: '共享类型', detail: 'client/server 都引;不能 import client utils(纯类型 + import.meta 检测)' },
-    en: { role: 'Shared types', detail: 'Imported by both client and server; must not pull in client utils (pure types + import.meta guard)' },
+    name: 'shared', size: '~1k LOC',
+    zh: { role: '前后端共享类型',           bullet: ['纯 TypeScript 类型, 零运行时', '不能引 client utils', '改一处, 前后端同步收紧'] },
+    en: { role: 'Shared types',             bullet: ['Pure TS types, zero runtime', 'Must not import client utils', 'One source for both ends'] },
   },
   {
-    name: 'stats-build',
-    zh: { role: 'WCA 统计管道', detail: '80+ SQL-driven 统计,周更 CI;基于 jonatanklosko/wca_statistics TS 重写' },
-    en: { role: 'WCA stats pipeline', detail: '80+ SQL-driven statistics, weekly CI; TS rewrite of jonatanklosko/wca_statistics' },
+    name: 'stats-build', size: '~5k LOC',
+    zh: { role: 'WCA 统计独立管道',         bullet: ['80+ SQL-driven 统计', '周更 CI, ~2 小时跑完', '基于 jonatanklosko/wca_statistics 重写'] },
+    en: { role: 'WCA stats standalone pipeline', bullet: ['80+ SQL-driven stats', 'Weekly CI, ~2h end to end', 'TS rewrite of jonatanklosko/wca_statistics'] },
   },
   {
-    name: 'stats-ui',
-    zh: { role: '统计页 UI', detail: '为 80+ 个 stat 提供通用渲染壳;client 通过 lazy() 加载' },
-    en: { role: 'Stats UI', detail: 'Generic rendering shell for the 80+ stat pages; client lazy-loads it' },
+    name: 'stats-ui', size: '~3k LOC',
+    zh: { role: '统计页通用渲染壳',         bullet: ['给 80+ stat 提供一致 UI', 'client 通过 lazy() 加载', '表 + 折线 + 热图 + 分组排序'] },
+    en: { role: 'Generic stats rendering shell', bullet: ['Uniform UI for 80+ stat pages', 'client lazy-loads it', 'Tables, line charts, heatmaps, grouped sort'] },
   },
 ];
 
-interface ModuleRow {
+interface Mod {
   route: string;
-  zhName: string;
-  enName: string;
+  zh: string;
+  en: string;
+  origin: 'own' | 'port' | 'fork';
   zhDesc: string;
   enDesc: string;
-  origin: 'own' | 'fork' | 'port';
-  originLabel: string;
 }
-const MODULES: ModuleRow[] = [
-  { route: '/recon', zhName: '复盘', enName: 'Recon', zhDesc: '比赛成绩复盘 + 同轮自动带入', enDesc: 'Competition result review + same-round autofill', origin: 'own', originLabel: 'own' },
-  { route: '/trainer', zhName: '公式训练', enName: 'Trainer', zhDesc: '41 套公式计时训练', enDesc: '41 algorithm sets with timed drills', origin: 'own', originLabel: 'own' },
-  { route: '/calc', zhName: '成绩计算', enName: 'Calc', zhDesc: 'HTH 成绩计算器', enDesc: 'HTH score calculator', origin: 'port', originLabel: 'port' },
-  { route: '/battle', zhName: '1v1 对战', enName: 'Battle', zhDesc: '双人计时对战', enDesc: 'Two-player race timer', origin: 'port', originLabel: 'port' },
-  { route: '/frame-count', zhName: '逐帧计时', enName: 'Frame Count', zhDesc: 'WebCodecs + mp4box.js 视频抽帧', enDesc: 'WebCodecs + mp4box.js video frame stepping', origin: 'own', originLabel: 'own' },
-  { route: '/viz', zhName: '成绩分布', enName: 'Distribution', zhDesc: 'WCA 成绩分布可视化', enDesc: 'WCA result distribution viz', origin: 'own', originLabel: 'own' },
-  { route: '/calendar', zhName: '比赛日历', enName: 'Calendar', zhDesc: '全球 WCA 比赛日历', enDesc: 'Global WCA competition calendar', origin: 'own', originLabel: 'own' },
-  { route: '/scramble-stats', zhName: '打乱难度', enName: 'Scramble', zhDesc: 'WCA 打乱难度分布', enDesc: 'WCA scramble difficulty distribution', origin: 'own', originLabel: 'own' },
-  { route: '/wca-stats', zhName: 'WCA 统计', enName: 'WCA Stats', zhDesc: '80+ 统计页,周更', enDesc: '80+ statistics pages, weekly refresh', origin: 'own', originLabel: 'own' },
-  { route: '/recognize/pll', zhName: 'PLL 识别', enName: 'Recognize', zhDesc: '看图答字母训练', enDesc: 'Image-to-letter recognition drill', origin: 'own', originLabel: 'own' },
-  { route: '/mosaic', zhName: '马赛克', enName: 'Mosaic', zhDesc: '魔方拼图生成器', enDesc: 'Cube mosaic generator', origin: 'port', originLabel: 'port' },
-  { route: '/cstimer', zhName: 'csTimer', enName: 'csTimer', zhDesc: '集成 cs0x7f/cstimer', enDesc: 'Integrated cs0x7f/cstimer', origin: 'fork', originLabel: 'fork' },
-  { route: '/solver', zhName: '复原求解器', enName: 'Solver', zhDesc: 'fork of or18/RubiksSolverDemo', enDesc: 'fork of or18/RubiksSolverDemo', origin: 'fork', originLabel: 'fork' },
-  { route: '/alg-trainers', zhName: '公式训练器', enName: 'Alg Trainers', zhDesc: 'fork of mihlefeld/Alg-Trainers', enDesc: 'fork of mihlefeld/Alg-Trainers', origin: 'fork', originLabel: 'fork' },
+const MODULES: Mod[] = [
+  { route: '/recon',          zh: '复盘',        en: 'Recon',        origin: 'own',  zhDesc: '比赛复盘 + 同轮自动带入',       enDesc: 'Result review + same-round autofill' },
+  { route: '/trainer',        zh: '公式训练',    en: 'Trainer',      origin: 'own',  zhDesc: '41 套公式计时训练',              enDesc: '41 algorithm sets with timing' },
+  { route: '/frame-count',    zh: '逐帧',        en: 'Frame Count',  origin: 'own',  zhDesc: 'WebCodecs + mp4box.js',          enDesc: 'WebCodecs + mp4box.js' },
+  { route: '/viz',            zh: '成绩分布',    en: 'Distribution', origin: 'own',  zhDesc: '成绩分布可视化',                 enDesc: 'Result distribution viz' },
+  { route: '/calendar',       zh: '比赛日历',    en: 'Calendar',     origin: 'own',  zhDesc: '全球比赛日历',                   enDesc: 'Global comp calendar' },
+  { route: '/scramble-stats', zh: '打乱难度',    en: 'Scramble',     origin: 'own',  zhDesc: '打乱难度分布',                   enDesc: 'Scramble difficulty' },
+  { route: '/wca-stats',      zh: 'WCA 统计',    en: 'WCA Stats',    origin: 'own',  zhDesc: '80+ 统计页, 周更',               enDesc: '80+ pages, weekly' },
+  { route: '/recognize/pll',  zh: 'PLL 识别',    en: 'Recognize',    origin: 'own',  zhDesc: '看图答字母训练',                 enDesc: 'Image-to-letter drill' },
+  { route: '/calc',           zh: 'HTH 计算',    en: 'HTH Calc',     origin: 'port', zhDesc: 'port: carykh/hthgrapher',        enDesc: 'port: carykh/hthgrapher' },
+  { route: '/battle',         zh: '1v1',         en: 'Battle',       origin: 'port', zhDesc: 'port: MatteoColombo',            enDesc: 'port: MatteoColombo' },
+  { route: '/mosaic',         zh: '马赛克',      en: 'Mosaic',       origin: 'port', zhDesc: 'port: Roman-/mosaic',            enDesc: 'port: Roman-/mosaic' },
+  { route: '/cstimer',        zh: 'csTimer',     en: 'csTimer',      origin: 'fork', zhDesc: 'fork: cs0x7f/cstimer',           enDesc: 'fork: cs0x7f/cstimer' },
+  { route: '/solver',         zh: '复原器',      en: 'Solver',       origin: 'fork', zhDesc: 'fork: or18/RubiksSolverDemo',    enDesc: 'fork: or18/RubiksSolverDemo' },
+  { route: '/alg-trainers',   zh: '公式训练器',  en: 'Alg Trainers', origin: 'fork', zhDesc: 'fork: mihlefeld/Alg-Trainers',   enDesc: 'fork: mihlefeld/Alg-Trainers' },
 ];
 
-interface Highlight {
-  glyph: string;
-  zh: { title: string; desc: string };
-  en: { title: string; desc: string };
+interface Decision {
+  topic: string;
+  pick: string;
+  alt: string;
+  zh: string;
+  en: string;
 }
-const HIGHLIGHTS: Highlight[] = [
+const DECISIONS: Decision[] = [
+  { topic: 'Framework',   pick: 'React 19',         alt: 'Vue / Svelte',          zh: '生态最广;cubing.js / sr-puzzlegen 等魔方库的示例都是 React;团队熟。',                en: 'Widest ecosystem; cubing.js / sr-puzzlegen samples are React; team familiarity.' },
+  { topic: 'Bundler',     pick: 'Vite 8',           alt: 'Webpack / Turbopack',   zh: 'Dev server 启动 < 1s;HMR 即时;ESM 原生;tsc -b 增量 12s。',                          en: 'Sub-1s dev start; instant HMR; native ESM; tsc -b 12s incremental.' },
+  { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 一等公民;路由声明式;5 MB 依赖比 express 干净一个量级。',                en: 'TS-first; declarative routing; ~5MB deps vs Express noisy stack.' },
+  { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
+  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。',                         en: 'Hard-linked node_modules saves disk; Turbo runs only changed packages.' },
+  { topic: 'Static host', pick: '云服务器 nginx',   alt: 'Vercel / Netlify',      zh: '同台机 nginx + API + DB, localhost 内 hop;Vercel 这种 SaaS 跑国内打不开。',        en: 'Same VM hosts nginx + API + DB; localhost hops; Vercel SaaS is unreachable from China.' },
+];
+
+interface Detail {
+  title: string;
+  zh: ReactNode;
+  en: ReactNode;
+}
+const DETAILS: Detail[] = [
   {
-    glyph: '⌬',
-    zh: {
-      title: 'cubing.js — 一切动画与求解',
-      desc: 'TwistyPlayer 渲染所有魔方动画,Cube333 / Cube444 求解器跑在主线程,SquareOne / Megaminx 用 sr-puzzlegen 出 SVG。npm 上 0.50.x,已是依赖。',
-    },
-    en: {
-      title: 'cubing.js for animation + solving',
-      desc: 'TwistyPlayer renders every cube animation; Cube333/Cube444 solvers run on the main thread; SquareOne/Megaminx use sr-puzzlegen for SVG. cubing@0.50.x, already a dependency.',
-    },
+    title: 'SharedArrayBuffer · COOP/COEP',
+    zh: <><strong>/scramble/solver</strong> 和 <strong>/scramble/analyzer</strong> 跑 cubeopt-wasm, 需要 <code>SharedArrayBuffer</code>。仅这两条 route 由 nginx 注入 <code>COOP=same-origin</code> + <code>COEP=require-corp</code> 进 cross-origin isolated。其它 24 张卡完全干净, 登录回调不受影响。</>,
+    en: <><strong>/scramble/solver</strong> and <strong>/scramble/analyzer</strong> run cubeopt-wasm and require <code>SharedArrayBuffer</code>. Only those two routes get nginx-injected <code>COOP=same-origin</code> + <code>COEP=require-corp</code> for cross-origin isolation. Every other page stays clean — login callbacks unaffected.</>,
   },
   {
-    glyph: '⌗',
-    zh: {
-      title: 'visualcube — 立方体状态图',
-      desc: '所有 NxN 立方体状态图(F2L/OLL/PLL/ZBLL 等)统一走 @cuberoot/visualcube。手写 SVG 是反面教材,被全数删除。',
-    },
-    en: {
-      title: 'visualcube for cube-state images',
-      desc: 'Every NxN cube-state image (F2L/OLL/PLL/ZBLL …) goes through @cuberoot/visualcube. Hand-written SVG is forbidden — the legacy MiniCube.tsx was a cautionary tale, now removed.',
-    },
+    title: 'apiUrl() 是唯一的 fetch 入口',
+    zh: <>客户端不能硬编码 origin。<code>utils/api_base.ts</code> 的 <code>apiUrl()</code> 用 <code>import.meta.env.DEV</code> 切换:dev 走 Vite proxy, prod 打 <code>api.cuberoot.me</code>。hostname 检测会被 Tailscale / LAN IP 骗到, 绝对禁用。</>,
+    en: <>Client never hardcodes origin. <code>utils/api_base.ts</code> uses <code>import.meta.env.DEV</code>: dev → Vite proxy, prod → <code>api.cuberoot.me</code>. <code>hostname</code> checks get fooled by Tailscale / LAN IP — banned.</>,
   },
   {
-    glyph: '⌖',
-    zh: {
-      title: 'COOP / COEP — SharedArrayBuffer',
-      desc: '/scramble/solver 和 /scramble/analyzer 跑 cubeopt-wasm,需要 SharedArrayBuffer。仅这两条 route 由 nginx 注 COOP=same-origin + COEP=require-corp,其他 24 张卡完全干净。',
-    },
-    en: {
-      title: 'COOP / COEP for SharedArrayBuffer',
-      desc: '/scramble/solver and /scramble/analyzer run cubeopt-wasm and need SharedArrayBuffer. Only those two routes get COOP=same-origin + COEP=require-corp from nginx; every other page stays clean.',
-    },
+    title: 'cubing.js + sr-puzzlegen + visualcube 三件套',
+    zh: <><strong>cubing.js</strong> 渲染动画 (TwistyPlayer)、跑 3x3 / 4x4 求解器。<strong>sr-puzzlegen</strong> 出 sq1 / megaminx / pyraminx / skewb 静态 SVG。<strong>visualcube</strong> 出 NxN 状态图 (F2L / OLL / PLL / ZBLL)。三者各管一块, <strong>禁止手写魔方 SVG</strong>。</>,
+    en: <><strong>cubing.js</strong> for animation (TwistyPlayer) and 3x3/4x4 solvers. <strong>sr-puzzlegen</strong> for sq1 / megaminx / pyraminx / skewb SVGs. <strong>visualcube</strong> for NxN state images (F2L / OLL / PLL / ZBLL). Three libs, three lanes — <strong>hand-written cube SVG is banned</strong>.</>,
   },
   {
-    glyph: '⛯',
-    zh: {
-      title: 'WCA 统计的三段管道',
-      desc: 'CI 跑 stats-build 算出 80+ 个 JSON + 月级 TSV,scp 到云服务器,服务器 \\copy 入 PG,Hono API 出口,nginx 24h 缓存。改一处必同步三处:builder / scp 清单 / load.sql。',
-    },
-    en: {
-      title: 'WCA stats — a three-stage pipeline',
-      desc: 'CI runs stats-build to produce 80+ JSON + monthly TSVs; scp to the cloud VM; \\copy into PG; Hono API exposes it; nginx caches 1 day. Change one stage and you must update all three: builder, scp manifest, load.sql.',
-    },
+    title: 'i18n — 两种 pattern 并存',
+    zh: <>大段文案走 <code>t()</code> + <code>en.json</code> / <code>zh.json</code>;组件内零散文案走 <code>isZh ? 'X' : 'Y'</code> 三元。<code>LangToggle</code> 每页右上角, 默认跟系统语言。WCA 比赛中文名独立走 <code>comp_names_zh.json</code>。</>,
+    en: <>Long blocks → <code>t()</code> + <code>en.json</code>/<code>zh.json</code>; inline strings → <code>isZh ? 'X' : 'Y'</code> ternary. <code>LangToggle</code> sits top-right on every page. Chinese comp names live in a separate <code>comp_names_zh.json</code>.</>,
   },
   {
-    glyph: '⚙',
-    zh: {
-      title: 'i18n — 中英双语',
-      desc: '两种模式并存:t() + JSON keys(大段文案)和 isZh ? "X" : "Y" 三元(组件内零散文案)。LangToggle 在每页头部右上角,默认跟系统语言。',
-    },
-    en: {
-      title: 'Bilingual zh / en',
-      desc: 'Two patterns coexist: t() + JSON keys for long blocks; isZh ? "X" : "Y" ternaries for inline strings. LangToggle sits top-right on every page, defaults to system locale.',
-    },
+    title: 'WCA 统计的脆弱三角',
+    zh: <>新增一个 stat 表要同步改三处:<code>stats-build/src/bin/*.ts</code> (写 TSV)、<code>.github/workflows/stats.yml</code> (scp 清单)、<code>ops/sql/load.sql</code> (<code>\copy</code> 引用)。漏一处, 服务器表静默为空, nginx 还缓存 24 小时。dry-run grep 三段对照是唯一保险。</>,
+    en: <>Adding a stat table needs three coordinated edits: <code>stats-build/src/bin/*.ts</code> (writes TSV), <code>.github/workflows/stats.yml</code> (scp manifest), <code>ops/sql/load.sql</code> (<code>\copy</code> reference). Miss one and the server table silently empties — nginx still caches 24h. The only safety net: a 30-second grep dry-run across all three.</>,
   },
   {
-    glyph: '⏚',
-    zh: {
-      title: '凡是 fetch 都走 apiUrl()',
-      desc: '客户端不能硬编码 origin。utils/api_base.ts 的 apiUrl() 在 dev 时走 Vite proxy,prod 时打 api.cuberoot.me。跨域白名单在 server/src/index.ts 的 CORS 中间件。',
-    },
-    en: {
-      title: 'Every fetch goes through apiUrl()',
-      desc: 'Client never hardcodes origin. utils/api_base.ts → apiUrl() routes to Vite proxy in dev and api.cuberoot.me in prod. The CORS allowlist lives in server/src/index.ts.',
-    },
+    title: 'fork / port / own 三种治理',
+    zh: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream 静态资源原样托管, 只改外层包装。<strong>port</strong> (Calc / Battle / Mosaic) = 把别人的 React / HTML 重写一遍。<strong>own</strong> (其它 11 个) = 自己设计 + 实现。改 fork / port 前必须确认 upstream。</>,
+    en: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream assets hosted as-is, only the outer shell is ours. <strong>port</strong> (Calc / Battle / Mosaic) = someone else's React / HTML, rewritten in this repo. <strong>own</strong> (the other 11) = designed and built here. Touching a fork or port? Check upstream first.</>,
   },
 ];
+
+// ─── 主组件 ───────────────────────────────────────
 
 export default function CodeArchitecturePage() {
   const { i18n } = useTranslation();
@@ -234,247 +360,256 @@ export default function CodeArchitecturePage() {
 
   return (
     <LangCtx.Provider value={lang}>
-      <div className="arch-root">
-        <div className="arch-bg" />
-
-        <header className="arch-head">
+      <div className="arch-page">
+        <header className="arch-hero">
           <div className="arch-topbar">
-            <Link to="/code" className="arch-back">
-              ← /code
-            </Link>
+            <Link to="/code" className="arch-back">← /code</Link>
             <LangToggle variant="inline" />
           </div>
-          <h1 className="arch-title">
-            <span className="arch-title-prefix">/</span>architecture
-            <span className="arch-title-cursor">_</span>
+          <div className="arch-hero-meta">
+            <L zh="一份内部说明书" en="An internal handbook" />
+            <span className="arch-meta-sep">·</span>
+            <span>2026.05</span>
+          </div>
+          <h1 className="arch-hero-title">
+            <L zh="CubeRoot 是怎么搭起来的" en="How CubeRoot is built" />
           </h1>
-          <p className="arch-sub">
+          <p className="arch-hero-lede">
             <L
-              zh={<>CubeRoot 是怎么搭起来的:一个 React SPA + Hono API + PostgreSQL 数据库 + nginx 入口,加上一条独立跑的 WCA 统计管道。这页讲完每一层。</>}
-              en={<>How CubeRoot is put together: a React SPA, a Hono API, a PostgreSQL database, an nginx entrypoint, plus a separately-running WCA statistics pipeline. This page walks every layer.</>}
+              zh={<>一个 24+ 工具页的魔方站, 跑在一台云服务器上。前端是 React 19 SPA, 后端是 Hono + PostgreSQL, WCA 统计有一条独立的周更管道。下面这页把每一层讲清楚 — 从一个鼠标点击, 到 DOM 更新, 中间发生了什么。</>}
+              en={<>A cube-tools site with 24+ tool pages, running on a single cloud VM. Frontend is a React 19 SPA, backend is Hono + PostgreSQL, and the WCA statistics pipeline runs separately on a weekly cadence. This page walks every layer — from a mouse click to a DOM update, and everything in between.</>}
             />
           </p>
-          <div className="arch-meta">
-            <span><L zh="最近更新" en="Last updated" /></span>
-            <span className="arch-meta-dot">·</span>
-            <span>2026.05</span>
-            <span className="arch-meta-dot">·</span>
-            <Link to="/code/language" className="arch-meta-link">
-              <L zh="看编程语言导览 →" en="Programming languages →" />
-            </Link>
+          <div className="arch-hero-stats">
+            <div className="arch-hs"><div className="arch-hs-v">5</div><div className="arch-hs-l"><L zh="monorepo 包" en="packages" /></div></div>
+            <div className="arch-hs"><div className="arch-hs-v">14</div><div className="arch-hs-l"><L zh="模块" en="modules" /></div></div>
+            <div className="arch-hs"><div className="arch-hs-v">80+</div><div className="arch-hs-l"><L zh="WCA 统计页" en="WCA stat pages" /></div></div>
+            <div className="arch-hs"><div className="arch-hs-v">41</div><div className="arch-hs-l"><L zh="公式库" en="alg sets" /></div></div>
+            <div className="arch-hs"><div className="arch-hs-v">1</div><div className="arch-hs-l"><L zh="台云服务器" en="cloud VM" /></div></div>
           </div>
         </header>
 
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 01</span>
-            <L zh="一眼看清楚" en="At a glance" />
-          </h2>
-          <div className="arch-stats">
-            {STATS.map((s) => (
-              <div key={s.value} className="arch-stat">
-                <div className="arch-stat-v">{s.value}</div>
-                <div className="arch-stat-l">{lang === 'zh' ? s.zh : s.en}</div>
-              </div>
-            ))}
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">01</span>
+            <h2 className="arch-sec-title"><L zh="一图看懂整个系统" en="The whole system in one picture" /></h2>
           </div>
-        </section>
-
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 02</span>
-            <L zh="四层栈" en="Four-layer stack" />
-          </h2>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>站点的一切都坐在一台云服务器上。nginx 既服静态 SPA 也反代 Hono API;Hono 通过本地 socket 打 PG。GH Pages 是兜底镜像, 跑国内挂了 cuberoot.me 才会用到。</>}
+              en={<>Everything sits on one cloud VM. nginx serves both the static SPA and reverse-proxies the Hono API; Hono talks to PG over a local socket. GitHub Pages is a fallback mirror — used only when cuberoot.me itself is down.</>}
+            />
+          </p>
+          <div className="arch-diagram">
+            <SystemTopoSVG />
+          </div>
           <div className="arch-layers">
             {LAYERS.map((l) => {
               const t = l[lang];
               return (
-                <div key={l.tag} className="arch-layer" style={{ ['--accent' as string]: l.accent }}>
-                  <div className="arch-layer-tag">{l.tag}</div>
-                  <div className="arch-layer-title">{t.title}</div>
+                <div key={l.num} className="arch-layer">
+                  <div className="arch-layer-num">{l.num}</div>
+                  <div className="arch-layer-name">{t.name}</div>
+                  <div className="arch-layer-one">{t.one}</div>
                   <div className="arch-layer-tech">{t.tech}</div>
-                  <p className="arch-layer-desc">{t.desc}</p>
                 </div>
               );
             })}
           </div>
         </section>
 
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 03</span>
-            <L zh="Monorepo 五个包" en="Five packages in the monorepo" />
-          </h2>
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">02</span>
+            <h2 className="arch-sec-title"><L zh="Monorepo:五个包" en="Monorepo: five packages" /></h2>
+          </div>
+          <p className="arch-sec-lede">
+            <L
+              zh={<><code>core/</code> 是 pnpm + Turbo monorepo, 五个包各管一摊。CI 只跑改动到的包, 缓存 hit 时秒级出结果。</>}
+              en={<><code>core/</code> is a pnpm + Turbo monorepo with five packages, each owning one slice. CI only re-runs packages that actually changed — cache hits make most builds sub-second.</>}
+            />
+          </p>
+          <div className="arch-diagram">
+            <PackageDepsSVG />
+          </div>
           <div className="arch-pkgs">
             {PACKAGES.map((p) => {
               const t = p[lang];
               return (
-                <div key={p.name} className="arch-pkg">
-                  <div className="arch-pkg-name">@cuberoot/{p.name}</div>
+                <article key={p.name} className="arch-pkg">
+                  <header className="arch-pkg-head">
+                    <span className="arch-pkg-name">@cuberoot/{p.name}</span>
+                    <span className="arch-pkg-size">{p.size}</span>
+                  </header>
                   <div className="arch-pkg-role">{t.role}</div>
-                  <div className="arch-pkg-detail">{t.detail}</div>
-                </div>
+                  <ul className="arch-pkg-bullets">
+                    {t.bullet.map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </article>
               );
             })}
           </div>
-          <pre className="arch-tree">{`core/
-├── packages/
-│   ├── client/         # React 19 + Vite 8 SPA
-│   ├── server/         # Hono + PG 13
-│   ├── shared/         # 共享类型
-│   ├── stats-build/    # WCA 统计管道
-│   └── stats-ui/       # 统计页通用 UI
-├── pnpm-workspace.yaml
-└── turbo.json`}</pre>
         </section>
 
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 04</span>
-            <L zh="14 个模块都在哪" en="Where the 14 modules live" />
-          </h2>
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">03</span>
+            <h2 className="arch-sec-title"><L zh="一次点击到 DOM 更新" en="From click to DOM" /></h2>
+          </div>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>典型的读请求 (比如打开 /recon/abc), 端到端在 50ms 以内。nginx <code>proxy_cache</code> 命中时降到 10ms 以下。这里把每一跳的时间标出来。</>}
+              en={<>A typical read (say, opening /recon/abc) runs end-to-end in under 50ms. With an nginx <code>proxy_cache</code> hit it drops below 10ms. Each hop's latency is plotted below.</>}
+            />
+          </p>
+          <div className="arch-diagram">
+            <RequestLifecycleSVG />
+          </div>
+          <pre className="arch-code">{`Browser
+  │  GET cuberoot.me/recon/abc
+  ▼
+nginx :443    →  try_files → index.html  (SPA fallback)
+  │
+  ▼
+React SPA   →  fetch(apiUrl('/v1/recon/abc'))
+                          │
+                          ▼
+                nginx :443 (api.cuberoot.me)
+                  │  proxy_cache /v1/wca/* (24h)
+                  ▼
+                Hono :3001    →  pg pool  →  PostgreSQL :5432
+                  │
+                  ▼
+                JSON  →  React state  →  DOM`}</pre>
+        </section>
+
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">04</span>
+            <h2 className="arch-sec-title"><L zh="14 个模块, 三种治理" en="14 modules, three flavors" /></h2>
+          </div>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>不是所有路由都是我写的。<strong>own</strong> = 自己设计 + 实现;<strong>port</strong> = 把别人的 React / HTML 重写进本仓库;<strong>fork</strong> = upstream 静态资源原样托管。点卡片去看实际模块。</>}
+              en={<>Not every route was built from scratch. <strong>own</strong> = designed and built here; <strong>port</strong> = someone else's React/HTML rewritten in-repo; <strong>fork</strong> = upstream assets hosted as-is. Click a card to visit the module.</>}
+            />
+          </p>
+          <div className="arch-mod-legend">
+            <span className="arch-tag arch-tag-own">own · 8</span>
+            <span className="arch-tag arch-tag-port">port · 3</span>
+            <span className="arch-tag arch-tag-fork">fork · 3</span>
+          </div>
           <div className="arch-mods">
             {MODULES.map((m) => (
               <Link key={m.route} to={m.route} className={`arch-mod arch-mod-${m.origin}`}>
-                <div className="arch-mod-route">{m.route}</div>
-                <div className="arch-mod-name">{lang === 'zh' ? m.zhName : m.enName}</div>
+                <div className="arch-mod-top">
+                  <span className="arch-mod-route">{m.route}</span>
+                  <span className={`arch-tag arch-tag-${m.origin}`}>{m.origin}</span>
+                </div>
+                <div className="arch-mod-name">{lang === 'zh' ? m.zh : m.en}</div>
                 <div className="arch-mod-desc">{lang === 'zh' ? m.zhDesc : m.enDesc}</div>
-                <div className="arch-mod-badge">{m.originLabel}</div>
               </Link>
             ))}
           </div>
-          <p className="arch-section-foot">
+        </section>
+
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">05</span>
+            <h2 className="arch-sec-title"><L zh="WCA 统计:一条独立的周更管道" en="WCA stats: a separate weekly pipeline" /></h2>
+          </div>
+          <p className="arch-sec-lede">
             <L
-              zh={<>own = 自己写的;port = 把别人的 React/HTML 项目重写成本仓库的一部分;fork = upstream 静态资源原样托管,只改外层包装。改 fork / port 前先核对原作者。</>}
-              en={<>own = built in-house; port = someone else's React/HTML project rewritten as part of this repo; fork = upstream assets hosted as-is, only the outer wrapper is mine. Touching a fork or port? Check upstream first.</>}
+              zh={<>统计数据跟主站完全解耦。GitHub Actions 每周从 WCA 公开 dump 拉数据, 在 runner 上跑 80+ 个 SQL-driven 统计, 产出 JSON + TSV, scp 到云服务器, <code>\copy</code> 进 PG, Hono 读出来, nginx 再缓存 24 小时。</>}
+              en={<>Stats data is fully decoupled from the main site. GitHub Actions pulls the WCA public dump weekly, runs 80+ SQL-driven statistics on the runner, produces JSON + TSVs, scp's them to the VM, <code>\copy</code>s them into PG, Hono reads them out, and nginx caches 24h on top.</>}
             />
           </p>
-        </section>
-
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 05</span>
-            <L zh="一个请求是怎么走完的" en="The path of a request" />
-          </h2>
-          <pre className="arch-flow">{`Browser
-  │ GET cuberoot.me/recon/abc
-  ▼
-nginx  (云服务器 :443)
-  │ root /www/wwwroot/toolkit
-  │ try_files → /index.html (SPA fallback)
-  ▼
-React SPA  (Vite-built bundle)
-  │ fetch(apiUrl('/v1/recon/abc'))
-  ▼
-nginx  (api.cuberoot.me :443)
-  │ proxy_pass → 127.0.0.1:3001
-  │ proxy_cache /v1/wca/* (24h)
-  ▼
-Hono  (Node + pm2)
-  │ pg pool → PostgreSQL 13
-  ▼
-JSON  →  React state  →  DOM`}</pre>
-        </section>
-
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 06</span>
-            <L zh="WCA 统计的独立管道" en="The standalone WCA stats pipeline" />
-          </h2>
-          <pre className="arch-flow">{`GitHub Actions  (周更, ~2h)
-  │ pull 最新 WCA dump → 本地 MySQL
-  │ stats-build run  (80+ SQL, 1 TS process)
-  ▼
-artifacts/
-  ├── stats/*.json           (80+ 个,前端直读)
-  └── stats/*.copy.tsv       (月级行,跑得太多不进 JSON)
-  ▼
-scp → 云服务器:/root/stats-staging/
-  ▼
-ops/bin/load.sql
-  │ \\copy 进 PG (8 张表)
-  ▼
-Hono /v1/wca-stats/*  →  nginx 24h cache  →  /wca-stats UI`}</pre>
-          <p className="arch-section-foot">
-            <L
-              zh={<>三处必须同步:stats-build 的 builder.ts 写 TSV,stats.yml 的 scp 清单,load.sql 的 \\copy 引用 — 漏一处则服务器表静默为空。</>}
-              en={<>Three places must stay in sync: builder.ts (which writes TSVs), the scp manifest in stats.yml, and the \\copy in load.sql. Miss any one and the server table silently goes empty.</>}
-            />
-          </p>
-        </section>
-
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 07</span>
-            <L zh="技术亮点" en="Tech highlights" />
-          </h2>
-          <div className="arch-hl">
-            {HIGHLIGHTS.map((h, i) => {
-              const t = h[lang];
-              return (
-                <div key={i} className="arch-hl-card">
-                  <div className="arch-hl-glyph">{h.glyph}</div>
-                  <div className="arch-hl-body">
-                    <div className="arch-hl-title">{t.title}</div>
-                    <p className="arch-hl-desc">{t.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="arch-diagram">
+            <StatsPipelineSVG />
           </div>
         </section>
 
-        <section className="arch-section">
-          <h2 className="arch-section-title">
-            <span className="arch-section-tag">// 08</span>
-            <L zh="部署故事" en="Deploy story" />
-          </h2>
-          <div className="arch-deploy">
-            <div className="arch-deploy-item">
-              <div className="arch-deploy-host">cuberoot.me</div>
-              <div className="arch-deploy-role">
-                <L zh="主站。云服务器 nginx 直接服。" en="Primary site. Served directly by cloud nginx." />
-              </div>
-            </div>
-            <div className="arch-deploy-item">
-              <div className="arch-deploy-host">www.cuberoot.me</div>
-              <div className="arch-deploy-role">
-                <L zh="apex 301 → www,反过来也常见 — 这里两条都通。" en="apex 301 → www, or the other way around — both directions work." />
-              </div>
-            </div>
-            <div className="arch-deploy-item">
-              <div className="arch-deploy-host">api.cuberoot.me</div>
-              <div className="arch-deploy-role">
-                <L zh="同一台云服务器,nginx 反代到 127.0.0.1:3001 的 Hono。" en="Same VM, nginx reverse-proxies to Hono at 127.0.0.1:3001." />
-              </div>
-            </div>
-            <div className="arch-deploy-item">
-              <div className="arch-deploy-host">ruiminyan.github.io</div>
-              <div className="arch-deploy-role">
-                <L zh="GH Pages 镜像兜底,自动 301 → cuberoot.me。" en="GitHub Pages fallback mirror, auto-301 to cuberoot.me." />
-              </div>
-            </div>
-            <div className="arch-deploy-item">
-              <div className="arch-deploy-host">cuberoot.me/blog/</div>
-              <div className="arch-deploy-role">
-                <L zh="静态博客,Hugo 生成,2026-05 从 WordPress 整体迁过来。" en="Static blog generated by Hugo; migrated wholesale from WordPress in 2026-05." />
-              </div>
-            </div>
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">06</span>
+            <h2 className="arch-sec-title"><L zh="部署:五个域名, 一台机器" en="Deploy: five hosts, one machine" /></h2>
+          </div>
+          <table className="arch-tbl">
+            <thead><tr>
+              <th><L zh="域名" en="Host" /></th>
+              <th><L zh="后面" en="Backed by" /></th>
+              <th><L zh="作用" en="Role" /></th>
+            </tr></thead>
+            <tbody>
+              <tr><td><code>cuberoot.me</code></td><td><L zh="云服务器 nginx" en="Cloud nginx" /></td><td><L zh="主站, SPA 入口" en="Primary site, SPA entry" /></td></tr>
+              <tr><td><code>www.cuberoot.me</code></td><td><L zh="同台, 301" en="Same VM, 301" /></td><td><L zh="apex 与 www 互通" en="apex / www mutual redirect" /></td></tr>
+              <tr><td><code>api.cuberoot.me</code></td><td><L zh="同台 nginx 反代 :3001" en="Same VM, nginx → :3001" /></td><td><L zh="Hono API + 24h proxy_cache" en="Hono API + 24h proxy_cache" /></td></tr>
+              <tr><td><code>ruiminyan.github.io</code></td><td><L zh="GitHub Pages 镜像" en="GitHub Pages mirror" /></td><td><L zh="兜底, 301 → cuberoot.me" en="Fallback, 301 → cuberoot.me" /></td></tr>
+              <tr><td><code>cuberoot.me/blog/</code></td><td><L zh="Hugo 静态" en="Hugo static" /></td><td><L zh="2026-05 从 WordPress 迁来" en="Migrated from WordPress, 2026-05" /></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">07</span>
+            <h2 className="arch-sec-title"><L zh="为什么是这些选型" en="Why these picks" /></h2>
+          </div>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>每个技术选型都有 alternatives。下表列出选了什么、没选什么、以及为什么。</>}
+              en={<>Each pick has alternatives. The table below lists what was chosen, what wasn't, and why.</>}
+            />
+          </p>
+          <table className="arch-tbl">
+            <thead><tr>
+              <th><L zh="主题" en="Topic" /></th>
+              <th><L zh="选" en="Picked" /></th>
+              <th><L zh="没选" en="Not picked" /></th>
+              <th><L zh="为什么" en="Why" /></th>
+            </tr></thead>
+            <tbody>
+              {DECISIONS.map((d) => (
+                <tr key={d.topic}>
+                  <td className="arch-tbl-topic">{d.topic}</td>
+                  <td className="arch-tbl-pick">{d.pick}</td>
+                  <td className="arch-tbl-alt">{d.alt}</td>
+                  <td>{lang === 'zh' ? d.zh : d.en}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">08</span>
+            <h2 className="arch-sec-title"><L zh="几个工程细节" en="Engineering details worth knowing" /></h2>
+          </div>
+          <div className="arch-details">
+            {DETAILS.map((d) => (
+              <article key={d.title} className="arch-detail">
+                <h3 className="arch-detail-title">{d.title}</h3>
+                <p className="arch-detail-body">{lang === 'zh' ? d.zh : d.en}</p>
+              </article>
+            ))}
           </div>
         </section>
 
         <footer className="arch-foot">
           <div className="arch-foot-line">
-            <L zh="开源地址" en="Source" />
-            <span className="arch-meta-dot">·</span>
+            <L zh="源码" en="Source" />
+            <span className="arch-meta-sep">·</span>
             <a href="https://github.com/ruiminyan/ruiminyan.github.io" target="_blank" rel="noreferrer">
               github.com/ruiminyan/ruiminyan.github.io
             </a>
+            <span className="arch-meta-sep">·</span>
+            <Link to="/code">/code</Link>
           </div>
           <p className="arch-foot-note">
             <L
-              zh={<>这页是 CubeRoot 的"内部说明书"。改任何模块前,先看一眼这里;改完了,再看一眼这里。</>}
-              en={<>This page is CubeRoot's "internal handbook." Read it before touching any module; read it again after.</>}
+              zh={<>这页是 CubeRoot 的内部说明书。改任何模块前, 先看一眼这里;改完了, 再看一眼这里。</>}
+              en={<>This is CubeRoot's internal handbook. Read it before touching any module; read it again after.</>}
             />
           </p>
         </footer>
