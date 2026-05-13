@@ -537,7 +537,7 @@ const TRACER_PATTERNS: Pattern[] = [
   },
   {
     id: 'wca-cached',
-    route: '/wca-stats/historical',
+    route: '/wca-stats/all-results?show=persons',
     lit: ['browser', 'edge', 'spa', 'fetch', 'api'],
     cacheHit: true,
     eta: '< 10ms (cache hit)',

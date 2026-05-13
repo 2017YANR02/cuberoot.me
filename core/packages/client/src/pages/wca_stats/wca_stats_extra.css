@@ -321,6 +321,37 @@
 .wse-sor-evcell.podium-3 { color: #cd7f32; font-weight: 600; }
 .wse-sor-evcell.empty { color: #555; }
 
+/* Show toggle 所在 filter 不强制 140px min-width,让 toggle 后紧贴下一项 filter */
+.wse-filter.wse-filter-show { min-width: 0; }
+
+/* Show toggle (Persons / Results), segmented pill — 与其它 filter 同高 */
+.wse-show-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  align-self: flex-start;  /* 不被 .wse-filter 的 stretch 拉宽 → 避免右侧露空 */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  height: 34px;
+}
+.wse-show-toggle button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-sub, #aaa);
+  padding: 0 16px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+.wse-show-toggle button:hover { color: var(--text-color, #f0ebe3); }
+.wse-show-toggle button.active {
+  background: rgba(120, 160, 255, 0.18);
+  color: var(--text-color, #f0ebe3);
+  font-weight: 500;
+}
+
 /* Search input (with × clear button) */
 .wse-filter-q { min-width: 200px; flex: 1; }
 .wse-q-wrap {

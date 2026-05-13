@@ -1,5 +1,8 @@
 /**
  * 当年成绩排行 — top 200 ww + top 30/country per (year, event, type)
+ * 两种视图(Show 切换):
+ *   show=results (默认) — 当年每条 valid 成绩一行
+ *   show=persons        — 当年每选手最佳一行(客户端去重,fetch 满 cap=200 后 dedup)
  * /wca-stats/year-results
  */
 import { useEffect, useMemo, useState } from 'react';
@@ -16,6 +19,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import CountrySelect, { useCountries } from './CountrySelect';
+import ShowToggle, { type ShowMode } from './ShowToggle';
 import { formatAttempts } from './AllResultsPage';
 import './wca_stats_extra.css';
 
@@ -28,6 +32,8 @@ const EVENTS = [
 ];
 const EVENTS_SET = new Set(EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
+const CAP_WW = 200;
+const CAP_COUNTRY = 30;
 
 interface Row {
   rank: number; value: number; wcaId: string; name: string;
@@ -41,6 +47,7 @@ export default function YearResultsPage() {
   const isZh = i18n.language === 'zh';
   const [params, setParams] = useSearchParams();
   const currentYear = new Date().getUTCFullYear();
+  const show: ShowMode = (params.get('show') === 'persons') ? 'persons' : 'results';
   const year = parseInt(params.get('year') ?? String(currentYear), 10);
   const month = parseInt(params.get('month') ?? '0', 10);
   const event = params.get('event') ?? '333';
@@ -56,7 +63,15 @@ export default function YearResultsPage() {
     setParams(next, { replace: false });
   };
 
-  const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);
+  const handleShowChange = (v: ShowMode) => {
+    const next = new URLSearchParams(params);
+    if (v === 'results') next.delete('show'); else next.set('show', v);
+    next.delete('page');
+    setParams(next, { replace: false });
+  };
+
+  const [rawRows, setRawRows] = useState<Row[]>([]);
+  const [rawTotal, setRawTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, setFlagBust] = useState(0);
@@ -65,6 +80,8 @@ export default function YearResultsPage() {
 
   useEffect(() => { loadFlagData().then(v => setFlagBust(v)); }, []);
 
+  // persons 模式: 拉全 cap 行(无服务端分页),客户端按 wca_id 去重
+  // results 模式: 走服务端分页
   useEffect(() => {
     setLoading(true); setError(null);
     const url = new URL(apiUrl('/v1/wca/year-results'), window.location.origin);
@@ -72,13 +89,34 @@ export default function YearResultsPage() {
     if (month > 0) url.searchParams.set('month', String(month));
     url.searchParams.set('event', event);
     url.searchParams.set('type', type);
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('size', String(size));
+    if (show === 'persons') {
+      const cap = country ? CAP_COUNTRY : CAP_WW;
+      url.searchParams.set('page', '1');
+      url.searchParams.set('size', String(cap));
+    } else {
+      url.searchParams.set('page', String(page));
+      url.searchParams.set('size', String(size));
+    }
     if (country) url.searchParams.set('country', country);
     fetch(url.toString().replace(window.location.origin, ''))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [year, month, event, type, country, page, size]);
+      .then((j: { rows: Row[]; total: number }) => { setRawRows(j.rows); setRawTotal(j.total); })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [show, year, month, event, type, country, page, size]);
+
+  // persons 视图: 按 wca_id 去重,保留每人 value 最小(行已按 rank_in_scope 升序到达)
+  const personRows = useMemo(() => {
+    if (show !== 'persons') return [] as Row[];
+    const seen = new Set<string>();
+    const out: Row[] = [];
+    for (const r of rawRows) {
+      if (seen.has(r.wcaId)) continue;
+      seen.add(r.wcaId);
+      out.push(r);
+    }
+    return out.map((r, i) => ({ ...r, rank: i + 1 }));
+  }, [show, rawRows]);
 
   const years = useMemo(() => {
     const ys: number[] = [];
@@ -86,7 +124,7 @@ export default function YearResultsPage() {
     return ys;
   }, [currentYear]);
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
+  const totalPages = rawTotal ? Math.max(1, Math.ceil(rawTotal / size)) : 1;
 
   return (
     <div className="wse-page">
@@ -95,8 +133,15 @@ export default function YearResultsPage() {
           <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
-        <h1>{isZh ? '当年成绩排行' : 'Current Year Ranking'}</h1>
-        <p className="wse-subtitle">{isZh ? '某年某月成绩榜(每年每国 top 30、全球 top 200)' : 'Top results within a year/month (top 30/country, 200 worldwide)'}</p>
+        <h1>{isZh ? '当年成绩排行' : 'Year Rankings'}</h1>
+        <p className="wse-subtitle">{isZh
+          ? (show === 'persons'
+              ? '当年每选手最佳(全球前 200 / 各国前 30 内去重)'
+              : '某年某月成绩榜(每年每国 top 30、全球 top 200)')
+          : (show === 'persons'
+              ? 'Each cuber\'s best in year (deduped within worldwide top 200 / per-country top 30)'
+              : 'Top results within a year/month (top 30/country, 200 worldwide)')}
+        </p>
       </header>
 
       <WcaEventSelector
@@ -107,6 +152,10 @@ export default function YearResultsPage() {
       />
 
       <div className="wse-filters">
+        <div className="wse-filter wse-filter-show">
+          <label>{isZh ? '显示' : 'Show'}</label>
+          <ShowToggle value={show} onChange={handleShowChange} isZh={isZh} />
+        </div>
         <div className="wse-filter">
           <label>{isZh ? '年份' : 'Year'}</label>
           <select value={year} onChange={e => update('year', e.target.value)}>
@@ -135,10 +184,10 @@ export default function YearResultsPage() {
       <div className="wse-table-wrapper">
         {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
-        {data && !loading && (
+        {!loading && !error && show === 'results' && (
           <>
             <div className="wse-result-meta">
-              {isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`}
+              {isZh ? `共 ${rawTotal.toLocaleString()} 条,显示 ${rawRows.length}` : `${rawTotal.toLocaleString()} results, showing ${rawRows.length}`}
             </div>
             <table className="wse-table">
               <thead>
@@ -152,7 +201,7 @@ export default function YearResultsPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.rows.map(r => (
+                {rawRows.map(r => (
                   <tr key={`${r.rank}-${r.wcaId}-${r.compId}`}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
@@ -160,14 +209,18 @@ export default function YearResultsPage() {
                       <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
-                    <td><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></td>
+                    <td>
+                      <a href={`https://www.worldcubeassociation.org/competitions/${r.compId}`} target="_blank" rel="noopener noreferrer">
+                        <CompCell compId={r.compId} compName={r.compName} isZh={isZh} />
+                      </a>
+                    </td>
                     <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                     <td className="wse-attempts-col">{formatAttempts(r.attempts, event, type, r.value)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {data.total > size && (
+            {rawTotal > size && (
               <Paginator
                 page={page}
                 totalPages={totalPages}
@@ -178,6 +231,40 @@ export default function YearResultsPage() {
                 onSizeChange={(s) => update('size', String(s))}
               />
             )}
+          </>
+        )}
+        {!loading && !error && show === 'persons' && (
+          <>
+            <div className="wse-result-meta">
+              {isZh ? `共 ${personRows.length.toLocaleString()} 人` : `${personRows.length.toLocaleString()} cubers`}
+            </div>
+            <table className="wse-table">
+              <thead>
+                <tr>
+                  <th className="wse-rank-col">#</th>
+                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
+                  {!country && <th>{isZh ? '国家' : 'Country'}</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {personRows.map(r => (
+                  <tr key={r.wcaId}>
+                    <td className="wse-rank-col">{r.rank}</td>
+                    <td>
+                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
+                    </td>
+                    <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
+                    {!country && (
+                      <td>
+                        {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                        <span>{r.countryId}</span>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </>
         )}
       </div>
