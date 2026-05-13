@@ -16725,6 +16725,11 @@
       "country": "Israel",
       "iso2": "IL"
     },
+    "2022KHAT05": {
+      "name": "Divyaansh Khatri (दिव्यांश खत्री)",
+      "country": "India",
+      "iso2": "IN"
+    },
     "2022KHEW01": {
       "name": "Keagen Khew",
       "country": "Singapore",
@@ -17365,6 +17370,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2023MEZA02": {
+      "name": "Miguel Ángel Meza",
+      "country": "Spain",
+      "iso2": "ES"
+    },
     "2023POWE10": {
       "name": "Matthew Powell",
       "country": "Singapore",
@@ -17374,6 +17384,11 @@
       "name": "Daniel Rimner",
       "country": "Germany",
       "iso2": "DE"
+    },
+    "2023ROBI10": {
+      "name": "Daniel Robinson",
+      "country": "United Kingdom",
+      "iso2": "GB"
     },
     "2023ROMA10": {
       "name": "Adam Romanowski",
@@ -18105,6 +18120,9 @@
     "AlaniaOpen2011": {
       "name": "Alania Open 2011"
     },
+    "AlbaceteCubeayVete2025": {
+      "name": "Albacete Cubea y Vete 2025"
+    },
     "AlbaceteOpen2016": {
       "name": "Albacete Open 2016"
     },
@@ -18407,6 +18425,9 @@
     },
     "AnahuacCubing2023": {
       "name": "Anahuac Cubing 2023"
+    },
+    "AnandCubeOpen2023": {
+      "name": "Anand Cube Open 2023"
     },
     "AnapoimaII2025": {
       "name": "Anapoima II 2025"
@@ -20049,6 +20070,9 @@
     "BayonneAtoutcubesOpen2024": {
       "name": "Bayonne Atoutcubes Open 2024"
     },
+    "BayonneAtoutcubesOpen2026": {
+      "name": "Bayonne Atoutcubes Open 2026"
+    },
     "BayouBacktoSchool2018": {
       "name": "Bayou Back to School 2018"
     },
@@ -21444,6 +21468,9 @@
     "BravoBKKCubeMaster2026": {
       "name": "Bravo BKK Cube Master 2026"
     },
+    "BravoBKKCubeOpen2026": {
+      "name": "Bravo BKK Cube Open 2026"
+    },
     "BraybrookBigCubes2026": {
       "name": "Braybrook Big Cubes 2026"
     },
@@ -21953,6 +21980,9 @@
     },
     "BulgarianOpen2018": {
       "name": "Bulgarian Open 2018"
+    },
+    "BullasOpen2024": {
+      "name": "Bullas Open 2024"
     },
     "BullCitySummerNC2024": {
       "name": "Bull City Summer NC 2024"
@@ -23171,6 +23201,9 @@
     },
     "ChampionnatQuebecois2024": {
       "name": "Championnat Québécois 2024"
+    },
+    "ChampionnatQuebecois2026": {
+      "name": "Championnat Québécois 2026"
     },
     "ChangChun2010": {
       "name": "ChangChun 2010"
@@ -24849,6 +24882,9 @@
     "CubeFiestaSurat2019": {
       "name": "Cube Fiesta Surat 2019"
     },
+    "CubeFiestaSurat2023": {
+      "name": "Cube Fiesta Surat 2023"
+    },
     "CubeForACureSpring2016": {
       "name": "Cube For A Cure Spring 2016"
     },
@@ -26025,6 +26061,9 @@
     "DarmstadtOpen2022": {
       "name": "DDD 2022"
     },
+    "DarmstadtOpen2026": {
+      "name": "Darmstadt Open 2026"
+    },
     "DarwinOpen2019": {
       "name": "Darwin Open 2019"
     },
@@ -26240,6 +26279,9 @@
     },
     "DerbyCityOpen2019": {
       "name": "Derby City Open 2019"
+    },
+    "DerwoodCubingDerbySpring2026": {
+      "name": "Derwood Cubing Derby Spring 2026"
     },
     "DesafioMaipuNxN2024": {
       "name": "Desafío Maipú NxN 2024"
@@ -27314,6 +27356,9 @@
     },
     "ElsassOpen2019": {
       "name": "Elsass Open 2019"
+    },
+    "ElTormesOpen2024": {
+      "name": "El Tormes Open 2024"
     },
     "EmpireStateALL11Stars2026": {
       "name": "Empire State ALL11-Stars 2026"
@@ -29421,6 +29466,9 @@
     "GetafeOpen2015": {
       "name": "Getafe Open 2015"
     },
+    "GetafeOpen2026": {
+      "name": "Getafe Open 2026"
+    },
     "GetafeVuelve2019": {
       "name": "Getafe Vuelve 2019"
     },
@@ -29789,6 +29837,9 @@
     },
     "GranadaOpen2025": {
       "name": "Granada Open 2025"
+    },
+    "GranAsociacionOpen2024": {
+      "name": "Gran Asociación Open 2024"
     },
     "GrandCubeOpen2017": {
       "name": "Grand Cube Open 2017"
@@ -31476,6 +31527,9 @@
     "iCubeDay2017": {
       "name": "iCube Day 2017"
     },
+    "iCubeOpen2022": {
+      "name": "i.Cube Open 2022"
+    },
     "iCubeOpen2023": {
       "name": "i.Cube Open 2023"
     },
@@ -32732,6 +32786,9 @@
     },
     "KampenOpen2023": {
       "name": "Kampen Open 2023"
+    },
+    "KampinKuutiopaivat2026": {
+      "name": "Kampin Kuutiopäivät 2026"
     },
     "KamppiCubeWeekend2025": {
       "name": "Kamppi Cube Weekend 2025"
@@ -34434,6 +34491,9 @@
     "LincolnOpen2019": {
       "name": "Lincoln Open 2019"
     },
+    "LincolnshireAutumn2024": {
+      "name": "Lincolnshire Autumn 2024"
+    },
     "LincolnshireSummer2023": {
       "name": "Lincolnshire Summer 2023"
     },
@@ -34712,6 +34772,9 @@
     },
     "LongjumOpen2025": {
       "name": "Longjum'Open 2025"
+    },
+    "LongjumOpen2026": {
+      "name": "Longjum'Open 2026"
     },
     "LongmontCubeOpen2017": {
       "name": "Longmont Cube Open 2017"
@@ -35054,6 +35117,9 @@
     },
     "MadridCundinamarcaVII2025": {
       "name": "Madrid Cundinamarca VII 2025"
+    },
+    "MadridMiniopen2025": {
+      "name": "Madrid Miniopen 2025"
     },
     "MadridNorteOpen2022": {
       "name": "Madrid Norte Open 2022"
@@ -36792,6 +36858,9 @@
     "MMovesinMiddlebury2024": {
       "name": "M Moves in Middlebury 2024"
     },
+    "MNHeartlandWarmUpII2026": {
+      "name": "MN Heartland Warm-Up II 2026"
+    },
     "MnMCubeCup2024": {
       "name": "MnM Cube Cup 2024"
     },
@@ -37049,6 +37118,9 @@
     },
     "MostolesOpen2025": {
       "name": "Móstoles Open 2025"
+    },
+    "MostolesOpen2026": {
+      "name": "Móstoles Open 2026"
     },
     "MotherCityCubingCapeTown2025": {
       "name": "Cubing Cape Town 2025"
@@ -40506,6 +40578,9 @@
     "PleaseBeQuietFrisco2020": {
       "name": "Please Be Quiet Frisco 2020"
     },
+    "PleaseBeQuietHefei2026": {
+      "name": "Please Be Quiet Hefei 2026"
+    },
     "PleaseBeQuietinAstana2023": {
       "name": "Please Be Quiet in Astana 2023"
     },
@@ -40727,6 +40802,9 @@
     },
     "PocosCuposVII2024": {
       "name": "Pocos Cupos VII 2024"
+    },
+    "PodlaskieTourBialystok2026": {
+      "name": "Podlaskie Tour Białystok 2026"
     },
     "PodlaskieTourSuwalki2026": {
       "name": "Podlaskie Tour Suwałki 2026"
@@ -41492,6 +41570,9 @@
     },
     "PuzzlesinPinehurst2025": {
       "name": "Puzzles in Pinehurst 2025"
+    },
+    "PuzzlesinPittsford2026": {
+      "name": "Puzzles in Pittsford 2026"
     },
     "PuzzlesinPottsville2024": {
       "name": "Puzzles in Pottsville 2024"
@@ -45852,6 +45933,9 @@
     "StevenageMay2024": {
       "name": "Stevenage May 2024"
     },
+    "StevenageMay2026": {
+      "name": "Stevenage May 2026"
+    },
     "StevenageNovember2023": {
       "name": "Stevenage November 2023"
     },
@@ -46121,6 +46205,9 @@
     },
     "SuratCubeCarnival2024": {
       "name": "Surat Cube Carnival 2024"
+    },
+    "SuratCubeOpen2026": {
+      "name": "Surat Cube Open 2026"
     },
     "SuratCubingSprint2023": {
       "name": "Surat Cubing Sprint 2023"
@@ -47871,6 +47958,9 @@
     "TorrelavegaOpen2023": {
       "name": "Torrelavega Open 2023"
     },
+    "TorrelodonesOpen2026": {
+      "name": "Torrelodones Open 2026"
+    },
     "TorunCubingSummer2024": {
       "name": "Toruń Cubing Summer 2024"
     },
@@ -48695,6 +48785,9 @@
     },
     "UniklMFIOpen2018": {
       "name": "Unikl MFI Open 2018"
+    },
+    "UniKLMIATCubeOpen2026": {
+      "name": "UniKL MIAT Cube Open 2026"
     },
     "UnionvilleOpenSpring2017": {
       "name": "Unionville Open Spring 2017"

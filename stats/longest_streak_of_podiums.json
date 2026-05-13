@@ -80,7 +80,7 @@
       "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
     ],
     [
-      88,
+      89,
       "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
       "3x3x3 Cube",
       "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
@@ -193,17 +193,17 @@
     ],
     [
       63,
-      "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-      "3x3x3 One-Handed",
-      "[Mishawaka Summer 2019](https://www.worldcubeassociation.org/competitions/MishawakaSummer2019)",
-      "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023)"
-    ],
-    [
-      62,
       "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
       "7x7x7 Cube",
       "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
       null
+    ],
+    [
+      63,
+      "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+      "3x3x3 One-Handed",
+      "[Mishawaka Summer 2019](https://www.worldcubeassociation.org/competitions/MishawakaSummer2019)",
+      "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023)"
     ],
     [
       60,
@@ -437,6 +437,13 @@
       null
     ],
     [
+      48,
+      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+      "Square-1",
+      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
+      null
+    ],
+    [
       47,
       "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
       "3x3x3 Blindfolded",
@@ -448,13 +455,6 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "5x5x5 Cube",
       "[İzmir Open 2020](https://www.worldcubeassociation.org/competitions/IzmirOpen2020)",
-      null
-    ],
-    [
-      47,
-      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-      "Square-1",
-      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
       null
     ],
     [
@@ -483,7 +483,7 @@
       "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
       "4x4x4 Cube",
       "[Champagne Open 2023](https://www.worldcubeassociation.org/competitions/ChampagneOpen2023)",
-      null
+      "[Longjum'Open 2026](https://www.worldcubeassociation.org/competitions/LongjumOpen2026)"
     ],
     [
       45,
@@ -509,14 +509,14 @@
     [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-      "6x6x6 Cube",
+      "5x5x5 Cube",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
       "[Project Kedzierzyn-Kozle 2021](https://www.worldcubeassociation.org/competitions/ProjectKedzierzynKozle2021)"
     ],
     [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-      "5x5x5 Cube",
+      "6x6x6 Cube",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
       "[Project Kedzierzyn-Kozle 2021](https://www.worldcubeassociation.org/competitions/ProjectKedzierzynKozle2021)"
     ],
