@@ -26,6 +26,7 @@ import {
   matchesCategory,
   type CrossColor,
   type Howfar,
+  type Stage1,
   type Solution,
   type WorkerVariant,
 } from './analyze_worker_client';
@@ -69,6 +70,19 @@ export default function AnalyzePage() {
     const v = Number(localStorage.getItem('analyze.howfar'));
     return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
   });
+  const [stage1, setStage1] = useState<Stage1>(() => {
+    const valid: Stage1[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
+    const urlV = searchParams.get('stage1');
+    if (urlV && (valid as string[]).includes(urlV)) return urlV as Stage1;
+    const v = localStorage.getItem('analyze.stage1');
+    if (v && (valid as string[]).includes(v)) return v as Stage1;
+    return 'cross';
+  });
+  const [pseudo, setPseudo] = useState<boolean>(() => {
+    if (searchParams.get('pseudo') === '1') return true;
+    if (searchParams.get('pseudo') === '0') return false;
+    return localStorage.getItem('analyze.pseudo') === '1';
+  });
   const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
     const urlColors = searchParams.get('colors');
     if (urlColors !== null) {
@@ -86,6 +100,8 @@ export default function AnalyzePage() {
     return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
   });
   useEffect(() => { localStorage.setItem('analyze.howfar', String(howfar)); }, [howfar]);
+  useEffect(() => { localStorage.setItem('analyze.stage1', stage1); }, [stage1]);
+  useEffect(() => { localStorage.setItem('analyze.pseudo', pseudo ? '1' : '0'); }, [pseudo]);
   useEffect(() => { localStorage.setItem('analyze.colors', JSON.stringify(colors)); }, [colors]);
   useEffect(() => {
     setSearchParams((prev) => {
@@ -95,12 +111,16 @@ export default function AnalyzePage() {
       else next.delete('scramble');
       if (howfar !== 4) next.set('howfar', String(howfar));
       else next.delete('howfar');
+      if (stage1 !== 'cross') next.set('stage1', stage1);
+      else next.delete('stage1');
+      if (pseudo) next.set('pseudo', '1');
+      else next.delete('pseudo');
       const checked = CROSS_COLORS.filter((c) => colors[c]);
       if (checked.length === CROSS_COLORS.length) next.delete('colors');
       else next.set('colors', checked.map((c) => COLOR_CHAR[c]).join(''));
       return next;
     }, { replace: true });
-  }, [scramble, howfar, colors, setSearchParams]);
+  }, [scramble, howfar, stage1, pseudo, colors, setSearchParams]);
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [crossesCovered, setCrossesCovered] = useState(0);
@@ -112,6 +132,7 @@ export default function AnalyzePage() {
   const [openIdx, setOpenIdx] = useState<Set<number>>(new Set());
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
   const analyzerRef = useRef<Analyzer>(new Analyzer());
   const startTimeRef = useRef<number>(0);
 
@@ -165,19 +186,21 @@ export default function AnalyzePage() {
     setAnalyzedScramble(trimmed);
     setFilter('all');
     setElapsedMs(null);
+    setXcrossFallback(false);
     startTimeRef.current = performance.now();
     analyzerRef.current.start(
-      { scramble: trimmed, crosscolors: colors, howfar },
+      { scramble: trimmed, crosscolors: colors, howfar, stage1, pseudo },
       {
         onProgress: (p) => {
           if (p.totalnumcross !== undefined) setCrossesCovered(p.totalnumcross);
           if (p.pairscovered !== undefined) setPairsCovered(p.pairscovered);
           if (p.llcovered !== undefined) setLlCovered(p.llcovered);
         },
-        onDone: (sols) => {
+        onDone: (sols, meta) => {
           setSolutions(sols);
           setElapsedMs(Math.round(performance.now() - startTimeRef.current));
           setRunning(false);
+          setXcrossFallback(meta?.xcrossFallback ?? false);
         },
         onError: (err) => {
           console.error('[analyze] worker error', err);
@@ -275,6 +298,36 @@ export default function AnalyzePage() {
 
       <div className="analyze-filters">
         <select
+          value={stage1}
+          onChange={(e) => setStage1(e.target.value as Stage1)}
+          disabled={running}
+          className="analyze-howfar"
+          title={t(
+            'XCross/XXCross/XXXCross = 联合搜索 cross + N 对 F2L (wasm IDA*+pruning),含最优 + 次优一步候选。',
+            'XCross/XXCross/XXXCross = joint shortest cross + N F2L pairs (wasm IDA* + pruning); includes optimal + 1-step variants.',
+          )}
+        >
+          <option value="cross">{pseudo ? 'pCross' : 'Cross'}</option>
+          <option value="xcross">{pseudo ? 'pXCross' : 'XCross'}</option>
+          <option value="xxcross">{pseudo ? 'pXXCross' : 'XXCross'}</option>
+          <option value="xxxcross">{pseudo ? 'pXXXCross' : 'XXXCross'}</option>
+        </select>
+        <label
+          className="analyze-pseudo"
+          title={t(
+            '伪 cross/F2L:允许底层 2 层相对中心面错位一个 AUF (y/y2/y′),归位旋转计 0 HTM,仅保留真伪解 (Δ≠0)。',
+            "Pseudo cross/F2L: bottom 2 layers may be one AUF off from centers (y/y2/y′); fix-up rotation costs 0 HTM, only true pseudo (Δ != 0) is kept.",
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={pseudo}
+            onChange={(e) => setPseudo(e.target.checked)}
+            disabled={running}
+          />
+          <span>{t('伪', 'Pseudo')}</span>
+        </label>
+        <select
           value={howfar}
           onChange={(e) => setHowfar(Number(e.target.value) as Howfar)}
           disabled={running}
@@ -302,6 +355,15 @@ export default function AnalyzePage() {
       {errorMsg && (
         <div className="analyze-error" role="alert">
           {errorMsg}
+        </div>
+      )}
+
+      {xcrossFallback && stage1 === 'xcross' && (
+        <div className="analyze-error" role="status">
+          {t(
+            'XCross wasm 未返回任何解 — 已降级到 cross 启发式搜索。',
+            'XCross wasm returned no valid solutions — fell back to cross heuristic search.',
+          )}
         </div>
       )}
 

@@ -18,7 +18,37 @@ const fs = require('fs');
 const path = require('path');
 
 global.self = global;
-global.importScripts = () => {};
+// emscripten's NODE branch does `var fs = require("fs")` — expose require to
+// global scope so indirect-eval'd loader can find it.
+global.require = require;
+global.__dirname = __dirname;
+global.__filename = __filename;
+// importScripts URLs are noop'd because the worker dependency contents are pre-concatenated
+// into `code` below. Exception: /analyze-worker/xcross/solver.js needs to be eval'd inline
+// so emscripten's `var Module = typeof Module != "undefined" ? Module : {}` picks up the
+// pre-configured self.Module instead of creating a new module-local one (which `require`
+// would do, breaking the locateFile + onRuntimeInitialized hooks).
+let xcrossSolverSource = null;
+global.importScripts = (...urls) => {
+  for (const url of urls) {
+    if (typeof url === 'string' && url.endsWith('/analyze-worker/xcross/solver.js')) {
+      if (xcrossSolverSource === null) {
+        xcrossSolverSource = fs.readFileSync(path.join(workerData.publicDir, 'xcross', 'solver.js'), 'utf8');
+      }
+      // Override locateFile BEFORE eval — emscripten's findWasmBinary() is sync and runs
+      // during createWasm() at end of module body. __dirname inside eval is the runner's,
+      // not the xcross dir, so the default scriptDirectory would point to tests/ and fail.
+      self.Module.locateFile = (p) => path.join(workerData.publicDir, 'xcross', p);
+      global.Module = self.Module;
+      // Indirect eval `(0, eval)(src)` runs in global scope (vs direct eval running in
+      // caller's CJS-module scope, where `var Module` would hoist module-local and
+      // shadow our globalThis.Module). With indirect eval, `var Module = ...` declares
+      // on globalThis and `typeof Module` reuses our pre-set object.
+      // eslint-disable-next-line no-eval
+      (0, eval)(xcrossSolverSource);
+    }
+  }
+};
 global.postMessage = (m) => parentPort.postMessage(m);
 
 // Some legacy anti-debug paths probe these — shim with permissive defaults.

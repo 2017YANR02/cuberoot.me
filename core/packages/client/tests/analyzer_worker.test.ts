@@ -32,6 +32,8 @@ interface AnalyzeRequest {
   scramble: string;
   crosscolors: Record<string, boolean>;
   howfar: 1 | 2 | 3 | 4;
+  stage1?: 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
+  pseudo?: boolean;
 }
 
 const ALL_COLORS = { Yellow: true, White: true, Red: true, Orange: true, Blue: true, Green: true };
@@ -100,6 +102,70 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     expect(fixed.llCovered).toBe(48729);
     expect(fixed.solutions.length).toBe(24420);
   });
+
+  it('xcross via wasm: white-only on WR avg seed yields valid xcross moves (cross+1pair solved)', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 1,
+      stage1: 'xcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    const first = r.solutions[0];
+    expect(first[3]).toEqual([]);
+    expect(first[1]).toMatch(/White XCross \[(BL|BR|FR|FL)\]/);
+    expect(first[0]).toBeGreaterThan(0);
+    expect(first[0]).toBeLessThan(20);
+  }, 30_000);
+
+  it('xxcross via wasm: white-only yields valid xxcross moves (cross+2pair solved)', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 2,
+      stage1: 'xxcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    const first = r.solutions[0];
+    expect(first[3]).toEqual([]);
+    expect(first[1]).toMatch(/White XXCross \[\w+ \w+\]/);
+    expect(first[0]).toBeGreaterThan(0);
+    expect(first[0]).toBeLessThan(25);
+  }, 60_000);
+
+  it('xxxcross via wasm: white-only yields valid xxxcross moves (cross+3pair solved)', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 3,
+      stage1: 'xxxcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    const first = r.solutions[0];
+    expect(first[3]).toEqual([]);
+    expect(first[1]).toMatch(/White XXXCross \[\w+ \w+ \w+\]/);
+    expect(first[0]).toBeGreaterThan(0);
+    expect(first[0]).toBeLessThan(30);
+  }, 120_000);
+
+  it('pseudo xcross via wasm: WR seed white-only emits at least one true-pseudo (Δ≠0) solution', async () => {
+    // Pseudo center-offset excludes Δ=0, so wasm finds the shortest true-pseudo
+    // (Δ ∈ {y, y2, y'}) per (color × slot). The pAUF rotation y/y2/y' is appended
+    // to the cross alg as a 0-HTM fix-up so downstream F2L/OLL/PLL recognition
+    // sees a canonical state.
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 1,
+      stage1: 'xcross',
+      pseudo: true,
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    const hasPseudoLabel = r.solutions.some((s) => /\bpXCross\b/.test(s[1]));
+    expect(hasPseudoLabel).toBe(true);
+    const pseudo = r.solutions.find((s) => /\bpXCross\b/.test(s[1]))!;
+    expect(/\b(y|y2|y')\s/.test(pseudo[1])).toBe(true);
+  }, 60_000);
 
   it('R L U R\' yellow-only: opposite-pair duplicate `R\' L\' R` no longer appears', async () => {
     const req: AnalyzeRequest = {
