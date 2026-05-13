@@ -1,3 +1,4 @@
+// @ts-nocheck — this is the runtime worker JS, types live in analyzer.worker.ts twin.
 /**
  * 3x3 CFOP scramble analyzer Worker — TS-source-equivalent runtime artifact.
  *
@@ -29,6 +30,163 @@ importScripts(
   '/analyze-worker/zbh.js',
   '/analyze-worker/boohoo.js',
 );
+
+// ── XCross wasm loader (crossSolver.wasm in F2L mode) ─────────────────
+// upstream tools/src/crossSolver/solver.wasm, leveraged via Module.solve("F2L",...).
+// Module config must be set before importScripts of the emscripten loader.
+// In a browser worker: locateFile returns a URL; emscripten fetches via XHR/fetch.
+// In Node worker_threads (vitest): emscripten reads via fs.readFileSync — a URL
+// here would be treated as an absolute fs path and fail. Skip locateFile so
+// emscripten uses its default scriptDirectory + path.
+self.Module = (typeof globalThis.process?.versions?.node === 'string')
+  ? {}
+  : { locateFile: (path) => '/analyze-worker/xcross/' + path };
+const xcrossReady = new Promise((resolve) => {
+  self.Module.onRuntimeInitialized = () => resolve(self.Module);
+});
+importScripts('/analyze-worker/xcross/solver.js');
+
+// rotation strings match NxN_Data inspection AUF: scramble + rotation → state on cross color.
+const XCROSS_ROTATIONS = {
+  Yellow: '', White: 'z2', Blue: 'x', Green: "x'", Red: 'z', Orange: "z'",
+};
+// F2L solver semantics — slot count = exact pair count to solve.
+// 0 slots = cross-only (used only by pseudo cross), 1 = xcross, 2 = xxcross, 3 = xxxcross.
+// Slot strings space-separated, e.g. "BL BR" requests xxcross solving BL + BR pairs.
+const XCROSS_SLOT_COMBOS = {
+  0: [[]],
+  1: [['BL'], ['BR'], ['FR'], ['FL']],
+  2: [['BL', 'BR'], ['BL', 'FR'], ['BL', 'FL'], ['BR', 'FR'], ['BR', 'FL'], ['FR', 'FL']],
+  3: [['BR', 'FR', 'FL'], ['BL', 'FR', 'FL'], ['BL', 'BR', 'FL'], ['BL', 'BR', 'FR']],
+};
+// sol_num + post-filter to optimal + optimal+1 length per (color × slot combo).
+// max_len bound depends on stage1 — xcross usually ≤11, xxcross ≤14, xxxcross ≤18.
+// solNum scales down for higher-X because the +1 branching factor is much larger
+// and we want to stay within reasonable per-call timings on mobile.
+// 'cross' (0 pairs) entry is only used in pseudo mode — non-pseudo cross goes
+// through the JS heuristic planner instead.
+const XCROSS_STAGE_PARAMS = {
+  cross:    { pairs: 0, solNum: 20, maxLen: 10, nearOptDelta: 1 },
+  xcross:   { pairs: 1, solNum: 20, maxLen: 12, nearOptDelta: 1 },
+  xxcross:  { pairs: 2, solNum: 10, maxLen: 14, nearOptDelta: 1 },
+  xxxcross: { pairs: 3, solNum: 5,  maxLen: 18, nearOptDelta: 1 },
+};
+// center_offset wasm arg: regular (Δ=0) only. The wasm's center_offset feature
+// doesn't behave as a "goal disjunction" for cube searches (xcross_search keeps
+// center_tmp at 0 since UDFBLR moves don't change it), so we implement pseudo
+// by appending y/y2/y' to the inspection rotation — making the wasm search for
+// a "real" cross in a frame that's y-rotated relative to canonical.
+const CENTER_OFFSET_REGULAR = 'EMPTY_EMPTY';
+// Pseudo offsets: each entry is a y-rotation appended to the inspection string,
+// equivalent to building cross+pair in a frame rotated by y^Δ from canonical.
+const PSEUDO_AUF_SUFFIXES = ['y', 'y2', "y'"];
+// wasm emit protocol: depth progress / terminal markers / move sequences (the actual solutions).
+const XCROSS_TERMINALS = new Set(['Search finished.', 'Already solved.', 'Unsolvable.', 'Error']);
+
+/**
+ * Run crossSolver.wasm in F2L mode for one (rotation, slot-combo).
+ * Sync — Module.solve blocks until wasm exits and emit (via EM_JS postMessage) is done.
+ * Returns array of raw move-sequence strings (e.g. `"z2 R U R' U' F R U' R' U' R U R' F'"`).
+ * Monkey-patches self.postMessage during the call to capture emit, then restores.
+ */
+function runXCrossWasmOnce(scramble, rotation, slot, solNum, maxLen, centerOffset) {
+  const collected = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: solver, scr, rot, slot, ll, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    self.Module.solve('F2L', scramble, rotation, slot, '', solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset || CENTER_OFFSET_REGULAR, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+
+/**
+ * For each selected cross color × each slot combination (chosen by stage1),
+ * call wasm, verify (petals=4 && pairs>=requiredPairs), and return CrossResult
+ * [alg, state, score] tuples for the F2LPlanner.
+ *   xcross   — 1-slot combos (4), keep solutions of length ≤ min+1 per combo (次优一步).
+ *   xxcross  — 2-slot combos (6), only the optimal per combo.
+ *   xxxcross — 3-slot combos (4), only the optimal per combo.
+ */
+function runXCrossAllColors(scramble, crosscolors, stage1, pseudo) {
+  const params = XCROSS_STAGE_PARAMS[stage1];
+  if (!params) return [];
+  const combos = XCROSS_SLOT_COMBOS[params.pairs];
+  const xs = 'X'.repeat(params.pairs);
+  const label = (pseudo ? 'p' : '') + xs + 'Cross';
+  // Pseudo mode: 3 extra rotations per color, each `<inspection> y^Δ`. These
+  // shift the wasm into a y-rotated frame so it finds a real cross in that
+  // frame — viewed from canonical, the result is a pseudo cross with offset y^Δ.
+  // The downstream F2L/OLL/PLL planner operates on the rotated cube state as-is.
+  const out = [];
+  for (const color of Object.keys(XCROSS_ROTATIONS)) {
+    if (crosscolors[color] === false) continue;
+    const baseRotation = XCROSS_ROTATIONS[color];
+    const rotations = pseudo
+      ? PSEUDO_AUF_SUFFIXES.map((suf) => baseRotation ? baseRotation + ' ' + suf : suf)
+      : [baseRotation];
+    for (const rotation of rotations) {
+      for (const slots of combos) {
+        const slotStr = slots.join(' ');
+        const wasmOuts = runXCrossWasmOnce(scramble, rotation, slotStr, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
+        const parsed = wasmOuts.map((w) => {
+          const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+          return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+        });
+        const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+        const lenCap = minLen + params.nearOptDelta;
+        const kept = parsed.filter((p) => p.len <= lenCap);
+        for (const { moves: movesOnly, len: depth } of kept) {
+          const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+          const state = NxN.new_NxN_Data(3);
+          NxN.ProcessMoves(state, scramble);
+          NxN.ProcessMoves(state, fullMoves);
+          if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
+          const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+          const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+          const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + slotPart;
+          const pairs = NxN.getAmountOfSolvedPairs(state);
+          const score = pairs * 10 - depth + 1;
+          out.push([alg, state, score]);
+          totalNumCross++;
+          postMessage({ totalnumcross: totalNumCross });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Existing JS heuristic cross planner, factored out + with an attempt cap to prevent
+ * the prior `while (crosses.length === 0)` infinite loop when queue depletes empty.
+ */
+function runCrossAllColors(scramble, crosscolors) {
+  const planner = new NxNCrossPlanner(scramble);
+  let crosses = [];
+  let attempts = 0;
+  while (crosses.length === 0 && attempts < 3) {
+    attempts++;
+    let anyAdded = false;
+    for (const color of Object.keys(planner.sides)) {
+      if (crosscolors[color] === false) continue;
+      const r = planner.processOptions(color, 10000, 100);
+      if (r.length > 0) { crosses = crosses.concat(r); anyAdded = true; }
+    }
+    if (!anyAdded) break;
+  }
+  return crosses;
+}
 
 // ── Queues ─────────────────────────────────────────────────────────────
 
@@ -211,8 +369,15 @@ class F2LPlanner {
     let counter = 0;
     while (this.queue.size() !== 0) {
       const cur = this.queue.pop();
-      const opts = NxN.getF2LOptions(cur[1]);
       const solvedBefore = NxN.getAmountOfSolvedPairs(cur[1]);
+      // If seed already meets howfar (e.g. xcross seed with 1 pair, howfar=1),
+      // emit directly as final — don't search further pairs.
+      if (solvedBefore >= howfar) {
+        out.push([NxN_AlgHandler.calculateETM(cur[0]), cur[0], cur[1], []]);
+        if (counter++ % 250 === 0) postMessage({ pairscovered: counter });
+        continue;
+      }
+      const opts = NxN.getF2LOptions(cur[1]);
       for (const opt of opts) {
         const p = NxN.new_NxN_Data(cur[1]);
         NxN.ProcessMoves(p, opt[1]);
@@ -326,42 +491,54 @@ class LLPlanner {
 let finalSolutions = [];
 let workingScramble = '';
 
-self.onmessage = (e) => {
-  finalSolutions = [];
-  totalNumCross = 0;
-  workingScramble = e.data.scramble;
-  const howfar = e.data.howfar;
+self.onmessage = async (e) => {
+  try {
+    finalSolutions = [];
+    totalNumCross = 0;
+    workingScramble = e.data.scramble;
+    const howfar = e.data.howfar;
+    const stage1 = e.data.stage1 || 'cross';
+    const pseudo = e.data.pseudo === true;
 
-  let crossPlanner = new NxNCrossPlanner(workingScramble);
-  let crosses = [];
+    const initial = NxN.new_NxN_Data(3);
+    NxN.ProcessMoves(initial, workingScramble);
 
-  const initial = NxN.new_NxN_Data(3);
-  NxN.ProcessMoves(initial, workingScramble);
-  if (NxN.isCrossSolved(initial)) {
-    crosses = [['', initial, 0]];
-  } else {
-    while (crosses.length === 0) {
-      for (const color of Object.keys(crossPlanner.sides)) {
-        if (e.data.crosscolors[color] === false) continue;
-        const r = crossPlanner.processOptions(color, 10000, 100);
-        crosses = crosses.concat(r);
+    let crosses = [];
+    let xcrossFallback = false;
+    // Wasm dispatch: any of the 4 stages with pseudo=true → wasm pseudo path;
+    // xcross/xxcross/xxxcross with pseudo=false → wasm regular path; plain
+    // 'cross' with pseudo=false stays on the JS heuristic planner.
+    const useWasm = pseudo || stage1 === 'xcross' || stage1 === 'xxcross' || stage1 === 'xxxcross';
+    if (NxN.isCrossSolved(initial)) {
+      crosses = [['', initial, 0]];
+    } else if (useWasm) {
+      await xcrossReady;
+      crosses = runXCrossAllColors(workingScramble, e.data.crosscolors, stage1, pseudo);
+      if (crosses.length === 0) {
+        // pseudo empty = no Δ≠0 solution at search bound; regular xcross empty =
+        // wasm misbehaved. Either way fall back to non-pseudo cross.
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else {
+      crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+    }
+
+    if (crosses.length > 0) {
+      crosses.sort((a, b) => b[2] - a[2]);
+      crosses = crosses.slice(0, 20);
+      const f2l = new F2LPlanner(crosses);
+      const f2lOut = f2l.processOptions(howfar);
+      if (howfar > 3) {
+        const ll = new LLPlanner(f2lOut);
+        finalSolutions = finalSolutions.concat(ll.processOptions());
+      } else {
+        finalSolutions = finalSolutions.concat(f2lOut);
       }
     }
-    crossPlanner = undefined;
-  }
 
-  if (crosses.length > 0) {
-    crosses.sort((a, b) => b[2] - a[2]);
-    crosses = crosses.slice(0, 20);
-    const f2l = new F2LPlanner(crosses);
-    const f2lOut = f2l.processOptions(howfar);
-    if (howfar > 3) {
-      const ll = new LLPlanner(f2lOut);
-      finalSolutions = finalSolutions.concat(ll.processOptions());
-    } else {
-      finalSolutions = finalSolutions.concat(f2lOut);
-    }
+    postMessage({ finalSolutions, xcrossFallback });
+  } catch (err) {
+    postMessage({ finalSolutions: [], error: String((err && err.message) || err) });
   }
-
-  postMessage({ finalSolutions });
 };
