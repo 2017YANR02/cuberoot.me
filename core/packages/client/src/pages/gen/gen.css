@@ -968,6 +968,16 @@
     height: 100%;
     width: auto;
 }
+@media (max-width: 700px) {
+    /* 默认 max-content 列宽 = 打乱不换行时的天然宽度,移动端必溢出 viewport。
+       让 grid 列可收缩,sheet table width:100% 自然回落到 viewport 宽。 */
+    .gen-tn-sheets { grid-template-columns: minmax(0, 1fr); }
+    /* 打乱换行后行变高 → SVG height:100% → 按宽高比变宽 → 又把列撑大。
+       在窄屏给 SVG 加 max-height,断开"行高→图宽"循环。 */
+    .gen-tn-attempt-preview { min-width: 64px; }
+    .gen-tn-attempt-preview svg { max-height: 72px; }
+}
+
 .gen-tn-extras-divider td {
     text-align: center;
     font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
