@@ -327,7 +327,7 @@ export default function AllResultsPage() {
                       ) : ''}
                     </td>
                     <td className="wse-attempts-col">
-                      {r.value != null && r.attempts.length > 0 ? formatAttempts(r.attempts, event, type, r.value) : ''}
+                      {r.value != null && r.attempts && r.attempts.length > 0 ? formatAttempts(r.attempts, event, type, r.value) : ''}
                     </td>
                   </tr>
                 ))}
