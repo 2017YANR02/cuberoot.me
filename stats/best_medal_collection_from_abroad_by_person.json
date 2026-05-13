@@ -88,17 +88,17 @@
     ],
     [
       "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
-      "**234**",
+      "**235**",
       "69",
       "36",
-      "339"
+      "340"
     ],
     [
       "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)",
-      "**209**",
-      "127",
-      "58",
-      "394"
+      "**212**",
+      "128",
+      "59",
+      "399"
     ],
     [
       "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
@@ -123,10 +123,10 @@
     ],
     [
       "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
-      "**150**",
-      "163",
+      "**153**",
+      "164",
       "140",
-      "453"
+      "457"
     ],
     [
       "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
@@ -137,10 +137,10 @@
     ],
     [
       "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
-      "**140**",
+      "**142**",
       "45",
       "16",
-      "201"
+      "203"
     ],
     [
       "[Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01)",
@@ -213,6 +213,20 @@
       "210"
     ],
     [
+      "[Burno Li Chak Kwan (李澤堃)](https://www.worldcubeassociation.org/persons/2017KWAN05)",
+      "**106**",
+      "66",
+      "41",
+      "213"
+    ],
+    [
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "**105**",
+      "38",
+      "22",
+      "165"
+    ],
+    [
       "[Ianis Costin Chele](https://www.worldcubeassociation.org/persons/2021CHEL01)",
       "**104**",
       "71",
@@ -227,11 +241,18 @@
       "268"
     ],
     [
+      "[Gergely Novotni](https://www.worldcubeassociation.org/persons/2016NOVO01)",
+      "**102**",
+      "51",
+      "25",
+      "178"
+    ],
+    [
       "[Anyu Zhang (张安宇)](https://www.worldcubeassociation.org/persons/2012ZHAN08)",
       "**100**",
-      "110",
+      "112",
       "62",
-      "272"
+      "274"
     ],
     [
       "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)",
@@ -241,32 +262,11 @@
       "203"
     ],
     [
-      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
-      "**99**",
-      "37",
-      "21",
-      "157"
-    ],
-    [
       "[Ivan Li Ka Leong (李嘉亮)](https://www.worldcubeassociation.org/persons/2015LEON02)",
       "**98**",
       "81",
       "63",
       "242"
-    ],
-    [
-      "[Burno Li Chak Kwan (李澤堃)](https://www.worldcubeassociation.org/persons/2017KWAN05)",
-      "**98**",
-      "66",
-      "40",
-      "204"
-    ],
-    [
-      "[Gergely Novotni](https://www.worldcubeassociation.org/persons/2016NOVO01)",
-      "**97**",
-      "49",
-      "25",
-      "171"
     ],
     [
       "[Sébastien Auroux](https://www.worldcubeassociation.org/persons/2008AURO01)",
@@ -354,10 +354,10 @@
     ],
     [
       "[Chris Mills](https://www.worldcubeassociation.org/persons/2014MILL04)",
-      "**75**",
+      "**80**",
       "72",
-      "63",
-      "210"
+      "64",
+      "216"
     ],
     [
       "[Ivan Lew Yi Wen (刘义文)](https://www.worldcubeassociation.org/persons/2012WENI01)",
@@ -458,6 +458,13 @@
       "192"
     ],
     [
+      "[David Vujasić](https://www.worldcubeassociation.org/persons/2015VUJA01)",
+      "**57**",
+      "74",
+      "59",
+      "190"
+    ],
+    [
       "[Oscar Nieto](https://www.worldcubeassociation.org/persons/2014NIET03)",
       "**57**",
       "40",
@@ -470,13 +477,6 @@
       "24",
       "13",
       "94"
-    ],
-    [
-      "[David Vujasić](https://www.worldcubeassociation.org/persons/2015VUJA01)",
-      "**56**",
-      "72",
-      "53",
-      "181"
     ],
     [
       "[Vincenzo Maria Gammino](https://www.worldcubeassociation.org/persons/2016GAMM01)",
@@ -696,6 +696,13 @@
       "162"
     ],
     [
+      "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
+      "**43**",
+      "62",
+      "69",
+      "174"
+    ],
+    [
       "[Konstantin Jaehne](https://www.worldcubeassociation.org/persons/2015JAEH01)",
       "**43**",
       "56",
@@ -729,13 +736,6 @@
       "15",
       "8",
       "65"
-    ],
-    [
-      "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
-      "**42**",
-      "1",
-      "0",
-      "43"
     ]
   ]
 }
