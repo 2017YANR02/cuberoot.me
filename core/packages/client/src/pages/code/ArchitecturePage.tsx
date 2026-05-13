@@ -208,103 +208,142 @@ function StatsPipelineSVG() {
   );
 }
 
-// ─── SVG 5: Dev HMR 双入口推导 ───────────────────
-function HmrDualEntrySVG() {
+// ─── SVG 5: Dev HMR 三入口推导 ───────────────────
+function HmrTripleEntrySVG() {
   return (
-    <svg viewBox="0 0 920 600" className="diagram-svg" role="img" aria-label="Dev HMR dual entry">
-      {/* 顶部:两个 page 入口 */}
+    <svg viewBox="0 0 980 680" className="diagram-svg" role="img" aria-label="Dev HMR triple entry">
+      {/* 顶部:3 个 page 入口 */}
       <g className="d-box d-box-user">
-        <rect x="40" y="14" width="340" height="82" rx="10" />
-        <text x="210" y="40" className="d-title">Laptop</text>
-        <text x="210" y="60" className="d-sub d-mono">http://localhost:5173/</text>
-        <text x="210" y="80" className="d-sub">URL.port = "5173"  ·  protocol = http</text>
+        <rect x="20" y="14" width="300" height="100" rx="10" />
+        <text x="170" y="40" className="d-title">Laptop</text>
+        <text x="170" y="64" className="d-sub d-mono">http://localhost:5173/</text>
+        <text x="170" y="88" className="d-sub">port = "5173"  ·  http</text>
       </g>
 
       <g className="d-box d-box-user">
-        <rect x="540" y="14" width="340" height="82" rx="10" />
-        <text x="710" y="40" className="d-title">Phone</text>
-        <text x="710" y="60" className="d-sub d-mono">https://alienware.tail171d80.ts.net/</text>
-        <text x="710" y="80" className="d-sub">URL.port = ""  ·  protocol = https</text>
+        <rect x="340" y="14" width="300" height="100" rx="10" />
+        <text x="490" y="40" className="d-title">Phone · 同 WiFi</text>
+        <text x="490" y="64" className="d-sub d-mono">https://alienware.tail171d80.ts.net/</text>
+        <text x="490" y="88" className="d-sub">port = ""  ·  https</text>
       </g>
 
-      {/* 两条箭头下来 */}
+      <g className="d-box d-box-user">
+        <rect x="660" y="14" width="300" height="100" rx="10" />
+        <text x="810" y="40" className="d-title">Phone · 蜂窝/外网</text>
+        <text x="810" y="64" className="d-sub d-mono">https://dev.cuberoot.me/</text>
+        <text x="810" y="88" className="d-sub">port = ""  ·  https</text>
+      </g>
+
+      {/* 三条箭头下来 */}
       <g className="d-arrow">
-        <line x1="210" y1="96" x2="210" y2="138" />
-        <polygon points="210,138 205,130 215,130" />
+        <line x1="170" y1="114" x2="170" y2="158" />
+        <polygon points="170,158 165,150 175,150" />
       </g>
       <g className="d-arrow">
-        <line x1="710" y1="96" x2="710" y2="138" />
-        <polygon points="710,138 705,130 715,130" />
+        <line x1="490" y1="114" x2="490" y2="158" />
+        <polygon points="490,158 485,150 495,150" />
+      </g>
+      <g className="d-arrow">
+        <line x1="810" y1="114" x2="810" y2="158" />
+        <polygon points="810,158 805,150 815,150" />
       </g>
 
       {/* 中间:共享的 /@vite/client */}
       <g className="d-pkg d-pkg-shared">
-        <rect x="60" y="138" width="800" height="140" rx="10" />
-        <text x="460" y="166" className="d-title">/@vite/client — 同一份 JS, 两边都拉这一份</text>
-        <text x="460" y="194" className="d-code">
+        <rect x="40" y="158" width="900" height="140" rx="10" />
+        <text x="490" y="186" className="d-title">/@vite/client — 同一份 JS, 三边都拉这一份</text>
+        <text x="490" y="214" className="d-code">
           socketProtocol = <tspan className="d-code-fall">null</tspan> || (protocol === "https:" ? "wss" : "ws")
         </text>
-        <text x="460" y="218" className="d-code">
+        <text x="490" y="238" className="d-code">
           hmrPort = <tspan className="d-code-fall">null</tspan>
         </text>
-        <text x="460" y="242" className="d-code">
+        <text x="490" y="262" className="d-code">
           socketHost = hostname + ":" + (hmrPort || URL.port) + "/"
         </text>
-        <text x="460" y="266" className="d-sub">短路求值:null 为假 → fallback 到 page URL 自身的值</text>
+        <text x="490" y="286" className="d-sub">短路求值:null 为假 → fallback 到 page URL 自身的值</text>
       </g>
 
-      {/* 两条分叉箭头 */}
+      {/* 三条分叉箭头到各自推导 box */}
       <g className="d-arrow">
-        <line x1="380" y1="278" x2="220" y2="320" />
-        <polygon points="220,320 226,313 230,321" />
+        <line x1="170" y1="298" x2="170" y2="342" />
+        <polygon points="170,342 165,334 175,334" />
       </g>
       <g className="d-arrow">
-        <line x1="540" y1="278" x2="700" y2="320" />
-        <polygon points="700,320 690,321 694,313" />
+        <line x1="490" y1="298" x2="490" y2="342" />
+        <polygon points="490,342 485,334 495,334" />
+      </g>
+      <g className="d-arrow">
+        <line x1="810" y1="298" x2="810" y2="342" />
+        <polygon points="810,342 805,334 815,334" />
       </g>
 
       {/* 推导出来的 ws URL */}
       <g>
-        <rect x="40" y="320" width="340" height="90" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
-        <text x="210" y="346" className="d-title">→ Laptop 推导出</text>
-        <text x="210" y="376" className="d-code d-code-strong">ws://localhost:5173/</text>
-        <text x="210" y="398" className="d-sub">page port "5173" 直接代入</text>
+        <rect x="20" y="342" width="300" height="100" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
+        <text x="170" y="370" className="d-title">→ Laptop 推导出</text>
+        <text x="170" y="400" className="d-code d-code-strong">ws://localhost:5173/</text>
+        <text x="170" y="424" className="d-sub">port "5173" 直接代入</text>
       </g>
 
       <g>
-        <rect x="540" y="320" width="340" height="90" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
-        <text x="710" y="346" className="d-title">→ Phone 推导出</text>
-        <text x="710" y="376" className="d-code d-code-strong">wss://alienware.tail171d80.ts.net:/</text>
-        <text x="710" y="398" className="d-sub">尾巴的孤零零 ":" 被浏览器规范化, 走 wss 默认 443</text>
+        <rect x="340" y="342" width="300" height="100" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
+        <text x="490" y="370" className="d-title">→ WiFi 推导出</text>
+        <text x="490" y="400" className="d-code d-code-strong">wss://alienware...ts.net:/</text>
+        <text x="490" y="424" className="d-sub">尾巴 ":" 规范化, wss 默认 443</text>
       </g>
 
-      {/* 两条到最终 server 的箭头 */}
-      <g className="d-arrow d-arrow-hot">
-        <line x1="210" y1="410" x2="400" y2="540" />
-        <polygon points="400,540 390,536 393,529" />
-        <text x="260" y="470" className="d-label">direct TCP</text>
-      </g>
-
-      {/* Funnel 中继 */}
       <g>
-        <rect x="540" y="436" width="340" height="48" rx="6" fill="#F4ECEA" stroke="#DDBCB1" strokeWidth="1.5" strokeDasharray="4 3" />
-        <text x="710" y="456" className="d-title">Tailscale Funnel</text>
-        <text x="710" y="474" className="d-sub d-mono">edge :443 (TLS) → 127.0.0.1:5173 (plain)</text>
-      </g>
-      <g className="d-arrow d-arrow-hot">
-        <line x1="710" y1="410" x2="710" y2="436" />
-        <polygon points="710,436 705,428 715,428" />
-      </g>
-      <g className="d-arrow d-arrow-hot">
-        <line x1="710" y1="484" x2="520" y2="540" />
-        <polygon points="520,540 530,536 528,529" />
+        <rect x="660" y="342" width="300" height="100" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
+        <text x="810" y="370" className="d-title">→ 蜂窝 推导出</text>
+        <text x="810" y="400" className="d-code d-code-strong">wss://dev.cuberoot.me:/</text>
+        <text x="810" y="424" className="d-sub">同款规则, wss 默认 443</text>
       </g>
 
-      {/* 最终的 Vite WS server */}
+      {/* 底部链路:3 条不同的中继回到同一个 Vite server */}
+
+      {/* Laptop direct */}
+      <g className="d-arrow d-arrow-hot">
+        <line x1="170" y1="442" x2="380" y2="620" />
+        <polygon points="380,620 370,617 374,610" />
+        <text x="210" y="540" className="d-label">direct TCP</text>
+      </g>
+
+      {/* WiFi via Funnel */}
+      <g>
+        <rect x="340" y="466" width="300" height="48" rx="6" fill="#F4ECEA" stroke="#DDBCB1" strokeWidth="1.5" strokeDasharray="4 3" />
+        <text x="490" y="486" className="d-title">Tailscale Funnel</text>
+        <text x="490" y="504" className="d-sub d-mono">edge :443 → 127.0.0.1:5173</text>
+      </g>
+      <g className="d-arrow d-arrow-hot">
+        <line x1="490" y1="442" x2="490" y2="466" />
+        <polygon points="490,466 485,458 495,458" />
+      </g>
+      <g className="d-arrow d-arrow-hot">
+        <line x1="490" y1="514" x2="490" y2="620" />
+        <polygon points="490,620 485,612 495,612" />
+      </g>
+
+      {/* 蜂窝 via nginx + frp 反向隧道 */}
+      <g>
+        <rect x="660" y="466" width="300" height="48" rx="6" fill="#F4ECEA" stroke="#DDBCB1" strokeWidth="1.5" strokeDasharray="4 3" />
+        <text x="810" y="486" className="d-title">nginx + frp 反向隧道</text>
+        <text x="810" y="504" className="d-sub d-mono">VPS :443 → frp :7100 → PC :5173</text>
+      </g>
+      <g className="d-arrow d-arrow-hot">
+        <line x1="810" y1="442" x2="810" y2="466" />
+        <polygon points="810,466 805,458 815,458" />
+      </g>
+      <g className="d-arrow d-arrow-hot">
+        <line x1="810" y1="514" x2="600" y2="620" />
+        <polygon points="600,620 610,617 608,610" />
+      </g>
+
+      {/* 最终的 Vite WS server (居中底部) */}
       <g className="d-box d-box-server">
-        <rect x="310" y="540" width="300" height="50" rx="10" />
-        <text x="460" y="562" className="d-title d-title-lg">Vite HTTP + WS</text>
-        <text x="460" y="580" className="d-sub d-mono">127.0.0.1:5173  ·  单端口共享</text>
+        <rect x="340" y="620" width="300" height="60" rx="10" />
+        <text x="490" y="644" className="d-title d-title-lg">Vite HTTP + WS</text>
+        <text x="490" y="664" className="d-sub d-mono">127.0.0.1:5173 · 单端口共享</text>
       </g>
     </svg>
   );
@@ -1234,16 +1273,16 @@ React SPA   →  fetch(apiUrl('/v1/recon/abc'))
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">09</span>
-            <h2 className="arch-sec-title"><L zh="Dev HMR:一份 JS, 两个入口都能热更" en="Dev HMR: one JS, two entries, both hot-reload" /></h2>
+            <h2 className="arch-sec-title"><L zh="Dev HMR:一份 JS, 三个入口都能热更" en="Dev HMR: one JS, three entries, all hot-reload" /></h2>
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>开发时 PC 走 <code>http://localhost:5173/</code> (本机直连, 飞快, 无 TLS), 手机走 <code>https://alienware.tail171d80.ts.net/</code> (Tailscale Funnel 公网可达)。两个入口共用同一份 <code>/@vite/client</code> JS, 却要分别拉 <code>ws</code> / <code>wss</code>、不同端口才能连到同一个 HMR server。Vite 是怎么"一份 JS 满足两边"的。</>}
-              en={<>In dev, the PC visits <code>http://localhost:5173/</code> (direct, fast, plain HTTP) and the phone visits <code>https://alienware.tail171d80.ts.net/</code> (public via Tailscale Funnel). Both entries pull the same <code>/@vite/client</code> JS, yet each needs a different scheme (<code>ws</code>/<code>wss</code>) and port to reach the same HMR server. Here's how Vite makes one JS satisfy both.</>}
+              zh={<>开发时 PC 走 <code>http://localhost:5173/</code> (本机直连, 飞快, 无 TLS), 同 WiFi 手机走 <code>https://alienware.tail171d80.ts.net/</code> (Tailscale Funnel 公网可达), 蜂窝/外网手机走 <code>https://dev.cuberoot.me/</code> (自有云服务器 nginx + frp 反向隧道回 PC vite)。三个入口共用同一份 <code>/@vite/client</code> JS, 却要分别拉 <code>ws</code> / <code>wss</code>、不同端口才能连到同一个 HMR server。Vite 是怎么"一份 JS 满足三边"的。</>}
+              en={<>In dev, the PC visits <code>http://localhost:5173/</code> (direct, fast, plain HTTP), same-WiFi phones visit <code>https://alienware.tail171d80.ts.net/</code> (public via Tailscale Funnel), and cellular/off-network phones visit <code>https://dev.cuberoot.me/</code> (self-hosted VM nginx + frp reverse tunnel back to the PC). All three entries pull the same <code>/@vite/client</code> JS, yet each needs a different scheme (<code>ws</code>/<code>wss</code>) and port to reach the same HMR server. Here's how Vite makes one JS satisfy all three.</>}
             />
           </p>
           <div className="arch-diagram">
-            <HmrDualEntrySVG />
+            <HmrTripleEntrySVG />
           </div>
           <pre className="arch-code">{`// ❌ BEFORE  — vite.config.ts 写了:  hmr: { clientPort: 443, protocol: 'wss' }
 //    Vite 把字面量烤进 /@vite/client, 两端都被强制走 wss://...:443/
@@ -1288,11 +1327,11 @@ const socketHost = \`\${importMetaUrl.hostname}:\${hmrPort || importMetaUrl.port
               </p>
             </article>
             <article className="arch-detail">
-              <h3 className="arch-detail-title"><L zh="为什么 Funnel 单端口能同时跑 HTTP + WS" en="Why Funnel's single port carries HTTP and WS together" /></h3>
+              <h3 className="arch-detail-title"><L zh="为什么反代单端口能同时跑 HTTP + WS" en="Why a single reverse-proxy port carries HTTP and WS together" /></h3>
               <p className="arch-detail-body">
                 <L
-                  zh={<>Vite dev server 是一个 <code>http.Server</code>, 在 5173 上同时接 HTTP 请求和 <code>Upgrade: websocket</code> 升级。所以 Funnel 那条 <code>:443 → :5173</code> 单一映射, 既转 HTML/JS 静态请求也转 WS upgrade, 一个端口够用。HMR 不需要单独再开一条 Funnel 规则。</>}
-                  en={<>Vite's dev server is one <code>http.Server</code> handling both regular HTTP requests and <code>Upgrade: websocket</code> on port 5173. So Funnel's single <code>:443 → :5173</code> mapping carries both the static HTML/JS and the WS upgrade — one port is enough. HMR doesn't need its own Funnel rule.</>}
+                  zh={<>Vite dev server 是一个 <code>http.Server</code>, 在 5173 上同时接 HTTP 请求和 <code>Upgrade: websocket</code> 升级。所以无论是 Funnel 的 <code>:443 → :5173</code>, 还是 <code>dev.cuberoot.me</code> 的 nginx <code>:443 → frp :7100 → :5173</code>, 单条映射既转 HTML/JS 静态请求也转 WS upgrade — 一个端口够用。HMR 不需要为反代单独再开一条规则。前提:nginx 里要有 <code>proxy_set_header Upgrade $http_upgrade; Connection $connection_upgrade;</code> 让 ws 升级头不被默认 HTTP/1.0 反代吞掉(<code>ops/nginx/www.cuberoot.me.conf</code> 顶部那段 map 就是干这事)。</>}
+                  en={<>Vite's dev server is one <code>http.Server</code> handling both regular HTTP and <code>Upgrade: websocket</code> on port 5173. So whether the route is Funnel's <code>:443 → :5173</code> or <code>dev.cuberoot.me</code>'s nginx <code>:443 → frp :7100 → :5173</code>, a single mapping carries both the static HTML/JS and the WS upgrade — one port is enough. HMR doesn't need a separate rule. Prerequisite: nginx must forward the Upgrade/Connection headers (<code>proxy_set_header Upgrade $http_upgrade; Connection $connection_upgrade;</code>), otherwise the default HTTP/1.0 proxy mode silently strips them — see the <code>map</code> at the top of <code>ops/nginx/www.cuberoot.me.conf</code>.</>}
                 />
               </p>
             </article>
