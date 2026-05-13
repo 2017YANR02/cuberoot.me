@@ -38,8 +38,6 @@ const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
-// NOTE: 历史排名 — 任意 (event, year, country, type) 切片
-const HistoricalRanksPage = lazy(() => import('./pages/wca_stats/HistoricalRanksPage'));
 // NOTE: WCA 6 个 cubing.pro 风格统计 tab
 const GrandSlamPage = lazy(() => import('./pages/wca_stats/GrandSlamPage'));
 const AllResultsPage = lazy(() => import('./pages/wca_stats/AllResultsPage'));
@@ -262,7 +260,6 @@ function App() {
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
         <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
-        <Route path="/wca-stats/historical" element={<Suspense fallback={<div>Loading...</div>}><HistoricalRanksPage /></Suspense>} />
         <Route path="/wca-stats/grand-slam" element={<Suspense fallback={<div>Loading...</div>}><GrandSlamPage /></Suspense>} />
         <Route path="/wca-stats/all-results" element={<Suspense fallback={<div>Loading...</div>}><AllResultsPage /></Suspense>} />
         <Route path="/wca-stats/year-results" element={<Suspense fallback={<div>Loading...</div>}><YearResultsPage /></Suspense>} />

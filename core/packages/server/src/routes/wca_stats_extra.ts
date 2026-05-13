@@ -156,10 +156,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const params: unknown[] = [event, type === 'average'];
 
   if (cn.id) { where.push(`t.person_country_id = ?`); params.push(cn.id); }
-  if (year) {
-    where.push(`t.comp_date >= ? AND t.comp_date <= ?`);
-    params.push(`${year}-01-01`, `${year}-12-31`);
-  }
+  if (year) { where.push(`t.comp_year = ?`); params.push(year); }
   if (month) { where.push(`EXTRACT(MONTH FROM t.comp_date) = ?`); params.push(month); }
 
   if (q) {
