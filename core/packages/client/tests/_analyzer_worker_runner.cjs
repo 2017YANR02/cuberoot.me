@@ -24,11 +24,14 @@ global.require = require;
 global.__dirname = __dirname;
 global.__filename = __filename;
 // importScripts URLs are noop'd because the worker dependency contents are pre-concatenated
-// into `code` below. Exception: /analyze-worker/xcross/solver.js needs to be eval'd inline
-// so emscripten's `var Module = typeof Module != "undefined" ? Module : {}` picks up the
-// pre-configured self.Module instead of creating a new module-local one (which `require`
-// would do, breaking the locateFile + onRuntimeInitialized hooks).
+// into `code` below. Two exceptions need inline eval at the call site:
+//   - /analyze-worker/xcross/solver.js — emscripten's `var Module = ...` must pick up our
+//     pre-configured self.Module (indirect eval into global scope, not CJS-module scope).
+//   - /analyze-worker/pseudo/pseudo-wrapped.js — emscripten wrapped in an IIFE so its var-
+//     declarations stay local; we still eval inline so its sync wasm load picks the right
+//     locateFile (and the test always overrides locateFile to point at fs paths).
 let xcrossSolverSource = null;
+let pseudoWrappedSource = null;
 global.importScripts = (...urls) => {
   for (const url of urls) {
     if (typeof url === 'string' && url.endsWith('/analyze-worker/xcross/solver.js')) {
@@ -46,6 +49,13 @@ global.importScripts = (...urls) => {
       // on globalThis and `typeof Module` reuses our pre-set object.
       // eslint-disable-next-line no-eval
       (0, eval)(xcrossSolverSource);
+    } else if (typeof url === 'string' && url.endsWith('/analyze-worker/pseudo/pseudo-wrapped.js')) {
+      if (pseudoWrappedSource === null) {
+        pseudoWrappedSource = fs.readFileSync(path.join(workerData.publicDir, 'pseudo', 'pseudo-wrapped.js'), 'utf8');
+      }
+      self.PseudoModuleStash.locateFile = (p) => path.join(workerData.publicDir, 'pseudo', p);
+      // eslint-disable-next-line no-eval
+      (0, eval)(pseudoWrappedSource);
     }
   }
 };

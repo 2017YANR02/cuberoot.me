@@ -58,34 +58,49 @@ importScripts(
   '/analyze-worker/boohoo.js',
 );
 
-// XCross wasm: upstream crossSolver.wasm in F2L mode. Set Module config BEFORE
-// importScripts of the emscripten loader.
+// Two wasm solvers coexist in the same worker. Both are emscripten-default
+// compiled and pollute globals (Module, HEAPU8, wasmExports, _malloc, ...) when
+// loaded; we avoid the collision by wrapping the SECOND module's source in an
+// IIFE so its var-declarations stay function-local (see analyzer.js comment for
+// full notes).
+type EmModule = { locateFile?: (p: string) => string; onRuntimeInitialized?: () => void; solve?: (...args: unknown[]) => void };
 declare const self: {
-  Module: { locateFile?: (p: string) => string; onRuntimeInitialized?: () => void; solve?: (...args: unknown[]) => void };
+  Module: EmModule;
+  PseudoModuleStash: EmModule;
   postMessage: (msg: unknown) => void;
   onmessage: ((e: MessageEvent<AnalyzeRequest>) => void) | null;
 };
-// Browser worker: locateFile returns a URL. Node worker_threads (vitest): skip
-// locateFile so emscripten uses its default scriptDirectory + path (fs read).
-self.Module = (typeof (globalThis as { process?: { versions?: { node?: string } } }).process?.versions?.node === 'string')
-  ? {}
-  : { locateFile: (path: string) => '/analyze-worker/xcross/' + path };
+const _isNode = typeof (globalThis as { process?: { versions?: { node?: string } } }).process?.versions?.node === 'string';
+// xcross — standard loader pattern, owns the global emscripten namespace.
+self.Module = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/xcross/' + p };
 const xcrossReady = new Promise<void>((resolve) => {
   self.Module.onRuntimeInitialized = () => resolve();
 });
+const xcrossModule = self.Module;
 importScripts('/analyze-worker/xcross/solver.js');
+// pseudo — IIFE-wrapped, picks up its config from self.PseudoModuleStash.
+self.PseudoModuleStash = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/pseudo/' + p };
+const pseudoReady = new Promise<void>((resolve) => {
+  self.PseudoModuleStash.onRuntimeInitialized = () => resolve();
+});
+const pseudoModule = self.PseudoModuleStash;
+importScripts('/analyze-worker/pseudo/pseudo-wrapped.js');
 
 // ── Types ─────────────────────────────────────────────────────────────
 
 type CrossColor = 'Yellow' | 'White' | 'Blue' | 'Green' | 'Red' | 'Orange';
 type Howfar = 1 | 2 | 3 | 4;
-type Stage1 = 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
+type Stage = 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
+type Variant = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
 
 interface AnalyzeRequest {
   scramble: string;
   crosscolors: Record<CrossColor, boolean>;
   howfar: Howfar;
-  stage1: Stage1;
+  variant?: Variant;
+  stage?: Stage;
+  // Legacy keys still accepted by the runtime worker for back-compat with older test fixtures.
+  stage1?: Stage;
   pseudo?: boolean;
 }
 
@@ -442,18 +457,18 @@ const XCROSS_SLOT_COMBOS: Record<0 | 1 | 2 | 3, string[][]> = {
 };
 // sol_num + post-filter optimal+1 per (color × slot combo). solNum scales down for
 // higher-X to bound per-call wasm time on mobile.
-const XCROSS_STAGE_PARAMS: Record<Stage1, { pairs: 0 | 1 | 2 | 3; solNum: number; maxLen: number; nearOptDelta: number }> = {
+const XCROSS_STAGE_PARAMS: Record<Stage, { pairs: 0 | 1 | 2 | 3; solNum: number; maxLen: number; nearOptDelta: number }> = {
   cross:    { pairs: 0, solNum: 20, maxLen: 10, nearOptDelta: 1 },
   xcross:   { pairs: 1, solNum: 20, maxLen: 12, nearOptDelta: 1 },
   xxcross:  { pairs: 2, solNum: 10, maxLen: 14, nearOptDelta: 1 },
   xxxcross: { pairs: 3, solNum: 5,  maxLen: 18, nearOptDelta: 1 },
 };
 const CENTER_OFFSET_REGULAR = 'EMPTY_EMPTY';
-// Pseudo: append y/y2/y' to the inspection rotation per Δ ∈ {1,2,3}. The wasm
-// center_offset feature doesn't gate the search the way one might assume (UDFBLR
-// moves leave center_tmp unchanged), so pseudo is implemented as 3 extra
-// rotated-frame wasm runs per (color × slot). See analyzer.js for details.
-const PSEUDO_AUF_SUFFIXES = ['y', 'y2', "y'"];
+// pseudoCrossSolver center_offset: allow cross to land at {Solved, D, D', D2} via
+// crest_mapping codes 0/1/2/3 = ""/y/y2/y'. See pseudo.cpp `buildCenterOffset`.
+const PSEUDO_CENTER_OFFSET_ALL = "EMPTY_EMPTY|EMPTY_y|EMPTY_y2|EMPTY_y'";
+// D-class fix-ups for detecting which offset a pseudo-cross result landed at.
+const PSEUDO_OFFSET_FIXES = ['', 'D', 'D2', "D'"];
 const XCROSS_TERMINALS = new Set(['Search finished.', 'Already solved.', 'Unsolvable.', 'Error']);
 
 /** Run crossSolver.wasm in F2L mode once. Sync; monkey-patches postMessage to capture emit. */
@@ -467,7 +482,7 @@ function runXCrossWasmOnce(scramble: string, rotation: string, slot: string, sol
     collected.push(msg);
   };
   try {
-    self.Module.solve!('F2L', scramble, rotation, slot, '', solNum, maxLen,
+    xcrossModule.solve!('F2L', scramble, rotation, slot, '', solNum, maxLen,
       'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
       '', centerOffset || CENTER_OFFSET_REGULAR, 0, '', '');
   } finally {
@@ -476,45 +491,108 @@ function runXCrossWasmOnce(scramble: string, rotation: string, slot: string, sol
   return collected;
 }
 
-function runXCrossAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>, stage1: Stage1, pseudo: boolean): CrossResult[] {
-  const params = XCROSS_STAGE_PARAMS[stage1];
+function runXCrossAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>, stage: Stage): CrossResult[] {
+  const params = XCROSS_STAGE_PARAMS[stage];
   const combos = XCROSS_SLOT_COMBOS[params.pairs];
   const xs = 'X'.repeat(params.pairs);
-  const label = (pseudo ? 'p' : '') + xs + 'Cross';
+  const label = xs + 'Cross';
   const out: CrossResult[] = [];
   for (const color of Object.keys(XCROSS_ROTATIONS) as CrossColor[]) {
     if (crosscolors[color] === false) continue;
-    const baseRotation = XCROSS_ROTATIONS[color];
-    const rotations: string[] = pseudo
-      ? PSEUDO_AUF_SUFFIXES.map((suf) => (baseRotation ? baseRotation + ' ' + suf : suf))
-      : [baseRotation];
-    for (const rotation of rotations) {
-      for (const slots of combos) {
-        const slotStr = slots.join(' ');
-        const wasmOuts = runXCrossWasmOnce(scramble, rotation, slotStr, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
-        const parsed = wasmOuts.map((w) => {
-          const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
-          return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
-        });
-        const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
-        const lenCap = minLen + params.nearOptDelta;
-        const kept = parsed.filter((p) => p.len <= lenCap);
-        for (const { moves: movesOnly, len: depth } of kept) {
-          const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
-          const state = NxN.new_NxN_Data(3);
-          NxN.ProcessMoves(state, scramble);
-          NxN.ProcessMoves(state, fullMoves);
-          if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
-          const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
-          const slotPart = slotStr ? ' [' + slotStr + ']' : '';
-          const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + slotPart;
-          const pairs = NxN.getAmountOfSolvedPairs(state);
-          const score = pairs * 10 - depth + 1;
-          out.push([alg, state, score]);
-          totalNumCross++;
-          postMessage({ totalnumcross: totalNumCross });
-        }
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const slots of combos) {
+      const slotStr = slots.join(' ');
+      const wasmOuts = runXCrossWasmOnce(scramble, rotation, slotStr, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+        const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + slotPart;
+        const pairs = NxN.getAmountOfSolvedPairs(state);
+        const score = pairs * 10 - depth + 1;
+        out.push([alg, state, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
       }
+    }
+  }
+  return out;
+}
+
+/** Run pseudoCrossSolver.wasm once. Same emit protocol as crossSolver. */
+function runPseudoWasmOnce(scramble: string, rotation: string, slot: string, pslot: string, solNum: number, maxLen: number, centerOffset: string): string[] {
+  const collected: string[] = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg: unknown) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, pslot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    pseudoModule.solve!(scramble, rotation, slot, pslot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+/**
+ * pCross: cross algorithms allowing D-offset target. For each wasm output we detect
+ * which D-class fix ('' / D / D2 / D') would re-align the cross, append it to the
+ * alg so the displayed sequence stays valid, and hand off the (now canonical)
+ * state to F2LPlanner. Δ=0 results are dropped to avoid duplicating regular cross.
+ */
+function runPseudoCrossAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>): CrossResult[] {
+  const params = XCROSS_STAGE_PARAMS.cross;
+  const solNum = params.solNum * 4;
+  const out: CrossResult[] = [];
+  for (const color of Object.keys(XCROSS_ROTATIONS) as CrossColor[]) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    const wasmOuts = runPseudoWasmOnce(scramble, rotation, '', '', solNum, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
+    const parsed = wasmOuts.map((w) => {
+      const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+      return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+    });
+    const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+    const lenCap = minLen + params.nearOptDelta;
+    const kept = parsed.filter((p) => p.len <= lenCap);
+    for (const { moves: movesOnly, len: depth } of kept) {
+      const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+      const state = NxN.new_NxN_Data(3);
+      NxN.ProcessMoves(state, scramble);
+      NxN.ProcessMoves(state, fullMoves);
+      let chosenFix: string | null = null;
+      let chosenState: NxNState | null = null;
+      for (const fix of PSEUDO_OFFSET_FIXES) {
+        const p = NxN.new_NxN_Data(state);
+        if (fix) NxN.ProcessMoves(p, fix);
+        if (NxN.isCrossSolved(p)) { chosenFix = fix; chosenState = p; break; }
+      }
+      if (chosenState === null) continue;
+      if (chosenFix === '') continue;
+      const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+      const fixSuffix = ' ' + chosenFix;
+      const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' pCross [+' + chosenFix + ']';
+      const score = -depth + 1;
+      out.push([alg, chosenState, score]);
+      totalNumCross++;
+      postMessage({ totalnumcross: totalNumCross });
     }
   }
   return out;
@@ -543,22 +621,33 @@ self.onmessage = async (e: MessageEvent<AnalyzeRequest>) => {
     totalNumCross = 0;
     workingScramble = e.data.scramble;
     const howfar = e.data.howfar;
-    const stage1: Stage1 = e.data.stage1 ?? 'cross';
+    // Accept both new {variant, stage} and legacy {stage1, pseudo} for back-compat with old tests.
+    const stage: Stage = e.data.stage ?? e.data.stage1 ?? 'cross';
+    const variant: Variant = e.data.variant ?? (e.data.pseudo === true ? 'pseudo' : 'std');
 
     const initial = NxN.new_NxN_Data(3);
     NxN.ProcessMoves(initial, workingScramble);
 
-    const pseudo = e.data.pseudo === true;
     let crosses: CrossResult[] = [];
     let xcrossFallback = false;
-    // wasm dispatch: any pseudo request OR an X-prefixed regular stage → wasm.
-    // Non-pseudo plain 'cross' stays on the JS heuristic planner.
-    const useWasm = pseudo || stage1 === 'xcross' || stage1 === 'xxcross' || stage1 === 'xxxcross';
+    let variantUnsupported = false;
+    // See analyzer.js twin for the full dispatch matrix and "how to add a new variant" comment.
+    const useXCrossWasm = variant === 'std' && (stage === 'xcross' || stage === 'xxcross' || stage === 'xxxcross');
+    const usePseudoCrossWasm = variant === 'pseudo' && stage === 'cross';
     if (NxN.isCrossSolved(initial)) {
       crosses = [['', initial, 0]];
-    } else if (useWasm) {
+    } else if (usePseudoCrossWasm) {
+      await pseudoReady;
+      crosses = runPseudoCrossAllColors(workingScramble, e.data.crosscolors);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (variant !== 'std') {
+      variantUnsupported = true;
+    } else if (useXCrossWasm) {
       await xcrossReady;
-      crosses = runXCrossAllColors(workingScramble, e.data.crosscolors, stage1, pseudo);
+      crosses = runXCrossAllColors(workingScramble, e.data.crosscolors, stage);
       if (crosses.length === 0) {
         xcrossFallback = true;
         crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
@@ -581,7 +670,7 @@ self.onmessage = async (e: MessageEvent<AnalyzeRequest>) => {
       }
     }
 
-    postMessage({ finalSolutions, xcrossFallback });
+    postMessage({ finalSolutions, xcrossFallback, variantUnsupported });
   } catch (err) {
     postMessage({ finalSolutions: [], error: String((err && (err as Error).message) || err) });
   }

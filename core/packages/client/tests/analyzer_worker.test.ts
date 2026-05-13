@@ -32,8 +32,8 @@ interface AnalyzeRequest {
   scramble: string;
   crosscolors: Record<string, boolean>;
   howfar: 1 | 2 | 3 | 4;
-  stage1?: 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
-  pseudo?: boolean;
+  variant?: 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
+  stage?: 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
 }
 
 const ALL_COLORS = { Yellow: true, White: true, Red: true, Orange: true, Blue: true, Green: true };
@@ -108,7 +108,8 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
       howfar: 1,
-      stage1: 'xcross',
+      variant: 'std',
+      stage: 'xcross',
     });
     expect(r.solutions.length).toBeGreaterThan(0);
     const first = r.solutions[0];
@@ -123,7 +124,8 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
       howfar: 2,
-      stage1: 'xxcross',
+      variant: 'std',
+      stage: 'xxcross',
     });
     expect(r.solutions.length).toBeGreaterThan(0);
     const first = r.solutions[0];
@@ -138,7 +140,8 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
       howfar: 3,
-      stage1: 'xxxcross',
+      variant: 'std',
+      stage: 'xxxcross',
     });
     expect(r.solutions.length).toBeGreaterThan(0);
     const first = r.solutions[0];
@@ -148,23 +151,24 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     expect(first[0]).toBeLessThan(30);
   }, 120_000);
 
-  it('pseudo xcross via wasm: WR seed white-only emits at least one true-pseudo (Δ≠0) solution', async () => {
-    // Pseudo center-offset excludes Δ=0, so wasm finds the shortest true-pseudo
-    // (Δ ∈ {y, y2, y'}) per (color × slot). The pAUF rotation y/y2/y' is appended
-    // to the cross alg as a 0-HTM fix-up so downstream F2L/OLL/PLL recognition
-    // sees a canonical state.
+  it('pseudo cross via wasm: WR seed white-only emits at least one Δ≠0 pCross solution', async () => {
+    // pseudoCrossSolver.wasm with center_offset {0, y, y2, y'}; Δ=0 results are
+    // dropped (they duplicate regular cross). For each Δ≠0 result we detect which
+    // D-class fix-up (D / D2 / D') re-aligns the cross to canonical and append it
+    // to the alg as a (visible) 0-HTM fix-up. F2L planner sees a canonical state.
     const r = await runAnalyzer('fixed', {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
-      howfar: 1,
-      stage1: 'xcross',
-      pseudo: true,
+      howfar: 4,
+      variant: 'pseudo',
+      stage: 'cross',
     });
     expect(r.solutions.length).toBeGreaterThan(0);
-    const hasPseudoLabel = r.solutions.some((s) => /\bpXCross\b/.test(s[1]));
+    const hasPseudoLabel = r.solutions.some((s) => /\bpCross\b/.test(s[1]));
     expect(hasPseudoLabel).toBe(true);
-    const pseudo = r.solutions.find((s) => /\bpXCross\b/.test(s[1]))!;
-    expect(/\b(y|y2|y')\s/.test(pseudo[1])).toBe(true);
+    const pseudo = r.solutions.find((s) => /\bpCross\b/.test(s[1]))!;
+    // D-class fix-up must be present in the alg
+    expect(/\[\+(D|D2|D')\]/.test(pseudo[1])).toBe(true);
   }, 60_000);
 
   it('R L U R\' yellow-only: opposite-pair duplicate `R\' L\' R` no longer appears', async () => {

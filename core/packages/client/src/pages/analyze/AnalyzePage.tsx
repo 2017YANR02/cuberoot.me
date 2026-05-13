@@ -26,7 +26,8 @@ import {
   matchesCategory,
   type CrossColor,
   type Howfar,
-  type Stage1,
+  type Stage,
+  type Variant,
   type Solution,
   type WorkerVariant,
 } from './analyze_worker_client';
@@ -70,18 +71,21 @@ export default function AnalyzePage() {
     const v = Number(localStorage.getItem('analyze.howfar'));
     return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
   });
-  const [stage1, setStage1] = useState<Stage1>(() => {
-    const valid: Stage1[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
-    const urlV = searchParams.get('stage1');
-    if (urlV && (valid as string[]).includes(urlV)) return urlV as Stage1;
-    const v = localStorage.getItem('analyze.stage1');
-    if (v && (valid as string[]).includes(v)) return v as Stage1;
+  const [stage, setStage] = useState<Stage>(() => {
+    const valid: Stage[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
+    const urlV = searchParams.get('stage');
+    if (urlV && (valid as string[]).includes(urlV)) return urlV as Stage;
+    const v = localStorage.getItem('analyze.stage');
+    if (v && (valid as string[]).includes(v)) return v as Stage;
     return 'cross';
   });
-  const [pseudo, setPseudo] = useState<boolean>(() => {
-    if (searchParams.get('pseudo') === '1') return true;
-    if (searchParams.get('pseudo') === '0') return false;
-    return localStorage.getItem('analyze.pseudo') === '1';
+  const [variant, setVariant] = useState<Variant>(() => {
+    const valid: Variant[] = ['std', 'eo', 'pair', 'pseudo', 'pseudo_pair'];
+    const urlV = searchParams.get('variant');
+    if (urlV && (valid as string[]).includes(urlV)) return urlV as Variant;
+    const v = localStorage.getItem('analyze.variant');
+    if (v && (valid as string[]).includes(v)) return v as Variant;
+    return 'std';
   });
   const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
     const urlColors = searchParams.get('colors');
@@ -100,8 +104,8 @@ export default function AnalyzePage() {
     return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
   });
   useEffect(() => { localStorage.setItem('analyze.howfar', String(howfar)); }, [howfar]);
-  useEffect(() => { localStorage.setItem('analyze.stage1', stage1); }, [stage1]);
-  useEffect(() => { localStorage.setItem('analyze.pseudo', pseudo ? '1' : '0'); }, [pseudo]);
+  useEffect(() => { localStorage.setItem('analyze.stage', stage); }, [stage]);
+  useEffect(() => { localStorage.setItem('analyze.variant', variant); }, [variant]);
   useEffect(() => { localStorage.setItem('analyze.colors', JSON.stringify(colors)); }, [colors]);
   useEffect(() => {
     setSearchParams((prev) => {
@@ -111,16 +115,16 @@ export default function AnalyzePage() {
       else next.delete('scramble');
       if (howfar !== 4) next.set('howfar', String(howfar));
       else next.delete('howfar');
-      if (stage1 !== 'cross') next.set('stage1', stage1);
-      else next.delete('stage1');
-      if (pseudo) next.set('pseudo', '1');
-      else next.delete('pseudo');
+      if (stage !== 'cross') next.set('stage', stage);
+      else next.delete('stage');
+      if (variant !== 'std') next.set('variant', variant);
+      else next.delete('variant');
       const checked = CROSS_COLORS.filter((c) => colors[c]);
       if (checked.length === CROSS_COLORS.length) next.delete('colors');
       else next.set('colors', checked.map((c) => COLOR_CHAR[c]).join(''));
       return next;
     }, { replace: true });
-  }, [scramble, howfar, stage1, pseudo, colors, setSearchParams]);
+  }, [scramble, howfar, stage, variant, colors, setSearchParams]);
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [crossesCovered, setCrossesCovered] = useState(0);
@@ -133,6 +137,7 @@ export default function AnalyzePage() {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
+  const [variantUnsupported, setVariantUnsupported] = useState<boolean>(false);
   const analyzerRef = useRef<Analyzer>(new Analyzer());
   const startTimeRef = useRef<number>(0);
 
@@ -187,9 +192,10 @@ export default function AnalyzePage() {
     setFilter('all');
     setElapsedMs(null);
     setXcrossFallback(false);
+    setVariantUnsupported(false);
     startTimeRef.current = performance.now();
     analyzerRef.current.start(
-      { scramble: trimmed, crosscolors: colors, howfar, stage1, pseudo },
+      { scramble: trimmed, crosscolors: colors, howfar, variant, stage },
       {
         onProgress: (p) => {
           if (p.totalnumcross !== undefined) setCrossesCovered(p.totalnumcross);
@@ -201,6 +207,7 @@ export default function AnalyzePage() {
           setElapsedMs(Math.round(performance.now() - startTimeRef.current));
           setRunning(false);
           setXcrossFallback(meta?.xcrossFallback ?? false);
+          setVariantUnsupported(meta?.variantUnsupported ?? false);
         },
         onError: (err) => {
           console.error('[analyze] worker error', err);
@@ -297,35 +304,32 @@ export default function AnalyzePage() {
       </div>
 
       <div className="analyze-filters">
-        <select
-          value={stage1}
-          onChange={(e) => setStage1(e.target.value as Stage1)}
-          disabled={running}
-          className="analyze-howfar"
-          title={t(
-            'XCross/XXCross/XXXCross = 联合搜索 cross + N 对 F2L (wasm IDA*+pruning),含最优 + 次优一步候选。',
-            'XCross/XXCross/XXXCross = joint shortest cross + N F2L pairs (wasm IDA* + pruning); includes optimal + 1-step variants.',
-          )}
-        >
-          <option value="cross">{pseudo ? 'pCross' : 'Cross'}</option>
-          <option value="xcross">{pseudo ? 'pXCross' : 'XCross'}</option>
-          <option value="xxcross">{pseudo ? 'pXXCross' : 'XXCross'}</option>
-          <option value="xxxcross">{pseudo ? 'pXXXCross' : 'XXXCross'}</option>
-        </select>
-        <label
-          className="analyze-pseudo"
-          title={t(
-            '伪 cross/F2L:允许底层 2 层相对中心面错位一个 AUF (y/y2/y′),归位旋转计 0 HTM,仅保留真伪解 (Δ≠0)。',
-            "Pseudo cross/F2L: bottom 2 layers may be one AUF off from centers (y/y2/y′); fix-up rotation costs 0 HTM, only true pseudo (Δ != 0) is kept.",
-          )}
-        >
-          <input
-            type="checkbox"
-            checked={pseudo}
-            onChange={(e) => setPseudo(e.target.checked)}
+        <label className="analyze-control">
+          <span>{t('变体', 'Variant')}</span>
+          <select
+            value={variant}
+            onChange={(e) => setVariant(e.target.value as Variant)}
             disabled={running}
-          />
-          <span>{t('伪', 'Pseudo')}</span>
+          >
+            <option value="std">{t('标准', 'Standard')}</option>
+            <option value="eo">EOCross</option>
+            <option value="pair">{t('十字+基态', 'Cross + Pair')}</option>
+            <option value="pseudo">{t('伪十字', 'Pseudo')}</option>
+            <option value="pseudo_pair">{t('伪十字+基态', 'Pseudo + Pair')}</option>
+          </select>
+        </label>
+        <label className="analyze-control">
+          <span>{t('阶段', 'Stage')}</span>
+          <select
+            value={stage}
+            onChange={(e) => setStage(e.target.value as Stage)}
+            disabled={running}
+          >
+            <option value="cross">Cross</option>
+            <option value="xcross">XCross</option>
+            <option value="xxcross">XXCross</option>
+            <option value="xxxcross">XXXCross</option>
+          </select>
         </label>
         <select
           value={howfar}
@@ -358,11 +362,29 @@ export default function AnalyzePage() {
         </div>
       )}
 
-      {xcrossFallback && stage1 === 'xcross' && (
+      {xcrossFallback && variant === 'std' && stage === 'xcross' && (
         <div className="analyze-error" role="status">
           {t(
             'XCross wasm 未返回任何解 — 已降级到 cross 启发式搜索。',
             'XCross wasm returned no valid solutions — fell back to cross heuristic search.',
+          )}
+        </div>
+      )}
+
+      {variantUnsupported && (
+        <div className="analyze-error" role="status">
+          {t(
+            '当前 变体 × 阶段 组合尚未实现 — 目前可用:Standard 全部 4 档,Pseudo + Cross (pCross)。',
+            'This Variant × Stage combination is not yet wired. Available: Standard (all 4 stages), Pseudo + Cross (pCross).',
+          )}
+        </div>
+      )}
+
+      {xcrossFallback && variant === 'pseudo' && stage === 'cross' && (
+        <div className="analyze-error" role="status">
+          {t(
+            'pCross wasm 在搜索深度内未找到 Δ≠0 的伪解 — 已退回普通 cross 启发式。',
+            'pCross wasm found no Δ≠0 pseudo solutions within depth bound — fell back to regular cross heuristic.',
           )}
         </div>
       )}
