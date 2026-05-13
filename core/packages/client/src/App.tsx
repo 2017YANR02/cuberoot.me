@@ -41,7 +41,6 @@ const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: WCA 6 个 cubing.pro 风格统计 tab
 const GrandSlamPage = lazy(() => import('./pages/wca_stats/GrandSlamPage'));
 const AllResultsPage = lazy(() => import('./pages/wca_stats/AllResultsPage'));
-const YearResultsPage = lazy(() => import('./pages/wca_stats/YearResultsPage'));
 const CohortRanksPage = lazy(() => import('./pages/wca_stats/CohortRanksPage'));
 const SuccessRatePage = lazy(() => import('./pages/wca_stats/SuccessRatePage'));
 const AllEventsDonePage = lazy(() => import('./pages/wca_stats/AllEventsDonePage'));
@@ -262,7 +261,6 @@ function App() {
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
         <Route path="/wca-stats/grand-slam" element={<Suspense fallback={<div>Loading...</div>}><GrandSlamPage /></Suspense>} />
         <Route path="/wca-stats/all-results" element={<Suspense fallback={<div>Loading...</div>}><AllResultsPage /></Suspense>} />
-        <Route path="/wca-stats/year-results" element={<Suspense fallback={<div>Loading...</div>}><YearResultsPage /></Suspense>} />
         <Route path="/wca-stats/cohort-ranks" element={<Suspense fallback={<div>Loading...</div>}><CohortRanksPage /></Suspense>} />
         <Route path="/wca-stats/success-rate" element={<Suspense fallback={<div>Loading...</div>}><SuccessRatePage /></Suspense>} />
         <Route path="/wca-stats/all-events-done" element={<Suspense fallback={<div>Loading...</div>}><AllEventsDonePage /></Suspense>} />

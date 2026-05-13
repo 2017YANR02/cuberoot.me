@@ -1,7 +1,7 @@
 /**
- * WCA stats extra — 7 + 2 个 cubing.pro 风格统计 tab / 选手页查询路由.
+ * WCA stats extra — 6 + 2 个 cubing.pro 风格统计 tab / 选手页查询路由.
  *
- * 数据源: wca_grand_slam / wca_results_top / wca_year_results_top
+ * 数据源: wca_grand_slam / wca_results_top
  *         wca_cohort_ranks / wca_success_rate / wca_all_events_done / wca_person_ranks
  *         + historical_ranks_snapshot(选手页 PR 历史 + 排名折线)
  * 每周由 GH Actions 重灌(同 historical_ranks).
@@ -9,7 +9,6 @@
  * 端点:
  *   GET /v1/wca/grand-slam?event=&onlyFirst=
  *   GET /v1/wca/all-results?event=&type=&country=&year=&month=&q=&page=&size=
- *   GET /v1/wca/year-results?year=&month=&event=&type=&country=&page=&size=
  *   GET /v1/wca/cohort-ranks?cohort=&event=&type=&country=&page=&size=
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
@@ -242,83 +241,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   });
 });
 
-// ── 3. /v1/wca/year-results ──
-wcaStatsExtraRoutes.get('/wca/year-results', async (c) => {
-  const year = parseInt(c.req.query('year') ?? '0', 10);
-  const month = parseInt(c.req.query('month') ?? '0', 10);  // 0 = 全年
-  const event = (c.req.query('event') ?? '333').toLowerCase();
-  const type = (c.req.query('type') ?? 'single').toLowerCase();
-  const country = c.req.query('country') ?? '';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
-  const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
-
-  if (!Number.isFinite(year) || year < 2003 || year > new Date().getUTCFullYear() + 1) {
-    return c.json({ error: 'Invalid year' }, 400);
-  }
-  if (!VALID_EVENTS.has(event)) return c.json({ error: 'Invalid event' }, 400);
-  if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
-  if (event === '333mbf' && type === 'average') return c.json({ error: 'No average for 333mbf' }, 400);
-  const cn = await resolveCountry(country);
-  if (!cn.ok) return c.json({ error: cn.err }, 400);
-
-  const offset = (page - 1) * size;
-  const monthCond = month > 0 ? `AND t.comp_month = ?` : '';
-  const params: unknown[] = [year, event, type === 'average', cn.id];
-  if (month > 0) params.push(month);
-  const totalParams = [...params];
-  params.push(size, offset);
-
-  // 派生表 + late join, 见 all-results 注释
-  const rows = await query<{
-    rank_in_scope: number; value: number; wca_id: string; person_country_id: string;
-    iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
-    comp_month: number; attempts: number[] | null; person_name: string;
-  }>(
-    `
-    SELECT q.rank_in_scope, q.value, q.wca_id, q.person_country_id,
-           co.iso2 AS iso2,
-           q.comp_id, c.name AS comp_name, c.start_date AS comp_date,
-           q.comp_month, q.attempts, p.name AS person_name
-    FROM (
-      SELECT t.rank_in_scope, t.value, t.wca_id, t.person_country_id,
-             t.comp_id, t.comp_month, t.attempts
-      FROM wca_year_results_top t
-      WHERE t.year = ? AND t.event_id = ? AND t.is_avg = ? AND t.country_filter = ?
-        ${monthCond}
-      ORDER BY t.rank_in_scope ASC
-      LIMIT ? OFFSET ?
-    ) q
-    JOIN wca_persons p ON p.wca_id = q.wca_id
-    LEFT JOIN wca_countries co ON co.id = q.person_country_id
-    LEFT JOIN wca_competitions c ON c.id = q.comp_id
-    ORDER BY q.rank_in_scope ASC
-    `,
-    params,
-  );
-
-  // alias `t` 必须保留 — monthCond 写的是 `AND t.comp_month = ?`
-  const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_year_results_top t
-     WHERE t.year = ? AND t.event_id = ? AND t.is_avg = ? AND t.country_filter = ? ${monthCond}`,
-    totalParams,
-  );
-  const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
-
-  c.header('Cache-Control', CACHE_HEADER);
-  return c.json({
-    year, month, event, type, country: cn.id, page, size, total,
-    rows: rows.map(r => ({
-      rank: r.rank_in_scope, value: r.value,
-      wcaId: r.wca_id, name: r.person_name,
-      countryId: r.person_country_id, iso2: r.iso2,
-      compId: r.comp_id, compName: r.comp_name, compDate: r.comp_date,
-      compMonth: r.comp_month,
-      attempts: r.attempts ?? [],
-    })),
-  });
-});
-
-// ── 4. /v1/wca/cohort-ranks ──
+// ── 3. /v1/wca/cohort-ranks ──
 wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
   const cohort = parseInt(c.req.query('cohort') ?? '0', 10);
   const event = (c.req.query('event') ?? '333').toLowerCase();

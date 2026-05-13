@@ -186,7 +186,7 @@ jobs:
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_stats_extra && rm -rf /tmp/wca_stats_extra/*'
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id load.sql wca_competitions.copy.tsv wca_grand_slam.copy.tsv \
-            wca_results_top.copy.tsv wca_year_results_top.copy.tsv wca_cohort_ranks.copy.tsv \
+            wca_results_top.copy.tsv wca_cohort_ranks.copy.tsv \
             wca_success_rate.copy.tsv wca_all_events_done.copy.tsv wca_person_ranks.copy.tsv \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_stats_extra/"
 
