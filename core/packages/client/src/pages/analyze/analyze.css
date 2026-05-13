@@ -167,6 +167,31 @@
     transition: opacity 120ms;
 }
 
+.analyze-pseudo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.55rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid var(--az-border);
+    border-radius: 4px;
+    background: var(--az-bg-soft, transparent);
+    opacity: 0.7;
+    transition: opacity 120ms, border-color 120ms;
+}
+
+.analyze-pseudo:has(input:checked) {
+    opacity: 1;
+    border-color: var(--az-text);
+}
+
+.analyze-pseudo input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
 .analyze-color:has(input:checked) {
     opacity: 1;
 }
