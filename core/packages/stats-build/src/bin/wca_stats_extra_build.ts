@@ -793,12 +793,18 @@ CREATE TABLE wca_results_top (
   person_country_id  VARCHAR(50) NOT NULL,
   comp_id            VARCHAR(50) NOT NULL,
   comp_date          DATE NOT NULL,
-  attempts           INTEGER[]
+  attempts           INTEGER[],
+  -- 派生年:为 (event, is_avg, year) ORDER BY value 翻页提供 leading index 列.
+  -- 不加 comp_date BETWEEN 过滤会让 PG 在 wrt_main 上线性 heap-fetch 跳过非目标年(老年份慢到 10s+).
+  comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED
 );
-CREATE INDEX wrt_main      ON wca_results_top (event_id, is_avg, value, wca_id) INCLUDE (id);
-CREATE INDEX wrt_country   ON wca_results_top (event_id, is_avg, person_country_id, value);
-CREATE INDEX wrt_wca_id    ON wca_results_top (event_id, is_avg, wca_id, value);
-CREATE INDEX wrt_comp_id   ON wca_results_top (event_id, is_avg, comp_id, value);
+CREATE INDEX wrt_main         ON wca_results_top (event_id, is_avg, value, wca_id) INCLUDE (id);
+CREATE INDEX wrt_country      ON wca_results_top (event_id, is_avg, person_country_id, value);
+CREATE INDEX wrt_wca_id       ON wca_results_top (event_id, is_avg, wca_id, value);
+CREATE INDEX wrt_comp_id      ON wca_results_top (event_id, is_avg, comp_id, value);
+-- year-aware 索引:任意年 worldwide / 大国家+年 翻页秒出.约 +825 MB.
+CREATE INDEX wrt_year         ON wca_results_top (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
+CREATE INDEX wrt_country_year ON wca_results_top (event_id, is_avg, person_country_id, comp_year, value) INCLUDE (id);
 
 TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;
