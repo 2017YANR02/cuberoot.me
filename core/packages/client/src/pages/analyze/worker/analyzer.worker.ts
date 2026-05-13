@@ -164,6 +164,10 @@ const CROSS_INSPECTION: Record<CrossColor, string> = {
 
 const FACES = ['R', 'U', 'L', 'D', 'F', 'B'] as const;
 const SUFFIXES = ['', "'", '2'] as const;
+// Canonical order within each opposite pair: R before L, U before D, F before B.
+// "After canonical-second, prune canonical-first" → never enumerate `L R` after
+// `R L` was already enumerated for the same final state.
+const CANONICAL_REVERSE_OPPOSITE: Record<string, string> = { L: 'R', D: 'U', B: 'F' };
 
 type CrossNode = [scoreNeg: number, depth: number, alg: string, state: NxNState, lastFace: string];
 type CrossResult = [alg: string, state: NxNState, score: number];
@@ -218,10 +222,13 @@ class NxNCrossPlanner {
       const cur = queue.pop();
       if (cur[1] + 1 > this.maxDepth[color]) continue;
       for (const face of FACES) {
-        // NOTE: upstream's opposite-face check is buggy (parallel-array indexed
-        // by string key always returns undefined). Only same-face actually prunes.
-        // Replicate bug-for-bug to match totals.
+        // Same-face never twice in a row; opposite-face only in canonical order.
+        // Upstream `ear.js` had a dead opposite-face check (parallel array indexed
+        // by string key always returns undefined) so its cross search double-counted
+        // every opposite-pair reordering. We diverge here. Use `?worker=legacy` for
+        // byte-identical upstream totals.
         if (face === cur[4]) continue;
+        if (CANONICAL_REVERSE_OPPOSITE[cur[4]] === face) continue;
         for (const suf of SUFFIXES) {
           const move = face + suf;
           const p = NxN.new_NxN_Data(cur[3]);

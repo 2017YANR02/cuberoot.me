@@ -12,7 +12,9 @@
  *   - `?worker=legacy` use upstream's original obfuscated worker
  *
  * Reference test: B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'
- *   → 53 / 7457 / 42664 / 21380 (21022 / 96 / 262 / 0) — must match speedcubedb.
+ *   → ?worker=legacy:  53 / 7457 / 42664 / 21380 (matches upstream bug-for-bug)
+ *   → default TS port: smaller (canonical opposite-pair ordering deduplicates
+ *     the cross search; legacy double-counts due to a dead opposite-face check)
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -34,11 +36,19 @@ import './analyze.css';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
+const COLOR_CHAR: Record<CrossColor, string> = {
+  Yellow: 'y', White: 'w', Red: 'r', Orange: 'o', Blue: 'b', Green: 'g',
+};
+const CHAR_COLOR: Record<string, CrossColor> = {
+  y: 'Yellow', w: 'White', r: 'Red', o: 'Orange', b: 'Blue', g: 'Green',
+};
+
 const EXAMPLE_SCRAMBLES: Array<{ name: string; scramble: string }> = [
   { name: 'WR avg seed', scramble: "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'" },
   { name: 'easy cross', scramble: "F R U' R' U' R U R' F' R U R' U' R' F R F'" },
   { name: 'OLL skip-friendly', scramble: "U L D R2 B2 D B2 U R2 U' F2 R2 U2 R' B D' U2 L2 B' F" },
   { name: 'long path', scramble: "U2 L2 F' D2 F' U2 L2 B R2 B2 R' D' R2 F' R F2 U' B' L" },
+  { name: 'opposite pair', scramble: 'R L' },
 ];
 
 type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
@@ -48,16 +58,23 @@ export default function AnalyzePage() {
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialScramble = searchParams.get('scramble')?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE;
   const workerVariant: WorkerVariant = searchParams.get('worker') === 'legacy' ? 'legacy' : 'ts';
 
   const [scramble, setScramble] = useState(initialScramble);
   const [howfar, setHowfar] = useState<Howfar>(() => {
+    const urlV = Number(searchParams.get('howfar'));
+    if (urlV === 1 || urlV === 2 || urlV === 3 || urlV === 4) return urlV;
     const v = Number(localStorage.getItem('analyze.howfar'));
     return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
   });
   const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
+    const urlColors = searchParams.get('colors');
+    if (urlColors !== null) {
+      const set = new Set(Array.from(urlColors.toLowerCase()).map((ch) => CHAR_COLOR[ch]).filter(Boolean) as CrossColor[]);
+      return Object.fromEntries(CROSS_COLORS.map((c) => [c, set.has(c)])) as Record<CrossColor, boolean>;
+    }
     try {
       const saved = JSON.parse(localStorage.getItem('analyze.colors') || 'null');
       if (saved && typeof saved === 'object') {
@@ -70,6 +87,20 @@ export default function AnalyzePage() {
   });
   useEffect(() => { localStorage.setItem('analyze.howfar', String(howfar)); }, [howfar]);
   useEffect(() => { localStorage.setItem('analyze.colors', JSON.stringify(colors)); }, [colors]);
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      const trimmed = scramble.trim();
+      if (trimmed) next.set('scramble', trimmed.replace(/ /g, '_'));
+      else next.delete('scramble');
+      if (howfar !== 4) next.set('howfar', String(howfar));
+      else next.delete('howfar');
+      const checked = CROSS_COLORS.filter((c) => colors[c]);
+      if (checked.length === CROSS_COLORS.length) next.delete('colors');
+      else next.set('colors', checked.map((c) => COLOR_CHAR[c]).join(''));
+      return next;
+    }, { replace: true });
+  }, [scramble, howfar, colors, setSearchParams]);
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [crossesCovered, setCrossesCovered] = useState(0);
@@ -275,7 +306,13 @@ export default function AnalyzePage() {
       )}
 
       <div className="analyze-stats">
-        <div className="analyze-stat-row">
+        <div
+          className="analyze-stat-row"
+          title={t(
+            '深度 ≤ max(5, 最优+2);非仅最优,含近优变体。每色上限 100 条,可能撞顶。',
+            'Depth ≤ max(5, optimal+2); near-optimal variants included, not just the best. Capped at 100 per color.',
+          )}
+        >
           <span>{t('十字解法数', 'Crosses covered')}:</span>
           <strong>{crossesCovered}</strong>
         </div>
@@ -284,7 +321,7 @@ export default function AnalyzePage() {
           <strong>{pairsCovered}</strong>
         </div>
         <div className="analyze-stat-row">
-          <span>{t('末层解法数', 'Last layer solutions covered')}:</span>
+          <span>{t('顶层解法数', 'Last layer solutions covered')}:</span>
           <strong>{llCovered}</strong>
         </div>
         <div className="analyze-stat-row">
@@ -329,7 +366,7 @@ export default function AnalyzePage() {
             />
             <FilterChip
               active={filter === 'll-skip'}
-              title={t('跳末层', 'LL Skip')}
+              title={t('跳顶层', 'LL Skip')}
               amount={counts.llSkip}
               onClick={() => setFilter('ll-skip')}
             />

@@ -14,7 +14,9 @@
  * only — control flow MUST stay identical to preserve byte-identical totals).
  *
  * Reference test scramble: B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'
- *   → 53 / 7457 / 42664 / 21380 (21022 / 96 / 262 / 0).
+ *   → upstream legacy worker (?worker=legacy): 53 / 7457 / 42664 / 21380.
+ *   → this TS port: smaller (cross search uses canonical opposite-pair ordering
+ *     to deduplicate; legacy double-counts due to dead opposite-face check).
  */
 
 // NOTE: order matters — boohoo.js's top-level `NxN['OLLHashTable'] = OLLHashTable`
@@ -99,6 +101,10 @@ const CROSS_INSPECTION = {
 
 const FACES = ['R', 'U', 'L', 'D', 'F', 'B'];
 const SUFFIXES = ['', "'", '2'];
+// Canonical order within each opposite pair: R before L, U before D, F before B.
+// "After canonical-second, prune canonical-first" → never enumerate `L R` after
+// `R L` was already enumerated for the same final state.
+const CANONICAL_REVERSE_OPPOSITE = { L: 'R', D: 'U', B: 'F' };
 
 let totalNumCross = 0;
 
@@ -150,10 +156,13 @@ class NxNCrossPlanner {
       const cur = queue.pop();
       if (cur[1] + 1 > this.maxDepth[color]) continue;
       for (const face of FACES) {
-        // NOTE: upstream has a buggy opposite-face check that always evaluates
-        // false (indexes a parallel-array with a string key). Only same-face is
-        // actually pruned. Replicate bug-for-bug to match totals.
+        // Same-face never twice in a row; opposite-face only in canonical order.
+        // Upstream `ear.js` had a dead opposite-face check (parallel array indexed
+        // by string key always returns undefined) so its cross search double-counted
+        // every opposite-pair reordering. We diverge here. Use `?worker=legacy` for
+        // byte-identical upstream totals.
         if (face === cur[4]) continue;
+        if (CANONICAL_REVERSE_OPPOSITE[cur[4]] === face) continue;
         for (const suf of SUFFIXES) {
           const move = face + suf;
           const p = NxN.new_NxN_Data(cur[3]);
