@@ -72,6 +72,15 @@ pnpm --filter @cuberoot/client lint
 - `serveRepoRoot` Vite 插件从仓库根 serve `/tools/`、`/stats/`、以及 upstream 静态页
 - **凭据展开**：给用户云服务器 / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
 
+## 测试
+
+- vitest 在 `@cuberoot/client`,跑 `pnpm --filter @cuberoot/client test`(全集)或 `test:watch`
+- utils 纯函数测试放 `src/utils/*.test.ts`,跟源文件并排
+- worker / 算法回归走 `tests/*.test.ts` + 一个 `_*_runner.cjs`(node:worker_threads + classic-worker globals shim),典型例子见 `tests/analyzer_worker.test.ts`
+- 改 worker / kociemba / scramble 生成器 / utils 必须配一组 fixture 测试,改前先看现有 `tests/` 里同类怎么写
+- CI 在 `.github/workflows/test.yml`,PR + push main 触发 typecheck + test
+- 回归 baseline(如 analyzer fixed totals)用 `expect().toBe()` 锁住具体数值,改算法时**主动改 baseline 当作一种 review 信号**,而不是改宽容到 `toBeGreaterThan` 蒙混
+
 ## 代码风格
 
 - 响应简洁，不加多余注释，不做超出需求的抽象
@@ -84,7 +93,7 @@ pnpm --filter @cuberoot/client lint
 - chip / tab / 下拉项上不显示数量计数（`(25)` / badge 之类一律不要）
 - WCA 历史时间锚点：第 1 场比赛 1982-06-05（WC1982），第 2 场 2003-08-23~24（WC2003）；任何"时间序列展示"（折线 / 热力图 / 时间轴 / bar chart race）默认视图从 **2003-08-22** 起步（WC2003 前夜：第 0 帧 = 1982 那场的全部成绩快照，再往后才是 WCA 复办之后的逐日演化），但**统计聚合（总数 / 国家排行 / 项目场次等）必须包含 1982 那场**（用户没主动缩放时口径=全时段，不要把"默认视图≠全数据"的不一致带到数字上）
 - 调试时不主动 `git log` / `git status`;删文件 / 配置前先确认
-- UI 验证走项目内 Playwright MCP,不 `npm install playwright`;fixtures 跑全集别采样
+- UI 验证走项目内 Playwright MCP;fixtures 跑全集别采样
 - 新路由 / 新顶层 page 前先 grep routes config 防撞名
 
 ## 专题知识 — 查对应 Skill

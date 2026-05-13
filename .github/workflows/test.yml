@@ -1,0 +1,44 @@
+# 前端测试 — vitest 单元 + 算法回归
+# 触发：PR 打开/更新,或推 main 时 core/ 有改动
+name: Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'core/**'
+      - '.github/workflows/test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        working-directory: core
+        run: pnpm --filter @cuberoot/client typecheck:ci
+
+      - name: Test
+        working-directory: core
+        run: pnpm --filter @cuberoot/client test
