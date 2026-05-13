@@ -579,59 +579,171 @@ const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-05-08~09',
+    date: '2026-05-10',
     tag: 'feature',
     zh: {
-      title: 'WCA Stats 大扩张',
-      body: '一周内加了 7 张 cubing.pro 风格的统计页 (大满贯 / 全部成绩 / 当年 / 届别 / 成功率 / 全达成 / 名次和), 加上 /scramble/gen 的 tnoodle PDF 导出。',
-      expand: '同期重构了 /persons/:wcaId 详情页 (hero + PR + 5 tabs + 月级 rank 图), /all-results 用派生表 + late join 优化深分页。后端 historical_ranks 走 build → scp → PG → Hono → nginx 24h cache 五层管道。',
+      title: '/alg/commutator 换位分解工具上线',
+      body: '3x3 commutator 分解器 (CommutatorPage 723 行 + engine.ts 1131 行 + 497 行 CSS)。同日 /site 后端化 (从硬编 sites.ts 改成 nav_sites 表 + admin 编辑)。',
+      expand: '换位分解是 BLD / FMC 圈高频需求, 之前要去外站。同期把 /site 站点导航从静态 ts 数组迁到 PG 后端 + admin 编辑 UI。基础设施侧上线自写 39 行 schema migration runner (不装 Flyway 等重型工具) + ssh keepalive + healthcheck.yml workflow。',
     },
     en: {
-      title: 'WCA Stats build-out',
-      body: 'In one week: 7 new cubing.pro-style stat pages (grand slam / all results / year / cohort / success rate / all events done / sum of ranks) plus tnoodle-style PDF export under /scramble/gen.',
-      expand: 'Same wave: rebuilt /persons/:wcaId (hero + PR + 5 tabs + monthly rank chart), refactored /all-results with derived-table + late-join for deep pagination. historical_ranks now flows through build → scp → PG → Hono → nginx 24h cache.',
+      title: '/alg/commutator decomposition tool launches',
+      body: '3x3 commutator analyzer (723-line CommutatorPage + 1131-line engine.ts + 497-line CSS). Same day /site goes backend (hardcoded sites.ts → nav_sites table + admin editor).',
+      expand: 'Commutator decomposition is a high-demand BLD/FMC tool previously requiring third-party sites. /site nav migrated from static TS array to PG-backed with an admin editor. Infrastructure also gained a self-hosted 39-line schema migration runner (no Flyway etc.) + ssh keepalive + healthcheck.yml workflow.',
+    },
+  },
+  {
+    date: '2026-05-08',
+    tag: 'feature',
+    zh: {
+      title: '单日 7 个独立功能上线 (/memo / /scramble Hub / 7 张 stat 子页 / /recognize 路由 / +3 lang)',
+      body: '(1) /memo Hub + /memo/colpi 记忆训练页 (314 行初版 → 同日后端化到 PG colpi_words/votes 双表 + 投票 API + 11.7k 词镜像); (2) /scramble 统一 Hub + /scramble/solver (cubeopt-wasm port); (3) /wca-stats/historical + 7 张 cubing.pro 风格 stat 子页 (大满贯/全部/当年/届别/成功率/全达成/名次和) 同 commit 上线; (4) /recognize/:algSetId 通用识别路由挂上, trainer 改造为 41-set 通用入口; (5) /code 加 Java / JavaScript / Mojo + CompareScramble。',
+      expand: 'colpi 是 colored-pi 记忆训练 (CFOP/blindfolded 圈用 11.7k 词从 bestsiteever.net 镜像)。/scramble/solver 是 cs0x7f/cubeopt-wasm 的 React port + 9 套 wasm worker (sw.ts 注 COOP/COEP for SAB)。7 张 stat 配套 6 张新 PG 表 + 5M+ rows / 382 MB 初始灌库。/recognize 通用化后旧的 OllTrainingPage / Zbll* / Zbls* 共 4713 行废代码删除。后端 historical_ranks 走 build → scp → PG → Hono → nginx 24h cache 五层管道。',
+    },
+    en: {
+      title: 'Seven features in one day (/memo, /scramble hub, 7 stat subpages, /recognize, +3 lang)',
+      body: '(1) /memo + /memo/colpi memory training (314-line v1 → same-day PG backend with colpi_words/votes + voting API + 11.7k-word mirror); (2) /scramble unified hub + /scramble/solver (cubeopt-wasm port); (3) /wca-stats/historical + 7 cubing.pro-style stat subpages (grand slam / all / year / cohort / success rate / all events done / sum of ranks) shipped in one commit; (4) /recognize/:algSetId generic recognition route wired, trainer reworked as 41-set entry; (5) /code adds Java / JavaScript / Mojo + CompareScramble.',
+      expand: 'colpi = colored-pi memory training (used by CFOP/blindfolded community, 11.7k words mirrored from bestsiteever.net). /scramble/solver is a React port of cs0x7f/cubeopt-wasm + 9 wasm workers (sw.ts COOP/COEP for SAB). The 7 stat pages are backed by 6 new PG tables + 5M+ rows / 382 MB initial load. After /recognize generalisation, legacy OllTrainingPage / Zbll* / Zbls* (4713 lines total) were removed. historical_ranks now flows through build → scp → PG → Hono → nginx 24h cache.',
+    },
+  },
+  {
+    date: '2026-05-07',
+    tag: 'feature',
+    zh: {
+      title: '/code 编程语言入门站上线 (9 种语言一次上)',
+      body: '一次 24-file commit 把 9 种语言同时上线: C / C++ / Go / Kotlin / TypeScript / Rust / Python / Zig / Swift, 加 CodeLandingPage + CompareAo5Page, 共 22294 行新增。',
+      expand: '内容方向是"魔方 + 这门语言" — 每页用速拧场景做例子 (eg. Ao5 计算用 C / Rust / TS 各写一遍)。同日 Alg admin 加 DnD 排序 + X-Admin-Key 通道。5/8 又加 Java / JavaScript / Mojo, 5/12 再加 C# / Ruby / PHP / Lua / Haskell + HTML / CSS / Bash / SQL 共 9 页, 总计 21 种语言/标记。',
+    },
+    en: {
+      title: '/code programming-language intro hub launches (9 languages at once)',
+      body: 'Single 24-file commit shipping 9 languages: C / C++ / Go / Kotlin / TypeScript / Rust / Python / Zig / Swift, plus CodeLandingPage + CompareAo5Page — 22294 lines added.',
+      expand: 'Each page uses speedcubing scenarios as examples (e.g. computing Ao5 in C / Rust / TS). Same day: Alg admin gains drag-reorder + X-Admin-Key channel. 5/8 added Java / JavaScript / Mojo; 5/12 added another 9 (C# / Ruby / PHP / Lua / Haskell + HTML / CSS / Bash / SQL), totalling 21 languages/markup.',
     },
   },
   {
     date: '2026-05-06',
     tag: 'migration',
     zh: {
-      title: '"大重构日":三件大事一起做',
-      body: '同一天完成:MariaDB → PG 13 整体迁移 / 41 个 alg JSON 进 PG / 宝塔 + PHP + WP 全卸。云服务器只剩 nginx + Node + PG。',
+      title: '三件迁移同日完成 (PG / alg DB / 卸宝塔)',
+      body: '同一天: MariaDB → PG 13 整体迁移 + 41 个 alg JSON → DB + 宝塔 + PHP + WP 全卸。云服务器只剩 nginx + Node + PG。',
       expand: 'PG 迁移用 jsonb / window function / partial index 让 recon / alg / stats 代码全简化一档。pg_dump systemd timer 每天 03:00 UTC 备份留 30 天。Alg 网页可直接编辑 (X-Admin-Key 或 OAuth), 不用 commit + redeploy。Blog 从 WordPress 迁 Hugo 静态。',
     },
     en: {
-      title: 'The "Great Refactor" day: three big migrations together',
-      body: 'Same day: MariaDB → PG 13 / 41 alg JSONs into PG / wipe baota + PHP + WP. The VM now runs only nginx + Node + PG.',
-      expand: 'The PG move uses jsonb / window functions / partial indexes to simplify recon / alg / stats across the board. pg_dump on a systemd timer at 03:00 UTC, 30-day retention. Algs now editable directly in the browser (X-Admin-Key or OAuth) — no commit + redeploy. Blog migrated from WordPress to static Hugo.',
+      title: 'Three migrations the same day (PG / alg DB / wipe baota)',
+      body: 'Same day: MariaDB → PG 13 + 41 alg JSONs into PG + wipe baota + PHP + WP. The VM now runs only nginx + Node + PG.',
+      expand: 'PG migration uses jsonb / window functions / partial indexes to simplify recon / alg / stats across the board. pg_dump on a systemd timer at 03:00 UTC, 30-day retention. Algs now editable directly in the browser (X-Admin-Key or OAuth) — no commit + redeploy. Blog migrated from WordPress to static Hugo.',
     },
   },
   {
     date: '2026-05-03',
-    tag: 'infra',
+    tag: 'feature',
     zh: {
-      title: 'VisualCube 服务化',
-      body: '魔方贴纸图改走服务端渲染:esbuild 打包 + Node server 渲染 SVG + service worker 拦 /v1/visualcube.svg 走干净 URL + 零网络。',
-      expand: '之前每张 NxN 状态图都让浏览器现场跑 visualcube 算面位置, 现在统一在云服务器渲完缓存。同期把 sq1/megaminx/pyraminx/skewb 也接 sr-puzzlegen, 手写魔方 SVG 一律禁。',
+      title: '6 个新页同日上线 + VisualCube 服务化',
+      body: '6 个新路由: /visualcube 全功能图片编辑器 + /notation 记号沙盒 + /patterns 花式图样库 + /average + /gen + /today。同时 /alg → /tutorial 整体改名 + VisualCube 服务化 (esbuild + Node 渲染 + /v1/visualcube.svg + service worker)。',
+      expand: '/visualcube 是仿 visualcube.roudai.net 的 React 重写, ICubeOptions 全参 + URL query state sync + 5 个 export action。/notation 给新手玩 R U R\' 这类记号语义直观看变化。/patterns 是收藏的"花式图样"。VisualCube 服务化让浏览器不用再现场跑 visualcube 算面位置, 统一服务端渲染 + 缓存。同期把 sq1/megaminx/pyraminx/skewb 也接 sr-puzzlegen, 手写魔方 SVG 一律禁。',
     },
     en: {
-      title: 'VisualCube turned into a service',
-      body: 'Cube sticker images moved to server-side rendering: esbuild bundle + Node renders SVG + service worker intercepts /v1/visualcube.svg for clean URLs and zero network.',
-      expand: 'Previously every NxN state image had to run visualcube live in the browser; now everything renders on the VM and gets cached. sq1/megaminx/pyraminx/skewb also wired up via sr-puzzlegen — no more hand-written cube SVG.',
+      title: '6 new pages same day + VisualCube as a service',
+      body: '6 new routes: /visualcube full-feature image editor + /notation sandbox + /patterns library + /average + /gen + /today. Same day /alg → /tutorial wholesale rename + VisualCube as a service (esbuild + Node + /v1/visualcube.svg + service worker).',
+      expand: '/visualcube is a React rewrite mimicking visualcube.roudai.net: full ICubeOptions parameter set + URL query state sync + 5 export actions. /notation lets beginners see what R U R\' actually does on a cube state. /patterns collects fancy puzzle patterns. VisualCube SaaS means browsers no longer compute facelet positions live — everything renders server-side and caches. sq1/megaminx/pyraminx/skewb also wired up via sr-puzzlegen — no more hand-written cube SVG.',
     },
   },
   {
-    date: '2026-04-23 ~ 28',
+    date: '2026-04-30 ~ 05-01',
     tag: 'feature',
     zh: {
-      title: '第二轮工具迁入:Mosaic / Alg 库 Phase 1 / Scramble Stats',
-      body: 'Mosaic port from Roman-/mosaic, alg 库走 docx → SPA 数据 (Phase 1), scramble-stats 把 D:\\cube\\solver C++ 分析器产出的 CSV 转成可视化分布。',
-      expand: 'alg 库 Phase 1 还没进 DB, 当时跑的是 docx 解析出的 JSON。两周后 (2026-05-06) 才整体进 PG。同期 top10 history 视频导出也是这阶段加的。',
+      title: '/prediction + /algdb + /calendar 列表视图上线',
+      body: '4-30 上 /prediction 项目理论极限与预测页 (667 行 PredictionPage + 317 行 EventSection + 315 行 charts.tsx)。5-1 上 /algdb 公式库 (从 speedcubedb scrape) + /prediction 完成 TheoreticalLimitView。同期 /calendar 加列表视图 + 范围过滤 + 每项目轮次 chip。',
+      expand: '/prediction 是用 WCA 历史数据估每项目"理论极限"再外推。/algdb 是 3x3 公式查询库 (OLL / PLL / F2L), 同期 Recon submit 加 cubedb.net 风格自动补全 + cubing.js cube3 阶段识别。ClearButton 抽组件统一所有 input 的清除 × 按钮, CuberSearchInput 207 行独立组件后续被多页复用。',
     },
     en: {
-      title: 'Second wave of tools: Mosaic / Alg DB Phase 1 / Scramble Stats',
-      body: 'Mosaic ported from Roman-/mosaic, alg library Phase 1 (docx → SPA data), scramble-stats turning D:\\cube\\solver C++ analyzer CSVs into visual distributions.',
-      expand: 'Phase 1 alg library was still JSON parsed from docx — only two weeks later (2026-05-06) did it move into PG. The top-10 history video export shipped in this period too.',
+      title: '/prediction + /algdb + /calendar list view launch',
+      body: '4-30: /prediction event theoretical-limits + forecasts (667-line PredictionPage + 317-line EventSection + 315-line charts.tsx). 5-1: /algdb (scrape from speedcubedb) + /prediction completed with TheoreticalLimitView. Concurrently /calendar gains list view + range filter + per-event round chips.',
+      expand: '/prediction uses WCA history to estimate each event\'s "theoretical limit" then extrapolates. /algdb is a 3x3 algorithm reference (OLL / PLL / F2L); meanwhile Recon submit gains cubedb.net-style autofill + cubing.js cube3 stage detection. ClearButton component unifies all input × buttons; the 207-line CuberSearchInput later reused across pages.',
+    },
+  },
+  {
+    date: '2026-04-26 ~ 27',
+    tag: 'feature',
+    zh: {
+      title: '/timer 速拧计时器上线 (TS 重写 + 116 commits 增强日)',
+      body: '4-26 把 /timer 从零做 TS 重写 (Kociemba + 2D 预览 + 直方图 + cstimer JSON I/O + 全项目)。4-27 一天打了 116 commits 把 BLD / 分阶段 timing / 智能立方蓝牙 / 3D 预览 / WCA inspection / share URL / 全套移动适配 / CFOP 多阶段 / cstimer 算法引擎 port / 5 个蓝牙协议全做了。',
+      expand: 'cstimer iframe 仍保留, /timer 是 nativeReact + 站点 i18n + WCA 登录 + 云同步的速拧计时器。5 个蓝牙协议指 GAN / Moyu / QY / GiiKER / Heykube。同日 shared components 第一波 (EventIcon / EventSelect / RecordSelect / RecordBadge) 抽出, WcaAuth + AuthCallbackPage 重做。',
+    },
+    en: {
+      title: '/timer launches (TS rewrite + 116-commit polish day)',
+      body: '4-26: /timer rewritten in TypeScript from scratch (Kociemba + 2D preview + histogram + cstimer JSON I/O + full event coverage). 4-27: 116 commits in one day adding BLD / stage timing / smartcube BT / 3D preview / WCA inspection / share URL / mobile polish / CFOP multi-stage / cstimer gSolver port / 5 BLE protocols.',
+      expand: 'csTimer iframe is still retained — /timer is the native-React, site-i18n, WCA-login, cloud-sync timer. The 5 BLE protocols are GAN / Moyu / QiYi / GiiKER / Heykube. Same day: shared components first wave (EventIcon / EventSelect / RecordSelect / RecordBadge) extracted; WcaAuth + AuthCallbackPage rebuilt.',
+    },
+  },
+  {
+    date: '2026-04-24 ~ 25',
+    tag: 'feature',
+    zh: {
+      title: '5 个新页两天上线 (/sites / /mosaic / /nemesizer / /wca-stats/persons / /wb)',
+      body: '4-24: /sites 站点导航 (2539 行 sites.ts) + /mosaic 魔方马赛克生成器 (port from Roman-/mosaic) + /nemesizer 初版 + /alg 内部 AlgCategoryPage。4-25: Nemesizer 完工 (port speedsolving wiki) + /wca-stats/persons 与 /wca-stats/persons/:wcaId (WcaPersonPicker 280k 本地索引 <20ms 搜索) + /wb 全球非官方纪录排名。',
+      expand: 'Nemesizer 概念来自 speedsolving wiki: "你的克星" = 在你某项目区域内, 名次紧追你但还没超过你的人。/wca-stats/persons 是 WCA 选手主页查询, 配 Hero card + PR table + 最近 12 场。这两天还顺手抽了 WheelPicker (354 行) 和 RecordBadge 通用组件。',
+    },
+    en: {
+      title: 'Five new pages over two days (/sites / /mosaic / /nemesizer / /wca-stats/persons / /wb)',
+      body: '4-24: /sites navigation (2539-line sites.ts) + /mosaic generator (port from Roman-/mosaic) + /nemesizer v1 + /alg internal AlgCategoryPage. 4-25: Nemesizer completed (port from speedsolving wiki) + /wca-stats/persons + /wca-stats/persons/:wcaId (WcaPersonPicker 280k local index <20ms) + /wb world unofficial rankings.',
+      expand: 'Nemesizer concept from speedsolving wiki: "your nemesis" = the cuber regionally ranked just behind you in an event who hasn\'t passed you yet. /wca-stats/persons is a WCA cuber profile lookup with Hero card + PR table + last 12 comps. Same two-day window also extracted WheelPicker (354 lines) and RecordBadge generic components.',
+    },
+  },
+  {
+    date: '2026-04-22',
+    tag: 'feature',
+    zh: {
+      title: '/scramble-stats 打乱难度分布页上线',
+      body: 'ScrambleStatsPage 389 行 + DiscreteHistogram 208 行离散直方图 + 新建 core/packages/scramble-stats-build/ 包 (CSV → distribution.json 240 行 builder)。',
+      expand: '数据源是 D:\\cube\\solver 这个 C++ 分析器跑出来的 CSV (每个项目 1M+ 打乱, 含 cross / x-cross / EO / 朝向 等阶段分布), 转成可视化分布。后续 5-3 加 sq1 / megaminx / pyraminx / skewb 多面体支持。',
+    },
+    en: {
+      title: '/scramble-stats scramble-difficulty distribution page launches',
+      body: '389-line ScrambleStatsPage + 208-line DiscreteHistogram + new core/packages/scramble-stats-build/ package (240-line CSV → distribution.json builder).',
+      expand: 'Data comes from D:\\cube\\solver — a C++ analyzer producing CSVs (1M+ scrambles per event, with cross / x-cross / EO / orientation stage distributions), turned into visualisations. Later (5-3) extended to sq1 / megaminx / pyraminx / skewb non-cube puzzles.',
+    },
+  },
+  {
+    date: '2026-04-23',
+    tag: 'feature',
+    zh: {
+      title: '/alg 教程 SPA 上线 (docx → SPA, 后改名 /tutorial)',
+      body: 'AlgIndexPage 列表 + AlgPostPage 详情 + AlgArticleView/Card/Chip/Content + useAlgCatalog hook + 681 行 alg.css + 5 个 CaseCard/Modal/AlgsetView 组件。',
+      expand: '当时数据源是 docx 解析出的 JSON, 两周后 (5-6) 才整体进 PG。5-3 把 /alg URL 整体改名为 /tutorial, 把 /alg 让给后来的 /algdb 公式库。',
+    },
+    en: {
+      title: '/alg tutorial SPA launches (docx → SPA, later renamed /tutorial)',
+      body: 'AlgIndexPage list + AlgPostPage detail + AlgArticleView/Card/Chip/Content + useAlgCatalog hook + 681-line alg.css + 5 CaseCard/Modal/AlgsetView components.',
+      expand: 'Initial data came from docx-parsed JSON; two weeks later (5-6) it moved into PG. On 5-3 the URL was wholesale renamed from /alg to /tutorial, freeing /alg for the later /algdb algorithm reference.',
+    },
+  },
+  {
+    date: '2026-04-16 ~ 18',
+    tag: 'feature',
+    zh: {
+      title: '/globe 地球页 + Landing 重写',
+      body: '4-16 上 /globe (903 行 GlobePage 用 three.js 转动地球展未来比赛点) + Landing 重写 (-283/+155 行减重 + LandingCubeHero 装饰 3D 魔方)。4-17 ~ 18 继续重写 372 行 + 949 行, 加银河系背景纹理 + 比赛 marker 聚合 + 搜索 (368 行)。',
+      expand: '/globe 是项目从"数据展示"到"沉浸式可视化"的跃迁。同期 LandingCubeHero 在 Landing 顶部循环跑 S\' U\' M\' y2 装饰动画, cubing/twisty 懒加载。4-20 再加 world_records_by_country 统计 + cn_disputed_patches.geojson 修中印 / 中尼争议边界。',
+    },
+    en: {
+      title: '/globe page + Landing rewrite',
+      body: '4-16: /globe launches (903-line three.js earth showing upcoming comps) + Landing rewrite (-283/+155 lines slim-down + LandingCubeHero decorative 3D cube). 4-17 ~ 18: another 372 + 949 lines of rewriting, plus Milky Way background, marker clustering, search (368 lines).',
+      expand: '/globe was the leap from "data display" to "immersive visualisation". LandingCubeHero loops S\' U\' M\' y2 at the top of Landing, with cubing/twisty lazy-loaded. 4-20 added world_records_by_country stat + cn_disputed_patches.geojson correcting Sino-Indian / Sino-Nepalese disputed borders.',
+    },
+  },
+  {
+    date: '2026-04-06 ~ 16',
+    tag: 'feature',
+    zh: {
+      title: '/frame-count 数帧工具上线 (10 天迭代成型)',
+      body: '4-6 从零起步 (819 行页面 + 800 行 CSS + WebCodecs 帧缓冲 hook). 4-7 接 @ffmpeg/ffmpeg + WebCodecs GPU 零丢帧硬件管线. 4-8 与 Gemini 协作做两层渲染修丢帧. 4-13 加 A 键去重 + IndexedDB MRU 目录记忆 + 两阶段缩略图 + pinch 缩放. 4-14 加 timestamp 起表帧反推法 + Mark + Solve bands. 4-15 加 VideoInfoPanels codec/audio/VFR 诊断面板.',
+      expand: 'Frame Count 是给比赛裁判 / 选手用的精确数帧工具 — 视频 fps 不稳 / VFR / iOS Safari 兼容是真实痛点。10 天里几乎每天都有具体的功能或 bug 修, 不是水的"持续迭代"。WebCodecs 是 Chrome 94+ API, 用硬件解码 + OffscreenCanvas crop + VideoEncoder + mp4-muxer 做零丢帧导出管线。',
+    },
+    en: {
+      title: '/frame-count tool launches (10-day iteration to maturity)',
+      body: '4-6 from zero (819-line page + 800-line CSS + WebCodecs frame buffer hook). 4-7 wires up @ffmpeg/ffmpeg + WebCodecs GPU zero-drop hardware pipeline. 4-8 two-tier render fix with Gemini collaboration. 4-13 adds A-key dedup + IndexedDB MRU dir memory + two-phase thumbnails + pinch zoom. 4-14 timestamp-based start-frame back-calc + Mark + Solve bands. 4-15 VideoInfoPanels codec/audio/VFR diagnostics.',
+      expand: 'Frame Count is a precise frame-counting tool for competition judges / cubers — video FPS instability / VFR / iOS Safari compatibility are real pain points. Almost every day in those 10 days shipped a concrete feature or bug fix, not vague "iteration". WebCodecs is a Chrome 94+ API; combined with OffscreenCanvas crop + VideoEncoder + mp4-muxer it gives a zero-drop hardware export pipeline.',
     },
   },
   {
@@ -677,15 +789,29 @@ const TIMELINE: TLEntry[] = [
     },
   },
   {
+    date: '2026-03-21',
+    tag: 'feature',
+    zh: {
+      title: '/viz 成绩分布页上线',
+      body: 'KDE / 直方图 / 山脊图 / 折线 4 种视图 + 多选手对比 + zoom/pan。3-22 再加累积直方图 + tooltip 卡片化 + 折线 zoom/pan + Non-PR WR 统计。',
+      expand: '/viz 是"看 cuber 群体成绩分布"的可视化页 — KDE 看哪个时段最厚, ridgeline 看进阶轨迹。多选手对比可以把你和顶级 cuber 同框看分布差。3-24 这页接着被 React 化收编进 monorepo。',
+    },
+    en: {
+      title: '/viz distribution page launches',
+      body: 'KDE / histogram / ridgeline / line — 4 views + multi-player comparison + zoom/pan. 3-22 adds cumulative histogram + card tooltips + line zoom/pan + Non-PR WR stat.',
+      expand: '/viz visualises distributions across the cuber population — KDE shows where the mass concentrates, ridgeline shows progression. Multi-cuber comparison lets you overlay your distribution against top cubers. On 3-24 the page was Reactified into the monorepo.',
+    },
+  },
+  {
     date: '2026-03-12 ~ 15',
     tag: 'feature',
     zh: {
-      title: '第一轮工具集成:HTH Calc / Alg-Trainers / csTimer / 1v1 Battle',
-      body: '4 天内集成 4 个 fork / port:HTH Calc (carykh/hthgrapher), Alg-Trainers (mihlefeld), csTimer (cs0x7f, GPL-3.0 self-hosted), 1v1 Battle (MatteoColombo/cube_challenge_timer)。',
+      title: '第一轮工具集成 (HTH Calc / Alg-Trainers / csTimer / 1v1 Battle)',
+      body: '4 天内集成 4 个 fork / port: HTH Calc (carykh/hthgrapher), Alg-Trainers (mihlefeld), csTimer (cs0x7f, GPL-3.0 self-hosted), 1v1 Battle (MatteoColombo/cube_challenge_timer)。',
       expand: 'csTimer 是 self-hosted (整个项目 vendor 进 /cstimer/) 不是 iframe; 其它 3 个当时还是静态嵌入。后来 (2026-03-23 monorepo 上线后) Calc / Battle 被重写成 React, Alg-Trainers 保留 fork 形态。',
     },
     en: {
-      title: 'First wave of integrations: HTH Calc / Alg-Trainers / csTimer / 1v1 Battle',
+      title: 'First wave of integrations (HTH Calc / Alg-Trainers / csTimer / 1v1 Battle)',
       body: 'Four forks / ports in four days: HTH Calc (carykh/hthgrapher), Alg-Trainers (mihlefeld), csTimer (cs0x7f, GPL-3.0 self-hosted), 1v1 Battle (MatteoColombo/cube_challenge_timer).',
       expand: 'csTimer is self-hosted (the whole upstream vendored into /cstimer/), not iframed; the other three were embedded statically at the time. After the monorepo landed (2026-03-23) Calc and Battle were rewritten in React; Alg-Trainers stayed in fork form.',
     },
@@ -708,14 +834,28 @@ const TIMELINE: TLEntry[] = [
     date: '2026-02-27',
     tag: 'feature',
     zh: {
-      title: 'Recon page Phase 1 + WCA OAuth',
-      body: '/recon 上线:csv → JSON 复盘库 2017 条, 89 个选手。同一天接 WCA OAuth 登录 + Firestore 社区复盘存储。',
+      title: '/recon Phase 1 + WCA OAuth',
+      body: '/recon 上线: csv → JSON 复盘库 2017 条, 89 个选手。同一天接 WCA OAuth 登录 + Firestore 社区复盘存储。',
       expand: '一开始用 implicit grant 绕 CORS。Phase 1 的成绩库是 CSV 静态文件, 后来 (2026-03-04) 才进 MariaDB, (2026-05-06) 又进 PG。Recon 是项目第一个有"登录 + 写入"的功能, 把站点从展示性质拉到协作性质。',
     },
     en: {
-      title: 'Recon page Phase 1 + WCA OAuth',
+      title: '/recon Phase 1 + WCA OAuth',
       body: '/recon launches: a CSV-to-JSON solve library with 2017 solves from 89 cubers. Same day: WCA OAuth login + Firestore community storage.',
       expand: 'Initially used the implicit grant to bypass CORS. Phase 1 stored data in static CSV; later went into MariaDB (2026-03-04), then PG (2026-05-06). Recon was the first feature with "login + write", which pulled the site from a showcase into a collaborative tool.',
+    },
+  },
+  {
+    date: '2026-02-26',
+    tag: 'feature',
+    zh: {
+      title: 'Upcoming Comps 比赛追踪器上线',
+      body: 'Upcoming Comps 页 (后来叫 /calendar): 列未来比赛 + 顶级选手 + 现/前 WR badge + 24h 缓存。',
+      expand: '数据源: WCA API + 中国大陆比赛接 cubing.com (因为 WCA API 不含中国大陆 NF 比赛)。这是站点第一个"有时效性"的页 — 不只看历史成绩, 还展望未来。后续 4-30 加列表视图, 4-28 加 /calendar/stats 子页。',
+    },
+    en: {
+      title: 'Upcoming Comps tracker launches',
+      body: 'Upcoming Comps page (later renamed /calendar): lists future competitions + top cubers attending + current/former WR badges + 24h cache.',
+      expand: 'Data sources: WCA API + cubing.com for China mainland comps (the WCA API doesn\'t include China-mainland-NF events). This was the site\'s first "time-sensitive" page — not just historical data, but a forward view. Later 4-30 adds list view, 4-28 adds /calendar/stats subpage.',
     },
   },
   {
@@ -724,12 +864,12 @@ const TIMELINE: TLEntry[] = [
     zh: {
       title: '第一个 Landing 页 — Solver + WCA Stats 双卡',
       body: '从单页 index.html 变成有真正"首页"的站点。Solver 和 WCA Stats 两张入口卡, 配 i18n (en/zh)。',
-      expand: '同期把 Solver (or18/RubiksSolverDemo fork) 的 UI 文字也翻译成中文。这是站点开始有"产品形态"的起点。',
+      expand: '同期把 Solver (or18/RubiksSolverDemo fork) 的 UI 文字也翻译成中文。这是站点开始有"产品形态"的起点。后来 26 张卡片都从这里长出来。',
     },
     en: {
       title: 'First landing page — Solver + WCA Stats',
       body: 'The site evolved from a single index.html into one with a real homepage. Two entry cards (Solver / WCA Stats), plus i18n (en/zh).',
-      expand: 'Solver (forked from or18/RubiksSolverDemo) had its UI translated to Chinese the same day. This is when the site started to feel like a product.',
+      expand: 'Solver (forked from or18/RubiksSolverDemo) had its UI translated to Chinese the same day. This is when the site started to feel like a product. Eventually 26 cards grew out of this layout.',
     },
   },
   {
@@ -738,12 +878,12 @@ const TIMELINE: TLEntry[] = [
     zh: {
       title: 'WCA Statistics 数据管道 (CI 周更)',
       body: 'GitHub Actions 每周从 WCA 公开 dump 拉数据, 跑统计脚本, 产物入仓。第一次"自动化数据流水线"。',
-      expand: '当时是 Python 脚本, 后来 (2026-03-23 monorepo) 整体重写为 TS 跑在 stats-build 包里。原项目灵感来自 jonatanklosko/wca_statistics, 后来扩到 80+ 张统计页。',
+      expand: '当时是 Ruby 脚本, 后来 (2026-03-23 monorepo) 整体重写为 TS 跑在 stats-build 包里。原项目灵感来自 jonatanklosko/wca_statistics, 后来扩到 80+ 张统计页。',
     },
     en: {
       title: 'WCA Statistics data pipeline (weekly CI)',
       body: 'GitHub Actions pulls the WCA public dump weekly, runs statistics scripts, commits the artifacts. The site\'s first automated data pipeline.',
-      expand: 'Originally a set of Python scripts, later rewritten in TypeScript inside the stats-build package (2026-03-23 monorepo). Inspired by jonatanklosko/wca_statistics; grew into 80+ stat pages.',
+      expand: 'Originally a set of Ruby scripts, later rewritten in TypeScript inside the stats-build package (2026-03-23 monorepo). Inspired by jonatanklosko/wca_statistics; grew into 80+ stat pages.',
     },
   },
   {
