@@ -73,6 +73,10 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   const valCol = type === 'single' ? 's.single' : 's.average';
   const wrCol = type === 'single' ? 's.single_world_rank' : 's.avg_world_rank';
   const crCol = type === 'single' ? 's.single_country_rank' : 's.avg_country_rank';
+  // PB 上下文列(2026-05 加,migration 0006):show=persons 视图渲染 Date/Competition/Solves 用.
+  const compIdCol = type === 'single' ? 's.best_single_comp_id'   : 's.best_average_comp_id';
+  const dateCol   = type === 'single' ? 's.best_single_date'      : 's.best_average_date';
+  const attsCol   = type === 'single' ? 's.best_single_attempts'  : 's.best_average_attempts';
 
   // ── 主查询(分页)
   const offset = (page - 1) * size;
@@ -93,6 +97,10 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     iso2: string | null;
     world_rank: number;
     country_rank: number;
+    comp_id: string | null;
+    comp_name: string | null;
+    comp_date: string | null;
+    attempts: number[] | null;
   }>(
     `
     SELECT
@@ -102,10 +110,15 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
       s.country_id      AS country_id,
       co.iso2           AS iso2,
       ${wrCol}          AS world_rank,
-      ${crCol}          AS country_rank
+      ${crCol}          AS country_rank,
+      ${compIdCol}      AS comp_id,
+      c.name            AS comp_name,
+      ${dateCol}        AS comp_date,
+      ${attsCol}        AS attempts
     FROM historical_ranks_snapshot s
     JOIN wca_persons p ON p.wca_id = s.wca_id
     LEFT JOIN wca_countries co ON co.id = s.country_id
+    LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
     WHERE s.event_id = ? AND s.year = ?
       ${whereExtra}
     ORDER BY ${orderRank} ASC, s.wca_id ASC
@@ -144,6 +157,10 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
       value: r.val,
       countryId: r.country_id,
       iso2: r.iso2,
+      compId: r.comp_id,
+      compName: r.comp_name,
+      compDate: r.comp_date,
+      attempts: r.attempts ?? [],
     })),
   });
 });

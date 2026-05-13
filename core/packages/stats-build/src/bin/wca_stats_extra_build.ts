@@ -307,10 +307,9 @@ async function main() {
 
   // 输出 stream
   const allTopStream = createWriteStream(resolve(outDir, 'wca_results_top.copy.tsv'));
-  const yearTopStream = createWriteStream(resolve(outDir, 'wca_year_results_top.copy.tsv'));
   const cohortStream = createWriteStream(resolve(outDir, 'wca_cohort_ranks.copy.tsv'));
   const grandSlamStream = createWriteStream(resolve(outDir, 'wca_grand_slam.copy.tsv'));
-  let allTopCount = 0, yearTopCount = 0, cohortCount = 0, gsCount = 0;
+  let allTopCount = 0, cohortCount = 0, gsCount = 0;
 
   // grand slam 累积 (per event):collect from finals at championship comps
   // 结构: gsAcc[(event, person)] = { worldChampComp, worldChampPos, contChampComp, contChampPos, natChampComp, natChampPos, hasWr }
@@ -395,20 +394,7 @@ async function main() {
     // ── (b) success_rate counters (only for active events) ──
     const sr = isActive ? successAcc.get(eventId)! : null;
 
-    // ── (c) all_results_top: 全量流式 / year_results_top: 仍 TopK ──
-    const yearTopByKey = new Map<string, TopK>();
-    function getOrCreateYear(year: number, isAvg: boolean, country: string): TopK {
-      const k = `${year}|${isAvg ? 1 : 0}|${country}`;
-      let t = yearTopByKey.get(k);
-      if (!t) {
-        const cap = country === '' ? YEAR_RESULTS_WW_CAP : YEAR_RESULTS_PER_COUNTRY_CAP;
-        t = new TopK(cap, isAvg);
-        yearTopByKey.set(k, t);
-      }
-      return t;
-    }
-
-    // ── (d) grand_slam 的 finals 收集(只 active 项目) ──
+    // ── (c) grand_slam 的 finals 收集(只 active 项目) ──
     const gsForEvent = isActive ? gsAcc.get(eventId)! : null;
 
     // 主迭代
@@ -451,24 +437,18 @@ async function main() {
         s.add(r.compId);
       }
 
-      // all_results_top: 全量流式写 ; year_results_top: 仍按 (year, country) 取 TopK
+      // all_results_top: 全量流式写
       if (r.best > 0) {
         allTopStream.write(
           `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\n`,
         );
         allTopCount++;
-        const yr = parseInt(r.compDate.slice(0, 4), 10);
-        getOrCreateYear(yr, false, '').add(r);
-        getOrCreateYear(yr, false, r.countryId).add(r);
       }
       if (r.average > 0) {
         allTopStream.write(
           `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\n`,
         );
         allTopCount++;
-        const yr = parseInt(r.compDate.slice(0, 4), 10);
-        getOrCreateYear(yr, true, '').add(r);
-        getOrCreateYear(yr, true, r.countryId).add(r);
       }
 
       // grand_slam: 只 finals + 领奖台(pos<=3)
@@ -517,28 +497,6 @@ async function main() {
       }
     }
 
-    // ── 写 wca_year_results_top(all-results 已在主迭代里流式写完) ──
-    let nYear = 0;
-    for (const [k, tk] of yearTopByKey) {
-      const parts = k.split('|');
-      const yearStr = parts[0]!;
-      const isAvg = parts[1]! === '1';
-      const country = parts[2]!;
-      const arr = tk.finalize();
-      for (let i = 0; i < arr.length; i++) {
-        const r = arr[i]!;
-        const month = parseInt(r.compDate.slice(5, 7), 10);
-        const value = isAvg ? r.average : r.best;
-        yearTopStream.write(
-          `${yearStr}\t${eventId}\t${bool(isAvg)}\t${pgEsc(country)}\t${i + 1}\t${value}\t` +
-          `${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${month}\t` +
-          `${intArr(r.attempts)}\n`,
-        );
-        nYear++;
-      }
-    }
-    yearTopCount += nYear;
-
     // ── 写 wca_cohort_ranks(per cohort_year × event × is_avg) ──
     // 把 acc(每人当前累积 PB)按 cohort_year 分组,组内排名
     if (acc.size > 0) {
@@ -582,8 +540,7 @@ async function main() {
     // 保存 acc 给 grand_slam(后期填 best/avg)
     accByEvent.set(eventId, acc);
 
-    console.log(`  ${eventId} done. acc=${acc.size} top_year=${nYear} (allTopCount=${allTopCount}) (${Date.now() - tev}ms)`);
-    yearTopByKey.clear();
+    console.log(`  ${eventId} done. acc=${acc.size} allTopCount=${allTopCount} (${Date.now() - tev}ms)`);
     if (global.gc) global.gc();
   }
 
@@ -766,7 +723,6 @@ async function main() {
   // ── flush 还在 buffer 的 stream ──
   await Promise.all([
     new Promise<void>(res => allTopStream.end(() => res())),
-    new Promise<void>(res => yearTopStream.end(() => res())),
     new Promise<void>(res => cohortStream.end(() => res())),
     new Promise<void>(res => grandSlamStream.end(() => res())),
   ]);
@@ -808,7 +764,6 @@ CREATE INDEX wrt_country_year ON wca_results_top (event_id, is_avg, person_count
 
 TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;
-TRUNCATE wca_year_results_top;
 TRUNCATE wca_cohort_ranks;
 TRUNCATE wca_success_rate;
 TRUNCATE wca_all_events_done;
@@ -817,7 +772,6 @@ TRUNCATE wca_person_ranks;
 \\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
 \\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
 \\copy wca_results_top (event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts) FROM 'wca_results_top.copy.tsv';
-\\copy wca_year_results_top (year, event_id, is_avg, country_filter, rank_in_scope, value, wca_id, person_country_id, comp_id, comp_month, attempts) FROM 'wca_year_results_top.copy.tsv';
 \\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
 \\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
@@ -833,7 +787,6 @@ COMMIT;
 VACUUM (ANALYZE) wca_results_top;
 ANALYZE wca_competitions;
 ANALYZE wca_grand_slam;
-ANALYZE wca_year_results_top;
 ANALYZE wca_cohort_ranks;
 ANALYZE wca_success_rate;
 ANALYZE wca_all_events_done;
@@ -850,7 +803,6 @@ ANALYZE wca_person_ranks;
   console.log(`  competitions      : ${comps.length.toLocaleString()} rows, ${sizeMb('wca_competitions.copy.tsv')} MB`);
   console.log(`  grand_slam        : ${gsCount.toLocaleString()} rows, ${sizeMb('wca_grand_slam.copy.tsv')} MB`);
   console.log(`  results_top       : ${allTopCount.toLocaleString()} rows, ${sizeMb('wca_results_top.copy.tsv')} MB`);
-  console.log(`  year_results_top  : ${yearTopCount.toLocaleString()} rows, ${sizeMb('wca_year_results_top.copy.tsv')} MB`);
   console.log(`  cohort_ranks      : ${cohortCount.toLocaleString()} rows, ${sizeMb('wca_cohort_ranks.copy.tsv')} MB`);
   console.log(`  success_rate      : ${srCount.toLocaleString()} rows, ${sizeMb('wca_success_rate.copy.tsv')} MB`);
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);

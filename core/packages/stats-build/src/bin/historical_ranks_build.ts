@@ -54,10 +54,26 @@ function num(v: number | null | undefined): string {
   return String(v);
 }
 
+// PG INTEGER[] in COPY TEXT format: {v1,v2,v3,v4,v5}
+// 跳过 0/null(WCA value=0 表示 "未做" 该把,前端不渲染).
+// 全 0 → \N(NULL 列),不要写 "{}" 否则前端 attempts.length 显空字符串而非"无数据"语义.
+function intArr(arr: Array<number | null | undefined>): string {
+  const vals = arr.filter(v => v != null && v !== 0) as number[];
+  if (vals.length === 0) return '\\N';
+  return `{${vals.join(',')}}`;
+}
+
 interface Acc {
   best: number;       // 0 = 无单次成绩
   avg: number;        // 0 = 无平均成绩
   country: string;    // 最近一次比赛的国籍
+  // PB 上下文:single / average 各自来自的 result 行(comp + date + 5 把).
+  bestSingleCompId: string;
+  bestSingleDate: string;
+  bestSingleAttempts: number[];
+  bestAvgCompId: string;
+  bestAvgDate: string;
+  bestAvgAttempts: number[];
 }
 
 interface RankInfo { wr: number; cr: number; cor: number }
@@ -215,8 +231,11 @@ async function main() {
     // 拉本项目所有 result(只取需要的列),按比赛日期升序
     const [rows] = await conn.query<mysql.RowDataPacket[]>(`
       SELECT r.person_id, r.best, r.average, r.country_id,
-             YEAR(c.start_date)  AS comp_year,
-             MONTH(c.start_date) AS comp_month
+             r.competition_id     AS comp_id,
+             YEAR(c.start_date)   AS comp_year,
+             MONTH(c.start_date)  AS comp_month,
+             DATE_FORMAT(c.start_date, '%Y-%m-%d') AS comp_date,
+             r.value1, r.value2, r.value3, r.value4, r.value5
       FROM results r
       JOIN competitions c ON c.id = r.competition_id
       WHERE r.event_id = ? AND c.start_date IS NOT NULL
@@ -252,13 +271,33 @@ async function main() {
           const best = r['best'] as number;
           const avg = r['average'] as number;
           const country = r['country_id'] as string;
+          const compId = r['comp_id'] as string;
+          const compDate = r['comp_date'] as string;
+          const attempts = [
+            r['value1'] as number, r['value2'] as number, r['value3'] as number,
+            r['value4'] as number, r['value5'] as number,
+          ];
           let cur = acc.get(pid);
           if (!cur) {
-            cur = { best: 0, avg: 0, country };
+            cur = {
+              best: 0, avg: 0, country,
+              bestSingleCompId: '', bestSingleDate: '', bestSingleAttempts: [],
+              bestAvgCompId: '', bestAvgDate: '', bestAvgAttempts: [],
+            };
             acc.set(pid, cur);
           }
-          if (best > 0 && (cur.best === 0 || best < cur.best)) cur.best = best;
-          if (avg > 0 && (cur.avg === 0 || avg < cur.avg)) cur.avg = avg;
+          if (best > 0 && (cur.best === 0 || best < cur.best)) {
+            cur.best = best;
+            cur.bestSingleCompId = compId;
+            cur.bestSingleDate = compDate;
+            cur.bestSingleAttempts = attempts;
+          }
+          if (avg > 0 && (cur.avg === 0 || avg < cur.avg)) {
+            cur.avg = avg;
+            cur.bestAvgCompId = compId;
+            cur.bestAvgDate = compDate;
+            cur.bestAvgAttempts = attempts;
+          }
           cur.country = country;
           // 即使本人最佳没刷新,只要本月有 result 就算"参加" → 月级 emit
           // (跟 cubing.pro 行为对齐:每场比赛后该月都要有快照点)
@@ -287,6 +326,8 @@ async function main() {
       }
 
       // 年级 emit:年末全量(沿用旧行为,选手页 PR 历史最佳还在用这张表)
+      // 额外列(2026-05 加):PB 上下文 best_single_*/best_average_*
+      // — 用于 /wca-stats/all-results?show=persons 渲染 Date/Competition/Solves 列.
       if (acc.size > 0) {
         const { singleRanks, avgRanks } = computeRanks(acc);
         for (const [wcaId, v] of acc) {
@@ -297,7 +338,9 @@ async function main() {
           snapStream.write(
             `${eventId}\t${year}\t${wcaId}\t${num(single)}\t${num(average)}\t${pgEsc(v.country)}\t` +
             `${sr?.wr ?? 0}\t${sr?.cr ?? 0}\t${sr?.cor ?? 0}\t` +
-            `${ar?.wr ?? 0}\t${ar?.cr ?? 0}\t${ar?.cor ?? 0}\n`,
+            `${ar?.wr ?? 0}\t${ar?.cr ?? 0}\t${ar?.cor ?? 0}\t` +
+            `${v.best > 0 ? pgEsc(v.bestSingleCompId) : '\\N'}\t${v.best > 0 ? pgEsc(v.bestSingleDate) : '\\N'}\t${v.best > 0 ? intArr(v.bestSingleAttempts) : '\\N'}\t` +
+            `${v.avg > 0 ? pgEsc(v.bestAvgCompId) : '\\N'}\t${v.avg > 0 ? pgEsc(v.bestAvgDate) : '\\N'}\t${v.avg > 0 ? intArr(v.bestAvgAttempts) : '\\N'}\n`,
           );
           totalYearRows++;
         }
@@ -332,7 +375,7 @@ TRUNCATE historical_ranks_monthly_snapshot;
 \\copy wca_continents (id, name) FROM 'wca_continents.copy.tsv';
 \\copy wca_countries (id, iso2, name, continent_id) FROM 'wca_countries.copy.tsv';
 \\copy wca_persons (wca_id, name, country_id) FROM 'wca_persons.copy.tsv';
-\\copy historical_ranks_snapshot (event_id, year, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank) FROM 'historical_ranks_snapshot.copy.tsv';
+\\copy historical_ranks_snapshot (event_id, year, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank, best_single_comp_id, best_single_date, best_single_attempts, best_average_comp_id, best_average_date, best_average_attempts) FROM 'historical_ranks_snapshot.copy.tsv';
 \\copy historical_ranks_monthly_snapshot (event_id, year, month, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank) FROM 'historical_ranks_monthly_snapshot.copy.tsv';
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('last_imported_at', NOW()::TEXT, NOW())

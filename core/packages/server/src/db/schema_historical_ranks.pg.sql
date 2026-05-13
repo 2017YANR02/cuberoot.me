@@ -49,8 +49,16 @@ CREATE TABLE IF NOT EXISTS historical_ranks_snapshot (
   avg_world_rank        INTEGER NOT NULL DEFAULT 0,
   avg_country_rank      INTEGER NOT NULL DEFAULT 0,
   avg_continent_rank    INTEGER NOT NULL DEFAULT 0,
+  -- PB 上下文(2026-05 加,migration 0006):persons 模式渲染 Date/Competition/Solves 列用
+  best_single_comp_id   VARCHAR(40),
+  best_single_date      DATE,
+  best_single_attempts  INTEGER[],
+  best_average_comp_id  VARCHAR(40),
+  best_average_date     DATE,
+  best_average_attempts INTEGER[],
   PRIMARY KEY (event_id, year, wca_id)
 );
+-- 注:渲染 Competition 列需 JOIN wca_competitions(由 wca_stats_extra 那条管道维护).
 
 -- 主查询索引:按 (event, year) 出全球榜或国家榜
 CREATE INDEX IF NOT EXISTS hrs_single_wr ON historical_ranks_snapshot (event_id, year, single_world_rank) WHERE single_world_rank > 0;

@@ -5,7 +5,6 @@
 -- 6 个表:
 --   wca_grand_slam        : 大满贯(WC + Continental + National 领奖台 + WR)
 --   wca_results_top       : 全部成绩排行(top 5000 ww + top 500/country, per event×type)
---   wca_year_results_top  : 当年成绩排行(top 200 ww + top 30/country, per year×event×type)
 --   wca_cohort_ranks      : 参赛届别排行(每届首参赛年的人累积最佳)
 --   wca_success_rate      : 项目成功率(每人 solved/attempted)
 --   wca_all_events_done   : 全项目达成(每人完成 17 项的耗时)
@@ -68,26 +67,6 @@ CREATE INDEX IF NOT EXISTS wrt_country ON wca_results_top (event_id, is_avg, per
 CREATE INDEX IF NOT EXISTS wrt_wca_id ON wca_results_top (event_id, is_avg, wca_id, value);
 CREATE INDEX IF NOT EXISTS wrt_comp_id ON wca_results_top (event_id, is_avg, comp_id, value);
 -- 年份/月份: 走 main 索引 + comp_date 过滤(不专门索引,跳过 cap=2GB 索引膨胀)
-
--- ── wca_year_results_top: 当年成绩排行 (~5M 行) ──
--- 一行 = (year, event, is_avg, country_filter, rank) 的具体一次成绩.
--- country_filter='' 全球(top 200),否则国家(top 30).
--- year 是比赛年,month 让前端可二级筛选.
-CREATE TABLE IF NOT EXISTS wca_year_results_top (
-  year               SMALLINT NOT NULL,
-  event_id           VARCHAR(20) NOT NULL,
-  is_avg             BOOLEAN NOT NULL,
-  country_filter     VARCHAR(50) NOT NULL,
-  rank_in_scope      INTEGER NOT NULL,
-  value              INTEGER NOT NULL,
-  wca_id             VARCHAR(20) NOT NULL,
-  person_country_id  VARCHAR(50) NOT NULL,
-  comp_id            VARCHAR(50) NOT NULL,
-  comp_month         SMALLINT NOT NULL,
-  attempts           INTEGER[],
-  PRIMARY KEY (year, event_id, is_avg, country_filter, rank_in_scope)
-);
-CREATE INDEX IF NOT EXISTS yrt_month ON wca_year_results_top (year, event_id, is_avg, country_filter, comp_month);
 
 -- ── wca_cohort_ranks: 参赛届别排行 (~10M 行) ──
 -- 一行 = (cohort_year, event, is_avg, person):cohort_year=该选手第一次参赛的年份.
