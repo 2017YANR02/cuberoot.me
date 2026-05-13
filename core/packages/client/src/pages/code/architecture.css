@@ -176,6 +176,18 @@
   height: auto;
   max-width: 100%;
 }
+.arch-diagram-caption {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-mute);
+}
+.arch-diagram-caption code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.arch-diagram-caption em { font-style: italic; color: var(--ink); }
 
 /* SVG common */
 .d-title {
@@ -642,10 +654,13 @@
 }
 
 @media (max-width: 720px) {
-  .arch-page { padding: 36px 18px 60px; }
+  .arch-page { padding: 36px 18px 60px; overflow-x: hidden; }
   .arch-hero { margin-bottom: 56px; }
-  .arch-sec { margin-bottom: 64px; }
+  .arch-sec { margin-bottom: 64px; min-width: 0; }
   .arch-diagram { padding: 18px 12px; }
+  /* 行内 code 默认 nowrap,窄屏下长 URL (https://dev.cuberoot.me/) 会推爆段落。
+     窄屏放宽 wrap 规则;wss:// localhost:5173 等代码字面量按 / : 切断 OK。 */
+  .arch-page code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 }
 
 /* ── 10 Request Tracer ──────────────────────── */
