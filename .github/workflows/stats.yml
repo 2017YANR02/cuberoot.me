@@ -132,6 +132,10 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_lookup_data.ts
 
+      - name: Build historical records JSON (WR/CR/NR)
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/records_build.ts
+
       - name: Fetch upcoming comps
         run: python scripts/fetch_upcoming_comps.py --refresh
 

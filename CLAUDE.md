@@ -106,6 +106,7 @@ pnpm --filter @cuberoot/client lint
 | 国旗渲染 | `country-flag` | 任何展示国旗的地方（JSX / popup innerHTML）；统一走 `utils/flag.tsx` 的 `<Flag>` 或 `flagHtml`；TW 特判只在这一处 |
 | WCA 项目图标 / 选择器 | `wca-event` | 渲染 WCA 项目名(必须有 `<EventIcon>`),或在 wca-stats 子页加单项目选择器(用 `<WcaEventSelector>` 图标行,不要下拉) |
 | WCA 成绩值格式化 | `wca-format-result` | 任何把 raw WCA 数值（centiseconds / FMC moves / MBLD encoding）→ 字符串的地方；统一走 `utils/wca_format_result.ts` |
+| WCA 纪录标志 (WR/CR/NR/AsR/...) | `wca-record-badge` | 渲染纪录标志徽章；统一走 `<RecordBadge>`,禁自写 span+CSS |
 | 比赛日期区间展示 | `comp-date-range` | 任何显示 `start_date` / `end_date` 对的地方；紧凑格式 `2026-06-06~07` |
 | 中国比赛名中文化 | `cn-comp-names` | 中文模式下比赛名；`comp_names_zh.json` 数据问题 |
 | Competition JSON 数据源 | `comp-data-schema` | 改 upcoming/past comps 相关代码 |

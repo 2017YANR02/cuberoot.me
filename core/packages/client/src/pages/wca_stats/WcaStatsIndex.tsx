@@ -41,6 +41,7 @@ const LOOKUP = '__lookup__';
 const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
   { path: '/wca-stats/persons',         zh: '选手查询',     en: 'Persons' },
   { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
+  { path: '/wca-stats/records',          zh: 'WR/CR/NR 纪录', en: 'Records' },
   { path: '/wca-stats/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
   { path: '/wca-stats/all-results',      zh: '全部成绩排行', en: 'All Results' },
   { path: '/wca-stats/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },

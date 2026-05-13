@@ -1,0 +1,194 @@
+/* Records 页样式 — 对齐 wca_stats_extra.css 深色主题 token */
+
+.records-page .records-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.records-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* show toggle */
+.records-show-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+.records-show-toggle button {
+  padding: 6px 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-sub, #aaa);
+}
+.records-show-toggle button:hover { color: var(--text-color, #f0ebe3); }
+.records-show-toggle button.active {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-color, #f0ebe3);
+}
+
+/* region picker — 效仿 WCA results/records Region 下拉 */
+.records-region {
+  position: relative;
+  width: 220px;
+}
+.records-region-trigger {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-color, #f0ebe3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  text-align: left;
+}
+.records-region-trigger:hover { border-color: rgba(255, 255, 255, 0.25); }
+.records-region-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.records-region-caret { color: var(--text-sub, #888); font-size: 10px; margin-left: 6px; }
+
+.records-region-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 420px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+  color: var(--text-color, #f0ebe3);
+}
+.records-region-section {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sub, #888);
+  padding: 8px 12px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.records-region-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 7px 12px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-color, #f0ebe3);
+}
+.records-region-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.records-region-item.active {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-color, #f0ebe3);
+  font-weight: 600;
+}
+.records-region-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-sub, #aaa);
+  background: rgba(255, 255, 255, 0.02);
+}
+.records-region-search input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  outline: none;
+  color: var(--text-color, #f0ebe3);
+}
+.records-region-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.records-type-sub {
+  color: var(--text-sub, #888);
+  font-size: 12px;
+}
+
+.records-rank {
+  color: var(--text-sub, #888);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 大洲剪影:高度对齐国旗(1em),宽度按各洲自然 aspect 自适应 */
+.continent-icon {
+  display: inline-flex;
+  height: 1em;
+  align-items: center;
+  flex-shrink: 0;
+}
+.continent-icon img {
+  height: 100%;
+  width: auto;
+  max-width: 2.4em;
+  display: block;
+  opacity: 0.85;
+}
+
+/* mixed 模式下 event 分组 */
+.records-event-group { margin-top: 24px; }
+.records-event-group:first-child { margin-top: 0; }
+.records-event-h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  margin: 16px 0 8px;
+  color: var(--text-color, #f0ebe3);
+}
+.records-event-count {
+  font-size: 12px;
+  color: var(--text-sub, #888);
+  font-weight: 400;
+}
+
+/* 移动端 */
+@media (max-width: 720px) {
+  .records-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .records-region,
+  .records-show-toggle {
+    width: 100%;
+  }
+  .records-show-toggle {
+    justify-content: stretch;
+  }
+  .records-show-toggle button {
+    flex: 1;
+  }
+  .records-table {
+    font-size: 12px;
+  }
+}
