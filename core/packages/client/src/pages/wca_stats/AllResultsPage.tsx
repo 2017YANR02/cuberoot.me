@@ -45,6 +45,9 @@ interface PersonRow {
   rank: number; wcaId: string; name: string;
   value: number | null;
   countryId: string; iso2: string | null;
+  // PB 上下文(2026-05 加):值非空时,这三项也应有.NULL → 老数据(管道未重灌).
+  compId: string | null; compName: string | null; compDate: string | null;
+  attempts: number[];
 }
 
 type Data =
@@ -248,8 +251,8 @@ export default function AllResultsPage() {
                   <th className="wse-rank-col">#</th>
                   <th>{isZh ? '选手' : 'Person'}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  <th>{isZh ? '比赛' : 'Competition'}</th>
                   <th>{isZh ? '日期' : 'Date'}</th>
+                  <th>{isZh ? '比赛' : 'Competition'}</th>
                   <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
                 </tr>
               </thead>
@@ -262,12 +265,12 @@ export default function AllResultsPage() {
                       <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
+                    <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                     <td>
                       <a href={`https://www.worldcubeassociation.org/competitions/${r.compId}`} target="_blank" rel="noopener noreferrer">
                         <CompCell compId={r.compId} compName={r.compName} isZh={isZh} />
                       </a>
                     </td>
-                    <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                     <td className="wse-attempts-col">{formatAttempts(r.attempts, event, type, r.value)}</td>
                   </tr>
                 ))}
@@ -297,7 +300,9 @@ export default function AllResultsPage() {
                   <th className="wse-rank-col">#</th>
                   <th>{isZh ? '选手' : 'Person'}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  {!country && <th>{isZh ? '国家' : 'Country'}</th>}
+                  <th>{isZh ? '日期' : 'Date'}</th>
+                  <th>{isZh ? '比赛' : 'Competition'}</th>
+                  <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -305,6 +310,7 @@ export default function AllResultsPage() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
+                      {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                       <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">
                         {displayCuberName(r.name, isZh)}
                       </a>
@@ -312,12 +318,17 @@ export default function AllResultsPage() {
                     <td className="wse-value-col">
                       {r.value != null ? formatWcaResult(r.value, event, type) : '—'}
                     </td>
-                    {!country && (
-                      <td>
-                        {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                        <span>{r.countryId}</span>
-                      </td>
-                    )}
+                    <td className="wse-detail-cell">{r.compDate ?? ''}</td>
+                    <td>
+                      {r.compId ? (
+                        <a href={`https://www.worldcubeassociation.org/competitions/${r.compId}`} target="_blank" rel="noopener noreferrer">
+                          <CompCell compId={r.compId} compName={r.compName} isZh={isZh} />
+                        </a>
+                      ) : ''}
+                    </td>
+                    <td className="wse-attempts-col">
+                      {r.value != null && r.attempts.length > 0 ? formatAttempts(r.attempts, event, type, r.value) : ''}
+                    </td>
                   </tr>
                 ))}
               </tbody>

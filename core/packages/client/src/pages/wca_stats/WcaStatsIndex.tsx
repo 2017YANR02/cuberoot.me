@@ -43,7 +43,6 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
   { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
   { path: '/wca-stats/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
   { path: '/wca-stats/all-results',      zh: '全部成绩排行', en: 'All Results' },
-  { path: '/wca-stats/year-results',     zh: '当年成绩排行', en: 'Year Results' },
   { path: '/wca-stats/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
   { path: '/wca-stats/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
   { path: '/wca-stats/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
