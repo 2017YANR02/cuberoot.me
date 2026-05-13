@@ -568,14 +568,14 @@ const TIMELINE: TLEntry[] = [
     date: '2026-05-12',
     tag: 'dx',
     zh: {
-      title: 'HMR 双入口修复 + /code/architecture 重写图文长版',
-      body: 'PC localhost 和手机 Funnel 同时能 HMR。这页 (/code/architecture) 也从纯文字改成现在的图文长版, 一边写一边在两端实时验证。',
-      expand: '本页第 09 节有完整推导:写死 clientPort 等于全员遵守一个入口。删掉让 client 跟着 page URL 自己算 — page URL 是 http:5173 就用 ws, 是 https:443 就用 wss, 浏览器自己规范化空端口。',
+      title: 'HMR 三入口 + dev.cuberoot.me 隧道 + /code/architecture 重写',
+      body: 'PC localhost / 同 WiFi 手机 (ts.net) / 蜂窝外网手机 (dev.cuberoot.me) 三端实时 HMR — 不同反代,同一份 vite client。这页同日从纯文字改成图文长版, 一边写一边在三端验证。',
+      expand: '蜂窝下原来 ts.net Funnel 因 PC 在墙内不稳, 新加 dev.cuberoot.me 走 frp 反向隧道 → 自有云服务器 nginx, 强制 TLS + token, 公网开放 7000 但安全。本页第 09 节有 HMR 三入口完整推导:写死 clientPort 等于全员遵守一个入口, 删掉让 client 跟着 page URL 自己算 — 三端各自正确, 浏览器自己规范化空端口。',
     },
     en: {
-      title: 'HMR dual-entry fix + /code/architecture rewrite',
-      body: 'PC localhost and phone Funnel now hot-reload together. This page (/code/architecture) was rewritten from plain prose into the illustrated long-form you\'re reading, validated live on both entries.',
-      expand: 'Section 09 has the breakdown — a hardcoded clientPort forces every visitor through one entry. Delete it, let the client derive from its own page URL: http:5173 → ws, https:443 → wss, browser normalizes the empty port itself.',
+      title: 'HMR triple entry + dev.cuberoot.me tunnel + /code/architecture rewrite',
+      body: 'PC localhost / same-WiFi phone (ts.net) / cellular phone (dev.cuberoot.me) all hot-reload — three reverse proxies, one vite client. This page (/code/architecture) was rewritten from plain prose into illustrated long-form, validated live on all three.',
+      expand: 'Cellular previously couldn\'t use ts.net Funnel (PC inside GFW, relay flaky); added dev.cuberoot.me over frp reverse tunnel → self-hosted VM nginx, forced TLS + token, port 7000 public but safe. Section 09 has the full triple-entry derivation: a hardcoded clientPort forces everyone through one entry. Delete it, let the client derive from its own page URL — three entries each compute their own correct values, browser normalizes the empty port.',
     },
   },
   {
