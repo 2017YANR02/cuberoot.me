@@ -27,7 +27,14 @@ import { VisualCube } from '../../components/VisualCube';
 import LangToggle from '../../components/LangToggle';
 import AlgPlayer from '../../components/AlgPlayer';
 import { CaseThumb } from './CaseThumb';
+import { compactSq1Alg } from '../gen/sq1_svg';
 import './alg.css';
+
+/** sq1 algs/setups under /alg/sq1 are shown stripped of parens/commas/spaces.
+ *  AlgPlayer still gets the raw form — its `normalizeAlgForTwisty` canonicalizes. */
+function displayAlg(puzzle: AlgPuzzle, alg: string): string {
+  return puzzle === 'sq1' ? compactSq1Alg(alg) : alg;
+}
 
 /** F2L `c.setup` is canonical (FR slot disturbed). For other oris, append a `y`-rotation
  *  so the disturbed slot ends up at the right visual position (cube also rotates with it,
@@ -95,6 +102,7 @@ function sanitizeAlgHtml(html: string): string {
 
 function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; algHtml?: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const [copied, setCopied] = useState(false);
+  const algShown = displayAlg(puzzle, alg);
   return (
     <>
       <div
@@ -110,15 +118,15 @@ function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, set
         }}
         title={animatable ? (expanded ? 'collapse' : 'play') : 'copy'}
       >
-        {algHtml
+        {algHtml && puzzle !== 'sq1'
           ? <span className="alg-alg-text" dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
-          : <span className="alg-alg-text">{alg}</span>}
+          : <span className="alg-alg-text">{algShown}</span>}
         <button
           type="button"
           className="alg-alg-copy-btn"
           onClick={(e) => {
             e.stopPropagation();
-            navigator.clipboard.writeText(alg).then(() => {
+            navigator.clipboard.writeText(algShown).then(() => {
               setCopied(true);
               setTimeout(() => setCopied(false), 1200);
             });
@@ -569,7 +577,7 @@ export default function AlgCategoryPage() {
                           {c.setup && (
                             <div className="alg-case-standard">
                               <Shuffle size={13} className="alg-case-icon" aria-label={isZh ? '打乱' : 'Setup'} />
-                              <code>{c.setup}</code>
+                              <code>{displayAlg(puzzleParam, c.setup)}</code>
                             </div>
                           )}
                         </div>

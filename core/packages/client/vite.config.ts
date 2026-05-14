@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import fs from 'fs'
 import { renderFromSimpleQuery } from '@cuberoot/visualcube'
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS, invertSq1Alg as invertSq1AlgDev } from './src/pages/gen/sq1_svg'
+import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './src/pages/gen/mega_svg'
 // (touch to force vite restart after visualcube bundle rebuild)
 
 // ── 静态文件 MIME 映射 ────────────────────────────────────────────────────
@@ -100,19 +102,33 @@ function visualcubeDev(): Plugin {
         if (!url.startsWith('/v1/visualcube.svg')) return next();
         try {
           const qs = new URL(url, 'http://localhost').searchParams;
-          const svg = renderFromSimpleQuery({
-            alg: qs.get('alg') ?? undefined,
-            case: qs.get('case') ?? undefined,
-            setup: qs.get('setup') ?? undefined,
-            view: qs.get('view') ?? undefined,
-            mask: qs.get('mask') ?? undefined,
-            size: qs.get('size') ?? undefined,
-            cubeSize: qs.get('cubeSize') ?? undefined,
-            pzl: qs.get('pzl') ?? undefined,
-            bg: qs.get('bg') ?? undefined,
-            cc: qs.get('cc') ?? undefined,
-            co: qs.get('co') ?? undefined,
-          });
+          const puzzle = (qs.get('puzzle') ?? 'cube').toLowerCase();
+          let svg: string;
+          if (puzzle === 'sq1' || puzzle === 'megaminx') {
+            const setupRaw = qs.get('setup');
+            const caseRaw = qs.get('case');
+            const algRaw = qs.get('alg');
+            const forward = setupRaw ?? algRaw ?? (caseRaw != null
+              ? (puzzle === 'sq1' ? invertSq1AlgDev(caseRaw) : caseRaw)
+              : '');
+            svg = puzzle === 'sq1'
+              ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS)
+              : renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS);
+          } else {
+            svg = renderFromSimpleQuery({
+              alg: qs.get('alg') ?? undefined,
+              case: qs.get('case') ?? undefined,
+              setup: qs.get('setup') ?? undefined,
+              view: qs.get('view') ?? undefined,
+              mask: qs.get('mask') ?? undefined,
+              size: qs.get('size') ?? undefined,
+              cubeSize: qs.get('cubeSize') ?? undefined,
+              pzl: qs.get('pzl') ?? undefined,
+              bg: qs.get('bg') ?? undefined,
+              cc: qs.get('cc') ?? undefined,
+              co: qs.get('co') ?? undefined,
+            });
+          }
           res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
           res.setHeader('Cache-Control', 'no-store');
           res.end(svg);

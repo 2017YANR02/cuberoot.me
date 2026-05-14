@@ -42,13 +42,63 @@ const SOLVED_PIECES: number[] = [
   8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15,
 ];
 
+/** Tokenizer regex for sq1 alg. Tolerates:
+ *    - parens optional:       `(1,0)` / `1,0`
+ *    - comma optional:        `(1 0)` / `1 0`
+ *    - separator optional:    `10`, `3-3`, `-21`  (greedy + backtrack)
+ *    - any mix:               `1, 0`, `(1  0)`, etc.
+ *  The `(?:,\s*|\s+|(?=-?\d))` group allows zero-width separation when the
+ *  next char is `-` or a digit, so `10` parses as `1,0` after backtracking
+ *  `\d+` greedy from `10` → `1`. Sq1 turns are practically [-5, 6] so the
+ *  single-digit fallback is unambiguous in real algs. */
+const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?/g;
+
+/** Inverse a sq1 alg: reverse order, negate each (t,b); `/` stays.
+ *  Output uses canonical `(t,b)` form regardless of input formatting. */
+export function invertSq1Alg(alg: string): string {
+  const tokens: string[] = [];
+  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(alg)) !== null) {
+    if (m[1] === '/') tokens.push('/');
+    else tokens.push(`(${-parseInt(m[2]!, 10)},${-parseInt(m[3]!, 10)})`);
+  }
+  return tokens.reverse().join('');
+}
+
+/** Re-emit a sq1 alg in canonical `(t, b) / (t, b) / ...` form.
+ *  Use this when handing the alg to cubing.js TwistyPlayer — its sq1 parser requires
+ *  spaces around `/` AND after each comma. Without them: `Unexpected character at index N`. */
+export function canonicalSq1Alg(alg: string): string {
+  const tokens: string[] = [];
+  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(alg)) !== null) {
+    if (m[1] === '/') tokens.push('/');
+    else tokens.push(`(${m[2]}, ${m[3]})`);
+  }
+  return tokens.join(' ');
+}
+
+/** Re-emit a sq1 alg in compact `tb/tb/...` form (no parens, no commas, no spaces).
+ *  For DISPLAY only — safe round-trip iff every |t|, |b| ≤ 9 (sq1 turns are [-5..6] in practice). */
+export function compactSq1Alg(alg: string): string {
+  const tokens: string[] = [];
+  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(alg)) !== null) {
+    if (m[1] === '/') tokens.push('/');
+    else tokens.push(`${m[2]}${m[3]}`);
+  }
+  return tokens.join('');
+}
+
 /** Parse + apply a WCA-spec sq1 scramble. Accepts both `(t,b)/...` and `t,b /...` forms. */
 export function applySq1Scramble(scramble: string): Sq1State {
   let pieces = SOLVED_PIECES.slice();
   let sliceSolved = true;
 
-  // Match either a slash or a (top, bottom) pair (with or without parens).
-  const re = /(\/)|\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/g;
+  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
   let m: RegExpExecArray | null;
   while ((m = re.exec(scramble)) !== null) {
     if (m[1] === '/') {

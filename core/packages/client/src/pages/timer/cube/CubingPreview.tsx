@@ -87,11 +87,11 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
 
   // sq1 / mega use our tnoodle puzzle ports (sq1: portrait, mega: wide
   // unfolded with all 12 face colors). Bypasses scramble-display entirely.
+  // Empty scramble → ports render the solved state (don't early-return null).
   const portedSvg = useMemo(() => {
-    if (!scramble) return null;
     try {
-      if (eventId === 'sq1')  return renderSq1ScrambleSvg(scramble, DEFAULT_SQ1_COLORS);
-      if (eventId === 'minx') return renderMegaScrambleSvg(scramble, DEFAULT_MEGA_COLORS);
+      if (eventId === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
+      if (eventId === 'minx') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
       return null;
     } catch (err) {
       console.warn(`[CubingPreview] ${eventId} render failed`, err);
