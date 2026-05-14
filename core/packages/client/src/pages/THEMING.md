@@ -60,7 +60,7 @@ dark/light 切换已落地 (2026-05-14)。token 在 `src/index.css :root`,toggle
 
 /* 跟系统 dark + 显式 dark 都生效;[data-theme=light] 显式 override 时不进 */
 @media (prefers-color-scheme: dark) {
-  :where(html:not([data-theme=light])) {
+  html:not([data-theme=light]) {
     --background:        #1c1917;
     --surface:           #232020;
     --surface-elevated:  #2a2520;
@@ -111,7 +111,10 @@ html[data-theme=dark] {
 
 **`prefers-color-scheme` + `[data-theme]` 双轨**:
 
-- 跟系统:`@media (prefers-color-scheme: dark) { :where(html:not([data-theme=light])) { ... } }`
+> ⚠️ **坑**: 不要把 `html:not([data-theme=light])` 包在 `:where()` 里 —— `:where()` 特异性是 0,会被 `:root { --background: #FAF9F5 }` (特异性 0,1,0) 压过去,@media 反盖**完全不生效**。直接用 `html:not([data-theme=light])` (特异性 0,1,1) 才赢得过。
+
+
+- 跟系统:`@media (prefers-color-scheme: dark) { html:not([data-theme=light]) { ... } }`
 - 显式 dark override:`html[data-theme=dark] { ... }`
 - 显式 light override:`html[data-theme=light]`(覆盖系统 dark 偏好)
 
@@ -184,7 +187,7 @@ ThemeToggle 默认值 = `system`(对齐 macOS / Win11 / iOS 现代 UX 主流)。
 .colpi-page { --c-active: #C15F3C; }
 
 @media (prefers-color-scheme: dark) {
-  :where(html:not([data-theme=light])) .colpi-page {
+  html:not([data-theme=light]) .colpi-page {
     --c-active: #D97757;  /* 暗底下提亮 */
   }
 }

@@ -6,19 +6,19 @@
    var(--text) 当卡片字色,从 / 导航过去后 --text=#181716(landing 浅色字)落
    在暗主题卡片上,文字就消失了。改 scope 到 .landing-page,只在 landing 内生效。 */
 .landing-page {
-    --bg: #FAF9F5;
-    --surface: #FFFFFF;
-    --text: #181716;
-    --text-sub: #6F6E6B;
-    --border: #E5E4DF;
-    --border-strong: #CCCAC2;
-    --accent: #C15F3C;
-    --accent-soft: rgba(193, 95, 60, 0.08);
+    /* 走 :root 通用 token,跟 ThemeToggle 联动。短名 alias 减少改动量。 */
+    --bg: var(--background);
+    --surface: var(--card);
+    --text: var(--foreground);
+    --text-sub: var(--muted-foreground);
+    --border: var(--border-default);
+    /* --border-strong 跟 :root 同名 */
+    /* --accent 跟 :root 同名 */
+    --accent-soft: var(--accent-soft);
 }
 
 .landing-page {
-    /* NOTE: landing 是浅色主题——覆写全站 :root 的 color-scheme: dark */
-    color-scheme: light;
+    color-scheme: light dark;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--bg);
     color: var(--text);
@@ -388,15 +388,39 @@
 }
 
 /* ── 全局 WCA 登录（左上） ── */
-.landing-page .global-auth {
+.landing-page .global-corner {
     position: fixed;
     top: 16px;
-    left: 16px;
+    /* 内容 max-width 1100px,超宽屏跟内容右沿,不贴视口边 */
+    right: max(16px, calc((100vw - 1100px) / 2));
     z-index: 100;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    /* frosted glass:滚动时下方内容被模糊化,toggle 永远清晰可读 (Claude/Linear/Vercel 通用) */
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--background) 75%, transparent);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
 }
 
-/* NOTE: trigger 在视口左上角，dropdown 默认 right:0 会溢出到屏外——landing 页改成左对齐 */
-.landing-page .wca-auth-dropdown {
-    left: 0;
-    right: auto;
+/* cluster 内 3 个 toggle 尺寸对齐:跟 WCA auth 36×36 一致 */
+.landing-page .global-corner .lang-toggle,
+.landing-page .global-corner .theme-toggle-inline {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
+.landing-page .global-corner .lang-flag {
+    width: 22px;
+    height: 16px;
+    border-radius: 2px;
+    display: inline-block;
+    line-height: 0;
+}
+

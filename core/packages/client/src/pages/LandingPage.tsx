@@ -19,6 +19,7 @@ import DonateModal from './DonateModal';
 import WcaAuth from '../components/WcaAuth';
 import ThemeToggle from '../components/ThemeToggle';
 import { Flag } from '../utils/flag';
+import { useEffectiveTheme } from '../utils/theme';
 import './landing.css';
 
 // NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
@@ -402,6 +403,7 @@ export default function LandingPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { i18n } = useTranslation();
   const [donateOpen, setDonateOpen] = useState(false);
+  const effectiveTheme = useEffectiveTheme();
 
   useParticles(SHOW_PARTICLES ? canvasRef : { current: null });
 
@@ -442,7 +444,7 @@ export default function LandingPage() {
       </div>
 
       <div className="brand-line">
-        <img src="/icons/CubeRoot.png" alt="" className="brand-logo" />
+        <img src={effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
       <h1 className="landing-tagline">{t('tagline')}</h1>
