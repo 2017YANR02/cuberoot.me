@@ -49,7 +49,7 @@ jobs:
                    icon_timer.png cstimer_logo.png callback.html \
                    robots.txt sitemap.xml MediaInfoModule.wasm \
                    countries-110m.geojson cn_disputed_patches.geojson \
-                   beian-badge.png sw.js \
+                   beian-badge.png sw.js blog-slugs.json \
                    bf2b302cee273ba35e5f50c3dffffdd0.txt; do
             [ -f "$f" ] && cp -f "$f" _deploy/ || true
           done

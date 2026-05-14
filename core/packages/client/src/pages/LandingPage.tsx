@@ -18,6 +18,7 @@ import LandingCubeHero from './LandingCubeHero';
 import DonateModal from './DonateModal';
 import WcaAuth from '../components/WcaAuth';
 import ThemeToggle from '../components/ThemeToggle';
+import { Flag } from '../utils/flag';
 import './landing.css';
 
 // NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
@@ -389,7 +390,7 @@ const SECTIONS: Section[] = [
     titleKey: 'secOther',
     cards: [
       { id: 'code', href: '/code', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
-      { id: 'blog', href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
+      { id: 'blog', href: 'https://blog.cuberoot.me/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site', internal: true, tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
     ],
   },
@@ -431,9 +432,13 @@ export default function LandingPage() {
         />
       )}
 
-      {/* NOTE: 全局 WCA 登录区域（左上角）——共享 WcaAuth 组件 */}
-      <div className="global-auth">
+      {/* NOTE: 右上角 cluster — WCA 登录 + 语言 + 主题 */}
+      <div className="global-corner">
         <WcaAuth />
+        <button className="lang-toggle" onClick={toggleLang} title={lang === 'zh' ? '切换为 English' : 'Switch to 中文'} aria-label={lang === 'zh' ? '中文' : 'English'}>
+          <Flag iso2={lang === 'zh' ? 'cn' : 'us'} className="lang-flag" />
+        </button>
+        <ThemeToggle />
       </div>
 
       <div className="brand-line">
@@ -534,13 +539,6 @@ export default function LandingPage() {
           <Heart size={14} strokeWidth={1.8} />
           <span>{lang === 'zh' ? '赞助' : 'Donate'}</span>
         </button>
-
-        <button className="lang-toggle" onClick={toggleLang}>
-          <span className="globe-icon">🌐</span>
-          <span className="lang-label">{lang === 'zh' ? 'English' : '中文'}</span>
-        </button>
-
-        <ThemeToggle />
       </div>
 
       {/* NOTE: 中国 ICP / 公安备案 — 仅在 cuberoot.me 域名（备案绑定该域名）和本地 dev 显示。
