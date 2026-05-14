@@ -1,6 +1,6 @@
 ---
 name: wca-stats-db
-description: "Use whenever writing SQL against the local wca_statistics MySQL dump (in stats-build statistics, ad-hoc validation, or debugging). Covers schema (snake_case! not camelCase), key tables (results / competitions / persons / events / round_types / formats / result_attempts / countries / continents), join idioms (sub_id=1, rank<900), special value encodings (DNF=-1, DNS=-2, FMC, multi-blind), regional records markers, table-name case quirk on Windows. Triggers: \"WCA SQL\", \"WCA dump\", \"WCA schema\", \"results 表\", \"competitions 表\", \"event_id\", \"person_id\", \"result_attempts\", \"regional_single_record\", \"sub_id\"."
+description: "Use when writing SQL against local wca_statistics MySQL dump. Covers snake_case schema, key tables, join idioms (sub_id=1/rank<900), value encodings (DNF=-1/DNS=-2/FMC/MBLD), records markers. Triggers: \"WCA SQL\", \"WCA dump\", \"WCA schema\", \"results 表\", \"competitions 表\", \"event_id\", \"person_id\", \"result_attempts\", \"regional_single_record\", \"sub_id\"."
 ---
 
 # WCA Statistics DB
