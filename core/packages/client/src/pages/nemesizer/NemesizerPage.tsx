@@ -50,11 +50,10 @@ export default function NemesizerPage() {
       </div>
 
       {err && <div className="nemesizer-loading" style={{ color: '#e87474' }}>{err}</div>}
-      {!ds && !err && <div className="nemesizer-loading">{isZh ? `加载中… (${phase})` : `Loading… (${phase})`}</div>}
-      {ds && mode === 'standard' && <StandardMode ds={ds} isZh={isZh} />}
-      {ds && mode === 'h2h' && <H2HMode ds={ds} isZh={isZh} />}
-      {ds && mode === 'whatif' && <WhatIfMode ds={ds} isZh={isZh} />}
-      {ds && mode === 'stats' && <StatsMode ds={ds} isZh={isZh} />}
+      {!err && mode === 'standard' && <StandardMode ds={ds} isZh={isZh} loadingPhase={phase} />}
+      {!err && mode === 'h2h' && <H2HMode ds={ds} isZh={isZh} loadingPhase={phase} />}
+      {!err && mode === 'whatif' && <WhatIfMode ds={ds} isZh={isZh} loadingPhase={phase} />}
+      {!err && mode === 'stats' && (ds ? <StatsMode ds={ds} isZh={isZh} /> : <div className="nemesizer-loading">{isZh ? `加载中… (${phase})` : `Loading… (${phase})`}</div>)}
 
       <footer className="nemesizer-footer">
         {isZh ? (

@@ -15,6 +15,7 @@ const TrainerRunPage = lazy(() => import('./pages/trainer/TrainerRunPage'));
 
 // NOTE: LandingPage 懒加载 — 全站入口页（粒子系统 + 卡片）
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 
 // NOTE: Calc 模块懒加载 — 体积较大，按需加载
 const CalcPage = lazy(() => import('./pages/calc/CalcPage'));
@@ -180,6 +181,7 @@ function App() {
       <Routes>
         {/* NOTE: 全站入口页（卡片网格） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
+        <Route path="/about" element={<Suspense fallback={<div>Loading...</div>}><AboutPage /></Suspense>} />
         {/* 统一公式训练器 — 所有 set 走同一套页面+组件 */}
         <Route path="/trainer" element={<Suspense fallback={<div>Loading...</div>}><TrainerLandingPage /></Suspense>} />
         <Route path="/trainer/:puzzle/:set" element={<Suspense fallback={<div>Loading...</div>}><TrainerSelectPage /></Suspense>} />
