@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Search } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { EventIcon } from '../../components/EventIcon';
@@ -24,6 +24,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
 import { CompCell } from '../../components/CompCell/CompCell';
 import { RecordBadge } from '../../components/RecordBadge';
+import { RegionPicker } from '../../components/RegionPicker';
 import { ALL_EVENT_IDS } from './event_constants';
 import { formatAttempts } from './AllResultsPage';
 import './wca_stats_extra.css';
@@ -38,18 +39,11 @@ interface Row {
 
 interface Bundle { updated: string; rows: Row[] }
 
-const CONTINENTS = [
-  { slug: 'africa',        zh: '非洲',     en: 'Africa' },
-  { slug: 'asia',          zh: '亚洲',     en: 'Asia' },
-  { slug: 'europe',        zh: '欧洲',     en: 'Europe' },
-  { slug: 'northAmerica',  zh: '北美洲',   en: 'North America' },
-  { slug: 'oceania',       zh: '大洋洲',   en: 'Oceania' },
-  { slug: 'southAmerica',  zh: '南美洲',   en: 'South America' },
-];
+const CONTINENT_SLUGS = new Set(['africa', 'asia', 'europe', 'northAmerica', 'oceania', 'southAmerica']);
 
 function regionUrl(region: string): string {
   if (region === 'world' || region === '') return '/stats/records/history/world.json';
-  if (CONTINENTS.some(c => c.slug === region)) return `/stats/records/history/continent/${region}.json`;
+  if (CONTINENT_SLUGS.has(region)) return `/stats/records/history/continent/${region}.json`;
   return `/stats/records/history/country/${region}.json`;
 }
 
@@ -94,6 +88,13 @@ export default function RecordsPage() {
       .then((j) => { if (j) setManifest({ countries: j.countries }); })
       .catch(() => { /* keep null */ });
   }, []);
+
+  // 国家列表按 collator 排好,RegionPicker 保留传入顺序
+  const manifestCountriesSorted = useMemo(() => {
+    if (!manifest) return [];
+    const collator = new Intl.Collator(isZh ? 'zh-Hans-CN' : 'en', { sensitivity: 'base' });
+    return [...manifest.countries].sort((a, b) => collator.compare(countryName(a, isZh), countryName(b, isZh)));
+  }, [manifest, isZh]);
 
   // 加载选中 region 的数据
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function RecordsPage() {
           <RegionPicker
             value={region}
             isZh={isZh}
-            countries={manifest?.countries ?? []}
+            restrictTo={manifestCountriesSorted}
             onChange={(v) => update('region', v)}
           />
         </div>
@@ -300,115 +301,3 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
   );
 }
 
-// 大洲剪影 — public/_assets/continent-icons/*.svg(手工维护,非脚本生成)
-function ContinentIcon({ slug }: { slug: string }) {
-  return (
-    <span className="continent-icon">
-      <img src={`/_assets/continent-icons/${slug}.svg`} alt="" />
-    </span>
-  );
-}
-
-// Region picker:World / 6 大洲 / 国家.效仿 WCA results/records 页 Region 下拉.
-function RegionPicker({ value, isZh, countries, onChange }: {
-  value: string; isZh: boolean; countries: string[]; onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState('');
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = () => setOpen(false);
-    setTimeout(() => document.addEventListener('click', handler, { once: true }), 0);
-    return () => document.removeEventListener('click', handler);
-  }, [open]);
-
-  const label = (() => {
-    if (value === 'world' || value === '') return isZh ? '全部区域' : 'All regions';
-    const cont = CONTINENTS.find(c => c.slug === value);
-    if (cont) return isZh ? cont.zh : cont.en;
-    return countryName(value, isZh);
-  })();
-
-  const ql = q.trim().toLowerCase();
-  const showWorld = !ql || (isZh ? '全部区域' : 'all regions').includes(ql);
-  const continentsFiltered = useMemo(() => {
-    if (!ql) return CONTINENTS;
-    return CONTINENTS.filter(c => c.en.toLowerCase().includes(ql) || c.zh.includes(q));
-  }, [ql, q]);
-  const countriesSorted = useMemo(() => {
-    const collator = new Intl.Collator(isZh ? 'zh-Hans-CN' : 'en', { sensitivity: 'base' });
-    return [...countries].sort((a, b) => collator.compare(countryName(a, isZh), countryName(b, isZh)));
-  }, [countries, isZh]);
-  const countriesFiltered = useMemo(() => {
-    if (!ql) return countriesSorted;
-    return countriesSorted.filter(iso =>
-      iso.toLowerCase().includes(ql) ||
-      countryName(iso, isZh).toLowerCase().includes(ql) ||
-      countryName(iso, false).toLowerCase().includes(ql),
-    );
-  }, [countriesSorted, ql, isZh]);
-
-  const select = (v: string) => { onChange(v); setOpen(false); setQ(''); };
-
-  return (
-    <div className="records-region" onClick={(e) => e.stopPropagation()}>
-      <button type="button" className="records-region-trigger" onClick={() => setOpen(o => !o)}>
-        {value !== 'world' && value !== '' && (
-          CONTINENTS.some(c => c.slug === value)
-            ? <ContinentIcon slug={value} />
-            : <Flag iso2={value} spanClassName="country-flag" imgClassName="country-flag-ct" />
-        )}
-        <span className="records-region-label">{label}</span>
-        <span className="records-region-caret">▾</span>
-      </button>
-      {open && (
-        <div className="records-region-popup">
-          <div className="records-region-search">
-            <Search size={14} />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={isZh ? '搜索...' : 'Search...'}
-            />
-          </div>
-          <div className="records-region-list">
-            {showWorld && (
-              <button
-                className={`records-region-item${value === 'world' || value === '' ? ' active' : ''}`}
-                onClick={() => select('world')}
-              >{isZh ? '全部区域' : 'All regions'}</button>
-            )}
-            {continentsFiltered.length > 0 && (
-              <div className="records-region-section">{isZh ? '大洲' : 'Continent'}</div>
-            )}
-            {continentsFiltered.map(c => (
-              <button
-                key={c.slug}
-                className={`records-region-item${value === c.slug ? ' active' : ''}`}
-                onClick={() => select(c.slug)}
-              >
-                <ContinentIcon slug={c.slug} />
-                <span>{isZh ? c.zh : c.en}</span>
-              </button>
-            ))}
-            {countriesFiltered.length > 0 && (
-              <div className="records-region-section">{isZh ? '地区' : 'Region'}</div>
-            )}
-            {countriesFiltered.map(iso => (
-              <button
-                key={iso}
-                className={`records-region-item${value === iso ? ' active' : ''}`}
-                onClick={() => select(iso)}
-              >
-                <Flag iso2={iso} spanClassName="country-flag" imgClassName="country-flag-ct" />
-                <span>{countryName(iso, isZh)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

@@ -3,7 +3,7 @@
 /* 项目列：仅 cubing-icon */
 .wca-stats-table .wca-stats-event-icon {
   font-size: 18px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 
 .wca-stats-page {
