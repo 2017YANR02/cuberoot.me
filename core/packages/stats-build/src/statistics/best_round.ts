@@ -1,5 +1,4 @@
 // NOTE: 最佳轮次——每个项目中 top 3 成绩之和最低的轮次
-// 与 Ruby _stats_build/statistics/best_round.rb 1:1 对应
 // 特殊性：逐项目执行参数化 SQL（query 含 %s 占位符），333mbf 用 points 之和降序排
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES, BLD_EVENTS } from '../core/events.js';
@@ -87,7 +86,6 @@ export class BestRound extends GroupedStatistic {
     return allResults;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       let eventRows = rows.filter(r => r['event_id'] === eventId);
@@ -153,7 +151,7 @@ export class BestRound extends GroupedStatistic {
 
     // NOTE: 调用 transform
     const grouped = this.transformWithMbf(allRows, mbfRows);
-    // NOTE: 照搬 Ruby 内存管理——transform 完成后释放原始数据
+    // NOTE: 内存管理——transform 完成后释放原始数据
     allRows = null;
     if (global.gc) global.gc();
 

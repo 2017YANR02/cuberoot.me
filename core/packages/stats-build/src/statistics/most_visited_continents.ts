@@ -1,5 +1,4 @@
 // NOTE: 去过最多大洲参赛
-// 与 Ruby _stats_build/statistics/most_visited_continents.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class MostVisitedContinents extends Statistic {

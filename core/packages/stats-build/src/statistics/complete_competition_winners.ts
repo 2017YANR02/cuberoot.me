@@ -1,5 +1,4 @@
 // NOTE: 完全比赛冠军
-// 与 Ruby _stats_build/statistics/complete_competition_winners.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class CompleteCompetitionWinners extends Statistic {

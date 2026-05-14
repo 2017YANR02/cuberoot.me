@@ -1,5 +1,4 @@
 // NOTE: 每年每国比赛数
-// 与 Ruby _stats_build/statistics/competitions_per_year_by_country.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 

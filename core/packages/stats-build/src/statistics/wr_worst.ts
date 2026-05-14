@@ -1,5 +1,4 @@
 // NOTE: Worst Solve in Round——一轮中的最差成绩
-// 与 Ruby _stats_build/statistics/wr_worst.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

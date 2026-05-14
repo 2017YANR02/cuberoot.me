@@ -1,5 +1,4 @@
 // NOTE: 最长保持纪录
-// 与 Ruby _stats_build/statistics/longest_standing_records.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, OFFICIAL_EVENTS } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -43,7 +42,7 @@ export class LongestStandingRecords extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按区域×类型统计最长保持天数
+  // NOTE: 按区域×类型统计最长保持天数
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const regionRecords: Record<string, string[]> = {
       'World': ['WR'],

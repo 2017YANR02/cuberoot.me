@@ -1,5 +1,4 @@
 // NOTE: 每场比赛平均参赛项目数
-// 与 Ruby _stats_build/statistics/average_event_count_by_competition.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 

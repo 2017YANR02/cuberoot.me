@@ -1,4 +1,4 @@
-// NOTE: 统计基类——与 Ruby _stats_build/core/statistic.rb 对应
+// NOTE: 统计基类
 // 子类实现 query() 返回 SQL 字符串，基类负责执行查询、转换数据、输出 JSON
 import { query as dbQuery } from './database.js';
 import { headerZh } from './events.js';
@@ -12,7 +12,6 @@ export interface StatSection {
 }
 
 // NOTE: 双视图面板（Ranking + History）——RoundMetric/AverageOfX/AoRounds 使用
-// 与 Ruby StatPanel#tabbed_grouped_markdown 对应
 export interface StatPanel {
   id: string;       // 'ranking' | 'history'
   labelEn: string;  // Tab 按钮英文标签
@@ -27,7 +26,6 @@ export interface StatPanel {
 }
 
 // NOTE: 数据源面板（wr_newcomer 的第二层：1st-solve / 1st-comp）
-// 与 Ruby source-panel div 对应
 export interface SourcePanel {
   id: string;         // 如 'single-1st-solve'
   labelEn: string;    // 如 '1st Solve'
@@ -36,7 +34,6 @@ export interface SourcePanel {
 }
 
 // NOTE: 指标面板（最外层：Single / Average）
-// 与 Ruby metric-panel div 对应
 // 两种模式：
 //   1. 直接包含 panels（2 级：wr_non_pr / wr_dominance）
 //   2. 包含 sourcePanels（3 级：wr_newcomer）
@@ -94,13 +91,11 @@ export abstract class Statistic {
   }
 
   // NOTE: 默认 transform——从 RowDataPacket 提取值数组（顺序与 SQL SELECT 一致）
-  // 与 Ruby 的 query_results.map(&:values) 对应
   transform(rows: RowDataPacket[]): unknown[][] {
     return rows.map(row => Object.values(row));
   }
 
   // NOTE: 从类名推导统计 ID（CamelCase → snake_case）
-  // 与 Ruby top() 方法中的 basename 推导逻辑一致
   get id(): string {
     return this.constructor.name
       .replace(/([a-z\d])([A-Z])/g, '$1_$2')
@@ -112,7 +107,7 @@ export abstract class Statistic {
   async toJson(): Promise<StatJson> {
     let rawRows: RowDataPacket[] | null = await this.queryResults();
     const data = this.transform(rawRows);
-    // NOTE: 照搬 Ruby 内存管理——transform 完成后立即释放查询结果
+    // NOTE: 内存管理——transform 完成后立即释放查询结果
     rawRows = null;
     if (global.gc) global.gc();
 

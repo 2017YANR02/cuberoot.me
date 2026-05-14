@@ -1,5 +1,4 @@
 // NOTE: 世锦赛纪录
-// 与 Ruby _stats_build/statistics/world_championship_records.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -42,7 +41,7 @@ export class WorldChampionshipRecords extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按 Single/Average 分组 → 按项目找最佳
+  // NOTE: 按 Single/Average 分组 → 按项目找最佳
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return (['Single', 'Average'] as const).map(header => {
       const type = header.toLowerCase() as 'single' | 'average';

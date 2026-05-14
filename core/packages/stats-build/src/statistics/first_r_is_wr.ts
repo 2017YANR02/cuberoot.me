@@ -1,5 +1,4 @@
 // NOTE: 首次破纪录即世界纪录
-// 与 Ruby _stats_build/statistics/first_r_is_wr.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import { EVENTS } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -63,7 +62,7 @@ export class FirstRIsWr extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——用 SolveTime 格式化成绩
+  // NOTE: 用 SolveTime 格式化成绩
   transform(rows: RowDataPacket[]): unknown[][] {
     return rows.map((r, i) => {
       const eventName = EVENTS[r['event_id'] as string] ?? (r['event_id'] as string);

@@ -1,5 +1,4 @@
 // NOTE: 最常出现的成绩
-// 与 Ruby _stats_build/statistics/most_frequent_results.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -27,7 +26,7 @@ export class MostFrequentResults extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——拆分 attempts、按值频率排序
+  // NOTE: 拆分 attempts、按值频率排序
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       // NOTE: 收集所有正值 attempt

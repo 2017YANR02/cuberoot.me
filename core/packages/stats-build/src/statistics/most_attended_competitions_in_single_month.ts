@@ -1,5 +1,4 @@
 // NOTE: 单月参赛最多
-// 与 Ruby _stats_build/statistics/most_attended_competitions_in_single_month.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class MostAttendedCompetitionsInSingleMonth extends Statistic {

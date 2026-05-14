@@ -1,12 +1,11 @@
 // NOTE: 单周内最多参加比赛数
-// 与 Ruby _stats_build/statistics/most_attended_competitions_in_single_week.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
 // NOTE: 月份英文缩写
 const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
 
-// NOTE: 格式化日期为 "d&nbsp;Mon&nbsp;YYYY"（与 Ruby strftime "%e&nbsp;%b&nbsp;%Y" 对应）
+// NOTE: 格式化日期为 "d&nbsp;Mon&nbsp;YYYY"
 function formatDateNbsp(d: Date | string): string {
   const date = typeof d === 'string' ? new Date(d) : d;
   return `${date.getDate()}&nbsp;${MONTH_ABBR[date.getMonth()]}&nbsp;${date.getFullYear()}`;

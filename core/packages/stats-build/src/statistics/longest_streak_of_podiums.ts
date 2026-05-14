@@ -1,5 +1,4 @@
 // NOTE: 最长连续登台记录
-// 与 Ruby _stats_build/statistics/longest_streak_of_podiums.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -39,7 +38,7 @@ export class LongestStreakOfPodiums extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按选手→按(比赛+项目)追踪连续登台记录
+  // NOTE: 按选手→按(比赛+项目)追踪连续登台记录
   transform(rows: RowDataPacket[]): unknown[][] {
     interface Streak {
       eventName: string; count: number; personLink: string;

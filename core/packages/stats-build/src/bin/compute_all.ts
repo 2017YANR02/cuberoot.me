@@ -1,4 +1,4 @@
-// NOTE: 批量执行所有统计——与 Ruby compute_all.rb 等价
+// NOTE: 批量执行所有统计
 // 用法：npx tsx src/bin/compute_all.ts
 // 环境变量：
 //   STATS_FILTER — 逗号分隔统计 ID（为空=全部）
@@ -15,7 +15,7 @@ import { AverageOfX } from '../core/average_of_x.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// NOTE: 与 Ruby index.rb ALL_MERGED 一致——被聚合页面包含的子统计 ID
+// NOTE: ALL_MERGED——被聚合页面包含的子统计 ID
 // 这些子统计已在 wr_metric / wr_aoxr / average_of 中执行，不单独运行
 const MERGED_INTO_METRIC = [
   'wr_single_history', 'wr_average_history',
@@ -33,15 +33,14 @@ const ALL_MERGED = new Set([
   ...MERGED_INTO_METRIC, ...MERGED_INTO_AOXR, ...MERGED_INTO_AVERAGE_OF,
 ]);
 
-// NOTE: 与 Ruby PRIORITY_STATS 一致——聚合页面排最前，确保缓存及时释放
+// NOTE: 优先统计——聚合页面排最前，确保缓存及时释放
 const PRIORITY_STATS = [
   'wr_newcomer', 'wr_metric', 'wr_aoxr', 'average_of',
   'wr_current', 'first_r_is_wr', 'wr_dominance',
 ];
 
-// NOTE: 与 Ruby HEAVY_STATS 一致——这些统计 RSS > 3GB
+// NOTE: HEAVY_STATS——这些统计 RSS > 3GB
 // 在子进程（child_process.fork）中隔离执行，退出后 OS 回收全部内存
-// 与 Ruby compute_all.rb Phase 2 的 fork 隔离 1:1 对应
 const HEAVY_STATS = new Set([
   'longest_streak_of_podiums',
   'longest_streak_of_personal_records',
@@ -58,7 +57,6 @@ const HEAVY_STATS = new Set([
 
 
 // NOTE: fork 隔离执行——在独立子进程中运行统计，退出后 OS 回收全部内存
-// 与 Ruby compute_all.rb 的 run_isolated 1:1 对应
 // 复用 compute.ts 作为子进程入口（已具备独立运行任何统计的能力）
 function runIsolated(statId: string): Promise<{ success: boolean }> {
   return new Promise((res) => {
@@ -76,7 +74,7 @@ function runIsolated(statId: string): Promise<{ success: boolean }> {
   });
 }
 
-// NOTE: 与 Ruby AGGREGATE_CACHE_CLEANUP 对应——聚合页面完成后清除基类缓存
+// NOTE: 聚合页面完成后清除基类缓存
 // 结构：statId -> 清理函数
 const AGGREGATE_CACHE_CLEANUP: Record<string, () => void> = {
   'wr_metric':  () => {
@@ -110,7 +108,7 @@ async function main() {
 
   let orderedIds = buildOrderedIds();
 
-  // NOTE: 支持 STATS_FILTER 环境变量——与 Ruby 一致
+  // NOTE: 支持 STATS_FILTER 环境变量
   const filter = process.env['STATS_FILTER'];
   if (filter && filter.trim()) {
     const filterIds = filter.split(',').map(s => s.trim());
@@ -131,7 +129,6 @@ async function main() {
 
     if (shouldIsolate) {
       // NOTE: 重量级统计——在子进程中隔离执行，退出后 OS 回收全部 RSS
-      // 与 Ruby run_isolated (Process.fork) 1:1 对应
       const { success } = await runIsolated(statId);
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
@@ -178,7 +175,7 @@ async function main() {
       }
     }
 
-    // NOTE: 聚合统计完成后清除基类缓存——与 Ruby AGGREGATE_CACHE_CLEANUP 对应
+    // NOTE: 聚合统计完成后清除基类缓存
     if (AGGREGATE_CACHE_CLEANUP[statId]) {
       AGGREGATE_CACHE_CLEANUP[statId]();
       if (global.gc) global.gc();

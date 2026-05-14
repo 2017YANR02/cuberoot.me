@@ -1,15 +1,14 @@
 // NOTE: 最多不同参赛日期
-// 与 Ruby _stats_build/statistics/most_distinct_dates_competed_on.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 月份英文全名（与 Ruby Date::MONTHNAMES 对应，index 1-12）
+// NOTE: 月份英文全名
 const MONTH_NAMES = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ] as const;
 
-// NOTE: 每月总天数（非闰年基准，与 Ruby Date.new(2000, month, -1).day 对应）
+// NOTE: 每月总天数（非闰年基准，2 月按 29 天保留）
 const DAYS_IN_MONTH = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as const;
 
 export class MostDistinctDatesCompetedOn extends Statistic {
@@ -57,7 +56,6 @@ export class MostDistinctDatesCompetedOn extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform + transform_dates 1:1 对应
   // 将日期列表按月份分组，显示覆盖百分比和具体日期
   transform(rows: RowDataPacket[]): unknown[][] {
     return rows.map(r => [

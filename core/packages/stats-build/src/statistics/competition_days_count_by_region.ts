@@ -1,5 +1,4 @@
 // NOTE: 按区域统计比赛天数
-// 与 Ruby _stats_build/statistics/competition_days_count_by_region.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -30,7 +29,7 @@ export class CompetitionDaysCountByRegion extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按 World/Continents/Countries 三个维度分组
+  // NOTE: 按 World/Continents/Countries 三个维度分组
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const groupings: Record<string, (r: RowDataPacket) => string> = {
       'World': () => 'World',

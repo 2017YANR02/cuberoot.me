@@ -33,7 +33,7 @@ export const REQUIRED_TABLES = [
   'round_types', 'users',
 ] as const;
 
-// NOTE: 与 Ruby Database::INDICES 一致——导入后追加的自定义索引
+// NOTE: 导入后追加的自定义索引
 export const INDICES = [
   'CREATE INDEX index_results_on_competition_id_person_id ON results (competition_id, person_id);',
 ] as const;
@@ -47,7 +47,7 @@ export function getPool(): mysql.Pool {
       user: DB_CONFIG.username,
       password: DB_CONFIG.password,
       database: DB_CONFIG.database,
-      // NOTE: 与 Ruby 版一致的 session 初始化
+      // NOTE: session 初始化
       connectionLimit: 4,
       multipleStatements: false,
     });
@@ -70,7 +70,6 @@ export async function closePool(): Promise<void> {
   }
 }
 
-// NOTE: 与 Ruby Database::ATTEMPTS_SUBQUERY 对应
 // 从 result_attempts 表中获取各次成绩值（逗号分隔）
 export const ATTEMPTS_SUBQUERY = '(SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = result.id)';
 

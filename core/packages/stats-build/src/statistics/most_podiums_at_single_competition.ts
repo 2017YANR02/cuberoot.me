@@ -1,5 +1,4 @@
 // NOTE: 单场比赛登台最多
-// 与 Ruby _stats_build/statistics/most_podiums_at_single_competition.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class MostPodiumsAtSingleCompetition extends Statistic {

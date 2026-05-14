@@ -146,10 +146,7 @@ async function main() {
     let stat: InstanceType<typeof StatClass> | null = new StatClass();
     let json: Record<string, unknown> | null = await stat.toJson() as unknown as Record<string, unknown>;
 
-    // NOTE: 照搬 Ruby compute_all.rb 的内存管理：
-    // statistic_object.instance_variables.each { |iv| set(iv, nil) }
-    // GC.start
-    // 释放 stat 实例中的 queryResults 等大型缓存
+    // NOTE: 内存管理——释放 stat 实例中的 queryResults 等大型缓存
     stat = null;
     if (global.gc) global.gc();
 
@@ -164,7 +161,7 @@ async function main() {
     if (global.gc) global.gc();
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    // NOTE: 与 Ruby 日志格式对齐——显示 GC 后的 RSS 内存
+    // NOTE: 显示 GC 后的 RSS 内存
     const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
     console.log(`完成: ${outputPath} (${duration}s)  [${mem}MB]`);
   } catch (err) {

@@ -1,5 +1,4 @@
 // NOTE: Median——一轮中的中位数
-// 与 Ruby _stats_build/statistics/wr_median.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

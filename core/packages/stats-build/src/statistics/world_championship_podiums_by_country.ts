@@ -1,5 +1,4 @@
 // NOTE: 世锦赛领奖台次数（按国家）
-// 与 Ruby _stats_build/statistics/world_championship_podiums_by_country.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class WorldChampionshipPodiumsByCountry extends Statistic {
@@ -16,7 +15,6 @@ export class WorldChampionshipPodiumsByCountry extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT

@@ -1,8 +1,6 @@
 // 生成 stats/person_countries.json + stats/comp_countries.json
 // 给前端 personFlagIso2() / compFlagIso2() 用（country_flags.ts loadFlagData）
-// NOTE: 替代已删除的 Ruby _stats_build/generate_comp_countries.rb；
-// 老 Ruby 脚本只 dump stats markdown 中出现过的选手；
-// markdown 已废，改为 dump 全部 sub_id=1 选手（~282K，gzip 后 ~700KB，前端懒加载）。
+// NOTE: dump 全部 sub_id=1 选手（~282K，gzip 后 ~700KB，前端懒加载）。
 import { writeFileSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';

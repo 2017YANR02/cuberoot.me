@@ -1,5 +1,4 @@
 // NOTE: 各国当前世界纪录数量
-// 与 Ruby _stats_build/statistics/current_world_records_by_country.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class CurrentWorldRecordsByCountry extends Statistic {
@@ -14,7 +13,6 @@ export class CurrentWorldRecordsByCountry extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   // 从 results 表直接计算每个项目的 WR 持有者
   query(): string {
     return `

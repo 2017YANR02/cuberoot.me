@@ -1,5 +1,4 @@
 // NOTE: Newcomer——新人统计合并页
-// 与 Ruby _stats_build/statistics/wr_newcomer.rb 1:1 对应
 // 两个维度:
 //   1) 指标 (metric): Single / Average
 //   2) 数据源 (source): 首次还原 (1st-solve) / 首场比赛 (1st-comp)
@@ -130,7 +129,6 @@ export class WrNewcomer extends Statistic {
   }
 
   // NOTE: 数据源 1——首次还原（首场比赛第一轮第一个 attempt / average）
-  // 与 Ruby fetch_first_round_data 1:1 对应
   private async fetchFirstRoundData(
     conn: import('mysql2/promise').PoolConnection,
     metric: typeof METRICS[number],
@@ -177,7 +175,6 @@ export class WrNewcomer extends Statistic {
   }
 
   // NOTE: 数据源 2——首场比赛（所有轮次的 MIN(best) / MIN(average)）
-  // 与 Ruby fetch_first_comp_data 1:1 对应
   private async fetchFirstCompData(
     conn: import('mysql2/promise').PoolConnection,
     metric: typeof METRICS[number],
@@ -216,7 +213,6 @@ export class WrNewcomer extends Statistic {
   }
 
   // NOTE: Current Ranking（每项目 Top 10）
-  // 与 Ruby build_ranking 1:1 对应
   private buildRanking(
     grouped: Map<string, RowDataPacket[]>,
     metric: typeof METRICS[number],
@@ -237,7 +233,6 @@ export class WrNewcomer extends Statistic {
   }
 
   // NOTE: History（严格递减序列，最新在最上面）
-  // 与 Ruby build_history 1:1 对应
   private buildHistory(
     grouped: Map<string, RowDataPacket[]>,
     metric: typeof METRICS[number],

@@ -1,5 +1,4 @@
 // NOTE: 参赛人数最少的比赛
-// 与 Ruby _stats_build/statistics/fewest_competitors_contest.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class FewestCompetitorsContest extends Statistic {
@@ -13,7 +12,6 @@ export class FewestCompetitorsContest extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT

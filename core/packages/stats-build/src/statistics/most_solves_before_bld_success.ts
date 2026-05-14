@@ -1,5 +1,4 @@
 // NOTE: 盲拧成功前最多尝试次数
-// 与 Ruby _stats_build/statistics/most_solves_before_bld_success.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { BLD_EVENTS } from '../core/events.js';
 import { ATTEMPTS_SUBQUERY } from '../core/database.js';
@@ -32,7 +31,6 @@ export class MostSolvesBeforeBldSuccess extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 按选手追踪所有 attempt → 找到首次成功（值 > 0）的索引
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return Object.entries(BLD_EVENTS).map(([eventId, eventName]) => {

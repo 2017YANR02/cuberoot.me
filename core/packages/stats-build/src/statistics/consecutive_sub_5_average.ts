@@ -1,5 +1,4 @@
 // NOTE: 最多连续 sub-5 average（333 项目）
-// 与 Ruby _stats_build/statistics/consecutive_sub_5_average.rb 1:1 对应
 // 双视图：Ranking（每人最长 streak，top 100）+ History（WR 演变，倒序）
 import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
@@ -66,7 +65,7 @@ export class ConsecutiveSub5Average extends Statistic {
   async toJson(): Promise<StatJson> {
     let rawRows: RowDataPacket[] | null = await this.queryResults();
     const allStreaks = this.collectAllStreaks(rawRows);
-    // NOTE: 照搬 Ruby 内存管理——collectAllStreaks 完成后释放原始查询结果
+    // NOTE: 内存管理——collectAllStreaks 完成后释放原始查询结果
     rawRows = null;
     if (global.gc) global.gc();
 
@@ -147,7 +146,6 @@ export class ConsecutiveSub5Average extends Statistic {
   }
 
   // NOTE: 找出一个选手的所有连续 sub-5 average 段（count > 1）
-  // 与 Ruby collect_streaks 1:1 对应
   private collectStreaksForPerson(rows: RowDataPacket[], result: StreakInfo[]): void {
     const personId = String(rows[0]['person_id']);
     const personLink = String(rows[0]['person_link']);
@@ -187,7 +185,6 @@ export class ConsecutiveSub5Average extends Statistic {
   }
 
   // NOTE: 构建 WR History——按结束日期排序，只保留 >= 当前最大值的行，最终倒序
-  // 与 Ruby build_wr_history 1:1 对应
   private buildWrHistory(streaks: StreakInfo[]): StreakInfo[] {
     // NOTE: 按 [endDate, count] 升序排序
     const sorted = [...streaks].sort((a, b) => {
