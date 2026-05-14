@@ -1,6 +1,4 @@
-// NOTE: 生成统计索引 JSON——与 Ruby compute_index.rb 等价
-// Ruby 版输出 stats/index.md（Markdown + data-i18n），
-// TS 版输出 stats/index.json（供 React 前端渲染）
+// NOTE: 生成统计索引 JSON——输出 stats/index.json（供 React 前端渲染）
 //
 // 无需 MySQL 连接——从已生成的统计 JSON 中读取标题
 // 用法：npx tsx src/bin/compute_index.ts
@@ -13,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, '../../../../../stats');
 const OUTPUT_PATH = resolve(DATA_DIR, 'index.json');
 
-// NOTE: 与 Ruby index.rb ALL_MERGED 一致——这些子统计被聚合页面包含，索引页不单独列出
+// NOTE: ALL_MERGED——这些子统计被聚合页面包含，索引页不单独列出
 // top10_history 的 bar chart race 已嵌入 wr_metric 第 0 个 panel，独立卡片是死链
 const ALL_MERGED = new Set([
   'wr_single_history', 'wr_average_history',
@@ -142,7 +140,7 @@ const TITLE_ZH_OVERRIDES: Record<string, string> = {
   world_records_by_person: '选手世界纪录数',
 };
 
-// NOTE: 数字填充排序——确保 "Ao5" 排在 "Ao12" 前面（与 Ruby sort_key 一致）
+// NOTE: 数字填充排序——确保 "Ao5" 排在 "Ao12" 前面
 function sortKey(title: string): string {
   return title.replace(/\d+/g, n => n.padStart(10, '0'));
 }
@@ -182,7 +180,7 @@ function main() {
         return { id, titleEn: t.title, titleZh: TITLE_ZH_OVERRIDES[id] ?? t.titleZh };
       });
 
-    // NOTE: preserveOrder 为 true 保持 ids 数组原始顺序（与 Ruby 一致）
+    // NOTE: preserveOrder 为 true 保持 ids 数组原始顺序
     if (!cat.preserveOrder) {
       stats.sort((a, b) => sortKey(a.titleEn).localeCompare(sortKey(b.titleEn)));
     }

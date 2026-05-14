@@ -1,11 +1,10 @@
 // NOTE: AverageOfX 抽象基类——连续 X 次官方还原的裁剪均值
-// 与 Ruby _stats_build/statistics/abstract/average_of_x.rb 1:1 对应
 // 算法：滑动窗口，每人所有 attempt 按时间排列，窗口长度 = solveCount
 // 支持双视图 JSON：Current Ranking + WR History
 //
 // NOTE: 共享查询模式——7 个子类（Ao3~Ao1000）共用同一份大 SQL 查询结果
 // 第一个子类执行查询后缓存，后续 6 个子类直接复用
-// 与 Ruby @@query_results 对齐，避免 6 次重复查询（每次 ~60s）
+// 避免 6 次重复查询（每次 ~60s）
 import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
@@ -43,7 +42,7 @@ const HISTORY_HEADER_AOX = {
 const SKIPPED_VALUE = 0;
 
 
-// --- 共享查询结果缓存（与 Ruby @@query_results 对齐） ---
+// --- 共享查询结果缓存 ---
 // NOTE: 7 个子类共享同一份大 SQL 查询结果，避免 6 次重复查询
 let sharedQueryRows: RowDataPacket[] | null = null;
 
@@ -119,7 +118,6 @@ export abstract class AverageOfX extends GroupedStatistic {
   }
 
   // NOTE: 共享查询——第一个子类执行 SQL 后缓存，后续子类复用
-  // 与 Ruby @@query_results ||= begin ... end 一致
   private async getSharedQueryRows(): Promise<RowDataPacket[]> {
     if (!sharedQueryRows) {
       sharedQueryRows = await this.queryResults();

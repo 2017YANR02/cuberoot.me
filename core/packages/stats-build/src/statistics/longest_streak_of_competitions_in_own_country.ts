@@ -1,5 +1,4 @@
 // NOTE: 在本国最长连续参赛
-// 与 Ruby _stats_build/statistics/longest_streak_of_competitions_in_own_country.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -37,7 +36,7 @@ export class LongestStreakOfCompetitionsInOwnCountry extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按国家分组、追踪每人连续参赛记录
+  // NOTE: 按国家分组、追踪每人连续参赛记录
   transform(rows: RowDataPacket[]): unknown[][] {
     interface Streak { count: number; firstCompetition: string | null; lastCompetition: string | null; country: string }
 

@@ -1,5 +1,4 @@
 // NOTE: 领奖台最差成绩——按项目分组
-// 与 Ruby _stats_build/statistics/worst_result_on_podium.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -21,7 +20,6 @@ export class WorstResultOnPodium extends GroupedStatistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT
@@ -42,7 +40,6 @@ export class WorstResultOnPodium extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 按项目遍历 → 用 SolveTime 解析 → 过滤 DNF → 按主成绩正序排列 → 反转取最差 top 10
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {

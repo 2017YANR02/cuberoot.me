@@ -7,6 +7,15 @@ description: "Use whenever writing SQL against the local wca_statistics MySQL du
 
 本仓库本地的 WCA dump：`E:\mysql_data\wca_statistics`，连接配置在 `core/packages/stats-build/database.yml`。**写 SQL 前先看这个文件**，凭对 WCA 公开 TSV 的肌肉记忆会踩坑。
 
+## 🔥 头号坑:`results` 表没有 `value1..value5`
+
+WCA 公开 TSV / 老 Ruby 代码 / 训练数据里到处是 `r.value1, r.value2, ..., r.value5`。**本 dump 把 5 次 attempt 拆出去了**。要 attempt 值用:
+
+- `result_attempts`(长格式,推荐):`(SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = r.id) AS atts`,client 端 `attsStr.split(',').map(Number)`
+- `result_values`(宽格式,本地有但**不在 CI REQUIRED_TABLES**,stats-build 里禁用)
+
+写 `r.value[1-5]` 的 SQL = 必挂(本地 + CI 都挂)。
+
 ## ⚠️ 本地 dump ≠ CI 可用表
 
 本地 dump 是 WCA 全量；CI (`update_database.ts`) 只导入 `REQUIRED_TABLES` 15 张：

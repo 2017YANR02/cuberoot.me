@@ -1,5 +1,4 @@
 // NOTE: WR Single History——单次 WR 进展历史
-// 与 Ruby _stats_build/statistics/wr_single_history.rb 1:1 对应
 // compute_metric 直接返回 best 字段，无需从 attempts 计算
 import { RoundMetric } from '../core/round_metric.js';
 import { OFFICIAL_EVENTS_RECORD } from '../core/events.js';

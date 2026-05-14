@@ -1,5 +1,4 @@
 // NOTE: Ao1R——一场比赛恰好 1 轮时的 average
-// 与 Ruby _stats_build/statistics/wr_ao1r.rb 1:1 对应
 import { AoRounds } from '../core/ao_rounds.js';
 
 export class WrAo1r extends AoRounds {

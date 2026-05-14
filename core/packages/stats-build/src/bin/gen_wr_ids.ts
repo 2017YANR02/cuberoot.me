@@ -1,6 +1,5 @@
 // NOTE: 从已生成的 wr_metric.json 中提取每个项目的 WR 值和 top 2 WCA ID
-// 与 Ruby gen_wr_ids.rb 等价——Ruby 版实例化 WrAverageHistory/WrSingleHistory 后从 ranking_data 提取
-// TS 版直接读取 compute_all 已生成的 JSON，无需 MySQL 连接
+// 直接读取 compute_all 已生成的 JSON，无需 MySQL 连接
 //
 // 输出：stats/wr_ids.json — calc 页面依赖此文件获取当前 WR 数据
 // 用法：npx tsx src/bin/gen_wr_ids.ts
@@ -29,7 +28,7 @@ function extractWcaId(personLink: string): string | null {
   return match ? match[1] : null;
 }
 
-// NOTE: 从显示字符串解析为 centiseconds（与 Ruby parse_cs 1:1 对应）
+// NOTE: 从显示字符串解析为 centiseconds
 function parseCentiseconds(str: string): number | null {
   // 格式: "1:23.45" → 8345
   const mmss = str.match(/^(\d+):(\d+\.\d+)$/);
@@ -116,7 +115,7 @@ function main() {
     }
   }
 
-  // NOTE: 校验——与 Ruby 一致
+  // NOTE: 校验
   const hasIds = Object.values(result).some(v => v.avg_id_1);
   if (!hasIds) {
     console.error('FATAL: wr_ids.json has no player IDs. Check wr_metric.json.');

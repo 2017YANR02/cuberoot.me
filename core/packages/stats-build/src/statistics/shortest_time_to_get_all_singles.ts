@@ -1,5 +1,4 @@
 // NOTE: 最短时间获得所有项目单次成绩
-// 与 Ruby _stats_build/statistics/shortest_time_to_get_all_singles.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -41,7 +40,6 @@ export class ShortestTimeToGetAllSingles extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 按选手分组 → 找每个项目首次成功日期 → 最后一个项目的日期减去首场比赛日期
   transform(rows: RowDataPacket[]): unknown[][] {
     const byPerson = new Map<string, RowDataPacket[]>();

@@ -1,9 +1,8 @@
 // NOTE: 单场比赛最多纪录
-// 与 Ruby _stats_build/statistics/most_records_at_single_competition.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 取 top N，含并列（与 Ruby take_top_n_with_ties 对应）
+// NOTE: 取 top N，含并列
 function takeTopNWithTies(xs: unknown[][], n: number, valueIndex: number): unknown[][] {
   if (xs.length <= n) return xs;
   const boundaryValue = xs[n - 1][valueIndex];
@@ -39,7 +38,7 @@ export class MostRecordsAtSingleCompetition extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按 World/Continental/National 三级纪录统计
+  // NOTE: 按 World/Continental/National 三级纪录统计
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const levels: Record<string, string[]> = {
       'World': ['WR'],

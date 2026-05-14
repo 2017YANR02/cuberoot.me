@@ -1,5 +1,4 @@
 // NOTE: DNF 率（按项目）
-// 与 Ruby _stats_build/statistics/dnf_rate_by_event.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import { EVENTS } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
@@ -17,7 +16,7 @@ export class DnfRateByEvent extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致——通过 result_attempts 表聚合
+  // NOTE: SQL — 通过 result_attempts 表聚合
   query(): string {
     return `
       SELECT
@@ -30,7 +29,6 @@ export class DnfRateByEvent extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 计算 DNF 率 → 按降序排列 → 格式化为百分比字符串
   transform(rows: RowDataPacket[]): unknown[][] {
     return rows

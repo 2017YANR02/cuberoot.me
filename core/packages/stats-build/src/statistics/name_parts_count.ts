@@ -1,5 +1,4 @@
 // NOTE: 姓名词数统计
-// 与 Ruby _stats_build/statistics/name_parts_count.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -17,7 +16,6 @@ export class NamePartsCount extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT
@@ -29,7 +27,6 @@ export class NamePartsCount extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 1. 去掉括号内本地名称 → 按空格分词计数
   // 2. 按词数分组 → 统计人数
   // 3. 每个分组取 top 5 国家，计算该国占比
@@ -68,7 +65,7 @@ export class NamePartsCount extends Statistic {
       result.push([partsCount, people.length, countriesStr]);
     }
 
-    // NOTE: 按词数升序排列（与 Ruby .sort_by!(&:first) 对应）
+    // NOTE: 按词数升序排列
     return result.sort((a, b) => (a[0] as number) - (b[0] as number));
   }
 }

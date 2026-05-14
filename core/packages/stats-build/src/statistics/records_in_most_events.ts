@@ -1,5 +1,4 @@
 // NOTE: 在最多项目中打破纪录
-// 与 Ruby _stats_build/statistics/records_in_most_events.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -33,7 +32,7 @@ export class RecordsInMostEvents extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按 World/Continental/National 三级纪录分组
+  // NOTE: 按 World/Continental/National 三级纪录分组
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const levels: Record<string, string[]> = {
       'World': ['WR'],

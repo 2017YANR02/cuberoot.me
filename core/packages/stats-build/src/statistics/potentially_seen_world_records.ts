@@ -1,5 +1,4 @@
 // NOTE: 可能目击过的世界纪录
-// 与 Ruby _stats_build/statistics/potentially_seen_world_records.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class PotentiallySeenWorldRecords extends Statistic {

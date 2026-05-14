@@ -1,5 +1,4 @@
 // NOTE: Average Of X 聚合页面——将 7 个 AverageOfX 子类合并为一个 JSON
-// 与 Ruby _stats_build/statistics/average_of.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { StatJson, MetricPanel } from '../core/statistic.js';
 
@@ -34,7 +33,7 @@ export class AverageOf extends Statistic {
         new () => Statistic;
       let inst: InstanceType<typeof StatClass> | null = new StatClass();
       const sub = await inst.toJson();
-      // NOTE: 照搬 Ruby — 子统计完成后释放实例
+      // NOTE: 子统计完成后释放实例
       inst = null;
       if (global.gc) global.gc();
 

@@ -1,9 +1,8 @@
 // NOTE: WCA 项目映射 + 中英文翻译
-// 与 Ruby _stats_build/core/events.rb 1:1 对应
 // 包含所有项目 ID、子集常量（WITH_AVERAGE/MO3 等）和翻译表
 
 // HACK: JS Object 对纯数字 key（如 '222','333'）按升序排列，
-// 导致 Object.entries(EVENTS) 顺序与 Ruby Hash 不一致。
+// 导致 Object.entries(EVENTS) 顺序不稳定。
 // 用固定数组保证插入顺序——所有需要按顺序遍历的地方都用此数组
 export const EVENTS_ENTRIES: [string, string][] = [
   ['333',    "Rubik's Cube"],
@@ -32,7 +31,7 @@ export const EVENTS_ENTRIES: [string, string][] = [
 // NOTE: 兼容旧代码——用于 key 查 value 的场景（顺序不重要）
 export const EVENTS: Record<string, string> = Object.fromEntries(EVENTS_ENTRIES);
 
-// NOTE: 按指定子集过滤并保持 Ruby 定义顺序
+// NOTE: 按指定子集过滤并保持原定义顺序
 export function eventsEntries(subset?: Record<string, string>): [string, string][] {
   if (!subset) return EVENTS_ENTRIES;
   return EVENTS_ENTRIES.filter(([id]) => id in subset);
@@ -56,11 +55,10 @@ export const BLD_EVENTS: Record<string, string> = Object.fromEntries(
   Object.entries(EVENTS).filter(([id]) => ['333bf', '444bf', '555bf', '333mbf'].includes(id))
 );
 
-// NOTE: Ruby Events::OFFICIAL = ALL.dup，包含所有项目（含退役项目）
 // 用于 longest_standing_records 等需要全量项目的统计
 export const OFFICIAL_EVENTS: string[] = Object.keys(EVENTS);
 
-// NOTE: 官方项目 Record（id → name），与 Ruby Events::OFFICIAL 对应
+// NOTE: 官方项目 Record（id → name）
 export const OFFICIAL_EVENTS_RECORD: Record<string, string> = Object.fromEntries(
   Object.entries(EVENTS).filter(([id]) => OFFICIAL_EVENTS.includes(id))
 );
@@ -97,7 +95,7 @@ export const NAMES_ZH: Record<string, string> = {
   'Rubik\'s Cube: Multiple blind old style': '旧多盲',
 };
 
-// NOTE: 表头英文 → 中文映射（与 Ruby events.rb HEADER_ZH 完全同步）
+// NOTE: 表头英文 → 中文映射
 export const HEADER_ZH: Record<string, string> = {
   'Person': '选手',
   'Event': '项目',

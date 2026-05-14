@@ -1,5 +1,4 @@
 // NOTE: Best/Average Ratio——best / average 比值
-// 与 Ruby _stats_build/statistics/wr_best_average_ratio.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';

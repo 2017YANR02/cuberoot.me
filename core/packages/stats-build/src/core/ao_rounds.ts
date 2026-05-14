@@ -1,11 +1,10 @@
 // NOTE: AoRounds 抽象基类——跨轮次 average of averages
-// 与 Ruby _stats_build/statistics/abstract/ao_rounds.rb 1:1 对应
 // AoXR = 一场比赛中某人恰好参加了 X 轮时，各轮 average 的均值
 // 支持双视图 JSON：排名（ranking）+ WR 历史（history）
 //
 // NOTE: 一次性计算模式——第一个子类运行时，为 ROUND_COUNTS=[1,2,3,4]
 // 四种 round_count 同时计算结果。每个 event 只查 MySQL 一次，
-// 4 种 rc 共享同一份数据。与 Ruby compute_all_round_counts / @@precomputed 对齐。
+// 4 种 rc 共享同一份数据。
 import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
@@ -14,7 +13,7 @@ import { formatDate, calcDays, filterWrHistory } from './format_date.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 排名表头（与 Ruby StatPanel::RANKING_HEADER + Details 列对应）
+// NOTE: 排名表头
 const RANKING_HEADER: TableHeader = {
   '#': 'right', 'Person': 'left', 'Result': 'right',
   'Country': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
@@ -28,7 +27,7 @@ const ROUND_SORT_ORDER: Record<string, number> = {
 // NOTE: 所有子类的 round_count 枚举——一次性为 4 种 rc 批量计算
 const ROUND_COUNTS = [1, 2, 3, 4] as const;
 
-// --- 预计算缓存（与 Ruby @@precomputed 对齐） ---
+// --- 预计算缓存 ---
 // 结构：roundCount -> { historyData, rankingData }
 interface AoRoundsCache {
   historyData: [string, unknown[][]][];
@@ -75,7 +74,6 @@ export abstract class AoRounds extends GroupedStatistic {
   transform(): [string, unknown[][]][] { return []; }
 
   // NOTE: 一次性为所有 round_count 预计算结果
-  // 与 Ruby compute_all_round_counts 1:1 对应
   // 每个 event 只查 MySQL 一次，4 种 rc 共享同一份数据
   static async precomputeAllRoundCounts(): Promise<void> {
     precomputed = new Map();

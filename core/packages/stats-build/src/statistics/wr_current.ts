@@ -1,5 +1,4 @@
 // NOTE: 当前世界纪录
-// 与 Ruby _stats_build/statistics/wr_current.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -44,7 +43,6 @@ export class WrCurrent extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 按项目遍历 → 找当前 WR single 和 average → 用 SolveTime 格式化
   transform(rows: RowDataPacket[]): unknown[][] {
     const result: unknown[][] = [];

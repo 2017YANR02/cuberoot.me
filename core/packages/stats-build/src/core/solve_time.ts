@@ -1,5 +1,4 @@
 // NOTE: WCA 成绩值格式化工具
-// 与 Ruby _stats_build/core/solve_time.rb 1:1 对应
 // 处理：普通项目（厘秒→时钟格式）、333fm（步数）、333mbf/333mbo（多盲编解码）
 
 // NOTE: 特殊成绩值常量
@@ -25,7 +24,7 @@ export class SolveTime {
     this.decode(wcaValue);
   }
 
-  // NOTE: 与 Ruby wca_value= 方法对应——根据项目类型解码原始值
+  // NOTE: 根据项目类型解码原始值
   private decode(wcaValue: number): void {
     if (this.eventId === '333fm') {
       // NOTE: 平均值乘以了 100 存储，单次就是步数本身
@@ -69,7 +68,7 @@ export class SolveTime {
   // NOTE: 成绩是否有效（非 DNF/DNS/跳过）
   isComplete(): boolean { return !this.isDn() && !this.isSkipped(); }
 
-  // NOTE: 用于排序——与 Ruby <=> 方法对应
+  // NOTE: 用于排序
   // 排序优先级：跳过 > DNS > DNF > 正常值
   toOrdurable(): [number, number, number, number] {
     return [
@@ -98,13 +97,13 @@ export class SolveTime {
     const centis = cs % 100;
 
     const formatted = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(centis).padStart(2, '0')}`;
-    // NOTE: 去除前导零和冒号（与 Ruby sub(/^[0:]*/, '') 对应）
+    // NOTE: 去除前导零和冒号
     let result = formatted.replace(/^[0:]*/, '');
     if (result.startsWith('.')) result = '0' + result;
     return result;
   }
 
-  // NOTE: 格式化为人类可读字符串——与 Ruby clock_format 方法 1:1 对应
+  // NOTE: 格式化为人类可读字符串
   clockFormat(): string {
     if (this.isDns()) return 'DNS';
     if (this.isDnf()) return 'DNF';

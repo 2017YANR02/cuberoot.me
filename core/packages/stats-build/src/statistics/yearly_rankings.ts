@@ -1,5 +1,4 @@
 // NOTE: 年度排名——仅包含当年比赛结果
-// 与 Ruby _stats_build/statistics/yearly_rankings.rb 1:1 对应
 import { Rankings } from '../core/rankings.js';
 
 export class YearlyRankings extends Rankings {

@@ -235,7 +235,8 @@ async function main() {
              YEAR(c.start_date)   AS comp_year,
              MONTH(c.start_date)  AS comp_month,
              DATE_FORMAT(c.start_date, '%Y-%m-%d') AS comp_date,
-             r.value1, r.value2, r.value3, r.value4, r.value5
+             (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
+              FROM result_attempts ra WHERE ra.result_id = r.id) AS atts
       FROM results r
       JOIN competitions c ON c.id = r.competition_id
       WHERE r.event_id = ? AND c.start_date IS NOT NULL
@@ -273,10 +274,11 @@ async function main() {
           const country = r['country_id'] as string;
           const compId = r['comp_id'] as string;
           const compDate = r['comp_date'] as string;
-          const attempts = [
-            r['value1'] as number, r['value2'] as number, r['value3'] as number,
-            r['value4'] as number, r['value5'] as number,
-          ];
+          const attsStr = r['atts'] as string | null;
+          const attempts: number[] = attsStr
+            ? attsStr.split(',').map(s => Number(s))
+            : [];
+          while (attempts.length < 5) attempts.push(0);
           let cur = acc.get(pid);
           if (!cur) {
             cur = {

@@ -1,5 +1,4 @@
 // NOTE: 移动平均（指数加权平均 EMA）
-// 与 Ruby _stats_build/statistics/moving_average.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -13,7 +12,7 @@ function movingAverage(numbers: number[]): number {
   for (const num of numbers) {
     avg = avg * alpha + (1 - alpha) * num;
   }
-  // NOTE: 偏差校正（与 Ruby bias correction 一致）
+  // NOTE: 偏差校正
   const corrected = avg / (1 - alpha ** numbers.length);
   return Math.round(corrected);
 }

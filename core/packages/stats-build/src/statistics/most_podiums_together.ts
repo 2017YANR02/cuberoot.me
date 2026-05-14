@@ -1,5 +1,4 @@
 // NOTE: 最多共同登台次数
-// 与 Ruby _stats_build/statistics/most_podiums_together.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -46,7 +45,7 @@ export class MostPodiumsTogether extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——对每组领奖台选手取组合，统计共同登台频率
+  // NOTE: 对每组领奖台选手取组合，统计共同登台频率
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const podiums = rows.map(r => (r['people'] as string).split(','));
 

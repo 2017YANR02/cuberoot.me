@@ -1,16 +1,15 @@
 // NOTE: 每周比赛数量统计
-// 与 Ruby _stats_build/statistics/competitions_count_by_week.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 月份英文缩写（与 Ruby strftime "%e %b %Y" 输出一致）
+// NOTE: 月份英文缩写
 const MONTH_ABBR = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ] as const;
 
 // NOTE: 将 Date 或日期字符串格式化为 "d Mon YYYY"（如 "5 Jan 2025"）
-// 与 Ruby strftime("%e %b %Y") 行为一致：日期无前导零
+// 日期无前导零
 function formatDate(d: Date | string): string {
   const date = typeof d === 'string' ? new Date(d) : d;
   const day = date.getDate();
@@ -34,7 +33,6 @@ export class CompetitionsCountByWeek extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT
@@ -49,7 +47,7 @@ export class CompetitionsCountByWeek extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——格式化日期
+  // NOTE: 格式化日期
   transform(rows: RowDataPacket[]): unknown[][] {
     return rows.map(row => [
       row['competitions_count'],

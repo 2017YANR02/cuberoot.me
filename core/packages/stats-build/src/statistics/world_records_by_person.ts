@@ -1,5 +1,4 @@
 // NOTE: 个人世界纪录数量
-// 与 Ruby _stats_build/statistics/world_records_by_person.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class WorldRecordsByPerson extends Statistic {
@@ -13,7 +12,6 @@ export class WorldRecordsByPerson extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT

@@ -1,5 +1,4 @@
 // NOTE: BPA (Best Possible Average)——前 4 次中取最好 3 次均值
-// 与 Ruby _stats_build/statistics/wr_bpa.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

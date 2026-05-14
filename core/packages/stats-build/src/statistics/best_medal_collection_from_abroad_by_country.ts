@@ -1,5 +1,4 @@
 // NOTE: 各国海外最佳奖牌收藏
-// 与 Ruby _stats_build/statistics/best_medal_collection_from_abroad_by_country.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class BestMedalCollectionFromAbroadByCountry extends Statistic {

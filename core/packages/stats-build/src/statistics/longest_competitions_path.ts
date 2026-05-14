@@ -1,5 +1,4 @@
 // NOTE: 最长比赛路径（参赛选手总行程距离）
-// 与 Ruby _stats_build/statistics/longest_competitions_path.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -45,7 +44,6 @@ export class LongestCompetitionsPath extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 按选手分组 → 计算连续比赛间距离之和 → 降序排列 → 格式化为 "123 456 km"
   transform(rows: RowDataPacket[]): unknown[][] {
     // NOTE: 按选手分组
@@ -74,7 +72,7 @@ export class LongestCompetitionsPath extends Statistic {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 1000)
       .map(([personLink, dist]) => {
-        // NOTE: 与 Ruby gsub(/(\\d)(?=\\d{3}+$)/, '\\1 ') 一致——千位空格分隔
+        // NOTE: 千位空格分隔
         const distStr = dist.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' km';
         return [personLink, distStr];
       });

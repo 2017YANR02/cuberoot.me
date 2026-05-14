@@ -1,5 +1,4 @@
 // NOTE: 最长达到 sub-10 三阶平均的时间
-// 与 Ruby _stats_build/statistics/longest_time_to_sub_10.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 

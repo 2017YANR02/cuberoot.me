@@ -1,5 +1,4 @@
 // NOTE: 333mbf/333mbo Mo3 平均值
-// 与 Ruby _stats_build/statistics/mbf_average.rb 1:1 对应
 // 333mbf：从 DB 计算 Mo3，WCA 编码 0DDTTTTTMM，DD/TTTTT/MM 分别取均值（ROUND）后拼接
 // 333mbo：历史上仅 1 人完成过 3 轮，硬编码数据
 // 此类同时作为独立统计页面和数据提供者（供 WrAverageHistory 委托）
@@ -11,7 +10,7 @@ import { ATTEMPTS_SUBQUERY } from '../core/database.js';
 import type { StatJson, StatPanel, StatSection, TableHeader } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 排名表头（6 列，与 Ruby StatPanel RANKING_HEADER 对应 + Details）
+// NOTE: 排名表头（标准 RANKING_HEADER + Details）
 const RANKING_HEADER: TableHeader = {
   '#': 'right', 'Person': 'left', 'Mo3': 'right',
   'Country': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
@@ -79,7 +78,7 @@ export class MbfAverage extends Statistic {
     `;
   }
 
-  // NOTE: DD/TTTTT/MM 分别取均值后拼接——与 Ruby mbf_mo3 1:1 对应
+  // NOTE: DD/TTTTT/MM 分别取均值后拼接
   private mbfMo3(v1: number, v2: number, v3: number): number {
     const vals = [v1, v2, v3];
     const dd = Math.round(vals.reduce((s, v) => s + Math.floor(v / 10_000_000), 0) / 3);
@@ -111,7 +110,7 @@ export class MbfAverage extends Statistic {
       const mo3 = this.mbfMo3(v1, v2, v3);
       computed.push({ row: r, metric: mo3, v1, v2, v3 });
     }
-    // NOTE: 照搬 Ruby 内存管理——遍历完成后释放原始查询结果
+    // NOTE: 内存管理——遍历完成后释放原始查询结果
     queryResults = null;
     if (global.gc) global.gc();
 
@@ -212,7 +211,7 @@ export class MbfAverage extends Statistic {
       .filter(([, rows]) => rows.length > 0)
       .map(([title, rows]) => ({ title, titleZh: eventZh(title), rows }));
 
-    // NOTE: history 数据结构与 Ruby 一致：{ event_name => rows }
+    // NOTE: history 数据结构：{ event_name => rows }
     const historyData: Record<string, unknown[][]> = {
       [mbfName]: this._mbfHistory,
       [MBO_EVENT_NAME]: MBO_HISTORY,
