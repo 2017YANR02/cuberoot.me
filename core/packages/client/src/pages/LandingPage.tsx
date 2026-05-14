@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
-  Swords, Target, CalendarDays, Puzzle, BookOpen, Earth as GlobeIcon,
+  Swords, CalendarDays, BookOpen, Earth as GlobeIcon,
   Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
   ImagePlus,
   Wand2,
@@ -352,7 +352,7 @@ const SECTIONS: Section[] = [
       { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer', comingSoon: true },
       { id: 'battle',   href: '/battle',       internal: true, tier: 'standard', Icon: Swords,    nameKey: 'battle' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
-      { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', Icon: Target,    nameKey: 'algTrainer' },
+      { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: import.meta.env.BASE_URL + 'icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'utility',  nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
     ],
   },
@@ -383,7 +383,7 @@ const SECTIONS: Section[] = [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
       { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
-      { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', Icon: Puzzle,     nameKey: 'solver' },
+      { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: import.meta.env.BASE_URL + 'icons/upstream/solver.png', nameKey: 'solver' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
     ],
   },
@@ -424,13 +424,6 @@ export default function LandingPage() {
           style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
         />
       )}
-
-      {/* NOTE: 右上角 cluster — WCA 登录 + 语言 + 主题 */}
-      <div className="global-corner">
-        <WcaAuth />
-        <LangToggle />
-        <ThemeToggle />
-      </div>
 
       <div className="brand-line">
         <img src={effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
@@ -491,24 +484,8 @@ export default function LandingPage() {
         ))}
       </div>
 
-      {/* NOTE: 致谢：列出上游开源项目作者 */}
-      <div className="credits">
-        <span>{t('creditsPrefix')}</span>{' '}
-        <a href="https://github.com/or18/RubiksSolverDemo" target="_blank" rel="noopener noreferrer">or18</a> ·{' '}
-        <a href="https://github.com/jonatanklosko/wca_statistics" target="_blank" rel="noopener noreferrer">jonatanklosko</a> ·{' '}
-        <a href="https://github.com/mihlefeld/Alg-Trainers" target="_blank" rel="noopener noreferrer">mihlefeld</a> ·{' '}
-        <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a> ·{' '}
-        <a href="https://github.com/MatteoColombo/cube_challenge_timer" target="_blank" rel="noopener noreferrer">MatteoColombo</a> ·{' '}
-        <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f</a> ·{' '}
-        <a href="https://github.com/MeigenChou/DCTimer-Android" target="_blank" rel="noopener noreferrer">MeigenChou</a> ·{' '}
-        <a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">Roman-</a> ·{' '}
-        <a href="https://nemesizer.com" target="_blank" rel="noopener noreferrer">nemesizer.com</a> ·{' '}
-        <a href="https://cubing.pro/" target="_blank" rel="noopener noreferrer">cubing.pro</a> ·{' '}
-        <a href="https://github.com/tdecker91/puzzle-gen" target="_blank" rel="noopener noreferrer">tdecker91</a> ·{' '}
-        <a href="https://github.com/nbwzx/commutator" target="_blank" rel="noopener noreferrer">nbwzx</a>
-      </div>
-
       <div className="footer">
+        <Link to="/about" className="footer-about">{lang === 'zh' ? '关于' : 'About'}</Link>
         <a
           href="https://github.com/RuiminYan/cuberoot.me"
           target="_blank"
@@ -530,6 +507,10 @@ export default function LandingPage() {
           <Heart size={14} strokeWidth={1.8} />
           <span>{lang === 'zh' ? '赞助' : 'Donate'}</span>
         </button>
+
+        <WcaAuth />
+        <LangToggle />
+        <ThemeToggle />
       </div>
 
       {/* NOTE: 中国 ICP / 公安备案 — 仅在 cuberoot.me 域名（备案绑定该域名）和本地 dev 显示。

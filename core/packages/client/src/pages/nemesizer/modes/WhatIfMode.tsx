@@ -6,33 +6,15 @@ import PersonCell from '../components/PersonCell';
 import { NEMESIZER_EVENTS } from '../data/nemesizerData';
 import { applyRelation, type RelationView } from '../data/nemesizerAlgo';
 
-interface Props { ds: NemesizerDataset; isZh: boolean; }
+interface Props { ds: NemesizerDataset | null; isZh: boolean; loadingPhase?: string; }
 
-export default function WhatIfMode({ ds, isZh }: Props) {
+export default function WhatIfMode({ ds, isZh, loadingPhase }: Props) {
   const [params, setParams] = useSearchParams();
   const person = params.get('person') ?? '';
   const view: RelationView = (params.get('view') as RelationView) || 'myNem';
-  const personIdx = person ? ds.wcaIdIndex.get(person.toUpperCase()) : undefined;
+  const personIdx = ds && person ? ds.wcaIdIndex.get(person.toUpperCase()) : undefined;
 
   const [overrides, setOverrides] = useState<Map<number, string>>(new Map());
-
-  const setParam = (k: string, v: string) => {
-    const n = new URLSearchParams(params);
-    if (v) n.set(k, v); else n.delete(k);
-    setParams(n, { replace: true });
-  };
-
-  if (personIdx === undefined) {
-    return (
-      <div>
-        <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
-        <p className="nemesizer-results-summary">
-          {isZh ? '假设你在某些项目上的排名不同，看看新的宿敌关系。' : 'Enter alternate ranks for one or more events to see the new you.'}
-        </p>
-        <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
-      </div>
-    );
-  }
 
   const override = useMemo(() => {
     const m = new Map<number, number>();
@@ -43,8 +25,46 @@ export default function WhatIfMode({ ds, isZh }: Props) {
     return m;
   }, [overrides]);
 
-  const newResults = useMemo(() => applyRelation(ds, personIdx, view, override), [ds, personIdx, view, override]);
-  const origResults = useMemo(() => applyRelation(ds, personIdx, view), [ds, personIdx, view]);
+  const newResults = useMemo(
+    () => ds && personIdx !== undefined ? applyRelation(ds, personIdx, view, override) : null,
+    [ds, personIdx, view, override],
+  );
+  const origResults = useMemo(
+    () => ds && personIdx !== undefined ? applyRelation(ds, personIdx, view) : null,
+    [ds, personIdx, view],
+  );
+
+  const setParam = (k: string, v: string) => {
+    const n = new URLSearchParams(params);
+    if (v) n.set(k, v); else n.delete(k);
+    setParams(n, { replace: true });
+  };
+
+  // No person yet: render the picker immediately, even while ds is loading.
+  if (!person) {
+    return (
+      <div>
+        <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
+        <p className="nemesizer-results-summary">
+          {isZh ? '假设你在某些项目上的排名不同，看看新的宿敌关系。' : 'Enter alternate ranks for one or more events to see the new you.'}
+        </p>
+        <NemesizerPersonPicker ds={ds} isZh={isZh} onPick={id => setParam('person', id)} />
+      </div>
+    );
+  }
+
+  if (!ds) {
+    return <div className="nemesizer-loading">{isZh ? `加载中… (${loadingPhase ?? ''})` : `Loading… (${loadingPhase ?? ''})`}</div>;
+  }
+
+  if (personIdx === undefined || !newResults || !origResults) {
+    return (
+      <div>
+        <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
+        <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
+      </div>
+    );
+  }
 
   const p = ds.persons[personIdx];
 

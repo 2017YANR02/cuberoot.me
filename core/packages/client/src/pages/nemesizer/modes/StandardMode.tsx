@@ -5,7 +5,7 @@ import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { applyRelation, filterByScope, type RelationView } from '../data/nemesizerAlgo';
 
-interface Props { ds: NemesizerDataset; isZh: boolean; }
+interface Props { ds: NemesizerDataset | null; isZh: boolean; loadingPhase?: string; }
 
 const VIEWS: { id: RelationView; en: string; zh: string }[] = [
   { id: 'myNem',      en: 'Show my nemeses',              zh: '显示我的宿敌' },
@@ -21,7 +21,7 @@ type ShowMode = 'people' | 'countries';
 type Order = 'id' | 'name' | 'nemeses' | 'nemesized';
 type Direction = 'up' | 'down';
 
-export default function StandardMode({ ds, isZh }: Props) {
+export default function StandardMode({ ds, isZh, loadingPhase }: Props) {
   const [params, setParams] = useSearchParams();
   const person = params.get('person') ?? '';
   const view = (params.get('view') as RelationView) || 'myNem';
@@ -30,7 +30,7 @@ export default function StandardMode({ ds, isZh }: Props) {
   const order = (params.get('order') as Order) || 'id';
   const direction = (params.get('direction') as Direction) || 'up';
 
-  const personIdx = person ? ds.wcaIdIndex.get(person.toUpperCase()) : undefined;
+  const personIdx: number | undefined = ds && person ? ds.wcaIdIndex.get(person.toUpperCase()) : undefined;
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -41,12 +41,31 @@ export default function StandardMode({ ds, isZh }: Props) {
   const pick = (wcaId: string) => setParam('person', wcaId);
 
   const results = useMemo(() => {
-    if (personIdx === undefined) return null;
+    if (!ds || personIdx === undefined) return null;
     const raw = applyRelation(ds, personIdx, view);
     return filterByScope(ds, raw, scope, personIdx);
   }, [ds, personIdx, view, scope]);
 
-  if (!person || personIdx === undefined) {
+  // No person selected: render the picker immediately, even while ds is loading.
+  // Searches typed before ds is ready wait on the load promise inside the picker.
+  if (!person) {
+    return (
+      <NemesizerPersonPicker
+        ds={ds}
+        isZh={isZh}
+        onPick={pick}
+        placeholder={isZh ? '输入 WCA ID、姓名、国家或年份开始' : 'Enter WCA ID, name, country or year'}
+      />
+    );
+  }
+
+  // Person in URL but dataset not ready yet — show loader (results need the data).
+  if (!ds) {
+    return <div className="nemesizer-loading">{isZh ? `加载中… (${loadingPhase ?? ''})` : `Loading… (${loadingPhase ?? ''})`}</div>;
+  }
+
+  // Dataset ready but the WCA ID didn't resolve — show picker prefilled with the bad query.
+  if (personIdx === undefined) {
     return (
       <NemesizerPersonPicker
         ds={ds}

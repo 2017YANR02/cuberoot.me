@@ -51,6 +51,18 @@ async function fetchGz(url: string): Promise<Uint8Array> {
 
 let loading: Promise<NemesizerDataset> | null = null;
 
+// Yield to the browser so long parses don't trip the "Page Unresponsive" dialog.
+// MessageChannel yields with ~0ms delay (unlike setTimeout 0 which clamps to 4ms).
+function yieldToBrowser(): Promise<void> {
+  return new Promise(resolve => {
+    const mc = new MessageChannel();
+    mc.port1.onmessage = () => resolve();
+    mc.port2.postMessage(null);
+  });
+}
+
+const CHUNK = 50000;
+
 export function loadNemesizerData(onProgress?: (phase: string) => void): Promise<NemesizerDataset> {
   if (loading) return loading;
   const p = (async (): Promise<NemesizerDataset> => {
@@ -70,16 +82,23 @@ export function loadNemesizerData(onProgress?: (phase: string) => void): Promise
       fetchGz(`${BASE}/counts.bin.gz?v=${v}`),
     ]);
 
-    onProgress?.('parsing');
+    onProgress?.('parsing persons');
+    await yieldToBrowser();
     const { continents, persons } = decodePersons(personsBytes);
+    onProgress?.('parsing ranks');
+    await yieldToBrowser();
     const ranks = decodeRanks(ranksBytes);
+    onProgress?.('parsing counts');
+    await yieldToBrowser();
     const counts = decodeCounts(countsBytes);
 
-    onProgress?.('indexing');
+    onProgress?.('indexing names');
+    await yieldToBrowser();
     const wcaIdIndex = new Map<string, number>();
     const nameIndex = new Map<string, number>();
     const zhNameIndex = new Map<string, number>();
     for (let i = 0; i < persons.length; i++) {
+      if (i > 0 && i % CHUNK === 0) await yieldToBrowser();
       const p = persons[i];
       wcaIdIndex.set(p.wcaId, i);
       nameIndex.set(stripParens(p.name).toLowerCase(), i);
@@ -87,11 +106,14 @@ export function loadNemesizerData(onProgress?: (phase: string) => void): Promise
       if (zh) zhNameIndex.set(zh, i);
     }
 
+    onProgress?.('indexing ranks');
+    await yieldToBrowser();
     const nEk = NEMESIZER_EVENTS.length * 2;
     const ranksByPerson: RankRef[][] = Array.from({ length: persons.length }, () => []);
     const buckets: number[][] = Array.from({ length: nEk }, () => []);
     const rankOfPerson: Map<number, number>[] = Array.from({ length: nEk }, () => new Map());
     for (let i = 0; i < ranks.count; i++) {
+      if (i > 0 && i % CHUNK === 0) await yieldToBrowser();
       const pi = ranks.personIdx[i];
       const ev = ranks.eventIdx[i];
       const kind = ranks.kind[i];
@@ -102,17 +124,23 @@ export function loadNemesizerData(onProgress?: (phase: string) => void): Promise
       buckets[ek].push(pi);
       rankOfPerson[ek].set(pi, r);
     }
+
+    onProgress?.('sorting buckets');
+    await yieldToBrowser();
     const byEk: Uint32Array[] = new Array(nEk);
     for (let ek = 0; ek < nEk; ek++) {
       const arr = buckets[ek];
       const map = rankOfPerson[ek];
       arr.sort((a, b) => map.get(a)! - map.get(b)!);
       byEk[ek] = Uint32Array.from(arr);
+      await yieldToBrowser();
     }
 
+    onProgress?.('indexing countries');
     const countryIndex = new Map<string, number[]>();
     const continentIndex = new Map<number, number[]>();
     for (let i = 0; i < persons.length; i++) {
+      if (i > 0 && i % CHUNK === 0) await yieldToBrowser();
       const iso2 = persons[i].countryIso2;
       if (iso2) {
         if (!countryIndex.has(iso2)) countryIndex.set(iso2, []);

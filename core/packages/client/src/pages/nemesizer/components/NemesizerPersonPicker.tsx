@@ -3,10 +3,10 @@
 import { useCallback } from 'react';
 import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
 import type { NemesizerDataset } from '../data/nemesizerData';
-import { findPersons } from '../data/nemesizerData';
+import { findPersons, loadNemesizerData } from '../data/nemesizerData';
 
 interface Props {
-  ds: NemesizerDataset;
+  ds: NemesizerDataset | null;
   isZh: boolean;
   initialQuery?: string;
   onPick: (wcaId: string) => void;
@@ -17,10 +17,11 @@ interface Props {
 export default function NemesizerPersonPicker({
   ds, isZh, initialQuery, onPick, placeholder, autoConfirmExact = true,
 }: Props) {
-  const searchFn = useCallback((query: string): WcaPerson[] => {
-    const idxs = findPersons(ds, query);
+  const searchFn = useCallback(async (query: string): Promise<WcaPerson[]> => {
+    const ready = ds ?? await loadNemesizerData();
+    const idxs = findPersons(ready, query);
     return idxs.slice(0, 20).map(i => {
-      const p = ds.persons[i];
+      const p = ready.persons[i];
       return { wcaId: p.wcaId, name: p.name, iso2: p.countryIso2, avatarUrl: '' };
     });
   }, [ds]);

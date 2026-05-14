@@ -1,14 +1,23 @@
 // NOTE: WCA 统计索引页 — 浅色主题（对齐首页 landing.css tokens）+ 搜索 + Tab 分类
 // 路由：/wca-stats
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search,
+  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search, CalendarDays,
   type LucideIcon,
 } from 'lucide-react';
+import { loadPersonsIndex, searchLocalPersons, type WcaPerson } from '@cuberoot/shared';
 import { getLangQuery } from '../../i18n';
 import LangToggle from '../../components/LangToggle';
+import { ClearButton } from '../../components/ClearButton';
+import { Flag } from '../../utils/flag';
+import { displayCuberName } from '../../utils/name_utils';
+import { loadComps, searchComps, type Comp } from '../../utils/comp_search';
+import { compNameZh } from '../../utils/country_flags';
+import { stripWcaPrefix } from '../../utils/comp_localize';
+import { localizeCity } from '../../utils/city_localize';
+import { formatDateRangeIso } from '../../utils/date_range';
 import './wca_stats.css';
 
 // NOTE: iconName → lucide 组件映射（与 compute_index.ts STAT_CATEGORIES.iconName 对齐）
@@ -39,7 +48,6 @@ const ALL = '__all__';
 const LOOKUP = '__lookup__';
 
 const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
-  { path: '/wca-stats/persons',         zh: '选手查询',     en: 'Persons' },
   { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
   { path: '/wca-stats/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
   { path: '/wca-stats/all-results',      zh: '全部成绩排行', en: 'All Results' },
@@ -49,6 +57,10 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
   { path: '/wca-stats/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
 ];
 
+// NOTE: 选手 / 比赛跨库搜索阈值。英文/数字 q.length >= 2 才发,中文/包含 unicode 1 字符即可
+const MIN_LEN_LATIN = 2;
+const hasNonLatin = (s: string) => /[^\x00-\x7F]/.test(s);
+
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
   const [data, setData] = useState<IndexData | null>(null);
@@ -56,6 +68,13 @@ export default function WcaStatsIndex() {
   const [loading, setLoading] = useState(true);
   const [activeCat, setActiveCat] = useState<string>(ALL);
   const [query, setQuery] = useState('');
+  // 跨库搜索结果 — 选手 / 比赛(stats titles 已即时 filter,不存 state)
+  const [personMatches, setPersonMatches] = useState<WcaPerson[]>([]);
+  const [compMatches, setCompMatches] = useState<Comp[]>([]);
+  // loadComps 结果缓存(模块级 cache 在 utils,这里只是触发一次)
+  const compsRef = useRef<Comp[] | null>(null);
+  // 两个索引是否已完成加载 — 用于控制"未找到"提示,避免首次输入闪现
+  const [xLoaded, setXLoaded] = useState(false);
 
   const isZh = i18n.language === 'zh';
 
@@ -76,6 +95,34 @@ export default function WcaStatsIndex() {
   }, []);
 
   const q = query.trim().toLowerCase();
+  const qRaw = query.trim();
+  const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
+
+  // 首次需要跨库搜索时 lazy load persons + comps 索引
+  useEffect(() => {
+    if (!xSearchEnabled || xLoaded) return;
+    Promise.all([
+      loadPersonsIndex().catch(() => null),
+      loadComps().then(arr => { compsRef.current = arr; }).catch(() => null),
+    ]).then(() => setXLoaded(true));
+  }, [xSearchEnabled, xLoaded]);
+
+  // debounced 跨库搜索 — 输入停 200ms 后跑;索引加载完后也会重跑一次
+  useEffect(() => {
+    if (!xSearchEnabled) {
+      setPersonMatches([]);
+      setCompMatches([]);
+      return;
+    }
+    const handle = setTimeout(() => {
+      // 不 limit:全量命中,用户自己用更具体的 query 收窄
+      const persons = searchLocalPersons(qRaw, Infinity) ?? [];
+      setPersonMatches(persons);
+      const comps = compsRef.current ? searchComps(qRaw, compsRef.current, Infinity) : [];
+      setCompMatches(comps);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [qRaw, xSearchEnabled, xLoaded]);
 
   // NOTE: 搜索模式忽略 tab，全库匹配；否则按 tab 过滤
   const visible = useMemo(() => {
@@ -121,7 +168,12 @@ export default function WcaStatsIndex() {
 
   const langQuery = getLangQuery();
   const totalCount = data.categories.reduce((s, c) => s + c.stats.length, 0);
-  const visibleCount = visible.reduce((s, c) => s + c.stats.length, 0) + lookupVisible.length;
+  const visibleCount =
+    visible.reduce((s, c) => s + c.stats.length, 0) +
+    lookupVisible.length +
+    personMatches.length +
+    compMatches.length;
+  const hasAnyMatch = visibleCount > 0;
 
   return (
     <div className="wca-stats-index">
@@ -149,10 +201,13 @@ export default function WcaStatsIndex() {
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder={isZh ? '搜索统计项…' : 'Search stats…'}
+            placeholder={isZh ? '搜索统计项 / 选手 / 比赛…' : 'Search stats, persons, competitions…'}
           />
           {q !== '' && (
             <span className="wca-stats-index-search-count">{visibleCount}</span>
+          )}
+          {query !== '' && (
+            <ClearButton onClick={() => setQuery('')} isZh={isZh} preserveFocus />
           )}
         </div>
 
@@ -207,6 +262,7 @@ export default function WcaStatsIndex() {
             </div>
           </section>
         )}
+
         {visible.map(cat => {
           const iconKey = cat.iconName || '';
           const Icon = ICON_MAP[iconKey];
@@ -231,9 +287,72 @@ export default function WcaStatsIndex() {
           );
         })}
 
-        {visible.length === 0 && activeCat !== LOOKUP && !(q !== '' && lookupVisible.length > 0) && (
+        {compMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <CalendarDays size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '比赛' : 'Competitions'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {compMatches.map(c => {
+                const zhName = isZh ? compNameZh(c.name) : '';
+                const displayName = stripWcaPrefix(zhName || c.name);
+                const cityStr = c.city ? localizeCity(c.city, isZh) : '';
+                return (
+                  <a
+                    key={c.id}
+                    href={`https://www.worldcubeassociation.org/competitions/${c.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="wca-stats-index-card wca-stats-index-card--rich"
+                  >
+                    <Flag iso2={c.country} className="country-flag" />
+                    <span className="wca-stats-index-card-main">
+                      <span className="wca-stats-index-card-name">{displayName}</span>
+                      <span className="wca-stats-index-card-meta">
+                        {formatDateRangeIso(c.start_date, c.end_date)}
+                        {cityStr ? ` · ${cityStr}` : ''}
+                      </span>
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {personMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <UserRound size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '选手' : 'Persons'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {personMatches.map(p => (
+                <Link
+                  key={p.wcaId}
+                  to={`/wca-stats/persons/${p.wcaId}${langQuery}`}
+                  className="wca-stats-index-card wca-stats-index-card--rich"
+                >
+                  <Flag iso2={p.iso2} className="country-flag" />
+                  <span className="wca-stats-index-card-main">
+                    <span className="wca-stats-index-card-name">{displayCuberName(p.name, isZh)}</span>
+                    <span className="wca-stats-index-card-meta">{p.wcaId}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {!hasAnyMatch && activeCat !== LOOKUP && (!xSearchEnabled || xLoaded) && (
           <div className="wca-stats-index-empty">
-            {isZh ? '未找到匹配的统计项' : 'No stats match your search.'}
+            {isZh ? '未找到匹配项' : 'No matches found.'}
+          </div>
+        )}
+        {!hasAnyMatch && xSearchEnabled && !xLoaded && (
+          <div className="wca-stats-index-empty">
+            {isZh ? '搜索中…' : 'Searching…'}
           </div>
         )}
       </div>
