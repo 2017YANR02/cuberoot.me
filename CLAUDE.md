@@ -94,6 +94,16 @@ pnpm --filter @cuberoot/client lint
 - UI 验证走项目内 Playwright MCP;fixtures 跑全集别采样
 - 新路由 / 新顶层 page 前先 grep routes config 防撞名
 
+## 主题 / 颜色
+
+未来给 8 页(trainer / battle / memo / alg / wca-stats / calendar / calc / wb)加 dark/light 切换,方向锁在 `core/packages/client/src/pages/THEMING.md`。当前状态:**只锁了决策,代码尚未落地**。
+
+- 在这 8 页内新写 CSS,**别再 #888 #aaa 硬码灰**;按 THEMING.md 的命名表用 `--muted-foreground` / `--faint-foreground` / `--border-default` 等(token 还没在 :root 落地,但提前用 var() 也行 — 落地时一起激活)
+- 信号色(success/warning/danger/info)统一用 `--signal-*` token,别新发明 `--ok-color` 之类
+- 页面专有 accent / 品牌色(如 `--c-active` `--wb-gold`)留 page-scope
+- 加新页前先想"未来要不要 dark/light",要的话扩 THEMING.md 8 页表;不要的话随便硬码
+- alg / globe 已自有双主题方案,不动
+
 ## Skill 路由
 
 主题命中 trigger 时主动调对应 skill,不要凭记忆。skill 描述 + triggers 已由 harness 自动加载,触发即可,**不要在此再列索引表**(双倍信息,白付 token)。

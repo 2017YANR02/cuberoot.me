@@ -4,8 +4,8 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 24px 16px;
-  color: var(--text-color, #f0ebe3);
-  background: var(--bg-color, #1a1a1a);
+  color: #f0ebe3;
+  background: #1a1a1a;
   min-height: 100vh;
 }
 
@@ -17,16 +17,16 @@
   margin-bottom: 12px;
 }
 .wse-back {
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 14px;
 }
-.wse-back:hover { color: var(--text-color, #f0ebe3); }
+.wse-back:hover { color: #f0ebe3; }
 .wse-page h1 { margin: 0 0 8px; font-size: 1.75rem; font-weight: 700; }
-.wse-subtitle { margin: 0; color: var(--text-sub, #aaa); font-size: 14px; }
+.wse-subtitle { margin: 0; color: #aaa; font-size: 14px; }
 
 .wse-filters {
   display: flex;
@@ -47,7 +47,7 @@
 }
 .wse-filter label {
   font-size: 12px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -97,13 +97,13 @@
   padding: 0 !important;
   font-size: 16px;
   cursor: pointer;
-  color: var(--text-sub, #888);
+  color: #888;
   border: none !important;
   background: transparent !important;
   border-radius: 0 !important;
   height: auto !important;
 }
-.wse-country-clear:hover { color: var(--text-color, #f0ebe3); }
+.wse-country-clear:hover { color: #f0ebe3; }
 .wse-country-popup {
   position: absolute;
   top: calc(100% + 4px);
@@ -125,7 +125,7 @@
   gap: 6px;
   padding: 6px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .wse-country-search input {
   flex: 1;
@@ -166,7 +166,7 @@
   cursor: pointer;
   user-select: none;
   font-size: 13px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .wse-toggle input { accent-color: #d77757; }
 
@@ -181,12 +181,12 @@
 .wse-state {
   padding: 40px;
   text-align: center;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .wse-state-error { color: #ff7676; }
 .wse-result-meta {
   font-size: 13px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   padding: 4px 8px 12px;
 }
 .wse-table {
@@ -207,7 +207,7 @@
   font-size: 12px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .wse-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 .wse-table a { color: #d77757; text-decoration: none; }
@@ -217,7 +217,7 @@
   text-align: right !important;
   width: 50px;
   font-variant-numeric: tabular-nums;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .wse-value-col {
   text-align: right !important;
@@ -227,7 +227,7 @@
 .wse-attempts-col {
   font-variant-numeric: tabular-nums;
   font-size: 13px;
-  color: var(--text-sub, #ccc);
+  color: #ccc;
 }
 
 /* Pagination */
@@ -238,7 +238,7 @@
   gap: 12px;
   padding: 16px 0 8px;
   font-size: 13px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .wse-pagination button {
   width: 32px;
@@ -304,9 +304,9 @@
 /* 数据细节列 */
 .wse-detail-cell {
   font-size: 12px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
-.wse-detail-cell strong { color: var(--text-color, #f0ebe3); font-weight: 500; }
+.wse-detail-cell strong { color: #f0ebe3; font-weight: 500; }
 
 /* Sum of ranks per-event mini cells */
 .wse-sor-evcell {
@@ -339,16 +339,16 @@
   appearance: none;
   border: none;
   background: transparent;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   padding: 0 16px;
   font-size: 14px;
   cursor: pointer;
   line-height: 1;
 }
-.wse-show-toggle button:hover { color: var(--text-color, #f0ebe3); }
+.wse-show-toggle button:hover { color: #f0ebe3; }
 .wse-show-toggle button.active {
   background: rgba(120, 160, 255, 0.18);
-  color: var(--text-color, #f0ebe3);
+  color: #f0ebe3;
   font-weight: 500;
 }
 
