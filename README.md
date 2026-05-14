@@ -52,7 +52,7 @@ A growing suite of speedcubing tools, organized as a single SPA on top of a pnpm
 ## 🏗️ Architecture
 
 ```
-ruiminyan.github.io/
+cuberoot.me/
 ├── core/                          # pnpm + Turbo monorepo (all new work lives here)
 │   └── packages/
 │       ├── client/                # React 19 + Vite 8 SPA

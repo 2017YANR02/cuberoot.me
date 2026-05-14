@@ -7,10 +7,10 @@
 
 ### 仓库概况
 
-仓库 `ruiminyan.github.io` 是一个魔方工具站（CubeRoot），部署在 GitHub Pages 上。核心结构：
+仓库 `cuberoot.me` 是一个魔方工具站（CubeRoot），部署在 GitHub Pages 上。核心结构：
 
 ```
-ruiminyan.github.io/
+cuberoot.me/
 ├── _site/                  # Jekyll 构建输出（GitHub Pages 部署）
 ├── _stats_build/           # [LEGACY] Ruby 版 WCA 统计构建脚本（已迁移，仅保留参考）
 ├── i18n/                   # [LEGACY] 原版 JS 国际化 + 项目选择器
@@ -347,7 +347,7 @@ JSON 结构：`data.metricPanels: MetricPanel[]`，每个 MetricPanel 内有 `pa
 ## 八、验证方式
 
 ```powershell
-cd d:\cube\ruiminyan.github.io\trainer
+cd d:\cube\cuberoot.me\core
 pnpm --filter @cuberoot/client dev
 ```
 

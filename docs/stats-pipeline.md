@@ -4,7 +4,7 @@
 
 88 项 WCA 统计，每周日 19:00 UTC 由 CI 自动更新。
 
-- **地址**：[ruiminyan.github.io/stats/](https://ruiminyan.github.io/stats/) · [www.cuberoot.me](https://www.cuberoot.me)
+- **地址**：[cuberoot.me/stats/](https://cuberoot.me/stats/) · [www.cuberoot.me](https://www.cuberoot.me)
 - **CI**：`.github/workflows/stats.yml`
 - **耗时**：~47 分钟
 

@@ -424,7 +424,7 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
       linkUrls = otherUrls;
     }
   } else {
-    // ruiminyan.github.io 或其他境外：YT 嵌入 + B 站出链接（YT 为空时回退嵌 B 站）
+    // 其他境外域名：YT 嵌入 + B 站出链接（YT 为空时回退嵌 B 站）
     if (ytUrls.length > 0) {
       embedUrls = ytUrls;
       linkUrls = [...biliUrls, ...otherUrls];

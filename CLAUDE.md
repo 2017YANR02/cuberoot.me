@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库布局
 
-仓库根是 GitHub Pages 站点（`ruiminyan.github.io`），同时托管：
+仓库 `RuiminYan/cuberoot.me`(自定义域名 `cuberoot.me` 走 GH Pages CNAME),同时托管：
 
 1. **根目录的静态 HTML/JS**（来自多个 fork）—— 只读，不改。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
@@ -40,7 +40,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 部署拓扑
 
-- **静态 SPA**:云服务器 nginx 服 `cuberoot.me` + `www.cuberoot.me`(apex 301 → www),vhost 见 `ops/nginx/www.cuberoot.me.conf`,root `/www/wwwroot/toolkit`。`ruiminyan.github.io` 是 GH Pages 镜像(deploy_mirror.yml),纯兜底,自动 301 → `cuberoot.me`。改 nginx 走 `deploy_nginx.yml`(push `ops/nginx/**` 触发,scp + `nginx -t` + reload + 失败回滚 .bak)。
+- **静态 SPA**:云服务器 nginx 服 `cuberoot.me` + `www.cuberoot.me`(apex 301 → www),vhost 见 `ops/nginx/www.cuberoot.me.conf`,root `/www/wwwroot/toolkit`。GH Pages 走 CNAME=`cuberoot.me`,境外 DNS 走 GH(同内容,deploy_mirror.yml rsync 同步)。改 nginx 走 `deploy_nginx.yml`(push `ops/nginx/**` 触发,scp + `nginx -t` + reload + 失败回滚 .bak)。
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台云服务器,nginx 反代到 127.0.0.1:3001)。
 - 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(跨域到 `api.cuberoot.me`),不要硬编码 origin。CORS allowlist 在 `core/packages/server/src/index.ts`。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。

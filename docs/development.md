@@ -38,14 +38,14 @@ sudo net stop MySQL80   # ⚠️ 绝对不要强杀 mysqld.exe，否则损坏 In
 | 流程 | Implicit Grant（`response_type=token`，绕过 CORS） |
 | Client ID | `mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4` |
 | Scopes | `public` |
-| Redirect URIs | `ruiminyan.github.io/auth/callback`、`www.cuberoot.me/auth/callback`、`localhost:5173/auth/callback` |
+| Redirect URIs | `cuberoot.me/auth/callback`、`www.cuberoot.me/auth/callback`、`localhost:5173/auth/callback` |
 
 > Implicit Grant 因为 WCA token endpoint 不开放 CORS。
 
 ## 前端开发服务器
 
 ```powershell
-cd D:\cube\ruiminyan.github.io\core
+cd D:\cube\cuberoot.me\core
 pnpm --filter @cuberoot/client dev
 # → http://localhost:5173/
 ```
@@ -58,7 +58,7 @@ pnpm --filter @cuberoot/client dev
 
 ```powershell
 git -C D:\cube\RubiksSolverDemo pull
-cd D:\cube\ruiminyan.github.io
+cd D:\cube\cuberoot.me
 .\_sync_RubiksSolverDemo.ps1
 ```
 
@@ -68,7 +68,7 @@ cd D:\cube\ruiminyan.github.io
 
 ```powershell
 git -C D:\cube\mihlefeld-alg-trainers pull
-cd D:\cube\ruiminyan.github.io
+cd D:\cube\cuberoot.me
 .\sync_alg_trainers.ps1
 ```
 

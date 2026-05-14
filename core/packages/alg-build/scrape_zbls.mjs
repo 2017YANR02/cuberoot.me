@@ -254,6 +254,6 @@ for (const c of allCases) {
 }
 console.log('By subgroup:', bySubgroup);
 
-writeFileSync('D:/cube/ruiminyan.github.io/core/packages/alg-build/zbls_scraped.json',
+writeFileSync(new URL('./zbls_scraped.json', import.meta.url),
   JSON.stringify(allCases, null, 2), 'utf-8');
 console.log('Wrote zbls_scraped.json');
