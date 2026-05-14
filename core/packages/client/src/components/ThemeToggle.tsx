@@ -24,6 +24,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
     const next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
     localStorage.setItem(THEME_KEY, next);
     setTheme(next);
+    window.dispatchEvent(new Event('theme-change'));
   };
 
   const Icon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;

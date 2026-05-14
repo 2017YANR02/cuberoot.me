@@ -146,8 +146,9 @@ img[src$="ChineseTaipei.svg"] {
 }
 
 /* dark 反盖:跟系统 + 显式 [data-theme=dark];[data-theme=light] 强制 light 时不进 */
+/* NOTE: 不能用 :where() 包,会让特异性变 0 被 :root 默认值压过去 */
 @media (prefers-color-scheme: dark) {
-  :where(html:not([data-theme=light])) {
+  html:not([data-theme=light]) {
     --background: #1c1917;
     --foreground: #f0ebe3;
     --card: #232020;
@@ -227,15 +228,15 @@ option {
   background-color: #ffffff !important;
 }
 
-/* NOTE: html 背景同步 body 色，避免 iOS Safari 工具栏区域露出黑边 */
+/* NOTE: html 背景同步 body 色,避免 iOS Safari 工具栏区域露出黑边 */
 html {
-  background: var(--bg-primary);
+  background: var(--background);
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
   /* NOTE: dvh 在 iOS Safari 里随工具栏伸缩，避免 vh 留空或溢出 */
   min-height: 100dvh;
