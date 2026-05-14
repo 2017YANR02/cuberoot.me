@@ -1,0 +1,18 @@
+.theme-toggle-inline {
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.theme-toggle-inline:hover {
+  background: var(--accent-soft);
+  color: var(--foreground);
+  border-color: var(--border-strong);
+}

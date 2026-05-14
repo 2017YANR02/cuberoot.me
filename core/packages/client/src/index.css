@@ -98,27 +98,98 @@ img[src$="ChineseTaipei.svg"] {
   border-radius: 3px;
 }
 
-/* NOTE: 暗色系魔方训练器主题 — Claude 风格暖棕/珊瑚系 */
+/* NOTE: Claude 风格暖棕/珊瑚系。light 默认 + dark 反盖,详见 DESIGN.md / THEMING.md。 */
 
 :root {
-  /* NOTE: 告诉浏览器以暗色渲染 UA 控件（select 下拉、scrollbar、date/time picker 等）。
-     landing 页是 light theme，单独在 .landing-page 上覆写为 light。 */
-  color-scheme: dark;
+  color-scheme: light dark;
 
+  /* Legacy dark tokens（旧页继续用,Phase 2 逐页迁移掉） */
   --bg-primary: #1c1917;
   --bg-secondary: #231f1c;
   --bg-card: #2a2520;
   --bg-card-hover: #332e28;
   --text-primary: #f0ebe3;
   --text-secondary: #9c8c7e;
-  --accent: #d97757;
   --accent-glow: rgba(217, 119, 87, 0.25);
-  --success: #5aac7e;
-  --warning: #d4a259;
-  --danger: #e05c5c;
-  --border: rgba(255, 235, 220, 0.1);
+  --border-dark: rgba(255, 235, 220, 0.1);
+
+  /* shadcn 风新 token,light 默认 */
+  --background: #FAF9F5;
+  --foreground: #181716;
+  --card: #FFFFFF;
+  --card-foreground: #181716;
+  --popover: #FFFFFF;
+  --popover-foreground: #181716;
+  --primary: #181716;
+  --primary-foreground: #FAF9F5;
+  --secondary: #F5F4EE;
+  --secondary-foreground: #181716;
+  --muted: #F5F4EE;
+  --muted-foreground: #6F6E6B;
+  --faint-foreground: #9F9D97;
+  --accent: #C15F3C;
+  --accent-foreground: #FFFFFF;
+  --accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
+  --destructive: #e05c5c;
+  --destructive-foreground: #FFFFFF;
+  --signal-success: #5aac7e;
+  --signal-warning: #d4a259;
+  --signal-info: #4a9eff;
+  --signal-danger: #e05c5c;
+  --border-default: #E5E4DF;
+  --border-strong: #CCCAC2;
+  --input: #E5E4DF;
+  --ring: var(--accent);
+
   --radius: 12px;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* dark 反盖:跟系统 + 显式 [data-theme=dark];[data-theme=light] 强制 light 时不进 */
+@media (prefers-color-scheme: dark) {
+  :where(html:not([data-theme=light])) {
+    --background: #1c1917;
+    --foreground: #f0ebe3;
+    --card: #232020;
+    --card-foreground: #f0ebe3;
+    --popover: #2a2520;
+    --popover-foreground: #f0ebe3;
+    --primary: #f0ebe3;
+    --primary-foreground: #181716;
+    --secondary: #2a2520;
+    --secondary-foreground: #f0ebe3;
+    --muted: #2a2520;
+    --muted-foreground: #9c8c7e;
+    --faint-foreground: #7A736A;
+    --accent: #d97757;
+    --accent-foreground: #181716;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
+    --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
+    --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+}
+
+html[data-theme=dark] {
+  --background: #1c1917;
+  --foreground: #f0ebe3;
+  --card: #232020;
+  --card-foreground: #f0ebe3;
+  --popover: #2a2520;
+  --popover-foreground: #f0ebe3;
+  --primary: #f0ebe3;
+  --primary-foreground: #181716;
+  --secondary: #2a2520;
+  --secondary-foreground: #f0ebe3;
+  --muted: #2a2520;
+  --muted-foreground: #9c8c7e;
+  --faint-foreground: #7A736A;
+  --accent: #d97757;
+  --accent-foreground: #181716;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
+  --input: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 * {
@@ -210,7 +281,7 @@ body {
   gap: 0.75rem;
   padding: 2rem;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   border-radius: var(--radius);
   text-decoration: none;
   color: var(--text-primary);
@@ -243,7 +314,7 @@ body {
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-dark);
 }
 
 .page-header h1 {
@@ -253,7 +324,7 @@ body {
 
 .back-btn {
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   color: var(--text-secondary);
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -292,7 +363,7 @@ body {
 .select-actions button {
   padding: 0.5rem 1.2rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   background: var(--bg-card);
   color: var(--text-primary);
   cursor: pointer;
@@ -339,7 +410,7 @@ body {
   justify-content: center;
   padding: 0.75rem;
   background: var(--bg-card);
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-dark);
   border-radius: 8px;
   color: var(--text-primary);
   font-weight: 600;
@@ -390,7 +461,7 @@ body {
   width: 200px;
   height: 200px;
   background: var(--bg-card);
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-dark);
   border-radius: var(--radius);
   display: flex;
   align-items: center;
@@ -412,11 +483,11 @@ body {
 }
 
 .timer.running {
-  color: var(--success);
+  color: var(--signal-success);
 }
 
 .timer.stopped {
-  color: var(--warning);
+  color: var(--signal-warning);
 }
 
 .hint-text {
@@ -467,7 +538,7 @@ body {
 .btn-secondary {
   padding: 0.5rem 1.5rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   background: var(--bg-card);
   color: var(--text-primary);
   cursor: pointer;
@@ -544,7 +615,7 @@ body {
 .complete-actions button {
   padding: 0.75rem 2rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   background: var(--bg-card);
   color: var(--text-primary);
   cursor: pointer;
@@ -564,8 +635,8 @@ body {
 
 .clear-btn {
   background: none;
-  border: 1px solid var(--danger);
-  color: var(--danger);
+  border: 1px solid var(--signal-danger);
+  color: var(--signal-danger);
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
@@ -581,7 +652,7 @@ body {
 .stats-table th {
   text-align: left;
   padding: 0.75rem 1rem;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid var(--border-dark);
   color: var(--text-secondary);
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -590,7 +661,7 @@ body {
 
 .stats-table td {
   padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-dark);
   font-family: var(--font-mono);
   font-size: 0.9rem;
 }
@@ -612,7 +683,7 @@ body {
   justify-content: center;
   height: 100vh;
   font-size: 1.5rem;
-  color: var(--danger);
+  color: var(--signal-danger);
 }
 
 /* ===== 响应式 ===== */

@@ -28,12 +28,12 @@
   background: transparent;
   cursor: pointer;
   font: inherit;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
-.records-show-toggle button:hover { color: #f0ebe3; }
+.records-show-toggle button:hover { color: var(--foreground); }
 .records-show-toggle button.active {
   background: rgba(255, 255, 255, 0.10);
-  color: #f0ebe3;
+  color: var(--foreground);
 }
 
 /* RegionPicker 颜色变量覆盖 — 默认 light theme,这里改成 wca-stats 深色 */
@@ -41,8 +41,8 @@
   --rp-bg: rgba(255, 255, 255, 0.04);
   --rp-bg-hover: rgba(255, 255, 255, 0.06);
   --rp-bg-active: rgba(255, 255, 255, 0.10);
-  --rp-text: #f0ebe3;
-  --rp-text-sub: #888;
+  --rp-text: var(--foreground);
+  --rp-text-sub: var(--faint-foreground);
   --rp-border: rgba(255, 255, 255, 0.12);
   --rp-border-hover: rgba(255, 255, 255, 0.25);
   --rp-popup-bg: #1f1f1f;
@@ -50,12 +50,12 @@
 }
 
 .records-type-sub {
-  color: #888;
+  color: var(--faint-foreground);
   font-size: 12px;
 }
 
 .records-rank {
-  color: #888;
+  color: var(--faint-foreground);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
@@ -69,11 +69,11 @@
   gap: 8px;
   font-size: 18px;
   margin: 16px 0 8px;
-  color: #f0ebe3;
+  color: var(--foreground);
 }
 .records-event-count {
   font-size: 12px;
-  color: #888;
+  color: var(--faint-foreground);
   font-weight: 400;
 }
 

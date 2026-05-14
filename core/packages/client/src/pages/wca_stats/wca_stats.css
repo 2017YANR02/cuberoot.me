@@ -3,17 +3,24 @@
 /* 项目列：仅 cubing-icon */
 .wca-stats-table .wca-stats-event-icon {
   font-size: 18px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 
 .wca-stats-page {
+  /* wca-stats 视觉硬码 dark,锁 dark token,light 系统下保持深色 */
+  color-scheme: dark;
+  --background: #1c1917;
+  --foreground: #f0ebe3;
+  --muted-foreground: #9c8c7e;
+  --faint-foreground: #7A736A;
+
   width: fit-content;
   min-width: min(100%, 800px);
   max-width: 100%;
   margin: 0 auto;
   padding: 24px 32px;
   min-height: 100vh;
-  color: #f0ebe3;
+  color: var(--foreground);
 }
 
 /* 页面头部 */
@@ -90,7 +97,7 @@
   margin-left: 12px;
   cursor: pointer;
   font-size: 13px;
-  color: #aaaaaa;
+  color: var(--muted-foreground)aaa;
   white-space: nowrap;
   user-select: none;
 }
@@ -213,7 +220,7 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-metric-pill-arrow {
   font-size: 10px;
-  color: #aaaaaa;
+  color: var(--muted-foreground)aaa;
   transition: transform 0.2s;
 }
 
@@ -237,7 +244,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-option {
   padding: 9px 16px;
   font-size: 13px;
-  color: #f0ebe3;
+  color: var(--foreground);
   cursor: pointer;
   transition: background 0.15s;
   border: none;
@@ -923,7 +930,7 @@ input:checked + .wca-stats-toggle-pill::after {
 /* 图标默认色 */
 .wca-stats-event-selector .event-btn .cubing-icon {
   font-size: 22px;
-  color: #aaa;
+  color: var(--muted-foreground);
   transition: color 0.2s;
 }
 

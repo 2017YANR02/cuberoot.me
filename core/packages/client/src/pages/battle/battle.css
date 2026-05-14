@@ -20,9 +20,13 @@
 }
 
 .battle-container {
+    /* AMOLED 纯黑,故意 page-scope 反盖 --background;颜色不跟随系统 light/dark */
+    --background: #000;
+    --foreground: #f0ebe3;
+    color-scheme: dark;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: #000;
-    color: #f0ebe3;
+    background-color: var(--background);
+    color: var(--foreground);
     height: 100dvh;
     display: flex;
     flex-direction: column;
