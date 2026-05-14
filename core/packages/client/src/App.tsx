@@ -4,7 +4,7 @@
  * @see index.html 全局加载的外部 CSS（cubing-icons / flag-icons / Google Fonts）
  */
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import i18n from './i18n';
 import { TrainingPage } from './pages/TrainingPage';
 
@@ -129,6 +129,30 @@ const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
 //       用 replaceState 不进历史记录、不触发 React Router 重渲染。
+// 旧 WordPress blog permalink (cuberoot.me/1lll/, /f2l/, /wp-content/... 等) 整体迁到
+// blog.cuberoot.me 子域。SPA 兜底前先比对 slug 列表,命中就 hard redirect。
+function BlogRedirectFallback() {
+  const location = useLocation();
+  const [slugs, setSlugs] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    fetch('/blog-slugs.json')
+      .then(r => r.json())
+      .then((list: string[]) => setSlugs(new Set(list)))
+      .catch(() => setSlugs(new Set()));
+  }, []);
+
+  if (slugs === null) return <div>Loading...</div>;
+
+  const firstSeg = location.pathname.split('/').filter(Boolean)[0];
+  if (firstSeg && slugs.has(decodeURIComponent(firstSeg))) {
+    window.location.replace(`https://blog.cuberoot.me${location.pathname}${location.search}${location.hash}`);
+    return <div>Redirecting…</div>;
+  }
+
+  return <Navigate to="/" replace />;
+}
+
 function LangParamGuard() {
   const location = useLocation();
   useEffect(() => {
@@ -300,8 +324,8 @@ function App() {
         {/* Auth — WCA OAuth 回调 */}
         <Route path="/auth/callback" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
         <Route path="/callback.html" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
-        {/* Catch-all — 未匹配路径回首页 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch-all — 旧 WP blog slug → 子域,其余回首页 */}
+        <Route path="*" element={<BlogRedirectFallback />} />
       </Routes>
     </BrowserRouter>
   );
