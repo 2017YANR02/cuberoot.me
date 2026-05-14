@@ -7,6 +7,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './i18n'
 import App from './App.tsx'
+import { installLangNormalize } from './utils/url_lang_normalize'
+
+installLangNormalize()
 
 // Service Worker — 见 src/sw.ts;构建走 scripts/build_sw.mjs → public/sw.js
 //   (1) 拦截 /v1/visualcube.svg 本地生成 SVG

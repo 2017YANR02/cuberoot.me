@@ -64,6 +64,15 @@ export default function RecordsPage() {
   const region = params.get('region') || 'world';
   const event = params.get('event') || '';   // '' = all events
 
+  // 强制 show 显式在 URL 里(默认 history)
+  useEffect(() => {
+    if (params.get('show') !== 'history' && params.get('show') !== 'mixed') {
+      const next = new URLSearchParams(params);
+      next.set('show', 'history');
+      setParams(next, { replace: true });
+    }
+  }, [params, setParams]);
+
   const update = (k: string, v: string) => {
     const next = new URLSearchParams(params);
     if (v) next.set(k, v); else next.delete(k);
@@ -114,6 +123,7 @@ export default function RecordsPage() {
   }, [bundle]);
 
   // history 模式按 event 分组(N 张表),mixed 模式扁平单表
+  // 每组内 single 排前、average 排后,各自保持原日期序
   const grouped = useMemo(() => {
     if (show !== 'history') return null;
     const map = new Map<string, Row[]>();
@@ -124,7 +134,12 @@ export default function RecordsPage() {
     }
     return ALL_EVENT_IDS
       .filter(id => map.has(id))
-      .map(id => ({ event: id, rows: map.get(id)! }));
+      .map(id => {
+        const rows = map.get(id)!;
+        const singles = rows.filter(r => r.t === 's');
+        const averages = rows.filter(r => r.t === 'a');
+        return { event: id, rows: [...singles, ...averages] };
+      });
   }, [visibleRows, show]);
 
   return (
@@ -136,7 +151,7 @@ export default function RecordsPage() {
           </Link>
           <LangToggle />
         </div>
-        <h1>{isZh ? 'WR / CR / NR 纪录' : 'Records'}</h1>
+        <h1>{isZh ? '纪录' : 'Records'}</h1>
         <p className="wse-subtitle">
           {isZh
             ? '历史上所有曾被打破的世界 / 大洲 / 国家纪录'
@@ -150,13 +165,13 @@ export default function RecordsPage() {
             <button
               type="button"
               className={show === 'history' ? 'active' : ''}
-              onClick={() => update('show', '')}
-            >{isZh ? '按项目分组' : 'History'}</button>
+              onClick={() => update('show', 'history')}
+            >{isZh ? '历史' : 'History'}</button>
             <button
               type="button"
               className={show === 'mixed' ? 'active' : ''}
               onClick={() => update('show', 'mixed')}
-            >{isZh ? '合并时序' : 'Mixed'}</button>
+            >{isZh ? '混合' : 'Mixed'}</button>
           </div>
 
           <RegionPicker
@@ -187,16 +202,18 @@ export default function RecordsPage() {
 
             {show === 'history' && grouped && grouped.map(g => (
               <section key={g.event} className="records-event-group">
-                <h2 className="records-event-h2">
-                  <EventIcon event={g.event} />
-                  <span>{eventDisplayName(g.event, isZh)}</span>
-                </h2>
+                {!event && (
+                  <h2 className="records-event-h2">
+                    <EventIcon event={g.event} />
+                    <span>{eventDisplayName(g.event, isZh)}</span>
+                  </h2>
+                )}
                 <RowsTable rows={g.rows} isZh={isZh} showEvent={false} />
               </section>
             ))}
 
             {show === 'mixed' && visibleRows.length > 0 && (
-              <RowsTable rows={visibleRows} isZh={isZh} showEvent={true} />
+              <RowsTable rows={visibleRows} isZh={isZh} showEvent={!event} />
             )}
           </>
         )}
@@ -249,7 +266,7 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
             <td>
               <RecordBadge record={r.l} />
               {' '}
-              <span className="records-type-sub">{r.t === 's' ? (isZh ? '单' : 'Single') : (isZh ? '均' : 'Avg')}</span>
+              <span className="records-type-sub">{r.t === 's' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Avg')}</span>
               {' '}
               <span className="records-rank">#{ranks[i]}</span>
             </td>
@@ -283,7 +300,7 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
   );
 }
 
-// 大洲剪影 — 由 scripts/gen_continent_icons.mjs 从 countries-110m.geojson 生成
+// 大洲剪影 — public/_assets/continent-icons/*.svg(手工维护,非脚本生成)
 function ContinentIcon({ slug }: { slug: string }) {
   return (
     <span className="continent-icon">
@@ -319,14 +336,18 @@ function RegionPicker({ value, isZh, countries, onChange }: {
     if (!ql) return CONTINENTS;
     return CONTINENTS.filter(c => c.en.toLowerCase().includes(ql) || c.zh.includes(q));
   }, [ql, q]);
+  const countriesSorted = useMemo(() => {
+    const collator = new Intl.Collator(isZh ? 'zh-Hans-CN' : 'en', { sensitivity: 'base' });
+    return [...countries].sort((a, b) => collator.compare(countryName(a, isZh), countryName(b, isZh)));
+  }, [countries, isZh]);
   const countriesFiltered = useMemo(() => {
-    if (!ql) return countries;
-    return countries.filter(iso =>
+    if (!ql) return countriesSorted;
+    return countriesSorted.filter(iso =>
       iso.toLowerCase().includes(ql) ||
       countryName(iso, isZh).toLowerCase().includes(ql) ||
       countryName(iso, false).toLowerCase().includes(ql),
     );
-  }, [countries, ql, isZh]);
+  }, [countriesSorted, ql, isZh]);
 
   const select = (v: string) => { onChange(v); setOpen(false); setQ(''); };
 
@@ -373,7 +394,7 @@ function RegionPicker({ value, isZh, countries, onChange }: {
               </button>
             ))}
             {countriesFiltered.length > 0 && (
-              <div className="records-region-section">{isZh ? '国家' : 'Country'}</div>
+              <div className="records-region-section">{isZh ? '地区' : 'Region'}</div>
             )}
             {countriesFiltered.map(iso => (
               <button
