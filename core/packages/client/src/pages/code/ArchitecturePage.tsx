@@ -576,12 +576,12 @@ const TIMELINE: TLEntry[] = [
     zh: {
       title: 'HMR 三入口 + dev.cuberoot.me 隧道 + /code/architecture 重写',
       body: 'PC localhost / 同 WiFi 手机 (ts.net) / 蜂窝外网手机 (dev.cuberoot.me) 三端实时 HMR — 不同反代,同一份 vite client。这页同日从纯文字改成图文长版, 一边写一边在三端验证。',
-      expand: '蜂窝下原来 ts.net Funnel 因 PC 在墙内不稳, 新加 dev.cuberoot.me 走 frp 反向隧道 → 自有云服务器 nginx, 强制 TLS + token, 公网开放 7000 但安全。本页第 09 节有 HMR 三入口完整推导:写死 clientPort 等于全员遵守一个入口, 删掉让 client 跟着 page URL 自己算 — 三端各自正确, 浏览器自己规范化空端口。',
+      expand: '蜂窝下原来 ts.net Funnel 因 PC 跨境路由不稳, 新加 dev.cuberoot.me 走 frp 反向隧道 → 自有云服务器 nginx, 强制 TLS + token, 公网开放 7000 但安全。本页第 09 节有 HMR 三入口完整推导:写死 clientPort 等于全员遵守一个入口, 删掉让 client 跟着 page URL 自己算 — 三端各自正确, 浏览器自己规范化空端口。',
     },
     en: {
       title: 'HMR triple entry + dev.cuberoot.me tunnel + /code/architecture rewrite',
       body: 'PC localhost / same-WiFi phone (ts.net) / cellular phone (dev.cuberoot.me) all hot-reload — three reverse proxies, one vite client. This page (/code/architecture) was rewritten from plain prose into illustrated long-form, validated live on all three.',
-      expand: 'Cellular previously couldn\'t use ts.net Funnel (PC inside GFW, relay flaky); added dev.cuberoot.me over frp reverse tunnel → self-hosted VM nginx, forced TLS + token, port 7000 public but safe. Section 09 has the full triple-entry derivation: a hardcoded clientPort forces everyone through one entry. Delete it, let the client derive from its own page URL — three entries each compute their own correct values, browser normalizes the empty port.',
+      expand: 'Cellular previously couldn\'t use ts.net Funnel (PC behind cross-border routing, relay flaky); added dev.cuberoot.me over frp reverse tunnel → self-hosted VM nginx, forced TLS + token, port 7000 public but safe. Section 09 has the full triple-entry derivation: a hardcoded clientPort forces everyone through one entry. Delete it, let the client derive from its own page URL — three entries each compute their own correct values, browser normalizes the empty port.',
     },
   },
   {
@@ -632,12 +632,12 @@ const TIMELINE: TLEntry[] = [
     zh: {
       title: '三件迁移同日完成 (PG / alg DB / 卸宝塔)',
       body: '同一天: MariaDB → PG 13 整体迁移 + 41 个 alg JSON → DB + 宝塔 + PHP + WP 全卸。云服务器只剩 nginx + Node + PG。',
-      expand: 'PG 迁移用 jsonb / window function / partial index 让 recon / alg / stats 代码全简化一档。pg_dump systemd timer 每天 03:00 UTC 备份留 30 天。Alg 网页可直接编辑 (X-Admin-Key 或 OAuth), 不用 commit + redeploy。Blog 从 WordPress 迁 Hugo 静态。',
+      expand: 'PG 迁移用 jsonb / window function / partial index 让 recon / alg / stats 代码全简化一档。pg_dump systemd timer 每天 03:00 UTC 备份留 30 天。Alg 网页可直接编辑 (X-Admin-Key 或 OAuth), 不用 commit + redeploy。Blog 从 WordPress 整站静态化归档 (后来 2026-05-14 又拆出 blog.cuberoot.me 子域 + GH Pages 镜像)。',
     },
     en: {
       title: 'Three migrations the same day (PG / alg DB / wipe baota)',
       body: 'Same day: MariaDB → PG 13 + 41 alg JSONs into PG + wipe baota + PHP + WP. The VM now runs only nginx + Node + PG.',
-      expand: 'PG migration uses jsonb / window functions / partial indexes to simplify recon / alg / stats across the board. pg_dump on a systemd timer at 03:00 UTC, 30-day retention. Algs now editable directly in the browser (X-Admin-Key or OAuth) — no commit + redeploy. Blog migrated from WordPress to static Hugo.',
+      expand: 'PG migration uses jsonb / window functions / partial indexes to simplify recon / alg / stats across the board. pg_dump on a systemd timer at 03:00 UTC, 30-day retention. Algs now editable directly in the browser (X-Admin-Key or OAuth) — no commit + redeploy. Blog was statically archived from WordPress (later split into blog.cuberoot.me subdomain + GH Pages mirror on 2026-05-14).',
     },
   },
   {
@@ -1364,7 +1364,7 @@ React SPA   →  fetch(apiUrl('/v1/recon/abc'))
               <tr><td><code>cuberoot.me</code></td><td><L zh="云服务器 nginx" en="Cloud nginx" /></td><td><L zh="主站, SPA 入口" en="Primary site, SPA entry" /></td></tr>
               <tr><td><code>www.cuberoot.me</code></td><td><L zh="同台, 301" en="Same VM, 301" /></td><td><L zh="apex 与 www 互通" en="apex / www mutual redirect" /></td></tr>
               <tr><td><code>api.cuberoot.me</code></td><td><L zh="同台 nginx 反代 :3001" en="Same VM, nginx → :3001" /></td><td><L zh="Hono API + 24h proxy_cache" en="Hono API + 24h proxy_cache" /></td></tr>
-              <tr><td><code>cuberoot.me/blog/</code></td><td><L zh="Hugo 静态" en="Hugo static" /></td><td><L zh="2026-05 从 WordPress 迁来" en="Migrated from WordPress, 2026-05" /></td></tr>
+              <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨:同台 nginx alias / GH Pages" en="Dual: nginx alias / GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze),境内主路径快,境外走子域" en="WordPress static archive (frozen 2026-05); main path serves CN, subdomain serves oversea" /></td></tr>
             </tbody>
           </table>
         </section>
