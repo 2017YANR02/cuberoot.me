@@ -93,7 +93,7 @@ EVENT_DISPLAY_ORDER = [
 ]
 # 内部ID -> (排序索引, 显示短名)
 EVENT_ORDER_MAP = {eid: (idx, short) for idx, (eid, short) in enumerate(EVENT_DISPLAY_ORDER)}
-USER_AGENT = "WCA-Stats-Bot/1.0 (ruiminyan.github.io)"
+USER_AGENT = "WCA-Stats-Bot/1.0 (cuberoot.me)"
 # ==================================================
 
 

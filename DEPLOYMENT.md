@@ -4,8 +4,7 @@
 
 ✅ **WCA 统计自动更新已上线**
 
-- **地址**：[ruiminyan.github.io/wca-stats/](https://ruiminyan.github.io/wca-stats/)
-- **镜像**：[www.cuberoot.me](https://www.cuberoot.me)（自动同步）
+- **地址**：[cuberoot.me/wca-stats/](https://cuberoot.me/wca-stats/) · [www.cuberoot.me/wca-stats/](https://www.cuberoot.me/wca-stats/)
 
 ## CI 策略
 
@@ -18,7 +17,7 @@
 | **Backup Recon** | 定时（每周一凌晨 4:00）/ 手动 | API 拉取复盘备份 + 增量 WCA 成绩 | ~10 秒 |
 | **Update Upcoming** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
 
-> Push 代码不触发统计 CI。手动触发：[Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) → 选择 workflow → "Run workflow"。
+> Push 代码不触发统计 CI。手动触发：[Actions 页面](https://github.com/RuiminYan/cuberoot.me/actions) → 选择 workflow → "Run workflow"。
 
 ## 部署流
 

@@ -63,7 +63,7 @@ function SystemTopoSVG() {
         <rect x="680" y="200" width="180" height="80" rx="10" />
         <text x="770" y="230" className="d-title">GH Pages</text>
         <text x="770" y="248" className="d-sub">fallback mirror</text>
-        <text x="770" y="266" className="d-sub d-mono">ruiminyan.github.io</text>
+        <text x="770" y="266" className="d-sub d-mono">cuberoot.me (CNAME)</text>
       </g>
 
       <g className="d-arrow d-arrow-hot">
@@ -891,12 +891,12 @@ const TIMELINE: TLEntry[] = [
     tag: 'infra',
     zh: {
       title: '项目诞生 — 一个 index.html',
-      body: 'GitHub Pages 上的一个 ruiminyan.github.io repo, 一个空的 index.html, 一份 README。完。',
+      body: 'GitHub Pages 上的一个 repo, 一个空的 index.html, 一份 README。完。',
       expand: '初次 push 那天没有任何工具 / 后端 / 数据, 就是个壳。后两个月里慢慢往里塞 fork 的工具页 (Solver / Alg-Trainers 等)。整站第一个有数据的功能要等到 2026-02-17 的 WCA Statistics 才出现 — 也就是说前 65 天基本只在排版。',
     },
     en: {
       title: 'Day zero — one index.html',
-      body: 'A ruiminyan.github.io repo on GitHub Pages, an empty index.html, a README. That\'s it.',
+      body: 'A repo on GitHub Pages, an empty index.html, a README. That\'s it.',
       expand: 'The day-one push had no tools, no backend, no data — just a shell. Over the next two months it slowly accumulated forked tool pages (Solver, Alg-Trainers, etc.). The first feature with real data didn\'t arrive until 2026-02-17 (WCA Statistics), meaning the first 65 days were essentially layout work.',
     },
   },
@@ -1358,7 +1358,6 @@ React SPA   →  fetch(apiUrl('/v1/recon/abc'))
               <tr><td><code>cuberoot.me</code></td><td><L zh="云服务器 nginx" en="Cloud nginx" /></td><td><L zh="主站, SPA 入口" en="Primary site, SPA entry" /></td></tr>
               <tr><td><code>www.cuberoot.me</code></td><td><L zh="同台, 301" en="Same VM, 301" /></td><td><L zh="apex 与 www 互通" en="apex / www mutual redirect" /></td></tr>
               <tr><td><code>api.cuberoot.me</code></td><td><L zh="同台 nginx 反代 :3001" en="Same VM, nginx → :3001" /></td><td><L zh="Hono API + 24h proxy_cache" en="Hono API + 24h proxy_cache" /></td></tr>
-              <tr><td><code>ruiminyan.github.io</code></td><td><L zh="GitHub Pages 镜像" en="GitHub Pages mirror" /></td><td><L zh="兜底, 301 → cuberoot.me" en="Fallback, 301 → cuberoot.me" /></td></tr>
               <tr><td><code>cuberoot.me/blog/</code></td><td><L zh="Hugo 静态" en="Hugo static" /></td><td><L zh="2026-05 从 WordPress 迁来" en="Migrated from WordPress, 2026-05" /></td></tr>
             </tbody>
           </table>
@@ -1512,8 +1511,8 @@ const socketHost = \`\${importMetaUrl.hostname}:\${hmrPort || importMetaUrl.port
           <div className="arch-foot-line">
             <L zh="源码" en="Source" />
             <span className="arch-meta-sep">·</span>
-            <a href="https://github.com/ruiminyan/ruiminyan.github.io" target="_blank" rel="noreferrer">
-              github.com/ruiminyan/ruiminyan.github.io
+            <a href="https://github.com/RuiminYan/cuberoot.me" target="_blank" rel="noreferrer">
+              github.com/RuiminYan/cuberoot.me
             </a>
             <span className="arch-meta-sep">·</span>
             <Link to="/code">/code</Link>

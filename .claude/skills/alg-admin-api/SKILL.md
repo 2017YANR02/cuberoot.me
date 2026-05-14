@@ -19,7 +19,7 @@ helper:`packages/server/src/utils/recon_helpers.ts` 的 `requireAdminOrApiKey(c)
 key 在 **`.password.md`**(本地 gitignored) + 云 `/root/core-api/.env`。AI 自己读:
 
 ```bash
-KEY=$(grep -oP 'ADMIN_API_KEY\*\* \| `\K[^`]+' D:/cube/ruiminyan.github.io/.password.md)
+KEY=$(grep -oP 'ADMIN_API_KEY\*\* \| `\K[^`]+' D:/cube/cuberoot.me/.password.md)
 ```
 
 **别在对话明文打 key**,用 `$KEY`。

@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Continue'
 # NOTE: --expose-gc 让 wr_dominance 可显式 GC；--max-old-space-size=6144 适配 GitHub Actions 7GB 环境
 $env:NODE_OPTIONS = '--expose-gc --max-old-space-size=6144'
 
-$statsDir = "d:\cube\ruiminyan.github.io\trainer\packages\stats-build"
+$statsDir = $PSScriptRoot
 $reportFile = Join-Path $statsDir "test_report.txt"
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 

@@ -100,7 +100,7 @@ const EDGE_SLOT_FACES: Array<[number, number]> = [
 ];
 ```
 
-> **VERIFY THESE BY PROBE FIRST.** Don't trust me. Run a probe like the ones already in `/d/cube/ruiminyan.github.io/core/packages/client/probe*.mjs` history (search git log for examples) — apply known single-piece insertions (`U R U' R'`, `L' U' L U`, etc.) from solved and inspect which slots/orientations changed. Adjust the tables if my sketch is wrong. Slot ↔ piece numbering convention was verified earlier; sticker-direction convention may not be.
+> **VERIFY THESE BY PROBE FIRST.** Don't trust me. Run a probe like the ones already in `/d/cube/cuberoot.me/core/packages/client/probe*.mjs` history (search git log for examples) — apply known single-piece insertions (`U R U' R'`, `L' U' L U`, etc.) from solved and inspect which slots/orientations changed. Adjust the tables if my sketch is wrong. Slot ↔ piece numbering convention was verified earlier; sticker-direction convention may not be.
 
 **Function — `edgeStickerOnFace(pattern, edgeSlot, faceIdx)`:** returns the sticker color (0..5) shown at `faceIdx` for the edge currently at `edgeSlot`.
 
@@ -232,7 +232,7 @@ Don't repeat these.
 
 ```bash
 # 1. Sanity-check the current state
-cd /d/cube/ruiminyan.github.io/core
+cd /d/cube/cuberoot.me/core
 pnpm --filter @cuberoot/client typecheck
 git log --oneline main ^origin/main | head -15
 

@@ -29,7 +29,7 @@ Top 3 surprises from peer research:
 - **`/viz` 时间序列分布、`/globe` 全球地图、`/calendar` 日历堆叠** —— 三个独立维度叠在 WCA 数据上，竞品没有同等深度。
 - **`/frame-count` 用 WebCodecs + mp4box.js 做帧级分析** —— 这是 reco.nz 完全没有的能力，是一个独立护城河。
 - **`/scramble-stats`** 来自本地 C++ 求解器跑出的 CSV，给打乱"难度分布"建模 —— 全网没看到第二家。
-- **中英双语 + 中国比赛名中文化 + 中国镜像**(cuberoot.me 备案 + ruiminyan.github.io 备线)，国内访问体验唯一。
+- **中英双语 + 中国比赛名中文化 + 双线接入**(cuberoot.me 备案 + GH Pages 境外 CNAME)，国内访问体验唯一。
 - **WCA OAuth 已通**(`WcaAuth` 组件 + Hono server)，未来个人化功能不需要再搭一遍登录。
 
 任何新功能必须复用以上资产，不要平起一个新栈。

@@ -7,13 +7,13 @@
 .PARAMETER UpstreamDir
     上游仓库路径（默认 D:\cube\mihlefeld-alg-trainers）
 .PARAMETER LocalDir
-    本地项目路径（默认 D:\cube\ruiminyan.github.io）
+    本地项目路径（默认 D:\cube\cuberoot.me）
 .PARAMETER DryRun
     只预览变更，不实际写入文件
 #>
 param(
     [string]$UpstreamDir = "D:\cube\mihlefeld-alg-trainers",
-    [string]$LocalDir = "D:\cube\ruiminyan.github.io",
+    [string]$LocalDir = "D:\cube\cuberoot.me",
     [switch]$DryRun
 )
 
