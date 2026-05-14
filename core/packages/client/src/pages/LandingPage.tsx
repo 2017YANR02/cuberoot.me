@@ -17,6 +17,7 @@ import {
 import LandingCubeHero from './LandingCubeHero';
 import DonateModal from './DonateModal';
 import WcaAuth from '../components/WcaAuth';
+import ThemeToggle from '../components/ThemeToggle';
 import './landing.css';
 
 // NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
@@ -538,6 +539,8 @@ export default function LandingPage() {
           <span className="globe-icon">🌐</span>
           <span className="lang-label">{lang === 'zh' ? 'English' : '中文'}</span>
         </button>
+
+        <ThemeToggle />
       </div>
 
       {/* NOTE: 中国 ICP / 公安备案 — 仅在 cuberoot.me 域名（备案绑定该域名）和本地 dev 显示。

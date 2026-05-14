@@ -4,15 +4,16 @@
  * ────────────────────────────────────────────────────────────────────────── */
 
 .wb-page {
-    --wb-bg: #FAF9F5;
-    --wb-surface: #FFFFFF;
-    --wb-text: #181716;
-    --wb-text-sub: #6F6E6B;
-    --wb-text-mute: #95938E;
-    --wb-border: #E5E4DF;
-    --wb-border-strong: #CCCAC2;
-    --wb-accent: #C15F3C;
-    --wb-accent-soft: rgba(193, 95, 60, 0.08);
+    /* 走 :root 通用 token,自动 light/dark 反盖;page-specific gold 保留。 */
+    --wb-bg: var(--background);
+    --wb-surface: var(--card);
+    --wb-text: var(--foreground);
+    --wb-text-sub: var(--muted-foreground);
+    --wb-text-mute: var(--faint-foreground);
+    --wb-border: var(--border-default);
+    --wb-border-strong: var(--border-strong);
+    --wb-accent: var(--accent);
+    --wb-accent-soft: var(--accent-soft);
     --wb-gold: #C9A24E;
     --wb-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
 

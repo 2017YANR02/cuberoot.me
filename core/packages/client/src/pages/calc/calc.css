@@ -12,6 +12,10 @@
 }
 
 .calc-page {
+    /* calc 视觉强度大,目前 light-only。dark 模式不要打乱 cream-button-on-cream-bg 设计意图。 */
+    color-scheme: light;
+    --background: #FAF9F5;
+    --foreground: #181716;
     color: #332e28;
 }
 

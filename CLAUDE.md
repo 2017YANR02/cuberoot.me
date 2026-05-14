@@ -96,13 +96,14 @@ pnpm --filter @cuberoot/client lint
 
 ## 主题 / 颜色
 
-未来给 8 页(trainer / battle / memo / alg / wca-stats / calendar / calc / wb)加 dark/light 切换,方向锁在 `core/packages/client/src/pages/THEMING.md`。当前状态:**只锁了决策,代码尚未落地**。
+8 页 dark/light 已落地。token 在 `src/index.css :root`,详见 `DESIGN.md` + `pages/THEMING.md`。
 
-- 在这 8 页内新写 CSS,**别再 #888 #aaa 硬码灰**;按 THEMING.md 的命名表用 `--muted-foreground` / `--faint-foreground` / `--border-default` 等(token 还没在 :root 落地,但提前用 var() 也行 — 落地时一起激活)
-- 信号色(success/warning/danger/info)统一用 `--signal-*` token,别新发明 `--ok-color` 之类
-- 页面专有 accent / 品牌色(如 `--c-active` `--wb-gold`)留 page-scope
-- 加新页前先想"未来要不要 dark/light",要的话扩 THEMING.md 8 页表;不要的话随便硬码
-- alg / globe 已自有双主题方案,不动
+- 新 CSS 用 shadcn 风 token (`--background --foreground --muted-foreground --border-default --accent --signal-*`),禁 `#888 #aaa` 硬码
+- 衍生色用 `color-mix(in srgb, var(--base) X%, transparent)`,禁手算 rgba
+- 页面专有 brand 色 (`--c-active --wb-gold` 等) 留 page-scope
+- 视觉硬码 dark 的页 page-scope 锁 `color-scheme: dark` + 反盖 `--background --foreground`,防 light 系统下黑字黑底
+- legacy 老 token (`--bg-primary --text-primary --accent-glow --border-dark`) 不再新用
+- alg / globe 自有双主题,不动
 
 ## Skill 路由
 

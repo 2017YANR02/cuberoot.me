@@ -3,17 +3,18 @@
  * ========================================================================== */
 
 .calendar-page {
-    --bg: #FAF9F5;
-    --surface: #FFFFFF;
-    --surface-alt: #F5F4EE;
-    --text: #181716;
-    --text-sub: #6F6E6B;
-    --text-muted: #9F9D97;
-    --border: #E5E4DF;
-    --border-strong: #CCCAC2;
-    --accent: #C15F3C;
-    --accent-soft: rgba(193, 95, 60, 0.10);
-    --accent-soft-strong: rgba(193, 95, 60, 0.22);
+    /* 走 :root 通用 token,自动 light/dark 反盖。短名作 alias 保留以减少改动量。 */
+    --bg: var(--background);
+    --surface: var(--card);
+    --surface-alt: var(--muted);
+    --text: var(--foreground);
+    --text-sub: var(--muted-foreground);
+    --text-muted: var(--faint-foreground);
+    --border: var(--border-default);
+    /* --border-strong 跟 :root 同名 */
+    /* --accent 跟 :root 同名 */
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+    --accent-soft-strong: color-mix(in srgb, var(--accent) 22%, transparent);
     --wr-current: #DC2626;
     --wr-former: #D69755;
 
