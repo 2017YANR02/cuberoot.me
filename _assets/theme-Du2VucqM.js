@@ -1,1 +1,0 @@
-var e=`theme`;function t(e){let t=document.documentElement;e===`system`?t.removeAttribute(`data-theme`):t.setAttribute(`data-theme`,e)}function n(){t(localStorage.getItem(`theme`)||`system`)}export{t as n,n as r,e as t};
