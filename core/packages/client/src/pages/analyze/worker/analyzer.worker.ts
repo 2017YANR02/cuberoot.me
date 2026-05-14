@@ -67,6 +67,9 @@ type EmModule = { locateFile?: (p: string) => string; onRuntimeInitialized?: () 
 declare const self: {
   Module: EmModule;
   PseudoModuleStash: EmModule;
+  EOCrossStash: EmModule;
+  PairingStash: EmModule;
+  PseudoPairingStash: EmModule;
   postMessage: (msg: unknown) => void;
   onmessage: ((e: MessageEvent<AnalyzeRequest>) => void) | null;
 };
@@ -79,12 +82,33 @@ const xcrossReady = new Promise<void>((resolve) => {
 const xcrossModule = self.Module;
 importScripts('/analyze-worker/xcross/solver.js');
 // pseudo — IIFE-wrapped, picks up its config from self.PseudoModuleStash.
-self.PseudoModuleStash = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/pseudo/' + p };
+self.PseudoModuleStash = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/pseudo-cross/' + p };
 const pseudoReady = new Promise<void>((resolve) => {
   self.PseudoModuleStash.onRuntimeInitialized = () => resolve();
 });
 const pseudoModule = self.PseudoModuleStash;
-importScripts('/analyze-worker/pseudo/pseudo-wrapped.js');
+importScripts('/analyze-worker/pseudo-cross/pseudo-wrapped.js');
+// EOCross — IIFE-wrapped, solve(scr, rot, slot, num, len, ...) 11 args, no pslot.
+self.EOCrossStash = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/eocross/' + p };
+const eoCrossReady = new Promise<void>((resolve) => {
+  self.EOCrossStash.onRuntimeInitialized = () => resolve();
+});
+const eoCrossModule = self.EOCrossStash;
+importScripts('/analyze-worker/eocross/solver-wrapped.js');
+// F2L_PairingSolver — IIFE-wrapped, solve(scr, rot, slot, pslot, num, len, ...) 12 args.
+self.PairingStash = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/pair/' + p };
+const pairingReady = new Promise<void>((resolve) => {
+  self.PairingStash.onRuntimeInitialized = () => resolve();
+});
+const pairingModule = self.PairingStash;
+importScripts('/analyze-worker/pair/pairing_solver-wrapped.js');
+// pseudoPairingSolver — IIFE-wrapped, solve(scr, rot, slot, pslot, a_slot, a_pslot, num, len, ...) 14 args.
+self.PseudoPairingStash = _isNode ? {} : { locateFile: (p: string) => '/analyze-worker/pseudo-pair/' + p };
+const pseudoPairingReady = new Promise<void>((resolve) => {
+  self.PseudoPairingStash.onRuntimeInitialized = () => resolve();
+});
+const pseudoPairingModule = self.PseudoPairingStash;
+importScripts('/analyze-worker/pseudo-pair/pseudoPairingSolver-wrapped.js');
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -471,6 +495,26 @@ const PSEUDO_CENTER_OFFSET_ALL = "EMPTY_EMPTY|EMPTY_y|EMPTY_y2|EMPTY_y'";
 const PSEUDO_OFFSET_FIXES = ['', 'D', 'D2', "D'"];
 const XCROSS_TERMINALS = new Set(['Search finished.', 'Already solved.', 'Unsolvable.', 'Error']);
 
+// Stage labels for new variants. xs = number of X prefixes (matches std XCross naming).
+const STAGE_XS: Record<Stage, string> = { cross: '', xcross: 'X', xxcross: 'XX', xxxcross: 'XXX' };
+// EO solutions take more moves (remaining edges must be EO). Bump maxLen vs std XCROSS_STAGE_PARAMS.
+const EOCROSS_STAGE_PARAMS: Record<Stage, { pairs: 0 | 1 | 2 | 3; solNum: number; maxLen: number; nearOptDelta: number }> = {
+  cross:    { pairs: 0, solNum: 20, maxLen: 12, nearOptDelta: 1 },
+  xcross:   { pairs: 1, solNum: 20, maxLen: 14, nearOptDelta: 1 },
+  xxcross:  { pairs: 2, solNum: 10, maxLen: 16, nearOptDelta: 1 },
+  xxxcross: { pairs: 3, solNum: 5,  maxLen: 20, nearOptDelta: 1 },
+};
+// Pair-ready stages — alg ends right BEFORE the Setup+Insert that would close the pair.
+const PAIR_STAGE_PARAMS: Record<Stage, { pairs: 0 | 1 | 2 | 3; solNum: number; maxLen: number; nearOptDelta: number }> = {
+  cross:    { pairs: 0, solNum: 20, maxLen: 10, nearOptDelta: 1 },
+  xcross:   { pairs: 1, solNum: 20, maxLen: 12, nearOptDelta: 1 },
+  xxcross:  { pairs: 2, solNum: 10, maxLen: 14, nearOptDelta: 1 },
+  xxxcross: { pairs: 3, solNum: 5,  maxLen: 18, nearOptDelta: 1 },
+};
+const PSEUDO_PAIR_STAGE_PARAMS = PAIR_STAGE_PARAMS;
+// For Pseudo+Pair we restrict to matched a_slot==a_pslot to keep F2L planner handoff sane.
+const F2L_SLOTS = ['BL', 'BR', 'FR', 'FL'] as const;
+
 /** Run crossSolver.wasm in F2L mode once. Sync; monkey-patches postMessage to capture emit. */
 function runXCrossWasmOnce(scramble: string, rotation: string, slot: string, solNum: number, maxLen: number, centerOffset: string): string[] {
   const collected: string[] = [];
@@ -552,47 +596,268 @@ function runPseudoWasmOnce(scramble: string, rotation: string, slot: string, psl
 }
 
 /**
- * pCross: cross algorithms allowing D-offset target. For each wasm output we detect
- * which D-class fix ('' / D / D2 / D') would re-align the cross, append it to the
- * alg so the displayed sequence stays valid, and hand off the (now canonical)
- * state to F2LPlanner. Δ=0 results are dropped to avoid duplicating regular cross.
+ * Pseudo Cross/XCross/XXCross/XXXCross via pseudoCrossSolver.wasm.
+ * Stage selection: slot+pslot count selects cross_search/xcross_search/etc. We use matched
+ * slot==pslot so after D-fix both edge (fixed-pos) and corner (pseudo-pos) land in the same
+ * canonical F2L slot, indistinguishable from standard XCross/XXCross/XXXCross. Decoupled
+ * slot≠pslot would need offset-aware F2L — out of scope. Δ=0 dropped to avoid duplicates.
  */
-function runPseudoCrossAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>): CrossResult[] {
-  const params = XCROSS_STAGE_PARAMS.cross;
+function runPseudoCrossAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>, stage: Stage): CrossResult[] {
+  const params = XCROSS_STAGE_PARAMS[stage];
+  const combos = XCROSS_SLOT_COMBOS[params.pairs];
+  const label = 'p' + STAGE_XS[stage] + 'Cross';
   const solNum = params.solNum * 4;
   const out: CrossResult[] = [];
   for (const color of Object.keys(XCROSS_ROTATIONS) as CrossColor[]) {
     if (crosscolors[color] === false) continue;
     const rotation = XCROSS_ROTATIONS[color];
-    const wasmOuts = runPseudoWasmOnce(scramble, rotation, '', '', solNum, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
-    const parsed = wasmOuts.map((w) => {
-      const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
-      return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
-    });
-    const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
-    const lenCap = minLen + params.nearOptDelta;
-    const kept = parsed.filter((p) => p.len <= lenCap);
-    for (const { moves: movesOnly, len: depth } of kept) {
-      const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
-      const state = NxN.new_NxN_Data(3);
-      NxN.ProcessMoves(state, scramble);
-      NxN.ProcessMoves(state, fullMoves);
-      let chosenFix: string | null = null;
-      let chosenState: NxNState | null = null;
-      for (const fix of PSEUDO_OFFSET_FIXES) {
-        const p = NxN.new_NxN_Data(state);
-        if (fix) NxN.ProcessMoves(p, fix);
-        if (NxN.isCrossSolved(p)) { chosenFix = fix; chosenState = p; break; }
+    for (const slots of combos) {
+      const slotStr = slots.join(' ');
+      const wasmOuts = runPseudoWasmOnce(scramble, rotation, slotStr, slotStr, solNum, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        let chosenFix: string | null = null;
+        let chosenState: NxNState | null = null;
+        for (const fix of PSEUDO_OFFSET_FIXES) {
+          const p = NxN.new_NxN_Data(state);
+          if (fix) NxN.ProcessMoves(p, fix);
+          if (NxN.isCrossSolved(p) && NxN.getAmountOfSolvedPairs(p) >= params.pairs) {
+            chosenFix = fix;
+            chosenState = p;
+            break;
+          }
+        }
+        if (chosenState === null) continue;
+        if (chosenFix === '') continue;
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const fixSuffix = ' ' + chosenFix;
+        const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+        const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' ' + label + ' [+' + chosenFix + ']' + slotPart;
+        const pairsNow = NxN.getAmountOfSolvedPairs(chosenState);
+        const score = pairsNow * 10 - depth + 1;
+        out.push([alg, chosenState, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
       }
-      if (chosenState === null) continue;
-      if (chosenFix === '') continue;
-      const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
-      const fixSuffix = ' ' + chosenFix;
-      const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' pCross [+' + chosenFix + ']';
-      const score = -depth + 1;
-      out.push([alg, chosenState, score]);
-      totalNumCross++;
-      postMessage({ totalnumcross: totalNumCross });
+    }
+  }
+  return out;
+}
+
+// ── EO Cross via EOCrossSolver.wasm ────────────────────────────────────
+// Output state: cross (or xcross/xxcross/...) solved + remaining edges color-oriented (EO).
+// State is canonical (no D-offset), so F2LPlanner takes over directly.
+function runEOWasmOnce(scramble: string, rotation: string, slot: string, solNum: number, maxLen: number, centerOffset: string): string[] {
+  const collected: string[] = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg: unknown) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    eoCrossModule.solve!(scramble, rotation, slot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset || CENTER_OFFSET_REGULAR, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+function runEOCrossAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>, stage: Stage): CrossResult[] {
+  const params = EOCROSS_STAGE_PARAMS[stage];
+  const combos = XCROSS_SLOT_COMBOS[params.pairs];
+  const label = 'EO+' + STAGE_XS[stage] + 'Cross';
+  const out: CrossResult[] = [];
+  for (const color of Object.keys(XCROSS_ROTATIONS) as CrossColor[]) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const slots of combos) {
+      const slotStr = slots.join(' ');
+      const wasmOuts = runEOWasmOnce(scramble, rotation, slotStr, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+        const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + slotPart;
+        const pairs = NxN.getAmountOfSolvedPairs(state);
+        const score = pairs * 10 - depth + 1;
+        out.push([alg, state, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
+      }
+    }
+  }
+  return out;
+}
+
+// ── Cross + Pair via F2L_PairingSolver.wasm ────────────────────────────
+// Output state: cross (or xcross/...) solved + one F2L slot in "pair-ready" configuration.
+// F2L planner picks up the pair-ready as the next pair to insert.
+function runPairWasmOnce(scramble: string, rotation: string, slot: string, pslot: string, solNum: number, maxLen: number, centerOffset: string): string[] {
+  const collected: string[] = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg: unknown) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, pslot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    pairingModule.solve!(scramble, rotation, slot, pslot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset || CENTER_OFFSET_REGULAR, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+function pairSlotPslotCombos(pairs: 0 | 1 | 2 | 3): Array<{ slot: string; pslot: string }> {
+  const out: Array<{ slot: string; pslot: string }> = [];
+  const baseCombos = XCROSS_SLOT_COMBOS[pairs];
+  for (const slots of baseCombos) {
+    const remaining = F2L_SLOTS.filter((s) => !slots.includes(s));
+    for (const ps of remaining) out.push({ slot: slots.join(' '), pslot: ps });
+  }
+  return out;
+}
+
+function runCrossPairAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>, stage: Stage): CrossResult[] {
+  const params = PAIR_STAGE_PARAMS[stage];
+  const combos = pairSlotPslotCombos(params.pairs);
+  const label = STAGE_XS[stage] + 'Cross+Pair';
+  const out: CrossResult[] = [];
+  for (const color of Object.keys(XCROSS_ROTATIONS) as CrossColor[]) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const { slot, pslot } of combos) {
+      const wasmOuts = runPairWasmOnce(scramble, rotation, slot, pslot, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const slotPart = slot ? ' [' + slot + ']' : '';
+        const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + ' (' + pslot + ' ready)' + slotPart;
+        const pairsNow = NxN.getAmountOfSolvedPairs(state);
+        const score = pairsNow * 10 - depth + 1;
+        out.push([alg, state, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
+      }
+    }
+  }
+  return out;
+}
+
+// ── Pseudo + Pair via pseudoPairingSolver.wasm ─────────────────────────
+// Like Pair, with D-offset cross allowed. Restrict a_slot==a_pslot (matched physical slot).
+function runPseudoPairWasmOnce(scramble: string, rotation: string, slot: string, pslot: string, aSlot: string, aPslot: string, solNum: number, maxLen: number, centerOffset: string): string[] {
+  const collected: string[] = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg: unknown) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, pslot, a_slot, a_pslot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    pseudoPairingModule.solve!(scramble, rotation, slot, pslot, aSlot, aPslot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+function runPseudoPairAllColors(scramble: string, crosscolors: Record<CrossColor, boolean>, stage: Stage): CrossResult[] {
+  const params = PSEUDO_PAIR_STAGE_PARAMS[stage];
+  const baseCombos = XCROSS_SLOT_COMBOS[params.pairs];
+  const out: CrossResult[] = [];
+  const label = 'p' + STAGE_XS[stage] + 'Cross+pPair';
+  const solNumExpanded = params.solNum * 4;
+  for (const color of Object.keys(XCROSS_ROTATIONS) as CrossColor[]) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const slots of baseCombos) {
+      const slotStr = slots.join(' ');
+      const remaining = F2L_SLOTS.filter((s) => !slots.includes(s));
+      for (const ar of remaining) {
+        const wasmOuts = runPseudoPairWasmOnce(scramble, rotation, slotStr, slotStr, ar, ar,
+          solNumExpanded, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
+        const parsed = wasmOuts.map((w) => {
+          const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+          return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+        });
+        const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+        const lenCap = minLen + params.nearOptDelta;
+        const kept = parsed.filter((p) => p.len <= lenCap);
+        for (const { moves: movesOnly, len: depth } of kept) {
+          const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+          const state = NxN.new_NxN_Data(3);
+          NxN.ProcessMoves(state, scramble);
+          NxN.ProcessMoves(state, fullMoves);
+          let chosenFix: string | null = null;
+          let chosenState: NxNState | null = null;
+          for (const fix of PSEUDO_OFFSET_FIXES) {
+            const p = NxN.new_NxN_Data(state);
+            if (fix) NxN.ProcessMoves(p, fix);
+            if (NxN.isCrossSolved(p) && NxN.getAmountOfSolvedPairs(p) >= params.pairs) {
+              chosenFix = fix;
+              chosenState = p;
+              break;
+            }
+          }
+          if (chosenState === null) continue;
+          if (chosenFix === '') continue;
+          const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+          const fixSuffix = ' ' + chosenFix;
+          const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+          const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' ' + label + ' (' + ar + ' ready, +' + chosenFix + ')' + slotPart;
+          const pairsNow = NxN.getAmountOfSolvedPairs(chosenState);
+          const score = pairsNow * 10 - depth + 1;
+          out.push([alg, chosenState, score]);
+          totalNumCross++;
+          postMessage({ totalnumcross: totalNumCross });
+        }
+      }
     }
   }
   return out;
@@ -633,12 +898,36 @@ self.onmessage = async (e: MessageEvent<AnalyzeRequest>) => {
     let variantUnsupported = false;
     // See analyzer.js twin for the full dispatch matrix and "how to add a new variant" comment.
     const useXCrossWasm = variant === 'std' && (stage === 'xcross' || stage === 'xxcross' || stage === 'xxxcross');
-    const usePseudoCrossWasm = variant === 'pseudo' && stage === 'cross';
+    const usePseudoCrossWasm = variant === 'pseudo';
+    const useEOCrossWasm = variant === 'eo';
+    const usePairWasm = variant === 'pair';
+    const usePseudoPairWasm = variant === 'pseudo_pair';
     if (NxN.isCrossSolved(initial)) {
       crosses = [['', initial, 0]];
     } else if (usePseudoCrossWasm) {
       await pseudoReady;
-      crosses = runPseudoCrossAllColors(workingScramble, e.data.crosscolors);
+      crosses = runPseudoCrossAllColors(workingScramble, e.data.crosscolors, stage);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (useEOCrossWasm) {
+      await eoCrossReady;
+      crosses = runEOCrossAllColors(workingScramble, e.data.crosscolors, stage);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (usePairWasm) {
+      await pairingReady;
+      crosses = runCrossPairAllColors(workingScramble, e.data.crosscolors, stage);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (usePseudoPairWasm) {
+      await pseudoPairingReady;
+      crosses = runPseudoPairAllColors(workingScramble, e.data.crosscolors, stage);
       if (crosses.length === 0) {
         xcrossFallback = true;
         crosses = runCrossAllColors(workingScramble, e.data.crosscolors);

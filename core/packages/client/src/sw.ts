@@ -15,6 +15,8 @@
  * 这个文件被 scripts/build_sw.mjs 用 esbuild bundle 成 public/sw.js。
  */
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS, invertSq1Alg } from './pages/gen/sq1_svg';
+import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './pages/gen/mega_svg';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -35,6 +37,28 @@ self.addEventListener('fetch', (event) => {
   event.respondWith((async () => {
     try {
       const qs = url.searchParams;
+      const puzzle = (qs.get('puzzle') ?? 'cube').toLowerCase();
+
+      // sq1 / megaminx (variant=net) — local tnoodle port, same renderer as
+      // /visualcube?puzzle=sq1&variant=net + /alg/sq1 thumbnails.
+      if (puzzle === 'sq1' || puzzle === 'megaminx') {
+        const setupRaw = qs.get('setup');
+        const caseRaw = qs.get('case');
+        const algRaw = qs.get('alg');
+        const forward = setupRaw ?? algRaw ?? (caseRaw != null
+          ? (puzzle === 'sq1' ? invertSq1Alg(caseRaw) : caseRaw)
+          : '');
+        const svg = puzzle === 'sq1'
+          ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS)
+          : renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS);
+        return new Response(svg, {
+          headers: {
+            'Content-Type': 'image/svg+xml; charset=utf-8',
+            'Cache-Control': 'public, max-age=86400',
+          },
+        });
+      }
+
       const svg = renderFromSimpleQuery({
         alg: qs.get('alg') ?? undefined,
         case: qs.get('case') ?? undefined,

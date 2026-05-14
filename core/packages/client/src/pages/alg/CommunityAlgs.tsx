@@ -31,6 +31,7 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, submissions, 
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
+  const login = useAuthStore(s => s.login);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
 
   const [adding, setAdding] = useState(false);
@@ -159,40 +160,39 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, submissions, 
         );
       })}
 
-      {user ? (
-        adding ? (
-          <div className="alg-community-add">
-            <textarea
-              className="alg-community-textarea"
-              value={draftAlg}
-              onChange={e => setDraftAlg(e.target.value)}
-              placeholder={isZh ? '输入算法 (例如 R U R\' U\')' : 'Enter alg (e.g. R U R\' U\')'}
-              rows={1}
-              autoFocus
-            />
-            <input
-              className="alg-community-notes-input"
-              value={draftNotes}
-              onChange={e => setDraftNotes(e.target.value)}
-              placeholder={isZh ? '注释 (可选)' : 'Notes (optional)'}
-            />
-            <button type="button" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={isZh ? '提交' : 'Submit'}>
-              <Check size={14} />
-            </button>
-            <button type="button" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); }} title={isZh ? '取消' : 'Cancel'}>
-              <X size={14} />
-            </button>
-          </div>
-        ) : (
-          <button type="button" className="alg-community-add-btn" onClick={() => setAdding(true)}
-            title={isZh ? '添加我的算法' : 'Add my alg'} aria-label={isZh ? '添加我的算法' : 'Add my alg'}>
-            <Plus size={14} />
+      {user && adding ? (
+        <div className="alg-community-add">
+          <textarea
+            className="alg-community-textarea"
+            value={draftAlg}
+            onChange={e => setDraftAlg(e.target.value)}
+            placeholder={isZh ? '输入算法' : 'Enter alg'}
+            rows={1}
+            autoFocus
+          />
+          <input
+            className="alg-community-notes-input"
+            value={draftNotes}
+            onChange={e => setDraftNotes(e.target.value)}
+            placeholder={isZh ? '注释 (可选)' : 'Notes (optional)'}
+          />
+          <button type="button" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={isZh ? '提交' : 'Submit'}>
+            <Check size={14} />
           </button>
-        )
-      ) : (
-        <div className="alg-community-login-hint">
-          {isZh ? '登录后可添加自己的算法' : 'Log in to add your own alg'}
+          <button type="button" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); }} title={isZh ? '取消' : 'Cancel'}>
+            <X size={14} />
+          </button>
         </div>
+      ) : (
+        <button
+          type="button"
+          className="alg-community-add-btn"
+          onClick={user ? () => setAdding(true) : login}
+          title={user ? (isZh ? '添加我的算法' : 'Add my alg') : (isZh ? '登录后添加自己的算法' : 'Log in to add your own alg')}
+          aria-label={user ? (isZh ? '添加我的算法' : 'Add my alg') : (isZh ? '登录添加算法' : 'Log in to add alg')}
+        >
+          <Plus size={14} />
+        </button>
       )}
     </div>
   );

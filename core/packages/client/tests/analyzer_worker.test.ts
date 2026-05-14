@@ -171,6 +171,106 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     expect(/\[\+(D|D2|D')\]/.test(pseudo[1])).toBe(true);
   }, 60_000);
 
+  it('Pseudo xcross via wasm: emits at least one pXCross solution with D-fix marker', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 1,
+      variant: 'pseudo',
+      stage: 'xcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bpXCross\b/.test(s[1]))).toBe(true);
+    const p = r.solutions.find((s) => /\bpXCross\b/.test(s[1]))!;
+    expect(/\[\+(D|D2|D')\]/.test(p[1])).toBe(true);
+  }, 60_000);
+
+  it('Pseudo xxcross via wasm: emits at least one pXXCross solution', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 2,
+      variant: 'pseudo',
+      stage: 'xxcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bpXXCross\b/.test(s[1]))).toBe(true);
+  }, 120_000);
+
+  it('Pseudo xxxcross via wasm: emits at least one pXXXCross solution', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 3,
+      variant: 'pseudo',
+      stage: 'xxxcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bpXXXCross\b/.test(s[1]))).toBe(true);
+  }, 120_000);
+
+  it('EOCross variant: WR seed white-only emits at least one EO+Cross-labeled solution', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 4,
+      variant: 'eo',
+      stage: 'cross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bEO\+Cross\b/.test(s[1]))).toBe(true);
+  }, 90_000);
+
+  it('EOCross variant: xcross stage emits EO+XCross-labeled solution', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 1,
+      variant: 'eo',
+      stage: 'xcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bEO\+XCross\b/.test(s[1]))).toBe(true);
+  }, 120_000);
+
+  it('Cross+Pair variant: WR seed white-only emits at least one Cross+Pair solution', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 4,
+      variant: 'pair',
+      stage: 'cross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bCross\+Pair\b/.test(s[1]))).toBe(true);
+  }, 60_000);
+
+  it('Cross+Pair variant: xcross stage emits XCross+Pair solution', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 2,
+      variant: 'pair',
+      stage: 'xcross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bXCross\+Pair\b/.test(s[1]))).toBe(true);
+  }, 120_000);
+
+  it('PseudoPair variant: cross stage emits pCross+pPair solution with D-fix marker', async () => {
+    const r = await runAnalyzer('fixed', {
+      scramble: REFERENCE_SCRAMBLE,
+      crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
+      howfar: 4,
+      variant: 'pseudo_pair',
+      stage: 'cross',
+    });
+    expect(r.solutions.length).toBeGreaterThan(0);
+    expect(r.solutions.some((s) => /\bpCross\+pPair\b/.test(s[1]))).toBe(true);
+    const pseudoPair = r.solutions.find((s) => /\bpCross\+pPair\b/.test(s[1]))!;
+    expect(/\+(D|D2|D')/.test(pseudoPair[1])).toBe(true);
+  }, 90_000);
+
   it('R L U R\' yellow-only: opposite-pair duplicate `R\' L\' R` no longer appears', async () => {
     const req: AnalyzeRequest = {
       scramble: "R L U R'",
