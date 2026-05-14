@@ -32,6 +32,9 @@ global.__filename = __filename;
 //     locateFile (and the test always overrides locateFile to point at fs paths).
 let xcrossSolverSource = null;
 let pseudoWrappedSource = null;
+let eoCrossWrappedSource = null;
+let pairWrappedSource = null;
+let pseudoPairWrappedSource = null;
 global.importScripts = (...urls) => {
   for (const url of urls) {
     if (typeof url === 'string' && url.endsWith('/analyze-worker/xcross/solver.js')) {
@@ -49,13 +52,34 @@ global.importScripts = (...urls) => {
       // on globalThis and `typeof Module` reuses our pre-set object.
       // eslint-disable-next-line no-eval
       (0, eval)(xcrossSolverSource);
-    } else if (typeof url === 'string' && url.endsWith('/analyze-worker/pseudo/pseudo-wrapped.js')) {
+    } else if (typeof url === 'string' && url.endsWith('/analyze-worker/pseudo-cross/pseudo-wrapped.js')) {
       if (pseudoWrappedSource === null) {
-        pseudoWrappedSource = fs.readFileSync(path.join(workerData.publicDir, 'pseudo', 'pseudo-wrapped.js'), 'utf8');
+        pseudoWrappedSource = fs.readFileSync(path.join(workerData.publicDir, 'pseudo-cross','pseudo-wrapped.js'), 'utf8');
       }
-      self.PseudoModuleStash.locateFile = (p) => path.join(workerData.publicDir, 'pseudo', p);
+      self.PseudoModuleStash.locateFile = (p) => path.join(workerData.publicDir, 'pseudo-cross',p);
       // eslint-disable-next-line no-eval
       (0, eval)(pseudoWrappedSource);
+    } else if (typeof url === 'string' && url.endsWith('/analyze-worker/eocross/solver-wrapped.js')) {
+      if (eoCrossWrappedSource === null) {
+        eoCrossWrappedSource = fs.readFileSync(path.join(workerData.publicDir, 'eocross', 'solver-wrapped.js'), 'utf8');
+      }
+      self.EOCrossStash.locateFile = (p) => path.join(workerData.publicDir, 'eocross', p);
+      // eslint-disable-next-line no-eval
+      (0, eval)(eoCrossWrappedSource);
+    } else if (typeof url === 'string' && url.endsWith('/analyze-worker/pair/pairing_solver-wrapped.js')) {
+      if (pairWrappedSource === null) {
+        pairWrappedSource = fs.readFileSync(path.join(workerData.publicDir, 'pair', 'pairing_solver-wrapped.js'), 'utf8');
+      }
+      self.PairingStash.locateFile = (p) => path.join(workerData.publicDir, 'pair', p);
+      // eslint-disable-next-line no-eval
+      (0, eval)(pairWrappedSource);
+    } else if (typeof url === 'string' && url.endsWith('/analyze-worker/pseudo-pair/pseudoPairingSolver-wrapped.js')) {
+      if (pseudoPairWrappedSource === null) {
+        pseudoPairWrappedSource = fs.readFileSync(path.join(workerData.publicDir, 'pseudo-pair', 'pseudoPairingSolver-wrapped.js'), 'utf8');
+      }
+      self.PseudoPairingStash.locateFile = (p) => path.join(workerData.publicDir, 'pseudo-pair', p);
+      // eslint-disable-next-line no-eval
+      (0, eval)(pseudoPairWrappedSource);
     }
   }
 };

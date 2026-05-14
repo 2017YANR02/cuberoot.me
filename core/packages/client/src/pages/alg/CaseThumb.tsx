@@ -9,6 +9,7 @@
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { VisualCube } from '../../components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
+import { apiUrl } from '../../utils/api_base';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
@@ -52,6 +53,22 @@ export function CaseThumb({
    *  the full case (ZBLL grouped by COLL → corners-only preview). */
   mask?: string;
 }) {
+  if (puzzle === 'sq1') {
+    // Route through `/v1/visualcube.svg?puzzle=sq1&variant=net` so the thumb is a
+    // real <img> (right-click → Save image as…). The SW (prod) + vite middleware
+    // (dev) both dispatch to the local tnoodle port — visual parity with
+    // /visualcube?puzzle=sq1&variant=net.
+    const params = new URLSearchParams({ puzzle: 'sq1', variant: 'net' });
+    if (setup && setup.trim()) params.set('setup', setup);
+    else if (alg) params.set('case', alg);
+    return (
+      <img
+        src={apiUrl(`/v1/visualcube.svg?${params}`)}
+        alt="Square-1 case"
+        style={{ width: size, height: size, objectFit: 'contain' }}
+      />
+    );
+  }
   if (SR_PUZZLES.includes(puzzle)) {
     const kind = srPuzzleKind(puzzle)!;
     const driver = setup && setup.trim() ? { alg: setup } : { case: alg };

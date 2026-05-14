@@ -32,6 +32,8 @@ import CubingPreview from '../timer/cube/CubingPreview';
 import { invertAlg } from '../notation/alg_ops';
 import InteractiveCubeNet, { type PaintColor } from './InteractiveCubeNet';
 import { SOLVED_FACELET } from '../scramble/solver/facelet';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS, invertSq1Alg as invertSq1AlgLocal } from '../gen/sq1_svg';
+import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '../gen/mega_svg';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -821,6 +823,23 @@ export default function VisualCubeEditorPage() {
             );
           }
           if (isCubeNet || isOtherNet) {
+            // sq1 / megaminx: render directly via the tnoodle port — same SVG
+            // shape as our NxN path (auto-sized by `.vc-preview svg` CSS).
+            // CubingPreview's fixed inline width/height container breaks
+            // centering inside `.vc-preview-wrap` (flex + max-height: 45vh) at
+            // browser zooms where vh shrinks below the inline height.
+            if (isOtherNet && (state.puzzleType === 'sq1' || state.puzzleType === 'megaminx')) {
+              const raw = state.algorithm ?? '';
+              const forward = state.algType === 'case'
+                ? (state.puzzleType === 'sq1' ? invertSq1AlgLocal(raw) : invertAlg(raw))
+                : raw;
+              const svgStr = state.puzzleType === 'sq1'
+                ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS)
+                : renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS);
+              return (
+                <div className="vc-preview" dangerouslySetInnerHTML={{ __html: svgStr }} />
+              );
+            }
             const event = isCubeNet
               ? (() => { const n = Math.max(2, Math.min(7, state.cubeSize)); return `${n}${n}${n}`; })()
               : cubingNetEventOf(state.puzzleType)!;

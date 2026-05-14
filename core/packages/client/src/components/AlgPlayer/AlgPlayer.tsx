@@ -10,6 +10,7 @@
  */
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
 import type { AlgPuzzle } from '@cuberoot/shared';
+import { canonicalSq1Alg } from '../../pages/gen/sq1_svg';
 
 export interface AlgPlayerHandle {
   /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
@@ -29,10 +30,11 @@ export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
   'skewb': 'skewb',
 };
 
-/** SQ1 alg `1,0/-1,0` → `(1,0)/(-1,0)`. cubing.js parser 需要每个 m,n move 加括号。 */
+/** SQ1 alg → canonical `(t,b)/(t,b)/...` for cubing.js TwistyPlayer.
+ *  Accepts any input form (parens / commas / spaces all optional, e.g. `10/3-3/-21`). */
 export function normalizeAlgForTwisty(puzzle: AlgPuzzle, alg: string): string {
   if (puzzle !== 'sq1') return alg;
-  return alg.replace(/(-?\d+,-?\d+)/g, '($1)');
+  return canonicalSq1Alg(alg);
 }
 
 /** Map our (puzzle, set) to a cubing.js experimentalStickering value (LL/LS grayed out). */

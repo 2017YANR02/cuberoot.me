@@ -22,10 +22,10 @@ export type Howfar = 1 | 2 | 3 | 4;
 /**
  * Variant — F2L 阶段变体:
  *   'std'         — Standard:常规 cross / XCross / XXCross / XXXCross。
- *   'eo'          — EOCross:边定向后再 cross/xcross/...(尚未集成)。
- *   'pair'        — Cross + Pair:cross + 任意 F2L pair-ready(尚未集成)。
+ *   'eo'          — EOCross:cross/xcross/... 同时剩余棱块色向正确(EO)。所有 stage 支持。
+ *   'pair'        — Cross + Pair:cross/xcross/... 加 1 个 pair-ready 槽位。所有 stage 支持。
  *   'pseudo'      — Pseudo:cross 允许 D/D'/D2 偏移,corner/edge 索引独立(目前仅 stage=cross 支持 pCross)。
- *   'pseudo_pair' — Pseudo + Pair:pseudo cross 之上加 pair-ready(尚未集成)。
+ *   'pseudo_pair' — Pseudo + Pair:pseudo cross + pair-ready,a_slot==a_pslot 匹配模式。所有 stage 支持。
  *
  * Stage — 第一阶段目标深度:
  *   'cross'    — 仅 cross / pCross。
