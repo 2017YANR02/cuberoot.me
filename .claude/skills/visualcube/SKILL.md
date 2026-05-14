@@ -1,6 +1,6 @@
 ---
 name: visualcube
-description: "Use whenever rendering a cube state image anywhere in UI — 3x3 + 2x2 / 4x4 / 5x5. Single source: `<VisualCube>` (React) or `cubeSVG()` / `renderCubeSVG()` from `@cuberoot/visualcube`. Hand-written `<rect>` SVG cubes are a bug (legacy `MiniCube.tsx` and `JcubeThumb.tsx` were removed). Triggers: \"魔方图片\", \"cube image\", \"VisualCube\", \"MiniCube\", \"JcubeThumb\", \"F2L 图\", \"OLL 图\", \"PLL 图\", \"ZBLL 图\", \"立方体预览\", \"facelets\", \"NxN cube\", \"2x2 / 4x4 / 5x5 thumbnail\"."
+description: "Use when rendering NxN cube state image. Single entry: `<VisualCube>` / `cubeSVG()` from `@cuberoot/visualcube`. 手写 `<rect>` SVG = bug. Triggers: \"魔方图片\", \"cube image\", \"VisualCube\", \"MiniCube\", \"JcubeThumb\", \"F2L 图\", \"OLL 图\", \"PLL 图\", \"ZBLL 图\", \"立方体预览\", \"facelets\", \"NxN cube\", \"2x2 / 4x4 / 5x5 thumbnail\"."
 ---
 
 ## 入口

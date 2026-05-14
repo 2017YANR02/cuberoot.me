@@ -1,6 +1,6 @@
 ---
 name: cubing-anim-alg
-description: "Use whenever building UI that needs cubing.js TwistyPlayer animation + alg input + caret-driven move sync — alg / recon submit / admin editors / new training pages. Covers: pick AlgPlayer vs TwistySection, fillPane vs fixed size, caret→moveCount sync via syncPlayerToMoveCount, debounce-rebuild, AlgInput onCaretChange, CubeKeyboardSection layout traps, sq1 alg normalization, stickering map. English code uses `alg`, never `formula`. Triggers: \"cubing.js\", \"TwistyPlayer\", \"AlgPlayer\", \"TwistySection\", \"光标同步\", \"caret sync\", \"syncPlayerToMoveCount\", \"AlgInput\", \"alg input\", \"输入 alg\", \"虚拟键盘\", \"CubeKeyboardSection\", \"动画跟随\", \"alg player\"."
+description: "Use when building UI with cubing.js TwistyPlayer + alg input + caret-driven move sync (alg/recon/admin/training pages). Code uses `alg`, not `formula`. Triggers: \"cubing.js\", \"TwistyPlayer\", \"AlgPlayer\", \"TwistySection\", \"光标同步\", \"caret sync\", \"syncPlayerToMoveCount\", \"AlgInput\", \"alg input\", \"输入 alg\", \"虚拟键盘\", \"CubeKeyboardSection\", \"动画跟随\", \"alg player\"."
 ---
 
 ## 入口 — 选哪个

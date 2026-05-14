@@ -1,6 +1,6 @@
 ---
 name: server-deploy
-description: "Use when changing Hono server routes (`core/packages/server/**`) or DB schema (ALTER / new table / new column). Covers PG credentials, schema-change ordering, 云服务器 deploy via GitHub Actions (云服务器 itself has no GitHub access), pm2 process. Triggers: \"recon_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
+description: "Use when 改 Hono server routes (`core/packages/server/**`) 或 PG schema (ALTER/新表/新列)。GH Actions 部署,pm2 进程。Triggers: \"recon_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
 ---
 
 # Recon server / DB 部署

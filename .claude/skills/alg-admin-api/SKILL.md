@@ -1,6 +1,6 @@
 ---
 name: alg-admin-api
-description: "Use when AI/scripts need to manage alg DB (alg_cases / alg_sets) without OAuth login — create/update/delete a case, reorder cases, batch-validate, dedup. Covers the X-Admin-Key auth bypass channel, the 4 admin endpoints under routes/alg_sets.ts, and direct SQL playbook (cuberoot PG 13). Triggers: \"alg admin\", \"X-Admin-Key\", \"reorder cases\", \"del alg case\", \"alg dup\", \"批量校验 alg\", \"AdminCaseEditor\", \"alg_cases SQL\"."
+description: "Use when AI/脚本管理 alg DB (create/update/del/reorder/batch-validate/dedup) 免 OAuth。X-Admin-Key 通道 + 4 个 admin endpoints + 直 SQL playbook。Triggers: \"alg admin\", \"X-Admin-Key\", \"reorder cases\", \"del alg case\", \"alg dup\", \"批量校验 alg\", \"AdminCaseEditor\", \"alg_cases SQL\"."
 ---
 
 # Alg DB admin operations

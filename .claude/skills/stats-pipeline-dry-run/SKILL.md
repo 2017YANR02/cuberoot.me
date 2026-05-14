@@ -1,6 +1,6 @@
 ---
 name: stats-pipeline-dry-run
-description: "Use whenever modifying the stats-build → server PG 数据流 — 加新 .copy.tsv / 改 builder 输出 / 改 stats.yml scp 清单 / 改 load.sql。三处必须严格一致(builder 写 ↔ scp 传 ↔ load.sql \\copy 引),少一处 = 服务器表静默空 + nginx cache + 24h 才发现。提供 30 秒的 grep 三段对照命令。Triggers: \"stats.yml\", \"historical_ranks_build\", \"wca_stats_extra_build\", \"load.sql\", \"\\\\copy\", \".copy.tsv\", \"scp historical_ranks\", \"stats workflow scp\", \"加新 stat 表\", \"新 builder 输出\"."
+description: "Use when 改 stats-build → server PG 数据流 (新 .copy.tsv / builder 输出 / stats.yml scp 清单 / load.sql)。builder ↔ scp ↔ load.sql 三处必须一致,少一处 = 服务器表静默空。Triggers: \"stats.yml\", \"historical_ranks_build\", \"wca_stats_extra_build\", \"load.sql\", \"\\\\copy\", \".copy.tsv\", \"scp historical_ranks\", \"stats workflow scp\", \"加新 stat 表\", \"新 builder 输出\"."
 ---
 
 # Stats Pipeline Dry-Run

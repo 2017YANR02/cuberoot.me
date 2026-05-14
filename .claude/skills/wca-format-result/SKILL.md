@@ -1,6 +1,6 @@
 ---
 name: wca-format-result
-description: "Use whenever turning a raw WCA result value (centiseconds / FMC moves / MBLD encoding) into a display string anywhere in UI — PR tables, comp records, H2H rows, leaderboards, popups. Single entry point: utils/wca_format_result.ts. Triggers: \"WCA 成绩\", \"成绩格式化\", \"formatWcaResult\", \"centiseconds\", \"FMC\", \"MBLD\", \"333mbf\", \"333fm\", \"DNF\", \"DNS\", \"0.28\", \"33.00\", \"slice(1,3)\", \"padStart(10\", 渲染 WCA 成绩 / 纪录值 / PR / 比赛纪录."
+description: "Use when raw WCA result value (centiseconds/FMC/MBLD encoding) → display string. Single entry: utils/wca_format_result.ts. Triggers: \"WCA 成绩\", \"成绩格式化\", \"formatWcaResult\", \"centiseconds\", \"FMC\", \"MBLD\", \"333mbf\", \"333fm\", \"DNF\", \"DNS\", \"0.28\", \"33.00\", \"slice(1,3)\", \"padStart(10\", 渲染 WCA 成绩 / 纪录值 / PR / 比赛纪录."
 ---
 
 # WCA 成绩值格式化
