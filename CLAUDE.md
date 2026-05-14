@@ -97,14 +97,7 @@ pnpm --filter @cuberoot/client lint
 
 ## 主题 / 颜色
 
-8 页 dark/light 已落地。token 在 `src/index.css :root`,详见 `DESIGN.md` + `pages/THEMING.md`。
-
-- 新 CSS 用 shadcn 风 token (`--background --foreground --muted-foreground --border-default --accent --signal-*`),禁 `#888 #aaa` 硬码
-- 衍生色用 `color-mix(in srgb, var(--base) X%, transparent)`,禁手算 rgba
-- 页面专有 brand 色 (`--c-active --wb-gold` 等) 留 page-scope
-- 视觉硬码 dark 的页 page-scope 锁 `color-scheme: dark` + 反盖 `--background --foreground`,防 light 系统下黑字黑底
-- legacy 老 token (`--bg-primary --text-primary --accent-glow --border-dark`) 不再新用
-- alg / globe 自有双主题,不动
+写任何 CSS 色值 (背景 / 文字 / 边框 / hover) 前调 `theme-tokens` skill —— token 表 + dark-locked 页清单 + color-mix 衍生规则在那里。禁 `#888 #aaa` 等硬码灰阶。
 
 ## Skill 路由
 
