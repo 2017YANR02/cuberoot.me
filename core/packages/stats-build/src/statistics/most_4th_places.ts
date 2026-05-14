@@ -1,5 +1,4 @@
 // NOTE: 最多第四名
-// 与 Ruby _stats_build/statistics/most_4th_places.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class Most4thPlaces extends Statistic {
@@ -15,7 +14,6 @@ export class Most4thPlaces extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   query(): string {
     return `
       SELECT

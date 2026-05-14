@@ -1,5 +1,4 @@
 // NOTE: Dominance（屠榜）——选手在某项目全历史成绩排行榜上完全霸占前 N 席
-// 与 Ruby _stats_build/statistics/wr_dominance.rb 1:1 对应
 // 算法：
 //   1. 找到全局成绩最好的选手 P
 //   2. 找到非 P 选手中的最佳成绩 others_best
@@ -234,7 +233,7 @@ export class WrDominance extends Statistic {
     return { personMap, compMap };
   }
 
-  // NOTE: 统一计算 dominance 的历史和排名——与 Ruby compute_dominance 1:1 对应
+  // NOTE: 统一计算 dominance 的历史和排名
   // 性能优化：per-person 有序数组（二分插入 O(log n)）+ 二分搜索计数
   // NOTE: 瘦行模式——rows 无 person_link/comp_link，返回 ID 以便后续 resolveLinks
   private computeDominance(

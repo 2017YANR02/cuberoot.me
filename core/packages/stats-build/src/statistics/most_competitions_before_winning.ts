@@ -1,5 +1,4 @@
 // NOTE: 首次获胜前参加最多比赛
-// 与 Ruby _stats_build/statistics/most_competitions_before_winning.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
@@ -35,7 +34,7 @@ export class MostCompetitionsBeforeWinning extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按项目→选手→比赛找首次获胜的索引
+  // NOTE: 按项目→选手→比赛找首次获胜的索引
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       const eventRows = rows.filter(r => r['event_id'] === eventId);

@@ -1,6 +1,4 @@
 // NOTE: Stats 页面交互逻辑（前后端分离）
-// 从 Ruby Heredoc 中提取，消除双重转义问题
-// 原始位置：metric_selector.rb / tab_ui.rb / wr_newcomer.rb
 
 // ── Metric 切换 ───────────────────────────────────────────
 // NOTE: 显示选中的 .metric-panel，高亮按钮

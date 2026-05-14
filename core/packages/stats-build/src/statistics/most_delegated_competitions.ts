@@ -1,5 +1,4 @@
 // NOTE: 代表比赛最多
-// 与 Ruby _stats_build/statistics/most_delegated_competitions.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class MostDelegatedCompetitions extends Statistic {

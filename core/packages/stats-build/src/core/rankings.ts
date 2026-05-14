@@ -1,5 +1,4 @@
 // NOTE: Rankings 抽象基类——按项目 × {Single, Average} 分组排名
-// 与 Ruby _stats_build/statistics/abstract/rankings.rb 1:1 对应
 // 子类通过 constructor 传入 WHERE 条件来过滤数据
 import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from './events.js';
@@ -41,7 +40,6 @@ export abstract class Rankings extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 对每个 event × {single, average}，筛选、排序、去重、top 10
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.flatMap(([eventId, eventName]) => {

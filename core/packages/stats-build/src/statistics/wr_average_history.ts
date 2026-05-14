@@ -1,5 +1,4 @@
 // NOTE: WR Average History——平均 WR 进展历史
-// 与 Ruby _stats_build/statistics/wr_average_history.rb 1:1 对应
 // compute_metric 直接返回 average 字段
 // 333mbf/333mbo 无官方 average，通过委托 MbfAverage 获取 Mo3 数据
 import { RoundMetric } from '../core/round_metric.js';

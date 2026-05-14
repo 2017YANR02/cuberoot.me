@@ -1,5 +1,4 @@
 // NOTE: Worst Counting Solve——Ao5 中计入平均的 3 次中的最差一次
-// 与 Ruby _stats_build/statistics/wr_worst_counting.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

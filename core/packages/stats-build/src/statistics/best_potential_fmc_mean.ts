@@ -1,5 +1,4 @@
 // NOTE: 最佳潜在 FMC 平均
-// 与 Ruby _stats_build/statistics/best_potential_fmc_mean.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 

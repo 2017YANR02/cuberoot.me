@@ -1,5 +1,4 @@
 // NOTE: BAo5 (Best Average of 5)——5 次中取最好的 3 次求均值
-// 与 Ruby _stats_build/statistics/wr_bao5.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

@@ -1,5 +1,4 @@
 // NOTE: 每年代表比赛数
-// 与 Ruby _stats_build/statistics/delegated_competition_per_year.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 

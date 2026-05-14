@@ -1,5 +1,4 @@
 // NOTE: 世锦赛领奖台次数（按选手）
-// 与 Ruby _stats_build/statistics/world_championship_podiums_by_person.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class WorldChampionshipPodiumsByPerson extends Statistic {
@@ -16,7 +15,6 @@ export class WorldChampionshipPodiumsByPerson extends Statistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致
   // 从 results + championships 表统计世锦赛决赛领奖台
   query(): string {
     return `

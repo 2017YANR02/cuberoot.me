@@ -1,11 +1,9 @@
 // NOTE: WR Metric 聚合页面——将 13 个 RoundMetric 子类合并为一个 JSON
-// 与 Ruby _stats_build/statistics/wr_metric.rb 1:1 对应
 // 每个子统计的 toJson() 输出的 panels 被包装为一个 MetricPanel
 import { Statistic } from '../core/statistic.js';
 import type { StatJson, MetricPanel } from '../core/statistic.js';
 
 // NOTE: 子统计类和 UI 元数据映射
-// 顺序与 Ruby METRIC_CLASSES 一致
 const METRIC_DEFS = [
   { module: () => import('./wr_single_history.js'),    label: 'Single',        id: 'single' },
   { module: () => import('./wr_average_history.js'),   label: 'Average',       id: 'average' },
@@ -53,7 +51,7 @@ export class WrMetric extends Statistic {
         new () => Statistic;
       let inst: InstanceType<typeof StatClass> | null = new StatClass();
       const sub = await inst.toJson();
-      // NOTE: 照搬 Ruby — 子统计完成后释放实例
+      // NOTE: 子统计完成后释放实例
       inst = null;
       if (global.gc) global.gc();
 

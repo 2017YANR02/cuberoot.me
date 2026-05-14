@@ -1,4 +1,4 @@
-// NOTE: WCA 数据库下载+导入——完全替代 Ruby update_database.rb + init.rb
+// NOTE: WCA 数据库下载+导入
 // CI 用法：npx tsx src/bin/update_database.ts
 // 步骤：
 //   1. 下载 WCA export zip (~2GB)
@@ -21,7 +21,7 @@ const EXPORT_URL = 'https://www.worldcubeassociation.org/wst/wca-developer-datab
 const ZIP_FILENAME = 'wca-developer-database-dump.zip';
 const SQL_FILENAME = 'wca-developer-database-dump.sql';
 
-// NOTE: MySQL CLI 命令（与 Ruby 版一致，密码通过命令行传递）
+// NOTE: MySQL CLI 命令（密码通过命令行传递）
 function mysqlCmd(): string {
   const parts = ['mysql', `--user=${DB_CONFIG.username}`];
   if (DB_CONFIG.password) parts.push(`--password=${DB_CONFIG.password}`);
@@ -29,7 +29,7 @@ function mysqlCmd(): string {
   return parts.join(' ');
 }
 
-// NOTE: 计时辅助函数——与 Ruby Helpers.timed_task 等价
+// NOTE: 计时辅助函数
 async function timedTask<T>(message: string, fn: () => T | Promise<T>): Promise<T> {
   console.log(message);
   const start = Date.now();
@@ -67,7 +67,7 @@ async function unzipExport(zipPath: string, destDir: string): Promise<void> {
   });
 }
 
-// NOTE: 步骤 3——设置 MySQL 高性能参数（与 Ruby 版完全一致）
+// NOTE: 步骤 3——设置 MySQL 高性能参数
 async function setMysqlPerformanceParams(): Promise<void> {
   await timedTask('Setting MySQL performance parameters', () => {
     const mysql = mysqlCmd();
@@ -90,10 +90,10 @@ async function setMysqlPerformanceParams(): Promise<void> {
 
 // NOTE: 步骤 4——逐行解析 SQL dump，按表名过滤导入
 // 全流式架构：readline 逐行 -> 8MB 写缓冲合并 I/O -> 表切换时导入
-// 性能优化（与 Ruby 版对齐）：
+// 性能优化：
 //   1. 8MB 写缓冲：将 ~3600 万次 writeSync 合并为几百次，大幅减少 syscall
 //   2. 延迟建索引：从 CREATE TABLE 中剥离 KEY 定义，INSERT 完成后再一次性建索引
-//      避免每条 INSERT 都维护二级索引，这是 Ruby 版快 10 分钟的主因
+//      避免每条 INSERT 都维护二级索引，可省约 10 分钟
 // 内存峰值：8MB 写缓冲 + header（几十行）+ CREATE TABLE 块（~20 行），安全可控
 async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const requiredSet = new Set<string>(REQUIRED_TABLES);
@@ -132,7 +132,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
       }
     };
 
-    // --- CREATE TABLE KEY 剥离（与 Ruby gsub! 逻辑一致）---
+    // --- CREATE TABLE KEY 剥离 ---
     // CREATE TABLE 块很小（~20 行），缓冲在内存安全无 OOM 风险
     let inCreateTable = false;
     let createTableLines: string[] = [];
@@ -192,7 +192,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         const tableName = tableMatch[1];
 
         if (!headerBuilt) {
-          // NOTE: 第一个表之前的内容作为 header（与 Ruby L68-69 对应）
+          // NOTE: 第一个表之前的内容作为 header
           headerBuilt = true;
         } else if (currentTable && fd !== null) {
           // NOTE: 上一张目标表结束——立即 flush 并导入
@@ -223,8 +223,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
           if (line.startsWith(')')) {
             inCreateTable = false;
             const createSql = createTableLines.join('\n');
-            // NOTE: 与 Ruby gsub!(/,\s*KEY (.\w+.) (\([^)]*\))/m) 完全一致
-            // 移除 CREATE TABLE 内的 KEY 定义，收集为延迟 CREATE INDEX
+            // NOTE: 移除 CREATE TABLE 内的 KEY 定义，收集为延迟 CREATE INDEX
             const processed = createSql.replace(
               /,\s*KEY (.\w+.) (\([^)]*\))/g,
               (_match: string, name: string, cols: string) => {
@@ -274,7 +273,7 @@ async function postImport(exportTimestamp: Date): Promise<void> {
     );
   });
 
-  // NOTE: 存储 export timestamp（与 Ruby 版一致）
+  // NOTE: 存储 export timestamp
   const ts = exportTimestamp.toISOString();
   const metaSql = `CREATE TABLE wca_statistics_metadata (field varchar(255), value varchar(255)); INSERT INTO wca_statistics_metadata (field, value) VALUES ('export_timestamp', '${ts}')`;
   execSync(`${mysql} ${db} -e "${metaSql}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
@@ -291,7 +290,7 @@ async function main() {
     console.log(`Copied database.yml template to ${configDest}`);
   }
 
-  // NOTE: 在临时目录中操作（与 Ruby Dir.mktmpdir 一致）
+  // NOTE: 在临时目录中操作
   const workDir = resolve(tmpdir(), `wca-stats-import-${Date.now()}`);
   mkdirSync(workDir, { recursive: true });
   console.log(`Working directory: ${workDir}`);

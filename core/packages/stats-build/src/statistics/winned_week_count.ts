@@ -1,5 +1,4 @@
 // NOTE: 获胜周数
-// 与 Ruby _stats_build/statistics/winned_week_count.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';

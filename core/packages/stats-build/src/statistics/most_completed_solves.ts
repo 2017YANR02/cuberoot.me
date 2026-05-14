@@ -1,5 +1,4 @@
 // NOTE: 最多完成还原数——按 6 维度分组
-// 与 Ruby _stats_build/statistics/most_completed_solves.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -15,7 +14,7 @@ export class MostCompletedSolves extends GroupedStatistic {
     };
   }
 
-  // NOTE: SQL 与 Ruby 版完全一致——通过 result_attempts 子查询统计完成数和 DNF 数
+  // NOTE: SQL — 通过 result_attempts 子查询统计完成数和 DNF 数
   query(): string {
     return `
       SELECT
@@ -36,7 +35,6 @@ export class MostCompletedSolves extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应
   // 按 6 个维度分组（Competition/Person/Country/Continent/Year/Event）
   // 每个维度返回一个 section —— [sectionTitle, rows]
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
@@ -62,7 +60,7 @@ export class MostCompletedSolves extends GroupedStatistic {
       }
 
       // NOTE: 按完成数降序 → 再按尝试数升序 → 再按名称升序排列
-      // 取 top 20，completed_count 加粗（与 Ruby 一致）
+      // 取 top 20，completed_count 加粗
       const sorted = [...grouped.entries()]
         .map(([key, val]) => ({
           key,

@@ -1,5 +1,4 @@
 // NOTE: Variance——一轮中 5 次成绩的样本方差
-// 与 Ruby _stats_build/statistics/wr_variance.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

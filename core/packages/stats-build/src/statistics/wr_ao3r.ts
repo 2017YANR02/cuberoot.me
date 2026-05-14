@@ -1,5 +1,4 @@
 // NOTE: Ao3R——一场比赛恰好 3 轮时各轮 average 的均值
-// 与 Ruby _stats_build/statistics/wr_ao3r.rb 1:1 对应
 import { AoRounds } from '../core/ao_rounds.js';
 
 export class WrAo3r extends AoRounds {

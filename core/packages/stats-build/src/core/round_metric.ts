@@ -1,12 +1,10 @@
 // NOTE: RoundMetric 抽象基类——从一轮的所有 attempt 中计算衍生指标
-// 与 Ruby _stats_build/statistics/abstract/round_metric.rb 1:1 对应
 // 产出双视图 JSON：排名（ranking）+ WR 历史（history）
 // 子类只需实现 computeMetric(values, row) 方法即可
 //
 // NOTE: 一次性计算模式——第一个 batch 子类运行时，为所有 batch 子类
 // 按 (valueColumn, targetEvents) 分组，逐 event 查询一次 MySQL，
 // 同组每个子类的 computeMetric 共享同一份数据计算排名。
-// 与 Ruby compute_all_rankings / @@precomputed_rankings 完全对齐。
 import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, EVENTS_WITH_AO5, OFFICIAL_EVENTS_RECORD, EVENTS, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
@@ -15,18 +13,18 @@ import { formatDate, calcDays, filterWrHistory } from './format_date.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 标准排名表头（与 Ruby StatPanel::RANKING_HEADER 对应 + Details 列）
+// NOTE: 标准排名表头
 const RANKING_HEADER: TableHeader = {
   '#': 'right', 'Person': 'left', 'Result': 'right',
   'Country': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
 };
 
-// --- 预计算排名缓存（与 Ruby @@precomputed_rankings 对齐） ---
+// --- 预计算排名缓存 ---
 // 结构：className -> [eventName, top10Rows][]
 let precomputedRankings: Map<string, [string, unknown[][]][]> | null = null;
 
 // NOTE: 11 个 batchRanking=true 的子类定义
-// JS 无法像 Ruby 用 .subclasses 自动发现，硬编码 import 列表
+// JS 无法自动发现子类，硬编码 import 列表
 // 所有 11 个子类都使用 (valueColumn='average', targetEvents=EVENTS_WITH_AO5)
 const BATCH_SUBCLASS_IMPORTS = [
   { name: 'WrBao5',             module: () => import('../statistics/wr_bao5.js') },
@@ -90,7 +88,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     `;
   }
 
-  // NOTE: transform 生成 WR 历史数据（与 Ruby transform 1:1 对应）
+  // NOTE: transform 生成 WR 历史数据
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     const events = this.targetEvents();
     return Object.entries(events).map(([eventId, eventName]) => {
@@ -140,7 +138,6 @@ export abstract class RoundMetric extends GroupedStatistic {
   }
 
   // NOTE: 一次性为所有 batch 子类预计算排名数据
-  // 与 Ruby compute_all_rankings 1:1 对应
   // 每个 event 只查 MySQL 一次，同组所有子类共享查询结果
   static async precomputeAllRankings(): Promise<void> {
     precomputedRankings = new Map();
@@ -210,7 +207,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     }
   }
 
-  // NOTE: 缓存清理——wr_metric 聚合完成后调用，与 Ruby AGGREGATE_CACHE_CLEANUP 对应
+  // NOTE: 缓存清理——wr_metric 聚合完成后调用
   static clearPrecomputed(): void {
     precomputedRankings = null;
   }
@@ -219,7 +216,7 @@ export abstract class RoundMetric extends GroupedStatistic {
   async toJson(): Promise<StatJson> {
     let rawRows: RowDataPacket[] | null = await this.queryResults();
     const historyData = this.transform(rawRows);
-    // NOTE: 照搬 Ruby 内存管理——transform 后释放原始查询结果
+    // NOTE: 内存管理——transform 后释放原始查询结果
     rawRows = null;
     if (global.gc) global.gc();
     const rankingData = await this.rankingData();
@@ -267,7 +264,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     };
   }
 
-  // NOTE: WR 历史行生成——与 Ruby wr_history_row 1:1 对应
+  // NOTE: WR 历史行生成
   // 返回: [gain_str, days_str, person_link, date_str, competition_link, details]
   protected wrHistoryRow<T extends { row: RowDataPacket }>(
     records: T[], i: number, eventId: string,

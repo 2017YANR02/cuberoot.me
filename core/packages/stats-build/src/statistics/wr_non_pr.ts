@@ -1,5 +1,4 @@
 // NOTE: Non-PR WR——不是个人纪录的成绩中历史最佳
-// 与 Ruby _stats_build/statistics/wr_non_pr.rb 1:1 对应
 // 算法：逐行扫描维护每人 PB，value > PB → Non-PR 结果
 // 双维度（Single + Average）× 双视图（Ranking + History）→ 4 个 MetricPanel 内嵌 panels
 import { formatDate } from '../core/format_date.js';
@@ -126,7 +125,6 @@ export class WrNonPr extends Statistic {
   }
 
   // NOTE: 核心算法——从结果中筛选 non-PR 成绩，追踪 WR 演变
-  // 与 Ruby compute_non_pr 1:1 对应
   private computeNonPr(
     rows: RowDataPacket[], valueCol: 'best' | 'average', eventId: string,
   ): { history: unknown[][]; ranking: unknown[][] } {

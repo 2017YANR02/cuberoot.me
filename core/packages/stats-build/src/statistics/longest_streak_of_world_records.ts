@@ -1,5 +1,4 @@
 // NOTE: 最长连续世界纪录
-// 与 Ruby _stats_build/statistics/longest_streak_of_world_records.rb 1:1 对应
 import { Statistic, type StatJson } from '../core/statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { query as dbQuery } from '../core/database.js';
@@ -67,7 +66,7 @@ export class LongestStreakOfWorldRecords extends Statistic {
     return super.toJson();
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按(项目, 类型)追踪同一选手连续 WR 数
+  // NOTE: 按(项目, 类型)追踪同一选手连续 WR 数
   transform(rows: RowDataPacket[]): unknown[][] {
     interface WrStreak {
       count: number; eventId: string; event: string; type: string; personLink: string;
@@ -86,7 +85,7 @@ export class LongestStreakOfWorldRecords extends Statistic {
         const eventRows = rows
           .filter(r => r['event_id'] === eventId && r[recordField] === 'WR')
           .sort((a, b) => {
-            // NOTE: 按日期正序，同日期内按成绩降序（与 Ruby 一致）
+            // NOTE: 按日期正序，同日期内按成绩降序
             const dateA = new Date(a['competition_date'] as Date);
             const dateB = new Date(b['competition_date'] as Date);
             if (dateA.getTime() !== dateB.getTime()) return dateA.getTime() - dateB.getTime();

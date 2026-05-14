@@ -1,5 +1,4 @@
 // NOTE: 最佳非领奖台成绩
-// 与 Ruby _stats_build/statistics/best_result_off_podium.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -41,7 +40,7 @@ export class BestResultOffPodium extends GroupedStatistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——按项目分组、用 sort_by 指定的字段排序
+  // NOTE: 按项目分组、用 sort_by 指定的字段排序
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       // NOTE: 为每行创建 SolveTime 并保留原始 row 引用

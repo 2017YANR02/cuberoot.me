@@ -1,5 +1,4 @@
 // NOTE: 海外参赛最多
-// 与 Ruby _stats_build/statistics/most_competitions_abroad.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 
 export class MostCompetitionsAbroad extends Statistic {

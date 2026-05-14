@@ -1,5 +1,4 @@
 // NOTE: Mo5 (Mean of 5)——5 次全部求均值，无裁剪
-// 与 Ruby _stats_build/statistics/wr_mo5.rb 1:1 对应
 import { RoundMetric } from '../core/round_metric.js';
 import { EVENTS_WITH_AO5 } from '../core/events.js';
 

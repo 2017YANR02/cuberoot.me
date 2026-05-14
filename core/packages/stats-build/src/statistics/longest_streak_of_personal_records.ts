@@ -1,5 +1,4 @@
 // NOTE: 最长连续个人纪录比赛记录
-// 与 Ruby _stats_build/statistics/longest_streak_of_personal_records.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -32,7 +31,7 @@ export class LongestStreakOfPersonalRecords extends Statistic {
     `;
   }
 
-  // NOTE: 与 Ruby transform 1:1 对应——追踪每人在每个项目的 PB，统计连续破 PB 的比赛数
+  // NOTE: 追踪每人在每个项目的 PB，统计连续破 PB 的比赛数
   transform(rows: RowDataPacket[]): unknown[][] {
     interface Streak { count: number; firstCompetition: string | null; lastCompetition: string | null }
 
