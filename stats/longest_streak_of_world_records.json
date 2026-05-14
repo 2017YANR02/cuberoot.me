@@ -805,21 +805,21 @@
     ],
     [
       "1.62",
-      2,
-      "3x3x3 Blindfolded",
-      "Average",
-      "[Alexander Yu](https://www.worldcubeassociation.org/persons/2007YUAL01)",
-      "[Kearny Kardinal 2008](https://www.worldcubeassociation.org/competitions/KearnyKardinal2008)",
-      "[Guangdong Open 2009](https://www.worldcubeassociation.org/competitions/GuangdongOpen2009)"
-    ],
-    [
-      "1.62",
       3,
       "5x5x5 Cube",
       "Single",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
       "Still active"
+    ],
+    [
+      "1.62",
+      2,
+      "3x3x3 Blindfolded",
+      "Average",
+      "[Alexander Yu](https://www.worldcubeassociation.org/persons/2007YUAL01)",
+      "[Kearny Kardinal 2008](https://www.worldcubeassociation.org/competitions/KearnyKardinal2008)",
+      "[Guangdong Open 2009](https://www.worldcubeassociation.org/competitions/GuangdongOpen2009)"
     ],
     [
       "1.61",
@@ -1038,7 +1038,7 @@
       "[Guildford Summer Open 2011](https://www.worldcubeassociation.org/competitions/GuildfordSummerOpen2011)"
     ],
     [
-      "1.33",
+      "1.34",
       2,
       "Square-1",
       "Average",
@@ -1355,20 +1355,20 @@
     [
       "0.86",
       2,
-      "4x4x4 Cube",
-      "Average",
-      "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-      "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010)",
-      "[Princeton Fall 2011](https://www.worldcubeassociation.org/competitions/PrincetonFall2011)"
-    ],
-    [
-      "0.86",
-      2,
       "5x5x5 Cube",
       "Average",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
       "Still active"
+    ],
+    [
+      "0.86",
+      2,
+      "4x4x4 Cube",
+      "Average",
+      "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+      "[Melbourne Cube Day 2010](https://www.worldcubeassociation.org/competitions/MelbourneCubeDay2010)",
+      "[Princeton Fall 2011](https://www.worldcubeassociation.org/competitions/PrincetonFall2011)"
     ],
     [
       "0.84",
@@ -1425,7 +1425,7 @@
       "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
     ],
     [
-      "0.74",
+      "0.75",
       3,
       "Megaminx",
       "Single",
