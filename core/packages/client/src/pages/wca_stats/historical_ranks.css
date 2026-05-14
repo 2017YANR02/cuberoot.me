@@ -2,8 +2,8 @@
   max-width: 1100px;
   margin: 0 auto;
   padding: 24px 16px;
-  color: var(--text-color, #f0ebe3);
-  background: var(--bg-color, #1a1a1a);
+  color: #f0ebe3;
+  background: #1a1a1a;
   min-height: 100vh;
 }
 
@@ -19,14 +19,14 @@
 }
 
 .hr-back {
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 14px;
 }
-.hr-back:hover { color: var(--text-color, #f0ebe3); }
+.hr-back:hover { color: #f0ebe3; }
 
 .historical-ranks-page h1 {
   margin: 0 0 8px;
@@ -36,7 +36,7 @@
 
 .hr-subtitle {
   margin: 0;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   font-size: 14px;
 }
 
@@ -60,7 +60,7 @@
 
 .hr-filter label {
   font-size: 12px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -118,13 +118,13 @@
   padding: 0 !important;
   font-size: 16px;
   cursor: pointer;
-  color: var(--text-sub, #888);
+  color: #888;
   border: none !important;
   background: transparent !important;
   border-radius: 0 !important;
   height: auto !important;
 }
-.hr-country-clear:hover { color: var(--text-color, #f0ebe3); }
+.hr-country-clear:hover { color: #f0ebe3; }
 
 .hr-country-popup {
   position: absolute;
@@ -148,7 +148,7 @@
   gap: 6px;
   padding: 6px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .hr-country-search input {
   flex: 1;
@@ -194,13 +194,13 @@
 .hr-state {
   padding: 40px;
   text-align: center;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 .hr-state-error { color: #ff7676; }
 
 .hr-result-meta {
   font-size: 13px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
   padding: 4px 8px 12px;
 }
 
@@ -224,7 +224,7 @@
   font-size: 12px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 
 .hr-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
@@ -239,7 +239,7 @@
   text-align: right !important;
   width: 50px;
   font-variant-numeric: tabular-nums;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 
 .hr-value-col {
@@ -255,7 +255,7 @@
   gap: 12px;
   padding: 16px 0 8px;
   font-size: 13px;
-  color: var(--text-sub, #aaa);
+  color: #aaa;
 }
 
 .hr-pagination button {

@@ -20,7 +20,7 @@ import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
 import { Flag as SharedFlag } from '../utils/flag';
 import { WheelPicker } from '../components/WheelPicker';
 import { RecordBadge } from '../components/RecordBadge';
-import { CountryInput } from '../components/CountryInput';
+import { RegionPicker } from '../components/RegionPicker';
 import {
   loadCompRecordsSummary,
   loadCompRecordsDetail,
@@ -1122,12 +1122,11 @@ export default function CalendarPage() {
     return m;
   }, [activeComps]);
 
+  // RegionPicker 国家列表(出现过的 iso2,按 count desc),组件保留传入顺序
   const countryOptions = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const c of activeComps) counts[c.country] = (counts[c.country] || 0) + 1;
-    // NOTE: 按 count 降序排列的 iso2 列表 + counts 映射，供 CountryInput 使用
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([iso2]) => iso2);
-    return { sorted, counts };
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([iso2]) => iso2);
   }, [activeComps]);
 
   // ── 选手静态索引 ────────────────────────────────────────────
@@ -1455,13 +1454,13 @@ export default function CalendarPage() {
           placeholder={t('upcoming.searchCuber')}
           isZh={isZh}
         />
-        <CountryInput
+        <RegionPicker
           className="country-filter"
           multi
+          isZh={isZh}
           value={countryFilters}
           onChange={setCountryFilters}
-          restrictTo={countryOptions.sorted}
-          counts={countryOptions.counts}
+          restrictTo={countryOptions}
           allLabel={t('upcoming.allCountries')}
         />
         <button
