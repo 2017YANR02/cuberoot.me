@@ -60,12 +60,10 @@ pnpm --filter @cuberoot/client build
 pnpm --filter @cuberoot/client lint
 ```
 
-> **重要 — Claude 易犯的错误：**
-> 1. **不要用 `cd core &&`**：session CWD 已经是 `core/`，再 cd 会 "No such file or directory"。
-> 2. **路径前缀也不能加 `core/`**：CWD 已是 `core/`，所以写 `packages/client/...` 而不是 `core/packages/client/...`；写 `ls packages/stats-build/database.yml` 不是 `ls core/packages/stats-build/database.yml`。**因路径错而看不到文件 ≠ 文件不存在,先核对 CWD 再下结论**。
-> 3. **类型检查只有一档了**（历史教训：以前的 `typecheck` 走根 `tsconfig.json` 即 `files: []` references-only 壳，`tsc --noEmit` 实际什么都没检查，typo 静默过；2026-04 改为 `tsc -b`）。日常和 push 前都跑 `typecheck`；`typecheck:ci` 加 `--force` 是 CI 用的清缓存全量。
-> 4. **磁盘不够必须停下来告诉我**（worktree / pnpm install / build 失败时先 `df -h` 再求助，别静默换方案）。
-> 5. **Dev server 我已经在跑,不要 `pnpm dev`**：`http://127.0.0.1:5173/` 永远开着,要验证直接 playwright 打开;别后台启 dev,会因端口占用立刻挂。
+> **重要:**
+> 1. typecheck 只有一档,日常 / push 前用 `typecheck`,CI 对齐用 `typecheck:ci` (`tsc -b --force`)。**禁** `tsc --noEmit` 走根 tsconfig (references-only 壳,typo 静默过)。
+> 2. **Dev server 永远在 `http://127.0.0.1:5173/`,不要 `pnpm dev`** (端口占用立刻挂)。要验证用 playwright 直接开。
+> 3. 磁盘不够 (worktree / pnpm install / build 失败时) 先 `df -h` 告诉我,别静默换方案。
 
 - Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
 - Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
@@ -96,25 +94,6 @@ pnpm --filter @cuberoot/client lint
 - UI 验证走项目内 Playwright MCP;fixtures 跑全集别采样
 - 新路由 / 新顶层 page 前先 grep routes config 防撞名
 
-## 专题知识 — 查对应 Skill
+## Skill 路由
 
-这些主题每次出现时，**主动调用对应 skill** 读取详细规则，不要凭记忆：
-
-| 主题 | Skill | 什么时候用 |
-|---|---|---|
-| 选手名渲染（括号中文） | `cuber-name-display` | 任何展示 WCA person 名的地方 |
-| 国旗渲染 | `country-flag` | 任何展示国旗的地方（JSX / popup innerHTML）；统一走 `utils/flag.tsx` 的 `<Flag>` 或 `flagHtml`；TW 特判只在这一处 |
-| WCA 项目图标 / 选择器 | `wca-event` | 渲染 WCA 项目名(必须有 `<EventIcon>`),或在 wca-stats 子页加单项目选择器(用 `<WcaEventSelector>` 图标行,不要下拉) |
-| WCA 成绩值格式化 | `wca-format-result` | 任何把 raw WCA 数值（centiseconds / FMC moves / MBLD encoding）→ 字符串的地方；统一走 `utils/wca_format_result.ts` |
-| WCA 纪录标志 (WR/CR/NR/AsR/...) | `wca-record-badge` | 渲染纪录标志徽章；统一走 `<RecordBadge>`,禁自写 span+CSS |
-| 比赛日期区间展示 | `comp-date-range` | 任何显示 `start_date` / `end_date` 对的地方；紧凑格式 `2026-06-06~07` |
-| 中国比赛名中文化 | `cn-comp-names` | 中文模式下比赛名；`comp_names_zh.json` 数据问题 |
-| Competition JSON 数据源 | `comp-data-schema` | 改 upcoming/past comps 相关代码 |
-| 新增 public 静态资源 | `deploy-public-asset` | 加 geojson / 图片 / 纹理 / wasm 等；双 workflow 白名单 |
-| 重跑统计数据 | `stats-build` | 修改 `stats/*.json` 生成器；新增 stat |
-| 写 WCA SQL（本地 dump） | `wca-stats-db` | 任何写针对 `wca_statistics` MySQL 的 SQL — schema snake_case、persons.sub_id=1、events.rank<900、成绩值编码、records 标记 |
-| 重跑打乱分布 | `scramble-stats-build` | 修改 `stats/scramble/*.json`；WCA 配色 / 阶段-朝向 schema / pair CSV 特殊记号 |
-| 渲染魔方图片 / 3x3 立方体预览 | `visualcube` | 任何要画 3x3 魔方状态图的地方（F2L / OLL / PLL / 自定义 case 预览 / scramble 状态可视化）；走 `<VisualCube>` 或 `cubeSVG()`，**禁手写 SVG**（之前的 `MiniCube.tsx` 是反面教材） |
-| AI/脚本管理公式库（admin） | `alg-admin-api` | 增删改 case、reorder、批量校验、清 dup；走 `X-Admin-Key` 通道免 OAuth,key 在 `.password.md` |
-| 改 server 路由 / 改 DB schema / 加列 / 加表 | `server-deploy` | 任何改 `core/packages/server/**` 或 PG schema 的地方；DB 凭据、PG 方言关键、schema 变更走 `migrations/*.sql` 文件而**非** ssh ALTER、pm2 / nginx purge |
-| 改 stats 数据管道 / 加新 .copy.tsv / 改 stats.yml | `stats-pipeline-dry-run` | 改 `stats-build/src/bin/*` 或 stats.yml 时;builder/scp/load.sql 三处必须一致;ssh 远端长任务必须带 keepalive triple |
+主题命中 trigger 时主动调对应 skill,不要凭记忆。skill 描述 + triggers 已由 harness 自动加载,触发即可,**不要在此再列索引表**(双倍信息,白付 token)。

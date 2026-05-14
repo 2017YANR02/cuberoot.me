@@ -1,6 +1,6 @@
 ---
 name: cn-comp-names
-description: "Use when (a) regenerating `stats/comp_names_zh.json`, (b) debugging missing or wrong Chinese comp names, or (c) writing new code that displays a comp name (so you remember to go through `utils/comp_localize.ts`, never raw `c.name`). Frontend display logic lives in code (see `utils/comp_localize.ts` JSDoc) — this skill only covers what code can't tell you: the data pipeline + scraper gotchas. Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"localizeCity\", \"CITY_ZH\"."
+description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chinese comp names, or displaying comp name in new code (must go through `utils/comp_localize.ts`, never raw `c.name`). Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"localizeCity\", \"CITY_ZH\"."
 ---
 
 # 中国比赛名中文化

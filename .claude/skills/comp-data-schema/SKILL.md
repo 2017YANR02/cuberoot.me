@@ -1,6 +1,6 @@
 ---
 name: comp-data-schema
-description: "Use when touching WCA competition JSON data — upcoming_comps.json / all_upcoming_comps.json / all_past_comps.json — or their consumers (UpcomingCompsPage, GlobePage upcoming mode), OR when adding any comp picker/search input in UI. Covers schemas, field semantics, event short-name convention, country/TW special rules, and the shared CompPicker / comp_search utility. Triggers: \"比赛 JSON\", \"upcoming_comps\", \"all_past_comps\", \"competition schema\", \"比赛数据源\", \"比赛搜索\", \"CompPicker\", \"comp picker\", \"搜比赛\"."
+description: "Use when touching WCA competition JSON (upcoming_comps/all_past_comps), their consumers, or any comp picker/search UI. Triggers: \"比赛 JSON\", \"upcoming_comps\", \"all_past_comps\", \"competition schema\", \"比赛数据源\", \"比赛搜索\", \"CompPicker\", \"comp picker\", \"搜比赛\"."
 ---
 
 # Competition 数据源（预生成 JSON）

@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: "Use whenever adding, editing, or reviewing user-visible text in the React client (core/packages/client). Covers the zh/en dual-language convention: two accepted patterns (`t()` + JSON keys vs inline `isZh ? 'X' : 'Y'` ternary), when to choose which, how to keep en.json and zh.json parallel, LangToggle placement, and wca_translations.ts exception. Triggers: \"中英双语\", \"i18n\", \"translate\", \"add Chinese/English\", \"LangToggle\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
+description: "Use when adding/editing user-visible text in React client. zh/en 双语:两种 pattern (`t()` + JSON key vs inline `isZh ? 'X' : 'Y'`),en.json/zh.json 必须 parallel。Triggers: \"中英双语\", \"i18n\", \"translate\", \"add Chinese/English\", \"LangToggle\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
 ---
 
 # i18n（core/packages/client）
