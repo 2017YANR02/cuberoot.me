@@ -53,3 +53,5 @@ tmp/
 
 # stats-build 中间产物 (historical_ranks 等)
 core/packages/stats-build/output/
+
+.cc-connect/
