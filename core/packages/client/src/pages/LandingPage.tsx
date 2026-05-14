@@ -18,7 +18,7 @@ import LandingCubeHero from './LandingCubeHero';
 import DonateModal from './DonateModal';
 import WcaAuth from '../components/WcaAuth';
 import ThemeToggle from '../components/ThemeToggle';
-import { Flag } from '../utils/flag';
+import LangToggle from '../components/LangToggle';
 import { useEffectiveTheme } from '../utils/theme';
 import './landing.css';
 
@@ -391,7 +391,7 @@ const SECTIONS: Section[] = [
     titleKey: 'secOther',
     cards: [
       { id: 'code', href: '/code', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
-      { id: 'blog', href: 'https://blog.cuberoot.me/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
+      { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site', internal: true, tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
     ],
   },
@@ -415,15 +415,6 @@ export default function LandingPage() {
     return TEXTS[key][lang];
   }, [lang]);
 
-  /** 语言切换 — 与原版 I18n.toggle() 行为一致 */
-  const toggleLang = useCallback(() => {
-    const newLang = lang === 'zh' ? 'en' : 'zh';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('trainer-lang', newLang);
-  }, [lang, i18n]);
-
-
-
   return (
     <div className="landing-page">
       {/* NOTE: 粒子动画 Canvas — SHOW_PARTICLES=true 时才挂载（当前关闭） */}
@@ -437,9 +428,7 @@ export default function LandingPage() {
       {/* NOTE: 右上角 cluster — WCA 登录 + 语言 + 主题 */}
       <div className="global-corner">
         <WcaAuth />
-        <button className="lang-toggle" onClick={toggleLang} title={lang === 'zh' ? '切换为 English' : 'Switch to 中文'} aria-label={lang === 'zh' ? '中文' : 'English'}>
-          <Flag iso2={lang === 'zh' ? 'cn' : 'us'} className="lang-flag" />
-        </button>
+        <LangToggle />
         <ThemeToggle />
       </div>
 

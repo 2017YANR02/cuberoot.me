@@ -34,8 +34,7 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
-// NOTE: WCA 选手成绩查询（/wca-stats 子模块）
-const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
+// NOTE: WCA 选手详情(/wca-stats/persons/:wcaId);搜索入口已并入 WcaStatsIndex 顶部搜索框
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: WCA 6 个 cubing.pro 风格统计 tab
@@ -129,8 +128,10 @@ const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
 //       用 replaceState 不进历史记录、不触发 React Router 重渲染。
-// 旧 WordPress blog permalink (cuberoot.me/1lll/, /f2l/, /wp-content/... 等) 整体迁到
-// blog.cuberoot.me 子域。SPA 兜底前先比对 slug 列表,命中就 hard redirect。
+// Blog 双轨:境内走 cuberoot.me/blog/ (主 vhost,nginx ^~ /blog/ alias 直 serve);
+// 境外走 https://blog.cuberoot.me/ (GH Pages cuberoot-blog repo)。
+// 1) 旧 WP permalink (/1lll/, /wp-content/...) → 主路径 /blog/<path>,境内秒开 + 境外再次兜底
+// 2) /blog/* 走到 SPA 兜底 = 境外 GH Pages mirror 无该文件 → 跳子域 (境内 nginx 在 SPA 之前接住,不会进这里)
 function BlogRedirectFallback() {
   const location = useLocation();
   const [slugs, setSlugs] = useState<Set<string> | null>(null);
@@ -145,8 +146,15 @@ function BlogRedirectFallback() {
   if (slugs === null) return <div>Loading...</div>;
 
   const firstSeg = location.pathname.split('/').filter(Boolean)[0];
+
   if (firstSeg && slugs.has(decodeURIComponent(firstSeg))) {
-    window.location.replace(`https://blog.cuberoot.me${location.pathname}${location.search}${location.hash}`);
+    window.location.replace(`/blog${location.pathname}${location.search}${location.hash}`);
+    return <div>Redirecting…</div>;
+  }
+
+  if (firstSeg === 'blog') {
+    const rest = location.pathname.replace(/^\/blog/, '') || '/';
+    window.location.replace(`https://blog.cuberoot.me${rest}${location.search}${location.hash}`);
     return <div>Redirecting…</div>;
   }
 
@@ -282,7 +290,6 @@ function App() {
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
-        <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
         <Route path="/wca-stats/grand-slam" element={<Suspense fallback={<div>Loading...</div>}><GrandSlamPage /></Suspense>} />
         <Route path="/wca-stats/all-results" element={<Suspense fallback={<div>Loading...</div>}><AllResultsPage /></Suspense>} />
