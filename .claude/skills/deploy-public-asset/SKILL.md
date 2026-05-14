@@ -23,7 +23,7 @@ description: "Use when adding new public/static files to the site — images, fo
 1. **`.github/workflows/deploy_core.yml`**：`git add -A <dir>/` 行（新目录）或 `git add -A <file>`（新文件）
 2. **`.github/workflows/deploy_mirror.yml`**：`for d in ...`（目录）或 `for f in ...`（文件）
 
-**漏一处则 `ruiminyan.github.io` 和 `www.cuberoot.me` 有一个 404**。
+**漏一处则 GH Pages (cuberoot.me) 和 `www.cuberoot.me` 镜像有一个 404**。
 
 ## ⚠️ 本地 dev server 也要能访问 —— 根目录静态资源要**同时放 public/**
 

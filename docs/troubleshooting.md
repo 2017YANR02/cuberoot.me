@@ -3,7 +3,7 @@
 ## CI/CD 问题
 
 ### 统计未更新？
-1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) 是否有错误
+1. 检查 [Actions 页面](https://github.com/RuiminYan/cuberoot.me/actions) 是否有错误
 2. 确认 `stats.yml` 中设置了 `permissions: contents: write`
 3. 确保提交信息包含 `[skip ci]` 避免递归触发
 

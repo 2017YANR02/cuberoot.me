@@ -513,7 +513,7 @@ export default function LandingPage() {
 
       <div className="footer">
         <a
-          href="https://github.com/RuiminYan/ruiminyan.github.io"
+          href="https://github.com/RuiminYan/cuberoot.me"
           target="_blank"
           rel="noopener noreferrer"
           className="footer-github"
@@ -541,7 +541,7 @@ export default function LandingPage() {
       </div>
 
       {/* NOTE: 中国 ICP / 公安备案 — 仅在 cuberoot.me 域名（备案绑定该域名）和本地 dev 显示。
-          GitHub Pages 镜像（ruiminyan.github.io）由境外主机服务，无需中国备案，不显示。 */}
+          其他域名（GitHub Pages 直接 URL 等）无需中国备案，不显示。 */}
       {(() => {
         const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
         const onCuberootMe = /(^|\.)cuberoot\.me$/i.test(hostname);

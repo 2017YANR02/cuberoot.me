@@ -23,7 +23,6 @@ app.use('*', cors({
     'http://localhost:5173',              // Vite dev server
     'https://www.cuberoot.me',            // 生产环境（SPA）
     'https://cuberoot.me',                // 裸域 (含 GH Pages 海外线路)
-    'https://ruiminyan.github.io',        // GitHub Pages 直接访问
   ],
   maxAge: 86400,
 }));

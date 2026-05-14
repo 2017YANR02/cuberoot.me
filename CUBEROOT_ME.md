@@ -30,7 +30,7 @@ https://www.cuberoot.me/stats/       → WCA 统计页面
 
 ### 概述
 
-云服务器上部署了 `ruiminyan.github.io` 的镜像 + Hono API。
+云服务器上部署了 `cuberoot.me` 的镜像 + Hono API。
 
 | 项目 | 值 |
 |------|-----|
@@ -62,7 +62,7 @@ push 到 main 分支
 
 ### GitHub Secrets(部署凭据)
 
-存储在 [仓库 Settings → Secrets](https://github.com/RuiminYan/ruiminyan.github.io/settings/secrets/actions):
+存储在 [仓库 Settings → Secrets](https://github.com/RuiminYan/cuberoot.me/settings/secrets/actions):
 
 | Secret | 用途 |
 |--------|------|
@@ -130,7 +130,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 ## 故障排除
 
 ### 镜像未更新?
-1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) 对应 workflow 是否全绿
+1. 检查 [Actions 页面](https://github.com/RuiminYan/cuberoot.me/actions) 对应 workflow 是否全绿
 2. 红叉看日志(SSH 连接 / rsync / nginx -t 失败)
 
 ### nginx 配置回滚?
@@ -162,7 +162,7 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 | **进程管理** | pm2(`core-api`,`pm2 startup` 已配置开机自启) |
 | **凭据文件** | `/root/core-api/.env`(DB_*, JWT_SECRET, WCA_OAUTH_*) |
 | **API 入口** | `https://api.cuberoot.me/v1/health` 等 |
-| **CORS** | 允许 `cuberoot.me`、`www.cuberoot.me`、`ruiminyan.github.io`、`localhost:5173` |
+| **CORS** | 允许 `cuberoot.me`、`www.cuberoot.me`、`localhost:5173` |
 | **CI 部署** | `deploy_core.yml`(rsync `dist/` + `pm2 restart core-api`) |
 
 > 健康检查:`curl https://api.cuberoot.me/v1/health` → `{"status":"ok","db":"connected"}`

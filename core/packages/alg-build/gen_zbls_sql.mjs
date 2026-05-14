@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { alignCase } from './zbls_align_lib.mjs';
 
-const SCRAPED = JSON.parse(readFileSync('D:/cube/ruiminyan.github.io/core/packages/alg-build/zbls_scraped.json', 'utf-8'));
+const SCRAPED = JSON.parse(readFileSync(new URL('./zbls_scraped.json', import.meta.url), 'utf-8'));
 const APOSTROPHE_LETTERS = ['C','D','E','G','H','I','J','K','L','M','P','Q','R','U','V','W','X'];
 const NEW_LETTERS_FROM_DOCX = ['Solved Pair','A','B'];
 

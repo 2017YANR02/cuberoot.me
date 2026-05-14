@@ -30,7 +30,7 @@ CACHE_DIR = ROOT_DIR / ".comp_names_zh_cache"
 
 CUBING_CHINA_URL = "https://cubing.com/competition"
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
-USER_AGENT = "WCA-Stats-Bot/1.0 (ruiminyan.github.io)"
+USER_AGENT = "WCA-Stats-Bot/1.0 (cuberoot.me)"
 API_DELAY_SEC = 0.3
 
 
