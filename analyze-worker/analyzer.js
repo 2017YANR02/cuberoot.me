@@ -56,12 +56,38 @@ const xcrossModule = self.Module;
 importScripts('/analyze-worker/xcross/solver.js');
 
 // Load pseudo (wrapped)
-self.PseudoModuleStash = _isNode ? {} : { locateFile: (p) => '/analyze-worker/pseudo/' + p };
+self.PseudoModuleStash = _isNode ? {} : { locateFile: (p) => '/analyze-worker/pseudo-cross/' + p };
 const pseudoReady = new Promise((resolve) => {
   self.PseudoModuleStash.onRuntimeInitialized = () => resolve();
 });
 const pseudoModule = self.PseudoModuleStash;
-importScripts('/analyze-worker/pseudo/pseudo-wrapped.js');
+importScripts('/analyze-worker/pseudo-cross/pseudo-wrapped.js');
+
+// Load EOCross (wrapped). solve(scr, rot, slot, num, len, ...) — 11 args, no pslot.
+self.EOCrossStash = _isNode ? {} : { locateFile: (p) => '/analyze-worker/eocross/' + p };
+const eoCrossReady = new Promise((resolve) => {
+  self.EOCrossStash.onRuntimeInitialized = () => resolve();
+});
+const eoCrossModule = self.EOCrossStash;
+importScripts('/analyze-worker/eocross/solver-wrapped.js');
+
+// Load F2L_PairingSolver (wrapped). solve(scr, rot, slot, pslot, num, len, ...) — 12 args.
+// slot = solved F2L slots (XCross/XXCross etc), pslot = the single pair-ready slot to find.
+self.PairingStash = _isNode ? {} : { locateFile: (p) => '/analyze-worker/pair/' + p };
+const pairingReady = new Promise((resolve) => {
+  self.PairingStash.onRuntimeInitialized = () => resolve();
+});
+const pairingModule = self.PairingStash;
+importScripts('/analyze-worker/pair/pairing_solver-wrapped.js');
+
+// Load pseudoPairingSolver (wrapped). solve(scr, rot, slot, pslot, a_slot, a_pslot, num, len, ...) — 14 args.
+// slot/pslot = solved pairs, a_slot/a_pslot = auxiliary pair-ready edge/corner. Allows D-offset cross.
+self.PseudoPairingStash = _isNode ? {} : { locateFile: (p) => '/analyze-worker/pseudo-pair/' + p };
+const pseudoPairingReady = new Promise((resolve) => {
+  self.PseudoPairingStash.onRuntimeInitialized = () => resolve();
+});
+const pseudoPairingModule = self.PseudoPairingStash;
+importScripts('/analyze-worker/pseudo-pair/pseudoPairingSolver-wrapped.js');
 
 // rotation strings match NxN_Data inspection AUF: scramble + rotation → state on cross color.
 const XCROSS_ROTATIONS = {
@@ -101,6 +127,32 @@ const CENTER_OFFSET_REGULAR = 'EMPTY_EMPTY';
 const PSEUDO_CENTER_OFFSET_ALL = "EMPTY_EMPTY|EMPTY_y|EMPTY_y2|EMPTY_y'";
 // wasm emit protocol: depth progress / terminal markers / move sequences (the actual solutions).
 const XCROSS_TERMINALS = new Set(['Search finished.', 'Already solved.', 'Unsolvable.', 'Error']);
+
+// Stage labels for new variants. xs = number of X prefixes; matches std XCross naming.
+// Used by EO/Pair/PseudoPair runners (the X count comes from the stage's `pairs` field).
+const STAGE_XS = { cross: '', xcross: 'X', xxcross: 'XX', xxxcross: 'XXX' };
+// EO solutions take more moves because remaining edges must be EO. README says EO+Cross
+// is typically 7-8 HTM, EO+XCross 9-10, EO+XXCross 11+. Bump maxLen vs std XCROSS_STAGE_PARAMS.
+const EOCROSS_STAGE_PARAMS = {
+  cross:    { pairs: 0, solNum: 20, maxLen: 12, nearOptDelta: 1 },
+  xcross:   { pairs: 1, solNum: 20, maxLen: 14, nearOptDelta: 1 },
+  xxcross:  { pairs: 2, solNum: 10, maxLen: 16, nearOptDelta: 1 },
+  xxxcross: { pairs: 3, solNum: 5,  maxLen: 20, nearOptDelta: 1 },
+};
+// Pair-ready stages — alg ends right BEFORE the Setup+Insert that would close the pair.
+// F2L planner then picks up the pair-ready and emits the insertion as its first pair.
+// Lengths comparable to std XCross at one stage lower (Cross+Pair ≈ XCross alg minus 2-3 moves).
+const PAIR_STAGE_PARAMS = {
+  cross:    { pairs: 0, solNum: 20, maxLen: 10, nearOptDelta: 1 },
+  xcross:   { pairs: 1, solNum: 20, maxLen: 12, nearOptDelta: 1 },
+  xxcross:  { pairs: 2, solNum: 10, maxLen: 14, nearOptDelta: 1 },
+  xxxcross: { pairs: 3, solNum: 5,  maxLen: 18, nearOptDelta: 1 },
+};
+// Pseudo+Pair: same length distribution as Pair but with D-offset cross. Same params.
+const PSEUDO_PAIR_STAGE_PARAMS = PAIR_STAGE_PARAMS;
+// For Pseudo+Pair we restrict to matched a_slot==a_pslot to keep F2L planner handoff sane.
+// (Decoupled a_slot ≠ a_pslot would require offset-aware F2L — out of scope.)
+const F2L_SLOTS = ['BL', 'BR', 'FR', 'FL'];
 
 /**
  * Run crossSolver.wasm in F2L mode for one (rotation, slot-combo).
@@ -209,60 +261,302 @@ function runPseudoWasmOnce(scramble, rotation, slot, pslot, solNum, maxLen, cent
 }
 
 /**
- * pCross: search for cross algorithms that leave the bottom 4 edges in cross
- * configuration but possibly D-offset from centers (state ∈ {Solved, D, D', D2}).
+ * Pseudo Cross/XCross/XXCross/XXXCross via pseudoCrossSolver.wasm.
  *
- * Per pseudoCrossSolver center_offset semantics, the wasm finds algorithms whose
- * resulting state matches one of the 4 D-class targets. For each result we detect
- * which D-class fix (∅ / D / D2 / D') would re-align it, append that fix to the alg
- * (so the displayed solution is a valid full sequence), and hand off to F2LPlanner
- * with a now-canonical cross-solved state.
+ * Per pseudoCrossSolver center_offset semantics, the wasm finds algorithms whose resulting
+ * state matches one of the 4 D-class targets. For each wasm output we detect which D-class
+ * fix-up (∅ / D / D2 / D') re-aligns the cross, append it to the alg (kept visible as a
+ * 0-HTM fix-up), and hand the now-canonical state off to F2LPlanner.
  *
- * NOTE: this means each pCross result is mathematically a (regular cross + 1) HTM
- * alg with a "split" notation. Real value-add over regular cross is showing
- * cubers WHICH cross algorithms have an exploitable D-offset prefix. F2L-in-offset
- * frame would require modifying F2LPlanner to be center-aware — deferred.
+ * Stage selection:
+ *   - cross   : slot="" pslot=""  → cross_search
+ *   - xcross  : 4 slot combos × matched pslot (slot==pslot)  → xcross_search
+ *   - xxcross : 6 slot combos × matched pslot              → xxcross_search
+ *   - xxxcross: 4 slot combos × matched pslot              → xxxcross_search
+ *
+ * Matched mode (slot==pslot, same physical F2L slot for both edge & corner) keeps the
+ * F2L planner handoff sane: after D-fix, both the edge (fixed-pos) and corner (pseudo-pos)
+ * land in the same canonical slot, indistinguishable from a real XCross/XXCross/XXXCross.
+ * Decoupled mode (slot ≠ pslot, edge/corner in different physical slots after D-fix) would
+ * require offset-aware F2L — out of scope.
+ *
+ * Δ=0 results are dropped to avoid duplicating regular cross/xcross/... paths.
  */
-function runPseudoCrossAllColors(scramble, crosscolors) {
-  const params = XCROSS_STAGE_PARAMS.cross;
-  const solNum = params.solNum * 4; // 4 offset goals, ask for more so each Δ has variety
+function runPseudoCrossAllColors(scramble, crosscolors, stage) {
+  const params = XCROSS_STAGE_PARAMS[stage];
+  if (!params) return [];
+  const combos = XCROSS_SLOT_COMBOS[params.pairs];
+  const xs = STAGE_XS[stage];
+  const label = 'p' + xs + 'Cross';
+  const solNum = params.solNum * 4; // 4 offset goals
   const out = [];
   for (const color of Object.keys(XCROSS_ROTATIONS)) {
     if (crosscolors[color] === false) continue;
     const rotation = XCROSS_ROTATIONS[color];
-    const wasmOuts = runPseudoWasmOnce(scramble, rotation, '', '', solNum, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
-    const parsed = wasmOuts.map((w) => {
-      const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
-      return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
-    });
-    const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
-    const lenCap = minLen + params.nearOptDelta;
-    const kept = parsed.filter((p) => p.len <= lenCap);
-    for (const { moves: movesOnly, len: depth } of kept) {
-      const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
-      // Build state after scramble + inspection + wasm-solve, then detect D-offset.
-      let state = NxN.new_NxN_Data(3);
-      NxN.ProcessMoves(state, scramble);
-      NxN.ProcessMoves(state, fullMoves);
-      let chosenFix = null;
-      let chosenState = null;
-      for (const fix of PSEUDO_OFFSET_FIXES) {
-        const p = NxN.new_NxN_Data(state);
-        if (fix) NxN.ProcessMoves(p, fix);
-        if (NxN.isCrossSolved(p)) { chosenFix = fix; chosenState = p; break; }
+    for (const slots of combos) {
+      const slotStr = slots.join(' '); // matched: slot == pslot
+      const wasmOuts = runPseudoWasmOnce(scramble, rotation, slotStr, slotStr, solNum, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        let chosenFix = null;
+        let chosenState = null;
+        for (const fix of PSEUDO_OFFSET_FIXES) {
+          const p = NxN.new_NxN_Data(state);
+          if (fix) NxN.ProcessMoves(p, fix);
+          if (NxN.isCrossSolved(p) && NxN.getAmountOfSolvedPairs(p) >= params.pairs) {
+            chosenFix = fix;
+            chosenState = p;
+            break;
+          }
+        }
+        if (chosenState === null) continue;
+        if (chosenFix === '') continue; // duplicates regular path
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const fixSuffix = ' ' + chosenFix;
+        const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+        const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' ' + label + ' [+' + chosenFix + ']' + slotPart;
+        const pairsNow = NxN.getAmountOfSolvedPairs(chosenState);
+        const score = pairsNow * 10 - depth + 1;
+        out.push([alg, chosenState, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
       }
-      if (chosenState === null) continue; // wasm output didn't yield a recognisable cross
-      // Skip Δ=0 — these are just regular crosses, would duplicate non-pseudo path.
-      // (Non-pseudo cross runs via JS heuristic planner, but we exclude here too so
-      // pseudo mode shows only the actual "pseudo" finds.)
-      if (chosenFix === '') continue;
-      const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
-      const fixSuffix = chosenFix ? ' ' + chosenFix : '';
-      const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' pCross [+' + chosenFix + ']';
-      const score = -depth + 1;
-      out.push([alg, chosenState, score]);
-      totalNumCross++;
-      postMessage({ totalnumcross: totalNumCross });
+    }
+  }
+  return out;
+}
+
+// ── EO Cross via EOCrossSolver.wasm ────────────────────────────────────
+// Output state: cross (or xcross/xxcross/...) solved + remaining edges color-oriented (EO).
+// State is canonical (no D-offset), so F2LPlanner takes over directly.
+function runEOWasmOnce(scramble, rotation, slot, solNum, maxLen, centerOffset) {
+  const collected = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    eoCrossModule.solve(scramble, rotation, slot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset || CENTER_OFFSET_REGULAR, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+function runEOCrossAllColors(scramble, crosscolors, stage) {
+  const params = EOCROSS_STAGE_PARAMS[stage];
+  if (!params) return [];
+  const combos = XCROSS_SLOT_COMBOS[params.pairs];
+  const label = 'EO+' + STAGE_XS[stage] + 'Cross';
+  const out = [];
+  for (const color of Object.keys(XCROSS_ROTATIONS)) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const slots of combos) {
+      const slotStr = slots.join(' ');
+      const wasmOuts = runEOWasmOnce(scramble, rotation, slotStr, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+        const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + slotPart;
+        const pairs = NxN.getAmountOfSolvedPairs(state);
+        const score = pairs * 10 - depth + 1;
+        out.push([alg, state, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
+      }
+    }
+  }
+  return out;
+}
+
+// ── Cross + Pair via F2L_PairingSolver.wasm ────────────────────────────
+// Output state: cross (or xcross/...) solved + one F2L slot in "pair-ready" configuration
+// (Setup + Insert away from being a solved pair). State is canonical; F2L planner sees the
+// pair-ready and emits its insertion as the next Pair step. No D-offset detection needed.
+function runPairWasmOnce(scramble, rotation, slot, pslot, solNum, maxLen, centerOffset) {
+  const collected = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, pslot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    pairingModule.solve(scramble, rotation, slot, pslot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset || CENTER_OFFSET_REGULAR, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+/**
+ * Enumerate (solved slots × pair-ready slot) combos for the Pair variant.
+ * stage=cross  : slot="" × pslot ∈ {BL,BR,FR,FL} → 4 combos.
+ * stage=xcross : slot ∈ slots × pslot ∈ remaining → 4×3=12.
+ * stage=xxcross: 6×2 = 12. stage=xxxcross: 4×1 = 4.
+ */
+function pairSlotPslotCombos(pairs) {
+  const out = [];
+  const baseCombos = XCROSS_SLOT_COMBOS[pairs];
+  for (const slots of baseCombos) {
+    const remaining = F2L_SLOTS.filter((s) => !slots.includes(s));
+    for (const ps of remaining) out.push({ slot: slots.join(' '), pslot: ps });
+  }
+  return out;
+}
+
+function runCrossPairAllColors(scramble, crosscolors, stage) {
+  const params = PAIR_STAGE_PARAMS[stage];
+  if (!params) return [];
+  const combos = pairSlotPslotCombos(params.pairs);
+  const label = STAGE_XS[stage] + 'Cross+Pair';
+  const out = [];
+  for (const color of Object.keys(XCROSS_ROTATIONS)) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const { slot, pslot } of combos) {
+      const wasmOuts = runPairWasmOnce(scramble, rotation, slot, pslot, params.solNum, params.maxLen, CENTER_OFFSET_REGULAR);
+      const parsed = wasmOuts.map((w) => {
+        const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+        return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+      });
+      const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+      const lenCap = minLen + params.nearOptDelta;
+      const kept = parsed.filter((p) => p.len <= lenCap);
+      for (const { moves: movesOnly, len: depth } of kept) {
+        const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+        const state = NxN.new_NxN_Data(3);
+        NxN.ProcessMoves(state, scramble);
+        NxN.ProcessMoves(state, fullMoves);
+        // Pair-mode output: cross-solved with `pairs` solved slots, pair-ready not yet inserted.
+        if (!NxN.isCrossSolved(state) || NxN.getAmountOfSolvedPairs(state) < params.pairs) continue;
+        const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+        const slotPart = slot ? ' [' + slot + ']' : '';
+        const alg = inspectionPrefix + movesOnly + ' // ' + color + ' ' + label + ' (' + pslot + ' ready)' + slotPart;
+        const pairsNow = NxN.getAmountOfSolvedPairs(state);
+        const score = pairsNow * 10 - depth + 1;
+        out.push([alg, state, score]);
+        totalNumCross++;
+        postMessage({ totalnumcross: totalNumCross });
+      }
+    }
+  }
+  return out;
+}
+
+// ── Pseudo + Pair via pseudoPairingSolver.wasm ─────────────────────────
+// Like Pair, but cross is allowed to land at any D-class offset (Solved/D/D'/D2). We restrict
+// a_slot==a_pslot (matched physical slot) so F2L planner's pair-ready detection works after
+// applying the D-fix. Δ=0 results are dropped (duplicate regular Pair).
+function runPseudoPairWasmOnce(scramble, rotation, slot, pslot, aSlot, aPslot, solNum, maxLen, centerOffset) {
+  const collected = [];
+  const orig = self.postMessage.bind(self);
+  self.postMessage = (msg) => {
+    if (typeof msg !== 'string') { orig(msg); return; }
+    if (XCROSS_TERMINALS.has(msg)) return;
+    if (msg.startsWith('depth')) return;
+    collected.push(msg);
+  };
+  try {
+    // signature: scr, rot, slot, pslot, a_slot, a_pslot, num, len, move_restrict, post_alg, center_offset, max_rot_count, ma2, mcString
+    pseudoPairingModule.solve(scramble, rotation, slot, pslot, aSlot, aPslot, solNum, maxLen,
+      'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+      '', centerOffset, 0, '', '');
+  } finally {
+    self.postMessage = orig;
+  }
+  return collected;
+}
+
+function runPseudoPairAllColors(scramble, crosscolors, stage) {
+  const params = PSEUDO_PAIR_STAGE_PARAMS[stage];
+  if (!params) return [];
+  // Matched pseudo-pair (a_slot==a_pslot). Iterate (slot, pslot) where slot=N solved pairs
+  // (slot==pslot — corner and edge in same slot), pslot=a single pair-ready slot (same physical slot).
+  const baseCombos = XCROSS_SLOT_COMBOS[params.pairs];
+  const out = [];
+  const label = 'p' + STAGE_XS[stage] + 'Cross+pPair';
+  const solNumExpanded = params.solNum * 4; // 4 offset goals like pCross
+  for (const color of Object.keys(XCROSS_ROTATIONS)) {
+    if (crosscolors[color] === false) continue;
+    const rotation = XCROSS_ROTATIONS[color];
+    for (const slots of baseCombos) {
+      const slotStr = slots.join(' '); // solved pairs (both edge & corner side)
+      const remaining = F2L_SLOTS.filter((s) => !slots.includes(s));
+      for (const ar of remaining) {
+        const wasmOuts = runPseudoPairWasmOnce(scramble, rotation, slotStr, slotStr, ar, ar,
+          solNumExpanded, params.maxLen, PSEUDO_CENTER_OFFSET_ALL);
+        const parsed = wasmOuts.map((w) => {
+          const m = rotation && w.startsWith(rotation + ' ') ? w.substring(rotation.length + 1) : w;
+          return { moves: m, len: m.split(/\s+/).filter((s) => s.length).length };
+        });
+        const minLen = parsed.length === 0 ? 0 : Math.min(...parsed.map((p) => p.len));
+        const lenCap = minLen + params.nearOptDelta;
+        const kept = parsed.filter((p) => p.len <= lenCap);
+        for (const { moves: movesOnly, len: depth } of kept) {
+          const fullMoves = (rotation ? rotation + ' ' : '') + movesOnly;
+          let state = NxN.new_NxN_Data(3);
+          NxN.ProcessMoves(state, scramble);
+          NxN.ProcessMoves(state, fullMoves);
+          let chosenFix = null;
+          let chosenState = null;
+          for (const fix of PSEUDO_OFFSET_FIXES) {
+            const p = NxN.new_NxN_Data(state);
+            if (fix) NxN.ProcessMoves(p, fix);
+            // After fix, expect canonical cross + `pairs` solved (we don't require pair-ready
+            // detection — F2L planner will find it via getF2LOptions).
+            if (NxN.isCrossSolved(p) && NxN.getAmountOfSolvedPairs(p) >= params.pairs) {
+              chosenFix = fix;
+              chosenState = p;
+              break;
+            }
+          }
+          if (chosenState === null) continue;
+          if (chosenFix === '') continue; // duplicates regular Pair — skip Δ=0
+          const inspectionPrefix = rotation ? rotation + ' // Inspection\n' : '';
+          const fixSuffix = ' ' + chosenFix;
+          const slotPart = slotStr ? ' [' + slotStr + ']' : '';
+          const alg = inspectionPrefix + movesOnly + fixSuffix + ' // ' + color + ' ' + label + ' (' + ar + ' ready, +' + chosenFix + ')' + slotPart;
+          const pairsNow = NxN.getAmountOfSolvedPairs(chosenState);
+          const score = pairsNow * 10 - depth + 1;
+          out.push([alg, chosenState, score]);
+          totalNumCross++;
+          postMessage({ totalnumcross: totalNumCross });
+        }
+      }
     }
   }
   return out;
@@ -611,21 +905,45 @@ self.onmessage = async (e) => {
     // Dispatch matrix (variant × stage):
     //   std        × cross      → JS heuristic NxNCrossPlanner (fastest, no wasm)
     //   std        × xcross/etc → crossSolver.wasm in F2L mode
-    //   pseudo     × cross      → pseudoCrossSolver.wasm (pCross, Δ≠0 only)
-    //   pseudo     × xcross/etc → NOT WIRED — needs slot×pslot enumeration + offset-aware F2L
-    //   eo         × *          → NOT WIRED — needs EOCrossSolver wasm port
-    //   pair       × *          → NOT WIRED — needs F2L_PairingSolver wasm port
-    //   pseudo_pair× *          → NOT WIRED — needs pseudoPairingSolver wasm port
+    //   pseudo     × cross      → pseudoCrossSolver.wasm cross_search (Δ≠0 only)
+    //   pseudo     × xcross/etc → pseudoCrossSolver.wasm {x|xx|xxx}cross_search, matched slot/pslot
+    //   eo         × *          → EOCrossSolver.wasm (EO+Cross / EO+XCross / EO+XXCross / EO+XXXCross)
+    //   pair       × *          → F2L_PairingSolver.wasm (Cross+Pair / XCross+Pair / ...)
+    //   pseudo_pair× *          → pseudoPairingSolver.wasm (pCross+pPair etc, Δ≠0 only, a_slot==a_pslot)
     // To add a new variant: copy its wasm to public/analyze-worker/<dir>/, IIFE-wrap if it
     // pollutes globals, add a loader, then a runXXXAllColors that returns CrossResult[]
     // and slot in here.
     const useXCrossWasm = variant === 'std' && (stage === 'xcross' || stage === 'xxcross' || stage === 'xxxcross');
-    const usePseudoCrossWasm = variant === 'pseudo' && stage === 'cross';
+    const usePseudoCrossWasm = variant === 'pseudo';
+    const useEOCrossWasm = variant === 'eo';
+    const usePairWasm = variant === 'pair';
+    const usePseudoPairWasm = variant === 'pseudo_pair';
     if (NxN.isCrossSolved(initial)) {
       crosses = [['', initial, 0]];
     } else if (usePseudoCrossWasm) {
       await pseudoReady;
-      crosses = runPseudoCrossAllColors(workingScramble, e.data.crosscolors);
+      crosses = runPseudoCrossAllColors(workingScramble, e.data.crosscolors, stage);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (useEOCrossWasm) {
+      await eoCrossReady;
+      crosses = runEOCrossAllColors(workingScramble, e.data.crosscolors, stage);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (usePairWasm) {
+      await pairingReady;
+      crosses = runCrossPairAllColors(workingScramble, e.data.crosscolors, stage);
+      if (crosses.length === 0) {
+        xcrossFallback = true;
+        crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
+      }
+    } else if (usePseudoPairWasm) {
+      await pseudoPairingReady;
+      crosses = runPseudoPairAllColors(workingScramble, e.data.crosscolors, stage);
       if (crosses.length === 0) {
         xcrossFallback = true;
         crosses = runCrossAllColors(workingScramble, e.data.crosscolors);
