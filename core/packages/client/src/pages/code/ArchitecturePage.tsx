@@ -452,6 +452,7 @@ const DECISIONS: Decision[] = [
   { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
   { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。',                         en: 'Hard-linked node_modules saves disk; Turbo runs only changed packages.' },
   { topic: 'Static host', pick: '云服务器 nginx',   alt: 'Vercel / Netlify',      zh: '同台机 nginx + API + DB, localhost 内 hop;Vercel 这种 SaaS 跑国内打不开。',        en: 'Same VM hosts nginx + API + DB; localhost hops; Vercel SaaS is unreachable from China.' },
+  { topic: 'Theme tokens', pick: 'shadcn 命名 + hex + color-mix', alt: 'oklch / Material 3 / Radix Colors', zh: '8 页双主题切换。命名跟 OSS 标准 shadcn (AI 写代码命中率高);色值 hex (调研 30+ 大厂含 Anthropic console 自己,0 家把 oklch 当主品牌 token);衍生用 color-mix(in srgb) 跟 Anthropic CDS 实战用法 (644 处) 对齐。', en: 'Dark/light across 8 pages. Naming follows shadcn (OSS standard, friendly to AI code-gen); hex values (surveyed 30+ big-co incl. Anthropic console — zero use oklch as primary brand tokens); derivations via color-mix(in srgb) aligning with Anthropic CDS (644 production uses).' },
 ];
 
 interface Detail {
@@ -479,6 +480,11 @@ const DETAILS: Detail[] = [
     title: 'i18n — 两种 pattern 并存',
     zh: <>大段文案走 <code>t()</code> + <code>en.json</code> / <code>zh.json</code>;组件内零散文案走 <code>isZh ? 'X' : 'Y'</code> 三元。<code>LangToggle</code> 每页右上角, 默认跟系统语言。WCA 比赛中文名独立走 <code>comp_names_zh.json</code>。</>,
     en: <>Long blocks → <code>t()</code> + <code>en.json</code>/<code>zh.json</code>; inline strings → <code>isZh ? 'X' : 'Y'</code> ternary. <code>LangToggle</code> sits top-right on every page. Chinese comp names live in a separate <code>comp_names_zh.json</code>.</>,
+  },
+  {
+    title: 'Theme — dark / light / system 三态',
+    zh: <>shadcn 风 token (<code>--background --foreground --muted-foreground --accent --signal-*</code>) 在 <code>:root</code>, light 默认 + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> 双轨反盖。衍生色一律 <code>color-mix(in srgb, var(--base) X%, transparent)</code>, 改 base 一处自动跟。<code>ThemeToggle</code> 每页右上角循环 system → light → dark, 存 <code>localStorage.theme</code>, 启动 <code>bootstrapTheme()</code> 挂 <code>html[data-theme]</code>。8 页支持切换 (3 双主题 + 4 dark-locked + 1 light-locked), 其它老页跑 legacy <code>--bg-primary --text-primary</code> 不动。</>,
+    en: <>shadcn-style tokens (<code>--background --foreground --muted-foreground --accent --signal-*</code>) live in <code>:root</code>, light defaults + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> dual override. Derivations always go through <code>color-mix(in srgb, var(--base) X%, transparent)</code> so changing one base ripples to all. <code>ThemeToggle</code> sits top-right and cycles system → light → dark, persists to <code>localStorage.theme</code>, applied via <code>bootstrapTheme()</code> at startup. 8 pages support switching (3 dual-theme + 4 dark-locked + 1 light-locked); legacy pages still use the old <code>--bg-primary --text-primary</code> tokens untouched.</>,
   },
   {
     title: 'WCA 统计的脆弱三角',
