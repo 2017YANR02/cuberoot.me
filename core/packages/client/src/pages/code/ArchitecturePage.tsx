@@ -181,7 +181,7 @@ function StatsPipelineSVG() {
   const nodes = [
     { x: 20,  label: 'WCA dump',      sub: '每周公开',                tone: 'ext' },
     { x: 180, label: 'MySQL',         sub: '本机 :3306',              tone: 'work' },
-    { x: 340, label: 'stats-build',   sub: '80+ SQL · 1 TS process',  tone: 'core' },
+    { x: 340, label: 'stats-build',   sub: '80+ SQL · 1 TS',          tone: 'core' },
     { x: 500, label: 'JSON + TSV',    sub: 'artifacts/',              tone: 'work' },
     { x: 660, label: 'scp → VM',      sub: '~6 MB',                   tone: 'work' },
     { x: 820, label: 'PG / API / UI', sub: 'nginx cache 24h',         tone: 'ext' },
