@@ -43,41 +43,41 @@ img[src$="ChineseTaipei.svg"] {
   height: 0.9em !important;
 }
 
-/* 通用清空 ×（components/ClearButton.tsx 共享样式）—— 所有搜索/选择型输入的 × 一个出处 */
+/* 通用清空 ×（components/ClearButton.tsx 共享样式）—— 所有搜索/选择型输入的 ×
+ * 苹果风:实心灰圆 + SVG 细线 ×,适应深 / 浅主题 (token 派生,自动跟主题) */
 .clear-btn {
   position: absolute;
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 50%;
-  background: transparent;
-  color: var(--text-sub, #888);
-  font-size: 1rem;
-  line-height: 1;
+  background: color-mix(in srgb, var(--foreground) 32%, transparent);
+  color: var(--background);
   cursor: pointer;
   padding: 0;
   font-family: inherit;
+  transition: background 0.15s;
 }
 .clear-btn:hover {
-  background: var(--surface-alt, rgba(255, 255, 255, 0.08));
-  color: var(--accent, #e5e5e5);
+  background: color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+.clear-btn-icon {
+  width: 10px;
+  height: 10px;
+  display: block;
 }
 /* 流式布局独立按钮（不浮在输入框上）— 日期区间清空等场景 */
 .clear-btn--standalone {
   position: static;
   transform: none;
-  width: 24px;
-  height: 24px;
-  background: var(--surface-alt, rgba(255, 255, 255, 0.08));
-}
-.clear-btn--standalone:hover {
-  background: var(--accent-soft, rgba(255, 255, 255, 0.16));
+  width: 20px;
+  height: 20px;
 }
 
 /* WCA 多地代码（XW/XA/XE/XF/XN/XO/XS/XM）没有国旗，参考 WCA 官网渲染成"空描边"占位
@@ -632,16 +632,6 @@ body {
 .stats-page {
   max-width: 900px;
   margin: 0 auto;
-}
-
-.clear-btn {
-  background: none;
-  border: 1px solid var(--signal-danger);
-  color: var(--signal-danger);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
 }
 
 .stats-table {

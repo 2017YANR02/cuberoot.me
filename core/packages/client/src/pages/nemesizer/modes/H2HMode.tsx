@@ -7,11 +7,11 @@ import { NEMESIZER_EVENTS } from '../data/nemesizerData';
 import { formatWcaResultK } from '../../../utils/wca_format_result';
 import { eventDisplayName } from '../../../utils/wca_events';
 
-interface Props { ds: NemesizerDataset; isZh: boolean; }
+interface Props { ds: NemesizerDataset | null; isZh: boolean; loadingPhase?: string; }
 
 type Show = 'ranks' | 'results';
 
-export default function H2HMode({ ds, isZh }: Props) {
+export default function H2HMode({ ds, isZh, loadingPhase }: Props) {
   const [params, setParams] = useSearchParams();
   const p1 = params.get('p1') ?? '';
   const p2 = params.get('p2') ?? '';
@@ -23,8 +23,23 @@ export default function H2HMode({ ds, isZh }: Props) {
     setParams(next, { replace: true });
   };
 
-  const idx1 = p1 ? ds.wcaIdIndex.get(p1.toUpperCase()) : undefined;
-  const idx2 = p2 ? ds.wcaIdIndex.get(p2.toUpperCase()) : undefined;
+  const idx1 = ds && p1 ? ds.wcaIdIndex.get(p1.toUpperCase()) : undefined;
+  const idx2 = ds && p2 ? ds.wcaIdIndex.get(p2.toUpperCase()) : undefined;
+
+  // No p1 yet: render the picker immediately, even while ds is loading.
+  if (!p1) {
+    return (
+      <div>
+        <h2 style={{ textAlign: 'center' }}>{isZh ? '正面对决' : 'Head to head!'}</h2>
+        <NemesizerPersonPicker ds={ds} isZh={isZh} onPick={id => setParam('p1', id)}
+          placeholder={isZh ? '选手 1：WCA ID 或姓名' : 'Person 1: WCA ID or name'} />
+      </div>
+    );
+  }
+
+  if (!ds) {
+    return <div className="nemesizer-loading">{isZh ? `加载中… (${loadingPhase ?? ''})` : `Loading… (${loadingPhase ?? ''})`}</div>;
+  }
 
   if (idx1 === undefined) {
     return (

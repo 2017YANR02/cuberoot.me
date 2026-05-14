@@ -43,6 +43,16 @@ export function ClearButton({
       onClick={onClick}
       aria-label={label}
       title={title ?? label}
-    >×</button>
+    >
+      <svg className="clear-btn-icon" viewBox="0 0 10 10" aria-hidden="true">
+        <path
+          d="M2.6 2.6 L7.4 7.4 M7.4 2.6 L2.6 7.4"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+    </button>
   );
 }

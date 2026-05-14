@@ -694,7 +694,7 @@ input:checked + .wca-stats-toggle-pill::after {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.7rem 0.9rem;
+  padding: 0.7rem 2.4rem 0.7rem 0.9rem; /* 右侧空 2.4rem 给 inline × 让位 */
   background: var(--idx-surface);
   border: 1px solid var(--idx-border);
   border-radius: 10px;
@@ -849,6 +849,50 @@ input:checked + .wca-stats-toggle-pill::after {
   color: var(--idx-accent);
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(24, 23, 22, 0.04);
+}
+
+/* 富信息卡片(选手 / 比赛搜索结果):国旗 + 主名 + 副文本 */
+.wca-stats-index-card--rich {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.wca-stats-index-card--rich .country-flag {
+  flex-shrink: 0;
+  width: 1.4em !important;
+  margin-right: 0;
+}
+
+.wca-stats-index-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wca-stats-index-card-name {
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wca-stats-index-card-meta {
+  font-size: 0.72rem;
+  color: var(--idx-text-mute);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wca-stats-index-card--rich:hover .wca-stats-index-card-meta {
+  color: var(--idx-text-sub);
 }
 
 /* 空搜索结果 */
