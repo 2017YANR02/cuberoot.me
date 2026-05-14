@@ -1,21 +1,21 @@
 /* /memo/colpi/ — clone of bestsiteever.net/colpi UI shell */
 
 .colpi-page {
-  /* Claude-warm palette — aligns with the LandingPage cream/terracotta theme. */
-  --c-bg: #FAF9F5;          /* page cream */
-  --c-panel: #FFFFFF;       /* section panels */
-  --c-border: #E5E4DF;      /* hairline */
-  --c-text: #2A2925;        /* near-black warm */
-  --c-muted: #6F6E6B;       /* secondary text */
-  --c-faded: #B5B2A8;       /* tertiary (empty cell text) */
-  --c-primary: #2A2925;     /* primary button bg */
-  --c-filled: #E5E2D6;      /* parchment / oat — "has words" cell */
-  --c-empty:  #F4F2EA;      /* cream-lighter — "no words" cell */
-  --c-grey: #F4F2EA;        /* secondary button hover, kept as alias */
-  --c-active: #C15F3C;      /* terracotta accent (matches site) */
+  /* 通用色走 :root,自动 light/dark;page-specific cell color (filled/empty) 保留 */
+  --c-bg: var(--background);
+  --c-panel: var(--card);
+  --c-border: var(--border-default);
+  --c-text: var(--foreground);
+  --c-muted: var(--muted-foreground);
+  --c-faded: var(--faint-foreground);
+  --c-primary: var(--primary);
+  --c-filled: #E5E2D6;      /* parchment / oat — "has words" cell,语义化保留 */
+  --c-empty:  #F4F2EA;      /* cream-lighter — "no words" cell,语义化保留 */
+  --c-grey: var(--muted);
+  --c-active: var(--accent);
 
   background: var(--c-bg);
-  color-scheme: light;
+  color-scheme: light dark;
   min-height: 100vh;
   color: var(--c-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

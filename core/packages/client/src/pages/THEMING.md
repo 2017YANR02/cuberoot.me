@@ -1,6 +1,6 @@
 # THEMING
 
-未来 dark/light 切换的方向锁定。**今天只锁决策,不动代码** — 真做时按此文档照单做,无须再纠结命名/反盖位置/toggle 形态。
+dark/light 切换已落地 (2026-05-14)。token 在 `src/index.css :root`,toggle 在 `components/ThemeToggle.tsx`,bootstrap 在 `utils/theme.ts` (main.tsx 启动调)。
 
 ---
 
@@ -61,16 +61,16 @@
 /* 跟系统 dark + 显式 dark 都生效;[data-theme=light] 显式 override 时不进 */
 @media (prefers-color-scheme: dark) {
   :where(html:not([data-theme=light])) {
-    --background:        #1a1a1a;
+    --background:        #1c1917;
     --surface:           #232020;
     --surface-elevated:  #2a2520;
     --surface-muted:     #1f1c1a;
     --foreground:        #f0ebe3;
-    --muted-foreground:  #aaa;
-    --faint-foreground:  #888;
+    --muted-foreground:  #9c8c7e;   /* 暖灰,跟 Claude 调性 */
+    --faint-foreground:  #7A736A;
     --border-default:    rgba(255, 235, 220, 0.1);
     --border-strong:     rgba(255, 235, 220, 0.2);
-    /* signal 通常 light 暗色环境下饱和度降一档,选时具体调 */
+    /* signal 通常 light/dark 同值就够,实在刺眼再单独调 */
   }
 }
 html[data-theme=dark] {
@@ -155,6 +155,14 @@ ThemeToggle 三态(对齐 claude.ai):
 **总计:8-10 小时**(分散在多个 PR 推,每页独立验证)
 
 每页做完跑 `pnpm --filter @cuberoot/client typecheck` + 浏览器 light + dark + system 三态 visual 校。
+
+### 迁移策略:统一 (不是兼容)
+
+发现某页硬码值跟 DESIGN.md canonical token 不一致时,**默认让页面跟 token 走,而不是改 token 去保现状**。例:某页 `background: #FAFAFA` 但 `--background: #FAF9F5`,直接换成 `var(--background)`,不为这页发明 `#FAFAFA` 变体。
+
+例外:battle 的 AMOLED 纯黑 `#000` —— 这是设计意图,需要在 `.battle-container` 内 page-scope 反盖 `--background: #000`,不要"统一"成 `#1c1917`。
+
+ThemeToggle 默认值 = `system`(对齐 macOS / Win11 / iOS 现代 UX 主流)。这意味着 OS 设深色的用户进站,目前的 4 个 light 页 (memo/calc/wb/calendar) 上线即自动 dark。是预期行为。
 
 ---
 

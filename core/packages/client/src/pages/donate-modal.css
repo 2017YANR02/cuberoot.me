@@ -19,7 +19,7 @@
 .donate-modal {
     position: relative;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-dark);
     border-radius: 14px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
     padding: 1.5rem 1.75rem 1.25rem;
@@ -76,7 +76,7 @@
     width: 100%;
     height: auto;
     border-radius: 8px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-dark);
     background: #fff;
     display: block;
 }
@@ -89,7 +89,7 @@
 .donate-contact {
     margin: 1rem 0 0;
     padding: 0.85rem 1rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-dark);
     border-radius: 10px;
     background: var(--accent-soft);
     font-size: 0.8rem;
@@ -144,7 +144,7 @@
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-dark);
     border-radius: 5px;
     padding: 2px 5px;
     color: var(--text-sub);
@@ -189,7 +189,7 @@
     padding: 1px 6px;
     border-radius: 4px;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-dark);
     color: var(--text);
 }
 

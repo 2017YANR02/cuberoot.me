@@ -1,6 +1,6 @@
-# DESIGN — Claude-style 设计系统(参考文档,未落地)
+# DESIGN — Claude-style 设计系统(已落地)
 
-未来 8 页(trainer / battle / memo / alg / wca-stats / calendar / calc / wb)重构主题用此文档作蓝本。今天**不动代码**,只锁色值/命名/架构。落地决策见 `src/pages/THEMING.md`。
+8 页 (trainer / battle / memo / alg / wca-stats / calendar / calc / wb) 已用此规范落地。token 在 `src/index.css :root`,实现细节见 `src/pages/THEMING.md`。新页/新色按此文档决策树。
 
 写作格式参考:Anthropic frontend-design plugin 推荐的 9 段 DESIGN.md 标准。
 
@@ -15,8 +15,8 @@
 - ✅ **Claude 风**:warm terracotta + cream,书卷气 + 友好
 
 色相基础:
-- 中性色色相 = **暖灰**(yellow/orange undertone, hue ~ 60-80 in oklch)
-- Accent = **terracotta orange**(#C15F3C / oklch 0.60 0.13 40)
+- 中性色色相 = **暖灰**(yellow/orange undertone,不是冷蓝灰)
+- Accent = **terracotta orange** `#C15F3C`
 - 信号色 = 柔和饱和度,不刺眼
 
 **你的站已经在用**:landing / wb / memo (colpi) / calendar 都是这个调色板,就是命名各自一套。重构 = 统一命名,色值不变。
@@ -27,44 +27,51 @@
 
 ### 完整 token 表(light + dark,对齐 shadcn/ui 命名)
 
+色值统一 hex。oklch 工具产物对齐难、IDE 不预览,2026-05 调研 30+ 大厂(GitHub / Anthropic console / OpenAI / Linear / Discord / Atlassian / Adobe Spectrum / MS Fluent 等)零一家把 oklch 当主品牌 token,全 hex;故跟随。
+
 | Token | Light(默认)| Dark(反盖)| 用途 |
 |---|---|---|---|
-| `--background` | `#FAF9F5` (oklch 0.97 0.005 80) | `#1c1917` (oklch 0.18 0.005 60) | 页面整体背景 |
-| `--foreground` | `#181716` (oklch 0.18 0.005 60) | `#f0ebe3` (oklch 0.94 0.012 80) | 主文字 |
-| `--card` | `#FFFFFF` (oklch 1 0 0) | `#232020` (oklch 0.22 0.005 60) | 卡片 / panel 背景 |
+| `--background` | `#FAF9F5` | `#1c1917` | 页面整体背景 |
+| `--foreground` | `#181716` | `#f0ebe3` | 主文字 |
+| `--card` | `#FFFFFF` | `#232020` | 卡片 / panel 背景 |
 | `--card-foreground` | `#181716` | `#f0ebe3` | 卡片内文字 |
-| `--popover` | `#FFFFFF` | `#2a2520` (oklch 0.24 0.008 60) | 下拉 / modal 浮层 |
+| `--popover` | `#FFFFFF` | `#2a2520` | 下拉 / modal 浮层 |
 | `--popover-foreground` | `#181716` | `#f0ebe3` | 浮层内文字 |
 | `--primary` | `#181716` | `#f0ebe3` | 主按钮背景(反差色)|
 | `--primary-foreground` | `#FAF9F5` | `#181716` | 主按钮文字 |
-| `--secondary` | `#F5F4EE` (oklch 0.96 0.005 80) | `#2a2520` | 次按钮背景 |
+| `--secondary` | `#F5F4EE` | `#2a2520` | 次按钮背景 |
 | `--secondary-foreground` | `#181716` | `#f0ebe3` | 次按钮文字 |
 | `--muted` | `#F5F4EE` | `#2a2520` | 弱化背景(disabled / hover bg)|
-| `--muted-foreground` | `#6F6E6B` (oklch 0.50 0.005 60) | `#9c8c7e` (oklch 0.62 0.018 60) | 弱化文字(副信息)|
-| `--accent` | `#C15F3C` (oklch 0.60 0.13 40) | `#d97757` (oklch 0.68 0.13 40) | **品牌强调** terracotta(dark 下提亮一档)|
+| `--muted-foreground` | `#6F6E6B` | `#9c8c7e` | 弱化文字(副信息)|
+| `--faint-foreground` | `#9F9D97` | `#7A736A` | 更弱化(disabled / 占位)|
+| `--accent` | `#C15F3C` | `#d97757` | **品牌强调** terracotta(dark 下提亮一档)|
 | `--accent-foreground` | `#FFFFFF` | `#181716` | accent 上的文字 |
-| `--accent-soft` | `rgba(193, 95, 60, 0.08)` | `rgba(217, 119, 87, 0.16)` | accent 弱化背景(tag / badge)|
-| `--destructive` | `#e05c5c` (oklch 0.65 0.18 25) | `#e05c5c`(同)| 危险/删除 |
+| `--accent-soft` | `color-mix(in srgb, var(--accent) 8%, transparent)` | `color-mix(in srgb, var(--accent) 16%, transparent)` | accent 弱化背景(tag / badge),衍生 |
+| `--destructive` | `#e05c5c` | `#e05c5c` | 危险/删除 |
 | `--destructive-foreground` | `#FFFFFF` | `#FFFFFF` | destructive 上文字 |
-| `--success` | `#5aac7e` (oklch 0.68 0.10 150) | `#5aac7e` | 成功 |
-| `--warning` | `#d4a259` (oklch 0.74 0.12 75) | `#d4a259` | 警告 |
-| `--info` | `#4a9eff` (oklch 0.65 0.18 250) | `#4a9eff` | 信息 |
-| `--border` | `#E5E4DF` (oklch 0.90 0.005 80) | `rgba(255, 235, 220, 0.10)` | 默认边框 |
-| `--border-strong` | `#CCCAC2` (oklch 0.81 0.005 80) | `rgba(255, 235, 220, 0.20)` | 强调边框 |
-| `--input` | `#E5E4DF` | `rgba(255, 235, 220, 0.10)` | 输入框边框 |
+| `--signal-success` | `#5aac7e` | `#5aac7e` | 成功 |
+| `--signal-warning` | `#d4a259` | `#d4a259` | 警告 |
+| `--signal-info` | `#4a9eff` | `#4a9eff` | 信息 |
+| `--border-default` | `#E5E4DF` | `color-mix(in srgb, var(--foreground) 10%, transparent)` | 默认边框,dark 衍生 |
+| `--border-strong` | `#CCCAC2` | `color-mix(in srgb, var(--foreground) 20%, transparent)` | 强调边框,dark 衍生 |
+| `--input` | `#E5E4DF` | `color-mix(in srgb, var(--foreground) 10%, transparent)` | 输入框边框 |
 | `--ring` | `#C15F3C` | `#d97757` | focus ring(accent 同色)|
+
+> 信号色(`destructive` / `signal-*`)light/dark 同值。一般足够;若 dark 下感觉刺眼再单独调,不要先发明两套。
+
+> **衍生色一律走 `color-mix(in srgb, var(--base) X%, transparent)`**,不要再手算 rgba。理由:改 base 一处自动跟,跟 Anthropic console (cds 系统) 644 处实战用法对齐。`in srgb` 是 Anthropic 默认色彩空间,你也跟随。
 
 ### Charts(数据可视化用)
 
 ```css
---chart-1: oklch(0.65 0.13 40);   /* terracotta */
---chart-2: oklch(0.65 0.10 150);  /* sage green */
---chart-3: oklch(0.62 0.12 75);   /* mustard */
---chart-4: oklch(0.62 0.18 250);  /* blue */
---chart-5: oklch(0.55 0.20 320);  /* magenta */
+--chart-1: #C15F3C;   /* terracotta(同 --accent)*/
+--chart-2: #5aac7e;   /* sage green */
+--chart-3: #d4a259;   /* mustard */
+--chart-4: #4a9eff;   /* blue */
+--chart-5: #b056c9;   /* magenta */
 ```
 
-dark 模式饱和度降一档,light 同色相用更深值。
+dark 模式按需各自微调(目前一套足够,真做时再说)。
 
 ### Selection / Code(对齐 shadcn 完整集)
 
@@ -191,7 +198,7 @@ Claude 风**轻柔阴影**,绝不重(避免 Material 的"卡片浮空"感)。
 --shadow-soft:     0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
 --shadow-elevated: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
 --shadow-floating: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.10);
---shadow-glow:     0 0 0 4px rgba(193, 95, 60, 0.20);  /* accent focus glow */
+--shadow-glow:     0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);  /* accent focus glow */
 ```
 
 dark 模式 shadow 不变(在 dark bg 上几乎看不见,但保留以防 light overlay)。
@@ -208,7 +215,7 @@ dark 模式 shadow 不变(在 dark bg 上几乎看不见,但保留以防 light o
 
 ### Do
 
-- ✅ 用 `oklch()` 写新色(色彩感知线性,跨 light/dark 调整可预测)
+- ✅ 色值全 hex(`#RRGGBB`),不混 hsl / rgb / oklch
 - ✅ 按 token 名读色,**不再 #888 / #aaa 硬码**
 - ✅ accent 色保留品牌 terracotta,不要因为 dark mode 改色相
 - ✅ `--muted` 和 `--secondary` 在 Claude 风里**值相同**(都是 surface-alt),保留 shadcn 命名是为了组件兼容
@@ -326,7 +333,6 @@ dark 模式 shadow 不变(在 dark bg 上几乎看不见,但保留以防 light o
 - **DESIGN.md 模板库**:[https://github.com/VoltAgent/awesome-claude-design](https://github.com/VoltAgent/awesome-claude-design) — 68 个现成模板
 - **WebKit dark mode 官方推荐**:[https://webkit.org/blog/8840/dark-mode-support-in-webkit/](https://webkit.org/blog/8840/dark-mode-support-in-webkit/)
 - **shadcn/ui theming docs**:[https://ui.shadcn.com/docs/theming](https://ui.shadcn.com/docs/theming)
-- **OKLCH color picker**:[https://oklch.com](https://oklch.com) — 转 hex 用
 
 ### 站内已有的 Claude 风参考实现
 

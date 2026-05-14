@@ -1,10 +1,17 @@
 /* 6 个 cubing.pro 风格统计 tab 共享样式. 类名前缀 .wse- (wca-stats-extra). */
 
 .wse-page {
+  /* wse 视觉硬码 dark,锁 dark token */
+  color-scheme: dark;
+  --background: #1c1917;
+  --foreground: #f0ebe3;
+  --muted-foreground: #9c8c7e;
+  --faint-foreground: #7A736A;
+
   max-width: 1180px;
   margin: 0 auto;
   padding: 24px 16px;
-  color: #f0ebe3;
+  color: var(--foreground);
   background: #1a1a1a;
   min-height: 100vh;
 }
@@ -17,16 +24,16 @@
   margin-bottom: 12px;
 }
 .wse-back {
-  color: #aaa;
+  color: var(--muted-foreground);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 14px;
 }
-.wse-back:hover { color: #f0ebe3; }
+.wse-back:hover { color: var(--foreground); }
 .wse-page h1 { margin: 0 0 8px; font-size: 1.75rem; font-weight: 700; }
-.wse-subtitle { margin: 0; color: #aaa; font-size: 14px; }
+.wse-subtitle { margin: 0; color: var(--muted-foreground); font-size: 14px; }
 
 .wse-filters {
   display: flex;
@@ -47,7 +54,7 @@
 }
 .wse-filter label {
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -97,13 +104,13 @@
   padding: 0 !important;
   font-size: 16px;
   cursor: pointer;
-  color: #888;
+  color: var(--faint-foreground);
   border: none !important;
   background: transparent !important;
   border-radius: 0 !important;
   height: auto !important;
 }
-.wse-country-clear:hover { color: #f0ebe3; }
+.wse-country-clear:hover { color: var(--foreground); }
 .wse-country-popup {
   position: absolute;
   top: calc(100% + 4px);
@@ -125,7 +132,7 @@
   gap: 6px;
   padding: 6px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .wse-country-search input {
   flex: 1;
@@ -166,7 +173,7 @@
   cursor: pointer;
   user-select: none;
   font-size: 13px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .wse-toggle input { accent-color: #d77757; }
 
@@ -181,12 +188,12 @@
 .wse-state {
   padding: 40px;
   text-align: center;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .wse-state-error { color: #ff7676; }
 .wse-result-meta {
   font-size: 13px;
-  color: #aaa;
+  color: var(--muted-foreground);
   padding: 4px 8px 12px;
 }
 .wse-table {
@@ -207,7 +214,7 @@
   font-size: 12px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .wse-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 .wse-table a { color: #d77757; text-decoration: none; }
@@ -217,7 +224,7 @@
   text-align: right !important;
   width: 50px;
   font-variant-numeric: tabular-nums;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .wse-value-col {
   text-align: right !important;
@@ -238,7 +245,7 @@
   gap: 12px;
   padding: 16px 0 8px;
   font-size: 13px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .wse-pagination button {
   width: 32px;
@@ -304,9 +311,9 @@
 /* 数据细节列 */
 .wse-detail-cell {
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
-.wse-detail-cell strong { color: #f0ebe3; font-weight: 500; }
+.wse-detail-cell strong { color: var(--foreground); font-weight: 500; }
 
 /* Sum of ranks per-event mini cells */
 .wse-sor-evcell {
@@ -339,16 +346,16 @@
   appearance: none;
   border: none;
   background: transparent;
-  color: #aaa;
+  color: var(--muted-foreground);
   padding: 0 16px;
   font-size: 14px;
   cursor: pointer;
   line-height: 1;
 }
-.wse-show-toggle button:hover { color: #f0ebe3; }
+.wse-show-toggle button:hover { color: var(--foreground); }
 .wse-show-toggle button.active {
   background: rgba(120, 160, 255, 0.18);
-  color: #f0ebe3;
+  color: var(--foreground);
   font-weight: 500;
 }
 
