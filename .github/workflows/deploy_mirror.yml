@@ -69,6 +69,8 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-          rsync -rltz --delete --exclude='blog' --chmod=D755,F644 \
+          # --exclude='.*' 滤掉 git checkout 的 atomic-write 临时文件 (`.<name>.<rand>`)
+          # 否则 rsync 扫到 tmp 后传输前 tmp 被 rename/删 → exit 24
+          rsync -rltz --delete --exclude='blog' --exclude='.*' --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             _deploy/ "${USER}@${HOST}:${PATH_REMOTE}/"
