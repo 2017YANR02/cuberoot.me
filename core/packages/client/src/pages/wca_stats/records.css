@@ -68,6 +68,7 @@
   right: 0;
   max-height: 420px;
   overflow: hidden;
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   background: #1f1f1f;
@@ -98,6 +99,14 @@
   font: inherit;
   font-size: 14px;
   color: var(--text-color, #f0ebe3);
+  box-sizing: border-box;
+  min-width: 0;
+}
+.records-region-item > span:not(.continent-icon):not(.country-flag) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .records-region-item:hover {
   background: rgba(255, 255, 255, 0.06);
@@ -127,7 +136,10 @@
 .records-region-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
 }
+.records-region-search input { min-width: 0; }
 
 .records-type-sub {
   color: var(--text-sub, #888);
