@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '../pages/gen/skewb_pyramid_svg';
+import { canonicalSq1Alg } from '../pages/gen/sq1_svg';
 
 /** Reverse a skewb alg token-by-token (R → R', R' → R, R2 → R2). */
 function invertSkewbAlg(alg: string): string {
@@ -91,8 +92,10 @@ export function PuzzleSVG({
       if (cancelled || !host) return;
       host.innerHTML = '';
       const puzzle: { alg?: string; case?: string; rotations?: { x?: number; y?: number; z?: number }[] } = {};
-      if (caseAlg && caseAlg.trim()) puzzle.case = caseAlg;
-      else if (alg && alg.trim()) puzzle.alg = alg;
+      const isSq1 = kind === 'sq1' || kind === 'sq1-net';
+      const norm = (s: string) => isSq1 ? canonicalSq1Alg(s) : s;
+      if (caseAlg && caseAlg.trim()) puzzle.case = norm(caseAlg);
+      else if (alg && alg.trim()) puzzle.alg = norm(alg);
       if (rotations && rotations.length > 0) puzzle.rotations = rotations;
       try {
         mod.SVG(host, TYPE_MAP[kind] as never, {

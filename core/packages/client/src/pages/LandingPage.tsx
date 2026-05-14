@@ -300,7 +300,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   worldBests:      { en: 'World Bests', zh: '非官方纪录' },
   blog:            { en: 'Blog', zh: '博客' },
   prediction:      { en: 'Prediction', zh: '预测' },
-  visualcubeEditor:{ en: 'Cube Image', zh: '魔方图' },
+  visualcubeEditor:{ en: 'VisualCube', zh: '魔方可视化' },
   analyze:         { en: 'Analyzer', zh: '打乱分析' },
   gen:             { en: 'Scrambles', zh: '生成打乱' },
   notation:        { en: 'Notation', zh: '记号沙盒' },
