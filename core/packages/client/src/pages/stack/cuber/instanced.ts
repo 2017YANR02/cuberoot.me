@@ -73,34 +73,15 @@ function injectSliceRotationShader(material: THREE.Material): void {
       '#include <common>',
       `#include <common>
       attribute vec3 aLayerXYZ;
-      attribute vec4 aOrientation;
       uniform vec3 uSliceAxisMask;
       uniform float uSliceLayer;
-      uniform mat4 uSliceRot;
-      // Quaternion → 3×3 rotation matrix → 4×4 affine
-      mat4 quatToMat4(vec4 q) {
-        float x = q.x, y = q.y, z = q.z, w = q.w;
-        float x2 = x + x, y2 = y + y, z2 = z + z;
-        float xx = x * x2, xy = x * y2, xz = x * z2;
-        float yy = y * y2, yz = y * z2, zz = z * z2;
-        float wx = w * x2, wy = w * y2, wz = w * z2;
-        return mat4(
-          1.0 - (yy + zz), xy + wz,           xz - wy,           0.0,
-          xy - wz,         1.0 - (xx + zz),   yz + wx,           0.0,
-          xz + wy,         yz - wx,           1.0 - (xx + yy),   0.0,
-          0.0,             0.0,               0.0,               1.0
-        );
-      }`
+      uniform mat4 uSliceRot;`
     );
     shader.vertexShader = shader.vertexShader.replace(
       '#include <project_vertex>',
       `vec4 mvPosition = vec4(transformed, 1.0);
       #ifdef USE_INSTANCING
-        // 1) Apply initial position via instanceMatrix
         mvPosition = instanceMatrix * mvPosition;
-        // 2) Apply accumulated rotation via aOrientation (cubelet's quaternion)
-        mvPosition = quatToMat4(aOrientation) * mvPosition;
-        // 3) Apply active slice rotation if cubelet's layer matches
         float myLayer = dot(aLayerXYZ, uSliceAxisMask);
         if (abs(myLayer - uSliceLayer) < 0.5) {
           mvPosition = uSliceRot * mvPosition;
@@ -367,34 +348,26 @@ export default class InstancedRenderer extends THREE.Group {
     }
   }
 
-  /** Shader slice 模式: 给 frame + sticker mesh clone 几何 + 添加 aLayerXYZ +
-   * aOrientation 属性, 注入 shader, 关 moving 渲染。
-   * - aLayerXYZ: per-instance 当前 layer (随 twist 更新)
-   * - aOrientation: per-instance 累积四元数 (随 twist compose)
-   * Static instanceMatrix 永远保持构造时初始值, shader 用 aOrientation 算 final pos。 */
+  /** Shader slice 模式: 给 frame + sticker mesh clone 几何 + 添加 aLayerXYZ 属性,
+   * 注入 shader,关 moving 渲染。beginSlice → 设 uniform 即可,免 N² 写。 */
   private setupShaderSliceMode(cube: Cube, cubelets: Cubelet[]): void {
     const half = (cube.order - 1) / 2;
-    // Frame: aLayerXYZ + aOrientation per cubelet
+    // Frame: aLayerXYZ per cubelet
     const frameLayers = new Float32Array(cubelets.length * 3);
-    const frameOrient = new Float32Array(cubelets.length * 4);
     for (let i = 0; i < cubelets.length; i++) {
       const v = cubelets[i].vector;
       frameLayers[i * 3 + 0] = v.x + half;
       frameLayers[i * 3 + 1] = v.y + half;
       frameLayers[i * 3 + 2] = v.z + half;
-      // Identity quaternion (0, 0, 0, 1)
-      frameOrient[i * 4 + 3] = 1;
     }
     const frameGeo = this.staticFrame.geometry.clone();
     frameGeo.setAttribute('aLayerXYZ', new THREE.InstancedBufferAttribute(frameLayers, 3));
-    frameGeo.setAttribute('aOrientation', new THREE.InstancedBufferAttribute(frameOrient, 4));
     this.staticFrame.geometry = frameGeo;
     this.shaderFrameMat = (this.staticFrame.material as THREE.MeshBasicMaterial).clone();
     injectSliceRotationShader(this.shaderFrameMat);
     this.staticFrame.material = this.shaderFrameMat;
-    // Sticker: aLayerXYZ + aOrientation per sticker slot (= cubelet's)
+    // Sticker: aLayerXYZ per sticker slot
     const stickerLayers = new Float32Array(this.stickerSlots.length * 3);
-    const stickerOrient = new Float32Array(this.stickerSlots.length * 4);
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = cube.initials.get(slot.cubeletInitial);
@@ -403,11 +376,9 @@ export default class InstancedRenderer extends THREE.Group {
       stickerLayers[i * 3 + 0] = v.x + half;
       stickerLayers[i * 3 + 1] = v.y + half;
       stickerLayers[i * 3 + 2] = v.z + half;
-      stickerOrient[i * 4 + 3] = 1;
     }
     const stickerGeo = this.staticSticker.geometry.clone();
     stickerGeo.setAttribute('aLayerXYZ', new THREE.InstancedBufferAttribute(stickerLayers, 3));
-    stickerGeo.setAttribute('aOrientation', new THREE.InstancedBufferAttribute(stickerOrient, 4));
     this.staticSticker.geometry = stickerGeo;
     this.shaderStickerMat = (this.staticSticker.material as THREE.MeshBasicMaterial).clone();
     injectSliceRotationShader(this.shaderStickerMat);
@@ -418,6 +389,68 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame.count = 0;
     this.movingSticker.count = 0;
   }
+
+  /** Process one chunk of pending shader-mode commit (frame + sticker + layer
+   * 写入 for ~CHUNK_SIZE cubelets). Called per-frame from StackPage render loop. */
+  advanceCommitChunk(): void {
+    if (!this.pendingCommit) return;
+    const CHUNK_SIZE = 8000;
+    const { state, cursor } = this.pendingCommit;
+    const instArr = state.instances;
+    const cubeletsArr = state.cubelets;
+    const end = Math.min(instArr.length, cursor + CHUNK_SIZE);
+    const tmpMat = this.tmpMat;
+    const staticFrame = this.staticFrame;
+    const staticSticker = this.staticSticker;
+    const frameAttr = staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    const stickerAttr = staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    const half = (this.cube.order - 1) / 2;
+    const cubeletSlots = this.cubeletSlots;
+    const stickerSlotsArr = this.stickerSlots;
+    for (let i = cursor; i < end; i++) {
+      const cubelet = cubeletsArr[i];
+      if (!cubelet) continue;
+      const v = cubelet.vector;
+      const lx = v.x + half;
+      const ly = v.y + half;
+      const lz = v.z + half;
+      staticFrame.setMatrixAt(instArr[i], cubelet.matrix);
+      frameAttr.setXYZ(instArr[i], lx, ly, lz);
+      const slots = cubeletSlots.get(cubelet.initial);
+      if (!slots) continue;
+      for (let j = 0; j < slots.length; j++) {
+        const slotIdx = slots[j];
+        const slot = stickerSlotsArr[slotIdx];
+        if (!slot.visible) {
+          staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+          continue;
+        }
+        tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+        staticSticker.setMatrixAt(slotIdx, tmpMat);
+        stickerAttr.setXYZ(slotIdx, lx, ly, lz);
+      }
+    }
+    this.pendingCommit.cursor = end;
+    if (end >= instArr.length) {
+      // 完成: flush GPU + clear uniform + release state。
+      // 中间 chunk 不设 needsUpdate — shader uniform 持续 active 让视觉走旋转,
+      // GPU 不需看到 static buffer 的中间状态 (24MB 上传每帧太贵)。
+      staticFrame.instanceMatrix.needsUpdate = true;
+      staticSticker.instanceMatrix.needsUpdate = true;
+      frameAttr.needsUpdate = true;
+      stickerAttr.needsUpdate = true;
+      this.setShaderSliceUniforms(-1, 0, null);
+      this.pendingCommit = null;
+      this.cube.dirty = true;
+    }
+  }
+
+  /** 强制 sync flush 全部 pending commit (next beginSlice 调用,确保新 slice 开始前
+   * 所有 cubelet 位置已 committed)。 */
+  private flushPendingCommitSync(): void {
+    while (this.pendingCommit) this.advanceCommitChunk();
+  }
+
 
   /** Update shader-slice uniforms for active slice. axisIdx: 0=x, 1=y, 2=z; -1 = inactive (layer set to -1). */
   private setShaderSliceUniforms(axisIdx: number, layer: number, rot: THREE.Matrix4 | null): void {
