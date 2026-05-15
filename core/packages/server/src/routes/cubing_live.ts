@@ -8,6 +8,7 @@
  * Cache: in-memory 60s。比赛实时刷新但 60s 粒度够看。
  */
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import WebSocket from 'ws';
 
 export const cubingLiveRoutes = new Hono();
@@ -59,6 +60,8 @@ interface CompData {
   slug: string;     // WCA ID (无横杠),规范形态
   cubingSlug?: string; // cubing.com 用的 dash slug;source=wca 时无
   source: 'cubing' | 'wca';
+  /** 这场比赛两边都有数据时给前端展示数据源切换器 */
+  availableSources?: ('cubing' | 'wca')[];
   compId: number;
   name: string;
   type: string;     // "WCA" / "Non-WCA"
@@ -186,7 +189,15 @@ interface WsCollectResult {
 
 type SecondaryFilter = 'females' | 'children' | 'newcomers';
 
-async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 25000): Promise<WsCollectResult> {
+export interface ProgressEvent {
+  step: 'meta' | 'cubing.results' | 'cubing.filter' | 'wca.fetch' | 'wca.transform';
+  filter?: SecondaryFilter;
+  done: number;
+  total: number;
+}
+export type ProgressFn = (p: ProgressEvent) => void;
+
+async function collectCompData(compId: number, events: EventMeta[], onProgress?: ProgressFn, timeoutMs = 25000): Promise<WsCollectResult> {
   const ws = await openCubingWs();
   const result: WsCollectResult = {
     users: {},
@@ -247,6 +258,15 @@ async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 
         const bucket = result.membersByFilter[currentPhase.filter];
         for (const r of arr) if (!bucket.includes(r.n)) bucket.push(r.n);
       }
+
+      try {
+        onProgress?.({
+          step: currentPhase.filter === 'all' ? 'cubing.results' : 'cubing.filter',
+          filter: currentPhase.filter === 'all' ? undefined : currentPhase.filter,
+          done: currentPhase.received,
+          total: currentPhase.pending.size,
+        });
+      } catch { /* progress 异常不影响主流程 */ }
 
       if (currentPhase.received >= currentPhase.pending.size) {
         currentPhase.done();
@@ -340,7 +360,8 @@ const ROUND_NAME: Record<string, string> = {
   h: 'Final',
 };
 
-async function loadFromWca(wcaId: string): Promise<CompData> {
+async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
+  onProgress?.({ step: 'wca.fetch', done: 0, total: 2 });
   const [metaRes, resultsRes] = await Promise.all([
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`),
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}/results`),
@@ -349,6 +370,8 @@ async function loadFromWca(wcaId: string): Promise<CompData> {
   if (!resultsRes.ok) throw new Error(`WCA results HTTP ${resultsRes.status}`);
   const meta = await metaRes.json() as WcaCompMeta;
   const results = await resultsRes.json() as WcaResultRow[];
+  onProgress?.({ step: 'wca.fetch', done: 2, total: 2 });
+  onProgress?.({ step: 'wca.transform', done: 0, total: 1 });
 
   // Users — competitor number 用自增序号(WCA 没有 number 概念)
   const users: Record<string, User> = {};
@@ -414,6 +437,7 @@ async function loadFromWca(wcaId: string): Promise<CompData> {
       ar: r.regional_average_record ?? '',
     });
   }
+  onProgress?.({ step: 'wca.transform', done: 1, total: 1 });
 
   return {
     slug: wcaId,
@@ -429,10 +453,18 @@ async function loadFromWca(wcaId: string): Promise<CompData> {
   };
 }
 
-async function loadFromCubing(wcaId: string): Promise<CompData> {
+async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetchedMeta?: ScrapedMeta): Promise<CompData> {
   const cubingSlug = wcaIdToCubingSlug(wcaId);
-  const meta = await scrapeMeta(cubingSlug);
-  const { users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events);
+  let meta: ScrapedMeta;
+  if (prefetchedMeta) {
+    meta = prefetchedMeta;
+    onProgress?.({ step: 'meta', done: 1, total: 1 });
+  } else {
+    onProgress?.({ step: 'meta', done: 0, total: 1 });
+    meta = await scrapeMeta(cubingSlug);
+    onProgress?.({ step: 'meta', done: 1, total: 1 });
+  }
+  const { users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events, onProgress);
   return {
     slug: wcaId,
     cubingSlug,
@@ -448,39 +480,102 @@ async function loadFromCubing(wcaId: string): Promise<CompData> {
   };
 }
 
-async function loadComp(wcaId: string): Promise<CompData> {
-  const now = Date.now();
-  const cached = cache.get(wcaId);
-  if (cached && now - cached.fetchedAt < ttlFor(cached.source)) return cached;
+// ─── Source probing ───────────────────────────────────────────────────────
 
-  const pending = inflight.get(wcaId);
-  if (pending) return pending;
+const PROBE_TTL_MS = 5 * 60_000;
+interface ProbeResult { wca: boolean; cubingMeta: ScrapedMeta | null; at: number }
+const probeCache = new Map<string, ProbeResult>();
+
+async function probeSources(wcaId: string): Promise<ProbeResult> {
+  const hit = probeCache.get(wcaId);
+  if (hit && Date.now() - hit.at < PROBE_TTL_MS) return hit;
+  const [wca, cubingMeta] = await Promise.all([
+    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`, { method: 'HEAD' })
+      .then(r => r.ok).catch(() => false),
+    scrapeMeta(wcaIdToCubingSlug(wcaId)).catch(() => null),
+  ]);
+  const result: ProbeResult = { wca, cubingMeta, at: Date.now() };
+  probeCache.set(wcaId, result);
+  return result;
+}
+
+type SourceChoice = 'auto' | 'wca' | 'cubing';
+
+async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
+  const probe = await probeSources(wcaId);
+  const availableSources: ('wca' | 'cubing')[] = [];
+  if (probe.wca) availableSources.push('wca');
+  if (probe.cubingMeta) availableSources.push('cubing');
+  if (availableSources.length === 0) throw new Error('Not found on WCA or cubing.com');
+
+  let useSource: 'wca' | 'cubing';
+  if (choice === 'auto') {
+    useSource = availableSources.includes('wca') ? 'wca' : 'cubing';
+  } else if (!availableSources.includes(choice)) {
+    throw new Error(`No data on ${choice}`);
+  } else {
+    useSource = choice;
+  }
+
+  const cacheKey = `${wcaId}:${useSource}`;
+  const cached = cache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < ttlFor(cached.source)) {
+    return { ...cached, availableSources };
+  }
+
+  // inflight 去重(非流式)
+  if (!onProgress) {
+    const pending = inflight.get(cacheKey);
+    if (pending) return pending.then(d => ({ ...d, availableSources }));
+  }
 
   const p = (async () => {
-    let data: CompData;
-    try {
-      data = await loadFromCubing(wcaId);
-    } catch {
-      // cubing.com 没这场(常见:非中国比赛)→ 走 WCA API
-      data = await loadFromWca(wcaId);
-    }
-    cache.set(wcaId, data);
+    const data = useSource === 'wca'
+      ? await loadFromWca(wcaId, onProgress)
+      : await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
+    data.availableSources = availableSources;
+    cache.set(cacheKey, data);
     return data;
-  })().finally(() => inflight.delete(wcaId));
+  })().finally(() => { if (!onProgress) inflight.delete(cacheKey); });
 
-  inflight.set(wcaId, p);
+  if (!onProgress) inflight.set(cacheKey, p);
   return p;
 }
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 
+function parseSource(s: string | undefined): SourceChoice {
+  if (s === 'wca' || s === 'cubing') return s;
+  return 'auto';
+}
+
+cubingLiveRoutes.get('/cubing-live-stream/:slug', async (c) => {
+  const raw = c.req.param('slug');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(raw)) return c.json({ error: 'invalid slug' }, 400);
+  const wcaId = raw.replace(/-/g, '');
+  const source = parseSource(c.req.query('source'));
+
+  return streamSSE(c, async (stream) => {
+    const onProgress: ProgressFn = (p) => {
+      stream.writeSSE({ event: 'progress', data: JSON.stringify(p) }).catch(() => {});
+    };
+
+    try {
+      const data = await loadComp(wcaId, source, onProgress);
+      await stream.writeSSE({ event: 'done', data: JSON.stringify(data) });
+    } catch (e) {
+      await stream.writeSSE({ event: 'error', data: JSON.stringify({ error: (e as Error).message }) });
+    }
+  });
+});
+
 cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
   const raw = c.req.param('slug');
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(raw)) return c.json({ error: 'invalid slug' }, 400);
-  // 输入归一化为 WCA ID (无横杠) — client 现在已经按 WCA ID 发,这里兜底兼容老链接
   const wcaId = raw.replace(/-/g, '');
+  const source = parseSource(c.req.query('source'));
   try {
-    const data = await loadComp(wcaId);
+    const data = await loadComp(wcaId, source);
     c.header('Cache-Control', 'public, max-age=30');
     return c.json(data);
   } catch (e) {
