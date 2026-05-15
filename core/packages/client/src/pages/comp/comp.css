@@ -161,7 +161,13 @@
 .comp-recent-link:hover {
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
-.comp-recent-name { font-weight: 500; font-size: 0.95rem; }
+.comp-recent-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
 .comp-recent-slug { font-size: 0.8rem; color: var(--muted-foreground); font-family: ui-monospace, monospace; }
 
 .comp-recent-remove {
@@ -200,9 +206,16 @@
   margin-bottom: 16px;
 }
 .comp-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1.6rem;
   font-weight: 600;
   margin: 4px 0 6px;
+}
+.comp-title-flag {
+  width: 30px;
+  height: 22px;
 }
 .comp-detail-meta {
   display: flex;
@@ -232,6 +245,40 @@
   border-radius: 6px;
   color: var(--muted-foreground);
   cursor: pointer;
+}
+.comp-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+  color: var(--muted-foreground);
+}
+.comp-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.comp-live-indicator.status-open {
+  color: var(--signal-success, #10a060);
+  border-color: color-mix(in srgb, var(--signal-success, #10a060) 35%, transparent);
+  background: color-mix(in srgb, var(--signal-success, #10a060) 8%, transparent);
+}
+.comp-live-indicator.status-open .comp-live-dot {
+  animation: comp-pulse 1.5s ease-in-out infinite;
+}
+.comp-live-indicator.status-connecting,
+.comp-live-indicator.status-error {
+  color: var(--signal-warning, #c98a16);
+}
+@keyframes comp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.7); }
 }
 .comp-refresh-btn:hover {
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
@@ -340,8 +387,7 @@ td.is-pr {
 .cuber-link-static { cursor: default; text-decoration: none; }
 .cuber-link-static:hover { text-decoration: none; }
 
-.td-region { display: flex; align-items: center; gap: 6px; }
-.region-name { color: var(--muted-foreground); font-size: 0.85rem; }
+.td-person { display: flex; align-items: center; gap: 8px; }
 .comp-flag {
   display: inline-block;
   width: 20px;
@@ -497,5 +543,5 @@ td.is-pr {
   .comp-modal-header { padding: 10px 12px; }
   .comp-modal-title { font-size: 0.95rem; gap: 6px; }
   .comp-modal-body { padding: 10px; }
-  .region-name { display: none; }
+  .td-person { gap: 6px; }
 }

@@ -10,7 +10,21 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, X as XIcon, ExternalLink } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { Flag } from '../../utils/flag';
+import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
+import { localizeCompName } from '../../utils/comp_localize';
 import './comp.css';
+
+function decodeEntities(s: string): string {
+  if (!s) return s;
+  return s
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
 
 const RECENT_KEY = 'comp.recent';
 const RECENT_MAX = 12;
@@ -51,8 +65,11 @@ export default function CompIndexPage() {
   const [input, setInput] = useState('');
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [, setFlagDataVer] = useState(0);
 
   useEffect(() => { setRecent(loadRecent()); }, []);
+  // 拉 comp_names_zh.json + comp_countries.json,recent 才能查到中文名 + 国旗
+  useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
 
   const onGo = () => {
     const slug = parseSlug(input);
@@ -108,14 +125,21 @@ export default function CompIndexPage() {
         <div className="comp-recent">
           <h2 className="comp-recent-title">{isZh ? '最近浏览' : 'Recent'}</h2>
           <ul className="comp-recent-list">
-            {recent.map(r => (
+            {recent.map(r => {
+              const wcaId = r.slug.replace(/-/g, '');
+              const iso2 = compFlagIso2(wcaId);
+              const display = localizeCompName(wcaId, decodeEntities(r.name), isZh);
+              return (
               <li key={r.slug} className="comp-recent-item">
                 <button
                   type="button"
                   className="comp-recent-link"
                   onClick={() => navigate(`/comp/${r.slug}`)}
                 >
-                  <span className="comp-recent-name">{r.name}</span>
+                  <span className="comp-recent-name">
+                    {iso2 && <Flag iso2={iso2} className="comp-flag" />}
+                    <span>{display}</span>
+                  </span>
                   <span className="comp-recent-slug">{r.slug}</span>
                 </button>
                 <button
@@ -128,7 +152,8 @@ export default function CompIndexPage() {
                   <XIcon size={14} />
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       )}
