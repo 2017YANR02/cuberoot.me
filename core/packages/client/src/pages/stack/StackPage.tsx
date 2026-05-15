@@ -411,6 +411,15 @@ export default function StackPage() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const onSetupChange = useCallback((setup: string) => {
+    setSearchParams((prev) => {
+      const np = new URLSearchParams(prev);
+      np.set('mode', 'player');
+      if (setup) np.set('setup', setup); else np.delete('setup');
+      return np;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
     if (!world) return;
@@ -540,17 +549,38 @@ export default function StackPage() {
         <ThemeToggle />
       </header>
 
-      <div className="stack-canvas-wrap" ref={containerRef}>
-        {orderLoading ? (
-          <div className="stack-loading">
-            <div className="stack-spinner" />
-            <span>{t('构建中…', 'Building…')}</span>
-          </div>
-        ) : null}
-        {solvedToast ? (
-          <div className="stack-toast">{t('已复原 ✦', 'Solved ✦')}</div>
-        ) : null}
-        {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
+      <div className="stack-body">
+        <div className="stack-canvas-wrap" ref={containerRef}>
+          {orderLoading ? (
+            <div className="stack-loading">
+              <div className="stack-spinner" />
+              <span>{t('构建中…', 'Building…')}</span>
+            </div>
+          ) : null}
+          {solvedToast ? (
+            <div className="stack-toast">{t('已复原 ✦', 'Solved ✦')}</div>
+          ) : null}
+          {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
+        </div>
+
+        <aside className="stack-side">
+          {mode === 'algs' ? (
+            <AlgsPanel
+              onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
+              onOrderChange={handleOrder}
+            />
+          ) : mode === 'director' ? (
+            <DirectorPanel getCanvas={getCanvas} />
+          ) : (
+            <PlayerControls
+              world={worldRef.current}
+              alg={playerAlg}
+              setup={playerSetup}
+              onAlgChange={onAlgChange}
+              onSetupChange={onSetupChange}
+            />
+          )}
+        </aside>
       </div>
 
       {isMobile ? (
@@ -561,26 +591,6 @@ export default function StackPage() {
             world.cube.twister.twist(new TwistAction(sign, reverse, 1), false, true);
           }}
         />
-      ) : null}
-
-      {mode === 'player' ? (
-        <PlayerControls
-          world={worldRef.current}
-          alg={playerAlg}
-          setup={playerSetup}
-          onAlgChange={onAlgChange}
-        />
-      ) : null}
-      {mode === 'algs' ? (
-        <AlgsPanel
-          onSelect={(setup, alg) => {
-            onAlgPick(setup, alg);
-          }}
-          onOrderChange={handleOrder}
-        />
-      ) : null}
-      {mode === 'director' ? (
-        <DirectorPanel getCanvas={getCanvas} />
       ) : null}
 
       <SettingDrawer

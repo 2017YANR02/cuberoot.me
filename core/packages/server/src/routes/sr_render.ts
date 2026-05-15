@@ -11,7 +11,10 @@
  * skewb-top uses @cuberoot/shared/skewb-pyramid-svg (pure string, no DOM).
  */
 import { parseHTML } from 'linkedom';
-import { SVG as srSVG } from 'sr-puzzlegen';
+// sr-puzzlegen's dist has bare `import "./foo"` (no .js) — fatal under Node ESM
+// strict mode. Route through the vendor workspace pkg, which esbuild-bundles
+// it into a single resolved ESM file. Same pattern as @cuberoot/visualcube.
+import { SVG as srSVG } from '@cuberoot/vendor-sr-puzzlegen';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 
 let domReady: Promise<void> | null = null;

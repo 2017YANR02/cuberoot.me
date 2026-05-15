@@ -135,11 +135,42 @@
   color: var(--foreground);
 }
 
+.stack-body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  min-width: 0;
+}
+
 .stack-canvas-wrap {
   flex: 1;
   position: relative;
-  width: 100%;
   min-height: 0;
+  min-width: 0;
+}
+
+.stack-side {
+  width: 380px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border-default);
+  background: var(--card);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 窄屏:cube 在上,面板在下;面板限高,可滚动 */
+@media (max-width: 767px) {
+  .stack-body {
+    flex-direction: column;
+  }
+  .stack-side {
+    width: 100%;
+    max-height: 45vh;
+    border-left: none;
+    border-top: 1px solid var(--border-default);
+  }
 }
 
 .stack-loading {

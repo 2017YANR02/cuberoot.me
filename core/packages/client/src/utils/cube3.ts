@@ -80,6 +80,44 @@ export function countMoves(alg: string): number {
   }
 }
 
+/**
+ * Mirror an alg through one of the slice planes.
+ *  - axis 'M': swap R↔L, r↔l, and invert M/x amounts (R becomes L', etc.)
+ *  - axis 'S': swap F↔B, f↔b, and invert S/z amounts
+ *  - axis 'E': swap U↔D, u↔d, and invert E/y amounts
+ * Moves on the swap axis itself get their amount sign flipped.
+ * Other families pass through unchanged.
+ */
+export function mirrorAlg(alg: string, axis: 'M' | 'S' | 'E'): string {
+  if (!alg) return '';
+  const swap = ({ M: ['R', 'L'], S: ['F', 'B'], E: ['U', 'D'] } as const)[axis];
+  const wideSwap = ({ M: ['r', 'l'], S: ['f', 'b'], E: ['u', 'd'] } as const)[axis];
+  const wideSwapW = ({ M: ['Rw', 'Lw'], S: ['Fw', 'Bw'], E: ['Uw', 'Dw'] } as const)[axis];
+  const flipAxis = ({ M: 'x', S: 'z', E: 'y' } as const)[axis];
+  try {
+    const out: string[] = [];
+    for (const m of new Alg(alg).experimentalLeafMoves()) {
+      let f = m.family;
+      let amount = m.amount;
+      if (f === swap[0]) f = swap[1];
+      else if (f === swap[1]) f = swap[0];
+      else if (f === wideSwap[0]) f = wideSwap[1];
+      else if (f === wideSwap[1]) f = wideSwap[0];
+      else if (f === wideSwapW[0]) f = wideSwapW[1];
+      else if (f === wideSwapW[1]) f = wideSwapW[0];
+      // For swapped families and the slice/rotation on the same axis: flip sign
+      if ([...swap, ...wideSwap, ...wideSwapW, axis, flipAxis].includes(f as never)
+          || [...swap, ...wideSwap, ...wideSwapW, axis, flipAxis].includes(m.family as never)) {
+        amount = -amount;
+      }
+      out.push(new Move(f, amount).toString());
+    }
+    return out.join(' ');
+  } catch {
+    return alg;
+  }
+}
+
 /** Cancel adjacent same-axis moves (e.g. "U' U" → "", "U' U2" → "U") AND
  *  fold each move's amount modulo 4 (`U3` → `U'`, `U4` → drop, `U5` → `U`).
  *  cubing.js's experimentalSimplify cancels but leaves U-axis amounts > 2

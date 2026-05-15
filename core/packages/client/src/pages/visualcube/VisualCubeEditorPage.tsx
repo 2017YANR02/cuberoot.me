@@ -785,6 +785,10 @@ export default function VisualCubeEditorPage() {
     }
   }, [state, searchParams, setSearchParams]);
 
+  // Mobile lands mid-page sometimes (likely sticky preview + viewport-unit
+  // jitter as iOS URL bar collapses on first paint). Pin scroll to top on mount.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   const opts = useMemo(() => stateToOpts(state), [state]);
   const svg = useMemo(() => {
     try {
