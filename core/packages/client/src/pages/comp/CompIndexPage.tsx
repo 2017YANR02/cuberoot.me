@@ -5,7 +5,7 @@
  * 跳转到 /comp/:slug 看实时成绩。下方列最近浏览过的比赛 (localStorage)。
  */
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X as XIcon, ExternalLink } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
@@ -132,6 +132,7 @@ export default function CompIndexPage() {
           ? <>支持搜索 WCA 比赛名/城市,或粘贴 <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com <ExternalLink size={12} /></a> Live 链接。</>
           : <>Search a WCA comp / city, or paste a <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com <ExternalLink size={12} /></a> Live URL.</>
         }
+        <Link to="/comp/sources" className="comp-hint-link">{isZh ? '数据源流程' : 'Data source flow'} →</Link>
       </div>
 
       {recent.length > 0 && (
