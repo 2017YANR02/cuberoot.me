@@ -115,7 +115,9 @@ export default function StackPage() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.autoClear = false;
     renderer.setClearColor(0xffffff, 0);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // 超高阶 N≥50: 夹 DPR=1 砍 (dpr/1)² 的 fragment 工作量,让 chunked commit
+    // 期间的 render 时间能在一个 vsync 内完成。低阶照常 retina。
+    renderer.setPixelRatio(puzzleParam >= 50 ? 1 : window.devicePixelRatio);
     rendererRef.current = renderer;
 
     container.appendChild(renderer.domElement);
@@ -436,6 +438,10 @@ export default function StackPage() {
         return np;
       }, { replace: true });
     };
+    const updateDpr = () => {
+      // 超高阶夹 DPR=1
+      rendererRef.current?.setPixelRatio(n >= 50 ? 1 : window.devicePixelRatio);
+    };
     if (n >= 5) {
       setOrderLoading(true);
       window.setTimeout(() => {
@@ -445,6 +451,8 @@ export default function StackPage() {
         wasCompleteRef.current = true;
         ensureCubeCallback();
         applySettings(worldRef.current, settings);
+        updateDpr();
+        worldRef.current.resize();
         setOrderLoading(false);
         writeUrl();
       }, 16);
@@ -454,6 +462,8 @@ export default function StackPage() {
       wasCompleteRef.current = true;
       ensureCubeCallback();
       applySettings(world, settings);
+      updateDpr();
+      world.resize();
       writeUrl();
     }
   }, [ensureCubeCallback, settings, setSearchParams]);
