@@ -208,14 +208,6 @@ export default class InstancedRenderer extends THREE.Group {
    * 共享一个 quaternion,免 N² 次 mat4 mul/帧。第 2 个 slice 进来前 bake 进
    * per-instance,然后 fallback 到多 slice 路径。 */
   private singleSliceGroup: CubeGroup | null = null;
-  /** Pending shader-mode endSlice commit. endSlice 在 shader 路径下保留 final
-   * rotation uniform + 把 commit 工作切成 chunk 分 rAF 跑,避免 60ms spike
-   * 拖累 min fps。 next beginSlice 强制 flush 全部 remaining。 */
-  private pendingCommit: {
-    state: { instances: number[]; cubelets: Cubelet[] };
-    group: CubeGroup;
-    cursor: number;
-  } | null = null;
   /** Stage 2: Matrix4 freelist 池 — 替代 beginSlice 里 187k 次 .clone() 的 GC 风暴。
    * 池 max size ≈ 一个面 slice 的 cubelet+sticker+hint 数 (~187k @ N=250 ≈ 12 MB),
    * 不会无限涨;endSlice 全部 release 回池,下个 twist 复用。 */
@@ -427,72 +419,6 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker.count = 0;
   }
 
-  /** Process one chunk of pending shader-mode commit (frame + sticker + layer
-   * 写入 for ~CHUNK_SIZE cubelets). Called per-frame from StackPage render loop. */
-  advanceCommitChunk(): void {
-    if (!this.pendingCommit) return;
-    const CHUNK_SIZE = 6000;
-    const { state, cursor } = this.pendingCommit;
-    const instArr = state.instances;
-    const cubeletsArr = state.cubelets;
-    const end = Math.min(instArr.length, cursor + CHUNK_SIZE);
-    const staticFrame = this.staticFrame;
-    const staticSticker = this.staticSticker;
-    const frameLayerAttr = staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-    const stickerLayerAttr = staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-    const frameOrientAttr = staticFrame.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-    const stickerOrientAttr = staticSticker.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-    const frameOrientArr = frameOrientAttr.array as Float32Array;
-    const stickerOrientArr = stickerOrientAttr.array as Float32Array;
-    const half = (this.cube.order - 1) / 2;
-    const cubeletSlots = this.cubeletSlots;
-    // Per slice cubelet, write aOrientation (cubelet's accumulated quaternion) +
-    // aLayerXYZ (current layer). No mat4 ops needed — shader composes via quatToMat4.
-    for (let i = cursor; i < end; i++) {
-      const cubelet = cubeletsArr[i];
-      if (!cubelet) continue;
-      const v = cubelet.vector;
-      const q = cubelet.quaternion;
-      const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
-      const lx = v.x + half, ly = v.y + half, lz = v.z + half;
-      const instOff = instArr[i] * 4;
-      frameOrientArr[instOff + 0] = qx;
-      frameOrientArr[instOff + 1] = qy;
-      frameOrientArr[instOff + 2] = qz;
-      frameOrientArr[instOff + 3] = qw;
-      frameLayerAttr.setXYZ(instArr[i], lx, ly, lz);
-      const slots = cubeletSlots.get(cubelet.initial);
-      if (!slots) continue;
-      for (let j = 0; j < slots.length; j++) {
-        const slotIdx = slots[j];
-        const slotOff = slotIdx * 4;
-        stickerOrientArr[slotOff + 0] = qx;
-        stickerOrientArr[slotOff + 1] = qy;
-        stickerOrientArr[slotOff + 2] = qz;
-        stickerOrientArr[slotOff + 3] = qw;
-        stickerLayerAttr.setXYZ(slotIdx, lx, ly, lz);
-      }
-    }
-    this.pendingCommit.cursor = end;
-    if (end >= instArr.length) {
-      // 完成: flush GPU + clear uniform + release state
-      frameLayerAttr.needsUpdate = true;
-      stickerLayerAttr.needsUpdate = true;
-      frameOrientAttr.needsUpdate = true;
-      stickerOrientAttr.needsUpdate = true;
-      this.setShaderSliceUniforms(-1, 0, null);
-      this.pendingCommit = null;
-      this.cube.dirty = true;
-    }
-  }
-
-  /** 强制 sync flush 全部 pending commit (next beginSlice 调用,确保新 slice 开始前
-   * 所有 cubelet 位置已 committed)。 */
-  private flushPendingCommitSync(): void {
-    while (this.pendingCommit) this.advanceCommitChunk();
-  }
-
-
   /** Update shader-slice uniforms for active slice. axisIdx: 0=x, 1=y, 2=z; -1 = inactive (layer set to -1). */
   private setShaderSliceUniforms(axisIdx: number, layer: number, rot: THREE.Matrix4 | null): void {
     if (!this.shaderFrameMat || !this.shaderStickerMat) return;
@@ -555,9 +481,6 @@ export default class InstancedRenderer extends THREE.Group {
 
     // Shader slice 快路径: 只设 uniforms,无 per-instance 写 (省 ~73ms / twist at N=250)
     if (this.useShaderSlice) {
-      // 上次 endSlice 的 pending commit 必须先 sync flush 完, 否则新 slice 的 uniform
-      // 会被旧 slice 的 commit 中途冲掉, 视觉撕裂
-      if (this.pendingCommit) this.flushPendingCommitSync();
       const axisIdx = group.axis === 'x' ? 0 : group.axis === 'y' ? 1 : 2;
       this.setShaderSliceUniforms(axisIdx, group.layer, null);
       // 缓存 cubelets / instances / slots 给 endSlice 用 — 省 62500 Map.get
@@ -769,21 +692,57 @@ export default class InstancedRenderer extends THREE.Group {
     const state = this.activeSlices.get(group);
     if (!state) return;
 
-    // Shader 路径: commit cubelet.matrix → static + aLayerXYZ update。
-    // 工作量 ~60ms @ N=250 face slice, 切 chunk 分 rAF 跑 (每 chunk ~10ms),
-    // 避免 single-frame spike 拖低 min fps。Slice uniform 保活到 commit 完成。
+    // Shader 路径: 写 aOrientation + aLayerXYZ 给 slice cubelets (frame + sticker)。
+    // aOrientation 4 floats vs mat4 16 floats, sticker 不用 multiplyMatrices, 一次性 commit
+    // 同步 ~30ms 比 chunk + flushPendingCommitSync 模式 (per beginSlice 60ms spike) 更稳。
     if (this.useShaderSlice) {
-      // 如有遗留 pending commit (用户连按导致 next twist 进来),先 sync flush
-      if (this.pendingCommit) this.flushPendingCommitSync();
-      // 立即 release origMats (它们没用),清 active slice 但保留 commit state
       this.releaseMat4Array(state.origCubeletMats);
       this.releaseMat4Array(state.origStickerMats);
       this.releaseMat4Array(state.origHintMats);
       this.activeSlices.delete(group);
-      // 保留 uniform = final rotation, layer = group.layer 直到 commit 完成 (视觉持续正确)
-      this.pendingCommit = { state: { instances: state.instances, cubelets: state.cubelets }, group, cursor: 0 };
-      // 第一 chunk 推进; 后续由 rAF 驱动 (StackPage render loop 每帧检查)
-      this.advanceCommitChunk();
+      const instArr = state.instances;
+      const cubeletsArr = state.cubelets;
+      const staticFrame = this.staticFrame;
+      const staticSticker = this.staticSticker;
+      const frameLayerAttr = staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+      const stickerLayerAttr = staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+      const frameOrientAttr = staticFrame.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
+      const stickerOrientAttr = staticSticker.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
+      const frameOrientArr = frameOrientAttr.array as Float32Array;
+      const stickerOrientArr = stickerOrientAttr.array as Float32Array;
+      const half = (this.cube.order - 1) / 2;
+      const cubeletSlots = this.cubeletSlots;
+      for (let i = 0; i < instArr.length; i++) {
+        const cubelet = cubeletsArr[i];
+        if (!cubelet) continue;
+        const v = cubelet.vector;
+        const q = cubelet.quaternion;
+        const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
+        const lx = v.x + half, ly = v.y + half, lz = v.z + half;
+        const instOff = instArr[i] * 4;
+        frameOrientArr[instOff + 0] = qx;
+        frameOrientArr[instOff + 1] = qy;
+        frameOrientArr[instOff + 2] = qz;
+        frameOrientArr[instOff + 3] = qw;
+        frameLayerAttr.setXYZ(instArr[i], lx, ly, lz);
+        const slots = cubeletSlots.get(cubelet.initial);
+        if (!slots) continue;
+        for (let j = 0; j < slots.length; j++) {
+          const slotIdx = slots[j];
+          const slotOff = slotIdx * 4;
+          stickerOrientArr[slotOff + 0] = qx;
+          stickerOrientArr[slotOff + 1] = qy;
+          stickerOrientArr[slotOff + 2] = qz;
+          stickerOrientArr[slotOff + 3] = qw;
+          stickerLayerAttr.setXYZ(slotIdx, lx, ly, lz);
+        }
+      }
+      frameLayerAttr.needsUpdate = true;
+      stickerLayerAttr.needsUpdate = true;
+      frameOrientAttr.needsUpdate = true;
+      stickerOrientAttr.needsUpdate = true;
+      this.setShaderSliceUniforms(-1, 0, null);
+      state.cubelets.length = 0;
       this.cube.dirty = true;
       return;
     }
