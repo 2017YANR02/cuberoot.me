@@ -13,7 +13,16 @@ import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
 import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
+import { CompPicker } from '../../components/CompPicker';
+import type { Comp } from '../../utils/comp_search';
 import './comp.css';
+
+/** WCA comp id (camelCase, "XianCherryBlossom2026") → cubing.com slug ("Xian-Cherry-Blossom-2026")。
+ *  cubing.com 把 WCA name 里的空格换成 dash,标点全去。WCA id 跟 name 大小写完全一致
+ *  (PascalCase),所以从 id 反推 slug = 每个大写字母前插 dash (首字符除外)。 */
+function wcaIdToCubingSlug(wcaId: string): string {
+  return wcaId.replace(/([a-z0-9])([A-Z])/g, '$1-$2');
+}
 
 function decodeEntities(s: string): string {
   if (!s) return s;
@@ -97,14 +106,17 @@ export default function CompIndexPage() {
       </p>
 
       <div className="comp-input-row">
-        <input
-          type="text"
-          className="comp-input"
+        <CompPicker
+          className="comp-picker-wrap"
           value={input}
-          onChange={e => { setInput(e.target.value); setErr(null); }}
-          onKeyDown={e => { if (e.key === 'Enter') onGo(); }}
-          placeholder={isZh ? 'cubing.com slug 或完整 URL,例: Xian-Cherry-Blossom-2026' : 'cubing.com slug or full URL, e.g. Xian-Cherry-Blossom-2026'}
-          autoFocus
+          onChange={(v) => { setInput(v); setErr(null); }}
+          onPick={(c: Comp) => {
+            // CompPicker 选中 WCA 比赛 → 反推 cubing.com slug
+            const slug = wcaIdToCubingSlug(c.id);
+            navigate(`/comp/${slug}`);
+          }}
+          isZh={isZh}
+          placeholder={isZh ? '搜索比赛 / 城市,或粘贴 cubing.com URL' : 'Search competition / city, or paste cubing.com URL'}
         />
         <button type="button" className="comp-go-btn" onClick={onGo}>
           {isZh ? '打开' : 'Open'} <ArrowRight size={16} />
@@ -113,12 +125,10 @@ export default function CompIndexPage() {
       {err && <div className="comp-err">{err}</div>}
 
       <div className="comp-hint">
-        <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">
-          cubing.com <ExternalLink size={12} />
-        </a>
-        <span className="comp-hint-text">
-          {isZh ? ' 上点开任意 Live 比赛,把 URL 末段 slug 粘到这里。' : ' Pick any Live comp on cubing.com and paste the URL slug here.'}
-        </span>
+        {isZh
+          ? <>支持搜索 WCA 比赛名/城市,或粘贴 <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com <ExternalLink size={12} /></a> Live 链接。</>
+          : <>Search a WCA comp / city, or paste a <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com <ExternalLink size={12} /></a> Live URL.</>
+        }
       </div>
 
       {recent.length > 0 && (
