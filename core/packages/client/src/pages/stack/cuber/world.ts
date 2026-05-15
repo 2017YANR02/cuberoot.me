@@ -27,11 +27,11 @@ export default class World {
     this.scene.rotation.x = Math.PI / 6;
     this.scene.rotation.y = -Math.PI / 4 + Math.PI / 16;
 
-    // NOTE: ambient at π = full sRGB color output (three r155+ 物理光照默认下需要 ×π)
-    // directional 关掉,保持 cuber 原本的 flat shading
-    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI);
+    // NOTE: ambient + directional 组合 (×π 是 three r155+ 物理光照补偿)
+    // directional 给贴片侧面阴影,配合 cubelet.thickness=true 出立体感
+    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.75);
     this.scene.add(this.ambient);
-    this.directional = new THREE.DirectionalLight(0xffffff, 0);
+    this.directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.4);
     this.directional.position.set(Cubelet.SIZE, Cubelet.SIZE * 3, Cubelet.SIZE * 2);
     this.scene.add(this.directional);
     this.scene.updateMatrix();
@@ -60,6 +60,10 @@ export default class World {
     if (this.cubes[value] == undefined) {
       this.cubes[value] = new Cube(value);
       this.cubes[value].callbacks.push(this.callback);
+      // 贴片立体感:depth=0.1 默认基本是平面,scale z 放大让贴片"凸出"出来
+      for (const cubelet of this.cubes[value].cubelets) {
+        cubelet.thickness = true;
+      }
     }
     this.cube = this.cubes[value];
     this.scene.add(this.cube);
