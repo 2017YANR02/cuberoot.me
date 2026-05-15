@@ -70,6 +70,7 @@ pnpm --filter @cuberoot/client lint
 - Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
 - `serveRepoRoot` Vite 插件从仓库根 serve `/tools/`、`/stats/`、以及 upstream 静态页
 - **凭据展开**：给用户云服务器 / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
+- **本地 PG**:docker `pg13`(5433 pwd `dev` db `recon_db`,PG 13)。schema / load.sql 先本地验。
 
 ## 测试
 

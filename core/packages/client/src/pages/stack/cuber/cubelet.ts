@@ -88,43 +88,53 @@ class Frame extends THREE.BufferGeometry {
   }
 }
 
+function makeStickerShape(size: number, arrow: boolean): THREE.Shape {
+  size = size / 2;
+  const left = -size;
+  const bottom = size;
+  const top = -size;
+  const right = size;
+  const radius = size / 4;
+  const shape = new THREE.Shape();
+  shape.moveTo(left, top + radius);
+  shape.lineTo(left, bottom - radius);
+  shape.quadraticCurveTo(left, bottom, left + radius, bottom);
+  shape.lineTo(right - radius, bottom);
+  shape.quadraticCurveTo(right, bottom, right, bottom - radius);
+  shape.lineTo(right, top + radius);
+  shape.quadraticCurveTo(right, top, right - radius, top);
+  shape.lineTo(left + radius, top);
+  shape.quadraticCurveTo(left, top, left, top + radius);
+  shape.closePath();
+
+  if (arrow) {
+    const h = size * 0.6;
+    const w = h * 0.8;
+    const arrowPath = new THREE.Path();
+    arrowPath.moveTo(0, h);
+    arrowPath.lineTo(-w, 0);
+    arrowPath.lineTo(-w / 2, 0);
+    arrowPath.lineTo(-w / 2, -h);
+    arrowPath.lineTo(w / 2, -h);
+    arrowPath.lineTo(w / 2, 0);
+    arrowPath.lineTo(w, 0);
+    arrowPath.closePath();
+    shape.holes.push(arrowPath);
+  }
+  return shape;
+}
+
 class Sticker extends THREE.ExtrudeGeometry {
   constructor(size: number, depth: number, arrow: boolean) {
-    size = size / 2;
-    const left = -size;
-    const bottom = size;
-    const top = -size;
-    const right = size;
-    const radius = size / 4;
+    super(makeStickerShape(size, arrow), { bevelEnabled: false, depth: depth });
+  }
+}
 
-    const shape = new THREE.Shape();
-    shape.moveTo(left, top + radius);
-    shape.lineTo(left, bottom - radius);
-    shape.quadraticCurveTo(left, bottom, left + radius, bottom);
-    shape.lineTo(right - radius, bottom);
-    shape.quadraticCurveTo(right, bottom, right, bottom - radius);
-    shape.lineTo(right, top + radius);
-    shape.quadraticCurveTo(right, top, right - radius, top);
-    shape.lineTo(left + radius, top);
-    shape.quadraticCurveTo(left, top, left, top + radius);
-    shape.closePath();
-
-    if (arrow) {
-      const h = size * 0.6;
-      const w = h * 0.8;
-      const arrowPath = new THREE.Path();
-      arrowPath.moveTo(0, h);
-      arrowPath.lineTo(-w, 0);
-      arrowPath.lineTo(-w / 2, 0);
-      arrowPath.lineTo(-w / 2, -h);
-      arrowPath.lineTo(w / 2, -h);
-      arrowPath.lineTo(w / 2, 0);
-      arrowPath.lineTo(w, 0);
-      arrowPath.closePath();
-      shape.holes.push(arrowPath);
-    }
-
-    super(shape, { bevelEnabled: false, depth: depth });
+/** Hint sticker: 单面 plane,设 BackSide 后只在背向 camera 时可见。
+ * 阴影只显示"看不到的 3 个面"(同 alg.cubing.net / cubing.js Cube3D)。 */
+export class HintSticker extends THREE.ShapeGeometry {
+  constructor(size: number, arrow: boolean) {
+    super(makeStickerShape(size, arrow));
   }
 }
 
@@ -151,6 +161,14 @@ export default class Cubelet extends THREE.Group {
   public static readonly _ARROW: Sticker = new Sticker(
     Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
     Cubelet._STICKER_DEPTH,
+    true
+  );
+  public static readonly _HINT: HintSticker = new HintSticker(
+    Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
+    false
+  );
+  public static readonly _HINT_ARROW: HintSticker = new HintSticker(
+    Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
     true
   );
 

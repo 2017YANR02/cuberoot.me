@@ -129,13 +129,31 @@ export default function StackPage() {
     toucher.init(renderer.domElement, world.controller.touch);
     toucherRef.current = toucher;
 
-    // 单击转动:无拖动时根据点击的面 (U/F/R) + 修饰键触发 twist。
-    // 右键 / Shift = 逆时针;不可见的 L/D/B 面 face 会是 null,忽略。
-    world.controller.taps.push((_idx, face, opts) => {
+    // 单击转动 — 仿 cubesim (cubegraphicsobject.cpp:267-336):
+    // 无拖动 click = atan2(0,0)=0 = Right direction。layer 跟 sticker 的 cubelet 走,
+    // 支持高阶魔方内层:点 U 最前一行 → F 层;点 U 中央行 → S 中切片;点 U 最后一行 → B 层。
+    // Shift / 右键 = 逆时针。
+    world.controller.taps.push((idx, face, opts) => {
       if (face === null) return;
-      const sign = FACE[face]; // 0..5 → 'L'/'R'/'D'/'U'/'B'/'F'
+      const order = world.cube.order;
+      // positionIdx = z*N² + y*N + x → 反解 y, z (x 不需要)
+      const y = Math.floor((idx % (order * order)) / order);
+      const z = Math.floor(idx / (order * order));
+      let axis: 'x' | 'y' | 'z';
+      let layer: number;
+      switch (face) {
+        case FACE.U: axis = 'z'; layer = z; break;
+        case FACE.F: axis = 'y'; layer = y; break;
+        case FACE.R: axis = 'y'; layer = y; break;
+        default: return;
+      }
       const reverse = opts.shift || opts.button === 2;
-      world.cube.twister.twist(new TwistAction(sign, reverse, 1), false, true);
+      const group = world.cube.table.groups[axis]?.[layer];
+      if (!group) return;
+      // group.name 已含 wide/layer 前缀 (如 "R" / "2R" / "M'" / "2L'"),
+      // 走 twister.twist 让 history 也 record (undo/redo 才 work),
+      // force=true 截断前一个动画 + 接续按键的"截断"语义
+      world.cube.twister.twist(new TwistAction(group.name, reverse, 1), false, true);
     });
 
     // 右键 default 是 context menu,阻止它好让右键单击能触发逆时针转
