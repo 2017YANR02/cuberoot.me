@@ -57,7 +57,11 @@ CREATE TABLE IF NOT EXISTS wca_results_top (
   person_country_id  VARCHAR(50) NOT NULL,    -- 持件人当时国籍(国旗用)
   comp_id            VARCHAR(50) NOT NULL,
   comp_date          DATE NOT NULL,           -- 比赛 start_date,用于 year/month 过滤(无需 join)
-  attempts           INTEGER[]                -- 5 次 raw 值(WCA 编码)
+  attempts           INTEGER[],               -- 5 次 raw 值(WCA 编码)
+  -- 末尾 3 列服务 /comp 页面 fast-path: 按 comp_id 拉所有 round 成绩;is_avg=false/true 两行合成一条
+  round_type_id      VARCHAR(2) NOT NULL DEFAULT '',
+  format_id          VARCHAR(2) NOT NULL DEFAULT '',
+  record_tag         VARCHAR(2) NOT NULL DEFAULT ''   -- single(is_avg=false 时) 或 average(is_avg=true 时) 的 regional_*_record
 );
 -- 主索引: ORDER BY value LIMIT/OFFSET — 全量翻页主路径
 CREATE INDEX IF NOT EXISTS wrt_main ON wca_results_top (event_id, is_avg, value, wca_id);
@@ -66,6 +70,8 @@ CREATE INDEX IF NOT EXISTS wrt_country ON wca_results_top (event_id, is_avg, per
 -- 选手 / 比赛搜索路径(IN list);q 命中条数少,走该索引比 main + filter 快
 CREATE INDEX IF NOT EXISTS wrt_wca_id ON wca_results_top (event_id, is_avg, wca_id, value);
 CREATE INDEX IF NOT EXISTS wrt_comp_id ON wca_results_top (event_id, is_avg, comp_id, value);
+-- /comp 页面 fast-path: 单 comp 拉全部成绩,无 event 过滤
+CREATE INDEX IF NOT EXISTS wrt_comp_lookup ON wca_results_top (comp_id);
 -- 年份/月份: 走 main 索引 + comp_date 过滤(不专门索引,跳过 cap=2GB 索引膨胀)
 
 -- ── wca_cohort_ranks: 参赛届别排行 (~10M 行) ──

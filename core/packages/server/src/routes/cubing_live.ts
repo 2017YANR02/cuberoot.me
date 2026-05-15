@@ -10,6 +10,7 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import WebSocket from 'ws';
+import { query } from '../db/connection.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -57,7 +58,7 @@ interface LiveResult {
   ar: string | number; // average record marker
 }
 
-type SourceId = 'cubing' | 'wca' | 'wca_live';
+type SourceId = 'cubing' | 'wca' | 'wca_live' | 'wca_db';
 
 interface CompData {
   slug: string;     // WCA ID (无横杠),规范形态
@@ -194,7 +195,7 @@ interface WsCollectResult {
 type SecondaryFilter = 'females' | 'children' | 'newcomers';
 
 export interface ProgressEvent {
-  step: 'meta' | 'cubing.results' | 'cubing.filter' | 'wca.fetch' | 'wca.transform' | 'wca_live.results';
+  step: 'meta' | 'cubing.results' | 'cubing.filter' | 'wca.fetch' | 'wca.transform' | 'wca_live.results' | 'wca_db.query' | 'wca_db.transform';
   filter?: SecondaryFilter;
   done: number;
   total: number;
@@ -322,7 +323,10 @@ const cache = new Map<string, CompData>();
 const inflight = new Map<string, Promise<CompData>>();
 
 function ttlFor(source: SourceId): number {
-  // wca_live & cubing 都是实时源,缓存短
+  // wca_db 每周 CI 重灌,内存缓存可放心拉长到 12h.
+  // wca REST 数据稳定,1h.
+  // wca_live & cubing 都是实时源,缓存短.
+  if (source === 'wca_db') return 12 * 60 * 60_000;
   return source === 'wca' ? WCA_CACHE_TTL_MS : CUBING_CACHE_TTL_MS;
 }
 
@@ -449,6 +453,180 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
     source: 'wca',
     compId: 0,
     name: meta.name,
+    type: 'WCA',
+    events,
+    users,
+    resultsByRound,
+    membersByFilter: { females: [], children: [], newcomers: [] },
+    fetchedAt: Date.now(),
+  };
+}
+
+// ─── WCA dump fast-path (PG wca_results_top) ──────────────────────────────
+// 已结束 & 已入库的比赛走这条:本地 PG join wca_persons/wca_countries/wca_competitions,
+// 几十 ms 出全部 round 成绩;CI 每周重灌 dump 时一并填新数据.
+// 命中即独占,不再 probe cubing / wca_live / wca REST.
+
+// 标准 WCA event 顺序;不在此表的 event 落到末尾.
+const WCA_EVENT_ORDER = [
+  '333','222','444','555','666','777',
+  '333bf','333fm','333oh',
+  'clock','minx','pyram','skewb','sq1',
+  '444bf','555bf','333mbf',
+  'magic','mmagic','333ft','333mbo',
+];
+
+interface WcaDbRow {
+  event_id: string;
+  round_type_id: string;
+  format_id: string;
+  is_avg: boolean;
+  value: number;
+  attempts: number[] | null;
+  record_tag: string;
+  wca_id: string;
+  person_country_id: string;
+  person_name: string | null;
+  country_iso2: string | null;
+  comp_name: string | null;
+}
+
+async function probeWcaDb(wcaId: string): Promise<boolean> {
+  try {
+    const rows = await query<{ x: number }>(
+      'SELECT 1 AS x FROM wca_results_top WHERE comp_id = ? LIMIT 1',
+      [wcaId],
+    );
+    return rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function loadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
+  onProgress?.({ step: 'wca_db.query', done: 0, total: 1 });
+  const rows = await query<WcaDbRow>(
+    `SELECT
+       rt.event_id, rt.round_type_id, rt.format_id, rt.is_avg, rt.value, rt.attempts, rt.record_tag,
+       rt.wca_id, rt.person_country_id,
+       p.name AS person_name,
+       c.iso2 AS country_iso2,
+       comp.name AS comp_name
+     FROM wca_results_top rt
+     LEFT JOIN wca_persons      p    ON p.wca_id   = rt.wca_id
+     LEFT JOIN wca_countries    c    ON c.id       = rt.person_country_id
+     LEFT JOIN wca_competitions comp ON comp.id    = rt.comp_id
+     WHERE rt.comp_id = ?`,
+    [wcaId],
+  );
+  onProgress?.({ step: 'wca_db.query', done: 1, total: 1 });
+  if (rows.length === 0) throw new Error(`wca_db: no results for ${wcaId}`);
+  onProgress?.({ step: 'wca_db.transform', done: 0, total: 1 });
+
+  const compName = rows[0].comp_name ?? wcaId;
+
+  // Users
+  const users: Record<string, User> = {};
+  const numByWcaId = new Map<string, number>();
+  for (const r of rows) {
+    if (!r.wca_id || numByWcaId.has(r.wca_id)) continue;
+    const n = numByWcaId.size + 1;
+    numByWcaId.set(r.wca_id, n);
+    users[String(n)] = {
+      number: n,
+      name: r.person_name ?? r.wca_id,
+      wcaid: r.wca_id,
+      region: r.country_iso2 ? r.country_iso2.toLowerCase() : '',
+    };
+  }
+
+  // 合并 is_avg=false/true 两行 → 一条 LiveResult
+  // key = event:round:wca_id
+  const merged = new Map<string, LiveResult>();
+  const seenAttemptsByKey = new Map<string, number[]>();
+  for (const r of rows) {
+    const key = `${r.event_id}:${r.round_type_id}:${r.wca_id}`;
+    let cur = merged.get(key);
+    if (!cur) {
+      const n = numByWcaId.get(r.wca_id) ?? 0;
+      cur = {
+        i: 0, c: 0, n,
+        e: r.event_id, r: r.round_type_id, f: r.format_id,
+        b: 0, a: 0, v: [], sr: '', ar: '',
+      };
+      merged.set(key, cur);
+    }
+    // attempts: 优先用 best 行(更稳),avg 行如果 best 行没给再补
+    const att = r.attempts ?? [];
+    if (!seenAttemptsByKey.has(key) || (!r.is_avg && seenAttemptsByKey.get(key)!.length === 0)) {
+      seenAttemptsByKey.set(key, att);
+      cur.v = att;
+    }
+    if (r.is_avg) {
+      cur.a = r.value;
+      if (r.record_tag) cur.ar = r.record_tag;
+    } else {
+      cur.b = r.value;
+      if (r.record_tag) cur.sr = r.record_tag;
+    }
+  }
+
+  // 收集 events × rounds + result rn/tt 计数
+  type RoundAccum = RoundMeta & { _seen: Set<string> };
+  const eventMap = new Map<string, EventMeta & { _rmap: Map<string, RoundAccum> }>();
+  for (const r of rows) {
+    let ev = eventMap.get(r.event_id);
+    if (!ev) {
+      ev = { i: r.event_id, name: r.event_id, rs: [], _rmap: new Map() };
+      eventMap.set(r.event_id, ev);
+    }
+    let rd = ev._rmap.get(r.round_type_id);
+    if (!rd) {
+      rd = {
+        i: r.round_type_id, e: r.event_id, f: r.format_id,
+        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
+        name: ROUND_NAME[r.round_type_id] || r.round_type_id,
+        _seen: new Set(),
+      };
+      ev._rmap.set(r.round_type_id, rd);
+      ev.rs.push(rd);
+    }
+    rd._seen.add(r.wca_id);
+  }
+  for (const ev of eventMap.values()) {
+    for (const rd of ev.rs) {
+      const acc = rd as RoundAccum;
+      acc.rn = acc._seen.size;
+      acc.tt = acc.rn;
+      delete (acc as Partial<RoundAccum>)._seen;
+    }
+    ev.rs.sort((a, b) => (ROUND_ORDER[a.i] ?? 99) - (ROUND_ORDER[b.i] ?? 99));
+    delete (ev as Partial<EventMeta & { _rmap?: unknown }>)._rmap;
+  }
+
+  // event 按官方顺序排
+  const events: EventMeta[] = [];
+  for (const id of WCA_EVENT_ORDER) {
+    const ev = eventMap.get(id);
+    if (ev) events.push(ev);
+  }
+  for (const ev of eventMap.values()) {
+    if (!events.includes(ev)) events.push(ev);
+  }
+
+  // resultsByRound: 按 best/avg 排序(0/DNF 放最后)
+  const resultsByRound: Record<string, LiveResult[]> = {};
+  for (const lr of merged.values()) {
+    const key = `${lr.e}:${lr.r}`;
+    (resultsByRound[key] ||= []).push(lr);
+  }
+  onProgress?.({ step: 'wca_db.transform', done: 1, total: 1 });
+
+  return {
+    slug: wcaId,
+    source: 'wca_db',
+    compId: 0,
+    name: compName,
     type: 'WCA',
     events,
     users,
@@ -657,19 +835,26 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
 // ─── Source probing ───────────────────────────────────────────────────────
 
 const PROBE_TTL_MS = 5 * 60_000;
-interface ProbeResult { wca: boolean; cubingMeta: ScrapedMeta | null; wcaLiveId: string | null; at: number }
+interface ProbeResult { wcaDb: boolean; wca: boolean; cubingMeta: ScrapedMeta | null; wcaLiveId: string | null; at: number }
 const probeCache = new Map<string, ProbeResult>();
 
 async function probeSources(wcaId: string): Promise<ProbeResult> {
   const hit = probeCache.get(wcaId);
   if (hit && Date.now() - hit.at < PROBE_TTL_MS) return hit;
+  // wca_db 命中即独占:成绩已经在本地 WCA dump 里,不必再问 cubing.com / wca_live / WCA REST.
+  const wcaDb = await probeWcaDb(wcaId);
+  if (wcaDb) {
+    const result: ProbeResult = { wcaDb: true, wca: false, cubingMeta: null, wcaLiveId: null, at: Date.now() };
+    probeCache.set(wcaId, result);
+    return result;
+  }
   const [wca, cubingMeta, wcaLiveId] = await Promise.all([
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`, { method: 'HEAD' })
       .then(r => r.ok).catch(() => false),
     scrapeMeta(wcaIdToCubingSlug(wcaId)).catch(() => null),
     probeWcaLive(wcaId),
   ]);
-  const result: ProbeResult = { wca, cubingMeta, wcaLiveId, at: Date.now() };
+  const result: ProbeResult = { wcaDb: false, wca, cubingMeta, wcaLiveId, at: Date.now() };
   probeCache.set(wcaId, result);
   return result;
 }
@@ -677,11 +862,12 @@ async function probeSources(wcaId: string): Promise<ProbeResult> {
 type SourceChoice = 'auto' | SourceId;
 
 /** 默认源选择规则:
+ *  - wca_db 单独存在 → wca_db (本地 dump,最快;命中即独占)
  *  - cubing+wca 都有(中国赛后) → wca (WCA REST API 数据更权威)
  *  - wca_live+wca 都有(国外比赛刚结束) → wca_live (实时数据)
- *  - 单一源 → 该源
- *  - cubing+wca_live 极少见 → wca_live */
+ *  - 单一源 → 该源 */
 function defaultSource(available: SourceId[]): SourceId {
+  if (available.includes('wca_db')) return 'wca_db';
   if (available.includes('cubing') && available.includes('wca')) return 'wca';
   if (available.includes('wca_live')) return 'wca_live';
   if (available.includes('wca')) return 'wca';
@@ -691,6 +877,7 @@ function defaultSource(available: SourceId[]): SourceId {
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   const probe = await probeSources(wcaId);
   const availableSources: SourceId[] = [];
+  if (probe.wcaDb) availableSources.push('wca_db');
   if (probe.cubingMeta) availableSources.push('cubing');
   if (probe.wcaLiveId) availableSources.push('wca_live');
   if (probe.wca) availableSources.push('wca');
@@ -718,7 +905,8 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
 
   const p = (async () => {
     let data: CompData;
-    if (useSource === 'wca') data = await loadFromWca(wcaId, onProgress);
+    if (useSource === 'wca_db') data = await loadFromWcaDb(wcaId, onProgress);
+    else if (useSource === 'wca') data = await loadFromWca(wcaId, onProgress);
     else if (useSource === 'wca_live') data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId || undefined);
     else data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
     data.availableSources = availableSources;
@@ -733,7 +921,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
 // ─── Routes ────────────────────────────────────────────────────────────────
 
 function parseSource(s: string | undefined): SourceChoice {
-  if (s === 'wca' || s === 'cubing' || s === 'wca_live') return s;
+  if (s === 'wca' || s === 'cubing' || s === 'wca_live' || s === 'wca_db') return s;
   return 'auto';
 }
 
