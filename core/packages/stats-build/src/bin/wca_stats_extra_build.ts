@@ -762,7 +762,7 @@ CREATE TABLE wca_results_top (
   -- (event, round_type, wca_id) 下 is_avg=false/true 两行合成一条成绩;record_tag 选 single/average 中相应那个.
   round_type_id      VARCHAR(2)  NOT NULL DEFAULT '',
   format_id          VARCHAR(2)  NOT NULL DEFAULT '',
-  record_tag         VARCHAR(2)  NOT NULL DEFAULT '',
+  record_tag         VARCHAR(3)  NOT NULL DEFAULT '',
   -- 派生年:为 (event, is_avg, year) ORDER BY value 翻页提供 leading index 列.
   -- 不加 comp_date BETWEEN 过滤会让 PG 在 wrt_main 上线性 heap-fetch 跳过非目标年(老年份慢到 10s+).
   comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED

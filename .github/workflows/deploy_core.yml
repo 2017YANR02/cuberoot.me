@@ -139,10 +139,11 @@ jobs:
             "root@${{ secrets.DEPLOY_HOST }}" \
             '/usr/local/bin/apply_migrations.sh /root/core-api/migrations'
 
-          # pm2 重启 — 新进程 entry = dist/server.bundle.js。`pm2 restart` 不会
-          # 改 entry script,所以首发要 `pm2 delete` 后再 start。
+          # pm2 reload — 给老 worker drain 时间再杀,比 restart 平滑;首次部署
+          # 走 fallback 直接 start。entry 现在固定 dist/server.bundle.js,不再
+          # 需要 delete + start 这种粗暴换 entry 的写法。
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-            'cd /root/core-api && pm2 delete core-api 2>/dev/null; pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env" && pm2 save'
+            'cd /root/core-api && (pm2 reload core-api --update-env 2>/dev/null || pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env") && pm2 save'
 
           # nginx api_cache 24h TTL,server schema/SQL 一改老响应顽固活着 → 部署后清空
           # (memory: reference_nginx_proxy_cache.md)
