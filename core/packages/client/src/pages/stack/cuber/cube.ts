@@ -176,12 +176,28 @@ export default class Cube extends THREE.Group {
     // 分配 → 主 GC pause 拖 min fps)。Shader 模式 cubelet.matrix 无人读, 跳 updateMatrix。
     this.cubelets.clear();
     const skipMatrix = (this.instancedRenderer as unknown as { useShaderSlice?: boolean }).useShaderSlice;
+    // 直接更新 _index + _vector 字段而不走 cubelet.index setter — 那个 setter
+    // 在每次调用时 `new THREE.Vector3` (372k allocations at N=250 = major GC bomb
+    // ~50ms later in measurement window, dragging min fps).
+    const order = this.order;
+    const order2 = order * order;
+    const half = (order - 1) / 2;
     for (const cubelet of this.initials.values()) {
       cubelet.quaternion.set(0, 0, 0, 1);
       cubelet._rotIdx = 0;
-      cubelet.index = cubelet.initial;
-      if (!skipMatrix) cubelet.updateMatrix();
-      this.cubelets.set(cubelet.index, cubelet);
+      const initial = cubelet.initial;
+      const ix = (initial % order) - half;
+      const iy = ((initial % order2) / order | 0) - half;
+      const iz = (initial / order2 | 0) - half;
+      cubelet._vector.set(ix, iy, iz);
+      cubelet._index = initial;
+      if (!skipMatrix) {
+        cubelet.position.x = Cubelet.SIZE * ix;
+        cubelet.position.y = Cubelet.SIZE * iy;
+        cubelet.position.z = Cubelet.SIZE * iz;
+        cubelet.updateMatrix();
+      }
+      this.cubelets.set(initial, cubelet);
     }
     this.instancedRenderer.rebuildAll();
   }
