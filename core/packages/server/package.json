@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.0",
     "linkedom": "^0.18.12",
     "postgres": "^3.4.9",
+    "sr-puzzlegen": "^1.0.4",
     "ws": "^8.20.0"
   },
   "devDependencies": {

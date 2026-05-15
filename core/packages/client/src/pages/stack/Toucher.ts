@@ -39,7 +39,13 @@ export default class Toucher {
     this.dom.tabIndex = 1;
     this.dom.focus();
     const rect = this.dom.getBoundingClientRect();
-    const action = new TouchAction(event.type, event.clientX - rect.left, event.clientY - rect.top);
+    const action = new TouchAction(
+      event.type,
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      event.shiftKey,
+      event.button,
+    );
     this.callback(action);
     if (event.cancelable) event.preventDefault();
     if (event.type === "mouseup") {

@@ -135,47 +135,206 @@
 .stack-keymap[open] > summary {
   margin-bottom: 8px;
 }
-.stack-keymap-group + .stack-keymap-group {
-  margin-top: 10px;
-}
 .stack-keymap-title {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 4px;
 }
-.stack-keymap-row {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  align-items: center;
-  padding: 2px 0;
-  gap: 8px;
+.stack-keymap-hint {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
 }
-.stack-keymap-move {
+
+/* 键盘 grid */
+.stack-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stack-keyboard-row {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
+.stack-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 3px 0;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1;
+}
+.stack-key:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border-default));
+}
+.stack-key.empty {
+  background: transparent;
+}
+.stack-key.empty .stack-key-move {
+  color: var(--muted-foreground);
+  opacity: 0.45;
+}
+.stack-key.editing {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground, #fff);
+}
+.stack-key.editing .stack-key-label,
+.stack-key.editing .stack-key-move {
+  color: inherit;
+}
+.stack-key-label {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.stack-key-move {
   font-size: 12px;
+  font-weight: 600;
   color: var(--foreground);
 }
-.stack-keymap-keys {
-  display: inline-flex;
+
+/* move picker (点击格子后弹出) */
+.stack-keymap-picker {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+.stack-keymap-picker-group + .stack-keymap-picker-group {
+  margin-top: 8px;
+}
+.stack-keymap-picker-row {
+  display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+.stack-keymap-picker-btn {
+  min-width: 32px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+.stack-keymap-picker-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground, #fff);
+}
+.stack-keymap-picker-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.stack-keymap-picker-clear,
+.stack-keymap-picker-cancel {
+  flex: 1;
+  height: 26px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  cursor: pointer;
+}
+.stack-keymap-picker-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stack-keymap-picker-clear:not(:disabled):hover,
+.stack-keymap-picker-cancel:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+/* misc + reset */
+.stack-keymap-misc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted-foreground);
   align-items: center;
 }
-.stack-keymap-keys kbd {
+.stack-keymap-misc kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   border: 1px solid var(--border-default);
   border-bottom-width: 2px;
-  border-radius: 4px;
+  border-radius: 3px;
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: var(--foreground);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1;
+}
+.stack-mouse-help {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--foreground);
+}
+.stack-mouse-help > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.stack-mouse-op {
+  color: var(--muted-foreground);
+}
+.stack-mouse-op kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1;
+}
+.stack-mouse-act {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--foreground);
+}
+
+.stack-keymap-reset {
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+.stack-keymap-reset:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }

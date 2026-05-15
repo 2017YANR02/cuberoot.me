@@ -384,11 +384,26 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
     return n;
   };
   const s = { ...DEFAULTS };
-  const pt = get('puzzle');
-  if (pt === 'sq1' || pt === 'megaminx' || pt === 'pyraminx' || pt === 'skewb' || pt === 'cube') s.puzzleType = pt;
+  // pzl unifies puzzle-type + NxN size: numeric → cube of that size; keyword
+  // (cube/sq1/mega/pyra/skewb) → puzzle type. Legacy `puzzle=` + old long
+  // values (megaminx/pyraminx) still accepted.
+  const pzl = get('pzl') ?? get('puzzle');
+  if (pzl != null) {
+    const n = parseInt(pzl, 10);
+    if (!isNaN(n) && String(n) === pzl.trim()) {
+      s.puzzleType = 'cube';
+      s.cubeSize = Math.max(1, Math.min(50, n));
+    } else {
+      const v = pzl.toLowerCase();
+      if (v === 'cube') s.puzzleType = 'cube';
+      else if (v === 'sq1') s.puzzleType = 'sq1';
+      else if (v === 'mega' || v === 'megaminx') s.puzzleType = 'megaminx';
+      else if (v === 'pyra' || v === 'pyraminx') s.puzzleType = 'pyraminx';
+      else if (v === 'skewb') s.puzzleType = 'skewb';
+    }
+  }
   const pv = get('variant');
   if (pv === 'iso' || pv === 'net' || pv === 'top') s.puzzleVariant = pv;
-  s.cubeSize = num('pzl', DEFAULTS.cubeSize, 1, 10);
   s.imageSize = num('size', DEFAULTS.imageSize, 1, 1000);
 
   if (get('case') != null) {
@@ -453,11 +468,18 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
   return s;
 }
 
+/** Map internal puzzleType → URL pzl shortname. cube → numeric (size). */
+function pzlShort(t: EditorState['puzzleType']): string {
+  if (t === 'megaminx') return 'mega';
+  if (t === 'pyraminx') return 'pyra';
+  return t; // 'sq1' | 'skewb' | 'cube' (cube handled via numeric size)
+}
+
 function stateToParams(s: EditorState): URLSearchParams {
   const p = new URLSearchParams();
-  if (s.puzzleType !== DEFAULTS.puzzleType) p.set('puzzle', s.puzzleType);
+  if (s.puzzleType !== 'cube') p.set('pzl', pzlShort(s.puzzleType));
+  else if (s.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(s.cubeSize));
   if (s.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('variant', s.puzzleVariant);
-  if (s.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(s.cubeSize));
   if (s.imageSize !== DEFAULTS.imageSize) p.set('size', String(s.imageSize));
   if (s.algorithm) p.set(s.algType, s.algorithm);
   if (s.arrows) p.set('arw', s.arrows);
@@ -668,7 +690,7 @@ export default function VisualCubeEditorPage() {
     startYAngle: number; startXAngle: number;
     yslot: 1 | 2 | null; xslot: 1 | 2 | null;
     rafId: number | null; pendingDx: number; pendingDy: number;
-    dxSign: 1 | -1; xMin: number; xMax: number;
+    dxSign: 1 | -1; dySign: 1 | -1; xMin: number; xMax: number;
   } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const wrapAngle = (n: number) => {
@@ -703,6 +725,7 @@ export default function VisualCubeEditorPage() {
       startXAngle: xslot ? angleAt(xslot) : 0,
       yslot, xslot, rafId: null, pendingDx: 0, pendingDy: 0,
       dxSign: isSrPuzzlegen ? 1 : -1,
+      dySign: isSrPuzzlegen ? 1 : -1,
       xMin: xDefault - 45, xMax: xDefault + 45,
     };
     setIsDragging(true);
@@ -727,7 +750,7 @@ export default function VisualCubeEditorPage() {
           else next.rotateAngle2 = v;
         }
         if (cur.xslot) {
-          const raw = cur.startXAngle - cur.pendingDy * 0.5;
+          const raw = cur.startXAngle + cur.dySign * cur.pendingDy * 0.5;
           const v = Math.max(cur.xMin, Math.min(cur.xMax, Math.round(raw)));
           if (cur.xslot === 1) next.rotateAngle1 = v;
           else next.rotateAngle2 = v;
@@ -848,7 +871,7 @@ export default function VisualCubeEditorPage() {
     const p = new URLSearchParams();
     if (state.algorithm) p.set(state.algType, state.algorithm);
     if (state.puzzleType !== 'cube') {
-      p.set('puzzle', state.puzzleType);
+      p.set('pzl', pzlShort(state.puzzleType));
       if (state.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('variant', state.puzzleVariant);
     } else {
       if (state.cubeView !== 'normal') p.set('view', state.cubeView);
@@ -1040,9 +1063,15 @@ export default function VisualCubeEditorPage() {
                 key={pt}
                 type="button"
                 className={`vc-btn vc-btn-sm${state.puzzleType === pt ? ' vc-btn-active' : ''}`}
-                onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleType: pt }))}
+                onClick={() => setState((s) => {
+                  const next = { ...s, puzzleType: pt };
+                  const d = rotationDefaultsFor(next);
+                  next.rotateAxis1 = d.axis1; next.rotateAngle1 = d.angle1;
+                  next.rotateAxis2 = d.axis2; next.rotateAngle2 = d.angle2;
+                  return next;
+                })}
               >
-                {pt === 'cube' ? 'NxN' : pt === 'sq1' ? 'Sq1' : pt === 'megaminx' ? 'Minx' : pt === 'pyraminx' ? 'Pyra' : 'Skewb'}
+                {pt === 'cube' ? 'NxN' : pt === 'sq1' ? 'Sq1' : pt === 'megaminx' ? 'Mega' : pt === 'pyraminx' ? 'Pyra' : 'Skewb'}
               </button>
             ))}
           </div>
@@ -1075,10 +1104,10 @@ export default function VisualCubeEditorPage() {
               <input
                 type="number"
                 className="vc-num"
-                value={state.cubeSize} min={1} max={10}
+                value={state.cubeSize} min={1} max={50}
                 onChange={(e) => {
                   const n = parseInt(e.target.value, 10);
-                  if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(10, n)));
+                  if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(50, n)));
                 }}
               />
             </>

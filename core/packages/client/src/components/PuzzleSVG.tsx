@@ -9,7 +9,7 @@
  * render time so view rotation works.
  */
 import { useEffect, useMemo, useRef } from 'react';
-import { renderSkewbPyramidSvgParametric } from '../pages/gen/skewb_pyramid_svg';
+import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { canonicalSq1Alg } from '../pages/gen/sq1_svg';
 
 /** Reverse a skewb alg token-by-token (R → R', R' → R, R2 → R2). */
