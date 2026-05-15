@@ -21,7 +21,10 @@ import MobileKeypad from './MobileKeypad';
 import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
+import PerfOverlay, { type PerfStats } from './PerfOverlay';
 import './stack.css';
+
+const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
 const ORDERS = Array.from({ length: 49 }, (_, i) => i + 2);  // 2~50 阶
 type Mode = 'play' | 'player' | 'algs' | 'director';
@@ -71,6 +74,10 @@ export default function StackPage() {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
   const wasCompleteRef = useRef(false);
+  const statsRef = useRef<PerfStats>({
+    drawCalls: 0, triangles: 0, geometries: 0, textures: 0, programs: 0,
+    meshCount: 0, cubeletCount: 0, fps: 0, frameMs: 0, order: 3,
+  });
 
   const [order, setOrder] = useState<number>(3);
   const [moves, setMoves] = useState<number>(0);
@@ -232,12 +239,44 @@ export default function StackPage() {
     renderer.domElement.addEventListener('pointercancel', onPointerUp);
 
     let raf = 0;
+    const fpsBuf: number[] = [];
+    let lastFrameAt = performance.now();
+    let meshSampleAt = 0;
     const loop = () => {
+      const now = performance.now();
+      const dt = now - lastFrameAt;
+      lastFrameAt = now;
+      const t0 = performance.now();
+      let didRender = false;
       if (world.dirty || world.cube.dirty) {
         renderer.clear();
         renderer.render(world.scene, world.camera);
         world.dirty = false;
         world.cube.dirty = false;
+        didRender = true;
+      }
+      if (IS_DEV) {
+        fpsBuf.push(dt);
+        if (fpsBuf.length > 60) fpsBuf.shift();
+        const s = statsRef.current;
+        if (didRender) {
+          s.drawCalls = renderer.info.render.calls;
+          s.triangles = renderer.info.render.triangles;
+          s.frameMs = performance.now() - t0;
+        }
+        s.geometries = renderer.info.memory.geometries;
+        s.textures = renderer.info.memory.textures;
+        s.programs = renderer.info.programs?.length ?? 0;
+        const avgDt = fpsBuf.reduce((a, b) => a + b, 0) / fpsBuf.length;
+        s.fps = avgDt > 0 ? 1000 / avgDt : 0;
+        s.cubeletCount = world.cube.cubelets.length;
+        s.order = world.cube.order;
+        if (now - meshSampleAt > 1000) {
+          meshSampleAt = now;
+          let count = 0;
+          world.scene.traverse((o) => { if ((o as THREE.Mesh).isMesh) count++; });
+          s.meshCount = count;
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -388,6 +427,41 @@ export default function StackPage() {
   const playerSetup = useMemo(() => setupParam, [setupParam]);
   const playerAlg = useMemo(() => algParam, [algParam]);
 
+  // Stress test: 复原 → 排队 30 个 twist → 测 5s 窗口里的 rAF tick
+  const onStress = useCallback(async () => {
+    const w = worldRef.current;
+    if (!w) return { avgFps: 0, minFps: 0, durationMs: 0, frames: 0 };
+    w.cube.twister.twist(new TwistAction('#'), true, true);
+    await new Promise((r) => setTimeout(r, 200));
+    const SIGNS = ['R', 'U', 'F', 'L', 'D', 'B'];
+    for (let i = 0; i < 30; i++) {
+      w.cube.twister.twist(new TwistAction(SIGNS[i % SIGNS.length], i % 2 === 0, 1), false, false);
+    }
+    const DURATION = 5000;
+    const t0 = performance.now();
+    return new Promise<{ avgFps: number; minFps: number; durationMs: number; frames: number }>((resolve) => {
+      let frames = 0;
+      let maxDt = 0;
+      let lastT = t0;
+      const tick = () => {
+        const now = performance.now();
+        const dt = now - lastT;
+        lastT = now;
+        frames++;
+        if (dt > maxDt && dt < 500) maxDt = dt;
+        if (now - t0 < DURATION) {
+          requestAnimationFrame(tick);
+        } else {
+          const elapsed = now - t0;
+          const avgFps = (frames * 1000) / elapsed;
+          const minFps = maxDt > 0 ? 1000 / maxDt : 0;
+          resolve({ avgFps, minFps, durationMs: elapsed, frames });
+        }
+      };
+      requestAnimationFrame(tick);
+    });
+  }, []);
+
   const modeButtons: { id: Mode; icon: typeof Box; label: string }[] = useMemo(() => [
     { id: 'play',     icon: Box,        label: t('自由', 'Play') },
     { id: 'player',   icon: PlayCircle, label: t('回放', 'Player') },
@@ -462,6 +536,7 @@ export default function StackPage() {
         {solvedToast ? (
           <div className="stack-toast">{t('已复原 ✦', 'Solved ✦')}</div>
         ) : null}
+        {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
       </div>
 
       {isMobile ? (
