@@ -131,41 +131,109 @@ export default class CubeGroup extends THREE.Group {
       turnIdxFor?: (axis: string, angle: number) => number;
     };
     if (ir.useShaderSlice && ir.lookupCompTable && ir.turnIdxFor) {
-      // rotIdx fast path: instead of computing new quaternion per cubelet (~21ms
-      // at N=250), look up via 24×9 composition table for cube rotation group.
+      // rotIdx fast path: per-cubelet quaternion update via 24-entry lookup.
+      // Face turns are ALSO position permutations (no trig). Per turnIdx, the
+      // vector transformation is a simple swap+negate. Drop turnIdx is one of 9
+      // (3 axes × ±90° + 180°). Dispatch via switch on turnIdx.
       const turnIdx = ir.turnIdxFor(this.axis, this.angle);
       const compLookup = ir.lookupCompTable;
-      const axisVec = CubeGroup.AXIS_VECTOR[this.axis];
-      const angle = this.angle;
       const half = (this.cube.order - 1) / 2;
-      const cosA = Math.cos(angle), sinA = Math.sin(angle);
-      const ax = axisVec.x, ay = axisVec.y, az = axisVec.z;
       const N = this.cubelets.length;
       const order = this.cube.order;
       const order2 = order * order;
       const cubelets = this.cubelets;
-      for (let i = N - 1; i >= 0; i--) {
-        const c = cubelets[i];
-        // Composition: c._rotIdx = compTable[turnIdx][c._rotIdx]
-        c._rotIdx = compLookup(turnIdx, c._rotIdx);
-        // Vector rotation: Rodrigues
-        const v = c._vector;
-        const vx = v.x, vy = v.y, vz = v.z;
-        const dot = ax * vx + ay * vy + az * vz;
-        const oneMinusCos = 1 - cosA;
-        const nx = vx * cosA + (ay * vz - az * vy) * sinA + ax * dot * oneMinusCos;
-        const ny = vy * cosA + (az * vx - ax * vz) * sinA + ay * dot * oneMinusCos;
-        const nz = vz * cosA + (ax * vy - ay * vx) * sinA + az * dot * oneMinusCos;
-        const rx = Math.round(nx * 2) / 2;
-        const ry = Math.round(ny * 2) / 2;
-        const rz = Math.round(nz * 2) / 2;
-        v.x = rx; v.y = ry; v.z = rz;
-        const ix = Math.round(rx + half);
-        const iy = Math.round(ry + half);
-        const iz = Math.round(rz + half);
-        const newIndex = iz * order2 + iy * order + ix;
-        c._index = newIndex;
-        this.cube.cubelets.set(newIndex, c);
+      // Pre-branch on turnIdx so the inner loop is straight-line code.
+      switch (turnIdx) {
+        case 0: { // x +90°: (vx, vy, vz) → (vx, vz, -vy)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(0, c._rotIdx);
+            const v = c._vector; const vy = v.y, vz = v.z;
+            v.y = vz; v.z = -vy;
+            const ix = (v.x + half + 0.5) | 0, iy = (vz + half + 0.5) | 0, iz = (-vy + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 1: { // x +180°: (vx, vy, vz) → (vx, -vy, -vz)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(1, c._rotIdx);
+            const v = c._vector; const vy = v.y, vz = v.z;
+            v.y = -vy; v.z = -vz;
+            const ix = (v.x + half + 0.5) | 0, iy = (-vy + half + 0.5) | 0, iz = (-vz + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 2: { // x -90°: (vx, vy, vz) → (vx, -vz, vy)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(2, c._rotIdx);
+            const v = c._vector; const vy = v.y, vz = v.z;
+            v.y = -vz; v.z = vy;
+            const ix = (v.x + half + 0.5) | 0, iy = (-vz + half + 0.5) | 0, iz = (vy + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 3: { // y +90°: (vx, vy, vz) → (-vz, vy, vx)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(3, c._rotIdx);
+            const v = c._vector; const vx = v.x, vz = v.z;
+            v.x = -vz; v.z = vx;
+            const ix = (-vz + half + 0.5) | 0, iy = (v.y + half + 0.5) | 0, iz = (vx + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 4: { // y +180°: (vx, vy, vz) → (-vx, vy, -vz)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(4, c._rotIdx);
+            const v = c._vector; const vx = v.x, vz = v.z;
+            v.x = -vx; v.z = -vz;
+            const ix = (-vx + half + 0.5) | 0, iy = (v.y + half + 0.5) | 0, iz = (-vz + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 5: { // y -90°: (vx, vy, vz) → (vz, vy, -vx)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(5, c._rotIdx);
+            const v = c._vector; const vx = v.x, vz = v.z;
+            v.x = vz; v.z = -vx;
+            const ix = (vz + half + 0.5) | 0, iy = (v.y + half + 0.5) | 0, iz = (-vx + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 6: { // z +90°: (vx, vy, vz) → (vy, -vx, vz)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(6, c._rotIdx);
+            const v = c._vector; const vx = v.x, vy = v.y;
+            v.x = vy; v.y = -vx;
+            const ix = (vy + half + 0.5) | 0, iy = (-vx + half + 0.5) | 0, iz = (v.z + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 7: { // z +180°: (vx, vy, vz) → (-vx, -vy, vz)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(7, c._rotIdx);
+            const v = c._vector; const vx = v.x, vy = v.y;
+            v.x = -vx; v.y = -vy;
+            const ix = (-vx + half + 0.5) | 0, iy = (-vy + half + 0.5) | 0, iz = (v.z + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
+        case 8: { // z -90°: (vx, vy, vz) → (-vy, vx, vz)
+          for (let i = N - 1; i >= 0; i--) {
+            const c = cubelets[i]; c._rotIdx = compLookup(8, c._rotIdx);
+            const v = c._vector; const vx = v.x, vy = v.y;
+            v.x = -vy; v.y = vx;
+            const ix = (-vy + half + 0.5) | 0, iy = (vx + half + 0.5) | 0, iz = (v.z + half + 0.5) | 0;
+            const newIndex = iz * order2 + iy * order + ix;
+            c._index = newIndex; this.cube.cubelets.set(newIndex, c);
+          } break;
+        }
       }
       cubelets.length = 0;
       this.cube.dirty = true;
