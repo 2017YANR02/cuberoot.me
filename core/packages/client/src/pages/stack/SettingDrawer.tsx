@@ -59,10 +59,8 @@ export function applySettings(world: World, s: StackSettings): void {
   world.scale = mapScale(s.scale);
   world.perspective = mapPerspective(s.perspective);
   world.cube.arrow = s.arrow;
-  for (const cubelet of world.cube.cubelets) {
-    cubelet.thickness = s.thickness;
-    cubelet.hollow = s.hollow;
-  }
+  world.cube.instancedRenderer.thickness = s.thickness;
+  world.cube.instancedRenderer.hollow = s.hollow;
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();
