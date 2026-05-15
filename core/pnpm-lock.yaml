@@ -315,6 +315,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.15
+      esbuild:
+        specifier: ^0.27.4
+        version: 0.27.4
       tsx:
         specifier: ^4.0.0
         version: 4.21.0

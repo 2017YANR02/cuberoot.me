@@ -17,14 +17,16 @@
 .stack-player-input {
   flex: 1;
   min-width: 200px;
-  height: 32px;
-  padding: 0 10px;
+  padding: 6px 10px;
   border: 1px solid var(--input);
   border-radius: 6px;
   background: var(--background);
   color: var(--foreground);
   font-family: ui-monospace, monospace;
   font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
 }
 .stack-player-input:focus {
   outline: 2px solid var(--ring);
