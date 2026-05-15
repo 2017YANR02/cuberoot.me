@@ -99,17 +99,17 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame = this.makeFrameMesh(visCount, true);
     this.movingFrame.count = 0;
 
-    // 核心填充 box (N>=3 才需要 — N=2 没有内层)。
-    // 作为 movingFrame 的子物 — 跟着 moving 的 quaternion 转。
-    // body 旋转时 cubelet 全进 moving,core 也跟着转,不会漏出来。
-    // 均匀色立方体绕中心轴转视觉上无区别,所以 outer/inner slice 旋转时也没副作用。
+    // 核心填充:slice 旋转 / body 旋转露出 cube 内部时,看到这块 dark sphere 而不是穿透到对面。
+    // 用 sphere(不是 box)因为 sphere 是旋转不变的 — body 旋转时 cube 整体转、core 不转,
+    // 也不会有 box 那种"45° 旋转后顶角戳出 cube 表面"的 bug。
+    // Radius = (N-2)/2 * SIZE = 正好填满 cube interior(到 surface cubelet 内表面)。
     if (cube.order >= 3) {
-      const coreSide = (cube.order - 2.1) * Cubelet.SIZE;
-      this.coreMesh = new THREE.Mesh(new THREE.BoxGeometry(coreSide, coreSide, coreSide), Cubelet.CORE);
+      const coreRadius = (cube.order - 2) * Cubelet.SIZE / 2;
+      this.coreMesh = new THREE.Mesh(new THREE.SphereGeometry(coreRadius, 32, 16), Cubelet.CORE);
       this.coreMesh.frustumCulled = false;
       this.coreMesh.matrixAutoUpdate = false;
       this.coreMesh.matrix.identity();
-      this.movingFrame.add(this.coreMesh);
+      this.add(this.coreMesh);
     }
 
     // 初始 frame 矩阵 (static),全部 moving 隐藏
