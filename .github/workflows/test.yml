@@ -40,7 +40,15 @@ jobs:
         run: pnpm --filter @cuberoot/client typecheck:ci
 
       # esbuild bundle 只剥类型不检查,server 类型坏了 deploy_core build 仍能过
-      # → 必须 CI 真跑 tsc --noEmit 兜底
+      # → 必须 CI 真跑 tsc --noEmit 兜底。
+      # server tsconfig references shared + visualcube,tsc 启动校验它们 dist/.d.ts
+      # 必须存在(TS6305),所以先 build 这两个再 typecheck server。
+      - name: Build shared deps
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
+
       - name: Typecheck server
         working-directory: core
         run: pnpm --filter @cuberoot/server typecheck
