@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, X as XIcon, ExternalLink } from 'lucide-react';
+import { X as XIcon, ExternalLink } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
@@ -80,13 +80,6 @@ export default function CompIndexPage() {
   // 拉 comp_names_zh.json + comp_countries.json,recent 才能查到中文名 + 国旗
   useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
 
-  const onGo = () => {
-    const slug = parseSlug(input);
-    if (!slug) { setErr(isZh ? '请输入 cubing.com 比赛 slug 或 URL' : 'Enter a cubing.com slug or URL'); return; }
-    setErr(null);
-    navigate(`/comp/${slug}`);
-  };
-
   const removeRecent = (slug: string) => {
     const next = recent.filter(r => r.slug !== slug);
     setRecent(next);
@@ -109,18 +102,22 @@ export default function CompIndexPage() {
         <CompPicker
           className="comp-picker-wrap"
           value={input}
-          onChange={(v) => { setInput(v); setErr(null); }}
+          onChange={(v) => {
+            setInput(v);
+            setErr(null);
+            // 用户粘贴 cubing.com URL / 纯 slug → 直接跳;搜索 WCA 比赛走 onPick
+            const slug = parseSlug(v);
+            if (slug && /[A-Za-z0-9]/.test(slug) && (v.includes('/') || v.includes('-'))) {
+              navigate(`/comp/${slug}`);
+            }
+          }}
           onPick={(c: Comp) => {
-            // CompPicker 选中 WCA 比赛 → 反推 cubing.com slug
             const slug = wcaIdToCubingSlug(c.id);
             navigate(`/comp/${slug}`);
           }}
           isZh={isZh}
           placeholder={isZh ? '搜索比赛 / 城市,或粘贴 cubing.com URL' : 'Search competition / city, or paste cubing.com URL'}
         />
-        <button type="button" className="comp-go-btn" onClick={onGo}>
-          {isZh ? '打开' : 'Open'} <ArrowRight size={16} />
-        </button>
       </div>
       {err && <div className="comp-err">{err}</div>}
 
