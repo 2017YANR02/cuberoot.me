@@ -74,3 +74,16 @@ jobs:
           rsync -rltz --delete --exclude='blog' --exclude='.*' --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             _deploy/ "${USER}@${HOST}:${PATH_REMOTE}/"
+
+      # nemesizer 数据集驻 Node heap, .bin.gz 替换后必须 pm2 reload 才能拿新数据。
+      # 只在 stats 周更触发时跑 — 其它 trigger(push/upcoming-comps/deploy-core)
+      # 数据没变,reload 是浪费(虽然无害)。
+      - name: Reload core-api to pick up new nemesizer dataset
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Update Stats'
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -n -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${USER}@${HOST}" 'pm2 reload core-api'
