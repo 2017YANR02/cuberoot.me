@@ -370,12 +370,16 @@ export default function StackPage() {
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
     if (!world) return;
-    // 先 setup 状态(同步,无动画),再 push 整段 alg(动画一气呵成,push 内部原子入队)
+    // 只 setup 到 case 状态 (训练用), 不自动跑 alg。
+    // 把 setup/alg 写进 URL — 切到回放模式时, PlayerControls 自动 reset+载入。
     world.cube.twister.setup(setup);
-    if (alg.trim()) {
-      world.cube.twister.push(alg);
-    }
-  }, []);
+    setSearchParams((prev) => {
+      const np = new URLSearchParams(prev);
+      if (setup) np.set('setup', setup); else np.delete('setup');
+      if (alg) np.set('alg', alg); else np.delete('alg');
+      return np;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const getCanvas = useCallback((): HTMLCanvasElement | null => {
     return rendererRef.current?.domElement ?? null;
