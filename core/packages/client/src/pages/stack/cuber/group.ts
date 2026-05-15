@@ -27,8 +27,8 @@ export default class CubeGroup extends THREE.Group {
     this._angle = angle;
     this.setRotationFromAxisAngle(CubeGroup.AXIS_VECTOR[this.axis], this._angle);
     this.updateMatrix();
-    // PG3D-style:渲染走 instancedRenderer 的 movingMesh.quaternion,不依赖此 group 的 parent 链
-    this.cube.instancedRenderer.setSliceAngle(angle, this.axis);
+    // per-instance 写 instance matrix,多并发 slice 各自独立 angle 互不影响
+    this.cube.instancedRenderer.setSliceAngle(this, angle);
     this.cube.dirty = true;
   }
 
