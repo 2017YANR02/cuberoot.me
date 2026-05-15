@@ -22,6 +22,10 @@ import { FACE, COLORS } from "./define";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
+// 内填充 box: 比 cubelet frame 小 1 单位防 z-fight (frame outer face 在 ±SIZE/2)。
+// 任何方向上 frame 的"洞"(slice 旋转 / 邻居被搬走暴露的内表面) 露出来后,
+// 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
+const INNER_BOX = new THREE.BoxGeometry(Cubelet.SIZE - 1, Cubelet.SIZE - 1, Cubelet.SIZE - 1);
 
 function makeStickerLocalMatrix(face: number, zScale: number): THREE.Matrix4 {
   const pos = new THREE.Vector3();
@@ -58,8 +62,11 @@ export default class InstancedRenderer extends THREE.Group {
   movingFrame!: THREE.InstancedMesh;
   staticSticker!: THREE.InstancedMesh;
   movingSticker!: THREE.InstancedMesh;
-  /** 核心填充:slice 旋转露出内部时,看到这块 dark box 而不是穿透到对面 */
-  coreMesh: THREE.Mesh | null = null;
+  /** Per-cubelet 内填充:每个 cubelet 内部塞一个实心 box,跟 Frame 共享 matrix。
+   * 任何 slice 旋转后,Frame 缝隙永远能看到自己或邻居的 inner box(灰),
+   * 不会穿透到背景或别的 sticker。 */
+  staticInner!: THREE.InstancedMesh;
+  movingInner!: THREE.InstancedMesh;
 
   private stickerMaterial: THREE.MeshLambertMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial;
@@ -94,32 +101,25 @@ export default class InstancedRenderer extends THREE.Group {
       this.instanceToInitial.push(cubelets[i].initial);
     }
 
-    // Frame meshes
+    // Frame meshes + per-cubelet inner box meshes(共享 matrix)
     this.staticFrame = this.makeFrameMesh(visCount, false);
     this.movingFrame = this.makeFrameMesh(visCount, true);
     this.movingFrame.count = 0;
+    this.staticInner = this.makeInnerMesh(visCount, false);
+    this.movingInner = this.makeInnerMesh(visCount, true);
+    this.movingInner.count = 0;
 
-    // 核心填充:surface-only 渲染下,中心 (N-2)³ 个 cubelet 位置不存在 mesh,形成一个
-    // 边长 (N-2)*SIZE 的立方空腔。Slice 旋转露出该空腔时,需要 box 兜底。
-    // size = (N-2)*SIZE 正好填满空腔 — 包括角(以前用内切 sphere 角到不了所以漏)。
-    // box 跟 cube 一起转(parent = renderer = child of cube),没有相对旋转,
-    // 不会出现 box 自己 45° 旋转戳出表面的情况。
-    if (cube.order >= 3) {
-      const coreSize = (cube.order - 2) * Cubelet.SIZE;
-      this.coreMesh = new THREE.Mesh(new THREE.BoxGeometry(coreSize, coreSize, coreSize), Cubelet.CORE);
-      this.coreMesh.frustumCulled = false;
-      this.coreMesh.matrixAutoUpdate = false;
-      this.coreMesh.matrix.identity();
-      this.add(this.coreMesh);
-    }
-
-    // 初始 frame 矩阵 (static),全部 moving 隐藏
+    // 初始 frame + inner box 矩阵 (static),全部 moving 隐藏
     for (let i = 0; i < visCount; i++) {
       this.staticFrame.setMatrixAt(i, cubelets[i].matrix);
       this.movingFrame.setMatrixAt(i, HIDE_MAT);
+      this.staticInner.setMatrixAt(i, cubelets[i].matrix);
+      this.movingInner.setMatrixAt(i, HIDE_MAT);
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticInner.instanceMatrix.needsUpdate = true;
+    this.movingInner.instanceMatrix.needsUpdate = true;
 
     // Sticker slots
     const zScale = this._thickness ? HALF : 1;
@@ -165,6 +165,8 @@ export default class InstancedRenderer extends THREE.Group {
 
     this.add(this.staticFrame);
     this.add(this.movingFrame);
+    this.add(this.staticInner);
+    this.add(this.movingInner);
     this.add(this.staticSticker);
     this.add(this.movingSticker);
   }
@@ -174,6 +176,14 @@ export default class InstancedRenderer extends THREE.Group {
     m.frustumCulled = false;
     // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
     // static mesh 永远 identity
+    m.matrixAutoUpdate = moving;
+    if (!moving) m.matrix.identity();
+    return m;
+  }
+
+  private makeInnerMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    const m = new THREE.InstancedMesh(INNER_BOX, Cubelet.CORE, count);
+    m.frustumCulled = false;
     m.matrixAutoUpdate = moving;
     if (!moving) m.matrix.identity();
     return m;
@@ -209,6 +219,8 @@ export default class InstancedRenderer extends THREE.Group {
       this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
       this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
       this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
+      this.movingInner.setMatrixAt(instIdx, this.tmpMat);
+      this.staticInner.setMatrixAt(instIdx, HIDE_MAT);
 
       const slots = this.cubeletSlots.get(cubelet.initial);
       if (slots) {
@@ -226,11 +238,15 @@ export default class InstancedRenderer extends THREE.Group {
       // 第一个 slice 激活:打开 moving 渲染、重置 quaternion
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
+      this.movingInner.quaternion.identity();
       this.movingFrame.count = this.instanceToInitial.length;
       this.movingSticker.count = this.stickerSlots.length;
+      this.movingInner.count = this.instanceToInitial.length;
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticInner.instanceMatrix.needsUpdate = true;
+    this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
@@ -244,6 +260,7 @@ export default class InstancedRenderer extends THREE.Group {
     this.tmpQuat.setFromAxisAngle(axisVec, angle);
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
+    this.movingInner.quaternion.copy(this.tmpQuat);
     this.cube.dirty = true;
   }
 
@@ -257,6 +274,8 @@ export default class InstancedRenderer extends THREE.Group {
       if (!cubelet) continue;
       this.staticFrame.setMatrixAt(instIdx, cubelet.matrix);
       this.movingFrame.setMatrixAt(instIdx, HIDE_MAT);
+      this.staticInner.setMatrixAt(instIdx, cubelet.matrix);
+      this.movingInner.setMatrixAt(instIdx, HIDE_MAT);
 
       const slots = this.cubeletSlots.get(cubeletInitial);
       if (slots) {
@@ -277,11 +296,15 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.activeSlices.size === 0) {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
+      this.movingInner.quaternion.identity();
       this.movingFrame.count = 0;
       this.movingSticker.count = 0;
+      this.movingInner.count = 0;
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticInner.instanceMatrix.needsUpdate = true;
+    this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
@@ -292,9 +315,11 @@ export default class InstancedRenderer extends THREE.Group {
     this.activeSlices.clear();
     this.movingFrame.count = 0;
     this.movingSticker.count = 0;
+    this.movingInner.count = 0;
     this.tmpQuat.identity();
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
+    this.movingInner.quaternion.copy(this.tmpQuat);
 
     for (let i = 0; i < this.instanceToInitial.length; i++) {
       const cubeletInitial = this.instanceToInitial[i];
@@ -302,6 +327,8 @@ export default class InstancedRenderer extends THREE.Group {
       if (!cubelet) continue;
       this.staticFrame.setMatrixAt(i, cubelet.matrix);
       this.movingFrame.setMatrixAt(i, HIDE_MAT);
+      this.staticInner.setMatrixAt(i, cubelet.matrix);
+      this.movingInner.setMatrixAt(i, HIDE_MAT);
     }
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
@@ -317,6 +344,8 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticInner.instanceMatrix.needsUpdate = true;
+    this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
@@ -383,6 +412,8 @@ export default class InstancedRenderer extends THREE.Group {
     const mat = value ? Cubelet.TRANS : Cubelet.CORE;
     this.staticFrame.material = mat;
     this.movingFrame.material = mat;
+    this.staticInner.material = mat;
+    this.movingInner.material = mat;
     this.cube.dirty = true;
   }
 
@@ -399,12 +430,11 @@ export default class InstancedRenderer extends THREE.Group {
   dispose(): void {
     this.staticFrame.dispose();
     this.movingFrame.dispose();
+    this.staticInner.dispose();
+    this.movingInner.dispose();
     this.staticSticker.dispose();
     this.movingSticker.dispose();
     this.stickerMaterial.dispose();
     this.movingStickerMaterial.dispose();
-    if (this.coreMesh) {
-      this.coreMesh.geometry.dispose();
-    }
   }
 }
