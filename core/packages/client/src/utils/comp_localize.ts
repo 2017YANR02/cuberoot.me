@@ -1,4 +1,4 @@
-// NOTE: 比赛名本地化(中文模式)——和 cn-comp-names skill 对齐的统一入口
+// NOTE: 比赛名本地化(中文模式)——和 comp-names-zh skill 对齐的统一入口
 // 4 级查表(同 GlobePage.localizeCompName):
 //   1) 调用方传入的 upcomingNameZhById(可选,GlobePage 用 upcoming_comps.json 的 id→name_zh)
 //   2) comp_names_zh.json 英文名→中文名(走 country_flags 里 loadFlagData 已加载的 _compNamesZh)
