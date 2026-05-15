@@ -71,7 +71,6 @@ export default function StackPage() {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
   const wasCompleteRef = useRef(false);
-  const algPlayTimerRef = useRef<number | null>(null);
 
   const [order, setOrder] = useState<number>(3);
   const [moves, setMoves] = useState<number>(0);
@@ -246,7 +245,6 @@ export default function StackPage() {
 
     return () => {
       cancelAnimationFrame(raf);
-      if (algPlayTimerRef.current) window.clearTimeout(algPlayTimerRef.current);
       window.removeEventListener('resize', resize);
       ro.disconnect();
       renderer.domElement.removeEventListener('wheel', onWheel);
@@ -372,23 +370,15 @@ export default function StackPage() {
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
     if (!world) return;
-    // 1. 同步摆出 case 状态 (无动画)
+    // 只 setup 到 case 状态 (训练用), 不自动跑 alg。
+    // 把 setup/alg 写进 URL — 切到回放模式时, PlayerControls 自动 reset+载入。
     world.cube.twister.setup(setup);
-    // 2. URL 同步, 切「回放」tab 时 PlayerControls 接管
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
       if (setup) np.set('setup', setup); else np.delete('setup');
       if (alg) np.set('alg', alg); else np.delete('alg');
       return np;
     }, { replace: true });
-    // 3. 暂停一下让用户看清 case, 然后动画演示 alg
-    if (algPlayTimerRef.current) window.clearTimeout(algPlayTimerRef.current);
-    if (alg.trim()) {
-      algPlayTimerRef.current = window.setTimeout(() => {
-        const w = worldRef.current;
-        if (w) w.cube.twister.push(alg);
-      }, 800);
-    }
   }, [setSearchParams]);
 
   const getCanvas = useCallback((): HTMLCanvasElement | null => {
@@ -448,18 +438,16 @@ export default function StackPage() {
             <Settings size={16} />
           </button>
         </div>
-        <div className="stack-orders">
+        <select
+          className="stack-order-select"
+          value={order}
+          onChange={(e) => handleOrder(Number(e.target.value))}
+          title={t('阶数', 'Cube order')}
+        >
           {ORDERS.map((n) => (
-            <button
-              key={n}
-              className={n === order ? 'active' : ''}
-              onClick={() => handleOrder(n)}
-              title={`${n}x${n}x${n}`}
-            >
-              {n}
-            </button>
+            <option key={n} value={n}>{n}×{n}</option>
           ))}
-        </div>
+        </select>
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>

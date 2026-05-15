@@ -55,14 +55,12 @@
   text-align: center;
 }
 
-.stack-actions,
-.stack-orders {
+.stack-actions {
   display: inline-flex;
   gap: 4px;
 }
 
-.stack-actions button,
-.stack-orders button {
+.stack-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -77,15 +75,23 @@
   cursor: pointer;
 }
 
-.stack-actions button:hover,
-.stack-orders button:hover {
+.stack-actions button:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-.stack-orders button.active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  border-color: var(--accent);
+.stack-order-select {
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.stack-order-select:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .stack-modes {
@@ -197,10 +203,14 @@
     padding: 2px 8px;
     min-width: 32px;
   }
-  .stack-actions button,
-  .stack-orders button {
+  .stack-actions button {
     min-width: 28px;
     height: 28px;
     padding: 0 6px;
+  }
+  .stack-order-select {
+    height: 28px;
+    padding: 0 4px;
+    font-size: 12px;
   }
 }
