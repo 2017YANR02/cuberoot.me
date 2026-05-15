@@ -11,7 +11,7 @@ import {
   Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
   ImagePlus,
   Wand2,
-  Code as CodeIcon, Brain,
+  Code as CodeIcon, Brain, Box, Radio,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -309,6 +309,8 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   notation:        { en: 'Notation', zh: '记号沙盒' },
   memo:            { en: 'Memo', zh: '记忆' },
   code:            { en: 'Code', zh: '编程' },
+  stack:           { en: 'Stack', zh: '魔方栈' },
+  comp:            { en: 'Live Comp', zh: '比赛直播' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
   // Section titles
@@ -374,6 +376,7 @@ const SECTIONS: Section[] = [
       { id: 'hth',        href: '/calc',       internal: true, tier: 'standard',  Icon: CalculatorIcon, nameKey: 'hthGrapher' },
       { id: 'wb',         href: '/wb',         internal: true, tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
       { id: 'prediction', href: '/prediction', internal: true, tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
+      { id: 'comp',       href: '/comp',       internal: true, tier: 'standard',  Icon: Radio,          nameKey: 'comp' },
     ],
   },
   {
@@ -385,6 +388,7 @@ const SECTIONS: Section[] = [
       { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: import.meta.env.BASE_URL + 'icons/upstream/solver.png', nameKey: 'solver' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
+      { id: 'stack',       href: '/stack',       internal: true, tier: 'medium', Icon: Box,        nameKey: 'stack' },
     ],
   },
   {
