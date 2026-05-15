@@ -102,6 +102,9 @@ export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
             </option>
           ))}
         </select>
+        <span className="stack-algs-hint">
+          {t('点公式 = 摆出此情形;切「回放」标签看动画', 'Click case = set up the position; switch to Player tab to watch the alg')}
+        </span>
       </div>
       <div className="stack-algs-list">
         {loading ? <div className="stack-algs-msg">{t('加载中…', 'Loading…')}</div> : null}

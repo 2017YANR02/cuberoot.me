@@ -31,9 +31,14 @@
 
 .stack-algs-sets {
   padding: 4px 12px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .stack-algs-sets select {
-  width: 100%;
+  flex: 1;
+  min-width: 160px;
   height: 32px;
   padding: 0 8px;
   border: 1px solid var(--input);
@@ -41,6 +46,10 @@
   background: var(--background);
   color: var(--foreground);
   font-size: 13px;
+}
+.stack-algs-hint {
+  font-size: 12px;
+  color: var(--muted-foreground);
 }
 
 .stack-algs-list {
