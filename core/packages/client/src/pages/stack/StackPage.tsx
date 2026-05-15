@@ -365,9 +365,6 @@ export default function StackPage() {
       const now = performance.now();
       const dt = now - lastFrameAt;
       lastFrameAt = now;
-      // Pending shader-mode commit chunks: drain one per frame to avoid 60ms spike
-      const ir = world.cube.instancedRenderer as unknown as { advanceCommitChunk?: () => void; pendingCommit?: unknown };
-      if (ir.pendingCommit && ir.advanceCommitChunk) ir.advanceCommitChunk();
       const t0 = performance.now();
       let didRender = false;
       if (world.dirty || world.cube.dirty) {
