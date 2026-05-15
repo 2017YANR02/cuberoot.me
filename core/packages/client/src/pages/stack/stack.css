@@ -79,33 +79,6 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-.stack-order-input {
-  width: 64px;
-  height: 32px;
-  padding: 0 6px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-.stack-order-input:hover,
-.stack-order-input:focus {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  outline: none;
-  border-color: var(--ring);
-}
-.stack-order-input::-webkit-inner-spin-button,
-.stack-order-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.stack-order-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
 .stack-modes {
   display: inline-flex;
   gap: 2px;
@@ -250,11 +223,5 @@
     min-width: 28px;
     height: 28px;
     padding: 0 6px;
-  }
-  .stack-order-input {
-    width: 56px;
-    height: 28px;
-    padding: 0 4px;
-    font-size: 12px;
   }
 }
