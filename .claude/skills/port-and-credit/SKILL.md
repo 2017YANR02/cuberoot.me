@@ -1,18 +1,29 @@
 ---
 name: port-and-credit
-description: "Use when porting / forking / integrating an open-source project (npm dep, vendored source, fork-with-modifications) into this repo. Covers where credit goes and what NOT to delete. Triggers: \"复刻\", \"port\", \"fork\", \"vendored\", \"加致谢\", \"credit\", \"upstream\"."
+description: "Use when porting / forking / integrating an open-source project (npm dep, vendored source, fork-with-modifications) into this repo. Single-source credits via credits_data.json + gen-credits script. Covers what NOT to delete. Triggers: \"复刻\", \"port\", \"fork\", \"vendored\", \"加致谢\", \"credit\", \"upstream\", \"credits_data.json\", \"gen-credits\"."
 ---
 
 # 复刻 / 集成 / 致谢
 
-集成上游开源项目 = **必须**两处加致谢。漏一处就是 bug。
+集成上游开源项目 = **必须**加致谢。单一数据源 → 自动同步 README + /about。
 
-## 致谢两处
+## 单一数据源
 
-1. **根 `README.md`** 的 `## 🙏 Credits` 列表 — 一条 markdown bullet：项目链接 + 一句话用途
-2. **`core/packages/client/src/pages/LandingPage.tsx`** 的 `<div className="credits">` — 末尾追加 ` ·{' '}<a href=... target="_blank" rel="noopener noreferrer">作者名</a>`
+`core/packages/client/src/pages/credits_data.json` 是唯一 source。Schema:
 
-只加一处 = 站点 footer 或 README 缺一个，过段时间自己也找不到。
+```json
+{
+  "name": "user/repo or domain",
+  "url": "https://...",
+  "zh": "中文短描述",
+  "en": "English short desc",
+  "long_en": "可选,README 用的长描述(没有就 fallback en)"
+}
+```
+
+加完一条 → 跑 **`pnpm --filter @cuberoot/client gen-credits`** → README 的 `<!-- credits:start --><!-- credits:end -->` 块自动重写 → `git add` JSON + README 一起 commit。
+
+**禁** 直接编辑 README 的 Credits bullet 区(下次跑脚本会被覆盖);**禁** 在 AboutPage 里硬编码 credit。/about 的 `<ul className="about-credits">` 直接 `import CREDITS from './credits_data.json'`,加一条数据它自动出现。
 
 ## 复刻规则
 
