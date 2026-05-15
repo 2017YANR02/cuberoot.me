@@ -153,6 +153,21 @@ export default class Cube extends THREE.Group {
     return this._arrow;
   }
 
+  /** 释放 GPU 资源 + 清自己内部引用,防 world.cubes[] 切阶累积导致 OOM。
+   * 调用后 cube 不可再用 — 调用方应同时从 scene + cubes[] 摘除。 */
+  dispose(): void {
+    this.instancedRenderer.dispose();
+    this.cubelets.clear();
+    this.initials.clear();
+    this.locks.clear();
+    this.callbacks.length = 0;
+    // 断 group ↔ cube 循环引用 (groups[axis][layer].cube 指回来)
+    for (const axis of ['x', 'y', 'z']) {
+      const arr = this.table.groups[axis];
+      if (arr) for (const g of arr) (g as unknown as { cube: Cube | null }).cube = null;
+    }
+  }
+
   reset(): void {
     tweener.finish();
     // 每个 cubelet 复位:旋转归零、index 设回 initial、矩阵刷新。

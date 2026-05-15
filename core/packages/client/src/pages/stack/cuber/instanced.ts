@@ -26,12 +26,19 @@ const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
 // 任何方向上 frame 的"洞"(slice 旋转 / 邻居被搬走暴露的内表面) 露出来后,
 // 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
 const INNER_BOX = new THREE.BoxGeometry(Cubelet.SIZE - 1, Cubelet.SIZE - 1, Cubelet.SIZE - 1);
-/** 超高阶阈值 (N≥SUPER_ORDER): frame 缝隙 < 1px,inner box 视觉无意义,
- * 整套构造 / slice 写矩阵 / draw 全跳过省 372k 实例的开销。
- * `let` + setter 是给 DEV bench 强制开关用,生产代码只读 SUPER_ORDER。 */
-let SUPER_ORDER = 50;
-export function setSuperOrder(v: number): void { SUPER_ORDER = v; }
-export function getSuperOrder(): number { return SUPER_ORDER; }
+/** 性能开关 — DEV bench 可改 (window.__PERF_FLAGS),生产代码只读。
+ * - `superOrderThreshold`: N≥此值 = 超高阶,启 inner box skip 等(stage 0)。
+ *   bench A/B: 关闭 = 设成 order+1。
+ * - `singleSliceQuaternion`: 单 slice 动画时整 moving mesh 共享 quaternion,
+ *   省 N² 次 mat4 mul/帧(stage 1)。多并发 slice 自动 fallback per-instance。
+ */
+export const __PERF_FLAGS: {
+  superOrderThreshold: number;
+  singleSliceQuaternion: boolean;
+} = {
+  superOrderThreshold: 50,
+  singleSliceQuaternion: true,
+};
 
 function makeStickerLocalMatrix(face: number, zScale: number, distanceMul = 1): THREE.Matrix4 {
   const d = HALF * distanceMul;
@@ -105,7 +112,6 @@ export default class InstancedRenderer extends THREE.Group {
   // 同轴异步并发 (user 拖了 A 还在 tween,又 drag 平行 B) 也要正确 — 每个 slice
   // 独立 angle,所以存它进 moving 之前的 instance matrix (origCubeletMat / origStickerMat /
   // origHintMat),setSliceAngle 时 per-instance 算 `rot(slice.axis, slice.angle) × origMat`。
-  // movingMesh.quaternion 永远 identity,不再 share。
   private activeSlices: Map<CubeGroup, {
     instances: number[];
     slots: number[];
@@ -113,6 +119,10 @@ export default class InstancedRenderer extends THREE.Group {
     origStickerMats: THREE.Matrix4[];
     origHintMats: THREE.Matrix4[];
   }> = new Map();
+  /** Single-slice quaternion 模式: 活跃 slice 只剩 1 个时,整 moving mesh
+   * 共享一个 quaternion,免 N² 次 mat4 mul/帧。第 2 个 slice 进来前 bake 进
+   * per-instance,然后 fallback 到多 slice 路径。 */
+  private singleSliceGroup: CubeGroup | null = null;
 
   // 临时
   private tmpMat = new THREE.Matrix4();
@@ -124,7 +134,7 @@ export default class InstancedRenderer extends THREE.Group {
     super();
     this.cube = cube;
     this.matrixAutoUpdate = false;
-    this.hasInner = cube.order < SUPER_ORDER;
+    this.hasInner = cube.order < __PERF_FLAGS.superOrderThreshold;
 
     const cubelets = [...cube.initials.values()];
     const visCount = cubelets.length;
@@ -290,6 +300,11 @@ export default class InstancedRenderer extends THREE.Group {
       // re-entrant — clean up first
       this.endSlice(group);
     }
+    // Single→multi 过渡: 必须先把旧 single slice 的 quaternion bake 进 per-instance,
+    // 否则下面写新 slice 的 origMats 会跟 q_old 复合渲染错位。
+    if (this.singleSliceGroup && this.singleSliceGroup !== group) {
+      this.bakeSingleSliceQuaternion();
+    }
     const instances: number[] = [];
     const slotsList: number[] = [];
     const origCubeletMats: THREE.Matrix4[] = [];
@@ -351,18 +366,72 @@ export default class InstancedRenderer extends THREE.Group {
       this.staticInner.instanceMatrix.needsUpdate = true;
       this.movingInner.instanceMatrix.needsUpdate = true;
     }
+    // Stage 1: 标记 single slice (恰好 1 个 active),setSliceAngle 走快路径
+    if (__PERF_FLAGS.singleSliceQuaternion && this.activeSlices.size === 1) {
+      this.singleSliceGroup = group;
+    }
     this.cube.dirty = true;
   }
 
-  /** group.angle setter 调。per-instance 写每个 cubelet/sticker 的新 matrix。
-   * 多个并发 slice (同轴异步 / 整 cube 旋转) 各自独立 angle,互不影响。
-   * movingMesh.quaternion 永远 identity (在 beginSlice 已设)。 */
+  /** Single → multi 过渡 / endSlice 收尾时调:把 singleSliceGroup 的当前 quaternion
+   * bake 进 per-instance matrices, 然后重置 moving.quaternion = identity。
+   * 之后两个 slice 都走 per-instance 路径。 */
+  private bakeSingleSliceQuaternion(): void {
+    const group = this.singleSliceGroup;
+    if (!group) return;
+    const state = this.activeSlices.get(group);
+    if (!state) { this.singleSliceGroup = null; return; }
+    this.tmpRotMat.makeRotationFromQuaternion(this.movingFrame.quaternion);
+    if (this.hasInner) {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+        this.movingInner.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+      this.movingInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.quaternion.identity();
+    } else {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+    }
+    for (let i = 0; i < state.slots.length; i++) {
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
+      this.movingSticker.setMatrixAt(state.slots[i], this.tmpMat);
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
+      this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
+    }
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    this.movingFrame.quaternion.identity();
+    this.movingSticker.quaternion.identity();
+    this.movingHint.quaternion.identity();
+    this.singleSliceGroup = null;
+  }
+
+  /** group.angle setter 调。
+   * - 单 slice 模式 (stage 1): 整 moving mesh quaternion = rot,免 N² mat4 mul。
+   * - 多 slice 模式: per-instance 写 instance matrix。 */
   setSliceAngle(group: CubeGroup, angle: number): void {
     const state = this.activeSlices.get(group);
     if (!state) return;
     const axisVec = CubeGroup.AXIS_VECTOR[group.axis];
     if (!axisVec) return;
     this.tmpQuat.setFromAxisAngle(axisVec, angle);
+
+    if (this.singleSliceGroup === group) {
+      // Stage 1 快路径: moving mesh.matrix 由 quaternion 自动复合,
+      // 每个 instance 渲染 = rotation(q) × origMat × vertex。
+      this.movingFrame.quaternion.copy(this.tmpQuat);
+      this.movingSticker.quaternion.copy(this.tmpQuat);
+      this.movingHint.quaternion.copy(this.tmpQuat);
+      if (this.hasInner) this.movingInner.quaternion.copy(this.tmpQuat);
+      this.cube.dirty = true;
+      return;
+    }
+
     this.tmpRotMat.makeRotationFromQuaternion(this.tmpQuat);
     if (this.hasInner) {
       for (let i = 0; i < state.instances.length; i++) {
@@ -425,6 +494,9 @@ export default class InstancedRenderer extends THREE.Group {
       }
     }
     this.activeSlices.delete(group);
+    if (this.singleSliceGroup === group) {
+      this.singleSliceGroup = null;
+    }
     if (this.activeSlices.size === 0) {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
@@ -453,6 +525,7 @@ export default class InstancedRenderer extends THREE.Group {
   /** cube.reset() 后调:全部 cubelet 在初始位置,重建所有 static 矩阵。 */
   rebuildAll(): void {
     this.activeSlices.clear();
+    this.singleSliceGroup = null;
     this.movingFrame.count = 0;
     this.movingSticker.count = 0;
     this.movingHint.count = 0;
