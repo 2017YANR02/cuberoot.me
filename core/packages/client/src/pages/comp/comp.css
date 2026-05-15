@@ -626,3 +626,228 @@ td.is-pr {
   .comp-modal-body { padding: 10px; }
   .td-person { gap: 6px; }
 }
+
+/* ─── /comp/sources flow diagram ───────────────────────────────────── */
+.comp-hint-link {
+  display: inline-block;
+  margin-left: 0.6em;
+  font-size: 0.85em;
+  color: var(--accent);
+  text-decoration: none;
+}
+.comp-hint-link:hover { text-decoration: underline; }
+
+.comp-sources-page {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 24px 16px 60px;
+}
+.comp-sources-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.comp-flow {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.comp-flow-input,
+.comp-flow-output {
+  align-self: center;
+  padding: 10px 16px;
+  background: var(--muted);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.comp-flow-input code,
+.comp-flow-output code { font-family: ui-monospace, monospace; }
+.comp-flow-input-label {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.comp-flow-input-eg {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+  font-family: ui-monospace, monospace;
+}
+.comp-flow-output {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-default));
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.comp-flow-arrow {
+  align-self: center;
+  color: var(--faint-foreground);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 6px 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.comp-flow-arrow-miss {
+  color: var(--muted-foreground);
+}
+.comp-flow-arrow-miss span {
+  font-size: 0.72rem;
+  font-family: ui-monospace, monospace;
+}
+
+.comp-flow-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+}
+.comp-flow-step-fast {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-default));
+}
+.comp-flow-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: ui-monospace, monospace;
+}
+.comp-flow-step-fast .comp-flow-step-num {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.comp-flow-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.comp-flow-step-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.98rem;
+  flex-wrap: wrap;
+}
+.comp-flow-step-title code {
+  font-size: 0.82rem;
+  background: var(--muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 400;
+}
+.comp-flow-step-desc {
+  font-size: 0.86rem;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+.comp-flow-step-desc-muted { font-size: 0.8rem; }
+.comp-flow-step-meta {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+.comp-flow-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-family: ui-monospace, monospace;
+}
+.comp-flow-pill-fast {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.comp-flow-fork {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.comp-flow-source {
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.comp-flow-source-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.comp-flow-source-tagline {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.comp-flow-source-tech {
+  font-size: 0.75rem;
+  color: var(--faint-foreground);
+  font-family: ui-monospace, monospace;
+  line-height: 1.45;
+}
+
+.comp-flow-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.comp-flow-rule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  flex-wrap: wrap;
+}
+.comp-flow-rule code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  background: var(--muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.comp-flow-rule-arrow {
+  color: var(--faint-foreground);
+}
+.comp-flow-rule-note {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+}
+
+@media (max-width: 640px) {
+  .comp-flow-fork { grid-template-columns: 1fr; }
+  .comp-flow-step { padding: 12px 12px; }
+  .comp-flow-step-title { font-size: 0.92rem; }
+  .comp-flow-step-desc { font-size: 0.82rem; }
+}
