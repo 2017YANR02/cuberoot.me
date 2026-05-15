@@ -113,6 +113,7 @@ This project stands on the shoulders of excellent open-source work:
 - [**MatteoColombo/cube_challenge_timer**](https://github.com/MatteoColombo/cube_challenge_timer) — 1v1 battle timer logic (React port)
 - [**cs0x7f/cstimer**](https://github.com/cs0x7f/cstimer) — professional speedcubing timer & WCA random-state scramble engine
 - [**Roman-/mosaic**](https://github.com/Roman-/mosaic) — cube mosaic generator (React port)
+- [**huazhechen/cuber**](https://github.com/huazhechen/cuber) — virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/stack`; original UI was Vue + Vuetify
 - [**MeigenChou/DCTimer-Android**](https://github.com/MeigenChou/DCTimer-Android) — design inspiration for the battle timer
 - [**huizhiLLL/WCA-Nemesizer-API**](https://github.com/huizhiLLL/WCA-Nemesizer-API) — nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))
 - [**roudai/VisualCubeEditor2**](https://github.com/roudai/VisualCubeEditor2) — Vue + sr-visualizer GUI cube image editor; UI replicated in React for the `/visualcube` page (renderer swapped to our `@cuberoot/visualcube` package)
