@@ -14,11 +14,16 @@ import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
+import { RecordBadge } from '../../components/RecordBadge';
 import { eventDisplayName } from '../../utils/wca_events';
 import { displayCuberName } from '../../utils/name_utils';
+import { countryToIso2, loadFlagData, compFlagIso2 } from '../../utils/country_flags';
+import { countryName } from '../../utils/country_name';
+import { localizeCompName } from '../../utils/comp_localize';
 import { apiUrl } from '../../utils/api_base';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
 import { rememberRecent } from './CompIndexPage';
+import { useLiveStream, applyResultPatch, type LivePatch } from './useLiveStream';
 import './comp.css';
 
 // ─── 类型(与 server 端 cubing_live.ts 保持一致) ─────────────────────────
@@ -67,24 +72,11 @@ interface CompData {
 
 // ─── helpers ──────────────────────────────────────────────────────────────
 
-/** 比赛 region 标识 → ISO2 (常规国家全名 or 已是 ISO2 都接受) */
+/** cubing.com region 字符串 → ISO2 (走 utils/country_flags 单一来源,跟 wca-stats / globe 一致) */
 function regionToIso2(region: string): string {
   if (!region) return '';
   if (region.length === 2) return region.toLowerCase();
-  // 走 country_flags 的 countryToIso2,但这里 region 是 cubing.com 自描述
-  // 简单映射常见值,降级 fallback 给 Flag 组件
-  const map: Record<string, string> = {
-    'China': 'cn',
-    'Hong Kong, China': 'hk',
-    'Chinese Taipei': 'tw',
-    'Taiwan, China': 'tw',
-    'Macau, China': 'mo',
-    'United States': 'us',
-    'United Kingdom': 'gb',
-    'Korea': 'kr',
-    'Japan': 'jp',
-  };
-  return map[region] || region.toLowerCase();
+  return countryToIso2(region) || '';
 }
 
 /** 把 result 的 b/a 与 sr/ar(若实时已被 server 打标记) 拍平成 PR 标志结构。
@@ -140,6 +132,41 @@ function formatLive(value: number, eventId: string, isAverage: boolean): string 
 /** 每个 round 的稳定 key: "<event>:<round>"  */
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
 
+/** cubing.com 给的 round.name 是英文,中文模式翻一下。
+ *  覆盖常见 "First round" / "Second round" / "Semi Final" / "Quarter Final" / "Final"。 */
+const ROUND_NAME_ZH: Record<string, string> = {
+  'First round': '初赛',
+  'Second round': '复赛',
+  'Third round': '第三轮',
+  'Quarter Final': '1/4 决赛',
+  'Semi Final': '半决赛',
+  'Final': '决赛',
+};
+function roundDisplayName(rdName: string, isZh: boolean): string {
+  if (!isZh) return rdName;
+  return ROUND_NAME_ZH[rdName] || rdName;
+}
+
+/** cubing.com region 字符串 → 显示名:走 utils/country_name 单一来源。 */
+function regionDisplay(region: string, isZh: boolean): string {
+  if (!region) return '';
+  const iso2 = regionToIso2(region);
+  if (iso2) return countryName(iso2.toUpperCase(), isZh);
+  return region;
+}
+
+/** Decode common HTML entities (cubing.com title 里 ' 存成 &#039;) */
+function decodeEntities(s: string): string {
+  if (!s) return s;
+  return s
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
 /** Round 状态 → 中英描述 (Open / Finished / Live) */
 function statusLabel(rd: RoundMeta, isZh: boolean): string {
   const map = ['Open', 'Finished', 'Live'];
@@ -160,6 +187,9 @@ export default function CompDetailPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // _flagDataVer 仅用来触发重渲染(loadFlagData 完成后 localizeCompName/countryName 才能查到中文)
+  const [, setFlagDataVer] = useState(0);
+  useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
   // PR map: wcaid → PbByEvent. null = fetched, no data.
   const [pbVer, setPbVer] = useState(0); // bump to force re-render after prefetch
   const [openedCuber, setOpenedCuber] = useState<number | null>(null);
@@ -200,6 +230,44 @@ export default function CompDetailPage() {
     await load();
     setRefreshing(false);
   };
+
+  // ── 实时增量: 直连 wss://cubing.com/ws,把 result.new / result.update / round.update / users patch 进 data ──
+
+  const applyPatch = useCallback((patch: LivePatch) => {
+    setData(prev => {
+      if (!prev) return prev;
+      if (patch.kind === 'result.new' || patch.kind === 'result.update') {
+        const r = patch.result;
+        // 只接收本比赛的事件 (server 会按 competitionId 过滤,这里再防一道)
+        if (r.c !== prev.compId) return prev;
+        const key = `${r.e}:${r.r}`;
+        const arr = prev.resultsByRound[key] || [];
+        const nextArr = applyResultPatch(arr, patch);
+        return {
+          ...prev,
+          resultsByRound: { ...prev.resultsByRound, [key]: nextArr },
+          fetchedAt: Date.now(),
+        };
+      }
+      if (patch.kind === 'round.update') {
+        const ru = patch.round;
+        const events = prev.events.map(ev => {
+          if (ev.i !== ru.e) return ev;
+          return {
+            ...ev,
+            rs: ev.rs.map(rd => rd.i === ru.i ? { ...rd, ...ru } : rd),
+          };
+        });
+        return { ...prev, events, fetchedAt: Date.now() };
+      }
+      if (patch.kind === 'users') {
+        return { ...prev, users: { ...prev.users, ...patch.users }, fetchedAt: Date.now() };
+      }
+      return prev;
+    });
+  }, []);
+
+  const wsStatus = useLiveStream({ compId: data?.compId ?? null, applyPatch });
 
   // ── 默认选 round: 优先 finished 最近一个 3x3 round,否则第一个有数据的 round ──
 
@@ -350,7 +418,19 @@ export default function CompDetailPage() {
 
       <header className="comp-detail-header">
         <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
-        <h1 className="comp-detail-title">{data.name}</h1>
+        <h1 className="comp-detail-title">
+          {/* cubing.com slug 形如 "Xian-Cherry-Blossom-2026",WCA comp id 把横线去掉就行 */}
+          {(() => {
+            const wcaId = slug.replace(/-/g, '');
+            const iso2 = compFlagIso2(wcaId);
+            return (
+              <>
+                {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
+                {localizeCompName(wcaId, decodeEntities(data.name), isZh)}
+              </>
+            );
+          })()}
+        </h1>
         <div className="comp-detail-meta">
           <a
             href={`https://cubing.com/live/${data.slug}`}
@@ -364,6 +444,7 @@ export default function CompDetailPage() {
           <span className="comp-detail-fetched">
             {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
           </span>
+          <LiveIndicator status={wsStatus} isZh={isZh} />
           <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={isZh ? '刷新' : 'Refresh'}>
             <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
           </button>
@@ -378,7 +459,7 @@ export default function CompDetailPage() {
         >
           {roundOptions.map(o => (
             <option key={o.key} value={o.key}>
-              {eventDisplayName(o.ev.i, isZh)} - {o.rd.name}
+              {eventDisplayName(o.ev.i, isZh)} - {roundDisplayName(o.rd.name, isZh)}
               {o.rd.s === 1 ? ` - ${isZh ? '已结束' : 'Finished'}` : o.rd.s === 2 ? ` - ${isZh ? '实时' : 'Live'}` : ''}
               {' '}({o.rd.rn})
             </option>
@@ -401,7 +482,7 @@ export default function CompDetailPage() {
       {currentRound && (
         <div className="comp-round-banner">
           <span className="comp-round-banner-title">
-            {eventDisplayName(currentRound.ev.i, isZh)} - {currentRound.rd.name}
+            {eventDisplayName(currentRound.ev.i, isZh)} - {roundDisplayName(currentRound.rd.name, isZh)}
           </span>
           <span className="comp-round-banner-status">
             {statusLabel(currentRound.rd, isZh)}
@@ -460,7 +541,6 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
             <th className="th-person">{isZh ? '选手' : 'Person'}</th>
             {showAvg && <th className="th-avg">{isZh ? '平均' : 'Average'}</th>}
             <th className="th-best">{isZh ? '单次' : 'Best'}</th>
-            <th className="th-region">{isZh ? '地区' : 'Region'}</th>
             <th className="th-detail" colSpan={attemptCount}>{isZh ? '详情' : 'Detail'}</th>
           </tr>
         </thead>
@@ -476,21 +556,25 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
                 <td className="td-place">{r.b === 0 ? '-' : (idx + 1)}</td>
                 <td className="td-no">{r.n}</td>
                 <td className="td-person">
-                  <button type="button" className="cuber-link" onClick={() => onClickCuber(r.n)}>
+                  <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                  <button
+                    type="button"
+                    className="cuber-link"
+                    onClick={() => onClickCuber(r.n)}
+                    title={regionDisplay(u.region, isZh)}
+                  >
                     {displayCuberName(u.name, isZh)}
                   </button>
                 </td>
                 {showAvg && (
                   <td className={`td-avg${averagePr ? ' is-pr' : ''}`} title={averagePr ? (isZh ? '平均 PR' : 'Average PR') : undefined}>
                     {formatLive(r.a, r.e, true)}
+                    {r.ar ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} /> : null}
                   </td>
                 )}
                 <td className={`td-best${singlePr ? ' is-pr' : ''}`} title={singlePr ? (isZh ? '单次 PR' : 'Single PR') : undefined}>
                   {formatLive(r.b, r.e, false)}
-                </td>
-                <td className="td-region">
-                  <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                  <span className="region-name">{u.region}</span>
+                  {r.sr ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} /> : null}
                 </td>
                 {Array.from({ length: attemptCount }).map((_, i) => (
                   <td key={i} className="td-attempt">{formatLive(r.v[i] ?? 0, r.e, false)}</td>
@@ -499,7 +583,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
             );
           })}
           {results.length === 0 && (
-            <tr><td colSpan={6 + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
+            <tr><td colSpan={5 + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
           )}
         </tbody>
       </table>
@@ -577,7 +661,7 @@ function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
                 {u.wcaid} <ExternalLink size={12} />
               </a>
             )}
-            <span className="comp-modal-region">{u.region}</span>
+            <span className="comp-modal-region">{regionDisplay(u.region, isZh)}</span>
           </div>
           <button type="button" className="comp-modal-close" onClick={onClose} aria-label="Close">
             <XIcon size={18} />
@@ -611,11 +695,15 @@ function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
                       const place = idx >= 0 && result.b !== 0 ? idx + 1 : '-';
                       return (
                         <tr key={`${en.ev.i}:${en.rd.i}`}>
-                          <td>{en.rd.name}</td>
+                          <td>{roundDisplayName(en.rd.name, isZh)}</td>
                           <td>{place}</td>
-                          <td className={singlePr ? 'is-pr' : ''}>{formatLive(result.b, result.e, false)}</td>
+                          <td className={singlePr ? 'is-pr' : ''}>
+                            {formatLive(result.b, result.e, false)}
+                            {result.sr ? <RecordBadge record={result.sr} variant="inline" iso2={regionToIso2(u.region)} /> : null}
+                          </td>
                           <td className={averagePr && isAverageFormat ? 'is-pr' : ''}>
                             {isAverageFormat ? formatLive(result.a, result.e, true) : ''}
+                            {isAverageFormat && result.ar ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} /> : null}
                           </td>
                           {Array.from({ length: 5 }).map((_, i) => (
                             <td key={i}>{formatLive(result.v[i] ?? 0, result.e, false)}</td>
@@ -636,5 +724,26 @@ function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
         </footer>
       </div>
     </div>
+  );
+}
+
+// ─── LiveIndicator ───────────────────────────────────────────────────────
+
+function LiveIndicator({ status, isZh }: { status: import("./useLiveStream").WsStatus; isZh: boolean }) {
+  const label = (() => {
+    switch (status) {
+      case "open":       return isZh ? "实时" : "Live";
+      case "connecting": return isZh ? "连接中" : "Connecting";
+      case "closed":     return isZh ? "已断开" : "Disconnected";
+      case "error":      return isZh ? "连接失败" : "Error";
+      default:           return "";
+    }
+  })();
+  if (!label) return null;
+  return (
+    <span className={`comp-live-indicator status-${status}`} title={isZh ? "wss://cubing.com/ws 实时推送" : "wss://cubing.com/ws live stream"}>
+      <span className="comp-live-dot" />
+      {label}
+    </span>
   );
 }
