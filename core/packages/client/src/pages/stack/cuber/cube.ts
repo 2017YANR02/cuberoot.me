@@ -178,6 +178,7 @@ export default class Cube extends THREE.Group {
     const skipMatrix = (this.instancedRenderer as unknown as { useShaderSlice?: boolean }).useShaderSlice;
     for (const cubelet of this.initials.values()) {
       cubelet.quaternion.set(0, 0, 0, 1);
+      cubelet._rotIdx = 0;
       cubelet.index = cubelet.initial;
       if (!skipMatrix) cubelet.updateMatrix();
       this.cubelets.set(cubelet.index, cubelet);

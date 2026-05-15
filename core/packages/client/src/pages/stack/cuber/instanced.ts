@@ -22,6 +22,97 @@ import { FACE, COLORS } from "./define";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
+
+/** Cube rotation group: 24 distinct orientations encoded as quaternions.
+ * Flat 96-float array (24 × xyzw). compTable indexes the result of composing
+ * a slice-turn quaternion onto a current rotation index, enabling O(1)
+ * cubelet orientation updates instead of per-cubelet quaternion math.
+ *
+ * TURNS: 9 slice rotations (3 axes × 3 angles: ±π/2, π). turnIdxFor(axis, angle)
+ * maps a CubeGroup's (axis, angle) to a turn index 0..8. */
+const SLICE_TURNS_Q: ReadonlyArray<readonly [number, number, number, number]> = [
+  [+Math.SQRT1_2, 0, 0, Math.SQRT1_2],    // 0: x +90°
+  [1, 0, 0, 0],                            // 1: x 180°
+  [-Math.SQRT1_2, 0, 0, Math.SQRT1_2],    // 2: x -90°
+  [0, +Math.SQRT1_2, 0, Math.SQRT1_2],    // 3: y +90°
+  [0, 1, 0, 0],                            // 4: y 180°
+  [0, -Math.SQRT1_2, 0, Math.SQRT1_2],    // 5: y -90°
+  [0, 0, +Math.SQRT1_2, Math.SQRT1_2],    // 6: z +90°
+  [0, 0, 1, 0],                            // 7: z 180°
+  [0, 0, -Math.SQRT1_2, Math.SQRT1_2],    // 8: z -90°
+];
+
+const ROTS_Q = new Float32Array(24 * 4);
+let COMP_TABLE: Uint8Array | null = null;
+
+function initRotationGroup(): void {
+  if (COMP_TABLE) return;
+  const indexByKey = new Map<string, number>();
+  const quantize = (n: number) => Math.round(n * 1000) / 1000;
+  const canonKey = (x: number, y: number, z: number, w: number) => {
+    const s = w >= 0 ? 1 : -1;
+    return `${quantize(x*s)},${quantize(y*s)},${quantize(z*s)},${quantize(w*s)}`;
+  };
+  // identity at idx 0
+  ROTS_Q[0] = 0; ROTS_Q[1] = 0; ROTS_Q[2] = 0; ROTS_Q[3] = 1;
+  indexByKey.set(canonKey(0, 0, 0, 1), 0);
+  const queue: number[] = [0];
+  while (queue.length) {
+    const cur = queue.shift()!;
+    const cx = ROTS_Q[cur*4], cy = ROTS_Q[cur*4+1], cz = ROTS_Q[cur*4+2], cw = ROTS_Q[cur*4+3];
+    for (const [tx, ty, tz, tw] of SLICE_TURNS_Q) {
+      // composed = turn × current (Three's Quaternion.premultiply)
+      const nx = tw*cx + tx*cw + ty*cz - tz*cy;
+      const ny = tw*cy - tx*cz + ty*cw + tz*cx;
+      const nz = tw*cz + tx*cy - ty*cx + tz*cw;
+      const nw = tw*cw - tx*cx - ty*cy - tz*cz;
+      const key = canonKey(nx, ny, nz, nw);
+      if (!indexByKey.has(key)) {
+        const idx = indexByKey.size;
+        indexByKey.set(key, idx);
+        const s = nw >= 0 ? 1 : -1;
+        ROTS_Q[idx*4] = nx*s; ROTS_Q[idx*4+1] = ny*s; ROTS_Q[idx*4+2] = nz*s; ROTS_Q[idx*4+3] = nw*s;
+        queue.push(idx);
+      }
+    }
+  }
+  // 24 elements expected
+  COMP_TABLE = new Uint8Array(SLICE_TURNS_Q.length * 24);
+  for (let t = 0; t < SLICE_TURNS_Q.length; t++) {
+    const [tx, ty, tz, tw] = SLICE_TURNS_Q[t];
+    for (let c = 0; c < 24; c++) {
+      const cx = ROTS_Q[c*4], cy = ROTS_Q[c*4+1], cz = ROTS_Q[c*4+2], cw = ROTS_Q[c*4+3];
+      const nx = tw*cx + tx*cw + ty*cz - tz*cy;
+      const ny = tw*cy - tx*cz + ty*cw + tz*cx;
+      const nz = tw*cz + tx*cy - ty*cx + tz*cw;
+      const nw = tw*cw - tx*cx - ty*cy - tz*cz;
+      const newIdx = indexByKey.get(canonKey(nx, ny, nz, nw));
+      if (newIdx === undefined) throw new Error('rotation group not closed at idx ' + c + ' turn ' + t);
+      COMP_TABLE[t * 24 + c] = newIdx;
+    }
+  }
+}
+
+/** Maps CubeGroup.axis + angle (snapped to ±π/2 or π) to turn index 0..8.
+ * Returns -1 for unsupported (shouldn't happen for face turns). */
+export function turnIdxFor(axis: string, angle: number): number {
+  // Normalize angle to (-π, π]
+  let a = angle % (2 * Math.PI);
+  if (a > Math.PI) a -= 2 * Math.PI;
+  if (a <= -Math.PI) a += 2 * Math.PI;
+  const eps = 0.05;
+  let base: number;
+  if (axis === 'x') base = 0;
+  else if (axis === 'y') base = 3;
+  else if (axis === 'z') base = 6;
+  else return -1;
+  if (Math.abs(a - Math.PI/2) < eps) return base + 0;
+  if (Math.abs(a - Math.PI) < eps || Math.abs(a + Math.PI) < eps) return base + 1;
+  if (Math.abs(a + Math.PI/2) < eps) return base + 2;
+  return -1;
+}
+
+initRotationGroup();
 // 内填充 box: 比 cubelet frame 小 1 单位防 z-fight (frame outer face 在 ±SIZE/2)。
 // 任何方向上 frame 的"洞"(slice 旋转 / 邻居被搬走暴露的内表面) 露出来后,
 // 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
@@ -53,13 +144,18 @@ function injectSliceRotationShader(material: THREE.Material): void {
     userData: { sliceUniforms?: Record<string, { value: unknown }> };
   };
   m.userData = m.userData ?? {};
+  // uOrientations: 24 vec4 quaternions (the cube rotation group). aRotIdx is
+  // per-instance float index into this array. Avoids 4-float aOrientation upload
+  // per twist — only 1 float per cubelet.
+  const orientationsArr: THREE.Vector4[] = [];
+  for (let i = 0; i < 24; i++) {
+    orientationsArr.push(new THREE.Vector4(ROTS_Q[i*4], ROTS_Q[i*4+1], ROTS_Q[i*4+2], ROTS_Q[i*4+3]));
+  }
   const uniforms = {
-    // uSliceLayer = -1 表示 inactive (无 cubelet 的 layer 匹配)。
-    // 不用 uSliceActive bool 因为部分 GLSL driver 在 uSliceActive=0 时把分支常量
-    // 折叠优化掉,后续 setSliceAngle 设 1 时 shader 已经不响应了。
-    uSliceAxisMask: { value: new THREE.Vector3(1, 0, 0) },  // (1,0,0)=x, (0,1,0)=y, (0,0,1)=z
-    uSliceLayer: { value: -1 },            // 0..N-1 = active slice, -1 = inactive
+    uSliceAxisMask: { value: new THREE.Vector3(1, 0, 0) },
+    uSliceLayer: { value: -1 },
     uSliceRot: { value: new THREE.Matrix4() },
+    uOrientations: { value: orientationsArr },
   };
   m.userData.sliceUniforms = uniforms;
   // 必须设 customProgramCacheKey 否则 three.js 复用 cached basic shader,
@@ -73,10 +169,11 @@ function injectSliceRotationShader(material: THREE.Material): void {
       '#include <common>',
       `#include <common>
       attribute vec3 aLayerXYZ;
-      attribute vec4 aOrientation;
+      attribute float aRotIdx;
       uniform vec3 uSliceAxisMask;
       uniform float uSliceLayer;
       uniform mat4 uSliceRot;
+      uniform vec4 uOrientations[24];
       // Quaternion → 3×3 rotation matrix → 4×4 affine
       mat4 quatToMat4(vec4 q) {
         float x = q.x, y = q.y, z = q.z, w = q.w;
@@ -98,8 +195,11 @@ function injectSliceRotationShader(material: THREE.Material): void {
       #ifdef USE_INSTANCING
         // 1) Apply initial position via instanceMatrix
         mvPosition = instanceMatrix * mvPosition;
-        // 2) Apply accumulated rotation via aOrientation (cubelet's quaternion)
-        mvPosition = quatToMat4(aOrientation) * mvPosition;
+        // 2) Apply accumulated rotation: lookup cubelet's quaternion from
+        //    the 24-entry rotation group table by per-instance aRotIdx.
+        //    Avoids per-instance vec4 quaternion attribute writes.
+        vec4 orientation = uOrientations[int(aRotIdx + 0.5)];
+        mvPosition = quatToMat4(orientation) * mvPosition;
         // 3) Apply active slice rotation if cubelet's layer matches
         float myLayer = dot(aLayerXYZ, uSliceAxisMask);
         if (abs(myLayer - uSliceLayer) < 0.5) {
@@ -155,6 +255,13 @@ export default class InstancedRenderer extends THREE.Group {
   movingInner!: THREE.InstancedMesh;
   /** false 时 staticInner/movingInner 仍存在(便于 dispose)但不写矩阵、不渲染。 */
   private hasInner: boolean;
+  /** Exposed for group.drop fast path. */
+  lookupCompTable(turnIdx: number, fromRot: number): number {
+    return COMP_TABLE![turnIdx * 24 + fromRot];
+  }
+  turnIdxFor(axis: string, angle: number): number {
+    return turnIdxFor(axis, angle);
+  }
   /** N≥superOrderThreshold + flag 开: frame 用 BoxGeometry, sticker 用 PlaneGeometry,
    * 材质换 unlit。geometry tris/cubelet 88→12, tris/sticker 204→2。 */
   private useLowPolyGpu: boolean;
@@ -409,33 +516,29 @@ export default class InstancedRenderer extends THREE.Group {
    * Static instanceMatrix 永远保持构造时初始值, shader 用 aOrientation 算 final pos。 */
   private setupShaderSliceMode(cube: Cube, cubelets: Cubelet[]): void {
     const half = (cube.order - 1) / 2;
-    // Frame: aLayerXYZ + aOrientation per cubelet
+    // Frame: aLayerXYZ + aRotIdx per cubelet (1 float index into uOrientations[24])
     const frameLayers = new Float32Array(cubelets.length * 3);
-    const frameOrient = new Float32Array(cubelets.length * 4);
+    const frameRotIdx = new Float32Array(cubelets.length);  // all zero (identity rotation index)
     for (let i = 0; i < cubelets.length; i++) {
       const v = cubelets[i].vector;
       frameLayers[i * 3 + 0] = v.x + half;
       frameLayers[i * 3 + 1] = v.y + half;
       frameLayers[i * 3 + 2] = v.z + half;
-      // Identity quaternion (0, 0, 0, 1)
-      frameOrient[i * 4 + 3] = 1;
     }
     const frameGeo = this.staticFrame.geometry.clone();
     const frameLayerAttr = new THREE.InstancedBufferAttribute(frameLayers, 3);
-    const frameOrientAttr = new THREE.InstancedBufferAttribute(frameOrient, 4);
-    // DynamicDrawUsage hints driver: buffer updates often, allocate accordingly.
-    // Reduces GPU bufferSubData cost per endSlice upload (the per-twist spike).
+    const frameRotIdxAttr = new THREE.InstancedBufferAttribute(frameRotIdx, 1);
     frameLayerAttr.setUsage(THREE.DynamicDrawUsage);
-    frameOrientAttr.setUsage(THREE.DynamicDrawUsage);
+    frameRotIdxAttr.setUsage(THREE.DynamicDrawUsage);
     frameGeo.setAttribute('aLayerXYZ', frameLayerAttr);
-    frameGeo.setAttribute('aOrientation', frameOrientAttr);
+    frameGeo.setAttribute('aRotIdx', frameRotIdxAttr);
     this.staticFrame.geometry = frameGeo;
     this.shaderFrameMat = (this.staticFrame.material as THREE.MeshBasicMaterial).clone();
     injectSliceRotationShader(this.shaderFrameMat);
     this.staticFrame.material = this.shaderFrameMat;
-    // Sticker: aLayerXYZ + aOrientation per sticker slot (= cubelet's)
+    // Sticker: aLayerXYZ + aRotIdx per sticker slot (= cubelet's)
     const stickerLayers = new Float32Array(this.stickerSlots.length * 3);
-    const stickerOrient = new Float32Array(this.stickerSlots.length * 4);
+    const stickerRotIdx = new Float32Array(this.stickerSlots.length);
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = cube.initials.get(slot.cubeletInitial);
@@ -444,15 +547,14 @@ export default class InstancedRenderer extends THREE.Group {
       stickerLayers[i * 3 + 0] = v.x + half;
       stickerLayers[i * 3 + 1] = v.y + half;
       stickerLayers[i * 3 + 2] = v.z + half;
-      stickerOrient[i * 4 + 3] = 1;
     }
     const stickerGeo = this.staticSticker.geometry.clone();
     const stickerLayerAttr = new THREE.InstancedBufferAttribute(stickerLayers, 3);
-    const stickerOrientAttr = new THREE.InstancedBufferAttribute(stickerOrient, 4);
+    const stickerRotIdxAttr = new THREE.InstancedBufferAttribute(stickerRotIdx, 1);
     stickerLayerAttr.setUsage(THREE.DynamicDrawUsage);
-    stickerOrientAttr.setUsage(THREE.DynamicDrawUsage);
+    stickerRotIdxAttr.setUsage(THREE.DynamicDrawUsage);
     stickerGeo.setAttribute('aLayerXYZ', stickerLayerAttr);
-    stickerGeo.setAttribute('aOrientation', stickerOrientAttr);
+    stickerGeo.setAttribute('aRotIdx', stickerRotIdxAttr);
     this.staticSticker.geometry = stickerGeo;
     this.shaderStickerMat = (this.staticSticker.material as THREE.MeshBasicMaterial).clone();
     injectSliceRotationShader(this.shaderStickerMat);
@@ -752,41 +854,32 @@ export default class InstancedRenderer extends THREE.Group {
       const staticSticker = this.staticSticker;
       const frameLayerAttr = staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
       const stickerLayerAttr = staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-      const frameOrientAttr = staticFrame.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-      const stickerOrientAttr = staticSticker.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-      const frameOrientArr = frameOrientAttr.array as Float32Array;
-      const stickerOrientArr = stickerOrientAttr.array as Float32Array;
+      const frameRotIdxAttr = staticFrame.geometry.getAttribute('aRotIdx') as THREE.InstancedBufferAttribute;
+      const stickerRotIdxAttr = staticSticker.geometry.getAttribute('aRotIdx') as THREE.InstancedBufferAttribute;
+      const frameRotIdxArr = frameRotIdxAttr.array as Float32Array;
+      const stickerRotIdxArr = stickerRotIdxAttr.array as Float32Array;
       const half = (this.cube.order - 1) / 2;
       const cubeletSlots = this.cubeletSlots;
       for (let i = 0; i < instArr.length; i++) {
         const cubelet = cubeletsArr[i];
         if (!cubelet) continue;
         const v = cubelet.vector;
-        const q = cubelet.quaternion;
-        const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
         const lx = v.x + half, ly = v.y + half, lz = v.z + half;
-        const instOff = instArr[i] * 4;
-        frameOrientArr[instOff + 0] = qx;
-        frameOrientArr[instOff + 1] = qy;
-        frameOrientArr[instOff + 2] = qz;
-        frameOrientArr[instOff + 3] = qw;
+        const rotIdx = cubelet._rotIdx;
+        frameRotIdxArr[instArr[i]] = rotIdx;
         frameLayerAttr.setXYZ(instArr[i], lx, ly, lz);
         const slots = cubeletSlots.get(cubelet.initial);
         if (!slots) continue;
         for (let j = 0; j < slots.length; j++) {
           const slotIdx = slots[j];
-          const slotOff = slotIdx * 4;
-          stickerOrientArr[slotOff + 0] = qx;
-          stickerOrientArr[slotOff + 1] = qy;
-          stickerOrientArr[slotOff + 2] = qz;
-          stickerOrientArr[slotOff + 3] = qw;
+          stickerRotIdxArr[slotIdx] = rotIdx;
           stickerLayerAttr.setXYZ(slotIdx, lx, ly, lz);
         }
       }
       frameLayerAttr.needsUpdate = true;
       stickerLayerAttr.needsUpdate = true;
-      frameOrientAttr.needsUpdate = true;
-      stickerOrientAttr.needsUpdate = true;
+      frameRotIdxAttr.needsUpdate = true;
+      stickerRotIdxAttr.needsUpdate = true;
       this.setShaderSliceUniforms(-1, 0, null);
       this.releaseSliceState(state);
       this.cube.dirty = true;
@@ -872,22 +965,17 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this.activeSlices.clear();
     this.singleSliceGroup = null;
-    // Shader mode: 重置 per-instance aOrientation 到 identity quat (0,0,0,1)
-    // 因为 cube.reset() 把 cubelet.quaternion 置回 identity, 但我们独立存
-    // 了 aOrientation buffer 必须 sync。aLayerXYZ 同样需要回到初始 layer。
+    // Shader mode: reset per-instance aRotIdx to 0 (identity rotation index)
+    // because cube.reset() resets all cubelets to initial orientation.
     if (this.useShaderSlice) {
-      const frameOrient = this.staticFrame.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-      const stickerOrient = this.staticSticker.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-      const frameOrientArr = frameOrient.array as Float32Array;
-      const stickerOrientArr = stickerOrient.array as Float32Array;
-      for (let i = 0; i < frameOrientArr.length; i += 4) {
-        frameOrientArr[i] = 0; frameOrientArr[i + 1] = 0; frameOrientArr[i + 2] = 0; frameOrientArr[i + 3] = 1;
-      }
-      for (let i = 0; i < stickerOrientArr.length; i += 4) {
-        stickerOrientArr[i] = 0; stickerOrientArr[i + 1] = 0; stickerOrientArr[i + 2] = 0; stickerOrientArr[i + 3] = 1;
-      }
-      frameOrient.needsUpdate = true;
-      stickerOrient.needsUpdate = true;
+      const frameRotIdx = this.staticFrame.geometry.getAttribute('aRotIdx') as THREE.InstancedBufferAttribute;
+      const stickerRotIdx = this.staticSticker.geometry.getAttribute('aRotIdx') as THREE.InstancedBufferAttribute;
+      const frameRotIdxArr = frameRotIdx.array as Float32Array;
+      const stickerRotIdxArr = stickerRotIdx.array as Float32Array;
+      frameRotIdxArr.fill(0);
+      stickerRotIdxArr.fill(0);
+      frameRotIdx.needsUpdate = true;
+      stickerRotIdx.needsUpdate = true;
       const frameLayer = this.staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
       const stickerLayer = this.staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
       const half = (this.cube.order - 1) / 2;
