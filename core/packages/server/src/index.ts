@@ -12,6 +12,8 @@ import { colpiRoutes } from './routes/colpi.js';
 import { historicalRanksRoutes } from './routes/historical_ranks.js';
 import { wcaStatsExtraRoutes } from './routes/wca_stats_extra.js';
 import { navSitesRoutes } from './routes/nav_sites.js';
+import { nemesizerRoutes } from './routes/nemesizer.js';
+import { loadNemesizerDataset } from './nemesizer/loader.js';
 
 const app = new Hono();
 
@@ -53,6 +55,13 @@ app.route('/v1', colpiRoutes);
 app.route('/v1', historicalRanksRoutes);
 app.route('/v1', wcaStatsExtraRoutes);
 app.route('/v1', navSitesRoutes);
+app.route('/v1', nemesizerRoutes);
+
+// Kick off nemesizer dataset load asynchronously — the worker would otherwise
+// block the listener from coming up. Routes return 503 until ready (~5s).
+loadNemesizerDataset().catch(err => {
+  console.error('[nemesizer] startup load failed, routes will keep returning 503:', err);
+});
 
 const PORT = Number(process.env.PORT) || 3001;
 

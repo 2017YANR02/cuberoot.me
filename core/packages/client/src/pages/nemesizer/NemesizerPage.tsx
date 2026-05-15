@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import NemesizerBrand from './components/NemesizerBrand';
 import StandardMode from './modes/StandardMode';
 import H2HMode from './modes/H2HMode';
 import WhatIfMode from './modes/WhatIfMode';
 import StatsMode from './modes/StatsMode';
-import { loadNemesizerData, type NemesizerDataset } from './data/nemesizerData';
 import './nemesizer.css';
 
 type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
@@ -17,16 +16,8 @@ export default function NemesizerPage() {
   const isZh = i18n.language === 'zh';
   const [params, setParams] = useSearchParams();
   const mode = (params.get('mode') as Mode) || 'standard';
-  const [ds, setDs] = useState<NemesizerDataset | null>(null);
-  const [phase, setPhase] = useState<string>('');
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadNemesizerData(setPhase).then(setDs).catch(e => setErr(String(e)));
-  }, []);
 
   const setMode = (m: Mode) => {
-    // Reset mode-specific params when switching
     const next = new URLSearchParams();
     const lang = params.get('lang');
     if (lang) next.set('lang', lang);
@@ -36,7 +27,8 @@ export default function NemesizerPage() {
 
   return (
     <div className="nemesizer-page">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <ThemeToggle />
         <LangToggle />
       </div>
 
@@ -49,11 +41,10 @@ export default function NemesizerPage() {
         <TabBtn active={mode === 'stats'} onClick={() => setMode('stats')}>{isZh ? '统计' : 'Statistics'}</TabBtn>
       </div>
 
-      {err && <div className="nemesizer-loading" style={{ color: '#e87474' }}>{err}</div>}
-      {!err && mode === 'standard' && <StandardMode ds={ds} isZh={isZh} loadingPhase={phase} />}
-      {!err && mode === 'h2h' && <H2HMode ds={ds} isZh={isZh} loadingPhase={phase} />}
-      {!err && mode === 'whatif' && <WhatIfMode ds={ds} isZh={isZh} loadingPhase={phase} />}
-      {!err && mode === 'stats' && (ds ? <StatsMode ds={ds} isZh={isZh} /> : <div className="nemesizer-loading">{isZh ? `加载中… (${phase})` : `Loading… (${phase})`}</div>)}
+      {mode === 'standard' && <StandardMode isZh={isZh} />}
+      {mode === 'h2h' && <H2HMode isZh={isZh} />}
+      {mode === 'whatif' && <WhatIfMode isZh={isZh} />}
+      {mode === 'stats' && <StatsMode isZh={isZh} />}
 
       <footer className="nemesizer-footer">
         {isZh ? (
