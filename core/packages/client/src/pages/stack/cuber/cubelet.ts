@@ -277,10 +277,6 @@ export default class Cubelet extends THREE.Group {
   /** InstancedRenderer 在构造时填: cubelet.initial → 0..N-1 instance idx。
    * 替代 Map.get(initialToInstance) per-cubelet 在 beginSlice / endSlice 热路径。 */
   _instIdx: number = -1;
-  /** Index into the cube rotation group (0..23, 0 = identity). Updated via
-   * COMP_TABLE lookup in group.drop() instead of per-cubelet quaternion math.
-   * Shader reads from per-instance aRotIdx attribute + uOrientations[24] uniform. */
-  _rotIdx: number = 0;
 
   _quaternion: THREE.Quaternion;
   order: number;
