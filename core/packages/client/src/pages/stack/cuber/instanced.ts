@@ -35,9 +35,11 @@ const INNER_BOX = new THREE.BoxGeometry(Cubelet.SIZE - 1, Cubelet.SIZE - 1, Cube
 export const __PERF_FLAGS: {
   superOrderThreshold: number;
   singleSliceQuaternion: boolean;
+  superOrderLowPolyGpu: boolean;
 } = {
   superOrderThreshold: 50,
   singleSliceQuaternion: true,
+  superOrderLowPolyGpu: true,
 };
 
 function makeStickerLocalMatrix(face: number, zScale: number, distanceMul = 1): THREE.Matrix4 {
@@ -83,9 +85,12 @@ export default class InstancedRenderer extends THREE.Group {
   movingInner!: THREE.InstancedMesh;
   /** false 时 staticInner/movingInner 仍存在(便于 dispose)但不写矩阵、不渲染。 */
   private hasInner: boolean;
+  /** N≥superOrderThreshold + flag 开: frame 用 BoxGeometry, sticker 用 PlaneGeometry,
+   * 材质换 unlit。geometry tris/cubelet 88→12, tris/sticker 204→2。 */
+  private useLowPolyGpu: boolean;
 
-  private stickerMaterial: THREE.MeshLambertMaterial;
-  private movingStickerMaterial: THREE.MeshLambertMaterial;
+  private stickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
+  private movingStickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
 
   /** hint stickers (alg.cubing.net "hint facelets"): 每个 sticker 沿 face normal
    * 推到 cube 外侧 (order+1) 倍位置, BasicMaterial 半透明全亮。提示背面颜色。
@@ -134,7 +139,9 @@ export default class InstancedRenderer extends THREE.Group {
     super();
     this.cube = cube;
     this.matrixAutoUpdate = false;
-    this.hasInner = cube.order < __PERF_FLAGS.superOrderThreshold;
+    const isSuperOrder = cube.order >= __PERF_FLAGS.superOrderThreshold;
+    this.hasInner = !isSuperOrder;
+    this.useLowPolyGpu = isSuperOrder && __PERF_FLAGS.superOrderLowPolyGpu;
 
     const cubelets = [...cube.initials.values()];
     const visCount = cubelets.length;
@@ -192,9 +199,9 @@ export default class InstancedRenderer extends THREE.Group {
       this.cubeletSlots.set(cubelet.initial, list);
     }
 
-    // Sticker meshes
-    this.stickerMaterial = new THREE.MeshLambertMaterial();
-    this.movingStickerMaterial = new THREE.MeshLambertMaterial();
+    // Sticker meshes — 超高阶用 unlit basic 省 fragment shader 光照
+    this.stickerMaterial = this.useLowPolyGpu ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
+    this.movingStickerMaterial = this.useLowPolyGpu ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
     this.movingSticker.count = 0;
@@ -264,7 +271,9 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
-    const m = new THREE.InstancedMesh(Cubelet._FRAME, Cubelet.CORE, count);
+    const geo = this.useLowPolyGpu ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+    const mat = this.useLowPolyGpu ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const m = new THREE.InstancedMesh(geo, mat, count);
     m.frustumCulled = false;
     // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
     // static mesh 永远 identity
@@ -274,7 +283,8 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   private makeInnerMesh(count: number, moving: boolean): THREE.InstancedMesh {
-    const m = new THREE.InstancedMesh(INNER_BOX, Cubelet.CORE, count);
+    const mat = this.useLowPolyGpu ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const m = new THREE.InstancedMesh(INNER_BOX, mat, count);
     m.frustumCulled = false;
     m.matrixAutoUpdate = moving;
     if (!moving) m.matrix.identity();
@@ -282,8 +292,9 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    const baseGeo = this.useLowPolyGpu ? Cubelet._STICKER_LOW : Cubelet._STICKER;
     const m = new THREE.InstancedMesh(
-      moving ? this.staticSticker?.geometry ?? Cubelet._STICKER : Cubelet._STICKER,
+      moving ? this.staticSticker?.geometry ?? baseGeo : baseGeo,
       moving ? this.movingStickerMaterial : this.stickerMaterial,
       count,
     );
