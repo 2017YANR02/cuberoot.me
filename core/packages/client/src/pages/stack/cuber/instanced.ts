@@ -58,6 +58,8 @@ export default class InstancedRenderer extends THREE.Group {
   movingFrame!: THREE.InstancedMesh;
   staticSticker!: THREE.InstancedMesh;
   movingSticker!: THREE.InstancedMesh;
+  /** 核心填充:slice 旋转露出内部时,看到这块 dark box 而不是穿透到对面 */
+  coreMesh: THREE.Mesh | null = null;
 
   private stickerMaterial: THREE.MeshLambertMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial;
@@ -92,9 +94,21 @@ export default class InstancedRenderer extends THREE.Group {
       this.instanceToInitial.push(cubelets[i].initial);
     }
 
+    // 核心填充 box (N>=3 才需要 — N=2 没有内层)
+    if (cube.order >= 3) {
+      const coreSide = (cube.order - 2.1) * Cubelet.SIZE;
+      this.coreMesh = new THREE.Mesh(new THREE.BoxGeometry(coreSide, coreSide, coreSide), Cubelet.CORE);
+      this.coreMesh.frustumCulled = false;
+      this.coreMesh.matrixAutoUpdate = false;
+      this.coreMesh.matrix.identity();
+      this.add(this.coreMesh);
+    }
+
     // Frame meshes
     this.staticFrame = this.makeFrameMesh(visCount, false);
     this.movingFrame = this.makeFrameMesh(visCount, true);
+    // idle 时 moving 不渲染 (count=0)
+    this.movingFrame.count = 0;
 
     // 初始 frame 矩阵 (static),全部 moving 隐藏
     for (let i = 0; i < visCount; i++) {
@@ -129,6 +143,7 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingStickerMaterial = new THREE.MeshLambertMaterial();
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
+    this.movingSticker.count = 0;
 
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
@@ -204,10 +219,12 @@ export default class InstancedRenderer extends THREE.Group {
       }
     }
     this.activeSlices.set(group, { instances, slots: slotsList });
-    // 进入 slice 时,把 moving 的 quaternion 重置为 0 (新动画从 angle=0 开始)
     if (this.activeSlices.size === 1) {
+      // 第一个 slice 激活:打开 moving 渲染、重置 quaternion
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
+      this.movingFrame.count = this.instanceToInitial.length;
+      this.movingSticker.count = this.stickerSlots.length;
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
@@ -257,6 +274,8 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.activeSlices.size === 0) {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
+      this.movingFrame.count = 0;
+      this.movingSticker.count = 0;
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
@@ -268,6 +287,8 @@ export default class InstancedRenderer extends THREE.Group {
   /** cube.reset() 后调:全部 cubelet 在初始位置,重建所有 static 矩阵。 */
   rebuildAll(): void {
     this.activeSlices.clear();
+    this.movingFrame.count = 0;
+    this.movingSticker.count = 0;
     this.tmpQuat.identity();
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
@@ -379,5 +400,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker.dispose();
     this.stickerMaterial.dispose();
     this.movingStickerMaterial.dispose();
+    if (this.coreMesh) {
+      this.coreMesh.geometry.dispose();
+    }
   }
 }
