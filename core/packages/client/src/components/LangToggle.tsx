@@ -35,7 +35,7 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
       title={isZh ? 'Switch to English' : '切换为中文'}
       aria-label={isZh ? 'Switch to English' : '切换为中文'}
     >
-      {isZh ? '中文' : 'English'}
+      {isZh ? '中文' : 'EN'}
     </button>
   );
 }

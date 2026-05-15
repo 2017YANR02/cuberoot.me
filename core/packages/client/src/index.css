@@ -193,6 +193,62 @@ html[data-theme=dark] {
   --input: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
+/* dark-locked 页(trainer / visualcube editor / wca-stats subpages / recon)
+   :root:has() 把 token 提到根,body bg 跟着翻,避免 max-width 切出来的两侧露 light 底。
+   battle 单独锁更黑的 AMOLED。
+   这些页不参与 ThemeToggle —— 永远 dark, 故意行为。 */
+html:has(.trainer-root),
+html:has(.vc-editor-page),
+html:has(.wca-stats-page),
+html:has(.wse-page),
+html:has(.wp-page),
+html:has(.records-page),
+html:has(.recon-page) {
+  color-scheme: dark;
+  --background: #1c1917;
+  --foreground: #f0ebe3;
+  --card: #232020;
+  --card-foreground: #f0ebe3;
+  --popover: #2a2520;
+  --popover-foreground: #f0ebe3;
+  --primary: #f0ebe3;
+  --primary-foreground: #181716;
+  --secondary: #2a2520;
+  --secondary-foreground: #f0ebe3;
+  --muted: #2a2520;
+  --muted-foreground: #9c8c7e;
+  --faint-foreground: #7A736A;
+  --accent: #d97757;
+  --accent-foreground: #181716;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
+  --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+html:has(.battle-container) {
+  color-scheme: dark;
+  --background: #000;
+  --foreground: #f0ebe3;
+  --card: #0a0a0a;
+  --card-foreground: #f0ebe3;
+  --popover: #0a0a0a;
+  --popover-foreground: #f0ebe3;
+  --primary: #f0ebe3;
+  --primary-foreground: #181716;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #f0ebe3;
+  --muted: #1a1a1a;
+  --muted-foreground: #9c8c7e;
+  --faint-foreground: #7A736A;
+  --accent: #d97757;
+  --accent-foreground: #181716;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
+  --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
 * {
   margin: 0;
   padding: 0;

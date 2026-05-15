@@ -13,6 +13,7 @@ import { historicalRanksRoutes } from './routes/historical_ranks.js';
 import { wcaStatsExtraRoutes } from './routes/wca_stats_extra.js';
 import { navSitesRoutes } from './routes/nav_sites.js';
 import { nemesizerRoutes } from './routes/nemesizer.js';
+import { cubingLiveRoutes } from './routes/cubing_live.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 
 const app = new Hono();
@@ -56,6 +57,7 @@ app.route('/v1', historicalRanksRoutes);
 app.route('/v1', wcaStatsExtraRoutes);
 app.route('/v1', navSitesRoutes);
 app.route('/v1', nemesizerRoutes);
+app.route('/v1', cubingLiveRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).

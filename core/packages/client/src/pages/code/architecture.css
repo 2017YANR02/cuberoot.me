@@ -1,16 +1,16 @@
 /* ─── /code/architecture ────────────────────────
- * 亮色技术文档风。跟 /code/language (暗色 monospace) 完全不同。
- * 米白底 + 衬线正文 + sans 标题 + mono 代码 + 手绘风 SVG。
+ * 技术文档风。中性色 alias 到 :root token,跟 ThemeToggle 翻 light/dark。
+ * 品牌深蓝 accent + hot/green/warn 信号色 page-scope 保留,dark 下提亮 accent。
  * ──────────────────────────────────────────────── */
 
 .arch-page {
-  --bg: #FBFAF5;
-  --bg-elev: #FFFFFF;
-  --bg-rule: #ECE8DD;
-  --ink: #1A1A1A;
-  --ink-dim: #4A4A4A;
-  --ink-mute: #8A857B;
-  --rule: #DDD7C9;
+  --bg: var(--background);
+  --bg-elev: var(--card);
+  --bg-rule: var(--muted);
+  --ink: var(--foreground);
+  --ink-dim: var(--muted-foreground);
+  --ink-mute: var(--faint-foreground);
+  --rule: var(--border-default);
   --accent: #1F3A6E;
   --hot: #D97757;
   --green: #4A7A4A;
@@ -28,6 +28,12 @@
   min-height: 100vh;
   padding: 56px 32px 80px;
 }
+
+/* dark 模式提亮品牌深蓝 — #1F3A6E 在 #1c1917 底上对比度太低 */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) .arch-page { --accent: #6B8FCE; }
+}
+html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
 
 .arch-page code {
   font-family: var(--mono);
@@ -236,7 +242,7 @@
   stroke-width: 2;
 }
 .d-box-user rect {
-  fill: #F6F1E7;
+  fill: color-mix(in srgb, var(--hot) 8%, var(--bg-elev));
   stroke: var(--hot);
   stroke-width: 1.5;
 }
@@ -247,9 +253,9 @@
   stroke: var(--rule);
   stroke-width: 1;
 }
-.d-inner-a { fill: #EEF3FA; stroke: #BDD0EA; }
-.d-inner-b { fill: #F4ECEA; stroke: #DDBCB1; }
-.d-inner-c { fill: #ECF1EC; stroke: #B5CAB5; }
+.d-inner-a { fill: color-mix(in srgb, var(--accent) 12%, var(--bg-elev)); stroke: color-mix(in srgb, var(--accent) 38%, var(--bg-elev)); }
+.d-inner-b { fill: color-mix(in srgb, var(--hot) 12%, var(--bg-elev));    stroke: color-mix(in srgb, var(--hot) 42%, var(--bg-elev)); }
+.d-inner-c { fill: color-mix(in srgb, var(--green) 12%, var(--bg-elev));  stroke: color-mix(in srgb, var(--green) 42%, var(--bg-elev)); }
 .d-inner-text {
   font-family: var(--sans);
   font-size: 13px;
@@ -270,7 +276,7 @@
 
 /* SVG 2: packages */
 .d-pkg rect { fill: var(--bg-elev); stroke: var(--rule); stroke-width: 1.5; }
-.d-pkg-shared rect { fill: #FAF5E6; stroke: #D9C57E; }
+.d-pkg-shared rect { fill: color-mix(in srgb, var(--warn) 12%, var(--bg-elev)); stroke: color-mix(in srgb, var(--warn) 50%, var(--bg-elev)); }
 .d-pkg-iso rect { stroke-dasharray: 5 3; }
 .d-edge line { stroke: var(--ink-mute); stroke-width: 1.3; }
 .d-edge polygon { fill: var(--ink-mute); }
@@ -297,7 +303,7 @@
 /* SVG 4: pipeline */
 .d-pl rect { fill: var(--bg-elev); stroke: var(--rule); stroke-width: 1.5; }
 .d-pl-ext rect { stroke-dasharray: 4 3; }
-.d-pl-core rect { fill: #FFF6E0; stroke: var(--hot); stroke-width: 2; }
+.d-pl-core rect { fill: color-mix(in srgb, var(--hot) 12%, var(--bg-elev)); stroke: var(--hot); stroke-width: 2; }
 .d-arrow-pipeline line { stroke: var(--ink-mute); stroke-width: 1.5; }
 .d-arrow-pipeline polygon { fill: var(--ink-mute); }
 
@@ -463,8 +469,8 @@
   line-height: 1.4;
   white-space: nowrap;
 }
-.arch-tag-own  { color: var(--green); border-color: rgba(74, 122, 74, .35); background: #ECF1EC; }
-.arch-tag-port { color: var(--hot);   border-color: rgba(217, 119, 87, .35); background: #FAEDE7; }
+.arch-tag-own  { color: var(--green); border-color: rgba(74, 122, 74, .35); background: color-mix(in srgb, var(--green) 12%, var(--bg-elev)); }
+.arch-tag-port { color: var(--hot);   border-color: rgba(217, 119, 87, .35); background: color-mix(in srgb, var(--hot) 12%, var(--bg-elev)); }
 .arch-tag-fork { color: var(--ink-mute); border-color: var(--rule); background: var(--bg-elev); }
 
 .arch-mods {
@@ -531,7 +537,7 @@
   overflow: hidden;
 }
 .arch-tbl thead {
-  background: #F4F0E5;
+  background: var(--bg-rule);
 }
 .arch-tbl th {
   text-align: left;
@@ -552,7 +558,7 @@
   line-height: 1.65;
 }
 .arch-tbl tbody tr:last-child td { border-bottom: 0; }
-.arch-tbl tbody tr:nth-child(odd) td { background: rgba(244, 240, 229, 0.3); }
+.arch-tbl tbody tr:nth-child(odd) td { background: color-mix(in srgb, var(--bg-rule) 30%, transparent); }
 .arch-tbl-topic {
   font-family: var(--mono);
   font-weight: 600;
@@ -744,17 +750,17 @@
   opacity: 1;
   filter: none;
   border-color: var(--accent);
-  background: linear-gradient(180deg, #EEF3FA 0%, #FFFFFF 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, var(--bg-elev)) 0%, var(--bg-elev) 100%);
   box-shadow: 0 2px 10px rgba(31, 58, 110, 0.10);
 }
 .tracer-stage.hit {
   border-color: var(--green);
-  background: linear-gradient(180deg, #ECF1EC 0%, #F6FAF6 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--green) 14%, var(--bg-elev)) 0%, var(--bg-elev) 100%);
   box-shadow: 0 2px 10px rgba(74, 122, 74, 0.14);
 }
 .tracer-stage.final:not(.hit) {
   border-color: var(--hot);
-  background: linear-gradient(180deg, #FAEDE7 0%, #FFF6F2 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hot) 14%, var(--bg-elev)) 0%, var(--bg-elev) 100%);
   box-shadow: 0 2px 10px rgba(217, 119, 87, 0.15);
 }
 .tracer-stage-num {
@@ -1166,7 +1172,7 @@
 }
 .arch-page .cal-grid .day-cell:nth-child(7n) { border-right: 0; }
 .arch-page .cal-grid .day-cell.out-of-month {
-  background: rgba(244, 240, 229, 0.18);
+  background: color-mix(in srgb, var(--bg-rule) 35%, transparent);
 }
 
 .cal-day {
@@ -1199,14 +1205,14 @@
   transition: background-color .12s, box-shadow .12s;
 }
 .arch-page .cal-grid .day-cell.cal-cell-has-entry:hover {
-  background: #F6F1E7;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev));
 }
 .arch-page .cal-grid .day-cell.cal-cell-has-entry:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 .arch-page .cal-grid .day-cell.cal-cell-expanded {
-  background: #F4ECEA;
+  background: color-mix(in srgb, var(--hot) 14%, var(--bg-elev));
   box-shadow: 0 0 0 2px var(--hot) inset;
   z-index: 2;
 }

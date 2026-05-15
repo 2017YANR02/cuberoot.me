@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { ShieldCheck } from 'lucide-react';
 import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import { EventIcon } from '../../components/EventIcon';
 import { eventDisplayName } from '../../utils/wca_events';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
@@ -28,17 +29,20 @@ export default function AlgIndexPage() {
       <div className="alg-index-header">
         <div className="alg-index-header-row">
           <h1 className="alg-index-title">{isZh ? '公式库' : 'Algorithm DB'}</h1>
-          {isAdmin && (
-            <button
-              type="button"
-              className="alg-admin-add-btn"
-              onClick={() => setValidationOpen(true)}
-              title={isZh ? '校验全库公式' : 'Validate all sets'}
-            >
-              <ShieldCheck size={14} /> {isZh ? '校验全库' : 'Validate all'}
-            </button>
-          )}
-          <LangToggle variant="inline" />
+          <div className="alg-index-header-actions">
+            {isAdmin && (
+              <button
+                type="button"
+                className="alg-admin-add-btn"
+                onClick={() => setValidationOpen(true)}
+                title={isZh ? '校验全库公式' : 'Validate all sets'}
+              >
+                <ShieldCheck size={14} /> {isZh ? '校验全库' : 'Validate all'}
+              </button>
+            )}
+            <ThemeToggle />
+            <LangToggle variant="inline" />
+          </div>
         </div>
         <p className="alg-index-subtitle">
           {(isZh ? '魔方公式速查 — ' : 'Cube algorithm reference — ') +
