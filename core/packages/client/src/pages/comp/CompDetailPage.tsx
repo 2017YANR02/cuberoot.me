@@ -62,6 +62,8 @@ interface EventMeta {
 interface LiveResult {
   i: number; c: number; n: number; e: string; r: string; f: string;
   b: number; a: number; v: number[]; sr: string; ar: string | number;
+  // wca_db 路径预先计算的历史 PR 标志(comp_date 之前累积 PB 比较 + 同比赛内按 round 顺序)
+  pS?: boolean; pA?: boolean;
 }
 
 interface MembersByFilter {
@@ -97,10 +99,17 @@ function regionToIso2(region: string): string {
 }
 
 /** 把 result 的 b/a 与 sr/ar(若实时已被 server 打标记) 拍平成 PR 标志结构。
- *  PR 判定: 比赛之前 WCA 的 PB(=刚 fetch 到的 PbByEvent[event].single/.average.best)。
- *  注: WCA 已收录该比赛的话,PB 会包含本比赛的成绩,此时只有“最好那把”相等 = PR;
+ *  优先级:
+ *    1. server 历史 PR(result.pS/pA) — wca_db 路径在响应时已按本比赛日期计算好,精确反映"当时"是否 PR.
+ *    2. 回退到 WCA REST 当前 PR 比较 — 用于 cubing / wca_live / wca 实时源,数据无历史时只能比当前 PR.
+ *       注意:对很老的比赛,选手当前 PR 远好于当年成绩,此路径会漏标 — 必须靠 wca_db 路径补.
+ *  注: WCA 已收录该比赛的话,PB 会包含本比赛的成绩,此时只有"最好那把"相等 = PR;
  *  比赛进行中的话,PB 不包含,首次 sub-PB 就算 PR。 */
 function classifyPr(result: LiveResult, pb: PbByEvent | null): { singlePr: boolean; averagePr: boolean } {
+  // server 已算好,直接用(undefined = wca_db 之外的源,继续走 WCA REST 回退)
+  if (result.pS !== undefined || result.pA !== undefined) {
+    return { singlePr: !!result.pS, averagePr: !!result.pA };
+  }
   if (!pb) return { singlePr: false, averagePr: false };
   const entry = pb[result.e];
   if (!entry) {

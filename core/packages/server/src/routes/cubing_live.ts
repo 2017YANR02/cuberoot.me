@@ -57,6 +57,10 @@ interface LiveResult {
   v: number[];      // attempts (centiseconds)
   sr: string;       // single record marker
   ar: string | number; // average record marker
+  // 历史 PR 标志(仅 wca_db 路径填充):该值在本比赛开始日之前是否为该选手该项目首次达成
+  // 同比赛内多轮按 round_type_id 顺序累积,后置轮也能识别 PR.
+  pS?: boolean;     // single is PR at this comp's date
+  pA?: boolean;     // average is PR at this comp's date
 }
 
 type SourceId = 'cubing' | 'wca' | 'wca_live' | 'wca_db';
@@ -481,6 +485,7 @@ interface WcaDbRow {
   person_name: string | null;
   country_iso2: string | null;
   comp_name: string | null;
+  comp_date: string;          // ISO yyyy-mm-dd — 本比赛 start_date (用于历史 PR 比较)
 }
 
 /** 返回 null 表示本地 dump 没有这场比赛 (有效信号,fall-through 给外部 probe);PG 报错才 throw. */
@@ -489,7 +494,7 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
   const rows = await query<WcaDbRow>(
     `SELECT
        rt.event_id, rt.round_type_id, rt.format_id, rt.is_avg, rt.value, rt.attempts, rt.record_tag,
-       rt.wca_id, rt.person_country_id,
+       rt.wca_id, rt.person_country_id, rt.comp_date,
        p.name AS person_name,
        c.iso2 AS country_iso2,
        comp.name AS comp_name
@@ -589,6 +594,58 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
   for (const lr of merged.values()) {
     const key = `${lr.e}:${lr.r}`;
     (resultsByRound[key] ||= []).push(lr);
+  }
+
+  // ── 历史 PR 检测 ─────────────────────────────────────────────────────
+  // 对该比赛每位选手每项目,查 wca_results_top 中 comp_date < 本比赛日期的累积最佳;
+  // 然后按 ROUND_ORDER 升序遍历本比赛各轮 (1 → 2 → 3 → f),用 running best 标 pS/pA.
+  // 同一比赛内后置轮(决赛)若打破前轮 + 历史最佳,也会被标 PR.
+  const compDate = rows[0].comp_date;
+  const wcaIdsInComp = [...numByWcaId.keys()];
+  const eventIdsInComp = [...eventMap.keys()];
+  if (compDate && wcaIdsInComp.length > 0 && eventIdsInComp.length > 0) {
+    const idQs = wcaIdsInComp.map(() => '?').join(',');
+    const evQs = eventIdsInComp.map(() => '?').join(',');
+    const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; best_val: number }>(
+      `SELECT wca_id, event_id, is_avg, MIN(value) AS best_val
+       FROM wca_results_top
+       WHERE wca_id IN (${idQs})
+         AND event_id IN (${evQs})
+         AND comp_date < ?
+       GROUP BY wca_id, event_id, is_avg`,
+      [...wcaIdsInComp, ...eventIdsInComp, compDate],
+    );
+    // wca_id|event_id|is_avg(0|1) → best
+    const priorBest = new Map<string, number>();
+    for (const pr of priorRows) {
+      priorBest.set(`${pr.wca_id}|${pr.event_id}|${pr.is_avg ? '1' : '0'}`, pr.best_val);
+    }
+    // 按 (wca_id, event_id) 分组本比赛 results,按 round 升序处理
+    const groups = new Map<string, LiveResult[]>();
+    for (const lr of merged.values()) {
+      const wcaIdForN = users[String(lr.n)]?.wcaid;
+      if (!wcaIdForN) continue;
+      const k = `${wcaIdForN}|${lr.e}`;
+      let arr = groups.get(k);
+      if (!arr) { arr = []; groups.set(k, arr); }
+      arr.push(lr);
+    }
+    for (const [k, arr] of groups) {
+      arr.sort((a, b) => (ROUND_ORDER[a.r] ?? 99) - (ROUND_ORDER[b.r] ?? 99));
+      const [wcaIdKey, eventIdKey] = k.split('|');
+      let runSingle = priorBest.get(`${wcaIdKey}|${eventIdKey}|0`) ?? Infinity;
+      let runAvg    = priorBest.get(`${wcaIdKey}|${eventIdKey}|1`) ?? Infinity;
+      for (const lr of arr) {
+        if (lr.b > 0 && lr.b <= runSingle) {
+          lr.pS = true;
+          runSingle = lr.b;
+        }
+        if (lr.a > 0 && lr.a <= runAvg) {
+          lr.pA = true;
+          runAvg = lr.a;
+        }
+      }
+    }
   }
   onProgress?.({ step: 'wca_db.transform', done: 1, total: 1 });
 

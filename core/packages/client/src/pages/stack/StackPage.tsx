@@ -163,13 +163,14 @@ export default function StackPage() {
 
     if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
       (window as unknown as { __stack__?: World }).__stack__ = world;
+      (window as unknown as { __renderer__?: THREE.WebGLRenderer }).__renderer__ = renderer;
       // 暴露 tweener 实例,避免 console import 拿到不同的 module instance
       import('./cuber/tweener').then((m) => {
         (window as unknown as { __tweener__?: unknown }).__tweener__ = m.default;
       });
 
-      // A/B bench:同 session 跑 with-inner vs no-inner,返回结构化 JSON。
-      // 用法: await window.__bench({ order: 250, runs: 3, durationMs: 5000 })
+      // A/B bench:同 session 跑 baseline (所有 perf flags off) vs optimized (默认开)。
+      // 返回结构化 JSON。用法: await window.__bench({ order: 250, runs: 3 })
       (window as unknown as { __bench?: unknown }).__bench = async (
         opts: { order: number; runs?: number; durationMs?: number; twists?: number } = { order: 250 },
       ) => {
@@ -180,15 +181,32 @@ export default function StackPage() {
           const s = [...arr].sort((a, b) => a - b);
           return +s[Math.floor(s.length / 2)].toFixed(2);
         };
-        const variants: Record<string, unknown> = {};
+        const defaults = { ...m.__PERF_FLAGS };
+        const variants: Record<string, { runs: { avgFps: number; minFps: number; frames: number }[]; median_avgFps: number; median_minFps: number; idle_tris: number; idle_draws: number }> = {};
 
-        for (const [name, thresh] of [['with_inner', N + 1], ['no_inner', 0]] as const) {
-          m.setSuperOrder(thresh);
-          // 清缓存逼 world.order setter 重建 Cube (Cube 构造里 read SUPER_ORDER)
+        const configs: { name: string; flags: Partial<typeof m.__PERF_FLAGS> }[] = [
+          { name: 'baseline', flags: { superOrderThreshold: N + 1, singleSliceQuaternion: false } },
+          { name: 'optimized', flags: defaults },
+        ];
+
+        const tweenerMod = await import('./cuber/tweener');
+        for (const cfg of configs) {
+          Object.assign(m.__PERF_FLAGS, cfg.flags);
+          // Flush pending tweens 释放对旧 cube/group 的引用;dispose + 清缓存 + 重建
+          tweenerMod.default.finish();
+          (world.cube as unknown as { dispose?: () => void }).dispose?.();
           (world as unknown as { cubes: (unknown | undefined)[] }).cubes[N] = undefined;
           world.order = N;
           await new Promise((r) => requestAnimationFrame(r));
           await new Promise((r) => setTimeout(r, 100));
+
+          // idle tris/draws: reset 完, no active slice, moving.count=0 → 单 cube 真实场景成本
+          world.cube.twister.twist(new TwistAction('#'), true, true);
+          await new Promise((res) => setTimeout(res, 200));
+          world.cube.dirty = true;
+          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+          const idle_tris = rendererRef.current?.info.render.triangles ?? 0;
+          const idle_draws = rendererRef.current?.info.render.calls ?? 0;
 
           const runsData: { avgFps: number; minFps: number; frames: number }[] = [];
           for (let r = 0; r < runs; r++) {
@@ -220,33 +238,37 @@ export default function StackPage() {
               frames,
             });
           }
-          const r = rendererRef.current;
-          variants[name] = {
+          variants[cfg.name] = {
             runs: runsData,
             median_avgFps: med(runsData.map((x) => x.avgFps)),
             median_minFps: med(runsData.map((x) => x.minFps)),
-            tris: r?.info.render.triangles ?? 0,
-            draws: r?.info.render.calls ?? 0,
+            idle_tris,
+            idle_draws,
           };
         }
-        m.setSuperOrder(50);
+        Object.assign(m.__PERF_FLAGS, defaults);
 
-        const wi = variants.with_inner as { median_avgFps: number; median_minFps: number; tris: number; draws: number };
-        const ni = variants.no_inner as { median_avgFps: number; median_minFps: number; tris: number; draws: number };
+        const b = variants.baseline;
+        const o = variants.optimized;
         return {
           order: N, runs, durationMs, twists,
+          flags_active: defaults,
           variants,
           summary: {
-            with_inner_fps: wi.median_avgFps,
-            no_inner_fps: ni.median_avgFps,
-            avg_fps_delta_pct: +(((ni.median_avgFps - wi.median_avgFps) / wi.median_avgFps) * 100).toFixed(1),
-            with_inner_min_fps: wi.median_minFps,
-            no_inner_min_fps: ni.median_minFps,
-            tris_saved: wi.tris - ni.tris,
-            draws_saved: wi.draws - ni.draws,
+            baseline_avg_fps: b.median_avgFps,
+            optimized_avg_fps: o.median_avgFps,
+            avg_fps_delta_pct: +(((o.median_avgFps - b.median_avgFps) / b.median_avgFps) * 100).toFixed(1),
+            baseline_min_fps: b.median_minFps,
+            optimized_min_fps: o.median_minFps,
+            min_fps_delta_pct: b.median_minFps > 0 ? +(((o.median_minFps - b.median_minFps) / b.median_minFps) * 100).toFixed(1) : null,
+            idle_tris_saved: b.idle_tris - o.idle_tris,
+            idle_draws_saved: b.idle_draws - o.idle_draws,
           },
         };
       };
+      import('./cuber/instanced').then((mod) => {
+        (window as unknown as { __PERF_FLAGS?: unknown }).__PERF_FLAGS = mod.__PERF_FLAGS;
+      });
     }
 
     const resize = () => {
