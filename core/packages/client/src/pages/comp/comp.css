@@ -854,12 +854,13 @@ td.is-pr {
 
 /* ─── /comp/sources 数据上游 section ────────────────────────────────── */
 .comp-flow-section-title {
-  margin: 40px 0 4px;
+  margin: 40px 0 16px;
   font-size: 1.1rem;
   font-weight: 600;
 }
+.comp-flow-section-title-first { margin-top: 24px; }
 .comp-flow-section-sub {
-  margin: 0 0 16px;
+  margin: -10px 0 16px;
   color: var(--muted-foreground);
   font-size: 0.88rem;
 }
@@ -929,13 +930,27 @@ td.is-pr {
   color: var(--muted-foreground);
   font-family: ui-monospace, monospace;
 }
-.comp-lineage-arrow-fan { padding-bottom: 2px; }
 .comp-lineage-arrow-small {
   color: var(--faint-foreground);
   font-size: 1rem;
   line-height: 1;
   padding: 4px 0;
 }
+
+/* 双分叉:↙ ↘ 各自对齐到下方两列分支,清晰表示"分叉给两个目标" */
+.comp-lineage-fan-arrows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px 0;
+  color: var(--muted-foreground);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.comp-lineage-fan-arrows > span {
+  text-align: center;
+}
+.comp-lineage-fan-arrows > span:first-child { justify-self: end; padding-right: 18%; }
+.comp-lineage-fan-arrows > span:last-child  { justify-self: start; padding-left: 18%; }
 
 .comp-lineage-fan {
   display: grid;
@@ -971,4 +986,17 @@ td.is-pr {
 
 @media (max-width: 640px) {
   .comp-lineage-fan { grid-template-columns: 1fr; }
+  .comp-lineage-fan-arrows { grid-template-columns: 1fr; }
+  .comp-lineage-fan-arrows > span:first-child,
+  .comp-lineage-fan-arrows > span:last-child {
+    justify-self: center;
+    padding: 0;
+  }
+  /* 窄屏只显示一个 ↓ 即可 */
+  .comp-lineage-fan-arrows > span:first-child { display: none; }
+  .comp-lineage-fan-arrows > span:last-child::after {
+    content: '↓';
+  }
+  .comp-lineage-fan-arrows > span:last-child { font-size: 0; }
+  .comp-lineage-fan-arrows > span:last-child::after { font-size: 1.2rem; }
 }
