@@ -128,6 +128,17 @@ export default class InstancedRenderer extends THREE.Group {
    * 共享一个 quaternion,免 N² 次 mat4 mul/帧。第 2 个 slice 进来前 bake 进
    * per-instance,然后 fallback 到多 slice 路径。 */
   private singleSliceGroup: CubeGroup | null = null;
+  /** Stage 2: Matrix4 freelist 池 — 替代 beginSlice 里 187k 次 .clone() 的 GC 风暴。
+   * 池 max size ≈ 一个面 slice 的 cubelet+sticker+hint 数 (~187k @ N=250 ≈ 12 MB),
+   * 不会无限涨;endSlice 全部 release 回池,下个 twist 复用。 */
+  private mat4Pool: THREE.Matrix4[] = [];
+  private acquireMat4(): THREE.Matrix4 {
+    return this.mat4Pool.pop() ?? new THREE.Matrix4();
+  }
+  private releaseMat4Array(arr: THREE.Matrix4[]): void {
+    for (let i = 0; i < arr.length; i++) this.mat4Pool.push(arr[i]);
+    arr.length = 0;
+  }
 
   // 临时
   private tmpMat = new THREE.Matrix4();
@@ -329,7 +340,9 @@ export default class InstancedRenderer extends THREE.Group {
       if (instIdx === undefined) continue;
       instances.push(instIdx);
       this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
-      origCubeletMats.push(this.tmpMat.clone());
+      const origCub = this.acquireMat4();
+      origCub.copy(this.tmpMat);
+      origCubeletMats.push(origCub);
       this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
       this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
       if (this.hasInner) {
@@ -343,13 +356,21 @@ export default class InstancedRenderer extends THREE.Group {
           if (!this.stickerSlots[slotIdx].visible) continue;
           slotsList.push(slotIdx);
           this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
-          origStickerMats.push(this.tmpMat.clone());
+          const origStk = this.acquireMat4();
+          origStk.copy(this.tmpMat);
+          origStickerMats.push(origStk);
           this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
           this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
-          this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
-          origHintMats.push(this.tmpMat.clone());
-          this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
-          this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
+          // Hint 在 visible=false 时也照写 4×62500 次 mat 操作 = beginSlice 的 30% 时间。
+          // 关时跳过,need 时 set hint 走 onHintEnabledMidSlice 重新 fill。
+          if (this._hint) {
+            this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
+            const origHnt = this.acquireMat4();
+            origHnt.copy(this.tmpMat);
+            origHintMats.push(origHnt);
+            this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
+            this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
+          }
         }
       }
     }
@@ -410,15 +431,19 @@ export default class InstancedRenderer extends THREE.Group {
     for (let i = 0; i < state.slots.length; i++) {
       this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
       this.movingSticker.setMatrixAt(state.slots[i], this.tmpMat);
-      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
-      this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
     }
     this.movingFrame.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
-    this.movingHint.instanceMatrix.needsUpdate = true;
     this.movingFrame.quaternion.identity();
     this.movingSticker.quaternion.identity();
-    this.movingHint.quaternion.identity();
+    if (this._hint && state.origHintMats.length > 0) {
+      for (let i = 0; i < state.slots.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
+        this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
+      }
+      this.movingHint.instanceMatrix.needsUpdate = true;
+      this.movingHint.quaternion.identity();
+    }
     this.singleSliceGroup = null;
   }
 
@@ -460,12 +485,16 @@ export default class InstancedRenderer extends THREE.Group {
     for (let i = 0; i < state.slots.length; i++) {
       this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
       this.movingSticker.setMatrixAt(state.slots[i], this.tmpMat);
-      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
-      this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
     }
     this.movingFrame.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
-    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this._hint && state.origHintMats.length > 0) {
+      for (let i = 0; i < state.slots.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
+        this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
+      }
+      this.movingHint.instanceMatrix.needsUpdate = true;
+    }
     this.cube.dirty = true;
   }
 
@@ -491,19 +520,28 @@ export default class InstancedRenderer extends THREE.Group {
           if (!slot.visible) {
             this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
             this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
-            this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
-            this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+            if (this._hint) {
+              this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
+              this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+            }
             continue;
           }
           this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
           this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
           this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
-          this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slotIdx]);
-          this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
-          this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+          // Hint matrix 是 endSlice 50% 时间。关时跳, 开时 set hint(true) 走全量 rebuild
+          if (this._hint) {
+            this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slotIdx]);
+            this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
+            this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+          }
         }
       }
     }
+    // Stage 2: 把 origMats 数组里的 Matrix4 全释放回池
+    this.releaseMat4Array(state.origCubeletMats);
+    this.releaseMat4Array(state.origStickerMats);
+    this.releaseMat4Array(state.origHintMats);
     this.activeSlices.delete(group);
     if (this.singleSliceGroup === group) {
       this.singleSliceGroup = null;
@@ -535,6 +573,12 @@ export default class InstancedRenderer extends THREE.Group {
 
   /** cube.reset() 后调:全部 cubelet 在初始位置,重建所有 static 矩阵。 */
   rebuildAll(): void {
+    // 池回收任何还活着的 slice 的 mat4
+    for (const state of this.activeSlices.values()) {
+      this.releaseMat4Array(state.origCubeletMats);
+      this.releaseMat4Array(state.origStickerMats);
+      this.releaseMat4Array(state.origHintMats);
+    }
     this.activeSlices.clear();
     this.singleSliceGroup = null;
     this.movingFrame.count = 0;
@@ -690,6 +734,21 @@ export default class InstancedRenderer extends THREE.Group {
     this._hint = value;
     this.staticHint.visible = value;
     this.movingHint.visible = value;
+    if (value) {
+      // 开 hint 时全量 rebuild staticHint — 关 hint 期间的 cube twist 不更新它,
+      // 此时位置可能 stale。全量重写一次保证视觉正确。
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const slot = this.stickerSlots[i];
+        const cubelet = this.cube.initials.get(slot.cubeletInitial);
+        if (!cubelet || !slot.visible) {
+          this.staticHint.setMatrixAt(i, HIDE_MAT);
+          continue;
+        }
+        this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+        this.staticHint.setMatrixAt(i, this.tmpMat);
+      }
+      this.staticHint.instanceMatrix.needsUpdate = true;
+    }
     this.cube.dirty = true;
   }
   get hint(): boolean { return this._hint; }
