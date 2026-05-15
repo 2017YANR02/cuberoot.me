@@ -10,7 +10,7 @@ DIR="$1"
 [ -d "$DIR" ] || { echo "$DIR not a dir" >&2; exit 1; }
 
 export PGPASSWORD=314159
-PG=( psql -U recon_user -h 127.0.0.1 -d recon_db -v ON_ERROR_STOP=1 )
+PG=( psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 )
 
 "${PG[@]}" -c "CREATE TABLE IF NOT EXISTS _schema_migrations (filename TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT now());" >/dev/null
 

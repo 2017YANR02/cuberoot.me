@@ -1,5 +1,5 @@
 -- Historical Ranks 相关表(2026-05 新增)
--- 加进现有 recon_db,与 recon/alg 表共存。
+-- 加进现有 cuberoot_db,与 recon/alg 表共存。
 -- 设计意图见 D:/cube/cubing-pro/src/wca/sync_static_to_db.go(参考实现,Go版,我们简化为按年快照)。
 --
 -- 数据流:GitHub Actions runner 上跑 historical_ranks_build.ts 输出 PG SQL,

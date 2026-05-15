@@ -4,9 +4,9 @@
 
 ```
 Hono API 后端（api.cuberoot.me/v1/recon/）
-    │  PostgreSQL 13 recon_db.recons（全量数据，SERIAL ID）
-    │  PostgreSQL 13 recon_db.edits（编辑覆盖层，JSONB 字段）
-    │  PostgreSQL 13 recon_db.edit_history（编辑历史记录）
+    │  PostgreSQL 13 cuberoot_db.recons（全量数据，SERIAL ID）
+    │  PostgreSQL 13 cuberoot_db.edits（编辑覆盖层，JSONB 字段）
+    │  PostgreSQL 13 cuberoot_db.edit_history（编辑历史记录）
     ↓
 React SPA（/recon 路由，Zustand 状态管理）
     ↓ 中文模式时
