@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid } from 'lucide-react';
 import { getLangQuery } from '../i18n';
+import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
   fetchAllPastCompsJson,
@@ -98,8 +99,7 @@ const WCA_EVENT_ID_TO_SHORT: Record<string, string> = Object.fromEntries(
   Object.entries(SHORT_TO_EVENT_ID).map(([s, w]) => [w, s])
 );
 
-// 列表视图与 chip 过滤共用的项目顺序（WCA 标准 17 项 + 4 个已停办老项目：333ft 用脚拧、333mbo 旧多盲、magic、mmagic）
-const EVENT_ORDER = ['333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh', 'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf', '333ft', '333mbo', 'magic', 'mmagic'] as const;
+const EVENT_ORDER = WCA_EVENT_ORDER;
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
