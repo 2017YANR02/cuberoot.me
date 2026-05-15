@@ -71,6 +71,15 @@ grep -n "ssh.*hr_id" .github/workflows/stats.yml
 ```
 所有匹配行都得有 `ServerAliveInterval=30`。
 
+## 本地 dry-run
+
+docker `pg13`(5433 pwd `dev` db `recon_db`)。改列宽 / 类型先本地 `\copy` 边界 fixture。
+
+```bash
+export MSYS_NO_PATHCONV=1
+docker cp x.sql pg13:/x.sql && docker exec -e PGPASSWORD=dev pg13 psql -U postgres -d recon_db -f /x.sql
+```
+
 ## 验证服务器是否灌进去了
 
 ```bash
