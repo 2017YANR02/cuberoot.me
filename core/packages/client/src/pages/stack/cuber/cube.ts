@@ -1,4 +1,6 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/cube.ts
+// 高阶优化:cubelets/initials 改 Map<positionIdx, Cubelet>(原 sparse Array 在 N>~100 时浪费),
+// 构造从 O(N³) 全量循环改为 O(N²) 表面枚举。
 import { GroupTable } from "./group";
 import Cubelet from "./cubelet";
 import { FACE } from "./define";
@@ -8,11 +10,40 @@ import History from "./history";
 import tweener from "./tweener";
 import InstancedRenderer from "./instanced";
 
+/** 枚举 N 阶魔方所有"表面" cubelet 的 positionIdx (= z*N²+y*N+x)。
+ * 6 面 + 边交集去重,总数 = 6N²-12N+8。N=2000 ≈ 24M。 */
+function* surfacePositions(N: number): Generator<number> {
+  const N2 = N * N;
+  // U/D faces: y=0, y=N-1 (full slabs)
+  for (let z = 0; z < N; z++) {
+    for (let x = 0; x < N; x++) {
+      yield x + 0 * N + z * N2;
+      yield x + (N - 1) * N + z * N2;
+    }
+  }
+  // L/R faces: x=0, x=N-1 (skip top/bottom rows already enumerated above)
+  for (let z = 0; z < N; z++) {
+    for (let y = 1; y < N - 1; y++) {
+      yield 0 + y * N + z * N2;
+      yield (N - 1) + y * N + z * N2;
+    }
+  }
+  // F/B faces: z=0, z=N-1 (skip all 4 edge bands already enumerated)
+  for (let y = 1; y < N - 1; y++) {
+    for (let x = 1; x < N - 1; x++) {
+      yield x + y * N + 0 * N2;
+      yield x + y * N + (N - 1) * N2;
+    }
+  }
+}
+
 export default class Cube extends THREE.Group {
   public dirty = true;
   public locks: Map<string, Set<number>>;
-  public cubelets: Cubelet[] = [];
-  public initials: Cubelet[] = [];
+  /** 当前位置 → cubelet at that position(随旋转更新) */
+  public cubelets: Map<number, Cubelet> = new Map();
+  /** 原始位置 → cubelet originally created there(永不变,用于 stick 寻址 + 渲染身份) */
+  public initials: Map<number, Cubelet> = new Map();
   public table: GroupTable;
   public order: number;
   public callbacks: (() => void)[] = [];
@@ -24,14 +55,11 @@ export default class Cube extends THREE.Group {
     super();
     this.order = order;
     this.scale.set(3 / order, 3 / order, 3 / order);
-    for (let i = 0; i < order * order * order; i++) {
-      const cubelet = new Cubelet(order, i);
-      this.cubelets.push(cubelet);
-      this.initials.push(cubelet);
-      if (cubelet.exist) {
-        // cubelet 不再有 Mesh 子物;仍 add 进 cube 让 matrixWorld 正确传播
-        this.add(cubelet);
-      }
+    for (const positionIdx of surfacePositions(order)) {
+      const cubelet = new Cubelet(order, positionIdx);
+      // 表面位置的 cubelet 一定 exist=true (Cubelet 构造里的 d>=0 条件对所有表面格成立)
+      this.cubelets.set(positionIdx, cubelet);
+      this.initials.set(positionIdx, cubelet);
     }
     this.locks = new Map();
     this.locks.set("x", new Set());
@@ -89,29 +117,30 @@ export default class Cube extends THREE.Group {
       if (!group) {
         throw Error();
       }
-      let cubelet = this.cubelets[group.indices[0]];
-      const color = cubelet.getFace(face as FACE);
+      const first = this.cubelets.get(group.indices[0]);
+      if (!first) return true;  // shouldn't happen for face groups
+      const color = first.getFace(face as FACE);
       if (this.arrow) {
-        const q1 = this.cubelets[group.indices[0]].rotation;
-        const same = group.indices.every((idx) => {
-          cubelet = this.cubelets[idx];
-          const q2 = cubelet.rotation;
-          return color == cubelet.getFace(face as FACE) && (q1.x - q2.x) ** 2 + (q1.y - q2.y) ** 2 + (q1.z - q2.z) ** 2 < 0.1;
+        const q1 = first.rotation;
+        return group.indices.every((idx) => {
+          const c = this.cubelets.get(idx);
+          if (!c) return true;
+          const q2 = c.rotation;
+          return color == c.getFace(face as FACE) && (q1.x - q2.x) ** 2 + (q1.y - q2.y) ** 2 + (q1.z - q2.z) ** 2 < 0.1;
         });
-        return same;
       } else {
-        const same = group.indices.every((idx) => {
-          cubelet = this.cubelets[idx];
-          return color == cubelet.getFace(face as FACE);
+        return group.indices.every((idx) => {
+          const c = this.cubelets.get(idx);
+          if (!c) return true;
+          return color == c.getFace(face as FACE);
         });
-        return same;
       }
     });
     return complete;
   }
 
   index(value: number): number {
-    return this.initials[value].index;
+    return this.initials.get(value)?.index ?? value;
   }
 
   public _arrow = false;
@@ -126,18 +155,20 @@ export default class Cube extends THREE.Group {
 
   reset(): void {
     tweener.finish();
-    for (const cubelet of this.cubelets) {
+    // 每个 cubelet 复位:旋转归零、index 设回 initial、矩阵刷新。
+    // 然后重建 cubelets map(key 应为 cubelet.index, 复位后等于 initial)。
+    this.cubelets.clear();
+    for (const cubelet of this.initials.values()) {
       cubelet.setRotationFromEuler(new THREE.Euler(0, 0, 0));
       cubelet.index = cubelet.initial;
       cubelet.updateMatrix();
+      this.cubelets.set(cubelet.index, cubelet);
     }
-    this.cubelets.sort((left, right) => {
-      return left.index - right.index;
-    });
+    this.instancedRenderer.rebuildAll();
   }
 
   stick(index: number, face: number, value: string): void {
-    const cubelet = this.initials[index];
+    const cubelet = this.initials.get(index);
     if (!cubelet) {
       throw Error("invalid cubelet index: " + index);
     }
@@ -154,14 +185,14 @@ export default class Cube extends THREE.Group {
         throw Error();
       }
       for (const idx of group.indices) {
-        this.initials[idx].stick(face as FACE, "");
+        this.initials.get(idx)?.stick(face as FACE, "");
       }
       const indexes = strip[key];
       if (indexes == undefined) {
         continue;
       }
       for (const idx of indexes) {
-        const cubelet = this.initials[idx];
+        const cubelet = this.initials.get(idx);
         if (!cubelet) {
           throw Error("invalid cubelet index: " + idx);
         }
@@ -179,8 +210,7 @@ export default class Cube extends THREE.Group {
     for (z = 0; z < this.order; z++) {
       for (x = 0; x < this.order; x++) {
         const idx = z * this.order * this.order + y * this.order + x;
-        const color = this.cubelets[idx].getColor(FACE.U);
-        result.push(color);
+        result.push(this.cubelets.get(idx)?.getColor(FACE.U) ?? "?");
       }
     }
 
@@ -188,8 +218,7 @@ export default class Cube extends THREE.Group {
     for (y = this.order - 1; y >= 0; y--) {
       for (z = this.order - 1; z >= 0; z--) {
         const idx = z * this.order * this.order + y * this.order + x;
-        const color = this.cubelets[idx].getColor(FACE.R);
-        result.push(color);
+        result.push(this.cubelets.get(idx)?.getColor(FACE.R) ?? "?");
       }
     }
 
@@ -197,8 +226,7 @@ export default class Cube extends THREE.Group {
     for (y = this.order - 1; y >= 0; y--) {
       for (x = 0; x < this.order; x++) {
         const idx = z * this.order * this.order + y * this.order + x;
-        const color = this.cubelets[idx].getColor(FACE.F);
-        result.push(color);
+        result.push(this.cubelets.get(idx)?.getColor(FACE.F) ?? "?");
       }
     }
 
@@ -206,8 +234,7 @@ export default class Cube extends THREE.Group {
     for (z = this.order - 1; z >= 0; z--) {
       for (x = 0; x < this.order; x++) {
         const idx = z * this.order * this.order + y * this.order + x;
-        const color = this.cubelets[idx].getColor(FACE.D);
-        result.push(color);
+        result.push(this.cubelets.get(idx)?.getColor(FACE.D) ?? "?");
       }
     }
 
@@ -215,8 +242,7 @@ export default class Cube extends THREE.Group {
     for (y = this.order - 1; y >= 0; y--) {
       for (z = 0; z < this.order; z++) {
         const idx = z * this.order * this.order + y * this.order + x;
-        const color = this.cubelets[idx].getColor(FACE.L);
-        result.push(color);
+        result.push(this.cubelets.get(idx)?.getColor(FACE.L) ?? "?");
       }
     }
 
@@ -224,8 +250,7 @@ export default class Cube extends THREE.Group {
     for (y = this.order - 1; y >= 0; y--) {
       for (x = this.order - 1; x >= 0; x--) {
         const idx = z * this.order * this.order + y * this.order + x;
-        const color = this.cubelets[idx].getColor(FACE.B);
-        result.push(color);
+        result.push(this.cubelets.get(idx)?.getColor(FACE.B) ?? "?");
       }
     }
     return result.join("");

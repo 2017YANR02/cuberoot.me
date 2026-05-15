@@ -251,7 +251,6 @@ export default function StackPage() {
       const t0 = performance.now();
       let didRender = false;
       if (world.dirty || world.cube.dirty) {
-        world.cube.instancedRenderer.update();
         renderer.clear();
         renderer.render(world.scene, world.camera);
         world.dirty = false;
@@ -272,7 +271,7 @@ export default function StackPage() {
         s.programs = renderer.info.programs?.length ?? 0;
         const avgDt = fpsBuf.reduce((a, b) => a + b, 0) / fpsBuf.length;
         s.fps = avgDt > 0 ? 1000 / avgDt : 0;
-        s.cubeletCount = world.cube.cubelets.length;
+        s.cubeletCount = world.cube.cubelets.size;
         s.order = world.cube.order;
         if (now - meshSampleAt > 1000) {
           meshSampleAt = now;
