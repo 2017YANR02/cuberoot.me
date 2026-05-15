@@ -88,6 +88,35 @@
   border-color: var(--accent);
 }
 
+.stack-modes {
+  display: inline-flex;
+  gap: 2px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border-radius: 6px;
+  padding: 2px;
+}
+.stack-modes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  cursor: pointer;
+}
+.stack-modes button.active {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.stack-modes button:hover:not(.active) {
+  color: var(--foreground);
+}
+
 .stack-canvas-wrap {
   flex: 1;
   position: relative;
@@ -95,10 +124,64 @@
   min-height: 0;
 }
 
+.stack-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  z-index: 2;
+}
+.stack-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: stack-spin 0.7s linear infinite;
+}
+@keyframes stack-spin {
+  to { transform: rotate(360deg); }
+}
+
+.stack-toast {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 14%, transparent);
+  z-index: 3;
+  animation: stack-toast-in 0.25s ease-out;
+}
+@keyframes stack-toast-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .stack-canvas-wrap canvas {
   width: 100% !important;
   height: 100% !important;
   display: block;
+}
+
+@media (max-width: 640px) {
+  .stack-modes button span {
+    display: none;
+  }
+  .stack-modes button {
+    padding: 0 8px;
+  }
 }
 
 @media (max-width: 480px) {
