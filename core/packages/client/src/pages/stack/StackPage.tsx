@@ -45,6 +45,13 @@ export default function StackPage() {
   const mode = (searchParams.get('mode') as Mode) || 'player';
   const algParam = searchParams.get('alg') || '';
   const setupParam = searchParams.get('setup') || '';
+  const puzzleParam = (() => {
+    const raw = searchParams.get('puzzle');
+    if (!raw) return 3;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 2 || n > 500) return 3;
+    return n;
+  })();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -59,7 +66,7 @@ export default function StackPage() {
   const [order, setOrder] = useState<number>(3);
   const [solvedToast, setSolvedToast] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [, setWorldTick] = useState(0);
+  const [worldTick, setWorldTick] = useState(0);
   const [settings, setSettings] = useState<StackSettings>(() => loadSettings());
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
   const keymapRef = useRef(keymap);
@@ -160,6 +167,86 @@ export default function StackPage() {
       import('./cuber/tweener').then((m) => {
         (window as unknown as { __tweener__?: unknown }).__tweener__ = m.default;
       });
+
+      // A/B bench:同 session 跑 with-inner vs no-inner,返回结构化 JSON。
+      // 用法: await window.__bench({ order: 250, runs: 3, durationMs: 5000 })
+      (window as unknown as { __bench?: unknown }).__bench = async (
+        opts: { order: number; runs?: number; durationMs?: number; twists?: number } = { order: 250 },
+      ) => {
+        const { order: N, runs = 3, durationMs = 5000, twists = 30 } = opts;
+        const m = await import('./cuber/instanced');
+        const SIGNS = ['R', 'U', 'F', 'L', 'D', 'B'];
+        const med = (arr: number[]): number => {
+          const s = [...arr].sort((a, b) => a - b);
+          return +s[Math.floor(s.length / 2)].toFixed(2);
+        };
+        const variants: Record<string, unknown> = {};
+
+        for (const [name, thresh] of [['with_inner', N + 1], ['no_inner', 0]] as const) {
+          m.setSuperOrder(thresh);
+          // 清缓存逼 world.order setter 重建 Cube (Cube 构造里 read SUPER_ORDER)
+          (world as unknown as { cubes: (unknown | undefined)[] }).cubes[N] = undefined;
+          world.order = N;
+          await new Promise((r) => requestAnimationFrame(r));
+          await new Promise((r) => setTimeout(r, 100));
+
+          const runsData: { avgFps: number; minFps: number; frames: number }[] = [];
+          for (let r = 0; r < runs; r++) {
+            world.cube.twister.twist(new TwistAction('#'), true, true);
+            await new Promise((res) => setTimeout(res, 200));
+            for (let i = 0; i < twists; i++) {
+              world.cube.twister.twist(new TwistAction(SIGNS[i % SIGNS.length], i % 2 === 0, 1), false, false);
+            }
+            const t0 = performance.now();
+            let frames = 0;
+            let maxDt = 0;
+            let lastT = t0;
+            await new Promise<void>((resolve) => {
+              const tick = () => {
+                const now = performance.now();
+                const dt = now - lastT;
+                lastT = now;
+                frames++;
+                if (dt > maxDt && dt < 500) maxDt = dt;
+                if (now - t0 < durationMs) requestAnimationFrame(tick);
+                else resolve();
+              };
+              requestAnimationFrame(tick);
+            });
+            const elapsed = performance.now() - t0;
+            runsData.push({
+              avgFps: +((frames * 1000) / elapsed).toFixed(2),
+              minFps: +(maxDt > 0 ? 1000 / maxDt : 0).toFixed(2),
+              frames,
+            });
+          }
+          const r = rendererRef.current;
+          variants[name] = {
+            runs: runsData,
+            median_avgFps: med(runsData.map((x) => x.avgFps)),
+            median_minFps: med(runsData.map((x) => x.minFps)),
+            tris: r?.info.render.triangles ?? 0,
+            draws: r?.info.render.calls ?? 0,
+          };
+        }
+        m.setSuperOrder(50);
+
+        const wi = variants.with_inner as { median_avgFps: number; median_minFps: number; tris: number; draws: number };
+        const ni = variants.no_inner as { median_avgFps: number; median_minFps: number; tris: number; draws: number };
+        return {
+          order: N, runs, durationMs, twists,
+          variants,
+          summary: {
+            with_inner_fps: wi.median_avgFps,
+            no_inner_fps: ni.median_avgFps,
+            avg_fps_delta_pct: +(((ni.median_avgFps - wi.median_avgFps) / wi.median_avgFps) * 100).toFixed(1),
+            with_inner_min_fps: wi.median_minFps,
+            no_inner_min_fps: ni.median_minFps,
+            tris_saved: wi.tris - ni.tris,
+            draws_saved: wi.draws - ni.draws,
+          },
+        };
+      };
     }
 
     const resize = () => {
@@ -317,6 +404,13 @@ export default function StackPage() {
   const handleOrder = useCallback((n: number) => {
     const world = worldRef.current;
     if (!world || world.order === n) return;
+    const writeUrl = () => {
+      setSearchParams((prev) => {
+        const np = new URLSearchParams(prev);
+        if (n === 3) np.delete('puzzle'); else np.set('puzzle', String(n));
+        return np;
+      }, { replace: true });
+    };
     if (n >= 5) {
       setOrderLoading(true);
       window.setTimeout(() => {
@@ -327,6 +421,7 @@ export default function StackPage() {
         ensureCubeCallback();
         applySettings(worldRef.current, settings);
         setOrderLoading(false);
+        writeUrl();
       }, 16);
     } else {
       world.order = n;
@@ -334,8 +429,16 @@ export default function StackPage() {
       wasCompleteRef.current = true;
       ensureCubeCallback();
       applySettings(world, settings);
+      writeUrl();
     }
-  }, [ensureCubeCallback, settings]);
+  }, [ensureCubeCallback, settings, setSearchParams]);
+
+  // URL puzzle=N 同步到 cube。worldTick 保证 mount 完后 effect 重跑一次
+  useEffect(() => {
+    if (!worldRef.current) return;
+    if (worldRef.current.order === puzzleParam) return;
+    handleOrder(puzzleParam);
+  }, [puzzleParam, handleOrder, worldTick]);
 
   // settings 变化时即时 apply
   useEffect(() => {
