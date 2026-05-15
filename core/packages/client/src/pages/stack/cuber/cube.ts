@@ -173,13 +173,12 @@ export default class Cube extends THREE.Group {
     // 每个 cubelet 复位:旋转归零、index 设回 initial、矩阵刷新。
     // 然后重建 cubelets map(key 应为 cubelet.index, 复位后等于 initial)。
     // 直接 set quaternion 单位元而不 new Euler per cubelet (N=250 = 372k 次 Euler
-    // 分配 → 主 GC pause 拖 min fps)。Shader 模式 cubelet.matrix 无人读, 跳 updateMatrix。
+    // 分配 → 主 GC pause 拖 min fps)。
     this.cubelets.clear();
-    const skipMatrix = (this.instancedRenderer as unknown as { useShaderSlice?: boolean }).useShaderSlice;
     for (const cubelet of this.initials.values()) {
       cubelet.quaternion.set(0, 0, 0, 1);
       cubelet.index = cubelet.initial;
-      if (!skipMatrix) cubelet.updateMatrix();
+      cubelet.updateMatrix();
       this.cubelets.set(cubelet.index, cubelet);
     }
     this.instancedRenderer.rebuildAll();
