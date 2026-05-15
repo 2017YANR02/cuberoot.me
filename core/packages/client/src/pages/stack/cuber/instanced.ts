@@ -93,11 +93,22 @@ export default class InstancedRenderer extends THREE.Group {
   private _arrow = false;
   private _hint = false;
 
-  // active slices (支持并发,例如 x/y/z 整 cube 旋转 = N 个 group 同时跑)
-  private activeSlices: Map<CubeGroup, { instances: number[]; slots: number[] }> = new Map();
+  // active slices (支持并发,例如 x/y/z 整 cube 旋转 = N 个 group 同时跑)。
+  // 同轴异步并发 (user 拖了 A 还在 tween,又 drag 平行 B) 也要正确 — 每个 slice
+  // 独立 angle,所以存它进 moving 之前的 instance matrix (origCubeletMat / origStickerMat /
+  // origHintMat),setSliceAngle 时 per-instance 算 `rot(slice.axis, slice.angle) × origMat`。
+  // movingMesh.quaternion 永远 identity,不再 share。
+  private activeSlices: Map<CubeGroup, {
+    instances: number[];
+    slots: number[];
+    origCubeletMats: THREE.Matrix4[];
+    origStickerMats: THREE.Matrix4[];
+    origHintMats: THREE.Matrix4[];
+  }> = new Map();
 
   // 临时
   private tmpMat = new THREE.Matrix4();
+  private tmpRotMat = new THREE.Matrix4();
   private tmpColor = new THREE.Color();
   private tmpQuat = new THREE.Quaternion();
 
@@ -254,7 +265,8 @@ export default class InstancedRenderer extends THREE.Group {
     return m;
   }
 
-  /** group.hold 时调。把 slice 内 cubelet 切换到 moving,static slot 隐藏。 */
+  /** group.hold 时调。把 slice 内 cubelet 切换到 moving,static slot 隐藏。
+   * 同时存原始 instance matrix,setSliceAngle 用它 per-instance 旋转。 */
   beginSlice(group: CubeGroup): void {
     if (this.activeSlices.has(group)) {
       // re-entrant — clean up first
@@ -262,6 +274,9 @@ export default class InstancedRenderer extends THREE.Group {
     }
     const instances: number[] = [];
     const slotsList: number[] = [];
+    const origCubeletMats: THREE.Matrix4[] = [];
+    const origStickerMats: THREE.Matrix4[] = [];
+    const origHintMats: THREE.Matrix4[] = [];
 
     for (const positionIdx of group.indices) {
       const cubelet = this.cube.cubelets.get(positionIdx);
@@ -270,6 +285,7 @@ export default class InstancedRenderer extends THREE.Group {
       if (instIdx === undefined) continue;
       instances.push(instIdx);
       this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
+      origCubeletMats.push(this.tmpMat.clone());
       this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
       this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
       this.movingInner.setMatrixAt(instIdx, this.tmpMat);
@@ -281,15 +297,17 @@ export default class InstancedRenderer extends THREE.Group {
           if (!this.stickerSlots[slotIdx].visible) continue;
           slotsList.push(slotIdx);
           this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
+          origStickerMats.push(this.tmpMat.clone());
           this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
           this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
           this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
+          origHintMats.push(this.tmpMat.clone());
           this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
           this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
         }
       }
     }
-    this.activeSlices.set(group, { instances, slots: slotsList });
+    this.activeSlices.set(group, { instances, slots: slotsList, origCubeletMats, origStickerMats, origHintMats });
     if (this.activeSlices.size === 1) {
       // 第一个 slice 激活:打开 moving 渲染、重置 quaternion
       this.movingFrame.quaternion.identity();
@@ -312,16 +330,31 @@ export default class InstancedRenderer extends THREE.Group {
     this.cube.dirty = true;
   }
 
-  /** group.angle setter 调。仅旋转 moving meshes,不动 instance 矩阵。
-   * 多个并发 slice (整 cube 旋转) 会重复设同一 quaternion,无害。 */
-  setSliceAngle(angle: number, axis: string): void {
-    const axisVec = CubeGroup.AXIS_VECTOR[axis];
+  /** group.angle setter 调。per-instance 写每个 cubelet/sticker 的新 matrix。
+   * 多个并发 slice (同轴异步 / 整 cube 旋转) 各自独立 angle,互不影响。
+   * movingMesh.quaternion 永远 identity (在 beginSlice 已设)。 */
+  setSliceAngle(group: CubeGroup, angle: number): void {
+    const state = this.activeSlices.get(group);
+    if (!state) return;
+    const axisVec = CubeGroup.AXIS_VECTOR[group.axis];
     if (!axisVec) return;
     this.tmpQuat.setFromAxisAngle(axisVec, angle);
-    this.movingFrame.quaternion.copy(this.tmpQuat);
-    this.movingSticker.quaternion.copy(this.tmpQuat);
-    this.movingInner.quaternion.copy(this.tmpQuat);
-    this.movingHint.quaternion.copy(this.tmpQuat);
+    this.tmpRotMat.makeRotationFromQuaternion(this.tmpQuat);
+    for (let i = 0; i < state.instances.length; i++) {
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+      this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+      this.movingInner.setMatrixAt(state.instances[i], this.tmpMat);
+    }
+    for (let i = 0; i < state.slots.length; i++) {
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
+      this.movingSticker.setMatrixAt(state.slots[i], this.tmpMat);
+      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origHintMats[i]);
+      this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
+    }
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.movingInner.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
   }
 
