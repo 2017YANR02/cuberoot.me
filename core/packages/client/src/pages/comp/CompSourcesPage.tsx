@@ -174,6 +174,65 @@ export default function CompSourcesPage() {
             <span>{isZh ? '渲染比赛页面' : 'Render comp page'}</span>
           </div>
         </div>
+
+        <h2 className="comp-flow-section-title">{isZh ? '数据上游' : 'Data Lineage'}</h2>
+        <p className="comp-flow-section-sub">
+          {isZh ? '同一份成绩,经不同时序与渠道呈现给上面 4 个源。' : 'The same result data surfaces through these 4 sources in different stages and channels.'}
+        </p>
+
+        <div className="comp-lineage">
+          <div className="comp-lineage-stage">
+            <div className="comp-lineage-when">{isZh ? '比赛进行中' : 'During comp'}</div>
+            <div className="comp-lineage-box">
+              <Radio size={14} />
+              <span>WCA Live</span>
+              <span className="comp-lineage-note">{isZh ? '裁判 / 计分员实时录入' : 'live entry by judges'}</span>
+            </div>
+          </div>
+
+          <div className="comp-lineage-arrow">
+            <span>↓</span>
+            <span className="comp-lineage-arrow-label">{isZh ? 'delegate 审核 + 锁定 (几小时~几天)' : 'delegate reviews + submits (hours~days)'}</span>
+          </div>
+
+          <div className="comp-lineage-stage">
+            <div className="comp-lineage-when">{isZh ? '赛后锁定' : 'After lock'}</div>
+            <div className="comp-lineage-box comp-lineage-box-canonical">
+              <Database size={14} />
+              <span>{isZh ? 'WCA 中心 DB' : 'WCA central DB'}</span>
+              <span className="comp-lineage-note">{isZh ? '唯一权威源' : 'canonical source'}</span>
+            </div>
+          </div>
+
+          <div className="comp-lineage-arrow comp-lineage-arrow-fan">↓</div>
+
+          <div className="comp-lineage-fan">
+            <div className="comp-lineage-branch">
+              <div className="comp-lineage-box">
+                <FileText size={14} />
+                <span>WCA REST API</span>
+              </div>
+              <div className="comp-lineage-branch-note">{isZh ? '读接口,一次性快照' : 'read endpoint, snapshot'}</div>
+            </div>
+            <div className="comp-lineage-branch">
+              <div className="comp-lineage-branch-step">{isZh ? '周更 .sql dump' : 'weekly .sql dump'}</div>
+              <div className="comp-lineage-arrow-small">↓</div>
+              <div className="comp-lineage-box comp-lineage-box-fast">
+                <Database size={14} />
+                <span>wca_db</span>
+                <span className="comp-lineage-note">{isZh ? '本地 PG 镜像' : 'local PG mirror'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="comp-lineage-sidebar">
+            <div className="comp-lineage-box comp-lineage-box-side">
+              <Globe size={14} />
+              <span>cubing.com</span>
+              <span className="comp-lineage-note">{isZh ? '独立运营,中国赛事主要计分系统' : 'independent; main scorekeeping for CN comps'}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
