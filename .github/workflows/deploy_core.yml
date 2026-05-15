@@ -48,6 +48,12 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/visualcube build
 
+      # 同理:sr-puzzlegen 的 dist 是无扩展名 ESM,Node 严格模式跑不动 → 走 vendor 包
+      # bundle 成单文件。漏建会让 /v1/visualcube.svg 非 cube 项目 crash 重启循环。
+      - name: Build vendor-sr-puzzlegen
+        working-directory: core
+        run: pnpm --filter @cuberoot/vendor-sr-puzzlegen build
+
       # 构建后端 + 打 self-contained deploy bundle (含 prod node_modules,workspace 内联)
       - name: Build server
         working-directory: core
