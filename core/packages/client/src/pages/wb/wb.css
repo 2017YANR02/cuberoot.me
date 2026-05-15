@@ -37,7 +37,7 @@
     top: 0;
     z-index: 10;
     backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.85);
+    background: color-mix(in srgb, var(--card) 85%, transparent);
 }
 
 .wb-back {
@@ -123,7 +123,7 @@
     top: 4.05rem;
     z-index: 9;
     backdrop-filter: blur(8px);
-    background: rgba(250, 249, 245, 0.92);
+    background: color-mix(in srgb, var(--background) 92%, transparent);
     border-bottom: 1px solid var(--wb-border);
 }
 
@@ -206,20 +206,21 @@
 .wb-tab.is-active {
     background: var(--wb-accent);
     border-color: var(--wb-accent);
-    color: #fff;
+    color: var(--accent-foreground);
 }
 
 .wb-tab-count {
     font-size: 0.7rem;
     padding: 1px 6px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.06);
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
     color: inherit;
     opacity: 0.8;
 }
 
 .wb-tab.is-active .wb-tab-count {
-    background: rgba(255, 255, 255, 0.22);
+    /* active tab 内 — 叠在 accent 上,白 22% 维持浅彩 chip 观感 (light/dark 无差) */
+    background: color-mix(in srgb, #fff 22%, transparent);
 }
 
 /* ── Main ── */
@@ -358,11 +359,11 @@
 }
 
 .wb-record:hover {
-    background: rgba(0, 0, 0, 0.015);
+    background: color-mix(in srgb, var(--foreground) 2%, transparent);
 }
 
 .wb-record:not(:last-child) {
-    border-bottom-color: rgba(229, 228, 223, 0.5);
+    border-bottom-color: color-mix(in srgb, var(--wb-border) 50%, transparent);
 }
 
 .wb-fmt {
@@ -391,7 +392,7 @@
     width: 16px;
     height: 12px;
     border-radius: 2px;
-    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--foreground) 10%, transparent);
     flex-shrink: 0;
     object-fit: cover;
 }

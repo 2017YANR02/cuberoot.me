@@ -10,6 +10,7 @@ import {
 import { loadPersonsIndex, searchLocalPersons, type WcaPerson } from '@cuberoot/shared';
 import { getLangQuery } from '../../i18n';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import { ClearButton } from '../../components/ClearButton';
 import { Flag } from '../../utils/flag';
 import { displayCuberName } from '../../utils/name_utils';
@@ -191,6 +192,7 @@ export default function WcaStatsIndex() {
         </div>
         <div className="wca-stats-index-hero-right">
           <LangToggle />
+          <ThemeToggle />
         </div>
       </header>
 

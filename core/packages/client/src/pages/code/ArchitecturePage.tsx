@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import COMMITS_DATA from './timeline_commits.json';
 import MonthGrid from '../../components/MonthGrid';
 import './architecture.css';
@@ -1184,7 +1185,10 @@ export default function ArchitecturePage() {
         <header className="arch-hero">
           <div className="arch-topbar">
             <Link to="/code" className="arch-back">← /code</Link>
-            <LangToggle variant="inline" />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <ThemeToggle />
+              <LangToggle variant="inline" />
+            </div>
           </div>
           <div className="arch-hero-meta">
             <L zh="一份内部说明书" en="An internal handbook" />

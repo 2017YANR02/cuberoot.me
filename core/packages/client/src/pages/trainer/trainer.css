@@ -3,13 +3,8 @@
    Dark theme. Mobile (<480) collapses sidebar below timer. */
 
 .trainer-root {
-  /* trainer 视觉是 dark-themed,bg/卡片硬码 dark;锁 dark token,light 系统下也保持深色。 */
-  color-scheme: dark;
-  --background: #1c1917;
-  --foreground: #f0ebe3;
-  --muted-foreground: #9c8c7e;
-  --faint-foreground: #7A736A;
-
+  /* trainer 是 dark-locked:实际锁见 index.css 的 html:has(.trainer-root) 块,
+     :root 级别 token 翻 dark,body bg 自动跟着,不会因 max-width 露 light 底。 */
   max-width: 1400px;
   margin: 0 auto;
   padding: 24px;

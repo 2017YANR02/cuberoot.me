@@ -25,6 +25,7 @@ import AdminCaseEditor, { type AdminEditorState } from './AdminCaseEditor';
 import ValidationReportModal from './ValidationReportModal';
 import { VisualCube } from '../../components/VisualCube';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import AlgPlayer from '../../components/AlgPlayer';
 import { CaseThumb } from './CaseThumb';
 import { compactSq1Alg } from '../gen/sq1_svg';
@@ -398,7 +399,8 @@ export default function AlgCategoryPage() {
             </button>
           </>
         )}
-        <LangToggle variant="inline" className="alg-lang-toggle" />
+        <ThemeToggle className="alg-lang-toggle" />
+        <LangToggle variant="inline" />
       </div>
 
       {/* Page-level ori switcher — only for sets where every case has the same 4 oris (F2L family).

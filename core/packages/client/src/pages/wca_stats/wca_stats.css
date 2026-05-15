@@ -7,13 +7,7 @@
 }
 
 .wca-stats-page {
-  /* wca-stats 视觉硬码 dark,锁 dark token,light 系统下保持深色 */
-  color-scheme: dark;
-  --background: #1c1917;
-  --foreground: #f0ebe3;
-  --muted-foreground: #9c8c7e;
-  --faint-foreground: #7A736A;
-
+  /* wca-stats 详情子页是 dark-locked:实际锁见 index.css 的 html:has(.wca-stats-page) 块 */
   width: fit-content;
   min-width: min(100%, 800px);
   max-width: 100%;
@@ -97,7 +91,7 @@
   margin-left: 12px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--muted-foreground)aaa;
+  color: var(--muted-foreground);
   white-space: nowrap;
   user-select: none;
 }
@@ -220,7 +214,7 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-metric-pill-arrow {
   font-size: 10px;
-  color: var(--muted-foreground)aaa;
+  color: var(--muted-foreground);
   transition: transform 0.2s;
 }
 
@@ -616,24 +610,14 @@ input:checked + .wca-stats-toggle-pill::after {
    ========================================================================== */
 
 .wca-stats-index {
-  --idx-bg: #FAF9F5;
-  --idx-surface: #FFFFFF;
-  --idx-text: #181716;
-  --idx-text-sub: #6F6E6B;
-  --idx-text-mute: #97958F;
-  --idx-border: #E5E4DF;
-  --idx-border-strong: #CCCAC2;
-  --idx-accent: #C15F3C;
-  --idx-accent-soft: rgba(193, 95, 60, 0.08);
-
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
   padding: 3rem 1.5rem 4rem;
   max-width: none;
-  background: var(--idx-bg);
-  color: var(--idx-text);
+  background: var(--background);
+  color: var(--foreground);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   box-sizing: border-box;
 }
@@ -654,7 +638,7 @@ input:checked + .wca-stats-toggle-pill::after {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--idx-text-sub);
+  color: var(--muted-foreground);
   margin-bottom: 0.6rem;
 }
 
@@ -664,19 +648,22 @@ input:checked + .wca-stats-toggle-pill::after {
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.015em;
-  color: var(--idx-text);
+  color: var(--foreground);
   margin: 0 0 0.6rem;
 }
 
 .wca-stats-index-sub {
   font-size: 0.92rem;
-  color: var(--idx-text-sub);
+  color: var(--muted-foreground);
   margin: 0;
   line-height: 1.5;
 }
 
 .wca-stats-index-hero-right {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ── Toolbar：搜索 + tabs ───────────────────────────────── */
@@ -695,19 +682,19 @@ input:checked + .wca-stats-toggle-pill::after {
   align-items: center;
   gap: 0.6rem;
   padding: 0.7rem 2.4rem 0.7rem 0.9rem; /* 右侧空 2.4rem 给 inline × 让位 */
-  background: var(--idx-surface);
-  border: 1px solid var(--idx-border);
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .wca-stats-index-search:focus-within {
-  border-color: var(--idx-border-strong);
-  box-shadow: 0 0 0 3px var(--idx-accent-soft);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .wca-stats-index-search > svg {
-  color: var(--idx-text-mute);
+  color: var(--faint-foreground);
   flex-shrink: 0;
 }
 
@@ -716,7 +703,7 @@ input:checked + .wca-stats-toggle-pill::after {
   border: none;
   outline: none;
   background: transparent;
-  color: var(--idx-text);
+  color: var(--foreground);
   font-size: 0.95rem;
   font-family: inherit;
   padding: 0;
@@ -724,15 +711,15 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-index-search input::placeholder {
-  color: var(--idx-text-mute);
+  color: var(--faint-foreground);
 }
 
 .wca-stats-index-search-count {
   flex-shrink: 0;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--idx-accent);
-  background: var(--idx-accent-soft);
+  color: var(--accent);
+  background: var(--accent-soft);
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -749,10 +736,10 @@ input:checked + .wca-stats-toggle-pill::after {
   align-items: center;
   gap: 0.4rem;
   padding: 0.45rem 0.85rem;
-  border: 1px solid var(--idx-border);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: var(--idx-surface);
-  color: var(--idx-text-sub);
+  background: var(--card);
+  color: var(--muted-foreground);
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 500;
@@ -762,18 +749,18 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-index-tab:hover {
-  border-color: var(--idx-border-strong);
-  color: var(--idx-text);
+  border-color: var(--border-strong);
+  color: var(--foreground);
 }
 
 .wca-stats-index-tab.active {
-  background: var(--idx-text);
-  border-color: var(--idx-text);
-  color: var(--idx-bg);
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
 }
 
 .wca-stats-index-tab.active svg {
-  color: var(--idx-bg);
+  color: var(--background);
 }
 
 .wca-stats-index-tab-count {
@@ -799,11 +786,11 @@ input:checked + .wca-stats-toggle-pill::after {
   gap: 0.55rem;
   margin-bottom: 0.9rem;
   padding-bottom: 0.6rem;
-  border-bottom: 1px solid var(--idx-border);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .wca-stats-index-section-header svg {
-  color: var(--idx-accent);
+  color: var(--accent);
   flex-shrink: 0;
 }
 
@@ -813,14 +800,14 @@ input:checked + .wca-stats-toggle-pill::after {
   font-size: 1.15rem;
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: var(--idx-text);
+  color: var(--foreground);
 }
 
 .wca-stats-index-section-count {
   margin-left: auto;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--idx-text-mute);
+  color: var(--faint-foreground);
   font-variant-numeric: tabular-nums;
 }
 
@@ -833,10 +820,10 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-index-card {
   display: block;
   padding: 0.75rem 0.95rem;
-  background: var(--idx-surface);
-  border: 1px solid var(--idx-border);
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
-  color: var(--idx-text);
+  color: var(--foreground);
   text-decoration: none;
   font-size: 0.86rem;
   font-weight: 450;
@@ -845,8 +832,8 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-index-card:hover {
-  border-color: var(--idx-accent);
-  color: var(--idx-accent);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(24, 23, 22, 0.04);
 }
@@ -884,7 +871,7 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-index-card-meta {
   font-size: 0.72rem;
-  color: var(--idx-text-mute);
+  color: var(--faint-foreground);
   font-variant-numeric: tabular-nums;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -892,14 +879,14 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-index-card--rich:hover .wca-stats-index-card-meta {
-  color: var(--idx-text-sub);
+  color: var(--muted-foreground);
 }
 
 /* 空搜索结果 */
 .wca-stats-index-empty {
   padding: 3rem 0;
   text-align: center;
-  color: var(--idx-text-mute);
+  color: var(--faint-foreground);
   font-size: 0.95rem;
 }
 
@@ -910,12 +897,12 @@ input:checked + .wca-stats-toggle-pill::after {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--idx-text-sub);
+  color: var(--muted-foreground);
   font-size: 1rem;
 }
 
 .wca-stats-index-status-error h2 {
-  color: #b53e22;
+  color: var(--destructive);
   margin: 0 0 0.5rem;
   font-weight: 500;
 }

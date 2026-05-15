@@ -12,6 +12,7 @@ import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import LangToggle from '../../../components/LangToggle';
+import ThemeToggle from '../../../components/ThemeToggle';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
 import './commutator.css';
 
@@ -130,6 +131,7 @@ export default function CommutatorPage() {
                 >
                     <ExternalLink size={16} />
                 </a>
+                <ThemeToggle />
                 <LangToggle variant="inline" />
             </header>
 

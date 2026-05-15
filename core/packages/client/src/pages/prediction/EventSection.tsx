@@ -21,11 +21,11 @@ const COLORS = {
   top10: '#0a8a6b',
   top100: '#8c5ad1',
   top1000: '#b3248a',
-  top10000: '#5a6370',
+  top10000: 'var(--muted-foreground)',
   alt: '#7eb8c4',
 };
 
-const SUB_COLOR = ['#5a6370', '#8c5ad1', '#0a8a6b', '#2f6fd8', '#c2410c', '#b3248a', '#d13636', '#e8b97a', '#0891b2'];
+const SUB_COLOR = ['var(--muted-foreground)', '#8c5ad1', '#0a8a6b', '#2f6fd8', '#c2410c', '#b3248a', '#d13636', '#e8b97a', '#0891b2'];
 
 function stripParen(name: string): string {
   return name.replace(/\s*\(.*?\)\s*$/, '').trim();
