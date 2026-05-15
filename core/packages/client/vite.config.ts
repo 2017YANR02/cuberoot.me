@@ -219,15 +219,12 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
     },
     proxy: {
-      // NOTE: nemesizer 路由在开发时打到本地 Hono(:3002) 而非线上。
-      // 顺序重要——更长前缀必须先于 '/v1' 注册,Vite 才会取窄匹配。
-      // 本地若没起 Hono 这一段会 ECONNREFUSED,前端会拿 502;
-      // 不需要 nemesizer 时把这一段注释掉即可回退到全 prod。
-      '/v1/nemesizer': {
-        target: 'http://127.0.0.1:3002',
-        changeOrigin: true,
-        secure: false,
-      },
+      // 调本地 Hono 开发 server 端 (改 /v1/nemesizer/* 等路由时):
+      //   1. 把下面这段 uncomment;
+      //   2. cd core/packages/server && NEMESIZER_DATA_DIR=<repo>/stats/nemesizer PORT=3002 pnpm dev
+      //   3. 顺序重要 —— 长前缀必须先于 '/v1' 注册才会被取窄匹配
+      // '/v1/nemesizer': { target: 'http://127.0.0.1:3002', changeOrigin: true, secure: false },
+
       // NOTE: Hono API 代理到线上后端（本地无 recon_db，无法运行 Hono 后端）
       '/v1': {
         target: 'https://api.cuberoot.me',
