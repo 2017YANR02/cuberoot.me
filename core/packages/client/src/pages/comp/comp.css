@@ -627,7 +627,7 @@ td.is-pr {
   .td-person { gap: 6px; }
 }
 
-/* ─── /comp/sources flow diagram ───────────────────────────────────── */
+/* ─── /comp/sources unified flow ───────────────────────────────────── */
 .comp-hint-link {
   display: inline-block;
   margin-left: 0.6em;
@@ -648,133 +648,12 @@ td.is-pr {
   margin: 0 auto;
 }
 
-.comp-flow {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-}
-
-.comp-flow-input,
-.comp-flow-output {
-  align-self: center;
-  padding: 10px 16px;
-  background: var(--muted);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  font-size: 0.92rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.comp-flow-input code,
-.comp-flow-output code { font-family: ui-monospace, monospace; }
-.comp-flow-input-label {
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.comp-flow-input-eg {
-  font-size: 0.78rem;
-  color: var(--faint-foreground);
-  font-family: ui-monospace, monospace;
-}
-.comp-flow-output {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-default));
-  color: var(--foreground);
-  font-weight: 500;
-}
-
-.comp-flow-arrow {
-  align-self: center;
-  color: var(--faint-foreground);
-  font-size: 1.2rem;
-  line-height: 1;
-  padding: 6px 0;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.comp-flow-arrow-miss {
-  color: var(--muted-foreground);
-}
-.comp-flow-arrow-miss span {
-  font-size: 0.72rem;
-  font-family: ui-monospace, monospace;
-}
-
-.comp-flow-step {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-}
-.comp-flow-step-fast {
-  background: color-mix(in srgb, var(--accent) 8%, var(--card));
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-default));
-}
-.comp-flow-step-num {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--muted);
-  color: var(--muted-foreground);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  font-family: ui-monospace, monospace;
-}
-.comp-flow-step-fast .comp-flow-step-num {
-  background: var(--accent);
-  color: var(--accent-foreground);
-}
-.comp-flow-step-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.comp-flow-step-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 0.98rem;
-  flex-wrap: wrap;
-}
-.comp-flow-step-title code {
-  font-size: 0.82rem;
-  background: var(--muted);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 400;
-}
-.comp-flow-step-desc {
-  font-size: 0.86rem;
-  color: var(--muted-foreground);
-  line-height: 1.5;
-}
-.comp-flow-step-desc-muted { font-size: 0.8rem; }
-.comp-flow-step-meta {
-  display: inline-flex;
-  gap: 6px;
-  margin-top: 2px;
-}
 .comp-flow-pill {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   background: var(--muted);
   color: var(--muted-foreground);
   font-family: ui-monospace, monospace;
@@ -784,98 +663,55 @@ td.is-pr {
   color: var(--accent-foreground);
 }
 
-.comp-flow-fork {
+/* ── 上游 lineage:2 列 (WCA 链 + cubing.com 独立链路) ── */
+.comp-flow-top {
+  margin-top: 24px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 16px;
+  align-items: stretch;
 }
-.comp-flow-source {
-  padding: 12px 14px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.comp-flow-source-head {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-.comp-flow-source-tagline {
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-}
-.comp-flow-source-tech {
-  font-size: 0.75rem;
-  color: var(--faint-foreground);
-  font-family: ui-monospace, monospace;
-  line-height: 1.45;
-}
-
-.comp-flow-rules {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 2px;
-}
-.comp-flow-rule {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.84rem;
-  flex-wrap: wrap;
-}
-.comp-flow-rule code {
-  font-family: ui-monospace, monospace;
-  font-size: 0.78rem;
-  background: var(--muted);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-.comp-flow-rule-arrow {
-  color: var(--faint-foreground);
-}
-.comp-flow-rule-note {
-  font-size: 0.78rem;
-  color: var(--faint-foreground);
-}
-
-@media (max-width: 640px) {
-  .comp-flow-fork { grid-template-columns: 1fr; }
-  .comp-flow-step { padding: 12px 12px; }
-  .comp-flow-step-title { font-size: 0.92rem; }
-  .comp-flow-step-desc { font-size: 0.82rem; }
-}
-
-/* ─── /comp/sources 数据上游 section ────────────────────────────────── */
-.comp-flow-section-title {
-  margin: 40px 0 16px;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-.comp-flow-section-title-first { margin-top: 24px; }
-.comp-flow-section-sub {
-  margin: -10px 0 16px;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
-}
-
-.comp-lineage {
+.comp-flow-top-left,
+.comp-flow-top-right {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 4px;
 }
+.comp-flow-top-left > .comp-lineage-when,
+.comp-flow-top-right > .comp-lineage-when {
+  text-align: center;
+}
+.comp-flow-top-left > .comp-lineage-box,
+.comp-flow-top-right > .comp-lineage-box { width: 100%; }
+
+/* 横向 merge bar:把 2 列底部显式合并到一条线,再 ↓ 进 gate */
+.comp-flow-merge-bar {
+  position: relative;
+  margin: 12px 0 4px;
+  padding-top: 18px;
+  border-top: 2px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.comp-flow-merge-label {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  letter-spacing: 0.02em;
+}
+.comp-flow-merge-arrow {
+  color: var(--faint-foreground);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
 .comp-lineage-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .comp-lineage-when {
   font-size: 0.72rem;
@@ -884,23 +720,50 @@ td.is-pr {
   letter-spacing: 0.05em;
 }
 .comp-lineage-box {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: var(--card);
   border: 1px solid var(--border-default);
   border-radius: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+.comp-lineage-box-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.92rem;
   flex-wrap: wrap;
-  justify-content: center;
-  max-width: 100%;
 }
-.comp-lineage-box > span:first-of-type { font-weight: 600; }
+.comp-lineage-box-head > span:first-of-type { font-weight: 600; }
 .comp-lineage-note {
   font-size: 0.78rem;
   color: var(--muted-foreground);
   font-weight: 400;
+}
+.comp-lineage-server {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  flex-wrap: wrap;
+}
+.comp-lineage-server-tag {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.comp-lineage-server code {
+  font-family: ui-monospace, monospace;
+  color: var(--foreground);
+  word-break: break-word;
 }
 .comp-lineage-box-canonical {
   background: color-mix(in srgb, var(--accent) 6%, var(--card));
@@ -946,9 +809,7 @@ td.is-pr {
   font-size: 1.4rem;
   line-height: 1;
 }
-.comp-lineage-fan-arrows > span {
-  text-align: center;
-}
+.comp-lineage-fan-arrows > span { text-align: center; }
 .comp-lineage-fan-arrows > span:first-child { justify-self: end; padding-right: 18%; }
 .comp-lineage-fan-arrows > span:last-child  { justify-self: start; padding-left: 18%; }
 
@@ -956,6 +817,7 @@ td.is-pr {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: stretch;
 }
 .comp-lineage-branch {
   display: flex;
@@ -963,17 +825,14 @@ td.is-pr {
   align-items: center;
   gap: 4px;
 }
+.comp-lineage-branch > .comp-lineage-box { width: 100%; }
 .comp-lineage-branch-step {
   font-size: 0.78rem;
   color: var(--muted-foreground);
   font-family: ui-monospace, monospace;
-  padding: 2px 8px;
+  padding: 2px 10px;
   background: var(--muted);
   border-radius: 999px;
-}
-.comp-lineage-branch-note {
-  font-size: 0.78rem;
-  color: var(--faint-foreground);
 }
 
 .comp-lineage-sidebar {
@@ -981,22 +840,146 @@ td.is-pr {
   padding-top: 18px;
   border-top: 1px dashed var(--border-default);
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── lineage → gate 之间的桥 ── */
+.comp-gate-bridge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 16px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+.comp-gate-bridge-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-default);
+}
+.comp-gate-bridge-label {
+  flex-shrink: 0;
+}
+
+/* ── 下游 server gate ── */
+.comp-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.comp-gate-input,
+.comp-gate-output {
+  align-self: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.comp-gate-input {
+  background: var(--muted);
+  border: 1px solid var(--border-default);
+}
+.comp-gate-input code { font-family: ui-monospace, monospace; }
+.comp-gate-input-label {
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.comp-gate-output {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-default));
+  font-weight: 500;
+}
+.comp-gate-arrow {
+  align-self: center;
+  color: var(--faint-foreground);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 4px 0;
+}
+
+.comp-gate-rules {
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-gate-rules-title {
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.comp-gate-rule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.comp-gate-rule-list > li {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+.comp-gate-rule-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+.comp-gate-rule-list > li:first-child .comp-gate-rule-num {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.comp-gate-rule-body {
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.comp-gate-rule-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  background: var(--muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.comp-gate-rules-note {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-default);
 }
 
 @media (max-width: 640px) {
+  .comp-flow-top { grid-template-columns: 1fr; gap: 12px; }
   .comp-lineage-fan { grid-template-columns: 1fr; }
   .comp-lineage-fan-arrows { grid-template-columns: 1fr; }
-  .comp-lineage-fan-arrows > span:first-child,
+  .comp-lineage-fan-arrows > span:first-child { display: none; }
   .comp-lineage-fan-arrows > span:last-child {
     justify-self: center;
     padding: 0;
+    font-size: 0;
   }
-  /* 窄屏只显示一个 ↓ 即可 */
-  .comp-lineage-fan-arrows > span:first-child { display: none; }
   .comp-lineage-fan-arrows > span:last-child::after {
     content: '↓';
+    font-size: 1.2rem;
   }
-  .comp-lineage-fan-arrows > span:last-child { font-size: 0; }
-  .comp-lineage-fan-arrows > span:last-child::after { font-size: 1.2rem; }
 }

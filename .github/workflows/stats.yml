@@ -76,6 +76,13 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      # nemesizer.ts imports @cuberoot/shared/nemesizer-format whose `node`
+      # condition resolves to dist/nemesizer_format.js; tsx runs in Node so
+      # the dist must exist before any tsx step that crosses that subpath.
+      - name: Build shared package
+        working-directory: core
+        run: pnpm --filter @cuberoot/shared build
+
       - name: Create stats output directory
         run: mkdir -p stats
 

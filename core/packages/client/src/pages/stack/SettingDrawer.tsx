@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
 import World from './cuber/world';
+import { KEYMAP_GROUPS, keyLabel } from './keymap';
 import './setting-drawer.css';
 
 export interface StackSettings {
@@ -56,7 +57,12 @@ function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        
 
 export function applySettings(world: World, s: StackSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
-  world.scale = mapScale(s.scale);
+  // scale 由滚轮直接改 world.scale + 防抖反算 settings (round 损失 ≤0.005),
+  // 这里如果差距在 round 误差内就别回写,避免滚动途中突跳
+  const targetScale = mapScale(s.scale);
+  if (Math.abs(world.scale - targetScale) > 0.006) {
+    world.scale = targetScale;
+  }
   world.perspective = mapPerspective(s.perspective);
   world.cube.arrow = s.arrow;
   world.cube.instancedRenderer.thickness = s.thickness;
@@ -109,6 +115,37 @@ export default function SettingDrawer({ open, onClose, settings, onChange }: Pro
           <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
           <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
           <Toggle label={t('显示朝向箭头', 'Orientation arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+
+          <details className="stack-keymap">
+            <summary>{t('键盘快捷键', 'Keyboard shortcuts')}</summary>
+            {KEYMAP_GROUPS.map((g) => (
+              <div key={g.zh} className="stack-keymap-group">
+                <div className="stack-keymap-title">{isZh ? g.zh : g.en}</div>
+                {g.rows.map((r) => (
+                  <div key={r.move} className="stack-keymap-row">
+                    <span className="stack-keymap-move">{r.move}</span>
+                    <span className="stack-keymap-keys">
+                      {r.keys.map((k) => (
+                        <kbd key={k}>{keyLabel(k)}</kbd>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div className="stack-keymap-group">
+              <div className="stack-keymap-title">{t('其它', 'Misc')}</div>
+              <div className="stack-keymap-row">
+                <span className="stack-keymap-move">{t('撤销', 'Undo')}</span>
+                <span className="stack-keymap-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>⌫</kbd></span>
+              </div>
+              <div className="stack-keymap-row">
+                <span className="stack-keymap-move">{t('重做', 'Redo')}</span>
+                <span className="stack-keymap-keys"><kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
+              </div>
+            </div>
+          </details>
+
           <button
             className="stack-drawer-reset"
             onClick={() => onChange(DEFAULT_SETTINGS)}

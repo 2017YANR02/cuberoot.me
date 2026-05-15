@@ -19,6 +19,7 @@
     "./data/*.json": "./data/*.json"
   },
   "scripts": {
+    "build": "tsc -b",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
