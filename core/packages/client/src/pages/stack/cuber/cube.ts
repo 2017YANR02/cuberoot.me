@@ -6,6 +6,7 @@ import * as THREE from "three";
 import Twister, { TwistAction } from "./twister";
 import History from "./history";
 import tweener from "./tweener";
+import InstancedRenderer from "./instanced";
 
 export default class Cube extends THREE.Group {
   public dirty = true;
@@ -17,6 +18,7 @@ export default class Cube extends THREE.Group {
   public callbacks: (() => void)[] = [];
   public history: History;
   public twister: Twister = new Twister(this);
+  public instancedRenderer: InstancedRenderer;
 
   constructor(order: number) {
     super();
@@ -27,6 +29,7 @@ export default class Cube extends THREE.Group {
       this.cubelets.push(cubelet);
       this.initials.push(cubelet);
       if (cubelet.exist) {
+        // cubelet 不再有 Mesh 子物;仍 add 进 cube 让 matrixWorld 正确传播
         this.add(cubelet);
       }
     }
@@ -39,6 +42,8 @@ export default class Cube extends THREE.Group {
     this.table = new GroupTable(this);
     this.matrixAutoUpdate = false;
     this.updateMatrix();
+    this.instancedRenderer = new InstancedRenderer(this);
+    this.add(this.instancedRenderer);
   }
 
   callback(): void {
@@ -112,9 +117,7 @@ export default class Cube extends THREE.Group {
   public _arrow = false;
   set arrow(value: boolean) {
     this._arrow = value;
-    for (const cubelet of this.cubelets) {
-      cubelet.arrow = value;
-    }
+    this.instancedRenderer.arrow = value;
   }
 
   get arrow(): boolean {
@@ -139,6 +142,7 @@ export default class Cube extends THREE.Group {
       throw Error("invalid cubelet index: " + index);
     }
     cubelet.stick(face, value);
+    this.instancedRenderer.applyStick(cubelet.initial, face, value);
     this.dirty = true;
   }
 

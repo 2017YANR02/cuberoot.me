@@ -60,10 +60,8 @@ export default class World {
     if (this.cubes[value] == undefined) {
       this.cubes[value] = new Cube(value);
       this.cubes[value].callbacks.push(this.callback);
-      // 贴片立体感:depth=0.1 默认基本是平面,scale z 放大让贴片"凸出"出来
-      for (const cubelet of this.cubes[value].cubelets) {
-        cubelet.thickness = true;
-      }
+      // thickness 默认 true (跟 upstream),细化值由 SettingDrawer.applySettings 覆盖
+      this.cubes[value].instancedRenderer.thickness = true;
     }
     this.cube = this.cubes[value];
     this.scene.add(this.cube);

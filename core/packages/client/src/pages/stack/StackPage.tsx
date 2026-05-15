@@ -26,7 +26,8 @@ import './stack.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
-const ORDERS = Array.from({ length: 49 }, (_, i) => i + 2);  // 2~50 阶
+const ORDER_MIN = 2;
+const ORDER_MAX = 2000;
 type Mode = 'play' | 'player' | 'algs' | 'director';
 
 const KEYMAP: Record<string, { sign: string; reverse?: boolean }> = {
@@ -80,6 +81,7 @@ export default function StackPage() {
   });
 
   const [order, setOrder] = useState<number>(3);
+  const [orderDraft, setOrderDraft] = useState<string>('3');
   const [moves, setMoves] = useState<number>(0);
   const [canRedo, setCanRedo] = useState(false);
   const [solvedToast, setSolvedToast] = useState(false);
@@ -249,6 +251,7 @@ export default function StackPage() {
       const t0 = performance.now();
       let didRender = false;
       if (world.dirty || world.cube.dirty) {
+        world.cube.instancedRenderer.update();
         renderer.clear();
         renderer.render(world.scene, world.camera);
         world.dirty = false;
@@ -338,6 +341,9 @@ export default function StackPage() {
     const world = worldRef.current;
     if (world) applySettings(world, settings);
   }, [settings]);
+
+  // 外部 (AlgsPanel onOrderChange) 改 order 时同步 draft
+  useEffect(() => { setOrderDraft(String(order)); }, [order]);
 
   const handleScramble = useCallback(() => {
     const world = worldRef.current;
@@ -512,16 +518,25 @@ export default function StackPage() {
             <Settings size={16} />
           </button>
         </div>
-        <select
-          className="stack-order-select"
-          value={order}
-          onChange={(e) => handleOrder(Number(e.target.value))}
-          title={t('阶数', 'Cube order')}
-        >
-          {ORDERS.map((n) => (
-            <option key={n} value={n}>{n}×{n}</option>
-          ))}
-        </select>
+        <input
+          className="stack-order-input"
+          type="number"
+          min={ORDER_MIN}
+          max={ORDER_MAX}
+          step={1}
+          value={orderDraft}
+          onChange={(e) => setOrderDraft(e.target.value)}
+          onBlur={() => {
+            const n = Math.max(ORDER_MIN, Math.min(ORDER_MAX, Math.floor(Number(orderDraft) || order)));
+            setOrderDraft(String(n));
+            handleOrder(n);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            else if (e.key === 'Escape') { setOrderDraft(String(order)); (e.target as HTMLInputElement).blur(); }
+          }}
+          title={t('阶数 2–2000(回车 / 失焦应用)', 'Cube order 2–2000 (Enter / blur to apply)')}
+        />
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
