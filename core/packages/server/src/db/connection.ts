@@ -7,7 +7,7 @@ const sql = postgres({
   port: Number(process.env.DB_PORT) || 5432,
   user: process.env.DB_USER || 'recon_user',
   password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || 'recon_db',
+  database: process.env.DB_NAME || 'cuberoot_db',
   max: 10,
   idle_timeout: 60,
   // mariadb 之前对 undefined 视同 null,这里对齐

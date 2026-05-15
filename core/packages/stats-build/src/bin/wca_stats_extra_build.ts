@@ -738,7 +738,7 @@ async function main() {
 
   // ── 10. load.sql ──
   const loadSql = `-- 由 wca_stats_extra_build.ts 生成,跑在服务器 PG 上.
--- cd <此目录> && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d recon_db -f load.sql
+-- cd <此目录> && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f load.sql
 
 BEGIN;
 

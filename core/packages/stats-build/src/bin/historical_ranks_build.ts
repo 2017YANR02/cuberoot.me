@@ -16,7 +16,7 @@
 //   - rank 仍是相对全量 cuber 算的,值正确
 //
 // server 端跑法(scp 上述文件到 /tmp/wca_import 后):
-//   cd /tmp/wca_import && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d recon_db -f load.sql
+//   cd /tmp/wca_import && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f load.sql
 
 import mysql from 'mysql2/promise';
 import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
@@ -363,7 +363,7 @@ async function main() {
 
   // ── 3. 写 load.sql:在 server 端原子替换
   const loadSql = `-- 由 historical_ranks_build.ts 生成,跑在服务器 PG 上
--- 使用方式: cd <此 SQL 所在目录> && psql -U recon_user -h 127.0.0.1 -d recon_db -f load.sql
+-- 使用方式: cd <此 SQL 所在目录> && psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f load.sql
 
 BEGIN;
 

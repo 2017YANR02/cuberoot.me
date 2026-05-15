@@ -1,4 +1,4 @@
--- PostgreSQL schema for recon_db (生产真实 schema 的 PG 等价版,2026-05-06 实测对账)
+-- PostgreSQL schema for cuberoot_db (生产真实 schema 的 PG 等价版,2026-05-06 实测对账)
 -- 设计原则: 最保守翻译,server 代码 0 改动
 --   tinyint(1)         → SMALLINT  (不转 BOOLEAN,jsonToRow 仍写 0/1)
 --   longtext+json_valid → TEXT     (server 代码已经用 JSON.parse 兜底,沿用)

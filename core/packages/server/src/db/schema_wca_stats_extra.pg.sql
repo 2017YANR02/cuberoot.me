@@ -1,5 +1,5 @@
 -- WCA stats extra (2026-05) — 6 个 cubing.pro 风格的统计 tab
--- 与 schema_historical_ranks.pg.sql 共存,在 recon_db 里.
+-- 与 schema_historical_ranks.pg.sql 共存,在 cuberoot_db 里.
 -- 数据流相同:CI runner 计算 → scp TSV → server psql -f load.sql 原子替换.
 --
 -- 6 个表:
