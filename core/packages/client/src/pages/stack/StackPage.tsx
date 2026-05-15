@@ -22,6 +22,7 @@ import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import PerfOverlay, { type PerfStats } from './PerfOverlay';
+import { KEYMAP } from './keymap';
 import './stack.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
@@ -29,27 +30,6 @@ const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 const ORDER_MIN = 2;
 const ORDER_MAX = 2000;
 type Mode = 'play' | 'player' | 'algs' | 'director';
-
-const KEYMAP: Record<string, { sign: string; reverse?: boolean }> = {
-  KeyI: { sign: 'R' },                  KeyK: { sign: 'R', reverse: true },
-  KeyW: { sign: 'B' },                  KeyO: { sign: 'B', reverse: true },
-  KeyS: { sign: 'D' },                  KeyL: { sign: 'D', reverse: true },
-  KeyD: { sign: 'L' },                  KeyE: { sign: 'L', reverse: true },
-  KeyJ: { sign: 'U' },                  KeyF: { sign: 'U', reverse: true },
-  KeyH: { sign: 'F' },                  KeyG: { sign: 'F', reverse: true },
-  Semicolon: { sign: 'y' },             KeyA: { sign: 'y', reverse: true },
-  KeyU: { sign: 'r' },                  KeyR: { sign: 'l', reverse: true },
-  KeyM: { sign: 'r', reverse: true },   KeyV: { sign: 'l' },
-  KeyT: { sign: 'x' },                  KeyY: { sign: 'x' },
-  KeyN: { sign: 'x', reverse: true },   KeyB: { sign: 'x', reverse: true },
-  Period: { sign: 'M', reverse: true }, KeyX: { sign: 'M', reverse: true },
-  Digit5: { sign: 'M' },                Digit6: { sign: 'M' },
-  KeyP: { sign: 'z' },                  KeyQ: { sign: 'z', reverse: true },
-  KeyZ: { sign: 'd' },                  Slash: { sign: 'd', reverse: true },
-  KeyC: { sign: 'u', reverse: true },   Comma: { sign: 'u' },
-  ArrowLeft: { sign: 'U' },             ArrowUp: { sign: 'R' },
-  ArrowRight: { sign: 'U', reverse: true }, ArrowDown: { sign: 'R', reverse: true },
-};
 
 interface StackCube {
   history: { moves: number; redoStack: unknown[] };
@@ -396,7 +376,9 @@ export default function StackPage() {
       e.preventDefault();
       const world = worldRef.current;
       if (!world) return;
-      world.cube.twister.twist(new TwistAction(k.sign, k.reverse, 1), false, false);
+      // force=true:前一个 group 还在转时 finish 它到终点 + unlock + retry,
+      // 连按 I/J 时 R 截断到完成位 + U 立刻开始 (cube.lock 跨轴互斥)
+      world.cube.twister.twist(new TwistAction(k.sign, k.reverse, 1), false, true);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -558,7 +540,7 @@ export default function StackPage() {
           onTwist={(sign, reverse) => {
             const world = worldRef.current;
             if (!world) return;
-            world.cube.twister.twist(new TwistAction(sign, reverse, 1), false, false);
+            world.cube.twister.twist(new TwistAction(sign, reverse, 1), false, true);
           }}
         />
       ) : null}
