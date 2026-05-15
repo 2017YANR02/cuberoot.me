@@ -7,8 +7,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as THREE from 'three';
 import {
-  ChevronLeft, RotateCcw, Shuffle, Undo2, Redo2,
-  Settings, BookOpen, Film, PlayCircle, Box,
+  ChevronLeft,
+  BookOpen, Film, PlayCircle, Box,
 } from 'lucide-react';
 import World from './cuber/world';
 import Toucher from './Toucher';
@@ -16,9 +16,7 @@ import { TwistAction } from './cuber/twister';
 import { FACE } from './cuber/define';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import SettingDrawer, { loadSettings, saveSettings, applySettings, type StackSettings } from './SettingDrawer';
-import MobileKeypad from './MobileKeypad';
+import { loadSettings, saveSettings, applySettings, type StackSettings } from './SettingDrawer';
 import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
@@ -28,9 +26,7 @@ import './stack.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
-const ORDER_MIN = 2;
-const ORDER_MAX = 2000;
-type Mode = 'play' | 'player' | 'algs' | 'director';
+type Mode = 'player' | 'algs' | 'director';
 
 interface StackCube {
   history: { moves: number; redoStack: unknown[] };
@@ -44,10 +40,9 @@ export default function StackPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const isMobile = useIsMobile(640);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const mode = (searchParams.get('mode') as Mode) || 'play';
+  const mode = (searchParams.get('mode') as Mode) || 'player';
   const algParam = searchParams.get('alg') || '';
   const setupParam = searchParams.get('setup') || '';
 
@@ -62,12 +57,9 @@ export default function StackPage() {
   });
 
   const [order, setOrder] = useState<number>(3);
-  const [orderDraft, setOrderDraft] = useState<string>('3');
-  const [moves, setMoves] = useState<number>(0);
-  const [canRedo, setCanRedo] = useState(false);
   const [solvedToast, setSolvedToast] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [, setWorldTick] = useState(0);
   const [settings, setSettings] = useState<StackSettings>(() => loadSettings());
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
   const keymapRef = useRef(keymap);
@@ -76,7 +68,7 @@ export default function StackPage() {
   const setMode = useCallback((next: Mode) => {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
-      if (next === 'play') np.delete('mode'); else np.set('mode', next);
+      if (next === 'player') np.delete('mode'); else np.set('mode', next);
       if (next !== 'player') { np.delete('alg'); np.delete('setup'); }
       return np;
     }, { replace: true });
@@ -94,8 +86,6 @@ export default function StackPage() {
       const wnow = worldRef.current;
       if (!wnow) return;
       const c = wnow.cube as unknown as StackCube;
-      setMoves(c.history.moves);
-      setCanRedo(c.history.redoStack.length > 0);
       const completeNow = c.complete;
       if (completeNow && !wasCompleteRef.current && c.history.moves > 0) {
         setSolvedToast(true);
@@ -113,6 +103,7 @@ export default function StackPage() {
 
     const world = new World();
     worldRef.current = world;
+    setWorldTick((n) => n + 1);  // 触发 re-render 让 PlayerControls 收到 world prop (worldRef.current 自身改不会 re-render)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.autoClear = false;
@@ -332,8 +323,6 @@ export default function StackPage() {
         if (!worldRef.current) return;
         worldRef.current.order = n;
         setOrder(n);
-        setMoves(0);
-        setCanRedo(false);
         wasCompleteRef.current = true;
         ensureCubeCallback();
         applySettings(worldRef.current, settings);
@@ -342,8 +331,6 @@ export default function StackPage() {
     } else {
       world.order = n;
       setOrder(n);
-      setMoves(0);
-      setCanRedo(false);
       wasCompleteRef.current = true;
       ensureCubeCallback();
       applySettings(world, settings);
@@ -356,21 +343,6 @@ export default function StackPage() {
     const world = worldRef.current;
     if (world) applySettings(world, settings);
   }, [settings]);
-
-  // 外部 (AlgsPanel onOrderChange) 改 order 时同步 draft
-  useEffect(() => { setOrderDraft(String(order)); }, [order]);
-
-  const handleScramble = useCallback(() => {
-    const world = worldRef.current;
-    if (!world) return;
-    world.cube.twister.twist(new TwistAction('*'), true, true);
-  }, []);
-
-  const handleReset = useCallback(() => {
-    const world = worldRef.current;
-    if (!world) return;
-    world.cube.twister.twist(new TwistAction('#'), true, true);
-  }, []);
 
   const handleUndo = useCallback(() => {
     const world = worldRef.current;
@@ -387,10 +359,9 @@ export default function StackPage() {
   // 全键盘映射
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // 输入框 / 设置抽屉 / 模态时不接管
+      // 输入框 / 模态时不接管
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      if (settingsOpen) return;
 
       if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyZ')) {
         e.preventDefault();
@@ -418,7 +389,7 @@ export default function StackPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo, settingsOpen]);
+  }, [handleUndo, handleRedo]);
 
   const onAlgChange = useCallback((alg: string) => {
     setSearchParams((prev) => {
@@ -495,7 +466,6 @@ export default function StackPage() {
   }, []);
 
   const modeButtons: { id: Mode; icon: typeof Box; label: string }[] = useMemo(() => [
-    { id: 'play',     icon: Box,        label: t('自由', 'Play') },
     { id: 'player',   icon: PlayCircle, label: t('回放', 'Player') },
     { id: 'algs',     icon: BookOpen,   label: t('公式', 'Algs') },
     { id: 'director', icon: Film,       label: t('录制', 'Record') },
@@ -526,43 +496,6 @@ export default function StackPage() {
           })}
         </nav>
         <div className="stack-spacer" />
-        <div className="stack-counter" title={t('步数 (HTM)', 'Moves (HTM)')}>{moves}</div>
-        <div className="stack-actions">
-          <button onClick={handleUndo} disabled={moves === 0 && !canRedo} title={t('撤销 Ctrl+Z', 'Undo Ctrl+Z')}>
-            <Undo2 size={16} />
-          </button>
-          <button onClick={handleRedo} disabled={!canRedo} title={t('重做 Ctrl+Y', 'Redo Ctrl+Y')}>
-            <Redo2 size={16} />
-          </button>
-          <button onClick={handleScramble} title={t('打乱', 'Scramble')}>
-            <Shuffle size={16} />
-          </button>
-          <button onClick={handleReset} title={t('复原', 'Reset')}>
-            <RotateCcw size={16} />
-          </button>
-          <button onClick={() => setSettingsOpen(true)} title={t('设置', 'Settings')}>
-            <Settings size={16} />
-          </button>
-        </div>
-        <input
-          className="stack-order-input"
-          type="number"
-          min={ORDER_MIN}
-          max={ORDER_MAX}
-          step={1}
-          value={orderDraft}
-          onChange={(e) => setOrderDraft(e.target.value)}
-          onBlur={() => {
-            const n = Math.max(ORDER_MIN, Math.min(ORDER_MAX, Math.floor(Number(orderDraft) || order)));
-            setOrderDraft(String(n));
-            handleOrder(n);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-            else if (e.key === 'Escape') { setOrderDraft(String(order)); (e.target as HTMLInputElement).blur(); }
-          }}
-          title={t('阶数 2–2000(回车 / 失焦应用)', 'Cube order 2–2000 (Enter / blur to apply)')}
-        />
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
@@ -596,30 +529,18 @@ export default function StackPage() {
               setup={playerSetup}
               onAlgChange={onAlgChange}
               onSetupChange={onSetupChange}
+              order={order}
+              onOrderChange={handleOrder}
+              settings={settings}
+              onSettingsChange={setSettings}
+              keymap={keymap}
+              onKeymapChange={setKeymap}
+              onResetKeymap={() => setKeymap(resetKeymapStorage())}
             />
           )}
         </aside>
       </div>
 
-      {isMobile ? (
-        <MobileKeypad
-          onTwist={(sign, reverse) => {
-            const world = worldRef.current;
-            if (!world) return;
-            world.cube.twister.twist(new TwistAction(sign, reverse, 1), false, true);
-          }}
-        />
-      ) : null}
-
-      <SettingDrawer
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        settings={settings}
-        onChange={setSettings}
-        keymap={keymap}
-        onKeymapChange={setKeymap}
-        onResetKeymap={() => setKeymap(resetKeymapStorage())}
-      />
     </div>
   );
 }
