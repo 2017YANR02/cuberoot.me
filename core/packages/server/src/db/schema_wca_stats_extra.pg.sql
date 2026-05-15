@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS wca_results_top (
   -- 末尾 3 列服务 /comp 页面 fast-path: 按 comp_id 拉所有 round 成绩;is_avg=false/true 两行合成一条
   round_type_id      VARCHAR(2) NOT NULL DEFAULT '',
   format_id          VARCHAR(2) NOT NULL DEFAULT '',
-  record_tag         VARCHAR(2) NOT NULL DEFAULT ''   -- single(is_avg=false 时) 或 average(is_avg=true 时) 的 regional_*_record
+  record_tag         VARCHAR(3) NOT NULL DEFAULT ''   -- single(is_avg=false 时) 或 average(is_avg=true 时) 的 regional_*_record (AsR/NAR/SAR/OcR/AfR 3 字符)
 );
 -- 主索引: ORDER BY value LIMIT/OFFSET — 全量翻页主路径
 CREATE INDEX IF NOT EXISTS wrt_main ON wca_results_top (event_id, is_avg, value, wca_id);
