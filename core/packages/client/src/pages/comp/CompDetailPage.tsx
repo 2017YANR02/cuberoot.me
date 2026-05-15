@@ -70,7 +70,7 @@ interface MembersByFilter {
   newcomers: number[];
 }
 
-type SourceId = 'cubing' | 'wca' | 'wca_live';
+type SourceId = 'cubing' | 'wca' | 'wca_live' | 'wca_db';
 interface CompData {
   slug: string;
   cubingSlug?: string;
@@ -328,7 +328,9 @@ export default function CompDetailPage() {
     });
   }, []);
 
-  const isWca = data?.source === 'wca';
+  // wca_db (本地 WCA dump) 是 wca REST 的 fast-path,UI 上当作 wca 同等待:
+  // 没有 live 推送、和 wca 共享同一个标题链接 (worldcubeassociation.org)。
+  const isWca = data?.source === 'wca' || data?.source === 'wca_db';
   const isWcaLive = data?.source === 'wca_live';
   const isCubing = data?.source === 'cubing';
 
@@ -541,8 +543,8 @@ export default function CompDetailPage() {
       if (!progress) return isZh ? '加载中…' : 'Loading…';
       const f = progress.filter ? ` · ${progress.filter}` : '';
       const map: Record<string, string> = isZh
-        ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据', 'wca_live.results': '从 WCA Live 拉取' }
-        : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data', 'wca_live.results': 'Loading from WCA Live' };
+        ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据', 'wca_live.results': '从 WCA Live 拉取', 'wca_db.query': '从 WCA 数据库读取', 'wca_db.transform': '解析 WCA 数据' }
+        : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data', 'wca_live.results': 'Loading from WCA Live', 'wca_db.query': 'Querying WCA database', 'wca_db.transform': 'Parsing WCA data' };
       return (map[progress.step] || progress.step) + f;
     })();
     return (
@@ -615,7 +617,7 @@ export default function CompDetailPage() {
             {data.availableSources && data.availableSources.length > 1 && (
               <div className="comp-source-toggle" role="group" aria-label={isZh ? '数据源' : 'Data source'}>
                 {data.availableSources.map(s => {
-                  const label = s === 'wca' ? 'WCA' : s === 'wca_live' ? 'WCA Live' : 'cubing.com';
+                  const label = s === 'wca' || s === 'wca_db' ? 'WCA' : s === 'wca_live' ? 'WCA Live' : 'cubing.com';
                   return (
                     <button
                       key={s}
