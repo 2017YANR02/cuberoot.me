@@ -26,6 +26,9 @@ export default function PlayerControls({ world, alg, setup, onAlgChange }: Props
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const playTimerRef = useRef<number | null>(null);
+  // 副作用 (twist) 不能放 setState updater 里 — strict mode 会双调
+  const stepRef = useRef(0);
+  useEffect(() => { stepRef.current = step; }, [step]);
 
   const actions = useMemo<TwistAction[]>(() => {
     if (!alg.trim()) return [];
@@ -61,7 +64,7 @@ export default function PlayerControls({ world, alg, setup, onAlgChange }: Props
     setStep((s) => s - 1);
   }, [world, step, actions]);
 
-  // 播放循环
+  // 播放循环。twist 在 interval 回调里直接跑, ref 跟踪当前步, setState 只用于渲染。
   useEffect(() => {
     if (!playing) {
       if (playTimerRef.current) {
@@ -71,15 +74,14 @@ export default function PlayerControls({ world, alg, setup, onAlgChange }: Props
       return;
     }
     playTimerRef.current = window.setInterval(() => {
-      setStep((s) => {
-        if (s >= actions.length) {
-          setPlaying(false);
-          return s;
-        }
-        const a = actions[s];
-        world?.cube.twister.twist(a, false, true);
-        return s + 1;
-      });
+      const s = stepRef.current;
+      if (s >= actions.length) {
+        setPlaying(false);
+        return;
+      }
+      world?.cube.twister.twist(actions[s], false, true);
+      stepRef.current = s + 1;
+      setStep(s + 1);
     }, 600);
     return () => {
       if (playTimerRef.current) {
