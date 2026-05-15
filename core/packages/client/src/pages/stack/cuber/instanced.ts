@@ -219,41 +219,6 @@ export default class InstancedRenderer extends THREE.Group {
     for (let i = 0; i < arr.length; i++) this.mat4Pool.push(arr[i]);
     arr.length = 0;
   }
-  /** Pool of slice state objects to avoid creating 3+ Arrays per beginSlice.
-   * Slice arrays grow to 62500 (N² @ N=250); pushing into a fresh Array
-   * causes ~17 reallocations as V8 doubles capacity → measurable GC. */
-  private slicePool: {
-    instances: number[];
-    slots: number[];
-    cubelets: Cubelet[];
-    origCubeletMats: THREE.Matrix4[];
-    origStickerMats: THREE.Matrix4[];
-    origHintMats: THREE.Matrix4[];
-  }[] = [];
-  private acquireSliceState() {
-    return this.slicePool.pop() ?? {
-      instances: [] as number[],
-      slots: [] as number[],
-      cubelets: [] as Cubelet[],
-      origCubeletMats: [] as THREE.Matrix4[],
-      origStickerMats: [] as THREE.Matrix4[],
-      origHintMats: [] as THREE.Matrix4[],
-    };
-  }
-  private releaseSliceState(state: {
-    instances: number[];
-    slots: number[];
-    cubelets: Cubelet[];
-    origCubeletMats: THREE.Matrix4[];
-    origStickerMats: THREE.Matrix4[];
-    origHintMats: THREE.Matrix4[];
-  }): void {
-    state.instances.length = 0;
-    state.slots.length = 0;
-    state.cubelets.length = 0;
-    // origMats already released by releaseMat4Array
-    this.slicePool.push(state);
-  }
 
   // 临时
   private tmpMat = new THREE.Matrix4();
@@ -521,18 +486,20 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.useShaderSlice) {
       const axisIdx = group.axis === 'x' ? 0 : group.axis === 'y' ? 1 : 2;
       this.setShaderSliceUniforms(axisIdx, group.layer, null);
-      // Pool 复用 state — 避免 62500-entry push 触发 V8 array realloc
-      const state = this.acquireSliceState();
-      const indices = group.indices;
-      for (let k = 0; k < indices.length; k++) {
-        const cubelet = this.cube.cubelets.get(indices[k]);
+      // 缓存 cubelets / instances / slots 给 endSlice 用 — 省 62500 Map.get
+      const instances: number[] = [];
+      const cubeletsArr: Cubelet[] = [];
+      const slotsList: number[] = [];
+      for (const positionIdx of group.indices) {
+        const cubelet = this.cube.cubelets.get(positionIdx);
         if (!cubelet || cubelet._instIdx < 0) continue;
-        state.instances.push(cubelet._instIdx);
-        state.cubelets.push(cubelet);
+        instances.push(cubelet._instIdx);
+        cubeletsArr.push(cubelet);
         const slots = this.cubeletSlots.get(cubelet.initial);
-        if (slots) for (let s = 0; s < slots.length; s++) if (this.stickerSlots[slots[s]].visible) state.slots.push(slots[s]);
+        if (slots) for (const s of slots) if (this.stickerSlots[s].visible) slotsList.push(s);
       }
-      this.activeSlices.set(group, state);
+      // 占位空数组 (没用 origMats 但 endSlice 要 release_mat4 释放空数组)
+      this.activeSlices.set(group, { instances, slots: slotsList, cubelets: cubeletsArr, origCubeletMats: [], origStickerMats: [], origHintMats: [] });
       this.cube.dirty = true;
       return;
     }
@@ -778,7 +745,7 @@ export default class InstancedRenderer extends THREE.Group {
       frameOrientAttr.needsUpdate = true;
       stickerOrientAttr.needsUpdate = true;
       this.setShaderSliceUniforms(-1, 0, null);
-      this.releaseSliceState(state);
+      state.cubelets.length = 0;
       this.cube.dirty = true;
       return;
     }
@@ -862,42 +829,6 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this.activeSlices.clear();
     this.singleSliceGroup = null;
-    // Shader mode: 重置 per-instance aOrientation 到 identity quat (0,0,0,1)
-    // 因为 cube.reset() 把 cubelet.quaternion 置回 identity, 但我们独立存
-    // 了 aOrientation buffer 必须 sync。aLayerXYZ 同样需要回到初始 layer。
-    if (this.useShaderSlice) {
-      const frameOrient = this.staticFrame.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-      const stickerOrient = this.staticSticker.geometry.getAttribute('aOrientation') as THREE.InstancedBufferAttribute;
-      const frameOrientArr = frameOrient.array as Float32Array;
-      const stickerOrientArr = stickerOrient.array as Float32Array;
-      for (let i = 0; i < frameOrientArr.length; i += 4) {
-        frameOrientArr[i] = 0; frameOrientArr[i + 1] = 0; frameOrientArr[i + 2] = 0; frameOrientArr[i + 3] = 1;
-      }
-      for (let i = 0; i < stickerOrientArr.length; i += 4) {
-        stickerOrientArr[i] = 0; stickerOrientArr[i + 1] = 0; stickerOrientArr[i + 2] = 0; stickerOrientArr[i + 3] = 1;
-      }
-      frameOrient.needsUpdate = true;
-      stickerOrient.needsUpdate = true;
-      const frameLayer = this.staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-      const stickerLayer = this.staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-      const half = (this.cube.order - 1) / 2;
-      // 直接 iterate Map.values() 不展 spread 数组 (372k 大小 spread = 主 GC trigger)
-      let i = 0;
-      for (const cubelet of this.cube.initials.values()) {
-        const v = cubelet.vector;
-        frameLayer.setXYZ(i++, v.x + half, v.y + half, v.z + half);
-      }
-      for (let j = 0; j < this.stickerSlots.length; j++) {
-        const slot = this.stickerSlots[j];
-        const cubelet = this.cube.initials.get(slot.cubeletInitial);
-        if (!cubelet) continue;
-        const v = cubelet.vector;
-        stickerLayer.setXYZ(j, v.x + half, v.y + half, v.z + half);
-      }
-      frameLayer.needsUpdate = true;
-      stickerLayer.needsUpdate = true;
-      this.setShaderSliceUniforms(-1, 0, null);
-    }
     this.movingFrame.count = 0;
     this.movingSticker.count = 0;
     this.movingHint.count = 0;
