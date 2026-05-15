@@ -32,11 +32,22 @@ export default function PlayerControls({ world, alg, setup, onAlgChange, onSetup
   const [speed, setSpeed] = useState(1);   // 倍速 0.25..4
   const playTimerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
+  const setupTaRef = useRef<HTMLTextAreaElement>(null);
+  const algTaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { stepRef.current = step; }, [step]);
 
   // 外部 alg/setup 变化时同步 draft
   useEffect(() => { setAlgDraft(alg); }, [alg]);
   useEffect(() => { setSetupDraft(setup ?? ''); }, [setup]);
+
+  // textarea 高度自适应内容 (height: auto → scrollHeight)
+  const autosize = (ta: HTMLTextAreaElement | null) => {
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  };
+  useEffect(() => { autosize(setupTaRef.current); }, [setupDraft]);
+  useEffect(() => { autosize(algTaRef.current); }, [algDraft]);
 
   // alg → flat TwistAction[],用 cubing.js Alg parser(commutator/conjugate/嵌套全支持)
   const actions = useMemo<TwistAction[]>(() => {
@@ -117,26 +128,37 @@ export default function PlayerControls({ world, alg, setup, onAlgChange, onSetup
     <div className="stack-player">
       <div className="stack-player-row">
         <label className="stack-player-label">{t('打乱', 'Setup')}</label>
-        <input
+        <textarea
+          ref={setupTaRef}
           className="stack-player-input"
-          type="text"
-          placeholder={t("Setup (例: R U R' D2)", "Setup (e.g. R U R' D2)")}
+          rows={1}
           value={setupDraft}
           onChange={(e) => setSetupDraft(e.target.value)}
           onBlur={applySetup}
-          onKeyDown={(e) => { if (e.key === 'Enter') applySetup(); }}
+          onKeyDown={(e) => {
+            // Ctrl/Cmd + Enter 提交,普通 Enter 换行
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              applySetup();
+            }
+          }}
         />
       </div>
       <div className="stack-player-row">
         <label className="stack-player-label">{t('公式', 'Alg')}</label>
-        <input
+        <textarea
+          ref={algTaRef}
           className="stack-player-input"
-          type="text"
-          placeholder={t("公式 (例: [R, U: F'])", "Alg (e.g. [R, U: F'])")}
+          rows={1}
           value={algDraft}
           onChange={(e) => setAlgDraft(e.target.value)}
           onBlur={applyAlg}
-          onKeyDown={(e) => { if (e.key === 'Enter') applyAlg(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              applyAlg();
+            }
+          }}
         />
         <span className="stack-player-count" title={t('展开后的 move 数', 'Move count after expansion')}>{moveCount}</span>
       </div>
