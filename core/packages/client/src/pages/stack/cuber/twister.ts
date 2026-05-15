@@ -200,6 +200,8 @@ export class TwistNode {
 export default class Twister {
   private cube: Cube;
   private queue: TwistAction[] = [];
+  // 在 undo / redo 内部 twist 时为 true,避免误清空 redo 栈
+  public suppressRedoClear = false;
   constructor(cube: Cube) {
     this.cube = cube;
     this.cube.callbacks.push(this.update);
@@ -341,6 +343,10 @@ export default class Twister {
     }
     if (success) {
       this.cube.record(action);
+      // 用户主动 twist (非 undo/redo 内部) 清空 redo 栈
+      if (!this.suppressRedoClear) {
+        this.cube.history.redoStack = [];
+      }
     }
     return success;
   }
@@ -350,7 +356,22 @@ export default class Twister {
       return;
     }
     const last = this.cube.history.last;
+    // 保存原 action 以便 redo
+    const original = new TwistAction(last.sign, last.reverse, 1);
+    this.cube.history.redoStack.push(original);
     const reverse = new TwistAction(last.sign, !last.reverse, 1);
+    this.suppressRedoClear = true;
     this.twist(reverse, false, true);
+    this.suppressRedoClear = false;
+  }
+
+  redo(): void {
+    const action = this.cube.history.redoStack.pop();
+    if (!action) {
+      return;
+    }
+    this.suppressRedoClear = true;
+    this.twist(action, false, true);
+    this.suppressRedoClear = false;
   }
 }

@@ -3,6 +3,7 @@ import { TwistAction } from "./twister";
 
 export default class History {
   list: TwistAction[] = [];
+  redoStack: TwistAction[] = [];
   init = "";
   exp = "";
 
@@ -38,6 +39,7 @@ export default class History {
 
   clear(): void {
     this.list = [];
+    this.redoStack = [];
     this.init = "";
     this.exp = "";
   }
