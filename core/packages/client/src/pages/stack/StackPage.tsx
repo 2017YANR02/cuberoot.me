@@ -159,6 +159,75 @@ export default function StackPage() {
     resize();
     window.addEventListener('resize', resize);
 
+    // 滚轮 / 双指捏合缩放: 实时改 world.scale + resize, 滚动停止后同步到 settings
+    const SCALE_MIN = 0.3;
+    const SCALE_MAX = 3.0;
+    const settingsFromScale = (s: number) => Math.round((s - 0.5) * 100);  // mapScale 的反函数
+    let scaleSyncTimer: number | null = null;
+    const syncScaleToSettings = () => {
+      if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
+      scaleSyncTimer = window.setTimeout(() => {
+        const w = worldRef.current;
+        if (!w) return;
+        const v = Math.max(0, Math.min(100, settingsFromScale(w.scale)));
+        setSettings((prev) => prev.scale === v ? prev : { ...prev, scale: v });
+      }, 250);
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const w = worldRef.current;
+      if (!w) return;
+      const factor = e.deltaY > 0 ? 0.92 : 1.08;
+      w.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale * factor));
+      w.resize();
+      syncScaleToSettings();
+    };
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
+
+    // 双指捏合: pointerdown 跟踪两个 active pointer
+    const activePointers = new Map<number, { x: number; y: number }>();
+    let pinchStartDist = 0;
+    let pinchStartScale = 0;
+    let pinching = false;
+    const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+      Math.hypot(a.x - b.x, a.y - b.y);
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activePointers.size === 2) {
+        const [a, b] = [...activePointers.values()];
+        pinchStartDist = dist(a, b);
+        pinchStartScale = world.scale;
+        pinching = true;
+        world.controller.disable = true;  // 暂停旋转, 让捏合主导
+      }
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinching && activePointers.size === 2) {
+        e.preventDefault();
+        const [a, b] = [...activePointers.values()];
+        const ratio = dist(a, b) / Math.max(pinchStartDist, 1);
+        world.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, pinchStartScale * ratio));
+        world.resize();
+      }
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      activePointers.delete(e.pointerId);
+      if (pinching && activePointers.size < 2) {
+        pinching = false;
+        world.controller.disable = false;
+        syncScaleToSettings();
+      }
+    };
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointermove', onPointerMove, { passive: false });
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
+    renderer.domElement.addEventListener('pointercancel', onPointerUp);
+
     let raf = 0;
     const loop = () => {
       if (world.dirty || world.cube.dirty) {
@@ -174,6 +243,12 @@ export default function StackPage() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
+      renderer.domElement.removeEventListener('wheel', onWheel);
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      renderer.domElement.removeEventListener('pointercancel', onPointerUp);
+      if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
       toucher.destroy();
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
