@@ -159,7 +159,6 @@ export default class InstancedRenderer extends THREE.Group {
     for (let i = 0; i < visCount; i++) {
       this.initialToInstance.set(cubelets[i].initial, i);
       this.instanceToInitial.push(cubelets[i].initial);
-      cubelets[i]._instIdx = i;
     }
 
     // Frame meshes + per-cubelet inner box meshes(共享 matrix)
@@ -337,18 +336,17 @@ export default class InstancedRenderer extends THREE.Group {
     for (const positionIdx of group.indices) {
       const cubelet = this.cube.cubelets.get(positionIdx);
       if (!cubelet) continue;
-      const instIdx = cubelet._instIdx;
-      if (instIdx < 0) continue;
+      const instIdx = this.initialToInstance.get(cubelet.initial);
+      if (instIdx === undefined) continue;
       instances.push(instIdx);
-      // Frame matrix at this instance == cubelet.matrix (logical state).
-      // 直接读 cubelet.matrix 跳过 staticFrame.getMatrixAt 的 typed array dance。
+      this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
       const origCub = this.acquireMat4();
-      origCub.copy(cubelet.matrix);
+      origCub.copy(this.tmpMat);
       origCubeletMats.push(origCub);
-      this.movingFrame.setMatrixAt(instIdx, cubelet.matrix);
+      this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
       this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
       if (this.hasInner) {
-        this.movingInner.setMatrixAt(instIdx, cubelet.matrix);
+        this.movingInner.setMatrixAt(instIdx, this.tmpMat);
         this.staticInner.setMatrixAt(instIdx, HIDE_MAT);
       }
 
