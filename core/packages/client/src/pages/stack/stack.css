@@ -101,18 +101,6 @@
   display: block;
 }
 
-.stack-credit {
-  padding: 6px 12px;
-  font-size: 11px;
-  color: var(--faint-foreground);
-  text-align: center;
-  border-top: 1px solid var(--border-default);
-  background: var(--card);
-}
-.stack-credit a {
-  color: var(--muted-foreground);
-}
-
 @media (max-width: 480px) {
   .stack-header {
     padding: 6px 8px;
