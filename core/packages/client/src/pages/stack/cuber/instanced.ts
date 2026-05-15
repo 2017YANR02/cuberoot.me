@@ -180,7 +180,6 @@ export default class InstancedRenderer extends THREE.Group {
   private activeSlices: Map<CubeGroup, {
     instances: number[];
     slots: number[];
-    cubelets: Cubelet[];          // parallel to instances, avoids Map.get in endSlice
     origCubeletMats: THREE.Matrix4[];
     origStickerMats: THREE.Matrix4[];
     origHintMats: THREE.Matrix4[];
@@ -390,40 +389,23 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker.count = 0;
   }
 
-  /** Process one chunk of pending shader-mode commit (frame + sticker + layer
-   * 写入 for ~CHUNK_SIZE cubelets). Called per-frame from StackPage render loop. */
-  advanceCommitChunk(): void {
-    if (!this.pendingCommit) return;
-    const CHUNK_SIZE = 8000;
-    const { state, cursor } = this.pendingCommit;
-    const instArr = state.instances;
-    const cubeletsArr = state.cubelets;
-    const end = Math.min(instArr.length, cursor + CHUNK_SIZE);
-    const tmpMat = this.tmpMat;
-    const staticFrame = this.staticFrame;
-    const staticSticker = this.staticSticker;
-    const frameAttr = staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-    const stickerAttr = staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+  /** Update aLayerXYZ for given cubelets — called at endSlice to reflect new layer
+   * assignments after group.rotate moved them. */
+  private updateShaderLayers(cubeletInstIdxs: number[]): void {
+    if (!this.useShaderSlice) return;
     const half = (this.cube.order - 1) / 2;
-    const cubeletSlots = this.cubeletSlots;
-    const stickerSlotsArr = this.stickerSlots;
-    for (let i = cursor; i < end; i++) {
-      const cubelet = cubeletsArr[i];
+    const frameAttr = this.staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    const stickerAttr = this.staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    for (const instIdx of cubeletInstIdxs) {
+      const cubeletInitial = this.instanceToInitial[instIdx];
+      const cubelet = this.cube.initials.get(cubeletInitial);
       if (!cubelet) continue;
       const v = cubelet.vector;
-      const lx = v.x + half;
-      const ly = v.y + half;
-      const lz = v.z + half;
-      staticFrame.setMatrixAt(instArr[i], cubelet.matrix);
-      frameAttr.setXYZ(instArr[i], lx, ly, lz);
-      const slots = cubeletSlots.get(cubelet.initial);
-      if (!slots) continue;
-      for (let j = 0; j < slots.length; j++) {
-        const slotIdx = slots[j];
-        const slot = stickerSlotsArr[slotIdx];
-        if (!slot.visible) {
-          staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
-          continue;
+      frameAttr.setXYZ(instIdx, v.x + half, v.y + half, v.z + half);
+      const slots = this.cubeletSlots.get(cubeletInitial);
+      if (slots) {
+        for (const slotIdx of slots) {
+          stickerAttr.setXYZ(slotIdx, v.x + half, v.y + half, v.z + half);
         }
         tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
         staticSticker.setMatrixAt(slotIdx, tmpMat);
@@ -516,20 +498,18 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.useShaderSlice) {
       const axisIdx = group.axis === 'x' ? 0 : group.axis === 'y' ? 1 : 2;
       this.setShaderSliceUniforms(axisIdx, group.layer, null);
-      // 缓存 cubelets / instances / slots 给 endSlice 用 — 省 62500 Map.get
+      // 仍然记 instances/slots 给 endSlice 用 (它需要 update cubelet.matrix)
       const instances: number[] = [];
-      const cubeletsArr: Cubelet[] = [];
       const slotsList: number[] = [];
       for (const positionIdx of group.indices) {
         const cubelet = this.cube.cubelets.get(positionIdx);
         if (!cubelet || cubelet._instIdx < 0) continue;
         instances.push(cubelet._instIdx);
-        cubeletsArr.push(cubelet);
         const slots = this.cubeletSlots.get(cubelet.initial);
         if (slots) for (const s of slots) if (this.stickerSlots[s].visible) slotsList.push(s);
       }
       // 占位空数组 (没用 origMats 但 endSlice 要 release_mat4 释放空数组)
-      this.activeSlices.set(group, { instances, slots: slotsList, cubelets: cubeletsArr, origCubeletMats: [], origStickerMats: [], origHintMats: [] });
+      this.activeSlices.set(group, { instances, slots: slotsList, origCubeletMats: [], origStickerMats: [], origHintMats: [] });
       this.cube.dirty = true;
       return;
     }
@@ -587,7 +567,7 @@ export default class InstancedRenderer extends THREE.Group {
         }
       }
     }
-    this.activeSlices.set(group, { instances, slots: slotsList, cubelets: [], origCubeletMats, origStickerMats, origHintMats });
+    this.activeSlices.set(group, { instances, slots: slotsList, origCubeletMats, origStickerMats, origHintMats });
     if (this.activeSlices.size === 1) {
       // 第一个 slice 激活:打开 moving 渲染、重置 quaternion
       this.movingFrame.quaternion.identity();
@@ -729,6 +709,28 @@ export default class InstancedRenderer extends THREE.Group {
     // aOrientation 4 floats vs mat4 16 floats, sticker 不用 multiplyMatrices, 一次性 commit
     // 同步 ~30ms 比 chunk + flushPendingCommitSync 模式 (per beginSlice 60ms spike) 更稳。
     if (this.useShaderSlice) {
+      for (const instIdx of state.instances) {
+        const cubeletInitial = this.instanceToInitial[instIdx];
+        const cubelet = this.cube.initials.get(cubeletInitial);
+        if (!cubelet) continue;
+        this.staticFrame.setMatrixAt(instIdx, cubelet.matrix);
+        const slots = this.cubeletSlots.get(cubeletInitial);
+        if (slots) {
+          for (const slotIdx of slots) {
+            const slot = this.stickerSlots[slotIdx];
+            if (!slot.visible) {
+              this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+              continue;
+            }
+            this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+            this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
+          }
+        }
+      }
+      this.updateShaderLayers(state.instances);
+      this.staticFrame.instanceMatrix.needsUpdate = true;
+      this.staticSticker.instanceMatrix.needsUpdate = true;
+      this.setShaderSliceUniforms(-1, 0, null);
       this.releaseMat4Array(state.origCubeletMats);
       this.releaseMat4Array(state.origStickerMats);
       this.releaseMat4Array(state.origHintMats);
