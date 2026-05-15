@@ -523,45 +523,59 @@ async function loadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<Co
   if (rows.length === 0) throw new Error(`wca_db: no results for ${wcaId}`);
   onProgress?.({ step: 'wca_db.transform', done: 0, total: 1 });
 
-  const compName = rows[0].comp_name ?? wcaId;
-
-  // Users
+  // 单遍累积 users / merged / events 三件事(共享 rows 流),避免 3 次重复迭代 + 中间 scratch map.
   const users: Record<string, User> = {};
   const numByWcaId = new Map<string, number>();
-  for (const r of rows) {
-    if (!r.wca_id || numByWcaId.has(r.wca_id)) continue;
-    const n = numByWcaId.size + 1;
-    numByWcaId.set(r.wca_id, n);
-    users[String(n)] = {
-      number: n,
-      name: r.person_name ?? r.wca_id,
-      wcaid: r.wca_id,
-      region: r.country_iso2 ? r.country_iso2.toLowerCase() : '',
-    };
-  }
-
-  // 合并 is_avg=false/true 两行 → 一条 LiveResult
-  // key = event:round:wca_id
   const merged = new Map<string, LiveResult>();
-  const seenAttemptsByKey = new Map<string, number[]>();
+  const eventMap = new Map<string, EventMeta>();
+  const roundLookup = new Map<string, RoundMeta>();      // `${ev}:${rd}` → rd
+  const seenInRound = new Map<string, Set<string>>();    // `${ev}:${rd}` → distinct wca_ids(rn 计数源)
+
   for (const r of rows) {
-    const key = `${r.event_id}:${r.round_type_id}:${r.wca_id}`;
-    let cur = merged.get(key);
+    let num = numByWcaId.get(r.wca_id);
+    if (num === undefined && r.wca_id) {
+      num = numByWcaId.size + 1;
+      numByWcaId.set(r.wca_id, num);
+      users[String(num)] = {
+        number: num,
+        name: r.person_name ?? r.wca_id,
+        wcaid: r.wca_id,
+        region: r.country_iso2 ? r.country_iso2.toLowerCase() : '',
+      };
+    }
+
+    let ev = eventMap.get(r.event_id);
+    if (!ev) {
+      ev = { i: r.event_id, name: r.event_id, rs: [] };
+      eventMap.set(r.event_id, ev);
+    }
+    const rkey = `${r.event_id}:${r.round_type_id}`;
+    let rd = roundLookup.get(rkey);
+    if (!rd) {
+      rd = {
+        i: r.round_type_id, e: r.event_id, f: r.format_id,
+        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
+        name: ROUND_NAME[r.round_type_id] || r.round_type_id,
+      };
+      roundLookup.set(rkey, rd);
+      ev.rs.push(rd);
+    }
+    let seen = seenInRound.get(rkey);
+    if (!seen) { seen = new Set(); seenInRound.set(rkey, seen); }
+    if (r.wca_id) seen.add(r.wca_id);
+
+    const mkey = `${rkey}:${r.wca_id}`;
+    let cur = merged.get(mkey);
     if (!cur) {
-      const n = numByWcaId.get(r.wca_id) ?? 0;
       cur = {
-        i: 0, c: 0, n,
+        i: 0, c: 0, n: num ?? 0,
         e: r.event_id, r: r.round_type_id, f: r.format_id,
         b: 0, a: 0, v: [], sr: '', ar: '',
       };
-      merged.set(key, cur);
+      merged.set(mkey, cur);
     }
-    // attempts: 优先用 best 行(更稳),avg 行如果 best 行没给再补
-    const att = r.attempts ?? [];
-    if (!seenAttemptsByKey.has(key) || (!r.is_avg && seenAttemptsByKey.get(key)!.length === 0)) {
-      seenAttemptsByKey.set(key, att);
-      cur.v = att;
-    }
+    // 优先 best 行的 attempts(更稳),avg 行只在 best 行还没给时兜底.
+    if (!r.is_avg || cur.v.length === 0) cur.v = r.attempts ?? cur.v;
     if (r.is_avg) {
       cur.a = r.value;
       if (r.record_tag) cur.ar = r.record_tag;
@@ -571,50 +585,25 @@ async function loadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<Co
     }
   }
 
-  // 收集 events × rounds + result rn/tt 计数
-  type RoundAccum = RoundMeta & { _seen: Set<string> };
-  const eventMap = new Map<string, EventMeta & { _rmap: Map<string, RoundAccum> }>();
-  for (const r of rows) {
-    let ev = eventMap.get(r.event_id);
-    if (!ev) {
-      ev = { i: r.event_id, name: r.event_id, rs: [], _rmap: new Map() };
-      eventMap.set(r.event_id, ev);
-    }
-    let rd = ev._rmap.get(r.round_type_id);
-    if (!rd) {
-      rd = {
-        i: r.round_type_id, e: r.event_id, f: r.format_id,
-        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
-        name: ROUND_NAME[r.round_type_id] || r.round_type_id,
-        _seen: new Set(),
-      };
-      ev._rmap.set(r.round_type_id, rd);
-      ev.rs.push(rd);
-    }
-    rd._seen.add(r.wca_id);
-  }
   for (const ev of eventMap.values()) {
     for (const rd of ev.rs) {
-      const acc = rd as RoundAccum;
-      acc.rn = acc._seen.size;
-      acc.tt = acc.rn;
-      delete (acc as Partial<RoundAccum>)._seen;
+      const cnt = seenInRound.get(`${rd.e}:${rd.i}`)?.size ?? 0;
+      rd.rn = cnt;
+      rd.tt = cnt;
     }
     ev.rs.sort((a, b) => (ROUND_ORDER[a.i] ?? 99) - (ROUND_ORDER[b.i] ?? 99));
-    delete (ev as Partial<EventMeta & { _rmap?: unknown }>)._rmap;
   }
 
-  // event 按官方顺序排
   const events: EventMeta[] = [];
+  const added = new Set<string>();
   for (const id of WCA_EVENT_ORDER) {
     const ev = eventMap.get(id);
-    if (ev) events.push(ev);
+    if (ev) { events.push(ev); added.add(id); }
   }
-  for (const ev of eventMap.values()) {
-    if (!events.includes(ev)) events.push(ev);
+  for (const [id, ev] of eventMap) {
+    if (!added.has(id)) events.push(ev);
   }
 
-  // resultsByRound: 按 best/avg 排序(0/DNF 放最后)
   const resultsByRound: Record<string, LiveResult[]> = {};
   for (const lr of merged.values()) {
     const key = `${lr.e}:${lr.r}`;
@@ -626,7 +615,7 @@ async function loadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<Co
     slug: wcaId,
     source: 'wca_db',
     compId: 0,
-    name: compName,
+    name: rows[0].comp_name ?? wcaId,
     type: 'WCA',
     events,
     users,
