@@ -1,0 +1,1 @@
+import{a as e}from"./chunk-Byb_VWJN.js";import{t}from"./react-BHPi-aqk.js";var n=e(t(),1);function r(e=768){let t=`(max-width: ${e}px)`,[r,i]=(0,n.useState)(()=>typeof window<`u`&&window.matchMedia(t).matches);return(0,n.useEffect)(()=>{let e=window.matchMedia(t),n=e=>i(e.matches);return e.addEventListener(`change`,n),()=>e.removeEventListener(`change`,n)},[t]),r}export{r as t};
