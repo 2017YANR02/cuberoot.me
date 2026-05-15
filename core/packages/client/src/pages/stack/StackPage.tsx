@@ -93,6 +93,10 @@ export default function StackPage() {
       const wnow = worldRef.current;
       if (!wnow) return;
       const c = wnow.cube as unknown as StackCube;
+      // 超高阶 N≥50: 跳过 cube.complete 计算。它每次 callback 都迭代 6×N² 个
+      // cubelet (N=250 = 375k × getFace 四元数计算 = 100-200ms spike per twist
+      // = min fps 主凶)。用户在 N=250 不会手工 solve, 不显 solved toast 完全可接受。
+      if (wnow.cube.order >= 50) return;
       const completeNow = c.complete;
       if (completeNow && !wasCompleteRef.current && c.history.moves > 0) {
         setSolvedToast(true);
