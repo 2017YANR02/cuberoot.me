@@ -56,7 +56,9 @@ interface LiveResult {
 }
 
 interface CompData {
-  slug: string;
+  slug: string;     // WCA ID (无横杠),规范形态
+  cubingSlug?: string; // cubing.com 用的 dash slug;source=wca 时无
+  source: 'cubing' | 'wca';
   compId: number;
   name: string;
   type: string;     // "WCA" / "Non-WCA"
@@ -290,48 +292,195 @@ async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 
 
 // ─── Cache ─────────────────────────────────────────────────────────────────
 
-const CACHE_TTL_MS = 60_000;
+const CUBING_CACHE_TTL_MS = 60_000;      // cubing.com 直播,1 分钟兜底
+const WCA_CACHE_TTL_MS = 60 * 60_000;    // WCA 静态数据,1 小时
 const cache = new Map<string, CompData>();
 const inflight = new Map<string, Promise<CompData>>();
 
-async function loadComp(slug: string): Promise<CompData> {
-  const now = Date.now();
-  const cached = cache.get(slug);
-  if (cached && now - cached.fetchedAt < CACHE_TTL_MS) return cached;
+function ttlFor(source: 'cubing' | 'wca'): number {
+  return source === 'wca' ? WCA_CACHE_TTL_MS : CUBING_CACHE_TTL_MS;
+}
 
-  const pending = inflight.get(slug);
+/** WCA ID (e.g. XuzhouZenith2026) → cubing.com slug (Xuzhou-Zenith-2026)。
+ *  在小写↔大写、字母↔数字边界插横杠。绝大多数 cubing.com slug 都是这个规则。 */
+function wcaIdToCubingSlug(wcaId: string): string {
+  return wcaId
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/([A-Za-z])(\d)/g, '$1-$2');
+}
+
+// ─── WCA API fallback (non-cubing.com comps) ──────────────────────────────
+
+const WCA_API_BASE = 'https://www.worldcubeassociation.org/api/v0';
+
+interface WcaCompMeta { id: string; name: string; event_ids?: string[]; }
+interface WcaResultRow {
+  id: number; round_id: number; pos: number;
+  best: number; average: number;
+  name: string; country_iso2: string; wca_id: string;
+  competition_id: string; event_id: string; round_type_id: string; format_id: string;
+  attempts: number[];
+  regional_single_record: string | null;
+  regional_average_record: string | null;
+}
+
+const ROUND_ORDER: Record<string, number> = {
+  d: 0, '1': 1, e: 2, '2': 3, g: 4, '3': 5, c: 6, b: 7, f: 8, h: 9,
+};
+const ROUND_NAME: Record<string, string> = {
+  '1': 'First round',
+  '2': 'Second round',
+  '3': 'Semi Final',
+  f: 'Final',
+  d: 'First round',
+  e: 'Second round',
+  g: 'Semi Final',
+  c: 'Final',
+  b: 'B Final',
+  h: 'Final',
+};
+
+async function loadFromWca(wcaId: string): Promise<CompData> {
+  const [metaRes, resultsRes] = await Promise.all([
+    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`),
+    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}/results`),
+  ]);
+  if (!metaRes.ok) throw new Error(`WCA meta HTTP ${metaRes.status}`);
+  if (!resultsRes.ok) throw new Error(`WCA results HTTP ${resultsRes.status}`);
+  const meta = await metaRes.json() as WcaCompMeta;
+  const results = await resultsRes.json() as WcaResultRow[];
+
+  // Users — competitor number 用自增序号(WCA 没有 number 概念)
+  const users: Record<string, User> = {};
+  const numByWcaId = new Map<string, number>();
+  for (const r of results) {
+    if (!r.wca_id) continue;
+    if (numByWcaId.has(r.wca_id)) continue;
+    const n = numByWcaId.size + 1;
+    numByWcaId.set(r.wca_id, n);
+    users[String(n)] = {
+      number: n,
+      name: r.name,
+      wcaid: r.wca_id,
+      region: r.country_iso2 ? r.country_iso2.toLowerCase() : '',
+    };
+  }
+
+  // Events + rounds (从 results 反推)
+  const eventMap = new Map<string, EventMeta>();
+  for (const r of results) {
+    let ev = eventMap.get(r.event_id);
+    if (!ev) {
+      ev = { i: r.event_id, name: r.event_id, rs: [] };
+      eventMap.set(r.event_id, ev);
+    }
+    let rd = ev.rs.find(x => x.i === r.round_type_id);
+    if (!rd) {
+      rd = {
+        i: r.round_type_id, e: r.event_id, f: r.format_id,
+        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
+        name: ROUND_NAME[r.round_type_id] || r.round_type_id,
+      };
+      ev.rs.push(rd);
+    }
+    rd.rn += 1;
+    rd.tt = rd.rn;
+  }
+  for (const ev of eventMap.values()) {
+    ev.rs.sort((a, b) => (ROUND_ORDER[a.i] ?? 99) - (ROUND_ORDER[b.i] ?? 99));
+  }
+  // Order events as listed in meta.event_ids (官方顺序),其余 fallback 按 results 出现序
+  const evIds = meta.event_ids ?? [...eventMap.keys()];
+  const events: EventMeta[] = [];
+  for (const id of evIds) {
+    const ev = eventMap.get(id);
+    if (ev) events.push(ev);
+  }
+  for (const ev of eventMap.values()) {
+    if (!events.includes(ev)) events.push(ev);
+  }
+
+  // resultsByRound
+  const resultsByRound: Record<string, LiveResult[]> = {};
+  for (const r of results) {
+    const key = `${r.event_id}:${r.round_type_id}`;
+    if (!resultsByRound[key]) resultsByRound[key] = [];
+    const n = numByWcaId.get(r.wca_id) ?? 0;
+    resultsByRound[key].push({
+      i: r.id, c: 0, n,
+      e: r.event_id, r: r.round_type_id, f: r.format_id,
+      b: r.best, a: r.average, v: r.attempts ?? [],
+      sr: r.regional_single_record ?? '',
+      ar: r.regional_average_record ?? '',
+    });
+  }
+
+  return {
+    slug: wcaId,
+    source: 'wca',
+    compId: 0,
+    name: meta.name,
+    type: 'WCA',
+    events,
+    users,
+    resultsByRound,
+    membersByFilter: { females: [], children: [], newcomers: [] },
+    fetchedAt: Date.now(),
+  };
+}
+
+async function loadFromCubing(wcaId: string): Promise<CompData> {
+  const cubingSlug = wcaIdToCubingSlug(wcaId);
+  const meta = await scrapeMeta(cubingSlug);
+  const { users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events);
+  return {
+    slug: wcaId,
+    cubingSlug,
+    source: 'cubing',
+    compId: meta.compId,
+    name: meta.name,
+    type: meta.type,
+    events: meta.events,
+    users,
+    resultsByRound,
+    membersByFilter,
+    fetchedAt: Date.now(),
+  };
+}
+
+async function loadComp(wcaId: string): Promise<CompData> {
+  const now = Date.now();
+  const cached = cache.get(wcaId);
+  if (cached && now - cached.fetchedAt < ttlFor(cached.source)) return cached;
+
+  const pending = inflight.get(wcaId);
   if (pending) return pending;
 
   const p = (async () => {
-    const meta = await scrapeMeta(slug);
-    const { users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events);
-    const data: CompData = {
-      slug,
-      compId: meta.compId,
-      name: meta.name,
-      type: meta.type,
-      events: meta.events,
-      users,
-      resultsByRound,
-      membersByFilter,
-      fetchedAt: Date.now(),
-    };
-    cache.set(slug, data);
+    let data: CompData;
+    try {
+      data = await loadFromCubing(wcaId);
+    } catch {
+      // cubing.com 没这场(常见:非中国比赛)→ 走 WCA API
+      data = await loadFromWca(wcaId);
+    }
+    cache.set(wcaId, data);
     return data;
-  })().finally(() => inflight.delete(slug));
+  })().finally(() => inflight.delete(wcaId));
 
-  inflight.set(slug, p);
+  inflight.set(wcaId, p);
   return p;
 }
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 
 cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
-  const slug = c.req.param('slug');
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) return c.json({ error: 'invalid slug' }, 400);
+  const raw = c.req.param('slug');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(raw)) return c.json({ error: 'invalid slug' }, 400);
+  // 输入归一化为 WCA ID (无横杠) — client 现在已经按 WCA ID 发,这里兜底兼容老链接
+  const wcaId = raw.replace(/-/g, '');
   try {
-    const data = await loadComp(slug);
-    // public cache 30s on edge so repeated viewers hit nginx cache, not us
+    const data = await loadComp(wcaId);
     c.header('Cache-Control', 'public, max-age=30');
     return c.json(data);
   } catch (e) {

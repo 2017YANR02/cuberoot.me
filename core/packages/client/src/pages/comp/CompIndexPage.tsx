@@ -22,12 +22,6 @@ import './comp.css';
  *    (1) 小写字母 → 大写字母 (camelCase 边界): "XuzhouZenith" → "Xuzhou-Zenith"
  *    (2) 字母 → 数字 (年份前): "Zenith2026" → "Zenith-2026"
  *  例: XuzhouZenith2026 → Xuzhou-Zenith-2026 ✓ */
-function wcaIdToCubingSlug(wcaId: string): string {
-  return wcaId
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/([A-Za-z])([0-9])/g, '$1-$2');
-}
-
 function decodeEntities(s: string): string {
   if (!s) return s;
   return s
@@ -54,20 +48,29 @@ function loadRecent(): RecentEntry[] {
     if (!raw) return [];
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    return arr.filter((e): e is RecentEntry =>
+    // 老条目 slug 带横杠,迁移成 WCA ID 形态(同一比赛去重保留最新)
+    const valid = arr.filter((e): e is RecentEntry =>
       e && typeof e.slug === 'string' && typeof e.name === 'string' && typeof e.viewedAt === 'number',
     );
+    const dedup = new Map<string, RecentEntry>();
+    for (const e of valid) {
+      const norm = { ...e, slug: e.slug.replace(/-/g, '') };
+      const existing = dedup.get(norm.slug);
+      if (!existing || existing.viewedAt < norm.viewedAt) dedup.set(norm.slug, norm);
+    }
+    return [...dedup.values()].sort((a, b) => b.viewedAt - a.viewedAt);
   } catch { return []; }
 }
 
+/** 把任意输入(cubing.com URL / dash slug / WCA ID)归一为 WCA ID(无横杠) */
 function parseSlug(input: string): string | null {
   const t = input.trim();
   if (!t) return null;
   // Full URL: extract last path segment
   const urlMatch = t.match(/cubing\.com\/live\/([A-Za-z0-9_-]+)/i);
-  if (urlMatch) return urlMatch[1];
-  // Plain slug
-  if (/^[A-Za-z0-9_-]+$/.test(t)) return t;
+  if (urlMatch) return urlMatch[1].replace(/-/g, '');
+  // Plain slug — 去掉横杠归一到 WCA ID
+  if (/^[A-Za-z0-9_-]+$/.test(t)) return t.replace(/-/g, '');
   return null;
 }
 
@@ -116,8 +119,7 @@ export default function CompIndexPage() {
             }
           }}
           onPick={(c: Comp) => {
-            const slug = wcaIdToCubingSlug(c.id);
-            navigate(`/comp/${slug}`);
+            navigate(`/comp/${c.id}`);
           }}
           isZh={isZh}
           placeholder={isZh ? '搜索比赛 / 城市,或粘贴 cubing.com URL' : 'Search competition / city, or paste cubing.com URL'}
@@ -137,9 +139,8 @@ export default function CompIndexPage() {
           <h2 className="comp-recent-title">{isZh ? '最近浏览' : 'Recent'}</h2>
           <ul className="comp-recent-list">
             {recent.map(r => {
-              const wcaId = r.slug.replace(/-/g, '');
-              const iso2 = compFlagIso2(wcaId);
-              const display = localizeCompName(wcaId, decodeEntities(r.name), isZh);
+              const iso2 = compFlagIso2(r.slug);
+              const display = localizeCompName(r.slug, decodeEntities(r.name), isZh);
               return (
               <li key={r.slug} className="comp-recent-item">
                 <button

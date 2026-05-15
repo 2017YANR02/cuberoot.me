@@ -8,7 +8,7 @@
  *         result.b/.a ≤ pre-comp PR(或本比赛之前的更优) → 标黄。
  */
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
@@ -22,6 +22,8 @@ import { countryName } from '../../utils/country_name';
 import { localizeCompName } from '../../utils/comp_localize';
 import { apiUrl } from '../../utils/api_base';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
+import WcaEventSelector from '../../components/WcaEventSelector';
+import { formatWcaResult } from '../../utils/wca_format_result';
 import { rememberRecent } from './CompIndexPage';
 import { useLiveStream, applyResultPatch, type LivePatch } from './useLiveStream';
 import './comp.css';
@@ -59,14 +61,23 @@ interface LiveResult {
   b: number; a: number; v: number[]; sr: string; ar: string | number;
 }
 
+interface MembersByFilter {
+  females: number[];
+  children: number[];
+  newcomers: number[];
+}
+
 interface CompData {
   slug: string;
+  cubingSlug?: string;
+  source?: 'cubing' | 'wca';
   compId: number;
   name: string;
   type: string;
   events: EventMeta[];
   users: Record<string, User>;
   resultsByRound: Record<string, LiveResult[]>;
+  membersByFilter?: MembersByFilter;
   fetchedAt: number;
 }
 
@@ -167,21 +178,21 @@ function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&');
 }
 
-/** Round 状态 → 中英描述 (Open / Finished / Live) */
-function statusLabel(rd: RoundMeta, isZh: boolean): string {
-  const map = ['Open', 'Finished', 'Live'];
-  const en = map[rd.s] || '';
-  if (!isZh) return en;
-  return ({ 'Open': '进行中', 'Finished': '已结束', 'Live': '实时' } as Record<string, string>)[en] || en;
-}
-
 // ─── 组件 ─────────────────────────────────────────────────────────────────
 
 export default function CompDetailPage() {
-  const { slug = '' } = useParams<{ slug: string }>();
+  const { slug: rawSlug = '' } = useParams<{ slug: string }>();
+  const slug = rawSlug.replace(/-/g, ''); // canonical = WCA ID
+  const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [searchParams, setSearchParams] = useSearchParams();
+  // 老 URL (Xuzhou-Zenith-2026) → 重定向到 WCA ID 形态
+  useEffect(() => {
+    if (rawSlug && rawSlug !== slug) {
+      navigate(`/comp/${slug}${window.location.search}`, { replace: true });
+    }
+  }, [rawSlug, slug, navigate]);
 
   const [data, setData] = useState<CompData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,6 +209,8 @@ export default function CompDetailPage() {
   const eventParam = searchParams.get('event') || '';
   const roundParam = searchParams.get('round') || '';
   const filterParam = searchParams.get('filter') || 'all';
+  const viewParam = (searchParams.get('view') === 'psych' ? 'psych' : 'live') as 'live' | 'psych';
+  const psychEventParam = searchParams.get('psychEvent') || '';
 
   // ── fetch comp data ────────────────────────────────────────────────────
 
@@ -267,7 +280,8 @@ export default function CompDetailPage() {
     });
   }, []);
 
-  const wsStatus = useLiveStream({ compId: data?.compId ?? null, applyPatch });
+  const isWca = data?.source === 'wca';
+  const wsStatus = useLiveStream({ compId: isWca ? null : (data?.compId ?? null), applyPatch });
 
   // ── 默认选 round: 优先 finished 最近一个 3x3 round,否则第一个有数据的 round ──
 
@@ -317,10 +331,26 @@ export default function CompDetailPage() {
     if (!data || !currentRound) return [];
     const key = roundKey(currentRound.ev.i, currentRound.rd.i);
     const all = data.resultsByRound[key] || [];
-    if (filterParam === 'all') return all;
-    // 简单 filter: females / newcomers / children — server 端 cubing.com 没传过来这些 flag,
-    // 暂时全部返回 all (留作 TODO)。
-    return all;
+    let arr = all;
+    if (filterParam !== 'all') {
+      const members = data.membersByFilter?.[filterParam as keyof MembersByFilter];
+      if (members) {
+        const set = new Set(members);
+        arr = all.filter(r => set.has(r.n));
+      }
+    }
+    // WCA 排名:平均赛制按 avg ASC,best ASC tiebreaker;best-of-N 按 best ASC。
+    // DNF (-1) / DNS (-2) / 空 (0) 一律排到最后。
+    // 用三态 cmp 而不是减法 — Infinity - Infinity = NaN,会让 tiebreak 失效。
+    const f = currentRound.rd.f;
+    const byAvg = f === 'a' || f === 'm' || f === '';
+    const rankKey = (v: number) => (v > 0 ? v : Infinity);
+    const cmp = (a: number, b: number) => a < b ? -1 : a > b ? 1 : 0;
+    return arr.slice().sort((x, y) => {
+      const primary = byAvg ? cmp(rankKey(x.a), rankKey(y.a)) : cmp(rankKey(x.b), rankKey(y.b));
+      if (primary !== 0) return primary;
+      return cmp(rankKey(x.b), rankKey(y.b));
+    });
   }, [data, currentRound, filterParam]);
 
   // ── prefetch PRs for current round ────────────────────────────────────
@@ -382,6 +412,36 @@ export default function CompDetailPage() {
     setSearchParams(next, { replace: false });
   };
 
+  const onChangeView = (value: 'live' | 'psych') => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'live') next.delete('view');
+    else next.set('view', 'psych');
+    setSearchParams(next, { replace: false });
+  };
+
+  const onChangePsychEvent = (eventId: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (eventId) next.set('psychEvent', eventId);
+    else next.delete('psychEvent');
+    setSearchParams(next, { replace: false });
+  };
+
+  // Psych Sheet: prefetch PRs for ALL competitors when entering view (cache dedupe handles dupes)
+  useEffect(() => {
+    if (viewParam !== 'psych' || !data) return;
+    const wcaIds = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
+    if (wcaIds.length === 0) return;
+    let cancelled = false;
+    prefetchPbs(wcaIds).then(() => { if (!cancelled) setPbVer(v => v + 1); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [viewParam, data]);
+
+  const psychEventId = useMemo(() => {
+    if (!data) return '';
+    if (psychEventParam && data.events.some(e => e.i === psychEventParam)) return psychEventParam;
+    return data.events[0]?.i || '';
+  }, [data, psychEventParam]);
+
   // ── 渲染 ───────────────────────────────────────────────────────────────
 
   if (loading) return <div className="comp-detail-page"><div className="comp-loading">{isZh ? '加载中…' : 'Loading…'}</div></div>;
@@ -416,90 +476,122 @@ export default function CompDetailPage() {
         <ThemeToggle />
       </div>
 
-      <header className="comp-detail-header">
-        <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
-        <h1 className="comp-detail-title">
-          {/* cubing.com slug 形如 "Xian-Cherry-Blossom-2026",WCA comp id 把横线去掉就行 */}
-          {(() => {
-            const wcaId = slug.replace(/-/g, '');
-            const iso2 = compFlagIso2(wcaId);
-            return (
-              <>
-                {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
-                {localizeCompName(wcaId, decodeEntities(data.name), isZh)}
-              </>
-            );
-          })()}
-        </h1>
-        <div className="comp-detail-meta">
-          <a
-            href={`https://cubing.com/live/${data.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="comp-detail-link"
-            title="cubing.com"
+      <div className="comp-table-section">
+        <header className="comp-detail-header">
+          <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
+          <h1 className="comp-detail-title">
+            {/* slug 已经是 WCA ID 形态(无横杠) */}
+            {(() => {
+              const iso2 = compFlagIso2(slug);
+              return (
+                <>
+                  {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
+                  {localizeCompName(slug, decodeEntities(data.name), isZh)}
+                </>
+              );
+            })()}
+          </h1>
+          <div className="comp-detail-meta">
+            {isWca ? (
+              <a
+                href={`https://www.worldcubeassociation.org/competitions/${data.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="comp-detail-link"
+                title="WCA"
+              >
+                WCA <ExternalLink size={12} />
+              </a>
+            ) : (
+              <a
+                href={`https://cubing.com/live/${data.cubingSlug || data.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="comp-detail-link"
+                title="cubing.com"
+              >
+                cubing.com <ExternalLink size={12} />
+              </a>
+            )}
+            <span className="comp-detail-fetched">
+              {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
+            </span>
+            {!isWca && <LiveIndicator status={wsStatus} isZh={isZh} />}
+            {!isWca && wsStatus !== 'open' && (
+              <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={isZh ? '刷新' : 'Refresh'}>
+                <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className="comp-view-tabs">
+          <button
+            type="button"
+            className={`comp-view-tab${viewParam === 'live' ? ' is-active' : ''}`}
+            onClick={() => onChangeView('live')}
           >
-            cubing.com <ExternalLink size={12} />
-          </a>
-          <span className="comp-detail-fetched">
-            {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
-          </span>
-          <LiveIndicator status={wsStatus} isZh={isZh} />
-          <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={isZh ? '刷新' : 'Refresh'}>
-            <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
+            {isZh ? (isWca ? '成绩' : '直播成绩') : (isWca ? 'Results' : 'Live')}
+          </button>
+          <button
+            type="button"
+            className={`comp-view-tab${viewParam === 'psych' ? ' is-active' : ''}`}
+            onClick={() => onChangeView('psych')}
+          >
+            {isZh ? '赛前榜' : 'Psych Sheet'}
           </button>
         </div>
-      </header>
 
-      <div className="comp-selectors">
-        <select
-          className="comp-select comp-round-select"
-          value={currentRound ? roundKey(currentRound.ev.i, currentRound.rd.i) : ''}
-          onChange={e => onChangeRound(e.target.value)}
-        >
-          {roundOptions.map(o => (
-            <option key={o.key} value={o.key}>
-              {eventDisplayName(o.ev.i, isZh)} - {roundDisplayName(o.rd.name, isZh)}
-              {o.rd.s === 1 ? ` - ${isZh ? '已结束' : 'Finished'}` : o.rd.s === 2 ? ` - ${isZh ? '实时' : 'Live'}` : ''}
-              {' '}({o.rd.rn})
-            </option>
-          ))}
-        </select>
+        {viewParam === 'live' ? (
+          <>
+            <div className="comp-selectors">
+              <select
+                className="comp-select comp-round-select"
+                value={currentRound ? roundKey(currentRound.ev.i, currentRound.rd.i) : ''}
+                onChange={e => onChangeRound(e.target.value)}
+              >
+                {roundOptions.map(o => (
+                  <option key={o.key} value={o.key}>
+                    {eventDisplayName(o.ev.i, isZh)} - {roundDisplayName(o.rd.name, isZh)}
+                    {o.rd.s === 1 ? ` - ${isZh ? '已结束' : 'Finished'}` : o.rd.s === 2 ? ` - ${isZh ? '实时' : 'Live'}` : ''}
+                    {' '}({o.rd.rn})
+                  </option>
+                ))}
+              </select>
 
-        <select
-          className="comp-select comp-filter-select"
-          value={filterParam}
-          onChange={e => onChangeFilter(e.target.value)}
-          disabled
-          title={isZh ? '该过滤器待 cubing.com 数据中加入选手 metadata 后启用' : 'Disabled until cubing.com exposes per-cuber tags'}
-        >
-          {filterOptions.map(f => (
-            <option key={f.value} value={f.value}>{isZh ? f.labelZh : f.labelEn}</option>
-          ))}
-        </select>
+              {!isWca && (
+                <select
+                  className="comp-select comp-filter-select"
+                  value={filterParam}
+                  onChange={e => onChangeFilter(e.target.value)}
+                >
+                  {filterOptions.map(f => (
+                    <option key={f.value} value={f.value}>{isZh ? f.labelZh : f.labelEn}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <ResultsTable
+              results={filteredResults}
+              users={data.users}
+              round={currentRound?.rd}
+              isZh={isZh}
+              pbMap={pbMap}
+              onClickCuber={n => setOpenedCuber(n)}
+            />
+          </>
+        ) : (
+          <PsychSheet
+            data={data}
+            isZh={isZh}
+            eventId={psychEventId}
+            onChangeEvent={onChangePsychEvent}
+            pbMap={pbMap}
+            onClickCuber={n => setOpenedCuber(n)}
+          />
+        )}
       </div>
-
-      {currentRound && (
-        <div className="comp-round-banner">
-          <span className="comp-round-banner-title">
-            {eventDisplayName(currentRound.ev.i, isZh)} - {roundDisplayName(currentRound.rd.name, isZh)}
-          </span>
-          <span className="comp-round-banner-status">
-            {statusLabel(currentRound.rd, isZh)}
-            {' · '}
-            {filteredResults.length} {isZh ? '人' : 'results'}
-          </span>
-        </div>
-      )}
-
-      <ResultsTable
-        results={filteredResults}
-        users={data.users}
-        round={currentRound?.rd}
-        isZh={isZh}
-        pbMap={pbMap}
-        onClickCuber={n => setOpenedCuber(n)}
-      />
 
       {openedCuber !== null && (
         <CuberModal
@@ -567,14 +659,18 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
                   </button>
                 </td>
                 {showAvg && (
-                  <td className={`td-avg${averagePr ? ' is-pr' : ''}`} title={averagePr ? (isZh ? '平均 PR' : 'Average PR') : undefined}>
+                  <td className="td-avg">
                     {formatLive(r.a, r.e, true)}
-                    {r.ar ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} /> : null}
+                    {r.ar
+                      ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
+                      : averagePr ? <RecordBadge record="PR" variant="inline" /> : null}
                   </td>
                 )}
-                <td className={`td-best${singlePr ? ' is-pr' : ''}`} title={singlePr ? (isZh ? '单次 PR' : 'Single PR') : undefined}>
+                <td className="td-best">
                   {formatLive(r.b, r.e, false)}
-                  {r.sr ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} /> : null}
+                  {r.sr
+                    ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
+                    : singlePr ? <RecordBadge record="PR" variant="inline" /> : null}
                 </td>
                 {Array.from({ length: attemptCount }).map((_, i) => (
                   <td key={i} className="td-attempt">{formatLive(r.v[i] ?? 0, r.e, false)}</td>
@@ -588,6 +684,102 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
         </tbody>
       </table>
     </div>
+  );
+}
+
+// ─── PsychSheet: 赛前榜 (按 WCA PR 排序) ──────────────────────────────────
+
+interface PsychSheetProps {
+  data: CompData;
+  isZh: boolean;
+  eventId: string;
+  onChangeEvent: (id: string) => void;
+  pbMap: Record<string, PbByEvent | null>;
+  onClickCuber: (number: number) => void;
+}
+
+function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }: PsychSheetProps) {
+  const availableEvents = useMemo(() => new Set(data.events.map(e => e.i)), [data.events]);
+
+  // 该项目所有出现过的 cuber number(union 项目下所有 round)
+  const rows = useMemo(() => {
+    if (!eventId) return [];
+    const numbers = new Set<number>();
+    for (const rd of data.events.find(e => e.i === eventId)?.rs ?? []) {
+      for (const r of data.resultsByRound[`${eventId}:${rd.i}`] ?? []) {
+        numbers.add(r.n);
+      }
+    }
+    const rankKey = (v: number | undefined) => (v && v > 0 ? v : Infinity);
+    const cmp = (a: number, b: number) => a < b ? -1 : a > b ? 1 : 0;
+    const arr = [...numbers]
+      .map(n => {
+        const u = data.users[String(n)];
+        if (!u) return null;
+        const pb = u.wcaid ? pbMap[u.wcaid] : null;
+        const single = pb?.[eventId]?.single?.best;
+        const average = pb?.[eventId]?.average?.best;
+        return { n, u, single, average };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+    arr.sort((x, y) => {
+      const byAvg = cmp(rankKey(x.average), rankKey(y.average));
+      if (byAvg !== 0) return byAvg;
+      return cmp(rankKey(x.single), rankKey(y.single));
+    });
+    return arr;
+  }, [data, eventId, pbMap]);
+
+  return (
+    <>
+      <div className="comp-psych-eventbar">
+        <WcaEventSelector
+          availableEvents={availableEvents}
+          selectedEvent={eventId}
+          onSelect={onChangeEvent}
+          isZh={isZh}
+          onlyAvailable
+        />
+      </div>
+      <div className="comp-table-wrap">
+        <table className="comp-table">
+          <thead>
+            <tr>
+              <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
+              <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+              <th className="th-avg">{isZh ? '平均 PR' : 'Average PR'}</th>
+              <th className="th-best">{isZh ? '单次 PR' : 'Single PR'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, idx) => {
+              const isOdd = idx % 2 === 1;
+              return (
+                <tr key={row.n} className={isOdd ? 'row-odd' : ''}>
+                  <td className="td-place">{idx + 1}</td>
+                  <td className="td-person">
+                    <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
+                    <button
+                      type="button"
+                      className="cuber-link"
+                      onClick={() => onClickCuber(row.n)}
+                      title={regionDisplay(row.u.region, isZh)}
+                    >
+                      {displayCuberName(row.u.name, isZh)}
+                    </button>
+                  </td>
+                  <td className="td-avg">{row.average ? formatWcaResult(row.average, eventId, 'average') : '—'}</td>
+                  <td className="td-best">{row.single ? formatWcaResult(row.single, eventId, 'single') : '—'}</td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && (
+              <tr><td colSpan={4} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
@@ -697,13 +889,17 @@ function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
                         <tr key={`${en.ev.i}:${en.rd.i}`}>
                           <td>{roundDisplayName(en.rd.name, isZh)}</td>
                           <td>{place}</td>
-                          <td className={singlePr ? 'is-pr' : ''}>
+                          <td>
                             {formatLive(result.b, result.e, false)}
-                            {result.sr ? <RecordBadge record={result.sr} variant="inline" iso2={regionToIso2(u.region)} /> : null}
+                            {result.sr
+                              ? <RecordBadge record={result.sr} variant="inline" iso2={regionToIso2(u.region)} />
+                              : singlePr ? <RecordBadge record="PR" variant="inline" /> : null}
                           </td>
-                          <td className={averagePr && isAverageFormat ? 'is-pr' : ''}>
+                          <td>
                             {isAverageFormat ? formatLive(result.a, result.e, true) : ''}
-                            {isAverageFormat && result.ar ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} /> : null}
+                            {isAverageFormat && (result.ar
+                              ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} />
+                              : averagePr ? <RecordBadge record="PR" variant="inline" /> : null)}
                           </td>
                           {Array.from({ length: 5 }).map((_, i) => (
                             <td key={i}>{formatLive(result.v[i] ?? 0, result.e, false)}</td>
