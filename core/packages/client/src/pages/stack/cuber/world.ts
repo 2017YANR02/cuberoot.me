@@ -27,8 +27,9 @@ export default class World {
     this.scene.rotation.x = Math.PI / 6;
     this.scene.rotation.y = -Math.PI / 4 + Math.PI / 16;
 
-    // NOTE: ambient at 1 + directional at 0 = flat shading (cuber 默认风格)
-    this.ambient = new THREE.AmbientLight(0xffffff, 1);
+    // NOTE: ambient at π = full sRGB color output (three r155+ 物理光照默认下需要 ×π)
+    // directional 关掉,保持 cuber 原本的 flat shading
+    this.ambient = new THREE.AmbientLight(0xffffff, Math.PI);
     this.scene.add(this.ambient);
     this.directional = new THREE.DirectionalLight(0xffffff, 0);
     this.directional.position.set(Cubelet.SIZE, Cubelet.SIZE * 3, Cubelet.SIZE * 2);
