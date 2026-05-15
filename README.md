@@ -104,25 +104,31 @@ Every user-facing tool ships in **English** and **简体中文**, switchable fro
 
 ## 🙏 Credits
 
-This project stands on the shoulders of excellent open-source work:
+This project stands on the shoulders of excellent open-source work.
 
+> **单一数据源**:`core/packages/client/src/pages/credits_data.json`(同步 `/about` 页)。
+> 改 credits → 改 JSON → 跑 `pnpm --filter @cuberoot/client gen-credits` → commit。
+
+<!-- credits:start -->
 - [**or18/RubiksSolverDemo**](https://github.com/or18/RubiksSolverDemo) — 3×3 solver & trainer pages, PWA scaffolding
 - [**jonatanklosko/wca_statistics**](https://github.com/jonatanklosko/wca_statistics) — statistics engine, SQL queries, plugin framework (TS rewrite)
-- [**mihlefeld/Alg-Trainers**](https://github.com/mihlefeld/Alg-Trainers) — algorithm trainer pages
+- [**mihlefeld/Alg-Trainers**](https://github.com/mihlefeld/Alg-Trainers) — Algorithm trainer pages
 - [**carykh/hthgrapher**](https://github.com/carykh/hthgrapher) — Head-to-Head Ao5 calculator (React port)
 - [**MatteoColombo/cube_challenge_timer**](https://github.com/MatteoColombo/cube_challenge_timer) — 1v1 battle timer logic (React port)
 - [**cs0x7f/cstimer**](https://github.com/cs0x7f/cstimer) — professional speedcubing timer & WCA random-state scramble engine
-- [**Roman-/mosaic**](https://github.com/Roman-/mosaic) — cube mosaic generator (React port)
+- [**Roman-/mosaic**](https://github.com/Roman-/mosaic) — Cube mosaic generator (React port)
 - [**huazhechen/cuber**](https://github.com/huazhechen/cuber) — virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/stack`; original UI was Vue + Vuetify
 - [**MeigenChou/DCTimer-Android**](https://github.com/MeigenChou/DCTimer-Android) — design inspiration for the battle timer
 - [**huizhiLLL/WCA-Nemesizer-API**](https://github.com/huizhiLLL/WCA-Nemesizer-API) — nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))
 - [**roudai/VisualCubeEditor2**](https://github.com/roudai/VisualCubeEditor2) — Vue + sr-visualizer GUI cube image editor; UI replicated in React for the `/visualcube` page (renderer swapped to our `@cuberoot/visualcube` package)
-- [**tdecker91/puzzle-gen**](https://github.com/tdecker91/puzzle-gen) (`sr-puzzlegen` on npm) — non-cube WCA puzzle SVG renderer (Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by `/visualcube`
+- [**tdecker91/puzzle-gen**](https://github.com/tdecker91/puzzle-gen) — non-cube WCA puzzle SVG renderer (`sr-puzzlegen` on npm; Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by `/visualcube`
 - [**cube.rider.biz/visualcube.php**](https://cube.rider.biz/visualcube.php) — PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`
 - [**speedcubedb.com**](https://speedcubedb.com/) — algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)
 - [**nbwzx/commutator**](https://github.com/nbwzx/commutator) — commutator decomposition / expansion engine (Zixing Wang) re-wrapped as ES module for the `/alg/commutator` tool; algorithm code unchanged from upstream, UI rebuilt in React
-- [**speedsolving.com/wiki: Pretty Pattern**](https://www.speedsolving.com/wiki/index.php/Pretty_pattern) and [**ruwix.com Rubik's Cube Patterns**](https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/) — pattern algorithms compiled into `/patterns`
+- [**speedsolving.com/wiki: Pretty Pattern**](https://www.speedsolving.com/wiki/index.php/Pretty_pattern) — Pattern algorithms for /patterns
+- [**ruwix.com Rubik's Cube Patterns**](https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/) — Pattern algorithms for /patterns
 - [**cubing.pro**](https://cubing.pro/) — UI/概念参考来源:`/wca-stats` 子页(历史排名 / 大满贯 / 全部成绩排行 / 当年成绩排行 / 参赛届别排行 / 项目成功率 / 全项目达成 / 全项目排行)+ `/wca-stats/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)
+<!-- credits:end -->
 
 ---
 
