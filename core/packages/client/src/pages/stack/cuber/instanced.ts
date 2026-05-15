@@ -421,14 +421,8 @@ export default class InstancedRenderer extends THREE.Group {
       frameOrient[i * 4 + 3] = 1;
     }
     const frameGeo = this.staticFrame.geometry.clone();
-    const frameLayerAttr = new THREE.InstancedBufferAttribute(frameLayers, 3);
-    const frameOrientAttr = new THREE.InstancedBufferAttribute(frameOrient, 4);
-    // DynamicDrawUsage hints driver: buffer updates often, allocate accordingly.
-    // Reduces GPU bufferSubData cost per endSlice upload (the per-twist spike).
-    frameLayerAttr.setUsage(THREE.DynamicDrawUsage);
-    frameOrientAttr.setUsage(THREE.DynamicDrawUsage);
-    frameGeo.setAttribute('aLayerXYZ', frameLayerAttr);
-    frameGeo.setAttribute('aOrientation', frameOrientAttr);
+    frameGeo.setAttribute('aLayerXYZ', new THREE.InstancedBufferAttribute(frameLayers, 3));
+    frameGeo.setAttribute('aOrientation', new THREE.InstancedBufferAttribute(frameOrient, 4));
     this.staticFrame.geometry = frameGeo;
     this.shaderFrameMat = (this.staticFrame.material as THREE.MeshBasicMaterial).clone();
     injectSliceRotationShader(this.shaderFrameMat);
@@ -447,12 +441,8 @@ export default class InstancedRenderer extends THREE.Group {
       stickerOrient[i * 4 + 3] = 1;
     }
     const stickerGeo = this.staticSticker.geometry.clone();
-    const stickerLayerAttr = new THREE.InstancedBufferAttribute(stickerLayers, 3);
-    const stickerOrientAttr = new THREE.InstancedBufferAttribute(stickerOrient, 4);
-    stickerLayerAttr.setUsage(THREE.DynamicDrawUsage);
-    stickerOrientAttr.setUsage(THREE.DynamicDrawUsage);
-    stickerGeo.setAttribute('aLayerXYZ', stickerLayerAttr);
-    stickerGeo.setAttribute('aOrientation', stickerOrientAttr);
+    stickerGeo.setAttribute('aLayerXYZ', new THREE.InstancedBufferAttribute(stickerLayers, 3));
+    stickerGeo.setAttribute('aOrientation', new THREE.InstancedBufferAttribute(stickerOrient, 4));
     this.staticSticker.geometry = stickerGeo;
     this.shaderStickerMat = (this.staticSticker.material as THREE.MeshBasicMaterial).clone();
     injectSliceRotationShader(this.shaderStickerMat);
