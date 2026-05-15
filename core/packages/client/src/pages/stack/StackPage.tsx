@@ -23,7 +23,7 @@ import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import './stack.css';
 
-const ORDERS = [2, 3, 4, 5, 6, 7] as const;
+const ORDERS = Array.from({ length: 49 }, (_, i) => i + 2);  // 2~50 阶
 type Mode = 'play' | 'player' | 'algs' | 'director';
 
 const KEYMAP: Record<string, { sign: string; reverse?: boolean }> = {
