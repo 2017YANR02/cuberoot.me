@@ -36,11 +36,62 @@ export const __PERF_FLAGS: {
   superOrderThreshold: number;
   singleSliceQuaternion: boolean;
   superOrderLowPolyGpu: boolean;
+  superOrderShaderSlice: boolean;
 } = {
   superOrderThreshold: 50,
   singleSliceQuaternion: true,
   superOrderLowPolyGpu: true,
+  superOrderShaderSlice: true,
 };
+
+/** 注入 vertex shader,让 GPU 按 per-instance aLayerXYZ 判定是否在活跃 slice,
+ * 在 instanceMatrix 后乘上 uSliceRot。zero per-instance writes during animation。 */
+function injectSliceRotationShader(material: THREE.Material): void {
+  const m = material as THREE.Material & {
+    onBeforeCompile?: (shader: { uniforms: Record<string, { value: unknown }>; vertexShader: string }) => void;
+    customProgramCacheKey?: () => string;
+    userData: { sliceUniforms?: Record<string, { value: unknown }> };
+  };
+  m.userData = m.userData ?? {};
+  const uniforms = {
+    // uSliceLayer = -1 表示 inactive (无 cubelet 的 layer 匹配)。
+    // 不用 uSliceActive bool 因为部分 GLSL driver 在 uSliceActive=0 时把分支常量
+    // 折叠优化掉,后续 setSliceAngle 设 1 时 shader 已经不响应了。
+    uSliceAxisMask: { value: new THREE.Vector3(1, 0, 0) },  // (1,0,0)=x, (0,1,0)=y, (0,0,1)=z
+    uSliceLayer: { value: -1 },            // 0..N-1 = active slice, -1 = inactive
+    uSliceRot: { value: new THREE.Matrix4() },
+  };
+  m.userData.sliceUniforms = uniforms;
+  // 必须设 customProgramCacheKey 否则 three.js 复用 cached basic shader,
+  // onBeforeCompile 的注入被忽略 (cache key 只看 shaderID + defines)。
+  // 用 material.uuid 让每个 material 实例独立 program — 避免 dev HMR 下旧
+  // cached program (旧 shader 源码) 被新 material 复用。
+  m.customProgramCacheKey = () => 'cuber-slice-' + m.uuid;
+  m.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniforms);
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      `#include <common>
+      attribute vec3 aLayerXYZ;
+      uniform vec3 uSliceAxisMask;
+      uniform float uSliceLayer;
+      uniform mat4 uSliceRot;`
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <project_vertex>',
+      `vec4 mvPosition = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        mvPosition = instanceMatrix * mvPosition;
+        float myLayer = dot(aLayerXYZ, uSliceAxisMask);
+        if (abs(myLayer - uSliceLayer) < 0.5) {
+          mvPosition = uSliceRot * mvPosition;
+        }
+      #endif
+      mvPosition = modelViewMatrix * mvPosition;
+      gl_Position = projectionMatrix * mvPosition;`
+    );
+  };
+}
 
 function makeStickerLocalMatrix(face: number, zScale: number, distanceMul = 1): THREE.Matrix4 {
   const d = HALF * distanceMul;
@@ -88,6 +139,15 @@ export default class InstancedRenderer extends THREE.Group {
   /** N≥superOrderThreshold + flag 开: frame 用 BoxGeometry, sticker 用 PlaneGeometry,
    * 材质换 unlit。geometry tris/cubelet 88→12, tris/sticker 204→2。 */
   private useLowPolyGpu: boolean;
+  /** N≥superOrderThreshold + flag 开: shader-based slice rotation。
+   * beginSlice/setSliceAngle/endSlice 不再 per-instance 写 moving mesh,
+   * 仅设 uniform。GPU vertex shader 按 aLayerXYZ 判定 slice 成员 + 乘 uSliceRot。
+   * endSlice 仍需 update cubelet.matrix 进 static instanceMatrix (一次性 commit)。 */
+  private useShaderSlice: boolean;
+  /** Per-cube cloned materials (shader injected). 共享 _FRAME_LOW geometry 添加
+   * aLayerXYZ 会污染 singleton, 所以 geometry 也 clone。 */
+  private shaderFrameMat?: THREE.MeshBasicMaterial;
+  private shaderStickerMat?: THREE.MeshBasicMaterial;
 
   private stickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
@@ -153,6 +213,7 @@ export default class InstancedRenderer extends THREE.Group {
     const isSuperOrder = cube.order >= __PERF_FLAGS.superOrderThreshold;
     this.hasInner = !isSuperOrder;
     this.useLowPolyGpu = isSuperOrder && __PERF_FLAGS.superOrderLowPolyGpu;
+    this.useShaderSlice = isSuperOrder && __PERF_FLAGS.superOrderShaderSlice && this.useLowPolyGpu;
 
     const cubelets = [...cube.initials.values()];
     const visCount = cubelets.length;
@@ -280,6 +341,94 @@ export default class InstancedRenderer extends THREE.Group {
     this.add(this.movingSticker);
     this.add(this.staticHint);
     this.add(this.movingHint);
+
+    if (this.useShaderSlice) {
+      this.setupShaderSliceMode(cube, cubelets);
+    }
+  }
+
+  /** Shader slice 模式: 给 frame + sticker mesh clone 几何 + 添加 aLayerXYZ 属性,
+   * 注入 shader,关 moving 渲染。beginSlice → 设 uniform 即可,免 N² 写。 */
+  private setupShaderSliceMode(cube: Cube, cubelets: Cubelet[]): void {
+    const half = (cube.order - 1) / 2;
+    // Frame: aLayerXYZ per cubelet
+    const frameLayers = new Float32Array(cubelets.length * 3);
+    for (let i = 0; i < cubelets.length; i++) {
+      const v = cubelets[i].vector;
+      frameLayers[i * 3 + 0] = v.x + half;
+      frameLayers[i * 3 + 1] = v.y + half;
+      frameLayers[i * 3 + 2] = v.z + half;
+    }
+    const frameGeo = this.staticFrame.geometry.clone();
+    frameGeo.setAttribute('aLayerXYZ', new THREE.InstancedBufferAttribute(frameLayers, 3));
+    this.staticFrame.geometry = frameGeo;
+    this.shaderFrameMat = (this.staticFrame.material as THREE.MeshBasicMaterial).clone();
+    injectSliceRotationShader(this.shaderFrameMat);
+    this.staticFrame.material = this.shaderFrameMat;
+    // Sticker: aLayerXYZ per sticker slot
+    const stickerLayers = new Float32Array(this.stickerSlots.length * 3);
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = cube.initials.get(slot.cubeletInitial);
+      if (!cubelet) continue;
+      const v = cubelet.vector;
+      stickerLayers[i * 3 + 0] = v.x + half;
+      stickerLayers[i * 3 + 1] = v.y + half;
+      stickerLayers[i * 3 + 2] = v.z + half;
+    }
+    const stickerGeo = this.staticSticker.geometry.clone();
+    stickerGeo.setAttribute('aLayerXYZ', new THREE.InstancedBufferAttribute(stickerLayers, 3));
+    this.staticSticker.geometry = stickerGeo;
+    this.shaderStickerMat = (this.staticSticker.material as THREE.MeshBasicMaterial).clone();
+    injectSliceRotationShader(this.shaderStickerMat);
+    this.staticSticker.material = this.shaderStickerMat;
+    // 关掉 moving 渲染 — shader 让 static 自己处理 slice 视觉
+    this.movingFrame.visible = false;
+    this.movingSticker.visible = false;
+    this.movingFrame.count = 0;
+    this.movingSticker.count = 0;
+  }
+
+  /** Update aLayerXYZ for given cubelets — called at endSlice to reflect new layer
+   * assignments after group.rotate moved them. */
+  private updateShaderLayers(cubeletInstIdxs: number[]): void {
+    if (!this.useShaderSlice) return;
+    const half = (this.cube.order - 1) / 2;
+    const frameAttr = this.staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    const stickerAttr = this.staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    for (const instIdx of cubeletInstIdxs) {
+      const cubeletInitial = this.instanceToInitial[instIdx];
+      const cubelet = this.cube.initials.get(cubeletInitial);
+      if (!cubelet) continue;
+      const v = cubelet.vector;
+      frameAttr.setXYZ(instIdx, v.x + half, v.y + half, v.z + half);
+      const slots = this.cubeletSlots.get(cubeletInitial);
+      if (slots) {
+        for (const slotIdx of slots) {
+          stickerAttr.setXYZ(slotIdx, v.x + half, v.y + half, v.z + half);
+        }
+      }
+    }
+    frameAttr.needsUpdate = true;
+    stickerAttr.needsUpdate = true;
+  }
+
+  /** Update shader-slice uniforms for active slice. axisIdx: 0=x, 1=y, 2=z; -1 = inactive (layer set to -1). */
+  private setShaderSliceUniforms(axisIdx: number, layer: number, rot: THREE.Matrix4 | null): void {
+    if (!this.shaderFrameMat || !this.shaderStickerMat) return;
+    for (const mat of [this.shaderFrameMat, this.shaderStickerMat]) {
+      const u = (mat.userData as { sliceUniforms?: Record<string, { value: unknown }> }).sliceUniforms;
+      if (!u) continue;
+      const mask = u.uSliceAxisMask.value as THREE.Vector3;
+      if (axisIdx >= 0) {
+        mask.set(axisIdx === 0 ? 1 : 0, axisIdx === 1 ? 1 : 0, axisIdx === 2 ? 1 : 0);
+        u.uSliceLayer.value = layer;
+      } else {
+        // 关 slice: layer=-1 不匹配任何 cubelet
+        u.uSliceLayer.value = -1;
+      }
+      if (rot) (u.uSliceRot.value as THREE.Matrix4).copy(rot);
+    }
   }
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
@@ -323,6 +472,27 @@ export default class InstancedRenderer extends THREE.Group {
       // re-entrant — clean up first
       this.endSlice(group);
     }
+
+    // Shader slice 快路径: 只设 uniforms,无 per-instance 写 (省 ~73ms / twist at N=250)
+    if (this.useShaderSlice) {
+      const axisIdx = group.axis === 'x' ? 0 : group.axis === 'y' ? 1 : 2;
+      this.setShaderSliceUniforms(axisIdx, group.layer, null);
+      // 仍然记 instances/slots 给 endSlice 用 (它需要 update cubelet.matrix)
+      const instances: number[] = [];
+      const slotsList: number[] = [];
+      for (const positionIdx of group.indices) {
+        const cubelet = this.cube.cubelets.get(positionIdx);
+        if (!cubelet || cubelet._instIdx < 0) continue;
+        instances.push(cubelet._instIdx);
+        const slots = this.cubeletSlots.get(cubelet.initial);
+        if (slots) for (const s of slots) if (this.stickerSlots[s].visible) slotsList.push(s);
+      }
+      // 占位空数组 (没用 origMats 但 endSlice 要 release_mat4 释放空数组)
+      this.activeSlices.set(group, { instances, slots: slotsList, origCubeletMats: [], origStickerMats: [], origHintMats: [] });
+      this.cube.dirty = true;
+      return;
+    }
+
     // Single→multi 过渡: 必须先把旧 single slice 的 quaternion bake 进 per-instance,
     // 否则下面写新 slice 的 origMats 会跟 q_old 复合渲染错位。
     if (this.singleSliceGroup && this.singleSliceGroup !== group) {
@@ -459,6 +629,15 @@ export default class InstancedRenderer extends THREE.Group {
     if (!axisVec) return;
     this.tmpQuat.setFromAxisAngle(axisVec, angle);
 
+    // Shader 路径: 更新 uniform rotation matrix。免 N² 写。
+    if (this.useShaderSlice) {
+      this.tmpRotMat.makeRotationFromQuaternion(this.tmpQuat);
+      const axisIdx = group.axis === 'x' ? 0 : group.axis === 'y' ? 1 : 2;
+      this.setShaderSliceUniforms(axisIdx, group.layer, this.tmpRotMat);
+      this.cube.dirty = true;
+      return;
+    }
+
     if (this.singleSliceGroup === group) {
       // Stage 1 快路径: moving mesh.matrix 由 quaternion 自动复合,
       // 每个 instance 渲染 = rotation(q) × origMat × vertex。
@@ -504,6 +683,40 @@ export default class InstancedRenderer extends THREE.Group {
   endSlice(group: CubeGroup): void {
     const state = this.activeSlices.get(group);
     if (!state) return;
+
+    // Shader 路径: 只需 commit 新 cubelet.matrix 进 static + update aLayerXYZ (位置变了)。
+    // 不动 moving (已 invisible/count=0), 不写 HIDE_MAT。
+    if (this.useShaderSlice) {
+      for (const instIdx of state.instances) {
+        const cubeletInitial = this.instanceToInitial[instIdx];
+        const cubelet = this.cube.initials.get(cubeletInitial);
+        if (!cubelet) continue;
+        this.staticFrame.setMatrixAt(instIdx, cubelet.matrix);
+        const slots = this.cubeletSlots.get(cubeletInitial);
+        if (slots) {
+          for (const slotIdx of slots) {
+            const slot = this.stickerSlots[slotIdx];
+            if (!slot.visible) {
+              this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+              continue;
+            }
+            this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+            this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
+          }
+        }
+      }
+      this.updateShaderLayers(state.instances);
+      this.staticFrame.instanceMatrix.needsUpdate = true;
+      this.staticSticker.instanceMatrix.needsUpdate = true;
+      this.setShaderSliceUniforms(-1, 0, null);
+      this.releaseMat4Array(state.origCubeletMats);
+      this.releaseMat4Array(state.origStickerMats);
+      this.releaseMat4Array(state.origHintMats);
+      this.activeSlices.delete(group);
+      this.cube.dirty = true;
+      return;
+    }
+
     for (const instIdx of state.instances) {
       const cubeletInitial = this.instanceToInitial[instIdx];
       const cubelet = this.cube.initials.get(cubeletInitial);
@@ -710,6 +923,11 @@ export default class InstancedRenderer extends THREE.Group {
   get thickness(): boolean { return this._thickness; }
 
   set hollow(value: boolean) {
+    // Shader slice 模式 frame 用 shaderFrameMat (注入 GLSL),不能换成 CORE/TRANS,
+    // 否则 shader 注入丢失。inner 在 super-order 已 disabled,这里也跳过。
+    if (this.useShaderSlice) {
+      return;
+    }
     const mat = value ? Cubelet.TRANS : Cubelet.CORE;
     this.staticFrame.material = mat;
     this.movingFrame.material = mat;
