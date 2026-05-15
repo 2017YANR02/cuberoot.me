@@ -1,0 +1,135 @@
+.stack-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+
+.stack-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--card);
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.stack-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.stack-back:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+
+.stack-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stack-spacer {
+  flex: 1;
+}
+
+.stack-counter {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--muted-foreground);
+  padding: 4px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.stack-actions,
+.stack-orders {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.stack-actions button,
+.stack-orders button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.stack-actions button:hover,
+.stack-orders button:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.stack-orders button.active {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+}
+
+.stack-canvas-wrap {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  min-height: 0;
+}
+
+.stack-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.stack-credit {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--faint-foreground);
+  text-align: center;
+  border-top: 1px solid var(--border-default);
+  background: var(--card);
+}
+.stack-credit a {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 480px) {
+  .stack-header {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .stack-title {
+    font-size: 14px;
+  }
+  .stack-counter {
+    font-size: 12px;
+    padding: 2px 8px;
+    min-width: 32px;
+  }
+  .stack-actions button,
+  .stack-orders button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+  }
+}
