@@ -17,11 +17,15 @@ import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
 import './comp.css';
 
-/** WCA comp id (camelCase, "XianCherryBlossom2026") → cubing.com slug ("Xian-Cherry-Blossom-2026")。
- *  cubing.com 把 WCA name 里的空格换成 dash,标点全去。WCA id 跟 name 大小写完全一致
- *  (PascalCase),所以从 id 反推 slug = 每个大写字母前插 dash (首字符除外)。 */
+/** WCA comp id (PascalCase, "XianCherryBlossom2026") → cubing.com slug ("Xian-Cherry-Blossom-2026")。
+ *  cubing.com 把 WCA name 里的空格换 dash,标点去掉。从 id 反推 slug 需要插 dash 在:
+ *    (1) 小写字母 → 大写字母 (camelCase 边界): "XuzhouZenith" → "Xuzhou-Zenith"
+ *    (2) 字母 → 数字 (年份前): "Zenith2026" → "Zenith-2026"
+ *  例: XuzhouZenith2026 → Xuzhou-Zenith-2026 ✓ */
 function wcaIdToCubingSlug(wcaId: string): string {
-  return wcaId.replace(/([a-z0-9])([A-Z])/g, '$1-$2');
+  return wcaId
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/([A-Za-z])([0-9])/g, '$1-$2');
 }
 
 function decodeEntities(s: string): string {
