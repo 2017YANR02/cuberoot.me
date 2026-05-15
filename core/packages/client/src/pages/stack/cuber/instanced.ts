@@ -454,22 +454,25 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker.count = 0;
   }
 
-  /** Update shader-slice uniforms for active slice. axisIdx: 0=x, 1=y, 2=z; -1 = inactive (layer set to -1). */
+  /** Update shader-slice uniforms for active slice. axisIdx: 0=x, 1=y, 2=z; -1 = inactive.
+   * 直接 inline 两个 material 而不 `for ... of [a, b]` (那是 per-tween-tick 调,
+   * array 字面量每帧分配 ~150 次 = 显著 GC pressure)。 */
   private setShaderSliceUniforms(axisIdx: number, layer: number, rot: THREE.Matrix4 | null): void {
     if (!this.shaderFrameMat || !this.shaderStickerMat) return;
-    for (const mat of [this.shaderFrameMat, this.shaderStickerMat]) {
-      const u = (mat.userData as { sliceUniforms?: Record<string, { value: unknown }> }).sliceUniforms;
-      if (!u) continue;
-      const mask = u.uSliceAxisMask.value as THREE.Vector3;
-      if (axisIdx >= 0) {
-        mask.set(axisIdx === 0 ? 1 : 0, axisIdx === 1 ? 1 : 0, axisIdx === 2 ? 1 : 0);
-        u.uSliceLayer.value = layer;
-      } else {
-        // 关 slice: layer=-1 不匹配任何 cubelet
-        u.uSliceLayer.value = -1;
-      }
-      if (rot) (u.uSliceRot.value as THREE.Matrix4).copy(rot);
+    this.setShaderUniformsForMat(this.shaderFrameMat, axisIdx, layer, rot);
+    this.setShaderUniformsForMat(this.shaderStickerMat, axisIdx, layer, rot);
+  }
+  private setShaderUniformsForMat(mat: THREE.Material, axisIdx: number, layer: number, rot: THREE.Matrix4 | null): void {
+    const u = (mat.userData as { sliceUniforms?: Record<string, { value: unknown }> }).sliceUniforms;
+    if (!u) return;
+    const mask = u.uSliceAxisMask.value as THREE.Vector3;
+    if (axisIdx >= 0) {
+      mask.set(axisIdx === 0 ? 1 : 0, axisIdx === 1 ? 1 : 0, axisIdx === 2 ? 1 : 0);
+      u.uSliceLayer.value = layer;
+    } else {
+      u.uSliceLayer.value = -1;
     }
+    if (rot) (u.uSliceRot.value as THREE.Matrix4).copy(rot);
   }
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
