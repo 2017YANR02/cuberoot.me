@@ -63,6 +63,7 @@ interface CompData {
   events: EventMeta[];
   users: Record<string, User>;
   resultsByRound: Record<string, LiveResult[]>; // key = "<event>:<round>"
+  membersByFilter: MembersByFilter; // 哪些 user number 属于 females / children / newcomers
   fetchedAt: number;
 }
 
@@ -169,14 +170,27 @@ function openCubingWs(): Promise<WebSocket> {
   });
 }
 
+interface MembersByFilter {
+  females: number[];
+  children: number[];
+  newcomers: number[];
+}
+
 interface WsCollectResult {
   users: Record<string, User>;
   resultsByRound: Record<string, LiveResult[]>;
+  membersByFilter: MembersByFilter;
 }
+
+type SecondaryFilter = 'females' | 'children' | 'newcomers';
 
 async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 25000): Promise<WsCollectResult> {
   const ws = await openCubingWs();
-  const result: WsCollectResult = { users: {}, resultsByRound: {} };
+  const result: WsCollectResult = {
+    users: {},
+    resultsByRound: {},
+    membersByFilter: { females: [], children: [], newcomers: [] },
+  };
 
   const rounds: { e: string; r: string }[] = [];
   for (const ev of events) {
@@ -187,7 +201,10 @@ async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 
     }
   }
 
-  let pendingRounds = new Set(rounds.map(r => `${r.e}:${r.r}`));
+  // cubing.com 不在 result.all 消息里回传 filter,只能"一次只跑一个 filter"分相,
+  // 收齐这相的所有 round 响应再发下一相 — 共 4 相 (all + 3 secondary)。
+  type Phase = { filter: 'all' | SecondaryFilter; pending: Set<string>; received: number; done: () => void };
+  let currentPhase: Phase | null = null;
   let gotUsers = false;
 
   await new Promise<void>((resolve, reject) => {
@@ -196,7 +213,7 @@ async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 
       if (err) reject(err); else resolve();
     };
     const overallTimeout = setTimeout(() => {
-      finish(new Error(`WS collect timeout; missing rounds=${pendingRounds.size}, gotUsers=${gotUsers}`));
+      finish(new Error(`WS collect timeout; phase=${currentPhase?.filter}, gotUsers=${gotUsers}`));
     }, timeoutMs);
 
     ws.on('message', (raw: WebSocket.RawData) => {
@@ -211,21 +228,26 @@ async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 
       if (msg.type === 'users' && msg.data && typeof msg.data === 'object') {
         result.users = msg.data as Record<string, User>;
         gotUsers = true;
-      } else if (msg.type === 'result.all' && Array.isArray(msg.data)) {
-        const arr = msg.data as LiveResult[];
+        return;
+      }
+      if (msg.type !== 'result.all' || !Array.isArray(msg.data)) return;
+      if (!currentPhase) return;
+
+      const arr = msg.data as LiveResult[];
+      currentPhase.received += 1;
+
+      if (currentPhase.filter === 'all') {
         if (arr.length > 0) {
           const key = `${arr[0].e}:${arr[0].r}`;
           result.resultsByRound[key] = arr;
-          pendingRounds.delete(key);
-        } else {
-          // empty round → drop one pending key (we don't know which from the data alone)
-          // we'll let timeout handle this; for empty rounds we already skipped above
         }
+      } else {
+        const bucket = result.membersByFilter[currentPhase.filter];
+        for (const r of arr) if (!bucket.includes(r.n)) bucket.push(r.n);
       }
 
-      if (gotUsers && pendingRounds.size === 0) {
-        clearTimeout(overallTimeout);
-        finish();
+      if (currentPhase.received >= currentPhase.pending.size) {
+        currentPhase.done();
       }
     });
 
@@ -239,12 +261,28 @@ async function collectCompData(compId: number, events: EventMeta[], timeoutMs = 
       finish(e as Error);
     });
 
-    // Subscribe to competition
-    ws.send(JSON.stringify({ type: 'competition', competitionId: compId }));
-    // Fetch each round's results. Stagger so the server doesn't reject as flood.
-    for (const r of rounds) {
-      ws.send(JSON.stringify({ type: 'result', action: 'fetch', params: { event: r.e, round: r.r, filter: 'all' } }));
-    }
+    const runPhase = (filter: 'all' | SecondaryFilter) => new Promise<void>((res) => {
+      currentPhase = {
+        filter,
+        pending: new Set(rounds.map(r => `${r.e}:${r.r}`)),
+        received: 0,
+        done: res,
+      };
+      for (const r of rounds) {
+        ws.send(JSON.stringify({ type: 'result', action: 'fetch', params: { event: r.e, round: r.r, filter } }));
+      }
+    });
+
+    (async () => {
+      ws.send(JSON.stringify({ type: 'competition', competitionId: compId }));
+      await runPhase('all');
+      // secondary filters: 缺数据不致命,单相 timeout 用全局 overallTimeout 兜底
+      for (const f of ['females', 'children', 'newcomers'] as const) {
+        await runPhase(f);
+      }
+      clearTimeout(overallTimeout);
+      finish();
+    })().catch((e) => finish(e as Error));
   });
 
   return result;
@@ -266,7 +304,7 @@ async function loadComp(slug: string): Promise<CompData> {
 
   const p = (async () => {
     const meta = await scrapeMeta(slug);
-    const { users, resultsByRound } = await collectCompData(meta.compId, meta.events);
+    const { users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events);
     const data: CompData = {
       slug,
       compId: meta.compId,
@@ -275,6 +313,7 @@ async function loadComp(slug: string): Promise<CompData> {
       events: meta.events,
       users,
       resultsByRound,
+      membersByFilter,
       fetchedAt: Date.now(),
     };
     cache.set(slug, data);
