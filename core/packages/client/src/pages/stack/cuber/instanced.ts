@@ -189,6 +189,14 @@ export default class InstancedRenderer extends THREE.Group {
    * 共享一个 quaternion,免 N² 次 mat4 mul/帧。第 2 个 slice 进来前 bake 进
    * per-instance,然后 fallback 到多 slice 路径。 */
   private singleSliceGroup: CubeGroup | null = null;
+  /** Pending shader-mode endSlice commit. endSlice 在 shader 路径下保留 final
+   * rotation uniform + 把 commit 工作切成 chunk 分 rAF 跑,避免 60ms spike
+   * 拖累 min fps。 next beginSlice 强制 flush 全部 remaining。 */
+  private pendingCommit: {
+    state: { instances: number[]; cubelets: Cubelet[] };
+    group: CubeGroup;
+    cursor: number;
+  } | null = null;
   /** Stage 2: Matrix4 freelist 池 — 替代 beginSlice 里 187k 次 .clone() 的 GC 风暴。
    * 池 max size ≈ 一个面 slice 的 cubelet+sticker+hint 数 (~187k @ N=250 ≈ 12 MB),
    * 不会无限涨;endSlice 全部 release 回池,下个 twist 复用。 */
@@ -390,33 +398,67 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker.count = 0;
   }
 
-  /** Update aLayerXYZ for given cubelets — called at endSlice to reflect new layer
-   * assignments after group.rotate moved them. Uses parallel cubelets[] array (cached
-   * at beginSlice) to avoid 62500 Map.get on hot path. */
-  private updateShaderLayers(instArr: number[], cubeletsArr: Cubelet[]): void {
-    if (!this.useShaderSlice) return;
+  /** Process one chunk of pending shader-mode commit (frame + sticker + layer
+   * 写入 for ~CHUNK_SIZE cubelets). Called per-frame from StackPage render loop. */
+  advanceCommitChunk(): void {
+    if (!this.pendingCommit) return;
+    const CHUNK_SIZE = 8000;
+    const { state, cursor } = this.pendingCommit;
+    const instArr = state.instances;
+    const cubeletsArr = state.cubelets;
+    const end = Math.min(instArr.length, cursor + CHUNK_SIZE);
+    const tmpMat = this.tmpMat;
+    const staticFrame = this.staticFrame;
+    const staticSticker = this.staticSticker;
+    const frameAttr = staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
+    const stickerAttr = staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
     const half = (this.cube.order - 1) / 2;
-    const frameAttr = this.staticFrame.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
-    const stickerAttr = this.staticSticker.geometry.getAttribute('aLayerXYZ') as THREE.InstancedBufferAttribute;
     const cubeletSlots = this.cubeletSlots;
-    for (let i = 0; i < instArr.length; i++) {
+    const stickerSlotsArr = this.stickerSlots;
+    for (let i = cursor; i < end; i++) {
       const cubelet = cubeletsArr[i];
       if (!cubelet) continue;
       const v = cubelet.vector;
       const lx = v.x + half;
       const ly = v.y + half;
       const lz = v.z + half;
+      staticFrame.setMatrixAt(instArr[i], cubelet.matrix);
       frameAttr.setXYZ(instArr[i], lx, ly, lz);
       const slots = cubeletSlots.get(cubelet.initial);
-      if (slots) {
-        for (let j = 0; j < slots.length; j++) {
-          stickerAttr.setXYZ(slots[j], lx, ly, lz);
+      if (!slots) continue;
+      for (let j = 0; j < slots.length; j++) {
+        const slotIdx = slots[j];
+        const slot = stickerSlotsArr[slotIdx];
+        if (!slot.visible) {
+          staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+          continue;
         }
+        tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+        staticSticker.setMatrixAt(slotIdx, tmpMat);
+        stickerAttr.setXYZ(slotIdx, lx, ly, lz);
       }
     }
-    frameAttr.needsUpdate = true;
-    stickerAttr.needsUpdate = true;
+    this.pendingCommit.cursor = end;
+    if (end >= instArr.length) {
+      // 完成: flush GPU + clear uniform + release state。
+      // 中间 chunk 不设 needsUpdate — shader uniform 持续 active 让视觉走旋转,
+      // GPU 不需看到 static buffer 的中间状态 (24MB 上传每帧太贵)。
+      staticFrame.instanceMatrix.needsUpdate = true;
+      staticSticker.instanceMatrix.needsUpdate = true;
+      frameAttr.needsUpdate = true;
+      stickerAttr.needsUpdate = true;
+      this.setShaderSliceUniforms(-1, 0, null);
+      this.pendingCommit = null;
+      this.cube.dirty = true;
+    }
   }
+
+  /** 强制 sync flush 全部 pending commit (next beginSlice 调用,确保新 slice 开始前
+   * 所有 cubelet 位置已 committed)。 */
+  private flushPendingCommitSync(): void {
+    while (this.pendingCommit) this.advanceCommitChunk();
+  }
+
 
   /** Update shader-slice uniforms for active slice. axisIdx: 0=x, 1=y, 2=z; -1 = inactive (layer set to -1). */
   private setShaderSliceUniforms(axisIdx: number, layer: number, rot: THREE.Matrix4 | null): void {
@@ -480,6 +522,9 @@ export default class InstancedRenderer extends THREE.Group {
 
     // Shader slice 快路径: 只设 uniforms,无 per-instance 写 (省 ~73ms / twist at N=250)
     if (this.useShaderSlice) {
+      // 上次 endSlice 的 pending commit 必须先 sync flush 完, 否则新 slice 的 uniform
+      // 会被旧 slice 的 commit 中途冲掉, 视觉撕裂
+      if (this.pendingCommit) this.flushPendingCommitSync();
       const axisIdx = group.axis === 'x' ? 0 : group.axis === 'y' ? 1 : 2;
       this.setShaderSliceUniforms(axisIdx, group.layer, null);
       // 缓存 cubelets / instances / slots 给 endSlice 用 — 省 62500 Map.get
@@ -691,41 +736,21 @@ export default class InstancedRenderer extends THREE.Group {
     const state = this.activeSlices.get(group);
     if (!state) return;
 
-    // Shader 路径: 只需 commit 新 cubelet.matrix 进 static + update aLayerXYZ (位置变了)。
-    // 不动 moving (已 invisible/count=0), 不写 HIDE_MAT。
+    // Shader 路径: commit cubelet.matrix → static + aLayerXYZ update。
+    // 工作量 ~60ms @ N=250 face slice, 切 chunk 分 rAF 跑 (每 chunk ~10ms),
+    // 避免 single-frame spike 拖低 min fps。Slice uniform 保活到 commit 完成。
     if (this.useShaderSlice) {
-      const instArr = state.instances;
-      const cubeletsArr = state.cubelets;
-      const tmpMat = this.tmpMat;
-      const staticFrame = this.staticFrame;
-      const staticSticker = this.staticSticker;
-      // Inline frame setMatrixAt (avoid 62500 Map.get via cached cubelets)
-      for (let i = 0; i < instArr.length; i++) {
-        const cubelet = cubeletsArr[i];
-        if (!cubelet) continue;
-        staticFrame.setMatrixAt(instArr[i], cubelet.matrix);
-        const slots = this.cubeletSlots.get(cubelet.initial);
-        if (!slots) continue;
-        for (let j = 0; j < slots.length; j++) {
-          const slotIdx = slots[j];
-          const slot = this.stickerSlots[slotIdx];
-          if (!slot.visible) {
-            staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
-            continue;
-          }
-          tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
-          staticSticker.setMatrixAt(slotIdx, tmpMat);
-        }
-      }
-      this.updateShaderLayers(state.instances, cubeletsArr);
-      staticFrame.instanceMatrix.needsUpdate = true;
-      staticSticker.instanceMatrix.needsUpdate = true;
-      this.setShaderSliceUniforms(-1, 0, null);
+      // 如有遗留 pending commit (用户连按导致 next twist 进来),先 sync flush
+      if (this.pendingCommit) this.flushPendingCommitSync();
+      // 立即 release origMats (它们没用),清 active slice 但保留 commit state
       this.releaseMat4Array(state.origCubeletMats);
       this.releaseMat4Array(state.origStickerMats);
       this.releaseMat4Array(state.origHintMats);
-      state.cubelets.length = 0;
       this.activeSlices.delete(group);
+      // 保留 uniform = final rotation, layer = group.layer 直到 commit 完成 (视觉持续正确)
+      this.pendingCommit = { state: { instances: state.instances, cubelets: state.cubelets }, group, cursor: 0 };
+      // 第一 chunk 推进; 后续由 rAF 驱动 (StackPage render loop 每帧检查)
+      this.advanceCommitChunk();
       this.cube.dirty = true;
       return;
     }
