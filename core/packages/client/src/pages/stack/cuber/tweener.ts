@@ -31,6 +31,9 @@ export class Tween {
 
 export class Tweener {
   tweens: Tween[];
+  // 30 twist 序列每个 twist 一个 Tween, 不 pool 等于每 5s 30 次 new + 30 次 release,
+  // 累积 GC pressure → 100+ms 偶发 stall 拖 min fps。Pool 直接消除。
+  private pool: Tween[] = [];
 
   get length(): number {
     return this.tweens.length;
@@ -47,9 +50,18 @@ export class Tweener {
   }
 
   tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void): Tween {
-    const tween = new Tween(begin, end, duration, update);
-    this.tweens.push(tween);
-    return tween;
+    let t = this.pool.pop();
+    if (t) {
+      t.begin = begin;
+      t.end = end;
+      t.duration = duration;
+      t.callback = update;
+      t.value = 0;
+    } else {
+      t = new Tween(begin, end, duration, update);
+    }
+    this.tweens.push(t);
+    return t;
   }
 
   update(): boolean {
@@ -58,7 +70,8 @@ export class Tweener {
     let len = this.tweens.length;
     while (i < len) {
       if (this.tweens[i].update()) {
-        this.tweens.splice(i, 1);
+        const finished = this.tweens.splice(i, 1)[0];
+        this.pool.push(finished);
         len--;
       } else {
         i++;
@@ -73,6 +86,7 @@ export class Tweener {
         if (this.tweens[i] == tween) {
           tween.finish();
           this.tweens.splice(i, 1);
+          this.pool.push(tween);
           return;
         }
       }
@@ -80,6 +94,7 @@ export class Tweener {
       const tweens = this.tweens.splice(0, this.tweens.length);
       for (const t of tweens) {
         t.finish();
+        this.pool.push(t);
       }
     }
   }
@@ -88,6 +103,7 @@ export class Tweener {
     for (let i = 0; i < this.tweens.length; i++) {
       if (this.tweens[i] == tween) {
         this.tweens.splice(i, 1);
+        this.pool.push(tween);
         return;
       }
     }
