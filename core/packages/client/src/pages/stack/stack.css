@@ -151,7 +151,7 @@
 }
 
 .stack-side {
-  width: 380px;
+  width: 50%;
   flex-shrink: 0;
   border-left: 1px solid var(--border-default);
   background: var(--card);
