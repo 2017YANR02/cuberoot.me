@@ -27,16 +27,17 @@ const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
 // 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
 const INNER_BOX = new THREE.BoxGeometry(Cubelet.SIZE - 1, Cubelet.SIZE - 1, Cubelet.SIZE - 1);
 
-function makeStickerLocalMatrix(face: number, zScale: number): THREE.Matrix4 {
+function makeStickerLocalMatrix(face: number, zScale: number, distanceMul = 1): THREE.Matrix4 {
+  const d = HALF * distanceMul;
   const pos = new THREE.Vector3();
   const rot = new THREE.Euler();
   switch (face) {
-    case FACE.L: rot.y = -Math.PI / 2; pos.x = -HALF; break;
-    case FACE.R: rot.y = +Math.PI / 2; pos.x = +HALF; break;
-    case FACE.D: rot.x = +Math.PI / 2; pos.y = -HALF; break;
-    case FACE.U: rot.x = -Math.PI / 2; pos.y = +HALF; break;
-    case FACE.B: rot.x = +Math.PI;     pos.z = -HALF; break;
-    case FACE.F: /* identity */        pos.z = +HALF; break;
+    case FACE.L: rot.y = -Math.PI / 2; pos.x = -d; break;
+    case FACE.R: rot.y = +Math.PI / 2; pos.x = +d; break;
+    case FACE.D: rot.x = +Math.PI / 2; pos.y = -d; break;
+    case FACE.U: rot.x = -Math.PI / 2; pos.y = +d; break;
+    case FACE.B: rot.x = +Math.PI;     pos.z = -d; break;
+    case FACE.F: /* identity */        pos.z = +d; break;
   }
   const m = new THREE.Matrix4();
   m.compose(pos, new THREE.Quaternion().setFromEuler(rot), new THREE.Vector3(1, 1, zScale));
