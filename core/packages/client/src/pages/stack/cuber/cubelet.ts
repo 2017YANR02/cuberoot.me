@@ -172,10 +172,26 @@ export default class Cubelet extends THREE.Group {
     true
   );
 
+  /** 超高阶 frame 简化 box (BoxGeometry, 12 tri/cubelet vs Frame 88 tri/cubelet)。
+   * 至 N≥50 frame 圆角斜面在屏幕亚像素,看不出。 */
+  public static readonly _FRAME_LOW: THREE.BoxGeometry = new THREE.BoxGeometry(
+    Cubelet.SIZE, Cubelet.SIZE, Cubelet.SIZE,
+  );
+  /** 超高阶 sticker 简化平面 (PlaneGeometry, 2 tri/sticker vs Extrude 204 tri)。
+   * 圆角 + 厚度在 N≥50 失意义。 */
+  public static readonly _STICKER_LOW: THREE.PlaneGeometry = new THREE.PlaneGeometry(
+    Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
+    Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
+  );
+
   public static CORE = new THREE.MeshPhongMaterial({
     color: COLORS.Core,
     specular: COLORS.Gray,
     shininess: 2,
+  });
+  /** 超高阶 frame 用的 unlit material — Phong shading 在亚像素 cubelet 上无意义。 */
+  public static CORE_BASIC = new THREE.MeshBasicMaterial({
+    color: COLORS.Core,
   });
 
   public static TRANS = new THREE.MeshBasicMaterial({
