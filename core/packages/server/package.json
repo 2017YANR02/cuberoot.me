@@ -5,15 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -b",
     "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
-    "start": "node dist/index.js",
-    "start:bundle": "node dist/server.bundle.js",
+    "start": "node dist/server.bundle.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
-    "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
     "@cuberoot/visualcube": "workspace:*",
     "@hono/node-server": "^1.0.0",
     "@types/ws": "^8.18.1",
@@ -22,6 +19,7 @@
     "jsonwebtoken": "^9.0.0",
     "linkedom": "^0.18.12",
     "postgres": "^3.4.9",
+    "sr-puzzlegen": "^1.0.4",
     "ws": "^8.20.0"
   },
   "devDependencies": {

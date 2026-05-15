@@ -42,28 +42,21 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/client build
 
-      # 先 bundle visualcube (esbuild 单文件输出，server Node ESM 才能 import)
-      # tsc -b 只跑 tsconfig 不跑 npm script，必须显式调用
-      - name: Build visualcube
-        working-directory: core
-        run: pnpm --filter @cuberoot/visualcube build
-
-      # 同理:sr-puzzlegen 的 dist 是无扩展名 ESM,Node 严格模式跑不动 → 走 vendor 包
-      # bundle 成单文件。漏建会让 /v1/visualcube.svg 非 cube 项目 crash 重启循环。
-      - name: Build vendor-sr-puzzlegen
-        working-directory: core
-        run: pnpm --filter @cuberoot/vendor-sr-puzzlegen build
-
-      # 构建后端 + 打 self-contained deploy bundle (含 prod node_modules,workspace 内联)
-      - name: Build server
-        working-directory: core
-        run: pnpm --filter @cuberoot/server build
-
-      - name: Bundle server deploy
+      # @cuberoot/shared subpath imports (server reads dist/*.js via node export
+      # condition). visualcube 同理: server bundle 通过 node→dist/index.js 解析。
+      # 这两个 dist/ 必须先存在 esbuild 才能拉进 bundle。
+      - name: Build shared deps
         working-directory: core
         run: |
-          rm -rf /tmp/server-deploy
-          pnpm --filter @cuberoot/server deploy --prod --legacy /tmp/server-deploy
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
+
+      # esbuild --bundle 把 server src + 全部 deps (含写得烂的 sr-puzzlegen,
+      # 无扩展名 ESM)打成单个 dist/server.bundle.js,Node 严格模式直接跑。
+      # 旧的 tsc -b + `pnpm deploy --prod --legacy` self-contained 树已退役。
+      - name: Build server bundle
+        working-directory: core
+        run: pnpm --filter @cuberoot/server build:bundle
 
       # 将 client dist 产物同步到仓库根目录
       # NOTE: Vite 产出 index.html + _assets/ + public/ 静态文件
@@ -120,23 +113,20 @@ jobs:
 
       - name: Deploy server
         run: |
-          # NOTE: 不在根用 --delete（避免删 云服务器 上的 .env / pm2 状态等）
-          # 各子目录单独 --delete 保证清理旧内容
+          # bundle 自包含 → 只需要 scp 单文件 + sourcemap + migrations。
+          # 旧 node_modules 树已退役;留在远端无害但下次清理可以删
+          # (`ssh root@cuberoot 'rm -rf /root/core-api/node_modules'`)。
 
-          # dist (compiled JS)
-          rsync -rltz --delete --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            /tmp/server-deploy/dist/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/dist/"
+          # 先确保远端目录存在
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
+            'mkdir -p /root/core-api/dist'
 
-          # node_modules (prod deps + workspace 内联)
-          rsync -rltz --delete --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            /tmp/server-deploy/node_modules/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/node_modules/"
-
-          # package.json
+          # server.bundle.js + sourcemap
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            /tmp/server-deploy/package.json "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/package.json"
+            core/packages/server/dist/server.bundle.js \
+            core/packages/server/dist/server.bundle.js.map \
+            "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/dist/"
 
           # migrations/ — schema 改动放这里,apply_migrations.sh 自动跑没跑过的
           # 必须在 pm2 restart 之前!否则新代码部上去查不到列 → /api/* 全 500
@@ -149,9 +139,10 @@ jobs:
             "root@${{ secrets.DEPLOY_HOST }}" \
             '/usr/local/bin/apply_migrations.sh /root/core-api/migrations'
 
-          # pm2 重启（首次用 start，已有则 restart）
+          # pm2 重启 — 新进程 entry = dist/server.bundle.js。`pm2 restart` 不会
+          # 改 entry script,所以首发要 `pm2 delete` 后再 start。
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-            'cd /root/core-api && (pm2 restart core-api 2>/dev/null || pm2 start dist/index.js --name core-api --node-args="--env-file=.env") && pm2 save'
+            'cd /root/core-api && pm2 delete core-api 2>/dev/null; pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env" && pm2 save'
 
           # nginx api_cache 24h TTL,server schema/SQL 一改老响应顽固活着 → 部署后清空
           # (memory: reference_nginx_proxy_cache.md)
