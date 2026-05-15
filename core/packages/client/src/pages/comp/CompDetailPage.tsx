@@ -23,6 +23,7 @@ import { localizeCompName } from '../../utils/comp_localize';
 import { apiUrl } from '../../utils/api_base';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { rememberRecent } from './CompIndexPage';
 import { useLiveStream, applyResultPatch, type LivePatch } from './useLiveStream';
@@ -71,6 +72,7 @@ interface CompData {
   slug: string;
   cubingSlug?: string;
   source?: 'cubing' | 'wca';
+  availableSources?: ('cubing' | 'wca')[];
   compId: number;
   name: string;
   type: string;
@@ -198,6 +200,7 @@ export default function CompDetailPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ step: string; filter?: string; done: number; total: number } | null>(null);
   // _flagDataVer 仅用来触发重渲染(loadFlagData 完成后 localizeCompName/countryName 才能查到中文)
   const [, setFlagDataVer] = useState(0);
   useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
@@ -211,25 +214,66 @@ export default function CompDetailPage() {
   const filterParam = searchParams.get('filter') || 'all';
   const viewParam = (searchParams.get('view') === 'psych' ? 'psych' : 'live') as 'live' | 'psych';
   const psychEventParam = searchParams.get('psychEvent') || '';
+  const sourceParam = searchParams.get('source'); // 'wca' | 'cubing' | null=auto
 
   // ── fetch comp data ────────────────────────────────────────────────────
 
-  const load = useCallback(async () => {
+  const load = useCallback(() => {
     setError(null);
-    try {
-      const res = await fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`));
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-        throw new Error(j.error || `HTTP ${res.status}`);
-      }
-      const j = await res.json();
-      setData(j);
-      // 记录最近浏览
-      rememberRecent(j.slug, j.name);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }, [slug]);
+    setProgress(null);
+    return new Promise<void>((resolve) => {
+      const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
+      const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
+      const es = new EventSource(url);
+      let finished = false;
+      const fallback = () => {
+        // SSE 出错或不可用 → 回退到普通 JSON
+        es.close();
+        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`))
+          .then(async r => {
+            if (!r.ok) {
+              const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+              throw new Error(j.error || `HTTP ${r.status}`);
+            }
+            return r.json();
+          })
+          .then(j => {
+            setData(j);
+            rememberRecent(j.slug, j.name);
+          })
+          .catch(e => setError((e as Error).message))
+          .finally(() => { setProgress(null); resolve(); });
+      };
+      es.addEventListener('progress', (ev) => {
+        try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch {}
+      });
+      es.addEventListener('done', (ev) => {
+        finished = true;
+        try {
+          const j = JSON.parse((ev as MessageEvent).data) as CompData;
+          setData(j);
+          rememberRecent(j.slug, j.name);
+        } catch (e) {
+          setError((e as Error).message);
+        }
+        es.close();
+        setProgress(null);
+        resolve();
+      });
+      es.addEventListener('error', (ev) => {
+        try {
+          const data = (ev as MessageEvent).data;
+          if (data) {
+            const j = JSON.parse(data);
+            if (j.error) setError(j.error);
+          }
+        } catch {}
+        if (finished) return;
+        // 连接错误 (EventSource 默认会重连;此处不让它重连,直接 fallback)
+        if (!finished) fallback();
+      });
+    });
+  }, [slug, sourceParam]);
 
   useEffect(() => {
     let cancel = false;
@@ -436,15 +480,34 @@ export default function CompDetailPage() {
     return () => { cancelled = true; };
   }, [viewParam, data]);
 
+  // 空 = 选手名单(全部);否则按所选项目 PR 排
   const psychEventId = useMemo(() => {
     if (!data) return '';
     if (psychEventParam && data.events.some(e => e.i === psychEventParam)) return psychEventParam;
-    return data.events[0]?.i || '';
+    return '';
   }, [data, psychEventParam]);
 
   // ── 渲染 ───────────────────────────────────────────────────────────────
 
-  if (loading) return <div className="comp-detail-page"><div className="comp-loading">{isZh ? '加载中…' : 'Loading…'}</div></div>;
+  if (loading) {
+    const pct = progress && progress.total > 0 ? Math.round(100 * progress.done / progress.total) : 0;
+    const stepLabel = (() => {
+      if (!progress) return isZh ? '加载中…' : 'Loading…';
+      const f = progress.filter ? ` · ${progress.filter}` : '';
+      const map: Record<string, string> = isZh
+        ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据' }
+        : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data' };
+      return (map[progress.step] || progress.step) + f;
+    })();
+    return (
+      <div className="comp-detail-page">
+        <div className="comp-loading">
+          <div className="comp-loading-label">{stepLabel} {progress ? `(${progress.done}/${progress.total})` : ''}</div>
+          <div className="comp-loading-bar"><div className="comp-loading-bar-fill" style={{ width: `${pct}%` }} /></div>
+        </div>
+      </div>
+    );
+  }
   if (error || !data) {
     return (
       <div className="comp-detail-page">
@@ -480,38 +543,44 @@ export default function CompDetailPage() {
         <header className="comp-detail-header">
           <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
           <h1 className="comp-detail-title">
-            {/* slug 已经是 WCA ID 形态(无横杠) */}
             {(() => {
               const iso2 = compFlagIso2(slug);
+              const href = isWca
+                ? `https://www.worldcubeassociation.org/competitions/${data.slug}`
+                : `https://cubing.com/live/${data.cubingSlug || data.slug}`;
               return (
-                <>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="comp-detail-title-link"
+                  title={isWca ? 'WCA' : 'cubing.com'}
+                >
                   {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
                   {localizeCompName(slug, decodeEntities(data.name), isZh)}
-                </>
+                </a>
               );
             })()}
           </h1>
           <div className="comp-detail-meta">
-            {isWca ? (
-              <a
-                href={`https://www.worldcubeassociation.org/competitions/${data.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="comp-detail-link"
-                title="WCA"
-              >
-                WCA <ExternalLink size={12} />
-              </a>
-            ) : (
-              <a
-                href={`https://cubing.com/live/${data.cubingSlug || data.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="comp-detail-link"
-                title="cubing.com"
-              >
-                cubing.com <ExternalLink size={12} />
-              </a>
+            {data.availableSources && data.availableSources.length > 1 && (
+              <div className="comp-source-toggle" role="group" aria-label={isZh ? '数据源' : 'Data source'}>
+                {data.availableSources.map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`comp-source-btn${data.source === s ? ' is-active' : ''}`}
+                    onClick={() => {
+                      const next = new URLSearchParams(searchParams);
+                      if (s === 'wca') next.delete('source'); // wca = 默认,清掉 query
+                      else next.set('source', s);
+                      setSearchParams(next, { replace: false });
+                    }}
+                  >
+                    {s === 'wca' ? 'WCA' : 'cubing.com'}
+                  </button>
+                ))}
+              </div>
             )}
             <span className="comp-detail-fetched">
               {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
@@ -701,8 +770,24 @@ interface PsychSheetProps {
 function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }: PsychSheetProps) {
   const availableEvents = useMemo(() => new Set(data.events.map(e => e.i)), [data.events]);
 
-  // 该项目所有出现过的 cuber number(union 项目下所有 round)
-  const rows = useMemo(() => {
+  // 每位选手参赛的项目集合(用于"选手名单"模式右侧 icon 行)
+  const userEvents = useMemo(() => {
+    const map = new Map<number, string[]>();
+    for (const ev of data.events) {
+      const inEvent = new Set<number>();
+      for (const rd of ev.rs) {
+        for (const r of data.resultsByRound[`${ev.i}:${rd.i}`] ?? []) inEvent.add(r.n);
+      }
+      for (const n of inEvent) {
+        if (!map.has(n)) map.set(n, []);
+        map.get(n)!.push(ev.i);
+      }
+    }
+    return map;
+  }, [data]);
+
+  // eventId 空 → 选手名单(全部 users,按名字字母序);否则按所选项目 PR 排
+  const psychRows = useMemo(() => {
     if (!eventId) return [];
     const numbers = new Set<number>();
     for (const rd of data.events.find(e => e.i === eventId)?.rs ?? []) {
@@ -730,6 +815,13 @@ function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }:
     return arr;
   }, [data, eventId, pbMap]);
 
+  const rosterRows = useMemo(() => {
+    if (eventId) return [];
+    const all = Object.values(data.users);
+    all.sort((a, b) => displayCuberName(a.name, isZh).localeCompare(displayCuberName(b.name, isZh)));
+    return all;
+  }, [data, eventId, isZh]);
+
   return (
     <>
       <div className="comp-psych-eventbar">
@@ -738,45 +830,90 @@ function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }:
           selectedEvent={eventId}
           onSelect={onChangeEvent}
           isZh={isZh}
+          allowAll
           onlyAvailable
         />
       </div>
       <div className="comp-table-wrap">
         <table className="comp-table">
-          <thead>
-            <tr>
-              <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
-              <th className="th-person">{isZh ? '选手' : 'Person'}</th>
-              <th className="th-avg">{isZh ? '平均 PR' : 'Average PR'}</th>
-              <th className="th-best">{isZh ? '单次 PR' : 'Single PR'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, idx) => {
-              const isOdd = idx % 2 === 1;
-              return (
-                <tr key={row.n} className={isOdd ? 'row-odd' : ''}>
-                  <td className="td-place">{idx + 1}</td>
-                  <td className="td-person">
-                    <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
-                    <button
-                      type="button"
-                      className="cuber-link"
-                      onClick={() => onClickCuber(row.n)}
-                      title={regionDisplay(row.u.region, isZh)}
-                    >
-                      {displayCuberName(row.u.name, isZh)}
-                    </button>
-                  </td>
-                  <td className="td-avg">{row.average ? formatWcaResult(row.average, eventId, 'average') : '—'}</td>
-                  <td className="td-best">{row.single ? formatWcaResult(row.single, eventId, 'single') : '—'}</td>
+          {eventId ? (
+            <>
+              <thead>
+                <tr>
+                  <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
+                  <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+                  <th className="th-avg">{isZh ? '平均 PR' : 'Average PR'}</th>
+                  <th className="th-best">{isZh ? '单次 PR' : 'Single PR'}</th>
                 </tr>
-              );
-            })}
-            {rows.length === 0 && (
-              <tr><td colSpan={4} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
-            )}
-          </tbody>
+              </thead>
+              <tbody>
+                {psychRows.map((row, idx) => {
+                  const isOdd = idx % 2 === 1;
+                  return (
+                    <tr key={row.n} className={isOdd ? 'row-odd' : ''}>
+                      <td className="td-place">{idx + 1}</td>
+                      <td className="td-person">
+                        <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
+                        <button
+                          type="button"
+                          className="cuber-link"
+                          onClick={() => onClickCuber(row.n)}
+                          title={regionDisplay(row.u.region, isZh)}
+                        >
+                          {displayCuberName(row.u.name, isZh)}
+                        </button>
+                      </td>
+                      <td className="td-avg">{row.average ? formatWcaResult(row.average, eventId, 'average') : '—'}</td>
+                      <td className="td-best">{row.single ? formatWcaResult(row.single, eventId, 'single') : '—'}</td>
+                    </tr>
+                  );
+                })}
+                {psychRows.length === 0 && (
+                  <tr><td colSpan={4} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+                )}
+              </tbody>
+            </>
+          ) : (
+            <>
+              <thead>
+                <tr>
+                  <th className="th-place">#</th>
+                  <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+                  <th>{isZh ? '项目' : 'Events'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rosterRows.map((u, idx) => {
+                  const isOdd = idx % 2 === 1;
+                  const evs = userEvents.get(u.number) ?? [];
+                  return (
+                    <tr key={u.number} className={isOdd ? 'row-odd' : ''}>
+                      <td className="td-place">{idx + 1}</td>
+                      <td className="td-person">
+                        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                        <button
+                          type="button"
+                          className="cuber-link"
+                          onClick={() => onClickCuber(u.number)}
+                          title={regionDisplay(u.region, isZh)}
+                        >
+                          {displayCuberName(u.name, isZh)}
+                        </button>
+                      </td>
+                      <td className="comp-roster-events">
+                        {evs.map(e => (
+                          <EventIcon key={e} event={e} className="comp-roster-event" title={e} />
+                        ))}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {rosterRows.length === 0 && (
+                  <tr><td colSpan={3} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+                )}
+              </tbody>
+            </>
+          )}
         </table>
       </div>
     </>
