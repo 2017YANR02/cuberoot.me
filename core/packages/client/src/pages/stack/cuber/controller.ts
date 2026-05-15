@@ -11,10 +11,14 @@ export class TouchAction {
   type: string;
   x: number;
   y: number;
-  constructor(type: string, x: number, y: number) {
+  shift: boolean;
+  button: number;
+  constructor(type: string, x: number, y: number, shift = false, button = 0) {
     this.type = type;
     this.x = x;
     this.y = y;
+    this.shift = shift;
+    this.button = button;
   }
 }
 
@@ -32,7 +36,10 @@ export default class Controller {
   public rotating = false;
   public angle = 0;
   public contingle = 0;
-  public taps: ((index: number, face: FACE | null) => void)[];
+  public taps: ((index: number, face: FACE | null, opts: { shift: boolean; button: number }) => void)[];
+  // mousedown 时记录修饰键,handleUp 单击分支用
+  private downShift = false;
+  private downButton = 0;
   public ray = new THREE.Ray();
   public down = new THREE.Vector2(0, 0);
   public move = new THREE.Vector2(0, 0);
@@ -310,7 +317,7 @@ export default class Controller {
           break;
       }
       for (const tap of this.taps) {
-        tap(this.holder.index, face);
+        tap(this.holder.index, face, { shift: this.downShift, button: this.downButton });
       }
     }
     if (this.rotating) {
@@ -363,6 +370,8 @@ export default class Controller {
       case "mousedown":
         this.down.x = action.x;
         this.down.y = action.y;
+        this.downShift = action.shift;
+        this.downButton = action.button;
         this.tick = new Date().getTime();
         this.handleDown();
         break;

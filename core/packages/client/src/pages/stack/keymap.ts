@@ -1,7 +1,8 @@
-// 键盘快捷键:e.code → 转动。和 cstimer 标准布局对齐,加 S/E 切片,额外加方向键。
+// 键盘快捷键:e.code → 转动。默认对齐 cstimer 标准布局 + 方向键。
+// 用户可在 SettingDrawer 中自定义,持久化到 localStorage 'stack.keymap'。
 export interface KeyMove { sign: string; reverse?: boolean }
 
-export const KEYMAP: Record<string, KeyMove> = {
+export const DEFAULT_KEYMAP: Record<string, KeyMove> = {
   // 6 面
   KeyI: { sign: 'R' },                  KeyK: { sign: 'R', reverse: true },
   KeyW: { sign: 'B' },                  KeyO: { sign: 'B', reverse: true },
@@ -25,12 +26,40 @@ export const KEYMAP: Record<string, KeyMove> = {
   Semicolon: { sign: 'y' },             KeyA: { sign: 'y', reverse: true },
   KeyP: { sign: 'z' },                  KeyQ: { sign: 'z', reverse: true },
   // 方向键
-  ArrowUp: { sign: 'R' },                   ArrowDown: { sign: 'R', reverse: true },
-  ArrowLeft: { sign: 'U' },                 ArrowRight: { sign: 'U', reverse: true },
+  ArrowUp: { sign: 'R' },                ArrowDown: { sign: 'R', reverse: true },
+  ArrowLeft: { sign: 'U' },              ArrowRight: { sign: 'U', reverse: true },
 };
+
+const STORAGE_KEY = 'stack.keymap';
+
+export function loadKeymap(): Record<string, KeyMove> {
+  if (typeof window === 'undefined') return { ...DEFAULT_KEYMAP };
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_KEYMAP };
+    const parsed = JSON.parse(raw) as Record<string, KeyMove>;
+    return parsed && typeof parsed === 'object' ? parsed : { ...DEFAULT_KEYMAP };
+  } catch {
+    return { ...DEFAULT_KEYMAP };
+  }
+}
+
+export function saveKeymap(km: Record<string, KeyMove>): void {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(km)); } catch { /* ignore */ }
+}
+
+export function resetKeymap(): Record<string, KeyMove> {
+  if (typeof window === 'undefined') return { ...DEFAULT_KEYMAP };
+  try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  return { ...DEFAULT_KEYMAP };
+}
 
 const KEY_LABEL: Record<string, string> = {
   Comma: ',', Period: '.', Slash: '/', Semicolon: ';',
+  Backquote: '`', Minus: '-', Equal: '=',
+  BracketLeft: '[', BracketRight: ']', Backslash: '\\', Quote: "'",
+  Space: 'Space', Tab: 'Tab', Enter: 'Enter', Backspace: '⌫',
   ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
 };
 
@@ -41,69 +70,77 @@ export function keyLabel(code: string): string {
   return code;
 }
 
-export interface KeymapRow {
-  move: string;        // 显示标签,例如 "R" / "R'" / "r" / "M'"
-  keys: string[];      // e.code 列表
+export function moveLabel(m: KeyMove): string {
+  return m.sign + (m.reverse ? "'" : '');
+}
+
+// 用于键盘 grid 中格子的简短显示。wide 用 Rw 风格 (cstimer/WCA 习惯)
+export function displayMove(m: KeyMove): string {
+  let sign = m.sign;
+  if (/^[rludfb]$/.test(sign)) sign = sign.toUpperCase() + 'w';
+  return sign + (m.reverse ? "'" : '');
+}
+
+// 键盘 4 行 × 10 列 (QWERTY,对齐 grid 不偏移)
+export const KEYBOARD_ROWS: string[][] = [
+  ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'],
+  ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'],
+  ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon'],
+  ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash'],
+];
+
+export function moveEq(a: KeyMove, b: KeyMove): boolean {
+  return a.sign === b.sign && !!a.reverse === !!b.reverse;
+}
+
+export function keysForMove(km: Record<string, KeyMove>, m: KeyMove): string[] {
+  return Object.entries(km)
+    .filter(([, v]) => moveEq(v, m))
+    .map(([k]) => k);
 }
 
 export interface KeymapGroup {
   zh: string;
   en: string;
-  rows: KeymapRow[];
+  moves: KeyMove[];
 }
 
-// 每个 move 列出所有可触发的键。顺序按 R U F L D B → 外层 → wide → 切片 → 整体转。
+// 每个分组只列 move 列表,具体 key 在 UI 中从 effective keymap 反查
 export const KEYMAP_GROUPS: KeymapGroup[] = [
   {
     zh: '基本 6 面', en: 'Basic faces',
-    rows: [
-      { move: 'R',  keys: ['KeyI', 'ArrowUp'] },
-      { move: "R'", keys: ['KeyK', 'ArrowDown'] },
-      { move: 'U',  keys: ['KeyJ', 'ArrowLeft'] },
-      { move: "U'", keys: ['KeyF', 'ArrowRight'] },
-      { move: 'F',  keys: ['KeyH'] },
-      { move: "F'", keys: ['KeyG'] },
-      { move: 'L',  keys: ['KeyD'] },
-      { move: "L'", keys: ['KeyE'] },
-      { move: 'D',  keys: ['KeyS'] },
-      { move: "D'", keys: ['KeyL'] },
-      { move: 'B',  keys: ['KeyW'] },
-      { move: "B'", keys: ['KeyO'] },
+    moves: [
+      { sign: 'R' }, { sign: 'R', reverse: true },
+      { sign: 'U' }, { sign: 'U', reverse: true },
+      { sign: 'F' }, { sign: 'F', reverse: true },
+      { sign: 'L' }, { sign: 'L', reverse: true },
+      { sign: 'D' }, { sign: 'D', reverse: true },
+      { sign: 'B' }, { sign: 'B', reverse: true },
     ],
   },
   {
     zh: '内层 (wide)', en: 'Wide (inner)',
-    rows: [
-      { move: 'r',  keys: ['KeyU'] },
-      { move: "r'", keys: ['KeyM'] },
-      { move: 'l',  keys: ['KeyV'] },
-      { move: "l'", keys: ['KeyR'] },
-      { move: 'u',  keys: ['Comma'] },
-      { move: "u'", keys: ['KeyC'] },
-      { move: 'd',  keys: ['KeyZ'] },
-      { move: "d'", keys: ['Slash'] },
+    moves: [
+      { sign: 'r' }, { sign: 'r', reverse: true },
+      { sign: 'l' }, { sign: 'l', reverse: true },
+      { sign: 'u' }, { sign: 'u', reverse: true },
+      { sign: 'd' }, { sign: 'd', reverse: true },
     ],
   },
   {
     zh: '中层切片', en: 'Slices',
-    rows: [
-      { move: 'M',  keys: ['Digit5', 'Digit6'] },
-      { move: "M'", keys: ['Period', 'KeyX'] },
-      { move: 'E',  keys: ['Digit2'] },
-      { move: "E'", keys: ['Digit9'] },
-      { move: 'S',  keys: ['Digit0'] },
-      { move: "S'", keys: ['Digit1'] },
+    moves: [
+      { sign: 'M' }, { sign: 'M', reverse: true },
+      { sign: 'E' }, { sign: 'E', reverse: true },
+      { sign: 'S' }, { sign: 'S', reverse: true },
     ],
   },
   {
     zh: '整体转', en: 'Rotation',
-    rows: [
-      { move: 'x',  keys: ['KeyT', 'KeyY'] },
-      { move: "x'", keys: ['KeyN', 'KeyB'] },
-      { move: 'y',  keys: ['Semicolon'] },
-      { move: "y'", keys: ['KeyA'] },
-      { move: 'z',  keys: ['KeyP'] },
-      { move: "z'", keys: ['KeyQ'] },
+    moves: [
+      { sign: 'x' }, { sign: 'x', reverse: true },
+      { sign: 'y' }, { sign: 'y', reverse: true },
+      { sign: 'z' }, { sign: 'z', reverse: true },
     ],
   },
 ];

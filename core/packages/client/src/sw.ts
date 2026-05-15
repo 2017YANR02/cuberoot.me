@@ -37,10 +37,17 @@ self.addEventListener('fetch', (event) => {
   event.respondWith((async () => {
     try {
       const qs = url.searchParams;
-      const puzzle = (qs.get('puzzle') ?? 'cube').toLowerCase();
+      // pzl unifies puzzle-type + NxN size. Numeric pzl → NxN; keyword → puzzle.
+      // Legacy `puzzle=` param still accepted.
+      const rawPzl = (qs.get('pzl') ?? qs.get('puzzle') ?? 'cube').toLowerCase();
+      const isNumeric = /^\d+$/.test(rawPzl);
+      const puzzle = isNumeric ? 'cube'
+        : rawPzl === 'mega' ? 'megaminx'
+        : rawPzl === 'pyra' ? 'pyraminx'
+        : rawPzl;
 
       // sq1 / megaminx (variant=net) — local tnoodle port, same renderer as
-      // /visualcube?puzzle=sq1&variant=net + /alg/sq1 thumbnails.
+      // /visualcube?pzl=sq1&variant=net + /alg/sq1 thumbnails.
       if (puzzle === 'sq1' || puzzle === 'megaminx') {
         const setupRaw = qs.get('setup');
         const caseRaw = qs.get('case');

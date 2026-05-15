@@ -13,6 +13,7 @@ import {
 import World from './cuber/world';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
+import { FACE } from './cuber/define';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -22,7 +23,7 @@ import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import PerfOverlay, { type PerfStats } from './PerfOverlay';
-import { KEYMAP } from './keymap';
+import { loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove } from './keymap';
 import './stack.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
@@ -68,6 +69,9 @@ export default function StackPage() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<StackSettings>(() => loadSettings());
+  const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
+  const keymapRef = useRef(keymap);
+  useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
 
   const setMode = useCallback((next: Mode) => {
     setSearchParams((prev) => {
@@ -124,6 +128,19 @@ export default function StackPage() {
     const toucher = new Toucher();
     toucher.init(renderer.domElement, world.controller.touch);
     toucherRef.current = toucher;
+
+    // 单击转动:无拖动时根据点击的面 (U/F/R) + 修饰键触发 twist。
+    // 右键 / Shift = 逆时针;不可见的 L/D/B 面 face 会是 null,忽略。
+    world.controller.taps.push((_idx, face, opts) => {
+      if (face === null) return;
+      const sign = FACE[face]; // 0..5 → 'L'/'R'/'D'/'U'/'B'/'F'
+      const reverse = opts.shift || opts.button === 2;
+      world.cube.twister.twist(new TwistAction(sign, reverse, 1), false, true);
+    });
+
+    // 右键 default 是 context menu,阻止它好让右键单击能触发逆时针转
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
+    renderer.domElement.addEventListener('contextmenu', onContextMenu);
 
     ensureCubeCallback();
     applySettings(world, settings);
@@ -273,6 +290,7 @@ export default function StackPage() {
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('pointercancel', onPointerUp);
+      renderer.domElement.removeEventListener('contextmenu', onContextMenu);
       if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
       toucher.destroy();
       if (renderer.domElement.parentNode) {
@@ -371,7 +389,7 @@ export default function StackPage() {
         handleUndo();
         return;
       }
-      const k = KEYMAP[e.code];
+      const k = keymapRef.current[e.code];
       if (!k) return;
       e.preventDefault();
       const world = worldRef.current;
@@ -570,6 +588,9 @@ export default function StackPage() {
         onClose={() => setSettingsOpen(false)}
         settings={settings}
         onChange={setSettings}
+        keymap={keymap}
+        onKeymapChange={setKeymap}
+        onResetKeymap={() => setKeymap(resetKeymapStorage())}
       />
     </div>
   );

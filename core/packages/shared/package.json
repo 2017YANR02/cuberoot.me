@@ -16,6 +16,10 @@
       "default": "./src/wca_events.ts"
     },
     "./alg": "./src/alg.ts",
+    "./skewb-pyramid-svg": {
+      "node": "./dist/skewb_pyramid_svg.js",
+      "default": "./src/skewb_pyramid_svg.ts"
+    },
     "./data/*.json": "./data/*.json"
   },
   "scripts": {
