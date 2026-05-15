@@ -1,17 +1,28 @@
 /**
- * InstancedRenderer — 用 2 个 InstancedMesh 替换 N³ 个 cubelet Mesh。
- * 灵感来自 cubing.js PG3D (单 BufferGeometry + materialIndex 切静/动)。
- * Cubelet 仍是 THREE.Group(承载 position/quaternion/index 逻辑 + 被 CubeGroup 重 parent),
- * 但不创建任何 Mesh 子物;每帧 update() 读 cubelet.matrixWorld 写 instanceMatrix。
+ * InstancedRenderer — PG3D-style 静/动双 InstancedMesh,event-driven。
+ *
+ * 设计:
+ *  - 4 个 InstancedMesh: staticFrame + movingFrame + staticSticker + movingSticker
+ *    static 容量 = N visible cubelets / N visible stickers。每个 cubelet 拥有稳定的 instance idx。
+ *    moving 容量同 static — slice 旋转时同 idx 在 static/moving 之间切换可见性。
+ *  - 不每帧重写 cubelet 矩阵。 只在 3 个时机更新:
+ *      constructor: 写入所有 cubelet 的初始矩阵到 static
+ *      beginSlice: 把 slice 内 cubelet 的矩阵从 static 复制到 moving,隐藏 static slot
+ *      setSliceAngle: 把整 movingFrame/movingSticker 围绕 slice 轴旋转 angle (一次 quaternion)
+ *      endSlice: cubelet 的逻辑矩阵已被 group.rotate() 改成新位置,把新矩阵写回 static slot,隐藏 moving
+ *      rebuildAll: cube.reset() 后,重写所有 static 矩阵
+ *  - applyStick: setColorAt 写到 static (slice 期间也 OK,因为颜色跟着 cubelet,在 slice 期间 cubelet 在 moving)
+ *    需要给 moving 也同步,否则 slice 期间换色看不见。
  */
 import * as THREE from "three";
 import Cubelet from "./cubelet";
 import Cube from "./cube";
+import CubeGroup from "./group";
 import { FACE, COLORS } from "./define";
 
 const HALF = Cubelet.SIZE / 2;
+const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
 
-/** 把 thickness toggle 烤进 sticker local 矩阵的 z scale。upstream 默认 32。 */
 function makeStickerLocalMatrix(face: number, zScale: number): THREE.Matrix4 {
   const pos = new THREE.Vector3();
   const rot = new THREE.Euler();
@@ -28,144 +39,295 @@ function makeStickerLocalMatrix(face: number, zScale: number): THREE.Matrix4 {
   return m;
 }
 
-const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
+interface StickerSlot {
+  cubeletInitial: number;
+  face: number;
+  localMat: THREE.Matrix4;
+  visible: boolean;
+}
 
 export default class InstancedRenderer extends THREE.Group {
   cube: Cube;
 
-  /** cubelet 在 cube.initials[] 里的 index(稳定身份,不随旋转变);只装 exist=true 的 */
-  visibleCubeletIdx: number[] = [];
-  /** Reverse map: cubeletInitial → instance idx in frameMesh,-1 = 不渲染 */
-  cubeletToInstance: Int32Array;
+  /** 稳定 instance idx: cubelet.initial → 0..N-1 */
+  initialToInstance: Map<number, number> = new Map();
+  /** 反查: instance idx → cubelet.initial (用于 endSlice 拿 cubelet) */
+  instanceToInitial: number[] = [];
 
-  frameMesh: THREE.InstancedMesh;
-  stickerMesh: THREE.InstancedMesh;
-  /** 当前 sticker geometry / material(供 arrow / hollow 切换替换) */
-  private stickerGeometry: THREE.BufferGeometry;
+  staticFrame!: THREE.InstancedMesh;
+  movingFrame!: THREE.InstancedMesh;
+  staticSticker!: THREE.InstancedMesh;
+  movingSticker!: THREE.InstancedMesh;
+
   private stickerMaterial: THREE.MeshLambertMaterial;
-  private frameMaterial: THREE.Material;
+  private movingStickerMaterial: THREE.MeshLambertMaterial;
 
-  // 每个 sticker slot
-  stickerCubeletIdx: Int32Array;
-  stickerLocalFace: Int8Array;
-  stickerLocalMatrix: THREE.Matrix4[];
-  stickerVisible: Uint8Array;
-  /** sticker slot index 反查:key = cubeletIdx * 6 + localFace */
-  private slotLookup: Map<number, number>;
+  stickerSlots: StickerSlot[] = [];
+  /** key: cubeletInitial * 6 + face → slot idx */
+  private slotLookup: Map<number, number> = new Map();
+  /** 每个 cubeletInitial 拥有的 sticker slot idx 列表(beginSlice/endSlice 用) */
+  private cubeletSlots: Map<number, number[]> = new Map();
 
   // toggles
   private _thickness = true;
   private _arrow = false;
 
-  // 复用临时
+  // active slices (支持并发,例如 x/y/z 整 cube 旋转 = N 个 group 同时跑)
+  private activeSlices: Map<CubeGroup, { instances: number[]; slots: number[] }> = new Map();
+
+  // 临时
   private tmpMat = new THREE.Matrix4();
-  private cubeWorldInv = new THREE.Matrix4();
   private tmpColor = new THREE.Color();
+  private tmpQuat = new THREE.Quaternion();
 
   constructor(cube: Cube) {
     super();
     this.cube = cube;
     this.matrixAutoUpdate = false;
 
-    // 收集 visible cubelets(用 initials 数组的 index 做稳定身份 — cubelets[] 会随旋转重排)
-    this.cubeletToInstance = new Int32Array(cube.initials.length).fill(-1);
-    for (let i = 0; i < cube.initials.length; i++) {
-      if (cube.initials[i].exist) {
-        this.cubeletToInstance[i] = this.visibleCubeletIdx.length;
-        this.visibleCubeletIdx.push(i);
-      }
+    const cubelets = [...cube.initials.values()];
+    const visCount = cubelets.length;
+    for (let i = 0; i < visCount; i++) {
+      this.initialToInstance.set(cubelets[i].initial, i);
+      this.instanceToInitial.push(cubelets[i].initial);
     }
-    const visCount = this.visibleCubeletIdx.length;
 
-    this.frameMaterial = Cubelet.CORE;
-    this.frameMesh = new THREE.InstancedMesh(Cubelet._FRAME, this.frameMaterial, visCount);
-    this.frameMesh.frustumCulled = false;
-    this.frameMesh.matrixAutoUpdate = false;
+    // Frame meshes
+    this.staticFrame = this.makeFrameMesh(visCount, false);
+    this.movingFrame = this.makeFrameMesh(visCount, true);
 
-    // sticker slots
-    const slotsCubeletIdx: number[] = [];
-    const slotsFace: number[] = [];
-    const slotsMat: THREE.Matrix4[] = [];
-    const initialColors: string[] = [];
-    const lookup = new Map<number, number>();
+    // 初始 frame 矩阵 (static),全部 moving 隐藏
+    for (let i = 0; i < visCount; i++) {
+      this.staticFrame.setMatrixAt(i, cubelets[i].matrix);
+      this.movingFrame.setMatrixAt(i, HIDE_MAT);
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+
+    // Sticker slots
     const zScale = this._thickness ? HALF : 1;
-    for (const idx of this.visibleCubeletIdx) {
-      const c = cube.initials[idx];
+    for (const cubelet of cubelets) {
+      const list: number[] = [];
       for (let f = 0; f < 6; f++) {
-        const col = c.colors[f];
+        const col = cubelet.colors[f];
         if (col == null || col === "") continue;
-        const slot = slotsCubeletIdx.length;
-        lookup.set(idx * 6 + f, slot);
-        slotsCubeletIdx.push(idx);
-        slotsFace.push(f);
-        slotsMat.push(makeStickerLocalMatrix(f, zScale));
-        initialColors.push(col);
+        const slotIdx = this.stickerSlots.length;
+        this.slotLookup.set(cubelet.initial * 6 + f, slotIdx);
+        list.push(slotIdx);
+        this.stickerSlots.push({
+          cubeletInitial: cubelet.initial,
+          face: f,
+          localMat: makeStickerLocalMatrix(f, zScale),
+          visible: true,
+        });
       }
+      this.cubeletSlots.set(cubelet.initial, list);
     }
-    this.stickerCubeletIdx = new Int32Array(slotsCubeletIdx);
-    this.stickerLocalFace = new Int8Array(slotsFace);
-    this.stickerLocalMatrix = slotsMat;
-    this.stickerVisible = new Uint8Array(slotsCubeletIdx.length).fill(1);
-    this.slotLookup = lookup;
 
-    this.stickerGeometry = Cubelet._STICKER;
+    // Sticker meshes
     this.stickerMaterial = new THREE.MeshLambertMaterial();
-    this.stickerMesh = new THREE.InstancedMesh(this.stickerGeometry, this.stickerMaterial, slotsCubeletIdx.length);
-    this.stickerMesh.frustumCulled = false;
-    this.stickerMesh.matrixAutoUpdate = false;
+    this.movingStickerMaterial = new THREE.MeshLambertMaterial();
+    this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
+    this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
 
-    for (let i = 0; i < initialColors.length; i++) {
-      this.tmpColor.set(COLORS[initialColors[i]] ?? COLORS.Gray);
-      this.stickerMesh.setColorAt(i, this.tmpColor);
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = cube.initials.get(slot.cubeletInitial)!;
+      this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+      this.staticSticker.setMatrixAt(i, this.tmpMat);
+      this.movingSticker.setMatrixAt(i, HIDE_MAT);
+      this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
+      this.staticSticker.setColorAt(i, this.tmpColor);
+      this.movingSticker.setColorAt(i, this.tmpColor);
     }
-    if (this.stickerMesh.instanceColor) this.stickerMesh.instanceColor.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
+    if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
 
-    this.add(this.frameMesh);
-    this.add(this.stickerMesh);
+    this.add(this.staticFrame);
+    this.add(this.movingFrame);
+    this.add(this.staticSticker);
+    this.add(this.movingSticker);
   }
 
-  /** 每帧 render 前调。读 cubelet.matrixWorld → 写 instanceMatrix。 */
-  update(): void {
-    this.cube.updateMatrixWorld(true);
-    this.cubeWorldInv.copy(this.cube.matrixWorld).invert();
+  private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    const m = new THREE.InstancedMesh(Cubelet._FRAME, Cubelet.CORE, count);
+    m.frustumCulled = false;
+    // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
+    // static mesh 永远 identity
+    m.matrixAutoUpdate = moving;
+    if (!moving) m.matrix.identity();
+    return m;
+  }
 
-    const initials = this.cube.initials;
+  private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    const m = new THREE.InstancedMesh(
+      moving ? this.staticSticker?.geometry ?? Cubelet._STICKER : Cubelet._STICKER,
+      moving ? this.movingStickerMaterial : this.stickerMaterial,
+      count,
+    );
+    m.frustumCulled = false;
+    m.matrixAutoUpdate = moving;
+    if (!moving) m.matrix.identity();
+    return m;
+  }
 
-    for (let i = 0; i < this.visibleCubeletIdx.length; i++) {
-      const c = initials[this.visibleCubeletIdx[i]];
-      this.tmpMat.multiplyMatrices(this.cubeWorldInv, c.matrixWorld);
-      this.frameMesh.setMatrixAt(i, this.tmpMat);
+  /** group.hold 时调。把 slice 内 cubelet 切换到 moving,static slot 隐藏。 */
+  beginSlice(group: CubeGroup): void {
+    if (this.activeSlices.has(group)) {
+      // re-entrant — clean up first
+      this.endSlice(group);
     }
-    this.frameMesh.instanceMatrix.needsUpdate = true;
+    const instances: number[] = [];
+    const slotsList: number[] = [];
 
-    for (let i = 0; i < this.stickerCubeletIdx.length; i++) {
-      if (this.stickerVisible[i] === 0) {
-        this.stickerMesh.setMatrixAt(i, HIDE_MAT);
+    for (const positionIdx of group.indices) {
+      const cubelet = this.cube.cubelets.get(positionIdx);
+      if (!cubelet) continue;
+      const instIdx = this.initialToInstance.get(cubelet.initial);
+      if (instIdx === undefined) continue;
+      instances.push(instIdx);
+      this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
+      this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
+      this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
+
+      const slots = this.cubeletSlots.get(cubelet.initial);
+      if (slots) {
+        for (const slotIdx of slots) {
+          if (!this.stickerSlots[slotIdx].visible) continue;
+          slotsList.push(slotIdx);
+          this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
+          this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
+          this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+        }
+      }
+    }
+    this.activeSlices.set(group, { instances, slots: slotsList });
+    // 进入 slice 时,把 moving 的 quaternion 重置为 0 (新动画从 angle=0 开始)
+    if (this.activeSlices.size === 1) {
+      this.movingFrame.quaternion.identity();
+      this.movingSticker.quaternion.identity();
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+
+  /** group.angle setter 调。仅旋转 moving meshes,不动 instance 矩阵。
+   * 多个并发 slice (整 cube 旋转) 会重复设同一 quaternion,无害。 */
+  setSliceAngle(angle: number, axis: string): void {
+    const axisVec = CubeGroup.AXIS_VECTOR[axis];
+    if (!axisVec) return;
+    this.tmpQuat.setFromAxisAngle(axisVec, angle);
+    this.movingFrame.quaternion.copy(this.tmpQuat);
+    this.movingSticker.quaternion.copy(this.tmpQuat);
+    this.cube.dirty = true;
+  }
+
+  /** group.drop 时调。cubelet.matrix 已被 group.rotate() 改成新位置,写回 static。 */
+  endSlice(group: CubeGroup): void {
+    const state = this.activeSlices.get(group);
+    if (!state) return;
+    for (const instIdx of state.instances) {
+      const cubeletInitial = this.instanceToInitial[instIdx];
+      const cubelet = this.cube.initials.get(cubeletInitial);
+      if (!cubelet) continue;
+      this.staticFrame.setMatrixAt(instIdx, cubelet.matrix);
+      this.movingFrame.setMatrixAt(instIdx, HIDE_MAT);
+
+      const slots = this.cubeletSlots.get(cubeletInitial);
+      if (slots) {
+        for (const slotIdx of slots) {
+          const slot = this.stickerSlots[slotIdx];
+          if (!slot.visible) {
+            this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+            this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+            continue;
+          }
+          this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+          this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
+          this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+        }
+      }
+    }
+    this.activeSlices.delete(group);
+    if (this.activeSlices.size === 0) {
+      this.movingFrame.quaternion.identity();
+      this.movingSticker.quaternion.identity();
+    }
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+
+  /** cube.reset() 后调:全部 cubelet 在初始位置,重建所有 static 矩阵。 */
+  rebuildAll(): void {
+    this.activeSlices.clear();
+    this.tmpQuat.identity();
+    this.movingFrame.quaternion.copy(this.tmpQuat);
+    this.movingSticker.quaternion.copy(this.tmpQuat);
+
+    for (let i = 0; i < this.instanceToInitial.length; i++) {
+      const cubeletInitial = this.instanceToInitial[i];
+      const cubelet = this.cube.initials.get(cubeletInitial);
+      if (!cubelet) continue;
+      this.staticFrame.setMatrixAt(i, cubelet.matrix);
+      this.movingFrame.setMatrixAt(i, HIDE_MAT);
+    }
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = this.cube.initials.get(slot.cubeletInitial);
+      if (!cubelet || !slot.visible) {
+        this.staticSticker.setMatrixAt(i, HIDE_MAT);
+        this.movingSticker.setMatrixAt(i, HIDE_MAT);
         continue;
       }
-      const c = initials[this.stickerCubeletIdx[i]];
-      this.tmpMat.multiplyMatrices(this.cubeWorldInv, c.matrixWorld).multiply(this.stickerLocalMatrix[i]);
-      this.stickerMesh.setMatrixAt(i, this.tmpMat);
+      this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+      this.staticSticker.setMatrixAt(i, this.tmpMat);
+      this.movingSticker.setMatrixAt(i, HIDE_MAT);
     }
-    this.stickerMesh.instanceMatrix.needsUpdate = true;
+    this.staticFrame.instanceMatrix.needsUpdate = true;
+    this.movingFrame.instanceMatrix.needsUpdate = true;
+    this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.cube.dirty = true;
   }
 
-  /** stick(face, value) 走这里:更新 sticker color / 隐藏。value: '' = 恢复初始,'remove' = 隐藏,其它 = label。
-   * cubeletInitial 是 cube.initials[] 里的稳定 index(= cubelet.initial)。 */
   applyStick(cubeletInitial: number, face: number, label: string | undefined): void {
     const slot = this.slotLookup.get(cubeletInitial * 6 + face);
     if (slot === undefined) return;
+    const slotData = this.stickerSlots[slot];
     if (label === "remove") {
-      this.stickerVisible[slot] = 0;
+      slotData.visible = false;
+      this.staticSticker.setMatrixAt(slot, HIDE_MAT);
+      this.movingSticker.setMatrixAt(slot, HIDE_MAT);
+      this.staticSticker.instanceMatrix.needsUpdate = true;
+      this.movingSticker.instanceMatrix.needsUpdate = true;
       this.cube.dirty = true;
       return;
     }
-    this.stickerVisible[slot] = 1;
-    const cubelet = this.cube.initials[cubeletInitial];
-    const effective = label && label.length > 0 ? label : (cubelet.colors[face] ?? "Gray");
+    if (!slotData.visible) {
+      // re-show
+      slotData.visible = true;
+      const cubelet = this.cube.initials.get(cubeletInitial);
+      if (cubelet) {
+        this.tmpMat.multiplyMatrices(cubelet.matrix, slotData.localMat);
+        this.staticSticker.setMatrixAt(slot, this.tmpMat);
+        this.staticSticker.instanceMatrix.needsUpdate = true;
+      }
+    }
+    const cubelet = this.cube.initials.get(cubeletInitial);
+    const effective = label && label.length > 0 ? label : (cubelet?.colors[face] ?? "Gray");
     this.tmpColor.set(COLORS[effective] ?? COLORS.Gray);
-    this.stickerMesh.setColorAt(slot, this.tmpColor);
-    if (this.stickerMesh.instanceColor) this.stickerMesh.instanceColor.needsUpdate = true;
+    this.staticSticker.setColorAt(slot, this.tmpColor);
+    this.movingSticker.setColorAt(slot, this.tmpColor);
+    if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
+    if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
     this.cube.dirty = true;
   }
 
@@ -173,29 +335,49 @@ export default class InstancedRenderer extends THREE.Group {
     if (value === this._thickness) return;
     this._thickness = value;
     const zScale = value ? HALF : 1;
-    for (let i = 0; i < this.stickerLocalMatrix.length; i++) {
-      this.stickerLocalMatrix[i] = makeStickerLocalMatrix(this.stickerLocalFace[i], zScale);
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      slot.localMat = makeStickerLocalMatrix(slot.face, zScale);
     }
+    // Rebuild sticker matrices
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = this.cube.initials.get(slot.cubeletInitial);
+      if (!cubelet || !slot.visible) {
+        this.staticSticker.setMatrixAt(i, HIDE_MAT);
+        continue;
+      }
+      this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+      this.staticSticker.setMatrixAt(i, this.tmpMat);
+    }
+    this.staticSticker.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
   }
   get thickness(): boolean { return this._thickness; }
 
   set hollow(value: boolean) {
-    this.frameMesh.material = value ? Cubelet.TRANS : Cubelet.CORE;
+    const mat = value ? Cubelet.TRANS : Cubelet.CORE;
+    this.staticFrame.material = mat;
+    this.movingFrame.material = mat;
     this.cube.dirty = true;
   }
 
   set arrow(value: boolean) {
     if (value === this._arrow) return;
     this._arrow = value;
-    this.stickerMesh.geometry = value ? Cubelet._ARROW : Cubelet._STICKER;
+    const geo = value ? Cubelet._ARROW : Cubelet._STICKER;
+    this.staticSticker.geometry = geo;
+    this.movingSticker.geometry = geo;
     this.cube.dirty = true;
   }
   get arrow(): boolean { return this._arrow; }
 
   dispose(): void {
-    this.frameMesh.dispose();
-    this.stickerMesh.dispose();
+    this.staticFrame.dispose();
+    this.movingFrame.dispose();
+    this.staticSticker.dispose();
+    this.movingSticker.dispose();
     this.stickerMaterial.dispose();
+    this.movingStickerMaterial.dispose();
   }
 }
