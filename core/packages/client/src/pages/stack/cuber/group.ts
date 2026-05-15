@@ -176,11 +176,7 @@ export default class CubeGroup extends THREE.Group {
   rotate(cubelet: Cubelet): void {
     cubelet.rotateOnWorldAxis(CubeGroup.AXIS_VECTOR[this.axis], this.angle);
     cubelet.vector = cubelet.vector.applyAxisAngle(CubeGroup.AXIS_VECTOR[this.axis], this.angle);
-    // Shader 模式 (instancedRenderer.useShaderSlice) 下不 read cubelet.matrix
-    // (shader 读 cubelet.quaternion 写到 aOrientation),省 62500 次 matrix.compose。
-    if (!(this.cube.instancedRenderer as unknown as { useShaderSlice?: boolean }).useShaderSlice) {
-      cubelet.updateMatrix();
-    }
+    cubelet.updateMatrix();
   }
 }
 
