@@ -293,6 +293,37 @@
 .is-spinning { animation: comp-spin 0.9s linear infinite; }
 @keyframes comp-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
+.comp-table-section {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.comp-view-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+.comp-view-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.comp-view-tab:hover { color: var(--foreground); }
+.comp-view-tab.is-active {
+  color: var(--foreground);
+  border-bottom-color: var(--accent);
+}
+.comp-psych-eventbar {
+  margin-bottom: 12px;
+}
 .comp-selectors {
   display: flex;
   gap: 8px;
@@ -331,17 +362,22 @@
 /* ── Table ─────────────────────────────────────────────────────────── */
 
 .comp-table-wrap {
-  overflow-x: auto;
+  /* 不设 overflow——会困住 thead 的 position: sticky；过宽时由页面横滚 */
+  /* inline-block 让 wrap 收缩到 table 实际宽度,边框严丝合缝包住 table */
+  display: inline-block;
   border-radius: 6px;
   border: 1px solid var(--border-default);
 }
 .comp-table {
-  width: 100%;
+  width: auto;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
 .comp-table thead th {
-  background: color-mix(in srgb, var(--muted) 80%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--muted) 80%, var(--background));
   padding: 8px 10px;
   text-align: left;
   font-weight: 600;
@@ -358,9 +394,7 @@
 .comp-table tbody tr.row-odd { background: color-mix(in srgb, var(--foreground) 2.5%, transparent); }
 .comp-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 
-.th-place, .td-place { width: 56px; }
-.th-no, .td-no { width: 56px; color: var(--muted-foreground); }
-.th-person { min-width: 180px; }
+.td-no { color: var(--muted-foreground); }
 .th-avg, .td-avg, .th-best, .td-best { font-variant-numeric: tabular-nums; }
 .td-avg { font-weight: 600; }
 .td-attempt {
@@ -368,7 +402,6 @@
   color: var(--muted-foreground);
   font-size: 0.85rem;
   text-align: right;
-  padding-right: 18px !important;
 }
 
 .td-best.is-pr,
