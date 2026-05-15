@@ -10,6 +10,7 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import WebSocket from 'ws';
+import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { query } from '../db/connection.js';
 
 export const cubingLiveRoutes = new Hono();
@@ -467,15 +468,6 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
 // 几十 ms 出全部 round 成绩;CI 每周重灌 dump 时一并填新数据.
 // 命中即独占,不再 probe cubing / wca_live / wca REST.
 
-// 标准 WCA event 顺序;不在此表的 event 落到末尾.
-const WCA_EVENT_ORDER = [
-  '333','222','444','555','666','777',
-  '333bf','333fm','333oh',
-  'clock','minx','pyram','skewb','sq1',
-  '444bf','555bf','333mbf',
-  'magic','mmagic','333ft','333mbo',
-];
-
 interface WcaDbRow {
   event_id: string;
   round_type_id: string;
@@ -491,19 +483,8 @@ interface WcaDbRow {
   comp_name: string | null;
 }
 
-async function probeWcaDb(wcaId: string): Promise<boolean> {
-  try {
-    const rows = await query<{ x: number }>(
-      'SELECT 1 AS x FROM wca_results_top WHERE comp_id = ? LIMIT 1',
-      [wcaId],
-    );
-    return rows.length > 0;
-  } catch {
-    return false;
-  }
-}
-
-async function loadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
+/** 返回 null 表示本地 dump 没有这场比赛 (有效信号,fall-through 给外部 probe);PG 报错才 throw. */
+async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<CompData | null> {
   onProgress?.({ step: 'wca_db.query', done: 0, total: 1 });
   const rows = await query<WcaDbRow>(
     `SELECT
@@ -520,7 +501,7 @@ async function loadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<Co
     [wcaId],
   );
   onProgress?.({ step: 'wca_db.query', done: 1, total: 1 });
-  if (rows.length === 0) throw new Error(`wca_db: no results for ${wcaId}`);
+  if (rows.length === 0) return null;
   onProgress?.({ step: 'wca_db.transform', done: 0, total: 1 });
 
   // 单遍累积 users / merged / events 三件事(共享 rows 流),避免 3 次重复迭代 + 中间 scratch map.
@@ -824,26 +805,19 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
 // ─── Source probing ───────────────────────────────────────────────────────
 
 const PROBE_TTL_MS = 5 * 60_000;
-interface ProbeResult { wcaDb: boolean; wca: boolean; cubingMeta: ScrapedMeta | null; wcaLiveId: string | null; at: number }
+interface ProbeResult { wca: boolean; cubingMeta: ScrapedMeta | null; wcaLiveId: string | null; at: number }
 const probeCache = new Map<string, ProbeResult>();
 
 async function probeSources(wcaId: string): Promise<ProbeResult> {
   const hit = probeCache.get(wcaId);
   if (hit && Date.now() - hit.at < PROBE_TTL_MS) return hit;
-  // wca_db 命中即独占:成绩已经在本地 WCA dump 里,不必再问 cubing.com / wca_live / WCA REST.
-  const wcaDb = await probeWcaDb(wcaId);
-  if (wcaDb) {
-    const result: ProbeResult = { wcaDb: true, wca: false, cubingMeta: null, wcaLiveId: null, at: Date.now() };
-    probeCache.set(wcaId, result);
-    return result;
-  }
   const [wca, cubingMeta, wcaLiveId] = await Promise.all([
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`, { method: 'HEAD' })
       .then(r => r.ok).catch(() => false),
     scrapeMeta(wcaIdToCubingSlug(wcaId)).catch(() => null),
     probeWcaLive(wcaId),
   ]);
-  const result: ProbeResult = { wcaDb: false, wca, cubingMeta, wcaLiveId, at: Date.now() };
+  const result: ProbeResult = { wca, cubingMeta, wcaLiveId, at: Date.now() };
   probeCache.set(wcaId, result);
   return result;
 }
@@ -851,12 +825,10 @@ async function probeSources(wcaId: string): Promise<ProbeResult> {
 type SourceChoice = 'auto' | SourceId;
 
 /** 默认源选择规则:
- *  - wca_db 单独存在 → wca_db (本地 dump,最快;命中即独占)
  *  - cubing+wca 都有(中国赛后) → wca (WCA REST API 数据更权威)
  *  - wca_live+wca 都有(国外比赛刚结束) → wca_live (实时数据)
  *  - 单一源 → 该源 */
 function defaultSource(available: SourceId[]): SourceId {
-  if (available.includes('wca_db')) return 'wca_db';
   if (available.includes('cubing') && available.includes('wca')) return 'wca';
   if (available.includes('wca_live')) return 'wca_live';
   if (available.includes('wca')) return 'wca';
@@ -864,9 +836,31 @@ function defaultSource(available: SourceId[]): SourceId {
 }
 
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
+  // wca_db fast-path: 命中即独占,不发外部 probe.单次 PG 查直接出全部数据.
+  if (choice === 'auto' || choice === 'wca_db') {
+    const cacheKey = `${wcaId}:wca_db`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < ttlFor('wca_db')) {
+      return { ...cached, availableSources: ['wca_db'] };
+    }
+    try {
+      const data = await tryLoadFromWcaDb(wcaId, onProgress);
+      if (data) {
+        data.availableSources = ['wca_db'];
+        cache.set(cacheKey, data);
+        return data;
+      }
+      // null = 本地 dump 没这场,fall-through
+    } catch (e) {
+      // PG 故障不应阻止外部源兜底,只 log;auto choice 继续走 probe.
+      console.warn(`[cubing-live] wca_db query failed for ${wcaId}:`, (e as Error).message);
+      if (choice === 'wca_db') throw e;
+    }
+    if (choice === 'wca_db') throw new Error(`No data on wca_db for ${wcaId}`);
+  }
+
   const probe = await probeSources(wcaId);
   const availableSources: SourceId[] = [];
-  if (probe.wcaDb) availableSources.push('wca_db');
   if (probe.cubingMeta) availableSources.push('cubing');
   if (probe.wcaLiveId) availableSources.push('wca_live');
   if (probe.wca) availableSources.push('wca');
@@ -894,8 +888,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
 
   const p = (async () => {
     let data: CompData;
-    if (useSource === 'wca_db') data = await loadFromWcaDb(wcaId, onProgress);
-    else if (useSource === 'wca') data = await loadFromWca(wcaId, onProgress);
+    if (useSource === 'wca') data = await loadFromWca(wcaId, onProgress);
     else if (useSource === 'wca_live') data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId || undefined);
     else data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
     data.availableSources = availableSources;

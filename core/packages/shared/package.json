@@ -11,6 +11,10 @@
       "node": "./dist/nemesizer_format.js",
       "default": "./src/nemesizer_format.ts"
     },
+    "./wca-events": {
+      "node": "./dist/wca_events.js",
+      "default": "./src/wca_events.ts"
+    },
     "./alg": "./src/alg.ts",
     "./data/*.json": "./data/*.json"
   },
