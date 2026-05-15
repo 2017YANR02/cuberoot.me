@@ -158,6 +158,9 @@ export default function StackPage() {
     };
     resize();
     window.addEventListener('resize', resize);
+    // 模式切换 / 设置抽屉等改变容器高度时, ResizeObserver 才能感知 — window resize 不会触发
+    const ro = new ResizeObserver(resize);
+    ro.observe(container);
 
     // 滚轮 / 双指捏合缩放: 实时改 world.scale + resize, 滚动停止后同步到 settings
     const SCALE_MIN = 0.3;
@@ -243,6 +246,7 @@ export default function StackPage() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
+      ro.disconnect();
       renderer.domElement.removeEventListener('wheel', onWheel);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
