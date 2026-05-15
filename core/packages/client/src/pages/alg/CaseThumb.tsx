@@ -58,7 +58,7 @@ export function CaseThumb({
     // real <img> (right-click → Save image as…). The SW (prod) + vite middleware
     // (dev) both dispatch to the local tnoodle port — visual parity with
     // /visualcube?puzzle=sq1&variant=net.
-    const params = new URLSearchParams({ puzzle: 'sq1', variant: 'net' });
+    const params = new URLSearchParams({ pzl: 'sq1', variant: 'net' });
     if (setup && setup.trim()) params.set('setup', setup);
     else if (alg) params.set('case', alg);
     return (

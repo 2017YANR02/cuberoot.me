@@ -5,15 +5,17 @@
  */
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import World from './cuber/world';
-import { KEYMAP_GROUPS, keyLabel } from './keymap';
+import CubeGroup from './cuber/group';
+import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 
 export interface StackSettings {
   sensitivity: number;
   scale: number;
   perspective: number;
+  speed: number;
   thickness: boolean;
   hollow: boolean;
   arrow: boolean;
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: StackSettings = {
   sensitivity: 50,
   scale: 50,
   perspective: 50,
+  speed: 50,
   thickness: true,
   hollow: false,
   arrow: false,
@@ -54,6 +57,8 @@ export function saveSettings(s: StackSettings): void {
 function mapSensitivity(v: number): number { return 0.1 + (v / 100) * 1.4; }   // 0.1 ~ 1.5
 function mapScale(v: number): number { return 0.5 + v / 100; }                  // 0.5 ~ 1.5
 function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        // 2 ~ 10
+// speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 30 帧 (现状)
+function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 100) * 55)); }
 
 export function applySettings(world: World, s: StackSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
@@ -64,6 +69,7 @@ export function applySettings(world: World, s: StackSettings): void {
     world.scale = targetScale;
   }
   world.perspective = mapPerspective(s.perspective);
+  CubeGroup.frames = mapFrames(s.speed);
   world.cube.arrow = s.arrow;
   world.cube.instancedRenderer.thickness = s.thickness;
   world.cube.instancedRenderer.hollow = s.hollow;
@@ -77,20 +83,31 @@ interface Props {
   onClose: () => void;
   settings: StackSettings;
   onChange: (s: StackSettings) => void;
+  keymap: Record<string, KeyMove>;
+  onKeymapChange: (km: Record<string, KeyMove>) => void;
+  onResetKeymap: () => void;
 }
 
-export default function SettingDrawer({ open, onClose, settings, onChange }: Props) {
+export default function SettingDrawer({
+  open, onClose, settings, onChange,
+  keymap, onKeymapChange, onResetKeymap,
+}: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  // 当前正在编辑的键码 (点击键盘格子触发)
+  const [editingCode, setEditingCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (editingCode) setEditingCode(null);
+        else onClose();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [open, onClose, editingCode]);
 
   if (!open) return null;
 
@@ -112,38 +129,101 @@ export default function SettingDrawer({ open, onClose, settings, onChange }: Pro
           <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
           <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
           <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
+          <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
           <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
           <Toggle label={t('显示朝向箭头', 'Orientation arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
 
           <details className="stack-keymap">
             <summary>{t('键盘快捷键', 'Keyboard shortcuts')}</summary>
-            {KEYMAP_GROUPS.map((g) => (
-              <div key={g.zh} className="stack-keymap-group">
-                <div className="stack-keymap-title">{isZh ? g.zh : g.en}</div>
-                {g.rows.map((r) => (
-                  <div key={r.move} className="stack-keymap-row">
-                    <span className="stack-keymap-move">{r.move}</span>
-                    <span className="stack-keymap-keys">
-                      {r.keys.map((k) => (
-                        <kbd key={k}>{keyLabel(k)}</kbd>
+            <div className="stack-keymap-hint">
+              {editingCode
+                ? t(`为 ${keyLabel(editingCode)} 键选择动作 (ESC 取消)`, `Choose move for ${keyLabel(editingCode)} (ESC to cancel)`)
+                : t('点击键盘格修改对应快捷键', 'Click a key to rebind')}
+            </div>
+
+            <div className="stack-keyboard">
+              {KEYBOARD_ROWS.map((row, ri) => (
+                <div key={ri} className="stack-keyboard-row">
+                  {row.map((code) => {
+                    const m = keymap[code];
+                    const editing = editingCode === code;
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        className={'stack-key' + (editing ? ' editing' : '') + (!m ? ' empty' : '')}
+                        onClick={() => setEditingCode(editing ? null : code)}
+                      >
+                        <span className="stack-key-label">{keyLabel(code)}</span>
+                        <span className="stack-key-move">{m ? displayMove(m) : '·'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {editingCode && (
+              <div className="stack-keymap-picker">
+                {KEYMAP_GROUPS.map((g) => (
+                  <div key={g.zh} className="stack-keymap-picker-group">
+                    <div className="stack-keymap-title">{isZh ? g.zh : g.en}</div>
+                    <div className="stack-keymap-picker-row">
+                      {g.moves.map((m) => (
+                        <button
+                          key={displayMove(m)}
+                          type="button"
+                          className="stack-keymap-picker-btn"
+                          onClick={() => {
+                            onKeymapChange({ ...keymap, [editingCode]: m });
+                            setEditingCode(null);
+                          }}
+                        >{displayMove(m)}</button>
                       ))}
-                    </span>
+                    </div>
                   </div>
                 ))}
+                <div className="stack-keymap-picker-actions">
+                  <button
+                    type="button"
+                    className="stack-keymap-picker-clear"
+                    disabled={!keymap[editingCode]}
+                    onClick={() => {
+                      const next = { ...keymap };
+                      delete next[editingCode];
+                      onKeymapChange(next);
+                      setEditingCode(null);
+                    }}
+                  >{t('清除该键', 'Clear this key')}</button>
+                  <button
+                    type="button"
+                    className="stack-keymap-picker-cancel"
+                    onClick={() => setEditingCode(null)}
+                  >{t('取消', 'Cancel')}</button>
+                </div>
               </div>
-            ))}
-            <div className="stack-keymap-group">
-              <div className="stack-keymap-title">{t('其它', 'Misc')}</div>
-              <div className="stack-keymap-row">
-                <span className="stack-keymap-move">{t('撤销', 'Undo')}</span>
-                <span className="stack-keymap-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>⌫</kbd></span>
-              </div>
-              <div className="stack-keymap-row">
-                <span className="stack-keymap-move">{t('重做', 'Redo')}</span>
-                <span className="stack-keymap-keys"><kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
-              </div>
+            )}
+
+            <div className="stack-keymap-misc">
+              <span>{t('其它 (固定):', 'Misc (fixed):')}</span>
+              <span>{t('撤销', 'Undo')} <kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>⌫</kbd></span>
+              <span>{t('重做', 'Redo')} <kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
             </div>
+
+            <div className="stack-keymap-title" style={{ marginTop: 12 }}>{t('鼠标', 'Mouse')}</div>
+            <div className="stack-mouse-help">
+              <div><span className="stack-mouse-op">{t('左键点 U / F / R 面', 'Click U / F / R face')}</span><span className="stack-mouse-act">U / F / R</span></div>
+              <div><span className="stack-mouse-op"><kbd>Shift</kbd> {t('+ 左键', '+ click')}</span><span className="stack-mouse-act">U' / F' / R'</span></div>
+              <div><span className="stack-mouse-op">{t('右键点击', 'Right click')}</span><span className="stack-mouse-act">U' / F' / R' ({t('同 Shift', 'same as Shift')})</span></div>
+              <div><span className="stack-mouse-op">{t('拖动 sticker', 'Drag sticker')}</span><span className="stack-mouse-act">{t('转该层 (含中层)', 'Rotate that slice (incl. inner)')}</span></div>
+              <div><span className="stack-mouse-op">{t('拖动空白', 'Drag empty area')}</span><span className="stack-mouse-act">{t('整体旋转视角', 'Rotate whole cube')}</span></div>
+              <div><span className="stack-mouse-op">{t('滚轮', 'Wheel')}</span><span className="stack-mouse-act">{t('缩放', 'Zoom')}</span></div>
+            </div>
+
+            <button type="button" className="stack-keymap-reset" onClick={onResetKeymap}>
+              {t('恢复默认快捷键', 'Reset shortcuts to defaults')}
+            </button>
           </details>
 
           <button

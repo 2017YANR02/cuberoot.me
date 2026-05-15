@@ -302,6 +302,9 @@ importers:
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
+      sr-puzzlegen:
+        specifier: ^1.0.4
+        version: 1.0.4
       ws:
         specifier: ^8.20.0
         version: 8.20.0
