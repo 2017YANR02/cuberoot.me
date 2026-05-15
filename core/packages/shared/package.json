@@ -7,7 +7,10 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./nemesizer-format": "./src/nemesizer_format.ts",
+    "./nemesizer-format": {
+      "node": "./dist/nemesizer_format.js",
+      "default": "./src/nemesizer_format.ts"
+    },
     "./alg": "./src/alg.ts",
     "./data/*.json": "./data/*.json"
   },
