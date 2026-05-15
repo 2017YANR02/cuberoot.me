@@ -741,7 +741,11 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
   if (!round) return null;
   const isAverageFormat = round.f === 'a' || round.f === 'm' || round.f === '';
   const showAvg = isAverageFormat;
-  const attemptCount = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
+  // HTH 比赛单 round 可能有 14~30 个 attempt,以 format 推断的 5 不够。
+  // 取本 round 所有 row 的实际最大 attempt 数兜底。
+  const formatAttempts = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
+  const maxRowAttempts = results.reduce((m, r) => Math.max(m, r.v.length), 0);
+  const attemptCount = Math.max(formatAttempts, maxRowAttempts);
 
   return (
     <div className="comp-table-wrap">
