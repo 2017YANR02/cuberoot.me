@@ -34,6 +34,7 @@ interface RoundMeta {
   tt: number;       // total attempts
   name: string;     // "First round" / "Final" / etc
   allStatus?: string[];
+  liveId?: string;  // WCA Live 内部 round id(订阅用)
 }
 
 interface EventMeta {
@@ -56,12 +57,15 @@ interface LiveResult {
   ar: string | number; // average record marker
 }
 
+type SourceId = 'cubing' | 'wca' | 'wca_live';
+
 interface CompData {
   slug: string;     // WCA ID (无横杠),规范形态
   cubingSlug?: string; // cubing.com 用的 dash slug;source=wca 时无
-  source: 'cubing' | 'wca';
-  /** 这场比赛两边都有数据时给前端展示数据源切换器 */
-  availableSources?: ('cubing' | 'wca')[];
+  wcaLiveId?: string; // WCA Live 的内部数字 id (用于订阅)
+  source: SourceId;
+  /** 这场比赛 ≥2 个源都有数据时给前端展示数据源切换器 */
+  availableSources?: SourceId[];
   compId: number;
   name: string;
   type: string;     // "WCA" / "Non-WCA"
@@ -190,7 +194,7 @@ interface WsCollectResult {
 type SecondaryFilter = 'females' | 'children' | 'newcomers';
 
 export interface ProgressEvent {
-  step: 'meta' | 'cubing.results' | 'cubing.filter' | 'wca.fetch' | 'wca.transform';
+  step: 'meta' | 'cubing.results' | 'cubing.filter' | 'wca.fetch' | 'wca.transform' | 'wca_live.results';
   filter?: SecondaryFilter;
   done: number;
   total: number;
@@ -317,7 +321,8 @@ const WCA_CACHE_TTL_MS = 60 * 60_000;    // WCA 静态数据,1 小时
 const cache = new Map<string, CompData>();
 const inflight = new Map<string, Promise<CompData>>();
 
-function ttlFor(source: 'cubing' | 'wca'): number {
+function ttlFor(source: SourceId): number {
+  // wca_live & cubing 都是实时源,缓存短
   return source === 'wca' ? WCA_CACHE_TTL_MS : CUBING_CACHE_TTL_MS;
 }
 
@@ -453,6 +458,175 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
   };
 }
 
+// ─── WCA Live source (GraphQL) ─────────────────────────────────────────────
+
+const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
+
+interface WcaLiveCompListItem { id: string; wcaId: string }
+const COMPS_LIST_TTL_MS = 60_000;
+let compsListCache: { at: number; list: WcaLiveCompListItem[] } = { at: 0, list: [] };
+
+async function gql<T = unknown>(query: string, variables?: Record<string, unknown>): Promise<T> {
+  const res = await fetch(WCA_LIVE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!res.ok) throw new Error(`WCA Live HTTP ${res.status}`);
+  const j = await res.json() as { data?: T; errors?: { message: string }[] };
+  if (j.errors?.length) throw new Error(`WCA Live: ${j.errors[0].message}`);
+  if (!j.data) throw new Error('WCA Live: empty data');
+  return j.data;
+}
+
+async function getWcaLiveCompsList(): Promise<WcaLiveCompListItem[]> {
+  if (Date.now() - compsListCache.at < COMPS_LIST_TTL_MS) return compsListCache.list;
+  const from = new Date(Date.now() - 365 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+  const data = await gql<{ competitions: WcaLiveCompListItem[] }>(
+    'query Q($from: Date!) { competitions(from: $from, limit: 5000) { id wcaId } }',
+    { from },
+  );
+  compsListCache = { at: Date.now(), list: data.competitions };
+  return data.competitions;
+}
+
+async function probeWcaLive(wcaId: string): Promise<string | null> {
+  try {
+    const list = await getWcaLiveCompsList();
+    return list.find(c => c.wcaId === wcaId)?.id ?? null;
+  } catch { return null; }
+}
+
+interface WcaLiveRound {
+  id: string;
+  name: string;
+  number: number;
+  format: { id: string };
+}
+interface WcaLiveCompEvent {
+  event: { id: string };
+  rounds: WcaLiveRound[];
+}
+interface WcaLiveAttempt { result: number }
+interface WcaLiveResult {
+  id: string;
+  ranking: number | null;
+  best: number | null;
+  average: number | null;
+  single_record_tag: string | null;
+  average_record_tag: string | null;
+  attempts: WcaLiveAttempt[];
+  person: { name: string; wcaId: string; country: { iso2: string } };
+}
+
+async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetchedInternalId?: string): Promise<CompData> {
+  const internalId = prefetchedInternalId ?? await probeWcaLive(wcaId);
+  if (!internalId) throw new Error('Not on WCA Live');
+
+  onProgress?.({ step: 'meta', done: 0, total: 1 });
+  const metaData = await gql<{ competition: { id: string; wcaId: string; name: string; competitionEvents: WcaLiveCompEvent[] } }>(
+    `query Q($id: ID!) {
+      competition(id: $id) {
+        id wcaId name
+        competitionEvents {
+          event { id }
+          rounds { id name number format { id } }
+        }
+      }
+    }`,
+    { id: internalId },
+  );
+  const comp = metaData.competition;
+  onProgress?.({ step: 'meta', done: 1, total: 1 });
+
+  // 把 WCA Live 的 round.number (1/2/3/...) → 我们的 round_type_id ('1'/'2'/'3'/'f')
+  // 最后一轮永远 'f',其它按 number 字符串
+  const events: EventMeta[] = [];
+  type RoundLink = { liveId: string; eventId: string; roundTypeId: string; format: string };
+  const roundLinks: RoundLink[] = [];
+  for (const ce of comp.competitionEvents) {
+    const total = ce.rounds.length;
+    const rs: RoundMeta[] = [];
+    ce.rounds.forEach((r, idx) => {
+      const isFinal = idx === total - 1;
+      const roundTypeId = isFinal ? 'f' : String(r.number);
+      rs.push({
+        i: roundTypeId, e: ce.event.id, f: r.format.id,
+        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
+        name: r.name,
+        liveId: r.id,
+      });
+      roundLinks.push({ liveId: r.id, eventId: ce.event.id, roundTypeId, format: r.format.id });
+    });
+    events.push({ i: ce.event.id, name: ce.event.id, rs });
+  }
+
+  const users: Record<string, User> = {};
+  const numByWcaId = new Map<string, number>();
+  const resultsByRound: Record<string, LiveResult[]> = {};
+
+  onProgress?.({ step: 'wca_live.results', done: 0, total: roundLinks.length });
+  // 串行,WCA Live 单 query complexity 受限,batch 容易超限。30 个 round 大约 3-5s。
+  for (let i = 0; i < roundLinks.length; i++) {
+    const link = roundLinks[i];
+    try {
+      const data = await gql<{ round: { results: WcaLiveResult[] } }>(
+        `query Q($id: ID!) {
+          round(id: $id) {
+            results {
+              id ranking best average
+              singleRecordTag averageRecordTag
+              attempts { result }
+              person { name wcaId country { iso2 } }
+            }
+          }
+        }`,
+        { id: link.liveId },
+      );
+      const list = data.round.results;
+      const liveResults: LiveResult[] = [];
+      for (const r of list) {
+        const wid = r.person.wcaId;
+        let num = wid ? numByWcaId.get(wid) : undefined;
+        if (!num) {
+          num = numByWcaId.size + 1;
+          if (wid) numByWcaId.set(wid, num);
+          users[String(num)] = {
+            number: num, name: r.person.name, wcaid: wid || '',
+            region: (r.person.country.iso2 || '').toLowerCase(),
+          };
+        }
+        liveResults.push({
+          i: parseInt(r.id, 10) || 0, c: 0, n: num,
+          e: link.eventId, r: link.roundTypeId, f: link.format,
+          b: r.best ?? 0, a: r.average ?? 0,
+          v: r.attempts.map(a => a.result),
+          sr: r.single_record_tag ?? '',
+          ar: r.average_record_tag ?? '',
+        });
+      }
+      resultsByRound[`${link.eventId}:${link.roundTypeId}`] = liveResults;
+      const rd = events.find(e => e.i === link.eventId)?.rs.find(x => x.i === link.roundTypeId);
+      if (rd) { rd.rn = liveResults.length; rd.tt = liveResults.length; }
+    } catch { /* 单个 round 失败不致命,继续 */ }
+    onProgress?.({ step: 'wca_live.results', done: i + 1, total: roundLinks.length });
+  }
+
+  return {
+    slug: wcaId,
+    wcaLiveId: internalId,
+    source: 'wca_live',
+    compId: parseInt(internalId, 10) || 0,
+    name: comp.name,
+    type: 'WCA',
+    events,
+    users,
+    resultsByRound,
+    membersByFilter: { females: [], children: [], newcomers: [] },
+    fetchedAt: Date.now(),
+  };
+}
+
 async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetchedMeta?: ScrapedMeta): Promise<CompData> {
   const cubingSlug = wcaIdToCubingSlug(wcaId);
   let meta: ScrapedMeta;
@@ -483,34 +657,48 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
 // ─── Source probing ───────────────────────────────────────────────────────
 
 const PROBE_TTL_MS = 5 * 60_000;
-interface ProbeResult { wca: boolean; cubingMeta: ScrapedMeta | null; at: number }
+interface ProbeResult { wca: boolean; cubingMeta: ScrapedMeta | null; wcaLiveId: string | null; at: number }
 const probeCache = new Map<string, ProbeResult>();
 
 async function probeSources(wcaId: string): Promise<ProbeResult> {
   const hit = probeCache.get(wcaId);
   if (hit && Date.now() - hit.at < PROBE_TTL_MS) return hit;
-  const [wca, cubingMeta] = await Promise.all([
+  const [wca, cubingMeta, wcaLiveId] = await Promise.all([
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`, { method: 'HEAD' })
       .then(r => r.ok).catch(() => false),
     scrapeMeta(wcaIdToCubingSlug(wcaId)).catch(() => null),
+    probeWcaLive(wcaId),
   ]);
-  const result: ProbeResult = { wca, cubingMeta, at: Date.now() };
+  const result: ProbeResult = { wca, cubingMeta, wcaLiveId, at: Date.now() };
   probeCache.set(wcaId, result);
   return result;
 }
 
-type SourceChoice = 'auto' | 'wca' | 'cubing';
+type SourceChoice = 'auto' | SourceId;
+
+/** 默认源选择规则:
+ *  - cubing+wca 都有(中国赛后) → wca (WCA REST API 数据更权威)
+ *  - wca_live+wca 都有(国外比赛刚结束) → wca_live (实时数据)
+ *  - 单一源 → 该源
+ *  - cubing+wca_live 极少见 → wca_live */
+function defaultSource(available: SourceId[]): SourceId {
+  if (available.includes('cubing') && available.includes('wca')) return 'wca';
+  if (available.includes('wca_live')) return 'wca_live';
+  if (available.includes('wca')) return 'wca';
+  return available[0];
+}
 
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   const probe = await probeSources(wcaId);
-  const availableSources: ('wca' | 'cubing')[] = [];
-  if (probe.wca) availableSources.push('wca');
+  const availableSources: SourceId[] = [];
   if (probe.cubingMeta) availableSources.push('cubing');
-  if (availableSources.length === 0) throw new Error('Not found on WCA or cubing.com');
+  if (probe.wcaLiveId) availableSources.push('wca_live');
+  if (probe.wca) availableSources.push('wca');
+  if (availableSources.length === 0) throw new Error('Not found on cubing.com / WCA Live / WCA');
 
-  let useSource: 'wca' | 'cubing';
+  let useSource: SourceId;
   if (choice === 'auto') {
-    useSource = availableSources.includes('wca') ? 'wca' : 'cubing';
+    useSource = defaultSource(availableSources);
   } else if (!availableSources.includes(choice)) {
     throw new Error(`No data on ${choice}`);
   } else {
@@ -523,16 +711,16 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     return { ...cached, availableSources };
   }
 
-  // inflight 去重(非流式)
   if (!onProgress) {
     const pending = inflight.get(cacheKey);
     if (pending) return pending.then(d => ({ ...d, availableSources }));
   }
 
   const p = (async () => {
-    const data = useSource === 'wca'
-      ? await loadFromWca(wcaId, onProgress)
-      : await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
+    let data: CompData;
+    if (useSource === 'wca') data = await loadFromWca(wcaId, onProgress);
+    else if (useSource === 'wca_live') data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId || undefined);
+    else data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
     data.availableSources = availableSources;
     cache.set(cacheKey, data);
     return data;
@@ -545,7 +733,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
 // ─── Routes ────────────────────────────────────────────────────────────────
 
 function parseSource(s: string | undefined): SourceChoice {
-  if (s === 'wca' || s === 'cubing') return s;
+  if (s === 'wca' || s === 'cubing' || s === 'wca_live') return s;
   return 'auto';
 }
 

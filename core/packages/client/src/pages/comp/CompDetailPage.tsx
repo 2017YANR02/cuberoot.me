@@ -27,6 +27,7 @@ import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { rememberRecent } from './CompIndexPage';
 import { useLiveStream, applyResultPatch, type LivePatch } from './useLiveStream';
+import { useWcaLiveStream, type WcaLiveRoundUpdate } from './useWcaLiveStream';
 import './comp.css';
 
 // ─── 类型(与 server 端 cubing_live.ts 保持一致) ─────────────────────────
@@ -49,6 +50,7 @@ interface RoundMeta {
   rn: number;
   tt: number;
   name: string;
+  liveId?: string; // WCA Live 内部 id (订阅用)
 }
 
 interface EventMeta {
@@ -68,11 +70,13 @@ interface MembersByFilter {
   newcomers: number[];
 }
 
+type SourceId = 'cubing' | 'wca' | 'wca_live';
 interface CompData {
   slug: string;
   cubingSlug?: string;
-  source?: 'cubing' | 'wca';
-  availableSources?: ('cubing' | 'wca')[];
+  wcaLiveId?: string;
+  source?: SourceId;
+  availableSources?: SourceId[];
   compId: number;
   name: string;
   type: string;
@@ -325,7 +329,49 @@ export default function CompDetailPage() {
   }, []);
 
   const isWca = data?.source === 'wca';
-  const wsStatus = useLiveStream({ compId: isWca ? null : (data?.compId ?? null), applyPatch });
+  const isWcaLive = data?.source === 'wca_live';
+  const isCubing = data?.source === 'cubing';
+
+  // cubing.com WS (只在 cubing 源)
+  const cubingWsStatus = useLiveStream({ compId: isCubing ? (data?.compId ?? null) : null, applyPatch });
+
+  // WCA Live subscription (只在 wca_live 源)
+  const wcaLiveRounds = useMemo(() => {
+    if (!isWcaLive || !data) return [];
+    const out: { liveId: string; eventId: string; roundTypeId: string; format: string }[] = [];
+    for (const ev of data.events) {
+      for (const rd of ev.rs) {
+        if (rd.liveId) out.push({ liveId: rd.liveId, eventId: ev.i, roundTypeId: rd.i, format: rd.f });
+      }
+    }
+    return out;
+  }, [isWcaLive, data]);
+  const wcaLiveNumMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!data) return map;
+    for (const u of Object.values(data.users)) {
+      if (u.wcaid) map.set(u.wcaid, u.number);
+    }
+    return map;
+  }, [data]);
+  const onWcaLiveUpdate = useCallback((update: WcaLiveRoundUpdate) => {
+    setData(prev => {
+      if (!prev) return prev;
+      const key = `${update.eventId}:${update.roundTypeId}`;
+      return {
+        ...prev,
+        resultsByRound: { ...prev.resultsByRound, [key]: update.rows },
+        fetchedAt: Date.now(),
+      };
+    });
+  }, []);
+  const wcaLiveStatus = useWcaLiveStream({
+    rounds: wcaLiveRounds,
+    numByWcaId: wcaLiveNumMap,
+    onRoundUpdate: onWcaLiveUpdate,
+  });
+
+  const wsStatus = isWcaLive ? wcaLiveStatus : cubingWsStatus;
 
   // ── 默认选 round: 优先 finished 最近一个 3x3 round,否则第一个有数据的 round ──
 
@@ -495,8 +541,8 @@ export default function CompDetailPage() {
       if (!progress) return isZh ? '加载中…' : 'Loading…';
       const f = progress.filter ? ` · ${progress.filter}` : '';
       const map: Record<string, string> = isZh
-        ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据' }
-        : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data' };
+        ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据', 'wca_live.results': '从 WCA Live 拉取' }
+        : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data', 'wca_live.results': 'Loading from WCA Live' };
       return (map[progress.step] || progress.step) + f;
     })();
     return (
@@ -547,14 +593,17 @@ export default function CompDetailPage() {
               const iso2 = compFlagIso2(slug);
               const href = isWca
                 ? `https://www.worldcubeassociation.org/competitions/${data.slug}`
-                : `https://cubing.com/live/${data.cubingSlug || data.slug}`;
+                : isWcaLive
+                  ? `https://live.worldcubeassociation.org/competitions/${data.slug}`
+                  : `https://cubing.com/live/${data.cubingSlug || data.slug}`;
+              const titleLabel = isWca ? 'WCA' : isWcaLive ? 'WCA Live' : 'cubing.com';
               return (
                 <a
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="comp-detail-title-link"
-                  title={isWca ? 'WCA' : 'cubing.com'}
+                  title={titleLabel}
                 >
                   {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
                   {localizeCompName(slug, decodeEntities(data.name), isZh)}
@@ -565,21 +614,23 @@ export default function CompDetailPage() {
           <div className="comp-detail-meta">
             {data.availableSources && data.availableSources.length > 1 && (
               <div className="comp-source-toggle" role="group" aria-label={isZh ? '数据源' : 'Data source'}>
-                {data.availableSources.map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={`comp-source-btn${data.source === s ? ' is-active' : ''}`}
-                    onClick={() => {
-                      const next = new URLSearchParams(searchParams);
-                      if (s === 'wca') next.delete('source'); // wca = 默认,清掉 query
-                      else next.set('source', s);
-                      setSearchParams(next, { replace: false });
-                    }}
-                  >
-                    {s === 'wca' ? 'WCA' : 'cubing.com'}
-                  </button>
-                ))}
+                {data.availableSources.map(s => {
+                  const label = s === 'wca' ? 'WCA' : s === 'wca_live' ? 'WCA Live' : 'cubing.com';
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`comp-source-btn${data.source === s ? ' is-active' : ''}`}
+                      onClick={() => {
+                        const next = new URLSearchParams(searchParams);
+                        next.set('source', s);
+                        setSearchParams(next, { replace: false });
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             )}
             <span className="comp-detail-fetched">
