@@ -1,12 +1,15 @@
-// Thin wrapper around shared WcaPersonPicker, plumbed to the local nemesizer
-// binary index (already loaded for the nemesis algorithms — no extra fetch).
+// Thin wrapper around the shared WcaPersonPicker.
+// No nemesizer dataset needed — search uses the shared persons_index that
+// wca-stats already loads (one ~10MB gz, cached forever after first hit).
 import { useCallback } from 'react';
-import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
-import type { NemesizerDataset } from '../data/nemesizerData';
-import { findPersons, loadNemesizerData } from '../data/nemesizerData';
+import {
+  WcaPersonPicker,
+  loadPersonsIndex,
+  searchLocalPersons,
+  type WcaPerson,
+} from '@cuberoot/shared';
 
 interface Props {
-  ds: NemesizerDataset | null;
   isZh: boolean;
   initialQuery?: string;
   onPick: (wcaId: string) => void;
@@ -15,16 +18,12 @@ interface Props {
 }
 
 export default function NemesizerPersonPicker({
-  ds, isZh, initialQuery, onPick, placeholder, autoConfirmExact = true,
+  isZh, initialQuery, onPick, placeholder, autoConfirmExact = true,
 }: Props) {
   const searchFn = useCallback(async (query: string): Promise<WcaPerson[]> => {
-    const ready = ds ?? await loadNemesizerData();
-    const idxs = findPersons(ready, query);
-    return idxs.slice(0, 20).map(i => {
-      const p = ready.persons[i];
-      return { wcaId: p.wcaId, name: p.name, iso2: p.countryIso2, avatarUrl: '' };
-    });
-  }, [ds]);
+    await loadPersonsIndex();
+    return searchLocalPersons(query, 20) ?? [];
+  }, []);
 
   const handleSelect = useCallback((person: WcaPerson) => {
     onPick(person.wcaId);
