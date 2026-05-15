@@ -172,9 +172,11 @@ export default class Cube extends THREE.Group {
     tweener.finish();
     // 每个 cubelet 复位:旋转归零、index 设回 initial、矩阵刷新。
     // 然后重建 cubelets map(key 应为 cubelet.index, 复位后等于 initial)。
+    // 直接 set quaternion 单位元而不 new Euler per cubelet (N=250 = 372k 次 Euler
+    // 分配 → 主 GC pause 拖 min fps)。
     this.cubelets.clear();
     for (const cubelet of this.initials.values()) {
-      cubelet.setRotationFromEuler(new THREE.Euler(0, 0, 0));
+      cubelet.quaternion.set(0, 0, 0, 1);
       cubelet.index = cubelet.initial;
       cubelet.updateMatrix();
       this.cubelets.set(cubelet.index, cubelet);
