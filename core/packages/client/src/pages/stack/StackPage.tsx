@@ -164,14 +164,6 @@ export default function StackPage() {
       </header>
 
       <div ref={containerRef} className="stack-canvas-wrap" />
-
-      <div className="stack-credit">
-        {isZh ? '核心移植自 ' : 'Cube engine ported from '}
-        <a href="https://github.com/huazhechen/cuber" target="_blank" rel="noopener noreferrer">
-          huazhechen/cuber
-        </a>
-        {' (MIT)'}
-      </div>
     </div>
   );
 }
