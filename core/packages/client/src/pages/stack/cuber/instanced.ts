@@ -72,6 +72,16 @@ export default class InstancedRenderer extends THREE.Group {
   private stickerMaterial: THREE.MeshLambertMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial;
 
+  /** hint stickers (alg.cubing.net "hint facelets"): 每个 sticker 沿 face normal
+   * 推到 cube 外侧 (order+1) 倍位置, BasicMaterial 半透明全亮。提示背面颜色。
+   * 抄自 huazhechen/cuber `cubelet.ts` 的 `mirror` 字段, 但走 instanced 渲染。 */
+  staticHint!: THREE.InstancedMesh;
+  movingHint!: THREE.InstancedMesh;
+  private hintMaterial: THREE.MeshBasicMaterial;
+  private movingHintMaterial: THREE.MeshBasicMaterial;
+  private hintLocalMats: THREE.Matrix4[] = [];
+  private hintDistance: number;
+
   stickerSlots: StickerSlot[] = [];
   /** key: cubeletInitial * 6 + face → slot idx */
   private slotLookup: Map<number, number> = new Map();
@@ -81,6 +91,7 @@ export default class InstancedRenderer extends THREE.Group {
   // toggles
   private _thickness = true;
   private _arrow = false;
+  private _hint = false;
 
   // active slices (支持并发,例如 x/y/z 整 cube 旋转 = N 个 group 同时跑)
   private activeSlices: Map<CubeGroup, { instances: number[]; slots: number[] }> = new Map();
@@ -164,12 +175,53 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
     if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
 
+    // Hint stickers — 单面 plane (ShapeGeometry) + BackSide:
+    // 只在 face normal 背向 camera 时可见,自动只显"看不到的 3 个面"。
+    this.hintDistance = cube.order + 1;
+    this.hintMaterial = new THREE.MeshBasicMaterial({
+      transparent: true, opacity: 0.35, depthWrite: false, side: THREE.BackSide,
+    });
+    this.movingHintMaterial = new THREE.MeshBasicMaterial({
+      transparent: true, opacity: 0.35, depthWrite: false, side: THREE.BackSide,
+    });
+    this.staticHint = new THREE.InstancedMesh(Cubelet._HINT, this.hintMaterial, this.stickerSlots.length);
+    this.movingHint = new THREE.InstancedMesh(Cubelet._HINT, this.movingHintMaterial, this.stickerSlots.length);
+    this.staticHint.frustumCulled = false;
+    this.movingHint.frustumCulled = false;
+    this.staticHint.matrixAutoUpdate = false;
+    this.movingHint.matrixAutoUpdate = true;
+    this.staticHint.matrix.identity();
+    this.staticHint.visible = false;
+    this.movingHint.visible = false;
+    this.movingHint.count = 0;
+
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      this.hintLocalMats.push(makeStickerLocalMatrix(slot.face, zScale, this.hintDistance));
+    }
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = cube.initials.get(slot.cubeletInitial)!;
+      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
+      this.movingHint.setMatrixAt(i, HIDE_MAT);
+      this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
+      this.staticHint.setColorAt(i, this.tmpColor);
+      this.movingHint.setColorAt(i, this.tmpColor);
+    }
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+    if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+
     this.add(this.staticFrame);
     this.add(this.movingFrame);
     this.add(this.staticInner);
     this.add(this.movingInner);
     this.add(this.staticSticker);
     this.add(this.movingSticker);
+    this.add(this.staticHint);
+    this.add(this.movingHint);
   }
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
@@ -231,6 +283,9 @@ export default class InstancedRenderer extends THREE.Group {
           this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
           this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
           this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+          this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
+          this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
+          this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
         }
       }
     }
@@ -240,9 +295,11 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
       this.movingInner.quaternion.identity();
+      this.movingHint.quaternion.identity();
       this.movingFrame.count = this.instanceToInitial.length;
       this.movingSticker.count = this.stickerSlots.length;
       this.movingInner.count = this.instanceToInitial.length;
+      this.movingHint.count = this.stickerSlots.length;
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
@@ -250,6 +307,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
   }
 
@@ -262,6 +321,7 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
     this.movingInner.quaternion.copy(this.tmpQuat);
+    this.movingHint.quaternion.copy(this.tmpQuat);
     this.cube.dirty = true;
   }
 
@@ -285,11 +345,16 @@ export default class InstancedRenderer extends THREE.Group {
           if (!slot.visible) {
             this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
             this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+            this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
+            this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
             continue;
           }
           this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
           this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
           this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+          this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slotIdx]);
+          this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
+          this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
         }
       }
     }
@@ -298,9 +363,11 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
       this.movingInner.quaternion.identity();
+      this.movingHint.quaternion.identity();
       this.movingFrame.count = 0;
       this.movingSticker.count = 0;
       this.movingInner.count = 0;
+      this.movingHint.count = 0;
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
@@ -308,6 +375,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
   }
 
@@ -317,10 +386,12 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame.count = 0;
     this.movingSticker.count = 0;
     this.movingInner.count = 0;
+    this.movingHint.count = 0;
     this.tmpQuat.identity();
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
     this.movingInner.quaternion.copy(this.tmpQuat);
+    this.movingHint.quaternion.copy(this.tmpQuat);
 
     for (let i = 0; i < this.instanceToInitial.length; i++) {
       const cubeletInitial = this.instanceToInitial[i];
@@ -337,11 +408,16 @@ export default class InstancedRenderer extends THREE.Group {
       if (!cubelet || !slot.visible) {
         this.staticSticker.setMatrixAt(i, HIDE_MAT);
         this.movingSticker.setMatrixAt(i, HIDE_MAT);
+        this.staticHint.setMatrixAt(i, HIDE_MAT);
+        this.movingHint.setMatrixAt(i, HIDE_MAT);
         continue;
       }
       this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
       this.staticSticker.setMatrixAt(i, this.tmpMat);
       this.movingSticker.setMatrixAt(i, HIDE_MAT);
+      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
+      this.movingHint.setMatrixAt(i, HIDE_MAT);
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
@@ -349,6 +425,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
   }
 
@@ -360,8 +438,12 @@ export default class InstancedRenderer extends THREE.Group {
       slotData.visible = false;
       this.staticSticker.setMatrixAt(slot, HIDE_MAT);
       this.movingSticker.setMatrixAt(slot, HIDE_MAT);
+      this.staticHint.setMatrixAt(slot, HIDE_MAT);
+      this.movingHint.setMatrixAt(slot, HIDE_MAT);
       this.staticSticker.instanceMatrix.needsUpdate = true;
       this.movingSticker.instanceMatrix.needsUpdate = true;
+      this.staticHint.instanceMatrix.needsUpdate = true;
+      this.movingHint.instanceMatrix.needsUpdate = true;
       this.cube.dirty = true;
       return;
     }
@@ -372,7 +454,10 @@ export default class InstancedRenderer extends THREE.Group {
       if (cubelet) {
         this.tmpMat.multiplyMatrices(cubelet.matrix, slotData.localMat);
         this.staticSticker.setMatrixAt(slot, this.tmpMat);
+        this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slot]);
+        this.staticHint.setMatrixAt(slot, this.tmpMat);
         this.staticSticker.instanceMatrix.needsUpdate = true;
+        this.staticHint.instanceMatrix.needsUpdate = true;
       }
     }
     const cubelet = this.cube.initials.get(cubeletInitial);
@@ -380,8 +465,12 @@ export default class InstancedRenderer extends THREE.Group {
     this.tmpColor.set(COLORS[effective] ?? COLORS.Gray);
     this.staticSticker.setColorAt(slot, this.tmpColor);
     this.movingSticker.setColorAt(slot, this.tmpColor);
+    this.staticHint.setColorAt(slot, this.tmpColor);
+    this.movingHint.setColorAt(slot, this.tmpColor);
     if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
     if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
+    if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+    if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
     this.cube.dirty = true;
   }
 
@@ -392,19 +481,24 @@ export default class InstancedRenderer extends THREE.Group {
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       slot.localMat = makeStickerLocalMatrix(slot.face, zScale);
+      this.hintLocalMats[i] = makeStickerLocalMatrix(slot.face, zScale, this.hintDistance);
     }
-    // Rebuild sticker matrices
+    // Rebuild sticker + hint matrices
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = this.cube.initials.get(slot.cubeletInitial);
       if (!cubelet || !slot.visible) {
         this.staticSticker.setMatrixAt(i, HIDE_MAT);
+        this.staticHint.setMatrixAt(i, HIDE_MAT);
         continue;
       }
       this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
       this.staticSticker.setMatrixAt(i, this.tmpMat);
+      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
     }
     this.staticSticker.instanceMatrix.needsUpdate = true;
+    this.staticHint.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
   }
   get thickness(): boolean { return this._thickness; }
@@ -421,12 +515,22 @@ export default class InstancedRenderer extends THREE.Group {
   set arrow(value: boolean) {
     if (value === this._arrow) return;
     this._arrow = value;
-    const geo = value ? Cubelet._ARROW : Cubelet._STICKER;
-    this.staticSticker.geometry = geo;
-    this.movingSticker.geometry = geo;
+    this.staticSticker.geometry = value ? Cubelet._ARROW : Cubelet._STICKER;
+    this.movingSticker.geometry = value ? Cubelet._ARROW : Cubelet._STICKER;
+    this.staticHint.geometry = value ? Cubelet._HINT_ARROW : Cubelet._HINT;
+    this.movingHint.geometry = value ? Cubelet._HINT_ARROW : Cubelet._HINT;
     this.cube.dirty = true;
   }
   get arrow(): boolean { return this._arrow; }
+
+  set hint(value: boolean) {
+    if (value === this._hint) return;
+    this._hint = value;
+    this.staticHint.visible = value;
+    this.movingHint.visible = value;
+    this.cube.dirty = true;
+  }
+  get hint(): boolean { return this._hint; }
 
   dispose(): void {
     this.staticFrame.dispose();
@@ -435,7 +539,11 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingInner.dispose();
     this.staticSticker.dispose();
     this.movingSticker.dispose();
+    this.staticHint.dispose();
+    this.movingHint.dispose();
     this.stickerMaterial.dispose();
     this.movingStickerMaterial.dispose();
+    this.hintMaterial.dispose();
+    this.movingHintMaterial.dispose();
   }
 }
