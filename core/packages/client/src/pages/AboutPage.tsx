@@ -1,51 +1,15 @@
 /**
  * /about — 关于 / 致谢页。纯文字列表,中英双语。
+ *
+ * Credits 数据源: src/pages/credits_data.json (单一数据源)。
+ * 改 credits 必同步 README → 跑 `pnpm gen-credits` 再 commit。
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import LangToggle from '../components/LangToggle';
+import CREDITS from './credits_data.json';
 import './about.css';
-
-interface Credit {
-  name: string;
-  url: string;
-  zh: string;
-  en: string;
-}
-
-// NOTE: 上游开源项目 — 按字母序整理
-const CREDITS: Credit[] = [
-  { name: 'or18 / RubiksSolverDemo', url: 'https://github.com/or18/RubiksSolverDemo',
-    zh: '3x3 求解器 demo',                                   en: '3x3 solver demo' },
-  { name: 'jonatanklosko / wca_statistics', url: 'https://github.com/jonatanklosko/wca_statistics',
-    zh: 'WCA 统计管道的原型(本站 TS 重写版)',               en: 'WCA statistics pipeline (TS rewrite here)' },
-  { name: 'mihlefeld / Alg-Trainers', url: 'https://github.com/mihlefeld/Alg-Trainers',
-    zh: '公式训练器',                                         en: 'Algorithm trainer' },
-  { name: 'carykh / hthgrapher', url: 'https://github.com/carykh/hthgrapher',
-    zh: 'HTH 计算器(已 port 为 React)',                     en: 'HTH calculator (ported to React)' },
-  { name: 'MatteoColombo / cube_challenge_timer', url: 'https://github.com/MatteoColombo/cube_challenge_timer',
-    zh: '1v1 对战计时器(已 port 为 React)',                 en: '1v1 battle timer (ported to React)' },
-  { name: 'cs0x7f / cstimer', url: 'https://github.com/cs0x7f/cstimer',
-    zh: 'csTimer 计时器(integrated)',                       en: 'csTimer (integrated)' },
-  { name: 'MeigenChou / DCTimer-Android', url: 'https://github.com/MeigenChou/DCTimer-Android',
-    zh: 'BLE / 协议参考',                                     en: 'BLE / protocol reference' },
-  { name: 'Roman- / mosaic', url: 'https://github.com/Roman-/mosaic',
-    zh: '魔方马赛克(已 port 为 React)',                     en: 'Mosaic generator (ported to React)' },
-  { name: 'huazhechen / cuber', url: 'https://github.com/huazhechen/cuber',
-    zh: '/stack 的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)',
-    en: '/stack three.js cube engine (originally Vue + Vuetify, ported to React)' },
-  { name: 'nemesizer.com', url: 'https://nemesizer.com',
-    zh: '"宿敌"概念灵感',                                    en: 'Nemesizer concept inspiration' },
-  { name: 'cubing.pro', url: 'https://cubing.pro/',
-    zh: '若干统计可视化的灵感',                                en: 'Statistics visualization inspiration' },
-  { name: 'tdecker91 / puzzle-gen', url: 'https://github.com/tdecker91/puzzle-gen',
-    zh: 'SR puzzle SVG 渲染(sq1 / megaminx / pyraminx / skewb)', en: 'SR puzzle SVG renderer' },
-  { name: 'nbwzx / commutator', url: 'https://github.com/nbwzx/commutator',
-    zh: '换位子分解工具(已 port 为 React)',                  en: 'Commutator decomposer (ported to React)' },
-  { name: 'speedcubedb.com', url: 'https://speedcubedb.com',
-    zh: '公式库 / CFOP 分析器灵感',                            en: 'Alg library / CFOP analyzer inspiration' },
-];
 
 export default function AboutPage() {
   const { i18n } = useTranslation();
