@@ -108,12 +108,14 @@ async function scrapeMeta(slug: string): Promise<ScrapedMeta> {
   if (!res.ok) throw new Error(`cubing.com returned ${res.status} for /live/${slug}`);
   const html = await res.text();
 
-  // Find #live-container and read its data-* attrs
+  // Find #live-container and read its data-* attrs. The data-* attrs come AFTER
+  // the id= within the same <div ...> opening tag — slice from a bit before the
+  // id (to keep the start of the opening tag) through ~16KB after (data-events
+  // alone is ~7KB and stages can be larger for big comps).
   const idx = html.indexOf('id="live-container"');
   if (idx < 0) throw new Error('live-container not found (slug may be invalid or has no live page)');
-  // Take a window large enough to contain the events JSON (~7KB)
-  const start = Math.max(0, idx - 12000);
-  const end = Math.min(html.length, idx + 200);
+  const start = Math.max(0, idx - 200);
+  const end = Math.min(html.length, idx + 16000);
   const block = html.slice(start, end);
 
   const cRaw = attrFromHtml(block, 'data-c');
