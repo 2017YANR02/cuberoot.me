@@ -597,41 +597,30 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
   }
 
   // ── 历史 PR 检测 ─────────────────────────────────────────────────────
-  // 数据源: historical_ranks_monthly_snapshot (稀疏存储,只记录"PB 改变的那个月").
-  // 查每位选手每项目在本比赛月份"之前"的最新累积 PB,然后按 ROUND_ORDER 升序遍历本
-  // 比赛各轮 (1 → 2 → 3 → f),用 running best 标 pS/pA. 同一比赛内后置轮(决赛)
-  // 若打破前轮 + 历史最佳,也能被标 PR.
-  //
-  // 边界: 同月内本比赛之前的另一场比赛 PB 不被算入(年-月粒度截到比赛月之前).
-  // 实际极少发生 (同月多场 + 同人参赛),用户可接受.
-  // wca_results_top 直接 group by(回退方案) 因 4M+ 行 + comp_date 无索引扫到 10s, 不可用.
+  // 对该比赛每位选手每项目,查 wca_results_top 中 comp_date < 本比赛日期的累积最佳;
+  // 然后按 ROUND_ORDER 升序遍历本比赛各轮 (1 → 2 → 3 → f),用 running best 标 pS/pA.
+  // 同一比赛内后置轮(决赛)若打破前轮 + 历史最佳,也会被标 PR.
   const compDate = rows[0].comp_date;
   const wcaIdsInComp = [...numByWcaId.keys()];
   const eventIdsInComp = [...eventMap.keys()];
   if (compDate && wcaIdsInComp.length > 0 && eventIdsInComp.length > 0) {
-    const compYear = parseInt(compDate.slice(0, 4), 10);
-    const compMonth = parseInt(compDate.slice(5, 7), 10);
     const idQs = wcaIdsInComp.map(() => '?').join(',');
     const evQs = eventIdsInComp.map(() => '?').join(',');
-    // DISTINCT ON (event_id, wca_id) + ORDER BY year DESC, month DESC → 每对最新的 PB 行.
-    const priorRows = await query<{ wca_id: string; event_id: string; single: number | null; average: number | null }>(
-      `SELECT DISTINCT ON (event_id, wca_id) event_id, wca_id, single, average
-       FROM historical_ranks_monthly_snapshot
-       WHERE event_id IN (${evQs})
-         AND wca_id IN (${idQs})
-         AND (year < ? OR (year = ? AND month < ?))
-       ORDER BY event_id, wca_id, year DESC, month DESC`,
-      [...eventIdsInComp, ...wcaIdsInComp, compYear, compYear, compMonth],
+    const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; best_val: number }>(
+      `SELECT wca_id, event_id, is_avg, MIN(value) AS best_val
+       FROM wca_results_top
+       WHERE wca_id IN (${idQs})
+         AND event_id IN (${evQs})
+         AND comp_date < ?
+       GROUP BY wca_id, event_id, is_avg`,
+      [...wcaIdsInComp, ...eventIdsInComp, compDate],
     );
-    // wca_id|event_id → { single, average }
-    const priorBest = new Map<string, { s: number; a: number }>();
+    // wca_id|event_id|is_avg(0|1) → best
+    const priorBest = new Map<string, number>();
     for (const pr of priorRows) {
-      priorBest.set(`${pr.wca_id}|${pr.event_id}`, {
-        s: pr.single ?? Infinity,
-        a: pr.average ?? Infinity,
-      });
+      priorBest.set(`${pr.wca_id}|${pr.event_id}|${pr.is_avg ? '1' : '0'}`, pr.best_val);
     }
-    // 按 (wca_id, event_id) 分组本比赛 results,按 round 升序处理.
+    // 按 (wca_id, event_id) 分组本比赛 results,按 round 升序处理
     const groups = new Map<string, LiveResult[]>();
     for (const lr of merged.values()) {
       const wcaIdForN = users[String(lr.n)]?.wcaid;
@@ -643,9 +632,9 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
     }
     for (const [k, arr] of groups) {
       arr.sort((a, b) => (ROUND_ORDER[a.r] ?? 99) - (ROUND_ORDER[b.r] ?? 99));
-      const pb = priorBest.get(k);
-      let runSingle = pb?.s ?? Infinity;
-      let runAvg    = pb?.a ?? Infinity;
+      const [wcaIdKey, eventIdKey] = k.split('|');
+      let runSingle = priorBest.get(`${wcaIdKey}|${eventIdKey}|0`) ?? Infinity;
+      let runAvg    = priorBest.get(`${wcaIdKey}|${eventIdKey}|1`) ?? Infinity;
       for (const lr of arr) {
         if (lr.b > 0 && lr.b <= runSingle) {
           lr.pS = true;
