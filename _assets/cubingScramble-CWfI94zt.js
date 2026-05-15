@@ -1,0 +1,3 @@
+import{t as e}from"./chunk-M7YKTETT-gdIWx_W9.js";import{r as t}from"./wca_events-mTB65Kjz.js";var n=[`333`,`222`,`444`,`555`,`666`,`777`,`333bf`,`444bf`,`555bf`,`333fm`,`333oh`,`333mbf`,`clock`,`minx`,`pyram`,`skewb`,`sq1`],r=new Set(n);async function i(n){let i=t(n);if(!r.has(i))return null;let a=(await e(i)).toString();if(i===`minx`&&!a.includes(`
+`)){let e=a.split(/\s+/).filter(Boolean),t=[],n=[];for(let r of e)n.push(r),/^U['+]?$/.test(r)&&(t.push(n.join(` `)),n=[]);n.length&&t.push(n.join(` `)),a=t.join(`
+`)}return a}export{i as n,n as t};
