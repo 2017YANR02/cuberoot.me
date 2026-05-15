@@ -99,13 +99,13 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame = this.makeFrameMesh(visCount, true);
     this.movingFrame.count = 0;
 
-    // 核心填充:slice 旋转 / body 旋转露出 cube 内部时,看到这块 dark sphere 而不是穿透到对面。
-    // 用 sphere(不是 box)因为 sphere 是旋转不变的 — body 旋转时 cube 整体转、core 不转,
-    // 也不会有 box 那种"45° 旋转后顶角戳出 cube 表面"的 bug。
-    // Radius = (N-2)/2 * SIZE = 正好填满 cube interior(到 surface cubelet 内表面)。
+    // 核心填充:slice 旋转露出 cube 内部时,看到这块 dark box 而不是穿透到对面。
+    // 用 box (size = N - 0.05) — 几乎填满 cube outer 体积,角区域也覆盖,没有 sphere 那种内切球
+    // 留下角洞的问题。 box 跟 cube 一起转(parent = renderer = child of cube),没有相对旋转,
+    // 不会出现 box 自己 45° 旋转戳出表面的情况。 0.05 epsilon 防 z-fight cubelet 外表面贴纸。
     if (cube.order >= 3) {
-      const coreRadius = (cube.order - 2) * Cubelet.SIZE / 2;
-      this.coreMesh = new THREE.Mesh(new THREE.SphereGeometry(coreRadius, 32, 16), Cubelet.CORE);
+      const coreSize = (cube.order - 0.05) * Cubelet.SIZE;
+      this.coreMesh = new THREE.Mesh(new THREE.BoxGeometry(coreSize, coreSize, coreSize), Cubelet.CORE);
       this.coreMesh.frustumCulled = false;
       this.coreMesh.matrixAutoUpdate = false;
       this.coreMesh.matrix.identity();
