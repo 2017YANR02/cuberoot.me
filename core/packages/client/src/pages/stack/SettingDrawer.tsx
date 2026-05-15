@@ -49,9 +49,9 @@ export function saveSettings(s: StackSettings): void {
   }
 }
 
-// 把 0~100 → 实际数值
+// 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
 function mapSensitivity(v: number): number { return 0.1 + (v / 100) * 1.4; }   // 0.1 ~ 1.5
-function mapScale(v: number): number { return 0.5 + (v / 100) * 1.5; }          // 0.5 ~ 2.0
+function mapScale(v: number): number { return 0.5 + v / 100; }                  // 0.5 ~ 1.5
 function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        // 2 ~ 10
 
 export function applySettings(world: World, s: StackSettings): void {

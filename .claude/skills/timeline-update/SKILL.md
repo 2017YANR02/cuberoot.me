@@ -21,7 +21,7 @@ description: "Use when user wants to fill in /code/architecture 第 11 节的日
 2. 每日 `git log --format='%ai|%H|%s' --since=DAY --until=DAY --no-merges`
 3. SKIP 整天: 当天全部 commit 匹配 `^chore: update (wca|upcoming)` / `^Merge` / `ci: rebuild SPA` / `^backup:` / `^Update .*\.(md|html|json)$`
 4. **placeholder commit 必解码**: subject 是 `update` / `1` / `i18n` / 单字 → `git show --stat HASH` + `git show HASH -- <key-file>` 看实际改动。大日 (>20 commits) 里常藏整页新增, 漏掉 = entry 写错
-5. 写日历 entry: 中文 1 行 + 英文 1 行, ` + ` 串多主题, 写组件名 (`/recon`, `GlobePage` 等), 中文标点, 无 emoji, 无句号收尾, 厂商身份 (阿里云 etc) → "自有云服务器"
+5. 写日历 entry: 中文 1 行 + 英文 1 行, ` + ` 串多主题, 写组件名 (`/recon`, `GlobePage` 等), 中文标点, 无 emoji, 无句号收尾, 厂商身份 (阿里云 etc) → "自有云服务器"。**禁子编号** (`(1)..(8)`) 和嵌套括号细节 (行数 / commit hash / 子组件清单) — 那些进 TIMELINE expand。日历一句话只列**主题词**, 哪怕一天 8 件也保持"+串"扁平。看到 entry 长得像段落 = 改
 6. 审 TIMELINE: 凡新 LandingPage 卡片 / 新顶层路由 / 新重要 sub-route / 框架换栈 / 整片基础设施变更 → 都加一条。新加前先 `grep -nE "id:|href:" LandingPage.tsx` + `grep -nE "path=" App.tsx` 防漏
 7. 已有 entry 太单薄 (placeholder 揭出隐藏改动) → **改写**而非追加
 8. 给用户**预览** (日历 entry 三列表格 + TIMELINE 候选条目单独一段), 同意再写
