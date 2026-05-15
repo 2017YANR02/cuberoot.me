@@ -125,6 +125,64 @@ export default class CubeGroup extends THREE.Group {
   drop(): void {
     this.holding = false;
     this.tween = undefined;
+    const isShader = (this.cube.instancedRenderer as unknown as { useShaderSlice?: boolean }).useShaderSlice;
+    if (isShader) {
+      // Shader 模式 fast path: inline quaternion premul + vector rotate, 跳函数
+      // 调用 + applyQuaternion 的 _quat 临时对象分配。这是 drop 的最热循环。
+      const axisVec = CubeGroup.AXIS_VECTOR[this.axis];
+      const angle = this.angle;
+      const half = (this.cube.order - 1) / 2;
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+      const halfA = angle * 0.5;
+      const sH = Math.sin(halfA), cH = Math.cos(halfA);
+      const qx = axisVec.x * sH, qy = axisVec.y * sH, qz = axisVec.z * sH, qw = cH;
+      const ax = axisVec.x, ay = axisVec.y, az = axisVec.z;
+      const N = this.cubelets.length;
+      const order = this.cube.order;
+      const order2 = order * order;
+      const cubelets = this.cubelets;
+      for (let i = N - 1; i >= 0; i--) {
+        const c = cubelets[i];
+        // 内联 quaternion.premultiply: q_new = q_axis × q_cur (Three's premultiply)
+        const cq = c.quaternion;
+        const cx = cq.x, cy = cq.y, cz = cq.z, cw = cq.w;
+        cq.set(
+          qw * cx + qx * cw + qy * cz - qz * cy,
+          qw * cy - qx * cz + qy * cw + qz * cx,
+          qw * cz + qx * cy - qy * cx + qz * cw,
+          qw * cw - qx * cx - qy * cy - qz * cz,
+        );
+        // 内联 Vector3 旋转: Rodrigues' formula 适合 axis-angle 旋转任意 vector
+        // v_rot = v cosA + (axis × v) sinA + axis (axis · v) (1 - cosA)
+        const v = c._vector;
+        const vx = v.x, vy = v.y, vz = v.z;
+        const dot = ax * vx + ay * vy + az * vz;
+        const oneMinusCos = 1 - cosA;
+        const nx = vx * cosA + (ay * vz - az * vy) * sinA + ax * dot * oneMinusCos;
+        const ny = vy * cosA + (az * vx - ax * vz) * sinA + ay * dot * oneMinusCos;
+        const nz = vz * cosA + (ax * vy - ay * vx) * sinA + az * dot * oneMinusCos;
+        // 量化到 0.5 步长 (与原 setter 一致)
+        const rx = Math.round(nx * 2) / 2;
+        const ry = Math.round(ny * 2) / 2;
+        const rz = Math.round(nz * 2) / 2;
+        v.x = rx; v.y = ry; v.z = rz;
+        // index 重计算 (替代 cubelet.vector 的 setter)
+        const ix = Math.round(rx + half);
+        const iy = Math.round(ry + half);
+        const iz = Math.round(rz + half);
+        const newIndex = iz * order2 + iy * order + ix;
+        c._index = newIndex;
+        // updateMatrix 在 shader 模式不需要 (已跳过)
+        this.cube.cubelets.set(newIndex, c);
+      }
+      cubelets.length = 0;
+      this.cube.dirty = true;
+      this.cube.instancedRenderer.endSlice(this);
+      this.angle = 0;
+      this.cube.unlock(this.axis, this.layer);
+      this.cube.callback();
+      return;
+    }
     while (true) {
       const cubelet = this.cubelets.pop();
       if (undefined === cubelet) {
