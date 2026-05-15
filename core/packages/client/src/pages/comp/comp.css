@@ -851,3 +851,124 @@ td.is-pr {
   .comp-flow-step-title { font-size: 0.92rem; }
   .comp-flow-step-desc { font-size: 0.82rem; }
 }
+
+/* ─── /comp/sources 数据上游 section ────────────────────────────────── */
+.comp-flow-section-title {
+  margin: 40px 0 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.comp-flow-section-sub {
+  margin: 0 0 16px;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+
+.comp-lineage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.comp-lineage-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.comp-lineage-when {
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.comp-lineage-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  font-size: 0.92rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+.comp-lineage-box > span:first-of-type { font-weight: 600; }
+.comp-lineage-note {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.comp-lineage-box-canonical {
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-default));
+}
+.comp-lineage-box-fast {
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+}
+.comp-lineage-box-side {
+  background: var(--muted);
+}
+
+.comp-lineage-arrow {
+  align-self: center;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  color: var(--faint-foreground);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.comp-lineage-arrow-label {
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  font-family: ui-monospace, monospace;
+}
+.comp-lineage-arrow-fan { padding-bottom: 2px; }
+.comp-lineage-arrow-small {
+  color: var(--faint-foreground);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px 0;
+}
+
+.comp-lineage-fan {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.comp-lineage-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.comp-lineage-branch-step {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  font-family: ui-monospace, monospace;
+  padding: 2px 8px;
+  background: var(--muted);
+  border-radius: 999px;
+}
+.comp-lineage-branch-note {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+}
+
+.comp-lineage-sidebar {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border-default);
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .comp-lineage-fan { grid-template-columns: 1fr; }
+}
