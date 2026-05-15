@@ -26,6 +26,12 @@ const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
 // 任何方向上 frame 的"洞"(slice 旋转 / 邻居被搬走暴露的内表面) 露出来后,
 // 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
 const INNER_BOX = new THREE.BoxGeometry(Cubelet.SIZE - 1, Cubelet.SIZE - 1, Cubelet.SIZE - 1);
+/** 超高阶阈值 (N≥SUPER_ORDER): frame 缝隙 < 1px,inner box 视觉无意义,
+ * 整套构造 / slice 写矩阵 / draw 全跳过省 372k 实例的开销。
+ * `let` + setter 是给 DEV bench 强制开关用,生产代码只读 SUPER_ORDER。 */
+let SUPER_ORDER = 50;
+export function setSuperOrder(v: number): void { SUPER_ORDER = v; }
+export function getSuperOrder(): number { return SUPER_ORDER; }
 
 function makeStickerLocalMatrix(face: number, zScale: number, distanceMul = 1): THREE.Matrix4 {
   const d = HALF * distanceMul;
@@ -65,9 +71,11 @@ export default class InstancedRenderer extends THREE.Group {
   movingSticker!: THREE.InstancedMesh;
   /** Per-cubelet 内填充:每个 cubelet 内部塞一个实心 box,跟 Frame 共享 matrix。
    * 任何 slice 旋转后,Frame 缝隙永远能看到自己或邻居的 inner box(灰),
-   * 不会穿透到背景或别的 sticker。 */
+   * 不会穿透到背景或别的 sticker。N≥SUPER_ORDER 时整套跳过(`hasInner=false`)。 */
   staticInner!: THREE.InstancedMesh;
   movingInner!: THREE.InstancedMesh;
+  /** false 时 staticInner/movingInner 仍存在(便于 dispose)但不写矩阵、不渲染。 */
+  private hasInner: boolean;
 
   private stickerMaterial: THREE.MeshLambertMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial;
@@ -116,6 +124,7 @@ export default class InstancedRenderer extends THREE.Group {
     super();
     this.cube = cube;
     this.matrixAutoUpdate = false;
+    this.hasInner = cube.order < SUPER_ORDER;
 
     const cubelets = [...cube.initials.values()];
     const visCount = cubelets.length;
@@ -131,18 +140,27 @@ export default class InstancedRenderer extends THREE.Group {
     this.staticInner = this.makeInnerMesh(visCount, false);
     this.movingInner = this.makeInnerMesh(visCount, true);
     this.movingInner.count = 0;
+    if (!this.hasInner) {
+      this.staticInner.visible = false;
+      this.movingInner.visible = false;
+      this.staticInner.count = 0;
+    }
 
     // 初始 frame + inner box 矩阵 (static),全部 moving 隐藏
     for (let i = 0; i < visCount; i++) {
       this.staticFrame.setMatrixAt(i, cubelets[i].matrix);
       this.movingFrame.setMatrixAt(i, HIDE_MAT);
-      this.staticInner.setMatrixAt(i, cubelets[i].matrix);
-      this.movingInner.setMatrixAt(i, HIDE_MAT);
+      if (this.hasInner) {
+        this.staticInner.setMatrixAt(i, cubelets[i].matrix);
+        this.movingInner.setMatrixAt(i, HIDE_MAT);
+      }
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
-    this.staticInner.instanceMatrix.needsUpdate = true;
-    this.movingInner.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
 
     // Sticker slots
     const zScale = this._thickness ? HALF : 1;
@@ -288,8 +306,10 @@ export default class InstancedRenderer extends THREE.Group {
       origCubeletMats.push(this.tmpMat.clone());
       this.movingFrame.setMatrixAt(instIdx, this.tmpMat);
       this.staticFrame.setMatrixAt(instIdx, HIDE_MAT);
-      this.movingInner.setMatrixAt(instIdx, this.tmpMat);
-      this.staticInner.setMatrixAt(instIdx, HIDE_MAT);
+      if (this.hasInner) {
+        this.movingInner.setMatrixAt(instIdx, this.tmpMat);
+        this.staticInner.setMatrixAt(instIdx, HIDE_MAT);
+      }
 
       const slots = this.cubeletSlots.get(cubelet.initial);
       if (slots) {
@@ -312,21 +332,25 @@ export default class InstancedRenderer extends THREE.Group {
       // 第一个 slice 激活:打开 moving 渲染、重置 quaternion
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
-      this.movingInner.quaternion.identity();
       this.movingHint.quaternion.identity();
       this.movingFrame.count = this.instanceToInitial.length;
       this.movingSticker.count = this.stickerSlots.length;
-      this.movingInner.count = this.instanceToInitial.length;
       this.movingHint.count = this.stickerSlots.length;
+      if (this.hasInner) {
+        this.movingInner.quaternion.identity();
+        this.movingInner.count = this.instanceToInitial.length;
+      }
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
-    this.staticInner.instanceMatrix.needsUpdate = true;
-    this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.staticHint.instanceMatrix.needsUpdate = true;
     this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
     this.cube.dirty = true;
   }
 
@@ -340,10 +364,18 @@ export default class InstancedRenderer extends THREE.Group {
     if (!axisVec) return;
     this.tmpQuat.setFromAxisAngle(axisVec, angle);
     this.tmpRotMat.makeRotationFromQuaternion(this.tmpQuat);
-    for (let i = 0; i < state.instances.length; i++) {
-      this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
-      this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
-      this.movingInner.setMatrixAt(state.instances[i], this.tmpMat);
+    if (this.hasInner) {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+        this.movingInner.setMatrixAt(state.instances[i], this.tmpMat);
+      }
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    } else {
+      for (let i = 0; i < state.instances.length; i++) {
+        this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
+        this.movingFrame.setMatrixAt(state.instances[i], this.tmpMat);
+      }
     }
     for (let i = 0; i < state.slots.length; i++) {
       this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origStickerMats[i]);
@@ -352,7 +384,6 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingHint.setMatrixAt(state.slots[i], this.tmpMat);
     }
     this.movingFrame.instanceMatrix.needsUpdate = true;
-    this.movingInner.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.movingHint.instanceMatrix.needsUpdate = true;
     this.cube.dirty = true;
@@ -368,8 +399,10 @@ export default class InstancedRenderer extends THREE.Group {
       if (!cubelet) continue;
       this.staticFrame.setMatrixAt(instIdx, cubelet.matrix);
       this.movingFrame.setMatrixAt(instIdx, HIDE_MAT);
-      this.staticInner.setMatrixAt(instIdx, cubelet.matrix);
-      this.movingInner.setMatrixAt(instIdx, HIDE_MAT);
+      if (this.hasInner) {
+        this.staticInner.setMatrixAt(instIdx, cubelet.matrix);
+        this.movingInner.setMatrixAt(instIdx, HIDE_MAT);
+      }
 
       const slots = this.cubeletSlots.get(cubeletInitial);
       if (slots) {
@@ -395,21 +428,25 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.activeSlices.size === 0) {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
-      this.movingInner.quaternion.identity();
       this.movingHint.quaternion.identity();
       this.movingFrame.count = 0;
       this.movingSticker.count = 0;
-      this.movingInner.count = 0;
       this.movingHint.count = 0;
+      if (this.hasInner) {
+        this.movingInner.quaternion.identity();
+        this.movingInner.count = 0;
+      }
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
-    this.staticInner.instanceMatrix.needsUpdate = true;
-    this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.staticHint.instanceMatrix.needsUpdate = true;
     this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
     this.cube.dirty = true;
   }
 
@@ -418,13 +455,15 @@ export default class InstancedRenderer extends THREE.Group {
     this.activeSlices.clear();
     this.movingFrame.count = 0;
     this.movingSticker.count = 0;
-    this.movingInner.count = 0;
     this.movingHint.count = 0;
     this.tmpQuat.identity();
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
-    this.movingInner.quaternion.copy(this.tmpQuat);
     this.movingHint.quaternion.copy(this.tmpQuat);
+    if (this.hasInner) {
+      this.movingInner.count = 0;
+      this.movingInner.quaternion.copy(this.tmpQuat);
+    }
 
     for (let i = 0; i < this.instanceToInitial.length; i++) {
       const cubeletInitial = this.instanceToInitial[i];
@@ -432,8 +471,10 @@ export default class InstancedRenderer extends THREE.Group {
       if (!cubelet) continue;
       this.staticFrame.setMatrixAt(i, cubelet.matrix);
       this.movingFrame.setMatrixAt(i, HIDE_MAT);
-      this.staticInner.setMatrixAt(i, cubelet.matrix);
-      this.movingInner.setMatrixAt(i, HIDE_MAT);
+      if (this.hasInner) {
+        this.staticInner.setMatrixAt(i, cubelet.matrix);
+        this.movingInner.setMatrixAt(i, HIDE_MAT);
+      }
     }
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
@@ -454,12 +495,14 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
     this.movingFrame.instanceMatrix.needsUpdate = true;
-    this.staticInner.instanceMatrix.needsUpdate = true;
-    this.movingInner.instanceMatrix.needsUpdate = true;
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
     this.staticHint.instanceMatrix.needsUpdate = true;
     this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.hasInner) {
+      this.staticInner.instanceMatrix.needsUpdate = true;
+      this.movingInner.instanceMatrix.needsUpdate = true;
+    }
     this.cube.dirty = true;
   }
 
@@ -540,8 +583,10 @@ export default class InstancedRenderer extends THREE.Group {
     const mat = value ? Cubelet.TRANS : Cubelet.CORE;
     this.staticFrame.material = mat;
     this.movingFrame.material = mat;
-    this.staticInner.material = mat;
-    this.movingInner.material = mat;
+    if (this.hasInner) {
+      this.staticInner.material = mat;
+      this.movingInner.material = mat;
+    }
     this.cube.dirty = true;
   }
 
