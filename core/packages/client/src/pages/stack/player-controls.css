@@ -1,30 +1,30 @@
 .stack-player {
-  padding: 8px 12px;
+  padding: 14px 18px;
   background: var(--card);
   border-top: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .stack-player-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .stack-player-input {
   flex: 1;
-  min-width: 200px;
-  padding: 6px 10px;
+  min-width: 220px;
+  padding: 8px 12px;
   border: 1px solid var(--input);
   border-radius: 6px;
   background: var(--background);
   color: var(--foreground);
   font-family: ui-monospace, monospace;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.55;
   resize: none;
   overflow: hidden;
 }
@@ -38,14 +38,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
   background: transparent;
   color: var(--foreground);
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
 }
 .stack-player-row button:hover:not(:disabled) {
@@ -58,21 +58,21 @@
 
 .stack-player-progress {
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted-foreground);
-  margin-left: 4px;
+  margin-left: 6px;
 }
 
 .stack-player-moves {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted-foreground);
 }
 .stack-player-moves span {
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
@@ -87,50 +87,50 @@
 }
 
 .stack-player-label {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted-foreground);
-  width: 44px;
+  width: 52px;
   flex-shrink: 0;
 }
 
 .stack-player-count {
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted-foreground);
-  min-width: 28px;
+  min-width: 32px;
   text-align: right;
 }
 
 .stack-player-speed {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-left: auto;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
 .stack-player-speed input[type=range] {
-  width: 90px;
+  width: 110px;
   accent-color: var(--accent);
 }
 
 .stack-player-tools {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 .stack-player-tools button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  height: 28px;
-  padding: 0 10px;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
   background: transparent;
   color: var(--foreground);
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
 }
 .stack-player-tools button:hover {
