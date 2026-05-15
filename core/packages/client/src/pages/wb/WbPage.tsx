@@ -5,6 +5,7 @@ import { useWbData } from './use_wb_data';
 import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '../../utils/name_utils';
 import { Flag } from '../../utils/flag';
+import ThemeToggle from '../../components/ThemeToggle';
 import './wb.css';
 
 const SOURCE_URL = 'https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records';
@@ -54,6 +55,7 @@ export default function WbPage() {
           <ExternalLink size={14} />
           <span>{t('数据源', 'Source')}</span>
         </a>
+        <ThemeToggle />
       </header>
 
       <div className="wb-toolbar">

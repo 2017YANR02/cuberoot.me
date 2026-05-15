@@ -16,6 +16,7 @@ import { fitExpFloor, type DataPoint } from './models';
 import { EVENTS, formatVal, toDisplay, toDisplayAvg } from './events';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import EventSection from './EventSection';
+import ThemeToggle from '../../components/ThemeToggle';
 import './prediction.css';
 
 /** 取最后一行 (物理下界单次) 的 T 值 — 优先用显式 t_phys_single, 其次 decomp 末行计算 */
@@ -156,8 +157,9 @@ export default function PredictionPage() {
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}
         </button>
         <button className="pred-lang" onClick={toggleLang}>
-          {isZh ? 'English' : '中文'}
+          {isZh ? 'EN' : '中文'}
         </button>
+        <ThemeToggle />
       </header>
 
       <div className="pred-layout">

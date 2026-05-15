@@ -135,7 +135,7 @@ export function LineChart({
               x2={PAD.l + cw}
               y1={yScale(v)}
               y2={yScale(v)}
-              stroke="#e8edf3"
+              stroke="var(--border-default)"
               strokeWidth={1}
             />
             <text
@@ -144,7 +144,7 @@ export function LineChart({
               textAnchor="end"
               dominantBaseline="middle"
               fontSize={11}
-              fill="#5a6370"
+              fill="var(--muted-foreground)"
             >
               {yFormat(v)}
             </text>
@@ -158,7 +158,7 @@ export function LineChart({
               x2={xScale(v)}
               y1={PAD.t + ch}
               y2={PAD.t + ch + 4}
-              stroke="#aab1bd"
+              stroke="var(--faint-foreground)"
               strokeWidth={1}
             />
             <text
@@ -166,15 +166,15 @@ export function LineChart({
               y={PAD.t + ch + 18}
               textAnchor="middle"
               fontSize={11}
-              fill="#5a6370"
+              fill="var(--muted-foreground)"
             >
               {xFormat(v)}
             </text>
           </g>
         ))}
         {/* axes */}
-        <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + ch} stroke="#8a93a0" />
-        <line x1={PAD.l} x2={PAD.l + cw} y1={PAD.t + ch} y2={PAD.t + ch} stroke="#8a93a0" />
+        <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + ch} stroke="var(--faint-foreground)" />
+        <line x1={PAD.l} x2={PAD.l + cw} y1={PAD.t + ch} y2={PAD.t + ch} stroke="var(--faint-foreground)" />
         {/* annotations: vertical lines */}
         {annotations.map((a) => (
           <g key={`ann-${a.x}`}>
@@ -183,7 +183,7 @@ export function LineChart({
               x2={xScale(a.x)}
               y1={PAD.t}
               y2={PAD.t + ch}
-              stroke={a.color || '#c2410c'}
+              stroke={a.color || 'var(--accent)'}
               strokeDasharray="2 3"
               strokeWidth={1}
             />
@@ -191,7 +191,7 @@ export function LineChart({
               x={xScale(a.x) + 3}
               y={PAD.t + 12}
               fontSize={10}
-              fill={a.color || '#c2410c'}
+              fill={a.color || 'var(--accent)'}
             >
               {a.label}
             </text>
@@ -200,13 +200,13 @@ export function LineChart({
         {/* highlight points */}
         {highlights.map((h, i) => (
           <g key={`hl-${i}`}>
-            <circle cx={xScale(h.x)} cy={yScale(h.y)} r={4} fill="#d97757" />
+            <circle cx={xScale(h.x)} cy={yScale(h.y)} r={4} fill="var(--accent)" />
             <text
               x={xScale(h.x)}
               y={yScale(h.y) - 8}
               textAnchor="middle"
               fontSize={10}
-              fill="#d97757"
+              fill="var(--accent)"
               fontWeight={600}
             >
               {h.label}
@@ -247,7 +247,7 @@ export function LineChart({
             x2={hover.x}
             y1={PAD.t}
             y2={PAD.t + ch}
-            stroke="#aaa"
+            stroke="var(--faint-foreground)"
             strokeWidth={1}
             strokeDasharray="3 3"
           />
@@ -260,7 +260,7 @@ export function LineChart({
             y={PAD.t + ch / 2}
             textAnchor="middle"
             fontSize={11}
-            fill="#5a6370"
+            fill="var(--muted-foreground)"
           >
             {yLabel}
           </text>
@@ -271,7 +271,7 @@ export function LineChart({
             y={height - 4}
             textAnchor="middle"
             fontSize={11}
-            fill="#5a6370"
+            fill="var(--muted-foreground)"
           >
             {xLabel}
           </text>

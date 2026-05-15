@@ -258,10 +258,8 @@ interface EditorState {
   faceB: string;
   rotateAxis1: string;
   rotateAxis2: string;
-  rotateAxis3: string;
   rotateAngle1: number;
   rotateAngle2: number;
-  rotateAngle3: number;
   backgroundColor: string;    // '' = transparent
   cubeColor: string;          // default '#000000'
   cubeOpacity: number;        // 0-100
@@ -300,10 +298,8 @@ const DEFAULTS: EditorState = {
   faceB: FACE_DEFAULTS.B,
   rotateAxis1: 'y',
   rotateAxis2: 'x',
-  rotateAxis3: 'z',
   rotateAngle1: 30,
   rotateAngle2: -30,
-  rotateAngle3: 0,
   backgroundColor: '',
   cubeColor: '#000000',
   cubeOpacity: 100,
@@ -320,25 +316,46 @@ const DEFAULTS: EditorState = {
   netActiveColor: 'U',
 };
 
-/** Variant-specific rotation defaults. Skewb-top wants the upstream mihlefeld
- *  pose (Rz45 ∘ Rx30) so the slider midpoint matches the canonical look; every
- *  other puzzle uses our NxN iso pose. */
+/** Per-puzzle rotation defaults — must match the underlying renderer's intrinsic
+ *  iso pose so that `rotationsMatchDefault → undefined rotations` (renderer's own
+ *  default) and the user's first slider/drag tweak are visually continuous.
+ *
+ *    • cube (visualcube renderer): NxN iso (y30, x-30)
+ *    • skewb-top (local 2D fan):   mihlefeld pose (z45, x30)
+ *    • sq1, pyraminx, skewb-iso:   match sr-puzzlegen options.js defaults
+ *    • megaminx-iso:               sr-puzzlegen has no default rotation entry
+ *                                  (puzzle geometry is pre-rotated), so 0/0/0. */
 function rotationDefaultsFor(args: { puzzleType: PuzzleType; puzzleVariant: PuzzleVariant }) {
-  if (args.puzzleType === 'skewb' && args.puzzleVariant === 'top') {
-    return { axis1: 'z', angle1: 45, axis2: 'x', angle2: 30, axis3: 'y', angle3: 0 };
+  const { puzzleType: t, puzzleVariant: v } = args;
+  if (t === 'skewb' && v === 'top') {
+    // mihlefeld z45 pose dropped — fan layout renders unrotated.
+    return { axis1: 'y', angle1: 0, axis2: 'x', angle2: 0 };
   }
+  if (t === 'sq1') {
+    // sr-puzzlegen sq1 is Z-up internally (z is yaw); we keep Y-up canonical
+    // in state and swap y↔z at render time (see srPuzzleAxis below).
+    return { axis1: 'y', angle1: -34, axis2: 'x', angle2: -56 };
+  }
+  if (t === 'pyraminx') {
+    return { axis1: 'y', angle1: 60, axis2: 'x', angle2: -60 };
+  }
+  if (t === 'skewb') { // skewb-iso
+    return { axis1: 'y', angle1: 45, axis2: 'x', angle2: 34 };
+  }
+  if (t === 'megaminx') {
+    return { axis1: 'y', angle1: 0, axis2: 'x', angle2: 0 };
+  }
+  // cube — visualcube renderer
   return {
     axis1: DEFAULTS.rotateAxis1, angle1: DEFAULTS.rotateAngle1,
     axis2: DEFAULTS.rotateAxis2, angle2: DEFAULTS.rotateAngle2,
-    axis3: DEFAULTS.rotateAxis3, angle3: DEFAULTS.rotateAngle3,
   };
 }
 
 function rotationsMatchDefault(s: EditorState): boolean {
   const d = rotationDefaultsFor(s);
   return s.rotateAxis1 === d.axis1 && s.rotateAngle1 === d.angle1 &&
-         s.rotateAxis2 === d.axis2 && s.rotateAngle2 === d.angle2 &&
-         s.rotateAxis3 === d.axis3 && s.rotateAngle3 === d.angle3;
+         s.rotateAxis2 === d.axis2 && s.rotateAngle2 === d.angle2;
 }
 
 /** When user crosses the skewb-top boundary (entering or leaving), if their
@@ -351,7 +368,6 @@ function snapRotationOnVariantBoundary(s: EditorState, partial: Partial<EditorSt
     const d = rotationDefaultsFor(next);
     next.rotateAxis1 = d.axis1; next.rotateAngle1 = d.angle1;
     next.rotateAxis2 = d.axis2; next.rotateAngle2 = d.angle2;
-    next.rotateAxis3 = d.axis3; next.rotateAngle3 = d.angle3;
   }
   return next;
 }
@@ -419,15 +435,14 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
   const rotDef = rotationDefaultsFor(s);
   s.rotateAxis1 = rotDef.axis1; s.rotateAngle1 = rotDef.angle1;
   s.rotateAxis2 = rotDef.axis2; s.rotateAngle2 = rotDef.angle2;
-  s.rotateAxis3 = rotDef.axis3; s.rotateAngle3 = rotDef.angle3;
 
-  // r=y30x-30z0  (axis-letter then signed degrees, repeating)
+  // r=y30x-30  (axis-letter then signed degrees, repeating; legacy 3rd pair
+  // and any z-axis values are dropped — z rotation no longer supported).
   const r = get('r');
   if (r) {
-    const matches = [...r.matchAll(/([xyz])(-?\d{1,3})/g)];
+    const matches = [...r.matchAll(/([xy])(-?\d{1,3})/g)];
     if (matches[0]) { s.rotateAxis1 = matches[0][1]; s.rotateAngle1 = parseInt(matches[0][2], 10); }
     if (matches[1]) { s.rotateAxis2 = matches[1][1]; s.rotateAngle2 = parseInt(matches[1][2], 10); }
-    if (matches[2]) { s.rotateAxis3 = matches[2][1]; s.rotateAngle3 = parseInt(matches[2][2], 10); }
   }
 
   if (get('bg') != null) s.backgroundColor = get('bg') ?? '';
@@ -461,7 +476,7 @@ function stateToParams(s: EditorState): URLSearchParams {
   }
   // r: emit when not default
   if (!rotationsMatchDefault(s)) {
-    p.set('r', `${s.rotateAxis1}${s.rotateAngle1}${s.rotateAxis2}${s.rotateAngle2}${s.rotateAxis3}${s.rotateAngle3}`);
+    p.set('r', `${s.rotateAxis1}${s.rotateAngle1}${s.rotateAxis2}${s.rotateAngle2}`);
   }
   if (s.backgroundColor) p.set('bg', s.backgroundColor);
   if (s.cubeColor !== DEFAULTS.cubeColor) p.set('cc', s.cubeColor);
@@ -514,7 +529,6 @@ function stateToOpts(s: EditorState): ICubeOptions {
     opts.viewportRotations = [
       [axisEnum(s.rotateAxis1), s.rotateAngle1],
       [axisEnum(s.rotateAxis2), s.rotateAngle2],
-      [axisEnum(s.rotateAxis3), s.rotateAngle3],
     ];
   }
 
@@ -644,6 +658,100 @@ export default function VisualCubeEditorPage() {
   const set = useCallback(<K extends keyof EditorState>(key: K, value: EditorState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  // Drag-to-rotate: pointer drag on the preview maps dx/dy to the rotation
+  // slots whose axis is 'y' / 'x'. State updates are rAF-throttled so even
+  // 7x7 stays usable. Slider/URL stay in sync because we mutate the same
+  // rotateAngle{1,2,3} fields the sliders read.
+  const dragRef = useRef<{
+    startX: number; startY: number;
+    startYAngle: number; startXAngle: number;
+    yslot: 1 | 2 | null; xslot: 1 | 2 | null;
+    rafId: number | null; pendingDx: number; pendingDy: number;
+    dxSign: 1 | -1; xMin: number; xMax: number;
+  } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const wrapAngle = (n: number) => {
+    const r = ((Math.round(n) + 180) % 360 + 360) % 360 - 180;
+    return r === -180 ? 180 : r;
+  };
+  const onPreviewPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const findSlot = (axis: 'x' | 'y'): 1 | 2 | null => {
+      if (state.rotateAxis1 === axis) return 1;
+      if (state.rotateAxis2 === axis) return 2;
+      return null;
+    };
+    const yslot = findSlot('y');
+    const xslot = findSlot('x');
+    if (yslot === null && xslot === null) return;
+    const angleAt = (slot: 1 | 2) =>
+      slot === 1 ? state.rotateAngle1 : state.rotateAngle2;
+    // visualcube (NxN) and our local skewb-top renderer share one y-rotation
+    // convention; sr-puzzlegen (sq1/megaminx/pyraminx/skewb-iso) is the opposite,
+    // so we flip dx for it.
+    const isSrPuzzlegen = state.puzzleType !== 'cube'
+      && !(state.puzzleType === 'skewb' && state.puzzleVariant === 'top');
+    const defs = rotationDefaultsFor(state);
+    const defaultAt = (slot: 1 | 2) =>
+      slot === 1 ? defs.angle1 : defs.angle2;
+    const xDefault = xslot ? defaultAt(xslot) : 0;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = {
+      startX: e.clientX, startY: e.clientY,
+      startYAngle: yslot ? angleAt(yslot) : 0,
+      startXAngle: xslot ? angleAt(xslot) : 0,
+      yslot, xslot, rafId: null, pendingDx: 0, pendingDy: 0,
+      dxSign: isSrPuzzlegen ? 1 : -1,
+      xMin: xDefault - 45, xMax: xDefault + 45,
+    };
+    setIsDragging(true);
+  }, [state.rotateAxis1, state.rotateAxis2,
+      state.rotateAngle1, state.rotateAngle2,
+      state.puzzleType, state.puzzleVariant]);
+  const onPreviewPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    d.pendingDx = e.clientX - d.startX;
+    d.pendingDy = e.clientY - d.startY;
+    if (d.rafId !== null) return;
+    d.rafId = requestAnimationFrame(() => {
+      const cur = dragRef.current;
+      if (!cur) return;
+      cur.rafId = null;
+      setState((prev) => {
+        const next = { ...prev };
+        if (cur.yslot) {
+          const v = wrapAngle(cur.startYAngle + cur.dxSign * cur.pendingDx * 0.5);
+          if (cur.yslot === 1) next.rotateAngle1 = v;
+          else next.rotateAngle2 = v;
+        }
+        if (cur.xslot) {
+          const raw = cur.startXAngle - cur.pendingDy * 0.5;
+          const v = Math.max(cur.xMin, Math.min(cur.xMax, Math.round(raw)));
+          if (cur.xslot === 1) next.rotateAngle1 = v;
+          else next.rotateAngle2 = v;
+        }
+        return next;
+      });
+    });
+  }, []);
+  const onPreviewPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (d.rafId !== null) cancelAnimationFrame(d.rafId);
+    dragRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    setIsDragging(false);
+  }, []);
+  const dragHandlers = {
+    onPointerDown: onPreviewPointerDown,
+    onPointerMove: onPreviewPointerMove,
+    onPointerUp: onPreviewPointerUp,
+    onPointerCancel: onPreviewPointerUp,
+  };
 
   // Sync state → URL (replace, debounced via microtask)
   useEffect(() => {
@@ -858,7 +966,8 @@ export default function VisualCubeEditorPage() {
           if (state.puzzleType === 'cube') {
             return (
               <div
-                className="vc-preview"
+                className={`vc-preview vc-preview-draggable${isDragging ? ' dragging' : ''}`}
+                {...dragHandlers}
                 dangerouslySetInnerHTML={{ __html: svg }}
               />
             );
@@ -870,13 +979,21 @@ export default function VisualCubeEditorPage() {
           // parametric mihlefeld renderer which natively supports rotation.
           const srKind = srKindOf(state.puzzleType, state.puzzleVariant)!;
           const rotSupported = state.puzzleVariant !== 'net';
+          // sr-puzzlegen uses Z-up for sq1/pyraminx (z is yaw axis), but our
+          // state is canonically Y-up (and z removed from UI). Promote y→z
+          // so the renderer's intrinsic yaw axis is what gets touched.
+          const srPuzzleAxis = (axis: string): string =>
+            (state.puzzleType === 'sq1' || state.puzzleType === 'pyraminx') && axis === 'y'
+              ? 'z' : axis;
           const rotations = rotSupported && !rotationsMatchDefault(state) ? [
-            { [state.rotateAxis1]: state.rotateAngle1 },
-            { [state.rotateAxis2]: state.rotateAngle2 },
-            { [state.rotateAxis3]: state.rotateAngle3 },
+            { [srPuzzleAxis(state.rotateAxis1)]: state.rotateAngle1 },
+            { [srPuzzleAxis(state.rotateAxis2)]: state.rotateAngle2 },
           ] as { x?: number; y?: number; z?: number }[] : undefined;
           return (
-            <div className="vc-preview">
+            <div
+              className={`vc-preview${rotSupported ? ` vc-preview-draggable${isDragging ? ' dragging' : ''}` : ''}`}
+              {...(rotSupported ? dragHandlers : {})}
+            >
               <PuzzleSVG
                 kind={srKind}
                 alg={state.algType === 'alg' ? state.algorithm : undefined}
@@ -998,7 +1115,7 @@ export default function VisualCubeEditorPage() {
                 className="vc-text vc-textarea"
                 rows={2}
                 defaultValue={state.algorithm}
-                placeholder="R U R' U' …"
+                placeholder=""
                 onInput={syncAlgFromDom}
               />
               <button
@@ -1222,14 +1339,14 @@ export default function VisualCubeEditorPage() {
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
           <div className="vc-row-controls vc-col">
-            {[1, 2, 3].map((i) => {
-              const axisKey = `rotateAxis${i}` as 'rotateAxis1' | 'rotateAxis2' | 'rotateAxis3';
-              const angleKey = `rotateAngle${i}` as 'rotateAngle1' | 'rotateAngle2' | 'rotateAngle3';
+            {([1, 2] as const).map((i) => {
+              const axisKey = `rotateAxis${i}` as 'rotateAxis1' | 'rotateAxis2';
+              const angleKey = `rotateAngle${i}` as 'rotateAngle1' | 'rotateAngle2';
               return (
                 <div key={i} className="vc-row-controls">
                   <select className="vc-select-sm" value={state[axisKey]}
                     onChange={(e) => set(axisKey, e.target.value)}>
-                    {['x', 'y', 'z'].map((a) => <option key={a} value={a}>{a}</option>)}
+                    {['x', 'y'].map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
                   <input
                     type="number"
@@ -1248,8 +1365,8 @@ export default function VisualCubeEditorPage() {
                   <button type="button" className="vc-btn-icon" title="Reset"
                     onClick={() => {
                       const d = rotationDefaultsFor(state);
-                      const axisVal = i === 1 ? d.axis1 : i === 2 ? d.axis2 : d.axis3;
-                      const angleVal = i === 1 ? d.angle1 : i === 2 ? d.angle2 : d.angle3;
+                      const axisVal = i === 1 ? d.axis1 : d.axis2;
+                      const angleVal = i === 1 ? d.angle1 : d.angle2;
                       set(axisKey, axisVal as never);
                       set(angleKey, angleVal as never);
                     }}>
@@ -1393,6 +1510,9 @@ const INLINE_CSS = `
   overflow: hidden;
 }
 .vc-preview svg { display: block; max-width: 100%; max-height: calc(45vh - 48px); width: auto; height: auto; }
+.vc-preview-draggable { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.vc-preview-draggable.dragging { cursor: grabbing; }
+.vc-preview-draggable svg { pointer-events: none; }
 
 .vc-exports { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
 

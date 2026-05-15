@@ -85,6 +85,9 @@ const MemoLandingPage = lazy(() => import('./pages/memo/MemoLandingPage'));
 const ColpiPage = lazy(() => import('./pages/memo/colpi/ColpiPage'));
 // NOTE: WB — 非官方世界纪录（port of speedsolving.com wiki UWR list）
 const WbPage = lazy(() => import('./pages/wb/WbPage'));
+// NOTE: Comp — cubing.com 比赛直播查看 (按轮成绩 + 选手弹窗 + PR 标志)
+const CompIndexPage = lazy(() => import('./pages/comp/CompIndexPage'));
+const CompDetailPage = lazy(() => import('./pages/comp/CompDetailPage'));
 // NOTE: Timer — 纯 TypeScript 重写的速拧计时器（替代 cstimer iframe 的核心流程）
 const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
 // NOTE: VisualCube Editor — 全功能交互式魔方图生成器
@@ -332,6 +335,9 @@ function App() {
         <Route path="/memo/colpi/:pair" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
         {/* WB — 非官方世界纪录 */}
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
+        {/* Comp — cubing.com 比赛直播 */}
+        <Route path="/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
+        <Route path="/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
