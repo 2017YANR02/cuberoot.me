@@ -1,6 +1,6 @@
 ---
 name: server-deploy
-description: "Use when 改 Hono server routes (`core/packages/server/**`) 或 PG schema (ALTER/新表/新列)。GH Actions 部署,pm2 进程。Triggers: \"recon_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
+description: "Use when 改 Hono server routes (`core/packages/server/**`) 或 PG schema (ALTER/新表/新列)。GH Actions 部署,pm2 进程。Triggers: \"cuberoot_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
 ---
 
 # Recon server / DB 部署
@@ -13,17 +13,17 @@ description: "Use when 改 Hono server routes (`core/packages/server/**`) 或 PG
 
 ## DB 凭据(PostgreSQL 13)
 
-**`.password.md`**(gitignored,不在 repo 里)。生产 DB 是 PG 13 跑在 cuberoot,`recon_db / recon_user / 314159`。**不是** MariaDB —— 2026-05-06 已迁完,MariaDB 服务 + 数据已完整卸载(blog 已切静态,见 memory `reference_post_baota.md`)。
+**`.password.md`**(gitignored,不在 repo 里)。生产 DB 是 PG 13 跑在 cuberoot,`cuberoot_db / recon_user / 314159`。**不是** MariaDB —— 2026-05-06 已迁完,MariaDB 服务 + 数据已完整卸载(blog 已切静态,见 memory `reference_post_baota.md`)。
 
 云服务器上跑 SQL 示例(密码用 `PGPASSWORD` env,避免 quoting 嵌套):
 ```bash
-ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db -c 'ALTER TABLE comments ADD COLUMN pinned SMALLINT NOT NULL DEFAULT 0;'"
+ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db -c 'ALTER TABLE comments ADD COLUMN pinned SMALLINT NOT NULL DEFAULT 0;'"
 ```
 
 **SSH quoting trap**: 多层引号嵌套(ssh + bash + psql)经常把单引号 / 内部空格搞坏,密码会被存成 ` 314159 `(前后多空格)。**SQL 多行 / 含字面引号时**,改成 `scp` 一个 SQL 文件上去再 `psql -f`:
 ```bash
 scp /tmp/migration.sql root@cuberoot:/tmp/
-ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db -f /tmp/migration.sql && rm /tmp/migration.sql'
+ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f /tmp/migration.sql && rm /tmp/migration.sql'
 ```
 
 ## Schema 变更:走 migration 文件,不要手动 ALTER
@@ -82,7 +82,7 @@ ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db
 | Server 部署目录 | `/root/core-api/` |
 | pm2 进程 | `core-api` |
 | 端口 | 3001(Nginx 反代 `/api/`) |
-| `.env` | `/root/core-api/.env`(DB_HOST=127.0.0.1, DB_PORT=5432, DB_USER=recon_user, DB_PASS=314159, DB_NAME=recon_db, JWT_SECRET, PORT) |
+| `.env` | `/root/core-api/.env`(DB_HOST=127.0.0.1, DB_PORT=5432, DB_USER=recon_user, DB_PASS=314159, DB_NAME=cuberoot_db, JWT_SECRET, PORT) |
 | PG 数据目录 | `/var/lib/pgsql/data/` |
 | PG 服务 | `systemctl {start,stop,reload,restart} postgresql` |
 | Schema 文件 | `core/packages/server/src/db/schema.pg.sql`(repo,11 张表) |

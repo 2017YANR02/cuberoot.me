@@ -225,7 +225,7 @@ export default defineConfig({
       //   3. 顺序重要 —— 长前缀必须先于 '/v1' 注册才会被取窄匹配
       // '/v1/nemesizer': { target: 'http://127.0.0.1:3002', changeOrigin: true, secure: false },
 
-      // NOTE: Hono API 代理到线上后端（本地无 recon_db，无法运行 Hono 后端）
+      // NOTE: Hono API 代理到线上后端（本地无 cuberoot_db，无法运行 Hono 后端）
       '/v1': {
         target: 'https://api.cuberoot.me',
         changeOrigin: true,

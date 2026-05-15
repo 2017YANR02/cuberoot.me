@@ -75,7 +75,7 @@ Top 3 surprises from peer research:
 #### B1. BLE 自动复盘 (BLE 自动复盘 / Auto-Recon from Smart Cube)
 - **Description**: 用 BLE 录每一刀，结束后自动跑 cube-state diff → 给出 cross/F2L1-4/OLL/PLL 切分 + 每段 TPS/移动数/思考时间。
 - **Reference sites**: [reco.nz](https://reco.nz)（手动）、[csTimer 多阶段分时](https://cstimer.net)。
-- **Implementation sketch**: 接 A1 的 move stream；用现有 `recon_stats.ts` / `recon_utils.ts` 切分逻辑；写入 `recon_db`(已有 server)。新加 `/recon/live`。
+- **Implementation sketch**: 接 A1 的 move stream；用现有 `recon_stats.ts` / `recon_utils.ts` 切分逻辑；写入 `cuberoot_db`(已有 server)。新加 `/recon/live`。
 - **Priority**: P0（依赖 A1）
 - **Effort**: M（A1 完成后）
 

@@ -167,14 +167,14 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 
 > 健康检查:`curl https://api.cuberoot.me/v1/health` → `{"status":"ok","db":"connected"}`
 
-## PostgreSQL 13(recon_db)
+## PostgreSQL 13(cuberoot_db)
 
 2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载。
 
 | 项目 | 值 |
 |------|-----|
 | **DB** | PostgreSQL 13 |
-| **库名** | `recon_db` |
+| **库名** | `cuberoot_db`(2026-05-15 从 `recon_db` 改名,sed grep 友好) |
 | **用户** | `recon_user`(仅限 localhost) |
 | **数据目录** | `/var/lib/pgsql/data/` |
 | **服务** | `systemctl {start,stop,restart} postgresql` |
@@ -189,18 +189,18 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
 | API 备份(recon 表) | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
-| PG 全库 dump | `pg-dump-recon.timer` (systemd) | 每天 03:00 UTC + 10min random | `/root/archive/pg-recon-YYYY-MM-DD.sql.gz`(留 30 天) |
+| PG 全库 dump | `pg-dump-recon.timer` (systemd) | 每天 03:00 UTC + 10min random | `/root/archive/pg-recon-YYYY-MM-DD.sql.gz`(留 7 天) |
 
 **全库 dump 实现**(2026-05-06 加):
-- 脚本 `/usr/local/bin/pg-dump-recon.sh`(pg_dump → gzip,< 1KB 失败 abort,过期 mtime+30 自动删)
+- 脚本 `/usr/local/bin/pg-dump-recon.sh`(pg_dump → gzip,< 1KB 失败 abort,过期 mtime+7 自动删)
 - service `/etc/systemd/system/pg-dump-recon.service`(After=postgresql.service)
 - timer `/etc/systemd/system/pg-dump-recon.timer`(OnCalendar=*-*-* 03:00 UTC)
 - 防的: 人为 SQL 错误 / PG 升级失败 / OOM corruption / 误删数据库目录
 - 不防: 整盘损坏(备份和原数据同盘)。要异地备份再加 daily push 到 GitHub repo / OSS。
 
-**手动恢复 recon_db:**
+**手动恢复 cuberoot_db:**
 ```bash
-ssh root@cuberoot 'gunzip -c /root/archive/pg-recon-<DATE>.sql.gz | PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db'
+ssh root@cuberoot 'gunzip -c /root/archive/pg-recon-<DATE>.sql.gz | PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db'
 ```
 
 ## SSH 登录方式

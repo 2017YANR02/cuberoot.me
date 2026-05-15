@@ -45,6 +45,6 @@ YAGNI。要回滚:
 ## 看哪些 migration 已应用
 
 ```bash
-ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db \
+ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
   -c 'SELECT filename, applied_at FROM _schema_migrations ORDER BY filename;'"
 ```

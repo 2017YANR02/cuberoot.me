@@ -73,17 +73,17 @@ grep -n "ssh.*hr_id" .github/workflows/stats.yml
 
 ## 本地 dry-run
 
-docker `pg13`(5433 pwd `dev` db `recon_db`)。改列宽 / 类型先本地 `\copy` 边界 fixture。
+docker `pg13`(5433 pwd `dev` db `cuberoot_db`)。改列宽 / 类型先本地 `\copy` 边界 fixture。
 
 ```bash
 export MSYS_NO_PATHCONV=1
-docker cp x.sql pg13:/x.sql && docker exec -e PGPASSWORD=dev pg13 psql -U postgres -d recon_db -f /x.sql
+docker cp x.sql pg13:/x.sql && docker exec -e PGPASSWORD=dev pg13 psql -U postgres -d cuberoot_db -f /x.sql
 ```
 
 ## 验证服务器是否灌进去了
 
 ```bash
-ssh root@cuberoot 'sudo -u postgres psql -d recon_db \
+ssh root@cuberoot 'sudo -u postgres psql -d cuberoot_db \
   -c "SELECT COUNT(*) FROM historical_ranks_snapshot;" \
   -c "SELECT COUNT(*) FROM historical_ranks_monthly_snapshot;"'
 ```

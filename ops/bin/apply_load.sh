@@ -44,7 +44,7 @@ cd "$IMPORT_DIR"
 echo "::group::[$LOG_TAG] psql -e -f load.sql"
 # psql -e 回显 server 收到的每条 SQL(\copy / TRUNCATE / CREATE INDEX 等)
 # tee >(logger) 让 stdout 走 ssh client (Actions 实时日志) 同时 syslog 留备份
-PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d recon_db \
+PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
   -e -v ON_ERROR_STOP=1 -f load.sql 2>&1 \
   | tee >(logger -t "$LOG_TAG")
 echo "::endgroup::"
