@@ -27,6 +27,8 @@ export default class CubeGroup extends THREE.Group {
     this._angle = angle;
     this.setRotationFromAxisAngle(CubeGroup.AXIS_VECTOR[this.axis], this._angle);
     this.updateMatrix();
+    // PG3D-style:渲染走 instancedRenderer 的 movingMesh.quaternion,不依赖此 group 的 parent 链
+    this.cube.instancedRenderer.setSliceAngle(angle, this.axis);
     this.cube.dirty = true;
   }
 
@@ -104,14 +106,12 @@ export default class CubeGroup extends THREE.Group {
     }
     this.holding = true;
     for (const i of this.indices) {
-      const cubelet = this.cube.cubelets[i];
+      const cubelet = this.cube.cubelets.get(i);
+      if (!cubelet) continue;
       this.cubelets.push(cubelet);
-      this.cube.remove(cubelet);
-      if (cubelet.exist) {
-        this.add(cubelet);
-      }
+      // 渲染走 instancedRenderer; 不再 reparent THREE 节点
     }
-    this.cube.add(this);
+    this.cube.instancedRenderer.beginSlice(this);
     return true;
   }
 
@@ -131,14 +131,10 @@ export default class CubeGroup extends THREE.Group {
         break;
       }
       this.rotate(cubelet);
-      this.remove(cubelet);
-      if (cubelet.exist) {
-        this.cube.add(cubelet);
-      }
-      this.cube.cubelets[cubelet.index] = cubelet;
+      this.cube.cubelets.set(cubelet.index, cubelet);
     }
-    this.cube.remove(this);
     this.cube.dirty = true;
+    this.cube.instancedRenderer.endSlice(this);
     this.angle = 0;
     this.cube.unlock(this.axis, this.layer);
     this.cube.callback();
@@ -208,7 +204,7 @@ export class GroupTable {
       }
       this.groups[axis] = list;
     }
-    for (const cubelet of cube.initials) {
+    for (const cubelet of cube.initials.values()) {
       if (!cubelet.exist) {
         continue;
       }
