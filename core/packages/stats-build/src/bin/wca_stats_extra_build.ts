@@ -99,6 +99,7 @@ interface ResultRow {
   regSingleRecord: string | null;
   regAvgRecord: string | null;
   roundTypeId: string;
+  formatId: string;
   pos: number;
   attempts: (number | null)[];  // 5 attempts inline(主 SQL 走 result_attempts GROUP_CONCAT 子查询)
 }
@@ -350,7 +351,7 @@ async function main() {
     const [rows] = await conn.query<mysql.RowDataPacket[]>(`
       SELECT r.id, r.person_id, r.best, r.average, r.country_id, r.competition_id,
              r.regional_single_record, r.regional_average_record,
-             r.round_type_id, r.pos,
+             r.round_type_id, r.format_id, r.pos,
              c.start_date AS sd,
              (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
               FROM result_attempts ra WHERE ra.result_id = r.id) AS attempts_csv
@@ -378,6 +379,7 @@ async function main() {
         regSingleRecord: r['regional_single_record'] as string | null,
         regAvgRecord: r['regional_average_record'] as string | null,
         roundTypeId: r['round_type_id'] as string,
+        formatId: r['format_id'] as string,
         pos: r['pos'] as number,
         attempts,
       };
@@ -438,15 +440,21 @@ async function main() {
       }
 
       // all_results_top: 全量流式写
+      // 末尾 3 列(round_type_id, format_id, record_tag)是为 /comp 页面准备的:
+      // 同 (comp_id, event_id, round_type_id, wca_id) 下 is_avg=false/true 两行配对成一条完整成绩.
+      const rt = pgEsc(r.roundTypeId);
+      const fm = pgEsc(r.formatId);
       if (r.best > 0) {
+        const tag = pgEsc(r.regSingleRecord ?? '');
         allTopStream.write(
-          `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\n`,
+          `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
         );
         allTopCount++;
       }
       if (r.average > 0) {
+        const tag = pgEsc(r.regAvgRecord ?? '');
         allTopStream.write(
-          `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\n`,
+          `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
         );
         allTopCount++;
       }
@@ -750,6 +758,11 @@ CREATE TABLE wca_results_top (
   comp_id            VARCHAR(50) NOT NULL,
   comp_date          DATE NOT NULL,
   attempts           INTEGER[],
+  -- 末尾 3 列服务 /comp 页面 fast-path (按 comp_id 拉所有 round 成绩):
+  -- (event, round_type, wca_id) 下 is_avg=false/true 两行合成一条成绩;record_tag 选 single/average 中相应那个.
+  round_type_id      VARCHAR(2)  NOT NULL DEFAULT '',
+  format_id          VARCHAR(2)  NOT NULL DEFAULT '',
+  record_tag         VARCHAR(2)  NOT NULL DEFAULT '',
   -- 派生年:为 (event, is_avg, year) ORDER BY value 翻页提供 leading index 列.
   -- 不加 comp_date BETWEEN 过滤会让 PG 在 wrt_main 上线性 heap-fetch 跳过非目标年(老年份慢到 10s+).
   comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED
@@ -761,6 +774,8 @@ CREATE INDEX wrt_comp_id      ON wca_results_top (event_id, is_avg, comp_id, val
 -- year-aware 索引:任意年 worldwide / 大国家+年 翻页秒出.约 +825 MB.
 CREATE INDEX wrt_year         ON wca_results_top (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
 CREATE INDEX wrt_country_year ON wca_results_top (event_id, is_avg, person_country_id, comp_year, value) INCLUDE (id);
+-- /comp 页面 fast-path: 单 comp 拉全部成绩,无 event 过滤.约 +150 MB.
+CREATE INDEX wrt_comp_lookup  ON wca_results_top (comp_id);
 
 TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;
@@ -771,7 +786,7 @@ TRUNCATE wca_person_ranks;
 
 \\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
 \\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
-\\copy wca_results_top (event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts) FROM 'wca_results_top.copy.tsv';
+\\copy wca_results_top (event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts, round_type_id, format_id, record_tag) FROM 'wca_results_top.copy.tsv';
 \\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
 \\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
