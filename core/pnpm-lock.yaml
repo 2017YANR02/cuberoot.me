@@ -278,9 +278,6 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
-      '@cuberoot/vendor-sr-puzzlegen':
-        specifier: workspace:*
-        version: link:../vendor-sr-puzzlegen
       '@cuberoot/visualcube':
         specifier: workspace:*
         version: link:../visualcube
@@ -305,6 +302,9 @@ importers:
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
+      sr-puzzlegen:
+        specifier: ^1.0.4
+        version: 1.0.4
       ws:
         specifier: ^8.20.0
         version: 8.20.0
@@ -371,19 +371,6 @@ importers:
 
   packages/stats-ui:
     devDependencies:
-      typescript:
-        specifier: ~5.7.0
-        version: 5.7.3
-
-  packages/vendor-sr-puzzlegen:
-    dependencies:
-      sr-puzzlegen:
-        specifier: ^1.0.4
-        version: 1.0.4
-    devDependencies:
-      esbuild:
-        specifier: ^0.27.4
-        version: 0.27.4
       typescript:
         specifier: ~5.7.0
         version: 5.7.3
