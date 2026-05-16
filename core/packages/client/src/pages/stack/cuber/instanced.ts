@@ -267,7 +267,8 @@ export default class InstancedRenderer extends THREE.Group {
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
     const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
     const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
-    const m = new THREE.InstancedMesh(Cubelet._FRAME, mat, count);
+    const geo = isSuperOrder ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+    const m = new THREE.InstancedMesh(geo, mat, count);
     m.frustumCulled = false;
     // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
     // static mesh 永远 identity
