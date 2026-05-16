@@ -31,6 +31,8 @@ export class Tween {
 
 export class Tweener {
   tweens: Tween[];
+  /** 暂停 rAF 自动推进。导出 mp4 时离线 manual tick,需要先停掉自动 update 避免冲突。 */
+  paused = false;
 
   get length(): number {
     return this.tweens.length;
@@ -43,6 +45,7 @@ export class Tweener {
 
   loop(): void {
     requestAnimationFrame(this.loop.bind(this));
+    if (this.paused) return;
     this.update();
   }
 
