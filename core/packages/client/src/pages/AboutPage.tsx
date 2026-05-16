@@ -2,7 +2,6 @@
  * /about — 关于 / 致谢页。纯文字列表,中英双语。
  *
  * Credits 数据源: src/pages/credits_data.json (单一数据源)。
- * 改 credits 必同步 README → 跑 `pnpm gen-credits` 再 commit。
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
