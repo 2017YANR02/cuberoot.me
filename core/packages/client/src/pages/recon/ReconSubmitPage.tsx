@@ -1008,6 +1008,7 @@ export default function ReconSubmitPage() {
                 <CompPicker
                   value={form.comp || ''}
                   onChange={(v) => setField('comp', v)}
+                  onUrlPaste={(id) => setField('comp', id)}
                   onPick={applyPickedComp}
                   isZh={isZh}
                   disableSuggestions={!form.official}

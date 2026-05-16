@@ -335,6 +335,7 @@ export default function ImportMode({ t, isZh }: Props) {
               className="gen-tn-comp-picker"
               value={input}
               onChange={setInput}
+              onUrlPaste={setInput}
               onPick={onPickComp}
               isZh={isZh}
               placeholder={t('搜索比赛名 / 粘贴 ID 或 URL', 'Search competition / paste ID or URL')}
