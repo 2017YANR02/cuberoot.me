@@ -329,6 +329,8 @@ const CUBING_CACHE_TTL_MS = 60_000;      // cubing.com 直播,1 分钟兜底
 const WCA_CACHE_TTL_MS = 60 * 60_000;    // WCA 静态数据,1 小时
 const cache = new Map<string, CompData>();
 const inflight = new Map<string, Promise<CompData>>();
+// wca_db 路径需独立去重 map — 因 tryLoadFromWcaDb 可能 resolve null(本地 dump 没此 comp).
+const inflightWcaDb = new Map<string, Promise<CompData | null>>();
 
 function ttlFor(source: SourceId): number {
   // wca_db 每周 CI 重灌,内存缓存可放心拉长到 12h.
@@ -992,19 +994,28 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     if (cached && Date.now() - cached.fetchedAt < ttlFor('wca_db')) {
       return { ...cached, availableSources: ['wca_db'] };
     }
-    try {
-      const data = await tryLoadFromWcaDb(wcaId, onProgress);
-      if (data) {
-        data.availableSources = ['wca_db'];
-        cache.set(cacheKey, data);
-        return data;
-      }
-      // null = 本地 dump 没这场,fall-through
-    } catch (e) {
-      // PG 故障不应阻止外部源兜底,只 log;auto choice 继续走 probe.
-      console.warn(`[cubing-live] wca_db query failed for ${wcaId}:`, (e as Error).message);
-      if (choice === 'wca_db') throw e;
+    // 去重:大比赛 tryLoadFromWcaDb 的 prior-PR 查询 5+ 分钟,并发刷新会堆爆 PG 连接池 (max=10).
+    // 同 comp 已在飞就 await 同一个 promise,不开新查询.
+    let pending = inflightWcaDb.get(cacheKey);
+    if (!pending) {
+      pending = (async () => {
+        try {
+          const data = await tryLoadFromWcaDb(wcaId, onProgress);
+          if (data) {
+            data.availableSources = ['wca_db'];
+            cache.set(cacheKey, data);
+            return data;
+          }
+          return null;
+        } catch (e) {
+          console.warn(`[cubing-live] wca_db query failed for ${wcaId}:`, (e as Error).message);
+          return null;  // PG 错误也走 fall-through (choice='wca_db' 时下方 throw)
+        }
+      })().finally(() => { inflightWcaDb.delete(cacheKey); });
+      inflightWcaDb.set(cacheKey, pending);
     }
+    const result = await pending;
+    if (result) return result;
     if (choice === 'wca_db') throw new Error(`No data on wca_db for ${wcaId}`);
   }
 
@@ -1030,10 +1041,10 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     return { ...cached, availableSources };
   }
 
-  if (!onProgress) {
-    const pending = inflight.get(cacheKey);
-    if (pending) return pending.then(d => ({ ...d, availableSources }));
-  }
+  // SSE 也参与去重 — 第二个 waiter 看不到 progress 事件(没传 onProgress 给已在飞的 worker),
+  // 但能等到 done.比让每个 SSE 各跑一份 collectCompData 强.
+  const pending = inflight.get(cacheKey);
+  if (pending) return pending.then(d => ({ ...d, availableSources }));
 
   const p = (async () => {
     let data: CompData;
@@ -1076,9 +1087,9 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     data.availableSources = availableSources;
     cache.set(`${wcaId}:${data.source}`, data);
     return data;
-  })().finally(() => { if (!onProgress) inflight.delete(cacheKey); });
+  })().finally(() => { inflight.delete(cacheKey); });
 
-  if (!onProgress) inflight.set(cacheKey, p);
+  inflight.set(cacheKey, p);
   return p;
 }
 
