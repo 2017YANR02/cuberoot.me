@@ -67,10 +67,8 @@ interface StickerSlot {
 export default class InstancedRenderer extends THREE.Group {
   cube: Cube;
 
-  /** 稳定 instance idx: cubelet.initial → 0..N-1 */
-  initialToInstance: Map<number, number> = new Map();
   /** 反查: instance idx → cubelet.initial (用于 endSlice 拿 cubelet) */
-  instanceToInitial: number[] = [];
+  instanceToInitial!: Uint32Array;
 
   staticFrame!: THREE.InstancedMesh;
   movingFrame!: THREE.InstancedMesh;
@@ -141,9 +139,13 @@ export default class InstancedRenderer extends THREE.Group {
 
     const cubelets = [...cube.initials.values()];
     const visCount = cubelets.length;
+    // initialToInstance Map 已淘汰 — instance idx 直接存到 cubelet._instIdx,beginSlice 走属性读
+    // instanceToInitial 用 Uint32Array 跳 Array.push (372k 次)
+    this.instanceToInitial = new Uint32Array(visCount);
     for (let i = 0; i < visCount; i++) {
-      this.initialToInstance.set(cubelets[i].initial, i);
-      this.instanceToInitial.push(cubelets[i].initial);
+      const c = cubelets[i];
+      c._instIdx = i;
+      this.instanceToInitial[i] = c.initial;
     }
     const T1 = performance.now();
 
@@ -372,8 +374,8 @@ export default class InstancedRenderer extends THREE.Group {
     for (const positionIdx of group.indices) {
       const cubelet = this.cube.cubelets.get(positionIdx);
       if (!cubelet) continue;
-      const instIdx = this.initialToInstance.get(cubelet.initial);
-      if (instIdx === undefined) continue;
+      const instIdx = cubelet._instIdx;
+      if (instIdx < 0) continue;
       instances.push(instIdx);
       this.staticFrame.getMatrixAt(instIdx, this.tmpMat);
       origCubeletMats.push(this.tmpMat.clone());
