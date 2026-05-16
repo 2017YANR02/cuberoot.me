@@ -4,7 +4,7 @@
  * 唯一 stack-特有部分:把"播放到第 n 步"转成 stack World twister 的 reset+fast-twist
  * (因为 stack 渲染是 huazhechen/cuber 自渲染,不是 TwistyPlayer,没 timestamp scrub)。
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw, Settings, ChevronRight, Shuffle, Keyboard, Grid3x3 } from 'lucide-react';
 import { Alg } from 'cubing/alg';
@@ -16,6 +16,7 @@ import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils'
 import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
+import { WheelPicker } from '../../components/WheelPicker';
 import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, type StackSettings } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './player-controls.css';
@@ -27,6 +28,7 @@ interface Props {
   onAlgChange: (alg: string) => void;
   onSetupChange: (setup: string) => void;
   order: number;
+  /** 阶数确认改变时调 (wheel 完全停下 / input 回车失焦 / AlgsPanel 选公式)。拖动 / inertia 期间不调。 */
   onOrderChange: (n: number) => void;
   settings: StackSettings;
   onSettingsChange: (s: StackSettings) => void;
@@ -324,13 +326,6 @@ export default function PlayerControls({
           />
         </label>
       </div>
-      <div className="stack-player-tools">
-        <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('取逆', 'Invert')}</button>
-        <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>
-        <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')}><FlipHorizontal2 size={13} />Mirror M</button>
-        <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('沿 S 面镜像 (F↔B)', 'Mirror S (F↔B)')}><FlipVertical2 size={13} />Mirror S</button>
-        <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
-      </div>
       <div className="stack-keyboard-section">
         <div className="stack-keyboard-switcher">
           <button
@@ -367,6 +362,13 @@ export default function PlayerControls({
         {kbVariant === 'qwerty' && (
           <StackQwertyKeypad keymap={keymap} onMove={applyMove} />
         )}
+      </div>
+      <div className="stack-player-tools">
+        <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('取逆', 'Invert')}</button>
+        <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>
+        <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')}><FlipHorizontal2 size={13} />Mirror M</button>
+        <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('沿 S 面镜像 (F↔B)', 'Mirror S (F↔B)')}><FlipVertical2 size={13} />Mirror S</button>
+        <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
       </div>
       <PuzzleSettings
         order={order}
@@ -428,6 +430,67 @@ const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
   U: '顶', D: '底', L: '左', R: '右', F: '前', B: '后',
 };
 
+/** 共用色板格 — preset (onClick) 与 picker (onPick) 都用同一外观 */
+function SwatchCell({
+  color, label, title, active, onPick, onClick,
+}: {
+  color: string;
+  label?: string;
+  title?: string;
+  active?: boolean;
+  onPick?: (c: string) => void;
+  onClick?: () => void;
+}) {
+  const labelEl = label ? <span className="stack-swatch-label">{label}</span> : null;
+  const boxEl = <span className="stack-swatch-box" style={{ background: color }} />;
+  const cls = 'stack-swatch' + (active ? ' active' : '');
+  if (onPick) {
+    return (
+      <label className={cls} title={title}>
+        {labelEl}
+        <input
+          type="color"
+          className="stack-swatch-input"
+          value={color}
+          onChange={(e) => onPick(e.target.value)}
+        />
+        {boxEl}
+      </label>
+    );
+  }
+  return (
+    <button type="button" className={cls} onClick={onClick} title={title}>
+      {labelEl}
+      {boxEl}
+    </button>
+  );
+}
+
+function ColorRow({
+  label, children, action,
+}: {
+  label: string;
+  children: ReactNode;
+  action?: { label: string; title?: string; onClick: () => void };
+}) {
+  return (
+    <div className="stack-color-row">
+      <span className="stack-color-row-label">{label}</span>
+      <div className="stack-swatch-list">{children}</div>
+      {action && (
+        <button
+          type="button"
+          className="stack-face-color-reset"
+          onClick={action.onClick}
+          title={action.title}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+}
+
 const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<StackSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'> }[] = [
   { id: 'std',    zh: '标准', en: 'Standard', s: { thickness: true,  hollow: false, arrow: false, hint: false } },
   { id: 'hollow', zh: '镂空', en: 'Hollow',   s: { thickness: true,  hollow: true,  arrow: false, hint: false } },
@@ -457,14 +520,54 @@ function PuzzleSettings({
       && p.s.arrow === settings.arrow && p.s.hint === settings.hint,
   )?.id ?? '';
 
+  const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
   const [orderDraft, setOrderDraft] = useState<string>(String(order));
   useEffect(() => { setOrderDraft(String(order)); }, [order]);
-  const commitOrder = () => {
+  // wheel 已经 180ms 静止才 onSettle,但大阶魔方重建 (cube ctor + GL upload) 是同步阻塞的 ——
+  // 紧接着想二次手指狂滑会被 cube 重建堵住 touchstart 排队。
+  // 多套一层 500ms"可撤销窗口":onSettle 后不立刻 apply,这窗口内任何 wheel 触碰 / onChange 都撤销 apply,
+  // 让"连续狂滑"完全不触发任何重建。
+  const applyTimerRef = useRef<number | null>(null);
+  const wheelRootRef = useRef<HTMLDivElement>(null);
+  const cancelPendingApply = useCallback(() => {
+    if (applyTimerRef.current != null) {
+      window.clearTimeout(applyTimerRef.current);
+      applyTimerRef.current = null;
+    }
+  }, []);
+  const handleWheelChange = useCallback((n: number) => {
+    cancelPendingApply();
+    setOrderDraft(String(n));
+  }, [cancelPendingApply]);
+  const handleWheelSettle = useCallback((n: number) => {
+    cancelPendingApply();
+    applyTimerRef.current = window.setTimeout(() => {
+      applyTimerRef.current = null;
+      onOrderChange(n);
+    }, 500);
+  }, [cancelPendingApply, onOrderChange]);
+  // 直接监听 wheel root 的 touchstart / mousedown — 用户刚一碰还没移动就撤销,
+  // 不依赖 onChange 触发(纯按住不动的 touch 不会 onChange)。
+  useEffect(() => {
+    const el = wheelRootRef.current;
+    if (!el) return;
+    el.addEventListener('touchstart', cancelPendingApply, { passive: true });
+    el.addEventListener('mousedown', cancelPendingApply);
+    return () => {
+      el.removeEventListener('touchstart', cancelPendingApply);
+      el.removeEventListener('mousedown', cancelPendingApply);
+    };
+  }, [cancelPendingApply]);
+  useEffect(() => () => cancelPendingApply(), [cancelPendingApply]);
+  const commitOrderInput = () => {
     const raw = Number(orderDraft);
     if (!Number.isFinite(raw)) { setOrderDraft(String(order)); return; }
-    const n = Math.max(2, Math.min(2000, Math.floor(raw)));
+    const n = Math.max(1, Math.min(400, Math.floor(raw)));
     setOrderDraft(String(n));
-    if (n !== order) onOrderChange(n);
+    if (n !== order) {
+      cancelPendingApply();
+      onOrderChange(n);  // 输入框是用户主动提交,立刻 apply,不进 500ms 窗口
+    }
   };
 
   const set = <K extends keyof StackSettings>(key: K, value: StackSettings[K]) => {
@@ -489,21 +592,37 @@ function PuzzleSettings({
           <div className="stack-puzzle-row">
             <div className="stack-puzzle-section">
               <div className="stack-puzzle-section-title">{t('阶数', 'Order')}</div>
-              <input
-                type="number"
-                className="stack-puzzle-num"
-                min={2}
-                max={2000}
-                step={1}
-                value={orderDraft}
-                title={t('阶数 2–2000(回车 / 失焦应用)', 'Order 2–2000 (Enter / blur to apply)')}
-                onChange={(e) => setOrderDraft(e.target.value)}
-                onBlur={commitOrder}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                  else if (e.key === 'Escape') { setOrderDraft(String(order)); (e.target as HTMLInputElement).blur(); }
-                }}
-              />
+              <div className="stack-puzzle-order-control" ref={wheelRootRef}>
+                <WheelPicker
+                  value={order}
+                  minValue={1}
+                  maxValue={400}
+                  renderSlot={renderOrderSlot}
+                  onChange={handleWheelChange}
+                  onSettle={handleWheelSettle}
+                  width={72}
+                  itemHeight={22}
+                  slots={3}
+                  ariaLabel={t('阶数', 'Order')}
+                  className="stack-puzzle-order-wheel"
+                />
+                <input
+                  type="number"
+                  className="stack-puzzle-order-input"
+                  min={1}
+                  max={400}
+                  step={1}
+                  value={orderDraft}
+                  title={t('阶数 1–400(回车 / 失焦应用)', 'Order 1–400 (Enter / blur to apply)')}
+                  onChange={(e) => setOrderDraft(e.target.value)}
+                  onBlur={commitOrderInput}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    else if (e.key === 'Escape') { setOrderDraft(String(order)); (e.target as HTMLInputElement).blur(); }
+                  }}
+                />
+              </div>
             </div>
             <div className="stack-puzzle-section">
               <div className="stack-puzzle-section-title">{t('视觉风格', 'Style')}</div>
@@ -552,49 +671,40 @@ function PuzzleSettings({
             <Toggle label={t('显示朝向箭头', 'Orientation arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
           </div>
-          <label className="stack-color-row">
-            <span>{t('内核色', 'Core color')}</span>
-            <input
-              type="color"
-              value={settings.coreColor}
-              onChange={(e) => set('coreColor', e.target.value)}
+          <ColorRow label={t('内核色', 'Core color')}>
+            <SwatchCell
+              color={settings.coreColor}
+              title={t('自定义', 'Custom')}
+              onPick={(c) => set('coreColor', c)}
             />
-            <div className="stack-color-presets">
-              {CORE_COLOR_PRESETS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={'stack-color-swatch' + (c.toLowerCase() === settings.coreColor.toLowerCase() ? ' active' : '')}
-                  style={{ background: c }}
-                  onClick={() => set('coreColor', c)}
-                  title={c}
-                />
-              ))}
-            </div>
-          </label>
-          <div className="stack-color-row stack-face-color-row">
-            <span>{t('面色', 'Face colors')}</span>
-            <div className="stack-face-color-grid">
-              {FACE_ORDER.map((f) => (
-                <label key={f} className="stack-face-color-cell" title={t(FACE_LABELS_ZH[f], f)}>
-                  <span>{f}</span>
-                  <input
-                    type="color"
-                    value={settings.faceColors[f]}
-                    onChange={(e) => set('faceColors', { ...settings.faceColors, [f]: e.target.value })}
-                  />
-                </label>
-              ))}
-            </div>
-            <button
-              type="button"
-              className="stack-face-color-reset"
-              onClick={() => set('faceColors', { ...DEFAULT_FACE_COLORS })}
-              title={t('恢复 WCA 默认', 'Reset to WCA defaults')}
-            >
-              WCA
-            </button>
-          </div>
+            {CORE_COLOR_PRESETS.map((c) => (
+              <SwatchCell
+                key={c}
+                color={c}
+                title={c}
+                active={c.toLowerCase() === settings.coreColor.toLowerCase()}
+                onClick={() => set('coreColor', c)}
+              />
+            ))}
+          </ColorRow>
+          <ColorRow
+            label={t('面色', 'Face colors')}
+            action={{
+              label: 'WCA',
+              title: t('恢复 WCA 默认', 'Reset to WCA defaults'),
+              onClick: () => set('faceColors', { ...DEFAULT_FACE_COLORS }),
+            }}
+          >
+            {FACE_ORDER.map((f) => (
+              <SwatchCell
+                key={f}
+                color={settings.faceColors[f]}
+                label={f}
+                title={t(FACE_LABELS_ZH[f], f)}
+                onPick={(c) => set('faceColors', { ...settings.faceColors, [f]: c })}
+              />
+            ))}
+          </ColorRow>
         </div>
       )}
       <KeymapModal

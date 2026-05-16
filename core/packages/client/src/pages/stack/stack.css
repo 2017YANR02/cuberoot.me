@@ -146,31 +146,6 @@
   }
 }
 
-.stack-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 12px;
-  background: color-mix(in srgb, var(--background) 80%, transparent);
-  color: var(--muted-foreground);
-  font-size: 13px;
-  z-index: 2;
-}
-.stack-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--border-default);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: stack-spin 0.7s linear infinite;
-}
-@keyframes stack-spin {
-  to { transform: rotate(360deg); }
-}
-
 .stack-canvas-wrap canvas {
   width: 100% !important;
   height: 100% !important;

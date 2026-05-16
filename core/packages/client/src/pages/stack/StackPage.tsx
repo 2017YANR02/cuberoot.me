@@ -52,7 +52,7 @@ export default function StackPage() {
     const raw = searchParams.get('puzzle');
     if (!raw) return 3;
     const n = parseInt(raw, 10);
-    if (!Number.isFinite(n) || n < 2 || n > 500) return 3;
+    if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
   })();
 
@@ -78,7 +78,6 @@ export default function StackPage() {
   useEffect(() => {
     try { localStorage.setItem('stack.fullscreen', fullscreen ? '1' : '0'); } catch { /* private mode */ }
   }, [fullscreen]);
-  const [orderLoading, setOrderLoading] = useState(false);
   const [worldTick, setWorldTick] = useState(0);
   const [settings, setSettings] = useState<StackSettings>(() => loadSettings());
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
@@ -159,15 +158,28 @@ export default function StackPage() {
       if (!group) return;
       // 默认单层切片(group.name,跟旧行为一致)。
       // Alt 按住 → 走 wide(点击深度决定宽度)
-      const sign = opts.alt ? CubeGroup.wideFromClick(axis, layer, order).sign : group.name;
+      // 1×1:只有转体,不存在"层",全部记成 x/y/z
+      let sign: string;
+      if (order === 1) {
+        sign = axis;
+      } else {
+        sign = opts.alt ? CubeGroup.wideFromClick(axis, layer, order).sign : group.name;
+      }
       const action = new TwistAction(sign, reverse, 1);
       world.cube.twister.twist(action, false, true);
       userMoveRef.current?.(action);
     });
 
-    // 拖拽 / 整体旋转完成时,转发给上层 (PlayerControls) 的追加 handler
+    // 拖拽 / 整体旋转完成时,转发给上层 (PlayerControls) 的追加 handler。
+    // 1×1 没有"层":sticker drag 出来的 M'/E'/S 重写成 x/y/z(只有转体)
+    const NORMALIZE_1X1: Record<string, string> = { "M'": 'x', "E'": 'y', "S": 'z' };
     world.controller.userTwist.push((action) => {
-      userMoveRef.current?.(action);
+      let a = action;
+      if (world.cube.order === 1) {
+        const mapped = NORMALIZE_1X1[action.sign];
+        if (mapped) a = new TwistAction(mapped, action.reverse, action.times);
+      }
+      userMoveRef.current?.(a);
     });
 
     // 右键 default 是 context menu,阻止它好让右键单击能触发逆时针转
@@ -498,38 +510,34 @@ export default function StackPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 切阶数(大阶数有几百毫秒构建,先 spinner 再切)
+  // 切阶数 — handleOrder 永远是即时 apply。
+  // 拖动期间不会被调:wheel 内部跟着手指走,onSettle 才 fire (手指松 + 惯性停 + 滚轮静 180ms 后),
+  // 一次性 apply,避免一帧一重建造成动画卡。
+  const settingsRef = useRef(settings);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
   const handleOrder = useCallback((n: number) => {
+    setOrder(n);
     const world = worldRef.current;
-    if (!world || world.order === n) return;
-    const writeUrl = () => {
+    if (!world || world.order === n) {
+      // world 未就绪 / 已是该阶 — 只更新 URL
       setSearchParams((prev) => {
         const np = new URLSearchParams(prev);
         if (n === 3) np.delete('puzzle'); else np.set('puzzle', String(n));
         return np;
       }, { replace: true });
-    };
-    if (n >= 5) {
-      setOrderLoading(true);
-      window.setTimeout(() => {
-        if (!worldRef.current) return;
-        worldRef.current.order = n;
-        setOrder(n);
-        wasCompleteRef.current = true;
-        ensureCubeCallback();
-        applySettings(worldRef.current, settings);
-        setOrderLoading(false);
-        writeUrl();
-      }, 16);
-    } else {
-      world.order = n;
-      setOrder(n);
-      wasCompleteRef.current = true;
-      ensureCubeCallback();
-      applySettings(world, settings);
-      writeUrl();
+      return;
     }
-  }, [ensureCubeCallback, settings, setSearchParams]);
+    world.order = n;
+    wasCompleteRef.current = true;
+    ensureCubeCallback();
+    applySettings(world, settingsRef.current);
+    setSearchParams((prev) => {
+      const np = new URLSearchParams(prev);
+      if (n === 3) np.delete('puzzle'); else np.set('puzzle', String(n));
+      return np;
+    }, { replace: true });
+  }, [ensureCubeCallback, setSearchParams]);
 
   // URL puzzle=N 同步到 cube。worldTick 保证 mount 完后 effect 重跑一次
   useEffect(() => {
@@ -719,12 +727,6 @@ export default function StackPage() {
 
       <div className="stack-body">
         <div className="stack-canvas-wrap" ref={containerRef}>
-          {orderLoading ? (
-            <div className="stack-loading">
-              <div className="stack-spinner" />
-              <span>{t('构建中…', 'Building…')}</span>
-            </div>
-          ) : null}
           {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
           <button
             className="stack-fullscreen-exit"
