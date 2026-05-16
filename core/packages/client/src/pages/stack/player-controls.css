@@ -13,6 +13,10 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+/* setup 行 textarea 自适应可能很高,按钮要钉在顶部不要跟着居中 */
+.stack-player-row--top {
+  align-items: flex-start;
+}
 
 .stack-player-input {
   flex: 1;
