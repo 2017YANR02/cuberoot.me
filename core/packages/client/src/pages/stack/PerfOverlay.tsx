@@ -4,6 +4,7 @@
  * 包含一个 stress-test 按钮:在当前阶数跑 60 个连续 twist,记录 avg FPS。
  */
 import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 
 export interface PerfStats {
   drawCalls: number;
@@ -28,20 +29,30 @@ interface Props {
   onStress: () => Promise<{ avgFps: number; minFps: number; durationMs: number; frames: number }>;
 }
 
+const COLLAPSE_KEY = 'stack.perfOverlay.collapsed';
+
 export default function PerfOverlay({ statsRef, onStress }: Props) {
   const [snapshot, setSnapshot] = useState<PerfStats>(statsRef.current);
   const [stressResult, setStressResult] = useState<string>('');
   const [running, setRunning] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { return false; }
+  });
   const tickRef = useRef<number | null>(null);
 
   useEffect(() => {
+    try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch { /* private mode */ }
+  }, [collapsed]);
+
+  useEffect(() => {
+    if (collapsed) return;
     tickRef.current = window.setInterval(() => {
       setSnapshot({ ...statsRef.current });
     }, 250);
     return () => {
       if (tickRef.current) window.clearInterval(tickRef.current);
     };
-  }, [statsRef]);
+  }, [statsRef, collapsed]);
 
   const runStress = async () => {
     setRunning(true);
@@ -52,6 +63,31 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
     );
     setRunning(false);
   };
+
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        title="Show perf overlay"
+        style={{
+          position: 'absolute',
+          top: 8,
+          left: 8,
+          padding: '4px 8px',
+          background: 'rgba(0,0,0,0.55)',
+          color: '#fff',
+          font: '11px ui-monospace, monospace',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 4,
+          zIndex: 10,
+          pointerEvents: 'auto',
+          cursor: 'pointer',
+        }}
+      >
+        perf
+      </button>
+    );
+  }
 
   return (
     <div
@@ -71,6 +107,29 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
         minWidth: 220,
       }}
     >
+      <button
+        onClick={() => setCollapsed(true)}
+        title="Hide"
+        aria-label="Hide perf overlay"
+        style={{
+          position: 'absolute',
+          top: 2,
+          right: 2,
+          width: 18,
+          height: 18,
+          padding: 0,
+          background: 'transparent',
+          color: '#bbb',
+          border: 'none',
+          borderRadius: 3,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <X size={12} />
+      </button>
       <div>
         order <b>{snapshot.order}</b> · cubelets <b>{snapshot.cubeletCount}</b> · scene meshes <b>{snapshot.meshCount}</b>
       </div>
