@@ -308,6 +308,8 @@ export default class Cubelet extends THREE.Group {
     (c as unknown as { matrix: THREE.Matrix4 }).matrix = new THREE.Matrix4();
     (c as unknown as { matrixAutoUpdate: boolean }).matrixAutoUpdate = false;
     (c as unknown as { matrixWorldNeedsUpdate: boolean }).matrixWorldNeedsUpdate = false;
+    // 这版 three.js Object3D 加了 pivot 字段;updateMatrix 里 `if (pivot !== null)` 对 undefined 也成立 → 进分支读 pivot.x 崩
+    (c as unknown as { pivot: null }).pivot = null;
     // Cubelet 自己的字段 init (跟 ctor 一致)
     c.colors = [undefined, undefined, undefined, undefined, undefined, undefined];
     c.initialColors = [undefined, undefined, undefined, undefined, undefined, undefined];
