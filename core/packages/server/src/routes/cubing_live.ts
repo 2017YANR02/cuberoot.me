@@ -411,6 +411,16 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
 
   // Events + rounds (从 results 反推)
   const eventMap = new Map<string, EventMeta>();
+  // Announcement-only 比赛 results=[] 也要给 events 列表 — UI 的 event selector 才能显示.
+  // 从 meta.event_ids 兜底,每项一个空 round(s=0/rn=0).
+  if (results.length === 0 && (meta.event_ids ?? []).length > 0) {
+    for (const eid of meta.event_ids!) {
+      eventMap.set(eid, {
+        i: eid, name: eid,
+        rs: [{ i: 'f', e: eid, f: 'a', co: 0, tl: 0, n: 0, s: 0, rn: 0, tt: 0, name: 'Final' }],
+      });
+    }
+  }
   for (const r of results) {
     let ev = eventMap.get(r.event_id);
     if (!ev) {
@@ -1031,10 +1041,18 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     else if (useSource === 'wca_live') data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId || undefined);
     else data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
 
-    // WCA REST 命中但 results=[] (未办比赛仅有 announcement) → auto 模式时 fallback cubing 拿报名表.
-    // 用户显式 source=wca 保持空数据.缓存键用 data.source 而非原 useSource.
-    if (choice === 'auto' && data.source === 'wca' && data.events.length === 0 && probe.cubingMeta) {
-      data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
+    // WCA 命中 announcement 但 users={} (未办的中国比赛 — /live 重定向所以 cubing probe 也 null) →
+    // 用 WCA cell_name 推 cubing slug 抓 /competitors 补报名表.源仍记 'wca',只是 users 来自 cubing 网页.
+    if (choice === 'auto' && data.source === 'wca' && Object.keys(data.users).length === 0) {
+      const cubingSlug = data.name.replace(/\s+/g, '-');
+      try {
+        const competitorUsers = await scrapeCompetitors(cubingSlug, onProgress);
+        if (Object.keys(competitorUsers).length > 0) {
+          data = { ...data, users: competitorUsers, cubingSlug };
+        }
+      } catch (e) {
+        console.warn(`[cubing-live] competitors fallback failed for ${cubingSlug}:`, (e as Error).message);
+      }
     }
 
     data.availableSources = availableSources;
