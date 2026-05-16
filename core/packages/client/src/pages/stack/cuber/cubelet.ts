@@ -172,6 +172,19 @@ export default class Cubelet extends THREE.Group {
     true
   );
 
+  /** 超高阶简化 sticker (PlaneGeometry, 2 tri vs ExtrudeGeometry 204 tri)。
+   * 沿 +Z 平移 0.05 单位破 z-fight:否则跟 frame pocket 底面 z=±SIZE/2 共面,
+   * N=250 大跨度下 z-buffer 精度不足 → 异色条纹。
+   * localMat 的 zScale=HALF=32 把 0.05 撑到 1.6 单位 pop-out,接近 ExtrudeGeometry 原 3.2 但视觉更平。 */
+  public static readonly _STICKER_LOW: THREE.PlaneGeometry = (() => {
+    const g = new THREE.PlaneGeometry(
+      Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
+      Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
+    );
+    g.translate(0, 0, 0.05);
+    return g;
+  })();
+
   public static CORE = new THREE.MeshPhongMaterial({
     color: COLORS.Core,
     specular: COLORS.Gray,
