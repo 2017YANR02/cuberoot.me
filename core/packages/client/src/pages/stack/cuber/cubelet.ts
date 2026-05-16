@@ -290,6 +290,9 @@ export default class Cubelet extends THREE.Group {
   /** 静态 scratch quaternion — getFace 求逆用,避免每个 Cubelet 各自 new Quaternion (372k 次累积 ~80ms ctor 时间)。 */
   private static readonly _SCRATCH_QUAT = new THREE.Quaternion();
   get _quaternion(): THREE.Quaternion { return Cubelet._SCRATCH_QUAT; }
+  /** 共享 unit scale Vector3 — 所有 cubelet 都是 (1,1,1) 不变,只 createLite 用 (省 372k Vec3 alloc)。
+   * 不可 mutate;若 set scale 真有需求改 hot path 时再切回 per-cubelet。 */
+  private static readonly _UNIT_SCALE = Object.freeze(new THREE.Vector3(1, 1, 1));
 
   order: number;
   exist = false;
@@ -304,15 +307,16 @@ export default class Cubelet extends THREE.Group {
     // Object3D 必备字段 (Cube 渲染管线读)
     (c as unknown as { position: THREE.Vector3 }).position = new THREE.Vector3();
     (c as unknown as { quaternion: THREE.Quaternion }).quaternion = new THREE.Quaternion();
-    (c as unknown as { scale: THREE.Vector3 }).scale = new THREE.Vector3(1, 1, 1);
+    (c as unknown as { scale: THREE.Vector3 }).scale = Cubelet._UNIT_SCALE;
     (c as unknown as { matrix: THREE.Matrix4 }).matrix = new THREE.Matrix4();
     (c as unknown as { matrixAutoUpdate: boolean }).matrixAutoUpdate = false;
     (c as unknown as { matrixWorldNeedsUpdate: boolean }).matrixWorldNeedsUpdate = false;
     // 这版 three.js Object3D 加了 pivot 字段;updateMatrix 里 `if (pivot !== null)` 对 undefined 也成立 → 进分支读 pivot.x 崩
     (c as unknown as { pivot: null }).pivot = null;
-    // Cubelet 自己的字段 init (跟 ctor 一致)
-    c.colors = [undefined, undefined, undefined, undefined, undefined, undefined];
-    c.initialColors = [undefined, undefined, undefined, undefined, undefined, undefined];
+    // Cubelet 自己的字段 init (跟 ctor 一致)。
+    // colors/initialColors 用 new Array(6) 稀疏(无 fill 写入),省去循环逐项填 undefined。
+    c.colors = new Array(6);
+    c.initialColors = new Array(6);
     c.exist = false;
     c.order = order;
     c.initial = index;
@@ -334,13 +338,13 @@ export default class Cubelet extends THREE.Group {
     d = Math.sqrt(d) + (Math.sqrt(2) * Cubelet.SIZE) / 2 - (order * Cubelet.SIZE) / 2;
     if (d >= 0) {
       c.exist = true;
-      if (_x === -half) c.initialColors[FACE.L] = FACE_LABELS[FACE.L];
-      if (_x === +half) c.initialColors[FACE.R] = FACE_LABELS[FACE.R];
-      if (_y === -half) c.initialColors[FACE.D] = FACE_LABELS[FACE.D];
-      if (_y === +half) c.initialColors[FACE.U] = FACE_LABELS[FACE.U];
-      if (_z === -half) c.initialColors[FACE.B] = FACE_LABELS[FACE.B];
-      if (_z === +half) c.initialColors[FACE.F] = FACE_LABELS[FACE.F];
-      for (let i = 0; i < 6; i++) c.colors[i] = c.initialColors[i];
+      // 直接写两个数组,跳过 6 次循环 copy
+      if (_x === -half) { c.initialColors[FACE.L] = FACE_LABELS[FACE.L]; c.colors[FACE.L] = FACE_LABELS[FACE.L]; }
+      if (_x === +half) { c.initialColors[FACE.R] = FACE_LABELS[FACE.R]; c.colors[FACE.R] = FACE_LABELS[FACE.R]; }
+      if (_y === -half) { c.initialColors[FACE.D] = FACE_LABELS[FACE.D]; c.colors[FACE.D] = FACE_LABELS[FACE.D]; }
+      if (_y === +half) { c.initialColors[FACE.U] = FACE_LABELS[FACE.U]; c.colors[FACE.U] = FACE_LABELS[FACE.U]; }
+      if (_z === -half) { c.initialColors[FACE.B] = FACE_LABELS[FACE.B]; c.colors[FACE.B] = FACE_LABELS[FACE.B]; }
+      if (_z === +half) { c.initialColors[FACE.F] = FACE_LABELS[FACE.F]; c.colors[FACE.F] = FACE_LABELS[FACE.F]; }
     }
     const e = c.matrix.elements;
     e[12] = px; e[13] = py; e[14] = pz;
