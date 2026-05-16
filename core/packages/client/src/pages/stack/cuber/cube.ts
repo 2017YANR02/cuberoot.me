@@ -10,33 +10,6 @@ import History from "./history";
 import tweener from "./tweener";
 import InstancedRenderer from "./instanced";
 
-/** 枚举 N 阶魔方所有"表面" cubelet 的 positionIdx (= z*N²+y*N+x)。
- * 6 面 + 边交集去重,总数 = 6N²-12N+8。N=2000 ≈ 24M。 */
-function* surfacePositions(N: number): Generator<number> {
-  const N2 = N * N;
-  // U/D faces: y=0, y=N-1 (full slabs)
-  for (let z = 0; z < N; z++) {
-    for (let x = 0; x < N; x++) {
-      yield x + 0 * N + z * N2;
-      yield x + (N - 1) * N + z * N2;
-    }
-  }
-  // L/R faces: x=0, x=N-1 (skip top/bottom rows already enumerated above)
-  for (let z = 0; z < N; z++) {
-    for (let y = 1; y < N - 1; y++) {
-      yield 0 + y * N + z * N2;
-      yield (N - 1) + y * N + z * N2;
-    }
-  }
-  // F/B faces: z=0, z=N-1 (skip all 4 edge bands already enumerated)
-  for (let y = 1; y < N - 1; y++) {
-    for (let x = 1; x < N - 1; x++) {
-      yield x + y * N + 0 * N2;
-      yield x + y * N + (N - 1) * N2;
-    }
-  }
-}
-
 export default class Cube extends THREE.Group {
   public dirty = true;
   public locks: Map<string, Set<number>>;
@@ -56,11 +29,59 @@ export default class Cube extends THREE.Group {
     const t0 = performance.now();
     this.order = order;
     this.scale.set(3 / order, 3 / order, 3 / order);
-    for (const positionIdx of surfacePositions(order)) {
-      const cubelet = new Cubelet(order, positionIdx);
-      // 表面位置的 cubelet 一定 exist=true (Cubelet 构造里的 d>=0 条件对所有表面格成立)
-      this.cubelets.set(positionIdx, cubelet);
-      this.initials.set(positionIdx, cubelet);
+    // surfacePositions inline,直接展开循环避免 closure / generator 开销
+    // N≥50 用 Cubelet.createLite (跳过 THREE.Object3D ctor 重活,~600ms 节省)
+    const N = order;
+    const N2 = N * N;
+    const cubeletsMap = this.cubelets;
+    const initialsMap = this.initials;
+    const useLite = N >= 50;
+    const make = useLite
+      ? (idx: number) => Cubelet.createLite(order, idx)
+      : (idx: number) => new Cubelet(order, idx);
+    // U/D faces: full y=0, y=N-1 slabs
+    for (let z = 0; z < N; z++) {
+      const zN2 = z * N2;
+      for (let x = 0; x < N; x++) {
+        let positionIdx = x + zN2;
+        let cubelet = make(positionIdx);
+        cubeletsMap.set(positionIdx, cubelet);
+        initialsMap.set(positionIdx, cubelet);
+        positionIdx = x + (N - 1) * N + zN2;
+        cubelet = make(positionIdx);
+        cubeletsMap.set(positionIdx, cubelet);
+        initialsMap.set(positionIdx, cubelet);
+      }
+    }
+    // L/R faces: x=0, x=N-1 (skip y=0 / y=N-1)
+    for (let z = 0; z < N; z++) {
+      const zN2 = z * N2;
+      for (let y = 1; y < N - 1; y++) {
+        const yN = y * N;
+        let positionIdx = yN + zN2;
+        let cubelet = make(positionIdx);
+        cubeletsMap.set(positionIdx, cubelet);
+        initialsMap.set(positionIdx, cubelet);
+        positionIdx = (N - 1) + yN + zN2;
+        cubelet = make(positionIdx);
+        cubeletsMap.set(positionIdx, cubelet);
+        initialsMap.set(positionIdx, cubelet);
+      }
+    }
+    // F/B faces: z=0, z=N-1 (skip all 4 edge bands)
+    const lastZN2 = (N - 1) * N2;
+    for (let y = 1; y < N - 1; y++) {
+      const yN = y * N;
+      for (let x = 1; x < N - 1; x++) {
+        let positionIdx = x + yN;
+        let cubelet = make(positionIdx);
+        cubeletsMap.set(positionIdx, cubelet);
+        initialsMap.set(positionIdx, cubelet);
+        positionIdx = x + yN + lastZN2;
+        cubelet = make(positionIdx);
+        cubeletsMap.set(positionIdx, cubelet);
+        initialsMap.set(positionIdx, cubelet);
+      }
     }
     const t1 = performance.now();
     this.locks = new Map();
