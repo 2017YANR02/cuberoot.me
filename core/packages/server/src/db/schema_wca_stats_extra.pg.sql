@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS wca_grand_slam (
 CREATE INDEX IF NOT EXISTS gs_event ON wca_grand_slam (event_id);
 
 -- ── wca_results_top: 全部成绩排行 (~11M 行,无 cap) ──
+-- `_top` 是历史名:最初是 top 5000 ww + top 500/country,后扩成全量,名字保留避免 rename.
 -- 一行 = 一次 valid (best 或 average) 成绩.同人同 comp 多 round 可能重复.
 -- 客户端按 (event, is_avg) 过滤后 ORDER BY value 翻页,可叠加 country / year / month / 选手 / 比赛搜索.
 --
