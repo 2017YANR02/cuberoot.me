@@ -8,6 +8,7 @@ const URL = '/stats/persons_search.json.gz';
 interface Loaded {
   records: Array<[string, string, string]>;  // [wcaId, name, iso2]
   haystacks: string[];                       // 同序，预小写化的 "id|name" 用于 includes
+  byId: Map<string, [string, string, string]>; // wcaId → 记录,O(1) lookup
 }
 
 let loaded: Loaded | null = null;
@@ -21,7 +22,8 @@ async function fetchAndParse(): Promise<Loaded> {
   const text = await new Response(stream).text();
   const records = JSON.parse(text) as Array<[string, string, string]>;
   const haystacks = records.map(r => `${r[0].toLowerCase()}|${r[1].toLowerCase()}`);
-  return { records, haystacks };
+  const byId = new Map(records.map(r => [r[0], r] as const));
+  return { records, haystacks, byId };
 }
 
 export function loadPersonsIndex(): Promise<Loaded> {
@@ -34,6 +36,14 @@ export function loadPersonsIndex(): Promise<Loaded> {
 // 是否已加载完。Picker 用来决定是走本地还是 fallback WCA API
 export function isPersonsIndexReady(): boolean {
   return loaded !== null;
+}
+
+// wcaId → 选手记录,O(1) Map lookup。未加载完返 null,调用方走 loadPersonsIndex 后重试。
+export function getPersonByWcaId(wcaId: string): WcaPerson | null {
+  if (!loaded) return null;
+  const r = loaded.byId.get(wcaId);
+  if (!r) return null;
+  return { wcaId: r[0], name: r[1], iso2: r[2], avatarUrl: '' };
 }
 
 // 本地搜索；未加载完返回 null（让调用方 fallback）
