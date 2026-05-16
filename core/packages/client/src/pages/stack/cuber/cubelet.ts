@@ -235,7 +235,12 @@ export default class Cubelet extends THREE.Group {
     const _x = (index % this.order) - half;
     const _y = Math.floor((index % (this.order * this.order)) / this.order) - half;
     const _z = Math.floor(index / (this.order * this.order)) - half;
-    this.vector = new THREE.Vector3(_x, _y, _z);
+    // 直接写,避免 `new Vector3` (372k 次构造时累积 ~50ms GC pressure)
+    this._vector.set(_x, _y, _z);
+    this._index = index;
+    this.position.x = Cubelet.SIZE * _x;
+    this.position.y = Cubelet.SIZE * _y;
+    this.position.z = Cubelet.SIZE * _z;
   }
 
   get index(): number {
@@ -282,7 +287,10 @@ export default class Cubelet extends THREE.Group {
 
   initial: number;
 
-  _quaternion: THREE.Quaternion;
+  /** 静态 scratch quaternion — getFace 求逆用,避免每个 Cubelet 各自 new Quaternion (372k 次累积 ~80ms ctor 时间)。 */
+  private static readonly _SCRATCH_QUAT = new THREE.Quaternion();
+  get _quaternion(): THREE.Quaternion { return Cubelet._SCRATCH_QUAT; }
+
   order: number;
   exist = false;
 
@@ -292,7 +300,6 @@ export default class Cubelet extends THREE.Group {
     this.initial = index;
     this._vector = new THREE.Vector3();
     this.index = index;
-    this._quaternion = new THREE.Quaternion();
 
     const xx = this.position.x * this.position.x;
     const yy = this.position.y * this.position.y;
@@ -306,16 +313,19 @@ export default class Cubelet extends THREE.Group {
     const half = (order - 1) / 2;
 
     // 初始 sticker label = vector 触面对应的 label
-    if (this.vector.x === -half) this.initialColors[FACE.L] = FACE_LABELS[FACE.L];
-    if (this.vector.x === +half) this.initialColors[FACE.R] = FACE_LABELS[FACE.R];
-    if (this.vector.y === -half) this.initialColors[FACE.D] = FACE_LABELS[FACE.D];
-    if (this.vector.y === +half) this.initialColors[FACE.U] = FACE_LABELS[FACE.U];
-    if (this.vector.z === -half) this.initialColors[FACE.B] = FACE_LABELS[FACE.B];
-    if (this.vector.z === +half) this.initialColors[FACE.F] = FACE_LABELS[FACE.F];
+    if (this._vector.x === -half) this.initialColors[FACE.L] = FACE_LABELS[FACE.L];
+    if (this._vector.x === +half) this.initialColors[FACE.R] = FACE_LABELS[FACE.R];
+    if (this._vector.y === -half) this.initialColors[FACE.D] = FACE_LABELS[FACE.D];
+    if (this._vector.y === +half) this.initialColors[FACE.U] = FACE_LABELS[FACE.U];
+    if (this._vector.z === -half) this.initialColors[FACE.B] = FACE_LABELS[FACE.B];
+    if (this._vector.z === +half) this.initialColors[FACE.F] = FACE_LABELS[FACE.F];
     for (let i = 0; i < 6; i++) this.colors[i] = this.initialColors[i];
 
     this.matrixAutoUpdate = false;
-    this.updateMatrix();
+    // 初始 rotation=identity, scale=1, matrix 默认即 identity,只需填 position 列
+    // (避开 updateMatrix 的 compose / decompose,372k 累积 ~150ms)。
+    const e = this.matrix.elements;
+    e[12] = this.position.x; e[13] = this.position.y; e[14] = this.position.z;
   }
 
   /** 更新 logical color。renderer 同步走 cube.stick() → renderer.applyStick()。 */
