@@ -286,6 +286,9 @@ export default class Cubelet extends THREE.Group {
   }
 
   initial: number;
+  /** InstancedRenderer 内 stable instance idx (0..N-1)。InstancedRenderer ctor 设;
+   * 后续 beginSlice 用它跳 initialToInstance Map.get。 */
+  _instIdx: number = -1;
 
   /** 静态 scratch quaternion — getFace 求逆用,避免每个 Cubelet 各自 new Quaternion (372k 次累积 ~80ms ctor 时间)。 */
   private static readonly _SCRATCH_QUAT = new THREE.Quaternion();
