@@ -83,6 +83,26 @@
 .stack-slider-val {
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0 4px;
+  width: 3.5em;
+  text-align: right;
+  font: inherit;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.stack-slider-val::-webkit-outer-spin-button,
+.stack-slider-val::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stack-slider-val:hover { border-color: var(--border-default); }
+.stack-slider-val:focus {
+  outline: none;
+  border-color: var(--accent);
+  color: var(--foreground);
 }
 .stack-slider input[type=range] {
   width: 100%;
