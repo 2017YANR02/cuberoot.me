@@ -172,6 +172,12 @@ export default class Cubelet extends THREE.Group {
     true
   );
 
+  /** 超高阶简化 frame (BoxGeometry 12 tri vs Frame BufferGeometry 88 tri)。
+   * 没 pocket 凹陷 + 圆角斜面;N≥50 这些细节都在亚像素。 */
+  public static readonly _FRAME_LOW: THREE.BoxGeometry = new THREE.BoxGeometry(
+    Cubelet.SIZE, Cubelet.SIZE, Cubelet.SIZE,
+  );
+
   /** 超高阶简化 sticker (PlaneGeometry, 2 tri vs ExtrudeGeometry 204 tri)。
    * 沿 +Z 平移 0.05 单位破 z-fight:否则跟 frame pocket 底面 z=±SIZE/2 共面,
    * N=250 大跨度下 z-buffer 精度不足 → 异色条纹。
