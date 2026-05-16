@@ -4,6 +4,7 @@
  * 包含一个 stress-test 按钮:在当前阶数跑 60 个连续 twist,记录 avg FPS。
  */
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 
 export interface PerfStats {
@@ -32,6 +33,8 @@ interface Props {
 const COLLAPSE_KEY = 'stack.perfOverlay.collapsed';
 
 export default function PerfOverlay({ statsRef, onStress }: Props) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const [snapshot, setSnapshot] = useState<PerfStats>(statsRef.current);
   const [stressResult, setStressResult] = useState<string>('');
   const [running, setRunning] = useState(false);
@@ -59,7 +62,9 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
     setStressResult('…');
     const r = await onStress();
     setStressResult(
-      `avg ${r.avgFps.toFixed(1)} fps · min ${r.minFps.toFixed(1)} fps · ${r.frames}f / ${r.durationMs.toFixed(0)}ms`
+      isZh
+        ? `平均 ${r.avgFps.toFixed(1)} fps · 最低 ${r.minFps.toFixed(1)} fps · ${r.frames}帧 / ${r.durationMs.toFixed(0)}ms`
+        : `avg ${r.avgFps.toFixed(1)} fps · min ${r.minFps.toFixed(1)} fps · ${r.frames}f / ${r.durationMs.toFixed(0)}ms`
     );
     setRunning(false);
   };
@@ -68,7 +73,7 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        title="Show perf overlay"
+        title={isZh ? '显示性能面板' : 'Show perf overlay'}
         style={{
           position: 'absolute',
           top: 8,
@@ -84,7 +89,7 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
           cursor: 'pointer',
         }}
       >
-        perf
+        {isZh ? '性能' : 'perf'}
       </button>
     );
   }
@@ -109,8 +114,8 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
     >
       <button
         onClick={() => setCollapsed(true)}
-        title="Hide"
-        aria-label="Hide perf overlay"
+        title={isZh ? '隐藏' : 'Hide'}
+        aria-label={isZh ? '隐藏性能面板' : 'Hide perf overlay'}
         style={{
           position: 'absolute',
           top: 4,
@@ -131,19 +136,19 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
         <X size={12} />
       </button>
       <div>
-        order <b>{snapshot.order}</b> · cubelets <b>{snapshot.cubeletCount}</b> · scene meshes <b>{snapshot.meshCount}</b>
+        {isZh ? '阶数' : 'order'} <b>{snapshot.order}</b> · {isZh ? '格数' : 'cubelets'} <b>{snapshot.cubeletCount}</b> · {isZh ? '场景网格' : 'scene meshes'} <b>{snapshot.meshCount}</b>
       </div>
       <div>
-        draw <b>{snapshot.drawCalls}</b> · tris <b>{snapshot.triangles.toLocaleString()}</b> · geos <b>{snapshot.geometries}</b>
+        {isZh ? '绘制' : 'draw'} <b>{snapshot.drawCalls}</b> · {isZh ? '三角形' : 'tris'} <b>{snapshot.triangles.toLocaleString()}</b> · {isZh ? '几何' : 'geos'} <b>{snapshot.geometries}</b>
       </div>
       <div>
-        fps <b>{snapshot.fps.toFixed(1)}</b> · frame <b>{snapshot.frameMs.toFixed(2)}ms</b>
+        {isZh ? '帧率' : 'fps'} <b>{snapshot.fps.toFixed(1)}</b> · {isZh ? '帧时长' : 'frame'} <b>{snapshot.frameMs.toFixed(2)}ms</b>
       </div>
       <div>
         {snapshot.jsHeapMB > 0 ? (
-          <>JS heap <b>{snapshot.jsHeapMB.toFixed(0)}M</b> · </>
+          <>{isZh ? 'JS 堆' : 'JS heap'} <b>{snapshot.jsHeapMB.toFixed(0)}M</b> · </>
         ) : null}
-        GPU buf <b>{snapshot.gpuBufMB.toFixed(0)}M</b>
+        {isZh ? 'GPU 缓冲' : 'GPU buf'} <b>{snapshot.gpuBufMB.toFixed(0)}M</b>
       </div>
       <button
         onClick={runStress}
@@ -159,7 +164,7 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
           cursor: running ? 'not-allowed' : 'pointer',
         }}
       >
-        {running ? 'running…' : 'stress 60 twists'}
+        {running ? (isZh ? '运行中…' : 'running…') : (isZh ? '压测 60 转' : 'stress 60 twists')}
       </button>
       {stressResult ? <div style={{ marginTop: 2 }}>{stressResult}</div> : null}
     </div>
