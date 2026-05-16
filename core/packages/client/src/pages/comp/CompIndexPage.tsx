@@ -99,7 +99,7 @@ export default function CompIndexPage() {
         <ThemeToggle />
       </div>
 
-      <h1 className="comp-page-title">{isZh ? '比赛直播' : 'Live Competitions'}</h1>
+      <h1 className="comp-page-title">{isZh ? 'WCA 比赛' : 'WCA Competitions'}</h1>
       <p className="comp-page-subtitle">
         {isZh ? '查看 cubing.com 直播比赛的实时按轮次成绩。' : 'Live round-by-round results from cubing.com.'}
       </p>

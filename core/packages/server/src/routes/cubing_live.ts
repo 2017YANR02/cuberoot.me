@@ -855,7 +855,27 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     meta = await scrapeMeta(cubingSlug);
     onProgress?.({ step: 'meta', done: 1, total: 1 });
   }
-  const { users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events, onProgress);
+
+  // 没开始的比赛所有 round rn=0 && s!=2 ⇒ WS subscribe 后只回个空 users,
+  // 接着 runPhase('all') 等不到任何 result.all 响应,挂到 25s overallTimeout 才返回.
+  // 跳过 WS,直接落到 competitors HTML 兜底.
+  const hasAnyResults = meta.events.some(ev => ev.rs.some(rd => rd.rn > 0 || rd.s === 2));
+  let users: Record<string, User> = {};
+  let resultsByRound: Record<string, LiveResult[]> = {};
+  let membersByFilter: MembersByFilter = { females: [], children: [], newcomers: [] };
+  if (hasAnyResults) {
+    ({ users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events, onProgress));
+  }
+
+  // WS 没返回报名表(comp 没开始,或 WS 异常)→ 抓 /competition/{slug}/competitors HTML
+  if (Object.keys(users).length === 0) {
+    try {
+      users = await scrapeCompetitors(cubingSlug, onProgress);
+    } catch (e) {
+      console.warn(`[cubing-live] competitors scrape failed for ${cubingSlug}:`, (e as Error).message);
+    }
+  }
+
   return {
     slug: wcaId,
     cubingSlug,
@@ -869,6 +889,53 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     membersByFilter,
     fetchedAt: Date.now(),
   };
+}
+
+/** /competition/{slug}/competitors HTML scrape.
+ *  WS 在比赛还没开始时只回个空 users — 此时 cubing.com 的网页版报名表是唯一公开来源.
+ *  tbody 第一行是列汇总(40 / 5/35 / 35/5 / ...)— 用 "name 全是数字或 / " 的启发式过滤掉. */
+async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): Promise<Record<string, User>> {
+  onProgress?.({ step: 'cubing.results', done: 0, total: 1 });
+  const url = `${CUBING_BASE}/competition/${encodeURIComponent(cubingSlug)}/competitors?lang=en`;
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+      'Accept-Language': 'en-US,en;q=0.9',
+      // cubing.com 对裸 UA 返 429 + 让浏览器 set 此 cookie 再 reload,服务器侧也按这个规则放行.
+      'Cookie': 'CubingRateLimit=1',
+    },
+  });
+  if (!res.ok) throw new Error(`cubing.com /competitors HTTP ${res.status}`);
+  const html = await res.text();
+
+  const tbodyMatch = html.match(/<tbody>([\s\S]*?)<\/tbody>/);
+  if (!tbodyMatch) return {};
+  const tbody = tbodyMatch[1];
+
+  const users: Record<string, User> = {};
+  const rowRe = /<tr[^>]*>\s*<td>(\d+)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([^<]*)<\/td>\s*<td>([^<]*)<\/td>/g;
+  const wcaIdRe = /\/results\/person\/([A-Za-z0-9]+)/;
+  const tagRe = /<[^>]+>/g;
+  let m: RegExpExecArray | null;
+  while ((m = rowRe.exec(tbody))) {
+    const number = parseInt(m[1], 10);
+    if (!Number.isFinite(number)) continue;
+    const nameCell = m[2];
+    const name = decodeHtmlEntities(nameCell.replace(tagRe, '')).trim();
+    // tbody 第一行的列汇总行:name 槽位是 "5/35" 之类,过滤掉
+    if (!name || /^[\d/&;\s]+$/.test(name)) continue;
+    const wcaMatch = nameCell.match(wcaIdRe);
+    const region = decodeHtmlEntities(m[4]).replace(/&nbsp;/g, ' ').trim();
+    users[String(number)] = {
+      number,
+      name,
+      wcaid: wcaMatch ? wcaMatch[1] : '',
+      region,
+    };
+  }
+  onProgress?.({ step: 'cubing.results', done: 1, total: 1 });
+  return users;
 }
 
 // ─── Source probing ───────────────────────────────────────────────────────
