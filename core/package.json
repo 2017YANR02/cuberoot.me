@@ -1,7 +1,7 @@
 {
   "name": "cuberoot-toolkit",
   "private": true,
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@11.1.2",
   "scripts": {
     "dev:client": "turbo dev --filter=@cuberoot/client",
     "dev:server": "turbo dev --filter=@cuberoot/server",
