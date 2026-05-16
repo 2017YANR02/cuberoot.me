@@ -294,57 +294,6 @@ export default class Cubelet extends THREE.Group {
   order: number;
   exist = false;
 
-  /** N≥50 的 lite 构造:跳过 THREE.Object3D ctor 的重活 (uuid generate / rotation 双向 onChange /
-   * Layers / userData / matrixWorld / modelViewMatrix / normalMatrix / animations / listeners 等),
-   * 只 init Cube 渲染管线实际读的字段:position, quaternion, scale, matrix。
-   * Cubelet 不进 scene graph (只 instanced 渲染),省掉的字段 three 内部不会读。
-   * N=250 ~600ms 节省 (372k × ~1.5us 单次 super() 开销)。 */
-  static createLite(order: number, index: number): Cubelet {
-    const c = Object.create(Cubelet.prototype) as Cubelet;
-    // Object3D 必备字段 (Cube 渲染管线读)
-    (c as unknown as { position: THREE.Vector3 }).position = new THREE.Vector3();
-    (c as unknown as { quaternion: THREE.Quaternion }).quaternion = new THREE.Quaternion();
-    (c as unknown as { scale: THREE.Vector3 }).scale = new THREE.Vector3(1, 1, 1);
-    (c as unknown as { matrix: THREE.Matrix4 }).matrix = new THREE.Matrix4();
-    (c as unknown as { matrixAutoUpdate: boolean }).matrixAutoUpdate = false;
-    (c as unknown as { matrixWorldNeedsUpdate: boolean }).matrixWorldNeedsUpdate = false;
-    // Cubelet 自己的字段 init (跟 ctor 一致)
-    c.colors = [undefined, undefined, undefined, undefined, undefined, undefined];
-    c.initialColors = [undefined, undefined, undefined, undefined, undefined, undefined];
-    c.exist = false;
-    c.order = order;
-    c.initial = index;
-    c._vector = new THREE.Vector3();
-    const order2 = order * order;
-    const half = (order - 1) / 2;
-    const _x = (index % order) - half;
-    const _y = ((index % order2) / order | 0) - half;
-    const _z = (index / order2 | 0) - half;
-    c._vector.set(_x, _y, _z);
-    c._index = index;
-    const px = Cubelet.SIZE * _x;
-    const py = Cubelet.SIZE * _y;
-    const pz = Cubelet.SIZE * _z;
-    c.position.x = px; c.position.y = py; c.position.z = pz;
-    // d 检查 — 表面 cubelet 必满足 d>=0, exist=true
-    const xx = px * px, yy = py * py, zz = pz * pz;
-    let d = xx + yy + zz - Math.min(xx, yy, zz);
-    d = Math.sqrt(d) + (Math.sqrt(2) * Cubelet.SIZE) / 2 - (order * Cubelet.SIZE) / 2;
-    if (d >= 0) {
-      c.exist = true;
-      if (_x === -half) c.initialColors[FACE.L] = FACE_LABELS[FACE.L];
-      if (_x === +half) c.initialColors[FACE.R] = FACE_LABELS[FACE.R];
-      if (_y === -half) c.initialColors[FACE.D] = FACE_LABELS[FACE.D];
-      if (_y === +half) c.initialColors[FACE.U] = FACE_LABELS[FACE.U];
-      if (_z === -half) c.initialColors[FACE.B] = FACE_LABELS[FACE.B];
-      if (_z === +half) c.initialColors[FACE.F] = FACE_LABELS[FACE.F];
-      for (let i = 0; i < 6; i++) c.colors[i] = c.initialColors[i];
-    }
-    const e = c.matrix.elements;
-    e[12] = px; e[13] = py; e[14] = pz;
-    return c;
-  }
-
   constructor(order: number, index: number) {
     super();
     this.order = order;
