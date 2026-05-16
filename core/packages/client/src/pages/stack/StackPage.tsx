@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import {
   ChevronLeft,
   BookOpen, Film, PlayCircle, Box,
+  Maximize2, Minimize2,
 } from 'lucide-react';
 import World from './cuber/world';
 import Cubelet from './cuber/cubelet';
@@ -67,6 +68,12 @@ export default function StackPage() {
 
   const [order, setOrder] = useState<number>(3);
   const [solvedToast, setSolvedToast] = useState(false);
+  const [fullscreen, setFullscreen] = useState<boolean>(() => {
+    try { return localStorage.getItem('stack.fullscreen') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('stack.fullscreen', fullscreen ? '1' : '0'); } catch { /* private mode */ }
+  }, [fullscreen]);
   const [orderLoading, setOrderLoading] = useState(false);
   const [worldTick, setWorldTick] = useState(0);
   const [settings, setSettings] = useState<StackSettings>(() => loadSettings());
@@ -660,7 +667,7 @@ export default function StackPage() {
   ], [isZh]);
 
   return (
-    <div className="stack-page">
+    <div className={`stack-page${fullscreen ? ' stack-page--fullscreen' : ''}`}>
       <header className="stack-header">
         <Link to="/" className="stack-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
@@ -683,6 +690,14 @@ export default function StackPage() {
           })}
         </nav>
         <div className="stack-spacer" />
+        <button
+          className="stack-fullscreen-btn"
+          onClick={() => setFullscreen(true)}
+          title={t('全屏魔方', 'Fullscreen cube')}
+          aria-label={t('全屏魔方', 'Fullscreen cube')}
+        >
+          <Maximize2 size={14} />
+        </button>
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
@@ -699,6 +714,16 @@ export default function StackPage() {
             <div className="stack-toast">{t('已复原 ✦', 'Solved ✦')}</div>
           ) : null}
           {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
+          {fullscreen ? (
+            <button
+              className="stack-fullscreen-exit"
+              onClick={() => setFullscreen(false)}
+              title={t('退出全屏', 'Exit fullscreen')}
+              aria-label={t('退出全屏', 'Exit fullscreen')}
+            >
+              <Minimize2 size={16} />
+            </button>
+          ) : null}
         </div>
 
         <aside className="stack-side">
