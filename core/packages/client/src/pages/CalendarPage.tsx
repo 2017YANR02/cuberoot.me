@@ -32,7 +32,7 @@ import {
 import { formatWcaResult } from '../utils/wca_format_result';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
-import { defaultCancelledCutoffIso, isCancelledComp } from '../utils/comp_search';
+import { defaultCancelledCutoffIso, isCancelledComp, compNameMatches } from '../utils/comp_search';
 import { localizeCity } from '../utils/city_localize';
 import { countryName } from '../utils/country_name';
 import { expandCountrySelection } from '../utils/continent';
@@ -1193,11 +1193,11 @@ export default function CalendarPage() {
   // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
   const isMatch = useCallback(
     (comp: Competition) => {
-      const compQ = compQuery.toLowerCase().trim();
-      if (compQ) {
+      const compQRaw = compQuery.trim();
+      if (compQRaw) {
         const cityZh = comp.city ? localizeCity(comp.city, true) : '';
         const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''} ${cityZh}`.toLowerCase();
-        if (!text.includes(compQ)) return false;
+        if (!compNameMatches(text, compQRaw)) return false;
       }
       if (selectedCuber && selectedCuberCompIds) {
         if (!selectedCuberCompIds.has(comp.id)) return false;

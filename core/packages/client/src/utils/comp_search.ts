@@ -69,8 +69,17 @@ export async function loadComps(): Promise<Comp[]> {
 const ZH_NAME_SYNONYMS: Record<string, string> = {
   '锦标赛': 'championship',
   '公开赛': 'open',
-  '邀请赛': 'invitational',
 };
+
+/** haystack 是否包含 rawQuery,或包含其中文比赛类型词同义词(锦标/锦标赛→championship 等)。
+ *  haystack 调用方负责传 lowercase. */
+export function compNameMatches(haystack: string, rawQuery: string): boolean {
+  if (!rawQuery) return false;
+  const q = rawQuery.toLowerCase();
+  if (haystack.includes(q)) return true;
+  const syn = Object.entries(ZH_NAME_SYNONYMS).find(([zh]) => zh.includes(rawQuery))?.[1];
+  return !!syn && haystack.includes(syn);
+}
 
 /**
  * 按 query 模糊匹配 comp。打分：id 完全 > id 前缀 > name 前缀 > id 子串 > name/nameZh/city/cityZh 子串。
@@ -82,7 +91,6 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
   const raw = query.trim();
   const q = raw.toLowerCase();
   if (!q) return [];
-  const synEn = ZH_NAME_SYNONYMS[raw];
   const scored: { c: Comp; s: number }[] = [];
   for (const c of comps) {
     const id = c.id.toLowerCase();
@@ -96,9 +104,8 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
     else if (name.startsWith(q)) s = Math.max(s, 800);
     else if (id.includes(q)) s = Math.max(s, 700);
     else if (
-      name.includes(q) || nameZh.includes(raw) ||
-      city.includes(q) || (cityZh && cityZh.includes(raw)) ||
-      (synEn && name.includes(synEn))
+      compNameMatches(name, raw) || nameZh.includes(raw) ||
+      city.includes(q) || (cityZh && cityZh.includes(raw))
     ) {
       s = 500;
     }
