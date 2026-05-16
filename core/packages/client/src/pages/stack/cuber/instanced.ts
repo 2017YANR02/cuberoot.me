@@ -153,8 +153,12 @@ export default class InstancedRenderer extends THREE.Group {
     this.staticFrame = this.makeFrameMesh(visCount, false);
     this.movingFrame = this.makeFrameMesh(visCount, true);
     this.movingFrame.count = 0;
-    this.staticInner = this.makeInnerMesh(visCount, false);
-    this.movingInner = this.makeInnerMesh(visCount, true);
+    // !hasInner 时仍 new mesh 占位 (dispose / 各 setMatrixAt 调用都得 mesh 存在),
+    // 但 count=1 让 InstancedBufferAttribute 只分配 16 floats 而不是 16 * visCount。
+    // N=250 省 ~48 MB (2 个 mesh × 64B × 372k)。
+    const innerBufCount = this.hasInner ? visCount : 1;
+    this.staticInner = this.makeInnerMesh(innerBufCount, false);
+    this.movingInner = this.makeInnerMesh(innerBufCount, true);
     this.movingInner.count = 0;
     if (!this.hasInner) {
       this.staticInner.visible = false;
