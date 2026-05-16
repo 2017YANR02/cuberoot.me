@@ -91,6 +91,13 @@ export default function CompSourcesPage() {
                     <code>{isZh ? '本地 PG 查询' : 'local PG query'}</code>
                     <span className="comp-flow-pill comp-flow-pill-fast">{'< 50 ms'}</span>
                   </div>
+                  <div className="comp-lineage-server">
+                    <span className="comp-lineage-server-tag">+</span>
+                    <code>{isZh ? '历史 PR 检测' : 'historical PR detection'}</code>
+                    <span className="comp-lineage-note">
+                      {isZh ? '查比赛日期前累积 PB,叠加 NR/CR/WR badge' : 'prior cumulative PB → PR badge alongside NR/CR/WR'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

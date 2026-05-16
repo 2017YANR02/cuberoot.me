@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X as XIcon, ExternalLink } from 'lucide-react';
+import { X as XIcon } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
@@ -15,7 +15,18 @@ import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
+import { apiUrl } from '../../utils/api_base';
 import './comp.css';
+
+/** Hover/focus 时暗中 fetch 比赛 JSON,进浏览器 HTTP cache,30s 内点击命中即 instant 渲染.
+ *  同 URL 多次触发自动 dedupe(同一 prefetch 仍在飞时不重发). */
+const prefetched = new Set<string>();
+function prefetchComp(slug: string) {
+  if (prefetched.has(slug)) return;
+  prefetched.add(slug);
+  const url = apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`);
+  fetch(url, { cache: 'force-cache' }).catch(() => { prefetched.delete(slug); });
+}
 
 /** WCA comp id (PascalCase, "XianCherryBlossom2026") → cubing.com slug ("Xian-Cherry-Blossom-2026")。
  *  cubing.com 把 WCA name 里的空格换 dash,标点去掉。从 id 反推 slug 需要插 dash 在:
@@ -62,18 +73,6 @@ function loadRecent(): RecentEntry[] {
   } catch { return []; }
 }
 
-/** 把任意输入(cubing.com URL / dash slug / WCA ID)归一为 WCA ID(无横杠) */
-function parseSlug(input: string): string | null {
-  const t = input.trim();
-  if (!t) return null;
-  // Full URL: extract last path segment
-  const urlMatch = t.match(/cubing\.com\/live\/([A-Za-z0-9_-]+)/i);
-  if (urlMatch) return urlMatch[1].replace(/-/g, '');
-  // Plain slug — 去掉横杠归一到 WCA ID
-  if (/^[A-Za-z0-9_-]+$/.test(t)) return t.replace(/-/g, '');
-  return null;
-}
-
 export default function CompIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -109,28 +108,19 @@ export default function CompIndexPage() {
         <CompPicker
           className="comp-picker-wrap"
           value={input}
-          onChange={(v) => {
-            setInput(v);
-            setErr(null);
-            // 用户粘贴 cubing.com URL / 纯 slug → 直接跳;搜索 WCA 比赛走 onPick
-            const slug = parseSlug(v);
-            if (slug && /[A-Za-z0-9]/.test(slug) && (v.includes('/') || v.includes('-'))) {
-              navigate(`/comp/${slug}`);
-            }
-          }}
-          onPick={(c: Comp) => {
-            navigate(`/comp/${c.id}`);
-          }}
+          onChange={(v) => { setInput(v); setErr(null); }}
+          onUrlPaste={(id) => navigate(`/comp/${id}`)}
+          onPick={(c: Comp) => { navigate(`/comp/${c.id}`); }}
           isZh={isZh}
-          placeholder={isZh ? '搜索比赛 / 城市,或粘贴 cubing.com URL' : 'Search competition / city, or paste cubing.com URL'}
+          placeholder={isZh ? '搜索比赛 / 城市,或粘贴比赛链接' : 'Search competition / city, or paste comp URL'}
         />
       </div>
       {err && <div className="comp-err">{err}</div>}
 
       <div className="comp-hint">
         {isZh
-          ? <>支持搜索 WCA 比赛名/城市,或粘贴 <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com <ExternalLink size={12} /></a> Live 链接。</>
-          : <>Search a WCA comp / city, or paste a <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com <ExternalLink size={12} /></a> Live URL.</>
+          ? <>或浏览 <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com</a> / <a href="https://www.worldcubeassociation.org/competitions" target="_blank" rel="noopener noreferrer">WCA</a>。</>
+          : <>Or browse <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com</a> / <a href="https://www.worldcubeassociation.org/competitions" target="_blank" rel="noopener noreferrer">WCA</a>.</>
         }
         <Link to="/comp/sources" className="comp-hint-link">{isZh ? '数据源流程' : 'Data source flow'} →</Link>
       </div>
@@ -148,6 +138,9 @@ export default function CompIndexPage() {
                   type="button"
                   className="comp-recent-link"
                   onClick={() => navigate(`/comp/${r.slug}`)}
+                  onMouseEnter={() => prefetchComp(r.slug)}
+                  onFocus={() => prefetchComp(r.slug)}
+                  onTouchStart={() => prefetchComp(r.slug)}
                 >
                   <span className="comp-recent-name">
                     {iso2 && <Flag iso2={iso2} className="comp-flag" />}
