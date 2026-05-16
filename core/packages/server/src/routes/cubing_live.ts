@@ -1120,14 +1120,51 @@ cubingLiveRoutes.get('/cubing-live-stream/:slug', async (c) => {
   });
 });
 
+/** 把 CompData 裁成只含焦点轮的小响应 (events/membersByFilter 元数据保留;users/resultsByRound/personalRecords 仅保留该轮选手).
+ *  /comp/<slug>?event=333&round=f 首屏只需 16 行,完整 621KB 太重 — 走 ?only=333:f 仅 ~3KB. */
+function trimToOnlyRound(data: CompData, eventId: string, roundId: string): CompData {
+  const key = `${eventId}:${roundId}`;
+  const rows = data.resultsByRound[key] ?? [];
+  const userNums = new Set<string>();
+  for (const r of rows) userNums.add(String(r.n));
+  const trimmedUsers: Record<string, User> = {};
+  for (const [k, v] of Object.entries(data.users)) {
+    if (userNums.has(k)) trimmedUsers[k] = v;
+  }
+  let trimmedPR: CompData['personalRecords'] = undefined;
+  if (data.personalRecords) {
+    trimmedPR = {};
+    for (const u of Object.values(trimmedUsers)) {
+      if (u.wcaid && data.personalRecords[u.wcaid]) {
+        trimmedPR[u.wcaid] = data.personalRecords[u.wcaid];
+      }
+    }
+  }
+  return {
+    ...data,
+    users: trimmedUsers,
+    resultsByRound: { [key]: rows },
+    personalRecords: trimmedPR,
+  };
+}
+
 cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
   const raw = c.req.param('slug');
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(raw)) return c.json({ error: 'invalid slug' }, 400);
   const wcaId = raw.replace(/-/g, '');
   const source = parseSource(c.req.query('source'));
+  const onlyRaw = c.req.query('only');
+  const onlyMatch = onlyRaw && /^([A-Za-z0-9]+):([A-Za-z0-9]+)$/.exec(onlyRaw);
   try {
     const data = await loadComp(wcaId, source);
-    c.header('Cache-Control', 'public, max-age=30');
+    // wca_db = 过去比赛 (CI 周更),响应可放心 1d immutable;实时源 30s 兜底.
+    c.header(
+      'Cache-Control',
+      data.source === 'wca_db' ? 'public, max-age=86400, immutable' : 'public, max-age=30',
+    );
+    if (onlyMatch) {
+      return c.json(trimToOnlyRound(data, onlyMatch[1], onlyMatch[2]));
+    }
     return c.json(data);
   } catch (e) {
     const msg = (e as Error).message;
