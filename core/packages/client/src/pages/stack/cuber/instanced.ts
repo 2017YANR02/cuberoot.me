@@ -265,7 +265,9 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
-    const m = new THREE.InstancedMesh(Cubelet._FRAME, Cubelet.CORE, count);
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const m = new THREE.InstancedMesh(Cubelet._FRAME, mat, count);
     m.frustumCulled = false;
     // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
     // static mesh 永远 identity
@@ -275,7 +277,9 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   private makeInnerMesh(count: number, moving: boolean): THREE.InstancedMesh {
-    const m = new THREE.InstancedMesh(INNER_BOX, Cubelet.CORE, count);
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const m = new THREE.InstancedMesh(INNER_BOX, mat, count);
     m.frustumCulled = false;
     m.matrixAutoUpdate = moving;
     if (!moving) m.matrix.identity();
