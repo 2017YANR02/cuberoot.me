@@ -4,7 +4,7 @@
 
 ✅ **WCA 统计自动更新已上线**
 
-- **地址**：[cuberoot.me/wca-stats/](https://cuberoot.me/wca-stats/) · [www.cuberoot.me/wca-stats/](https://www.cuberoot.me/wca-stats/)
+- **地址**：[cuberoot.me/wca/](https://cuberoot.me/wca/) · [www.cuberoot.me/wca/](https://www.cuberoot.me/wca/)
 
 ## CI 策略
 

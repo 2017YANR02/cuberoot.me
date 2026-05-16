@@ -907,6 +907,42 @@ input:checked + .wca-stats-toggle-pill::after {
   font-weight: 500;
 }
 
+/* 工具卡片(大卡 + 图标 + 名字 — 跟 landing standard tier 视觉对齐) */
+.wca-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.55rem;
+}
+
+.wca-tool-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 120px;
+  padding: 1.5rem 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: border-color 150ms, color 150ms, transform 150ms, box-shadow 150ms;
+}
+
+.wca-tool-card:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(24, 23, 22, 0.04);
+}
+
+.wca-tool-card svg {
+  color: var(--accent);
+}
+
 @media (max-width: 640px) {
   .wca-stats-index {
     padding: 2rem 1rem 3rem;
@@ -922,6 +958,15 @@ input:checked + .wca-stats-toggle-pill::after {
   .wca-stats-index-card {
     padding: 0.6rem 0.7rem;
     font-size: 0.8rem;
+  }
+  .wca-tools-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .wca-tool-card {
+    min-height: 95px;
+    padding: 1rem 0.6rem;
+    font-size: 0.85rem;
   }
 }
 

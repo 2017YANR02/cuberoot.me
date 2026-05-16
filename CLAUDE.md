@@ -23,15 +23,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Solver | `/solver` | 根目录静态 HTML | fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) | ❌ upstream |
 | Alg Trainer | `/alg-trainers` | 根目录静态 HTML | fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) | ❌ upstream |
 | csTimer | `/cstimer` | 根目录 `/cstimer/` | integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) | ❌ upstream |
-| WCA Stats（数据管道） | `/wca-stats` | `core/packages/stats-build` | 基于 [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) 的 TS 重写 | ⚠️ 管道已重写，UI 自有 |
+| WCA Stats（数据管道） | `/wca` | `core/packages/stats-build` | 基于 [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) 的 TS 重写 | ⚠️ 管道已重写，UI 自有 |
 | Score Calculator (HTH) | `/calc` | `core/packages/client/src/pages/calc/` | ported from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) | ✅ 已 port 为 React |
 | 1v1 Battle | `/battle` | `core/packages/client/src/pages/battle/` | ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) | ✅ 已 port 为 React |
 | Recon | `/recon` | `core/packages/client/src/pages/recon/` | 自有 | ✅ |
 | Trainer（公式计时训练，全 41 套） | `/trainer` | `core/packages/client/src/pages/trainer/` (Landing/Select/Run + components + trainer.css) | 自有 | ✅ |
 | Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client/src/pages/TrainingPage.tsx` | 自有 | ✅ |
 | Frame Count | `/frame-count` | `core/packages/client/src/pages/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
-| Distribution | `/viz` | `core/packages/client/src/pages/viz/` | 自有 | ✅ |
-| Calendar (比赛日历) | `/calendar` | `core/packages/client/src/pages/CalendarPage.tsx` | 自有 | ✅ |
+| Distribution | `/wca/viz` | `core/packages/client/src/pages/viz/` | 自有 | ✅ |
+| Calendar (比赛日历) | `/wca/calendar` | `core/packages/client/src/pages/CalendarPage.tsx` | 自有 | ✅ |
 | Scramble（打乱难度分布） | `/scramble-stats` | `core/packages/client/src/pages/scramble_stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client/src/pages/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ 已 port 为 React |
 | Blog | `cuberoot.me/blog/` | 不在本仓库 | 外部托管 | — |
@@ -51,8 +51,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 包管理用 **pnpm 10**（不是 npm）。Windows 下按全局规则用 `pwsh`。
 
+**CWD 前提**:用户启动 Claude Code 前已 `cd D:\cube\cuberoot.me\core`(pnpm workspace 根)。所有 pnpm 命令直接跑。若 `pnpm install` 报 `ERR_PNPM_NO_PKG_MANIFEST` = CWD 在仓库根了,用 PowerShell tool `Set-Location core` 一次(别用 Bash tool 写 Windows 反斜杠路径,会被吞)。
+
 ```bash
-# 所有命令直接在仓库根或 core/ 下运行，不要加 cd core（CWD 已经是 core/）
 pnpm install
 pnpm --filter @cuberoot/client dev            # http://127.0.0.1:5173/
 pnpm --filter @cuberoot/client typecheck      # tsc -b（incremental，~12s 首次 / 后续略快）

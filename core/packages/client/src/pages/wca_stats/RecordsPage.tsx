@@ -1,6 +1,6 @@
 /**
  * Records — WR / CR / NR 历史纪录查询
- * /wca-stats/records
+ * /wca/records
  *
  * 数据:静态 JSON,/stats/records/history/{world|continent/<slug>|country/<ISO2>}.json
  * 由 stats-build/src/bin/records_build.ts 周更.
@@ -147,7 +147,7 @@ export default function RecordsPage() {
     <div className="wse-page records-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back">
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back">
             <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
           </Link>
           <LangToggle />

@@ -75,7 +75,7 @@ export class MyNewStat extends Statistic {
 2. 新表头翻译加到 `src/core/events.ts` 的 `HEADER_ZH`
 3. 类型检查：`npx tsc --noEmit`
 4. 生成：`npx tsx src/bin/compute.ts my_new_stat`
-5. 输出：`stats/my_new_stat.json`，React 前端 `/wca-stats/my_new_stat` 渲染
+5. 输出：`stats/my_new_stat.json`，React 前端 `/wca/my_new_stat` 渲染
 
 ## 近期比赛追踪
 

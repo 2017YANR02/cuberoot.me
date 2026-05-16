@@ -1,4 +1,4 @@
-// /wca-stats/persons/:wcaId — WCA 选手详情页.
+// /wca/persons/:wcaId — WCA 选手详情页.
 // Hero(头像 + 名字 + 信息条) + PR 表(当前/历史最佳排名) + 5 tabs(成绩/赛事/项目统计/里程碑/点亮城市).
 //
 // UI 灵感来自 cubing.pro/wca/player/* (GPL-3.0,致谢见 README + LandingPage credits).
@@ -91,7 +91,7 @@ export default function PersonDetailPage() {
 function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId?: string }) {
   return (
     <header className="wp-header">
-      <Link to="/wca-stats/persons" className="wp-back">
+      <Link to="/wca/persons" className="wp-back">
         <ChevronLeft size={16} />
         <span>{t('选手搜索', 'Search')}</span>
       </Link>

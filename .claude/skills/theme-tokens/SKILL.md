@@ -57,8 +57,8 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 
 | 页 | 模式 | 处理 |
 |---|---|---|
-| `/calendar` `/wb` `/memo/colpi` `/alg` | 双主题 | 走 :root token,自动 light/dark 翻 |
-| `/trainer` `/battle` `/wca-stats/*` (含 records/wse/t10h) | **dark-locked** | page-scope `color-scheme: dark` + 反盖 `--background --foreground` 等;**不要给它们加 light/dark 反盖** |
+| `/wca/calendar` `/wb` `/memo/colpi` `/alg` | 双主题 | 走 :root token,自动 light/dark 翻 |
+| `/trainer` `/battle` `/wca/*` (含 records/wse/t10h) | **dark-locked** | page-scope `color-scheme: dark` + 反盖 `--background --foreground` 等;**不要给它们加 light/dark 反盖** |
 | `/calc` | **light-locked** | page-scope `color-scheme: light` + 锁 `--background --foreground` light 值 |
 
 ## Light/dark 反盖 (写新 :root token 才用)
@@ -85,7 +85,7 @@ html[data-theme=dark] {
 - ❌ 手算 `rgba(255,255,255,0.08)` → 用 `color-mix(in srgb, var(--foreground) 8%, transparent)`
 - ❌ `:where(html:not([data-theme=light]))` 包反盖块 → 直接 `html:not([data-theme=light])`,否则 specificity=0 被 :root 压死
 - ❌ 用 oklch / hsl 写新色 → 全栈 hex
-- ❌ 给 dark-locked 页 (trainer/battle/wca-stats) 加 light 反盖 → 它们故意锁 dark
+- ❌ 给 dark-locked 页 (trainer/battle/wca) 加 light 反盖 → 它们故意锁 dark
 - ❌ legacy 老 token (`--bg-primary --text-primary --accent-glow --border-dark`) 用在新代码 → 留给旧页
 
 ## 测试矩阵 (改主题相关 CSS 必跑 4 cell)

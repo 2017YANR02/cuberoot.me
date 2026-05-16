@@ -34,12 +34,12 @@ export interface LandingSearchCard {
 
 const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
   { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
-  { path: '/wca-stats/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
-  { path: '/wca-stats/all-results',      zh: '全部成绩排行', en: 'All Results' },
-  { path: '/wca-stats/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
-  { path: '/wca-stats/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
-  { path: '/wca-stats/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
-  { path: '/wca-stats/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
+  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
+  { path: '/wca/all-results',      zh: '全部成绩排行', en: 'All Results' },
+  { path: '/wca/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
+  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
+  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
+  { path: '/wca/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
 ];
 
 const MIN_LEN_LATIN = 2;
@@ -234,7 +234,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   {stats.map(s => (
                     <Link
                       key={s.id}
-                      to={`/wca-stats/${s.id}${langQuery}`}
+                      to={`/wca/${s.id}${langQuery}`}
                       className="landing-search-item"
                       onClick={closeAfter}
                     >
@@ -291,7 +291,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {personMatches.map(p => (
                   <Link
                     key={p.wcaId}
-                    to={`/wca-stats/persons/${p.wcaId}${langQuery}`}
+                    to={`/wca/persons/${p.wcaId}${langQuery}`}
                     className="landing-search-item landing-search-item--rich"
                     onClick={closeAfter}
                   >

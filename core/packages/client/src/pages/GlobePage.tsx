@@ -2907,7 +2907,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             )}
           </>
         ) : (<>
-        <Link to="/calendar" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
+        <Link to="/wca/calendar" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
           <svg className="globe-logo" width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
               <radialGradient id="earthGrad" cx="0.35" cy="0.35" r="0.85">

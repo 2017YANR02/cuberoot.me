@@ -1,7 +1,7 @@
 # Nemesizer 移植设计
 
 **Date:** 2026-04-24
-**Scope:** 将 https://nemesizer.com 的全部功能移植到本站，新顶级路由 `/nemesizer`，从 `/wca-stats` 入口页链接过去。纯静态（GitHub Pages），数据和计算全部 client-side。
+**Scope:** 将 https://nemesizer.com 的全部功能移植到本站，新顶级路由 `/nemesizer`，从 `/wca` 入口页链接过去。纯静态（GitHub Pages），数据和计算全部 client-side。
 
 ## 1. 术语与定义
 

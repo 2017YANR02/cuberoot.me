@@ -7,7 +7,7 @@ Audience: site author (sole maintainer). Format: prioritized, actionable.
 
 ## 1. Executive summary
 
-cuberoot.me已经在两个方向上甩开同类站点：**WCA统计的深度与可视化** (`/wca-stats`, `/viz`, `/globe`, `/calendar`, `/scramble-stats`) 和 **基于视频的复盘工具** (`/frame-count`, `/recon`)。同类站点(cstimer / jperm / cubeskills / cubingapp)在这两块上要么没有要么很弱。空白主要集中在三处：
+cuberoot.me已经在两个方向上甩开同类站点：**WCA统计的深度与可视化** (`/wca`, `/wca/viz`, `/wca/globe`, `/wca/calendar`, `/scramble-stats`) 和 **基于视频的复盘工具** (`/frame-count`, `/recon`)。同类站点(cstimer / jperm / cubeskills / cubingapp)在这两块上要么没有要么很弱。空白主要集中在三处：
 
 1. **P0 — BLE 智能魔方接入** (timer + recon + trainer)。这是 cstimer / cubingapp / reco.nz 都有而 cuberoot 完全没有的能力，且能直接喂养已有的 recon / 训练器，杠杆最大。
 2. **P0 — Cuber 个人主页 / 关注 / 对位 (rivalries / H2H)**。WCA 数据已经全在本地，只差一层"以人为索引"的视图；wcadb 和 cubingchina 有但都做得很糙。
@@ -26,7 +26,7 @@ Top 3 surprises from peer research:
 读过 `LandingPage.tsx`、`App.tsx`、`pages/` 后梳理：
 
 - **WCA Stats 全量重写为 TS 管道** (`packages/stats-build`)，80+ 自定义 stat、StatJson schema 标准化。同类(jonatanklosko原版)是 elixir 周更，UI 单薄；cuberoot 自己渲染。
-- **`/viz` 时间序列分布、`/globe` 全球地图、`/calendar` 日历堆叠** —— 三个独立维度叠在 WCA 数据上，竞品没有同等深度。
+- **`/wca/viz` 时间序列分布、`/wca/globe` 全球地图、`/wca/calendar` 日历堆叠** —— 三个独立维度叠在 WCA 数据上，竞品没有同等深度。
 - **`/frame-count` 用 WebCodecs + mp4box.js 做帧级分析** —— 这是 reco.nz 完全没有的能力，是一个独立护城河。
 - **`/scramble-stats`** 来自本地 C++ 求解器跑出的 CSV，给打乱"难度分布"建模 —— 全网没看到第二家。
 - **中英双语 + 中国比赛名中文化 + 双线接入**(cuberoot.me 备案 + GH Pages 境外 CNAME)，国内访问体验唯一。
@@ -64,7 +64,7 @@ Top 3 surprises from peer research:
 #### A4. 跨色训练 / Cross Color Neutrality
 - **Description**: 强制随机出 cross 颜色；统计每种颜色平均时间、识别哪种颜色最弱。
 - **Reference sites**: 无成熟竞品（这是数据型用户的痒点）。
-- **Implementation sketch**: timer/recon 页加 "force cross color" 设置；session 数据按 cross color 分桶汇总到 `/viz`。
+- **Implementation sketch**: timer/recon 页加 "force cross color" 设置；session 数据按 cross color 分桶汇总到 `/wca/viz`。
 - **Priority**: P2
 - **Effort**: S
 
@@ -135,7 +135,7 @@ Top 3 surprises from peer research:
 #### C6. Motion chart / Bar chart race（条形竞赛动画 / Bar Chart Race）
 - **Description**: 从 1982-06-05 到今天，国家奖牌数 / 注册选手数 / 平均成绩的逐年动画。
 - **Reference sites**: [Flourish](https://flourish.studio) 上常见，但 WCA 数据无人做。
-- **Implementation sketch**: 复用 `/viz` D3 栈；时间锚点严格按 CLAUDE.md 默认 2003-08-22 起，但聚合包含 1982。
+- **Implementation sketch**: 复用 `/wca/viz` D3 栈；时间锚点严格按 CLAUDE.md 默认 2003-08-22 起，但聚合包含 1982。
 - **Priority**: P1
 - **Effort**: M
 
@@ -200,7 +200,7 @@ Top 3 surprises from peer research:
 - **Effort**: M
 
 #### G2. 可嵌入可视化 (Embed / Embeddable Charts)
-- **Description**: `/viz/embed?stat=...` 提供 iframe，方便 r/cubers / 微信文章引用。
+- **Description**: `/wca/viz/embed?stat=...` 提供 iframe，方便 r/cubers / 微信文章引用。
 - **Reference sites**: [Flourish](https://flourish.studio), [Datawrapper](https://datawrapper.de)。
 - **Implementation sketch**: 现有 viz 页加 `?embed=1` query → 隐藏导航 + 透明背景；CSP 允许 iframe。
 - **Priority**: P2

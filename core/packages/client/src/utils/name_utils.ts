@@ -1,4 +1,4 @@
-// NOTE: 选手名处理工具 — 跨页面共享（wca-stats / upcoming-comps 等）
+// NOTE: 选手名处理工具 — 跨页面共享（wca / upcoming-comps 等）
 
 const CJK_REGEX = /[\u4e00-\u9fff]/;
 const PAREN_ZH_REGEX = /\(([^)]*[\u4e00-\u9fff][^)]*)\)\s*$/;

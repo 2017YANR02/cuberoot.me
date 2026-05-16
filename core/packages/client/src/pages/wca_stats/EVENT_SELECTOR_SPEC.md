@@ -352,10 +352,10 @@ pnpm --filter @cuberoot/client dev
 ```
 
 测试页面（需要 JSON 已生成）：
-- **sections 模式**：http://localhost:5173/app/wca-stats/most_completed_solves
-- **panels 模式**：http://localhost:5173/app/wca-stats/wr_dominance
-- **metricPanels 模式**：http://localhost:5173/app/wca-stats/wr_metric
-- **rows 模式**（不应显示选择器）：http://localhost:5173/app/wca-stats/wr_current
+- **sections 模式**：http://localhost:5173/app/wca/most_completed_solves
+- **panels 模式**：http://localhost:5173/app/wca/wr_dominance
+- **metricPanels 模式**：http://localhost:5173/app/wca/wr_metric
+- **rows 模式**（不应显示选择器）：http://localhost:5173/app/wca/wr_current
 
 逐个检查：
 1. 图标按钮行是否显示正确（21 个图标，无数据的灰色）
