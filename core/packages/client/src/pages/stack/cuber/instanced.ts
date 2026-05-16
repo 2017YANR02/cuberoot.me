@@ -210,12 +210,24 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
     this.movingSticker.count = 0;
 
+    // 构造时 cubelet.matrix = 纯 translation (rot=identity, scale=1),T × localMat 简化为
+    // localMat.elements 直接 copy + 12/13/14 加 cubelet.position。跳过 multiplyMatrices (64 mul) +
+    // setMatrixAt (tmpMat.toArray)。movingSticker.setMatrixAt(HIDE_MAT) 也跳:moving count=0 当前不
+    // 渲染,Float32Array 默认 0 矩阵也是 degenerate (count 起来后 beginSlice 会写正确值)。
+    const staticInstArr = this.staticSticker.instanceMatrix.array;
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = cube.initials.get(slot.cubeletInitial)!;
-      this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
-      this.staticSticker.setMatrixAt(i, this.tmpMat);
-      this.movingSticker.setMatrixAt(i, HIDE_MAT);
+      const lm = slot.localMat.elements;
+      const cp = cubelet.position;
+      const off = i * 16;
+      staticInstArr[off+0] = lm[0]; staticInstArr[off+1] = lm[1]; staticInstArr[off+2] = lm[2]; staticInstArr[off+3] = lm[3];
+      staticInstArr[off+4] = lm[4]; staticInstArr[off+5] = lm[5]; staticInstArr[off+6] = lm[6]; staticInstArr[off+7] = lm[7];
+      staticInstArr[off+8] = lm[8]; staticInstArr[off+9] = lm[9]; staticInstArr[off+10] = lm[10]; staticInstArr[off+11] = lm[11];
+      staticInstArr[off+12] = lm[12] + cp.x;
+      staticInstArr[off+13] = lm[13] + cp.y;
+      staticInstArr[off+14] = lm[14] + cp.z;
+      staticInstArr[off+15] = lm[15];
       this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
       this.staticSticker.setColorAt(i, this.tmpColor);
       this.movingSticker.setColorAt(i, this.tmpColor);
