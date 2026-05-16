@@ -15,6 +15,7 @@ import World from './cuber/world';
 import Cubelet from './cuber/cubelet';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
+import CubeGroup from './cuber/group';
 import { FACE } from './cuber/define';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -71,7 +72,6 @@ export default function StackPage() {
   const userMoveRef = useRef<((action: TwistAction) => void) | null>(null);
 
   const [order, setOrder] = useState<number>(3);
-  const [solvedToast, setSolvedToast] = useState(false);
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     try { return localStorage.getItem('stack.fullscreen') === '1'; } catch { return false; }
   });
@@ -107,10 +107,6 @@ export default function StackPage() {
       if (!wnow) return;
       const c = wnow.cube as unknown as StackCube;
       const completeNow = c.complete;
-      if (completeNow && !wasCompleteRef.current && c.history.moves > 0) {
-        setSolvedToast(true);
-        window.setTimeout(() => setSolvedToast(false), 2200);
-      }
       wasCompleteRef.current = completeNow;
     });
   }, []);
@@ -161,10 +157,10 @@ export default function StackPage() {
       const reverse = opts.shift || opts.button === 2;
       const group = world.cube.table.groups[axis]?.[layer];
       if (!group) return;
-      // group.name 已含 wide/layer 前缀 (如 "R" / "2R" / "M'" / "2L'"),
-      // 走 twister.twist 让 history 也 record (undo/redo 才 work),
-      // force=true 截断前一个动画 + 接续按键的"截断"语义
-      const action = new TwistAction(group.name, reverse, 1);
+      // 默认单层切片(group.name,跟旧行为一致)。
+      // Alt 按住 → 走 wide(点击深度决定宽度)
+      const sign = opts.alt ? CubeGroup.wideFromClick(axis, layer, order).sign : group.name;
+      const action = new TwistAction(sign, reverse, 1);
       world.cube.twister.twist(action, false, true);
       userMoveRef.current?.(action);
     });
@@ -728,9 +724,6 @@ export default function StackPage() {
               <div className="stack-spinner" />
               <span>{t('构建中…', 'Building…')}</span>
             </div>
-          ) : null}
-          {solvedToast ? (
-            <div className="stack-toast">{t('已复原 ✦', 'Solved ✦')}</div>
           ) : null}
           {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
           <button

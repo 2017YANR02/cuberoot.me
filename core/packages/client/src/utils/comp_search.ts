@@ -66,19 +66,51 @@ export async function loadComps(): Promise<Comp[]> {
 // 中文搜索词 → 英文 name 子串同义词。
 // 现状:很多 WCA 比赛没有中文名映射(compNameZh 返回空),用户搜"锦标赛"匹配不到 "Championship".
 // 这张表把常见中文比赛关键词翻成英文小写子串,在 q 之外额外用 name.includes(syn) 命中.
-const ZH_NAME_SYNONYMS: Record<string, string> = {
-  '锦标赛': 'championship',
-  '公开赛': 'open',
+// 触发词(中文 / 英文缩写)→ haystack 匹配规则.
+// tokens: 必须出现的英文 token 列表
+// phrase: true 时要求相邻(只允许空白分隔),false / 缺省时自由 AND(中间可夹任何词).
+// 顺序重要:Object.entries 用 find 取首个 prefix-match.'锦标赛' 放最前,
+// 用户只敲"锦"时返回最广的 championship,更具体的得敲全词.
+// 'wc' 让 "wc" / "wc 2015" 都能命中 "World Rubik's Cube Championship 2015" 类老命名.
+// '中锦赛' 用 phrase:China Championship 命名严格 "China Championship YYYY",
+//   宽松 AND 会把 "China's 10th Anniversary Championship 2017" 这种误判进来.
+interface SynEntry { tokens: string[]; phrase?: boolean }
+const NAME_SYNONYMS: Record<string, SynEntry> = {
+  '锦标赛': { tokens: ['championship'] },
+  '世锦赛': { tokens: ['world', 'championship'] },
+  '中锦赛': { tokens: ['china', 'championship'], phrase: true },
+  '公开赛': { tokens: ['open'] },
+  'wc': { tokens: ['world', 'championship'] },
 };
 
-/** haystack 是否包含 rawQuery,或包含其中文比赛类型词同义词(锦标/锦标赛→championship 等)。
+function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function haystackHasSyn(haystack: string, syn: SynEntry): boolean {
+  if (syn.phrase) {
+    return new RegExp(syn.tokens.map(escapeRe).join('\\s+')).test(haystack);
+  }
+  return syn.tokens.every(t => haystack.includes(t));
+}
+
+/** haystack 是否包含 rawQuery 的全部空格分词(AND).任一 token 命中 NAME_SYNONYMS
+ *  键(支持前缀:'锦'→'锦标赛','wc'→'wc')时按其 phrase / AND 规则在 haystack 上匹配同义词.
+ *  "wc 2015" → 'wc' 同义词 ['world','championship'] AND + '2015' 直接 includes → 都满足才返 true.
  *  haystack 调用方负责传 lowercase. */
 export function compNameMatches(haystack: string, rawQuery: string): boolean {
   if (!rawQuery) return false;
-  const q = rawQuery.toLowerCase();
-  if (haystack.includes(q)) return true;
-  const syn = Object.entries(ZH_NAME_SYNONYMS).find(([zh]) => zh.includes(rawQuery))?.[1];
-  return !!syn && haystack.includes(syn);
+  const tokens = rawQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return false;
+  if (tokens.every(t => haystack.includes(t))) return true;
+  let anyExpanded = false;
+  for (const t of tokens) {
+    const syn = Object.entries(NAME_SYNONYMS).find(([k]) => k.includes(t))?.[1];
+    if (syn) {
+      anyExpanded = true;
+      if (!haystackHasSyn(haystack, syn)) return false;
+    } else if (!haystack.includes(t)) {
+      return false;
+    }
+  }
+  return anyExpanded;
 }
 
 /**

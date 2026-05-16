@@ -14,6 +14,42 @@ export default class CubeGroup extends THREE.Group {
     z: new THREE.Vector3(0, 0, -1),
   };
 
+  /** 点击/拖动 cubelet 推导宽层 notation + 对应 groups 的 layer 列表。
+   * 规则:点击位置到 axis 两端外层的最小深度 = wide 宽度;靠近哪一端就从那一端起算。
+   *  - width === N: 整体转 ("x" / "y" / "z")
+   *  - width === 1, fromLow: 单层外层 ("L'" / "D'" / "B'") — apostrophe 让正 angle 对应正确 notation
+   *  - width === 1, !fromLow: 单层外层 ("R" / "U" / "F")
+   *  - width === 2: "Rw" / "Lw'" / "Uw" / "Dw'" / "Fw" / "Bw'"
+   *  - width >= 3: "3Rw" / "5Lw'" 等
+   *
+   * 返回的 sign 已经把"用户拖出正 angle"对应的 notation 算好,
+   * caller 直接 `new TwistAction(sign, angle<0, times)` 即可。 */
+  static wideFromClick(axis: string, layer: number, N: number): { sign: string; layers: number[] } {
+    const depthLow = layer;
+    const depthHigh = N - 1 - layer;
+    const fromLow = depthLow <= depthHigh;
+    const width = fromLow ? layer + 1 : N - layer;
+    const layers: number[] = [];
+    let sign: string;
+    if (width === N) {
+      for (let l = 0; l < N; l++) layers.push(l);
+      sign = axis;
+    } else if (fromLow) {
+      for (let l = 0; l < width; l++) layers.push(l);
+      const letter = axis === 'x' ? 'L' : axis === 'y' ? 'D' : 'B';
+      if (width === 1) sign = letter + "'";
+      else if (width === 2) sign = letter + "w'";
+      else sign = width + letter + "w'";
+    } else {
+      for (let l = N - width; l < N; l++) layers.push(l);
+      const letter = axis === 'x' ? 'R' : axis === 'y' ? 'U' : 'F';
+      if (width === 1) sign = letter;
+      else if (width === 2) sign = letter + 'w';
+      else sign = width + letter + 'w';
+    }
+    return { sign, layers };
+  }
+
   cube: Cube;
   cubelets: Cubelet[];
   indices: number[];
