@@ -93,9 +93,13 @@ export default class InstancedRenderer extends THREE.Group {
   private hintMaterial: THREE.MeshBasicMaterial;
   private movingHintMaterial: THREE.MeshBasicMaterial;
   private hintLocalMats: THREE.Matrix4[] = [];
-  /** 构造时为 true (延后 populate 省 ~440ms@N=250); 首次 set hint(true) 触发 populateHint() 后置 false */
+  /** 构造时为 true (延后 populate 省 ~440ms @ N=250); 首次 set hint(true) 触发 populateHint() 后置 false */
   private hintNeedsPopulate = false;
   private hintDistance: number;
+  /** hint 颜色预混用的 bg 色 (matches CSS --background)。setHintBackdrop() 注入,主题切换 reapply。 */
+  private hintBgColor: THREE.Color = new THREE.Color(0xffffff);
+  /** hint face 色权重: hint_rgb = HINT_FACE_MIX * face + (1-HINT_FACE_MIX) * bg。等效原 opacity=0.35。 */
+  private static readonly HINT_FACE_MIX = 0.35;
 
   stickerSlots: StickerSlot[] = [];
   /** 紧凑表: cubelet._instIdx * 6 + face → slot idx (-1 = 无 sticker)。
@@ -276,13 +280,11 @@ export default class InstancedRenderer extends THREE.Group {
 
     // Hint stickers — 单面 plane (ShapeGeometry) + BackSide:
     // 只在 face normal 背向 camera 时可见,自动只显"看不到的 3 个面"。
+    // 不透明 + 颜色预混 0.35 face + 0.65 bg: 等效原 opacity=0.35 视觉但 canvas alpha=1,
+    // 防 checkered bg 透过 hint 区域。bg 色由 setHintBackdrop() 注入,主题切换需 re-call。
     this.hintDistance = cube.order + 1;
-    this.hintMaterial = new THREE.MeshBasicMaterial({
-      transparent: true, opacity: 0.35, depthWrite: false, side: THREE.BackSide,
-    });
-    this.movingHintMaterial = new THREE.MeshBasicMaterial({
-      transparent: true, opacity: 0.35, depthWrite: false, side: THREE.BackSide,
-    });
+    this.hintMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+    this.movingHintMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
     this.staticHint = new THREE.InstancedMesh(Cubelet._HINT, this.hintMaterial, this.stickerSlots.length);
     this.movingHint = new THREE.InstancedMesh(Cubelet._HINT, this.movingHintMaterial, this.stickerSlots.length);
     this.staticHint.frustumCulled = false;
@@ -675,6 +677,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.tmpColor.set(COLORS[effective] ?? COLORS.Gray);
     this.staticSticker.setColorAt(slot, this.tmpColor);
     this.movingSticker.setColorAt(slot, this.tmpColor);
+    // hint 走预混 (不透明,避免 checker 透过); sticker 用原色
+    this.computeHintColor(effective);
     this.staticHint.setColorAt(slot, this.tmpColor);
     this.movingHint.setColorAt(slot, this.tmpColor);
     if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
@@ -755,6 +759,33 @@ export default class InstancedRenderer extends THREE.Group {
   }
   get hint(): boolean { return this._hint; }
 
+  /** 算 face 色与 bg 预混的 hint 实际显示色,写入 this.tmpColor。
+   * 不透明 + 预混等效原 opacity=0.35 的视觉,但 canvas alpha=1,避免 checker bg 透过 hint。 */
+  private computeHintColor(faceLabel: string | undefined): void {
+    this.tmpColor.set(COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
+    this.tmpColor.lerp(this.hintBgColor, 1 - InstancedRenderer.HINT_FACE_MIX);
+  }
+
+  /** 主题/背景色变了时调:刷新 hint 预混颜色 + bg 色字段。
+   * `bgHex` 应来自 CSS var(--background) 解析后的 hex/rgb 字符串。 */
+  setHintBackdrop(bgHex: string): void {
+    this.hintBgColor.set(bgHex);
+    // 重写所有 hint 实例颜色 (face mix bg)
+    if (!this.hintNeedsPopulate) {
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const slot = this.stickerSlots[i];
+        const cubelet = this.cube.initials.get(slot.cubeletInitial);
+        if (!cubelet) continue;
+        this.computeHintColor(cubelet.colors[slot.face]);
+        this.staticHint.setColorAt(i, this.tmpColor);
+        this.movingHint.setColorAt(i, this.tmpColor);
+      }
+      if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+      if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+      this.cube.dirty = true;
+    }
+  }
+
   /** 构造时延后的 hint matrix/color GPU 上传。N=250 ~250ms,只在首次开 hint 才付。 */
   private populateHint(): void {
     const cube = this.cube;
@@ -764,7 +795,7 @@ export default class InstancedRenderer extends THREE.Group {
       this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
       this.staticHint.setMatrixAt(i, this.tmpMat);
       this.movingHint.setMatrixAt(i, HIDE_MAT);
-      this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
+      this.computeHintColor(cubelet.colors[slot.face]);
       this.staticHint.setColorAt(i, this.tmpColor);
       this.movingHint.setColorAt(i, this.tmpColor);
     }

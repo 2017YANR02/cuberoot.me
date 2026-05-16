@@ -538,6 +538,20 @@ export default function StackPage() {
     if (world) applySettings(world, settings);
   }, [settings]);
 
+  // 主题切换 (html[data-theme] / prefers-color-scheme) 时重 apply,
+  // 让 hint 预混底色跟随新的 --background
+  useEffect(() => {
+    const reapply = () => {
+      const w = worldRef.current;
+      if (w) applySettings(w, settings);
+    };
+    const mo = new MutationObserver(reapply);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', reapply);
+    return () => { mo.disconnect(); mq.removeEventListener('change', reapply); };
+  }, [settings]);
+
   const handleUndo = useCallback(() => {
     const world = worldRef.current;
     if (!world) return;

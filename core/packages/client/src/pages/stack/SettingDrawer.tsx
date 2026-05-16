@@ -85,6 +85,11 @@ export function applySettings(world: World, s: StackSettings): void {
   world.cube.instancedRenderer.thickness = s.thickness;
   world.cube.instancedRenderer.hollow = s.hollow;
   world.cube.instancedRenderer.hint = s.hint;
+  // hint 预混底色 = 当前 CSS --background; 主题切换 + checker toggle 都该 reapply
+  if (typeof window !== 'undefined') {
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
+    if (bg) world.cube.instancedRenderer.setHintBackdrop(bg);
+  }
   // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
   Cubelet.CORE.color.set(s.coreColor);
   Cubelet.CORE_BASIC.color.set(s.coreColor);
