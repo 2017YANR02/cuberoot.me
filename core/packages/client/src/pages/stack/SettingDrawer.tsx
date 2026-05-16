@@ -21,6 +21,8 @@ export interface StackSettings {
   hint: boolean;
   /** 点打乱按钮:false=instant 应用,true=慢动画逐 move 播放 */
   animateScramble: boolean;
+  /** 画布背景:false=纯色 (var --background),true=透明棋盘格 (twizzle 风格) */
+  checkeredBg: boolean;
 }
 
 export const DEFAULT_SETTINGS: StackSettings = {
@@ -33,6 +35,7 @@ export const DEFAULT_SETTINGS: StackSettings = {
   arrow: false,
   hint: false,
   animateScramble: false,
+  checkeredBg: false,
 };
 
 const STORAGE_KEY = 'stack.settings';
