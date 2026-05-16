@@ -26,7 +26,19 @@ export interface StackSettings {
   checkeredBg: boolean;
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
+  /** 6 面色 (WCA 默认) */
+  faceColors: { U: string; D: string; L: string; R: string; F: string; B: string };
 }
+
+/** WCA 标准 6 面色 — 跟 cuber/define.ts COLORS 一致 */
+export const DEFAULT_FACE_COLORS = {
+  U: '#FFFFFF',
+  D: '#FEFE00',
+  L: '#FFA100',
+  R: '#EE0000',
+  F: '#00D800',
+  B: '#0000F2',
+} as const;
 
 export const DEFAULT_SETTINGS: StackSettings = {
   sensitivity: 50,
@@ -40,6 +52,7 @@ export const DEFAULT_SETTINGS: StackSettings = {
   animateScramble: false,
   checkeredBg: false,
   coreColor: '#202020',
+  faceColors: { ...DEFAULT_FACE_COLORS },
 };
 
 const STORAGE_KEY = 'stack.settings';
@@ -94,6 +107,8 @@ export function applySettings(world: World, s: StackSettings): void {
   Cubelet.CORE.color.set(s.coreColor);
   Cubelet.CORE_BASIC.color.set(s.coreColor);
   Cubelet._PANEL_MAT.color.set(s.coreColor);
+  // 6 面色
+  world.cube.instancedRenderer.setFaceColors(s.faceColors);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();

@@ -16,7 +16,7 @@ import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils'
 import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
-import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, type StackSettings } from './SettingDrawer';
+import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, type StackSettings } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './player-controls.css';
 
@@ -423,6 +423,11 @@ const CORE_COLOR_PRESETS: string[] = [
   '#202020', '#EE0000', '#FFA100', '#FFFFFF', '#FEFE00', '#00D800', '#0000F2',
 ];
 
+const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
+const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
+  U: '顶', D: '底', L: '左', R: '右', F: '前', B: '后',
+};
+
 const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<StackSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'> }[] = [
   { id: 'std',    zh: '标准', en: 'Standard', s: { thickness: true,  hollow: false, arrow: false, hint: false } },
   { id: 'hollow', zh: '镂空', en: 'Hollow',   s: { thickness: true,  hollow: true,  arrow: false, hint: false } },
@@ -567,6 +572,29 @@ function PuzzleSettings({
               ))}
             </div>
           </label>
+          <div className="stack-color-row stack-face-color-row">
+            <span>{t('面色', 'Face colors')}</span>
+            <div className="stack-face-color-grid">
+              {FACE_ORDER.map((f) => (
+                <label key={f} className="stack-face-color-cell" title={t(FACE_LABELS_ZH[f], f)}>
+                  <span>{f}</span>
+                  <input
+                    type="color"
+                    value={settings.faceColors[f]}
+                    onChange={(e) => set('faceColors', { ...settings.faceColors, [f]: e.target.value })}
+                  />
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="stack-face-color-reset"
+              onClick={() => set('faceColors', { ...DEFAULT_FACE_COLORS })}
+              title={t('恢复 WCA 默认', 'Reset to WCA defaults')}
+            >
+              WCA
+            </button>
+          </div>
         </div>
       )}
       <KeymapModal
