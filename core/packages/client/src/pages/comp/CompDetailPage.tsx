@@ -223,10 +223,15 @@ export default function CompDetailPage() {
 
   // 名字 enrichment: 部分数据源(cubing.com /competitors 报名表)只给英文名,
   // 通过 @cuberoot/shared persons_index 查"English (中文)"全名,跟 /recon / WcaPersonPicker 同 source.
-  // 仅当存在 wcaid 且名字没括号时触发(已是全格式的不重复加载 10MB 索引).
+  // 触发条件:全部 users 都缺括号 = 来自 scrape 源,需要补.WC2015 等国际赛混杂中外选手,
+  // 中国人名已带括号 → 跳过(否则非中国选手没括号也会触发 10MB 索引下载,加载变慢).
   useEffect(() => {
     if (!data) return;
-    const needFix = Object.values(data.users).some(u => u.wcaid && !u.name.includes('('));
+    const usersArr = Object.values(data.users);
+    if (usersArr.length === 0) return;
+    const anyWithParens = usersArr.some(u => u.name.includes('('));
+    if (anyWithParens) return;
+    const needFix = usersArr.some(u => u.wcaid && !u.name.includes('('));
     if (!needFix) return;
     let cancelled = false;
     loadPersonsIndex().then(() => {
