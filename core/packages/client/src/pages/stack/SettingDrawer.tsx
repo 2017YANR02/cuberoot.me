@@ -15,6 +15,10 @@ export interface StackSettings {
   sensitivity: number;
   scale: number;
   perspective: number;
+  /** 左右 (yaw) — scene.rotation.y。50=正前方,0=左侧 90°,100=右侧 90°。默认 30 (跟 upstream cuber 一致) */
+  viewAngle: number;
+  /** 上下 (pitch) — scene.rotation.x。50=平视,0=俯视 90°,100=仰视 90°。默认 33 (跟 upstream cuber 一致) */
+  viewGradient: number;
   speed: number;
   thickness: boolean;
   hollow: boolean;
@@ -44,6 +48,8 @@ export const DEFAULT_SETTINGS: StackSettings = {
   sensitivity: 50,
   scale: 50,
   perspective: 50,
+  viewAngle: 30,
+  viewGradient: 33,
   speed: 50,
   thickness: true,
   hollow: false,
@@ -81,6 +87,9 @@ export function saveSettings(s: StackSettings): void {
 function mapSensitivity(v: number): number { return 0.1 + (v / 100) * 1.4; }   // 0.1 ~ 1.5
 function mapScale(v: number): number { return 0.5 + v / 100; }                  // 0.5 ~ 1.5
 function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        // 2 ~ 10
+// upstream cuber 的镜头映射:50 居中,两端到 ±π/2
+function mapYaw(v: number): number { return ((v / 50 - 1) * Math.PI) / 2; }     // scene.rotation.y
+function mapPitch(v: number): number { return ((1 - v / 50) * Math.PI) / 2; }   // scene.rotation.x
 // speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 30 帧 (现状)
 function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 100) * 55)); }
 
@@ -93,6 +102,9 @@ export function applySettings(world: World, s: StackSettings): void {
     world.scale = targetScale;
   }
   world.perspective = mapPerspective(s.perspective);
+  world.scene.rotation.y = mapYaw(s.viewAngle);
+  world.scene.rotation.x = mapPitch(s.viewGradient);
+  world.scene.updateMatrix();
   CubeGroup.frames = mapFrames(s.speed);
   world.cube.arrow = s.arrow;
   world.cube.instancedRenderer.thickness = s.thickness;
@@ -115,11 +127,33 @@ export function applySettings(world: World, s: StackSettings): void {
 }
 
 export function Slider({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const [draft, setDraft] = useState<string>(String(value));
+  useEffect(() => { setDraft(String(value)); }, [value]);
+  const commit = () => {
+    const n = Number(draft);
+    if (!Number.isFinite(n)) { setDraft(String(value)); return; }
+    const clamped = Math.max(0, Math.min(100, Math.round(n)));
+    setDraft(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  };
   return (
     <label className="stack-slider">
       <div className="stack-slider-row">
         <span>{label}</span>
-        <span className="stack-slider-val">{value}</span>
+        <input
+          type="number"
+          className="stack-slider-val"
+          min={0}
+          max={100}
+          step={1}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            else if (e.key === 'Escape') { setDraft(String(value)); (e.target as HTMLInputElement).blur(); }
+          }}
+        />
       </div>
       <input
         type="range"

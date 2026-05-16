@@ -21,6 +21,29 @@ import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, typ
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './player-controls.css';
 
+// 1×1 上 face/slice 全等价于 x/y/z 转体。
+// SAME = 跟轴同向(R/U/F/S),OPP = 跟轴反向(L/D/B/M/E);wide (Rw 等) → 同向。
+// 不可表达的 (其它内层 wide / 数字前缀切片) 返回 null,会被丢弃。
+const SAME_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
+  R: 'x', U: 'y', F: 'z',
+  S: 'z',  // S 跟 F 同向
+};
+const OPP_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
+  L: 'x', D: 'y', B: 'z',
+  M: 'x',  // M 跟 L 同向
+  E: 'y',  // E 跟 D 同向
+};
+
+function normalizeTo1x1(action: TwistAction): TwistAction | null {
+  const s = action.sign;
+  if (s === 'x' || s === 'y' || s === 'z') return action;
+  // wide 在 1×1 上跟同字母的 face move 等价(整层 = 全方块)
+  const bare = s.endsWith('w') ? s.slice(0, -1).toUpperCase() : s;
+  if (SAME_AXIS_1X1[bare]) return new TwistAction(SAME_AXIS_1X1[bare], action.reverse, action.times);
+  if (OPP_AXIS_1X1[bare]) return new TwistAction(OPP_AXIS_1X1[bare], !action.reverse, action.times);
+  return null;
+}
+
 interface Props {
   world: World | null;
   alg: string;
@@ -168,6 +191,11 @@ export default function PlayerControls({
   // 永远落到 alg 框 (不像 QWERTY 那样允许写入 setup),因为 drag/tap 时焦点通常不在输入框,
   // 而即便焦点在 setup 框,用户拖魔方的语义也是"开始解",该落解法。
   const appendUserMove = useCallback((action: TwistAction) => {
+    if (world && world.cube.order === 1) {
+      const norm = normalizeTo1x1(action);
+      if (!norm) return;  // 1×1 上不可表达的 move:丢弃
+      action = norm;
+    }
     const moveText = action.value;
     if (!moveText) return;
     const algEl = algElRef.current;
@@ -192,7 +220,14 @@ export default function PlayerControls({
 
   // QWERTY 模式:按一个 keymap 动作 → 转魔方 + 追加到 setup/alg (打乱框激活时落 setup,否则落 alg 并 focus alg)
   const applyMove = useCallback((k: KeyMove) => {
-    if (world) world.cube.twister.twist(new TwistAction(k.sign, !!k.reverse, 1), false, true);
+    let action: TwistAction | null = new TwistAction(k.sign, !!k.reverse, 1);
+    let moveText = displayMove(k);
+    if (world && world.cube.order === 1) {
+      action = normalizeTo1x1(action);
+      if (!action) return;  // 1×1 上不可表达的 move:不转也不写
+      moveText = action.value;
+    }
+    if (world) world.cube.twister.twist(action, false, true);
     const setupEl = setupElRef.current;
     const algEl = algElRef.current;
     const active = document.activeElement;
@@ -201,7 +236,7 @@ export default function PlayerControls({
     if (!(target instanceof HTMLTextAreaElement)) return;
     if (!writeToSetup && active !== target) target.focus();
     const current = target.value;
-    const next = current.trimEnd() + (current.trim() ? ' ' : '') + displayMove(k) + ' ';
+    const next = current.trimEnd() + (current.trim() ? ' ' : '') + moveText + ' ';
     target.value = next;
     target.selectionStart = target.selectionEnd = next.length;
     skipAutoResetRef.current = true;  // 阻止下面 useEffect 把 cube 复原回 setup
@@ -364,10 +399,10 @@ export default function PlayerControls({
         )}
       </div>
       <div className="stack-player-tools">
-        <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('取逆', 'Invert')}</button>
+        <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
         <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>
-        <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')}><FlipHorizontal2 size={13} />Mirror M</button>
-        <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('沿 S 面镜像 (F↔B)', 'Mirror S (F↔B)')}><FlipVertical2 size={13} />Mirror S</button>
+        <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M:沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')} aria-label={t('Mirror M:沿 M 面镜像', 'Mirror M')}><FlipHorizontal2 size={13} /></button>
+        <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S:沿 S 面镜像 (F↔B)', 'Mirror S (F↔B)')} aria-label={t('Mirror S:沿 S 面镜像', 'Mirror S')}><FlipVertical2 size={13} /></button>
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
       </div>
       <PuzzleSettings
@@ -661,6 +696,8 @@ function PuzzleSettings({
             <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
+            <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
+            <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
           <div className="stack-puzzle-toggles">
@@ -668,7 +705,7 @@ function PuzzleSettings({
             <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
             <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
             <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
-            <Toggle label={t('显示朝向箭头', 'Orientation arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+            <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
           </div>
           <ColorRow label={t('内核色', 'Core color')}>

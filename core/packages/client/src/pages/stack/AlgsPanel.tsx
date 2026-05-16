@@ -103,7 +103,7 @@ export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
           ))}
         </select>
         <span className="stack-algs-hint">
-          {t('点公式 = 摆出此情形;切「回放」标签看动画', 'Click case = set up the position; switch to Player tab to watch the alg')}
+          {t('点公式 = 摆出此情形;下方回放区按播放看动画', 'Click case = set up the position; hit play below to watch the alg')}
         </span>
       </div>
       <div className="stack-algs-list">
