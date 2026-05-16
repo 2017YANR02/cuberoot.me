@@ -19,6 +19,8 @@ export interface StackSettings {
   hollow: boolean;
   arrow: boolean;
   hint: boolean;
+  /** 点打乱按钮:false=instant 应用,true=慢动画逐 move 播放 */
+  animateScramble: boolean;
 }
 
 export const DEFAULT_SETTINGS: StackSettings = {
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: StackSettings = {
   hollow: false,
   arrow: false,
   hint: false,
+  animateScramble: false,
 };
 
 const STORAGE_KEY = 'stack.settings';

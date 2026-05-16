@@ -84,6 +84,9 @@ export default function PlayerControls({
 
   // applyMove (QWERTY 增量追加) 时 set 这个 ref,下面 actions-effect 跳过 reset 避免冲掉刚 twist 的状态
   const skipAutoResetRef = useRef(false);
+  // animateScramble 路径:setup 写入会触发 useEffect → jumpToStep(0) instant 应用,
+  // 跟动画播放冲突。set 此 ref 让 useEffect skip 一次。
+  const animatingScrambleRef = useRef(false);
 
   // setup / alg / actions 变化时重置到当前 step(或 0)
   useEffect(() => {
@@ -91,6 +94,11 @@ export default function PlayerControls({
       skipAutoResetRef.current = false;
       setStep(actions.length);  // applyMove 已直接 twist cube,step 推到末尾保持一致
       return;
+    }
+    if (animatingScrambleRef.current) {
+      animatingScrambleRef.current = false;
+      setStep(0);
+      return;  // cube 由 twister.push 慢动画接管,别 instant reset
     }
     jumpToStep(0);
   /* eslint-disable-next-line react-hooks/exhaustive-deps */
@@ -184,7 +192,8 @@ export default function PlayerControls({
   }, [kbVariant, keymap, applyMove]);
 
   // 随机打乱:WCA 2-7 阶走 tnoodle 官方 scramble,其它阶用 huazhechen scrambler (9N moves)。
-  // 两条路径都把字符串写入 setup 框 → useEffect → twister.setup() instant 应用。
+  // settings.animateScramble:false=写入 setup → useEffect → twister.setup() instant 应用;
+  //                          true=animatingScrambleRef 让 useEffect skip,自己 reset+twister.push 慢动画。
   const handleScramble = useCallback(async () => {
     if (!world) return;
     let scramble: string | null = null;
@@ -193,19 +202,22 @@ export default function PlayerControls({
       scramble = await tnoodleRandomScramble(eventId);
     }
     if (!scramble) {
-      // tnoodle 失败 / 阶数不在 WCA 范围,本地生成
       scramble = world.cube.twister.scrambler();
+    }
+    if (settings.animateScramble) {
+      animatingScrambleRef.current = true;
+      world.cube.twister.setup('');     // reset to solved (instant)
+      world.cube.twister.push(scramble); // 排队慢动画逐 move 播
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
     const el = setupElRef.current;
     if (el instanceof HTMLTextAreaElement) {
       el.value = scramble;
-      // AlgInput 是非受控,直接赋值不会触发 autoResize,手动撑一下
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
     }
-  }, [world, order, onSetupChange]);
+  }, [world, order, onSetupChange, settings.animateScramble]);
 
   return (
     <div className="stack-player">
@@ -484,6 +496,7 @@ function PuzzleSettings({
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
           <div className="stack-puzzle-toggles">
+            <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
             <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
             <Toggle label={t('显示朝向箭头', 'Orientation arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
