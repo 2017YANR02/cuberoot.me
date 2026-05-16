@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { canonicalSq1Alg } from '../pages/gen/sq1_svg';
+import { patchSrPuzzlegen } from './sr-puzzlegen-patch';
 
 /** Reverse a skewb alg token-by-token (R → R', R' → R, R2 → R2). */
 function invertSkewbAlg(alg: string): string {
@@ -90,6 +91,7 @@ export function PuzzleSVG({
 
     import('sr-puzzlegen').then((mod) => {
       if (cancelled || !host) return;
+      patchSrPuzzlegen(mod);
       host.innerHTML = '';
       const puzzle: { alg?: string; case?: string; rotations?: { x?: number; y?: number; z?: number }[] } = {};
       const isSq1 = kind === 'sq1' || kind === 'sq1-net';
