@@ -53,6 +53,7 @@ export default class Cube extends THREE.Group {
 
   constructor(order: number) {
     super();
+    const t0 = performance.now();
     this.order = order;
     this.scale.set(3 / order, 3 / order, 3 / order);
     for (const positionIdx of surfacePositions(order)) {
@@ -61,6 +62,7 @@ export default class Cube extends THREE.Group {
       this.cubelets.set(positionIdx, cubelet);
       this.initials.set(positionIdx, cubelet);
     }
+    const t1 = performance.now();
     this.locks = new Map();
     this.locks.set("x", new Set());
     this.locks.set("y", new Set());
@@ -70,8 +72,13 @@ export default class Cube extends THREE.Group {
     this.table = new GroupTable(this);
     this.matrixAutoUpdate = false;
     this.updateMatrix();
+    const t2 = performance.now();
     this.instancedRenderer = new InstancedRenderer(this);
+    const t3 = performance.now();
     this.add(this.instancedRenderer);
+    if (order >= 50) {
+      console.log(`[Cube ctor N=${order}] cubelets=${(t1 - t0).toFixed(0)}ms groupTable=${(t2 - t1).toFixed(0)}ms instancedRenderer=${(t3 - t2).toFixed(0)}ms total=${(t3 - t0).toFixed(0)}ms`);
+    }
   }
 
   callback(): void {
