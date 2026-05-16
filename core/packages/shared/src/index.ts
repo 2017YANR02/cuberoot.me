@@ -22,7 +22,6 @@ export {
   loadPersonsIndex,
   isPersonsIndexReady,
   searchLocalPersons,
-  getPersonByWcaId,
 } from './api/persons_index';
 export * from './nemesizer_format';
 export * from './alg';
