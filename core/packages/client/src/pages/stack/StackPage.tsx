@@ -11,6 +11,7 @@ import {
   BookOpen, Film, PlayCircle, Box,
 } from 'lucide-react';
 import World from './cuber/world';
+import Cubelet from './cuber/cubelet';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import { FACE } from './cuber/define';
@@ -287,8 +288,9 @@ export default function StackPage() {
     ro.observe(container);
 
     // 滚轮 / 双指捏合缩放: 实时改 world.scale + resize, 滚动停止后同步到 settings
+    // 上限取消 (用户期望"无限放大"); 超出 slider 1.5 上限就不回写,避免 applySettings 反向 reset
     const SCALE_MIN = 0.3;
-    const SCALE_MAX = 3.0;
+    const SCALE_MAX = Infinity;
     const settingsFromScale = (s: number) => Math.round((s - 0.5) * 100);  // mapScale 的反函数
     let scaleSyncTimer: number | null = null;
     const syncScaleToSettings = () => {
@@ -296,6 +298,7 @@ export default function StackPage() {
       scaleSyncTimer = window.setTimeout(() => {
         const w = worldRef.current;
         if (!w) return;
+        if (w.scale < 0.5 || w.scale > 1.5) return;  // 超出 slider 映射范围,保留 world.scale 不动 settings
         const v = Math.max(0, Math.min(100, settingsFromScale(w.scale)));
         setSettings((prev) => prev.scale === v ? prev : { ...prev, scale: v });
       }, 250);
@@ -311,25 +314,61 @@ export default function StackPage() {
     };
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
-    // 双指捏合: pointerdown 跟踪两个 active pointer
+    // 屏幕像素 → 世界单位 pan delta:乘 cube 在该 fov + scale 下的等效世界尺寸 / canvas 像素
+    const screenDeltaToWorld = (dxPx: number, dyPx: number) => {
+      const w = worldRef.current;
+      if (!w) return { x: 0, y: 0 };
+      const cubeWorldSize = Cubelet.SIZE * 3;  // 跟 camera distance 系数同源
+      const px = w.height;  // 视野高度对应世界 cubeWorldSize / scale
+      const k = (cubeWorldSize / w.scale) / Math.max(px, 1);
+      // "drag the cube" 直觉:屏拖右 → cube 跟手向右,即 camera 向左 → panX 减
+      return { x: -dxPx * k, y: dyPx * k };
+    };
+
+    // 双指捏合 + 双指中点位移 pan;桌面右键拖拽 pan
     const activePointers = new Map<number, { x: number; y: number }>();
     let pinchStartDist = 0;
     let pinchStartScale = 0;
+    let pinchStartCenter = { x: 0, y: 0 };
+    let pinchStartPan = { x: 0, y: 0 };
     let pinching = false;
+    let mousePanning = false;
+    let panLastX = 0;
+    let panLastY = 0;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
     const onPointerDown = (e: PointerEvent) => {
+      // 桌面右键 / 中键 = pan
+      if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1)) {
+        e.preventDefault();
+        mousePanning = true;
+        panLastX = e.clientX;
+        panLastY = e.clientY;
+        renderer.domElement.setPointerCapture(e.pointerId);
+        return;
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (activePointers.size === 2) {
         const [a, b] = [...activePointers.values()];
         pinchStartDist = dist(a, b);
         pinchStartScale = world.scale;
+        pinchStartCenter = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        pinchStartPan = { x: world.panX, y: world.panY };
         pinching = true;
-        world.controller.disable = true;  // 暂停旋转, 让捏合主导
+        world.controller.disable = true;
       }
     };
     const onPointerMove = (e: PointerEvent) => {
+      if (mousePanning && e.pointerType === 'mouse') {
+        const d = screenDeltaToWorld(e.clientX - panLastX, e.clientY - panLastY);
+        panLastX = e.clientX;
+        panLastY = e.clientY;
+        world.panX += d.x;
+        world.panY += d.y;
+        world.resize();
+        return;
+      }
       if (e.pointerType !== 'touch') return;
       if (!activePointers.has(e.pointerId)) return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -338,10 +377,19 @@ export default function StackPage() {
         const [a, b] = [...activePointers.values()];
         const ratio = dist(a, b) / Math.max(pinchStartDist, 1);
         world.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, pinchStartScale * ratio));
+        const center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const d = screenDeltaToWorld(center.x - pinchStartCenter.x, center.y - pinchStartCenter.y);
+        world.panX = pinchStartPan.x + d.x;
+        world.panY = pinchStartPan.y + d.y;
         world.resize();
       }
     };
     const onPointerUp = (e: PointerEvent) => {
+      if (mousePanning && e.pointerType === 'mouse') {
+        mousePanning = false;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+        return;
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
@@ -354,6 +402,7 @@ export default function StackPage() {
     renderer.domElement.addEventListener('pointermove', onPointerMove, { passive: false });
     renderer.domElement.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('pointercancel', onPointerUp);
+    // 注:右键 contextmenu 已在前面 mount 时屏蔽,这里不重复
 
     let raf = 0;
     const fpsBuf: number[] = [];
