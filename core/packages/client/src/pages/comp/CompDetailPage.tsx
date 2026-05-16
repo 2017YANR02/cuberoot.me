@@ -28,6 +28,7 @@ import { formatWcaResult } from '../../utils/wca_format_result';
 import { rememberRecent } from './CompIndexPage';
 import { useLiveStream, applyResultPatch, type LivePatch } from './useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from './useWcaLiveStream';
+import { loadPersonsIndex, getPersonByWcaId } from '@cuberoot/shared';
 import './comp.css';
 
 // ─── 类型(与 server 端 cubing_live.ts 保持一致) ─────────────────────────
@@ -219,6 +220,34 @@ export default function CompDetailPage() {
   // _flagDataVer 仅用来触发重渲染(loadFlagData 完成后 localizeCompName/countryName 才能查到中文)
   const [, setFlagDataVer] = useState(0);
   useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
+
+  // 名字 enrichment: 部分数据源(cubing.com /competitors 报名表)只给英文名,
+  // 通过 @cuberoot/shared persons_index 查"English (中文)"全名,跟 /recon / WcaPersonPicker 同 source.
+  // 仅当存在 wcaid 且名字没括号时触发(已是全格式的不重复加载 10MB 索引).
+  useEffect(() => {
+    if (!data) return;
+    const needFix = Object.values(data.users).some(u => u.wcaid && !u.name.includes('('));
+    if (!needFix) return;
+    let cancelled = false;
+    loadPersonsIndex().then(() => {
+      if (cancelled) return;
+      setData(prev => {
+        if (!prev) return prev;
+        const users = { ...prev.users };
+        let changed = false;
+        for (const [num, u] of Object.entries(users)) {
+          if (!u.wcaid || u.name.includes('(')) continue;
+          const p = getPersonByWcaId(u.wcaid);
+          if (p && p.name && p.name !== u.name) {
+            users[num] = { ...u, name: p.name };
+            changed = true;
+          }
+        }
+        return changed ? { ...prev, users } : prev;
+      });
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [data?.slug, data?.fetchedAt]);
   // PR map: wcaid → PbByEvent. null = fetched, no data.
   const [pbVer, setPbVer] = useState(0); // bump to force re-render after prefetch
   const [openedCuber, setOpenedCuber] = useState<number | null>(null);
