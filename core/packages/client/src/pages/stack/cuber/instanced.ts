@@ -84,8 +84,8 @@ export default class InstancedRenderer extends THREE.Group {
   /** false 时 staticInner/movingInner 仍存在(便于 dispose)但不写矩阵、不渲染。 */
   private hasInner: boolean;
 
-  private stickerMaterial: THREE.MeshLambertMaterial;
-  private movingStickerMaterial: THREE.MeshLambertMaterial;
+  private stickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
+  private movingStickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
 
   /** hint stickers (alg.cubing.net "hint facelets"): 每个 sticker 沿 face normal
    * 推到 cube 外侧 (order+1) 倍位置, BasicMaterial 半透明全亮。提示背面颜色。
@@ -192,9 +192,10 @@ export default class InstancedRenderer extends THREE.Group {
       this.cubeletSlots.set(cubelet.initial, list);
     }
 
-    // Sticker meshes
-    this.stickerMaterial = new THREE.MeshLambertMaterial();
-    this.movingStickerMaterial = new THREE.MeshLambertMaterial();
+    // Sticker meshes — N≥50 用 unlit Basic 省 fragment shader 光照
+    const isSuperOrderForSticker = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    this.stickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
+    this.movingStickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
     this.movingSticker.count = 0;
