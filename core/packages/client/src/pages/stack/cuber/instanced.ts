@@ -178,8 +178,10 @@ export default class InstancedRenderer extends THREE.Group {
 
     const T2 = performance.now();
 
-    // Sticker slots
+    // Sticker slots — 共享 6 个 face localMat,而不是每 slot 各 alloc 一个 (376k → 6,省 ~150ms)
     const zScale = this._thickness ? HALF : 1;
+    const faceLocalMats: THREE.Matrix4[] = [];
+    for (let f = 0; f < 6; f++) faceLocalMats.push(makeStickerLocalMatrix(f, zScale));
     for (const cubelet of cubelets) {
       const list: number[] = [];
       for (let f = 0; f < 6; f++) {
@@ -191,7 +193,7 @@ export default class InstancedRenderer extends THREE.Group {
         this.stickerSlots.push({
           cubeletInitial: cubelet.initial,
           face: f,
-          localMat: makeStickerLocalMatrix(f, zScale),
+          localMat: faceLocalMats[f],
           visible: true,
         });
       }
@@ -243,10 +245,11 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingHint.visible = false;
     this.movingHint.count = 0;
 
-    // localMats 仍 eager 建 (beginSlice/endSlice 依赖),延后的只是上传到 InstancedMesh
+    // hintLocalMats 仍 eager 建 (beginSlice/endSlice 依赖),共享 6 个 face 矩阵省 alloc
+    const faceHintMatsInit: THREE.Matrix4[] = [];
+    for (let f = 0; f < 6; f++) faceHintMatsInit.push(makeStickerLocalMatrix(f, zScale, this.hintDistance));
     for (let i = 0; i < this.stickerSlots.length; i++) {
-      const slot = this.stickerSlots[i];
-      this.hintLocalMats.push(makeStickerLocalMatrix(slot.face, zScale, this.hintDistance));
+      this.hintLocalMats.push(faceHintMatsInit[this.stickerSlots[i].face]);
     }
     // Hint 默认 off; 延后 setMatrixAt + setColorAt 上传到首次 set hint(true)
     // (hint 输出走 staticHint.visible=false,在 visible 之前 GPU 不读其 instance buffer,延后无副作用)
@@ -638,10 +641,17 @@ export default class InstancedRenderer extends THREE.Group {
     if (value === this._thickness) return;
     this._thickness = value;
     const zScale = value ? HALF : 1;
+    // 6 个 face local matrix 共享给所有同 face slot,而不是 376k × alloc
+    const faceLocalMats: THREE.Matrix4[] = [];
+    const faceHintMats: THREE.Matrix4[] = [];
+    for (let f = 0; f < 6; f++) {
+      faceLocalMats.push(makeStickerLocalMatrix(f, zScale));
+      faceHintMats.push(makeStickerLocalMatrix(f, zScale, this.hintDistance));
+    }
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
-      slot.localMat = makeStickerLocalMatrix(slot.face, zScale);
-      this.hintLocalMats[i] = makeStickerLocalMatrix(slot.face, zScale, this.hintDistance);
+      slot.localMat = faceLocalMats[slot.face];
+      this.hintLocalMats[i] = faceHintMats[slot.face];
     }
     // Rebuild sticker + hint matrices
     for (let i = 0; i < this.stickerSlots.length; i++) {
