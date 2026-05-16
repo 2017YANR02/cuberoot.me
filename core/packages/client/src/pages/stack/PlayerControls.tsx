@@ -183,21 +183,28 @@ export default function PlayerControls({
     return () => window.removeEventListener('keydown', onKey, true);
   }, [kbVariant, keymap, applyMove]);
 
-  // 随机打乱:WCA 2-7 阶走 tnoodle,其它阶用 world 自带 '*' 落到 cube 上 (不入 setup 文本)
+  // 随机打乱:WCA 2-7 阶走 tnoodle 官方 scramble,其它阶用 huazhechen scrambler (9N moves)。
+  // 两条路径都把字符串写入 setup 框 → useEffect → twister.setup() instant 应用。
   const handleScramble = useCallback(async () => {
     if (!world) return;
+    let scramble: string | null = null;
     if (order >= 2 && order <= 7) {
       const eventId = `${order}${order}${order}`;
-      const s = await tnoodleRandomScramble(eventId);
-      if (s) {
-        setSetupDraft(s);
-        onSetupChange(s);
-        const el = setupElRef.current;
-        if (el instanceof HTMLTextAreaElement) el.value = s;
-        return;
-      }
+      scramble = await tnoodleRandomScramble(eventId);
     }
-    world.cube.twister.twist(new TwistAction('*'), true, true);
+    if (!scramble) {
+      // tnoodle 失败 / 阶数不在 WCA 范围,本地生成
+      scramble = world.cube.twister.scrambler();
+    }
+    setSetupDraft(scramble);
+    onSetupChange(scramble);
+    const el = setupElRef.current;
+    if (el instanceof HTMLTextAreaElement) {
+      el.value = scramble;
+      // AlgInput 是非受控,直接赋值不会触发 autoResize,手动撑一下
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
   }, [world, order, onSetupChange]);
 
   return (
