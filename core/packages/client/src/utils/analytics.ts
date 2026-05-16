@@ -14,12 +14,13 @@ import { apiUrl } from './api_base';
 
 interface Current {
   id: number | null;
+  ticket: string | null;         // HMAC from /pv, required by /dwell
   pendingFor: string | null;     // path being requested — used to dedupe rapid duplicates
   startedAt: number;
   path: string;
 }
 
-let current: Current = { id: null, pendingFor: null, startedAt: 0, path: '' };
+let current: Current = { id: null, ticket: null, pendingFor: null, startedAt: 0, path: '' };
 let lifecycleBound = false;
 
 // SPA route paths that we should NOT track (iframes / upstream HTML mounts).
@@ -30,7 +31,7 @@ function shouldTrack(path: string): boolean {
   return !EXCLUDE_PREFIXES.some(p => path === p || path.startsWith(`${p}/`));
 }
 
-async function sendPv(path: string, ref: string): Promise<number | null> {
+async function sendPv(path: string, ref: string): Promise<{ id: number | null; t: string | null }> {
   try {
     const res = await fetch(apiUrl('/v1/analytics/pv'), {
       method: 'POST',
@@ -39,16 +40,16 @@ async function sendPv(path: string, ref: string): Promise<number | null> {
       keepalive: true,
       credentials: 'omit',
     });
-    if (!res.ok) return null;
-    const j = await res.json() as { id: number | null };
-    return j.id ?? null;
+    if (!res.ok) return { id: null, t: null };
+    const j = await res.json() as { id: number | null; t?: string };
+    return { id: j.id ?? null, t: j.t ?? null };
   } catch {
-    return null;
+    return { id: null, t: null };
   }
 }
 
-function sendDwell(id: number, ms: number): void {
-  const body = JSON.stringify({ id, ms });
+function sendDwell(id: number, ms: number, ticket: string): void {
+  const body = JSON.stringify({ id, ms, t: ticket });
   // navigator.sendBeacon is the right tool here — survives page unload.
   if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
     try {
@@ -70,11 +71,12 @@ function sendDwell(id: number, ms: number): void {
 }
 
 function flushPrevious(): void {
-  if (current.id != null && current.startedAt > 0) {
+  if (current.id != null && current.ticket != null && current.startedAt > 0) {
     const ms = Date.now() - current.startedAt;
-    if (ms > 0 && ms < 6 * 60 * 60 * 1000) sendDwell(current.id, ms);
+    if (ms > 0 && ms < 6 * 60 * 60 * 1000) sendDwell(current.id, ms, current.ticket);
   }
   current.id = null;
+  current.ticket = null;
   current.startedAt = 0;
 }
 
@@ -90,11 +92,20 @@ export function trackPageview(path: string, ref?: string): void {
   current.path = path;
   current.pendingFor = path;
   current.startedAt = Date.now();
-  void sendPv(path, ref ?? document.referrer ?? '').then(id => {
-    // Only adopt the id if user hasn't navigated again in the meantime.
+  // Snapshot the start time for the closure — if user navigates again before the
+  // /pv response lands, we want to record A's dwell using A's startedAt, not B's.
+  const snapStartedAt = current.startedAt;
+  void sendPv(path, ref ?? document.referrer ?? '').then(({ id, t }) => {
+    if (id == null || t == null) return;
     if (current.pendingFor === path) {
+      // Still on the same page → keep the id around for the eventual dwell flush.
       current.id = id;
+      current.ticket = t;
       current.pendingFor = null;
+    } else {
+      // User already navigated away; fire the dwell for the page we just registered.
+      const ms = Date.now() - snapStartedAt;
+      if (ms > 0 && ms < 6 * 60 * 60 * 1000) sendDwell(id, ms, t);
     }
   });
 }
