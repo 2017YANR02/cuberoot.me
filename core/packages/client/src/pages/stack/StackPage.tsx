@@ -655,6 +655,8 @@ export default function StackPage() {
   const getCanvas = useCallback((): HTMLCanvasElement | null => {
     return rendererRef.current?.domElement ?? null;
   }, []);
+  const getWorld = useCallback((): World | null => worldRef.current, []);
+  const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
   const playerSetup = useMemo(() => setupParam, [setupParam]);
   const playerAlg = useMemo(() => algParam, [algParam]);
@@ -752,7 +754,13 @@ export default function StackPage() {
             icon={Film}
             label={t('录制', 'Record')}
           >
-            <DirectorPanel getCanvas={getCanvas} />
+            <DirectorPanel
+              getCanvas={getCanvas}
+              getWorld={getWorld}
+              getRenderer={getRenderer}
+              setup={setupParam}
+              alg={algParam}
+            />
           </CollapsibleSection>
         </aside>
       </div>
