@@ -498,6 +498,20 @@ export default function CompDetailPage() {
     });
   }, [data, currentRound, filterParam]);
 
+  // 后续 round 出现过的选手 = 晋级的人,在当前 round 表里浅绿色高亮
+  const advancers = useMemo(() => {
+    if (!data || !currentRound) return new Set<number>();
+    const rs = currentRound.ev.rs;
+    const idx = rs.findIndex(r => r.i === currentRound.rd.i);
+    if (idx < 0 || idx >= rs.length - 1) return new Set<number>();
+    const set = new Set<number>();
+    for (let i = idx + 1; i < rs.length; i++) {
+      const key = roundKey(currentRound.ev.i, rs[i].i);
+      for (const r of data.resultsByRound[key] || []) set.add(r.n);
+    }
+    return set;
+  }, [data, currentRound]);
+
   // ── prefetch PRs for current round ────────────────────────────────────
   // wca_db 源 server 已经给了 LiveResult.pS / pA 历史 PR 标志,classifyPr 优先用 server flag.
   // 跳过 client 端 WCA API prefetch — 否则 WC2019 这种大型赛事几千选手并发 fetch 直接触发 429.
@@ -738,7 +752,7 @@ export default function CompDetailPage() {
             className={`comp-view-tab${viewParam === 'psych' ? ' is-active' : ''}`}
             onClick={() => onChangeView('psych')}
           >
-            {isZh ? '赛前榜' : 'Psych Sheet'}
+            {isZh ? '预排名' : 'Psych Sheet'}
           </button>
         </div>
 
@@ -778,6 +792,7 @@ export default function CompDetailPage() {
               round={currentRound?.rd}
               isZh={isZh}
               pbMap={pbMap}
+              advancers={advancers}
               onClickCuber={n => setOpenedCuber(n)}
             />
           </>
@@ -814,10 +829,11 @@ interface ResultsTableProps {
   round: RoundMeta | undefined;
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
+  advancers?: Set<number>;
   onClickCuber: (number: number) => void;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: ResultsTableProps) {
+function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber }: ResultsTableProps) {
   if (!round) return null;
   const isAverageFormat = round.f === 'a' || round.f === 'm' || round.f === '';
   const showAvg = isAverageFormat;
@@ -847,8 +863,10 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
             const pb = pbMap[u.wcaid];
             const { singlePr, averagePr } = classifyPr(r, pb);
             const isOdd = idx % 2 === 1;
+            const advanced = advancers?.has(r.n);
+            const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
             return (
-              <tr key={r.i || `${r.n}:${idx}`} className={isOdd ? 'row-odd' : ''}>
+              <tr key={r.i || `${r.n}:${idx}`} className={cls}>
                 <td className="td-place">{r.b === 0 ? '-' : (idx + 1)}</td>
                 <td className="td-no">{r.n}</td>
                 <td className="td-person">

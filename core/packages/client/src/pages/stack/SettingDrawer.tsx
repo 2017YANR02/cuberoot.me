@@ -275,6 +275,10 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
               <span className="stack-mouse-act">{t('逆时针', 'Counter-clockwise')}</span>
             </div>
             <div>
+              <span className="stack-mouse-op"><kbd>Alt</kbd> {t('+ 单击 / 拖动', '+ click / drag')}</span>
+              <span className="stack-mouse-act">{t('宽层转动 (深度=宽度):内层 → Rw/3Lw/...,中线 → x/y/z', 'Wide turn (depth = width): inner → Rw/3Lw/..., center → x/y/z')}</span>
+            </div>
+            <div>
               <span className="stack-mouse-op">{t('拖动 sticker', 'Drag sticker')}</span>
               <span className="stack-mouse-act">{t('沿手势方向转该层', 'Rotate slice along drag direction')}</span>
             </div>

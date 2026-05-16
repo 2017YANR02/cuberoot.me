@@ -13,12 +13,14 @@ export class TouchAction {
   y: number;
   shift: boolean;
   button: number;
-  constructor(type: string, x: number, y: number, shift = false, button = 0) {
+  alt: boolean;
+  constructor(type: string, x: number, y: number, shift = false, button = 0, alt = false) {
     this.type = type;
     this.x = x;
     this.y = y;
     this.shift = shift;
     this.button = button;
+    this.alt = alt;
   }
 }
 
@@ -36,13 +38,15 @@ export default class Controller {
   public rotating = false;
   public angle = 0;
   public contingle = 0;
-  public taps: ((index: number, face: FACE | null, opts: { shift: boolean; button: number }) => void)[];
+  public taps: ((index: number, face: FACE | null, opts: { shift: boolean; button: number; alt: boolean }) => void)[];
   // 拖拽 / 整体旋转完成时 (cube.record 之后) 触发的 user-twist 回调。
   // 用于把 drag 出来的 move 自动追加到上层 (PlayerControls) 的解法输入框。
   public userTwist: ((action: TwistAction) => void)[] = [];
   // mousedown 时记录修饰键,handleUp 单击分支用
   private downShift = false;
   private downButton = 0;
+  // Alt 修饰键:按住 = 强制单层切片,不走 wide 深度推断
+  private downAlt = false;
   public ray = new THREE.Ray();
   public down = new THREE.Vector2(0, 0);
   public move = new THREE.Vector2(0, 0);
@@ -50,6 +54,10 @@ export default class Controller {
   public holder = new Holder();
   public vector = new THREE.Vector3();
   public group: CubeGroup | null = null;
+  /** 宽层 wide turn 的额外 group 列表 (不含 this.group)。空 = 单层切片(现状)。 */
+  public wideExtras: CubeGroup[] = [];
+  /** 宽层 wide turn 的 notation (如 "Rw"/"3Lw'"/"x")。空串 = 用 this.group.name(现状)。 */
+  public wideSign: string = "";
   public axis: string = "y";
   public planes = [
     new THREE.Plane(new THREE.Vector3(1, 0, 0), (-Cubelet.SIZE * 3) / 2),
@@ -96,6 +104,8 @@ export default class Controller {
         if (this.group.angle != angle) {
           const delta = (angle - this.group.angle) / 2;
           this.group.angle += delta;
+          // 宽层:extras 跟 primary 走 (=, 不是 +=delta,防累计漂移)
+          for (const g of this.wideExtras) g.angle = this.group.angle;
           this.world.dirty = true;
         }
       } else {
@@ -266,6 +276,24 @@ export default class Controller {
           tweener.finish();
           success = this.group.drag();
         }
+        // 默认单层切片;Alt 修饰键按下 → 走 wide (深度 = 宽度)
+        this.wideExtras = [];
+        this.wideSign = "";
+        if (this.downAlt) {
+          const order = this.world.cube.order;
+          const wide = CubeGroup.wideFromClick(this.group.axis, this.group.layer, order);
+          this.wideSign = wide.layers.length > 1 ? wide.sign : "";
+          for (const l of wide.layers) {
+            if (l === this.group.layer) continue;
+            const g = this.world.cube.table.groups[this.group.axis][l];
+            let s = g.drag();
+            while (!s) {
+              tweener.finish();
+              s = g.drag();
+            }
+            this.wideExtras.push(g);
+          }
+        }
         this.contingle = this.group.angle;
         this.vector.crossVectors(this.holder.vector, this.holder.plane.normal);
         this.holder.vector.multiplyScalar(this.vector.x + this.vector.y + this.vector.z);
@@ -320,7 +348,7 @@ export default class Controller {
           break;
       }
       for (const tap of this.taps) {
-        tap(this.holder.index, face, { shift: this.downShift, button: this.downButton });
+        tap(this.holder.index, face, { shift: this.downShift, button: this.downButton, alt: this.downAlt });
       }
     }
     if (this.rotating) {
@@ -339,11 +367,15 @@ export default class Controller {
       }
       if (this.group) {
         this.group.twist(angle, false);
+        // 宽层:extras 同步 twist (snap 到 90° 倍数动画)
+        for (const g of this.wideExtras) g.twist(angle, false);
         if (angle != 0) {
           let times = Math.round(angle / (Math.PI / 2));
           const reverse = times < 0;
           times = Math.abs(times);
-          const action = new TwistAction(this.group.name, reverse, times);
+          // wideSign 非空 = 宽层 / 整体转, 用拼好的 notation;否则用 group.name (单层切片现状)
+          const sign = this.wideSign || this.group.name;
+          const action = new TwistAction(sign, reverse, times);
           this.world.cube.record(action);
           for (const cb of this.userTwist) cb(action);
         }
@@ -363,6 +395,8 @@ export default class Controller {
       }
     }
     this.group = null;
+    this.wideExtras = [];
+    this.wideSign = "";
     this.holder.index = -1;
     this.dragging = false;
     this.rotating = false;
@@ -379,6 +413,7 @@ export default class Controller {
         this.down.y = action.y;
         this.downShift = action.shift;
         this.downButton = action.button;
+        this.downAlt = action.alt;
         this.tick = new Date().getTime();
         this.handleDown();
         break;

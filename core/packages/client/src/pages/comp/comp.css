@@ -435,7 +435,10 @@
 }
 .comp-table tbody tr:last-child td { border-bottom: none; }
 .comp-table tbody tr.row-odd { background: color-mix(in srgb, var(--foreground) 2.5%, transparent); }
+.comp-table tbody tr.row-advanced { background: color-mix(in srgb, var(--signal-success) 16%, transparent); }
+.comp-table tbody tr.row-advanced.row-odd { background: color-mix(in srgb, var(--signal-success) 22%, transparent); }
 .comp-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.comp-table tbody tr.row-advanced:hover { background: color-mix(in srgb, var(--signal-success) 28%, transparent); }
 
 .td-no { color: var(--muted-foreground); }
 .th-avg, .td-avg, .th-best, .td-best { font-variant-numeric: tabular-nums; }

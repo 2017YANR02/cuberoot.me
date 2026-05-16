@@ -17,7 +17,7 @@ const CITY_ZH: Record<string, string> = {
   'Chifeng': '赤峰', 'Dalian': '大连', 'Dandong': '丹东', 'Dongguan': '东莞',
   'Ezhou': '鄂州', 'Foshan': '佛山', 'Fushun': '抚顺', 'Fuzhou': '福州',
   'Guangzhou': '广州', 'Guilin': '桂林', 'Guiyang': '贵阳', 'Haikou': '海口',
-  'Hangzhou': '杭州', 'Harbin': '哈尔滨', 'Hefei': '合肥', 'Hengyang': '衡阳',
+  'Hangzhou': '杭州', 'Harbin': '哈尔滨', 'Hefei': '合肥', 'Hengyang': '衡阳', 'Huanggang': '黄冈',
   'Heze': '菏泽', 'Hohhot': '呼和浩特', 'Huaibei': '淮北', 'Huizhou': '惠州',
   'Huzhou': '湖州', 'Jiangmen': '江门', 'Jiaozuo': '焦作', 'Jiaxing': '嘉兴',
   'Jieyang': '揭阳', 'Jinan': '济南', 'Jinhua': '金华', 'Jiujiang': '九江',
@@ -57,11 +57,19 @@ const CITY_ZH: Record<string, string> = {
   'Amsterdam': '阿姆斯特丹', 'Brussels': '布鲁塞尔', 'Vienna': '维也纳',
   'Moscow': '莫斯科', 'Sydney': '悉尼', 'Melbourne': '墨尔本',
   'Toronto': '多伦多', 'Vancouver': '温哥华', 'Montreal': '蒙特利尔',
+  'São Paulo': '圣保罗', 'Sao Paulo': '圣保罗',
+  'Las Vegas': '拉斯维加斯', 'Lake Buena Vista': '布埃纳维斯塔湖',
+  'Düsseldorf': '杜塞尔多夫', 'Dusseldorf': '杜塞尔多夫',
+  'Budapest': '布达佩斯',
 };
 
-/** 从 "City, Province" 形式里只取 city，剥掉 " City" 后缀和尾部邮编数字 */
+/** 从 "City, Province" 形式里只取 city,剥掉 " City" 后缀和尾部邮编数字.
+ *  WCA 把非拉丁字母国家的城市写成 "<native> (English)"(如 "인천광역시 (Incheon)") —
+ *  这种取括号内英文当 key,让 CITY_ZH 命中. */
 export function normalizeCityKey(city: string): string {
   let s = city.split(/,\s*/)[0].trim();
+  const paren = s.match(/\(([^)]+)\)\s*$/);
+  if (paren && /[A-Za-z]/.test(paren[1])) return paren[1].trim();
   s = s.replace(/\s+\d+$/, '');
   s = s.replace(/\s+City$/i, '');
   return s.trim();
