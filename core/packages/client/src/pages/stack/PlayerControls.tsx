@@ -10,6 +10,7 @@ import { Play, Pause, SkipBack, SkipForward, RotateCcw, FlipHorizontal2, FlipVer
 import { Alg } from 'cubing/alg';
 import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
+import CubeGroup from './cuber/group';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
 import { tnoodleRandomScramble } from '../../utils/cubingScramble';
@@ -49,6 +50,12 @@ export default function PlayerControls({
   const [playing, setPlaying] = useState(false);
   const [kbVariant, setKbVariant] = useState<'alg' | 'qwerty' | null>(null);
   const [speed, setSpeed] = useState(1);
+  // speed 同步到 twist 内部 tween 时长 (CubeGroup.frames 默认 30)。
+  // 这样打乱 (twister.push 走 callback 链) 跟 alg 播放共用同一速度。
+  // 下限 2 帧防 speed 过大变成 instant。
+  useEffect(() => {
+    CubeGroup.frames = Math.max(2, Math.round(30 / speed));
+  }, [speed]);
   const playTimerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
   const setupElRef = useRef<HTMLTextAreaElement | HTMLDivElement | null>(null);
