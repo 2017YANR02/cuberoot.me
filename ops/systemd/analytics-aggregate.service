@@ -1,0 +1,11 @@
+[Unit]
+Description=Aggregate yesterday's pageviews into traffic_daily and prune old rows
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/root/core-api/.env
+ExecStart=/bin/bash -c 'PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /root/core-api/sql/aggregate_traffic_daily.sql'
+StandardOutput=journal
+StandardError=journal
