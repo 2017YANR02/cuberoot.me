@@ -1,6 +1,6 @@
 /**
  * 参赛届别排行 — 同届(首参赛年)内排名
- * /wca-stats/cohort-ranks
+ * /wca/cohort-ranks
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -81,7 +81,7 @@ export default function CohortRanksPage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? '参赛届别排行' : 'Cohort Ranks'}</h1>

@@ -1,7 +1,7 @@
 // NOTE: 各国世界纪录数量（含按年累计时间轴）
 // 扩展：除了原 rows（国家总数降序），额外输出 years[] + cumulative{countryName: number[]}
 // 用于 /globe 的 WR 模式（choropleth + 年份 slider + play/pause）
-// 和 /wca-stats/world_records_by_country 的年份 slider
+// 和 /wca/world_records_by_country 的年份 slider
 import { Statistic } from '../core/statistic.js';
 import type { StatJson } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';

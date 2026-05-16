@@ -14,8 +14,8 @@ dark/light 切换已落地 (2026-05-14)。token 在 `src/index.css :root`,toggle
 | 2 | battle | `/battle` | dark(纯黑 AMOLED)| ❌ 全硬码 `#000 #f0ebe3` | 无,需新建 |
 | 3 | memo (colpi) | `/memo/colpi` | light | ✅ 严格 token | `--c-*` |
 | 4 | alg | `/alg` | **跟随系统**(已完成)| ✅ token + `prefers-color-scheme` | `--alg-*` |
-| 5 | wca-stats | `/wca-stats` 家族 | dark | ❌ 硬码(2026-05-14 刚清掉伪 token)| 无,需新建 |
-| 6 | calendar | `/calendar` | light | ✅ 严格 token | 短名 `--bg/--text` |
+| 5 | wca-stats | `/wca` 家族 | dark | ❌ 硬码(2026-05-14 刚清掉伪 token)| 无,需新建 |
+| 6 | calendar | `/wca/calendar` | light | ✅ 严格 token | 短名 `--bg/--text` |
 | 7 | calc | `/calc` | light | ❌ 部分硬码,body bg `#E7DFD5` | 无,需新建 |
 | 8 | wb | `/wb` | light | ✅ 严格 token | `--wb-*` |
 

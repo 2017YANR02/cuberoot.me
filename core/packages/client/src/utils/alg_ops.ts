@@ -1,7 +1,7 @@
 /**
- * Lightweight alg utilities for /notation. Uses cubing/alg's Alg class for
- * parsing + simplify + invert; mirror operations done via face-letter substitution
- * because cubing.js doesn't expose a stable mirror API at this version.
+ * Lightweight alg utilities — wraps cubing/alg's Alg class for parsing + simplify
+ * + invert; mirror operations done via face-letter substitution because cubing.js
+ * doesn't expose a stable mirror API at this version.
  *
  * Move count metrics:
  *  - HTM (face turn metric):  face/wide move = 1, slice (M/E/S) = 2, rotation = 0

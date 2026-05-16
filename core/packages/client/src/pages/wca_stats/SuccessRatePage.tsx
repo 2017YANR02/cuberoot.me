@@ -1,6 +1,6 @@
 /**
  * 项目成功率 — solved/attempted per (event, person)
- * /wca-stats/success-rate
+ * /wca/success-rate
  */
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -71,7 +71,7 @@ export default function SuccessRatePage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? '项目成功率' : 'Event Success Rate'}</h1>

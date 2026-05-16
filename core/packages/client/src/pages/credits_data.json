@@ -115,8 +115,8 @@
   {
     "name": "cubing.pro",
     "url": "https://cubing.pro/",
-    "zh": "/wca-stats 各子页 + 选手详情页 UI/概念参考",
-    "en": "UI / concept reference for /wca-stats sub-pages + person detail page",
-    "long_en": "UI/概念参考来源:`/wca-stats` 子页(历史排名 / 大满贯 / 全部成绩排行 / 当年成绩排行 / 参赛届别排行 / 项目成功率 / 全项目达成 / 全项目排行)+ `/wca-stats/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
+    "zh": "/wca 各子页 + 选手详情页 UI/概念参考",
+    "en": "UI / concept reference for /wca sub-pages + person detail page",
+    "long_en": "UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排行 / 当年成绩排行 / 参赛届别排行 / 项目成功率 / 全项目达成 / 全项目排行)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
   }
 ]

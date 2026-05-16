@@ -1,6 +1,6 @@
 /**
  * Historical Ranks - 任意 (event, year, country, type) 切片
- * /wca-stats/historical
+ * /wca/historical
  *
  * API: GET /v1/wca/historical-ranks 返回当年末累积最佳排名(分页).
  * 数据每天 GH Actions 灌一次,nginx 缓存 1 day.
@@ -110,7 +110,7 @@ export default function HistoricalRanksPage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back">
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back">
             <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
           </Link>
           <LangToggle />

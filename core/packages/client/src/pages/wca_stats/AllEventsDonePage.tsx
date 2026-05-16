@@ -1,6 +1,6 @@
 /**
  * 全项目达成排行榜 — 完成全 17 项 WCA 项目的人,按耗时升序
- * /wca-stats/all-events-done
+ * /wca/all-events-done
  */
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -70,7 +70,7 @@ export default function AllEventsDonePage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? '全项目达成排行榜' : 'All Events Achievement'}</h1>

@@ -1,6 +1,6 @@
 // NOTE: Top 10 History — bar chart race(对齐参考视频的视觉:黑底 + X 轴刻度 + 横条)
 // 数据源:stats/top10_history.json(主索引) + stats/top10_history/{eventId}.json(per-event lazy)
-// 路由:/wca-stats/top10_history
+// 路由:/wca/top10_history
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Download } from 'lucide-react';

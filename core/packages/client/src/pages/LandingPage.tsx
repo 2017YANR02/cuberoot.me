@@ -6,12 +6,11 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
-  Swords, CalendarDays, BookOpen, Earth as GlobeIcon,
-  Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
+  Film, ScanSearch,
+  Swords, BookOpen,
+  Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
   ImagePlus,
-  Wand2,
-  Code as CodeIcon, Brain, Box, Radio,
+  Code as CodeIcon, Brain, Box,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -284,7 +283,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   brand:           { en: 'CubeRoot', zh: 'CubeRoot' },
   tagline:         { en: 'Solve. Train. Analyze.', zh: '解法 · 训练 · 分析' },
   solver:          { en: 'or18 Solver', zh: 'or18 求解器' },
-  wcaStats:        { en: 'WCA Stats', zh: 'WCA 统计' },
+  wcaStats:        { en: 'WCA', zh: 'WCA' },
   recon:           { en: 'Recon', zh: '复盘' },
   algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器' },
   cuberootTrainer: { en: 'Trainer', zh: '训练器' },
@@ -307,19 +306,12 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   visualcubeEditor:{ en: 'VisualCube', zh: '魔方可视化' },
   analyze:         { en: 'Analyzer', zh: '打乱分析' },
   gen:             { en: 'Scrambles', zh: '生成打乱' },
-  notation:        { en: 'Notation', zh: '记号沙盒' },
   memo:            { en: 'Memo', zh: '记忆' },
   code:            { en: 'Code', zh: '编程' },
   stack:           { en: 'Stack', zh: '魔方栈' },
   comp:            { en: 'Comp', zh: '比赛' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
-  // Section titles
-  secTrain:        { en: 'Train',  zh: '训练' },
-  secLearn:        { en: 'Learn',  zh: '学习' },
-  secWca:          { en: 'Compete', zh: '比赛' },
-  secTools:        { en: 'Tool',   zh: '工具' },
-  secOther:        { en: 'Other',  zh: '其他' },
 };
 
 // ── 卡片配置 ──────────────────────────────────────────────────────────────
@@ -340,16 +332,24 @@ interface CardConfig {
   comingSoon?: boolean;
 }
 
-// NOTE: 落地页按 5 大类分组渲染。每个 section 是独立 12 列 grid；
-// 卡片 tier 调整成让每个 section 行尾对齐(标准卡 3 列 / medium 4 列 / hero-side 6 列 / hero 6 列 × 2 行)。
+// NOTE: 落地页按 4 大类分组渲染 (WCA 单独作 hero,不进 section)。每个 section
+// 是独立 12 列 grid。卡片 tier:standard 3 列 / medium 4 列 / hero 6 列 × 2 行。
+// 每个 section 头部走 V2 narrative pattern:eyebrow + serif title + sub-line。
+type I18n = { en: string; zh: string };
 interface Section {
-  titleKey: keyof typeof TEXTS;
+  id: string;
+  eyebrow: I18n;
+  title: I18n;
+  sub: I18n;
   cards: CardConfig[];
 }
 
 const SECTIONS: Section[] = [
   {
-    titleKey: 'secTrain',
+    id: 'train',
+    eyebrow: { en: 'TRAIN · 训练', zh: 'TRAIN · 训练' },
+    title:   { en: 'Drill, time, refine.', zh: '练习、计时、复盘。' },
+    sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。' },
     cards: [
       { id: 'cuberoot', href: '/trainer',      internal: true, tier: 'hero',     nameKey: 'cuberootTrainer' },
       { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer', comingSoon: true },
@@ -360,28 +360,20 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    titleKey: 'secLearn',
+    id: 'learn',
+    eyebrow: { en: 'LEARN · 学习', zh: 'LEARN · 学习' },
+    title:   { en: 'Methods and algorithms.', zh: '方法与公式。' },
+    sub:     { en: 'CFOP tutorials and the full algorithm library — beginner method to ZBLL.', zh: 'CFOP 教程 + 多阶公式库 — 从入门法到 ZBLL 全套查阅。' },
     cards: [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
       { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
-      { id: 'notation', href: '/notation', internal: true, tier: 'medium', Icon: Wand2,      nameKey: 'notation' },
     ],
   },
   {
-    titleKey: 'secWca',
-    cards: [
-      { id: 'stats',      href: '/wca-stats',  internal: true, tier: 'hero-side', Icon: BarChart3,      nameKey: 'wcaStats' },
-      { id: 'upcoming',   href: '/calendar',   internal: true, tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
-      { id: 'globe',      href: '/globe',      internal: true, tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },
-      { id: 'viz',        href: '/viz',        internal: true, tier: 'standard',  Icon: LineChart,      nameKey: 'viz' },
-      { id: 'hth',        href: '/calc',       internal: true, tier: 'standard',  Icon: CalculatorIcon, nameKey: 'hthGrapher' },
-      { id: 'wb',         href: '/wb',         internal: true, tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
-      { id: 'prediction', href: '/prediction', internal: true, tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
-      { id: 'comp',       href: '/comp',       internal: true, tier: 'standard',  Icon: Radio,          nameKey: 'comp' },
-    ],
-  },
-  {
-    titleKey: 'secTools',
+    id: 'tool',
+    eyebrow: { en: 'TOOL · 工具', zh: 'TOOL · 工具' },
+    title:   { en: 'From scramble to solution.', zh: '从打乱到解法。' },
+    sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。' },
     cards: [
       { id: 'recon',       href: '/recon',       internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
@@ -393,30 +385,37 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    titleKey: 'secOther',
+    id: 'other',
+    eyebrow: { en: 'OTHER · 其他', zh: 'OTHER · 其他' },
+    title:   { en: 'Read, code, explore.', zh: '阅读、编程、探索。' },
+    sub:     { en: 'Code notes, blog, link directory, unofficial world records.', zh: '代码笔记、博客、链接导航、非官方纪录。' },
     cards: [
-      { id: 'code', href: '/code', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
+      { id: 'code', href: '/code',  internal: true,  tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
-      { id: 'site', href: '/site', internal: true, tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
+      { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
+      { id: 'wb',   href: '/wb',    internal: true,  tier: 'medium', Icon: Trophy,   nameKey: 'worldBests' },
     ],
   },
 ];
 
-// NOTE: 全站搜索索引 — 模块级派生自 SECTIONS,跳过 comingSoon 卡。
-//       每张卡同时携带 zh/en 名 + 类目标题,LandingSearch 按 lang 切显示文本。
-const SEARCH_CARDS: LandingSearchCard[] = SECTIONS.flatMap(sec =>
-  sec.cards
-    .filter(c => !c.comingSoon)
-    .map(c => ({
-      id: c.id,
-      href: c.href,
-      internal: c.internal,
-      nameEn: TEXTS[c.nameKey].en,
-      nameZh: TEXTS[c.nameKey].zh,
-      sectionTitleEn: TEXTS[sec.titleKey].en,
-      sectionTitleZh: TEXTS[sec.titleKey].zh,
-    })),
-);
+// NOTE: 全站搜索索引 — 模块级派生自 SECTIONS,跳过 comingSoon 卡;WCA 单独前置
+// (它是 hero,不在 SECTIONS 内,但搜索得能命中)。
+const SEARCH_CARDS: LandingSearchCard[] = [
+  { id: 'stats', href: '/wca', internal: true, nameEn: 'WCA', nameZh: 'WCA', sectionTitleEn: 'WCA', sectionTitleZh: 'WCA' },
+  ...SECTIONS.flatMap(sec =>
+    sec.cards
+      .filter(c => !c.comingSoon)
+      .map(c => ({
+        id: c.id,
+        href: c.href,
+        internal: c.internal,
+        nameEn: TEXTS[c.nameKey].en,
+        nameZh: TEXTS[c.nameKey].zh,
+        sectionTitleEn: sec.eyebrow.en,
+        sectionTitleZh: sec.eyebrow.zh,
+      })),
+  ),
+];
 
 // ── 组件 ─────────────────────────────────────────────────────────────────
 
@@ -454,10 +453,24 @@ export default function LandingPage() {
 
       <LandingSearch cards={SEARCH_CARDS} lang={lang} />
 
+      {/* WCA full-width hero — 顶层入口,不属于任何 section */}
+      <Link to="/wca" className="wca-hero">
+        <img src={import.meta.env.BASE_URL + 'icons/wca.svg'} alt="WCA" className="wca-hero-logo" />
+        <div className="wca-hero-meta">
+          <div className="wca-hero-title">{lang === 'zh' ? 'WCA 统计' : 'WCA Statistics'}</div>
+          <div className="wca-hero-sub">{lang === 'zh' ? '魔方世界所有数据切片 · 80+ 自动生成排行 · 周更' : 'Every slice of the cubing world · 80+ auto-generated rankings · updated weekly'}</div>
+        </div>
+        <div className="wca-hero-arrow" aria-hidden="true">→</div>
+      </Link>
+
       <div className="cards-sections">
         {SECTIONS.map((sec) => (
-          <section key={sec.titleKey} className="cards-section">
-            <h2 className="section-title">{t(sec.titleKey)}</h2>
+          <section key={sec.id} className="cards-section">
+            <div className="section-header">
+              <div className="section-eyebrow">{lang === 'zh' ? sec.eyebrow.zh : sec.eyebrow.en}</div>
+              <h2 className="section-title-serif">{lang === 'zh' ? sec.title.zh : sec.title.en}</h2>
+              <div className="section-sub">{lang === 'zh' ? sec.sub.zh : sec.sub.en}</div>
+            </div>
             <div className="cards-container">
               {sec.cards.map((card) => {
                 const iconSize = card.tier === 'hero-side' ? 32
