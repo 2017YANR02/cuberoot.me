@@ -190,6 +190,10 @@ export default class Cubelet extends THREE.Group {
     specular: COLORS.Gray,
     shininess: 2,
   });
+  /** 超高阶 frame 用的 unlit material — Phong specular 在亚像素 cubelet 上无意义。 */
+  public static CORE_BASIC = new THREE.MeshBasicMaterial({
+    color: COLORS.Core,
+  });
 
   public static TRANS = new THREE.MeshBasicMaterial({
     color: COLORS.Gray,
