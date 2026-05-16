@@ -47,6 +47,23 @@ export default class CubeGroup extends THREE.Group {
     this.axis = axis;
     this.layer = layer;
 
+    // Inner-layer occluder panel: super-order cube 只造 surface cubelet,中层 slice = ring 空环,
+    // 旋转中透过 ring 内部能看到背景/对面。挂一片薄板填满 ring 内部,跟 group 旋转一起转。
+    // outer layer (layer 0 / N-1) 已是 full plane 不需要。
+    const N = this.cube.order;
+    if (layer > 0 && layer < N - 1) {
+      const S = Cubelet.SIZE;
+      const span = (N - 2) * S - 1;  // 留 0.5 防 z-fight 撞 perimeter cubelet
+      const thick = S - 1;
+      const panel = new THREE.Mesh(Cubelet._PANEL, Cubelet._PANEL_MAT);
+      const offset = (layer - (N - 1) / 2) * S;
+      if (axis === "x") { panel.scale.set(thick, span, span); panel.position.x = offset; }
+      else if (axis === "y") { panel.scale.set(span, thick, span); panel.position.y = offset; }
+      else { panel.scale.set(span, span, thick); panel.position.z = offset; }
+      panel.frustumCulled = false;
+      this.add(panel);
+    }
+
     const half = (this.cube.order - 1) / 2;
     const table: { [key: string]: string }[] = [
       {
@@ -201,6 +218,7 @@ export class GroupTable {
       for (let layer = 0; layer < this.order; layer++) {
         const g = new CubeGroup(cube, axis, layer);
         list[layer] = g;
+        cube.add(g);  // 进 scene graph 让 inner-layer panel 跟 group.rotation 渲染
       }
       this.groups[axis] = list;
     }
