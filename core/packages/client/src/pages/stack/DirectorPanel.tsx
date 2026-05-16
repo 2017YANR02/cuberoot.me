@@ -1,30 +1,24 @@
 /**
- * DirectorPanel — 截图 + canvas 录像。
+ * DirectorPanel — 截图 PNG + 导出当前 setup+alg 到 1080p mp4。
+ *
  * 截图: canvas → PNG 下载。
- * 录像: canvas.captureStream() + MediaRecorder → webm 下载。
+ * 导出: 离线 renderer + WebCodecs + mp4-muxer (跟 wr_metric 同一套路)。
+ *       点按钮 → 弹 overlay (进度条 + 预览 + 取消) → 后台跑 stack_export.exportStackVideo。
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, Circle, Square } from 'lucide-react';
+import { Camera, Film } from 'lucide-react';
+import * as THREE from 'three';
+import World from './cuber/world';
+import { exportStackVideo, type ExportProgress } from './stack_export';
 import './director-panel.css';
 
 interface Props {
   getCanvas: () => HTMLCanvasElement | null;
-}
-
-function pickMimeType(): { mime: string; ext: string } | null {
-  const candidates = [
-    { mime: 'video/mp4;codecs=h264', ext: 'mp4' },
-    { mime: 'video/webm;codecs=vp9', ext: 'webm' },
-    { mime: 'video/webm;codecs=vp8', ext: 'webm' },
-    { mime: 'video/webm', ext: 'webm' },
-  ];
-  for (const c of candidates) {
-    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c.mime)) {
-      return c;
-    }
-  }
-  return null;
+  getWorld: () => World | null;
+  getRenderer: () => THREE.WebGLRenderer | null;
+  setup: string;
+  alg: string;
 }
 
 function download(blob: Blob, name: string): void {
@@ -38,18 +32,15 @@ function download(blob: Blob, name: string): void {
   URL.revokeObjectURL(url);
 }
 
-export default function DirectorPanel({ getCanvas }: Props) {
+export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup, alg }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const startTickRef = useRef(0);
-  const tickIntRef = useRef<number | null>(null);
-  const [recording, setRecording] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [mimeInfo] = useState(() => pickMimeType());
+  const [exporting, setExporting] = useState(false);
+  const [progress, setProgress] = useState<ExportProgress | null>(null);
+  const previewRef = useRef<HTMLCanvasElement | null>(null);
+  const abortRef = useRef<{ aborted: boolean }>({ aborted: false });
 
   const snapshot = useCallback(() => {
     const cv = getCanvas();
@@ -60,42 +51,40 @@ export default function DirectorPanel({ getCanvas }: Props) {
     }, 'image/png');
   }, [getCanvas]);
 
-  const startRecord = useCallback(() => {
-    const cv = getCanvas();
-    if (!cv || !mimeInfo) return;
-    const stream = (cv as HTMLCanvasElement & { captureStream: (fps: number) => MediaStream }).captureStream(30);
-    chunksRef.current = [];
-    const rec = new MediaRecorder(stream, { mimeType: mimeInfo.mime });
-    rec.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-    };
-    rec.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: mimeInfo.mime });
-      download(blob, `stack-${Date.now()}.${mimeInfo.ext}`);
-      chunksRef.current = [];
-    };
-    rec.start(250);
-    recorderRef.current = rec;
-    startTickRef.current = Date.now();
-    setRecording(true);
-    setElapsed(0);
-    tickIntRef.current = window.setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTickRef.current) / 1000));
-    }, 250);
-  }, [getCanvas, mimeInfo]);
-
-  const stopRecord = useCallback(() => {
-    const rec = recorderRef.current;
-    if (rec && rec.state !== 'inactive') rec.stop();
-    recorderRef.current = null;
-    if (tickIntRef.current) {
-      window.clearInterval(tickIntRef.current);
-      tickIntRef.current = null;
+  const startExport = useCallback(async () => {
+    const world = getWorld();
+    const renderer = getRenderer();
+    if (!world || !renderer || exporting) return;
+    setExporting(true);
+    abortRef.current = { aborted: false };
+    setProgress({ phase: isZh ? '准备...' : 'Preparing...', pct: 0, framesDone: 0, framesTotal: 0 });
+    // 等 overlay 挂载后 previewRef 就位
+    await new Promise<void>(r => requestAnimationFrame(() => r()));
+    try {
+      await exportStackVideo({
+        world, renderer, setup, alg, isZh,
+        abortRef: abortRef.current,
+        onProgress: setProgress,
+        previewCanvas: previewRef.current,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg !== 'aborted') {
+        console.error('[Stack Export] failed:', e);
+        // eslint-disable-next-line no-alert
+        alert((isZh ? '导出失败:' : 'Export failed: ') + msg);
+      }
+    } finally {
+      setExporting(false);
+      setProgress(null);
     }
-    setRecording(false);
+  }, [getWorld, getRenderer, exporting, setup, alg, isZh]);
+
+  const cancelExport = useCallback(() => {
+    abortRef.current.aborted = true;
   }, []);
 
-  useEffect(() => () => stopRecord(), [stopRecord]);
+  const canExport = alg.trim().length > 0;
 
   return (
     <div className="stack-director">
@@ -103,27 +92,34 @@ export default function DirectorPanel({ getCanvas }: Props) {
         <Camera size={14} />
         {t('截图 PNG', 'Snapshot PNG')}
       </button>
-      {!recording ? (
-        <button
-          className="stack-director-btn"
-          onClick={startRecord}
-          disabled={!mimeInfo}
-          title={!mimeInfo ? t('浏览器不支持录像', 'Recorder unsupported') : ''}
-        >
-          <Circle size={14} fill="currentColor" color="var(--destructive)" />
-          {t('开始录像', 'Start recording')}
-          {mimeInfo ? <span className="stack-director-ext">.{mimeInfo.ext}</span> : null}
-        </button>
-      ) : (
-        <button className="stack-director-btn recording" onClick={stopRecord}>
-          <Square size={14} fill="currentColor" />
-          {t('停止', 'Stop')}
-          <span className="stack-director-time">{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</span>
-        </button>
-      )}
+      <button
+        className="stack-director-btn"
+        onClick={startExport}
+        disabled={!canExport || exporting}
+        title={!canExport ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record') : ''}
+      >
+        <Film size={14} />
+        {t('导出 mp4 1080p', 'Export mp4 1080p')}
+      </button>
       <span className="stack-director-hint">
-        {t('录制画布交互;打乱 / 撤销 / 拖动都会进入视频。', 'Captures the cube canvas — scrambles, undos, drags all show up in the video.')}
+        {t('1080p 离线渲染当前打乱+解法的动画', 'Offline 1080p render of current scramble+solution')}
       </span>
+
+      {exporting && progress && (
+        <div className="stack-export-overlay">
+          <div className="stack-export-card">
+            <div className="stack-export-title">{t('导出视频中', 'Exporting video')}</div>
+            <canvas ref={previewRef} className="stack-export-preview" />
+            <div className="stack-export-bar">
+              <div className="stack-export-bar-fill" style={{ width: `${(progress.pct * 100).toFixed(1)}%` }} />
+            </div>
+            <div className="stack-export-msg">{progress.phase}</div>
+            <button type="button" className="stack-export-cancel" onClick={cancelExport}>
+              {t('取消', 'Cancel')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
