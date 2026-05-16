@@ -215,6 +215,19 @@ export default class InstancedRenderer extends THREE.Group {
     // setMatrixAt (tmpMat.toArray)。movingSticker.setMatrixAt(HIDE_MAT) 也跳:moving count=0 当前不
     // 渲染,Float32Array 默认 0 矩阵也是 degenerate (count 起来后 beginSlice 会写正确值)。
     const staticInstArr = this.staticSticker.instanceMatrix.array;
+    // 预算 6 面的 RGB triple — 跳过 376k × COLORS 字符串查表 + Color.set 解析
+    const faceRGB = new Float32Array(6 * 3);
+    for (let f = 0; f < 6; f++) {
+      this.tmpColor.set(COLORS[FACE[f as 0|1|2|3|4|5]] ?? COLORS.Gray);
+      faceRGB[f * 3 + 0] = this.tmpColor.r;
+      faceRGB[f * 3 + 1] = this.tmpColor.g;
+      faceRGB[f * 3 + 2] = this.tmpColor.b;
+    }
+    // 触发 instanceColor 分配 (setColorAt 第一次调用时会自动分配 InstancedBufferAttribute)
+    this.staticSticker.setColorAt(0, this.tmpColor);
+    this.movingSticker.setColorAt(0, this.tmpColor);
+    const staticColorArr = this.staticSticker.instanceColor!.array;
+    const movingColorArr = this.movingSticker.instanceColor!.array;
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = cube.initials.get(slot.cubeletInitial)!;
@@ -228,9 +241,16 @@ export default class InstancedRenderer extends THREE.Group {
       staticInstArr[off+13] = lm[13] + cp.y;
       staticInstArr[off+14] = lm[14] + cp.z;
       staticInstArr[off+15] = lm[15];
-      this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
-      this.staticSticker.setColorAt(i, this.tmpColor);
-      this.movingSticker.setColorAt(i, this.tmpColor);
+      // sticker 的 face label 必为 FACE_LABELS[face] (slot 创建条件就是 colors[face] 非空,
+      // 而构造期 colors[face] 等于 FACE_LABELS[face]),直接查 faceRGB 跳过 COLORS map
+      const cOff = i * 3;
+      const fOff = slot.face * 3;
+      staticColorArr[cOff + 0] = faceRGB[fOff + 0];
+      staticColorArr[cOff + 1] = faceRGB[fOff + 1];
+      staticColorArr[cOff + 2] = faceRGB[fOff + 2];
+      movingColorArr[cOff + 0] = faceRGB[fOff + 0];
+      movingColorArr[cOff + 1] = faceRGB[fOff + 1];
+      movingColorArr[cOff + 2] = faceRGB[fOff + 2];
     }
     this.staticSticker.instanceMatrix.needsUpdate = true;
     this.movingSticker.instanceMatrix.needsUpdate = true;
