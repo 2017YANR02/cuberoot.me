@@ -25,16 +25,16 @@ A growing suite of speedcubing tools, organized as a single SPA on top of a pnpm
 | **Frame Count** | [`/frame-count`](https://cuberoot.me/frame-count) | Frame-accurate timing from solve videos (WebCodecs + mp4box) |
 | **Recon** | [`/recon`](https://cuberoot.me/recon) | Solve reconstruction with step-by-step playback |
 | **Calculator** | [`/calc`](https://cuberoot.me/calc) | Head-to-Head Ao5 projection & visualization |
-| **Distribution** | [`/viz`](https://cuberoot.me/viz) | Watch result distributions evolve over time |
+| **Distribution** | [`/wca/viz`](https://cuberoot.me/wca/viz) | Watch result distributions evolve over time |
 | **Battle** | [`/battle`](https://cuberoot.me/battle) | 1v1 head-to-head timer with penalties & best-of-N |
 
 ### 🏆 Competition data
 
 | Tool | Path | What it does |
 |---|---|---|
-| **WCA Stats** | [`/wca-stats`](https://cuberoot.me/wca-stats) | 80+ auto-generated rankings from the WCA database, updated weekly |
+| **WCA Stats** | [`/wca`](https://cuberoot.me/wca) | 80+ auto-generated rankings from the WCA database, updated weekly |
 | **Upcoming Comps** | [`/upcoming-comps`](https://cuberoot.me/upcoming-comps) | Worldwide competition calendar with event filters |
-| **Globe** | [`/globe`](https://cuberoot.me/globe) | 3D globe view of past & upcoming competitions |
+| **Globe** | [`/wca/globe`](https://cuberoot.me/wca/globe) | 3D globe view of past & upcoming competitions |
 | **Scramble** | [`/scramble-stats`](https://cuberoot.me/scramble-stats) | Difficulty distribution of WCA scrambles by event & stage |
 
 ### 🛠️ Classics
@@ -127,7 +127,7 @@ This project stands on the shoulders of excellent open-source work.
 - [**nbwzx/commutator**](https://github.com/nbwzx/commutator) — commutator decomposition / expansion engine (Zixing Wang) re-wrapped as ES module for the `/alg/commutator` tool; algorithm code unchanged from upstream, UI rebuilt in React
 - [**speedsolving.com/wiki: Pretty Pattern**](https://www.speedsolving.com/wiki/index.php/Pretty_pattern) — Pattern algorithms for /patterns
 - [**ruwix.com Rubik's Cube Patterns**](https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/) — Pattern algorithms for /patterns
-- [**cubing.pro**](https://cubing.pro/) — UI/概念参考来源:`/wca-stats` 子页(历史排名 / 大满贯 / 全部成绩排行 / 当年成绩排行 / 参赛届别排行 / 项目成功率 / 全项目达成 / 全项目排行)+ `/wca-stats/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)
+- [**cubing.pro**](https://cubing.pro/) — UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排行 / 当年成绩排行 / 参赛届别排行 / 项目成功率 / 全项目达成 / 全项目排行)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)
 <!-- credits:end -->
 
 ---

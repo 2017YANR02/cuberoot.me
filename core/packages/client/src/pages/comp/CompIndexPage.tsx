@@ -109,8 +109,8 @@ export default function CompIndexPage() {
           className="comp-picker-wrap"
           value={input}
           onChange={(v) => { setInput(v); setErr(null); }}
-          onUrlPaste={(id) => navigate(`/comp/${id}`)}
-          onPick={(c: Comp) => { navigate(`/comp/${c.id}`); }}
+          onUrlPaste={(id) => navigate(`/wca/comp/${id}`)}
+          onPick={(c: Comp) => { navigate(`/wca/comp/${c.id}`); }}
           isZh={isZh}
           placeholder={isZh ? '搜索比赛 / 城市,或粘贴比赛链接' : 'Search competition / city, or paste comp URL'}
         />
@@ -122,7 +122,7 @@ export default function CompIndexPage() {
           ? <>或浏览 <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com</a> / <a href="https://www.worldcubeassociation.org/competitions" target="_blank" rel="noopener noreferrer">WCA</a>。</>
           : <>Or browse <a href="https://cubing.com/" target="_blank" rel="noopener noreferrer">cubing.com</a> / <a href="https://www.worldcubeassociation.org/competitions" target="_blank" rel="noopener noreferrer">WCA</a>.</>
         }
-        <Link to="/comp/sources" className="comp-hint-link">{isZh ? '数据源流程' : 'Data source flow'} →</Link>
+        <Link to="/wca/comp/sources" className="comp-hint-link">{isZh ? '数据源流程' : 'Data source flow'} →</Link>
       </div>
 
       {recent.length > 0 && (
@@ -137,7 +137,7 @@ export default function CompIndexPage() {
                 <button
                   type="button"
                   className="comp-recent-link"
-                  onClick={() => navigate(`/comp/${r.slug}`)}
+                  onClick={() => navigate(`/wca/comp/${r.slug}`)}
                   onMouseEnter={() => prefetchComp(r.slug)}
                   onFocus={() => prefetchComp(r.slug)}
                   onTouchStart={() => prefetchComp(r.slug)}

@@ -1,10 +1,11 @@
 // NOTE: WCA 统计索引页 — 浅色主题（对齐首页 landing.css tokens）+ 搜索 + Tab 分类
-// 路由：/wca-stats
+// 路由：/wca
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search, CalendarDays,
+  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search, Wrench,
+  CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator,
   type LucideIcon,
 } from 'lucide-react';
 import { loadPersonsIndex, searchLocalPersons, type WcaPerson } from '@cuberoot/shared';
@@ -45,17 +46,27 @@ interface IndexData {
   categories: Category[];
 }
 
-const ALL = '__all__';
+const TOOLS = '__tools__';
 const LOOKUP = '__lookup__';
 
+// 顶层工具页(大卡片,带图标 — 跟 landing 卡片视觉一致)
+const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon }[] = [
+  { path: '/wca/calendar',   zh: '日历',     en: 'Calendar',     Icon: CalendarDays },
+  { path: '/wca/globe',      zh: '地球',     en: 'Globe',        Icon: Globe2 },
+  { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart },
+  { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown },
+  { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio },
+  { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target },
+  { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator },
+];
+
 const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
-  { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
-  { path: '/wca-stats/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
-  { path: '/wca-stats/all-results',      zh: '全部成绩排行', en: 'All Results' },
-  { path: '/wca-stats/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
-  { path: '/wca-stats/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
-  { path: '/wca-stats/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
-  { path: '/wca-stats/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
+  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
+  { path: '/wca/all-results',      zh: '全部成绩排行', en: 'All Results' },
+  { path: '/wca/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
+  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
+  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
+  { path: '/wca/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
 ];
 
 // NOTE: 选手 / 比赛跨库搜索阈值。英文/数字 q.length >= 2 才发,中文/包含 unicode 1 字符即可
@@ -67,7 +78,7 @@ export default function WcaStatsIndex() {
   const [data, setData] = useState<IndexData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeCat, setActiveCat] = useState<string>(ALL);
+  const [activeCat, setActiveCat] = useState<string>(TOOLS);
   const [query, setQuery] = useState('');
   // 跨库搜索结果 — 选手 / 比赛(stats titles 已即时 filter,不存 state)
   const [personMatches, setPersonMatches] = useState<WcaPerson[]>([]);
@@ -125,12 +136,12 @@ export default function WcaStatsIndex() {
     return () => clearTimeout(handle);
   }, [qRaw, xSearchEnabled, xLoaded]);
 
-  // NOTE: 搜索模式忽略 tab，全库匹配；否则按 tab 过滤
+  // NOTE: 搜索模式忽略 tab,全库匹配;否则按 tab 过滤(TOOLS / LOOKUP 不显示 stats categories)
   const visible = useMemo(() => {
     if (!data) return [];
-    if (activeCat === LOOKUP && q === '') return [];
+    if (q === '' && (activeCat === LOOKUP || activeCat === TOOLS)) return [];
     return data.categories
-      .filter(c => q !== '' || activeCat === ALL || c.nameEn === activeCat)
+      .filter(c => q !== '' || c.nameEn === activeCat)
       .map(c => ({
         ...c,
         stats: q === '' ? c.stats : c.stats.filter(s =>
@@ -144,6 +155,13 @@ export default function WcaStatsIndex() {
   const lookupVisible = useMemo(() => {
     if (q === '') return LOOKUP_ITEMS;
     return LOOKUP_ITEMS.filter(it =>
+      it.zh.toLowerCase().includes(q) || it.en.toLowerCase().includes(q),
+    );
+  }, [q]);
+
+  const toolsVisible = useMemo(() => {
+    if (q === '') return WCA_TOOLS;
+    return WCA_TOOLS.filter(it =>
       it.zh.toLowerCase().includes(q) || it.en.toLowerCase().includes(q),
     );
   }, [q]);
@@ -168,10 +186,10 @@ export default function WcaStatsIndex() {
   }
 
   const langQuery = getLangQuery();
-  const totalCount = data.categories.reduce((s, c) => s + c.stats.length, 0);
   const visibleCount =
     visible.reduce((s, c) => s + c.stats.length, 0) +
     lookupVisible.length +
+    toolsVisible.length +
     personMatches.length +
     compMatches.length;
   const hasAnyMatch = visibleCount > 0;
@@ -182,13 +200,8 @@ export default function WcaStatsIndex() {
         <div>
           <div className="wca-stats-index-eyebrow">WCA Statistics</div>
           <h1 className="wca-stats-index-title">
-            {isZh ? '魔方世界的数字切片' : 'The numbers behind every solve'}
+            {isZh ? 'WCA 统计' : 'WCA Statistics'}
           </h1>
-          <p className="wca-stats-index-sub">
-            {isZh
-              ? `基于 WCA 官方数据库自动生成 · 共 ${totalCount} 项 · 每周更新`
-              : `${totalCount} auto-generated rankings from the WCA database · updated weekly`}
-          </p>
         </div>
         <div className="wca-stats-index-hero-right">
           <LangToggle />
@@ -216,10 +229,11 @@ export default function WcaStatsIndex() {
         {q === '' && (
           <div className="wca-stats-index-tabs">
             <button
-              className={`wca-stats-index-tab ${activeCat === ALL ? 'active' : ''}`}
-              onClick={() => setActiveCat(ALL)}
+              className={`wca-stats-index-tab ${activeCat === TOOLS ? 'active' : ''}`}
+              onClick={() => setActiveCat(TOOLS)}
             >
-              <span>{isZh ? '全部' : 'All'}</span>
+              <Wrench size={14} strokeWidth={1.75} />
+              <span>{isZh ? '工具' : 'Tools'}</span>
             </button>
             <button
               className={`wca-stats-index-tab ${activeCat === LOOKUP ? 'active' : ''}`}
@@ -249,7 +263,24 @@ export default function WcaStatsIndex() {
       </div>
 
       <div className="wca-stats-index-body">
-        {((q === '' && (activeCat === ALL || activeCat === LOOKUP)) || (q !== '' && lookupVisible.length > 0)) && (
+        {((q === '' && activeCat === TOOLS) || (q !== '' && toolsVisible.length > 0)) && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <Wrench size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '工具' : 'Tools'}</h2>
+            </div>
+            <div className="wca-tools-grid">
+              {toolsVisible.map(it => (
+                <Link key={it.path} to={`${it.path}${langQuery}`} className="wca-tool-card">
+                  <it.Icon size={28} strokeWidth={1.5} />
+                  <span>{isZh ? it.zh : it.en}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {((q === '' && activeCat === LOOKUP) || (q !== '' && lookupVisible.length > 0)) && (
           <section className="wca-stats-index-section">
             <div className="wca-stats-index-section-header">
               <Search size={18} strokeWidth={1.75} />
@@ -278,7 +309,7 @@ export default function WcaStatsIndex() {
                 {cat.stats.map(s => (
                   <Link
                     key={s.id}
-                    to={`/wca-stats/${s.id}${langQuery}`}
+                    to={`/wca/${s.id}${langQuery}`}
                     className="wca-stats-index-card"
                   >
                     {isZh ? s.titleZh : s.titleEn}
@@ -333,7 +364,7 @@ export default function WcaStatsIndex() {
               {personMatches.map(p => (
                 <Link
                   key={p.wcaId}
-                  to={`/wca-stats/persons/${p.wcaId}${langQuery}`}
+                  to={`/wca/persons/${p.wcaId}${langQuery}`}
                   className="wca-stats-index-card wca-stats-index-card--rich"
                 >
                   <Flag iso2={p.iso2} className="country-flag" />

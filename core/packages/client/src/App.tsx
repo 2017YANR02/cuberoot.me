@@ -35,7 +35,7 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
-// NOTE: WCA 选手详情(/wca-stats/persons/:wcaId);搜索入口已并入 WcaStatsIndex 顶部搜索框
+// NOTE: WCA 选手详情(/wca/persons/:wcaId);搜索入口已并入 WcaStatsIndex 顶部搜索框
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: WCA 6 个 cubing.pro 风格统计 tab
@@ -98,8 +98,6 @@ const VisualCubeStagesPage = lazy(() => import('./pages/visualcube/VisualCubeSta
 const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
 // NOTE: Gen — 批量打乱生成器（覆盖 16 个 WCA 项目）
 const GenPage = lazy(() => import('./pages/gen/GenPage'));
-// NOTE: Notation — 公式记号沙盒（化简 / 逆向 / 镜像 + HTM/QTM 计数 + TwistyPlayer）
-const NotationPage = lazy(() => import('./pages/notation/NotationPage'));
 // NOTE: Stack — 虚拟魔方 Playground (port of huazhechen/cuber)
 const StackPage = lazy(() => import('./pages/stack/StackPage'));
 // NOTE: Patterns — 著名 3x3 图案集
@@ -196,8 +194,6 @@ function App() {
         <Route path="/recognize/:algSetId" element={<TrainingPage />} />
         {/* Calc — 成绩计算器 */}
         <Route path="/calc" element={<Suspense fallback={<div>Loading...</div>}><CalcPage /></Suspense>} />
-        {/* Viz — 分布演变可视化 */}
-        <Route path="/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
         {/* Battle — 对战计时器 */}
         <Route path="/battle" element={<Suspense fallback={<div>Loading...</div>}><BattlePage /></Suspense>} />
         {/* Recon — 复盘数据库 */}
@@ -209,12 +205,6 @@ function App() {
         <Route path="/recon/:parentId/alt/:altIdx" element={<Suspense fallback={<div>Loading...</div>}><AltViewPage /></Suspense>} />
         <Route path="/recon/:parentId/alt/:altIdx/edit" element={<Suspense fallback={<div>Loading...</div>}><AltSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
-        {/* Calendar — 顶尖选手近期比赛追踪（路由曾叫 /upcoming-comps，旧链接重定向） */}
-        <Route path="/calendar" element={<Suspense fallback={<div>Loading...</div>}><CalendarPage /></Suspense>} />
-        <Route path="/calendar/stats" element={<Suspense fallback={<div>Loading...</div>}><CalendarStatsPage /></Suspense>} />
-        <Route path="/upcoming-comps" element={<Navigate to="/calendar" replace />} />
-        {/* Globe — 3D 地球 WCA 比赛地理分布 */}
-        <Route path="/globe" element={<Suspense fallback={<div>Loading...</div>}><GlobePage /></Suspense>} />
         {/* NOTE: iframe 包装路由 — 嵌入未迁移模块，零改动上游代码 */}
         <Route path="/solver" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/solver/" title="Solver" /></Suspense>} />
         <Route path="/2x2x2" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/2x2x2/" title="2x2x2 Solver" /></Suspense>} />
@@ -251,8 +241,6 @@ function App() {
         <Route path="/patterns" element={<Navigate to="/scramble/pattern" replace />} />
         {/* /average 已并入 /calc 的"成绩计算器" tab — 兼容旧链接 */}
         <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
-        {/* Notation — 公式记号沙盒 */}
-        <Route path="/notation" element={<Suspense fallback={<div>Loading...</div>}><NotationPage /></Suspense>} />
         {/* Stack — 虚拟魔方 Playground */}
         <Route path="/stack" element={<Suspense fallback={<div>Loading...</div>}><StackPage /></Suspense>} />
         {/* Code — hub (架构 + 语言) + 子页面 */}
@@ -298,17 +286,27 @@ function App() {
         <Route path="/code/compare" element={<Navigate to="/code/language/compare" replace />} />
         <Route path="/code/scramble" element={<Navigate to="/code/language/scramble" replace />} />
         {/* WCA Stats — 统计数据展示 */}
-        <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
+        <Route path="/wca" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
-        <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
-        <Route path="/wca-stats/grand-slam" element={<Suspense fallback={<div>Loading...</div>}><GrandSlamPage /></Suspense>} />
-        <Route path="/wca-stats/all-results" element={<Suspense fallback={<div>Loading...</div>}><AllResultsPage /></Suspense>} />
-        <Route path="/wca-stats/records" element={<Suspense fallback={<div>Loading...</div>}><RecordsPage /></Suspense>} />
-        <Route path="/wca-stats/cohort-ranks" element={<Suspense fallback={<div>Loading...</div>}><CohortRanksPage /></Suspense>} />
-        <Route path="/wca-stats/success-rate" element={<Suspense fallback={<div>Loading...</div>}><SuccessRatePage /></Suspense>} />
-        <Route path="/wca-stats/all-events-done" element={<Suspense fallback={<div>Loading...</div>}><AllEventsDonePage /></Suspense>} />
-        <Route path="/wca-stats/sum-of-ranks" element={<Suspense fallback={<div>Loading...</div>}><SumOfRanksPage /></Suspense>} />
-<Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
+        <Route path="/wca/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
+        <Route path="/wca/grand-slam" element={<Suspense fallback={<div>Loading...</div>}><GrandSlamPage /></Suspense>} />
+        <Route path="/wca/all-results" element={<Suspense fallback={<div>Loading...</div>}><AllResultsPage /></Suspense>} />
+        <Route path="/wca/records" element={<Suspense fallback={<div>Loading...</div>}><RecordsPage /></Suspense>} />
+        <Route path="/wca/cohort-ranks" element={<Suspense fallback={<div>Loading...</div>}><CohortRanksPage /></Suspense>} />
+        <Route path="/wca/success-rate" element={<Suspense fallback={<div>Loading...</div>}><SuccessRatePage /></Suspense>} />
+        <Route path="/wca/all-events-done" element={<Suspense fallback={<div>Loading...</div>}><AllEventsDonePage /></Suspense>} />
+        <Route path="/wca/sum-of-ranks" element={<Suspense fallback={<div>Loading...</div>}><SumOfRanksPage /></Suspense>} />
+        {/* /wca/* 子页面(原 top-level /calendar /globe /viz /prediction /comp,2026-05 迁入 /wca 命名空间) */}
+        <Route path="/wca/calendar" element={<Suspense fallback={<div>Loading...</div>}><CalendarPage /></Suspense>} />
+        <Route path="/wca/calendar/stats" element={<Suspense fallback={<div>Loading...</div>}><CalendarStatsPage /></Suspense>} />
+        <Route path="/upcoming-comps" element={<Navigate to="/wca/calendar" replace />} />
+        <Route path="/wca/globe" element={<Suspense fallback={<div>Loading...</div>}><GlobePage /></Suspense>} />
+        <Route path="/wca/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
+        <Route path="/wca/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
+        <Route path="/wca/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
+        <Route path="/wca/comp/sources" element={<Suspense fallback={<div>Loading...</div>}><CompSourcesPage /></Suspense>} />
+        <Route path="/wca/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />
+        <Route path="/wca/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
@@ -327,7 +325,6 @@ function App() {
         <Route path="/alg/:puzzle/:set/:subgroup" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         {/* Sites — 魔方网址导航 */}
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
-        <Route path="/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
         {/* Mosaic — 魔方马赛克生成器 */}
         <Route path="/mosaic" element={<Suspense fallback={<div>Loading...</div>}><MosaicPage /></Suspense>} />
         {/* Memo — 记忆类工具子区(/memo: 子区入口, /memo/colpi: 字母对图像 UI 复刻) */}
@@ -336,10 +333,6 @@ function App() {
         <Route path="/memo/colpi/:pair" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
         {/* WB — 非官方世界纪录 */}
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
-        {/* Comp — cubing.com 比赛直播 */}
-        <Route path="/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
-        <Route path="/comp/sources" element={<Suspense fallback={<div>Loading...</div>}><CompSourcesPage /></Suspense>} />
-        <Route path="/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}

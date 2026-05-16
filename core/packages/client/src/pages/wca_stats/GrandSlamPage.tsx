@@ -1,6 +1,6 @@
 /**
  * 大满贯 - WC + Continental + National 领奖台 + WR(任一类型)的人.
- * /wca-stats/grand-slam
+ * /wca/grand-slam
  */
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -76,7 +76,7 @@ export default function GrandSlamPage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back">
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back">
             <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
           </Link>
           <LangToggle />

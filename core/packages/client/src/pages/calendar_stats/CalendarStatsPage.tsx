@@ -259,7 +259,7 @@ export default function CalendarStatsPage() {
                   const count = yearMonthGrid.get(key) ?? 0;
                   const clickable = count > 0;
                   const onClick = clickable
-                    ? () => navigate(`/calendar?year=${y}&month=${month}`)
+                    ? () => navigate(`/wca/calendar?year=${y}&month=${month}`)
                     : undefined;
                   return (
                     <rect
@@ -308,8 +308,8 @@ export default function CalendarStatsPage() {
             view={view}
             onViewChange={setView}
             onPointClick={(year, month) => {
-              if (granularity === 'month') navigate(`/calendar?year=${year}&month=${month}`);
-              else navigate(`/calendar?year=${year}&month=1`);
+              if (granularity === 'month') navigate(`/wca/calendar?year=${year}&month=${month}`);
+              else navigate(`/wca/calendar?year=${year}&month=1`);
             }}
           />
         </section>

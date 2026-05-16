@@ -1,5 +1,5 @@
 -- 0006_historical_ranks_pb_context.sql
--- 为 persons 模式排名表(/wca-stats/all-results?show=persons)补 PB 上下文:
+-- 为 persons 模式排名表(/wca/all-results?show=persons)补 PB 上下文:
 -- 单次 / 平均 PB 各自来自哪场比赛、哪天、那一组 5 把分别多少。
 -- 跟 wca_competitions 一起 join 出 comp 名字给前端;wca_competitions 也是新表(参考 wca_stats_extra 那条管道).
 --

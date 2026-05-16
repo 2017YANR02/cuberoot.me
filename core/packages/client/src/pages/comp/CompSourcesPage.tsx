@@ -21,7 +21,7 @@ export default function CompSourcesPage() {
       </div>
 
       <div className="comp-sources-wrap">
-        <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
+        <Link to="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
         <h1 className="comp-page-title">{isZh ? '数据流' : 'Data Flow'}</h1>
         <p className="comp-page-subtitle">
           {isZh

@@ -1,6 +1,6 @@
 # DESIGN — Claude-style 设计系统(已落地)
 
-8 页 (trainer / battle / memo / alg / wca-stats / calendar / calc / wb) 已用此规范落地。token 在 `src/index.css :root`,实现细节见 `src/pages/THEMING.md`。新页/新色按此文档决策树。
+8 页 (trainer / battle / memo / alg / wca / calendar / calc / wb) 已用此规范落地。token 在 `src/index.css :root`,实现细节见 `src/pages/THEMING.md`。新页/新色按此文档决策树。
 
 写作格式参考:Anthropic frontend-design plugin 推荐的 9 段 DESIGN.md 标准。
 
@@ -168,7 +168,7 @@ dark 模式按需各自微调(目前一套足够,真做时再说)。
 --container-sm: 640px;
 --container-md: 768px;
 --container-lg: 1024px;
---container-xl: 1280px;   /* 主流页(calendar / wca-stats / wb)用这个 */
+--container-xl: 1280px;   /* 主流页(calendar / wca / wb)用这个 */
 --container-2xl: 1536px;
 ```
 
@@ -303,11 +303,11 @@ dark 模式 shadow 不变(在 dark bg 上几乎看不见,但保留以防 light o
 - 先把现有 :root 上冲突的 token rename(`--border` → `--border-dark`、`--success/warning/danger` → 合并到新 `--success/warning/info/destructive`)
 - grep 全站 `var(--border)` (138 处) / `var(--success/warning/danger)` (11 处) 逐文件 review,对应替换
 - 落地新 light token + dark 反盖
-- 全 dark 页(timer / wca-stats / recon / etc)visual 校验
+- 全 dark 页(timer / wca / recon / etc)visual 校验
 
 ### Phase 2 — 8 页迁移到统一 token(8-10h,分页推)
 
-按 THEMING.md 顺序:alg(0)→ wb → memo → calendar → calc → trainer → wca-stats → battle
+按 THEMING.md 顺序:alg(0)→ wb → memo → calendar → calc → trainer → wca → battle
 
 每页:硬码替换为 token + 删自有 namespace token + visual 校 light + dark + system 三态。
 

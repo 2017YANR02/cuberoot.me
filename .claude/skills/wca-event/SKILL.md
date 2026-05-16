@@ -1,6 +1,6 @@
 ---
 name: wca-event
-description: "渲染 WCA 项目名 / 加 wca-stats 单项目选择器时用. (1) 项目名前必须 `<EventIcon>`(纯文字=bug),`components/EventIcon`. (2) wca-stats 子页选项目用 `<WcaEventSelector>` 21 图标行,不用 `<EventSelect>` 下拉. Triggers: 项目名, EventIcon, cubing-icon, WcaEventSelector, 项目选择器, event picker, eventDisplayName."
+description: "渲染 WCA 项目名 / 加 /wca 单项目选择器时用. (1) 项目名前必须 `<EventIcon>`(纯文字=bug),`components/EventIcon`. (2) /wca 子页选项目用 `<WcaEventSelector>` 21 图标行,不用 `<EventSelect>` 下拉. Triggers: 项目名, EventIcon, cubing-icon, WcaEventSelector, 项目选择器, event picker, eventDisplayName."
 ---
 
 # 项目图标 + 选择器
@@ -17,7 +17,7 @@ import { eventDisplayName } from '../../utils/wca_events';
 
 禁:emoji / lucide / 自写 SVG;重写 short→id 映射;popup `innerHTML` 手拼 — 仿 `flagHtml` 用 `toWcaEventId`.
 
-## wca-stats 单项目选择器
+## /wca 单项目选择器
 
 ```tsx
 import WcaEventSelector from './WcaEventSelector';

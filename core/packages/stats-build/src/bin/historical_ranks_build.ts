@@ -329,7 +329,7 @@ async function main() {
 
       // 年级 emit:年末全量(沿用旧行为,选手页 PR 历史最佳还在用这张表)
       // 额外列(2026-05 加):PB 上下文 best_single_*/best_average_*
-      // — 用于 /wca-stats/all-results?show=persons 渲染 Date/Competition/Solves 列.
+      // — 用于 /wca/all-results?show=persons 渲染 Date/Competition/Solves 列.
       if (acc.size > 0) {
         const { singleRanks, avgRanks } = computeRanks(acc);
         for (const [wcaId, v] of acc) {

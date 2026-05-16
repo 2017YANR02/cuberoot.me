@@ -4,7 +4,7 @@
  *                         可叠加 country / year / month / 选手或比赛搜索
  *   show=persons        — 每选手一行(年末累积最佳);走 /v1/wca/historical-ranks,
  *                         只支持 year / country / type,year 必填(自动 fallback 到当前年)
- * /wca-stats/all-results
+ * /wca/all-results
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -166,7 +166,7 @@ export default function AllResultsPage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? '排名' : 'Rankings'}</h1>

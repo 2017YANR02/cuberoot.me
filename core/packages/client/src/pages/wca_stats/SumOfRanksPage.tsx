@@ -1,6 +1,6 @@
 /**
  * 全项目排行 — 累加各项世界(或国家)排名
- * /wca-stats/sum-of-ranks
+ * /wca/sum-of-ranks
  */
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -87,7 +87,7 @@ export default function SumOfRanksPage() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link to={`/wca-stats?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? '全项目排行' : 'Sum of Ranks'}</h1>

@@ -207,7 +207,7 @@ export default function CompDetailPage() {
   // 老 URL (Xuzhou-Zenith-2026) → 重定向到 WCA ID 形态
   useEffect(() => {
     if (rawSlug && rawSlug !== slug) {
-      navigate(`/comp/${slug}${window.location.search}`, { replace: true });
+      navigate(`/wca/comp/${slug}${window.location.search}`, { replace: true });
     }
   }, [rawSlug, slug, navigate]);
 
@@ -287,7 +287,7 @@ export default function CompDetailPage() {
         });
       };
 
-      // wca_db fast-path: 静态 JSON 端点可命中浏览器 HTTP cache(/comp/ 首页 hover prefetch),
+      // wca_db fast-path: 静态 JSON 端点可命中浏览器 HTTP cache(/wca/comp/ 首页 hover prefetch),
       // 命中即 instant 出货,无需走 SSE.失败再 fall through 到 SSE.
       // 用户显式选 cubing/wca_live/wca 时 skip 此路径(那些源 server 抓数据慢,SSE progress 更有用).
       if (!sourceParam || sourceParam === 'wca_db') {
@@ -648,7 +648,7 @@ export default function CompDetailPage() {
   if (error || !data) {
     return (
       <div className="comp-detail-page">
-        <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
+        <Link to="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
         <div className="comp-err comp-err-block">
           <div className="comp-err-title">{isZh ? '加载失败' : 'Failed to load'}</div>
           <div className="comp-err-detail">{error || 'No data'}</div>
@@ -681,7 +681,7 @@ export default function CompDetailPage() {
 
       <div className="comp-table-section">
         <header className="comp-detail-header">
-          <Link to="/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link to="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
           <h1 className="comp-detail-title">
             {(() => {
               const iso2 = compFlagIso2(slug);

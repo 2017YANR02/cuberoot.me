@@ -1422,10 +1422,10 @@ export default function CalendarPage() {
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
         <div className="upcoming-meta">
-          <Link to={`/calendar/stats${getLangQuery()}`} className="globe-link">
+          <Link to={`/wca/calendar/stats${getLangQuery()}`} className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {isZh ? '统计' : 'Stats'}
           </Link>
-          <Link to="/globe" className="globe-link">
+          <Link to="/wca/globe" className="globe-link">
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
           </Link>
           <LangToggle variant="inline" />
