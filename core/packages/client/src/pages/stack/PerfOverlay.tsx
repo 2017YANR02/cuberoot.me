@@ -16,6 +16,11 @@ export interface PerfStats {
   fps: number;
   frameMs: number;
   order: number;
+  /** JS heap in MB (Chrome only, 100MB quantized 不精确). 0 = 不支持 */
+  jsHeapMB: number;
+  /** 估算 GPU instance buffer (instanceMatrix + instanceColor) in MB.
+   * 不含 geometry/texture,只是 InstancedRenderer 的大头开销 */
+  gpuBufMB: number;
 }
 
 interface Props {
@@ -74,6 +79,12 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
       </div>
       <div>
         fps <b>{snapshot.fps.toFixed(1)}</b> · frame <b>{snapshot.frameMs.toFixed(2)}ms</b>
+      </div>
+      <div>
+        {snapshot.jsHeapMB > 0 ? (
+          <>JS heap <b>{snapshot.jsHeapMB.toFixed(0)}M</b> · </>
+        ) : null}
+        GPU buf <b>{snapshot.gpuBufMB.toFixed(0)}M</b>
       </div>
       <button
         onClick={runStress}

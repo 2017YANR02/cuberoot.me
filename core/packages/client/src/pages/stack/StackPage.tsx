@@ -62,6 +62,7 @@ export default function StackPage() {
   const statsRef = useRef<PerfStats>({
     drawCalls: 0, triangles: 0, geometries: 0, textures: 0, programs: 0,
     meshCount: 0, cubeletCount: 0, fps: 0, frameMs: 0, order: 3,
+    jsHeapMB: 0, gpuBufMB: 0,
   });
 
   const [order, setOrder] = useState<number>(3);
@@ -440,8 +441,20 @@ export default function StackPage() {
         if (now - meshSampleAt > 1000) {
           meshSampleAt = now;
           let count = 0;
-          world.scene.traverse((o) => { if ((o as THREE.Mesh).isMesh) count++; });
+          let gpuBytes = 0;
+          world.scene.traverse((o) => {
+            const mesh = o as THREE.Mesh & { isInstancedMesh?: boolean; instanceMatrix?: THREE.BufferAttribute; instanceColor?: THREE.BufferAttribute | null };
+            if ((o as THREE.Mesh).isMesh) count++;
+            if (mesh.isInstancedMesh) {
+              if (mesh.instanceMatrix) gpuBytes += mesh.instanceMatrix.array.byteLength;
+              if (mesh.instanceColor) gpuBytes += mesh.instanceColor.array.byteLength;
+            }
+          });
           s.meshCount = count;
+          s.gpuBufMB = gpuBytes / (1024 * 1024);
+          // Chrome 私有 API,Firefox/Safari undefined。100MB 量化(无 --enable-precise-memory-info)。
+          const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+          s.jsHeapMB = mem ? mem.usedJSHeapSize / (1024 * 1024) : 0;
         }
       }
       raf = requestAnimationFrame(loop);
