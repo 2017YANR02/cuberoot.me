@@ -291,10 +291,29 @@ export default function CompDetailPage() {
       // 命中即 instant 出货,无需走 SSE.失败再 fall through 到 SSE.
       // 用户显式选 cubing/wca_live/wca 时 skip 此路径(那些源 server 抓数据慢,SSE progress 更有用).
       if (!sourceParam || sourceParam === 'wca_db') {
+        // URL 已选定 event+round 时,先并发发一发 ?only=event:round 轻量请求(~3KB)
+        // 大比赛全量 621KB / gzip 159KB,纯网络就要 1s+;trimmed 几十 ms 出货,焦点轮立刻渲染.
+        // fullArrived 防 race:full 比 trimmed 先回时不要被 trimmed 覆盖.
+        let fullArrived = false;
+        if (eventParam && roundParam) {
+          const only = `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`;
+          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db&only=${only}`))
+            .then(r => r.ok ? r.json() : null)
+            .then(j => {
+              if (j && !fullArrived) {
+                setData(j);
+                rememberRecent(j.slug, j.name);
+                setProgress(null);
+                resolve();
+              }
+            })
+            .catch(() => {});
+        }
         fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`))
           .then(r => r.ok ? r.json() : null)
           .then(j => {
             if (j) {
+              fullArrived = true;
               setData(j);
               rememberRecent(j.slug, j.name);
               setProgress(null);
@@ -308,7 +327,10 @@ export default function CompDetailPage() {
         startSse();
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, sourceParam]);
+  // 故意不依赖 eventParam/roundParam:它们只用于首屏 trimmed 请求,
+  // 用户切换轮次后 full 数据已在内存,不需要再发请求.
 
   useEffect(() => {
     let cancel = false;
