@@ -132,6 +132,7 @@ export default class InstancedRenderer extends THREE.Group {
 
   constructor(cube: Cube) {
     super();
+    const T0 = performance.now();
     this.cube = cube;
     this.matrixAutoUpdate = false;
     this.hasInner = cube.order < __PERF_FLAGS.superOrderThreshold;
@@ -142,6 +143,7 @@ export default class InstancedRenderer extends THREE.Group {
       this.initialToInstance.set(cubelets[i].initial, i);
       this.instanceToInitial.push(cubelets[i].initial);
     }
+    const T1 = performance.now();
 
     // Frame meshes + per-cubelet inner box meshes(共享 matrix)
     this.staticFrame = this.makeFrameMesh(visCount, false);
@@ -172,6 +174,8 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingInner.instanceMatrix.needsUpdate = true;
     }
 
+    const T2 = performance.now();
+
     // Sticker slots
     const zScale = this._thickness ? HALF : 1;
     for (const cubelet of cubelets) {
@@ -191,6 +195,8 @@ export default class InstancedRenderer extends THREE.Group {
       }
       this.cubeletSlots.set(cubelet.initial, list);
     }
+
+    const T3 = performance.now();
 
     // Sticker meshes — N≥50 用 unlit Basic 省 fragment shader 光照
     const isSuperOrderForSticker = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
@@ -262,6 +268,10 @@ export default class InstancedRenderer extends THREE.Group {
     this.add(this.movingSticker);
     this.add(this.staticHint);
     this.add(this.movingHint);
+    const T4 = performance.now();
+    if (cube.order >= 50) {
+      console.log(`[InstancedRenderer ctor N=${cube.order}] init=${(T1 - T0).toFixed(0)}ms frame+inner=${(T2 - T1).toFixed(0)}ms stickerSlots=${(T3 - T2).toFixed(0)}ms stickerMesh+hint=${(T4 - T3).toFixed(0)}ms total=${(T4 - T0).toFixed(0)}ms slots=${this.stickerSlots.length}`);
+    }
   }
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
