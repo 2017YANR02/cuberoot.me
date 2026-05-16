@@ -95,7 +95,7 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
         position: 'absolute',
         top: 8,
         left: 8,
-        padding: '6px 10px',
+        padding: '6px 26px 6px 10px',
         background: 'rgba(0,0,0,0.65)',
         color: '#fff',
         font: '11px ui-monospace, monospace',
@@ -113,8 +113,8 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
         aria-label="Hide perf overlay"
         style={{
           position: 'absolute',
-          top: 2,
-          right: 2,
+          top: 4,
+          right: 4,
           width: 18,
           height: 18,
           padding: 0,
