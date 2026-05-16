@@ -5,11 +5,19 @@
  * Privacy: 不存原始 IP / 完整 UA. visitor_id = sha256(ip||ua||day||SALT) 截 16 字节,
  * 每日 rotate → 只能 daily-unique UV, 跨日不可追踪.
  */
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { open as openMmdb, type Reader, type CountryResponse } from 'maxmind';
 
-const ANALYTICS_SALT = process.env.ANALYTICS_SALT || 'dev-analytics-salt-not-secret';
+const ANALYTICS_SALT = (() => {
+  const v = process.env.ANALYTICS_SALT;
+  if (v) return v;
+  // Refuse to silently degrade in prod — known dev salt = visitor_id is precomputable.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ANALYTICS_SALT must be set in production');
+  }
+  return 'dev-analytics-salt-not-secret';
+})();
 const MMDB_PATH = process.env.GEOIP_MMDB || '/usr/share/GeoIP/GeoLite2-Country.mmdb';
 
 let mmdbReader: Reader<CountryResponse> | null = null;
@@ -64,7 +72,10 @@ export function makeVisitorId(ip: string, ua: string, date: Date = new Date()): 
  * Coarse UA classifier. Matches common bots first, then mobile/tablet markers.
  * Default = desktop.
  */
-const BOT_RE = /bot|crawl|spider|scrape|slurp|fetch|monitor|preview|headless|curl|wget|python-requests|node-fetch|axios|okhttp|java\/|go-http|libwww|httpclient/i;
+// Narrower than a casual /bot|crawl|.../ — avoids catching "GamingMonitor" / iMessage
+// link preview / Apple URLSession-FetchRequest etc which are legitimate UA fragments.
+// \b boundaries + explicit names. Anything not matching here falls through to ua class.
+const BOT_RE = /\b(googlebot|bingbot|yandexbot|baiduspider|duckduckbot|applebot|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|whatsapp|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|seznambot|sogou|exabot|bytespider|amazonbot|gptbot|claudebot|ccbot|chatgpt-user|perplexity|crawler|spider|headless|curl|wget|python-requests|node-fetch|libwww|httpclient|axios\/|okhttp\/|go-http-client|java\/)\b/i;
 const TABLET_RE = /ipad|tablet|playbook|kindle|silk|nexus 7|nexus 10/i;
 const MOBILE_RE = /mobile|iphone|ipod|android|blackberry|windows phone|opera mini|opera mobi/i;
 
@@ -114,10 +125,12 @@ export function normalizeReferrer(referrer: string | undefined, ownHost?: string
 }
 
 /**
- * Extract client IP from forwarded headers. Mirror of recon.ts / colpi.ts pattern.
+ * Extract client IP from nginx-set X-Real-IP only. We do NOT fall back to
+ * client-controllable X-Forwarded-For: Hono binds 0.0.0.0:3001 and a peer
+ * with direct access could otherwise spoof IP → spoof visitor_id / country.
  */
 export function getClientIp(headerLookup: (name: string) => string | undefined): string {
-  return headerLookup('x-real-ip') ?? headerLookup('x-forwarded-for')?.split(',')[0].trim() ?? '0.0.0.0';
+  return headerLookup('x-real-ip') ?? '0.0.0.0';
 }
 
 /**
@@ -126,4 +139,39 @@ export function getClientIp(headerLookup: (name: string) => string | undefined):
 export function truncate(s: string | null | undefined, max: number): string | null {
   if (!s) return null;
   return s.length > max ? s.slice(0, max) : s;
+}
+
+/**
+ * Path validator — SPA routes are ascii + a few reserved chars.
+ * Rejects oversized / non-route garbage so attackers can't bloat the path-index
+ * cardinality by spamming distinct random paths.
+ */
+const PATH_RE = /^\/[A-Za-z0-9/_\-.:%~@()]{0,200}$/;
+export function validPath(p: string): boolean {
+  return PATH_RE.test(p);
+}
+
+/**
+ * HMAC-signed dwell ticket. /pv returns { id, t } where t is a short HMAC of
+ * (id || visitor_id || ts_minute || SALT). /dwell requires the t back, so an
+ * attacker without the original visitor_id can't poison rows they didn't write.
+ * 12 hex chars (48 bits) is enough — guess space ~3e14, rate-limited to 5/s.
+ */
+export function makeDwellTicket(id: number, visitor_id: Buffer): string {
+  const h = createHmac('sha256', ANALYTICS_SALT);
+  h.update(String(id));
+  h.update('\0');
+  h.update(visitor_id);
+  return h.digest('hex').slice(0, 12);
+}
+
+export function verifyDwellTicket(id: number, visitor_id: Buffer, ticket: string): boolean {
+  if (typeof ticket !== 'string' || ticket.length !== 12) return false;
+  const expected = makeDwellTicket(id, visitor_id);
+  // 12-char hex strings, constant-time compare.
+  try {
+    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(ticket, 'hex'));
+  } catch {
+    return false;
+  }
 }

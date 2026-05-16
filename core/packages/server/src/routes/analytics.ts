@@ -15,36 +15,48 @@
  * 隐私: 见 utils/analytics_helpers.ts.
  */
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import {
   classifyUa,
   getClientIp,
   lookupCountry,
+  makeDwellTicket,
   makeVisitorId,
   normalizeReferrer,
   truncate,
+  validPath,
+  verifyDwellTicket,
 } from '../utils/analytics_helpers.js';
 
 export const analyticsRoutes = new Hono();
 
-const PATH_MAX = 500;
 const REF_MAX = 100;
+
+// 2 KB hard cap on /pv + /dwell bodies — both endpoints take only small JSON
+// (path + ref OR id + ms + ticket). Anything larger is malicious.
+const analyticsBodyLimit = bodyLimit({
+  maxSize: 2 * 1024,
+  onError: (c) => c.json({ error: 'body too large' }, 413),
+});
 
 interface PvInput {
   path?: unknown;
   ref?: unknown;
 }
 
-analyticsRoutes.post('/analytics/pv', async (c) => {
+analyticsRoutes.post('/analytics/pv', analyticsBodyLimit, async (c) => {
   let body: PvInput;
   try {
     body = await c.req.json();
   } catch {
     return c.json({ error: 'invalid json' }, 400);
   }
-  const path = typeof body.path === 'string' ? truncate(body.path, PATH_MAX) : null;
-  if (!path) return c.json({ error: 'path required' }, 400);
+  if (typeof body.path !== 'string' || !validPath(body.path)) {
+    return c.json({ error: 'invalid path' }, 400);
+  }
+  const path = body.path;
 
   const ref = typeof body.ref === 'string' ? body.ref : '';
   const ua = c.req.header('user-agent') ?? '';
@@ -66,15 +78,18 @@ analyticsRoutes.post('/analytics/pv', async (c) => {
      RETURNING id`,
     [visitor_id, path, ref_domain, country, ua_class],
   );
-  return c.json({ id: Number(row.id) });
+  const id = Number(row.id);
+  // Caller must echo this ticket back on /dwell to prove they wrote the row.
+  return c.json({ id, t: makeDwellTicket(id, visitor_id) });
 });
 
 interface DwellInput {
   id?: unknown;
   ms?: unknown;
+  t?: unknown;
 }
 
-analyticsRoutes.post('/analytics/dwell', async (c) => {
+analyticsRoutes.post('/analytics/dwell', analyticsBodyLimit, async (c) => {
   let body: DwellInput;
   try {
     body = await c.req.json();
@@ -83,11 +98,26 @@ analyticsRoutes.post('/analytics/dwell', async (c) => {
   }
   const id = typeof body.id === 'number' && Number.isFinite(body.id) ? Math.floor(body.id) : null;
   const ms = typeof body.ms === 'number' && Number.isFinite(body.ms) ? Math.max(0, Math.floor(body.ms)) : null;
-  if (id === null || ms === null) return c.json({ error: 'id + ms required' }, 400);
+  const ticket = typeof body.t === 'string' ? body.t : null;
+  if (id === null || ms === null || ticket === null) return c.json({ error: 'id + ms + t required' }, 400);
+
+  // Recompute the visitor_id we'd issue right now for this caller; if it matches
+  // the row's, the ticket from /pv will verify. Falls back to row's stored
+  // visitor_id if the caller's day/IP/UA changed since /pv (rare, e.g. mobile
+  // network switch). Either way the secret never leaves the server.
+  const [row] = await query<{ visitor_id: Buffer }>(
+    `SELECT visitor_id FROM pageviews WHERE id = ? AND dwell_ms IS NULL AND ts > NOW() - INTERVAL '2 hours'`,
+    [id],
+  );
+  if (!row) return c.json({ ok: true });  // already filled / pruned / nonexistent — silent ok
+  if (!verifyDwellTicket(id, row.visitor_id, ticket)) {
+    return c.json({ error: 'invalid ticket' }, 403);
+  }
+
   // Cap at 30 min — beyond that it's almost certainly a tab left open / suspended laptop.
   const capped = Math.min(ms, 30 * 60 * 1000);
   await query(
-    `UPDATE pageviews SET dwell_ms = ? WHERE id = ? AND dwell_ms IS NULL AND ts > NOW() - INTERVAL '2 hours'`,
+    `UPDATE pageviews SET dwell_ms = ? WHERE id = ? AND dwell_ms IS NULL`,
     [capped, id],
   );
   return c.json({ ok: true });
