@@ -66,6 +66,10 @@ export default function StackPage() {
     jsHeapMB: 0, gpuBufMB: 0,
   });
 
+  // 用户主动 twist (drag / tap / 实体键盘) 后,把 move 追加到 PlayerControls 的解法输入框。
+  // PlayerControls 挂载时把 handler 装到这里; setup / jumpToStep / playback 等程序化 twist 不走这条。
+  const userMoveRef = useRef<((action: TwistAction) => void) | null>(null);
+
   const [order, setOrder] = useState<number>(3);
   const [solvedToast, setSolvedToast] = useState(false);
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
@@ -160,7 +164,14 @@ export default function StackPage() {
       // group.name 已含 wide/layer 前缀 (如 "R" / "2R" / "M'" / "2L'"),
       // 走 twister.twist 让 history 也 record (undo/redo 才 work),
       // force=true 截断前一个动画 + 接续按键的"截断"语义
-      world.cube.twister.twist(new TwistAction(group.name, reverse, 1), false, true);
+      const action = new TwistAction(group.name, reverse, 1);
+      world.cube.twister.twist(action, false, true);
+      userMoveRef.current?.(action);
+    });
+
+    // 拖拽 / 整体旋转完成时,转发给上层 (PlayerControls) 的追加 handler
+    world.controller.userTwist.push((action) => {
+      userMoveRef.current?.(action);
     });
 
     // 右键 default 是 context menu,阻止它好让右键单击能触发逆时针转
@@ -593,7 +604,9 @@ export default function StackPage() {
       if (!world) return;
       // force=true:前一个 group 还在转时 finish 它到终点 + unlock + retry,
       // 连按 I/J 时 R 截断到完成位 + U 立刻开始 (cube.lock 跨轴互斥)
-      world.cube.twister.twist(new TwistAction(k.sign, k.reverse, 1), false, true);
+      const action = new TwistAction(k.sign, k.reverse, 1);
+      world.cube.twister.twist(action, false, true);
+      userMoveRef.current?.(action);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -752,6 +765,7 @@ export default function StackPage() {
               keymap={keymap}
               onKeymapChange={setKeymap}
               onResetKeymap={() => setKeymap(resetKeymapStorage())}
+              userMoveRef={userMoveRef}
             />
           )}
         </aside>

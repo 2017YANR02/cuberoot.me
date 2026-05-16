@@ -4,7 +4,7 @@
  * 唯一 stack-特有部分:把"播放到第 n 步"转成 stack World twister 的 reset+fast-twist
  * (因为 stack 渲染是 huazhechen/cuber 自渲染,不是 TwistyPlayer,没 timestamp scrub)。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw, Settings, ChevronRight, Shuffle, Keyboard, Grid3x3 } from 'lucide-react';
 import { Alg } from 'cubing/alg';
@@ -33,12 +33,15 @@ interface Props {
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
+  /** StackPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
+  userMoveRef?: RefObject<((action: TwistAction) => void) | null>;
 }
 
 export default function PlayerControls({
   world, alg, setup, onAlgChange, onSetupChange,
   order, onOrderChange, settings, onSettingsChange,
   keymap, onKeymapChange, onResetKeymap,
+  userMoveRef,
 }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -157,6 +160,33 @@ export default function PlayerControls({
     const algEl = algElRef.current;
     if (algEl instanceof HTMLTextAreaElement) algEl.value = next;
   };
+
+  // 用户主动 twist (drag / tap / 实体键盘) 完成时追加 move 到解法框。
+  // 跟 applyMove 不同的是:cube 已经被上层 twist 过了,这里只动文本。
+  // 永远落到 alg 框 (不像 QWERTY 那样允许写入 setup),因为 drag/tap 时焦点通常不在输入框,
+  // 而即便焦点在 setup 框,用户拖魔方的语义也是"开始解",该落解法。
+  const appendUserMove = useCallback((action: TwistAction) => {
+    const moveText = action.value;
+    if (!moveText) return;
+    const algEl = algElRef.current;
+    if (!(algEl instanceof HTMLTextAreaElement)) return;
+    const current = algEl.value;
+    const next = current.trimEnd() + (current.trim() ? ' ' : '') + moveText + ' ';
+    algEl.value = next;
+    algEl.selectionStart = algEl.selectionEnd = next.length;
+    algEl.style.height = 'auto';
+    algEl.style.height = algEl.scrollHeight + 'px';
+    skipAutoResetRef.current = true;
+    setAlgDraft(next);
+    onAlgChange(next);
+  }, [onAlgChange]);
+
+  // 注册到 StackPage userMoveRef,卸载时清空
+  useEffect(() => {
+    if (!userMoveRef) return;
+    userMoveRef.current = appendUserMove;
+    return () => { userMoveRef.current = null; };
+  }, [userMoveRef, appendUserMove]);
 
   // QWERTY 模式:按一个 keymap 动作 → 转魔方 + 追加到 setup/alg (打乱框激活时落 setup,否则落 alg 并 focus alg)
   const applyMove = useCallback((k: KeyMove) => {
