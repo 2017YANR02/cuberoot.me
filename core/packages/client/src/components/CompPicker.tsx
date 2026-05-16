@@ -21,8 +21,9 @@ export interface CompPickerPreset {
 
 /** 识别 cubing.com / WCA 比赛链接,返回归一的 WCA ID(无横杠);不是链接返 null. */
 export function extractWcaIdFromUrl(input: string): string | null {
-  const t = input.trim();
-  const cubing = t.match(/cubing\.com\/live\/([A-Za-z0-9_-]+)/i);
+  // 用户用 × (U+00D7) 替代 x 的偶发场景(中文输入法 / 复制时被替换)兜底归一化
+  const t = input.trim().replace(/×/g, 'x');
+  const cubing = t.match(/cubing\.com\/(?:live|competition)\/([A-Za-z0-9_-]+)/i);
   if (cubing) return cubing[1].replace(/-/g, '');
   const wca = t.match(/worldcubeassociation\.org\/competitions\/([A-Za-z0-9_]+)/i);
   if (wca) return wca[1];
