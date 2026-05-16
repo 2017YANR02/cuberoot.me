@@ -12,8 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b",
-    "typecheck:ci": "tsc -b --force",
-    "gen-credits": "node ../../../scripts/gen_readme_credits.mjs"
+    "typecheck:ci": "tsc -b --force"
   },
   "dependencies": {
     "@absinthe/socket": "^0.2.1",
