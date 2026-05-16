@@ -21,6 +21,7 @@ export default class CubeGroup extends THREE.Group {
   layer: number;
   private holding = false;
   private tween: Tween | undefined = undefined;
+  private panel: THREE.Mesh | undefined = undefined;
 
   _angle: number;
   set angle(angle) {
@@ -50,6 +51,8 @@ export default class CubeGroup extends THREE.Group {
     // Inner-layer occluder panel: super-order cube 只造 surface cubelet,中层 slice = ring 空环,
     // 旋转中透过 ring 内部能看到背景/对面。挂一片薄板填满 ring 内部,跟 group 旋转一起转。
     // outer layer (layer 0 / N-1) 已是 full plane 不需要。
+    // 默认隐藏,只在 hold()→drop() 之间 (该 group 实际在转) 才显示;
+    // 静止时 panel 一直藏着,避免 xyz 整体转时另外两轴的静止 panel 戳穿外表面。
     const N = this.cube.order;
     if (layer > 0 && layer < N - 1) {
       const S = Cubelet.SIZE;
@@ -61,6 +64,8 @@ export default class CubeGroup extends THREE.Group {
       else if (axis === "y") { panel.scale.set(span, thick, span); panel.position.y = offset; }
       else { panel.scale.set(span, span, thick); panel.position.z = offset; }
       panel.frustumCulled = false;
+      panel.visible = false;
+      this.panel = panel;
       this.add(panel);
     }
 
@@ -129,6 +134,7 @@ export default class CubeGroup extends THREE.Group {
       // 渲染走 instancedRenderer; 不再 reparent THREE 节点
     }
     this.cube.instancedRenderer.beginSlice(this);
+    if (this.panel) this.panel.visible = true;
     return true;
   }
 
@@ -153,6 +159,7 @@ export default class CubeGroup extends THREE.Group {
     this.cube.dirty = true;
     this.cube.instancedRenderer.endSlice(this);
     this.angle = 0;
+    if (this.panel) this.panel.visible = false;
     this.cube.unlock(this.axis, this.layer);
     this.cube.callback();
   }
