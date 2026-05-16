@@ -28,7 +28,6 @@ import { formatWcaResult } from '../../utils/wca_format_result';
 import { rememberRecent } from './CompIndexPage';
 import { useLiveStream, applyResultPatch, type LivePatch } from './useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from './useWcaLiveStream';
-import { loadPersonsIndex, getPersonByWcaId } from '@cuberoot/shared';
 import './comp.css';
 
 // ─── 类型(与 server 端 cubing_live.ts 保持一致) ─────────────────────────
@@ -221,38 +220,6 @@ export default function CompDetailPage() {
   const [, setFlagDataVer] = useState(0);
   useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
 
-  // 名字 enrichment: 部分数据源(cubing.com /competitors 报名表)只给英文名,
-  // 通过 @cuberoot/shared persons_index 查"English (中文)"全名,跟 /recon / WcaPersonPicker 同 source.
-  // 触发条件:全部 users 都缺括号 = 来自 scrape 源,需要补.WC2015 等国际赛混杂中外选手,
-  // 中国人名已带括号 → 跳过(否则非中国选手没括号也会触发 10MB 索引下载,加载变慢).
-  useEffect(() => {
-    if (!data) return;
-    const usersArr = Object.values(data.users);
-    if (usersArr.length === 0) return;
-    const anyWithParens = usersArr.some(u => u.name.includes('('));
-    if (anyWithParens) return;
-    const needFix = usersArr.some(u => u.wcaid && !u.name.includes('('));
-    if (!needFix) return;
-    let cancelled = false;
-    loadPersonsIndex().then(() => {
-      if (cancelled) return;
-      setData(prev => {
-        if (!prev) return prev;
-        const users = { ...prev.users };
-        let changed = false;
-        for (const [num, u] of Object.entries(users)) {
-          if (!u.wcaid || u.name.includes('(')) continue;
-          const p = getPersonByWcaId(u.wcaid);
-          if (p && p.name && p.name !== u.name) {
-            users[num] = { ...u, name: p.name };
-            changed = true;
-          }
-        }
-        return changed ? { ...prev, users } : prev;
-      });
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [data?.slug, data?.fetchedAt]);
   // PR map: wcaid → PbByEvent. null = fetched, no data.
   const [pbVer, setPbVer] = useState(0); // bump to force re-render after prefetch
   const [openedCuber, setOpenedCuber] = useState<number | null>(null);
