@@ -203,7 +203,8 @@ html:has(.wca-stats-page),
 html:has(.wse-page),
 html:has(.wp-page),
 html:has(.records-page),
-html:has(.recon-page) {
+html:has(.recon-page),
+html:has(.tr-page) {
   color-scheme: dark;
   --background: #1c1917;
   --foreground: #f0ebe3;

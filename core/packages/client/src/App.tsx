@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Suspense, lazy, useEffect, useState } from 'react';
 import i18n from './i18n';
 import { TrainingPage } from './pages/TrainingPage';
+import AnalyticsBeacon from './components/AnalyticsBeacon';
 
 // NOTE: 新统一公式训练器（PLL/OLL/ZBLL/ZBLS,扩展中）
 const TrainerLandingPage = lazy(() => import('./pages/trainer/TrainerLandingPage'));
@@ -58,6 +59,7 @@ const IframePage = lazy(() => import('./pages/IframePage'));
 const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 // NOTE: Frame Count 数帧工具懒加载
 const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
+const TrafficPage = lazy(() => import('./pages/traffic/TrafficPage'));
 // NOTE: Scramble Hub + sub-tools (stats / gen / analyzer / solver)
 const ScrambleHubPage = lazy(() => import('./pages/scramble/ScrambleHubPage'));
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
@@ -182,6 +184,7 @@ function App() {
   return (
     <BrowserRouter basename="/">
       <LangParamGuard />
+      <AnalyticsBeacon />
       <Routes>
         {/* NOTE: 全站入口页（卡片网格） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
@@ -311,6 +314,7 @@ function App() {
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
+        <Route path="/traffic" element={<Suspense fallback={<div>Loading...</div>}><TrafficPage /></Suspense>} />
         {/* Tutorial — 公式教程目录（曾用 /alg） */}
         <Route path="/tutorial" element={<Suspense fallback={<div>Loading...</div>}><TutorialIndexPage /></Suspense>} />
         <Route path="/tutorial/c/:category" element={<Suspense fallback={<div>Loading...</div>}><TutorialCategoryPage /></Suspense>} />
