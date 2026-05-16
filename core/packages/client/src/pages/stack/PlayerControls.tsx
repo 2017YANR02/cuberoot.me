@@ -209,7 +209,7 @@ export default function PlayerControls({
 
   return (
     <div className="stack-player">
-      <div className="stack-player-row">
+      <div className="stack-player-row stack-player-row--top">
         <AlgInput
           elementRef={setupElRef}
           initialText={setupDraft}
