@@ -282,8 +282,11 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
+    // 排除法测试: 仅 sticker geometry 改 PlaneGeometry,其它(material/frame)不动
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const baseGeo = isSuperOrder ? Cubelet._STICKER_LOW : Cubelet._STICKER;
     const m = new THREE.InstancedMesh(
-      moving ? this.staticSticker?.geometry ?? Cubelet._STICKER : Cubelet._STICKER,
+      moving ? this.staticSticker?.geometry ?? baseGeo : baseGeo,
       moving ? this.movingStickerMaterial : this.stickerMaterial,
       count,
     );
