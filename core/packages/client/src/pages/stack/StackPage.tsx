@@ -7,8 +7,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as THREE from 'three';
 import {
-  ChevronLeft,
-  BookOpen, Film, PlayCircle, Box,
+  ChevronLeft, ChevronRight,
+  BookOpen, Film,
   Maximize2, Minimize2,
 } from 'lucide-react';
 import World from './cuber/world';
@@ -29,8 +29,6 @@ import './stack.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
-type Mode = 'player' | 'algs' | 'director';
-
 interface StackCube {
   history: { moves: number; redoStack: unknown[] };
   twister: { undo: () => void; redo: () => void; twist: (a: TwistAction, fast: boolean, force: boolean) => boolean; setup: (e: string) => void; push: (e: string) => void };
@@ -45,7 +43,6 @@ export default function StackPage() {
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const mode = (searchParams.get('mode') as Mode) || 'player';
   const algParam = searchParams.get('alg') || '';
   const setupParam = searchParams.get('setup') || '';
   const puzzleParam = (() => {
@@ -84,14 +81,29 @@ export default function StackPage() {
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
 
-  const setMode = useCallback((next: Mode) => {
+  // 公式 / 录制 折叠状态;localStorage 持久化用户选择
+  const [algsOpen, setAlgsOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem('stack.panel.algs') === '1'; } catch { return false; }
+  });
+  const [directorOpen, setDirectorOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem('stack.panel.director') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('stack.panel.algs', algsOpen ? '1' : '0'); } catch { /* private */ }
+  }, [algsOpen]);
+  useEffect(() => {
+    try { localStorage.setItem('stack.panel.director', directorOpen ? '1' : '0'); } catch { /* private */ }
+  }, [directorOpen]);
+
+  // URL 中遗留的 mode 参数清掉 (mode 已并入单面板)
+  useEffect(() => {
+    if (!searchParams.get('mode')) return;
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
-      if (next === 'player') np.delete('mode'); else np.set('mode', next);
-      if (next !== 'player') { np.delete('alg'); np.delete('setup'); }
+      np.delete('mode');
       return np;
     }, { replace: true });
-  }, [setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
   const ensureCubeCallback = useCallback(() => {
     const w = worldRef.current;
@@ -171,15 +183,9 @@ export default function StackPage() {
     });
 
     // 拖拽 / 整体旋转完成时,转发给上层 (PlayerControls) 的追加 handler。
-    // 1×1 没有"层":sticker drag 出来的 M'/E'/S 重写成 x/y/z(只有转体)
-    const NORMALIZE_1X1: Record<string, string> = { "M'": 'x', "E'": 'y', "S": 'z' };
+    // 1×1 上 face/slice → xyz 转体的归一化在 appendUserMove 里统一处理,这里直接转发。
     world.controller.userTwist.push((action) => {
-      let a = action;
-      if (world.cube.order === 1) {
-        const mapped = NORMALIZE_1X1[action.sign];
-        if (mapped) a = new TwistAction(mapped, action.reverse, action.times);
-      }
-      userMoveRef.current?.(a);
+      userMoveRef.current?.(action);
     });
 
     // 右键 default 是 context menu,阻止它好让右键单击能触发逆时针转
@@ -619,7 +625,6 @@ export default function StackPage() {
   const onAlgChange = useCallback((alg: string) => {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
-      np.set('mode', 'player');
       if (alg) np.set('alg', alg); else np.delete('alg');
       return np;
     }, { replace: true });
@@ -628,7 +633,6 @@ export default function StackPage() {
   const onSetupChange = useCallback((setup: string) => {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
-      np.set('mode', 'player');
       if (setup) np.set('setup', setup); else np.delete('setup');
       return np;
     }, { replace: true });
@@ -690,13 +694,6 @@ export default function StackPage() {
     });
   }, []);
 
-  const modeButtons: { id: Mode; icon: typeof Box; label: string }[] = useMemo(() => [
-    { id: 'player',   icon: PlayCircle, label: t('回放', 'Player') },
-    { id: 'algs',     icon: BookOpen,   label: t('公式', 'Algs') },
-    { id: 'director', icon: Film,       label: t('录制', 'Record') },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [isZh]);
-
   return (
     <div className={`stack-page${fullscreen ? ' stack-page--fullscreen' : ''}${settings.checkeredBg ? ' stack-page--checkered' : ''}`}>
       <header className="stack-header">
@@ -704,22 +701,6 @@ export default function StackPage() {
           <ChevronLeft size={18} />
         </Link>
         <h1 className="stack-title">{t('魔方栈', 'Stack')}</h1>
-        <nav className="stack-modes">
-          {modeButtons.map((m) => {
-            const Icon = m.icon;
-            return (
-              <button
-                key={m.id}
-                className={m.id === mode ? 'active' : ''}
-                onClick={() => setMode(m.id)}
-                title={m.label}
-              >
-                <Icon size={14} />
-                <span>{m.label}</span>
-              </button>
-            );
-          })}
-        </nav>
         <div className="stack-spacer" />
         <LangToggle variant="inline" />
         <ThemeToggle />
@@ -739,33 +720,70 @@ export default function StackPage() {
         </div>
 
         <aside className="stack-side">
-          {mode === 'algs' ? (
+          <CollapsibleSection
+            open={algsOpen}
+            onToggle={() => setAlgsOpen((o) => !o)}
+            icon={BookOpen}
+            label={t('公式', 'Algs')}
+          >
             <AlgsPanel
               onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
               onOrderChange={handleOrder}
             />
-          ) : mode === 'director' ? (
+          </CollapsibleSection>
+          <PlayerControls
+            world={worldRef.current}
+            alg={playerAlg}
+            setup={playerSetup}
+            onAlgChange={onAlgChange}
+            onSetupChange={onSetupChange}
+            order={order}
+            onOrderChange={handleOrder}
+            settings={settings}
+            onSettingsChange={setSettings}
+            keymap={keymap}
+            onKeymapChange={setKeymap}
+            onResetKeymap={() => setKeymap(resetKeymapStorage())}
+            userMoveRef={userMoveRef}
+          />
+          <CollapsibleSection
+            open={directorOpen}
+            onToggle={() => setDirectorOpen((o) => !o)}
+            icon={Film}
+            label={t('录制', 'Record')}
+          >
             <DirectorPanel getCanvas={getCanvas} />
-          ) : (
-            <PlayerControls
-              world={worldRef.current}
-              alg={playerAlg}
-              setup={playerSetup}
-              onAlgChange={onAlgChange}
-              onSetupChange={onSetupChange}
-              order={order}
-              onOrderChange={handleOrder}
-              settings={settings}
-              onSettingsChange={setSettings}
-              keymap={keymap}
-              onKeymapChange={setKeymap}
-              onResetKeymap={() => setKeymap(resetKeymapStorage())}
-              userMoveRef={userMoveRef}
-            />
-          )}
+          </CollapsibleSection>
         </aside>
       </div>
 
     </div>
+  );
+}
+
+function CollapsibleSection({
+  open, onToggle, icon: Icon, label, children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  icon: typeof BookOpen;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="stack-puzzle">
+      <button
+        type="button"
+        className="stack-puzzle-head"
+        onClick={onToggle}
+        aria-expanded={open}
+        title={label}
+      >
+        <ChevronRight size={14} className={'stack-puzzle-caret' + (open ? ' open' : '')} />
+        <Icon size={14} />
+        <span className="stack-puzzle-title">{label}</span>
+      </button>
+      {open && <div className="stack-section-body">{children}</div>}
+    </section>
   );
 }

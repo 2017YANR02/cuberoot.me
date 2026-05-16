@@ -79,33 +79,14 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-.stack-modes {
-  display: inline-flex;
-  gap: 2px;
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  border-radius: 6px;
-  padding: 2px;
+/* StackPage 用 CollapsibleSection 把 AlgsPanel / DirectorPanel 折进侧栏。
+   子面板自身已有 border-top,wrapper 不再重复加。 */
+.stack-section-body {
+  display: flex;
+  flex-direction: column;
 }
-.stack-modes button {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 28px;
-  padding: 0 10px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.stack-modes button.active {
-  background: var(--card);
-  color: var(--foreground);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-.stack-modes button:hover:not(.active) {
-  color: var(--foreground);
+.stack-section-body > .stack-algs {
+  max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .stack-side 滚动 */
 }
 
 .stack-body {
@@ -197,15 +178,6 @@
 }
 .stack-fullscreen-exit:hover {
   background: rgba(0, 0, 0, 0.75);
-}
-
-@media (max-width: 640px) {
-  .stack-modes button span {
-    display: none;
-  }
-  .stack-modes button {
-    padding: 0 8px;
-  }
 }
 
 @media (max-width: 480px) {
