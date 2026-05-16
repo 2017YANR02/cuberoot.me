@@ -160,13 +160,25 @@ export default class InstancedRenderer extends THREE.Group {
       this.staticInner.count = 0;
     }
 
-    // 初始 frame + inner box 矩阵 (static),全部 moving 隐藏
-    for (let i = 0; i < visCount; i++) {
-      this.staticFrame.setMatrixAt(i, cubelets[i].matrix);
-      this.movingFrame.setMatrixAt(i, HIDE_MAT);
-      if (this.hasInner) {
-        this.staticInner.setMatrixAt(i, cubelets[i].matrix);
-        this.movingInner.setMatrixAt(i, HIDE_MAT);
+    // 构造时 cubelet.matrix = 单位旋转 + cubelet.position translation。直接写 instance buffer
+    // 跳过 setMatrixAt (matrix.toArray 间接)。movingFrame 的 HIDE_MAT 也跳:moving count=0,
+    // 当前不渲染;有 slice 时 beginSlice 会写正确矩阵。
+    {
+      const arr = this.staticFrame.instanceMatrix.array;
+      for (let i = 0; i < visCount; i++) {
+        const off = i * 16;
+        const p = cubelets[i].position;
+        arr[off + 0] = 1; arr[off + 5] = 1; arr[off + 10] = 1; arr[off + 15] = 1;
+        arr[off + 12] = p.x; arr[off + 13] = p.y; arr[off + 14] = p.z;
+      }
+    }
+    if (this.hasInner) {
+      const arr = this.staticInner.instanceMatrix.array;
+      for (let i = 0; i < visCount; i++) {
+        const off = i * 16;
+        const p = cubelets[i].position;
+        arr[off + 0] = 1; arr[off + 5] = 1; arr[off + 10] = 1; arr[off + 15] = 1;
+        arr[off + 12] = p.x; arr[off + 13] = p.y; arr[off + 14] = p.z;
       }
     }
     this.staticFrame.instanceMatrix.needsUpdate = true;
