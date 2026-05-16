@@ -206,29 +206,56 @@
 .stack-puzzle-section-grow .stack-puzzle-select {
   width: 100%;
 }
-.stack-puzzle-num {
-  width: 80px;
-  height: 32px;
-  padding: 0 10px;
+.stack-puzzle-order-control {
+  position: relative;
+  width: 72px;
+}
+.stack-puzzle-order-wheel {
+  height: 66px;
+  min-height: 0;
   border: 1px solid var(--border-default);
   border-radius: 6px;
-  background: var(--background);
+  --wp-bg: var(--background);
+  --wp-highlight-h: 24px;
+}
+.stack-puzzle-order-wheel .wheel-picker-item {
+  font-size: 14px;
+  padding: 2px 0;
+}
+/* 中间高亮位由 input 接管 — 隐藏滚筒自带的居中文本层 */
+.stack-puzzle-order-wheel .wheel-picker-list-white {
+  visibility: hidden;
+}
+.stack-puzzle-order-input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 24px;
+  transform: translateY(-50%);
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--foreground);
   font-size: 14px;
   font-variant-numeric: tabular-nums;
   text-align: center;
+  z-index: 3;
+  outline: none;
+  touch-action: none;
 }
-.stack-puzzle-num:focus {
-  outline: 2px solid var(--ring);
+.stack-puzzle-order-input:focus {
+  outline: 1px solid var(--ring);
   outline-offset: -1px;
-  border-color: var(--ring);
+  border-radius: 4px;
 }
-.stack-puzzle-num::-webkit-inner-spin-button,
-.stack-puzzle-num::-webkit-outer-spin-button {
+.stack-puzzle-order-input::-webkit-inner-spin-button,
+.stack-puzzle-order-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.stack-puzzle-num[type="number"] {
+.stack-puzzle-order-input[type="number"] {
   -moz-appearance: textfield;
 }
 .stack-puzzle-select {
@@ -296,61 +323,56 @@
 
 .stack-color-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   font-size: 13px;
   margin-top: 4px;
 }
-.stack-color-row input[type="color"] {
-  width: 32px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: transparent;
-  cursor: pointer;
+.stack-color-row-label {
+  align-self: center;
 }
-.stack-color-presets {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-.stack-color-swatch {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  cursor: pointer;
-}
-.stack-color-swatch.active {
-  outline: 2px solid var(--accent-foreground);
-  outline-offset: 1px;
-}
-
-.stack-face-color-row {
-  flex-wrap: wrap;
-}
-.stack-face-color-grid {
+.stack-swatch-list {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
-.stack-face-color-cell {
-  display: flex;
+.stack-swatch {
+  position: relative;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   font-size: 11px;
   color: var(--muted-foreground);
+  cursor: pointer;
 }
-.stack-face-color-cell input[type="color"] {
-  width: 26px;
+.stack-swatch-label {
+  line-height: 1;
+}
+.stack-swatch-box {
+  display: block;
+  width: 22px;
   height: 22px;
-  padding: 0;
   border: 1px solid var(--border);
   border-radius: 4px;
-  background: transparent;
+}
+.stack-swatch:hover .stack-swatch-box {
+  border-color: var(--accent-foreground);
+}
+.stack-swatch.active .stack-swatch-box {
+  outline: 2px solid var(--accent-foreground);
+  outline-offset: 1px;
+}
+.stack-swatch-input {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 22px;
+  opacity: 0;
   cursor: pointer;
 }
 .stack-face-color-reset {
@@ -361,6 +383,7 @@
   background: var(--background);
   color: var(--foreground);
   cursor: pointer;
+  align-self: center;
 }
 .stack-face-color-reset:hover {
   background: var(--accent);

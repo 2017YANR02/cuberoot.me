@@ -20,6 +20,11 @@ export interface WheelPickerProps {
   renderSlot: (v: number) => string;
   /** 值变化时触发（拖拽中每跨一步就会触发一次） */
   onChange: (v: number) => void;
+  /** 拖动 / 惯性 / 滚轮全部静止 settleDelay ms 后触发一次,值是最终稳态值。
+   * 用于"重操作"延迟(如重建大对象),避免拖动期间被多次触发 */
+  onSettle?: (v: number) => void;
+  /** onSettle 判稳延迟,默认 180ms */
+  settleDelay?: number;
   /** 禁用态：半透明 + 不响应事件 */
   disabled?: boolean;
   /** 宽度（px 或 CSS 字符串），默认 72 */
@@ -43,6 +48,8 @@ export function WheelPicker({
   clamp: clampProp,
   renderSlot,
   onChange,
+  onSettle,
+  settleDelay = 180,
   disabled = false,
   width = 72,
   itemHeight = 30,
@@ -58,8 +65,8 @@ export function WheelPicker({
   const slotWhiteRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // NOTE: Ref 桥接 props — 避免 useEffect 依赖导致重入
-  const propsRef = useRef({ step, minValue, maxValue, clampProp, renderSlot, onChange, tick });
-  propsRef.current = { step, minValue, maxValue, clampProp, renderSlot, onChange, tick };
+  const propsRef = useRef({ step, minValue, maxValue, clampProp, renderSlot, onChange, onSettle, settleDelay, tick });
+  propsRef.current = { step, minValue, maxValue, clampProp, renderSlot, onChange, onSettle, settleDelay, tick };
 
   // NOTE: 暴露主 effect 闭包里的同步函数，外部 value 变化时调
   const syncRef = useRef<((v: number) => void) | null>(null);
@@ -77,6 +84,16 @@ export function WheelPicker({
     let itemH = itemHeight;
     let isDragging = false;
     let animTimer: ReturnType<typeof setTimeout> | null = null;
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function scheduleSettle() {
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        settleTimer = null;
+        if (isDragging) { scheduleSettle(); return; }  // 用户又按住了 → 推迟
+        propsRef.current.onSettle?.(currentValue);
+      }, propsRef.current.settleDelay);
+    }
 
     // ── Web Audio tick ──
     let audioCtx: AudioContext | null = null;
@@ -202,7 +219,9 @@ export function WheelPicker({
     let lastStepIdx = 0;
 
     function onStart(e: MouseEvent | TouchEvent) {
-      e.preventDefault();
+      // NOTE: 触摸不 preventDefault — 让 tap 能 fire click 给上层覆盖元素 (如 stack 阶数 input) focus。
+      // CSS touch-action: none + 拖动时 onMove preventDefault 联合阻止页面滚动,功能上等价。
+      if (!('touches' in e)) e.preventDefault();
       if (inertiaRaf) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
       if (animTimer) { clearTimeout(animTimer); animTimer = null; }
       isDragging = true;
@@ -257,6 +276,7 @@ export function WheelPicker({
       setListStyle('transform', 'translateY(0px)');
       updateTransforms(0);
       if (Math.abs(velocity) > 0.3) startInertia(velocity);
+      else scheduleSettle();
     }
 
     function startInertia(v: number) {
@@ -264,7 +284,7 @@ export function WheelPicker({
       let accum = 0;
       function loop() {
         v *= FRICTION;
-        if (Math.abs(v) < 0.03) return;
+        if (Math.abs(v) < 0.03) { scheduleSettle(); return; }
         accum += v * 16;
         const steps = Math.round(-accum / itemH);
         if (steps !== 0) {
@@ -281,6 +301,7 @@ export function WheelPicker({
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       adjustByStep(e.deltaY < 0 ? 1 : -1, true);
+      scheduleSettle();
     }
 
     root.addEventListener('mousedown', onStart);
@@ -304,6 +325,7 @@ export function WheelPicker({
       root.removeEventListener('wheel', onWheel);
       if (inertiaRaf) cancelAnimationFrame(inertiaRaf);
       if (animTimer) clearTimeout(animTimer);
+      if (settleTimer) clearTimeout(settleTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // NOTE: 空依赖 — 只挂载一次
