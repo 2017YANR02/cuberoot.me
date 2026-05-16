@@ -766,6 +766,38 @@ export default class InstancedRenderer extends THREE.Group {
     this.tmpColor.lerp(this.hintBgColor, 1 - InstancedRenderer.HINT_FACE_MIX);
   }
 
+  /** 用户改了 6 面色:写 COLORS map + 重刷所有 sticker / hint instance color。
+   * sticker 用原色,hint 走 computeHintColor 跟当前 bg 预混。
+   * cubelet.colors[face] 是 logical label ("L"/"R"/"U"/"D"/"F"/"B"),COLORS 改了下次 applyStick 也自动走新色。 */
+  setFaceColors(map: Partial<Record<"U" | "D" | "L" | "R" | "F" | "B", string>>): void {
+    for (const k of ["U", "D", "L", "R", "F", "B"] as const) {
+      const v = map[k];
+      if (v) COLORS[k] = v;
+    }
+    const updateHint = !this.hintNeedsPopulate;
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = this.cube.initials.get(slot.cubeletInitial);
+      if (!cubelet) continue;
+      const label = cubelet.colors[slot.face];
+      this.tmpColor.set(COLORS[label ?? "Gray"] ?? COLORS.Gray);
+      this.staticSticker.setColorAt(i, this.tmpColor);
+      this.movingSticker.setColorAt(i, this.tmpColor);
+      if (updateHint) {
+        this.computeHintColor(label);
+        this.staticHint.setColorAt(i, this.tmpColor);
+        this.movingHint.setColorAt(i, this.tmpColor);
+      }
+    }
+    if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
+    if (this.movingSticker.instanceColor) this.movingSticker.instanceColor.needsUpdate = true;
+    if (updateHint) {
+      if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+      if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+    }
+    this.cube.dirty = true;
+  }
+
   /** 主题/背景色变了时调:刷新 hint 预混颜色 + bg 色字段。
    * `bgHex` 应来自 CSS var(--background) 解析后的 hex/rgb 字符串。 */
   setHintBackdrop(bgHex: string): void {

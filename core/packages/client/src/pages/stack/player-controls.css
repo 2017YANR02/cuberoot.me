@@ -328,6 +328,44 @@
   outline-offset: 1px;
 }
 
+.stack-face-color-row {
+  flex-wrap: wrap;
+}
+.stack-face-color-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.stack-face-color-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.stack-face-color-cell input[type="color"] {
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.stack-face-color-reset {
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+}
+.stack-face-color-reset:hover {
+  background: var(--accent);
+}
+
 .stack-keyboard-section {
   display: flex;
   flex-direction: column;
