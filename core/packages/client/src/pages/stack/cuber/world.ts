@@ -80,6 +80,10 @@ export default class World {
 
   scale = 1;
   perspective = 5;
+  /** 视图平移 (世界单位)。camera + lookAt 同时偏移,保持视线方向不变。 */
+  panX = 0;
+  panY = 0;
+  private _lookAtTarget = new THREE.Vector3();
   resize(): void {
     const min = this.height / Math.min(this.width, this.height) / this.scale / this.perspective;
     const fov = (2 * Math.atan(min) * 180) / Math.PI;
@@ -87,10 +91,13 @@ export default class World {
     this.camera.aspect = this.width / this.height;
     this.camera.fov = fov;
     const distance = Cubelet.SIZE * 3 * this.perspective;
+    this.camera.position.x = this.panX;
+    this.camera.position.y = this.panY;
     this.camera.position.z = distance;
     this.camera.near = distance - Cubelet.SIZE * 3;
     this.camera.far = distance + Cubelet.SIZE * 8;
-    this.camera.lookAt(this.scene.position);
+    this._lookAtTarget.set(this.panX, this.panY, 0);
+    this.camera.lookAt(this._lookAtTarget);
     this.camera.updateProjectionMatrix();
     this.dirty = true;
   }
