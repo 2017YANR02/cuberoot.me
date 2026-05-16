@@ -1,0 +1,11 @@
+[Unit]
+Description=Run analytics-aggregate.service daily at 04:30 UTC
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 UTC
+RandomizedDelaySec=5min
+Persistent=true
+Unit=analytics-aggregate.service
+
+[Install]
+WantedBy=timers.target
