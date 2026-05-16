@@ -235,12 +235,18 @@ export function compFlagIso2(compId: string): string {
   return countryToIso2(countryId);
 }
 
+// cubing.com 没收录的比赛(取消 / 早期 / 数据缺失)手动补 — 优先级高于 _compNamesZh.
+const MANUAL_COMP_NAMES_ZH: Record<string, string> = {
+  'China Championship 2020': '中国锦标赛2020',
+};
+
 /**
  * 根据英文比赛名（cell_name）获取中文比赛名
- * NOTE: 数据源为 recon_aux_data.json 的 compNamesZh 映射表
+ * NOTE: 数据源为 recon_aux_data.json 的 compNamesZh 映射表;
+ *       手动 override 表 MANUAL_COMP_NAMES_ZH 优先,覆盖 cubing.com 漏录的比赛.
  * @param cellName 英文比赛名（如 "Beijing Winter 2026"）
  * @returns 中文比赛名（如 "2026WCA北京冬季魔方赛"），未找到返回空字符串
  */
 export function compNameZh(cellName: string): string {
-  return _compNamesZh?.[cellName] ?? '';
+  return MANUAL_COMP_NAMES_ZH[cellName] ?? _compNamesZh?.[cellName] ?? '';
 }

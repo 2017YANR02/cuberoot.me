@@ -45,6 +45,7 @@ export default class Toucher {
       event.clientY - rect.top,
       event.shiftKey,
       event.button,
+      event.altKey,
     );
     this.callback(action);
     if (event.cancelable) event.preventDefault();
