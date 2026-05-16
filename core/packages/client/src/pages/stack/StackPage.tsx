@@ -690,14 +690,6 @@ export default function StackPage() {
           })}
         </nav>
         <div className="stack-spacer" />
-        <button
-          className="stack-fullscreen-btn"
-          onClick={() => setFullscreen(true)}
-          title={t('全屏魔方', 'Fullscreen cube')}
-          aria-label={t('全屏魔方', 'Fullscreen cube')}
-        >
-          <Maximize2 size={14} />
-        </button>
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
@@ -714,16 +706,14 @@ export default function StackPage() {
             <div className="stack-toast">{t('已复原 ✦', 'Solved ✦')}</div>
           ) : null}
           {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
-          {fullscreen ? (
-            <button
-              className="stack-fullscreen-exit"
-              onClick={() => setFullscreen(false)}
-              title={t('退出全屏', 'Exit fullscreen')}
-              aria-label={t('退出全屏', 'Exit fullscreen')}
-            >
-              <Minimize2 size={16} />
-            </button>
-          ) : null}
+          <button
+            className="stack-fullscreen-exit"
+            onClick={() => setFullscreen(!fullscreen)}
+            title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
+            aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
+          >
+            {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
         </div>
 
         <aside className="stack-side">

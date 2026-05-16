@@ -197,31 +197,13 @@
   display: block;
 }
 
-/* Header 上的全屏入口按钮,跟 stack-actions 风格一致 */
-.stack-fullscreen-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.stack-fullscreen-btn:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  color: var(--foreground);
-}
-
 /* 全屏模式:藏 header + side,canvas 占满 */
 .stack-page--fullscreen .stack-header,
 .stack-page--fullscreen .stack-side {
   display: none;
 }
 
-/* 全屏退出浮按钮:右上角,半透明,touch 区域足够 */
+/* 全屏 toggle 按钮:浮在 canvas 右上角,进入/退出共用 */
 .stack-fullscreen-exit {
   position: absolute;
   top: 8px;
