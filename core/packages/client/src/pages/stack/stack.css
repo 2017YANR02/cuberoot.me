@@ -197,6 +197,26 @@
   display: block;
 }
 
+/* 透明棋盘格背景 (twizzle 风格)。WebGL 已 alpha:true,canvas 透明,
+ * 这里 CSS 背景透出来。color-mix 让格子跟主题 foreground 算,
+ * 深色主题下浅一点深色,浅色主题下深一点浅色,自动适配。 */
+.stack-page--checkered .stack-canvas-wrap {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(45deg,
+      color-mix(in srgb, var(--foreground) 10%, transparent) 25%,
+      transparent 25%, transparent 75%,
+      color-mix(in srgb, var(--foreground) 10%, transparent) 75%
+    ),
+    linear-gradient(45deg,
+      color-mix(in srgb, var(--foreground) 10%, transparent) 25%,
+      transparent 25%, transparent 75%,
+      color-mix(in srgb, var(--foreground) 10%, transparent) 75%
+    );
+  background-position: 0 0, 12px 12px;
+  background-size: 24px 24px;
+}
+
 /* 全屏模式:藏 header + side,canvas 占满 */
 .stack-page--fullscreen .stack-header,
 .stack-page--fullscreen .stack-side {

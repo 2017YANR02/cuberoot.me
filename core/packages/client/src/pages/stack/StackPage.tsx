@@ -667,7 +667,7 @@ export default function StackPage() {
   ], [isZh]);
 
   return (
-    <div className={`stack-page${fullscreen ? ' stack-page--fullscreen' : ''}`}>
+    <div className={`stack-page${fullscreen ? ' stack-page--fullscreen' : ''}${settings.checkeredBg ? ' stack-page--checkered' : ''}`}>
       <header className="stack-header">
         <Link to="/" className="stack-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
