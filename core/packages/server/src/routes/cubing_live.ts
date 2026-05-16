@@ -1027,8 +1027,15 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     if (useSource === 'wca') data = await loadFromWca(wcaId, onProgress);
     else if (useSource === 'wca_live') data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId || undefined);
     else data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
+
+    // WCA REST 命中但 results=[] (未办比赛仅有 announcement) → auto 模式时 fallback cubing 拿报名表.
+    // 用户显式 source=wca 保持空数据.缓存键用 data.source 而非原 useSource.
+    if (choice === 'auto' && data.source === 'wca' && data.events.length === 0 && probe.cubingMeta) {
+      data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
+    }
+
     data.availableSources = availableSources;
-    cache.set(cacheKey, data);
+    cache.set(`${wcaId}:${data.source}`, data);
     return data;
   })().finally(() => { if (!onProgress) inflight.delete(cacheKey); });
 
