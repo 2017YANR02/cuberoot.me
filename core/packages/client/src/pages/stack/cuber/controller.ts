@@ -37,6 +37,9 @@ export default class Controller {
   public angle = 0;
   public contingle = 0;
   public taps: ((index: number, face: FACE | null, opts: { shift: boolean; button: number }) => void)[];
+  // 拖拽 / 整体旋转完成时 (cube.record 之后) 触发的 user-twist 回调。
+  // 用于把 drag 出来的 move 自动追加到上层 (PlayerControls) 的解法输入框。
+  public userTwist: ((action: TwistAction) => void)[] = [];
   // mousedown 时记录修饰键,handleUp 单击分支用
   private downShift = false;
   private downButton = 0;
@@ -340,7 +343,9 @@ export default class Controller {
           let times = Math.round(angle / (Math.PI / 2));
           const reverse = times < 0;
           times = Math.abs(times);
-          this.world.cube.record(new TwistAction(this.group.name, reverse, times));
+          const action = new TwistAction(this.group.name, reverse, times);
+          this.world.cube.record(action);
+          for (const cb of this.userTwist) cb(action);
         }
       } else {
         const groups = this.world.cube.table.groups[this.axis[0]];
@@ -351,7 +356,9 @@ export default class Controller {
           let times = Math.round(angle / (Math.PI / 2));
           const reverse = times < 0;
           times = Math.abs(times);
-          this.world.cube.record(new TwistAction(this.axis, reverse, times));
+          const action = new TwistAction(this.axis, reverse, times);
+          this.world.cube.record(action);
+          for (const cb of this.userTwist) cb(action);
         }
       }
     }
