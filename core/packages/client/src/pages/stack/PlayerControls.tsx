@@ -13,7 +13,7 @@ import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
-import { tnoodleRandomScramble } from '../../utils/cubingScramble';
+import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, type StackSettings } from './SettingDrawer';
@@ -209,7 +209,9 @@ export default function PlayerControls({
       scramble = await tnoodleRandomScramble(eventId);
     }
     if (!scramble) {
-      scramble = world.cube.twister.scrambler();
+      // N>=8 (或 cubing.js 拿不到 scramble) 走自家 N×N random-move,
+      // 跟 cubing.js 5-7 阶同一模式 (random-move, wide notation, 长度 20*(N-2))
+      scramble = randomMoveScrambleNxN(order);
     }
     if (settings.animateScramble) {
       animatingScrambleRef.current = true;
