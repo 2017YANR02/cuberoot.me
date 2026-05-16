@@ -98,10 +98,10 @@ export default class InstancedRenderer extends THREE.Group {
   private hintDistance: number;
 
   stickerSlots: StickerSlot[] = [];
-  /** key: cubeletInitial * 6 + face → slot idx */
-  private slotLookup: Map<number, number> = new Map();
-  /** 每个 cubeletInitial 拥有的 sticker slot idx 列表(beginSlice/endSlice 用) */
-  private cubeletSlots: Map<number, number[]> = new Map();
+  /** 紧凑表: cubelet._instIdx * 6 + face → slot idx (-1 = 无 sticker)。
+   * 替代两个 Map (slotLookup + cubeletSlots),N=250 省 ~70 MB:
+   * 之前 375k Map 项 + 372k 小 Array,现在 = visCount*6*4B = ~9 MB。 */
+  private cubeletFaceSlot!: Int32Array;
 
   // toggles
   private _thickness = true;
@@ -200,14 +200,14 @@ export default class InstancedRenderer extends THREE.Group {
     const zScale = this._thickness ? HALF : 1;
     const faceLocalMats: THREE.Matrix4[] = [];
     for (let f = 0; f < 6; f++) faceLocalMats.push(makeStickerLocalMatrix(f, zScale));
+    this.cubeletFaceSlot = new Int32Array(visCount * 6).fill(-1);
     for (const cubelet of cubelets) {
-      const list: number[] = [];
+      const base = cubelet._instIdx * 6;
       for (let f = 0; f < 6; f++) {
         const col = cubelet.colors[f];
         if (col == null || col === "") continue;
         const slotIdx = this.stickerSlots.length;
-        this.slotLookup.set(cubelet.initial * 6 + f, slotIdx);
-        list.push(slotIdx);
+        this.cubeletFaceSlot[base + f] = slotIdx;
         this.stickerSlots.push({
           cubeletInitial: cubelet.initial,
           face: f,
@@ -215,7 +215,6 @@ export default class InstancedRenderer extends THREE.Group {
           visible: true,
         });
       }
-      this.cubeletSlots.set(cubelet.initial, list);
     }
 
     const T3 = performance.now();
@@ -390,20 +389,20 @@ export default class InstancedRenderer extends THREE.Group {
         this.staticInner.setMatrixAt(instIdx, HIDE_MAT);
       }
 
-      const slots = this.cubeletSlots.get(cubelet.initial);
-      if (slots) {
-        for (const slotIdx of slots) {
-          if (!this.stickerSlots[slotIdx].visible) continue;
-          slotsList.push(slotIdx);
-          this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
-          origStickerMats.push(this.tmpMat.clone());
-          this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
-          this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
-          this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
-          origHintMats.push(this.tmpMat.clone());
-          this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
-          this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
-        }
+      const base = instIdx * 6;
+      for (let f = 0; f < 6; f++) {
+        const slotIdx = this.cubeletFaceSlot[base + f];
+        if (slotIdx < 0) continue;
+        if (!this.stickerSlots[slotIdx].visible) continue;
+        slotsList.push(slotIdx);
+        this.staticSticker.getMatrixAt(slotIdx, this.tmpMat);
+        origStickerMats.push(this.tmpMat.clone());
+        this.movingSticker.setMatrixAt(slotIdx, this.tmpMat);
+        this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
+        this.staticHint.getMatrixAt(slotIdx, this.tmpMat);
+        origHintMats.push(this.tmpMat.clone());
+        this.movingHint.setMatrixAt(slotIdx, this.tmpMat);
+        this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
       }
     }
     this.activeSlices.set(group, { instances, slots: slotsList, origCubeletMats, origStickerMats, origHintMats });
@@ -537,24 +536,24 @@ export default class InstancedRenderer extends THREE.Group {
         this.movingInner.setMatrixAt(instIdx, HIDE_MAT);
       }
 
-      const slots = this.cubeletSlots.get(cubeletInitial);
-      if (slots) {
-        for (const slotIdx of slots) {
-          const slot = this.stickerSlots[slotIdx];
-          if (!slot.visible) {
-            this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
-            this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
-            this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
-            this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
-            continue;
-          }
-          this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
-          this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
+      const base = instIdx * 6;
+      for (let f = 0; f < 6; f++) {
+        const slotIdx = this.cubeletFaceSlot[base + f];
+        if (slotIdx < 0) continue;
+        const slot = this.stickerSlots[slotIdx];
+        if (!slot.visible) {
+          this.staticSticker.setMatrixAt(slotIdx, HIDE_MAT);
           this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
-          this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slotIdx]);
-          this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
+          this.staticHint.setMatrixAt(slotIdx, HIDE_MAT);
           this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
+          continue;
         }
+        this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+        this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
+        this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
+        this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slotIdx]);
+        this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
+        this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
       }
     }
     this.activeSlices.delete(group);
@@ -644,8 +643,10 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   applyStick(cubeletInitial: number, face: number, label: string | undefined): void {
-    const slot = this.slotLookup.get(cubeletInitial * 6 + face);
-    if (slot === undefined) return;
+    const cubelet = this.cube.initials.get(cubeletInitial);
+    if (!cubelet || cubelet._instIdx < 0) return;
+    const slot = this.cubeletFaceSlot[cubelet._instIdx * 6 + face];
+    if (slot < 0) return;
     const slotData = this.stickerSlots[slot];
     if (label === "remove") {
       slotData.visible = false;
@@ -663,18 +664,14 @@ export default class InstancedRenderer extends THREE.Group {
     if (!slotData.visible) {
       // re-show
       slotData.visible = true;
-      const cubelet = this.cube.initials.get(cubeletInitial);
-      if (cubelet) {
-        this.tmpMat.multiplyMatrices(cubelet.matrix, slotData.localMat);
-        this.staticSticker.setMatrixAt(slot, this.tmpMat);
-        this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slot]);
-        this.staticHint.setMatrixAt(slot, this.tmpMat);
-        this.staticSticker.instanceMatrix.needsUpdate = true;
-        this.staticHint.instanceMatrix.needsUpdate = true;
-      }
+      this.tmpMat.multiplyMatrices(cubelet.matrix, slotData.localMat);
+      this.staticSticker.setMatrixAt(slot, this.tmpMat);
+      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slot]);
+      this.staticHint.setMatrixAt(slot, this.tmpMat);
+      this.staticSticker.instanceMatrix.needsUpdate = true;
+      this.staticHint.instanceMatrix.needsUpdate = true;
     }
-    const cubelet = this.cube.initials.get(cubeletInitial);
-    const effective = label && label.length > 0 ? label : (cubelet?.colors[face] ?? "Gray");
+    const effective = label && label.length > 0 ? label : (cubelet.colors[face] ?? "Gray");
     this.tmpColor.set(COLORS[effective] ?? COLORS.Gray);
     this.staticSticker.setColorAt(slot, this.tmpColor);
     this.movingSticker.setColorAt(slot, this.tmpColor);
