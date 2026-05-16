@@ -178,6 +178,14 @@ export default class Cubelet extends THREE.Group {
     Cubelet.SIZE, Cubelet.SIZE, Cubelet.SIZE,
   );
 
+  /** 内层 slice 填充板 — 单位立方,由 CubeGroup 按 axis 缩放成 (1,N-2,N-2)*SIZE 等比例的薄片。
+   * super-order 优化只造表面 cubelet,中间层 slice 是只有 ring 的空环;旋转中能透过 ring 内部看背景。
+   * 给每个 inner slice group 挂一片这个,跟 group 旋转一起转,挡住 ring 内部。 */
+  public static readonly _PANEL: THREE.BoxGeometry = new THREE.BoxGeometry(1, 1, 1);
+  public static readonly _PANEL_MAT: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
+    color: COLORS.Core,
+  });
+
   /** 超高阶简化 sticker (PlaneGeometry, 2 tri vs ExtrudeGeometry 204 tri)。
    * 沿 +Z 平移 0.05 单位破 z-fight:否则跟 frame pocket 底面 z=±SIZE/2 共面,
    * N=250 大跨度下 z-buffer 精度不足 → 异色条纹。

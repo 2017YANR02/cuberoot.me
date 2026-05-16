@@ -294,6 +294,40 @@
   min-width: 0;
 }
 
+.stack-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.stack-color-row input[type="color"] {
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.stack-color-presets {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.stack-color-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.stack-color-swatch.active {
+  outline: 2px solid var(--accent-foreground);
+  outline-offset: 1px;
+}
+
 .stack-keyboard-section {
   display: flex;
   flex-direction: column;

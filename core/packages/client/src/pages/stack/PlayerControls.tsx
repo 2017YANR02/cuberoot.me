@@ -388,6 +388,11 @@ function StackQwertyKeypad({
   );
 }
 
+/** 内核色 preset: 默认深灰 + WCA 6 面色 (跟 define.ts COLORS 对齐) */
+const CORE_COLOR_PRESETS: string[] = [
+  '#202020', '#EE0000', '#FFA100', '#FFFFFF', '#FEFE00', '#00D800', '#0000F2',
+];
+
 const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<StackSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'> }[] = [
   { id: 'std',    zh: '标准', en: 'Standard', s: { thickness: true,  hollow: false, arrow: false, hint: false } },
   { id: 'hollow', zh: '镂空', en: 'Hollow',   s: { thickness: true,  hollow: true,  arrow: false, hint: false } },
@@ -512,6 +517,26 @@ function PuzzleSettings({
             <Toggle label={t('显示朝向箭头', 'Orientation arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
           </div>
+          <label className="stack-color-row">
+            <span>{t('内核色', 'Core color')}</span>
+            <input
+              type="color"
+              value={settings.coreColor}
+              onChange={(e) => set('coreColor', e.target.value)}
+            />
+            <div className="stack-color-presets">
+              {CORE_COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={'stack-color-swatch' + (c.toLowerCase() === settings.coreColor.toLowerCase() ? ' active' : '')}
+                  style={{ background: c }}
+                  onClick={() => set('coreColor', c)}
+                  title={c}
+                />
+              ))}
+            </div>
+          </label>
         </div>
       )}
       <KeymapModal

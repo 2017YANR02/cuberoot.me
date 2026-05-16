@@ -7,6 +7,7 @@ import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import World from './cuber/world';
 import CubeGroup from './cuber/group';
+import Cubelet from './cuber/cubelet';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 
@@ -23,6 +24,8 @@ export interface StackSettings {
   animateScramble: boolean;
   /** 画布背景:false=纯色 (var --background),true=透明棋盘格 (twizzle 风格) */
   checkeredBg: boolean;
+  /** 内核色 (frame + 内层 slice 填充板的颜色) */
+  coreColor: string;
 }
 
 export const DEFAULT_SETTINGS: StackSettings = {
@@ -36,6 +39,7 @@ export const DEFAULT_SETTINGS: StackSettings = {
   hint: false,
   animateScramble: false,
   checkeredBg: false,
+  coreColor: '#202020',
 };
 
 const STORAGE_KEY = 'stack.settings';
@@ -81,6 +85,10 @@ export function applySettings(world: World, s: StackSettings): void {
   world.cube.instancedRenderer.thickness = s.thickness;
   world.cube.instancedRenderer.hollow = s.hollow;
   world.cube.instancedRenderer.hint = s.hint;
+  // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
+  Cubelet.CORE.color.set(s.coreColor);
+  Cubelet.CORE_BASIC.color.set(s.coreColor);
+  Cubelet._PANEL_MAT.color.set(s.coreColor);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();
