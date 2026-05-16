@@ -80,6 +80,9 @@ interface CompData {
   resultsByRound: Record<string, LiveResult[]>; // key = "<event>:<round>"
   membersByFilter: MembersByFilter; // 哪些 user number 属于 females / children / newcomers
   fetchedAt: number;
+  /** wca_db 路径预填:每选手在本比赛之前的累积 PB(centiseconds),供 Psych Sheet 排序用.
+   *  避免 client 直连 WCA API 触发 429.形态: wcaid → eventId → { single?, average? } */
+  personalRecords?: Record<string, Record<string, { single?: number; average?: number }>>;
 }
 
 // ─── HTML scraping ─────────────────────────────────────────────────────────
@@ -554,7 +557,8 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
     let cur = merged.get(mkey);
     if (!cur) {
       cur = {
-        i: 0, c: 0, n: num ?? 0,
+        // 递增 id — wca_db 没有真实 cubing.com result.id,这里用 merged.size+1 保证 React key 唯一.
+        i: merged.size + 1, c: 0, n: num ?? 0,
         e: r.event_id, r: r.round_type_id, f: r.format_id,
         b: 0, a: 0, v: [], sr: '', ar: '',
       };
@@ -596,10 +600,13 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
     (resultsByRound[key] ||= []).push(lr);
   }
 
-  // ── 历史 PR 检测 ─────────────────────────────────────────────────────
+  // ── 历史 PR 检测 + personalRecords 预填 ────────────────────────────
   // 对该比赛每位选手每项目,查 wca_results_top 中 comp_date < 本比赛日期的累积最佳;
   // 然后按 ROUND_ORDER 升序遍历本比赛各轮 (1 → 2 → 3 → f),用 running best 标 pS/pA.
   // 同一比赛内后置轮(决赛)若打破前轮 + 历史最佳,也会被标 PR.
+  // 同时把 priorBest 转成 personalRecords 塞进返回,供 client Psych Sheet 排序使用 —
+  // 避免 client 逐选手直连 WCA API /persons/<id> 触发 429.
+  const personalRecords: Record<string, Record<string, { single?: number; average?: number }>> = {};
   const compDate = rows[0].comp_date;
   const wcaIdsInComp = [...numByWcaId.keys()];
   const eventIdsInComp = [...eventMap.keys()];
@@ -619,6 +626,10 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
     const priorBest = new Map<string, number>();
     for (const pr of priorRows) {
       priorBest.set(`${pr.wca_id}|${pr.event_id}|${pr.is_avg ? '1' : '0'}`, pr.best_val);
+      const perEvent = (personalRecords[pr.wca_id] ||= {});
+      const slot = (perEvent[pr.event_id] ||= {});
+      if (pr.is_avg) slot.average = pr.best_val;
+      else slot.single = pr.best_val;
     }
     // 按 (wca_id, event_id) 分组本比赛 results,按 round 升序处理
     const groups = new Map<string, LiveResult[]>();
@@ -660,6 +671,7 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
     resultsByRound,
     membersByFilter: { females: [], children: [], newcomers: [] },
     fetchedAt: Date.now(),
+    personalRecords,
   };
 }
 

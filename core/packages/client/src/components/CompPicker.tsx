@@ -1,5 +1,6 @@
 // 比赛搜索输入框 — 文本输入 + 下拉建议。允许自由文本（非 WCA 比赛）。
 // 选中时通过 onPick 回调把整条 Comp 记录给父组件（父决定回填哪些字段）。
+// 用户粘贴 cubing.com 或 WCA 比赛链接时,自动解出 WCA ID 触发 onUrlPaste(若有传)。
 import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Flag } from '../utils/flag';
 import { loadComps, searchComps, isCancelledComp, type Comp } from '../utils/comp_search';
@@ -18,6 +19,16 @@ export interface CompPickerPreset {
   value: string;
 }
 
+/** 识别 cubing.com / WCA 比赛链接,返回归一的 WCA ID(无横杠);不是链接返 null. */
+export function extractWcaIdFromUrl(input: string): string | null {
+  const t = input.trim();
+  const cubing = t.match(/cubing\.com\/live\/([A-Za-z0-9_-]+)/i);
+  if (cubing) return cubing[1].replace(/-/g, '');
+  const wca = t.match(/worldcubeassociation\.org\/competitions\/([A-Za-z0-9_]+)/i);
+  if (wca) return wca[1];
+  return null;
+}
+
 interface Props {
   value: string;
   onChange: (val: string) => void;
@@ -29,9 +40,12 @@ interface Props {
   disableSuggestions?: boolean;
   /** 下拉顶部的固定预设项(常驻显示,与 disableSuggestions 无关) */
   presets?: CompPickerPreset[];
+  /** 用户粘贴 cubing.com / WCA 比赛链接时回调(参数=归一化 WCA ID,无横杠).
+   *  不传则按普通文本输入处理. */
+  onUrlPaste?: (wcaId: string) => void;
 }
 
-export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets }: Props) {
+export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
@@ -83,7 +97,15 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
         type="text"
         className={value ? 'comp-picker-input--with-clear' : ''}
         value={displayValue}
-        onChange={e => { onChange(e.target.value); setOpen(true); }}
+        onChange={e => {
+          const v = e.target.value;
+          if (onUrlPaste) {
+            const wcaId = extractWcaIdFromUrl(v);
+            if (wcaId) { onUrlPaste(wcaId); return; }
+          }
+          onChange(v);
+          setOpen(true);
+        }}
         onFocus={() => { setFocused(true); setOpen(true); if (!disableSuggestions) ensureLoaded(); }}
         onBlur={() => { setFocused(false); }}
         placeholder={placeholder}

@@ -87,6 +87,8 @@ interface CompData {
   resultsByRound: Record<string, LiveResult[]>;
   membersByFilter?: MembersByFilter;
   fetchedAt: number;
+  /** wca_db 路径预填:每选手本比赛前累积 PB(centiseconds).Psych Sheet 直接消费,避免逐选手调 WCA API 触发 429. */
+  personalRecords?: Record<string, Record<string, { single?: number; average?: number }>>;
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────
@@ -235,56 +237,75 @@ export default function CompDetailPage() {
     setError(null);
     setProgress(null);
     return new Promise<void>((resolve) => {
-      const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
-      const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
-      const es = new EventSource(url);
-      let finished = false;
-      const fallback = () => {
-        // SSE 出错或不可用 → 回退到普通 JSON
-        es.close();
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`))
-          .then(async r => {
-            if (!r.ok) {
-              const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
-              throw new Error(j.error || `HTTP ${r.status}`);
-            }
-            return r.json();
-          })
-          .then(j => {
+      // SSE 主路径 (cubing/wca_live 实时源用 progress 显示).
+      const startSse = () => {
+        const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
+        const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
+        const es = new EventSource(url);
+        let finished = false;
+        const fallback = () => {
+          es.close();
+          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`))
+            .then(async r => {
+              if (!r.ok) {
+                const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+                throw new Error(j.error || `HTTP ${r.status}`);
+              }
+              return r.json();
+            })
+            .then(j => { setData(j); rememberRecent(j.slug, j.name); })
+            .catch(e => setError((e as Error).message))
+            .finally(() => { setProgress(null); resolve(); });
+        };
+        es.addEventListener('progress', (ev) => {
+          try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch {}
+        });
+        es.addEventListener('done', (ev) => {
+          finished = true;
+          try {
+            const j = JSON.parse((ev as MessageEvent).data) as CompData;
             setData(j);
             rememberRecent(j.slug, j.name);
-          })
-          .catch(e => setError((e as Error).message))
-          .finally(() => { setProgress(null); resolve(); });
-      };
-      es.addEventListener('progress', (ev) => {
-        try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch {}
-      });
-      es.addEventListener('done', (ev) => {
-        finished = true;
-        try {
-          const j = JSON.parse((ev as MessageEvent).data) as CompData;
-          setData(j);
-          rememberRecent(j.slug, j.name);
-        } catch (e) {
-          setError((e as Error).message);
-        }
-        es.close();
-        setProgress(null);
-        resolve();
-      });
-      es.addEventListener('error', (ev) => {
-        try {
-          const data = (ev as MessageEvent).data;
-          if (data) {
-            const j = JSON.parse(data);
-            if (j.error) setError(j.error);
+          } catch (e) {
+            setError((e as Error).message);
           }
-        } catch {}
-        if (finished) return;
-        // 连接错误 (EventSource 默认会重连;此处不让它重连,直接 fallback)
-        if (!finished) fallback();
-      });
+          es.close();
+          setProgress(null);
+          resolve();
+        });
+        es.addEventListener('error', (ev) => {
+          try {
+            const data = (ev as MessageEvent).data;
+            if (data) {
+              const j = JSON.parse(data);
+              if (j.error) setError(j.error);
+            }
+          } catch {}
+          if (finished) return;
+          if (!finished) fallback();
+        });
+      };
+
+      // wca_db fast-path: 静态 JSON 端点可命中浏览器 HTTP cache(/comp/ 首页 hover prefetch),
+      // 命中即 instant 出货,无需走 SSE.失败再 fall through 到 SSE.
+      // 用户显式选 cubing/wca_live/wca 时 skip 此路径(那些源 server 抓数据慢,SSE progress 更有用).
+      if (!sourceParam || sourceParam === 'wca_db') {
+        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`))
+          .then(r => r.ok ? r.json() : null)
+          .then(j => {
+            if (j) {
+              setData(j);
+              rememberRecent(j.slug, j.name);
+              setProgress(null);
+              resolve();
+              return;
+            }
+            startSse();
+          })
+          .catch(() => startSse());
+      } else {
+        startSse();
+      }
     });
   }, [slug, sourceParam]);
 
@@ -455,9 +476,12 @@ export default function CompDetailPage() {
   }, [data, currentRound, filterParam]);
 
   // ── prefetch PRs for current round ────────────────────────────────────
+  // wca_db 源 server 已经给了 LiveResult.pS / pA 历史 PR 标志,classifyPr 优先用 server flag.
+  // 跳过 client 端 WCA API prefetch — 否则 WC2019 这种大型赛事几千选手并发 fetch 直接触发 429.
 
   useEffect(() => {
     if (!data || !currentRound) return;
+    if (data.source === 'wca_db') return;
     const key = roundKey(currentRound.ev.i, currentRound.rd.i);
     const results = data.resultsByRound[key] || [];
     const wcaIds = results
@@ -485,6 +509,23 @@ export default function CompDetailPage() {
 
   useEffect(() => {
     if (!data) return;
+    // wca_db 路径:server 已经把比赛前 PB 塞进 data.personalRecords,直接转 pbMap 给 Psych Sheet 用.
+    // 不发 client → WCA API 请求.rank 字段填 0(Psych Sheet 只用 best 值排序,不显示 rank).
+    if (data.source === 'wca_db') {
+      const obj: Record<string, PbByEvent | null> = {};
+      for (const [wcaId, byEvent] of Object.entries(data.personalRecords ?? {})) {
+        const pb: PbByEvent = {};
+        for (const [ev, slot] of Object.entries(byEvent)) {
+          pb[ev] = {
+            single: slot.single ? { best: slot.single, world_rank: 0, continental_rank: 0, national_rank: 0 } : undefined,
+            average: slot.average ? { best: slot.average, world_rank: 0, continental_rank: 0, national_rank: 0 } : undefined,
+          };
+        }
+        obj[wcaId] = pb;
+      }
+      setPbMap(obj);
+      return;
+    }
     // 当 pbVer 改变时, 把 cache 里所有 wcaid 的结果 dump 进 pbMap
     const ids = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
     Promise.all(ids.map(async id => [id, await fetchPb(id)] as const))
@@ -528,8 +569,10 @@ export default function CompDetailPage() {
   };
 
   // Psych Sheet: prefetch PRs for ALL competitors when entering view (cache dedupe handles dupes)
+  // wca_db 路径 server 已经给了 personalRecords,跳过 prefetch.
   useEffect(() => {
     if (viewParam !== 'psych' || !data) return;
+    if (data.source === 'wca_db') return;
     const wcaIds = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
     if (wcaIds.length === 0) return;
     let cancelled = false;
@@ -581,6 +624,9 @@ export default function CompDetailPage() {
   const roundOptions = data.events
     .flatMap(ev => ev.rs.map(rd => ({ ev, rd, key: roundKey(ev.i, rd.i) })))
     .filter(o => (data.resultsByRound[o.key] || []).length > 0 || o.rd.s === 2);
+  // 比赛已完全结束时,每条 round 都标"已结束"是冗余信息 — 整体折叠掉.
+  // 部分结束时仍标(区分已开 vs 待开).rd.s===2 (实时) 独立显示不受影响.
+  const allRoundsFinished = roundOptions.length > 0 && roundOptions.every(o => o.rd.s === 1);
 
   const filterOptions = [
     { value: 'all', labelZh: '全部', labelEn: 'All' },
@@ -684,7 +730,7 @@ export default function CompDetailPage() {
                 {roundOptions.map(o => (
                   <option key={o.key} value={o.key}>
                     {eventDisplayName(o.ev.i, isZh)} - {roundDisplayName(o.rd.name, isZh)}
-                    {o.rd.s === 1 ? ` - ${isZh ? '已结束' : 'Finished'}` : o.rd.s === 2 ? ` - ${isZh ? '实时' : 'Live'}` : ''}
+                    {o.rd.s === 2 ? ` - ${isZh ? '实时' : 'Live'}` : (!allRoundsFinished && o.rd.s === 1 ? ` - ${isZh ? '已结束' : 'Finished'}` : '')}
                     {' '}({o.rd.rn})
                   </option>
                 ))}
@@ -779,7 +825,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, onClickCuber }: Resu
             const { singlePr, averagePr } = classifyPr(r, pb);
             const isOdd = idx % 2 === 1;
             return (
-              <tr key={r.i} className={isOdd ? 'row-odd' : ''}>
+              <tr key={r.i || `${r.n}:${idx}`} className={isOdd ? 'row-odd' : ''}>
                 <td className="td-place">{r.b === 0 ? '-' : (idx + 1)}</td>
                 <td className="td-no">{r.n}</td>
                 <td className="td-person">
