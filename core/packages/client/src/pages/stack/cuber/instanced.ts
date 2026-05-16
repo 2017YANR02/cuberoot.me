@@ -95,6 +95,8 @@ export default class InstancedRenderer extends THREE.Group {
   private hintMaterial: THREE.MeshBasicMaterial;
   private movingHintMaterial: THREE.MeshBasicMaterial;
   private hintLocalMats: THREE.Matrix4[] = [];
+  /** 构造时为 true (延后 populate 省 ~440ms@N=250); 首次 set hint(true) 触发 populateHint() 后置 false */
+  private hintNeedsPopulate = false;
   private hintDistance: number;
 
   stickerSlots: StickerSlot[] = [];
@@ -241,24 +243,14 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingHint.visible = false;
     this.movingHint.count = 0;
 
+    // localMats 仍 eager 建 (beginSlice/endSlice 依赖),延后的只是上传到 InstancedMesh
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       this.hintLocalMats.push(makeStickerLocalMatrix(slot.face, zScale, this.hintDistance));
     }
-    for (let i = 0; i < this.stickerSlots.length; i++) {
-      const slot = this.stickerSlots[i];
-      const cubelet = cube.initials.get(slot.cubeletInitial)!;
-      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
-      this.staticHint.setMatrixAt(i, this.tmpMat);
-      this.movingHint.setMatrixAt(i, HIDE_MAT);
-      this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
-      this.staticHint.setColorAt(i, this.tmpColor);
-      this.movingHint.setColorAt(i, this.tmpColor);
-    }
-    this.staticHint.instanceMatrix.needsUpdate = true;
-    this.movingHint.instanceMatrix.needsUpdate = true;
-    if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
-    if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+    // Hint 默认 off; 延后 setMatrixAt + setColorAt 上传到首次 set hint(true)
+    // (hint 输出走 staticHint.visible=false,在 visible 之前 GPU 不读其 instance buffer,延后无副作用)
+    this.hintNeedsPopulate = true;
 
     this.add(this.staticFrame);
     this.add(this.movingFrame);
@@ -696,11 +688,34 @@ export default class InstancedRenderer extends THREE.Group {
   set hint(value: boolean) {
     if (value === this._hint) return;
     this._hint = value;
+    if (value && this.hintNeedsPopulate) {
+      this.populateHint();
+      this.hintNeedsPopulate = false;
+    }
     this.staticHint.visible = value;
     this.movingHint.visible = value;
     this.cube.dirty = true;
   }
   get hint(): boolean { return this._hint; }
+
+  /** 构造时延后的 hint matrix/color GPU 上传。N=250 ~250ms,只在首次开 hint 才付。 */
+  private populateHint(): void {
+    const cube = this.cube;
+    for (let i = 0; i < this.stickerSlots.length; i++) {
+      const slot = this.stickerSlots[i];
+      const cubelet = cube.initials.get(slot.cubeletInitial)!;
+      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.staticHint.setMatrixAt(i, this.tmpMat);
+      this.movingHint.setMatrixAt(i, HIDE_MAT);
+      this.tmpColor.set(COLORS[cubelet.colors[slot.face] ?? "Gray"] ?? COLORS.Gray);
+      this.staticHint.setColorAt(i, this.tmpColor);
+      this.movingHint.setColorAt(i, this.tmpColor);
+    }
+    this.staticHint.instanceMatrix.needsUpdate = true;
+    this.movingHint.instanceMatrix.needsUpdate = true;
+    if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
+    if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+  }
 
   dispose(): void {
     this.staticFrame.dispose();
