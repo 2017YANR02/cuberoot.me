@@ -63,15 +63,26 @@ export async function loadComps(): Promise<Comp[]> {
   return inflight;
 }
 
+// 中文搜索词 → 英文 name 子串同义词。
+// 现状:很多 WCA 比赛没有中文名映射(compNameZh 返回空),用户搜"锦标赛"匹配不到 "Championship".
+// 这张表把常见中文比赛关键词翻成英文小写子串,在 q 之外额外用 name.includes(syn) 命中.
+const ZH_NAME_SYNONYMS: Record<string, string> = {
+  '锦标赛': 'championship',
+  '公开赛': 'open',
+  '邀请赛': 'invitational',
+};
+
 /**
  * 按 query 模糊匹配 comp。打分：id 完全 > id 前缀 > name 前缀 > id 子串 > name/nameZh/city/cityZh 子串。
  * 把"想找这个地方的比赛"和"想找这个名字的比赛"放同档,内部按 start_date 倒序(最新先)。
  * city 同时匹配英文原值和中文化结果("徐州" 命中 city="Xuzhou")。
+ * 中文比赛类型词("锦标赛"/"公开赛")通过 ZH_NAME_SYNONYMS 映射到英文 name 子串。
  */
 export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
   const raw = query.trim();
   const q = raw.toLowerCase();
   if (!q) return [];
+  const synEn = ZH_NAME_SYNONYMS[raw];
   const scored: { c: Comp; s: number }[] = [];
   for (const c of comps) {
     const id = c.id.toLowerCase();
@@ -84,7 +95,11 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
     else if (id.startsWith(q)) s = Math.max(s, 900);
     else if (name.startsWith(q)) s = Math.max(s, 800);
     else if (id.includes(q)) s = Math.max(s, 700);
-    else if (name.includes(q) || nameZh.includes(raw) || city.includes(q) || (cityZh && cityZh.includes(raw))) {
+    else if (
+      name.includes(q) || nameZh.includes(raw) ||
+      city.includes(q) || (cityZh && cityZh.includes(raw)) ||
+      (synEn && name.includes(synEn))
+    ) {
       s = 500;
     }
     if (s === 0) continue;
