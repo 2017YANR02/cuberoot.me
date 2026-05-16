@@ -19,6 +19,7 @@ import DonateModal from './DonateModal';
 import WcaAuth from '../components/WcaAuth';
 import ThemeToggle from '../components/ThemeToggle';
 import LangToggle from '../components/LangToggle';
+import LandingSearch, { type LandingSearchCard } from '../components/LandingSearch';
 import { useEffectiveTheme } from '../utils/theme';
 import './landing.css';
 
@@ -310,7 +311,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   memo:            { en: 'Memo', zh: '记忆' },
   code:            { en: 'Code', zh: '编程' },
   stack:           { en: 'Stack', zh: '魔方栈' },
-  comp:            { en: 'Live Comp', zh: '比赛直播' },
+  comp:            { en: 'Comp', zh: '比赛' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
   // Section titles
@@ -401,6 +402,22 @@ const SECTIONS: Section[] = [
   },
 ];
 
+// NOTE: 全站搜索索引 — 模块级派生自 SECTIONS,跳过 comingSoon 卡。
+//       每张卡同时携带 zh/en 名 + 类目标题,LandingSearch 按 lang 切显示文本。
+const SEARCH_CARDS: LandingSearchCard[] = SECTIONS.flatMap(sec =>
+  sec.cards
+    .filter(c => !c.comingSoon)
+    .map(c => ({
+      id: c.id,
+      href: c.href,
+      internal: c.internal,
+      nameEn: TEXTS[c.nameKey].en,
+      nameZh: TEXTS[c.nameKey].zh,
+      sectionTitleEn: TEXTS[sec.titleKey].en,
+      sectionTitleZh: TEXTS[sec.titleKey].zh,
+    })),
+);
+
 // ── 组件 ─────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -434,6 +451,8 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <h1 className="landing-tagline">{t('tagline')}</h1>
+
+      <LandingSearch cards={SEARCH_CARDS} lang={lang} />
 
       <div className="cards-sections">
         {SECTIONS.map((sec) => (
