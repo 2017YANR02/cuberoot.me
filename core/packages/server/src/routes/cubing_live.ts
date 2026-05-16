@@ -1048,6 +1048,24 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
       try {
         const competitorUsers = await scrapeCompetitors(cubingSlug, onProgress);
         if (Object.keys(competitorUsers).length > 0) {
+          // cubing.com /competitors 只给英文名,从 PG wca_persons 拼回"English (中文)"形式让
+          // client displayCuberName(name, isZh) 中英文模式都能 work (cuber-name-display skill).
+          const wcaIds = Object.values(competitorUsers).map(u => u.wcaid).filter(Boolean);
+          if (wcaIds.length > 0) {
+            try {
+              const personRows = await query<{ wca_id: string; name: string }>(
+                `SELECT wca_id, name FROM wca_persons WHERE wca_id = ANY(?::text[])`,
+                [wcaIds],
+              );
+              const nameMap = new Map(personRows.map(r => [r.wca_id, r.name]));
+              for (const u of Object.values(competitorUsers)) {
+                const full = u.wcaid ? nameMap.get(u.wcaid) : undefined;
+                if (full) u.name = full;
+              }
+            } catch (e) {
+              console.warn(`[cubing-live] wca_persons name lookup failed:`, (e as Error).message);
+            }
+          }
           data = { ...data, users: competitorUsers, cubingSlug };
         }
       } catch (e) {
