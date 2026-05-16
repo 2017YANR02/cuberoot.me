@@ -339,11 +339,14 @@ function ttlFor(source: SourceId): number {
 }
 
 /** WCA ID (e.g. XuzhouZenith2026) → cubing.com slug (Xuzhou-Zenith-2026)。
- *  在小写↔大写、字母↔数字边界插横杠。绝大多数 cubing.com slug 都是这个规则。 */
+ *  在 小写↔大写 / 数字↔大写 / 小写↔数字 边界插横杠;
+ *  但 NxN (3x3 / 4x4 / 5x5) 里 x 前是数字时不拆 — 否则 "League3x3IV" → "3-x-3-IV" 错的. */
 function wcaIdToCubingSlug(wcaId: string): string {
   return wcaId
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/([A-Za-z])(\d)/g, '$1-$2');
+    .replace(/([a-z])([A-Z])/g, '$1-$2')       // lc→UC: HefeiCubing → Hefei-Cubing
+    .replace(/(\d)([A-Z])/g, '$1-$2')           // digit→UC: 3IV → 3-IV
+    .replace(/([A-Z])(\d)/g, '$1-$2')           // UC→digit: IV2026 → IV-2026
+    .replace(/(?<!\d)([a-z])(\d)/g, '$1-$2');   // lc→digit (前面不是 digit):League3 → League-3,但 NxN 里 x3 保留
 }
 
 // ─── WCA API fallback (non-cubing.com comps) ──────────────────────────────
