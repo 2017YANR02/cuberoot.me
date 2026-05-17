@@ -397,20 +397,25 @@ export default class Twister {
             case 11: nx = -oy; ny = ox; nz = oz; break;                 // z, t=3: (-y, x, z)
           }
           v.x = nx; v.y = ny; v.z = nz;
-          c._index = (nz + half) * order2 + (ny + half) * order + (nx + half);
-          c.position.x = SIZE * nx;
-          c.position.y = SIZE * ny;
-          c.position.z = SIZE * nz;
+          // c._index / c.position / c.quaternion 都不在循环里写,末尾 sweep 时一并算
+          // 出。flat[] 索引在 inner local 用 newIdx 临时计算,不写回 cubelet。
+          const newIdx = (nz + half) * order2 + (ny + half) * order + (nx + half);
           // rotIdx 累加器替 quaternion.premultiply:1-op 表查 ↔ ~16-op + setter overhead
           const oldRotIdx = rotIdx[c._instIdx];
           rotIdx[c._instIdx] = cubeCompose[oldRotIdx * 12 + dispatch];
-          flat[c._index] = c;
+          flat[newIdx] = c;
         }
       }
     }
-    // 末尾一次性 sweep:写回 cube.cubelets Map + 从 rotIdx 表还原 quaternion + 算 matrix
+    // 末尾一次性 sweep:从 c._vector 算最终 _index/position,从 rotIdx 还原 quaternion,
+    // 重建 cubelets Map,compose matrix。循环里只更 _vector,这里一并 batch 写其它。
     cube.cubelets.clear();
     for (const c of cube.initials.values()) {
+      const fx = c._vector.x, fy = c._vector.y, fz = c._vector.z;
+      c._index = (fz + half) * order2 + (fy + half) * order + (fx + half);
+      c.position.x = SIZE * fx;
+      c.position.y = SIZE * fy;
+      c.position.z = SIZE * fz;
       cube.cubelets.set(c._index, c);
       const q = cubeRotQuats[rotIdx[c._instIdx]];
       c.quaternion.set(q.x, q.y, q.z, q.w);
