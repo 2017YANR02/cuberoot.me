@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Film, ScanSearch,
   Swords, BookOpen,
-  Shuffle, Library, BookMarked, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
+  Shuffle, Library, BookMarked, BookA, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
   ImagePlus,
   Code as CodeIcon, Brain, Box,
   type LucideIcon,
@@ -298,6 +298,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   scramble:        { en: 'Scramble', zh: '打乱' },
   alg:             { en: 'Tutorial',   zh: '教程' },
   algdb:           { en: 'Algorithms', zh: '公式' },
+  wiki:            { en: 'Wiki', zh: 'Wiki' },
   sitesDirectory:  { en: 'Web', zh: '网站' },
   mosaic:          { en: 'Mosaic', zh: '马赛克' },
   worldBests:      { en: 'World Bests', zh: '非官方纪录' },
@@ -367,6 +368,7 @@ const SECTIONS: Section[] = [
     cards: [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
       { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
+      { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
     ],
   },
   {
