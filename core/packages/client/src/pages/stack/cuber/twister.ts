@@ -5,6 +5,7 @@ import Cubelet from "./cubelet";
 import tweener from "./tweener";
 import CubeGroup from "./group";
 import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
+import { ensureWorkerInit, workerApply } from "./setup_worker_client";
 
 // Stack kernel (WASM):内层 rotate apply loop。模块初始化时 fire-and-forget,
 // init 完前 setup() 退回纯 JS 路径。N=200 用户场景 ~6s,kernel 目标降到 1s 量级。
@@ -46,6 +47,44 @@ function getGroupRegistry(cube: Cube): GroupRegistry {
   reg = { flat, offsets };
   groupRegistryCache.set(cube, reg);
   return reg;
+}
+
+// setupAsync 用:cube 初始 (solved) 状态的 typed array snapshot。
+// 每次 setupAsync 起手 .set() 复位 working vec/flat,跳掉 cube.reset(true) 的 ~200ms (N=200)。
+type InitialState = {
+  vecX: Float32Array;
+  vecY: Float32Array;
+  vecZ: Float32Array;
+  cubeletByInst: Cubelet[];
+  flat: Int32Array;
+};
+const initialStateCache = new WeakMap<Cube, InitialState>();
+function getInitialState(cube: Cube): InitialState {
+  let s = initialStateCache.get(cube);
+  if (s) return s;
+  const visCount = cube.instancedRenderer.instanceToInitial.length;
+  const order = cube.order;
+  const order2 = order * order;
+  const totalPos = order * order2;
+  const half = (order - 1) / 2;
+  const vecX = new Float32Array(visCount);
+  const vecY = new Float32Array(visCount);
+  const vecZ = new Float32Array(visCount);
+  const cubeletByInst: Cubelet[] = new Array(visCount);
+  const flat = new Int32Array(totalPos);
+  for (const c of cube.initials.values()) {
+    const idx = c.initial;  // 永不变 — 解码即初始位置
+    const x = (idx % order) - half;
+    const y = Math.floor((idx % order2) / order) - half;
+    const z = Math.floor(idx / order2) - half;
+    const inst = c._instIdx;
+    vecX[inst] = x; vecY[inst] = y; vecZ[inst] = z;
+    cubeletByInst[inst] = c;
+    flat[idx] = inst + 1;
+  }
+  s = { vecX, vecY, vecZ, cubeletByInst, flat };
+  initialStateCache.set(cube, s);
+  return s;
 }
 
 // setup fast-path 用的 12 个预算 Quaternion (3 axis × twist mod 4)。
@@ -544,6 +583,126 @@ export default class Twister {
       parse: T3 - T2,
       loop: T4 - T3,
       rebuild: T5 - T4,
+    };
+  }
+
+  /**
+   * setupAsync: 把 hot loop 甩到 Worker 跑,主线程在 worker 算的几秒里 UI 60fps 不卡。
+   *  - 跳过 cube.reset(true) (~200ms @ N=200):直接用 cached InitialState .copy 起手
+   *  - parse + rotatesDesc 收集仍在主线程 (~50ms @ N=200)
+   *  - postMessage 到 worker, await 几秒
+   *  - end sweep + rebuildAll 仍在主线程 (~500ms @ N=200) — 这部分仍卡,后续可分帧 chunk
+   *  - 兜底:特殊 sign / WASM 没 ready → 退回同步 setup()
+   *
+   * API: 返回 Promise<void>。caller 必须 await,期间 UI 自由。
+   */
+  async setupAsync(exp: string, reverse = false, times = 1): Promise<void> {
+    const TBENCH0 = performance.now();
+    this.finish();
+    const T1 = performance.now();
+    const node = new TwistNode(exp, reverse, times);
+    const list = node.parse();
+    const T3 = performance.now();
+
+    // 特殊 sign 走同步 fallback。罕见 (用户用 # / * / . / ~ / ; 这些 setup 内嵌指令)。
+    let hasSpecial = false;
+    for (const action of list) {
+      if (action.sign === "#" || action.sign === "*" || action.sign === "." || action.sign === ";" || action.sign === "~") {
+        hasSpecial = true; break;
+      }
+    }
+    const wasmEnabled = (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM ?? true;
+    if (!STACK_KERNEL_READY || !wasmEnabled || hasSpecial) {
+      this.setup(exp, reverse, times);
+      return;
+    }
+
+    const cube = this.cube;
+    const order = cube.order;
+    const order2 = order * order;
+    const half = (order - 1) / 2;
+    const SIZE = Cubelet.SIZE;
+    const { quats: cubeRotQuats, compose: cubeCompose } = getCubeRotTables();
+    const reg = getGroupRegistry(cube);
+    const init = getInitialState(cube);
+    const visCount = init.cubeletByInst.length;
+
+    // 收集 rotatesDesc (跟 setup() WASM path 同)
+    const N = order;
+    let cap = list.length * 4;
+    let rotatesDesc = new Uint32Array(cap * 2);
+    let rCount = 0;
+    const ensureCap = (need: number) => {
+      if (need <= cap) return;
+      while (cap < need) cap *= 2;
+      const next = new Uint32Array(cap * 2);
+      next.set(rotatesDesc.subarray(0, rCount * 2));
+      rotatesDesc = next;
+    };
+    for (const action of list) {
+      const rotates = cube.table.convert(action);
+      for (const rotate of rotates) {
+        const axisKey = rotate.group.axis;
+        const axisIdx = axisKey === 'x' ? 0 : axisKey === 'y' ? 1 : axisKey === 'z' ? 2 : -1;
+        if (axisIdx < 0) continue;
+        const t01 = ((rotate.twist % 4) + 4) % 4;
+        if (t01 === 0) continue;
+        const dispatch = axisIdx * 4 + t01;
+        const groupId = axisIdx * N + rotate.group.layer;
+        ensureCap(rCount + 1);
+        rotatesDesc[rCount * 2] = dispatch;
+        rotatesDesc[rCount * 2 + 1] = groupId;
+        rCount++;
+      }
+    }
+
+    // worker init (per order, 第一次几十 ms 给 worker 灌 groupRegistry + initialFlat)
+    await ensureWorkerInit(cube, cubeCompose, reg.flat, reg.offsets, init.flat);
+
+    // 准备 working typed arrays — 从 cached initial state 复制 (跳过 cube.reset)
+    const vecX = new Float32Array(init.vecX);
+    const vecY = new Float32Array(init.vecY);
+    const vecZ = new Float32Array(init.vecZ);
+    const rotIdx = new Uint8Array(visCount);  // all zeros = identity
+
+    const T_PREP = performance.now();
+
+    // ★ 整个 hot loop 在 worker 异步执行,主线程这段时间空闲
+    const res = await workerApply(N, rotatesDesc.subarray(0, rCount * 2), vecX, vecY, vecZ, rotIdx);
+
+    const T_WORKER = performance.now();
+
+    // End sweep — 写回 cubelet 对象 + 重建 cube.cubelets map
+    const rX = res.vecX, rY = res.vecY, rZ = res.vecZ, rRotIdx = res.rotIdx;
+    cube.cubelets.clear();
+    for (let i = 0; i < visCount; i++) {
+      const c = init.cubeletByInst[i];
+      const fx = rX[i], fy = rY[i], fz = rZ[i];
+      c._vector.x = fx; c._vector.y = fy; c._vector.z = fz;
+      c._index = (fz + half) * order2 + (fy + half) * order + (fx + half);
+      c.position.x = SIZE * fx;
+      c.position.y = SIZE * fy;
+      c.position.z = SIZE * fz;
+      cube.cubelets.set(c._index, c);
+      const q = cubeRotQuats[rRotIdx[i]];
+      c.quaternion.set(q.x, q.y, q.z, q.w);
+      c.updateMatrix();
+    }
+    const T_SWEEP = performance.now();
+    cube.instancedRenderer.rebuildAll();
+    cube.dirty = true;
+    cube.history.clear();
+    cube.history.init = exp;
+    cube.callback();
+    const T_END = performance.now();
+
+    this.lastSetupCpuMs = T_END - TBENCH0;
+    this.lastSetupParts = {
+      finish: T1 - TBENCH0,
+      reset: 0,
+      parse: T3 - T1,
+      loop: T_WORKER - T_PREP,  // 含 worker 异步等待 + transfer
+      rebuild: T_END - T_SWEEP,
     };
   }
 
