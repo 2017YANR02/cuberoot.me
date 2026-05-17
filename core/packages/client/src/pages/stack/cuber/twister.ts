@@ -4,6 +4,49 @@ import Cube from "./cube";
 import Cubelet from "./cubelet";
 import tweener from "./tweener";
 import CubeGroup from "./group";
+import initStackKernel, { apply_rotates as stackKernelApplyRotates } from "@cuberoot/stack-kernel";
+
+// Stack kernel (WASM):内层 rotate apply loop。模块初始化时 fire-and-forget,
+// init 完前 setup() 退回纯 JS 路径。N=200 用户场景 ~6s,kernel 目标降到 1s 量级。
+let STACK_KERNEL_READY = false;
+initStackKernel().then(() => { STACK_KERNEL_READY = true; }).catch((e) => {
+  console.warn('[stack-kernel] init failed, falling back to JS path:', e);
+});
+
+// Per-cube group indices registry,setup() 每次复用。flat = 拍平的 cube.table.groups[axis][layer].indices,
+// offsets[groupId+1]-offsets[groupId] = 该 group 的 indices 长度。groupId = axisIdx*N + layer。
+type GroupRegistry = { flat: Int32Array; offsets: Uint32Array };
+const groupRegistryCache = new WeakMap<Cube, GroupRegistry>();
+function getGroupRegistry(cube: Cube): GroupRegistry {
+  let reg = groupRegistryCache.get(cube);
+  if (reg) return reg;
+  const N = cube.order;
+  const groups = cube.table.groups;
+  const offsets = new Uint32Array(3 * N + 1);
+  let total = 0;
+  for (let a = 0; a < 3; a++) {
+    const axisKey = a === 0 ? 'x' : a === 1 ? 'y' : 'z';
+    const arr = groups[axisKey];
+    for (let l = 0; l < N; l++) {
+      offsets[a * N + l] = total;
+      total += arr[l].indices.length;
+    }
+  }
+  offsets[3 * N] = total;
+  const flat = new Int32Array(total);
+  let p = 0;
+  for (let a = 0; a < 3; a++) {
+    const axisKey = a === 0 ? 'x' : a === 1 ? 'y' : 'z';
+    const arr = groups[axisKey];
+    for (let l = 0; l < N; l++) {
+      const indices = arr[l].indices;
+      for (let i = 0; i < indices.length; i++) flat[p++] = indices[i];
+    }
+  }
+  reg = { flat, offsets };
+  groupRegistryCache.set(cube, reg);
+  return reg;
+}
 
 // setup fast-path 用的 12 个预算 Quaternion (3 axis × twist mod 4)。
 // 跳掉每 cubelet `q.setFromAxisAngle()` 的三角 — N=50 setup 累加 ~3000万次省到 0。
@@ -371,47 +414,99 @@ export default class Twister {
     const rotIdx = new Uint8Array(visCount);  // 默认 0 = identity
     // 预分配 slice instIdx 缓冲 (face slab 最大 = N²),28k slice 复用避免 alloc。
     const sliceInsts = new Int32Array(order2);
+    // 特殊 sign 极罕见;含则退回纯 JS 路径(WASM kernel 不支持 lock-aware twist)。
+    let hasSpecial = false;
     for (const action of list) {
-      // 特殊 sign (#/*/./~/;) 包含递归 setup / lock-aware callback 等复杂语义,
-      // 在 setup 输入里极罕见,直接退回普通 twist 路径。
       if (action.sign === "#" || action.sign === "*" || action.sign === "." || action.sign === ";" || action.sign === "~") {
-        this.twist(action, true, true);
-        continue;
+        hasSpecial = true; break;
       }
-      const rotates = cube.table.convert(action);
-      for (const rotate of rotates) {
-        const axisKey = rotate.group.axis;
-        const axisIdx = axisKey === 'x' ? 0 : axisKey === 'y' ? 1 : axisKey === 'z' ? 2 : -1;
-        if (axisIdx < 0) continue;
-        const t01 = ((rotate.twist % 4) + 4) % 4;
-        if (t01 === 0) continue;
-        const indices = rotate.group.indices;
-        // group.indices 都是 exist cubelet 位置,rotation 在 slab 内 permute,
-        // 所以 flat[pos] 总有值 (instIdx+1)。直接拿 typed array,免 if/push。
-        const sliceLen = indices.length;
-        for (let i = 0; i < sliceLen; i++) {
-          sliceInsts[i] = flat[indices[i]] - 1;  // instIdx (0..visCount-1)
+    }
+    // bench flag: window.__STACK_KERNEL_WASM = false 强制走 JS 对比。
+    const wasmEnabled = (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM ?? true;
+    if (STACK_KERNEL_READY && wasmEnabled && !hasSpecial) {
+      // 批量收集所有 rotate 的 (dispatch, groupId),一次 WASM 调用。
+      const N = order;
+      const reg = getGroupRegistry(cube);
+      // 上限估算:每个 action 最多 N rotates (xyz 整体转),通常 ≤ N/2。
+      // 用 ArrayBuffer + 动态扩容避免预分配过头。
+      let cap = list.length * 4;  // 初始猜
+      let rotatesDesc = new Uint32Array(cap * 2);
+      let rCount = 0;
+      const ensureCap = (need: number) => {
+        if (need <= cap) return;
+        while (cap < need) cap *= 2;
+        const next = new Uint32Array(cap * 2);
+        next.set(rotatesDesc.subarray(0, rCount * 2));
+        rotatesDesc = next;
+      };
+      for (const action of list) {
+        const rotates = cube.table.convert(action);
+        for (const rotate of rotates) {
+          const axisKey = rotate.group.axis;
+          const axisIdx = axisKey === 'x' ? 0 : axisKey === 'y' ? 1 : axisKey === 'z' ? 2 : -1;
+          if (axisIdx < 0) continue;
+          const t01 = ((rotate.twist % 4) + 4) % 4;
+          if (t01 === 0) continue;
+          const dispatch = axisIdx * 4 + t01;
+          const groupId = axisIdx * N + rotate.group.layer;
+          ensureCap(rCount + 1);
+          rotatesDesc[rCount * 2] = dispatch;
+          rotatesDesc[rCount * 2 + 1] = groupId;
+          rCount++;
         }
-        // axis × twist01 整数坐标变换。
-        const dispatch = axisIdx * 4 + t01;
-        for (let i = 0; i < sliceLen; i++) {
-          const instIdx = sliceInsts[i];
-          const ox = vecX[instIdx], oy = vecY[instIdx], oz = vecZ[instIdx];
-          let nx = 0, ny = 0, nz = 0;
-          switch (dispatch) {
-            case 1: nx = ox; ny = oz; nz = -oy; break;
-            case 2: nx = ox; ny = -oy; nz = -oz; break;
-            case 3: nx = ox; ny = -oz; nz = oy; break;
-            case 5: nx = -oz; ny = oy; nz = ox; break;
-            case 6: nx = -ox; ny = oy; nz = -oz; break;
-            case 7: nx = oz; ny = oy; nz = -ox; break;
-            case 9: nx = oy; ny = -ox; nz = oz; break;
-            case 10: nx = -ox; ny = -oy; nz = oz; break;
-            case 11: nx = -oy; ny = ox; nz = oz; break;
+      }
+      stackKernelApplyRotates(
+        rotatesDesc.subarray(0, rCount * 2),
+        reg.flat,
+        reg.offsets,
+        vecX, vecY, vecZ,
+        rotIdx,
+        flat,
+        sliceInsts,
+        cubeCompose,
+        order,
+      );
+    } else {
+      for (const action of list) {
+        if (action.sign === "#" || action.sign === "*" || action.sign === "." || action.sign === ";" || action.sign === "~") {
+          this.twist(action, true, true);
+          continue;
+        }
+        const rotates = cube.table.convert(action);
+        for (const rotate of rotates) {
+          const axisKey = rotate.group.axis;
+          const axisIdx = axisKey === 'x' ? 0 : axisKey === 'y' ? 1 : axisKey === 'z' ? 2 : -1;
+          if (axisIdx < 0) continue;
+          const t01 = ((rotate.twist % 4) + 4) % 4;
+          if (t01 === 0) continue;
+          const indices = rotate.group.indices;
+          // group.indices 都是 exist cubelet 位置,rotation 在 slab 内 permute,
+          // 所以 flat[pos] 总有值 (instIdx+1)。直接拿 typed array,免 if/push。
+          const sliceLen = indices.length;
+          for (let i = 0; i < sliceLen; i++) {
+            sliceInsts[i] = flat[indices[i]] - 1;  // instIdx (0..visCount-1)
           }
-          vecX[instIdx] = nx; vecY[instIdx] = ny; vecZ[instIdx] = nz;
-          flat[(nz + half) * order2 + (ny + half) * order + (nx + half)] = instIdx + 1;
-          rotIdx[instIdx] = cubeCompose[rotIdx[instIdx] * 12 + dispatch];
+          // axis × twist01 整数坐标变换。
+          const dispatch = axisIdx * 4 + t01;
+          for (let i = 0; i < sliceLen; i++) {
+            const instIdx = sliceInsts[i];
+            const ox = vecX[instIdx], oy = vecY[instIdx], oz = vecZ[instIdx];
+            let nx = 0, ny = 0, nz = 0;
+            switch (dispatch) {
+              case 1: nx = ox; ny = oz; nz = -oy; break;
+              case 2: nx = ox; ny = -oy; nz = -oz; break;
+              case 3: nx = ox; ny = -oz; nz = oy; break;
+              case 5: nx = -oz; ny = oy; nz = ox; break;
+              case 6: nx = -ox; ny = oy; nz = -oz; break;
+              case 7: nx = oz; ny = oy; nz = -ox; break;
+              case 9: nx = oy; ny = -ox; nz = oz; break;
+              case 10: nx = -ox; ny = -oy; nz = oz; break;
+              case 11: nx = -oy; ny = ox; nz = oz; break;
+            }
+            vecX[instIdx] = nx; vecY[instIdx] = ny; vecZ[instIdx] = nz;
+            flat[(nz + half) * order2 + (ny + half) * order + (nx + half)] = instIdx + 1;
+            rotIdx[instIdx] = cubeCompose[rotIdx[instIdx] * 12 + dispatch];
+          }
         }
       }
     }

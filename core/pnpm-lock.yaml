@@ -72,6 +72,9 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/stack-kernel':
+        specifier: workspace:*
+        version: link:../stack-kernel
       '@cuberoot/visualcube':
         specifier: workspace:*
         version: link:../visualcube
@@ -349,6 +352,8 @@ importers:
       typescript:
         specifier: ~5.7.0
         version: 5.7.3
+
+  packages/stack-kernel: {}
 
   packages/stats-build:
     dependencies:

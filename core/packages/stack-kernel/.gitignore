@@ -1,0 +1,5 @@
+target/
+Cargo.lock
+# NOTE: pkg/ 委进 git (wasm-pack 产物 ~32KB),CI 0 改动。
+# Rust 源改动后手动 `pnpm --filter @cuberoot/stack-kernel build` + git add pkg/。
+
