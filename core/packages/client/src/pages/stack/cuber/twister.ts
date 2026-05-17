@@ -296,6 +296,12 @@ export default class Twister {
     const half = (order - 1) / 2;
     const SIZE = Cubelet.SIZE;
     const rotQuats = getRotQuats();
+    // Flat 数组替 cube.cubelets Map 作为 setup 内 hot path:V8 array indexed get/set
+    // ~2-3x 比 Map.get/set 快。N=75 → 421k slot × 8B = 3.4MB,N=250 60MB
+    // (用户主流 N<=100 时 OK)。
+    const totalPos = order * order2;
+    const flat: (Cubelet | undefined)[] = new Array(totalPos);
+    for (const c of cube.cubelets.values()) flat[c._index] = c;
     for (const action of list) {
       // 特殊 sign (#/*/./~/;) 包含递归 setup / lock-aware callback 等复杂语义,
       // 在 setup 输入里极罕见,直接退回普通 twist 路径。
@@ -314,7 +320,7 @@ export default class Twister {
         const slice: Cubelet[] = [];
         const indices = rotate.group.indices;
         for (let i = 0; i < indices.length; i++) {
-          const c = cube.cubelets.get(indices[i]);
+          const c = flat[indices[i]];
           if (c) slice.push(c);
         }
         // axis × twist01 整数坐标变换 — 见上方推导。switch 在外层一次,inner 跑纯算术。
@@ -342,14 +348,14 @@ export default class Twister {
           c.position.y = SIZE * ny;
           c.position.z = SIZE * nz;
           c.quaternion.premultiply(qRot);  // world-space rotate ≡ premul
-          // matrix 不在循环里 compose:setup 期间画面不渲染中间帧,只末尾一次 sweep
-          // 每 cubelet 算 matrix (32k 次 vs 16M 次)。Matrix4.compose 是循环热点 (~60% 总时长)。
-          cube.cubelets.set(c._index, c);
+          flat[c._index] = c;
         }
       }
     }
-    // 末尾一次性 sweep 所有 cubelet 算 matrix (从循环里挪出来 — N=75 16M→32k 调用,setup CPU 9.3s→3.4s)
+    // 末尾一次性 sweep:写回 cube.cubelets Map + 算 matrix (从循环里挪出来 — N=75 16M→32k 调用)
+    cube.cubelets.clear();
     for (const c of cube.initials.values()) {
+      cube.cubelets.set(c._index, c);
       c.updateMatrix();
     }
     const T4 = performance.now();
