@@ -2,6 +2,8 @@
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
+  max-width: 1080px;
+  margin: 0 auto;
   padding: 24px 32px;
   box-sizing: border-box;
 }
