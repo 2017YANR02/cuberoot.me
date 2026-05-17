@@ -46,9 +46,11 @@ interface Props {
   event: EventMeta;
   data: EventData;
   isZh: boolean;
+  chapterNum?: number;
+  chapterTotal?: number;
 }
 
-export default function EventSection({ event, data, isZh }: Props) {
+export default function EventSection({ event, data, isZh, chapterNum, chapterTotal }: Props) {
   const currentYear = new Date().getFullYear();
   const rawSingle = data.wr_by_year.map((d) => toDisplay(d.wr_single, event.scale));
   const rawAvg = data.wr_by_year.map((d) => toDisplayAvg(d.wr_avg, event));
@@ -155,6 +157,11 @@ export default function EventSection({ event, data, isZh }: Props) {
       <details className="pred-event-details" open={event.id === '333'}>
         <summary className="pred-event-summary">
           <h2>
+            {chapterNum && (
+              <span className="pred-event-chapter-num">
+                {chapterNum.toString().padStart(2, '0')}{chapterTotal ? ` / ${chapterTotal}` : ''}
+              </span>
+            )}
             <span className="pred-event-title-zh">{isZh ? event.name_zh : event.name_en}</span>
             <span className="pred-event-title-id">{event.id}</span>
           </h2>
