@@ -122,7 +122,7 @@ export default function PlayerControls({
   const sq1AnimTimerRef = useRef<number | null>(null);
 
   // 跳转到第 n 步:setup 重置 + fast 应用前 n 个 action
-  const jumpToStep = useCallback((n: number) => {
+  const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
     if (isSq1) {
       // SQ1: cancel any pending animation, reset cube, then animate the full
@@ -143,7 +143,8 @@ export default function PlayerControls({
       return;
     }
     const cube = world.cube as import('./cuber/cube').default;
-    cube.twister.setup(setupDraft);
+    // setupAsync: worker offload,主线程 UI 期间 60fps 不卡。N=200 ~5s 还是有,但用户能滚 / 切窗口
+    await cube.twister.setupAsync(setupDraft);
     const target = Math.max(0, Math.min(n, actions.length));
     for (let i = 0; i < target; i++) {
       cube.twister.twist(actions[i], true, true);
@@ -339,17 +340,22 @@ export default function PlayerControls({
       animatingScrambleRef.current = true;
       const w = world;
       const t0 = performance.now();
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        w.cube.twister.setup(scramble!);
-        // Sq1Twister 没这字段;NxN Twister 才量 setup CPU。union 走 cast 拿。
-        const cpuMs = (w.cube.twister as unknown as { lastSetupCpuMs?: number }).lastSetupCpuMs;
-        // 下一帧 render 把 dirty cube 画到 GPU,再 message-channel/setTimeout 等 paint 上屏后报时
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            onScrambleTime?.(performance.now() - t0, cpuMs);
-          }, 0);
-        });
-      }));
+      // setupAsync: worker 跑 hot loop,主线程在 worker 算的几秒里 UI 不卡。
+      // 末尾 sweep + rebuildAll 仍在主线程,~500-700ms 卡顿 (N=200) 而非 5400ms。
+      const tw = w.cube.twister as unknown as { setupAsync?: (e: string) => Promise<void>; setup: (e: string) => void; lastSetupCpuMs?: number };
+      if (tw.setupAsync) {
+        await tw.setupAsync(scramble);
+      } else {
+        // Sq1Twister 没 setupAsync — 退回 sync
+        tw.setup(scramble);
+      }
+      const cpuMs = tw.lastSetupCpuMs;
+      // 下一帧 render 把 dirty cube 画到 GPU,再 message-channel/setTimeout 等 paint 上屏后报时
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          onScrambleTime?.(performance.now() - t0, cpuMs);
+        }, 0);
+      });
     }
     const el = setupElRef.current;
     if (el instanceof HTMLTextAreaElement) {
