@@ -6,11 +6,13 @@
  *
  * Comp + Practice share `cubing/scramble` (Lucas Garron, WCA-spec output).
  */
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Shuffle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { prewarmScramble } from '../../utils/cubingScramble';
 import QuickMode from './QuickMode';
 import TNoodleMode from './TNoodleMode';
 import ImportMode from './ImportMode';
@@ -31,6 +33,14 @@ export default function GenPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
+
+  // Prewarm the heaviest random-state scramblers while the user is reading the
+  // event selector. 444/555 each pay a ~3s pruning-table build on first call;
+  // running that during page idle (rather than after the user clicks Generate)
+  // is the single biggest win for perceived latency.
+  useEffect(() => {
+    prewarmScramble('333', '444', '555');
+  }, []);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const rawParam = searchParams.get('mode') ?? '';
