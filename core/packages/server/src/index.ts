@@ -15,6 +15,7 @@ import { navSitesRoutes } from './routes/nav_sites.js';
 import { nemesizerRoutes } from './routes/nemesizer.js';
 import { cubingLiveRoutes } from './routes/cubing_live.js';
 import { analyticsRoutes } from './routes/analytics.js';
+import { wikiRoutes } from './routes/wiki.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 
 const app = new Hono();
@@ -60,6 +61,7 @@ app.route('/v1', navSitesRoutes);
 app.route('/v1', nemesizerRoutes);
 app.route('/v1', cubingLiveRoutes);
 app.route('/v1', analyticsRoutes);
+app.route('/v1', wikiRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
