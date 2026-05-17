@@ -49,8 +49,8 @@ const LAYER_GAP = 4;          // equator gap between layers
 const HALF_GAP = LAYER_GAP / 2;
 const BEVEL = {
   steps: 1, depth: LAYER_HEIGHT,
-  bevelEnabled: true, bevelThickness: 3, bevelSize: 3,
-  bevelOffset: -3, bevelSegments: 2,
+  bevelEnabled: true, bevelThickness: 2, bevelSize: 2,
+  bevelOffset: -2, bevelSegments: 2,
 };
 
 void HALF_W;
@@ -240,11 +240,11 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
       side: THREE.DoubleSide,
     });
     const wallA = mkRectMesh(TILE - 6, LAYER_HEIGHT - 6, matA);
-    wallA.position.set(TILE / 2, TILE + 0.2, LAYER_HEIGHT / 2);
+    wallA.position.set(TILE / 2, TILE + 1.5, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
     group.add(wallA);
     const wallB = mkRectMesh(TILE - 6, LAYER_HEIGHT - 6, matB);
-    wallB.position.set(TILE + 0.2, TILE / 2, LAYER_HEIGHT / 2);
+    wallB.position.set(TILE + 1.5, TILE / 2, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallB);
 
@@ -271,7 +271,7 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
       side: THREE.DoubleSide,
     });
     const wallA = mkRectMesh(WEDGE_W - 6, LAYER_HEIGHT - 6, matA);
-    wallA.position.set(TILE + 0.2, 0, LAYER_HEIGHT / 2);
+    wallA.position.set(TILE + 1.5, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallA);
 
