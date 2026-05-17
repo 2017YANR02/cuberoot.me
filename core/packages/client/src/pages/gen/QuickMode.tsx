@@ -28,6 +28,13 @@ function parsePastedScrambles(text: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+/** ms → "1234ms" / "1.2s" / "12.3s" — keep narrow for inline sheet headers. */
+function formatMs(ms: number): string {
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (ms < 10000) return `${(ms / 1000).toFixed(2)}s`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 type SubMode = 'gen' | 'text';
 
 interface Props {
@@ -48,6 +55,9 @@ export default function QuickMode({ t, subMode }: Props) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
+  /** 每个 event 的批次计时 — wall = 该 event 第一个 scramble 开始到最后一个完成的实际墙钟。 */
+  const [timing, setTiming] = useState<Record<string, { wallMs: number; avgMs: number; firstMs: number; count: number }>>({});
+  const [batchWallMs, setBatchWallMs] = useState<number | null>(null);
 
   const reqIdRef = useRef(0);
   const [tick, setTick] = useState(0);
@@ -77,6 +87,8 @@ export default function QuickMode({ t, subMode }: Props) {
     const myId = ++reqIdRef.current;
     setLoading(true);
     setGenerated({});
+    setTiming({});
+    setBatchWallMs(null);
     setCopiedKey(null);
     const total = eventsOrdered.length * count;
     let done = 0;
@@ -85,11 +97,23 @@ export default function QuickMode({ t, subMode }: Props) {
     const buckets: Record<string, string[]> = {};
     for (const ev of eventsOrdered) buckets[ev] = [];
 
+    // Per-event timing accumulators.
+    const evWallStart: Record<string, number> = {};
+    const evWallEnd: Record<string, number> = {};
+    const evDurations: Record<string, number[]> = {};
+    for (const ev of eventsOrdered) evDurations[ev] = [];
+
+    const batchStart = performance.now();
     const promises: Promise<void>[] = [];
     for (const ev of eventsOrdered) {
       for (let i = 0; i < count; i++) {
+        const t0 = performance.now();
+        if (!(ev in evWallStart) || t0 < evWallStart[ev]) evWallStart[ev] = t0;
         promises.push(
           tnoodleRandomScramble(ev).then((s) => {
+            const t1 = performance.now();
+            evWallEnd[ev] = !(ev in evWallEnd) || t1 > evWallEnd[ev] ? t1 : evWallEnd[ev];
+            evDurations[ev].push(t1 - t0);
             if (reqIdRef.current !== myId) return;
             if (s) buckets[ev].push(s);
             done += 1;
@@ -102,7 +126,17 @@ export default function QuickMode({ t, subMode }: Props) {
     (async () => {
       await Promise.all(promises);
       if (reqIdRef.current !== myId) return;
+      const nextTiming: Record<string, { wallMs: number; avgMs: number; firstMs: number; count: number }> = {};
+      for (const ev of eventsOrdered) {
+        const durs = evDurations[ev];
+        const wall = (evWallEnd[ev] ?? 0) - (evWallStart[ev] ?? 0);
+        const avg = durs.length > 0 ? durs.reduce((a, b) => a + b, 0) / durs.length : 0;
+        const first = durs[0] ?? 0;
+        nextTiming[ev] = { wallMs: wall, avgMs: avg, firstMs: first, count: durs.length };
+      }
       setGenerated(buckets);
+      setTiming(nextTiming);
+      setBatchWallMs(performance.now() - batchStart);
       setLoading(false);
       setGenProgress(null);
     })().catch((e) => {
@@ -282,6 +316,13 @@ export default function QuickMode({ t, subMode }: Props) {
         </div>
       )}
 
+      {/* 批次总耗时(gen 模式才显示) */}
+      {subMode === 'gen' && batchWallMs !== null && totalScrambles > 0 && (
+        <div className="gen-tn-bench-total">
+          {t('总耗时', 'Batch')} {formatMs(batchWallMs)}    {totalScrambles} {t('个打乱', 'scrambles')}
+        </div>
+      )}
+
       {/* 每个项目一个 sheet — gen 模式显示生成结果,text 模式显示已粘贴打乱的预览 */}
       {totalScrambles > 0 && (
         <div className="gen-tn-sheets">
@@ -289,11 +330,17 @@ export default function QuickMode({ t, subMode }: Props) {
             const arr = scramblesByEvent[ev];
             if (arr.length === 0) return null;
             const hasPreview = eventHasScramblePreview(ev);
+            const ti = timing[ev];
             return (
               <div key={ev} className="gen-tn-sheet">
                 <div className="gen-tn-sheet-header">
                   <EventIcon event={ev} />
                   <span>{eventDisplayName(ev, isZh)} {arr.length} {t('个打乱', 'scrambles')}</span>
+                  {ti && ti.count > 0 && (
+                    <span className="gen-tn-bench">
+                      {formatMs(ti.wallMs)}    {t('平均', 'avg')} {formatMs(ti.avgMs)}    {t('首条', 'first')} {formatMs(ti.firstMs)}
+                    </span>
+                  )}
                 </div>
                 <table className="gen-tn-sheet-table"><tbody>
                   {arr.map((s, i) => {
