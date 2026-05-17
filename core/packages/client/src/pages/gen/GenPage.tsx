@@ -10,15 +10,22 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Shuffle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import QuickMode from './QuickMode';
 import TNoodleMode from './TNoodleMode';
 import ImportMode from './ImportMode';
 import './gen.css';
 
-type Mode = 'practice' | 'comp' | 'import';
+type Mode = 'comp' | 'gen' | 'text' | 'wca';
 
-const VALID_MODES: ReadonlySet<Mode> = new Set(['practice', 'comp', 'import']);
-const LEGACY_MODE_ALIAS: Record<string, Mode> = { quick: 'practice', tnoodle: 'comp' };
+const VALID_MODES: ReadonlySet<Mode> = new Set(['comp', 'gen', 'text', 'wca']);
+// 老链接兼容:practice/quick → gen(原 practice 默认子模式),tnoodle → comp,import → wca。
+const LEGACY_MODE_ALIAS: Record<string, Mode> = {
+  practice: 'gen',
+  quick: 'gen',
+  tnoodle: 'comp',
+  import: 'wca',
+};
 
 export default function GenPage() {
   const { i18n } = useTranslation();
@@ -32,10 +39,9 @@ export default function GenPage() {
   const setMode = (next: Mode) => {
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
-      // 三个 mode 都显式写进 URL,保持一致(包括默认 comp)。
       p.set('mode', next);
-      // ?comp= 不在这里清 —— ImportMode 永远挂载且保留已加载比赛,
-      // URL 也保持 comp 同步,刷新或换 tab 再回都能秒回原状态。
+      // ?comp= 不在这里清 —— ImportMode (WCA tab) 永远挂载且保留已加载比赛,
+      // URL 也保持同步,刷新或换 tab 再回都能秒回原状态。
       return p;
     }, { replace: true });
   };
@@ -53,31 +59,40 @@ export default function GenPage() {
             className={`gen-mode-chip${mode === 'comp' ? ' is-active' : ''}`}
             onClick={() => setMode('comp')}
           >
-            {t('比赛', 'Comp')}
+            {t('模拟', 'Mock')}
           </button>
           <button
             type="button"
-            className={`gen-mode-chip${mode === 'practice' ? ' is-active' : ''}`}
-            onClick={() => setMode('practice')}
+            className={`gen-mode-chip${mode === 'gen' ? ' is-active' : ''}`}
+            onClick={() => setMode('gen')}
           >
-            {t('练习', 'Practice')}
+            {t('批量', 'Batch')}
           </button>
           <button
             type="button"
-            className={`gen-mode-chip${mode === 'import' ? ' is-active' : ''}`}
-            onClick={() => setMode('import')}
+            className={`gen-mode-chip${mode === 'text' ? ' is-active' : ''}`}
+            onClick={() => setMode('text')}
           >
-            {t('导入', 'Import')}
+            {t('输入', 'Paste')}
+          </button>
+          <button
+            type="button"
+            className={`gen-mode-chip${mode === 'wca' ? ' is-active' : ''}`}
+            onClick={() => setMode('wca')}
+          >
+            {t('WCA', 'WCA')}
           </button>
         </div>
         <LangToggle variant="inline" />
+        <ThemeToggle />
       </header>
 
       <main className="gen-main">
-        {mode === 'practice' && <QuickMode t={t} />}
         {mode === 'comp' && <TNoodleMode t={t} isZh={isZh} />}
+        {mode === 'gen' && <QuickMode t={t} subMode="gen" />}
+        {mode === 'text' && <QuickMode t={t} subMode="text" />}
         {/* ImportMode 永远挂载:切走再切回保留已加载比赛 + 已生成 sheets */}
-        <div style={{ display: mode === 'import' ? 'block' : 'none' }}>
+        <div style={{ display: mode === 'wca' ? 'block' : 'none' }}>
           <ImportMode t={t} isZh={isZh} />
         </div>
       </main>

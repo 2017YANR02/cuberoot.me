@@ -24,7 +24,7 @@
     gap: 1rem;
     padding: 1.25rem 2rem 1rem;
     border-bottom: 1px solid var(--pat-border);
-    background: rgba(255, 255, 255, 0.85);
+    background: color-mix(in srgb, var(--pat-bg) 88%, transparent);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -121,9 +121,9 @@
 
 .pat-card:hover {
     border-color: var(--pat-accent);
-    background: linear-gradient(180deg, #FFF, #FBF6F2);
+    background: linear-gradient(180deg, var(--pat-surface), color-mix(in srgb, var(--pat-accent) 4%, var(--pat-surface)));
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
 .pat-card-preview {
@@ -152,6 +152,58 @@
     .pat-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
     .pat-card { padding: 10px 8px 8px; }
     .pat-card-preview { height: 110px; }
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .pat-page {
+        --pat-bg: #1c1917;
+        --pat-surface: #232020;
+        --pat-text: #f0ebe3;
+        --pat-text-sub: #9c8c7e;
+        --pat-text-mute: #7A736A;
+        --pat-border: rgba(240, 235, 227, 0.1);
+        --pat-border-strong: rgba(240, 235, 227, 0.2);
+        --pat-accent: #d97757;
+        --pat-accent-soft: rgba(217, 119, 87, 0.16);
+    }
+}
+html[data-theme=dark] .pat-page {
+    --pat-bg: #1c1917;
+    --pat-surface: #232020;
+    --pat-text: #f0ebe3;
+    --pat-text-sub: #9c8c7e;
+    --pat-text-mute: #7A736A;
+    --pat-border: rgba(240, 235, 227, 0.1);
+    --pat-border-strong: rgba(240, 235, 227, 0.2);
+    --pat-accent: #d97757;
+    --pat-accent-soft: rgba(217, 119, 87, 0.16);
+}
+
+/* dark 下黑阴影被 dark bg 吸收 → hover/modal lift 反馈丢失。用更深的黑突出 */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .pat-card:hover {
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+    }
+    html:not([data-theme=light]) .pat-modal {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+    }
+}
+html[data-theme=dark] .pat-card:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+html[data-theme=dark] .pat-modal {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+}
+
+/* dark 下 select chevron(data: URL 不继承 currentColor,只能换条 URL)*/
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .pat-puzzle-select {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239c8c7e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    }
+}
+html[data-theme=dark] .pat-puzzle-select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239c8c7e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 
 /* ── Modal ── */
@@ -244,7 +296,7 @@
     display: flex;
     align-items: stretch;
     gap: 8px;
-    background: #FBF8F3;
+    background: color-mix(in srgb, var(--pat-accent) 5%, var(--pat-bg));
     border: 1px solid var(--pat-border);
     border-radius: 8px;
     padding: 8px 10px;
