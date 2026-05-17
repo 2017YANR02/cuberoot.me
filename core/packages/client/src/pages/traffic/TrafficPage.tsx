@@ -1,5 +1,5 @@
 /**
- * /traffic — WCA-gated 站内流量统计.
+ * /code/traffic — WCA-gated 站内流量统计.
  * 数据来源: GET /v1/analytics/summary?range=7d|30d|90d|all (Bearer auth).
  * 4 块: PV/UV 折线 + Top 路径 + Top 来源 + 国家分布.
  */
@@ -13,7 +13,6 @@ import { Flag } from '../../utils/flag';
 import { countryName } from '../../utils/country_name';
 import { useAuthStore } from '../../stores/auth_store';
 import { apiUrl } from '../../utils/api_base';
-import { getLangQuery } from '../../i18n';
 import './traffic.css';
 
 type Range = '7d' | '30d' | '90d' | 'all';
@@ -83,7 +82,7 @@ export default function TrafficPage() {
       <div className="tr-page">
         <header className="tr-header">
           <div className="tr-header-left">
-            <Link to={`/${getLangQuery()}`} className="tr-back" aria-label={T('返回首页', 'Back')}>
+            <Link to="/code" className="tr-back" aria-label={T('返回 /code', 'Back to /code')}>
               <ArrowLeft size={18} />
             </Link>
             <h1 className="tr-title">{T('流量统计', 'Traffic')}</h1>
@@ -104,7 +103,7 @@ export default function TrafficPage() {
     <div className="tr-page">
       <header className="tr-header">
         <div className="tr-header-left">
-          <Link to={`/${getLangQuery()}`} className="tr-back" aria-label={T('返回首页', 'Back')}>
+          <Link to="/code" className="tr-back" aria-label={T('返回 /code', 'Back to /code')}>
             <ArrowLeft size={18} />
           </Link>
           <h1 className="tr-title">{T('流量统计', 'Traffic')}</h1>
