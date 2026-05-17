@@ -81,6 +81,14 @@
   margin: 0 0 12px;
   color: var(--foreground);
 }
+.tr-section-head { margin: 0 0 12px; }
+.tr-section-head .tr-section-title { margin: 0; }
+.tr-section-hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+  line-height: 1.45;
+}
 
 .tr-chart-wrap {
   height: 280px;
