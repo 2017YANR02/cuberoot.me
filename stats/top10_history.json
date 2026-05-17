@@ -17155,6 +17155,11 @@
       "country": "China",
       "iso2": "CN"
     },
+    "2023CHMI01": {
+      "name": "Marcin Chmielewski",
+      "country": "Poland",
+      "iso2": "PL"
+    },
     "2023CLAR02": {
       "name": "Carson Clark (张卡森)",
       "country": "USA",
@@ -17744,6 +17749,9 @@
     },
     "3rdCoastCubing2019": {
       "name": "3rd Coast Cubing 2019"
+    },
+    "3x3inMadison2026": {
+      "name": "3x3 in Madison 2026"
     },
     "3x3OnlyMinnesota2019": {
       "name": "3x3 Only Minnesota 2019"
@@ -21821,6 +21829,9 @@
     },
     "BubblininDublinOH2024": {
       "name": "Bubblin' in Dublin OH 2024"
+    },
+    "BUBTCubeOpen2026": {
+      "name": "BUBT Cube Open 2026"
     },
     "BucaramangaCultural2017": {
       "name": "Bucaramanga Cultural 2017"
@@ -26405,6 +26416,9 @@
     },
     "DFWWeeknights12026": {
       "name": "DFW Weeknights 1 2026"
+    },
+    "DFWWeeknights32026": {
+      "name": "DFW Weeknights 3 2026"
     },
     "DFWWinterVariation2024": {
       "name": "DFW Winter Variation 2024"
@@ -41385,6 +41399,9 @@
     "PSSFMCWarszawa2019": {
       "name": "PSS FMC Warszawa 2019"
     },
+    "PSSSideDayGdansk2026": {
+      "name": "PSS Side Day Gdańsk 2026"
+    },
     "PSTBilgoraj2020": {
       "name": "PST Biłgoraj 2020"
     },
@@ -50831,6 +50848,9 @@
     },
     "WLSLato2016": {
       "name": "WLS Lato 2016"
+    },
+    "WLSMaj2026": {
+      "name": "WLS Maj 2026"
     },
     "WLSMarzec2026": {
       "name": "WLS Marzec 2026"

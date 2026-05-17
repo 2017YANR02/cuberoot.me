@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-14T03:25:46.225Z",
-  "exportDate": "2026-05-14",
-  "personCount": 288250,
-  "rankCount": 1865464,
+  "generatedAt": "2026-05-17T22:03:47.636Z",
+  "exportDate": "2026-05-17",
+  "personCount": 288373,
+  "rankCount": 1866297,
   "events": [
     {
       "id": "333",
@@ -1044,12 +1044,6 @@
       "nameEn": "Vietnam",
       "nameZh": "Vietnam",
       "continentIdx": 0
-    },
-    {
-      "iso2": "vu",
-      "nameEn": "Vanuatu",
-      "nameZh": "Vanuatu",
-      "continentIdx": 5
     },
     {
       "iso2": "ws",
