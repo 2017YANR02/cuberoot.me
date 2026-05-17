@@ -167,10 +167,6 @@ analyticsRoutes.get('/analytics/summary', async (c) => {
   if (dailyToday[0] && dailyToday[0].pv > 0) daily.push(dailyToday[0]);
 
   // Top paths/refs/countries — 同样合并历史 + 今天.
-  const histRangeSql = days === null
-    ? `WHERE day < CURRENT_DATE`
-    : `WHERE day >= CURRENT_DATE - INTERVAL '${days} days' AND day < CURRENT_DATE`;
-
   // Paths: top 20 by pv.
   // 历史 traffic_daily.uv 是 (day,path,country,ref) 粒度的 uv, sum 起来会高估 path 级 uv.
   // 折中: range≤90d 直接走 pageviews (准确, 行数 OK); range='all' 时只能 sum traffic_daily.uv
@@ -211,32 +207,58 @@ analyticsRoutes.get('/analytics/summary', async (c) => {
        LIMIT 30`,
     );
   } else {
-    // all-time: 走 traffic_daily; uv 是 sum (上界估计).
+    // all-time: traffic_daily (历史) + 今天的 pageviews UNION ALL,在外层再 GROUP.
+    // 这样 timer 还没跑过 / 当天部署都能立刻看到 breakdown.
+    // 注意 aggregate SQL 只聚合 day < CURRENT_DATE 的行, traffic_daily 永远不含今天 → 无重复.
+    // uv 是各天 uv 之和, 全时段是上界估计(同访客跨天会被多算).
     paths = await query<PathRow>(
       `SELECT path,
               SUM(pv)::int AS pv,
               SUM(uv)::int AS uv,
               ROUND(AVG(avg_dwell_ms))::int AS avg_dwell_ms
-       FROM traffic_daily ${histRangeSql}
+       FROM (
+         SELECT path, SUM(pv)::int AS pv, SUM(uv)::int AS uv, AVG(avg_dwell_ms)::float AS avg_dwell_ms
+           FROM traffic_daily WHERE day < CURRENT_DATE
+           GROUP BY path
+         UNION ALL
+         SELECT path, COUNT(*)::int AS pv, COUNT(DISTINCT visitor_id)::int AS uv, AVG(dwell_ms)::float AS avg_dwell_ms
+           FROM pageviews WHERE ts >= CURRENT_DATE AND ua_class <> 'bot'
+           GROUP BY path
+       ) t
        GROUP BY path
        ORDER BY pv DESC
        LIMIT 20`,
     );
     refs = await query<RefRow>(
-      `SELECT CASE WHEN ref_domain = '' THEN '(direct)' ELSE ref_domain END AS ref_domain,
-              SUM(pv)::int AS pv,
-              SUM(uv)::int AS uv
-       FROM traffic_daily ${histRangeSql}
-       GROUP BY 1
+      `SELECT ref_domain, SUM(pv)::int AS pv, SUM(uv)::int AS uv
+       FROM (
+         SELECT CASE WHEN ref_domain = '' THEN '(direct)' ELSE ref_domain END AS ref_domain,
+                SUM(pv)::int AS pv, SUM(uv)::int AS uv
+           FROM traffic_daily WHERE day < CURRENT_DATE
+           GROUP BY 1
+         UNION ALL
+         SELECT COALESCE(NULLIF(ref_domain, ''), '(direct)') AS ref_domain,
+                COUNT(*)::int AS pv, COUNT(DISTINCT visitor_id)::int AS uv
+           FROM pageviews WHERE ts >= CURRENT_DATE AND ua_class <> 'bot'
+           GROUP BY 1
+       ) t
+       GROUP BY ref_domain
        ORDER BY pv DESC
        LIMIT 20`,
     );
     countries = await query<CountryRow>(
-      `SELECT country,
-              SUM(pv)::int AS pv,
-              SUM(uv)::int AS uv
-       FROM traffic_daily ${histRangeSql}
-       GROUP BY 1
+      `SELECT country, SUM(pv)::int AS pv, SUM(uv)::int AS uv
+       FROM (
+         SELECT country, SUM(pv)::int AS pv, SUM(uv)::int AS uv
+           FROM traffic_daily WHERE day < CURRENT_DATE
+           GROUP BY country
+         UNION ALL
+         SELECT COALESCE(NULLIF(country, ''), 'XX') AS country,
+                COUNT(*)::int AS pv, COUNT(DISTINCT visitor_id)::int AS uv
+           FROM pageviews WHERE ts >= CURRENT_DATE AND ua_class <> 'bot'
+           GROUP BY 1
+       ) t
+       GROUP BY country
        ORDER BY pv DESC
        LIMIT 30`,
     );
