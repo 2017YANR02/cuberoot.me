@@ -109,7 +109,7 @@ export default class Controller {
           this.world.dirty = true;
         }
       } else {
-        const groups = this.world.cube.table.groups[this.axis[0]];
+        const groups = (this.world.cube as import('./cube').default).table.groups[this.axis[0]];
         for (const group of groups) {
           if (group.angle != angle) {
             const delta = (angle - group.angle) / 2;
@@ -141,7 +141,7 @@ export default class Controller {
             layer = Math.floor(index / (order * order));
             break;
         }
-        return this.world.cube.table.groups[axis][layer];
+        return (this.world.cube as import('./cube').default).table.groups[axis][layer];
       }
     }
     return null;
@@ -236,7 +236,7 @@ export default class Controller {
         }
         this.group = null;
         const contingle: Set<number> = new Set();
-        for (const group of this.world.cube.table.groups[this.axis[0]]) {
+        for (const group of (this.world.cube as import('./cube').default).table.groups[this.axis[0]]) {
           let success = group.drag();
           while (!success) {
             tweener.finish();
@@ -285,7 +285,7 @@ export default class Controller {
           this.wideSign = wide.layers.length > 1 ? wide.sign : "";
           for (const l of wide.layers) {
             if (l === this.group.layer) continue;
-            const g = this.world.cube.table.groups[this.group.axis][l];
+            const g = (this.world.cube as import('./cube').default).table.groups[this.group.axis][l];
             let s = g.drag();
             while (!s) {
               tweener.finish();
@@ -376,11 +376,11 @@ export default class Controller {
           // wideSign 非空 = 宽层 / 整体转, 用拼好的 notation;否则用 group.name (单层切片现状)
           const sign = this.wideSign || this.group.name;
           const action = new TwistAction(sign, reverse, times);
-          this.world.cube.record(action);
+          (this.world.cube as import('./cube').default).record(action);
           for (const cb of this.userTwist) cb(action);
         }
       } else {
-        const groups = this.world.cube.table.groups[this.axis[0]];
+        const groups = (this.world.cube as import('./cube').default).table.groups[this.axis[0]];
         for (const group of groups) {
           group.twist(angle, false);
         }
@@ -389,7 +389,7 @@ export default class Controller {
           const reverse = times < 0;
           times = Math.abs(times);
           const action = new TwistAction(this.axis, reverse, times);
-          this.world.cube.record(action);
+          (this.world.cube as import('./cube').default).record(action);
           for (const cb of this.userTwist) cb(action);
         }
       }

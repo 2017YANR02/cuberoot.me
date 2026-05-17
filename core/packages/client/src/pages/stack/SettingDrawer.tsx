@@ -106,21 +106,24 @@ export function applySettings(world: World, s: StackSettings): void {
   world.scene.rotation.x = mapPitch(s.viewGradient);
   world.scene.updateMatrix();
   CubeGroup.frames = mapFrames(s.speed);
-  world.cube.arrow = s.arrow;
-  world.cube.instancedRenderer.thickness = s.thickness;
-  world.cube.instancedRenderer.hollow = s.hollow;
-  world.cube.instancedRenderer.hint = s.hint;
-  // hint 预混底色 = 当前 CSS --background; 主题切换 + checker toggle 都该 reapply
-  if (typeof window !== 'undefined') {
-    const bg = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
-    if (bg) world.cube.instancedRenderer.setHintBackdrop(bg);
+  // NxN-only options skipped for SQ1 (sticker thickness / hollow / hint / face
+  // colors are baked at construction time for the SQ1 wedges).
+  if (world.puzzleKind !== 'sq1') {
+    const cube = world.cube as import('./cuber/cube').default;
+    cube.arrow = s.arrow;
+    cube.instancedRenderer.thickness = s.thickness;
+    cube.instancedRenderer.hollow = s.hollow;
+    cube.instancedRenderer.hint = s.hint;
+    if (typeof window !== 'undefined') {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
+      if (bg) cube.instancedRenderer.setHintBackdrop(bg);
+    }
+    // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
+    Cubelet.CORE.color.set(s.coreColor);
+    Cubelet.CORE_BASIC.color.set(s.coreColor);
+    Cubelet._PANEL_MAT.color.set(s.coreColor);
+    cube.instancedRenderer.setFaceColors(s.faceColors);
   }
-  // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
-  Cubelet.CORE.color.set(s.coreColor);
-  Cubelet.CORE_BASIC.color.set(s.coreColor);
-  Cubelet._PANEL_MAT.color.set(s.coreColor);
-  // 6 面色
-  world.cube.instancedRenderer.setFaceColors(s.faceColors);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();

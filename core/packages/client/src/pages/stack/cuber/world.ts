@@ -3,6 +3,10 @@ import Cube from "./cube";
 import Cubelet from "./cubelet";
 import * as THREE from "three";
 import Controller from "./controller";
+import Sq1Cube from "./sq1/Sq1Cube";
+
+/** Puzzle slot — either an NxN cube (order >= 1) or SQ1 (sentinel 'sq1'). */
+export type PuzzleKind = number | 'sq1';
 
 export default class World {
   public width = 1;
@@ -11,12 +15,18 @@ export default class World {
   public scene: THREE.Scene;
   public camera: THREE.PerspectiveCamera;
 
-  public cube!: Cube;
+  /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube. Consumers that
+   *  reach into NxN-specific fields (instancedRenderer, table, locks) must
+   *  first check `world.puzzleKind` !== 'sq1'. */
+  public cube!: Cube | Sq1Cube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
 
   private cubes: Cube[] = [];
+  private sq1Cube: Sq1Cube | null = null;
+  /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
+  public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
 
   public controller: Controller;
@@ -42,7 +52,7 @@ export default class World {
     this.camera.position.z = 0;
 
     this.controller = new Controller(this);
-    this.order = 3;
+    this.setPuzzle(3);
   }
 
   set dirty(value: boolean) {
@@ -53,19 +63,36 @@ export default class World {
     return this.cube.dirty;
   }
 
-  set order(value: number) {
+  /** Unified puzzle switch. Pass a number for NxN, 'sq1' for Square-1. */
+  setPuzzle(kind: PuzzleKind): void {
     if (this.cube) {
       this.scene.remove(this.cube);
     }
-    if (this.cubes[value] == undefined) {
-      this.cubes[value] = new Cube(value);
-      this.cubes[value].callbacks.push(this.callback);
-      // thickness 默认 true (跟 upstream),细化值由 SettingDrawer.applySettings 覆盖
-      this.cubes[value].instancedRenderer.thickness = true;
+    if (kind === 'sq1') {
+      if (this.sq1Cube == null) {
+        this.sq1Cube = new Sq1Cube();
+        this.sq1Cube.callbacks.push(this.callback);
+      }
+      this.cube = this.sq1Cube;
+      // SQ1 drag/tap input not implemented yet — disable controller.
+      this.controller.disable = true;
+    } else {
+      if (this.cubes[kind] == undefined) {
+        this.cubes[kind] = new Cube(kind);
+        this.cubes[kind].callbacks.push(this.callback);
+        this.cubes[kind].instancedRenderer.thickness = true;
+      }
+      this.cube = this.cubes[kind];
+      this.controller.disable = false;
     }
-    this.cube = this.cubes[value];
+    this.puzzleKind = kind;
     this.scene.add(this.cube);
     this.dirty = true;
+  }
+
+  /** Legacy property — kept for back-compat. Number kinds only. */
+  set order(value: number) {
+    this.setPuzzle(value);
   }
 
   get order(): number {
