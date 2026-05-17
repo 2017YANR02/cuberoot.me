@@ -26,6 +26,57 @@ function getRotQuats(): THREE.Quaternion[] {
   return out;
 }
 
+// Cube rotation group 24 个元素 → 24 个 quaternion + (24 × 12) compose table。
+// setup 内 cubelet 用 rotIdx (0..23) 替 quaternion 累积,跳掉 16M 次 ~16-op
+// quaternion.premultiply,末尾 sync 一次 (32k 次 quaternion.copy)。
+let CUBE_ROT_QUATS: THREE.Quaternion[] | null = null;
+let CUBE_COMPOSE: Uint8Array | null = null;  // composeIdx[oldRotIdx*12 + dispatch] = newRotIdx
+function getCubeRotTables(): { quats: THREE.Quaternion[]; compose: Uint8Array } {
+  if (CUBE_ROT_QUATS) return { quats: CUBE_ROT_QUATS, compose: CUBE_COMPOSE! };
+  const rotQuats = getRotQuats();
+  const quats: THREE.Quaternion[] = [new THREE.Quaternion(0, 0, 0, 1)];
+  const keyToIdx = new Map<string, number>();
+  // 一个 rotation 对应 ±q 两种 quaternion 表示;BFS 时把 -q 也 alias 到同一 idx
+  function quatKey(q: THREE.Quaternion): string {
+    const r = (v: number) => Math.round(v * 100000);
+    return `${r(q.x)},${r(q.y)},${r(q.z)},${r(q.w)}`;
+  }
+  function regKey(q: THREE.Quaternion, idx: number): void {
+    keyToIdx.set(quatKey(q), idx);
+    const tmp = new THREE.Quaternion(-q.x, -q.y, -q.z, -q.w);
+    keyToIdx.set(quatKey(tmp), idx);
+  }
+  regKey(quats[0], 0);
+  const triples: number[] = [];  // (oldIdx, dispatch, newIdx) triples
+  const queue = [0];
+  const work = new THREE.Quaternion();
+  while (queue.length > 0) {
+    const oldIdx = queue.shift()!;
+    for (let dispatch = 1; dispatch < 12; dispatch++) {
+      const t01 = dispatch & 3;
+      if (t01 === 0) continue;  // identity 跳过
+      const qRot = rotQuats[(dispatch >> 2) * 4 + t01];
+      work.copy(quats[oldIdx]).premultiply(qRot);
+      let newIdx = keyToIdx.get(quatKey(work));
+      if (newIdx === undefined) {
+        newIdx = quats.length;
+        const q = work.clone();
+        quats.push(q);
+        regKey(q, newIdx);
+        queue.push(newIdx);
+      }
+      triples.push(oldIdx, dispatch, newIdx);
+    }
+  }
+  const compose = new Uint8Array(quats.length * 12);
+  for (let i = 0; i < triples.length; i += 3) {
+    compose[triples[i] * 12 + triples[i + 1]] = triples[i + 2];
+  }
+  CUBE_ROT_QUATS = quats;
+  CUBE_COMPOSE = compose;
+  return { quats, compose };
+}
+
 export class TwistAction {
   sign: string;
   reverse: boolean;
@@ -295,13 +346,17 @@ export default class Twister {
     const order2 = order * order;
     const half = (order - 1) / 2;
     const SIZE = Cubelet.SIZE;
-    const rotQuats = getRotQuats();
+    const { quats: cubeRotQuats, compose: cubeCompose } = getCubeRotTables();
     // Flat 数组替 cube.cubelets Map 作为 setup 内 hot path:V8 array indexed get/set
     // ~2-3x 比 Map.get/set 快。N=75 → 421k slot × 8B = 3.4MB,N=250 60MB
     // (用户主流 N<=100 时 OK)。
     const totalPos = order * order2;
     const flat: (Cubelet | undefined)[] = new Array(totalPos);
     for (const c of cube.cubelets.values()) flat[c._index] = c;
+    // Per-cubelet rotIdx 累加器 (Uint8Array indexed by _instIdx)。setup 内只在累加器上做表查,
+    // 末尾 sweep 时根据 rotIdx 还原 quaternion。16M 次 premultiply (~16 ops) → 16M 次 1-op 表查。
+    const visCount = cube.instancedRenderer.instanceToInitial.length;
+    const rotIdx = new Uint8Array(visCount);  // 默认 0 = identity
     for (const action of list) {
       // 特殊 sign (#/*/./~/;) 包含递归 setup / lock-aware callback 等复杂语义,
       // 在 setup 输入里极罕见,直接退回普通 twist 路径。
@@ -316,7 +371,6 @@ export default class Twister {
         if (axisIdx < 0) continue;
         const t01 = ((rotate.twist % 4) + 4) % 4;
         if (t01 === 0) continue;
-        const qRot = rotQuats[axisIdx * 4 + t01];
         const slice: Cubelet[] = [];
         const indices = rotate.group.indices;
         for (let i = 0; i < indices.length; i++) {
@@ -347,15 +401,19 @@ export default class Twister {
           c.position.x = SIZE * nx;
           c.position.y = SIZE * ny;
           c.position.z = SIZE * nz;
-          c.quaternion.premultiply(qRot);  // world-space rotate ≡ premul
+          // rotIdx 累加器替 quaternion.premultiply:1-op 表查 ↔ ~16-op + setter overhead
+          const oldRotIdx = rotIdx[c._instIdx];
+          rotIdx[c._instIdx] = cubeCompose[oldRotIdx * 12 + dispatch];
           flat[c._index] = c;
         }
       }
     }
-    // 末尾一次性 sweep:写回 cube.cubelets Map + 算 matrix (从循环里挪出来 — N=75 16M→32k 调用)
+    // 末尾一次性 sweep:写回 cube.cubelets Map + 从 rotIdx 表还原 quaternion + 算 matrix
     cube.cubelets.clear();
     for (const c of cube.initials.values()) {
       cube.cubelets.set(c._index, c);
+      const q = cubeRotQuats[rotIdx[c._instIdx]];
+      c.quaternion.set(q.x, q.y, q.z, q.w);
       c.updateMatrix();
     }
     const T4 = performance.now();
