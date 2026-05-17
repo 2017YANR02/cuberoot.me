@@ -34,6 +34,8 @@ import { METHODS_HARDWARE_EN } from './data/longform/methods_hardware';
 import { BIOMECH_TRAINING_EN } from './data/longform/biomech_training';
 import { CUBERS_COMMUNITY_EN } from './data/longform/cubers_community';
 import { STATS_FORECAST_EN } from './data/longform/stats_forecast';
+import { ALGORITHMS_CATALOG_EN } from './data/longform/algorithms_catalog';
+import { FMC_EVENTS_EN } from './data/longform/fmc_events';
 import './prediction.css';
 import './prediction333.css';
 
@@ -589,6 +591,8 @@ export default function Prediction333Page() {
               <PllPreview letter="H" alg="M2 U M2 U2 M2 U M2" isZh={isZh} note_en="4-fold symmetric edge swap; rarest PLL" note_zh="4 重对称棱换;最罕见 PLL" />
               <PllPreview letter="Y" alg="F R U' R' U' R U R' F' R U R' U' R' F R F'" isZh={isZh} note_en="Corner diag + edge diag (Y on side)" note_zh="角斜 + 棱斜 (侧面 Y 形)" />
             </div>
+
+            {!isZh && <Longform text={ALGORITHMS_CATALOG_EN} />}
           </Section>
 
           <Section id="method-zb" titleZh="ZB / ZBLS / ZBLL — 顶级方法栈" titleEn="ZB / ZBLS / ZBLL — The Elite Stack" isZh={isZh}>
@@ -1009,6 +1013,8 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
               <li>{isZh ? <><strong>"未知的未知".</strong> 顶级 cuber 老化曲线? 心理上限? 无 peer-reviewed data.</> : <><strong>"Unknown unknowns".</strong> Top-cuber aging curves? Psychological ceiling? No peer-reviewed data.</>}</li>
             </ol>
             <p>{isZh ? <><strong>最终评估.</strong> 所有预测是 best estimate, 5 年 ±10%, 25 年 ±30%, 50 年误差量级与现值相当. 这不是 oracle, 它是 framework — 用来在数据更新时迭代.</> : <><strong>Final assessment.</strong> All forecasts best-estimate; 5-yr ±10%, 25-yr ±30%, 50-yr order-of-magnitude. Not an oracle — a framework to iterate.</>}</p>
+
+            {!isZh && <Longform text={FMC_EVENTS_EN} />}
           </Section>
 
           <footer className="pred-footer">
