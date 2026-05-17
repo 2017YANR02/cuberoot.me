@@ -1,0 +1,22 @@
+{
+  "name": "@cuberoot/stack-kernel",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "pkg/stack_kernel.js",
+  "types": "pkg/stack_kernel.d.ts",
+  "exports": {
+    ".": {
+      "types": "./pkg/stack_kernel.d.ts",
+      "import": "./pkg/stack_kernel.js"
+    },
+    "./wasm": "./pkg/stack_kernel_bg.wasm"
+  },
+  "files": [
+    "pkg/"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --release --target web --out-dir pkg && node -e \"require('fs').rmSync('pkg/.gitignore',{force:true})\"",
+    "build:debug": "wasm-pack build --dev --target web --out-dir pkg && node -e \"require('fs').rmSync('pkg/.gitignore',{force:true})\""
+  }
+}

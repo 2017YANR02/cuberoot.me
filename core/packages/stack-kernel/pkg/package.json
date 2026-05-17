@@ -1,0 +1,15 @@
+{
+  "name": "stack-kernel",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "stack_kernel_bg.wasm",
+    "stack_kernel.js",
+    "stack_kernel.d.ts"
+  ],
+  "main": "stack_kernel.js",
+  "types": "stack_kernel.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

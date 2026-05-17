@@ -1,0 +1,3 @@
+# 只给 wasm32 加 simd128;否则 RUSTFLAGS 全局影响 host build 触发 ignore warnings。
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]
