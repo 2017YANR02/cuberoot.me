@@ -1,5 +1,157 @@
 # /stack setup 性能优化记录
 
+---
+
+# 🎯 下一阶段交接(给接力 AI)
+
+**目标:N=200 setup 5238ms → ~2000ms,~2-2.5×**
+
+## 当前状态(2026-05-17,commit `eddb2e0ee` 后)
+
+- WASM kernel 已上线,N=200 1.20× over JS(5238ms vs 6293ms loop)
+- 已修偶数 N 的 `half` bug(commit `94878d03d`)
+- 已加 `apply_rotates_no_flat` 诊断 variant(commit `eddb2e0ee`)
+- 诊断结论:**`flat[N³]` random scatter/gather 占 WASM loop 83% 时间**(5591ms → 944ms when skipped)
+
+## 你要做的事:perSlab 数据结构重构
+
+替换 `flat[N³]` 全局位置 → instId 映射,改成**每 slab 各持一个 cubelet 列表**。理论能消掉 32MB random scatter,把 loop 从 5.6s 打到 ~1.5-2s。
+
+### 诊断数据(打底,不要质疑)
+
+N=200 button 路径(20×(N-2)=3960 moves),median of 6 samples:
+
+| variant | loop ms |
+|---|---:|
+| WASM 完整(flat 走完整路径) | **5591** |
+| WASM 跳掉所有 flat 读写 | **944** |
+| JS 完整 | 6656 |
+
+`flat` 操作占 WASM loop 时间 83%。如果 perSlab 维护成本 < 80% × 4647ms,就净赚。
+
+### 设计草图
+
+**核心改动:** 移除 `flat: Int32Array(N³)`。维护:
+
+```
+perSlab[axis][layer]: Int32Array(slabSize)  // 当前在该 slab 的 cubelet instIds
+                                            // slabSize = N² for face (layer 0 / N-1),
+                                            // 4N-4 for inner ring
+posInSlab[instId * 3 + axis]: u32           // 该 instId 在 perSlab[axis][其当前 layer] 里的索引
+```
+
+**Per rotation(axis A, layer L)流程:**
+
+1. 直接拿 `perSlab[A][L]` 得到要旋转的 cubelet instIds(原本要 flat[indices[i]] gather,现在 O(1) 取到)
+2. 对每个 cubelet 旋转 (vec_y, vec_z) → (vec_y', vec_z')(同当前 kernel)
+3. 不再写 `flat[new_pos]`,改成:
+   - cubelet 在 A 轴 slab 内 layer 不变(slab 是空间固定),但 perSlab[A][L] 内的顺序可能变。其实**不需要更新 A 轴 perSlab 的内容**(成员相同,顺序无所谓 — 下次旋转还是这些 cubelets)。
+   - cubelet 在 B/C 两个其他轴的 layer 变了(B-layer 从 old_y 变成 new_y):从 perSlab[B][old_y] 删掉,加进 perSlab[B][new_y]。C 同理。
+4. 删除+插入用 swap-remove + tail-append,O(1):
+   ```
+   // 从 perSlab[B][old_y] 删 instId:
+   let pos = posInSlab[instId*3 + B];
+   let last = perSlab[B][old_y].pop();
+   perSlab[B][old_y][pos] = last;
+   posInSlab[last*3 + B] = pos;
+   // 插入 perSlab[B][new_y]:
+   posInSlab[instId*3 + B] = perSlab[B][new_y].length;
+   perSlab[B][new_y].push(instId);
+   ```
+   (但 perSlab 是定长 Int32Array,需要单独 count[B][layer] 字段管长度)
+
+### 数据结构细节
+
+```rust
+struct PerSlab {
+    // 拍平:slabFlat[axis * sumPerAxis + offset_for_layer + i] = instId
+    slab_flat: Box<[i32]>,         // total = 3 * Σ slabSize per axis
+    slab_offsets: Box<[u32]>,      // [3*N+1],各 slab 在 slab_flat 里的起点
+    slab_count: Box<[u32]>,        // [3*N],当前 slab 实际占用长度
+    pos_in_slab: Box<[u32]>,       // [vis_count * 3],cubelet 在它当前 layer 的 slab 里的 index
+}
+```
+
+初始化(setup 开始前):每个 cubelet 按 initial position 算出三个 axis 的 layer,放进对应 slab。
+
+### 关键 gotchas(必读)
+
+1. **半层移动 = swap remove 失败模式**:cubelet 在 A 轴 slab 里被旋转后还在同 slab(A 不变),但是 perSlab[A][L] 数组内的 index 可能因为 B/C 轴的 swap-remove 操作改了。**实现时 swap-remove 必须 update posInSlab 的对应 entry,否则下次找不到自己。** 上面伪代码已经处理。
+
+2. **slab 容量不同**:face slab(layer 0 / N-1)= N²,inner ring(layer 1..N-2)= 4N-4。slab_offsets 必须按这个累加。
+
+3. **偶数 N 的 half = (N-1)/2.0 是 half-integer(99.5 for N=200)。** vec_y new_layer 从 vec_y 算回 = `(vec_y + half_f) as usize`。整数除会错。这是上一轮的 bug。
+
+4. **B/C 轴是哪两个?** axis A 旋转影响 (y, z) 时:
+   - A=0 (x-axis 旋转)→ B=1 (y), C=2 (z)
+   - A=1 (y-axis 旋转)→ B=0 (x), C=2 (z)
+   - A=2 (z-axis 旋转)→ B=0 (x), C=1 (y)
+   写成查表更安全。
+
+5. **`cube.cubelets` Map / `_index` 末尾 sweep 不动**:perSlab 只替换 setup 内部的 hot path 状态,setup 末尾从 vecX/Y/Z 算 _index 写回 cubelet 的逻辑不动(否则跟外部代码不兼容)。
+
+### 验证方法(写代码时必跑)
+
+setup 后,**hash 对比 JS path 和 perSlab path 的 cube state**。这是必需的,**不能只看 `cube.complete: false`**(崩坏状态也是 not complete)。
+
+```js
+window.__STACK_KERNEL_WASM = false;
+tw.setup(SAME_SCRAMBLE);
+const jsHash = hashState(w.cube);
+window.__STACK_KERNEL_WASM = true;  // 这时 = perSlab path
+tw.setup(SAME_SCRAMBLE);
+const wasmHash = hashState(w.cube);
+assert(jsHash === wasmHash);  // 必须严格相等
+```
+
+hash 函数:`for (const c of cubelets.values()) h = (h*31 + c._index + (c.quaternion.x*1000|0) + (c.quaternion.y*1000|0)) >>> 0`。
+
+视觉再核:N=200 screenshot 应该是「彩色像素汤,无黑洞」(参考 `.tmp/png/n200-wasm-fixed.png`)。**如果有黑洞或大片纯色,perSlab 算错位**。
+
+### Bench 方法
+
+```js
+// playwright eval,N=200,paired A/B:
+// 8 samples + 2 warmup,fresh scramble per sample
+// flag: window.__STACK_KERNEL_WASM = true/false
+```
+
+我用的脚本在过去会话里(本文档下面 git log 拿)。核心是 `randomMoveScrambleNxN` 风格(20*(N-2) moves,wide notation,prefix random 1..N/2)。
+
+**不要用 `twister.scrambler()`** —— 那个只生成 9*N moves,跟 button 路径不一致。
+
+### 文件 / 命令速查
+
+| | |
+|---|---|
+| WASM kernel | `core/packages/stack-kernel/src/lib.rs` |
+| WASM build | `pnpm --filter @cuberoot/stack-kernel build` |
+| WASM 入口 (JS) | `core/packages/client/src/pages/stack/cuber/twister.ts` setup() 函数 |
+| Dev server | `http://127.0.0.1:5173/stack`,**不要重启** |
+| Playwright | MCP 已加载,`mcp__playwright__browser_*` |
+| Toolchain | rustc 1.95 + wasm-pack 0.15,装在 `~/.cargo/bin/` |
+| pkg/ 委 git | rebuild 完手动 `git add core/packages/stack-kernel/pkg/` |
+| typecheck | `pnpm --filter @cuberoot/client typecheck`(改 .ts 后必跑) |
+
+### Commit 流程
+
+每个有提升的 step 立刻 commit。中文 message + N=200 前后 median 对比。Co-Authored-By 用:
+```
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+```
+
+退步或持平 → `git checkout --` 回滚,不要勉强 commit。
+
+### 不要做的事
+
+- 不要重启 dev server
+- 不要做 N=75 优化(已经 218ms 不是用户痛点;主目标 N=200)
+- 不要碰 Sq1(`packages/client/src/pages/stack/cuber/sq1/`)
+- 不要碰 `Twister.push`(动画播放,跟 setup 完全不同代码路径)
+- 不要相信纸面预估,所有改动 paired A/B paired bench 实测
+
+---
+
 ## 项目背景
 
 - 路由 `/stack`(`packages/client/src/pages/stack/`):NxN 魔方 3D 工具,基于 three.js + InstancedMesh
