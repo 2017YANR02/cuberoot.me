@@ -49,34 +49,44 @@ export const SQ1_INNER_R = SQ1_SIZE * 0.18;
 /** Gap between pieces (hairline). */
 export const SQ1_GAP = 0.4;
 
-/** Sticker outward offset from body face. */
-export const SQ1_STICKER_LIFT = 0.4;
+/** Sticker bevel parameters (cubedb-style pillow). Total thickness =
+ *  2 × BEVEL_THICKNESS. With negative offset + matching size the silhouette
+ *  equals the inset shape; bevel just rounds the edges. */
+export const SQ1_STICKER_BEVEL_SIZE = 3.2;       // ≈ SIZE * 0.05
+export const SQ1_STICKER_BEVEL_THICKNESS = 2.4;  // ≈ SIZE * 0.038
+export const SQ1_STICKER_BEVEL_OFFSET = -3.2;
+export const SQ1_STICKER_BEVEL_SEGMENTS = 3;
 
-/** Sticker thickness. */
-export const SQ1_STICKER_DEPTH = 0.4;
+/** Distance from body face to sticker MIDplane. Set = BEVEL_THICKNESS + ε
+ *  so the inner-half of the pillow sits flush with the body, outer-half
+ *  pillows outward (and no part of the sticker buries inside the body). */
+export const SQ1_STICKER_LIFT = SQ1_STICKER_BEVEL_THICKNESS + 0.6;
 
-/** Sticker inset (border around each sticker). Small → stickers fill the 3×3
- *  cell with only a thin black border, matching cubedb. */
+/** Sticker inset from cell edge (black plastic hairline showing between stickers). */
 export const SQ1_STICKER_BORDER = 1.6;
 
-/** Black plastic color. */
-export const SQ1_BODY_COLOR = '#0E0E0E';
+/** Black plastic color (body). */
+export const SQ1_BODY_COLOR = '#0a0a0a';
 
 // ─── materials ────────────────────────────────────────────────────────────
+/** Plastic body — matte-ish dark grey with subdued highlights. */
 export const SQ1_BODY_MAT = new THREE.MeshPhongMaterial({
   color: SQ1_BODY_COLOR,
-  specular: '#3a3a3a',
-  shininess: 24,
+  specular: '#1a1a1a',
+  shininess: 30,
 });
 
+/** Sticker material — strong specular for glossy "decal" highlights
+ *  (matches cubedb's specular=0x222222, shininess=40 spec, slightly bumped
+ *  to compensate for our smaller world scale and renderer linear lighting). */
 const _STICKER_MAT_CACHE = new Map<string, THREE.MeshPhongMaterial>();
 export function stickerMaterial(hex: string): THREE.MeshPhongMaterial {
   let m = _STICKER_MAT_CACHE.get(hex);
   if (!m) {
     m = new THREE.MeshPhongMaterial({
       color: hex,
-      specular: '#2a2a2a',
-      shininess: 22,
+      specular: '#222222',
+      shininess: 40,
     });
     _STICKER_MAT_CACHE.set(hex, m);
   }
@@ -123,15 +133,14 @@ function buildPrism(vertices2D: readonly (readonly [number, number])[], height: 
 // ─── body geometries ──────────────────────────────────────────────────────
 const DEG = Math.PI / 180;
 
-/** Corner piece body — pentagonal footprint, asymmetric (cube corner at local
- *  -15° from wedge midline +X). Faces meeting at the cube corner have outward
- *  normals at local -60° and +30°. */
+/** Corner piece body — quadrilateral footprint with apex at the rotation axis,
+ *  asymmetric cube-corner at local -15° from wedge midline +X. Faces meeting
+ *  at the cube corner have outward normals at local -60° and +30°. */
 export function buildCornerBody(): THREE.BufferGeometry {
   const s = SQ1_CUBE_HALF;
   const halfSpan = 30 * DEG;
   const tanGap = SQ1_GAP / (s * Math.SQRT2);
   const hs = halfSpan - tanGap;
-  const r_in = SQ1_INNER_R;
   const cornerLocalAng = -15 * DEG;
   const faceA_ang = -60 * DEG;   // cube face normal (cubeCorner − 45° in local)
   const faceB_ang = +30 * DEG;   // cube face normal (cubeCorner + 45°)
@@ -142,32 +151,30 @@ export function buildCornerBody(): THREE.BufferGeometry {
   const cornerX = s * Math.SQRT2 * Math.cos(cornerLocalAng);
   const cornerZ = s * Math.SQRT2 * Math.sin(cornerLocalAng);
 
+  // CCW from +Y: apex at origin → outer ribbon at -hs → cube-corner → outer ribbon at +hs.
   const verts: [number, number][] = [
-    [r_in * Math.cos(-hs), r_in * Math.sin(-hs)],
+    [0, 0],
     [r_outer_minus * Math.cos(-hs), r_outer_minus * Math.sin(-hs)],
     [cornerX, cornerZ],
     [r_outer_plus * Math.cos(+hs), r_outer_plus * Math.sin(+hs)],
-    [r_in * Math.cos(+hs), r_in * Math.sin(+hs)],
   ];
   return buildPrism(verts, SQ1_LAYER_H - SQ1_GAP);
 }
 
-/** Edge piece body — trapezoidal footprint (cube face normal at local -15°
- *  from wedge midline). */
+/** Edge piece body — triangular footprint with apex at the rotation axis,
+ *  cube-face flush at local -15° from wedge midline. */
 export function buildEdgeBody(): THREE.BufferGeometry {
   const s = SQ1_CUBE_HALF;
   const halfSpan = 15 * DEG;
   const tanGap = SQ1_GAP / s;
   const hs = halfSpan - tanGap;
-  const r_in = SQ1_INNER_R;
   const faceNormalAng = -15 * DEG;
   const r_outer_minus = s / Math.cos(-hs - faceNormalAng);
   const r_outer_plus = s / Math.cos(+hs - faceNormalAng);
   const verts: [number, number][] = [
-    [r_in * Math.cos(-hs), r_in * Math.sin(-hs)],
+    [0, 0],
     [r_outer_minus * Math.cos(-hs), r_outer_minus * Math.sin(-hs)],
     [r_outer_plus * Math.cos(+hs), r_outer_plus * Math.sin(+hs)],
-    [r_in * Math.cos(+hs), r_in * Math.sin(+hs)],
   ];
   return buildPrism(verts, SQ1_LAYER_H - SQ1_GAP);
 }
@@ -191,33 +198,35 @@ function roundedRectShape(w: number, h: number, radius: number): THREE.Shape {
   return s;
 }
 
-/** A rounded-square sticker (lies in default XY plane, extrudes along +Z). */
+/** Common extrude params: cubedb's "pillow" trick. depth=0 + negative
+ *  bevelOffset cancels the bevelSize, so the silhouette equals the input
+ *  shape; the bevel rounds the edges and gives 2× bevelThickness of total
+ *  Z extent. The result reads as a glossy molded sticker, not a flat decal. */
+const PILLOW_EXTRUDE: THREE.ExtrudeGeometryOptions = {
+  steps: 1,
+  depth: 0,
+  bevelEnabled: true,
+  bevelThickness: SQ1_STICKER_BEVEL_THICKNESS,
+  bevelSize: SQ1_STICKER_BEVEL_SIZE,
+  bevelOffset: SQ1_STICKER_BEVEL_OFFSET,
+  bevelSegments: SQ1_STICKER_BEVEL_SEGMENTS,
+};
+
+/** A rounded-square sticker (lies in default XY plane, extrudes along ±Z). */
 export function buildSquareSticker(side: number, border: number = SQ1_STICKER_BORDER): THREE.BufferGeometry {
   const inner = Math.max(2, side - 2 * border);
-  const radius = inner * 0.18;
+  const radius = inner * 0.16;
   const shape = roundedRectShape(inner, inner, radius);
-  return new THREE.ExtrudeGeometry(shape, {
-    bevelEnabled: true,
-    bevelSegments: 1,
-    bevelSize: 0.8,
-    bevelThickness: 0.8,
-    depth: SQ1_STICKER_DEPTH,
-  });
+  return new THREE.ExtrudeGeometry(shape, PILLOW_EXTRUDE);
 }
 
-/** Rectangular sticker (used for outer faces). Default XY plane, extrudes along +Z. */
+/** Rectangular sticker (used for outer faces). Default XY plane, extrudes along ±Z. */
 export function buildRectSticker(width: number, height: number, border: number = SQ1_STICKER_BORDER): THREE.BufferGeometry {
   const w = Math.max(2, width - 2 * border);
   const h = Math.max(2, height - 2 * border);
-  const radius = Math.min(w, h) * 0.18;
+  const radius = Math.min(w, h) * 0.16;
   const shape = roundedRectShape(w, h, radius);
-  return new THREE.ExtrudeGeometry(shape, {
-    bevelEnabled: true,
-    bevelSegments: 1,
-    bevelSize: 0.8,
-    bevelThickness: 0.8,
-    depth: SQ1_STICKER_DEPTH,
-  });
+  return new THREE.ExtrudeGeometry(shape, PILLOW_EXTRUDE);
 }
 
 // ─── equator slab geometry ────────────────────────────────────────────────

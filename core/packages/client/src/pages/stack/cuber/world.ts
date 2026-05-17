@@ -22,6 +22,9 @@ export default class World {
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
+  /** Extra rim lights added/removed with the SQ1 puzzle (it's a small object
+   *  with many oblique faces; needs more wraparound than NxN). */
+  private sq1RimLights: THREE.DirectionalLight[] = [];
 
   private cubes: Cube[] = [];
   private sq1Cube: Sq1Cube | null = null;
@@ -76,6 +79,7 @@ export default class World {
       this.cube = this.sq1Cube;
       // SQ1 drag/tap input not implemented yet — disable controller.
       this.controller.disable = true;
+      this._ensureSq1Lights();
     } else {
       if (this.cubes[kind] == undefined) {
         this.cubes[kind] = new Cube(kind);
@@ -84,6 +88,7 @@ export default class World {
       }
       this.cube = this.cubes[kind];
       this.controller.disable = false;
+      this._removeSq1Lights();
     }
     this.puzzleKind = kind;
     this.scene.add(this.cube);
@@ -104,6 +109,33 @@ export default class World {
       cb();
     }
   };
+
+  /** Add four extra directional lights wrapping the SQ1 — back, below, left,
+   *  right — to highlight the oblique facets that the single NxN key light
+   *  misses. Intensities low enough that the existing key light still reads
+   *  as the dominant top-front light. */
+  private _ensureSq1Lights(): void {
+    if (this.sq1RimLights.length > 0) return;
+    const d = Cubelet.SIZE;
+    const positions: [number, number, number][] = [
+      [-d * 3, +d * 2, +d * 2],   // front-left fill
+      [+d * 3, -d * 1, +d * 2],   // bottom-right rim
+      [-d * 2, -d * 2, -d * 2],   // back-below
+      [+d * 2, +d * 2, -d * 3],   // back-top
+    ];
+    for (const p of positions) {
+      const l = new THREE.DirectionalLight(0xffffff, Math.PI * 0.18);
+      l.position.set(p[0], p[1], p[2]);
+      this.scene.add(l);
+      this.sq1RimLights.push(l);
+    }
+    this.scene.updateMatrix();
+  }
+
+  private _removeSq1Lights(): void {
+    for (const l of this.sq1RimLights) this.scene.remove(l);
+    this.sq1RimLights.length = 0;
+  }
 
   scale = 1;
   perspective = 5;

@@ -111,4 +111,90 @@ describe('SQ1 state', () => {
     const c = pieceColors(9, scheme); // bottom corner
     expect(c.top).toBe(DEFAULT_SQ1_COLORS.D);
   });
+
+  it('every (t, b) followed by (-t, -b) returns to solved', () => {
+    for (const [t, b] of [[1, 0], [3, -3], [-2, -2], [4, 1], [0, -5], [-4, -4]] as const) {
+      let s = solvedSq1();
+      s = applySq1Move(s, { kind: 'turn', top: t, bottom: b });
+      s = applySq1Move(s, { kind: 'turn', top: -t, bottom: -b });
+      expect(s.pieces).toEqual(SOLVED_PIECES);
+      expect(s.sliceSolved).toBe(true);
+    }
+  });
+
+  it('several WCA scrambles + each one\'s inverse return to solved', () => {
+    // Inverse: reverse move order, negate each (t, b), keep `/` as is.
+    const invertAlg = (alg: string): string => {
+      const re = /(\/)|\(?\s*(-?\d+)\s*,?\s*(-?\d+)\s*\)?/g;
+      const tokens: string[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(alg)) !== null) {
+        if (m[1] === '/') tokens.push('/');
+        else tokens.push(`(${-parseInt(m[2]!, 10)},${-parseInt(m[3]!, 10)})`);
+      }
+      return tokens.reverse().join(' ');
+    };
+    for (const fwd of [
+      '(1, 0) / (-2, -2) / (1, -2) / (0, -3) / (-4, 0)',
+      '(3, 0) / (0, -3) / (1, 1) / (-1, -2) /',
+      '(6, 0) / (0, 6) / (3, -3) /',
+    ]) {
+      const s = applySq1Scramble(fwd + ' ' + invertAlg(fwd));
+      expect(s.pieces).toEqual(SOLVED_PIECES);
+      expect(s.sliceSolved).toBe(true);
+    }
+  });
+
+  it('slot indexing invariant: top has 12 + bottom 12 unique slot fillings', () => {
+    const s = solvedSq1();
+    // Each layer's 12 slot entries cover exactly piece ids 0..7 (top) or 8..15 (bottom).
+    const top = s.pieces.slice(0, 12);
+    const bot = s.pieces.slice(12, 24);
+    expect(new Set(top)).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7]));
+    expect(new Set(bot)).toEqual(new Set([8, 9, 10, 11, 12, 13, 14, 15]));
+  });
+
+  it('after one slash, each layer still has 12 entries (mixed top/bot pieces)', () => {
+    const s = applySq1Scramble('/');
+    expect(s.pieces.length).toBe(24);
+    // Right-half slots 6..11 (top) ↔ 12..17 (bottom) swap — so top now contains
+    // some originally-bottom piece ids.
+    const top = s.pieces.slice(0, 12);
+    const hasBottomPieceInTop = top.some(p => p >= 8);
+    expect(hasBottomPieceInTop).toBe(true);
+  });
+
+  it('pieceColors: all 4 top corners use exactly {F, L, B, R} sticker palette', () => {
+    const scheme = SQ1_FACE_KEYS.map(k => DEFAULT_SQ1_COLORS[k]);
+    const sideHexes = new Set<string>();
+    for (const id of [0, 2, 4, 6]) {
+      const c = pieceColors(id, scheme);
+      for (const s of c.sides) sideHexes.add(s);
+    }
+    // Should cover all 4 side faces (L, B, R, F).
+    expect(sideHexes).toEqual(new Set([
+      DEFAULT_SQ1_COLORS.L,
+      DEFAULT_SQ1_COLORS.B,
+      DEFAULT_SQ1_COLORS.R,
+      DEFAULT_SQ1_COLORS.F,
+    ]));
+  });
+
+  it('pieceColors: each top corner has 2 distinct adjacent-face colors', () => {
+    const scheme = SQ1_FACE_KEYS.map(k => DEFAULT_SQ1_COLORS[k]);
+    // The two stickers on a single corner must NOT be opposite faces
+    // (i.e. not {F,B} or {L,R}). Adjacent faces only.
+    const opposites = new Map([
+      [DEFAULT_SQ1_COLORS.F, DEFAULT_SQ1_COLORS.B],
+      [DEFAULT_SQ1_COLORS.B, DEFAULT_SQ1_COLORS.F],
+      [DEFAULT_SQ1_COLORS.L, DEFAULT_SQ1_COLORS.R],
+      [DEFAULT_SQ1_COLORS.R, DEFAULT_SQ1_COLORS.L],
+    ]);
+    for (const id of [0, 2, 4, 6, 9, 11, 13, 15]) {
+      const c = pieceColors(id, scheme);
+      expect(c.sides.length).toBe(2);
+      expect(c.sides[0]).not.toBe(c.sides[1]);
+      expect(opposites.get(c.sides[0])).not.toBe(c.sides[1]);
+    }
+  });
 });
