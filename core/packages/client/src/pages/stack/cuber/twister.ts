@@ -1,7 +1,30 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/twister.ts
+import * as THREE from "three";
 import Cube from "./cube";
+import Cubelet from "./cubelet";
 import tweener from "./tweener";
 import CubeGroup from "./group";
+
+// setup fast-path 用的 12 个预算 Quaternion (3 axis × twist mod 4)。
+// 跳掉每 cubelet `q.setFromAxisAngle()` 的三角 — N=50 setup 累加 ~3000万次省到 0。
+// Lazy:CubeGroup 跟本文件循环 import,模块 init 时 CubeGroup.AXIS_VECTOR 还没 ready。
+let PRECOMPUTED_ROT_QUATS: THREE.Quaternion[] | null = null;
+function getRotQuats(): THREE.Quaternion[] {
+  if (PRECOMPUTED_ROT_QUATS) return PRECOMPUTED_ROT_QUATS;
+  const axes: [number, number, number][] = [[-1, 0, 0], [0, -1, 0], [0, 0, -1]];
+  const tmp = new THREE.Vector3();
+  const out: THREE.Quaternion[] = [];
+  for (let a = 0; a < 3; a++) {
+    tmp.set(axes[a][0], axes[a][1], axes[a][2]);
+    for (let t = 0; t < 4; t++) {
+      const q = new THREE.Quaternion();
+      q.setFromAxisAngle(tmp, (Math.PI / 2) * t);
+      out.push(q);
+    }
+  }
+  PRECOMPUTED_ROT_QUATS = out;
+  return out;
+}
 
 export class TwistAction {
   sign: string;
@@ -254,13 +277,72 @@ export default class Twister {
     this.cube.reset();
     const node = new TwistNode(exp, reverse, times);
     const list = node.parse();
+    // Logic-only fast path: setup 期间画面不渲染中间帧,跳过 InstancedRenderer 的
+    // beginSlice/setSliceAngle/endSlice (per slice 大量 Matrix4.clone + 反复改写 moving/static buf),
+    // 只更新 cubelet 的逻辑状态 (matrix + cube.cubelets map),末尾一次性 rebuildAll
+    // 把 final static 写 GPU。N=50 上 setup 总时长降一个量级。
+    const cube = this.cube;
+    const order = cube.order;
+    const order2 = order * order;
+    const half = (order - 1) / 2;
+    const SIZE = Cubelet.SIZE;
+    const rotQuats = getRotQuats();
     for (const action of list) {
-      this.twist(action, true, true);
+      // 特殊 sign (#/*/./~/;) 包含递归 setup / lock-aware callback 等复杂语义,
+      // 在 setup 输入里极罕见,直接退回普通 twist 路径。
+      if (action.sign === "#" || action.sign === "*" || action.sign === "." || action.sign === ";" || action.sign === "~") {
+        this.twist(action, true, true);
+        continue;
+      }
+      const rotates = cube.table.convert(action);
+      for (const rotate of rotates) {
+        const axisKey = rotate.group.axis;
+        const axisIdx = axisKey === 'x' ? 0 : axisKey === 'y' ? 1 : axisKey === 'z' ? 2 : -1;
+        if (axisIdx < 0) continue;
+        const t01 = ((rotate.twist % 4) + 4) % 4;
+        if (t01 === 0) continue;
+        const qRot = rotQuats[axisIdx * 4 + t01];
+        const slice: Cubelet[] = [];
+        const indices = rotate.group.indices;
+        for (let i = 0; i < indices.length; i++) {
+          const c = cube.cubelets.get(indices[i]);
+          if (c) slice.push(c);
+        }
+        // axis × twist01 整数坐标变换 — 见上方推导。switch 在外层一次,inner 跑纯算术。
+        // 90°/180°/270° rotation 都是 axis-aligned permutation + sign,免 trig + Math.round。
+        const dispatch = axisIdx * 4 + t01;
+        for (let i = 0; i < slice.length; i++) {
+          const c = slice[i];
+          const v = c._vector;
+          const ox = v.x, oy = v.y, oz = v.z;
+          let nx = 0, ny = 0, nz = 0;
+          switch (dispatch) {
+            case 1: nx = ox; ny = oz; nz = -oy; break;                  // x, t=1: (x, z, -y)
+            case 2: nx = ox; ny = -oy; nz = -oz; break;                 // x, t=2: (x, -y, -z)
+            case 3: nx = ox; ny = -oz; nz = oy; break;                  // x, t=3: (x, -z, y)
+            case 5: nx = -oz; ny = oy; nz = ox; break;                  // y, t=1: (-z, y, x)
+            case 6: nx = -ox; ny = oy; nz = -oz; break;                 // y, t=2: (-x, y, -z)
+            case 7: nx = oz; ny = oy; nz = -ox; break;                  // y, t=3: (z, y, -x)
+            case 9: nx = oy; ny = -ox; nz = oz; break;                  // z, t=1: (y, -x, z)
+            case 10: nx = -ox; ny = -oy; nz = oz; break;                // z, t=2: (-x, -y, z)
+            case 11: nx = -oy; ny = ox; nz = oz; break;                 // z, t=3: (-y, x, z)
+          }
+          v.x = nx; v.y = ny; v.z = nz;
+          c._index = (nz + half) * order2 + (ny + half) * order + (nx + half);
+          c.position.x = SIZE * nx;
+          c.position.y = SIZE * ny;
+          c.position.z = SIZE * nz;
+          c.quaternion.premultiply(qRot);  // world-space rotate ≡ premul
+          c.updateMatrix();
+          cube.cubelets.set(c._index, c);
+        }
+      }
     }
-    this.cube.dirty = true;
-    this.cube.history.clear();
-    this.cube.history.init = exp;
-    this.cube.callback();
+    cube.instancedRenderer.rebuildAll();
+    cube.dirty = true;
+    cube.history.clear();
+    cube.history.init = exp;
+    cube.callback();
   }
 
   push(exp: string, reverse = false, times = 1): void {
