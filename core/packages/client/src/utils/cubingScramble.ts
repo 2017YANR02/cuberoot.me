@@ -1,20 +1,22 @@
 /**
  * WCA-spec scrambles. 16 of 17 events come from `cubing/scramble` (Lucas
  * Garron); 4x4 is routed to cs0x7f's Threephase via `cstimer_module` in our
- * own Web Worker — cubing.js vendors the exact same JS but wraps it in a
- * worker boundary + prepends a random-state 3x3 solve per call, which costs
- * ~50-200ms of solver work we can skip.
+ * own Web Worker pool — cubing.js vendors the exact same JS but wraps it in
+ * a single worker + prepends a random-state 3x3 solve per call, which costs
+ * ~50-200ms of solver work we can skip. The worker pool further gives 4x4
+ * real parallelism, ~3-4x faster on bursty 50-scramble batches.
  *
  * Three layers on top:
  *   1. `setSearchDebug({ scramblePrefetchLevel: 'immediate' })` — cubing's
  *      built-in 1-deep prefetch starts the next scramble the instant the
  *      current one resolves (default 'auto' waits 1s idle).
- *   2. `prewarmScramble(event)` — fire one scramble in the background when
+ *   2. `prewarmScramble(event)` — fire pool refills in the background when
  *      the user lands on /scramble/gen, so the ~1.5-3s cold pruning-table
- *      build runs in parallel with the user configuring events.
- *   3. `pooledScramble(event)` — small in-memory pool (POOL_SIZE per event)
- *      kept warm between user actions. The pool refills in background; up
- *      to POOL_SIZE first scrambles of a batch are popped instantly.
+ *      build runs in parallel with the user configuring events (and for
+ *      4x4 every worker builds its table at the same time).
+ *   3. `pooledScramble(event)` — in-memory pool kept warm between actions.
+ *      4x4 pool is sized to keep every worker fed (worker_count + 2);
+ *      other events stay at 3 since their solver is single-worker anyway.
  */
 import { randomScrambleForEvent } from 'cubing/scramble';
 import { setSearchDebug } from 'cubing/search';
@@ -89,19 +91,32 @@ export function randomMoveScrambleNxN(N: number): string {
 }
 
 // ── App-level pool ──────────────────────────────────────────────────────
-// Keep up to POOL_SIZE pre-generated scrambles per event hot in memory. The
-// cubing worker serializes scramble work anyway, so a larger pool doesn't
-// run faster — it just absorbs bursty UI demand (clicking Generate, switching
-// events, opening Comp mode with 5+ events).
-const POOL_SIZE = 3;
+// Keep up to poolSizeFor(event) pre-generated scrambles per event hot in
+// memory. Sized per event so 4x4 (multi-worker) gets a larger pool to make
+// the common count=1..25 cases pop instantly; other events stay at 3 since
+// their solver is single-worker and a larger pool wouldn't run any faster.
+const DEFAULT_POOL_SIZE = 3;
+// 4x4 pool spans the largest practical Generate count (the COUNT_PRESETS
+// chip set tops out at 50, but most users pick 1/5/12/25). 25 means cold
+// page load → click count≤25 → instant. count=50 still benefits: 25 pop
+// instant, remaining 25 split across WORKER_COUNT workers in ~1-1.5s.
+// Memory cost is tiny — 25 ~100-byte strings — the real cost is ~3s of
+// background CPU during /scramble/gen mount, which the user notices
+// far less than waiting after they click Generate.
+const POOL_SIZE_444 = 25;
+function poolSizeFor(wcaId: string): number {
+  return wcaId === '444' ? POOL_SIZE_444 : DEFAULT_POOL_SIZE;
+}
+
 const pool = new Map<string, string[]>();
 const refilling = new Map<string, Promise<void>>();
 
 /**
  * Engine selector: 444 goes through cs0x7f's Threephase via cstimer_module
- * (in our own Web Worker, no wrapping overhead). Everything else stays on
- * cubing/scramble. We benched ~1.9x faster cold + ~1.7x faster warm for 444
- * because cubing.js's wrapper does an extra random-state 3x3 solve per call.
+ * (in our own Web Worker pool, no wrapping overhead). Everything else stays
+ * on cubing/scramble. cubing.js's wrapper does an extra random-state 3x3
+ * solve per 4x4 call which we skip, plus we get N-way parallelism from
+ * the worker pool.
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
@@ -112,7 +127,22 @@ async function generateScramble(wcaId: string): Promise<string> {
 async function refillPool(wcaId: string): Promise<void> {
   const cur = pool.get(wcaId) ?? [];
   pool.set(wcaId, cur);
-  while (cur.length < POOL_SIZE) {
+  const target = poolSizeFor(wcaId);
+  // 4x4 has a worker pool that runs in parallel; fire all needed scrambles
+  // concurrently so every worker fills a slot. Other events queue serially
+  // inside one worker anyway, so parallelism there only hurts (extra
+  // scheduling without faster output).
+  if (wcaId === '444') {
+    while (cur.length < target) {
+      const need = target - cur.length;
+      const batch = await Promise.all(
+        Array.from({ length: need }, () => generateScramble(wcaId)),
+      );
+      for (const raw of batch) cur.push(formatScramble(wcaId, raw));
+    }
+    return;
+  }
+  while (cur.length < target) {
     const raw = await generateScramble(wcaId);
     cur.push(formatScramble(wcaId, raw));
   }
@@ -120,7 +150,16 @@ async function refillPool(wcaId: string): Promise<void> {
 
 function scheduleRefill(wcaId: string): void {
   if (refilling.has(wcaId)) return;
-  const p = refillPool(wcaId).finally(() => refilling.delete(wcaId));
+  // Mark immediately so the dedup guard covers an entire synchronous burst
+  // of pops, but defer the actual refill work to a macrotask so any in-
+  // flight Generate-N call gets its direct-generate scrambles queued into
+  // the cstimer worker pool BEFORE the refill adds its own. Workers
+  // process FIFO, so this is the difference between count=50 finishing
+  // in (50/N) × solver_ms vs (100/N) × solver_ms.
+  const p = (async () => {
+    await new Promise<void>((r) => setTimeout(r, 0));
+    try { await refillPool(wcaId); } finally { refilling.delete(wcaId); }
+  })();
   refilling.set(wcaId, p);
 }
 
@@ -136,6 +175,9 @@ export function prewarmScramble(...events: string[]): void {
   for (const ev of list) {
     const wcaId = toWcaEventId(ev);
     if (!SUPPORTED.has(wcaId)) continue;
+    // 4x4 refill fires POOL_SIZE_444 (≥ worker count + 2) scrambles in
+    // parallel, so every worker picks one and builds its pruning table
+    // concurrently with the others — no extra prewarm call needed.
     scheduleRefill(wcaId);
   }
 }

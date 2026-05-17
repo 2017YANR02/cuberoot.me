@@ -896,6 +896,23 @@
     font-weight: 600;
     color: var(--gen-text);
 }
+.gen-tn-bench {
+    font-family: 'LiberationMono', 'NotoSans', monospace;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--gen-text-mute);
+    letter-spacing: 0.02em;
+    white-space: pre;
+}
+.gen-tn-bench-total {
+    font-family: 'LiberationMono', 'NotoSans', monospace;
+    font-size: 0.85rem;
+    color: var(--gen-text-sub);
+    text-align: center;
+    margin: 0.75rem 0 0.25rem;
+    letter-spacing: 0.02em;
+    white-space: pre;
+}
 /* Table mirrors tnoodle PDF layout (see image 9): tight cell grid, mono
    scramble cell, fixed-width gray-bg preview cell. We drop `width: 100%` so
    the table shrinks to its content width — otherwise a 970px main column
