@@ -29,7 +29,12 @@ pub fn apply_rotates(
 ) {
     let order_i = order as i32;
     let order2 = order_i * order_i;
-    let half = (order_i - 1) / 2;
+    // half 必须用 f32:偶数 N (e.g. 200) 时 cubelet vec 分量是 half-integer
+    // (-99.5..+99.5),JS 侧 (order-1)/2 = 99.5。整数除会丢精度 →
+    // 后续 (nz as i32 + half) 把 99.5 截成 99 再加 99 = 198,正确应是 199 → flat 位置写错。
+    let half_f = (order_i - 1) as f32 / 2.0;
+    let order_us = order_i as usize;
+    let order2_us = order2 as usize;
     let n_rotates = rotates_desc.len() / 2;
 
     unsafe {
@@ -84,10 +89,12 @@ pub fn apply_rotates(
                 *vx_ptr.add(inst_idx) = nx;
                 *vy_ptr.add(inst_idx) = ny;
                 *vz_ptr.add(inst_idx) = nz;
-                let new_pos = (nz as i32 + half) * order2
-                    + (ny as i32 + half) * order_i
-                    + (nx as i32 + half);
-                *fl_ptr.add(new_pos as usize) = inst_idx as i32 + 1;
+                // (n* + half_f) 在偶数/奇数 N 上都是非负整数 (合法 cubelet 位置),
+                // f32 → usize cast 直接落到正确槽位。
+                let new_pos = (nz + half_f) as usize * order2_us
+                    + (ny + half_f) as usize * order_us
+                    + (nx + half_f) as usize;
+                *fl_ptr.add(new_pos) = inst_idx as i32 + 1;
                 let old = *ri_ptr.add(inst_idx) as usize;
                 *ri_ptr.add(inst_idx) = *srow.get_unchecked(old);
             }
