@@ -105,6 +105,9 @@ importers:
       cropperjs:
         specifier: ^1.6.2
         version: 1.6.2
+      cstimer_module:
+        specifier: ^0.1.5
+        version: 0.1.5
       cubing:
         specifier: ^0.63.3
         version: 0.63.3
@@ -1507,6 +1510,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  cstimer_module@0.1.5:
+    resolution: {integrity: sha512-5vAYZEnMOjk6iExR9b8eY6XzDpJoKP4HKCD0FhBKpNIzQoxj3foGEVjmQCZsgFU3nuAewTlP6ULcZxvqFyCDJg==}
 
   cubing@0.63.3:
     resolution: {integrity: sha512-151hSarw9sN06iohHClHQ3RaiI5MNpaIyyb1+I0cuRerHq3jfyhb2Eyif9YAEIbEJiiMc6AUsNFo00Rnti2JWw==}
@@ -4197,6 +4203,8 @@ snapshots:
   cssom@0.5.0: {}
 
   csstype@3.2.3: {}
+
+  cstimer_module@0.1.5: {}
 
   cubing@0.63.3:
     dependencies:

@@ -1,25 +1,24 @@
 /**
- * WCA-spec scrambles via `cubing/scramble`. cubing.js's scramblers are
- * maintained by the same author as tnoodle (Lucas Garron) and produce the
- * same official WCA-compliant output for all 17 events — exposed here as a
- * single async entry point. Accepts either short keys ('3x3', 'pyra', 'mega'…)
- * or WCA ids ('333', 'pyram', 'minx'…).
+ * WCA-spec scrambles. 16 of 17 events come from `cubing/scramble` (Lucas
+ * Garron); 4x4 is routed to cs0x7f's Threephase via `cstimer_module` in our
+ * own Web Worker — cubing.js vendors the exact same JS but wraps it in a
+ * worker boundary + prepends a random-state 3x3 solve per call, which costs
+ * ~50-200ms of solver work we can skip.
  *
- * Performance: cubing/scramble runs in a Web Worker but the first 4x4 (and
- * other random-state events) call pays ~3s to BFS-build the pruning tables;
- * subsequent warm calls are 200-800ms. We layer three tricks on top:
+ * Three layers on top:
  *   1. `setSearchDebug({ scramblePrefetchLevel: 'immediate' })` — cubing's
- *      built-in 1-deep prefetch starts the next scramble in the worker the
- *      instant the previous one resolves (default 'auto' waits 1s idle).
+ *      built-in 1-deep prefetch starts the next scramble the instant the
+ *      current one resolves (default 'auto' waits 1s idle).
  *   2. `prewarmScramble(event)` — fire one scramble in the background when
- *      the user lands on /scramble/gen, so the cold init runs in parallel
- *      with the user configuring events.
+ *      the user lands on /scramble/gen, so the ~1.5-3s cold pruning-table
+ *      build runs in parallel with the user configuring events.
  *   3. `pooledScramble(event)` — small in-memory pool (POOL_SIZE per event)
  *      kept warm between user actions. The pool refills in background; up
  *      to POOL_SIZE first scrambles of a batch are popped instantly.
  */
 import { randomScrambleForEvent } from 'cubing/scramble';
 import { setSearchDebug } from 'cubing/search';
+import { cstimerScramble444 } from './cstimer_444';
 import { toWcaEventId } from './wca_events';
 
 // Tell cubing.js to start the next prefetched scramble the instant the
@@ -98,12 +97,24 @@ const POOL_SIZE = 3;
 const pool = new Map<string, string[]>();
 const refilling = new Map<string, Promise<void>>();
 
+/**
+ * Engine selector: 444 goes through cs0x7f's Threephase via cstimer_module
+ * (in our own Web Worker, no wrapping overhead). Everything else stays on
+ * cubing/scramble. We benched ~1.9x faster cold + ~1.7x faster warm for 444
+ * because cubing.js's wrapper does an extra random-state 3x3 solve per call.
+ */
+async function generateScramble(wcaId: string): Promise<string> {
+  if (wcaId === '444') return cstimerScramble444();
+  const alg = await randomScrambleForEvent(wcaId);
+  return alg.toString();
+}
+
 async function refillPool(wcaId: string): Promise<void> {
   const cur = pool.get(wcaId) ?? [];
   pool.set(wcaId, cur);
   while (cur.length < POOL_SIZE) {
-    const alg = await randomScrambleForEvent(wcaId);
-    cur.push(formatScramble(wcaId, alg.toString()));
+    const raw = await generateScramble(wcaId);
+    cur.push(formatScramble(wcaId, raw));
   }
 }
 
@@ -147,8 +158,8 @@ export async function pooledScramble(event: string): Promise<string | null> {
   // Cold path: nothing pooled. Fire a direct call AND start a background
   // refill so the next caller is warm.
   scheduleRefill(wcaId);
-  const alg = await randomScrambleForEvent(wcaId);
-  return formatScramble(wcaId, alg.toString());
+  const raw = await generateScramble(wcaId);
+  return formatScramble(wcaId, raw);
 }
 
 /** Megaminx layout fixup — see comment in tnoodleRandomScramble below. */
