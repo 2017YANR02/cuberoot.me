@@ -274,13 +274,18 @@ export default class Twister {
 
   /** 上一次 setup() 同步 CPU 耗时,DEV bench 用。0 = 还没跑过。 */
   public lastSetupCpuMs = 0;
+  /** sub-bench: 各阶段耗时,DEV 用。{finish,reset,parse,loop,rebuild,total} ms */
+  public lastSetupParts: { finish: number; reset: number; parse: number; loop: number; rebuild: number } = { finish: 0, reset: 0, parse: 0, loop: 0, rebuild: 0 };
 
   setup(exp: string, reverse = false, times = 1): void {
     const TBENCH0 = performance.now();
     this.finish();
+    const T1 = performance.now();
     this.cube.reset(true);
+    const T2 = performance.now();
     const node = new TwistNode(exp, reverse, times);
     const list = node.parse();
+    const T3 = performance.now();
     // Logic-only fast path: setup 期间画面不渲染中间帧,跳过 InstancedRenderer 的
     // beginSlice/setSliceAngle/endSlice (per slice 大量 Matrix4.clone + 反复改写 moving/static buf),
     // 只更新 cubelet 的逻辑状态 (matrix + cube.cubelets map),末尾一次性 rebuildAll
@@ -337,17 +342,31 @@ export default class Twister {
           c.position.y = SIZE * ny;
           c.position.z = SIZE * nz;
           c.quaternion.premultiply(qRot);  // world-space rotate ≡ premul
-          c.updateMatrix();
+          // matrix 不在循环里 compose:setup 期间画面不渲染中间帧,只末尾一次 sweep
+          // 每 cubelet 算 matrix (32k 次 vs 16M 次)。Matrix4.compose 是循环热点 (~60% 总时长)。
           cube.cubelets.set(c._index, c);
         }
       }
     }
+    // 末尾一次性 sweep 所有 cubelet 算 matrix (从循环里挪出来 — N=75 16M→32k 调用,setup CPU 9.3s→3.4s)
+    for (const c of cube.initials.values()) {
+      c.updateMatrix();
+    }
+    const T4 = performance.now();
     cube.instancedRenderer.rebuildAll();
     cube.dirty = true;
     cube.history.clear();
     cube.history.init = exp;
     cube.callback();
-    this.lastSetupCpuMs = performance.now() - TBENCH0;
+    const T5 = performance.now();
+    this.lastSetupCpuMs = T5 - TBENCH0;
+    this.lastSetupParts = {
+      finish: T1 - TBENCH0,
+      reset: T2 - T1,
+      parse: T3 - T2,
+      loop: T4 - T3,
+      rebuild: T5 - T4,
+    };
   }
 
   push(exp: string, reverse = false, times = 1): void {
