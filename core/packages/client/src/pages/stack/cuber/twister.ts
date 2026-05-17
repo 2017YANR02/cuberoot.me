@@ -350,12 +350,24 @@ export default class Twister {
     // Flat 数组替 cube.cubelets Map 作为 setup 内 hot path:V8 array indexed get/set
     // ~2-3x 比 Map.get/set 快。N=75 → 421k slot × 8B = 3.4MB,N=250 60MB
     // (用户主流 N<=100 时 OK)。
-    const totalPos = order * order2;
-    const flat: (Cubelet | undefined)[] = new Array(totalPos);
-    for (const c of cube.cubelets.values()) flat[c._index] = c;
-    // Per-cubelet rotIdx 累加器 (Uint8Array indexed by _instIdx)。setup 内只在累加器上做表查,
-    // 末尾 sweep 时根据 rotIdx 还原 quaternion。16M 次 premultiply (~16 ops) → 16M 次 1-op 表查。
     const visCount = cube.instancedRenderer.instanceToInitial.length;
+    // SoA: cubelet._vector 不在 hot loop 直接读写 (Vector3 object 寻址 2 层),
+    // 改用 3 个 Float32Array indexed by _instIdx,内存连续 + TypedArray IC 命中率高。
+    const vecX = new Float32Array(visCount);
+    const vecY = new Float32Array(visCount);
+    const vecZ = new Float32Array(visCount);
+    const cubeletByInst: Cubelet[] = new Array(visCount);
+    for (const c of cube.initials.values()) {
+      const v = c._vector;
+      const i = c._instIdx;
+      vecX[i] = v.x; vecY[i] = v.y; vecZ[i] = v.z;
+      cubeletByInst[i] = c;
+    }
+    // Flat 数组替 cube.cubelets Map,存 instIdx + 1 (0 = empty)。
+    const totalPos = order * order2;
+    const flat = new Int32Array(totalPos);
+    for (const c of cube.cubelets.values()) flat[c._index] = c._instIdx + 1;
+    // Per-cubelet rotIdx 累加器 (Uint8Array indexed by _instIdx)。
     const rotIdx = new Uint8Array(visCount);  // 默认 0 = identity
     for (const action of list) {
       // 特殊 sign (#/*/./~/;) 包含递归 setup / lock-aware callback 等复杂语义,
@@ -371,53 +383,52 @@ export default class Twister {
         if (axisIdx < 0) continue;
         const t01 = ((rotate.twist % 4) + 4) % 4;
         if (t01 === 0) continue;
-        const slice: Cubelet[] = [];
         const indices = rotate.group.indices;
-        for (let i = 0; i < indices.length; i++) {
-          const c = flat[indices[i]];
-          if (c) slice.push(c);
+        // group.indices 都是 exist cubelet 位置,rotation 在 slab 内 permute,
+        // 所以 flat[pos] 总有值 (instIdx+1)。直接拿 typed array,免 if/push。
+        const sliceLen = indices.length;
+        // Stack-local instIdx 缓冲,放在 Int32Array 给 V8 IC 干净;免 push。
+        // 大小已知 = indices.length,小尺寸用 Array,大尺寸用 Int32Array
+        const sliceInsts = new Int32Array(sliceLen);
+        for (let i = 0; i < sliceLen; i++) {
+          sliceInsts[i] = flat[indices[i]] - 1;  // instIdx (0..visCount-1)
         }
-        // axis × twist01 整数坐标变换 — 见上方推导。switch 在外层一次,inner 跑纯算术。
-        // 90°/180°/270° rotation 都是 axis-aligned permutation + sign,免 trig + Math.round。
+        // axis × twist01 整数坐标变换。
         const dispatch = axisIdx * 4 + t01;
-        for (let i = 0; i < slice.length; i++) {
-          const c = slice[i];
-          const v = c._vector;
-          const ox = v.x, oy = v.y, oz = v.z;
+        for (let i = 0; i < sliceLen; i++) {
+          const instIdx = sliceInsts[i];
+          const ox = vecX[instIdx], oy = vecY[instIdx], oz = vecZ[instIdx];
           let nx = 0, ny = 0, nz = 0;
           switch (dispatch) {
-            case 1: nx = ox; ny = oz; nz = -oy; break;                  // x, t=1: (x, z, -y)
-            case 2: nx = ox; ny = -oy; nz = -oz; break;                 // x, t=2: (x, -y, -z)
-            case 3: nx = ox; ny = -oz; nz = oy; break;                  // x, t=3: (x, -z, y)
-            case 5: nx = -oz; ny = oy; nz = ox; break;                  // y, t=1: (-z, y, x)
-            case 6: nx = -ox; ny = oy; nz = -oz; break;                 // y, t=2: (-x, y, -z)
-            case 7: nx = oz; ny = oy; nz = -ox; break;                  // y, t=3: (z, y, -x)
-            case 9: nx = oy; ny = -ox; nz = oz; break;                  // z, t=1: (y, -x, z)
-            case 10: nx = -ox; ny = -oy; nz = oz; break;                // z, t=2: (-x, -y, z)
-            case 11: nx = -oy; ny = ox; nz = oz; break;                 // z, t=3: (-y, x, z)
+            case 1: nx = ox; ny = oz; nz = -oy; break;
+            case 2: nx = ox; ny = -oy; nz = -oz; break;
+            case 3: nx = ox; ny = -oz; nz = oy; break;
+            case 5: nx = -oz; ny = oy; nz = ox; break;
+            case 6: nx = -ox; ny = oy; nz = -oz; break;
+            case 7: nx = oz; ny = oy; nz = -ox; break;
+            case 9: nx = oy; ny = -ox; nz = oz; break;
+            case 10: nx = -ox; ny = -oy; nz = oz; break;
+            case 11: nx = -oy; ny = ox; nz = oz; break;
           }
-          v.x = nx; v.y = ny; v.z = nz;
-          // c._index / c.position / c.quaternion 都不在循环里写,末尾 sweep 时一并算
-          // 出。flat[] 索引在 inner local 用 newIdx 临时计算,不写回 cubelet。
-          const newIdx = (nz + half) * order2 + (ny + half) * order + (nx + half);
-          // rotIdx 累加器替 quaternion.premultiply:1-op 表查 ↔ ~16-op + setter overhead
-          const oldRotIdx = rotIdx[c._instIdx];
-          rotIdx[c._instIdx] = cubeCompose[oldRotIdx * 12 + dispatch];
-          flat[newIdx] = c;
+          vecX[instIdx] = nx; vecY[instIdx] = ny; vecZ[instIdx] = nz;
+          flat[(nz + half) * order2 + (ny + half) * order + (nx + half)] = instIdx + 1;
+          rotIdx[instIdx] = cubeCompose[rotIdx[instIdx] * 12 + dispatch];
         }
       }
     }
-    // 末尾一次性 sweep:从 c._vector 算最终 _index/position,从 rotIdx 还原 quaternion,
-    // 重建 cubelets Map,compose matrix。循环里只更 _vector,这里一并 batch 写其它。
+    // 末尾一次性 sweep:从 vecX/Y/Z + rotIdx 算最终 _vector / _index / position / quaternion,
+    // 重建 cubelets Map,compose matrix。
     cube.cubelets.clear();
-    for (const c of cube.initials.values()) {
-      const fx = c._vector.x, fy = c._vector.y, fz = c._vector.z;
+    for (let i = 0; i < visCount; i++) {
+      const c = cubeletByInst[i];
+      const fx = vecX[i], fy = vecY[i], fz = vecZ[i];
+      c._vector.x = fx; c._vector.y = fy; c._vector.z = fz;
       c._index = (fz + half) * order2 + (fy + half) * order + (fx + half);
       c.position.x = SIZE * fx;
       c.position.y = SIZE * fy;
       c.position.z = SIZE * fz;
       cube.cubelets.set(c._index, c);
-      const q = cubeRotQuats[rotIdx[c._instIdx]];
+      const q = cubeRotQuats[rotIdx[i]];
       c.quaternion.set(q.x, q.y, q.z, q.w);
       c.updateMatrix();
     }
