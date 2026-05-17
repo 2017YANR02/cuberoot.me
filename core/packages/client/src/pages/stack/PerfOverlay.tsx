@@ -23,6 +23,8 @@ export interface PerfStats {
   /** 估算 GPU instance buffer (instanceMatrix + instanceColor) in MB.
    * 不含 geometry/texture,只是 InstancedRenderer 的大头开销 */
   gpuBufMB: number;
+  /** 上一次打乱:state 应用 + 渲染 + paint 的端到端 ms。0 = 还没打乱过 */
+  scrambleMs: number;
 }
 
 interface Props {
@@ -150,6 +152,11 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
         ) : null}
         {isZh ? 'GPU 缓冲' : 'GPU buf'} <b>{snapshot.gpuBufMB.toFixed(0)}M</b>
       </div>
+      {snapshot.scrambleMs > 0 ? (
+        <div>
+          {isZh ? '出图' : 'scramble'} <b>{snapshot.scrambleMs.toFixed(0)}ms</b>
+        </div>
+      ) : null}
       <button
         onClick={runStress}
         disabled={running}

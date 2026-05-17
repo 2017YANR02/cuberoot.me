@@ -53,6 +53,10 @@ interface Props {
   order: number;
   /** 阶数确认改变时调 (wheel 完全停下 / input 回车失焦 / AlgsPanel 选公式)。拖动 / inertia 期间不调。 */
   onOrderChange: (n: number) => void;
+  /** Active puzzle — number for NxN, 'sq1' for Square-1. Drives mode-specific UI. */
+  puzzleKind: number | 'sq1';
+  /** Called when user picks a different puzzle kind via the picker. */
+  onPuzzleChange: (kind: number | 'sq1') => void;
   settings: StackSettings;
   onSettingsChange: (s: StackSettings) => void;
   keymap: Record<string, KeyMove>;
@@ -60,14 +64,18 @@ interface Props {
   onResetKeymap: () => void;
   /** StackPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
   userMoveRef?: RefObject<((action: TwistAction) => void) | null>;
+  /** Dev 性能采样回调:打乱 click → 画面上屏总耗时 (ms) */
+  onScrambleTime?: (ms: number) => void;
 }
 
 export default function PlayerControls({
   world, alg, setup, onAlgChange, onSetupChange,
-  order, onOrderChange, settings, onSettingsChange,
+  order, onOrderChange, puzzleKind, onPuzzleChange,
+  settings, onSettingsChange,
   keymap, onKeymapChange, onResetKeymap,
-  userMoveRef,
+  userMoveRef, onScrambleTime,
 }: Props) {
+  const isSq1 = puzzleKind === 'sq1';
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -96,7 +104,10 @@ export default function PlayerControls({
 
   // alg → 可播 alg(剥注释 / 零宽 / 连写补空格)→ leaf moves
   // cleanForPlayer 已经处理 `D'U'` `UD2` 这种连写,Alg parser 不会再 throw
+  // SQ1: alg playback is not supported in MVP (SQ1 notation `(t,b)/...` is parsed
+  // by sq1 twister directly, not via cubing.js TwistyPlayer / NxN TwistAction).
   const actions = useMemo<TwistAction[]>(() => {
+    if (isSq1) return [];
     if (!algDraft.trim()) return [];
     try {
       const cleaned = cleanForPlayer(algDraft);
@@ -104,18 +115,41 @@ export default function PlayerControls({
     } catch {
       return [];
     }
-  }, [algDraft]);
+  }, [algDraft, isSq1]);
+
+  // SQ1: debounce timer for animating the typed setup. Per-keystroke instant
+  // apply made users think "nothing rotates" — they need to see the move animate.
+  const sq1AnimTimerRef = useRef<number | null>(null);
 
   // 跳转到第 n 步:setup 重置 + fast 应用前 n 个 action
   const jumpToStep = useCallback((n: number) => {
     if (!world) return;
-    world.cube.twister.setup(setupDraft);
+    if (isSq1) {
+      // SQ1: cancel any pending animation, reset cube, then animate the full
+      // setup. Debounced so rapid keystrokes don't restart the animation per char.
+      if (sq1AnimTimerRef.current != null) {
+        window.clearTimeout(sq1AnimTimerRef.current);
+        sq1AnimTimerRef.current = null;
+      }
+      const text = setupDraft;
+      sq1AnimTimerRef.current = window.setTimeout(() => {
+        sq1AnimTimerRef.current = null;
+        if (!world) return;
+        world.cube.twister.finish();
+        world.cube.twister.setup('');
+        if (text.trim()) world.cube.twister.push(text);
+      }, 280);
+      setStep(0);
+      return;
+    }
+    const cube = world.cube as import('./cuber/cube').default;
+    cube.twister.setup(setupDraft);
     const target = Math.max(0, Math.min(n, actions.length));
     for (let i = 0; i < target; i++) {
-      world.cube.twister.twist(actions[i], true, true);
+      cube.twister.twist(actions[i], true, true);
     }
     setStep(target);
-  }, [world, setupDraft, actions]);
+  }, [world, setupDraft, actions, isSq1]);
 
   // applyMove (QWERTY 增量追加) 时 set 这个 ref,下面 actions-effect 跳过 reset 避免冲掉刚 twist 的状态
   const skipAutoResetRef = useRef(false);
@@ -162,7 +196,10 @@ export default function PlayerControls({
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= actions.length) { setPlaying(false); return; }
-      world?.cube.twister.twist(actions[s], false, true);
+      if (world && !isSq1) {
+        const cube = world.cube as import('./cuber/cube').default;
+        cube.twister.twist(actions[s], false, true);
+      }
       stepRef.current = s + 1;
       setStep(s + 1);
     }, intervalMs);
@@ -191,6 +228,7 @@ export default function PlayerControls({
   // 永远落到 alg 框 (不像 QWERTY 那样允许写入 setup),因为 drag/tap 时焦点通常不在输入框,
   // 而即便焦点在 setup 框,用户拖魔方的语义也是"开始解",该落解法。
   const appendUserMove = useCallback((action: TwistAction) => {
+    if (isSq1) return; // SQ1 has no drag/tap input in MVP
     if (world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
       if (!norm) return;  // 1×1 上不可表达的 move:丢弃
@@ -220,6 +258,7 @@ export default function PlayerControls({
 
   // QWERTY 模式:按一个 keymap 动作 → 转魔方 + 追加到 setup/alg (打乱框激活时落 setup,否则落 alg 并 focus alg)
   const applyMove = useCallback((k: KeyMove) => {
+    if (isSq1) return; // SQ1 keymap not implemented in MVP
     let action: TwistAction | null = new TwistAction(k.sign, !!k.reverse, 1);
     let moveText = displayMove(k);
     if (world && world.cube.order === 1) {
@@ -227,7 +266,10 @@ export default function PlayerControls({
       if (!action) return;  // 1×1 上不可表达的 move:不转也不写
       moveText = action.value;
     }
-    if (world) world.cube.twister.twist(action, false, true);
+    if (world && !isSq1) {
+      const cube = world.cube as import('./cuber/cube').default;
+      cube.twister.twist(action, false, true);
+    }
     const setupEl = setupElRef.current;
     const algEl = algElRef.current;
     const active = document.activeElement;
@@ -271,29 +313,51 @@ export default function PlayerControls({
   const handleScramble = useCallback(async () => {
     if (!world) return;
     let scramble: string | null = null;
-    if (order >= 2 && order <= 7) {
+    if (isSq1) {
+      scramble = await tnoodleRandomScramble('sq1');
+    } else if (order >= 2 && order <= 7) {
       const eventId = `${order}${order}${order}`;
       scramble = await tnoodleRandomScramble(eventId);
     }
     if (!scramble) {
+      // SQ1: tnoodle hard-required. Fall back to '' to skip if upstream fails.
       // N>=8 (或 cubing.js 拿不到 scramble) 走自家 N×N random-move,
       // 跟 cubing.js 5-7 阶同一模式 (random-move, wide notation, 长度 20*(N-2))
-      scramble = randomMoveScrambleNxN(order);
+      scramble = isSq1 ? '' : randomMoveScrambleNxN(order);
     }
-    if (settings.animateScramble) {
+    // SQ1: always animate — instant apply gives the impression that nothing
+    // rotated (state changes in one frame). The animation is the whole point.
+    const animate = scramble && (isSq1 || settings.animateScramble);
+    if (animate) {
       animatingScrambleRef.current = true;
       world.cube.twister.setup('');     // reset to solved (instant)
       world.cube.twister.push(scramble); // 排队慢动画逐 move 播
+    } else if (scramble) {
+      // instant apply 走 useEffect 会同步阻塞主线程,公式框跟着卡。
+      // 用 animatingScrambleRef 让 useEffect 跳过自动 reset,改在 rAF 之后手动 apply,
+      // 给 textarea 一帧把公式画出来。
+      animatingScrambleRef.current = true;
+      const w = world;
+      const t0 = performance.now();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        w.cube.twister.setup(scramble!);
+        // 下一帧 render 把 dirty cube 画到 GPU,再 message-channel/setTimeout 等 paint 上屏后报时
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            onScrambleTime?.(performance.now() - t0);
+          }, 0);
+        });
+      }));
     }
-    setSetupDraft(scramble);
-    onSetupChange(scramble);
     const el = setupElRef.current;
     if (el instanceof HTMLTextAreaElement) {
       el.value = scramble;
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
     }
-  }, [world, order, onSetupChange, settings.animateScramble]);
+    setSetupDraft(scramble);
+    onSetupChange(scramble);
+  }, [world, order, onSetupChange, settings.animateScramble, isSq1, onScrambleTime]);
 
   return (
     <div className="stack-player">
@@ -408,6 +472,8 @@ export default function PlayerControls({
       <PuzzleSettings
         order={order}
         onOrderChange={onOrderChange}
+        puzzleKind={puzzleKind}
+        onPuzzleChange={onPuzzleChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
         t={t}
@@ -535,11 +601,14 @@ const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<StackSettings
 ];
 
 function PuzzleSettings({
-  order, onOrderChange, settings, onSettingsChange, t,
+  order, onOrderChange, puzzleKind, onPuzzleChange,
+  settings, onSettingsChange, t,
   keymap, onKeymapChange, onResetKeymap,
 }: {
   order: number;
   onOrderChange: (n: number) => void;
+  puzzleKind: number | 'sq1';
+  onPuzzleChange: (kind: number | 'sq1') => void;
   settings: StackSettings;
   onSettingsChange: (s: StackSettings) => void;
   t: (zh: string, en: string) => string;
@@ -547,6 +616,7 @@ function PuzzleSettings({
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
 }) {
+  const isSq1Local = puzzleKind === 'sq1';
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -626,6 +696,21 @@ function PuzzleSettings({
         <div className="stack-puzzle-body">
           <div className="stack-puzzle-row">
             <div className="stack-puzzle-section">
+              <div className="stack-puzzle-section-title">{t('类型', 'Puzzle')}</div>
+              <select
+                className="stack-puzzle-select"
+                value={isSq1Local ? 'sq1' : 'nxn'}
+                onChange={(e) => {
+                  if (e.target.value === 'sq1') onPuzzleChange('sq1');
+                  else onPuzzleChange(order || 3);
+                }}
+              >
+                <option value="nxn">{t('NxN', 'NxN')}</option>
+                <option value="sq1">{t('Square-1', 'Square-1')}</option>
+              </select>
+            </div>
+            {!isSq1Local && (
+            <div className="stack-puzzle-section">
               <div className="stack-puzzle-section-title">{t('阶数', 'Order')}</div>
               <div className="stack-puzzle-order-control" ref={wheelRootRef}>
                 <WheelPicker
@@ -659,6 +744,8 @@ function PuzzleSettings({
                 />
               </div>
             </div>
+            )}
+            {!isSq1Local && (
             <div className="stack-puzzle-section">
               <div className="stack-puzzle-section-title">{t('视觉风格', 'Style')}</div>
               <select
@@ -675,6 +762,7 @@ function PuzzleSettings({
                 ))}
               </select>
             </div>
+            )}
             <button
               type="button"
               className="stack-keymap-open-btn"
