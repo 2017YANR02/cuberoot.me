@@ -4,7 +4,7 @@ import Cube from "./cube";
 import Cubelet from "./cubelet";
 import tweener from "./tweener";
 import CubeGroup from "./group";
-import initStackKernel, { apply_rotates as stackKernelApplyRotates } from "@cuberoot/stack-kernel";
+import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
 
 // Stack kernel (WASM):内层 rotate apply loop。模块初始化时 fire-and-forget,
 // init 完前 setup() 退回纯 JS 路径。N=200 用户场景 ~6s,kernel 目标降到 1s 量级。
@@ -455,7 +455,11 @@ export default class Twister {
           rCount++;
         }
       }
-      stackKernelApplyRotates(
+      // 诊断:__STACK_KERNEL_NO_FLAT = true 切到 no_flat variant (跳 flat 读写,
+      // cube state 一定错,只用来量 flat 操作的成本上限,验证 perSlab 是否值得做)。
+      const noFlat = (window as unknown as { __STACK_KERNEL_NO_FLAT?: boolean }).__STACK_KERNEL_NO_FLAT === true;
+      const fn = noFlat ? stackKernelApplyRotatesNoFlat : stackKernelApplyRotates;
+      fn(
         rotatesDesc.subarray(0, rCount * 2),
         reg.flat,
         reg.offsets,

@@ -3,11 +3,14 @@
 
 export function apply_rotates(rotates_desc: Uint32Array, group_indices_flat: Int32Array, group_indices_offsets: Uint32Array, vec_x: Float32Array, vec_y: Float32Array, vec_z: Float32Array, rot_idx: Uint8Array, flat: Int32Array, slice_insts: Int32Array, cube_compose: Uint8Array, order: number): void;
 
+export function apply_rotates_no_flat(rotates_desc: Uint32Array, group_indices_flat: Int32Array, group_indices_offsets: Uint32Array, vec_x: Float32Array, vec_y: Float32Array, vec_z: Float32Array, rot_idx: Uint8Array, flat: Int32Array, slice_insts: Int32Array, cube_compose: Uint8Array, order: number): void;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly apply_rotates: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: any, j: number, k: number, l: any, m: number, n: number, o: any, p: number, q: number, r: any, s: number, t: number, u: any, v: number, w: number, x: any, y: number, z: number, a1: number) => void;
+    readonly apply_rotates_no_flat: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: any, j: number, k: number, l: any, m: number, n: number, o: any, p: number, q: number, r: any, s: number, t: number, u: any, v: number, w: number, x: any, y: number, z: number, a1: number) => void;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_start: () => void;
