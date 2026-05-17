@@ -73,6 +73,17 @@
 .demo-sq1-btnrow button:hover {
   background: #444;
 }
+.demo-sq1-speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #aaa;
+  margin-left: auto;
+}
+.demo-sq1-speed input[type=range] {
+  width: 120px;
+}
 .demo-sq1-progress {
   font-size: 12px;
   color: #888;

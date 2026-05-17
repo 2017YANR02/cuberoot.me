@@ -17,6 +17,7 @@ export default function DemoSq1Page() {
   const [scramble, setScramble] = useState(DEFAULT_SCRAMBLE);
   const [moves, setMoves] = useState<Sq1Move[]>([]);
   const [progress, setProgress] = useState({ idx: 0, total: 0 });
+  const [speed, setSpeed] = useState(1.0);
 
   // Init renderer once.
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function DemoSq1Page() {
     const r = rendererRef.current;
     if (!r) return;
     r.resetTo(solvedState());
+    r.durationPerMoveMs = Math.round(220 / speed);
     await r.playScramble(moves);
   };
 
@@ -101,9 +103,22 @@ export default function DemoSq1Page() {
           <button onClick={onReset}>Reset</button>
           <button onClick={onPlay}>Play scramble</button>
           <button onClick={onShowFinal}>Jump to end</button>
+          <label className="demo-sq1-speed">
+            Speed: {speed.toFixed(1)}×
+            <input
+              type="range"
+              min={0.25}
+              max={4}
+              step={0.25}
+              value={speed}
+              onChange={e => setSpeed(parseFloat(e.target.value))}
+            />
+          </label>
         </div>
         <div className="demo-sq1-progress">
-          {progress.total > 0 ? `Move ${progress.idx} / ${progress.total}` : 'Idle'}
+          {progress.total > 0
+            ? `Move ${progress.idx} / ${progress.total} — drag to rotate, scroll to zoom`
+            : `${moves.length} moves parsed — drag to rotate, scroll to zoom`}
         </div>
       </div>
     </div>
