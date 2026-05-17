@@ -79,6 +79,7 @@ const CommutatorPage = lazy(() => import('./pages/alg/commutator/CommutatorPage'
 const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 // NOTE: /prediction — 3x3 速拧极限预测
 const PredictionPage = lazy(() => import('./pages/prediction/PredictionPage'));
+const Prediction333Page = lazy(() => import('./pages/prediction/Prediction333Page'));
 // NOTE: Mosaic — 魔方马赛克生成器（port of Roman-/mosaic）
 const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
 // NOTE: Memo — 记忆类工具子区
@@ -132,6 +133,8 @@ const BashIntroPage = lazy(() => import('./pages/code/BashIntroPage'));
 const SqlIntroPage = lazy(() => import('./pages/code/SqlIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
+// NOTE: /demo/sq1 — Square-1 立体动画演示（cubedb.net 风格的 three.js 渲染）
+const DemoSq1Page = lazy(() => import('./pages/demo/sq1/DemoSq1Page'));
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -290,6 +293,8 @@ function App() {
         <Route path="/code/mojo" element={<Navigate to="/code/language/mojo" replace />} />
         <Route path="/code/compare" element={<Navigate to="/code/language/compare" replace />} />
         <Route path="/code/scramble" element={<Navigate to="/code/language/scramble" replace />} />
+        {/* Demo — 内部演示页（不在导航中暴露） */}
+        <Route path="/demo/sq1" element={<Suspense fallback={<div>Loading...</div>}><DemoSq1Page /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
@@ -308,6 +313,7 @@ function App() {
         <Route path="/wca/globe" element={<Suspense fallback={<div>Loading...</div>}><GlobePage /></Suspense>} />
         <Route path="/wca/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
         <Route path="/wca/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
+        <Route path="/wca/prediction/333" element={<Suspense fallback={<div>Loading...</div>}><Prediction333Page /></Suspense>} />
         <Route path="/wca/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
         <Route path="/wca/comp/sources" element={<Suspense fallback={<div>Loading...</div>}><CompSourcesPage /></Suspense>} />
         <Route path="/wca/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />

@@ -320,6 +320,20 @@ export default function PredictionPage() {
             </p>
           </section>
 
+          {/* Pointer to 3x3 deep-dive */}
+          <Link to="/wca/prediction/333" className="pred-333-deepdive-cta">
+            <div className="pred-333-cta-left">
+              <div className="pred-333-cta-eyebrow">{isZh ? '深度章节' : 'Deep Dive'}</div>
+              <div className="pred-333-cta-title">{isZh ? '三阶魔方: 终极极限预测' : '3x3: The Ultimate Limits Forecast'}</div>
+              <div className="pred-333-cta-sub">
+                {isZh
+                  ? '24 节, 历史 / 方法 / 数学 / 生物力学 / 顶级选手 / 训练 / 统计 / 综合预测.'
+                  : '24 sections — history, methods, math, biomech, top cubers, training, stats, ensemble forecast.'}
+              </div>
+            </div>
+            <div className="pred-333-cta-arrow">→</div>
+          </Link>
+
           {/* Headline bar chart */}
           <section className="pred-section" id="headline">
             <h2>{isZh ? '撞墙排行: 一张图看完 16 项' : 'Wall-Closeness Ranking: All 16 Events at a Glance'}</h2>

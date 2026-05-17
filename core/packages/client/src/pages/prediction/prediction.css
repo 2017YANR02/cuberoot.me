@@ -590,6 +590,48 @@
   word-break: break-all;
 }
 
+/* ── 3x3 deep-dive CTA ─────────────────────────────────── */
+.pred-333-deepdive-cta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 22px;
+  margin: 0 0 32px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--card)), var(--card));
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--foreground);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.pred-333-deepdive-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.pred-333-cta-left { flex: 1; min-width: 0; }
+.pred-333-cta-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.pred-333-cta-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.pred-333-cta-sub {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.pred-333-cta-arrow {
+  font-size: 32px;
+  color: var(--accent);
+  font-weight: 300;
+}
+
 /* ── Headline bar (closeness ranking) ─────────────────── */
 .pred-headline-bar {
   margin: 14px 0 6px;
