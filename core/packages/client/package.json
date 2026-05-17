@@ -29,6 +29,7 @@
     "@ffmpeg/util": "^0.12.2",
     "@mapbox/vector-tile": "^2.0.4",
     "cropperjs": "^1.6.2",
+    "cstimer_module": "^0.1.5",
     "cubing": "^0.63.3",
     "dompurify": "^3.4.1",
     "echarts": "^6.0.0",
