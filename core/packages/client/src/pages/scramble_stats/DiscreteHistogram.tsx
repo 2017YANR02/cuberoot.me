@@ -140,8 +140,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           const y = PAD.t + chartH - (v / yMax) * chartH;
           return (
             <g key={`y${i}`}>
-              <line x1={PAD.l} x2={PAD.l + chartW} y1={y} y2={y} stroke="#E5E4DF" strokeDasharray="2,3" />
-              <text x={PAD.l - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#6F6E6B">{fmtY(v)}</text>
+              <line x1={PAD.l} x2={PAD.l + chartW} y1={y} y2={y} style={{ stroke: 'var(--border)' }} strokeDasharray="2,3" />
+              <text x={PAD.l - 8} y={y + 4} textAnchor="end" fontSize="11" style={{ fill: 'var(--text-sub)' }}>{fmtY(v)}</text>
             </g>
           );
         })}
@@ -150,14 +150,14 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           const x = PAD.l + i * slotW + slotW / 2;
           return (
             <g key={`x${v}`}>
-              <line x1={x} x2={x} y1={PAD.t + chartH} y2={PAD.t + chartH + 4} stroke="#CCCAC2" />
-              <text x={x} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="12" fill="#181716">{v}</text>
+              <line x1={x} x2={x} y1={PAD.t + chartH} y2={PAD.t + chartH + 4} style={{ stroke: 'var(--border-strong)' }} />
+              <text x={x} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="12" style={{ fill: 'var(--text)' }}>{v}</text>
             </g>
           );
         })}
         {/* X/Y 轴线 */}
-        <line x1={PAD.l} x2={PAD.l + chartW} y1={PAD.t + chartH} y2={PAD.t + chartH} stroke="#CCCAC2" />
-        <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + chartH} stroke="#CCCAC2" />
+        <line x1={PAD.l} x2={PAD.l + chartW} y1={PAD.t + chartH} y2={PAD.t + chartH} style={{ stroke: 'var(--border-strong)' }} />
+        <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + chartH} style={{ stroke: 'var(--border-strong)' }} />
         {/* Bars */}
         {series.map((s, si) => (
           <g key={`s${si}`}>
@@ -228,8 +228,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           }
           return (
             <g key={`lb${v}`}>
-              <text x={cx} y={topY - 12} textAnchor="middle" fontSize="10" fill="#181716">{fmtCount(countDisp)}</text>
-              <text x={cx} y={topY} textAnchor="middle" fontSize="10" fill="#6F6E6B">{fmtPct(pctDisp)}</text>
+              <text x={cx} y={topY - 12} textAnchor="middle" fontSize="10" style={{ fill: 'var(--text)' }}>{fmtCount(countDisp)}</text>
+              <text x={cx} y={topY} textAnchor="middle" fontSize="10" style={{ fill: 'var(--text-sub)' }}>{fmtPct(pctDisp)}</text>
             </g>
           );
         })}

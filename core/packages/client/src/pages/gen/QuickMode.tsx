@@ -28,16 +28,17 @@ function parsePastedScrambles(text: string): string[] {
     .filter((line) => line.length > 0);
 }
 
-interface Props {
-  t: (zh: string, en: string) => string;
-}
-
 type SubMode = 'gen' | 'text';
 
-export default function QuickMode({ t }: Props) {
+interface Props {
+  t: (zh: string, en: string) => string;
+  /** 由 GenPage 的顶层 tab 决定:'gen' = 批量, 'text' = 输入 */
+  subMode: SubMode;
+}
+
+export default function QuickMode({ t, subMode }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const [subMode, setSubMode] = useState<SubMode>('gen');
   const [events, setEvents] = useState<Set<string>>(() => new Set(['333']));
   const [count, setCount] = useState<number>(5);
   const [generated, setGenerated] = useState<Record<string, string[]>>({});
@@ -188,28 +189,6 @@ export default function QuickMode({ t }: Props) {
 
   return (
     <>
-      {/* 生成 / 文本 子模式切换 */}
-      <div className="gen-tn-round-chips" role="tablist" style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={subMode === 'gen'}
-          className={`gen-tn-round-chip${subMode === 'gen' ? ' is-active' : ''}`}
-          onClick={() => setSubMode('gen')}
-        >
-          {t('生成', 'Generate')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={subMode === 'text'}
-          className={`gen-tn-round-chip${subMode === 'text' ? ' is-active' : ''}`}
-          onClick={() => setSubMode('text')}
-        >
-          {t('文本', 'Paste')}
-        </button>
-      </div>
-
       <WcaEventSelector
         availableEvents={TNOODLE_EVENT_SET}
         selectedEvents={events}

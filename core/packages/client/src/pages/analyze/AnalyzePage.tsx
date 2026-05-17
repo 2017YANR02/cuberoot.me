@@ -33,6 +33,7 @@ import {
 } from './analyze_worker_client';
 import { randomScrambleForEvent } from '../../utils/scramble';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import TwistySection from '../../components/TwistySection';
 import './analyze.css';
 
@@ -241,6 +242,7 @@ export default function AnalyzePage() {
         <div className="analyze-header-row">
           <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
           <LangToggle variant="inline" className="analyze-lang-toggle" />
+          <ThemeToggle />
         </div>
         <p className="analyze-sub">
           {t(

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Sparkles, X, Copy, Check } from 'lucide-react';
 import { Alg } from 'cubing/alg';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import { VisualCube } from '../../components/VisualCube';
 import TwistySection from '../../components/TwistySection';
 import {
@@ -76,6 +77,7 @@ export default function PatternsPage() {
           ))}
         </select>
         <LangToggle variant="inline" />
+        <ThemeToggle />
       </header>
 
       <main className="pat-main">

@@ -45,7 +45,7 @@
     /* sticky bar 背景拉满视口宽度,但内容用动态 padding 锁在 ≤980px 中央 */
     padding: 1.25rem max(2rem, calc((100vw - 980px) / 2)) 1rem;
     border-bottom: 1px solid var(--gen-border);
-    background: rgba(255, 255, 255, 0.85);
+    background: color-mix(in srgb, var(--gen-bg) 88%, transparent);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -175,8 +175,8 @@
 }
 
 .gen-btn-primary:hover:not(:disabled) {
-    background: #A84F32;
-    border-color: #A84F32;
+    background: color-mix(in srgb, var(--gen-accent) 85%, var(--gen-text));
+    border-color: color-mix(in srgb, var(--gen-accent) 85%, var(--gen-text));
     color: #FFF;
 }
 
@@ -190,7 +190,7 @@
     bottom: 0;
     height: 2px;
     width: 100%;
-    background: rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, var(--gen-text) 8%, transparent);
     pointer-events: none;
 }
 .gen-btn-bar-fill {
@@ -251,7 +251,7 @@
 .gen-item .gen-preview { flex-shrink: 0; }
 
 .gen-item-clickable { cursor: pointer; transition: background-color 0.15s; }
-.gen-item-clickable:hover { background-color: rgba(0, 0, 0, 0.025); }
+.gen-item-clickable:hover { background-color: color-mix(in srgb, var(--gen-text) 4%, transparent); }
 /* 复制后:行号变成强调色,持续 ~1.2s 内提示;不再用浮层避免压住魔方图 */
 .gen-item-clickable.is-copied .gen-num {
     color: var(--gen-accent);
@@ -922,9 +922,10 @@
     text-align: center;
 }
 .gen-tn-attempt-scramble {
-    /* width auto + no table-width = scramble cell sizes to content (NBSP-padded
-       tokens force a natural grid). */
-    width: auto;
+    /* width:100% + auto-layout = 拿走 preview cell 之外的全部剩余宽度。
+       preview cell 固定 96px(见下方);scramble 列实际宽 = table - 32 - 96 = ~852px,
+       受 max-width 兜在 560px 内,table 自然收窄到内容宽。 */
+    width: 100%;
     max-width: 560px;       /* matches the ~550pt scramble column on A4 */
 }
 .gen-tn-attempt-line {
@@ -955,27 +956,25 @@
 .gen-tn-attempt-preview {
     background: #C0C0C0;    /* tnoodle SCRAMBLE_BACKGROUND_COLOR */
     text-align: center;
-    /* 让 cell 按图天然宽高比撑开:行越高(7x7 八行打乱)图越大 → cell 自然变宽。
-       小技巧:外层 table 显式 height:1px,td height:100% 才能让子元素读到行高。 */
-    height: 100%;
     padding: 0;
+    /* 固定 cell 宽度,scramble cell width:100% 拿走剩余空间。
+       不要按"图行高 × 宽高比"动态撑宽,否则短打乱(2x2)那行 table 剩余宽
+       全部塞给 preview cell,出现一格 ~400px 大空白的 bug。 */
+    width: 96px;
     min-width: 96px;
 }
-.gen-tn-sheet-table { height: 1px; }
 .gen-tn-attempt-preview svg {
     display: block;
     margin: 0 auto;
-    height: 100%;
-    width: auto;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
 }
 @media (max-width: 700px) {
     /* 默认 max-content 列宽 = 打乱不换行时的天然宽度,移动端必溢出 viewport。
        让 grid 列可收缩,sheet table width:100% 自然回落到 viewport 宽。 */
     .gen-tn-sheets { grid-template-columns: minmax(0, 1fr); }
-    /* 打乱换行后行变高 → SVG height:100% → 按宽高比变宽 → 又把列撑大。
-       在窄屏给 SVG 加 max-height,断开"行高→图宽"循环。 */
-    .gen-tn-attempt-preview { min-width: 64px; }
-    .gen-tn-attempt-preview svg { max-height: 72px; }
+    .gen-tn-attempt-preview { width: 64px; min-width: 64px; }
 }
 
 .gen-tn-extras-divider td {
@@ -988,4 +987,74 @@
     padding: 4px 12px;
     border-left: none;
     border-right: none;
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .gen-page {
+        --gen-bg: #1c1917;
+        --gen-surface: #232020;
+        --gen-text: #f0ebe3;
+        --gen-text-sub: #9c8c7e;
+        --gen-text-mute: #7A736A;
+        --gen-border: rgba(240, 235, 227, 0.1);
+        --gen-border-strong: rgba(240, 235, 227, 0.2);
+        --gen-accent: #d97757;
+        --gen-accent-soft: rgba(217, 119, 87, 0.16);
+    }
+}
+html[data-theme=dark] .gen-page {
+    --gen-bg: #1c1917;
+    --gen-surface: #232020;
+    --gen-text: #f0ebe3;
+    --gen-text-sub: #9c8c7e;
+    --gen-text-mute: #7A736A;
+    --gen-border: rgba(240, 235, 227, 0.1);
+    --gen-border-strong: rgba(240, 235, 227, 0.2);
+    --gen-accent: #d97757;
+    --gen-accent-soft: rgba(217, 119, 87, 0.16);
+}
+
+/* dark 下黑阴影会被 dark bg 吸收 → lift 反馈丢失。加深 */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .gen-page .gen-controls {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    html:not([data-theme=light]) .gen-page .event-select-popup {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    /* clock-chip 默认黑边在 dark 下消失:用 chip 自身用户色为基,叠 20% 白拉出对比 */
+    html:not([data-theme=light]) .gen-page .gen-tn-clock-chip {
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+}
+html[data-theme=dark] .gen-page .gen-controls {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+html[data-theme=dark] .gen-page .event-select-popup {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+html[data-theme=dark] .gen-page .gen-tn-clock-chip {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* TNoodle 打印预览(白纸黑字)与主题脱钩,任何模式都保持纸张观感 */
+.gen-tn-sheets {
+    --gen-bg: #FFFFFF;
+    --gen-surface: #FFFFFF;
+    --gen-text: #181716;
+    --gen-text-sub: #6F6E6B;
+    --gen-text-mute: #95938E;
+    --gen-border: #E5E4DF;
+    --gen-border-strong: #CCCAC2;
+    color-scheme: light;
+}
+/* 每张 sheet = 一张纸:显式白底 + 黑字。不然 page dark 底透过来,黑字看不见 */
+.gen-tn-sheets .gen-tn-sheet {
+    background: #FFFFFF;
+    color: #181716;
+}
+.gen-tn-sheets .gen-tn-sheet-header,
+.gen-tn-sheets .gen-tn-sheet-title {
+    color: #181716;
 }
