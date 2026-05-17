@@ -49,22 +49,30 @@ const WEDGE_HALF_CHORD = W * Math.tan(Math.PI / 12); // ≈36.84
 const TILE_W = W - WEDGE_HALF_CHORD;                 // corner-face width ≈100.66
 const WEDGE_FACE_W = 2 * WEDGE_HALF_CHORD;           // wedge-face width ≈73.68
 
-// Layer heights chosen so total height = 2·W = 275 → cube is actually cubic.
-//   Top + Mid + Bot = 110 + 55 + 110 = 275 ✓
-// Middle layer is ~1/5 of total, matching cubedb's visual proportions.
-const LAYER_HEIGHT = 110;     // top/bot layer thickness
-const MID_HEIGHT = 55;        // equator slice thickness
+// Layer heights match cubedb exactly: top=bot=W=100, mid=M=75, total=2W+M=275=2R
+// → cube is cubic (X/Z extent = 275, Y extent = 275).
+const LAYER_HEIGHT = 100;     // top/bot layer thickness (= cubedb's W)
+const MID_HEIGHT = 75;        // equator slice thickness (= cubedb's M)
 const HALF_MID = MID_HEIGHT / 2;
+// Bevel from cubedb exactly: big bevelSize+inward bevelOffset = the body's
+// top/bot cap is deeply inset from the shape outline (20 units), with a
+// sloped bevel transitioning out to the outline. Combined with a TRANSLUCENT
+// top sticker (opacity 0.75), this is what creates the visible piece division
+// lines (black star pattern) on the U face in cubedb's render.
 const BEVEL = {
-  steps: 1, depth: LAYER_HEIGHT,
-  bevelEnabled: true, bevelThickness: 2, bevelSize: 2,
-  bevelOffset: -2, bevelSegments: 2,
+  steps: 2, depth: LAYER_HEIGHT,
+  bevelEnabled: true, bevelThickness: 5, bevelSize: 20,
+  bevelOffset: -20, bevelSegments: 3,
 };
-// Sticker Z-offset above body cap: must clear bevel (extends ±bevelThickness
-// beyond depth) — otherwise sticker is INSIDE the body and gets occluded.
-const STICKER_Z = LAYER_HEIGHT + BEVEL.bevelThickness + 0.5; // 102.5
+// Sticker Z-offset above body cap: clear bevel extending bevelThickness past depth.
+const STICKER_Z = LAYER_HEIGHT + BEVEL.bevelThickness + 0.5; // 105.5
 // Side-sticker outward radial offset from cube face (W).
 const SIDE_OFFSET = 0.5;
+// Sticker material params (per cubedb): translucent + shiny, so the black
+// body bevel underneath shows through and produces the piece divisions.
+const STICKER_OPACITY = 0.75;
+const STICKER_SHININESS = 40;
+const STICKER_SPECULAR = 0x222222;
 
 export const SQ1_COLORS = {
   L: 0x1f4dff,
@@ -239,15 +247,11 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
   const body = new THREE.Mesh(bodyGeom, bodyMat);
   group.add(body);
 
-  // Top sticker: full shape outline (no inset). The body's bevel inset by
-  // BEVEL.bevelOffset gives the visible black plastic edge around the sticker.
+  // Top sticker: full shape outline (no inset). Translucent (opacity 0.75)
+  // so the deeply-inset bevel of the body underneath shows through as a
+  // black radial pattern (= the visible piece divisions on U/D faces).
   const stickerGeom = new THREE.ShapeGeometry(outline);
-  const topMat = new THREE.MeshPhongMaterial({
-    color: SQ1_COLORS[faces.top], specular: 0x222222, shininess: 50,
-    side: THREE.DoubleSide,
-  });
-  const topSticker = new THREE.Mesh(stickerGeom, topMat);
-  // STICKER_Z clears the bevel cap (extends bevelThickness past depth).
+  const topSticker = new THREE.Mesh(stickerGeom, mkStickerMat(SQ1_COLORS[faces.top]));
   topSticker.position.z = STICKER_Z;
   group.add(topSticker);
 
@@ -270,31 +274,6 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
     wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallB);
-
-    // Hidden-face hint tiles: floating colored quads pushed outward, so the
-    // viewer can see what's on the away-facing sides. cubedb signature.
-    const HINT_OFFSET = 220;
-    const HINT_SCALE = 0.55;
-    const hintMatA = matA.clone();
-    hintMatA.transparent = true; hintMatA.opacity = 0.78;
-    const hintA = mkRectMesh(
-      (TILE_W - 2 * SIDE_INSET_H) * HINT_SCALE,
-      (LAYER_HEIGHT - 2 * SIDE_INSET_V) * HINT_SCALE,
-      hintMatA,
-    );
-    hintA.position.set(CORNER_FACE_CENTER, W + HINT_OFFSET, LAYER_HEIGHT / 2);
-    hintA.rotation.set(-Math.PI / 2, 0, 0);
-    group.add(hintA);
-    const hintMatB = matB.clone();
-    hintMatB.transparent = true; hintMatB.opacity = 0.78;
-    const hintB = mkRectMesh(
-      (TILE_W - 2 * SIDE_INSET_H) * HINT_SCALE,
-      (LAYER_HEIGHT - 2 * SIDE_INSET_V) * HINT_SCALE,
-      hintMatB,
-    );
-    hintB.position.set(W + HINT_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
-    hintB.rotation.set(0, Math.PI / 2, Math.PI / 2);
-    group.add(hintB);
   } else {
     // Wedge has 1 outer face on +X side: chord at X=W, spans Y from
     // -WEDGE_HALF_CHORD to +WEDGE_HALF_CHORD (width WEDGE_FACE_W).
@@ -303,19 +282,6 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
     wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallA);
-
-    const HINT_OFFSET = 220;
-    const HINT_SCALE = 0.55;
-    const hintMat = matA.clone();
-    hintMat.transparent = true; hintMat.opacity = 0.78;
-    const hintA = mkRectMesh(
-      (WEDGE_FACE_W - 2 * SIDE_INSET_H) * HINT_SCALE,
-      (LAYER_HEIGHT - 2 * SIDE_INSET_V) * HINT_SCALE,
-      hintMat,
-    );
-    hintA.position.set(W + HINT_OFFSET, 0, LAYER_HEIGHT / 2);
-    hintA.rotation.set(0, Math.PI / 2, Math.PI / 2);
-    group.add(hintA);
   }
 
   // Group transform: extrusion along +Z becomes world +Y for the top layer.
@@ -336,7 +302,8 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
 
 function mkStickerMat(color: number): THREE.MeshPhongMaterial {
   return new THREE.MeshPhongMaterial({
-    color, specular: 0x222222, shininess: 50, side: THREE.DoubleSide,
+    color, specular: STICKER_SPECULAR, shininess: STICKER_SHININESS,
+    side: THREE.DoubleSide, transparent: true, opacity: STICKER_OPACITY,
   });
 }
 
@@ -439,7 +406,9 @@ export class Sq1Renderer {
 
     const aspect = opts.width / Math.max(1, opts.height);
     this.camera = new THREE.PerspectiveCamera(30, aspect, 1, 5000);
-    this.camera.position.set(420, 360, 500);
+    // Match cubedb's default: steep top-down angle from +X+Y+Z, ~45° above horizontal.
+    // Distance ~1000 to leave breathing room for floating hint tiles.
+    this.camera.position.set(400, 680, 600);
     this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({
@@ -462,6 +431,7 @@ export class Sq1Renderer {
     this.setupLighting();
     this.buildPieces();
     this.buildMiddle();
+    this.buildHints();
     this.applyStateInstant(this.state);
     this.start();
   }
@@ -490,19 +460,18 @@ export class Sq1Renderer {
   }
 
   /**
-   * Equator slice = 2 rectangular slabs (right half X>0, left half X<0), body
-   * color only (real Sq1 middle pieces are plain plastic with no stickers).
-   * Splitting at X=0 lets the right half participate in `/` slice rotation
-   * while the left half stays put — visually invisible since both are body
-   * color, but mechanically correct.
+   * Equator slice = 2 rectangular slabs (right half X>0 + left half X<0). Per
+   * cubedb's geometry, each middle piece has a COLORED sticker on its outer
+   * cube face: right slab shows GREEN (R) on +X face, left slab shows BLUE
+   * (L) on -X face. F/B faces stay body color (real Sq1 middle has stickers
+   * only on its 2 outermost L/R cube faces).
    */
   private buildMiddle(): void {
-    const mat = new THREE.MeshPhongMaterial({
+    const bodyMat = new THREE.MeshPhongMaterial({
       color: SQ1_COLORS.BODY, specular: 0x222222, shininess: 25,
       side: THREE.DoubleSide,
     });
     const mkHalf = (sign: 1 | -1): THREE.Object3D => {
-      // Half-slab in XY plane (shape) → extruded along Z, then rotated so Y is vertical.
       const shape = new THREE.Shape();
       const x0 = sign === 1 ? 0 : -W;
       const x1 = sign === 1 ? W : 0;
@@ -516,19 +485,83 @@ export class Sq1Renderer {
         bevelEnabled: true, bevelThickness: 1.5, bevelSize: 1.5,
         bevelOffset: -1.5, bevelSegments: 1,
       });
-      // Extrusion +Z → world +Y after Rx(-π/2); then center vertically on equator.
       geom.rotateX(-Math.PI / 2);
       geom.translate(0, -HALF_MID, 0);
-      const mesh = new THREE.Mesh(geom, mat);
-      // Wrap in a pivot at world origin so slice rotation around X works
-      // (slicePivot rotates around its own X axis at origin).
       const pivot = new THREE.Object3D();
-      pivot.add(mesh);
+      pivot.add(new THREE.Mesh(geom, bodyMat));
+      // 3 colored stickers per middle half: outer cube face (L or R for left
+      // or right half), plus F (+Z) and B (-Z) covering its half of the
+      // front/back. Together left+right cover all 4 side cube faces in solved.
+      const stickerH = MID_HEIGHT - 2 * SIDE_INSET_V;
+      const addSideSticker = (
+        color: number,
+        pos: [number, number, number],
+        rot: [number, number, number],
+        tangentialW: number,
+      ): void => {
+        const w = tangentialW - 2 * SIDE_INSET_H;
+        const mat = mkStickerMat(color);
+        const s = new THREE.Mesh(new THREE.PlaneGeometry(w, stickerH), mat);
+        s.position.set(...pos);
+        s.rotation.set(...rot);
+        pivot.add(s);
+      };
+      // L (-X) or R (+X) sticker: full Z depth × MID_HEIGHT
+      const xFaceColor = sign === 1 ? SQ1_COLORS.R : SQ1_COLORS.L;
+      addSideSticker(
+        xFaceColor,
+        [sign * (W + SIDE_OFFSET), 0, 0],
+        [0, sign === 1 ? Math.PI / 2 : -Math.PI / 2, 0],
+        2 * W,
+      );
+      // F (+Z) sticker on this half: width = W (this piece's X extent), centered on its X midpoint
+      addSideSticker(
+        SQ1_COLORS.F,
+        [sign * W / 2, 0, W + SIDE_OFFSET],
+        [0, 0, 0],
+        W,
+      );
+      // B (-Z) sticker on this half
+      addSideSticker(
+        SQ1_COLORS.B,
+        [sign * W / 2, 0, -(W + SIDE_OFFSET)],
+        [0, Math.PI, 0],
+        W,
+      );
       this.cubeRoot.add(pivot);
       return pivot;
     };
     this.middle.push({ pivot: mkHalf(1), side: 1 });
     this.middle.push({ pivot: mkHalf(-1), side: -1 });
+  }
+
+  /**
+   * Per-face hint tiles (one per cube face = 6 total) — translucent floating
+   * quads at face_normal × HINT_OFFSET, sized like a full cube face. Cubedb
+   * shows these as visual references for the away-facing sides.
+   */
+  private buildHints(): void {
+    const HINT_OFFSET = 240;
+    const HINT_SIZE = 0.7 * 2 * W; // ~190px per face
+    const faces: { color: number; dir: [number, number, number] }[] = [
+      { color: SQ1_COLORS.U, dir: [0, 1, 0] },
+      { color: SQ1_COLORS.D, dir: [0, -1, 0] },
+      { color: SQ1_COLORS.R, dir: [1, 0, 0] },
+      { color: SQ1_COLORS.L, dir: [-1, 0, 0] },
+      { color: SQ1_COLORS.F, dir: [0, 0, 1] },
+      { color: SQ1_COLORS.B, dir: [0, 0, -1] },
+    ];
+    for (const f of faces) {
+      const mat = new THREE.MeshPhongMaterial({
+        color: f.color, specular: STICKER_SPECULAR, shininess: STICKER_SHININESS,
+        side: THREE.DoubleSide, transparent: true, opacity: 0.65,
+      });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(HINT_SIZE, HINT_SIZE), mat);
+      const n = new THREE.Vector3(...f.dir);
+      mesh.position.copy(n).multiplyScalar(W + HINT_OFFSET);
+      mesh.lookAt(0, 0, 0);
+      this.cubeRoot.add(mesh);
+    }
   }
 
   applyStateInstant(state: Sq1State): void {
