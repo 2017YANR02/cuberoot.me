@@ -161,6 +161,8 @@ export default function TrafficPage() {
 
 function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) {
   const T = (zh: string, en: string) => (isZh ? zh : en);
+  // 数据少时强制画端点 + 实心,免得 1 天数据完全看不见.
+  const sparse = data.length <= 2;
   const option = useMemo(() => ({
     grid: { left: 48, right: 16, top: 36, bottom: 28 },
     legend: { top: 4, textStyle: { color: '#cfd3dc' } },
@@ -181,25 +183,37 @@ function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) 
         name: 'PV',
         type: 'line',
         smooth: true,
-        showSymbol: false,
+        showSymbol: sparse,
+        symbolSize: 10,
         data: data.map(d => d.pv),
         lineStyle: { color: '#5b9dd9', width: 2 },
+        itemStyle: { color: '#5b9dd9' },
         areaStyle: { color: 'rgba(91,157,217,0.15)' },
       },
       {
         name: 'UV',
         type: 'line',
         smooth: true,
-        showSymbol: false,
+        showSymbol: sparse,
+        symbolSize: 10,
         data: data.map(d => d.uv),
         lineStyle: { color: '#f0a04b', width: 2 },
+        itemStyle: { color: '#f0a04b' },
       },
     ],
-  }), [data]);
+  }), [data, sparse]);
 
   return (
     <section className="tr-section">
-      <h2 className="tr-section-title">{T('每日 PV / UV', 'Daily PV / UV')}</h2>
+      <div className="tr-section-head">
+        <h2 className="tr-section-title">{T('每日 PV / UV', 'Daily PV / UV')}</h2>
+        <p className="tr-section-hint">
+          {T(
+            'PV = 浏览量(每开一次页记 1);UV = 独立访客(同人同天只算 1)',
+            'PV = pageviews (every visit counts); UV = unique visitors (same person same day counts once)',
+          )}
+        </p>
+      </div>
       {data.length === 0 ? (
         <div className="tr-empty">{T('暂无数据', 'No data')}</div>
       ) : (
