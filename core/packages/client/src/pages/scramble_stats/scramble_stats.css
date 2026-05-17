@@ -298,7 +298,7 @@
   margin-top: 0.125rem;
 }
 .scramble-stats-cn-diff.good {
-  color: #2F7D5B;
+  color: var(--signal-success);
 }
 
 .scramble-stats-cn-note {
@@ -442,4 +442,28 @@
   font-size: 0.75rem;
   color: var(--text-sub);
   padding: 0 0.25rem;
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) .scramble-stats-page {
+    --bg: #1c1917;
+    --surface: #232020;
+    --text: #f0ebe3;
+    --text-sub: #9c8c7e;
+    --border: rgba(240, 235, 227, 0.1);
+    --border-strong: rgba(240, 235, 227, 0.2);
+    --accent: #d97757;
+    --accent-soft: rgba(217, 119, 87, 0.16);
+  }
+}
+html[data-theme=dark] .scramble-stats-page {
+  --bg: #1c1917;
+  --surface: #232020;
+  --text: #f0ebe3;
+  --text-sub: #9c8c7e;
+  --border: rgba(240, 235, 227, 0.1);
+  --border-strong: rgba(240, 235, 227, 0.2);
+  --accent: #d97757;
+  --accent-soft: rgba(217, 119, 87, 0.16);
 }

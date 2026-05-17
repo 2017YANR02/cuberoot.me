@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import './scramble_stats.css';
 
@@ -345,6 +346,7 @@ export default function ScrambleStatsPage() {
         <div className="scramble-stats-header">
           <div className="scramble-stats-header-nav">
             <LangToggle />
+            <ThemeToggle />
           </div>
           <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
         </div>
@@ -359,6 +361,7 @@ export default function ScrambleStatsPage() {
         <div className="scramble-stats-header">
           <div className="scramble-stats-header-nav">
             <LangToggle />
+            <ThemeToggle />
           </div>
           <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
         </div>
@@ -396,6 +399,7 @@ export default function ScrambleStatsPage() {
       <div className="scramble-stats-header">
         <div className="scramble-stats-header-nav">
           <LangToggle />
+          <ThemeToggle />
         </div>
         <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
         <p className="scramble-stats-note">{sourceText}</p>

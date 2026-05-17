@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface Card {
   to: string;
@@ -61,7 +62,10 @@ export default function ScrambleHubPage() {
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
         <h1>{t('打乱', 'Scramble')}</h1>
-        <LangToggle variant="inline" />
+        <div className="hub-toggles">
+          <LangToggle variant="inline" />
+          <ThemeToggle />
+        </div>
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (
@@ -81,13 +85,18 @@ const INLINE_CSS = `
   max-width: 880px;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
-  color: var(--text);
+  color: var(--foreground);
 }
 .hub-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+}
+.hub-toggles {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .hub-header h1 {
   margin: 0;
@@ -96,7 +105,7 @@ const INLINE_CSS = `
   letter-spacing: -0.01em;
 }
 .hub-lead {
-  color: var(--text-muted, #aaa);
+  color: var(--muted-foreground);
   margin: 0 0 1.5rem;
   line-height: 1.6;
 }
@@ -110,15 +119,15 @@ const INLINE_CSS = `
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.25rem;
-  background: var(--panel, #1f1f1f);
-  border: 1px solid var(--border, #333);
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
-  color: var(--text);
+  color: var(--foreground);
   text-decoration: none;
   transition: transform 0.12s ease, border-color 0.12s ease;
 }
 .hub-card:hover {
-  border-color: var(--accent, #ff8800);
+  border-color: var(--accent);
   transform: translateY(-2px);
 }
 .hub-card-title {
@@ -126,7 +135,7 @@ const INLINE_CSS = `
   font-weight: 600;
 }
 .hub-card-desc {
-  color: var(--text-muted, #aaa);
+  color: var(--muted-foreground);
   font-size: 0.9rem;
   line-height: 1.45;
 }
