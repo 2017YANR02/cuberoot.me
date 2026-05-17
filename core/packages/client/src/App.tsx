@@ -314,7 +314,7 @@ function App() {
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
-        <Route path="/traffic" element={<Suspense fallback={<div>Loading...</div>}><TrafficPage /></Suspense>} />
+        <Route path="/code/traffic" element={<Suspense fallback={<div>Loading...</div>}><TrafficPage /></Suspense>} />
         {/* Tutorial — 公式教程目录（曾用 /alg） */}
         <Route path="/tutorial" element={<Suspense fallback={<div>Loading...</div>}><TutorialIndexPage /></Suspense>} />
         <Route path="/tutorial/c/:category" element={<Suspense fallback={<div>Loading...</div>}><TutorialCategoryPage /></Suspense>} />

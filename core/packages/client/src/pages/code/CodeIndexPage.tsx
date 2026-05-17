@@ -47,6 +47,23 @@ const CARDS: Card[] = [
       meta: '12 languages · 2 cross-comparisons',
     },
   },
+  {
+    href: '/code/traffic',
+    glyph: '↗',
+    accent: '#F0A04B',
+    zh: {
+      title: '流量',
+      sub: 'Site Traffic',
+      tagline: '站内访问统计:PV/UV 时间线、热门路径、来源、国家分布。数据自己采,无第三方追踪',
+      meta: 'PV/UV · 4 维度 · 90 天滚存',
+    },
+    en: {
+      title: 'Traffic',
+      sub: 'Self-hosted Analytics',
+      tagline: 'Site traffic: PV/UV timeline, top paths, referrers, country breakdown. Collected in-house, no 3rd-party tracking',
+      meta: 'PV/UV · 4 metrics · 90-day rolling',
+    },
+  },
 ];
 
 export default function CodeIndexPage() {
