@@ -39,12 +39,16 @@ const DEG = Math.PI / 180;
 const SLOT_DEG = 30;
 const SLOT_0_START_DEG = 90;
 
-/** Slot center offset (in slot units) for a given piece id (0..15). */
+/** Slot center offset (in slot units) for a given piece id (0..15).
+ *  Top layer pattern (per SOLVED_PIECES): corner / edge / corner / edge / ...
+ *  Bottom layer pattern: edge / corner / edge / corner / ... (offset by half a
+ *  slot — so bottom slot 0 is an edge, NOT a corner). Each piece occupies
+ *  `local * 1.5 + offset` slot units; offset = 1 for top (corner-first wedge
+ *  midline) or 0.5 for bottom (edge-first wedge midline). */
 function pieceSlotCenter(pieceId: number): number {
-  const local = pieceId <= 7 ? pieceId : pieceId - 8;
-  const isCorner = local % 2 === 0;
-  const base = Math.floor(local / 2) * 3;
-  return base + (isCorner ? 1 : 2.5);
+  const isTop = pieceId <= 7;
+  const local = isTop ? pieceId : pieceId - 8;
+  return local * 1.5 + (isTop ? 1 : 0.5);
 }
 
 /** Map (slot center, layer) → rotY (three.js Y-axis rotation in radians). */
