@@ -272,9 +272,13 @@ export default class Twister {
     tweener.finish();
   }
 
+  /** 上一次 setup() 同步 CPU 耗时,DEV bench 用。0 = 还没跑过。 */
+  public lastSetupCpuMs = 0;
+
   setup(exp: string, reverse = false, times = 1): void {
+    const TBENCH0 = performance.now();
     this.finish();
-    this.cube.reset();
+    this.cube.reset(true);
     const node = new TwistNode(exp, reverse, times);
     const list = node.parse();
     // Logic-only fast path: setup 期间画面不渲染中间帧,跳过 InstancedRenderer 的
@@ -343,6 +347,7 @@ export default class Twister {
     cube.history.clear();
     cube.history.init = exp;
     cube.callback();
+    this.lastSetupCpuMs = performance.now() - TBENCH0;
   }
 
   push(exp: string, reverse = false, times = 1): void {

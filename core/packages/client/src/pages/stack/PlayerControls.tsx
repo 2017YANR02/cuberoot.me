@@ -64,8 +64,8 @@ interface Props {
   onResetKeymap: () => void;
   /** StackPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
   userMoveRef?: RefObject<((action: TwistAction) => void) | null>;
-  /** Dev 性能采样回调:打乱 click → 画面上屏总耗时 (ms) */
-  onScrambleTime?: (ms: number) => void;
+  /** Dev 性能采样回调:打乱 click → 画面上屏总耗时 (ms) + setup CPU 纯耗时 (ms) */
+  onScrambleTime?: (ms: number, cpuMs?: number) => void;
 }
 
 export default function PlayerControls({
@@ -341,10 +341,12 @@ export default function PlayerControls({
       const t0 = performance.now();
       requestAnimationFrame(() => requestAnimationFrame(() => {
         w.cube.twister.setup(scramble!);
+        // Sq1Twister 没这字段;NxN Twister 才量 setup CPU。union 走 cast 拿。
+        const cpuMs = (w.cube.twister as unknown as { lastSetupCpuMs?: number }).lastSetupCpuMs;
         // 下一帧 render 把 dirty cube 画到 GPU,再 message-channel/setTimeout 等 paint 上屏后报时
         requestAnimationFrame(() => {
           setTimeout(() => {
-            onScrambleTime?.(performance.now() - t0);
+            onScrambleTime?.(performance.now() - t0, cpuMs);
           }, 0);
         });
       }));
