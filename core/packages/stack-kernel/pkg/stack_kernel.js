@@ -36,6 +36,43 @@ export function apply_rotates(rotates_desc, group_indices_flat, group_indices_of
     const len9 = WASM_VECTOR_LEN;
     wasm.apply_rotates(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, vec_x, ptr4, len4, vec_y, ptr5, len5, vec_z, ptr6, len6, rot_idx, ptr7, len7, flat, ptr8, len8, slice_insts, ptr9, len9, order);
 }
+
+/**
+ * @param {Uint32Array} rotates_desc
+ * @param {Int32Array} group_indices_flat
+ * @param {Uint32Array} group_indices_offsets
+ * @param {Float32Array} vec_x
+ * @param {Float32Array} vec_y
+ * @param {Float32Array} vec_z
+ * @param {Uint8Array} rot_idx
+ * @param {Int32Array} flat
+ * @param {Int32Array} slice_insts
+ * @param {Uint8Array} cube_compose
+ * @param {number} order
+ */
+export function apply_rotates_no_flat(rotates_desc, group_indices_flat, group_indices_offsets, vec_x, vec_y, vec_z, rot_idx, flat, slice_insts, cube_compose, order) {
+    const ptr0 = passArray32ToWasm0(rotates_desc, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(group_indices_flat, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passArray32ToWasm0(group_indices_offsets, wasm.__wbindgen_malloc);
+    const len2 = WASM_VECTOR_LEN;
+    var ptr3 = passArrayF32ToWasm0(vec_x, wasm.__wbindgen_malloc);
+    var len3 = WASM_VECTOR_LEN;
+    var ptr4 = passArrayF32ToWasm0(vec_y, wasm.__wbindgen_malloc);
+    var len4 = WASM_VECTOR_LEN;
+    var ptr5 = passArrayF32ToWasm0(vec_z, wasm.__wbindgen_malloc);
+    var len5 = WASM_VECTOR_LEN;
+    var ptr6 = passArray8ToWasm0(rot_idx, wasm.__wbindgen_malloc);
+    var len6 = WASM_VECTOR_LEN;
+    var ptr7 = passArray32ToWasm0(flat, wasm.__wbindgen_malloc);
+    var len7 = WASM_VECTOR_LEN;
+    var ptr8 = passArray32ToWasm0(slice_insts, wasm.__wbindgen_malloc);
+    var len8 = WASM_VECTOR_LEN;
+    const ptr9 = passArray8ToWasm0(cube_compose, wasm.__wbindgen_malloc);
+    const len9 = WASM_VECTOR_LEN;
+    wasm.apply_rotates_no_flat(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, vec_x, ptr4, len4, vec_y, ptr5, len5, vec_z, ptr6, len6, rot_idx, ptr7, len7, flat, ptr8, len8, slice_insts, ptr9, len9, order);
+}
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
