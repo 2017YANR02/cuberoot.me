@@ -369,6 +369,8 @@ export default class Twister {
     for (const c of cube.cubelets.values()) flat[c._index] = c._instIdx + 1;
     // Per-cubelet rotIdx 累加器 (Uint8Array indexed by _instIdx)。
     const rotIdx = new Uint8Array(visCount);  // 默认 0 = identity
+    // 预分配 slice instIdx 缓冲 (face slab 最大 = N²),28k slice 复用避免 alloc。
+    const sliceInsts = new Int32Array(order2);
     for (const action of list) {
       // 特殊 sign (#/*/./~/;) 包含递归 setup / lock-aware callback 等复杂语义,
       // 在 setup 输入里极罕见,直接退回普通 twist 路径。
@@ -387,9 +389,6 @@ export default class Twister {
         // group.indices 都是 exist cubelet 位置,rotation 在 slab 内 permute,
         // 所以 flat[pos] 总有值 (instIdx+1)。直接拿 typed array,免 if/push。
         const sliceLen = indices.length;
-        // Stack-local instIdx 缓冲,放在 Int32Array 给 V8 IC 干净;免 push。
-        // 大小已知 = indices.length,小尺寸用 Array,大尺寸用 Int32Array
-        const sliceInsts = new Int32Array(sliceLen);
         for (let i = 0; i < sliceLen; i++) {
           sliceInsts[i] = flat[indices[i]] - 1;  // instIdx (0..visCount-1)
         }
