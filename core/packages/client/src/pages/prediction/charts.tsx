@@ -1,5 +1,5 @@
 // 简易 SVG 折线 / 柱状图组件 — 自给自足,无第三方
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 export interface Series {
   name: string;
@@ -9,8 +9,26 @@ export interface Series {
   width?: number;
 }
 
+/** 预测带 (bootstrap CI 或 GEV envelope) */
+export interface Band {
+  name: string;
+  color: string;
+  opacity?: number;
+  data: { x: number; lo: number; hi: number }[];
+}
+
+/** 水平参考线 (物理下界, ZBLL floor 等) */
+export interface RefLine {
+  y: number;
+  label: string;
+  color?: string;
+  dashed?: boolean;
+}
+
 interface LineChartProps {
   series: Series[];
+  bands?: Band[];
+  refLines?: RefLine[];
   width?: number;
   height?: number;
   yLabel?: string;
@@ -27,6 +45,8 @@ interface LineChartProps {
 
 export function LineChart({
   series,
+  bands = [],
+  refLines = [],
   width = 760,
   height = 360,
   yLabel,
@@ -40,13 +60,28 @@ export function LineChart({
   highlights = [],
   showLegend = true,
 }: LineChartProps) {
-  const PAD = { l: 56, r: 16, t: 12, b: 36 };
+  // 移动端窄屏适配 — 左侧标签紧缩, 字号略小
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 600px)');
+    const sync = () => setIsNarrow(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const PAD = isNarrow
+    ? { l: 46, r: 10, t: 10, b: 30 }
+    : { l: 56, r: 16, t: 12, b: 36 };
   const cw = width - PAD.l - PAD.r;
   const ch = height - PAD.t - PAD.b;
 
   const allPoints = series.flatMap((s) => s.data.filter((p) => p.y !== null));
-  const xVals = allPoints.map((p) => p.x);
-  const yValsRaw = allPoints.map((p) => p.y!);
+  const bandPts = bands.flatMap((b) => b.data.flatMap((d) => [d.lo, d.hi]));
+  const refYs = refLines.map((r) => r.y);
+  const xVals = allPoints.map((p) => p.x).concat(bands.flatMap((b) => b.data.map((d) => d.x)));
+  const yValsRaw = allPoints.map((p) => p.y!).concat(bandPts).concat(refYs);
   const xMin = Math.min(...xVals);
   const xMax = Math.max(...xVals);
   const yLo = yMin ?? Math.min(...yValsRaw);
@@ -175,6 +210,65 @@ export function LineChart({
         {/* axes */}
         <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + ch} stroke="var(--faint-foreground)" />
         <line x1={PAD.l} x2={PAD.l + cw} y1={PAD.t + ch} y2={PAD.t + ch} stroke="var(--faint-foreground)" />
+        {/* prediction bands (drawn first so lines + dots overlap nicely) */}
+        {bands.map((band, bi) => {
+          const segments: Array<typeof band.data> = [];
+          let cur: typeof band.data = [];
+          for (const d of band.data) {
+            if (isFinite(d.lo) && isFinite(d.hi)) cur.push(d);
+            else if (cur.length) { segments.push(cur); cur = []; }
+          }
+          if (cur.length) segments.push(cur);
+          return segments.map((seg, si) => {
+            let d = '';
+            seg.forEach((p, i) => {
+              const X = xScale(p.x);
+              const Y = yScale(p.hi);
+              d += i === 0 ? `M${X.toFixed(1)},${Y.toFixed(1)}` : ` L${X.toFixed(1)},${Y.toFixed(1)}`;
+            });
+            for (let i = seg.length - 1; i >= 0; i--) {
+              const X = xScale(seg[i].x);
+              const Y = yScale(seg[i].lo);
+              d += ` L${X.toFixed(1)},${Y.toFixed(1)}`;
+            }
+            d += ' Z';
+            return (
+              <path
+                key={`band-${bi}-${si}`}
+                d={d}
+                fill={band.color}
+                fillOpacity={band.opacity ?? 0.14}
+                stroke="none"
+              />
+            );
+          });
+        })}
+        {/* horizontal reference lines (physical floor, etc.) */}
+        {refLines.map((r, i) => (
+          <g key={`rl-${i}`}>
+            <line
+              x1={PAD.l}
+              x2={PAD.l + cw}
+              y1={yScale(r.y)}
+              y2={yScale(r.y)}
+              stroke={r.color || 'var(--signal-success)'}
+              strokeWidth={1.2}
+              strokeDasharray={r.dashed === false ? undefined : '5 3'}
+              opacity={0.8}
+            />
+            <text
+              x={PAD.l + cw - 4}
+              y={yScale(r.y) - 4}
+              textAnchor="end"
+              fontSize={10.5}
+              fill={r.color || 'var(--signal-success)'}
+              fontWeight={600}
+              style={{ paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 3, strokeLinejoin: 'round' }}
+            >
+              {r.label}
+            </text>
+          </g>
+        ))}
         {/* annotations: vertical lines */}
         {annotations.map((a) => (
           <g key={`ann-${a.x}`}>
@@ -186,12 +280,15 @@ export function LineChart({
               stroke={a.color || 'var(--accent)'}
               strokeDasharray="2 3"
               strokeWidth={1}
+              opacity={0.6}
             />
             <text
               x={xScale(a.x) + 3}
-              y={PAD.t + 12}
-              fontSize={10}
+              y={PAD.t + 11}
+              fontSize={9.5}
               fill={a.color || 'var(--accent)'}
+              opacity={0.85}
+              style={{ paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 3, strokeLinejoin: 'round' }}
             >
               {a.label}
             </text>
