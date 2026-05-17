@@ -61,7 +61,9 @@ export interface WikiSection {
 export interface WikiList { sections: WikiSection[] }
 
 export async function fetchWikiTerms(): Promise<WikiList> {
-  const r = await fetch(apiUrl('/v1/wiki/terms'));
+  // cache: 'no-store' 兜底 — 即使 server header 被中间层覆盖,写操作后的 reload
+  // 也保证拿到 fresh 数据。
+  const r = await fetch(apiUrl('/v1/wiki/terms'), { cache: 'no-store' });
   return handle<WikiList>(r);
 }
 
