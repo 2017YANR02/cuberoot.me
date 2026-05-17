@@ -181,7 +181,7 @@ export default function WikiPage() {
       </header>
 
       <main className="wiki-main">
-        <h1 className="wiki-title">{isZh ? '魔方术语' : 'Cubing Glossary'}</h1>
+        <h1 className="wiki-title">{isZh ? '魔方百科' : 'Cubing Wiki'}</h1>
         <p className="wiki-lead">
           {isZh
             ? `${totalEntries} 条术语,中英对照,登录可增补。资料汇编自 `
