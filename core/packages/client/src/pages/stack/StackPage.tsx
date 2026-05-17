@@ -12,10 +12,18 @@ import {
   Maximize2, Minimize2,
 } from 'lucide-react';
 import World from './cuber/world';
+import type Cube from './cuber/cube';
 import Cubelet from './cuber/cubelet';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
+
+/** Narrow `world.cube` to the NxN Cube type. Returns null when world is in
+ *  SQ1 mode (NxN-specific access — table/cubelets/twist(TwistAction) — is then
+ *  skipped by the caller). */
+function asNxN(world: World): Cube | null {
+  return world.puzzleKind === 'sq1' ? null : (world.cube as Cube);
+}
 import { FACE } from './cuber/define';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -45,9 +53,11 @@ export default function StackPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const algParam = searchParams.get('alg') || '';
   const setupParam = searchParams.get('setup') || '';
-  const puzzleParam = (() => {
+  /** Puzzle kind — number for NxN, 'sq1' for Square-1. */
+  const puzzleParam: number | 'sq1' = (() => {
     const raw = searchParams.get('puzzle');
     if (!raw) return 3;
+    if (raw === 'sq1') return 'sq1';
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
@@ -61,7 +71,7 @@ export default function StackPage() {
   const statsRef = useRef<PerfStats>({
     drawCalls: 0, triangles: 0, geometries: 0, textures: 0, programs: 0,
     meshCount: 0, cubeletCount: 0, fps: 0, frameMs: 0, order: 3,
-    jsHeapMB: 0, gpuBufMB: 0,
+    jsHeapMB: 0, gpuBufMB: 0, scrambleMs: 0,
   });
 
   // 用户主动 twist (drag / tap / 实体键盘) 后,把 move 追加到 PlayerControls 的解法输入框。
@@ -69,6 +79,9 @@ export default function StackPage() {
   const userMoveRef = useRef<((action: TwistAction) => void) | null>(null);
 
   const [order, setOrder] = useState<number>(3);
+  /** Tracks current puzzle for UI (PlayerControls reads this to switch SQ1 mode). */
+  const [puzzleKind, setPuzzleKind] = useState<number | 'sq1'>(3);
+  void puzzleKind; // currently consumed via worldRef on demand; reserved for future SQ1 UI gating
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     try { return localStorage.getItem('stack.fullscreen') === '1'; } catch { return false; }
   });
@@ -153,7 +166,9 @@ export default function StackPage() {
     // Shift / 右键 = 逆时针。
     world.controller.taps.push((idx, face, opts) => {
       if (face === null) return;
-      const order = world.cube.order;
+      const cube = asNxN(world);
+      if (!cube) return; // SQ1: no tap-to-twist (controller is disabled anyway)
+      const order = cube.order;
       // positionIdx = z*N² + y*N + x → 反解 y, z (x 不需要)
       const y = Math.floor((idx % (order * order)) / order);
       const z = Math.floor(idx / (order * order));
@@ -166,7 +181,7 @@ export default function StackPage() {
         default: return;
       }
       const reverse = opts.shift || opts.button === 2;
-      const group = world.cube.table.groups[axis]?.[layer];
+      const group = cube.table.groups[axis]?.[layer];
       if (!group) return;
       // 默认单层切片(group.name,跟旧行为一致)。
       // Alt 按住 → 走 wide(点击深度决定宽度)
@@ -178,7 +193,7 @@ export default function StackPage() {
         sign = opts.alt ? CubeGroup.wideFromClick(axis, layer, order).sign : group.name;
       }
       const action = new TwistAction(sign, reverse, 1);
-      world.cube.twister.twist(action, false, true);
+      cube.twister.twist(action, false, true);
       userMoveRef.current?.(action);
     });
 
@@ -209,6 +224,8 @@ export default function StackPage() {
         opts: { order: number; runs?: number; durationMs?: number; twists?: number } = { order: 250 },
       ) => {
         const { order: N, runs = 3, durationMs = 5000, twists = 30 } = opts;
+        const cube = asNxN(world);
+        if (!cube) return null; // bench only meaningful for NxN
         const m = await import('./cuber/instanced');
         const SIGNS = ['R', 'U', 'F', 'L', 'D', 'B'];
         const med = (arr: number[]): number => {
@@ -235,7 +252,7 @@ export default function StackPage() {
           await new Promise((r) => setTimeout(r, 100));
 
           // idle tris/draws: reset 完, no active slice, moving.count=0 → 单 cube 真实场景成本
-          world.cube.twister.twist(new TwistAction('#'), true, true);
+          cube.twister.twist(new TwistAction('#'), true, true);
           await new Promise((res) => setTimeout(res, 200));
           world.cube.dirty = true;
           await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -244,10 +261,10 @@ export default function StackPage() {
 
           const runsData: { avgFps: number; minFps: number; frames: number }[] = [];
           for (let r = 0; r < runs; r++) {
-            world.cube.twister.twist(new TwistAction('#'), true, true);
+            cube.twister.twist(new TwistAction('#'), true, true);
             await new Promise((res) => setTimeout(res, 200));
             for (let i = 0; i < twists; i++) {
-              world.cube.twister.twist(new TwistAction(SIGNS[i % SIGNS.length], i % 2 === 0, 1), false, false);
+              cube.twister.twist(new TwistAction(SIGNS[i % SIGNS.length], i % 2 === 0, 1), false, false);
             }
             const t0 = performance.now();
             let frames = 0;
@@ -468,7 +485,7 @@ export default function StackPage() {
         s.programs = renderer.info.programs?.length ?? 0;
         const avgDt = fpsBuf.reduce((a, b) => a + b, 0) / fpsBuf.length;
         s.fps = avgDt > 0 ? 1000 / avgDt : 0;
-        s.cubeletCount = world.cube.cubelets.size;
+        s.cubeletCount = world.puzzleKind === 'sq1' ? 16 : (world.cube as Cube).cubelets.size;
         s.order = world.cube.order;
         if (now - meshSampleAt > 1000) {
           meshSampleAt = now;
@@ -522,35 +539,41 @@ export default function StackPage() {
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-  const handleOrder = useCallback((n: number) => {
-    setOrder(n);
+  const handlePuzzle = useCallback((kind: number | 'sq1') => {
+    setPuzzleKind(kind);
+    if (typeof kind === 'number') setOrder(kind);
     const world = worldRef.current;
-    if (!world || world.order === n) {
-      // world 未就绪 / 已是该阶 — 只更新 URL
+    if (!world || world.puzzleKind === kind) {
+      // world 未就绪 / 已是该 puzzle — 只更新 URL
       setSearchParams((prev) => {
         const np = new URLSearchParams(prev);
-        if (n === 3) np.delete('puzzle'); else np.set('puzzle', String(n));
+        if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
         return np;
       }, { replace: true });
       return;
     }
-    world.order = n;
+    world.setPuzzle(kind);
     wasCompleteRef.current = true;
     ensureCubeCallback();
     applySettings(world, settingsRef.current);
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
-      if (n === 3) np.delete('puzzle'); else np.set('puzzle', String(n));
+      if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
       return np;
     }, { replace: true });
   }, [ensureCubeCallback, setSearchParams]);
 
+  /** Legacy adapter for AlgsPanel etc. that only know about numeric orders. */
+  const handleOrder = useCallback((n: number) => {
+    handlePuzzle(n);
+  }, [handlePuzzle]);
+
   // URL puzzle=N 同步到 cube。worldTick 保证 mount 完后 effect 重跑一次
   useEffect(() => {
     if (!worldRef.current) return;
-    if (worldRef.current.order === puzzleParam) return;
-    handleOrder(puzzleParam);
-  }, [puzzleParam, handleOrder, worldTick]);
+    if (worldRef.current.puzzleKind === puzzleParam) return;
+    handlePuzzle(puzzleParam);
+  }, [puzzleParam, handlePuzzle, worldTick]);
 
   // settings 变化时即时 apply
   useEffect(() => {
@@ -612,10 +635,13 @@ export default function StackPage() {
       e.preventDefault();
       const world = worldRef.current;
       if (!world) return;
+      // SQ1: 全键盘 keymap 走 NxN 记号,不适用,直接吞掉
+      const cube = asNxN(world);
+      if (!cube) return;
       // force=true:前一个 group 还在转时 finish 它到终点 + unlock + retry,
       // 连按 I/J 时 R 截断到完成位 + U 立刻开始 (cube.lock 跨轴互斥)
       const action = new TwistAction(k.sign, k.reverse, 1);
-      world.cube.twister.twist(action, false, true);
+      cube.twister.twist(action, false, true);
       userMoveRef.current?.(action);
     };
     window.addEventListener('keydown', onKey);
@@ -665,11 +691,13 @@ export default function StackPage() {
   const onStress = useCallback(async () => {
     const w = worldRef.current;
     if (!w) return { avgFps: 0, minFps: 0, durationMs: 0, frames: 0 };
-    w.cube.twister.twist(new TwistAction('#'), true, true);
+    const stressCube = asNxN(w);
+    if (!stressCube) return { avgFps: 0, minFps: 0, durationMs: 0, frames: 0 };
+    stressCube.twister.twist(new TwistAction('#'), true, true);
     await new Promise((r) => setTimeout(r, 200));
     const SIGNS = ['R', 'U', 'F', 'L', 'D', 'B'];
     for (let i = 0; i < 30; i++) {
-      w.cube.twister.twist(new TwistAction(SIGNS[i % SIGNS.length], i % 2 === 0, 1), false, false);
+      stressCube.twister.twist(new TwistAction(SIGNS[i % SIGNS.length], i % 2 === 0, 1), false, false);
     }
     const DURATION = 5000;
     const t0 = performance.now();
@@ -741,12 +769,15 @@ export default function StackPage() {
             onSetupChange={onSetupChange}
             order={order}
             onOrderChange={handleOrder}
+            puzzleKind={puzzleKind}
+            onPuzzleChange={handlePuzzle}
             settings={settings}
             onSettingsChange={setSettings}
             keymap={keymap}
             onKeymapChange={setKeymap}
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
             userMoveRef={userMoveRef}
+            onScrambleTime={IS_DEV ? (ms) => { statsRef.current.scrambleMs = ms; } : undefined}
           />
           <CollapsibleSection
             open={directorOpen}
