@@ -196,7 +196,7 @@ export default class Cube extends THREE.Group {
     }
   }
 
-  reset(): void {
+  reset(skipRebuild = false): void {
     tweener.finish();
     // 每个 cubelet 复位:旋转归零、index 设回 initial、矩阵刷新。
     // 然后重建 cubelets map(key 应为 cubelet.index, 复位后等于 initial)。
@@ -207,7 +207,8 @@ export default class Cube extends THREE.Group {
       cubelet.updateMatrix();
       this.cubelets.set(cubelet.index, cubelet);
     }
-    this.instancedRenderer.rebuildAll();
+    // setup 内调时传 true:末尾自己 rebuildAll,这里跳一次省 ~50ms@N=75。
+    if (!skipRebuild) this.instancedRenderer.rebuildAll();
   }
 
   stick(index: number, face: number, value: string): void {

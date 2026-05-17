@@ -71,7 +71,7 @@ export default function StackPage() {
   const statsRef = useRef<PerfStats>({
     drawCalls: 0, triangles: 0, geometries: 0, textures: 0, programs: 0,
     meshCount: 0, cubeletCount: 0, fps: 0, frameMs: 0, order: 3,
-    jsHeapMB: 0, gpuBufMB: 0, scrambleMs: 0,
+    jsHeapMB: 0, gpuBufMB: 0, scrambleMs: 0, setupCpuMs: 0,
   });
 
   // 用户主动 twist (drag / tap / 实体键盘) 后,把 move 追加到 PlayerControls 的解法输入框。
@@ -213,6 +213,7 @@ export default function StackPage() {
     if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
       (window as unknown as { __stack__?: World }).__stack__ = world;
       (window as unknown as { __renderer__?: THREE.WebGLRenderer }).__renderer__ = renderer;
+      (window as unknown as { __stack_stats__?: typeof statsRef.current }).__stack_stats__ = statsRef.current;
       // 暴露 tweener 实例,避免 console import 拿到不同的 module instance
       import('./cuber/tweener').then((m) => {
         (window as unknown as { __tweener__?: unknown }).__tweener__ = m.default;
@@ -777,7 +778,10 @@ export default function StackPage() {
             onKeymapChange={setKeymap}
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
             userMoveRef={userMoveRef}
-            onScrambleTime={IS_DEV ? (ms) => { statsRef.current.scrambleMs = ms; } : undefined}
+            onScrambleTime={IS_DEV ? (ms, cpuMs) => {
+              statsRef.current.scrambleMs = ms;
+              if (cpuMs != null) statsRef.current.setupCpuMs = cpuMs;
+            } : undefined}
           />
           <CollapsibleSection
             open={directorOpen}

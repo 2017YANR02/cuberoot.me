@@ -25,6 +25,8 @@ export interface PerfStats {
   gpuBufMB: number;
   /** 上一次打乱:state 应用 + 渲染 + paint 的端到端 ms。0 = 还没打乱过 */
   scrambleMs: number;
+  /** 上一次 twister.setup 同步 CPU 耗时 (不含 GPU upload / paint),GC 噪声小,适合 bench */
+  setupCpuMs: number;
 }
 
 interface Props {
@@ -155,6 +157,7 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
       {snapshot.scrambleMs > 0 ? (
         <div>
           {isZh ? '出图' : 'scramble'} <b>{snapshot.scrambleMs.toFixed(0)}ms</b>
+          {snapshot.setupCpuMs > 0 ? <> · setup <b>{snapshot.setupCpuMs.toFixed(0)}ms</b></> : null}
         </div>
       ) : null}
       <button
