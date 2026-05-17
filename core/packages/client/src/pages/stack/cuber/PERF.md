@@ -18,9 +18,13 @@
 ## 现状
 
 - N=75 setup CPU 中位数:**9460ms → 251ms**(~38× 加速)
-- N=175 setup CPU 中位数:**~3.6s**(下一阶段目标)
-- 测试方法:fresh navigate + 2 warmup + 8 samples,取 median
+- N=200 setup CPU 中位数(button 路径口径,3960 moves):
+  - JS path:**6313ms**(median of 8)
+  - WASM kernel:**5303ms**(1.19×,first call 冷启 ~7.5s)
+- N=175 setup CPU 中位数:**~3.6s**(历史数据)
+- 测试方法:fresh navigate + 1 warmup + 8 samples,取 median;每个 sample 新生成 scramble
 - 入口:`packages/client/src/pages/stack/cuber/twister.ts` 的 `Twister.setup`
+- WASM kernel 源:`packages/stack-kernel/src/lib.rs`,wasm-pack target web,SIMD 启用但未显式用 v128
 
 ## 关键设计
 
@@ -81,6 +85,14 @@ setup 走 logic-only fast path,与 `push`(动画播放)分离:
 - `Twister.lastSetupCpuMs` + `lastSetupParts`(finish/reset/parse/loop/rebuild 子时间)
 - `PerfOverlay` 显示 "出图 NNNms · setup NNNms"(DEV)
 - `window.__stack_stats__` 暴露给 Playwright 自动化
+- `window.__STACK_KERNEL_WASM = false` 强制走 JS 路径(WASM A/B 对比用)
+
+### WASM kernel(2026-05-17,N=200 1.19×)
+- 新 workspace `packages/stack-kernel/`,Rust + wasm-bindgen,`pkg/` 委进 git
+- Kernel 接管 setup 内层 rotate apply loop:rotatesDesc + groupIndicesFlat 一次 JS→WASM 调用
+- Per-cube `groupRegistry` 缓存(flat indices + offsets,~3MB @ N=200,WeakMap by cube)
+- N=200 paired bench:WASM 5303ms vs JS 6313ms,1.19×,WASM 一致性更好(没 GC stop-world 大尾)
+- 实测远低于 PERF.md 原本 4-7× 预估;真因见下面"失败"章节
 
 ## 失败的尝试(已 git checkout 回滚,别再试)
 
@@ -103,6 +115,22 @@ setup 走 logic-only fast path,与 `push`(动画播放)分离:
 - 早期实验,想看跳掉能省多少
 - 但 cube state 会错乱,后续 scramble 在错误状态上叠加导致 setup 反而变慢
 - 教训:破坏状态的实验得跑一次就清状态,否则数据骗人
+
+### M:per-slice compose row
+- 把 `rotIdx[i] = cubeCompose[rotIdx[i]*12 + dispatch]` 改成预算 24-entry sliceCompose,内层 `rotIdx[i] = sliceCompose[rotIdx[i]]`
+- N=200 实测 6087 vs 6062ms (within noise)
+- V8 已把 `*12 + dispatch` 当 loop-invariant 优化掉了,改不动
+
+### WASM kernel 1.19× 而不是 4-7×(2026-05-17)
+- 最初 naive 实现 9.6s,**比 JS 还慢 60%**
+- 加 `unsafe get_unchecked` 跳 bounds check → 5.3s,赢 JS 1.19×
+- 为什么离 PERF.md 4-7× 预估这么远:
+  - 内层不是 compute-bound 而是 **memory-bandwidth bound**:每 iter 5 random reads + 5 random writes,主要打 `flat[N³]` (32MB @ N=200,远超 L3 cache)
+  - 313M iter × ~20ns DRAM 延迟 = 6s,接近实测,跟 runtime 无关
+  - SIMD 帮不上忙(wasm SIMD 没 scatter/gather 指令)
+  - V8 对 TypedArray hot loop 已经做了大量优化(IC、auto-vec、register allocation),wasm naive 实现纯换语言打不过 V8 JIT
+  - PERF.md 原 4-7× 预估假设了 compute bound 工作负载,不适用这里
+- 教训:基准前先评估是 memory bound 还是 compute bound,memory bound 工作负载 WASM 换语言收益很小
 
 ## 经验教训
 
@@ -132,7 +160,20 @@ loop 内每次迭代成本(~13ns):
 
 ≈ 40 CPU 周期/iter @ 3GHz。**接近 JS 硬件极限。**
 
-## 后续方向
+## 后续方向(2026-05-17 后)
+
+按 N=200 实测,memory bandwidth 是硬天花板,前面 PERF.md 写的 WASM 4-7× 那个段落已过期(留作教训档案)。剩下能继续打的:
+
+### -1. 减少 flat 数组打到主存(核心方向)
+- 内层每 iter 1 个 `flat[new_pos]` 写,32MB 数组 random scatter,大概率 cache miss
+- 思路:换数据结构,把 cubelet identity 维护从 flat 改成"per-slab ordered list"
+  - 每个 slab 维护 `cubelet_at_position: indices` 列表(N² 或 4N-4 长)
+  - rotation 在 slab 内就是数组旋转(4 个角分组循环交换)
+  - 不需要再去 flat 查"这个位置当前是谁"
+- 难点:slab membership 一旦旋转就乱了(原本 X-axis 0 层的 cubelet 转 R 后可能挪到 X-axis 1 层),除非 R 永远在 X-axis;但 R 和 U 在不同 axis,数据结构必须支持任意 axis 视图
+- 设计复杂,但理论上能从 6s 打到 1-2s
+
+## 后续方向(历史预估,已部分作废)
 
 ### 1. 算法层(高 risk / 高 reward)
 
