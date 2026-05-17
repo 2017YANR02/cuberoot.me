@@ -26,6 +26,14 @@ import {
   SKIP_PROBABILITIES,
 } from './data/method_dna';
 import { OPTIMAL_HTM_DISTRIBUTION, GODS_NUMBER_HISTORY } from './theory_data';
+import { Longform } from './components/Longform';
+import { HISTORY_DETAIL_EN } from './data/longform/history_detail';
+import { MATH_DETAIL_EN } from './data/longform/math_detail';
+import { CFOP_DETAIL_EN } from './data/longform/cfop_detail';
+import { METHODS_HARDWARE_EN } from './data/longform/methods_hardware';
+import { BIOMECH_TRAINING_EN } from './data/longform/biomech_training';
+import { CUBERS_COMMUNITY_EN } from './data/longform/cubers_community';
+import { STATS_FORECAST_EN } from './data/longform/stats_forecast';
 import './prediction.css';
 import './prediction333.css';
 
@@ -357,6 +365,8 @@ export default function Prediction333Page() {
                 </tbody>
               </table>
             </div>
+
+            {!isZh && <Longform text={HISTORY_DETAIL_EN} />}
           </Section>
 
           <Section id="reconstructions" titleZh="著名复盘 (STM / TPS)" titleEn="Famous Reconstructions" isZh={isZh}>
@@ -501,6 +511,8 @@ export default function Prediction333Page() {
                 ? <><strong>HTM → STM 换算.</strong> CFOP slice 少, HTM ≈ STM. Roux M-slice 多, HTM 比 STM 高 5-10%. 跨方法比较步数必须先统一到 STM, 否则 Roux 的 48 STM 会被错误显示为 53 HTM.</>
                 : <><strong>HTM→STM conversion.</strong> CFOP slice-rare so HTM ≈ STM. Roux relies on M-slice; HTM exceeds STM by 5-10%. Cross-method comparison must normalize to STM, or Roux's 48 STM shows as 53 HTM.</>}
             </p>
+
+            {!isZh && <Longform text={MATH_DETAIL_EN} />}
           </Section>
 
           <Section id="method-cfop" titleZh="CFOP 解剖学: Cross → F2L → OLL → PLL" titleEn="CFOP Anatomy: Cross → F2L → OLL → PLL" isZh={isZh}>
@@ -537,6 +549,8 @@ export default function Prediction333Page() {
               <li>{isZh ? '<strong>Multislotting</strong>: 一组动作同时解两对 F2L.' : '<strong>Multislotting</strong>: one sequence inserts two pairs.'}</li>
               <li>{isZh ? '<strong>EO-during-F2L</strong>: 即 ZBLS, 最后一对 F2L 同时控 EO.' : '<strong>EO-during-F2L</strong>: i.e. ZBLS, last pair while orienting LL edges.'}</li>
             </ul>
+
+            {!isZh && <Longform text={CFOP_DETAIL_EN} />}
           </Section>
 
           <Section id="method-oll" titleZh="OLL 57 case 全表" titleEn="OLL: All 57 Cases" isZh={isZh}>
@@ -711,6 +725,8 @@ export default function Prediction333Page() {
                 ? <><strong>关键发现.</strong> Zajder 2.76 用 <strong>2021 年的 GAN 12 M</strong>, 不是最新的 GAN 16. <strong>硬件已不是顶级 WR 瓶颈</strong>; 突破来自方法 (ZBLL) + 训练 (智能魔方).</>
                 : <><strong>Key finding.</strong> Zajder's 2.76 used a <strong>2021 GAN 12 M</strong>, not the latest GAN 16. <strong>Hardware is no longer the binding constraint at the top</strong>; gains come from methods (ZBLL) + training (smart cubes).</>}
             </p>
+
+            {!isZh && <Longform text={METHODS_HARDWARE_EN} />}
           </Section>
 
           <Section id="smart-cube" titleZh="智能魔方革命 (2019-2026)" titleEn="Smart Cube Revolution (2019-2026)" isZh={isZh}>
@@ -762,6 +778,8 @@ export default function Prediction333Page() {
                 ? <><strong>读图法.</strong> Zajder 2.76 落在 29 STM × 10.5 TPS → 表中 30/10 = 3.05 (实测 2.76 反映 ZBLL skip). 100 年渐近 ~24 STM × 16 TPS ≈ 1.55s. 数学硬墙 ~16 STM × 17 TPS = 1.0s.</>
                 : <><strong>Reading.</strong> Zajder 2.76 ≈ 29 STM × 10.5 TPS → cell 30/10 = 3.05. 100-yr asymptote ≈ 24 STM × 16 TPS ≈ 1.55 s. Math wall ≈ 16 STM × 17 TPS = 1.0 s.</>}
             </p>
+
+            {!isZh && <Longform text={BIOMECH_TRAINING_EN} />}
           </Section>
 
           <Section id="cubers" titleZh="顶级选手画像" titleEn="Top Cuber Profiles" isZh={isZh}>
@@ -853,6 +871,8 @@ export default function Prediction333Page() {
               hardware_zh="—"
               current_en="Mid-tier competitor; 1LLL recognition prevents WR-level performance"
               current_zh="中阶选手;1LLL 识别速度限制 WR 表现" />
+
+            {!isZh && <Longform text={CUBERS_COMMUNITY_EN} />}
           </Section>
 
           <Section id="training" titleZh="训练学方法 — 量化的练习路径" titleEn="Training Methodology — Quantitative Practice" isZh={isZh}>
@@ -961,6 +981,8 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
               yMin={0.5}
               yMax={20}
             />
+
+            {!isZh && <Longform text={STATS_FORECAST_EN} />}
           </Section>
 
           <Section id="scenarios" titleZh="情景分析" titleEn="Scenarios" isZh={isZh}>
