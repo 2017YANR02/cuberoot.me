@@ -889,17 +889,6 @@
           "22.00"
         ],
         [
-          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
-          "19.67",
-          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
-          "21.00",
-          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
-          "21.33"
-        ],
-        [
           "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -909,6 +898,17 @@
           "21.00",
           "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "21.00"
+        ],
+        [
+          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
+          "19.67",
+          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
+          "21.00",
+          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
+          "21.33"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
@@ -955,17 +955,6 @@
           "21.67"
         ],
         [
-          "[FMC under the Mistletoe 2025](https://www.worldcubeassociation.org/competitions/FMCundertheMistletoe2025/results/all#e333fm_1)",
-          "First round",
-          "1:03.34",
-          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
-          "20.67",
-          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
-          "21.00",
-          "[Jibo Zhao (赵吉波)](https://www.worldcubeassociation.org/persons/2010ZHAO11)",
-          "21.67"
-        ],
-        [
           "[FMC West Melbourne 2024](https://www.worldcubeassociation.org/competitions/FMCWestMelbourne2024/results/all#e333fm_1)",
           "First round",
           "1:03.34",
@@ -975,6 +964,17 @@
           "20.67",
           "[Max Parris](https://www.worldcubeassociation.org/persons/2022PARR10)",
           "22.67"
+        ],
+        [
+          "[FMC under the Mistletoe 2025](https://www.worldcubeassociation.org/competitions/FMCundertheMistletoe2025/results/all#e333fm_1)",
+          "First round",
+          "1:03.34",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
+          "20.67",
+          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
+          "21.00",
+          "[Jibo Zhao (赵吉波)](https://www.worldcubeassociation.org/persons/2010ZHAO11)",
+          "21.67"
         ],
         [
           "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#e333fm_f)",
@@ -1093,15 +1093,15 @@
           "10.82"
         ],
         [
-          "[Swisscubing Cup I 2025](https://www.worldcubeassociation.org/competitions/SwisscubingCupI2025/results/all#e333oh_e)",
-          "Second round",
-          "28.17",
-          "[Eden Robinson-Rechavi](https://www.worldcubeassociation.org/persons/2022ROBI05)",
-          "8.53",
-          "[Dhruva Sai Meruva](https://www.worldcubeassociation.org/persons/2021MERU01)",
-          "9.39",
-          "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)",
-          "10.25"
+          "[3x3 in Madison 2026](https://www.worldcubeassociation.org/competitions/3x3inMadison2026/results/all#e333oh_d)",
+          "First round",
+          "28.10",
+          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+          "8.71",
+          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+          "9.52",
+          "[Eli Parker](https://www.worldcubeassociation.org/persons/2016PARK02)",
+          "9.87"
         ]
       ]
     },
@@ -1229,9 +1229,9 @@
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#epyram_2)",
           "Second round",
           "4.64",
-          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
-          "1.52",
           "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "1.52",
+          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
           "1.52",
           "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
           "1.60"
