@@ -99,8 +99,10 @@ function validateText(s: unknown, max: number, required: boolean): { ok: boolean
 }
 
 // GET /v1/wiki/terms — 全量列表,按 letter+position 排;additions inline 一起带回
+// NOTE: 不走 HTTP cache — 写操作 (create/update/delete) 立刻可见,避免"删了还在"。
+// 全量 payload ~100KB,登录用户日常浏览频率低,不缓存影响极小。
 wikiRoutes.get('/wiki/terms', async (c) => {
-  c.header('Cache-Control', 'public, max-age=30');
+  c.header('Cache-Control', 'no-store');
 
   const terms = await query<TermRow>(
     `SELECT id, letter, position, head, body, source, owner_wca_id, owner_name,
