@@ -231,13 +231,6 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
 
   // Side stickers — on the OUTER cube-face walls of the piece.
   if (corner) {
-    // Corner has 2 outer walls: at piece-local x=TILE (faces +X axis after
-    // group rotation) and piece-local y=TILE (faces -Z axis after group
-    // rotation, since piece-local +Y → world -Z under Rx(-90°)).
-    // For slot 0 (FL corner, pivot rotation +180°): piece-local +X → world -X (L face),
-    //   piece-local -Z → world +Z (F face). So +X wall → L (sideB), -Z wall → F (sideA).
-    // Generalizing: +X wall always gets sideB, +Y wall (= world -Z direction
-    // before pivot rotation) gets sideA.
     const matA = new THREE.MeshPhongMaterial({
       color: SQ1_COLORS[faces.sideA], specular: 0x222222, shininess: 50,
       side: THREE.DoubleSide,
@@ -254,6 +247,23 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
     wallB.position.set(TILE + 0.2, TILE / 2, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallB);
+
+    // Hidden-face hint tiles: duplicate of each side sticker pushed ~OFFSET units
+    // outward in the OPPOSITE direction (so you can see "what's on the back").
+    // Cubedb shows hidden stickers as semi-transparent floating quads.
+    const HINT_OFFSET = 220;
+    const hintMatA = matA.clone();
+    hintMatA.transparent = true; hintMatA.opacity = 0.78;
+    const hintA = mkRectMesh((TILE - 6) * 0.55, (LAYER_HEIGHT - 6) * 0.55, hintMatA);
+    hintA.position.set(TILE / 2, TILE + 0.2 + HINT_OFFSET, LAYER_HEIGHT / 2);
+    hintA.rotation.set(-Math.PI / 2, 0, 0);
+    group.add(hintA);
+    const hintMatB = matB.clone();
+    hintMatB.transparent = true; hintMatB.opacity = 0.78;
+    const hintB = mkRectMesh((TILE - 6) * 0.55, (LAYER_HEIGHT - 6) * 0.55, hintMatB);
+    hintB.position.set(TILE + 0.2 + HINT_OFFSET, TILE / 2, LAYER_HEIGHT / 2);
+    hintB.rotation.set(0, Math.PI / 2, Math.PI / 2);
+    group.add(hintB);
   } else {
     // Wedge has 1 outer wall at x=TILE, spans Y=-WEDGE_W/2..+WEDGE_W/2, Z=0..LAYER_HEIGHT.
     const matA = new THREE.MeshPhongMaterial({
@@ -264,6 +274,14 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
     wallA.position.set(TILE + 0.2, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallA);
+
+    const HINT_OFFSET = 220;
+    const hintMat = matA.clone();
+    hintMat.transparent = true; hintMat.opacity = 0.78;
+    const hintA = mkRectMesh((WEDGE_W - 6) * 0.55, (LAYER_HEIGHT - 6) * 0.55, hintMat);
+    hintA.position.set(TILE + 0.2 + HINT_OFFSET, 0, LAYER_HEIGHT / 2);
+    hintA.rotation.set(0, Math.PI / 2, Math.PI / 2);
+    group.add(hintA);
   }
 
   // Group transform: extrusion along +Z becomes world +Y for the top layer.
