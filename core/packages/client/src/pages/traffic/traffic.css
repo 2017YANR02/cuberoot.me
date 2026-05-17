@@ -64,6 +64,11 @@
   color: var(--foreground);
 }
 
+.tr-view-select {
+  display: inline-block;
+  min-width: 160px;
+}
+
 .tr-totals { margin-left: auto; font-size: 0.85rem; color: var(--muted-foreground); }
 .tr-totals b { color: var(--foreground); font-weight: 600; }
 
