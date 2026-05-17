@@ -4,18 +4,17 @@
  * Coordinate convention (world):
  *   - Y vertical (up).
  *   - +X = right, +Z = front (toward viewer).
- *   - Cube has half-side W = TILE + WEDGE_W/2 = 137.5 along X and Z.
+ *   - Cube has half-side W = 137.5 along X and Z.
  *
- * Piece geometry (cube-corner approach, verbatim from cubedb):
- *   - Each CORNER piece is a TILE × TILE square (100×100) in XZ, extruded
- *     LAYER_HEIGHT along Y. 4 corners per layer, positioned at the 4 cube
- *     corners (±W, ±W) and rotated by Y multiples of 90°.
- *   - Each WEDGE piece is a TILE × WEDGE_W rectangle (100×75), extruded
- *     LAYER_HEIGHT along Y. 4 wedges per layer, positioned at the centers
- *     of the 4 cube faces (±W, 0) / (0, ±W).
- *   - Pivot at the cube's central vertical axis; piece geometry is built in
- *     piece-local space with origin at the cube center, then translated
- *     outward by W and rotated around +Y by the slot angle.
+ * Piece geometry (pie-slice polygon extruded along Z):
+ *   - Each CORNER piece is a 4-vertex polygon spanning 60° (axis →
+ *     +X-side outer → cube corner → +Y-side outer → axis).
+ *   - Each WEDGE piece is a 3-vertex triangle spanning 30° (axis →
+ *     +X-side outer → +X-side outer mirror → axis).
+ *   - All outer vertices live on the cube outline at distance W; the
+ *     wedge-vs-corner tangential boundary is at ±W·tan(15°) ≈ ±36.84.
+ *   - Pivot at the cube's central vertical axis; pivot Y rotation places the
+ *     piece at its slot angle.
  *
  * Slot layout (top layer slots 0..11, bot slots 12..23):
  *   - Slot k corresponds to a 30° wedge starting at angle θ_k = k·30° around +Y
@@ -34,26 +33,38 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// ─── geometry constants (verbatim from cubedb) ─────────────────────────────
-const TILE = 100;            // corner side length (and outer-radial extent)
-const WEDGE_W = 75;          // wedge tangential width
-const HALF_W = TILE / 2 + WEDGE_W / 2 + TILE / 2 - TILE / 2; // see below
-// The cube's half-side W: from center axis, the OUTER edge of a corner is at
-// distance W. A corner is TILE × TILE in XZ, with its inner edge at W - TILE.
-// A wedge is centered on a face, so its outer face is at distance W and
-// tangential edges at ±WEDGE_W/2 from the face center.
-const W = TILE + WEDGE_W / 2;  // 100 + 37.5 = 137.5
+// ─── geometry constants ───────────────────────────────────────────────────
+// Cube top-down outline: 275×275 square, centered on the vertical axis.
+//   W = half-side (137.5). Each layer has 12 slots × 30°. Corner spans 2 slots
+//   (60°), wedge 1 slot (30°). Pieces are **pie-slice polygons** in the XY
+//   plane, extruded along Z by LAYER_HEIGHT.
+//
+// The wedge-vs-corner angular boundary is at ±15° from each slot axis. At the
+// cube face (distance W from axis), this gives a tangential boundary at
+// ±W·tan(15°) ≈ ±36.84 — i.e. the wedge's flat outer face is ≈73.6 wide and
+// the corner's adjacent flat face is ≈100.66 wide. These match cubedb's
+// nominal "TILE=100 / WEDGE_W=75" but with the geometrically-correct values.
+const W = 137.5;                                     // cube half-side
+const WEDGE_HALF_CHORD = W * Math.tan(Math.PI / 12); // ≈36.84
+const TILE_W = W - WEDGE_HALF_CHORD;                 // corner-face width ≈100.66
+const WEDGE_FACE_W = 2 * WEDGE_HALF_CHORD;           // wedge-face width ≈73.68
 
-const LAYER_HEIGHT = 100;     // thickness of one layer (top or bot)
-const LAYER_GAP = 4;          // equator gap between layers
-const HALF_GAP = LAYER_GAP / 2;
+// Layer heights chosen so total height = 2·W = 275 → cube is actually cubic.
+//   Top + Mid + Bot = 110 + 55 + 110 = 275 ✓
+// Middle layer is ~1/5 of total, matching cubedb's visual proportions.
+const LAYER_HEIGHT = 110;     // top/bot layer thickness
+const MID_HEIGHT = 55;        // equator slice thickness
+const HALF_MID = MID_HEIGHT / 2;
 const BEVEL = {
   steps: 1, depth: LAYER_HEIGHT,
   bevelEnabled: true, bevelThickness: 2, bevelSize: 2,
   bevelOffset: -2, bevelSegments: 2,
 };
-
-void HALF_W;
+// Sticker Z-offset above body cap: must clear bevel (extends ±bevelThickness
+// beyond depth) — otherwise sticker is INSIDE the body and gets occluded.
+const STICKER_Z = LAYER_HEIGHT + BEVEL.bevelThickness + 0.5; // 102.5
+// Side-sticker outward radial offset from cube face (W).
+const SIDE_OFFSET = 0.5;
 
 export const SQ1_COLORS = {
   L: 0x1f4dff,
@@ -159,41 +170,43 @@ function pieceFaces(piece: number): { top: FaceKey; sideA: FaceKey; sideB?: Face
   }
 }
 
-// ─── piece geometry (cube-corner approach) ─────────────────────────────────
-// All pieces built in PIECE-LOCAL space:
-//   - The piece sits at its solved-slot-0 position by default.
-//   - For a CORNER: outer corner at (TILE, 0, TILE), inner corner at (0,0,0),
-//                   extruded along +Y from y=0 to y=LAYER_HEIGHT.
-//   - For a WEDGE: outer edge midpoint at (TILE, 0, 0), wedge tangential extent
-//                  is along ±Z from -WEDGE_W/2 to +WEDGE_W/2.
-//
-// Top/side stickers are placed on the OUTER faces of these cuboids. Corners
-// have 2 side stickers (one on each of the two cube faces it spans), wedges
-// have 1 side sticker (centered on its cube face).
+// ─── piece geometry (pie-slice polygon) ───────────────────────────────────
+// All pieces built in PIECE-LOCAL (group) space, then group rotated -π/2
+// around X so the extruded Z direction becomes world +Y (vertical).
+//   - CORNER default: outer corner at (W, W) → after group rotation, pivot
+//     (W, 0, -W). Default world angle = +45° (RB direction).
+//   - WEDGE default: outer face centered at (W, 0) → pivot (W, 0, 0). Default
+//     world angle = 0° (R direction).
+// placementForSlot() returns the pivot Y rotation to swing the piece from
+// its default angle to its target slot angle.
 
 function cornerShape(): THREE.Shape {
-  // A square in XY plane (we extrude along Z later, then rotate the group to
-  // make Z become Y vertical). Corner is at (0,0); outer at (TILE, TILE).
-  // We round the outer-corner only.
-  const r = 18;
+  // Pie-slice corner: 4 vertices in XY plane.
+  //   - (0, 0): axis vertex (at the cube central axis)
+  //   - (W, WEDGE_HALF_CHORD): outer vertex on +X face, at boundary with adj wedge
+  //   - (W, W): cube outline corner
+  //   - (WEDGE_HALF_CHORD, W): outer vertex on +Y face, at boundary with adj wedge
+  // CCW order (positive signed area) so ShapeGeometry normals face +Z.
   const s = new THREE.Shape();
   s.moveTo(0, 0);
-  s.lineTo(TILE, 0);
-  s.lineTo(TILE, TILE - r);
-  s.absarc(TILE - r, TILE - r, r, 0, Math.PI / 2, false);
-  s.lineTo(0, TILE);
+  s.lineTo(W, WEDGE_HALF_CHORD);
+  s.lineTo(W, W);
+  s.lineTo(WEDGE_HALF_CHORD, W);
   s.lineTo(0, 0);
   return s;
 }
 
 function wedgeShape(): THREE.Shape {
-  // Rectangle: outer in +X direction (length TILE), tangential extent ±WEDGE_W/2 in Y.
+  // Pie-slice wedge: triangle in XY plane.
+  //   - (0, 0): axis vertex
+  //   - (W, -WEDGE_HALF_CHORD): outer-right
+  //   - (W, +WEDGE_HALF_CHORD): outer-left
+  // The chord between the two outer vertices is the wedge's flat outer face.
   const s = new THREE.Shape();
-  s.moveTo(0, -WEDGE_W / 2);
-  s.lineTo(TILE, -WEDGE_W / 2);
-  s.lineTo(TILE, WEDGE_W / 2);
-  s.lineTo(0, WEDGE_W / 2);
-  s.lineTo(0, -WEDGE_W / 2);
+  s.moveTo(0, 0);
+  s.lineTo(W, -WEDGE_HALF_CHORD);
+  s.lineTo(W, WEDGE_HALF_CHORD);
+  s.lineTo(0, 0);
   return s;
 }
 
@@ -201,6 +214,15 @@ interface BuildResult {
   pivot: THREE.Object3D;
   group: THREE.Group;
 }
+
+// Side-sticker insets so adjacent pieces show body color between their stickers.
+const SIDE_INSET_H = 3;  // tangential inset on each side
+const SIDE_INSET_V = 3;  // vertical inset on top/bottom
+
+// Center of the corner's outer cube face (tangential coord). The corner's
+// outer face on +X side spans Y from WEDGE_HALF_CHORD to W (length TILE_W);
+// midpoint Y = (W + WEDGE_HALF_CHORD) / 2. Same for the +Y face's X center.
+const CORNER_FACE_CENTER = (W + WEDGE_HALF_CHORD) / 2;
 
 function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
   const faces = pieceFaces(piece);
@@ -217,76 +239,90 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
   const body = new THREE.Mesh(bodyGeom, bodyMat);
   group.add(body);
 
-  // Top sticker: flat colored ShapeGeometry sitting on the body's top face.
-  // Sticker is inset 3px from the outline so a thin black border shows.
-  const stickerOutline = corner ? cornerShapeInset(3.5) : wedgeShapeInset(3.5);
-  const stickerGeom = new THREE.ShapeGeometry(stickerOutline);
+  // Top sticker: full shape outline (no inset). The body's bevel inset by
+  // BEVEL.bevelOffset gives the visible black plastic edge around the sticker.
+  const stickerGeom = new THREE.ShapeGeometry(outline);
   const topMat = new THREE.MeshPhongMaterial({
     color: SQ1_COLORS[faces.top], specular: 0x222222, shininess: 50,
     side: THREE.DoubleSide,
   });
   const topSticker = new THREE.Mesh(stickerGeom, topMat);
-  topSticker.position.z = LAYER_HEIGHT + 0.05;
+  // STICKER_Z clears the bevel cap (extends bevelThickness past depth).
+  topSticker.position.z = STICKER_Z;
   group.add(topSticker);
 
-  // Side stickers — on the OUTER cube-face walls of the piece.
+  // Side stickers — placed on the OUTER cube-face surfaces (at radial W).
+  // They're flat planes positioned slightly outside the cube face to avoid
+  // Z-fighting with the body's side walls. Width/height inset so adjacent
+  // pieces' stickers don't touch, leaving a thin body-colored gap.
   if (corner) {
-    const matA = new THREE.MeshPhongMaterial({
-      color: SQ1_COLORS[faces.sideA], specular: 0x222222, shininess: 50,
-      side: THREE.DoubleSide,
-    });
-    const matB = new THREE.MeshPhongMaterial({
-      color: SQ1_COLORS[faces.sideB!], specular: 0x222222, shininess: 50,
-      side: THREE.DoubleSide,
-    });
-    const wallA = mkRectMesh(TILE - 6, LAYER_HEIGHT - 6, matA);
-    wallA.position.set(TILE / 2, TILE + 1.5, LAYER_HEIGHT / 2);
+    const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
+    const matB = mkStickerMat(SQ1_COLORS[faces.sideB!]);
+
+    // wallA on +Y face: spans X from WEDGE_HALF_CHORD to W (width TILE_W).
+    const wallA = mkRectMesh(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
+    wallA.position.set(CORNER_FACE_CENTER, W + SIDE_OFFSET, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
     group.add(wallA);
-    const wallB = mkRectMesh(TILE - 6, LAYER_HEIGHT - 6, matB);
-    wallB.position.set(TILE + 1.5, TILE / 2, LAYER_HEIGHT / 2);
+
+    // wallB on +X face: spans Y from WEDGE_HALF_CHORD to W.
+    const wallB = mkRectMesh(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
+    wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallB);
 
-    // Hidden-face hint tiles: duplicate of each side sticker pushed ~OFFSET units
-    // outward in the OPPOSITE direction (so you can see "what's on the back").
-    // Cubedb shows hidden stickers as semi-transparent floating quads.
+    // Hidden-face hint tiles: floating colored quads pushed outward, so the
+    // viewer can see what's on the away-facing sides. cubedb signature.
     const HINT_OFFSET = 220;
+    const HINT_SCALE = 0.55;
     const hintMatA = matA.clone();
     hintMatA.transparent = true; hintMatA.opacity = 0.78;
-    const hintA = mkRectMesh((TILE - 6) * 0.55, (LAYER_HEIGHT - 6) * 0.55, hintMatA);
-    hintA.position.set(TILE / 2, TILE + 0.2 + HINT_OFFSET, LAYER_HEIGHT / 2);
+    const hintA = mkRectMesh(
+      (TILE_W - 2 * SIDE_INSET_H) * HINT_SCALE,
+      (LAYER_HEIGHT - 2 * SIDE_INSET_V) * HINT_SCALE,
+      hintMatA,
+    );
+    hintA.position.set(CORNER_FACE_CENTER, W + HINT_OFFSET, LAYER_HEIGHT / 2);
     hintA.rotation.set(-Math.PI / 2, 0, 0);
     group.add(hintA);
     const hintMatB = matB.clone();
     hintMatB.transparent = true; hintMatB.opacity = 0.78;
-    const hintB = mkRectMesh((TILE - 6) * 0.55, (LAYER_HEIGHT - 6) * 0.55, hintMatB);
-    hintB.position.set(TILE + 0.2 + HINT_OFFSET, TILE / 2, LAYER_HEIGHT / 2);
+    const hintB = mkRectMesh(
+      (TILE_W - 2 * SIDE_INSET_H) * HINT_SCALE,
+      (LAYER_HEIGHT - 2 * SIDE_INSET_V) * HINT_SCALE,
+      hintMatB,
+    );
+    hintB.position.set(W + HINT_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     hintB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(hintB);
   } else {
-    // Wedge has 1 outer wall at x=TILE, spans Y=-WEDGE_W/2..+WEDGE_W/2, Z=0..LAYER_HEIGHT.
-    const matA = new THREE.MeshPhongMaterial({
-      color: SQ1_COLORS[faces.sideA], specular: 0x222222, shininess: 50,
-      side: THREE.DoubleSide,
-    });
-    const wallA = mkRectMesh(WEDGE_W - 6, LAYER_HEIGHT - 6, matA);
-    wallA.position.set(TILE + 1.5, 0, LAYER_HEIGHT / 2);
+    // Wedge has 1 outer face on +X side: chord at X=W, spans Y from
+    // -WEDGE_HALF_CHORD to +WEDGE_HALF_CHORD (width WEDGE_FACE_W).
+    const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
+    const wallA = mkRectMesh(WEDGE_FACE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
+    wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallA);
 
     const HINT_OFFSET = 220;
+    const HINT_SCALE = 0.55;
     const hintMat = matA.clone();
     hintMat.transparent = true; hintMat.opacity = 0.78;
-    const hintA = mkRectMesh((WEDGE_W - 6) * 0.55, (LAYER_HEIGHT - 6) * 0.55, hintMat);
-    hintA.position.set(TILE + 0.2 + HINT_OFFSET, 0, LAYER_HEIGHT / 2);
+    const hintA = mkRectMesh(
+      (WEDGE_FACE_W - 2 * SIDE_INSET_H) * HINT_SCALE,
+      (LAYER_HEIGHT - 2 * SIDE_INSET_V) * HINT_SCALE,
+      hintMat,
+    );
+    hintA.position.set(W + HINT_OFFSET, 0, LAYER_HEIGHT / 2);
     hintA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(hintA);
   }
 
   // Group transform: extrusion along +Z becomes world +Y for the top layer.
-  // For BOT layer, we use scale.y=-1 on the pivot (after rotation) to mirror
-  // across the equator.
+  // For BOT layer, scale.y=-1 on the pivot mirrors across the equator.
+  // (With the increased sticker Z offset, the negative-scale ShapeGeometry
+  //  lighting issue no longer matters because the sticker is now physically
+  //  outside the bevel rather than occluded by it.)
   const pivot = new THREE.Object3D();
   group.rotation.x = -Math.PI / 2;
   pivot.add(group);
@@ -298,26 +334,10 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
   return { group, pivot };
 }
 
-function cornerShapeInset(gap: number): THREE.Shape {
-  const r = 18 - gap;
-  const s = new THREE.Shape();
-  s.moveTo(gap, gap);
-  s.lineTo(TILE - gap, gap);
-  s.lineTo(TILE - gap, TILE - gap - r);
-  s.absarc(TILE - gap - r, TILE - gap - r, r, 0, Math.PI / 2, false);
-  s.lineTo(gap, TILE - gap);
-  s.lineTo(gap, gap);
-  return s;
-}
-
-function wedgeShapeInset(gap: number): THREE.Shape {
-  const s = new THREE.Shape();
-  s.moveTo(gap, -WEDGE_W / 2 + gap);
-  s.lineTo(TILE - gap, -WEDGE_W / 2 + gap);
-  s.lineTo(TILE - gap, WEDGE_W / 2 - gap);
-  s.lineTo(gap, WEDGE_W / 2 - gap);
-  s.lineTo(gap, -WEDGE_W / 2 + gap);
-  return s;
+function mkStickerMat(color: number): THREE.MeshPhongMaterial {
+  return new THREE.MeshPhongMaterial({
+    color, specular: 0x222222, shininess: 50, side: THREE.DoubleSide,
+  });
 }
 
 function mkRectMesh(w: number, h: number, mat: THREE.MeshPhongMaterial): THREE.Mesh {
@@ -342,10 +362,10 @@ function mkRectMesh(w: number, h: number, mat: THREE.MeshPhongMaterial): THREE.M
  *    (15 - 2k)/2 · 30° = (15 - 2k) · 15°.
  *
  *  Piece geometry's natural orientation:
- *    - WEDGE: outer face center at piece-local (TILE, 0, 0) → world angle 0°.
+ *    - WEDGE: outer face center at piece-local (W, 0, 0) → world angle 0°.
  *      Pivot rotation = target angle.
- *    - CORNER: outer corner at piece-local (TILE, TILE, 0) → world angle +45°
- *      after group rotation. Pivot rotation = target angle - 45°.
+ *    - CORNER: outer corner at piece-local (W, W, 0) → world angle +45° after
+ *      group rotation. Pivot rotation = target angle - 45°.
  */
 function placementForSlot(slot: number, corner: boolean): { angleRad: number; isTop: boolean } {
   const isTop = slot < 12;
@@ -398,6 +418,7 @@ export class Sq1Renderer {
   controls: OrbitControls;
   cubeRoot: THREE.Object3D;
   pieces: PieceEntry[] = [];
+  middle: { pivot: THREE.Object3D; side: 1 | -1 }[] = [];
   state: Sq1State = solvedState();
   durationPerMoveMs = 220;
 
@@ -440,6 +461,7 @@ export class Sq1Renderer {
 
     this.setupLighting();
     this.buildPieces();
+    this.buildMiddle();
     this.applyStateInstant(this.state);
     this.start();
   }
@@ -467,6 +489,48 @@ export class Sq1Renderer {
     }
   }
 
+  /**
+   * Equator slice = 2 rectangular slabs (right half X>0, left half X<0), body
+   * color only (real Sq1 middle pieces are plain plastic with no stickers).
+   * Splitting at X=0 lets the right half participate in `/` slice rotation
+   * while the left half stays put — visually invisible since both are body
+   * color, but mechanically correct.
+   */
+  private buildMiddle(): void {
+    const mat = new THREE.MeshPhongMaterial({
+      color: SQ1_COLORS.BODY, specular: 0x222222, shininess: 25,
+      side: THREE.DoubleSide,
+    });
+    const mkHalf = (sign: 1 | -1): THREE.Object3D => {
+      // Half-slab in XY plane (shape) → extruded along Z, then rotated so Y is vertical.
+      const shape = new THREE.Shape();
+      const x0 = sign === 1 ? 0 : -W;
+      const x1 = sign === 1 ? W : 0;
+      shape.moveTo(x0, -W);
+      shape.lineTo(x1, -W);
+      shape.lineTo(x1, W);
+      shape.lineTo(x0, W);
+      shape.lineTo(x0, -W);
+      const geom = new THREE.ExtrudeGeometry(shape, {
+        steps: 1, depth: MID_HEIGHT,
+        bevelEnabled: true, bevelThickness: 1.5, bevelSize: 1.5,
+        bevelOffset: -1.5, bevelSegments: 1,
+      });
+      // Extrusion +Z → world +Y after Rx(-π/2); then center vertically on equator.
+      geom.rotateX(-Math.PI / 2);
+      geom.translate(0, -HALF_MID, 0);
+      const mesh = new THREE.Mesh(geom, mat);
+      // Wrap in a pivot at world origin so slice rotation around X works
+      // (slicePivot rotates around its own X axis at origin).
+      const pivot = new THREE.Object3D();
+      pivot.add(mesh);
+      this.cubeRoot.add(pivot);
+      return pivot;
+    };
+    this.middle.push({ pivot: mkHalf(1), side: 1 });
+    this.middle.push({ pivot: mkHalf(-1), side: -1 });
+  }
+
   applyStateInstant(state: Sq1State): void {
     this.state = state;
     const pieceSlot = new Map<number, number>();
@@ -477,7 +541,7 @@ export class Sq1Renderer {
       const slot = pieceSlot.get(p.pieceId);
       if (slot === undefined) continue;
       const { angleRad, isTop } = placementForSlot(slot, isCornerPiece(p.pieceId));
-      p.pivot.position.set(0, isTop ? HALF_GAP : -HALF_GAP, 0);
+      p.pivot.position.set(0, isTop ? HALF_MID : -HALF_MID, 0);
       p.pivot.rotation.set(0, angleRad, 0);
       p.pivot.quaternion.setFromEuler(p.pivot.rotation);
       p.pivot.scale.x = 1;
@@ -578,10 +642,22 @@ export class Sq1Renderer {
     } else {
       const slicePivot = new THREE.Object3D();
       this.cubeRoot.add(slicePivot);
+      // Right-half check: pivot.position is (0, ±HALF_MID, 0) for every piece —
+      // the slot direction is encoded in pivot.rotation.y, not position. So we
+      // PROBE a representative geometry point (the outer radial face center for
+      // wedges, or the outer corner vertex for corners) through the pivot's
+      // world matrix to get the piece's actual world X.
+      const probe = new THREE.Vector3();
       for (const p of this.pieces) {
         p.pivot.updateWorldMatrix(true, false);
-        const wpos = new THREE.Vector3().setFromMatrixPosition(p.pivot.matrixWorld);
-        if (wpos.x > 0.5) this.attach(p.pivot, slicePivot);
+        const isCorner = isCornerPiece(p.pieceId);
+        probe.set(W, 0, isCorner ? -W : 0);
+        probe.applyMatrix4(p.pivot.matrixWorld);
+        if (probe.x > 0.5) this.attach(p.pivot, slicePivot);
+      }
+      // Middle right slab (side=1) joins the slice. Left slab stays.
+      for (const m of this.middle) {
+        if (m.side === 1) this.attach(m.pivot, slicePivot);
       }
       this.active = { move, t: 0, duration: this.durationPerMoveMs, slicePivot, angle: Math.PI };
     }
@@ -596,6 +672,18 @@ export class Sq1Renderer {
       pv.updateMatrixWorld(true);
       for (const p of this.pieces) {
         if (p.pivot.parent === pv) this.attach(p.pivot, this.cubeRoot);
+      }
+      for (const m of this.middle) {
+        if (m.pivot.parent === pv) {
+          this.attach(m.pivot, this.cubeRoot);
+          // Snap middle slab back to canonical pose — its mesh is symmetric in
+          // Y/Z so 180° around X is visually identical, but reset transforms so
+          // matrices don't drift across many moves.
+          m.pivot.position.set(0, 0, 0);
+          m.pivot.rotation.set(0, 0, 0);
+          m.pivot.quaternion.setFromEuler(m.pivot.rotation);
+          m.pivot.scale.set(1, 1, 1);
+        }
       }
       this.cubeRoot.remove(pv);
     } else {
