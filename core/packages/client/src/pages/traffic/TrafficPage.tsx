@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import LangToggle from '../../components/LangToggle';
+import { ListSelect } from '../../components/ListSelect';
 import { Flag } from '../../utils/flag';
 import { countryName } from '../../utils/country_name';
 import { useAuthStore } from '../../stores/auth_store';
@@ -16,6 +17,7 @@ import { apiUrl } from '../../utils/api_base';
 import './traffic.css';
 
 type Range = '7d' | '30d' | '90d' | 'all';
+type View = 'series' | 'paths' | 'refs' | 'countries';
 
 interface DailyRow { day: string; pv: number; uv: number }
 interface PathRow { path: string; pv: number; uv: number; avg_dwell_ms: number | null }
@@ -63,9 +65,17 @@ export default function TrafficPage() {
   const login = useAuthStore(s => s.login);
 
   const [range, setRange] = useState<Range>('30d');
+  const [view, setView] = useState<View>('series');
   const [data, setData] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  const viewItems = useMemo(() => [
+    { value: 'series', label: T('每日 PV / UV', 'Daily PV / UV') },
+    { value: 'paths', label: T('热门路径', 'Top paths') },
+    { value: 'refs', label: T('来源', 'Top referrers') },
+    { value: 'countries', label: T('国家分布', 'Top countries') },
+  ], [isZh]);
 
   useEffect(() => {
     if (!user) return;
@@ -125,6 +135,14 @@ export default function TrafficPage() {
             </button>
           ))}
         </div>
+        <ListSelect
+          items={viewItems}
+          value={view}
+          onChange={(v) => setView(v as View)}
+          allLabel=""
+          clearable={false}
+          className="tr-view-select"
+        />
         {data && (
           <div className="tr-totals">
             {T('共', '')} <b>{data.totals.pv.toLocaleString()}</b> {T('次访问', 'pageviews')}
@@ -138,10 +156,10 @@ export default function TrafficPage() {
 
       {data && !loading && !err && (
         <>
-          <TrafficTimeSeries data={data.daily} isZh={isZh} />
-          <TopPaths rows={data.paths} isZh={isZh} />
-          <TopRefs rows={data.referrers} isZh={isZh} />
-          <TopCountries rows={data.countries} isZh={isZh} />
+          {view === 'series' && <TrafficTimeSeries data={data.daily} isZh={isZh} />}
+          {view === 'paths' && <TopPaths rows={data.paths} isZh={isZh} />}
+          {view === 'refs' && <TopRefs rows={data.referrers} isZh={isZh} />}
+          {view === 'countries' && <TopCountries rows={data.countries} isZh={isZh} />}
         </>
       )}
 

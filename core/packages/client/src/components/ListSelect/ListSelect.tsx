@@ -29,9 +29,11 @@ interface ListSelectProps {
   className?: string;
   /** popup 顶部加搜索框 (列表长时建议开) */
   searchable?: boolean;
+  /** 是否显示 × 清除按钮. 默认 true (筛选语义). 视图切换器这种"必须选一项"的场景传 false. */
+  clearable?: boolean;
 }
 
-export function ListSelect({ items, value, onChange, allLabel, className, searchable }: ListSelectProps) {
+export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true }: ListSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
@@ -89,7 +91,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
             <span className="list-select-label">{allLabel}</span>
           )}
         </span>
-        {value && (
+        {clearable && value && (
           <span
             className="list-select-clear"
             role="button"
