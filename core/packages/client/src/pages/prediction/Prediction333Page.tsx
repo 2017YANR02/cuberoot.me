@@ -4,10 +4,12 @@
  * 独立路由的"长文" — 历史 / 方法 / 数学 / 生物力学 / 顶级选手 / 训练 / 统计 / 预测.
  * 收尾给出 single + Ao5 综合预测.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext, createContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Menu, X as XIcon } from 'lucide-react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from 'lucide-react';
+
+const ActiveSectionContext = createContext<string>('tldr');
 import { LineChart, type Series, type Band, type RefLine } from './charts';
 import ThemeToggle from '../../components/ThemeToggle';
 import { VisualCube } from '../../components/VisualCube';
@@ -80,14 +82,41 @@ export default function Prediction333Page() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [tocOpen, setTocOpen] = useState(false);
-  const [activeId, setActiveId] = useState<string>('tldr');
+  const params = useParams<{ sectionId?: string }>();
+  const navigate = useNavigate();
+  const requested = params.sectionId ?? 'tldr';
+  const activeIdx = Math.max(0, SECTIONS.findIndex((s) => s.id === requested));
+  const activeId = SECTIONS[activeIdx].id;
+  const prevSection = activeIdx > 0 ? SECTIONS[activeIdx - 1] : null;
+  const nextSection = activeIdx < SECTIONS.length - 1 ? SECTIONS[activeIdx + 1] : null;
+  const sectionHref = (id: string) => {
+    const search = window.location.search;
+    return `/wca/prediction/333/${id}${search}`;
+  };
 
+  // Scroll to top on section change.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [activeId]);
+
+  // Keyboard nav: left/right arrow goes prev/next.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'ArrowLeft' && prevSection) navigate(sectionHref(prevSection.id));
+      if (e.key === 'ArrowRight' && nextSection) navigate(sectionHref(nextSection.id));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [prevSection, nextSection, navigate]);
+
+  // Legacy scrollspy kept as a no-op so removing observed elements doesn't break.
   useEffect(() => {
     const els = SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
     const obs = new IntersectionObserver(
       (entries) => {
         const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) setActiveId(visible.target.id);
+        if (visible) void visible;
       },
       { rootMargin: '-100px 0px -60% 0px' },
     );
@@ -183,12 +212,12 @@ export default function Prediction333Page() {
           <div className="pred-toc-title">{isZh ? '3x3 深度' : '3x3 Deep Dive'}</div>
           <div className="pred-toc-group">
             {SECTIONS.map((s, i) => (
-              <a key={s.id} href={`#${s.id}`}
+              <Link key={s.id} to={sectionHref(s.id)}
                  className={`pred-toc-item${activeId === s.id ? ' is-active' : ''}`}
                  onClick={() => setTocOpen(false)}>
                 <span className="pred-toc-event-num">{(i + 1).toString().padStart(2, '0')}</span>
                 <span className="pred-toc-event-name">{isZh ? s.labelZh : s.labelEn}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </aside>
@@ -202,6 +231,12 @@ export default function Prediction333Page() {
               ? '历史 · 方法 · 硬件 · 数学 · 生物力学 · 顶级选手 · 训练 · 统计 — 综合预测单次与平均.'
               : 'History · Methods · Hardware · Math · Biomech · Top Cubers · Training · Statistics — toward a single & average forecast.'}
           </p>
+          <div className="pred-333-section-meta">
+            {isZh ? '章节' : 'Section'} <strong>{(activeIdx + 1).toString().padStart(2, '0')}</strong> / {SECTIONS.length}
+            <span className="pred-333-section-meta-hint">{isZh ? ' · ← → 切换' : ' · ← → to navigate'}</span>
+          </div>
+
+          <ActiveSectionContext.Provider value={activeId}>
 
           <Section id="tldr" titleZh="一句话结论" titleEn="Top Line" isZh={isZh}>
             <div className="pred-tldr pred-tldr-333">
@@ -561,28 +596,28 @@ export default function Prediction333Page() {
                 ? <><strong>Cross 的色中性 (CN) 加成.</strong> 固定颜色 cross 平均 5.81 HTM, 全色中性 (CN) <strong>4.81 HTM</strong>. 关键不是均值差, 是 P(≤4 步 cross) 从固定色 5.99% 跳到 CN 29.17% — <strong>5 倍简单 cross</strong>. 这就是 CN 在顶级普及的原因.</>
                 : <><strong>Cross color neutrality (CN).</strong> Fixed color 5.81 HTM avg, full CN <strong>4.81</strong>. The win isn't the mean — P(≤4-move cross) jumps from 5.99% to <strong>29.17%</strong>, ~5× as many easy crosses. Why CN is universal at the top.</>}
             </p>
-            <p>{isZh ? '<strong>F2L 41 case</strong> 平均 6.7 STM/slot, 4 槽合计 26.8 STM. 顶级 cuber 的 F2L:' : '<strong>F2L 41 cases</strong>, 6.7 STM/slot avg, 26.8 total. Elite F2L tricks:'}</p>
+            <p>{isZh ? <><strong>F2L 41 case</strong> 平均 6.7 STM/slot, 4 槽合计 26.8 STM. 顶级 cuber 的 F2L:</> : <><strong>F2L 41 cases</strong>, 6.7 STM/slot avg, 26.8 total. Elite F2L tricks:</>}</p>
             <ul>
-              <li>{isZh ? '<strong>Pseudoslotting</strong>: 把 F 或 B 面错位 90° 当 setup.' : '<strong>Pseudoslotting</strong>: misalign F or B by 90° as setup.'}</li>
-              <li>{isZh ? '<strong>Multislotting</strong>: 一组动作同时解两对 F2L.' : '<strong>Multislotting</strong>: one sequence inserts two pairs.'}</li>
-              <li>{isZh ? '<strong>EO-during-F2L</strong>: 即 ZBLS, 最后一对 F2L 同时控 EO.' : '<strong>EO-during-F2L</strong>: i.e. ZBLS, last pair while orienting LL edges.'}</li>
+              <li>{isZh ? <><strong>Pseudoslotting</strong>: 把 F 或 B 面错位 90° 当 setup.</> : <><strong>Pseudoslotting</strong>: misalign F or B by 90° as setup.</>}</li>
+              <li>{isZh ? <><strong>Multislotting</strong>: 一组动作同时解两对 F2L.</> : <><strong>Multislotting</strong>: one sequence inserts two pairs.</>}</li>
+              <li>{isZh ? <><strong>EO-during-F2L</strong>: 即 ZBLS, 最后一对 F2L 同时控 EO.</> : <><strong>EO-during-F2L</strong>: i.e. ZBLS, last pair while orienting LL edges.</>}</li>
             </ul>
 
             {!isZh && <Longform text={CFOP_DETAIL_EN} />}
           </Section>
 
           <Section id="method-oll" titleZh="OLL 57 case 全表" titleEn="OLL: All 57 Cases" isZh={isZh}>
-            <p>{isZh ? '<strong>57 case</strong>, 算法长度 STM 7-14 不等:' : '<strong>57 cases</strong>, alg lengths 7-14 STM:'}</p>
+            <p>{isZh ? <><strong>57 case</strong>, 算法长度 STM 7-14 不等:</> : <><strong>57 cases</strong>, alg lengths 7-14 STM:</>}</p>
             <LineChart
               series={[{ name: 'cases', color: '#0a8a6b', data: OLL_BY_STM.map((d) => ({ x: d.stm, y: d.case_count })) }]}
               yLabel={isZh ? 'case 数' : 'case count'} xLabel="STM" yMin={0}
               yFormat={(v) => v.toFixed(0)}
             />
-            <p>{isZh ? '<strong>双峰</strong>: 9 STM (14 case) 和 11 STM (10 case) 是高点; 14 STM 只 1 个 (Dot OLL #57). <strong>Sune / Anti-Sune (#26/27) 是经典 7 步</strong>.' : '<strong>Bimodal</strong>: 9 STM (14) and 11 STM (10) peak; only OLL #57 (Dot) at 14. <strong>Sune / Antisune (#26/27) classic 7-move</strong>.'}</p>
+            <p>{isZh ? <><strong>双峰</strong>: 9 STM (14 case) 和 11 STM (10 case) 是高点; 14 STM 只 1 个 (Dot OLL #57). <strong>Sune / Anti-Sune (#26/27) 是经典 7 步</strong>.</> : <><strong>Bimodal</strong>: 9 STM (14) and 11 STM (10) peak; only OLL #57 (Dot) at 14. <strong>Sune / Antisune (#26/27) classic 7-move</strong>.</>}</p>
           </Section>
 
           <Section id="method-pll" titleZh="PLL 21 case 全表" titleEn="PLL: All 21 Cases" isZh={isZh}>
-            <p>{isZh ? '<strong>21 case</strong> (4 对镜像 → 17 个独立算法). 均长 12.5 STM:' : '<strong>21 cases</strong> (4 mirror pairs → 17 independent algs). Mean 12.5 STM:'}</p>
+            <p>{isZh ? <><strong>21 case</strong> (4 对镜像 → 17 个独立算法). 均长 12.5 STM:</> : <><strong>21 cases</strong> (4 mirror pairs → 17 independent algs). Mean 12.5 STM:</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
                 <thead><tr><th>{isZh ? '字母' : 'Letter'}</th><th>{isZh ? '名称' : 'Name'}</th><th>STM</th><th>P</th><th>{isZh ? '识别' : 'Recog'}</th><th>{isZh ? '算法' : 'Alg'}</th></tr></thead>
@@ -600,7 +635,7 @@ export default function Prediction333Page() {
                 </tbody>
               </table>
             </div>
-            <p>{isZh ? '<strong>4 个 PLL 视觉样本</strong>:' : '<strong>4 iconic PLL previews</strong>:'}</p>
+            <p>{isZh ? <><strong>4 个 PLL 视觉样本</strong>:</> : <><strong>4 iconic PLL previews</strong>:</>}</p>
             <div className="pred-pll-gallery">
               <PllPreview letter="T" alg="R U R' U' R' F R2 U' R' U' R U R' F'" isZh={isZh} note_en="Adjacent corner + adjacent edge swap" note_zh="角对角 + 棱相邻换" />
               <PllPreview letter="Ja" alg="x R2 F R F' R U2 r' U r U2 x'" isZh={isZh} note_en="Adjacent corner swap, no edge cycle" note_zh="角相邻换, 无棱循环" />
@@ -617,7 +652,7 @@ export default function Prediction333Page() {
                 ? <>ZB 方法把 CFOP 的 OLL + PLL 替换为 <strong>ZBLS (302-303 case)</strong> + <strong>ZBLL (493 case)</strong>. ZBLS 解最后一对 F2L 同时把 LL 4 棱朝向解决; ZBLL 在 EO 已知下 1 alg 解整个 LL.</>
                 : <>ZB replaces CFOP's OLL + PLL with <strong>ZBLS (302-303 cases)</strong> + <strong>ZBLL (493 cases)</strong>. ZBLS solves last pair while orienting LL edges; ZBLL solves entire LL in one alg given EO.</>}
             </p>
-            <p>{isZh ? '<strong>ZBLL 8 子集</strong>:' : '<strong>ZBLL 8 sub-families</strong>:'}</p>
+            <p>{isZh ? <><strong>ZBLL 8 子集</strong>:</> : <><strong>ZBLL 8 sub-families</strong>:</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
                 <thead><tr><th>{isZh ? '子集' : 'COLL'}</th><th>{isZh ? 'case 数' : 'cases'}</th><th>{isZh ? 'STM' : 'STM'}</th><th>{isZh ? '说明' : 'Description'}</th></tr></thead>
@@ -670,20 +705,20 @@ export default function Prediction333Page() {
                 : <><strong>Lookahead</strong> = executing pair N while eyes track pair N+1. <strong>Deliberately slow execution; total time drops</strong>. Zemdegs CubeSkills splits into 3 stages:</>}
             </p>
             <ul>
-              <li>{isZh ? '<strong>Spotting</strong>: 暂停后用眼睛找 (新手/中阶).' : '<strong>Spotting</strong>: pause, find with eyes (beginner/intermediate).'}</li>
-              <li>{isZh ? '<strong>Tracking</strong>: 转动中眼睛追 (sub-12+).' : '<strong>Tracking</strong>: eyes follow during turns (sub-12+).'}</li>
-              <li>{isZh ? '<strong>Knowing</strong>: 不用看, 推断位置 (sub-8 顶尖).' : '<strong>Knowing</strong>: predict location no-look (sub-8 elite).'}</li>
+              <li>{isZh ? <><strong>Spotting</strong>: 暂停后用眼睛找 (新手/中阶).</> : <><strong>Spotting</strong>: pause, find with eyes (beginner/intermediate).</>}</li>
+              <li>{isZh ? <><strong>Tracking</strong>: 转动中眼睛追 (sub-12+).</> : <><strong>Tracking</strong>: eyes follow during turns (sub-12+).</>}</li>
+              <li>{isZh ? <><strong>Knowing</strong>: 不用看, 推断位置 (sub-8 顶尖).</> : <><strong>Knowing</strong>: predict location no-look (sub-8 elite).</>}</li>
             </ul>
-            <p>{isZh ? '<strong>lookahead 失效三种情形</strong>: 幸运 scramble, multislotting, pseudoslotting.' : '<strong>3 lookahead failure modes</strong>: lucky scrambles, multislotting, pseudoslotting.'}</p>
+            <p>{isZh ? <><strong>lookahead 失效三种情形</strong>: 幸运 scramble, multislotting, pseudoslotting.</> : <><strong>3 lookahead failure modes</strong>: lucky scrambles, multislotting, pseudoslotting.</>}</p>
           </Section>
 
           <Section id="inspection" titleZh="Inspection 运筹 — 15 秒怎么用" titleEn="Inspection — How to Spend 15 Seconds" isZh={isZh}>
-            <p>{isZh ? '<strong>WCA A3</strong>: inspection 上限 15s, 16-17s +2, ≥17s DNF. 顶级 cuber 流程:' : '<strong>WCA A3</strong>: 15s cap, 16-17s +2, ≥17s DNF. Elite flow:'}</p>
+            <p>{isZh ? <><strong>WCA A3</strong>: inspection 上限 15s, 16-17s +2, ≥17s DNF. 顶级 cuber 流程:</> : <><strong>WCA A3</strong>: 15s cap, 16-17s +2, ≥17s DNF. Elite flow:</>}</p>
             <ol>
-              <li>{isZh ? '<strong>秒 0-5</strong>: 色中性扫描, 锁定最佳 cross 颜色.' : '<strong>0-5 s</strong>: CN scan, lock best cross color.'}</li>
-              <li>{isZh ? '<strong>秒 5-11</strong>: 规划完整 cross 序列 (6-8 步, ergo-optimal).' : '<strong>5-11 s</strong>: plan full cross (6-8 moves, ergo-optimal).'}</li>
-              <li>{isZh ? '<strong>秒 11-14</strong>: 定位第一对 F2L.' : '<strong>11-14 s</strong>: locate first F2L pair.'}</li>
-              <li>{isZh ? '<strong>秒 15</strong>: 确认握姿, 启动 StackMat.' : '<strong>15 s</strong>: confirm grip, start StackMat.'}</li>
+              <li>{isZh ? <><strong>秒 0-5</strong>: 色中性扫描, 锁定最佳 cross 颜色.</> : <><strong>0-5 s</strong>: CN scan, lock best cross color.</>}</li>
+              <li>{isZh ? <><strong>秒 5-11</strong>: 规划完整 cross 序列 (6-8 步, ergo-optimal).</> : <><strong>5-11 s</strong>: plan full cross (6-8 moves, ergo-optimal).</>}</li>
+              <li>{isZh ? <><strong>秒 11-14</strong>: 定位第一对 F2L.</> : <><strong>11-14 s</strong>: locate first F2L pair.</>}</li>
+              <li>{isZh ? <><strong>秒 15</strong>: 确认握姿, 启动 StackMat.</> : <><strong>15 s</strong>: confirm grip, start StackMat.</>}</li>
             </ol>
             <p>{isZh ? <><strong>X-cross inspection</strong> 是难度最高也回报最大的. <strong>CN 比固定色看到 X-cross 多 ~5 倍</strong>.</> : <><strong>X-cross inspection</strong> is the hardest, most rewarding skill. <strong>CN cubers see X-cross ~5× more often</strong>.</>}</p>
           </Section>
@@ -757,9 +792,9 @@ export default function Prediction333Page() {
                 : <>Smart cube = BLE + gyro + battery + app. <strong>GAN 356 i (2019)</strong> the first mainstream BLE speedcube. Iterations i2 (2021), i3 (2022), i Carry 2 (2024 — dockless, 700h battery). Apps: GAN Cube Station, Cubeast (3rd-party speedcubing-grade), csTimer (open source, BLE since 2020).</>}
             </p>
             <ul>
-              <li>{isZh ? '<strong>初/中级 (sub-20 → sub-12)</strong>: 价值最大. Cubeast 给按步切分时间, sub-15 → sub-12 周期缩短 30-50%.' : '<strong>Beginner/intermediate</strong>: highest value. Cubeast per-step splits; sub-15 → sub-12 progression 30-50% faster.'}</li>
-              <li>{isZh ? '<strong>高级 (sub-10 → sub-6)</strong>: 训练新方法 (ZBLL 识别) + 监测 plateaus.' : '<strong>Advanced</strong>: new method drilling + plateau detection.'}</li>
-              <li>{isZh ? '<strong>顶级 (sub-5 → WR)</strong>: 仅训练分析 (WCA 不允许比赛使用). 反馈循环缩短 PR 节奏.' : '<strong>Elite</strong>: analysis only (WCA disallows in comp). Faster feedback shortens PR cadence.'}</li>
+              <li>{isZh ? <><strong>初/中级 (sub-20 → sub-12)</strong>: 价值最大. Cubeast 给按步切分时间, sub-15 → sub-12 周期缩短 30-50%.</> : <><strong>Beginner/intermediate</strong>: highest value. Cubeast per-step splits; sub-15 → sub-12 progression 30-50% faster.</>}</li>
+              <li>{isZh ? <><strong>高级 (sub-10 → sub-6)</strong>: 训练新方法 (ZBLL 识别) + 监测 plateaus.</> : <><strong>Advanced</strong>: new method drilling + plateau detection.</>}</li>
+              <li>{isZh ? <><strong>顶级 (sub-5 → WR)</strong>: 仅训练分析 (WCA 不允许比赛使用). 反馈循环缩短 PR 节奏.</> : <><strong>Elite</strong>: analysis only (WCA disallows in comp). Faster feedback shortens PR cadence.</>}</li>
             </ul>
             <p>
               {isZh
@@ -780,7 +815,7 @@ export default function Prediction333Page() {
                 ? <><strong>速拧 TPS 顶端估计</strong>: 持续 17 TPS, 突发 20-22. 17 × 50 STM = 2.94s, 17 × 28 STM (Zajder 路径) = 1.65s — 与 100 年内可达 1.5s 一致.</>
                 : <><strong>Cubing TPS ceiling estimate</strong>: sustained 17, burst 20-22. 17 × 50 STM = 2.94 s, 17 × 28 STM (Zajder path) = 1.65 s — matches "100-yr reachable 1.5 s".</>}
             </p>
-            <p>{isZh ? '<strong>步数-TPS 等高线</strong> (T = STM/TPS + 0.05 反应):' : '<strong>STM-TPS contours</strong> (T = STM/TPS + 0.05 s reaction):'}</p>
+            <p>{isZh ? <><strong>步数-TPS 等高线</strong> (T = STM/TPS + 0.05 反应):</> : <><strong>STM-TPS contours</strong> (T = STM/TPS + 0.05 s reaction):</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
                 <thead><tr><th>STM \ TPS</th><th>10</th><th>12</th><th>14</th><th>16</th><th>18</th><th>20</th></tr></thead>
@@ -898,7 +933,7 @@ export default function Prediction333Page() {
           </Section>
 
           <Section id="training" titleZh="训练学方法 — 量化的练习路径" titleEn="Training Methodology — Quantitative Practice" isZh={isZh}>
-            <p>{isZh ? '<strong>累计 solves 与 PB 阈值关系</strong> (社区共识):' : '<strong>Cumulative solves vs PB threshold</strong> (community consensus):'}</p>
+            <p>{isZh ? <><strong>累计 solves 与 PB 阈值关系</strong> (社区共识):</> : <><strong>Cumulative solves vs PB threshold</strong> (community consensus):</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
                 <thead><tr><th>{isZh ? '阈值' : 'PB'}</th><th>{isZh ? '累计 solves' : 'Cumulative'}</th><th>{isZh ? '一致训练时间' : 'Calendar time'}</th><th>{isZh ? '日均' : 'Daily'}</th></tr></thead>
@@ -914,14 +949,14 @@ export default function Prediction333Page() {
                 </tbody>
               </table>
             </div>
-            <p>{isZh ? '<strong>训练分配 (顶级共识)</strong>:' : '<strong>Practice composition (consensus)</strong>:'}</p>
+            <p>{isZh ? <><strong>训练分配 (顶级共识)</strong>:</> : <><strong>Practice composition (consensus)</strong>:</>}</p>
             <ul>
               <li>{isZh ? '~60% csTimer 计时解 (Ao12/50/100 session)' : '~60% csTimer-timed solves'}</li>
               <li>{isZh ? '~15% 慢解 / lookahead 强制' : '~15% slow / forced-lookahead solves'}</li>
               <li>{isZh ? '~15% 算法练习 (case 频率加权)' : '~15% algorithm drilling (case-frequency-weighted)'}</li>
               <li>{isZh ? '~10% 复盘 (视频 / smart cube)' : '~10% review (video / smart cube)'}</li>
             </ul>
-            <p>{isZh ? '<strong>训练 PB 与 WCA PB 差距</strong>: 5-10%. 原因: cube 冷启动 / scramble 验证延迟 / 焦虑 / 无热身.' : '<strong>Training-comp gap</strong>: 5-10%. Causes: cube cooldown, scramble verification delay, anxiety, no warmup.'}</p>
+            <p>{isZh ? <><strong>训练 PB 与 WCA PB 差距</strong>: 5-10%. 原因: cube 冷启动 / scramble 验证延迟 / 焦虑 / 无热身.</> : <><strong>Training-comp gap</strong>: 5-10%. Causes: cube cooldown, scramble verification delay, anxiety, no warmup.</>}</p>
           </Section>
 
           <Section id="stats" titleZh="统计建模: 4 个独立模型" titleEn="Statistical Modeling: 4 Independent Models" isZh={isZh}>
@@ -932,7 +967,7 @@ export default function Prediction333Page() {
               <li>{isZh ? <><strong>幂律.</strong> T(t) = a · t^(−b). 无 floor. 长期撞 0.</> : <><strong>Power law.</strong> No floor; hits 0 long-term.</>}</li>
               <li>{isZh ? <><strong>GEV reverse-Weibull.</strong> 极值参数 ξ &lt; 0 给有限 endpoint, 拟合 1982-2026 WR 得 τ̂ ≈ 2.0 ± 0.4 s.</> : <><strong>GEV reverse-Weibull.</strong> Shape ξ &lt; 0 gives finite endpoint; fit on 1982-2026 WR yields τ̂ ≈ 2.0 ± 0.4 s.</>}</li>
             </ol>
-            <p>{isZh ? '<strong>Walk-forward backtest</strong> (训练 2003-2020, 预测 2021-2026):' : '<strong>Walk-forward backtest</strong> (train 2003-2020, forecast 2021-2026):'}</p>
+            <p>{isZh ? <><strong>Walk-forward backtest</strong> (训练 2003-2020, 预测 2021-2026):</> : <><strong>Walk-forward backtest</strong> (train 2003-2020, forecast 2021-2026):</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
                 <thead><tr><th>{isZh ? '模型' : 'Model'}</th><th>{isZh ? '2026 预测' : '2026 forecast'}</th><th>{isZh ? '实测' : 'Actual'}</th><th>{isZh ? '误差' : 'Error'}</th></tr></thead>
@@ -1036,6 +1071,28 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
             {!isZh && <Longform text={FMC_EVENTS_EN} />}
             {!isZh && <Longform text={RELATED_PUZZLES_EN} />}
           </Section>
+          </ActiveSectionContext.Provider>
+
+          <nav className="pred-333-pager">
+            {prevSection ? (
+              <Link to={sectionHref(prevSection.id)} className="pred-333-pager-link pred-333-pager-prev">
+                <ArrowLeft size={16} />
+                <span>
+                  <span className="pred-333-pager-label">{isZh ? '上一章' : 'Previous'}</span>
+                  <span className="pred-333-pager-title">{isZh ? prevSection.labelZh : prevSection.labelEn}</span>
+                </span>
+              </Link>
+            ) : <span />}
+            {nextSection ? (
+              <Link to={sectionHref(nextSection.id)} className="pred-333-pager-link pred-333-pager-next">
+                <span>
+                  <span className="pred-333-pager-label">{isZh ? '下一章' : 'Next'}</span>
+                  <span className="pred-333-pager-title">{isZh ? nextSection.labelZh : nextSection.labelEn}</span>
+                </span>
+                <ArrowRightIcon size={16} />
+              </Link>
+            ) : <span />}
+          </nav>
 
           <footer className="pred-footer">
             <div>{isZh ? '本章节是 /wca/prediction 的 3x3 深度版. 数据 2026-05.' : 'This is the 3x3 deep-dive of /wca/prediction. Data May 2026.'}</div>
@@ -1047,6 +1104,8 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
 }
 
 function Section({ id, titleZh, titleEn, isZh, children }: { id: string; titleZh: string; titleEn: string; isZh: boolean; children: React.ReactNode }) {
+  const activeId = useContext(ActiveSectionContext);
+  if (id !== activeId) return null;
   return (
     <section className="pred-section" id={id}>
       <h2>{isZh ? titleZh : titleEn}</h2>
