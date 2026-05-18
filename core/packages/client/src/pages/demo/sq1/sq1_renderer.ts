@@ -142,10 +142,16 @@ function applyTurn(state: Sq1State, top: number, bot: number): Sq1State {
 }
 
 function applySlice(state: Sq1State): Sq1State {
+  // / move = right half rotated 180° around X axis. Top slot k (angle
+  // (8-k)·30°) maps to bot slot at angle -((8-k)·30°). Solving:
+  //   top[6+i] ↔ bot[13+i] for i=0..5 (covering slots 6-11 top, 13-18 bot).
+  // This includes B wedge (bot slot 18) in slice; excludes F wedge (bot
+  // slot 12). Old impl used [i+12], which was off-by-one and caused piece-
+  // type mismatch at swapped slots → visible protrusions on cube after /.
   const next = state.pieces.slice();
   for (let i = 0; i < 6; i++) {
-    const c = next[i + 12];
-    next[i + 12] = next[i + 6];
+    const c = next[i + 13];
+    next[i + 13] = next[i + 6];
     next[i + 6] = c;
   }
   return { pieces: next, sliceSolved: !state.sliceSolved };
