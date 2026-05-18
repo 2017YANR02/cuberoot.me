@@ -21,7 +21,8 @@ import ScrambleLines from './ScrambleLines';
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
-const COUNT_PRESETS = [1, 5, 12, 25, 50];
+const COUNT_PRESETS = [1, 5, 12, 25, 50, 100, 200, 1000];
+const COUNT_MAX = 1000;
 
 /** 每行一条打乱;容忍开头 "1. " / "1) " / "1、" / "1:" 之类编号前缀。 */
 function parsePastedScrambles(text: string): string[] {
@@ -299,27 +300,22 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         <div className="gen-control-group gen-control-actions">
           {subMode === 'batch' ? (
             <div className="gen-count-row">
-              {COUNT_PRESETS.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`gen-count-chip${count === n ? ' is-active' : ''}`}
-                  onClick={() => setCount(n)}
-                >
-                  {n}
-                </button>
-              ))}
               <input
                 type="number"
+                list="gen-count-presets"
                 min={1}
-                max={500}
+                max={COUNT_MAX}
                 value={count}
                 onChange={(e) => {
-                  const v = Math.max(1, Math.min(500, Number(e.target.value) || 1));
+                  const v = Math.max(1, Math.min(COUNT_MAX, Number(e.target.value) || 1));
                   setCount(v);
                 }}
-                className="gen-count-input"
+                className="gen-count-input gen-count-input--combo"
+                aria-label={t('每项打乱数', 'Scrambles per event')}
               />
+              <datalist id="gen-count-presets">
+                {COUNT_PRESETS.map((n) => <option key={n} value={n} />)}
+              </datalist>
             </div>
           ) : (
             <div className="gen-tn-paste-hint">
