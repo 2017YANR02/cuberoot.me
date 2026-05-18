@@ -63,6 +63,7 @@ const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
 const TrafficPage = lazy(() => import('./pages/traffic/TrafficPage'));
 // NOTE: Scramble Hub + sub-tools (stats / gen / analyzer / solver)
 const ScrambleHubPage = lazy(() => import('./pages/scramble/ScrambleHubPage'));
+const GodNumberPage = lazy(() => import('./pages/god/GodNumberPage'));
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
 const ScrambleSolverPage = lazy(() => import('./pages/scramble/solver/ScrambleSolverPage'));
 // NOTE: Tutorial — 公式教程目录（docx 源迁移）
@@ -250,6 +251,7 @@ function App() {
         <Route path="/scramble/analyzer" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
         <Route path="/scramble/solver" element={<Suspense fallback={<div>Loading...</div>}><ScrambleSolverPage /></Suspense>} />
         <Route path="/scramble/pattern" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
+        <Route path="/scramble/god" element={<Suspense fallback={<div>Loading...</div>}><GodNumberPage /></Suspense>} />
         {/* 旧链接兼容重定向 */}
         <Route path="/scramble-stats" element={<Navigate to="/scramble/stats" replace />} />
         <Route path="/analyze" element={<Navigate to="/scramble/analyzer" replace />} />
