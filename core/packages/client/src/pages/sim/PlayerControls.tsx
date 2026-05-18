@@ -15,6 +15,7 @@ import { parseSq1Scramble, type Sq1Move } from './cuber/sq1/sq1State';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
 import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
+import { isTwistyPuzzle, type SimPuzzle } from './SimPage';
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { WheelPicker } from '../../components/WheelPicker';
@@ -54,10 +55,11 @@ interface Props {
   order: number;
   /** 阶数确认改变时调 (wheel 完全停下 / input 回车失焦 / AlgsPanel 选公式)。拖动 / inertia 期间不调。 */
   onOrderChange: (n: number) => void;
-  /** Active puzzle — number for NxN, 'sq1' for Square-1. Drives mode-specific UI. */
-  puzzleKind: number | 'sq1';
+  /** Active puzzle. Number for NxN, 'sq1' for Square-1, 'pyraminx' / 'skewb' /
+   *  'megaminx' for the cubing.js-rendered puzzles. Drives mode-specific UI. */
+  puzzleKind: SimPuzzle;
   /** Called when user picks a different puzzle kind via the picker. */
-  onPuzzleChange: (kind: number | 'sq1') => void;
+  onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
   keymap: Record<string, KeyMove>;
@@ -77,6 +79,7 @@ export default function PlayerControls({
   userMoveRef, onScrambleTime,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
+  const isTwistyMode = isTwistyPuzzle(puzzleKind);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -234,19 +237,26 @@ export default function PlayerControls({
   // 跟 applyMove 不同的是:cube 已经被上层 twist 过了,这里只动文本。
   // 永远落到 alg 框 (不像 QWERTY 那样允许写入 setup),因为 drag/tap 时焦点通常不在输入框,
   // 而即便焦点在 setup 框,用户拖魔方的语义也是"开始解",该落解法。
+  // sq1: action.value = "(1,0)" / "(0,-1)" / "/" 原样追加;
+  // twisty (pyraminx/skewb/megaminx): cubing.js raycast 出的 move 文本(如 U / R' / BL2)。
   const appendUserMove = useCallback((action: TwistAction) => {
-    if (isSq1) return; // SQ1 has no drag/tap input in MVP
-    if (world && world.cube.order === 1) {
+    let moveText = action.value;
+    if (!isSq1 && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
       if (!norm) return;  // 1×1 上不可表达的 move:丢弃
-      action = norm;
+      moveText = norm.value;
     }
-    const moveText = action.value;
     if (!moveText) return;
     const algEl = algElRef.current;
     if (!(algEl instanceof HTMLTextAreaElement)) return;
     const current = algEl.value;
-    const next = current.trimEnd() + (current.trim() ? ' ' : '') + moveText + ' ';
+    // sq1 的 `/` 不要前置空格,`(1,0)` 跟 `/` 紧贴方便阅读;其它 puzzle 一律空格分。
+    const sep = current.trim()
+      ? (isSq1 && (moveText === '/' || current.trimEnd().endsWith('/'))
+        ? ''
+        : ' ')
+      : '';
+    const next = current.trimEnd() + sep + moveText + ' ';
     algEl.value = next;
     algEl.selectionStart = algEl.selectionEnd = next.length;
     algEl.style.height = 'auto';
@@ -254,7 +264,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [onAlgChange]);
+  }, [onAlgChange, isSq1, isTwistyMode, world]);
 
   // 注册到 SimPage userMoveRef,卸载时清空
   useEffect(() => {
@@ -318,6 +328,20 @@ export default function PlayerControls({
   // settings.animateScramble:false=写入 setup → useEffect → twister.setup() instant 应用;
   //                          true=animatingScrambleRef 让 useEffect skip,自己 reset+twister.push 慢动画。
   const handleScramble = useCallback(async () => {
+    // Twisty puzzles: no world to drive; just fetch a scramble and write it
+    // to setup. TwistyPlayer re-renders the setup state automatically.
+    if (isTwistyMode) {
+      const scramble = (await tnoodleRandomScramble(puzzleKind as string)) ?? '';
+      const el = setupElRef.current;
+      if (el instanceof HTMLTextAreaElement) {
+        el.value = scramble;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+      }
+      setSetupDraft(scramble);
+      onSetupChange(scramble);
+      return;
+    }
     if (!world) return;
     let scramble: string | null = null;
     if (isSq1) {
@@ -371,7 +395,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, onSetupChange, settings.animateScramble, isSq1, onScrambleTime]);
+  }, [world, order, onSetupChange, settings.animateScramble, isSq1, onScrambleTime, isTwistyMode, puzzleKind]);
 
   return (
     <div className="sim-player">
@@ -415,6 +439,7 @@ export default function PlayerControls({
           onCaretChange={handleCaretSync}
         />
       </div>
+      {!isTwistyMode && (
       <div className="sim-player-row">
         <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
@@ -439,6 +464,8 @@ export default function PlayerControls({
           />
         </label>
       </div>
+      )}
+      {!isTwistyMode && (
       <div className="sim-keyboard-section">
         <div className="sim-keyboard-switcher">
           <button
@@ -476,11 +503,26 @@ export default function PlayerControls({
           <SimQwertyKeypad keymap={keymap} onMove={applyMove} />
         )}
       </div>
+      )}
       <div className="sim-player-tools">
         <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
-        <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>
-        <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M:沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')} aria-label={t('Mirror M:沿 M 面镜像', 'Mirror M')}><FlipHorizontal2 size={13} /></button>
-        <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S:沿 S 面镜像 (F↔B)', 'Mirror S (F↔B)')} aria-label={t('Mirror S:沿 S 面镜像', 'Mirror S')}><FlipVertical2 size={13} /></button>
+        {isSq1 && (
+          <button
+            onClick={() => {
+              if (!world) return;
+              // 让 Sq1Twister 走动画路径,回头 finishMove 会自动写历史 + 派发 callback。
+              // 透到 appendUserMove 把 `/` 加到解法框。
+              const c = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
+              const ok = c.twister.twist({ kind: 'slice' }, false, true);
+              if (ok) appendUserMove(new TwistAction('/', false, 1));
+            }}
+            title={t('Slash:E 半立方翻转 180°', 'Slash: flip east half 180°')}
+            aria-label={t('Slash', 'Slash')}
+          >/</button>
+        )}
+        {!isTwistyMode && <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>}
+        {!isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M:沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')} aria-label={t('Mirror M:沿 M 面镜像', 'Mirror M')}><FlipHorizontal2 size={13} /></button>}
+        {!isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S:沿 S 面镜像 (F↔B)', 'Mirror S (F↔B)')} aria-label={t('Mirror S:沿 S 面镜像', 'Mirror S')}><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
       </div>
       <PuzzleSettings
@@ -621,8 +663,8 @@ function PuzzleSettings({
 }: {
   order: number;
   onOrderChange: (n: number) => void;
-  puzzleKind: number | 'sq1';
-  onPuzzleChange: (kind: number | 'sq1') => void;
+  puzzleKind: SimPuzzle;
+  onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
   t: (zh: string, en: string) => string;
@@ -631,6 +673,10 @@ function PuzzleSettings({
   onResetKeymap: () => void;
 }) {
   const isSq1Local = puzzleKind === 'sq1';
+  const isTwistyLocal = isTwistyPuzzle(puzzleKind);
+  const isNxNLocal = !isSq1Local && !isTwistyLocal;
+  // Twisty puzzles render via cubing.js TwistyPlayer; the NxN-specific sliders
+  // / toggles / color rows / keymap settings don't apply, so they're hidden.
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -713,17 +759,21 @@ function PuzzleSettings({
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <select
                 className="sim-puzzle-select"
-                value={isSq1Local ? 'sq1' : 'nxn'}
+                value={isTwistyLocal ? puzzleKind : (isSq1Local ? 'sq1' : 'nxn')}
                 onChange={(e) => {
-                  if (e.target.value === 'sq1') onPuzzleChange('sq1');
+                  const v = e.target.value;
+                  if (v === 'sq1' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
                   else onPuzzleChange(order || 3);
                 }}
               >
                 <option value="nxn">{t('NxN', 'NxN')}</option>
                 <option value="sq1">{t('Square-1', 'Square-1')}</option>
+                <option value="pyraminx">{t('金字塔', 'Pyraminx')}</option>
+                <option value="skewb">{t('斜转', 'Skewb')}</option>
+                <option value="megaminx">{t('五魔', 'Megaminx')}</option>
               </select>
             </div>
-            {!isSq1Local && (
+            {isNxNLocal && (
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('阶数', 'Order')}</div>
               <div className="sim-puzzle-order-control" ref={wheelRootRef}>
@@ -759,7 +809,7 @@ function PuzzleSettings({
               </div>
             </div>
             )}
-            {!isSq1Local && (
+            {isNxNLocal && (
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('视觉风格', 'Style')}</div>
               <select
@@ -777,40 +827,44 @@ function PuzzleSettings({
               </select>
             </div>
             )}
-            <button
-              type="button"
-              className="sim-keymap-open-btn"
-              onClick={() => setKeymapOpen(true)}
-            >
-              <Keyboard size={14} />
-              <span>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</span>
-            </button>
-            <button
-              type="button"
-              className="sim-drawer-reset"
-              onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
-            >
-              {t('恢复默认', 'Reset to defaults')}
-            </button>
+            {!isTwistyLocal && (
+              <button
+                type="button"
+                className="sim-keymap-open-btn"
+                onClick={() => setKeymapOpen(true)}
+              >
+                <Keyboard size={14} />
+                <span>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</span>
+              </button>
+            )}
+            {!isTwistyLocal && (
+              <button
+                type="button"
+                className="sim-drawer-reset"
+                onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
+              >
+                {t('恢复默认', 'Reset to defaults')}
+              </button>
+            )}
           </div>
 
-          <div className="sim-puzzle-sliders">
+          {!isTwistyLocal && <div className="sim-puzzle-sliders">
             <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
             <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
-          </div>
-          <div className="sim-puzzle-toggles">
+          </div>}
+          {!isTwistyLocal && <div className="sim-puzzle-toggles">
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
             <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
             <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
             <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
-          </div>
-          <ColorRow label={t('内核色', 'Core color')}>
+          </div>}
+          {!isTwistyLocal && <ColorRow label={t('内核色', 'Core color')}>
             <SwatchCell
               color={settings.coreColor}
               title={t('自定义', 'Custom')}
@@ -825,8 +879,8 @@ function PuzzleSettings({
                 onClick={() => set('coreColor', c)}
               />
             ))}
-          </ColorRow>
-          <ColorRow
+          </ColorRow>}
+          {!isTwistyLocal && <ColorRow
             label={t('面色', 'Face colors')}
             action={{
               label: 'WCA',
@@ -843,7 +897,7 @@ function PuzzleSettings({
                 onPick={(c) => set('faceColors', { ...settings.faceColors, [f]: c })}
               />
             ))}
-          </ColorRow>
+          </ColorRow>}
         </div>
       )}
       <KeymapModal

@@ -59,6 +59,13 @@
     "long_en": "virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/sim`; original UI was Vue + Vuetify"
   },
   {
+    "name": "cubing/cubing.js",
+    "url": "https://github.com/cubing/cubing.js",
+    "zh": "/sim Pyraminx / Skewb / Megaminx 渲染走 cubing.js TwistyPlayer(复刻 alpha.twizzle.net/edit);Alg parser + 各项目 random-state scramble 也复用此库",
+    "en": "Pyraminx / Skewb / Megaminx in /sim use cubing.js TwistyPlayer (mirrors alpha.twizzle.net/edit); Alg parser + per-event random-state scramble also share this library",
+    "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages"
+  },
+  {
     "name": "MeigenChou/DCTimer-Android",
     "url": "https://github.com/MeigenChou/DCTimer-Android",
     "zh": "BLE / 协议参考;对战计时器设计灵感",
