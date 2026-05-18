@@ -110,6 +110,12 @@ export interface PdfOptions {
   onProgress?: (done: number, total: number) => void;
   /** tnoodle-style per-event color override. Currently only `clock` is honored. */
   eventColors?: Record<string, Record<string, string>>;
+  /** Whether to render the per-attempt scramble preview image column.
+   *  Off ⇒ table collapses to label + scramble text (no image col, no SVG
+   *  embedding). FMC pages are unaffected — the FMC sheet structure has
+   *  its own cube-preview cell that's part of the WCA solution sheet
+   *  layout. Defaults to true. */
+  showPreview?: boolean;
 }
 
 // ─── Font loading (cached) ────────────────────────────────────────────────
@@ -424,6 +430,7 @@ export async function generateTnoodlePdf(
         todayIso: today,
         generatorTag: opts.generatorTag,
         eventColors: opts.eventColors,
+        showPreview: opts.showPreview !== false,
       });
     }
     opts.onProgress?.(p + 1, totalPages);
@@ -443,6 +450,8 @@ interface PageHeader {
   generatorTag: string;
   /** Per-event color overrides (currently only `clock` is honored). */
   eventColors?: Record<string, Record<string, string>>;
+  /** When false, the scramble image column is dropped entirely. */
+  showPreview: boolean;
 }
 
 async function renderPage(
@@ -500,8 +509,13 @@ async function renderPage(
   const totalParts = scrambleImageParts + scrambleStringParts + MAX_INDEX_COLUMN_RATIO;
 
   const labelColW = (scrambleImageParts / totalParts) * tableWidth;
-  const textColW = (scrambleStringParts / totalParts) * tableWidth;
-  const imageColW = (MAX_INDEX_COLUMN_RATIO / totalParts) * tableWidth;
+  // When previews are hidden we drop the image column entirely and give its
+  // width to the scramble text column. Layout stays a clean 2-col rect grid.
+  const rawImageColW = (MAX_INDEX_COLUMN_RATIO / totalParts) * tableWidth;
+  const imageColW = hdr.showPreview ? rawImageColW : 0;
+  const textColW = hdr.showPreview
+    ? (scrambleStringParts / totalParts) * tableWidth
+    : tableWidth - labelColW;
 
   const rowH = tableHeight / chunk.length;
   let currentY = tableTop;
@@ -520,12 +534,14 @@ async function renderPage(
       doc.setLineWidth(0.5);
       doc.rect(tableLeft, rowTop, labelColW, rowH);
       doc.rect(tableLeft + labelColW, rowTop, textColW, rowH);
-      // Image cell with gray background
       const imgX = tableLeft + labelColW + textColW;
-      doc.setFillColor(...SCRAMBLE_BG_RGB);
-      doc.rect(imgX, rowTop, imageColW, rowH, 'F');
-      doc.setFillColor(255, 255, 255);
-      doc.rect(imgX, rowTop, imageColW, rowH);  // border
+      if (hdr.showPreview) {
+        // Image cell with gray background
+        doc.setFillColor(...SCRAMBLE_BG_RGB);
+        doc.rect(imgX, rowTop, imageColW, rowH, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.rect(imgX, rowTop, imageColW, rowH);  // border
+      }
 
       // Label
       doc.setFont(FONT_SANS, 'normal');
@@ -561,25 +577,27 @@ async function renderPage(
       //   pyra / skewb → cubing.js TwistyPlayer 2D extraction (slow)
       // isExtra unused — state computation identical for main vs extras.
       void isExtra;
-      let portedSvg: string | null = null;
-      if (sheet.event === 'clock') {
-        portedSvg = renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS);
-      } else if (sheet.event === 'sq1') {
-        portedSvg = renderSq1ScrambleSvg(a.scramble, hdr.eventColors?.sq1 ?? DEFAULT_SQ1_COLORS);
-      } else if (sheet.event === 'minx') {
-        portedSvg = renderMegaScrambleSvg(a.scramble, hdr.eventColors?.minx ?? DEFAULT_MEGA_COLORS);
-      } else if (sheet.event === 'pyram') {
-        portedSvg = renderPyraScrambleSvg(a.scramble, hdr.eventColors?.pyram ?? PYRA_DEFAULT_COLORS);
-      } else if (sheet.event === 'skewb') {
-        portedSvg = renderSkewbScrambleSvg(a.scramble, hdr.eventColors?.skewb ?? SKEWB_DEFAULT_COLORS);
-      }
-      const svgStr = portedSvg
-        ?? renderUnfoldedSvgForEvent(sheet.event, a.scramble)
-        ?? await getScramble2DSvg(sheet.event, a.scramble);
-      if (svgStr) {
-        const svgEl = svgStringToElement(svgStr);
-        await embedSvg(doc, svgEl, imgX + DEFAULT_CELL_PADDING, rowTop + DEFAULT_CELL_PADDING,
-          imageColW - 2 * DEFAULT_CELL_PADDING, rowH - 2 * DEFAULT_CELL_PADDING);
+      if (hdr.showPreview) {
+        let portedSvg: string | null = null;
+        if (sheet.event === 'clock') {
+          portedSvg = renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS);
+        } else if (sheet.event === 'sq1') {
+          portedSvg = renderSq1ScrambleSvg(a.scramble, hdr.eventColors?.sq1 ?? DEFAULT_SQ1_COLORS);
+        } else if (sheet.event === 'minx') {
+          portedSvg = renderMegaScrambleSvg(a.scramble, hdr.eventColors?.minx ?? DEFAULT_MEGA_COLORS);
+        } else if (sheet.event === 'pyram') {
+          portedSvg = renderPyraScrambleSvg(a.scramble, hdr.eventColors?.pyram ?? PYRA_DEFAULT_COLORS);
+        } else if (sheet.event === 'skewb') {
+          portedSvg = renderSkewbScrambleSvg(a.scramble, hdr.eventColors?.skewb ?? SKEWB_DEFAULT_COLORS);
+        }
+        const svgStr = portedSvg
+          ?? renderUnfoldedSvgForEvent(sheet.event, a.scramble)
+          ?? await getScramble2DSvg(sheet.event, a.scramble);
+        if (svgStr) {
+          const svgEl = svgStringToElement(svgStr);
+          await embedSvg(doc, svgEl, imgX + DEFAULT_CELL_PADDING, rowTop + DEFAULT_CELL_PADDING,
+            imageColW - 2 * DEFAULT_CELL_PADDING, rowH - 2 * DEFAULT_CELL_PADDING);
+        }
       }
 
       currentY = rowBottom;

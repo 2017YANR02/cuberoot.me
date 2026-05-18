@@ -6,7 +6,7 @@
  *
  * Comp + Practice share `cubing/scramble` (Lucas Garron, WCA-spec output).
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Shuffle } from 'lucide-react';
@@ -17,6 +17,12 @@ import QuickMode from './QuickMode';
 import TNoodleMode from './TNoodleMode';
 import ImportMode from './ImportMode';
 import './gen.css';
+
+const SHOW_PREVIEW_KEY = 'gen:showPreview';
+function readShowPreview(): boolean {
+  if (typeof localStorage === 'undefined') return true;
+  return localStorage.getItem(SHOW_PREVIEW_KEY) !== '0';
+}
 
 type Mode = 'comp' | 'gen' | 'text' | 'wca';
 
@@ -41,6 +47,15 @@ export default function GenPage() {
   useEffect(() => {
     prewarmScramble('333', '444', '555');
   }, []);
+
+  // Shared 打乱图 visibility. Persisted to localStorage so the choice survives
+  // page reloads and mode switches. Off ⇒ neither web sheet nor PDF includes
+  // the per-attempt preview thumbnail.
+  const [showPreview, setShowPreviewState] = useState<boolean>(readShowPreview);
+  const setShowPreview = (v: boolean) => {
+    setShowPreviewState(v);
+    try { localStorage.setItem(SHOW_PREVIEW_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+  };
 
   const [searchParams, setSearchParams] = useSearchParams();
   const rawParam = searchParams.get('mode') ?? '';
@@ -98,12 +113,12 @@ export default function GenPage() {
       </header>
 
       <main className="gen-main">
-        {mode === 'comp' && <TNoodleMode t={t} isZh={isZh} />}
-        {mode === 'gen' && <QuickMode t={t} subMode="gen" />}
-        {mode === 'text' && <QuickMode t={t} subMode="text" />}
+        {mode === 'comp' && <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
+        {mode === 'gen' && <QuickMode t={t} subMode="gen" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
+        {mode === 'text' && <QuickMode t={t} subMode="text" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
         {/* ImportMode 永远挂载:切走再切回保留已加载比赛 + 已生成 sheets */}
         <div style={{ display: mode === 'wca' ? 'block' : 'none' }}>
-          <ImportMode t={t} isZh={isZh} />
+          <ImportMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />
         </div>
       </main>
     </div>
