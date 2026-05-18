@@ -255,6 +255,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         selectedEvents={events}
         onToggle={toggleEvent}
         isZh={isZh}
+        onlyAvailable
       />
 
       {/* 高阶 NxN(8-50)输入。回车 / blur 即添加为额外 event chip 出现在下方 sheet。 */}
