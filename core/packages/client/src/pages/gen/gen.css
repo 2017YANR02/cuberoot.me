@@ -929,6 +929,16 @@
     vertical-align: middle;
     border: 1px solid #000;
 }
+/* Hover + click-to-copy on sheet rows. Whole row clickable; ScrambleLines text
+   stays selectable because the <tr> click handler only fires when no native
+   text selection was made. tr.is-copied flashes briefly with accent. */
+.gen-tn-sheet-table tr:hover:not(.gen-tn-extras-divider) td {
+    background: color-mix(in srgb, currentColor 5%, transparent);
+}
+.gen-tn-sheet-table tr.is-copied td {
+    background: color-mix(in srgb, var(--gen-accent) 22%, transparent);
+    transition: background 0.5s ease-out;
+}
 .gen-tn-attempt-num {
     /* PDF renders the row label with NotoSans (FONT_SANS), not the mono. */
     width: 32px;

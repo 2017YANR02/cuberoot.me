@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Download, Trash2, CloudDownload } from 'lucide-react';
+import { Download, Trash2, CloudDownload, Image as ImageIcon, ImageOff } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { CompPicker } from '../../components/CompPicker';
 import { CompCell } from '../../components/CompCell/CompCell';
@@ -29,6 +29,8 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 interface Props {
   t: (zh: string, en: string) => string;
   isZh: boolean;
+  showPreview: boolean;
+  onTogglePreview: () => void;
 }
 
 const ROUND_INDEX: Record<string, number> = {
@@ -147,7 +149,7 @@ function buildSheets(rows: WcaScrambleRow[]): RoundSheet[] {
   return sheets;
 }
 
-export default function ImportMode({ t, isZh }: Props) {
+export default function ImportMode({ t, isZh, showPreview, onTogglePreview }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlComp = searchParams.get('comp') ?? '';
   const [input, setInput] = useState('');
@@ -265,6 +267,7 @@ export default function ImportMode({ t, isZh }: Props) {
         competitionTitle: loadedCompName ?? loadedCompId ?? 'Scrambles',
         generatorTag: GENERATOR_TAG,
         isZh,
+        showPreview,
         onProgress: (done, total) => setPdfProgress({ done, total }),
       });
       const url = URL.createObjectURL(blob);
@@ -343,6 +346,16 @@ export default function ImportMode({ t, isZh }: Props) {
           )}
         </div>
         <div className="gen-control-group gen-control-actions">
+          <button
+            type="button"
+            className="gen-btn"
+            onClick={onTogglePreview}
+            title={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            aria-pressed={!showPreview}
+          >
+            {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
+          </button>
           {loadedCompId ? (
             <>
               <ProgressButton
@@ -417,7 +430,7 @@ export default function ImportMode({ t, isZh }: Props) {
           )}
           <div className="gen-tn-sheets">
             {visible.map((sh, i) => (
-              <SheetView key={i} sheet={sh} isZh={isZh} t={t} />
+              <SheetView key={i} sheet={sh} isZh={isZh} t={t} showPreview={showPreview} />
             ))}
           </div>
         </>

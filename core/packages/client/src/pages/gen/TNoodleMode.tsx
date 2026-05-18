@@ -8,7 +8,7 @@
  * Phase 3 adds PDF.
  */
 import { useMemo, useState } from 'react';
-import { RefreshCw, Download, X, Trash2, Edit3 } from 'lucide-react';
+import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { eventDisplayName } from '../../utils/wca_events';
@@ -31,11 +31,13 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 interface Props {
   t: (zh: string, en: string) => string;
   isZh: boolean;
+  showPreview: boolean;
+  onTogglePreview: () => void;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-export default function TNoodleMode({ t, isZh }: Props) {
+export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: Props) {
   const [compName, setCompName] = useState<string>(`Scrambles for ${todayIso()}`);
   const [events, setEvents] = useState<Record<string, EventConfig>>({
     '333': defaultEventConfig('333'),
@@ -222,6 +224,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
         competitionTitle: compName,
         generatorTag: GENERATOR_TAG,
         isZh,
+        showPreview,
         onProgress: (done, total) => setPdfProgress({ done, total }),
         eventColors,
       });
@@ -302,6 +305,16 @@ export default function TNoodleMode({ t, isZh }: Props) {
               title={t('生成打乱', 'Generate scrambles')}
             />
           )}
+          <button
+            type="button"
+            className="gen-btn"
+            onClick={onTogglePreview}
+            title={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            aria-pressed={!showPreview}
+          >
+            {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
+          </button>
           {sheets && sheets.length > 0 && (
             <ProgressButton
               icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
@@ -468,6 +481,7 @@ export default function TNoodleMode({ t, isZh }: Props) {
                 sheet={sh}
                 isZh={isZh}
                 t={t}
+                showPreview={showPreview}
                 clockColors={sh.event === 'clock' ? events[sh.event]?.colors : undefined}
                 sq1Colors={sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
                 megaColors={sh.event === 'minx' ? events[sh.event]?.colors : undefined}

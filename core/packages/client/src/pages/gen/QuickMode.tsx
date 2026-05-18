@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download, Image as ImageIcon, ImageOff } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
@@ -41,9 +41,12 @@ interface Props {
   t: (zh: string, en: string) => string;
   /** 由 GenPage 的顶层 tab 决定:'gen' = 批量, 'text' = 输入 */
   subMode: SubMode;
+  /** 是否在每行右侧渲染打乱图(2D net SVG)。off ⇒ 网页 + PDF 都不出。 */
+  showPreview: boolean;
+  onTogglePreview: () => void;
 }
 
-export default function QuickMode({ t, subMode }: Props) {
+export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [events, setEvents] = useState<Set<string>>(() => new Set(['333']));
@@ -193,6 +196,7 @@ export default function QuickMode({ t, subMode }: Props) {
         competitionTitle: `Scrambles for ${today}`,
         generatorTag: GENERATOR_TAG,
         isZh,
+        showPreview,
         onProgress: (done, total) => setPdfProgress({ done, total }),
       });
       const url = URL.createObjectURL(blob);
@@ -279,6 +283,16 @@ export default function QuickMode({ t, subMode }: Props) {
               title={t('重新生成', 'Regenerate')}
             />
           )}
+          <button
+            type="button"
+            className="gen-btn"
+            onClick={onTogglePreview}
+            title={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            aria-pressed={!showPreview}
+          >
+            {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
+          </button>
           {totalScrambles > 0 && (
             <ProgressButton
               icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
@@ -357,11 +371,13 @@ export default function QuickMode({ t, subMode }: Props) {
                         <td className="gen-tn-attempt-scramble">
                           <ScrambleLines scramble={s} className="gen-tn-attempt-line" />
                         </td>
-                        <td className="gen-tn-attempt-preview">
-                          {hasPreview && (
-                            <ScramblePreview2D event={ev} scramble={s} size={48} />
-                          )}
-                        </td>
+                        {showPreview && (
+                          <td className="gen-tn-attempt-preview">
+                            {hasPreview && (
+                              <ScramblePreview2D event={ev} scramble={s} size={48} />
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
