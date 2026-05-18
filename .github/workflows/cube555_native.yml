@@ -1,0 +1,100 @@
+name: cube555 native-image
+
+# GraalVM AOT build of cs.cube555.Daemon → standalone Linux binary on server.
+# Only fires when Daemon.java / native-image meta changes, or manually.
+#
+# Smoke test runs on the SERVER (not CI runner) since the 230MB pruning tables
+# already live there — cold-building them in CI from scratch would burn 5+ min
+# per run and the tables get thrown away anyway. CI just produces the binary,
+# scps it to a staging path, server runs `echo smoke1 | ./binary` and only
+# promotes to /opt/cube555/cube555-daemon if it produces READY + OK.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'core/cube555-daemon/Daemon.java'
+      - 'core/cube555-daemon/native-image/**'
+      - '.github/workflows/cube555_native.yml'
+
+concurrency:
+  group: cube555-native
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup GraalVM 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Clone cube555 upstream
+        run: git clone --depth=1 https://github.com/cs0x7f/cube555.git /tmp/cube555
+
+      - name: Inject Daemon.java + native-image meta
+        run: |
+          cp core/cube555-daemon/Daemon.java /tmp/cube555/example/Daemon.java
+          mkdir -p /tmp/cube555/native-image
+          cp -r core/cube555-daemon/native-image/. /tmp/cube555/native-image/
+          ls -la /tmp/cube555/native-image
+
+      - name: Compile sources
+        working-directory: /tmp/cube555
+        run: |
+          mkdir -p dist
+          # cube555 source declares package cs.cube555; example/Daemon.java in
+          # same package, depends on lib/twophase.jar (cs.min2phase).
+          javac -d dist -cp lib/twophase.jar src/*.java example/Daemon.java
+          ls dist/cs/cube555 | head
+
+      - name: Build native-image
+        working-directory: /tmp/cube555
+        run: |
+          native-image \
+            --no-fallback \
+            -O2 \
+            -H:Name=cube555-daemon \
+            -H:SerializationConfigurationFiles=native-image/serialization-config.json \
+            -H:ReflectionConfigurationFiles=native-image/reflect-config.json \
+            -H:ResourceConfigurationFiles=native-image/resource-config.json \
+            -cp dist:lib/twophase.jar \
+            cs.cube555.Daemon
+          ls -lh cube555-daemon
+          file cube555-daemon
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Upload binary to staging path
+        run: |
+          rsync -ltz --chmod=F755 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            /tmp/cube555/cube555-daemon \
+            "root@${{ secrets.DEPLOY_HOST }}:/opt/cube555/cube555-daemon.new"
+
+      - name: Smoke test on server
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'cd /opt/cube555 && CUBE555_WORKERS=1 timeout 60 bash -c "printf '\''smoke1\nQUIT\n'\'' | ./cube555-daemon.new" > /tmp/cube555.out 2> /tmp/cube555.err; rc=$?; tail -20 /tmp/cube555.err; echo "---stdout---"; cat /tmp/cube555.out; if grep -q "^READY" /tmp/cube555.out && grep -q "smoke1.*OK" /tmp/cube555.out; then echo "✓ smoke ok"; else echo "✗ smoke failed (rc=$rc)"; exit 1; fi'
+
+      - name: Promote binary
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'mv /opt/cube555/cube555-daemon.new /opt/cube555/cube555-daemon && pm2 reload core-api --update-env'

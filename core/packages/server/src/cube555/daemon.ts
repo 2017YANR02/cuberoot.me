@@ -11,12 +11,17 @@
  * Env:
  *   CUBE555_HOME       — cube555 source tree (default /opt/cube555;
  *                        contains dist/, lib/twophase.jar, and is the CWD
- *                        we pass to the JVM so pruning tables read/write
- *                        from one stable path)
- *   CUBE555_WORKERS    — JVM-internal worker thread count (default 4)
+ *                        we pass to the child so pruning tables read/write
+ *                        from one stable path — also where the native
+ *                        binary expects to find the .jpdata files)
+ *   CUBE555_NATIVE_BIN — if set, spawn this path directly (GraalVM AOT
+ *                        binary) instead of `java -cp ... cs.cube555.Daemon`.
+ *                        ~200ms startup vs ~3s for JVM, ~150MB less RSS.
+ *   CUBE555_WORKERS    — internal worker thread count (default 4)
  *   CUBE555_DISABLED=1 — skip spawn entirely (route returns 503;
  *                        useful for local dev when JDK isn't installed)
- *   JAVA_BIN           — java executable path (default "java")
+ *   JAVA_BIN           — java executable path (default "java"), ignored
+ *                        when CUBE555_NATIVE_BIN is set.
  *
  * Wire format documented in core/cube555-daemon/Daemon.java top-of-file.
  */
@@ -32,6 +37,7 @@ interface Pending {
 const HOME = process.env.CUBE555_HOME ?? '/opt/cube555';
 const WORKERS = process.env.CUBE555_WORKERS ?? '4';
 const DISABLED = process.env.CUBE555_DISABLED === '1';
+const NATIVE_BIN = process.env.CUBE555_NATIVE_BIN;
 const JAVA = process.env.JAVA_BIN ?? 'java';
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -55,12 +61,14 @@ function rejectAllPending(reason: string): void {
 
 function spawnDaemon(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const args = ['-Xmx1g', '-cp', CLASSPATH, 'cs.cube555.Daemon'];
-    console.log(`[cube555] spawn: cd ${HOME} && ${JAVA} ${args.join(' ')}`);
+    const useNative = !!NATIVE_BIN;
+    const exe = useNative ? NATIVE_BIN! : JAVA;
+    const args = useNative ? [] : ['-Xmx1g', '-cp', CLASSPATH, 'cs.cube555.Daemon'];
+    console.log(`[cube555] spawn (${useNative ? 'native' : 'jvm'}): cd ${HOME} && ${exe}${args.length ? ' ' + args.join(' ') : ''}`);
 
     let proc: ChildProcess;
     try {
-      proc = spawn(JAVA, args, {
+      proc = spawn(exe, args, {
         cwd: HOME,
         env: { ...process.env, CUBE555_WORKERS: WORKERS },
         stdio: ['pipe', 'pipe', 'pipe'],
