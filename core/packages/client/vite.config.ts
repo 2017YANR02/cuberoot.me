@@ -225,9 +225,11 @@ export default defineConfig({
       //   3. 顺序重要 —— 长前缀必须先于 '/v1' 注册才会被取窄匹配
       // '/v1/nemesizer': { target: 'http://127.0.0.1:3002', changeOrigin: true, secure: false },
 
-      // 5x5 random-state daemon —— 本地 Hono dev (CUBE555_HOME=D:/cube/cube555 PORT=3002)。
-      // 注释掉就直接走 prod。窄前缀必须在 '/v1' 之前以让 vite 取窄匹配。
-      '/v1/scramble/555-rs': { target: 'http://127.0.0.1:3002', changeOrigin: true, secure: false },
+      // 调本地 cube555 daemon (Java 子进程 by Hono) 时:
+      //   1. cd core/packages/server && pnpm build:bundle
+      //   2. PORT=3002 CUBE555_HOME='D:/cube/cube555' node dist/server.bundle.js
+      //   3. 把下面这行 uncomment;窄前缀必须在 '/v1' 之前以让 vite 取窄匹配
+      // '/v1/scramble/555-rs': { target: 'http://127.0.0.1:3002', changeOrigin: true, secure: false },
 
       // NOTE: Hono API 代理到线上后端（本地无 cuberoot_db，无法运行 Hono 后端）
       '/v1': {
