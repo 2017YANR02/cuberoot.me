@@ -5,28 +5,9 @@
  */
 import type { AlgCase } from '@cuberoot/shared';
 import { API_ORIGIN } from './api_base';
+import { authHeaders, handleApi as handle } from './admin_api';
 
 const API_BASE = API_ORIGIN + '/v1/alg/sets';
-
-function getToken(): string | null {
-  return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
-}
-
-function authHeaders(): HeadersInit {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-async function handle<T>(resp: Response): Promise<T> {
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(err.error || `API error ${resp.status}`);
-  }
-  return resp.json();
-}
 
 export interface AlgCaseInput {
   caseName: string;

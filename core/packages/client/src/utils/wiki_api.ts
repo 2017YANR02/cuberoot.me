@@ -8,26 +8,7 @@
  *   - 增补的 owner / admin 可改可软删
  */
 import { apiUrl } from './api_base';
-
-function getToken(): string | null {
-  return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
-}
-
-function authHeaders(): HeadersInit {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-async function handle<T>(r: Response): Promise<T> {
-  if (!r.ok) {
-    const err = await r.json().catch(() => ({ error: r.statusText }));
-    throw new Error(err.error || `API error ${r.status}`);
-  }
-  return r.json();
-}
+import { authHeaders, handleApi as handle } from './admin_api';
 
 export interface WikiAddition {
   id: number;
