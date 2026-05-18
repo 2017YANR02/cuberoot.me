@@ -316,7 +316,8 @@ function splitToFixedSizeLines(
 function roundDetailString(sheet: RoundSheetInput, isZh: boolean): string {
   void isZh;
   const evName = tnoodleEventTitle(sheet.event) ?? eventDisplayName(sheet.event, false);
-  const round = `Round ${sheet.roundIdx + 1}`;
+  // WCA round_type_id 'f'/'h' → roundIdx=3 = Final regardless of total rounds.
+  const round = sheet.roundIdx === 3 ? 'Final' : `Round ${sheet.roundIdx + 1}`;
   const grp = (sheet.totalGroups ?? 1) > 1 ? ` Scramble Set ${String.fromCharCode(65 + sheet.groupIdx)}` : '';
   const att = sheet.attemptNumber !== undefined ? ` Attempt ${sheet.attemptNumber + 1}` : '';
   return `${evName} ${round}${grp}${att}`;
