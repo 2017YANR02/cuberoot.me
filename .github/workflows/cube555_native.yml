@@ -48,7 +48,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y musl-tools musl-dev
           ZLIB_VER=1.3.1
-          curl -sSLO https://zlib.net/zlib-${ZLIB_VER}.tar.gz
+          curl -fsSLO "https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.gz"
+          file zlib-${ZLIB_VER}.tar.gz
           tar xzf zlib-${ZLIB_VER}.tar.gz
           cd zlib-${ZLIB_VER}
           CC=musl-gcc ./configure --prefix=/usr/local --static
