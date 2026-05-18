@@ -1,7 +1,7 @@
 // NOTE: 导出 WCA 历史所有已结束比赛 → stats/all_past_comps.json
 // Globe 页 history 模式消费这个文件。
 //
-// 数据源：本地 MySQL wca_statistics 库（update_database.ts 每周从 WCA 官方 dump 导入）
+// 数据源：本地 MySQL wca_developer_database 库（update_database.ts 每周从 WCA 官方 dump 导入）
 // 成本：一次 SQL ~1s + 序列化 ~0.5s，整个脚本 < 2s
 //
 // 用法：npx tsx src/bin/gen_all_comps.ts

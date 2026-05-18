@@ -1,7 +1,7 @@
 /**
  * /prediction — WCA 全项目速拧极限预测综合报告
  *
- * 数据源: 本地 wca_statistics MySQL → stats/prediction/all_events.json
+ * 数据源: 本地 wca_developer_database MySQL → stats/prediction/all_events.json
  * 建模:  Ensemble (exp+floor / Gompertz / 幂律 / 纯指数) × 物理下界 T_phys × GEV 极值理论
  *
  * 涵盖项目: 16 (15 计时项目 + 1 步数 FMC)
@@ -491,8 +491,8 @@ export default function PredictionPage() {
               <li>
                 <strong>{isZh ? '数据源' : 'Source'}.</strong>{' '}
                 {isZh
-                  ? `WCA 全量 results dump, 在本机 MySQL 8 (wca_statistics 库). 包含 1982 至 ${new Date().getFullYear()} 全部 16 个项目共 1.7M+ 条 333 单次成绩(其他项目数据规模见各章).`
-                  : `Full WCA results dump in local MySQL 8 (wca_statistics db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`}
+                  ? `WCA 全量 results dump, 在本机 MySQL 8 (wca_developer_database 库). 包含 1982 至 ${new Date().getFullYear()} 全部 16 个项目共 1.7M+ 条 333 单次成绩(其他项目数据规模见各章).`
+                  : `Full WCA results dump in local MySQL 8 (wca_developer_database db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`}
               </li>
               <li>
                 <strong>{isZh ? '过滤' : 'Filter'}.</strong>{' '}
