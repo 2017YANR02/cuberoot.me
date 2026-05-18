@@ -454,14 +454,15 @@ interface PieceEntry {
   pivot: THREE.Object3D;
   group: THREE.Group;
   layerSign: 1 | -1;
-  /** Parity of slice operations this piece has been through. When true, the
-   * canonical (Y-rotation only) placement gets wallA/wallB on the wrong cube
-   * faces; we swap their materials to compensate. */
-  flipped: boolean;
-  wallA: THREE.Mesh | null;
-  wallB: THREE.Mesh | null;
-  matA: THREE.MeshPhongMaterial | null;
-  matB: THREE.MeshPhongMaterial | null;
+}
+
+/** Interpolation target for a single piece during a move animation. */
+interface PieceAnim {
+  pivot: THREE.Object3D;
+  startQuat: THREE.Quaternion;
+  endQuat: THREE.Quaternion;
+  startPos: THREE.Vector3;
+  endPos: THREE.Vector3;
 }
 
 export class Sq1Renderer {
@@ -478,8 +479,7 @@ export class Sq1Renderer {
   private rafId: number | null = null;
   private animQueue: Sq1Move[] = [];
   private active:
-    | { move: Sq1Move; t: number; duration: number; topPivot: THREE.Object3D; botPivot: THREE.Object3D; topAngle: number; botAngle: number }
-    | { move: Sq1Move; t: number; duration: number; slicePivot: THREE.Object3D; midSlicePivot: THREE.Object3D; midAxis: THREE.Vector3; angle: number }
+    | { move: Sq1Move; t: number; duration: number; anims: PieceAnim[] }
     | null = null;
   private onIdle: (() => void) | null = null;
   private moveListeners: Array<(idx: number, total: number) => void> = [];
@@ -539,12 +539,9 @@ export class Sq1Renderer {
   private buildPieces(): void {
     for (let piece = 0; piece <= 15; piece++) {
       const isTop = piece <= 7;
-      const { group, pivot, wallA, wallB, matA, matB } = buildPieceMesh(piece, isTop);
+      const { group, pivot } = buildPieceMesh(piece, isTop);
       this.cubeRoot.add(pivot);
-      this.pieces.push({
-        pieceId: piece, pivot, group, layerSign: isTop ? 1 : -1,
-        flipped: false, wallA, wallB, matA, matB,
-      });
+      this.pieces.push({ pieceId: piece, pivot, group, layerSign: isTop ? 1 : -1 });
     }
   }
 
@@ -712,14 +709,6 @@ export class Sq1Renderer {
       p.pivot.scale.z = 1;
       p.pivot.scale.y = isTop ? 1 : -1;
       p.layerSign = isTop ? 1 : -1;
-      // Canonical Y-rotation + scale.y flip puts wallA/wallB on cube faces
-      // that DON'T match the chord-perp slice rotation outcome. For flipped
-      // corners, swap the two sticker materials so the colors land on the
-      // faces cubedb shows. Wedges have a single sticker — no swap needed.
-      if (isCornerPiece(p.pieceId) && p.wallA && p.wallB && p.matA && p.matB) {
-        p.wallA.material = p.flipped ? p.matB : p.matA;
-        p.wallB.material = p.flipped ? p.matA : p.matB;
-      }
     }
     // Reset middle pieces — sliceSolved=true means BIG/SMALL are at their
     // canonical (built) positions. sliceSolved=false means BIG is flipped
@@ -751,11 +740,6 @@ export class Sq1Renderer {
     this.active = null;
     this.totalMoves = 0;
     this.finishedMoves = 0;
-    // Clear per-piece flipped parity; only meaningful relative to the path
-    // that built state. resetTo accepts a logical state (no path info) so
-    // assume canonical placement (flipped=false). Callers that need the
-    // post-slice visual should use applyMovesInstant which replays / toggles.
-    for (const p of this.pieces) p.flipped = false;
     this.applyStateInstant(state);
   }
 
@@ -830,119 +814,76 @@ export class Sq1Renderer {
     this.active.t += dt;
     const tFrac = Math.min(1, this.active.t / this.active.duration);
     const e = tFrac < 0.5 ? 4 * tFrac * tFrac * tFrac : 1 - Math.pow(-2 * tFrac + 2, 3) / 2;
-    if ('topPivot' in this.active) {
-      this.active.topPivot.rotation.y = this.active.topAngle * e;
-      this.active.botPivot.rotation.y = this.active.botAngle * e;
-    } else {
-      this.active.slicePivot.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle * e);
-      this.active.midSlicePivot.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle * e);
+    for (const a of this.active.anims) {
+      a.pivot.quaternion.slerpQuaternions(a.startQuat, a.endQuat, e);
+      a.pivot.position.lerpVectors(a.startPos, a.endPos, e);
     }
     if (tFrac >= 1) this.finishMove();
   }
 
   private beginMove(move: Sq1Move): void {
-    const probe = new THREE.Vector3();
+    const anims: PieceAnim[] = [];
     if (move.kind === 'turn') {
-      const topPivot = new THREE.Object3D();
-      const botPivot = new THREE.Object3D();
-      this.cubeRoot.add(topPivot);
-      this.cubeRoot.add(botPivot);
-      // Select layer by CURRENT world Y, not original layerSign — / slice
-      // physically moves east pieces between top↔bot, so subsequent (t,b)
-      // turns must follow what's actually in each layer right now.
+      // Layer = current world Y of pivot. Y rotation around origin preserves Y
+      // (pivot pos is on the central axis), so this is stable across moves.
+      const topDelta = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 1, 0), -(move.top ?? 0) * (Math.PI / 6),
+      );
+      // bot slot order is CCW (opposite of top's CW); raw sign so animation
+      // direction matches applyTurn's slot shift.
+      const botDelta = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 1, 0), (move.bot ?? 0) * (Math.PI / 6),
+      );
       for (const p of this.pieces) {
-        p.pivot.updateWorldMatrix(true, false);
-        p.pivot.getWorldPosition(probe);
-        const target = probe.y > 0 ? topPivot : botPivot;
-        this.attach(p.pivot, target);
+        const delta = p.pivot.position.y > 0 ? topDelta : botDelta;
+        anims.push(this.makePieceAnim(p.pivot, delta));
       }
-      const topAngle = -(move.top ?? 0) * (Math.PI / 6);
-      // bot slot indices go CCW (increasing index = increasing world angle),
-      // opposite to top. Keep raw sign so animation direction matches the
-      // canonical slot shift applySq1Move computes.
-      const botAngle = (move.bot ?? 0) * (Math.PI / 6);
-      this.active = { move, t: 0, duration: this.durationPerMoveMs, topPivot, botPivot, topAngle, botAngle };
     } else {
-      // / slice: east-of-chord pieces (top + bot + BIG middle) rotate 180°
-      // around chord-perp axis (W, 0, WHC)/d. East stays east; top↔bot flips;
-      // each piece's own R-ish direction stays mostly on R, F↔B swap. The
-      // SMALL west middle piece does not move (per cubedb animation).
+      // / slice: east-of-chord pieces (top + bot + BIG middle) all rotate
+      // 180° around chord-perp axis (W, 0, WHC). chord-perp 180° is det=+1,
+      // pure rotation — no decompose ambiguity since we apply directly to
+      // each pivot's quaternion (no reparent).
       const sliceAxis = new THREE.Vector3(W, 0, WEDGE_HALF_CHORD).normalize();
-      const slicePivot = new THREE.Object3D();
-      const midSlicePivot = new THREE.Object3D();
-      this.cubeRoot.add(slicePivot);
-      this.cubeRoot.add(midSlicePivot);
-      // Probe at the piece's outer point (corner extreme / wedge outer face
-      // center) so X/Z are non-zero. The pivot itself sits on the central
-      // axis (0, ±HALF_MID, 0) and would always test 0.
+      const sliceDelta = new THREE.Quaternion().setFromAxisAngle(sliceAxis, Math.PI);
+      const probe = new THREE.Vector3();
       for (const p of this.pieces) {
         p.pivot.updateWorldMatrix(true, false);
         const isCorner = isCornerPiece(p.pieceId);
         probe.set(W, 0, isCorner ? -W : 0);
         probe.applyMatrix4(p.pivot.matrixWorld);
         if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) {
-          this.attach(p.pivot, slicePivot);
-          // Toggle parity — chord-perp 180° is its own inverse, so two slices
-          // restore. Used in applyStateInstant to swap corner wallA/wallB
-          // materials so canonical snap matches slice rotation orientation.
-          p.flipped = !p.flipped;
+          anims.push(this.makePieceAnim(p.pivot, sliceDelta));
         }
       }
-      for (const m of this.middle) if (m.side === 1) this.attach(m.pivot, midSlicePivot);
-      this.active = {
-        move, t: 0, duration: this.durationPerMoveMs,
-        slicePivot, midSlicePivot, midAxis: sliceAxis, angle: Math.PI,
-      };
+      // BIG (east) middle piece rides the same slice rotation; SMALL stays.
+      for (const m of this.middle) {
+        if (m.side === 1) anims.push(this.makePieceAnim(m.pivot, sliceDelta));
+      }
     }
+    this.active = { move, t: 0, duration: this.durationPerMoveMs, anims };
+  }
+
+  /** Snapshot pivot's current quat+pos and compute the target after applying
+   * `delta` rotation (delta · current). delta is a world-frame rotation around
+   * the origin, so it affects both orientation and position. */
+  private makePieceAnim(pivot: THREE.Object3D, delta: THREE.Quaternion): PieceAnim {
+    const startQuat = pivot.quaternion.clone();
+    const endQuat = delta.clone().multiply(startQuat);
+    const startPos = pivot.position.clone();
+    const endPos = startPos.clone().applyQuaternion(delta);
+    return { pivot, startQuat, endQuat, startPos, endPos };
   }
 
   private finishMove(): void {
     if (!this.active) return;
-    const move = this.active.move;
-    if ('slicePivot' in this.active) {
-      const pv = this.active.slicePivot;
-      pv.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle);
-      pv.updateMatrixWorld(true);
-      for (const p of this.pieces) {
-        if (p.pivot.parent === pv) this.attach(p.pivot, this.cubeRoot);
-      }
-      const midPv = this.active.midSlicePivot;
-      midPv.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle);
-      midPv.updateMatrixWorld(true);
-      for (const m of this.middle) {
-        if (m.pivot.parent === midPv) this.attach(m.pivot, this.cubeRoot);
-      }
-      this.cubeRoot.remove(pv);
-      this.cubeRoot.remove(midPv);
-    } else {
-      const tp = this.active.topPivot;
-      const bp = this.active.botPivot;
-      tp.rotation.y = this.active.topAngle;
-      bp.rotation.y = this.active.botAngle;
-      tp.updateMatrixWorld(true);
-      bp.updateMatrixWorld(true);
-      for (const p of this.pieces) {
-        if (p.pivot.parent === tp || p.pivot.parent === bp) {
-          this.attach(p.pivot, this.cubeRoot);
-        }
-      }
-      this.cubeRoot.remove(tp);
-      this.cubeRoot.remove(bp);
+    for (const a of this.active.anims) {
+      a.pivot.quaternion.copy(a.endQuat);
+      a.pivot.position.copy(a.endPos);
     }
+    this.state = applySq1Move(this.state, this.active.move);
     this.active = null;
-    this.state = applySq1Move(this.state, move);
-    // Snap to canonical placements after each move. Without this, slice
-    // rotations and (t,b) turns produce slightly non-canonical orientations
-    // that accumulate over a long scramble, leaving the cube misaligned at
-    // the end. The snap is visually small because chord-perp 180° already
-    // lands pieces near their canonical slot positions.
-    this.applyStateInstant(this.state);
     this.finishedMoves += 1;
     this.notify();
   }
 
-  private attach(child: THREE.Object3D, parent: THREE.Object3D): void {
-    if (child.parent === parent) return;
-    parent.attach(child);
-  }
 }
