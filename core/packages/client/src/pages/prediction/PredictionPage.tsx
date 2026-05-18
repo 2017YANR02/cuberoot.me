@@ -334,6 +334,20 @@ export default function PredictionPage() {
             <div className="pred-333-cta-arrow">→</div>
           </Link>
 
+          {/* Pointer to lucky-scramble floor */}
+          <Link to="/wca/prediction/lucky" className="pred-333-deepdive-cta">
+            <div className="pred-333-cta-left">
+              <div className="pred-333-cta-eyebrow">{isZh ? '运气下界' : 'Lucky Floor'}</div>
+              <div className="pred-333-cta-title">{isZh ? '最幸运 scramble 下的单次极限' : 'Single-Solve Floor If You Hit the Luckiest Scramble'}</div>
+              <div className="pred-333-cta-sub">
+                {isZh
+                  ? '拖动年份, 看"每年累积 scramble 数 + 深度分布"反推的运气下界. 三阶 → 0.27 s (2 步 / TPS_ceil).'
+                  : 'Drag the year slider: expected minimum-depth scramble × TPS ceiling. 3x3 asymptote: 0.27 s (2 moves / TPS_ceil).'}
+              </div>
+            </div>
+            <div className="pred-333-cta-arrow">→</div>
+          </Link>
+
           {/* Headline bar chart */}
           <section className="pred-section" id="headline">
             <h2>{isZh ? '撞墙排行: 一张图看完 16 项' : 'Wall-Closeness Ranking: All 16 Events at a Glance'}</h2>
