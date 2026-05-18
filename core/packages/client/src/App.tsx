@@ -103,6 +103,7 @@ const VisualCubeStagesPage = lazy(() => import('./pages/visualcube/VisualCubeSta
 const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
 // NOTE: Gen — 批量打乱生成器（覆盖 16 个 WCA 项目）
 const GenPage = lazy(() => import('./pages/gen/GenPage'));
+const Scramble555AboutPage = lazy(() => import('./pages/scramble_555_about/Scramble555AboutPage'));
 // NOTE: liquid-glass-react 沙盒,验证 iOS 26 效果用,无导航入口
 const LiquidGlassTestPage = lazy(() => import('./pages/liquid_glass_test/LiquidGlassTestPage'));
 // NOTE: Sim — 虚拟魔方 Playground (port of huazhechen/cuber)
@@ -115,6 +116,7 @@ const CodeLandingPage = lazy(() => import('./pages/code/CodeLandingPage'));
 const ArchitecturePage = lazy(() => import('./pages/code/ArchitecturePage'));
 const StackLandingPage = lazy(() => import('./pages/code/StackLandingPage'));
 const StackToolPage = lazy(() => import('./pages/code/StackToolPage'));
+const OpsPage = lazy(() => import('./pages/code/OpsPage'));
 const TsIntroPage = lazy(() => import('./pages/code/TsIntroPage'));
 const RustIntroPage = lazy(() => import('./pages/code/RustIntroPage'));
 const GoIntroPage = lazy(() => import('./pages/code/GoIntroPage'));
@@ -242,6 +244,7 @@ function App() {
         <Route path="/scramble" element={<Suspense fallback={<div>Loading...</div>}><ScrambleHubPage /></Suspense>} />
         <Route path="/scramble/stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
         <Route path="/scramble/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
+        <Route path="/scramble/555-about" element={<Suspense fallback={<div>Loading...</div>}><Scramble555AboutPage /></Suspense>} />
         <Route path="/liquid-glass-test" element={<Suspense fallback={<div>Loading...</div>}><LiquidGlassTestPage /></Suspense>} />
         <Route path="/scramble/analyzer" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
         <Route path="/scramble/solver" element={<Suspense fallback={<div>Loading...</div>}><ScrambleSolverPage /></Suspense>} />
@@ -260,6 +263,7 @@ function App() {
         <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><ArchitecturePage /></Suspense>} />
         <Route path="/code/stack" element={<Suspense fallback={<div>Loading...</div>}><StackLandingPage /></Suspense>} />
         <Route path="/code/stack/:slug" element={<Suspense fallback={<div>Loading...</div>}><StackToolPage /></Suspense>} />
+        <Route path="/code/ops" element={<Suspense fallback={<div>Loading...</div>}><OpsPage /></Suspense>} />
         <Route path="/code/language" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
         <Route path="/code/language/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
         <Route path="/code/language/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />

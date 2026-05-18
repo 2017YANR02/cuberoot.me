@@ -13,12 +13,12 @@ export type Scramble555Mode = 'rs' | 'rm';
 
 const KEY = 'cuberoot.gen.555_mode';
 const EVENT = 'cuberoot:555-mode-change';
-const DEFAULT: Scramble555Mode = 'rs';
+const DEFAULT: Scramble555Mode = 'rm';
 
 export function get555Mode(): Scramble555Mode {
   if (typeof localStorage === 'undefined') return DEFAULT;
   const v = localStorage.getItem(KEY);
-  return v === 'rm' ? 'rm' : DEFAULT;
+  return v === 'rs' ? 'rs' : DEFAULT;
 }
 
 export function set555Mode(mode: Scramble555Mode): void {
