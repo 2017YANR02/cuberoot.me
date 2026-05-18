@@ -51,11 +51,11 @@ const LOOKUP = '__lookup__';
 
 // 顶层工具页(大卡片,带图标 — 跟 landing 卡片视觉一致)
 const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon }[] = [
+  { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio },
   { path: '/wca/calendar',   zh: '日历',     en: 'Calendar',     Icon: CalendarDays },
   { path: '/wca/globe',      zh: '地球',     en: 'Globe',        Icon: Globe2 },
   { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart },
   { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown },
-  { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio },
   { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target },
   { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator },
 ];
