@@ -1,5 +1,5 @@
 /**
- * stack_export — 把当前 setup+alg 离线渲染成 1080p mp4。
+ * sim_export — 把当前 setup+alg 离线渲染成 1080p mp4。
  *
  * 思路: 暂停 tweener 的 rAF 自动推进, 把 renderer 切到 1920×1080, twister.setup(setup)
  * 立即应用 setup, push(alg) 进 queue, 然后 manual loop:
@@ -30,7 +30,7 @@ export interface ExportProgress {
   framesTotal: number;
 }
 
-export interface StackExportOptions {
+export interface SimExportOptions {
   world: World;
   renderer: THREE.WebGLRenderer;
   setup: string;
@@ -61,7 +61,7 @@ function estimateTotalFrames(alg: string): number {
   return HOLD_START_FRAMES + Math.max(perMove, Math.round(leafs.length * perMove * 0.9)) + HOLD_END_FRAMES;
 }
 
-export async function exportStackVideo(opts: StackExportOptions): Promise<void> {
+export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   const { world, renderer, setup, alg, isZh, abortRef, onProgress, previewCanvas } = opts;
   if (typeof VideoEncoder === 'undefined') {
     throw new Error(isZh
@@ -262,7 +262,7 @@ export async function exportStackVideo(opts: StackExportOptions): Promise<void> 
   const a = document.createElement('a');
   const tsTag = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   a.href = url;
-  a.download = `stack-${tsTag}.mp4`;
+  a.download = `sim-${tsTag}.mp4`;
   document.body.appendChild(a);
   a.click();
   a.remove();

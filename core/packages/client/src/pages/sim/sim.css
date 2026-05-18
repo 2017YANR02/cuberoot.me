@@ -1,4 +1,4 @@
-.stack-page {
+.sim-page {
   position: fixed;
   inset: 0;
   display: flex;
@@ -8,7 +8,7 @@
   overflow: hidden;
 }
 
-.stack-header {
+.sim-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -19,7 +19,7 @@
   flex-wrap: wrap;
 }
 
-.stack-back {
+.sim-back {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -29,22 +29,22 @@
   color: var(--muted-foreground);
   text-decoration: none;
 }
-.stack-back:hover {
+.sim-back:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
 
-.stack-title {
+.sim-title {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
 }
 
-.stack-spacer {
+.sim-spacer {
   flex: 1;
 }
 
-.stack-counter {
+.sim-counter {
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   color: var(--muted-foreground);
@@ -55,12 +55,12 @@
   text-align: center;
 }
 
-.stack-actions {
+.sim-actions {
   display: inline-flex;
   gap: 4px;
 }
 
-.stack-actions button {
+.sim-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -75,21 +75,21 @@
   cursor: pointer;
 }
 
-.stack-actions button:hover {
+.sim-actions button:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-/* StackPage 用 CollapsibleSection 把 AlgsPanel / DirectorPanel 折进侧栏。
+/* SimPage 用 CollapsibleSection 把 AlgsPanel / DirectorPanel 折进侧栏。
    子面板自身已有 border-top,wrapper 不再重复加。 */
-.stack-section-body {
+.sim-section-body {
   display: flex;
   flex-direction: column;
 }
-.stack-section-body > .stack-algs {
-  max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .stack-side 滚动 */
+.sim-section-body > .sim-algs {
+  max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .sim-side 滚动 */
 }
 
-.stack-body {
+.sim-body {
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -97,14 +97,14 @@
   min-width: 0;
 }
 
-.stack-canvas-wrap {
+.sim-canvas-wrap {
   flex: 1;
   position: relative;
   min-height: 0;
   min-width: 0;
 }
 
-.stack-side {
+.sim-side {
   width: 50%;
   flex-shrink: 0;
   border-left: 1px solid var(--border-default);
@@ -116,10 +116,10 @@
 
 /* 窄屏:cube 在上,面板在下;面板限高,可滚动 */
 @media (max-width: 767px) {
-  .stack-body {
+  .sim-body {
     flex-direction: column;
   }
-  .stack-side {
+  .sim-side {
     width: 100%;
     max-height: 45vh;
     border-left: none;
@@ -127,7 +127,7 @@
   }
 }
 
-.stack-canvas-wrap canvas {
+.sim-canvas-wrap canvas {
   width: 100% !important;
   height: 100% !important;
   display: block;
@@ -136,7 +136,7 @@
 /* 透明棋盘格背景 (twizzle 风格)。WebGL 已 alpha:true,canvas 透明,
  * 这里 CSS 背景透出来。color-mix 让格子跟主题 foreground 算,
  * 深色主题下浅一点深色,浅色主题下深一点浅色,自动适配。 */
-.stack-page--checkered .stack-canvas-wrap {
+.sim-page--checkered .sim-canvas-wrap {
   background-color: var(--background);
   background-image:
     linear-gradient(45deg,
@@ -154,13 +154,13 @@
 }
 
 /* 全屏模式:藏 header + side,canvas 占满 */
-.stack-page--fullscreen .stack-header,
-.stack-page--fullscreen .stack-side {
+.sim-page--fullscreen .sim-header,
+.sim-page--fullscreen .sim-side {
   display: none;
 }
 
 /* 全屏 toggle 按钮:浮在 canvas 右上角,进入/退出共用 */
-.stack-fullscreen-exit {
+.sim-fullscreen-exit {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -176,24 +176,24 @@
   cursor: pointer;
   z-index: 10;
 }
-.stack-fullscreen-exit:hover {
+.sim-fullscreen-exit:hover {
   background: rgba(0, 0, 0, 0.75);
 }
 
 @media (max-width: 480px) {
-  .stack-header {
+  .sim-header {
     padding: 6px 8px;
     gap: 6px;
   }
-  .stack-title {
+  .sim-title {
     font-size: 14px;
   }
-  .stack-counter {
+  .sim-counter {
     font-size: 12px;
     padding: 2px 8px;
     min-width: 32px;
   }
-  .stack-actions button {
+  .sim-actions button {
     min-width: 28px;
     height: 28px;
     padding: 0 6px;

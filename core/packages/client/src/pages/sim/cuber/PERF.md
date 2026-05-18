@@ -1,4 +1,4 @@
-# /stack setup 性能优化记录
+# /sim setup 性能优化记录
 
 ---
 
@@ -68,7 +68,7 @@ worker 算 5s (主线程感知不到)
 - worker.compute(rotatesDesc, vecXYZ, rotIdx, flat, ...): worker 端跑 kernel loop,return vec + rotIdx。
 - `setup_part2(vec, rotIdx)`: 主线程,end sweep + rebuildAll。
 
-异步化:`Twister.setup` 返回 Promise,callers 必须 `await`。**这是 API breaking,需要看 call sites**。`StackPage.tsx` 里点击 scramble 是个 handler,await 没问题。
+异步化:`Twister.setup` 返回 Promise,callers 必须 `await`。**这是 API breaking,需要看 call sites**。`SimPage.tsx` 里点击 scramble 是个 handler,await 没问题。
 
 ## 不要走的方向
 
@@ -92,8 +92,8 @@ scramble 用 `randomMoveScrambleNxN` (20*(N-2) moves, wide notation, prefix 1..N
 |---|---|
 | WASM kernel | `core/packages/stack-kernel/src/lib.rs` |
 | WASM build | `pnpm --filter @cuberoot/stack-kernel build` |
-| WASM 入口 (JS) | `core/packages/client/src/pages/stack/cuber/twister.ts` setup() 函数 |
-| Dev server | `http://127.0.0.1:5173/stack` |
+| WASM 入口 (JS) | `core/packages/client/src/pages/sim/cuber/twister.ts` setup() 函数 |
+| Dev server | `http://127.0.0.1:5173/sim` |
 | Playwright | MCP 已加载,`mcp__playwright__browser_*` |
 | Toolchain | rustc 1.95 + wasm-pack 0.15 + wasm-bindgen-cli 0.2.121 (`cargo install wasm-bindgen-cli --version 0.2.121` 装一次) |
 | pkg/ 委 git | rebuild 完手动 `git add core/packages/stack-kernel/pkg/` |
@@ -122,7 +122,7 @@ hash: `for (const c of cubelets.values()) h = (h*31 + c._index + (c.quaternion.x
 
 ## 项目背景
 
-- 路由 `/stack`(`packages/client/src/pages/stack/`):NxN 魔方 3D 工具,基于 three.js + InstancedMesh
+- 路由 `/sim`(`packages/client/src/pages/sim/`):NxN 魔方 3D 工具,基于 three.js + InstancedMesh
 - 上游:port 自 [huazhechen/cuber](https://github.com/huazhechen/cuber),已重写渲染层为 instanced(单 mesh 多 instance),支持 N=2..250+
 - 关键概念:
   - **cubelet**:单个小方块,有 `_vector`(当前坐标)、`_index`(position key)、`_instIdx`(GPU instance idx)、quaternion、matrix
@@ -131,9 +131,9 @@ hash: `for (const c of cubelets.values()) h = (h*31 + c._index + (c.quaternion.x
   - **scramble**:一串 move 字符串,如 `R U' 3Rw2 ...`,WCA 标准长度 = 20·(N-2)
 - `Twister.setup(exp)` 是核心:从 solved 状态出发,把 scramble 字符串里所有 move 同步施加到 cube,**画面中间帧不渲染**(只末尾 `instancedRenderer.rebuildAll` 一次写 GPU)
 - 跟 `Twister.push(exp)` 区分:push 是给动画播放队列用的,每个 move 慢动画播,完全不同代码路径,**别动**
-- 用户场景:点"随机打乱"按钮(`.stack-player-scramble`),N 越大 setup 越慢,N=75 原始 ~9s,N=175 ~3.6s(当前)。优化目标是让大阶魔方打乱后秒出。
+- 用户场景:点"随机打乱"按钮(`.sim-player-scramble`),N 越大 setup 越慢,N=75 原始 ~9s,N=175 ~3.6s(当前)。优化目标是让大阶魔方打乱后秒出。
 
-入口文件:`packages/client/src/pages/stack/cuber/twister.ts` 的 `Twister.setup` 函数。
+入口文件:`packages/client/src/pages/sim/cuber/twister.ts` 的 `Twister.setup` 函数。
 
 ## 现状
 
@@ -143,7 +143,7 @@ hash: `for (const c of cubelets.values()) h = (h*31 + c._index + (c.quaternion.x
   - WASM kernel:**5303ms**(1.19×,first call 冷启 ~7.5s)
 - N=175 setup CPU 中位数:**~3.6s**(历史数据)
 - 测试方法:fresh navigate + 1 warmup + 8 samples,取 median;每个 sample 新生成 scramble
-- 入口:`packages/client/src/pages/stack/cuber/twister.ts` 的 `Twister.setup`
+- 入口:`packages/client/src/pages/sim/cuber/twister.ts` 的 `Twister.setup`
 - WASM kernel 源:`packages/stack-kernel/src/lib.rs`,wasm-pack target web,SIMD 启用但未显式用 v128
 
 ## 关键设计
@@ -204,7 +204,7 @@ setup 走 logic-only fast path,与 `push`(动画播放)分离:
 ### 辅助:bench 基础设施
 - `Twister.lastSetupCpuMs` + `lastSetupParts`(finish/reset/parse/loop/rebuild 子时间)
 - `PerfOverlay` 显示 "出图 NNNms · setup NNNms"(DEV)
-- `window.__stack_stats__` 暴露给 Playwright 自动化
+- `window.__sim_stats__` 暴露给 Playwright 自动化
 - `window.__STACK_KERNEL_WASM = false` 强制走 JS 路径(WASM A/B 对比用)
 
 ### WASM kernel(2026-05-17,N=200 1.19×)
@@ -401,7 +401,7 @@ setup 整个甩 worker 后,主线程画面不卡 → 公式可以更早出现。
 2. dev server 在 127.0.0.1:5173,**不要重启**
 3. 用 Playwright MCP 自动化测,paired A/B 必须
 4. 每次改动:有提升 → commit;没提升或退步 → `git checkout --`
-5. 只动 NxN 相关(`packages/client/src/pages/stack/cuber/`),不动 Sq1
+5. 只动 NxN 相关(`packages/client/src/pages/sim/cuber/`),不动 Sq1
 6. commit message 用中文,带前后 median 对比
 7. 提交时 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 

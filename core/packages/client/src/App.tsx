@@ -105,8 +105,8 @@ const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
 const GenPage = lazy(() => import('./pages/gen/GenPage'));
 // NOTE: liquid-glass-react 沙盒,验证 iOS 26 效果用,无导航入口
 const LiquidGlassTestPage = lazy(() => import('./pages/liquid_glass_test/LiquidGlassTestPage'));
-// NOTE: Stack — 虚拟魔方 Playground (port of huazhechen/cuber)
-const StackPage = lazy(() => import('./pages/stack/StackPage'));
+// NOTE: Sim — 虚拟魔方 Playground (port of huazhechen/cuber)
+const SimPage = lazy(() => import('./pages/sim/SimPage'));
 // NOTE: Patterns — 著名 3x3 图案集
 const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
 // NOTE: /code — hub (架构 + 语言两张卡片) + 子页面
@@ -253,8 +253,8 @@ function App() {
         <Route path="/patterns" element={<Navigate to="/scramble/pattern" replace />} />
         {/* /average 已并入 /calc 的"成绩计算器" tab — 兼容旧链接 */}
         <Route path="/average" element={<Navigate to="/calc?tab=average" replace />} />
-        {/* Stack — 虚拟魔方 Playground */}
-        <Route path="/stack" element={<Suspense fallback={<div>Loading...</div>}><StackPage /></Suspense>} />
+        {/* Sim — 虚拟魔方 Playground */}
+        <Route path="/sim" element={<Suspense fallback={<div>Loading...</div>}><SimPage /></Suspense>} />
         {/* Code — hub (架构 + 语言) + 子页面 */}
         <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeIndexPage /></Suspense>} />
         <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><ArchitecturePage /></Suspense>} />

@@ -1,6 +1,6 @@
 /**
- * PerfOverlay — DEV-only render perf HUD for /stack.
- * Samples every 250ms from a stats ref written by StackPage's render loop.
+ * PerfOverlay — DEV-only render perf HUD for /sim.
+ * Samples every 250ms from a stats ref written by SimPage's render loop.
  * 包含一个 stress-test 按钮:在当前阶数跑 60 个连续 twist,记录 avg FPS。
  */
 import { useEffect, useRef, useState } from 'react';
@@ -34,7 +34,7 @@ interface Props {
   onStress: () => Promise<{ avgFps: number; minFps: number; durationMs: number; frames: number }>;
 }
 
-const COLLAPSE_KEY = 'stack.perfOverlay.collapsed';
+const COLLAPSE_KEY = 'sim.perfOverlay.collapsed';
 
 export default function PerfOverlay({ statsRef, onStress }: Props) {
   const { i18n } = useTranslation();

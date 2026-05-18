@@ -1,4 +1,4 @@
-.stack-director {
+.sim-director {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -8,7 +8,7 @@
   border-top: 1px solid var(--border-default);
 }
 
-.stack-director-btn {
+.sim-director-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -21,35 +21,35 @@
   font-size: 13px;
   cursor: pointer;
 }
-.stack-director-btn:hover:not(:disabled) {
+.sim-director-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
-.stack-director-btn:disabled {
+.sim-director-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.stack-director-btn.recording {
+.sim-director-btn.recording {
   border-color: var(--destructive);
   color: var(--destructive);
 }
 
-.stack-director-ext {
+.sim-director-ext {
   font-family: ui-monospace, monospace;
   font-size: 11px;
   color: var(--muted-foreground);
 }
 
-.stack-director-time {
+.sim-director-time {
   font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
 
-.stack-director-hint {
+.sim-director-hint {
   font-size: 12px;
   color: var(--muted-foreground);
 }
 
-.stack-export-overlay {
+.sim-export-overlay {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -60,7 +60,7 @@
   padding: 24px;
 }
 
-.stack-export-card {
+.sim-export-card {
   width: min(720px, calc(100vw - 48px));
   padding: 24px 28px;
   background: #161616;
@@ -72,13 +72,13 @@
   gap: 12px;
 }
 
-.stack-export-title {
+.sim-export-title {
   font-size: 16px;
   font-weight: 700;
   color: #fff;
 }
 
-.stack-export-preview {
+.sim-export-preview {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -87,27 +87,27 @@
   border-radius: 6px;
 }
 
-.stack-export-bar {
+.sim-export-bar {
   height: 8px;
   background: #2a2a2a;
   border-radius: 999px;
   overflow: hidden;
 }
 
-.stack-export-bar-fill {
+.sim-export-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #4d8eff, #66c8ff);
   transition: width 0.3s ease-out;
 }
 
-.stack-export-msg {
+.sim-export-msg {
   font-size: 13px;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
   min-height: 1.4em;
 }
 
-.stack-export-cancel {
+.sim-export-cancel {
   align-self: flex-end;
   padding: 6px 18px;
   font-size: 13px;
@@ -118,7 +118,7 @@
   cursor: pointer;
 }
 
-.stack-export-cancel:hover {
+.sim-export-cancel:hover {
   background: #2a2a2a;
   color: #fff;
 }

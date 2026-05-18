@@ -1,12 +1,12 @@
-.stack-drawer-backdrop {
+.sim-drawer-backdrop {
   position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--background) 60%, transparent);
   z-index: 50;
-  animation: stack-fade-in 0.15s ease-out;
+  animation: sim-fade-in 0.15s ease-out;
 }
 
-.stack-drawer {
+.sim-drawer {
   position: fixed;
   top: 0;
   right: 0;
@@ -18,32 +18,32 @@
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 16px color-mix(in srgb, var(--foreground) 8%, transparent);
-  animation: stack-slide-in 0.2s ease-out;
+  animation: sim-slide-in 0.2s ease-out;
 }
 
-@keyframes stack-fade-in {
+@keyframes sim-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes stack-slide-in {
+@keyframes sim-slide-in {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
 
-.stack-drawer-head {
+.sim-drawer-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-default);
 }
-.stack-drawer-head h2 {
+.sim-drawer-head h2 {
   font-size: 15px;
   font-weight: 600;
   margin: 0;
 }
-.stack-drawer-head button {
+.sim-drawer-head button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -55,12 +55,12 @@
   color: var(--muted-foreground);
   cursor: pointer;
 }
-.stack-drawer-head button:hover {
+.sim-drawer-head button:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
 
-.stack-drawer-body {
+.sim-drawer-body {
   flex: 1;
   padding: 16px;
   display: flex;
@@ -69,18 +69,18 @@
   overflow-y: auto;
 }
 
-.stack-slider {
+.sim-slider {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
 }
-.stack-slider-row {
+.sim-slider-row {
   display: flex;
   justify-content: space-between;
   color: var(--foreground);
 }
-.stack-slider-val {
+.sim-slider-val {
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
   background: transparent;
@@ -93,23 +93,23 @@
   -moz-appearance: textfield;
   appearance: textfield;
 }
-.stack-slider-val::-webkit-outer-spin-button,
-.stack-slider-val::-webkit-inner-spin-button {
+.sim-slider-val::-webkit-outer-spin-button,
+.sim-slider-val::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.stack-slider-val:hover { border-color: var(--border-default); }
-.stack-slider-val:focus {
+.sim-slider-val:hover { border-color: var(--border-default); }
+.sim-slider-val:focus {
   outline: none;
   border-color: var(--accent);
   color: var(--foreground);
 }
-.stack-slider input[type=range] {
+.sim-slider input[type=range] {
   width: 100%;
   accent-color: var(--accent);
 }
 
-.stack-toggle {
+.sim-toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -117,14 +117,14 @@
   color: var(--foreground);
   cursor: pointer;
 }
-.stack-toggle input[type=checkbox] {
+.sim-toggle input[type=checkbox] {
   accent-color: var(--accent);
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
 
-.stack-drawer-reset {
+.sim-drawer-reset {
   margin-top: 8px;
   padding: 8px 12px;
   border: 1px solid var(--border-default);
@@ -134,29 +134,29 @@
   font-size: 13px;
   cursor: pointer;
 }
-.stack-drawer-reset:hover {
+.sim-drawer-reset:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
-.stack-keymap {
+.sim-keymap {
   font-size: 12px;
   color: var(--foreground);
   border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 8px 10px;
 }
-.stack-keymap > summary {
+.sim-keymap > summary {
   cursor: pointer;
   font-size: 13px;
   color: var(--foreground);
   user-select: none;
   outline: none;
 }
-.stack-keymap[open] > summary {
+.sim-keymap[open] > summary {
   margin-bottom: 8px;
 }
 /* 抽屉里那个"打开快捷键 modal"按钮 */
-.stack-keymap-open-btn {
+.sim-keymap-open-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -168,12 +168,12 @@
   font-size: 13px;
   cursor: pointer;
 }
-.stack-keymap-open-btn:hover {
+.sim-keymap-open-btn:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 /* keymap modal — z-index 比设置抽屉 (51) 高,backdrop 灰罩 */
-.stack-keymap-modal-backdrop {
+.sim-keymap-modal-backdrop {
   position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--background) 60%, transparent);
@@ -182,9 +182,9 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: stack-fade-in 0.15s ease-out;
+  animation: sim-fade-in 0.15s ease-out;
 }
-.stack-keymap-modal {
+.sim-keymap-modal {
   width: min(720px, 100%);
   max-height: calc(100vh - 32px);
   display: flex;
@@ -194,19 +194,19 @@
   border-radius: 8px;
   box-shadow: 0 10px 40px color-mix(in srgb, var(--foreground) 18%, transparent);
 }
-.stack-keymap-modal-head {
+.sim-keymap-modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-default);
 }
-.stack-keymap-modal-head h2 {
+.sim-keymap-modal-head h2 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
 }
-.stack-keymap-modal-head button {
+.sim-keymap-modal-head button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -218,11 +218,11 @@
   color: var(--muted-foreground);
   cursor: pointer;
 }
-.stack-keymap-modal-head button:hover {
+.sim-keymap-modal-head button:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
-.stack-keymap-modal-body {
+.sim-keymap-modal-body {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
@@ -231,31 +231,31 @@
   gap: 10px;
 }
 
-.stack-keymap-title {
+.sim-keymap-title {
   font-size: 10px;
   color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 4px;
 }
-.stack-keymap-hint {
+.sim-keymap-hint {
   font-size: 11px;
   color: var(--muted-foreground);
   margin-bottom: 8px;
 }
 
 /* 键盘 grid */
-.stack-keyboard {
+.sim-keyboard {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.stack-keyboard-row {
+.sim-keyboard-row {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 3px;
 }
-.stack-key {
+.sim-key {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -270,52 +270,52 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   line-height: 1;
 }
-.stack-key:hover {
+.sim-key:hover {
   border-color: color-mix(in srgb, var(--accent) 60%, var(--border-default));
 }
-.stack-key.empty {
+.sim-key.empty {
   background: transparent;
 }
-.stack-key.empty .stack-key-move {
+.sim-key.empty .sim-key-move {
   color: var(--muted-foreground);
   opacity: 0.45;
 }
-.stack-key.editing {
+.sim-key.editing {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-foreground, #fff);
 }
-.stack-key.editing .stack-key-label,
-.stack-key.editing .stack-key-move {
+.sim-key.editing .sim-key-label,
+.sim-key.editing .sim-key-move {
   color: inherit;
 }
-.stack-key-label {
+.sim-key-label {
   font-size: 10px;
   color: var(--muted-foreground);
 }
-.stack-key-move {
+.sim-key-move {
   font-size: 12px;
   font-weight: 600;
   color: var(--foreground);
 }
 
 /* move picker (点击格子后弹出) */
-.stack-keymap-picker {
+.sim-keymap-picker {
   margin-top: 10px;
   padding: 8px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
   background: color-mix(in srgb, var(--foreground) 2%, transparent);
 }
-.stack-keymap-picker-group + .stack-keymap-picker-group {
+.sim-keymap-picker-group + .sim-keymap-picker-group {
   margin-top: 8px;
 }
-.stack-keymap-picker-row {
+.sim-keymap-picker-row {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
-.stack-keymap-picker-btn {
+.sim-keymap-picker-btn {
   min-width: 32px;
   height: 26px;
   padding: 0 6px;
@@ -327,18 +327,18 @@
   font-size: 12px;
   cursor: pointer;
 }
-.stack-keymap-picker-btn:hover {
+.sim-keymap-picker-btn:hover {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-foreground, #fff);
 }
-.stack-keymap-picker-actions {
+.sim-keymap-picker-actions {
   display: flex;
   gap: 6px;
   margin-top: 10px;
 }
-.stack-keymap-picker-clear,
-.stack-keymap-picker-cancel {
+.sim-keymap-picker-clear,
+.sim-keymap-picker-cancel {
   flex: 1;
   height: 26px;
   border: 1px solid var(--border-default);
@@ -348,17 +348,17 @@
   font-size: 12px;
   cursor: pointer;
 }
-.stack-keymap-picker-clear:disabled {
+.sim-keymap-picker-clear:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.stack-keymap-picker-clear:not(:disabled):hover,
-.stack-keymap-picker-cancel:hover {
+.sim-keymap-picker-clear:not(:disabled):hover,
+.sim-keymap-picker-cancel:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 /* misc + reset */
-.stack-keymap-misc {
+.sim-keymap-misc {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 14px;
@@ -367,7 +367,7 @@
   color: var(--muted-foreground);
   align-items: center;
 }
-.stack-keymap-misc kbd {
+.sim-keymap-misc kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -383,23 +383,23 @@
   font-size: 10px;
   line-height: 1;
 }
-.stack-mouse-help {
+.sim-mouse-help {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 11px;
   color: var(--foreground);
 }
-.stack-mouse-help > div {
+.sim-mouse-help > div {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
 }
-.stack-mouse-op {
+.sim-mouse-op {
   color: var(--muted-foreground);
 }
-.stack-mouse-op kbd {
+.sim-mouse-op kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -415,12 +415,12 @@
   font-size: 10px;
   line-height: 1;
 }
-.stack-mouse-act {
+.sim-mouse-act {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--foreground);
 }
 
-.stack-keymap-reset {
+.sim-keymap-reset {
   margin-top: 10px;
   padding: 6px 10px;
   border: 1px solid var(--border-default);
@@ -431,6 +431,6 @@
   cursor: pointer;
   width: 100%;
 }
-.stack-keymap-reset:hover {
+.sim-keymap-reset:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
