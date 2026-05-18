@@ -166,7 +166,7 @@ async function main(): Promise<void> {
         SELECT d, daily_min FROM running
         WHERE prev_best IS NULL OR daily_min < prev_best
       )
-      SELECT d.d AS date, d.daily_min AS value, MIN(r.person_id) AS person_id, MIN(r.person_name) AS person_name, MIN(c.country_id) AS country_id
+      SELECT d.d AS date, d.daily_min AS value, MIN(r.person_id) AS person_id, MIN(r.person_name) AS person_name, MIN(r.country_id) AS country_id
       FROM drops d
       JOIN competitions c ON c.start_date=d.d
       JOIN results r ON r.competition_id=c.id AND r.event_id='${ev.id}' AND r.best=d.daily_min
@@ -175,10 +175,10 @@ async function main(): Promise<void> {
 
     eventData.country_share = await q(`
       WITH yearly AS (
-        SELECT YEAR(c.start_date) AS year, c.country_id, COUNT(DISTINCT r.person_id) AS cubers
+        SELECT YEAR(c.start_date) AS year, r.country_id, COUNT(DISTINCT r.person_id) AS cubers
         FROM results r JOIN competitions c ON c.id=r.competition_id
         WHERE r.event_id='${ev.id}' AND c.start_date IS NOT NULL
-        GROUP BY YEAR(c.start_date), c.country_id
+        GROUP BY YEAR(c.start_date), r.country_id
       )
       SELECT year, country_id, cubers FROM yearly
       WHERE cubers >= 50 ORDER BY year, cubers DESC
