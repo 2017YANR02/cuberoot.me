@@ -217,7 +217,7 @@ export default function PredictionPage() {
               className="pred-toc-item pred-toc-subpage"
               onClick={() => setTocOpen(false)}
             >
-              {isZh ? '"不可能更快"下界' : '"Cannot Be Faster" Floor'}
+              {isZh ? '运气预测 (累积概率)' : 'Luck Forecast (cumulative P)'}
             </Link>
           </div>
 
@@ -352,15 +352,15 @@ export default function PredictionPage() {
             <div className="pred-333-cta-arrow">→</div>
           </Link>
 
-          {/* Pointer to lucky-scramble floor */}
+          {/* Pointer to lucky-scramble forecast */}
           <Link to="/wca/prediction/lucky" className="pred-333-deepdive-cta pred-lucky-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{isZh ? '数学下界 · 非预测' : 'Math Floor · Not a Forecast'}</div>
-              <div className="pred-333-cta-title">{isZh ? '运气 + 手速双满下的"不可能更快"下界' : 'The "Cannot Be Faster" Lower Bound (luck × TPS both maxed)'}</div>
+              <div className="pred-333-cta-eyebrow">{isZh ? '运气预测 · 累积概率' : 'Luck Forecast · Cumulative Probability'}</div>
+              <div className="pred-333-cta-title">{isZh ? '撞上最幸运 scramble 的概率: 何时高?' : 'When Does Cumulative P of Hitting the Luckiest Scramble Become High?'}</div>
               <div className="pred-333-cta-sub">
                 {isZh
-                  ? '拖动年份, 看累积 scramble 数 + 深度分布算出的运气下界. 三阶渐近 → 0.27 s (2 步 / TPS_ceil). 与真实 WR 无关 — 实际受物理墙 ~1.5 s 约束.'
-                  : 'Year slider × depth distribution × TPS ceiling. 3x3 asymptote = 0.27 s (2 moves / TPS_ceil). Independent of real WRs, which are bounded by the ~1.5 s physical floor.'}
+                  ? '三阶 4.3×10^19 状态里只有 262 个 ≤2 步可解. 单次概率 6×10^-18 ≈ 零, 但 P = 1−(1−p)^N 随累积 N 增长. 需要 N₅₀ ≈ 1.2×10^17 次打乱才能有 50% 概率撞上一次 → 三阶 0.27 s 是 ~10^14 年级渐近.'
+                  : '3x3 has only 262 of 4.3×10^19 states solvable in ≤2 moves. Per-scramble p ≈ 6×10^-18, but cumulative P = 1−(1−p)^N grows with N. N₅₀ ≈ 1.2×10^17 → the 3x3 0.27 s asymptote is ~10^14 yr out.'}
               </div>
             </div>
             <div className="pred-333-cta-arrow">→</div>

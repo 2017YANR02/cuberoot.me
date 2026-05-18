@@ -1,14 +1,27 @@
 /**
  * LuckyLimitPage — /wca/prediction/lucky
  *
- * 极限单次成绩 = "最幸运 scramble" 下界:
- *   - 每个 puzzle 有一个深度分布: 多少个状态恰好 k 步可解.
- *   - WCA 每年累计生成 N 个 scramble (含备用), 独立均匀采样.
- *   - 在 N 次采样中, 期望最小步数 m(N) = argmin k 满足 N · P(d ≤ k) ≥ 1.
- *   - 单次极限 T(N) = m(N) / TPS_ceil + setup_s.
+ * 核心: 累积概率预测.
  *
- * 当 N → ∞ (年份 → ∞): m → k_min_WCA, T → k_min_WCA / TPS_ceil + setup_s.
- * 对 3x3, k_min_WCA = 2, TPS_ceil = 17, setup_s = 0.15 → T_∞ ≈ 0.27 s.
+ *   三阶 4.3×10^19 个状态. 其中只有 262 个 (1+18+243) 可在 ≤2 步解开.
+ *   单次抽中这种 scramble 的概率: 6×10^-18 (一亿亿亿分之 6).
+ *
+ *   但 WCA 每年累积大量打乱 (含备用), 设第 Y 年的累积打乱总数为 N(Y).
+ *   "至少撞上一次 d ≤ k 的状态" 的累积概率:
+ *
+ *       P(min ≤ k in N(Y)) = 1 - (1 - p_le_k)^N(Y)
+ *
+ *   - 单次 P 极小, 但 N 足够大时, P → 1.
+ *   - 期望最幸运 d 随 N 单调下降 (E[min] = ∑ P(min > k)).
+ *   - 抽中后 cuber 顶到 TPS_ceil 跑出的单次时间 = d / TPS_ceil + setup_s.
+ *
+ *   预测随年份的演化:
+ *   - 2026 (N≈6.6M):  P(d≤2)≈4×10^-11, 几乎零; E[min]≈11.5 步.
+ *   - 2100 (N≈590M):  P(d≤2)≈3.6×10^-9, 仍极低; E[min]≈9.5 步.
+ *   - 10^15 yr (N≈3×10^34): P(d≤2)≈1; E[min]≈2 步 → 单次时间逼近 0.27 s.
+ *
+ *   关键洞察: "撞上最幸运 scramble 然后跑出超低单次" 不是某一年的事件,
+ *   而是 *累积* N 大到足够撞上低 d 状态. 何时? 看这个页面.
  */
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,10 +33,14 @@ import {
   LUCKY_EVENTS,
   cumScrambles,
   expectedLuckyDepth,
+  pHitLeqK,
+  pSingleLeqK,
+  nForProbability,
   sliderToYear,
   yearToSlider,
   formatYear,
   formatBigN,
+  D_333,
 } from './lucky_data';
 import { LineChart, type Series } from './charts';
 import './prediction.css';
@@ -45,11 +62,42 @@ interface Row {
   notes_en?: string;
 }
 
+/** 概率友好格式化 — 多区间不同精度 */
+function formatProb(p: number, isZh: boolean): string {
+  if (!isFinite(p) || p < 0) return '–';
+  if (p >= 0.999) return isZh ? '~100%' : '~100%';
+  if (p >= 0.01) return (p * 100).toFixed(p >= 0.1 ? 1 : 2) + '%';
+  if (p === 0) return '0';
+  if (p < 1e-15) {
+    const exp = Math.floor(Math.log10(p));
+    const mant = p / Math.pow(10, exp);
+    return `${mant.toFixed(1)}×10^${exp}`;
+  }
+  if (p < 1e-3) {
+    const exp = Math.floor(Math.log10(p));
+    const mant = p / Math.pow(10, exp);
+    return `${mant.toFixed(2)}×10^${exp}`;
+  }
+  return (p * 100).toFixed(3) + '%';
+}
+
+/** 友好年份显示 (用于 "需要 N=1.6e17 → 哪一年") */
+function nToApproxYear(N: number): number {
+  // 二分搜索 slider 值使 cumScrambles('333', sliderToYear(s)) ≈ N
+  let lo = 0, hi = 1;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    const y = sliderToYear(mid);
+    const cum = cumScrambles('333', y);
+    if (cum < N) lo = mid; else hi = mid;
+  }
+  return sliderToYear((lo + hi) / 2);
+}
+
 export default function LuckyLimitPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
-  // URL ?year= state
   const initialYear = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     const y = parseFloat(params.get('year') ?? '');
@@ -64,7 +112,6 @@ export default function LuckyLimitPage() {
     setSliderValue(yearToSlider(y));
   }, []);
 
-  // Persist year to URL
   useEffect(() => {
     const url = new URL(window.location.href);
     url.searchParams.set('year', Math.round(year).toString());
@@ -77,7 +124,7 @@ export default function LuckyLimitPage() {
     localStorage.setItem('trainer-lang', n);
   };
 
-  // Compute per-event rows
+  // Per-event rows
   const rows: Row[] = useMemo(() => {
     const list: Row[] = [];
     for (const ev of EVENTS) {
@@ -89,12 +136,7 @@ export default function LuckyLimitPage() {
       const timeCeil = depthClamped / lucky.tps_ceil + lucky.setup_s;
       const timeNow = depthClamped / lucky.tps_now + lucky.setup_s;
       list.push({
-        ev,
-        N,
-        depth,
-        depthClamped,
-        timeCeil,
-        timeNow,
+        ev, N, depth, depthClamped, timeCeil, timeNow,
         k_min_wca: lucky.dist.k_min_wca,
         tps_ceil: lucky.tps_ceil,
         tps_now: lucky.tps_now,
@@ -107,22 +149,53 @@ export default function LuckyLimitPage() {
     return list;
   }, [year]);
 
-  // Chart series: 3x3 lucky time over year (sampled along slider domain)
-  // X 轴用 log10(year - 2002) 避免极大 year 让 LineChart 的 tick 循环爆栈.
-  // xFormat 反算回 year 用于显示.
+  const row333 = rows.find((r) => r.ev.id === '333');
+
+  // ─── 概率核心: 三阶在当前 N 下, P(撞上 d≤K) for K = {2, 5, 8, 10, 12, 15}
+  const N333 = row333?.N ?? 0;
+  const probTable_333 = useMemo(() => {
+    const ks = [2, 5, 8, 10, 12, 15];
+    return ks.map((k) => ({
+      k,
+      pSingle: pSingleLeqK(D_333, k),
+      pCumulative: pHitLeqK(D_333, N333, k),
+      nFor50: nForProbability(D_333, k, 0.5),
+      yearFor50: nForProbability(D_333, k, 0.5) === Infinity
+        ? Infinity
+        : nToApproxYear(nForProbability(D_333, k, 0.5)),
+    }));
+  }, [N333]);
+
+  // ─── P(撞上 d≤K) vs Year chart (多条线)
   const yearToLogX = (y: number) => Math.log10(Math.max(1, y - 2002));
   const logXToYear = (x: number) => 2002 + Math.pow(10, x);
 
-  const chartSeries: Series[] = useMemo(() => {
-    const sampleS = Array.from({ length: 120 }, (_, i) => i / 119);
+  const probSeries: Series[] = useMemo(() => {
+    const sampleS = Array.from({ length: 130 }, (_, i) => i / 129);
+    const ks = [2, 5, 8, 10, 12, 15];
+    const colors = ['#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#9333ea'];
+    return ks.map((k, i): Series => {
+      const data = sampleS.map((s) => {
+        const y = sliderToYear(s);
+        const N = cumScrambles('333', y);
+        const p = pHitLeqK(D_333, N, k);
+        return { x: yearToLogX(y), y: p };
+      });
+      return {
+        name: `P(d ≤ ${k})`,
+        color: colors[i],
+        data,
+      };
+    });
+  }, []);
+
+  // ─── time vs year chart (跨项目)
+  const timeSeries: Series[] = useMemo(() => {
+    const sampleS = Array.from({ length: 130 }, (_, i) => i / 129);
     const eventIds = ['333', '222', '444', '555', 'pyram', 'skewb'];
     const colors: Record<string, string> = {
-      '333': '#dc2626',
-      '222': '#16a34a',
-      '444': '#2563eb',
-      '555': '#9333ea',
-      'pyram': '#ea580c',
-      'skewb': '#ca8a04',
+      '333': '#dc2626', '222': '#16a34a', '444': '#2563eb',
+      '555': '#9333ea', 'pyram': '#ea580c', 'skewb': '#ca8a04',
     };
     return eventIds.map((id): Series => {
       const ev = EVENTS.find((e) => e.id === id);
@@ -143,10 +216,6 @@ export default function LuckyLimitPage() {
     });
   }, [isZh]);
 
-  // Pick the 3x3 row for headline
-  const row333 = rows.find((r) => r.ev.id === '333');
-  const lucky333 = LUCKY_EVENTS['333'];
-
   return (
     <div className="pred-page">
       <header className="pred-header">
@@ -162,12 +231,12 @@ export default function LuckyLimitPage() {
 
       <article className="pred-article" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 28px 80px' }}>
         <h1 className="pred-title">
-          {isZh ? '运气极限: 数学上的"不可能更快"下界' : 'Lucky-Scramble Floor: The "Cannot Be Faster" Lower Bound'}
+          {isZh ? '运气预测: 累积打乱越多, 撞上最幸运 scramble 的概率越高' : 'Lucky-Scramble Forecast: Cumulative Probability of Hitting the Luckiest Scramble'}
         </h1>
         <p className="pred-subtitle">
           {isZh
-            ? '本页不是预测当年 WR. 给出的是"假设抽中最幸运 scramble + 手速顶到生理极限"两个独立极限叠加的数学下界. 真实 WR 仍受物理墙 (M/TPS+R ≈ 1.5–3 s)、scrambler 工程下界 (实际 17–25 步 scramble) 和识别/反应噪声约束 — 这条下界比真实 WR 低很多, 仅用于回答"理论上不可能更快是多少".'
-            : 'Not a year-by-year WR prediction. This shows the math floor from combining two independent maxima: luckiest possible scramble AND TPS at the physiological ceiling. Real WRs are bounded by the physical floor (M/TPS+R ≈ 1.5–3 s), the scrambler engineering floor (real scrambles are 17–25 moves), and recognition/reaction noise — so this floor is far below real WRs and only answers "what is the absolute lower bound."'}
+            ? '三阶 4.3×10^19 个状态, 其中只有 262 个 (1+18+243) 可在 ≤2 步解开. 单次抽中这种 scramble 的概率 ≈ 6×10^-18, 微乎其微. 但 WCA 每年累积大量打乱 (含备用), 累积撞上一次的概率 P = 1 − (1 − p)^N 随 N 单调上升. 拖动年份 → 看 N(Y) → 看每个 d 阈值的累积概率 → 看期望最幸运成绩.'
+            : '3x3 has 4.3×10^19 states; only 262 (= 1+18+243) are solvable in ≤2 moves. A single random scramble has only ~6×10^-18 chance of landing there. But WCA accumulates many scrambles per year (incl. backups); cumulative-hit probability is P = 1 − (1 − p)^N, monotonically rising with N. Drag the year → see N(Y) → see cumulative probability per depth threshold → see the expected luckiest result.'}
         </p>
 
         {/* Year slider */}
@@ -176,6 +245,9 @@ export default function LuckyLimitPage() {
             <div className="lucky-year-display">
               <div className="lucky-year-label">{isZh ? '年份' : 'Year'}</div>
               <div className="lucky-year-value">{formatYear(year)}</div>
+              <div className="lucky-year-N">
+                N(Y) = <strong>{formatBigN(N333)}</strong>
+              </div>
             </div>
             <input
               type="range"
@@ -201,74 +273,165 @@ export default function LuckyLimitPage() {
           </div>
           <p className="lucky-slider-note">
             {isZh
-              ? '滑条左半段 (0..40%) 线性映射 2003..2100, 右半段对数映射到 ~10^15 年后, 用于展示渐近极限.'
-              : 'Slider left half (0–40%) linearly maps 2003–2100; right half is log-scale up to ~10^15 years, showing the asymptote.'}
+              ? '滑条左半段 (0..40%) 线性 2003..2100, 右半段对数到 10^15 年.'
+              : 'Left half (0–40%) is linear 2003–2100; right half is log up to 10^15 yr.'}
           </p>
         </section>
 
-        {/* Headline for 3x3 */}
-        {row333 && lucky333 && (
+        {/* 概率核心区 — 三阶 P(d ≤ K) 表 */}
+        <section className="pred-section">
+          <h2>{isZh ? '三阶: 当前累积概率' : '3x3: Cumulative Hit Probability'}</h2>
+          <p>
+            {isZh ? (
+              <>
+                给定累积打乱 <strong>N = {formatBigN(N333)}</strong> ({formatYear(year)} 年),
+                "至少撞上一次 d ≤ K 状态" 的累积概率 P = 1 − (1 − p)^N.
+                K 越小 → p 越小 → 即使 N 极大也需要等更多年.
+              </>
+            ) : (
+              <>
+                Given N = <strong>{formatBigN(N333)}</strong> ({formatYear(year)}),
+                cumulative probability of hitting at least one scramble with d ≤ K is P = 1 − (1 − p)^N.
+                Smaller K → smaller p → need exponentially more accumulation.
+              </>
+            )}
+          </p>
+          <div className="lucky-prob-table-wrap">
+            <table className="lucky-prob-table">
+              <thead>
+                <tr>
+                  <th>{isZh ? '深度 K' : 'Depth K'}</th>
+                  <th>{isZh ? '该深度状态数' : '# states at d ≤ K'}</th>
+                  <th>{isZh ? '单次 p' : 'Single-scramble p'}</th>
+                  <th>P(撞上 d ≤ K) <span style={{ color: 'var(--faint-foreground)' }}>@ N(Y)</span></th>
+                  <th>{isZh ? 'N₅₀ (达到 50% 所需)' : 'N₅₀ (for 50% chance)'}</th>
+                  <th>{isZh ? '对应年份' : 'Year reached'}</th>
+                  <th>{isZh ? '该 d 单次时间 (TPS 17)' : 'Time at this d (TPS 17)'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {probTable_333.map((r) => {
+                  const numStates = Math.round(r.pSingle * D_333.total);
+                  return (
+                    <tr key={r.k}>
+                      <td><strong>d ≤ {r.k}</strong></td>
+                      <td>{formatBigN(numStates)}</td>
+                      <td>{formatProb(r.pSingle, isZh)}</td>
+                      <td className={r.pCumulative >= 0.5 ? 'lucky-prob-high' : r.pCumulative >= 0.01 ? 'lucky-prob-mid' : 'lucky-prob-low'}>
+                        {formatProb(r.pCumulative, isZh)}
+                      </td>
+                      <td>{formatBigN(r.nFor50)}</td>
+                      <td>{r.yearFor50 === Infinity ? '–' : formatYear(r.yearFor50)}</td>
+                      <td>{(Math.max(r.k, D_333.k_min_wca) / 17 + 0.15).toFixed(2)} s</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="lucky-prob-caption">
+            {isZh ? (
+              <>
+                <strong>读法:</strong> 比如表中 d ≤ 2 行 — 单次概率 6×10^-18 (4.3×10^19 个状态里只有 262 个).
+                需要累积到 N₅₀ ≈ 1.2×10^17 次打乱才能有 50% 概率撞上一次,
+                对应年份约 10^14 左右 (WCA 比赛累积 30000 场 / 年 × 250 scrambles / 场 ≈ 7.5×10^6 / 年).
+                这就是为什么 "三阶 2 步运气解" 不是任何一年内能见到的事件, 而是"累积到无穷年"的渐近.
+                现实里 2026 年期望最幸运 d ≈ 11.5 步, 概率压在 d=11..12 之间(P 达 40%).
+              </>
+            ) : (
+              <>
+                <strong>How to read:</strong> e.g. d ≤ 2 row — single-scramble prob 6×10^-18 (262 of 4.3×10^19).
+                Need N₅₀ ≈ 1.2×10^17 to have 50% chance of one such hit; that's ~10^14 yr away at WCA's 7.5M scrambles/year cap.
+                That is why "3x3 2-move lucky solve" is not a near-future event but an asymptotic limit.
+                Today the expected luckiest scramble is d ≈ 11.5 with P(d≤12) ≈ 99.9%.
+              </>
+            )}
+          </p>
+        </section>
+
+        {/* Headline for 3x3 — 当前预测 */}
+        {row333 && (
           <section className="lucky-headline">
             <div className="lucky-headline-left">
               <div className="lucky-headline-eyebrow">
-                {isZh ? '三阶 · 数学下界 (非预测)' : '3x3 · Math Floor (not a forecast)'}
+                {isZh ? `三阶 · ${formatYear(year)} 运气预测` : `3x3 · ${formatYear(year)} luck forecast`}
               </div>
               <div className="lucky-headline-time">
                 {formatVal(row333.timeCeil, row333.ev.scale)}
               </div>
               <div className="lucky-headline-sub">
                 {isZh
-                  ? `${row333.depthClamped.toFixed(1)} 步 / 17 TPS + 0.15 s · 实际 WR 受 ~1.5 s 物理墙约束`
-                  : `${row333.depthClamped.toFixed(1)} moves / 17 TPS + 0.15 s · real WR bounded by ~1.5 s physical floor`}
+                  ? `E[min] = ${row333.depthClamped.toFixed(2)} 步 / 17 TPS + 0.15 s`
+                  : `E[min] = ${row333.depthClamped.toFixed(2)} moves / 17 TPS + 0.15 s`}
               </div>
             </div>
             <div className="lucky-headline-right">
               <Stat
-                label={isZh ? '累积 scramble 数' : 'Cumulative scrambles'}
+                label={isZh ? '累积 scramble' : 'Cumulative N(Y)'}
                 value={formatBigN(row333.N)}
-                hint={isZh ? `${2003}–${Math.round(year)}` : `${2003}–${Math.round(year)}`}
+                hint={isZh ? `2003–${Math.round(year)}` : `2003–${Math.round(year)}`}
               />
               <Stat
-                label={isZh ? '期望最小步数' : 'Expected min depth'}
+                label={isZh ? '期望最幸运 d' : 'Expected min depth'}
                 value={row333.depthClamped.toFixed(2) + (isZh ? ' 步' : ' moves')}
-                hint={isZh ? `WCA 下限 ${lucky333.dist.k_min_wca} 步` : `WCA min ${lucky333.dist.k_min_wca} moves`}
+                hint={isZh ? `WCA 接受 ≥${row333.k_min_wca} 步` : `WCA accepts ≥${row333.k_min_wca} moves`}
               />
               <Stat
-                label={isZh ? '同 TPS 14.6 (王艺衡持续值)' : 'At TPS 14.6 (Wang sustained)'}
+                label={isZh ? 'TPS 14.6 (现实 cuber)' : 'TPS 14.6 (real cuber)'}
                 value={formatVal(row333.timeNow, row333.ev.scale)}
-                hint={isZh ? '现实可达下界' : 'Currently reachable floor'}
+                hint={isZh ? 'TPS 顶到王艺衡持续值' : 'TPS at Wang sustained level'}
               />
             </div>
           </section>
         )}
 
-        {/* Chart: time vs year for several events */}
+        {/* 概率随年份演化 — chart */}
         <section className="pred-section">
-          <h2>{isZh ? '运气下界随年份' : 'Lucky Floor over Years'}</h2>
+          <h2>{isZh ? 'P(撞上 d ≤ K) 随年份' : 'Cumulative Hit Probability vs Year'}</h2>
           <p>
             {isZh
-              ? '每条线 = 假设 cuber 顶到 TPS 上界, 用当年累积 scramble 数算的期望最幸运成绩. 纵轴用 log 比较跨项目尺度.'
-              : 'Each line assumes TPS at the physiological ceiling, using cumulative scramble count for that year. Y-axis log-scaled to compare across events.'}
+              ? '每条线对应一个 d 阈值. 横轴 log 年份 (覆盖 2003 → 10^15 yr), 纵轴 = P(撞上 ≤ K). 看不同 K 是 "在何时" 从 0 跨到 1.'
+              : 'Each line corresponds to one K threshold. X-axis: log year (2003 → 10^15 yr), Y-axis: P(hit ≤ K). Watch when each line crosses from 0 to 1.'}
           </p>
           <LineChart
-            series={chartSeries}
-            yLog
+            series={probSeries}
             xLabel={isZh ? '年 (log)' : 'Year (log)'}
-            yLabel={isZh ? '运气极限 (秒)' : 'Lucky floor (s)'}
+            yLabel={isZh ? '累积概率 P' : 'Cumulative P'}
             xFormat={(v) => formatYear(logXToYear(v))}
-            yFormat={(v) => v < 1 ? v.toFixed(2) : v.toFixed(1)}
-            yMin={0.05}
-            height={360}
+            yFormat={(v) => (v >= 0.01 ? (v * 100).toFixed(0) + '%' : v.toExponential(0))}
+            yMin={0}
+            yMax={1}
+            height={340}
           />
         </section>
 
-        {/* Per-event grid */}
+        {/* 期望最幸运时间 chart */}
         <section className="pred-section">
-          <h2>{isZh ? '各项目当前年份下的运气下界' : 'Per-Event Lucky Floor at Selected Year'}</h2>
+          <h2>{isZh ? '期望最幸运成绩随年份 (跨项目)' : 'Expected Luckiest Time vs Year (Cross-Event)'}</h2>
           <p>
             {isZh
-              ? '所有项目在所选年份下的"如果中了最幸运 scramble"理论成绩. 标 ★ 的项目深度分布完全精确; 其他为状态空间峰值模型近似.'
-              : 'For every event, the theoretical "if you hit the luckiest scramble" floor at the selected year. ★ = exact depth distribution; others = peak-concentrated approximation.'}
+              ? '横轴 log 年份, 纵轴 log 秒. 每条线 = 某项目 E[min depth] / TPS_ceil + setup_s. 长期渐近到 k_min_wca / TPS_ceil + setup (各项目最快可能单次).'
+              : 'Log year vs log seconds. Each line = E[min depth] / TPS_ceil + setup_s per event. Asymptote = k_min_wca / TPS_ceil + setup (fastest physically possible single).'}
+          </p>
+          <LineChart
+            series={timeSeries}
+            yLog
+            xLabel={isZh ? '年 (log)' : 'Year (log)'}
+            yLabel={isZh ? '期望最幸运 (秒)' : 'Expected luckiest (s)'}
+            xFormat={(v) => formatYear(logXToYear(v))}
+            yFormat={(v) => v < 1 ? v.toFixed(2) : v.toFixed(1)}
+            yMin={0.05}
+            height={340}
+          />
+        </section>
+
+        {/* Per-event cards */}
+        <section className="pred-section">
+          <h2>{isZh ? '各项目当前年份运气预测' : 'Per-Event Forecast at Selected Year'}</h2>
+          <p>
+            {isZh
+              ? '★ = 深度分布精确; ◐ = 部分精确高深度估计; ~ = 近似分布. 时间 = E[min] / TPS_ceil + setup_s.'
+              : '★ = exact depth distribution; ◐ = partial (exact low / est. high); ~ = approximate. Time = E[min] / TPS_ceil + setup_s.'}
           </p>
           <div className="lucky-grid">
             {rows.map((r) => (
@@ -284,70 +447,70 @@ export default function LuckyLimitPage() {
             <li>
               <strong>{isZh ? '状态空间.' : 'State space.'}</strong>{' '}
               {isZh
-                ? '三阶 4.3252 × 10^19 状态, 二阶 3,674,160, Pyraminx 933,120 (modulo tips), Skewb 3,149,280. 这些 puzzle 的深度分布 (每个 d 上有多少状态) 完全已知.'
-                : '3x3 has 4.3252 × 10^19 states, 2x2 has 3,674,160, Pyraminx has 933,120 (modulo tips), Skewb has 3,149,280. Depth distributions for these are fully known.'}
+                ? '三阶 4.3252 × 10^19 状态, 二阶 3,674,160, Pyraminx 933,120, Skewb 3,149,280. 这些的深度分布完全已知 (counts[d] = 步数恰为 d 的状态数).'
+                : '3x3 = 4.3252 × 10^19 states; 2x2 = 3,674,160; Pyraminx = 933,120; Skewb = 3,149,280. Their full depth distributions are known.'}
             </li>
             <li>
-              <strong>{isZh ? '深度分布来源.' : 'Depth distribution sources.'}</strong>{' '}
+              <strong>{isZh ? '深度分布来源.' : 'Distribution sources.'}</strong>{' '}
               {isZh
-                ? '3x3: cube20.org / Rokicki 2010 (d=0..15 精确, d=16..20 估计). 2x2: Korf / Pochmann. Pyraminx / Skewb: Jaap Scherphuis 完整枚举. 大魔方 / Megaminx / Sq1 / Clock 状态分布不可枚举, 用 "峰值集中" 近似 (大多数状态聚在 God\'s number 附近, 低深度按几何衰减).'
-                : '3x3: cube20.org / Rokicki 2010 (exact d=0–15, est. d=16–20). 2x2: Korf / Pochmann. Pyraminx / Skewb: Jaap Scherphuis. Large cubes / Megaminx / Sq1 / Clock distributions are not enumerable; we use a peak-concentrated approximation (most states at God\'s-number, geometric decay below).'}
+                ? '三阶: cube20.org / Rokicki 2010 (d=0..15 精确, d=16..20 估计). 二阶: Korf / Pochmann. Pyraminx / Skewb: Jaap Scherphuis. 大魔方 / Megaminx / Sq1 / Clock 分布不可枚举, 用"峰值集中"近似.'
+                : '3x3: cube20.org / Rokicki 2010 (exact d=0..15, est. d=16..20). 2x2: Korf / Pochmann. Pyraminx / Skewb: Jaap Scherphuis. Larger cubes etc.: peak-concentrated approximation.'}
             </li>
             <li>
-              <strong>{isZh ? '年比赛 / scramble 数.' : 'Comps and scrambles per year.'}</strong>{' '}
+              <strong>{isZh ? '累积打乱 N(Y).' : 'Accumulated scrambles N(Y).'}</strong>{' '}
               {isZh
-                ? '2003–2025 用 WCA 真实数据; 2026+ 用 5% 年复合增长外推, 封顶 30,000 场 / 年. 单场 3x3 scramble 数 (含备用) 用线性模型: 2003 ~30 / 场, 2026 ~250 / 场. 其他项目按经验份额 (e.g. 4x4 ≈ 0.70 × 3x3).'
-                : '2003–2025 are real WCA counts; 2026+ extrapolated at 5% CAGR capped at 30 k comps/year. Per-comp 3x3 scrambles (incl. backups) linearly model 30 (2003) → 250 (2026). Other events use share factors (e.g. 4x4 ≈ 0.70 × 3x3).'}
+                ? '2003–2025 来自 WCA 真实数据 (≈28000 场), 2026+ 用 5% 年复合增长外推, 封顶 30000 场/年. 单场 3x3 scramble 数 (含备用) 线性插值: 2003 ~30, 2026 ~250. 其他项目按 scramble_share 折算 (4x4 ≈ 0.70 × 3x3).'
+                : '2003–2025 from WCA dump (≈28k comps total), 2026+ extrapolated at 5% CAGR capped at 30k comps/year. Per-comp 3x3 scrambles (incl. backups) linearly interpolated 30 → 250 (2003 → 2026). Other events by share factor (4x4 ≈ 0.70 × 3x3).'}
             </li>
             <li>
-              <strong>{isZh ? '期望最小步数.' : 'Expected minimum depth.'}</strong>{' '}
+              <strong>{isZh ? '累积概率.' : 'Cumulative probability.'}</strong>{' '}
               {isZh
-                ? 'N 次独立采样下, 出现至少 1 个 d ≤ k scramble 的期望 = N · ∑_{i≤k} N(i) / |S|. 我们取 argmin k 使该期望 ≥ 1, log-线性插值到浮点深度. 下限被 WCA 接受规则约束 (3x3: ≥2 步).'
-                : 'Expected count of d ≤ k scrambles in N draws = N · ∑_{i≤k} N(i) / |S|. We take argmin k where this ≥ 1, log-linearly interpolated to a float. Floor clamped to WCA-acceptable minimum (3x3: ≥ 2 moves).'}
+                ? 'P(在 N 次独立打乱中至少撞上一次 d ≤ K) = 1 − (1 − p_le_K)^N, 其中 p_le_K = ∑_{i≤K} counts[i] / |S|. 实现用 log1p(-p) 避免 underflow.'
+                : 'P(hit at least one d ≤ K in N draws) = 1 − (1 − p_le_K)^N, with p_le_K = ∑_{i≤K} counts[i] / |S|. Implemented via log1p(-p) for numerical stability when p is tiny.'}
+            </li>
+            <li>
+              <strong>{isZh ? '期望最幸运 E[min].' : 'Expected min E[min].'}</strong>{' '}
+              {isZh
+                ? "E[min depth in N samples] = ∑_{k=0}^{G-1} (1 − P(min ≤ k)), 然后被 WCA 接受规则 k_min_wca 截断 (三阶 ≥ 2, 二阶 / Pyraminx / Skewb ≥ 1)."
+                : "E[min depth] = ∑_{k=0}^{G-1} (1 − P(min ≤ k)), then clamped to WCA-acceptable minimum (3x3 ≥ 2; 2x2 / Pyraminx / Skewb ≥ 1)."}
             </li>
             <li>
               <strong>{isZh ? '执行时间.' : 'Execution time.'}</strong>{' '}
               {isZh
-                ? 'T = depth / TPS_ceil + setup_s. TPS_ceil: 3x3=17 (击鼓双手 22 Hz, 50% 二次损耗), OH=10, 大魔方 8–12, 2x2=16. setup_s: 单次启动 + StackMat 触发 + 收尾噪声 0.10–2.00 s, 越大魔方越多.'
-                : 'T = depth / TPS_ceil + setup_s. TPS_ceil: 3x3=17 (dual-hand 22 Hz drum × 50 % loss), OH=10, big cubes 8–12, 2x2=16. setup_s: trigger + final-move tap 0.10–2.00 s, larger cubes bigger.'}
+                ? 'T = E[min] / TPS_ceil + setup_s. TPS_ceil 取生理上界 (3x3 = 17, 击鼓双手 22 Hz × 50% 二次损耗), OH = 10, 大魔方 8–12. setup_s 是收尾 + StackMat 触发噪声 0.10–2.00 s.'
+                : 'T = E[min] / TPS_ceil + setup_s. TPS_ceil = physiological ceiling (3x3 = 17, dual-hand 22 Hz drum × 50% loss), OH = 10, big cubes 8–12. setup_s = trigger + tap-off 0.10–2.00 s.'}
             </li>
             <li>
-              <strong>{isZh ? '极限 (年份 → ∞).' : 'Asymptote (year → ∞).'}</strong>{' '}
+              <strong>{isZh ? '渐近 (N → ∞).' : 'Asymptote (N → ∞).'}</strong>{' '}
               {isZh
-                ? '3x3: 2 步 / 17 TPS + 0.15 s = 0.27 s. 2x2 / Pyraminx / Skewb: 1 步 / TPS_ceil + setup ≈ 0.16–0.20 s. 这是把"运气压满 + 手速压满"的合并极限, 远低于物理墙 (1.5 s, 见主页 §生物力学极限).'
-                : '3x3: 2 moves / 17 TPS + 0.15 s = 0.27 s. 2x2 / Pyraminx / Skewb: 1 move / TPS_ceil + setup ≈ 0.16–0.20 s. This combines "luck maxed" with "TPS maxed" and sits well below the biomech floor (1.5 s, see main page §Biomech).'}
+                ? "三阶: 2 步 / 17 TPS + 0.15 s = 0.27 s. 二阶 / Pyraminx / Skewb: 1 步 / TPS_ceil + setup ≈ 0.16–0.20 s. 这些是 \"运气和手速都满足\" 时的下界 — 物理墙 (M/TPS+R) 还在 1.5+ s, 普通比赛中的实际 WR 受物理墙约束."
+                : "3x3: 2 moves / 17 TPS + 0.15 s = 0.27 s. 2x2 / Pyraminx / Skewb: 1 move / TPS_ceil + setup ≈ 0.16–0.20 s. These are reachable only when luck + TPS are both maxed; the physical floor (M/TPS+R) is still ~1.5 s and bounds real-comp WRs."}
             </li>
           </ol>
         </section>
 
-        {/* Caveats */}
         <section className="pred-section">
           <h2>{isZh ? '局限' : 'Caveats'}</h2>
           <ul>
             <li>
               {isZh
-                ? '"运气下界"假设 scramble 均匀采样自整个状态空间 (TNoodle 实际做的). 但 WCA 规则文档要求 scramble 长度足够"打乱可见": 真实生成的 scramble 极少出现 < 5 步可解状态, 因为 TNoodle 的输出 scramble 长 17–25 步, 实际几乎不会停在 d ≤ 5 的状态. 本页假设的 "随年份累积命中"是数学下界, 不是工程上观察到的现实.'
-                : '"Lucky floor" assumes uniform state-space sampling (which TNoodle does). But the WCA reg requires "visibly scrambled" output: TNoodle outputs 17–25-move scrambles, so reaching a d ≤ 5 state in practice almost never happens. This page reports a mathematical lower bound, not what cubers actually see.'}
+                ? 'WCA scrambler 是均匀采样, 但实际 TNoodle 输出长度 17–25 步的 move sequence — 不会刻意筛出短解状态. 累积命中是数学事件, 现实中即使 N 足够也需要 cuber 当场识别到 "这是个 d=4 状态" + 找到 4 步最优解 (没有教科书算法库覆盖低 d).'
+                : "WCA scrambler is uniform sampling, but TNoodle outputs 17–25 move sequences (not filtered for short-solve states). A cumulative hit is mathematical; in practice the cuber would also have to recognize \"this is a d=4 state\" mid-comp and find a 4-move optimal solution (no algorithm book covers low-d states)."}
             </li>
             <li>
               {isZh
-                ? '当 N 接近 |S| (e.g. 2x2 已超出), 公式仍成立但用处不大: 你已经"扫了全部状态"; 真正限制是 WCA 接受规则 (k_min_wca).'
-                : 'When N approaches |S| (e.g. 2x2 already has), the formula still holds but is uninteresting: you have effectively swept the state space, and the binding constraint becomes the WCA-acceptable minimum k_min_wca.'}
+                ? '识别 + 切换 + 反应噪声 + 双手协调下界 (≥ 50 ms StackMat 触发) 实际让"d=2 + 17 TPS"的 0.27 s 也碰不到, 物理底层墙 ≈ 1.5 s.'
+                : 'Recognition + switching + reaction + dual-hand coordination floor (≥ 50 ms StackMat trigger) mean the "d=2 + 17 TPS" 0.27 s is unreachable; the physical floor is ~1.5 s.'}
             </li>
             <li>
               {isZh
-                ? '现实里"最快单次"还会被识别 + 切换 + 反应时间 + 执行噪声拉高. 物理下界 (M/TPS + R, 见主页) 通常 ≥ 1.5 s 而非 0.27 s. "运气下界"是另一个角度的"还有多少压缩空间不来自训练"的上界.'
-                : "Real WRs also bound by recognition + switching + reaction + execution noise — the physical floor (M/TPS + R, main page) is ≥ 1.5 s, not 0.27 s. The 'lucky floor' is an orthogonal upper bound on \"how much room exists beyond training.\""}
+                ? '大魔方 (4x4+) / Megaminx / Sq1 / Clock 分布未枚举, 用"峰值集中"近似. 量级正确, 个位精度不可靠.'
+                : 'Large cubes / Megaminx / Sq1 / Clock distributions not enumerated; peak-concentrated approximation. Order-of-magnitude reliable, not single-digit.'}
             </li>
             <li>
               {isZh
-                ? '大魔方 (4x4+) / Megaminx / Sq1 / Clock 的深度分布未公开, 用"峰值集中"模型. 结果只在数量级意义上可靠.'
-                : 'Big cubes / Megaminx / Sq1 / Clock have no published depth distribution; we use a peak-concentrated approximation. Results are order-of-magnitude only.'}
-            </li>
-            <li>
-              {isZh
-                ? 'FMC / 盲拧 项目此页不建模 (FMC 输出 = 步数本身, 非速度; 盲拧受记忆速度而非 TPS 限制).'
-                : 'FMC and blindfold events are not modeled here (FMC time = move count itself; blindfold is memo-bound, not TPS-bound).'}
+                ? 'FMC / 盲拧 本页不建模 (FMC 时间 = 步数本身; 盲拧受记忆速度而非 TPS 约束).'
+                : 'FMC / blind not modeled (FMC time = move count; blind is memo-bound, not TPS).'}
             </li>
           </ul>
         </section>
@@ -355,7 +518,7 @@ export default function LuckyLimitPage() {
         <footer className="pred-footer">
           <div>
             {isZh
-              ? '深度分布: cube20.org / Rokicki / Korf / Pochmann / Scherphuis · WCA 比赛数: WCA results dump'
+              ? '深度分布: cube20.org / Rokicki / Korf / Pochmann / Scherphuis · 比赛数: WCA results dump'
               : 'Depth distributions: cube20.org / Rokicki / Korf / Pochmann / Scherphuis · Comp counts: WCA results dump'}
           </div>
         </footer>
@@ -364,7 +527,6 @@ export default function LuckyLimitPage() {
   );
 }
 
-/** Small stat cell */
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="lucky-stat">
@@ -382,21 +544,21 @@ function EventCard({ row, isZh }: { row: Row; isZh: boolean }) {
       <div className="lucky-card-header">
         <span className="lucky-card-name">{isZh ? ev.name_zh : ev.name_en}</span>
         <span className="lucky-card-id">{ev.id}</span>
-        {row.source === 'exact' && <span className="lucky-card-badge" title={isZh ? '深度分布精确' : 'Exact depth distribution'}>★</span>}
-        {row.source === 'partial' && <span className="lucky-card-badge" title={isZh ? '部分精确, 高深度估计' : 'Partial: exact at low depth, estimated at high'}>◐</span>}
-        {row.source === 'approx' && <span className="lucky-card-badge lucky-card-badge-approx" title={isZh ? '近似分布' : 'Approximate distribution'}>~</span>}
+        {row.source === 'exact' && <span className="lucky-card-badge" title={isZh ? '精确分布' : 'Exact'}>★</span>}
+        {row.source === 'partial' && <span className="lucky-card-badge" title={isZh ? '部分精确' : 'Partial'}>◐</span>}
+        {row.source === 'approx' && <span className="lucky-card-badge lucky-card-badge-approx" title={isZh ? '近似' : 'Approximate'}>~</span>}
       </div>
       <div className="lucky-card-stats">
         <div>
-          <div className="lucky-card-stat-label">{isZh ? '累积 scramble' : 'Cum. scrambles'}</div>
+          <div className="lucky-card-stat-label">{isZh ? '累积 N' : 'Cumulative N'}</div>
           <div className="lucky-card-stat-value">{formatBigN(row.N)}</div>
         </div>
         <div>
-          <div className="lucky-card-stat-label">{isZh ? '期望最小步数' : 'Exp. min depth'}</div>
+          <div className="lucky-card-stat-label">{isZh ? 'E[min] 步数' : 'E[min] depth'}</div>
           <div className="lucky-card-stat-value">{row.depthClamped.toFixed(2)}</div>
         </div>
         <div>
-          <div className="lucky-card-stat-label">{isZh ? '运气下界' : 'Lucky floor'}</div>
+          <div className="lucky-card-stat-label">{isZh ? '期望最幸运' : 'Expected luckiest'}</div>
           <div className="lucky-card-stat-value lucky-card-stat-time">
             {formatVal(row.timeCeil, ev.scale)}
           </div>
