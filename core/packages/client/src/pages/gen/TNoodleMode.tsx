@@ -49,9 +49,16 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
 
-  const enabledEvents = useMemo(
-    () => TNOODLE_WCA_EVENTS.filter((e) => events[e]),
+  // 高阶 NxN(nxn8..nxn50)按 N 升序排,接在 WCA 21 项之后。
+  const customNxN = useMemo(
+    () => Object.keys(events)
+      .filter((id) => /^nxn\d+$/.test(id))
+      .sort((a, b) => parseInt(a.slice(3), 10) - parseInt(b.slice(3), 10)),
     [events],
+  );
+  const enabledEvents = useMemo(
+    () => [...TNOODLE_WCA_EVENTS.filter((e) => events[e]), ...customNxN],
+    [events, customNxN],
   );
 
   const toggleEvent = (e: string) => {
@@ -61,6 +68,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
       else next[e] = defaultEventConfig(e);
       return next;
     });
+  };
+
+  // 高阶 NxN 输入(8-50)。回车 / blur 后作为 event 加入配置。
+  const [highNxNInput, setHighNxNInput] = useState<string>('');
+  const addHighNxN = (raw: string) => {
+    const n = parseInt(raw, 10);
+    if (!isFinite(n) || n < 8 || n > 50) return;
+    const id = `nxn${n}`;
+    setEvents((prev) => {
+      if (prev[id]) return prev;
+      return { ...prev, [id]: defaultEventConfig(id) };
+    });
+    setHighNxNInput('');
   };
 
   const setRoundCount = (e: string, count: number) => {
@@ -120,9 +140,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
           const round = cfg.rounds[ri];
           const mainCount = formatAttempts(round.format);
           for (let g = 0; g < Math.max(1, round.scrambleSets); g++) {
-            if (ev === '333mbf') {
+            if (ev === '333mbf' || ev === '333mbo') {
               // Tnoodle MBLD: each attempt becomes its OWN sheet, with N
               // separate cube scrambles as rows. No extras for MBLD.
+              // 333mbo (retired old-style) uses identical scramble layout.
               const cubesPerAttempt = cfg.mbldCubes ?? 8;
               for (let a = 0; a < mainCount; a++) {
                 const cubeRows: AttemptScramble[] = [];
@@ -251,7 +272,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
       const cfg = events[ev];
       for (const r of cfg.rounds) {
         const sets = Math.max(1, r.scrambleSets);
-        if (ev === '333mbf') {
+        if (ev === '333mbf' || ev === '333mbo') {
           // MBLD: per attempt = `cubesPerAttempt` rows, no extras
           n += formatAttempts(r.format) * (cfg.mbldCubes ?? 8) * sets;
         } else if (ev === '333fm') {
@@ -378,6 +399,27 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
         />
       )}
 
+      {/* 高阶 NxN(8-50)输入。已生成 sheets 时隐藏(view 模式不改配置)。 */}
+      {!(sheets && sheets.length > 0) && (
+        <div style={{ margin: '12px 0 20px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '13px', color: 'var(--muted-foreground, #888)' }}>
+            {t('高阶 NxN', 'High-order NxN')}
+          </label>
+          <input
+            type="number"
+            min={8}
+            max={50}
+            value={highNxNInput}
+            placeholder="8-50"
+            onChange={(e) => setHighNxNInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
+            onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
+            className="gen-count-input"
+            style={{ width: '72px' }}
+          />
+        </div>
+      )}
+
       {sheets && sheets.length > 0 ? null : enabledEvents.length === 0 ? (
         <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
       ) : (
@@ -442,7 +484,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
                       isZh={isZh}
                     />
                   ))}
-                  {ev === '333mbf' && (
+                  {(ev === '333mbf' || ev === '333mbo') && (
                     <div className="gen-tn-round-row">
                       <span className="gen-tn-round-num">{t('每次魔方数', 'Cubes/attempt')}</span>
                       <input

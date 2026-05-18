@@ -52,9 +52,15 @@ const DISPLAY_EN: Record<string, string> = {
   'magic': 'Magic', 'mmagic': 'M.Magic', '333mbo': 'MBO',
 };
 
-/** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。 */
+/** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。
+ *  `nxnN` 合成 id（N≥8 高阶魔方）走 "N阶" / "N×N"。 */
 export function eventDisplayName(input: string, isZh: boolean): string {
   const id = toWcaEventId(input);
+  const m = /^nxn(\d+)$/.exec(id);
+  if (m) {
+    const n = m[1];
+    return isZh ? `${n}阶` : `${n}×${n}`;
+  }
   const dict = isZh ? DISPLAY_ZH : DISPLAY_EN;
   return dict[id] ?? id;
 }

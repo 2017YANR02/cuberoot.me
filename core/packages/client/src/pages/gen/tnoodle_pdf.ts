@@ -231,6 +231,7 @@ function computePhrase(
   scramble: string,
   boxWidthPt: number,
   boxHeightPt: number,
+  maxFontSize: number = MAX_PHRASE_FONT_SIZE,
 ): PhraseLayout {
   // Megaminx: tnoodle hard-wraps at every face-cycle boundary (each line ends
   // with U or U'). Skip the one-line / fit-loop path entirely so we don't
@@ -244,13 +245,13 @@ function computePhrase(
     const widestSize = Math.min(
       ...lines.map((l) => fitOneLine(doc, l, boxWidthPt, lineHeight)),
     );
-    return { lines, fontSize: Math.min(widestSize, MAX_PHRASE_FONT_SIZE) };
+    return { lines, fontSize: Math.min(widestSize, maxFontSize) };
   }
   // First try one-line at max font (tnoodle "is it readable on one line?")
   const oneLinePadded = NBSP + scramble.replace(/\n/g, ' ') + NBSP;
   const oneLineSize = fitOneLine(doc, oneLinePadded, boxWidthPt, boxHeightPt);
   if (oneLineSize >= MIN_ONE_LINE_FONT_SIZE) {
-    return { lines: [oneLinePadded.trim()], fontSize: oneLineSize };
+    return { lines: [oneLinePadded.trim()], fontSize: Math.min(oneLineSize, maxFontSize) };
   }
   // Multi-line: split into break-chunks, try N=2,3,4,... until everything fits
   const breakChunks = paddedTokens(scramble);
@@ -259,7 +260,7 @@ function computePhrase(
     // approximate font size that makes each line fit in lineHeight
     const fontSize = Math.min(
       lineHeight / Math.max(1, SCRAMBLE_TEXT_LEADING),
-      MAX_PHRASE_FONT_SIZE,
+      maxFontSize,
     );
     const lines = splitToFixedSizeLines(doc, breakChunks, fontSize, boxWidthPt);
     if (lines.length <= nLines) {
@@ -269,13 +270,13 @@ function computePhrase(
       );
       return {
         lines,
-        fontSize: Math.min(actualSize, MAX_PHRASE_FONT_SIZE),
+        fontSize: Math.min(actualSize, maxFontSize),
       };
     }
   }
-  // Fallback: pack at MAX_PHRASE_FONT_SIZE
-  const lines = splitToFixedSizeLines(doc, breakChunks, MAX_PHRASE_FONT_SIZE, boxWidthPt);
-  return { lines, fontSize: MAX_PHRASE_FONT_SIZE };
+  // Fallback: pack at maxFontSize
+  const lines = splitToFixedSizeLines(doc, breakChunks, maxFontSize, boxWidthPt);
+  return { lines, fontSize: maxFontSize };
 }
 
 function splitToFixedSizeLines(
@@ -327,7 +328,9 @@ function tnoodleEventTitle(event: string): string | null {
     '222': '2x2x2', '333': '3x3x3', '444': '4x4x4', '555': '5x5x5',
     '666': '6x6x6', '777': '7x7x7',
     '333bf': '3x3x3 Blindfolded', '444bf': '4x4x4 Blindfolded', '555bf': '5x5x5 Blindfolded',
-    '333oh': '3x3x3 One-Handed', '333fm': '3x3x3 Fewest Moves', '333mbf': '3x3x3 Multiple Blindfolded',
+    '333oh': '3x3x3 One-Handed', '333fm': '3x3x3 Fewest Moves',
+    '333ft': '3x3x3 With Feet', '333mbf': '3x3x3 Multiple Blindfolded',
+    '333mbo': '3x3x3 Multi-Blind Old Style',
     'pyram': 'Pyraminx', 'minx': 'Megaminx', 'sq1': 'Square-1',
     'skewb': 'Skewb', 'clock': 'Clock',
   };
@@ -524,6 +527,17 @@ async function renderPage(
   const standardAttempts = chunk.filter((a) => !a.isExtra);
   const extraAttempts = chunk.filter((a) => a.isExtra);
 
+  // Pre-pass: tnoodle picks a per-row font that grows to fill each cell — visually
+  // jarring when one row gets 24pt single-line and the next gets 12pt two-line text.
+  // Find the smallest "best fit" across the whole sheet and clamp every row to it.
+  const textBoxW = textColW - 2 * DEFAULT_CELL_PADDING;
+  const textBoxH = rowH - 2 * DEFAULT_CELL_PADDING;
+  let sheetFontCap = MAX_PHRASE_FONT_SIZE;
+  for (const a of chunk) {
+    const p = computePhrase(doc, a.scramble, textBoxW, textBoxH);
+    if (p.fontSize < sheetFontCap) sheetFontCap = p.fontSize;
+  }
+
   const renderRows = async (attempts: AttemptInput[], isExtra: boolean) => {
     for (let i = 0; i < attempts.length; i++) {
       const a = attempts[i];
@@ -548,10 +562,8 @@ async function renderPage(
       doc.setFontSize(12);
       doc.text(a.label, tableLeft + labelColW / 2, rowTop + rowH / 2, { align: 'center', baseline: 'middle' });
 
-      // Scramble text
-      const textBoxW = textColW - 2 * DEFAULT_CELL_PADDING;
-      const textBoxH = rowH - 2 * DEFAULT_CELL_PADDING;
-      const phrase = computePhrase(doc, a.scramble, textBoxW, textBoxH);
+      // Scramble text — clamp to sheetFontCap so all rows share the same size.
+      const phrase = computePhrase(doc, a.scramble, textBoxW, textBoxH, sheetFontCap);
       const useHL = phrase.lines.length >= MIN_LINES_HIGHLIGHTING;
       doc.setFont(FONT_MONO, 'normal');
       doc.setFontSize(phrase.fontSize);

@@ -21,7 +21,8 @@ import { renderUnfoldedSvgForEvent, eventToCubeSize } from '../pages/gen/cube_un
 
 const EVENT_TO_PUZZLE: Record<string, string> = {
   '222': '2x2x2',
-  '333': '3x3x3', '333oh': '3x3x3', '333bf': '3x3x3', '333fm': '3x3x3', '333mbf': '3x3x3',
+  '333': '3x3x3', '333oh': '3x3x3', '333bf': '3x3x3', '333fm': '3x3x3', '333ft': '3x3x3',
+  '333mbf': '3x3x3', '333mbo': '3x3x3',
   '444': '4x4x4', '444bf': '4x4x4',
   '555': '5x5x5', '555bf': '5x5x5',
   '666': '6x6x6',
@@ -34,7 +35,8 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
 };
 
 export function eventHasScramblePreview(event: string): boolean {
-  return event in EVENT_TO_PUZZLE;
+  if (event in EVENT_TO_PUZZLE) return true;
+  return eventToCubeSize(event) !== null;  // covers `nxnN` synthetic ids
 }
 
 interface Props {
@@ -119,8 +121,6 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1
     };
   }, [puzzle, scramble, size]);
 
-  if (!puzzle) return null;
-
   const hostStyle: CSSProperties = {
     width: size * 2,
     height: size * 1.5,
@@ -139,5 +139,7 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1
       />
     );
   }
+  // TwistyPlayer fallback path needs a puzzle id from EVENT_TO_PUZZLE.
+  if (!puzzle) return null;
   return <div ref={hostRef} style={hostStyle} />;
 }

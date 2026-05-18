@@ -10,6 +10,7 @@ import { RefreshCw, Download, Image as ImageIcon, ImageOff } from 'lucide-react'
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
+import { visualcubeApiHref } from '../../utils/visualcube_link';
 import { eventDisplayName } from '../../utils/wca_events';
 import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
 import type { RoundSheetInput } from './tnoodle_pdf';
@@ -35,7 +36,7 @@ function formatMs(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-type SubMode = 'gen' | 'text';
+type SubMode = 'batch' | 'paste';
 
 interface Props {
   t: (zh: string, en: string) => string;
@@ -65,10 +66,17 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
   const reqIdRef = useRef(0);
   const [tick, setTick] = useState(0);
 
-  // 选中项目按 WCA 顺序固定展示
-  const eventsOrdered = useMemo(
-    () => TNOODLE_WCA_EVENTS.filter((id) => events.has(id)),
+  // 高阶 NxN(8-50)合成 event id `nxn<N>`,排在 WCA 21 项之后。
+  const customNxN = useMemo(
+    () => Array.from(events)
+      .filter((id) => /^nxn\d+$/.test(id))
+      .sort((a, b) => parseInt(a.slice(3), 10) - parseInt(b.slice(3), 10)),
     [events],
+  );
+  // 选中项目按 WCA 顺序固定展示 + 高阶 NxN 拼在后面
+  const eventsOrdered = useMemo(
+    () => [...TNOODLE_WCA_EVENTS.filter((id) => events.has(id)), ...customNxN],
+    [events, customNxN],
   );
   const eventsKey = eventsOrdered.join(',');
 
@@ -84,9 +92,24 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
     });
   };
 
+  // 高阶 NxN 输入:仅 8-50 有效(2-7 已在事件选择器里)。输入即作为额外 event 加入选择集。
+  const [highNxNInput, setHighNxNInput] = useState<string>('');
+  const addHighNxN = (raw: string) => {
+    const n = parseInt(raw, 10);
+    if (!isFinite(n) || n < 8 || n > 50) return;
+    const id = `nxn${n}`;
+    setEvents((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    setHighNxNInput('');
+  };
+
   // 生成模式: events/count/tick 任一变化 → 重新生成全部
   useEffect(() => {
-    if (subMode !== 'gen') return;
+    if (subMode !== 'batch') return;
     const myId = ++reqIdRef.current;
     setLoading(true);
     setGenerated({});
@@ -155,7 +178,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
   // 每个项目对应的"当前可见 scrambles":gen 模式来自 generated,text 模式来自 pasteTexts 解析
   const scramblesByEvent = useMemo(() => {
     const m: Record<string, string[]> = {};
-    if (subMode === 'gen') {
+    if (subMode === 'batch') {
       for (const ev of eventsOrdered) m[ev] = generated[ev] ?? [];
     } else {
       for (const ev of eventsOrdered) m[ev] = parsePastedScrambles(pasteTexts[ev] ?? '');
@@ -234,9 +257,43 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         isZh={isZh}
       />
 
+      {/* 高阶 NxN(8-50)输入。回车 / blur 即添加为额外 event chip 出现在下方 sheet。 */}
+      <div className="gen-tn-highn-row" style={{ margin: '12px 0 20px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <label style={{ fontSize: '13px', color: 'var(--muted-foreground, #888)' }}>
+          {t('高阶 NxN', 'High-order NxN')}
+        </label>
+        <input
+          type="number"
+          min={8}
+          max={50}
+          value={highNxNInput}
+          placeholder="8-50"
+          onChange={(e) => setHighNxNInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
+          onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
+          className="gen-count-input"
+          style={{ width: '72px' }}
+        />
+        {customNxN.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            {customNxN.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => toggleEvent(id)}
+                className="gen-count-chip is-active"
+                title={t('点击移除', 'Click to remove')}
+              >
+                {eventDisplayName(id, isZh)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="gen-tn-controls" style={{ marginTop: '1rem' }}>
         <div className="gen-control-group gen-control-actions">
-          {subMode === 'gen' ? (
+          {subMode === 'batch' ? (
             <div className="gen-count-row">
               {COUNT_PRESETS.map((n) => (
                 <button
@@ -270,7 +327,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
           )}
         </div>
         <div className="gen-control-group gen-control-actions">
-          {subMode === 'gen' && (
+          {subMode === 'batch' && (
             <ProgressButton
               primary
               icon={<RefreshCw size={14} className={loading ? 'gen-spin' : ''} />}
@@ -309,7 +366,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
       </div>
 
       {/* text 模式:每个选中项目一块输入区 */}
-      {subMode === 'text' && (
+      {subMode === 'paste' && (
         <div className="gen-tn-paste-blocks">
           {eventsOrdered.map((ev) => (
             <div key={ev} className="gen-tn-paste-block">
@@ -331,7 +388,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
       )}
 
       {/* 批次总耗时(gen 模式才显示) */}
-      {subMode === 'gen' && batchWallMs !== null && totalScrambles > 0 && (
+      {subMode === 'batch' && batchWallMs !== null && totalScrambles > 0 && (
         <div className="gen-tn-bench-total">
           {t('总耗时', 'Batch')} {formatMs(batchWallMs)}    {totalScrambles} {t('个打乱', 'scrambles')}
         </div>
@@ -370,12 +427,25 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
                         <td className="gen-tn-attempt-num">{i + 1}</td>
                         <td className="gen-tn-attempt-scramble">
                           <ScrambleLines scramble={s} className="gen-tn-attempt-line" />
+                          {copiedKey === key && (
+                            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
+                          )}
                         </td>
                         {showPreview && (
                           <td className="gen-tn-attempt-preview">
-                            {hasPreview && (
-                              <ScramblePreview2D event={ev} scramble={s} size={48} />
-                            )}
+                            {hasPreview && (() => {
+                              const preview = <ScramblePreview2D event={ev} scramble={s} size={48} />;
+                              const href = visualcubeApiHref(ev, s);
+                              return href ? (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title={t('打开大图', 'Open full-size image')}
+                                >{preview}</a>
+                              ) : preview;
+                            })()}
                           </td>
                         )}
                       </tr>

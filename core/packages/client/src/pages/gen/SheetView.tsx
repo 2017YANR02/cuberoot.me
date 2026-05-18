@@ -10,6 +10,7 @@ import { useState, type ReactNode } from 'react';
 import { EventIcon } from '../../components/EventIcon';
 import { eventDisplayName } from '../../utils/wca_events';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
+import { visualcubeApiHref } from '../../utils/visualcube_link';
 import type { WcaFormat } from './wca_round';
 import ScrambleLines from './ScrambleLines';
 
@@ -93,12 +94,25 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         <td className="gen-tn-attempt-num">{a.label}</td>
         <td className="gen-tn-attempt-scramble">
           <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
+          {copiedIdx === i && (
+            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
+          )}
         </td>
         {showPreview && (
           <td className="gen-tn-attempt-preview">
-            {eventHasScramblePreview(event) && a.scramble && (
-              <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />
-            )}
+            {eventHasScramblePreview(event) && a.scramble && (() => {
+              const preview = <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />;
+              const href = visualcubeApiHref(event, a.scramble);
+              return href ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}  /* 否则会触发整行 click-to-copy */
+                  title={t('打开大图', 'Open full-size image')}
+                >{preview}</a>
+              ) : preview;
+            })()}
           </td>
         )}
       </tr>,

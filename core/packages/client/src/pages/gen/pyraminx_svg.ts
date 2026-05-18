@@ -212,7 +212,7 @@ export function renderPyraScrambleSvg(scramble: string, colors: Record<string, s
   const h = 3 * SQRT3 * PIECE_SIZE + 3 * GAP;
 
   const out: string[] = [];
-  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(w)} ${fmt(h)}">`);
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(w)} ${fmt(h)}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
   // Tnoodle drawMinx face origins (centroids of each unfolded triangle)
   // F (face 0): top-center, point-up
   drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, GAP + SQRT3 * PIECE_SIZE,         true,  state.image[0], PIECE_SIZE, scheme);
