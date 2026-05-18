@@ -31,6 +31,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/stack',
+    glyph: '◴',
+    accent: '#7BD389',
+    zh: {
+      title: '技术栈',
+      sub: 'The Stack',
+      tagline: 'CubeRoot 真正在跑的 10 件软件,一件一篇:React 19 / Vite 8 / Hono / Node 22 / pm2 / PostgreSQL 13 / pg_dump / nginx / Cloudflare DNS / Let’s Encrypt',
+      meta: '10 件软件 · 前端 · 后端 · 边缘',
+    },
+    en: {
+      title: 'Stack',
+      sub: 'The Stack',
+      tagline: 'The 10 actual pieces of software CubeRoot runs on, one page each: React 19 / Vite 8 / Hono / Node 22 / pm2 / PostgreSQL 13 / pg_dump / nginx / Cloudflare DNS / Let’s Encrypt',
+      meta: '10 pieces · frontend · backend · edge',
+    },
+  },
+  {
     href: '/code/language',
     glyph: '{ }',
     accent: '#5BA8FF',
