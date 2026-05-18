@@ -226,34 +226,45 @@ Kociemba 已经接近 god's number (20),没空间;只能砍 reduction。
   推测:5-phase reduction 完产出的 3x3 状态有时离已解很远,optimal-IDA* 直接爆炸。
 - decision: **绝对 unusable**,kill。OPTIMAL_SOLUTION 默认 `KOC_FLAGS=0`(env knob 保留)。
 
-## 优化结论 — 60 步目标不可达
+## 优化失败结论
 
-试过 7 个方向(上表),最佳:
-- 单 seed 安全配置 P5=8:**avg 69.57 / 1.51s** (vs baseline 70.80 / 1.46s,-1.23 步)
-- 多 seed 激进 SEEDS=2 + 宽 beam:**avg 68.97 / 4.67s**(-1.83 步,但破坏 uniformity)
-- 绝对地板 SEEDS=5 + P5=4:**avg 68.35 / 7.52s**(已超 7s avg-latency 上限)
+试过 7 方向:
+1. Kociemba `probeMin` 1e6(`solution(..., 1_000_000L, 0)`)— 25x 延迟换 1 步,revert
+2. Kociemba `probeMin` 1e4 — 改善小于 ±1σ 噪声,revert
+3. `phase5SolsSize=16` + pick-shortest p5sol — -0.8 步 / 1.7x 延迟,keep(P5=8 是其降配)
+4. 全阶段宽 beam(P1=400 P2..4=1500 P5=32)— -1.5 步 / 2.6x 延迟,不入 default
+5. Multi-seed `SEEDS=2` + 宽 beam — -1.8 步 / 3.2x 延迟,且破坏 uniform-random-state
+6. Multi-seed `SEEDS=5 P5=4`(极限拉满)— -2.5 步 / **5.2x 延迟超 7s avg-lat 上限**
+7. Kociemba `OPTIMAL_SOLUTION` (`KOC_FLAGS=0x8`)— >1000x 慢,20+min 没出一条 kill
 
-**瓶颈分析**:
+最好结果:avg moves **68.35**, latency **7523ms**(Attempt 6,SEEDS=5 P5=4 极限,但
+已超 7s avg-latency 上限,uniformity 也被多 seed 破坏)。
 
-1. **Kociemba 已接近最优**:~19 步 avg,god's number=20,没空间再砍(OPTIMAL_SOLUTION
-   太慢不能用)。
-2. **Reduction 51 步是 5-phase 架构的强约束**:每个 phase 提交一个 subgoal,链式分解
-   失去全局最优性。within-seed p5sols 长度方差 ≤1 步,挑最短无效。
-3. **Cross-seed 方差 σ≈1.5 步**:multi-seed K=N 期望降 ~0.85σ_K_factor。
-   K=10 大约 -2.3 步,K=30 大约 -3.0 步,与 K=5(已 -2.5)收益递减。
-   且 K>1 破坏 "每条 scramble 对应均匀随机状态" 的数学性质,WCA random-state 要求
-   不再严格成立。
+7s 上限内 + uniformity 不破坏的最佳:avg **69.57** / latency **1509ms**(单 seed
+P5=8,本次 ship 的 default,baseline 70.80 / 1463ms,-1.23 步,几乎零延迟代价)。
 
-要砍到 60 步,需要:
-- 替换 cube555 5-phase reducer (e.g. Optimal/non-phased IDA*),工程量月级
-- 或接受 cube555 floor ~67-68 步 + Kociemba ~19 步 = **~67 步 absolute floor**
-- 或换 scramble 生成范式(放弃 random-state,接受 random-move,WCA 5x5 官方是 60 random moves)
+瓶颈分析:
+- **Kociemba 已接近最优**:~19 步 avg,god's number=20,没空间再砍。
+  OPTIMAL_SOLUTION 0x8 走 `searchopt()`,实测 >1000x 慢,unusable。
+- **Reduction 51 步是 5-phase 架构强约束**:每 phase 提交独立 subgoal,链式分解
+  失去全局最优性。p5sols pool dump 显示 64 个候选 reduction 长度 min/max 差 ≤1 步
+  → within-seed 方差几乎 0,挑最短只值 ~1 步。
+- **Cross-seed 方差 σ≈1.5 步**:multi-seed K=N 期望降 ~0.85σ\*因子。K=10 才 -2.3 步,
+  K=30 大约 -3.0 步,K=5(已 -2.5)起严重递减;且 K>1 破坏"每条 scramble 对应均匀
+  随机状态"的数学性质,WCA random-state 要求不再严格成立。
+- **PROMPT 第 A 方向假设错误**:`solveReduction(state, int)` 第 2 参实际是 verbose
+  flag(`USE_SEPARATOR=0x1`),不是 quality 档位。PROMPT 表里 "升档 -5~10 步" 的
+  预期 0 收益。
 
-**下一步可能路径**:
-- 短期:本次 ship P5=8 默认(-1.2 步,几乎零代价),环境变量 (`CUBE555_SEEDS`,
-  `CUBE555_P*`,`CUBE555_KOC_PROBE_MIN`,`CUBE555_KOC_FLAGS`) 留作未来部署级 tuning。
-- 中期:若用户对长度强敏感,部署侧设 `CUBE555_SEEDS=2` (-1.8 步,uniformity caveat 接受)。
-- 长期:研究上游 cube555 fork 是否有更优 reducer,或对接 brian.cs0x7f 新版 cube333 multi-phase。
+下一步可能路径:
+- **替换 cube555 reducer**:写非 phased 全局 IDA* / 类 Korf optimal 5x5 求解器,工程
+  量月级,需重做 13 张剪枝表设计。能把 reduction 砍到接近 optimal ~38-42 步,total
+  接近 60 步。
+- **接受 cube555 architectural floor ~67-68 步**:本次 ship 的 P5=8 是该 floor 上的
+  zero-cost 改进,部署侧用 `CUBE555_SEEDS=2` 可再 -0.6 步代价 3x 延迟,接受 uniformity
+  trade-off 即可。
+- **换 scramble 生成范式**:放弃 random-state,接受 WCA 5x5 官方的 60 random moves
+  (固定 60 步,均匀生成),但失去"任意合法状态可达"的覆盖性。
 
 ## Methodology Notes
 
