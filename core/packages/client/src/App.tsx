@@ -314,6 +314,7 @@ function App() {
         <Route path="/wca/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
         <Route path="/wca/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
         <Route path="/wca/prediction/333" element={<Suspense fallback={<div>Loading...</div>}><Prediction333Page /></Suspense>} />
+        <Route path="/wca/prediction/333/:sectionId" element={<Suspense fallback={<div>Loading...</div>}><Prediction333Page /></Suspense>} />
         <Route path="/wca/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
         <Route path="/wca/comp/sources" element={<Suspense fallback={<div>Loading...</div>}><CompSourcesPage /></Suspense>} />
         <Route path="/wca/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />

@@ -939,3 +939,90 @@
   .pred-ov-wr { font-size: 16px; }
   .pred-ov-pair { font-size: 10.5px; }
 }
+
+/* ── 3x3 longform deep-dive (in main /wca/prediction page) ─────── */
+.pred-333-deepdive {
+  margin-top: 24px;
+  border-top: 1px solid var(--border-default);
+  padding-top: 18px;
+}
+.pred-333-deepdive > h3 {
+  font-size: 17px;
+  color: var(--foreground);
+  margin: 0 0 8px;
+}
+.pred-333-chapter {
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 0 14px;
+  margin: 8px 0;
+  background: var(--card);
+}
+.pred-333-chapter-summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: 14px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pred-333-chapter-summary::before {
+  content: '▸';
+  color: var(--accent);
+  font-size: 11px;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.pred-333-chapter[open] > .pred-333-chapter-summary::before {
+  transform: rotate(90deg);
+}
+.pred-333-chapter[open] {
+  padding-bottom: 14px;
+}
+
+/* ── 3x3 inline CTA (in main /wca/prediction page, 3x3 chapter bottom) ── */
+.pred-333-inline-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  margin: 20px 0 8px;
+  border-radius: 8px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 14%, var(--background)),
+    color-mix(in srgb, var(--accent) 6%, var(--background)));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  text-decoration: none;
+  color: var(--foreground);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.pred-333-inline-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.pred-333-inline-cta-text {
+  flex: 1;
+  min-width: 0;
+}
+.pred-333-inline-cta-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pred-333-inline-cta-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 4px;
+}
+.pred-333-inline-cta-desc {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}

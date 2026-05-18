@@ -23,7 +23,11 @@ const detectedLang = detectLanguage();
 const initParams = new URLSearchParams(window.location.search);
 if (!initParams.get('lang')) {
   initParams.set('lang', detectedLang);
-  const newUrl = `${window.location.pathname}?${initParams.toString()}${window.location.hash}`;
+  // Collapse leading multi-slashes so newUrl never starts with `//` (which is
+  // a scheme-relative URL — replaceState would parse the next segment as host
+  // and throw SecurityError; reproduced when user lands on `//wca/...`).
+  const safePath = window.location.pathname.replace(/^\/+/, '/');
+  const newUrl = `${safePath}?${initParams.toString()}${window.location.hash}`;
   history.replaceState(null, '', newUrl);
 }
 

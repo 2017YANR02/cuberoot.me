@@ -4,25 +4,8 @@ import { formatVal, milestonePredictions, toDisplay, toDisplayAvg, type EventMet
 import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import TheoreticalLimitView from './TheoreticalLimitView';
-import { Longform } from './components/Longform';
-import { HISTORY_DETAIL_EN } from './data/longform/history_detail';
-import { MATH_DETAIL_EN } from './data/longform/math_detail';
-import { CFOP_DETAIL_EN } from './data/longform/cfop_detail';
-import { METHODS_HARDWARE_EN } from './data/longform/methods_hardware';
-import { BIOMECH_TRAINING_EN } from './data/longform/biomech_training';
-import { CUBERS_COMMUNITY_EN } from './data/longform/cubers_community';
-import { STATS_FORECAST_EN } from './data/longform/stats_forecast';
-import { ALGORITHMS_CATALOG_EN } from './data/longform/algorithms_catalog';
-import { FMC_EVENTS_EN } from './data/longform/fmc_events';
-import { ENGINEERING_EN } from './data/longform/engineering';
-import { WR_SLOWMO_EN } from './data/longform/wr_slowmo';
-import { GROUP_THEORY_ADV_EN } from './data/longform/group_theory_adv';
-import { SOLVER_SOFTWARE_EN } from './data/longform/solver_software';
-import { COMPETITIONS_DETAIL_EN } from './data/longform/competitions_detail';
-import { AI_ML_EN } from './data/longform/ai_ml';
-import { PSYCHOLOGY_EN } from './data/longform/psychology';
-import { RELATED_PUZZLES_EN } from './data/longform/related_puzzles';
-import { HISTORY_EXTENDED_EN } from './data/longform/history_extended';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 interface EventData {
   wr_by_year: Array<{ year: number; wr_single: number | null; wr_avg: number | null; solves: number }>;
@@ -131,7 +114,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
     });
   }
 
-  // Top-N 图
+  // Top-N 图.
   const topN = data.topN_single.filter((d) => d.year >= 2003 && d.year < currentYear);
   const topSeries: Series[] = [
     { name: 'Top 1',     color: COLORS.single,   data: topN.map((d) => ({ x: d.year, y: toDisplay(d.top1, event.scale) })) },
@@ -191,6 +174,21 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
             <span className="pred-event-summary-hint">{isZh ? '点击展开' : 'click to expand'}</span>
           </div>
         </summary>
+
+      {event.id === '333' && (
+        <Link to="/wca/prediction/333" className="pred-333-inline-cta">
+          <div className="pred-333-inline-cta-text">
+            <div className="pred-333-inline-cta-eyebrow">{isZh ? '深度阅读' : 'Deep Dive'}</div>
+            <div className="pred-333-inline-cta-title">
+              {isZh ? '3x3 极限预测 — 25 章节 / 24 万字英文长文' : '3x3 Ultimate Limits — 25 sections, ~240k English words'}
+            </div>
+            <div className="pred-333-inline-cta-desc">
+              {isZh ? '历史 / 方法 / 数学 / 硬件 / 生物力学 / 训练 / 顶级选手 / 统计建模 — 独立路由阅读' : 'History · methods · math · hardware · biomech · training · top cubers · stats — dedicated route'}
+            </div>
+          </div>
+          <ArrowRight size={20} />
+        </Link>
+      )}
 
       {/* 基本盘 */}
       <div className="pred-event-cards">
@@ -414,14 +412,12 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
         {isZh ? (
           <>
             <strong>注:</strong> Top-N 是 "<em>该年内</em>排名 N 的最好成绩",每年独立采样,<strong>不是单调下降的</strong>。
-            2020-2021 中段 (Top 100 / 1000) 普遍抬头,是因为 COVID 比赛大量取消,排名 1000 这种深度位置的样本池缩水,中位水平被拖慢;Top 1 抖动小是因为顶尖选手没受影响。
-            Top 10000 在 2023 才出现,因为之前年度活跃人数不足。
+            2020-2021 抬头是 COVID 比赛大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明显,因为深度位置的"那一年还在比的最末位"是少数几次出赛、没机会刷低 PB 的 newcomer;Top 1 / Top 10 抖动小是因为顶尖选手没受影响。
           </>
         ) : (
           <>
             <strong>Note:</strong> Top-N is the rank-N best result <em>achieved within that year</em>, sampled independently per year — <strong>not monotonically decreasing</strong>.
-            The 2020-2021 hump (Top 100 / 1000) reflects COVID competition cancellations: the rank-1000 sample pool shrank, dragging down median quality. Top 1 stays stable because elite cubers kept practicing.
-            Top 10000 only appears from 2023 because prior years had fewer than 10k active competitors.
+            The 2020-2021 hump reflects COVID competition cancellations — the deeper the rank, the bigger the hump, because the rank-1000 / rank-10000 spot that year was held by infrequent competitors with few attempts to lower their PB. Top 1 / Top 10 stay stable since elite cubers kept practicing regardless.
           </>
         )}
       </p>
@@ -436,35 +432,6 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       />
       </details>
 
-      {event.id === '333' && !isZh && (
-        <div className="pred-333-deepdive">
-          <h3>Deep Dive: 3x3 (English longform, ~240k words)</h3>
-          <p style={{ color: 'var(--muted-foreground)', fontSize: '13px' }}>
-            The 18-chapter longform below covers history, methods, mathematics, hardware, biomechanics, training,
-            top cubers, statistical modeling, algorithms, FMC/OH/BLD, engineering, slow-motion WR analysis,
-            advanced group theory, solver software, every WCA World Championship, AI/ML research, psychology,
-            related WCA puzzles, and extended cultural history of the cube.
-          </p>
-          <Longform text={HISTORY_DETAIL_EN} />
-          <Longform text={HISTORY_EXTENDED_EN} />
-          <Longform text={COMPETITIONS_DETAIL_EN} />
-          <Longform text={WR_SLOWMO_EN} />
-          <Longform text={MATH_DETAIL_EN} />
-          <Longform text={GROUP_THEORY_ADV_EN} />
-          <Longform text={SOLVER_SOFTWARE_EN} />
-          <Longform text={CFOP_DETAIL_EN} />
-          <Longform text={ALGORITHMS_CATALOG_EN} />
-          <Longform text={METHODS_HARDWARE_EN} />
-          <Longform text={ENGINEERING_EN} />
-          <Longform text={BIOMECH_TRAINING_EN} />
-          <Longform text={PSYCHOLOGY_EN} />
-          <Longform text={CUBERS_COMMUNITY_EN} />
-          <Longform text={STATS_FORECAST_EN} />
-          <Longform text={AI_ML_EN} />
-          <Longform text={FMC_EVENTS_EN} />
-          <Longform text={RELATED_PUZZLES_EN} />
-        </div>
-      )}
     </section>
   );
 }
