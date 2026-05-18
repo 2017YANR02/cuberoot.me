@@ -654,29 +654,26 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
         />
       )}
 
-      {/* 高阶 NxN(8-50)输入。已生成 sheets 时隐藏(view 模式不改配置)。 */}
+      {/* 配置条:高阶 NxN + 5x5 打乱模式 共一行,view 模式隐藏 */}
       {!loaded && (
-        <div style={{ margin: '12px 0 20px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: '13px', color: 'var(--muted-foreground, #888)' }}>
-            {t('高阶 NxN', 'High-order NxN')}
-          </label>
-          <input
-            type="number"
-            min={8}
-            max={50}
-            value={highNxNInput}
-            placeholder="8-50"
-            onChange={(e) => setHighNxNInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
-            onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
-            className="gen-count-input"
-            style={{ width: '72px' }}
-          />
+        <div className="gen-tn-config-row">
+          <div className="gen-tn-config-group">
+            <label className="gen-tn-config-label">{t('高阶 NxN', 'High-order NxN')}</label>
+            <input
+              type="number"
+              min={8}
+              max={50}
+              value={highNxNInput}
+              placeholder="8-50"
+              onChange={(e) => setHighNxNInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
+              onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
+              className="gen-count-input"
+              style={{ width: '72px' }}
+            />
+          </div>
+          <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
         </div>
-      )}
-
-      {!loaded && (
-        <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
       )}
 
       {loaded ? null : enabledEvents.length === 0 ? (
