@@ -75,7 +75,7 @@ export default function DemoSq1Page() {
   // Sync renderer's speed continuously (used by both caret-driven and Play).
   useEffect(() => {
     const r = rendererRef.current;
-    if (r) r.durationPerMoveMs = Math.round(220 / speed);
+    if (r) r.durationPerMoveMs = Math.round(880 / speed);
   }, [speed]);
 
   // Drive the cube from caret position: +1 move forward → animate that move,
