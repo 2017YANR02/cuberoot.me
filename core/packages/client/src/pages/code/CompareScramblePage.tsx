@@ -374,6 +374,153 @@ fn parse(s: String) -> Optional[List[Move]]:
         out.append(Move(head, turn))
     return out`,
   },
+  {
+    slug: 'csharp', name: 'C#', href: '/code/language/csharp', accent: '#512BD4', commentToken: '//',
+    zhFlavor: 'record + enum + switch 表达式',
+    enFlavor: 'record + enum + switch expression',
+    code: `using System;
+using System.Collections.Generic;
+
+public enum Token { U, D, L, R, F, B, M, E, S, x, y, z }
+public record Move(Token Token, int Turn);
+
+public static class Scramble
+{
+    public static List<Move> Parse(string s)
+    {
+        var moves = new List<Move>();
+        foreach (var t in s.Split(default(char[]),
+                                  StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!Enum.TryParse<Token>(t[..1], out var token))
+                throw new FormatException($"bad token: {t}");
+            int turn = t[1..] switch
+            {
+                ""  => 1,
+                "2" => 2,
+                "'" => 3,
+                _   => throw new FormatException($"bad suffix: {t}"),
+            };
+            moves.Add(new Move(token, turn));
+        }
+        return moves;
+    }
+}`,
+  },
+  {
+    slug: 'ruby', name: 'Ruby', href: '/code/language/ruby', accent: '#CC342D', commentToken: '#',
+    zhFlavor: '动态类型 + Struct + case/when',
+    enFlavor: 'Duck-typed + Struct + case/when',
+    code: `require 'set'
+
+VALID = Set.new("UDLRFBMESxyz".chars)
+
+Move = Struct.new(:token, :turn)
+class ScrambleError < StandardError; end
+
+def parse(s)
+  s.split.map do |t|
+    raise ScrambleError, "bad token: #{t}" unless VALID.include?(t[0])
+    turn = case t[1..]
+           when ''   then 1
+           when '2'  then 2
+           when "'"  then 3
+           else raise ScrambleError, "bad suffix: #{t}"
+           end
+    Move.new(t[0], turn)
+  end
+end`,
+  },
+  {
+    slug: 'php', name: 'PHP', href: '/code/language/php', accent: '#777BB4', commentToken: '//',
+    zhFlavor: 'enum (PHP 8.1) + match 表达式',
+    enFlavor: 'PHP 8.1 enum + match expression',
+    code: `<?php
+enum Token: string {
+    case U = 'U'; case D = 'D'; case L = 'L'; case R = 'R';
+    case F = 'F'; case B = 'B'; case M = 'M'; case E = 'E';
+    case S = 'S'; case X = 'x'; case Y = 'y'; case Z = 'z';
+}
+
+readonly class Move {
+    public function __construct(public Token $token, public int $turn) {}
+}
+
+function parse(string $s): array {
+    $out = [];
+    foreach (preg_split('/\\\\s+/', trim($s)) as $t) {
+        if ($t === '') continue;
+        $token = Token::tryFrom($t[0]);
+        if (!$token) throw new ValueError("bad token: $t");
+        $turn = match (substr($t, 1)) {
+            ''  => 1,
+            '2' => 2,
+            "'" => 3,
+            default => throw new ValueError("bad suffix: $t"),
+        };
+        $out[] = new Move($token, $turn);
+    }
+    return $out;
+}`,
+  },
+  {
+    slug: 'lua', name: 'Lua', href: '/code/language/lua', accent: '#2C2D72', commentToken: '--',
+    zhFlavor: '多返回值 (value, err) + gmatch %S+',
+    enFlavor: 'Multi-return (value, err) + gmatch %S+',
+    code: `-- Lua: no enum, no Result type. Idiom: return value, err.
+
+local VALID = {}
+for c in ("UDLRFBMESxyz"):gmatch(".") do VALID[c] = true end
+
+local function parse(s)
+    local out = {}
+    for t in s:gmatch("%S+") do
+        local head = t:sub(1, 1)
+        if not VALID[head] then
+            return nil, "bad token: " .. t
+        end
+        local tail = t:sub(2)
+        local turn
+        if     tail == ""  then turn = 1
+        elseif tail == "2" then turn = 2
+        elseif tail == "'" then turn = 3
+        else
+            return nil, "bad suffix: " .. t
+        end
+        out[#out + 1] = { token = head, turn = turn }
+    end
+    return out
+end`,
+  },
+  {
+    slug: 'haskell', name: 'Haskell', href: '/code/language/haskell', accent: '#5E5086', commentToken: '--',
+    zhFlavor: 'ADT (Token / Move) + Either String',
+    enFlavor: 'ADT (Token / Move) + Either String',
+    code: `-- Haskell: ADT for Token, Either for failure. mapM threads errors.
+
+data Token = U | D | L | R | F | B
+           | M | E | S | X | Y | Z
+           deriving (Show, Eq)
+
+data Move = Move { token :: Token, turn :: Int } deriving Show
+
+parse :: String -> Either String [Move]
+parse = mapM parseOne . words
+  where
+    parseOne []     = Left "empty token"
+    parseOne (h:rs) = Move <$> tokenOf h <*> turnOf rs
+
+    tokenOf c = case c of
+      'U' -> Right U; 'D' -> Right D; 'L' -> Right L; 'R' -> Right R
+      'F' -> Right F; 'B' -> Right B; 'M' -> Right M; 'E' -> Right E
+      'S' -> Right S; 'x' -> Right X; 'y' -> Right Y; 'z' -> Right Z
+      _   -> Left ("bad token: " ++ [c])
+
+    turnOf ""  = Right 1
+    turnOf "2" = Right 2
+    turnOf "'" = Right 3
+    turnOf r   = Left ("bad suffix: " ++ r)`,
+  },
 ];
 
 function highlightComments(code: string, token: string) {
@@ -397,8 +544,8 @@ export default function CompareScramblePage() {
 
   useEffect(() => {
     document.title = lang === 'zh'
-      ? '十二种语言,一个打乱解析器 — CubeRoot'
-      : 'One scramble parser, twelve languages — CubeRoot';
+      ? '17 种语言, 一个打乱解析器 — CubeRoot'
+      : 'One scramble parser, seventeen languages — CubeRoot';
   }, [lang]);
 
   return (
@@ -415,18 +562,18 @@ export default function CompareScramblePage() {
           </div>
 
           <div className="compare-tag">
-            <L zh="// Scramble Parser · 12 Languages · 1 Algorithm" en="// Scramble Parser · 12 Languages · 1 Algorithm" />
+            <L zh="// Scramble Parser · 17 Languages · 1 Algorithm" en="// Scramble Parser · 17 Languages · 1 Algorithm" />
           </div>
           <h1 className="compare-title">
             <L
-              zh={<>十二种语言<span className="compare-comma">,</span> 一个 <span className="compare-hl">打乱解析器</span></>}
-              en={<>One <span className="compare-hl">scramble parser</span><span className="compare-comma">,</span> twelve languages</>}
+              zh={<>17 种语言<span className="compare-comma">,</span> 一个 <span className="compare-hl">打乱解析器</span></>}
+              en={<>One <span className="compare-hl">scramble parser</span><span className="compare-comma">,</span> seventeen languages</>}
             />
           </h1>
           <p className="compare-sub">
             <L
-              zh={<>同一个 <strong>scramble → Move[]</strong> 解析器,十二种语言写一遍。看每门语言怎么表达"12 种合法 token 之一 + 可选后缀",以及解析失败时怎么把错误回传给调用者——这才是类型系统真正干活的地方。</>}
-              en={<>The same <strong>scramble → Move[]</strong> parser, written in eleven languages. Watch each language model "one of 12 legal tokens, plus an optional suffix" and how it hands a parse failure back to the caller — that's where a type system actually earns its keep.</>}
+              zh={<>同一个 <strong>scramble → Move[]</strong> 解析器, 17 种语言写一遍。看每门语言怎么表达"12 种合法 token 之一 + 可选后缀", 以及解析失败时怎么把错误回传给调用者——这才是类型系统真正干活的地方。</>}
+              en={<>The same <strong>scramble → Move[]</strong> parser, written in seventeen languages. Watch each language model "one of 12 legal tokens, plus an optional suffix" and how it hands a parse failure back to the caller — that's where a type system actually earns its keep.</>}
             />
           </p>
         </header>
@@ -498,15 +645,15 @@ export default function CompareScramblePage() {
             <div>
               <h3><L zh={'12 个 token 怎么建模'} en="How to model 12 tokens" /></h3>
               <p><L
-                zh={<>Rust / Swift / Kotlin / Java / C++ 走 <strong>enum</strong>, 编译期就能保证"只接受这 12 个值"。TS 用<strong>字面量联合</strong> <code>'U' | 'D' | …</code> 拿到一样的静态保证。Python 用字符串 + 运行时 set 检查。JS 连这层都没有——只有一个 <code>Set</code> 拦着 typo。</>}
-                en={<>Rust / Swift / Kotlin / Java / C++ reach for an <strong>enum</strong> — the type system locks the set to those 12 values at compile time. TS gets the same static guarantee through a <strong>string literal union</strong> <code>'U' | 'D' | …</code>. Python uses strings + a runtime set. JS doesn't even have that — just a <code>Set</code> as a typo guard.</>}
+                zh={<>Rust / Swift / Kotlin / Java / C++ / C# / PHP 走 <strong>enum</strong>, 编译期就能保证"只接受这 12 个值";Haskell 用 <strong>ADT</strong> <code>data Token = U | D | …</code> 拿到一样的保证。TS 用<strong>字面量联合</strong> <code>'U' | 'D' | …</code> 走类型层。Python / Ruby / Lua 用字符串 + 运行时 set 检查。JS 连这层都没有——只有一个 <code>Set</code> 拦着 typo。</>}
+                en={<>Rust / Swift / Kotlin / Java / C++ / C# / PHP reach for an <strong>enum</strong> — the type system locks the set to those 12 values at compile time; Haskell uses an <strong>ADT</strong> <code>data Token = U | D | …</code> for the same guarantee. TS gets a static guarantee through a <strong>string literal union</strong> <code>'U' | 'D' | …</code>. Python / Ruby / Lua use strings + a runtime set. JS doesn't even have that — just a <code>Set</code> as a typo guard.</>}
               /></p>
             </div>
             <div>
               <h3><L zh={'解析失败怎么传出去'} en="How a parse failure escapes" /></h3>
               <p><L
-                zh={<>5 种风格: <strong>Result/Either</strong>(Rust / Kotlin)、<strong>std::expected</strong>(C++23)、<strong>错误联合</strong>(Zig <code>!T</code>)、<strong>throws</strong>(Swift / Java / Python / JS)、<strong>多返回值</strong>(Go <code>(v, err)</code>)、<strong>输出参数 + 错误码</strong>(C)。每种风格背后都是一套不同的"调用方记得处理错误吗"的设计哲学。</>}
-                en={<>Five flavours: <strong>Result/Either</strong> (Rust / Kotlin), <strong>std::expected</strong> (C++23), <strong>error union</strong> (Zig <code>!T</code>), <strong>throws</strong> (Swift / Java / Python / JS), <strong>multi-return</strong> (Go <code>(v, err)</code>), and <strong>out-param + error code</strong> (C). Each style comes with its own answer to "will the caller actually handle the error".</>}
+                zh={<>6 种风格: <strong>Result / Either / Optional</strong>(TS / Rust / Kotlin / Haskell / Mojo)、<strong>std::expected</strong>(C++23)、<strong>错误联合</strong>(Zig <code>!T</code>)、<strong>throws / 异常</strong>(Swift / Java / Python / JS / Ruby / PHP / C#)、<strong>多返回值</strong>(Go / Lua: <code>(v, err)</code>)、<strong>输出参数 + 错误码</strong>(C)。每种风格背后都是一套不同的"调用方记得处理错误吗"的设计哲学。</>}
+                en={<>Six flavours: <strong>Result / Either / Optional</strong> (TS / Rust / Kotlin / Haskell / Mojo), <strong>std::expected</strong> (C++23), <strong>error union</strong> (Zig <code>!T</code>), <strong>throws / exceptions</strong> (Swift / Java / Python / JS / Ruby / PHP / C#), <strong>multi-return</strong> (Go / Lua: <code>(v, err)</code>), and <strong>out-param + error code</strong> (C). Each style comes with its own answer to "will the caller actually handle the error".</>}
               /></p>
             </div>
             <div>
@@ -519,8 +666,8 @@ export default function CompareScramblePage() {
             <div>
               <h3><L zh={'分词:让标准库去操心'} en="Tokenizing: let stdlib handle it" /></h3>
               <p><L
-                zh={<>Go <code>strings.Fields</code>、Python <code>s.split()</code>、Zig <code>tokenizeAny</code>、Kotlin/Java/JS/TS 的 <code>split(/\\s+/)</code>—— 一行就把"连续空格"问题处理掉。C 是反例:得手动 <code>isspace</code> + 字符指针推进、自己管缓冲区。<strong>能交给标准库的就别自己写</strong>,这条规则在 11 种语言里只有 1 种例外。</>}
-                en={<>Go's <code>strings.Fields</code>, Python's <code>s.split()</code>, Zig's <code>tokenizeAny</code>, Kotlin/Java/JS/TS's <code>split(/\\s+/)</code> — one line and "runs of whitespace" is handled. C is the counterexample: you walk the pointer with <code>isspace</code> and manage the output buffer yourself. <strong>Defer to stdlib whenever you can</strong> — across 11 languages, only one is an exception.</>}
+                zh={<>Go <code>strings.Fields</code>、Python / Ruby / Mojo <code>s.split()</code>、Rust <code>split_whitespace</code>、Zig <code>tokenizeAny</code>、Kotlin/Java/JS/TS <code>split(/\\s+/)</code>、Lua <code>gmatch("%S+")</code>、Haskell <code>words</code>、C# <code>Split(RemoveEmptyEntries)</code>、PHP <code>preg_split</code> —— 一行就把"连续空格"问题处理掉。C 是反例:得手动 <code>isspace</code> + 字符指针推进、自己管缓冲区。<strong>能交给标准库的就别自己写</strong>, 这条规则在 17 种语言里只有 1 种例外。</>}
+                en={<>Go's <code>strings.Fields</code>, Python / Ruby / Mojo <code>s.split()</code>, Rust's <code>split_whitespace</code>, Zig's <code>tokenizeAny</code>, Kotlin/Java/JS/TS's <code>split(/\\s+/)</code>, Lua's <code>gmatch("%S+")</code>, Haskell's <code>words</code>, C#'s <code>Split(RemoveEmptyEntries)</code>, PHP's <code>preg_split</code> — one line and "runs of whitespace" is handled. C is the counterexample: you walk the pointer with <code>isspace</code> and manage the output buffer yourself. <strong>Defer to stdlib whenever you can</strong> — across 17 languages, only one is an exception.</>}
               /></p>
             </div>
           </div>

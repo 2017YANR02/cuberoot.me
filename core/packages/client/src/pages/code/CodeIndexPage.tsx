@@ -54,14 +54,14 @@ const CARDS: Card[] = [
     zh: {
       title: '语言',
       sub: 'Programming Languages',
-      tagline: '12 门编程语言的长篇导览。一门一篇深度,含历史、特性、生态、当下处境',
-      meta: '12 门语言 · 2 篇横向对比',
+      tagline: '17 门编程语言的长篇导览。一门一篇深度, 含历史、特性、生态、当下处境',
+      meta: '17 门语言 · 2 篇横向对比',
     },
     en: {
       title: 'Languages',
       sub: 'Long-form guides',
-      tagline: 'Long-form guides to 12 programming languages — history, features, ecosystem, current state, one page each',
-      meta: '12 languages · 2 cross-comparisons',
+      tagline: 'Long-form guides to 17 programming languages — history, features, ecosystem, current state, one page each',
+      meta: '17 languages · 2 cross-comparisons',
     },
   },
   {
