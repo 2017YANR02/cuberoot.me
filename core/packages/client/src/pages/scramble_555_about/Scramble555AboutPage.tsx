@@ -2,8 +2,9 @@
  * /scramble/555-about — 5x5 打乱两种生成方法的对照说明页,从
  * Scramble555ModePicker 的 info 图标进入。
  *
- * 单页:头部 + 简介 + 两张并排卡片(各自纵向流程图)+ 对比表 + 资料链接。
- * 窄屏卡片堆叠两行。无外部图表库依赖,流程图用 CSS box + Unicode 箭头。
+ * 单页:头部 + 简介 + 两张并排卡片(各自纵向流程图)+ 求解器深入 +
+ * 服务端实现 + 对比表 + 资料链接。窄屏卡片堆叠。无外部图表库依赖,
+ * 流程图用 CSS box + Unicode 箭头。
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +34,44 @@ function Arrow() {
   return <span className="s555-arrow" aria-hidden="true">↓</span>;
 }
 
+interface PhaseProps {
+  name: string;
+  goal: string;
+  coord: string;
+  table: string;
+  moves: string;
+}
+function PhaseCard({ name, goal, coord, table, moves }: PhaseProps) {
+  return (
+    <div className="s555-phase">
+      <div className="s555-phase-head">
+        <span className="s555-phase-name">{name}</span>
+        <span className="s555-phase-moves">{moves}</span>
+      </div>
+      <div className="s555-phase-goal">{goal}</div>
+      <div className="s555-phase-meta">
+        <div><span className="s555-phase-meta-label">coord</span><code>{coord}</code></div>
+        <div><span className="s555-phase-meta-label">table</span><code>{table}</code></div>
+      </div>
+    </div>
+  );
+}
+
+interface StatProps {
+  value: string;
+  label: string;
+  hint?: string;
+}
+function Stat({ value, label, hint }: StatProps) {
+  return (
+    <div className="s555-stat">
+      <div className="s555-stat-value">{value}</div>
+      <div className="s555-stat-label">{label}</div>
+      {hint && <div className="s555-stat-hint">{hint}</div>}
+    </div>
+  );
+}
+
 export default function Scramble555AboutPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -53,11 +92,38 @@ export default function Scramble555AboutPage() {
 
         <p className="s555-intro">
           {t(
-            '两种生成方法都能"打乱"一个 5×5 魔方,但数学层面差很远。下面是它们各自的流程、优缺点,以及为什么这个站给你两个选项。',
-            'Two methods both "scramble" a 5×5 cube, but they\'re mathematically very different. Here\'s how each one works, the trade-offs, and why this site lets you pick.',
+            '两种生成方法都能"打乱"一个 5×5 魔方,但数学层面差很远。「随机转动」是 WCA 比赛官方标准,做法是从初始态出发随机走 60 步;「随机状态」从 5×5 的所有合法状态(2.27 × 10⁷⁴ 个)里**均匀**抽一个,反求出到达它的步骤序列。前者快(浏览器毫秒级),后者贵(服务器跑 IDA* 搜索,~1-3s 一条),但分布性更好。',
+            'Two methods both "scramble" a 5×5 cube, but they\'re mathematically very different. Random-move (the WCA standard) walks 60 random steps from solved. Random-state samples **uniformly** from the 2.27 × 10⁷⁴ legal 5×5 states and inverts a solver path back to scramble. The former is browser-instant; the latter is solver-heavy (~1-3 s) but distributes perfectly.',
           )}
         </p>
 
+        {/* ──── 数字一览 ──── */}
+        <h2 className="s555-section-title">{t('数字一览', 'By the numbers')}</h2>
+        <div className="s555-stats-grid">
+          <Stat
+            value="2.27 × 10⁷⁴"
+            label={t('5×5 合法状态数', 'Legal 5×5 states')}
+            hint={t('vs 3×3 ≈ 4.3 × 10¹⁹,差 55 个数量级', 'vs 3×3 ≈ 4.3 × 10¹⁹, 55 orders of magnitude more')}
+          />
+          <Stat
+            value="60 / ~70"
+            label={t('打乱长度(随机转动 / 随机状态)', 'Scramble length (random-move / random-state)')}
+            hint={t('WCA Reg 4d 规定 60', 'WCA Reg 4d mandates 60')}
+          />
+          <Stat
+            value="13 / ~230 MB"
+            label={t('剪枝表数量 / 总大小', 'Pruning tables / total size')}
+            hint={t('Phase 1-5 各 ObjectInputStream 落盘', 'one per phase, Java-serialized to disk')}
+          />
+          <Stat
+            value="~1.5 s"
+            label={t('单条 solver 耗时(服务器)', 'Single solver time (server)')}
+            hint={t('IDA* + Kociemba 两阶段,服务器侧实测', 'IDA* + Kociemba two-phase, observed prod')}
+          />
+        </div>
+
+        {/* ──── 两种方法的卡片 ──── */}
+        <h2 className="s555-section-title">{t('两种方法,逐步对比', 'The two methods, step by step')}</h2>
         <div className="s555-grid">
           {/* ──── Random Move 卡片 ──── */}
           <section className="s555-card">
@@ -66,37 +132,69 @@ export default function Scramble555AboutPage() {
               <span className="s555-badge s555-badge--wca">WCA</span>
             </header>
             <p className="s555-card-tag">
-              {t('WCA 比赛官方标准。生成的就是 60 步打乱序列。', 'WCA competition standard. The output is a 60-move sequence.')}
+              {t(
+                'WCA 比赛官方标准。从复原态出发随机走 60 步,过程即结果。',
+                'WCA competition standard. Walk 60 random steps from solved; the process is the output.',
+              )}
             </p>
 
             <div className="s555-flow">
-              <Step step={1} title={t('随机选一面', 'Pick a face at random')}
-                body={t('U / R / F / D / L / B 6 个面,均匀。', 'One of U / R / F / D / L / B, uniform.')} />
+              <Step
+                step={1}
+                title={t('随机选一面', 'Pick a face at random')}
+                body={t(
+                  'U / R / F / D / L / B 6 个面,每个 1/6 概率。不包括"中层"(M/E/S)、整体旋转(x/y/z)、对侧同步转(R L 等),保持 WCA 兼容。',
+                  'One of U / R / F / D / L / B, each 1/6. No slice (M/E/S), no rotation (x/y/z), no double-face primitives — keeps WCA spec.',
+                )}
+              />
               <Arrow />
-              <Step step={2} title={t('随机选层宽', 'Pick layer width')}
-                body={t('1 层 (R / U) 或 2 层 (Rw / Uw)。', '1 layer (R / U) or 2 layers (Rw / Uw).')} />
+              <Step
+                step={2}
+                title={t('随机选层宽', 'Pick layer width')}
+                body={t(
+                  '50/50 概率选 1 层(R / U)或 2 层(Rw / Uw)。5×5 才有 wide 转动(3×3 没有),这是 5×5 打乱比 3×3 信息量大的原因之一。',
+                  '50/50 between 1 layer (R / U) and 2 layers (Rw / Uw). Wide turns exist only on N×N where N ≥ 4 — one reason 5×5 scrambles carry more information than 3×3.',
+                )}
+              />
               <Arrow />
-              <Step step={3} title={t('随机选后缀', 'Pick suffix')}
-                body={t("' / 2 / 无,各 1/3 概率。", "' / 2 / nothing, 1/3 each.")} />
+              <Step
+                step={3}
+                title={t('随机选后缀', 'Pick suffix')}
+                body={t(
+                  '空 / \' / 2 各 1/3 概率。`R`(顺 90°)、`R\'`(逆 90°)、`R2`(180°)。`R2 R2` = 无效,会被下一步过滤掉。',
+                  "Empty / ' / 2, each 1/3. `R` (clockwise 90°), `R'` (counter 90°), `R2` (180°). `R2 R2` cancels — filtered next step.",
+                )}
+              />
               <Arrow />
-              <Step step={4} title={t('同轴防压缩', 'Reject same-axis')}
-                body={t('如果这一步跟上一步同轴(U vs D 也算),抛掉重选。', "Reject if same axis as previous (U vs D counts as same). Try again.")} />
+              <Step
+                step={4}
+                title={t('同轴防压缩', 'Reject same-axis')}
+                body={t(
+                  '如果新步跟上一步同轴(U/D 同轴,R/L 同轴,F/B 同轴),抛掉重选。这保证序列不能局部合并(如 R L R = R\' L 之类),也是 WCA 允许的"shortest equivalent"长度下限。',
+                  'If the new move shares an axis with the previous (U/D, R/L, F/B), reject and re-roll. Prevents trivially collapsible sequences (`R L R` ≡ `R\' L`); ensures WCA-spec shortest-equivalent length.',
+                )}
+              />
               <Arrow />
-              <Step step={5} title={t('追加到序列', 'Append')}
-                body={t('合法就加进去,跳回 1。重复直到 60 步。', 'Append, loop back to step 1. Repeat until 60 moves.')}
-                highlight />
+              <Step
+                step={5}
+                title={t('追加到序列', 'Append')}
+                body={t('合法就追加,跳回 1。重复直到序列长 60(WCA 规定值)。', 'Append, loop back to step 1. Repeat until sequence length = 60 (WCA-mandated).')}
+                highlight
+              />
             </div>
 
             <h3 className="s555-pros">{t('优点', 'Pros')}</h3>
             <ul className="s555-list">
-              <li>{t('即时生成(<1 毫秒),浏览器本地算', 'Instant (<1 ms), runs locally in browser')}</li>
-              <li>{t('确定性低,但符合 WCA 规则', 'Low determinism, but matches WCA spec')}</li>
-              <li>{t('零依赖、零网络', 'Zero deps, zero network')}</li>
+              <li>{t('即时生成(<1 毫秒),完全在浏览器算', 'Instant (<1 ms), runs locally in browser')}</li>
+              <li>{t('零网络依赖,断网照跑', 'Zero network — works offline')}</li>
+              <li>{t('符合 WCA Regulation §4d,比赛能用', 'Matches WCA Regulation §4d — competition-legal')}</li>
+              <li>{t('生成器只 ~50 行代码,可审计', 'Generator is ~50 LoC — auditable')}</li>
             </ul>
             <h3 className="s555-cons">{t('缺点', 'Cons')}</h3>
             <ul className="s555-list">
-              <li>{t('「过程」而不是「结果」 — 短解状态出现概率偏高', 'A process, not an outcome — easier-to-solve states are over-represented')}</li>
-              <li>{t('实际状态空间利用率不足', 'State-space coverage is not uniform')}</li>
+              <li>{t('「过程」而非「结果」 — 短解状态出现概率系统性偏高', 'A process, not an outcome — short-solve states are systematically over-represented')}</li>
+              <li>{t('实际有效状态数远低于 10⁷⁴', 'Effective state coverage is far smaller than 10⁷⁴')}</li>
+              <li>{t('两次打乱可能撞到同一个状态(理论几率极低,但分布偏)', 'Two scrambles can collide on the same state (low odds, but the distribution is biased)')}</li>
             </ul>
           </section>
 
@@ -107,41 +205,189 @@ export default function Scramble555AboutPage() {
               <span className="s555-badge s555-badge--ours">cube555</span>
             </header>
             <p className="s555-card-tag">
-              {t('cs0x7f 的 5-phase reduction solver。先采样状态,再反求打乱。', "cs0x7f's 5-phase reduction solver. Sample a state, then derive the scramble.")}
+              {t(
+                'cs0x7f 的 5-phase reduction solver。先采样状态,再反求打乱。',
+                "cs0x7f's 5-phase reduction solver. Sample a state, then invert a solver path.",
+              )}
             </p>
 
             <div className="s555-flow">
-              <Step step={1} title={t('采样合法状态', 'Sample a legal state')}
-                body={t('在 5×5 全部合法状态(≈ 2.27 × 10⁷⁴)里**均匀**抽一个。', 'Sample uniformly from all legal 5×5 states (≈ 2.27 × 10⁷⁴).')} />
+              <Step
+                step={1}
+                title={t('采样合法状态', 'Sample a legal state')}
+                body={t(
+                  '在 5×5 全部合法状态(2.27 × 10⁷⁴)里**均匀**抽一个 —— 每个 center / wing edge / mid edge / corner 的位置和朝向独立随机,然后修正成可达的偶置换。',
+                  'Sample uniformly across all 2.27 × 10⁷⁴ legal states — randomize each center / wing edge / mid edge / corner position+orientation, fix parity to land in the solvable coset.',
+                )}
+              />
               <Arrow />
-              <Step step={2} title={t('Phase 1-3:reduce 到 3×3', 'Phase 1-3: reduce to 3×3')}
-                body={t('还原 center + 配对 wing edge,~30 步。', 'Solve centers and pair wing edges, ~30 moves.')} />
+              <Step
+                step={2}
+                title={t('Phase 1-3:reduce 到 3×3', 'Phase 1-3: reduce to 3×3')}
+                body={t(
+                  '逐阶段还原 center + 配对 wing edge。每阶段一张 IDA* 剪枝表,几十 MB 量级,深度边界来自 BFS。总和 ~30 步。',
+                  'Stage-wise solve centers and pair wing edges. Each stage uses one IDA* pruning table (tens of MB, BFS-built). Total ~30 moves.',
+                )}
+              />
               <Arrow />
-              <Step step={3} title={t('Phase 4:完成 reduction', 'Phase 4: finish reduction')}
-                body={t('配对 mid edge,完成 3×3 reduction,~15 步。', 'Pair middle edges, finish the 3×3 reduction, ~15 moves.')} />
+              <Step
+                step={3}
+                title={t('Phase 4:完成 reduction', 'Phase 4: finish reduction')}
+                body={t(
+                  '配对剩下的 mid edge,固定 center 朝向。这一阶段最难,3 张协同剪枝表。~15 步。',
+                  'Pair the remaining mid edges, lock centre orientation. This phase is the hardest — 3 cooperating pruning tables. ~15 moves.',
+                )}
+              />
               <Arrow />
-              <Step step={4} title={t('Phase 5:像 3×3 一样求解', 'Phase 5: solve as 3×3')}
-                body={t('twophase Kociemba 求解角块 + 边块,~20 步。', 'Solve corners + edges via two-phase Kociemba, ~20 moves.')} />
+              <Step
+                step={4}
+                title={t('Phase 5:像 3×3 一样求解', 'Phase 5: solve as 3×3')}
+                body={t(
+                  '此时 5×5 等价于一个 3×3,交给 Kociemba two-phase solver(min2phase,21 步内)。',
+                  'At this point the 5×5 is equivalent to a 3×3, handed off to the Kociemba two-phase solver (min2phase, ≤21 moves).',
+                )}
+              />
               <Arrow />
-              <Step step={5} title={t('解 → 打乱', 'Invert solution')}
-                body={t('把解法**反序 + 每步取反**得到打乱序列(~70 步)。', 'Reverse the solution and invert each move → scramble (~70 moves).')}
-                highlight />
+              <Step
+                step={5}
+                title={t('解 → 打乱', 'Invert solution')}
+                body={t(
+                  '把整条解法**反序 + 每步取反**(R → R\', U2 → U2),得到打乱序列(~70 步)。本质是用"解"反推"乱"。',
+                  'Reverse the full solution and invert each move (R → R\', U2 → U2) → scramble (~70 moves). The trick is using the **solve** to derive the **scramble**.',
+                )}
+                highlight
+              />
             </div>
 
             <h3 className="s555-pros">{t('优点', 'Pros')}</h3>
             <ul className="s555-list">
               <li>{t('状态空间均匀采样,真随机', 'Uniform over the state space — truly random')}</li>
-              <li>{t('每个解都"独一无二",没有偏向短解的统计现象', 'Each scramble is independent; no short-solve bias')}</li>
-              <li>{t('Round-trip self-verify:每条返回前都核过', 'Round-trip self-verify: every scramble is checked before return')}</li>
+              <li>{t('每条打乱状态分布独立,无短解偏差', 'Each scramble is independent; no short-solve bias')}</li>
+              <li>{t('Round-trip self-verify:返回前用 CubieCube 模拟一遍核对', 'Round-trip self-verify: every scramble is checked via CubieCube replay before return')}</li>
+              <li>{t('5×5 真随机 solver 是稀有品 —— 公开实现只有 cs0x7f/cube555', 'A real 5×5 random-state solver is rare — cs0x7f/cube555 is the only public implementation')}</li>
             </ul>
             <h3 className="s555-cons">{t('缺点', 'Cons')}</h3>
             <ul className="s555-list">
-              <li>{t('慢:服务器 solver ~1.5s / 条', 'Slow: solver takes ~1.5 s / scramble on the server')}</li>
-              <li>{t('依赖网络:server 挂了会降级到随机转动', 'Needs network — if the server is down, falls back to random-move')}</li>
-              <li>{t('非 WCA 标准:比赛不能用', 'Not WCA-compliant: not allowed in official competition')}</li>
+              <li>{t('慢:服务器 solver ~1.5s / 条(取决于种子复杂度)', 'Slow: ~1.5 s / scramble on the server (varies by seed)')}</li>
+              <li>{t('需要网络:服务挂了会降级到随机转动(本站做了 fallback)', 'Requires network — falls back to random-move if backend is down')}</li>
+              <li>{t('非 WCA 标准:序列长度 ~70 步,不能用于比赛', 'Not WCA-compliant: ~70-move output, not allowed in competition')}</li>
+              <li>{t('230 MB 剪枝表常驻内存,JVM 模式整进程 ~540 MB RSS', 'Pins 230 MB of pruning tables in memory; JVM total RSS ~540 MB')}</li>
             </ul>
           </section>
         </div>
+
+        {/* ──── 求解器内部 ──── */}
+        <h2 className="s555-section-title">{t('cube555 内部:5 个 phase 的样子', 'Inside cube555: anatomy of the 5 phases')}</h2>
+        <p className="s555-section-intro">
+          {t(
+            'cs0x7f 的 cube555 把 5×5 求解切成 5 个 reduction 阶段。每阶段一个目标子状态,用 IDA*(iterative deepening A*)搜索 + 离线 BFS 算出的剪枝表(`heuristic`),保证每阶段最优解的几步内可终止。下表是每阶段的 coord(用什么索引剪枝表)和 size(表内存占用):',
+            'cs0x7f\'s cube555 cuts the 5×5 solve into 5 reduction phases. Each phase has a target sub-state and uses IDA* (iterative deepening A*) plus a pre-computed BFS pruning table (`heuristic`) so each phase terminates within near-optimal depth. The table below lists each phase\'s coord (the pruning-table index) and table size:',
+          )}
+        </p>
+        <div className="s555-phases">
+          <PhaseCard
+            name="Phase 1"
+            goal={t('对面 + 邻面 center 配色', 'Pair opposite + adjacent centers')}
+            coord="x-center sym + t-center sym"
+            table="~30 MB"
+            moves="~12"
+          />
+          <Arrow />
+          <PhaseCard
+            name="Phase 2"
+            goal={t('剩余 center 还原', 'Finish remaining centers')}
+            coord="t-center, x-center raw"
+            table="~25 MB"
+            moves="~10"
+          />
+          <Arrow />
+          <PhaseCard
+            name="Phase 3"
+            goal={t('配对 wing edge,固定 center', 'Pair wing edges, lock centers')}
+            coord="center + mid/wing edge sym"
+            table="~50 MB"
+            moves="~14"
+          />
+          <Arrow />
+          <PhaseCard
+            name="Phase 4"
+            goal={t('完成 mid edge 配对,reduce 到 3×3', 'Finish mid edges, reduce to 3×3')}
+            coord="ml-edge × ud-center, ml-edge × rl-center"
+            table="~90 MB"
+            moves="~14"
+          />
+          <Arrow />
+          <PhaseCard
+            name="Phase 5"
+            goal={t('像 3×3 一样解(Kociemba two-phase)', 'Solve like a 3×3 (Kociemba two-phase)')}
+            coord="3×3 corner / edge raw"
+            table="~35 MB"
+            moves="≤21"
+          />
+        </div>
+        <p className="s555-section-note">
+          {t(
+            '首次启动需要 ~5 分钟把 13 张剪枝表全部 BFS 算出来落盘(`.jpdata` / `.jhdata`),后续启动 ~3 秒从盘 mmap 回内存。本站服务器上一次性建好后随容器保留。',
+            'Cold-build of all 13 pruning tables takes ~5 min (BFS, persisted as `.jpdata` / `.jhdata` via Java Serialization); subsequent boots reload from disk in ~3 s. Tables live on the server container.',
+          )}
+        </p>
+
+        {/* ──── 服务端实现 ──── */}
+        <h2 className="s555-section-title">{t('在 cuberoot.me 怎么跑起来', 'How it runs on cuberoot.me')}</h2>
+        <p className="s555-section-intro">
+          {t(
+            '上游 cube555 是个 Java GUI demo,本站把它改造成 stdio 协议的常驻 daemon,由 Hono(TypeScript)spawn 子进程做 stdin/stdout 行协议通信。从「点 Generate」到「拿到 scramble」走了下面这条路:',
+            'Upstream cube555 ships as a Java GUI demo. We adapt it as a long-lived stdio daemon spawned by Hono (TypeScript), talking line-based stdin/stdout protocol. The user click → scramble path goes through:',
+          )}
+        </p>
+        <div className="s555-flow s555-flow--arch">
+          <Step
+            step={1}
+            title={t('Browser:pooledScramble', 'Browser: pooledScramble')}
+            body={t(
+              '用户点 Generate(N),客户端发起 N 个 pooledScramble 调用;池空时所有 caller 共享同一个 SSE batch 请求 `/v1/scramble/555-rs/batch?count=N`,不再每人一发(以前会 2N 个调用)。',
+              'User clicks Generate(N). The client fires N pooledScramble calls; when the pool is empty, all callers wait on one shared SSE batch `/v1/scramble/555-rs/batch?count=N` rather than each firing its own (used to be 2N requests).',
+            )}
+          />
+          <Arrow />
+          <Step
+            step={2}
+            title={t('Edge:nginx 反代', 'Edge: nginx reverse proxy')}
+            body={t(
+              'api.cuberoot.me 由 nginx 反代到 Hono(127.0.0.1:3001)。SSE 端点带 `X-Accel-Buffering: no`,关掉 nginx 默认 proxy_buffering,scramble 一条流出就立刻下行。',
+              'api.cuberoot.me is nginx-proxied to Hono (127.0.0.1:3001). The SSE endpoint sets `X-Accel-Buffering: no` to disable nginx\'s default proxy_buffering, so each scramble streams downstream as the solver produces it.',
+            )}
+          />
+          <Arrow />
+          <Step
+            step={3}
+            title={t('Hono:streamSSE → daemon', 'Hono: streamSSE → daemon')}
+            body={t(
+              'Hono 用 `streamSSE` 开 N 个并发 `getScramble()`;每个走 stdio 协议发 id 行给 Java daemon,daemon 内部 3-worker 线程池并行求解,解完按 id tab-separated 回 stdout。',
+              'Hono uses `streamSSE` to open N concurrent `getScramble()` calls; each sends an id line over stdio to the Java daemon. The daemon\'s 3-worker thread pool solves in parallel, returning each result as a tab-separated id\\tscramble\\tstate line.',
+            )}
+          />
+          <Arrow />
+          <Step
+            step={4}
+            title={t('Daemon:cube555 native binary', 'Daemon: cube555 native binary')}
+            body={t(
+              '生产环境用 GraalVM `native-image --static --libc=musl` 编出的 ~18 MB 静态二进制(不依赖系统 glibc),`-Xmx512m`。3 worker 实测 12 条 batch ~14s wall(~1.5s / 条 × 4 轮)。',
+              'Production runs a ~18 MB GraalVM `native-image --static --libc=musl` binary (no glibc dependency), `-Xmx512m`. With 3 workers: 12-scramble batch ≈ 14 s wall (~1.5 s/solve × 4 rounds).',
+            )}
+            highlight
+          />
+        </div>
+        <p className="s555-section-note">
+          {t(
+            '实测「切到随机状态 + 点 Generate(5/项)」冷击场景:17.6 s → 9.69 s(-45%),首条 4.7 s → 2.48 s(-47%)。完整 bench 在 ',
+            'Real-world bench of the "switch to random-state + click Generate(5/event)" cold path: 17.6 s → 9.69 s (-45%), first-scramble 4.7 s → 2.48 s (-47%). Full numbers in ',
+          )}
+          <a href="https://github.com/RuiminYan/cuberoot.me/blob/main/core/cube555-daemon/BENCHMARKS.md" target="_blank" rel="noopener noreferrer">
+            BENCHMARKS.md
+          </a>
+          {t('。', '.')}
+        </p>
 
         {/* ──── 对比表 ──── */}
         <h2 className="s555-section-title">{t('一眼对比', 'At a glance')}</h2>
@@ -166,24 +412,39 @@ export default function Scramble555AboutPage() {
                 <td>~70</td>
               </tr>
               <tr>
-                <th>{t('生成时间', 'Generation time')}</th>
+                <th>{t('生成耗时', 'Generation time')}</th>
                 <td>{t('<1 毫秒', '<1 ms')}</td>
                 <td>~1.5 s</td>
               </tr>
               <tr>
-                <th>{t('状态分布', 'State distribution')}</th>
-                <td>{t('偏短解', 'biased toward easy solves')}</td>
-                <td>{t('均匀', 'uniform')}</td>
-              </tr>
-              <tr>
                 <th>{t('计算位置', 'Where it runs')}</th>
-                <td>{t('浏览器', 'in-browser')}</td>
-                <td>{t('服务器 (Java daemon)', 'server (Java daemon)')}</td>
+                <td>{t('浏览器(本地)', 'browser (local)')}</td>
+                <td>{t('服务器(daemon)', 'server (daemon)')}</td>
               </tr>
               <tr>
-                <th>{t('剪枝表', 'Pruning tables')}</th>
+                <th>{t('状态分布', 'State distribution')}</th>
+                <td>{t('非均匀,偏短解', 'non-uniform, biased to easy solves')}</td>
+                <td>{t('均匀(uniform)', 'uniform')}</td>
+              </tr>
+              <tr>
+                <th>{t('需要剪枝表?', 'Needs pruning tables?')}</th>
                 <td>{t('无', 'none')}</td>
                 <td>~230 MB</td>
+              </tr>
+              <tr>
+                <th>{t('依赖网络?', 'Needs network?')}</th>
+                <td>{t('否', 'no')}</td>
+                <td>{t('是(失败回落随机转动)', 'yes (fallback to random-move on failure)')}</td>
+              </tr>
+              <tr>
+                <th>{t('实现复杂度', 'Implementation complexity')}</th>
+                <td>{t('~50 行 TypeScript', '~50 lines of TypeScript')}</td>
+                <td>{t('~20 个 Java 类,~5000 行', '~20 Java classes, ~5000 LoC')}</td>
+              </tr>
+              <tr>
+                <th>{t('适用场景', 'Use when')}</th>
+                <td>{t('比赛、官方计时、离线训练', 'competition, official timing, offline practice')}</td>
+                <td>{t('家庭训练、数据集采样、无偏 benchmark', 'home training, dataset sampling, unbiased benchmarks')}</td>
               </tr>
             </tbody>
           </table>
@@ -193,25 +454,39 @@ export default function Scramble555AboutPage() {
         <h2 className="s555-section-title">{t('参考资料', 'References')}</h2>
         <ul className="s555-refs">
           <li>
-            <a href="https://github.com/cs0x7f/cube555" target="_blank" rel="noopener noreferrer">
-              cs0x7f/cube555
-            </a>
+            <a href="https://github.com/cs0x7f/cube555" target="_blank" rel="noopener noreferrer">cs0x7f/cube555</a>
             {' — '}
             {t('5-phase reduction solver 上游(Java),本站 daemon 就是它的胶水', 'upstream 5-phase reduction solver (Java); our daemon wraps it')}
           </li>
           <li>
-            <a href="https://www.worldcubeassociation.org/regulations/#article-4-scrambling" target="_blank" rel="noopener noreferrer">
-              {t('WCA 第 4 条规则:打乱', 'WCA Regulation §4: Scrambling')}
-            </a>
+            <a href="https://github.com/cs0x7f/min2phase" target="_blank" rel="noopener noreferrer">cs0x7f/min2phase</a>
             {' — '}
-            {t('为什么比赛用 60 步随机转动', 'why competitions use 60-move random-move')}
+            {t('cube555 Phase 5 用的 3×3 Kociemba two-phase 求解器', "cube555's Phase 5 driver — Kociemba two-phase for the residual 3×3")}
           </li>
           <li>
-            <a href="https://www.cubing.net/cubing.js/" target="_blank" rel="noopener noreferrer">
-              cubing.js
-            </a>
+            <a href="https://www.worldcubeassociation.org/regulations/#article-4-scrambling" target="_blank" rel="noopener noreferrer">{t('WCA Regulation §4:Scrambling', 'WCA Regulation §4: Scrambling')}</a>
             {' — '}
-            {t('浏览器端随机转动生成器', 'in-browser random-move generator we use')}
+            {t('为什么比赛用 60 步随机转动(§4d4)', 'why competitions use 60-move random-move (§4d4)')}
+          </li>
+          <li>
+            <a href="https://www.cubing.net/cubing.js/" target="_blank" rel="noopener noreferrer">cubing.js</a>
+            {' — '}
+            {t('Lucas Garron 的浏览器端随机转动 / 随机状态生成器(2×2-4×4 是 random-state,5×5+ 是 random-move)', "Lucas Garron's in-browser random-move / random-state generators (random-state for 2×2-4×4, random-move for 5×5+)")}
+          </li>
+          <li>
+            <a href="https://kociemba.org/cube.htm" target="_blank" rel="noopener noreferrer">Herbert Kociemba — Cube Explorer</a>
+            {' — '}
+            {t('Two-phase algorithm 原始论文与实现,3×3 求解器的事实标准', 'Original paper + implementation of the two-phase algorithm — the de-facto 3×3 solver standard')}
+          </li>
+          <li>
+            <a href="https://en.wikipedia.org/wiki/Iterative_deepening_A*" target="_blank" rel="noopener noreferrer">{t('IDA* 算法(维基百科)', 'IDA* algorithm (Wikipedia)')}</a>
+            {' — '}
+            {t('Korf 1985,cube555 每阶段搜索的内核', "Korf 1985 — the search kernel cube555 uses at every phase")}
+          </li>
+          <li>
+            <a href="https://github.com/RuiminYan/cuberoot.me/blob/main/core/cube555-daemon/BENCHMARKS.md" target="_blank" rel="noopener noreferrer">BENCHMARKS.md</a>
+            {' — '}
+            {t('本站 daemon 各阶段实测数据(JVM → batch SSE → GraalVM native → client cold-path 修复)', 'real-world numbers for our daemon (JVM → batch SSE → GraalVM native → client cold-path fix)')}
           </li>
         </ul>
       </main>

@@ -232,7 +232,145 @@
 .s555-section-title {
     font-size: 1.15rem;
     font-weight: 600;
-    margin: 1rem 0 0.75rem;
+    margin: 2rem 0 0.75rem;
+}
+
+.s555-section-intro {
+    color: var(--s555-text-sub);
+    line-height: 1.7;
+    margin: 0 0 1.25rem;
+    font-size: 0.95rem;
+}
+
+.s555-section-note {
+    color: var(--s555-text-mute);
+    line-height: 1.7;
+    margin: 1rem 0 2.5rem;
+    font-size: 0.88rem;
+}
+.s555-section-note a {
+    color: var(--s555-accent);
+    text-decoration: none;
+}
+.s555-section-note a:hover { text-decoration: underline; }
+
+/* ──── Stat grid (4-card row) ──── */
+.s555-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 2rem;
+}
+@media (max-width: 880px) {
+    .s555-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .s555-stats-grid { grid-template-columns: 1fr; }
+}
+
+.s555-stat {
+    background: var(--s555-surface);
+    border: 1px solid var(--s555-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.s555-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--s555-accent);
+    line-height: 1.2;
+}
+
+.s555-stat-label {
+    font-size: 0.82rem;
+    color: var(--s555-text);
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+.s555-stat-hint {
+    font-size: 0.72rem;
+    color: var(--s555-text-mute);
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+/* ──── Phase pipeline (5 cards stacked with arrows) ──── */
+.s555-phases {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 1rem 0 1rem;
+    max-width: 620px;
+}
+
+.s555-phase {
+    border: 1px solid var(--s555-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--s555-surface);
+}
+
+.s555-phase-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.s555-phase-name {
+    font-weight: 600;
+    color: var(--s555-text);
+    font-size: 0.95rem;
+    letter-spacing: -0.005em;
+}
+
+.s555-phase-moves {
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: var(--s555-accent);
+    background: var(--s555-accent-soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.s555-phase-goal {
+    font-size: 0.85rem;
+    color: var(--s555-text-sub);
+    line-height: 1.55;
+    margin-bottom: 8px;
+}
+
+.s555-phase-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--s555-text-mute);
+}
+.s555-phase-meta code {
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    color: var(--s555-text-sub);
+    background: color-mix(in srgb, var(--s555-surface) 90%, var(--s555-text));
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    word-break: break-all;
+}
+.s555-phase-meta-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ──── Architecture flow (wider single-column) ──── */
+.s555-flow--arch {
+    max-width: 640px;
+    margin: 1rem 0 1rem;
 }
 
 /* ──── Table ──── */
