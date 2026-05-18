@@ -64,9 +64,6 @@ export default function TwistySection({
     // 的入口;我们设 alg/setup 走 model.alg.set 不经 addMove。
     // 用 onUserMoveRef 避免每次 prop 变都重新 wrap。
     // 修饰键 → cubing.js 内置:shift = 2nd slice (wide/layer), ctrl = rotation, right-click = invert。
-    // 金字塔 tip (小角) 走点击 puzzle 后 alt 改 family lowercase 的路 不可行 (pyraminx 用 U/L/R/B
-    // 当 tip 命名,而 raycast 给的 family 是 F/D/BL/BR — 改 lowercase 得到的 f/d/bl/br 在 pyraminx
-    // 不合法 → "Bad move"。 完整 tip 支持得靠 positional raycast,在后续 iter 加。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const model = (player as any).experimentalModel;
     if (model && typeof model.experimentalAddMove === 'function') {
@@ -77,6 +74,55 @@ export default function TwistySection({
         try { onUserMoveRef.current?.(text); } catch { /* swallow */ }
         return orig(mv, opts);
       };
+    }
+
+    // Pyraminx tip 支持:cubing.js stickerDat.axis 里只有 face 轴 (F/D/L/R 内部) +
+    // 4 个 corner-axis (内部大写 FRL/DRF/DFL/DLR,通过 spinmatch 映回外部 u/l/r/b LAYER move),
+    // 没有 tip 轴。raycast 点贴近 tip 时它返回的是 layer 小写,而我们想要 tip 大写。
+    // wrap getClosestMoveToAxis:hit point 距某 tip vertex 足够近 (<阈值) 时,把 layer
+    // 升级为 tip;外部 family 大小写映射:u↔U / l↔L / r↔R / b↔B。
+    //
+    // 三段式触控:面中心 → F (big corner / 3-layer);近角 → u/l/r/b (layer / 2-layer);
+    // 贴顶点 → U/L/R/B (tip / 1-layer)。
+    if (puzzle === 'pyraminx') {
+      // Pyraminx tip 三段判定:
+      //   - F-center 朝外距 ≈ 0.39 (world after PG_SCALE=0.5)
+      //   - 大边 mid 距 ≈ 0.7-0.9
+      //   - 顶点 (corner vertex) ≈ 1.0+
+      // cubing.js stickerDat 没有 tip 轴,但有 4 face 轴 + 4 corner 轴 (内部 FRL/DRF/DFL/DLR
+      // → notationToExternal 通过 layer map 项 u→FRL/l→FLD/r→FDR/b→DLR 返回小写 layer)。
+      // 默认 click:hit 越接近顶点 → corner 轴胜 → 返回小写 u/l/r/b (layer)。
+      // 这里 wrap:小写 layer + hit |point| 大 (世界半径 > TIP_THRESHOLD) = 用户点 tip
+      // 区域 → 升 family 为大写 U/L/R/B,在 pyraminxFamilyMap 映为内部 tip frl/fld/...
+      // depth=secondSlice (shift) 走 wide ≠ tip,depth=rotation (ctrl) 走 Uv 等。两者直透。
+      const LAYER_TO_TIP: Record<string, string> = { u: 'U', l: 'L', r: 'R', b: 'B' };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (async () => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const obj: any = await player.experimentalCurrentThreeJSPuzzleObject();
+          if (!obj || playerInstRef.current !== player) return;
+          const origClosest = obj.getClosestMoveToAxis?.bind(obj);
+          if (typeof origClosest !== 'function') return;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          obj.getClosestMoveToAxis = (point: any, transformations: { invert: boolean; depth?: string }) => {
+            const ret = origClosest(point, transformations);
+            if (!ret) return ret;
+            if (transformations.depth != null && transformations.depth !== 'none') return ret;
+            const family: string = ret.move?.family ?? ret.move?.quantum?.family;
+            if (!LAYER_TO_TIP[family]) return ret;
+            // hit point 距原点 (世界坐标)。Pyraminx 渲染下 PG_SCALE=0.5,顶点 world 距
+            // 约 1.0-1.2。 阈值 0.95 = 命中点贴顶点附近 (内 1/4 高度) → tip。
+            const d2 = point.x * point.x + point.y * point.y + point.z * point.z;
+            if (d2 < 0.90) return ret;
+            const tipFam = LAYER_TO_TIP[family];
+            try {
+              const tipMv = ret.move.modified({ family: tipFam });
+              return { move: tipMv, order: ret.order };
+            } catch { return ret; }
+          };
+        } catch { /* dispose / 切 puzzle: 静默回退 */ }
+      })();
     }
 
     if (fillPane) {
