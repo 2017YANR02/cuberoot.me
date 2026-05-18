@@ -537,39 +537,45 @@ export class Sq1Renderer {
    * + a short R + a long L. The other carries full B + long R + short L.
    *
    * Cut line equation (top-down XZ plane): z = x·tan(30°), passing through
-   * (W, +CUT_OFF) and (-W, -CUT_OFF) where CUT_OFF = W·tan(30°) ≈ 79.4.
+   * Cut is VERTICAL at world x = -WEDGE_HALF_CHORD ≈ -36.84 — aligned with
+   * top/bot layer's LF/F-wedge boundary on F face (and similarly LB/B-wedge
+   * on B face). User wants the seam visible on F and B faces (not L/R).
    *
-   * After a `/` slice, both middle pieces rotate 180° around X — Big and
-   * Small swap places (since chord through center → equal volumes), and the
-   * F vs B colors visible on the cube swap.
+   * 2 rectangular pieces:
+   *   • LEFT (small): x ∈ [-W, -WHC] — full L sticker + small F/B strips
+   *   • RIGHT (big):  x ∈ [-WHC, +W] — full R sticker + big F/B strips
+   *
+   * After `/`, RIGHT goes into slice (rotated 180° around X axis). Body stays
+   * at +X side (X unchanged by Rx), Y/Z flip. RIGHT's F sticker (was at +Z)
+   * moves to -Z → cube's F face shows orange (B color) on right portion and
+   * red still on left (from LEFT piece). Matches real sq1 F/B color partial
+   * swap after /.
    */
   private buildMiddle(): void {
-    const CUT_OFF = W * Math.tan(Math.PI / 6); // ≈79.4
+    const CUT_X = -WEDGE_HALF_CHORD;  // ≈ -36.84, aligned with top LF/F-wedge boundary
     const bodyMat = new THREE.MeshPhongMaterial({
       color: SQ1_COLORS.BODY, specular: 0x222222, shininess: 25,
       side: THREE.DoubleSide,
     });
-    // Build one half. `kind === 'big'` = upper-left (has full F=red edge);
-    // `kind === 'small'` = lower-right (has full B=orange edge).
-    const mkHalf = (kind: 'big' | 'small'): THREE.Object3D => {
-      // Shape vertices in XZ-plane (we'll extrude along Z then rotate -π/2
-      // around X so Z becomes Y vertical). Using ShapeXY = (X, Z) so:
-      //   Shape Y axis ≡ world Z axis (after rotation).
+    // kind === 'right': RIGHT half (big), x>CUT_X, has +X R sticker.
+    // kind === 'left':  LEFT half (small), x<CUT_X, has -X L sticker.
+    const mkHalf = (kind: 'right' | 'left'): THREE.Object3D => {
+      // Shape coords (X=worldX, ShapeY = -worldZ after rotateX(-π/2)).
       const shape = new THREE.Shape();
-      if (kind === 'big') {
-        // CCW: chord-start (-W, -CUT_OFF) → back-left (-W, +W) → back-right (W, W) → chord-end (W, CUT_OFF)
-        shape.moveTo(-W, -CUT_OFF);
-        shape.lineTo(-W, W);
-        shape.lineTo(W, W);
-        shape.lineTo(W, CUT_OFF);
-        shape.lineTo(-W, -CUT_OFF);
+      if (kind === 'right') {
+        // RIGHT: worldX ∈ [CUT_X, +W], worldZ ∈ [-W, +W] → ShapeY ∈ [-W, +W]. CCW:
+        shape.moveTo(CUT_X, -W);   // world (CUT_X, +W)  — F-edge cut
+        shape.lineTo(W, -W);       // world (+W, +W)     — RF corner
+        shape.lineTo(W, W);        // world (+W, -W)     — RB corner
+        shape.lineTo(CUT_X, W);    // world (CUT_X, -W)  — B-edge cut
+        shape.lineTo(CUT_X, -W);
       } else {
-        // CCW: chord-start (-W, -CUT_OFF) → front-left (-W, -W) → front-right (W, -W) → chord-end (W, CUT_OFF)
-        shape.moveTo(-W, -CUT_OFF);
+        // LEFT: worldX ∈ [-W, CUT_X], worldZ ∈ [-W, +W]. CCW:
+        shape.moveTo(-W, -W);      // world (-W, +W)     — LF corner
+        shape.lineTo(CUT_X, -W);   // world (CUT_X, +W)  — F-edge cut
+        shape.lineTo(CUT_X, W);    // world (CUT_X, -W)  — B-edge cut
+        shape.lineTo(-W, W);       // world (-W, -W)     — LB corner
         shape.lineTo(-W, -W);
-        shape.lineTo(W, -W);
-        shape.lineTo(W, CUT_OFF);
-        shape.lineTo(-W, -CUT_OFF);
       }
       const geom = new THREE.ExtrudeGeometry(shape, {
         steps: 1, depth: MID_HEIGHT,
@@ -581,21 +587,16 @@ export class Sq1Renderer {
       const pivot = new THREE.Object3D();
       pivot.add(new THREE.Mesh(geom, bodyMat));
 
-      // 3 outer-face stickers per piece. Each piece has 3 outer cube-face
-      // edges (the 4th edge is the internal chord). Long/short asymmetry =
-      // famous Sq1 hardware feature.
+      // Each piece has 3 outer-face stickers (the 4th edge is the internal cut chord).
       const stickerH = MID_HEIGHT - 2 * SIDE_INSET_V;
       const addSticker = (color: number, axisFace: 'L' | 'R' | 'F' | 'B', zFrom: number, zTo: number, xFrom: number, xTo: number): void => {
-        // axisFace tells the cube face direction; (zFrom, zTo) for L/R; (xFrom, xTo) for F/B.
         let posX: number, posZ: number, rotY: number, tangentialLen: number;
         if (axisFace === 'L' || axisFace === 'R') {
-          // sticker plane in YZ, normal=±X
           posX = (axisFace === 'R' ? +1 : -1) * (W + SIDE_OFFSET);
           posZ = (zFrom + zTo) / 2;
           rotY = axisFace === 'R' ? Math.PI / 2 : -Math.PI / 2;
           tangentialLen = Math.abs(zTo - zFrom);
         } else {
-          // F/B: sticker plane in XY, normal=±Z
           posX = (xFrom + xTo) / 2;
           posZ = (axisFace === 'F' ? +1 : -1) * (W + SIDE_OFFSET);
           rotY = axisFace === 'F' ? 0 : Math.PI;
@@ -608,31 +609,29 @@ export class Sq1Renderer {
         pivot.add(mesh);
       };
 
-      if (kind === 'big') {
-        // Big piece outer edges:
-        //   • F (+Z): x ∈ [-W, +W], full length 2W (LONG)
-        //   • R (+X): z ∈ [+CUT_OFF, +W], length W − CUT_OFF ≈ 58 (SHORT)
-        //   • L (-X): z ∈ [-CUT_OFF, +W], length W + CUT_OFF ≈ 217 (medium)
-        addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, W);
-        addSticker(SQ1_COLORS.R, 'R', CUT_OFF, W, 0, 0);
-        addSticker(SQ1_COLORS.L, 'L', -CUT_OFF, W, 0, 0);
+      if (kind === 'right') {
+        // RIGHT (big) outer edges:
+        //   • R (+X): full z range [-W, +W] (LONG, 2W)
+        //   • F (+Z): x ∈ [CUT_X, +W] = W + WHC ≈ 174
+        //   • B (-Z): x ∈ [CUT_X, +W] = W + WHC ≈ 174
+        addSticker(SQ1_COLORS.R, 'R', -W, W, 0, 0);
+        addSticker(SQ1_COLORS.F, 'F', 0, 0, CUT_X, W);
+        addSticker(SQ1_COLORS.B, 'B', 0, 0, CUT_X, W);
       } else {
-        // Small piece outer edges:
-        //   • B (-Z): x ∈ [-W, +W], full length 2W (LONG)
-        //   • R (+X): z ∈ [-W, +CUT_OFF], length W + CUT_OFF ≈ 217 (medium)
-        //   • L (-X): z ∈ [-W, -CUT_OFF], length W − CUT_OFF ≈ 58 (SHORT)
-        addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, W);
-        addSticker(SQ1_COLORS.R, 'R', -W, CUT_OFF, 0, 0);
-        addSticker(SQ1_COLORS.L, 'L', -W, -CUT_OFF, 0, 0);
+        // LEFT (small) outer edges:
+        //   • L (-X): full z range [-W, +W] (LONG, 2W)
+        //   • F (+Z): x ∈ [-W, CUT_X] = W − WHC ≈ 101
+        //   • B (-Z): x ∈ [-W, CUT_X] = W − WHC ≈ 101
+        addSticker(SQ1_COLORS.L, 'L', -W, W, 0, 0);
+        addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, CUT_X);
+        addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, CUT_X);
       }
 
       this.cubeRoot.add(pivot);
       return pivot;
     };
-    // `side` field repurposed: 1 = big (has F edge), -1 = small (has B edge).
-    // Slice rotation includes BOTH since chord-through-center middle swaps as one.
-    this.middle.push({ pivot: mkHalf('big'), side: 1 });
-    this.middle.push({ pivot: mkHalf('small'), side: -1 });
+    this.middle.push({ pivot: mkHalf('right'), side: 1 });
+    this.middle.push({ pivot: mkHalf('left'), side: -1 });
   }
 
   /**
@@ -681,6 +680,16 @@ export class Sq1Renderer {
       p.pivot.scale.z = 1;
       p.pivot.scale.y = isTop ? 1 : -1;
       p.layerSign = isTop ? 1 : -1;
+    }
+    // Middle pivots: RIGHT side rotates 180° around X when sliceSolved=false
+    // (i.e., after odd number of / moves). LEFT stays. This matches the
+    // slice animation result and keeps URL-load / animation paths consistent.
+    for (const m of this.middle) {
+      m.pivot.position.set(0, 0, 0);
+      const rotated = !state.sliceSolved && m.side === 1;
+      m.pivot.rotation.set(rotated ? Math.PI : 0, 0, 0);
+      m.pivot.quaternion.setFromEuler(m.pivot.rotation);
+      m.pivot.scale.set(1, 1, 1);
     }
   }
 
@@ -773,13 +782,9 @@ export class Sq1Renderer {
       const botAngle = -(move.bot ?? 0) * (Math.PI / 6);
       this.active = { move, t: 0, duration: this.durationPerMoveMs, topPivot, botPivot, topAngle, botAngle };
     } else {
+      // TOP/BOT pieces: rotate around X axis (unchanged — sq1 / move axis).
       const slicePivot = new THREE.Object3D();
       this.cubeRoot.add(slicePivot);
-      // Right-half check: pivot.position is (0, ±HALF_MID, 0) for every piece —
-      // the slot direction is encoded in pivot.rotation.y, not position. So we
-      // PROBE a representative geometry point (the outer radial face center for
-      // wedges, or the outer corner vertex for corners) through the pivot's
-      // world matrix to get the piece's actual world X.
       const probe = new THREE.Vector3();
       for (const p of this.pieces) {
         p.pivot.updateWorldMatrix(true, false);
@@ -788,9 +793,13 @@ export class Sq1Renderer {
         probe.applyMatrix4(p.pivot.matrixWorld);
         if (probe.x > 0.5) this.attach(p.pivot, slicePivot);
       }
-      // Diagonal-cut middle: both pieces participate in slice rotation
-      // (chord through center → big and small swap as one rigid pair).
-      for (const m of this.middle) this.attach(m.pivot, slicePivot);
+      // MIDDLE: with vertical cut at x=-WHC, RIGHT half (side=1) is the
+      // "right of slice plane" piece and joins the rotation. LEFT half stays.
+      // RIGHT body symmetric in Y and Z within its volume, so Rx(180°) keeps
+      // it in same x range — only F/B stickers swap.
+      for (const m of this.middle) {
+        if (m.side === 1) this.attach(m.pivot, slicePivot);
+      }
       this.active = { move, t: 0, duration: this.durationPerMoveMs, slicePivot, angle: Math.PI };
     }
   }
@@ -805,14 +814,10 @@ export class Sq1Renderer {
       for (const p of this.pieces) {
         if (p.pivot.parent === pv) this.attach(p.pivot, this.cubeRoot);
       }
+      // Middle pieces — attached to same slicePivot, get same Rx(180°). RIGHT
+      // middle stays at +X side (body symmetric), F/B stickers visually swap.
       for (const m of this.middle) {
-        if (m.pivot.parent === pv) {
-          this.attach(m.pivot, this.cubeRoot);
-          // Don't snap back — diagonal-cut middle's 180° rotation is VISIBLE
-          // (Big and Small pieces actually swap volumes, F and B face colors
-          // swap on the cube). Let rotation accumulate; after 2× / it returns
-          // to original. attach() preserves world transforms automatically.
-        }
+        if (m.pivot.parent === pv) this.attach(m.pivot, this.cubeRoot);
       }
       this.cubeRoot.remove(pv);
     } else {
