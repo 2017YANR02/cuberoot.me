@@ -55,7 +55,11 @@ jobs:
           CC=musl-gcc ./configure --prefix=/usr/local --static
           make -j"$(nproc)"
           sudo make install
-          ls -la /usr/local/lib/libz.a
+          # native-image 调 musl-gcc linker 走自己的 -L 列表 (不读 LIBRARY_PATH),
+          # /usr/local/lib 不在列表里。直接 copy 到 /usr/lib/x86_64-linux-musl/
+          # (该路径在 musl-gcc.specs 默认搜索里)。
+          sudo cp /usr/local/lib/libz.a /usr/lib/x86_64-linux-musl/libz.a
+          ls -la /usr/lib/x86_64-linux-musl/libz.a
 
       - name: Clone cube555 upstream
         run: git clone --depth=1 https://github.com/cs0x7f/cube555.git /tmp/cube555
@@ -78,10 +82,6 @@ jobs:
 
       - name: Build native-image
         working-directory: /tmp/cube555
-        env:
-          # 让 linker 找到 /usr/local/lib/libz.a (musl-built static zlib)
-          LIBRARY_PATH: /usr/local/lib
-          CPATH: /usr/local/include
         run: |
           native-image \
             --static \
