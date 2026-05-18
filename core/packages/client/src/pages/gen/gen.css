@@ -282,12 +282,17 @@
     white-space: pre-wrap;
 }
 /* Per-line spans for multi-line scrambles (mega) — mirrors tnoodle PDF
-   alternating-row highlighting (#E6E6E6, MIN_LINES_HIGHLIGHTING=4). */
+   alternating-row highlighting (#E6E6E6, MIN_LINES_HIGHLIGHTING=4). Color
+   tracks the current --gen-text so dark mode gets a subtle darker tint
+   instead of a glaring near-white stripe — the PDF light look stays
+   identical because .gen-tn-sheets.has-preview locks --gen-text to #181716. */
 .gen-scramble-line, .gen-tn-attempt-line .gen-scramble-line {
     display: block;
     padding: 0 4px;
 }
-.gen-scramble-line.is-hl { background: #e6e6e6; }
+.gen-scramble-line.is-hl {
+    background: color-mix(in srgb, var(--gen-text) 8%, transparent);
+}
 
 .gen-copy-btn {
     padding: 6px;
@@ -927,7 +932,7 @@
 .gen-tn-sheet-table td {
     padding: 6px 10px;
     vertical-align: middle;
-    border: 1px solid #000;
+    border: 1px solid var(--gen-border-strong);
 }
 /* Hover + click-to-copy on sheet rows. Whole row clickable; ScrambleLines text
    stays selectable because the <tr> click handler only fires when no native
@@ -944,7 +949,7 @@
     width: 32px;
     font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 0.85rem;
-    color: #000;
+    color: var(--gen-text);
     font-weight: 400;
     text-align: center;
 }
@@ -954,6 +959,34 @@
        受 max-width 兜在 560px 内,table 自然收窄到内容宽。 */
     width: 100%;
     max-width: 560px;       /* matches the ~550pt scramble column on A4 */
+    position: relative;      /* anchor the click-to-copy "已复制" toast */
+}
+/* "已复制 / Copied" 浮层 —— 点击 row 复制后,在 scramble 单元格中央弹出一个
+   accent-色小药丸,1.2s fade-in/out。pointer-events:none 防止挡住下一次点击。 */
+.gen-tn-copy-toast {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.92);
+    background: var(--gen-accent);
+    color: #FFF;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--gen-accent) 40%, transparent);
+    animation: gen-copy-toast 1.2s ease-out forwards;
+    z-index: 5;
+}
+@keyframes gen-copy-toast {
+    0%   { opacity: 0; transform: translate(-50%, calc(-50% + 6px)) scale(0.92); }
+    15%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    75%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, calc(-50% - 6px)) scale(0.96); }
 }
 .gen-tn-attempt-line {
     display: block;
@@ -970,18 +1003,23 @@
     white-space: pre-wrap;
     /* PDF MIN_LINES_HIGHLIGHTING:每隔一行用浅灰底纹。我们用 repeating gradient
        直接按 line-height (1.5em) 切条纹,wrap 后视觉自动对齐,不需要 JS 分行。
-       1.5em 对应 line-height: 1.5 与 font-size 的乘积,刚好 1 行高度。 */
+       1.5em 对应 line-height: 1.5 与 font-size 的乘积,刚好 1 行高度。
+       颜色绑 --gen-text 8% 跟随主题:浅色页 ≈ 原 #e6e6e6,深色页变成微弱的
+       浅色细带,不再像之前那样在 dark 上糊成一条亮白条。 */
+    --gen-stripe-color: color-mix(in srgb, var(--gen-text) 8%, transparent);
     background: repeating-linear-gradient(
         to bottom,
         transparent 0,
         transparent 1.5em,
-        #e6e6e6 1.5em,
-        #e6e6e6 3em
+        var(--gen-stripe-color) 1.5em,
+        var(--gen-stripe-color) 3em
     );
 }
 .gen-tn-attempt-line + .gen-tn-attempt-line { margin-top: 2px; }
 .gen-tn-attempt-preview {
-    background: #C0C0C0;    /* tnoodle SCRAMBLE_BACKGROUND_COLOR */
+    /* tnoodle PDF SCRAMBLE_BACKGROUND_COLOR=#C0C0C0;web 改用 --gen-text 18%
+       这样浅色页 ≈ 原灰底,深色页变成温和的低对比方块,SVG 棱角不糊。 */
+    background: color-mix(in srgb, var(--gen-text) 18%, transparent);
     text-align: center;
     padding: 0;
     /* 固定 cell 宽度,scramble cell width:100% 拿走剩余空间。
@@ -1009,7 +1047,7 @@
     font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 0.78rem;
     font-weight: 400;
-    color: #000;
+    color: var(--gen-text);
     background: var(--gen-bg);
     padding: 4px 12px;
     border-left: none;
@@ -1065,23 +1103,10 @@ html[data-theme=dark] .gen-page .gen-tn-clock-chip {
     border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* TNoodle 打印预览(白纸黑字)与主题脱钩,任何模式都保持纸张观感 */
-.gen-tn-sheets {
-    --gen-bg: #FFFFFF;
-    --gen-surface: #FFFFFF;
-    --gen-text: #181716;
-    --gen-text-sub: #6F6E6B;
-    --gen-text-mute: #95938E;
-    --gen-border: #E5E4DF;
-    --gen-border-strong: #CCCAC2;
-    color-scheme: light;
-}
-/* 每张 sheet = 一张纸:显式白底 + 黑字。不然 page dark 底透过来,黑字看不见 */
+/* Sheet 始终跟 page 主题:浅色页 = 白纸黑字(像 PDF),深色页 = 深色卡 +
+   浅色字。SVG preview 的 WCA 色块用纯 hex(白/黄/红/橙/绿/蓝),足够在
+   任一主题下读得清,所以不需要为它们再锁 light。 */
 .gen-tn-sheets .gen-tn-sheet {
-    background: #FFFFFF;
-    color: #181716;
-}
-.gen-tn-sheets .gen-tn-sheet-header,
-.gen-tn-sheets .gen-tn-sheet-title {
-    color: #181716;
+    background: var(--gen-surface);
+    color: var(--gen-text);
 }
