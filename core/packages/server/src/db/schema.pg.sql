@@ -346,3 +346,25 @@ CREATE TABLE wiki_additions (
   deleted_at   TIMESTAMPTZ
 );
 CREATE INDEX idx_wiki_additions_term ON wiki_additions (term_id, created_at) WHERE deleted_at IS NULL;
+
+-- ── 21. ops_commands (/code/ops runbook 命令 + 提示词) ──
+-- migration 0010_ops_commands.sql / 0011_seed_ops_commands.sql
+-- admin 编辑走 X-Admin-Key (server/routes/ops.ts),public GET 5min cache
+CREATE TABLE ops_commands (
+  id          TEXT         PRIMARY KEY,
+  category    TEXT         NOT NULL CHECK (category IN ('db','build','deploy','backup','prompt')),
+  cwd         TEXT,
+  position    INTEGER      NOT NULL DEFAULT 0,
+  chips       JSONB        NOT NULL DEFAULT '[]'::jsonb,
+  title_zh    TEXT         NOT NULL,
+  title_en    TEXT         NOT NULL,
+  desc_zh     TEXT         NOT NULL,
+  desc_en     TEXT         NOT NULL,
+  cmd         TEXT         NOT NULL,
+  variants    JSONB        NOT NULL DEFAULT '[]'::jsonb,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_ops_commands_cat_pos ON ops_commands(category, position);
+CREATE TRIGGER ops_commands_updated_at BEFORE UPDATE ON ops_commands
+  FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();

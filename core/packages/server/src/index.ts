@@ -17,6 +17,7 @@ import { cubingLiveRoutes } from './routes/cubing_live.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { wikiRoutes } from './routes/wiki.js';
 import { scramble555Routes } from './routes/scramble_555.js';
+import { opsRoutes } from './routes/ops.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 
@@ -65,6 +66,7 @@ app.route('/v1', cubingLiveRoutes);
 app.route('/v1', analyticsRoutes);
 app.route('/v1', wikiRoutes);
 app.route('/v1', scramble555Routes);
+app.route('/v1', opsRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
