@@ -67,6 +67,15 @@ export default function StackPage() {
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  // 没带 ?puzzle= 就强制写 puzzle=3 (默认 3x3),让 URL 永远显式。
+  useEffect(() => {
+    if (searchParams.get('puzzle') != null) return;
+    setSearchParams((prev) => {
+      const np = new URLSearchParams(prev);
+      np.set('puzzle', '3');
+      return withPuzzleFirst(np);
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
   const algParam = searchParams.get('alg') || '';
   const setupParam = searchParams.get('setup') || '';
   /** Puzzle kind — number for NxN, 'sq1' for Square-1. */
@@ -411,6 +420,9 @@ export default function StackPage() {
     let sq1DragLastDelta = 0;
     // 区分 tap vs drag:小位移内不切到 turn 模式,松手 = 普通 click (留给后续 hit-test)
     const SQ1_DRAG_THRESHOLD_PX = 4;
+    // 标记 pointerdown 之后还没决定走 turn/view 的待命态.
+    // hover 时 pointerdown 没发, 这个标记是 false, move 不该走 threshold 分支.
+    let sq1Pending = false;
     let sq1DownX = 0;
     let sq1DownY = 0;
     let sq1MovedPastThreshold = false;
@@ -432,6 +444,7 @@ export default function StackPage() {
         if (!isTouchMulti) {
           sq1DownX = e.clientX;
           sq1DownY = e.clientY;
+          sq1Pending = true;
           sq1MovedPastThreshold = false;
           sq1Drag = null;
           sq1DragLastDelta = 0;
@@ -446,6 +459,7 @@ export default function StackPage() {
             // 双指 pinch — 走下面已有逻辑;放弃 turn / 旋转
             sq1Drag = null;
             sq1Rotating = false;
+            sq1Pending = false;
             sq1MovedPastThreshold = false;
           }
         }
@@ -500,7 +514,7 @@ export default function StackPage() {
           return;
         }
         // 等待 threshold 决定 turn vs 视角
-        if (!sq1MovedPastThreshold && !pinching) {
+        if (sq1Pending && !sq1MovedPastThreshold && !pinching) {
           const dx = e.clientX - sq1DownX;
           const dy = e.clientY - sq1DownY;
           if (Math.hypot(dx, dy) >= SQ1_DRAG_THRESHOLD_PX) {
@@ -570,13 +584,17 @@ export default function StackPage() {
         sq1Drag = null;
         sq1DragLastDelta = 0;
         sq1MovedPastThreshold = false;
+        sq1Pending = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
       if (sq1Rotating) {
         sq1Rotating = false;
         sq1MovedPastThreshold = false;
+        sq1Pending = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
+      // 没进 drag/rotate 就放开 (纯 tap) 也要清待命态
+      sq1Pending = false;
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
@@ -684,7 +702,7 @@ export default function StackPage() {
       // world 未就绪 / 已是该 puzzle — 只更新 URL
       setSearchParams((prev) => {
         const np = new URLSearchParams(prev);
-        if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
+        np.set('puzzle', String(kind));
         return withPuzzleFirst(np);
       }, { replace: true });
       return;
