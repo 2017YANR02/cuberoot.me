@@ -386,6 +386,10 @@ export default function StackPage() {
     let mousePanning = false;
     let panLastX = 0;
     let panLastY = 0;
+    // SQ1-only: 左键 / 单指拖拽旋转场景(controller.disable=true,自家走)。
+    let sq1Rotating = false;
+    let sq1LastX = 0;
+    let sq1LastY = 0;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
     const onPointerDown = (e: PointerEvent) => {
@@ -398,6 +402,26 @@ export default function StackPage() {
         renderer.domElement.setPointerCapture(e.pointerId);
         return;
       }
+      // SQ1 左键 / 触摸单指 → 旋转场景(NxN 走 Controller,此分支跳过)
+      if (worldRef.current?.puzzleKind === 'sq1' && (e.pointerType !== 'mouse' || e.button === 0)) {
+        if (e.pointerType === 'touch') {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (activePointers.size === 2) {
+            // 双指 pinch — 走下面已有逻辑
+          } else if (activePointers.size === 1) {
+            sq1Rotating = true;
+            sq1LastX = e.clientX;
+            sq1LastY = e.clientY;
+          }
+        } else {
+          sq1Rotating = true;
+          sq1LastX = e.clientX;
+          sq1LastY = e.clientY;
+          renderer.domElement.setPointerCapture(e.pointerId);
+        }
+        // 双指起跳到下面 pinch 分支
+        if (e.pointerType !== 'touch') return;
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (activePointers.size === 2) {
@@ -407,6 +431,7 @@ export default function StackPage() {
         pinchStartCenter = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
         pinchStartPan = { x: world.panX, y: world.panY };
         pinching = true;
+        sq1Rotating = false;
         world.controller.disable = true;
       }
     };
@@ -418,6 +443,18 @@ export default function StackPage() {
         world.panX += d.x;
         world.panY += d.y;
         world.resize();
+        return;
+      }
+      if (sq1Rotating && worldRef.current?.puzzleKind === 'sq1') {
+        const dx = e.clientX - sq1LastX;
+        const dy = e.clientY - sq1LastY;
+        sq1LastX = e.clientX;
+        sq1LastY = e.clientY;
+        const k = 0.01;
+        world.scene.rotation.y += dx * k;
+        world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+        world.scene.updateMatrix();
+        world.dirty = true;
         return;
       }
       if (e.pointerType !== 'touch') return;
@@ -441,11 +478,15 @@ export default function StackPage() {
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
         return;
       }
+      if (sq1Rotating) {
+        sq1Rotating = false;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
         pinching = false;
-        world.controller.disable = false;
+        world.controller.disable = worldRef.current?.puzzleKind === 'sq1';
         syncScaleToSettings();
       }
     };

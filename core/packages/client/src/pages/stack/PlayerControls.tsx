@@ -11,6 +11,7 @@ import { Alg } from 'cubing/alg';
 import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
+import { parseSq1Scramble, type Sq1Move } from './cuber/sq1/sq1State';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
 import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
@@ -104,8 +105,6 @@ export default function PlayerControls({
 
   // alg → 可播 alg(剥注释 / 零宽 / 连写补空格)→ leaf moves
   // cleanForPlayer 已经处理 `D'U'` `UD2` 这种连写,Alg parser 不会再 throw
-  // SQ1: alg playback is not supported in MVP (SQ1 notation `(t,b)/...` is parsed
-  // by sq1 twister directly, not via cubing.js TwistyPlayer / NxN TwistAction).
   const actions = useMemo<TwistAction[]>(() => {
     if (isSq1) return [];
     if (!algDraft.trim()) return [];
@@ -117,29 +116,26 @@ export default function PlayerControls({
     }
   }, [algDraft, isSq1]);
 
-  // SQ1: debounce timer for animating the typed setup. Per-keystroke instant
-  // apply made users think "nothing rotates" — they need to see the move animate.
-  const sq1AnimTimerRef = useRef<number | null>(null);
+  // SQ1 alg parsing — own path since cubing.js Alg doesn't understand `(t,b)/`.
+  const sq1Actions = useMemo<Sq1Move[]>(() => {
+    if (!isSq1) return [];
+    return parseSq1Scramble(algDraft);
+  }, [algDraft, isSq1]);
+
+  const totalSteps = isSq1 ? sq1Actions.length : actions.length;
 
   // 跳转到第 n 步:setup 重置 + fast 应用前 n 个 action
   const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
     if (isSq1) {
-      // SQ1: cancel any pending animation, reset cube, then animate the full
-      // setup. Debounced so rapid keystrokes don't restart the animation per char.
-      if (sq1AnimTimerRef.current != null) {
-        window.clearTimeout(sq1AnimTimerRef.current);
-        sq1AnimTimerRef.current = null;
-      }
-      const text = setupDraft;
-      sq1AnimTimerRef.current = window.setTimeout(() => {
-        sq1AnimTimerRef.current = null;
-        if (!world) return;
-        world.cube.twister.finish();
-        world.cube.twister.setup('');
-        if (text.trim()) world.cube.twister.push(text);
-      }, 280);
-      setStep(0);
+      // SQ1: instant setup + instant n alg moves (no debounce). Same model as
+      // /demo/sq1's caret-driven snap path. tweener finish() drains in-flight.
+      const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
+      sq1Cube.twister.finish();
+      sq1Cube.twister.setup(setupDraft);
+      const target = Math.max(0, Math.min(n, sq1Actions.length));
+      sq1Cube.applyMovesInstant(sq1Actions.slice(0, target));
+      setStep(target);
       return;
     }
     const cube = world.cube as import('./cuber/cube').default;
@@ -150,7 +146,7 @@ export default function PlayerControls({
       cube.twister.twist(actions[i], true, true);
     }
     setStep(target);
-  }, [world, setupDraft, actions, isSq1]);
+  }, [world, setupDraft, actions, sq1Actions, isSq1]);
 
   // applyMove (QWERTY 增量追加) 时 set 这个 ref,下面 actions-effect 跳过 reset 避免冲掉刚 twist 的状态
   const skipAutoResetRef = useRef(false);
@@ -162,27 +158,31 @@ export default function PlayerControls({
   useEffect(() => {
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
-      setStep(actions.length);  // applyMove 已直接 twist cube,step 推到末尾保持一致
+      setStep(isSq1 ? sq1Actions.length : actions.length);
       return;
     }
     if (animatingScrambleRef.current) {
       animatingScrambleRef.current = false;
       setStep(0);
-      return;  // cube 由 twister.push 慢动画接管,别 instant reset
+      return;
     }
     jumpToStep(0);
   /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [setupDraft, actions]);
+  }, [setupDraft, actions, sq1Actions]);
 
   // caret 同步:从 textarea selectionStart 算前面有几个 move → jump
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     const before = text.slice(0, caretIndex);
     const algBefore = extractAlgFromText(before);
+    if (isSq1) {
+      jumpToStep(parseSq1Scramble(algBefore).length);
+      return;
+    }
     try {
       const n = [...new Alg(algBefore).experimentalLeafMoves()].length;
       jumpToStep(n);
     } catch { /* ignore */ }
-  }, [jumpToStep]);
+  }, [jumpToStep, isSq1]);
 
   const stepForward = useCallback(() => { jumpToStep(step + 1); }, [jumpToStep, step]);
   const stepBack = useCallback(() => { jumpToStep(step - 1); }, [jumpToStep, step]);
@@ -194,12 +194,18 @@ export default function PlayerControls({
       return;
     }
     const intervalMs = Math.max(60, Math.round(600 / speed));
+    const total = isSq1 ? sq1Actions.length : actions.length;
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
-      if (s >= actions.length) { setPlaying(false); return; }
-      if (world && !isSq1) {
-        const cube = world.cube as import('./cuber/cube').default;
-        cube.twister.twist(actions[s], false, true);
+      if (s >= total) { setPlaying(false); return; }
+      if (world) {
+        if (isSq1) {
+          const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
+          sq1Cube.twister.twist(sq1Actions[s], false, true);
+        } else {
+          const cube = world.cube as import('./cuber/cube').default;
+          cube.twister.twist(actions[s], false, true);
+        }
       }
       stepRef.current = s + 1;
       setStep(s + 1);
@@ -207,7 +213,7 @@ export default function PlayerControls({
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
-  }, [playing, actions, world, speed]);
+  }, [playing, actions, sq1Actions, world, speed, isSq1]);
 
   // 工具:对 (打乱 + 解法) 作为整体做变换,结果全部落到解法,打乱清空。
   // AlgInput 非受控 (defaultValue),改 state 必须同时把 textarea.value 也写一遍。
@@ -414,13 +420,13 @@ export default function PlayerControls({
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
         <button
           onClick={() => setPlaying((p) => !p)}
-          disabled={actions.length === 0}
+          disabled={totalSteps === 0}
           title={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
         >
           {playing ? <Pause size={14} /> : <Play size={14} />}
         </button>
-        <button onClick={stepForward} disabled={step >= actions.length} title={t('下一步', 'Step forward')}><SkipForward size={14} /></button>
-        <span className="stack-player-progress">{step} / {actions.length}</span>
+        <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')}><SkipForward size={14} /></button>
+        <span className="stack-player-progress">{step} / {totalSteps}</span>
         <label className="stack-player-speed">
           <span>{speed.toFixed(2)}×</span>
           <input
