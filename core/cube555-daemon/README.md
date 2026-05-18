@@ -70,6 +70,10 @@ pnpm --filter @cuberoot/client dev
 | `CUBE555_WORKERS` | `4` | 内部并行求解线程数 |
 | `CUBE555_NATIVE_BIN` | (unset) | 设为某路径则 spawn 该 GraalVM 编出的 native 二进制(无 JVM 启动开销,-Xmx512m 固定);留空走 `java -cp ...` |
 | `CUBE555_DISABLED` | (unset) | 设为 `1` 时 Hono 跳过 spawn,`/v1/scramble/555-rs` 返 503 |
+| `CUBE555_P1`..`CUBE555_P5` | `200/500/500/500/8` | 5-phase reduction 每阶段保留候选数。`CUBE555_P5=8`(default)开"挑最短 p5sol"省 ~1.2 步;详 BENCHMARKS。 |
+| `CUBE555_SEEDS` | `1` | 多 seed:每请求跑 K 个随机状态取最短。**K>1 破坏 uniform-random-state 性质**。K=2 多 ~3s 延迟省 ~1.8 步;K=5 已超 7s budget 见地板 ~68 步。 |
+| `CUBE555_KOC_PROBE_MIN` | `500` | Kociemba `probeMin` (找到首解后继续搜更短的概率最低 probe 数)。改大延迟暴涨却几乎不省步,留 default。 |
+| `CUBE555_KOC_FLAGS` | `0` | Kociemba verbose 位掩码。`0x8` = OPTIMAL_SOLUTION,**实测 >1000x 慢,unusable**。 |
 
 ## GraalVM native binary(可选,推荐生产用)
 

@@ -150,9 +150,117 @@ drain 时持续 fire 新 batch(count=4 → count=1),凑齐 pool 到 size=5。
 要做的话得让 refill 感知"未被满足的 caller 数",这是 30+ 行重构,留作
 later。
 
+## Local solve-length optimization — 2026-05-18
+
+目标:把每条 5x5 random-state 打乱平均长度从 ~70 步砍到 ≤60 步。本地直 spawn
+daemon 跑 `local_bench.mjs` n=30 par=3 workers=3 -Xmx4g,数 scramble token 数。
+没有走线上,**没改 cube555 src/**,只动 `Daemon.java`。
+
+### 关键 finding(影响所有方向的天花板)
+
+`Search.solveReduction(facelet, int verbose)` 第 2 参实际是 **verbose flag**
+(`USE_SEPARATOR = 0x1`),不是 "quality" 档位 — 改它只影响 separator 输出。
+PROMPT 里 "quality 升档 -5~10 步" 的预期不成立。
+
+打开 split log 看真实占比:**reduction ~51 步 / Kociemba ~19 步 / total ~70**。
+Kociemba 已经接近 god's number (20),没空间;只能砍 reduction。
+
+进一步 dump `Search.p5sols` 看各候选 reduction 长度分布(P5_SOLS=64):
+```
+[POOL] p5sols.size=64 red.min=51 red.max=52 red.avg=51
+[POOL] p5sols.size=64 red.min=52 red.max=52 red.avg=52
+[POOL] p5sols.size=64 red.min=49 red.max=50 red.avg=49
+```
+单 seed 内 64 个 phase-5 候选 reduction 长度全部 ±1 步内,**within-seed 方差
+几乎为零**。挑最短不能撬出更多。所有改进必须来自不同 random state 之间的方差。
+
+### Attempt 1 — Kociemba `probeMin` 1e6
+
+- change: `solution(facelet, 21, MAX_VALUE, 1_000_000L, 0)` (was probeMin=500)
+- bench (n=20, par=3, W3, xmx=4g):
+  - **avg moves: 69.20** (was 70.30, -1.1)
+  - avg latency: **29490ms** (was 1240ms, +24x)
+  - self-verify: 20/20 OK ✓
+- decision: **revert**, 25x latency 换 1 步极不划算。
+
+### Attempt 2 — Kociemba `probeMin` 1e4
+
+- change: 同上,probeMin=10_000
+- bench (n=20): avg moves 70.10 (-0.2,在噪声内), latency 2135ms (1.7x)
+- decision: **revert**, 改善小于 ±1σ 噪声。Kociemba 已经接近最优,probeMin 无解。
+
+### Attempt 3 — P5_SOLS=16,pick-shortest p5sol
+
+- change: 加 `Search.phase5SolsSize = 16`;Daemon `handle()` 拉 `reducer.p5sols`,
+  对每个候选重建 3x3 facelet + 跑 Kociemba,取 (red+koc) 最小那条。
+  upstream solveReduction 只用 `p5sols.get(0)`,我们多看几个。
+- bench (n=20): avg moves **69.50** (-0.8), latency 2159ms (1.7x)
+- decision: keep, 但 P5=16 浪费太多 — pool diversity 太窄(见上 finding)。
+  生产 default 改 **P5=8**,基本没 latency 代价 +1.16 步改善。
+
+### Attempt 4 — Wide beam (P1=400 P2=1500 P3=1500 P4=1500 P5=32)
+
+- change: 把 cube555 5 个阶段 sols pool 全部加宽,试图让 phase 3/4 探到更短链。
+- bench (n=30, par=3, W3): avg moves **69.27** (-1.5), latency 3766ms (2.6x)
+- decision: 改善真但低于预期。各阶段 IDA* 已经在 sols pool 大小够时收敛,
+  再宽 beam 边际趋零。**不入 default**(latency 翻倍换 0.4 步 vs P5=8 不值)。
+
+### Attempt 5 — Multi-seed K=2, wide beam (P1-P4=1000 P5=8)
+
+- change: `CUBE555_SEEDS=2`,每请求跑 2 个 `Tools.randomCube` 取最短。
+  注:K>1 破坏 uniform-random-state 性质 — 偏向"易解状态"。
+- bench (n=30): avg moves **68.97** (-1.83), latency 4673ms (3.2x)
+- decision: 不入 default,但 env knob 留着,愿意以"非 WCA 严格 uniform"换更短打乱的部署可启用。
+
+### Attempt 6 — Multi-seed K=5,P5=4 (极限拉满)
+
+- change: `CUBE555_SEEDS=5 CUBE555_P5=4` — 跑 5 个随机状态各挑最短,看绝对下限
+- bench (n=20): avg moves **68.35** (-2.5), latency **7523ms** (5.2x, 超 7s 上限)
+- decision: 已经跑到 latency budget 之外,而 avg moves 还是 68 — 这是 cube555
+  5-phase 架构 + 当前 cs.min2phase Kociemba 的**绝对下限**附近。
+
+### Attempt 7 — Kociemba `OPTIMAL_SOLUTION` (0x8) flag
+
+- change: `solution(..., 0x8)` — 走 `searchopt()` 而非 `search()`,保证 Kociemba 最优。
+- bench: 单 worker 跑 20+ 分钟未出第一条结果,catastrophically 慢 (>>1000x)。
+  推测:5-phase reduction 完产出的 3x3 状态有时离已解很远,optimal-IDA* 直接爆炸。
+- decision: **绝对 unusable**,kill。OPTIMAL_SOLUTION 默认 `KOC_FLAGS=0`(env knob 保留)。
+
+## 优化结论 — 60 步目标不可达
+
+试过 7 个方向(上表),最佳:
+- 单 seed 安全配置 P5=8:**avg 69.57 / 1.51s** (vs baseline 70.80 / 1.46s,-1.23 步)
+- 多 seed 激进 SEEDS=2 + 宽 beam:**avg 68.97 / 4.67s**(-1.83 步,但破坏 uniformity)
+- 绝对地板 SEEDS=5 + P5=4:**avg 68.35 / 7.52s**(已超 7s avg-latency 上限)
+
+**瓶颈分析**:
+
+1. **Kociemba 已接近最优**:~19 步 avg,god's number=20,没空间再砍(OPTIMAL_SOLUTION
+   太慢不能用)。
+2. **Reduction 51 步是 5-phase 架构的强约束**:每个 phase 提交一个 subgoal,链式分解
+   失去全局最优性。within-seed p5sols 长度方差 ≤1 步,挑最短无效。
+3. **Cross-seed 方差 σ≈1.5 步**:multi-seed K=N 期望降 ~0.85σ_K_factor。
+   K=10 大约 -2.3 步,K=30 大约 -3.0 步,与 K=5(已 -2.5)收益递减。
+   且 K>1 破坏 "每条 scramble 对应均匀随机状态" 的数学性质,WCA random-state 要求
+   不再严格成立。
+
+要砍到 60 步,需要:
+- 替换 cube555 5-phase reducer (e.g. Optimal/non-phased IDA*),工程量月级
+- 或接受 cube555 floor ~67-68 步 + Kociemba ~19 步 = **~67 步 absolute floor**
+- 或换 scramble 生成范式(放弃 random-state,接受 random-move,WCA 5x5 官方是 60 random moves)
+
+**下一步可能路径**:
+- 短期:本次 ship P5=8 默认(-1.2 步,几乎零代价),环境变量 (`CUBE555_SEEDS`,
+  `CUBE555_P*`,`CUBE555_KOC_PROBE_MIN`,`CUBE555_KOC_FLAGS`) 留作未来部署级 tuning。
+- 中期:若用户对长度强敏感,部署侧设 `CUBE555_SEEDS=2` (-1.8 步,uniformity caveat 接受)。
+- 长期:研究上游 cube555 fork 是否有更优 reducer,或对接 brian.cs0x7f 新版 cube333 multi-phase。
+
 ## Methodology Notes
 
 - bench.mjs 在本机跑,客户端 → API 跨公网。RTT ~30-50ms 量级,对秒级 solver 影响可忽略。
 - `single` 串行,确保没有自身请求互相挤压 worker(测纯 solver 上限)。
 - `par` 12 路 fetch 同时发,模拟前端 `cubingScramble.ts` 池满刷新场景。
 - `batch` 上线后会用同一脚本同 base 跑,直接对比 firstScramble 时间。
+- 优化迭代用 **`local_bench.mjs`**(直 spawn java daemon,数 token,n=30 par=3 W3 xmx=4g)。
+  脚本在 `core/cube555-daemon/local_bench.mjs`,从 core/ 跑:
+  `node cube555-daemon/local_bench.mjs --n 30 --par 3 --workers 3 --xmx 4g`。
