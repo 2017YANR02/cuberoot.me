@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Download, Trash2, CloudDownload, Image as ImageIcon, ImageOff } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { CompPicker } from '../../components/CompPicker';
 import { CompCell } from '../../components/CompCell/CompCell';
 import type { Comp } from '../../utils/comp_search';
@@ -394,14 +395,6 @@ export default function ImportMode({ t, isZh, showPreview, onTogglePreview }: Pr
 
       {error && <div className="gen-tn-empty" style={{ color: 'var(--gen-accent)' }}>{error}</div>}
 
-      {!sheets && !error && (
-        <div className="gen-tn-empty">
-          {t(
-            '粘贴 WCA 比赛页 URL 或 ID(如 OddDayinHongKong2026),按 Enter 或 Load 加载该比赛的全部打乱。',
-            'Paste a WCA competition URL or ID (e.g. OddDayinHongKong2026), press Enter or Load to fetch all published scrambles.',
-          )}
-        </div>
-      )}
 
       {sheets && sheets.length > 0 && activeView && (
         <>
@@ -412,20 +405,14 @@ export default function ImportMode({ t, isZh, showPreview, onTogglePreview }: Pr
             onlyAvailable
             isZh={isZh}
           />
-          {roundIdxsInEvent.length > 1 && (
-            <div className="gen-tn-round-chips" role="tablist">
-              {roundIdxsInEvent.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  role="tab"
-                  aria-selected={r === activeRoundIdx}
-                  className={`gen-tn-round-chip${r === activeRoundIdx ? ' is-active' : ''}`}
-                  onClick={() => setViewedRoundIdx(r)}
-                >
-                  {roundLabel(r)}
-                </button>
-              ))}
+          {roundIdxsInEvent.length > 1 && activeRoundIdx !== null && (
+            <div className="gen-tn-round-chips-wrap">
+              <LiquidGlassChips<number>
+                items={roundIdxsInEvent}
+                value={activeRoundIdx}
+                onChange={setViewedRoundIdx}
+                getLabel={roundLabel}
+              />
             </div>
           )}
           <div className="gen-tn-sheets">
