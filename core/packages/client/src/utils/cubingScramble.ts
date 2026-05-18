@@ -273,8 +273,32 @@ export async function pooledScramble(event: string): Promise<string | null> {
     scheduleRefill(wcaId);
     return s;
   }
-  // Cold path: nothing pooled. Fire a direct call AND start a background
-  // refill so the next caller is warm.
+  // Cold path for 5x5 random-state: instead of each caller firing its own
+  // single fetch, wait for the in-flight batch SSE refill to push scrambles
+  // to pool — N concurrent callers (Generate-N click) share ONE batch SSE,
+  // daemon 调用从 2N (N single + N batch refill) 缩到 N。
+  // Bench:Generate(5) cold-click 17.6s → ~6s (server 3 worker, ~3s/solve)。
+  if (wcaId === '555' && get555Mode() === 'rs') {
+    scheduleRefill(wcaId);
+    const startGen = pool555Generation;
+    const start = Date.now();
+    const MAX_WAIT_MS = 45_000;
+    while (Date.now() - start < MAX_WAIT_MS) {
+      if (startGen !== pool555Generation) break;
+      const p = pool.get(wcaId);
+      if (p && p.length > 0) {
+        const s = p.shift()!;
+        pool.set(wcaId, p);
+        return s;
+      }
+      // refill 结束且仍未轮到我们 → 走 fall-through single fetch (其余
+      // 等待者会再触发一轮 refill, 拿那一波)
+      if (!refilling.has(wcaId)) break;
+      await new Promise<void>((r) => setTimeout(r, 60));
+    }
+  }
+  // Fall-through cold path (其它 event,或 555-rs refill 失败/排在批后位):
+  // 单条 fetch + 顺手 schedule 一次 refill 保温下一击。
   scheduleRefill(wcaId);
   const raw = await generateScramble(wcaId);
   return formatScramble(wcaId, raw);
