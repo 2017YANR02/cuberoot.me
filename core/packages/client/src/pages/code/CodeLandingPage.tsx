@@ -476,12 +476,12 @@ export default function CodeLandingPage() {
             // {lang === 'zh' ? '横向对比' : 'Side-by-side'}
           </div>
           <h2 className="code-landing-banner-title">
-            {lang === 'zh' ? '十二种语言,一个 Ao5 算法' : 'One Ao5, twelve languages'}
+            {lang === 'zh' ? '17 种语言, 一个 Ao5 算法' : 'One Ao5, seventeen languages'}
           </h2>
           <p className="code-landing-banner-sub">
             {lang === 'zh'
-              ? '同一个 WCA Average-of-5 写 12 遍,看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样'
-              : 'The same WCA Average-of-5, written twelve times — watch how each language handles DNF / Optional / sorting / type systems'}
+              ? '同一个 WCA Average-of-5 写 17 遍, 看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样'
+              : 'The same WCA Average-of-5, written seventeen times — watch how each language handles DNF / Optional / sorting / type systems'}
           </p>
         </div>
         <div className="code-landing-banner-arrow">→</div>
@@ -494,12 +494,12 @@ export default function CodeLandingPage() {
             // {lang === 'zh' ? '横向对比' : 'Side-by-side'}
           </div>
           <h2 className="code-landing-banner-title">
-            {lang === 'zh' ? '十二种语言,一个打乱解析器' : 'One scramble parser, twelve languages'}
+            {lang === 'zh' ? '17 种语言, 一个打乱解析器' : 'One scramble parser, seventeen languages'}
           </h2>
           <p className="code-landing-banner-sub">
             {lang === 'zh'
-              ? '同一个 3x3 WCA 打乱串解析,12 种语言写一遍,看 sum types / Result / Optional / 异常 谁更顺手'
-              : 'The same 3x3 WCA scramble parser, written twelve times — sum types vs Result vs Optional vs exceptions, head to head'}
+              ? '同一个 3x3 WCA 打乱串解析, 17 种语言写一遍, 看 sum types / Result / Optional / 异常 谁更顺手'
+              : 'The same 3x3 WCA scramble parser, written seventeen times — sum types vs Result vs Optional vs exceptions, head to head'}
           </p>
         </div>
         <div className="code-landing-banner-arrow">→</div>

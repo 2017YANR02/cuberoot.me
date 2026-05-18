@@ -281,6 +281,100 @@ fn ao5(times: List[Optional[Int]]) -> Optional[Int]:
     )
     return (s[1].value() + s[2].value() + s[3].value()) // 3`,
   },
+  {
+    slug: 'csharp', name: 'C#', href: '/code/language/csharp', accent: '#512BD4', commentToken: '//',
+    zhFlavor: 'int? 可空 + LINQ OrderBy',
+    enFlavor: 'Nullable<int> + LINQ OrderBy',
+    code: `// C# 8+: int? is Nullable<int>. LINQ for sort & sum.
+// DNFs become null and float to the end via int.MaxValue key.
+
+public static int? Ao5(int?[] times)
+{
+    if (times.Count(t => t is null) >= 2) return null;
+
+    var s = times
+        .OrderBy(t => t ?? int.MaxValue)
+        .ToArray();
+
+    return (s[1]!.Value + s[2]!.Value + s[3]!.Value) / 3;
+}`,
+  },
+  {
+    slug: 'ruby', name: 'Ruby', href: '/code/language/ruby', accent: '#CC342D', commentToken: '#',
+    zhFlavor: 'nil + sort_by Float::INFINITY',
+    enFlavor: 'nil + sort_by Float::INFINITY',
+    code: `# WCA Ao5: nil = DNF. INFINITY in sort_by pushes nils to the end.
+
+def ao5(times)
+  return nil if times.count(&:nil?) >= 2
+
+  s = times.sort_by { |t| t.nil? ? Float::INFINITY : t }
+  (s[1] + s[2] + s[3]) / 3
+end`,
+  },
+  {
+    slug: 'php', name: 'PHP', href: '/code/language/php', accent: '#777BB4', commentToken: '//',
+    zhFlavor: '?int 可空 + usort + 太空船 <=>',
+    enFlavor: '?int nullable + usort + spaceship <=>',
+    code: `<?php
+// PHP 8: nullable return ?int, arrow fn, spaceship operator <=>.
+
+function ao5(array $times): ?int {
+    $dnfs = count(array_filter($times, fn($t) => $t === null));
+    if ($dnfs >= 2) return null;
+
+    $s = $times;
+    usort($s, fn($a, $b) =>
+        $a === null ? 1 : ($b === null ? -1 : $a <=> $b)
+    );
+
+    return intdiv($s[1] + $s[2] + $s[3], 3);
+}`,
+  },
+  {
+    slug: 'lua', name: 'Lua', href: '/code/language/lua', accent: '#2C2D72', commentToken: '--',
+    zhFlavor: '1-indexed 表 + -1 哨兵 (nil 在表里会消失)',
+    enFlavor: '1-indexed table + -1 sentinel (nil holes vanish)',
+    code: `-- Lua: tables drop trailing nils, so we use -1 as DNF.
+-- Tables are 1-indexed.
+
+local DNF = -1
+
+local function ao5(times)
+    local dnfs = 0
+    for i = 1, 5 do
+        if times[i] == DNF then dnfs = dnfs + 1 end
+    end
+    if dnfs >= 2 then return DNF end
+
+    local s = { table.unpack(times) }
+    table.sort(s, function(a, b)
+        if a == DNF then return false end
+        if b == DNF then return true  end
+        return a < b
+    end)
+
+    return math.floor((s[2] + s[3] + s[4]) / 3)
+end`,
+  },
+  {
+    slug: 'haskell', name: 'Haskell', href: '/code/language/haskell', accent: '#5E5086', commentToken: '--',
+    zhFlavor: 'Maybe Int + sortBy comparing + catMaybes',
+    enFlavor: 'Maybe Int + sortBy comparing + catMaybes',
+    code: `-- WCA Ao5: Maybe Int. Total functions, pattern-matching the empties out.
+
+import Data.List  (sortBy)
+import Data.Ord   (comparing)
+import Data.Maybe (catMaybes, isNothing)
+
+ao5 :: [Maybe Int] -> Maybe Int
+ao5 ts
+  | length (filter isNothing ts) >= 2 = Nothing
+  | otherwise = Just (sum middle \`div\` 3)
+  where
+    sorted = sortBy (comparing (maybe maxBound id)) ts
+    middle = catMaybes (take 3 (drop 1 sorted))`,
+  },
 ];
 
 function highlightComments(code: string, token: string) {
@@ -304,8 +398,8 @@ export default function CompareAo5Page() {
 
   useEffect(() => {
     document.title = lang === 'zh'
-      ? '十二种语言,一个 Ao5 — CubeRoot'
-      : 'One Ao5, Twelve Languages — CubeRoot';
+      ? '17 种语言, 一个 Ao5 — CubeRoot'
+      : 'One Ao5, Seventeen Languages — CubeRoot';
   }, [lang]);
 
   return (
@@ -322,18 +416,18 @@ export default function CompareAo5Page() {
           </div>
 
           <div className="compare-tag">
-            <L zh="// WCA Ao5 · 12 Languages · 1 Algorithm" en="// WCA Ao5 · 12 Languages · 1 Algorithm" />
+            <L zh="// WCA Ao5 · 17 Languages · 1 Algorithm" en="// WCA Ao5 · 17 Languages · 1 Algorithm" />
           </div>
           <h1 className="compare-title">
             <L
-              zh={<>十二种语言<span className="compare-comma">,</span> 一个 <span className="compare-hl">Ao5</span></>}
-              en={<>One <span className="compare-hl">Ao5</span><span className="compare-comma">,</span> Twelve Languages</>}
+              zh={<>17 种语言<span className="compare-comma">,</span> 一个 <span className="compare-hl">Ao5</span></>}
+              en={<>One <span className="compare-hl">Ao5</span><span className="compare-comma">,</span> Seventeen Languages</>}
             />
           </h1>
           <p className="compare-sub">
             <L
-              zh={<>同一个 <strong>WCA Average-of-5</strong> 算法,十二种语言写一遍。看每门语言怎么处理"DNF"——这个"成绩不存在"的情况是每个语言类型系统的试金石。</>}
-              en={<>The same <strong>WCA Average-of-5</strong> algorithm, written in twelve languages. Watch each language handle "DNF" — that "value doesn't exist" case is a litmus test for any type system.</>}
+              zh={<>同一个 <strong>WCA Average-of-5</strong> 算法, 17 种语言写一遍。看每门语言怎么处理"DNF"——这个"成绩不存在"的情况是每个语言类型系统的试金石。</>}
+              en={<>The same <strong>WCA Average-of-5</strong> algorithm, written in seventeen languages. Watch each language handle "DNF" — that "value doesn't exist" case is a litmus test for any type system.</>}
             />
           </p>
         </header>
@@ -405,15 +499,15 @@ export default function CompareAo5Page() {
             <div>
               <h3><L zh={'DNF 这个"空值"'} en="The DNF empty value" /></h3>
               <p><L
-                zh={<>12 种语言对"成绩不存在"给出 4 种不同答案:<strong>类型联合</strong>(TS <code>number | null</code>)、<strong>Option/Optional</strong>(Rust / C++ / Swift / Kotlin / Zig / Python / Java 的 boxed null / Mojo 的 <code>Optional[Int]</code>)、<strong>哨兵值</strong>(C / Go 用 -1)、<strong>无类型把门</strong>(JS)。AI agent 写代码时,前两类编译期就能查出 DNF 没处理;后两类要靠测试才发现——JS 这一栏是 TS 的反衬。</>}
-                en={<>Twelve languages, four distinct answers to "value doesn't exist": <strong>union types</strong> (TS <code>number | null</code>), <strong>Option/Optional</strong> (Rust / C++ / Swift / Kotlin / Zig / Python / Java's boxed null / Mojo's <code>Optional[Int]</code>), <strong>sentinel values</strong> (C / Go using -1), and <strong>no type guard at all</strong> (JS). When an AI agent writes code, the first two surface unhandled DNFs at compile time; the last two need tests to catch — JS is the foil to TS here.</>}
+                zh={<>17 种语言对"成绩不存在"给出 4 种不同答案:<strong>类型联合</strong>(TS <code>number | null</code> / PHP <code>?int</code>)、<strong>Option / Optional / Maybe</strong>(Rust / C++ / Swift / Kotlin / Zig / Python / Java boxed null / Mojo <code>Optional[Int]</code> / C# <code>int?</code> / Haskell <code>Maybe Int</code>)、<strong>哨兵值</strong>(C / Go / Lua 用 -1)、<strong>无类型把门</strong>(JS / Ruby)。AI agent 写代码时, 前两类编译期就能查出 DNF 没处理;后两类要靠测试才发现——JS / Ruby 这一栏是 TS 的反衬。</>}
+                en={<>Seventeen languages, four distinct answers to "value doesn't exist": <strong>union types</strong> (TS <code>number | null</code> / PHP <code>?int</code>), <strong>Option / Optional / Maybe</strong> (Rust / C++ / Swift / Kotlin / Zig / Python / Java's boxed null / Mojo's <code>Optional[Int]</code> / C# <code>int?</code> / Haskell <code>Maybe Int</code>), <strong>sentinel values</strong> (C / Go / Lua using -1), and <strong>no type guard at all</strong> (JS / Ruby). The first two surface unhandled DNFs at compile time; the last two need tests to catch — JS / Ruby are the foil to TS here.</>}
               /></p>
             </div>
             <div>
               <h3><L zh={'排序时的"空值放哪"'} en="Where do empties sort to" /></h3>
               <p><L
-                zh={<>Kotlin 一行: <code>compareBy(nullsLast())</code>。Python 一行 lambda key。Rust 要 4 行 match 穷尽。Zig 要包一个内联结构体。同样的语义,代码量差 5×——这就是"语言密度"的真实差距。</>}
-                en={<>Kotlin in one line: <code>compareBy(nullsLast())</code>. Python in one lambda key. Rust takes a four-arm exhaustive match. Zig wraps it in an inline struct. Same semantics, 5× variance in line count — the real "language density" gap.</>}
+                zh={<>Kotlin 一行: <code>compareBy(nullsLast())</code>。Ruby <code>sort_by</code> 一句。Python 一行 lambda key。Haskell <code>comparing (maybe maxBound id)</code> 一行。Rust 要 4 行 match 穷尽。Zig 要包一个内联结构体。同样的语义, 代码量差 5×——这就是"语言密度"的真实差距。</>}
+                en={<>Kotlin in one line: <code>compareBy(nullsLast())</code>. Ruby <code>sort_by</code> in one line. Python in one lambda key. Haskell with <code>comparing (maybe maxBound id)</code> in one line. Rust takes a four-arm exhaustive match. Zig wraps it in an inline struct. Same semantics, 5× variance in line count — the real "language density" gap.</>}
               /></p>
             </div>
             <div>
@@ -441,8 +535,8 @@ export default function CompareAo5Page() {
           </div>
           <p className="compare-foot-note">
             <L
-              zh={<>第二篇横向对比已经上了:<Link to="/code/language/scramble">打乱解析器,十一种语言</Link>。</>}
-              en={<>The second comparison is live: <Link to="/code/language/scramble">scramble parser, eleven languages</Link>.</>}
+              zh={<>第二篇横向对比已经上了:<Link to="/code/language/scramble">打乱解析器, 17 种语言</Link>。</>}
+              en={<>The second comparison is live: <Link to="/code/language/scramble">scramble parser, seventeen languages</Link>.</>}
             />
           </p>
         </footer>
