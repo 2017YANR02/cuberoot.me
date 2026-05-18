@@ -134,4 +134,44 @@ describe('SQ1 state', () => {
     const hasBottomPieceInTop = top.some(p => p >= 8);
     expect(hasBottomPieceInTop).toBe(true);
   });
+
+  // Shared tokenizer with pages/gen/sq1_svg.ts — locks single-num shorthand
+  // and edge forms so the StackPage 打乱/解法 inputs accept them too.
+  it('single-number shorthand `/3/` = `/ (3, 0) /`', () => {
+    expect(parseSq1Scramble('/3/')).toEqual([
+      { kind: 'slice' },
+      { kind: 'turn', top: 3, bot: 0 },
+      { kind: 'slice' },
+    ]);
+  });
+  it('leading `3/` (no opening slash) parses', () => {
+    expect(parseSq1Scramble('3/')).toEqual([
+      { kind: 'turn', top: 3, bot: 0 },
+      { kind: 'slice' },
+    ]);
+  });
+  it('negative single `-3` = (-3, 0)', () => {
+    expect(parseSq1Scramble('-3')).toEqual([
+      { kind: 'turn', top: -3, bot: 0 },
+    ]);
+  });
+  it('paren shorthand `(3)` = (3, 0)', () => {
+    expect(parseSq1Scramble('(3)')).toEqual([
+      { kind: 'turn', top: 3, bot: 0 },
+    ]);
+  });
+  it('mixed shorthand + pair: `(1,0) / 3 / (-2, -2)`', () => {
+    expect(parseSq1Scramble('(1,0) / 3 / (-2, -2)')).toEqual([
+      { kind: 'turn', top: 1, bot: 0 },
+      { kind: 'slice' },
+      { kind: 'turn', top: 3, bot: 0 },
+      { kind: 'slice' },
+      { kind: 'turn', top: -2, bot: -2 },
+    ]);
+  });
+  it('`30` stays pair `(3, 0)`, NOT single 30 (greedy backtrack)', () => {
+    expect(parseSq1Scramble('30')).toEqual([
+      { kind: 'turn', top: 3, bot: 0 },
+    ]);
+  });
 });

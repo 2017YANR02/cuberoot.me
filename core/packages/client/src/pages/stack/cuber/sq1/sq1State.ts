@@ -9,8 +9,11 @@
  *   - 'turn'  : (top, bot) integer 30° unit layer rotations
  *   - 'slice' : flip the east-half slabs across the chord-perp axis
  *
- * Notation: `(t, b) / (t, b) / ...` (parens optional). Tokenizer is permissive.
+ * Notation: parser is shared with `pages/gen/sq1_svg.ts` (single source of
+ * truth, `parseSq1Tokens`). Supports `(t,b) / (t,b) / ...`, paren-/comma-/
+ * space-optional forms, and `t` single-number shorthand = `(t, 0)`.
  */
+import { parseSq1Tokens, type Sq1Token } from '../../../gen/sq1_svg';
 
 export interface Sq1State {
   /** True when the equator slice is in solved orientation (F on +Z, B on -Z). */
@@ -19,9 +22,7 @@ export interface Sq1State {
   pieces: number[];
 }
 
-export type Sq1Move =
-  | { kind: 'turn'; top: number; bot: number }
-  | { kind: 'slice' };
+export type Sq1Move = Sq1Token;
 
 export const SOLVED_PIECES: number[] = [
   0, 0, 1, 2, 2, 3, 4, 4, 5, 6, 6, 7,
@@ -32,20 +33,8 @@ export function solvedSq1(): Sq1State {
   return { pieces: SOLVED_PIECES.slice(), sliceSolved: true };
 }
 
-const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?/g;
-
 export function parseSq1Scramble(scramble: string): Sq1Move[] {
-  const moves: Sq1Move[] = [];
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(scramble)) !== null) {
-    if (m[1] === '/') {
-      moves.push({ kind: 'slice' });
-    } else if (m[2] !== undefined) {
-      moves.push({ kind: 'turn', top: parseInt(m[2], 10), bot: parseInt(m[3], 10) });
-    }
-  }
-  return moves;
+  return parseSq1Tokens(scramble);
 }
 
 export function applySq1Move(state: Sq1State, move: Sq1Move): Sq1State {
