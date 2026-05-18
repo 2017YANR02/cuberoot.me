@@ -110,6 +110,20 @@
     align-items: center;
 }
 
+/* 5x5 random-state ↔ random-move 切换条:跟 high-NxN 行同高,只在选中 5x5 时出现 */
+.gen-555-mode-row {
+    margin: 12px 0 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.gen-555-mode-label {
+    font-size: 13px;
+    color: var(--gen-text-mute);
+}
+
 .gen-count-chip {
     padding: 4px 10px;
     border-radius: 6px;
