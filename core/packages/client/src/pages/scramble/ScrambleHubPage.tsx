@@ -8,7 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
+import { BarChart3, Dices, Microscope, Sparkles, Wand2, Infinity as InfinityIcon } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 
@@ -49,6 +49,12 @@ const CARDS: Card[] = [
     Icon: Wand2,
     zh: { title: '图案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 图案集 (棋盘 / 十字 / 立方体中立方等)' },
     en: { title: 'Pattern', desc: 'Famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7 (checkerboard, cross, cube-in-cube, …)' },
+  },
+  {
+    to: '/scramble/god',
+    Icon: InfinityIcon,
+    zh: { title: '上帝之数', desc: '17 个 WCA 项目的群直径 (精确值 / 上下界) + 群论 + 现场 BFS' },
+    en: { title: "God's number", desc: 'Cayley-graph diameter for all 17 WCA puzzles (exact / bounds) + group theory + live BFS' },
   },
 ];
 
