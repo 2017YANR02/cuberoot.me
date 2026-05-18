@@ -160,6 +160,11 @@
 
 .gen-count-input:focus { border-color: var(--gen-accent); }
 
+/* combobox 形态:input + datalist 原生下拉。空间留给 4 位数 + 下拉箭头。 */
+.gen-count-input--combo {
+    width: 92px;
+}
+
 .gen-btn {
     display: inline-flex;
     align-items: center;
