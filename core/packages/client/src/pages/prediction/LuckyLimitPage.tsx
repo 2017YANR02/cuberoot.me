@@ -246,7 +246,8 @@ export default function LuckyLimitPage() {
               <div className="lucky-year-label">{isZh ? '年份' : 'Year'}</div>
               <div className="lucky-year-value">{formatYear(year)}</div>
               <div className="lucky-year-N">
-                N(Y) = <strong>{formatBigN(N333)}</strong>
+                {isZh ? '累积三阶 scramble' : 'Cumulative 3x3 scrambles'}<br />
+                N(Y) = <strong>{formatBigN(N333)}</strong> {isZh ? '个 (含备用)' : '(incl. backups)'}
               </div>
             </div>
             <input
@@ -284,15 +285,15 @@ export default function LuckyLimitPage() {
           <p>
             {isZh ? (
               <>
-                给定累积打乱 <strong>N = {formatBigN(N333)}</strong> ({formatYear(year)} 年),
-                "至少撞上一次 d ≤ K 状态" 的累积概率 P = 1 − (1 − p)^N.
-                K 越小 → p 越小 → 即使 N 极大也需要等更多年.
+                到 {formatYear(year)} 年, WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶 scramble</strong> (含备用).
+                "在这 N 个 scramble 中至少撞上一次 d ≤ K 状态" 的累积概率 P = 1 − (1 − p)^N.
+                K 越小 → 该状态在 4.3×10^19 中的占比 p 越小 → N 即使极大也需要继续累积.
               </>
             ) : (
               <>
-                Given N = <strong>{formatBigN(N333)}</strong> ({formatYear(year)}),
-                cumulative probability of hitting at least one scramble with d ≤ K is P = 1 − (1 − p)^N.
-                Smaller K → smaller p → need exponentially more accumulation.
+                Through {formatYear(year)}, WCA has accumulated <strong>{formatBigN(N333)} 3x3 scrambles</strong> (incl. backups).
+                Cumulative probability of at least one d ≤ K hit across these N is P = 1 − (1 − p)^N.
+                Smaller K → smaller p in the 4.3×10^19 state space → need exponentially larger N.
               </>
             )}
           </p>
@@ -300,13 +301,13 @@ export default function LuckyLimitPage() {
             <table className="lucky-prob-table">
               <thead>
                 <tr>
-                  <th>{isZh ? '深度 K' : 'Depth K'}</th>
-                  <th>{isZh ? '该深度状态数' : '# states at d ≤ K'}</th>
-                  <th>{isZh ? '单次 p' : 'Single-scramble p'}</th>
-                  <th>P(撞上 d ≤ K) <span style={{ color: 'var(--faint-foreground)' }}>@ N(Y)</span></th>
-                  <th>{isZh ? 'N₅₀ (达到 50% 所需)' : 'N₅₀ (for 50% chance)'}</th>
-                  <th>{isZh ? '对应年份' : 'Year reached'}</th>
-                  <th>{isZh ? '该 d 单次时间 (TPS 17)' : 'Time at this d (TPS 17)'}</th>
+                  <th>{isZh ? '深度 K (步)' : 'Depth K (moves)'}</th>
+                  <th>{isZh ? '≤K 步可解状态数 (个)' : '# states at d ≤ K'}</th>
+                  <th>{isZh ? '单次 p (无单位)' : 'Single-scramble p'}</th>
+                  <th>{isZh ? `P(撞上 d≤K) @ N=${formatBigN(N333)}` : `P(d≤K hit) @ N=${formatBigN(N333)}`}</th>
+                  <th>{isZh ? 'N₅₀ (个 scramble)' : 'N₅₀ (scrambles)'}</th>
+                  <th>{isZh ? 'N₅₀ 对应年份' : 'Year reached'}</th>
+                  <th>{isZh ? '该 d 单次时间 (秒, TPS 17)' : 'Time at d (s, TPS 17)'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -367,9 +368,9 @@ export default function LuckyLimitPage() {
             </div>
             <div className="lucky-headline-right">
               <Stat
-                label={isZh ? '累积 scramble' : 'Cumulative N(Y)'}
+                label={isZh ? '累积 scramble 数 (个)' : 'Cumulative scrambles'}
                 value={formatBigN(row333.N)}
-                hint={isZh ? `2003–${Math.round(year)}` : `2003–${Math.round(year)}`}
+                hint={isZh ? `2003–${Math.round(year)} · 含备用` : `2003–${Math.round(year)} · incl. backups`}
               />
               <Stat
                 label={isZh ? '期望最幸运 d' : 'Expected min depth'}
@@ -550,7 +551,7 @@ function EventCard({ row, isZh }: { row: Row; isZh: boolean }) {
       </div>
       <div className="lucky-card-stats">
         <div>
-          <div className="lucky-card-stat-label">{isZh ? '累积 N' : 'Cumulative N'}</div>
+          <div className="lucky-card-stat-label">{isZh ? '累积 scramble (个)' : 'Cumulative scrambles'}</div>
           <div className="lucky-card-stat-value">{formatBigN(row.N)}</div>
         </div>
         <div>
