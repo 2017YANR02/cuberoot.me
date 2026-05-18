@@ -36,6 +36,15 @@ import { CUBERS_COMMUNITY_EN } from './data/longform/cubers_community';
 import { STATS_FORECAST_EN } from './data/longform/stats_forecast';
 import { ALGORITHMS_CATALOG_EN } from './data/longform/algorithms_catalog';
 import { FMC_EVENTS_EN } from './data/longform/fmc_events';
+import { ENGINEERING_EN } from './data/longform/engineering';
+import { WR_SLOWMO_EN } from './data/longform/wr_slowmo';
+import { GROUP_THEORY_ADV_EN } from './data/longform/group_theory_adv';
+import { SOLVER_SOFTWARE_EN } from './data/longform/solver_software';
+import { COMPETITIONS_DETAIL_EN } from './data/longform/competitions_detail';
+import { AI_ML_EN } from './data/longform/ai_ml';
+import { PSYCHOLOGY_EN } from './data/longform/psychology';
+import { RELATED_PUZZLES_EN } from './data/longform/related_puzzles';
+import { HISTORY_EXTENDED_EN } from './data/longform/history_extended';
 import './prediction.css';
 import './prediction333.css';
 
@@ -369,6 +378,8 @@ export default function Prediction333Page() {
             </div>
 
             {!isZh && <Longform text={HISTORY_DETAIL_EN} />}
+            {!isZh && <Longform text={HISTORY_EXTENDED_EN} />}
+            {!isZh && <Longform text={COMPETITIONS_DETAIL_EN} />}
           </Section>
 
           <Section id="reconstructions" titleZh="著名复盘 (STM / TPS)" titleEn="Famous Reconstructions" isZh={isZh}>
@@ -405,6 +416,8 @@ export default function Prediction333Page() {
                 ? <><strong>核心观察:</strong> Du 3.47 的 27 STM 比 Zajder 2.76 的 29 STM 还少, 但 Du 的 TPS 仅 7.78. 如果 Du 那把打乱由 Zajder 执行, 理论上能跑 27/14 ≈ 1.9 秒 — 这正是"100 年内可达 ~1.5 秒"预测的来源: <strong>Du 的步数 + Wang 的 TPS</strong> = 现役顶级 cuber 的"叠加最优".</>
                 : <><strong>Key cross-comparison:</strong> Du's 27 STM is fewer than Zajder's 29, but Du was only 7.78 TPS. Hand Du's scramble to Zajder-level TPS: 27/14 ≈ 1.9 s. This is the source of "100-yr reachable ~1.5 s" — <strong>Du's STM + Wang's TPS</strong> = "stacked optimum of living cubers".</>}
             </p>
+
+            {!isZh && <Longform text={WR_SLOWMO_EN} />}
           </Section>
 
           <Section id="state-space" titleZh="状态空间 4.3×10¹⁹" titleEn="State Space 4.3×10¹⁹" isZh={isZh}>
@@ -488,6 +501,8 @@ export default function Prediction333Page() {
                 ? <><strong>对 single WR 的含义.</strong> 顶级 CFOP cuber 实际 50-58 STM, ZB cuber 48-52 STM, 都是 optimal HTM 的 2-3 倍. "lucky scramble"通常意味着抽到一个允许 X-cross / XX-cross 或自然 skip 的低-optimal scramble. Du 3.47 的 scramble optimal HTM = 18, Du 走的是 28 STM 的方法路径 — 不"违反 God's number", 是因为 CFOP/ZB 在结构上长出 +10-20 步税.</>
                 : <><strong>Implication for single WRs.</strong> Top CFOP 50-58 STM, ZB 48-52 STM — both 2-3× optimal. A "lucky scramble" = low-optimal scramble admitting X-cross / XX-cross or natural skips. Du's scramble had optimal HTM = 18, his CFOP path was 28 STM — no violation of God's number; CFOP pays a +10-20 STM method tax.</>}
             </p>
+
+            {!isZh && <Longform text={SOLVER_SOFTWARE_EN} />}
           </Section>
 
           <Section id="metrics" titleZh="度量学: HTM vs STM vs QTM vs ATM" titleEn="Metrics: HTM vs STM vs QTM vs ATM" isZh={isZh}>
@@ -515,6 +530,7 @@ export default function Prediction333Page() {
             </p>
 
             {!isZh && <Longform text={MATH_DETAIL_EN} />}
+            {!isZh && <Longform text={GROUP_THEORY_ADV_EN} />}
           </Section>
 
           <Section id="method-cfop" titleZh="CFOP 解剖学: Cross → F2L → OLL → PLL" titleEn="CFOP Anatomy: Cross → F2L → OLL → PLL" isZh={isZh}>
@@ -731,6 +747,7 @@ export default function Prediction333Page() {
             </p>
 
             {!isZh && <Longform text={METHODS_HARDWARE_EN} />}
+            {!isZh && <Longform text={ENGINEERING_EN} />}
           </Section>
 
           <Section id="smart-cube" titleZh="智能魔方革命 (2019-2026)" titleEn="Smart Cube Revolution (2019-2026)" isZh={isZh}>
@@ -784,6 +801,7 @@ export default function Prediction333Page() {
             </p>
 
             {!isZh && <Longform text={BIOMECH_TRAINING_EN} />}
+            {!isZh && <Longform text={PSYCHOLOGY_EN} />}
           </Section>
 
           <Section id="cubers" titleZh="顶级选手画像" titleEn="Top Cuber Profiles" isZh={isZh}>
@@ -987,6 +1005,7 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
             />
 
             {!isZh && <Longform text={STATS_FORECAST_EN} />}
+            {!isZh && <Longform text={AI_ML_EN} />}
           </Section>
 
           <Section id="scenarios" titleZh="情景分析" titleEn="Scenarios" isZh={isZh}>
@@ -1015,6 +1034,7 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
             <p>{isZh ? <><strong>最终评估.</strong> 所有预测是 best estimate, 5 年 ±10%, 25 年 ±30%, 50 年误差量级与现值相当. 这不是 oracle, 它是 framework — 用来在数据更新时迭代.</> : <><strong>Final assessment.</strong> All forecasts best-estimate; 5-yr ±10%, 25-yr ±30%, 50-yr order-of-magnitude. Not an oracle — a framework to iterate.</>}</p>
 
             {!isZh && <Longform text={FMC_EVENTS_EN} />}
+            {!isZh && <Longform text={RELATED_PUZZLES_EN} />}
           </Section>
 
           <footer className="pred-footer">
