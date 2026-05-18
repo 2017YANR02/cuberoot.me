@@ -313,50 +313,81 @@ export function cumScrambles(eventId: string, year: number): number {
 }
 
 /* ============================================================
- * 核心计算: 期望最小步数 (E[min d]) 给定 N 个独立 scramble
+ * 核心计算: 累积概率 + 期望最小步数
  * ============================================================ */
 
 /**
- * 给定深度分布 dist 和 N 个独立 scramble, 返回期望最小深度.
+ * 累积"至少撞上一次 d ≤ k 状态"的概率.
  *
- * 严格公式: P(min ≤ k) = 1 - (1 - p_le_k)^N, 其中 p_le_k = ∑_{i≤k} N(i) / |S|.
- *   E[min] = ∑_{k=0}^{G} k · (P(min ≤ k) - P(min ≤ k-1)).
+ * P(min ≤ k in N samples) = 1 - (1 - p_le_k)^N
  *
- * 但为了与"用户直觉"一致 (用户问"什么 k 满足 N·P ≥ 1"), 我们也提供 "expected hit depth":
- *   argmin k 满足 N · P(d ≤ k) ≥ 1.
+ * 其中 p_le_k = ∑_{i≤k} N(i) / |S|.
  *
- * 这是 "至少 1 个 scramble 可在 ≤ k 步解掉" 的概率约 63% 的阈值.
+ * 用 log1p(-p) 防 p 极小时的 underflow:
+ *   (1-p)^N = exp(N · log1p(-p))
+ *   → P = -expm1(N · log1p(-p)) = 1 - exp(N · log1p(-p))
  *
- * 实际上 E[min] ≈ argmin k 满足 N · p_le_k ≈ ln 2 = 0.693 (中位最小值).
+ * 当 N · p << 1 时 P ≈ N · p (单次稀释概率).
+ * 当 N · p >> 1 时 P → 1.
+ */
+export function pHitLeqK(dist: DepthDist, N: number, k: number): number {
+  if (N <= 0 || k < 0) return 0;
+  if (k >= dist.diameter) return 1;
+  let cum = 0;
+  for (let i = 0; i <= k; i++) cum += (dist.counts[i] ?? 0);
+  const p = cum / dist.total;
+  if (p <= 0) return 0;
+  if (p >= 1) return 1;
+  // P = 1 - (1-p)^N = -expm1(N · log1p(-p))
+  return -Math.expm1(N * Math.log1p(-p));
+}
+
+/**
+ * 单次抽中 d ≤ k 状态的概率 (与 N 无关).
+ */
+export function pSingleLeqK(dist: DepthDist, k: number): number {
+  if (k < 0) return 0;
+  if (k >= dist.diameter) return 1;
+  let cum = 0;
+  for (let i = 0; i <= k; i++) cum += (dist.counts[i] ?? 0);
+  return cum / dist.total;
+}
+
+/**
+ * 严格期望最小深度 E[min depth in N samples].
  *
- * 这里返回 floating point depth (用于平滑曲线).
+ * E[min] = ∑_{k=0}^{G} k · (P(min ≤ k) - P(min ≤ k-1))
+ *        = ∑_{k=0}^{G-1} P(min > k)
+ *        = ∑_{k=0}^{G-1} (1 - P(min ≤ k))
+ *
+ * 几何上是"累积超出概率"的 area under curve, 收敛到 G 当 N → 0,
+ * 收敛到 0 (但被 k_min_wca 截断) 当 N → ∞.
  */
 export function expectedLuckyDepth(dist: DepthDist, N: number): number {
   if (N <= 0) return dist.diameter;
-  // 累积 p_le_k
-  let cum = 0;
-  for (let k = 0; k <= dist.diameter; k++) {
-    cum += dist.counts[k];
-    const pLeK = cum / dist.total;
-    const expectedCount = N * pLeK;
-    if (expectedCount >= 1) {
-      // 在 [k-1, k] 之间线性插值 (按 log-期望)
-      if (k === 0) return Math.max(0, dist.k_min_wca);
-      const cumPrev = cum - dist.counts[k];
-      const pLeKPrev = cumPrev / dist.total;
-      const expectedPrev = N * pLeKPrev;
-      // log-linear: 找 alpha 使 N · p_alpha = 1
-      // p_alpha 在 log 空间从 expectedPrev → expectedCount
-      if (expectedPrev <= 0 || expectedCount <= expectedPrev) return Math.max(k, dist.k_min_wca);
-      const logLo = Math.log(Math.max(expectedPrev, 1e-300));
-      const logHi = Math.log(expectedCount);
-      const target = 0;
-      const alpha = (target - logLo) / (logHi - logLo);
-      const interp = k - 1 + alpha;
-      return Math.max(interp, dist.k_min_wca);
-    }
+  // E[min] = sum_{k=0..G-1} (1 - P(min ≤ k))
+  // 我们的"撞上 ≤ k"已经包括 d=0 (solved); 但 WCA 不接受 d < k_min_wca,
+  // 所以累加从 k = k_min_wca - 1 起 (P(min > k_min_wca - 1) 起头),
+  // 再加 k_min_wca 的"底层项".
+  let E = 0;
+  for (let k = 0; k < dist.diameter; k++) {
+    const pLeK = pHitLeqK(dist, N, k);
+    E += 1 - pLeK;
   }
-  return dist.diameter;
+  // E 现在是无 WCA 下限时的严格 E[min].
+  // WCA 不接受 d < k_min_wca 的 scramble (re-roll), 所以实际期望 = max(E, k_min_wca).
+  return Math.max(E, dist.k_min_wca);
+}
+
+/**
+ * 给定 d 阈值 K, 返回累积到 P(撞上至少一次 d ≤ K) 达到目标概率 (默认 0.5) 所需的 N.
+ */
+export function nForProbability(dist: DepthDist, k: number, targetP = 0.5): number {
+  const p = pSingleLeqK(dist, k);
+  if (p <= 0) return Infinity;
+  if (p >= 1) return 1;
+  // 1 - (1-p)^N = targetP → N = log(1 - targetP) / log(1 - p)
+  return Math.log(1 - targetP) / Math.log1p(-p);
 }
 
 /**
