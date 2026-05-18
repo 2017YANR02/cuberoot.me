@@ -37,14 +37,14 @@ const CARDS: Card[] = [
     zh: {
       title: '技术栈',
       sub: 'The Stack',
-      tagline: 'CubeRoot 真正在跑的 10 件软件,一件一篇:React 19 / Vite 8 / Hono / Node 22 / pm2 / PostgreSQL 13 / pg_dump / nginx / Cloudflare DNS / Let’s Encrypt',
-      meta: '10 件软件 · 前端 · 后端 · 边缘',
+      tagline: 'CubeRoot 真正在用的 13 件软件,一件一篇:React / Vite / Hono / Node 22 / pm2 / PostgreSQL 13 / pg_dump / nginx / Cloudflare DNS / Let’s Encrypt / git / Claude Opus 4.7 / Claude Code',
+      meta: '13 件软件 · 前端 · 后端 · 边缘 · 开发',
     },
     en: {
       title: 'Stack',
       sub: 'The Stack',
-      tagline: 'The 10 actual pieces of software CubeRoot runs on, one page each: React 19 / Vite 8 / Hono / Node 22 / pm2 / PostgreSQL 13 / pg_dump / nginx / Cloudflare DNS / Let’s Encrypt',
-      meta: '10 pieces · frontend · backend · edge',
+      tagline: 'The 13 actual pieces of software cuberoot.me uses, one page each: React / Vite / Hono / Node 22 / pm2 / PostgreSQL 13 / pg_dump / nginx / Cloudflare DNS / Let’s Encrypt / git / Claude Opus 4.7 / Claude Code',
+      meta: '13 pieces · frontend · backend · edge · dev',
     },
   },
   {

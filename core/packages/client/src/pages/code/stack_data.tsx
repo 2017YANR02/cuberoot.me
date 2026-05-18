@@ -11,6 +11,9 @@ import { PG_DUMP } from './stack_tools/pg-dump';
 import { NGINX } from './stack_tools/nginx';
 import { CLOUDFLARE_DNS } from './stack_tools/cloudflare-dns';
 import { LETSENCRYPT } from './stack_tools/lets-encrypt';
+import { GIT } from './stack_tools/git';
+import { CLAUDE } from './stack_tools/claude';
+import { CLAUDE_CODE } from './stack_tools/claude-code';
 
 export const STACK_TOOLS: StackTool[] = [
   REACT,
@@ -23,4 +26,7 @@ export const STACK_TOOLS: StackTool[] = [
   NGINX,
   CLOUDFLARE_DNS,
   LETSENCRYPT,
+  GIT,
+  CLAUDE,
+  CLAUDE_CODE,
 ];
