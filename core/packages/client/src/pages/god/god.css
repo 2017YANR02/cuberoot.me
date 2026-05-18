@@ -1,0 +1,832 @@
+/* /scramble/god — 上帝之数总览页样式。
+ *
+ * 双主题:走 :root token,自动跟 ThemeToggle + 系统 prefers-color-scheme 翻转。
+ * 局部 semantic alias 用 --god-* 命名,只在本页 scope 用。 */
+
+.god-page {
+  --god-bg: var(--background);
+  --god-surface: var(--card);
+  --god-surface-2: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
+  --god-text: var(--foreground);
+  --god-text-sub: var(--muted-foreground);
+  --god-text-mute: var(--faint-foreground);
+  --god-border: var(--border-default);
+  --god-border-strong: var(--border-strong);
+  --god-accent: var(--accent);
+  --god-accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --god-wca: var(--signal-info);
+  --god-wca-soft: color-mix(in srgb, var(--signal-info) 12%, transparent);
+  --god-warn: var(--signal-warning);
+  --god-warn-soft: color-mix(in srgb, var(--signal-warning) 14%, transparent);
+  --god-grid: color-mix(in srgb, var(--foreground) 12%, transparent);
+
+  background: var(--god-bg);
+  color: var(--god-text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── header ────────────────────────────────────────────────────────── */
+
+.god-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem max(1rem, calc((100vw - 980px) / 2));
+  border-bottom: 1px solid var(--god-border);
+  background: color-mix(in srgb, var(--god-bg) 88%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+}
+
+.god-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--god-text-sub);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+.god-back:hover { color: var(--god-text); }
+
+.god-header-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.god-main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ─── HERO ──────────────────────────────────────────────────────────── */
+
+.god-hero {
+  margin-bottom: 2.5rem;
+}
+.god-hero-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--god-text-mute);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.god-title {
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+  line-height: 1.15;
+}
+.god-title-zh {
+  font-size: 0.7em;
+  font-weight: 500;
+  color: var(--god-text-sub);
+  display: inline-block;
+}
+.god-lead {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--god-text-sub);
+  margin: 0 0 1.5rem;
+  max-width: 760px;
+}
+
+.god-formula-block {
+  margin: 1.25rem 0;
+  padding: 18px 22px;
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-left: 3px solid var(--god-accent);
+  border-radius: 10px;
+  display: inline-block;
+}
+.god-formula {
+  font-family: 'KaTeX_Math', 'Cambria Math', 'STIX Two Math', 'LiberationMono', ui-monospace, monospace;
+  font-size: 1.25rem;
+  color: var(--god-text);
+  letter-spacing: 0.01em;
+}
+.god-formula sub {
+  font-size: 0.7em;
+  color: var(--god-text-sub);
+  vertical-align: sub;
+}
+.god-formula-cap {
+  font-size: 0.82rem;
+  color: var(--god-text-sub);
+  margin-top: 6px;
+}
+
+/* ─── HIGHLIGHTS ────────────────────────────────────────────────────── */
+
+.god-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 3rem;
+}
+.god-hl-card {
+  padding: 18px 16px;
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.god-hl-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--god-accent);
+  opacity: 0.5;
+}
+.god-hl-num {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--god-accent);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  word-break: break-all;
+}
+.god-hl-cap {
+  font-size: 0.88rem;
+  color: var(--god-text);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+.god-hl-sub {
+  font-size: 0.74rem;
+  color: var(--god-text-mute);
+  margin-top: 4px;
+  font-family: 'LiberationMono', ui-monospace, monospace;
+}
+
+/* ─── SECTION ───────────────────────────────────────────────────────── */
+
+.god-section {
+  margin-top: 3rem;
+}
+.god-section h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+.god-sec-lead {
+  color: var(--god-text-sub);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0 0 1.5rem;
+  max-width: 760px;
+}
+.god-loading {
+  color: var(--god-text-mute);
+  padding: 2rem;
+  text-align: center;
+}
+
+/* ─── PRIMER GRID ───────────────────────────────────────────────────── */
+
+.god-primer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 720px) { .god-primer-grid { grid-template-columns: 1fr; } }
+.god-primer-cell {
+  padding: 16px 18px;
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 10px;
+}
+.god-primer-cell h3 {
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--god-text);
+}
+.god-primer-cell p {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--god-text-sub);
+  margin: 0;
+}
+
+/* ─── PUZZLES GRID ──────────────────────────────────────────────────── */
+
+.god-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 14px;
+}
+@media (max-width: 480px) { .god-grid { grid-template-columns: 1fr; } }
+
+.god-card {
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 12px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  overflow: hidden;
+}
+.god-card:hover { border-color: var(--god-border-strong); }
+.god-card.is-expanded { border-color: var(--god-accent); }
+
+.god-card-head {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.god-card-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.god-card-icon img { display: block; }
+.god-card-cubing-icon {
+  font-size: 40px;
+  color: var(--god-text-sub);
+}
+.god-card-titleblock {
+  min-width: 0;
+}
+.god-card-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--god-text);
+}
+.god-card-eventicon {
+  font-size: 16px;
+  color: var(--god-text-sub);
+}
+.god-card-states {
+  font-size: 0.78rem;
+  color: var(--god-text-mute);
+  font-family: 'LiberationMono', ui-monospace, monospace;
+  margin-top: 3px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.god-card-states-extra { color: var(--god-text-sub); }
+
+.god-card-d-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+.god-card-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.god-card-badge.is-exact {
+  background: var(--god-accent-soft);
+  color: var(--god-accent);
+}
+.god-card-badge.is-bounds {
+  background: var(--god-warn-soft);
+  color: var(--god-warn);
+}
+.god-card-badge.is-trivial {
+  background: var(--god-wca-soft);
+  color: var(--god-wca);
+}
+.god-card-d-num {
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--god-text);
+}
+.god-card-d-metric {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--god-text-mute);
+  font-weight: 500;
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+}
+
+/* card body */
+.god-card-body {
+  padding: 0 14px 16px;
+  border-top: 1px solid var(--god-border);
+  margin-top: -1px;
+}
+.god-card-blurb {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--god-text-sub);
+  margin: 14px 0 0;
+}
+.god-card-metrics {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: var(--god-surface-2);
+  border-radius: 8px;
+}
+.god-card-metrics-h {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--god-text-mute);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.god-card-metrics-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.god-card-metrics-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 2px 0;
+}
+.god-card-metric-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--god-text-sub);
+  font-family: 'LiberationMono', ui-monospace, monospace;
+  flex-shrink: 0;
+}
+.god-card-metric-val {
+  font-weight: 600;
+  color: var(--god-text);
+  font-variant-numeric: tabular-nums;
+}
+.god-card-metric-note {
+  color: var(--god-text-mute);
+  font-size: 0.78rem;
+}
+
+.god-card-meta {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--god-text-sub);
+  line-height: 1.55;
+}
+.god-card-meta-l {
+  color: var(--god-text-mute);
+  margin-right: 6px;
+}
+.god-card-year {
+  color: var(--god-text-mute);
+}
+
+.god-card-refs {
+  list-style: none;
+  padding: 12px 0 0;
+  margin: 12px 0 0;
+  border-top: 1px dashed var(--god-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.god-card-refs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--god-accent);
+  text-decoration: none;
+  font-size: 0.82rem;
+}
+.god-card-refs a:hover { text-decoration: underline; }
+
+.god-grid-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--god-text-sub);
+}
+.god-grid-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.god-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.god-dot.is-exact { background: var(--god-accent); }
+.god-dot.is-bounds { background: var(--god-warn); }
+.god-dot.is-trivial { background: var(--god-wca); }
+
+/* ─── GROWTH CHART ──────────────────────────────────────────────────── */
+
+.god-growth-wrap {
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.god-growth-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.god-growth-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: var(--god-text-sub);
+}
+.god-growth-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.god-growth-legend i {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 1px;
+}
+.god-growth-legend .dashed i {
+  background: var(--god-accent);
+  position: relative;
+}
+.god-growth-readout {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--god-surface-2);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  min-height: 1.65em;
+}
+.god-growth-hint { color: var(--god-text-mute); font-size: 0.82rem; }
+
+/* ─── BFS DEMO ──────────────────────────────────────────────────────── */
+
+.god-bfs-wrap {
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.god-bfs-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.god-btn-primary, .god-btn-secondary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+.god-btn-primary {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.god-btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.god-btn-primary:active { transform: scale(0.98); }
+.god-btn-secondary {
+  background: transparent;
+  color: var(--god-text);
+  border-color: var(--god-border-strong);
+}
+.god-btn-secondary:hover {
+  background: var(--god-surface-2);
+}
+
+.god-bfs-stat {
+  font-size: 0.88rem;
+  color: var(--god-text-sub);
+  font-variant-numeric: tabular-nums;
+}
+.god-bfs-stat b { color: var(--god-text); }
+.god-bfs-result { color: var(--god-accent); }
+.god-bfs-result b { color: var(--god-accent); font-size: 1.15em; }
+
+.god-bfs-chart {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  margin-top: 14px;
+  align-items: end;
+}
+.god-bfs-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.god-bfs-bar-cell {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+.god-bfs-bar-known {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  background: color-mix(in srgb, var(--god-text-mute) 30%, transparent);
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+}
+.god-bfs-bar-live {
+  position: relative;
+  width: 70%;
+  background: linear-gradient(to top, var(--god-accent), color-mix(in srgb, var(--god-accent) 60%, transparent));
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+  z-index: 1;
+}
+.god-bfs-bar-num {
+  font-size: 0.62rem;
+  color: var(--god-text-sub);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  transform: rotate(-30deg);
+  transform-origin: center;
+  height: 1.5em;
+}
+.god-bfs-bar-label {
+  font-size: 0.75rem;
+  color: var(--god-text);
+  font-weight: 600;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.god-bfs-caption {
+  font-size: 0.85rem;
+  color: var(--god-text-sub);
+  line-height: 1.65;
+  margin: 18px 0 0;
+}
+
+/* ─── METRIC ────────────────────────────────────────────────────────── */
+
+.god-metric-wrap {
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.god-metric-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--god-surface-2);
+  padding: 4px;
+  border-radius: 8px;
+  width: max-content;
+  margin-bottom: 14px;
+}
+.god-metric-tab {
+  padding: 6px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--god-text-sub);
+  font-weight: 500;
+  font-size: 0.9rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.god-metric-tab.is-on {
+  background: var(--god-surface);
+  color: var(--god-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.god-metric-defn {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--god-text-sub);
+  margin-bottom: 14px;
+}
+
+.god-metric-example {
+  padding: 14px 16px;
+  background: var(--god-surface-2);
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.god-metric-alg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.god-metric-move {
+  font-family: 'LiberationMono', ui-monospace, monospace;
+  font-size: 0.95rem;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--god-text);
+  transition: background 0.15s ease;
+}
+.god-metric-move.is-heavy {
+  background: var(--god-accent-soft);
+  color: var(--god-accent);
+  font-weight: 600;
+}
+.god-metric-move.is-heavy sup {
+  font-size: 0.6em;
+  margin-left: 2px;
+}
+.god-metric-count {
+  font-size: 0.92rem;
+  color: var(--god-text-sub);
+}
+
+.god-metric-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.god-metric-table th,
+.god-metric-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--god-border);
+}
+.god-metric-table thead th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--god-text-mute);
+  font-weight: 600;
+}
+.god-metric-table tbody tr:last-child td { border-bottom: 0; }
+
+/* ─── ALGO GRID ─────────────────────────────────────────────────────── */
+
+.god-algo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.god-algo-cell {
+  padding: 14px 16px;
+  background: var(--god-surface);
+  border: 1px solid var(--god-border);
+  border-radius: 10px;
+  border-top: 3px solid color-mix(in srgb, var(--god-accent) 60%, transparent);
+}
+.god-algo-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--god-text);
+}
+.god-algo-desc {
+  font-size: 0.86rem;
+  color: var(--god-text-sub);
+  line-height: 1.6;
+}
+
+/* ─── TIMELINE ──────────────────────────────────────────────────────── */
+
+.god-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+.god-timeline::before {
+  content: '';
+  position: absolute;
+  left: 60px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--god-border);
+}
+.god-tl-item {
+  display: grid;
+  grid-template-columns: 48px 24px 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 10px 0;
+  position: relative;
+}
+.god-tl-year {
+  font-family: 'LiberationMono', ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: var(--god-text-mute);
+  text-align: right;
+  padding-top: 2px;
+}
+.god-tl-dot {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--god-surface);
+  border: 2px solid var(--god-border-strong);
+  margin-top: 5px;
+  margin-left: 4px;
+  z-index: 1;
+}
+.god-tl-item.is-major .god-tl-dot {
+  background: var(--god-accent);
+  border-color: var(--god-accent);
+  box-shadow: 0 0 0 4px var(--god-accent-soft);
+}
+.god-tl-item.is-multi .god-tl-dot {
+  background: var(--god-wca);
+  border-color: var(--god-wca);
+}
+.god-tl-body {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--god-text-sub);
+}
+.god-tl-item.is-major .god-tl-body {
+  color: var(--god-text);
+  font-weight: 500;
+}
+
+/* ─── REFS ──────────────────────────────────────────────────────────── */
+
+.god-refs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.god-refs li {
+  padding: 6px 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--god-text-sub);
+}
+.god-refs a {
+  color: var(--god-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.god-refs a:hover { text-decoration: underline; }
+
+/* ─── responsive ────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .god-header { padding: 0.875rem 1rem; }
+  .god-main { padding: 1.25rem 1rem 3rem; }
+  .god-title { font-size: 1.7rem; }
+  .god-formula { font-size: 1.05rem; }
+  .god-section h2 { font-size: 1.2rem; }
+  .god-card-head {
+    grid-template-columns: 50px 1fr auto;
+  }
+  .god-card-icon {
+    width: 48px; height: 48px;
+  }
+  .god-card-d-num { font-size: 1.4rem; }
+  .god-bfs-bar-num { font-size: 0.55rem; }
+  .god-tl-item {
+    grid-template-columns: 40px 24px 1fr;
+    gap: 8px;
+  }
+  .god-timeline::before { left: 52px; }
+  .god-tl-year { font-size: 0.78rem; }
+  .god-tl-body { font-size: 0.85rem; }
+}
