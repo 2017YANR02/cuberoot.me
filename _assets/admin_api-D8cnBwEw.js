@@ -1,0 +1,1 @@
+function e(){return localStorage.getItem(`cuberoot_jwt`)||localStorage.getItem(`wca_access_token`)}function t(){let t=e();return{"Content-Type":`application/json`,...t?{Authorization:`Bearer ${t}`}:{}}}async function n(e){if(!e.ok){let t=await e.json().catch(()=>({error:e.statusText}));throw Error(t.error||`API error ${e.status}`)}return e.json()}export{n,t};
