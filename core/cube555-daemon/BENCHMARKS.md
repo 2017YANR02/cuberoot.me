@@ -10,6 +10,8 @@
 
 ## 各阶段对比
 
+> **User-facing 实测**:Playwright 端跑 /scramble/gen 切 5x5 随机状态 + 点 Generate(5/项)冷路径,Pre-fix 17.6s → Post-fix 9.69s(-45%)。详见下方"客户端冷路径修复"段。
+
 | 指标 | Baseline (JVM/W2) | + batch+SSE (JVM/W2) | + GraalVM native (W2) | + workers=3 (native/W3) |
 |---|---:|---:|---:|---:|
 | **single p50** | 1.93s | 2.11s | 2.34s | 2.45s |
@@ -113,6 +115,40 @@ free -m available: 285M  # workers=2 时是 803M, 多塞一个 worker 吃 ~120MB
 **与 JVM 横向**:per-solve 性能等价(±10% 噪声内),native 真正赢在:
 - 进程 RSS 540→368MB,**省 172MB**,刚好够多塞 1 个 worker
 - W2 vs W3 上 par-12 28.8→21.5s(-25%),吞吐净增
+
+## + 客户端冷路径修复 (cubingScramble.ts) — 2026-05-18
+
+Playwright 实测 `/scramble/gen` 用户「切到 5x5 随机状态 + 点 Generate(5/项)」**冷路径**(池空 + 模式刚切)。
+
+```
+                    Pre-fix          Post-fix
+─────────────────────────────────────────────────
+总耗时              17.6s            9.69s   (-45%)
+首条                ~4.7s            2.48s   (-47%)
+Daemon 调用次数     10               10      (同)
+  其中 single         5                0
+  其中 batch SSE      1 (count=5)      3 (count=5+4+1)
+```
+
+**为什么 daemon 调用数一样但耗时减半?**
+
+Pre-fix 5 个 single fetch 各自走 Hono → daemon stdio → 排队/出队,每条都
+单独一轮 HTTP+TLS 握手 + Hono 中间件;5 个 single 内部串行交付。
+
+Post-fix 全部走 batch SSE,1 个 HTTP 连接,daemon 内部 N 个 solver 并行
+求,解完哪个 push 哪个,客户端流式收。同样 10 个 solver work,网络层和
+daemon dispatch 层效率明显高。
+
+**修法**(`cubingScramble.ts` `pooledScramble`):pool 空 + 555-rs 时,不再
+让每个 caller 各自 `fetch555Scramble()`,而是 schedule 一个 batch refill 后
+poll pool。N 并发 caller 共享同一个 batch SSE,batch 流出的 scramble 谁醒
+谁拿。
+
+**剩余优化**(未做):refill loop while(cur.length<target) 在 caller 还在
+drain 时持续 fire 新 batch(count=4 → count=1),凑齐 pool 到 size=5。
+所以"cold click 5"实际取了 10 条(5 用 5 留池)。下一击命中池,~0ms。
+要做的话得让 refill 感知"未被满足的 caller 数",这是 30+ 行重构,留作
+later。
 
 ## Methodology Notes
 
