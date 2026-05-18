@@ -51,3 +51,61 @@ export async function fetch555Ready(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Streaming batch fetch. Server-side accepts count=1..12 and emits one SSE
+ * `data:` event per finished solve, in any order (worker parallelism). On
+ * any per-item failure server emits `event: error`; on terminal completion
+ * `event: done`. We yield successful scrambles only; caller handles partial
+ * fills by checking yielded count vs requested.
+ *
+ * Single open TCP connection saves TLS+HTTP setup vs N parallel fetches
+ * and lets the pool refill stream scrambles in as the solver finishes each
+ * (vs Promise.all blocking until the slowest).
+ */
+const BATCH_FETCH_TIMEOUT_MS = 60_000;
+const BATCH_MAX = 12;
+
+export async function* fetch555ScrambleBatch(
+  count: number,
+  signal?: AbortSignal,
+): AsyncGenerator<string> {
+  const n = Math.max(1, Math.min(BATCH_MAX, Math.floor(count)));
+  const ctrl = new AbortController();
+  const onAbort = (): void => ctrl.abort();
+  signal?.addEventListener('abort', onAbort);
+  const timer = setTimeout(() => ctrl.abort(), BATCH_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(apiUrl(`/v1/scramble/555-rs/batch?count=${n}`), { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.body) throw new Error('no body');
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    let event = 'message';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).replace(/\r$/, '');
+        buf = buf.slice(nl + 1);
+        if (line === '') { event = 'message'; continue; }
+        if (line.startsWith('event:')) { event = line.slice(6).trim(); continue; }
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (event === 'done' || event === 'error') continue;
+        try {
+          const obj = JSON.parse(payload) as { scramble?: string };
+          if (obj.scramble) yield obj.scramble;
+        } catch {
+          // malformed line — skip
+        }
+      }
+    }
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
