@@ -130,7 +130,9 @@ export default function TheoreticalLimitView({ event, limit, fittedL, isZh }: Pr
 
       {/* 论证段 */}
       <h4>{isZh ? '物理下界论证' : 'Physical Floor Reasoning'}</h4>
-      <p>{isZh ? limit.reasoning_zh : limit.reasoning_en}</p>
+      {(isZh ? limit.reasoning_zh : limit.reasoning_en).split(/\n\n+/).map((para, i) => (
+        <p key={i}>{para}</p>
+      ))}
 
       {/* 拟合 L 与 T_phys 对比 */}
       {fittedL !== null && limit.why_fit_differs_zh && (

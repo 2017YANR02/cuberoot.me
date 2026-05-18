@@ -4,11 +4,19 @@
  * Supports: `## H2`, `### H3`, paragraphs (blank-line separated),
  * `- list items`, `**bold**`, `*italic*`, `` `code` ``.
  * Deliberately minimal to keep agent-authored chapter files un-fussy.
+ *
+ * Each chapter is ~12-16k words → parsing to JSX produces ~5000 elements.
+ * On pages that mount 18 chapters at once (Prediction333Page) this freezes
+ * the main thread for 5-10s. So Longform now self-defers via
+ * IntersectionObserver: it renders a tall placeholder until the viewport is
+ * within 800px of it, then mounts the parsed content. Stays mounted forever.
  */
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 interface LongformProps {
   text: string;
+  /** Skip the IntersectionObserver deferral (for pages that already gate via collapsibles). */
+  eager?: boolean;
 }
 
 function inline(s: string): ReactNode[] {
@@ -54,7 +62,7 @@ function inline(s: string): ReactNode[] {
   return out;
 }
 
-export function Longform({ text }: LongformProps) {
+function renderText(text: string): ReactNode {
   const blocks = text.trim().split(/\n\n+/);
   const out: ReactNode[] = [];
   let listBuf: string[] = [];
@@ -92,4 +100,39 @@ export function Longform({ text }: LongformProps) {
   }
   flushList();
   return <div className="pred-longform">{out}</div>;
+}
+
+export function Longform({ text, eager = false }: LongformProps) {
+  const [shown, setShown] = useState(eager);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (shown || !ref.current) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShown(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '800px' },
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [shown]);
+
+  if (shown) return <>{renderText(text)}</>;
+  // Placeholder: ~ proportional to chapter length so the page scroll length is
+  // approximately final from the start (avoid scroll-position jumps as chapters
+  // hydrate). Estimate ~7 chars per rendered px ≈ tuned for typical chapters.
+  const estHeight = Math.max(400, Math.min(8000, Math.round(text.length / 4)));
+  return (
+    <div
+      ref={ref}
+      className="pred-longform-placeholder"
+      style={{ minHeight: estHeight, color: 'var(--muted-foreground)', fontSize: 12, padding: 24 }}
+    >
+      Loading chapter…
+    </div>
+  );
 }
