@@ -142,6 +142,8 @@ const PowershellIntroPage = lazy(() => import('./pages/code/PowershellIntroPage'
 const SqlIntroPage = lazy(() => import('./pages/code/SqlIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
+// NOTE: Theory — Rubik's cube as a group (long-form math essay + interactive panels)
+const GroupTheoryPage = lazy(() => import('./pages/theory/GroupTheoryPage'));
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -359,6 +361,8 @@ function App() {
         <Route path="/memo/colpi/:pair" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
         {/* WB — 非官方世界纪录 */}
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
+        {/* Theory — 长文 + 互动: 魔方与群论 */}
+        <Route path="/theory/group" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
