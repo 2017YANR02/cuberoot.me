@@ -372,6 +372,23 @@ const SCRIPT_TOPICS: Topic[] = [
     available: true,
   },
   {
+    slug: 'powershell',
+    href: '/code/language/powershell',
+    zh: {
+      title: 'PowerShell',
+      sub: '对象管道 · Windows 默认',
+      tagline: '2006 Jeffrey Snover 在微软发布,基于 "Monad Manifesto" (2002)。管道传 .NET 对象不传文本; 2016 MIT 开源跨平台,2025 pwsh 7.5 跑在 .NET 9 上',
+    },
+    en: {
+      title: 'PowerShell',
+      sub: 'Object pipeline · Windows default',
+      tagline: 'Jeffrey Snover shipped it at Microsoft in 2006, off the back of the 2002 Monad Manifesto. Pipes carry .NET objects, not text. MIT open-sourced and cross-platform in 2016; pwsh 7.5 on .NET 9 in 2025',
+    },
+    accent: '#5391FE',
+    logo: <span className="topic-glyph">{'>_'}</span>,
+    available: true,
+  },
+  {
     slug: 'sql',
     href: '/code/language/sql',
     zh: {

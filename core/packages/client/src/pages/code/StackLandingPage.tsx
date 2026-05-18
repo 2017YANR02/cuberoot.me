@@ -78,8 +78,8 @@ export default function StackLandingPage() {
         </h1>
         <p className="stack-landing-sub">
           {lang === 'zh'
-            ? '不是"流行清单",是 cuberoot.me 真正用过的 (加上即将用上的) 32 件软件 —— 在生产 VM 上跑的、写它的工具链、以及个人接下来要接入的工具。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。'
-            : 'Not a "trending list" — 32 pieces of software cuberoot.me actually leans on (plus the ones I am about to adopt): what runs on the production VM, the authoring chain that writes it, and personal tooling about to enter the loop. One page each: history, strengths, and the exact job it does in this architecture.'}
+            ? '不是"流行清单",是 cuberoot.me 真正用过的 (加上即将用上的) 36 件软件 —— 在生产 VM 上跑的、写它的工具链、以及个人接下来要接入的工具。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。'
+            : 'Not a "trending list" — 36 pieces of software cuberoot.me actually leans on (plus the ones I am about to adopt): what runs on the production VM, the authoring chain that writes it, and personal tooling about to enter the loop. One page each: history, strengths, and the exact job it does in this architecture.'}
         </p>
         <div className="stack-landing-meta">
           <span>{lang === 'zh' ? '快照' : 'Snapshot'}</span>
