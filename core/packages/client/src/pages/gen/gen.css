@@ -52,9 +52,10 @@
     backdrop-filter: blur(8px);
 }
 
-.gen-title { flex: 1; display: flex; align-items: center; gap: 10px; }
-.gen-title-icon { color: var(--gen-accent); }
-.gen-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; }
+.gen-title { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.gen-title-icon { color: var(--gen-accent); flex-shrink: 0; }
+/* nowrap 保险:窄屏 header 内宽紧张时,4 字标题别再被压成 1 字一行竖排。 */
+.gen-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; white-space: nowrap; }
 .gen-title-sub { color: var(--gen-text-mute); font-size: 0.8rem; letter-spacing: 0.02em; }
 
 .gen-main {
@@ -401,30 +402,99 @@
     color: var(--gen-accent);
 }
 
-/* ───────── mode chips (Quick / TNoodle) ───────── */
+/* ───────── mode chips (iOS UISegmentedControl 风) ─────────
+   - 胶囊容器 = frosted glass (backdrop blur + 半透明白底淡灰描边)
+   - thumb = 单个绝对定位元素,位置由 JS 测量当前 active chip 写入 inline
+     transform,切 chip 时通过 transition 滑过去
+   - touch-action: pan-y 保留垂直滚动,水平 swipe 给 pointer 事件
+   - user-select:none 防长按选中文字 */
 .gen-mode-chips {
+    position: relative;
     display: inline-flex;
-    background: var(--gen-surface);
-    border: 1px solid var(--gen-border);
+    background: color-mix(in srgb, var(--gen-text) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--gen-text) 8%, transparent);
     border-radius: 999px;
     padding: 3px;
-    gap: 2px;
+    gap: 0;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: inset 0 0 0 0.5px color-mix(in srgb, #fff 18%, transparent);
+}
+/* liquid-glass-react 渲染多个 sibling 层 (overLight ×2 + glass + border ×2),
+   全塞这层 absolute wrapper 里 → 一并被 z-index:0 锁在 chip 文字下方,
+   pointer-events:none 避免拦住 chip 点击 / pointer drag。
+   overflow:hidden + border-radius:inherit 把 displacement 170% 扩展区 + lib 自带
+   下沉 drop shadow 都裁回 chips 胶囊形,不再下漏一坨。 */
+.gen-mode-thumb-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: inherit;
+}
+/* lib 给 .glass 内联 `box-shadow: 0 12px 40px rgba(0,0,0,0.25)` 当 drop shadow,
+   小尺寸 chip 上很扎眼;盖掉 (inline → 必须 !important)。 */
+.gen-mode-thumb-layer .glass {
+    box-shadow: none !important;
+}
+
+/* Safari / iOS 兜底 thumb:lib 的 SVG displacement 不工作,退一档 CSS frosted。
+   位置同 LiquidGlass:top/left 取 chip 中心,translate(-50%,-50%) 居中。
+   transition 模拟 lib 的 0.2s ease-out。 */
+.gen-mode-thumb-fallback {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--gen-text) 14%, transparent);
+    box-shadow:
+        inset 0 0 0 0.5px color-mix(in srgb, #fff 22%, transparent),
+        inset 0 1px 2px color-mix(in srgb, #fff 18%, transparent),
+        0 1px 3px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    transition: top 0.2s ease-out, left 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out;
 }
 .gen-mode-chip {
+    position: relative;
+    z-index: 1;
     border: none;
     background: transparent;
     color: var(--gen-text-sub);
-    padding: 4px 14px;
+    padding: 5px 16px;
     border-radius: 999px;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: color 200ms ease-out;
+    white-space: nowrap;
+    /* 让父级 pointer 事件接管,chip 本身只是命中目标,不要触发 OS 双击/长按菜单 */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .gen-mode-chip:hover { color: var(--gen-text); }
 .gen-mode-chip.is-active {
-    background: var(--gen-accent);
-    color: #FFF;
+    /* 玻璃 thumb 是半透明的, 用主题文字色 + 加粗即可,无需反白 */
+    color: var(--gen-text);
+    font-weight: 600;
+}
+
+/* 窄屏:header 改成两行 —— 标题 + 语言/主题 在上,4 个 mode chip 占满第二行居中。
+   不动 chips 内部样式(还是胶囊),只是从挤在标题右边挪到下面独占一行,
+   彻底消除 4 字标题被压竖排的情况。 */
+@media (max-width: 700px) {
+    .gen-header { flex-wrap: wrap; gap: 8px 12px; padding: 0.9rem 1rem 0.75rem; }
+    .gen-mode-chips {
+        order: 99;
+        flex: 1 0 100%;
+        justify-content: center;
+    }
+}
+@media (max-width: 380px) {
+    .gen-mode-chip { padding: 4px 10px; font-size: 0.8rem; }
 }
 
 /* ───────── TNoodle mode ───────── */

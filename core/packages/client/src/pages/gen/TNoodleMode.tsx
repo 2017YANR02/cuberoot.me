@@ -383,6 +383,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
         // ── 配置模式:多选 toggle + 点击循环轮数(清空按钮在顶部 actions 区) ──
         <WcaEventSelector
           availableEvents={TNOODLE_EVENT_SET}
+          onlyAvailable
           selectedEvents={new Set(Object.keys(events))}
           badges={Object.fromEntries(Object.entries(events).map(([ev, cfg]) => [ev, cfg.rounds.length]))}
           onToggle={(ev) => {
