@@ -52,60 +52,57 @@ const SOLVED_PIECES: number[] = [
  *  the next char is `-` or a digit. Sq1 turns are practically [-5, 6] so the
  *  single-digit fallback is unambiguous in real algs.
  *  Groups: 1=`/`, 2,3=pair top/bot, 4=single top (bot implicitly 0). */
-const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?|\(?\s*(-?\d+)\s*\)?/g;
+export const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?|\(?\s*(-?\d+)\s*\)?/g;
+
+export type Sq1Token =
+  | { kind: 'slice' }
+  | { kind: 'turn'; top: number; bot: number };
+
+/** Single canonical tokenizer — all sq1 alg consumers (this file + stack page's
+ *  sq1State.ts) should go through here so format support stays in lockstep. */
+export function parseSq1Tokens(alg: string): Sq1Token[] {
+  const out: Sq1Token[] = [];
+  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(alg)) !== null) {
+    if (m[1] === '/') out.push({ kind: 'slice' });
+    else if (m[2] !== undefined) out.push({ kind: 'turn', top: parseInt(m[2], 10), bot: parseInt(m[3]!, 10) });
+    else out.push({ kind: 'turn', top: parseInt(m[4]!, 10), bot: 0 });
+  }
+  return out;
+}
 
 /** Inverse a sq1 alg: reverse order, negate each (t,b); `/` stays.
  *  Output uses canonical `(t,b)` form regardless of input formatting. */
 export function invertSq1Alg(alg: string): string {
-  const tokens: string[] = [];
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(alg)) !== null) {
-    if (m[1] === '/') tokens.push('/');
-    else if (m[2] !== undefined) tokens.push(`(${-parseInt(m[2], 10)},${-parseInt(m[3]!, 10)})`);
-    else tokens.push(`(${-parseInt(m[4]!, 10)},0)`);
-  }
-  return tokens.reverse().join('');
+  return parseSq1Tokens(alg).reverse().map((tok) =>
+    tok.kind === 'slice' ? '/' : `(${-tok.top},${-tok.bot})`,
+  ).join('');
 }
 
 /** Re-emit a sq1 alg in canonical `(t, b) / (t, b) / ...` form.
  *  Use this when handing the alg to cubing.js TwistyPlayer — its sq1 parser requires
  *  spaces around `/` AND after each comma. Without them: `Unexpected character at index N`. */
 export function canonicalSq1Alg(alg: string): string {
-  const tokens: string[] = [];
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(alg)) !== null) {
-    if (m[1] === '/') tokens.push('/');
-    else if (m[2] !== undefined) tokens.push(`(${m[2]}, ${m[3]})`);
-    else tokens.push(`(${m[4]}, 0)`);
-  }
-  return tokens.join(' ');
+  return parseSq1Tokens(alg).map((tok) =>
+    tok.kind === 'slice' ? '/' : `(${tok.top}, ${tok.bot})`,
+  ).join(' ');
 }
 
 /** Re-emit a sq1 alg in compact `tb/tb/...` form (no parens, no commas, no spaces).
  *  For DISPLAY only — safe round-trip iff every |t|, |b| ≤ 9 (sq1 turns are [-5..6] in practice). */
 export function compactSq1Alg(alg: string): string {
-  const tokens: string[] = [];
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(alg)) !== null) {
-    if (m[1] === '/') tokens.push('/');
-    else if (m[2] !== undefined) tokens.push(`${m[2]}${m[3]}`);
-    else tokens.push(`${m[4]}0`);
-  }
-  return tokens.join('');
+  return parseSq1Tokens(alg).map((tok) =>
+    tok.kind === 'slice' ? '/' : `${tok.top}${tok.bot}`,
+  ).join('');
 }
 
-/** Parse + apply a WCA-spec sq1 scramble. Accepts both `(t,b)/...` and `t,b /...` forms. */
+/** Parse + apply a WCA-spec sq1 scramble. Accepts every form parseSq1Tokens does. */
 export function applySq1Scramble(scramble: string): Sq1State {
   let pieces = SOLVED_PIECES.slice();
   let sliceSolved = true;
-
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(scramble)) !== null) {
-    if (m[1] === '/') {
+  for (const tok of parseSq1Tokens(scramble)) {
+    if (tok.kind === 'slice') {
       const next = pieces.slice();
       // Swap [6..11] with [12..17] — same as tnoodle doSlash().
       for (let i = 0; i < 6; i++) {
@@ -116,11 +113,8 @@ export function applySq1Scramble(scramble: string): Sq1State {
       pieces = next;
       sliceSolved = !sliceSolved;
     } else {
-      // m[2]/m[3] = pair, m[4] = single (implicit bottom=0)
-      const top = parseInt(m[2] !== undefined ? m[2] : m[4]!, 10);
-      const bottom = m[2] !== undefined ? parseInt(m[3]!, 10) : 0;
-      const t = ((-top % 12) + 12) % 12;
-      const b = ((-bottom % 12) + 12) % 12;
+      const t = ((-tok.top % 12) + 12) % 12;
+      const b = ((-tok.bot % 12) + 12) % 12;
       const next = pieces.slice();
       const oldTop = pieces.slice(0, 12);
       for (let i = 0; i < 12; i++) next[i] = oldTop[(t + i) % 12];
