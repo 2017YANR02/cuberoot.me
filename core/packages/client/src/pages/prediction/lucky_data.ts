@@ -264,13 +264,52 @@ export function scramblesInYear(eventId: string, year: number): number {
 
 /**
  * 累计 scramble 数从 2003 到 Y (含 Y 当年).
+ *
+ * 性能关键: slider 拖到 10^15 年时, 不能用 for 循环 (会死锁主线程).
+ * 实现: 预计算到 2003..CUM_END_YEAR (148 项), 之后用解析二次多项式延拓.
+ *
+ * 2080+ comps 已封顶 30,000, perComp(y) = 250 + 2(y-2026) 仍线性递增,
+ * ∫_{T0..Y} 30000 · share · (250 + 2(y-2026)) dy =
+ *   30000 · share · [250 · (Y-T0) + (Y-2026)² - (T0-2026)²]
  */
-export function cumScrambles(eventId: string, year: number): number {
-  let sum = 0;
-  for (let y = 2003; y <= year; y++) {
-    sum += scramblesInYear(eventId, y);
+const CUM_END_YEAR = 2150;
+const _CUM_CACHE = new Map<string, number[]>();
+
+function _buildCumTable(eventId: string): number[] {
+  const arr: number[] = [];
+  let s = 0;
+  for (let y = 2003; y <= CUM_END_YEAR; y++) {
+    s += scramblesInYear(eventId, y);
+    arr.push(s);
   }
-  return sum;
+  return arr;
+}
+
+export function cumScrambles(eventId: string, year: number): number {
+  if (year < 2003) return 0;
+  const lucky = LUCKY_EVENTS[eventId];
+  if (!lucky) return 0;
+  let arr = _CUM_CACHE.get(eventId);
+  if (!arr) {
+    arr = _buildCumTable(eventId);
+    _CUM_CACHE.set(eventId, arr);
+  }
+  const yIdx = Math.floor(year) - 2003;
+  if (yIdx < arr.length) {
+    return arr[Math.max(0, yIdx)];
+  }
+  // year > CUM_END_YEAR — 解析二次延拓
+  const cumAtEnd = arr[arr.length - 1];
+  const share = lucky.scramble_share;
+  const T0 = CUM_END_YEAR;
+  // ∫ 30000 · share · perComp(y) dy, perComp(y) = 250 + 2·(y - 2026)
+  const integralLinear = (yEnd: number): number => {
+    const span = yEnd - T0;
+    // perComp at T0 = 250 + 2·(2150-2026) = 498
+    // ∫ (498 + 2·(y - T0)) dy from T0..yEnd = 498·span + span²
+    return 30000 * share * (498 * span + span * span);
+  };
+  return cumAtEnd + integralLinear(year);
 }
 
 /* ============================================================

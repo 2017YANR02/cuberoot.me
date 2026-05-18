@@ -632,6 +632,29 @@
   font-weight: 300;
 }
 
+/* Lucky CTA — 单独颜色区分于 3x3 deep-dive CTA */
+.pred-lucky-cta {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, #16a34a 18%, var(--card)),
+    color-mix(in srgb, #16a34a 4%, var(--card))) !important;
+  border-color: #16a34a !important;
+}
+.pred-lucky-cta .pred-333-cta-eyebrow,
+.pred-lucky-cta .pred-333-cta-arrow { color: #16a34a; }
+
+/* TOC sub-page links — 让 sidebar 上的子页跳转更醒目 */
+.pred-toc-subpage {
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  margin-bottom: 3px;
+}
+.pred-toc-subpage:hover {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
 /* ── Headline bar (closeness ranking) ─────────────────── */
 .pred-headline-bar {
   margin: 14px 0 6px;
