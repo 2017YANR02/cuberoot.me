@@ -1,11 +1,21 @@
 ---
 name: wca-stats-db
-description: "Use when writing SQL against local wca_statistics MySQL dump. Covers snake_case schema, key tables, join idioms (sub_id=1/rank<900), value encodings (DNF=-1/DNS=-2/FMC/MBLD), records markers. Triggers: \"WCA SQL\", \"WCA dump\", \"WCA schema\", \"results 表\", \"competitions 表\", \"event_id\", \"person_id\", \"result_attempts\", \"regional_single_record\", \"sub_id\"."
+description: "Use when writing SQL against local wca_developer_database MySQL dump, or refreshing it from WCA developer export. Covers snake_case schema, key tables, join idioms (sub_id=1/rank<900), value encodings (DNF=-1/DNS=-2/FMC/MBLD), records markers, refresh script. Triggers: \"WCA SQL\", \"WCA dump\", \"WCA schema\", \"results 表\", \"competitions 表\", \"event_id\", \"person_id\", \"result_attempts\", \"regional_single_record\", \"sub_id\", \"更新 WCA dump\", \"刷新 WCA\", \"wca export\", \"wca-developer-database-dump\", \"update_database\"."
 ---
 
 # WCA Statistics DB
 
-本仓库本地的 WCA dump：`E:\mysql_data\wca_statistics`，连接配置在 `core/packages/stats-build/database.yml`。**写 SQL 前先看这个文件**，凭对 WCA 公开 TSV 的肌肉记忆会踩坑。
+本仓库本地的 WCA dump:MySQL 库名 `wca_developer_database` (datadir `E:\mysql_data\wca_developer_database\`),连接配置在 `core/packages/stats-build/database.yml`。**写 SQL 前先看这个文件**,凭对 WCA 公开 TSV 的肌肉记忆会踩坑。
+
+## 从 WCA 官网刷新 dump
+
+CWD `core/`,一键(下载 ~2GB + 解压 + drop & rebuild + 建索引):
+
+```pwsh
+pnpm --filter @cuberoot/stats-build exec tsx src/bin/update_database.ts
+```
+
+脚本 `packages/stats-build/src/bin/update_database.ts`,源 `https://www.worldcubeassociation.org/wst/wca-developer-database-dump.zip`。只导 `REQUIRED_TABLES`(见下),磁盘留 ~10GB,需要 `mysql` CLI 在 PATH。export timestamp 写进 metadata 表。
 
 ## 🔥 头号坑:`results` 表没有 `value1..value5`
 

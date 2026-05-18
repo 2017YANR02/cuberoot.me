@@ -137,7 +137,7 @@ async function main() {
       host: dbHost,
       username: process.env.MYSQL_USER ?? 'root',
       password: process.env.MYSQL_PASS ?? '',
-      database: process.env.MYSQL_DB ?? 'wca_statistics',
+      database: process.env.MYSQL_DB ?? 'wca_developer_database',
     };
   } else {
     const yamlPath = resolve(__dirname, '../../database.yml');

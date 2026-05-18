@@ -1,6 +1,6 @@
 # MySQL 连接凭据——复制为 database.yml 并填写真实密码
 # 此文件已在 .gitignore 中排除，禁止提交含真实密码的版本
-database: "wca_statistics"
+database: "wca_developer_database"
 username: "root"
 password: "YOUR_PASSWORD_HERE"
 host: "127.0.0.1"
