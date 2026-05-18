@@ -21,6 +21,7 @@
 import { randomScrambleForEvent } from 'cubing/scramble';
 import { setSearchDebug } from 'cubing/search';
 import { cstimerScramble444 } from './cstimer_444';
+import { fetch555Scramble } from './scramble_555_server';
 import { toWcaEventId } from './wca_events';
 
 // Tell cubing.js to start the next prefetched scramble the instant the
@@ -104,8 +105,17 @@ const DEFAULT_POOL_SIZE = 3;
 // background CPU during /scramble/gen mount, which the user notices
 // far less than waiting after they click Generate.
 const POOL_SIZE_444 = 25;
+// 5x5 random-state is server-side (Java daemon on cuberoot.me) with 4 internal
+// workers. Each fetch costs ~1.5s server CPU + network RTT, so we keep a
+// modest pool of 5 — enough to make count≤5 instant from /scramble/gen and
+// not so deep that prewarming wastes server CPU for an unwatched tab. Larger
+// batches (count=12/25) still benefit since 5 pop instant and the rest stream
+// in via the parallel-refill branch below.
+const POOL_SIZE_555 = 5;
 function poolSizeFor(wcaId: string): number {
-  return wcaId === '444' ? POOL_SIZE_444 : DEFAULT_POOL_SIZE;
+  if (wcaId === '444') return POOL_SIZE_444;
+  if (wcaId === '555') return POOL_SIZE_555;
+  return DEFAULT_POOL_SIZE;
 }
 
 const pool = new Map<string, string[]>();
@@ -120,6 +130,17 @@ const refilling = new Map<string, Promise<void>>();
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
+  // 5x5 random-state is served by the Hono daemon (cube555 Java). If the
+  // backend is down / cold / past 30s, fall through to cubing.js's WCA
+  // random-move 60 so /scramble/gen never breaks — degraded quality but
+  // still serviceable. Errors get one console.warn so an outage is visible.
+  if (wcaId === '555') {
+    try {
+      return await fetch555Scramble();
+    } catch (err) {
+      console.warn('[555-rs] fetch failed, falling back to random-move:', err);
+    }
+  }
   // 333ft / 333mbo use identical scrambles to 333 / 333mbf — cubing/scramble
   // doesn't ship scramblers for these retired events, so map to 333.
   const cubingId = wcaId === '333ft' || wcaId === '333mbo' ? '333' : wcaId;
@@ -131,11 +152,12 @@ async function refillPool(wcaId: string): Promise<void> {
   const cur = pool.get(wcaId) ?? [];
   pool.set(wcaId, cur);
   const target = poolSizeFor(wcaId);
-  // 4x4 has a worker pool that runs in parallel; fire all needed scrambles
-  // concurrently so every worker fills a slot. Other events queue serially
-  // inside one worker anyway, so parallelism there only hurts (extra
-  // scheduling without faster output).
-  if (wcaId === '444') {
+  // 4x4 has a Web Worker pool that runs in parallel; 5x5 has a server-side
+  // 4-thread daemon. Both benefit from firing N fetches concurrently so every
+  // worker fills a slot in one batch wall, instead of serializing through one
+  // pipe. Other events single-thread inside one cubing/scramble worker, so
+  // parallelism there only adds scheduling overhead without faster output.
+  if (wcaId === '444' || wcaId === '555') {
     while (cur.length < target) {
       const need = target - cur.length;
       const batch = await Promise.all(

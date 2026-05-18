@@ -16,7 +16,9 @@ import { nemesizerRoutes } from './routes/nemesizer.js';
 import { cubingLiveRoutes } from './routes/cubing_live.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { wikiRoutes } from './routes/wiki.js';
+import { scramble555Routes } from './routes/scramble_555.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
+import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 
 const app = new Hono();
 
@@ -62,11 +64,19 @@ app.route('/v1', nemesizerRoutes);
 app.route('/v1', cubingLiveRoutes);
 app.route('/v1', analyticsRoutes);
 app.route('/v1', wikiRoutes);
+app.route('/v1', scramble555Routes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
 loadNemesizerDataset().catch(err => {
   console.error('[nemesizer] startup load failed, routes will keep returning 503:', err);
+});
+
+// Kick off cube555 JVM daemon spawn in background — first-time cold table
+// build is ~5 min, warm reload from disk ~3s; /v1/scramble/555-rs returns
+// 503 until daemon emits READY. CUBE555_DISABLED=1 skips spawn entirely.
+ensureCube555Daemon().catch(err => {
+  console.error('[cube555] startup failed, /v1/scramble/555-rs will return 503:', err);
 });
 
 const PORT = Number(process.env.PORT) || 3001;

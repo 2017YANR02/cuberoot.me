@@ -39,6 +39,13 @@
     "long_en": "professional speedcubing timer & WCA random-state scramble engine"
   },
   {
+    "name": "cs0x7f/cube555",
+    "url": "https://github.com/cs0x7f/cube555",
+    "zh": "5x5 随机状态求解器(server-side daemon 驱动 /scramble/gen 5x5)",
+    "en": "5x5 random-state solver (server-side daemon powers /scramble/gen 5x5)",
+    "long_en": "five-phase reduction 5x5x5 solver — runs as a Java child process under our Hono server"
+  },
+  {
     "name": "Roman-/mosaic",
     "url": "https://github.com/Roman-/mosaic",
     "zh": "魔方马赛克(已 port 为 React)",

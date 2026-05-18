@@ -134,6 +134,17 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             core/packages/server/migrations/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/migrations/"
 
+          # cube555-daemon/Daemon.java — Java 子进程的胶水代码,跟 server.bundle.js
+          # 同步更新,然后 javac 重编;pm2 reload 自然让 Hono 再 spawn,新 .class 接上。
+          # 上游 cube555 src + lib/twophase.jar 已一次性铺在 /opt/cube555/(见 core/cube555-daemon/README.md)。
+          rsync -ltz --chmod=F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            core/cube555-daemon/Daemon.java \
+            "root@${{ secrets.DEPLOY_HOST }}:/opt/cube555/example/Daemon.java"
+          ssh -T -n -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'cd /opt/cube555 && javac -d dist -cp "dist:lib/twophase.jar" example/Daemon.java'
+
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
             -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "root@${{ secrets.DEPLOY_HOST }}" \
