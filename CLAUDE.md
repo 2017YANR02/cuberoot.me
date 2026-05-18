@@ -56,14 +56,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 pnpm install
 pnpm --filter @cuberoot/client dev            # http://127.0.0.1:5173/
-pnpm --filter @cuberoot/client typecheck      # tsc -b（incremental，~12s 首次 / 后续略快）
+pnpm --filter @cuberoot/client typecheck      # tsgo (native Go port，~3s 冷 / ~1.2s 暖)
+pnpm --filter @cuberoot/client typecheck:tsc  # tsc -b incremental，对齐编辑器 TS server 行为
 pnpm --filter @cuberoot/client typecheck:ci   # tsc -b --force（清缓存全量，对齐 CI）
 pnpm --filter @cuberoot/client build
 pnpm --filter @cuberoot/client lint
 ```
 
 > **重要:**
-> 1. typecheck 只有一档,日常 / push 前用 `typecheck`,CI 对齐用 `typecheck:ci` (`tsc -b --force`)。**禁** `tsc --noEmit` 走根 tsconfig (references-only 壳,typo 静默过)。
+> 1. 日常用 `typecheck` (tsgo,native Go,3s 冷 / 1s 暖,Microsoft 官方 preview);怀疑 tsgo 漏报时用 `typecheck:tsc` (老 tsc -b);push 前 / CI 对齐用 `typecheck:ci` (`tsc -b --force`)。**禁** `tsc --noEmit` 走根 tsconfig (references-only 壳,typo 静默过)。
 > 2. **Dev server 永远在 `http://127.0.0.1:5173/`,不要 `pnpm dev`** (端口占用立刻挂)。要验证用 playwright 直接开。
 > 3. 磁盘不够 (worktree / pnpm install / build 失败时) 先 `df -h` 告诉我,别静默换方案。
 
