@@ -77,7 +77,9 @@ export default class World {
         this.sq1Cube.callbacks.push(this.callback);
       }
       this.cube = this.sq1Cube;
-      // SQ1 drag/tap input not implemented yet — disable controller.
+      // SQ1: Controller reaches into cube.table.groups (NxN layer state) on
+      // empty-space drag, which Sq1Cube doesn't have. Disable it; StackPage
+      // installs a separate sq1 drag-rotate handler that updates this.cube.rotation.
       this.controller.disable = true;
       this._ensureSq1Lights();
     } else {
@@ -117,14 +119,16 @@ export default class World {
   private _ensureSq1Lights(): void {
     if (this.sq1RimLights.length > 0) return;
     const d = Cubelet.SIZE;
+    // 8 corners of a bounding cube, mirroring /demo/sq1's lighting rig — gives
+    // the small oblique facets enough wrap-around to read all 6 hint tiles.
     const positions: [number, number, number][] = [
-      [-d * 3, +d * 2, +d * 2],   // front-left fill
-      [+d * 3, -d * 1, +d * 2],   // bottom-right rim
-      [-d * 2, -d * 2, -d * 2],   // back-below
-      [+d * 2, +d * 2, -d * 3],   // back-top
+      [+d * 3, +d * 3, +d * 3], [-d * 3, +d * 3, +d * 3],
+      [+d * 3, +d * 3, -d * 3], [-d * 3, +d * 3, -d * 3],
+      [+d * 3, -d * 3, +d * 3], [-d * 3, -d * 3, +d * 3],
+      [+d * 3, -d * 3, -d * 3], [-d * 3, -d * 3, -d * 3],
     ];
     for (const p of positions) {
-      const l = new THREE.DirectionalLight(0xffffff, Math.PI * 0.18);
+      const l = new THREE.DirectionalLight(0xffffff, Math.PI * 0.15);
       l.position.set(p[0], p[1], p[2]);
       this.scene.add(l);
       this.sq1RimLights.push(l);
@@ -153,7 +157,11 @@ export default class World {
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
-    this.camera.near = distance - Cubelet.SIZE * 3;
+    // SIZE*3 was the NxN order-3 half-width edge; tight for the axis-aligned
+    // cube but clips SQ1's bigger half-side (W=137.5; diagonal reach ≈ 238)
+    // at its closest corner. SIZE*4 = 256 covers SQ1 with margin and only
+    // costs a sliver of z-buffer precision for NxN.
+    this.camera.near = distance - Cubelet.SIZE * 4;
     this.camera.far = distance + Cubelet.SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);

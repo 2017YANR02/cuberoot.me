@@ -136,8 +136,6 @@ const BashIntroPage = lazy(() => import('./pages/code/BashIntroPage'));
 const SqlIntroPage = lazy(() => import('./pages/code/SqlIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
-// NOTE: /demo/sq1 — Square-1 立体动画演示（cubedb.net 风格的 three.js 渲染）
-const DemoSq1Page = lazy(() => import('./pages/demo/sq1/DemoSq1Page'));
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -298,8 +296,6 @@ function App() {
         <Route path="/code/mojo" element={<Navigate to="/code/language/mojo" replace />} />
         <Route path="/code/compare" element={<Navigate to="/code/language/compare" replace />} />
         <Route path="/code/scramble" element={<Navigate to="/code/language/scramble" replace />} />
-        {/* Demo — 内部演示页（不在导航中暴露） */}
-        <Route path="/demo/sq1" element={<Suspense fallback={<div>Loading...</div>}><DemoSq1Page /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
