@@ -8,6 +8,7 @@
  * via PlayerControls). Each frame the callback slerps pivot.quat + lerps
  * pivot.pos between the begin/end snapshots Sq1Cube provided.
  */
+import * as THREE from 'three';
 import tweener, { type Tween } from '../tweener';
 import CubeGroup from '../group';
 import type Sq1Cube from './Sq1Cube';
@@ -140,12 +141,21 @@ export default class Sq1Twister {
       ? 2  // 180° around chord-perp axis
       : Math.max(Math.abs(move.top ?? 0), Math.abs(move.bot ?? 0)) / 3;
     const frames = Math.max(2, Math.round(CubeGroup.tweenDuration(d)));
+    // Pre-invert startQuat per piece — pivot.position(v) is startPos rotated by
+    // the current "delta from start" (= curQuat · startQuat⁻¹), so that the
+    // pivot traces the actual rotation arc instead of a straight LERP line.
+    // (LERP'd pos collapsed all east pivots to (0,0,0) mid-slash, making piece
+    // bodies appear to swim through the static west half — visible clipping.)
+    const startQuatInvs = anims.map((a) => a.startQuat.clone().invert());
+    const deltaCur = new THREE.Quaternion();
     // tweener.update() applies Quadratic.Out easing; `v` here is the post-easing
     // 0..1, same shape NxN's CubeGroup.twist sees. Use it directly.
     this.activeTween = tweener.tween(0, 1, frames, (v) => {
-      for (const a of anims) {
+      for (let i = 0; i < anims.length; i++) {
+        const a = anims[i];
         a.pivot.quaternion.slerpQuaternions(a.startQuat, a.endQuat, v);
-        a.pivot.position.lerpVectors(a.startPos, a.endPos, v);
+        deltaCur.copy(a.pivot.quaternion).multiply(startQuatInvs[i]);
+        a.pivot.position.copy(a.startPos).applyQuaternion(deltaCur);
       }
       this.cube.dirty = true;
       if (v >= 1) {
