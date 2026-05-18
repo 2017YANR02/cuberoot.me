@@ -137,6 +137,7 @@ const HaskellIntroPage = lazy(() => import('./pages/code/HaskellIntroPage'));
 const HtmlIntroPage = lazy(() => import('./pages/code/HtmlIntroPage'));
 const CssIntroPage = lazy(() => import('./pages/code/CssIntroPage'));
 const BashIntroPage = lazy(() => import('./pages/code/BashIntroPage'));
+const PowershellIntroPage = lazy(() => import('./pages/code/PowershellIntroPage'));
 const SqlIntroPage = lazy(() => import('./pages/code/SqlIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
@@ -285,6 +286,7 @@ function App() {
         <Route path="/code/language/html" element={<Suspense fallback={<div>Loading...</div>}><HtmlIntroPage /></Suspense>} />
         <Route path="/code/language/css" element={<Suspense fallback={<div>Loading...</div>}><CssIntroPage /></Suspense>} />
         <Route path="/code/language/bash" element={<Suspense fallback={<div>Loading...</div>}><BashIntroPage /></Suspense>} />
+        <Route path="/code/language/powershell" element={<Suspense fallback={<div>Loading...</div>}><PowershellIntroPage /></Suspense>} />
         <Route path="/code/language/sql" element={<Suspense fallback={<div>Loading...</div>}><SqlIntroPage /></Suspense>} />
         <Route path="/code/language/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
         <Route path="/code/language/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
