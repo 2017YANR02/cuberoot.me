@@ -137,6 +137,7 @@
 .s-tok-edge   { border-color: rgba(245, 178, 99, .35); color: #F5B263; background: rgba(245, 178, 99, .06); }
 .s-tok-front  { border-color: rgba(91, 168, 255, .35); color: #5BA8FF; background: rgba(91, 168, 255, .06); }
 .s-tok-back   { border-color: rgba(123, 211, 137, .35); color: var(--accent-leaf); background: rgba(123, 211, 137, .06); }
+.s-tok-dev    { border-color: rgba(217, 119, 87, .35); color: #E89578; background: rgba(217, 119, 87, .06); }
 .s-arrow { color: var(--text-faint); }
 
 /* ── Groups ────────────────────────────── */

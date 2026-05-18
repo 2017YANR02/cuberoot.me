@@ -51,7 +51,7 @@ export interface StackTool {
   name: string;
   version: string;
   since: string;
-  group: 'frontend' | 'backend' | 'edge';
+  group: 'frontend' | 'backend' | 'edge' | 'dev';
   accent: string;
   bright: string;
   glyph: ReactNode;

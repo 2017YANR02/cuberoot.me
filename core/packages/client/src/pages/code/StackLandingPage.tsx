@@ -5,7 +5,7 @@ import LangToggle from '../../components/LangToggle';
 import { STACK_TOOLS, type StackTool } from './stack_data';
 import './stack_landing.css';
 
-const GROUPS: { id: 'frontend' | 'backend' | 'edge'; zh: { title: string; sub: string }; en: { title: string; sub: string } }[] = [
+const GROUPS: { id: 'frontend' | 'backend' | 'edge' | 'dev'; zh: { title: string; sub: string }; en: { title: string; sub: string } }[] = [
   {
     id: 'frontend',
     zh: { title: '前端', sub: '浏览器里跑的那一半' },
@@ -20,6 +20,11 @@ const GROUPS: { id: 'frontend' | 'backend' | 'edge'; zh: { title: string; sub: s
     id: 'edge',
     zh: { title: '边缘 / 网络', sub: 'TLS、DNS、HTTP 在跨进入站点之前' },
     en: { title: 'Edge / Network', sub: 'TLS, DNS, HTTP — before a request even reaches a process' },
+  },
+  {
+    id: 'dev',
+    zh: { title: '开发 / AI', sub: '把字打到 commit, 整个写作工具链' },
+    en: { title: 'Dev / AI', sub: 'From keystrokes to a commit — the whole authoring chain' },
   },
 ];
 
@@ -73,8 +78,8 @@ export default function StackLandingPage() {
         </h1>
         <p className="stack-landing-sub">
           {lang === 'zh'
-            ? '不是"流行清单",是真正在 cuberoot.me 这台机器上跑的 10 件软件。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。'
-            : 'Not a "trending list" — the 10 actual pieces of software running on the cuberoot.me VM. One page each: history, strengths, and the exact job it does in this architecture.'}
+            ? '不是"流行清单",是 cuberoot.me 真正用过的 13 件软件 —— 在生产 VM 上跑的,加上写它的工具链。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。'
+            : 'Not a "trending list" — the 13 actual pieces of software cuberoot.me leans on: what runs on the production VM, plus the authoring chain that writes it. One page each: history, strengths, and the exact job it does in this architecture.'}
         </p>
         <div className="stack-landing-meta">
           <span>{lang === 'zh' ? '快照' : 'Snapshot'}</span>
@@ -112,6 +117,20 @@ export default function StackLandingPage() {
             <span className="s-tok s-tok-back">PostgreSQL 13 :5432</span>
             <span className="s-arrow">→</span>
             <span className="s-tok s-tok-back">pg_dump 03:00 UTC</span>
+          </span>
+        </div>
+        <div className="stack-summary-row">
+          <span className="stack-summary-k">/</span>
+          <span className="stack-summary-flow">
+            <span className="s-tok s-tok-dev">Claude Opus 4.7</span>
+            <span className="s-arrow">→</span>
+            <span className="s-tok s-tok-dev">Claude Code</span>
+            <span className="s-arrow">→</span>
+            <span className="s-tok s-tok-dev">git</span>
+            <span className="s-arrow">→</span>
+            <span className="s-tok s-tok-dev">GitHub Actions</span>
+            <span className="s-arrow">→</span>
+            <span className="s-tok s-tok-edge">nginx + acme.sh</span>
           </span>
         </div>
       </div>
