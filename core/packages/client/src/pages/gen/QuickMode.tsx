@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, Download, Image as ImageIcon, ImageOff } from 'lucide-react';
+import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
 import { EventIcon } from '../../components/EventIcon';
@@ -68,6 +68,21 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
   const reqIdRef = useRef(0);
   const [tick, setTick] = useState(0);
 
+  // Count combobox 自带 dropdown — datalist 会按输入过滤 option,无法关闭这个行为,
+  // 所以放弃 datalist 用自己写的 popover。点输入框旁的 ▼ 切换显隐,click-outside 关。
+  const [countOpen, setCountOpen] = useState(false);
+  const countComboRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!countOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (countComboRef.current && !countComboRef.current.contains(e.target as Node)) {
+        setCountOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [countOpen]);
+
   // 高阶 NxN(8-50)合成 event id `nxn<N>`,排在 WCA 21 项之后。
   const customNxN = useMemo(
     () => Array.from(events)
@@ -85,11 +100,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
   const toggleEvent = (id: string) => {
     setEvents((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        if (next.size > 1) next.delete(id); // 至少保留 1 个
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -260,62 +272,79 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         onlyAvailable
       />
 
-      {/* 高阶 NxN(8-50)输入。回车 / blur 即添加为额外 event chip 出现在下方 sheet。 */}
-      <div className="gen-tn-highn-row" style={{ margin: '12px 0 20px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <label style={{ fontSize: '13px', color: 'var(--muted-foreground, #888)' }}>
-          {t('高阶 NxN', 'High-order NxN')}
-        </label>
-        <input
-          type="number"
-          min={8}
-          max={50}
-          value={highNxNInput}
-          placeholder="8-50"
-          onChange={(e) => setHighNxNInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
-          onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
-          className="gen-count-input"
-          style={{ width: '72px' }}
-        />
-        {customNxN.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            {customNxN.map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => toggleEvent(id)}
-                className="gen-count-chip is-active"
-                title={t('点击移除', 'Click to remove')}
-              >
-                {eventDisplayName(id, isZh)}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* 配置条:高阶 NxN + 5x5 打乱模式 共一行,窄屏自动换行 */}
+      <div className="gen-tn-config-row">
+        <div className="gen-tn-config-group">
+          <label className="gen-tn-config-label">{t('高阶 NxN', 'High-order NxN')}</label>
+          <input
+            type="number"
+            min={8}
+            max={50}
+            value={highNxNInput}
+            placeholder="8-50"
+            onChange={(e) => setHighNxNInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
+            onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
+            className="gen-count-input"
+            style={{ width: '72px' }}
+          />
+          {customNxN.length > 0 && customNxN.map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => toggleEvent(id)}
+              className="gen-count-chip is-active"
+              title={t('点击移除', 'Click to remove')}
+            >
+              {eventDisplayName(id, isZh)}
+            </button>
+          ))}
+        </div>
+        <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
       </div>
-
-      <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
 
       <div className="gen-tn-controls" style={{ marginTop: '1rem' }}>
         <div className="gen-control-group gen-control-actions">
           {subMode === 'batch' ? (
             <div className="gen-count-row">
-              <input
-                type="number"
-                list="gen-count-presets"
-                min={1}
-                max={COUNT_MAX}
-                value={count}
-                onChange={(e) => {
-                  const v = Math.max(1, Math.min(COUNT_MAX, Number(e.target.value) || 1));
-                  setCount(v);
-                }}
-                className="gen-count-input gen-count-input--combo"
-                aria-label={t('每项打乱数', 'Scrambles per event')}
-              />
-              <datalist id="gen-count-presets">
-                {COUNT_PRESETS.map((n) => <option key={n} value={n} />)}
-              </datalist>
+              <div ref={countComboRef} className="gen-count-combo">
+                <input
+                  type="number"
+                  min={1}
+                  max={COUNT_MAX}
+                  value={count}
+                  onChange={(e) => {
+                    const v = Math.max(1, Math.min(COUNT_MAX, Number(e.target.value) || 1));
+                    setCount(v);
+                  }}
+                  className="gen-count-input gen-count-input--combo"
+                  aria-label={t('每项打乱数', 'Scrambles per event')}
+                />
+                <button
+                  type="button"
+                  className="gen-count-combo-trigger"
+                  onClick={() => setCountOpen((o) => !o)}
+                  aria-label={t('打开预设', 'Open presets')}
+                  aria-expanded={countOpen}
+                >
+                  <ChevronDown size={14} />
+                </button>
+                {countOpen && (
+                  <ul className="gen-count-combo-list" role="listbox">
+                    {COUNT_PRESETS.map((n) => (
+                      <li
+                        key={n}
+                        role="option"
+                        aria-selected={count === n}
+                        className={`gen-count-combo-option${count === n ? ' is-active' : ''}`}
+                        onClick={() => { setCount(n); setCountOpen(false); }}
+                      >
+                        {n}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           ) : (
             <div className="gen-tn-paste-hint">

@@ -110,18 +110,34 @@
     align-items: center;
 }
 
-/* 5x5 random-state ↔ random-move 切换条:跟 high-NxN 行同高,只在选中 5x5 时出现 */
-.gen-555-mode-row {
-    margin: 12px 0 16px;
+/* 高阶 NxN + 5x5 模式 一行容器,窄屏 wrap 成两行 */
+.gen-tn-config-row {
+    margin: 12px 0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    align-items: center;
+}
+
+.gen-tn-config-group {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
 }
 
+.gen-tn-config-label,
 .gen-555-mode-label {
     font-size: 13px;
     color: var(--gen-text-mute);
+}
+
+/* 5x5 random-state ↔ random-move 切换条:只在选中 5x5 时由组件渲染 */
+.gen-555-mode-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
 }
 
 .gen-count-chip {
@@ -160,9 +176,62 @@
 
 .gen-count-input:focus { border-color: var(--gen-accent); }
 
-/* combobox 形态:input + datalist 原生下拉。空间留给 4 位数 + 下拉箭头。 */
+/* combobox 形态:自己写的 input + popover dropdown(不用 datalist,后者会按输入过滤 option)。
+ * type=number 自带的 ▲▼ spinner 也屏蔽,留 ChevronDown trigger 在 input 右侧。 */
+.gen-count-combo {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
 .gen-count-input--combo {
     width: 92px;
+    padding-right: 28px; /* 给 trigger 让位 */
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.gen-count-input--combo::-webkit-outer-spin-button,
+.gen-count-input--combo::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.gen-count-combo-trigger {
+    position: absolute;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: var(--gen-text-sub);
+    cursor: pointer;
+    padding: 0;
+}
+.gen-count-combo-trigger:hover { color: var(--gen-text); }
+.gen-count-combo-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 92px;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: var(--gen-surface);
+    border: 1px solid var(--gen-border);
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    z-index: 20;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+.gen-count-combo-option {
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--gen-text);
+}
+.gen-count-combo-option:hover { background: var(--gen-accent-soft); }
+.gen-count-combo-option.is-active {
+    color: var(--gen-accent);
+    font-weight: 600;
 }
 
 .gen-btn {

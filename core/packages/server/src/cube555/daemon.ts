@@ -72,12 +72,22 @@ function spawnDaemon(): Promise<void> {
 
     child = proc;
 
-    // Forward Java stderr (pruning-table build progress, verify diagnostics)
-    // verbatim so server logs can be scanned for [VERIFY-FAIL] etc.
+    // Forward Java stderr to ours,但过滤掉 cube555 内部 Logger 的彩色 cube 状态图
+    // 和每条 scramble 的 5x phase 时间 + reduction 总长 —— 这些是 debug 噪声,会占
+    // pm2 logs 盘。保留:VERIFY-FAIL 自检 / 异常栈 / 剪枝表构建进度 / 任何未匹配
+    // 的未知行(默认 surface 不丢)。
+    const DROP_STDERR = [
+      /\x1b\[/,                   // ANSI 彩色字符(几乎肯定是 cube 状态图)
+      /^Phase[1-5] Finished in /, // 每条 scramble 的 phase 时间打印
+      /^Reduction: \d+$/,         // 每条 scramble 的总长
+    ];
     proc.stderr?.on('data', (chunk: Buffer) => {
       const s = chunk.toString();
       for (const line of s.split('\n')) {
-        if (line.trim()) console.error(`[cube555-java] ${line}`);
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        if (DROP_STDERR.some((re) => re.test(line))) continue;
+        console.error(`[cube555-java] ${trimmed}`);
       }
     });
 

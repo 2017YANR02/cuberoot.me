@@ -17,6 +17,10 @@ pnpm --filter @cuberoot/stats-build exec tsx src/bin/update_database.ts
 
 脚本 `packages/stats-build/src/bin/update_database.ts`,源 `https://www.worldcubeassociation.org/wst/wca-developer-database-dump.zip`。只导 `REQUIRED_TABLES`(见下),磁盘留 ~10GB,需要 `mysql` CLI 在 PATH。export timestamp 写进 metadata 表。
 
+已解压过 .sql 不想再下:`$env:WCA_DUMP_SQL_PATH = 'path/to/dump.sql'` 跳过下载+解压。
+
+**dump 里这两张表本来就空,不是 bug**:`ranks_single` / `ranks_average` —— WCA app 内部 materialized rankings,export 时只 ship schema 不 ship data。脚本 assertion 看 dump 有无 INSERT 决定是否报错,空表合法。stats-build 里所有 SQL 都直接 `GROUP BY results` 自己算 PB,不查这两表。
+
 ## 🔥 头号坑:`results` 表没有 `value1..value5`
 
 WCA 公开 TSV / 老 Ruby 代码 / 训练数据里到处是 `r.value1, r.value2, ..., r.value5`。**本 dump 把 5 次 attempt 拆出去了**。要 attempt 值用:
