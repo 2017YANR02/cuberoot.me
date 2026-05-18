@@ -42,16 +42,17 @@ const SOLVED_PIECES: number[] = [
   8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15,
 ];
 
-/** Tokenizer regex for sq1 alg. Tolerates:
- *    - parens optional:       `(1,0)` / `1,0`
- *    - comma optional:        `(1 0)` / `1 0`
- *    - separator optional:    `10`, `3-3`, `-21`  (greedy + backtrack)
- *    - any mix:               `1, 0`, `(1  0)`, etc.
- *  The `(?:,\s*|\s+|(?=-?\d))` group allows zero-width separation when the
- *  next char is `-` or a digit, so `10` parses as `1,0` after backtracking
- *  `\d+` greedy from `10` → `1`. Sq1 turns are practically [-5, 6] so the
- *  single-digit fallback is unambiguous in real algs. */
-const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?/g;
+/** Tokenizer regex for sq1 alg. Three branches:
+ *    1. `/`                  slice
+ *    2. (t,b) pair           `(1,0)`, `1,0`, `(1 0)`, `1 0`, `10`, `3-3`, ...
+ *    3. single t shorthand   `(3)`, `3`, `-3`   → means `(t, 0)` (top-only)
+ *  Pair branch comes before single so existing forms like `10`/`30` still
+ *  parse as `(1,0)`/`(3,0)` via greedy backtrack, not as a single number.
+ *  The pair `(?:,\s*|\s+|(?=-?\d))` group allows zero-width separation when
+ *  the next char is `-` or a digit. Sq1 turns are practically [-5, 6] so the
+ *  single-digit fallback is unambiguous in real algs.
+ *  Groups: 1=`/`, 2,3=pair top/bot, 4=single top (bot implicitly 0). */
+const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?|\(?\s*(-?\d+)\s*\)?/g;
 
 /** Inverse a sq1 alg: reverse order, negate each (t,b); `/` stays.
  *  Output uses canonical `(t,b)` form regardless of input formatting. */
@@ -61,7 +62,8 @@ export function invertSq1Alg(alg: string): string {
   let m: RegExpExecArray | null;
   while ((m = re.exec(alg)) !== null) {
     if (m[1] === '/') tokens.push('/');
-    else tokens.push(`(${-parseInt(m[2]!, 10)},${-parseInt(m[3]!, 10)})`);
+    else if (m[2] !== undefined) tokens.push(`(${-parseInt(m[2], 10)},${-parseInt(m[3]!, 10)})`);
+    else tokens.push(`(${-parseInt(m[4]!, 10)},0)`);
   }
   return tokens.reverse().join('');
 }
@@ -75,7 +77,8 @@ export function canonicalSq1Alg(alg: string): string {
   let m: RegExpExecArray | null;
   while ((m = re.exec(alg)) !== null) {
     if (m[1] === '/') tokens.push('/');
-    else tokens.push(`(${m[2]}, ${m[3]})`);
+    else if (m[2] !== undefined) tokens.push(`(${m[2]}, ${m[3]})`);
+    else tokens.push(`(${m[4]}, 0)`);
   }
   return tokens.join(' ');
 }
@@ -88,7 +91,8 @@ export function compactSq1Alg(alg: string): string {
   let m: RegExpExecArray | null;
   while ((m = re.exec(alg)) !== null) {
     if (m[1] === '/') tokens.push('/');
-    else tokens.push(`${m[2]}${m[3]}`);
+    else if (m[2] !== undefined) tokens.push(`${m[2]}${m[3]}`);
+    else tokens.push(`${m[4]}0`);
   }
   return tokens.join('');
 }
@@ -111,9 +115,10 @@ export function applySq1Scramble(scramble: string): Sq1State {
       }
       pieces = next;
       sliceSolved = !sliceSolved;
-    } else if (m[2] !== undefined) {
-      const top = parseInt(m[2], 10);
-      const bottom = parseInt(m[3], 10);
+    } else {
+      // m[2]/m[3] = pair, m[4] = single (implicit bottom=0)
+      const top = parseInt(m[2] !== undefined ? m[2] : m[4]!, 10);
+      const bottom = m[2] !== undefined ? parseInt(m[3]!, 10) : 0;
       const t = ((-top % 12) + 12) % 12;
       const b = ((-bottom % 12) + 12) % 12;
       const next = pieces.slice();
