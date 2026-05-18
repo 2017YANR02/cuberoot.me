@@ -111,6 +111,8 @@ const PatternsPage = lazy(() => import('./pages/patterns/PatternsPage'));
 const CodeIndexPage = lazy(() => import('./pages/code/CodeIndexPage'));
 const CodeLandingPage = lazy(() => import('./pages/code/CodeLandingPage'));
 const ArchitecturePage = lazy(() => import('./pages/code/ArchitecturePage'));
+const StackLandingPage = lazy(() => import('./pages/code/StackLandingPage'));
+const StackToolPage = lazy(() => import('./pages/code/StackToolPage'));
 const TsIntroPage = lazy(() => import('./pages/code/TsIntroPage'));
 const RustIntroPage = lazy(() => import('./pages/code/RustIntroPage'));
 const GoIntroPage = lazy(() => import('./pages/code/GoIntroPage'));
@@ -255,6 +257,8 @@ function App() {
         {/* Code — hub (架构 + 语言) + 子页面 */}
         <Route path="/code" element={<Suspense fallback={<div>Loading...</div>}><CodeIndexPage /></Suspense>} />
         <Route path="/code/architecture" element={<Suspense fallback={<div>Loading...</div>}><ArchitecturePage /></Suspense>} />
+        <Route path="/code/stack" element={<Suspense fallback={<div>Loading...</div>}><StackLandingPage /></Suspense>} />
+        <Route path="/code/stack/:slug" element={<Suspense fallback={<div>Loading...</div>}><StackToolPage /></Suspense>} />
         <Route path="/code/language" element={<Suspense fallback={<div>Loading...</div>}><CodeLandingPage /></Suspense>} />
         <Route path="/code/language/ts" element={<Suspense fallback={<div>Loading...</div>}><TsIntroPage /></Suspense>} />
         <Route path="/code/language/rust" element={<Suspense fallback={<div>Loading...</div>}><RustIntroPage /></Suspense>} />
