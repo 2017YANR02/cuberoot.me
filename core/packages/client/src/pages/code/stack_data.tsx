@@ -6,6 +6,7 @@ import { VITE } from './stack_tools/vite';
 import { THREE } from './stack_tools/three';
 import { CUBING_JS } from './stack_tools/cubing-js';
 import { TAILWIND } from './stack_tools/tailwind';
+import { ZUSTAND } from './stack_tools/zustand';
 import { HONO } from './stack_tools/hono';
 import { NODE } from './stack_tools/node';
 import { PM2 } from './stack_tools/pm2';
@@ -22,6 +23,8 @@ import { CLAUDE } from './stack_tools/claude';
 import { CLAUDE_CODE } from './stack_tools/claude-code';
 import { PNPM } from './stack_tools/pnpm';
 import { TURBO } from './stack_tools/turbo';
+import { MONOREPO } from './stack_tools/monorepo';
+import { NPM } from './stack_tools/npm';
 import { UV } from './stack_tools/uv';
 import { GITHUB_ACTIONS } from './stack_tools/github-actions';
 import { PLAYWRIGHT } from './stack_tools/playwright';
@@ -29,6 +32,7 @@ import { VITEST } from './stack_tools/vitest';
 import { TAILSCALE } from './stack_tools/tailscale';
 import { OPENSSH } from './stack_tools/openssh';
 import { RSYNC } from './stack_tools/rsync';
+import { OBSIDIAN } from './stack_tools/obsidian';
 
 export const STACK_TOOLS: StackTool[] = [
   REACT,
@@ -36,6 +40,7 @@ export const STACK_TOOLS: StackTool[] = [
   THREE,
   CUBING_JS,
   TAILWIND,
+  ZUSTAND,
   HONO,
   NODE,
   PM2,
@@ -52,6 +57,8 @@ export const STACK_TOOLS: StackTool[] = [
   CLAUDE_CODE,
   PNPM,
   TURBO,
+  MONOREPO,
+  NPM,
   UV,
   GITHUB_ACTIONS,
   PLAYWRIGHT,
@@ -59,4 +66,5 @@ export const STACK_TOOLS: StackTool[] = [
   TAILSCALE,
   OPENSSH,
   RSYNC,
+  OBSIDIAN,
 ];

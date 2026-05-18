@@ -389,8 +389,8 @@ interface Pkg {
 const PACKAGES: Pkg[] = [
   {
     name: 'client', size: '~120k LOC',
-    zh: { role: 'React SPA — 整个前端',     bullet: ['pages/ 一个工具一目录', 'components/ 跨页复用', 'utils/ 工具函数 (apiUrl / flag / format_result)'] },
-    en: { role: 'React SPA — the whole frontend', bullet: ['pages/ — one folder per tool', 'components/ — shared widgets', 'utils/ — helpers (apiUrl / flag / format_result)'] },
+    zh: { role: 'React SPA — 整个前端',     bullet: ['pages/ 一个工具一目录', 'components/ 跨页复用', 'utils/ 工具函数 (apiUrl / flag / format_result)', 'stores/ Zustand 11 个 store (auth / settings / sessions / 等)'] },
+    en: { role: 'React SPA — the whole frontend', bullet: ['pages/ — one folder per tool', 'components/ — shared widgets', 'utils/ — helpers (apiUrl / flag / format_result)', 'stores/ — 11 Zustand stores (auth / settings / sessions / etc.)'] },
   },
   {
     name: 'server', size: '~8k LOC',
@@ -452,7 +452,8 @@ const DECISIONS: Decision[] = [
   { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/vite 装着, src/index.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/vite + a single @import "tailwindcss" in src/index.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.' },
   { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 一等公民;路由声明式;5 MB 依赖比 express 干净一个量级。',                en: 'TS-first; declarative routing; ~5MB deps vs Express noisy stack.' },
   { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
-  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。',                         en: 'Hard-linked node_modules saves disk; Turbo runs only changed packages.' },
+  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '5 个 workspace (client / server / shared / stats-build / stats-ui), 一份 pnpm-lock。硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。底层 registry 仍是 npm (registry.npmjs.org), pnpm 只是更快的客户端。', en: 'Five workspaces (client / server / shared / stats-build / stats-ui), one pnpm-lock. Hard-linked node_modules saves disk; Turbo runs only changed packages. The underlying registry is still npm (registry.npmjs.org) — pnpm is just a faster client.' },
+  { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '11 个 store (6 全局 + 5 页面级)。无 Provider, create() 返回 hook, 选 selector 拿切片。auth 走 storage 事件跨标签同步, settings/sessions 用 persist 中间件落 localStorage。打包后约 1 KB。', en: '11 stores (6 global + 5 page-local). No Provider — create() returns a hook, components select slices. auth syncs across tabs via the storage event; settings/sessions persist to localStorage via middleware. ~1 KB bundle cost.' },
   { topic: 'Static host', pick: '云服务器 nginx',   alt: 'Vercel / Netlify',      zh: '同台机 nginx + API + DB, localhost 内 hop;Vercel 这种 SaaS 跑国内打不开。',        en: 'Same VM hosts nginx + API + DB; localhost hops; Vercel SaaS is unreachable from China.' },
   { topic: 'Theme tokens', pick: 'shadcn 命名 + hex + color-mix', alt: 'oklch / Material 3 / Radix Colors', zh: '8 页双主题切换。命名跟 OSS 标准 shadcn (AI 写代码命中率高);色值 hex (调研 30+ 大厂含 Anthropic console 自己,0 家把 oklch 当主品牌 token);衍生用 color-mix(in srgb) 跟 Anthropic CDS 实战用法 (644 处) 对齐。', en: 'Dark/light across 8 pages. Naming follows shadcn (OSS standard, friendly to AI code-gen); hex values (surveyed 30+ big-co incl. Anthropic console — zero use oklch as primary brand tokens); derivations via color-mix(in srgb) aligning with Anthropic CDS (644 production uses).' },
 ];
@@ -497,6 +498,16 @@ const DETAILS: Detail[] = [
     title: 'fork / port / own 三种治理',
     zh: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream 静态资源原样托管, 只改外层包装。<strong>port</strong> (Calc / Battle / Mosaic) = 把别人的 React / HTML 重写一遍。<strong>own</strong> (其它 11 个) = 自己设计 + 实现。改 fork / port 前必须确认 upstream。</>,
     en: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream assets hosted as-is, only the outer shell is ours. <strong>port</strong> (Calc / Battle / Mosaic) = someone else's React / HTML, rewritten in this repo. <strong>own</strong> (the other 11) = designed and built here. Touching a fork or port? Check upstream first.</>,
+  },
+  {
+    title: '状态管理 — Zustand 11 个 store',
+    zh: <>全局 store 在 <code>src/stores/</code>:<code>auth_store</code> (WCA OAuth 用户)、<code>settingsStore</code> (主题 / 语言, persist)、<code>sessionStore</code> (当前 solve 会话, persist)、<code>statsStore</code> (WCA stats 查询)、<code>trainerStore</code> (训练状态, persist)、<code>recon_store</code> (复盘缓存)。页面级 store 跟着各自 page 走 (battle / calc / mosaic / viz)。模式统一:<code>create()</code> 返回 hook, 不用 Provider, 不写 reducer。auth 监听 <code>window 'storage'</code> 事件做跨标签同步。</>,
+    en: <>Global stores live in <code>src/stores/</code>: <code>auth_store</code> (WCA OAuth user), <code>settingsStore</code> (theme / lang, persisted), <code>sessionStore</code> (active solve session, persisted), <code>statsStore</code> (WCA stats query), <code>trainerStore</code> (drill state, persisted), <code>recon_store</code> (recon cache). Page-local stores live next to their pages (battle / calc / mosaic / viz). One pattern throughout: <code>create()</code> returns a hook — no Provider, no reducer. auth listens to the <code>window 'storage'</code> event for cross-tab sync.</>,
+  },
+  {
+    title: 'npm registry — 我们用 pnpm 但拉的是 npm',
+    zh: <><code>pnpm install</code> 跑的是从 <code>registry.npmjs.org</code> 下 tarball 这件事。yarn / pnpm / bun 都是同一 registry 的不同客户端, 都共享 <code>package.json</code> + <code>semver</code> + lockfile 这套 npm 定义的协议。选 pnpm 是因为硬链接 store 省盘 + Turbo cache 友好 + monorepo workspaces 体验好;但 4M+ 包 + 周下载几千亿次的护城河, 始终在 npm 那一头。</>,
+    en: <><code>pnpm install</code> still fetches tarballs from <code>registry.npmjs.org</code>. yarn / pnpm / bun are different clients of the same registry, all sharing the <code>package.json</code> + <code>semver</code> + lockfile protocol that npm defined. We pick pnpm for hard-linked store (disk savings), Turbo-cache friendliness, and good workspaces — but the moat (4M+ packages, hundreds of billions of weekly downloads) is at npm's end.</>,
   },
 ];
 
