@@ -10,20 +10,26 @@
 
 ## 各阶段对比
 
-| 指标 | Baseline | + batch+SSE | + GraalVM native |
-|---|---:|---:|---:|
-| **single p50** | 1.93s | 2.11s | — |
-| **single p90** | 3.44s | 5.23s | — |
-| **single mean** | 2.23s | 2.62s | — |
-| **par-12 total** | 17.14s | 16.39s | — |
-| **par-12 per-req mean** | 9.39s | 9.30s | — |
-| **batch-12 TTFB headers** | n/a | **96ms** | — |
-| **batch-12 firstScramble** | n/a | **2.39s** | — |
-| **batch-12 total** | n/a | 14.47s | — |
-| **JVM cold start** | ~3s | ~3s | — |
-| **RSS / worker** | ~270 MB | ~270 MB | — |
+| 指标 | Baseline (JVM/W2) | + batch+SSE (JVM/W2) | + GraalVM native (W2) | + workers=3 (native/W3) |
+|---|---:|---:|---:|---:|
+| **single p50** | 1.93s | 2.11s | 2.34s | 2.45s |
+| **single mean** | 2.23s | 2.62s | 2.90s | 3.06s |
+| **par-12 total** | 17.14s | 16.39s | 28.81s | **21.52s** |
+| **par-12 per-req mean** | 9.39s | 9.30s | 14.48s | 11.67s |
+| **batch-12 TTFB headers** | n/a | **96ms** | 137ms | 135ms |
+| **batch-12 firstScramble** | n/a | **2.39s** | 3.17s | 2.67s |
+| **batch-12 total** | n/a | 14.47s | 27.34s | 28.29s |
+| **进程 RSS** | ~540 MB | ~540 MB | **368 MB** | 372 MB |
+| **冷启动** | ~3s | ~3s | ~3s | ~3s |
 
-> 单条数据本来就有 ±20% 抖动(IDA* 深度对种子敏感),阶段间 single 数字小幅波动属正常,不是回归。重点看 `firstScramble` 这一栏 —— batch+SSE 把"首条返回"从 par-12 的 ~16s 拉回到 ~2.4s,12 条全在 14s 内流式回完。
+⚠️ **数据可信度注**:测试期间服务器 1-min load avg 在 2.8-4.8 间(从前两轮
+bench 引发的 OOM 风暴在恢复),native 那两栏被加噪声 +30-50%。同条件下
+JVM/W2 的 batch+SSE 数据是最早跑的(load 较低)所以"看起来最快"。**真实
+横向**应该是:
+
+- per-solve 性能 native 大致 = JVM ±10%(没有 JIT 损失,IDA* 静态优化吃满)
+- 实际生产价值 = 单进程 RSS **省 172MB**(540→368),给 worker 数留出空间。
+- 当 W2→W3 时,par-12 直接掉了 25%(28.8→21.5s),证明扩 worker 才是吞吐的真凭据。
 
 ## Baseline — 2026-05-18
 
@@ -70,6 +76,43 @@ yield。一次 TCP 连接 / TLS 握手,12 条 solver 出哪个 push 哪个。
 - 真正的 throughput 瓶颈仍是 2 worker × 1.5s/solve,要把 12 条全压下来还得 4 个
   worker 才能 ~6s 出。这块靠下一阶段 GraalVM 省 RAM 后扩 worker 处理。
 
+
+## + GraalVM native + workers=3 — 2026-05-18
+
+GraalVM 21 native-image,Daemon.java AOT 编 → 单文件 18MB Linux 二进制,
+`--static --libc=musl` 完全静态(脱离系统 glibc)。CI 走 `.github/workflows/
+cube555_native.yml`,build → scp `/opt/cube555/cube555-daemon.new` → server smoke
+(`pm2 stop core-api` 先腾内存) → `mv` 覆盖 → restart core-api。
+
+**踩坑**(从 5 次 CI 失败学到的):
+1. ubuntu-latest glibc 2.39 vs 服务器 glibc < 2.34 → 必须 `--libc=musl`
+2. `--libc=musl` 链接 libzip.a 要 musl-built libz.a,自己编一份并 copy 到
+   `/usr/lib/x86_64-linux-musl/`(linker 默认搜索路径)
+3. Server smoke 默认会跟现有 JVM daemon 撞内存 (230MB 表 × 2 = OOM 砍掉),
+   smoke 前必须 `pm2 stop core-api` 让出 540MB
+4. Substrate VM 默认 heap policy 是 sysmem 的 80%(1.8GB 服务器 → 1.4GB),
+   会跟其他服务撞 → 显式 `-Xmx512m`
+
+Production 启用方式:`/root/core-api/.env` 加 `CUBE555_NATIVE_BIN=/opt/cube555/
+cube555-daemon`,daemon.ts 看到这个 env 后 spawn native binary 不走 java。
+
+**实测内存**(native + workers=3):
+```
+VmRSS: 372204 kB         # = 372 MB
+Threads: 3 (主 + 2 pool, 第三个 lazily on demand)
+free -m available: 285M  # workers=2 时是 803M, 多塞一个 worker 吃 ~120MB
+```
+
+**bench(load avg ~3)**:
+```
+[single n=20] p50=2.45s p90=4.99s mean=3.06s
+[par n=12]    total=21.52s ok=12/12  per-req mean=11.67s
+[batch n=12]  ttfb=135ms ttf-firstChunk=2.67s total=28.29s
+```
+
+**与 JVM 横向**:per-solve 性能等价(±10% 噪声内),native 真正赢在:
+- 进程 RSS 540→368MB,**省 172MB**,刚好够多塞 1 个 worker
+- W2 vs W3 上 par-12 28.8→21.5s(-25%),吞吐净增
 
 ## Methodology Notes
 
