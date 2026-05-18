@@ -225,6 +225,10 @@ function wedgeShape(): THREE.Shape {
 interface BuildResult {
   pivot: THREE.Object3D;
   group: THREE.Group;
+  wallA: THREE.Mesh | null;
+  wallB: THREE.Mesh | null;
+  matA: THREE.MeshPhongMaterial | null;
+  matB: THREE.MeshPhongMaterial | null;
 }
 
 // Side-sticker insets so adjacent pieces show body color between their stickers.
@@ -271,25 +275,29 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
   // Side stickers — RAISED rounded-rect ExtrudeGeometry (/stack-style).
   // Sticker base sits at the cube face surface; the extrusion thickness
   // protrudes outward, making the sticker look like a physical raised tile.
+  let wallA: THREE.Mesh | null = null;
+  let wallB: THREE.Mesh | null = null;
+  let matA: THREE.MeshPhongMaterial | null = null;
+  let matB: THREE.MeshPhongMaterial | null = null;
   if (corner) {
-    const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
-    const matB = mkStickerMat(SQ1_COLORS[faces.sideB!]);
+    matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
+    matB = mkStickerMat(SQ1_COLORS[faces.sideB!]);
 
     // wallA on +Y face. Extrude direction +Z (in shape coords) → world +Y after rotation.
-    const wallA = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
+    wallA = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
     wallA.position.set(CORNER_FACE_CENTER, W + SIDE_OFFSET, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
     group.add(wallA);
 
     // wallB on +X face.
-    const wallB = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
+    wallB = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
     wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallB);
   } else {
     // Wedge has 1 outer face on +X side.
-    const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
-    const wallA = mkRaisedRectSticker(WEDGE_FACE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
+    matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
+    wallA = mkRaisedRectSticker(WEDGE_FACE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
     wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallA);
@@ -308,7 +316,7 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
     pivot.scale.y = -1;
   }
 
-  return { group, pivot };
+  return { group, pivot, wallA, wallB, matA, matB };
 }
 
 function mkStickerMat(color: number): THREE.MeshPhongMaterial {
@@ -446,6 +454,14 @@ interface PieceEntry {
   pivot: THREE.Object3D;
   group: THREE.Group;
   layerSign: 1 | -1;
+  /** Parity of slice operations this piece has been through. When true, the
+   * canonical (Y-rotation only) placement gets wallA/wallB on the wrong cube
+   * faces; we swap their materials to compensate. */
+  flipped: boolean;
+  wallA: THREE.Mesh | null;
+  wallB: THREE.Mesh | null;
+  matA: THREE.MeshPhongMaterial | null;
+  matB: THREE.MeshPhongMaterial | null;
 }
 
 export class Sq1Renderer {
@@ -523,9 +539,12 @@ export class Sq1Renderer {
   private buildPieces(): void {
     for (let piece = 0; piece <= 15; piece++) {
       const isTop = piece <= 7;
-      const { group, pivot } = buildPieceMesh(piece, isTop);
+      const { group, pivot, wallA, wallB, matA, matB } = buildPieceMesh(piece, isTop);
       this.cubeRoot.add(pivot);
-      this.pieces.push({ pieceId: piece, pivot, group, layerSign: isTop ? 1 : -1 });
+      this.pieces.push({
+        pieceId: piece, pivot, group, layerSign: isTop ? 1 : -1,
+        flipped: false, wallA, wallB, matA, matB,
+      });
     }
   }
 
@@ -693,6 +712,14 @@ export class Sq1Renderer {
       p.pivot.scale.z = 1;
       p.pivot.scale.y = isTop ? 1 : -1;
       p.layerSign = isTop ? 1 : -1;
+      // Canonical Y-rotation + scale.y flip puts wallA/wallB on cube faces
+      // that DON'T match the chord-perp slice rotation outcome. For flipped
+      // corners, swap the two sticker materials so the colors land on the
+      // faces cubedb shows. Wedges have a single sticker — no swap needed.
+      if (isCornerPiece(p.pieceId) && p.wallA && p.wallB && p.matA && p.matB) {
+        p.wallA.material = p.flipped ? p.matB : p.matA;
+        p.wallB.material = p.flipped ? p.matA : p.matB;
+      }
     }
     // Reset middle pieces — sliceSolved=true means BIG/SMALL are at their
     // canonical (built) positions. sliceSolved=false means BIG is flipped
@@ -724,6 +751,11 @@ export class Sq1Renderer {
     this.active = null;
     this.totalMoves = 0;
     this.finishedMoves = 0;
+    // Clear per-piece flipped parity; only meaningful relative to the path
+    // that built state. resetTo accepts a logical state (no path info) so
+    // assume canonical placement (flipped=false). Callers that need the
+    // post-slice visual should use applyMovesInstant which replays / toggles.
+    for (const p of this.pieces) p.flipped = false;
     this.applyStateInstant(state);
   }
 
@@ -848,7 +880,13 @@ export class Sq1Renderer {
         const isCorner = isCornerPiece(p.pieceId);
         probe.set(W, 0, isCorner ? -W : 0);
         probe.applyMatrix4(p.pivot.matrixWorld);
-        if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) this.attach(p.pivot, slicePivot);
+        if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) {
+          this.attach(p.pivot, slicePivot);
+          // Toggle parity — chord-perp 180° is its own inverse, so two slices
+          // restore. Used in applyStateInstant to swap corner wallA/wallB
+          // materials so canonical snap matches slice rotation orientation.
+          p.flipped = !p.flipped;
+        }
       }
       for (const m of this.middle) if (m.side === 1) this.attach(m.pivot, midSlicePivot);
       this.active = {
