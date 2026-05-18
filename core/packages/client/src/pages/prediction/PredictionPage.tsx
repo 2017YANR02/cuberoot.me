@@ -217,7 +217,7 @@ export default function PredictionPage() {
               className="pred-toc-item pred-toc-subpage"
               onClick={() => setTocOpen(false)}
             >
-              {isZh ? '运气极限 (年份滑条)' : 'Lucky Floor (year slider)'}
+              {isZh ? '"不可能更快"下界' : '"Cannot Be Faster" Floor'}
             </Link>
           </div>
 
@@ -355,12 +355,12 @@ export default function PredictionPage() {
           {/* Pointer to lucky-scramble floor */}
           <Link to="/wca/prediction/lucky" className="pred-333-deepdive-cta pred-lucky-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{isZh ? '运气下界 · 互动子页' : 'Lucky Floor · Interactive'}</div>
-              <div className="pred-333-cta-title">{isZh ? '最幸运 scramble 下的单次极限 (年份滑条)' : 'Single-Solve Floor If You Hit the Luckiest Scramble (year slider)'}</div>
+              <div className="pred-333-cta-eyebrow">{isZh ? '数学下界 · 非预测' : 'Math Floor · Not a Forecast'}</div>
+              <div className="pred-333-cta-title">{isZh ? '运气 + 手速双满下的"不可能更快"下界' : 'The "Cannot Be Faster" Lower Bound (luck × TPS both maxed)'}</div>
               <div className="pred-333-cta-sub">
                 {isZh
-                  ? '拖动年份, 看每年累积 scramble 数 + 深度分布反推的运气下界. 三阶 → 0.27 s (2 步 / TPS_ceil).'
-                  : 'Drag the year: expected minimum-depth scramble × TPS ceiling. 3x3 asymptote: 0.27 s (2 moves / TPS_ceil).'}
+                  ? '拖动年份, 看累积 scramble 数 + 深度分布算出的运气下界. 三阶渐近 → 0.27 s (2 步 / TPS_ceil). 与真实 WR 无关 — 实际受物理墙 ~1.5 s 约束.'
+                  : 'Year slider × depth distribution × TPS ceiling. 3x3 asymptote = 0.27 s (2 moves / TPS_ceil). Independent of real WRs, which are bounded by the ~1.5 s physical floor.'}
               </div>
             </div>
             <div className="pred-333-cta-arrow">→</div>

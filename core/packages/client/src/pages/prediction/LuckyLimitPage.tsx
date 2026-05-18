@@ -162,12 +162,12 @@ export default function LuckyLimitPage() {
 
       <article className="pred-article" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 28px 80px' }}>
         <h1 className="pred-title">
-          {isZh ? '运气极限: 最幸运 scramble 下的单次成绩' : 'Lucky-Scramble Floor: Single-Solve Limits'}
+          {isZh ? '运气极限: 数学上的"不可能更快"下界' : 'Lucky-Scramble Floor: The "Cannot Be Faster" Lower Bound'}
         </h1>
         <p className="pred-subtitle">
           {isZh
-            ? '三阶最少接受 2 步,二阶最少 1 步;每年比赛累积越多,期望最幸运 scramble 越短;TPS 顶到生理极限,得单次时间下界.拖动年份看演化.'
-            : 'Min WCA depth = 2 for 3x3, 1 for 2x2/Pyraminx/Skewb. More cumulative scrambles → smaller expected min depth. Time = depth / TPS_ceiling + setup. Drag the year to see the trajectory.'}
+            ? '本页不是预测当年 WR. 给出的是"假设抽中最幸运 scramble + 手速顶到生理极限"两个独立极限叠加的数学下界. 真实 WR 仍受物理墙 (M/TPS+R ≈ 1.5–3 s)、scrambler 工程下界 (实际 17–25 步 scramble) 和识别/反应噪声约束 — 这条下界比真实 WR 低很多, 仅用于回答"理论上不可能更快是多少".'
+            : 'Not a year-by-year WR prediction. This shows the math floor from combining two independent maxima: luckiest possible scramble AND TPS at the physiological ceiling. Real WRs are bounded by the physical floor (M/TPS+R ≈ 1.5–3 s), the scrambler engineering floor (real scrambles are 17–25 moves), and recognition/reaction noise — so this floor is far below real WRs and only answers "what is the absolute lower bound."'}
         </p>
 
         {/* Year slider */}
@@ -210,12 +210,16 @@ export default function LuckyLimitPage() {
         {row333 && lucky333 && (
           <section className="lucky-headline">
             <div className="lucky-headline-left">
-              <div className="lucky-headline-eyebrow">{isZh ? '三阶魔方' : '3x3 Cube'}</div>
+              <div className="lucky-headline-eyebrow">
+                {isZh ? '三阶 · 数学下界 (非预测)' : '3x3 · Math Floor (not a forecast)'}
+              </div>
               <div className="lucky-headline-time">
                 {formatVal(row333.timeCeil, row333.ev.scale)}
               </div>
               <div className="lucky-headline-sub">
-                {isZh ? '下界 (TPS_ceil 17)' : 'Floor (TPS_ceil 17)'}
+                {isZh
+                  ? `${row333.depthClamped.toFixed(1)} 步 / 17 TPS + 0.15 s · 实际 WR 受 ~1.5 s 物理墙约束`
+                  : `${row333.depthClamped.toFixed(1)} moves / 17 TPS + 0.15 s · real WR bounded by ~1.5 s physical floor`}
               </div>
             </div>
             <div className="lucky-headline-right">
