@@ -80,6 +80,7 @@ const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 // NOTE: /prediction — 3x3 速拧极限预测
 const PredictionPage = lazy(() => import('./pages/prediction/PredictionPage'));
 const Prediction333Page = lazy(() => import('./pages/prediction/Prediction333Page'));
+const LuckyLimitPage = lazy(() => import('./pages/prediction/LuckyLimitPage'));
 // NOTE: Mosaic — 魔方马赛克生成器（port of Roman-/mosaic）
 const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
 // NOTE: Memo — 记忆类工具子区
@@ -315,6 +316,7 @@ function App() {
         <Route path="/wca/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />
         <Route path="/wca/prediction/333" element={<Suspense fallback={<div>Loading...</div>}><Prediction333Page /></Suspense>} />
         <Route path="/wca/prediction/333/:sectionId" element={<Suspense fallback={<div>Loading...</div>}><Prediction333Page /></Suspense>} />
+        <Route path="/wca/prediction/lucky" element={<Suspense fallback={<div>Loading...</div>}><LuckyLimitPage /></Suspense>} />
         <Route path="/wca/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
         <Route path="/wca/comp/sources" element={<Suspense fallback={<div>Loading...</div>}><CompSourcesPage /></Suspense>} />
         <Route path="/wca/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />
