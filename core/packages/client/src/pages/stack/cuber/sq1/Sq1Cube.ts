@@ -1,398 +1,64 @@
 /**
- * Sq1Cube — three.js Group that visualizes a Square-1 puzzle as a cube.
+ * Sq1Cube — three.js Group rendering a Square-1 puzzle.
  *
- * Each piece is a vertical prism whose top-down footprint extends to the cube
- * boundary. Corners are pentagons with a tip at the cube corner; edges are
- * trapezoids flush against a cube face. Solved state therefore looks like a
- * 2-cube-half × 2-cube-half × cube_full prism (i.e. a cube).
+ * 16 piece pivots (8 top / 8 bot) + 2 middle slabs (asymmetric trapezoids) +
+ * 6 floating hint tiles, all children of `this`.
  *
- * State machine maps slot indices to angles via slotCenterAngle. Geometry maps
- * each piece's LOCAL +X to its wedge midline; the actual cube-corner / cube-face
- * feature sits at LOCAL -15° (corner) or LOCAL +15° (edge) due to the SQ1's
- * 30°-slot grid being offset by 15° from cube-face/diagonal directions.
+ * Piece pivot is the unit of identity: its quaternion + position is the truth
+ * for "where is this piece right now in world space". scale.y = -1 on bot
+ * pivots is set once at build and never touched again — quaternion composition
+ * stays in SO(3), no decompose ambiguity. (See /demo/sq1 refactor commit
+ * 6b13fca6c for the root cause analysis.)
+ *
+ * Move semantics:
+ *   - turn(t,b): rotate top pivots by -t·30° / bot pivots by +b·30° around +Y.
+ *   - slice    : rotate all east-of-chord pivots + BIG mid 180° around chord-perp axis.
+ *
+ * Sq1Cube exposes `beginMove` / `finishMove` for the Sq1Twister to drive
+ * animations via the global tweener. `applyStateInstant` / `applyMovesInstant`
+ * are the fast paths used for reset/caret-jump.
  */
 import * as THREE from 'three';
 import {
-  SQ1_CUBE_HALF,
-  SQ1_LAYER_H,
-  SQ1_EQUATOR_H,
-  SQ1_LAYER_Y,
-  SQ1_GAP,
-  SQ1_STICKER_LIFT,
-  SQ1_STICKER_BORDER,
-  SQ1_BODY_MAT,
-  stickerMaterial,
-  buildCornerBody,
-  buildEdgeBody,
-  buildSquareSticker,
-  buildRectSticker,
-  buildEquatorSlabBox,
-} from './geometry';
+  buildPieceMesh,
+  buildMiddlePair,
+  placementForSlot,
+  isCornerPiece,
+  HALF_MID,
+  W,
+  WEDGE_HALF_CHORD,
+  SLICE_AXIS,
+} from './sq1Geometry';
 import {
-  DEFAULT_SQ1_COLORS,
-  SQ1_FACE_KEYS,
-  pieceColors,
-  pieceInfo,
-} from './state';
-
-const DEG = Math.PI / 180;
-const SLOT_DEG = 30;
-const SLOT_0_START_DEG = 90;
-
-/** Slot center offset (in slot units) for a given piece id (0..15).
- *  Top layer pattern (per SOLVED_PIECES): corner / edge / corner / edge / ...
- *  Bottom layer pattern: edge / corner / edge / corner / ... (offset by half a
- *  slot — so bottom slot 0 is an edge, NOT a corner). Each piece occupies
- *  `local * 1.5 + offset` slot units; offset = 1 for top (corner-first wedge
- *  midline) or 0.5 for bottom (edge-first wedge midline). */
-function pieceSlotCenter(pieceId: number): number {
-  const isTop = pieceId <= 7;
-  const local = isTop ? pieceId : pieceId - 8;
-  return local * 1.5 + (isTop ? 1 : 0.5);
-}
-
-/** Map (slot center, layer) → rotY (three.js Y-axis rotation in radians). */
-export function slotCenterAngle(slotCenter: number, layer: 'top' | 'bottom'): number {
-  const baseDeg = SLOT_0_START_DEG + slotCenter * SLOT_DEG;
-  const deg = layer === 'top' ? baseDeg : -baseDeg;
-  return deg * DEG;
-}
-
-// ─── shared piece geometries (built once) ────────────────────────────────
-let _cornerBody: THREE.BufferGeometry | null = null;
-let _edgeBody: THREE.BufferGeometry | null = null;
-let _cornerTopSticker: THREE.BufferGeometry | null = null;
-let _edgeTopSticker: THREE.BufferGeometry | null = null;
-let _cornerSideSticker: THREE.BufferGeometry | null = null;
-let _edgeSideSticker: THREE.BufferGeometry | null = null;
-
-function cornerBody(): THREE.BufferGeometry {
-  if (!_cornerBody) _cornerBody = buildCornerBody();
-  return _cornerBody;
-}
-function edgeBody(): THREE.BufferGeometry {
-  if (!_edgeBody) _edgeBody = buildEdgeBody();
-  return _edgeBody;
-}
-/** Square sticker for a corner-piece top: side ≈ 2/3 cube-half (the corner cell of 3×3). */
-function cornerTopSticker(): THREE.BufferGeometry {
-  if (!_cornerTopSticker) {
-    const side = (SQ1_CUBE_HALF * 2) / 3;
-    _cornerTopSticker = buildSquareSticker(side, SQ1_STICKER_BORDER);
-  }
-  return _cornerTopSticker;
-}
-/** Square sticker for an edge-piece top: same size as corner cell (cubed grid). */
-function edgeTopSticker(): THREE.BufferGeometry {
-  if (!_edgeTopSticker) {
-    const side = (SQ1_CUBE_HALF * 2) / 3;
-    _edgeTopSticker = buildSquareSticker(side, SQ1_STICKER_BORDER);
-  }
-  return _edgeTopSticker;
-}
-/** Side sticker rectangle for corner / edge — sized to a 3×3-grid cell. */
-function cornerSideSticker(): THREE.BufferGeometry {
-  if (!_cornerSideSticker) {
-    const side = (SQ1_CUBE_HALF * 2) / 3;
-    _cornerSideSticker = buildRectSticker(side, SQ1_LAYER_H, SQ1_STICKER_BORDER);
-  }
-  return _cornerSideSticker;
-}
-function edgeSideSticker(): THREE.BufferGeometry {
-  if (!_edgeSideSticker) {
-    const side = (SQ1_CUBE_HALF * 2) / 3;
-    _edgeSideSticker = buildRectSticker(side, SQ1_LAYER_H, SQ1_STICKER_BORDER);
-  }
-  return _edgeSideSticker;
-}
-
-// ─── Sq1Piece ──────────────────────────────────────────────────────────────
-export class Sq1Piece extends THREE.Group {
-  pieceId: number;
-  isCorner: boolean;
-  initialLayer: 'top' | 'bottom';
-  currentLayer: 'top' | 'bottom';
-  rotY: number = 0;
-  slashCount: number = 0;
-  body: THREE.Mesh;
-  topSticker: THREE.Mesh;
-  outerStickers: THREE.Mesh[];
-
-  constructor(pieceId: number, layer: 'top' | 'bottom', stickerColors: { top: string; sides: string[] }) {
-    super();
-    this.pieceId = pieceId;
-    this.isCorner = pieceInfo(pieceId).isCorner;
-    this.initialLayer = layer;
-    this.currentLayer = layer;
-
-    const layerY = layer === 'top' ? +SQ1_LAYER_Y : -SQ1_LAYER_Y;
-    const layerSign = layer === 'top' ? +1 : -1;
-
-    // Solved-state rotY — used to counter-rotate stickers so they appear
-    // axis-aligned in world space (not as diamonds).
-    const ang0 = slotCenterAngle(pieceSlotCenter(pieceId), layer);
-
-    // ─── body ───────────────────────────────────────────────────────────
-    const bodyGeom = this.isCorner ? cornerBody() : edgeBody();
-    this.body = new THREE.Mesh(bodyGeom, SQ1_BODY_MAT);
-    this.body.position.y = layerY;
-    this.add(this.body);
-
-    // ─── top sticker (or "bottom" sticker for bottom-layer pieces) ──────
-    // Position: at the top of the piece body (for top layer) or bottom (for bottom layer).
-    // The cube corner is at LOCAL -15° (for corner) or LOCAL +15° (for edge).
-    // Sticker sits at the 3×3-grid cell center. For corner, cell center is at distance
-    // 2/3 cubeHalf along cube-corner direction = local -15°. For edge, cell center is
-    // along cube-face direction = local +15°.
-    const cellOff = (SQ1_CUBE_HALF * 2) / 3;
-    // For ALL top stickers we counter-rotate by -ang0 around piece-local Y so
-    // the sticker appears world-axis-aligned (sides along world X / Z) after
-    // the piece's own rotY rotation. This makes the top face look like a clean
-    // 3×3 grid of axis-aligned squares (per cubedb).
-    if (this.isCorner) {
-      const cornerOffsetAng = -15 * DEG;  // cube corner direction in piece local
-      const dist = cellOff * Math.SQRT2;
-      const stickerGeom = cornerTopSticker();
-      this.topSticker = new THREE.Mesh(stickerGeom, stickerMaterial(stickerColors.top));
-      this.topSticker.position.set(
-        dist * Math.cos(cornerOffsetAng),
-        layerY + layerSign * (SQ1_LAYER_H / 2 - SQ1_GAP / 2 + SQ1_STICKER_LIFT),
-        dist * Math.sin(cornerOffsetAng),
-      );
-      this.topSticker.rotation.x = layerSign > 0 ? -Math.PI / 2 : +Math.PI / 2;
-      this.topSticker.rotation.z = -ang0;  // counter-rotate so sticker is world-axis-aligned
-    } else {
-      const edgeOffsetAng = -15 * DEG;
-      const dist = cellOff;  // cell center is exactly 2/3 s from origin
-      const stickerGeom = edgeTopSticker();
-      this.topSticker = new THREE.Mesh(stickerGeom, stickerMaterial(stickerColors.top));
-      this.topSticker.position.set(
-        dist * Math.cos(edgeOffsetAng),
-        layerY + layerSign * (SQ1_LAYER_H / 2 - SQ1_GAP / 2 + SQ1_STICKER_LIFT),
-        dist * Math.sin(edgeOffsetAng),
-      );
-      this.topSticker.rotation.x = layerSign > 0 ? -Math.PI / 2 : +Math.PI / 2;
-      this.topSticker.rotation.z = -ang0;
-    }
-    this.add(this.topSticker);
-
-    // ─── outer side stickers ────────────────────────────────────────────
-    // Corner: 2 stickers (one per cube face meeting at the corner).
-    // Cube face A normal (local angle -60° for corner): plane 0.5 x - 0.866 z = s.
-    //   Sticker center on this face at the 3×3-cell middle.
-    // Cube face B normal (local +30° for corner): plane 0.866 x + 0.5 z = s.
-    this.outerStickers = [];
-    if (this.isCorner) {
-      // Cell centers on each face, in WORLD, are at:
-      //   Face A (was world x=s for NE corner): (s, +y_mid, 2/3 s)
-      //   Face B (was world z=s for NE corner): (2/3 s, +y_mid, s)
-      // Generic: at face-center cell, which is at distance 2/3 s along the face's
-      // perpendicular direction (along the cube's face plane).
-      // In LOCAL frame:
-      //   Face A normal at local -60°. Cell center on face A: at the face's "inward"
-      //     middle, offset by 2/3 s along the face plane (perpendicular to local -60°).
-      //     The "face A in-plane direction" is local angle -60° + 90° = 30°.
-      //     Center position = (project onto face A) + (offset along face).
-      //     Face A passes through cube corner at local (1.366 s, -0.366 s).
-      //     From corner, walk 2/3 s along face A in the direction of cube center (away
-      //     from the corner along the face). The direction from corner toward the
-      //     inside of cube along face A: tangent of face A is at local angle -60°+90° = 30°.
-      //     Walk in -30°-angle direction (away from corner toward face center).
-      //   Compute: center = corner + (-2/3 s) * (cos 30°, sin 30°)
-      //          = (1.366 - 2/3 * 0.866, -0.366 - 2/3 * 0.5) s
-      //          = (1.366 - 0.577, -0.366 - 0.333) s
-      //          = (0.789, -0.699) s
-      // Hmm but we want the sticker on the OUTSIDE of the face, slightly extruded.
-      // Place center at the cell middle (on the face plane), then offset by SQ1_STICKER_LIFT
-      // along the outward normal.
-      const halfDeg = 30;  // half-angle from cube corner direction to face normal
-      const cornerLocalAng = -15 * DEG;
-      // Face A normal at cornerLocalAng - halfDeg, Face B at cornerLocalAng + halfDeg.
-      // Walking from cube corner toward the next-inner cell on each face:
-      //   Face A (lower normal angle): tangent = nAng - π/2 (CW perpendicular).
-      //   Face B (higher normal angle): tangent = nAng + π/2 (CCW perpendicular).
-      const faceNormalAngs = [
-        cornerLocalAng - halfDeg * DEG,
-        cornerLocalAng + halfDeg * DEG,
-      ];
-      const cornerX = SQ1_CUBE_HALF * Math.SQRT2 * Math.cos(cornerLocalAng);
-      const cornerZ = SQ1_CUBE_HALF * Math.SQRT2 * Math.sin(cornerLocalAng);
-      for (let i = 0; i < 2; i++) {
-        const nAng = faceNormalAngs[i];
-        const tangAng = nAng + (i === 0 ? -Math.PI / 2 : +Math.PI / 2);
-        // Offset from cube corner to corner-cell center on this face = cubeHalf / 3
-        // (cell side is 2/3 cubeHalf; corner cell center is half a cell from the cube
-        // corner along the face tangent).
-        const offset = SQ1_CUBE_HALF / 3;
-        const centerX = cornerX + offset * Math.cos(tangAng);
-        const centerZ = cornerZ + offset * Math.sin(tangAng);
-        // Push outward by SQ1_STICKER_LIFT along normal
-        const liftX = SQ1_STICKER_LIFT * Math.cos(nAng);
-        const liftZ = SQ1_STICKER_LIFT * Math.sin(nAng);
-        const sticker = new THREE.Mesh(cornerSideSticker(), stickerMaterial(stickerColors.sides[i]));
-        sticker.position.set(centerX + liftX, layerY, centerZ + liftZ);
-        // Orient: default normal +Z. Want normal at angle nAng around Y.
-        // Default extrude is +Z. To make extrude direction = (cos nAng, 0, sin nAng) at Y axis,
-        // we apply Ry such that local +Z → desired direction.
-        // Ry(θ): +Z → (sin θ, 0, cos θ). Want = (cos nAng, 0, sin nAng).
-        // → sin θ = cos nAng, cos θ = sin nAng → θ = π/2 - nAng.
-        sticker.rotation.y = Math.PI / 2 - nAng;
-        this.outerStickers.push(sticker);
-        this.add(sticker);
-      }
-    } else {
-      // Edge: 1 sticker on its single cube face. Face normal at local -15°.
-      const faceNormalAng = -15 * DEG;
-      // Face plane: x cos(15°) + z sin(15°) = s. Cell center on face at the middle (where
-      // the face meets the edge piece's "axis" extension), located at distance s along
-      // the normal direction.
-      const centerX = SQ1_CUBE_HALF * Math.cos(faceNormalAng);
-      const centerZ = SQ1_CUBE_HALF * Math.sin(faceNormalAng);
-      const liftX = SQ1_STICKER_LIFT * Math.cos(faceNormalAng);
-      const liftZ = SQ1_STICKER_LIFT * Math.sin(faceNormalAng);
-      const sticker = new THREE.Mesh(edgeSideSticker(), stickerMaterial(stickerColors.sides[0]));
-      sticker.position.set(centerX + liftX, layerY, centerZ + liftZ);
-      sticker.rotation.y = Math.PI / 2 - faceNormalAng;
-      this.outerStickers.push(sticker);
-      this.add(sticker);
-    }
-
-    // Initial rotation: place piece at its solved slot.
-    const ang = slotCenterAngle(pieceSlotCenter(pieceId), layer);
-    this.rotY = ang;
-    this.applyTransform();
-
-    this.matrixAutoUpdate = false;
-  }
-
-  applyTransform(): void {
-    const qY = new THREE.Quaternion().setFromAxisAngle(_AXIS_Y, this.rotY);
-    const q = new THREE.Quaternion().copy(qY);
-    for (let i = 0; i < this.slashCount; i++) {
-      q.premultiply(_QUAT_X_PI);
-    }
-    this.quaternion.copy(q);
-    this.position.set(0, 0, 0);
-    this.updateMatrix();
-  }
-}
-
-const _AXIS_Y = new THREE.Vector3(0, 1, 0);
-const _AXIS_X = new THREE.Vector3(1, 0, 0);
-const _QUAT_X_PI = new THREE.Quaternion().setFromAxisAngle(_AXIS_X, Math.PI);
-void _AXIS_X;  // keep imported
-
-// ─── Sq1Cube ──────────────────────────────────────────────────────────────
+  type Sq1State,
+  type Sq1Move,
+  solvedSq1,
+  applySq1Move,
+  SOLVED_PIECES,
+  moveToString,
+} from './sq1State';
 import Sq1Twister from './Sq1Twister';
 
-export default class Sq1Cube extends THREE.Group {
-  pieces: Sq1Piece[];
-  equator: THREE.Mesh[];
-  twister: Sq1Twister;
-  callbacks: (() => void)[] = [];
-  dirty = true;
-  readonly puzzleType = 'sq1' as const;
-  order: number = 0;
-  history = new Sq1History();
-
-  constructor() {
-    super();
-    this.matrixAutoUpdate = false;
-
-    this.pieces = [];
-    const scheme = SQ1_FACE_KEYS.map((k) => DEFAULT_SQ1_COLORS[k]);
-    for (let id = 0; id <= 7; id++) {
-      const colors = pieceColors(id, scheme);
-      const p = new Sq1Piece(id, 'top', colors);
-      this.pieces.push(p);
-      this.add(p);
-    }
-    for (let id = 8; id <= 15; id++) {
-      const colors = pieceColors(id, scheme);
-      const p = new Sq1Piece(id, 'bottom', colors);
-      this.pieces.push(p);
-      this.add(p);
-    }
-
-    this.equator = buildEquator(scheme);
-    for (const e of this.equator) this.add(e);
-
-    this.twister = new Sq1Twister(this);
-    this.updateMatrix();
-  }
-
-  pieceById(id: number): Sq1Piece {
-    return this.pieces[id];
-  }
-
-  reset(): void {
-    for (const p of this.pieces) {
-      p.rotY = slotCenterAngle(pieceSlotCenter(p.pieceId), p.initialLayer);
-      p.slashCount = 0;
-      p.currentLayer = p.initialLayer;
-      p.applyTransform();
-    }
-    for (const e of this.equator) {
-      const initial = (e.userData as { initialRotY: number; initialPos: THREE.Vector3 });
-      e.rotation.set(0, initial.initialRotY, 0);
-      e.position.copy(initial.initialPos);
-      e.updateMatrix();
-    }
-    this.dirty = true;
-  }
-
-  get complete(): boolean {
-    for (const p of this.pieces) {
-      const expected = slotCenterAngle(pieceSlotCenter(p.pieceId), p.initialLayer);
-      const delta = ((p.rotY - expected) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-      if (Math.min(delta, 2 * Math.PI - delta) > 0.05) return false;
-      if (p.slashCount % 2 !== 0) return false;
-      if (p.currentLayer !== p.initialLayer) return false;
-    }
-    return true;
-  }
-
-  dispose(): void {
-    this.pieces.length = 0;
-    this.equator.length = 0;
-    this.callbacks.length = 0;
-  }
+export interface PieceEntry {
+  pieceId: number;
+  pivot: THREE.Object3D;
+  group: THREE.Group;
+  layerSign: 1 | -1;
 }
 
-/** Two equator slabs (left/right halves) sized to fit inside the cube. */
-function buildEquator(scheme: string[]): THREE.Mesh[] {
-  const slabW = SQ1_CUBE_HALF - SQ1_GAP / 2; // each slab spans half cube width along X
-  const slabD = SQ1_CUBE_HALF * 2 - SQ1_GAP; // full cube depth along Z
-  const slabH = SQ1_EQUATOR_H - SQ1_GAP;
-  const cellOff = (SQ1_CUBE_HALF * 2) / 3;
-  const slabs: THREE.Mesh[] = [];
+export interface MiddleEntry {
+  pivot: THREE.Object3D;
+  side: 1 | -1;
+}
 
-  for (const side of ['left', 'right'] as const) {
-    const sign = side === 'right' ? +1 : -1;
-    const slab = new THREE.Mesh(buildEquatorSlabBox(slabW, slabH, slabD), SQ1_BODY_MAT);
-    slab.position.set(sign * slabW / 2, 0, 0);
-    slab.matrixAutoUpdate = false;
-    slab.userData = { initialRotY: 0, initialPos: slab.position.clone(), side };
-    slab.updateMatrix();
-    // F sticker on +Z face (1 sticker for each slab covering middle of front face)
-    const fGeom = buildRectSticker(cellOff, SQ1_EQUATOR_H * 0.85, SQ1_STICKER_BORDER);
-    const fSticker = new THREE.Mesh(fGeom, stickerMaterial(scheme[3])); // F = red
-    fSticker.position.set(sign * cellOff / 2 - sign * slabW / 2, 0, slabD / 2 + SQ1_STICKER_LIFT);
-    slab.add(fSticker);
-    // B sticker on -Z face
-    const bSticker = new THREE.Mesh(fGeom, stickerMaterial(scheme[1])); // B = orange
-    bSticker.position.set(sign * cellOff / 2 - sign * slabW / 2, 0, -slabD / 2 - SQ1_STICKER_LIFT);
-    bSticker.rotation.y = Math.PI;
-    slab.add(bSticker);
-    // Outer side sticker (R on right slab, L on left slab)
-    const sideGeom = buildRectSticker(cellOff, SQ1_EQUATOR_H * 0.85, SQ1_STICKER_BORDER);
-    const sideSticker = new THREE.Mesh(sideGeom, stickerMaterial(scheme[side === 'right' ? 2 : 0]));
-    sideSticker.position.set(sign * slabW / 2 + sign * SQ1_STICKER_LIFT, 0, 0);
-    sideSticker.rotation.y = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
-    slab.add(sideSticker);
-    slabs.push(slab);
-  }
-  return slabs;
+/** One piece's animation plan for a single move. delta is applied as
+ *  `pivot.quat = delta · current; pivot.pos = delta · current_pos`. */
+export interface PieceAnim {
+  pivot: THREE.Object3D;
+  startQuat: THREE.Quaternion;
+  endQuat: THREE.Quaternion;
+  startPos: THREE.Vector3;
+  endPos: THREE.Vector3;
 }
 
 export class Sq1History {
@@ -406,6 +72,170 @@ export class Sq1History {
     this.moves.length = 0;
     this.redoStack.length = 0;
   }
+  record(move: string): void {
+    this.moves.push(move);
+    this.redoStack.length = 0;
+  }
 }
 
-export { pieceSlotCenter };
+export default class Sq1Cube extends THREE.Group {
+  pieces: PieceEntry[] = [];
+  middle: MiddleEntry[] = [];
+  state: Sq1State = solvedSq1();
+  callbacks: (() => void)[] = [];
+  dirty = true;
+  readonly puzzleType = 'sq1' as const;
+  order: number = 0;
+  history = new Sq1History();
+  twister: Sq1Twister;
+
+  constructor() {
+    super();
+
+    for (let piece = 0; piece <= 15; piece++) {
+      const isTop = piece <= 7;
+      const { group, pivot } = buildPieceMesh(piece, isTop);
+      this.add(pivot);
+      this.pieces.push({ pieceId: piece, pivot, group, layerSign: isTop ? 1 : -1 });
+    }
+
+    const { big, small } = buildMiddlePair();
+    this.add(big);
+    this.add(small);
+    this.middle.push({ pivot: big, side: 1 });
+    this.middle.push({ pivot: small, side: -1 });
+
+    this.applyStateInstant(this.state);
+    this.twister = new Sq1Twister(this);
+  }
+
+  pieceById(id: number): PieceEntry | undefined {
+    return this.pieces.find((p) => p.pieceId === id);
+  }
+
+  /** Snap every piece to its canonical slot pose given the discrete state. */
+  applyStateInstant(state: Sq1State): void {
+    this.state = state;
+    const pieceSlot = new Map<number, number>();
+    for (let s = 0; s < 24; s++) {
+      if (!pieceSlot.has(state.pieces[s])) pieceSlot.set(state.pieces[s], s);
+    }
+    for (const p of this.pieces) {
+      const slot = pieceSlot.get(p.pieceId);
+      if (slot === undefined) continue;
+      const { angleRad, isTop } = placementForSlot(slot, isCornerPiece(p.pieceId));
+      p.pivot.position.set(0, isTop ? HALF_MID : -HALF_MID, 0);
+      p.pivot.rotation.set(0, angleRad, 0);
+      p.pivot.quaternion.setFromEuler(p.pivot.rotation);
+      p.pivot.scale.x = 1;
+      p.pivot.scale.z = 1;
+      p.pivot.scale.y = isTop ? 1 : -1;
+      p.layerSign = isTop ? 1 : -1;
+    }
+    for (const m of this.middle) {
+      m.pivot.position.set(0, 0, 0);
+      if (m.side === 1 && !state.sliceSolved) {
+        m.pivot.quaternion.setFromAxisAngle(SLICE_AXIS, Math.PI);
+      } else {
+        m.pivot.quaternion.identity();
+      }
+    }
+    this.dirty = true;
+  }
+
+  reset(): void {
+    this.applyStateInstant(solvedSq1());
+  }
+
+  /** Compute the per-piece animation plan for a move. Caller (Sq1Twister)
+   *  tweens between startQuat/Pos → endQuat/Pos and then calls finishMove. */
+  beginMove(move: Sq1Move): PieceAnim[] {
+    const anims: PieceAnim[] = [];
+    if (move.kind === 'turn') {
+      const topDelta = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 1, 0), -(move.top ?? 0) * (Math.PI / 6),
+      );
+      const botDelta = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 1, 0), (move.bot ?? 0) * (Math.PI / 6),
+      );
+      for (const p of this.pieces) {
+        const delta = p.pivot.position.y > 0 ? topDelta : botDelta;
+        anims.push(this._makeAnim(p.pivot, delta));
+      }
+    } else {
+      const sliceDelta = new THREE.Quaternion().setFromAxisAngle(SLICE_AXIS, Math.PI);
+      const probe = new THREE.Vector3();
+      for (const p of this.pieces) {
+        // pivot.matrix is the piece's transform IN CUBE-LOCAL frame
+        // (Sq1Cube is rotated by world.scene; matrixWorld would include that
+        // rotation and break the east/west chord test).
+        p.pivot.updateMatrix();
+        const isCorner = isCornerPiece(p.pieceId);
+        probe.set(W, 0, isCorner ? -W : 0);
+        probe.applyMatrix4(p.pivot.matrix);
+        if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) {
+          anims.push(this._makeAnim(p.pivot, sliceDelta));
+        }
+      }
+      for (const m of this.middle) {
+        if (m.side === 1) anims.push(this._makeAnim(m.pivot, sliceDelta));
+      }
+    }
+    return anims;
+  }
+
+  /** Snap pivots to end pose, update discrete state, record history. */
+  finishMove(anims: PieceAnim[], move: Sq1Move): void {
+    for (const a of anims) {
+      a.pivot.quaternion.copy(a.endQuat);
+      a.pivot.position.copy(a.endPos);
+    }
+    this.state = applySq1Move(this.state, move);
+    this.history.record(moveToString(move));
+    this.dirty = true;
+    for (const cb of this.callbacks) cb();
+  }
+
+  /** Instant version: snap end pose without animating. */
+  applyMoveInstant(move: Sq1Move): void {
+    const anims = this.beginMove(move);
+    this.finishMove(anims, move);
+  }
+
+  /** Reset to solved and replay moves at once (no animation). */
+  applyMovesInstant(moves: Sq1Move[]): void {
+    this.applyStateInstant(solvedSq1());
+    for (const move of moves) this.applyMoveInstant(move);
+  }
+
+  get complete(): boolean {
+    if (!this.state.sliceSolved) return false;
+    for (let i = 0; i < 24; i++) {
+      if (this.state.pieces[i] !== SOLVED_PIECES[i]) return false;
+    }
+    return true;
+  }
+
+  dispose(): void {
+    this.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.geometry?.dispose();
+        const mat = mesh.material;
+        if (Array.isArray(mat)) for (const m of mat) m.dispose();
+        else mat?.dispose();
+      }
+    });
+    this.pieces.length = 0;
+    this.middle.length = 0;
+    this.callbacks.length = 0;
+  }
+
+  private _makeAnim(pivot: THREE.Object3D, delta: THREE.Quaternion): PieceAnim {
+    const startQuat = pivot.quaternion.clone();
+    const endQuat = delta.clone().multiply(startQuat);
+    const startPos = pivot.position.clone();
+    const endPos = startPos.clone().applyQuaternion(delta);
+    return { pivot, startQuat, endQuat, startPos, endPos };
+  }
+}

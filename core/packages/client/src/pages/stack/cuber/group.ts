@@ -7,6 +7,14 @@ import tweener, { Tween } from "./tweener";
 
 export default class CubeGroup extends THREE.Group {
   public static frames = 30;
+
+  /** Tween duration formula shared with sq1: scales sub-linearly with the move
+   *  magnitude `d` (in 90° units). 90° = frames; 180° = ~1.33×frames; 30° =
+   *  0.5×frames. Sq1Twister reads this so the two animations stay in lockstep
+   *  if anyone retunes the curve. */
+  static tweenDuration(d: number): number {
+    return CubeGroup.frames * (2 - 2 / (d + 1));
+  }
   public static readonly AXIS_VECTOR: { [key: string]: THREE.Vector3 } = {
     a: new THREE.Vector3(1, 1, 1),
     x: new THREE.Vector3(-1, 0, 0),
