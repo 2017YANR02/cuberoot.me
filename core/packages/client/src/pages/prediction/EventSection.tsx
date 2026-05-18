@@ -4,6 +4,25 @@ import { formatVal, milestonePredictions, toDisplay, toDisplayAvg, type EventMet
 import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import TheoreticalLimitView from './TheoreticalLimitView';
+import { Longform } from './components/Longform';
+import { HISTORY_DETAIL_EN } from './data/longform/history_detail';
+import { MATH_DETAIL_EN } from './data/longform/math_detail';
+import { CFOP_DETAIL_EN } from './data/longform/cfop_detail';
+import { METHODS_HARDWARE_EN } from './data/longform/methods_hardware';
+import { BIOMECH_TRAINING_EN } from './data/longform/biomech_training';
+import { CUBERS_COMMUNITY_EN } from './data/longform/cubers_community';
+import { STATS_FORECAST_EN } from './data/longform/stats_forecast';
+import { ALGORITHMS_CATALOG_EN } from './data/longform/algorithms_catalog';
+import { FMC_EVENTS_EN } from './data/longform/fmc_events';
+import { ENGINEERING_EN } from './data/longform/engineering';
+import { WR_SLOWMO_EN } from './data/longform/wr_slowmo';
+import { GROUP_THEORY_ADV_EN } from './data/longform/group_theory_adv';
+import { SOLVER_SOFTWARE_EN } from './data/longform/solver_software';
+import { COMPETITIONS_DETAIL_EN } from './data/longform/competitions_detail';
+import { AI_ML_EN } from './data/longform/ai_ml';
+import { PSYCHOLOGY_EN } from './data/longform/psychology';
+import { RELATED_PUZZLES_EN } from './data/longform/related_puzzles';
+import { HISTORY_EXTENDED_EN } from './data/longform/history_extended';
 
 interface EventData {
   wr_by_year: Array<{ year: number; wr_single: number | null; wr_avg: number | null; solves: number }>;
@@ -416,6 +435,36 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
         yFormat={(v) => v >= 1 ? Math.round(v).toLocaleString() : v.toFixed(0)}
       />
       </details>
+
+      {event.id === '333' && !isZh && (
+        <div className="pred-333-deepdive">
+          <h3>Deep Dive: 3x3 (English longform, ~240k words)</h3>
+          <p style={{ color: 'var(--muted-foreground)', fontSize: '13px' }}>
+            The 18-chapter longform below covers history, methods, mathematics, hardware, biomechanics, training,
+            top cubers, statistical modeling, algorithms, FMC/OH/BLD, engineering, slow-motion WR analysis,
+            advanced group theory, solver software, every WCA World Championship, AI/ML research, psychology,
+            related WCA puzzles, and extended cultural history of the cube.
+          </p>
+          <Longform text={HISTORY_DETAIL_EN} />
+          <Longform text={HISTORY_EXTENDED_EN} />
+          <Longform text={COMPETITIONS_DETAIL_EN} />
+          <Longform text={WR_SLOWMO_EN} />
+          <Longform text={MATH_DETAIL_EN} />
+          <Longform text={GROUP_THEORY_ADV_EN} />
+          <Longform text={SOLVER_SOFTWARE_EN} />
+          <Longform text={CFOP_DETAIL_EN} />
+          <Longform text={ALGORITHMS_CATALOG_EN} />
+          <Longform text={METHODS_HARDWARE_EN} />
+          <Longform text={ENGINEERING_EN} />
+          <Longform text={BIOMECH_TRAINING_EN} />
+          <Longform text={PSYCHOLOGY_EN} />
+          <Longform text={CUBERS_COMMUNITY_EN} />
+          <Longform text={STATS_FORECAST_EN} />
+          <Longform text={AI_ML_EN} />
+          <Longform text={FMC_EVENTS_EN} />
+          <Longform text={RELATED_PUZZLES_EN} />
+        </div>
+      )}
     </section>
   );
 }
