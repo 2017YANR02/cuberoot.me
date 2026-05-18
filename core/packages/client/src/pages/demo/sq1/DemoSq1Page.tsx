@@ -4,7 +4,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Sq1Renderer, solvedState, parseSq1Scramble, applySq1Move, type Sq1State,
+  Sq1Renderer, solvedState, parseSq1Scramble,
 } from './sq1_renderer';
 import './demo_sq1.css';
 
@@ -65,7 +65,7 @@ export default function DemoSq1Page() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
-    if (scramble === DEFAULT_SCRAMBLE) url.searchParams.delete('scramble');
+    if (scramble.trim().length === 0) url.searchParams.delete('scramble');
     else url.searchParams.set('scramble', scramble);
     const next = url.pathname + (url.search ? url.search : '') + url.hash;
     const cur = window.location.pathname + window.location.search + window.location.hash;
@@ -90,9 +90,7 @@ export default function DemoSq1Page() {
     if (target === prev + 1) {
       r.playScramble([moves[prev]]);
     } else {
-      let s: Sq1State = solvedState();
-      for (let i = 0; i < target; i++) s = applySq1Move(s, moves[i]);
-      r.resetTo(s);
+      r.applyMovesInstant(moves.slice(0, target));
     }
     setProgress({ idx: target, total: moves.length });
   }, [movesBeforeCaret, moves]);
