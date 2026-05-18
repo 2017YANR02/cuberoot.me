@@ -1,7 +1,34 @@
 // 单事件的"方法 + 硬件演进 + 物理极限分解"章节
 // 嵌在 EventSection 内部, 在 WR 走势图之后, Top-N 之前
+import type * as React from 'react';
 import { type TheoreticalLimit } from './theoretical_limits';
 import { formatVal, type EventMeta } from './events';
+
+/** 轻量 inline markdown: **bold** + `code` + escape HTML */
+function renderInline(s: string): string {
+  const esc = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+/** block-level: 段落 split by \n\n; 若段落每行 `- ` 起头则渲染为 ul */
+function renderBlocks(text: string): React.ReactNode[] {
+  return text.split(/\n\n+/).map((para, i) => {
+    const lines = para.split('\n');
+    const allBullets = lines.length > 1 && lines.every((l) => /^\s*-\s+/.test(l));
+    if (allBullets) {
+      return (
+        <ul key={i}>
+          {lines.map((l, j) => (
+            <li key={j} dangerouslySetInnerHTML={{ __html: renderInline(l.replace(/^\s*-\s+/, '')) }} />
+          ))}
+        </ul>
+      );
+    }
+    return <p key={i} dangerouslySetInnerHTML={{ __html: renderInline(para) }} />;
+  });
+}
 
 interface Props {
   event: EventMeta;
@@ -133,6 +160,18 @@ export default function TheoreticalLimitView({ event, limit, fittedL, isZh }: Pr
       {(isZh ? limit.reasoning_zh : limit.reasoning_en).split(/\n\n+/).map((para, i) => (
         <p key={i}>{para}</p>
       ))}
+
+      {/* 深度章节: 里程碑 / 顶级 cuber / 训练阶梯 / 项目特性 / 预测 */}
+      {limit.extended_sections && limit.extended_sections.length > 0 && (
+        <div className="pred-tlimit-extended">
+          {limit.extended_sections.map((s, i) => (
+            <div key={i} className="pred-tlimit-extended-section">
+              <h4>{isZh ? s.title_zh : s.title_en}</h4>
+              {renderBlocks(isZh ? s.body_zh : s.body_en)}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 拟合 L 与 T_phys 对比 */}
       {fittedL !== null && limit.why_fit_differs_zh && (
