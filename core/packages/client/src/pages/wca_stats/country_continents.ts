@@ -1,8 +1,8 @@
 // NOTE: WCA country_id → continent 静态映射(207 国家)
-// 来源:本地 wca_statistics MySQL `countries` 表
+// 来源:本地 wca_developer_database MySQL `countries` 表
 // 用途:Top10HistoryPage 的 bar 着色按大洲分(避免 200+ 国家的色相挤压)
 // 维护:WCA 加新国家时同步更新(很少发生);可由
-//   `mysql wca_statistics -N -e "SELECT id, continent_id FROM countries ORDER BY id"`
+//   `mysql wca_developer_database -N -e "SELECT id, continent_id FROM countries ORDER BY id"`
 // 重新生成
 
 export type Continent =

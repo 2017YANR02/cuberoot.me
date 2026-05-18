@@ -89,7 +89,7 @@ jobs:
       # NOTE: 写入 CI 专用数据库配置（TS database.ts 从此文件读取凭据）
       - name: Setup database config
         run: |
-          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > core/packages/stats-build/database.yml
+          printf 'database: "wca_developer_database"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > core/packages/stats-build/database.yml
 
       # NOTE: TS 管线——完全替代 Ruby
       - name: Download and import WCA database

@@ -49,7 +49,7 @@ cuberoot.me/
 ### WCA Stats 数据流
 
 ```
-MySQL (wca_statistics DB)
+MySQL (wca_developer_database DB)
   ↓ SQL 查询
 stats-build/src/statistics/*.ts (88 个统计实现)
   ↓ compute_all.ts 批量执行

@@ -1,7 +1,7 @@
 // WCA stats extra builder — 一次性算 6 个 cubing.pro 风格 stats 的 PG TSV.
 // 与 historical_ranks_build.ts 思路一致:逐 event 处理,保留必要的跨 event 聚合状态.
 //
-// 输入: MySQL `wca_statistics` (CI runner / 本地)
+// 输入: MySQL `wca_developer_database` (CI runner / 本地)
 // 输出: output/wca_stats_extra/*.copy.tsv + load.sql
 //
 // 用法:
@@ -131,7 +131,7 @@ async function main() {
       host: process.env.MYSQL_HOST,
       username: process.env.MYSQL_USER ?? 'root',
       password: process.env.MYSQL_PASS ?? '',
-      database: process.env.MYSQL_DB ?? 'wca_statistics',
+      database: process.env.MYSQL_DB ?? 'wca_developer_database',
     };
   } else {
     dbConfig = parseYaml(readFileSync(resolve(__dirname, '../../database.yml'), 'utf-8'));

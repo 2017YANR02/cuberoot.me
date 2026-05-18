@@ -22,8 +22,10 @@ const ZIP_FILENAME = 'wca-developer-database-dump.zip';
 const SQL_FILENAME = 'wca-developer-database-dump.sql';
 
 // NOTE: MySQL CLI 命令（密码通过命令行传递）
+// --default-character-set=binary: dump 含非 utf8mb4 字节 (RDS 里 latin1 column 的遗留数据等),
+//   不加这个 flag 整条 INSERT 会因 Incorrect string value 静默失败 → 多个表 0 行
 function mysqlCmd(): string {
-  const parts = ['mysql', `--user=${DB_CONFIG.username}`];
+  const parts = ['mysql', '--default-character-set=binary', `--user=${DB_CONFIG.username}`];
   if (DB_CONFIG.password) parts.push(`--password=${DB_CONFIG.password}`);
   if (DB_CONFIG.host && DB_CONFIG.host !== 'localhost') parts.push(`--host=${DB_CONFIG.host}`);
   return parts.join(' ');
@@ -82,10 +84,22 @@ async function setMysqlPerformanceParams(): Promise<void> {
       execSync(`${mysql} -e "${sql}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
     }
     // NOTE: DISABLE REDO_LOG 大幅加速批量写入（崩溃时需重新导入，CI 可接受）
-    execSync(`${mysql} -e "ALTER INSTANCE DISABLE INNODB REDO_LOG" 2>&1 | grep -v "Using a password" || true`, {
+    // 在 main() 的 finally 里 ENABLE 回来,本地实例长期裸奔很危险
+    execSync(`${mysql} -e "ALTER INSTANCE DISABLE INNODB REDO_LOG"`, {
       stdio: 'pipe',
     });
   });
+}
+
+// NOTE: 还原 REDO_LOG,本地实例不能长期裸奔
+async function enableRedoLog(): Promise<void> {
+  const mysql = mysqlCmd();
+  try {
+    execSync(`${mysql} -e "ALTER INSTANCE ENABLE INNODB REDO_LOG"`, { stdio: 'pipe' });
+    console.log('REDO_LOG re-enabled');
+  } catch (e) {
+    console.warn('Warning: failed to re-enable REDO_LOG —— 手动执行 ALTER INSTANCE ENABLE INNODB REDO_LOG');
+  }
 }
 
 // NOTE: 步骤 4——逐行解析 SQL dump，按表名过滤导入
@@ -101,8 +115,8 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const db = DB_CONFIG.database;
 
   // NOTE: 先删除并重建数据库
-  execSync(`${mysql} -e "DROP DATABASE IF EXISTS ${db}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
-  execSync(`${mysql} -e "CREATE DATABASE ${db}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
+  execSync(`${mysql} -e "DROP DATABASE IF EXISTS ${db}"`, { stdio: 'pipe' });
+  execSync(`${mysql} -e "CREATE DATABASE ${db}"`, { stdio: 'pipe' });
 
   return timedTask(`Importing ${SQL_FILENAME} into ${db}`, async () => {
     let headerLines: string[] = [];  // NOTE: 第一个表之前的 SQL（SET 语句等），通常几十行
@@ -110,6 +124,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
     let currentTable: string | null = null;
     let fd: number | null = null;  // NOTE: 同步 fd，closeSync 保证写完再导入
     let lineCount = 0;
+    let hasInsertForCurrentTable = false;  // NOTE: 跟踪 dump 里有无 INSERT 行,无 = 表本身空 (ranks_* 就是空的),0 行合法
     let firstLine = true;
     const importedTables = new Set<string>();
 
@@ -138,11 +153,13 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
     let createTableLines: string[] = [];
     let deferredIndexes: string[] = [];  // NOTE: 从 CREATE TABLE 中剥离的 KEY -> INSERT 后建索引
 
-    // NOTE: 辅助函数——flush 缓冲 -> 追加延迟索引 + INDICES -> 关闭 fd -> mysql 导入
+    // NOTE: 辅助函数——flush 缓冲 -> 追加延迟索引 -> 关闭 fd -> mysql 导入
+    // INDICES (跨表自定义索引) 放在 postImport 里建,不能 append 到每张表,
+    // 否则第一张表 (championships) 导完就会试着在还没建的 results 表上建索引
     const flushAndImport = (tableName: string, count: number) => {
       if (fd === null) return;
-      // NOTE: 追加从 CREATE TABLE 剥离的 KEY 索引 + 自定义 INDICES
-      const allIndexes = [...deferredIndexes, ...INDICES].join('\n');
+      // NOTE: 追加从 CREATE TABLE 剥离的 KEY 索引 (只属于本表)
+      const allIndexes = deferredIndexes.join('\n');
       bufWrite('\n' + allIndexes + '\n');
       bufFlush();
       closeSync(fd);
@@ -151,10 +168,26 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
 
       console.log(`  - Importing table ${tableName} (${count} lines)`);
       const f = join(workDir, `${tableName}.sql`);
-      execSync(`${mysql} ${db} < "${f}" 2>&1 | grep -v "Using a password" || true`, {
+      // NOTE: 不加 || true ——以前吞 exit code 导致 charset 错误整张表 0 行还报 "complete"
+      // execSync 的 stdio: 'pipe' 会把 stderr 包进 throw 出来,看得见错
+      execSync(`${mysql} ${db} < "${f}"`, {
         stdio: 'pipe',
         maxBuffer: 50 * 1024 * 1024,
       });
+      // NOTE: 导入后立刻 COUNT(*) 验证——dump 里有 INSERT 但库里 0 行 = charset / quote / KEY-strip 静默 bug
+      // 表名都是普通 identifier 无 MySQL 保留字,不 backtick-quote,否则 -e 里的 \` 被当 \ 命令前缀
+      const countOut = execSync(
+        `${mysql} ${db} -N -e "SELECT COUNT(*) FROM ${tableName}"`,
+        { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+      ).trim();
+      const rowCount = parseInt(countOut, 10);
+      if (!Number.isFinite(rowCount)) {
+        throw new Error(`Table ${tableName} COUNT(*) parse failed: ${countOut}`);
+      }
+      if (hasInsertForCurrentTable && rowCount === 0) {
+        throw new Error(`Table ${tableName} imported 0 rows but dump had INSERT — likely charset / SQL syntax bug, check ${f}`);
+      }
+      console.log(`    -> ${rowCount} rows${!hasInsertForCurrentTable ? ' (empty in dump)' : ''}`);
       // NOTE: 导入后删除临时文件释放磁盘
       try { unlinkSync(f); } catch { /* ignore */ }
       importedTables.add(tableName);
@@ -169,6 +202,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         writeSync(fd, hl + '\n');
       }
       lineCount = 0;
+      hasInsertForCurrentTable = false;
       writeBuf = '';
       inCreateTable = false;
       createTableLines = [];
@@ -212,6 +246,8 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         // NOTE: header 阶段——收集全局 SQL 语句
         headerLines.push(line);
       } else if (currentTable && fd !== null) {
+        // NOTE: dump 里有 INSERT 才 expect 非空——ranks_* 等 derived 表无 INSERT 是合法的
+        if (line.startsWith('INSERT INTO ')) hasInsertForCurrentTable = true;
         // NOTE: 目标表行——区分 CREATE TABLE 块和 INSERT 数据行
         if (!inCreateTable && line.startsWith('CREATE TABLE')) {
           // NOTE: 进入 CREATE TABLE 块——缓冲到内存（~20 行，安全）
@@ -268,15 +304,22 @@ async function postImport(exportTimestamp: Date): Promise<void> {
 
   await timedTask('Creating covering index on result_attempts', () => {
     execSync(
-      `${mysql} ${db} -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value)" 2>&1 | grep -v "Using a password" || true`,
+      `${mysql} ${db} -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value)"`,
       { stdio: 'pipe' },
     );
   });
 
+  // NOTE: 跨表自定义索引——必须等所有表导完才能建
+  for (const idxSql of INDICES) {
+    await timedTask(`Creating: ${idxSql.slice(0, 80)}...`, () => {
+      execSync(`${mysql} ${db} -e "${idxSql.replace(/;$/, '')}"`, { stdio: 'pipe' });
+    });
+  }
+
   // NOTE: 存储 export timestamp
   const ts = exportTimestamp.toISOString();
   const metaSql = `CREATE TABLE wca_statistics_metadata (field varchar(255), value varchar(255)); INSERT INTO wca_statistics_metadata (field, value) VALUES ('export_timestamp', '${ts}')`;
-  execSync(`${mysql} ${db} -e "${metaSql}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
+  execSync(`${mysql} ${db} -e "${metaSql}"`, { stdio: 'pipe' });
 }
 
 async function main() {
@@ -297,16 +340,25 @@ async function main() {
 
   try {
     const zipPath = join(workDir, ZIP_FILENAME);
-    const sqlPath = join(workDir, SQL_FILENAME);
+    let sqlPath = join(workDir, SQL_FILENAME);
 
-    await downloadExport(zipPath);
-    await unzipExport(zipPath, workDir);
+    // NOTE: WCA_DUMP_SQL_PATH 指向已解压的 .sql 时跳过下载+解压,直接用现成的
+    const existingSql = process.env.WCA_DUMP_SQL_PATH;
+    if (existingSql && existsSync(existingSql)) {
+      console.log(`Using existing SQL dump: ${existingSql}`);
+      sqlPath = existingSql;
+    } else {
+      await downloadExport(zipPath);
+      await unzipExport(zipPath, workDir);
+    }
     await setMysqlPerformanceParams();
     const exportTimestamp = await importTables(sqlPath, workDir);
     await postImport(exportTimestamp);
 
     console.log('\nDatabase update complete.');
   } finally {
+    // NOTE: 不论成败都要还原 REDO_LOG
+    await enableRedoLog();
     // NOTE: 清理临时目录
     try {
       execSync(`rm -rf "${workDir}"`, { stdio: 'pipe' });

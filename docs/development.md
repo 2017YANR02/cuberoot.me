@@ -7,8 +7,8 @@
 | MySQL 版本 | 8.0.37 |
 | 服务名 | MySQL80 |
 | 数据目录 | `E:\mysql_data\` |
-| 数据库 | `wca_statistics`（121 张表） |
-| Dump 文件 | `D:\cube\wca-developer-database\wca-developer-database-dump.sql` |
+| 数据库 | `wca_developer_database`（121 张表） |
+| Dump 文件 | `E:\mysql_data\wca-developer-database-dump.sql` |
 | 连接凭据 | `core/packages/stats-build/database.yml`（已在 `.gitignore`） |
 
 **统计管线只用到 12 张表**，列定义见 [`MIGRATION_PLAN.md`](../core/packages/stats-build/MIGRATION_PLAN.md)。
