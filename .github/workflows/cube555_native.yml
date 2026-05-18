@@ -36,6 +36,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
 
+      - name: Install musl toolchain
+        # ubuntu-latest 用 glibc 2.39, 服务器更旧 → 动态链接产物在服务器 ld 报
+        # GLIBC_2.34 not found。改 --static --libc=musl 做完全静态二进制,不依
+        # 赖系统 libc, 在任何 Linux x64 上都能跑。GraalVM 文档:
+        # https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-and-mostly-static-executable/
+        run: sudo apt-get update && sudo apt-get install -y musl-tools musl-dev
+
       - name: Clone cube555 upstream
         run: git clone --depth=1 https://github.com/cs0x7f/cube555.git /tmp/cube555
 
@@ -59,6 +66,8 @@ jobs:
         working-directory: /tmp/cube555
         run: |
           native-image \
+            --static \
+            --libc=musl \
             --no-fallback \
             -O2 \
             -H:Name=cube555-daemon \
@@ -69,6 +78,8 @@ jobs:
             cs.cube555.Daemon
           ls -lh cube555-daemon
           file cube555-daemon
+          # Verify it's actually static (no dynamic linker section)
+          ldd cube555-daemon 2>&1 || true
 
       - name: Setup SSH
         run: |
