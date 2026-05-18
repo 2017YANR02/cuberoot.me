@@ -17,6 +17,9 @@ import Cubelet from './cuber/cubelet';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
+import Sq1Cube from './cuber/sq1/Sq1Cube';
+import { sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, type Sq1DragStart } from './cuber/sq1/sq1Drag';
+import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null when world is in
  *  SQ1 mode (NxN-specific access — table/cubelets/twist(TwistAction) — is then
@@ -387,9 +390,17 @@ export default function StackPage() {
     let panLastX = 0;
     let panLastY = 0;
     // SQ1-only: 左键 / 单指拖拽旋转场景(controller.disable=true,自家走)。
+    // 拖到 top/bot 贴片上 → 该层 turn,否则 → 整体视角旋转。
     let sq1Rotating = false;
     let sq1LastX = 0;
     let sq1LastY = 0;
+    let sq1Drag: Sq1DragStart | null = null;
+    let sq1DragLastDelta = 0;
+    // 区分 tap vs drag:小位移内不切到 turn 模式,松手 = 普通 click (留给后续 hit-test)
+    const SQ1_DRAG_THRESHOLD_PX = 4;
+    let sq1DownX = 0;
+    let sq1DownY = 0;
+    let sq1MovedPastThreshold = false;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
     const onPointerDown = (e: PointerEvent) => {
@@ -402,24 +413,29 @@ export default function StackPage() {
         renderer.domElement.setPointerCapture(e.pointerId);
         return;
       }
-      // SQ1 左键 / 触摸单指 → 旋转场景(NxN 走 Controller,此分支跳过)
+      // SQ1 左键 / 触摸单指 → 先记下,等 move 决定是 turn-drag 还是视角旋转
       if (worldRef.current?.puzzleKind === 'sq1' && (e.pointerType !== 'mouse' || e.button === 0)) {
+        const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
+        if (!isTouchMulti) {
+          sq1DownX = e.clientX;
+          sq1DownY = e.clientY;
+          sq1MovedPastThreshold = false;
+          sq1Drag = null;
+          sq1DragLastDelta = 0;
+          sq1Rotating = false;
+          sq1LastX = e.clientX;
+          sq1LastY = e.clientY;
+          if (e.pointerType !== 'touch') renderer.domElement.setPointerCapture(e.pointerId);
+        }
         if (e.pointerType === 'touch') {
           activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (activePointers.size === 2) {
-            // 双指 pinch — 走下面已有逻辑
-          } else if (activePointers.size === 1) {
-            sq1Rotating = true;
-            sq1LastX = e.clientX;
-            sq1LastY = e.clientY;
+            // 双指 pinch — 走下面已有逻辑;放弃 turn / 旋转
+            sq1Drag = null;
+            sq1Rotating = false;
+            sq1MovedPastThreshold = false;
           }
-        } else {
-          sq1Rotating = true;
-          sq1LastX = e.clientX;
-          sq1LastY = e.clientY;
-          renderer.domElement.setPointerCapture(e.pointerId);
         }
-        // 双指起跳到下面 pinch 分支
         if (e.pointerType !== 'touch') return;
       }
       if (e.pointerType !== 'touch') return;
@@ -445,17 +461,68 @@ export default function StackPage() {
         world.resize();
         return;
       }
-      if (sq1Rotating && worldRef.current?.puzzleKind === 'sq1') {
-        const dx = e.clientX - sq1LastX;
-        const dy = e.clientY - sq1LastY;
-        sq1LastX = e.clientX;
-        sq1LastY = e.clientY;
-        const k = 0.01;
-        world.scene.rotation.y += dx * k;
-        world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
-        world.scene.updateMatrix();
-        world.dirty = true;
-        return;
+      if (worldRef.current?.puzzleKind === 'sq1') {
+        // 已进入 turn-drag → 跟新 Δθ, 滚 pivot
+        if (sq1Drag) {
+          const w = worldRef.current;
+          const d = sq1DragDelta(sq1Drag, w.scene, w.camera, e.clientX, e.clientY, w.width, w.height);
+          if (d != null) {
+            sq1DragLastDelta = d;
+            sq1DragApply(sq1Drag, d);
+            w.dirty = true;
+          }
+          return;
+        }
+        // 已在视角旋转 → 接着拖
+        if (sq1Rotating) {
+          const dx = e.clientX - sq1LastX;
+          const dy = e.clientY - sq1LastY;
+          sq1LastX = e.clientX;
+          sq1LastY = e.clientY;
+          const k = 0.01;
+          world.scene.rotation.y += dx * k;
+          world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+          world.scene.updateMatrix();
+          world.dirty = true;
+          return;
+        }
+        // 等待 threshold 决定 turn vs 视角
+        if (!sq1MovedPastThreshold && !pinching) {
+          const dx = e.clientX - sq1DownX;
+          const dy = e.clientY - sq1DownY;
+          if (Math.hypot(dx, dy) >= SQ1_DRAG_THRESHOLD_PX) {
+            sq1MovedPastThreshold = true;
+            const w = worldRef.current;
+            const c = w.cube;
+            if (c instanceof Sq1Cube) {
+              sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+            }
+            if (sq1Drag) {
+              // turn-drag — 从 down 角度开始, 立即 apply 当前 delta 让贴片不卡顿
+              const d = sq1DragDelta(sq1Drag, w.scene, w.camera, e.clientX, e.clientY, w.width, w.height);
+              if (d != null) {
+                sq1DragLastDelta = d;
+                sq1DragApply(sq1Drag, d);
+                w.dirty = true;
+              }
+            } else {
+              sq1Rotating = true;
+              sq1LastX = sq1DownX;
+              sq1LastY = sq1DownY;
+              // 把 threshold 内积累的位移补上, 否则手指会原地卡一下
+              const dx2 = e.clientX - sq1LastX;
+              const dy2 = e.clientY - sq1LastY;
+              sq1LastX = e.clientX;
+              sq1LastY = e.clientY;
+              const k = 0.01;
+              world.scene.rotation.y += dx2 * k;
+              world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy2 * k));
+              world.scene.updateMatrix();
+              world.dirty = true;
+            }
+            return;
+          }
+        }
       }
       if (e.pointerType !== 'touch') return;
       if (!activePointers.has(e.pointerId)) return;
@@ -478,8 +545,23 @@ export default function StackPage() {
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
         return;
       }
+      if (sq1Drag) {
+        const w = worldRef.current;
+        if (w) {
+          const c = w.cube;
+          if (c instanceof Sq1Cube) {
+            const move = sq1DragCommit(c, sq1Drag, sq1DragLastDelta);
+            if (move) userMoveRef.current?.(new TwistAction(sq1MoveToString(move), false, 1));
+          }
+        }
+        sq1Drag = null;
+        sq1DragLastDelta = 0;
+        sq1MovedPastThreshold = false;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
       if (sq1Rotating) {
         sq1Rotating = false;
+        sq1MovedPastThreshold = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
       if (e.pointerType !== 'touch') return;
