@@ -133,6 +133,25 @@
   display: block;
 }
 
+/* TwistySection (pyraminx / skewb / megaminx) — fill .sim-canvas-wrap fully.
+ * 关键:不要给 twisty-player 写 `display: *`。会盖住 shadow root 里
+ * `:host { display: grid }`,内部 .wrapper(grid item + contain:size)就拿不到
+ * host 全高,只剩默认 ~300px 的 webgl 画布。 */
+.sim-canvas-wrap .twisty-section {
+  position: absolute;
+  inset: 0;
+  margin-bottom: 0;
+}
+.sim-canvas-wrap .twisty-container {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
+}
+.sim-canvas-wrap twisty-player {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* 透明棋盘格背景 (twizzle 风格)。WebGL 已 alpha:true,canvas 透明,
  * 这里 CSS 背景透出来。color-mix 让格子跟主题 foreground 算,
  * 深色主题下浅一点深色,浅色主题下深一点浅色,自动适配。 */

@@ -11,6 +11,8 @@ import './algs-panel.css';
 interface Props {
   onSelect: (setup: string, alg: string, caseName: string) => void;
   onOrderChange?: (order: number) => void;
+  /** Active puzzle isn't NxN/sq1 — show a placeholder instead of the picker. */
+  disabled?: boolean;
 }
 
 const PUZZLE_TO_ORDER: Partial<Record<AlgPuzzle, number>> = {
@@ -22,7 +24,7 @@ const PUZZLE_TO_ORDER: Partial<Record<AlgPuzzle, number>> = {
 
 const PUZZLES_SUPPORTED: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5'];
 
-export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
+export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -77,6 +79,14 @@ export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
     const targetOrder = PUZZLE_TO_ORDER[p];
     if (targetOrder && onOrderChange) onOrderChange(targetOrder);
   };
+
+  if (disabled) {
+    return (
+      <div className="sim-algs">
+        <div className="sim-algs-msg">{t('该魔方暂无公式集', 'No algs for this puzzle yet')}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="sim-algs">

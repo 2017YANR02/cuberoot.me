@@ -21,6 +21,16 @@ import Sq1Cube from './cuber/sq1/Sq1Cube';
 import { sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, type Sq1DragStart } from './cuber/sq1/sq1Drag';
 import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
 
+/** SimPage-level puzzle kind. World only supports `number | 'sq1'`; the three
+ *  twisty-only puzzles render via cubing.js TwistyPlayer instead of the cuber
+ *  engine. `isTwistyPuzzle()` gates everything that depends on `world`. */
+export type SimPuzzle = number | 'sq1' | 'pyraminx' | 'skewb' | 'megaminx';
+export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx'] as const;
+export type TwistyPuzzle = typeof TWISTY_PUZZLES[number];
+export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
+  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
+}
+
 /** Narrow `world.cube` to the NxN Cube type. Returns null when world is in
  *  SQ1 mode (NxN-specific access — table/cubelets/twist(TwistAction) — is then
  *  skipped by the caller). */
@@ -49,6 +59,7 @@ import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import PerfOverlay, { type PerfStats } from './PerfOverlay';
 import { loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove } from './keymap';
+import TwistySection from '../../components/TwistySection';
 import './sim.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
@@ -78,15 +89,17 @@ export default function SimPage() {
   }, [searchParams, setSearchParams]);
   const algParam = searchParams.get('alg') || '';
   const setupParam = searchParams.get('setup') || '';
-  /** Puzzle kind — number for NxN, 'sq1' for Square-1. */
-  const puzzleParam: number | 'sq1' = (() => {
+  /** Puzzle kind — number for NxN, 'sq1' / 'pyraminx' / 'skewb' / 'megaminx' for non-NxN. */
+  const puzzleParam: SimPuzzle = (() => {
     const raw = searchParams.get('puzzle');
     if (!raw) return 3;
     if (raw === 'sq1') return 'sq1';
+    if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
   })();
+  const twisty = isTwistyPuzzle(puzzleParam);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -104,9 +117,8 @@ export default function SimPage() {
   const userMoveRef = useRef<((action: TwistAction) => void) | null>(null);
 
   const [order, setOrder] = useState<number>(3);
-  /** Tracks current puzzle for UI (PlayerControls reads this to switch SQ1 mode). */
-  const [puzzleKind, setPuzzleKind] = useState<number | 'sq1'>(3);
-  void puzzleKind; // currently consumed via worldRef on demand; reserved for future SQ1 UI gating
+  /** Tracks current puzzle for UI (PlayerControls reads this to switch mode). */
+  const [puzzleKind, setPuzzleKind] = useState<SimPuzzle>(3);
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     try { return localStorage.getItem('sim.fullscreen') === '1'; } catch { return false; }
   });
@@ -160,8 +172,11 @@ export default function SimPage() {
     });
   }, []);
 
-  // World 初始化(仅一次)。React StrictMode 会双调;用 ref 守卫。
+  // World 初始化。React StrictMode 会双调;用 ref 守卫。Twisty puzzles
+  // (pyraminx/skewb/megaminx) 不走 cuber 引擎,这里直接 skip;[twisty] 进 deps
+  // 让 NxN↔twisty 切换时 cleanup 自动 dispose 老 world。
   useEffect(() => {
+    if (twisty) return;
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -606,7 +621,8 @@ export default function SimPage() {
         sq1Pending = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
-      // 没进 drag/rotate 就放开 (纯 tap) 也要清待命态
+      // sq1 slash 走 PlayerControls 的"/" 按钮 / 实体键盘 / alg textarea 直接输入,
+      // tap-on-side 启发式跟 bot-face ray 撞冲突易误触,不做。
       sq1Pending = false;
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
@@ -699,7 +715,7 @@ export default function SimPage() {
       toucherRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [twisty]);
 
   // 切阶数 — handleOrder 永远是即时 apply。
   // 拖动期间不会被调:wheel 内部跟着手指走,onSettle 才 fire (手指松 + 惯性停 + 滚轮静 180ms 后),
@@ -707,28 +723,24 @@ export default function SimPage() {
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-  const handlePuzzle = useCallback((kind: number | 'sq1') => {
+  const handlePuzzle = useCallback((kind: SimPuzzle) => {
     setPuzzleKind(kind);
     if (typeof kind === 'number') setOrder(kind);
     const world = worldRef.current;
-    if (!world || world.puzzleKind === kind) {
-      // world 未就绪 / 已是该 puzzle — 只更新 URL
-      setSearchParams((prev) => {
-        const np = new URLSearchParams(prev);
-        np.set('puzzle', String(kind));
-        return withPuzzleFirst(np);
-      }, { replace: true });
-      return;
-    }
-    world.setPuzzle(kind);
-    wasCompleteRef.current = true;
-    ensureCubeCallback();
-    applySettings(world, settingsRef.current);
-    setSearchParams((prev) => {
+    const writeUrl = () => setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
       if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
       return withPuzzleFirst(np);
     }, { replace: true });
+    // Twisty puzzles never touch World — switching just updates URL; the
+    // world-init effect's [twisty] dep tears down any live cuber instance.
+    if (isTwistyPuzzle(kind)) { writeUrl(); return; }
+    if (!world || world.puzzleKind === kind) { writeUrl(); return; }
+    world.setPuzzle(kind);
+    wasCompleteRef.current = true;
+    ensureCubeCallback();
+    applySettings(world, settingsRef.current);
+    writeUrl();
   }, [ensureCubeCallback, setSearchParams]);
 
   /** Legacy adapter for AlgsPanel etc. that only know about numeric orders. */
@@ -738,6 +750,12 @@ export default function SimPage() {
 
   // URL puzzle=N 同步到 cube。worldTick 保证 mount 完后 effect 重跑一次
   useEffect(() => {
+    if (isTwistyPuzzle(puzzleParam)) {
+      // No world to sync — `puzzleKind` state still needs to mirror URL so
+      // PlayerControls / settings render correctly.
+      setPuzzleKind(puzzleParam);
+      return;
+    }
     if (!worldRef.current) return;
     if (worldRef.current.puzzleKind === puzzleParam) return;
     handlePuzzle(puzzleParam);
@@ -906,7 +924,19 @@ export default function SimPage() {
 
       <div className="sim-body">
         <div className="sim-canvas-wrap" ref={containerRef}>
-          {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
+          {twisty ? (
+            <TwistySection
+              puzzle={puzzleParam}
+              scramble={setupParam}
+              alg={algParam}
+              fillPane
+              twistOnClick
+              onUserMove={(moveText) => {
+                userMoveRef.current?.(new TwistAction(moveText, false, 1));
+              }}
+            />
+          ) : null}
+          {IS_DEV && !twisty ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
           <button
             className="sim-fullscreen-exit"
             onClick={() => setFullscreen(!fullscreen)}
@@ -927,6 +957,7 @@ export default function SimPage() {
             <AlgsPanel
               onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
               onOrderChange={handleOrder}
+              disabled={twisty}
             />
           </CollapsibleSection>
           <PlayerControls
@@ -950,20 +981,22 @@ export default function SimPage() {
               if (cpuMs != null) statsRef.current.setupCpuMs = cpuMs;
             } : undefined}
           />
-          <CollapsibleSection
-            open={directorOpen}
-            onToggle={() => setDirectorOpen((o) => !o)}
-            icon={Film}
-            label={t('录制', 'Record')}
-          >
-            <DirectorPanel
-              getCanvas={getCanvas}
-              getWorld={getWorld}
-              getRenderer={getRenderer}
-              setup={setupParam}
-              alg={algParam}
-            />
-          </CollapsibleSection>
+          {!twisty && (
+            <CollapsibleSection
+              open={directorOpen}
+              onToggle={() => setDirectorOpen((o) => !o)}
+              icon={Film}
+              label={t('录制', 'Record')}
+            >
+              <DirectorPanel
+                getCanvas={getCanvas}
+                getWorld={getWorld}
+                getRenderer={getRenderer}
+                setup={setupParam}
+                alg={algParam}
+              />
+            </CollapsibleSection>
+          )}
         </aside>
       </div>
 
