@@ -434,6 +434,260 @@
 }
 .ops-foot-link:hover { color: var(--ops-accent); }
 
+/* ── Admin bar + card buttons ────────────────────── */
+
+.ops-admin-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--ops-accent) 8%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--ops-accent) 40%, transparent);
+  border-radius: 8px;
+}
+.ops-admin-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: var(--ops-mono);
+  font-size: 12px;
+  background: var(--ops-accent);
+  color: #111;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: filter .2s;
+}
+.ops-admin-new:hover { filter: brightness(1.15); }
+.ops-admin-hint {
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  color: var(--ops-text-dim);
+}
+
+.ops-card-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ops-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid var(--ops-line-2);
+  border-radius: 5px;
+  color: var(--ops-text-dim);
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.ops-admin-btn:hover {
+  border-color: var(--ops-accent);
+  color: var(--ops-accent);
+  background: color-mix(in srgb, var(--ops-accent) 8%, transparent);
+}
+.ops-admin-btn-danger:hover {
+  border-color: #f87171;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+}
+
+/* ── Modal editor ────────────────────────────────── */
+
+.ops-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 14, 0.78);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 9999;
+  padding: 60px 16px 40px;
+  overflow-y: auto;
+}
+.ops-modal {
+  width: 100%;
+  max-width: 720px;
+  background: var(--ops-panel);
+  border: 1px solid var(--ops-line-3);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 0 1px color-mix(in srgb, var(--ops-accent) 25%, transparent);
+  display: flex;
+  flex-direction: column;
+  color: var(--ops-text);
+}
+.ops-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--ops-line);
+}
+.ops-modal-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ops-text);
+}
+.ops-modal-close {
+  background: transparent;
+  border: 1px solid var(--ops-line-2);
+  color: var(--ops-text-dim);
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.ops-modal-close:hover { border-color: var(--ops-accent); color: var(--ops-accent); }
+
+.ops-modal-body {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ops-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.ops-field > span {
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  color: var(--ops-text-dim);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.ops-field > span em {
+  font-style: normal;
+  text-transform: none;
+  color: var(--ops-text-faint);
+  font-size: 10px;
+  margin-left: 4px;
+}
+.ops-field input,
+.ops-field textarea,
+.ops-field select {
+  background: #07070F;
+  border: 1px solid var(--ops-line-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--ops-text);
+  font-family: var(--ops-sans);
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+.ops-field input:focus,
+.ops-field textarea:focus,
+.ops-field select:focus {
+  outline: none;
+  border-color: var(--ops-accent);
+}
+.ops-field textarea { resize: vertical; line-height: 1.6; }
+.ops-field-mono { font-family: var(--ops-mono) !important; font-size: 13px !important; }
+.ops-field select:disabled { opacity: .55; cursor: not-allowed; }
+.ops-field-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ops-field-row .ops-field { min-width: 200px; }
+
+.ops-chip-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ops-chip-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.ops-chip-row input { flex: 1; }
+.ops-chip-del {
+  background: transparent;
+  border: 1px solid var(--ops-line-2);
+  color: var(--ops-text-dim);
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.ops-chip-del:hover { border-color: #f87171; color: #f87171; }
+.ops-chip-add {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px dashed var(--ops-line-2);
+  border-radius: 5px;
+  color: var(--ops-text-dim);
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ops-chip-add:hover { border-color: var(--ops-accent); color: var(--ops-accent); }
+
+.ops-modal-error {
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, .1);
+  border: 1px solid rgba(248, 113, 113, .35);
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 12px;
+  font-family: var(--ops-mono);
+}
+.ops-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--ops-line);
+}
+.ops-modal-cancel,
+.ops-modal-save {
+  padding: 7px 16px;
+  font-family: var(--ops-mono);
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: filter .2s, border-color .2s, color .2s;
+}
+.ops-modal-cancel {
+  background: transparent;
+  border: 1px solid var(--ops-line-2);
+  color: var(--ops-text-dim);
+}
+.ops-modal-cancel:hover { border-color: var(--ops-text); color: var(--ops-text); }
+.ops-modal-save {
+  background: var(--ops-accent);
+  color: #111;
+  border: none;
+  font-weight: 600;
+}
+.ops-modal-save:hover:not(:disabled) { filter: brightness(1.15); }
+.ops-modal-save:disabled,
+.ops-modal-cancel:disabled { opacity: .55; cursor: not-allowed; }
+
 /* ── Mobile ──────────────────────────────────────── */
 
 @media (max-width: 640px) {
