@@ -36,12 +36,25 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
 
-      - name: Install musl toolchain
+      - name: Install musl toolchain + static zlib
         # ubuntu-latest 用 glibc 2.39, 服务器更旧 → 动态链接产物在服务器 ld 报
         # GLIBC_2.34 not found。改 --static --libc=musl 做完全静态二进制,不依
         # 赖系统 libc, 在任何 Linux x64 上都能跑。GraalVM 文档:
         # https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-and-mostly-static-executable/
-        run: sudo apt-get update && sudo apt-get install -y musl-tools musl-dev
+        #
+        # native-image 的 libzip.a 会链接 -lz; ubuntu zlib1g-dev 是 glibc 编的
+        # 不能用,得自己用 musl-gcc 编一份 static libz 装到 /usr/local/lib。
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools musl-dev
+          ZLIB_VER=1.3.1
+          curl -sSLO https://zlib.net/zlib-${ZLIB_VER}.tar.gz
+          tar xzf zlib-${ZLIB_VER}.tar.gz
+          cd zlib-${ZLIB_VER}
+          CC=musl-gcc ./configure --prefix=/usr/local --static
+          make -j"$(nproc)"
+          sudo make install
+          ls -la /usr/local/lib/libz.a
 
       - name: Clone cube555 upstream
         run: git clone --depth=1 https://github.com/cs0x7f/cube555.git /tmp/cube555
@@ -64,6 +77,10 @@ jobs:
 
       - name: Build native-image
         working-directory: /tmp/cube555
+        env:
+          # 让 linker 找到 /usr/local/lib/libz.a (musl-built static zlib)
+          LIBRARY_PATH: /usr/local/lib
+          CPATH: /usr/local/include
         run: |
           native-image \
             --static \
