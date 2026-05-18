@@ -142,16 +142,10 @@ function applyTurn(state: Sq1State, top: number, bot: number): Sq1State {
 }
 
 function applySlice(state: Sq1State): Sq1State {
-  // / move = right half rotated 180° around X axis. Top slot k (angle
-  // (8-k)·30°) maps to bot slot at angle -((8-k)·30°). Solving:
-  //   top[6+i] ↔ bot[13+i] for i=0..5 (covering slots 6-11 top, 13-18 bot).
-  // This includes B wedge (bot slot 18) in slice; excludes F wedge (bot
-  // slot 12). Old impl used [i+12], which was off-by-one and caused piece-
-  // type mismatch at swapped slots → visible protrusions on cube after /.
   const next = state.pieces.slice();
   for (let i = 0; i < 6; i++) {
-    const c = next[i + 13];
-    next[i + 13] = next[i + 6];
+    const c = next[i + 12];
+    next[i + 12] = next[i + 6];
     next[i + 6] = c;
   }
   return { pieces: next, sliceSolved: !state.sliceSolved };
@@ -469,7 +463,7 @@ export class Sq1Renderer {
   private animQueue: Sq1Move[] = [];
   private active:
     | { move: Sq1Move; t: number; duration: number; topPivot: THREE.Object3D; botPivot: THREE.Object3D; topAngle: number; botAngle: number }
-    | { move: Sq1Move; t: number; duration: number; slicePivot: THREE.Object3D; angle: number }
+    | { move: Sq1Move; t: number; duration: number; slicePivot: THREE.Object3D; midSlicePivot: THREE.Object3D; midAxis: THREE.Vector3; angle: number }
     | null = null;
   private onIdle: (() => void) | null = null;
   private moveListeners: Array<(idx: number, total: number) => void> = [];
@@ -543,45 +537,58 @@ export class Sq1Renderer {
    * + a short R + a long L. The other carries full B + long R + short L.
    *
    * Cut line equation (top-down XZ plane): z = x·tan(30°), passing through
-   * Cut is VERTICAL at world x = -WEDGE_HALF_CHORD ≈ -36.84 — aligned with
-   * top/bot layer's LF/F-wedge boundary on F face (and similarly LB/B-wedge
-   * on B face). User wants the seam visible on F and B faces (not L/R).
+   * Cut is a TILTED chord through the center of the middle layer.
+   * Endpoints:
+   *   • TOP edge (world z=-W, B-face direction): x = +WEDGE_HALF_CHORD
+   *   • BOTTOM edge (world z=+W, F-face direction): x = -WEDGE_HALF_CHORD
    *
-   * 2 rectangular pieces:
-   *   • LEFT (small): x ∈ [-W, -WHC] — full L sticker + small F/B strips
-   *   • RIGHT (big):  x ∈ [-WHC, +W] — full R sticker + big F/B strips
+   * This places the seam on F face at world x = -W·tan(15°) (= IMAGE LEFT
+   * when viewing F from +Z, aligned with top-layer LF-corner/F-wedge boundary)
+   * AND on B face at world x = +W·tan(15°) (= IMAGE LEFT when viewing B from
+   * -Z, since viewer is facing +Z so world +X maps to image LEFT — aligned
+   * with top-layer RB-corner/B-wedge boundary on that face's image-left side).
    *
-   * After `/`, RIGHT goes into slice (rotated 180° around X axis). Body stays
-   * at +X side (X unchanged by Rx), Y/Z flip. RIGHT's F sticker (was at +Z)
-   * moves to -Z → cube's F face shows orange (B color) on right portion and
-   * red still on left (from LEFT piece). Matches real sq1 F/B color partial
-   * swap after /.
+   * Chord passes through the cube's central axis → both pieces have EQUAL
+   * area (each = 2W²). They're mirror-reflective trapezoids.
+   *
+   * After a `/` slice, both pieces participate in slice rotation (180° around
+   * X axis as approximation of the true slice axis). F and B colors visible
+   * on the cube swap.
    */
   private buildMiddle(): void {
-    const CUT_X = -WEDGE_HALF_CHORD;  // ≈ -36.84, aligned with top LF/F-wedge boundary
+    const CUT_TOP_X = +WEDGE_HALF_CHORD;   // top-edge endpoint x (≈ +36.84, B face direction)
+    const CUT_BOT_X = -WEDGE_HALF_CHORD;   // bottom-edge endpoint x (≈ -36.84, F face direction)
+    // In SHAPE coords (Y=−worldZ after rotateX(-π/2)), top of world becomes
+    // shape Y=+W and bottom of world becomes shape Y=-W. So:
+    const cutTopShape: [number, number] = [CUT_TOP_X, +W];  // shape: cut endpoint at top-of-world
+    const cutBotShape: [number, number] = [CUT_BOT_X, -W];  // shape: cut endpoint at bottom-of-world
+
     const bodyMat = new THREE.MeshPhongMaterial({
       color: SQ1_COLORS.BODY, specular: 0x222222, shininess: 25,
       side: THREE.DoubleSide,
     });
-    // kind === 'right': RIGHT half (big), x>CUT_X, has +X R sticker.
-    // kind === 'left':  LEFT half (small), x<CUT_X, has -X L sticker.
-    const mkHalf = (kind: 'right' | 'left'): THREE.Object3D => {
-      // Shape coords (X=worldX, ShapeY = -worldZ after rotateX(-π/2)).
+    // kind === 'big': right-of-cut piece, has full R (+X) edge.
+    // kind === 'small': left-of-cut piece, has full L (-X) edge.
+    const mkHalf = (kind: 'big' | 'small'): THREE.Object3D => {
       const shape = new THREE.Shape();
-      if (kind === 'right') {
-        // RIGHT: worldX ∈ [CUT_X, +W], worldZ ∈ [-W, +W] → ShapeY ∈ [-W, +W]. CCW:
-        shape.moveTo(CUT_X, -W);   // world (CUT_X, +W)  — F-edge cut
-        shape.lineTo(W, -W);       // world (+W, +W)     — RF corner
-        shape.lineTo(W, W);        // world (+W, -W)     — RB corner
-        shape.lineTo(CUT_X, W);    // world (CUT_X, -W)  — B-edge cut
-        shape.lineTo(CUT_X, -W);
+      if (kind === 'big') {
+        // CCW (in shape coords): start at cut-bot, walk along bottom edge to
+        // bot-right corner, up right edge to top-right corner, along top edge
+        // to cut-top, then along cut back to cut-bot.
+        shape.moveTo(cutBotShape[0], cutBotShape[1]);
+        shape.lineTo(W, -W);
+        shape.lineTo(W, W);
+        shape.lineTo(cutTopShape[0], cutTopShape[1]);
+        shape.lineTo(cutBotShape[0], cutBotShape[1]);
       } else {
-        // LEFT: worldX ∈ [-W, CUT_X], worldZ ∈ [-W, +W]. CCW:
-        shape.moveTo(-W, -W);      // world (-W, +W)     — LF corner
-        shape.lineTo(CUT_X, -W);   // world (CUT_X, +W)  — F-edge cut
-        shape.lineTo(CUT_X, W);    // world (CUT_X, -W)  — B-edge cut
-        shape.lineTo(-W, W);       // world (-W, -W)     — LB corner
+        // CCW for small: top-left corner, down left edge to bot-left, along
+        // bottom edge to cut-bot, along cut up to cut-top, along top edge
+        // back to top-left.
+        shape.moveTo(-W, W);
         shape.lineTo(-W, -W);
+        shape.lineTo(cutBotShape[0], cutBotShape[1]);
+        shape.lineTo(cutTopShape[0], cutTopShape[1]);
+        shape.lineTo(-W, W);
       }
       const geom = new THREE.ExtrudeGeometry(shape, {
         steps: 1, depth: MID_HEIGHT,
@@ -615,29 +622,29 @@ export class Sq1Renderer {
         pivot.add(mesh);
       };
 
-      if (kind === 'right') {
-        // RIGHT (big) outer edges:
-        //   • R (+X): full z range [-W, +W] (LONG, 2W)
-        //   • F (+Z): x ∈ [CUT_X, +W] = W + WHC ≈ 174
-        //   • B (-Z): x ∈ [CUT_X, +W] = W + WHC ≈ 174
+      if (kind === 'big') {
+        // Big piece outer edges (world coords) — CUT_TOP_X=+WHC, CUT_BOT_X=-WHC:
+        //   • R (+X): full z range [-W, +W], length 2W (LONG)
+        //   • F (+Z): x ∈ [-WHC, +W], length W + WHC ≈ 174 (medium-long)
+        //   • B (-Z): x ∈ [+WHC, +W], length W − WHC ≈ 101 (medium)
         addSticker(SQ1_COLORS.R, 'R', -W, W, 0, 0);
-        addSticker(SQ1_COLORS.F, 'F', 0, 0, CUT_X, W);
-        addSticker(SQ1_COLORS.B, 'B', 0, 0, CUT_X, W);
+        addSticker(SQ1_COLORS.F, 'F', 0, 0, CUT_BOT_X, W);
+        addSticker(SQ1_COLORS.B, 'B', 0, 0, CUT_TOP_X, W);
       } else {
-        // LEFT (small) outer edges:
-        //   • L (-X): full z range [-W, +W] (LONG, 2W)
-        //   • F (+Z): x ∈ [-W, CUT_X] = W − WHC ≈ 101
-        //   • B (-Z): x ∈ [-W, CUT_X] = W − WHC ≈ 101
+        // Small piece outer edges:
+        //   • L (-X): full z range [-W, +W], length 2W (LONG)
+        //   • F (+Z): x ∈ [-W, -WHC], length W − WHC ≈ 101 (medium)
+        //   • B (-Z): x ∈ [-W, +WHC], length W + WHC ≈ 174 (medium-long)
         addSticker(SQ1_COLORS.L, 'L', -W, W, 0, 0);
-        addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, CUT_X);
-        addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, CUT_X);
+        addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, CUT_BOT_X);
+        addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, CUT_TOP_X);
       }
 
       this.cubeRoot.add(pivot);
       return pivot;
     };
-    this.middle.push({ pivot: mkHalf('right'), side: 1 });
-    this.middle.push({ pivot: mkHalf('left'), side: -1 });
+    this.middle.push({ pivot: mkHalf('big'), side: 1 });
+    this.middle.push({ pivot: mkHalf('small'), side: -1 });
   }
 
   /**
@@ -687,15 +694,17 @@ export class Sq1Renderer {
       p.pivot.scale.y = isTop ? 1 : -1;
       p.layerSign = isTop ? 1 : -1;
     }
-    // Middle pivots: RIGHT side rotates 180° around X when sliceSolved=false
-    // (i.e., after odd number of / moves). LEFT stays. This matches the
-    // slice animation result and keeps URL-load / animation paths consistent.
+    // Reset middle pieces — sliceSolved=true means BIG/SMALL are at their
+    // canonical (built) positions. sliceSolved=false means BIG is flipped
+    // around chord-perp axis (state after an odd number of / slices).
+    const midAxis = new THREE.Vector3(W, 0, WEDGE_HALF_CHORD).normalize();
     for (const m of this.middle) {
       m.pivot.position.set(0, 0, 0);
-      const rotated = !state.sliceSolved && m.side === 1;
-      m.pivot.rotation.set(rotated ? Math.PI : 0, 0, 0);
-      m.pivot.quaternion.setFromEuler(m.pivot.rotation);
-      m.pivot.scale.set(1, 1, 1);
+      if (m.side === 1 && !state.sliceSolved) {
+        m.pivot.quaternion.setFromAxisAngle(midAxis, Math.PI);
+      } else {
+        m.pivot.quaternion.identity();
+      }
     }
   }
 
@@ -769,44 +778,56 @@ export class Sq1Renderer {
       this.active.topPivot.rotation.y = this.active.topAngle * e;
       this.active.botPivot.rotation.y = this.active.botAngle * e;
     } else {
-      this.active.slicePivot.rotation.x = this.active.angle * e;
+      this.active.slicePivot.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle * e);
+      this.active.midSlicePivot.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle * e);
     }
     if (tFrac >= 1) this.finishMove();
   }
 
   private beginMove(move: Sq1Move): void {
+    const probe = new THREE.Vector3();
     if (move.kind === 'turn') {
       const topPivot = new THREE.Object3D();
       const botPivot = new THREE.Object3D();
       this.cubeRoot.add(topPivot);
       this.cubeRoot.add(botPivot);
+      // Select layer by CURRENT world Y, not original layerSign — / slice
+      // physically moves east pieces between top↔bot, so subsequent (t,b)
+      // turns must follow what's actually in each layer right now.
       for (const p of this.pieces) {
-        const target = p.layerSign === 1 ? topPivot : botPivot;
+        p.pivot.updateWorldMatrix(true, false);
+        p.pivot.getWorldPosition(probe);
+        const target = probe.y > 0 ? topPivot : botPivot;
         this.attach(p.pivot, target);
       }
       const topAngle = -(move.top ?? 0) * (Math.PI / 6);
       const botAngle = -(move.bot ?? 0) * (Math.PI / 6);
       this.active = { move, t: 0, duration: this.durationPerMoveMs, topPivot, botPivot, topAngle, botAngle };
     } else {
-      // TOP/BOT pieces: rotate around X axis (unchanged — sq1 / move axis).
+      // / slice: east-of-chord pieces (top + bot + BIG middle) rotate 180°
+      // around chord-perp axis (W, 0, WHC)/d. East stays east; top↔bot flips;
+      // each piece's own R-ish direction stays mostly on R, F↔B swap. The
+      // SMALL west middle piece does not move (per cubedb animation).
+      const sliceAxis = new THREE.Vector3(W, 0, WEDGE_HALF_CHORD).normalize();
       const slicePivot = new THREE.Object3D();
+      const midSlicePivot = new THREE.Object3D();
       this.cubeRoot.add(slicePivot);
-      const probe = new THREE.Vector3();
+      this.cubeRoot.add(midSlicePivot);
+      // Probe at the piece's outer point (corner extreme / wedge outer face
+      // center) so X/Z are non-zero. The pivot itself sits on the central
+      // axis (0, ±HALF_MID, 0) and would always test 0.
       for (const p of this.pieces) {
         p.pivot.updateWorldMatrix(true, false);
         const isCorner = isCornerPiece(p.pieceId);
         probe.set(W, 0, isCorner ? -W : 0);
         probe.applyMatrix4(p.pivot.matrixWorld);
-        if (probe.x > 0.5) this.attach(p.pivot, slicePivot);
+        if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) this.attach(p.pivot, slicePivot);
       }
-      // MIDDLE: with vertical cut at x=-WHC, RIGHT half (side=1) is the
-      // "right of slice plane" piece and joins the rotation. LEFT half stays.
-      // RIGHT body symmetric in Y and Z within its volume, so Rx(180°) keeps
-      // it in same x range — only F/B stickers swap.
-      for (const m of this.middle) {
-        if (m.side === 1) this.attach(m.pivot, slicePivot);
-      }
-      this.active = { move, t: 0, duration: this.durationPerMoveMs, slicePivot, angle: Math.PI };
+      for (const m of this.middle) if (m.side === 1) this.attach(m.pivot, midSlicePivot);
+      this.active = {
+        move, t: 0, duration: this.durationPerMoveMs,
+        slicePivot, midSlicePivot, midAxis: sliceAxis, angle: Math.PI,
+      };
     }
   }
 
@@ -815,17 +836,19 @@ export class Sq1Renderer {
     const move = this.active.move;
     if ('slicePivot' in this.active) {
       const pv = this.active.slicePivot;
-      pv.rotation.x = Math.PI;
+      pv.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle);
       pv.updateMatrixWorld(true);
       for (const p of this.pieces) {
         if (p.pivot.parent === pv) this.attach(p.pivot, this.cubeRoot);
       }
-      // Middle pieces — attached to same slicePivot, get same Rx(180°). RIGHT
-      // middle stays at +X side (body symmetric), F/B stickers visually swap.
+      const midPv = this.active.midSlicePivot;
+      midPv.quaternion.setFromAxisAngle(this.active.midAxis, this.active.angle);
+      midPv.updateMatrixWorld(true);
       for (const m of this.middle) {
-        if (m.pivot.parent === pv) this.attach(m.pivot, this.cubeRoot);
+        if (m.pivot.parent === midPv) this.attach(m.pivot, this.cubeRoot);
       }
       this.cubeRoot.remove(pv);
+      this.cubeRoot.remove(midPv);
     } else {
       const tp = this.active.topPivot;
       const bp = this.active.botPivot;
@@ -843,6 +866,11 @@ export class Sq1Renderer {
     }
     this.active = null;
     this.state = applySq1Move(this.state, move);
+    // Snap to canonical placements after each move. Without this, slice
+    // rotations and (t,b) turns produce slightly non-canonical orientations
+    // that accumulate over a long scramble, leaving the cube misaligned at
+    // the end. The snap is visually small because chord-perp 180° already
+    // lands pieces near their canonical slot positions.
     this.applyStateInstant(this.state);
     this.finishedMoves += 1;
     this.notify();
