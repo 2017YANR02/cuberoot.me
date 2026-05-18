@@ -204,6 +204,24 @@ export default function PredictionPage() {
           </div>
 
           <div className="pred-toc-group">
+            <div className="pred-toc-group-title">{isZh ? '子页面' : 'Sub-pages'}</div>
+            <Link
+              to="/wca/prediction/333"
+              className="pred-toc-item pred-toc-subpage"
+              onClick={() => setTocOpen(false)}
+            >
+              {isZh ? '三阶深度章节' : '3x3 Deep Dive'}
+            </Link>
+            <Link
+              to="/wca/prediction/lucky"
+              className="pred-toc-item pred-toc-subpage"
+              onClick={() => setTocOpen(false)}
+            >
+              {isZh ? '运气极限 (年份滑条)' : 'Lucky Floor (year slider)'}
+            </Link>
+          </div>
+
+          <div className="pred-toc-group">
             <div className="pred-toc-group-title">{isZh ? '全局分析' : 'Global Analysis'}</div>
             {SECTIONS.slice(1, 10).map((s) => (
               <a
@@ -335,14 +353,14 @@ export default function PredictionPage() {
           </Link>
 
           {/* Pointer to lucky-scramble floor */}
-          <Link to="/wca/prediction/lucky" className="pred-333-deepdive-cta">
+          <Link to="/wca/prediction/lucky" className="pred-333-deepdive-cta pred-lucky-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{isZh ? '运气下界' : 'Lucky Floor'}</div>
-              <div className="pred-333-cta-title">{isZh ? '最幸运 scramble 下的单次极限' : 'Single-Solve Floor If You Hit the Luckiest Scramble'}</div>
+              <div className="pred-333-cta-eyebrow">{isZh ? '运气下界 · 互动子页' : 'Lucky Floor · Interactive'}</div>
+              <div className="pred-333-cta-title">{isZh ? '最幸运 scramble 下的单次极限 (年份滑条)' : 'Single-Solve Floor If You Hit the Luckiest Scramble (year slider)'}</div>
               <div className="pred-333-cta-sub">
                 {isZh
-                  ? '拖动年份, 看"每年累积 scramble 数 + 深度分布"反推的运气下界. 三阶 → 0.27 s (2 步 / TPS_ceil).'
-                  : 'Drag the year slider: expected minimum-depth scramble × TPS ceiling. 3x3 asymptote: 0.27 s (2 moves / TPS_ceil).'}
+                  ? '拖动年份, 看每年累积 scramble 数 + 深度分布反推的运气下界. 三阶 → 0.27 s (2 步 / TPS_ceil).'
+                  : 'Drag the year: expected minimum-depth scramble × TPS ceiling. 3x3 asymptote: 0.27 s (2 moves / TPS_ceil).'}
               </div>
             </div>
             <div className="pred-333-cta-arrow">→</div>

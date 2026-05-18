@@ -108,8 +108,13 @@ export default function LuckyLimitPage() {
   }, [year]);
 
   // Chart series: 3x3 lucky time over year (sampled along slider domain)
+  // X 轴用 log10(year - 2002) 避免极大 year 让 LineChart 的 tick 循环爆栈.
+  // xFormat 反算回 year 用于显示.
+  const yearToLogX = (y: number) => Math.log10(Math.max(1, y - 2002));
+  const logXToYear = (x: number) => 2002 + Math.pow(10, x);
+
   const chartSeries: Series[] = useMemo(() => {
-    const sampleS = Array.from({ length: 100 }, (_, i) => i / 99);
+    const sampleS = Array.from({ length: 120 }, (_, i) => i / 119);
     const eventIds = ['333', '222', '444', '555', 'pyram', 'skewb'];
     const colors: Record<string, string> = {
       '333': '#dc2626',
@@ -128,7 +133,7 @@ export default function LuckyLimitPage() {
         const N = cumScrambles(id, y);
         const depth = Math.max(expectedLuckyDepth(lucky.dist, N), lucky.dist.k_min_wca);
         const time = depth / lucky.tps_ceil + lucky.setup_s;
-        return { x: y, y: time };
+        return { x: yearToLogX(y), y: time };
       });
       return {
         name: isZh ? ev.name_zh : ev.name_en,
@@ -244,9 +249,9 @@ export default function LuckyLimitPage() {
           <LineChart
             series={chartSeries}
             yLog
-            xLabel={isZh ? '年' : 'Year'}
+            xLabel={isZh ? '年 (log)' : 'Year (log)'}
             yLabel={isZh ? '运气极限 (秒)' : 'Lucky floor (s)'}
-            xFormat={(v) => formatYear(v)}
+            xFormat={(v) => formatYear(logXToYear(v))}
             yFormat={(v) => v < 1 ? v.toFixed(2) : v.toFixed(1)}
             yMin={0.05}
             height={360}
