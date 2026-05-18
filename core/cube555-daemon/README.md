@@ -66,9 +66,25 @@ pnpm --filter @cuberoot/client dev
 
 | 变量 | 默认 | 含义 |
 |------|------|------|
-| `CUBE555_HOME` | `/opt/cube555` | cube555 上游源码目录,含 dist/ 和 lib/ |
-| `CUBE555_WORKERS` | `4` | Java 内部并行求解线程数 |
+| `CUBE555_HOME` | `/opt/cube555` | cube555 上游源码目录,含 dist/ 和 lib/(也是 native 二进制 CWD) |
+| `CUBE555_WORKERS` | `4` | 内部并行求解线程数 |
+| `CUBE555_NATIVE_BIN` | (unset) | 设为某路径则 spawn 该 GraalVM 编出的 native 二进制(无 JVM 启动开销,-Xmx512m 固定);留空走 `java -cp ...` |
 | `CUBE555_DISABLED` | (unset) | 设为 `1` 时 Hono 跳过 spawn,`/v1/scramble/555-rs` 返 503 |
+
+## GraalVM native binary(可选,推荐生产用)
+
+`.github/workflows/cube555_native.yml` 用 GraalVM 21 AOT 编 `Daemon.java` 为单文件
+Linux x64 静态二进制(`--static --libc=musl` 脱离 glibc),scp 到
+`/opt/cube555/cube555-daemon`。生产环境 `.env` 加一行:
+
+```
+CUBE555_NATIVE_BIN=/opt/cube555/cube555-daemon
+```
+
+`pm2 restart core-api --update-env` 即生效。RSS 比 JVM 模式省 ~170MB(540→370),
+可以多塞 1 个 worker。性能数据见 `BENCHMARKS.md`。
+
+切回 JVM:把 `.env` 里这行注释掉再 restart。
 
 ## 协议
 
