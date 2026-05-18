@@ -27,6 +27,19 @@ import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
 function asNxN(world: World): Cube | null {
   return world.puzzleKind === 'sq1' ? null : (world.cube as Cube);
 }
+
+/** Reorder so `puzzle` is the first param in the URL (right after `?`).
+ *  All other params keep their relative order. */
+function withPuzzleFirst(p: URLSearchParams): URLSearchParams {
+  const out = new URLSearchParams();
+  const puzzle = p.get('puzzle');
+  if (puzzle != null) out.set('puzzle', puzzle);
+  for (const [k, v] of p) {
+    if (k === 'puzzle') continue;
+    out.set(k, v);
+  }
+  return out;
+}
 import { FACE } from './cuber/define';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -117,7 +130,7 @@ export default function StackPage() {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
       np.delete('mode');
-      return np;
+      return withPuzzleFirst(np);
     }, { replace: true });
   }, [searchParams, setSearchParams]);
 
@@ -672,7 +685,7 @@ export default function StackPage() {
       setSearchParams((prev) => {
         const np = new URLSearchParams(prev);
         if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
-        return np;
+        return withPuzzleFirst(np);
       }, { replace: true });
       return;
     }
@@ -683,7 +696,7 @@ export default function StackPage() {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
       if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
-      return np;
+      return withPuzzleFirst(np);
     }, { replace: true });
   }, [ensureCubeCallback, setSearchParams]);
 
@@ -776,7 +789,7 @@ export default function StackPage() {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
       if (alg) np.set('alg', alg); else np.delete('alg');
-      return np;
+      return withPuzzleFirst(np);
     }, { replace: true });
   }, [setSearchParams]);
 
@@ -784,7 +797,7 @@ export default function StackPage() {
     setSearchParams((prev) => {
       const np = new URLSearchParams(prev);
       if (setup) np.set('setup', setup); else np.delete('setup');
-      return np;
+      return withPuzzleFirst(np);
     }, { replace: true });
   }, [setSearchParams]);
 
@@ -798,7 +811,7 @@ export default function StackPage() {
       const np = new URLSearchParams(prev);
       if (setup) np.set('setup', setup); else np.delete('setup');
       if (alg) np.set('alg', alg); else np.delete('alg');
-      return np;
+      return withPuzzleFirst(np);
     }, { replace: true });
   }, [setSearchParams]);
 
