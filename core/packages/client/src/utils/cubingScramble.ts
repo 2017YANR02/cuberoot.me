@@ -21,7 +21,7 @@
 import { randomScrambleForEvent } from 'cubing/scramble';
 import { setSearchDebug } from 'cubing/search';
 import { cstimerScramble444 } from './cstimer_444';
-import { fetch555Scramble } from './scramble_555_server';
+import { fetch555Scramble, fetch555ScrambleBatch } from './scramble_555_server';
 import { get555Mode, on555ModeChange } from './scramble_555_mode';
 import { toWcaEventId } from './wca_events';
 
@@ -170,6 +170,27 @@ async function refillPool(wcaId: string): Promise<void> {
   // worker fills a slot in one batch wall, instead of serializing through one
   // pipe. Other events single-thread inside one cubing/scramble worker, so
   // parallelism there only adds scheduling overhead without faster output.
+  if (wcaId === '555' && get555Mode() === 'rs') {
+    // Streaming SSE batch — one TCP connection, push scrambles to pool as
+    // each parallel solver finishes. Falls through to Promise.all fan-out
+    // below if the batch endpoint errors (e.g. older deploys without /batch).
+    const startGen = pool555Generation;
+    try {
+      while (cur.length < target) {
+        const need = target - cur.length;
+        let yielded = 0;
+        for await (const raw of fetch555ScrambleBatch(need)) {
+          if (startGen !== pool555Generation) return;
+          cur.push(formatScramble(wcaId, raw));
+          yielded++;
+        }
+        if (yielded === 0) break; // 0 results = server bug or fallback path
+      }
+      if (cur.length >= target) return;
+    } catch (err) {
+      console.warn('[555-rs batch] failed, falling back:', err);
+    }
+  }
   if (wcaId === '444' || wcaId === '555') {
     while (cur.length < target) {
       const need = target - cur.length;
