@@ -1,0 +1,453 @@
+/* ── /code/ops — runbook 风格,跟 /code 系其他页独立设计 ────────── */
+/* dark-locked: page-scope color-scheme + 自有 token,不参与 :root light/dark 翻 */
+
+.ops-page {
+  color-scheme: dark;
+  --ops-bg: #0A0B14;
+  --ops-bg-2: #11121F;
+  --ops-panel: #141627;
+  --ops-panel-2: #1A1C30;
+  --ops-line: rgba(167, 139, 250, 0.10);
+  --ops-line-2: rgba(167, 139, 250, 0.20);
+  --ops-line-3: rgba(167, 139, 250, 0.35);
+  --ops-text: #E6E4F2;
+  --ops-text-dim: #8A87A8;
+  --ops-text-faint: #565474;
+  --ops-accent: #A78BFA;
+  --ops-accent-soft: rgba(167, 139, 250, 0.12);
+  /* 分类色:跟 rail / chip 切换 */
+  --ops-cat-db: #5BD4D0;
+  --ops-cat-build: #F0A04B;
+  --ops-cat-deploy: #7BD389;
+  --ops-cat-backup: #E879C9;
+
+  --ops-mono: 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --ops-sans: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  position: relative;
+  min-height: 100vh;
+  background: var(--ops-bg);
+  color: var(--ops-text);
+  font-family: var(--ops-sans);
+  overflow-x: hidden;
+}
+
+/* ── 背景 ─────────────────────────────────────────── */
+
+.ops-bg {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(167, 139, 250, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 139, 250, .04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 70%);
+  pointer-events: none;
+}
+.ops-bg-glow {
+  position: absolute;
+  top: -120px; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 600px;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--ops-accent) 14%, transparent), transparent 65%);
+  pointer-events: none;
+  filter: blur(20px);
+}
+
+.ops-shell {
+  position: relative;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 36px 32px 80px;
+}
+
+/* ── Topbar ──────────────────────────────────────── */
+
+.ops-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 56px;
+}
+.ops-back {
+  font-family: var(--ops-mono);
+  font-size: 13px;
+  color: var(--ops-text-dim);
+  text-decoration: none;
+  transition: color .2s;
+}
+.ops-back:hover { color: var(--ops-accent); }
+
+/* ── Hero ────────────────────────────────────────── */
+
+.ops-hero { margin-bottom: 48px; }
+
+.ops-hero-prompt {
+  font-family: var(--ops-mono);
+  font-size: 13px;
+  letter-spacing: .02em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  color: var(--ops-text-faint);
+}
+.ops-hero-user  { color: var(--ops-accent); }
+.ops-hero-at    { color: var(--ops-text-dim); }
+.ops-hero-host  { color: var(--ops-cat-deploy); }
+.ops-hero-colon { color: var(--ops-text-dim); }
+.ops-hero-path  { color: var(--ops-cat-db); margin-right: 6px; }
+.ops-hero-sigil { color: var(--ops-text-dim); }
+
+.ops-hero-title {
+  font-family: var(--ops-mono);
+  font-size: clamp(72px, 12vw, 132px);
+  font-weight: 700;
+  letter-spacing: -.05em;
+  line-height: .9;
+  margin: 0 0 18px;
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--ops-accent) 50%, #fff) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ops-hero-cursor {
+  color: var(--ops-accent);
+  -webkit-text-fill-color: var(--ops-accent);
+  animation: ops-cursor 1.1s steps(2, end) infinite;
+}
+@keyframes ops-cursor { 50% { opacity: 0; } }
+
+.ops-hero-sub {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ops-text-dim);
+  max-width: 620px;
+  margin: 0;
+}
+
+/* ── Filters ─────────────────────────────────────── */
+
+.ops-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--ops-line-2);
+}
+.ops-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  font-family: var(--ops-mono);
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--ops-line-2);
+  border-radius: 999px;
+  color: var(--ops-text-dim);
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.ops-filter:hover:not(:disabled) {
+  border-color: var(--ops-line-3);
+  color: var(--ops-text);
+}
+.ops-filter.is-active {
+  background: var(--ops-accent-soft);
+  border-color: color-mix(in srgb, var(--ops-accent) 60%, transparent);
+  color: var(--ops-accent);
+}
+.ops-filter:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.ops-filter-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ops-accent);
+  box-shadow: 0 0 8px var(--ops-accent);
+}
+.ops-filter-count {
+  font-size: 10px;
+  color: var(--ops-text-faint);
+  font-variant-numeric: tabular-nums;
+  padding-left: 4px;
+  border-left: 1px solid color-mix(in srgb, var(--ops-text-faint) 40%, transparent);
+}
+.ops-filter[data-cat='db'].is-active     { border-color: color-mix(in srgb, var(--ops-cat-db) 60%, transparent);     color: var(--ops-cat-db);     background: color-mix(in srgb, var(--ops-cat-db) 10%, transparent); }
+.ops-filter[data-cat='build'].is-active  { border-color: color-mix(in srgb, var(--ops-cat-build) 60%, transparent);  color: var(--ops-cat-build);  background: color-mix(in srgb, var(--ops-cat-build) 10%, transparent); }
+.ops-filter[data-cat='deploy'].is-active { border-color: color-mix(in srgb, var(--ops-cat-deploy) 60%, transparent); color: var(--ops-cat-deploy); background: color-mix(in srgb, var(--ops-cat-deploy) 10%, transparent); }
+.ops-filter[data-cat='backup'].is-active { border-color: color-mix(in srgb, var(--ops-cat-backup) 60%, transparent); color: var(--ops-cat-backup); background: color-mix(in srgb, var(--ops-cat-backup) 10%, transparent); }
+.ops-filter[data-cat='prompt'].is-active { border-color: color-mix(in srgb, var(--ops-accent) 60%, transparent); color: var(--ops-accent); background: var(--ops-accent-soft); }
+
+/* ── Op card ─────────────────────────────────────── */
+
+.ops-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ops-card {
+  position: relative;
+  background: linear-gradient(180deg, var(--ops-panel) 0%, var(--ops-bg-2) 100%);
+  border: 1px solid var(--ops-line-2);
+  border-radius: 14px;
+  padding: 28px 28px 28px 36px;
+  overflow: hidden;
+  transition: border-color .25s, transform .25s;
+}
+.ops-card:hover {
+  border-color: var(--ops-line-3);
+  transform: translateY(-1px);
+}
+.ops-card-rail {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--ops-text-faint);
+}
+.ops-card[data-cat='db'] .ops-card-rail     { background: var(--ops-cat-db); }
+.ops-card[data-cat='build'] .ops-card-rail  { background: var(--ops-cat-build); }
+.ops-card[data-cat='deploy'] .ops-card-rail { background: var(--ops-cat-deploy); }
+.ops-card[data-cat='backup'] .ops-card-rail { background: var(--ops-cat-backup); }
+.ops-card[data-cat='prompt'] .ops-card-rail { background: var(--ops-accent); }
+
+.ops-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ops-card-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ops-text-faint);
+}
+.ops-card[data-cat='db'] .ops-card-cat     { color: var(--ops-cat-db); }
+.ops-card[data-cat='build'] .ops-card-cat  { color: var(--ops-cat-build); }
+.ops-card[data-cat='deploy'] .ops-card-cat { color: var(--ops-cat-deploy); }
+.ops-card[data-cat='backup'] .ops-card-cat { color: var(--ops-cat-backup); }
+.ops-card[data-cat='prompt'] .ops-card-cat { color: var(--ops-accent); }
+
+.ops-card-cwd {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  color: var(--ops-text-faint);
+  padding: 3px 8px;
+  border: 1px solid var(--ops-line-2);
+  border-radius: 4px;
+}
+
+.ops-card-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--ops-text);
+  margin: 0 0 12px;
+  line-height: 1.25;
+}
+
+.ops-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ops-chip {
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  color: var(--ops-text-dim);
+  background: color-mix(in srgb, var(--ops-text-dim) 8%, transparent);
+  padding: 3px 9px;
+  border-radius: 4px;
+}
+
+.ops-card-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ops-text-dim);
+  margin: 0 0 18px;
+}
+
+/* ── Code block ──────────────────────────────────── */
+
+.ops-code {
+  position: relative;
+  background: #07070F;
+  border: 1px solid rgba(167, 139, 250, .12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ops-code-copy {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-family: var(--ops-mono);
+  font-size: 11px;
+  background: rgba(167, 139, 250, .10);
+  border: 1px solid rgba(167, 139, 250, .25);
+  border-radius: 5px;
+  color: var(--ops-text-dim);
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.ops-code-copy:hover {
+  background: rgba(167, 139, 250, .20);
+  color: var(--ops-accent);
+  border-color: var(--ops-accent);
+}
+.ops-code-pre {
+  margin: 0;
+  padding: 14px 110px 14px 16px;  /* right padding 给 copy button 留位 */
+  font-family: var(--ops-mono);
+  font-size: 13px;
+  color: var(--ops-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+/* prompt 模式:不是 shell,字体回归 sans + 留出段落呼吸 */
+.ops-code[data-mode='prompt'] {
+  background: #0E0E1A;
+  border-color: color-mix(in srgb, var(--ops-accent) 18%, transparent);
+}
+.ops-code[data-mode='prompt'] .ops-code-pre {
+  font-family: var(--ops-sans);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ops-text);
+  padding: 16px 110px 16px 16px;
+}
+.ops-code-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.ops-code-prompt {
+  color: var(--ops-accent);
+  user-select: none;
+}
+.ops-code-text {
+  flex: 1;
+}
+
+/* ── Variants ────────────────────────────────────── */
+
+.ops-card-variants {
+  margin-top: 16px;
+}
+.ops-variants-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--ops-line-2);
+  border-radius: 6px;
+  color: var(--ops-text-dim);
+  font-family: var(--ops-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.ops-variants-toggle:hover {
+  border-color: var(--ops-accent);
+  color: var(--ops-accent);
+}
+.ops-variants-toggle svg {
+  transition: transform .2s;
+}
+.ops-chev-open {
+  transform: rotate(180deg);
+}
+
+.ops-variants-body {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-left: 16px;
+  border-left: 1px dashed var(--ops-line-2);
+}
+.ops-variant {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ops-variant-label {
+  font-size: 13px;
+  color: var(--ops-text);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ops-variant-arrow {
+  color: var(--ops-accent);
+  font-family: var(--ops-mono);
+}
+.ops-variant-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ops-text-dim);
+}
+
+/* ── Empty / footer ──────────────────────────────── */
+
+.ops-empty {
+  text-align: center;
+  padding: 60px 0;
+  font-family: var(--ops-mono);
+  font-size: 13px;
+  color: var(--ops-text-faint);
+}
+
+.ops-foot {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--ops-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--ops-mono);
+  font-size: 12px;
+  color: var(--ops-text-faint);
+}
+.ops-foot-text { letter-spacing: .02em; }
+.ops-foot-link {
+  color: var(--ops-text-dim);
+  text-decoration: none;
+}
+.ops-foot-link:hover { color: var(--ops-accent); }
+
+/* ── Mobile ──────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .ops-shell { padding: 24px 16px 56px; }
+  .ops-topbar { margin-bottom: 36px; }
+  .ops-hero { margin-bottom: 32px; }
+  .ops-hero-title { letter-spacing: -.04em; }
+  .ops-card {
+    padding: 22px 18px 22px 26px;
+    border-radius: 10px;
+  }
+  .ops-card-title { font-size: 19px; }
+  .ops-code-pre { padding-right: 16px; padding-top: 44px; font-size: 12px; }
+  .ops-code-copy { top: 8px; right: 8px; }
+  .ops-filters { gap: 6px; }
+  .ops-filter { padding: 6px 10px; font-size: 11px; }
+}

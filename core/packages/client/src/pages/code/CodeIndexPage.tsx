@@ -81,6 +81,23 @@ const CARDS: Card[] = [
       meta: 'PV/UV · 4 metrics · 90-day rolling',
     },
   },
+  {
+    href: '/code/ops',
+    glyph: '~$',
+    accent: '#A78BFA',
+    zh: {
+      title: '运维',
+      sub: 'Ops Runbook',
+      tagline: '日常维护命令的实战手册:DB 刷新、构建、部署、备份。每条命令带前置条件、耗时、踩坑',
+      meta: '可复制 · 带 context · 持续增补',
+    },
+    en: {
+      title: 'Ops',
+      sub: 'Runbook',
+      tagline: 'Hands-on commands for routine maintenance: DB refresh, builds, deploys, backups. Each with prereqs, runtime, gotchas',
+      meta: 'Copyable · with context · always growing',
+    },
+  },
 ];
 
 export default function CodeIndexPage() {
