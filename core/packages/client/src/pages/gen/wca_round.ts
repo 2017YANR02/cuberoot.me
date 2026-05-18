@@ -45,7 +45,9 @@ export const ALLOWED_FORMATS: Record<string, WcaFormat[]> = {
   '333bf':  ['5', '3'],
   '333fm':  ['m'],
   '333oh':  ['a'],
+  '333ft':  ['a', 'm'],
   '333mbf': ['1', '2', '3'],
+  '333mbo': ['1', '2', '3'],
   'clock':  ['a'],
   'minx':   ['a'],
   'pyram':  ['a'],
@@ -103,9 +105,10 @@ export function defaultRoundConfig(event: string): RoundConfig {
 }
 
 export function defaultEventConfig(event: string): EventConfig {
+  const isMbld = event === '333mbf' || event === '333mbo';
   return {
     event,
     rounds: [defaultRoundConfig(event)],
-    mbldCubes: event === '333mbf' ? MBLD_DEFAULT_CUBES : undefined,
+    mbldCubes: isMbld ? MBLD_DEFAULT_CUBES : undefined,
   };
 }

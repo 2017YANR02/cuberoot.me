@@ -3,20 +3,20 @@
  *
  * Dispatch (post pzl unification — numeric pzl OR keyword pzl):
  *   - cube + view in {iso,plan,trans,oll,pll,...}  → @cuberoot/visualcube
- *   - cube + view=net                              → cubing.js 2D net
- *   - sq1 / mega / pyra / skewb + variant=net      → cubing.js 2D net
- *   - sq1 / mega / pyra / skewb + iso/top          → sr-puzzlegen (linkedom)
+ *   - cube + view=net|wca                          → cubing.js 2D net
+ *   - sq1 / mega / pyra / skewb + view=net|wca     → cubing.js 2D net
+ *   - sq1 / mega / pyra / skewb + view=iso|top     → sr-puzzlegen (linkedom)
  *
  * URL params:
  *   alg / case / setup       WCA notation (case = inverse of alg on solved)
- *   view                     iso | plan | f2l | oll | pll | pll-iso | trans | net
+ *   view                     cube:     iso | plan | f2l | oll | pll | pll-iso | trans | net
+ *                            non-cube: iso | top | net | wca   (was: variant=)
  *   mask                     explicit Masking enum value
  *   size                     32-1000; default 256
  *   pzl                      numeric (NxN size 1-50) OR keyword
  *                            (cube | sq1 | mega | pyra | skewb); legacy `puzzle=`
  *                            with old `megaminx`/`pyraminx` long forms still accepted
  *   bg / cc / co             background / plastic / opacity (cube renderer only)
- *   variant                  iso | net | top (relevant for non-cube puzzles)
  *
  * Cached 24h since responses are deterministic from inputs.
  */
@@ -48,7 +48,6 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
   const q = (k: string) => c.req.query(k);
 
   const { puzzle, cubeSizeFromPzl } = resolvePuzzle(q('pzl'), q('puzzle'));
-  const variant = q('variant');
   const view = q('view');
 
   // alg/setup are forward; case is the inverse alg (state the alg solves).
@@ -56,9 +55,9 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
   const algStr = q('case') ?? q('alg') ?? q('setup') ?? '';
   const isCase = q('case') != null;
 
-  const wantsNet =
-    (puzzle === 'cube' && view === 'net') ||
-    (puzzle !== 'cube' && variant === 'net');
+  // `view=wca` is the tnoodle-port unfolded layout — server doesn't ship a TS port,
+  // so reuse the cubing.js scramble-display net renderer (close-enough WCA preview).
+  const wantsNet = view === 'net' || view === 'wca';
 
   if (wantsNet) {
     let event: string;
@@ -84,7 +83,7 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
 
   // Non-cube iso/top: sr-puzzlegen via linkedom (+ shared skewb fan for skewb-top).
   if (puzzle === 'sq1' || puzzle === 'megaminx' || puzzle === 'pyraminx' || puzzle === 'skewb') {
-    const v: 'iso' | 'top' = variant === 'top' ? 'top' : 'iso';
+    const v: 'iso' | 'top' = view === 'top' ? 'top' : 'iso';
     const sizeRaw = parseInt(q('size') ?? '256', 10);
     const size = isNaN(sizeRaw) ? 256 : Math.max(32, Math.min(1000, sizeRaw));
     const svg = await renderSrPuzzlegenSVG(puzzle, v, algStr, isCase, q('r'), size);
@@ -93,7 +92,7 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
       c.header('Cache-Control', 'public, max-age=86400');
       return c.body(svg);
     }
-    return c.text(`Server-side render failed for puzzle=${puzzle} variant=${v}`, 500);
+    return c.text(`Server-side render failed for puzzle=${puzzle} view=${v}`, 500);
   }
 
   // Default cube (3D / plan / trans / oll / pll / ...)

@@ -34,6 +34,9 @@ import InteractiveCubeNet, { type PaintColor } from './InteractiveCubeNet';
 import { SOLVED_FACELET } from '../scramble/solver/facelet';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS, invertSq1Alg as invertSq1AlgLocal } from '../gen/sq1_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '../gen/mega_svg';
+import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from '../gen/pyraminx_svg';
+import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from '../gen/skewb_svg';
+import { renderUnfoldedSvg } from '../gen/cube_unfolded_svg';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -211,15 +214,18 @@ const MASK_ROTATIONS = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
 
 type AlgType = 'alg' | 'case';
 // 'net' is delegated to puzzle-gen (sr-puzzlegen) — our @cuberoot/visualcube does not render unfolded NxN.
-type SpecialView = 'normal' | 'plan' | 'trans' | 'net';
+type SpecialView = 'normal' | 'plan' | 'trans' | 'net' | 'wca';
 type PuzzleType = 'cube' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
-type PuzzleVariant = 'iso' | 'net' | 'top';
+// 'wca' = tnoodle-port unfolded layout (= /scramble/gen 预览,WCA spec). 'net' = cubing.js
+// scramble-display unfold,目前仅 skewb 还保留(skewb 的 cubing.js net 不是 WCA 配色)。
+type PuzzleVariant = 'iso' | 'net' | 'top' | 'wca';
 
 /** Map (puzzleType, variant) → sr-puzzlegen kind. Cube uses our own renderer instead.
- *  Net variants are NOT routed here — they go through <CubingPreview> (cubing.js scramble-display)
- *  for visual parity with /battle and /timer. */
+ *  Net / WCA variants are NOT routed here — they go through the tnoodle-port SVGs or
+ *  <CubingPreview> (cubing.js scramble-display). */
 function srKindOf(type: PuzzleType, variant: PuzzleVariant): PuzzleKind | null {
   if (type === 'cube') return null;
+  if (variant === 'net' || variant === 'wca') return null;
   if (type === 'sq1') return 'sq1';
   if (type === 'megaminx') return variant === 'top' ? 'megaminx-top' : 'megaminx';
   if (type === 'pyraminx') return 'pyraminx';
@@ -402,8 +408,6 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
       else if (v === 'skewb') s.puzzleType = 'skewb';
     }
   }
-  const pv = get('variant');
-  if (pv === 'iso' || pv === 'net' || pv === 'top') s.puzzleVariant = pv;
   s.imageSize = num('size', DEFAULTS.imageSize, 1, 1000);
 
   if (get('case') != null) {
@@ -417,9 +421,17 @@ function readInitialFromUrl(params: URLSearchParams): EditorState {
   if (get('arw') != null) s.arrows = get('arw') ?? '';
   if (get('ac') != null) s.defaultArrowColor = get('ac') ?? '';
 
-  // view: 'plan' / 'trans' / 'net' / (anything else → 'normal')
+  // Unified `view=` param dispatched by puzzleType.
+  //   cube     → 'plan' / 'trans' / 'net' (else 'normal')
+  //   non-cube → 'iso' / 'top' / 'wca' / 'net'  (仅 skewb 可用 net)
   const view = get('view');
-  if (view === 'plan' || view === 'trans' || view === 'net') s.cubeView = view;
+  if (view) {
+    if (s.puzzleType === 'cube') {
+      if (view === 'plan' || view === 'trans' || view === 'net' || view === 'wca') s.cubeView = view;
+    } else if (view === 'iso' || view === 'top' || view === 'wca' || view === 'net') {
+      s.puzzleVariant = view;
+    }
+  }
 
   // stage=mask-rotation
   const stage = get('stage');
@@ -477,14 +489,19 @@ function pzlShort(t: EditorState['puzzleType']): string {
 
 function stateToParams(s: EditorState): URLSearchParams {
   const p = new URLSearchParams();
+  // Always emit pzl= so bare /visualcube URLs canonicalize to ?pzl=3 (or ?pzl=sq1 etc.).
   if (s.puzzleType !== 'cube') p.set('pzl', pzlShort(s.puzzleType));
-  else if (s.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(s.cubeSize));
-  if (s.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('variant', s.puzzleVariant);
+  else p.set('pzl', String(s.cubeSize));
   if (s.imageSize !== DEFAULTS.imageSize) p.set('size', String(s.imageSize));
   if (s.algorithm) p.set(s.algType, s.algorithm);
   if (s.arrows) p.set('arw', s.arrows);
   if (s.defaultArrowColor) p.set('ac', s.defaultArrowColor);
-  if (s.cubeView !== 'normal') p.set('view', s.cubeView);
+  // Unified `view=` — only emit the one that's active for the current puzzleType.
+  if (s.puzzleType === 'cube') {
+    if (s.cubeView !== 'normal') p.set('view', s.cubeView);
+  } else if (s.puzzleVariant !== DEFAULTS.puzzleVariant) {
+    p.set('view', s.puzzleVariant);
+  }
   if (s.stageMask) {
     p.set('stage', s.maskAlg ? `${s.stageMask}-${s.maskAlg}` : s.stageMask);
   }
@@ -810,8 +827,14 @@ export default function VisualCubeEditorPage() {
     // Any net path renders via <scramble-display>, which mounts its <svg> inside a Shadow Root —
     // a plain querySelector('svg') misses it.
     const isCubeNet = state.puzzleType === 'cube' && state.cubeView === 'net';
-    const isOtherNet = state.puzzleType !== 'cube' && state.puzzleVariant === 'net';
-    if (isCubeNet || isOtherNet) {
+    const isCubeWca = state.puzzleType === 'cube' && state.cubeView === 'wca';
+    const isOtherUnfolded = state.puzzleType !== 'cube'
+      && (state.puzzleVariant === 'net' || state.puzzleVariant === 'wca');
+    if (isCubeNet || isCubeWca || isOtherUnfolded) {
+      // tnoodle port (variant=wca) inlines its SVG directly into .vc-preview;
+      // cubing.js scramble-display (skewb net + NxN cube net) wraps in Shadow DOM.
+      const direct = previewRef.current?.querySelector('.vc-preview > svg');
+      if (direct) return new XMLSerializer().serializeToString(direct);
       const sd = previewRef.current?.querySelector('scramble-display');
       const inShadow = sd?.shadowRoot?.querySelector('svg');
       return inShadow ? new XMLSerializer().serializeToString(inShadow) : '';
@@ -871,12 +894,13 @@ export default function VisualCubeEditorPage() {
 
   const apiUrl = useMemo(() => {
     // /v1/visualcube.svg supports: alg/case/setup/view/mask/size/bg/cc/co (cube renderer),
-    // plus puzzle/variant (cubing.js net renderer for sq1/megaminx/pyraminx/skewb + cube net).
+    // plus pzl=sq1/mega/pyra/skewb with view= for the puzzle's view variant.
+    // Server treats `variant=` as a silent legacy alias of `view=` (see server cube.ts).
     const p = new URLSearchParams();
     if (state.algorithm) p.set(state.algType, state.algorithm);
     if (state.puzzleType !== 'cube') {
       p.set('pzl', pzlShort(state.puzzleType));
-      if (state.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('variant', state.puzzleVariant);
+      if (state.puzzleVariant !== DEFAULTS.puzzleVariant) p.set('view', state.puzzleVariant);
     } else {
       if (state.cubeView !== 'normal') p.set('view', state.cubeView);
       if (state.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(state.cubeSize));
@@ -942,7 +966,9 @@ export default function VisualCubeEditorPage() {
           // renderer with /battle and /timer. scramble-display takes a FORWARD scramble,
           // so 'case' mode passes the inverse alg.
           const isCubeNet = state.puzzleType === 'cube' && state.cubeView === 'net';
-          const isOtherNet = state.puzzleType !== 'cube' && state.puzzleVariant === 'net';
+          const isCubeWca = state.puzzleType === 'cube' && state.cubeView === 'wca';
+          const isOtherUnfolded = state.puzzleType !== 'cube'
+            && (state.puzzleVariant === 'net' || state.puzzleVariant === 'wca');
           // 3x3 net 走可填色编辑器 — 其他 size / 非 cube 仍走 scramble-display
           if (isCubeNet && state.cubeSize === 3) {
             return (
@@ -957,20 +983,31 @@ export default function VisualCubeEditorPage() {
               </div>
             );
           }
-          if (isCubeNet || isOtherNet) {
-            // sq1 / megaminx: render directly via the tnoodle port — same SVG
-            // shape as our NxN path (auto-sized by `.vc-preview svg` CSS).
-            // CubingPreview's fixed inline width/height container breaks
-            // centering inside `.vc-preview-wrap` (flex + max-height: 45vh) at
-            // browser zooms where vh shrinks below the inline height.
-            if (isOtherNet && (state.puzzleType === 'sq1' || state.puzzleType === 'megaminx')) {
+          if (isCubeNet || isCubeWca || isOtherUnfolded) {
+            // view=wca: render via tnoodle TS port — identical SVG to /scramble/gen
+            // 预览 (ScramblePreview2D),WCA spec configurations.
+            if (isCubeWca) {
+              const raw = state.algorithm ?? '';
+              const forward = state.algType === 'case' ? invertAlg(raw) : raw;
+              // tnoodle TS port supports arbitrary N; cap at 50 to match the NxN Size input bound.
+              const N = Math.max(1, Math.min(50, state.cubeSize));
+              const svgStr = renderUnfoldedSvg(N, forward);
+              return (
+                <div className="vc-preview" dangerouslySetInnerHTML={{ __html: svgStr }} />
+              );
+            }
+            if (state.puzzleVariant === 'wca' && state.puzzleType !== 'cube') {
               const raw = state.algorithm ?? '';
               const forward = state.algType === 'case'
                 ? (state.puzzleType === 'sq1' ? invertSq1AlgLocal(raw) : invertAlg(raw))
                 : raw;
               const svgStr = state.puzzleType === 'sq1'
                 ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS)
-                : renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS);
+                : state.puzzleType === 'megaminx'
+                ? renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS)
+                : state.puzzleType === 'pyraminx'
+                ? renderPyraScrambleSvg(forward, PYRA_DEFAULT_COLORS)
+                : renderSkewbScrambleSvg(forward, SKEWB_DEFAULT_COLORS);
               return (
                 <div className="vc-preview" dangerouslySetInnerHTML={{ __html: svgStr }} />
               );
@@ -1081,24 +1118,45 @@ export default function VisualCubeEditorPage() {
           </div>
         </div>
 
-        {/* View variant — only relevant for non-cube puzzles */}
-        {state.puzzleType !== 'cube' && (
-          <div className="vc-row">
-            <label className="vc-label">{t('视图', 'View')}</label>
-            <div className="vc-row-controls">
-              {((state.puzzleType === 'megaminx' || state.puzzleType === 'skewb') ? (['iso', 'top', 'net'] as PuzzleVariant[]) : (['iso', 'net'] as PuzzleVariant[])).map((pv) => (
+        {/* View — sits directly under Puzzle for all puzzle types.
+            Cube:    normal / plan / trans / net   (NxN special views)
+            Non-cube: iso / top / wca / net        (puzzleVariant) */}
+        <div className="vc-row">
+          <label className="vc-label">{t('视图', 'View')}</label>
+          <div className="vc-row-controls">
+            {state.puzzleType === 'cube' ? (
+              (['normal', 'plan', 'trans', 'net', 'wca'] as SpecialView[]).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`vc-btn vc-btn-sm${state.cubeView === v ? ' vc-btn-active' : ''}`}
+                  onClick={() => set('cubeView', v)}
+                >
+                  {v}
+                </button>
+              ))
+            ) : (
+              ((): PuzzleVariant[] => {
+                // skewb 多出独立的 cubing.js Net(不是 WCA 配色);其余几个的 Net 已 rename 为 WCA。
+                if (state.puzzleType === 'skewb') return ['iso', 'top', 'net', 'wca'];
+                if (state.puzzleType === 'megaminx') return ['iso', 'top', 'wca'];
+                return ['iso', 'wca'];
+              })().map((pv) => (
                 <button
                   key={pv}
                   type="button"
                   className={`vc-btn vc-btn-sm${state.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
                   onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
                 >
-                  {pv === 'iso' ? (isZh ? '立体' : 'Iso') : pv === 'top' ? (isZh ? '顶视' : 'Top') : (isZh ? '展开' : 'Net')}
+                  {pv === 'iso' ? (isZh ? '立体' : 'iso')
+                    : pv === 'top' ? (isZh ? '顶视' : 'top')
+                    : pv === 'wca' ? 'wca'
+                    : (isZh ? '展开' : 'net')}
                 </button>
-              ))}
-            </div>
+              ))
+            )}
           </div>
-        )}
+        </div>
 
         {/* Cube size + image size on one row. Cube size only matters for NxN. */}
         <div className="vc-row">
@@ -1167,7 +1225,7 @@ export default function VisualCubeEditorPage() {
 
         {/* Arrow editor — NxN sticker indices, only used by our @cuberoot/visualcube renderer
             (not the puzzle-gen net path). */}
-        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && state.cubeView !== 'wca' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
           <div className="vc-row-controls vc-col">
@@ -1242,30 +1300,11 @@ export default function VisualCubeEditorPage() {
         </div>
         )}
 
-        {/* Special view + stage mask are NxN-cube specific (sr-puzzlegen has its own view variant picker above). */}
+        {/* Stage mask is NxN-cube specific (sr-puzzlegen has its own renderer for non-cube).
+            View picker for cube was moved up next to Puzzle. */}
         {state.puzzleType === 'cube' && (
           <>
-            <div className="vc-row">
-              <label className="vc-label">{t('视角', 'Special View')}</label>
-              <div className="vc-row-controls">
-                <div className="vc-radio-group">
-                  {(['normal', 'plan', 'trans', 'net'] as SpecialView[]).map((v) => (
-                    <label key={v}>
-                      <input
-                        type="radio"
-                        checked={state.cubeView === v}
-                        onChange={() => set('cubeView', v)}
-                      />
-                      {v}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Stage mask is implemented in our @cuberoot/visualcube renderer only — irrelevant for the
-                puzzle-gen unfolded-net path. */}
-            {state.cubeView !== 'net' && (
+            {state.cubeView !== 'net' && state.cubeView !== 'wca' && (
             <div className="vc-row">
               <label className="vc-label">{t('Mask', 'Stage Mask')}</label>
               <div className="vc-row-controls">
@@ -1323,7 +1362,7 @@ export default function VisualCubeEditorPage() {
         )}
 
         {/* Color Schemes — wired into our @cuberoot/visualcube renderer (not the puzzle-gen net path). */}
-        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && state.cubeView !== 'wca' && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('六面配色', 'Color Schemes')}</label>
           <div className="vc-row-controls vc-col">
@@ -1364,10 +1403,10 @@ export default function VisualCubeEditorPage() {
         )}
 
         {/* Rotation Sequence — for NxN cube 3D, sr-puzzlegen iso/top, and skewb-top.
-            Hidden for net layouts (cubing.js / puzzle-gen, fixed 2D). */}
+            Hidden for unfolded layouts (cubing.js Net / tnoodle WCA / puzzle-gen, fixed 2D). */}
         {(
-          (state.puzzleType === 'cube' && state.cubeView !== 'net') ||
-          (state.puzzleType !== 'cube' && state.puzzleVariant !== 'net')
+          (state.puzzleType === 'cube' && state.cubeView !== 'net' && state.cubeView !== 'wca') ||
+          (state.puzzleType !== 'cube' && state.puzzleVariant !== 'net' && state.puzzleVariant !== 'wca')
         ) && (
         <div className="vc-row vc-row-block">
           <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
@@ -1421,7 +1460,7 @@ export default function VisualCubeEditorPage() {
           allowEmpty
         />
         {/* Cube colour / opacity / projection distance — our @cuberoot/visualcube only. */}
-        {state.puzzleType === 'cube' && state.cubeView !== 'net' && (
+        {state.puzzleType === 'cube' && state.cubeView !== 'net' && state.cubeView !== 'wca' && (
           <>
             <ColorRow
               label={t('壳体色', 'Cube Color')}
