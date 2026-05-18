@@ -56,8 +56,14 @@ export const FACE_ORDER = ['L', 'B', 'R', 'F'] as const;
 type FaceKey = keyof typeof SQ1_COLORS;
 
 /** Slice axis (chord-perp). 180° around this swaps F/B walls of the BIG mid
- *  piece and the east half of top+bot layers. */
-export const SLICE_AXIS = new THREE.Vector3(W, 0, WEDGE_HALF_CHORD).normalize();
+ *  piece and the east half of top+bot layers.
+ *
+ *  Sign matters for the slerp trajectory (not the end state — Q(n,π) and Q(-n,π)
+ *  represent the same rotation). With +(W,0,WHC), east pieces would dip BELOW
+ *  the cube envelope mid-swing (bot piece y reaches ≈-50 at 45°). With the
+ *  negated direction, the east half swings OVER THE TOP — the natural SQ1
+ *  visual (matches cubedb / ruwix). */
+export const SLICE_AXIS = new THREE.Vector3(-W, 0, -WEDGE_HALF_CHORD).normalize();
 
 // ─── piece classification ─────────────────────────────────────────────────
 export function isCornerPiece(piece: number): boolean {
