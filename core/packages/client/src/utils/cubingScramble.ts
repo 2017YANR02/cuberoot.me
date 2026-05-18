@@ -36,7 +36,7 @@ try {
 export const TNOODLE_WCA_EVENTS = [
   '333', '222', '444', '555', '666', '777',
   '333bf', '444bf', '555bf',
-  '333fm', '333oh', '333mbf',
+  '333fm', '333oh', '333ft', '333mbf', '333mbo',
   'clock', 'minx', 'pyram', 'skewb', 'sq1',
 ] as const;
 
@@ -120,7 +120,10 @@ const refilling = new Map<string, Promise<void>>();
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
-  const alg = await randomScrambleForEvent(wcaId);
+  // 333ft / 333mbo use identical scrambles to 333 / 333mbf — cubing/scramble
+  // doesn't ship scramblers for these retired events, so map to 333.
+  const cubingId = wcaId === '333ft' || wcaId === '333mbo' ? '333' : wcaId;
+  const alg = await randomScrambleForEvent(cubingId);
   return alg.toString();
 }
 
@@ -187,7 +190,18 @@ export function prewarmScramble(...events: string[]): void {
  * direct cubing call. Either way, schedules a refill so the next caller
  * stays warm. Same return shape as `tnoodleRandomScramble`.
  */
+/** `nxn<N>` synthetic ids (N ≥ 8) for high-order NxN beyond WCA's 7x7 ceiling. */
+const NXN_HIGH_RE = /^nxn(\d+)$/;
+
 export async function pooledScramble(event: string): Promise<string | null> {
+  // High-order NxN: route directly to the random-move generator. No pool —
+  // generation is cheap (no solver), and pool refills are unnecessary.
+  const nxnHigh = NXN_HIGH_RE.exec(event);
+  if (nxnHigh) {
+    const n = parseInt(nxnHigh[1], 10);
+    if (n >= 2 && n <= 50) return randomMoveScrambleNxN(n);
+    return null;
+  }
   const wcaId = toWcaEventId(event);
   if (!SUPPORTED.has(wcaId)) return null;
   const cur = pool.get(wcaId);

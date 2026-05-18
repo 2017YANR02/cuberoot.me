@@ -158,7 +158,7 @@ export function renderSkewbScrambleSvg(scramble: string, colors: Record<string, 
   const trans = faceTransforms();
 
   const out: string[] = [];
-  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">`);
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
 
   for (let face = 0; face < 6; face++) {
     const t = trans[face];

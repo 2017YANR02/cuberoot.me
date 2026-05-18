@@ -46,17 +46,25 @@ export function isUnfoldablePuzzle(puzzleId: string): boolean {
 
 const EVENT_TO_PUZZLE: Record<string, string> = {
   '222': '2x2x2',
-  '333': '3x3x3', '333oh': '3x3x3', '333bf': '3x3x3', '333fm': '3x3x3', '333mbf': '3x3x3',
+  '333': '3x3x3', '333oh': '3x3x3', '333bf': '3x3x3', '333fm': '3x3x3', '333ft': '3x3x3',
+  '333mbf': '3x3x3', '333mbo': '3x3x3',
   '444': '4x4x4', '444bf': '4x4x4',
   '555': '5x5x5', '555bf': '5x5x5',
   '666': '6x6x6',
   '777': '7x7x7',
 };
 
+/** Synthetic id for high-order NxN (N ≥ 8) without a WCA event: `nxn8`..`nxn50`. */
+const NXN_HIGH_RE = /^nxn(\d+)$/;
 export function eventToCubeSize(event: string): number | null {
   const p = EVENT_TO_PUZZLE[event];
-  if (!p) return null;
-  return PUZZLE_TO_N[p] ?? null;
+  if (p) return PUZZLE_TO_N[p] ?? null;
+  const m = NXN_HIGH_RE.exec(event);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 2 && n <= 50) return n;
+  }
+  return null;
 }
 
 /** Parse a WCA scramble string and return the SVG unfolded-net for the resulting cube state. */
@@ -91,7 +99,7 @@ export function renderUnfoldedSvg(N: number, scramble: string): string {
   const w = 4 * N + 5 * GAP;
   const h = 3 * N + 4 * GAP;
   const parts: string[] = [];
-  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">`);
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
   // Tnoodle's puzzle SVG is transparent; the gray cell background is drawn by
   // the PDF renderer behind the image, and shows through the face gaps.
 
