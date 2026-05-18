@@ -68,11 +68,15 @@ const BEVEL = {
 const STICKER_Z = LAYER_HEIGHT + BEVEL.bevelThickness + 0.5; // 105.5
 // Side-sticker outward radial offset from cube face (W).
 const SIDE_OFFSET = 0.5;
-// Sticker material params (per cubedb): translucent + shiny, so the black
-// body bevel underneath shows through and produces the piece divisions.
-const STICKER_OPACITY = 0.75;
-const STICKER_SHININESS = 40;
-const STICKER_SPECULAR = 0x222222;
+// Sticker raise depth — /stack-style "raised tile" extrusion thickness.
+const STICKER_DEPTH = 2;
+// Sticker material params: opaque, shiny phong (matches /stack feel).
+const STICKER_SHININESS = 60;
+const STICKER_SPECULAR = 0x444444;
+// Top sticker inset toward centroid (in shape-local units) — leaves visible
+// body-color gap between adjacent piece stickers on U/D faces (replaces the
+// old transparent-sticker-over-bevel trick).
+const TOP_STICKER_INSET = 18;
 
 export const SQ1_COLORS = {
   L: 0x1f4dff,
@@ -247,38 +251,45 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
   const body = new THREE.Mesh(bodyGeom, bodyMat);
   group.add(body);
 
-  // Top sticker: full shape outline (no inset). Translucent (opacity 0.75)
-  // so the deeply-inset bevel of the body underneath shows through as a
-  // black radial pattern (= the visible piece divisions on U/D faces).
-  const stickerGeom = new THREE.ShapeGeometry(outline);
-  const topSticker = new THREE.Mesh(stickerGeom, mkStickerMat(SQ1_COLORS[faces.top]));
+  // Top sticker: RAISED ExtrudeGeometry (/stack-style). Inset shape toward
+  // centroid so adjacent pieces' stickers don't touch — visible body-color
+  // gap between them produces the U/D face piece division lines. Sticker
+  // extruded by STICKER_DEPTH for the "raised tile" 3D look.
+  const topInsetVerts: [number, number][] = corner
+    ? [[0, 0], [W, WEDGE_HALF_CHORD], [W, W], [WEDGE_HALF_CHORD, W]]
+    : [[0, 0], [W, -WEDGE_HALF_CHORD], [W, WEDGE_HALF_CHORD]];
+  const topStickerShape = insetShape(topInsetVerts, TOP_STICKER_INSET);
+  const topStickerGeom = new THREE.ExtrudeGeometry(topStickerShape, {
+    steps: 1, depth: STICKER_DEPTH,
+    bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6,
+    bevelOffset: 0, bevelSegments: 1,
+  });
+  const topSticker = new THREE.Mesh(topStickerGeom, mkStickerMat(SQ1_COLORS[faces.top]));
   topSticker.position.z = STICKER_Z;
   group.add(topSticker);
 
-  // Side stickers — placed on the OUTER cube-face surfaces (at radial W).
-  // They're flat planes positioned slightly outside the cube face to avoid
-  // Z-fighting with the body's side walls. Width/height inset so adjacent
-  // pieces' stickers don't touch, leaving a thin body-colored gap.
+  // Side stickers — RAISED rounded-rect ExtrudeGeometry (/stack-style).
+  // Sticker base sits at the cube face surface; the extrusion thickness
+  // protrudes outward, making the sticker look like a physical raised tile.
   if (corner) {
     const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
     const matB = mkStickerMat(SQ1_COLORS[faces.sideB!]);
 
-    // wallA on +Y face: spans X from WEDGE_HALF_CHORD to W (width TILE_W).
-    const wallA = mkRectMesh(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
+    // wallA on +Y face. Extrude direction +Z (in shape coords) → world +Y after rotation.
+    const wallA = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
     wallA.position.set(CORNER_FACE_CENTER, W + SIDE_OFFSET, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
     group.add(wallA);
 
-    // wallB on +X face: spans Y from WEDGE_HALF_CHORD to W.
-    const wallB = mkRectMesh(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
+    // wallB on +X face.
+    const wallB = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
     wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallB);
   } else {
-    // Wedge has 1 outer face on +X side: chord at X=W, spans Y from
-    // -WEDGE_HALF_CHORD to +WEDGE_HALF_CHORD (width WEDGE_FACE_W).
+    // Wedge has 1 outer face on +X side.
     const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
-    const wallA = mkRectMesh(WEDGE_FACE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
+    const wallA = mkRaisedRectSticker(WEDGE_FACE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
     wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     group.add(wallA);
@@ -303,12 +314,71 @@ function buildPieceMesh(piece: number, isTopLayer: boolean): BuildResult {
 function mkStickerMat(color: number): THREE.MeshPhongMaterial {
   return new THREE.MeshPhongMaterial({
     color, specular: STICKER_SPECULAR, shininess: STICKER_SHININESS,
-    side: THREE.DoubleSide, transparent: true, opacity: STICKER_OPACITY,
+    side: THREE.DoubleSide,
   });
 }
 
-function mkRectMesh(w: number, h: number, mat: THREE.MeshPhongMaterial): THREE.Mesh {
-  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+/**
+ * Rounded-rectangle Shape (technique copied from /stack's makeStickerShape).
+ * Origin at center; w × h with corner radius r. Used for raised side stickers.
+ */
+function roundedRectShape(w: number, h: number, r: number): THREE.Shape {
+  const halfW = w / 2, halfH = h / 2;
+  const rr = Math.min(r, halfW, halfH);
+  const s = new THREE.Shape();
+  s.moveTo(-halfW, -halfH + rr);
+  s.lineTo(-halfW, halfH - rr);
+  s.quadraticCurveTo(-halfW, halfH, -halfW + rr, halfH);
+  s.lineTo(halfW - rr, halfH);
+  s.quadraticCurveTo(halfW, halfH, halfW, halfH - rr);
+  s.lineTo(halfW, -halfH + rr);
+  s.quadraticCurveTo(halfW, -halfH, halfW - rr, -halfH);
+  s.lineTo(-halfW + rr, -halfH);
+  s.quadraticCurveTo(-halfW, -halfH, -halfW, -halfH + rr);
+  s.closePath();
+  return s;
+}
+
+/**
+ * Raised rectangular sticker (rounded-rect extruded along +Z by STICKER_DEPTH).
+ * Positioned at the body face with the FRONT (extruded +Z) facing outward.
+ * Use `applyRotation` to orient the sticker on its destination cube face.
+ */
+function mkRaisedRectSticker(w: number, h: number, mat: THREE.MeshPhongMaterial): THREE.Mesh {
+  const shape = roundedRectShape(w, h, Math.min(w, h) * 0.12);
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    steps: 1, depth: STICKER_DEPTH,
+    bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6,
+    bevelOffset: 0, bevelSegments: 1,
+  });
+  return new THREE.Mesh(geom, mat);
+}
+
+/**
+ * Inset a convex polygon shape uniformly by shrinking toward centroid.
+ * Used to make the top sticker slightly smaller than its piece outline so
+ * adjacent stickers show visible body-color gaps between them.
+ */
+function insetShape(verts: [number, number][], inset: number): THREE.Shape {
+  let cx = 0, cy = 0;
+  for (const [x, y] of verts) { cx += x; cy += y; }
+  cx /= verts.length; cy /= verts.length;
+  // Estimate scale factor: shrink so the FARTHEST vertex moves inward by `inset`.
+  let maxD = 0;
+  for (const [x, y] of verts) {
+    const d = Math.hypot(x - cx, y - cy);
+    if (d > maxD) maxD = d;
+  }
+  const scale = Math.max(0.1, 1 - inset / maxD);
+  const s = new THREE.Shape();
+  const insetVerts = verts.map(([x, y]): [number, number] => [
+    cx + (x - cx) * scale,
+    cy + (y - cy) * scale,
+  ]);
+  s.moveTo(insetVerts[0][0], insetVerts[0][1]);
+  for (let i = 1; i < insetVerts.length; i++) s.lineTo(insetVerts[i][0], insetVerts[i][1]);
+  s.closePath();
+  return s;
 }
 
 // ─── piece slot placement ─────────────────────────────────────────────────
@@ -460,26 +530,47 @@ export class Sq1Renderer {
   }
 
   /**
-   * Equator slice = 2 rectangular slabs (right half X>0 + left half X<0). Per
-   * cubedb's geometry, each middle piece has a COLORED sticker on its outer
-   * cube face: right slab shows GREEN (R) on +X face, left slab shows BLUE
-   * (L) on -X face. F/B faces stay body color (real Sq1 middle has stickers
-   * only on its 2 outermost L/R cube faces).
+   * Equator slice — real Square-1 has 2 ASYMMETRIC trapezoidal middle pieces
+   * split by a DIAGONAL chord through the center at 30° from the L/R axis
+   * (the famous "long edge / short edge" geometry). Each piece is 4-vertex
+   * trapezoid (chord + 3 cube-face edges). One piece carries the full F edge
+   * + a short R + a long L. The other carries full B + long R + short L.
+   *
+   * Cut line equation (top-down XZ plane): z = x·tan(30°), passing through
+   * (W, +CUT_OFF) and (-W, -CUT_OFF) where CUT_OFF = W·tan(30°) ≈ 79.4.
+   *
+   * After a `/` slice, both middle pieces rotate 180° around X — Big and
+   * Small swap places (since chord through center → equal volumes), and the
+   * F vs B colors visible on the cube swap.
    */
   private buildMiddle(): void {
+    const CUT_OFF = W * Math.tan(Math.PI / 6); // ≈79.4
     const bodyMat = new THREE.MeshPhongMaterial({
       color: SQ1_COLORS.BODY, specular: 0x222222, shininess: 25,
       side: THREE.DoubleSide,
     });
-    const mkHalf = (sign: 1 | -1): THREE.Object3D => {
+    // Build one half. `kind === 'big'` = upper-left (has full F=red edge);
+    // `kind === 'small'` = lower-right (has full B=orange edge).
+    const mkHalf = (kind: 'big' | 'small'): THREE.Object3D => {
+      // Shape vertices in XZ-plane (we'll extrude along Z then rotate -π/2
+      // around X so Z becomes Y vertical). Using ShapeXY = (X, Z) so:
+      //   Shape Y axis ≡ world Z axis (after rotation).
       const shape = new THREE.Shape();
-      const x0 = sign === 1 ? 0 : -W;
-      const x1 = sign === 1 ? W : 0;
-      shape.moveTo(x0, -W);
-      shape.lineTo(x1, -W);
-      shape.lineTo(x1, W);
-      shape.lineTo(x0, W);
-      shape.lineTo(x0, -W);
+      if (kind === 'big') {
+        // CCW: chord-start (-W, -CUT_OFF) → back-left (-W, +W) → back-right (W, W) → chord-end (W, CUT_OFF)
+        shape.moveTo(-W, -CUT_OFF);
+        shape.lineTo(-W, W);
+        shape.lineTo(W, W);
+        shape.lineTo(W, CUT_OFF);
+        shape.lineTo(-W, -CUT_OFF);
+      } else {
+        // CCW: chord-start (-W, -CUT_OFF) → front-left (-W, -W) → front-right (W, -W) → chord-end (W, CUT_OFF)
+        shape.moveTo(-W, -CUT_OFF);
+        shape.lineTo(-W, -W);
+        shape.lineTo(W, -W);
+        shape.lineTo(W, CUT_OFF);
+        shape.lineTo(-W, -CUT_OFF);
+      }
       const geom = new THREE.ExtrudeGeometry(shape, {
         steps: 1, depth: MID_HEIGHT,
         bevelEnabled: true, bevelThickness: 1.5, bevelSize: 1.5,
@@ -489,50 +580,59 @@ export class Sq1Renderer {
       geom.translate(0, -HALF_MID, 0);
       const pivot = new THREE.Object3D();
       pivot.add(new THREE.Mesh(geom, bodyMat));
-      // 3 colored stickers per middle half: outer cube face (L or R for left
-      // or right half), plus F (+Z) and B (-Z) covering its half of the
-      // front/back. Together left+right cover all 4 side cube faces in solved.
+
+      // 3 outer-face stickers per piece. Each piece has 3 outer cube-face
+      // edges (the 4th edge is the internal chord). Long/short asymmetry =
+      // famous Sq1 hardware feature.
       const stickerH = MID_HEIGHT - 2 * SIDE_INSET_V;
-      const addSideSticker = (
-        color: number,
-        pos: [number, number, number],
-        rot: [number, number, number],
-        tangentialW: number,
-      ): void => {
-        const w = tangentialW - 2 * SIDE_INSET_H;
-        const mat = mkStickerMat(color);
-        const s = new THREE.Mesh(new THREE.PlaneGeometry(w, stickerH), mat);
-        s.position.set(...pos);
-        s.rotation.set(...rot);
-        pivot.add(s);
+      const addSticker = (color: number, axisFace: 'L' | 'R' | 'F' | 'B', zFrom: number, zTo: number, xFrom: number, xTo: number): void => {
+        // axisFace tells the cube face direction; (zFrom, zTo) for L/R; (xFrom, xTo) for F/B.
+        let posX: number, posZ: number, rotY: number, tangentialLen: number;
+        if (axisFace === 'L' || axisFace === 'R') {
+          // sticker plane in YZ, normal=±X
+          posX = (axisFace === 'R' ? +1 : -1) * (W + SIDE_OFFSET);
+          posZ = (zFrom + zTo) / 2;
+          rotY = axisFace === 'R' ? Math.PI / 2 : -Math.PI / 2;
+          tangentialLen = Math.abs(zTo - zFrom);
+        } else {
+          // F/B: sticker plane in XY, normal=±Z
+          posX = (xFrom + xTo) / 2;
+          posZ = (axisFace === 'F' ? +1 : -1) * (W + SIDE_OFFSET);
+          rotY = axisFace === 'F' ? 0 : Math.PI;
+          tangentialLen = Math.abs(xTo - xFrom);
+        }
+        const w = Math.max(1, tangentialLen - 2 * SIDE_INSET_H);
+        const mesh = mkRaisedRectSticker(w, stickerH, mkStickerMat(color));
+        mesh.position.set(posX, 0, posZ);
+        mesh.rotation.set(0, rotY, 0);
+        pivot.add(mesh);
       };
-      // L (-X) or R (+X) sticker: full Z depth × MID_HEIGHT
-      const xFaceColor = sign === 1 ? SQ1_COLORS.R : SQ1_COLORS.L;
-      addSideSticker(
-        xFaceColor,
-        [sign * (W + SIDE_OFFSET), 0, 0],
-        [0, sign === 1 ? Math.PI / 2 : -Math.PI / 2, 0],
-        2 * W,
-      );
-      // F (+Z) sticker on this half: width = W (this piece's X extent), centered on its X midpoint
-      addSideSticker(
-        SQ1_COLORS.F,
-        [sign * W / 2, 0, W + SIDE_OFFSET],
-        [0, 0, 0],
-        W,
-      );
-      // B (-Z) sticker on this half
-      addSideSticker(
-        SQ1_COLORS.B,
-        [sign * W / 2, 0, -(W + SIDE_OFFSET)],
-        [0, Math.PI, 0],
-        W,
-      );
+
+      if (kind === 'big') {
+        // Big piece outer edges:
+        //   • F (+Z): x ∈ [-W, +W], full length 2W (LONG)
+        //   • R (+X): z ∈ [+CUT_OFF, +W], length W − CUT_OFF ≈ 58 (SHORT)
+        //   • L (-X): z ∈ [-CUT_OFF, +W], length W + CUT_OFF ≈ 217 (medium)
+        addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, W);
+        addSticker(SQ1_COLORS.R, 'R', CUT_OFF, W, 0, 0);
+        addSticker(SQ1_COLORS.L, 'L', -CUT_OFF, W, 0, 0);
+      } else {
+        // Small piece outer edges:
+        //   • B (-Z): x ∈ [-W, +W], full length 2W (LONG)
+        //   • R (+X): z ∈ [-W, +CUT_OFF], length W + CUT_OFF ≈ 217 (medium)
+        //   • L (-X): z ∈ [-W, -CUT_OFF], length W − CUT_OFF ≈ 58 (SHORT)
+        addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, W);
+        addSticker(SQ1_COLORS.R, 'R', -W, CUT_OFF, 0, 0);
+        addSticker(SQ1_COLORS.L, 'L', -W, -CUT_OFF, 0, 0);
+      }
+
       this.cubeRoot.add(pivot);
       return pivot;
     };
-    this.middle.push({ pivot: mkHalf(1), side: 1 });
-    this.middle.push({ pivot: mkHalf(-1), side: -1 });
+    // `side` field repurposed: 1 = big (has F edge), -1 = small (has B edge).
+    // Slice rotation includes BOTH since chord-through-center middle swaps as one.
+    this.middle.push({ pivot: mkHalf('big'), side: 1 });
+    this.middle.push({ pivot: mkHalf('small'), side: -1 });
   }
 
   /**
@@ -688,10 +788,9 @@ export class Sq1Renderer {
         probe.applyMatrix4(p.pivot.matrixWorld);
         if (probe.x > 0.5) this.attach(p.pivot, slicePivot);
       }
-      // Middle right slab (side=1) joins the slice. Left slab stays.
-      for (const m of this.middle) {
-        if (m.side === 1) this.attach(m.pivot, slicePivot);
-      }
+      // Diagonal-cut middle: both pieces participate in slice rotation
+      // (chord through center → big and small swap as one rigid pair).
+      for (const m of this.middle) this.attach(m.pivot, slicePivot);
       this.active = { move, t: 0, duration: this.durationPerMoveMs, slicePivot, angle: Math.PI };
     }
   }
@@ -709,13 +808,10 @@ export class Sq1Renderer {
       for (const m of this.middle) {
         if (m.pivot.parent === pv) {
           this.attach(m.pivot, this.cubeRoot);
-          // Snap middle slab back to canonical pose — its mesh is symmetric in
-          // Y/Z so 180° around X is visually identical, but reset transforms so
-          // matrices don't drift across many moves.
-          m.pivot.position.set(0, 0, 0);
-          m.pivot.rotation.set(0, 0, 0);
-          m.pivot.quaternion.setFromEuler(m.pivot.rotation);
-          m.pivot.scale.set(1, 1, 1);
+          // Don't snap back — diagonal-cut middle's 180° rotation is VISIBLE
+          // (Big and Small pieces actually swap volumes, F and B face colors
+          // swap on the cube). Let rotation accumulate; after 2× / it returns
+          // to original. attach() preserves world transforms automatically.
         }
       }
       this.cubeRoot.remove(pv);
