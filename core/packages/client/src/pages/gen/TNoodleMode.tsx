@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import Scramble555ModePicker from '../../components/Scramble555ModePicker';
 import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { CompPicker } from '../../components/CompPicker';
 import { CompCell } from '../../components/CompCell/CompCell';
@@ -672,6 +673,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
             style={{ width: '72px' }}
           />
         </div>
+      )}
+
+      {!loaded && (
+        <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
       )}
 
       {loaded ? null : enabledEvents.length === 0 ? (

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Download, Image as ImageIcon, ImageOff } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import Scramble555ModePicker from '../../components/Scramble555ModePicker';
 import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { visualcubeApiHref } from '../../utils/visualcube_link';
@@ -291,6 +292,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
           </div>
         )}
       </div>
+
+      <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
 
       <div className="gen-tn-controls" style={{ marginTop: '1rem' }}>
         <div className="gen-control-group gen-control-actions">

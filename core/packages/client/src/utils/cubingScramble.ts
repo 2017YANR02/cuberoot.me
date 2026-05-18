@@ -22,6 +22,7 @@ import { randomScrambleForEvent } from 'cubing/scramble';
 import { setSearchDebug } from 'cubing/search';
 import { cstimerScramble444 } from './cstimer_444';
 import { fetch555Scramble } from './scramble_555_server';
+import { get555Mode, on555ModeChange } from './scramble_555_mode';
 import { toWcaEventId } from './wca_events';
 
 // Tell cubing.js to start the next prefetched scramble the instant the
@@ -121,6 +122,17 @@ function poolSizeFor(wcaId: string): number {
 const pool = new Map<string, string[]>();
 const refilling = new Map<string, Promise<void>>();
 
+// 555 mode toggle bumps this generation;in-flight refills check it before
+// pushing into the pool so old-mode results can't pollute a freshly-cleared
+// pool. Without this, switching random-state ↔ random-move mid-prewarm would
+// leak wrong-mode scrambles into the pool.
+let pool555Generation = 0;
+on555ModeChange(() => {
+  pool555Generation++;
+  pool.set('555', []);
+  refilling.delete('555');
+});
+
 /**
  * Engine selector: 444 goes through cs0x7f's Threephase via cstimer_module
  * (in our own Web Worker pool, no wrapping overhead). Everything else stays
@@ -130,11 +142,12 @@ const refilling = new Map<string, Promise<void>>();
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
-  // 5x5 random-state is served by the Hono daemon (cube555 Java). If the
-  // backend is down / cold / past 30s, fall through to cubing.js's WCA
-  // random-move 60 so /scramble/gen never breaks — degraded quality but
-  // still serviceable. Errors get one console.warn so an outage is visible.
-  if (wcaId === '555') {
+  // 5x5: user picks random-state (cube555 daemon, ~70 moves) or random-move
+  // (cubing.js WCA-spec 60). Mode persisted in localStorage; flips clear the
+  // pool via the listener above. random-state fetch fails (backend down /
+  // timeout) silently fall through to random-move so /scramble/gen never
+  // breaks — degraded quality but still serviceable.
+  if (wcaId === '555' && get555Mode() === 'rs') {
     try {
       return await fetch555Scramble();
     } catch (err) {
@@ -160,9 +173,15 @@ async function refillPool(wcaId: string): Promise<void> {
   if (wcaId === '444' || wcaId === '555') {
     while (cur.length < target) {
       const need = target - cur.length;
+      const startGen = wcaId === '555' ? pool555Generation : 0;
       const batch = await Promise.all(
         Array.from({ length: need }, () => generateScramble(wcaId)),
       );
+      // 555 mode changed mid-batch → toss results, the post-change listener
+      // already replaced `cur` with [] and we'd otherwise repopulate it with
+      // stale scrambles. Exit so the new mode's refill (scheduled by
+      // the listener clearing 'refilling') gets a clean slate.
+      if (wcaId === '555' && startGen !== pool555Generation) return;
       for (const raw of batch) cur.push(formatScramble(wcaId, raw));
     }
     return;
