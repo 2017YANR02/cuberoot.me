@@ -54,11 +54,18 @@ interface SheetViewProps {
 export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const groupSuffix = (totalGroups ?? 1) > 1
-    ? ` ${t('组', 'Group')} ${String.fromCharCode(65 + groupIdx)}`
+    ? (isZh
+      ? ` ${String.fromCharCode(65 + groupIdx)} 组`
+      : ` Group ${String.fromCharCode(65 + groupIdx)}`)
     : '';
   const attemptSuffix = attemptNumber !== undefined
     ? ` ${t('第', 'Attempt')} ${attemptNumber + 1}${t('次', '')}`
     : '';
+  // WCA round_type_id 'f'/'h' (final/combined final) 都映射到 roundIdx=3,
+  // 与轮数无关 —— 2 轮赛的 final 也是 idx=3,不能写"第 4 轮"。
+  const roundLabel = roundIdx === 3
+    ? t('决赛', 'Final')
+    : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const copyAttempt = async (idx: number, scramble: string) => {
     if (!scramble) return;
@@ -122,7 +129,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     <div className="gen-tn-sheet">
       <div className="gen-tn-sheet-header">
         <EventIcon event={event} />
-        <span>{eventDisplayName(event, isZh)} {t('第', 'Round')} {roundIdx + 1}{t('轮', '')}{groupSuffix}{attemptSuffix}</span>
+        <span>{eventDisplayName(event, isZh)} {roundLabel}{groupSuffix}{attemptSuffix}</span>
       </div>
       <table className="gen-tn-sheet-table"><tbody>{rows}</tbody></table>
     </div>
