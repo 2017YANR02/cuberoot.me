@@ -11,6 +11,7 @@ import {
   Shuffle, Library, BookMarked, BookA, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
   ImagePlus,
   Code as CodeIcon, Brain, Box,
+  Sigma,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -311,6 +312,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   code:            { en: 'Code', zh: '编程' },
   sim:             { en: 'Sim', zh: '模拟' },
   comp:            { en: 'Comp', zh: '比赛' },
+  theoryGroup:     { en: 'Group Theory', zh: '群论' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
 };
@@ -369,6 +371,7 @@ const SECTIONS: Section[] = [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
       { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
+      { id: 'theory-group', href: '/theory/group', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
     ],
   },
   {
