@@ -172,12 +172,14 @@
 
 .code-index-card-title {
   font-family: var(--mono);
-  font-size: clamp(36px, 4vw, 48px);
+  font-size: clamp(28px, 3.2vw, 42px);
   font-weight: 700;
-  letter-spacing: -.03em;
+  letter-spacing: -.025em;
   color: var(--text);
   margin-bottom: 6px;
-  line-height: 1;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 .code-index-card-sub {
   font-family: var(--mono);
@@ -223,7 +225,7 @@
     min-height: 260px;
   }
   .code-index-card-glyph { font-size: 44px; }
-  .code-index-card-title { font-size: 34px; }
+  .code-index-card-title { font-size: 30px; }
 }
 
 /* ── Footer ────────────────────────────────── */
