@@ -2,35 +2,38 @@
  * /demo/sq1 — Square-1 立体动画演示。
  * cubedb.net 的视觉/动画复刻（three.js 自渲染，不走 cubing.js TwistyPlayer）。
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Sq1Renderer, solvedState, parseSq1Scramble, applySq1Move, type Sq1Move, type Sq1State,
+  Sq1Renderer, solvedState, parseSq1Scramble, applySq1Move, type Sq1State,
 } from './sq1_renderer';
 import './demo_sq1.css';
 
 const DEFAULT_SCRAMBLE = '(0, -4) / (0, -3) / (-3, 0) / (-5, -2) / (-1, -4) / (3, 0) / (-5, 0) / (0, -3) / (5, -2) / (2, -2) / (2, 0) / (0, -2) / (-1, 0)';
 
-/** Read ?scramble= from URL; URL-decoded. Empty/missing → DEFAULT_SCRAMBLE. */
-function readUrlScramble(): { scramble: string; fromUrl: boolean } {
-  if (typeof window === 'undefined') return { scramble: DEFAULT_SCRAMBLE, fromUrl: false };
-  const sp = new URLSearchParams(window.location.search);
-  const raw = sp.get('scramble');
-  if (raw === null) return { scramble: DEFAULT_SCRAMBLE, fromUrl: false };
-  return { scramble: raw, fromUrl: true };
+function readUrlScramble(): string | null {
+  if (typeof window === 'undefined') return null;
+  const q = new URLSearchParams(window.location.search).get('scramble');
+  return q && q.length > 0 ? q : null;
 }
 
 export default function DemoSq1Page() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const rendererRef = useRef<Sq1Renderer | null>(null);
-  const initialUrl = useRef(readUrlScramble());
-  const [scramble, setScramble] = useState(initialUrl.current.scramble);
-  const [moves, setMoves] = useState<Sq1Move[]>([]);
+  const [scramble, setScramble] = useState(() => readUrlScramble() ?? DEFAULT_SCRAMBLE);
+  const [caretIdx, setCaretIdx] = useState<number | null>(null);
   const [progress, setProgress] = useState({ idx: 0, total: 0 });
   const [speed, setSpeed] = useState(1.0);
+  const lastMoveCountRef = useRef(0);
 
-  // Init renderer once. If URL provided ?scramble=, auto-apply final state
-  // so the cube directly shows the post-scramble state (cubedb behavior).
+  const moves = useMemo(() => parseSq1Scramble(scramble), [scramble]);
+  const movesBeforeCaret = useMemo(() => {
+    if (caretIdx === null) return null;
+    return parseSq1Scramble(scramble.slice(0, caretIdx)).length;
+  }, [scramble, caretIdx]);
+
+  // Init renderer once.
   useEffect(() => {
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
@@ -50,15 +53,6 @@ export default function DemoSq1Page() {
     });
     ro.observe(wrap);
 
-    // If URL had scramble param, jump straight to end state.
-    if (initialUrl.current.fromUrl) {
-      const urlMoves = parseSq1Scramble(initialUrl.current.scramble);
-      let s: Sq1State = solvedState();
-      for (const m of urlMoves) s = applySq1Move(s, m);
-      r.resetTo(s);
-      setProgress({ idx: urlMoves.length, total: urlMoves.length });
-    }
-
     return () => {
       ro.disconnect();
       unsub();
@@ -67,34 +61,69 @@ export default function DemoSq1Page() {
     };
   }, []);
 
-  // Parse moves whenever scramble changes (preview state).
+  // Reflect scramble back into ?scramble= so the URL stays shareable.
   useEffect(() => {
-    setMoves(parseSq1Scramble(scramble));
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (scramble === DEFAULT_SCRAMBLE) url.searchParams.delete('scramble');
+    else url.searchParams.set('scramble', scramble);
+    const next = url.pathname + (url.search ? url.search : '') + url.hash;
+    const cur = window.location.pathname + window.location.search + window.location.hash;
+    if (next !== cur) window.history.replaceState(null, '', next);
   }, [scramble]);
 
-  const onReset = () => {
+  // Sync renderer's speed continuously (used by both caret-driven and Play).
+  useEffect(() => {
     const r = rendererRef.current;
-    if (!r) return;
-    r.resetTo(solvedState());
-    setProgress({ idx: 0, total: 0 });
+    if (r) r.durationPerMoveMs = Math.round(220 / speed);
+  }, [speed]);
+
+  // Drive the cube from caret position: +1 move forward → animate that move,
+  // any other jump (multi-step, backward, scramble text change) → snap.
+  useEffect(() => {
+    const r = rendererRef.current;
+    if (!r || movesBeforeCaret === null) return;
+    const prev = lastMoveCountRef.current;
+    const target = Math.min(movesBeforeCaret, moves.length);
+    if (target === prev) return;
+    lastMoveCountRef.current = target;
+    if (target === prev + 1) {
+      r.playScramble([moves[prev]]);
+    } else {
+      let s: Sq1State = solvedState();
+      for (let i = 0; i < target; i++) s = applySq1Move(s, moves[i]);
+      r.resetTo(s);
+    }
+    setProgress({ idx: target, total: moves.length });
+  }, [movesBeforeCaret, moves]);
+
+  const setCaretAt = (pos: number) => {
+    const el = textareaRef.current;
+    if (el) {
+      el.focus();
+      el.setSelectionRange(pos, pos);
+    }
+    setCaretIdx(pos);
   };
+
+  const updateCaret = () => {
+    const el = textareaRef.current;
+    if (el) setCaretIdx(el.selectionStart ?? 0);
+  };
+
+  const onReset = () => setCaretAt(0);
 
   const onPlay = async () => {
     const r = rendererRef.current;
     if (!r) return;
     r.resetTo(solvedState());
-    r.durationPerMoveMs = Math.round(220 / speed);
+    lastMoveCountRef.current = moves.length;
+    setProgress({ idx: 0, total: moves.length });
     await r.playScramble(moves);
+    setCaretAt(scramble.length);
   };
 
-  const onShowFinal = () => {
-    const r = rendererRef.current;
-    if (!r) return;
-    let s: Sq1State = solvedState();
-    for (const m of moves) s = applySq1Move(s, m);
-    r.resetTo(s);
-    setProgress({ idx: moves.length, total: moves.length });
-  };
+  const onShowFinal = () => setCaretAt(scramble.length);
 
   return (
     <div className="demo-sq1-page">
@@ -113,8 +142,13 @@ export default function DemoSq1Page() {
         <label>
           Scramble:
           <textarea
+            ref={textareaRef}
             value={scramble}
-            onChange={e => setScramble(e.target.value)}
+            onChange={e => { setScramble(e.target.value); updateCaret(); }}
+            onSelect={updateCaret}
+            onKeyUp={updateCaret}
+            onClick={updateCaret}
+            onFocus={updateCaret}
             rows={2}
             placeholder="(t, b) / (t, b) / ..."
           />
