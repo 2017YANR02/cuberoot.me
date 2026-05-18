@@ -63,7 +63,38 @@ public class Daemon {
 	private static final ArrayBlockingQueue<Worker> POOL =
 	    new ArrayBlockingQueue<>(Math.max(1, WORKERS));
 
+	/**
+	 * Beam widths for cube555's 5-phase reduction. Upstream defaults are
+	 * 200/500/500/500/1; we widen phase 5 to 8 so we can pick the shortest among
+	 * several final candidates instead of trusting whatever Phase5Search emitted
+	 * first. Empirically: P5=8 saves ~1.2 moves at ~+16% latency vs upstream
+	 * (n=30: 70.80→69.63 moves, 1.46→1.70s avg). Larger P5 / wider earlier phases
+	 * / multi-seed (CUBE555_SEEDS) explored but yield diminishing returns — see
+	 * BENCHMARKS.md "Local solve-length optimization (2026-05-18)" for full log.
+	 */
+	private static final int P1_SOLS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_P1", "200"));
+	private static final int P2_SOLS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_P2", "500"));
+	private static final int P3_SOLS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_P3", "500"));
+	private static final int P4_SOLS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_P4", "500"));
+	private static final int P5_SOLS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_P5", "8"));
+	/**
+	 * Multi-seed: per request, generate K random states and return the shortest solve. K=1 disables.
+	 * NOTE on uniformity: with K>1 the resulting state distribution is biased toward "easier"
+	 * (shorter-to-solve) states, breaking the uniform-random-state guarantee. K=1 preserves it
+	 * since cube555 Tools.randomCube samples uniformly on its own.
+	 */
+	private static final int SEEDS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_SEEDS", "1"));
+	/** Kociemba probeMin — min phase-2 probes spent looking for a shorter solution after the first hit. */
+	private static final long KOC_PROBE_MIN = Long.parseLong(System.getenv().getOrDefault("CUBE555_KOC_PROBE_MIN", "500"));
+	/** Kociemba verbose flags. 0x8 = OPTIMAL_SOLUTION (guaranteed optimal, exponentially slower — unusable for our latency budget). */
+	private static final int KOC_FLAGS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_KOC_FLAGS", "0"));
+
 	public static void main(String[] args) throws Exception {
+		Search.phase1SolsSize = P1_SOLS;
+		Search.phase2SolsSize = P2_SOLS;
+		Search.phase3SolsSize = P3_SOLS;
+		Search.phase4SolsSize = P4_SOLS;
+		Search.phase5SolsSize = P5_SOLS;
 		Search.init();
 		try { cs.min2phase.Search.init(); } catch (Throwable ignored) { /* lazy-init fallback */ }
 		for (int i = 0; i < WORKERS; i++) POOL.offer(new Worker());
@@ -86,20 +117,93 @@ public class Daemon {
 		Worker w = null;
 		try {
 			w = POOL.take();
-			String state = Tools.randomCube(w.rng);
-			String[] ret = w.reducer.solveReduction(state, 0);
-			if (ret == null || ret[0] == null)
-				throw new RuntimeException("solveReduction returned null");
-			String solve333 = w.solver333.solution(ret[1], 21, Integer.MAX_VALUE, 500, 0);
-			if (solve333 == null) throw new RuntimeException("min2phase returned null");
-			String scramble = invertAndConvert(ret[0] + " " + solve333);
-			String tag = verify(scramble, state) ? "OK" : "FAIL";
-			emit(id + "\t" + scramble + "\t" + state + "\t" + tag);
+			String bestState = null;
+			String bestScramble = null;
+			int bestTotal = Integer.MAX_VALUE;
+			for (int seed = 0; seed < SEEDS; seed++) {
+				String state = Tools.randomCube(w.rng);
+				String[] solved = solveBest(w, state);
+				if (solved == null) continue;
+				int total = countTokens(solved[0]);
+				if (total < bestTotal) {
+					bestTotal = total;
+					bestState = state;
+					bestScramble = solved[0];
+				}
+			}
+			if (bestScramble == null) throw new RuntimeException("all seeds failed");
+			String tag = verify(bestScramble, bestState) ? "OK" : "FAIL";
+			emit(id + "\t" + bestScramble + "\t" + bestState + "\t" + tag);
 		} catch (Throwable t) {
 			emit(id + "\tERROR\t" + t.getClass().getSimpleName() + ":" + t.getMessage());
 		} finally {
 			if (w != null) POOL.offer(w);
 		}
+	}
+
+	/**
+	 * Reduce + Kociemba for one random state, picking the shortest combined solve across all
+	 * phase-5 reduction candidates that cube555's Search accumulated. Upstream's solveReduction
+	 * always uses p5sols.get(0) (whichever Phase5Search emitted first), which leaves several moves
+	 * on the table when phase5SolsSize > 1. We re-evaluate every p5sol: rebuild the post-reduction
+	 * 3x3 facelet from a fresh CubieCube, run Kociemba, then keep the (reduction + Kociemba) pair
+	 * with the smallest total move count.
+	 *
+	 * Returns [scramble, "<redLen>+<kocLen>"] or null if nothing produced a Kociemba solution.
+	 */
+	static String[] solveBest(Worker w, String state) {
+		String[] firstRet = w.reducer.solveReduction(state, 0);
+		if (firstRet == null || firstRet[0] == null) return null;
+		String bestRed = null;
+		String bestKoc = null;
+		int bestTotal = Integer.MAX_VALUE;
+		// Default upstream pick first (p5sols.get(0)) — record its (red,koc) as the seed.
+		{
+			String koc = w.solver333.solution(firstRet[1], 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
+			if (koc != null && !koc.startsWith("Error")) {
+				int total = countTokens(firstRet[0]) + countTokens(koc);
+				bestTotal = total;
+				bestRed = firstRet[0];
+				bestKoc = koc;
+			}
+		}
+		// Then try alternative phase-5 candidates. Skip index 0 (same as firstRet).
+		ArrayList<SolvingCube> pool = w.reducer.p5sols;
+		int candidates = Math.min(pool.size(), P5_SOLS);
+		for (int i = 1; i < candidates; i++) {
+			SolvingCube sc = pool.get(i);
+			String red = sc.toSolutionString(0);
+			int redLen = countTokens(red);
+			// Cheap prune: if reduction alone already meets/exceeds bestTotal-17 (Kociemba >=17 typically),
+			// can't possibly improve. Skip the expensive 3x3 facelet build + Kociemba call.
+			if (redLen + 17 >= bestTotal) continue;
+			CubieCube cc = new CubieCube();
+			if (cc.fromFacelet(state) != 0) continue;
+			cc.doMove(sc.getSolution());
+			cc.doCornerMove(sc.getSolution());
+			String facelet333 = CubieCube.to333Facelet(cc.toFacelet());
+			String koc = w.solver333.solution(facelet333, 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
+			if (koc == null || koc.startsWith("Error")) continue;
+			int total = redLen + countTokens(koc);
+			if (total < bestTotal) {
+				bestTotal = total;
+				bestRed = red;
+				bestKoc = koc;
+			}
+		}
+		if (bestRed == null) return null;
+		String scramble = invertAndConvert(bestRed + " " + bestKoc);
+		return new String[] { scramble };
+	}
+
+	/** Count whitespace-separated tokens, ignoring //(...) annotations and empties. */
+	static int countTokens(String raw) {
+		if (raw == null) return 0;
+		String stripped = raw.replaceAll("//\\([^)]*\\)", " ").trim();
+		if (stripped.isEmpty()) return 0;
+		int n = 0;
+		for (String t : stripped.split("\\s+")) if (!t.isEmpty()) n++;
+		return n;
 	}
 
 	/** Strip //(...) annotations, tokenize, reverse + invert each move, lowercase→Xw. */
