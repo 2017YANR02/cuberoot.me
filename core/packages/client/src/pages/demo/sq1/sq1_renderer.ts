@@ -727,6 +727,30 @@ export class Sq1Renderer {
     this.applyStateInstant(state);
   }
 
+  /**
+   * Reset to solved, then replay each move instantly (no animation). Used by
+   * the caret-driven jump path so the visual state matches what the animation
+   * would produce — applyStateInstant alone gives canonical Y-rotation
+   * placements that don't match the chord-perp slice orientations.
+   */
+  applyMovesInstant(moves: Sq1Move[]): void {
+    this.animQueue = [];
+    this.active = null;
+    this.totalMoves = 0;
+    this.finishedMoves = 0;
+    this.applyStateInstant(solvedState());
+    for (const move of moves) {
+      this.beginMove(move);
+      // Force easing to end-of-animation by setting t = duration and stepping
+      // through tick once; finishMove will then snap pivots and clear active.
+      const a = this.active as { t: number; duration: number } | null;
+      if (a) {
+        a.t = a.duration;
+        this.tick(0);
+      }
+    }
+  }
+
   playScramble(moves: Sq1Move[]): Promise<void> {
     return new Promise(resolve => {
       this.animQueue.push(...moves);
@@ -801,7 +825,10 @@ export class Sq1Renderer {
         this.attach(p.pivot, target);
       }
       const topAngle = -(move.top ?? 0) * (Math.PI / 6);
-      const botAngle = -(move.bot ?? 0) * (Math.PI / 6);
+      // bot slot indices go CCW (increasing index = increasing world angle),
+      // opposite to top. Keep raw sign so animation direction matches the
+      // canonical slot shift applySq1Move computes.
+      const botAngle = (move.bot ?? 0) * (Math.PI / 6);
       this.active = { move, t: 0, duration: this.durationPerMoveMs, topPivot, botPivot, topAngle, botAngle };
     } else {
       // / slice: east-of-chord pieces (top + bot + BIG middle) rotate 180°
