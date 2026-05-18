@@ -1,5 +1,5 @@
 /**
- * Stack settings — 类型、持久化、世界 apply,以及独立的 KeymapModal。
+ * Sim settings — 类型、持久化、世界 apply,以及独立的 KeymapModal。
  * 老 drawer 已搬进 PlayerControls 的 PuzzleSettings 面板。
  */
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ import Cubelet from './cuber/cubelet';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 
-export interface StackSettings {
+export interface SimSettings {
   sensitivity: number;
   scale: number;
   perspective: number;
@@ -44,7 +44,7 @@ export const DEFAULT_FACE_COLORS = {
   B: '#0000F2',
 } as const;
 
-export const DEFAULT_SETTINGS: StackSettings = {
+export const DEFAULT_SETTINGS: SimSettings = {
   sensitivity: 50,
   scale: 50,
   perspective: 50,
@@ -61,20 +61,20 @@ export const DEFAULT_SETTINGS: StackSettings = {
   faceColors: { ...DEFAULT_FACE_COLORS },
 };
 
-const STORAGE_KEY = 'stack.settings';
+const STORAGE_KEY = 'sim.settings';
 
-export function loadSettings(): StackSettings {
+export function loadSettings(): SimSettings {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<StackSettings>) };
+    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<SimSettings>) };
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
 
-export function saveSettings(s: StackSettings): void {
+export function saveSettings(s: SimSettings): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
@@ -93,7 +93,7 @@ function mapPitch(v: number): number { return ((1 - v / 50) * Math.PI) / 2; }   
 // speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 30 帧 (现状)
 function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 100) * 55)); }
 
-export function applySettings(world: World, s: StackSettings): void {
+export function applySettings(world: World, s: SimSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   // scale 由滚轮直接改 world.scale + 防抖反算 settings (round 损失 ≤0.005),
   // 这里如果差距在 round 误差内就别回写,避免滚动途中突跳
@@ -140,12 +140,12 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
     if (clamped !== value) onChange(clamped);
   };
   return (
-    <label className="stack-slider">
-      <div className="stack-slider-row">
+    <label className="sim-slider">
+      <div className="sim-slider-row">
         <span>{label}</span>
         <input
           type="number"
-          className="stack-slider-val"
+          className="sim-slider-val"
           min={0}
           max={100}
           step={1}
@@ -171,7 +171,7 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
 
 export function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="stack-toggle">
+    <label className="sim-toggle">
       <span>{label}</span>
       <input
         type="checkbox"
@@ -211,22 +211,22 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
   if (!open) return null;
 
   return (
-    <div className="stack-keymap-modal-backdrop" onClick={onClose}>
-      <div className="stack-keymap-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}>
-        <header className="stack-keymap-modal-head">
+    <div className="sim-keymap-modal-backdrop" onClick={onClose}>
+      <div className="sim-keymap-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}>
+        <header className="sim-keymap-modal-head">
           <h2>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</h2>
           <button onClick={onClose} title={t('关闭', 'Close')}><X size={16} /></button>
         </header>
-        <div className="stack-keymap-modal-body">
-          <div className="stack-keymap-hint">
+        <div className="sim-keymap-modal-body">
+          <div className="sim-keymap-hint">
             {editingCode
               ? t(`为 ${keyLabel(editingCode)} 键选择动作 (ESC 取消)`, `Choose move for ${keyLabel(editingCode)} (ESC to cancel)`)
               : t('点击键盘格修改对应快捷键', 'Click a key to rebind')}
           </div>
 
-          <div className="stack-keyboard">
+          <div className="sim-keyboard">
             {KEYBOARD_ROWS.map((row, ri) => (
-              <div key={ri} className="stack-keyboard-row">
+              <div key={ri} className="sim-keyboard-row">
                 {row.map((code) => {
                   const m = keymap[code];
                   const editing = editingCode === code;
@@ -234,11 +234,11 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
                     <button
                       key={code}
                       type="button"
-                      className={'stack-key' + (editing ? ' editing' : '') + (!m ? ' empty' : '')}
+                      className={'sim-key' + (editing ? ' editing' : '') + (!m ? ' empty' : '')}
                       onClick={() => setEditingCode(editing ? null : code)}
                     >
-                      <span className="stack-key-label">{keyLabel(code)}</span>
-                      <span className="stack-key-move">{m ? displayMove(m) : '·'}</span>
+                      <span className="sim-key-label">{keyLabel(code)}</span>
+                      <span className="sim-key-move">{m ? displayMove(m) : '·'}</span>
                     </button>
                   );
                 })}
@@ -247,16 +247,16 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
           </div>
 
           {editingCode && (
-            <div className="stack-keymap-picker">
+            <div className="sim-keymap-picker">
               {KEYMAP_GROUPS.map((g) => (
-                <div key={g.zh} className="stack-keymap-picker-group">
-                  <div className="stack-keymap-title">{isZh ? g.zh : g.en}</div>
-                  <div className="stack-keymap-picker-row">
+                <div key={g.zh} className="sim-keymap-picker-group">
+                  <div className="sim-keymap-title">{isZh ? g.zh : g.en}</div>
+                  <div className="sim-keymap-picker-row">
                     {g.moves.map((m) => (
                       <button
                         key={displayMove(m)}
                         type="button"
-                        className="stack-keymap-picker-btn"
+                        className="sim-keymap-picker-btn"
                         onClick={() => {
                           onKeymapChange({ ...keymap, [editingCode]: m });
                           setEditingCode(null);
@@ -266,10 +266,10 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
                   </div>
                 </div>
               ))}
-              <div className="stack-keymap-picker-actions">
+              <div className="sim-keymap-picker-actions">
                 <button
                   type="button"
-                  className="stack-keymap-picker-clear"
+                  className="sim-keymap-picker-clear"
                   disabled={!keymap[editingCode]}
                   onClick={() => {
                     const next = { ...keymap };
@@ -280,56 +280,56 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
                 >{t('清除该键', 'Clear this key')}</button>
                 <button
                   type="button"
-                  className="stack-keymap-picker-cancel"
+                  className="sim-keymap-picker-cancel"
                   onClick={() => setEditingCode(null)}
                 >{t('取消', 'Cancel')}</button>
               </div>
             </div>
           )}
 
-          <div className="stack-keymap-misc">
+          <div className="sim-keymap-misc">
             <span>{t('其它 (固定):', 'Misc (fixed):')}</span>
             <span>{t('撤销', 'Undo')} <kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>⌫</kbd></span>
             <span>{t('重做', 'Redo')} <kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
           </div>
 
-          <div className="stack-keymap-title" style={{ marginTop: 12 }}>{t('鼠标', 'Mouse')}</div>
-          <div className="stack-mouse-help">
+          <div className="sim-keymap-title" style={{ marginTop: 12 }}>{t('鼠标', 'Mouse')}</div>
+          <div className="sim-mouse-help">
             <div>
-              <span className="stack-mouse-op">{t('单击 sticker', 'Click a sticker')}</span>
-              <span className="stack-mouse-act">{t('转该 sticker 所在切片', 'Rotate the slice through it')}</span>
+              <span className="sim-mouse-op">{t('单击 sticker', 'Click a sticker')}</span>
+              <span className="sim-mouse-act">{t('转该 sticker 所在切片', 'Rotate the slice through it')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op">&nbsp;&nbsp;{t('— U 面 → z 切片', '— U face → z slice')}</span>
-              <span className="stack-mouse-act">{t('点最前一行 = F,中央 = S,最后 = B', 'front row = F, middle = S, back = B\'')}</span>
+              <span className="sim-mouse-op">&nbsp;&nbsp;{t('— U 面 → z 切片', '— U face → z slice')}</span>
+              <span className="sim-mouse-act">{t('点最前一行 = F,中央 = S,最后 = B', 'front row = F, middle = S, back = B\'')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op">&nbsp;&nbsp;{t('— F / R 面 → y 切片', '— F / R face → y slice')}</span>
-              <span className="stack-mouse-act">{t('点最上 = U,中央 = E,最下 = D', 'top = U, middle = E, bottom = D\'')}</span>
+              <span className="sim-mouse-op">&nbsp;&nbsp;{t('— F / R 面 → y 切片', '— F / R face → y slice')}</span>
+              <span className="sim-mouse-act">{t('点最上 = U,中央 = E,最下 = D', 'top = U, middle = E, bottom = D\'')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op"><kbd>Shift</kbd> {t('+ 单击 / 右键单击', '+ click / right click')}</span>
-              <span className="stack-mouse-act">{t('逆时针', 'Counter-clockwise')}</span>
+              <span className="sim-mouse-op"><kbd>Shift</kbd> {t('+ 单击 / 右键单击', '+ click / right click')}</span>
+              <span className="sim-mouse-act">{t('逆时针', 'Counter-clockwise')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op"><kbd>Alt</kbd> {t('+ 单击 / 拖动', '+ click / drag')}</span>
-              <span className="stack-mouse-act">{t('宽层转动 (深度=宽度):内层 → Rw/3Lw/...,中线 → x/y/z', 'Wide turn (depth = width): inner → Rw/3Lw/..., center → x/y/z')}</span>
+              <span className="sim-mouse-op"><kbd>Alt</kbd> {t('+ 单击 / 拖动', '+ click / drag')}</span>
+              <span className="sim-mouse-act">{t('宽层转动 (深度=宽度):内层 → Rw/3Lw/...,中线 → x/y/z', 'Wide turn (depth = width): inner → Rw/3Lw/..., center → x/y/z')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op">{t('拖动 sticker', 'Drag sticker')}</span>
-              <span className="stack-mouse-act">{t('沿手势方向转该层', 'Rotate slice along drag direction')}</span>
+              <span className="sim-mouse-op">{t('拖动 sticker', 'Drag sticker')}</span>
+              <span className="sim-mouse-act">{t('沿手势方向转该层', 'Rotate slice along drag direction')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op">{t('拖动空白', 'Drag empty area')}</span>
-              <span className="stack-mouse-act">{t('整体旋转视角', 'Rotate whole cube')}</span>
+              <span className="sim-mouse-op">{t('拖动空白', 'Drag empty area')}</span>
+              <span className="sim-mouse-act">{t('整体旋转视角', 'Rotate whole cube')}</span>
             </div>
             <div>
-              <span className="stack-mouse-op">{t('滚轮', 'Wheel')}</span>
-              <span className="stack-mouse-act">{t('缩放', 'Zoom')}</span>
+              <span className="sim-mouse-op">{t('滚轮', 'Wheel')}</span>
+              <span className="sim-mouse-act">{t('缩放', 'Zoom')}</span>
             </div>
           </div>
 
-          <button type="button" className="stack-keymap-reset" onClick={onResetKeymap}>
+          <button type="button" className="sim-keymap-reset" onClick={onResetKeymap}>
             {t('恢复默认快捷键', 'Reset shortcuts to defaults')}
           </button>
         </div>

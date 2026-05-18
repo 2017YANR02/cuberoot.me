@@ -10,6 +10,9 @@ export default function LandingCubeHero() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [Ctor, setCtor] = useState<any>(null);
   const [failed, setFailed] = useState(false);
+  // NOTE: 拖动魔方旋转视角时,松手会触发外层 <Link> 的 click 跳到 /trainer。
+  // TwistyPlayer 走 shadow DOM + setPointerCapture,React 合成事件拿不到 move,
+  // 所以这里用原生 capture-phase listener + stopImmediatePropagation 在 Link 前拦掉。
 
   useEffect(() => {
     import('cubing/twisty').then((mod) => {
@@ -58,6 +61,40 @@ export default function LandingCubeHero() {
       container.innerHTML = '';
     };
   }, [Ctor]);
+
+  useEffect(() => {
+    const slot = containerRef.current;
+    if (!slot) return;
+    let startX = 0, startY = 0, dragged = false;
+    const onMove = (m: PointerEvent) => {
+      if ((m.clientX - startX) ** 2 + (m.clientY - startY) ** 2 > 16) dragged = true;
+    };
+    const onUp = () => {
+      document.removeEventListener('pointermove', onMove, true);
+      document.removeEventListener('pointerup', onUp, true);
+      document.removeEventListener('pointercancel', onUp, true);
+    };
+    const onDown = (e: PointerEvent) => {
+      startX = e.clientX; startY = e.clientY; dragged = false;
+      document.addEventListener('pointermove', onMove, true);
+      document.addEventListener('pointerup', onUp, true);
+      document.addEventListener('pointercancel', onUp, true);
+    };
+    const onClick = (e: MouseEvent) => {
+      if (dragged) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        dragged = false;
+      }
+    };
+    slot.addEventListener('pointerdown', onDown, true);
+    slot.addEventListener('click', onClick, true);
+    return () => {
+      slot.removeEventListener('pointerdown', onDown, true);
+      slot.removeEventListener('click', onClick, true);
+      onUp();
+    };
+  }, [failed]);
 
   if (failed) {
     return (

@@ -78,7 +78,7 @@ export default class World {
       }
       this.cube = this.sq1Cube;
       // SQ1: Controller reaches into cube.table.groups (NxN layer state) on
-      // empty-space drag, which Sq1Cube doesn't have. Disable it; StackPage
+      // empty-space drag, which Sq1Cube doesn't have. Disable it; SimPage
       // installs a separate sq1 drag-rotate handler that updates this.cube.rotation.
       this.controller.disable = true;
       this._ensureSq1Lights();

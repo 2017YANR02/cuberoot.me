@@ -79,8 +79,8 @@ export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
   };
 
   return (
-    <div className="stack-algs">
-      <div className="stack-algs-tabs">
+    <div className="sim-algs">
+      <div className="sim-algs-tabs">
         {PUZZLES_SUPPORTED.map((p) => (
           <button
             key={p}
@@ -91,7 +91,7 @@ export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
           </button>
         ))}
       </div>
-      <div className="stack-algs-sets">
+      <div className="sim-algs-sets">
         <select
           value={setSlug}
           onChange={(e) => setSetSlug(e.target.value)}
@@ -102,27 +102,27 @@ export default function AlgsPanel({ onSelect, onOrderChange }: Props) {
             </option>
           ))}
         </select>
-        <span className="stack-algs-hint">
+        <span className="sim-algs-hint">
           {t('点公式 = 摆出此情形;下方回放区按播放看动画', 'Click case = set up the position; hit play below to watch the alg')}
         </span>
       </div>
-      <div className="stack-algs-list">
-        {loading ? <div className="stack-algs-msg">{t('加载中…', 'Loading…')}</div> : null}
-        {error ? <div className="stack-algs-msg error">{error}</div> : null}
+      <div className="sim-algs-list">
+        {loading ? <div className="sim-algs-msg">{t('加载中…', 'Loading…')}</div> : null}
+        {error ? <div className="sim-algs-msg error">{error}</div> : null}
         {!loading && !error && cases.length === 0 ? (
-          <div className="stack-algs-msg">{t('暂无数据', 'No data')}</div>
+          <div className="sim-algs-msg">{t('暂无数据', 'No data')}</div>
         ) : null}
         {cases.map((c, i) => {
           const algText = c.algs?.[0]?.[0]?.alg ?? '';
           return (
             <button
               key={i}
-              className={'stack-algs-item' + (i === activeIdx ? ' active' : '')}
+              className={'sim-algs-item' + (i === activeIdx ? ' active' : '')}
               onClick={() => choose(i)}
               disabled={!algText}
             >
-              <span className="stack-algs-name">{c.name}</span>
-              <span className="stack-algs-alg">{algText}</span>
+              <span className="sim-algs-name">{c.name}</span>
+              <span className="sim-algs-alg">{algText}</span>
             </button>
           );
         })}

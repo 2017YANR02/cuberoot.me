@@ -136,7 +136,7 @@ describe('SQ1 state', () => {
   });
 
   // Shared tokenizer with pages/gen/sq1_svg.ts — locks single-num shorthand
-  // and edge forms so the StackPage 打乱/解法 inputs accept them too.
+  // and edge forms so the SimPage 打乱/解法 inputs accept them too.
   it('single-number shorthand `/3/` = `/ (3, 0) /`', () => {
     expect(parseSq1Scramble('/3/')).toEqual([
       { kind: 'slice' },

@@ -1,4 +1,4 @@
-# /stack 后续待办
+# /sim 后续待办
 
 > 本目录:**虚拟魔方 Playground / Alg Player / Algs 训练 / Director 录制**
 > 核心 `cuber/*` 移植自 huazhechen/cuber (MIT),渲染层重写为 `InstancedRenderer` 支持任意 N 阶。
@@ -7,7 +7,7 @@
 
 | 文件 | 角色 |
 |---|---|
-| `StackPage.tsx` | 顶层 React 容器,header(modes/undo/redo/scramble/reset/settings)+ 左 cube canvas + 右常驻面板 |
+| `SimPage.tsx` | 顶层 React 容器,header(modes/undo/redo/scramble/reset/settings)+ 左 cube canvas + 右常驻面板 |
 | `cuber/world.ts` | Three.js scene / camera / controller,cube 渲染主入口 |
 | `cuber/cube.ts` | logical state(`cubelets` / `initials` Map),只创建表面 cubelet |
 | `cuber/cubelet.ts` | per-cubelet state(position / colors / vector),不再持 Mesh |
@@ -16,7 +16,7 @@
 | `cuber/instanced.ts` | InstancedRenderer:static + moving InstancedMesh 各 4 套(frame/inner/sticker/hint) |
 | `cuber/controller.ts` | mouse/touch → drag / rotate / tap callback |
 | `Toucher.ts` | 鼠标 / 触摸事件分发器,带 shift / button 字段 |
-| `keymap.ts` | 键盘 KEYMAP + 持久化(localStorage `stack.keymap`)+ KEYBOARD_ROWS 数据 |
+| `keymap.ts` | 键盘 KEYMAP + 持久化(localStorage `sim.keymap`)+ KEYBOARD_ROWS 数据 |
 | `PlayerControls.tsx` | 右侧 alg playground 面板:setup/alg AlgInput + 工具按钮 + CubeKeyboardSection |
 | `SettingDrawer.tsx` | 右滑设置抽屉 + keymap modal |
 
@@ -47,7 +47,7 @@
 - header 现有 moves counter,**加 timer**:第一个 user move 启动,`cube.complete && moves > 0` 时停
 - 实时显示 time / TPS(moves / elapsed seconds)
 - solved 时 toast 升级成面板,显示 final time / avg TPS / PPS(N>3 才有意义)
-- 文件:`StackPage.tsx`(state),新建 `Statistics.tsx`(显示组件)
+- 文件:`SimPage.tsx`(state),新建 `Statistics.tsx`(显示组件)
 - 验收:打乱→开始转→solve 时面板弹出,数字对得上
 
 #### 2. Reconstruction with timestamps
@@ -60,7 +60,7 @@
 - 刷新就丢,要持久化
 - localStorage 自动保存 cube state(stickers 排列)+ history + settings
 - 可选:下载 .json 文件,粘贴恢复
-- 文件:`StackPage.tsx`(auto save on unload)+ 新工具 `stackSave.ts`(JSON 序列化)
+- 文件:`SimPage.tsx`(auto save on unload)+ 新工具 `simSave.ts`(JSON 序列化)
 - 验收:reload 后 cube 状态保留
 
 #### 4. Examples 预设
@@ -81,7 +81,7 @@
 - 现在 3x3 点 U center → 转 S 层(cubesim 风格,支持内层但反直觉)
 - 加 setting:`clickStyle: 'cubesim' | 'face'`
 - 'face' 模式:点 U sticker → 转 U layer(直觉但只能转外层)
-- 文件:`StackPage.tsx`(tap callback)、`SettingDrawer.tsx`
+- 文件:`SimPage.tsx`(tap callback)、`SettingDrawer.tsx`
 
 #### 7. Move counter metric 切换
 - 现 PlayerControls 右侧只有 H(leaf 数)
@@ -94,7 +94,7 @@
 - PlayerControls 工具栏加按钮
 
 #### 9. Move list 进度高亮
-- 之前 PlayerControls 有 `.stack-player-moves` 把每个 leaf move 列出来 done / current 高亮,重写时去掉了
+- 之前 PlayerControls 有 `.sim-player-moves` 把每个 leaf move 列出来 done / current 高亮,重写时去掉了
 - 加回去,但放在 alg input 下方折叠区(挤就折)
 - 文件:`PlayerControls.tsx` + `player-controls.css`
 
@@ -119,10 +119,10 @@
 #### 13. 2D Net 视图
 - alg.cubing.net 的 `Show 2D view` checkbox
 - 复用 `@cuberoot/visualcube` 渲染
-- 文件:`StackPage.tsx`、`PlayerControls.tsx`
+- 文件:`SimPage.tsx`、`PlayerControls.tsx`
 
 #### 14. Replay 视频导出
-- 我们已有 `/frame-count` 用 WebCodecs,真要做 stack replay 要复用那边
+- 我们已有 `/frame-count` 用 WebCodecs,真要做 sim replay 要复用那边
 - 工作量大且跟 `/director` 重叠,优先级最低
 
 ## 已知 issue / 不修
@@ -136,6 +136,6 @@
 1. 调用 skill `cubing-anim-alg` 前读完(alg / TwistyPlayer / AlgInput / 虚拟键盘 / sq1 特殊等)
 2. `feedback_typecheck_frequency`:UI 小改不要每次 typecheck,批量收尾或 push 前再跑
 3. `cubing-anim-alg` 里明令 "不要 `new TwistyPlayer({...})`",一律走 `<TwistySection>` / `<AlgPlayer>`
-4. stack 的 cube 渲染是自有 `World` + huazhechen 派生 + InstancedRenderer,**不是** TwistyPlayer。alg playground 那边用 cubing.js Alg parser 解析,move 喂给 stack twister
+4. sim 的 cube 渲染是自有 `World` + huazhechen 派生 + InstancedRenderer,**不是** TwistyPlayer。alg playground 那边用 cubing.js Alg parser 解析,move 喂给 sim twister
 5. 测试 4x4+ 单击内层时,记得 `world.cube.order = 4`(header 阶数输入)
 6. `D:\cube\cuber`(huazhechen 原版)、`D:\cube\cubesim`(benwh1 cubesim)、`D:\cube\cubing.js`(twizzle/alg.cubing.net 源码)都已 clone,参考实现先去那里看

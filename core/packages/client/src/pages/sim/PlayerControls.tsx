@@ -1,8 +1,8 @@
 /**
- * PlayerControls — alg playground for /stack。
+ * PlayerControls — alg playground for /sim。
  * 完全复用 ReconSubmit 那套:AlgInput + CubeKeyboardSection + recon_alg_utils。
- * 唯一 stack-特有部分:把"播放到第 n 步"转成 stack World twister 的 reset+fast-twist
- * (因为 stack 渲染是 huazhechen/cuber 自渲染,不是 TwistyPlayer,没 timestamp scrub)。
+ * 唯一 sim-特有部分:把"播放到第 n 步"转成 sim World twister 的 reset+fast-twist
+ * (因为 sim 渲染是 huazhechen/cuber 自渲染,不是 TwistyPlayer,没 timestamp scrub)。
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +18,7 @@ import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubing
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { WheelPicker } from '../../components/WheelPicker';
-import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, type StackSettings } from './SettingDrawer';
+import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, type SimSettings } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './player-controls.css';
 
@@ -58,12 +58,12 @@ interface Props {
   puzzleKind: number | 'sq1';
   /** Called when user picks a different puzzle kind via the picker. */
   onPuzzleChange: (kind: number | 'sq1') => void;
-  settings: StackSettings;
-  onSettingsChange: (s: StackSettings) => void;
+  settings: SimSettings;
+  onSettingsChange: (s: SimSettings) => void;
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
-  /** StackPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
+  /** SimPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
   userMoveRef?: RefObject<((action: TwistAction) => void) | null>;
   /** Dev 性能采样回调:打乱 click → 画面上屏总耗时 (ms) + setup CPU 纯耗时 (ms) */
   onScrambleTime?: (ms: number, cpuMs?: number) => void;
@@ -256,7 +256,7 @@ export default function PlayerControls({
     onAlgChange(next);
   }, [onAlgChange]);
 
-  // 注册到 StackPage userMoveRef,卸载时清空
+  // 注册到 SimPage userMoveRef,卸载时清空
   useEffect(() => {
     if (!userMoveRef) return;
     userMoveRef.current = appendUserMove;
@@ -374,15 +374,15 @@ export default function PlayerControls({
   }, [world, order, onSetupChange, settings.animateScramble, isSq1, onScrambleTime]);
 
   return (
-    <div className="stack-player">
-      <div className="stack-player-row stack-player-row--top">
+    <div className="sim-player">
+      <div className="sim-player-row sim-player-row--top">
         <AlgInput
           elementRef={setupElRef}
           initialText={setupDraft}
           autoSpace
           autoResize
           rows={1}
-          className="stack-player-input"
+          className="sim-player-input"
           placeholder={t('打乱', 'Scramble')}
           onChange={(text) => {
             setSetupDraft(text);
@@ -391,7 +391,7 @@ export default function PlayerControls({
         />
         <button
           type="button"
-          className="stack-player-scramble"
+          className="sim-player-scramble"
           onClick={handleScramble}
           title={t('随机打乱', 'Random scramble')}
           aria-label={t('随机打乱', 'Random scramble')}
@@ -399,14 +399,14 @@ export default function PlayerControls({
           <Shuffle size={14} />
         </button>
       </div>
-      <div className="stack-player-row">
+      <div className="sim-player-row">
         <AlgInput
           elementRef={algElRef}
           initialText={algDraft}
           autoSpace
           autoResize
           rows={1}
-          className="stack-player-input"
+          className="sim-player-input"
           placeholder={t('解法', 'Solution')}
           onChange={(text) => {
             setAlgDraft(text);
@@ -415,7 +415,7 @@ export default function PlayerControls({
           onCaretChange={handleCaretSync}
         />
       </div>
-      <div className="stack-player-row">
+      <div className="sim-player-row">
         <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
         <button
@@ -426,8 +426,8 @@ export default function PlayerControls({
           {playing ? <Pause size={14} /> : <Play size={14} />}
         </button>
         <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')}><SkipForward size={14} /></button>
-        <span className="stack-player-progress">{step} / {totalSteps}</span>
-        <label className="stack-player-speed">
+        <span className="sim-player-progress">{step} / {totalSteps}</span>
+        <label className="sim-player-speed">
           <span>{speed.toFixed(2)}×</span>
           <input
             type="range"
@@ -439,8 +439,8 @@ export default function PlayerControls({
           />
         </label>
       </div>
-      <div className="stack-keyboard-section">
-        <div className="stack-keyboard-switcher">
+      <div className="sim-keyboard-section">
+        <div className="sim-keyboard-switcher">
           <button
             type="button"
             className={'vkb-toggle' + (kbVariant === 'alg' ? ' active' : '')}
@@ -473,10 +473,10 @@ export default function PlayerControls({
           />
         )}
         {kbVariant === 'qwerty' && (
-          <StackQwertyKeypad keymap={keymap} onMove={applyMove} />
+          <SimQwertyKeypad keymap={keymap} onMove={applyMove} />
         )}
       </div>
-      <div className="stack-player-tools">
+      <div className="sim-player-tools">
         <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
         <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>
         <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M:沿 M 面镜像 (L↔R)', 'Mirror M (L↔R)')} aria-label={t('Mirror M:沿 M 面镜像', 'Mirror M')}><FlipHorizontal2 size={13} /></button>
@@ -499,7 +499,7 @@ export default function PlayerControls({
   );
 }
 
-function StackQwertyKeypad({
+function SimQwertyKeypad({
   keymap,
   onMove,
 }: {
@@ -507,16 +507,16 @@ function StackQwertyKeypad({
   onMove: (k: KeyMove) => void;
 }) {
   return (
-    <div className="stack-keyboard stack-qwerty-keypad">
+    <div className="sim-keyboard sim-qwerty-keypad">
       {KEYBOARD_ROWS.map((row, ri) => (
-        <div key={ri} className="stack-keyboard-row">
+        <div key={ri} className="sim-keyboard-row">
           {row.map((code) => {
             const m = keymap[code];
             return (
               <button
                 key={code}
                 type="button"
-                className={'stack-key' + (!m ? ' empty' : '')}
+                className={'sim-key' + (!m ? ' empty' : '')}
                 disabled={!m}
                 onPointerDown={(e) => {
                   if (!m) return;
@@ -524,8 +524,8 @@ function StackQwertyKeypad({
                   onMove(m);
                 }}
               >
-                <span className="stack-key-label">{keyLabel(code)}</span>
-                <span className="stack-key-move">{m ? displayMove(m) : '·'}</span>
+                <span className="sim-key-label">{keyLabel(code)}</span>
+                <span className="sim-key-move">{m ? displayMove(m) : '·'}</span>
               </button>
             );
           })}
@@ -556,16 +556,16 @@ function SwatchCell({
   onPick?: (c: string) => void;
   onClick?: () => void;
 }) {
-  const labelEl = label ? <span className="stack-swatch-label">{label}</span> : null;
-  const boxEl = <span className="stack-swatch-box" style={{ background: color }} />;
-  const cls = 'stack-swatch' + (active ? ' active' : '');
+  const labelEl = label ? <span className="sim-swatch-label">{label}</span> : null;
+  const boxEl = <span className="sim-swatch-box" style={{ background: color }} />;
+  const cls = 'sim-swatch' + (active ? ' active' : '');
   if (onPick) {
     return (
       <label className={cls} title={title}>
         {labelEl}
         <input
           type="color"
-          className="stack-swatch-input"
+          className="sim-swatch-input"
           value={color}
           onChange={(e) => onPick(e.target.value)}
         />
@@ -589,13 +589,13 @@ function ColorRow({
   action?: { label: string; title?: string; onClick: () => void };
 }) {
   return (
-    <div className="stack-color-row">
-      <span className="stack-color-row-label">{label}</span>
-      <div className="stack-swatch-list">{children}</div>
+    <div className="sim-color-row">
+      <span className="sim-color-row-label">{label}</span>
+      <div className="sim-swatch-list">{children}</div>
       {action && (
         <button
           type="button"
-          className="stack-face-color-reset"
+          className="sim-face-color-reset"
           onClick={action.onClick}
           title={action.title}
         >
@@ -606,7 +606,7 @@ function ColorRow({
   );
 }
 
-const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<StackSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'> }[] = [
+const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<SimSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'> }[] = [
   { id: 'std',    zh: '标准', en: 'Standard', s: { thickness: true,  hollow: false, arrow: false, hint: false } },
   { id: 'hollow', zh: '镂空', en: 'Hollow',   s: { thickness: true,  hollow: true,  arrow: false, hint: false } },
   { id: 'hint',   zh: '提示', en: 'Hint',     s: { thickness: true,  hollow: false, arrow: false, hint: true  } },
@@ -623,8 +623,8 @@ function PuzzleSettings({
   onOrderChange: (n: number) => void;
   puzzleKind: number | 'sq1';
   onPuzzleChange: (kind: number | 'sq1') => void;
-  settings: StackSettings;
-  onSettingsChange: (s: StackSettings) => void;
+  settings: SimSettings;
+  onSettingsChange: (s: SimSettings) => void;
   t: (zh: string, en: string) => string;
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
@@ -689,30 +689,30 @@ function PuzzleSettings({
     }
   };
 
-  const set = <K extends keyof StackSettings>(key: K, value: StackSettings[K]) => {
+  const set = <K extends keyof SimSettings>(key: K, value: SimSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value });
   };
 
   return (
-    <section className="stack-puzzle">
+    <section className="sim-puzzle">
       <button
         type="button"
-        className="stack-puzzle-head"
+        className="sim-puzzle-head"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={t('魔方设置', 'Puzzle Settings')}
         title={t('魔方设置', 'Puzzle Settings')}
       >
-        <ChevronRight size={14} className={'stack-puzzle-caret' + (open ? ' open' : '')} />
+        <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
         <Settings size={14} />
       </button>
       {open && (
-        <div className="stack-puzzle-body">
-          <div className="stack-puzzle-row">
-            <div className="stack-puzzle-section">
-              <div className="stack-puzzle-section-title">{t('类型', 'Puzzle')}</div>
+        <div className="sim-puzzle-body">
+          <div className="sim-puzzle-row">
+            <div className="sim-puzzle-section">
+              <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <select
-                className="stack-puzzle-select"
+                className="sim-puzzle-select"
                 value={isSq1Local ? 'sq1' : 'nxn'}
                 onChange={(e) => {
                   if (e.target.value === 'sq1') onPuzzleChange('sq1');
@@ -724,9 +724,9 @@ function PuzzleSettings({
               </select>
             </div>
             {!isSq1Local && (
-            <div className="stack-puzzle-section">
-              <div className="stack-puzzle-section-title">{t('阶数', 'Order')}</div>
-              <div className="stack-puzzle-order-control" ref={wheelRootRef}>
+            <div className="sim-puzzle-section">
+              <div className="sim-puzzle-section-title">{t('阶数', 'Order')}</div>
+              <div className="sim-puzzle-order-control" ref={wheelRootRef}>
                 <WheelPicker
                   value={order}
                   minValue={1}
@@ -738,11 +738,11 @@ function PuzzleSettings({
                   itemHeight={22}
                   slots={3}
                   ariaLabel={t('阶数', 'Order')}
-                  className="stack-puzzle-order-wheel"
+                  className="sim-puzzle-order-wheel"
                 />
                 <input
                   type="number"
-                  className="stack-puzzle-order-input"
+                  className="sim-puzzle-order-input"
                   min={1}
                   max={400}
                   step={1}
@@ -760,10 +760,10 @@ function PuzzleSettings({
             </div>
             )}
             {!isSq1Local && (
-            <div className="stack-puzzle-section">
-              <div className="stack-puzzle-section-title">{t('视觉风格', 'Style')}</div>
+            <div className="sim-puzzle-section">
+              <div className="sim-puzzle-section-title">{t('视觉风格', 'Style')}</div>
               <select
-                className="stack-puzzle-select"
+                className="sim-puzzle-select"
                 value={activePreset}
                 onChange={(e) => {
                   const p = STYLE_PRESETS.find((x) => x.id === e.target.value);
@@ -779,7 +779,7 @@ function PuzzleSettings({
             )}
             <button
               type="button"
-              className="stack-keymap-open-btn"
+              className="sim-keymap-open-btn"
               onClick={() => setKeymapOpen(true)}
             >
               <Keyboard size={14} />
@@ -787,14 +787,14 @@ function PuzzleSettings({
             </button>
             <button
               type="button"
-              className="stack-drawer-reset"
+              className="sim-drawer-reset"
               onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
             >
               {t('恢复默认', 'Reset to defaults')}
             </button>
           </div>
 
-          <div className="stack-puzzle-sliders">
+          <div className="sim-puzzle-sliders">
             <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
@@ -802,7 +802,7 @@ function PuzzleSettings({
             <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
-          <div className="stack-puzzle-toggles">
+          <div className="sim-puzzle-toggles">
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
             <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
