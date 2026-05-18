@@ -24,14 +24,18 @@ function readShowPreview(): boolean {
   return localStorage.getItem(SHOW_PREVIEW_KEY) !== '0';
 }
 
-type Mode = 'comp' | 'gen' | 'text' | 'wca';
+type Mode = 'mock' | 'batch' | 'paste' | 'wca';
 
-const VALID_MODES: ReadonlySet<Mode> = new Set(['comp', 'gen', 'text', 'wca']);
-// 老链接兼容:practice/quick → gen(原 practice 默认子模式),tnoodle → comp,import → wca。
+const VALID_MODES: ReadonlySet<Mode> = new Set(['mock', 'batch', 'paste', 'wca']);
+// 老链接兼容:URL 上 ?mode= 用过的别名都转到当前名。chip 字符串 = URL key。
 const LEGACY_MODE_ALIAS: Record<string, Mode> = {
-  practice: 'gen',
-  quick: 'gen',
-  tnoodle: 'comp',
+  // 历次重命名累积
+  comp: 'mock',
+  tnoodle: 'mock',
+  gen: 'batch',
+  practice: 'batch',
+  quick: 'batch',
+  text: 'paste',
   import: 'wca',
 };
 
@@ -60,12 +64,24 @@ export default function GenPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawParam = searchParams.get('mode') ?? '';
   const aliased = (LEGACY_MODE_ALIAS[rawParam] ?? rawParam) as Mode;
-  const mode: Mode = VALID_MODES.has(aliased) ? aliased : 'comp';
+  const mode: Mode = VALID_MODES.has(aliased) ? aliased : 'mock';
+
+  // 老链接(?mode=text 等)落到这里时 URL 还是旧值;静悄悄改写成 canonical 名,
+  // 这样书签/分享/复制 URL 都更新到当前别名。replace:true 避免污染历史。
+  useEffect(() => {
+    if (rawParam && rawParam !== mode) {
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.set('mode', mode);
+        return p;
+      }, { replace: true });
+    }
+  }, [rawParam, mode, setSearchParams]);
   const setMode = (next: Mode) => {
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
       p.set('mode', next);
-      // ?comp= 不在这里清 —— ImportMode (WCA tab) 永远挂载且保留已加载比赛,
+      // ?comp= 不在这里清 —— WCA tab 永远挂载且保留已加载比赛,
       // URL 也保持同步,刷新或换 tab 再回都能秒回原状态。
       return p;
     }, { replace: true });
@@ -81,22 +97,22 @@ export default function GenPage() {
         <div className="gen-mode-chips">
           <button
             type="button"
-            className={`gen-mode-chip${mode === 'comp' ? ' is-active' : ''}`}
-            onClick={() => setMode('comp')}
+            className={`gen-mode-chip${mode === 'mock' ? ' is-active' : ''}`}
+            onClick={() => setMode('mock')}
           >
             {t('模拟', 'Mock')}
           </button>
           <button
             type="button"
-            className={`gen-mode-chip${mode === 'gen' ? ' is-active' : ''}`}
-            onClick={() => setMode('gen')}
+            className={`gen-mode-chip${mode === 'batch' ? ' is-active' : ''}`}
+            onClick={() => setMode('batch')}
           >
             {t('批量', 'Batch')}
           </button>
           <button
             type="button"
-            className={`gen-mode-chip${mode === 'text' ? ' is-active' : ''}`}
-            onClick={() => setMode('text')}
+            className={`gen-mode-chip${mode === 'paste' ? ' is-active' : ''}`}
+            onClick={() => setMode('paste')}
           >
             {t('输入', 'Paste')}
           </button>
@@ -113,9 +129,9 @@ export default function GenPage() {
       </header>
 
       <main className="gen-main">
-        {mode === 'comp' && <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
-        {mode === 'gen' && <QuickMode t={t} subMode="gen" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
-        {mode === 'text' && <QuickMode t={t} subMode="text" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
+        {mode === 'mock' && <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
+        {mode === 'batch' && <QuickMode t={t} subMode="batch" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
+        {mode === 'paste' && <QuickMode t={t} subMode="paste" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
         {/* ImportMode 永远挂载:切走再切回保留已加载比赛 + 已生成 sheets */}
         <div style={{ display: mode === 'wca' ? 'block' : 'none' }}>
           <ImportMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />
