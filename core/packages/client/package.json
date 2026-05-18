@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b",
+    "typecheck": "tsgo --p tsconfig.app.json",
+    "typecheck:tsc": "tsc -b",
     "typecheck:ci": "tsc -b --force"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
     "html-react-parser": "^6.0.1",
     "i18next": "^24.0.0",
     "jspdf": "^4.2.1",
+    "liquid-glass-react": "^1.1.1",
     "lucide-react": "^1.8.0",
     "maplibre-gl": "^5.23.0",
     "mediainfo.js": "^0.3.7",
@@ -69,6 +71,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.183.1",
+    "@typescript/native-preview": "7.0.0-dev.20260517.1",
     "@vitejs/plugin-react": "^6.0.1",
     "esbuild": "^0.27.4",
     "eslint": "^9.39.4",
