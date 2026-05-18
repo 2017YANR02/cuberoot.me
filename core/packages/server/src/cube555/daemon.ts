@@ -63,7 +63,10 @@ function spawnDaemon(): Promise<void> {
   return new Promise((resolve, reject) => {
     const useNative = !!NATIVE_BIN;
     const exe = useNative ? NATIVE_BIN! : JAVA;
-    const args = useNative ? [] : ['-Xmx1g', '-cp', CLASSPATH, 'cs.cube555.Daemon'];
+    // Native binary 默认 substrate VM heap policy 上限 ~80% sysmem, 1.8GB 服务器
+    // 会摸到 1.4GB 跟 nginx/pg/Hono 撞 → OOM。显式 -Xmx512m: 230MB 剪枝表 + ~200MB
+    // 工作区, RSS 实测 ~280-350MB, 比 JVM (-Xmx1g 用 ~540MB) 省 ~200MB。
+    const args = useNative ? ['-Xmx512m'] : ['-Xmx1g', '-cp', CLASSPATH, 'cs.cube555.Daemon'];
     console.log(`[cube555] spawn (${useNative ? 'native' : 'jvm'}): cd ${HOME} && ${exe}${args.length ? ' ' + args.join(' ') : ''}`);
 
     let proc: ChildProcess;

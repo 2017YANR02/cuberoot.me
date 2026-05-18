@@ -116,14 +116,30 @@ jobs:
             /tmp/cube555/cube555-daemon \
             "root@${{ secrets.DEPLOY_HOST }}:/opt/cube555/cube555-daemon.new"
 
+      - name: Stop core-api for smoke
+        # 服务器 1.8GB RAM, 已被 Hono+JVM daemon 占 ~1.2GB,smoke 跑 native binary
+        # (加载 230MB 剪枝表)会跟 JVM daemon 撞内存触发 OOM killer。先 pm2 stop
+        # 让 Hono 退场 (期间 /v1/* 短暂 503),smoke 完再启回来。
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'pm2 stop core-api || true; sleep 2; free -m | head -2'
+
       - name: Smoke test on server
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "root@${{ secrets.DEPLOY_HOST }}" \
-            'cd /opt/cube555 && CUBE555_WORKERS=1 timeout 60 bash -c "printf '\''smoke1\nQUIT\n'\'' | ./cube555-daemon.new" > /tmp/cube555.out 2> /tmp/cube555.err; rc=$?; tail -20 /tmp/cube555.err; echo "---stdout---"; cat /tmp/cube555.out; if grep -q "^READY" /tmp/cube555.out && grep -q "smoke1.*OK" /tmp/cube555.out; then echo "✓ smoke ok"; else echo "✗ smoke failed (rc=$rc)"; exit 1; fi'
+            'cd /opt/cube555 && CUBE555_WORKERS=1 timeout 60 bash -c "printf '\''smoke1\nQUIT\n'\'' | ./cube555-daemon.new -Xmx512m" > /tmp/cube555.out 2> /tmp/cube555.err; rc=$?; tail -30 /tmp/cube555.err; echo "---stdout---"; cat /tmp/cube555.out; if grep -q "^READY" /tmp/cube555.out && grep -q "smoke1.*OK" /tmp/cube555.out; then echo "✓ smoke ok"; else echo "✗ smoke failed (rc=$rc)"; exit 1; fi'
 
-      - name: Promote binary
+      - name: Promote binary + restart core-api
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "root@${{ secrets.DEPLOY_HOST }}" \
-            'mv /opt/cube555/cube555-daemon.new /opt/cube555/cube555-daemon && pm2 reload core-api --update-env'
+            'mv /opt/cube555/cube555-daemon.new /opt/cube555/cube555-daemon && (pm2 restart core-api --update-env || pm2 start core-api)'
+
+      - name: Always restore core-api on failure
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'rm -f /opt/cube555/cube555-daemon.new; (pm2 restart core-api || pm2 start core-api) || true'
