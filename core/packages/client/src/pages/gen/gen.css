@@ -132,6 +132,14 @@
     color: var(--gen-text-mute);
 }
 
+.gen-555-mode-info {
+    display: inline-flex;
+    align-items: center;
+    color: var(--gen-text-mute);
+    transition: color 0.15s;
+}
+.gen-555-mode-info:hover { color: var(--gen-accent); }
+
 /* 5x5 random-state ↔ random-move 切换条:只在选中 5x5 时由组件渲染 */
 .gen-555-mode-row {
     display: flex;
