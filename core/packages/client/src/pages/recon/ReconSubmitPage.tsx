@@ -7,7 +7,7 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
-import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers, listRecons, resolveShortUrl } from '../../utils/recon_api';
+import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, listRecons, resolveShortUrl } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound, localizeRound, isBldEvent } from '../../utils/recon_utils';
@@ -745,16 +745,6 @@ export default function ReconSubmitPage() {
     setReconerCountry('');
   }, [setField]);
 
-  // NOTE: 适配 searchSolvers (后端 WCA 代理) 到 WcaPersonPicker 的 searchFn 接口
-  const solverSearchFn = useCallback(async (query: string): Promise<WcaPerson[]> => {
-    try {
-      const rows = await searchSolvers(query);
-      return rows.map(r => ({ wcaId: r.wcaId, name: r.name, iso2: r.iso2, avatarUrl: '' }));
-    } catch {
-      return [];
-    }
-  }, []);
-
   // NOTE: 推断魔方类型
   const puzzle = useMemo(() => {
     if (!form.event) return '3x3x3';
@@ -923,7 +913,6 @@ export default function ReconSubmitPage() {
                 <WcaPersonPicker
                   mode="inline"
                   onSelect={handleSolverPick}
-                  searchFn={solverSearchFn}
                   placeholder=""
                   autoConfirmExact
                 />
@@ -1378,7 +1367,6 @@ export default function ReconSubmitPage() {
                 <WcaPersonPicker
                   mode="inline"
                   onSelect={handleReconerPick}
-                  searchFn={solverSearchFn}
                   placeholder=""
                   autoConfirmExact
                 />
