@@ -44,6 +44,10 @@ scramble555Routes.get('/scramble/555-rs/ready', (c) => {
 scramble555Routes.get('/scramble/555-rs/batch', (c) => {
   const raw = Number(c.req.query('count') ?? '1');
   const count = Math.max(1, Math.min(BATCH_MAX, Number.isFinite(raw) ? Math.floor(raw) : 1));
+  // nginx 默认对 proxy_pass 开 proxy_buffering,SSE 会被攒到响应结束才一次性
+  // 下行 → TTFB = 全部 solve 完成时间,流式失去意义。这个私有头告诉 nginx
+  // 跳过 buffer,逐 chunk 转发(等同于 location 里 proxy_buffering off)。
+  c.header('X-Accel-Buffering', 'no');
   return streamSSE(c, async (stream) => {
     // Serialize writes — multiple solver promises resolve concurrently, and
     // hono's stream isn't safe for parallel writeSSE() calls.
