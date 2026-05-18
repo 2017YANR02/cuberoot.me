@@ -309,7 +309,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   gen:             { en: 'Scrambles', zh: '生成打乱' },
   memo:            { en: 'Memo', zh: '记忆' },
   code:            { en: 'Code', zh: '编程' },
-  stack:           { en: 'Stack', zh: '魔方栈' },
+  sim:             { en: 'Sim', zh: '模拟' },
   comp:            { en: 'Comp', zh: '比赛' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
@@ -383,7 +383,7 @@ const SECTIONS: Section[] = [
       { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: import.meta.env.BASE_URL + 'icons/upstream/solver.png', nameKey: 'solver' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
-      { id: 'stack',       href: '/stack',       internal: true, tier: 'medium', Icon: Box,        nameKey: 'stack' },
+      { id: 'sim',         href: '/sim',         internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
     ],
   },
   {

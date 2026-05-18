@@ -1,5 +1,5 @@
 // 键盘快捷键:e.code → 转动。默认对齐 cstimer 标准布局 + 方向键。
-// 用户可在 SettingDrawer 中自定义,持久化到 localStorage 'stack.keymap'。
+// 用户可在 SettingDrawer 中自定义,持久化到 localStorage 'sim.keymap'。
 export interface KeyMove { sign: string; reverse?: boolean }
 
 export const DEFAULT_KEYMAP: Record<string, KeyMove> = {
@@ -30,7 +30,7 @@ export const DEFAULT_KEYMAP: Record<string, KeyMove> = {
   ArrowLeft: { sign: 'U' },              ArrowRight: { sign: 'U', reverse: true },
 };
 
-const STORAGE_KEY = 'stack.keymap';
+const STORAGE_KEY = 'sim.keymap';
 
 export function loadKeymap(): Record<string, KeyMove> {
   if (typeof window === 'undefined') return { ...DEFAULT_KEYMAP };

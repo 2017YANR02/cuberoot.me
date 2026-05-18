@@ -1,6 +1,6 @@
 /**
- * /stack — 虚拟魔方 Playground / Player / Algs / Director
- * 核心 src/pages/stack/cuber/* 移植自 huazhechen/cuber (MIT)。
+ * /sim — 虚拟魔方 Playground / Player / Algs / Director
+ * 核心 src/pages/sim/cuber/* 移植自 huazhechen/cuber (MIT)。
  */
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -43,17 +43,17 @@ function withPuzzleFirst(p: URLSearchParams): URLSearchParams {
 import { FACE } from './cuber/define';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
-import { loadSettings, saveSettings, applySettings, type StackSettings } from './SettingDrawer';
+import { loadSettings, saveSettings, applySettings, type SimSettings } from './SettingDrawer';
 import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import PerfOverlay, { type PerfStats } from './PerfOverlay';
 import { loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove } from './keymap';
-import './stack.css';
+import './sim.css';
 
 const IS_DEV = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
-interface StackCube {
+interface SimCube {
   history: { moves: number; redoStack: unknown[] };
   twister: { undo: () => void; redo: () => void; twist: (a: TwistAction, fast: boolean, force: boolean) => boolean; setup: (e: string) => void; push: (e: string) => void };
   callbacks: (() => void)[];
@@ -61,7 +61,7 @@ interface StackCube {
   dirty: boolean;
 }
 
-export default function StackPage() {
+export default function SimPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -108,29 +108,29 @@ export default function StackPage() {
   const [puzzleKind, setPuzzleKind] = useState<number | 'sq1'>(3);
   void puzzleKind; // currently consumed via worldRef on demand; reserved for future SQ1 UI gating
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
-    try { return localStorage.getItem('stack.fullscreen') === '1'; } catch { return false; }
+    try { return localStorage.getItem('sim.fullscreen') === '1'; } catch { return false; }
   });
   useEffect(() => {
-    try { localStorage.setItem('stack.fullscreen', fullscreen ? '1' : '0'); } catch { /* private mode */ }
+    try { localStorage.setItem('sim.fullscreen', fullscreen ? '1' : '0'); } catch { /* private mode */ }
   }, [fullscreen]);
   const [worldTick, setWorldTick] = useState(0);
-  const [settings, setSettings] = useState<StackSettings>(() => loadSettings());
+  const [settings, setSettings] = useState<SimSettings>(() => loadSettings());
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
 
   // 公式 / 录制 折叠状态;localStorage 持久化用户选择
   const [algsOpen, setAlgsOpen] = useState<boolean>(() => {
-    try { return localStorage.getItem('stack.panel.algs') === '1'; } catch { return false; }
+    try { return localStorage.getItem('sim.panel.algs') === '1'; } catch { return false; }
   });
   const [directorOpen, setDirectorOpen] = useState<boolean>(() => {
-    try { return localStorage.getItem('stack.panel.director') === '1'; } catch { return false; }
+    try { return localStorage.getItem('sim.panel.director') === '1'; } catch { return false; }
   });
   useEffect(() => {
-    try { localStorage.setItem('stack.panel.algs', algsOpen ? '1' : '0'); } catch { /* private */ }
+    try { localStorage.setItem('sim.panel.algs', algsOpen ? '1' : '0'); } catch { /* private */ }
   }, [algsOpen]);
   useEffect(() => {
-    try { localStorage.setItem('stack.panel.director', directorOpen ? '1' : '0'); } catch { /* private */ }
+    try { localStorage.setItem('sim.panel.director', directorOpen ? '1' : '0'); } catch { /* private */ }
   }, [directorOpen]);
 
   // URL 中遗留的 mode 参数清掉 (mode 已并入单面板)
@@ -146,15 +146,15 @@ export default function StackPage() {
   const ensureCubeCallback = useCallback(() => {
     const w = worldRef.current;
     if (!w) return;
-    const cube = w.cube as unknown as StackCube;
-    const tag = '_stackBound';
+    const cube = w.cube as unknown as SimCube;
+    const tag = '_simBound';
     const cubeAny = cube as unknown as Record<string, unknown>;
     if (cubeAny[tag]) return;
     cubeAny[tag] = true;
     cube.callbacks.push(() => {
       const wnow = worldRef.current;
       if (!wnow) return;
-      const c = wnow.cube as unknown as StackCube;
+      const c = wnow.cube as unknown as SimCube;
       const completeNow = c.complete;
       wasCompleteRef.current = completeNow;
     });
@@ -236,9 +236,9 @@ export default function StackPage() {
     applySettings(world, settings);
 
     if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
-      (window as unknown as { __stack__?: World }).__stack__ = world;
+      (window as unknown as { __sim__?: World }).__sim__ = world;
       (window as unknown as { __renderer__?: THREE.WebGLRenderer }).__renderer__ = renderer;
-      (window as unknown as { __stack_stats__?: typeof statsRef.current }).__stack_stats__ = statsRef.current;
+      (window as unknown as { __sim_stats__?: typeof statsRef.current }).__sim_stats__ = statsRef.current;
       // 暴露 tweener 实例,避免 console import 拿到不同的 module instance
       import('./cuber/tweener').then((m) => {
         (window as unknown as { __tweener__?: unknown }).__tweener__ = m.default;
@@ -383,8 +383,21 @@ export default function StackPage() {
       e.preventDefault();
       const w = worldRef.current;
       if (!w) return;
-      const factor = e.deltaY > 0 ? 0.92 : 1.08;
-      w.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale * factor));
+      const oldScale = w.scale;
+      const newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, oldScale * (e.deltaY > 0 ? 0.92 : 1.08)));
+      if (newScale === oldScale) return;
+      // 以光标为缩放中心:pan 补偿,使光标下 z=0 的世界点缩放前后不变。
+      // 可见半高/半宽公式跟 world.resize() 同源 (halfH ∝ 1/scale)。
+      const rect = renderer.domElement.getBoundingClientRect();
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      const minDim = Math.min(w.width, w.height);
+      const halfH = (Cubelet.SIZE * 3 * w.height) / (minDim * oldScale);
+      const halfW = halfH * (w.width / w.height);
+      const t = 1 - oldScale / newScale;
+      w.panX += nx * halfW * t;
+      w.panY += ny * halfH * t;
+      w.scale = newScale;
       w.resize();
       syncScaleToSettings();
     };
@@ -880,22 +893,22 @@ export default function StackPage() {
   }, []);
 
   return (
-    <div className={`stack-page${fullscreen ? ' stack-page--fullscreen' : ''}${settings.checkeredBg ? ' stack-page--checkered' : ''}`}>
-      <header className="stack-header">
-        <Link to="/" className="stack-back" title={t('返回', 'Back')}>
+    <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}${settings.checkeredBg ? ' sim-page--checkered' : ''}`}>
+      <header className="sim-header">
+        <Link to="/" className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
         </Link>
-        <h1 className="stack-title">{t('魔方栈', 'Stack')}</h1>
-        <div className="stack-spacer" />
+        <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
+        <div className="sim-spacer" />
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
 
-      <div className="stack-body">
-        <div className="stack-canvas-wrap" ref={containerRef}>
+      <div className="sim-body">
+        <div className="sim-canvas-wrap" ref={containerRef}>
           {IS_DEV ? <PerfOverlay statsRef={statsRef} onStress={onStress} /> : null}
           <button
-            className="stack-fullscreen-exit"
+            className="sim-fullscreen-exit"
             onClick={() => setFullscreen(!fullscreen)}
             title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
             aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
@@ -904,7 +917,7 @@ export default function StackPage() {
           </button>
         </div>
 
-        <aside className="stack-side">
+        <aside className="sim-side">
           <CollapsibleSection
             open={algsOpen}
             onToggle={() => setAlgsOpen((o) => !o)}
@@ -968,19 +981,19 @@ function CollapsibleSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="stack-puzzle">
+    <section className="sim-puzzle">
       <button
         type="button"
-        className="stack-puzzle-head"
+        className="sim-puzzle-head"
         onClick={onToggle}
         aria-expanded={open}
         title={label}
       >
-        <ChevronRight size={14} className={'stack-puzzle-caret' + (open ? ' open' : '')} />
+        <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
         <Icon size={14} />
-        <span className="stack-puzzle-title">{label}</span>
+        <span className="sim-puzzle-title">{label}</span>
       </button>
-      {open && <div className="stack-section-body">{children}</div>}
+      {open && <div className="sim-section-body">{children}</div>}
     </section>
   );
 }
