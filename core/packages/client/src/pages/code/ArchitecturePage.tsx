@@ -365,8 +365,8 @@ const LAYERS: Layer[] = [
   },
   {
     num: '02',
-    zh: { name: '前端',     one: '一个 SPA, 24+ 工具页, React Router 切路由', tech: <>React 19 · Vite 8 · TypeScript · cubing.js</> },
-    en: { name: 'Frontend', one: 'One SPA, 24+ tool pages, React Router',     tech: <>React 19 · Vite 8 · TypeScript · cubing.js</> },
+    zh: { name: '前端',     one: '一个 SPA, 24+ 工具页, React Router 切路由', tech: <>React 19 · Vite 8 · TypeScript · cubing.js · Tailwind 4 (base 层)</> },
+    en: { name: 'Frontend', one: 'One SPA, 24+ tool pages, React Router',     tech: <>React 19 · Vite 8 · TypeScript · cubing.js · Tailwind 4 (base layer)</> },
   },
   {
     num: '03',
@@ -449,6 +449,7 @@ interface Decision {
 const DECISIONS: Decision[] = [
   { topic: 'Framework',   pick: 'React 19',         alt: 'Vue / Svelte',          zh: '生态最广;cubing.js / sr-puzzlegen 等魔方库的示例都是 React;团队熟。',                en: 'Widest ecosystem; cubing.js / sr-puzzlegen samples are React; team familiarity.' },
   { topic: 'Bundler',     pick: 'Vite 8',           alt: 'Webpack / Turbopack',   zh: 'Dev server 启动 < 1s;HMR 即时;ESM 原生;tsc -b 增量 12s。',                          en: 'Sub-1s dev start; instant HMR; native ESM; tsc -b 12s incremental.' },
+  { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/vite 装着, src/index.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/vite + a single @import "tailwindcss" in src/index.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.' },
   { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 一等公民;路由声明式;5 MB 依赖比 express 干净一个量级。',                en: 'TS-first; declarative routing; ~5MB deps vs Express noisy stack.' },
   { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
   { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。',                         en: 'Hard-linked node_modules saves disk; Turbo runs only changed packages.' },
