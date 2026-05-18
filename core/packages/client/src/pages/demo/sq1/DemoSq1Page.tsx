@@ -10,16 +10,27 @@ import './demo_sq1.css';
 
 const DEFAULT_SCRAMBLE = '(0, -4) / (0, -3) / (-3, 0) / (-5, -2) / (-1, -4) / (3, 0) / (-5, 0) / (0, -3) / (5, -2) / (2, -2) / (2, 0) / (0, -2) / (-1, 0)';
 
+/** Read ?scramble= from URL; URL-decoded. Empty/missing → DEFAULT_SCRAMBLE. */
+function readUrlScramble(): { scramble: string; fromUrl: boolean } {
+  if (typeof window === 'undefined') return { scramble: DEFAULT_SCRAMBLE, fromUrl: false };
+  const sp = new URLSearchParams(window.location.search);
+  const raw = sp.get('scramble');
+  if (raw === null) return { scramble: DEFAULT_SCRAMBLE, fromUrl: false };
+  return { scramble: raw, fromUrl: true };
+}
+
 export default function DemoSq1Page() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<Sq1Renderer | null>(null);
-  const [scramble, setScramble] = useState(DEFAULT_SCRAMBLE);
+  const initialUrl = useRef(readUrlScramble());
+  const [scramble, setScramble] = useState(initialUrl.current.scramble);
   const [moves, setMoves] = useState<Sq1Move[]>([]);
   const [progress, setProgress] = useState({ idx: 0, total: 0 });
   const [speed, setSpeed] = useState(1.0);
 
-  // Init renderer once.
+  // Init renderer once. If URL provided ?scramble=, auto-apply final state
+  // so the cube directly shows the post-scramble state (cubedb behavior).
   useEffect(() => {
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
@@ -38,6 +49,15 @@ export default function DemoSq1Page() {
       r.resize(b.width, b.height);
     });
     ro.observe(wrap);
+
+    // If URL had scramble param, jump straight to end state.
+    if (initialUrl.current.fromUrl) {
+      const urlMoves = parseSq1Scramble(initialUrl.current.scramble);
+      let s: Sq1State = solvedState();
+      for (const m of urlMoves) s = applySq1Move(s, m);
+      r.resetTo(s);
+      setProgress({ idx: urlMoves.length, total: urlMoves.length });
+    }
 
     return () => {
       ro.disconnect();
