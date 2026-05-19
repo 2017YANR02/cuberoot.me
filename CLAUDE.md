@@ -77,6 +77,7 @@ pnpm --filter @cuberoot/client lint
 ## 测试
 
 - vitest 在 `@cuberoot/client`,跑 `pnpm --filter @cuberoot/client test`(全集)或 `test:watch`
+- **`tests/analyzer_worker.test.ts` 跑 ~225s**(占全集 99%,CFOP 分析器全空间枚举 53×7457×42664×21380)。只改它以外的东西用 `pnpm --filter @cuberoot/client exec vitest run <path>` 单跑;**禁** `pnpm --filter X test -- <path>`(pnpm 透传 `--` 会被 vitest 吞掉、跑全集)
 - utils 纯函数测试放 `src/utils/*.test.ts`,跟源文件并排
 - worker / 算法回归走 `tests/*.test.ts` + 一个 `_*_runner.cjs`(node:worker_threads + classic-worker globals shim),典型例子见 `tests/analyzer_worker.test.ts`
 - 改 worker / kociemba / scramble 生成器 / utils 必须配一组 fixture 测试,改前先看现有 `tests/` 里同类怎么写

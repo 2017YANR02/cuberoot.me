@@ -369,7 +369,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
       </div>
 
-      <div className="gen-tn-controls" style={{ marginTop: '1rem' }}>
+      <div className="gen-tn-controls" style={{ marginTop: '8px' }}>
         <div className="gen-control-group gen-control-actions">
           {subMode === 'batch' ? (
             <div className="gen-count-row">

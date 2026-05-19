@@ -72,7 +72,8 @@ import { HelpCircle } from 'lucide-react';
 
 ## 禁
 
-- 不要 popover / tooltip 当 about 内容(信息量装不下,移动端难点)。
-- 不要复用别的 about 页的 CSS class(`s555-*` 等都是 page-local namespace,跨页 import 会耦合)。
-- 不要把 about 内容塞回源页 collapsible — 一展开顶掉主交互,是 bug。
-- about 页底部不放 LangToggle / ThemeToggle 之外的全局按钮(避免跟主页的 toggle 抢位置)。
+- `.x-main` 已有 `max-width: 880px` 时 padding 只能 `2rem 1.5rem 4rem`;响应式 `max(..., calc((100vw-880px)/2))` 仅用于无 max-width 的 header,否则汉字单字成行。
+- 不要 popover / tooltip 当 about 内容。
+- 不复用别 about 页的 CSS class(都是 page-local namespace)。
+- 不把 about 内容塞回源页 collapsible。
+- about 页底部不放 LangToggle / ThemeToggle 之外的全局按钮。

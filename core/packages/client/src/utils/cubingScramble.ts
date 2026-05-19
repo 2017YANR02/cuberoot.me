@@ -160,9 +160,14 @@ const POOL_SIZE_444 = 25;
 // batches (count=12/25) still benefit since 5 pop instant and the rest stream
 // in via the parallel-refill branch below.
 const POOL_SIZE_555 = 5;
+// FMC 每个 scramble ~0.5–3s(cubing.js 跑 kociemba solver 验证"非平凡",偶发慢)。
+// Mo3 一次 Generate 抽 3 个,默认 pool=3 一次点完就空。下次点在 refill 完成前 = cold。
+// 6 = 一次 Mo3 + 一发缓冲;refill 跑在后台不阻塞。
+const POOL_SIZE_333FM = 6;
 function poolSizeFor(wcaId: string): number {
   if (wcaId === '444') return POOL_SIZE_444;
   if (wcaId === '555') return POOL_SIZE_555;
+  if (wcaId === '333fm') return POOL_SIZE_333FM;
   return DEFAULT_POOL_SIZE;
 }
 
