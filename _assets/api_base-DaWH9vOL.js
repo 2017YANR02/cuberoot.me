@@ -1,0 +1,1 @@
+import{n as e}from"./api_base-Certh5vg.js";export{e as apiUrl};
