@@ -1,0 +1,419 @@
+/* /wca/about/:id — WCA 统计算法解释页(全部 stats / lookup 共用)
+ * 设计:浅色页面,自有 token,跟 5×5-about 一致的视觉语言但命名独立。
+ */
+
+.wcaa-page {
+    --wcaa-bg: #FAF9F5;
+    --wcaa-surface: #FFFFFF;
+    --wcaa-text: #181716;
+    --wcaa-text-sub: #6F6E6B;
+    --wcaa-text-mute: #95938E;
+    --wcaa-border: #E5E4DF;
+    --wcaa-border-strong: #CCCAC2;
+    --wcaa-accent: #C15F3C;
+    --wcaa-accent-soft: rgba(193, 95, 60, 0.08);
+    --wcaa-blue: #2563EB;
+    --wcaa-blue-soft: rgba(37, 99, 235, 0.10);
+    --wcaa-green: #4CAF50;
+    --wcaa-red: #D45A3F;
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--wcaa-bg);
+    color: var(--wcaa-text);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+[data-theme="dark"] .wcaa-page {
+    --wcaa-bg: #1A1918;
+    --wcaa-surface: #232220;
+    --wcaa-text: #ECEAE4;
+    --wcaa-text-sub: #B0AEA8;
+    --wcaa-text-mute: #7E7C77;
+    --wcaa-border: #36342F;
+    --wcaa-border-strong: #4D4A44;
+    --wcaa-accent: #D97757;
+    --wcaa-accent-soft: rgba(217, 119, 87, 0.14);
+    --wcaa-blue: #6B9DFF;
+    --wcaa-blue-soft: rgba(107, 157, 255, 0.16);
+}
+
+.wcaa-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem max(1.25rem, calc((100vw - 880px) / 2)) 1rem;
+    border-bottom: 1px solid var(--wcaa-border);
+    background: color-mix(in srgb, var(--wcaa-bg) 88%, transparent);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+}
+
+.wcaa-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--wcaa-text-sub);
+    text-decoration: none;
+    font-size: 0.92rem;
+}
+.wcaa-back:hover { color: var(--wcaa-text); }
+
+.wcaa-main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 4rem;
+}
+
+.wcaa-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 0.5rem;
+}
+
+.wcaa-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.wcaa-badge {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    background: var(--wcaa-accent-soft);
+    color: var(--wcaa-accent);
+    text-transform: uppercase;
+}
+
+.wcaa-intro {
+    color: var(--wcaa-text-sub);
+    line-height: 1.7;
+    margin: 0 0 1.5rem;
+    font-size: 0.97rem;
+}
+.wcaa-intro + .wcaa-intro { margin-top: -1rem; }
+
+.wcaa-intro code,
+.wcaa-prose code {
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--wcaa-accent-soft);
+    color: var(--wcaa-accent);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.wcaa-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    letter-spacing: -0.005em;
+}
+.wcaa-section-title:first-child { margin-top: 1.25rem; }
+
+.wcaa-prose {
+    color: var(--wcaa-text-sub);
+    line-height: 1.7;
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+}
+.wcaa-prose:last-child { margin-bottom: 0; }
+
+/* ──── Stat callouts (4 cards row) ──── */
+.wcaa-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 0 0 2rem;
+}
+@media (max-width: 880px) {
+    .wcaa-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .wcaa-stats-grid { grid-template-columns: 1fr; }
+}
+
+.wcaa-stat {
+    background: var(--wcaa-surface);
+    border: 1px solid var(--wcaa-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+.wcaa-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--wcaa-accent);
+    line-height: 1.2;
+}
+.wcaa-stat-label {
+    font-size: 0.82rem;
+    color: var(--wcaa-text);
+    margin-top: 6px;
+    font-weight: 500;
+}
+.wcaa-stat-hint {
+    font-size: 0.72rem;
+    color: var(--wcaa-text-mute);
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+/* ──── Flow steps ──── */
+.wcaa-flow {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 1.5rem;
+}
+.wcaa-step {
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--wcaa-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--wcaa-surface) 96%, var(--wcaa-text));
+    align-items: flex-start;
+}
+.wcaa-step.is-highlight {
+    border-color: var(--wcaa-accent);
+    background: var(--wcaa-accent-soft);
+}
+.wcaa-step-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--wcaa-text-mute);
+    color: var(--wcaa-surface);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'LiberationMono', ui-monospace, monospace;
+}
+.wcaa-step.is-highlight .wcaa-step-num {
+    background: var(--wcaa-accent);
+}
+.wcaa-step-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.wcaa-step-body {
+    font-size: 0.85rem;
+    color: var(--wcaa-text-sub);
+    line-height: 1.55;
+}
+.wcaa-step-body code {
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    font-size: 0.86em;
+    background: color-mix(in srgb, var(--wcaa-surface) 80%, var(--wcaa-text));
+    color: var(--wcaa-text);
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+.wcaa-arrow {
+    align-self: center;
+    color: var(--wcaa-text-mute);
+    font-size: 16px;
+    margin: 3px 0;
+    user-select: none;
+}
+
+/* ──── Formula card ──── */
+.wcaa-formula {
+    border: 1px solid var(--wcaa-border);
+    border-radius: 10px;
+    background: var(--wcaa-surface);
+    padding: 14px 16px;
+    margin: 0 0 12px;
+}
+.wcaa-formula-label {
+    font-size: 0.78rem;
+    color: var(--wcaa-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.wcaa-formula-expr {
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    font-size: 1rem;
+    color: var(--wcaa-text);
+    line-height: 1.5;
+    overflow-x: auto;
+    padding: 6px 0;
+    letter-spacing: -0.002em;
+}
+.wcaa-formula-body {
+    font-size: 0.85rem;
+    color: var(--wcaa-text-sub);
+    line-height: 1.55;
+    margin-top: 4px;
+}
+
+/* ──── Code block ──── */
+.wcaa-code {
+    border: 1px solid var(--wcaa-border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--wcaa-surface) 96%, var(--wcaa-text));
+    margin: 0 0 1rem;
+    overflow: hidden;
+}
+.wcaa-code-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--wcaa-border);
+    font-size: 0.72rem;
+    color: var(--wcaa-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+.wcaa-code pre {
+    margin: 0;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    font-size: 0.82rem;
+    color: var(--wcaa-text);
+    line-height: 1.55;
+    background: transparent;
+    white-space: pre;
+}
+.wcaa-code-caption {
+    font-size: 0.85rem;
+    color: var(--wcaa-text-sub);
+    margin-bottom: 0.5rem;
+    line-height: 1.55;
+}
+
+/* ──── Edges (bullet list) ──── */
+.wcaa-edges {
+    margin: 0 0 1.5rem;
+    padding-left: 1.1rem;
+    list-style: none;
+}
+.wcaa-edges li {
+    position: relative;
+    padding: 4px 0 4px 0;
+    font-size: 0.9rem;
+    color: var(--wcaa-text-sub);
+    line-height: 1.6;
+}
+.wcaa-edges li::before {
+    content: '!';
+    position: absolute;
+    left: -16px;
+    top: 4px;
+    font-family: 'LiberationMono', ui-monospace, monospace;
+    color: var(--wcaa-accent);
+    font-weight: 700;
+}
+
+/* ──── Related links ──── */
+.wcaa-related {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0 0 2rem;
+}
+@media (max-width: 600px) {
+    .wcaa-related { grid-template-columns: 1fr; }
+}
+.wcaa-related-card {
+    display: block;
+    border: 1px solid var(--wcaa-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: var(--wcaa-surface);
+    color: var(--wcaa-text);
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.wcaa-related-card:hover {
+    border-color: var(--wcaa-accent);
+    transform: translateY(-1px);
+}
+.wcaa-related-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.wcaa-related-hint {
+    font-size: 0.78rem;
+    color: var(--wcaa-text-mute);
+    margin-top: 2px;
+    line-height: 1.5;
+}
+
+/* ──── Not-found fallback ──── */
+.wcaa-missing {
+    border: 1px dashed var(--wcaa-border-strong);
+    border-radius: 12px;
+    padding: 30px 24px;
+    color: var(--wcaa-text-mute);
+    text-align: center;
+    line-height: 1.65;
+}
+
+/* ──── Help icon inside the index card ──── */
+.wca-stats-index-card-help {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--muted-foreground, #95938E);
+    opacity: 0.55;
+    text-decoration: none;
+    z-index: 2;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.wca-stats-index-card-help:hover {
+    opacity: 1;
+    color: #C15F3C;
+    background: rgba(193, 95, 60, 0.10);
+}
+[data-theme="dark"] .wca-stats-index-card-help:hover {
+    color: #D97757;
+    background: rgba(217, 119, 87, 0.14);
+}
+.wca-stats-index-card {
+    position: relative;
+}
+/* 给卡片右上留出 help 圆圈空间,避免文字撞到 */
+.wca-stats-index-card:has(.wca-stats-index-card-help) {
+    padding-right: 32px;
+}
+
+/* ──── 详情页 help icon(标题旁) ──── */
+.wca-stats-title-help {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    color: var(--muted-foreground, #95938E);
+    opacity: 0.65;
+    text-decoration: none;
+    transition: opacity 0.15s, color 0.15s;
+    vertical-align: middle;
+}
+.wca-stats-title-help:hover {
+    opacity: 1;
+    color: #e8a27a;
+}

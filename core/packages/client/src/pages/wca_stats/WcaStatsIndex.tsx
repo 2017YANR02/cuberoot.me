@@ -1,13 +1,14 @@
 // NOTE: WCA 统计索引页 — 浅色主题（对齐首页 landing.css tokens）+ 搜索 + Tab 分类
 // 路由：/wca
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search, Wrench,
-  CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator,
+  CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator, HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
+import { hasAbout } from '../wca_about/registry';
 import { loadPersonsIndex, searchLocalPersons, type WcaPerson } from '@cuberoot/shared';
 import { getLangQuery } from '../../i18n';
 import LangToggle from '../../components/LangToggle';
@@ -21,6 +22,7 @@ import { stripWcaPrefix } from '../../utils/comp_localize';
 import { localizeCity } from '../../utils/city_localize';
 import { formatDateRangeIso } from '../../utils/date_range';
 import './wca_stats.css';
+import '../wca_about/wca_about.css';
 
 // NOTE: iconName → lucide 组件映射（与 compute_index.ts STAT_CATEGORIES.iconName 对齐）
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -72,6 +74,35 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
 // NOTE: 选手 / 比赛跨库搜索阈值。英文/数字 q.length >= 2 才发,中文/包含 unicode 1 字符即可
 const MIN_LEN_LATIN = 2;
 const hasNonLatin = (s: string) => /[^\x00-\x7F]/.test(s);
+
+function AboutHelp({ id, isZh, langQuery }: { id: string; isZh: boolean; langQuery: string }) {
+  const navigate = useNavigate();
+  if (!hasAbout(id)) return null;
+  const label = isZh ? '查看算法说明' : 'View algorithm explanation';
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      title={label}
+      className="wca-stats-index-card-help"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(`/wca/about/${id}${langQuery}`);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          navigate(`/wca/about/${id}${langQuery}`);
+        }
+      }}
+    >
+      <HelpCircle size={15} strokeWidth={1.75} />
+    </span>
+  );
+}
 
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
@@ -287,11 +318,16 @@ export default function WcaStatsIndex() {
               <h2>{isZh ? '查询' : 'Lookup'}</h2>
             </div>
             <div className="wca-stats-index-grid">
-              {lookupVisible.map(it => (
-                <Link key={it.path} to={`${it.path}${langQuery}`} className="wca-stats-index-card">
-                  {isZh ? it.zh : it.en}
-                </Link>
-              ))}
+              {lookupVisible.map(it => {
+                // NOTE: lookup item path 形如 /wca/grand-slam,取最后一段当 about id
+                const lookupId = it.path.split('/').pop()!;
+                return (
+                  <Link key={it.path} to={`${it.path}${langQuery}`} className="wca-stats-index-card">
+                    {isZh ? it.zh : it.en}
+                    <AboutHelp id={lookupId} isZh={isZh} langQuery={langQuery} />
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
@@ -313,6 +349,7 @@ export default function WcaStatsIndex() {
                     className="wca-stats-index-card"
                   >
                     {isZh ? s.titleZh : s.titleEn}
+                    <AboutHelp id={s.id} isZh={isZh} langQuery={langQuery} />
                   </Link>
                 ))}
               </div>
