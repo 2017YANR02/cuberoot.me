@@ -1,0 +1,1 @@
+import{a as e}from"./chunk-Byb_VWJN.js";import{t}from"./react-BHPi-aqk.js";import{t as n}from"./useTranslation-azoUBVHB.js";var r=e(t(),1),i=`CubeRoot`,a=` — `;function o(e,t){let{i18n:o}=n(),s=o.language.startsWith(`zh`);(0,r.useEffect)(()=>{let n=(s?e:t).trim();return document.title=n?`${n}${a}${i}`:i,()=>{document.title=i}},[e,t,s])}export{o as t};
