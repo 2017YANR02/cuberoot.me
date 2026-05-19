@@ -88,20 +88,6 @@ public class Daemon {
 	private static final long KOC_PROBE_MIN = Long.parseLong(System.getenv().getOrDefault("CUBE555_KOC_PROBE_MIN", "500"));
 	/** Kociemba verbose flags. 0x8 = OPTIMAL_SOLUTION (guaranteed optimal, exponentially slower — unusable for our latency budget). */
 	private static final int KOC_FLAGS = Integer.parseInt(System.getenv().getOrDefault("CUBE555_KOC_FLAGS", "0"));
-	/**
-	 * Bidirectional solve: for each random state S, also solve S⁻¹ and pick whichever gives the shorter
-	 * scramble. By group identity L*(S) = L*(S⁻¹), but cube555's reducer is heuristic so the two paths
-	 * give different lengths in practice. Unlike multi-seed (CUBE555_SEEDS), this preserves the uniform
-	 * random-state guarantee — we're picking the better of two estimates of the SAME L*(S), not the
-	 * better of two different states. Doubles latency. Default off.
-	 *
-	 * NOTE: the backward path produces a facelet that's in the same coset as S (same physical state)
-	 * but may differ at within-face center positions due to 4!^6 indistinguishable-center labelings.
-	 * We replay the chosen scramble to derive expectedState so verify() compares against the right
-	 * facelet. Consumer sees the canonical-relabeling state (visually identical to original).
-	 */
-	private static final boolean BIDIR =
-	    !"0".equals(System.getenv().getOrDefault("CUBE555_BIDIR", "0"));
 
 	public static void main(String[] args) throws Exception {
 		Search.phase1SolsSize = P1_SOLS;
@@ -136,12 +122,12 @@ public class Daemon {
 			int bestTotal = Integer.MAX_VALUE;
 			for (int seed = 0; seed < SEEDS; seed++) {
 				String state = Tools.randomCube(w.rng);
-				String[] solved = solvePicked(w, state);
+				String[] solved = solveBest(w, state);
 				if (solved == null) continue;
 				int total = countTokens(solved[0]);
 				if (total < bestTotal) {
 					bestTotal = total;
-					bestState = solved[1];
+					bestState = state;
 					bestScramble = solved[0];
 				}
 			}
@@ -156,33 +142,40 @@ public class Daemon {
 	}
 
 	/**
-	 * Reduce + Kociemba for one state, picking the shortest combined solve across all phase-5
-	 * reduction candidates. Upstream's solveReduction always uses p5sols.get(0), leaving moves on
-	 * the table when phase5SolsSize > 1. We re-evaluate every p5sol: rebuild the post-reduction
-	 * 3x3 facelet, run Kociemba, keep the (reduction + Kociemba) pair with smallest total.
+	 * Reduce + Kociemba for one random state, picking the shortest combined solve across all
+	 * phase-5 reduction candidates that cube555's Search accumulated. Upstream's solveReduction
+	 * always uses p5sols.get(0) (whichever Phase5Search emitted first), which leaves several moves
+	 * on the table when phase5SolsSize > 1. We re-evaluate every p5sol: rebuild the post-reduction
+	 * 3x3 facelet from a fresh CubieCube, run Kociemba, then keep the (reduction + Kociemba) pair
+	 * with the smallest total move count.
 	 *
-	 * Returns raw [bestRed, bestKoc] strings (no inversion / no scramble assembly), or null.
+	 * Returns [scramble, "<redLen>+<kocLen>"] or null if nothing produced a Kociemba solution.
 	 */
-	static String[] solveCore(Worker w, String state) {
+	static String[] solveBest(Worker w, String state) {
 		String[] firstRet = w.reducer.solveReduction(state, 0);
 		if (firstRet == null || firstRet[0] == null) return null;
 		String bestRed = null;
 		String bestKoc = null;
 		int bestTotal = Integer.MAX_VALUE;
+		// Default upstream pick first (p5sols.get(0)) — record its (red,koc) as the seed.
 		{
 			String koc = w.solver333.solution(firstRet[1], 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
 			if (koc != null && !koc.startsWith("Error")) {
-				bestTotal = countTokens(firstRet[0]) + countTokens(koc);
+				int total = countTokens(firstRet[0]) + countTokens(koc);
+				bestTotal = total;
 				bestRed = firstRet[0];
 				bestKoc = koc;
 			}
 		}
+		// Then try alternative phase-5 candidates. Skip index 0 (same as firstRet).
 		ArrayList<SolvingCube> pool = w.reducer.p5sols;
 		int candidates = Math.min(pool.size(), P5_SOLS);
 		for (int i = 1; i < candidates; i++) {
 			SolvingCube sc = pool.get(i);
 			String red = sc.toSolutionString(0);
 			int redLen = countTokens(red);
+			// Cheap prune: if reduction alone already meets/exceeds bestTotal-17 (Kociemba >=17 typically),
+			// can't possibly improve. Skip the expensive 3x3 facelet build + Kociemba call.
 			if (redLen + 17 >= bestTotal) continue;
 			CubieCube cc = new CubieCube();
 			if (cc.fromFacelet(state) != 0) continue;
@@ -199,116 +192,8 @@ public class Daemon {
 			}
 		}
 		if (bestRed == null) return null;
-		return new String[] { bestRed, bestKoc };
-	}
-
-	/**
-	 * Forward path (always) + backward path (BIDIR=1). Returns [scramble, expectedState] for
-	 * verify; expectedState is the original state in forward case, or the replayed state in
-	 * backward case (within-face center labeling may differ from original but group element matches).
-	 */
-	static String[] solvePicked(Worker w, String state) {
-		String[] fwd = solveCore(w, state);
-		String fwdScramble = (fwd != null) ? invertAndConvert(fwd[0] + " " + fwd[1]) : null;
-		int fwdTokens = (fwdScramble != null) ? countTokens(fwdScramble) : Integer.MAX_VALUE;
-
-		String bwdScramble = null;
-		int bwdTokens = Integer.MAX_VALUE;
-		String bwdState = null;
-		if (BIDIR) {
-			try {
-				CubieCube cc = new CubieCube();
-				if (cc.fromFacelet(state) == 0) {
-					CubieCube ccInv = invertCubieCube(cc);
-					String stateInv = ccInv.toFacelet();
-					String[] bwd = solveCore(w, stateInv);
-					if (bwd != null) {
-						// Backward: solver returns word W such that W·stateInv = solved → [W] = stateInv⁻¹ = S.
-						// W applied to solved produces a facelet in the [S] coset; we use it directly as the scramble.
-						// Normalize cube555's lowercase-wide tokens to WCA Xw notation so parseMove accepts them.
-						bwdScramble = convertOnly(bwd[0] + " " + bwd[1]);
-						bwdTokens = countTokens(bwdScramble);
-						bwdState = replay(bwdScramble);
-					}
-				}
-			} catch (Throwable t) {
-				// fall through to forward
-			}
-		}
-
-		if (fwdScramble == null && bwdScramble == null) return null;
-		boolean useBwd = (bwdScramble != null) && (fwdScramble == null || bwdTokens < fwdTokens);
-		if (useBwd) return new String[] { bwdScramble, bwdState };
-		return new String[] { fwdScramble, state };
-	}
-
-	/** Apply a scramble token sequence to a solved cube; return resulting facelet. */
-	static String replay(String scramble) {
-		CubieCube cc = new CubieCube();
-		for (String tok : scramble.split("\\s+")) {
-			if (tok.isEmpty()) continue;
-			int m = parseMove(tok);
-			cc.doMove(m);
-			cc.doCornerMove(m);
-		}
-		return cc.toFacelet();
-	}
-
-	// Home-face lookup for the 24 T/X-center cubicles. Both arrays share layout: cubicle i is on
-	// face HOME_FACE[i] (= TCENTER[i]/25); cubicles 0-3 on U, 4-7 D, 8-11 F, 12-15 B, 16-19 R, 20-23 L.
-	private static final int[] HOME_FACE = new int[24];
-	static {
-		for (int i = 0; i < 24; i++) HOME_FACE[i] = CubieCube.TCENTER[i] / 25;
-	}
-
-	/**
-	 * Inverse of a CubieCube. Pieces with cubie identity (mEdge, wEdge, corner) invert via the
-	 * standard permutation-inverse formula. Centers (tCenter, xCenter) store only face indices —
-	 * within-face cubie identity is lost — so the inverse is multi-valued; we pick a canonical
-	 * representative by pairing home cubicles to occupied cubicles in index order per face. Any
-	 * pairing yields a facelet in the correct coset of S⁻¹; the chosen pairing affects which
-	 * within-face labeling the solver receives, but the resulting scramble is valid for S either way.
-	 */
-	static CubieCube invertCubieCube(CubieCube src) {
-		CubieCube dst = new CubieCube();
-		// wEdge: pure perm. dst[src[i]] = i.
-		for (int i = 0; i < 24; i++) dst.wEdge[src.wEdge[i]] = i;
-		// mEdge: perm + Z2 orient (self-inverse: flipping twice cancels).
-		for (int i = 0; i < 12; i++) {
-			int piece = src.mEdge[i] >> 1;
-			int orient = src.mEdge[i] & 1;
-			dst.mEdge[piece] = (i << 1) | orient;
-		}
-		// corner: perm + Z3 orient (orient negated mod 3).
-		for (int i = 0; i < 8; i++) {
-			int piece = src.corner.cp[i];
-			int orient = src.corner.co[i];
-			dst.corner.cp[piece] = i;
-			dst.corner.co[piece] = (3 - orient) % 3;
-		}
-		invertCenters(src.tCenter, dst.tCenter);
-		invertCenters(src.xCenter, dst.xCenter);
-		return dst;
-	}
-
-	static void invertCenters(int[] src, int[] dst) {
-		// For each face f (0..5), collect cubicles where src has color f.
-		int[][] occupied = new int[6][4];
-		int[] occCnt = new int[6];
-		for (int i = 0; i < 24; i++) {
-			int f = src[i];
-			occupied[f][occCnt[f]++] = i;
-		}
-		// Pair home cubicles of face f with occupied cubicles in index order.
-		// dst[home_cubicle] = HOME_FACE[paired occupied cubicle] = the physical face of the cubicle
-		// that received face-f color in src.
-		int[] homeCnt = new int[6];
-		for (int i = 0; i < 24; i++) {
-			int f = HOME_FACE[i];
-			int k = homeCnt[f]++;
-			int j = occupied[f][k];
-			dst[i] = HOME_FACE[j];
-		}
+		String scramble = invertAndConvert(bestRed + " " + bestKoc);
+		return new String[] { scramble };
 	}
 
 	/** Count whitespace-separated tokens, ignoring //(...) annotations and empties. */
@@ -347,25 +232,6 @@ public class Daemon {
 		else if (suffix.endsWith("'")) invSuffix = "";
 		else invSuffix = "'";
 		return wide ? (face + "w" + invSuffix) : (face + invSuffix);
-	}
-
-	/** Normalize cube555 reducer lowercase-wide notation (r, r2, r') to WCA Xw notation. Same suffix preserved. */
-	static String convertOnly(String raw) {
-		String stripped = raw.replaceAll("//\\([^)]*\\)", " ");
-		String[] tokens = stripped.trim().split("\\s+");
-		StringBuilder sb = new StringBuilder(tokens.length * 4);
-		boolean first = true;
-		for (String t : tokens) {
-			if (t.isEmpty()) continue;
-			if (!first) sb.append(' ');
-			char c0 = t.charAt(0);
-			boolean wide = c0 >= 'a' && c0 <= 'z';
-			char face = wide ? Character.toUpperCase(c0) : c0;
-			String suffix = t.substring(1);
-			sb.append(wide ? (face + "w" + suffix) : (face + suffix));
-			first = false;
-		}
-		return sb.toString();
 	}
 
 	/** Apply scramble to a solved CubieCube, compare facelet with expected.

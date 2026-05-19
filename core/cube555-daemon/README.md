@@ -74,7 +74,6 @@ pnpm --filter @cuberoot/client dev
 | `CUBE555_SEEDS` | `1` | 多 seed:每请求跑 K 个随机状态取最短。**K>1 破坏 uniform-random-state 性质**。K=2 多 ~3s 延迟省 ~1.8 步;K=5 已超 7s budget 见地板 ~68 步。 |
 | `CUBE555_KOC_PROBE_MIN` | `500` | Kociemba `probeMin` (找到首解后继续搜更短的概率最低 probe 数)。改大延迟暴涨却几乎不省步,留 default。 |
 | `CUBE555_KOC_FLAGS` | `0` | Kociemba verbose 位掩码。`0x8` = OPTIMAL_SOLUTION,**实测 >1000x 慢,unusable**。 |
-| `CUBE555_BIDIR` | `0` | 双向求解:除 S 外也解 S⁻¹,挑短的。**不破坏 uniformity**(L\*(S)=L\*(S⁻¹) 群论恒等,两个 heuristic 估计同一目标)。实测 -0.48 步 / latency ×2.3。details BENCHMARKS v2。 |
 
 ## GraalVM native binary(可选,推荐生产用)
 
