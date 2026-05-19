@@ -72,3 +72,53 @@ export function moveToString(m: Sq1Move): string {
 export function movesToString(moves: Sq1Move[]): string {
   return moves.map(moveToString).join(' ');
 }
+
+// ─── slash-validity (shape gating for U/D layer turns) ────────────────────
+//
+// The east slice cuts the equator between slots 5|6 and 11|0 on both top and
+// bot. A slice is only physically possible when *neither* cut bisects a
+// corner — i.e. corners (2 consecutive slots with same piece id) never
+// straddle either boundary. This is a function of the discrete state only;
+// the live render can sit anywhere mid-drag.
+
+function layerSlashValid(pieces: number[], offset: number): boolean {
+  return pieces[offset + 5] !== pieces[offset + 6]
+    && pieces[offset + 11] !== pieces[offset + 0];
+}
+
+/** True iff the state allows an `/` slice without bisecting a corner. */
+export function isSlashValid(state: Sq1State): boolean {
+  return layerSlashValid(state.pieces, 0) && layerSlashValid(state.pieces, 12);
+}
+
+/**
+ * Pick the integer-unit layer turn in [-6, 6] closest to `targetUnits` whose
+ * resulting state stays slash-valid. The opposite layer is untouched, so its
+ * validity is inherited. Ties (equal distance) prefer the smaller |U| —
+ * dragging into a forbidden 30° wedge from solved snaps back to 0, not to
+ * the next 60°.
+ *
+ * Always returns *some* U (0 if no non-zero candidate is closer); callers
+ * commit only when U ≠ 0.
+ */
+export function snapValidLayerTurn(
+  state: Sq1State,
+  layer: 'top' | 'bot',
+  targetUnits: number,
+): number {
+  let bestU = 0;
+  let bestDist = Infinity;
+  for (let u = -6; u <= 6; u++) {
+    const move: Sq1Move = layer === 'top'
+      ? { kind: 'turn', top: u, bot: 0 }
+      : { kind: 'turn', top: 0, bot: u };
+    const next = applySq1Move(state, move);
+    if (!isSlashValid(next)) continue;
+    const d = Math.abs(u - targetUnits);
+    if (d < bestDist - 1e-9 || (Math.abs(d - bestDist) < 1e-9 && Math.abs(u) < Math.abs(bestU))) {
+      bestDist = d;
+      bestU = u;
+    }
+  }
+  return bestU;
+}
