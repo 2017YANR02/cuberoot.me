@@ -135,6 +135,10 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/prediction_build.ts
 
+      - name: Generate 3x3 WR history JSON
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/wr333_history_build.ts
+
       - name: Generate competition records JSON
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_comp_records.ts
