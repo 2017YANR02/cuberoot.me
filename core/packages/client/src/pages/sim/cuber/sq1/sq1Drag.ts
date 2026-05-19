@@ -105,9 +105,11 @@ export function sq1DragStart(
   const refX = planePt ? planePt.x : hitLocal.x;
   const refZ = planePt ? planePt.z : hitLocal.z;
 
-  const sign = layer === 'top' ? 1 : -1;
+  // 按物理位置选层,不能用 piece.layerSign(piece id 类型 — slice 后会跟物理
+  // 反向:顶类 piece 物理 y<0,底类 y>0)。跟 Sq1Cube.beginMove 同一约定。
+  const wantTop = layer === 'top';
   const starts = cube.pieces
-    .filter((p) => p.layerSign === sign)
+    .filter((p) => (p.pivot.position.y > 0) === wantTop)
     .map((p) => ({
       pivot: p.pivot,
       quat: p.pivot.quaternion.clone(),
