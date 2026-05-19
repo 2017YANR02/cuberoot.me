@@ -52,13 +52,20 @@ export interface MiddleEntry {
 }
 
 /** One piece's animation plan for a single move. delta is applied as
- *  `pivot.quat = delta · current; pivot.pos = delta · current_pos`. */
+ *  `pivot.quat = delta · current; pivot.pos = delta · current_pos`.
+ *  `axis`+`angle` carry the *signed* world-space rotation so Sq1Twister can
+ *  interpolate as `q(angle·v, axis)` instead of slerp(start,end). slerp's
+ *  shortest-path flip at dot<0 makes 180° turns (top/bot=±6, slice) take
+ *  whichever arc floating-point error nudges into — visually `(6,…)` then
+ *  randomly looks like `(-6,…)` depending on accumulated quaternion drift. */
 export interface PieceAnim {
   pivot: THREE.Object3D;
   startQuat: THREE.Quaternion;
   endQuat: THREE.Quaternion;
   startPos: THREE.Vector3;
   endPos: THREE.Vector3;
+  axis: THREE.Vector3;
+  angle: number;
 }
 
 export class Sq1History {
@@ -152,15 +159,17 @@ export default class Sq1Cube extends THREE.Group {
   beginMove(move: Sq1Move): PieceAnim[] {
     const anims: PieceAnim[] = [];
     if (move.kind === 'turn') {
-      const topDelta = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(0, 1, 0), -(move.top ?? 0) * (Math.PI / 6),
-      );
-      const botDelta = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(0, 1, 0), (move.bot ?? 0) * (Math.PI / 6),
-      );
+      const Y = new THREE.Vector3(0, 1, 0);
+      const topAngle = -(move.top ?? 0) * (Math.PI / 6);
+      const botAngle = (move.bot ?? 0) * (Math.PI / 6);
+      const topDelta = new THREE.Quaternion().setFromAxisAngle(Y, topAngle);
+      const botDelta = new THREE.Quaternion().setFromAxisAngle(Y, botAngle);
       for (const p of this.pieces) {
-        const delta = p.pivot.position.y > 0 ? topDelta : botDelta;
-        anims.push(this._makeAnim(p.pivot, delta));
+        if (p.pivot.position.y > 0) {
+          anims.push(this._makeAnim(p.pivot, topDelta, Y, topAngle));
+        } else {
+          anims.push(this._makeAnim(p.pivot, botDelta, Y, botAngle));
+        }
       }
     } else {
       const sliceDelta = new THREE.Quaternion().setFromAxisAngle(SLICE_AXIS, Math.PI);
@@ -174,11 +183,11 @@ export default class Sq1Cube extends THREE.Group {
         probe.set(W, 0, isCorner ? -W : 0);
         probe.applyMatrix4(p.pivot.matrix);
         if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) {
-          anims.push(this._makeAnim(p.pivot, sliceDelta));
+          anims.push(this._makeAnim(p.pivot, sliceDelta, SLICE_AXIS, Math.PI));
         }
       }
       for (const m of this.middle) {
-        if (m.side === 1) anims.push(this._makeAnim(m.pivot, sliceDelta));
+        if (m.side === 1) anims.push(this._makeAnim(m.pivot, sliceDelta, SLICE_AXIS, Math.PI));
       }
     }
     return anims;
@@ -231,11 +240,14 @@ export default class Sq1Cube extends THREE.Group {
     this.callbacks.length = 0;
   }
 
-  private _makeAnim(pivot: THREE.Object3D, delta: THREE.Quaternion): PieceAnim {
+  private _makeAnim(
+    pivot: THREE.Object3D, delta: THREE.Quaternion,
+    axis: THREE.Vector3, angle: number,
+  ): PieceAnim {
     const startQuat = pivot.quaternion.clone();
     const endQuat = delta.clone().multiply(startQuat);
     const startPos = pivot.position.clone();
     const endPos = startPos.clone().applyQuaternion(delta);
-    return { pivot, startQuat, endQuat, startPos, endPos };
+    return { pivot, startQuat, endQuat, startPos, endPos, axis, angle };
   }
 }

@@ -363,6 +363,7 @@ export default function SimPage() {
     if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
       (window as unknown as { __sim__?: World }).__sim__ = world;
       (window as unknown as { __renderer__?: THREE.WebGLRenderer }).__renderer__ = renderer;
+      (window as unknown as { __THREE__?: typeof THREE }).__THREE__ = THREE;
       (window as unknown as { __sim_stats__?: typeof statsRef.current }).__sim_stats__ = statsRef.current;
       // 暴露 tweener 实例,避免 console import 拿到不同的 module instance
       import('./cuber/tweener').then((m) => {
@@ -582,8 +583,12 @@ export default function SimPage() {
       if (worldRef.current?.puzzleKind === 'sq1' && (e.pointerType !== 'mouse' || e.button === 0)) {
         const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
         if (!isTouchMulti) {
-          sq1DownX = e.clientX;
-          sq1DownY = e.clientY;
+          // sq1DragStart / sq1DragDelta 用 canvas-local 像素(0,0 = canvas 左上)
+          // 算 NDC,不能直接用 viewport clientX/Y — sim-header 在 canvas 上方占
+          // 49px,不减 rect.top 会让 raycast 落点偏到 mid slab 区,侧壁拖被误判 slice。
+          const r0 = renderer.domElement.getBoundingClientRect();
+          sq1DownX = e.clientX - r0.left;
+          sq1DownY = e.clientY - r0.top;
           sq1Pending = true;
           sq1MovedPastThreshold = false;
           sq1Drag = null;
@@ -629,10 +634,14 @@ export default function SimPage() {
         return;
       }
       if (worldRef.current?.puzzleKind === 'sq1') {
+        // canvas-local 坐标(同 sq1DownX/Y 约定)
+        const rmove = renderer.domElement.getBoundingClientRect();
+        const localX = e.clientX - rmove.left;
+        const localY = e.clientY - rmove.top;
         // 已进入 turn-drag → 跟新 Δθ, 滚 pivot
-        if (sq1Drag) {
+        if (sq1Drag && sq1Drag.kind === 'turn') {
           const w = worldRef.current;
-          const d = sq1DragDelta(sq1Drag, w.scene, w.camera, e.clientX, e.clientY, w.width, w.height);
+          const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
           if (d != null) {
             sq1DragLastDelta = d;
             sq1DragApply(sq1Drag, d);
@@ -664,15 +673,24 @@ export default function SimPage() {
             if (c instanceof Sq1Cube) {
               sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
             }
-            if (sq1Drag) {
+            if (sq1Drag?.kind === 'slice') {
+              // Mid-slab hit → 一次性 slash 动画(不跟手指);后续 move 已被
+              // sq1MovedPastThreshold gate 挡住,松手时 sq1Drag 已 null,不走 commit。
+              const c2 = w.cube as Sq1Cube;
+              const ok = c2.twister.twist({ kind: 'slice' }, false, true);
+              if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+              sq1Drag = null;
+            } else if (sq1Drag) {
               // turn-drag — 从 down 角度开始, 立即 apply 当前 delta 让贴片不卡顿
-              const d = sq1DragDelta(sq1Drag, w.scene, w.camera, e.clientX, e.clientY, w.width, w.height);
+              const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
               if (d != null) {
                 sq1DragLastDelta = d;
                 sq1DragApply(sq1Drag, d);
                 w.dirty = true;
               }
             } else {
+              // sq1DragStart returned null = ray miss = 不在 cube 上 → 切视角。
+              // 命中 cap / 侧壁 → turn-drag;命中 equator → slice (上面已处理)。
               sq1Rotating = true;
               sq1LastX = sq1DownX;
               sq1LastY = sq1DownY;
@@ -712,7 +730,7 @@ export default function SimPage() {
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
         return;
       }
-      if (sq1Drag) {
+      if (sq1Drag && sq1Drag.kind === 'turn') {
         const w = worldRef.current;
         if (w) {
           const c = w.cube;

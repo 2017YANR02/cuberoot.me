@@ -1,14 +1,20 @@
 /**
  * SQ1 drag-to-turn helpers.
  *
- * Pointer raycast hits a horizontal plane at TOP_Y or BOT_Y in cube-local frame.
- * Track Δθ around +Y between pointerdown and pointermove; apply uniformly to
- * every piece pivot in that layer so the sticker stays under the finger.
- * On release snap to nearest 30°, tween pivots into the snapped end pose, then
- * commit state + history (mirrors what Sq1Cube.finishMove does).
+ * Pointerdown raycasts the full sq1 geometry (caps + side walls + equator).
+ * Hit point's Y sign in cube-local frame picks the layer: y >= 0 → top, else
+ * bot. startAngle is the polar atan2(z, x) on the layer's reference plane
+ * (TOP_Y / BOT_Y), so subsequent moves re-project onto the same plane.
+ *
+ * Drag delta is sign-flipped so the sticker tracks the finger from any view:
+ * R_y(+θ) makes cube-local atan2 decrease, but the finger's atan2 increases
+ * by the same delta — so applying -delta around +Y keeps them in sync.
+ *
+ * On release snap to nearest 30°, tween pivots into the snapped end pose,
+ * then commit state + history (mirrors what Sq1Cube.finishMove does).
  */
 import * as THREE from 'three';
-import { W, HALF_MID, LAYER_HEIGHT } from './sq1Geometry';
+import { HALF_MID, LAYER_HEIGHT } from './sq1Geometry';
 import { applySq1Move, moveToString, type Sq1Move } from './sq1State';
 import type Sq1Cube from './Sq1Cube';
 import tweener from '../tweener';
@@ -18,11 +24,21 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const TOP_Y = HALF_MID + LAYER_HEIGHT;
 const BOT_Y = -HALF_MID - LAYER_HEIGHT;
 
-export interface Sq1DragStart {
+/** Live drag of one layer, snapped on release. */
+export interface Sq1TurnDrag {
+  kind: 'turn';
   layer: 'top' | 'bot';
   startAngle: number;
   starts: { pivot: THREE.Object3D; quat: THREE.Quaternion; pos: THREE.Vector3 }[];
 }
+
+/** Mid-slab hit. Carries no state — SimPage fires a one-shot slice animation
+ *  on first pointermove past the threshold and clears the drag handle. */
+export interface Sq1SliceDrag {
+  kind: 'slice';
+}
+
+export type Sq1DragStart = Sq1TurnDrag | Sq1SliceDrag;
 
 function buildLocalRay(
   scene: THREE.Scene, camera: THREE.Camera,
@@ -38,36 +54,57 @@ function buildLocalRay(
   return ray;
 }
 
-function planeHit(ray: THREE.Ray, y: number): THREE.Vector3 | null {
+/** Ray ∩ Y=const plane in cube-local frame. No cap-footprint check — once we
+ *  know which layer was hit, the plane is just a reference for polar angle. */
+function planeIntersect(ray: THREE.Ray, y: number): THREE.Vector3 | null {
   if (Math.abs(ray.direction.y) < 1e-6) return null;
   const t = (y - ray.origin.y) / ray.direction.y;
   if (t < 0) return null;
-  const pt = ray.origin.clone().add(ray.direction.clone().multiplyScalar(t));
-  if (Math.abs(pt.x) > W || Math.abs(pt.z) > W) return null;
-  return pt;
+  return ray.origin.clone().add(ray.direction.clone().multiplyScalar(t));
 }
 
-/** Raycast pointer onto top/bot Y-plane in cube-local frame. Picks the plane
- *  that hits closer to the camera, so a side-on view doesn't accidentally
- *  pick the far face when the ray passes through both. Returns null when
- *  neither face is hit (pointer over side wall or empty space). */
+const _raycaster = new THREE.Raycaster();
+const _ndc = new THREE.Vector2();
+
+/** Raycast the full cube. Any mesh hit (cap, side wall, equator) starts a
+ *  turn-drag; the hit's cube-local Y picks the layer. Returns null when the
+ *  pointer is over empty space — SimPage falls back to view rotation. */
 export function sq1DragStart(
   cube: Sq1Cube,
   scene: THREE.Scene, camera: THREE.Camera,
   screenX: number, screenY: number, width: number, height: number,
 ): Sq1DragStart | null {
+  _ndc.set((screenX / width) * 2 - 1, -(screenY / height) * 2 + 1);
+  _raycaster.setFromCamera(_ndc, camera);
+  const hits = _raycaster.intersectObject(cube, true);
+  if (hits.length === 0) return null;
+  // Hit point is in world space; convert to cube-local (= scene-local since
+  // sq1Cube has identity matrix relative to scene) to read Y sign.
+  const hitLocal = hits[0].point.clone();
+  const sceneInv = new THREE.Matrix4().copy(scene.matrix).invert();
+  hitLocal.applyMatrix4(sceneInv);
+  // Mid-slab hit (equator) → one-shot slice. Walk up the parent chain of the
+  // hit mesh; if it descends from either middle pivot, it's a slice gesture.
+  // Has to be done before the y-sign layer pick — a slab face at y=+ε would
+  // otherwise be misread as a top-layer turn.
+  const hitObj = hits[0].object;
+  for (const m of cube.middle) {
+    let cur: THREE.Object3D | null = hitObj;
+    while (cur && cur !== cube) {
+      if (cur === m.pivot) return { kind: 'slice' };
+      cur = cur.parent;
+    }
+  }
+  const layer: 'top' | 'bot' = hitLocal.y >= 0 ? 'top' : 'bot';
+
+  // startAngle: polar on layer's reference plane. Fallback to raw hit (x, z)
+  // if the ray runs parallel to the plane (rare degenerate view).
   const ray = buildLocalRay(scene, camera, screenX, screenY, width, height);
-  const top = planeHit(ray, TOP_Y);
-  const bot = planeHit(ray, BOT_Y);
-  let layer: 'top' | 'bot';
-  let hit: THREE.Vector3;
-  if (top && bot) {
-    const dTop = top.distanceToSquared(ray.origin);
-    const dBot = bot.distanceToSquared(ray.origin);
-    if (dTop <= dBot) { layer = 'top'; hit = top; } else { layer = 'bot'; hit = bot; }
-  } else if (top) { layer = 'top'; hit = top; }
-  else if (bot) { layer = 'bot'; hit = bot; }
-  else return null;
+  const planeY = layer === 'top' ? TOP_Y : BOT_Y;
+  const planePt = planeIntersect(ray, planeY);
+  const refX = planePt ? planePt.x : hitLocal.x;
+  const refZ = planePt ? planePt.z : hitLocal.z;
+
   const sign = layer === 'top' ? 1 : -1;
   const starts = cube.pieces
     .filter((p) => p.layerSign === sign)
@@ -76,14 +113,14 @@ export function sq1DragStart(
       quat: p.pivot.quaternion.clone(),
       pos: p.pivot.position.clone(),
     }));
-  return { layer, startAngle: Math.atan2(hit.z, hit.x), starts };
+  return { kind: 'turn', layer, startAngle: Math.atan2(refZ, refX), starts };
 }
 
 /** Re-raycast onto the same plane and return the Δθ since start (radians,
  *  unwrapped to (-π, π]). Null if the ray misses (rare — only when scene
  *  is rotated past vertical so the plane is behind / parallel). */
 export function sq1DragDelta(
-  start: Sq1DragStart,
+  start: Sq1TurnDrag,
   scene: THREE.Scene, camera: THREE.Camera,
   screenX: number, screenY: number, width: number, height: number,
 ): number | null {
@@ -98,12 +135,15 @@ export function sq1DragDelta(
   let d = Math.atan2(pt.z, pt.x) - start.startAngle;
   while (d > Math.PI) d -= 2 * Math.PI;
   while (d < -Math.PI) d += 2 * Math.PI;
-  return d;
+  // R_y(+θ) decreases cube-local atan2 by θ, while the finger's atan2 increases
+  // by Δfinger. So apply -Δfinger around +Y to keep sticker under finger. Both
+  // layers; apply + commit consume this value so the chain stays consistent.
+  return -d;
 }
 
 /** Apply live rotation to all tracked pivots: quat = q(Δ) · startQuat,
  *  pos = q(Δ) · startPos (so the sticker tracks the finger). */
-export function sq1DragApply(start: Sq1DragStart, delta: number): void {
+export function sq1DragApply(start: Sq1TurnDrag, delta: number): void {
   const q = new THREE.Quaternion().setFromAxisAngle(Y_AXIS, delta);
   for (const s of start.starts) {
     s.pivot.quaternion.multiplyQuaternions(q, s.quat);
@@ -115,7 +155,7 @@ export function sq1DragApply(start: Sq1DragStart, delta: number): void {
  *  state + history. Returns the committed move (null if 0 units = snap back). */
 export function sq1DragCommit(
   cube: Sq1Cube,
-  start: Sq1DragStart,
+  start: Sq1TurnDrag,
   delta: number,
 ): Sq1Move | null {
   const units = Math.round(delta / (Math.PI / 6));
