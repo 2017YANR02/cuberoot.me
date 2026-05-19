@@ -18,6 +18,7 @@ import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import Sq1Cube from './cuber/sq1/Sq1Cube';
+import tweener from './cuber/tweener';
 import { sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, type Sq1DragStart } from './cuber/sq1/sq1Drag';
 import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
 
@@ -671,6 +672,14 @@ export default function SimPage() {
             const w = worldRef.current;
             const c = w.cube;
             if (c instanceof Sq1Cube) {
+              // 任何 in-flight slice / drag-snap 都让 pivot 与 cube.state 脱钩。
+              // 用户报告的 pop 来自 mid-slice 时拖 U/D — beginMove/sq1DragStart
+              // 拿到的 pivot 还在 180° 弧线中段, layer pick 错位 + commit 叠在
+              // 半成品 slice 上 → 落地拓扑乱。drag-snap 期间快连拖也同样 drift。
+              // 在 threshold 跨过的一瞬间统一 force-finish 所有 tween, 让 pivot 落
+              // 到 canonical pose、cube.state 同步, 然后再 raycast 决定 turn/slice/view。
+              c.twister.finish();
+              tweener.finish();
               sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
             }
             if (sq1Drag?.kind === 'slice') {
