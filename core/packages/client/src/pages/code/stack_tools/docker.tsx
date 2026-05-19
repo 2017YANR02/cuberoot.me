@@ -149,3 +149,5 @@ export const DOCKER: StackTool = {
     { label: 'OCI spec', href: 'https://opencontainers.org' },
   ],
 };
+
+export default DOCKER;

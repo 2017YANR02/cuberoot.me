@@ -97,6 +97,17 @@ const WbPage = lazy(() => import('./pages/wb/WbPage'));
 const CompIndexPage = lazy(() => import('./pages/comp/CompIndexPage'));
 const CompDetailPage = lazy(() => import('./pages/comp/CompDetailPage'));
 const CompSourcesPage = lazy(() => import('./pages/comp/CompSourcesPage'));
+// NOTE: About 页 — 7 个工具卡片的说明页
+const CompAboutPage = lazy(() => import('./pages/comp_about/CompAboutPage'));
+const CalendarAboutPage = lazy(() => import('./pages/calendar_about/CalendarAboutPage'));
+const GlobeAboutPage = lazy(() => import('./pages/globe_about/GlobeAboutPage'));
+const VizAboutPage = lazy(() => import('./pages/viz_about/VizAboutPage'));
+const PredictionAboutPage = lazy(() => import('./pages/prediction_about/PredictionAboutPage'));
+const NemesizerAboutPage = lazy(() => import('./pages/nemesizer_about/NemesizerAboutPage'));
+const CalcAboutPage = lazy(() => import('./pages/calc_about/CalcAboutPage'));
+const ReconAboutPage = lazy(() => import('./pages/recon_about/ReconAboutPage'));
+const FrameCountAboutPage = lazy(() => import('./pages/frame_count_about/FrameCountAboutPage'));
+const MosaicAboutPage = lazy(() => import('./pages/mosaic_about/MosaicAboutPage'));
 // NOTE: Timer — 纯 TypeScript 重写的速拧计时器（替代 cstimer iframe 的核心流程）
 const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
 // NOTE: VisualCube Editor — 全功能交互式魔方图生成器
@@ -221,6 +232,7 @@ function App() {
         <Route path="/recognize/:algSetId" element={<TrainingPage />} />
         {/* Calc — 成绩计算器 */}
         <Route path="/calc" element={<Suspense fallback={<div>Loading...</div>}><CalcPage /></Suspense>} />
+        <Route path="/calc-about" element={<Suspense fallback={<div>Loading...</div>}><CalcAboutPage /></Suspense>} />
         {/* Battle — 对战计时器 */}
         <Route path="/battle" element={<Suspense fallback={<div>Loading...</div>}><BattlePage /></Suspense>} />
         {/* Recon — 复盘数据库 */}
@@ -352,11 +364,21 @@ function App() {
         <Route path="/wca/comp" element={<Suspense fallback={<div>Loading...</div>}><CompIndexPage /></Suspense>} />
         <Route path="/wca/comp/sources" element={<Suspense fallback={<div>Loading...</div>}><CompSourcesPage /></Suspense>} />
         <Route path="/wca/comp/:slug" element={<Suspense fallback={<div>Loading...</div>}><CompDetailPage /></Suspense>} />
+        {/* About 页 — 工具卡片说明 (must be before /wca/:statId catch-all) */}
+        <Route path="/wca/comp-about" element={<Suspense fallback={<div>Loading...</div>}><CompAboutPage /></Suspense>} />
+        <Route path="/wca/calendar-about" element={<Suspense fallback={<div>Loading...</div>}><CalendarAboutPage /></Suspense>} />
+        <Route path="/wca/globe-about" element={<Suspense fallback={<div>Loading...</div>}><GlobeAboutPage /></Suspense>} />
+        <Route path="/wca/viz-about" element={<Suspense fallback={<div>Loading...</div>}><VizAboutPage /></Suspense>} />
+        <Route path="/wca/prediction-about" element={<Suspense fallback={<div>Loading...</div>}><PredictionAboutPage /></Suspense>} />
         <Route path="/wca/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
+        <Route path="/nemesizer-about" element={<Suspense fallback={<div>Loading...</div>}><NemesizerAboutPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
+        <Route path="/frame-count-about" element={<Suspense fallback={<div>Loading...</div>}><FrameCountAboutPage /></Suspense>} />
+        <Route path="/recon-about" element={<Suspense fallback={<div>Loading...</div>}><ReconAboutPage /></Suspense>} />
+        <Route path="/mosaic-about" element={<Suspense fallback={<div>Loading...</div>}><MosaicAboutPage /></Suspense>} />
         <Route path="/code/traffic" element={<Suspense fallback={<div>Loading...</div>}><TrafficPage /></Suspense>} />
         {/* Tutorial — 公式教程目录（曾用 /alg） */}
         <Route path="/tutorial" element={<Suspense fallback={<div>Loading...</div>}><TutorialIndexPage /></Suspense>} />

@@ -145,3 +145,5 @@ export const NODE: StackTool = {
     { label: 'LTS release schedule', href: 'https://github.com/nodejs/release#release-schedule' },
   ],
 };
+
+export default NODE;

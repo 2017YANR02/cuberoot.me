@@ -97,6 +97,10 @@ export default function GenPage() {
     }, { replace: true });
   };
 
+  // 比赛 chip 激活时,header 右上腾出一个槽给 TNoodleMode 的 CompPicker 用 portal 注入
+  // (state 仍在 TNoodleMode,只是 DOM 出现在 header)。chip 不在 comp → slot 不渲染。
+  const [compHeaderSlot, setCompHeaderSlot] = useState<HTMLDivElement | null>(null);
+
   return (
     <div className="gen-page">
       <header className="gen-header">
@@ -114,6 +118,9 @@ export default function GenPage() {
             </Link>
           </h1>
         </div>
+        {mode === 'comp' && (
+          <div ref={setCompHeaderSlot} className="gen-comp-header-slot" />
+        )}
         <LiquidGlassChips<Mode>
           className="gen-mode-chips"
           items={MODE_ORDER}
@@ -128,7 +135,7 @@ export default function GenPage() {
       <main className="gen-main">
         {/* Comp 永远挂载:切走再切回保留已加载/已生成 sheets */}
         <div style={{ display: mode === 'comp' ? 'block' : 'none' }}>
-          <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />
+          <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} compHeaderSlot={compHeaderSlot} />
         </div>
         {mode === 'batch' && <QuickMode t={t} subMode="batch" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
         {mode === 'paste' && <QuickMode t={t} subMode="paste" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}

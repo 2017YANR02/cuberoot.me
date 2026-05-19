@@ -144,3 +144,5 @@ export const REACT_ROUTER: StackTool = {
     { label: 'Framework mode docs', href: 'https://reactrouter.com/start/framework/installation' },
   ],
 };
+
+export default REACT_ROUTER;

@@ -10,19 +10,26 @@ import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown } from '
 import WcaEventSelector from '../../components/WcaEventSelector';
 import NumberCommitInput from '../../components/NumberCommitInput';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
+import HighOrderNxNInput from '../../components/HighOrderNxNInput';
 import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { visualcubeApiHref } from '../../utils/visualcube_link';
 import { eventDisplayName } from '../../utils/wca_events';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '../../utils/cubingScramble';
+import { activeEventOf } from './active_view';
+import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '../../utils/cstimerScramble';
+import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '../../utils/shapeModScramble';
 import type { RoundSheetInput } from './tnoodle_pdf';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
-// `onlyAvailable` 模式下 selector 用这个 set 过滤;含 WCA + 非 WCA 两类。
-const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS]);
+// `onlyAvailable` 模式下 selector 用这个 set 过滤;含 WCA + twizzle 非 WCA + cstimer + shape-mod 四套。
+const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS]);
+const APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND];
+const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.id);
+const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
 const COUNT_PRESETS = [1, 5, 12, 25, 50, 100, 200, 1000];
 const COUNT_MAX = 1000;
 
@@ -66,6 +73,9 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
   /** 每个 event 的批次计时 — wall = 该 event 第一个 scramble 开始到最后一个完成的实际墙钟。 */
   const [timing, setTiming] = useState<Record<string, { wallMs: number; avgMs: number; firstMs: number; count: number }>>({});
   const [batchWallMs, setBatchWallMs] = useState<number | null>(null);
+  // 多事件同选时,sheet 区只展示一个 — 跟比赛模式一致。stored 记最后一次手动选,
+  // activeEventOf 在 events 变化时自动回退到 eventsOrdered[0]。
+  const [viewedEvent, setViewedEvent] = useState<string | null>(null);
 
   const reqIdRef = useRef(0);
   const [tick, setTick] = useState(0);
@@ -92,16 +102,19 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
       .sort((a, b) => parseInt(a.slice(3), 10) - parseInt(b.slice(3), 10)),
     [events],
   );
-  // 选中项目按 WCA 顺序固定展示 + 非 WCA + 高阶 NxN 拼在后面
+  // 选中项目按 WCA 顺序固定展示 + 非 WCA twizzle + cstimer + 高阶 NxN 拼在后面
   const eventsOrdered = useMemo(
     () => [
       ...TNOODLE_WCA_EVENTS.filter((id) => events.has(id)),
       ...TWIZZLE_NONWCA_EVENTS.filter((id) => events.has(id)),
+      ...CSTIMER_EVENT_ORDER.filter((id) => events.has(id)),
+      ...SHAPE_MOD_EVENT_ORDER.filter((id) => events.has(id)),
       ...customNxN,
     ],
     [events, customNxN],
   );
   const eventsKey = eventsOrdered.join(',');
+  const activeView = activeEventOf(viewedEvent, eventsOrdered);
 
   const toggleEvent = (id: string) => {
     setEvents((prev) => {
@@ -112,11 +125,10 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
     });
   };
 
-  // 高阶 NxN 输入:仅 8-50 有效(2-7 已在事件选择器里)。输入即作为额外 event 加入选择集。
-  const [highNxNInput, setHighNxNInput] = useState<string>('');
-  const addHighNxN = (raw: string) => {
-    const n = parseInt(raw, 10);
-    if (!isFinite(n) || n < 8 || n > 50) return;
+  // 「其他」展开态由 WcaEventSelector 回调;控制高阶 NxN 输入框的显隐。
+  // 已有 customNxN chip 时也保持显示(否则用户看不到已选的高阶项无法移除)。
+  const [otherExpanded, setOtherExpanded] = useState(false);
+  const addHighNxN = (n: number) => {
     const id = `nxn${n}`;
     setEvents((prev) => {
       if (prev.has(id)) return prev;
@@ -124,39 +136,78 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
       next.add(id);
       return next;
     });
-    setHighNxNInput('');
   };
 
-  // 生成模式: events/count/tick 任一变化 → 重新生成全部
+  // 生成模式:增量更新而非每次清空重生。
+  //   - count / tick 变化 → 全量重新生成
+  //   - 仅 event 增减 → 删掉移除的、为新增的现生(已有项目的打乱原样保留)
+  // lastCount/lastTick 用 ref 跨 effect 持久,跟 state 一同变更时不冲突。
+  const lastCountRef = useRef(count);
+  const lastTickRef = useRef(tick);
   useEffect(() => {
     if (subMode !== 'batch') return;
+    const fullRegen = count !== lastCountRef.current || tick !== lastTickRef.current;
+    lastCountRef.current = count;
+    lastTickRef.current = tick;
+
+    const existing = generated;
+    const toGenerate = fullRegen
+      ? eventsOrdered
+      : eventsOrdered.filter((ev) => !(ev in existing));
+    const toKeep = fullRegen
+      ? new Set<string>()
+      : new Set(eventsOrdered.filter((ev) => ev in existing));
+
+    // 移除已经不在 eventsOrdered 里的旧项目(用户点 ×) — 同步更新 generated/timing。
+    const removedKeys = Object.keys(existing).filter((ev) => !eventsOrdered.includes(ev));
+    if (toGenerate.length === 0 && removedKeys.length > 0) {
+      // 纯移除:同步更新 state 即可,不发起生成。
+      setGenerated((prev) => {
+        const next: Record<string, string[]> = {};
+        for (const ev of eventsOrdered) if (ev in prev) next[ev] = prev[ev];
+        return next;
+      });
+      setTiming((prev) => {
+        const next: typeof prev = {};
+        for (const ev of eventsOrdered) if (ev in prev) next[ev] = prev[ev];
+        return next;
+      });
+      return;
+    }
+    if (toGenerate.length === 0) return; // 啥也没变
+
     const myId = ++reqIdRef.current;
     setLoading(true);
-    setGenerated({});
-    setTiming({});
-    setBatchWallMs(null);
     setCopiedKey(null);
-    const total = eventsOrdered.length * count;
+    if (fullRegen) {
+      setGenerated({});
+      setTiming({});
+      setBatchWallMs(null);
+    }
+    const total = toGenerate.length * count;
     let done = 0;
     setGenProgress({ done: 0, total });
 
     const buckets: Record<string, string[]> = {};
-    for (const ev of eventsOrdered) buckets[ev] = [];
+    for (const ev of toGenerate) buckets[ev] = [];
 
-    // Per-event timing accumulators.
     const evWallStart: Record<string, number> = {};
     const evWallEnd: Record<string, number> = {};
     const evDurations: Record<string, number[]> = {};
-    for (const ev of eventsOrdered) evDurations[ev] = [];
+    for (const ev of toGenerate) evDurations[ev] = [];
 
     const batchStart = performance.now();
     const promises: Promise<void>[] = [];
-    for (const ev of eventsOrdered) {
+    for (const ev of toGenerate) {
       for (let i = 0; i < count; i++) {
         const t0 = performance.now();
         if (!(ev in evWallStart) || t0 < evWallStart[ev]) evWallStart[ev] = t0;
         promises.push(
-          tnoodleRandomScramble(ev).then((s) => {
+          (isCstimerEvent(ev)
+            ? cstimerScramble(ev)
+            : isShapeModEvent(ev)
+              ? tnoodleRandomScramble(shapeModSourceEvent(ev)!)
+              : tnoodleRandomScramble(ev)).then((s) => {
             const t1 = performance.now();
             evWallEnd[ev] = !(ev in evWallEnd) || t1 > evWallEnd[ev] ? t1 : evWallEnd[ev];
             evDurations[ev].push(t1 - t0);
@@ -172,16 +223,32 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
     (async () => {
       await Promise.all(promises);
       if (reqIdRef.current !== myId) return;
-      const nextTiming: Record<string, { wallMs: number; avgMs: number; firstMs: number; count: number }> = {};
-      for (const ev of eventsOrdered) {
+      const nextTimingDelta: Record<string, { wallMs: number; avgMs: number; firstMs: number; count: number }> = {};
+      for (const ev of toGenerate) {
         const durs = evDurations[ev];
         const wall = (evWallEnd[ev] ?? 0) - (evWallStart[ev] ?? 0);
         const avg = durs.length > 0 ? durs.reduce((a, b) => a + b, 0) / durs.length : 0;
         const first = durs[0] ?? 0;
-        nextTiming[ev] = { wallMs: wall, avgMs: avg, firstMs: first, count: durs.length };
+        nextTimingDelta[ev] = { wallMs: wall, avgMs: avg, firstMs: first, count: durs.length };
       }
-      setGenerated(buckets);
-      setTiming(nextTiming);
+      // 增量合并:保留 toKeep 里的旧数据,叠上新生成的 buckets,丢掉已删除的。
+      setGenerated((prev) => {
+        const next: Record<string, string[]> = {};
+        for (const ev of eventsOrdered) {
+          if (ev in buckets) next[ev] = buckets[ev];
+          else if (toKeep.has(ev)) next[ev] = prev[ev];
+        }
+        return next;
+      });
+      setTiming((prev) => {
+        const next: typeof prev = {};
+        for (const ev of eventsOrdered) {
+          if (ev in nextTimingDelta) next[ev] = nextTimingDelta[ev];
+          else if (toKeep.has(ev) && prev[ev]) next[ev] = prev[ev];
+        }
+        return next;
+      });
+      // 增量时 batchWallMs 反映的是本批 wall;全量时反映整批 wall。
       setBatchWallMs(performance.now() - batchStart);
       setLoading(false);
       setGenProgress(null);
@@ -275,39 +342,30 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         selectedEvents={events}
         onToggle={toggleEvent}
         onRemove={toggleEvent}
-        appendEvents={TWIZZLE_NONWCA_APPEND}
+        appendEvents={APPEND_EVENTS}
+        collapsibleAppend
+        onExpandedChange={setOtherExpanded}
         isZh={isZh}
         onlyAvailable
       />
 
-      {/* 配置条:高阶 NxN + 5x5 打乱模式 共一行,窄屏自动换行 */}
+      {/* 配置条:高阶 NxN(随「其他」展开) + 5x5 打乱模式(选了 5x5 才显) */}
       <div className="gen-tn-config-row">
-        <div className="gen-tn-config-group">
-          <label className="gen-tn-config-label">{t('高阶 NxN', 'High-order NxN')}</label>
-          <input
-            type="number"
-            min={8}
-            max={50}
-            value={highNxNInput}
-            placeholder="8-50"
-            onChange={(e) => setHighNxNInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
-            onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
-            className="gen-count-input"
-            style={{ width: '72px' }}
-          />
-          {customNxN.length > 0 && customNxN.map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => toggleEvent(id)}
-              className="gen-count-chip is-active"
-              title={t('点击移除', 'Click to remove')}
-            >
-              {eventDisplayName(id, isZh)}
-            </button>
-          ))}
-        </div>
+        {(otherExpanded || customNxN.length > 0) && (
+          <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
+            {customNxN.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => toggleEvent(id)}
+                className="gen-count-chip is-active"
+                title={t('点击移除', 'Click to remove')}
+              >
+                {eventDisplayName(id, isZh)}
+              </button>
+            ))}
+          </HighOrderNxNInput>
+        )}
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
       </div>
 
@@ -350,14 +408,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
                 )}
               </div>
             </div>
-          ) : (
-            <div className="gen-tn-paste-hint">
-              {t(
-                '在下方每个项目下粘贴打乱(每行一条),自动生成预览。可识别 "1. " / "1) " 编号前缀。',
-                'Paste scrambles (one per line) under each event below — preview is live. Leading "1. " / "1) " numbering is auto-stripped.',
-              )}
-            </div>
-          )}
+          ) : null /* paste 模式的提示语已合并到 textarea placeholder */}
         </div>
         <div className="gen-control-group gen-control-actions">
           {subMode === 'batch' && (
@@ -398,10 +449,22 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         </div>
       </div>
 
-      {/* text 模式:每个选中项目一块输入区 */}
-      {subMode === 'paste' && (
+      {/* 多项目时,view-selector 同比赛模式 — 切换当前展示哪个 sheet/paste 块 */}
+      {eventsOrdered.length >= 2 && activeView && (
+        <WcaEventSelector
+          availableEvents={new Set(eventsOrdered)}
+          selectedEvent={activeView}
+          onSelect={setViewedEvent}
+          appendEvents={APPEND_EVENTS}
+          onlyAvailable
+          isZh={isZh}
+        />
+      )}
+
+      {/* text 模式:每个选中项目一块输入区(只渲染 activeView 那块) */}
+      {subMode === 'paste' && activeView && (
         <div className="gen-tn-paste-blocks">
-          {eventsOrdered.map((ev) => (
+          {eventsOrdered.filter((ev) => ev === activeView).map((ev) => (
             <div key={ev} className="gen-tn-paste-block">
               <div className="gen-tn-paste-block-header">
                 <EventIcon event={ev} />
@@ -411,7 +474,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
                 className="gen-tn-paste-area"
                 value={pasteTexts[ev] ?? ''}
                 onChange={(e) => setPasteTexts((prev) => ({ ...prev, [ev]: e.target.value }))}
-                placeholder={t('每行一条打乱', 'One scramble per line')}
+                placeholder={t('每行一条打乱;开头 "1. " / "1) " 编号会自动去掉', 'One scramble per line; leading "1. " / "1) " numbering is auto-stripped')}
                 rows={5}
                 spellCheck={false}
               />
@@ -427,10 +490,10 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         </div>
       )}
 
-      {/* 每个项目一个 sheet — gen 模式显示生成结果,text 模式显示已粘贴打乱的预览 */}
-      {totalScrambles > 0 && (
+      {/* 当前 activeView 一个 sheet — gen 模式显示生成结果,text 模式显示已粘贴打乱的预览 */}
+      {totalScrambles > 0 && activeView && (
         <div className="gen-tn-sheets">
-          {eventsOrdered.map((ev) => {
+          {eventsOrdered.filter((ev) => ev === activeView).map((ev) => {
             const arr = scramblesByEvent[ev];
             if (arr.length === 0) return null;
             const hasPreview = eventHasScramblePreview(ev);

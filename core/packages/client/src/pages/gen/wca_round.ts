@@ -67,6 +67,14 @@ export const ALLOWED_FORMATS: Record<string, WcaFormat[]> = {
   'baby_fto':         ['a', '3', '2', '1'],
 };
 
+const DEFAULT_FORMATS: WcaFormat[] = ['a', '3', '2', '1'];
+
+/** Safe lookup — returns a generic cubical default for any unknown event id
+ *  (cstimer 31 个 / shape-mod 8 个 / 高阶 NxN 都没在静态表里)。 */
+export function allowedFormats(event: string): WcaFormat[] {
+  return ALLOWED_FORMATS[event] ?? DEFAULT_FORMATS;
+}
+
 /** Default extra-scramble count per round (tnoodle WCA convention). */
 export const DEFAULT_EXTRA_COUNT = 2;
 
@@ -107,7 +115,7 @@ export interface EventConfig {
 
 export function defaultRoundConfig(event: string): RoundConfig {
   return {
-    format: ALLOWED_FORMATS[event]?.[0] ?? '1',
+    format: allowedFormats(event)[0],
     scrambleSets: 1,
     copies: 1,
     locales: event === '333fm' ? [...DEFAULT_FMC_LOCALES] : undefined,

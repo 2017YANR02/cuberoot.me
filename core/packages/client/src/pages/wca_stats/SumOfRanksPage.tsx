@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from './Paginator';
 import { EventIcon } from '../../components/EventIcon';
 import { Flag } from '../../utils/flag';
@@ -92,7 +92,17 @@ export default function SumOfRanksPage() {
           <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
-        <h1>{isZh ? '全项目排行' : 'Sum of Ranks'}</h1>
+        <h1 className="wse-title-row">
+          {isZh ? '全项目排行' : 'Sum of Ranks'}
+          <Link
+            to="/wca/about/sum-of-ranks"
+            className="wse-title-help"
+            title={isZh ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={isZh ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={18} strokeWidth={1.75} />
+          </Link>
+        </h1>
         <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last)'}</p>
       </header>
 

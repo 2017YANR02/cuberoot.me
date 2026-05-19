@@ -147,3 +147,5 @@ export const WEBCODECS: StackTool = {
     { label: 'Chrome · WebCodecs intro', href: 'https://developer.chrome.com/docs/web-platform/best-practices/webcodecs' },
   ],
 };
+
+export default WEBCODECS;

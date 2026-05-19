@@ -143,3 +143,5 @@ export const VITE: StackTool = {
     { label: 'VoidZero', href: 'https://voidzero.dev' },
   ],
 };
+
+export default VITE;

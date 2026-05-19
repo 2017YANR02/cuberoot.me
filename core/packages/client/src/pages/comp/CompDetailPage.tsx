@@ -23,6 +23,9 @@ import { localizeCompName } from '../../utils/comp_localize';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { apiUrl } from '../../utils/api_base';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
+import { fetchCompInfo, fetchCompRounds, fetchCubingZh, type CompInfo, type CubingZhMeta } from '../../utils/comp_wcif';
+import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
+import { formatDateRangeIso, toIsoDate } from '../../utils/date_range';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { formatWcaResult } from '../../utils/wca_format_result';
@@ -226,6 +229,30 @@ export default function CompDetailPage() {
   // PR map: wcaid → PbByEvent. null = fetched, no data.
   const [pbVer, setPbVer] = useState(0); // bump to force re-render after prefetch
   const [openedCuber, setOpenedCuber] = useState<number | null>(null);
+  const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
+  const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
+  const [compRounds, setCompRounds] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    if (!slug) return;
+    let cancel = false;
+    fetchCompInfo(slug).then(info => { if (!cancel) setCompInfo(info); }).catch(() => {});
+    fetchCompRounds(slug).then(wcif => {
+      if (cancel) return;
+      const counts: Record<string, number> = {};
+      for (const [eid, formats] of Object.entries(wcif)) counts[eid] = formats.length;
+      if (Object.keys(counts).length > 0) setCompRounds(counts);
+    }).catch(() => {});
+    return () => { cancel = true; };
+  }, [slug]);
+  useEffect(() => {
+    if (!slug || !isZh || compInfo?.country_iso2?.toLowerCase() !== 'cn') {
+      setCubingZh(null);
+      return;
+    }
+    let cancel = false;
+    fetchCubingZh(slug).then(meta => { if (!cancel) setCubingZh(meta); }).catch(() => {});
+    return () => { cancel = true; };
+  }, [slug, isZh, compInfo]);
 
   // 当前选 round
   const eventParam = searchParams.get('event') || '';
@@ -241,14 +268,35 @@ export default function CompDetailPage() {
     setError(null);
     setProgress(null);
     return new Promise<void>((resolve) => {
+      // 任一来源先返回成绩(wca_db / SSE done)就 finish,其它路径自动作废.
+      let done = false;
+      let es: EventSource | null = null;
+      const finishWith = (j: CompData) => {
+        if (done) return;
+        done = true;
+        setData(j);
+        rememberRecent(j.slug, j.name);
+        setProgress(null);
+        if (es) { try { es.close(); } catch { /* ignore */ } }
+        resolve();
+      };
+      const failWith = (msg: string) => {
+        if (done) return;
+        done = true;
+        setError(msg);
+        setProgress(null);
+        if (es) { try { es.close(); } catch { /* ignore */ } }
+        resolve();
+      };
+
       // SSE 主路径 (cubing/wca_live 实时源用 progress 显示).
       const startSse = () => {
         const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
         const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
-        const es = new EventSource(url);
-        let finished = false;
+        es = new EventSource(url);
         const fallback = () => {
-          es.close();
+          if (done) return;
+          es?.close();
           fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`))
             .then(async r => {
               if (!r.ok) {
@@ -257,78 +305,55 @@ export default function CompDetailPage() {
               }
               return r.json();
             })
-            .then(j => { setData(j); rememberRecent(j.slug, j.name); })
-            .catch(e => setError((e as Error).message))
-            .finally(() => { setProgress(null); resolve(); });
+            .then(j => finishWith(j))
+            .catch(e => failWith((e as Error).message));
         };
         es.addEventListener('progress', (ev) => {
-          try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch {}
+          if (done) return;
+          try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch { /* ignore */ }
         });
         es.addEventListener('done', (ev) => {
-          finished = true;
           try {
             const j = JSON.parse((ev as MessageEvent).data) as CompData;
-            setData(j);
-            rememberRecent(j.slug, j.name);
+            finishWith(j);
           } catch (e) {
-            setError((e as Error).message);
+            failWith((e as Error).message);
           }
-          es.close();
-          setProgress(null);
-          resolve();
         });
         es.addEventListener('error', (ev) => {
+          if (done) return;
           try {
             const data = (ev as MessageEvent).data;
             if (data) {
               const j = JSON.parse(data);
               if (j.error) setError(j.error);
             }
-          } catch {}
-          if (finished) return;
-          if (!finished) fallback();
+          } catch { /* ignore */ }
+          fallback();
         });
       };
 
-      // wca_db fast-path: 静态 JSON 端点可命中浏览器 HTTP cache(/wca/comp/ 首页 hover prefetch),
-      // 命中即 instant 出货,无需走 SSE.失败再 fall through 到 SSE.
-      // 用户显式选 cubing/wca_live/wca 时 skip 此路径(那些源 server 抓数据慢,SSE progress 更有用).
+      // wca_db fast-path 和 SSE 并发竞速:
+      // - 过去比赛 wca_db 通常 100~200ms 出货(HTTP cache 命中即 instant),SSE 在 server 端也走 wca_db
+      //   同款 inflight dedup,client 一收到 wca_db 数据就关掉 SSE.
+      // - 未来比赛 wca_db 502/null,SSE 兜底 ~3s 完整跑.
+      // 不再串行等 1.2s RTT 才开 SSE — 那是 upcoming 比赛打开慢的主因.
+      // 用户显式选 cubing/wca_live/wca 时直接走 SSE,跳过 wca_db preflight.
       if (!sourceParam || sourceParam === 'wca_db') {
-        // URL 已选定 event+round 时,先并发发一发 ?only=event:round 轻量请求(~3KB)
-        // 大比赛全量 621KB / gzip 159KB,纯网络就要 1s+;trimmed 几十 ms 出货,焦点轮立刻渲染.
-        // fullArrived 防 race:full 比 trimmed 先回时不要被 trimmed 覆盖.
-        let fullArrived = false;
+        // URL 已选定 event+round 时,?only=event:round 轻量请求(~3KB)优先命中
         if (eventParam && roundParam) {
           const only = `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`;
           fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db&only=${only}`))
             .then(r => r.ok ? r.json() : null)
-            .then(j => {
-              if (j && !fullArrived) {
-                setData(j);
-                rememberRecent(j.slug, j.name);
-                setProgress(null);
-                resolve();
-              }
-            })
-            .catch(() => {});
+            .then(j => { if (j) finishWith(j); })
+            .catch(() => { /* ignore */ });
         }
         fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`))
           .then(r => r.ok ? r.json() : null)
-          .then(j => {
-            if (j) {
-              fullArrived = true;
-              setData(j);
-              rememberRecent(j.slug, j.name);
-              setProgress(null);
-              resolve();
-              return;
-            }
-            startSse();
-          })
-          .catch(() => startSse());
-      } else {
-        startSse();
+          .then(j => { if (j) finishWith(j); })
+          .catch(() => { /* ignore */ });
       }
+      startSse();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, sourceParam]);
@@ -502,18 +527,35 @@ export default function CompDetailPage() {
   }, [data, currentRound, filterParam]);
 
   // 后续 round 出现过的选手 = 晋级的人,在当前 round 表里浅绿色高亮
+  // 决赛(最后一轮)没有"后续"——退化为高亮前三名(同绿色)
   const advancers = useMemo(() => {
     if (!data || !currentRound) return new Set<number>();
     const rs = currentRound.ev.rs;
     const idx = rs.findIndex(r => r.i === currentRound.rd.i);
-    if (idx < 0 || idx >= rs.length - 1) return new Set<number>();
+    if (idx < 0) return new Set<number>();
     const set = new Set<number>();
+    if (idx >= rs.length - 1) {
+      // filteredResults 已按 WCA 排名排好;取前 3 + 任何与第 3 名同 (avg, best) 的并列
+      const f = currentRound.rd.f;
+      const byAvg = f === 'a' || f === 'm' || f === '';
+      const keyOf = (r: LiveResult) => byAvg ? `${r.a}|${r.b}` : `${r.b}`;
+      const valid = filteredResults.filter(r => r.b > 0);
+      if (valid.length === 0) return set;
+      const limit = Math.min(3, valid.length);
+      const thirdKey = keyOf(valid[limit - 1]);
+      for (let i = 0; i < valid.length; i++) {
+        if (i < limit) set.add(valid[i].n);
+        else if (keyOf(valid[i]) === thirdKey) set.add(valid[i].n);
+        else break;
+      }
+      return set;
+    }
     for (let i = idx + 1; i < rs.length; i++) {
       const key = roundKey(currentRound.ev.i, rs[i].i);
       for (const r of data.resultsByRound[key] || []) set.add(r.n);
     }
     return set;
-  }, [data, currentRound]);
+  }, [data, currentRound, filteredResults]);
 
   // ── prefetch PRs for current round ────────────────────────────────────
   // wca_db 源 server 已经给了 LiveResult.pS / pA 历史 PR 标志,classifyPr 优先用 server flag.
@@ -742,6 +784,8 @@ export default function CompDetailPage() {
           </div>
         </header>
 
+        {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} rounds={compRounds} />}
+
         <div className="comp-view-tabs">
           <button
             type="button"
@@ -821,6 +865,84 @@ export default function CompDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+// ─── CompInfoPanel: 比赛元数据(日期/城市/地址/详情/网站) ─────────────────
+
+function CompInfoPanel({
+  info, isZh, cubingZh, rounds,
+}: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null; rounds: Record<string, number> | null }) {
+  const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
+  const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
+  const cityStr = [info.city, country].filter(Boolean).join(isZh ? '、' : ', ');
+  const rows: { label: string; value: React.ReactNode }[] = [];
+  if (dateStr) rows.push({ label: isZh ? '日期' : 'Date', value: dateStr });
+  const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
+  const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
+  if (regOpenIso && regCloseIso) {
+    rows.push({ label: isZh ? '报名时间' : 'Registration', value: formatDateRangeIso(regOpenIso, regCloseIso) });
+  }
+  if (cubingZh?.withdrawDeadline) {
+    rows.push({ label: '退赛截止', value: cubingZh.withdrawDeadline });
+  }
+  if (cubingZh?.reopenAt) {
+    rows.push({ label: '重开报名', value: cubingZh.reopenAt });
+  }
+  if (info.event_change_deadline_date) {
+    const d = toIsoDate(new Date(info.event_change_deadline_date));
+    rows.push({ label: isZh ? '改项目截止' : 'Event change deadline', value: d });
+  }
+  if (info.waiting_list_deadline_date) {
+    const d = toIsoDate(new Date(info.waiting_list_deadline_date));
+    rows.push({ label: isZh ? '候补截止' : 'Waiting list deadline', value: d });
+  }
+  if (cityStr) rows.push({ label: isZh ? '城市' : 'City', value: cityStr });
+  if (cubingZh?.location) {
+    rows.push({ label: '地点', value: cubingZh.location });
+  } else {
+    if (info.venue_address) rows.push({ label: isZh ? '地址' : 'Address', value: info.venue_address });
+    if (info.venue_details) rows.push({ label: isZh ? '详情' : 'Details', value: info.venue_details });
+  }
+  if (info.website) {
+    rows.push({
+      label: isZh ? '网站' : 'Website',
+      value: (
+        <a href={info.website} target="_blank" rel="noopener noreferrer" className="comp-info-link">
+          {info.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+          <ExternalLink size={12} />
+        </a>
+      ),
+    });
+  }
+  if (rounds && Object.keys(rounds).length > 0) {
+    const orderSet = new Set<string>(WCA_EVENT_ORDER);
+    const order: string[] = [...WCA_EVENT_ORDER, ...Object.keys(rounds).filter(e => !orderSet.has(e))];
+    const ordered = order.filter(e => rounds[e] != null);
+    rows.push({
+      label: isZh ? '项目' : 'Events',
+      value: (
+        <span className="comp-info-events">
+          {ordered.map(eid => (
+            <span key={eid} className="comp-info-event">
+              <EventIcon event={eid} className="comp-info-event-icon" title={eventDisplayName(eid, isZh)} />
+              <span className="comp-info-event-rounds">{rounds[eid]}</span>
+            </span>
+          ))}
+        </span>
+      ),
+    });
+  }
+  if (rows.length === 0) return null;
+  return (
+    <dl className="comp-info-panel">
+      {rows.map(r => (
+        <div key={r.label} className="comp-info-row">
+          <dt className="comp-info-label">{r.label}</dt>
+          <dd className="comp-info-value">{r.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

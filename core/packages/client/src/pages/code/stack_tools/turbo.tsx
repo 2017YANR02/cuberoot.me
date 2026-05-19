@@ -146,3 +146,5 @@ export const TURBO: StackTool = {
     { label: 'Vercel acquires Turborepo (2021-12)', href: 'https://vercel.com/blog/vercel-acquires-turborepo' },
   ],
 };
+
+export default TURBO;

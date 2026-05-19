@@ -142,3 +142,5 @@ export const HONO: StackTool = {
     { label: 'Yusuke Wada', href: 'https://github.com/yusukebe' },
   ],
 };
+
+export default HONO;

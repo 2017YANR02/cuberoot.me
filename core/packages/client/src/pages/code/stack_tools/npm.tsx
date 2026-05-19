@@ -146,3 +146,5 @@ export const NPM: StackTool = {
     { label: 'left-pad incident write-up', href: 'https://www.theregister.com/2016/03/23/npm_left_pad_chaos/' },
   ],
 };
+
+export default NPM;

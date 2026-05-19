@@ -149,3 +149,5 @@ export const CLAUDE: StackTool = {
     { label: 'Anthropic SDK · npm', href: 'https://www.npmjs.com/package/@anthropic-ai/sdk' },
   ],
 };
+
+export default CLAUDE;

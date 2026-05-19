@@ -355,7 +355,10 @@ function wcaIdToCubingSlug(wcaId: string): string {
 
 const WCA_API_BASE = 'https://www.worldcubeassociation.org/api/v0';
 
-interface WcaCompMeta { id: string; name: string; event_ids?: string[]; }
+interface WcifPublic {
+  name: string;
+  events?: { id: string; rounds?: { id: string; format: string }[] }[];
+}
 interface WcaResultRow {
   id: number; round_id: number; pos: number;
   best: number; average: number;
@@ -369,6 +372,16 @@ interface WcaResultRow {
 const ROUND_ORDER: Record<string, number> = {
   d: 0, '1': 1, e: 2, '2': 3, g: 4, '3': 5, c: 6, b: 7, f: 8, h: 9,
 };
+
+/** WCIF round 顺序 index → WCA 规范 round_type_id (非 combined 形式).
+ *  WCA 约定:N=1 → ['f'];N=2 → ['1','f'];N=3 → ['1','3','f'](Semi);N=4 → ['1','2','3','f']. */
+function canonicalRoundId(idx: number, total: number): string {
+  if (idx === total - 1) return 'f';
+  if (total >= 3 && idx === total - 2) return '3';
+  if (total >= 4 && idx === total - 3) return '2';
+  if (idx === 0) return '1';
+  return String(idx + 1);
+}
 const ROUND_NAME: Record<string, string> = {
   '1': 'First round',
   '2': 'Second round',
@@ -384,13 +397,15 @@ const ROUND_NAME: Record<string, string> = {
 
 async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
   onProgress?.({ step: 'wca.fetch', done: 0, total: 2 });
-  const [metaRes, resultsRes] = await Promise.all([
-    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`),
+  // WCIF + results 并发.WCIF (~0.9s) 替代旧的 `/competitions/<id>` meta (~2.1s),省 ~1.2s 冷启.
+  // WCIF 提供准确的 events 结构(含每项真实轮次数 + format),meta 只给 event_ids 列表.
+  const [wcifRes, resultsRes] = await Promise.all([
+    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}/wcif/public`),
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}/results`),
   ]);
-  if (!metaRes.ok) throw new Error(`WCA meta HTTP ${metaRes.status}`);
+  if (!wcifRes.ok) throw new Error(`WCA WCIF HTTP ${wcifRes.status}`);
   if (!resultsRes.ok) throw new Error(`WCA results HTTP ${resultsRes.status}`);
-  const meta = await metaRes.json() as WcaCompMeta;
+  const wcif = await wcifRes.json() as WcifPublic;
   const results = await resultsRes.json() as WcaResultRow[];
   onProgress?.({ step: 'wca.fetch', done: 2, total: 2 });
   onProgress?.({ step: 'wca.transform', done: 0, total: 1 });
@@ -411,43 +426,54 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
     };
   }
 
-  // Events + rounds (从 results 反推)
+  // 1) Events 骨架来自 WCIF(announce-only 也有完整轮次结构,UI selector 立刻可显示)
   const eventMap = new Map<string, EventMeta>();
-  // Announcement-only 比赛 results=[] 也要给 events 列表 — UI 的 event selector 才能显示.
-  // 从 meta.event_ids 兜底,每项一个空 round(s=0/rn=0).
-  if (results.length === 0 && (meta.event_ids ?? []).length > 0) {
-    for (const eid of meta.event_ids!) {
-      eventMap.set(eid, {
-        i: eid, name: eid,
-        rs: [{ i: 'f', e: eid, f: 'a', co: 0, tl: 0, n: 0, s: 0, rn: 0, tt: 0, name: 'Final' }],
-      });
-    }
+  const wcifEventOrder: string[] = [];
+  for (const ev of wcif.events ?? []) {
+    wcifEventOrder.push(ev.id);
+    const total = ev.rounds?.length ?? 1;
+    eventMap.set(ev.id, {
+      i: ev.id, name: ev.id,
+      rs: (ev.rounds ?? []).map((r, idx) => {
+        const id = canonicalRoundId(idx, total);
+        return {
+          i: id, e: ev.id, f: r.format,
+          co: 0, tl: 0, n: 0, s: 0, rn: 0, tt: 0,
+          name: ROUND_NAME[id] || id,
+        };
+      }),
+    });
   }
-  for (const r of results) {
-    let ev = eventMap.get(r.event_id);
-    if (!ev) {
-      ev = { i: r.event_id, name: r.event_id, rs: [] };
-      eventMap.set(r.event_id, ev);
+
+  // 2) 有 results 时(过去比赛 / 进行中),用 results 重建 rounds — 处理 combined cutoff (d/e/g/c) 等
+  //    WCIF 给的是 SCHEDULED 结构,results 反映 ACTUAL,后者优先.
+  if (results.length > 0) {
+    for (const ev of eventMap.values()) ev.rs = [];
+    for (const r of results) {
+      let ev = eventMap.get(r.event_id);
+      if (!ev) {
+        ev = { i: r.event_id, name: r.event_id, rs: [] };
+        eventMap.set(r.event_id, ev);
+      }
+      let rd = ev.rs.find(x => x.i === r.round_type_id);
+      if (!rd) {
+        rd = {
+          i: r.round_type_id, e: r.event_id, f: r.format_id,
+          co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
+          name: ROUND_NAME[r.round_type_id] || r.round_type_id,
+        };
+        ev.rs.push(rd);
+      }
+      rd.rn += 1;
+      rd.tt = rd.rn;
     }
-    let rd = ev.rs.find(x => x.i === r.round_type_id);
-    if (!rd) {
-      rd = {
-        i: r.round_type_id, e: r.event_id, f: r.format_id,
-        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
-        name: ROUND_NAME[r.round_type_id] || r.round_type_id,
-      };
-      ev.rs.push(rd);
-    }
-    rd.rn += 1;
-    rd.tt = rd.rn;
   }
   for (const ev of eventMap.values()) {
     ev.rs.sort((a, b) => (ROUND_ORDER[a.i] ?? 99) - (ROUND_ORDER[b.i] ?? 99));
   }
-  // Order events as listed in meta.event_ids (官方顺序),其余 fallback 按 results 出现序
-  const evIds = meta.event_ids ?? [...eventMap.keys()];
+  // Event 顺序:WCIF events 即官方顺序;results 反推的额外 event(理论上不会发生)追加在后
   const events: EventMeta[] = [];
-  for (const id of evIds) {
+  for (const id of wcifEventOrder) {
     const ev = eventMap.get(id);
     if (ev) events.push(ev);
   }
@@ -475,7 +501,7 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
     slug: wcaId,
     source: 'wca',
     compId: 0,
-    name: meta.name,
+    name: wcif.name,
     type: 'WCA',
     events,
     users,
@@ -986,6 +1012,26 @@ function defaultSource(available: SourceId[]): SourceId {
   return available[0];
 }
 
+/** WCA announce-only (results=[]) 比赛用 cubing.com 报名表填 users + 拿 wca_persons 补全名. */
+async function enrichUsersWithChineseNames(competitorUsers: Record<string, User>): Promise<Record<string, User>> {
+  const wcaIds = Object.values(competitorUsers).map(u => u.wcaid).filter(Boolean);
+  if (wcaIds.length === 0) return competitorUsers;
+  try {
+    const personRows = await query<{ wca_id: string; name: string }>(
+      `SELECT wca_id, name FROM wca_persons WHERE wca_id = ANY(?::text[])`,
+      [wcaIds],
+    );
+    const nameMap = new Map(personRows.map(r => [r.wca_id, r.name]));
+    for (const u of Object.values(competitorUsers)) {
+      const full = u.wcaid ? nameMap.get(u.wcaid) : undefined;
+      if (full) u.name = full;
+    }
+  } catch (e) {
+    console.warn(`[cubing-live] wca_persons name lookup failed:`, (e as Error).message);
+  }
+  return competitorUsers;
+}
+
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   // wca_db fast-path: 命中即独占,不发外部 probe.单次 PG 查直接出全部数据.
   if (choice === 'auto' || choice === 'wca_db') {
@@ -1017,6 +1063,50 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     const result = await pending;
     if (result) return result;
     if (choice === 'wca_db') throw new Error(`No data on wca_db for ${wcaId}`);
+  }
+
+  // PG-known WCA shortcut: 当 wca_competitions 已收录这场 (announce → 周更 dump 覆盖),
+  // 直接跑 wca + 并行 cubing.com 报名表抓取,skip probe (~2s) + 串行 scrape (~1.2s).
+  // 缓存 / inflight dedup 跟原路径一致.过去比赛走 wca_db fast-path 不到这里.
+  // wca_competitions 没收录的(刚宣布、dump 还没更新) fall through 到 probe 兜底.
+  if (choice === 'auto') {
+    try {
+      const known = await query<{ id: string }>(
+        `SELECT id FROM wca_competitions WHERE id = ? LIMIT 1`,
+        [wcaId],
+      );
+      if (known.length > 0) {
+        const fastKey = `${wcaId}:wca`;
+        const cachedFast = cache.get(fastKey);
+        if (cachedFast && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
+          return { ...cachedFast, availableSources: ['wca'] };
+        }
+        const pendingFast = inflight.get(fastKey);
+        if (pendingFast) return pendingFast.then(d => ({ ...d, availableSources: ['wca'] }));
+
+        const pFast = (async () => {
+          const cubingSlug = wcaIdToCubingSlug(wcaId);
+          const [data, scraped] = await Promise.all([
+            loadFromWca(wcaId, onProgress),
+            scrapeCompetitors(cubingSlug).catch(() => ({} as Record<string, User>)),
+          ]);
+          let finalData = data;
+          if (Object.keys(data.users).length === 0 && Object.keys(scraped).length > 0) {
+            await enrichUsersWithChineseNames(scraped);
+            finalData = { ...data, users: scraped, cubingSlug };
+          }
+          finalData.availableSources = ['wca'];
+          cache.set(fastKey, finalData);
+          return finalData;
+        })().finally(() => { inflight.delete(fastKey); });
+
+        inflight.set(fastKey, pFast);
+        return pFast.then(d => ({ ...d, availableSources: ['wca'] }));
+      }
+    } catch (e) {
+      console.warn(`[cubing-live] PG known check failed for ${wcaId}:`, (e as Error).message);
+      // fall through to probe-based path
+    }
   }
 
   const probe = await probeSources(wcaId);
@@ -1061,22 +1151,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
       try {
         const competitorUsers = await scrapeCompetitors(cubingSlug, onProgress);
         if (Object.keys(competitorUsers).length > 0) {
-          const wcaIds = Object.values(competitorUsers).map(u => u.wcaid).filter(Boolean);
-          if (wcaIds.length > 0) {
-            try {
-              const personRows = await query<{ wca_id: string; name: string }>(
-                `SELECT wca_id, name FROM wca_persons WHERE wca_id = ANY(?::text[])`,
-                [wcaIds],
-              );
-              const nameMap = new Map(personRows.map(r => [r.wca_id, r.name]));
-              for (const u of Object.values(competitorUsers)) {
-                const full = u.wcaid ? nameMap.get(u.wcaid) : undefined;
-                if (full) u.name = full;
-              }
-            } catch (e) {
-              console.warn(`[cubing-live] wca_persons name lookup failed:`, (e as Error).message);
-            }
-          }
+          await enrichUsersWithChineseNames(competitorUsers);
           data = { ...data, users: competitorUsers, cubingSlug };
         }
       } catch (e) {
@@ -1147,6 +1222,69 @@ function trimToOnlyRound(data: CompData, eventId: string, roundId: string): Comp
     personalRecords: trimmedPR,
   };
 }
+
+// ─── /v1/cubing-zh: 中国大陆比赛 Chinese 元数据(scrape cubing.com) ───────
+// cubing.com 是国内魔方赛事网,出 venue/address/details 合并的中文地点 + 退赛/重开报名时间.
+// 仅查 wca_competitions.country_id='China' 时才出击;其它国家直接 null.
+interface CubingZhMeta {
+  location: string | null;
+  withdrawDeadline: string | null; // "YYYY-MM-DD HH:MM:SS"
+  reopenAt: string | null;
+}
+const cubingZhCache = new Map<string, { at: number; meta: CubingZhMeta }>();
+const CUBING_ZH_TTL_MS = 7 * 24 * 60 * 60_000;
+const EMPTY_ZH_META: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null };
+
+function extractDdLeadingText(html: string, label: string): string | null {
+  const re = new RegExp(`<dt>\\s*${label}\\s*<\\/dt>\\s*<dd>([\\s\\S]*?)<\\/dd>`);
+  const m = html.match(re);
+  if (!m) return null;
+  // dd 里可能套 <div class="text-info">...</div>(暂停报名说明),只取首个 tag 之前的纯文本.
+  const lead = m[1].split('<')[0].replace(/\s+/g, ' ').trim();
+  return lead || null;
+}
+
+cubingLiveRoutes.get('/cubing-zh/:wcaId', async (c) => {
+  const wcaId = c.req.param('wcaId');
+  if (!/^[A-Za-z0-9]{1,80}$/.test(wcaId)) return c.json({ error: 'invalid id' }, 400);
+  const cached = cubingZhCache.get(wcaId);
+  if (cached && Date.now() - cached.at < CUBING_ZH_TTL_MS) {
+    c.header('Cache-Control', 'public, max-age=604800');
+    return c.json(cached.meta);
+  }
+  try {
+    const rows = await query<{ name: string; country_id: string }>(
+      `SELECT name, country_id FROM wca_competitions WHERE id = ?`,
+      [wcaId],
+    );
+    if (rows.length === 0 || rows[0].country_id !== 'China') {
+      cubingZhCache.set(wcaId, { at: Date.now(), meta: EMPTY_ZH_META });
+      c.header('Cache-Control', 'public, max-age=604800');
+      return c.json(EMPTY_ZH_META);
+    }
+    const slug = rows[0].name.trim().replace(/['`‘’]/g, '').replace(/\s+/g, '-');
+    const res = await fetch(`${CUBING_BASE}/competition/${encodeURIComponent(slug)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+      },
+    });
+    const meta: CubingZhMeta = { ...EMPTY_ZH_META };
+    if (res.ok) {
+      const html = await res.text();
+      meta.location = extractDdLeadingText(html, '地点');
+      meta.withdrawDeadline = extractDdLeadingText(html, '退赛截止时间');
+      meta.reopenAt = extractDdLeadingText(html, '重开报名时间');
+    }
+    cubingZhCache.set(wcaId, { at: Date.now(), meta });
+    c.header('Cache-Control', 'public, max-age=604800');
+    return c.json(meta);
+  } catch (e) {
+    console.warn(`[cubing-zh] ${wcaId}:`, (e as Error).message);
+    return c.json(EMPTY_ZH_META);
+  }
+});
 
 cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
   const raw = c.req.param('slug');

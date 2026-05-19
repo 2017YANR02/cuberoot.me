@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import PillToggle from '../../components/PillToggle/PillToggle';
 import { RecordBadge } from '../../components/RecordBadge/RecordBadge';
@@ -83,7 +83,17 @@ export default function GrandSlamPage() {
           </Link>
           <LangToggle />
         </div>
-        <h1>{isZh ? '大满贯' : 'Grand Slam'}</h1>
+        <h1 className="wse-title-row">
+          {isZh ? '大满贯' : 'Grand Slam'}
+          <Link
+            to="/wca/about/grand-slam"
+            className="wse-title-help"
+            title={isZh ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={isZh ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={18} strokeWidth={1.75} />
+          </Link>
+        </h1>
         <p className="wse-subtitle">
           {isZh
             ? '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。'

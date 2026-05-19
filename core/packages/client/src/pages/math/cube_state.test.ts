@@ -107,9 +107,9 @@ describe('Thistlethwaite stages', () => {
     expect(thistlethwaiteStage(s)).toBe(3);
   });
 
-  it("after R U R' U' (sexy move), not even in G1 (F-axis EO flipped)", () => {
+  it("after R U R' U' (sexy move), in G1 but not G2 (EO preserved, CO broken)", () => {
     const s = applyAlg(identity(), "R U R' U'");
-    expect(thistlethwaiteStage(s)).toBe(0);
+    expect(thistlethwaiteStage(s)).toBe(1);
   });
 });
 

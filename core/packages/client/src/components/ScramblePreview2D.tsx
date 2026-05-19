@@ -18,6 +18,16 @@ import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '../pages/gen/mega_sv
 import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from '../pages/gen/pyraminx_svg';
 import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from '../pages/gen/skewb_svg';
 import { renderUnfoldedSvgForEvent, eventToCubeSize } from '../pages/gen/cube_unfolded_svg';
+import { isShapeModEvent, shapeModSourceEvent } from '../utils/shapeModScramble';
+
+// Shape mods (mirror_333 / fisher_333 / etc) share scramble + underlying cube
+// state with their WCA source event — for preview purposes treat them as the
+// source. (Visual sticker-shape differences are out of scope; we render the
+// resulting cube state in WCA colors so users can verify the scramble.)
+function previewSource(event: string): string {
+  if (isShapeModEvent(event)) return shapeModSourceEvent(event) ?? event;
+  return event;
+}
 
 const EVENT_TO_PUZZLE: Record<string, string> = {
   '222': '2x2x2',
@@ -41,8 +51,9 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
 };
 
 export function eventHasScramblePreview(event: string): boolean {
-  if (event in EVENT_TO_PUZZLE) return true;
-  return eventToCubeSize(event) !== null;  // covers `nxnN` synthetic ids
+  const eff = previewSource(event);
+  if (eff in EVENT_TO_PUZZLE) return true;
+  return eventToCubeSize(eff) !== null;  // covers `nxnN` synthetic ids
 }
 
 interface Props {
@@ -67,30 +78,31 @@ function normalizeAlg(puzzle: string, alg: string): string {
 
 export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1Colors, megaColors }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const puzzle = EVENT_TO_PUZZLE[event];
+  const eff = previewSource(event);
+  const puzzle = EVENT_TO_PUZZLE[eff];
 
   // tnoodle-port branches — synchronous custom SVGs. Returns early.
   const customSvg = useMemo(() => {
     try {
-      if (event === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
-      if (event === 'sq1')   return renderSq1ScrambleSvg(scramble,   sq1Colors   ?? DEFAULT_SQ1_COLORS);
-      if (event === 'minx')  return renderMegaScrambleSvg(scramble,  megaColors  ?? DEFAULT_MEGA_COLORS);
-      if (event === 'pyram') return renderPyraScrambleSvg(scramble,  PYRA_DEFAULT_COLORS);
-      if (event === 'skewb') return renderSkewbScrambleSvg(scramble, SKEWB_DEFAULT_COLORS);
-      if (eventToCubeSize(event)) return renderUnfoldedSvgForEvent(event, scramble);
+      if (eff === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
+      if (eff === 'sq1')   return renderSq1ScrambleSvg(scramble,   sq1Colors   ?? DEFAULT_SQ1_COLORS);
+      if (eff === 'minx')  return renderMegaScrambleSvg(scramble,  megaColors  ?? DEFAULT_MEGA_COLORS);
+      if (eff === 'pyram') return renderPyraScrambleSvg(scramble,  PYRA_DEFAULT_COLORS);
+      if (eff === 'skewb') return renderSkewbScrambleSvg(scramble, SKEWB_DEFAULT_COLORS);
+      if (eventToCubeSize(eff)) return renderUnfoldedSvgForEvent(eff, scramble);
       return null;
     } catch (err) {
-      console.warn(`[ScramblePreview2D] ${event} render failed`, err);
+      console.warn(`[ScramblePreview2D] ${event} (eff=${eff}) render failed`, err);
       return null;
     }
-  }, [event, scramble, clockColors, sq1Colors, megaColors]);
+  }, [event, eff, scramble, clockColors, sq1Colors, megaColors]);
 
   useEffect(() => {
     // All WCA events now render via custom tnoodle-port SVGs above.
     // The TwistyPlayer effect below is dead code retained as a fallback
     // for any future puzzle that doesn't have a tnoodle port yet.
     if (customSvg) return;
-    if (event === 'clock' || event === 'sq1' || event === 'minx') return; // handled above
+    if (eff === 'clock' || eff === 'sq1' || eff === 'minx') return; // handled above
     const host = hostRef.current;
     if (!host || !puzzle) return;
     let cancelled = false;

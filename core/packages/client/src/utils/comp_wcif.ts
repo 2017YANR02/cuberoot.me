@@ -31,41 +31,121 @@ function cacheSet(id: string, v: Record<string, RoundFormat[]>): void {
 
 const inflight = new Map<string, Promise<Record<string, RoundFormat[]>>>();
 
-const NAME_URL = (id: string) =>
+const INFO_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}`;
-const NAME_CACHE_PREFIX = 'wca-comp-name-v1-';
-const nameInflight = new Map<string, Promise<string | null>>();
+const INFO_CACHE_PREFIX = 'wca-comp-info-v3-';
+const infoInflight = new Map<string, Promise<CompInfo | null>>();
 
-/** 拿比赛人类可读名(如 "Odd Day in Hong Kong 2026")。失败返回 null。24h localStorage 缓存。 */
-export async function fetchCompName(compId: string): Promise<string | null> {
+export interface CompInfo {
+  name: string;
+  city: string;
+  country_iso2: string;
+  start_date: string;
+  end_date: string;
+  venue_address: string;
+  venue_details: string;
+  website: string;
+  registration_open: string;
+  registration_close: string;
+  event_change_deadline_date: string;
+  waiting_list_deadline_date: string;
+}
+
+/** 拿比赛元数据(名/城市/日期/地址/详情/官网)。失败返回 null。24h localStorage 缓存。 */
+export async function fetchCompInfo(compId: string): Promise<CompInfo | null> {
   if (!compId) return null;
   try {
-    const raw = localStorage.getItem(NAME_CACHE_PREFIX + compId);
+    const raw = localStorage.getItem(INFO_CACHE_PREFIX + compId);
     if (raw) {
-      const { t, v } = JSON.parse(raw) as { t: number; v: string };
+      const { t, v } = JSON.parse(raw) as { t: number; v: CompInfo };
       if (Date.now() - t <= CACHE_TTL_MS) return v;
     }
   } catch { /* ignore */ }
-  const existing = nameInflight.get(compId);
+  const existing = infoInflight.get(compId);
   if (existing) return existing;
   const p = (async () => {
     try {
-      const res = await fetch(NAME_URL(compId));
+      const res = await fetch(INFO_URL(compId));
       if (!res.ok) return null;
-      const data = await res.json() as { name?: string };
-      const name = typeof data.name === 'string' ? data.name : null;
-      if (name) {
-        try { localStorage.setItem(NAME_CACHE_PREFIX + compId, JSON.stringify({ t: Date.now(), v: name })); }
-        catch { /* quota / private mode */ }
-      }
-      return name;
+      const d = await res.json() as Partial<Record<keyof CompInfo, unknown>>;
+      const str = (k: keyof CompInfo) => typeof d[k] === 'string' ? d[k] as string : '';
+      if (!str('name')) return null;
+      const info: CompInfo = {
+        name: str('name'),
+        city: str('city'),
+        country_iso2: str('country_iso2'),
+        start_date: str('start_date'),
+        end_date: str('end_date'),
+        venue_address: str('venue_address'),
+        venue_details: str('venue_details'),
+        website: str('website'),
+        registration_open: str('registration_open'),
+        registration_close: str('registration_close'),
+        event_change_deadline_date: str('event_change_deadline_date'),
+        waiting_list_deadline_date: str('waiting_list_deadline_date'),
+      };
+      try { localStorage.setItem(INFO_CACHE_PREFIX + compId, JSON.stringify({ t: Date.now(), v: info })); }
+      catch { /* quota / private mode */ }
+      return info;
     } catch {
       return null;
     } finally {
-      nameInflight.delete(compId);
+      infoInflight.delete(compId);
     }
   })();
-  nameInflight.set(compId, p);
+  infoInflight.set(compId, p);
+  return p;
+}
+
+/** 兼容旧调用:拿比赛名。失败返回 null。 */
+export async function fetchCompName(compId: string): Promise<string | null> {
+  const info = await fetchCompInfo(compId);
+  return info?.name ?? null;
+}
+
+// ─── 中国大陆比赛 cubing.com 中文元数据 ─────────────────────────────────
+// server 抓 cubing.com:venue 合并的中文地点 + 退赛/重开报名时间.非国内 comp 全 null.
+export interface CubingZhMeta {
+  location: string | null;
+  withdrawDeadline: string | null;
+  reopenAt: string | null;
+}
+const EMPTY_ZH: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null };
+const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v1-';
+const zhInflight = new Map<string, Promise<CubingZhMeta>>();
+
+export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
+  if (!wcaId) return EMPTY_ZH;
+  try {
+    const raw = localStorage.getItem(ZH_CACHE_PREFIX + wcaId);
+    if (raw) {
+      const { t, v } = JSON.parse(raw) as { t: number; v: CubingZhMeta };
+      if (Date.now() - t <= 7 * CACHE_TTL_MS) return v;
+    }
+  } catch { /* ignore */ }
+  const existing = zhInflight.get(wcaId);
+  if (existing) return existing;
+  const p = (async () => {
+    try {
+      const { apiUrl } = await import('./api_base');
+      const res = await fetch(apiUrl(`/v1/cubing-zh/${encodeURIComponent(wcaId)}`));
+      if (!res.ok) return EMPTY_ZH;
+      const data = await res.json() as Partial<CubingZhMeta>;
+      const meta: CubingZhMeta = {
+        location: typeof data.location === 'string' && data.location ? data.location : null,
+        withdrawDeadline: typeof data.withdrawDeadline === 'string' && data.withdrawDeadline ? data.withdrawDeadline : null,
+        reopenAt: typeof data.reopenAt === 'string' && data.reopenAt ? data.reopenAt : null,
+      };
+      try { localStorage.setItem(ZH_CACHE_PREFIX + wcaId, JSON.stringify({ t: Date.now(), v: meta })); }
+      catch { /* ignore */ }
+      return meta;
+    } catch {
+      return EMPTY_ZH;
+    } finally {
+      zhInflight.delete(wcaId);
+    }
+  })();
+  zhInflight.set(wcaId, p);
   return p;
 }
 

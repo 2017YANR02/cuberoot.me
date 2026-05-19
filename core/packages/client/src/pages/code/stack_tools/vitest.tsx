@@ -145,3 +145,5 @@ export const VITEST: StackTool = {
     { label: 'Vitest 3.0 announcement', href: 'https://vitest.dev/blog/vitest-3' },
   ],
 };
+
+export default VITEST;

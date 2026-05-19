@@ -149,3 +149,5 @@ export const GITHUB_ACTIONS: StackTool = {
     { label: 'Universe 2018 announcement', href: 'https://github.blog/2018-10-16-future-of-software/' },
   ],
 };
+
+export default GITHUB_ACTIONS;

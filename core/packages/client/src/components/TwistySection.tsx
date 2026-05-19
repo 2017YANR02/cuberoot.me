@@ -1,5 +1,67 @@
 import { useState, useRef, useEffect, type MutableRefObject } from 'react';
+import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import './TwistySection.css';
+
+// Pyraminx 4 vertex 方向。screenSlot mode:字母 (U/L/R/B) 不绑定具体 vertex,
+// 改成按屏幕方位自动分配 — visible vertex 屏幕 y 最小拿 U,剩下按 x asc 拿 L/R,
+// invisible(背面)拿 B。用户拖动让 cube 翻面时,字母无缝跟着屏幕方位走。
+// vertex 几何:regular tetrahedron 单位 vertex,1 个 +Y 顶 + 3 个 y=-1/3 azimuth 60/180/300。
+const PYRA_FACES: FaceTable = [
+  { letter: 'U', normal: [0, 1, 0] },
+  { letter: 'L', normal: [-Math.sqrt(6) / 3, -1 / 3, Math.sqrt(2) / 3] },
+  { letter: 'R', normal: [Math.sqrt(6) / 3, -1 / 3, Math.sqrt(2) / 3] },
+  { letter: 'B', normal: [0, -1 / 3, -2 * Math.sqrt(2) / 3] },
+];
+
+// Skewb = cube 几何,UDLRFB + 轴对齐 normal
+const SKEWB_FACES: FaceTable = [
+  { letter: 'U', normal: [0, 1, 0] },
+  { letter: 'D', normal: [0, -1, 0] },
+  { letter: 'L', normal: [-1, 0, 0] },
+  { letter: 'R', normal: [1, 0, 0] },
+  { letter: 'F', normal: [0, 0, 1] },
+  { letter: 'B', normal: [0, 0, -1] },
+];
+
+// Megaminx 12 面 — 顶环 U/F/R/BR/BL/L 顺时针;底环 D/BF/DBR/DR/DL/DBL 对称。
+// 标签命名跟 normal 的真实映射需 playwright 校准。
+// 几何:dodecahedron 的面中心在 +Y 顶面 + 5 个 polar≈63.435° (= atan(2))、azimuth 0/72/144/216/288;底环 negate。
+const MEGA_PHI = Math.atan(2); // polar angle from +Y axis to top-ring face
+const MEGA_SIN = Math.sin(MEGA_PHI), MEGA_COS = Math.cos(MEGA_PHI);
+function megaTop(deg: number): [number, number, number] {
+  const t = deg * Math.PI / 180;
+  return [MEGA_SIN * Math.sin(t), MEGA_COS, MEGA_SIN * Math.cos(t)];
+}
+function neg(v: [number, number, number]): [number, number, number] { return [-v[0], -v[1], -v[2]]; }
+const MEGA_U_N: [number, number, number] = [0, 1, 0];
+const MEGA_F_N = megaTop(0);
+const MEGA_R_N = megaTop(72);
+const MEGA_BR_N = megaTop(144);
+const MEGA_BL_N = megaTop(216);
+const MEGA_L_N = megaTop(288);
+const MEGA_FACES: FaceTable = [
+  { letter: 'U', normal: MEGA_U_N },
+  { letter: 'F', normal: MEGA_F_N },
+  { letter: 'R', normal: MEGA_R_N },
+  { letter: 'BR', normal: MEGA_BR_N },
+  { letter: 'BL', normal: MEGA_BL_N },
+  { letter: 'L', normal: MEGA_L_N },
+  { letter: 'D', normal: neg(MEGA_U_N) },
+  { letter: 'BF', normal: neg(MEGA_F_N) },
+  // dodecahedron 12 face 两两 dual:R↔DBL, L↔DBR, BR↔DL, BL↔DR
+  // (playwright 校准: alg="DL" 让屏幕左下蓝色面动, alg="DR" 让右下米色面动)
+  { letter: 'DBL', normal: neg(MEGA_R_N) },
+  { letter: 'DL', normal: neg(MEGA_BR_N) },
+  { letter: 'DR', normal: neg(MEGA_BL_N) },
+  { letter: 'DBR', normal: neg(MEGA_L_N) },
+];
+
+const FACE_TABLES: Record<string, FaceTable | undefined> = {
+  skewb: SKEWB_FACES,
+  pyraminx: PYRA_FACES,
+  megaminx: MEGA_FACES,
+  '3x3x3': SKEWB_FACES,
+};
 
 /** sim PuzzleSettings 透传过来,只用其中跟 TwistyPlayer 能映射的字段。
  *  字段说明:
@@ -84,6 +146,7 @@ export default function TwistySection({
     setPlayerNonce((n) => n + 1);
     // NOTE: light colorScheme 让 scrubber 轨道右侧渲染为白色（对齐 legacy 图2样式）
     player.style.colorScheme = 'light';
+
 
     // onUserMove hook: 包 model.experimentalAddMove。cubing.js 的 press handler
     // (Twisty3DPuzzleWrapper.raycastMove) 是唯一会调到 model.experimentalAddMove
@@ -209,6 +272,9 @@ export default function TwistySection({
   // 跟 SettingDrawer 里 NxN 的 applySettings 行为一致 — 滑条 0..100 同一坐标系。
   // viewAngle/viewGradient 只在 slider 真变化或 player 重建时同步,
   // 否则保留 cubing.js drag 累积出来的姿态 (跟 NxN orbit 同款)。
+  // megaminx 默认 WCA 朝向(白顶绿前)= lat 26.565 lon=0 — 首次挂载时强制,
+  // 不让 sim 全局 yaw/pitch 默认 (30/33 → lon=-72/lat=30.6) 覆盖。
+  // 用户主动调 slider 后照常同步。
   const prevYawRef = useRef<number | null>(null);
   const prevPitchRef = useRef<number | null>(null);
   const prevNonceRef = useRef<number>(-1);
@@ -222,11 +288,20 @@ export default function TwistySection({
       ? 0.2 + (settings.speed / 50) * 0.8
       : 1 + ((settings.speed - 50) / 50) * 3;
     const isNewPlayer = prevNonceRef.current !== playerNonce;
-    if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
-      try { player.cameraLongitude = yawDeg; } catch { /* */ }
-    }
-    if (isNewPlayer || prevPitchRef.current !== settings.viewGradient) {
-      try { player.cameraLatitude = pitchDeg; } catch { /* */ }
+    // pyraminx / megaminx / skewb 默认走 alpha.twizzle.net 朝向 (lat=26.565° lon=0)。
+    // pyraminx 绿前黄下;megaminx 白顶绿前;skewb 白顶绿前。
+    const wcaDefault = (puzzle === 'megaminx' || puzzle === 'pyraminx' || puzzle === 'skewb')
+      ? { lat: 26.565, lon: 0 } : null;
+    if (isNewPlayer && wcaDefault) {
+      try { player.cameraLongitude = wcaDefault.lon; } catch { /* */ }
+      try { player.cameraLatitude = wcaDefault.lat; } catch { /* */ }
+    } else {
+      if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
+        try { player.cameraLongitude = yawDeg; } catch { /* */ }
+      }
+      if (isNewPlayer || prevPitchRef.current !== settings.viewGradient) {
+        try { player.cameraLatitude = pitchDeg; } catch { /* */ }
+      }
     }
     try { player.cameraDistance = dist; } catch { /* */ }
     try { player.tempoScale = tempo; } catch { /* */ }
@@ -235,6 +310,206 @@ export default function TwistySection({
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
   }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings, playerNonce]);
+
+  // 实时整体转 commit:user 拖动 cube,累积旋转 ≥ 对称阈值时自动 commit alg + camera reset。
+  // 视觉无缝要求:commit 瞬间 cube state + camera 同步切换,绕过 cubing.js 的
+  // experimentalAddMove(它 set catchUpMove → 触发 backwards 动画导致回弹)。
+  // 改成:直接 `player.alg = newAlg` + `timestampRequest.set('end')` + sync camera reset,
+  // 三件事同一 paint frame。
+  //
+  // axis 取自该 puzzle 顶点 / 面中心的单位向量,每帧投影 camera 旋转到这根轴累积。
+  //
+  // 现状(2026-05-19):cubing.js camera 是 2-DOF orbit(yaw + pitch,无 roll),只能
+  // 表达绕 +Y 轴的整体转。pyraminx 非 +Y 顶点(L/R/B)对应的转动需 roll,任何 (lat,lon)
+  // 拖动产生的瞬时旋转轴在 L/R/B 上的投影都接近 0(几何上正交),accumulator 永远积不起来。
+  // 所以这里 pyraminx 只接 U-vertex(+Y);Lv/Rv/Bv 要支持需自己接管 input + 用
+  // experimentalSetupTransformation 把朝向塞进 cube state,绕开 cubing.js camera 限制。
+  type AxisCfg = { name: string; axis: [number, number, number]; moveCW: string; moveCCW: string };
+  type RotateCfg = { thresholdDeg: number; axes: AxisCfg[] };
+  const ROTATE_CONFIG: Record<string, RotateCfg> = {
+    // U-vertex / +Y;校准 (.tmp/png/pyra_lon-119_v2 vs pyra_lon0_alg-RLUUvi):Uv' = R_y(+120°)
+    pyraminx: { thresholdDeg: 120, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
+    // 校准 (.tmp/png/mega_lon-71_alg-RU vs mega_lon0_alg-RUUvi)
+    megaminx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
+    // 校准 (.tmp/png/skewb_lon-161_alg-RU_clean vs skewb_default_alg-RUyi_clean)
+    skewb: { thresholdDeg: 90, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'y', moveCCW: "y'" }] },
+  };
+  const currentAlgRef = useRef(alg);
+  useEffect(() => { currentAlgRef.current = alg; }, [alg]);
+  // Cube state 相对 default 的累积旋转 quat,从 alg 字符串实时解析(扫 y/y'/y2/Uv/Uv'... token)
+  // —— 跟 commit / URL load / 用户手打 alg 都同步,不会脱节。
+  // FaceOverlay 用它把 default face normals 转到当前 piece 在世界中的位置 → label 跟 piece 走。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const faceOverlayRef = useRef<any>(null);
+  function quatMulRaw(a: number[], b: number[]): [number, number, number, number] {
+    return [
+      a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
+      a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+      a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
+      a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0],
+    ];
+  }
+  function quatAxisAngleRaw(a: [number, number, number], rad: number): [number, number, number, number] {
+    const h = rad / 2, s = Math.sin(h);
+    return [Math.cos(h), a[0] * s, a[1] * s, a[2] * s];
+  }
+  function algToOrientation(algStr: string, cfg: { thresholdDeg: number; axes: { axis: [number, number, number]; moveCW: string; moveCCW: string }[] }): [number, number, number, number] {
+    let orient: [number, number, number, number] = [1, 0, 0, 0];
+    const tokens = algStr.trim().split(/\s+/).filter(Boolean);
+    const D2R = Math.PI / 180;
+    for (const tok of tokens) {
+      for (const ax of cfg.axes) {
+        const thr = cfg.thresholdDeg * D2R;
+        // moveCW = R_axis(-thr);moveCCW = R_axis(+thr);后缀 "2" = 双倍角
+        let angle = 0;
+        if (tok === ax.moveCW) angle = -thr;
+        else if (tok === ax.moveCCW) angle = thr;
+        else if (tok === ax.moveCW + '2' || tok === ax.moveCCW + '2') angle = 2 * thr;
+        else continue;
+        const q = quatAxisAngleRaw(ax.axis, angle);
+        orient = quatMulRaw(q, orient);
+        break;
+      }
+    }
+    return orient;
+  }
+  // alg 变化 → 重算 orientation → 推给 FaceOverlay
+  useEffect(() => {
+    const cfg = ROTATE_CONFIG[puzzle];
+    if (!cfg) return;
+    const orient = algToOrientation(alg, cfg);
+    try { faceOverlayRef.current?.setCubeOrientation(orient); } catch { /* */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alg, puzzle, playerNonce]);
+  useEffect(() => {
+    const player = playerInstRef.current;
+    const cfg = ROTATE_CONFIG[puzzle];
+    if (!player || !cfg) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = (player as any).experimentalModel;
+    const sceneModel = m?.twistySceneModel;
+    if (!sceneModel?.orbitCoordinates || !m?.alg || !m?.timestampRequest) return;
+
+    // camera 在 (lat, lon) 的姿态 = R_y(lon) * R_x(-lat),用 quaternion 表示。
+    // 把 (lat, lon) 转 quat,然后 deltaQ = curQ * inv(prevQ) 是这帧 camera 转了多少。
+    // axis-angle 拆出来,投到每条 vertex 轴,累加进 accum,某根超过 threshold 就 commit。
+    const D2R = Math.PI / 180;
+    function quatFromAxisAngle(a: [number, number, number], rad: number): [number, number, number, number] {
+      const h = rad / 2, s = Math.sin(h);
+      return [Math.cos(h), a[0] * s, a[1] * s, a[2] * s];
+    }
+    function quatMul(a: number[], b: number[]): [number, number, number, number] {
+      return [
+        a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
+        a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+        a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
+        a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0],
+      ];
+    }
+    function quatInv(q: number[]): [number, number, number, number] {
+      return [q[0], -q[1], -q[2], -q[3]];
+    }
+    function quatRotate(q: number[], v: [number, number, number]): [number, number, number] {
+      // v 当纯虚 quat 处理:result = q * (0,v) * inv(q)
+      const vq: [number, number, number, number] = [0, v[0], v[1], v[2]];
+      const r = quatMul(quatMul(q, vq), quatInv(q));
+      return [r[1], r[2], r[3]];
+    }
+    function cameraQuat(latDeg: number, lonDeg: number) {
+      const qY = quatFromAxisAngle([0, 1, 0], lonDeg * D2R);
+      const qX = quatFromAxisAngle([1, 0, 0], -latDeg * D2R);
+      return quatMul(qY, qX);
+    }
+    function quatToAxisAngle(q: number[]): { axis: [number, number, number]; angle: number } {
+      // q[0] = cos(θ/2), |q.xyz| = sin(θ/2)
+      let w = q[0]; let x = q[1], y = q[2], z = q[3];
+      if (w < 0) { w = -w; x = -x; y = -y; z = -z; } // canonical: θ ∈ [0, π]
+      const sinHalf = Math.hypot(x, y, z);
+      const angle = 2 * Math.atan2(sinHalf, w);
+      if (sinHalf < 1e-8) return { axis: [1, 0, 0], angle: 0 };
+      return { axis: [x / sinHalf, y / sinHalf, z / sinHalf], angle };
+    }
+    function quatToOrbit(q: number[]): { lat: number; lon: number } {
+      // camera eye direction = q * (0,0,1)
+      const e = quatRotate(q as [number, number, number, number], [0, 0, 1]);
+      const lat = Math.asin(Math.max(-1, Math.min(1, e[1]))) / D2R;
+      const lon = Math.atan2(e[0], e[2]) / D2R;
+      return { lat, lon };
+    }
+
+    let prevLat: number | null = null;
+    let prevLon: number | null = null;
+    const accum: number[] = cfg.axes.map(() => 0);  // 每根 vertex 轴的有效转角(rad)
+    let cooldownUntil = 0;
+    const COOLDOWN_MS = 400;
+    const thresholdRad = cfg.thresholdDeg * D2R;
+
+    const onOrbit = (o: { latitude: number; longitude: number }) => {
+      const now = performance.now();
+      // cooldown 期间:同步 prev,zero accum,不 commit。
+      if (now < cooldownUntil) {
+        prevLat = o.latitude; prevLon = o.longitude;
+        for (let i = 0; i < accum.length; i++) accum[i] = 0;
+        return;
+      }
+      if (prevLat === null || prevLon === null) {
+        prevLat = o.latitude; prevLon = o.longitude;
+        return;
+      }
+      // 这帧 camera 转了多少
+      const prevQ = cameraQuat(prevLat, prevLon);
+      const curQ = cameraQuat(o.latitude, o.longitude);
+      const deltaQ = quatMul(curQ, quatInv(prevQ));
+      const { axis: rotAxis, angle: rotAngle } = quatToAxisAngle(deltaQ);
+      prevLat = o.latitude;
+      prevLon = o.longitude;
+      if (rotAngle < 1e-6) return;
+      // 投影到每根 vertex 轴
+      for (let i = 0; i < cfg.axes.length; i++) {
+        const V = cfg.axes[i].axis;
+        const dot = rotAxis[0] * V[0] + rotAxis[1] * V[1] + rotAxis[2] * V[2];
+        accum[i] += dot * rotAngle;
+      }
+      // 检查超 threshold
+      for (let i = 0; i < cfg.axes.length; i++) {
+        if (Math.abs(accum[i]) < thresholdRad) continue;
+        const ax = cfg.axes[i];
+        // 推导:visual_pre = render(state, camera_curQ) = project(curQ^-1 * state)。
+        //       visual_post = render(T(M) * state, camera_targetQ) = project(targetQ^-1 * T(M) * state)。
+        // 视觉相等 ⇒ targetQ = T(M) * curQ。
+        // playwright 校准 (Uv 那条):drag 右 (curQ = R_y(-Δ),accum_U<0) → commit Uv',
+        // 而 Uv' = R_y(+120°)(CCW 绕 +Y)。所以 accum<0 → moveCCW;moveQ 方向跟 accum 反号:
+        //   accum>0(camera CCW 绕 +V)→ commit moveCW(= R_V(-120°),把 camera 转回去 -120°)
+        //   accum<0(camera CW 绕 +V)→ commit moveCCW(= R_V(+120°))
+        const move = accum[i] > 0 ? ax.moveCW : ax.moveCCW;
+        // targetQ = T(M) * curQ(seamless),所以 moveQ ≡ T(M) ≡ alg 给 cube state 的世界旋转
+        const moveQ = quatFromAxisAngle(ax.axis as [number, number, number], -Math.sign(accum[i]) * thresholdRad);
+        const targetQ = quatMul(moveQ, curQ);
+        const { lat: targetLat, lon: targetLon } = quatToOrbit(targetQ);
+        try {
+          const curAlg = currentAlgRef.current.trim();
+          const newAlg = curAlg ? `${curAlg} ${move}` : move;
+          currentAlgRef.current = newAlg;
+          player.alg = newAlg;
+          m.timestampRequest.set('end');
+          player.cameraLatitude = targetLat;
+          player.cameraLongitude = targetLon;
+          onUserMoveRef.current?.(move);
+          // cubeOrientation 由 alg useEffect 自动重算,不在这里手动更新
+        } catch { /* */ }
+        cooldownUntil = now + COOLDOWN_MS;
+        for (let j = 0; j < accum.length; j++) accum[j] = 0;
+        prevLat = targetLat; prevLon = targetLon;
+        return;
+      }
+    };
+    sceneModel.orbitCoordinates.addFreshListener(onOrbit);
+    return () => {
+      try { sceneModel.orbitCoordinates.removeFreshListener(onOrbit); } catch { /* */ }
+    };
+  // ROTATE_CONFIG 是组件内 const 不变,不入 deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerNonce, puzzle]);
 
   // rotate 模式:player 容器上 pointerup 时,把 cameraLat/Long snap 到 puzzle 旋转对称角度。
   //   pyraminx (四面体): 120° (3 重对称 — 顶点轴)
@@ -266,11 +541,64 @@ export default function TwistySection({
     };
   }, [playerNonce, puzzle]);
 
-  // Face hints (U/D/L/R/F/B 字母指示): TwistyPlayer 用 closed shadow DOM,
-  // 内部 WebGL renderer 不可访问。puzzleObj.parent 那个 scene 只是 hit-test 用的
-  // model,不会被它的 renderer 画。要在 Twisty 上加 face hints 必须走 HTML overlay
-  // (绝对定位 + 订阅 orbitCoordinates 自己投影 3D→2D)。尚未实现 — NxN/SQ1 走
-  // cuber world.scene 路径已生效;Twisty (pyra/skewb/mega) 暂无 face hints。
+  // Face hints (字母指示):TwistyPlayer 用 closed shadow DOM,renderer 拿不到,
+  // 改用 HTML overlay。订阅 orbitCoordinates → 自家投影 3D→2D → 绝对定位 span。
+  // sticker drag 不改 orbit,所以 lat/lon 没变 = 不点亮(跟 sim NxN 同语义)。
+  useEffect(() => {
+    const player = playerInstRef.current;
+    const host = containerRef.current;
+    const table = FACE_TABLES[puzzle];
+    if (!player || !host || !table) return;
+    const model = player.experimentalModel?.twistySceneModel?.orbitCoordinates;
+    if (!model || typeof model.addFreshListener !== 'function') return;
+
+    const overlay = new FaceOverlay(host, table, { screenSlot: puzzle === 'pyraminx' });
+    overlay.setCubeOrientation(algToOrientation(currentAlgRef.current, ROTATE_CONFIG[puzzle] ?? { thresholdDeg: 0, axes: [] }));
+    faceOverlayRef.current = overlay;
+    // cubing.js 的 drag-to-orbit 在 closed shadow DOM 内捕获 pointer event,
+    // host 监听不到。改用 orbitCoordinates listener 间接判断:
+    // - 第一次 fresh 值不算"变化"
+    // - 后续每次 lat/lon 变 → show(),并启 idle 计时
+    // - idle 500ms 不变 → hide()
+    let lastLat: number | null = null;
+    let lastLon: number | null = null;
+    let hideTimer: number | null = null;
+    const HIDE_AFTER_MS = 500;
+    const onOrbit = (o: { latitude: number; longitude: number; distance: number }) => {
+      overlay.setOrbit(o);
+      if (lastLat === null) {
+        lastLat = o.latitude;
+        lastLon = o.longitude;
+        return;
+      }
+      if (o.latitude !== lastLat || o.longitude !== lastLon) {
+        lastLat = o.latitude;
+        lastLon = o.longitude;
+        overlay.show();
+        if (hideTimer != null) window.clearTimeout(hideTimer);
+        hideTimer = window.setTimeout(() => { overlay.hide(); hideTimer = null; }, HIDE_AFTER_MS);
+      }
+    };
+    model.addFreshListener(onOrbit);
+
+    let raf = 0;
+    let last = performance.now();
+    const tick = () => {
+      const now = performance.now();
+      overlay.tick(now - last);
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      if (hideTimer != null) window.clearTimeout(hideTimer);
+      try { model.removeFreshListener(onOrbit); } catch { /* ignore */ }
+      overlay.dispose();
+      if (faceOverlayRef.current === overlay) faceOverlayRef.current = null;
+    };
+  }, [playerNonce, puzzle]);
 
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>

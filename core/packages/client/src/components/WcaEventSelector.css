@@ -91,6 +91,42 @@
 .wca-stats-event-selector .event-btn-all:hover .event-all-label { color: #ddd; }
 .wca-stats-event-selector .event-btn-all.active .event-all-label { color: #fff; }
 
+/* cstimer 系列罕见 puzzle 没有 cubing-icons 字形,fallback 渲染 3-6 字符短标签。
+   宽度自适应、字号略小、保持跟 40×40 图标按钮在同一行高。 */
+.wca-stats-event-selector .event-btn-text {
+  width: auto;
+  min-width: 40px;
+  padding: 0 8px;
+}
+.wca-stats-event-selector .event-btn-text .event-text-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  transition: color 0.2s;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+}
+.wca-stats-event-selector .event-btn-text:hover .event-text-label { color: #ddd; }
+.wca-stats-event-selector .event-btn-text.active .event-text-label { color: #fff; }
+
+/* 展开/收起 toggle:跟 WCA 图标按钮等宽(40×40),拼在第 22 位接 WCA 21 项后面。
+   虚线边框区分"非 puzzle 控件"。 */
+.wca-stats-event-selector .event-btn-more {
+  border-style: dashed;
+  border-color: rgba(255, 235, 220, 0.18);
+}
+.wca-stats-event-selector .event-btn-more:hover {
+  border-color: rgba(255, 235, 220, 0.32);
+}
+.wca-stats-event-selector .event-more-arrow {
+  font-size: 14px;
+  font-weight: 700;
+  color: #aaa;
+  transition: color 0.2s;
+}
+.wca-stats-event-selector .event-btn-more:hover .event-more-arrow { color: #ddd; }
+.wca-stats-event-selector .event-btn-more.active .event-more-arrow { color: #fff; }
+
 .wca-stats-event-selector .event-btn:hover {
   background: rgba(255, 255, 255, 0.10);
   border-color: rgba(255, 235, 220, 0.12);

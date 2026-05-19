@@ -2,9 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/icons/CubeRoot.png" media="(prefers-color-scheme: light)" />
-    <link rel="icon" type="image/png" href="/icons/CubeRoot-dark.png" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" type="image/png" href="/icons/CubeRoot.png" />
+    <!-- favicon href 由 utils/theme.ts 跟 effectiveTheme 动态切换 (Chrome 对 media query favicon 支持不稳) -->
+    <link id="app-favicon" rel="icon" type="image/png" href="/icons/CubeRoot.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- NOTE: PWA — 添加到主屏幕图标 + manifest -->
     <link rel="apple-touch-icon" href="/icons/CubeRoot.png" />

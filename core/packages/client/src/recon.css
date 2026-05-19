@@ -15,7 +15,19 @@
   font-size: 1.4rem;
   margin-bottom: 0.5rem;
   color: #e5e5e5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.recon-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #95938E;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.recon-title-help:hover { opacity: 1; color: #e8a27a; }
 
 /* NOTE: 标题区行布局 — h1+副标题靠左，LangToggle 靠右（行业标准：header 内联） */
 .recon-page-header {

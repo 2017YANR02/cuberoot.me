@@ -28,7 +28,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { EventIcon } from '../../components/EventIcon';
 import { ColFilter, ColFilterCloseContext } from '../../components/ColFilter/ColFilter';
 import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
-import { Plus } from 'lucide-react';
+import { Plus, HelpCircle } from 'lucide-react';
 import '../../recon.css';
 
 // ── 列配置——原版顺序 ──
@@ -181,7 +181,7 @@ export default function ReconListPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('录像还原', 'Reconstructions');
+  useDocumentTitle('复盘', 'Reconstructions');
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -751,7 +751,17 @@ export default function ReconListPage() {
       {/* NOTE: 标题行 — h1 + 语言切换（行业标准：header 右对齐） */}
       <div className="recon-page-header">
         <div>
-          <h1>{t('recon.title')}</h1>
+          <h1>
+            {t('recon.title')}
+            <Link
+              to="/recon-about"
+              className="recon-title-help"
+              title={isZh ? '这页是干啥的?' : 'What is this page?'}
+              aria-label={isZh ? '查看说明' : 'About this page'}
+            >
+              <HelpCircle size={18} strokeWidth={1.75} />
+            </Link>
+          </h1>
           <p className="recon-subtitle">{t('recon.subtitle')}</p>
         </div>
         <LangToggle />

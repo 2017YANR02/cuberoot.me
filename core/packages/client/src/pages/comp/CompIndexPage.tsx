@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X as XIcon } from 'lucide-react';
+import { X as XIcon, HelpCircle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
@@ -91,7 +91,17 @@ export default function CompIndexPage() {
         <ThemeToggle />
       </div>
 
-      <h1 className="comp-page-title">{isZh ? 'WCA 比赛' : 'WCA Competitions'}</h1>
+      <h1 className="comp-page-title">
+        {isZh ? 'WCA 比赛' : 'WCA Competitions'}
+        <Link
+          to="/wca/comp-about"
+          className="comp-title-help"
+          title={isZh ? '这页是干啥的?' : 'What is this page?'}
+          aria-label={isZh ? '查看说明' : 'About this page'}
+        >
+          <HelpCircle size={18} strokeWidth={1.75} />
+        </Link>
+      </h1>
       <p className="comp-page-subtitle">
         {isZh ? '查看 cubing.com 直播比赛的实时按轮次成绩。' : 'Live round-by-round results from cubing.com.'}
       </p>

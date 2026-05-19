@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from './Paginator';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { Flag } from '../../utils/flag';
@@ -76,7 +76,17 @@ export default function SuccessRatePage() {
           <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
-        <h1>{isZh ? '项目成功率' : 'Event Success Rate'}</h1>
+        <h1 className="wse-title-row">
+          {isZh ? '项目成功率' : 'Event Success Rate'}
+          <Link
+            to="/wca/about/success-rate"
+            className="wse-title-help"
+            title={isZh ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={isZh ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={18} strokeWidth={1.75} />
+          </Link>
+        </h1>
         <p className="wse-subtitle">{isZh ? '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)' : 'Per-cuber success rate per event (most relevant for BLD / FMC)'}</p>
       </header>
 

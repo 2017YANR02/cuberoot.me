@@ -146,3 +146,5 @@ export const POSTGRES: StackTool = {
     { label: 'Versioning policy', href: 'https://www.postgresql.org/support/versioning/' },
   ],
 };
+
+export default POSTGRES;

@@ -1,5 +1,8 @@
 // WCA 项目 ID 单一来源——归一化各种短名到 WCA 标准 id（用于 cubing-icons CSS 类）+ 显示名
 
+import { cstimerEventDisplayName } from './cstimerScramble';
+import { shapeModDisplayName } from './shapeModScramble';
+
 // NOTE: 仓库里历史上有 3 套短名约定，全部归一化到 WCA 标准 id（333 / 222 / 333oh ...）
 //   - recon 数据：3x3 / 2x2 / 3bld / oh / mbld / pyra / mega / fmc ...
 //   - upcoming_comps：3 / 2 / 3bf / fm / py / sk / minx / mbf ...
@@ -57,7 +60,8 @@ const DISPLAY_EN: Record<string, string> = {
 };
 
 /** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。
- *  `nxnN` 合成 id（N≥8 高阶魔方）走 "N阶" / "N×N"。 */
+ *  `nxnN` 合成 id（N≥8 高阶魔方）走 "N阶" / "N×N"。
+ *  WCA / cubing.js / cstimer 三套 catalog 的 fallback 链:WCA → cstimer → 原样 id。 */
 export function eventDisplayName(input: string, isZh: boolean): string {
   const id = toWcaEventId(input);
   const m = /^nxn(\d+)$/.exec(id);
@@ -66,7 +70,12 @@ export function eventDisplayName(input: string, isZh: boolean): string {
     return isZh ? `${n}阶` : `${n}×${n}`;
   }
   const dict = isZh ? DISPLAY_ZH : DISPLAY_EN;
-  return dict[id] ?? id;
+  if (dict[id]) return dict[id];
+  const cstimerName = cstimerEventDisplayName(id, isZh);
+  if (cstimerName) return cstimerName;
+  const shapeName = shapeModDisplayName(id, isZh);
+  if (shapeName) return shapeName;
+  return id;
 }
 
 /** WCA 标准 21 个项目 id（用于过滤数据库里的非 WCA 项目，如 Gear / Mirror / Smart cube 等） */

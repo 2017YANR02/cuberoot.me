@@ -50,8 +50,8 @@ export default function GenAboutPage() {
         <h1 className="ga-title">{t('打乱生成器是怎么工作的', 'How the scramble generator works')}</h1>
         <p className="ga-intro">
           {t(
-            '/scramble/gen 是站内的统一打乱生成入口。3 种模式覆盖从「比赛官方打乱表」到「随手出 N 条练习」到「自带打乱粘进来出图」的常见需求。所有 WCA 项目走 Lucas Garron 的 cubing.js 随机状态生成器(4×4 走 cs0x7f Threephase 走 Web Worker 池,5×5 可切到本站 cube555 daemon 真随机态)。额外还接入了 cubing.js twizzleEvents 里 5 个非 WCA 的真随机态项目:FTO / 四阶金字塔 / 二阶五魔 / Redi / 二阶 FTO。',
-            '/scramble/gen is the unified scramble entry point. Three modes cover the common needs: "official WCA scramble sheet", "quick N scrambles to practice", "paste my own scrambles for preview". All WCA events go through Lucas Garron\'s cubing.js random-state scramblers (4×4 routes to cs0x7f Threephase via a Web Worker pool; 5×5 can switch to our server-side cube555 daemon for true random-state). 5 additional non-WCA random-state events from cubing.js twizzleEvents are also plugged in: FTO / Master Tetra / Kilominx / Redi / Baby FTO.',
+            '/scramble/gen 是站内的统一打乱生成入口。3 种模式覆盖从「比赛官方打乱表」到「随手出 N 条练习」到「自带打乱粘进来出图」的常见需求。所有 WCA 项目走 Lucas Garron 的 cubing.js 随机状态生成器(4×4 走 cs0x7f Threephase 走 Web Worker 池,5×5 可切到本站 cube555 daemon 真随机态)。除 WCA 21 项外另接入了三套非 WCA puzzle:cubing.js twizzleEvents 的 5 个(FTO / 四阶金字塔 / 二阶五魔 / Redi / 二阶 FTO);从 cs0x7f csTimer 引擎 vendor 进来的 31 个(齿轮/枫叶/恐龙/Sq2/SSq1/五魔金字塔/六阶五魔/直升机/cuboid 5 个/15-puzzle/8-puzzle 等);7 个 shape-mod 借用 WCA scramble(镜面/费舍尔/三阶金字塔/二阶金字塔/轴方/风火轮/幽灵/空心)。共 64 个 puzzle,非 WCA 默认折叠在「其他 ▾」chip 后,点开展示。',
+            '/scramble/gen is the unified scramble entry point. Three modes cover the common needs: "official WCA scramble sheet", "quick N scrambles to practice", "paste my own scrambles for preview". All WCA events go through Lucas Garron\'s cubing.js random-state scramblers (4×4 routes to cs0x7f Threephase via a Web Worker pool; 5×5 can switch to our server-side cube555 daemon for true random-state). Beyond WCA 21 we plug in three more sources: 5 random-state events from cubing.js twizzleEvents (FTO / Master Tetra / Kilominx / Redi / Baby FTO); 31 events vendored from cs0x7f csTimer (Gear / Ivy / Dino / Sq2 / SSq1 / Pyraminx Crystal / Gigaminx / Helicopter / 5 cuboids / 15-puzzle / 8-puzzle / …); 7 shape mods borrowing WCA scrambles (Mirror Blocks / Fisher / Mastermorphix / Pyramorphix / Axis / Windmill / Ghost / Void). 64 puzzles total; non-WCA ones collapse behind an "Other ▾" chip by default.',
           )}
         </p>
 
@@ -265,8 +265,30 @@ export default function GenAboutPage() {
                 <td>{t('浏览器', 'browser')}</td>
                 <td>
                   {t(
-                    '随机状态(cubing.js twizzleEvents),5 个项目接在 WCA 21 项后面同行展示',
-                    'Random-state (cubing.js twizzleEvents); 5 events appended in the same selector row after the WCA 21',
+                    '随机状态(cubing.js twizzleEvents)',
+                    'Random-state (cubing.js twizzleEvents)',
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td>{t('非 WCA:齿轮/枫叶/恐龙/Sq2/SSq1/BSq1/六阶五魔/五魔金字塔/直升机/弧面直升机/大金字塔(随态)/2×2×3/1×3×3/2×3×3/3×3×4/3×3×5/3×3×6/3×3×7/15-puzzle/8-puzzle/SFl/UFO/Ico/Crazy/Cm3/Cm2/Bic/Sia113/Sia123/Sia222/Dmd', 'Non-WCA: Gear / Ivy / Dino / Sq2 / SSq1 / BSq1 / Gigaminx / Pyraminx Crystal / Helicopter / Curvy Copter / Master Pyra RS / 2×2×3 / 1×3×3 / 2×3×3 / 3×3×4-7 / 15-puzzle / 8-puzzle / Super Floppy / UFO / Icosamate / Crazy 3×3 / Cmetrick / Cmetrick Mini / Bicube / Siamese ×3 / Diamond')}</td>
+                <td>cs0x7f csTimer</td>
+                <td>{t('浏览器 Web Worker', 'browser Web Worker')}</td>
+                <td>
+                  {t(
+                    '上游源码 vendor 在 tools/cstimer-scramble/(GPLv3);classic worker importScripts 整套 lib + scramble file。13 个随机态(IDA + 运行时建剪枝表),18 个随机转动。冷启 ~100-300ms,热路径 < 50ms。',
+                    'Upstream source vendored at tools/cstimer-scramble/ (GPLv3); classic worker importScripts the full lib + scramble files. 13 random-state (IDA + runtime prune tables), 18 random-move. Cold start ~100-300 ms, hot path < 50 ms.',
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td>{t('Shape-mod:镜面/费舍尔/三阶金字塔/二阶金字塔/轴方/风火轮/幽灵/空心', 'Shape mods: Mirror Blocks / Fisher / Mastermorphix / Pyramorphix / Axis / Windmill / Ghost / Void')}</td>
+                <td>{t('共享 WCA scramble', 'borrows WCA scramble')}</td>
+                <td>{t('浏览器', 'browser')}</td>
+                <td>
+                  {t(
+                    '本身是 3×3(或 2×2,Pyramorphix)的 sticker-shape 变体,cube state 跟原 puzzle 完全一致 → 直接复用对应 WCA 池的打乱,零额外算法。预览也按底层 puzzle 的 unfolded net 画。',
+                    'Sticker-shape variants of 3×3 (or 2×2 for Pyramorphix) — same underlying cube state, so we route to the WCA pool with zero extra algorithm. Preview renders the underlying puzzle\'s unfolded net.',
                   )}
                 </td>
               </tr>
@@ -322,7 +344,11 @@ export default function GenAboutPage() {
           </li>
           <li>
             <a href="https://www.cubing.net/cubing.js/" target="_blank" rel="noopener noreferrer">cubing.js</a>
-            {t(' — Lucas Garron 的浏览器 cubing 全家桶,本站打乱都从这条流出来。', " — Lucas Garron's in-browser cubing stack; all our scrambles flow through it.")}
+            {t(' — Lucas Garron 的浏览器 cubing 全家桶,本站 WCA + 5 个 twizzle 项目走这里。', " — Lucas Garron's in-browser cubing stack; WCA + 5 twizzle non-WCA events flow through it.")}
+          </li>
+          <li>
+            <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f/csTimer</a>
+            {t(' — 非 WCA 31 个 puzzle 的打乱引擎来源(GPLv3),vendor 在 tools/cstimer-scramble/。', ' — Source of the 31 non-WCA puzzle scramble engines (GPLv3), vendored at tools/cstimer-scramble/.')}
           </li>
           <li>
             <a href="https://www.worldcubeassociation.org/regulations/#article-4-scrambling" target="_blank" rel="noopener noreferrer">{t('WCA Regulation §4: Scrambling', 'WCA Regulation §4: Scrambling')}</a>
