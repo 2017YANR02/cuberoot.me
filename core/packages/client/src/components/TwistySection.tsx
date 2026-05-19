@@ -638,21 +638,16 @@ export default function TwistySection({
     if (!m?.alg || !m?.timestampRequest) return;
 
     const PIXELS_PER_COMMIT = 80;
-    const cfg = ROTATE_CONFIG['skewb'] ?? { thresholdDeg: 0, axes: [] };
     let active = false;
     let pid = -1;
     let lastY = 0;
 
     const commit = (move: string) => {
-      const curAlg = currentAlgRef.current.trim();
-      const newAlg = curAlg ? `${curAlg} ${move}` : move;
-      currentAlgRef.current = newAlg;
+      // experimentalAddMove 触发 cubing.js 内置 ~500ms 动画(rapid 连发自动 tempo-scale 串行)。
+      // 该方法已被 player 初始化时 wrap,会自动 onUserMove → SimPage 同步 alg / URL / textarea。
+      // 禁用 `player.alg= + timestampRequest.set('end')` — 直接跳末尾,没动画。
       try {
-        player.alg = newAlg;
-        m.timestampRequest.set('end');
-        const newOrient = algToOrientation(newAlg, cfg);
-        faceOverlayRef.current?.setCubeOrientation(newOrient);
-        onUserMoveRef.current?.(move);
+        player.experimentalAddMove(move);
       } catch { /* */ }
     };
 
