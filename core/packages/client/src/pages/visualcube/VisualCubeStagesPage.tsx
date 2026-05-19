@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { VisualCube } from '../../components/VisualCube';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 
 interface StageEntry {
   /** Display label (preserves PHP case). */
@@ -252,6 +253,7 @@ function StageCard({ cubeSize, label, mask }: { cubeSize: number; label: string;
 export default function VisualCubeStagesPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('阶段可视化', 'Visualcube Stages');
 
   return (
     <div className="vcs-page">

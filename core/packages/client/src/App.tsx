@@ -65,6 +65,7 @@ const TrafficPage = lazy(() => import('./pages/traffic/TrafficPage'));
 // NOTE: Scramble Hub + sub-tools (stats / gen / analyzer / solver)
 const ScrambleHubPage = lazy(() => import('./pages/scramble/ScrambleHubPage'));
 const GodNumberPage = lazy(() => import('./pages/god/GodNumberPage'));
+const MathLandingPage = lazy(() => import('./pages/math/MathLandingPage'));
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
 const ScrambleSolverPage = lazy(() => import('./pages/scramble/solver/ScrambleSolverPage'));
 // NOTE: Tutorial — 公式教程目录（docx 源迁移）
@@ -106,6 +107,7 @@ const AnalyzePage = lazy(() => import('./pages/analyze/AnalyzePage'));
 // NOTE: Gen — 批量打乱生成器（覆盖 16 个 WCA 项目）
 const GenPage = lazy(() => import('./pages/gen/GenPage'));
 const Scramble555AboutPage = lazy(() => import('./pages/scramble_555_about/Scramble555AboutPage'));
+const GenAboutPage = lazy(() => import('./pages/gen_about/GenAboutPage'));
 // NOTE: liquid-glass-react 沙盒,验证 iOS 26 效果用,无导航入口
 const LiquidGlassTestPage = lazy(() => import('./pages/liquid_glass_test/LiquidGlassTestPage'));
 // NOTE: Sim — 虚拟魔方 Playground (port of huazhechen/cuber)
@@ -151,7 +153,7 @@ const KociembaPage = lazy(() => import('./pages/code/KociembaPage'));
 const Min2PhasePage = lazy(() => import('./pages/code/Min2PhasePage'));
 const CfopStdSolverPage = lazy(() => import('./pages/code/CfopStdSolverPage'));
 // NOTE: Theory — Rubik's cube as a group (long-form math essay + interactive panels)
-const GroupTheoryPage = lazy(() => import('./pages/theory/GroupTheoryPage'));
+const GroupTheoryPage = lazy(() => import('./pages/math/GroupTheoryPage'));
 
 // NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
 //       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
@@ -257,11 +259,12 @@ function App() {
         <Route path="/scramble/stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
         <Route path="/scramble/gen" element={<Suspense fallback={<div>Loading...</div>}><GenPage /></Suspense>} />
         <Route path="/scramble/555-about" element={<Suspense fallback={<div>Loading...</div>}><Scramble555AboutPage /></Suspense>} />
+        <Route path="/scramble/gen-about" element={<Suspense fallback={<div>Loading...</div>}><GenAboutPage /></Suspense>} />
         <Route path="/liquid-glass-test" element={<Suspense fallback={<div>Loading...</div>}><LiquidGlassTestPage /></Suspense>} />
         <Route path="/scramble/analyzer" element={<Suspense fallback={<div>Loading...</div>}><AnalyzePage /></Suspense>} />
         <Route path="/scramble/solver" element={<Suspense fallback={<div>Loading...</div>}><ScrambleSolverPage /></Suspense>} />
         <Route path="/scramble/pattern" element={<Suspense fallback={<div>Loading...</div>}><PatternsPage /></Suspense>} />
-        <Route path="/scramble/god" element={<Suspense fallback={<div>Loading...</div>}><GodNumberPage /></Suspense>} />
+        <Route path="/scramble/god" element={<Navigate to="/math/god" replace />} />
         {/* 旧链接兼容重定向 */}
         <Route path="/scramble-stats" element={<Navigate to="/scramble/stats" replace />} />
         <Route path="/analyze" element={<Navigate to="/scramble/analyzer" replace />} />
@@ -377,9 +380,15 @@ function App() {
         <Route path="/memo/colpi/:pair" element={<Suspense fallback={<div>Loading...</div>}><ColpiPage /></Suspense>} />
         {/* WB — 非官方世界纪录 */}
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
-        {/* Theory — 长文 + 互动: 魔方与群论 */}
-        <Route path="/theory/group" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
-        <Route path="/theory/group/:slug" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
+        {/* Math — 长文 + 互动: 魔方与群论 / 上帝之数 */}
+        <Route path="/math" element={<Suspense fallback={<div>Loading...</div>}><MathLandingPage /></Suspense>} />
+        <Route path="/math/group" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
+        <Route path="/math/group/:slug" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
+        <Route path="/math/god" element={<Suspense fallback={<div>Loading...</div>}><GodNumberPage /></Suspense>} />
+        {/* 旧链接重定向 */}
+        <Route path="/theory" element={<Navigate to="/math" replace />} />
+        <Route path="/theory/group" element={<Navigate to="/math/group" replace />} />
+        <Route path="/theory/god" element={<Navigate to="/math/god" replace />} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}

@@ -16,6 +16,7 @@ import TwistySection from '../../components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import { computeAllStats } from '../../utils/recon_stats';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import '../../recon.css';
 import './recon_submit.css';
 import './recon_detail.css';
@@ -36,6 +37,7 @@ export default function AltViewPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('替代解', 'Alternative Solution');
   const isMobile = useIsMobile();
 
   const [parent, setParent] = useState<ReconSolve | null>(null);

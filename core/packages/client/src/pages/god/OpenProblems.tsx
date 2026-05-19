@@ -2,6 +2,7 @@
  * Open Problems — 未解之谜:4×4 / 5×5 / 6×6 / 7×7 / Megaminx 各自的精确直径未知。
  * 每个 panel 给出 gap + 收紧方向 + 可能的"赏金"工作量。
  */
+import { MathText } from './Tex';
 
 interface Problem {
   id: string;
@@ -91,20 +92,20 @@ export default function OpenProblems({ isZh }: Props) {
               <span className="god-open-metric">{p.metric}</span>
             </div>
           </header>
-          <div className="god-open-states">|G| = {p.states} · {t('鸿沟', 'gap')} = <b>{p.upper - p.lower}</b> {t('步', 'moves')}</div>
+          <div className="god-open-states"><MathText>{`|G| = ${p.states}`}</MathText> · {t('鸿沟', 'gap')} = <b>{p.upper - p.lower}</b> {t('步', 'moves')}</div>
 
           <div className="god-open-row">
             <div className="god-open-row-label">{t('为何难', 'Why it\'s hard')}</div>
-            <div className="god-open-row-body">{isZh ? p.whyHard.zh : p.whyHard.en}</div>
+            <div className="god-open-row-body"><MathText>{isZh ? p.whyHard.zh : p.whyHard.en}</MathText></div>
           </div>
           <div className="god-open-row">
             <div className="god-open-row-label">{t('合拢方向', 'Path to close')}</div>
-            <div className="god-open-row-body">{isZh ? p.toClose.zh : p.toClose.en}</div>
+            <div className="god-open-row-body"><MathText>{isZh ? p.toClose.zh : p.toClose.en}</MathText></div>
           </div>
           {p.estimate && (
             <div className="god-open-row">
               <div className="god-open-row-label">{t('粗略估算', 'Estimate')}</div>
-              <div className="god-open-row-body">{isZh ? p.estimate.zh : p.estimate.en}</div>
+              <div className="god-open-row-body"><MathText>{isZh ? p.estimate.zh : p.estimate.en}</MathText></div>
             </div>
           )}
         </article>

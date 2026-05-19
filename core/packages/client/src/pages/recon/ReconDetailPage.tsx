@@ -18,9 +18,10 @@ import bilibiliLogo from '../../assets/bilibili_logo.svg';
 import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, deleteAlternative } from '../../utils/recon_api';
 import {
   formatTime, flagClass,
-  isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
+  isBldEvent, getPuzzleId, wcaPersonUrl,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
 } from '../../utils/recon_utils';
+import { compLinkProps } from '../../utils/comp_link';
 import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
 import { EventIcon } from '../../components/EventIcon';
@@ -37,6 +38,7 @@ import SolutionView from './components/SolutionView';
 import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { computeAllStats } from '../../utils/recon_stats';
 import { DiscussionComposer, DiscussionEditBox, UserHeadline, ItemMenu, UserAvatarFallback } from './components/Discussion';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -48,6 +50,18 @@ export default function ReconDetailPage() {
   const [comments, setComments] = useState<ReconComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const reconTitle = (() => {
+    const fallback = isZh ? '录像还原' : 'Reconstruction';
+    if (!solve) return fallback;
+    const parts: string[] = [];
+    const t = solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null);
+    if (t) parts.push(t);
+    if (solve.event) parts.push(eventDisplayName(solve.event, isZh));
+    if (solve.person) parts.push(displayCuberName(solve.person, isZh));
+    return parts.length > 0 ? parts.join(' ') : fallback;
+  })();
+  useDocumentTitle(reconTitle, reconTitle);
 
   // NOTE: 异步加载 compNameZh 映射
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -111,9 +125,9 @@ export default function ReconDetailPage() {
               {solve.country && <span className={flagClass(solve.country)} />}
               <span>
                 {solve.compWcaId ? (
-                  <a href={wcaCompUrl(solve.compWcaId)} target="_blank" rel="noopener noreferrer">
+                  <Link {...compLinkProps(solve.compWcaId)}>
                     {stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
-                  </a>
+                  </Link>
                 ) : stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
                 {solve.round && (isZh ? `，${localizeRound(solve.round, t)}` : `, ${localizeRound(solve.round, t)}`)}
               </span>

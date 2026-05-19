@@ -5,11 +5,13 @@
 //   4. 全部成绩 (按比赛倒序的轮次表,attempts 列)
 
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { localizeCompName } from '../../../../../utils/comp_localize';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
+import { compLinkProps } from '../../../../../utils/comp_link';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computeProgress } from '../../logic/progress';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
@@ -214,11 +216,10 @@ function EventRoundsList({
                 <td className="wp-cell-comp">
                   {showComp && cmp && (
                     <>
-                      <a
-                        href={`https://www.worldcubeassociation.org/competitions/${cmp.id}`}
-                        target="_blank" rel="noopener noreferrer"
+                      <Link
+                        {...compLinkProps(cmp.id, { event: eventId, round: r.round_type_id })}
                         className="wp-bycomp-name"
-                      ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} /></a>
+                      ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} /></Link>
                       <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>
                     </>
                   )}

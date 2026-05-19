@@ -8,6 +8,7 @@
  * 用户切换度量,组件高亮"哪几步会折算成 2"。
  */
 import { useState } from 'react';
+import { MathText } from './Tex';
 
 type Metric = 'HTM' | 'QTM' | 'STM';
 
@@ -58,17 +59,23 @@ export default function MetricExplainer({ isZh }: Props) {
       </div>
 
       <div className="god-metric-defn">
-        {metric === 'HTM' && t(
-          'Half-Turn Metric:每个 90° 或 180° 面转都算 1 步。U2 = 1。WCA 文献最常用,也是 cube20.org 给出的 "20" 这个数字所用的度量。',
-          'Half-Turn Metric: each 90° or 180° face turn counts as 1. U2 = 1. The default in WCA literature and the metric behind the famous "20".',
+        {metric === 'HTM' && (
+          <MathText>{t(
+            'Half-Turn Metric:每个 90° 或 180° 面转都算 1 步。U2 = 1。WCA 文献最常用,也是 cube20.org 给出的 "20" 这个数字所用的度量。',
+            'Half-Turn Metric: each 90° or 180° face turn counts as 1. U2 = 1. The default in WCA literature and the metric behind the famous "20".',
+          )}</MathText>
         )}
-        {metric === 'QTM' && t(
-          'Quarter-Turn Metric:只有 90° 转算 1 步,180° 必须拆成两步 90°。U2 = 2。Rokicki & Davidson 2014 在这个度量下证出三阶直径 = 26。',
-          'Quarter-Turn Metric: only 90° counts as 1 step; a 180° turn is two 90°s. U2 = 2. Rokicki & Davidson 2014 proved the 3×3 diameter = 26 in this metric.',
+        {metric === 'QTM' && (
+          <MathText>{t(
+            'Quarter-Turn Metric:只有 90° 转算 1 步,180° 必须拆成两步 90°。U2 = 2。Rokicki & Davidson 2014 在这个度量下证出三阶直径 = 26。',
+            'Quarter-Turn Metric: only 90° counts as 1 step; a 180° turn is two 90°s. U2 = 2. Rokicki & Davidson 2014 proved the 3×3 diameter = 26 in this metric.',
+          )}</MathText>
         )}
-        {metric === 'STM' && t(
-          'Slice-Turn Metric:允许内层切片 M E S 作为单独一步。Rokicki 2014 证 3×3 STM 直径 = 18(同时是上下界)。多面 NxN 的 STM 上帝之数无人证过。',
-          'Slice-Turn Metric: inner slices M E S each count as a single move. Rokicki (2014) proved the 3×3 STM diameter = 18. No NxN STM bounds exist for N ≥ 4.',
+        {metric === 'STM' && (
+          <MathText>{t(
+            'Slice-Turn Metric:允许内层切片 M E S 作为单独一步。Rokicki 2014 证 3×3 STM 直径 = 18(同时是上下界)。多面 NxN 的 STM 上帝之数无人证过。',
+            'Slice-Turn Metric: inner slices M E S each count as a single move. Rokicki (2014) proved the 3×3 STM diameter = 18. No NxN STM bounds exist for N ≥ 4.',
+          )}</MathText>
         )}
       </div>
 

@@ -1,5 +1,5 @@
 /**
- * /scramble/god — 上帝之数 (God's Number) 全 WCA 项目总览。
+ * /math/god — 上帝之数 (God's Number) 全 WCA 项目总览。
  *
  * 结构:
  *   1. 头部 + 群论简介
@@ -10,16 +10,18 @@
  *   6. 历史时间线
  *   7. 算法 / 参考资料
  */
-import { Suspense, lazy, useMemo, useState } from 'react';
+import { Suspense, lazy, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { VisualCube } from '../../components/VisualCube';
 import { EventIcon } from '../../components/EventIcon';
 import { PUZZLES, primaryDiameter, WCA_EVENT_ORDER, type PuzzleEntry } from './god_data';
 import { DEEP } from './god_deep_data';
+import { TeX, TeXBlock, MathText } from './Tex';
 import './god.css';
 
 const GrowthChart = lazy(() => import('./GrowthChart'));
@@ -33,12 +35,32 @@ const FaqSection = lazy(() => import('./FaqSection'));
 
 /* ───── helpers ────────────────────────────────────────────────────── */
 
-function formatDiameter(p: PuzzleEntry, isZh: boolean): string {
+const SUP_MAP: Record<string, string> = {
+  '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+  '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
+  'ᵏ': 'k', '⁻': '-', '⁺': '+',
+};
+function fromSup(s: string): string { return s.split('').map((c) => SUP_MAP[c] ?? c).join(''); }
+
+/** Convert pretty-print scientific text like "4.3 × 10¹⁹" or "(4.3 × 10¹⁹)ᵏ" to KaTeX source. */
+function sciToTex(s: string): string {
+  return s
+    // (... × 10ⁿ)ᵏ pattern
+    .replace(/\(([^)]+)\)([⁰-⁹ᵏ⁻⁺]+)/g, (_m, inner: string, sup: string) => `\\bigl(${sciToTex(inner)}\\bigr)^{${fromSup(sup)}}`)
+    // a × 10ⁿ
+    .replace(/×\s*10([⁰-⁹⁻⁺]+)/g, (_m, sup: string) => `\\times 10^{${fromSup(sup)}}`)
+    // bare exponent: 20!·3¹⁹·30!·2²⁷
+    .replace(/(\d)([⁰-⁹]+)/g, (_m, base: string, sup: string) => `${base}^{${fromSup(sup)}}`)
+    // mid-dot → \cdot
+    .replace(/·/g, ' \\cdot ');
+}
+
+function formatDiameter(p: PuzzleEntry): { tex?: string; text?: string } {
   const d = primaryDiameter(p);
-  if (d.status === 'exact') return `${d.upper}`;
-  if (d.status === 'parametric') return isZh ? `20·k` : `20·k`;
-  if (d.lower != null && d.upper != null) return `${d.lower}–${d.upper}`;
-  return `≤ ${d.upper}`;
+  if (d.status === 'exact') return { text: `${d.upper}` };
+  if (d.status === 'parametric') return { tex: `20 \\cdot k` };
+  if (d.lower != null && d.upper != null) return { text: `${d.lower}–${d.upper}` };
+  return { tex: `\\le ${d.upper}` };
 }
 
 function statusBadge(p: PuzzleEntry, isZh: boolean): { label: string; cls: string } {
@@ -72,14 +94,17 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
             <EventIcon event={p.id} className="god-card-eventicon" />
             <span>{isZh ? p.name.zh : p.name.en}</span>
           </div>
-          <div className="god-card-states">|G| = {p.states.sci}{p.states.pretty && (
+          <div className="god-card-states"><TeX src={`|G| = ${sciToTex(p.states.sci)}`} />{p.states.pretty && (
             <span className="god-card-states-extra"> · {isZh ? p.states.pretty.zh : p.states.pretty.en}</span>
           )}</div>
         </div>
         <div className="god-card-d-block">
           <div className={`god-card-badge ${badge.cls}`}>{badge.label}</div>
           <div className="god-card-d-num">
-            {formatDiameter(p, isZh)}
+            {(() => {
+              const f = formatDiameter(p);
+              return f.tex ? <TeX src={f.tex} /> : f.text;
+            })()}
             <span className="god-card-d-metric">{d.metric}</span>
           </div>
         </div>
@@ -87,7 +112,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
 
       {expanded && (
         <div className="god-card-body">
-          <p className="god-card-blurb">{isZh ? p.blurb.zh : p.blurb.en}</p>
+          <p className="god-card-blurb"><MathText>{isZh ? p.blurb.zh : p.blurb.en}</MathText></p>
 
           {DEEP[p.id] && (
             <div className="god-card-deep">
@@ -95,7 +120,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
                 <h4 className="god-card-deep-h">{isZh ? DEEP[p.id].heading!.zh : DEEP[p.id].heading!.en}</h4>
               )}
               {DEEP[p.id].paragraphs.map((para, i) => (
-                <p key={i} className="god-card-deep-p">{isZh ? para.zh : para.en}</p>
+                <p key={i} className="god-card-deep-p"><MathText>{isZh ? para.zh : para.en}</MathText></p>
               ))}
             </div>
           )}
@@ -110,7 +135,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
                     <span className="god-card-metric-val">
                       {m.status === 'exact'
                         ? m.upper
-                        : (m.lower != null ? `${m.lower}–${m.upper}` : `≤ ${m.upper}`)}
+                        : (m.lower != null ? `${m.lower}–${m.upper}` : <TeX src={`\\le ${m.upper}`} />)}
                     </span>
                     {m.note && <span className="god-card-metric-note">— {isZh ? m.note.zh : m.note.en}</span>}
                   </li>
@@ -145,29 +170,29 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
 
 /* ───── timeline ───────────────────────────────────────────────────── */
 
-interface Milestone { year: number; zh: string; en: string; cls?: string }
+interface Milestone { year: number; zh: ReactNode; en: ReactNode; cls?: string }
 const MILESTONES: Milestone[] = [
-  { year: 1974, zh: 'Ernő Rubik 在布达佩斯发明"魔方"。最初用作教学具,演示三维结构、空间想象与组合学。', en: 'Ernő Rubik invents the Magic Cube in Budapest as a teaching aid for 3-D structure, spatial reasoning, and combinatorics.' },
-  { year: 1979, zh: '魔方上市为大众玩具;西方数学家立刻意识到它是"4.3 × 10¹⁹ 阶的有限群"。', en: 'Cube hits commercial shelves; Western mathematicians immediately recognise it as a finite group of order 4.3 × 10¹⁹.' },
-  { year: 1981, zh: 'David Singmaster 出版《Notes on Rubik\'s Magic Cube》——首次系统化记号(URFDLB) + 群论术语,为后来所有研究奠基。', en: 'David Singmaster publishes Notes on Rubik\'s Magic Cube — the first systematic notation (URFDLB) and group-theoretic terminology underpinning everything since.' },
-  { year: 1981, zh: '2×2 / Pyraminx / Skewb 的 BFS 在第一代 PC 上跑通 ⇒ 各自直径 11(三个不同群恰好同直径)。', en: '2×2 / Pyraminx / Skewb BFS feasible on early PCs ⇒ each diameter is 11 (a coincidence across three different groups).', cls: 'is-multi' },
-  { year: 1982, zh: 'Morwen Thistlethwaite 公布 4-phase 算法:G₀ → G₁ → G₂ → G₃ → {e},每阶段查预计算表,上界 ≤ 52 HTM。', en: 'Morwen Thistlethwaite publishes the 4-phase algorithm: G₀ → G₁ → G₂ → G₃ → {e}, each phase from a precomputed table, capping 3×3 at ≤ 52 HTM.' },
-  { year: 1990, zh: 'Hans Kloosterman 把上界压到 42 步;同年多位作者将其压到 40-37。', en: 'Hans Kloosterman tightens the upper bound to 42; several authors that year reach 40-37.' },
-  { year: 1992, zh: 'Herbert Kociemba 发表 2-phase 算法,引入子群 H = ⟨U,D,L²,R²,F²,B²⟩(他叫 P1 或 G₁);把 3×3 切成 22 亿陪集,每个陪集 ≤ 30 HTM,合计上界 ≤ 30。', en: 'Herbert Kociemba publishes the 2-phase algorithm with H = ⟨U,D,L²,R²,F²,B²⟩ (his "P1" / "G₁"): 2.2 billion cosets, each ≤ 30 HTM, total ≤ 30.' },
-  { year: 1995, zh: 'Michael Reid 用计算机辅助穷举证明 superflip 需 ≥ 20 步 ⇒ 3×3 下界跳到 20,并证 Kociemba 上界 ≤ 22。下界 20 / 上界 22 这个 2-步缝隙将持续 15 年。', en: 'Michael Reid uses computer-assisted enumeration to prove superflip needs ≥ 20 ⇒ 3×3 lower bound = 20; also proves Kociemba\'s bound ≤ 22. The 20/22 gap stands for 15 years.' },
-  { year: 2005, zh: 'Mike Masonjones 用 BFS 证 Square-1 twist metric 直径 = 13。', en: 'Mike Masonjones BFS-proves Square-1 twist-metric diameter = 13.' },
-  { year: 2006, zh: 'Silviu Radu 把三阶上界压到 27;次年(2007)Rokicki 加入研究,压到 26。', en: 'Silviu Radu pushes 3×3 upper bound to 27; Rokicki joins in 2007 and gets it to 26.' },
-  { year: 2008, zh: 'Tomas Rokicki 用 Sun 的 8GB 集群把上界一路压到 22 步 —— Reid 1995 的目标终于达到,但还没合拢。', en: 'Tomas Rokicki uses Sun\'s 8-GB cluster to drop the upper bound to 22 — finally reaching Reid\'s 1995 target, but the gap is not closed.' },
-  { year: 2010, zh: 'Rokicki · Kociemba · Davidson · Dethridge 在 Google 跑 35 CPU-年,把 22 亿陪集用对称压到 5588 万,再用集合覆盖压到 ~80 个 super-cosets。每个 super-coset 实际求解,无反例。2010-07-13 宣布:3×3 HTM 直径 = 20。', en: 'Rokicki · Kociemba · Davidson · Dethridge spend 35 CPU-years on Google: symmetry compresses 2.2B cosets to 55.88M, set-cover absorbs neighbours into ~80 super-cosets, each actually solved. No counterexample. 2010-07-13: 3×3 HTM diameter = 20.', cls: 'is-major' },
-  { year: 2011, zh: 'Erik Demaine 等人 (arXiv:1106.5736 "Algorithms for Solving Rubik\'s Cubes") 证 N×N 魔方上帝之数 = Θ(N²/log N),通过并行子算法 + cubie 对易类划分。这是 NxN 渐近的严格证明。', en: 'Erik Demaine et al. (arXiv:1106.5736 "Algorithms for Solving Rubik\'s Cubes") prove N×N God\'s number is Θ(N²/log N) via parallel sub-algorithms + cubie commuting-class partitioning. The rigorous N×N asymptotic.' },
-  { year: 2012, zh: 'Herbert Kociemba 用对易面计数证 Megaminx 下界 = 48 HTM。', en: 'Herbert Kociemba proves Megaminx lower bound = 48 HTM via commuting-faces counting.' },
-  { year: 2014, zh: 'Rokicki & Davidson 用同套陪集框架证 3×3 QTM 直径 = 26;Jakob Kogler 用 front-cross 陪集证 Rubik\'s Clock 直径 = 12;Rokicki 单独证 3×3 STM 直径 = 18。一年三个新精确直径。', en: 'Rokicki & Davidson prove 3×3 QTM diameter = 26 with the same coset framework; Jakob Kogler proves Rubik\'s Clock diameter = 12 via front-cross cosets; Rokicki separately proves 3×3 STM diameter = 18. Three new exact diameters in one year.', cls: 'is-major' },
-  { year: 2017, zh: 'Shuang Chen (WCA 2008CHEN27) 用 722 GB 磁盘 BFS + 3816 对称陪集,证 Square-1 face-turn 直径 = 31。磁盘 BFS 第一次在 cube 领域达到这种规模。', en: 'Shuang Chen (WCA 2008CHEN27) uses 722 GB disk BFS + 3816 symmetry cosets to prove Square-1 face-turn diameter = 31. The first cubing-domain disk-BFS at this scale.' },
-  { year: 2018, zh: 'Sebastiano Tronto 与 Vincent Sheu 在 SpeedSolving 公布 4×4 OBTM 下界 ≥ 35。', en: 'Sebastiano Tronto and Vincent Sheu publish the 4×4 OBTM lower bound ≥ 35 on SpeedSolving.' },
-  { year: 2020, zh: 'Graham Siggins 创下 MBLD 世界纪录 62/65。MBLD 群论上完全平凡(20·k 直径),记录是记忆 + 体力的极限。', en: 'Graham Siggins sets the MBLD world record 62/65. MBLD is group-theoretically trivial (diameter 20·k); the record is a memory + endurance limit.' },
-  { year: 2022, zh: 'Yusheng Du 三阶 4.86s WR(已被 Yiheng Wang 4.86 平 + 后续超越),平均解 ~40 HTM,远高于 20 的理论最优。', en: 'Yusheng Du sets 3×3 WR at 4.86s (later tied / surpassed by Yiheng Wang), avg solution ~40 HTM, far above the 20 theoretical optimum.' },
-  { year: 2024, zh: 'Merino & Subercaseaux (arXiv:2501.00144) 提出"Demigod\'s number" —— 用 36 HTM "高概率近似 oracle" 解三阶,不替代 Rokicki 20,但展示了用更少算力获得"近似上帝"的方法。', en: 'Merino & Subercaseaux (arXiv:2501.00144) propose a "Demigod\'s number" — a 36-HTM probabilistic oracle for 3×3. Doesn\'t replace Rokicki\'s 20 but demonstrates "approximate God" with less compute.' },
-  { year: 2025, zh: 'cube20.org 发布 Rubik\'s Clock 完整距离分布,作为 2014 Kogler 证明的 11 年后独立复核。', en: 'cube20.org publishes Rubik\'s Clock full distance distribution as an independent re-verification of Kogler\'s 2014 proof, 11 years on.' },
+  { year: 1974, zh: <>Ernő Rubik 在布达佩斯发明"魔方"。最初用作教学具,演示三维结构、空间想象与组合学。</>, en: <>Ernő Rubik invents the Magic Cube in Budapest as a teaching aid for 3-D structure, spatial reasoning, and combinatorics.</> },
+  { year: 1979, zh: <>魔方上市为大众玩具;西方数学家立刻意识到它是"<TeX src="4.3 \times 10^{19}" /> 阶的有限群"。</>, en: <>Cube hits commercial shelves; Western mathematicians immediately recognise it as a finite group of order <TeX src="4.3 \times 10^{19}" />.</> },
+  { year: 1981, zh: <>David Singmaster 出版《Notes on Rubik's Magic Cube》——首次系统化记号(URFDLB) + 群论术语,为后来所有研究奠基。</>, en: <>David Singmaster publishes Notes on Rubik's Magic Cube — the first systematic notation (URFDLB) and group-theoretic terminology underpinning everything since.</> },
+  { year: 1981, zh: <>2×2 / Pyraminx / Skewb 的 BFS 在第一代 PC 上跑通 ⇒ 各自直径 11(三个不同群恰好同直径)。</>, en: <>2×2 / Pyraminx / Skewb BFS feasible on early PCs ⇒ each diameter is 11 (a coincidence across three different groups).</>, cls: 'is-multi' },
+  { year: 1982, zh: <>Morwen Thistlethwaite 公布 4-phase 算法:<TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />,每阶段查预计算表,上界 <TeX src="\le 52" /> HTM。</>, en: <>Morwen Thistlethwaite publishes the 4-phase algorithm: <TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />, each phase from a precomputed table, capping 3×3 at <TeX src="\le 52" /> HTM.</> },
+  { year: 1990, zh: <>Hans Kloosterman 把上界压到 42 步;同年多位作者将其压到 40-37。</>, en: <>Hans Kloosterman tightens the upper bound to 42; several authors that year reach 40-37.</> },
+  { year: 1992, zh: <>Herbert Kociemba 发表 2-phase 算法,引入子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(他叫 P1 或 <TeX src="G_{1}" />);把 3×3 切成 22 亿陪集,每个陪集 <TeX src="\le 30" /> HTM,合计上界 <TeX src="\le 30" />。</>, en: <>Herbert Kociemba publishes the 2-phase algorithm with <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" /> (his "P1" / "<TeX src="G_{1}" />"): 2.2 billion cosets, each <TeX src="\le 30" /> HTM, total <TeX src="\le 30" />.</> },
+  { year: 1995, zh: <>Michael Reid 用计算机辅助穷举证明 superflip 需 <TeX src="\ge 20" /> 步 ⇒ 3×3 下界跳到 20,并证 Kociemba 上界 <TeX src="\le 22" />。下界 20 / 上界 22 这个 2-步缝隙将持续 15 年。</>, en: <>Michael Reid uses computer-assisted enumeration to prove superflip needs <TeX src="\ge 20" /> ⇒ 3×3 lower bound = 20; also proves Kociemba's bound <TeX src="\le 22" />. The 20/22 gap stands for 15 years.</> },
+  { year: 2005, zh: <>Mike Masonjones 用 BFS 证 Square-1 twist metric 直径 = 13。</>, en: <>Mike Masonjones BFS-proves Square-1 twist-metric diameter = 13.</> },
+  { year: 2006, zh: <>Silviu Radu 把三阶上界压到 27;次年(2007)Rokicki 加入研究,压到 26。</>, en: <>Silviu Radu pushes 3×3 upper bound to 27; Rokicki joins in 2007 and gets it to 26.</> },
+  { year: 2008, zh: <>Tomas Rokicki 用 Sun 的 8GB 集群把上界一路压到 22 步 —— Reid 1995 的目标终于达到,但还没合拢。</>, en: <>Tomas Rokicki uses Sun's 8-GB cluster to drop the upper bound to 22 — finally reaching Reid's 1995 target, but the gap is not closed.</> },
+  { year: 2010, zh: <>Rokicki · Kociemba · Davidson · Dethridge 在 Google 跑 35 CPU-年,把 22 亿陪集用对称压到 5588 万,再用集合覆盖压到 ~80 个 super-cosets。每个 super-coset 实际求解,无反例。2010-07-13 宣布:3×3 HTM 直径 = 20。</>, en: <>Rokicki · Kociemba · Davidson · Dethridge spend 35 CPU-years on Google: symmetry compresses 2.2B cosets to 55.88M, set-cover absorbs neighbours into ~80 super-cosets, each actually solved. No counterexample. 2010-07-13: 3×3 HTM diameter = 20.</>, cls: 'is-major' },
+  { year: 2011, zh: <>Erik Demaine 等人 (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") 证 <TeX src="N \times N" /> 魔方上帝之数 = <TeX src="\Theta(N^{2}/\log N)" />,通过并行子算法 + cubie 对易类划分。这是 <TeX src="N \times N" /> 渐近的严格证明。</>, en: <>Erik Demaine et al. (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") prove <TeX src="N \times N" /> God's number is <TeX src="\Theta(N^{2}/\log N)" /> via parallel sub-algorithms + cubie commuting-class partitioning. The rigorous <TeX src="N \times N" /> asymptotic.</> },
+  { year: 2012, zh: <>Herbert Kociemba 用对易面计数证 Megaminx 下界 = 48 HTM。</>, en: <>Herbert Kociemba proves Megaminx lower bound = 48 HTM via commuting-faces counting.</> },
+  { year: 2014, zh: <>Rokicki & Davidson 用同套陪集框架证 3×3 QTM 直径 = 26;Jakob Kogler 用 front-cross 陪集证 Rubik's Clock 直径 = 12;Rokicki 单独证 3×3 STM 直径 = 18。一年三个新精确直径。</>, en: <>Rokicki & Davidson prove 3×3 QTM diameter = 26 with the same coset framework; Jakob Kogler proves Rubik's Clock diameter = 12 via front-cross cosets; Rokicki separately proves 3×3 STM diameter = 18. Three new exact diameters in one year.</>, cls: 'is-major' },
+  { year: 2017, zh: <>Shuang Chen (WCA 2008CHEN27) 用 722 GB 磁盘 BFS + 3816 对称陪集,证 Square-1 face-turn 直径 = 31。磁盘 BFS 第一次在 cube 领域达到这种规模。</>, en: <>Shuang Chen (WCA 2008CHEN27) uses 722 GB disk BFS + 3816 symmetry cosets to prove Square-1 face-turn diameter = 31. The first cubing-domain disk-BFS at this scale.</> },
+  { year: 2018, zh: <>Sebastiano Tronto 与 Vincent Sheu 在 SpeedSolving 公布 4×4 OBTM 下界 <TeX src="\ge 35" />。</>, en: <>Sebastiano Tronto and Vincent Sheu publish the 4×4 OBTM lower bound <TeX src="\ge 35" /> on SpeedSolving.</> },
+  { year: 2020, zh: <>Graham Siggins 创下 MBLD 世界纪录 62/65。MBLD 群论上完全平凡(<TeX src="20 \cdot k" /> 直径),记录是记忆 + 体力的极限。</>, en: <>Graham Siggins sets the MBLD world record 62/65. MBLD is group-theoretically trivial (diameter <TeX src="20 \cdot k" />); the record is a memory + endurance limit.</> },
+  { year: 2022, zh: <>Yusheng Du 三阶 4.86s WR(已被 Yiheng Wang 4.86 平 + 后续超越),平均解 ~40 HTM,远高于 20 的理论最优。</>, en: <>Yusheng Du sets 3×3 WR at 4.86s (later tied / surpassed by Yiheng Wang), avg solution ~40 HTM, far above the 20 theoretical optimum.</> },
+  { year: 2024, zh: <>Merino & Subercaseaux (arXiv:2501.00144) 提出"Demigod's number" —— 用 36 HTM "高概率近似 oracle" 解三阶,不替代 Rokicki 20,但展示了用更少算力获得"近似上帝"的方法。</>, en: <>Merino & Subercaseaux (arXiv:2501.00144) propose a "Demigod's number" — a 36-HTM probabilistic oracle for 3×3. Doesn't replace Rokicki's 20 but demonstrates "approximate God" with less compute.</> },
+  { year: 2025, zh: <>cube20.org 发布 Rubik's Clock 完整距离分布,作为 2014 Kogler 证明的 11 年后独立复核。</>, en: <>cube20.org publishes Rubik's Clock full distance distribution as an independent re-verification of Kogler's 2014 proof, 11 years on.</> },
 ];
 
 /* ───── page ───────────────────────────────────────────────────────── */
@@ -175,6 +200,7 @@ const MILESTONES: Milestone[] = [
 export default function GodNumberPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('上帝之数', "God's Number");
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['333', '222']));
@@ -192,9 +218,9 @@ export default function GodNumberPage() {
   return (
     <div className="god-page">
       <header className="god-header">
-        <Link to="/scramble" className="god-back">
+        <Link to="/math" className="god-back">
           <ArrowLeft size={16} />
-          <span>{t('返回打乱中心', 'Back to scramble hub')}</span>
+          <span>{t('返回数学', 'Back to math hub')}</span>
         </Link>
         <div className="god-header-right">
           <LangToggle variant="inline" />
@@ -211,21 +237,21 @@ export default function GodNumberPage() {
             <span className="god-title-zh">{t('— 全 WCA 项目', '— across every WCA puzzle')}</span>
           </h1>
           <p className="god-lead">
-            {t(
-              '"上帝之数"是一个魔方解魔方所需的最少步数中最大的那个 —— 也就是这个魔方"最难的状态"。形式化讲,它就是 Cayley 图的直径:在群 G 与生成元集 S 下,起点 e 到任意点 g 的最短路径长度的最大值。下面把 17 个 WCA 项目的直径(精确或上下界)一一列出。',
-              "God's number is the maximum, over all states, of the minimum moves to solve. Formally it is the diameter of the Cayley graph of the puzzle group G with generator set S. Below, every WCA puzzle is listed with its exact diameter or current bounds.",
+            {isZh ? (
+              <>"上帝之数"是一个魔方解魔方所需的最少步数中最大的那个 —— 也就是这个魔方"最难的状态"。形式化讲,它就是 Cayley 图的直径:在群 <TeX src="G" /> 与生成元集 <TeX src="S" /> 下,起点 <TeX src="e" /> 到任意点 <TeX src="g" /> 的最短路径长度的最大值。下面把 17 个 WCA 项目的直径(精确或上下界)一一列出。</>
+            ) : (
+              <>God's number is the maximum, over all states, of the minimum moves to solve. Formally it is the diameter of the Cayley graph of the puzzle group <TeX src="G" /> with generator set <TeX src="S" />. Below, every WCA puzzle is listed with its exact diameter or current bounds.</>
             )}
           </p>
 
           {/* 关键公式 */}
           <div className="god-formula-block">
-            <div className="god-formula">
-              D(G, S) = max<sub>g ∈ G</sub> min<sub>w ∈ S*, w·e = g</sub> |w|
-            </div>
+            <TeXBlock src={`D(G,\\, S) \\;=\\; \\max_{g \\in G}\\; \\min_{\\substack{w \\in S^{*} \\\\ w \\cdot e \\,=\\, g}}\\, |w|`} />
             <div className="god-formula-cap">
-              {t(
-                'G = 魔方群, S = 合法转动生成元, |w| = 步数(按所选度量)',
-                'G = puzzle group, S = legal generating moves, |w| = word length (under the chosen metric)',
+              {isZh ? (
+                <><TeX src="G" /> = 魔方群,<TeX src="S" /> = 合法转动生成元,<TeX src="|w|" /> = 步数(按所选度量)</>
+              ) : (
+                <><TeX src="G" /> = puzzle group, <TeX src="S" /> = legal generating moves, <TeX src="|w|" /> = word length (under the chosen metric)</>
               )}
             </div>
           </div>
@@ -246,11 +272,11 @@ export default function GodNumberPage() {
           <div className="god-hl-card">
             <div className="god-hl-num">35 CPU·yr</div>
             <div className="god-hl-cap">{t('Google 集群跑掉的算力', 'Google compute spent on the proof')}</div>
-            <div className="god-hl-sub">55.88M cosets · 4.3 × 10¹⁹ states</div>
+            <div className="god-hl-sub">55.88M cosets · <TeX src="4.3 \times 10^{19}" /> states</div>
           </div>
           <div className="god-hl-card">
-            <div className="god-hl-num">Θ(N²/log N)</div>
-            <div className="god-hl-cap">{t('NxN 上帝之数渐近 (Demaine 2011)', 'N×N God\'s number asymptotic (Demaine 2011)')}</div>
+            <div className="god-hl-num"><TeX src="\Theta(N^{2}/\log N)" /></div>
+            <div className="god-hl-cap">{isZh ? <><TeX src="N \times N" /> 上帝之数渐近 (Demaine 2011)</> : <><TeX src="N \times N" /> God's number asymptotic (Demaine 2011)</>}</div>
             <div className="god-hl-sub">arXiv:1106.5736</div>
           </div>
         </section>
@@ -261,44 +287,50 @@ export default function GodNumberPage() {
           <div className="god-primer-grid">
             <div className="god-primer-cell">
               <h3>{t('1. 魔方是一个群', '1. A cube is a group')}</h3>
-              <p>{t(
-                '每个合法状态对应一个置换:把 8 个角块的位置 + 朝向、12 个棱块的位置 + 朝向打散重排。乘法 = 把两个操作依次施加。单位元 = "还原态"。逆元 = "反演"。三阶魔方的所有状态构成群 G,阶 |G| = 4.3 × 10¹⁹。',
-                'Every legal state is a permutation: 8 corners (pos + orientation) and 12 edges (pos + orientation) reshuffled. Multiplication = compose two operations. Identity = solved state. Inverse = invert the sequence. All 3×3 states form a group G with |G| = 4.3 × 10¹⁹.',
+              <p>{isZh ? (
+                <>每个合法状态对应一个置换:把 8 个角块的位置 + 朝向、12 个棱块的位置 + 朝向打散重排。乘法 = 把两个操作依次施加。单位元 = "还原态"。逆元 = "反演"。三阶魔方的所有状态构成群 <TeX src="G" />,阶 <TeX src="|G| = 4.3 \times 10^{19}" />。</>
+              ) : (
+                <>Every legal state is a permutation: 8 corners (pos + orientation) and 12 edges (pos + orientation) reshuffled. Multiplication = compose two operations. Identity = solved state. Inverse = invert the sequence. All 3×3 states form a group <TeX src="G" /> with <TeX src="|G| = 4.3 \times 10^{19}" />.</>
               )}</p>
             </div>
             <div className="god-primer-cell">
               <h3>{t('2. 生成元 = "你能转的"', '2. Generators = "what you can turn"')}</h3>
-              <p>{t(
-                '六个 90° 面转 {U, D, L, R, F, B} 与它们的 180° / 反转构成生成元集 S。任何状态都能写成 S 中元素的有限乘积 —— 这就是 G 由 S 生成。',
-                'The six 90° face turns {U, D, L, R, F, B} plus their inverses / doubles form generator set S. Every state is a finite product of elements of S — that\'s "G is generated by S".',
+              <p>{isZh ? (
+                <>六个 90° 面转 <TeX src="\{U, D, L, R, F, B\}" /> 与它们的 180° / 反转构成生成元集 <TeX src="S" />。任何状态都能写成 <TeX src="S" /> 中元素的有限乘积 —— 这就是 <TeX src="G" /> 由 <TeX src="S" /> 生成。</>
+              ) : (
+                <>The six 90° face turns <TeX src="\{U, D, L, R, F, B\}" /> plus their inverses / doubles form generator set <TeX src="S" />. Every state is a finite product of elements of <TeX src="S" /> — that's "<TeX src="G" /> is generated by <TeX src="S" />".</>
               )}</p>
             </div>
             <div className="god-primer-cell">
               <h3>{t('3. Cayley 图', '3. The Cayley graph')}</h3>
-              <p>{t(
-                '把每个状态当一个顶点,两个状态相差一个生成元就连一条边。这张图叫 Cayley 图 Γ(G, S)。"解魔方" = 找一条从打乱状态到单位元的路径。',
-                'Make a vertex for each state; draw an edge between two states differing by one generator. This is the Cayley graph Γ(G, S). "Solving" = finding a path from your state to the identity.',
+              <p>{isZh ? (
+                <>把每个状态当一个顶点,两个状态相差一个生成元就连一条边。这张图叫 Cayley 图 <TeX src="\Gamma(G, S)" />。"解魔方" = 找一条从打乱状态到单位元的路径。</>
+              ) : (
+                <>Make a vertex for each state; draw an edge between two states differing by one generator. This is the Cayley graph <TeX src="\Gamma(G, S)" />. "Solving" = finding a path from your state to the identity.</>
               )}</p>
             </div>
             <div className="god-primer-cell">
               <h3>{t('4. 直径 = 上帝之数', '4. Diameter = God\'s number')}</h3>
-              <p>{t(
-                'Cayley 图里"最短路径的最大值"就是直径 D(G, S)。也就是 —— 最坏情况下,最少要几步才能还原。这就是上帝之数。',
-                'The maximum, over all pairs of vertices, of the shortest-path length: that\'s the diameter D(G, S). In other words, worst-case minimum-move count. That\'s God\'s number.',
+              <p>{isZh ? (
+                <>Cayley 图里"最短路径的最大值"就是直径 <TeX src="D(G, S)" />。也就是 —— 最坏情况下,最少要几步才能还原。这就是上帝之数。</>
+              ) : (
+                <>The maximum, over all pairs of vertices, of the shortest-path length: that's the diameter <TeX src="D(G, S)" />. In other words, worst-case minimum-move count. That's God's number.</>
               )}</p>
             </div>
             <div className="god-primer-cell">
-              <h3>{t('5. Lagrange 定理 ⇒ 陪集分解', '5. Lagrange ⇒ coset decomposition')}</h3>
-              <p>{t(
-                '任何子群 H ⊂ G 都把 G 切成 |G|/|H| 个互不相交的等价类(陪集)。Kociemba 算法用 H = ⟨U,D,L²,R²,F²,B²⟩(|H| ≈ 1.95 × 10¹⁰)把 4.3 × 10¹⁹ 状态划成 2,217,093,120 个陪集——每个陪集只需求一次解,数量减少 10 个数量级。',
-                'Any subgroup H ⊂ G partitions G into |G|/|H| disjoint cosets. Kociemba\'s H = ⟨U,D,L²,R²,F²,B²⟩ (|H| ≈ 1.95 × 10¹⁰) splits 4.3 × 10¹⁹ states into 2,217,093,120 cosets — solve each once, 10 orders of magnitude saved.',
+              <h3>{isZh ? <>5. Lagrange 定理 ⇒ 陪集分解</> : <>5. Lagrange ⇒ coset decomposition</>}</h3>
+              <p>{isZh ? (
+                <>任何子群 <TeX src="H \subset G" /> 都把 <TeX src="G" /> 切成 <TeX src="|G|/|H|" /> 个互不相交的等价类(陪集)。Kociemba 算法用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(<TeX src="|H| \approx 1.95 \times 10^{10}" />)把 <TeX src="4.3 \times 10^{19}" /> 状态划成 2,217,093,120 个陪集——每个陪集只需求一次解,数量减少 10 个数量级。</>
+              ) : (
+                <>Any subgroup <TeX src="H \subset G" /> partitions <TeX src="G" /> into <TeX src="|G|/|H|" /> disjoint cosets. Kociemba's <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" /> (<TeX src="|H| \approx 1.95 \times 10^{10}" />) splits <TeX src="4.3 \times 10^{19}" /> states into 2,217,093,120 cosets — solve each once, 10 orders of magnitude saved.</>
               )}</p>
             </div>
             <div className="god-primer-cell">
-              <h3>{t('6. 对称群 S₄₈ ⇒ 进一步压缩', '6. Symmetry group S₄₈ ⇒ further squeeze')}</h3>
-              <p>{t(
-                '立方体本身有 48 个对称(24 个旋转 × 2 镜像)。两个状态若在对称下等价,其上帝之数相同。三阶 22 亿陪集模掉 S₄₈ 剩 ~5588 万——这是 2010 证明的可行规模。',
-                'The cube itself has 48 symmetries (24 rotations × 2 mirror). Two states equivalent under symmetry share a diameter. Quotienting the 2.2B cosets by S₄₈ leaves ~55.88M — the feasibility threshold that made the 2010 proof possible.',
+              <h3>{isZh ? <>6. 对称群 <TeX src="S_{48}" /> ⇒ 进一步压缩</> : <>6. Symmetry group <TeX src="S_{48}" /> ⇒ further squeeze</>}</h3>
+              <p>{isZh ? (
+                <>立方体本身有 48 个对称(24 个旋转 × 2 镜像)。两个状态若在对称下等价,其上帝之数相同。三阶 22 亿陪集模掉 <TeX src="S_{48}" /> 剩 ~5588 万——这是 2010 证明的可行规模。</>
+              ) : (
+                <>The cube itself has 48 symmetries (24 rotations × 2 mirror). Two states equivalent under symmetry share a diameter. Quotienting the 2.2B cosets by <TeX src="S_{48}" /> leaves ~55.88M — the feasibility threshold that made the 2010 proof possible.</>
               )}</p>
             </div>
           </div>
@@ -307,9 +339,10 @@ export default function GodNumberPage() {
         {/* ────────────── SUBGROUP CHAIN ────────────── */}
         <section className="god-section">
           <h2>{t('阶段算法 — 互动:Kociemba vs Thistlethwaite', 'Phase algorithms — interactive: Kociemba vs Thistlethwaite')}</h2>
-          <p className="god-sec-lead">{t(
-            '陪集分解的实现方式有两套主流。Thistlethwaite (1981) 把求解切成 4 个阶段,每个阶段冻结一个对称性;Kociemba (1992) 简化为 2 个阶段。下面是两套子群链的对比:每一层显示 |Gi| + 到下一层的陪集数 + 该阶段的最坏步数。',
-            'Two main flavours of coset decomposition. Thistlethwaite (1981) splits solving into 4 phases, each freezing one symmetry. Kociemba (1992) simplifies to 2. Below: the subgroup chains side by side, each layer showing |Gi| + coset count to next + phase worst-case moves.',
+          <p className="god-sec-lead">{isZh ? (
+            <>陪集分解的实现方式有两套主流。Thistlethwaite (1981) 把求解切成 4 个阶段,每个阶段冻结一个对称性;Kociemba (1992) 简化为 2 个阶段。下面是两套子群链的对比:每一层显示 <TeX src="|G_{i}|" /> + 到下一层的陪集数 + 该阶段的最坏步数。</>
+          ) : (
+            <>Two main flavours of coset decomposition. Thistlethwaite (1981) splits solving into 4 phases, each freezing one symmetry. Kociemba (1992) simplifies to 2. Below: the subgroup chains side by side, each layer showing <TeX src="|G_{i}|" /> + coset count to next + phase worst-case moves.</>
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <SubgroupChain isZh={isZh} />
@@ -354,9 +387,10 @@ export default function GodNumberPage() {
         {/* ────────────── 3×3 DISTANCE DISTRIBUTION ────────────── */}
         <section className="god-section">
           <h2>{t('三阶最少步分布 — 互动:FMC 的天花板', '3×3 minimum-solution distribution — interactive: the FMC ceiling')}</h2>
-          <p className="god-sec-lead">{t(
-            '把"距离 d (HTM) 处有多少个三阶状态"画出来,就是 FMC 选手实质要面对的"最少步分布"。Rokicki 团队公布了 d=0..15 的精确值;d=16..20 因总和被 4.3 × 10¹⁹ 约束,只有估算。',
-            'Plot "how many 3×3 states are at distance d (HTM)" and you get the distribution every FMC solver implicitly faces. Rokicki has published exact counts for d=0..15; d=16..20 are estimates constrained by the total sum 4.3 × 10¹⁹.',
+          <p className="god-sec-lead">{isZh ? (
+            <>把"距离 <TeX src="d" /> (HTM) 处有多少个三阶状态"画出来,就是 FMC 选手实质要面对的"最少步分布"。Rokicki 团队公布了 <TeX src="d = 0, \ldots, 15" /> 的精确值;<TeX src="d = 16, \ldots, 20" /> 因总和被 <TeX src="4.3 \times 10^{19}" /> 约束,只有估算。</>
+          ) : (
+            <>Plot "how many 3×3 states are at distance <TeX src="d" /> (HTM)" and you get the distribution every FMC solver implicitly faces. Rokicki has published exact counts for <TeX src="d = 0, \ldots, 15" />; <TeX src="d = 16, \ldots, 20" /> are estimates constrained by the total sum <TeX src="4.3 \times 10^{19}" />.</>
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <DistanceDistribution isZh={isZh} />
@@ -378,9 +412,10 @@ export default function GodNumberPage() {
         {/* ────────────── GROWTH ────────────── */}
         <section className="god-section">
           <h2>{t('NxN 增长 — 互动:状态空间 vs 上帝之数', 'N×N growth — interactive: state space vs diameter')}</h2>
-          <p className="god-sec-lead">{t(
-            '左轴 |G(N)| 走双指数级 (~10^(N²)),右轴上帝之数走多项式 / 多项式·对数。两者的比就是"难度密度"。鼠标悬停某个 N 看具体值。',
-            'Left axis grows double-exponentially (~10^(N²)); right axis grows polynomially with a log shave. Their ratio is the "difficulty density". Hover an N for exact values.',
+          <p className="god-sec-lead">{isZh ? (
+            <>左轴 <TeX src="|G(N)|" /> 走双指数级 (<TeX src="\sim 10^{N^{2}}" />),右轴上帝之数走多项式 / 多项式·对数。两者的比就是"难度密度"。鼠标悬停某个 <TeX src="N" /> 看具体值。</>
+          ) : (
+            <>Left axis grows double-exponentially (<TeX src="\sim 10^{N^{2}}" />); right axis grows polynomially with a log shave. Their ratio is the "difficulty density". Hover an <TeX src="N" /> for exact values.</>
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <GrowthChart isZh={isZh} />
@@ -390,9 +425,10 @@ export default function GodNumberPage() {
         {/* ────────────── BFS ────────────── */}
         <section className="god-section">
           <h2>{t('2×2 现场 BFS — 你来证一遍 "直径 = 11"', '2×2 live BFS — re-prove "diameter = 11" yourself')}</h2>
-          <p className="god-sec-lead">{t(
-            '2×2 群只有 367 万状态,一台笔记本几秒内 BFS 完整张图,无需对称压缩 / 陪集 / GPU。下面这个按钮在你浏览器里 spawn 一个 worker 跑完所有 9 个 HTM 生成元 (U U2 U\' R R2 R\' F F2 F\') 的广搜,并实时画距离分布。',
-            'The 2×2 group has only 3.67M states — a laptop BFSes the whole graph in seconds without symmetry / cosets / GPU. The button below spawns a worker that runs full BFS over the 9 HTM generators (U U2 U\' R R2 R\' F F2 F\') and streams the distance distribution to the chart.',
+          <p className="god-sec-lead">{isZh ? (
+            <>2×2 群只有 367 万状态,一台笔记本几秒内 BFS 完整张图,无需对称压缩 / 陪集 / GPU。下面这个按钮在你浏览器里 spawn 一个 worker 跑完所有 9 个 HTM 生成元 (<span className="god-mono">U U2 U' R R2 R' F F2 F'</span>) 的广搜,并实时画距离分布。</>
+          ) : (
+            <>The 2×2 group has only 3.67M states — a laptop BFSes the whole graph in seconds without symmetry / cosets / GPU. The button below spawns a worker that runs full BFS over the 9 HTM generators (<span className="god-mono">U U2 U' R R2 R' F F2 F'</span>) and streams the distance distribution to the chart.</>
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <Bfs2x2Demo isZh={isZh} />
@@ -409,58 +445,66 @@ export default function GodNumberPage() {
           <div className="god-algo-grid">
             <div className="god-algo-cell">
               <div className="god-algo-name">BFS</div>
-              <div className="god-algo-desc">{t(
-                '小群 (≤ 10⁸) 直接广搜整张图,1 字节/state 存距离,几秒-几分钟内得到完整分布 + 直径。本页 "2×2 现场 BFS" 就是浏览器跑这个,Pyraminx / Skewb / Sq-1 (twist) 也都这么算。',
-                'Tiny groups (≤ 10⁸): plain BFS over the whole graph, 1 byte/state for distance, full distribution + diameter in seconds-to-minutes. The "2×2 live BFS" above is exactly this. Pyraminx, Skewb, Sq-1 (twist) too.',
+              <div className="god-algo-desc">{isZh ? (
+                <>小群 (<TeX src="\le 10^{8}" />) 直接广搜整张图,1 字节/state 存距离,几秒-几分钟内得到完整分布 + 直径。本页 "2×2 现场 BFS" 就是浏览器跑这个,Pyraminx / Skewb / Sq-1 (twist) 也都这么算。</>
+              ) : (
+                <>Tiny groups (<TeX src="\le 10^{8}" />): plain BFS over the whole graph, 1 byte/state for distance, full distribution + diameter in seconds-to-minutes. The "2×2 live BFS" above is exactly this. Pyraminx, Skewb, Sq-1 (twist) too.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('双向 BFS', 'Bidirectional BFS')}</div>
-              <div className="god-algo-desc">{t(
-                '从起点和终点同时 BFS,在中点会合 ⇒ 总搜索空间从 b^d 降到 2·b^(d/2)。Sq-1 twist 用过;通用 IDA* 求解器也用类似思路。',
-                'BFS from both ends, meet in the middle ⇒ search space drops from b^d to 2·b^(d/2). Used for Sq-1 twist; the same trick powers many general IDA* solvers.',
+              <div className="god-algo-desc">{isZh ? (
+                <>从起点和终点同时 BFS,在中点会合 ⇒ 总搜索空间从 <TeX src="b^{d}" /> 降到 <TeX src="2 \cdot b^{d/2}" />。Sq-1 twist 用过;通用 IDA* 求解器也用类似思路。</>
+              ) : (
+                <>BFS from both ends, meet in the middle ⇒ search space drops from <TeX src="b^{d}" /> to <TeX src="2 \cdot b^{d/2}" />. Used for Sq-1 twist; the same trick powers many general IDA* solvers.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">IDA* + Pattern Database</div>
-              <div className="god-algo-desc">{t(
-                '中型群 (10⁹-10¹²):预计算某一组 cubie (e.g. "所有 corner") 的最短解距离表(占几百 MB),作为整体解的 admissible 下界 (heuristic h(s) ≤ d*(s))。主搜索用 Iterative Deepening A* + 这个 h,效果碾压纯 BFS。Kociemba\'s P1/P2 表就是 PDB 的经典例子。',
-                'Mid-sized groups (10⁹-10¹²): precompute the shortest-solution table for a subset of cubies (e.g. all corners) — a few hundred MB — and use it as an admissible heuristic h(s) ≤ d*(s) for the full problem. Iterative Deepening A* + this h crushes plain BFS. Kociemba\'s P1/P2 tables are the canonical example.',
+              <div className="god-algo-desc">{isZh ? (
+                <>中型群 (<TeX src="10^{9}\text{--}10^{12}" />):预计算某一组 cubie (e.g. "所有 corner") 的最短解距离表(占几百 MB),作为整体解的 admissible 下界 (heuristic <TeX src="h(s) \le d^{*}(s)" />)。主搜索用 Iterative Deepening A* + 这个 <TeX src="h" />,效果碾压纯 BFS。Kociemba's P1/P2 表就是 PDB 的经典例子。</>
+              ) : (
+                <>Mid-sized groups (<TeX src="10^{9}\text{--}10^{12}" />): precompute the shortest-solution table for a subset of cubies (e.g. all corners) — a few hundred MB — and use it as an admissible heuristic <TeX src="h(s) \le d^{*}(s)" /> for the full problem. Iterative Deepening A* + this <TeX src="h" /> crushes plain BFS. Kociemba's P1/P2 tables are the canonical example.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('陪集分解 + 集合覆盖', 'Coset partition + set cover')}</div>
-              <div className="god-algo-desc">{t(
-                '大群 (10¹⁹+):按子群 H 把 G 划成 |G|/|H| 个陪集,每个陪集独立求解。三阶用 H = ⟨U,D,L²,R²,F²,B²⟩,|G|/|H| = 22 亿。再用 set cover 贪心选 ~80 个 super-cosets(每个含若干相邻陪集),实际只对 super-coset 求解。',
-                'Huge groups (10¹⁹+): split G into |G|/|H| cosets of a subgroup H, solve each independently. 3×3 uses H = ⟨U,D,L²,R²,F²,B²⟩, |G|/|H| = 2.2B. Then a greedy set-cover packs neighbouring cosets into ~80 super-cosets and you actually solve only those.',
+              <div className="god-algo-desc">{isZh ? (
+                <>大群 (<TeX src="10^{19}+" />):按子群 <TeX src="H" /> 把 <TeX src="G" /> 划成 <TeX src="|G|/|H|" /> 个陪集,每个陪集独立求解。三阶用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />,<TeX src="|G|/|H| = 2.2 \times 10^{9}" />。再用 set cover 贪心选 ~80 个 super-cosets(每个含若干相邻陪集),实际只对 super-coset 求解。</>
+              ) : (
+                <>Huge groups (<TeX src="10^{19}+" />): split <TeX src="G" /> into <TeX src="|G|/|H|" /> cosets of a subgroup <TeX src="H" />, solve each independently. 3×3 uses <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />, <TeX src="|G|/|H| = 2.2 \times 10^{9}" />. Then a greedy set-cover packs neighbouring cosets into ~80 super-cosets and you actually solve only those.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('对称 / 反对称压缩', 'Symmetry / antisymmetry reduction')}</div>
-              <div className="god-algo-desc">{t(
-                '立方体 48 个对称(24 旋转 × 2 镜像)+ 反对称(逆元等价)总 96 个等价。两个等价状态的最优解长度必相等 ⇒ 一次解全。三阶 22 亿陪集模掉对称剩 5588 万 —— 这 40 倍压缩是 2010 证明的 enabler。',
-                'The cube has 48 symmetries (24 rotations × 2 mirrors) plus antisymmetry (inverses are equivalent), 96 total. Equivalent states share their optimal solution length ⇒ solve once, propagate. The 3×3\'s 2.2B cosets shrink to 55.88M under symmetry — that 40× squeeze is the 2010 proof\'s enabler.',
+              <div className="god-algo-desc">{isZh ? (
+                <>立方体 48 个对称(24 旋转 × 2 镜像)+ 反对称(逆元等价)总 96 个等价。两个等价状态的最优解长度必相等 ⇒ 一次解全。三阶 22 亿陪集模掉对称剩 5588 万 —— 这 40 倍压缩是 2010 证明的 enabler。</>
+              ) : (
+                <>The cube has 48 symmetries (24 rotations × 2 mirrors) plus antisymmetry (inverses are equivalent), 96 total. Equivalent states share their optimal solution length ⇒ solve once, propagate. The 3×3's 2.2B cosets shrink to 55.88M under symmetry — that 40× squeeze is the 2010 proof's enabler.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('磁盘 BFS', 'Disk-based BFS')}</div>
-              <div className="god-algo-desc">{t(
-                '当 |G| 超过内存时,把"前沿"按层批量写到 SSD,用外存 sort + uniq 跨层去重。Sq-1 face-turn (Shuang Chen 2017) 用了 722 GB——每个状态压到 2 bits 才装得下 1.2 × 10¹³ 个 twistable states。',
-                'When |G| outgrows RAM, batch-write each frontier layer to SSD; cross-layer dedup via external sort + uniq. Sq-1 face-turn (Shuang Chen 2017) used 722 GB — 2 bits/state to fit 1.2 × 10¹³ twistable states.',
+              <div className="god-algo-desc">{isZh ? (
+                <>当 <TeX src="|G|" /> 超过内存时,把"前沿"按层批量写到 SSD,用外存 sort + uniq 跨层去重。Sq-1 face-turn (Shuang Chen 2017) 用了 722 GB——每个状态压到 2 bits 才装得下 <TeX src="1.2 \times 10^{13}" /> 个 twistable states。</>
+              ) : (
+                <>When <TeX src="|G|" /> outgrows RAM, batch-write each frontier layer to SSD; cross-layer dedup via external sort + uniq. Sq-1 face-turn (Shuang Chen 2017) used 722 GB — 2 bits/state to fit <TeX src="1.2 \times 10^{13}" /> twistable states.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('Canonical-sequence 计数 (下界)', 'Canonical-sequence counting (lower bound)')}</div>
-              <div className="god-algo-desc">{t(
-                '不求解,只数 canonical 序列:深度 d 的合法序列数 ≤ N·M^(d-1)(同轴排除后)。Megaminx 用对易面递推 total(n+1) = 36t(n) - 240t(n-1) - 320t(n-2);让 total ≥ |G| 反推 d 下界。Megaminx 48 / 4×4 35 都是这么来的。',
-                'Don\'t solve, just count: legal canonical sequences at depth d ≤ N·M^(d-1) (after rejecting same-axis-as-previous). Megaminx uses a commuting-faces recurrence total(n+1) = 36t(n) − 240t(n−1) − 320t(n−2); set total ≥ |G| ⇒ lower bound on d. Megaminx 48, 4×4 35 came from here.',
+              <div className="god-algo-desc">{isZh ? (
+                <>不求解,只数 canonical 序列:深度 <TeX src="d" /> 的合法序列数 <TeX src="\le N \cdot M^{d-1}" />(同轴排除后)。Megaminx 用对易面递推 <TeX src="t(n+1) = 36\, t(n) - 240\, t(n-1) - 320\, t(n-2)" />;让 <TeX src="t(d) \ge |G|" /> 反推 <TeX src="d" /> 下界。Megaminx 48 / 4×4 35 都是这么来的。</>
+              ) : (
+                <>Don't solve, just count: legal canonical sequences at depth <TeX src="d" /> are <TeX src="\le N \cdot M^{d-1}" /> (after rejecting same-axis-as-previous). Megaminx uses a commuting-faces recurrence <TeX src="t(n+1) = 36\, t(n) - 240\, t(n-1) - 320\, t(n-2)" />; set <TeX src="t(d) \ge |G|" /> ⇒ lower bound on <TeX src="d" />. Megaminx 48, 4×4 35 came from here.</>
               )}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('渐近构造 (Demaine)', 'Asymptotic construction (Demaine)')}</div>
-              <div className="god-algo-desc">{t(
-                'Demaine 等 2011:把 N×N 上的所有 cubie 分成 O(N²/log N) 个 commuting class,每个用并行子算法 O(log N) 步内解决。配合 canonical-sequence Ω(N²/log N) 下界,得到 Θ(N²/log N) 的严证。常数很大,只是渐近正确。',
-                'Demaine et al. 2011: partition N×N cubies into O(N²/log N) commuting classes; solve each in O(log N) parallel moves. Match with the canonical-sequence Ω(N²/log N) lower bound ⇒ Θ(N²/log N), rigorous. Constants are big; only asymptotic.',
+              <div className="god-algo-desc">{isZh ? (
+                <>Demaine 等 2011:把 <TeX src="N \times N" /> 上的所有 cubie 分成 <TeX src="O(N^{2}/\log N)" /> 个 commuting class,每个用并行子算法 <TeX src="O(\log N)" /> 步内解决。配合 canonical-sequence <TeX src="\Omega(N^{2}/\log N)" /> 下界,得到 <TeX src="\Theta(N^{2}/\log N)" /> 的严证。常数很大,只是渐近正确。</>
+              ) : (
+                <>Demaine et al. 2011: partition <TeX src="N \times N" /> cubies into <TeX src="O(N^{2}/\log N)" /> commuting classes; solve each in <TeX src="O(\log N)" /> parallel moves. Match with the canonical-sequence <TeX src="\Omega(N^{2}/\log N)" /> lower bound ⇒ <TeX src="\Theta(N^{2}/\log N)" />, rigorous. Constants are big; only asymptotic.</>
               )}</div>
             </div>
           </div>
@@ -482,9 +526,10 @@ function dfs(state, max_depth, g):
     sub = dfs(apply(state, move), max_depth, g + 1)
     if sub is not None: return [move] + sub
   return None`}</pre>
-            <p className="god-algo-pseudo-cap">{t(
-              '一次 IDA* 求解一个状态 (毫秒级)。如果对所有 ~5588 万 super-cosets 都跑一次 IDA* 并保证 ≤ 20 步,直径就被压实 = 20。',
-              'One IDA* call solves one state (milliseconds). Run it on all ~55.88M super-cosets with the assertion ≤ 20 holds — and the diameter is nailed at 20.',
+            <p className="god-algo-pseudo-cap">{isZh ? (
+              <>一次 IDA* 求解一个状态 (毫秒级)。如果对所有 ~5588 万 super-cosets 都跑一次 IDA* 并保证 <TeX src="\le 20" /> 步,直径就被压实 = 20。</>
+            ) : (
+              <>One IDA* call solves one state (milliseconds). Run it on all ~55.88M super-cosets with the assertion <TeX src="\le 20" /> holds — and the diameter is nailed at 20.</>
             )}</p>
           </div>
         </section>
@@ -535,7 +580,7 @@ function dfs(state, max_depth, g):
             <li><a href="https://www.cube20.org/qtm/" target="_blank" rel="noopener noreferrer">cube20.org / QTM</a> — {t('三阶 QTM 直径 = 26 证明数据 (2014)', '3×3 QTM diameter = 26 proof data (2014)')}</li>
             <li><a href="https://www.cube20.org/clock/" target="_blank" rel="noopener noreferrer">cube20.org / Clock</a> — {t('Rubik\'s Clock 直径 = 12 与完整分布 (2025-03-04)', 'Rubik\'s Clock diameter = 12 and full distribution (2025-03-04)')}</li>
             <li><a href="https://epubs.siam.org/doi/abs/10.1137/120867366" target="_blank" rel="noopener noreferrer">Rokicki et al., SIAM J. Discrete Math 2014</a> — {t('同行评议版 "The Diameter of the Rubik\'s Cube Group Is Twenty"', 'Peer-reviewed paper "The Diameter of the Rubik\'s Cube Group Is Twenty"')}</li>
-            <li><a href="https://arxiv.org/abs/1106.5736" target="_blank" rel="noopener noreferrer">Demaine et al. 2011 — arXiv:1106.5736</a> — {t('"Algorithms for Solving Rubik\'s Cubes",NxN 上帝之数 Θ(N²/log N) 严证', '"Algorithms for Solving Rubik\'s Cubes", rigorous Θ(N²/log N) for N×N')}</li>
+            <li><a href="https://arxiv.org/abs/1106.5736" target="_blank" rel="noopener noreferrer">Demaine et al. 2011 — arXiv:1106.5736</a> — <MathText>{t('"Algorithms for Solving Rubik\'s Cubes",NxN 上帝之数 Θ(N²/log N) 严证', '"Algorithms for Solving Rubik\'s Cubes", rigorous Θ(N²/log N) for N×N')}</MathText></li>
             <li><a href="https://kociemba.org/cube.htm" target="_blank" rel="noopener noreferrer">Herbert Kociemba — Two-phase algorithm</a> — {t('Kociemba 自己的算法描述与实现指南', 'Algorithm description + implementation guide by the author')}</li>
             <li><a href="https://kociemba.org/themen/megaminx/megasol.html" target="_blank" rel="noopener noreferrer">Kociemba — Megaminx lower bound</a> — {t('Megaminx 下界 48 的对易面计数证明', 'Megaminx 48 lower bound via commuting-faces counting')}</li>
             <li><a href="https://www.jaapsch.net/puzzles/" target="_blank" rel="noopener noreferrer">Jaap Scherphuis\' puzzle pages</a> — {t('2×2 / Skewb / Pyraminx / Square-1 / Clock 的状态数 + BFS 数据', 'state counts + BFS data for 2×2, Skewb, Pyraminx, Square-1, Clock')}</li>

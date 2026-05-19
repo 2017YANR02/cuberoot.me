@@ -8,19 +8,21 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown } from 'lucide-react';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import NumberCommitInput from '../../components/NumberCommitInput';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
 import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
 import { visualcubeApiHref } from '../../utils/visualcube_link';
 import { eventDisplayName } from '../../utils/wca_events';
-import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
+import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '../../utils/cubingScramble';
 import type { RoundSheetInput } from './tnoodle_pdf';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
-const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
+// `onlyAvailable` 模式下 selector 用这个 set 过滤;含 WCA + 非 WCA 两类。
+const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS]);
 const COUNT_PRESETS = [1, 5, 12, 25, 50, 100, 200, 1000];
 const COUNT_MAX = 1000;
 
@@ -90,9 +92,13 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
       .sort((a, b) => parseInt(a.slice(3), 10) - parseInt(b.slice(3), 10)),
     [events],
   );
-  // 选中项目按 WCA 顺序固定展示 + 高阶 NxN 拼在后面
+  // 选中项目按 WCA 顺序固定展示 + 非 WCA + 高阶 NxN 拼在后面
   const eventsOrdered = useMemo(
-    () => [...TNOODLE_WCA_EVENTS.filter((id) => events.has(id)), ...customNxN],
+    () => [
+      ...TNOODLE_WCA_EVENTS.filter((id) => events.has(id)),
+      ...TWIZZLE_NONWCA_EVENTS.filter((id) => events.has(id)),
+      ...customNxN,
+    ],
     [events, customNxN],
   );
   const eventsKey = eventsOrdered.join(',');
@@ -268,6 +274,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         availableEvents={TNOODLE_EVENT_SET}
         selectedEvents={events}
         onToggle={toggleEvent}
+        onRemove={toggleEvent}
+        appendEvents={TWIZZLE_NONWCA_APPEND}
         isZh={isZh}
         onlyAvailable
       />
@@ -308,15 +316,11 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
           {subMode === 'batch' ? (
             <div className="gen-count-row">
               <div ref={countComboRef} className="gen-count-combo">
-                <input
-                  type="number"
+                <NumberCommitInput
                   min={1}
                   max={COUNT_MAX}
                   value={count}
-                  onChange={(e) => {
-                    const v = Math.max(1, Math.min(COUNT_MAX, Number(e.target.value) || 1));
-                    setCount(v);
-                  }}
+                  onCommit={setCount}
                   className="gen-count-input gen-count-input--combo"
                   aria-label={t('每项打乱数', 'Scrambles per event')}
                 />

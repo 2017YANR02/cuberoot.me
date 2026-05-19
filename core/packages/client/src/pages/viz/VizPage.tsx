@@ -18,6 +18,7 @@ import LegendPanel from './components/LegendPanel';
 import RidgelineCanvas from './components/RidgelineCanvas';
 import { Flag } from '../../utils/flag';
 import { personFlagIso2, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './viz.css';
 
 // NOTE: WCA 项目列表
@@ -44,6 +45,7 @@ const EVENTS = [
 export default function VizPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('成绩分布', 'Distribution');
   const players = useVizStore(s => s.players);
   const currentEventId = useVizStore(s => s.currentEventId);
   const addPlayer = useVizStore(s => s.addPlayer);

@@ -14,6 +14,7 @@ import { Flag } from '../../utils/flag';
 import { countryName } from '../../utils/country_name';
 import { useAuthStore } from '../../stores/auth_store';
 import { apiUrl } from '../../utils/api_base';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './traffic.css';
 
 type Range = '7d' | '30d' | '90d' | 'all';
@@ -60,6 +61,7 @@ function fmtDwell(ms: number | null): string {
 export default function TrafficPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('流量', 'Traffic');
   const T = (zh: string, en: string) => (isZh ? zh : en);
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);

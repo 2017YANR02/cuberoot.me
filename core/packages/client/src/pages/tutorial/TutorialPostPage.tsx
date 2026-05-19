@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { usePostContent, type Lang } from './useTutorialCatalog';
 import { TutorialArticleView } from './TutorialArticleView';
 import { AlgsetView } from './AlgsetView';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './tutorial.css';
 
 export default function TutorialPostPage() {
@@ -13,6 +14,9 @@ export default function TutorialPostPage() {
   const isZh = i18n.language.startsWith('zh');
   const pageLang = isZh ? 'zh' : 'en';
   const [lang, setLang] = useState<Lang>(pageLang);
+
+  const postTitle = post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : (isZh ? '教程' : 'Tutorial');
+  useDocumentTitle(postTitle, postTitle);
 
   if (loading) {
     return (

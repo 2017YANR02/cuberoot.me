@@ -43,6 +43,7 @@ import { AI_ML_EN } from './data/longform/ai_ml';
 import { PSYCHOLOGY_EN } from './data/longform/psychology';
 import { RELATED_PUZZLES_EN } from './data/longform/related_puzzles';
 import { HISTORY_EXTENDED_EN } from './data/longform/history_extended';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './prediction.css';
 import './prediction333.css';
 
@@ -85,6 +86,10 @@ export default function Prediction333Page() {
   const activeId = SECTIONS[activeIdx].id;
   const prevSection = activeIdx > 0 ? SECTIONS[activeIdx - 1] : null;
   const nextSection = activeIdx < SECTIONS.length - 1 ? SECTIONS[activeIdx + 1] : null;
+  const section333Title = params.sectionId
+    ? (isZh ? SECTIONS[activeIdx].labelZh : SECTIONS[activeIdx].labelEn)
+    : (isZh ? '三阶预测' : '3×3 Prediction');
+  useDocumentTitle(section333Title, section333Title);
   const sectionHref = (id: string) => {
     const search = window.location.search;
     return `/wca/prediction/333/${id}${search}`;

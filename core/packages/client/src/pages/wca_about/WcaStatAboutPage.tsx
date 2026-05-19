@@ -16,6 +16,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import { getLangQuery } from '../../i18n';
 import { ABOUT_REGISTRY } from './registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './types';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_about.css';
 
 function pickLang<T extends string | string[] | undefined>(zh: T, en: T, isZh: boolean): T {
@@ -150,6 +151,9 @@ export default function WcaStatAboutPage() {
     if (!id) return null;
     return ABOUT_REGISTRY[id] ?? null;
   }, [id]);
+
+  const aboutTitle = entry ? (isZh ? entry.titleZh : entry.titleEn) : (isZh ? '统计说明' : 'About Stat');
+  useDocumentTitle(aboutTitle, aboutTitle);
 
   if (!entry) {
     return (

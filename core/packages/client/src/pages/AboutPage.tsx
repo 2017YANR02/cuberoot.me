@@ -7,12 +7,14 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import LangToggle from '../components/LangToggle';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import CREDITS from './credits_data.json';
 import './about.css';
 
 export default function AboutPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('关于', 'About');
 
   return (
     <div className="about-page">

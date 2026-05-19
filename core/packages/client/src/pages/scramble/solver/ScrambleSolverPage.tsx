@@ -21,6 +21,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
+import { useDocumentTitle } from '../../../utils/useDocumentTitle';
 import CubingPreview from '../../timer/cube/CubingPreview';
 import { faceletToCubie, validateFacelet } from './facelet';
 import {
@@ -80,6 +81,7 @@ function randomMove(len: number): string {
 export default function ScrambleSolverPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('求解器', 'Solver');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const [searchParams] = useSearchParams();

@@ -45,6 +45,33 @@
   font-family: ui-monospace, monospace;
 }
 
+/* 右上 × 小圆,点一下直接移除项目;只在 multi-select + active + 传 onRemove 时渲染 */
+.wca-stats-event-selector .event-btn-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, color 0.12s, transform 0.1s;
+}
+.wca-stats-event-selector .event-btn-remove:hover {
+  background: #d33;
+  color: #fff;
+  transform: scale(1.15);
+}
+
 .wca-stats-event-selector .event-btn .cubing-icon {
   font-size: 22px;
   color: #aaa;

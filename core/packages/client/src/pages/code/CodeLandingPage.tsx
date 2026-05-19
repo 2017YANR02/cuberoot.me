@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './code_landing.css';
 
 interface Topic {
@@ -487,10 +487,7 @@ function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
 export default function CodeLandingPage() {
   const { i18n } = useTranslation();
   const lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
-
-  useEffect(() => {
-    document.title = lang === 'zh' ? '编程语言导览 — CubeRoot' : 'Programming Languages — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('编程', 'Code');
 
   return (
     <div className="code-landing">

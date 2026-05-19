@@ -1,4 +1,4 @@
-/* /scramble/god — 上帝之数总览页样式。
+/* /math/god — 上帝之数总览页样式。
  *
  * 双主题:走 :root token,自动跟 ThemeToggle + 系统 prefers-color-scheme 翻转。
  * 局部 semantic alias 用 --god-* 命名,只在本页 scope 用。 */
@@ -123,6 +123,17 @@
   color: var(--god-text-sub);
   margin-top: 6px;
 }
+
+/* KaTeX wrappers — inline and block. Block uses display: block so it can sit
+   inside <p> without hydration errors (we use <span> for the wrapper). */
+.god-tex { color: inherit; }
+.god-tex .katex { font-size: 1.02em; }
+.god-tex-block {
+  display: block;
+  margin: 0.6rem 0;
+  text-align: center;
+}
+.god-tex-block .katex-display { margin: 0; }
 
 /* ─── HIGHLIGHTS ────────────────────────────────────────────────────── */
 

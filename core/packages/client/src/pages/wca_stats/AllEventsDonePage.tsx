@@ -14,6 +14,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import CountrySelect, { useCountries } from './CountrySelect';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
@@ -31,6 +32,7 @@ interface Row {
 export default function AllEventsDonePage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('全项目达成', 'All Events Done');
   const [params, setParams] = useSearchParams();
   const country = params.get('country') ?? '';
   const onlyDone = params.get('onlyDone') !== '0';

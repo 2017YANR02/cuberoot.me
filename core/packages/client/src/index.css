@@ -288,6 +288,9 @@ option {
 /* NOTE: html 背景同步 body 色,避免 iOS Safari 工具栏区域露出黑边 */
 html {
   background: var(--background);
+  /* 内容高度跨越视口阈值时(toggle event / 路由切换 / sheet 加载完成),竖滚动条
+     出现/消失让视口宽度 +/-16px,整页左右抖。stable 永远保留 gutter 消除抖动。 */
+  scrollbar-gutter: stable;
 }
 
 body {

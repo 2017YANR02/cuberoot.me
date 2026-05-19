@@ -20,6 +20,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { countryName } from '../../utils/country_name';
 import { localizeCompName } from '../../utils/comp_localize';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { apiUrl } from '../../utils/api_base';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
 import WcaEventSelector from '../../components/WcaEventSelector';
@@ -212,6 +213,8 @@ export default function CompDetailPage() {
   }, [rawSlug, slug, navigate]);
 
   const [data, setData] = useState<CompData | null>(null);
+  const compNameTitle = data ? localizeCompName(slug, data.name, isZh) : slug;
+  useDocumentTitle(compNameTitle, compNameTitle);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);

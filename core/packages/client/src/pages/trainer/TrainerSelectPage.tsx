@@ -13,6 +13,7 @@ import { ALG_PUZZLES, getAlgSetMeta, loadAlg, type AlgPuzzle } from '@cuberoot/s
 import { useTrainerStore } from '../../stores/trainerStore';
 import { CaseTreePicker } from './components';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './trainer.css';
 
 function isPuzzle(s: string): s is AlgPuzzle {
@@ -24,6 +25,7 @@ export default function TrainerSelectPage() {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('公式训练', 'Algorithm Trainer');
 
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, setSlug) : undefined;

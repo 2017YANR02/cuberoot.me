@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { EVENTS, formatVal } from './events';
 import {
   LUCKY_EVENTS,
@@ -97,6 +98,7 @@ function nToApproxYear(N: number): number {
 export default function LuckyLimitPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('幸运极限', 'Lucky Limit');
 
   const initialYear = useMemo(() => {
     const params = new URLSearchParams(window.location.search);

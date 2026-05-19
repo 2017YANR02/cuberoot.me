@@ -11,9 +11,13 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#2d2b2a" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- 预热到 API 主机的 TCP+TLS,后续跨域 fetch 跳过 ~2s 握手 -->
+    <link rel="preconnect" href="https://api.cuberoot.me" crossorigin />
     <title>CubeRoot</title>
-    <!-- NOTE: Google Fonts — Inter（正文）/ JetBrains Mono（viz 模块）/ Fraunces（落地页衬线标题） -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Roboto+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+    <!-- 字体走 src/fonts.css 自托管(woff2 在 public/fonts/,见 fonts.css) -->
+    <!-- 关键字体预加载 — 正文 Inter 400 / 500 加快首屏 -->
+    <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
     <!-- NOTE: WCA 项目图标字体（本地化，来自 @cubing/icons@3.0.5） -->
     <link rel="stylesheet" href="/vendor/cubing-icons/cubing-icons.css">
     <!-- NOTE: 国旗 CSS 由 src/index.css 本地 import（见 flag-icons npm 包），无需 CDN -->

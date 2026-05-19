@@ -5,7 +5,7 @@
  *   - cuber:    选手生涯足迹（按时间顺序画大圆弧，支持 play/scrub）
  */
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2 } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
@@ -36,6 +36,8 @@ import { ClearButton } from '../components/ClearButton';
 import { displayCuberName } from '../utils/name_utils';
 import { formatDateRangeIso } from '../utils/date_range';
 import { Flag, flagHtml } from '../utils/flag';
+import { compHref, prefetchComp } from '../utils/comp_link';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import './globe.css';
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
@@ -596,6 +598,10 @@ async function mapWithConcurrency<T, R>(
 export default function GlobePage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('地球视图', 'Globe');
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -1161,8 +1167,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     }
     const features = Array.from(groups.values()).map((group) => {
       const head = group[0];
-      const isPastHead = (head as { __past?: boolean }).__past === true;
-      const url = isPastHead ? `https://www.worldcubeassociation.org/competitions/${head.id}` : (head as UpcomingCompRecord).url;
+      const url = compHref(head.id);
       const props: Record<string, unknown> = {
         id: head.id, name: head.name, city: head.city,
         country: head.country,
@@ -1170,14 +1175,14 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         stack_count: group.length,
       };
       if (group.length > 1) {
-        // 给点击展开用：把每条都规范化（保留 url 字段，past 用 id 反推）
+        // 给点击展开用：把每条都规范化（url 走内部 /wca/comp/<id>）
         const normalized = group.map((c) => {
           const past = (c as { __past?: boolean }).__past === true;
           return {
             id: c.id, name: c.name, city: c.city, country: c.country,
             start_date: c.start_date, end_date: c.end_date,
             latitude_degrees: c.latitude_degrees, longitude_degrees: c.longitude_degrees,
-            url: past ? `https://www.worldcubeassociation.org/competitions/${c.id}` : (c as UpcomingCompRecord).url,
+            url: compHref(c.id),
             events: c.events,
             competitor_limit: past ? 0 : (c as UpcomingCompRecord).competitor_limit,
           };
@@ -1321,7 +1326,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       properties: {
         index: i, id: c.id, name: c.name, city: c.city,
         city_label: localizeCity(c.city, isZh),
-        country_iso2: c.country_iso2, start_date: c.start_date, url: c.url,
+        country_iso2: c.country_iso2, start_date: c.start_date, url: compHref(c.id),
       },
     })),
   }), [cuberComps, isZh]);
@@ -2003,8 +2008,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, unknown>;
-        const url = `https://www.worldcubeassociation.org/competitions/${String(p.id ?? '')}`;
-        if (p.id) window.open(url, '_blank', 'noopener,noreferrer');
+        if (p.id) navigateRef.current(compHref(String(p.id)));
       });
       map.on('mouseenter', 'past-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'past-clusters', () => { map.getCanvas().style.cursor = ''; });
@@ -2013,6 +2017,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, unknown>;
+        if (p.id) prefetchComp(String(p.id));
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
         const city = String(p.city ?? '');
@@ -2036,6 +2041,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, string>;
+        if (p.id) prefetchComp(String(p.id));
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
         const cuberLocalized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
@@ -2054,23 +2060,29 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, string>;
-        const url = p.url || `https://www.worldcubeassociation.org/competitions/${p.id ?? ''}`;
+        const href = p.url || compHref(String(p.id ?? ''));
         if (isTouch) {
-          // 手机端：第一次点 → 弹 popup，比赛名为可点击链接
+          // 手机端：第一次点 → 弹 popup，比赛名为可点击链接(内部 href,触发 popup link onclick → SPA navigate)
           const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
           const safeName = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
           const html = `<div class="mlp">
-            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">${popupFlagHtml(String(p.country_iso2 ?? ''))} #${Number(p.index) + 1} ${safeName}</a>
+            <a class="mlp-name mlp-name-link" data-spa-href="${href}" href="${href}">${popupFlagHtml(String(p.country_iso2 ?? ''))} #${Number(p.index) + 1} ${safeName}</a>
             <div class="mlp-meta">${p.city_label ?? p.city ?? ''}<br><span class="mlp-date">${p.start_date}</span></div>
           </div>`;
           if (popupRef.current) popupRef.current.remove();
-          popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: true, offset: 12 })
+          const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: true, offset: 12 })
             .setLngLat(coords)
             .setHTML(html)
             .addTo(map);
+          popupRef.current = popup;
+          const el = popup.getElement().querySelector('a[data-spa-href]') as HTMLAnchorElement | null;
+          if (el) el.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            navigateRef.current(el.dataset.spaHref || href);
+          });
           return;
         }
-        if (url) window.open(url, '_blank', 'noopener,noreferrer');
+        navigateRef.current(href);
       });
     }
     }

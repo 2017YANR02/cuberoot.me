@@ -6,6 +6,7 @@ import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '../../utils/name_utils';
 import { Flag } from '../../utils/flag';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wb.css';
 
 const SOURCE_URL = 'https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records';
@@ -13,6 +14,7 @@ const SOURCE_URL = 'https://www.speedsolving.com/wiki/index.php?title=List_of_Un
 export default function WbPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  useDocumentTitle('非官方纪录', 'World Bests');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const { data, error } = useWbData();

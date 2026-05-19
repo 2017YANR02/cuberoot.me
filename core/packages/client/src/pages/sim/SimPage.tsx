@@ -90,6 +90,7 @@ const CLICK_RULES_3X3: Record<string, { sign: string; reverse: boolean }> = {
 };
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { loadSettings, saveSettings, applySettings, type SimSettings } from './SettingDrawer';
 import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
@@ -113,6 +114,7 @@ export default function SimPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  useDocumentTitle('模拟器', 'Sim');
 
   const [searchParams, setSearchParams] = useSearchParams();
   // 没带 ?puzzle= 就强制写 puzzle=3 (默认 3x3),让 URL 永远显式。
@@ -240,6 +242,58 @@ export default function SimPage() {
     const toucher = new Toucher();
     toucher.init(renderer.domElement, world.controller.touch);
     toucherRef.current = toucher;
+
+    // NxN 拖空白 = orbit 模式:dx/dy 喂回来,这里改 scene.rotation。
+    // 累积 yaw/pitch 越过 ±π/2 时立即 commit 一个 y/y' 或 x/x' TwistAction 进 move list,
+    // 同时把 scene.rotation 反向减 π/2,视觉无缝 — 等价于在用户拖动过程中自动转体。
+    // (rotate 模式不走这里;走 controller.handleMove 旧路径 = upstream snap+record 行为)
+    const Q = Math.PI / 2;
+    world.controller.onOrbit = (dx, dy) => {
+      const k = 0.01;
+      world.scene.rotation.y += dx * k;
+      world.scene.rotation.x += dy * k;
+      const cube = asNxN(world);
+      if (cube) {
+        // cuber AXIS_VECTOR.y = (0,-1,0), .x = (-1,0,0) — 负轴约定:
+        // y move 视觉 = three.js R_y(-π/2),y' = R_y(+π/2)。
+        // scene.rotation.y > +π/2 (右拖):commit y' (吃了 +π/2 视觉旋转),scene.y -= π/2。
+        // scene.rotation.y < -π/2 (左拖):commit y。x 同理。
+        let safety = 8;
+        while (world.scene.rotation.y > Q && safety-- > 0) {
+          const action = new TwistAction('y', true, 1); // y'
+          cube.twister.twist(action, true, true);
+          userMoveRef.current?.(action);
+          world.scene.rotation.y -= Q;
+        }
+        safety = 8;
+        while (world.scene.rotation.y < -Q && safety-- > 0) {
+          const action = new TwistAction('y', false, 1); // y
+          cube.twister.twist(action, true, true);
+          userMoveRef.current?.(action);
+          world.scene.rotation.y += Q;
+        }
+        safety = 8;
+        while (world.scene.rotation.x > Q && safety-- > 0) {
+          const action = new TwistAction('x', true, 1); // x'
+          cube.twister.twist(action, true, true);
+          userMoveRef.current?.(action);
+          world.scene.rotation.x -= Q;
+        }
+        safety = 8;
+        while (world.scene.rotation.x < -Q && safety-- > 0) {
+          const action = new TwistAction('x', false, 1); // x
+          cube.twister.twist(action, true, true);
+          userMoveRef.current?.(action);
+          world.scene.rotation.x += Q;
+        }
+      } else {
+        // SQ1 自己 onPointerMove 走 free orbit,不会经这里。这里是 NxN-only branch。
+        // 兜底:不能 commit move 时把 pitch clamp 回 ±π/2,跟旧行为对齐。
+        world.scene.rotation.x = Math.max(-Q, Math.min(Q, world.scene.rotation.x));
+      }
+      world.scene.updateMatrix();
+      world.dirty = true;
+    };
 
     // 单击转动:
     //  - 3x3 查 CLICK_RULES_3X3 表(corner / edge → 特定 face 转动,sticker 落 side)
@@ -513,6 +567,8 @@ export default function SimPage() {
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
     const onPointerDown = (e: PointerEvent) => {
+      // face hints 不在 pointerdown 时就点亮 — 因为 sticker 拖 (R/U/F 转单层) 也走这里,
+      // 那种不算"换视角"。render loop 按 controller / sq1 状态轮询。
       // 桌面右键 / 中键 = pan
       if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1)) {
         e.preventDefault();
@@ -675,6 +731,14 @@ export default function SimPage() {
         sq1Rotating = false;
         sq1MovedPastThreshold = false;
         sq1Pending = false;
+        // rotate 模式:松手后 yaw/pitch 各 snap 到最近的 π/2 整数倍 (跟 NxN 拖空白"转体"语义对齐)
+        if (settingsRef.current?.dragEmpty === 'rotate') {
+          const q = Math.PI / 2;
+          world.scene.rotation.y = Math.round(world.scene.rotation.y / q) * q;
+          world.scene.rotation.x = Math.round(world.scene.rotation.x / q) * q;
+          world.scene.updateMatrix();
+          world.dirty = true;
+        }
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
       // sq1 slash 走 PlayerControls 的"/" 按钮 / 实体键盘 / alg textarea 直接输入,
@@ -703,6 +767,15 @@ export default function SimPage() {
       const dt = now - lastFrameAt;
       lastFrameAt = now;
       const t0 = performance.now();
+      // FaceHints: NxN 看 controller.isViewRotating (orbit 或 rotate 模式 background drag);
+      //   SQ1 走自家 pointer 路径,sq1Rotating 是这个 effect 内的 let,直接读。
+      //   sticker 拖 (R/U/F) 不走这两个分支 → 字母不显示。
+      const viewing = world.puzzleKind === 'sq1'
+        ? sq1Rotating
+        : world.controller.isViewRotating;
+      if (viewing) world.faceHints.show();
+      else world.faceHints.hide();
+      if (world.faceHints.tick(dt)) world.dirty = true;
       let didRender = false;
       if (world.dirty || world.cube.dirty) {
         renderer.clear();
@@ -817,11 +890,14 @@ export default function SimPage() {
     handlePuzzle(puzzleParam);
   }, [puzzleParam, handlePuzzle, worldTick]);
 
-  // settings 变化时即时 apply
+  // settings 变化时即时 apply。prev 给 applySettings 用,只在 viewAngle/viewGradient
+  // 真变化时同步 scene.rotation,避免每次设置变都把 drag-orbit 累积出的姿态打回去。
+  const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
     saveSettings(settings);
     const world = worldRef.current;
-    if (world) applySettings(world, settings);
+    if (world) applySettings(world, settings, prevSettingsRef.current ?? undefined);
+    prevSettingsRef.current = settings;
   }, [settings]);
 
   // 主题切换 (html[data-theme] / prefers-color-scheme) 时重 apply,
@@ -872,6 +948,9 @@ export default function SimPage() {
         handleUndo();
         return;
       }
+      // Ctrl/Cmd/Alt 修饰键按下时让浏览器原生快捷键 (Ctrl+F 查找 / Ctrl+R 刷新 等) 走完,
+      // 不映 keymap。Shift 是计时器/魔方常用修饰,继续放行。
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = keymapRef.current[e.code];
       if (!k) return;
       e.preventDefault();

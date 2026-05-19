@@ -9,6 +9,7 @@
  * 移动端单列堆叠两张图,固定 320 高。
  */
 import { useMemo, useState } from 'react';
+import { TeX } from './Tex';
 
 interface Row {
   n: number;
@@ -141,21 +142,21 @@ export default function GrowthChart({ isZh }: Props) {
       </svg>
 
       <div className="god-growth-legend">
-        <span><i style={{ background: 'var(--god-wca)' }} /> {t('log₁₀ |G(N)| (状态空间)', 'log₁₀ |G(N)| (state space)')}</span>
+        <span><i style={{ background: 'var(--god-wca)' }} /> <TeX src="\log_{10} |G(N)|" /> {t('(状态空间)', '(state space)')}</span>
         <span><i style={{ background: 'var(--god-accent)' }} /> {t('已证直径', 'proven diameter')}</span>
         <span><i style={{ background: 'var(--god-warn)' }} /> {t('已知下界', 'known lower bound')}</span>
-        <span className="dashed"><i /> {t('Θ(N²/log N) 渐近带 (Demaine 2011)', 'Θ(N²/log N) band (Demaine 2011)')}</span>
+        <span className="dashed"><i /> <TeX src="\Theta(N^{2}/\log N)" /> {t('渐近带 (Demaine 2011)', 'band (Demaine 2011)')}</span>
       </div>
 
       <div className="god-growth-readout">
         {hovered ? (
           <>
             <strong>{hovered.n}×{hovered.n}:</strong>{' '}
-            {t('状态 ≈', '|G| ≈')} 10<sup>{hovered.states.toFixed(1)}</sup>
+            {t('状态 ≈', '|G| ≈')} <TeX src={`10^{${hovered.states.toFixed(1)}}`} />
             {' · '}
             {hovered.knownD != null
               ? <>{t('上帝之数', 'God\'s number')} = <span style={{ color: 'var(--god-accent)' }}>{hovered.knownD}</span> HTM</>
-              : <>D ∈ [<span style={{ color: 'var(--god-warn)' }}>{hovered.lowerD}</span>, {hovered.upperD}]</>}
+              : <><TeX src={`D \\in [${hovered.lowerD},\\, ${hovered.upperD}]`} /></>}
             {' · '}{t('Demaine 渐近', 'Demaine asymptotic')} ≈ {hovered.demaineLow.toFixed(0)}~{hovered.demaineHigh.toFixed(0)}
           </>
         ) : (

@@ -42,7 +42,28 @@ export const TNOODLE_WCA_EVENTS = [
   'clock', 'minx', 'pyram', 'skewb', 'sq1',
 ] as const;
 
-const SUPPORTED = new Set<string>(TNOODLE_WCA_EVENTS);
+// cubing.js `twizzleEvents` 里非 WCA 但已支持 random-state 打乱的项目。
+// 跟 https://experiments.cubing.net/cubing.js/mark3 暴露的对齐。
+// id 形态保持 cubing.js 一致(redi_cube / master_tetraminx 等下划线),
+// EventIcon 把它们映到 cubing-icons 的 `unofficial-*` class。
+export const TWIZZLE_NONWCA_EVENTS = [
+  'fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'baby_fto',
+] as const;
+
+/**
+ * 非 WCA 事件的 (id → cubing-icons class) 对照。EventIcon 和 WcaEventSelector
+ * 的 `appendEvents` prop 都从这里读,避免对照表两份易漂。
+ * 注意 cubing.js id 跟 cubing-icons class 短名不完全一致(`redi_cube`→`unofficial-redi`)。
+ */
+export const TWIZZLE_NONWCA_APPEND: ReadonlyArray<{ id: string; iconClass: string }> = [
+  { id: 'fto', iconClass: 'unofficial-fto' },
+  { id: 'master_tetraminx', iconClass: 'unofficial-mtetram' },
+  { id: 'kilominx', iconClass: 'unofficial-kilominx' },
+  { id: 'redi_cube', iconClass: 'unofficial-redi' },
+  { id: 'baby_fto', iconClass: 'unofficial-baby_fto' },
+];
+
+const SUPPORTED = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS]);
 
 export function isTnoodleSupportedEvent(event: string): boolean {
   return SUPPORTED.has(toWcaEventId(event));
@@ -66,6 +87,32 @@ export function isTnoodleSupportedEvent(event: string): boolean {
 const SCRAMBLE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
 const SCRAMBLE_AXIS_OF: Record<string, number> = { U: 0, D: 0, L: 1, R: 1, F: 2, B: 2 };
 const SCRAMBLE_SUFFIXES = ['', "'", '2'] as const;
+
+/**
+ * Random-move kilominx scrambler. Bypasses cubing.js's `randomKilominxScramble`
+ * because that solver (xyzzy/kilosolver.js) needs ~1 minute + a few hundred MB
+ * to build lookup tables on first call — completely unusable in a browser tab.
+ *
+ * Output matches WCA megaminx scramble format: 7 lines × 10 alternating R/D
+ * moves with random ± suffix + a U / U' at end of each line. Same notation /
+ * geometry as megaminx; kilominx (corner-only) uses the same face turns.
+ * Author of xyzzy/kilosolver says hybrid/random-move is "good enough for
+ * non-competition purposes" — and kilominx isn't a WCA event anyway.
+ */
+function randomMoveKilominxScramble(): string {
+  const lines: string[] = [];
+  for (let row = 0; row < 7; row++) {
+    const tokens: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const face = i % 2 === 0 ? 'R' : 'D';
+      const dir = Math.random() < 0.5 ? '++' : '--';
+      tokens.push(face + dir);
+    }
+    tokens.push(Math.random() < 0.5 ? 'U' : "U'");
+    lines.push(tokens.join(' '));
+  }
+  return lines.join('\n');
+}
 
 export function randomMoveScrambleNxN(N: number): string {
   if (N < 2) return '';
@@ -142,6 +189,8 @@ on555ModeChange(() => {
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
+  // kilominx 走自带 random-move,绕开 cubing.js 那个要 1 分钟建表的 random-state solver。
+  if (wcaId === 'kilominx') return randomMoveKilominxScramble();
   // 5x5: user picks random-state (cube555 daemon, ~70 moves) or random-move
   // (cubing.js WCA-spec 60). Mode persisted in localStorage; flips clear the
   // pool via the listener above. random-state fetch fails (backend down /

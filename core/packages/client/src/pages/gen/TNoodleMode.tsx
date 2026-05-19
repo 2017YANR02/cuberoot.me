@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import NumberCommitInput from '../../components/NumberCommitInput';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
 import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { CompPicker } from '../../components/CompPicker';
@@ -21,9 +22,10 @@ import { type WcaScrambleRow } from '../../utils/wca_results_api';
 import { fetchCompName } from '../../utils/comp_wcif';
 import { apiUrl } from '../../utils/api_base';
 import { eventDisplayName } from '../../utils/wca_events';
-import { TNOODLE_WCA_EVENTS, tnoodleRandomScramble } from '../../utils/cubingScramble';
+import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '../../utils/cubingScramble';
 
-const TNOODLE_EVENT_SET = new Set<string>(TNOODLE_WCA_EVENTS);
+// 给 selector 当 availableEvents 用,涵盖 WCA + 非 WCA。
+const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS]);
 import {
   ALLOWED_FORMATS, FORMAT_LABEL, formatAttempts, DEFAULT_EXTRA_COUNT,
   defaultEventConfig, defaultRoundConfig,
@@ -173,6 +175,18 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
   const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
 
   const autoLoadedRef = useRef<string | null>(null);
+  // 用户点垃圾桶可以中途取消生成 — generate() 每轮 tick 检一下,被置 true 就早退。
+  const generateAbortRef = useRef(false);
+
+  // 后台预生成 cache。用户调 event / rounds / sets 时,后台默默按当前配置 top up
+  // 对应 scramble type 的 pool;点击 生成 时直接 drain pool 而不是现场算。
+  // key = 传给 tnoodleRandomScramble 的 scramble type ('333bf' for MBLD, ev otherwise)。
+  // targetRef 由 effect 实时写,fill loop 每轮重读 —— 配置中途上调 mbldCubes/sets
+  // 时已 in-flight 的 fill 能跟上,不需要等 fill 退出再重启。
+  const cacheRef = useRef<Record<string, string[]>>({});
+  const cacheBusyRef = useRef<Set<string>>(new Set());
+  const cacheTargetRef = useRef<Record<string, number>>({});
+
   const [flagVer, setFlagVer] = useState(flagDataVersion());
   useEffect(() => {
     loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
@@ -186,7 +200,11 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
     [events],
   );
   const enabledEvents = useMemo(
-    () => [...TNOODLE_WCA_EVENTS.filter((e) => events[e]), ...customNxN],
+    () => [
+      ...TNOODLE_WCA_EVENTS.filter((e) => events[e]),
+      ...TWIZZLE_NONWCA_EVENTS.filter((e) => events[e]),
+      ...customNxN,
+    ],
     [events, customNxN],
   );
 
@@ -266,33 +284,94 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
     return n;
   }, [enabledEvents, events]);
 
+  const scrambleTypeFor = (ev: string): string =>
+    (ev === '333mbf' || ev === '333mbo') ? '333bf' : ev;
+
+  const drawScramble = async (type: string): Promise<string> => {
+    const q = cacheRef.current[type];
+    if (q && q.length > 0) return q.shift() ?? '';
+    return (await tnoodleRandomScramble(type)) ?? '';
+  };
+
+  // 后台预生成:用户在 configure 模式下调整时,按当前配置算出每种 scramble type
+  // 需要的数量,默默 top up cache。WCA 加载路径 / 已生成视图 都跳过。
+  useEffect(() => {
+    if (loadedCompId || sheets) return;
+    const need = new Map<string, number>();
+    for (const ev of enabledEvents) {
+      const cfg = events[ev];
+      if (!cfg) continue;
+      const type = scrambleTypeFor(ev);
+      let n = 0;
+      for (const r of cfg.rounds) {
+        const sets = Math.max(1, r.scrambleSets);
+        if (ev === '333mbf' || ev === '333mbo') {
+          n += formatAttempts(r.format) * (cfg.mbldCubes ?? 8) * sets;
+        } else if (ev === '333fm') {
+          n += formatAttempts(r.format) * sets;
+        } else {
+          n += (formatAttempts(r.format) + DEFAULT_EXTRA_COUNT) * sets;
+        }
+      }
+      need.set(type, (need.get(type) ?? 0) + n);
+    }
+    // 先把 targetRef 同步到当前值;in-flight fill 会在每轮 while 重读到新 target。
+    for (const [type, target] of need) cacheTargetRef.current[type] = target;
+    for (const [type] of need) {
+      if (cacheBusyRef.current.has(type)) continue;
+      if ((cacheRef.current[type]?.length ?? 0) >= (cacheTargetRef.current[type] ?? 0)) continue;
+      cacheBusyRef.current.add(type);
+      (async () => {
+        try {
+          while ((cacheRef.current[type]?.length ?? 0) < (cacheTargetRef.current[type] ?? 0)) {
+            const s = await tnoodleRandomScramble(type);
+            if (!cacheRef.current[type]) cacheRef.current[type] = [];
+            cacheRef.current[type].push(s ?? '');
+          }
+        } catch (err) {
+          console.warn('[gen/comp] background prefill failed', type, err);
+        } finally {
+          cacheBusyRef.current.delete(type);
+        }
+      })();
+    }
+  }, [enabledEvents, events, loadedCompId, sheets]);
+
   // ── mock 生成 ─────────────────────────────────────────────────
   const generate = async () => {
+    generateAbortRef.current = false;
     setGenerating(true);
     let done = 0;
     const total = totalAttempts;
     setGenProgress({ done: 0, total });
     const yieldToUi = () => new Promise<void>((r) => setTimeout(r, 0));
+    // tick 内 throw 这个 sentinel,catch 里识别并静默退出 — 避开层层 break。
+    // 延迟最多 1 个 scramble(in-flight 的 drawScramble 必须先 resolve)。
+    const ABORT_SENTINEL = {};
     const tick = async () => {
+      if (generateAbortRef.current) throw ABORT_SENTINEL;
       done += 1;
       setGenProgress({ done, total });
       if (done % 2 === 0) await yieldToUi();
     };
     try {
       const out: RoundSheet[] = [];
-      for (const ev of enabledEvents) {
+      outer: for (const ev of enabledEvents) {
+        if (generateAbortRef.current) break outer;
         const cfg = events[ev];
         for (let ri = 0; ri < cfg.rounds.length; ri++) {
+          if (generateAbortRef.current) break outer;
           const round = cfg.rounds[ri];
           const mainCount = formatAttempts(round.format);
           for (let g = 0; g < Math.max(1, round.scrambleSets); g++) {
+            if (generateAbortRef.current) break outer;
             if (ev === '333mbf' || ev === '333mbo') {
               const cubesPerAttempt = cfg.mbldCubes ?? 8;
               for (let a = 0; a < mainCount; a++) {
                 const cubeRows: AttemptScramble[] = [];
                 for (let c = 0; c < cubesPerAttempt; c++) {
-                  const s = await tnoodleRandomScramble('333bf');
-                  cubeRows.push({ label: String(c + 1), scramble: s ?? '', isExtra: false });
+                  const s = await drawScramble('333bf');
+                  cubeRows.push({ label: String(c + 1), scramble: s, isExtra: false });
                   await tick();
                 }
                 out.push({
@@ -306,13 +385,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
               }
             } else if (ev === '333fm') {
               for (let a = 0; a < mainCount; a++) {
-                const s = await tnoodleRandomScramble(ev);
+                const s = await drawScramble(ev);
                 await tick();
                 out.push({
                   event: ev, roundIdx: ri, groupIdx: g,
                   format: round.format,
                   attemptNumber: a,
-                  attempts: [{ label: '1', scramble: s ?? '', isExtra: false }],
+                  attempts: [{ label: '1', scramble: s, isExtra: false }],
                   locales: round.locales,
                   copies: round.copies,
                   totalGroups: round.scrambleSets,
@@ -321,13 +400,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
             } else {
               const attempts: AttemptScramble[] = [];
               for (let i = 0; i < mainCount; i++) {
-                const s = await tnoodleRandomScramble(ev);
-                attempts.push({ label: String(i + 1), scramble: s ?? '', isExtra: false });
+                const s = await drawScramble(ev);
+                attempts.push({ label: String(i + 1), scramble: s, isExtra: false });
                 await tick();
               }
               for (let i = 0; i < DEFAULT_EXTRA_COUNT; i++) {
-                const s = await tnoodleRandomScramble(ev);
-                attempts.push({ label: `E${i + 1}`, scramble: s ?? '', isExtra: true });
+                const s = await drawScramble(ev);
+                attempts.push({ label: `E${i + 1}`, scramble: s, isExtra: true });
                 await tick();
               }
               out.push({
@@ -341,10 +420,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
           }
         }
       }
-      setSheets(out);
-      setViewedEvent(out[0]?.event ?? null);
+      if (!generateAbortRef.current) {
+        setSheets(out);
+        setViewedEvent(out[0]?.event ?? null);
+      }
     } catch (err) {
-      console.error('[gen/comp] generate failed', err);
+      if (err !== ABORT_SENTINEL) console.error('[gen/comp] generate failed', err);
+      // abort 路径:静默退出,垃圾桶的 setSheets(null) 已经清场。
     } finally {
       setGenerating(false);
       setGenProgress(null);
@@ -510,7 +592,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
 
   const loaded = sheets && sheets.length > 0;
   const fmtKB = (b: number) => `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
-  const placeholder = t('输入比赛或链接,或自定义比赛名', 'Enter a comp / link, or a custom name');
+  const placeholder = t('输入 WCA 比赛或链接,或自定义比赛名', 'Enter a WCA comp / link, or a custom name');
 
   return (
     <>
@@ -609,13 +691,20 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
               title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
             />
           )}
-          {!loaded && !loadedCompId && Object.keys(events).length > 0 && (
+          {!loadedCompId && (Object.keys(events).length > 0 || loaded || generating) && (
             <button
               type="button"
               className="gen-btn"
-              onClick={() => setEvents({})}
-              title={t('清空所有项目', 'Clear all events')}
-              aria-label={t('清空所有项目', 'Clear all events')}
+              onClick={() => {
+                // 取消 in-flight 生成 + 清空 sheets + 清空 events,回到全空配置态。
+                generateAbortRef.current = true;
+                setSheets(null);
+                setViewedEvent(null);
+                setViewedRoundIdx(null);
+                setEvents({});
+              }}
+              title={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
+              aria-label={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
             >
               <Trash2 size={14} />
             </button>
@@ -627,10 +716,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
 
       {loaded ? (
         // ── 视图模式:已生成/加载,顶端 selector 单选,只能切视图 ──
+        // sheets 里可能同时有 WCA + 非 WCA(cubing.js twizzleEvents),
+        // 通过 appendEvents 同行 flex-wrap,不分两段。
         <WcaEventSelector
           availableEvents={new Set(eventsInSheets)}
           selectedEvent={activeView}
           onSelect={setViewedEvent}
+          appendEvents={TWIZZLE_NONWCA_APPEND}
           onlyAvailable
           isZh={isZh}
         />
@@ -650,6 +742,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
               else setRoundCount(ev, cur + 1);
             }
           }}
+          onRemove={toggleEvent}
+          appendEvents={TWIZZLE_NONWCA_APPEND}
           isZh={isZh}
         />
       )}
@@ -716,18 +810,18 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
                       )}
                       <label className="gen-tn-mini-num">
                         <span>{t('组', 'Sets')}</span>
-                        <input
-                          type="number" min={1} max={20}
+                        <NumberCommitInput
+                          min={1} max={20}
                           value={r.scrambleSets}
-                          onChange={(e) => updateRound(ev, ri, { scrambleSets: Math.max(1, Number(e.target.value) || 1) })}
+                          onCommit={(n) => updateRound(ev, ri, { scrambleSets: n })}
                         />
                       </label>
                       <label className="gen-tn-mini-num">
                         <span>{t('份', 'Copies')}</span>
-                        <input
-                          type="number" min={1} max={50}
+                        <NumberCommitInput
+                          min={1} max={50}
                           value={r.copies}
-                          onChange={(e) => updateRound(ev, ri, { copies: Math.max(1, Number(e.target.value) || 1) })}
+                          onCommit={(n) => updateRound(ev, ri, { copies: n })}
                         />
                       </label>
                     </div>
@@ -742,12 +836,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
                   ))}
                   {(ev === '333mbf' || ev === '333mbo') && (
                     <div className="gen-tn-round-row">
-                      <span className="gen-tn-round-num">{t('每次魔方数', 'Cubes/attempt')}</span>
-                      <input
-                        type="number" min={2} max={50}
+                      <span className="gen-tn-round-num">{t('魔方', 'Cubes')}</span>
+                      <NumberCommitInput
+                        min={2} max={50}
                         className="gen-tn-mbld-cubes"
                         value={cfg.mbldCubes ?? 8}
-                        onChange={(e) => setMbldCubes(ev, Math.max(2, Number(e.target.value) || 8))}
+                        onCommit={(n) => setMbldCubes(ev, n)}
                       />
                     </div>
                   )}

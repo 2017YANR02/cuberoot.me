@@ -368,40 +368,6 @@
     line-height: 1.65;
 }
 
-/* ──── Help icon inside the index card ──── */
-.wca-stats-index-card-help {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 22px;
-    height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    color: var(--muted-foreground, #95938E);
-    opacity: 0.55;
-    text-decoration: none;
-    z-index: 2;
-    transition: opacity 0.15s, background 0.15s, color 0.15s;
-}
-.wca-stats-index-card-help:hover {
-    opacity: 1;
-    color: #C15F3C;
-    background: rgba(193, 95, 60, 0.10);
-}
-[data-theme="dark"] .wca-stats-index-card-help:hover {
-    color: #D97757;
-    background: rgba(217, 119, 87, 0.14);
-}
-.wca-stats-index-card {
-    position: relative;
-}
-/* 给卡片右上留出 help 圆圈空间,避免文字撞到 */
-.wca-stats-index-card:has(.wca-stats-index-card-help) {
-    padding-right: 32px;
-}
-
 /* ──── 详情页 help icon(标题旁) ──── */
 .wca-stats-title-help {
     display: inline-flex;

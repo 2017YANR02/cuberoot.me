@@ -10,6 +10,7 @@ import { ShieldCheck } from 'lucide-react';
 import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { EventIcon } from '../../components/EventIcon';
 import { eventDisplayName } from '../../utils/wca_events';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
@@ -19,6 +20,7 @@ import './alg.css';
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('公式库', 'Algorithms');
   const navigate = useNavigate();
   const user = useAuthStore(s => s.user);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);

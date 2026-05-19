@@ -18,6 +18,7 @@ import TwistySection from '../../components/TwistySection';
 import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { computeAllStats } from '../../utils/recon_stats';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import '../../recon.css';
 import './recon_submit.css';
 import './recon_detail.css';
@@ -41,6 +42,7 @@ export default function AltSubmitPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('提交替代解', 'Submit Alternative');
   const user = useAuthStore(s => s.user);
   const currentWcaId = user?.wcaId || '';
 

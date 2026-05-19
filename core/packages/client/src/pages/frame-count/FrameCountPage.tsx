@@ -11,6 +11,7 @@ import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 
 import './frame-count.css';
 
@@ -284,6 +285,7 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
 
 export default function FrameCountPage() {
   const { t } = useTranslation();
+  useDocumentTitle('数帧', 'Frame Count');
 
   const videoRef = useRef<HTMLVideoElement>(null);
 

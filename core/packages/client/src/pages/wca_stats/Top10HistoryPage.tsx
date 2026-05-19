@@ -2,13 +2,15 @@
 // 数据源:stats/top10_history.json(主索引) + stats/top10_history/{eventId}.json(per-event lazy)
 // 路由:/wca/top10_history
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Download } from 'lucide-react';
 import { Flag } from '../../utils/flag';
 import { displayCuberName } from '../../utils/name_utils';
 import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
-import { wcaPersonUrl, wcaCompUrl } from '../../utils/recon_utils';
+import { wcaPersonUrl } from '../../utils/recon_utils';
+import { compLinkProps } from '../../utils/comp_link';
 import { formatWcaResult, type ResultKind } from '../../utils/wca_format_result';
 import { axisFor, tickLabel, type Metric } from './top10_axis';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
@@ -600,16 +602,14 @@ export default function Top10HistoryPage({
                   <span className="t10h-bar-name">{personName}</span>
                 </a>
                 <span className="t10h-value">{formatWcaResult(row.v, eventId, fmtKind)}</span>
-                <a
+                <Link
                   className="t10h-comp"
-                  href={wcaCompUrl(row.c)}
-                  target="_blank"
-                  rel="noopener"
+                  {...compLinkProps(row.c, { event: eventId })}
                   title={`${compName}  ${row.d}`}
                 >
                   {compIso2 && <Flag iso2={compIso2} className="t10h-comp-flag" />}
                   <span className="t10h-comp-name">{compName}</span>
-                </a>
+                </Link>
               </div>
             );
           })}

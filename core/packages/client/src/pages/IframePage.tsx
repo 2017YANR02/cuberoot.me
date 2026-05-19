@@ -3,6 +3,7 @@
  * NOTE: 用于嵌入未迁移到 React 的外部模块（Solver/Alg Trainer/csTimer）
  * 零改动上游代码，通过 iframe 在 SPA 内展示原版页面
  */
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 
 interface IframePageProps {
   /** iframe 加载的 URL 路径（如 /solver/） */
@@ -12,6 +13,8 @@ interface IframePageProps {
 }
 
 export default function IframePage({ src, title }: IframePageProps) {
+  // 工具名都是英文(csTimer / Solver / Cross Trainer 等),两语都用同一份
+  useDocumentTitle(title, title);
   return (
     <div style={{
       display: 'flex',

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './scramble_stats.css';
 
 interface HistEntry {
@@ -153,6 +154,7 @@ function computeStats(counts: Record<string, number>) {
 export default function ScrambleStatsPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('打乱分布', 'Scramble Stats');
 
   const [data, setData] = useState<DistributionJson | null>(null);
   const [error, setError] = useState<string | null>(null);
