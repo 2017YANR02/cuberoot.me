@@ -1126,6 +1126,1189 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   color: var(--ink-faint);
 }
 
+/* ── Centre verifier (§9.3) ────────────────────────────────────────────── */
+.gt-centre-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin: 20px 0 16px;
+}
+.gt-centre-cell {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 12px 8px;
+  text-align: center;
+  background: var(--bg-elev);
+  transition: border-color .15s, background .15s;
+}
+.gt-centre-ok {
+  border-color: color-mix(in srgb, var(--green) 60%, transparent);
+  background: color-mix(in srgb, var(--green) 8%, var(--bg-elev));
+}
+.gt-centre-bad {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev));
+}
+.gt-centre-face {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+}
+.gt-centre-status {
+  font-size: 20px;
+  margin: 4px 0;
+}
+.gt-centre-ok .gt-centre-status { color: var(--green); }
+.gt-centre-bad .gt-centre-status { color: var(--accent); }
+.gt-centre-detail {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+@media (max-width: 640px) {
+  .gt-centre-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Homomorphism panel (§17) ──────────────────────────────────────────── */
+.gt-hom-grid {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr 24px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 16px;
+}
+.gt-hom-cell {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 14px 8px;
+  text-align: center;
+  background: var(--bg-elev);
+}
+.gt-hom-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: .06em;
+}
+.gt-hom-val {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 28px;
+  margin-top: 4px;
+}
+.gt-hom-pos { color: var(--green); }
+.gt-hom-neg { color: var(--accent); }
+.gt-hom-op {
+  font-family: var(--math);
+  font-size: 22px;
+  text-align: center;
+  color: var(--ink-dim);
+}
+@media (max-width: 640px) {
+  .gt-hom-grid { grid-template-columns: 1fr; gap: 6px; }
+  .gt-hom-op { transform: rotate(90deg); }
+}
+
+/* ── Cayley walker (§14, expanded) ─────────────────────────────────────── */
+.gt-cayley-walker {
+  margin: 20px 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  padding: 20px;
+}
+.gt-cayley-walker-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.gt-cayley-walker-controls > .gt-cayley-walker-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.gt-cayley-walker-move {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  cursor: pointer;
+  color: var(--ink);
+  transition: border-color .15s, background .15s, color .15s;
+}
+.gt-cayley-walker-move:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+}
+.gt-cayley-walker-path {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px dashed var(--rule);
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  min-height: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.gt-cayley-walker-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--rule));
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.gt-cayley-walker-empty { color: var(--ink-faint); font-style: italic; }
+.gt-cayley-walker-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.gt-cayley-walker-stat {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 10px 12px;
+  background: var(--bg);
+}
+.gt-cayley-walker-stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.gt-cayley-walker-stat-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--ink);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.gt-cayley-walker-twisty {
+  width: 200px;
+  max-width: 100%;
+  margin: 0 auto;
+  aspect-ratio: 1;
+}
+
+/* Cayley BFS table for §14 (state count at each depth) */
+.gt-cayley-bfs {
+  margin: 20px 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.gt-cayley-bfs-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 110px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+}
+.gt-cayley-bfs-row:last-child { border-bottom: 0; }
+.gt-cayley-bfs-row.head {
+  background: color-mix(in srgb, var(--ink) 3%, var(--bg-elev));
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.gt-cayley-bfs-depth { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+.gt-cayley-bfs-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(to right, color-mix(in srgb, var(--accent-2) 40%, transparent), var(--accent-2));
+}
+.gt-cayley-bfs-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  text-align: right;
+}
+@media (max-width: 640px) {
+  .gt-cayley-bfs-row { grid-template-columns: 40px 1fr 80px; padding: 6px 10px; font-size: 11px; }
+}
+
+/* ── Section nav (per-section sub-page footer) ─────────────────────────── */
+.gt-section-nav {
+  max-width: 880px;
+  margin: 80px auto 48px;
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 16px;
+  border-top: 1px solid var(--rule);
+  padding-top: 24px;
+}
+.gt-section-nav-cell { min-width: 0; }
+.gt-section-nav-cell a {
+  display: block;
+  padding: 16px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color .15s, background .15s, transform .15s;
+}
+.gt-section-nav-cell a:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-elev));
+}
+.gt-section-nav-prev a:hover { transform: translateX(-2px); }
+.gt-section-nav-next a:hover { transform: translateX(2px); }
+.gt-section-nav-next a { text-align: right; }
+.gt-section-nav-toc a { text-align: center; padding: 16px 12px; }
+.gt-section-nav-dir {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.gt-section-nav-num {
+  font-family: var(--math);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--accent);
+  margin-top: 4px;
+}
+.gt-section-nav-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink);
+  margin-top: 2px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gt-section-nav-empty { padding: 16px; }
+@media (max-width: 640px) {
+  .gt-section-nav { grid-template-columns: 1fr; gap: 8px; margin-top: 56px; padding-top: 16px; }
+  .gt-section-nav-toc a { padding: 10px; }
+}
+
+/* ── Burnside visualisations (§18 expanded) ────────────────────────────── */
+.gt-burnside-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+.gt-burnside-sym {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.gt-burnside-sym:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-elev));
+}
+.gt-burnside-sym.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev));
+}
+.gt-burnside-sym-name {
+  font-family: var(--math);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.gt-burnside-sym-desc {
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.gt-orbit-explorer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.gt-orbit-explorer > div {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--bg-elev);
+}
+.gt-orbit-explorer h4 {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 8px;
+}
+.gt-orbit-explorer p {
+  font-size: 13px;
+  margin: 4px 0;
+  color: var(--ink);
+}
+.gt-orbit-explorer .gt-orbit-val {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .gt-orbit-explorer { grid-template-columns: 1fr; }
+}
+
+.gt-symgroup-svg {
+  display: block;
+  margin: 16px auto;
+  max-width: 100%;
+  height: auto;
+}
+.gt-symgroup-axis {
+  stroke: var(--ink-faint);
+  stroke-width: 1.4;
+  fill: none;
+  transition: stroke .15s, stroke-width .15s;
+}
+.gt-symgroup-axis-c4 { stroke: var(--accent); }
+.gt-symgroup-axis-c3 { stroke: var(--accent-2); }
+.gt-symgroup-axis-c2 { stroke: var(--gold); }
+.gt-symgroup-axis:hover, .gt-symgroup-axis.active {
+  stroke-width: 3;
+}
+.gt-symgroup-cube-edge { stroke: var(--ink); stroke-width: 1; fill: none; }
+.gt-symgroup-cube-face { fill: color-mix(in srgb, var(--accent) 6%, transparent); stroke: var(--ink-faint); stroke-width: .8; }
+.gt-symgroup-vertex { fill: var(--ink); }
+.gt-symgroup-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+.gt-symgroup-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* ── §3 State vector & R generator detail blocks ─────────────────────── */
+.gt-statevec,
+.gt-rgen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 14px 18px;
+  background: var(--bg-elev);
+  border-left: 3px solid var(--accent-2);
+  border-radius: 0 4px 4px 0;
+}
+.gt-statevec-row,
+.gt-rgen-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.gt-statevec-desc,
+.gt-rgen-desc {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  font-style: italic;
+}
+
+/* ── §5 Three invariants — numbered KaTeX rows ────────────────────────── */
+.gt-inv-laws {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+}
+.gt-inv-law {
+  display: grid;
+  grid-template-columns: 36px 1fr 180px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-elev);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+.gt-inv-law-num {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.gt-inv-law .gt-tex-block {
+  margin: 0;
+  text-align: left;
+  font-size: 1.08em;
+}
+.gt-inv-law-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .gt-inv-law {
+    grid-template-columns: 30px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .gt-inv-law-desc {
+    grid-column: 1 / -1;
+    text-align: left;
+    padding-left: 30px;
+  }
+}
+
+/* ── KaTeX TeX rendering ───────────────────────────────────────────────── */
+.gt-tex {
+  font-size: 1.02em;
+  color: var(--ink);
+}
+.gt-tex-block {
+  display: block;
+  margin: 18px auto;
+  text-align: center;
+  font-size: 1.08em;
+  color: var(--ink);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 0;
+}
+.gt-tex-block .katex-display {
+  margin: 0;
+}
+.gt-page .katex {
+  color: var(--ink);
+  font-size: 1.05em;
+}
+.gt-page .katex-display {
+  color: var(--ink);
+}
+
+/* ── §19 CosetVisualizer ─────────────────────────────────────────────── */
+.gt-coset-viz {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.gt-coset-pickrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.gt-coset-chip {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  color: var(--ink-dim);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.gt-coset-chip:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.gt-coset-chip.active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-elev));
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.gt-coset-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.gt-coset-stat {
+  text-align: center;
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.gt-coset-stat-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+.gt-coset-stat-val {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.gt-coset-stat-ok { color: var(--green); }
+.gt-coset-eqn {
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.gt-coset-fabric {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 4px;
+  margin-top: 12px;
+}
+.gt-coset-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: rgba(255,255,255,.85);
+  font-family: var(--mono);
+  font-size: 9px;
+  opacity: .85;
+  --coset-l: 50%;
+}
+html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
+@media (max-width: 640px) {
+  .gt-coset-stats { grid-template-columns: 1fr; }
+}
+
+/* ── §20 QuotientGroupBuilder ─────────────────────────────────────────── */
+.gt-quotient {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.gt-quotient-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.gt-quotient-tab {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  color: var(--ink-dim);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.gt-quotient-tab:hover { color: var(--ink); }
+.gt-quotient-tab.active {
+  background: color-mix(in srgb, var(--accent-2) 12%, var(--bg-elev));
+  border-color: var(--accent-2);
+  color: var(--ink);
+}
+.gt-quotient-body {
+  padding: 12px 0;
+}
+.gt-quotient-eqn {
+  margin-bottom: 12px;
+}
+.gt-quotient-desc {
+  color: var(--ink-dim);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+.gt-quotient-tiles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gt-quotient-tile {
+  flex: 1 1 120px;
+  padding: 12px;
+  border: 1.5px solid var(--accent-2);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent-2) 8%, var(--bg));
+  text-align: center;
+}
+.gt-quotient-tile-coset {
+  font-family: var(--math);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.gt-quotient-tile-cnt {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 6px;
+}
+
+/* ── §21 ParityCalculator ─────────────────────────────────────────────── */
+.gt-parity {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.gt-parity-input {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 15px;
+  padding: 10px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.gt-parity-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.gt-parity-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.gt-parity-cell {
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+  text-align: center;
+}
+.gt-parity-cell-prod {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+}
+.gt-parity-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+.gt-parity-val {
+  font-family: var(--math);
+  font-size: 28px;
+  font-weight: 700;
+}
+.gt-parity-val.pos { color: var(--green); }
+.gt-parity-val.neg { color: var(--warn); }
+.gt-parity-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 4px;
+}
+.gt-parity-cycles {
+  padding: 10px;
+  background: var(--bg);
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+}
+.gt-parity-cycles-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 2px 0;
+}
+.gt-parity-cycles-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+@media (max-width: 640px) {
+  .gt-parity-row { grid-template-columns: 1fr; }
+}
+
+/* ── §22 AlgorithmCompareTable ────────────────────────────────────────── */
+.gt-algo-compare {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.gt-algo-compare th,
+.gt-algo-compare td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+.gt-algo-compare th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: var(--bg-elev);
+}
+.gt-algo-compare td.num {
+  text-align: right;
+  font-family: var(--mono);
+  color: var(--ink);
+}
+.gt-algo-compare tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+@media (max-width: 720px) {
+  .gt-algo-compare { font-size: 11px; }
+  .gt-algo-compare th, .gt-algo-compare td { padding: 6px 4px; }
+}
+
+.gt-algo-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.gt-algo-flow-step {
+  flex: 1 1 280px;
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  padding: 14px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-elev));
+}
+.gt-algo-flow-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+.gt-algo-flow-title {
+  font-family: var(--math);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 4px 0 8px;
+  color: var(--ink);
+}
+.gt-algo-flow-body {
+  font-size: 13px;
+  color: var(--ink-dim);
+  line-height: 1.55;
+}
+.gt-algo-flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--math);
+  font-size: 24px;
+  color: var(--accent);
+  padding: 0 8px;
+  flex: 0 0 auto;
+}
+@media (max-width: 640px) {
+  .gt-algo-flow-arrow { transform: rotate(90deg); padding: 8px; }
+}
+
+.gt-algo-pseudo {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  padding: 14px 18px;
+  background: var(--bg-deep);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--ink);
+  margin: 12px 0;
+}
+
+/* ── §22 ThistlethwaitePhaseChart ─────────────────────────────────────── */
+.gt-thistle-chart {
+  margin: 20px 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--bg-elev);
+}
+.gt-thistle-stage {
+  display: grid;
+  grid-template-columns: 100px 1fr 160px 200px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.gt-thistle-stage:last-of-type { border-bottom: none; }
+.gt-thistle-stage-name {
+  font-family: var(--math);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.gt-thistle-stage-bar {
+  position: relative;
+  height: 22px;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.gt-thistle-stage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width .3s;
+}
+.gt-thistle-stage-depth {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 0 4px var(--bg);
+}
+.gt-thistle-stage-desc {
+  font-size: 13px;
+  color: var(--ink-dim);
+  font-style: italic;
+}
+.gt-thistle-stage-bound {
+  font-size: 11px;
+}
+.gt-thistle-total {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+@media (max-width: 720px) {
+  .gt-thistle-stage {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 10px 0;
+  }
+}
+
+/* ── §23 DistanceDistributionChart ────────────────────────────────────── */
+.gt-dist-chart {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+}
+.gt-dist-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 240px;
+  margin-bottom: 12px;
+}
+.gt-dist-bar-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform .1s;
+}
+.gt-dist-bar-cell:hover { transform: scaleY(1.02); }
+.gt-dist-bar {
+  width: 100%;
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+}
+.gt-dist-bar-fill {
+  width: 100%;
+  background: var(--accent);
+  transition: opacity .15s;
+  border-radius: 2px 2px 0 0;
+}
+.gt-dist-bar-fill.approx {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--accent),
+    var(--accent) 6px,
+    color-mix(in srgb, var(--accent) 40%, transparent) 6px,
+    color-mix(in srgb, var(--accent) 40%, transparent) 10px
+  );
+  opacity: .6;
+}
+.gt-dist-bar-cell.hover .gt-dist-bar-fill {
+  background: var(--accent-2);
+  opacity: 1;
+}
+.gt-dist-bar-d {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-dim);
+}
+.gt-dist-hover {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+  min-height: 32px;
+}
+.gt-dist-hover-d {
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 12px;
+}
+.gt-dist-hover-cnt { color: var(--ink); }
+.gt-dist-hover-approx { color: var(--ink-faint); font-style: italic; }
+.gt-dist-legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.gt-dist-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 12px;
+  vertical-align: middle;
+  margin-right: 6px;
+  border-radius: 2px;
+}
+.gt-dist-swatch.exact { background: var(--accent); }
+.gt-dist-swatch.approx {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--accent),
+    var(--accent) 4px,
+    transparent 4px,
+    transparent 7px
+  );
+}
+
+.gt-distance-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 16px 0;
+}
+.gt-distance-tbl th,
+.gt-distance-tbl td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+}
+.gt-distance-tbl th {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-faint);
+  background: var(--bg-elev);
+}
+.gt-distance-tbl td.num {
+  text-align: right;
+  font-family: var(--mono);
+}
+
+/* ── §24 RandomWalkSimulator ──────────────────────────────────────────── */
+.gt-rwalk {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.gt-rwalk-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.gt-rwalk-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.gt-rwalk-btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+.gt-rwalk-step {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.gt-rwalk-step strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+.gt-rwalk-chart {
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.gt-rwalk-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.gt-rwalk-stat {
+  text-align: center;
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.gt-rwalk-stat-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+.gt-rwalk-stat-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.gt-rwalk-stat-must {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--green);
+  margin-top: 2px;
+}
+@media (max-width: 640px) {
+  .gt-rwalk-stats { grid-template-columns: 1fr; }
+}
+
+/* ── §25 StabilizerChainExplorer ──────────────────────────────────────── */
+.gt-stab {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+}
+.gt-stab-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.gt-stab-tbl th,
+.gt-stab-tbl td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+}
+.gt-stab-tbl th {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-faint);
+}
+.gt-stab-tbl td.num {
+  text-align: right;
+  font-family: var(--mono);
+}
+
+/* ── §26 CharacterTableHint ───────────────────────────────────────────── */
+.gt-chartable {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+}
+.gt-chartable-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.gt-chartable-tbl th,
+.gt-chartable-tbl td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-align: center;
+}
+.gt-chartable-tbl thead th {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-faint);
+  background: var(--bg);
+}
+.gt-chartable-tbl tbody th {
+  font-family: var(--math);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--accent);
+  text-align: left;
+}
+.gt-chartable-tbl td.num {
+  font-family: var(--mono);
+  color: var(--ink);
+}
+
 /* ── Mobile tweaks ─────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .gt-page { padding: 32px 16px 64px; font-size: 16px; }
@@ -1135,4 +2318,5 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   .gt-hero { margin-bottom: 56px; }
   .gt-math-display { font-size: 1.05em; }
   .gt-result-row { font-size: 13px; }
+  .gt-tex-block { font-size: .98em; }
 }

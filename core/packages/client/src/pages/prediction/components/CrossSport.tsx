@@ -10,7 +10,7 @@ export function CrossSportSection({ isZh }: Props) {
       <h2>{isZh ? '跨运动锚定: WR 离物理墙多远' : 'Cross-Sport Anchoring: How Close Is the WR to the Wall'}</h2>
       <p>
         {isZh ? (
-          <>"WR 距理论极限百分比"是判断"一项运动是否成熟、还有多少空间"的最直接指标. 速拧两项放在一起看: 2x2 已接近反应时间墙, 3x3 还有近一半空间. 对比传统竞技运动, 你能感觉 3x3 的位置更像"1990 年代的马拉松"而不是"今天的马拉松".</>
+          <>「WR 占理论极限的百分比」是判断「一项运动成不成熟, 还剩多少空间」的最直接指标。速拧两项放到一起看: 2x2 已经接近反应时间墙,3x3 还有近一半空间。跟传统竞技项目对比一下,3x3 现在的位置更接近 1990 年代的马拉松,而不是今天的马拉松。</>
         ) : (
           <>"WR / theoretical-floor %" is the cleanest measure of "has this sport matured, and how much room remains." Putting 2x2 and 3x3 alongside running and other skill sports: 2x2 is already up against the reaction-time wall; 3x3 still has nearly half its headroom. 3x3 today is closer to where the marathon stood in the 1990s than where it stands now.</>
         )}
@@ -44,7 +44,7 @@ export function CrossSportSection({ isZh }: Props) {
                         {r.ratio_pct}%
                       </span>
                     </>
-                  ) : (isZh ? '墙已移' : 'wall moved')}
+                  ) : (isZh ? '墙已被推翻' : 'wall moved')}
                 </td>
               </tr>
             ))}
@@ -54,10 +54,10 @@ export function CrossSportSection({ isZh }: Props) {
       <p className="pred-note">
         {isZh ? (
           <>
-            <strong>反例 (NES Tetris).</strong> 2020 之前社区普遍认为 999,999 maxout 即"硬墙", 直到 CheeZ "rolling" 技法 (2020) +
-            Blue Scuti 撞穿 kill screen (2023) + rebirth wraparound (2024) 把上限完全打掉.
-            这是"先验墙"被技术革命推翻的范式 — 给速拧的 sub-2 / sub-1 想象保留可能 (智能魔方 + AI 教练 + 新方法不是不可能).
-            <strong>但跑步、打字这种"撞解剖学硬墙"的项目, 25-30 年零进展是常态.</strong> 速拧 3x3 目前位置 (54%) 在两种轨迹之间, 没有定论.
+            <strong>反例 (NES Tetris)。</strong> 2020 之前社区普遍认为 999,999 maxout 即「硬墙」,直到 CheeZ「rolling」技法 (2020) +
+            Blue Scuti 撞穿 kill screen (2023) + rebirth wraparound (2024) 把上限完全打掉。
+            这是一个典型的「以为是天花板的墙被技术革命推翻」的例子 — 给速拧 sub-2 / sub-1 留了想象空间 (智能魔方 + AI 教练 + 新方法并非完全没戏)。
+            <strong>但跑步, 打字这种「撞到解剖学硬墙」的项目,25-30 年零进展是常态。</strong> 速拧 3x3 目前位置 (54%) 夹在两种轨迹之间,没有定论。
           </>
         ) : (
           <>

@@ -7,9 +7,9 @@ This document is a deep-dive into every part of CFOP. It is intended for a reade
 
 ## Origins and Naming
 
-The method now called CFOP was first published as a complete system by Jessica Fridrich in 1981. Fridrich was a Czech cuber and computer scientist who would later become a leading researcher in digital image forensics; her cubing work was an early-career hobby. Her original publication was a magazine article in Czech that described the four-step structure that has remained essentially unchanged for forty-five years: solve a cross on one face, fill in the four corner-edge pairs that complete the first two layers, orient all the top-layer pieces so that the top face is one color, and finally permute those pieces so that the cube is solved.
+The method now called CFOP was first published as a complete system in English by Jessica Fridrich on her personal website in 1997. Fridrich was a Czech cuber (a teenager in 1981, when she began developing the method) who would later become a computer scientist and a leading researcher in digital image forensics; her cubing work was a long-running hobby that predated her academic career. She began assembling the four-step approach around 1981 in the runup to the 1982 World Championship in Budapest and refined it over the following fifteen years; the 1997 web publication was the first time the full pipeline — cross, F2L, last-layer orientation, last-layer permutation — appeared as a single English-language reference, complete with algorithm tables.
 
-The historical record is more complicated than the "Fridrich invented it" shorthand suggests. Hans Dockhorn and Anneke Treep, two Dutch cubers, independently developed substantially similar four-step structures during the early 1980s competitive scene in the Netherlands, including the key F2L insight of pairing a corner and edge before inserting them as a unit. René Schoof and others contributed early algorithmic work. The Fridrich publication was significant not because every component was original but because it codified the full pipeline, published algorithms for the last layer, and reached a Western audience through translation. For about two decades, the English-speaking community called the method "Fridrich" or "the Fridrich method," reflecting the simple fact that her publication was the proximate source for most who learned it.
+The historical record is more complicated than the "Fridrich invented it" shorthand suggests. Hans Dockhorn and Anneke Treep, two Dutch cubers, independently developed substantially similar four-step structures during the early 1980s competitive scene in the Netherlands, including the key F2L insight of pairing a corner and edge before inserting them as a unit. René Schoof and others contributed early algorithmic work. The Fridrich publication was significant not because every component was original but because it codified the full pipeline, published algorithms for the last layer, and reached a Western audience through her English-language website. For about a decade after the 1997 publication, the English-speaking community called the method "Fridrich" or "the Fridrich method," reflecting the simple fact that her website was the proximate source for most who learned it.
 
 Around 2008-2010, as the community grew more aware of the contributions of Dockhorn, Treep, and others, and as a more general sentiment toward inclusive attribution took hold, the community gradually shifted toward the acronym "CFOP" — derived from the four-step names — which credits the structure of the method without privileging any single inventor. The shift was never mandated by any organization; it emerged organically, accelerated by influential community figures such as Lars Vandenbergh, Bob Burton, and the SpeedSolving.com forum culture. Today, "Fridrich" is still occasionally used (especially by older cubers and in non-English-speaking communities), but "CFOP" is the universally understood, neutral term. The shift parallels similar renamings in other disciplines and is now considered settled community vocabulary.
 
@@ -110,9 +110,9 @@ The "wrist breaker" cross is a colloquial term for a cross plan that requires mu
 
 **Patrick Ponce,** former world record holder (4.69 in 2017), was notable for cross times reported by analysts to occasionally dip into the 0.6-second range on favorable scrambles. Ponce's TPS during cross was among the highest ever recorded for the phase.
 
-**Tymon Kolasinski,** Polish cuber and former world record holder (3.13 in 2022), is widely regarded as the best X-cross planner in the world. Tymon's inspection use is reported by coaches to push toward full XX-cross planning on roughly a quarter of his scrambles, which is exceptional.
+**Tymon Kolasinski,** Polish cuber and former Ao5 world record holder, is widely regarded as one of the best X-cross planners in the world. Tymon's inspection use is reported by coaches to push toward full XX-cross planning on a meaningful fraction of his scrambles, which is exceptional.
 
-**Yiheng Wang,** the current world record holder (around 3.05 as of 2026), has emphasized cross efficiency over raw cross speed: a higher proportion of his crosses are five or six HTM, and he is willing to spend a fraction of a second longer in inspection to find the cleaner cross. The result is faster F2L starts despite slower cross executions.
+**Yiheng Wang,** former world record holder (3.08 single, set at XMUM Cube Open 2025-02-15), has emphasized cross efficiency over raw cross speed: a higher proportion of his crosses are five or six HTM, and he is willing to spend a fraction of a second longer in inspection to find the cleaner cross. The result is faster F2L starts despite slower cross executions. The current single world record, 3.05, was set by Xuanyi Geng at Shenyang Spring 2025 on 2025-04-13.
 
 ### Drilling Cross
 
@@ -618,7 +618,9 @@ Standard drills for look-ahead:
 
 **Feliks Zemdegs:** Australian cuber. The benchmark for look-ahead at the top of the sport.
 
-**Yiheng Wang:** Current world record holder (2025-2026). Combines moderate TPS with strong look-ahead, similar to the Zemdegs style.
+**Yiheng Wang:** Former single world record holder (3.08 at XMUM Cube Open 2025) and current Ao5 world record holder. Combines moderate TPS with strong look-ahead, similar to the Zemdegs style.
+
+**Xuanyi Geng:** Current single world record holder (3.05 at Shenyang Spring 2025).
 
 **Tymon Kolasinski:** Polish cuber. Strong in cross planning (X-cross specialist) and look-ahead.
 
@@ -1178,27 +1180,27 @@ Note that several cells in the probability column show "2/72" — these are case
 
 **Y-rotation:** A 90-degree clockwise rotation around the vertical axis; commonly used between F2L pairs.
 
-**ZBLL** (Zborowski-Bruchem Last Layer): A 493-case 1LLL set assuming edges are oriented in F2L.
+**ZBLL** (Zborowski-Bruchem Last Layer): A 493-case 1LLL set assuming edges are oriented in F2L. Named for Zbigniew Zborowski and Ron van Bruchem.
 
 ## Appendix E: Notable World Records Achieved with CFOP
 
 A non-exhaustive timeline of 3x3x3 world records, all achieved with CFOP:
 
-- 2003-08-23: First WCA-era record at WC2003, by Dan Knights (United States), 16.71 single.
+- 2003-08-23: First WCA-era record at WC2003, by Dan Knights (United States), 16.71 single (and 20.00 average).
 - 2006-2007: Several records by Yu Nakajima and Toby Mao, dropping below 11 seconds.
-- 2008-07-13: Erik Akkersdijk (Netherlands), 7.08 single at the Czech Open (XX-cross).
-- 2011-12-04: Feliks Zemdegs (Australia), 5.66 single at Melbourne Cube Day. Beginning of Zemdegs era.
-- 2013-2015: Several Zemdegs records, including 5.55 in 2013, 5.25 in 2015.
+- 2008-07-13: Erik Akkersdijk (Netherlands), 7.08 single at the Czech Open.
+- 2011-06-25: Feliks Zemdegs (Australia), 5.66 single at Melbourne Winter Open 2011. Beginning of Zemdegs era.
+- 2013-03-02: Mats Valk (Netherlands), 5.55 single at Zonhoven Open 2013.
+- 2015-04-25: Collin Burns (USA), 5.25 single at Doylestown Spring 2015.
 - 2015-11-21: Lucas Etter (USA), 4.90 single at River Hill Fall 2015.
 - 2016-05-06: Mats Valk (Netherlands), 4.74 single at Jawa Timur Open 2016.
-- 2017-09-09: SeungBeom Cho (South Korea), 4.59 single.
-- 2017-09-24: Patrick Ponce (USA), 4.69 single. Briefly held the record.
-- 2018-05-19: Feliks Zemdegs, 4.22 single.
-- 2018-11-24: Yusheng Du (China), 3.47 single at Wuhu Open 2018. Held the record for nearly four years.
-- 2022-08-27: Tymon Kolasinski (Poland), 3.13 single at Cube Cracow 2022.
-- 2023-04-29: Max Park (USA), 3.13 (tied) at Pride in Long Beach 2023.
-- 2023-06-11: Max Park, 3.13 (tied again).
-- 2025: Yiheng Wang (China), records approaching 3.05.
+- 2017-09-02: Patrick Ponce (USA), 4.69 single at Rally In The Valley 2017. Briefly held the record.
+- 2017-10-28: SeungBeom Cho (South Korea), 4.59 single at ChicaGhosts 2017.
+- 2018-05-06: Feliks Zemdegs, 4.22 single at Cube for Cambodia 2018.
+- 2018-11-24: Yusheng Du (China), 3.47 single at Wuhu Open 2018. Held the record for over four years.
+- 2023-04-29: Max Park (USA), 3.13 single at Pride in Long Beach 2023.
+- 2025-02-15: Yiheng Wang (China), 3.08 single at XMUM Cube Open 2025.
+- 2025-04-13: Xuanyi Geng (China), 3.05 single at Shenyang Spring 2025 — the current world record.
 
 Every one of these solves was a CFOP solve. Almost all involved X-cross or XX-cross planning. Many involved LL skips, OLL skips, or fortunate scrambles that the solver capitalized on through superior recognition and execution.
 

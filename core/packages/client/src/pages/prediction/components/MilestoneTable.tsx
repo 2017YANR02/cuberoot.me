@@ -11,9 +11,9 @@ export function MilestoneTableSection({ isZh }: Props) {
       <p>
         {isZh ? (
           <>
-            本表把<strong>曲线拟合 (Exp+floor / Gompertz / 幂律 / 纯指数 加权集成)</strong> + <strong>物理下界 T_phys (M/TPS+R)</strong> + <strong>方法 / 硬件 regime shift 调整</strong> 三类信号合并, 给出未来 5 / 25 / 50 年的 WR 预测 (单次, 单位与各项目页面一致).
-            <strong>不要把数字当 oracle</strong> — 历史上 5 年级别的预测平均偏差 ±10%, 25 年 ±30%, 50 年误差量级与现值相当.
-            真值之所以总比预测低, 是因为<em>下一次方法 / 硬件革命</em>不会出现在历史轨迹里. Geng 的 ZB 革命 (2026) 就一次把 Ao5 砍掉 ~5%, 但单点拟合看不到.
+            本表把<strong>曲线拟合 (Exp+floor / Gompertz / 幂律 / 纯指数 加权集成)</strong> + <strong>物理下界 T_phys (M/TPS+R)</strong> + <strong>方法 / 硬件 regime shift 调整</strong> 三类信号合并,给出未来 5 / 25 / 50 年的 WR 预测 (单次,单位与各项目页面一致)。
+            <strong>不要把这些数字当作预言</strong> — 5 年这种短期预测的历史偏差 ±10%,25 年 ±30%,50 年的误差量级与当前数值相当。
+            实际值之所以经常比预测低,是因为<em>下一次方法 / 硬件革命</em>不会被历史轨迹捕捉到。Geng 的 ZB 革命 (2026) 一次就把 Ao5 砍掉了 ~5%,但单点拟合看不到这种跳跃。
           </>
         ) : (
           <>
@@ -56,7 +56,7 @@ export function MilestoneTableSection({ isZh }: Props) {
       </div>
       <p className="pred-note">
         {isZh
-          ? '区间 [a–b] = 95% 集成预测区间. "floor" 标注意为已抵达物理下界, 后续靠 scramble 幸运抽样.'
+          ? '区间 [a-b] = 95% 集成预测区间。「floor」标记表示已抵达物理下界,后续只能靠打乱的幸运抽样。'
           : 'Interval [a–b] = 95% ensemble prediction band. "floor" = already at the physical wall, further gains hinge on scramble luck only.'}
       </p>
     </section>

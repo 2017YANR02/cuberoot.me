@@ -279,7 +279,7 @@ export default function PredictionPage() {
           </h1>
           <p className="pred-subtitle">
             {isZh
-              ? `数据 ${data.generated_at.slice(0, 10)} · 1982-2050 · 16 项 · 拟合 / 物理 / 极值理论三轨预测`
+              ? `数据 ${data.generated_at.slice(0, 10)}  1982-2050  16 项  拟合 / 物理 / 极值理论三轨预测`
               : `Data ${data.generated_at.slice(0, 10)} · 1982-2050 · 16 events · curve / physics / extreme-value tri-track forecasts`}
           </p>
 
@@ -289,8 +289,8 @@ export default function PredictionPage() {
             <p className="pred-tldr-lede">
               {isZh ? (
                 <>
-                  速拧正在撞墙. <strong>16 个 WCA 项目里有 {closestCount} 个</strong> 当前 WR 已落在物理下界 (M/TPS+R 步数法) 的 80% 以内 — 这些项目剩余压缩空间大约 1.25 倍.
-                  与此同时, 3x3 单次 WR 在 2026 年第一次跌破 3 秒 (Zajder 2.76), 物理下界估计在 <strong>~1.5 s (100 年内可达) ~ 0.8 s (God's number 数学硬墙)</strong> 之间, 仍有 1.8 倍 ~ 3.5 倍空间.
+                  速拧正在撞墙。<strong>16 个 WCA 项目里有 {closestCount} 个</strong> 当前 WR 已经压到物理下界 (M/TPS+R 步数法) 的 80% 以内 — 余地不到 1.25 倍。
+                  3x3 单次 WR 在 2026 年首次跌破 3 秒 (Zajder 2.76),物理下界估计落在 <strong>~1.5 秒 (百年可达) 到 ~0.8 秒 (God's number 数学硬墙)</strong> 之间,还有 1.8 到 3.5 倍空间。
                 </>
               ) : (
                 <>
@@ -323,7 +323,7 @@ export default function PredictionPage() {
                 </ol>
               </div>
               <div className="pred-tldr-block">
-                <div className="pred-tldr-label">{isZh ? '今天的"撞墙"快报' : "Today's headline drops"}</div>
+                <div className="pred-tldr-label">{isZh ? '今天的「撞墙」快报' : "Today's headline drops"}</div>
                 <ul className="pred-tldr-list">
                   <li><span>3x3 Single</span> <strong>2.76 s</strong></li>
                   <li><span>3x3 Ao5 ({isZh ? 'ZB' : 'ZB'})</span> <strong>3.71 s</strong></li>
@@ -333,7 +333,7 @@ export default function PredictionPage() {
             </div>
             <p className="pred-tldr-note">
               {isZh
-                ? `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} 次 WR 改写 · ${totalEvents} 项目独立建模 · 拟合 / 物理 / GEV 三层并列, 互相校验.`
+                ? `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} 次 WR 改写  /  ${totalEvents} 项独立建模  /  拟合, 物理, GEV 三层并列互相校验`
                 : `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} WR drops · ${totalEvents} events modeled independently · curve / physics / GEV tracks cross-checked.`}
             </p>
           </section>
@@ -345,7 +345,7 @@ export default function PredictionPage() {
               <div className="pred-333-cta-title">{isZh ? '三阶魔方: 终极极限预测' : '3x3: The Ultimate Limits Forecast'}</div>
               <div className="pred-333-cta-sub">
                 {isZh
-                  ? '24 节, 历史 / 方法 / 数学 / 生物力学 / 顶级选手 / 训练 / 统计 / 综合预测.'
+                  ? '24 节,涵盖历史, 方法, 数学, 生物力学, 顶级选手, 训练, 统计, 综合预测。'
                   : '24 sections — history, methods, math, biomech, top cubers, training, stats, ensemble forecast.'}
               </div>
             </div>
@@ -355,11 +355,11 @@ export default function PredictionPage() {
           {/* Pointer to lucky-scramble forecast */}
           <Link to="/wca/prediction/lucky" className="pred-333-deepdive-cta pred-lucky-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{isZh ? '运气预测 · 累积概率' : 'Luck Forecast · Cumulative Probability'}</div>
-              <div className="pred-333-cta-title">{isZh ? '撞上最幸运 scramble 的概率: 何时高?' : 'When Does Cumulative P of Hitting the Luckiest Scramble Become High?'}</div>
+              <div className="pred-333-cta-eyebrow">{isZh ? '运气预测  累积概率' : 'Luck Forecast · Cumulative Probability'}</div>
+              <div className="pred-333-cta-title">{isZh ? '撞上最幸运打乱的概率: 何时高?' : 'When Does Cumulative P of Hitting the Luckiest Scramble Become High?'}</div>
               <div className="pred-333-cta-sub">
                 {isZh
-                  ? '三阶 4.3×10^19 状态里只有 262 个 ≤2 步可解. 单次概率 6×10^-18 ≈ 零, 但 P = 1−(1−p)^N 随累积 N 增长. 需要 N₅₀ ≈ 1.2×10^17 次打乱才能有 50% 概率撞上一次 → 三阶 0.27 s 是 ~10^14 年级渐近.'
+                  ? '三阶 4.3×10¹⁹ 个状态里只有 262 个能用 ≤2 步解开。单次概率 6×10⁻¹⁸ ≈ 零,但累积概率 P = 1−(1−p)^N 随 N 上涨。要 N₅₀ ≈ 1.2×10¹⁷ 次打乱才有 50% 命中,折算回去三阶 0.27 秒是 ~10¹⁴ 年级别的渐近线。'
                   : '3x3 has only 262 of 4.3×10^19 states solvable in ≤2 moves. Per-scramble p ≈ 6×10^-18, but cumulative P = 1−(1−p)^N grows with N. N₅₀ ≈ 1.2×10^17 → the 3x3 0.27 s asymptote is ~10^14 yr out.'}
               </div>
             </div>
@@ -371,7 +371,7 @@ export default function PredictionPage() {
             <h2>{isZh ? '撞墙排行: 一张图看完 16 项' : 'Wall-Closeness Ranking: All 16 Events at a Glance'}</h2>
             <p>
               {isZh
-                ? '横轴 = 物理下界 / 当前 WR (%). 越靠右 = 越无空间. 该指标比"WR 是多少"更能反映"项目成熟度": 一个 ratio 99% 的项目即使数字看上去吓人 (比如 0.30 s), 也几乎不会再有大幅改写; 一个 ratio 50% 的项目即使数字慢 (Wang 3.08 → Zajder 2.76 → 还能 ~1.5), 突破才刚开始.'
+                ? '横轴 = 物理下界 / 当前 WR (%)。越靠右 = 剩余空间越小。这个指标比「WR 是多少」更能反映「项目成熟度」: ratio 99% 的项目即使数字看上去吓人 (比如 0.30 秒),也几乎不会再有大幅改写;ratio 50% 的项目即使数字慢 (Wang 3.08 → Zajder 2.76 → 还能 ~1.5),突破才刚开始。'
                 : 'X-axis = physical floor / current WR (%). Further right = less headroom. This ratio captures "event maturity" better than the raw WR: a 99% event will see very few more WRs even if its absolute number looks impressive; a 50% event still has the steepest part of its curve ahead.'}
             </p>
             <HeadlineBar eventSummaries={eventSummaries} isZh={isZh} />
@@ -382,7 +382,7 @@ export default function PredictionPage() {
             <h2>{isZh ? '跨项目总览' : 'Cross-Event Overview'}</h2>
             <p>
               {isZh
-                ? '每张卡片三条线: 单次 / 平均 / 微型对比条. 微型条横轴是"物理下界 → 当前 WR"的区间, 三个点分别为 T_phys (绿)、拟合 L (橙)、当前 WR (红). 红点越靠近绿点 = 物理墙越紧逼.'
+                ? '每张卡片三行: 单次  /  平均  /  微型对比条。微型条横轴是「物理下界 → 当前 WR」的区间,三点分别是 T_phys (绿), 拟合 L (橙), 当前 WR (红)。红点离绿点越近,离物理墙就越近。'
                 : 'Each card has three rows: single, average, microbar. The bar runs from T_phys (green, physical floor) through L (orange, curve-fit trajectory floor) to WR (red, current). Red close to green = wall is closing in.'}
             </p>
             <div className="pred-legend-strip">
@@ -441,11 +441,11 @@ export default function PredictionPage() {
                     )}
                     <div className="pred-ov-foot">
                       <span>{s.progressionCount} WR{isZh ? ' 改写' : ' drops'}</span>
-                      <span className="pred-ov-foot-sep">·</span>
+                      <span className="pred-ov-foot-sep"> </span>
                       <span>{s.cumCubers.toLocaleString()} {isZh ? '人' : 'cubers'}</span>
                       {lim?.current_wr_avg_holder && (
                         <>
-                          <span className="pred-ov-foot-sep">·</span>
+                          <span className="pred-ov-foot-sep"> </span>
                           <span className="pred-ov-foot-holder">{lim.current_wr_avg_holder.split('—')[0].trim()}</span>
                         </>
                       )}
@@ -489,41 +489,41 @@ export default function PredictionPage() {
             <h2>{isZh ? '方法论' : 'Methodology'}</h2>
             <ol>
               <li>
-                <strong>{isZh ? '数据源' : 'Source'}.</strong>{' '}
+                <strong>{isZh ? '数据源' : 'Source'}{isZh ? '。' : '.'}</strong>{' '}
                 {isZh
-                  ? `WCA 全量 results dump, 在本机 MySQL 8 (wca_developer_database 库). 包含 1982 至 ${new Date().getFullYear()} 全部 16 个项目共 1.7M+ 条 333 单次成绩(其他项目数据规模见各章).`
+                  ? `WCA 全量 results dump,装在本机 MySQL 8 (wca_developer_database 库)。涵盖 1982 至 ${new Date().getFullYear()},全部 16 个项目,共 170 万+ 条 3x3 单次成绩 (其他项目数据规模见各章)。`
                   : `Full WCA results dump in local MySQL 8 (wca_developer_database db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`}
               </li>
               <li>
-                <strong>{isZh ? '过滤' : 'Filter'}.</strong>{' '}
-                <code>best &gt; 0</code> {isZh ? '排除 DNF (-1) 与 DNS (-2)' : 'excludes DNF (-1) and DNS (-2)'}; <code>average &gt; 0</code> {isZh ? '同上' : 'same'}. 333mbf {isZh ? '编码值无法直接比较, 单独处理' : 'uses encoded value, treated separately'}.
+                <strong>{isZh ? '过滤' : 'Filter'}{isZh ? '。' : '.'}</strong>{' '}
+                <code>best &gt; 0</code> {isZh ? '排除 DNF (-1) 与 DNS (-2)' : 'excludes DNF (-1) and DNS (-2)'}; <code>average &gt; 0</code> {isZh ? '同上' : 'same'}{isZh ? '。' : '.'} 333mbf {isZh ? '编码值无法直接比较,单独处理。' : 'uses encoded value, treated separately.'}
               </li>
               <li>
-                <strong>{isZh ? '年化' : 'Yearly bucketing'}.</strong>{' '}
+                <strong>{isZh ? '年化' : 'Yearly bucketing'}{isZh ? '。' : '.'}</strong>{' '}
                 {isZh
-                  ? '按 competitions.start_date 的年份归集. 当前未完整年自动从拟合数据中排除.'
+                  ? '按 competitions.start_date 的年份归类。当前不完整年份会从拟合数据中自动剔除。'
                   : 'Grouped by competitions.start_date year. Current year (incomplete) excluded from fits.'}
               </li>
               <li>
-                <strong>{isZh ? '集成模型' : 'Ensemble'}.</strong>{' '}
+                <strong>{isZh ? '集成模型' : 'Ensemble'}{isZh ? '。' : '.'}</strong>{' '}
                 {isZh
-                  ? '四模型并行拟合: 指数+下限 T(t)=L+A·exp(-k(t-t₀)) 主, Gompertz / 幂律 / 纯指数 校验. 按 R² 加权聚合给 5/25/50 年外推. L 网格搜索 (步长 0.05 秒 / 0.5 步), 每个候选 L 用 log(T-L) 上的 OLS 解析求 (A, k); 物理约束 L < 所有观测值.'
+                  ? '四个模型并行拟合: 主模型是「指数+下限」T(t)=L+A·exp(-k(t-t₀)),用 Gompertz, 幂律, 纯指数三个作对比。按 R² 加权集成,给出 5/25/50 年外推。L 用网格搜索 (步长 0.05 秒 / 0.5 步),每个候选 L 用 log(T-L) 上的 OLS 解析解出 (A, k);物理约束 L < 所有观测值。'
                   : 'Four models fit in parallel: exp+floor T(t)=L+A·exp(-k(t-t₀)) primary, Gompertz / power / pure-exp as comparison. R²-weighted ensemble drives 5/25/50-year forecasts. L grid-search (step 0.05 s / 0.5 moves); per candidate L: analytic OLS on log(T-L) for (A, k). Physical constraint: L < all observed.'}
               </li>
               <li>
-                <strong>{isZh ? '物理下界 T_phys' : 'Physical floor T_phys'}.</strong>{' '}
+                <strong>{isZh ? '物理下界 T_phys' : 'Physical floor T_phys'}{isZh ? '。' : '.'}</strong>{' '}
                 {isZh
-                  ? '步数法 T = M/TPS + R, 其中 M = 已验证 reconstruction 平均 STM, TPS = 顶级持续敲击率, R = 识别+切换噪声. 每项目独立填表, 见各章节"已验证 reconstruction".'
+                  ? '步数法 T = M/TPS + R,其中 M 是有公开复盘的平均 STM,TPS 是顶级选手的持续敲击率,R 是识别 + 切换的余量。每个项目独立填表,见各章节「已验证复盘」。'
                   : 'Step-count T = M/TPS + R, with M = verified reconstruction average STM, TPS = top-cuber sustained rate, R = recognition + switching residual. Filled per event, see each chapter\'s "Verified reconstructions".'}
               </li>
               <li>
-                <strong>{isZh ? '极值理论 GEV' : 'Extreme-value GEV'}.</strong>{' '}
+                <strong>{isZh ? '极值理论 GEV' : 'Extreme-value GEV'}{isZh ? '。' : '.'}</strong>{' '}
                 {isZh
-                  ? 'WR single 视为 N 次独立尝试的 sample minimum, 用 Gumbel 反算 E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π). 与拟合 / 物理 floor 三向校验, 不取单一来源.'
+                  ? '把 WR 单次视为 N 次独立尝试的样本最小值,用 Gumbel 反算 E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π)。这条结果跟拟合, 物理下界三方互校,不依赖单一来源。'
                   : 'WR single treated as N-sample minimum, Gumbel back-solve E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π). Cross-checked against fit and physical floor — no single-source answer.'}
               </li>
               <li>
-                <strong>{isZh ? '复现' : 'Reproduce'}.</strong>{' '}
+                <strong>{isZh ? '复现' : 'Reproduce'}{isZh ? '。' : '.'}</strong>{' '}
                 <code>node .tmp/extract_all_events.mjs</code> → <code>stats/prediction/all_events.json</code>
               </li>
             </ol>
@@ -534,7 +534,7 @@ export default function PredictionPage() {
 
           <footer className="pred-footer">
             <div>
-              {isZh ? `数据生成: ${data.generated_at} · 复现见方法论 §7 末尾`
+              {isZh ? `数据生成: ${data.generated_at}  复现见方法论 §7 末尾`
                     : `Data: ${data.generated_at} · Reproduce: see Methodology §7`}
             </div>
           </footer>
@@ -595,9 +595,9 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
       <p>
         {isZh ? (
           <>
-            前一节"数学硬墙"已经把"步数 ~ N^1.8" (Demaine 渐近) 和"时间 ~ N^2.5" 分开. 这里聚焦时间侧 — 实测 222→777 当前 WR 走出的曲线.
-            {scalingFit && <> 时间维度 b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>, R² = {scalingFit.r2.toFixed(3)}. 即 N 翻倍, 时间约 <strong>{(2 ** scalingFit.b).toFixed(1)} 倍</strong>.</>}
-            步数侧 (n^1.8) 和时间侧 (n^{scalingFit?.b.toFixed(2) ?? '?'}) 之间的差额, 就是"大魔方 TPS 显著下降"的成本.
+            前一节「数学硬墙」已经把「步数 ~ N^1.8」(Demaine 渐近) 和「时间 ~ N^2.5」分开。这里聚焦时间这一侧 — 实测 222 → 777 当前 WR 走出的曲线。
+            {scalingFit && <> 时间这一维 b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>,R² = {scalingFit.r2.toFixed(3)}。也就是 N 翻一倍,时间增到约 <strong>{(2 ** scalingFit.b).toFixed(1)} 倍</strong>。</>}
+            步数侧 (n^1.8) 和时间侧 (n^{scalingFit?.b.toFixed(2) ?? '?'}) 之间的差距,就是「大魔方 TPS 明显下降」的代价。
           </>
         ) : (
           <>
@@ -626,7 +626,7 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
       <h2>{isZh ? '生物力学极限 (TPS + 识别 + 切换)' : 'Biomech Floor (TPS + Recognition + Switching)'}</h2>
       <p>
         {isZh
-          ? '"解长度 × TPS + 识别" 的 first-principles 分解给出速拧时间下界. 三大输入分别有不同来源 — 解长度受 God\'s number 约束, TPS 受手指 / 击鼓生物力学约束, 识别+切换是高阶认知噪声.'
+          ? '「解长度 × TPS + 识别」的第一性原理分解,给出速拧时间下界。三大输入分别有不同来源 — 解长度受 God\'s number 约束,TPS 受手指 / 击鼓生物力学约束,识别 + 切换是高阶认知噪声。'
           : 'First-principles "STM × TPS + recognition" decomposition gives the time floor. Three inputs from different sources — STM bounded by God\'s number, TPS bounded by finger/drum biomech, recognition+switching is higher-order cognitive noise.'}
       </p>
       <table className="pred-limits">
@@ -646,7 +646,7 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
             <td>{isZh ? '24 = ZB+lucky / 49 = Geng 平均 / 55 = vanilla CFOP' : '24 = ZB+lucky / 49 = Geng avg / 55 = vanilla CFOP'}</td>
           </tr>
           <tr>
-            <td>{isZh ? '持续 TPS (单 cuber, ≥3 s)' : 'Sustained TPS (single cuber, ≥3 s)'}</td>
+            <td>{isZh ? '持续 TPS (单选手, ≥3 s)' : 'Sustained TPS (single cuber, ≥3 s)'}</td>
             <td>17</td><td>14</td><td>11</td>
             <td>{isZh ? '14.6 = Wang 3.08 实测, 17 = 100 年外推上界' : 'Wang 3.08 verified 14.6; 17 = 100-year extrapolation'}</td>
           </tr>
@@ -667,9 +667,9 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
       <p>
         {isZh ? (
           <>
-            <strong>"现实"3.6 秒在 Zajder 2.76 已经被打穿</strong>, 因为 Zajder 用 ZB 跑了 29 步, 比"现实"列的 49 步省了 20 步.
-            乐观 1.5 秒需要同时: 24 STM (近 God's STM 下界, 极少 scramble) + 17 TPS 持续 (王艺衡当前 14.6 的延展) + 0.05 s 识别 (近物理反应时间).
-            <strong>数学硬墙 (God's number 18 HTM ≈ 16 STM + 22 Hz 双手击鼓 + StackMat 50 ms) 在 ~0.78 s</strong>, 该数字 100 年内出现概率近零.
+            <strong>「现实」3.6 秒已经被 Zajder 2.76 击穿</strong>,因为 Zajder 用 ZB 跑了 29 步,比「现实」列的 49 步省了 20 步。
+            乐观 1.5 秒需要同时: 24 STM (近 God's STM 下界,极少打乱) + 17 TPS 持续 (王艺衡当前 14.6 的延展) + 0.05 秒识别 (接近物理反应时间)。
+            <strong>数学硬墙 (God's number 18 HTM ≈ 16 STM + 22 Hz 双手击鼓 + StackMat 50 ms) 在 ~0.78 秒</strong>,这个数字 100 年内出现的概率接近零。
           </>
         ) : (
           <>
@@ -682,7 +682,7 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
       <p>
         {isZh ? (
           <>
-            <strong>跨项目类比.</strong> STM × TPS × 切换 在每个项目都成立, 但三个输入因魔方大小 / 单手 / 盲拧任务而显著变化:
+            <strong>跨项目类比。</strong> STM × TPS × 切换 这个公式在每个项目都成立,但三个输入随魔方阶数, 单手, 盲拧任务显著不同:
           </>
         ) : (
           <>
@@ -691,10 +691,10 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
         )}
       </p>
       <ul>
-        <li>{isZh ? 'OH 单手: TPS 减半 ≈ 7-8, 解法相同 49 STM → 6.5 s 下限. 当前 WR 5.66, 已贴边.' : 'OH: TPS halves to ~7-8, same 49 STM → 6.5 s floor. Current WR 5.66 — at the wall.'}</li>
-        <li>{isZh ? '4x4: ~80 STM (含 reduce + 3x3 + parity) × TPS 9 = 8.9 s + 1 s 切换 = 9.9 s. 当前 WR 15.18, 还有 5 s 优化空间.' : '4x4: ~80 STM (reduce + 3x3 + parity) × TPS 9 = 8.9 s + 1 s switching = 9.9 s. Current WR 15.18 — 5 s headroom.'}</li>
-        <li>{isZh ? 'BLD: 不受 TPS 限制, 受记忆速度限制. 当前 3BLD WR ~11.67 s (Eggins 2026), 极限可能 ~5 s (Speed Cards 13 s 类比).' : '3BLD: not TPS-limited, memo-limited. Current WR 11.67 s (Eggins 2026); plausible floor ~5 s (Speed Cards 13 s analog).'}</li>
-        <li>{isZh ? "FMC: 信息论极限 = God's number 20 HTM (Rokicki 2010); 现 WR 16 单次. 67% scramble 需要 18 HTM, 仅 2.6% 是 16 — sub-15 几乎只能靠 scramble 抽中 ≤15 HTM 那 0.5%." : "FMC: info-theoretic floor = God's number 20 HTM (Rokicki 2010); current WR 16. 67% of scrambles need 18 HTM and only 2.6% are 16-HTM — sub-15 essentially needs landing on the ≤15-HTM 0.5%."}</li>
+        <li>{isZh ? 'OH 单手: TPS 减半到 ~7-8,解法同 49 STM → 6.5 秒下界。当前 WR 5.66,已经贴到墙上。' : 'OH: TPS halves to ~7-8, same 49 STM → 6.5 s floor. Current WR 5.66 — at the wall.'}</li>
+        <li>{isZh ? '4x4: ~80 STM (含 reduce + 3x3 + parity) × TPS 9 = 8.9 秒 + 1 秒切换 = 9.9 秒。当前 WR 15.18,还有 5 秒优化空间。' : '4x4: ~80 STM (reduce + 3x3 + parity) × TPS 9 = 8.9 s + 1 s switching = 9.9 s. Current WR 15.18 — 5 s headroom.'}</li>
+        <li>{isZh ? 'BLD: 不受 TPS 限制,瓶颈在记忆速度。当前 3BLD WR ~11.67 秒 (Eggins 2026),极限可能 ~5 秒 (类比 Speed Cards 13 秒)。' : '3BLD: not TPS-limited, memo-limited. Current WR 11.67 s (Eggins 2026); plausible floor ~5 s (Speed Cards 13 s analog).'}</li>
+        <li>{isZh ? "FMC: 信息论极限 = God's number 20 HTM (Rokicki 2010);现 WR 16 单次。67% 的打乱需要 18 HTM,仅 2.6% 是 16 — sub-15 几乎只能靠抽中 ≤ 15 HTM 那 0.5% 的稀有打乱。" : "FMC: info-theoretic floor = God's number 20 HTM (Rokicki 2010); current WR 16. 67% of scrambles need 18 HTM and only 2.6% are 16-HTM — sub-15 essentially needs landing on the ≤15-HTM 0.5%."}</li>
       </ul>
     </section>
   );
@@ -746,8 +746,8 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
       <p>
         {isZh ? (
           <>
-            <strong>解读.</strong> WR 持有者集中度反映两层: (a) 训练资源 (顶级 cuber 数量、教练池、智能魔方普及), (b) 比赛机会密度.
-            中、美两国占近 5 年全球比赛数的 ~45%, 这两国占绝大多数 WR 出场机会. 注意"WR 出现频率 ≠ 国家平均水平".
+            <strong>解读。</strong> WR 持有者的集中度反映两层: (a) 训练资源 (顶级选手数量, 教练池, 智能魔方普及),(b) 比赛机会密度。
+            中, 美两国占近 5 年全球比赛数的 ~45%,也占走了绝大多数 WR 出场机会。但「WR 频率 ≠ 国家平均水平」。
           </>
         ) : (
           <>
@@ -796,51 +796,51 @@ function CaveatsSection({ isZh }: { isZh: boolean }) {
       <h2>{isZh ? '局限与陷阱' : 'Caveats & Pitfalls'}</h2>
       <ol>
         <li>
-          <strong>{isZh ? '极值统计 ≠ 中心趋势.' : 'Extreme value ≠ central tendency.'}</strong>{' '}
+          <strong>{isZh ? '极值统计 ≠ 中心趋势。' : 'Extreme value ≠ central tendency.'}</strong>{' '}
           {isZh
-            ? 'WR 是 sample 极小值, 服从 Generalized Extreme Value (GEV) 分布而非高斯. 当样本量从年 100 升到年 26 万时, "可见尾部"非线性扩张 — N 翻 2000 倍, 期望 min 大致下移 σ·√(2 ln N) — 不取决于"实际能力提升".'
+            ? 'WR 是样本最小值,服从广义极值 (GEV) 分布,不是高斯。样本量从年 100 升到年 26 万 (2000 倍),期望最小值大致下移 σ·√(2 ln N),这部分跟「真实水平在不在涨」没关系。'
             : 'WR is a sample minimum, GEV-distributed not Gaussian. As N goes from 100/year to 260k/year (2000×), expected min shifts by σ·√(2 ln N) regardless of actual skill change.'}
         </li>
         <li>
-          <strong>{isZh ? '幸运打乱 (lucky scramble).' : 'Lucky scramble.'}</strong>{' '}
+          <strong>{isZh ? '幸运打乱 (lucky scramble)。' : 'Lucky scramble.'}</strong>{' '}
           {isZh
-            ? '一次 sub-3 单次往往依赖于 X-cross + skip OLL/PLL. 这种叠加事件在大样本下是"罕见但可期"的双指数尾部. 单次 WR 与"真实 ELO"部分解耦.'
+            ? '一次 sub-3 单次往往要靠 X-cross + OLL/PLL 跳过。这种复合事件在大样本里是「罕见但可期」的双指数尾;单次 WR 跟「真实 ELO」之间有相当一部分脱钩。'
             : 'A sub-3 single often relies on X-cross + skip OLL/PLL. Compound rare events have double-exponential tails. Single WRs partially decouple from "true skill ELO."'}
         </li>
         <li>
-          <strong>{isZh ? '硬件 / 方法革命的离散性.' : 'Discrete hardware / method revolutions.'}</strong>{' '}
+          <strong>{isZh ? '硬件 / 方法革命的离散性。' : 'Discrete hardware / method revolutions.'}</strong>{' '}
           {isZh
-            ? '指数衰减把"创新"摊平为单一 k. 但磁力魔方 (2017)、UV 涂层 (2019)、GAN 14/15/16 (2022+)、智能魔方训练 (2021+) 是离散事件, 各自带来 2-5% 阶跃. 长期外推必然低估"下一次革命".'
+            ? '指数衰减把「创新」拍平成一个 k 值。但磁力魔方 (2017), UV 涂层 (2019), GAN 14/15/16 (2022+), 智能魔方训练 (2021+) 都是离散事件,各自给出 2-5% 的阶跃。长期外推会系统性低估「下一次革命」。'
             : 'Exp decay smears innovation into a single k. But magnets (2017), UV coatings (2019), GAN flagships (2022+), smart-cube training (2021+) are discrete events with 2-5% step changes. Long-horizon forecasts undercount future revolutions.'}
         </li>
         <li>
-          <strong>{isZh ? '执行噪声下限.' : 'Execution noise floor.'}</strong>{' '}
+          <strong>{isZh ? '执行噪声下限。' : 'Execution noise floor.'}</strong>{' '}
           {isZh
-            ? '同一 cuber 同一打乱, 单次 SD ≈ 0.6-0.9 s 在顶级 cuber 身上 (社区复盘数据, 无 peer-reviewed paper). Ao5 在 N=5 下 SD 收缩 √5, 仍有 ~0.3 s. WR 平均永远 > WR 单次, 差距下限受执行噪声而非极限 L 决定.'
+            ? '同一选手 × 同一打乱,顶级选手的单次 SD ≈ 0.6-0.9 秒 (社区复盘数据,没有同行评审论文)。Ao5 在 N=5 下 SD 缩 √5 倍,仍有 ~0.3 秒。WR 平均始终大于 WR 单次,二者差距的下界由执行噪声决定,不由极限 L 决定。'
             : 'Same cuber × same scramble: top-cuber single SD ≈ 0.6–0.9 s (community-derived reconstruction logs; no peer-reviewed paper). Averaging 5 shrinks by √5 to ~0.3 s. WR average > WR single always; the gap floor is execution-noise-bound, not L-bound.'}
         </li>
         <li>
-          <strong>{isZh ? '生存者 + 选择偏差.' : 'Survivorship + selection bias.'}</strong>{' '}
+          <strong>{isZh ? '生存者 + 选择偏差。' : 'Survivorship + selection bias.'}</strong>{' '}
           {isZh
-            ? 'WCA 数据库只记录"有意愿/有机会参赛者". 大量"训练强但没去比赛"的 cuber 不可见. 极顶尖 cuber 的"训练 PB" 通常比 WCA PB 快 5-10%, 所以模型 L 对未来真实极限是保守上界.'
+            ? 'WCA 数据库只统计「愿意 + 有机会参赛」的人。大量「训练水平很高但没去参赛」的人不在册。顶级选手的「训练 PB」通常比 WCA 上的 PB 快 5-10%,所以模型 L 对未来真实极限是一个保守的上界。'
             : 'WCA captures only "those who choose to compete." Many high-skill cubers never enter comps. Elite training-PBs typically beat WCA-PBs by 5-10%, so fitted L is a conservative upper bound on the true future limit.'}
         </li>
         <li>
-          <strong>{isZh ? '区域不均衡 ≠ 能力差异.' : 'Regional imbalance ≠ ability gap.'}</strong>{' '}
+          <strong>{isZh ? '区域不均衡 ≠ 能力差异。' : 'Regional imbalance ≠ ability gap.'}</strong>{' '}
           {isZh
-            ? '近 5 年 WR 单次集中在中、美、菲、波兰. 不是民族能力差异, 是赛事密度: 中国年比赛 ~25%, 美国 ~20%; 在某地能"上场刷 WR" 的次数 ∝ 该地年度比赛数.'
+            ? '近 5 年的 WR 单次集中在中, 美, 菲, 波兰。不是民族能力差异,是赛事密度: 中国年比赛 ~25%,美国 ~20%;在某地能「上场刷 WR」的次数 ∝ 该地年度比赛数。'
             : 'Recent WR singles concentrate in CN/US/PH/PL. Not innate ability — it\'s comp density: CN ~25% of global, US ~20%. WR opportunities ∝ local annual comps.'}
         </li>
         <li>
-          <strong>{isZh ? 'WCA 计时规则演化.' : 'WCA timing rule evolution.'}</strong>{' '}
+          <strong>{isZh ? 'WCA 计时规则演化。' : 'WCA timing rule evolution.'}</strong>{' '}
           {isZh
-            ? '本报告假设规则不变. 实际上 WCA 在 2025-01-01 起引入 11f1 帧分析规则 (回应 2024 王艺衡 0.78 ao5 事件), 此后所有 sub-1 二阶单次和 sub-0.9 平均都受 frame-by-frame review. 未来若规则进一步收紧 (例如电子手压传感器), 现有 2x2 WR 可能"软退坡".'
+            ? '本报告默认规则不变。但 WCA 实际上从 2025-01-01 起引入了 11f1 帧分析规则 (针对 2024 王艺衡 0.78 Ao5 事件),之后所有 sub-1 二阶单次和 sub-0.9 平均都要走逐帧复核。未来若规则进一步收紧 (例如电子手压传感器),现有 2x2 WR 可能「软退坡」。'
             : 'Report assumes rules unchanged. In fact WCA enacted Regulation 11f1 on 2025-01-01 (frame-by-frame timer-pad review for WR-class results, responding to the 2024 Yiheng Wang 0.78 ao5 incident). Future tightening (electronic pad-pressure sensors) could "soft-rollback" current 2x2 WRs.'}
         </li>
         <li>
-          <strong>{isZh ? '"未验证"引用风险.' : "Unverified citations."}</strong>{' '}
+          <strong>{isZh ? '「未验证」引用风险。' : "Unverified citations."}</strong>{' '}
           {isZh
-            ? '本报告里凡是引用了具体作者+年份的物理 / 心理学论文 (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon), 已逐条 web 校验. 任何未列入引用的"知识"以社区 reconstruction 为准.'
+            ? '本报告里凡是引用了具体作者 + 年份的物理 / 心理学论文 (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon),都逐条联网校验过。任何未列入引用的「知识」以社区复盘为准。'
             : 'All cited specific-author papers (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon) are web-verified. Anything uncited is community reconstruction.'}
         </li>
       </ol>

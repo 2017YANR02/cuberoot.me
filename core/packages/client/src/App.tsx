@@ -141,6 +141,8 @@ const CssIntroPage = lazy(() => import('./pages/code/CssIntroPage'));
 const BashIntroPage = lazy(() => import('./pages/code/BashIntroPage'));
 const PowershellIntroPage = lazy(() => import('./pages/code/PowershellIntroPage'));
 const SqlIntroPage = lazy(() => import('./pages/code/SqlIntroPage'));
+const LatexIntroPage = lazy(() => import('./pages/code/LatexIntroPage'));
+const KatexIntroPage = lazy(() => import('./pages/code/KatexIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
 // NOTE: Theory — Rubik's cube as a group (long-form math essay + interactive panels)
@@ -293,6 +295,8 @@ function App() {
         <Route path="/code/language/bash" element={<Suspense fallback={<div>Loading...</div>}><BashIntroPage /></Suspense>} />
         <Route path="/code/language/powershell" element={<Suspense fallback={<div>Loading...</div>}><PowershellIntroPage /></Suspense>} />
         <Route path="/code/language/sql" element={<Suspense fallback={<div>Loading...</div>}><SqlIntroPage /></Suspense>} />
+        <Route path="/code/language/latex" element={<Suspense fallback={<div>Loading...</div>}><LatexIntroPage /></Suspense>} />
+        <Route path="/code/language/katex" element={<Suspense fallback={<div>Loading...</div>}><KatexIntroPage /></Suspense>} />
         <Route path="/code/language/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
         <Route path="/code/language/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
         {/* 旧路径 → 新路径 兼容 */}
@@ -365,6 +369,7 @@ function App() {
         <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
         {/* Theory — 长文 + 互动: 魔方与群论 */}
         <Route path="/theory/group" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
+        <Route path="/theory/group/:slug" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}

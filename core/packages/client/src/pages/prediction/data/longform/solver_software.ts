@@ -46,7 +46,7 @@ In its 1985 form, IDA* was an algorithm in search of a problem big enough to dem
 
 ## Pattern Databases
 
-A pattern database (PDB) is a precomputed lookup table that gives the exact minimum number of moves required to solve a particular subset of the cube's state. The idea was introduced by Joseph Culberson and Jonathan Schaeffer in 1996 for the 15-puzzle, and Korf adapted it to the 3x3 cube the following year. The construction is conceptually simple: pick a sub-problem (for example, "just the 8 corners, ignoring the edges entirely"); enumerate every reachable state of that sub-problem; perform a breadth-first search from the solved state outward; and store, for each state, the number of moves at which it was discovered. The result is a table indexed by the sub-problem state, returning the exact optimal number of moves to solve just that sub-problem.
+A pattern database (PDB) is a precomputed lookup table that gives the exact minimum number of moves required to solve a particular subset of the cube's state. The idea was developed by Joseph Culberson and Jonathan Schaeffer in the mid-1990s for the 15-puzzle (a 1994 technical report, later published as the 1998 Computational Intelligence paper "Pattern Databases"), and Korf adapted the same idea to the 3x3 cube in his 1997 AAAI paper, applying it at roughly the same time as the Culberson-Schaeffer journal write-up was being finalized. The construction is conceptually simple: pick a sub-problem (for example, "just the 8 corners, ignoring the edges entirely"); enumerate every reachable state of that sub-problem; perform a breadth-first search from the solved state outward; and store, for each state, the number of moves at which it was discovered. The result is a table indexed by the sub-problem state, returning the exact optimal number of moves to solve just that sub-problem.
 
 The crucial property of a pattern database is that the value it returns is an admissible heuristic for the full cube: any sequence of moves that solves the full cube must include enough moves to solve any sub-problem of it, so the optimal number of moves to solve the sub-problem is a lower bound on the optimal number of moves to solve the whole. Better still, multiple pattern databases can be combined by taking the maximum (or, for additive pattern databases under certain restrictions, by summing), and the resulting combined heuristic remains admissible. Maximum combination is conservative and always safe; additive combination requires that the sub-problems be disjoint in a particular technical sense.
 
@@ -124,7 +124,7 @@ min2phase is the solver embedded in TNoodle, the WCA's official scrambling tool,
 
 ARPlanner (a name often associated with Anthony Rich's early implementations, though the term has become generic) refers to a family of Kociemba-style solvers tuned for very fast inference at the cost of some solution length. Most ARPlanner implementations terminate phase 1 search at the first H position found and use a small phase 2 pruning table, sacrificing 1-3 moves of solution length for a 5-10x speedup. The "fastest known solver" benchmarks routinely cite ARPlanner-like implementations as the leaders, with single-solve times in the microsecond range on modern hardware.
 
-Kociemba's own implementation, cube-explorer, is a Windows GUI application that has been continuously developed since the late 1990s. cube-explorer's UI lets the user enter a scramble (by typing or by manipulating a 3D cube model), then runs the two-phase solver in the background, displaying intermediate solutions of decreasing length until the user stops the search or until the algorithm exhausts all candidate phase 1 lengths. cube-explorer also includes a scramble analyzer that reports the optimal length, the symmetric/antisymmetric properties of the scramble, and the cube's "type" (a classification based on the orbit structure of the position under the cube's symmetry group). For many years, cube-explorer was the de facto standard tool for FMC competitors who wanted to check whether their human-found solutions were close to optimal.
+Kociemba's own implementation, cube-explorer, is a Windows GUI application that has been continuously developed since 1997 (its first public release). cube-explorer's UI lets the user enter a scramble (by typing or by manipulating a 3D cube model), then runs the two-phase solver in the background, displaying intermediate solutions of decreasing length until the user stops the search or until the algorithm exhausts all candidate phase 1 lengths. cube-explorer also includes a scramble analyzer that reports the optimal length, the symmetric/antisymmetric properties of the scramble, and the cube's "type" (a classification based on the orbit structure of the position under the cube's symmetry group). For many years, cube-explorer was the de facto standard tool for FMC competitors who wanted to check whether their human-found solutions were close to optimal.
 
 ## ksolve and General-Puzzle Solvers
 
@@ -620,7 +620,7 @@ For readers who wish to explore further, the following are the most important pr
 - Korf, R. E. (1997). "Finding optimal solutions to Rubik's Cube using pattern databases." AAAI-97. The original paper introducing the IDA* + pattern database approach for the cube.
 - Kociemba, H. (1992-present). "The Two-Phase Algorithm." Available at kociemba.org. The original description of the two-phase algorithm, continuously updated by the author.
 - Rokicki, T., Kociemba, H., Davidson, M., Dethridge, J. (2014). "The Diameter of the Rubik's Cube Group is Twenty." SIAM Journal on Discrete Mathematics. The formal write-up of the God's number proof.
-- Culberson, J., Schaeffer, J. (1996). "Searching with Pattern Databases." Canadian AI Conference. The original paper introducing pattern databases for the 15-puzzle.
+- Culberson, J., Schaeffer, J. (1998). "Pattern Databases." Computational Intelligence 14(3), 318-334. The journal paper introducing pattern databases for the 15-puzzle (the underlying technique was first reported in a 1994 technical report by the same authors).
 - Felner, A., Korf, R. E., Hanan, S. (2004). "Additive Pattern Database Heuristics." Journal of Artificial Intelligence Research. The paper introducing additive pattern databases.
 - McAleer, S., Agostinelli, F., et al. (2018). "Solving the Rubik's Cube Without Human Knowledge." Nature Machine Intelligence. The DeepCubeA paper.
 
@@ -711,7 +711,7 @@ To put the modern state of the art in historical perspective, here is a brief ti
 
 1992: Herbert Kociemba publishes his two-phase algorithm, achieving solutions of approximately 22 to 25 moves in milliseconds. This is the dominant cube-solving algorithm for the next three decades.
 
-1996: Culberson and Schaeffer introduce pattern databases for the 15-puzzle, providing the heuristic technique that would soon be applied to the cube.
+1994 to 1998: Culberson and Schaeffer develop pattern databases for the 15-puzzle (1994 technical report, full 1998 journal version in Computational Intelligence), providing the heuristic technique that would soon be applied to the cube.
 
 1997: Korf publishes his optimal cube solver, using IDA* with pattern databases to find optimal solutions in 5 to 15 seconds. This is the first solver to consistently produce optimal solutions for random cube scrambles.
 
@@ -723,7 +723,7 @@ To put the modern state of the art in historical perspective, here is a brief ti
 
 2015 to 2020: Various optimization-focused implementations push the speed of Kociemba solvers below 1 millisecond per solve. The "1ms challenge" becomes an informal benchmark in the cubing-software community.
 
-2018: McAleer et al. publish DeepCubeA, the first neural-network-based cube solver to achieve competitive performance. This opens up a new research direction in learned heuristics.
+2018 to 2019: Agostinelli, McAleer, Shmakov, and Baldi publish DeepCubeA (2018 arXiv preprint; 2019 Nature Machine Intelligence journal version), the first neural-network-based cube solver to achieve competitive performance. This opens up a new research direction in learned heuristics.
 
 2020 to 2025: The Rust ecosystem produces several new high-performance cube solvers, including cubelib and twsearch. WebAssembly-based solvers achieve near-native performance in browsers. Smart cubes become more widely adopted, leading to new applications for real-time solver integration.
 
