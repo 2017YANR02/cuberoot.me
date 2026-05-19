@@ -51,6 +51,43 @@ function withPuzzleFirst(p: URLSearchParams): URLSearchParams {
   return out;
 }
 import { FACE } from './cuber/define';
+
+/** 3x3 sticker click 规则查表:key = `${face}_${x}_${y}_${z}`,value = (sign, reverse)。
+ *  cubelet positionIdx = z*N² + y*N + x;face: L=0 R=1 D=2 U=3 B=4 F=5。
+ *  reverse=true 表示无 modifier 时走 sign' 方向;Shift / 右键 XOR 反向。 */
+const CLICK_RULES_3X3: Record<string, { sign: string; reverse: boolean }> = {
+  // U 面 (face=3, y=2)
+  '3_0_2_2': { sign: 'F', reverse: true },   // UFL → F'
+  '3_2_2_2': { sign: 'F', reverse: false },  // UFR → F
+  '3_0_2_0': { sign: 'B', reverse: false },  // UBL → B
+  '3_2_2_0': { sign: 'B', reverse: true },   // UBR → B'
+  '3_0_2_1': { sign: 'S', reverse: true },   // UL  → S'
+  '3_2_2_1': { sign: 'S', reverse: false },  // UR  → S
+  '3_1_2_2': { sign: 'M', reverse: false },  // UF  → M
+  '3_1_2_0': { sign: 'M', reverse: true },   // UB  → M'
+  // F 面 (face=5, z=2)
+  '5_0_2_2': { sign: 'U', reverse: false },  // FUL → U
+  '5_2_2_2': { sign: 'U', reverse: true },   // FUR → U'
+  '5_0_0_2': { sign: 'D', reverse: true },   // FDL → D'
+  '5_2_0_2': { sign: 'D', reverse: false },  // FDR → D
+  '5_1_2_2': { sign: 'M', reverse: true },   // FU  → M'
+  '5_1_0_2': { sign: 'M', reverse: false },  // FD  → M
+  '5_0_1_2': { sign: 'E', reverse: true },   // FL  → E'
+  '5_2_1_2': { sign: 'E', reverse: false },  // FR  → E
+  // R 面 (face=1, x=2)
+  '1_2_1_2': { sign: 'E', reverse: true },   // RF  → E'
+  '1_2_1_0': { sign: 'E', reverse: true },   // RB  → E'
+  '1_2_0_0': { sign: 'D', reverse: false },  // RDB → D
+  // L 面 (face=0, x=0)
+  '0_0_2_2': { sign: 'U', reverse: true },   // LUF → U'
+  '0_0_2_0': { sign: 'U', reverse: false },  // LUB → U
+  '0_0_0_2': { sign: 'D', reverse: false },  // LDF → D
+  '0_0_0_0': { sign: 'D', reverse: true },   // LDB → D'
+  '0_0_2_1': { sign: 'S', reverse: false },  // LU  → S
+  '0_0_0_1': { sign: 'S', reverse: true },   // LD  → S'
+  '0_0_1_2': { sign: 'E', reverse: false },  // LF  → E
+  '0_0_1_0': { sign: 'E', reverse: true },   // LB  → E'
+};
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { loadSettings, saveSettings, applySettings, type SimSettings } from './SettingDrawer';
@@ -204,24 +241,39 @@ export default function SimPage() {
     toucher.init(renderer.domElement, world.controller.touch);
     toucherRef.current = toucher;
 
-    // 单击转动 — 仿 cubesim (cubegraphicsobject.cpp:267-336):
-    // 无拖动 click = atan2(0,0)=0 = Right direction。layer 跟 sticker 的 cubelet 走,
-    // 支持高阶魔方内层:点 U 最前一行 → F 层;点 U 中央行 → S 中切片;点 U 最后一行 → B 层。
-    // Shift / 右键 = 逆时针。
+    // 单击转动:
+    //  - 3x3 查 CLICK_RULES_3X3 表(corner / edge → 特定 face 转动,sticker 落 side)
+    //  - 其它阶 / 表外 sticker 退回 cubesim (cubegraphicsobject.cpp:267-336) 默认:
+    //    无拖动 click = Right direction;axis/layer 跟 cubelet 走。
+    //  - Shift / 右键 一律 XOR 反向。
     world.controller.taps.push((idx, face, opts) => {
       if (face === null) return;
       const cube = asNxN(world);
       if (!cube) return; // SQ1: no tap-to-twist (controller is disabled anyway)
       const order = cube.order;
-      // positionIdx = z*N² + y*N + x → 反解 y, z (x 不需要)
+      // positionIdx = z*N² + y*N + x → 反解 x, y, z
+      const x = idx % order;
       const y = Math.floor((idx % (order * order)) / order);
       const z = Math.floor(idx / (order * order));
+      const modInvert = opts.shift || opts.button === 2;
+
+      if (order === 3) {
+        const rule = CLICK_RULES_3X3[`${face}_${x}_${y}_${z}`];
+        if (rule) {
+          const action = new TwistAction(rule.sign, rule.reverse !== modInvert, 1);
+          cube.twister.twist(action, false, true);
+          userMoveRef.current?.(action);
+          return;
+        }
+      }
+
       let axis: 'x' | 'y' | 'z';
       let layer: number;
       switch (face) {
         case FACE.U: axis = 'z'; layer = z; break;
         case FACE.F: axis = 'y'; layer = y; break;
         case FACE.R: axis = 'y'; layer = y; break;
+        case FACE.L: axis = 'y'; layer = y; break;
         default: return;
       }
       const reverse = opts.shift || opts.button === 2;

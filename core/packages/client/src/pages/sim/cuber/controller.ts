@@ -59,12 +59,15 @@ export default class Controller {
   /** 宽层 wide turn 的 notation (如 "Rw"/"3Lw'"/"x")。空串 = 用 this.group.name(现状)。 */
   public wideSign: string = "";
   public axis: string = "y";
+  // 6 个 face plane,顺序:0=R(+x) 1=U(+y) 2=F(+z) 3=L(-x) 4=D(-y) 5=B(-z)
+  // handleUp() 里按此顺序映射成 FACE 常量
   public planes = [
     new THREE.Plane(new THREE.Vector3(1, 0, 0), (-Cubelet.SIZE * 3) / 2),
     new THREE.Plane(new THREE.Vector3(0, 1, 0), (-Cubelet.SIZE * 3) / 2),
     new THREE.Plane(new THREE.Vector3(0, 0, 1), (-Cubelet.SIZE * 3) / 2),
     new THREE.Plane(new THREE.Vector3(-1, 0, 0), (-Cubelet.SIZE * 3) / 2),
     new THREE.Plane(new THREE.Vector3(0, -1, 0), (-Cubelet.SIZE * 3) / 2),
+    new THREE.Plane(new THREE.Vector3(0, 0, -1), (-Cubelet.SIZE * 3) / 2),
   ];
   public _lock = false;
   get lock(): boolean {
@@ -345,6 +348,15 @@ export default class Controller {
           break;
         case this.planes[2]:
           face = FACE.F;
+          break;
+        case this.planes[3]:
+          face = FACE.L;
+          break;
+        case this.planes[4]:
+          face = FACE.D;
+          break;
+        case this.planes[5]:
+          face = FACE.B;
           break;
       }
       for (const tap of this.taps) {
