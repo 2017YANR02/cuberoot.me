@@ -134,24 +134,24 @@
       "titleZh": "Person",
       "rows": [
         [
+          "[Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01)",
+          "**22167**",
+          22589
+        ],
+        [
           "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
           "**22124**",
           23964
         ],
         [
-          "[Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01)",
-          "**22061**",
-          22482
-        ],
-        [
           "[Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02)",
-          "**20346**",
-          21174
+          "**20414**",
+          21249
         ],
         [
           "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
-          "**19494**",
-          20041
+          "**19497**",
+          20044
         ],
         [
           "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
@@ -165,8 +165,8 @@
         ],
         [
           "[Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01)",
-          "**18381**",
-          19251
+          "**18388**",
+          19261
         ],
         [
           "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
@@ -175,8 +175,8 @@
         ],
         [
           "[Sébastien Auroux](https://www.worldcubeassociation.org/persons/2008AURO01)",
-          "**17805**",
-          18477
+          "**17900**",
+          18572
         ],
         [
           "[Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03)",
@@ -190,8 +190,8 @@
         ],
         [
           "[Łukasz Burliga](https://www.worldcubeassociation.org/persons/2013BURL01)",
-          "**16215**",
-          16867
+          "**16269**",
+          16925
         ],
         [
           "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
@@ -200,13 +200,13 @@
         ],
         [
           "[Alwin Rölz](https://www.worldcubeassociation.org/persons/2016ROLZ01)",
-          "**15763**",
-          16520
+          "**15840**",
+          16601
         ],
         [
           "[Karol Zakrzewski](https://www.worldcubeassociation.org/persons/2014ZAKR01)",
-          "**15413**",
-          15835
+          "**15458**",
+          15880
         ],
         [
           "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
@@ -215,13 +215,13 @@
         ],
         [
           "[Katie Hull](https://www.worldcubeassociation.org/persons/2010HULL01)",
-          "**14761**",
-          15136
+          "**14817**",
+          15194
         ],
         [
           "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
-          "**14627**",
-          15060
+          "**14629**",
+          15063
         ],
         [
           "[Paul Mahvi](https://www.worldcubeassociation.org/persons/2012MAHV01)",
@@ -241,48 +241,48 @@
       "rows": [
         [
           "United States",
-          "**6433057**",
-          6734452
+          "**6448887**",
+          6751208
         ],
         [
           "China",
-          "**1551154**",
-          1624965
+          "**1551496**",
+          1625546
         ],
         [
           "Poland",
-          "**1410510**",
-          1485550
+          "**1416297**",
+          1491819
         ],
         [
           "Australia",
-          "**1128894**",
-          1190423
+          "**1131375**",
+          1193007
         ],
         [
           "United Kingdom",
-          "**1089769**",
-          1145184
+          "**1094865**",
+          1150606
         ],
         [
           "India",
-          "**1079043**",
-          1134893
+          "**1080022**",
+          1135894
         ],
         [
           "Spain",
-          "**1063941**",
-          1114774
+          "**1067436**",
+          1118573
         ],
         [
           "Germany",
-          "**854770**",
-          894219
+          "**863976**",
+          903711
         ],
         [
           "Canada",
-          "**795011**",
-          828805
+          "**796118**",
+          830001
         ],
         [
           "France",
@@ -301,23 +301,23 @@
         ],
         [
           "Sweden",
-          "**585888**",
-          616751
+          "**586346**",
+          617272
         ],
         [
           "Italy",
-          "**510445**",
-          536077
+          "**512316**",
+          538012
         ],
         [
           "Philippines",
-          "**506073**",
-          525750
+          "**506981**",
+          526686
         ],
         [
           "Mexico",
-          "**471435**",
-          491500
+          "**472319**",
+          492411
         ],
         [
           "Russia",
@@ -347,28 +347,28 @@
       "rows": [
         [
           "Europe",
-          "**11048593**",
-          11594465
+          "**11082234**",
+          11629967
         ],
         [
           "North America",
-          "**7943096**",
-          8308627
+          "**7960917**",
+          8327490
         ],
         [
           "Asia",
-          "**5676663**",
-          5942067
+          "**5680425**",
+          5946140
         ],
         [
           "South America",
-          "**2402089**",
-          2513720
+          "**2404715**",
+          2516469
         ],
         [
           "Oceania",
-          "**1426096**",
-          1502130
+          "**1428577**",
+          1504714
         ],
         [
           "Africa",
@@ -423,8 +423,8 @@
         ],
         [
           "2026",
-          "**1531836**",
-          1609301
+          "**1592167**",
+          1673072
         ],
         [
           "2016",
@@ -494,73 +494,73 @@
       "rows": [
         [
           "3x3x3 Cube",
-          "**8681071**",
-          8863191
+          "**8698883**",
+          8881321
         ],
         [
           "2x2x2 Cube",
-          "**4897555**",
-          5022538
+          "**4906333**",
+          5031505
         ],
         [
           "Pyraminx",
-          "**3182467**",
-          3264999
+          "**3189325**",
+          3271980
         ],
         [
           "4x4x4 Cube",
-          "**2492496**",
-          2584461
+          "**2496173**",
+          2588226
         ],
         [
           "3x3x3 One-Handed",
-          "**2263391**",
-          2336376
+          "**2267720**",
+          2340829
         ],
         [
           "Skewb",
-          "**2073524**",
-          2124502
+          "**2077101**",
+          2128147
         ],
         [
           "5x5x5 Cube",
-          "**1312027**",
-          1352448
+          "**1315196**",
+          1355699
         ],
         [
           "Clock",
-          "**934160**",
-          1076342
+          "**937727**",
+          1080401
         ],
         [
           "Megaminx",
-          "**930395**",
-          968729
+          "**933293**",
+          971704
         ],
         [
           "Square-1",
-          "**818277**",
-          851875
+          "**820891**",
+          854564
         ],
         [
           "6x6x6 Cube",
-          "**323614**",
-          335080
+          "**324600**",
+          336099
         ],
         [
           "7x7x7 Cube",
-          "**264806**",
-          276553
+          "**265554**",
+          277325
         ],
         [
           "3x3x3 Blindfolded",
-          "**196239**",
-          532342
+          "**196980**",
+          534361
         ],
         [
           "3x3x3 Fewest Moves",
-          "**121355**",
-          164552
+          "**121771**",
+          165076
         ],
         [
           "Magic",
@@ -579,18 +579,18 @@
         ],
         [
           "3x3x3 Multi-Blind",
-          "**29686**",
-          50037
+          "**29747**",
+          50144
         ],
         [
           "4x4x4 Blindfolded",
-          "**18131**",
-          67742
+          "**18197**",
+          68002
         ],
         [
           "5x5x5 Blindfolded",
-          "**7695**",
-          36228
+          "**7729**",
+          36383
         ]
       ]
     }
