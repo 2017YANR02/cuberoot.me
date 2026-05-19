@@ -42,8 +42,9 @@ export default function PerfOverlay({ statsRef, onStress }: Props) {
   const [snapshot, setSnapshot] = useState<PerfStats>(statsRef.current);
   const [stressResult, setStressResult] = useState<string>('');
   const [running, setRunning] = useState(false);
+  // 默认收起,只有用户主动展开过(localStorage='0')才默认展开
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { return false; }
+    try { return localStorage.getItem(COLLAPSE_KEY) !== '0'; } catch { return true; }
   });
   const tickRef = useRef<number | null>(null);
 

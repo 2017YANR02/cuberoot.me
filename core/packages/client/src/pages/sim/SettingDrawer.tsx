@@ -84,7 +84,7 @@ export function saveSettings(s: SimSettings): void {
 }
 
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
-function mapSensitivity(v: number): number { return 0.1 + (v / 100) * 1.4; }   // 0.1 ~ 1.5
+function mapSensitivity(v: number): number { return 0.05 + (v / 100) * 0.7; }   // 0.05 ~ 0.75 (整体 -50%)
 function mapScale(v: number): number { return 0.5 + v / 100; }                  // 0.5 ~ 1.5
 function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        // 2 ~ 10
 // upstream cuber 的镜头映射:50 居中,两端到 ±π/2
