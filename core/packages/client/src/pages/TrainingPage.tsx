@@ -21,6 +21,7 @@ import {
 import pllMap from '@cuberoot/shared/data/pll.json';
 import ollMap from '@cuberoot/shared/data/oll.json';
 import { VisualCube } from '../components/VisualCube';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 
@@ -29,6 +30,7 @@ export function TrainingPage() {
   const { algSetId } = useParams<{ algSetId: string }>();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('识别训练', 'Recognition Training');
 
   const gameState = useSessionStore((s) => s.gameState);
   const trainMode = useSessionStore((s) => s.trainMode);

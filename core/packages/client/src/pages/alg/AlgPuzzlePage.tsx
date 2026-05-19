@@ -13,6 +13,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import { EventIcon } from '../../components/EventIcon';
 import { eventDisplayName } from '../../utils/wca_events';
 import { CaseThumb } from './CaseThumb';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './alg.css';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
@@ -26,6 +27,10 @@ export default function AlgPuzzlePage() {
   const { puzzle = '' } = useParams<{ puzzle: string }>();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  const algFallback = isZh ? '公式库' : 'Algorithms';
+  const valid_ = isPuzzle(puzzle);
+  const algPuzzleTitle = valid_ ? eventDisplayName(puzzle, isZh) || puzzle : (puzzle || algFallback);
+  useDocumentTitle(algPuzzleTitle, algPuzzleTitle);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
 

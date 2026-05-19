@@ -16,6 +16,7 @@ import {
   type PastCompRecord,
 } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { displayCuberName } from '../utils/name_utils';
 import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
 import { Flag as SharedFlag } from '../utils/flag';
@@ -32,6 +33,7 @@ import {
 import { formatWcaResult } from '../utils/wca_format_result';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
+import { compLinkProps } from '../utils/comp_link';
 import { defaultCancelledCutoffIso, isCancelledComp, compNameMatches } from '../utils/comp_search';
 import { localizeCity } from '../utils/city_localize';
 import { countryName } from '../utils/country_name';
@@ -474,7 +476,6 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
   const displayName = localizeName(comp, isZh);
   const displayCity = isZh ? (comp.city_zh || localizeCity(comp.city, true)) : comp.city;
   const displayCountry = countryName(comp.country, isZh);
-  const compUrl = comp.cubing_china_url || `https://www.worldcubeassociation.org/competitions/${comp.id}`;
 
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date);
 
@@ -483,10 +484,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
       <div className={`modal-panel${cancelled ? ' is-cancelled' : ''}`} onClick={(ev) => ev.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
         <h2 className="modal-title">
-          <a href={compUrl} target="_blank" rel="noopener noreferrer">
+          <Link {...compLinkProps(comp.id)}>
             <Flag iso2={comp.country} />
             <span className={cancelled ? 'modal-title-name is-cancelled' : 'modal-title-name'}>{displayName}</span>
-          </a>
+          </Link>
           {cancelled && <span className="modal-cancelled-tag">{isZh ? '已取消' : 'Cancelled'}</span>}
         </h2>
         <div className="modal-meta">
@@ -983,6 +984,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 export default function CalendarPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('比赛日历', 'Competition Calendar');
 
   const [data, setData] = useState<UpcomingData | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -1,0 +1,281 @@
+/* /scramble/gen-about — 打乱生成器说明页 */
+
+.ga-page {
+    --ga-bg: #FAF9F5;
+    --ga-surface: #FFFFFF;
+    --ga-text: #181716;
+    --ga-text-sub: #6F6E6B;
+    --ga-text-mute: #95938E;
+    --ga-border: #E5E4DF;
+    --ga-border-strong: #CCCAC2;
+    --ga-accent: #C15F3C;
+    --ga-accent-soft: rgba(193, 95, 60, 0.08);
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--ga-bg);
+    color: var(--ga-text);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+[data-theme="dark"] .ga-page {
+    --ga-bg: #1A1918;
+    --ga-surface: #232220;
+    --ga-text: #ECEAE4;
+    --ga-text-sub: #B0AEA8;
+    --ga-text-mute: #7E7C77;
+    --ga-border: #36342F;
+    --ga-border-strong: #4D4A44;
+    --ga-accent: #D97757;
+    --ga-accent-soft: rgba(217, 119, 87, 0.14);
+}
+
+.ga-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem max(1.25rem, calc((100vw - 880px) / 2)) 1rem;
+    border-bottom: 1px solid var(--ga-border);
+    background: color-mix(in srgb, var(--ga-bg) 88%, transparent);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+}
+
+.ga-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ga-text-sub);
+    text-decoration: none;
+    font-size: 0.92rem;
+}
+.ga-back:hover { color: var(--ga-text); }
+
+.ga-main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 4rem;
+}
+
+.ga-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.ga-intro {
+    color: var(--ga-text-sub);
+    line-height: 1.65;
+    margin: 0 0 2rem;
+}
+
+.ga-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 2.4rem 0 0.6rem;
+    letter-spacing: -0.005em;
+}
+
+.ga-section-intro {
+    color: var(--ga-text-sub);
+    line-height: 1.6;
+    margin: 0 0 1rem;
+}
+
+.ga-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+    margin: 0.4rem 0 1rem;
+}
+
+.ga-mode-card {
+    background: var(--ga-surface);
+    border: 1px solid var(--ga-border);
+    border-radius: 12px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ga-mode-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.ga-mode-head h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.005em;
+}
+.ga-badge {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--ga-accent-soft);
+    color: var(--ga-accent);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ga-mode-tag {
+    color: var(--ga-text-sub);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.ga-mode-uses {
+    margin: 0;
+    padding: 0 0 0 1.1rem;
+    color: var(--ga-text);
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+.ga-mode-uses li { margin: 2px 0; }
+
+.ga-mode-out {
+    font-size: 0.78rem;
+    color: var(--ga-text-mute);
+    margin: 6px 0 0;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.ga-mode-out-body {
+    margin: 2px 0 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ga-text-sub);
+}
+
+.ga-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0.4rem 0 1.2rem;
+}
+.ga-flow--compact { gap: 6px; }
+
+.ga-step {
+    display: flex;
+    gap: 12px;
+    background: var(--ga-surface);
+    border: 1px solid var(--ga-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    align-items: flex-start;
+}
+.ga-step.is-highlight {
+    border-color: var(--ga-accent);
+    background: var(--ga-accent-soft);
+}
+.ga-step-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--ga-border);
+    color: var(--ga-text);
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+.ga-step.is-highlight .ga-step-num {
+    background: var(--ga-accent);
+    color: #fff;
+}
+.ga-step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+.ga-step-body {
+    color: var(--ga-text-sub);
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+.ga-arrow {
+    align-self: center;
+    color: var(--ga-text-mute);
+    font-size: 0.9rem;
+    line-height: 1;
+    user-select: none;
+}
+
+.ga-engine-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--ga-border);
+    border-radius: 10px;
+    background: var(--ga-surface);
+}
+.ga-engine-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+.ga-engine-table th,
+.ga-engine-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--ga-border);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.5;
+}
+.ga-engine-table thead th {
+    background: color-mix(in srgb, var(--ga-bg) 60%, var(--ga-surface));
+    color: var(--ga-text-sub);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+.ga-engine-table tbody tr:last-child td { border-bottom: none; }
+.ga-engine-table a {
+    color: var(--ga-accent);
+    text-decoration: none;
+}
+.ga-engine-table a:hover { text-decoration: underline; }
+
+.ga-pool-list {
+    margin: 0.4rem 0 1.2rem;
+    padding: 0 0 0 1.1rem;
+    line-height: 1.65;
+}
+.ga-pool-list li { margin: 6px 0; color: var(--ga-text-sub); }
+.ga-pool-list strong { color: var(--ga-text); font-weight: 600; }
+
+.ga-refs {
+    margin: 0;
+    padding: 0 0 0 1.1rem;
+    line-height: 1.75;
+    color: var(--ga-text-sub);
+}
+.ga-refs li { margin: 4px 0; }
+.ga-refs a {
+    color: var(--ga-accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+.ga-refs a:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+    .ga-main { padding: 1rem 1rem 3rem; }
+    .ga-title { font-size: 1.35rem; }
+    .ga-section-title { font-size: 1.02rem; }
+    .ga-mode-grid { grid-template-columns: 1fr; }
+    .ga-step { padding: 9px 11px; gap: 10px; }
+    .ga-engine-table { font-size: 0.82rem; }
+    .ga-engine-table th, .ga-engine-table td { padding: 7px 9px; }
+}

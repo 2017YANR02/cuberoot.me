@@ -14,6 +14,7 @@ import * as XLSX from 'xlsx';
 import LangToggle from '../../../components/LangToggle';
 import ThemeToggle from '../../../components/ThemeToggle';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
+import { useDocumentTitle } from '../../../utils/useDocumentTitle';
 import './commutator.css';
 
 type Tab = 'home' | 'decompose' | 'excel' | 'intro' | 'about';
@@ -90,6 +91,7 @@ function buildExpandOpts(s: Settings, algorithm: string) {
 export default function CommutatorPage() {
     const { i18n } = useTranslation();
     const isZh = i18n.language.startsWith('zh');
+    useDocumentTitle('交换子', 'Commutator');
     const t = (zh: string, en: string) => (isZh ? zh : en);
 
     const [tab, setTab] = useState<Tab>(() => {

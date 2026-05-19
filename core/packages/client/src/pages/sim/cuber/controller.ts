@@ -89,6 +89,22 @@ export default class Controller {
 
   world: World;
   sensitivity = 0.5;
+  /** 拖空白 (无 sticker hit) 时的语义:
+   *  'orbit'  — 累积 dx/dy 经 onOrbit 喂给外层改 scene.rotation,不进 move list。
+   *  'rotate' — upstream cuber 默认行为:snap 到 x/y/z 单轴 + 90° + 记 TwistAction。 */
+  dragEmpty: 'orbit' | 'rotate' = 'orbit';
+  /** orbit 模式下每次 pointermove 触发,delta 是相对上一次的位移 (像素)。 */
+  public onOrbit: ((dx: number, dy: number) => void) | null = null;
+  /** orbit 模式下追踪上一次 move 坐标 (像素),用来算 delta。 */
+  private orbitLastX = 0;
+  private orbitLastY = 0;
+  /** true = 用户在背景拖 orbit 模式自由视角。FaceHints 等外部模块观察方位变化时用。 */
+  public orbiting = false;
+  /** 用户正在做整体旋转视角的拖动 (orbit 模式 OR rotate 模式的 background drag);
+   *  sticker 单层拖不算 — FaceHints 用它决定要不要显示 U/D/L/R/F/B 字母。 */
+  get isViewRotating(): boolean {
+    return this.orbiting || (this.rotating && this.group === null && this.holder.index === -1);
+  }
   constructor(world: World) {
     this.world = world;
     this.taps = [];
@@ -202,11 +218,33 @@ export default class Controller {
     if (this.disable) {
       return;
     }
+    // orbit 模式 (拖空白 = 切视角):已经进入 orbit 后,每次 move 算 delta 喂回外层
+    if (this.orbiting) {
+      const dx = this.move.x - this.orbitLastX;
+      const dy = this.move.y - this.orbitLastY;
+      this.orbitLastX = this.move.x;
+      this.orbitLastY = this.move.y;
+      if (dx !== 0 || dy !== 0) this.onOrbit?.(dx, dy);
+      return;
+    }
     if (this.dragging) {
       const dx = this.move.x - this.down.x;
       const dy = this.move.y - this.down.y;
       const d = Math.sqrt(dx * dx + dy * dy);
       if (Math.min(this.world.width, this.world.height) / d > 128) {
+        return;
+      }
+      // 拖空白 + orbit 模式 → 切到 orbit 分支,不走整体转
+      if (this.holder.index === -1 && this.dragEmpty === 'orbit') {
+        this.dragging = false;
+        this.orbiting = true;
+        this.orbitLastX = this.down.x;
+        this.orbitLastY = this.down.y;
+        const ox = this.move.x - this.orbitLastX;
+        const oy = this.move.y - this.orbitLastY;
+        this.orbitLastX = this.move.x;
+        this.orbitLastY = this.move.y;
+        if (ox !== 0 || oy !== 0) this.onOrbit?.(ox, oy);
         return;
       }
       this.dragging = false;
@@ -412,6 +450,7 @@ export default class Controller {
     this.holder.index = -1;
     this.dragging = false;
     this.rotating = false;
+    this.orbiting = false;
     this.world.dirty = true;
   }
 

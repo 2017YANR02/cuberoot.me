@@ -1,5 +1,5 @@
 /**
- * /scramble/god — God's number data for every WCA event.
+ * /math/god — God's number data for every WCA event.
  *
  * Numbers cross-checked against:
  *   cube20.org · jaapsch.net · Rokicki et al. SIAM 2014 · Demaine et al. arXiv:1106.5736

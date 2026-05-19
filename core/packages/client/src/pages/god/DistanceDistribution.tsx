@@ -8,6 +8,7 @@
  *   - 标记 FMC WR (16) + 平均人类 (~28) + 上帝之数 (20) 三条标线
  */
 import { useMemo, useState } from 'react';
+import { MathText } from './Tex';
 
 interface Row {
   d: number;
@@ -211,19 +212,19 @@ export default function DistanceDistribution({ isZh }: Props) {
           );
         })() : (
           <span className="god-growth-hint">
-            {t(
+            <MathText>{t(
               'hover 某个深度看精确数字。d=0..15 是 Rokicki 团队公开的精确分布;d=16..20 因为总和约束被反推为估算。99% 的随机三阶状态需要 17-19 步最优。',
               'Hover a depth for exact values. d=0..15 are Rokicki\'s published exact counts; d=16..20 are estimates from the total-sum constraint. 99% of random 3×3 states need 17-19 moves optimally.',
-            )}
+            )}</MathText>
           </span>
         )}
       </div>
 
       <p className="god-dist-caption">
-        {t(
+        <MathText>{t(
           '这张表就是"最少步分布":随机抽一个三阶打乱,问它最少几步能解。绝大多数 (>99%) 在 17-19 步。恰好 20 步的"超难"状态约占 ~10⁻¹¹——也就是大约 ~4.9 亿个 antipode 状态,在 4.3 × 10¹⁹ 总状态里几乎找不到。FMC WR 16 步几乎不可能复刻,因为对应的 antipode 集太稀有。',
           'This is the "minimum-solution-length distribution": pick a random 3×3 state, ask how few moves it needs. Over 99% need 17-19. The exact-20 antipodes are about 10⁻¹¹ of all states (~490 million antipodes out of 4.3 × 10¹⁹). The 16-move FMC WR is essentially unreproducible because that antipode class is so rare.',
-        )}
+        )}</MathText>
       </p>
     </div>
   );

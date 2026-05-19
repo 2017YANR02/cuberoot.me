@@ -17,6 +17,7 @@ import { countryName } from '../../utils/country_name';
 import { eventDisplayName, toWcaEventId } from '../../utils/wca_events';
 import { EventIcon } from '../../components/EventIcon';
 import { getLangQuery } from '../../i18n';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './calendar_stats.css';
 
 const EVENT_LIST = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
@@ -35,6 +36,7 @@ function bucketColor(count: number, max: number): string {
 export default function CalendarStatsPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('日历统计', 'Calendar Stats');
   const navigate = useNavigate();
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [country, setCountry] = useState('');

@@ -15,18 +15,9 @@ import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
-import { apiUrl } from '../../utils/api_base';
+import { prefetchComp } from '../../utils/comp_link';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './comp.css';
-
-/** Hover/focus 时暗中 fetch 比赛 JSON,进浏览器 HTTP cache,30s 内点击命中即 instant 渲染.
- *  同 URL 多次触发自动 dedupe(同一 prefetch 仍在飞时不重发). */
-const prefetched = new Set<string>();
-function prefetchComp(slug: string) {
-  if (prefetched.has(slug)) return;
-  prefetched.add(slug);
-  const url = apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`);
-  fetch(url, { cache: 'force-cache' }).catch(() => { prefetched.delete(slug); });
-}
 
 /** WCA comp id (PascalCase, "XianCherryBlossom2026") → cubing.com slug ("Xian-Cherry-Blossom-2026")。
  *  cubing.com 把 WCA name 里的空格换 dash,标点去掉。从 id 反推 slug 需要插 dash 在:
@@ -76,6 +67,7 @@ function loadRecent(): RecentEntry[] {
 export default function CompIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('比赛', 'Competitions');
   const navigate = useNavigate();
   const [input, setInput] = useState('');
   const [recent, setRecent] = useState<RecentEntry[]>([]);

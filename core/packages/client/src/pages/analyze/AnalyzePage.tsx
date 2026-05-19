@@ -35,6 +35,7 @@ import { randomScrambleForEvent } from '../../utils/scramble';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import TwistySection from '../../components/TwistySection';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './analyze.css';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
@@ -59,6 +60,7 @@ type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
 export default function AnalyzePage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  useDocumentTitle('打乱分析', 'Scramble Analyzer');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [searchParams, setSearchParams] = useSearchParams();

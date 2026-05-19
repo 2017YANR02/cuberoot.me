@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search, X, Pencil, MessageSquarePlus, Plus, Trash2 } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import {
   fetchWikiTerms, createTerm, updateTerm, deleteTerm,
@@ -58,6 +59,7 @@ function slugify(head: string) {
 export default function WikiPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('Wiki', 'Wiki');
   const user = useAuthStore(s => s.user);
   const isLoggedIn = !!user;
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);

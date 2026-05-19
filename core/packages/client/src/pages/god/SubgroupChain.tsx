@@ -5,6 +5,7 @@
  * tab 切两个算法。点某一层显示生成元集 + 最大步数。
  */
 import { useState } from 'react';
+import { TeX, MathText } from './Tex';
 
 type AlgoKey = 'thistlethwaite' | 'kociemba';
 
@@ -145,36 +146,44 @@ export default function SubgroupChain({ isZh }: Props) {
       </div>
 
       <div className="god-chain-flow">
-        {chain.map((l, i) => (
-          <div key={l.label} className={`god-chain-layer ${active === i ? 'is-active' : ''}`}
-               onClick={() => setActive(active === i ? null : i)}>
-            <div className="god-chain-layer-head">
-              <span className="god-chain-layer-label">{l.label}</span>
-              <span className="god-chain-layer-order">|{l.label}| = {l.order}</span>
-            </div>
-            <div className="god-chain-layer-gens">{l.gens}</div>
-            <div className="god-chain-layer-desc">{isZh ? l.zh : l.en}</div>
-            {l.cosetsToParent && (
-              <div className="god-chain-layer-cosets">
-                {t('陪集数', 'Coset count')} |G{i-1}/G{i === chain.length - 1 ? `${i-1}` : i}| = <b>{l.cosetsToParent}</b>
-                {l.maxMoves != null && (
-                  <span className="god-chain-layer-mv">
-                    · {t('阶段最大', 'phase max')}: <b>{l.maxMoves}</b> HTM
-                  </span>
-                )}
+        {chain.map((l, i) => {
+          const parentIdx = i - 1;
+          const selfIdx = i === chain.length - 1 ? i - 1 : i;
+          return (
+            <div key={l.label} className={`god-chain-layer ${active === i ? 'is-active' : ''}`}
+                 onClick={() => setActive(active === i ? null : i)}>
+              <div className="god-chain-layer-head">
+                <span className="god-chain-layer-label">{l.label}</span>
+                <span className="god-chain-layer-order"><MathText>{`|${l.label}| = ${l.order}`}</MathText></span>
               </div>
-            )}
-          </div>
-        ))}
+              <div className="god-chain-layer-gens"><MathText>{l.gens}</MathText></div>
+              <div className="god-chain-layer-desc"><MathText>{isZh ? l.zh : l.en}</MathText></div>
+              {l.cosetsToParent && (
+                <div className="god-chain-layer-cosets">
+                  {t('陪集数', 'Coset count')} <TeX src={`\\bigl|G_{${parentIdx}}/G_{${selfIdx}}\\bigr| = ${l.cosetsToParent.replace(/,/g, '{,}')}`} />
+                  {l.maxMoves != null && (
+                    <span className="god-chain-layer-mv">
+                      · {t('阶段最大', 'phase max')}: <b>{l.maxMoves}</b> HTM
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <p className="god-chain-caption">
-        {algo === 'kociemba' ? t(
-          'Kociemba 两阶段:用 G₁ = ⟨U,D,L²,R²,F²,B²⟩ 把 4.3×10¹⁹ 状态切成 2.2 × 10⁹ 个陪集。阶段 1 把"在哪个陪集"解决(最多 12 步),阶段 2 在那个陪集里求解(最多 18 步)。Rokicki 2008 把上界压到 22;2010 引入对称 + 集合覆盖压到 20 —— 上界与下界(superflip 已知 20)相遇,直径 = 20 证毕。',
-          'Kociemba two-phase: G₁ = ⟨U,D,L²,R²,F²,B²⟩ partitions the 4.3×10¹⁹ states into 2.2 × 10⁹ cosets. Phase 1 finds the coset (≤ 12 moves); Phase 2 solves inside it (≤ 18 moves). Rokicki 2008 tightened to 22; 2010 added symmetry + set cover to reach 20 — meeting the lower bound (superflip needs 20), proving diameter = 20.',
-        ) : t(
-          'Thistlethwaite 四阶段:每个阶段把一个对称性"冻结"(先棱朝向、再角朝向 + M-slice、再 180°-only、最后还原)。每个阶段的子问题足够小可以预计算查表。给出 ≤ 52 HTM 上界,1981 年第一个 < 100 步的可计算解法。',
-          'Thistlethwaite four-phase: each phase freezes one symmetry (first edge orientation, then corner orientation + M-slice, then 180°-only, then identity). Each sub-problem is small enough to tabulate. Gives ≤ 52 HTM, the first sub-100 algorithmic bound (1981).',
+        {algo === 'kociemba' ? (
+          <MathText>{t(
+            'Kociemba 两阶段:用 G₁ = ⟨U,D,L²,R²,F²,B²⟩ 把 4.3×10¹⁹ 状态切成 2.2 × 10⁹ 个陪集。阶段 1 把"在哪个陪集"解决(最多 12 步),阶段 2 在那个陪集里求解(最多 18 步)。Rokicki 2008 把上界压到 22;2010 引入对称 + 集合覆盖压到 20 —— 上界与下界(superflip 已知 20)相遇,直径 = 20 证毕。',
+            'Kociemba two-phase: G₁ = ⟨U,D,L²,R²,F²,B²⟩ partitions the 4.3×10¹⁹ states into 2.2 × 10⁹ cosets. Phase 1 finds the coset (≤ 12 moves); Phase 2 solves inside it (≤ 18 moves). Rokicki 2008 tightened to 22; 2010 added symmetry + set cover to reach 20 — meeting the lower bound (superflip needs 20), proving diameter = 20.',
+          )}</MathText>
+        ) : (
+          <MathText>{t(
+            'Thistlethwaite 四阶段:每个阶段把一个对称性"冻结"(先棱朝向、再角朝向 + M-slice、再 180°-only、最后还原)。每个阶段的子问题足够小可以预计算查表。给出 ≤ 52 HTM 上界,1981 年第一个 < 100 步的可计算解法。',
+            'Thistlethwaite four-phase: each phase freezes one symmetry (first edge orientation, then corner orientation + M-slice, then 180°-only, then identity). Each sub-problem is small enough to tabulate. Gives ≤ 52 HTM, the first sub-100 algorithmic bound (1981).',
+          )}</MathText>
         )}
       </p>
     </div>

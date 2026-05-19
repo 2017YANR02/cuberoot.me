@@ -11,13 +11,15 @@ import type { ReconSolve } from '@cuberoot/shared';
 import {
   flagClass,
   formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
-  wcaPersonUrl, wcaCompUrl,
+  wcaPersonUrl,
 } from '../../utils/recon_utils';
+import { compLinkProps } from '../../utils/comp_link';
 import { displayCuberName } from '../../utils/name_utils';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
 import { Flag } from '../../utils/flag';
 import { stripWcaPrefix } from '../../utils/comp_localize';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { RecordBadge } from '../../components/RecordBadge';
 import WcaAuth from '../../components/WcaAuth';
 import { EventSelect } from '../../components/EventSelect';
@@ -179,6 +181,7 @@ export default function ReconListPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('录像还原', 'Reconstructions');
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -676,14 +679,12 @@ export default function ReconListPage() {
           return (
             <>
               {fc && <span className={fc} />}{' '}
-              <a
-                href={wcaCompUrl(solve.compWcaId)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                {...compLinkProps(solve.compWcaId)}
                 onClick={(e) => e.stopPropagation()}
               >
                 {displayName}
-              </a>
+              </Link>
             </>
           );
         }

@@ -5,6 +5,7 @@ import { Search as SearchIcon } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from './useTutorialCatalog';
 import { TutorialCard } from './TutorialCard';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './tutorial.css';
 
 export default function TutorialCategoryPage() {
@@ -16,6 +17,9 @@ export default function TutorialCategoryPage() {
   const category = rawCategory ? decodeURIComponent(rawCategory) : '';
   const [searchParams] = useSearchParams();
   const showHidden = searchParams.get('show') === 'hidden';
+
+  const tutorialTitle = category || (isZh ? '教程' : 'Tutorial');
+  useDocumentTitle(tutorialTitle, tutorialTitle);
 
   const [query, setQuery] = useState('');
   const [activeSub, setActiveSub] = useState<string>('all');

@@ -16,6 +16,7 @@ import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 
 const EVENTS = [
@@ -40,6 +41,7 @@ interface GsRow {
 export default function GrandSlamPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('大满贯', 'Grand Slam');
   const [params, setParams] = useSearchParams();
   const event = params.get('event') ?? '';
   const onlyFirst = params.get('onlyFirst') === '1';

@@ -7,6 +7,7 @@ import StandardMode from './modes/StandardMode';
 import H2HMode from './modes/H2HMode';
 import WhatIfMode from './modes/WhatIfMode';
 import StatsMode from './modes/StatsMode';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './nemesizer.css';
 
 type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
@@ -14,6 +15,7 @@ type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
 export default function NemesizerPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('苦主', 'Nemesizer');
   const [params, setParams] = useSearchParams();
   const mode = (params.get('mode') as Mode) || 'standard';
 

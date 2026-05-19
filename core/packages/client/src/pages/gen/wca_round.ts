@@ -34,27 +34,37 @@ export function formatAttempts(f: WcaFormat): number {
   }
 }
 
-/** Allowed formats per event. First entry is the per-event default. */
+/**
+ * Allowed formats per event. **First entry is the per-event default** (=WCA 标准),
+ * 后续是用户可选的替代格式。下拉菜单只在 `.length > 1` 时渲染 — 给每个事件 ≥2 项
+ * 默认就出下拉,用户能改 Ao5 → Bo3 / Bo2 / Bo1 等,首选不动。
+ */
 export const ALLOWED_FORMATS: Record<string, WcaFormat[]> = {
-  '222':    ['a'],
-  '333':    ['a'],
-  '444':    ['a'],
-  '555':    ['a'],
-  '666':    ['m'],
-  '777':    ['m'],
-  '333bf':  ['5', '3'],
-  '333fm':  ['m'],
-  '333oh':  ['a'],
-  '333ft':  ['a', 'm'],
+  '222':    ['a', '3', '2', '1'],
+  '333':    ['a', '3', '2', '1'],
+  '444':    ['a', '3', '2', '1'],
+  '555':    ['a', '3', '2', '1'],
+  '666':    ['m', '3', '2', '1'],
+  '777':    ['m', '3', '2', '1'],
+  '333bf':  ['5', '3', '2', '1'],
+  '333fm':  ['m', '2', '1'],
+  '333oh':  ['a', '3', '2', '1'],
+  '333ft':  ['a', 'm', '3', '2', '1'],
   '333mbf': ['1', '2', '3'],
   '333mbo': ['1', '2', '3'],
-  'clock':  ['a'],
-  'minx':   ['a'],
-  'pyram':  ['a'],
-  'skewb':  ['a'],
-  'sq1':    ['a'],
-  '444bf':  ['3'],
-  '555bf':  ['3'],
+  'clock':  ['a', '3', '2', '1'],
+  'minx':   ['a', '3', '2', '1'],
+  'pyram':  ['a', '3', '2', '1'],
+  'skewb':  ['a', '3', '2', '1'],
+  'sq1':    ['a', '3', '2', '1'],
+  '444bf':  ['3', '2', '1'],
+  '555bf':  ['3', '2', '1'],
+  // 非 WCA (cubing.js twizzleEvents) — 跟 WCA 普通 cube 项目对齐。
+  'fto':              ['a', '3', '2', '1'],
+  'master_tetraminx': ['a', '3', '2', '1'],
+  'kilominx':         ['a', '3', '2', '1'],
+  'redi_cube':        ['a', '3', '2', '1'],
+  'baby_fto':         ['a', '3', '2', '1'],
 };
 
 /** Default extra-scramble count per round (tnoodle WCA convention). */

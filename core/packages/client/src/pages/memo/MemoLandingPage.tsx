@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Brain, type LucideIcon } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import '../landing.css';
 
 interface MemoCard {
@@ -25,6 +26,7 @@ const CARDS: MemoCard[] = [
 export default function MemoLandingPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('记忆', 'Memo');
 
   return (
     <div className="landing-page">

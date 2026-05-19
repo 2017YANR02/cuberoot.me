@@ -14,6 +14,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import CountrySelect, { useCountries } from './CountrySelect';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 
 const EVENTS = [
@@ -34,6 +35,7 @@ interface Row {
 export default function CohortRanksPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('届别排名', 'Cohort Ranks');
   const [params, setParams] = useSearchParams();
   const currentYear = new Date().getUTCFullYear();
   const cohort = parseInt(params.get('cohort') ?? String(currentYear), 10);

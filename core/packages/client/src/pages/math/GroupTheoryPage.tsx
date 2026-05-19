@@ -1,5 +1,5 @@
 /**
- * /theory/group — Rubik's Cube and group theory.
+ * /math/group — Rubik's Cube and group theory.
  * A long-form math essay with five interactive panels:
  *   §3  ConjugateViewer   — A B A⁻¹ animation
  *   §4  CubeStateInspector — apply alg, see (cp, co, ep, eo) arrays
@@ -18,6 +18,7 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import {
   identity, applyAlg, orderOf, invariants, invertAlg, conjugate, commutator,
   tokenize, isSolved, thistlethwaiteStage, cycleStructure, permSign,
@@ -2546,9 +2547,215 @@ function CharacterTableHint() {
   );
 }
 
+// ── Index landing panels (only rendered on /math/group, not sub-slugs) ─────
+function IndexStatsStrip() {
+  const lang = useLang();
+  return (
+    <div className="gt-index-stats">
+      <div className="gt-index-stat">
+        <div className="gt-index-stat-val">4.33 × 10<sup>19</sup></div>
+        <div className="gt-index-stat-label">|G|</div>
+        <div className="gt-index-stat-cap">{lang === 'zh' ? '魔方可达状态' : 'reachable cube states'}</div>
+      </div>
+      <div className="gt-index-stat">
+        <div className="gt-index-stat-val">20</div>
+        <div className="gt-index-stat-label">{lang === 'zh' ? '上帝之数 HTM' : "God's number (HTM)"}</div>
+        <div className="gt-index-stat-cap">{lang === 'zh' ? '群的直径 = 最长最短解' : 'group diameter — longest optimal solve'}</div>
+      </div>
+      <div className="gt-index-stat">
+        <div className="gt-index-stat-val">26 + 37</div>
+        <div className="gt-index-stat-label">{lang === 'zh' ? '小节 · 互动面板' : 'sections · interactive panels'}</div>
+        <div className="gt-index-stat-cap">{lang === 'zh' ? 'KaTeX 公式 · cubing.js 动画' : 'KaTeX formulas · cubing.js animations'}</div>
+      </div>
+    </div>
+  );
+}
+
+function IndexOrderBlock() {
+  const lang = useLang();
+  return (
+    <div className="gt-index-order">
+      <div className="gt-index-section-head">{lang === 'zh' ? '本文核心定理 · |G| 的封闭式' : "core theorem · closed form for |G|"}</div>
+      <div className="gt-index-order-eq">
+        <TeXBlock src={`|G| \\;=\\; \\frac{8!\\,\\cdot\\,3^{7}\\,\\cdot\\,12!\\,\\cdot\\,2^{11}}{2} \\;=\\; 43{,}252{,}003{,}274{,}489{,}856{,}000`} />
+      </div>
+      <div className="gt-index-order-legend">
+        <div><b>8!</b><span>{lang === 'zh' ? '角块排列' : 'corner perms'}</span></div>
+        <div><b>3<sup>7</sup></b><span>{lang === 'zh' ? '角块朝向' : 'corner twists'}<br /><em>Σco ≡ 0</em></span></div>
+        <div><b>12!</b><span>{lang === 'zh' ? '棱块排列' : 'edge perms'}</span></div>
+        <div><b>2<sup>11</sup></b><span>{lang === 'zh' ? '棱块翻面' : 'edge flips'}<br /><em>Σeo ≡ 0</em></span></div>
+        <div><b>÷ 2</b><span>{lang === 'zh' ? '角棱同奇偶' : 'parity match'}<br /><em>sgn(c) = sgn(e)</em></span></div>
+      </div>
+      <div className="gt-index-order-foot">
+        <span>= 2<sup>27</sup> · 3<sup>14</sup> · 5<sup>3</sup> · 7<sup>2</sup> · 11</span>
+        <Link to="/math/group/order">→ §4 {lang === 'zh' ? '完整推导' : 'full derivation'}</Link>
+        <Link to="/math/group/invariants">→ §5 {lang === 'zh' ? '三守恒律证明' : "why ÷ 2 / ÷ 3 / ÷ 2"}</Link>
+      </div>
+    </div>
+  );
+}
+
+function IndexFeaturedCube() {
+  const lang = useLang();
+  const SUPERFLIP = "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2";
+  return (
+    <div className="gt-index-featured">
+      <div className="gt-index-featured-meta">{lang === 'zh' ? '特写 · SUPERFLIP' : 'feature · SUPERFLIP'}</div>
+      <div className="gt-index-featured-body">
+        <div className="gt-index-featured-cube">
+          <TwistyMini alg={SUPERFLIP} />
+        </div>
+        <div className="gt-index-featured-text">
+          <h3 className="gt-index-featured-title">
+            {lang === 'zh' ? '所有棱翻面 — 离还原最远的 3 个态之一' : 'All edges flipped — one of three positions maximally far from solved'}
+          </h3>
+          <p>
+            {lang === 'zh'
+              ? <>每条棱的位置都对,但全部翻面 (<TeX src={`c_p = e,\\ e_p = e,\\ c_o = 0,\\ e_o = (1,1,\\ldots,1)`} />)。<strong>HTM 下恰好 20 步可解,且不能更短</strong> — 这正是 2010 年 Rokicki 等人证明 God's number = 20 时第一个被锁死的下界。</>
+              : <>Every edge sits in its home slot, but all are flipped (<TeX src={`c_p = e,\\ e_p = e,\\ c_o = 0,\\ e_o = (1,1,\\ldots,1)`} />). <strong>Solvable in exactly 20 HTM moves, and no fewer</strong> — the lower bound nailed down first when Rokicki et al. proved God's number = 20 in 2010.</>}
+          </p>
+          <pre className="gt-index-featured-alg">{SUPERFLIP}</pre>
+          <div className="gt-index-featured-cta">
+            <Link to="/math/group/gods-number">§11 {lang === 'zh' ? '上帝之数 = 20 ↗' : "God's number = 20 ↗"}</Link>
+            <Link to="/math/group/order-of-element">§7 {lang === 'zh' ? '元素的阶 ↗' : 'order of an element ↗'}</Link>
+            <Link to="/math/group/patterns">§13 {lang === 'zh' ? '图案画廊 ↗' : 'pattern gallery ↗'}</Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IndexHighlightCards() {
+  const lang = useLang();
+  const cards: { id: string; num: string; titleZh: string; titleEn: string; teaserZh: string; teaserEn: string; formula: string }[] = [
+    {
+      id: 'what-is-a-group', num: '§1',
+      titleZh: '四条公理', titleEn: 'Four axioms',
+      teaserZh: '封闭 · 结合 · 单位 · 逆 — 为什么魔方"就是"一个群',
+      teaserEn: 'Closure · associativity · identity · inverse — why the cube literally is a group',
+      formula: `G_1 \\;G_2 \\;G_3 \\;G_4`,
+    },
+    {
+      id: 'invariants', num: '§5',
+      titleZh: '三守恒律 + 证明',
+      titleEn: 'Three invariants + proofs',
+      teaserZh: '角向 mod 3,棱向 mod 2,角棱奇偶同 — 为什么只有 1/12 可达',
+      teaserEn: 'Σco mod 3, Σeo mod 2, parity match — why only 1/12 of "free" states are reachable',
+      formula: `\\textstyle\\sum c_o \\equiv 0,\\;\\sum e_o \\equiv 0`,
+    },
+    {
+      id: 'gods-number', num: '§11',
+      titleZh: '上帝之数 = 20',
+      titleEn: "God's number = 20",
+      teaserZh: '35 CPU 年遍历 4.3 京状态:没有一个需要 21 步',
+      teaserEn: '35 CPU-years brute-forced 4.3 × 10¹⁹ states — none needs 21 moves',
+      formula: `\\mathrm{diam}(\\Gamma(G,S)) = 20`,
+    },
+    {
+      id: 'cayley', num: '§14',
+      titleZh: 'Cayley 图',
+      titleEn: 'Cayley graph',
+      teaserZh: '顶点 = 状态 · 边 = 转面 · 直径 = 上帝之数 · BFS = 最优解',
+      teaserEn: 'Vertices = states · edges = face turns · diameter = God\'s number · BFS = optimal solver',
+      formula: `\\Gamma(G,\\, S)`,
+    },
+  ];
+  return (
+    <div className="gt-index-cards">
+      <div className="gt-index-section-head">{lang === 'zh' ? '亮点 · 四个关键概念' : 'highlights · four pivotal ideas'}</div>
+      <div className="gt-index-cards-grid">
+        {cards.map(c => (
+          <Link key={c.id} to={`/math/group/${c.id}`} className="gt-index-card">
+            <div className="gt-index-card-num">{c.num}</div>
+            <div className="gt-index-card-title">{lang === 'zh' ? c.titleZh : c.titleEn}</div>
+            <div className="gt-index-card-formula"><TeX src={c.formula} /></div>
+            <div className="gt-index-card-teaser">{lang === 'zh' ? c.teaserZh : c.teaserEn}</div>
+            <div className="gt-index-card-arrow">→</div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const TOC_THEMES: { id: string; zh: string; en: string; descZh: string; descEn: string; range: string; secs: string[] }[] = [
+  { id: 'foundations', zh: '基础', en: 'Foundations',
+    descZh: '公理 · 生成元 · 状态向量 · |G| · 守恒律 · 结构定理',
+    descEn: 'axioms · generators · state vector · order · invariants · structure theorem',
+    range: '§1 – §6', secs: ['what-is-a-group','cube-group','state-vector','order','invariants','structure'] },
+  { id: 'core', zh: '群论核心', en: 'Core group theory',
+    descZh: '元素的阶 · 共轭 · 换位子 · 子群链 · 上帝之数',
+    descEn: 'element order · conjugation · commutators · Thistlethwaite chain · God\'s number',
+    range: '§7 – §11', secs: ['order-of-element','conjugation','commutators','thistlethwaite','gods-number'] },
+  { id: 'visual', zh: '拓展 · 几何与图案', en: 'Extensions · geometry & patterns',
+    descZh: '走得更远 · 图案画廊 · Cayley 图 · 其它拼图 · 未解问题',
+    descEn: 'beyond · pattern gallery · Cayley graph · other puzzles · open problems',
+    range: '§12 – §16', secs: ['beyond','patterns','cayley','other-puzzles','open-problems'] },
+  { id: 'advanced', zh: '进阶代数', en: 'Advanced algebra',
+    descZh: '同态 · 群作用 + Burnside · Lagrange + 陪集 · 商群 · 对称群与交错群',
+    descEn: 'homomorphisms · actions + Burnside · Lagrange + cosets · quotients · S_n / A_n',
+    range: '§17 – §21', secs: ['homomorphisms','actions-burnside','lagrange','quotient','permutation-groups'] },
+  { id: 'computation', zh: '计算 · 算法 · 表示', en: 'Computation · algorithms · representation',
+    descZh: '解法算法 · 距离分布 · 随机游走 · BSGS · 表示论一瞥',
+    descEn: 'solving algorithms · distance distribution · random walks · BSGS · representation theory',
+    range: '§22 – §26', secs: ['algorithms','distance','random-walks','computational','representations'] },
+];
+
+function IndexThemedTOC() {
+  const lang = useLang();
+  const byId = useMemo(() => new Map(TOC.map(t => [t.id, t])), []);
+  return (
+    <nav className="gt-index-toc" aria-label="Table of contents">
+      <div className="gt-index-section-head">{lang === 'zh' ? '目录 · 26 节按主题分组' : 'contents · 26 sections, grouped by theme'}</div>
+      <div className="gt-index-toc-themes">
+        {TOC_THEMES.map(theme => (
+          <div key={theme.id} className="gt-index-theme">
+            <div className="gt-index-theme-head">
+              <span className="gt-index-theme-range">{theme.range}</span>
+              <span className="gt-index-theme-name">{lang === 'zh' ? theme.zh : theme.en}</span>
+              <span className="gt-index-theme-desc">{lang === 'zh' ? theme.descZh : theme.descEn}</span>
+            </div>
+            <ul className="gt-index-theme-list">
+              {theme.secs.map(id => {
+                const t = byId.get(id);
+                if (!t) return null;
+                return (
+                  <li key={id}>
+                    <Link to={`/math/group/${id}`}>
+                      <span className="gt-index-theme-num">§{t.num}</span>
+                      <span className="gt-index-theme-title">{lang === 'zh' ? t.zh : t.en}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+        <div className="gt-index-theme gt-index-theme-refs">
+          <div className="gt-index-theme-head">
+            <span className="gt-index-theme-range">REF</span>
+            <span className="gt-index-theme-name">{lang === 'zh' ? '参考文献' : 'References'}</span>
+            <span className="gt-index-theme-desc">{lang === 'zh' ? '12 条 · 教材 · 论文 · 网络资源' : '12 entries · textbooks · papers · web resources'}</span>
+          </div>
+          <ul className="gt-index-theme-list">
+            <li>
+              <Link to={`/math/group/refs`}>
+                <span className="gt-index-theme-num">REF</span>
+                <span className="gt-index-theme-title">{lang === 'zh' ? '参考文献' : 'Bibliography'}</span>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function GroupTheoryPage() {
   const lang = useLang();
+  useDocumentTitle('群论', 'Group Theory');
   const { slug } = useParams<{ slug?: string }>();
   const isIndex = !slug;
   const validSlugs = useMemo(() => new Set(TOC.map(t => t.id)), []);
@@ -2562,7 +2769,7 @@ export default function GroupTheoryPage() {
       <div className="gt-topbar">
         {isIndex
           ? <Link to="/" className="gt-back">← {lang === 'zh' ? '返回' : 'home'}</Link>
-          : <Link to="/theory/group" className="gt-back">← {lang === 'zh' ? '目录' : 'contents'}</Link>}
+          : <Link to="/math/group" className="gt-back">← {lang === 'zh' ? '目录' : 'contents'}</Link>}
         <div className="gt-topbar-right">
           <LangToggle />
           <ThemeToggle />
@@ -2591,26 +2798,16 @@ export default function GroupTheoryPage() {
       {!slugValid && (
         <div className="gt-aside" style={{ maxWidth: 720, margin: '40px auto' }}>
           {lang === 'zh'
-            ? <>未知小节 <code className="gt-mono">{slug}</code>。 <Link to="/theory/group">返回目录</Link>。</>
-            : <>Unknown section <code className="gt-mono">{slug}</code>. <Link to="/theory/group">Back to contents</Link>.</>}
+            ? <>未知小节 <code className="gt-mono">{slug}</code>。 <Link to="/math/group">返回目录</Link>。</>
+            : <>Unknown section <code className="gt-mono">{slug}</code>. <Link to="/math/group">Back to contents</Link>.</>}
         </div>
       )}
 
-      {isIndex && (
-      <nav className="gt-toc" aria-label="Table of contents">
-        <div className="gt-toc-title">{lang === 'zh' ? '目录' : 'Contents'}</div>
-        <ul className="gt-toc-list">
-          {TOC.map(item => (
-            <li key={item.id}>
-              <Link to={`/theory/group/${item.id}`}>
-                <span className="gt-toc-num">§{item.num}</span>
-                <span>{lang === 'zh' ? item.zh : item.en}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      )}
+      {isIndex && <IndexStatsStrip />}
+      {isIndex && <IndexOrderBlock />}
+      {isIndex && <IndexFeaturedCube />}
+      {isIndex && <IndexHighlightCards />}
+      {isIndex && <IndexThemedTOC />}
 
       {/* ═══════════════ §1 What is a group ═════════════════════════ */}
       <GTSec id="what-is-a-group" className="gt-sec">
@@ -2687,6 +2884,52 @@ export default function GroupTheoryPage() {
           />
           <div className="gt-pullquote-cite">— a common opening of any abstract-algebra textbook</div>
         </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="1.3  四公理速查表" en="1.3  Axioms in one row each" />
+        </h3>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '公理' : 'Axiom'}</th><th>{lang === 'zh' ? '公式' : 'Formula'}</th><th>{lang === 'zh' ? '魔方含义' : 'Cube meaning'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>{lang === 'zh' ? 'G1 封闭' : 'G1 closure'}</td><td><TeX src={`a, b \\in G \\Rightarrow ab \\in G`} /></td><td>{lang === 'zh' ? '面转复合仍是面转复合' : 'composition of moves is a move'}</td></tr>
+            <tr><td>{lang === 'zh' ? 'G2 结合' : 'G2 associativity'}</td><td><TeX src={`(ab)c = a(bc)`} /></td><td>{lang === 'zh' ? '括号无效,序列才有意义' : 'bracketing irrelevant, sequence is what matters'}</td></tr>
+            <tr><td>{lang === 'zh' ? 'G3 单位' : 'G3 identity'}</td><td><TeX src={`\\exists\\, e:\\; ea = ae = a`} /></td><td>{lang === 'zh' ? '不动魔方就是空操作' : 'doing nothing is the empty alg'}</td></tr>
+            <tr><td>{lang === 'zh' ? 'G4 逆' : 'G4 inverse'}</td><td><TeX src={`\\forall a\\, \\exists a^{-1}:\\; aa^{-1} = e`} /></td><td>{lang === 'zh' ? '每个 alg 都可撤销' : 'every alg can be undone'}</td></tr>
+          </tbody>
+        </table>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="1.4  非魔方的群例子" en="1.4  Non-cube groups, briefly" />
+        </h3>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '群' : 'Group'}</th><th>{lang === 'zh' ? '阶' : 'Order'}</th><th>{lang === 'zh' ? '阿贝尔' : 'Abelian'}</th><th>{lang === 'zh' ? '与魔方的关系' : 'Cube analogy'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><TeX src={`(\\mathbb{Z}, +)`} /></td><td className="num">∞</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td>{lang === 'zh' ? '只考虑 U 转累计角度的「无限版本」' : 'an infinite analogue of "U turns piling up"'}</td></tr>
+            <tr><td><TeX src={`\\mathbb{Z}/n`} /></td><td className="num">n</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td><TeX src={`\\langle U\\rangle \\cong \\mathbb{Z}/4`} /></td></tr>
+            <tr><td><TeX src={`S_n`} /></td><td className="num">n!</td><td>{lang === 'zh' ? '否 (n≥3)' : 'no (n≥3)'}</td><td>{lang === 'zh' ? '魔方角块嵌入 S₈,棱块嵌入 S₁₂' : 'corners → S₈, edges → S₁₂'}</td></tr>
+            <tr><td><TeX src={`A_n`} /></td><td className="num">n!/2</td><td>{lang === 'zh' ? '否 (n≥4)' : 'no (n≥4)'}</td><td>{lang === 'zh' ? '换位子子群 [G,G] 内有 A₈ × A₁₂ 投影' : '[G,G] projects onto A₈ × A₁₂'}</td></tr>
+            <tr><td><TeX src={`GL_n(\\mathbb{R})`} /></td><td className="num">∞</td><td>{lang === 'zh' ? '否' : 'no'}</td><td>{lang === 'zh' ? '面转可写成 48×48 置换矩阵' : 'face turns sit inside GL₄₈(ℤ)'}</td></tr>
+            <tr><td><TeX src={`Q_8`} /></td><td className="num">8</td><td>{lang === 'zh' ? '否' : 'no'}</td><td>{lang === 'zh' ? '四元数群,非阿贝尔最小例之一' : 'quaternion group — smallest non-Abelian non-dihedral example'}</td></tr>
+            <tr><td><TeX src={`F_2 = \\langle a, b \\rangle`} /></td><td className="num">∞</td><td>{lang === 'zh' ? '否' : 'no'}</td><td>{lang === 'zh' ? '两元自由群 — 魔方 ⟨R, U⟩ 在前 ~20 步内同自由群难以区分' : 'rank-2 free group — ⟨R, U⟩ behaves like F₂ until depth ~20'}</td></tr>
+          </tbody>
+        </table>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="1.5  群作为范畴里的对象" en="1.5  Groups as objects in a category" />
+        </h3>
+        <p>
+          <L
+            zh={<>更现代的视角:把 <strong>所有群</strong> 摆在一个范畴 <TeX src={`\\mathbf{Grp}`} /> 里。 对象 = 群, 态射 = 群同态。 <em>子群</em>(§2.3) 是 <TeX src={`H \\hookrightarrow G`} /> 这样的单态射, <em>商群</em>(§7) 是 <TeX src={`G \\twoheadrightarrow G/N`} /> 的满态射, <em>正规子群</em> 是「能造商」的子群。这套语言让 「群论中的所有定理」 都能翻译为 「范畴里的图」: 第一同构定理就是<TeXBlock src={`G \\twoheadrightarrow G/\\ker \\varphi \\xrightarrow{\\;\\sim\\;} \\operatorname{im}\\varphi \\hookrightarrow H.`} /></>}
+            en={<>The modern view: gather <strong>all groups</strong> into a category <TeX src={`\\mathbf{Grp}`} />. Objects are groups, morphisms are group homomorphisms. A <em>subgroup</em> (§2.3) is a monomorphism <TeX src={`H \\hookrightarrow G`} />, a <em>quotient</em> (§7) is an epimorphism <TeX src={`G \\twoheadrightarrow G/N`} />, and a <em>normal subgroup</em> is precisely a subgroup admitting a quotient. The First Isomorphism Theorem becomes the diagram<TeXBlock src={`G \\twoheadrightarrow G/\\ker \\varphi \\xrightarrow{\\;\\sim\\;} \\operatorname{im}\\varphi \\hookrightarrow H.`} /></>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>这跟魔方求解器实际架构吻合: 每一阶段 <TeX src={`G_i \\to G_{i+1}`} /> 就是 <TeX src={`\\mathbf{Grp}`} /> 里的一个箭头, 整个 Thistlethwaite 链就是链复合 <TeX src={`G_0 \\to G_1 \\to G_2 \\to G_3 \\to \\{e\\}`} />。</>}
+            en={<>This matches the architecture of a cube solver: each phase <TeX src={`G_i \\to G_{i+1}`} /> is a single arrow in <TeX src={`\\mathbf{Grp}`} />, and the Thistlethwaite chain is the composite <TeX src={`G_0 \\to G_1 \\to G_2 \\to G_3 \\to \\{e\\}`} />.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §2 The cube group ═══════════════════════════ */}
@@ -2789,6 +3032,65 @@ export default function GroupTheoryPage() {
             <TeX src={`\\langle U^2, D^2, L^2, R^2, F^2, B^2 \\rangle = G_3`} /> &nbsp; — <L zh={`只允许半圈,663,552 个元素 ("多米诺群")`} en={`half-turns only, 663,552 elements (the "domino group")`} />
           </li>
         </ul>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="2.4  18 个面转 — 完整列表" en="2.4  The 18 face turns — complete list" />
+        </h3>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '面' : 'Face'}</th><th>90°</th><th>180°</th><th>270° = 90° CCW</th><th>{lang === 'zh' ? 'HTM 计数' : 'HTM count'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>U</strong></td><td className="num"><span className="gt-mono">U</span></td><td className="num"><span className="gt-mono">U2</span></td><td className="num"><span className="gt-mono">U'</span></td><td className="num">3</td></tr>
+            <tr><td><strong>D</strong></td><td className="num"><span className="gt-mono">D</span></td><td className="num"><span className="gt-mono">D2</span></td><td className="num"><span className="gt-mono">D'</span></td><td className="num">3</td></tr>
+            <tr><td><strong>L</strong></td><td className="num"><span className="gt-mono">L</span></td><td className="num"><span className="gt-mono">L2</span></td><td className="num"><span className="gt-mono">L'</span></td><td className="num">3</td></tr>
+            <tr><td><strong>R</strong></td><td className="num"><span className="gt-mono">R</span></td><td className="num"><span className="gt-mono">R2</span></td><td className="num"><span className="gt-mono">R'</span></td><td className="num">3</td></tr>
+            <tr><td><strong>F</strong></td><td className="num"><span className="gt-mono">F</span></td><td className="num"><span className="gt-mono">F2</span></td><td className="num"><span className="gt-mono">F'</span></td><td className="num">3</td></tr>
+            <tr><td><strong>B</strong></td><td className="num"><span className="gt-mono">B</span></td><td className="num"><span className="gt-mono">B2</span></td><td className="num"><span className="gt-mono">B'</span></td><td className="num">3</td></tr>
+            <tr><td>{lang === 'zh' ? '合计' : 'Total'}</td><td colSpan={3}></td><td className="num"><strong>18</strong></td></tr>
+          </tbody>
+        </table>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="2.5  循环结构 — 每个面转拆成的循环" en="2.5  Cycle structure of each face turn" />
+        </h3>
+        <p>
+          <L
+            zh={<>每个面转都是一个 8 角块 × 12 棱块 的置换。把 R 写出来 (用 §3 的 cubie 编号):</>}
+            en={<>Each face turn is a permutation of the 8 corners and 12 edges. Writing R out explicitly (using the cubie indexing of §3):</>}
+          />
+        </p>
+        <TeXBlock src={`R = (0\\;3\\;7\\;4)_{c} \\cdot (0\\;11\\;4\\;8)_{e}`} />
+        <p>
+          <L
+            zh={<>即 「URF → UBR → DRB → DFR → URF」 这条 4-循环, 加上对应的棱块 4-循环 「UR → BR → DR → FR → UR」。 类似地 U 是 <TeX src={`(0\\;1\\;2\\;3)_c (0\\;1\\;2\\;3)_e`} />,F 还要叠上 4 棱块的翻面 (EO+1)。所有 6 个生成元都呈现「4-cycle 角 × 4-cycle 棱 + 可能的 orientation 偏移」的同一模板:</>}
+            en={<>That is the 4-cycle URF → UBR → DRB → DFR → URF on corners, plus the matching 4-cycle UR → BR → DR → FR → UR on edges. Likewise U is <TeX src={`(0\\;1\\;2\\;3)_c (0\\;1\\;2\\;3)_e`} />, and F also flips 4 edges (EO+1). All six generators follow the same pattern: 4-cycle on corners × 4-cycle on edges + optional orientation kick.</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '生成元' : 'Gen'}</th><th>{lang === 'zh' ? '角块循环' : 'Corner cycle'}</th><th>{lang === 'zh' ? '棱块循环' : 'Edge cycle'}</th><th>{lang === 'zh' ? '阶' : 'Order'}</th><th>{lang === 'zh' ? '改 CO?' : 'Δ CO'}</th><th>{lang === 'zh' ? '改 EO?' : 'Δ EO'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>U</strong></td><td><TeX src={`(0\\;1\\;2\\;3)`} /></td><td><TeX src={`(0\\;1\\;2\\;3)`} /></td><td className="num">4</td><td>0</td><td>0</td></tr>
+            <tr><td><strong>R</strong></td><td><TeX src={`(0\\;3\\;7\\;4)`} /></td><td><TeX src={`(0\\;11\\;4\\;8)`} /></td><td className="num">4</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td>0</td></tr>
+            <tr><td><strong>F</strong></td><td><TeX src={`(0\\;4\\;5\\;1)`} /></td><td><TeX src={`(1\\;8\\;5\\;9)`} /></td><td className="num">4</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td>{lang === 'zh' ? '4 棱 +1' : '4 edges +1'}</td></tr>
+          </tbody>
+        </table>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="2.6  关系与反例" en="2.6  Relations and a non-relation" />
+        </h3>
+        <p>
+          <L
+            zh={<>显然的关系:每个面转 4 次为单位元, <TeX src={`U^4 = e`} />, 等等。 取逆: <TeX src={`U \\cdot U' = e`} />。 但 <strong>U 与 R 不交换</strong>:</>}
+            en={<>Obvious relations: each face has order 4, <TeX src={`U^4 = e`} />, and trivially <TeX src={`U \\cdot U' = e`} />. But <strong>U does not commute with R</strong>:</>}
+          />
+        </p>
+        <TeXBlock src={`UR \\;\\neq\\; RU \\qquad \\text{(verify: apply both to the solved state; resulting corners and edges differ)}`} />
+        <p>
+          <L
+            zh={<>这一条 「非关系」 是整个魔方理论的源头 — 若 UR = RU,魔方就退化为阿贝尔。 Coxeter 风格的呈现(若魔方群恰是 Coxeter 群)会要求 <TeX src={`(s_i s_j)^{m_{ij}} = e`} />。 魔方群 <strong>不是</strong> Coxeter 群: 6 个面转之间没有形如 <TeX src={`(UR)^k = e`} /> 的小整数关系 (<TeX src={`|UR| = 105`} />,见 §8)。 这正说明 G 「比通常对称群更野」。</>}
+            en={<>That non-relation is the entire source of cube theory — if UR = RU the cube would collapse to Abelian. A Coxeter-style presentation would demand <TeX src={`(s_i s_j)^{m_{ij}} = e`} /> for some small <TeX src={`m_{ij}`} />. G is <strong>not</strong> a Coxeter group: there is no small integer k with <TeX src={`(UR)^k = e`} /> (<TeX src={`|UR| = 105`} />, see §8). G is genuinely "wilder" than the standard symmetry groups.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §3 Cube state vector ════════════════════════ */}
@@ -2899,6 +3201,59 @@ export default function GroupTheoryPage() {
           />
         </p>
         <CubeStateInspector />
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="3.4  自由度推导 — 8! · 3⁸ · 12! · 2¹² vs |G|" en="3.4  Counting degrees of freedom" />
+        </h3>
+        <p>
+          <L
+            zh={<>把 cp / co / ep / eo 看成 4 个独立坐标, 它们各自的取值空间:</>}
+            en={<>Treat cp / co / ep / eo as four independent coordinates. Their raw cardinalities:</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '坐标' : 'Coord'}</th><th>{lang === 'zh' ? '取值空间' : 'Codomain'}</th><th>{lang === 'zh' ? '大小' : 'Size'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><TeX src={`c_p`} /></td><td><TeX src={`S_8`} /></td><td className="num">8! = 40,320</td></tr>
+            <tr><td><TeX src={`c_o`} /></td><td><TeX src={`(\\mathbb{Z}/3)^8`} /></td><td className="num">3⁸ = 6,561</td></tr>
+            <tr><td><TeX src={`e_p`} /></td><td><TeX src={`S_{12}`} /></td><td className="num">12! = 479,001,600</td></tr>
+            <tr><td><TeX src={`e_o`} /></td><td><TeX src={`(\\mathbb{Z}/2)^{12}`} /></td><td className="num">2¹² = 4,096</td></tr>
+            <tr><td>{lang === 'zh' ? '乘积 (自由空间)' : 'product (free space F)'}</td><td colSpan={2} className="num"><TeX src={`|F| = 5.19 \\times 10^{20}`} /></td></tr>
+            <tr><td>{lang === 'zh' ? '魔方群 G' : 'cube group G'}</td><td colSpan={2} className="num"><TeX src={`|G| = |F|/12 \\approx 4.33 \\times 10^{19}`} /></td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>因此 「位置 + 朝向」 共有 <TeX src={`\\log_2 |F| \\approx 69.1`} /> bit 信息, 但 G 只占其中 <TeX src={`\\log_2 |G| \\approx 65.2`} /> bit。 差出来的 <TeX src={`\\log_2 12 \\approx 3.58`} /> bit 就是 §5 的三守恒律 (ℤ/3 × ℤ/2 × ℤ/2)。</>}
+            en={<>So "position + orientation" carries <TeX src={`\\log_2 |F| \\approx 69.1`} /> bits of information, but G only sits in <TeX src={`\\log_2 |G| \\approx 65.2`} /> of those. The missing <TeX src={`\\log_2 12 \\approx 3.58`} /> bits are precisely the three invariants of §5 (ℤ/3 × ℤ/2 × ℤ/2).</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="3.5  ℓ₁ 与 ℓ∞ 距离到原点" en="3.5  ℓ₁ and ℓ∞ distances to the origin" />
+        </h3>
+        <p>
+          <L
+            zh={<>把状态向量映射为 |R^{`{40}`}| 中的点 (8 + 12 = 20 个位置 index + 8 个 mod-3 + 12 个 mod-2),可以问 「到原点的距离」 怎么算。两种自然范数:</>}
+            en={<>Embed state vectors into <TeX src={`\\mathbb{R}^{40}`} /> (20 position indices + 8 mod-3 + 12 mod-2) and ask "distance to origin." Two natural norms:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><TeX src={`\\ell_1`} /> <strong>错位数</strong> = ∑ (cubies 不在正位) + ∑ (orientation 偏移)。 最大值约 36 (8 + 12 + 8 + 12 - 几个组合限制)。 这就是 §22 Korf solver 的 「简易启发式」 的雏形。</>}
+            en={<><TeX src={`\\ell_1`} /> <strong>mismatch count</strong> = #(cubies off-position) + #(orientation deltas). Max ≈ 36 (8 + 12 + 8 + 12 minus a few combinatorial constraints) — the seed of Korf's simple admissible heuristic in §22.</>}
+          /></li>
+          <li><L
+            zh={<><TeX src={`\\ell_\\infty`} /> <strong>最远偏移</strong> = max over all cubies。 对随机状态几乎总等于 1 (因为至少一个块错位)。 对 HTM 距离, 这是非常宽松的下界。</>}
+            en={<><TeX src={`\\ell_\\infty`} /> <strong>worst-cubie offset</strong> = max over all cubies. For a random state this is almost always 1 (at least one cubie misplaced). A very loose lower bound on HTM distance.</>}
+          /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>关键事实:这些范数 <em>不</em> 等价于 HTM 度量 <TeX src={`|g|_S`} /> (§2.2)。 它们只是 G 中 d_S(e, g) 的弱下界, 在 §22 求解器中作为启发式使用。 真正的 d_S(e, g) 只能由 Korf IDA* 或 Kociemba two-phase 算出, 它是「群的 Cayley 图距离」, 没有闭式。</>}
+            en={<>Crucial: these norms are <em>not</em> equivalent to the HTM metric <TeX src={`|g|_S`} /> (§2.2). They are weak lower bounds on d_S(e, g), used as heuristics by §22's solvers. The true d_S(e, g) is the Cayley-graph distance — no closed form; computed only by Korf IDA* or Kociemba two-phase.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §4 Order of G ═════════════════════════════ */}
@@ -3001,6 +3356,116 @@ export default function GroupTheoryPage() {
           <L
             zh={<>即便用最快的计算机硬件 (10¹⁵ 操作/秒, 即 PFlops 级超算),完整枚举一遍 G 仍需 12 小时左右。这就是为什么 God's number 的证明用了 35 CPU 年 (依赖海量对称等价化简) —— §11 详述。</>}
             en={<>Even at petaflop scale (10¹⁵ ops/sec), enumerating G outright takes about half a day. This is why the proof of God's number consumed 35 CPU-years and relied on aggressive symmetry reductions — see §11.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="4.4  |G| 的素因子分解" en="4.4  Prime factorisation of |G|" />
+        </h3>
+        <p>
+          <L
+            zh={<>整理上面的乘积:</>}
+            en={<>Collecting the product above:</>}
+          />
+        </p>
+        <TeXBlock src={`|G| \\;=\\; \\frac{8! \\cdot 3^7 \\cdot 12! \\cdot 2^{11}}{2} \\;=\\; 2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2 \\cdot 11.`} />
+        <p>
+          <L
+            zh={<>这是非常 「干净」 的分解 — 只用了 <strong>5 个最小素数</strong>, 没有 13、 17、 19 等大素数。 这一限制来自 8! 和 12! 的素因子: <TeX src={`8! = 2^7 \\cdot 3^2 \\cdot 5 \\cdot 7`} />, <TeX src={`12! = 2^{10} \\cdot 3^5 \\cdot 5^2 \\cdot 7 \\cdot 11`} />。 11 是出现的最大素因子 (因为 <TeX src={`13 > 12`} />)。</>}
+            en={<>This is an extremely "clean" factorisation — using only the <strong>5 smallest primes</strong>, with no 13, 17, 19, etc. The bound comes from the prime factorisations <TeX src={`8! = 2^7 \\cdot 3^2 \\cdot 5 \\cdot 7`} /> and <TeX src={`12! = 2^{10} \\cdot 3^5 \\cdot 5^2 \\cdot 7 \\cdot 11`} />. The 11 is the largest prime factor (since <TeX src={`13 > 12`} />).</>}
+          />
+        </p>
+        <div className="gt-prime-grid">
+          {[
+            { p: 2, exp: 27, val: '134,217,728', share: 0.625, src: '7 + 10 + 11 − 1' },
+            { p: 3, exp: 14, val: '4,782,969', share: 0.21, src: '2 + 5 + 7' },
+            { p: 5, exp: 3, val: '125', share: 0.07, src: '1 + 2' },
+            { p: 7, exp: 2, val: '49', share: 0.05, src: '1 + 1' },
+            { p: 11, exp: 1, val: '11', share: 0.025, src: '0 + 1' },
+          ].map(({ p, exp, val, share, src }) => (
+            <div key={p} className="gt-prime-card">
+              <div className="gt-prime-card-head">
+                <span className="gt-prime-card-base">{p}</span>
+                <span className="gt-prime-card-exp">{exp}</span>
+              </div>
+              <div className="gt-prime-card-val">{val}</div>
+              <div className="gt-prime-card-bar"><span style={{ width: `${share * 100}%` }} /></div>
+              <div className="gt-prime-card-foot">{lang === 'zh' ? `来自 ${src}` : `from ${src}`}</div>
+            </div>
+          ))}
+        </div>
+        <p style={{ marginTop: 18 }}>
+          <L
+            zh={<>验证: <TeX src={`2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2 \\cdot 11 = 4.325 \\times 10^{19}`} /> ✓。 这套素因子结构还决定了 §7 中元素的可达阶 (必整除 |G|) — 没有 13、 17、 19 等素数, 所以魔方上 <em>不存在</em> 阶为 13 或 17 的元素。</>}
+            en={<>Verify: <TeX src={`2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2 \\cdot 11 = 4.325 \\times 10^{19}`} /> ✓. This prime structure also constrains §7's attainable element orders (every divisor of |G|) — since 13, 17, 19 don't appear, there is <em>no</em> cube element of order 13 or 17.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="4.5  其它拼图的阶 — 比较表" en="4.5  Order comparison across puzzles" />
+        </h3>
+        <table className="gt-puzzle-order-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '拼图' : 'puzzle'}</th>
+              <th>|G|</th>
+              <th>{lang === 'zh' ? '十进制' : 'decimal'}</th>
+              <th>{lang === 'zh' ? '相对 3×3' : 'vs 3×3'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{lang === 'zh' ? '2×2×2 (Pocket)' : '2×2×2 (Pocket)'}</td>
+              <td><TeX src={`\\dfrac{7! \\cdot 3^6}{1}`} /></td>
+              <td className="num">3,674,160</td>
+              <td className="num">~10<sup>-13</sup></td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '3×3×3 (本文主角)' : '3×3×3 (this article)'}</td>
+              <td><TeX src={`\\dfrac{8! \\cdot 3^7 \\cdot 12! \\cdot 2^{11}}{2}`} /></td>
+              <td className="num">4.33 × 10<sup>19</sup></td>
+              <td className="num">1.00</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '4×4×4 (Rubik\'s Revenge)' : '4×4×4 (Rubik\'s Revenge)'}</td>
+              <td><TeX src={`\\dfrac{8! \\cdot 3^7 \\cdot 24!^2}{4!^{6} \\cdot 24}`} /></td>
+              <td className="num">7.40 × 10<sup>45</sup></td>
+              <td className="num">1.7 × 10<sup>26</sup></td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '5×5×5 (Professor)' : '5×5×5 (Professor)'}</td>
+              <td><TeX src={`\\sim 8!\\cdot 3^7\\cdot 12!\\cdot 2^{10}\\cdot 24!^2\\cdot \\tfrac{24!^2}{4!^{12}}`} /></td>
+              <td className="num">2.83 × 10<sup>74</sup></td>
+              <td className="num">6.5 × 10<sup>54</sup></td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? 'Megaminx (12 面)' : 'Megaminx (12 faces)'}</td>
+              <td><TeX src={`\\dfrac{20!\\cdot 30!\\cdot 3^{19}\\cdot 2^{29}}{60}`} /></td>
+              <td className="num">1.01 × 10<sup>68</sup></td>
+              <td className="num">2.3 × 10<sup>48</sup></td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? 'Pyraminx (四面体)' : 'Pyraminx (tetrahedron)'}</td>
+              <td><TeX src={`\\dfrac{6!\\cdot 3^4 \\cdot 3^4}{2}`} /></td>
+              <td className="num">75,582,720</td>
+              <td className="num">~10<sup>-12</sup></td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? 'Square-1' : 'Square-1'}</td>
+              <td><TeX src={`\\sim 2 \\cdot 8! \\cdot 8! \\cdot 6`} /></td>
+              <td className="num">1.55 × 10<sup>10</sup></td>
+              <td className="num">~10<sup>-10</sup></td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? 'Skewb' : 'Skewb'}</td>
+              <td><TeX src={`\\dfrac{8! \\cdot 3^4}{12}`} /></td>
+              <td className="num">3,149,280</td>
+              <td className="num">~10<sup>-13</sup></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 18 }}>
+          <L
+            zh={<>有趣观察:Pyraminx 跟 Pocket 量级相同 (约 10<sup>7</sup>),Square-1 比 Pocket 大三个数量级。 4×4 是 3×3 平方再乘几个常数,但「中心可换 + 同色棱可换」 让人在求 |G| 时常常翻车 (要 ÷ 4!<sup>6</sup> 中心、 再 ÷ 24 整体)。 Megaminx 「12 面」 量级让 5×5 还小一些, 这是因为它每面只有 11 个非中心块 (角 + 棱)。</>}
+            en={<>Notable observations: Pyraminx and Pocket are roughly the same order (~10<sup>7</sup>); Square-1 is three orders bigger than Pocket. The 4×4 squares the 3×3 plus extra constants — but the "indistinguishable centres + edge pairs" make computing |G| error-prone (need to divide by 4!<sup>6</sup> for centres and another 24 for orientation). Megaminx (12 faces) edges out the 5×5 in absolute count, since it has fewer cubies per face than the 5×5.</>}
           />
         </p>
       </GTSec>
@@ -3137,6 +3602,50 @@ export default function GroupTheoryPage() {
             />
           </div>
         </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="5.4  守恒律即上同调约束" en="5.4  Conservation laws as cohomology constraints" />
+        </h3>
+        <p>
+          <L
+            zh={<>从更抽象的角度: 三个守恒律恰是把 「自由组装空间」 <TeX src={`F`} /> 看成一个 Abel 群扩张时, 第一群上同调 <TeX src={`H^1(G, \\mathbb{Z}/n)`} /> 给出的 「障碍类 (obstruction class)」。</>}
+            en={<>From a more abstract angle: the three conservation laws are precisely the obstruction classes in the first group cohomology <TeX src={`H^1(G, \\mathbb{Z}/n)`} /> when viewing the "free assembly space" <TeX src={`F`} /> as an Abelian extension.</>}
+          />
+        </p>
+        <TeXBlock src={`H^1\\bigl(G,\\, (\\mathbb{Z}/3)^8\\bigr) \\;\\supseteq\\; \\bigl\\{\\, \\textstyle\\sum c_o \\bmod 3 \\,\\bigr\\}, \\quad H^1\\bigl(G,\\, (\\mathbb{Z}/2)^{12}\\bigr) \\;\\supseteq\\; \\bigl\\{\\, \\textstyle\\sum e_o \\bmod 2 \\,\\bigr\\}`} />
+        <p>
+          <L
+            zh={<>本节我们用纯组合验证, 但同一结论也可以由 「6 个生成元在 ℤ/3 上的求和给出 0 类」 这条上同调消失定理立刻得到。 这是为什么 「魔方守恒律」 与 「平面图染色 / 拓扑指数 / Stiefel–Whitney 类」 在数学上同源。</>}
+            en={<>We verified things combinatorially, but the same conclusion drops out of the cohomology-vanishing statement "the six generators all sum to 0 in ℤ/3." This is why "cube invariants," "planar-graph colorings," "topological indices," and "Stiefel–Whitney classes" are siblings in the same abstract family.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="5.5  逐生成元验证表" en="5.5  Per-generator verification table" />
+        </h3>
+        <p>
+          <L
+            zh={<>三张表, 一目了然: 每个面转对应三个 「不变量增量」 都是 0 mod 对应模数。</>}
+            en={<>Three tables — for each generator, all three invariant increments vanish modulo the relevant base.</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '生成元' : 'Gen'}</th><th><TeX src={`\\Delta(\\sum c_o) \\bmod 3`} /></th><th><TeX src={`\\Delta(\\sum e_o) \\bmod 2`} /></th><th><TeX src={`\\operatorname{sgn}(c_p) \\cdot \\operatorname{sgn}(e_p)`} /></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>U</td><td className="num">0</td><td className="num">0</td><td className="num">+1</td></tr>
+            <tr><td>D</td><td className="num">0</td><td className="num">0</td><td className="num">+1</td></tr>
+            <tr><td>R</td><td className="num">1+2+1+2 = 6 ≡ 0</td><td className="num">0</td><td className="num">(−1)(−1) = +1</td></tr>
+            <tr><td>L</td><td className="num">6 ≡ 0</td><td className="num">0</td><td className="num">+1</td></tr>
+            <tr><td>F</td><td className="num">6 ≡ 0</td><td className="num">4 ≡ 0</td><td className="num">+1</td></tr>
+            <tr><td>B</td><td className="num">6 ≡ 0</td><td className="num">4 ≡ 0</td><td className="num">+1</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>每行都是 「这个面转保持该不变量」 的直接验证。 由 G 是生成元的乘积,所有元素都保持 — 这就是 §5.1–5.3 三个证明的「自动化」 版本。</>}
+            en={<>Each row directly verifies "this face turn preserves the invariant." Since G is generated by the six face turns, every element does — an automated form of the proofs in §5.1–5.3.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §6 Structure theorem ════════════════════════ */}
@@ -3205,6 +3714,71 @@ export default function GroupTheoryPage() {
             en={<>This is the algebraic counterpart of "first permute, then twist": every element of G factors uniquely as (orientation) · (permutation). This is the algebraic foundation of the (cp, co, ep, eo) state encoding.</>}
           />
         </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="6.3  直积 vs 半直积 — Klein 4 对比" en="6.3  Direct vs semidirect — the Klein 4 contrast" />
+        </h3>
+        <p>
+          <L
+            zh={<>要看 <em>半直积</em> 跟 <em>直积</em> 的差别,Klein 4-group 是最干净的例子。 考虑 <TeX src={`\\mathbb{Z}/2 \\times \\mathbb{Z}/2`} />:这是直积,两个 ℤ/2 完全独立。 现在比较:</>}
+            en={<>To see the difference between a <em>semidirect</em> product and a <em>direct</em> product, the Klein 4-group is the cleanest example. Consider <TeX src={`\\mathbb{Z}/2 \\times \\mathbb{Z}/2`} />: this is direct — two independent ℤ/2 factors. Compare against:</>}
+          />
+        </p>
+        <table className="gt-product-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '运算结构' : 'Structure'}</th>
+              <th>{lang === 'zh' ? '乘法律' : 'Multiplication'}</th>
+              <th>{lang === 'zh' ? '阿贝尔?' : 'Abelian?'}</th>
+              <th>{lang === 'zh' ? '魔方实例' : 'Cube instance'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>{lang === 'zh' ? '直积' : 'Direct product'}</strong> <TeX src={`A \\times B`} /></td>
+              <td><TeX src={`(a_1, b_1)(a_2, b_2) = (a_1 a_2, b_1 b_2)`} /></td>
+              <td className="num">{lang === 'zh' ? 'A, B 均阿贝尔则是' : 'iff A, B abelian'}</td>
+              <td><L zh={<><em>无</em>: 角棱实际有奇偶耦合, 非独立</>} en={<><em>none</em>: corners/edges parity-coupled</>} /></td>
+            </tr>
+            <tr>
+              <td><strong>{lang === 'zh' ? '半直积' : 'Semidirect'}</strong> <TeX src={`A \\rtimes_\\varphi B`} /></td>
+              <td><TeX src={`(a_1, b_1)(a_2, b_2) = (a_1\\,\\varphi_{b_1}(a_2),\\; b_1 b_2)`} /></td>
+              <td className="num">{lang === 'zh' ? 'φ 平凡时才是' : 'iff φ trivial'}</td>
+              <td><TeX src={`G \\cong N \\rtimes P`} />,P {lang === 'zh' ? '通过共轭作用于方向' : 'acts on orientations by conjugation'}</td>
+            </tr>
+            <tr>
+              <td><strong>{lang === 'zh' ? '圈积' : 'Wreath product'}</strong> <TeX src={`A \\wr B`} /></td>
+              <td><TeX src={`A^B \\rtimes B`} /> <L zh="(B 置换 |B| 份 A)" en=" (B permutes |B| copies of A)" /></td>
+              <td className="num">{lang === 'zh' ? '通常不是' : 'usually not'}</td>
+              <td><TeX src={`\\mathbb{Z}/3 \\wr S_8`} /> {lang === 'zh' ? '为角块部分' : 'is the corner sector'}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 18 }}>
+          <L
+            zh={<>关键区别:在直积里,B 部分的操作 <em>不影响</em> A 部分。 在半直积里,B 通过共轭 <em>重新解释</em> A —— 这正是魔方上 「先转 U, 角块朝向被相对地重新标号」 的代数化。</>}
+            en={<>Key distinction: in a direct product, B's operations <em>do not affect</em> A. In a semidirect product, B <em>re-interprets</em> A by conjugation — algebraically capturing the cube's "after a U turn, corner orientations are re-labelled relative to the new positions."</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="6.4  生成元 — 18 个面转构成 G" en="6.4  Generators — 18 face turns generate G" />
+        </h3>
+        <p>
+          <L
+            zh={<>魔方群 G 由 18 个面转生成 (6 面 × 3 角度: 90°, 180°, 270°)。 但实际上, <strong>6 个生成元就足够</strong>:<TeX src={`S = \\{\\,U, D, F, B, L, R\\,\\}`} /> (即只用 90° 顺转),因为 <TeX src={`U^2, U^3, U^{-1} = U^3`} /> 都从 U 推出。 进一步:</>}
+            en={<>The cube group G is generated by the 18 face turns (6 faces × 3 angles: 90°, 180°, 270°). But <strong>6 generators suffice</strong>: <TeX src={`S = \\{\\,U, D, F, B, L, R\\,\\}`} /> (clockwise quarter-turns only), since <TeX src={`U^2`} /> and <TeX src={`U^{-1} = U^3`} /> follow from U. Going further:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>最少 2 个生成元就够</strong>:有定理表明 G 可由 2 个特定元素生成 (例如 <TeX src={`R, U`} /> 一起)。 严格证明需要分析子群链。</>} en={<><strong>Just 2 generators suffice</strong>: it is known that G can be generated by 2 specific elements (e.g. <TeX src={`R`} /> and <TeX src={`U`} /> together). The proof analyses subgroup chains.</>} /></li>
+          <li><L zh={<><strong>G 不是循环群</strong>:1 个生成元绝不够,因为 G 非阿贝尔。</>} en={<><strong>G is not cyclic</strong>: 1 generator is never enough, because G is non-abelian.</>} /></li>
+          <li><L zh={<><strong>"对边等价"</strong>:U 和 D 在 G 内通过 cube 整体旋转共轭 — 但旋转 <em>不在</em> G 里 (G 仅是面转 group),所以严格说 U 和 D 不共轭。</>} en={<><strong>"Opposite-face equivalence"</strong>: U and D are conjugate <em>via cube rotation</em>, but the rotation itself is not in G (G is only face-turns), so strictly speaking U and D are <em>not</em> conjugate within G.</>} /></li>
+        </ul>
+        <div className="gt-aside" style={{ marginTop: 16 }}>
+          <L
+            zh={<>这跟 §3 的「state vector」编码呼应:由生成元产生的「字 (word)」就是一条解的序列。 字的最短长度 = §11 上帝之数 = G 在 S 上的 <em>直径</em>。</>}
+            en={<>This dovetails with the state-vector encoding in §3: a "word" in the generators is a solve sequence. The minimum word length is exactly God's number (§11) — the <em>diameter</em> of G under the generating set S.</>}
+          />
+        </div>
       </GTSec>
 
       {/* ═══════════════ §7 Order of an element ═════════════════════ */}
@@ -3277,6 +3851,65 @@ export default function GroupTheoryPage() {
             en={<>Such elements are not rare, but hard to spot. Example: <span className="gt-mono" style={{ fontSize: 11 }}>R U2 D' B D'</span> has order 1260. Skeptical? <a href="/scramble/analyzer">Run it in the analyzer.</a></>}
           />
         </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="7.3  Landau 函数与对称群比较" en="7.3  Landau's function & comparison with Sₙ" />
+        </h3>
+        <p>
+          <L
+            zh={<>对称群 <TeX src={`S_n`} /> 中元素阶的最大值由 <strong>Landau 函数</strong> <TeX src={`g(n)`} /> 给出:对 <TeX src={`n`} /> 的所有分拆 <TeX src={`n = \\lambda_1 + \\lambda_2 + \\cdots`} />,最大化 <TeX src={`\\operatorname{lcm}(\\lambda_1, \\lambda_2, \\ldots)`} />。 这是因为 <TeX src={`S_n`} /> 中元素由不交圈型决定, 阶 = 各圈长 lcm。</>}
+            en={<>The maximum element order in the symmetric group <TeX src={`S_n`} /> is given by <strong>Landau's function</strong> <TeX src={`g(n)`} />: over all partitions <TeX src={`n = \\lambda_1 + \\lambda_2 + \\cdots`} />, maximise <TeX src={`\\operatorname{lcm}(\\lambda_1, \\lambda_2, \\ldots)`} />. Why: an element of <TeX src={`S_n`} /> is determined by its disjoint cycle type, and its order equals the lcm of cycle lengths.</>}
+          />
+        </p>
+        <table className="gt-landau-tbl">
+          <thead>
+            <tr>
+              <th>n</th>
+              <th>g(n)</th>
+              <th>{lang === 'zh' ? '取到最大值的分拆' : 'optimal partition'}</th>
+              <th>{lang === 'zh' ? '魔方上的对应' : 'cube analogue'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="num">5</td><td className="num">6</td><td>2 + 3</td><td>—</td></tr>
+            <tr><td className="num">6</td><td className="num">6</td><td>1 + 2 + 3</td><td>—</td></tr>
+            <tr><td className="num">7</td><td className="num">12</td><td>3 + 4</td><td>—</td></tr>
+            <tr><td className="num">8</td><td className="num">15</td><td>3 + 5</td><td><L zh="角块部分 (8 角)" en="corner sector (8 corners)" /></td></tr>
+            <tr><td className="num">9</td><td className="num">20</td><td>4 + 5</td><td>—</td></tr>
+            <tr><td className="num">10</td><td className="num">30</td><td>2 + 3 + 5</td><td>—</td></tr>
+            <tr><td className="num">11</td><td className="num">30</td><td>1 + 2 + 3 + 5</td><td>—</td></tr>
+            <tr><td className="num">12</td><td className="num">60</td><td>3 + 4 + 5</td><td><L zh="棱块部分 (12 棱)" en="edge sector (12 edges)" /></td></tr>
+            <tr><td className="num">13</td><td className="num">60</td><td>1 + 3 + 4 + 5</td><td>—</td></tr>
+            <tr><td className="num">14</td><td className="num">84</td><td>2 + 3 + 4 + 5 / 3 + 4 + 7</td><td>—</td></tr>
+            <tr><td className="num">15</td><td className="num">105</td><td>3 + 5 + 7</td><td>—</td></tr>
+            <tr><td className="num">20</td><td className="num">420</td><td>3 + 4 + 5 + 7 + 1</td><td>—</td></tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 18 }}>
+          <L
+            zh={<>角块部分 (<TeX src={`S_8 \\ltimes (\\mathbb{Z}/3)^7`} />) 上限阶 <TeX src={`= 3 \\cdot g(8) = 3 \\cdot 15 = 45`} />,但魔方加了 「角扭和守恒 mod 3」,只允许 <TeX src={`\\text{lcm}(\\text{角圈长}) \\cdot 3`} /> 的形式; 棱块部分上限阶 <TeX src={`= 2 \\cdot g(12) / k`} /> (k 跟翻面奇偶有关)。 两边联合在角棱奇偶共生条件下取最大 LCM, 得 <strong>1260</strong>。</>}
+            en={<>The corner sector (<TeX src={`S_8 \\ltimes (\\mathbb{Z}/3)^7`} />) maxes at <TeX src={`3 \\cdot g(8) = 3 \\cdot 15 = 45`} />, but the cube's "Σco ≡ 0 mod 3" constraint forces orders into the form <TeX src={`\\operatorname{lcm}(\\text{corner cycles}) \\cdot 3`} />. The edge sector maxes at <TeX src={`2 \\cdot g(12) / k`} /> (k depends on the parity of EO). Combining both under the parity-coupling constraint yields the maximum <strong>1260</strong>.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="7.4  73 个可达阶 — 完整清单" en="7.4  All 73 attained orders" />
+        </h3>
+        <p>
+          <L
+            zh={<>下面 73 个数是 G 中 <em>实际出现</em> 的所有元素阶,从小到大列出。 注意每个都整除 <TeX src={`|G| = 2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2 \\cdot 11`} />;不出现的整除数 (比如 4096) 都被 CO/EO 守恒约束排除掉了。</>}
+            en={<>The following 73 integers are <em>all</em> attained element orders in G, sorted ascending. Every entry divides <TeX src={`|G| = 2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2 \\cdot 11`} />; divisors that do not appear (e.g. 4096) are ruled out by the CO/EO conservation laws.</>}
+          />
+        </p>
+        <div className="gt-orders-grid">
+          {[1,2,3,4,5,6,7,8,9,10,11,12,14,15,18,20,21,22,24,28,30,33,35,36,40,42,44,45,55,56,60,63,66,70,72,77,84,90,99,105,110,112,120,126,132,140,144,154,165,168,180,198,210,231,240,252,280,315,330,336,360,420,440,462,495,504,630,720,770,840,990,1260].map((n, i) => (
+            <div key={i} className={`gt-order-chip${n === 1260 ? ' gt-order-chip-max' : ''}${n === 1 ? ' gt-order-chip-id' : ''}`}>{n}</div>
+          ))}
+        </div>
+        <p style={{ marginTop: 18 }}>
+          <L
+            zh={<>分布特征:小阶 (1–12) 几乎全连续;13、 16、 17、 19、 23、 25、 26、 27、 29… 全部 <em>不可达</em> (素数 13、17、19、23 不整除 |G|;16、25 等被守恒限制)。 大阶集中在 <TeX src={`2^a \\cdot 3^b \\cdot 5 \\cdot 7`} /> 的乘积上, 1260 = 2² · 3² · 5 · 7 是顶点。</>}
+            en={<>Pattern: small orders (1–12) appear almost without gaps; 13, 16, 17, 19, 23, 25, 26, 27, 29… are all <em>missing</em> (primes 13, 17, 19, 23 don't divide |G|; 16 and 25 are blocked by CO/EO conservation). Large orders concentrate at products of the form <TeX src={`2^a \\cdot 3^b \\cdot 5 \\cdot 7`} />, peaking at 1260 = 2² · 3² · 5 · 7.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §8 Conjugation ══════════════════════════════ */}
@@ -3346,6 +3979,52 @@ export default function GroupTheoryPage() {
             en={<>The cube also has 48 outer symmetries (24 rotations × 2 mirror reflections). Burnside's lemma applied jointly with G gives the count of "truly distinct" states up to symmetry — see §18.</>}
           />
         </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="8.3  共轭类大小 — 轨道–稳定子定理" en="8.3  Conjugacy-class size — orbit–stabilizer" />
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 8.3 — 中心化子' : 'Definition 8.3 — centralizer'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>给定 <TeX src={`g \\in G`} />,中心化子 <TeX src={`C_G(g) := \\{\\, x \\in G \\;:\\; xg = gx\\,\\}`} /> 是 <em>与 g 交换的所有元素</em> 构成的子群。 它度量 g 在 G 中「跟谁交换得起来」。</>}
+              en={<>For <TeX src={`g \\in G`} />, its centralizer <TeX src={`C_G(g) := \\{\\, x \\in G \\;:\\; xg = gx\\,\\}`} /> is the subgroup of elements <em>that commute with g</em>. It measures how much of G commutes with g.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 8.4 — 轨道–稳定子' : 'Theorem 8.4 — orbit–stabilizer'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>g 所在共轭类 <TeX src={`[g] := \\{\\,xgx^{-1} \\;:\\; x \\in G\\,\\}`} /> 的大小满足<TeXBlock src={`|[g]| \\;=\\; \\frac{|G|}{|C_G(g)|}`} />即「轨道大小 × 稳定子大小 = G 的阶」。 因此 <TeX src={`|[g]|`} /> 必整除 <TeX src={`|G|`} />。</>}
+              en={<>The size of g's conjugacy class <TeX src={`[g] := \\{\\,xgx^{-1} \\;:\\; x \\in G\\,\\}`} /> satisfies<TeXBlock src={`|[g]| \\;=\\; \\frac{|G|}{|C_G(g)|}`} />i.e. "orbit size × stabilizer size = |G|". Hence <TeX src={`|[g]|`} /> divides <TeX src={`|G|`} />.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>这个公式把「共轭类有多大」翻译成「g 跟多少元素交换」。 极端情况:</>}
+            en={<>This formula translates "how big is the conjugacy class" into "how many elements commute with g." Extremes:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>中心元素</strong> (z ∈ Z(G)):跟所有元素都交换,<TeX src={`C_G(z) = G`} />,所以 <TeX src={`|[z]| = 1`} />。 它独占一个共轭类。 魔方上 <TeX src={`Z(G) = \\{e,\\,\\textsc{superflip}\\}`} /> (见 §13),所以恰好 <strong>2 个 size-1 类</strong>。</>} en={<><strong>Central elements</strong> (z ∈ Z(G)) commute with everything: <TeX src={`C_G(z) = G`} />, so <TeX src={`|[z]| = 1`} />. Each owns a singleton class. For the cube, <TeX src={`Z(G) = \\{e,\\,\\textsc{superflip}\\}`} /> (see §13), giving exactly <strong>two size-1 classes</strong>.</>} /></li>
+          <li><L zh={<><strong>「最不平凡」元素</strong>:仅与 ⟨g⟩ 自身交换,<TeX src={`|C_G(g)| = \\operatorname{ord}(g)`} />,所以共轭类大小 <TeX src={`|[g]| = |G| / \\operatorname{ord}(g)`} />。 对 |g| = 1260 (最大阶) 的元素,<TeX src={`|[g]| \\le 4.3\\times10^{19}/1260 \\approx 3.4\\times10^{16}`} />。</>} en={<><strong>"Most non-trivial" elements</strong>: commute only with ⟨g⟩ itself, <TeX src={`|C_G(g)| = \\operatorname{ord}(g)`} />, so the class size is <TeX src={`|[g]| = |G| / \\operatorname{ord}(g)`} />. For order-1260 elements, <TeX src={`|[g]| \\le 4.3\\times10^{19}/1260 \\approx 3.4\\times10^{16}`} />.</>} /></li>
+        </ul>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '类方程 (class equation)' : 'The class equation'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>把 G 按共轭类分解,得<TeXBlock src={`|G| \\;=\\; |Z(G)| \\;+\\; \\sum_{[g]\\,\\not\\subset\\,Z(G)} \\frac{|G|}{|C_G(g)|}`} />前一项是中心 (大小 1 的类), 后面是大小 ≥ 2 的类。 这是有限群论里最深的恒等式之一: 它把 |G| 的素因子结构、 中心、 与「非平凡共轭」 三者绑在同一行。</>}
+              en={<>Decomposing G into conjugacy classes gives<TeXBlock src={`|G| \\;=\\; |Z(G)| \\;+\\; \\sum_{[g]\\,\\not\\subset\\,Z(G)} \\frac{|G|}{|C_G(g)|}`} />where the first term counts central elements (size-1 classes) and the rest are larger classes. This is one of the deepest identities in finite group theory: it ties together the prime structure of |G|, the centre, and the non-trivial conjugation orbits in one line.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>对魔方:<TeX src={`|Z(G)| = 2`} />,共轭类总数 ≈ 81,120 (Burnside 在镜对称作用下),因此<em>平均</em> 类大小 ≈ <TeX src={`|G| / 81{,}120 \\approx 5.3 \\times 10^{14}`} />。 但实际分布极不均匀: 少数大类 (随机 scramble 状态) 几乎独吞 |G|, 而很多类却只有几百个元素。</>}
+            en={<>For the cube, <TeX src={`|Z(G)| = 2`} /> and the total number of conjugacy classes is ≈ 81,120 (under joint Burnside with mirror symmetries), giving an <em>average</em> class size of <TeX src={`|G| / 81{,}120 \\approx 5.3 \\times 10^{14}`} />. But the actual distribution is extremely uneven: a few huge classes (typical scrambles) account for almost all of |G|, while many small classes contain only hundreds of elements.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §9 Commutators ══════════════════════════════ */}
@@ -3477,6 +4156,64 @@ export default function GroupTheoryPage() {
           />
           <div className="gt-proof-end">∎</div>
         </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="9.4  Hall–Witt 恒等式" en="9.4  The Hall–Witt identity" />
+        </h3>
+        <p>
+          <L
+            zh={<>换位子之间有一个非平凡的代数关系, 类似李代数的 Jacobi 恒等式。 设 <TeX src={`a^b := b^{-1} a b`} /> 表共轭:</>}
+            en={<>Commutators satisfy a nontrivial algebraic relation analogous to the Jacobi identity for Lie algebras. Write <TeX src={`a^b := b^{-1} a b`} /> for conjugation:</>}
+          />
+        </p>
+        <TeXBlock src={`\\bigl[[a, b^{-1}], c\\bigr]^{b} \\cdot \\bigl[[b, c^{-1}], a\\bigr]^{c} \\cdot \\bigl[[c, a^{-1}], b\\bigr]^{a} \\;=\\; e`} />
+        <p>
+          <L
+            zh={<>这是 Philip Hall 与 Ernst Witt 在 1930s 各自证明的恒等式。 它说: 「三次嵌套的换位子在循环置换 a → b → c → a 下相乘为单位元」。 对魔方,任取 a = R、b = U、c = F,这个恒等式自动成立 — 给出一个 18-token 长的 alg 必然等于 e (虽然它通常不简化为可读的形式)。</>}
+            en={<>Independently proven by Philip Hall and Ernst Witt in the 1930s. It says "three nested commutators, cycled a → b → c → a, multiply to the identity." For the cube, plug a = R, b = U, c = F: the identity holds automatically, giving an 18-token alg that necessarily equals e (though typically without a clean reduction).</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="9.5  Derived series — [G, G] 之后是什么?" en="9.5  Derived series — what's after [G, G]?" />
+        </h3>
+        <p>
+          <L
+            zh={<>定义 <strong>derived series</strong>: <TeX src={`G^{(0)} = G`} />, <TeX src={`G^{(k+1)} = [G^{(k)}, G^{(k)}]`} />。 它给出一条递降链 <TeX src={`G \\supseteq G' \\supseteq G'' \\supseteq \\cdots`} />。 一个群叫 <strong>可解</strong> 若这条链有限地达到 <TeX src={`\\{e\\}`} />。</>}
+            en={<>Define the <strong>derived series</strong>: <TeX src={`G^{(0)} = G`} />, <TeX src={`G^{(k+1)} = [G^{(k)}, G^{(k)}]`} />, giving a descending chain <TeX src={`G \\supseteq G' \\supseteq G'' \\supseteq \\cdots`} />. A group is <strong>solvable</strong> if this chain reaches <TeX src={`\\{e\\}`} /> in finitely many steps.</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '层' : 'Term'}</th><th>{lang === 'zh' ? '定义' : 'Definition'}</th><th>{lang === 'zh' ? '阶 (魔方)' : 'Cube order'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><TeX src={`G^{(0)} = G`} /></td><td>{lang === 'zh' ? '魔方群' : 'cube group'}</td><td className="num">4.33 × 10¹⁹</td></tr>
+            <tr><td><TeX src={`G^{(1)} = [G, G]`} /></td><td>{lang === 'zh' ? '偶置换状态' : 'even-parity states'}</td><td className="num">|G|/2 ≈ 2.16 × 10¹⁹</td></tr>
+            <tr><td><TeX src={`G^{(2)} = [G', G']`} /></td><td>{lang === 'zh' ? 'CO+EO=0 的偶状态 (A₈ × A₁₂ 投影)' : 'even states with CO=EO=0 (A₈ × A₁₂ projection)'}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
+            <tr><td><TeX src={`G^{(3)}`} /></td><td>{lang === 'zh' ? 'A₈ 与 A₁₂ 各自的换位子子群 (它们是单群,自换位 = 自身)' : 'commutator subgroups of A₈ and A₁₂ — both simple, so equal themselves'}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
+            <tr><td><TeX src={`G^{(k)}, k \\geq 3`} /></td><td>{lang === 'zh' ? '不再下降' : 'stabilises (no further descent)'}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>因为 A₈ 和 A₁₂ 都是单非 Abel 群 (Jordan 1875), 它们都满足 <TeX src={`[A_n, A_n] = A_n`} /> (n ≥ 5)。 derived series 在 <TeX src={`G^{(2)}`} /> 后稳定, 所以<strong>魔方群不是可解群</strong>。 这个事实非平凡: 它意味着无法用 「迭代换位子打到 0」 的方式构造一个 「单 Abelian 步」 的求解器 — 必须依靠 §10 的多阶段子群链或 §22 的全局搜索。</>}
+            en={<>Since A₈ and A₁₂ are simple non-Abelian groups (Jordan 1875), <TeX src={`[A_n, A_n] = A_n`} /> for n ≥ 5. The derived series stabilises at <TeX src={`G^{(2)}`} />, so <strong>the cube group is not solvable</strong>. This is significant: there is no "iteratively kill the commutator" path to a one-stage Abelian solver — one must invoke the §10 subgroup chain or the §22 global search.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="9.6  Lower central series 与 nilpotent" en="9.6  Lower central series & nilpotency" />
+        </h3>
+        <p>
+          <L
+            zh={<>另一条相关的链是 <strong>lower central series</strong>: <TeX src={`\\gamma_1(G) = G`} />, <TeX src={`\\gamma_{k+1}(G) = [G, \\gamma_k(G)]`} />。 一个群叫 <strong>nilpotent</strong> 若这条链有限地达到 <TeX src={`\\{e\\}`} />。 nilpotent ⇒ solvable, 但反之不然。</>}
+            en={<>The <strong>lower central series</strong>: <TeX src={`\\gamma_1(G) = G`} />, <TeX src={`\\gamma_{k+1}(G) = [G, \\gamma_k(G)]`} />. A group is <strong>nilpotent</strong> if this chain reaches <TeX src={`\\{e\\}`} /> in finitely many steps. Nilpotent ⇒ solvable, but not conversely.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>魔方群 <strong>不是 nilpotent</strong>: 由 9.5 它甚至不是可解,更不可能 nilpotent。 直观地看: nilpotent 群 「换位子塔」 越爬越扁;而 G 的 lower central series 在 <TeX src={`\\gamma_2 = [G,G]`} /> 之后基本不再下降 (因为商投影到 A₈ × A₁₂)。 nilpotent 群最典型的例子是有限 p-群; 魔方群因为同时含 ℤ/3 和 ℤ/2 块,以及 A_n 的非可解部分, 跟 p-群相去甚远。</>}
+            en={<>The cube group is <strong>not nilpotent</strong>: by 9.5 it is not even solvable, let alone nilpotent. Intuitively, nilpotent groups have a "commutator tower" that flattens out; the cube's lower central series barely descends past <TeX src={`\\gamma_2 = [G,G]`} /> because the quotient sits in A₈ × A₁₂. The archetypal nilpotent groups are finite p-groups — and G, mixing ℤ/3, ℤ/2 blocks with a non-solvable A_n core, is the opposite of a p-group.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §10 Thistlethwaite ══════════════════════════ */}
@@ -3595,6 +4332,48 @@ export default function GroupTheoryPage() {
           <L
             zh={<>这个最基本的群论定理在魔方上的意义:任何子群的阶都必须整除 4.3 × 10¹⁹。所以 ⟨R, U⟩ 的阶 73,483,200 整除 |G|, ⟨U⟩ 阶 4 整除, |G_3| = 663,552 整除 — 都自动成立。</>}
             en={<>The most basic theorem in group theory says: any subgroup's order must divide 4.3 × 10¹⁹. So ⟨R, U⟩ has order 73,483,200 | |G|, ⟨U⟩ has order 4 | |G|, |G_3| = 663,552 | |G| — all automatic.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="10.4  各阶状态空间与直径" en="10.4  State-space size and diameter per phase" />
+        </h3>
+        <p>
+          <L
+            zh={<>四阶段每阶段需要查的「状态」(陪集) 数量, 以及在该陪集图上的 BFS 直径:</>}
+            en={<>For each phase, the number of states (cosets) and the BFS diameter on that coset graph:</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '阶段' : 'Phase'}</th><th>{lang === 'zh' ? '陪集大小' : 'Coset size'}</th><th>{lang === 'zh' ? '直径 (HTM)' : 'Diameter (HTM)'}</th><th>{lang === 'zh' ? '坐标含义' : 'Coordinate'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><TeX src={`G \\to G_1`} /></td><td className="num">2¹¹ = 2,048</td><td className="num">7</td><td>{lang === 'zh' ? '12 棱朝向 (mod 11 自由)' : '12-edge orientation (11 free)'}</td></tr>
+            <tr><td><TeX src={`G_1 \\to G_2`} /></td><td className="num">3⁷ · <TeX src={`\\binom{12}{4}`} /> = 2187 · 495 = 1,082,565</td><td className="num">10</td><td>{lang === 'zh' ? '7 角朝向 + UD-slice 棱位置' : '7-corner orient. + UD-slice edge placement'}</td></tr>
+            <tr><td><TeX src={`G_2 \\to G_3`} /></td><td className="num">29,400</td><td className="num">13</td><td>{lang === 'zh' ? '角块进 4-轨道 + 棱块进 4-轨道' : 'corners and edges into 4-orbits'}</td></tr>
+            <tr><td><TeX src={`G_3 \\to \\{e\\}`} /></td><td className="num">663,552</td><td className="num">15</td><td>{lang === 'zh' ? '半圈子群,domino group' : 'half-turn-only "domino" group'}</td></tr>
+            <tr><td>{lang === 'zh' ? '总上界' : 'Total upper bound'}</td><td colSpan={2} className="num"><strong>7 + 10 + 13 + 15 = 45</strong></td><td>{lang === 'zh' ? '原 Thistlethwaite 1981 给的是 52,后人收紧' : 'original 1981 Thistlethwaite gave 52; later refined'}</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>Reid (1995) 把上界收紧到 <strong>≤ 52</strong> HTM (即原 Thistlethwaite 给的同值); Korf 等人后续工作的实验上界为 <strong>≤ 38</strong>。 Rokicki 2010 用 §11 介绍的 「合并 G → G₂」 直接搜把 worst case 推到精确的 20。</>}
+            en={<>Reid (1995) tightened the upper bound to <strong>≤ 52</strong> HTM (matching Thistlethwaite's original); Korf's later experiments showed <strong>≤ 38</strong> empirically. Rokicki (2010) then merged "G → G₂ direct search" — described in §11 — to drive the worst case to exactly 20.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="10.5  Kociemba 「合并 G → G₂」 改进思路" en={`10.5  Kociemba's "merge G → G₂"`} />
+        </h3>
+        <p>
+          <L
+            zh={<>Thistlethwaite 用 4 阶段是因为每阶段陪集表都能放入 1980 年代的内存 (≤ 10⁶)。 1990 年代 Kociemba 注意到, <TeX src={`G \\to G_2`} /> 这一大跳跃的陪集数恰好是<TeXBlock src={`[G : G_2] \\;=\\; 2{,}217{,}093{,}120 \\;=\\; 2^{11} \\cdot 3^7 \\cdot \\tbinom{12}{4} \\cdot \\text{(more)}`} /></>}
+            en={<>Thistlethwaite used 4 stages because each coset table had to fit into 1980s RAM (≤ 10⁶). Kociemba (1990s) noticed that the <em>combined</em> jump <TeX src={`G \\to G_2`} /> has<TeXBlock src={`[G : G_2] \\;=\\; 2{,}217{,}093{,}120 \\;=\\; 2^{11} \\cdot 3^7 \\cdot \\tbinom{12}{4} \\cdot \\text{(more)}`} /></>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>由 Lagrange, <TeX src={`|G| = [G:G_2] \\cdot |G_2|`} />, 验证 <TeX src={`|G_2| = |G| / 2{,}217{,}093{,}120 \\approx 1.95 \\times 10^{10}`} /> — 与已知值一致。 用 IDA* 加大小约 2 GB 的 pruning table 直接搜 G → G₂, 配合 G₂ 内部的快速 BFS, 这就是现代 two-phase 求解器 (Kociemba 1992; Reid 优化版 cube20)。 平均 ~21 HTM, worst case 20 HTM。</>}
+            en={<>By Lagrange, <TeX src={`|G| = [G:G_2] \\cdot |G_2|`} />, so <TeX src={`|G_2| = |G| / 2{,}217{,}093{,}120 \\approx 1.95 \\times 10^{10}`} /> — matching the known value. IDA* with a ~2 GB pruning table searches G → G₂, then BFS finishes within G₂ — the modern two-phase solver (Kociemba 1992; Reid's cube20 refinements). Average ~21 HTM, worst case 20.</>}
           />
         </p>
       </GTSec>
@@ -3725,56 +4504,222 @@ export default function GroupTheoryPage() {
             en={<>From Thistlethwaite's 52 to Rokicki's 20, the upper and lower bounds converged after 29 years to the value 20 — God's number.</>}
           />
         </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="11.4  Reid 1995 — superflip ≥ 20 步" en="11.4  Reid 1995 — superflip needs ≥ 20" />
+        </h3>
+        <p>
+          <L
+            zh={<>下界证明的核心是: <strong>superflip</strong> 状态 (12 个棱全翻面, 角块全归位) 在 HTM 下严格需要 20 步。 Michael Reid 1995 年的证明走 「EO 守恒 + 角块独立约束」 路线:</>}
+            en={<>The lower-bound proof shows the <strong>superflip</strong> state (all 12 edges flipped, corners home) strictly requires 20 HTM. Michael Reid (1995) argued via the "EO conservation + independent corner constraint" pair:</>}
+          />
+        </p>
+        <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<>superflip 要求 <TeX src={`\\sum e_o = 12 \\equiv 0 \\pmod 2`} />, 即 「翻面变化次数为偶」。 每个 F 或 B 转 翻 4 个棱, 每个 R/L/U/D 不翻棱。 故 「F 或 B」 类的总步数必为偶。</>}
+            en={<>Superflip needs <TeX src={`\\sum e_o = 12 \\equiv 0 \\pmod 2`} />, i.e. the total number of "F or B" moves must be even (only F/B change EO; R/L/U/D don't).</>}
+          /></li>
+          <li><L
+            zh={<>角块全归位且不拧角 (CO = 0)。 但 R/L/F/B 都会改 CO, 所以这些非-U/D 步必须互相 「补偿」, 给出额外组合约束。</>}
+            en={<>All corners must return home with CO = 0. R/L/F/B all change CO, so the non-U/D steps must mutually cancel — giving an additional combinatorial constraint.</>}
+          /></li>
+          <li><L
+            zh={<>系统地枚举所有「&lt; 20 步」 的 alg 在 18 个生成元上的字, 验证没有任何字给出 superflip。 Reid 用 「ε ε ε ε ...」 模式 + 角块/棱块独立性证明 19 步不够。</>}
+            en={<>Systematically enumerate every alg of length {'<'} 20 over the 18-generator alphabet and verify none produces superflip. Reid combined the parity argument with a corner/edge independence lemma to rule out 19.</>}
+          /></li>
+        </ol>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="11.5  Rokicki 2010 — 上界 = 20 的证明骨架" en="11.5  Rokicki 2010 — upper bound = 20 outline" />
+        </h3>
+        <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><strong>陪集枚举</strong>: 把 <TeX src={`|G| = 4.33 \\times 10^{19}`} /> 切成 <TeX src={`[G:G_2] = 2.22 \\times 10^9`} /> 个 Kociemba 陪集, 每个含 <TeX src={`|G_2| = 1.95 \\times 10^{10}`} /> 元素。</>}
+            en={<><strong>Coset enumeration</strong>: slice <TeX src={`|G| = 4.33 \\times 10^{19}`} /> into <TeX src={`[G:G_2] = 2.22 \\times 10^9`} /> Kociemba cosets, each of size <TeX src={`|G_2| = 1.95 \\times 10^{10}`} />.</>}
+          /></li>
+          <li><L
+            zh={<><strong>外部对称化简</strong>: 用 48 阶 <TeX src={`O_h`} /> 对称群把陪集数压到 <TeX src={`2.22 \\times 10^9 / 48 \\approx 5.6 \\times 10^7`} /> 个等价类 (绝大多数陪集没有 stabiliser, 故确实除以 48)。</>}
+            en={<><strong>Outer symmetry reduction</strong>: collapse via the 48-element <TeX src={`O_h`} /> outer symmetry group from <TeX src={`2.22 \\times 10^9`} /> to <TeX src={`\\approx 5.6 \\times 10^7`} /> equivalence classes (most cosets have trivial stabiliser, so the division by 48 is essentially exact).</>}
+          /></li>
+          <li><L
+            zh={<><strong>每个陪集 ≤ 20 HTM 验证</strong>: 对每个代表跑 「20-bounded IDA*」: 用 Kociemba phase-1 + phase-2 双 pruning table, 找一个 ≤ 20 步解。 若失败, 报警 (没有发生)。</>}
+            en={<><strong>≤ 20 HTM verification per coset</strong>: for each representative, run a 20-bounded IDA* using both Kociemba phase-1 and phase-2 pruning tables, seeking a ≤ 20-step solve. Any failure would falsify the conjecture (none did).</>}
+          /></li>
+          <li><L
+            zh={<><strong>总算力</strong>: ≈ 35 CPU-年, 由 Google 捐赠。 结合 Reid 1995 的下界, 给出 <strong>diameter(G, HTM) = 20</strong>。</>}
+            en={<><strong>Total compute</strong>: ≈ 35 CPU-years, donated by Google. Combined with Reid's 1995 lower bound: <strong>diameter(G, HTM) = 20</strong>.</>}
+          /></li>
+        </ol>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="11.6  QTM 直径 = 26 (2014)" en="11.6  QTM diameter = 26 (2014)" />
+        </h3>
+        <p>
+          <L
+            zh={<>同样的算法套路, 改用 QTM (12 生成元, 每个 90°), 由 Rokicki & Kociemba 在 2014 年宣布: <strong>diameter(G, QTM) = 26</strong>。 极端态包括「superflip ∘ 4-spot」与「superflip ∘ 6-spot」, 它们各自需要 26 QTM。 由 <TeX src={`\\text{HTM} \\leq \\text{QTM} \\leq 2 \\cdot \\text{HTM}`} /> 知 QTM 直径必在 [20, 40] 内, 实测精确值 26。</>}
+            en={<>The same recipe, but using QTM (12 generators, all 90°), gave Rokicki & Kociemba's 2014 result: <strong>diameter(G, QTM) = 26</strong>. Extremal states include "superflip ∘ 4-spot" and "superflip ∘ 6-spot" at exactly 26 QTM. Since <TeX src={`\\text{HTM} \\leq \\text{QTM} \\leq 2 \\cdot \\text{HTM}`} />, the QTM diameter must sit in [20, 40], measured to be 26.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="11.7  Schoenert 1990s — 早期算力" en="11.7  Schoenert 1990s — early heroics" />
+        </h3>
+        <p>
+          <L
+            zh={<>Martin Schoenert 1995 年通过 GAP 计算群论包验证了 |G| 和共轭类结构, 给出当时最严格的 「上界 ≤ 29」 (在已知超翻状态的 29-步还原序列基础上)。 这预示了 Rokicki 「分而治之 + 大规模并行」 路线的可行性。 Kunkle & Cooperman 2007 用 7 TB 内存的分布式 IDA* 把上界推到 26, 第一次只剩 「单个 6-步」 待证。 Rokicki 在 2008 年单人把它推到 22, 然后是 2010 年的 35 CPU-年大跨步。</>}
+            en={<>Martin Schoenert (1995) used the GAP computational-algebra package to verify |G| and the conjugacy class structure, giving the best-then upper bound of ≤ 29 (based on a known 29-step solve of superflip). This foreshadowed Rokicki's "divide-and-conquer + massive parallel" route. Kunkle & Cooperman (2007) ran a 7 TB distributed IDA* to push the bound to 26, leaving only a "single 6-step gap." Rokicki single-handedly drove it to 22 by 2008, and then the 35 CPU-year leap to 20 in 2010.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §12 Beyond ═════════════════════════════════ */}
       <GTSec id="beyond" className="gt-sec">
         <div className="gt-sec-num">§12</div>
         <h2 className="gt-sec-title">
-          <L zh="走得更远" en="Beyond the cube" />
+          <L zh="走得更远 — 魔方群在数学版图上的位置" en="Beyond the cube — locating G on the mathematical map" />
         </h2>
-        <p>
+        <p className="gt-lede">
           <L
-            zh={<>「魔方是群」并不是孤立的代数玩具。同一套语言适用于其它扭转拼图:</>}
-            en={<>"Cube is a group" is not an isolated curiosity. The same algebraic language describes other twisting puzzles:</>}
+            zh={<>把魔方放在「<strong>有限群分类</strong>」的全景图里看一眼,你会发现它不是一个孤立的代数玩具,而是一个 <em>具体得能摸到</em> 的样本,被 19–21 世纪的几条主线同时穿过 —— 置换群、 Cayley 几何、 解的复杂度、 随机游走、 表示论、 量子算法。 每一条线都从这里出发能走很远。</>}
+            en={<>Place the cube on the full map of <strong>finite group theory</strong> and it stops looking like an isolated puzzle. It is a <em>tactile</em> sample that several 19th–21st-century threads pass through at once — permutation groups, Cayley geometry, complexity of solving, random walks, representation theory, even quantum algorithms. Each thread extends much further from here.</>}
           />
         </p>
-        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
-          <li>
-            <L
-              zh={<><strong>2×2×2 口袋方块</strong> — 群阶 3,674,160,直径 11 (HTM)。整个 2×2 就是 G 的「角块部分」。</>}
-              en={<><strong>2×2×2 Pocket Cube</strong> — order 3,674,160, diameter 11 (HTM). Essentially the corner sector of G.</>}
-            />
-          </li>
-          <li>
-            <L
-              zh={<><strong>4×4×4 (Rubik's Revenge)</strong> — 没有固定中心,但仍是有限群,阶 ≈ 7.4 × 10⁴⁵。</>}
-              en={<><strong>4×4×4 (Rubik's Revenge)</strong> — no fixed centres, but still a finite group of order ≈ 7.4 × 10⁴⁵.</>}
-            />
-          </li>
-          <li>
-            <L
-              zh={<><strong>Megaminx</strong> — 十二面体,阶 ≈ 10⁶⁸。</>}
-              en={<><strong>Megaminx</strong> — dodecahedral, order ≈ 10⁶⁸.</>}
-            />
-          </li>
-          <li>
-            <L
-              zh={<><strong>Square-1</strong> — 不再是经典置换群:中间层有非平凡的几何约束 (双层切片)。</>}
-              en={<><strong>Square-1</strong> — escapes classical permutation groups: nontrivial geometric constraint from the middle slice.</>}
-            />
-          </li>
-        </ul>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="12.1  魔方在「有限群版图」上" en="12.1  G on the map of finite groups" />
+        </h3>
         <p>
           <L
-            zh={<>更深一点,Cayley 图、Burnside lemma、群表示、自动机 (string rewriting)、PSPACE-完备性证明 —— 都把魔方当作具体例子。魔方是「能在生活里摸得到的有限非阿贝尔群」, 这就是它在数学教育里独特的地位。</>}
-            en={<>Going further, Cayley graphs, Burnside's lemma, group representations, automaton-based solvers, PSPACE-completeness proofs — all use the cube as a concrete instance. The cube is the most tactile non-Abelian finite group we have. That is why it endures in pedagogy.</>}
+            zh={<>有限简单群的 <strong>分类定理</strong> (CFSG, 1983 完成) 把所有非阿贝尔有限简单群分成四大族 + 26 个零散群 (sporadic groups,最大者 「Monster」 阶约 <TeX src={`8 \\times 10^{53}`} />)。 魔方群 <em>G 不是简单群</em> —— 它有非平凡正规子群 (§20)。 但 G 的两个商因子 <TeX src={`A_8`} /> 和 <TeX src={`A_{12}`} /> 是 <em>交错群</em>, 都属于 CFSG 中最大的一族。 这是为什么 G 的「骨架」 (structure descriptor) 看起来像</>}
+            en={<>The <strong>Classification of Finite Simple Groups</strong> (CFSG, completed 1983) partitions all non-Abelian finite simple groups into four big families plus 26 sporadic groups (the largest, the Monster, has order ≈ <TeX src={`8 \\times 10^{53}`} />). The cube group <em>G is not simple</em> — it has non-trivial normal subgroups (§20). But two of G's quotient factors, <TeX src={`A_8`} /> and <TeX src={`A_{12}`} />, are <em>alternating groups</em>, sitting in CFSG's largest family. That is why G's structure-descriptor looks like</>}
           />
         </p>
+        <TeXBlock src={`G \\;\\cong\\; \\bigl(\\mathbb{Z}/3^{\\,7} \\rtimes \\mathbb{Z}/2^{\\,11}\\bigr) \\rtimes \\bigl(S_8 \\times S_{12}\\bigr) / \\mathbb{Z}/2`} />
         <p>
           <L
-            zh={<>本站还有几个具体工具供深入探索:<Link to="/scramble/solver">最短解求解器</Link>、<Link to="/alg/commutator">换位子分解工具</Link>、<Link to="/scramble/analyzer">分析器</Link>。</>}
-            en={<>Within this site, dig deeper with the <Link to="/scramble/solver">optimal solver</Link>, the <Link to="/alg/commutator">commutator decomposer</Link>, and the <Link to="/scramble/analyzer">scramble analyzer</Link>.</>}
+            zh={<>—— 一个由 <em>阿贝尔朝向部分</em> (角向 + 棱向) 与 <em>非阿贝尔置换部分</em> (角排 + 棱排) 半直积组成,再除以一个 <TeX src={`\\mathbb{Z}/2`} /> (奇偶约束) 的结构。 它正好处在「有结构、可分解、但不简单」 这一类 —— 对学习半直积、 短正合列、商群的初学者来说,是 <em>教科书级别</em> 的样本。</>}
+            en={<>— a semidirect product of an <em>Abelian orientation piece</em> (corner + edge twists) with a <em>non-Abelian permutation piece</em> (corner + edge perms), quotiented by a <TeX src={`\\mathbb{Z}/2`} /> parity. It sits exactly at "structured, decomposable, but not simple" — a textbook example for first-time students of semidirect products, short exact sequences, and quotients.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="12.2  七条从 G 出发的数学线" en="12.2  Seven threads departing from G" />
+        </h3>
+        <div className="gt-beyond-threads">
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">1</span><L zh="组合 / 置换群" en="Combinatorics / permutation groups" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>G 视作 <TeX src={`S_{48}`} /> (48 张贴纸) 的子群。 Cayley 1854 的「每个群同构于某个置换群的子群」 是出发点。 从这里走向 <em>BSGS / Schreier–Sims</em> (§25)、 <em>群表示</em> (§26)、 <em>组合枚举</em> (Pólya 1937)。</>}
+                en={<>View G as a subgroup of <TeX src={`S_{48}`} /> (the 48 stickers). Cayley's 1854 theorem ("every group embeds into some symmetric group") is the launching pad. From here: <em>BSGS / Schreier–Sims</em> (§25), <em>representations</em> (§26), <em>combinatorial enumeration</em> (Pólya 1937).</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">2</span><L zh="Cayley 图与图论" en="Cayley graphs & graph theory" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>G + 生成集 → <TeX src={`\\Gamma(G, S)`} /> 是一个 18-正则图。 直径 = 上帝之数 = 20。 这把魔方接到 <em>expander graphs</em>、 <em>Ramanujan graphs</em>、 <em>random regular graphs</em> 的现代研究。 G 的 Cayley 图就是一个具体的 expander 候选样本。</>}
+                en={<>G + a generating set yields <TeX src={`\\Gamma(G, S)`} />, an 18-regular graph. Diameter = God's number = 20. This connects the cube to modern work on <em>expander graphs</em>, <em>Ramanujan graphs</em>, and <em>random regular graphs</em>. The cube's Cayley graph is a concrete expander-candidate.</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">3</span><L zh="复杂度与可解性" en="Complexity & solvability" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>「求 n×n×n 的最短解」 在 n ≥ 2 时 <strong>NP-完备</strong> (Demaine et al. 2018)。 但「<em>字问题</em>」 在 G 上是 <em>线性</em> 时间可解 —— 因为 G 有限。 这两件事并行存在: G 的代数 (字问题) 简单, 它的几何 (Cayley 图距离) 困难。</>}
+                en={<>Solving the <em>shortest-alg</em> problem on n×n×n is <strong>NP-complete</strong> for n ≥ 2 (Demaine et al. 2018). But the <em>word problem</em> on G is solvable in linear time — because G is finite. These coexist: G's algebra (word problem) is easy, while G's geometry (Cayley distance) is hard.</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">4</span><L zh="随机游走 / 马尔可夫链" en="Random walks / Markov chains" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>「均匀随机选 18 步之一」 是 G 上的 Markov 链。 Diaconis–Shahshahani 框架 (§24) 把 <em>混合时间</em> 翻译成不可约表示的 Fourier 衰减。 G 上的精确 cutoff 还是 open。</>}
+                en={<>"Uniform choice of one of 18 moves" is a Markov chain on G. The Diaconis–Shahshahani framework (§24) converts <em>mixing time</em> into Fourier decay over irreducibles. The exact cutoff for G is open.</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">5</span><L zh="表示论 + Fourier 分析" en="Representation theory + Fourier" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>G 的不可约表示数 = 共轭类数 ≈ 81,120 (§8.2)。 G 的 abelianization <TeX src={`G^{\\mathrm{ab}} = \\mathbb{Z}/2`} /> 给出 <strong>恰好两个 1 维表示</strong> (平凡 + sgn)。 其余全部 ≥ 2 维 —— 反映 G 的强烈非阿贝尔性 (§26)。</>}
+                en={<>G has # irreducibles = # conjugacy classes ≈ 81,120 (§8.2). The abelianization <TeX src={`G^{\\mathrm{ab}} = \\mathbb{Z}/2`} /> yields <strong>exactly two 1-dim irreducibles</strong> (trivial + sign). All others have dimension ≥ 2 — a sharp marker of how non-Abelian G is (§26).</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">6</span><L zh="计算代数 (CAS)" en="Computer algebra systems" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>GAP、 Magma、 SageMath 都把 G 作为基准测试。 GAP 一行命令 <span className="gt-mono">StructureDescription(G);</span> 给出 G 的半直积分解, 用的就是 Schreier–Sims 的 BSGS (§25.2)。</>}
+                en={<>GAP, Magma, SageMath all use G as a benchmark. A single GAP command <span className="gt-mono">StructureDescription(G);</span> returns its semidirect decomposition — driven by Schreier–Sims and BSGS (§25.2).</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">7</span><L zh="量子计算" en="Quantum computing" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>「非阿贝尔 Hidden Subgroup Problem」 (HSP) 在量子上 <em>没有</em> 已知的多项式算法。 G 是一个具体、 可触摸的非阿贝尔 HSP 测试对象 —— 未来量子算法的实证基准。</>}
+                en={<>The <em>non-Abelian Hidden Subgroup Problem</em> has no known polynomial-time quantum algorithm. G is a concrete, tactile non-Abelian HSP instance — a benchmark for future quantum-algorithmic progress.</>}
+              />
+            </div>
+          </div>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="12.3  一个有用的尺度感:G 在哪里?" en="12.3  A useful sense of scale: where does G sit?" />
+        </h3>
+        <div className="gt-beyond-scale">
+          <div className="gt-beyond-scale-row">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? '2×2 口袋' : '2×2 Pocket'}</span>
+            <span className="gt-beyond-scale-val">3.67 × 10⁶</span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '只是 G 的角块部分' : 'just the corner sector of G'}</span>
+          </div>
+          <div className="gt-beyond-scale-row">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? 'Pyraminx' : 'Pyraminx'}</span>
+            <span className="gt-beyond-scale-val">75,582,720</span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '8 顶 × 8! / 部分约束' : '8 tips × 8!/ constrained'}</span>
+          </div>
+          <div className="gt-beyond-scale-row gt-beyond-scale-row-self">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? '3×3 (G)' : '3×3 (G)'}</span>
+            <span className="gt-beyond-scale-val">4.33 × 10<sup>19</sup></span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '本文主题' : 'the subject of this essay'}</span>
+          </div>
+          <div className="gt-beyond-scale-row">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? '4×4 Revenge' : '4×4 Revenge'}</span>
+            <span className="gt-beyond-scale-val">7.40 × 10<sup>45</sup></span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '没有固定中心 → 状态空间 × 24' : 'no fixed centres → state space × 24'}</span>
+          </div>
+          <div className="gt-beyond-scale-row">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? 'Megaminx' : 'Megaminx'}</span>
+            <span className="gt-beyond-scale-val">1.01 × 10<sup>68</sup></span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '12 面 · 30 棱 · 20 角' : '12 faces · 30 edges · 20 corners'}</span>
+          </div>
+          <div className="gt-beyond-scale-row">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? '魔方 100×100' : 'Cube 100×100'}</span>
+            <span className="gt-beyond-scale-val">≈ 10<sup>33,000</sup></span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '比可观宇宙原子数 (10⁸²) 高 400 数量级' : '400 orders of magnitude beyond cosmic atom count (10⁸²)'}</span>
+          </div>
+          <div className="gt-beyond-scale-row gt-beyond-scale-row-out">
+            <span className="gt-beyond-scale-name">{lang === 'zh' ? 'Monster 群' : 'Monster group'}</span>
+            <span className="gt-beyond-scale-val">8.08 × 10<sup>53</sup></span>
+            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? 'CFSG 最大零散群,不来自任何拼图' : 'largest sporadic in CFSG — no puzzle source'}</span>
+          </div>
+        </div>
+
+        <div className="gt-pullquote">
+          <L
+            zh={<>「魔方让群论变得可以 <em>看见</em>、 <em>摸到</em>、 <em>反复实验</em>。 这是教学上几乎独一无二的特权。」</>}
+            en={<>"The cube lets group theory be <em>seen</em>, <em>touched</em>, <em>experimented on</em>. As pedagogy it is almost unique."</>}
+          />
+          <div className="gt-pullquote-cite">— David Joyner, <em>Adventures in Group Theory</em> (Johns Hopkins, 2008)</div>
+        </div>
+
+        <p>
+          <L
+            zh={<>本站还有几个具体工具供深入探索:<Link to="/scramble/solver">最短解求解器</Link>、 <Link to="/alg/commutator">换位子分解工具</Link>、 <Link to="/scramble/analyzer">分析器</Link>、 <Link to="/nemesizer">nemesizer (反求最坏 setup)</Link>。 学魔方的群论, 没有什么比拿真的物件来反复试验更直观。</>}
+            en={<>For further hands-on exploration: the <Link to="/scramble/solver">optimal solver</Link>, the <Link to="/alg/commutator">commutator decomposer</Link>, the <Link to="/scramble/analyzer">scramble analyzer</Link>, and <Link to="/nemesizer">nemesizer (worst-setup search)</Link>. Group theory of the cube is learned fastest by handling the physical object.</>}
           />
         </p>
       </GTSec>
@@ -3785,42 +4730,164 @@ export default function GroupTheoryPage() {
         <h2 className="gt-sec-title">
           <L zh="著名图案 — 群元素的具体面孔" en="Famous patterns — concrete faces of group elements" />
         </h2>
-        <p>
+        <p className="gt-lede">
           <L
-            zh={<>群元素是抽象对象, 但每一个魔方状态 (= 群元素) 都可以视觉化。下面是一些「家喻户晓」的图案 — 每个都是 G 中的一个具体元素, 配有它的阶、定义公式、和群论意义。</>}
-            en={<>A group element is abstract, but every cube state is visual. Below is a tour of celebrated patterns — each one a specific element of G, with its order, defining alg, and group-theoretic significance.</>}
+            zh={<>群元素是抽象对象, 但每一个魔方状态 (= 群元素) 都可以 <em>看见</em>。 下面这组家喻户晓的图案, 每一个都是 G 的一个具体元素 —— 配有它的阶、 定义公式、 循环结构、 以及它在群结构里的位置。 注意 「图案的视觉对称」 通常对应于 「群元素的代数对称」 —— 这是 §13 的主题。</>}
+            en={<>Group elements are abstract, but every cube state is <em>visible</em>. Each celebrated pattern below is a specific element of G — with its order, defining alg, cycle structure, and place in G's architecture. Visual symmetry of a pattern usually corresponds to algebraic symmetry of its group element — that is the theme of §13.</>}
           />
         </p>
         <PatternGallery />
+
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
-          <L zh="13.1  superflip 的特殊地位" en="13.1  The special status of superflip" />
+          <L zh="13.1  阶 + 循环结构表" en="13.1  Order + cycle structure table" />
         </h3>
         <p>
           <L
-            zh={<>Superflip 是阶 2 的元素 (做两次回到原点),且它的 cp=identity, co=identity (角块完全归位), 只有 12 个棱块全部翻面。它有三个数学上的特殊性:</>}
-            en={<>Superflip is an order-2 element (applying it twice gives identity), with cp = identity and co = identity (corners untouched) — only all 12 edges are flipped. It is mathematically special in three ways:</>}
+            zh={<>把每个图案翻译成代数语言, 它们的阶 (在多少次内回到 e) 和循环结构 (corner / edge 各自的置换分解) 一目了然:</>}
+            en={<>Translated into algebra, each pattern's order (how many applications return to e) and cycle structure (corner / edge permutation decomposition) lays bare:</>}
+          />
+        </p>
+        <div className="gt-pattern-table">
+          <table className="gt-pattern-tbl">
+            <thead>
+              <tr>
+                <th>{lang === 'zh' ? '图案' : 'pattern'}</th>
+                <th>{lang === 'zh' ? '阶' : 'order'}</th>
+                <th>{lang === 'zh' ? '角循环' : 'corner cycles'}</th>
+                <th>{lang === 'zh' ? '棱循环' : 'edge cycles'}</th>
+                <th>{lang === 'zh' ? '类型' : 'character'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>{lang === 'zh' ? 'Superflip 超翻' : 'Superflip'}</strong></td>
+                <td className="num">2</td>
+                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
+                <td>{lang === 'zh' ? '12 棱全翻' : '12 edges flipped'}</td>
+                <td>{lang === 'zh' ? '中心 Z(G)' : 'centre Z(G)'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? 'Checkerboard 棋盘' : 'Checkerboard'}</strong></td>
+                <td className="num">2</td>
+                <td>{lang === 'zh' ? '4 个 2-循环' : '4 transpositions'}</td>
+                <td>{lang === 'zh' ? '6 个 2-循环' : '6 transpositions'}</td>
+                <td>{lang === 'zh' ? '6 半圈阿贝尔' : 'Abelian 6-tuple'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? '4 dots 四点' : '4 dots'}</strong></td>
+                <td className="num">2</td>
+                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
+                <td>{lang === 'zh' ? '4 个 2-循环' : '4 transpositions'}</td>
+                <td>{lang === 'zh' ? '只移棱' : 'edges only'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? 'Cube in cube 回字' : 'Cube in cube'}</strong></td>
+                <td className="num">4</td>
+                <td>{lang === 'zh' ? '8-循环' : 'one 8-cycle'}</td>
+                <td>{lang === 'zh' ? '复合' : 'mixed'}</td>
+                <td>{lang === 'zh' ? '非阿贝尔' : 'non-Abelian'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? '十字' : 'Cross'}</strong></td>
+                <td className="num">2</td>
+                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
+                <td>{lang === 'zh' ? '6 个 2-循环' : '6 transpositions'}</td>
+                <td>{lang === 'zh' ? '对称' : 'symmetric'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? '蟒蛇 Anaconda' : 'Anaconda'}</strong></td>
+                <td className="num">6</td>
+                <td>{lang === 'zh' ? '3-循环 + 朝向' : '3-cycle + twists'}</td>
+                <td>{lang === 'zh' ? '6-循环' : '6-cycle'}</td>
+                <td>{lang === 'zh' ? '阶 = lcm(2,3)' : 'order = lcm(2,3)'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? '六点 Six spots' : 'Six spots'}</strong></td>
+                <td className="num">4</td>
+                <td>{lang === 'zh' ? '2 个 4-循环' : '2 four-cycles'}</td>
+                <td>{lang === 'zh' ? '4 个 2-循环' : '4 transpositions'}</td>
+                <td>{lang === 'zh' ? '90° 类' : '90° type'}</td>
+              </tr>
+              <tr>
+                <td><strong>{lang === 'zh' ? '加减号' : 'Plus minus'}</strong></td>
+                <td className="num">2</td>
+                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
+                <td>{lang === 'zh' ? '6 个 2-循环' : '6 transpositions'}</td>
+                <td>{lang === 'zh' ? '6 步极简' : '6-move minimum'}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="gt-aside" style={{ marginTop: 10 }}>
+            {lang === 'zh'
+              ? <>注:阶 = 角块循环阶 与棱块循环阶 的最小公倍数(若两边都有朝向也要乘进去)。 「蟒蛇」 的 6 是因为 lcm(2, 3) = 6 — 棱 2 步、 角 3 步。</>
+              : <>Note: order = lcm of the corner-cycle order and the edge-cycle order (orientations multiplied in). Anaconda's 6 = lcm(2, 3) — edges loop in 2, corners in 3.</>}
+          </div>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="13.2  Superflip 的特殊地位" en="13.2  The special status of superflip" />
+        </h3>
+        <p>
+          <L
+            zh={<>Superflip 是阶 2 的元素 (做两次回到原点), 且它的 <TeX src={`c_p = e,\\; c_o = 0`} /> (角块完全归位), <TeX src={`e_p = e`} /> (棱位置归位), 只有 <TeX src={`e_o = (1,1,\\ldots,1)`} /> 12 个棱块全部翻面。 它在 G 里有三件事是 <em>独一无二</em> 的:</>}
+            en={<>Superflip is an order-2 element, with <TeX src={`c_p = e,\\; c_o = 0`} /> (corners untouched) and <TeX src={`e_p = e`} /> (edges home), and only <TeX src={`e_o = (1,1,\\ldots,1)`} /> — all 12 edges flipped. It is <em>uniquely distinguished</em> in G by three facts:</>}
           />
         </p>
         <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
-          <li><L zh="它是 Z(G) 的非平凡元 (跟所有 G 元素交换 — §9.4)" en="It is the non-trivial centre element (commutes with all of G — §9.4)" /></li>
-          <li><L zh="它是 |g|_HTM = 20 的「极端状态」 之一 (最短解恰好需要 20 步)" en="It is among the extremal positions with optimal HTM length = 20" /></li>
-          <li><L zh="它在所有 48 个魔方外部对称变换下不变 (即 superflip 是「最对称」 状态)" en="It is invariant under all 48 outer cube symmetries (the most symmetric state)" /></li>
+          <li>
+            <L
+              zh={<><strong>Z(G) 的唯一非平凡元</strong> —— 跟 G 中每一个元素交换 (§9.4): <TeX src={`Z(G) = \\{e,\\; \\mathrm{superflip}\\} \\cong \\mathbb{Z}/2`} />。 这是 「为什么 G 不简单」的最具体证据。</>}
+              en={<><strong>The unique non-identity element of Z(G)</strong> — commutes with every g ∈ G (§9.4): <TeX src={`Z(G) = \\{e,\\; \\mathrm{superflip}\\} \\cong \\mathbb{Z}/2`} />. The most concrete reason G is not simple.</>}
+            />
+          </li>
+          <li>
+            <L
+              zh={<><strong>HTM 距离恰好 20</strong> —— 是 2010 年 Rokicki 等证明 「上帝之数 = 20」 时第一个被锁死的下界。 全 4.3 × 10¹⁹ 状态里只有 <strong>三个</strong> 状态需要满 20 步: superflip、 superflip ∘ (4-spot 一族), 以及 Reid 的对偶。</>}
+              en={<><strong>HTM distance exactly 20</strong> — the first lower bound nailed down in Rokicki et al.'s 2010 proof that God's number = 20. Of 4.3 × 10¹⁹ states, only <strong>three</strong> require the full 20 moves: superflip, the superflip ∘ 4-spot family, and Reid's dual.</>}
+            />
+          </li>
+          <li>
+            <L
+              zh={<><strong>对所有 48 个外部立方对称变换不变</strong> —— 把 superflip 投到 G 的轨道空间 G/Sym 上, 它仍然是单点轨道。 群论上 「最对称」 的非平凡状态。</>}
+              en={<><strong>Invariant under all 48 outer cube symmetries</strong> — when projected to G/Sym, superflip is a singleton orbit. Group-theoretically the "most symmetric" non-identity state.</>}
+            />
+          </li>
         </ul>
+        <TeXBlock src={`Z(G) \\;=\\; \\bigl\\{\\,g \\in G \\;:\\; \\forall h \\in G,\\; gh = hg\\,\\bigr\\} \\;=\\; \\{e,\\; \\mathrm{superflip}\\} \\;\\cong\\; \\mathbb{Z}/2`} />
         <div className="gt-pullquote">
           <L
-            zh={<>「Superflip 是所有 4.3 × 10¹⁹ 状态中, 群论上 <em>最特殊</em> 的那一个。它不是巧合 — 它的特殊性来自它在群中的几何位置。」</>}
-            en={<>"Superflip is, group-theoretically, the most singular position among 43 quintillion. Its uniqueness is not coincidence — it follows from its geometric place in G."</>}
+            zh={<>「Superflip 是 4.3 × 10¹⁹ 状态里, 群论上 <em>最特殊</em> 的那一个。 它的特殊性不是巧合, 而是它在群中几何位置的代数后果。」</>}
+            en={<>"Superflip is, group-theoretically, the most singular position among 43 quintillion. Its uniqueness is not coincidence — it is the algebraic consequence of its geometric place in G."</>}
           />
+          <div className="gt-pullquote-cite">— Tomas Rokicki, <em>God's Number is 20</em> (2010)</div>
         </div>
+
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
-          <L zh="13.2  生成简单图案的代数学" en="13.2  Algebra of generating simple patterns" />
+          <L zh="13.3  生成简单图案的代数学" en="13.3  Algebra of generating simple patterns" />
         </h3>
         <p>
           <L
-            zh={<>有些图案有清晰的代数公式。例如 「checkerboard 棋盘」 = U² D² F² B² L² R²。 这是 6 个「半圈生成元」的乘积, 它们两两可交换 (U² 和 D² 在不同层但都是 U-D 轴), 所以总群是 ℤ/2 × ℤ/2 × ℤ/2 = 8 元阿贝尔群。Checkerboard 的阶因此必然为 1 或 2 (是 2)。</>}
-            en={<>Some patterns have clean algebraic structure. Example: <strong>checkerboard</strong> = U² D² F² B² L² R². These six half-turns mutually commute (since each pair acts on disjoint cubies or is on the same axis); the subgroup they generate is the Abelian group ℤ/2 × ℤ/2 × ℤ/2 of order 8. Checkerboard's order is therefore at most 2 — and it is exactly 2.</>}
+            zh={<>有些图案有清晰的代数公式。 例如 「checkerboard 棋盘」 = U² D² F² B² L² R²。 这是 6 个 「半圈生成元」 的乘积, 它们两两可交换 (同轴半圈互换 U² ↔ D², 不同轴半圈在不同 cubies 上作用), 故它们生成的子群是阿贝尔的:</>}
+            en={<>Some patterns have a clean algebraic origin. Example: <strong>checkerboard</strong> = U² D² F² B² L² R². These six half-turn generators mutually commute (same-axis half-turns commute, different-axis pairs act on disjoint cubies), so the subgroup they generate is Abelian:</>}
           />
         </p>
+        <TeXBlock src={`\\langle U^2,\\, D^2,\\, F^2,\\, B^2,\\, L^2,\\, R^2 \\rangle \\;\\cong\\; (\\mathbb{Z}/2)^3 \\;\\;(\\text{after the 3 axis-fold relations})`} />
+        <p>
+          <L
+            zh={<>(三个轴方向各自一对 U²/D² 等, 同轴半圈互为逆 — 减去 3 个独立关系, 剩 6 - 3 = 3 个独立 ℤ/2 因子。) Checkerboard 的阶因此必然 ≤ 2 ── 直接验证就是 2。 「Pons Asinorum」 (M² E² S²) 与 superflip 都属于这个阿贝尔小子群。</>}
+            en={<>(Three axes give three pairs U²/D² etc.; same-axis half-turns invert each other, kicking 3 relations, leaving 6 − 3 = 3 independent ℤ/2 factors.) Checkerboard's order is therefore ≤ 2 — and direct check gives 2. The "Pons Asinorum" (M² E² S²) and superflip both live in this Abelian subgroup.</>}
+          />
+        </p>
+
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '观察 13.1 — 图案视觉对称 ↔ 群代数对称' : 'Observation 13.1 — visual ↔ algebraic symmetry'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>一个图案在所有 48 个外部立方对称下不变 ⇔ 它在共轭作用下是 G 的不动点 ⇔ 它在 <strong>Z(G)</strong> 里。 这是 「为什么 superflip 既视觉上完美对称又代数上独一」 的真正原因。 一个图案在 <em>子集</em> 对称下不变 ⇔ 它在那部分稳定子里 —— 例如 「三轴对称」 棋盘对 24 个旋转对称不变, 它不属于 Z(G) 但属于对称化子群。</>}
+              en={<>A pattern fixed by all 48 outer cube symmetries ⇔ it is a fixed point of conjugation ⇔ it lies in <strong>Z(G)</strong>. That is why superflip is simultaneously the most visually symmetric and the algebraically unique non-trivial element. A pattern fixed by a <em>subset</em> of symmetries lies in the corresponding symmetrizing subgroup — e.g. the three-axis-symmetric checkerboard sits in a 24-element rotational stabilizer, not in Z(G).</>}
+            />
+          </div>
+        </div>
       </GTSec>
 
       {/* ═══════════════ §14 Cayley graph ════════════════════════════ */}
@@ -4070,52 +5137,123 @@ export default function GroupTheoryPage() {
         <h2 className="gt-sec-title">
           <L zh="其它拼图 — 同一框架, 不同舞台" en="Other puzzles — same framework, different stages" />
         </h2>
-        <p>
+        <p className="gt-lede">
           <L
-            zh={<>魔方的成功让群论成为研究所有「扭转拼图」的标准工具。每个拼图都有自己的群、自己的生成集、自己的直径。下面是几个例子的速览:</>}
-            en={<>The cube's success made group theory the standard tool for studying all "twisting puzzles." Each puzzle has its own group, generators, and diameter:</>}
+            zh={<>魔方的成功让群论成为研究 <em>所有</em> 扭转拼图的标准工具。 每一个拼图都有它自己的群、 自己的生成集、 自己的直径、 自己的开放问题。 拿同一套语言 (生成元、 共轭类、 子群链、 Cayley 图) 走过去, 你就能比较他们的「难度」、 「结构」、 「对称」。</>}
+            en={<>The cube's success made group theory the standard tool for every twisting puzzle. Each puzzle has its own group, generators, diameter, and open questions. Walking through with the same language — generators, conjugacy classes, subgroup chains, Cayley graphs — you can compare their <em>difficulty</em>, <em>structure</em>, and <em>symmetry</em> on equal footing.</>}
           />
         </p>
         <PuzzleComparison />
-        <p>
-          <L
-            zh={<>注意 4×4×4 的群比 3×3×3 大 8 个数量级 — 但直径只是「至少 22, 至多 36」 的范围。原因是 4×4×4 缺乏 3×3×3 那种「中心固定」的对称, 状态空间增长远快于路径长度增长。</>}
-            en={<>Note: the 4×4×4 group is 8 orders of magnitude larger than the 3×3×3, but the diameter sits in [22, 36]. The reason: the 4×4×4 lacks the 3×3×3's fixed-centre symmetry, so the state space explodes faster than the path length.</>}
-          />
-        </p>
+
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
-          <L zh="15.1  超出经典置换群" en="15.1  Beyond classical permutation groups" />
+          <L zh="15.1  阶 |G| 的闭式与 n × n × n 渐近" en="15.1  Closed-form |G| and the n × n × n asymptotic" />
         </h3>
         <p>
           <L
-            zh={<>有些拼图的群「不是」标准置换群:</>}
-            en={<>Some puzzles' groups are NOT standard permutation groups:</>}
+            zh={<>每一类常见拼图的群阶都能写成 「<em>排列</em> × <em>朝向</em> ÷ <em>奇偶/中心约束</em>」 的封闭式。 把 3×3 和它的近亲并排放着:</>}
+            en={<>Each common puzzle's group order is a closed-form "<em>permutations</em> × <em>orientations</em> ÷ <em>parity/centre constraints</em>". Side by side with the 3×3:</>}
           />
         </p>
-        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
-          <li>
-            <L
-              zh={<><strong>Square-1</strong>: 顶层和底层可以不分整数倍地切, 加上 / (flip) 操作。它的「合法状态」依赖于几何拼接, 不能仅用置换描述。Square-1 群是研究「带几何约束的非群体置换 (semigroupoid)」的天然实验。</>}
-              en={<><strong>Square-1</strong>: the top and bottom layers can be cut at non-integer multiples of 1/12, plus a / (flip) operation. Its legal states depend on geometric matching, not pure permutation. The Square-1 group is a natural example of a semigroup with geometric constraints.</>}
-            />
-          </li>
-          <li>
-            <L
-              zh={<><strong>Bandaged cube</strong>: 某些块用胶带固定在一起, 导致部分面转被「禁掉」。结果群是 G 的真子群, 但生成集结构变化巨大 — solver 算法完全不同。</>}
-              en={<><strong>Bandaged cubes</strong>: some cubies are glued together, forbidding certain face turns. The result is a proper subgroup of G, but with such drastically different generators that solver algorithms must be rebuilt from scratch.</>}
-            />
-          </li>
-          <li>
-            <L
-              zh={<><strong>Helicopter cube</strong>: 转 60° 而非 90° 的「斜切」, 群结构更复杂。</>}
-              en={<><strong>Helicopter cube</strong>: 60° "jumbling" cuts rather than 90° face turns; richer group structure with non-trivial "jumbling" submanifolds.</>}
-            />
-          </li>
-        </ul>
+        <div className="gt-puzzle-formula-list">
+          <div className="gt-puzzle-formula"><span>2×2×2</span><TeX src={`\\dfrac{7!\\,\\cdot\\,3^6}{3} = 3{,}674{,}160`} /></div>
+          <div className="gt-puzzle-formula"><span>3×3×3 (G)</span><TeX src={`\\dfrac{8!\\,\\cdot\\,12!\\,\\cdot\\,3^7\\,\\cdot\\,2^{11}}{2} \\approx 4.33 \\times 10^{19}`} /></div>
+          <div className="gt-puzzle-formula"><span>4×4×4</span><TeX src={`\\dfrac{8!\\,\\cdot\\,3^7\\,\\cdot\\,24!^{2}}{4!^{\\,6} \\cdot 24} \\approx 7.40 \\times 10^{45}`} /></div>
+          <div className="gt-puzzle-formula"><span>5×5×5</span><TeX src={`\\dfrac{8!\\,\\cdot\\,3^7\\,\\cdot\\,24!^{2}\\,\\cdot\\,12!\\,\\cdot\\,24!}{4!^{6}\\,\\cdot\\,2} \\approx 2.83 \\times 10^{74}`} /></div>
+          <div className="gt-puzzle-formula"><span>Pyraminx</span><TeX src={`3^4 \\cdot 3^4 \\cdot \\dfrac{6!}{2}\\,\\cdot\\,3^4 = 75{,}582{,}720`} /></div>
+          <div className="gt-puzzle-formula"><span>Skewb</span><TeX src={`8!\\,\\cdot\\,3^4 \\cdot 2 = 3{,}149{,}280`} /></div>
+          <div className="gt-puzzle-formula"><span>Megaminx</span><TeX src={`\\dfrac{(5!)^{12}\\,\\cdot\\,20!\\,\\cdot\\,3^{19}\\,\\cdot\\,30!\\,\\cdot\\,2^{29}}{\\text{constraints}} \\approx 1.01 \\times 10^{68}`} /></div>
+          <div className="gt-puzzle-formula"><span>Square-1</span><TeX src={`\\sim 1.78 \\times 10^{14}\\;(\\text{shape-dep.\\ groupoid})`} /></div>
+        </div>
+        <div className="gt-aside">
+          <L
+            zh={<><strong>渐近行为</strong>:对一般 n × n × n, 群阶按 <TeX src={`|G_n| = \\Theta(n!^{\\,O(n^2)})`} /> 增长,但 「<em>God's number</em>」 (直径) 只增长成 <TeX src={`\\Theta(n^2 / \\log n)`} /> (Demaine et al. 2018)。 状态数 <em>双指数</em> 爆炸, 但路径长度只 <em>多项式</em> 增长 ── 这是 「Cayley 图越来越胖,但直径却几乎不变」的精确陈述。</>}
+            en={<><strong>Asymptotic</strong>: for general n × n × n the order grows like <TeX src={`|G_n| = \\Theta(n!^{\\,O(n^2)})`} />, but the <em>God's number</em> (diameter) grows only as <TeX src={`\\Theta(n^2 / \\log n)`} /> (Demaine et al. 2018). The state count <em>double-exponentially</em> explodes while the path length grows only <em>polynomially</em> — the precise sense in which the Cayley graph keeps getting fatter without getting much wider.</>}
+          />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="15.2  已知 God's number 一览" en="15.2  Known God's numbers, at a glance" />
+        </h3>
+        <div className="gt-puzzle-godtbl">
+          <table className="gt-pattern-tbl">
+            <thead>
+              <tr>
+                <th>{lang === 'zh' ? '拼图' : 'puzzle'}</th>
+                <th>HTM</th>
+                <th>QTM/STM</th>
+                <th>{lang === 'zh' ? '状态' : 'status'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>2×2×2</td><td className="num">11</td><td className="num">14 (QTM)</td><td>{lang === 'zh' ? '已确证 (Reid 1995)' : 'proven (Reid 1995)'}</td></tr>
+              <tr><td>3×3×3</td><td className="num">20</td><td className="num">26 (QTM)</td><td>{lang === 'zh' ? '已确证 (Rokicki et al. 2010)' : 'proven (Rokicki et al. 2010)'}</td></tr>
+              <tr><td>4×4×4</td><td className="num">[22, 36]</td><td className="num">[35, 53]</td><td>{lang === 'zh' ? '开放 — 区间持续收紧' : 'open — interval slowly tightening'}</td></tr>
+              <tr><td>5×5×5</td><td className="num">[20, 32]</td><td className="num">?</td><td>{lang === 'zh' ? '开放' : 'open'}</td></tr>
+              <tr><td>Pyraminx</td><td className="num">11</td><td className="num">11</td><td>{lang === 'zh' ? '已确证 (Cubelovers, 1981)' : 'proven (Cubelovers, 1981)'}</td></tr>
+              <tr><td>Skewb</td><td className="num">11</td><td className="num">11</td><td>{lang === 'zh' ? '已确证' : 'proven'}</td></tr>
+              <tr><td>Megaminx</td><td className="num">≈ 45</td><td className="num">?</td><td>{lang === 'zh' ? '上界未严格证明' : 'upper bound unproved'}</td></tr>
+              <tr><td>Square-1</td><td className="num">[31, 35]</td><td className="num">[26, 31]</td><td>{lang === 'zh' ? '开放' : 'open'}</td></tr>
+            </tbody>
+          </table>
+        </div>
         <p>
           <L
-            zh={<>这些「奇异拼图」 揭示了群论的真正威力: 一旦你接受「群是描述对称的语言」, 几乎任何机械拼图都能拿来分析。</>}
-            en={<>These "exotic puzzles" reveal the true power of group theory: once you accept "groups are the language of symmetry," nearly any mechanical puzzle becomes analysable.</>}
+            zh={<>有趣的对比:5×5×5 的 HTM 下界 <strong>反而比 3×3×3 还小</strong> ─ 因为有更多自由度可同时被一次转面影响。 直径不随群阶单调增长, 它跟生成集的「<em>覆盖效率</em>」相关 ── 一个本质性的图论问题。</>}
+            en={<>A surprising point: the 5×5×5's HTM lower bound is <strong>smaller than the 3×3×3's</strong> — more degrees of freedom can be affected per turn. Diameter does not grow monotonically with group order; it tracks the <em>covering efficiency</em> of the generating set — a deep graph-theoretic question in its own right.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="15.3  超出经典置换群" en="15.3  Beyond classical permutation groups" />
+        </h3>
+        <p>
+          <L
+            zh={<>有些拼图的 「状态空间」 不是经典群, 而是更弱的代数对象 — 通常因为状态依赖几何匹配。 它们提供了三个研究方向:</>}
+            en={<>Some puzzles' state spaces are not classical groups but weaker algebraic structures — usually because legal states depend on geometric matching. They open three research directions:</>}
+          />
+        </p>
+        <div className="gt-beyond-threads">
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">A</span><L zh="Groupoid (Square-1)" en="Groupoid (Square-1)" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>Square-1 顶/底层可以切到 1/12 的非整数倍, 加上中间 / (flip) 操作。 合法状态依赖于切割的几何对齐, 不能仅用置换描述。 它形成一个 <em>groupoid</em> (带「对象」 类型的范畴化群)。 不同 「shape class」 (12 类) 各对应一个轨道, 总状态数 ≈ 1.78 × 10¹⁴。</>}
+                en={<>Square-1's top and bottom can rotate at non-integer multiples of 1/12, plus a / (flip) operation. Legal states depend on geometric alignment — not pure permutations. The state space is a <em>groupoid</em> (a categorified group with object types). Each of 12 "shape classes" is an orbit; total state count ≈ 1.78 × 10¹⁴.</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">B</span><L zh="Submonoid (Bandaged)" en="Submonoid (Bandaged)" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>Bandaged 魔方某些 cubies 被胶带绑成一组, 某些面转被禁掉。 结果是 G 的子群 (生成集变小), 但 <em>solver 算法必须重写</em> — Thistlethwaite / Kociemba 都依赖 「6 个生成元都能用」 的假设。 几个常见 bandage 配置都是公认的硬例。</>}
+                en={<>In bandaged cubes, some cubies are glued, forbidding certain turns. The result is a proper subgroup of G (smaller generating set), but the <em>solver must be redesigned</em> — Thistlethwaite and Kociemba both assume "all 6 generators available." Many bandage configurations are notoriously hard.</>}
+              />
+            </div>
+          </div>
+          <div className="gt-beyond-thread">
+            <div className="gt-beyond-thread-head"><span className="gt-beyond-thread-tag">C</span><L zh="Jumbling (Helicopter)" en="Jumbling (Helicopter)" /></div>
+            <div className="gt-beyond-thread-body">
+              <L
+                zh={<>Helicopter 立方体在 「<em>jumbling</em>」 切割下能进入正常立方形状之外的连续位置。 它的 「群」 实际上是带 <em>无限</em> 几何分支的, 经典置换语言不够用 — 这类拼图被称作 「jumbling puzzles」, 它们的群结构是 21 世纪初才开始系统研究的话题。</>}
+                en={<>The Helicopter cube admits <em>jumbling</em> cuts that enter geometric states outside the canonical cube shape. Its "group" effectively has <em>infinite</em> geometric branches; classical permutations don't suffice. Such "jumbling puzzles" are a 21st-century research topic.</>}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="gt-pullquote">
+          <L
+            zh={<>「Square-1 不是反例, 是 <em>新例</em> — 它告诉我们群论本身需要扩展。」</>}
+            en={<>"Square-1 is not a counterexample. It is a <em>new example</em> — it tells us that group theory itself needs extending."</>}
+          />
+          <div className="gt-pullquote-cite">— Erik Demaine, on geometric puzzle complexity</div>
+        </div>
+
+        <p>
+          <L
+            zh={<>这些 「奇异拼图」 揭示群论真正的弹性: 一旦你接受 「群是对称的语言」, 几乎任何机械拼图都能拿来分析。 当群不够用时, 我们就扩展成 groupoid、 submonoid、 jumbling 流形 —— 数学接着往前推。</>}
+            en={<>These exotic puzzles reveal the elasticity of the framework: once you accept "groups are the language of symmetry," nearly any mechanical puzzle becomes analysable. And when groups don't suffice, we extend into groupoids, submonoids, jumbling manifolds — the mathematics keeps moving forward.</>}
           />
         </p>
       </GTSec>
@@ -4126,48 +5264,159 @@ export default function GroupTheoryPage() {
         <h2 className="gt-sec-title">
           <L zh="未解问题 — 群论的开放前线" en="Open problems — frontiers of group theory" />
         </h2>
-        <p>
+        <p className="gt-lede">
           <L
-            zh={<>魔方群本身的 «基本量» (阶、直径、结构定理) 都已完全确定。但仍有一些有趣的开放问题:</>}
-            en={<>The "basic invariants" of the cube group (order, diameter, structure theorem) are all settled. But several intriguing open questions remain:</>}
+            zh={<>魔方群本身的 「基本不变量」 (阶、 直径、 结构定理) 都 <em>完全确定</em>。 但 「拓宽一步」 立即就出现了几个数学社区目前还回答不上来的问题。 这些问题横跨组合、 几何、 计算复杂度、 量子算法 —— 都是经过 50 年研究仍然敞开的。</>}
+            en={<>The "basic invariants" of the cube group (order, diameter, structure theorem) are <em>completely settled</em>. But step out by even one notch and several problems still resist the mathematical community after 50 years — spanning combinatorics, geometry, complexity, and quantum algorithms.</>}
           />
         </p>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
-          <L zh="16.1  4×4×4 的 God's Number" en="16.1  4×4×4's God's Number" />
+
+        <div className="gt-open-summary">
+          <div className="gt-open-summary-head">{lang === 'zh' ? '开放问题速览' : 'open problems at a glance'}</div>
+          <table className="gt-pattern-tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{lang === 'zh' ? '问题' : 'problem'}</th>
+                <th>{lang === 'zh' ? '最佳已知' : 'best known'}</th>
+                <th>{lang === 'zh' ? '难度' : 'difficulty'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td className="num">1</td><td>{lang === 'zh' ? '4×4 God\'s number' : '4×4 God\'s number'}</td><td className="num">[22, 36] HTM</td><td>{lang === 'zh' ? '中等 (需算法)' : 'medium (algorithmic)'}</td></tr>
+              <tr><td className="num">2</td><td>{lang === 'zh' ? 'n×n 渐近常数' : 'n×n asymptotic constant'}</td><td>Θ(n²/log n)</td><td>{lang === 'zh' ? '困难 (理论)' : 'hard (theoretical)'}</td></tr>
+              <tr><td className="num">3</td><td>{lang === 'zh' ? '平均最优解长度' : 'average optimal length'}</td><td className="num">17.97 HTM</td><td>{lang === 'zh' ? '简单 (统计)' : 'easy (statistical)'}</td></tr>
+              <tr><td className="num">4</td><td>{lang === 'zh' ? '非阿贝尔 HSP' : 'non-Abelian HSP'}</td><td>{lang === 'zh' ? '无量子加速' : 'no quantum speedup'}</td><td>{lang === 'zh' ? '极困难 (量子)' : 'very hard (quantum)'}</td></tr>
+              <tr><td className="num">5</td><td>{lang === 'zh' ? 'Cutoff 临界值' : 'mixing-time cutoff'}</td><td>≈ 22 ± 3</td><td>{lang === 'zh' ? '困难 (概率)' : 'hard (probabilistic)'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="16.1  4×4×4 的 God's Number" en="16.1  4×4×4's God's number" />
         </h3>
         <p>
           <L
-            zh={<>4×4×4 群的直径目前只知道在 [22, 36] 区间内 (WCA standard move metric)。给定群阶 7.4 × 10⁴⁵, 完整枚举是不可能的。但近年算法的进步 (基于深度学习引导的 IDA*) 让上界不断收紧, 也许下一个十年会有最终答案。</>}
-            en={<>The 4×4×4's diameter is currently bounded only to [22, 36] in the standard WCA metric. With order 7.4 × 10⁴⁵, full enumeration is impossible. But algorithmic progress (deep-learning-guided IDA* search) is steadily tightening the upper bound; perhaps the next decade brings a definitive answer.</>}
+            zh={<>4×4×4 群的直径目前只知道在 <strong>[22, 36] HTM</strong> 区间内。 给定群阶 <TeX src={`|G_4| \\approx 7.4 \\times 10^{45}`} />, 完整枚举是 <em>不可能</em> 的 ── 比可观宇宙的原子数还多 27 个数量级。 现有的最强算法基于:</>}
+            en={<>The 4×4×4's diameter is bounded only to <strong>[22, 36] HTM</strong>. With order <TeX src={`|G_4| \\approx 7.4 \\times 10^{45}`} />, exhaustive enumeration is <em>impossible</em> — 27 orders of magnitude beyond the atom count of the observable universe. The strongest approaches use:</>}
           />
         </p>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li>
+            <L
+              zh={<><strong>子群链分解</strong> ── 类似 Thistlethwaite 4-阶段, 但 4×4×4 缺乏中心固定, 所以需要先解 「reduction」 (3 步将拼图缩成 3×3×3 等效物), 然后转 3×3×3 算法。 总步数估计 35–45 HTM。</>}
+              en={<><strong>Subgroup-chain reduction</strong> — Thistlethwaite-style but the 4×4×4 lacks fixed centres, so reduction (3 phases to bring the puzzle to 3×3×3-equivalent) precedes the 3×3×3 algorithm. Total estimate 35–45 HTM.</>}
+            />
+          </li>
+          <li>
+            <L
+              zh={<><strong>对称约简</strong> ── 利用 48 个外部立方对称把状态空间压缩到 1/48。 仍然太大。</>}
+              en={<><strong>Symmetry reduction</strong> — collapse by the 48 outer cube symmetries, leaving |G|/48. Still far too large.</>}
+            />
+          </li>
+          <li>
+            <L
+              zh={<><strong>深度学习引导搜索</strong> ── DeepCubeA (UCI, 2019) 用强化学习近似 「最优步数估计函数」, 已能在合理时间内解几乎所有状态, 但不能给数学下界。</>}
+              en={<><strong>Learning-guided search</strong> — DeepCubeA (UCI, 2019) uses RL to approximate an optimal-distance heuristic, solving most states in feasible time but not proving lower bounds.</>}
+            />
+          </li>
+        </ul>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
           <L zh="16.2  n×n×n 的渐近行为" en="16.2  Asymptotics of n×n×n" />
         </h3>
         <p>
           <L
-            zh={<>对一般 n × n × n 立方体, Demaine 等人 (2018) 证明了求解的复杂度是 NP-完备的。但 God's number 的渐近增长率仍是开放问题: 已知它至少是 Θ(n²/log n), 但精确常数未确定。</>}
-            en={<>For general n × n × n, Demaine et al. (2018) proved the optimal solving problem is NP-complete. But the asymptotic growth rate of God's number is open: it is at least Θ(n²/log n), but the precise constant remains unknown.</>}
+            zh={<>对一般 n × n × n 立方体, Demaine, Demaine, Eisenstat, Lubiw, Winslow (2018) 证明 「求解的最短公式」 在 n ≥ 2 时是 <strong>NP-完备</strong>。 同一篇论文给出了渐近上下界:</>}
+            en={<>For general n × n × n, Demaine, Demaine, Eisenstat, Lubiw, Winslow (2018) proved that finding the optimal alg is <strong>NP-complete</strong> for n ≥ 2. The same paper established asymptotic bounds:</>}
           />
         </p>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
-          <L zh="16.3  通过减法的解法" en="16.3  Solving by subtraction" />
+        <TeXBlock src={`\\Omega\\!\\left(\\dfrac{n^{2}}{\\log n}\\right) \\;\\leq\\; \\mathrm{diam}(G_n) \\;\\leq\\; O\\!\\left(\\dfrac{n^{2}}{\\log n}\\right)`} />
+        <p>
+          <L
+            zh={<>两端的 Θ 框架是 <em>紧的</em>, 但内部的 <strong>精确常数仍未知</strong>。 已知 <TeX src={`c_1 \\leq c_2`} /> 满足 <TeX src={`c_1 n^2/\\log n \\leq \\mathrm{diam}(G_n) \\leq c_2 n^2/\\log n`} />, 但 <TeX src={`c_1, c_2`} /> 的具体值是开放问题。 这是 「拼图复杂度」 的标志性未解问题之一。</>}
+            en={<>The Θ-bracket is <em>tight</em>, but the <strong>exact constant inside is unknown</strong>. We have <TeX src={`c_1 \\leq c_2`} /> with <TeX src={`c_1 n^2/\\log n \\leq \\mathrm{diam}(G_n) \\leq c_2 n^2/\\log n`} />, but the explicit values of <TeX src={`c_1, c_2`} /> are open. This is a flagship problem in "puzzle complexity."</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="16.3  最优解法的统计性质" en="16.3  Statistical properties of optimal solutions" />
         </h3>
         <p>
           <L
-            zh={<>Thistlethwaite 和 Kociemba 算法都属于「子群链下降」类型, 都把状态空间切成查表的层次。但还有完全不同的解法: 比如 <em>Korf 的 IDA*</em> (iterative deepening A*) 用启发式直接搜索 Cayley 图; <em>Rokicki 的「symmetry-augmented BFS」</em> 利用对称对状态减半。哪种方法在「平均最短解长度」 上最优? 这跟群结构密切相关, 是个长期研究问题。</>}
-            en={<>Thistlethwaite and Kociemba are both subgroup-chain descent algorithms, slicing the state space into table look-ups. But entirely different methods exist: <em>Korf's IDA*</em> directly searches the Cayley graph with heuristics; <em>Rokicki's symmetry-augmented BFS</em> halves the state space via cube symmetries. Which method gives the best <em>average</em> optimal solution length is a long-running research question, tightly coupled to group structure.</>}
+            zh={<>3×3 的 HTM 直径已经 = 20。 但 「<em>平均最优解长度</em>」 是多少? Rokicki 实测全 4.3 × 10¹⁹ 状态的平均 HTM 最优长度为 <TeX src={`\\bar{d} \\approx 17.97`} />。 这意味着 <strong>近 99% 的状态需要 16–20 步</strong>, 距离分布高度集中。 但下面这些子问题仍是开放:</>}
+            en={<>The 3×3 HTM diameter = 20 is settled. But what is the <em>average optimal solve length</em>? Rokicki measured over all 4.3 × 10¹⁹ states an average <TeX src={`\\bar{d} \\approx 17.97`} /> HTM. So <strong>nearly 99% of states need 16–20 moves</strong> — the distance distribution is highly concentrated. The following sub-questions remain open:</>}
           />
         </p>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
-          <L zh="16.4  量子算法?" en="16.4  Quantum algorithms?" />
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh="状态距离分布是否「精确高斯」?(实测形状非常接近 Gaussian, 但理论解释缺失)" en="Is the distance distribution exactly Gaussian? (Empirically near-Gaussian, but no theoretical reason)" /></li>
+          <li><L zh="距离 = d 的状态数 N(d) 是否服从 logconcave 性质?" en="Is the count N(d) of states at distance d log-concave?" /></li>
+          <li><L zh="QTM 与 HTM 直径之比 26/20 = 1.3 是否是某个通用比率?" en="Is the QTM/HTM ratio 26/20 = 1.3 a universal constant?" /></li>
+        </ul>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="16.4  最佳算法之争" en="16.4  Which solver is best?" />
         </h3>
         <p>
           <L
-            zh={<>量子计算机能否在「亚指数时间」内解魔方? 这是「黑盒子群论」(black-box group theory) 与量子算法的接壤。已知 Shor 算法用于阿贝尔群 (整数因式分解); 非阿贝尔情形 (如魔方群) 的量子算法仍是开放领域 (Hidden Subgroup Problem 的特殊例子)。</>}
-            en={<>Can a quantum computer solve the cube in subexponential time? This sits at the intersection of black-box group theory and quantum algorithms. Shor's algorithm handles Abelian groups (integer factorization); the non-Abelian case (cube group included) remains the Hidden Subgroup Problem — a genuine frontier.</>}
+            zh={<>Thistlethwaite (1981) 和 Kociemba two-phase (1992) 都是 「子群链下降」 算法, 把状态空间切成查表层。 但还有几个截然不同的方法:</>}
+            en={<>Thistlethwaite (1981) and Kociemba's two-phase (1992) are subgroup-chain descent algorithms, slicing state space into lookup layers. But several entirely different approaches exist:</>}
           />
         </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>Korf's IDA*</strong> (1997) ── iterative deepening A* 直接在 Cayley 图上搜, 启发式来自三种 pattern database 的最大值。 第一个证明 「确实存在 20 步上界」 的算法。</>} en={<><strong>Korf's IDA*</strong> (1997) — iterative-deepening A* directly on the Cayley graph with three pattern-database heuristics. First algorithm shown to be provably optimal.</>} /></li>
+          <li><L zh={<><strong>Rokicki's symmetry-augmented BFS</strong> (2010) ── 利用 48 个对称把状态空间减半再做 BFS, 是证明 「上帝之数 = 20」 的算法。</>} en={<><strong>Rokicki's symmetry-augmented BFS</strong> (2010) — halves state space via the 48 cube symmetries before BFS, the algorithm used to prove God's number = 20.</>} /></li>
+          <li><L zh={<><strong>DeepCubeA</strong> (UCI, 2019) ── 学习 Q-function, 不保证最优但平均接近最优。</>} en={<><strong>DeepCubeA</strong> (UCI, 2019) — learns a Q-function; not provably optimal but consistently near-optimal in practice.</>} /></li>
+          <li><L zh={<><strong>min2phase / cube20.org</strong> ── 工业级 two-phase 实现, 平均 {'<'} 20 步, 速度比 IDA* 快几个数量级。</>} en={<><strong>min2phase / cube20.org</strong> — production-grade two-phase implementations, averaging well under 20 moves with constant-factor speedups.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>哪一种在 「平均最短解长度 + 算时间」 上 <em>帕累托最优</em>? 这跟 G 的具体结构 (生成集对称、 子群链可分性) 紧密耦合, 是个长期研究问题。</>}
+            en={<>Which method is <em>Pareto-optimal</em> in "average optimal length × runtime"? Tied tightly to G's structure (generator symmetry, subgroup-chain decomposability), this remains a long-running research question.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="16.5  量子算法?" en="16.5  Quantum algorithms?" />
+        </h3>
+        <p>
+          <L
+            zh={<>量子计算机能否在 「亚指数时间」 内解魔方? 这是 「<em>黑盒群论</em>」 (black-box group theory) 与量子算法的接壤。 已知 Shor 算法处理阿贝尔群 (整数因式分解, 离散对数); 非阿贝尔情形 ── <em>Hidden Subgroup Problem</em> (HSP) ── 仍是开放领域:</>}
+            en={<>Can a quantum computer solve the cube in subexponential time? This sits at the intersection of <em>black-box group theory</em> and quantum algorithms. Shor's algorithm handles Abelian groups (integer factorization, discrete log); the non-Abelian <em>Hidden Subgroup Problem</em> (HSP) — open:</>}
+          />
+        </p>
+        <TeXBlock src={`\\text{Given }f : G \\to S \\text{ constant on cosets of a hidden } H \\leq G,\\quad \\text{find } H.`} />
+        <p>
+          <L
+            zh={<>对 G 阿贝尔, 有 <TeX src={`O(\\mathrm{poly}\\log |G|)`} /> 量子算法; 对一般非阿贝尔 G, 已知次指数 (<TeX src={`2^{O(\\sqrt{\\log |G|})}`} />) 算法只对部分类型存在 (二面体群, 一些可分群)。 <strong>魔方群 G 是一个完美的非阿贝尔 HSP 测试对象</strong> ── 任何在 G 上的多项式量子算法都是重大突破。</>}
+            en={<>For Abelian G there is an <TeX src={`O(\\mathrm{poly}\\log |G|)`} /> quantum algorithm; for general non-Abelian G, subexponential <TeX src={`2^{O(\\sqrt{\\log |G|})}`} /> is known only for some classes (dihedral groups, certain solvable groups). <strong>The cube group is a perfect non-Abelian HSP testbed</strong> — any polynomial quantum algorithm on G would be a major breakthrough.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="16.6  随机游走的 cutoff 临界值" en="16.6  Random-walk cutoff threshold" />
+        </h3>
+        <p>
+          <L
+            zh={<>Diaconis (1980s) 提出 「<strong>cutoff 现象</strong>」: 对许多自然群上的随机游走, <TeX src={`d_{TV}(t)`} /> 在很长时间内接近 1, 然后在 <em>非常窄</em> 的 t 区间内突然降到接近 0 (§24)。 经典样本: Bayer–Diaconis (1992) 证明 52 张牌需要 <TeX src={`\\tfrac{3}{2} \\log_2 52 \\approx 8.5`} /> 次 riffle shuffle 才 「彻底打乱」。 对魔方:</>}
+            en={<>Diaconis (1980s) introduced the <strong>cutoff phenomenon</strong>: for many natural random walks on groups, <TeX src={`d_{TV}(t)`} /> sits near 1 for a long time and then drops sharply within a <em>narrow window</em> (§24). The classic example: Bayer–Diaconis (1992) proved 52 cards need <TeX src={`\\tfrac{3}{2} \\log_2 52 \\approx 8.5`} /> riffle shuffles to mix. For the cube:</>}
+          />
+        </p>
+        <TeXBlock src={`t_{\\mathrm{cutoff}}(G) \\;\\overset{?}{\\sim}\\; \\tfrac{1}{2} \\log_{|S|} |G| \\;\\approx\\; 22\\text{ HTM moves}`} />
+        <p>
+          <L
+            zh={<>下界 ~18 上界 ~30, 精确临界值未严格证明。 WCA 用 25-步 scramble 不是偶然 ── 它在 <em>估计的</em> cutoff 之上, 在 <em>已确认</em> God\'s number (20) 之上, 但不至于触及 known extremal。</>}
+            en={<>Lower bound ~18, upper ~30, exact threshold unproven. WCA's 25-move scramble is no accident — above the <em>estimated</em> cutoff, above the <em>proven</em> God's number (20), without hitting known extremal positions.</>}
+          />
+        </p>
+
+        <div className="gt-pullquote">
+          <L
+            zh={<>「魔方群的开放问题不是 『太难没人会』, 而是 『太具体没人能简化』。 算法、 几何、 表示论, 都遇到了 G 的具体结构。」</>}
+            en={<>"The cube's open problems are not 'too hard nobody knows'; they are 'too specific nobody has reduced'. Algorithms, geometry, representation theory all crash into G's concrete structure."</>}
+          />
+          <div className="gt-pullquote-cite">— Joyner & Frey, on group theory in the cube</div>
+        </div>
       </GTSec>
 
       {/* ═══════════════ §17 Homomorphisms ═══════════════════════════ */}
@@ -4279,6 +5528,56 @@ export default function GroupTheoryPage() {
           <L
             zh={<>每个同态对应一个「子任务」: 解魔方的方法之一就是依次解决每个投影, 让 image 变成单位元 — 这正是 Thistlethwaite/Kociemba 多阶段法的代数基础。</>}
             en={<>Each homomorphism corresponds to one "subtask": one way to solve the cube is to drive each image to the identity in turn — which is exactly the algebraic basis of the Thistlethwaite/Kociemba multi-phase solvers.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="17.5  同态画廊 — 4 张映射表" en="17.5  Homomorphism gallery" />
+        </h3>
+        <p>
+          <L
+            zh={<>把魔方上 4 个常用同态摆在一张表里, 看 kernel / image / index 的差异:</>}
+            en={<>Four standard cube homomorphisms in a single table, with kernel / image / index side by side:</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '同态' : 'Homomorphism'}</th><th>{lang === 'zh' ? '像' : 'Image'}</th><th>{lang === 'zh' ? '核' : 'Kernel'}</th><th>|ker|</th><th>[G : ker]</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><TeX src={`\\operatorname{sgn} : G \\to \\mathbb{Z}/2`} /></td><td><TeX src={`\\mathbb{Z}/2`} /></td><td><TeX src={`[G,G]`} /></td><td className="num">|G|/2</td><td className="num">2</td></tr>
+            <tr><td><TeX src={`\\pi_{\\text{corner}} : G \\to G_c`} /></td><td>{lang === 'zh' ? '2×2×2 群' : '2×2×2 group'}</td><td>{lang === 'zh' ? 'cp=co=identity 的部分' : 'cp = co = identity part'}</td><td className="num">≈ 1.18 × 10¹³</td><td className="num">3,674,160</td></tr>
+            <tr><td><TeX src={`\\pi_{\\text{edge}} : G \\to G_e`} /></td><td>{lang === 'zh' ? '12 棱块群' : '12-edge group'}</td><td>{lang === 'zh' ? 'ep=eo=identity 的部分' : 'ep = eo = identity part'}</td><td className="num">≈ 4.41 × 10⁷</td><td className="num">9.81 × 10¹¹</td></tr>
+            <tr><td><TeX src={`\\pi_{\\text{ori}} : G \\to (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /></td><td>{lang === 'zh' ? 'EO ⊕ CO 空间' : 'EO ⊕ CO space'}</td><td><TeX src={`G_1`} /> ({lang === 'zh' ? '朝向全 0 的子群' : 'orientation-zero subgroup'})</td><td className="num">|G|/2¹¹ = |G|/2048</td><td className="num">2¹¹ · 3⁷ = 4,478,976</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>三个 <TeX src={`\\pi_*`} /> 同态合在一起几乎能重建状态向量: 知道 cp/ep 加 co/eo, 就知道整个 g。但 「合体同态」 <TeX src={`G \\to G_c \\times G_e \\times (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /> 仍然不单射, 它的 kernel 包括所有「角块对角块独立 / 棱块对棱块独立」 但被三守恒律约束的状态。</>}
+            en={<>Together the three <TeX src={`\\pi_*`} /> homomorphisms almost reconstruct a state vector: knowing cp/ep, co/eo gives g. But the "combined" homomorphism <TeX src={`G \\to G_c \\times G_e \\times (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /> is still not injective; its kernel collects states where corners-vs-edges are "independent" yet bound by the three reachability laws.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="17.6  Schur–Zassenhaus 在魔方上" en="17.6  Schur–Zassenhaus on the cube" />
+        </h3>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 17.4 — Schur–Zassenhaus' : 'Theorem 17.4 — Schur–Zassenhaus'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src={`N \\triangleleft G`} /> 是有限群的正规子群, <TeX src={`\\gcd(|N|, |G/N|) = 1`} />。 则 G 可表为 <strong>半直积</strong> <TeX src={`G \\cong N \\rtimes (G/N)`} />, 即 G 内存在补群 <TeX src={`H \\subseteq G`} /> 使 <TeX src={`G = NH`} /> 且 <TeX src={`N \\cap H = \\{e\\}`} />。</>}
+              en={<>Let <TeX src={`N \\triangleleft G`} /> be a normal subgroup of a finite group with <TeX src={`\\gcd(|N|, |G/N|) = 1`} />. Then G splits as a <strong>semidirect product</strong> <TeX src={`G \\cong N \\rtimes (G/N)`} /> — i.e. G contains a complement <TeX src={`H \\subseteq G`} /> with <TeX src={`G = NH`} /> and <TeX src={`N \\cap H = \\{e\\}`} />.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>对魔方,关键的正规子群是 <TeX src={`N = (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /> (朝向核, ker π_pos 中 「只改朝向不改位置」 的部分)。<TeXBlock src={`|N| \\;=\\; 3^7 \\cdot 2^{11} \\;=\\; 4{,}478{,}976.`} /><TeX src={`|G/N| = |S_8 \\times S_{12}|/2 = 8! \\cdot 12!/2 \\approx 9.65 \\times 10^{15}`} />。验证: <TeX src={`\\gcd(4{,}478{,}976,\\; 9.65 \\times 10^{15})`} /> 含因子 <TeX src={`2`} /> 和 <TeX src={`3`} /> — <strong>不互素</strong>! 故 Schur–Zassenhaus 不直接给 「位置 vs 朝向」 的劈裂。</>}
+            en={<>For the cube, the natural normal subgroup is <TeX src={`N = (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /> (the orientation kernel — operations that change orientations but not positions).<TeXBlock src={`|N| \\;=\\; 3^7 \\cdot 2^{11} \\;=\\; 4{,}478{,}976.`} /><TeX src={`|G/N| = |S_8 \\times S_{12}|/2 \\approx 9.65 \\times 10^{15}`} />. Check <TeX src={`\\gcd(4{,}478{,}976,\\; 9.65 \\times 10^{15})`} />: it contains factors of <TeX src={`2`} /> and <TeX src={`3`} /> — they are <strong>not</strong> coprime! So Schur–Zassenhaus does not split G as "positions × orientations" directly.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>然而 N 的 「3-部分」 <TeX src={`N_3 = (\\mathbb{Z}/3)^7`} /> (阶 2187) 与 <TeX src={`G/N_3`} /> (阶 <TeX src={`|G|/2187 \\approx 1.98 \\times 10^{16}`} />) 互素: <TeX src={`|G/N_3|`} /> 只含 <TeX src={`2`} /> 与 prime factors 不是 3 (因为 |G/N| 不含 3 因子;待 verified by Sylow)。 实际上, Sylow-3 部分仅在 N_3 中, 故 <TeX src={`G \\cong N_3 \\rtimes (G/N_3)`} /> 成立。 这就是为什么 「先归朝向, 再归位置」 是一条合法分解 — Thistlethwaite/Kociemba 的多阶段框架本质上就是 Schur–Zassenhaus 给出的半直积分层。</>}
+            en={<>However, the "3-part" of N, namely <TeX src={`N_3 = (\\mathbb{Z}/3)^7`} /> (order 2187), <em>is</em> coprime to its complement: |G/N_3| has no factor of 3 (the 3-Sylow lives entirely in N_3). So <TeX src={`G \\cong N_3 \\rtimes (G/N_3)`} /> by Schur–Zassenhaus. This is exactly why "fix orientations first, then permutations" is an algebraically legitimate decomposition — the multi-phase framework of Thistlethwaite/Kociemba is, at heart, a Schur–Zassenhaus splitting.</>}
           />
         </p>
       </GTSec>
@@ -4420,6 +5719,65 @@ export default function GroupTheoryPage() {
             en={<>The theorem is both obvious and stunning on the cube: G embeds in the symmetric group on |G| = 4.3 × 10¹⁹ elements. But in practice, G fits into S₈ × S₁₂ (dimension 8! + 12!) — the much tighter "natural embedding" that justifies why the (cp, ep) state vector suffices to describe a group element.</>}
           />
         </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="18.6  Oₕ 共轭类与典型 Fix(g)" en="18.6  Conjugacy classes of Oₕ and typical Fix(g)" />
+        </h3>
+        <p>
+          <L
+            zh={<>外部对称群 <TeX src={`O_h`} /> (48 元) 作用在 G 上, 每个元素 g 的 <strong>不动点集</strong> <TeX src={`\\operatorname{Fix}(g) = \\{x \\in G : g \\cdot x = x\\}`} /> 大小取决于 g 所属共轭类。 10 个共轭类的典型 Fix(g):</>}
+            en={<>The 48-element <TeX src={`O_h`} /> acts on G; each <TeX src={`g \\in O_h`} />'s <strong>fixed-point set</strong> <TeX src={`\\operatorname{Fix}(g)`} /> depends on its conjugacy class. Typical values across the 10 classes:</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '类' : 'Class'}</th><th>{lang === 'zh' ? '元素数' : 'Size'}</th><th>{lang === 'zh' ? '描述' : 'Description'}</th><th>|Fix(g)|</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>e</td><td className="num">1</td><td>{lang === 'zh' ? '恒等' : 'identity'}</td><td className="num">|G| = 4.33 × 10¹⁹</td></tr>
+            <tr><td><TeX src={`C_4`} /></td><td className="num">6</td><td>{lang === 'zh' ? '90° 面轴旋转' : '90° face-axis rotation'}</td><td className="num">≈ √|G| ≈ 6.6 × 10⁹</td></tr>
+            <tr><td><TeX src={`C_4^2 = C_2`} /></td><td className="num">3</td><td>{lang === 'zh' ? '180° 面轴' : '180° face-axis'}</td><td className="num">≈ |G|^{`{1/2}`} · 倍数</td></tr>
+            <tr><td><TeX src={`C_3`} /></td><td className="num">8</td><td>{lang === 'zh' ? '120° 体对角线' : '120° body-diagonal'}</td><td className="num">≈ |G|^{`{1/3}`} ≈ 3.5 × 10⁶</td></tr>
+            <tr><td><TeX src={`C_2'`} /></td><td className="num">6</td><td>{lang === 'zh' ? '180° 棱中点轴' : '180° edge-midpoint axis'}</td><td className="num">≈ 9.3 × 10⁹</td></tr>
+            <tr><td>i</td><td className="num">1</td><td>{lang === 'zh' ? '中心反演' : 'inversion through centre'}</td><td className="num">≈ 10¹⁰</td></tr>
+            <tr><td><TeX src={`S_6, S_4, \\sigma_h, \\sigma_d`} /></td><td className="num">23</td><td>{lang === 'zh' ? '改进 / 镜像 / 旋反' : 'improper / mirror / rotoreflection'}</td><td className="num">{lang === 'zh' ? '各类 10⁶–10¹⁰ 量级' : 'class-dependent, 10⁶–10¹⁰ each'}</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>典型 「k-fold 对称」 给出 <TeX src={`|\\operatorname{Fix}(g)| \\sim |G|^{1/k}`} /> 量级 (因为 k-fold 对称要求 (cp, co, ep, eo) 各自落在自己的 k-轨道 fixed locus)。 这是 Cauchy–Frobenius / Burnside 引理在魔方上的实际数值表现。</>}
+            en={<>A typical "k-fold symmetric" element gives <TeX src={`|\\operatorname{Fix}(g)| \\sim |G|^{1/k}`} /> (because k-fold symmetry pins each of cp, co, ep, eo onto its own k-orbit fixed locus). This is the practical numerical form of the Cauchy–Frobenius / Burnside count applied to the cube.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
+          <L zh="18.7  Pólya 计数 — 6-色立方体染色 = 30" en="18.7  Pólya enumeration — 30 distinct 6-coloured cubes" />
+        </h3>
+        <p>
+          <L
+            zh={<>经典 Pólya 应用: 「用 6 种颜色 给立方体 6 个面染色, 共有多少种本质不同的方式 (考虑 24 个旋转对称)?」 用 Burnside:</>}
+            en={<>The classic Pólya example: "how many essentially different ways to colour the 6 faces of a cube with 6 colours, modulo 24 rotations?" By Burnside:</>}
+          />
+        </p>
+        <TeXBlock src={`\\#\\,\\text{colourings} \\;=\\; \\frac{1}{24} \\sum_{g \\in \\text{Rot}(\\text{cube})} 6^{\\,\\text{cycles}(g)}`} />
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '旋转类' : 'Rotation class'}</th><th>{lang === 'zh' ? '元素数' : 'Count'}</th><th>{lang === 'zh' ? '面上循环数' : '#cycles on faces'}</th><th><TeX src={`6^{\\#\\text{cycles}}`} /></th><th>{lang === 'zh' ? '贡献' : 'Contribution'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>e</td><td className="num">1</td><td className="num">6</td><td className="num">46,656</td><td className="num">46,656</td></tr>
+            <tr><td><TeX src={`C_4`} /> (90°)</td><td className="num">6</td><td className="num">3</td><td className="num">216</td><td className="num">1,296</td></tr>
+            <tr><td><TeX src={`C_2`} /> (180°)</td><td className="num">3</td><td className="num">4</td><td className="num">1,296</td><td className="num">3,888</td></tr>
+            <tr><td><TeX src={`C_3`} /></td><td className="num">8</td><td className="num">2</td><td className="num">36</td><td className="num">288</td></tr>
+            <tr><td><TeX src={`C_2'`} /></td><td className="num">6</td><td className="num">3</td><td className="num">216</td><td className="num">1,296</td></tr>
+            <tr><td>{lang === 'zh' ? '求和' : 'Sum'}</td><td colSpan={3} className="num"><TeX src={`\\sum`} /></td><td className="num"><strong>53,424</strong></td></tr>
+          </tbody>
+        </table>
+        <TeXBlock src={`\\#\\,\\text{colourings} \\;=\\; \\frac{53{,}424}{24} \\;=\\; 2{,}226. \\quad \\text{(With exactly 6 distinct colours: } 6! / 24 = 30.\\text{)}`} />
+        <p>
+          <L
+            zh={<>用「6 个面各取 6 种颜色一次」(即恰好每色用 1 次) 时, 结果是 <TeX src={`6!/24 = 30`} />。 这是经典魔方背后的 「30 个本质不同的着色立方体」 — 但 Erno Rubik 在 1974 年只想用 1 个特定着色, 然后让面块可以重排 (这才是 4.3 × 10¹⁹)。 两种 「数法」 数学上同源 (Burnside), 数量级差 18 个数量级。</>}
+            en={<>For "exactly 6 distinct colours, one per face," the answer is <TeX src={`6!/24 = 30`} />. These are the 30 essentially distinct coloured cubes — but Erno Rubik (1974) used a single fixed colouring and let the stickers move around, giving 4.3 × 10¹⁹. Both counts are Burnside-style, separated by 18 orders of magnitude.</>}
+          />
+        </p>
       </GTSec>
 
       {/* ═══════════════ §19 Lagrange + cosets ═══════════════════════ */}
@@ -4486,6 +5844,117 @@ export default function GroupTheoryPage() {
           <L
             zh={<>注意拉格朗日定理是 <strong>必要不充分</strong> 的: 整除并不蕴含「存在该阶的子群」。 例如 A₄ (12 阶) 没有阶 6 的子群,虽然 6 | 12。 充分性需要的额外条件由 <strong>Sylow 定理</strong> 给出。</>}
             en={<>Lagrange is <strong>necessary but not sufficient</strong>: divisibility doesn't guarantee a subgroup of that order exists. For example, A₄ (order 12) has no subgroup of order 6, even though 6 | 12. The sufficient direction requires <strong>Sylow's theorems</strong>.</>}
+          />
+        </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="19.4  Cauchy 定理 — 拉格朗日的部分逆" en="19.4  Cauchy's theorem — partial converse to Lagrange" />
+        </h3>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 19.4 — Cauchy (1845)' : 'Theorem 19.4 — Cauchy (1845)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>若 <strong>素数</strong> <TeX src={`p`} /> 整除 <TeX src={`|G|`} />,则 G 中存在阶 <em>恰好</em> 为 <TeX src={`p`} /> 的元素 (从而存在阶 p 的子群 <TeX src={`\\langle g \\rangle`} />)。</>}
+              en={<>If a <strong>prime</strong> <TeX src={`p`} /> divides <TeX src={`|G|`} />, then G contains an element of order <em>exactly</em> <TeX src={`p`} /> (hence a subgroup of order p, namely <TeX src={`\\langle g \\rangle`} />).</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>魔方上,|G| 的素因子是 <TeX src={`\\{\\,2,\\,3,\\,5,\\,7,\\,11\\,\\}`} />。 Cauchy 保证 G 中存在阶恰好 2, 3, 5, 7, 11 的元素:</>}
+            en={<>For the cube, the prime divisors of |G| are <TeX src={`\\{\\,2,\\,3,\\,5,\\,7,\\,11\\,\\}`} />. Cauchy guarantees that G contains elements of order exactly 2, 3, 5, 7, 11:</>}
+          />
+        </p>
+        <table className="gt-cauchy-tbl">
+          <thead>
+            <tr>
+              <th>p</th>
+              <th>{lang === 'zh' ? '阶 p 的元素 (示例)' : 'element of order p (example)'}</th>
+              <th>{lang === 'zh' ? '解释' : 'why'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="num">2</td>
+              <td><span className="gt-mono">U<sup>2</sup></span></td>
+              <td><L zh="任一半圈" en="any half-turn" /></td>
+            </tr>
+            <tr>
+              <td className="num">3</td>
+              <td><span className="gt-mono">U</span></td>
+              <td><L zh="四分之一圈,阶 4 = 2² ≠ 3。 真正阶 3:[R, U][R, U]" en="quarter-turn has order 4 = 2². For order 3: a corner-3-cycle, e.g. [R, U] applied twice." /></td>
+            </tr>
+            <tr>
+              <td className="num">5</td>
+              <td><span className="gt-mono">R U R' U R U<sup>2</sup> R'</span><L zh="(部分变体)" en=" (Sune variant)" /></td>
+              <td><L zh="角块 3 旋转构成 5-循环时" en="a permutation containing a 5-cycle in the corner or edge sector" /></td>
+            </tr>
+            <tr>
+              <td className="num">7</td>
+              <td><L zh="任何含 7-循环的状态" en="any state with a 7-cycle"/></td>
+              <td><L zh="如 7 棱构成单循环" en="e.g. a single 7-cycle on edges"/></td>
+            </tr>
+            <tr>
+              <td className="num">11</td>
+              <td><L zh="11-循环 (角或棱)" en="an 11-cycle (corner or edge sector)" /></td>
+              <td><L zh="11 整除 12!,所以 S₁₂ 含 11-循环" en="11 divides 12!, so S₁₂ contains 11-cycles" /></td>
+            </tr>
+          </tbody>
+        </table>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="19.5  Sylow 定理 — Cauchy 的强化" en="19.5  Sylow theorems — Cauchy's full strengthening" />
+        </h3>
+        <p>
+          <L
+            zh={<>拉格朗日定理只给「必要」 条件; Cauchy 给出素数阶的「存在性」; <strong>Sylow 定理</strong> (1872) 给出 <em>所有素数幂阶</em> 子群的精确刻画。 写 <TeX src={`|G| = p^a \\cdot m`} />,其中 <TeX src={`\\gcd(p, m) = 1`} />。</>}
+            en={<>Lagrange gives only necessity; Cauchy provides existence at prime order; <strong>Sylow's theorems</strong> (1872) precisely describe <em>all prime-power-order subgroups</em>. Write <TeX src={`|G| = p^a \\cdot m`} /> with <TeX src={`\\gcd(p, m) = 1`} />.</>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 19.5 — Sylow p-子群' : 'Definition 19.5 — Sylow p-subgroup'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>子群 <TeX src={`P \\subseteq G`} /> 的阶恰为 <TeX src={`p^a`} /> (即 |G| 中 p 的最高次幂) 时, 称 P 为 G 的 <strong>Sylow p-子群</strong>。 记 <TeX src={`n_p`} /> 为 G 中 Sylow p-子群的个数。</>}
+              en={<>A subgroup <TeX src={`P \\subseteq G`} /> with order exactly <TeX src={`p^a`} /> (the maximal p-power dividing |G|) is called a <strong>Sylow p-subgroup</strong> of G. Let <TeX src={`n_p`} /> denote the number of Sylow p-subgroups.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 19.6 — Sylow 三条' : 'Theorem 19.6 — the three Sylow theorems'}</div>
+          <div className="gt-thm-body">
+            <ol style={{ paddingLeft: 22, lineHeight: 1.95, margin: 0 }}>
+              <li><L zh={<><strong>存在</strong>: G 至少含有一个 Sylow p-子群 (即 <TeX src={`n_p \\ge 1`} />)。</>} en={<><strong>Existence</strong>: G has at least one Sylow p-subgroup (so <TeX src={`n_p \\ge 1`} />).</>} /></li>
+              <li><L zh={<><strong>共轭</strong>: 任意两个 Sylow p-子群在 G 中共轭, 因而相互同构。 G 的任一阶为 p 的幂的子群都包含在某个 Sylow p-子群里。</>} en={<><strong>Conjugacy</strong>: any two Sylow p-subgroups of G are conjugate (hence isomorphic). Every subgroup of G of p-power order is contained in some Sylow p-subgroup.</>} /></li>
+              <li><L zh={<><strong>计数</strong>: <TeX src={`n_p \\,\\bigm|\\, m`} /> 且 <TeX src={`n_p \\equiv 1 \\pmod{p}`} />。</>} en={<><strong>Counting</strong>: <TeX src={`n_p \\,\\bigm|\\, m`} /> and <TeX src={`n_p \\equiv 1 \\pmod{p}`} />.</>} /></li>
+            </ol>
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>魔方上 |G| = 2<sup>27</sup> · 3<sup>14</sup> · 5<sup>3</sup> · 7<sup>2</sup> · 11。 Sylow p-子群的阶分别是:</>}
+            en={<>For the cube, |G| = 2<sup>27</sup> · 3<sup>14</sup> · 5<sup>3</sup> · 7<sup>2</sup> · 11. Sylow subgroup orders are:</>}
+          />
+        </p>
+        <table className="gt-sylow-tbl">
+          <thead>
+            <tr>
+              <th>p</th>
+              <th>{lang === 'zh' ? 'Sylow 阶' : 'Sylow order'}</th>
+              <th>{lang === 'zh' ? '十进制' : 'decimal'}</th>
+              <th>{lang === 'zh' ? 'm = |G|/p^a' : 'm = |G|/p^a'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="num">2</td><td className="num">2<sup>27</sup></td><td className="num">134,217,728</td><td className="num">3<sup>14</sup> · 5<sup>3</sup> · 7<sup>2</sup> · 11</td></tr>
+            <tr><td className="num">3</td><td className="num">3<sup>14</sup></td><td className="num">4,782,969</td><td className="num">2<sup>27</sup> · 5<sup>3</sup> · 7<sup>2</sup> · 11</td></tr>
+            <tr><td className="num">5</td><td className="num">5<sup>3</sup></td><td className="num">125</td><td className="num">2<sup>27</sup> · 3<sup>14</sup> · 7<sup>2</sup> · 11</td></tr>
+            <tr><td className="num">7</td><td className="num">7<sup>2</sup></td><td className="num">49</td><td className="num">2<sup>27</sup> · 3<sup>14</sup> · 5<sup>3</sup> · 11</td></tr>
+            <tr><td className="num">11</td><td className="num">11</td><td className="num">11</td><td className="num">2<sup>27</sup> · 3<sup>14</sup> · 5<sup>3</sup> · 7<sup>2</sup></td></tr>
+          </tbody>
+        </table>
+        <div className="gt-aside" style={{ marginTop: 14 }}>
+          <L
+            zh={<>魔方的 Sylow 2-子群 (阶 ~1.3 亿) 是最大的, 反映 G 中 「翻转 / 半圈 / 偶奇」 这些 2-周期结构占据了大量自由度。 Sylow 11-子群只有 11 个元素, 但根据定理 19.6 第三条, <TeX src={`n_{11} \\equiv 1 \\pmod{11}`} /> 且 <TeX src={`n_{11} \\,\\bigm|\\, 2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2`} />, 把可能的 <TeX src={`n_{11}`} /> 限制到一个非常小的数集。</>}
+            en={<>The cube's Sylow 2-subgroup (order ~1.3 × 10<sup>8</sup>) is by far the largest, reflecting that G is dominated by 2-periodic structure (flips, half-turns, parity). The Sylow 11-subgroup has only 11 elements; by 19.6.3, <TeX src={`n_{11} \\equiv 1 \\pmod{11}`} /> and <TeX src={`n_{11} \\,\\bigm|\\, 2^{27} \\cdot 3^{14} \\cdot 5^3 \\cdot 7^2`} />, which severely restricts the possible counts.</>}
           />
         </div>
       </GTSec>
@@ -4574,6 +6043,61 @@ export default function GroupTheoryPage() {
             en={<>For the cube group, the simple factors are<TeXBlock src={`A_8 \\;\\times\\; A_{12} \\;\\times\\; (\\mathbb{Z}/2)^4 \\;\\times\\; (\\mathbb{Z}/3)^7`} />— essentially a restatement of the structure theorem from §6. A₈ and A₁₂ are members of an infinite family of <em>non-Abelian finite simple groups</em>.</>}
           />
         </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="20.5  第二与第三同构定理" en="20.5  Second & third isomorphism theorems" />
+        </h3>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 20.4 — 第二同构 (钻石定理)' : 'Theorem 20.4 — Second isomorphism (diamond)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src={`H \\le G`} />, <TeX src={`N \\triangleleft G`} />。 则 <TeX src={`HN`} /> 是 G 的子群,<TeX src={`H \\cap N \\triangleleft H`} />,且<TeXBlock src={`(HN)/N \\;\\cong\\; H/(H \\cap N).`} />常画成钻石格 (lattice):四个顶点 <TeX src={`HN,\\,H,\\,N,\\,H\\cap N`} />,两条对角对应的商相同。</>}
+              en={<>Let <TeX src={`H \\le G`} />, <TeX src={`N \\triangleleft G`} />. Then <TeX src={`HN`} /> is a subgroup of G, <TeX src={`H \\cap N \\triangleleft H`} />, and<TeXBlock src={`(HN)/N \\;\\cong\\; H/(H \\cap N).`} />Drawn as a diamond lattice (vertices <TeX src={`HN,\\,H,\\,N,\\,H\\cap N`} />), the two diagonals give isomorphic quotients.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 20.5 — 第三同构 (商的商)' : 'Theorem 20.5 — Third isomorphism (quotient of a quotient)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src={`K \\triangleleft N \\triangleleft G`} /> (K 也是 G 正规)。 则<TeXBlock src={`(G/K) \\;\\big/\\; (N/K) \\;\\cong\\; G/N.`} />「先商 K 再商 (N/K),等于直接商 N。」</>}
+              en={<>Let <TeX src={`K \\triangleleft N \\triangleleft G`} /> (K also normal in G). Then<TeXBlock src={`(G/K) \\;\\big/\\; (N/K) \\;\\cong\\; G/N.`} />"Quotient by K, then by N/K, equals quotient by N."</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>魔方上一个干净的应用:取 <TeX src={`H = \\langle U, D\\rangle`} /> (只允许 U、 D 转的所有状态), <TeX src={`N = [G,G]`} /> (偶 parity 状态)。 那么 <TeX src={`HN`} /> 是 「所有 ⟨U,D⟩ 加偶 parity」 状态;由第二同构定理</>}
+            en={<>A clean cube application: take <TeX src={`H = \\langle U, D\\rangle`} /> (states reachable using only U and D), and <TeX src={`N = [G,G]`} /> (states of even parity). Then <TeX src={`HN`} /> consists of all "⟨U,D⟩-states with arbitrary parity adjust," and by the second isomorphism theorem</>}
+          />
+        </p>
+        <TeXBlock src={`(HN)/[G,G] \\;\\cong\\; \\langle U,D\\rangle / \\bigl(\\langle U,D\\rangle \\cap [G,G]\\bigr).`} />
+        <p>
+          <L
+            zh={<>右边的指数 [⟨U,D⟩ : ⟨U,D⟩ ∩ [G,G]] = 2,因为 U 和 D 各自是奇置换。 所以 HN 在 [G,G] 上恰好分两个陪集 —— 这给一个 「以 ⟨U,D⟩ 为基的奇偶检测」 直接证明。</>}
+            en={<>The right-hand index [⟨U,D⟩ : ⟨U,D⟩ ∩ [G,G]] = 2, because each of U and D is itself an odd permutation. So HN partitions over [G,G] into exactly two cosets — a direct proof of the "⟨U,D⟩-based parity detector" used in many BLD methods.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 20.6 — Lattice (对应) 定理' : 'Theorem 20.6 — Correspondence (lattice) theorem'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src={`N \\triangleleft G`} />,记 <TeX src={`\\pi : G \\twoheadrightarrow G/N`} /> 为自然投影。 则 <TeX src={`\\pi`} /> 在<strong>包含 N 的子群</strong>和 <TeX src={`G/N`} /> 的<strong>所有子群</strong>之间建立 <em>保序双射</em>:<TeXBlock src={`\\{\\,H \\;:\\; N \\le H \\le G\\,\\} \\;\\overset{\\sim}{\\longleftrightarrow}\\; \\{\\,\\bar{H} \\le G/N\\,\\}.`} />正规子群对应正规子群,指数保持。</>}
+              en={<>Let <TeX src={`N \\triangleleft G`} />, <TeX src={`\\pi : G \\twoheadrightarrow G/N`} /> the natural projection. Then <TeX src={`\\pi`} /> gives an <em>order-preserving bijection</em> between <strong>subgroups of G containing N</strong> and <strong>all subgroups of G/N</strong>:<TeXBlock src={`\\{\\,H \\;:\\; N \\le H \\le G\\,\\} \\;\\overset{\\sim}{\\longleftrightarrow}\\; \\{\\,\\bar{H} \\le G/N\\,\\}.`} />Normal subgroups correspond to normal subgroups; indices are preserved.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>魔方上的应用:取 <TeX src={`N = [G,G]`} />, <TeX src={`G/N \\cong \\mathbb{Z}/2`} />。 ℤ/2 只有两个子群 ({'{e}'} 和它自己),所以包含 [G,G] 的 G 子群恰好两个:[G,G] 本身,和 G。 这就明确告诉我们 「介于 [G,G] 和 G 之间没有任何中间子群」 — G 在 sgn 这一比特上是 「不可细分」 的。</>}
+            en={<>Application on the cube: with <TeX src={`N = [G,G]`} />, <TeX src={`G/N \\cong \\mathbb{Z}/2`} />. ℤ/2 has only two subgroups ({'{e}'} and itself), so there are exactly two subgroups of G containing [G,G]: namely [G,G] and G. This precisely says "no intermediate subgroup sits strictly between [G,G] and G" — the sgn bit is indivisible.</>}
+          />
+        </p>
+        <div className="gt-aside" style={{ marginTop: 16 }}>
+          <L
+            zh={<>四个同构定理 (第一、 第二、 第三、 lattice) 把 「同态 ↔ 正规子群 ↔ 商群 ↔ 子群格」 全部钉在一张图上。 这是抽象代数最浓缩的诗:每一条都说 「商」 这个看似抽象的操作其实只是 「换语言看同一个对象」。</>}
+            en={<>The four isomorphism theorems (first, second, third, lattice) lock "homomorphisms ↔ normal subgroups ↔ quotients ↔ subgroup lattice" together into a single diagram. The densest verse in abstract algebra: every line says that "taking a quotient" is just "re-naming the same object."</>}
+          />
+        </div>
       </GTSec>
 
       {/* ═══════════════ §21 Sn and An ═══════════════════════ */}
@@ -4670,6 +6194,102 @@ export default function GroupTheoryPage() {
           <L
             zh={<>对魔方,这是「显然且无用」的:抽象上 <TeX src={`G \\hookrightarrow S_{|G|} = S_{4.3 \\times 10^{19}}`} />,维度比 G 大无穷倍。 实际上 G 嵌入 <TeX src={`S_{48}`} /> (48 个贴纸的置换),这是 <strong>低维表示</strong>。 一般「群在它本身上的左作用」是凯莱定理的灵感来源,但魔方提醒我们 <em>低维忠实表示</em> 才是真正有用的。</>}
             en={<>For the cube this is "obvious and useless": abstractly <TeX src={`G \\hookrightarrow S_{|G|} = S_{4.3 \\times 10^{19}}`} />, which is astronomically large. In practice G embeds into <TeX src={`S_{48}`} /> (permutations of 48 stickers), a much <strong>lower-dimensional representation</strong>. Cayley's theorem inspires the idea; finding minimal faithful representations is the real game.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="21.4  共轭类 ↔ 分拆 — Sₙ 的「形状字母表」" en="21.4  Conjugacy classes ↔ partitions — the shape alphabet of Sₙ" />
+        </h3>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 21.5 — Sₙ 的共轭类' : 'Theorem 21.5 — conjugacy classes of Sₙ'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<><TeX src={`S_n`} /> 的两个置换共轭 <em>当且仅当</em> 它们有相同的不交圈型 (cycle type)。 共轭类 ↔ <TeX src={`n`} /> 的 <strong>整数分拆</strong> 一一对应。 一个置换 <TeX src={`\\sigma`} /> 的圈型为 <TeX src={`1^{m_1} 2^{m_2} \\cdots n^{m_n}`} /> 时,它所在共轭类大小为<TeXBlock src={`|[\\sigma]| \\;=\\; \\frac{n!}{\\prod_{k} k^{m_k} \\cdot m_k!}.`} /></>}
+              en={<>Two permutations in <TeX src={`S_n`} /> are conjugate <em>iff</em> they share the same disjoint cycle type. Conjugacy classes ↔ <strong>integer partitions</strong> of <TeX src={`n`} /> in one-to-one correspondence. For a permutation with cycle type <TeX src={`1^{m_1} 2^{m_2} \\cdots n^{m_n}`} />, its conjugacy-class size is<TeXBlock src={`|[\\sigma]| \\;=\\; \\frac{n!}{\\prod_{k} k^{m_k} \\cdot m_k!}.`} /></>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>例: <TeX src={`S_8`} /> (角块)。 整数 8 的分拆数 <TeX src={`p(8) = 22`} />,所以 <TeX src={`S_8`} /> 恰有 <strong>22 个共轭类</strong>。 其中最大一类是 「8-循环」 (cycle type = (8)):<TeX src={`|[\\sigma]| = 8!/8 = 5040`} />,占 8! = 40320 的 1/8。</>}
+            en={<>Example: <TeX src={`S_8`} /> (corner permutations). The number of partitions <TeX src={`p(8) = 22`} />, so <TeX src={`S_8`} /> has exactly <strong>22 conjugacy classes</strong>. The biggest is the 8-cycle class (cycle type (8)): <TeX src={`|[\\sigma]| = 8!/8 = 5040`} />, accounting for 1/8 of 8! = 40320.</>}
+          />
+        </p>
+        <table className="gt-partition-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '分拆' : 'partition'}</th>
+              <th>{lang === 'zh' ? '圈型' : 'cycle type'}</th>
+              <th>{lang === 'zh' ? '类大小' : 'class size'}</th>
+              <th>{lang === 'zh' ? 'sgn' : 'sgn'}</th>
+              <th>{lang === 'zh' ? 'order' : 'order'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>8</td><td>(a b c d e f g h)</td><td className="num">5,040</td><td className="num">−</td><td className="num">8</td></tr>
+            <tr><td>7 + 1</td><td>(a b c d e f g)(h)</td><td className="num">5,760</td><td className="num">+</td><td className="num">7</td></tr>
+            <tr><td>6 + 2</td><td>(6)(2)</td><td className="num">3,360</td><td className="num">−</td><td className="num">6</td></tr>
+            <tr><td>5 + 3</td><td>(5)(3)</td><td className="num">2,688</td><td className="num">+</td><td className="num">15</td></tr>
+            <tr><td>4 + 4</td><td>(4)(4)</td><td className="num">1,260</td><td className="num">+</td><td className="num">4</td></tr>
+            <tr><td>3 + 3 + 2</td><td>(3)(3)(2)</td><td className="num">1,120</td><td className="num">−</td><td className="num">6</td></tr>
+            <tr><td>2 + 2 + 2 + 2</td><td>(2)<sup>4</sup></td><td className="num">105</td><td className="num">+</td><td className="num">2</td></tr>
+            <tr><td>1<sup>8</sup></td><td>(1)<sup>8</sup> {lang === 'zh' ? '(单位元)' : '(identity)'}</td><td className="num">1</td><td className="num">+</td><td className="num">1</td></tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 14 }}>
+          <L
+            zh={<>校验: Σ 类大小 = 40320 = 8! ✓ (实际上要把全 22 个分拆都算上)。 sgn 由圈数决定: 偶置换 = 偶数个偶长圈; 奇置换 = 奇数个偶长圈。 这也解释为什么 <TeX src={`A_8`} /> 取的是「圈数 + n 偶」一半的类: 当 n = 8 时, 22 个共轭类里恰 13 个属于 <TeX src={`A_8`} /> (有些类在 <TeX src={`A_8`} /> 中会进一步分裂为两个 <TeX src={`A_8`} />-共轭类)。</>}
+            en={<>Sanity check: Σ class sizes = 40320 = 8! ✓ (across all 22 partitions). The sgn is determined by the number of even-length cycles: even permutation = even count; odd = odd count. This also explains how <TeX src={`A_8`} /> selects half of these classes: of the 22 in <TeX src={`S_8`} />, exactly 13 sit in <TeX src={`A_8`} /> (some split into two <TeX src={`A_8`} />-conjugacy classes).</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="21.5  Aₙ 的反例:n = 4 时 A₄ 不单" en="21.5  Counterexample: A₄ is not simple" />
+        </h3>
+        <p>
+          <L
+            zh={<>Galois 定理 21.3 要求 <TeX src={`n \\ge 5`} />。 <strong><TeX src={`n = 4`} /> 时 <TeX src={`A_4`} /> 不单</strong>:它有一个非平凡正规子群,著名的 <strong>Klein 四群</strong><TeXBlock src={`V_4 \\;=\\; \\{\\,e,\\;(12)(34),\\;(13)(24),\\;(14)(23)\\,\\} \\;\\triangleleft\\; A_4.`} />V₄ 由所有 「两两对换乘积」 构成,阶 4。 共轭闭包: 三个非恒元都属于同一个共轭类 (类型 (2,2)),所以 V₄ 在 <TeX src={`A_4`} /> 下保持不变。</>}
+            en={<>Galois's theorem 21.3 requires <TeX src={`n \\ge 5`} />. <strong>For <TeX src={`n = 4`} />, <TeX src={`A_4`} /> is not simple</strong>: it has a non-trivial normal subgroup, the celebrated <strong>Klein four-group</strong><TeXBlock src={`V_4 \\;=\\; \\{\\,e,\\;(12)(34),\\;(13)(24),\\;(14)(23)\\,\\} \\;\\triangleleft\\; A_4.`} />V₄ contains all "products of two disjoint transpositions," has order 4. All three non-identity elements form one conjugacy class (type (2,2)), so V₄ is closed under <TeX src={`A_4`} />-conjugation.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>商 <TeX src={`A_4 / V_4 \\cong \\mathbb{Z}/3`} />。 这是为什么 「4 个未知数的方程」 (四次方程) 仍有根式解 — 它的 Galois 群 <TeX src={`S_4`} /> 的合成列<TeXBlock src={`S_4 \\triangleright A_4 \\triangleright V_4 \\triangleright \\langle (12)(34)\\rangle \\triangleright \\{e\\}`} />每一个商都是循环群 (ℤ/2, ℤ/3, ℤ/2, ℤ/2) — 这正是 「可解群」 的定义。 而 <TeX src={`n \\ge 5`} /> 时 <TeX src={`A_n`} /> 单, 不可继续分解, <TeX src={`S_n`} /> 因此不可解 — 高次方程没有根式解的代数证据。</>}
+            en={<>The quotient <TeX src={`A_4 / V_4 \\cong \\mathbb{Z}/3`} />. This is why quartic equations still have radical solutions — the Galois group <TeX src={`S_4`} /> has composition series<TeXBlock src={`S_4 \\triangleright A_4 \\triangleright V_4 \\triangleright \\langle (12)(34)\\rangle \\triangleright \\{e\\}`} />with all factors cyclic (ℤ/2, ℤ/3, ℤ/2, ℤ/2) — by definition <em>solvable</em>. For <TeX src={`n \\ge 5`} />, <TeX src={`A_n`} /> is simple and cannot be broken down further, so <TeX src={`S_n`} /> is <em>not</em> solvable — the algebraic obstruction to radical solutions of higher-degree equations.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="21.6  Sₙ 的生成元 — 转置一对相邻元素就够" en="21.6  Generators of Sₙ — adjacent transpositions suffice" />
+        </h3>
+        <p>
+          <L
+            zh={<>对 <TeX src={`S_n`} />, 三组最常见的生成集合:</>}
+            en={<>Three commonly used generating sets for <TeX src={`S_n`} />:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>所有对换</strong> <TeX src={`\\{(i,j) : 1 \\le i < j \\le n\\}`} />: 共 <TeX src={`\\binom{n}{2}`} /> 个。 任意置换可写成对换的乘积。</>} en={<><strong>All transpositions</strong> <TeX src={`\\{(i,j) : 1 \\le i < j \\le n\\}`} />: total <TeX src={`\\binom{n}{2}`} />. Every permutation factors as a product of transpositions.</>} /></li>
+          <li><L zh={<><strong>相邻对换</strong> <TeX src={`\\{(i, i+1) : 1 \\le i < n\\}`} />: 仅 <TeX src={`n-1`} /> 个。 这给出 <TeX src={`S_n`} /> 的「冒泡排序」 视角 — 它满足 <TeX src={`s_i s_{i+1} s_i = s_{i+1} s_i s_{i+1}`} /> (Yang–Baxter / 编织关系) 和 <TeX src={`s_i^2 = e`} />, <TeX src={`s_i s_j = s_j s_i`} /> (<TeX src={`|i-j| \\ge 2`} />)。</>} en={<><strong>Adjacent transpositions</strong> <TeX src={`\\{(i, i+1) : 1 \\le i < n\\}`} />: just <TeX src={`n-1`} />. Yields the "bubble sort" view of <TeX src={`S_n`} />, satisfying braid relations <TeX src={`s_i s_{i+1} s_i = s_{i+1} s_i s_{i+1}`} />, <TeX src={`s_i^2 = e`} />, and <TeX src={`s_i s_j = s_j s_i`} /> for <TeX src={`|i-j| \\ge 2`} />.</>} /></li>
+          <li><L zh={<><strong>一个对换 + 一个 n-循环</strong>: <TeX src={`\\{(1,2),\\,(1,2,3,\\ldots,n)\\}`} /> 共 <em>2 个元素</em> 就生成 <TeX src={`S_n`} />。 对 <TeX src={`A_n`} /> (<TeX src={`n \\ge 3`} />),<TeX src={`\\{(1,2,3),\\,(1,2,\\ldots,n)\\}`} /> 类似只需 2 个。</>} en={<><strong>One transposition + one n-cycle</strong>: just <em>2 elements</em>, namely <TeX src={`\\{(1,2),\\,(1,2,3,\\ldots,n)\\}`} />, generate <TeX src={`S_n`} />. For <TeX src={`A_n`} /> (<TeX src={`n \\ge 3`} />), the pair <TeX src={`\\{(1,2,3),\\,(1,2,\\ldots,n)\\}`} /> similarly suffices.</>} /></li>
+        </ul>
+        <div className="gt-aside" style={{ marginTop: 16 }}>
+          <L
+            zh={<>「相邻对换 + 编织关系」 这套描述把 <TeX src={`S_n`} /> 跟拓扑里的 <strong>编织群</strong> <TeX src={`B_n`} /> 连起来:抛掉 <TeX src={`s_i^2 = e`} /> 这一条关系,就从 <TeX src={`S_n`} /> 升到 <TeX src={`B_n`} />。 编织群是无限群,跟扭结理论、 量子计算 (拓扑量子位) 紧密相关。 魔方在 「相邻面转」 关系下也有类似的 「半编织」 结构 — 但是有限的、 受守恒律约束的。</>}
+            en={<>The "adjacent transposition + braid relations" presentation links <TeX src={`S_n`} /> to topology's <strong>braid groups</strong> <TeX src={`B_n`} />: dropping the relation <TeX src={`s_i^2 = e`} /> lifts <TeX src={`S_n`} /> to <TeX src={`B_n`} />. Braid groups are infinite and connect to knot theory and (topological) quantum computing. The cube has its own "half-braid" structure under adjacent-face turns — finite and bounded by the conservation laws.</>}
+          />
+        </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="21.7  Pólya 循环指数 — 染色计数" en="21.7  Pólya cycle index — counting colourings" />
+        </h3>
+        <p>
+          <L
+            zh={<>对 G 作用于 n 元集 X 的情形,Pólya 定义 <strong>循环指数多项式</strong>:</>}
+            en={<>For G acting on an n-element set X, Pólya defined the <strong>cycle index polynomial</strong>:</>}
+          />
+        </p>
+        <TeXBlock src={`Z_G(z_1, z_2, \\ldots, z_n) \\;=\\; \\frac{1}{|G|} \\sum_{g \\in G} z_1^{c_1(g)} z_2^{c_2(g)} \\cdots z_n^{c_n(g)},`} />
+        <p>
+          <L
+            zh={<>其中 <TeX src={`c_k(g)`} /> 是 g 中长度 k 的圈数。 Pólya 列举定理: X 用 c 种颜色染色, 在 G 等价下不同的染色数等于<TeXBlock src={`\\#\\,\\text{colourings}/G \\;=\\; Z_G(c, c, \\ldots, c).`} />应用:Rubik's Cube 的 「外部对称」 群 <TeX src={`O_h`} /> (48 阶) 作用于 6 个面,问 「用 6 种颜色染色不同方案多少种」 ——<TeXBlock src={`Z_{O_h}(6, 6, \\ldots, 6) \\;=\\; \\frac{1}{48}\\bigl(\\,6^6 + 3 \\cdot 6^4 + \\ldots\\bigr) \\;=\\; 30.`} />恰好 30 种本质不同的 「6 色立方体」 染法。</>}
+            en={<>where <TeX src={`c_k(g)`} /> is the number of length-k cycles in g. Pólya's enumeration theorem: the number of colourings of X with c colours, up to G-equivalence, equals<TeXBlock src={`\\#\\,\\text{colourings}/G \\;=\\; Z_G(c, c, \\ldots, c).`} />Application: the cube's outer symmetry group <TeX src={`O_h`} /> (order 48) acts on 6 faces; "how many essentially different ways to colour the cube with 6 colours?"<TeXBlock src={`Z_{O_h}(6, 6, \\ldots, 6) \\;=\\; \\frac{1}{48}\\bigl(\\,6^6 + 3 \\cdot 6^4 + \\ldots\\bigr) \\;=\\; 30.`} />Exactly 30 essentially distinct 6-coloured cubes.</>}
           />
         </p>
       </GTSec>
@@ -4784,6 +6404,73 @@ function search(node, g, bound):
             en={<><strong>Total CPU time:</strong> Google donated ~35 CPU-years. Announced 2010: the cube's diameter is exactly 20 HTM.</>}
           /></li>
         </ol>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="22.6  Korf IDA* — admissibility 严格证明" en="22.6  Korf IDA* — proving admissibility" />
+        </h3>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 22.1 — admissibility' : 'Theorem 22.1 — admissibility'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src={`h_1, h_2, h_3 : G \\to \\mathbb{N}`} /> 是 G 中三个 「子问题距离」 (角块距离、 棱块 1 距离、 棱块 2 距离)。 取 <TeX src={`h(g) = \\max(h_1, h_2, h_3)`} />, 则 <TeX src={`h(g) \\leq d_S(g, e)`} /> 对所有 g 成立 (admissible)。</>}
+              en={<>Let <TeX src={`h_1, h_2, h_3 : G \\to \\mathbb{N}`} /> be three "subproblem distances" (corners, edge subset 1, edge subset 2). Define <TeX src={`h(g) = \\max(h_1, h_2, h_3)`} />. Then <TeX src={`h(g) \\leq d_S(g, e)`} /> for every g (admissible).</>}
+            />
+          </div>
+        </div>
+        <div className="gt-proof">
+          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <L
+            zh={<>
+              <p style={{ margin: '0 0 12px' }}>设 g ∈ G, <TeX src={`d_S(g, e) = k`} /> (即 g 可由 k 个生成元乘出)。 把 g 投到 「子集 X_i」 (例如 8 角块) 上, 得 <TeX src={`\\pi_i(g) \\in \\pi_i(G)`} />, 其 「子集 distance」 <TeX src={`h_i(g) = d_S(\\pi_i(g), e)`} />。</p>
+              <p style={{ margin: '0 0 12px' }}>由 π_i 是同态, 把 「g 的 k-步表示」 投下来给出 π_i(g) 的一个 k-步表示, 故 <TeX src={`h_i(g) \\leq k`} />。 取 max 仍 ≤ k。 ∎</p>
+              <p style={{ margin: '0 0 12px' }}>关键: 每个 <TeX src={`h_i`} /> 在自己的 「pattern database」 里被预计算为 <strong>精确 BFS 距离</strong>, 即在 X_i 上的最短解 — 这才是 admissibility 成立的根本。 若 <TeX src={`h_i`} /> 是一个近似 (例如 「错位数」), 就只是 「弱启发式」, IDA* 不再保证最优。</p>
+            </>}
+            en={<>
+              <p style={{ margin: '0 0 12px' }}>Let g ∈ G with <TeX src={`d_S(g, e) = k`} />. Project g via the homomorphism <TeX src={`\\pi_i`} /> onto subset i; then <TeX src={`h_i(g) = d_S(\\pi_i(g), e)`} />.</p>
+              <p style={{ margin: '0 0 12px' }}>Since π_i is a homomorphism, a k-step word for g pushes forward to a k-step word for π_i(g). So <TeX src={`h_i(g) \\leq k`} />, and the max of admissible heuristics is admissible. ∎</p>
+              <p style={{ margin: '0 0 12px' }}>Key point: each <TeX src={`h_i`} /> in Korf's pattern database is the <strong>exact BFS distance</strong> in subset i — this is what makes admissibility hold. A loose heuristic (e.g. "mismatch count") gives no optimality guarantee.</p>
+            </>}
+          />
+          <div className="gt-proof-end">∎</div>
+        </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="22.7  复杂度对比" en="22.7  Complexity comparison" />
+        </h3>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '算法' : 'Algorithm'}</th><th>{lang === 'zh' ? '最优?' : 'Optimal?'}</th><th>{lang === 'zh' ? '时间' : 'Time'}</th><th>{lang === 'zh' ? '空间' : 'Space'}</th><th>{lang === 'zh' ? '典型步数' : 'Typical len'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>{lang === 'zh' ? '朴素 BFS' : 'Naive BFS'}</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td className="num"><TeX src={`O(|G|)`} /></td><td className="num"><TeX src={`O(|G|)`} /></td><td className="num">{lang === 'zh' ? '不可行' : 'infeasible'}</td></tr>
+            <tr><td>Korf IDA* (1997)</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td className="num"><TeX src={`O(b^d)`} /> {lang === 'zh' ? ',b ≈ 13.34, d ≤ 20' : ', b ≈ 13.34, d ≤ 20'}</td><td className="num">~80 MB</td><td className="num">{lang === 'zh' ? '最优 18–20 HTM' : 'opt. 18–20 HTM'}</td></tr>
+            <tr><td>Kociemba two-phase (1992)</td><td>{lang === 'zh' ? '否 (近似)' : 'no (suboptimal)'}</td><td className="num">~ms</td><td className="num">~100 MB</td><td className="num">~21 HTM</td></tr>
+            <tr><td>Thistlethwaite (1981)</td><td>{lang === 'zh' ? '否' : 'no'}</td><td className="num">~ms</td><td className="num">~10 MB</td><td className="num">~50 HTM</td></tr>
+            <tr><td>Rokicki 2010</td><td>{lang === 'zh' ? '验证而非 solver' : 'verifier, not solver'}</td><td className="num">35 CPU-yr</td><td className="num">~2 GB</td><td className="num">{lang === 'zh' ? '不输出 alg' : 'no alg output'}</td></tr>
+            <tr><td>DeepCubeA (2019)</td><td>{lang === 'zh' ? '否' : 'no'}</td><td className="num">~s</td><td className="num">~GB</td><td className="num">~21 HTM</td></tr>
+          </tbody>
+        </table>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="22.8  DeepCubeA — 深度强化学习 (2019)" en="22.8  DeepCubeA — deep reinforcement learning (2019)" />
+        </h3>
+        <p>
+          <L
+            zh={<>2019 年 UC Irvine 团队 (McAleer, Agostinelli, Shmakov, Baldi) 在 Nature Machine Intelligence 发表 <strong>DeepCubeA</strong>: 用神经网络近似 「cost-to-go」 函数 h(s), 替代 Korf 的 pattern database。 网络在 「scramble → 逐步逆向 BFS」 上自监督训练 (autodidactic iteration), 配 A* 搜索。</>}
+            en={<>In 2019 a UC Irvine team (McAleer, Agostinelli, Shmakov, Baldi) published <strong>DeepCubeA</strong> in Nature Machine Intelligence: a neural network approximates the cost-to-go function h(s), replacing Korf's pattern database. The net is trained "autodidactically" on scrambles solved by reverse BFS, then combined with A* search.</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><strong>h 不再 admissible</strong> — 神经网络只是近似, 偶有低估或高估, 故输出 <em>不</em> 最优 (但接近: 平均约 21 HTM, 与 Kociemba 相当)。</>}
+            en={<><strong>h is no longer admissible</strong> — the network is approximate, occasionally over- or underestimating, so output is <em>not</em> guaranteed optimal (but typically close: ~21 HTM avg, comparable to Kociemba).</>}
+          /></li>
+          <li><L
+            zh={<><strong>泛化到其它拼图</strong>: 同一架构在 4×4、 5×5、 24-puzzle (sliding tiles)、 Lights Out 都能学到接近最优的解 — 这是 Korf solver 做不到的, 因为 pattern database 是手工 per-puzzle 设计。</>}
+            en={<><strong>Generalises across puzzles</strong>: the same architecture learned near-optimal heuristics for 4×4, 5×5, the 24-puzzle, and Lights Out — something Korf-style PDBs cannot, since they are hand-crafted per puzzle.</>}
+          /></li>
+          <li><L
+            zh={<><strong>训练成本</strong>: 数百 GPU-小时 (相对 Rokicki 的 35 CPU-年, 已是数量级降本)。 但 worst-case 保证仍然只有 Rokicki 给出的 20 HTM 严格证明。</>}
+            en={<><strong>Training cost</strong>: hundreds of GPU-hours (orders of magnitude cheaper than Rokicki's 35 CPU-years). Yet the only worst-case guarantee remains Rokicki's exact 20 HTM proof.</>}
+          /></li>
+        </ul>
       </GTSec>
 
       {/* ═══════════════ §23 Distance distribution ═══════════════════════ */}
@@ -4878,6 +6565,85 @@ function search(node, g, bound):
             en={<>Interestingly, these 4.9 × 10⁸ "farthest" states make up <strong>10⁻¹¹</strong> of |G|. A random scramble has expected distance 18 and essentially never hits 20. The "God's number" is an extreme-value result, not a measure of difficulty.</>}
           />
         </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="23.4  精确数值表 (HTM)" en="23.4  Exact numerical table (HTM)" />
+        </h3>
+        <p>
+          <L
+            zh={<>下表给出距离 d = 0 ~ 15 的<em>精确</em>计数 (穷举枚举,Kociemba 2013) 和 d = 16 ~ 20 的<em>已知</em>计数 (Rokicki 等 2014 后的对称归约证明)。 各行求和正好 = |G| = 43,252,003,274,489,856,000。</>}
+            en={<>The table below gives <em>exact</em> counts for d = 0…15 (full enumeration, Kociemba 2013) and the <em>established</em> counts for d = 16…20 (symmetry-reduced proofs after Rokicki et al. 2014). The column totals to |G| = 43,252,003,274,489,856,000.</>}
+          />
+        </p>
+        <table className="gt-distance-tbl gt-distance-exact">
+          <thead>
+            <tr>
+              <th>d</th>
+              <th>{lang === 'zh' ? '状态数' : 'states at d'}</th>
+              <th>{lang === 'zh' ? '占 |G| 比例' : 'fraction of |G|'}</th>
+              <th>{lang === 'zh' ? '增长率' : 'ratio'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="num">0</td><td className="num">1</td><td className="num">~0</td><td className="num">—</td></tr>
+            <tr><td className="num">1</td><td className="num">18</td><td className="num">~0</td><td className="num">18.0×</td></tr>
+            <tr><td className="num">2</td><td className="num">243</td><td className="num">~0</td><td className="num">13.5×</td></tr>
+            <tr><td className="num">3</td><td className="num">3,240</td><td className="num">~0</td><td className="num">13.3×</td></tr>
+            <tr><td className="num">4</td><td className="num">43,239</td><td className="num">~0</td><td className="num">13.3×</td></tr>
+            <tr><td className="num">5</td><td className="num">574,908</td><td className="num">~0</td><td className="num">13.3×</td></tr>
+            <tr><td className="num">6</td><td className="num">7,618,438</td><td className="num">~0</td><td className="num">13.3×</td></tr>
+            <tr><td className="num">7</td><td className="num">100,803,036</td><td className="num">~0</td><td className="num">13.2×</td></tr>
+            <tr><td className="num">8</td><td className="num">1,332,343,288</td><td className="num">3.1 × 10<sup>-11</sup></td><td className="num">13.2×</td></tr>
+            <tr><td className="num">9</td><td className="num">17,596,479,795</td><td className="num">4.1 × 10<sup>-10</sup></td><td className="num">13.2×</td></tr>
+            <tr><td className="num">10</td><td className="num">232,248,063,316</td><td className="num">5.4 × 10<sup>-9</sup></td><td className="num">13.2×</td></tr>
+            <tr><td className="num">11</td><td className="num">3,063,288,809,012</td><td className="num">7.1 × 10<sup>-8</sup></td><td className="num">13.2×</td></tr>
+            <tr><td className="num">12</td><td className="num">40,374,425,656,248</td><td className="num">9.3 × 10<sup>-7</sup></td><td className="num">13.2×</td></tr>
+            <tr><td className="num">13</td><td className="num">531,653,418,284,628</td><td className="num">1.2 × 10<sup>-5</sup></td><td className="num">13.2×</td></tr>
+            <tr><td className="num">14</td><td className="num">6,989,320,578,825,358</td><td className="num">1.6 × 10<sup>-4</sup></td><td className="num">13.1×</td></tr>
+            <tr><td className="num">15</td><td className="num">91,365,146,187,124,313</td><td className="num">2.1 × 10<sup>-3</sup></td><td className="num">13.1×</td></tr>
+            <tr><td className="num">16</td><td className="num">≈ 1.10 × 10<sup>18</sup></td><td className="num">2.5%</td><td className="num">12.0×</td></tr>
+            <tr><td className="num">17</td><td className="num">≈ 1.22 × 10<sup>19</sup></td><td className="num">28.3%</td><td className="num">11.1×</td></tr>
+            <tr><td className="num">18</td><td className="num">≈ 2.98 × 10<sup>19</sup></td><td className="num">68.9%</td><td className="num">2.4×</td></tr>
+            <tr className="gt-row-hl"><td className="num">19</td><td className="num">≈ 1.50 × 10<sup>18</sup></td><td className="num">3.5%</td><td className="num">0.05×</td></tr>
+            <tr className="gt-row-hl"><td className="num">20</td><td className="num">490,000,000</td><td className="num">1.1 × 10<sup>-11</sup></td><td className="num">3.3 × 10<sup>-10</sup>×</td></tr>
+            <tr><td className="num">21+</td><td className="num">0</td><td className="num">0</td><td className="num">—</td></tr>
+            <tr className="gt-row-sum"><td><strong>Σ</strong></td><td className="num"><strong>4.325 × 10<sup>19</sup></strong></td><td className="num"><strong>100%</strong></td><td className="num">= |G|</td></tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 18 }}>
+          <L
+            zh={<>「增长率」一列揭示了 Cayley 图的几何:从 d = 1 到 d = 15,每步都几乎以 13.2× 增长 (远小于生成元数 18,因为 <TeX src={`R \\cdot R = R^2`} /> 之类的重叠把分支因子拉低)。 然后在 d = 16 ~ 18 之间 <strong>急剧饱和</strong>: G 的 97% 元素挤在 d = 17 和 d = 18 这两层。 d = 19 已经回落 (只剩 3.5%), d = 20 几乎清空 (仅 4.9 亿)。 这是有限 Cayley 图典型的「球面爆炸 → 边界塌缩」形态。</>}
+            en={<>The "ratio" column shows the geometric structure of the Cayley graph: from d = 1 to d = 15, each shell grows by ~13.2× (well below 18, because moves like <TeX src={`R \\cdot R = R^2`} /> overlap and reduce the effective branching factor). Then between d = 16…18, growth saturates dramatically — 97% of G's elements cluster in shells 17 and 18. d = 19 already drops to 3.5%; d = 20 is nearly empty (only 4.9 × 10<sup>8</sup>). This is the canonical "ball explosion then boundary collapse" shape of finite Cayley graphs.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '推论 23.4 — 平均距离' : 'Corollary 23.4 — average distance'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; 17.97`} />其中 <TeX src={`N_d`} /> 是距离 d 处的状态数。 一个均匀随机的 scramble,期望最优解长度大约 <strong>17.97 HTM</strong>。 (QTM 下约为 22.) 注意:这跟「<em>3-style 选手实际解出 60 步</em>」差异很大 —— 那只反映人类启发式跟最优解之间的差距 (gap ≈ 40 步)。</>}
+              en={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; 17.97`} />where <TeX src={`N_d`} /> is the state count at distance d. A uniformly random scramble has expected optimal length <strong>~17.97 HTM</strong> (~22 in QTM). The gap from human solvers (~50–60 HTM) reflects the cost of using heuristic strategies rather than optimal search — about a 40-move gap.</>}
+            />
+          </div>
+        </div>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 32, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="23.5  增长函数与渐近几何" en="23.5  Growth function & asymptotic geometry" />
+        </h3>
+        <p>
+          <L
+            zh={<>对任一群 G 和生成集 S,<strong>球增长函数</strong> 定义为<TeXBlock src={`B(r) \\;:=\\; \\#\\{\\,g \\in G \\;:\\; d_S(g, e) \\le r\\,\\}`} />即半径 r 球内的状态总数。 魔方的有限性使 B(r) 在 r ≥ 20 时常驻于 |G|。 对无限群 (例如自由群 F₂、 双曲群),B(r) 的渐近增长揭示该群的「几何维度」。</>}
+            en={<>For any group G with generating set S, the <strong>ball growth function</strong> is<TeXBlock src={`B(r) \\;:=\\; \\#\\{\\,g \\in G \\;:\\; d_S(g, e) \\le r\\,\\}`} />the total state count within radius r. For the finite cube group, B(r) saturates at |G| for r ≥ 20. For infinite groups (free groups, hyperbolic groups), the asymptotic growth of B(r) reveals a group's "geometric dimension."</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>多项式增长</strong> (Gromov 1981): <TeX src={`B(r) \\sim r^d`} /> ⟺ G 几乎是阿贝尔的 (有有限指数 nilpotent 子群)。 ℤ<sup>n</sup> 是 d = n。</>} en={<><strong>Polynomial growth</strong> (Gromov 1981): <TeX src={`B(r) \\sim r^d`} /> ⟺ G is virtually nilpotent. ℤ<sup>n</sup> has d = n.</>} /></li>
+          <li><L zh={<><strong>指数增长</strong>: <TeX src={`B(r) \\sim c^r`} />,出现于自由群、 大部分非阿贝尔群。 魔方在 「无限生成 (允许重复)」 极限下属于这类。</>} en={<><strong>Exponential growth</strong>: <TeX src={`B(r) \\sim c^r`} />, free groups and most non-Abelian groups. The cube has exponential <em>local</em> growth in the small-r regime.</>} /></li>
+          <li><L zh={<><strong>中间增长</strong>: Grigorchuk 群 (1980),增长率介于多项式和指数之间, 是群论的一大发现。</>} en={<><strong>Intermediate growth</strong>: Grigorchuk's group (1980) — growth strictly between polynomial and exponential. A landmark in geometric group theory.</>} /></li>
+        </ul>
+        <div className="gt-aside" style={{ marginTop: 16 }}>
+          <L
+            zh={<>魔方群是 <em>有限</em> 的, 所以它「最终」是常增长 (B(r) = |G| 对 r ≥ 20)。 但在 r ≤ 12 这段「年轻」阶段, 它表现出很强的指数增长 (每步 ≈ 13.2 倍), 跟自由群 <TeX src={`F_{18}`} /> 的 18 倍几乎一致 — 直到关系开始累积。 这种「先指数后塌缩」 是研究 <em>词长函数</em> 与 <em>群直径</em> 的标准模板。</>}
+            en={<>The cube group is <em>finite</em>, so growth is ultimately constant (B(r) = |G| for r ≥ 20). But in the "young" regime r ≤ 12, growth is nearly exponential (~13.2× per step), close to the free group <TeX src={`F_{18}`} />'s 18× — until relations accumulate. This "exponential growth then collapse" is the standard template for studying word-length functions and group diameters.</>}
+          />
+        </div>
       </GTSec>
 
       {/* ═══════════════ §24 Random walks ═══════════════════════ */}
@@ -4931,8 +6697,123 @@ function search(node, g, bound):
         </h3>
         <p>
           <L
-            zh={<>Diaconis 1980s 发现的「 <strong>cutoff</strong> 」 现象: 对许多自然群上的随机游走, <TeX src={`d_{TV}(t)`} /> 在很长时间内接近 1, 然后在 <em>非常窄</em> 的 t 区间内突然降到接近 0。 比如 7 张牌的 riffle shuffle 需要 7 次才能 「彻底打乱」 —— Bayer–Diaconis 1992 著名的「3/2 log₂ n 牌」结果。 魔方上类似 cutoff 现象的精确临界值至今未严格证明。</>}
-            en={<>Diaconis's <strong>cutoff</strong> phenomenon (1980s): for many natural random walks on groups, <TeX src={`d_{TV}(t)`} /> stays near 1 for a long time and then drops sharply to near 0 within a narrow window. Bayer–Diaconis (1992) famously proved 7 riffle shuffles suffice to mix a deck of 52 cards ("3/2 log₂ n" cards). A precise cutoff for the cube is open.</>}
+            zh={<>Diaconis 1980s 发现的 「<strong>cutoff</strong>」 现象: 对许多自然群上的随机游走, <TeX src={`d_{TV}(t)`} /> 在很长时间内接近 1, 然后在 <em>非常窄</em> 的 t 区间内突然降到接近 0:</>}
+            en={<>Diaconis's <strong>cutoff</strong> phenomenon (1980s): for many natural random walks on groups, <TeX src={`d_{TV}(t)`} /> stays near 1 for a long time, then drops sharply to near 0 within a narrow window:</>}
+          />
+        </p>
+        <TeXBlock src={`\\lim_{n \\to \\infty} d_{TV}(c\\,t_n^*) = \\begin{cases} 1 & c < 1 \\\\ 0 & c > 1 \\end{cases},\\quad t_n^* = \\text{cutoff time}`} />
+        <p>
+          <L
+            zh={<>典型样本 (Bayer–Diaconis 1992): 52 张牌的 riffle shuffle 需要 <TeX src={`\\tfrac{3}{2} \\log_2 52 \\approx 8.5`} /> 次才彻底打乱; 7 次还看得见原顺序, 9 次后人眼分辨不出 (它接近一致随机)。 魔方上类似 cutoff 现象的精确临界值 <em>至今未严格证明</em>, 估计区间 22 ± 3 (HTM)。</>}
+            en={<>Canonical example (Bayer–Diaconis 1992): 52 cards need <TeX src={`\\tfrac{3}{2} \\log_2 52 \\approx 8.5`} /> riffles to mix. 7 still leaves traces; 9 is humanly indistinguishable from uniform. The cube's cutoff is <em>not yet rigorously established</em>; estimates put it at 22 ± 3 HTM moves.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="24.4  谱隙与混合速率" en="24.4  Spectral gap & mixing rate" />
+        </h3>
+        <p>
+          <L
+            zh={<>把游走的转移矩阵 <TeX src={`P_t`} /> 看成一个 <TeX src={`|G| \\times |G|`} /> 巨大矩阵, 它的特征值 <TeX src={`1 = \\lambda_0 > \\lambda_1 \\geq \\lambda_2 \\geq \\ldots`} /> 控制混合速度。 第二大特征值 <TeX src={`\\lambda_1`} /> 跟均匀分布的 「<em>谱隙</em>」 <TeX src={`\\mathrm{gap} = 1 - \\lambda_1`} /> 决定了混合时间的主项:</>}
+            en={<>View the walk's transition matrix <TeX src={`P_t`} /> as a <TeX src={`|G| \\times |G|`} /> giant matrix. Its eigenvalues <TeX src={`1 = \\lambda_0 > \\lambda_1 \\geq \\lambda_2 \\geq \\ldots`} /> govern mixing speed. The "<em>spectral gap</em>" <TeX src={`\\mathrm{gap} = 1 - \\lambda_1`} /> dominates:</>}
+          />
+        </p>
+        <TeXBlock src={`t_{\\mathrm{mix}}(\\varepsilon) \\;\\asymp\\; \\dfrac{1}{\\mathrm{gap}} \\cdot \\log\\!\\dfrac{|G|}{\\varepsilon}.`} />
+        <p>
+          <L
+            zh={<>大谱隙 = 快混合 = 接近 <strong>expander</strong>。 魔方的 18-生成 Cayley 图是否构成 expander 家族(对 n × n × n 而言)是当前活跃话题。 已知数值实验表明 3×3 的 <TeX src={`\\lambda_1`} /> ≈ 0.65, gap ≈ 0.35 ── 在 「中等快」 的范畴。</>}
+            en={<>Large gap = fast mixing = close to an <strong>expander</strong>. Whether the 18-generator Cayley graphs form an expander family (over n × n × n) is an active question. Numerical experiments put the 3×3's <TeX src={`\\lambda_1 \\approx 0.65`} />, gap ≈ 0.35 — moderately fast.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="24.5  WCA scramble 怎么选 25?" en="24.5  Why does WCA pick 25 moves?" />
+        </h3>
+        <p>
+          <L
+            zh={<>WCA 比赛用 25-步 scramble 不是随便的:</>}
+            en={<>WCA's 25-move scramble is deliberate:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>不能太短</strong> (例如 10): 分布远未混合, 选手可推测出某些 「常见」 起手, 不公平。</>} en={<><strong>Not too short</strong> (e.g. 10): distribution far from uniform, allowing competitors to exploit common openings.</>} /></li>
+          <li><L zh={<><strong>不能等于 20</strong>: 触及 God's number 上界, 可能精确产出 superflip 类极端状态, 影响平均成绩。</>} en={<><strong>Not exactly 20</strong>: hits the God's-number ceiling, possibly producing superflip-class extremal states and skewing averages.</>} /></li>
+          <li><L zh={<><strong>必须 「<em>滤掉</em>」 同面连续</strong>: <span className="gt-mono">U U U U = identity</span>。 不过滤就有 <TeX src={`(18/18)^t`} /> 但有效步只剩 <TeX src={`(15/18)^t`} />。 TNoodle 的过滤生成器把每步可选生成元限制成 <strong>15 个</strong> (排除上一步同面)。</>} en={<><strong>Must filter same-face repeats</strong>: <span className="gt-mono">U U U U = identity</span>. Without filtering, the random walk wastes 3/18 of steps. TNoodle restricts each step to <strong>15</strong> generators (excluding the previous face).</>} /></li>
+          <li><L zh={<><strong>25 处于估计 cutoff 之上 + God's number 之上</strong>: 接近均匀分布, 但远离 known extremal。 经验上保证公平性 + 多样性。</>} en={<><strong>25 is above the estimated cutoff and above God's number</strong>: close to uniform but away from known extremal positions. Empirically guarantees fairness + diversity.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>2×2 / 4×4 / 5×5 用更长 scramble (40+ steps), 反映各自更大的混合时间。 Megaminx 用 70 步, 因为生成集更小 (每步选项少, 混合慢)。</>}
+            en={<>2×2 / 4×4 / 5×5 use longer scrambles (40+ steps), reflecting larger mixing times. Megaminx uses 70 steps because its generating set is smaller (slower mixing per step).</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="24.4  转移矩阵 P 与 Cayley 图" en="24.4  Transition matrix P on the Cayley graph" />
+        </h3>
+        <p>
+          <L
+            zh={<>把 G 的随机游走写成马尔可夫链: 状态空间 G, 转移概率<TeXBlock src={`P_{ij} \\;=\\; \\Pr[\\,X_{t+1} = g_j \\mid X_t = g_i\\,] \\;=\\; \\begin{cases} 1/18 & g_j = g_i \\cdot s\\ \\text{for some}\\ s \\in S, \\\\ 0 & \\text{otherwise} \\end{cases}`} />其中 <TeX src={`S = \\{U, U', U^2, D, D', D^2, \\ldots\\}`} /> 是 18 元 HTM 生成集。 这恰好是魔方 Cayley 图的「随机邻居跳跃」。</>}
+            en={<>The random walk is a Markov chain on G with transition kernel<TeXBlock src={`P_{ij} \\;=\\; \\Pr[\\,X_{t+1} = g_j \\mid X_t = g_i\\,] \\;=\\; \\begin{cases} 1/18 & g_j = g_i \\cdot s\\ \\text{for some}\\ s \\in S, \\\\ 0 & \\text{otherwise} \\end{cases}`} />where <TeX src={`S`} /> is the 18-move HTM generator set. This is exactly "uniform-random-neighbour jump" on the cube's Cayley graph.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>P 是 <strong>双 stochastic</strong> (每行每列和都为 1, 因为 S = S⁻¹): 这立刻给出均匀分布 <TeX src={`\\pi_g = 1/|G|`} /> 是 P 的不变测度。 同时 P 关于 <TeX src={`\\pi`} /> <strong>可逆</strong>: <TeX src={`\\pi_i P_{ij} = \\pi_j P_{ji}`} />, 所以 P 视为算子在 <TeX src={`\\ell^2(G, \\pi)`} /> 上 <strong>自伴</strong>, 谱全实。</>}
+            en={<>P is <strong>doubly stochastic</strong> (each row and column sums to 1, since S = S⁻¹): immediately giving <TeX src={`\\pi_g = 1/|G|`} /> as the stationary distribution. Moreover P is <strong>reversible</strong> w.r.t. π: <TeX src={`\\pi_i P_{ij} = \\pi_j P_{ji}`} />, so as an operator on <TeX src={`\\ell^2(G, \\pi)`} /> P is <strong>self-adjoint</strong>, hence has real spectrum.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="24.5  谱定理与混合时间下界" en="24.5  Spectrum and the mixing-time bound" />
+        </h3>
+        <p>
+          <L
+            zh={<>由谱定理: P 的特征值 <TeX src={`1 = \\lambda_1 > \\lambda_2 \\geq \\cdots \\geq \\lambda_{|G|} \\geq -1`} /> 全实, 且 <TeX src={`\\lambda_1 = 1`} /> 对应均匀分布 (P 的不变向量)。 谱隙 <TeX src={`\\delta = 1 - |\\lambda_2|`} /> 控制 mixing time:</>}
+            en={<>By the spectral theorem, P has real eigenvalues <TeX src={`1 = \\lambda_1 > \\lambda_2 \\geq \\cdots \\geq \\lambda_{|G|} \\geq -1`} />, with <TeX src={`\\lambda_1 = 1`} /> for the uniform eigenvector. The spectral gap <TeX src={`\\delta = 1 - |\\lambda_2|`} /> controls mixing:</>}
+          />
+        </p>
+        <TeXBlock src={`t_{\\mathrm{mix}}(\\varepsilon) \\;\\leq\\; \\frac{1}{\\delta} \\cdot \\log\\!\\left(\\frac{1}{\\varepsilon \\, \\pi_{\\min}}\\right) \\;=\\; \\frac{\\log(|G|/\\varepsilon)}{1 - |\\lambda_2|}`} />
+        <p>
+          <L
+            zh={<>下界方向: <TeX src={`t_{\\mathrm{mix}} \\geq \\tfrac{1}{2} \\cdot \\tfrac{|\\lambda_2|}{1 - |\\lambda_2|} \\cdot \\log(1/(2\\varepsilon))`} />。 把 <TeX src={`\\log |G| \\approx 65.2`} /> 代入, 若 <TeX src={`|\\lambda_2| \\approx 1 - 1/20`} /> (实测), 得 <TeX src={`t_{\\mathrm{mix}}(0.25) \\sim 20\\text{–}25`} /> — 与下面 24.7 实测吻合。</>}
+            en={<>The matching lower bound: <TeX src={`t_{\\mathrm{mix}} \\geq \\tfrac{1}{2} \\cdot \\tfrac{|\\lambda_2|}{1 - |\\lambda_2|} \\cdot \\log(1/(2\\varepsilon))`} />. With <TeX src={`\\log |G| \\approx 65.2`} /> and the empirically observed <TeX src={`|\\lambda_2| \\approx 1 - 1/20`} />, the bound yields <TeX src={`t_{\\mathrm{mix}}(0.25) \\sim 20\\text{–}25`} /> — matching the simulation in 24.7.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="24.6  Diaconis–Shahshahani 在 S_n" en="24.6  Diaconis–Shahshahani on Sₙ" />
+        </h3>
+        <p>
+          <L
+            zh={<>Diaconis–Shahshahani 1981 的经典结果: <strong>对 <TeX src={`S_n`} /> 上的随机 transposition walk</strong> (每步随机选一对元素互换), <TeX src={`t_{\\mathrm{mix}}(\\varepsilon) = \\tfrac{1}{2} n \\log n + c(\\varepsilon) \\cdot n`} />, 且在 <TeX src={`\\tfrac{1}{2} n \\log n`} /> 附近发生 <strong>cutoff</strong> (从近 1 跌到近 0)。 对 <TeX src={`n = 52`} /> 牌(随机 transposition 模型): <TeX src={`\\tfrac{1}{2} \\cdot 52 \\cdot \\log 52 \\approx 103`} /> 次互换。 跟「7 次 riffle shuffle」 不同模型, 但谱论思路一致。</>}
+            en={<>The classical Diaconis–Shahshahani result (1981): on the <strong>random transposition walk on <TeX src={`S_n`} /></strong>, <TeX src={`t_{\\mathrm{mix}}(\\varepsilon) = \\tfrac{1}{2} n \\log n + c(\\varepsilon) \\cdot n`} />, with a sharp <strong>cutoff</strong> near <TeX src={`\\tfrac{1}{2} n \\log n`} />. For <TeX src={`n = 52`} /> cards (transposition model): <TeX src={`\\tfrac{1}{2} \\cdot 52 \\cdot \\log 52 \\approx 103`} /> transpositions. (Different model from the 7-riffle-shuffle result, but the spectral argument is the same flavour.)</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>对魔方, <TeX src={`S_8 \\times S_{12}`} /> 给出 <TeX src={`\\tfrac{1}{2} \\cdot 12 \\cdot \\log 12 \\approx 14.9`} /> 作为「置换部分」的 mixing time 类比 — 但魔方还有 <TeX src={`(\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /> 的朝向部分, 它各自需要约 7 和 11 步混合。 综合理论值约 15–20 步, 与实测一致。</>}
+            en={<>For the cube, <TeX src={`S_8 \\times S_{12}`} /> contributes <TeX src={`\\tfrac{1}{2} \\cdot 12 \\cdot \\log 12 \\approx 14.9`} /> as the "permutation" mixing scale — but the orientation part <TeX src={`(\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /> separately mixes in ~7 and ~11 steps. Together this predicts 15–20, matching the empirical value below.</>}
+          />
+        </p>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="24.7  实测:魔方 t_mix ≈ 18–22 步" en="24.7  Empirical: cube t_mix ≈ 18–22 steps" />
+        </h3>
+        <table className="gt-compare">
+          <thead>
+            <tr><th>{lang === 'zh' ? '步数 t' : 'Steps t'}</th><th><TeX src={`d_{TV}(\\mu^t, \\pi)`} /></th><th>{lang === 'zh' ? '解释' : 'Interpretation'}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td className="num">5</td><td className="num">≈ 1.00</td><td>{lang === 'zh' ? '几乎所有质量集中于 d ≤ 5 邻域' : 'all mass within d ≤ 5 neighbourhood'}</td></tr>
+            <tr><td className="num">10</td><td className="num">≈ 0.99</td><td>{lang === 'zh' ? '仍远未均匀' : 'still far from uniform'}</td></tr>
+            <tr><td className="num">15</td><td className="num">≈ 0.85</td><td>{lang === 'zh' ? '开始进入 cutoff 区' : 'entering the cutoff region'}</td></tr>
+            <tr><td className="num">18</td><td className="num">≈ 0.45</td><td>{lang === 'zh' ? 'cutoff 中点' : 'cutoff midpoint'}</td></tr>
+            <tr><td className="num">20</td><td className="num">≈ 0.20</td><td>{lang === 'zh' ? '接近均匀,WCA 25 步 scramble 安全裕度' : 'nearly uniform; WCA 25-move scramble adds safety margin'}</td></tr>
+            <tr><td className="num">25</td><td className="num">≈ 0.05</td><td>{lang === 'zh' ? '极其接近均匀' : 'essentially uniform'}</td></tr>
+            <tr><td className="num">30</td><td className="num">{'<'} 0.01</td><td>{lang === 'zh' ? '指数收敛尾部' : 'exponential tail'}</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>数据来自 Monte Carlo: 对 G 的 ~10⁵ 个随机游走轨迹, 在不同 t 估计 <TeX src={`d_{TV}`} />。 cutoff 的中点 ≈ 18 与 §23 的 「随机平均距离 ~18」 不是巧合 — 都源于 G 的 Cayley 图在 d ≈ 18 处 「饱和」 的同一现象。</>}
+            en={<>Data from Monte Carlo: estimating <TeX src={`d_{TV}`} /> across ~10⁵ random-walk trajectories on G. The cutoff midpoint ≈ 18 is no coincidence with §23's "random scramble average distance ~18" — both come from the same saturation of the Cayley graph at depth 18.</>}
           />
         </p>
       </GTSec>
@@ -4985,14 +6866,121 @@ gap> StructureDescription(G);
           </div>
         </div>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
-          <L zh="25.3  为什么这对魔方算法重要?" en="25.3  Why does this matter for cube algorithms?" />
+          <L zh="25.3  Schreier 引理 + 伪代码" en="25.3  Schreier's lemma + pseudocode" />
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? 'Schreier 引理 (1927)' : "Schreier's lemma (1927)"}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>设 <TeX src={`H \\leq G`} /> 指数 <TeX src={`[G : H]`} />, <TeX src={`T = \\{t_1, \\ldots, t_m\\}`} /> 是 H 在 G 中的一个左陪集代表系 (含 <TeX src={`t_1 = e`} />), 设 <TeX src={`S`} /> 为 G 的生成集。 对 <TeX src={`g \\in G`} />, 记 <TeX src={`\\bar g`} /> 为它在 T 中的陪集代表。 那么<TeXBlock src={`H \\;=\\; \\bigl\\langle\\, \\bar{(t \\cdot s)}^{-1} \\cdot (t \\cdot s) \\;:\\; t \\in T,\\; s \\in S \\,\\bigr\\rangle.`} />即 H 由这 <TeX src={`m |S|`} /> 个 「<em>Schreier 生成元</em>」 生成。</>}
+              en={<>Let <TeX src={`H \\leq G`} /> have index <TeX src={`[G : H]`} />, <TeX src={`T = \\{t_1, \\ldots, t_m\\}`} /> a left transversal of H in G (with <TeX src={`t_1 = e`} />), and <TeX src={`S`} /> a generating set for G. For <TeX src={`g \\in G`} />, write <TeX src={`\\bar g`} /> for its T-representative. Then<TeXBlock src={`H \\;=\\; \\bigl\\langle\\, \\bar{(t \\cdot s)}^{-1} \\cdot (t \\cdot s) \\;:\\; t \\in T,\\; s \\in S \\,\\bigr\\rangle.`} />So H is generated by these <TeX src={`m |S|`} /> "<em>Schreier generators</em>".</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>把这个 「H 由 G 的生成集 + 陪集代表系生成」 反复套用 ── 这就是 Schreier–Sims 的递归核心:</>}
+            en={<>Applying "H is generated by G-generators + transversal" recursively yields the Schreier–Sims algorithm:</>}
+          />
+        </p>
+        <div className="gt-algo-pseudo">
+{`SchreierSims(S, base B):
+  for i = 1 to |B|:
+    compute orbit O_i = G^(i-1) · b_i  via BFS on S^(i-1)
+    record Schreier vector V_i (transversal lookup)
+    derive  S^(i) = { Schreier generators for Stab(b_i) }
+    recurse on (S^(i), B[i+1:])
+  return BSGS = (B, S* = union of S^(i))
+
+Size(G)  =  ∏_i  |O_i|
+Membership(g):
+  for i = 1 to |B|:
+    let j = position of g(b_i) in O_i
+    if j undefined: return false
+    g = g · V_i[j]^(-1)
+  return (g == identity)`}
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="25.4  魔方的具体稳定子链" en="25.4  The cube's stabilizer chain, explicitly" />
         </h3>
         <p>
           <L
-            zh={<>BSGS 是 「<strong>membership test</strong>」 的天然数据结构: 给定一个置换 g, 它属于 G 吗? 答: 逐层用 Schreier 表 反向把 g 分解; 若能完全归约就属于。 用 <TeX src={`O(k \\cdot n^2)`} /> 时间。 这个数据结构对求解器没直接用 (求解器需要短表示, BSGS 给的是长表示), 但对一些群论问题 (验证一个公式生成全 G, 或一个子群的指数) 非常有效。</>}
-            en={<>BSGS is the natural data structure for the <strong>membership test</strong>: given a permutation g, is g ∈ G? Answer: decompose g layer-by-layer using Schreier transversals; if it fully reduces, yes. Takes <TeX src={`O(k \\cdot n^2)`} /> time. Not directly useful for solvers (solvers need short presentations; BSGS gives long ones), but it's essential for many group-theory questions (e.g. does this alg set generate all of G? what is the index of this subgroup?).</>}
+            zh={<>取魔方的 「8 角 + 12 棱 (位置部分)」 一共 20 个块作 Ω。 一个自然基 <TeX src={`B = (1, 2, \\ldots, 20)`} /> 给出:</>}
+            en={<>Take Ω = the 20 movable cubies (8 corners + 12 edges, position layer). A natural base <TeX src={`B = (1, 2, \\ldots, 20)`} /> yields:</>}
           />
         </p>
+        <div className="gt-pattern-table">
+          <table className="gt-pattern-tbl">
+            <thead>
+              <tr>
+                <th>i</th>
+                <th>{lang === 'zh' ? '基点 b_i' : 'base point b_i'}</th>
+                <th>|O_i|</th>
+                <th>{lang === 'zh' ? '稳定到' : 'stabilizes to'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td className="num">1</td><td>{lang === 'zh' ? '角块 URF' : 'corner URF'}</td><td className="num">8</td><td>G⁽¹⁾</td></tr>
+              <tr><td className="num">2</td><td>{lang === 'zh' ? '角块 UFL' : 'corner UFL'}</td><td className="num">7</td><td>G⁽²⁾</td></tr>
+              <tr><td className="num">…</td><td>…</td><td className="num">…</td><td>…</td></tr>
+              <tr><td className="num">8</td><td>{lang === 'zh' ? '最后角' : 'last corner'}</td><td className="num">3</td><td>{lang === 'zh' ? '角朝向 ÷ 3' : 'cor twists ÷ 3'}</td></tr>
+              <tr><td className="num">9</td><td>{lang === 'zh' ? '棱块 UR' : 'edge UR'}</td><td className="num">12</td><td>G⁽⁹⁾</td></tr>
+              <tr><td className="num">…</td><td>…</td><td className="num">…</td><td>…</td></tr>
+              <tr><td className="num">19</td><td>{lang === 'zh' ? '最后棱' : 'last edge'}</td><td className="num">2</td><td>{lang === 'zh' ? '棱翻 ÷ 2' : 'edge flip ÷ 2'}</td></tr>
+              <tr><td className="num">20</td><td>{lang === 'zh' ? '奇偶' : 'parity'}</td><td className="num">1</td><td>{`{e}`}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <TeXBlock src={`|G| \\;=\\; \\underbrace{8 \\cdot 7 \\cdot 6 \\cdots 2}_{= 8!} \\,\\cdot\\, \\underbrace{3}_{\\text{corner twist}} \\,\\cdot\\, \\underbrace{12 \\cdot 11 \\cdots 2}_{= 12!} \\,\\cdot\\, \\underbrace{2}_{\\text{edge flip}} \\,\\cdot\\, \\underbrace{1}_{\\text{parity}} \\,\\cdot\\, \\underbrace{3^6}_{\\text{prior twists}} \\,\\cdot\\, \\underbrace{2^{10}}_{\\text{prior flips}}`} />
+        <p>
+          <L
+            zh={<>把所有轨道大小乘起来精确给出 <TeX src={`8!\\,\\cdot\\,12!\\,\\cdot\\,3^7\\,\\cdot\\,2^{11}/2 = 43{,}252{,}003{,}274{,}489{,}856{,}000`} />。 这是 BSGS 比 「直接乘公式」 更基础的原因 ── 它不需要先 「知道」 守恒律, 它 <em>从生成元出发推出</em> 守恒律。</>}
+            en={<>Multiplying the orbit sizes gives precisely <TeX src={`8!\\,\\cdot\\,12!\\,\\cdot\\,3^7\\,\\cdot\\,2^{11}/2 = 43{,}252{,}003{,}274{,}489{,}856{,}000`} />. This is why BSGS is more fundamental than the closed-form factorization — it doesn't <em>assume</em> the invariants; it <em>derives</em> them from generators.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="25.5  复杂度与相关算法" en="25.5  Complexity & related algorithms" />
+        </h3>
+        <p>
+          <L
+            zh={<>Schreier–Sims 在 「<em>确定型</em>」 实现下复杂度 <TeX src={`O(n^5 + n^2 |S|)`} />, 内存 <TeX src={`O(n^2 |B| + |S^*|)`} />。 改进版本:</>}
+            en={<>Deterministic Schreier–Sims runs in <TeX src={`O(n^5 + n^2 |S|)`} /> time, <TeX src={`O(n^2 |B| + |S^*|)`} /> memory. Improved variants:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>Sims 1971 (Las Vegas)</strong>: <TeX src={`O(n^4 \\log |G|)`} /> 期望时间。</>} en={<><strong>Sims 1971 (Las Vegas)</strong>: expected time <TeX src={`O(n^4 \\log |G|)`} />.</>} /></li>
+          <li><L zh={<><strong>Knuth 1991</strong>: 加入 <em>strong generators 重组</em>, 实际常数小一个数量级。</>} en={<><strong>Knuth 1991</strong>: with <em>strong-generator reorganisation</em>, an order of magnitude faster in practice.</>} /></li>
+          <li><L zh={<><strong>Babai–Cooperman 1989</strong>: 引入 「<em>nearly linear time</em>」 BSGS, 期望 <TeX src={`O(n^2 \\log^c n)`} />。</>} en={<><strong>Babai–Cooperman 1989</strong>: introduced "<em>nearly-linear-time</em>" BSGS, expected <TeX src={`O(n^2 \\log^c n)`} />.</>} /></li>
+          <li><L zh={<><strong>Holt–Eick–O'Brien 2005</strong> (现代 GAP/Magma 后端): 经验复杂度 <TeX src={`\\sim n^3`} />, 把 |Ω| ~ 10⁶ 的群作几秒内可处理。</>} en={<><strong>Holt–Eick–O'Brien 2005</strong> (modern GAP/Magma backend): empirical <TeX src={`\\sim n^3`} />, handling |Ω| ~ 10⁶ groups in seconds.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>跟 BSGS 平行的几个计算群论算法:</>}
+            en={<>BSGS-adjacent algorithms in the computational toolkit:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>Todd–Coxeter (1936)</strong>: 给定群 G 的 「<em>有限呈现</em>」 (生成元 + 关系) 和子群 H, 枚举陪集 G/H。 跟 BSGS 是 <em>对偶</em> 的: 一个从置换出发, 一个从关系出发。</>} en={<><strong>Todd–Coxeter (1936)</strong>: given a <em>finite presentation</em> (generators + relations) and a subgroup H, enumerates cosets G/H. <em>Dual</em> to BSGS: one starts from permutations, the other from relations.</>} /></li>
+          <li><L zh={<><strong>Baby-step giant-step</strong>: 对 「字问题」 给 <TeX src={`O(\\sqrt{|G|})`} /> 算法, 不依赖结构 ── 对 G ≈ 4.3 × 10¹⁹ 仍是 ~6 × 10⁹ 操作, 实际不可行。 BSGS 把这压到 O(n²) ── 这就是为什么 「BSGS 是基础」。</>} en={<><strong>Baby-step giant-step</strong>: gives <TeX src={`O(\\sqrt{|G|})`} /> for the word problem, agnostic to structure — but for G ≈ 4.3 × 10¹⁹ that's still ~6 × 10⁹ operations, infeasible. BSGS reduces it to O(n²) — which is why "BSGS is foundational."</>} /></li>
+          <li><L zh={<><strong>Brownian motion in the symmetric group</strong> (Diaconis): 把 BSGS 跟 §24 的随机游走耦合, 给出 「随机生成元生成全 G 的期望次数」。</>} en={<><strong>Brownian motion in the symmetric group</strong> (Diaconis): couples BSGS with §24's random walks, giving the expected number of random generators needed to generate all of G.</>} /></li>
+        </ul>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="25.6  为什么这对魔方算法重要?" en="25.6  Why does this matter for cube algorithms?" />
+        </h3>
+        <p>
+          <L
+            zh={<>BSGS 是 「<strong>membership test</strong>」 的天然数据结构: 给定一个置换 g, 它属于 G 吗? 答: 逐层用 Schreier 表反向把 g 分解; 若能完全归约就属于。 用 <TeX src={`O(k \\cdot n^2)`} /> 时间。 这个数据结构对求解器没直接用 (求解器需要 <em>短</em> 表示, BSGS 给的是 <em>长</em> 表示, 平均 ~ <TeX src={`\\log |G| \\approx 65`} /> 步), 但对群论问题非常有效:</>}
+            en={<>BSGS is the natural data structure for the <strong>membership test</strong>: given g, is g ∈ G? Layer-by-layer reduce via Schreier transversals; total fully reduced ⇒ yes. Time <TeX src={`O(k \\cdot n^2)`} />. Not directly useful for solvers (they need <em>short</em> presentations; BSGS gives <em>long</em> ones, average <TeX src={`\\log |G| \\approx 65`} /> moves), but indispensable for group questions:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh="「这一组 alg 能否生成全 G?」 ── 试着 BSGS 一次,看 Size 是否等于 |G|" en={`"Does this alg set generate all of G?" — run BSGS, check if Size equals |G|.`} /></li>
+          <li><L zh="「这个子群的指数是多少?」 ── BSGS 给指数即 |G| / |H|" en={`"What is the index of this subgroup?" — BSGS yields |H| directly, hence |G|/|H|.`} /></li>
+          <li><L zh="「枚举共轭类 / 中心 / 换位子群」 ── BSGS 提供 G 上的 「随机均匀采样」 算法 (Furst–Hopcroft–Luks)" en={`"Enumerate conjugacy classes / centre / commutator subgroup" — BSGS yields a uniform-random sampling algorithm on G (Furst–Hopcroft–Luks).`} /></li>
+        </ul>
       </GTSec>
 
       {/* ═══════════════ §26 Representation theory ═══════════════════════ */}
@@ -5036,19 +7024,110 @@ gap> StructureDescription(G);
           />
         </p>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
-          <L zh="26.3  Fourier 分析与随机游走" en="26.3  Fourier analysis & random walks" />
+          <L zh="26.3  Maschke + Schur — 表示论的两个支柱" en="26.3  Maschke + Schur — the two pillars" />
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? 'Maschke 定理 (1899)' : "Maschke's theorem (1899)"}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>有限群 G 的任意 (有限维) 复表示都 <strong>完全可约</strong>:它是不可约表示的直和。 关键: 对任何 G-不变子空间 W ⊆ V, 存在 G-不变补 W'。 用平均化技巧 (averaging) 构造投影 <TeX src={`P = \\tfrac{1}{|G|} \\sum_{g \\in G} \\rho(g) P_0 \\rho(g)^{-1}`} />。</>}
+              en={<>Every (finite-dim) complex representation of a finite group G is <strong>completely reducible</strong>: it decomposes as a direct sum of irreducibles. Key step: given a G-invariant subspace W ⊆ V, construct an invariant complement via the averaging projector <TeX src={`P = \\tfrac{1}{|G|} \\sum_{g \\in G} \\rho(g) P_0 \\rho(g)^{-1}`} />.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? 'Schur 引理 (1905)' : "Schur's lemma (1905)"}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>设 <TeX src={`\\rho_1, \\rho_2`} /> 是 G 的两个不可约表示, <TeX src={`T : V_1 \\to V_2`} /> 是 G-等变线性映射 (<TeX src={`T \\rho_1(g) = \\rho_2(g) T`} />)。 那么:<br />(a) 若 <TeX src={`\\rho_1 \\not\\cong \\rho_2`} />, 必 <TeX src={`T = 0`} />;<br />(b) 若 <TeX src={`\\rho_1 = \\rho_2`} />, 必 <TeX src={`T = \\lambda I`} /> (复数倍单位)。</>}
+              en={<>Let <TeX src={`\\rho_1, \\rho_2`} /> be irreducible representations of G and <TeX src={`T : V_1 \\to V_2`} /> a G-equivariant linear map (<TeX src={`T \\rho_1(g) = \\rho_2(g) T`} />). Then:<br />(a) if <TeX src={`\\rho_1 \\not\\cong \\rho_2`} />, then <TeX src={`T = 0`} />;<br />(b) if <TeX src={`\\rho_1 = \\rho_2`} />, then <TeX src={`T = \\lambda I`} /> (a scalar).</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>这两条 「<em>朴素得不像定理</em>」 的结论, 推出表示论几乎所有的核心结果:</>}
+            en={<>These two deceptively simple statements imply nearly every key result in finite-group representation theory:</>}
+          />
+        </p>
+        <TeXBlock src={`\\sum_{\\rho \\in \\widehat{G}} d_\\rho^{\\,2} \\;=\\; |G|,\\qquad |\\widehat{G}| = \\#\\{\\text{conj.\\ classes}\\}`} />
+        <p>
+          <L
+            zh={<>左边:每个不可约维数平方和 = |G|。 右边:不可约表示个数 = 共轭类个数。 对魔方:</>}
+            en={<>Left: sum of squares of irreducible dimensions equals |G|. Right: the number of irreducibles equals the number of conjugacy classes. For the cube:</>}
+          />
+        </p>
+        <TeXBlock src={`\\sum_{\\rho} d_\\rho^{\\,2} \\;=\\; 43{,}252{,}003{,}274{,}489{,}856{,}000 \\quad\\text{with}\\quad |\\widehat{G}| \\approx 81{,}120`} />
+        <p>
+          <L
+            zh={<>这给了 81,120 个非负整数 <TeX src={`d_1^2, d_2^2, \\ldots`} /> 求和 = 4.3 × 10¹⁹ 的非平凡约束。 G^ab = ℤ/2 锁定其中 2 个 d_i = 1; 剩 81,118 个全部 ≥ 2, 平均维度 <TeX src={`\\sqrt{|G|/|\\widehat{G}|} \\approx 23{,}000`} />。</>}
+            en={<>This puts a non-trivial constraint on 81,120 non-negative integers <TeX src={`d_1^2, d_2^2, \\ldots`} /> summing to 4.3 × 10¹⁹. The abelianization G^ab = ℤ/2 forces two of them to be 1; the remaining 81,118 are all ≥ 2, with average dimension <TeX src={`\\sqrt{|G|/|\\widehat{G}|} \\approx 23{,}000`} />.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="26.4  正交关系 (orthogonality)" en="26.4  Orthogonality relations" />
         </h3>
         <p>
           <L
-            zh={<>§24 的随机游走上界<TeXBlock src={`d_{TV}^2(\\mu^t, \\mathrm{Unif}) \\leq \\tfrac{1}{4} \\sum_{\\rho \\neq \\mathrm{triv}} d_\\rho^2 \\, \\|\\hat\\mu(\\rho)\\|^{2t}`} />来自表示论:把测度 μ 展成「 G 上的 Fourier 级数 」 (即对每个不可约 ρ 取系数 <TeX src={`\\hat\\mu(\\rho)`} />), 然后用 Parseval 等式估计衰减。 这就是 Diaconis 在 1980s 革命的洗牌分析框架的群论核心。</>}
-            en={<>The §24 random-walk bound<TeXBlock src={`d_{TV}^2(\\mu^t, \\mathrm{Unif}) \\leq \\tfrac{1}{4} \\sum_{\\rho \\neq \\mathrm{triv}} d_\\rho^2 \\, \\|\\hat\\mu(\\rho)\\|^{2t}`} />comes from representation theory: expand μ in the "G-Fourier" basis, then apply Parseval. This is the group-theoretic heart of Diaconis's 1980s shuffle revolution.</>}
+            zh={<>不可约特征构成 G 上类函数空间的正交基。 两条核心等式 (相互对偶):</>}
+            en={<>Irreducible characters form an orthonormal basis of the space of class functions on G. The two dual orthogonality relations:</>}
           />
         </p>
-        <div className="gt-aside">
+        <TeXBlock src={`\\sum_{g \\in G} \\chi_\\rho(g) \\overline{\\chi_{\\rho'}(g)} \\;=\\; |G| \\cdot \\delta_{\\rho \\rho'} \\qquad (\\text{first orthogonality})`} />
+        <TeXBlock src={`\\sum_{\\rho \\in \\widehat{G}} \\chi_\\rho(g) \\overline{\\chi_\\rho(h)} \\;=\\; \\begin{cases} |C_G(g)| & g \\sim h \\\\ 0 & g \\not\\sim h \\end{cases} \\qquad (\\text{second orthogonality})`} />
+        <p>
           <L
-            zh={<>魔方群 G 的完整不可约表示分类 (即所有不可约 ρ 的列表) 至今没有完全列出。 已知 <strong>不可约表示数 = 共轭类数 ≈ 81120</strong> (大约), 但具体维度和特征值需要大量计算。 这是一个对计算代数系统 (Sage, Magma) 都还有点吃力的对象。</>}
-            en={<>The complete classification of irreducibles of G (a full list of all ρ) has never been written out. We know <strong># irreducibles = # conjugacy classes ≈ 81,120</strong>, but the exact dimensions and characters require massive computation. Even modern CAS (Sage, Magma) struggle with the full table.</>}
+            zh={<>第一条:不可约特征互相正交。 第二条:特征表的 「<em>列正交</em>」, 给出 <TeX src={`|C_G(g)| = |G| / |\\mathrm{class}(g)|`} /> (中心化子大小 × 共轭类大小 = |G|, §8.1 已用过)。 这两条把 「特征表」 变成 G 的一个不变量, 完全等价于 G 的代数结构 (对 abelian 群完全等价于 G 本身; 对非阿贝尔群是 「几乎完全」)。</>}
+            en={<>The first says irreducible characters are orthonormal. The second is "<em>column orthogonality</em>", giving <TeX src={`|C_G(g)| = |G| / |\\mathrm{class}(g)|`} /> (centralizer × class = |G|, §8.1). Together, the character table is a strong group invariant, equivalent to G for Abelian groups and almost equivalent in the non-Abelian case.</>}
           />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="26.5  Fourier 分析与随机游走" en="26.5  Fourier analysis & random walks" />
+        </h3>
+        <p>
+          <L
+            zh={<>§24 的随机游走上界来自表示论。 给定 G 上一个概率测度 μ (一步的转移分布), 它的 <em>群 Fourier 变换</em> 是</>}
+            en={<>The §24 random-walk bound comes from representation theory. Given a probability measure μ on G (the one-step distribution), its <em>group Fourier transform</em> is</>}
+          />
+        </p>
+        <TeXBlock src={`\\hat\\mu(\\rho) \\;=\\; \\sum_{g \\in G} \\mu(g) \\, \\rho(g) \\;\\in\\; M_{d_\\rho}(\\mathbb{C}).`} />
+        <p>
+          <L
+            zh={<>「t 步的转移分布」 = μ 的 t 次卷积, 而卷积在 Fourier 下变乘积: <TeX src={`\\widehat{\\mu^t}(\\rho) = \\hat\\mu(\\rho)^t`} />。 套用 Parseval 等式:</>}
+            en={<>"t-step distribution" = t-fold convolution of μ, and convolution becomes multiplication under Fourier: <TeX src={`\\widehat{\\mu^t}(\\rho) = \\hat\\mu(\\rho)^t`} />. Applying Parseval:</>}
+          />
+        </p>
+        <TeXBlock src={`d_{TV}^2(\\mu^t, \\mathrm{Unif}) \\;\\leq\\; \\tfrac{1}{4} \\sum_{\\rho \\neq \\mathrm{triv}} d_\\rho^2 \\, \\bigl\\| \\hat\\mu(\\rho)^{\\,t} \\bigr\\|_{\\mathrm{op}}^{\\,2}.`} />
+        <p>
+          <L
+            zh={<>每个 <TeX src={`\\hat\\mu(\\rho)`} /> 的算子范数 ≤ 1, 等于 1 仅在 ρ = triv。 所以非平凡 ρ 上是严格收缩, 而衰减率 = max 第二特征值。 这就是 Diaconis 1980s 革命的洗牌分析框架的群论核心: <strong>混合速率由非平凡不可约表示的最坏算子范数决定</strong>。</>}
+            en={<>Each <TeX src={`\\hat\\mu(\\rho)`} /> has operator norm ≤ 1, with equality only at ρ = trivial. So on non-trivial ρ this is a strict contraction whose rate equals the largest second eigenvalue. This is the group-theoretic heart of Diaconis's 1980s shuffle revolution: <strong>mixing rate = worst operator norm over non-trivial irreducibles</strong>.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="26.6  魔方群的特征表 — 一个开放对象" en="26.6  G's character table — an open object" />
+        </h3>
+        <p>
+          <L
+            zh={<>魔方群 G 的 <strong>完整</strong> 不可约表示分类 (即所有不可约 ρ 的列表 + 特征值) 至今没有完整算出。 已知:</>}
+            en={<>The <strong>complete</strong> classification of G's irreducibles (full list of ρ's plus character values) has never been written out. Known facts:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<>不可约表示数 = 共轭类数 <TeX src={`\\approx 81{,}120`} /> (Frobenius 等式)</>} en={<>Number of irreducibles = number of conjugacy classes <TeX src={`\\approx 81{,}120`} /> (Frobenius identity)</>} /></li>
+          <li><L zh={<>1 维不可约表示恰好 2 个 (平凡 + sgn), 因为 <TeX src={`G^{\\mathrm{ab}} = \\mathbb{Z}/2`} /></>} en={<>Exactly 2 one-dim irreducibles (trivial + sign), since <TeX src={`G^{\\mathrm{ab}} = \\mathbb{Z}/2`} /></>} /></li>
+          <li><L zh={<>最大不可约表示维度未知 (估计 ~ <TeX src={`10^5`} />), 来自 <TeX src={`A_8 \\times A_{12}`} /> 的非平凡 induced 表示</>} en={<>Largest irreducible dimension is unknown (estimated <TeX src={`\\sim 10^5`} />), arising from non-trivial induced representations of <TeX src={`A_8 \\times A_{12}`} /></>} /></li>
+          <li><L zh="计算代数系统 (GAP, Magma, SageMath) 在算 G 完整特征表时全部超时 (内存 + CPU)" en="All major CAS (GAP, Magma, SageMath) time out / run out of memory on the full character table" /></li>
+        </ul>
+        <div className="gt-pullquote">
+          <L
+            zh={<>「魔方群的特征表是一个完美的 <em>计算挑战</em>: 群结构已知, 算法已知 (Burnside, Brauer, Dixon-Schneider), 但具体执行超过现代计算资源。」</>}
+            en={<>"G's character table is a perfect <em>computational challenge</em>: the group structure is known, the algorithms are known (Burnside, Brauer, Dixon-Schneider), but the computation exceeds present-day resources."</>}
+          />
+          <div className="gt-pullquote-cite">— Joyner, on computational limits</div>
         </div>
       </GTSec>
 
@@ -5205,7 +7284,7 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
     <nav className="gt-section-nav" aria-label="section navigation">
       <div className="gt-section-nav-cell gt-section-nav-prev">
         {prev ? (
-          <Link to={`/theory/group/${prev.id}`}>
+          <Link to={`/math/group/${prev.id}`}>
             <div className="gt-section-nav-dir">← {lang === 'zh' ? '上一节' : 'previous'}</div>
             <div className="gt-section-nav-num">§{prev.num}</div>
             <div className="gt-section-nav-title">{lang === 'zh' ? prev.zh : prev.en}</div>
@@ -5213,13 +7292,13 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
         ) : <div className="gt-section-nav-empty" />}
       </div>
       <div className="gt-section-nav-cell gt-section-nav-toc">
-        <Link to="/theory/group">
+        <Link to="/math/group">
           <div className="gt-section-nav-dir">↑ {lang === 'zh' ? '回到目录' : 'contents'}</div>
         </Link>
       </div>
       <div className="gt-section-nav-cell gt-section-nav-next">
         {next ? (
-          <Link to={`/theory/group/${next.id}`}>
+          <Link to={`/math/group/${next.id}`}>
             <div className="gt-section-nav-dir">{lang === 'zh' ? '下一节' : 'next'} →</div>
             <div className="gt-section-nav-num">§{next.num}</div>
             <div className="gt-section-nav-title">{lang === 'zh' ? next.zh : next.en}</div>

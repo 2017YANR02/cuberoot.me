@@ -11,6 +11,7 @@ import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { VisualCube } from '../../components/VisualCube';
 import TwistySection from '../../components/TwistySection';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import {
   PATTERNS, CATEGORY_LABEL, PUZZLE_SIZES, PUZZLE_LABEL, patternPuzzle,
   type Category, type Pattern, type PuzzleSize,
@@ -27,6 +28,7 @@ function inverseOf(algStr: string): string {
 export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  useDocumentTitle('图案', 'Patterns');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');

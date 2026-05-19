@@ -2,10 +2,12 @@
 // 进步(PB)染色 + regional record 标签.
 
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { EventIcon } from '../../../../../components/EventIcon';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
+import { compLinkProps } from '../../../../../utils/comp_link';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computeProgress } from '../../logic/progress';
 import type { WcaResultRow, WcaCompetition } from '../../wca_api';
@@ -85,11 +87,10 @@ export default function ByCompList({ results, comps, isZh }: Props) {
         return (
           <div key={comp.id} className="wp-bycomp-block">
             <div className="wp-bycomp-header">
-              <a
-                href={`https://www.worldcubeassociation.org/competitions/${comp.id}`}
-                target="_blank" rel="noopener noreferrer"
+              <Link
+                {...compLinkProps(comp.id)}
                 className="wp-bycomp-name"
-              ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></a>
+              ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></Link>
               <span className="wp-bycomp-date">{formatDateRangeIso(comp.start_date, comp.end_date)}</span>
             </div>
             <div className="wp-table-scroll">

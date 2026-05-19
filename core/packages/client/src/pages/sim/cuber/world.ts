@@ -4,6 +4,7 @@ import Cubelet from "./cubelet";
 import * as THREE from "three";
 import Controller from "./controller";
 import Sq1Cube from "./sq1/Sq1Cube";
+import FaceHints from "./face_hints";
 
 /** Puzzle slot — either an NxN cube (order >= 1) or SQ1 (sentinel 'sq1'). */
 export type PuzzleKind = number | 'sq1';
@@ -34,6 +35,10 @@ export default class World {
 
   public controller: Controller;
 
+  /** 6 个面方位指示器(彩色面板 + U/D/L/R/F/B 字母),拖动时淡入。
+   *  挂在 scene 下,所以会跟着 scene.rotation 一起转,等价于"贴在 cube 上"。 */
+  public faceHints!: FaceHints;
+
   constructor() {
     this.scene = new THREE.Scene();
     this.scene.matrixAutoUpdate = false;
@@ -55,6 +60,8 @@ export default class World {
     this.camera.position.z = 0;
 
     this.controller = new Controller(this);
+    this.faceHints = new FaceHints();
+    this.scene.add(this.faceHints);
     this.setPuzzle(3);
   }
 

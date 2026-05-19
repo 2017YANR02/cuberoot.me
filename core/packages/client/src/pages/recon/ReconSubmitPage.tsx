@@ -37,6 +37,7 @@ import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/
 import { encodeUrlAlg, decodeUrlAlg } from '../../utils/cubedb_url';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Loader2, Shuffle } from 'lucide-react';
 import { randomScrambleForEvent } from '../../utils/scramble';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 
 /** 折叠区段 — GitHub 设置式 */
 function CollapsibleSection({ title, defaultOpen = false, children }: {
@@ -118,6 +119,7 @@ export default function ReconSubmitPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('提交录像还原', 'Submit Reconstruction');
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());

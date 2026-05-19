@@ -29,6 +29,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import AlgPlayer from '../../components/AlgPlayer';
 import { CaseThumb } from './CaseThumb';
 import { compactSq1Alg } from '../gen/sq1_svg';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './alg.css';
 
 /** sq1 algs/setups under /alg/sq1 are shown stripped of parens/commas/spaces.
@@ -199,6 +200,13 @@ export default function AlgCategoryPage() {
   const isZh = i18n.language.startsWith('zh');
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
+  const algSetTitle = (() => {
+    const fallback = isZh ? '公式库' : 'Algorithms';
+    if (!puzzleParam || !set) return fallback;
+    const setName = meta ? (isZh ? meta.zh : meta.en) : set;
+    return `${puzzleParam} · ${setName}`;
+  })();
+  useDocumentTitle(algSetTitle, algSetTitle);
   const [data, setData] = useState<AlgFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);

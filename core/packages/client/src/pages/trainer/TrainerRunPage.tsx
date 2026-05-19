@@ -18,6 +18,7 @@ import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList,
 } from './components';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './trainer.css';
 
 function isPuzzle(s: string): s is AlgPuzzle {
@@ -30,6 +31,7 @@ export default function TrainerRunPage() {
   const { puzzle: puzzleParam = '', set: setSlug = '' } = useParams<{ puzzle: string; set: string }>();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('训练中', 'Training');
 
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, setSlug) : undefined;

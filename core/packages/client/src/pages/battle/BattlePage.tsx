@@ -21,6 +21,7 @@ import HistoryPanel from './HistoryPanel';
 import VsHistoryPanel from './VsHistoryPanel';
 import { MilestoneToast } from './AdvancedFeatures';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import CubingPreview from '../timer/cube/CubingPreview';
 import BattleEventPicker from './BattleEventPicker';
 import { EventIcon } from '../../components/EventIcon';
@@ -922,6 +923,7 @@ export default function BattlePage() {
 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('对战', 'Battle');
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);

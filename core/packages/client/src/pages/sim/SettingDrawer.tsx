@@ -28,6 +28,9 @@ export interface SimSettings {
   animateScramble: boolean;
   /** 画布背景:false=纯色 (var --background),true=透明棋盘格 (twizzle 风格) */
   checkeredBg: boolean;
+  /** 拖魔方背景空白:'orbit' = 自由切视角 (改 scene.rotation,不进 move list);
+   *  'rotate' = 整体转 (NxN 记 x/y/z 进 move list,其它 puzzle 退化为 90° snap orbit)。 */
+  dragEmpty: 'orbit' | 'rotate';
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
@@ -57,6 +60,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   hint: false,
   animateScramble: false,
   checkeredBg: false,
+  dragEmpty: 'orbit',
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
 };
@@ -93,8 +97,9 @@ function mapPitch(v: number): number { return ((1 - v / 50) * Math.PI) / 2; }   
 // speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 30 帧 (现状)
 function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 100) * 55)); }
 
-export function applySettings(world: World, s: SimSettings): void {
+export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
+  world.controller.dragEmpty = s.dragEmpty;
   // scale 由滚轮直接改 world.scale + 防抖反算 settings (round 损失 ≤0.005),
   // 这里如果差距在 round 误差内就别回写,避免滚动途中突跳
   const targetScale = mapScale(s.scale);
@@ -102,9 +107,17 @@ export function applySettings(world: World, s: SimSettings): void {
     world.scale = targetScale;
   }
   world.perspective = mapPerspective(s.perspective);
-  world.scene.rotation.y = mapYaw(s.viewAngle);
-  world.scene.rotation.x = mapPitch(s.viewGradient);
+  // 视角:只在用户实际改 slider 时同步,否则保留 drag-orbit 累积出来的姿态。
+  // 首次 apply (prev undefined) 也同步,作为初始姿态。
+  if (!prev || prev.viewAngle !== s.viewAngle) {
+    world.scene.rotation.y = mapYaw(s.viewAngle);
+  }
+  if (!prev || prev.viewGradient !== s.viewGradient) {
+    world.scene.rotation.x = mapPitch(s.viewGradient);
+  }
   world.scene.updateMatrix();
+  // face hints (拖动时浮现的 U/D/L/R/F/B 色板) 跟主 face colors 走。
+  world.faceHints.setFaceColors(s.faceColors);
   CubeGroup.frames = mapFrames(s.speed);
   // NxN-only options skipped for SQ1 (sticker thickness / hollow / hint / face
   // colors are baked at construction time for the SQ1 wedges).

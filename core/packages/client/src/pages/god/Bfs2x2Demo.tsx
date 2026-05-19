@@ -7,6 +7,7 @@
  * 不依赖 cubing.js;BFS 用手写 perm rank + 编码 (见 bfs2x2.worker.ts)。
  */
 import { useEffect, useRef, useState } from 'react';
+import { MathText } from './Tex';
 
 interface Props { isZh: boolean; }
 
@@ -133,10 +134,10 @@ export default function Bfs2x2Demo({ isZh }: Props) {
       </div>
 
       <p className="god-bfs-caption">
-        {t(
+        <MathText>{t(
           '横轴 = 距离还原态的最少步数(HTM)。彩色 = 你这次 BFS 的结果,灰色虚影 = 已知精确分布。两个吻合 ⇒ 你刚刚在浏览器里从零证明了 "2×2 上帝之数 = 11"。',
           'X-axis = minimum HTM distance from solved. Coloured bars = your live BFS; pale ghost = published distribution. Match ⇒ you just re-proved "2×2 God\'s number = 11" in the browser.',
-        )}
+        )}</MathText>
       </p>
     </div>
   );

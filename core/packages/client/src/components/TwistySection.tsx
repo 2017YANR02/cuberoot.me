@@ -16,6 +16,8 @@ export interface TwistySettings {
   viewGradient: number;
   speed: number;
   hint: boolean;
+  /** 'orbit' = 自由 orbit (默认 cubing.js 行为);'rotate' = pointerup 后 snap cameraLat/Long 到 90° 整数倍 */
+  dragEmpty?: 'orbit' | 'rotate';
 }
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
@@ -205,27 +207,70 @@ export default function TwistySection({
 
   // settings 同步:把 yaw/pitch/scale/speed/hint 映到 TwistyPlayer 属性。
   // 跟 SettingDrawer 里 NxN 的 applySettings 行为一致 — 滑条 0..100 同一坐标系。
+  // viewAngle/viewGradient 只在 slider 真变化或 player 重建时同步,
+  // 否则保留 cubing.js drag 累积出来的姿态 (跟 NxN orbit 同款)。
+  const prevYawRef = useRef<number | null>(null);
+  const prevPitchRef = useRef<number | null>(null);
+  const prevNonceRef = useRef<number>(-1);
   useEffect(() => {
     const player = playerInstRef.current;
     if (!player || !settings) return;
-    // yaw 0..100 → -180..180 度 (cuber SettingDrawer 是 -π/2..π/2 弧度;TwistyPlayer
-    //   接受度数,这里把范围放宽到 -180..180 让"反面"也能转到)
     const yawDeg = ((settings.viewAngle - 50) / 50) * 180;
-    // pitch 0..100 → 90..-90 (上下) — cuber 是 0=俯视90 / 100=仰视-90
     const pitchDeg = ((50 - settings.viewGradient) / 50) * 90;
-    // scale 0..100 → cameraDistance [9, 3]:近端 (slider=100) ≈ 3,远端 (slider=0) ≈ 9。
-    //   默认 50 → 6,跟 cubing.js TwistyPlayer 默认 cameraDistance 同量级。
     const dist = 9 - (settings.scale / 100) * 6;
-    // speed 0..100 → tempoScale [0.2, 4],默认 50 → 1
     const tempo = settings.speed <= 50
       ? 0.2 + (settings.speed / 50) * 0.8
       : 1 + ((settings.speed - 50) / 50) * 3;
-    try { player.cameraLongitude = yawDeg; } catch { /* */ }
-    try { player.cameraLatitude = pitchDeg; } catch { /* */ }
+    const isNewPlayer = prevNonceRef.current !== playerNonce;
+    if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
+      try { player.cameraLongitude = yawDeg; } catch { /* */ }
+    }
+    if (isNewPlayer || prevPitchRef.current !== settings.viewGradient) {
+      try { player.cameraLatitude = pitchDeg; } catch { /* */ }
+    }
     try { player.cameraDistance = dist; } catch { /* */ }
     try { player.tempoScale = tempo; } catch { /* */ }
     try { player.hintFacelets = settings.hint ? 'floating' : 'none'; } catch { /* */ }
+    prevYawRef.current = settings.viewAngle;
+    prevPitchRef.current = settings.viewGradient;
+    prevNonceRef.current = playerNonce;
   }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings, playerNonce]);
+
+  // rotate 模式:player 容器上 pointerup 时,把 cameraLat/Long snap 到 puzzle 旋转对称角度。
+  //   pyraminx (四面体): 120° (3 重对称 — 顶点轴)
+  //   skewb (立方体): 90°
+  //   megaminx (十二面体): 72° (5 重对称 — 面轴)
+  // cubing.js 自带 orbit 我们不拦截,只在松手后修正。
+  const dragEmptyRef = useRef<'orbit' | 'rotate'>('orbit');
+  useEffect(() => { dragEmptyRef.current = settings?.dragEmpty ?? 'orbit'; }, [settings?.dragEmpty]);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const Q_DEG = puzzle === 'pyraminx' ? 120 : puzzle === 'megaminx' ? 72 : 90;
+    const onUp = () => {
+      if (dragEmptyRef.current !== 'rotate') return;
+      const player = playerInstRef.current;
+      if (!player) return;
+      try {
+        const lat = Number(player.cameraLatitude);
+        const lon = Number(player.cameraLongitude);
+        if (Number.isFinite(lat)) player.cameraLatitude = Math.round(lat / Q_DEG) * Q_DEG;
+        if (Number.isFinite(lon)) player.cameraLongitude = Math.round(lon / Q_DEG) * Q_DEG;
+      } catch { /* ignore */ }
+    };
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+    return () => {
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onUp);
+    };
+  }, [playerNonce, puzzle]);
+
+  // Face hints (U/D/L/R/F/B 字母指示): TwistyPlayer 用 closed shadow DOM,
+  // 内部 WebGL renderer 不可访问。puzzleObj.parent 那个 scene 只是 hit-test 用的
+  // model,不会被它的 renderer 画。要在 Twisty 上加 face hints 必须走 HTML overlay
+  // (绝对定位 + 订阅 orbitCoordinates 自己投影 3D→2D)。尚未实现 — NxN/SQ1 走
+  // cuber world.scene 路径已生效;Twisty (pyra/skewb/mega) 暂无 face hints。
 
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>

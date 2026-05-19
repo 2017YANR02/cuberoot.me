@@ -1,4 +1,4 @@
-/* ─── /theory/group ─────────────────────────────────────────────────────────
+/* ─── /math/group ───────────────────────────────────────────────────────────
  * Mathematical paper aesthetic. Inspired by arXiv typography + Edward Tufte.
  * Light & dark via global theme tokens, with a single warm accent.
  * ────────────────────────────────────────────────────────────────────────── */
@@ -149,6 +149,375 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
 }
 @media (max-width: 640px) {
   .gt-toc-list { grid-template-columns: 1fr; }
+}
+
+/* ── Index landing panels (only on /math/group) ────────────────────────── */
+.gt-index-section-head {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 18px;
+}
+
+/* Stats strip — 3 big numbers */
+.gt-index-stats {
+  max-width: 880px;
+  margin: 0 auto 64px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 2px solid var(--rule);
+  border-bottom: 2px solid var(--rule);
+}
+.gt-index-stat {
+  padding: 28px 20px;
+  text-align: center;
+  border-right: 1px solid var(--rule);
+}
+.gt-index-stat:last-child { border-right: 0; }
+.gt-index-stat-val {
+  font-family: var(--mono);
+  font-size: clamp(26px, 3.6vw, 38px);
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -.015em;
+  line-height: 1.1;
+}
+.gt-index-stat-val sup { font-size: .55em; vertical-align: super; }
+.gt-index-stat-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+.gt-index-stat-cap {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 8px;
+  line-height: 1.45;
+}
+@media (max-width: 640px) {
+  .gt-index-stats { grid-template-columns: 1fr; }
+  .gt-index-stat { border-right: 0; border-bottom: 1px solid var(--rule); padding: 22px 16px; }
+  .gt-index-stat:last-child { border-bottom: 0; }
+}
+
+/* Closed-form |G| block */
+.gt-index-order {
+  max-width: 880px;
+  margin: 0 auto 64px;
+}
+.gt-index-order-eq {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px 20px;
+  overflow-x: auto;
+  background-image:
+    linear-gradient(to right, transparent, color-mix(in srgb, var(--accent) 3%, transparent), transparent);
+}
+.gt-index-order-eq .gt-tex-block {
+  font-size: clamp(15px, 2.2vw, 21px);
+}
+.gt-index-order-legend {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  margin-top: 22px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gt-index-order-legend > div {
+  padding: 14px 12px;
+  border-right: 1px solid var(--rule);
+  background: var(--bg-elev);
+  text-align: center;
+}
+.gt-index-order-legend > div:last-child { border-right: 0; }
+.gt-index-order-legend b {
+  font-family: var(--math);
+  font-style: italic;
+  font-size: 20px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 6px;
+}
+.gt-index-order-legend b sup { font-style: normal; font-size: .65em; }
+.gt-index-order-legend span {
+  font-family: var(--serif);
+  font-size: 12.5px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+.gt-index-order-legend em {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-style: normal;
+  color: var(--ink-faint);
+  letter-spacing: .02em;
+}
+.gt-index-order-foot {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+.gt-index-order-foot > span { color: var(--ink-faint); }
+.gt-index-order-foot > span sup { font-size: .75em; }
+.gt-index-order-foot a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color .15s;
+}
+.gt-index-order-foot a:hover { color: var(--accent-2); }
+@media (max-width: 640px) {
+  .gt-index-order-legend { grid-template-columns: repeat(2, 1fr); }
+  .gt-index-order-legend > div { border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .gt-index-order-legend > div:nth-child(2n) { border-right: 0; }
+  .gt-index-order-legend > div:nth-last-child(-n+2) { border-bottom: 0; }
+}
+
+/* Featured cube — superflip showcase */
+.gt-index-featured {
+  max-width: 880px;
+  margin: 0 auto 64px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg-elev);
+  padding: 28px 32px;
+}
+.gt-index-featured-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.gt-index-featured-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+.gt-index-featured-cube {
+  width: 220px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gt-index-featured-cube > * {
+  width: 100% !important;
+  height: 100% !important;
+}
+.gt-index-featured-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--ink);
+  margin: 0 0 12px;
+  line-height: 1.3;
+}
+.gt-index-featured-text p {
+  font-size: 15.5px;
+  color: var(--ink-dim);
+  line-height: 1.7;
+  margin: 0 0 14px;
+}
+.gt-index-featured-alg {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--bg-deep);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+}
+.gt-index-featured-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.gt-index-featured-cta a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color .15s;
+}
+.gt-index-featured-cta a:hover { color: var(--accent-2); }
+@media (max-width: 640px) {
+  .gt-index-featured { padding: 22px 18px; }
+  .gt-index-featured-body { grid-template-columns: 1fr; gap: 18px; }
+  .gt-index-featured-cube { width: 100%; max-width: 240px; margin: 0 auto; }
+}
+
+/* Highlight cards — 4-up grid */
+.gt-index-cards { max-width: 880px; margin: 0 auto 64px; }
+.gt-index-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.gt-index-card {
+  display: block;
+  position: relative;
+  padding: 22px 22px 50px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg-elev);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color .15s, transform .15s, background .15s;
+  min-height: 168px;
+}
+.gt-index-card:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-elev));
+  transform: translateY(-2px);
+}
+.gt-index-card-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+.gt-index-card-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+.gt-index-card-formula {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+.gt-index-card-teaser {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  color: var(--ink-dim);
+  line-height: 1.6;
+}
+.gt-index-card-arrow {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--ink-faint);
+  transition: color .15s, transform .15s;
+}
+.gt-index-card:hover .gt-index-card-arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+@media (max-width: 640px) {
+  .gt-index-cards-grid { grid-template-columns: 1fr; }
+}
+
+/* Themed TOC */
+.gt-index-toc { max-width: 880px; margin: 0 auto 72px; }
+.gt-index-toc-themes {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gt-index-theme {
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-elev);
+}
+.gt-index-theme:last-child { border-bottom: 0; }
+.gt-index-theme-head {
+  display: grid;
+  grid-template-columns: 78px auto 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 16px 22px 12px;
+  border-bottom: 1px dashed var(--rule);
+}
+.gt-index-theme-range {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: var(--ink-faint);
+}
+.gt-index-theme-name {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.gt-index-theme-desc {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+.gt-index-theme-list {
+  list-style: none;
+  padding: 12px 22px 18px;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 28px;
+}
+.gt-index-theme-list a {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-family: var(--serif);
+  font-size: 15px;
+  padding: 5px 0;
+  transition: color .15s;
+}
+.gt-index-theme-list a:hover { color: var(--accent); }
+.gt-index-theme-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.gt-index-theme-list a:hover .gt-index-theme-num { color: var(--accent); }
+.gt-index-theme-refs .gt-index-theme-list { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .gt-index-theme-head {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 14px 18px 10px;
+  }
+  .gt-index-theme-list {
+    grid-template-columns: 1fr;
+    padding: 10px 18px 16px;
+  }
 }
 
 /* ── Section shell ──────────────────────────────────────────────────────── */
@@ -2309,6 +2678,500 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   color: var(--ink);
 }
 
+/* ── §12 / §15 Beyond threads (numbered card list) ─────────────────────── */
+.gt-beyond-threads {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 18px 0 8px;
+}
+.gt-beyond-thread {
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 16px 18px;
+}
+.gt-beyond-thread-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.gt-beyond-thread-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.gt-beyond-thread-body {
+  font-size: 14px;
+  color: var(--ink-dim);
+  line-height: 1.65;
+}
+@media (max-width: 640px) {
+  .gt-beyond-threads { grid-template-columns: 1fr; }
+}
+
+/* ── §12.3 Scale rows ──────────────────────────────────────────────────── */
+.gt-beyond-scale {
+  margin: 20px 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gt-beyond-scale-row {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-elev);
+  font-size: 14px;
+}
+.gt-beyond-scale-row:last-child { border-bottom: 0; }
+.gt-beyond-scale-row-self {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elev));
+}
+.gt-beyond-scale-row-out {
+  background: color-mix(in srgb, var(--gold) 5%, var(--bg-elev));
+}
+.gt-beyond-scale-name {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+}
+.gt-beyond-scale-val {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--accent);
+}
+.gt-beyond-scale-row-out .gt-beyond-scale-val { color: var(--gold); }
+.gt-beyond-scale-cmp {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-dim);
+  text-align: right;
+}
+@media (max-width: 640px) {
+  .gt-beyond-scale-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 12px 14px;
+  }
+  .gt-beyond-scale-cmp { text-align: left; }
+}
+
+/* ── §13 / §16 Generic pattern table ───────────────────────────────────── */
+.gt-pattern-table {
+  margin: 20px 0;
+  overflow-x: auto;
+}
+.gt-pattern-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--bg-elev);
+}
+.gt-pattern-tbl th,
+.gt-pattern-tbl td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+}
+.gt-pattern-tbl th {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-faint);
+  border-bottom: 2px solid var(--rule);
+  background: var(--bg-deep);
+}
+.gt-pattern-tbl td.num {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-weight: 600;
+}
+.gt-pattern-tbl tbody tr:last-child td { border-bottom: 0; }
+.gt-pattern-tbl tbody tr:hover { background: color-mix(in srgb, var(--accent) 3%, transparent); }
+
+/* ── §15.1 Puzzle formula list ─────────────────────────────────────────── */
+.gt-puzzle-formula-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+.gt-puzzle-formula {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-size: 14px;
+}
+.gt-puzzle-formula > span:first-child {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: .04em;
+  min-width: 92px;
+  flex-shrink: 0;
+}
+.gt-puzzle-formula .gt-tex { font-size: 14px; }
+.gt-puzzle-godtbl { margin: 18px 0; overflow-x: auto; }
+@media (max-width: 640px) {
+  .gt-puzzle-formula-list { grid-template-columns: 1fr; }
+}
+
+/* ── §16 Open problems summary ─────────────────────────────────────────── */
+.gt-open-summary {
+  margin: 22px 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-elev);
+}
+.gt-open-summary-head {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 14px 18px 8px;
+  border-bottom: 1px dashed var(--rule);
+}
+.gt-open-summary .gt-pattern-tbl {
+  background: transparent;
+}
+.gt-open-summary .gt-pattern-tbl th {
+  background: transparent;
+}
+
+/* ── §23.4 Exact distance distribution table ──────────────────────────── */
+.gt-distance-exact {
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+}
+.gt-distance-exact td.num,
+.gt-distance-exact th {
+  text-align: right;
+  white-space: nowrap;
+}
+.gt-distance-exact .gt-row-hl td {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  font-weight: 600;
+}
+.gt-distance-exact .gt-row-sum td {
+  border-top: 2px solid var(--rule);
+  background: var(--bg-elev);
+  font-family: var(--mono);
+}
+
+/* ── §19.4 Cauchy / §19.5 Sylow tables ───────────────────────────────── */
+.gt-cauchy-tbl,
+.gt-sylow-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 6px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.gt-cauchy-tbl th,
+.gt-sylow-tbl th {
+  text-align: left;
+  font-family: var(--serif);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid var(--rule);
+  background: var(--bg-elev);
+  color: var(--ink-dim);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gt-cauchy-tbl td,
+.gt-sylow-tbl td {
+  padding: 11px 14px;
+  border-bottom: 1px dashed var(--rule);
+  vertical-align: top;
+}
+.gt-cauchy-tbl td.num,
+.gt-sylow-tbl td.num {
+  font-family: var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.gt-sylow-tbl td.num:first-child,
+.gt-cauchy-tbl td.num:first-child {
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent);
+}
+.gt-cauchy-tbl tr:last-child td,
+.gt-sylow-tbl tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── §6.3 Direct/Semidirect/Wreath product comparison ─────────────────── */
+.gt-product-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+}
+.gt-product-tbl th {
+  text-align: left;
+  font-family: var(--serif);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid var(--rule);
+  background: var(--bg-elev);
+  color: var(--ink-dim);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gt-product-tbl td {
+  padding: 12px 14px;
+  border-bottom: 1px dashed var(--rule);
+  vertical-align: top;
+}
+.gt-product-tbl td:first-child {
+  white-space: nowrap;
+}
+.gt-product-tbl td.num {
+  text-align: center;
+  color: var(--ink-dim);
+  font-style: italic;
+  font-size: 13px;
+}
+.gt-product-tbl tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── §7.3 Landau function table ───────────────────────────────────────── */
+.gt-landau-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.gt-landau-tbl th {
+  text-align: left;
+  font-family: var(--serif);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid var(--rule);
+  background: var(--bg-elev);
+  color: var(--ink-dim);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gt-landau-tbl td {
+  padding: 9px 14px;
+  border-bottom: 1px dashed var(--rule);
+}
+.gt-landau-tbl td.num {
+  font-family: var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.gt-landau-tbl td.num:first-child {
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent);
+}
+.gt-landau-tbl tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── §7.4 73 attained orders grid ─────────────────────────────────────── */
+.gt-orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 6px;
+  margin: 18px 0;
+}
+.gt-order-chip {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--ink);
+  background: var(--bg-elev);
+  transition: background .15s, color .15s;
+}
+.gt-order-chip:hover {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-elev));
+}
+.gt-order-chip-id {
+  background: color-mix(in srgb, var(--ink-dim) 12%, var(--bg-elev));
+  color: var(--ink-dim);
+}
+.gt-order-chip-max {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── §21.4 Sₙ partition / conjugacy-class table ──────────────────────── */
+.gt-partition-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.gt-partition-tbl th {
+  text-align: left;
+  font-family: var(--serif);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid var(--rule);
+  background: var(--bg-elev);
+  color: var(--ink-dim);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gt-partition-tbl td {
+  padding: 9px 14px;
+  border-bottom: 1px dashed var(--rule);
+  font-family: var(--mono);
+}
+.gt-partition-tbl td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+.gt-partition-tbl tr:last-child td {
+  border-bottom: none;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  font-weight: 600;
+}
+
+/* ── §4.4 |G| prime-factor cards ──────────────────────────────────────── */
+.gt-prime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+.gt-prime-card {
+  padding: 14px 14px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg-elev);
+}
+.gt-prime-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--mono);
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+.gt-prime-card-base {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+.gt-prime-card-exp {
+  font-size: 14px;
+  font-weight: 600;
+  vertical-align: super;
+  line-height: 1;
+  margin-left: 1px;
+}
+.gt-prime-card-val {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.gt-prime-card-bar {
+  height: 4px;
+  background: color-mix(in srgb, var(--rule) 60%, transparent);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.gt-prime-card-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.gt-prime-card-foot {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+/* ── §4.5 Puzzle order comparison table ───────────────────────────────── */
+.gt-puzzle-order-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.gt-puzzle-order-tbl th {
+  text-align: left;
+  font-family: var(--serif);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid var(--rule);
+  background: var(--bg-elev);
+  color: var(--ink-dim);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gt-puzzle-order-tbl td {
+  padding: 11px 14px;
+  border-bottom: 1px dashed var(--rule);
+  vertical-align: middle;
+}
+.gt-puzzle-order-tbl td.num {
+  font-family: var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.gt-puzzle-order-tbl tr:nth-child(2) td {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-weight: 600;
+}
+.gt-puzzle-order-tbl tr:last-child td {
+  border-bottom: none;
+}
+
 /* ── Mobile tweaks ─────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .gt-page { padding: 32px 16px 64px; font-size: 16px; }
@@ -2319,4 +3182,23 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   .gt-math-display { font-size: 1.05em; }
   .gt-result-row { font-size: 13px; }
   .gt-tex-block { font-size: .98em; }
+  .gt-pattern-tbl th, .gt-pattern-tbl td { padding: 8px 10px; font-size: 13px; }
+  .gt-distance-exact { font-size: 12px; }
+  .gt-distance-exact th, .gt-distance-exact td { padding: 6px 8px; }
+  .gt-cauchy-tbl, .gt-sylow-tbl, .gt-product-tbl { font-size: 13px; }
+  .gt-cauchy-tbl th, .gt-cauchy-tbl td,
+  .gt-sylow-tbl th, .gt-sylow-tbl td,
+  .gt-product-tbl th, .gt-product-tbl td { padding: 8px 10px; }
+  .gt-product-tbl td:first-child { white-space: normal; }
+  .gt-landau-tbl { font-size: 12.5px; }
+  .gt-landau-tbl th, .gt-landau-tbl td { padding: 7px 10px; }
+  .gt-orders-grid { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 4px; }
+  .gt-order-chip { font-size: 12px; padding: 6px 2px; }
+  .gt-partition-tbl { font-size: 12.5px; }
+  .gt-partition-tbl th, .gt-partition-tbl td { padding: 7px 10px; }
+  .gt-prime-grid { grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 8px; }
+  .gt-prime-card { padding: 10px 10px 8px; }
+  .gt-prime-card-base { font-size: 22px; }
+  .gt-puzzle-order-tbl { font-size: 12.5px; }
+  .gt-puzzle-order-tbl th, .gt-puzzle-order-tbl td { padding: 7px 10px; }
 }
