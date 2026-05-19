@@ -4,6 +4,8 @@ import {
   applySq1Move,
   applySq1Scramble,
   parseSq1Scramble,
+  isSlashValid,
+  snapValidLayerTurn,
   SOLVED_PIECES,
 } from './sq1State';
 
@@ -173,5 +175,97 @@ describe('SQ1 state', () => {
     expect(parseSq1Scramble('30')).toEqual([
       { kind: 'turn', top: 3, bot: 0 },
     ]);
+  });
+
+  // ─── slash-validity (drag shape gating) ────────────────────────────────
+  it('solved state is slash-valid', () => {
+    expect(isSlashValid(solvedSq1())).toBe(true);
+  });
+
+  it('after (1,0) top is still slash-valid (corner-edge boundary on cuts)', () => {
+    const s = applySq1Move(solvedSq1(), { kind: 'turn', top: 1, bot: 0 });
+    expect(isSlashValid(s)).toBe(true);
+  });
+
+  it('after (-1,0) top has corners straddling both cuts — NOT slash-valid', () => {
+    const s = applySq1Move(solvedSq1(), { kind: 'turn', top: -1, bot: 0 });
+    expect(isSlashValid(s)).toBe(false);
+  });
+
+  it('after (2,0) top has corners straddling both cuts — NOT slash-valid', () => {
+    const s = applySq1Move(solvedSq1(), { kind: 'turn', top: 2, bot: 0 });
+    expect(isSlashValid(s)).toBe(false);
+  });
+
+  it('after (0,1) bot has corners straddling cuts — NOT slash-valid', () => {
+    const s = applySq1Move(solvedSq1(), { kind: 'turn', top: 0, bot: 1 });
+    expect(isSlashValid(s)).toBe(false);
+  });
+
+  it('snapValidLayerTurn: from solved, fractional drag into forbidden ±30° zone snaps to 0 (not 60°)', () => {
+    const s = solvedSq1();
+    // Forbidden top U on solved: {-4, -1, 2, 5} (within [-6, 6]).
+    // Drag target -1.0 (-30°): valid candidates 0 (dist 1.0), 1 (dist 2.0), -2 (dist 1.0).
+    // Tie-break prefers smaller |U| → 0 (snap back, mimics physical block).
+    expect(snapValidLayerTurn(s, 'top', -1)).toBe(0);
+    expect(snapValidLayerTurn(s, 'top', 2)).toBe(1);   // 2 invalid, nearest valid +1
+    expect(snapValidLayerTurn(s, 'top', 2.6)).toBe(3); // 2.6 closer to 3 than 1
+    expect(snapValidLayerTurn(s, 'top', 5)).toBe(4);   // 5 invalid, 4 closer than 6
+  });
+
+  it('snapValidLayerTurn: clean integer valid targets are returned unchanged', () => {
+    const s = solvedSq1();
+    for (const u of [0, 1, 3, 4, 6, -2, -3, -5, -6]) {
+      expect(snapValidLayerTurn(s, 'top', u)).toBe(u);
+    }
+  });
+
+  it('snapValidLayerTurn: bot forbidden set differs from top by corner offset', () => {
+    const s = solvedSq1();
+    // Forbidden bot U on solved: {-5, -2, 1, 4}.
+    expect(snapValidLayerTurn(s, 'bot', 1)).toBe(0);   // 1 invalid → 0
+    expect(snapValidLayerTurn(s, 'bot', 4)).toBe(3);   // 4 invalid → 3
+    expect(snapValidLayerTurn(s, 'bot', 3)).toBe(3);
+  });
+
+  it('snapValidLayerTurn: from a scrambled but slash-valid state, snap chooses valid neighbor', () => {
+    // Apply a real scramble that stays slash-valid at every step.
+    const s = applySq1Scramble('(1,0) / (3,-3) / (0,3) /');
+    expect(isSlashValid(s)).toBe(true);
+    for (const layer of ['top', 'bot'] as const) {
+      for (let target = -6; target <= 6; target += 0.25) {
+        const u = snapValidLayerTurn(s, layer, target);
+        const next = applySq1Move(
+          s,
+          layer === 'top' ? { kind: 'turn', top: u, bot: 0 } : { kind: 'turn', top: 0, bot: u },
+        );
+        expect(isSlashValid(next)).toBe(true);
+      }
+    }
+  });
+
+  it('snapValidLayerTurn fuzz: 200 random states → snap always lands slash-valid', () => {
+    // Seedless but bounded: drive a state through random valid moves + slices,
+    // then ask snap for random fractional targets and check the result.
+    let state = solvedSq1();
+    let trials = 0;
+    for (let i = 0; i < 200; i++) {
+      const layer = Math.random() < 0.5 ? 'top' : 'bot';
+      const target = (Math.random() * 12 - 6);
+      const u = snapValidLayerTurn(state, layer, target);
+      const next = applySq1Move(
+        state,
+        layer === 'top' ? { kind: 'turn', top: u, bot: 0 } : { kind: 'turn', top: 0, bot: u },
+      );
+      expect(isSlashValid(next)).toBe(true);
+      state = next;
+      // 30% chance to slice (slash-valid → still slash-valid after slice).
+      if (Math.random() < 0.3) {
+        const sliced = applySq1Move(state, { kind: 'slice' });
+        if (isSlashValid(sliced)) state = sliced;
+      }
+      trials++;
+    }
+    expect(trials).toBe(200);
   });
 });

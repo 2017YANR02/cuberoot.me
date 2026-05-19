@@ -13,7 +13,7 @@ import tweener, { type Tween } from '../tweener';
 import CubeGroup from '../group';
 import type Sq1Cube from './Sq1Cube';
 import type { PieceAnim } from './Sq1Cube';
-import { parseSq1Scramble, applySq1Move, type Sq1Move } from './sq1State';
+import { parseSq1Scramble, applySq1Move, isSlashValid, type Sq1Move } from './sq1State';
 
 export default class Sq1Twister {
   cube: Sq1Cube;
@@ -75,8 +75,16 @@ export default class Sq1Twister {
   /** Apply or animate one move.
    *   - fast=true       : instant snap, no animation
    *   - force=true      : if a tween is active, flush it then animate
-   *   - default         : if locked, return false (drop the move) */
+   *   - default         : if locked, return false (drop the move)
+   *
+   *  Slice gating: a `/` from a shape where a corner straddles the cut would
+   *  pop the cube. The drag commit already refuses to leave that shape, but
+   *  the manual `/` button and equator-slab tap go through here, so we also
+   *  block at this seam. (Scramble loading uses applyMoveInstant via setup
+   *  / push, which bypass this check — typed scrambles play exactly as
+   *  written even if they pop.) */
   twist(move: Sq1Move, fast: boolean, force: boolean): boolean {
+    if (move.kind === 'slice' && !isSlashValid(this.cube.state)) return false;
     if (fast) {
       this.cube.applyMoveInstant(move);
       return true;
