@@ -13,14 +13,17 @@ const PYRA_FACES: FaceTable = [
   { letter: 'B', normal: [0, -1 / 3, -2 * Math.sqrt(2) / 3] },
 ];
 
-// Skewb = cube 几何,UDLRFB + 轴对齐 normal
+// Skewb = cube 几何,轴对齐 normal。
+// 顺序 [U, F, R, ...] 是 screenSlot mode 的 slotLetters 约定:
+//   slot 0 = 屏幕顶 (U),slot 1 = 屏幕左 (F),slot 2 = 屏幕右 (R)。
+// 整体转 (y/x) 后 letter 仍 U/F/R 钉在屏幕方位,不跟 piece 走。
 const SKEWB_FACES: FaceTable = [
   { letter: 'U', normal: [0, 1, 0] },
-  { letter: 'D', normal: [0, -1, 0] },
-  { letter: 'L', normal: [-1, 0, 0] },
-  { letter: 'R', normal: [1, 0, 0] },
   { letter: 'F', normal: [0, 0, 1] },
+  { letter: 'R', normal: [1, 0, 0] },
+  { letter: 'L', normal: [-1, 0, 0] },
   { letter: 'B', normal: [0, 0, -1] },
+  { letter: 'D', normal: [0, -1, 0] },
 ];
 
 // Megaminx 12 面 — 顶环 U/F/R/BR/BL/L 顺时针;底环 D/BF/DBR/DR/DL/DBL 对称。
@@ -331,14 +334,18 @@ export default function TwistySection({
     pyraminx: { thresholdDeg: 120, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // 校准 (.tmp/png/mega_lon-71_alg-RU vs mega_lon0_alg-RUUvi)
     megaminx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
-    // 校准 (.tmp/png/skewb_lon-161_alg-RU_clean vs skewb_default_alg-RUyi_clean)
-    skewb: { thresholdDeg: 90, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'y', moveCCW: "y'" }] },
+    // y 校准 (.tmp/png/skewb_lon-161_alg-RU_clean vs skewb_default_alg-RUyi_clean)
+    // x 加 R-axis (+X) 接纵向拖动 → commit x/x',跟 NxN sim 一致;math 推:y = R_Y(-90°) 对应 moveCW='y' → x = R_X(-90°) 对应 moveCW='x'
+    skewb: {
+      thresholdDeg: 90,
+      axes: [
+        { name: 'U', axis: [0, 1, 0], moveCW: 'y', moveCCW: "y'" },
+        { name: 'R', axis: [1, 0, 0], moveCW: 'x', moveCCW: "x'" },
+      ],
+    },
   };
   const currentAlgRef = useRef(alg);
   useEffect(() => { currentAlgRef.current = alg; }, [alg]);
-  // Cube state 相对 default 的累积旋转 quat,从 alg 字符串实时解析(扫 y/y'/y2/Uv/Uv'... token)
-  // —— 跟 commit / URL load / 用户手打 alg 都同步,不会脱节。
-  // FaceOverlay 用它把 default face normals 转到当前 piece 在世界中的位置 → label 跟 piece 走。
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const faceOverlayRef = useRef<any>(null);
   function quatMulRaw(a: number[], b: number[]): [number, number, number, number] {
@@ -353,6 +360,8 @@ export default function TwistySection({
     const h = rad / 2, s = Math.sin(h);
     return [Math.cos(h), a[0] * s, a[1] * s, a[2] * s];
   }
+  // 扫 alg token → 累积 cube state quat。moveCW (`y`) = R_axis(-thr),moveCCW (`y'`) = R_axis(+thr)
+  // (sign 校准:y' 让 +Z piece 走到 +X,= R_y(+90°);y 反向。)
   function algToOrientation(algStr: string, cfg: { thresholdDeg: number; axes: { axis: [number, number, number]; moveCW: string; moveCCW: string }[] }): [number, number, number, number] {
     let orient: [number, number, number, number] = [1, 0, 0, 0];
     const tokens = algStr.trim().split(/\s+/).filter(Boolean);
@@ -360,7 +369,6 @@ export default function TwistySection({
     for (const tok of tokens) {
       for (const ax of cfg.axes) {
         const thr = cfg.thresholdDeg * D2R;
-        // moveCW = R_axis(-thr);moveCCW = R_axis(+thr);后缀 "2" = 双倍角
         let angle = 0;
         if (tok === ax.moveCW) angle = -thr;
         else if (tok === ax.moveCCW) angle = thr;
@@ -373,7 +381,7 @@ export default function TwistySection({
     }
     return orient;
   }
-  // alg 变化 → 重算 orientation → 推给 FaceOverlay
+  // 任何 alg 变化 → 重算 orient → 推 overlay。URL load / commit / 手输都过这条 path。
   useEffect(() => {
     const cfg = ROTATE_CONFIG[puzzle];
     if (!cfg) return;
@@ -389,6 +397,14 @@ export default function TwistySection({
     const m = (player as any).experimentalModel;
     const sceneModel = m?.twistySceneModel;
     if (!sceneModel?.orbitCoordinates || !m?.alg || !m?.timestampRequest) return;
+
+    // 当有 +Y 之外的 vertex 轴时,纵向拖动要能跨阈值 → 抬 latitudeLimit
+    // (cubing.js 默认 35°,卡死任何 90° lat 累积)。skewb 走这里;
+    // pyraminx/megaminx axes 只 +Y,纵拖不 commit,不抬避免相机翻过头。
+    const hasNonUAxis = cfg.axes.some((ax) => Math.abs(ax.axis[1]) < 0.99);
+    if (hasNonUAxis) {
+      try { (player as any).cameraLatitudeLimit = 180; } catch { /* */ }
+    }
 
     // camera 在 (lat, lon) 的姿态 = R_y(lon) * R_x(-lat),用 quaternion 表示。
     // 把 (lat, lon) 转 quat,然后 deltaQ = curQ * inv(prevQ) 是这帧 camera 转了多少。
@@ -494,8 +510,10 @@ export default function TwistySection({
           m.timestampRequest.set('end');
           player.cameraLatitude = targetLat;
           player.cameraLongitude = targetLon;
+          // commit 当帧同步推 overlay orientation;prop alg round-trip 异步,不推这一次 label 跳 1 frame
+          const newOrient = algToOrientation(newAlg, cfg);
+          faceOverlayRef.current?.setCubeOrientation(newOrient);
           onUserMoveRef.current?.(move);
-          // cubeOrientation 由 alg useEffect 自动重算,不在这里手动更新
         } catch { /* */ }
         cooldownUntil = now + COOLDOWN_MS;
         for (let j = 0; j < accum.length; j++) accum[j] = 0;
@@ -552,7 +570,12 @@ export default function TwistySection({
     const model = player.experimentalModel?.twistySceneModel?.orbitCoordinates;
     if (!model || typeof model.addFreshListener !== 'function') return;
 
-    const overlay = new FaceOverlay(host, table, { screenSlot: puzzle === 'pyraminx' });
+    const overlay = new FaceOverlay(host, table, {
+      // skewb 用 screenSlot mode,3 个 visible slot = U/F/R(屏幕方位钉死,不跟 piece)
+      // pyraminx 也 screenSlot(4 vertex 3 visible)。megaminx 仍 piece-follow。
+      screenSlot: puzzle === 'pyraminx' || puzzle === 'skewb',
+      visibleSlotCount: puzzle === 'skewb' ? 3 : undefined,
+    });
     overlay.setCubeOrientation(algToOrientation(currentAlgRef.current, ROTATE_CONFIG[puzzle] ?? { thresholdDeg: 0, axes: [] }));
     faceOverlayRef.current = overlay;
     // cubing.js 的 drag-to-orbit 在 closed shadow DOM 内捕获 pointer event,
