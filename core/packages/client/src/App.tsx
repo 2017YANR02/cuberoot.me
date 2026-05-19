@@ -145,6 +145,11 @@ const LatexIntroPage = lazy(() => import('./pages/code/LatexIntroPage'));
 const KatexIntroPage = lazy(() => import('./pages/code/KatexIntroPage'));
 const CompareAo5Page = lazy(() => import('./pages/code/CompareAo5Page'));
 const CompareScramblePage = lazy(() => import('./pages/code/CompareScramblePage'));
+const AlgorithmsLandingPage = lazy(() => import('./pages/code/AlgorithmsLandingPage'));
+const IdaStarPage = lazy(() => import('./pages/code/IdaStarPage'));
+const KociembaPage = lazy(() => import('./pages/code/KociembaPage'));
+const Min2PhasePage = lazy(() => import('./pages/code/Min2PhasePage'));
+const CfopStdSolverPage = lazy(() => import('./pages/code/CfopStdSolverPage'));
 // NOTE: Theory — Rubik's cube as a group (long-form math essay + interactive panels)
 const GroupTheoryPage = lazy(() => import('./pages/theory/GroupTheoryPage'));
 
@@ -299,6 +304,11 @@ function App() {
         <Route path="/code/language/katex" element={<Suspense fallback={<div>Loading...</div>}><KatexIntroPage /></Suspense>} />
         <Route path="/code/language/compare" element={<Suspense fallback={<div>Loading...</div>}><CompareAo5Page /></Suspense>} />
         <Route path="/code/language/scramble" element={<Suspense fallback={<div>Loading...</div>}><CompareScramblePage /></Suspense>} />
+        <Route path="/code/algorithms" element={<Suspense fallback={<div>Loading...</div>}><AlgorithmsLandingPage /></Suspense>} />
+        <Route path="/code/algorithms/ida-star" element={<Suspense fallback={<div>Loading...</div>}><IdaStarPage /></Suspense>} />
+        <Route path="/code/algorithms/kociemba" element={<Suspense fallback={<div>Loading...</div>}><KociembaPage /></Suspense>} />
+        <Route path="/code/algorithms/min2phase" element={<Suspense fallback={<div>Loading...</div>}><Min2PhasePage /></Suspense>} />
+        <Route path="/code/algorithms/cfop-std-solver" element={<Suspense fallback={<div>Loading...</div>}><CfopStdSolverPage /></Suspense>} />
         {/* 旧路径 → 新路径 兼容 */}
         <Route path="/code/ts" element={<Navigate to="/code/language/ts" replace />} />
         <Route path="/code/rust" element={<Navigate to="/code/language/rust" replace />} />

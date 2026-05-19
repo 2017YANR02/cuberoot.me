@@ -65,6 +65,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/algorithms',
+    glyph: 'Σ',
+    accent: '#E879A6',
+    zh: {
+      title: '算法',
+      sub: 'Algorithms',
+      tagline: 'CubeRoot 站内真正在跑的核心算法:IDA* + 剪枝表、Kociemba 二阶段、min2phase、自研 CFOP 多阶段求解器,带数学建模和大样本统计',
+      meta: '4 篇深度 · 状态空间搜索 · 240 万样本',
+    },
+    en: {
+      title: 'Algorithms',
+      sub: 'Core algorithms',
+      tagline: 'The algorithms actually running inside CubeRoot: IDA* with pruning tables, Kociemba two-phase, min2phase, and a self-built CFOP multi-stage solver — with full math modeling and 2.4M-sample statistics',
+      meta: '4 deep dives · state-space search · 2.4M samples',
+    },
+  },
+  {
     href: '/code/traffic',
     glyph: '↗',
     accent: '#F0A04B',
