@@ -141,20 +141,19 @@ export default class Sq1Twister {
       ? 2  // 180° around chord-perp axis
       : Math.max(Math.abs(move.top ?? 0), Math.abs(move.bot ?? 0)) / 3;
     const frames = Math.max(2, Math.round(CubeGroup.tweenDuration(d)));
-    // Pre-invert startQuat per piece — pivot.position(v) is startPos rotated by
-    // the current "delta from start" (= curQuat · startQuat⁻¹), so that the
-    // pivot traces the actual rotation arc instead of a straight LERP line.
-    // (LERP'd pos collapsed all east pivots to (0,0,0) mid-slash, making piece
-    // bodies appear to swim through the static west half — visible clipping.)
-    const startQuatInvs = anims.map((a) => a.startQuat.clone().invert());
+    // Interpolate as q(angle·v, axis) instead of slerp(start, end, v): slerp's
+    // shortest-path flip at dot<0 is non-deterministic when the start↔end pair
+    // is 90° apart in quaternion space (= 180° rotation), so top=±6 randomly
+    // swings the wrong way depending on float drift from prior moves.
+    // Direct axis-angle keeps the sign of `angle` as the source of truth.
     const deltaCur = new THREE.Quaternion();
     // tweener.update() applies Quadratic.Out easing; `v` here is the post-easing
     // 0..1, same shape NxN's CubeGroup.twist sees. Use it directly.
     this.activeTween = tweener.tween(0, 1, frames, (v) => {
       for (let i = 0; i < anims.length; i++) {
         const a = anims[i];
-        a.pivot.quaternion.slerpQuaternions(a.startQuat, a.endQuat, v);
-        deltaCur.copy(a.pivot.quaternion).multiply(startQuatInvs[i]);
+        deltaCur.setFromAxisAngle(a.axis, a.angle * v);
+        a.pivot.quaternion.multiplyQuaternions(deltaCur, a.startQuat);
         a.pivot.position.copy(a.startPos).applyQuaternion(deltaCur);
       }
       this.cube.dirty = true;
