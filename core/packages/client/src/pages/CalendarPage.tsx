@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'r
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid, HelpCircle } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
@@ -1422,7 +1422,17 @@ export default function CalendarPage() {
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}`}
     >
       <header className="upcoming-header">
-        <h1 className="upcoming-title">{t('upcoming.title')}</h1>
+        <h1 className="upcoming-title">
+          {t('upcoming.title')}
+          <Link
+            to="/wca/calendar-about"
+            className="calendar-title-help"
+            title={isZh ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={isZh ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={18} strokeWidth={1.75} />
+          </Link>
+        </h1>
         <div className="upcoming-meta">
           <Link to={`/wca/calendar/stats${getLangQuery()}`} className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {isZh ? '统计' : 'Stats'}

@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from './Paginator';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { Flag } from '../../utils/flag';
@@ -172,7 +172,17 @@ export default function AllResultsPage() {
           <Link to={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
-        <h1>{isZh ? '排名' : 'Rankings'}</h1>
+        <h1 className="wse-title-row">
+          {isZh ? '排名' : 'Rankings'}
+          <Link
+            to="/wca/about/all-results"
+            className="wse-title-help"
+            title={isZh ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={isZh ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={18} strokeWidth={1.75} />
+          </Link>
+        </h1>
         <p className="wse-subtitle">
           {show === 'persons'
             ? (isZh ? '截至指定年末的全球 / 单国家累积最佳' : 'End-of-year cumulative best, worldwide or by country')

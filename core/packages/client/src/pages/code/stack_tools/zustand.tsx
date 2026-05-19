@@ -142,3 +142,5 @@ export const ZUSTAND: StackTool = {
     { label: 'v5 release notes', href: 'https://github.com/pmndrs/zustand/releases/tag/v5.0.0' },
   ],
 };
+
+export default ZUSTAND;

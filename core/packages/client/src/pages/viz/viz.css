@@ -73,7 +73,20 @@ h1 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.viz-title-help {
+  display: inline-flex;
+  align-items: center;
+  -webkit-text-fill-color: unset;
+  color: var(--text-secondary);
+  opacity: 0.55;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.viz-title-help:hover { opacity: 1; color: var(--accent-cyan); }
 
 .subtitle {
   font-size: 13px;

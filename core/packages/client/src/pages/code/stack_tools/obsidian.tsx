@@ -153,3 +153,5 @@ export const OBSIDIAN: StackTool = {
     { label: 'Yakitrak/obsidian-cli', href: 'https://github.com/Yakitrak/obsidian-cli' },
   ],
 };
+
+export default OBSIDIAN;

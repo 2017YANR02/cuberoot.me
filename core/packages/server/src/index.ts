@@ -32,6 +32,7 @@ app.use('*', cors({
     'https://www.cuberoot.me',            // 生产环境（SPA）
     'https://cuberoot.me',                // 裸域 (含 GH Pages 海外线路)
   ],
+  credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
   maxAge: 86400,
 }));
 

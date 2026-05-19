@@ -148,3 +148,5 @@ export const OPENSSH: StackTool = {
     { label: 'Project history', href: 'https://www.openssh.com/history.html' },
   ],
 };
+
+export default OPENSSH;

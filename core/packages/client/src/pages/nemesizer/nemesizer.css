@@ -5,6 +5,24 @@
   color: #ddd;
 }
 
+.nemesizer-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.nemesizer-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #8e8ea0;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+  align-self: flex-end;
+  margin-bottom: 22px;
+}
+.nemesizer-title-help:hover { opacity: 1; color: #5b6dd9; }
+
 .nemesizer-brand {
   display: flex;
   align-items: center;

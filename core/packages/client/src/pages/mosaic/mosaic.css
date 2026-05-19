@@ -44,7 +44,16 @@
 }
 .mosaic-back:hover { background: var(--surface-2); }
 
-.mosaic-title { font-size: 18px; font-weight: 600; margin: 0; }
+.mosaic-title { font-size: 18px; font-weight: 600; margin: 0; display: inline-flex; align-items: center; gap: 8px; }
+.mosaic-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.mosaic-title-help:hover { opacity: 1; color: var(--accent); }
 .mosaic-subtitle { font-size: 13px; color: var(--muted); margin: 0; }
 
 .mosaic-main {

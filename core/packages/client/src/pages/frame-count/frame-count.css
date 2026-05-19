@@ -59,7 +59,19 @@
   font-size: 1.2rem;
   font-weight: 700;
   color: #e0e0e0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.fc-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #b0b0b0;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.fc-title-help:hover { opacity: 1; color: #fff; }
 
 .fc-shortcuts-btn {
   display: inline-flex;

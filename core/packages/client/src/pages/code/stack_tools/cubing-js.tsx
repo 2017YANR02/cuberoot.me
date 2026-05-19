@@ -150,3 +150,5 @@ export const CUBING_JS: StackTool = {
     { label: 'Twizzle (alpha)', href: 'https://alpha.twizzle.net' },
   ],
 };
+
+export default CUBING_JS;

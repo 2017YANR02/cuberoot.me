@@ -1,4 +1,6 @@
 import { lazy, Suspense } from 'react';
+import { Link } from 'react-router-dom';
+import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './state/store';
 import type { Stage } from './state/types';
@@ -34,7 +36,7 @@ function stageComponent(stage: Stage) {
 }
 
 export default function MosaicPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useDocumentTitle('马赛克', 'Mosaic');
   const stage = useMosaicStore(s => s.stage);
   const resetAll = useMosaicStore(s => s.resetAll);
@@ -61,7 +63,17 @@ export default function MosaicPage() {
             <button className="mosaic-back" onClick={backAction.fn}>{backAction.label}</button>
           )}
           <div>
-            <h1 className="mosaic-title">{t('mosaic.name')}</h1>
+            <h1 className="mosaic-title">
+              {t('mosaic.name')}
+              <Link
+                to="/mosaic-about"
+                className="mosaic-title-help"
+                title={i18n.language.startsWith('zh') ? '这页是干啥的?' : 'What is this page?'}
+                aria-label={i18n.language.startsWith('zh') ? '查看说明' : 'About this page'}
+              >
+                <HelpCircle size={18} strokeWidth={1.75} />
+              </Link>
+            </h1>
             <p className="mosaic-subtitle">{t(STAGE_TITLE_KEY[stage])}</p>
           </div>
         </div>

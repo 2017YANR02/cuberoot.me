@@ -83,16 +83,13 @@ export default function ScrambleLines({ scramble, className }: Props) {
   if (lines.length === 1) {
     return <code className={className}>{lines[0]}</code>;
   }
-  const hl = lines.length >= MIN_LINES_HIGHLIGHTING;
+  // 不再走 PDF 风格的隔行灰底(MIN_LINES_HIGHLIGHTING 旧逻辑)。多行
+  // (mega / sq1)纯文本换行即可,跟 PDF 三阶的"无 highlighting"对齐。
+  void MIN_LINES_HIGHLIGHTING;
   return (
     <code className={className}>
       {lines.map((line, i) => (
-        <span
-          key={i}
-          className={`gen-scramble-line${hl && i % 2 === 1 ? ' is-hl' : ''}`}
-        >
-          {line}
-        </span>
+        <span key={i} className="gen-scramble-line">{line}</span>
       ))}
     </code>
   );

@@ -65,8 +65,10 @@ interface Props {
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
-  /** SimPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
-  userMoveRef?: RefObject<((action: TwistAction) => void) | null>;
+  /** SimPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler。
+   *  传 string = 已是 cubing.js canonical move text(twisty puzzle 的 raycast / 整体转 commit 走这条),
+   *  跳过 TwistAction 解析(否则 `Uv` 会被吞成 `U`、`BL` 吞成 `B`)。 */
+  userMoveRef?: RefObject<((action: TwistAction | string) => void) | null>;
   /** twisty puzzle (pyraminx / skewb / megaminx) 的 TwistyPlayer 实例。
    *  animateScramble 打乱时用来 jumpToStart + play。 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -243,9 +245,11 @@ export default function PlayerControls({
   // 而即便焦点在 setup 框,用户拖魔方的语义也是"开始解",该落解法。
   // sq1: action.value = "(1,0)" / "(0,-1)" / "/" 原样追加;
   // twisty (pyraminx/skewb/megaminx): cubing.js raycast 出的 move 文本(如 U / R' / BL2)。
-  const appendUserMove = useCallback((action: TwistAction) => {
-    let moveText = action.value;
-    if (!isSq1 && !isTwistyMode && world && world.cube.order === 1) {
+  const appendUserMove = useCallback((action: TwistAction | string) => {
+    // string = raw cubing.js move text(`Uv` / `BL` / `DBR2'` 之类多字符 family)
+    // 直接当 moveText 用,不走 TwistAction 正则(它专为 NxN/SQ1 设计,会吞 v / 双字母 family)
+    let moveText = typeof action === 'string' ? action : action.value;
+    if (typeof action !== 'string' && !isSq1 && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
       if (!norm) return;  // 1×1 上不可表达的 move:丢弃
       moveText = norm.value;

@@ -146,3 +146,5 @@ export const MONOREPO: StackTool = {
     { label: 'Why Google Stores Billions of Lines of Code in a Single Repository (ACM 2016)', href: 'https://research.google/pubs/why-google-stores-billions-of-lines-of-code-in-a-single-repository/' },
   ],
 };
+
+export default MONOREPO;

@@ -148,3 +148,5 @@ export const REACT: StackTool = {
   ],
 };
 
+
+export default REACT;

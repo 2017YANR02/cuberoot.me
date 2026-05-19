@@ -145,3 +145,5 @@ export const PLAYWRIGHT: StackTool = {
     { label: 'Release notes', href: 'https://playwright.dev/docs/release-notes' },
   ],
 };
+
+export default PLAYWRIGHT;

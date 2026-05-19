@@ -72,6 +72,19 @@ body {
     min-width: 0;
 }
 
+.calc-title-help {
+    flex-shrink: 0;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    color: #a0978e;
+    opacity: 0.65;
+    text-decoration: none;
+    transition: opacity 0.15s, color 0.15s;
+    padding: 4px;
+}
+.calc-title-help:hover { opacity: 1; color: #c15f3c; }
+
 .calc-mode-toggle {
     flex-shrink: 0;
     align-self: stretch;

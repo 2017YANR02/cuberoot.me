@@ -143,3 +143,5 @@ export const PG_DUMP: StackTool = {
     { label: 'pg_dumpall docs', href: 'https://www.postgresql.org/docs/13/app-pg-dumpall.html' },
   ],
 };
+
+export default PG_DUMP;

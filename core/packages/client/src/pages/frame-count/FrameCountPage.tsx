@@ -4,6 +4,8 @@
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -284,7 +286,7 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
 // ── 组件 ──────────────────────────────────────────────────────────────────
 
 export default function FrameCountPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useDocumentTitle('数帧', 'Frame Count');
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -2118,7 +2120,17 @@ export default function FrameCountPage() {
     >
       {/* Header */}
       <header className="fc-header">
-        <span className="fc-title">{t('frameCount.title')}</span>
+        <span className="fc-title">
+          {t('frameCount.title')}
+          <Link
+            to="/frame-count-about"
+            className="fc-title-help"
+            title={i18n.language.startsWith('zh') ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={i18n.language.startsWith('zh') ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={18} strokeWidth={1.75} />
+          </Link>
+        </span>
         <LangToggle variant="inline" className="fc-lang-toggle" />
       </header>
 

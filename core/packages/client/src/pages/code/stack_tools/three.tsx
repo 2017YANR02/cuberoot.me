@@ -150,3 +150,5 @@ export const THREE: StackTool = {
     { label: 'react-three-fiber', href: 'https://r3f.docs.pmnd.rs' },
   ],
 };
+
+export default THREE;

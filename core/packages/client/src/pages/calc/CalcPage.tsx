@@ -4,8 +4,9 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Sigma } from 'lucide-react';
+import { Sigma, HelpCircle } from 'lucide-react';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './stores/calc_store';
 import { setCurrentEvent, setMoveCntMode, setMbfMode } from './engine/calc_engine';
 import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './engine/wr_data';
@@ -431,6 +432,14 @@ export function CalcPage() {
               <Sigma size={14} />
               <span>{isZh ? '简易版' : 'Simple'}</span>
             </button>
+            <Link
+              to="/calc-about"
+              className="calc-title-help"
+              title={isZh ? '这页是干啥的?' : 'What is this page?'}
+              aria-label={isZh ? '查看说明' : 'About this page'}
+            >
+              <HelpCircle size={16} strokeWidth={1.75} />
+            </Link>
           </div>
 
           {/* 指标表格 */}

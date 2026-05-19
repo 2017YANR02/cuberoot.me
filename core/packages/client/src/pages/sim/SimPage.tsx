@@ -153,7 +153,7 @@ export default function SimPage() {
 
   // 用户主动 twist (drag / tap / 实体键盘) 后,把 move 追加到 PlayerControls 的解法输入框。
   // PlayerControls 挂载时把 handler 装到这里; setup / jumpToStep / playback 等程序化 twist 不走这条。
-  const userMoveRef = useRef<((action: TwistAction) => void) | null>(null);
+  const userMoveRef = useRef<((action: TwistAction | string) => void) | null>(null);
 
   // pyraminx / skewb / megaminx 的 TwistyPlayer 实例。animateScramble 打乱时 jumpToStart + play。
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1069,7 +1069,9 @@ export default function SimPage() {
               playerRef={twistyPlayerRef}
               settings={settings}
               onUserMove={(moveText) => {
-                userMoveRef.current?.(new TwistAction(moveText, false, 1));
+                // moveText 已是 cubing.js canonical text(如 `Uv` / `BL2`),raw 传过去
+                // 跳过 TwistAction 解析(`Uv` → `U`、`BL` → `B` 的吞字 bug)
+                userMoveRef.current?.(moveText);
               }}
             />
           ) : null}

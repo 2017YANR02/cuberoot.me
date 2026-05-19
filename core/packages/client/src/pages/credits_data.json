@@ -34,9 +34,9 @@
   {
     "name": "cs0x7f/cstimer",
     "url": "https://github.com/cs0x7f/cstimer",
-    "zh": "csTimer 计时器(integrated)",
-    "en": "csTimer & WCA random-state scramble engine",
-    "long_en": "professional speedcubing timer & WCA random-state scramble engine"
+    "zh": "csTimer 计时器(integrated)+ 非 WCA 打乱引擎(/scramble/gen 30+ puzzle 走 vendor 进 tools/cstimer-scramble/)",
+    "en": "csTimer & WCA random-state scramble engine; non-WCA puzzle scramble engine for /scramble/gen (vendored in tools/cstimer-scramble/)",
+    "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/...) via classic Web Worker bridge"
   },
   {
     "name": "cs0x7f/cube555",

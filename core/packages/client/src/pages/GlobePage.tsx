@@ -7,7 +7,7 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2 } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -2953,7 +2953,17 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             </g>
           </svg>
         </Link>
-        <h1 className="globe-title-compact">{t('globe.title')}</h1>
+        <h1 className="globe-title-compact">
+          {t('globe.title')}
+          <Link
+            to="/wca/globe-about"
+            className="globe-title-help"
+            title={isZh ? '这页是干啥的?' : 'What is this page?'}
+            aria-label={isZh ? '查看说明' : 'About this page'}
+          >
+            <HelpCircle size={16} strokeWidth={1.75} />
+          </Link>
+        </h1>
 
         <div className="globe-search" ref={searchWrapRef}>
           <button
