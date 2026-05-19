@@ -67,6 +67,10 @@ interface Props {
   onResetKeymap: () => void;
   /** SimPage 装在这里;user drag / tap / 实体键盘 twist 完后会调到我们的 append handler */
   userMoveRef?: RefObject<((action: TwistAction) => void) | null>;
+  /** twisty puzzle (pyraminx / skewb / megaminx) 的 TwistyPlayer 实例。
+   *  animateScramble 打乱时用来 jumpToStart + play。 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  twistyPlayerRef?: RefObject<any>;
   /** Dev 性能采样回调:打乱 click → 画面上屏总耗时 (ms) + setup CPU 纯耗时 (ms) */
   onScrambleTime?: (ms: number, cpuMs?: number) => void;
 }
@@ -76,7 +80,7 @@ export default function PlayerControls({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   settings, onSettingsChange,
   keymap, onKeymapChange, onResetKeymap,
-  userMoveRef, onScrambleTime,
+  userMoveRef, twistyPlayerRef, onScrambleTime,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isTwistyMode = isTwistyPuzzle(puzzleKind);
@@ -328,10 +332,36 @@ export default function PlayerControls({
   // settings.animateScramble:false=写入 setup → useEffect → twister.setup() instant 应用;
   //                          true=animatingScrambleRef 让 useEffect skip,自己 reset+twister.push 慢动画。
   const handleScramble = useCallback(async () => {
-    // Twisty puzzles: no world to drive; just fetch a scramble and write it
-    // to setup. TwistyPlayer re-renders the setup state automatically.
+    // Twisty puzzles: no cuber world. animateScramble=false → 写 setup (instant
+    // baseline);true → 清 setup + 写 alg + 让 TwistyPlayer 从头自动播 (jumpToStart
+    // + play 经 player.experimentalModel.playController)。
     if (isTwistyMode) {
       const scramble = (await tnoodleRandomScramble(puzzleKind as string)) ?? '';
+      if (settings.animateScramble && scramble) {
+        // setup 清空,alg 设为 scramble,player 自动 jumpToStart + play
+        const setupEl = setupElRef.current;
+        if (setupEl instanceof HTMLTextAreaElement) setupEl.value = '';
+        setSetupDraft('');
+        onSetupChange('');
+        const algEl = algElRef.current;
+        if (algEl instanceof HTMLTextAreaElement) {
+          algEl.value = scramble;
+          algEl.style.height = 'auto';
+          algEl.style.height = algEl.scrollHeight + 'px';
+        }
+        skipAutoResetRef.current = true;
+        setAlgDraft(scramble);
+        onAlgChange(scramble);
+        // alg prop 异步 flush 到 TwistySection → player.alg 设好后再 jumpToStart + play
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const p = twistyPlayerRef?.current as unknown as { jumpToStart?: (opts?: unknown) => void; play?: () => void } | null;
+            try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
+            try { p?.play?.(); } catch { /* */ }
+          });
+        });
+        return;
+      }
       const el = setupElRef.current;
       if (el instanceof HTMLTextAreaElement) {
         el.value = scramble;
@@ -827,43 +857,39 @@ function PuzzleSettings({
               </select>
             </div>
             )}
-            {!isTwistyLocal && (
-              <button
-                type="button"
-                className="sim-keymap-open-btn"
-                onClick={() => setKeymapOpen(true)}
-              >
-                <Keyboard size={14} />
-                <span>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</span>
-              </button>
-            )}
-            {!isTwistyLocal && (
-              <button
-                type="button"
-                className="sim-drawer-reset"
-                onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
-              >
-                {t('恢复默认', 'Reset to defaults')}
-              </button>
-            )}
+            <button
+              type="button"
+              className="sim-keymap-open-btn"
+              onClick={() => setKeymapOpen(true)}
+            >
+              <Keyboard size={14} />
+              <span>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</span>
+            </button>
+            <button
+              type="button"
+              className="sim-drawer-reset"
+              onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
+            >
+              {t('恢复默认', 'Reset to defaults')}
+            </button>
           </div>
 
-          {!isTwistyLocal && <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
+          <div className="sim-puzzle-sliders">
+            {!isTwistyLocal && <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />}
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
-            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
+            {!isTwistyLocal && <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />}
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
             <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
-          </div>}
-          {!isTwistyLocal && <div className="sim-puzzle-toggles">
+          </div>
+          <div className="sim-puzzle-toggles">
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
-            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
-            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
-            <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+            {!isTwistyLocal && <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />}
+            {!isTwistyLocal && <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />}
+            {!isTwistyLocal && <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />}
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
-          </div>}
+          </div>
           {!isTwistyLocal && <ColorRow label={t('内核色', 'Core color')}>
             <SwatchCell
               color={settings.coreColor}

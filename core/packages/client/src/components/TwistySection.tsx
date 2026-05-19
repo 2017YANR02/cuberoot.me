@@ -1,9 +1,26 @@
 import { useState, useRef, useEffect, type MutableRefObject } from 'react';
 import './TwistySection.css';
 
+/** sim PuzzleSettings 透传过来,只用其中跟 TwistyPlayer 能映射的字段。
+ *  字段说明:
+ *  - scale 0..100 → cameraDistance (反向):upstream cuber 50=1.0,这里映 [3, 9]
+ *  - viewAngle 0..100 → cameraLongitude:0/100 = ±180°,50 = 0
+ *  - viewGradient 0..100 → cameraLatitude:0/100 = ±90°,50 = 0
+ *    (跟 SettingDrawer mapYaw/mapPitch 同方向)
+ *  - speed 0..100 → tempoScale:[0.2, 4]
+ *  - hint → hintFacelets 'floating' / 'none'
+ */
+export interface TwistySettings {
+  scale: number;
+  viewAngle: number;
+  viewGradient: number;
+  speed: number;
+  hint: boolean;
+}
+
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove,
+  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, settings,
 }: {
   puzzle: string;
   scramble: string;
@@ -18,6 +35,9 @@ export default function TwistySection({
    *  press handler 走 raycast → addMove → 我们这里截到 move 文本。
    *  程序化设 alg/setup 走 model.alg.set 不经 addMove,不会误触发。 */
   onUserMove?: (moveText: string) => void;
+  /** sim 的 PuzzleSettings 子集:scale / yaw / pitch / speed / hint。
+   *  其它 NxN-only 项 (thickness / hollow / arrow / coreColor / faceColors) 不传。 */
+  settings?: TwistySettings;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: MutableRefObject<any>;
 }) {
@@ -27,6 +47,9 @@ export default function TwistySection({
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerInstRef = useRef<any>(null);
+  // player 重建 nonce — 每次构造新 player +1,settings effect 依赖它就能在 player
+  // 刚生成时立刻把 settings 同步过去(否则 settings 引用没变 effect 不重跑)
+  const [playerNonce, setPlayerNonce] = useState(0);
   const onUserMoveRef = useRef(onUserMove);
   useEffect(() => { onUserMoveRef.current = onUserMove; }, [onUserMove]);
 
@@ -56,6 +79,7 @@ export default function TwistySection({
     if (twistOnClick) playerInit.experimentalMovePressInput = 'basic';
     const player = new Ctor(playerInit);
     playerInstRef.current = player;
+    setPlayerNonce((n) => n + 1);
     // NOTE: light colorScheme 让 scrubber 轨道右侧渲染为白色（对齐 legacy 图2样式）
     player.style.colorScheme = 'light';
 
@@ -178,6 +202,30 @@ export default function TwistySection({
     if (!player) return;
     try { player.experimentalSetupAlg = scramble; } catch { /* ignore */ }
   }, [scramble]);
+
+  // settings 同步:把 yaw/pitch/scale/speed/hint 映到 TwistyPlayer 属性。
+  // 跟 SettingDrawer 里 NxN 的 applySettings 行为一致 — 滑条 0..100 同一坐标系。
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || !settings) return;
+    // yaw 0..100 → -180..180 度 (cuber SettingDrawer 是 -π/2..π/2 弧度;TwistyPlayer
+    //   接受度数,这里把范围放宽到 -180..180 让"反面"也能转到)
+    const yawDeg = ((settings.viewAngle - 50) / 50) * 180;
+    // pitch 0..100 → 90..-90 (上下) — cuber 是 0=俯视90 / 100=仰视-90
+    const pitchDeg = ((50 - settings.viewGradient) / 50) * 90;
+    // scale 0..100 → cameraDistance [9, 3]:近端 (slider=100) ≈ 3,远端 (slider=0) ≈ 9。
+    //   默认 50 → 6,跟 cubing.js TwistyPlayer 默认 cameraDistance 同量级。
+    const dist = 9 - (settings.scale / 100) * 6;
+    // speed 0..100 → tempoScale [0.2, 4],默认 50 → 1
+    const tempo = settings.speed <= 50
+      ? 0.2 + (settings.speed / 50) * 0.8
+      : 1 + ((settings.speed - 50) / 50) * 3;
+    try { player.cameraLongitude = yawDeg; } catch { /* */ }
+    try { player.cameraLatitude = pitchDeg; } catch { /* */ }
+    try { player.cameraDistance = dist; } catch { /* */ }
+    try { player.tempoScale = tempo; } catch { /* */ }
+    try { player.hintFacelets = settings.hint ? 'floating' : 'none'; } catch { /* */ }
+  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings, playerNonce]);
 
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>

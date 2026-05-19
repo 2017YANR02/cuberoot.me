@@ -116,6 +116,10 @@ export default function SimPage() {
   // PlayerControls 挂载时把 handler 装到这里; setup / jumpToStep / playback 等程序化 twist 不走这条。
   const userMoveRef = useRef<((action: TwistAction) => void) | null>(null);
 
+  // pyraminx / skewb / megaminx 的 TwistyPlayer 实例。animateScramble 打乱时 jumpToStart + play。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const twistyPlayerRef = useRef<any>(null);
+
   const [order, setOrder] = useState<number>(3);
   /** Tracks current puzzle for UI (PlayerControls reads this to switch mode). */
   const [puzzleKind, setPuzzleKind] = useState<SimPuzzle>(3);
@@ -931,6 +935,8 @@ export default function SimPage() {
               alg={algParam}
               fillPane
               twistOnClick
+              playerRef={twistyPlayerRef}
+              settings={settings}
               onUserMove={(moveText) => {
                 userMoveRef.current?.(new TwistAction(moveText, false, 1));
               }}
@@ -976,6 +982,7 @@ export default function SimPage() {
             onKeymapChange={setKeymap}
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
             userMoveRef={userMoveRef}
+            twistyPlayerRef={twistyPlayerRef}
             onScrambleTime={IS_DEV ? (ms, cpuMs) => {
               statsRef.current.scrambleMs = ms;
               if (cpuMs != null) statsRef.current.setupCpuMs = cpuMs;
