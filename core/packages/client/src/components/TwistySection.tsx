@@ -334,12 +334,11 @@ export default function TwistySection({
     pyraminx: { thresholdDeg: 120, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // 校准 (.tmp/png/mega_lon-71_alg-RU vs mega_lon0_alg-RUUvi)
     megaminx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
-    // y 校准 (.tmp/png/skewb_lon-161_alg-RU_clean vs skewb_default_alg-RUyi_clean)
-    // x 加 R-axis (+X) 接纵向拖动 → commit x/x',跟 NxN sim 一致;math 推:y = R_Y(-90°) 对应 moveCW='y' → x = R_X(-90°) 对应 moveCW='x'
+    // skewb 只接 R-axis(+X)纵向拖动 → commit x/x';横向拖动只 orbit 视角不 commit。
+    // 转体集合 = {x, x'} 的所有叠加 (x4=identity)。
     skewb: {
       thresholdDeg: 90,
       axes: [
-        { name: 'U', axis: [0, 1, 0], moveCW: 'y', moveCCW: "y'" },
         { name: 'R', axis: [1, 0, 0], moveCW: 'x', moveCCW: "x'" },
       ],
     },
@@ -393,13 +392,15 @@ export default function TwistySection({
     const player = playerInstRef.current;
     const cfg = ROTATE_CONFIG[puzzle];
     if (!player || !cfg) return;
+    // skewb 走自己的 pixel-based pointer overlay (无限 x/x' chain),跳过 orbit-commit。
+    if (puzzle === 'skewb') return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = (player as any).experimentalModel;
     const sceneModel = m?.twistySceneModel;
     if (!sceneModel?.orbitCoordinates || !m?.alg || !m?.timestampRequest) return;
 
     // 当有 +Y 之外的 vertex 轴时,纵向拖动要能跨阈值 → 抬 latitudeLimit
-    // (cubing.js 默认 35°,卡死任何 90° lat 累积)。skewb 走这里;
+    // (cubing.js 默认 35°,卡死任何 90° lat 累积)。
     // pyraminx/megaminx axes 只 +Y,纵拖不 commit,不抬避免相机翻过头。
     const hasNonUAxis = cfg.axes.some((ax) => Math.abs(ax.axis[1]) < 0.99);
     if (hasNonUAxis) {
@@ -623,9 +624,81 @@ export default function TwistySection({
     };
   }, [playerNonce, puzzle]);
 
+  // skewb pixel-based 无限 x/x' chain:透明 overlay 接管所有 pointer 事件,
+  // cubing.js drag 完全失效 → camera 不动。每 PIXELS_PER_COMMIT 像素 |Δy| 触发 1 commit。
+  // Δy 参考点每次 commit 后移动,连续同方向拖可累积无数次。
+  const skewbOverlayRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (puzzle !== 'skewb') return;
+    const el = skewbOverlayRef.current;
+    const player = playerInstRef.current;
+    if (!el || !player) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = (player as any).experimentalModel;
+    if (!m?.alg || !m?.timestampRequest) return;
+
+    const PIXELS_PER_COMMIT = 80;
+    const cfg = ROTATE_CONFIG['skewb'] ?? { thresholdDeg: 0, axes: [] };
+    let active = false;
+    let pid = -1;
+    let lastY = 0;
+
+    const commit = (move: string) => {
+      const curAlg = currentAlgRef.current.trim();
+      const newAlg = curAlg ? `${curAlg} ${move}` : move;
+      currentAlgRef.current = newAlg;
+      try {
+        player.alg = newAlg;
+        m.timestampRequest.set('end');
+        const newOrient = algToOrientation(newAlg, cfg);
+        faceOverlayRef.current?.setCubeOrientation(newOrient);
+        onUserMoveRef.current?.(move);
+      } catch { /* */ }
+    };
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      active = true;
+      pid = e.pointerId;
+      lastY = e.clientY;
+      try { el.setPointerCapture(e.pointerId); } catch { /* */ }
+      e.preventDefault();
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!active || e.pointerId !== pid) return;
+      const dy = e.clientY - lastY;
+      if (Math.abs(dy) < PIXELS_PER_COMMIT) return;
+      const steps = Math.floor(Math.abs(dy) / PIXELS_PER_COMMIT);
+      const sign = dy > 0 ? 1 : -1;
+      // dy > 0 (drag down) → commit x'(对齐 cubing.js orbit 旧约定:lat 增 → x')
+      // dy < 0 (drag up)   → commit x
+      const move = dy > 0 ? "x'" : 'x';
+      for (let i = 0; i < steps; i++) commit(move);
+      lastY += sign * steps * PIXELS_PER_COMMIT;
+    };
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerId !== pid) return;
+      active = false;
+      try { el.releasePointerCapture(e.pointerId); } catch { /* */ }
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onUp);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puzzle, playerNonce]);
+
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
       <div ref={containerRef} className="twisty-container" />
+      {puzzle === 'skewb' && <div ref={skewbOverlayRef} className="twisty-skewb-overlay" />}
     </div>
   );
 }

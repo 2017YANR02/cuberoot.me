@@ -3,8 +3,24 @@
 
 .twisty-section {
   margin-bottom: 16px;
+  position: relative;
 }
 
 .twisty-container {
   margin-bottom: 12px;
+}
+
+/* skewb pointer overlay: 透明 + 接管所有 pointer 事件,cubing.js drag 收不到。
+   纵向拖动累积 Δy → commit x/x'。横向位移忽略 → 无任何 y/z 旋转产生。
+   覆盖整个 .twisty-container 区域。 */
+.twisty-skewb-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  touch-action: none;
+  cursor: ns-resize;
+  background: transparent;
+  z-index: 5;
 }
