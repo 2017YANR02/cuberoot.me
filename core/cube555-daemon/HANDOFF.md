@@ -1,14 +1,16 @@
 # cube555-daemon Optimization Handoff
 
-接 PROMPT_optimize_solve_length.md 后两轮(v1 knob / v2 群论)总结。本文是给下个 AI
+接 PROMPT_optimize_solve_length.md 后三轮(v1 knob / v2 群论 / v3 并行化)总结。本文是给下个 AI
 的状态快照 + 真实剩余路径。**不必读** PROMPT v1 / 全 BENCHMARKS,关键信息下面都有。
 
 ## 现状(2026-05-18 ship)
 
-- Default config:`P5_SOLS=8` 单 seed,其它 env 默认
-- bench (n=100):**avg 69.57 步 / latency 1509ms / 100% verify OK**
-- Opt-in `CUBE555_BIDIR=1`(双向求解):**avg 69.09 / latency 3483ms**,-0.48 步 / +131% 延迟,uniformity 不破坏
-- 7s budget 内余量大,移植性 / 内存 / 测试齐备
+- Default config:`P5_SOLS=8` 单 seed + **`CUBE555_BIDIR=1` 并行双向(v3)**
+- bench n=80 par=3:**avg 68.97 步 / latency 3730ms / 100% verify OK**
+- bench n=20 par=1(单请求):**avg 69.00 步 / latency 2419ms**
+- v1 baseline → v3 ship 累计 **-1.8 步**(70.80 → 68.97-69.00)
+- Opt-out `CUBE555_BIDIR=0`:回退单向,avg ~69.7 / latency ~1.9-2.3s
+- 7s budget par=1/2 安全;par=3 极端并发 max latency 偶超(par=3 max 11892ms),单用户场景不触发
 - 60 步目标 **不可达**(架构地板 ~67-68 步)
 
 ## 求解 pipeline
@@ -21,20 +23,21 @@ random state S ─[reducer 5-phase IDA*]─ ~51 步 ─[降到 3x3 等价]─[cs
 - Kociemba = `cs.min2phase`(打包在 `lib/twophase.jar`),~19 步接近 god's number=20,**没空间**
 - 拼接 = `Daemon.java solveCore()` 返 raw (red, koc),`solvePicked()` 走 `invertAndConvert`(正向)或 `convertOnly`(反向)
 
-## v1 + v2 已穷举的方向(全部失败 / 性价比太低)
+## v1 + v2 + v3 已穷举的方向
 
 | # | 方向 | 结果 |
 |---|------|------|
 | 1 | Kociemba `probeMin` 1e6 | 25x 延迟换 1 步,revert |
 | 2 | Kociemba `probeMin` 1e4 | <1σ 噪声,revert |
-| 3 | `phase5SolsSize=8` + pick-shortest p5sol | **-1.23 步 / +3% 延迟,ship default** |
+| 3 | `phase5SolsSize=8` + pick-shortest p5sol | **-1.23 步 / +3% 延迟,ship default (v1)** |
 | 4 | 全 phase 宽 beam(P1=400, P2-4=1500, P5=32) | -1.5 步 / 2.6x 延迟,不入 default |
 | 5 | Multi-seed K=2 + 宽 beam | -1.8 步 / 3.2x 延迟,破坏 uniformity |
 | 6 | Multi-seed K=5 P5=4 | -2.5 步 / 5.2x 延迟超 7s,破坏 uniformity |
 | 7 | Kociemba `OPTIMAL_SOLUTION` (0x8) | >1000x 慢,kill |
 | 8 | Reduction/Kociemba 边界 token cancellation | reducer 100% wide 结尾,`lastPlain=0`,零触发 |
-| 9 | 双向解 (bidir) | **-0.48 步 / +131% 延迟,opt-in `CUBE555_BIDIR=1`** |
+| 9 | 双向解 顺序版 (bidir sequential) | -0.48 步 / +131% 延迟,被 v3 取代 |
 | 10 | 对称共轭 N=4 取最短 | cube555 无 corner sym 表,自造 6-8h,放弃 |
+| 11 | **双向解 并行版 (bidir parallel)** | **-0.7~-1.0 步 / +29~63% 延迟,ship default (v3)** |
 
 ## 关键 API quirks(踩过的坑)
 
@@ -100,11 +103,13 @@ CUBE555_BIDIR=1 node cube555-daemon/local_bench.mjs --n 100 ...
 | `CUBE555_SEEDS` | `1` | 多 seed 取最短,K>1 破坏 uniformity |
 | `CUBE555_KOC_PROBE_MIN` | `500` | Kociemba 找到首解后继续搜的最少 probe,改大延迟暴涨 |
 | `CUBE555_KOC_FLAGS` | `0` | Kociemba verbose flag。0x8 = OPTIMAL_SOLUTION (unusable) |
-| `CUBE555_BIDIR` | `0` | 双向解,-0.48 步 / +131% 延迟,uniformity safe |
+| `CUBE555_BIDIR` | `1` | 双向解 并行版,-0.7~-1.0 步 / +29~63% 延迟,uniformity safe;设 `0` 关 |
 | `CUBE555_WORKERS` | `4` | 内部并行求解线程数 |
 | `CUBE555_NATIVE_BIN` | (unset) | 设路径走 GraalVM 二进制,省 ~170MB RSS |
 | `CUBE555_DISABLED` | (unset) | 设 `1` skip spawn,/v1/scramble/555-rs 返 503 |
 
 ## 一句话总结
 
-cube555 当前架构 floor ~67-68 步,**60 步在不重写 reducer 的情况下不可能**。本仓库的优化空间已基本榨干,下一步要么接受 ~69-70 步现状,要么投入月级工程替换 reducer。
+cube555 当前架构 floor ~67-68 步,**60 步在不重写 reducer 的情况下不可能**。v1+v2+v3 把
+ship default 从 70.80 压到 ~69(累计 -1.8 步),架构内可榨基本榨完,下一步要么接受现状,
+要么投入月级工程替换 reducer。

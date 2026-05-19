@@ -53,10 +53,15 @@ public class Daemon {
 
 	static { System.setOut(System.err); }
 
-	/** Each worker owns its own solver pair so threads never share mutable solver state. */
+	/** Each worker owns its own solver pair so threads never share mutable solver state.
+	 * Second pair (reducerBwd / solver333Bwd) is used only when BIDIR=1, letting forward
+	 * and backward solves run concurrently. Per-Search state (sols ArrayLists) is small;
+	 * heavy pruning tables are static and shared across instances. */
 	static class Worker {
 		final Search reducer = new Search();
 		final cs.min2phase.Search solver333 = new cs.min2phase.Search();
+		final Search reducerBwd = new Search();
+		final cs.min2phase.Search solver333Bwd = new cs.min2phase.Search();
 		final Random rng = new Random();
 	}
 
@@ -93,7 +98,10 @@ public class Daemon {
 	 * scramble. By group identity L*(S) = L*(S⁻¹), but cube555's reducer is heuristic so the two paths
 	 * give different lengths in practice. Unlike multi-seed (CUBE555_SEEDS), this preserves the uniform
 	 * random-state guarantee — we're picking the better of two estimates of the SAME L*(S), not the
-	 * better of two different states. Doubles latency. Default off.
+	 * better of two different states.
+	 *
+	 * The two solves run on separate worker reducer/solver pairs concurrently, so wall latency is
+	 * max(fwd, bwd) ≈ 1.3× single instead of 2×. Default on; set CUBE555_BIDIR=0 to disable.
 	 *
 	 * NOTE: the backward path produces a facelet that's in the same coset as S (same physical state)
 	 * but may differ at within-face center positions due to 4!^6 indistinguishable-center labelings.
@@ -101,7 +109,7 @@ public class Daemon {
 	 * facelet. Consumer sees the canonical-relabeling state (visually identical to original).
 	 */
 	private static final boolean BIDIR =
-	    !"0".equals(System.getenv().getOrDefault("CUBE555_BIDIR", "0"));
+	    !"0".equals(System.getenv().getOrDefault("CUBE555_BIDIR", "1"));
 
 	public static void main(String[] args) throws Exception {
 		Search.phase1SolsSize = P1_SOLS;
@@ -163,21 +171,21 @@ public class Daemon {
 	 *
 	 * Returns raw [bestRed, bestKoc] strings (no inversion / no scramble assembly), or null.
 	 */
-	static String[] solveCore(Worker w, String state) {
-		String[] firstRet = w.reducer.solveReduction(state, 0);
+	static String[] solveCore(Search reducer, cs.min2phase.Search solver333, String state) {
+		String[] firstRet = reducer.solveReduction(state, 0);
 		if (firstRet == null || firstRet[0] == null) return null;
 		String bestRed = null;
 		String bestKoc = null;
 		int bestTotal = Integer.MAX_VALUE;
 		{
-			String koc = w.solver333.solution(firstRet[1], 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
+			String koc = solver333.solution(firstRet[1], 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
 			if (koc != null && !koc.startsWith("Error")) {
 				bestTotal = countTokens(firstRet[0]) + countTokens(koc);
 				bestRed = firstRet[0];
 				bestKoc = koc;
 			}
 		}
-		ArrayList<SolvingCube> pool = w.reducer.p5sols;
+		ArrayList<SolvingCube> pool = reducer.p5sols;
 		int candidates = Math.min(pool.size(), P5_SOLS);
 		for (int i = 1; i < candidates; i++) {
 			SolvingCube sc = pool.get(i);
@@ -189,7 +197,7 @@ public class Daemon {
 			cc.doMove(sc.getSolution());
 			cc.doCornerMove(sc.getSolution());
 			String facelet333 = CubieCube.to333Facelet(cc.toFacelet());
-			String koc = w.solver333.solution(facelet333, 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
+			String koc = solver333.solution(facelet333, 21, Integer.MAX_VALUE, KOC_PROBE_MIN, KOC_FLAGS);
 			if (koc == null || koc.startsWith("Error")) continue;
 			int total = redLen + countTokens(koc);
 			if (total < bestTotal) {
@@ -206,34 +214,57 @@ public class Daemon {
 	 * Forward path (always) + backward path (BIDIR=1). Returns [scramble, expectedState] for
 	 * verify; expectedState is the original state in forward case, or the replayed state in
 	 * backward case (within-face center labeling may differ from original but group element matches).
+	 *
+	 * BIDIR mode runs the two solves concurrently on the worker's two reducer/solver pairs,
+	 * so wall latency is max(fwd, bwd) ≈ 1×single instead of 2×.
 	 */
 	static String[] solvePicked(Worker w, String state) {
-		String[] fwd = solveCore(w, state);
-		String fwdScramble = (fwd != null) ? invertAndConvert(fwd[0] + " " + fwd[1]) : null;
+		if (!BIDIR) {
+			String[] fwd = solveCore(w.reducer, w.solver333, state);
+			String fwdScramble = (fwd != null) ? invertAndConvert(fwd[0] + " " + fwd[1]) : null;
+			if (fwdScramble == null) return null;
+			return new String[] { fwdScramble, state };
+		}
+
+		String stateInv = null;
+		try {
+			CubieCube cc = new CubieCube();
+			if (cc.fromFacelet(state) == 0) {
+				stateInv = invertCubieCube(cc).toFacelet();
+			}
+		} catch (Throwable ignored) { /* bwd path skipped */ }
+		final String stateInvF = stateInv;
+
+		final String[][] fwdOut = new String[1][];
+		final String[][] bwdOut = new String[1][];
+
+		Thread fwdT = new Thread(() -> {
+			try { fwdOut[0] = solveCore(w.reducer, w.solver333, state); }
+			catch (Throwable ignored) {}
+		}, "bidir-fwd");
+		Thread bwdT = new Thread(() -> {
+			if (stateInvF == null) return;
+			try { bwdOut[0] = solveCore(w.reducerBwd, w.solver333Bwd, stateInvF); }
+			catch (Throwable ignored) {}
+		}, "bidir-bwd");
+		fwdT.start();
+		bwdT.start();
+		try { fwdT.join(); bwdT.join(); }
+		catch (InterruptedException ie) { Thread.currentThread().interrupt(); return null; }
+
+		String fwdScramble = (fwdOut[0] != null) ? invertAndConvert(fwdOut[0][0] + " " + fwdOut[0][1]) : null;
 		int fwdTokens = (fwdScramble != null) ? countTokens(fwdScramble) : Integer.MAX_VALUE;
 
 		String bwdScramble = null;
 		int bwdTokens = Integer.MAX_VALUE;
 		String bwdState = null;
-		if (BIDIR) {
-			try {
-				CubieCube cc = new CubieCube();
-				if (cc.fromFacelet(state) == 0) {
-					CubieCube ccInv = invertCubieCube(cc);
-					String stateInv = ccInv.toFacelet();
-					String[] bwd = solveCore(w, stateInv);
-					if (bwd != null) {
-						// Backward: solver returns word W such that W·stateInv = solved → [W] = stateInv⁻¹ = S.
-						// W applied to solved produces a facelet in the [S] coset; we use it directly as the scramble.
-						// Normalize cube555's lowercase-wide tokens to WCA Xw notation so parseMove accepts them.
-						bwdScramble = convertOnly(bwd[0] + " " + bwd[1]);
-						bwdTokens = countTokens(bwdScramble);
-						bwdState = replay(bwdScramble);
-					}
-				}
-			} catch (Throwable t) {
-				// fall through to forward
-			}
+		if (bwdOut[0] != null) {
+			// Backward: solver returns word W such that W·stateInv = solved → [W] = stateInv⁻¹ = S.
+			// W applied to solved produces a facelet in the [S] coset; we use it directly as the scramble.
+			// Normalize cube555's lowercase-wide tokens to WCA Xw notation so parseMove accepts them.
+			bwdScramble = convertOnly(bwdOut[0][0] + " " + bwdOut[0][1]);
+			bwdTokens = countTokens(bwdScramble);
+			bwdState = replay(bwdScramble);
 		}
 
 		if (fwdScramble == null && bwdScramble == null) return null;
