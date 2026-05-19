@@ -231,11 +231,11 @@ export default function LuckyLimitPage() {
 
       <article className="pred-article" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 28px 80px' }}>
         <h1 className="pred-title">
-          {isZh ? '运气预测: 累积打乱越多, 撞上最幸运 scramble 的概率越高' : 'Lucky-Scramble Forecast: Cumulative Probability of Hitting the Luckiest Scramble'}
+          {isZh ? '运气预测: 累积打乱越多, 撞上最幸运打乱的概率越高' : 'Lucky-Scramble Forecast: Cumulative Probability of Hitting the Luckiest Scramble'}
         </h1>
         <p className="pred-subtitle">
           {isZh
-            ? '三阶 4.3×10^19 个状态, 其中只有 262 个 (1+18+243) 可在 ≤2 步解开. 单次抽中这种 scramble 的概率 ≈ 6×10^-18, 微乎其微. 但 WCA 每年累积大量打乱 (含备用), 累积撞上一次的概率 P = 1 − (1 − p)^N 随 N 单调上升. 拖动年份 → 看 N(Y) → 看每个 d 阈值的累积概率 → 看期望最幸运成绩.'
+            ? '三阶 4.3×10¹⁹ 个状态,其中只有 262 个 (1+18+243) 能 ≤ 2 步解开。单次随机抽到这种打乱的概率 ≈ 6×10⁻¹⁸,几乎为零。但 WCA 每年积累大量打乱 (含备用),累积撞上一次的概率 P = 1−(1−p)^N 随 N 单调上升。拖年份 → 看 N(Y) → 看每个 d 阈值的累积概率 → 看期望最幸运成绩。'
             : '3x3 has 4.3×10^19 states; only 262 (= 1+18+243) are solvable in ≤2 moves. A single random scramble has only ~6×10^-18 chance of landing there. But WCA accumulates many scrambles per year (incl. backups); cumulative-hit probability is P = 1 − (1 − p)^N, monotonically rising with N. Drag the year → see N(Y) → see cumulative probability per depth threshold → see the expected luckiest result.'}
         </p>
 
@@ -246,7 +246,7 @@ export default function LuckyLimitPage() {
               <div className="lucky-year-label">{isZh ? '年份' : 'Year'}</div>
               <div className="lucky-year-value">{formatYear(year)}</div>
               <div className="lucky-year-N">
-                {isZh ? '累积三阶 scramble' : 'Cumulative 3x3 scrambles'}<br />
+                {isZh ? '累积三阶打乱' : 'Cumulative 3x3 scrambles'}<br />
                 N(Y) = <strong>{formatBigN(N333)}</strong> {isZh ? '个 (含备用)' : '(incl. backups)'}
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function LuckyLimitPage() {
           </div>
           <p className="lucky-slider-note">
             {isZh
-              ? '滑条左半段 (0..40%) 线性 2003..2100, 右半段对数到 10^15 年.'
+              ? '滑条左半段 (0-40%) 线性 2003-2100,右半段对数延伸到 10¹⁵ 年。'
               : 'Left half (0–40%) is linear 2003–2100; right half is log up to 10^15 yr.'}
           </p>
         </section>
@@ -285,9 +285,9 @@ export default function LuckyLimitPage() {
           <p>
             {isZh ? (
               <>
-                到 {formatYear(year)} 年, WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶 scramble</strong> (含备用).
-                "在这 N 个 scramble 中至少撞上一次 d ≤ K 状态" 的累积概率 P = 1 − (1 − p)^N.
-                K 越小 → 该状态在 4.3×10^19 中的占比 p 越小 → N 即使极大也需要继续累积.
+                到 {formatYear(year)} 年,WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶打乱</strong> (含备用)。
+                「在这 N 个打乱里至少撞上一次 d ≤ K 状态」的累积概率 P = 1 − (1 − p)^N。
+                K 越小 → 该状态在 4.3×10¹⁹ 中的占比 p 越小 → N 即使极大也需要继续累积。
               </>
             ) : (
               <>
@@ -305,7 +305,7 @@ export default function LuckyLimitPage() {
                   <th>{isZh ? '≤K 步可解状态数 (个)' : '# states at d ≤ K'}</th>
                   <th>{isZh ? '单次 p (无单位)' : 'Single-scramble p'}</th>
                   <th>{isZh ? `P(撞上 d≤K) @ N=${formatBigN(N333)}` : `P(d≤K hit) @ N=${formatBigN(N333)}`}</th>
-                  <th>{isZh ? 'N₅₀ (个 scramble)' : 'N₅₀ (scrambles)'}</th>
+                  <th>{isZh ? 'N₅₀ (个打乱)' : 'N₅₀ (scrambles)'}</th>
                   <th>{isZh ? 'N₅₀ 对应年份' : 'Year reached'}</th>
                   <th>{isZh ? '该 d 单次时间 (秒, TPS 17)' : 'Time at d (s, TPS 17)'}</th>
                 </tr>
@@ -333,11 +333,11 @@ export default function LuckyLimitPage() {
           <p className="lucky-prob-caption">
             {isZh ? (
               <>
-                <strong>读法:</strong> 比如表中 d ≤ 2 行 — 单次概率 6×10^-18 (4.3×10^19 个状态里只有 262 个).
-                需要累积到 N₅₀ ≈ 1.2×10^17 次打乱才能有 50% 概率撞上一次,
-                对应年份约 10^14 左右 (WCA 比赛累积 30000 场 / 年 × 250 scrambles / 场 ≈ 7.5×10^6 / 年).
-                这就是为什么 "三阶 2 步运气解" 不是任何一年内能见到的事件, 而是"累积到无穷年"的渐近.
-                现实里 2026 年期望最幸运 d ≈ 11.5 步, 概率压在 d=11..12 之间(P 达 40%).
+                <strong>怎么读:</strong> 比如表中 d ≤ 2 这一行 — 单次概率 6×10⁻¹⁸ (4.3×10¹⁹ 个状态里只有 262 个)。
+                需要累积到 N₅₀ ≈ 1.2×10¹⁷ 次打乱才能有 50% 概率撞上一次,
+                对应年份约 10¹⁴ 左右 (WCA 比赛累积 30000 场 / 年 × 250 个打乱 / 场 ≈ 7.5×10⁶ / 年)。
+                所以「三阶 2 步运气解」不是某一年能见到的事件,而是「累积到无穷年」的渐近。
+                现实里 2026 年的期望最幸运 d ≈ 11.5 步,分布集中在 d=11-12 (P 约 40%)。
               </>
             ) : (
               <>
@@ -368,17 +368,17 @@ export default function LuckyLimitPage() {
             </div>
             <div className="lucky-headline-right">
               <Stat
-                label={isZh ? '累积 scramble 数 (个)' : 'Cumulative scrambles'}
+                label={isZh ? '累积打乱数 (个)' : 'Cumulative scrambles'}
                 value={formatBigN(row333.N)}
-                hint={isZh ? `2003–${Math.round(year)} · 含备用` : `2003–${Math.round(year)} · incl. backups`}
+                hint={isZh ? `2003-${Math.round(year)}, 含备用` : `2003–${Math.round(year)} · incl. backups`}
               />
               <Stat
                 label={isZh ? '期望最幸运 d' : 'Expected min depth'}
                 value={row333.depthClamped.toFixed(2) + (isZh ? ' 步' : ' moves')}
-                hint={isZh ? `WCA 接受 ≥${row333.k_min_wca} 步` : `WCA accepts ≥${row333.k_min_wca} moves`}
+                hint={isZh ? `WCA 接受 ≥ ${row333.k_min_wca} 步` : `WCA accepts ≥${row333.k_min_wca} moves`}
               />
               <Stat
-                label={isZh ? 'TPS 14.6 (现实 cuber)' : 'TPS 14.6 (real cuber)'}
+                label={isZh ? 'TPS 14.6 (现实选手)' : 'TPS 14.6 (real cuber)'}
                 value={formatVal(row333.timeNow, row333.ev.scale)}
                 hint={isZh ? 'TPS 顶到王艺衡持续值' : 'TPS at Wang sustained level'}
               />
@@ -391,7 +391,7 @@ export default function LuckyLimitPage() {
           <h2>{isZh ? 'P(撞上 d ≤ K) 随年份' : 'Cumulative Hit Probability vs Year'}</h2>
           <p>
             {isZh
-              ? '每条线对应一个 d 阈值. 横轴 log 年份 (覆盖 2003 → 10^15 yr), 纵轴 = P(撞上 ≤ K). 看不同 K 是 "在何时" 从 0 跨到 1.'
+              ? '每条线对应一个 d 阈值。横轴是 log 年份 (覆盖 2003 → 10¹⁵ 年),纵轴 = P(撞上 ≤ K)。看不同 K「在何时」从 0 跨到 1。'
               : 'Each line corresponds to one K threshold. X-axis: log year (2003 → 10^15 yr), Y-axis: P(hit ≤ K). Watch when each line crosses from 0 to 1.'}
           </p>
           <LineChart
@@ -411,7 +411,7 @@ export default function LuckyLimitPage() {
           <h2>{isZh ? '期望最幸运成绩随年份 (跨项目)' : 'Expected Luckiest Time vs Year (Cross-Event)'}</h2>
           <p>
             {isZh
-              ? '横轴 log 年份, 纵轴 log 秒. 每条线 = 某项目 E[min depth] / TPS_ceil + setup_s. 长期渐近到 k_min_wca / TPS_ceil + setup (各项目最快可能单次).'
+              ? '横轴 log 年份,纵轴 log 秒。每条线 = 某项目 E[min depth] / TPS_ceil + setup_s。长期渐近到 k_min_wca / TPS_ceil + setup (各项目最快可能的单次)。'
               : 'Log year vs log seconds. Each line = E[min depth] / TPS_ceil + setup_s per event. Asymptote = k_min_wca / TPS_ceil + setup (fastest physically possible single).'}
           </p>
           <LineChart
@@ -431,7 +431,7 @@ export default function LuckyLimitPage() {
           <h2>{isZh ? '各项目当前年份运气预测' : 'Per-Event Forecast at Selected Year'}</h2>
           <p>
             {isZh
-              ? '★ = 深度分布精确; ◐ = 部分精确高深度估计; ~ = 近似分布. 时间 = E[min] / TPS_ceil + setup_s.'
+              ? '★ = 深度分布精确;◐ = 部分精确, 高深度估计;~ = 近似分布。时间 = E[min] / TPS_ceil + setup_s。'
               : '★ = exact depth distribution; ◐ = partial (exact low / est. high); ~ = approximate. Time = E[min] / TPS_ceil + setup_s.'}
           </p>
           <div className="lucky-grid">
@@ -446,45 +446,45 @@ export default function LuckyLimitPage() {
           <h2>{isZh ? '方法' : 'Methodology'}</h2>
           <ol>
             <li>
-              <strong>{isZh ? '状态空间.' : 'State space.'}</strong>{' '}
+              <strong>{isZh ? '状态空间。' : 'State space.'}</strong>{' '}
               {isZh
-                ? '三阶 4.3252 × 10^19 状态, 二阶 3,674,160, Pyraminx 933,120, Skewb 3,149,280. 这些的深度分布完全已知 (counts[d] = 步数恰为 d 的状态数).'
+                ? '三阶 4.3252×10¹⁹ 个状态,二阶 3,674,160,Pyraminx 933,120,Skewb 3,149,280。这四个项目的深度分布都已完全枚举 (counts[d] = 步数恰好为 d 的状态数)。'
                 : '3x3 = 4.3252 × 10^19 states; 2x2 = 3,674,160; Pyraminx = 933,120; Skewb = 3,149,280. Their full depth distributions are known.'}
             </li>
             <li>
-              <strong>{isZh ? '深度分布来源.' : 'Distribution sources.'}</strong>{' '}
+              <strong>{isZh ? '深度分布来源。' : 'Distribution sources.'}</strong>{' '}
               {isZh
-                ? '三阶: cube20.org / Rokicki 2010 (d=0..15 精确, d=16..20 估计). 二阶: Korf / Pochmann. Pyraminx / Skewb: Jaap Scherphuis. 大魔方 / Megaminx / Sq1 / Clock 分布不可枚举, 用"峰值集中"近似.'
+                ? '三阶: cube20.org / Rokicki 2010 (d = 0-15 精确,d = 16-20 估计)。二阶: Korf / Pochmann。Pyraminx / Skewb: Jaap Scherphuis。大魔方 / Megaminx / Sq1 / Clock 分布不可枚举,用「峰值集中」近似。'
                 : '3x3: cube20.org / Rokicki 2010 (exact d=0..15, est. d=16..20). 2x2: Korf / Pochmann. Pyraminx / Skewb: Jaap Scherphuis. Larger cubes etc.: peak-concentrated approximation.'}
             </li>
             <li>
-              <strong>{isZh ? '累积打乱 N(Y).' : 'Accumulated scrambles N(Y).'}</strong>{' '}
+              <strong>{isZh ? '累积打乱 N(Y)。' : 'Accumulated scrambles N(Y).'}</strong>{' '}
               {isZh
-                ? '2003–2025 来自 WCA 真实数据 (≈28000 场), 2026+ 用 5% 年复合增长外推, 封顶 30000 场/年. 单场 3x3 scramble 数 (含备用) 线性插值: 2003 ~30, 2026 ~250. 其他项目按 scramble_share 折算 (4x4 ≈ 0.70 × 3x3).'
+                ? '2003-2025 来自 WCA 真实数据 (≈ 28000 场),2026+ 用 5% 年复合增长外推,封顶 30000 场 / 年。单场 3x3 打乱数 (含备用) 线性插值: 2003 ~30,2026 ~250。其他项目按 scramble_share 折算 (4x4 ≈ 0.70 × 3x3)。'
                 : '2003–2025 from WCA dump (≈28k comps total), 2026+ extrapolated at 5% CAGR capped at 30k comps/year. Per-comp 3x3 scrambles (incl. backups) linearly interpolated 30 → 250 (2003 → 2026). Other events by share factor (4x4 ≈ 0.70 × 3x3).'}
             </li>
             <li>
-              <strong>{isZh ? '累积概率.' : 'Cumulative probability.'}</strong>{' '}
+              <strong>{isZh ? '累积概率。' : 'Cumulative probability.'}</strong>{' '}
               {isZh
-                ? 'P(在 N 次独立打乱中至少撞上一次 d ≤ K) = 1 − (1 − p_le_K)^N, 其中 p_le_K = ∑_{i≤K} counts[i] / |S|. 实现用 log1p(-p) 避免 underflow.'
+                ? 'P(在 N 次独立打乱中至少撞上一次 d ≤ K) = 1 − (1 − p_le_K)^N,其中 p_le_K = ∑_{i≤K} counts[i] / |S|。实现用 log1p(-p) 避免 underflow。'
                 : 'P(hit at least one d ≤ K in N draws) = 1 − (1 − p_le_K)^N, with p_le_K = ∑_{i≤K} counts[i] / |S|. Implemented via log1p(-p) for numerical stability when p is tiny.'}
             </li>
             <li>
-              <strong>{isZh ? '期望最幸运 E[min].' : 'Expected min E[min].'}</strong>{' '}
+              <strong>{isZh ? '期望最幸运 E[min]。' : 'Expected min E[min].'}</strong>{' '}
               {isZh
-                ? "E[min depth in N samples] = ∑_{k=0}^{G-1} (1 − P(min ≤ k)), 然后被 WCA 接受规则 k_min_wca 截断 (三阶 ≥ 2, 二阶 / Pyraminx / Skewb ≥ 1)."
+                ? "E[min depth in N samples] = ∑_{k=0}^{G-1} (1 − P(min ≤ k)),然后被 WCA 接受规则 k_min_wca 截断 (三阶 ≥ 2,二阶 / Pyraminx / Skewb ≥ 1)。"
                 : "E[min depth] = ∑_{k=0}^{G-1} (1 − P(min ≤ k)), then clamped to WCA-acceptable minimum (3x3 ≥ 2; 2x2 / Pyraminx / Skewb ≥ 1)."}
             </li>
             <li>
-              <strong>{isZh ? '执行时间.' : 'Execution time.'}</strong>{' '}
+              <strong>{isZh ? '执行时间。' : 'Execution time.'}</strong>{' '}
               {isZh
-                ? 'T = E[min] / TPS_ceil + setup_s. TPS_ceil 取生理上界 (3x3 = 17, 击鼓双手 22 Hz × 50% 二次损耗), OH = 10, 大魔方 8–12. setup_s 是收尾 + StackMat 触发噪声 0.10–2.00 s.'
+                ? 'T = E[min] / TPS_ceil + setup_s。TPS_ceil 取生理上界 (3x3 = 17,来自双手击鼓 22 Hz × 50% 的叠加损耗),OH = 10,大魔方 8-12。setup_s 是收尾 + StackMat 触发噪声 0.10-2.00 秒。'
                 : 'T = E[min] / TPS_ceil + setup_s. TPS_ceil = physiological ceiling (3x3 = 17, dual-hand 22 Hz drum × 50% loss), OH = 10, big cubes 8–12. setup_s = trigger + tap-off 0.10–2.00 s.'}
             </li>
             <li>
-              <strong>{isZh ? '渐近 (N → ∞).' : 'Asymptote (N → ∞).'}</strong>{' '}
+              <strong>{isZh ? '渐近 (N → ∞)。' : 'Asymptote (N → ∞).'}</strong>{' '}
               {isZh
-                ? "三阶: 2 步 / 17 TPS + 0.15 s = 0.27 s. 二阶 / Pyraminx / Skewb: 1 步 / TPS_ceil + setup ≈ 0.16–0.20 s. 这些是 \"运气和手速都满足\" 时的下界 — 物理墙 (M/TPS+R) 还在 1.5+ s, 普通比赛中的实际 WR 受物理墙约束."
+                ? "三阶: 2 步 / 17 TPS + 0.15 秒 = 0.27 秒。二阶 / Pyraminx / Skewb: 1 步 / TPS_ceil + setup ≈ 0.16-0.20 秒。这些是「运气和手速都满足」时的下界 — 物理墙 (M/TPS+R) 还在 1.5+ 秒,普通比赛中的实际 WR 受物理墙约束。"
                 : "3x3: 2 moves / 17 TPS + 0.15 s = 0.27 s. 2x2 / Pyraminx / Skewb: 1 move / TPS_ceil + setup ≈ 0.16–0.20 s. These are reachable only when luck + TPS are both maxed; the physical floor (M/TPS+R) is still ~1.5 s and bounds real-comp WRs."}
             </li>
           </ol>
@@ -495,22 +495,22 @@ export default function LuckyLimitPage() {
           <ul>
             <li>
               {isZh
-                ? 'WCA scrambler 是均匀采样, 但实际 TNoodle 输出长度 17–25 步的 move sequence — 不会刻意筛出短解状态. 累积命中是数学事件, 现实中即使 N 足够也需要 cuber 当场识别到 "这是个 d=4 状态" + 找到 4 步最优解 (没有教科书算法库覆盖低 d).'
+                ? 'WCA 的打乱器是均匀采样,但 TNoodle 实际输出是 17-25 步长的动作序列 — 不会刻意挑出可短解的状态。累积命中是数学层面的事;真到比赛里,选手还得当场识别出「这是个 d=4 状态」并找到 4 步最优解 (没有教科书算法库覆盖低 d 状态)。'
                 : "WCA scrambler is uniform sampling, but TNoodle outputs 17–25 move sequences (not filtered for short-solve states). A cumulative hit is mathematical; in practice the cuber would also have to recognize \"this is a d=4 state\" mid-comp and find a 4-move optimal solution (no algorithm book covers low-d states)."}
             </li>
             <li>
               {isZh
-                ? '识别 + 切换 + 反应噪声 + 双手协调下界 (≥ 50 ms StackMat 触发) 实际让"d=2 + 17 TPS"的 0.27 s 也碰不到, 物理底层墙 ≈ 1.5 s.'
+                ? '识别 + 切换 + 反应噪声 + 双手协调下界 (≥ 50 ms StackMat 触发) 实际让「d=2 + 17 TPS」的 0.27 秒也碰不到,物理底层墙 ≈ 1.5 秒。'
                 : 'Recognition + switching + reaction + dual-hand coordination floor (≥ 50 ms StackMat trigger) mean the "d=2 + 17 TPS" 0.27 s is unreachable; the physical floor is ~1.5 s.'}
             </li>
             <li>
               {isZh
-                ? '大魔方 (4x4+) / Megaminx / Sq1 / Clock 分布未枚举, 用"峰值集中"近似. 量级正确, 个位精度不可靠.'
+                ? '大魔方 (4x4+) / Megaminx / Sq1 / Clock 分布未枚举,用「峰值集中」近似。量级正确,个位精度不可靠。'
                 : 'Large cubes / Megaminx / Sq1 / Clock distributions not enumerated; peak-concentrated approximation. Order-of-magnitude reliable, not single-digit.'}
             </li>
             <li>
               {isZh
-                ? 'FMC / 盲拧 本页不建模 (FMC 时间 = 步数本身; 盲拧受记忆速度而非 TPS 约束).'
+                ? 'FMC / 盲拧本页不建模 (FMC 时间 = 步数本身;盲拧受记忆速度而非 TPS 约束)。'
                 : 'FMC / blind not modeled (FMC time = move count; blind is memo-bound, not TPS).'}
             </li>
           </ul>
@@ -519,7 +519,7 @@ export default function LuckyLimitPage() {
         <footer className="pred-footer">
           <div>
             {isZh
-              ? '深度分布: cube20.org / Rokicki / Korf / Pochmann / Scherphuis · 比赛数: WCA results dump'
+              ? '深度分布: cube20.org / Rokicki / Korf / Pochmann / Scherphuis  比赛数: WCA results dump'
               : 'Depth distributions: cube20.org / Rokicki / Korf / Pochmann / Scherphuis · Comp counts: WCA results dump'}
           </div>
         </footer>
@@ -551,7 +551,7 @@ function EventCard({ row, isZh }: { row: Row; isZh: boolean }) {
       </div>
       <div className="lucky-card-stats">
         <div>
-          <div className="lucky-card-stat-label">{isZh ? '累积 scramble (个)' : 'Cumulative scrambles'}</div>
+          <div className="lucky-card-stat-label">{isZh ? '累积打乱 (个)' : 'Cumulative scrambles'}</div>
           <div className="lucky-card-stat-value">{formatBigN(row.N)}</div>
         </div>
         <div>
@@ -564,7 +564,7 @@ function EventCard({ row, isZh }: { row: Row; isZh: boolean }) {
             {formatVal(row.timeCeil, ev.scale)}
           </div>
           <div className="lucky-card-stat-hint">
-            {isZh ? `${row.depthClamped.toFixed(1)}步 / ${row.tps_ceil} TPS + ${row.setup_s}s` :
+            {isZh ? `${row.depthClamped.toFixed(1)} 步 / ${row.tps_ceil} TPS + ${row.setup_s} 秒` :
               `${row.depthClamped.toFixed(1)}m / ${row.tps_ceil} TPS + ${row.setup_s}s`}
           </div>
         </div>

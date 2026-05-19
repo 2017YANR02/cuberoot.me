@@ -28,14 +28,14 @@ export function TheoryDeepDive({ isZh }: Props) {
 
   return (
     <section className="pred-section" id="theory-deep">
-      <h2>{isZh ? '数学、信息论、生物力学下的硬墙' : 'Hard Walls from Math, Information, Biomech'}</h2>
+      <h2>{isZh ? '数学, 信息论, 生物力学下的硬墙' : 'Hard Walls from Math, Information, Biomech'}</h2>
 
       <h3>{isZh ? "God's number 的演化 (3x3, HTM)" : "God's Number Progression (3x3, HTM)"}</h3>
       <p>
         {isZh ? (
           <>
-            Thistlethwaite 1981 给的最早上界是 52 HTM, 用四阶段群约简. 29 年后 Rokicki / Kociemba / Davidson / Dethridge (2010)
-            借助 ~35 CPU-年的 Google 算力, 把 20 HTM 证成最终值: <strong>所有 4.3×10¹⁹ 个 3x3 状态都能在 ≤20 HTM 内还原, 且至少存在一个 (superflip composite) 需要正好 20 HTM</strong>.
+            最早一版上界是 Thistlethwaite 1981 年给的 52 HTM,用四阶段群约简法。29 年后 Rokicki / Kociemba / Davidson / Dethridge (2010)
+            借助 ~35 CPU-年的 Google 算力,把 20 HTM 证成最终值: <strong>所有 4.3×10¹⁹ 个 3x3 状态都能在 ≤ 20 HTM 内还原,而且至少存在一个 (superflip composite) 需要正好 20 HTM</strong>。
           </>
         ) : (
           <>
@@ -69,9 +69,9 @@ export function TheoryDeepDive({ isZh }: Props) {
       <p className="pred-note">
         {isZh ? (
           <>
-            <strong>跨度量约束:</strong> HTM = {GODS_NUMBER_FACTS.htm.value} (Rokicki 2010) · QTM = {GODS_NUMBER_FACTS.qtm.value} (Rokicki & Davidson 2014, 只有 superflip × 4-spot 一个等价类需要 26) · STM 至今未证 (16 ≤ ? ≤ 20, superflip 在 STM 中可 16 步内解).
+            <strong>跨度量约束:</strong> HTM = {GODS_NUMBER_FACTS.htm.value} (Rokicki 2010)  /  QTM = {GODS_NUMBER_FACTS.qtm.value} (Rokicki & Davidson 2014,只有 superflip × 4-spot 一个等价类需要 26)  /  STM 至今未证 (16 ≤ ? ≤ 20,superflip 在 STM 中可 16 步内解)。
             NxN 渐近: <strong>{GODS_NUMBER_FACTS.bigCube.value}</strong> (Demaine et al. 2011, arXiv:1106.5736);
-            最优解 NxN <strong>NP-complete</strong> (Demaine, Eisenstat, Rudoy 2017, STACS).
+            最优解 NxN <strong>NP-complete</strong> (Demaine, Eisenstat, Rudoy 2017, STACS)。
           </>
         ) : (
           <>
@@ -86,9 +86,9 @@ export function TheoryDeepDive({ isZh }: Props) {
       <p>
         {isZh ? (
           <>
-            随机均匀打乱的最优 HTM 步数分布 <em>极度集中在 18</em>: 67% 个 scramble 需要正好 18 HTM, 26.6% 是 17, 2.6% 是 16,
-            而 20 步深度的位置仅约 <strong>490 万个 (3.4×10⁶ / 4.3×10¹⁹ ≈ 10⁻¹³)</strong>. 这是 cube20.org 全状态枚举得出.
-            FMC 16 步 WR (Tronto 2019) 因此本质上等价于<strong>找到 16 步可达的 scramble 的概率约 2.6% 然后还原</strong> — sub-15 需要 0.05% 量级的稀有 scramble, 不可常态化.
+            随机均匀打乱的最优 HTM 步数分布 <em>极度集中在 18</em>: 约 67% 的打乱需要正好 18 HTM,26.6% 是 17,2.6% 是 16,
+            而 20 步深度的位置只有约 <strong>490 万个 (3.4×10⁶ / 4.3×10¹⁹ ≈ 10⁻¹³)</strong>。这是 cube20.org 全状态枚举得出的。
+            FMC 16 步 WR (Tronto 2019) 其实就是<strong>抽到 2.6% 概率的 16 步可达打乱后把它解掉</strong> — sub-15 需要 0.05% 量级的稀有打乱,没法常态化。
           </>
         ) : (
           <>
@@ -111,10 +111,10 @@ export function TheoryDeepDive({ isZh }: Props) {
       <p>
         {isZh ? (
           <>
-            "时间随 N 多快增长"和"步数随 N 多快增长"是两个不同的问题, 容易混淆.
-            <strong>步数: STM ∝ N^{slope.toFixed(2)}</strong> (经验), 渐近上界 <em>Θ(N² / log N)</em> (Demaine et al. 2011). 222 用 ~9 步, 777 ~250 步.
-            <strong>时间: t ∝ N^{slopeTime.toFixed(2)}</strong>, 因为大魔方 TPS 显著下降 (222 持续 11, 777 持续 5.5), 时间增长比步数快.
-            过去的"时间 ∝ N^4.4"是把这两个放一起看的结果, 这一节把它们分开.
+            「时间随 N 多快增长」和「步数随 N 多快增长」是两个不同的问题,容易混淆。
+            <strong>步数: STM ∝ N^{slope.toFixed(2)}</strong> (经验),渐近上界 <em>Θ(N² / log N)</em> (Demaine et al. 2011)。222 用 ~9 步,777 ~250 步。
+            <strong>时间: t ∝ N^{slopeTime.toFixed(2)}</strong>,因为大魔方 TPS 显著下降 (222 持续 11,777 持续 5.5),时间增长比步数快。
+            过去常说的「时间 ∝ N^4.4」其实是把这两件事混在一起的产物,本节把它们拆开。
           </>
         ) : (
           <>
@@ -134,7 +134,7 @@ export function TheoryDeepDive({ isZh }: Props) {
       />
       <p className="pred-note">
         {isZh
-          ? '左轴对数刻度. 两条曲线斜率差就是"TPS 随 N 下降"的视觉化 — 大魔方花时间不只是因为步数多, 更因为每步更慢.'
+          ? '左轴对数刻度。两条曲线斜率差就是「TPS 随 N 下降」的视觉化 — 大魔方花时间,不只是因为步数多,更因为每步更慢。'
           : 'Log y-axis. The slope gap visualizes TPS decay with N — big cubes are slow not just because of more moves, but because every move is slower.'}
       </p>
     </section>

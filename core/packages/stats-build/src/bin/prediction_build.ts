@@ -129,7 +129,7 @@ async function main(): Promise<void> {
       .map((t, i) => `MIN(CASE WHEN r.best>0 AND r.best<=${t} THEN YEAR(c.start_date) END) AS s${i}`)
       .join(',\n      ');
     const subSums = ev.subThresholds
-      .map((_, i) => `SUM(CASE WHEN s${i} IS NOT NULL AND s${i}<=y THEN 1 ELSE 0 END) AS sub_${ev.subThresholds[i]}`)
+      .map((_, i) => `CAST(SUM(CASE WHEN s${i} IS NOT NULL AND s${i}<=y THEN 1 ELSE 0 END) AS SIGNED) AS sub_${ev.subThresholds[i]}`)
       .join(',\n      ');
     eventData.subX_single = await q(`
       WITH first_sub AS (

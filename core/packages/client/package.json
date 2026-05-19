@@ -40,6 +40,7 @@
     "html-react-parser": "^6.0.1",
     "i18next": "^24.0.0",
     "jspdf": "^4.2.1",
+    "katex": "^0.16.47",
     "liquid-glass-react": "^1.1.1",
     "lucide-react": "^1.8.0",
     "maplibre-gl": "^5.23.0",
@@ -66,6 +67,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/katex": "^0.16.8",
     "@types/node": "^24.12.0",
     "@types/phoenix": "^1.6.7",
     "@types/react": "^19.2.14",

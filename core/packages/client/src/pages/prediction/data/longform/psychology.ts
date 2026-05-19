@@ -200,7 +200,7 @@ During the solve itself, reaction time is not a major factor because the cuber i
 
 ## Part 5: The Therapeutic Dimension of Cubing
 
-### The Park Story and Rubinstein-Taybi Syndrome
+### The Park Story and Autism Spectrum Disorder
 
 Max Park is one of the most well-known elite cubers in the world, holder of the world record at 3.13 seconds set in 2023 (later broken by Yiheng Wang) and a world champion at multiple events. Less widely known outside the cubing community is that Park has autism spectrum disorder, diagnosed at a young age, and that cubing was introduced to him by his parents specifically as a therapeutic activity to help with motor coordination, focus, and social engagement. The story has been told in the documentary The Speed Cubers and in many subsequent interviews. Park's transformation from a child with significant communication and motor challenges into a world-record-holding athlete who travels the international competition circuit is one of the most dramatic illustrations of cubing's potential therapeutic benefit.
 

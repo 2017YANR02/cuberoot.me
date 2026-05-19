@@ -198,25 +198,25 @@ The classical answer is the Fisher-Tippett-Gnedenko theorem, which says that the
 
 G(x; mu, sigma, xi) = exp(-(1 + xi * (x - mu) / sigma)^(-1/xi))
 
-where mu is the location parameter, sigma is the scale parameter, and xi is the shape parameter. When xi > 0, the distribution is Frechet (heavy upper tail). When xi = 0, the distribution is Gumbel (light tails, exponential decay). When xi < 0, the distribution is Weibull (bounded above).
+where mu is the location parameter, sigma is the scale parameter, and xi is the shape parameter. When xi > 0, the distribution is Frechet (heavy upper tail). When xi = 0, the distribution is Gumbel (light tails, exponential decay). When xi < 0, the distribution is Weibull (bounded above, i.e., the right tail terminates at a finite endpoint).
 
-For minima rather than maxima, we apply the duality: if M_n is the maximum of n iid samples from distribution F, then -M_n is the maximum of n iid samples from the distribution of -X, and the minimum of the original samples is -(max of negated samples). After this reflection, the GEV applies to minima with a sign change in the relevant places.
+For minima rather than maxima, we apply the duality: if M_n is the maximum of n iid samples from distribution F, then -M_n is the maximum of n iid samples from the distribution of -X, and the minimum of the original samples is -(max of negated samples). After this reflection, the same GEV family applies to minima, and what was a bounded-above Weibull tail in the maxima problem becomes a bounded-below tail in the minima problem.
 
 For our cubing records, the underlying "attempt distribution" F is the distribution of single-solve times achievable by the population of cubers in a given year. This distribution has a left tail bounded by physical constraints (the floor we discussed earlier) and a right tail extending to large times (slow or failed solves). The minimum of a large number of attempts is what becomes the WR.
 
-The relevant EVT limit for minima of bounded-below distributions is the reverse Weibull, which we can write as
+The relevant EVT limit for minima of a distribution bounded below is the Weibull family with negative shape parameter in the maxima sign convention (the bounded-tail case xi < 0), reflected for minima. In the cubing literature this reflected form is sometimes written directly as
 
 P(min <= x) = 1 - exp(-((x - x_L) / sigma)^k), for x > x_L
 
 where x_L is the lower bound, sigma is the scale, and k is the shape parameter. As the sample size n grows, the expected minimum approaches x_L from above, at a rate that depends on k.
 
-## The Reverse Weibull and Its Implications
+## The Weibull-for-Minima Limit and Its Implications
 
-Let's work through the mathematics of the reverse Weibull for our cubing problem. If the underlying attempt distribution F has lower bound x_L and behaves like
+Let's work through the mathematics of this Weibull-for-minima limit for our cubing problem. If the underlying attempt distribution F has lower bound x_L and behaves like
 
 P(T <= x_L + epsilon) is approximately equal to c * epsilon^k
 
-for small epsilon (this is a smoothness/regularity condition known as the "Weibull domain of attraction"), then the minimum of n iid attempts from F has, in the limit as n grows, a reverse Weibull distribution with shape parameter k.
+for small epsilon (this is a smoothness/regularity condition known as the Weibull domain of attraction), then the minimum of n iid attempts from F has, in the limit as n grows, a (reflected) Weibull distribution with shape parameter k.
 
 The expected value of the minimum scales as
 
@@ -226,7 +226,7 @@ where Gamma is the Gamma function. The key feature is the power-law scaling in n
 
 For cubing, the relevant value of k is debated. Empirical studies (such as those done by various cubing community statisticians on the distribution of solve times) suggest k in the range 1.5 to 2.0, meaning the attempt distribution flattens out smoothly near the floor rather than spiking up to it. This is consistent with the fact that even very strong cubers occasionally produce solves much faster than their median, drawn from a tail of "lucky scrambles" that allow short solutions.
 
-Let's plug in numbers. Suppose x_L = 1.5 seconds (the physical floor we estimated earlier), sigma = 9.0 seconds (a rough scale parameter from observing the spread of fast solves), k = 1.8 (a moderately smooth attractor exponent), and n = 10^7 (the total cumulative number of WCA-recorded attempts through 2026). The expected minimum is
+Let's plug in numbers, treating this as an illustrative parameter set rather than an empirically calibrated fit. Suppose x_L = 1.5 seconds (the physical floor we estimated earlier), sigma = 9.0 seconds (a toy scale parameter, deliberately set high so the floor gap is the dominant term; in real cubing the spread of elite solves is closer to a second, but the qualitative behaviour does not change), k = 1.8 (a moderately smooth attractor exponent), and n = 10^7 (the total cumulative number of WCA-recorded attempts through 2026). The expected minimum is
 
 E[min] is approximately equal to 1.5 + 9.0 * Gamma(1 + 1/1.8) * (10^7)^(-1/1.8)
     = 1.5 + 9.0 * Gamma(1.556) * (10^7)^(-0.556)
@@ -842,7 +842,7 @@ For cubing-specific statistical work, the WCA forum (forum.worldcubeassociation.
 
 It is worth situating the cubing forecasting exercise within the broader literature on athletic and sport-record prediction. Several other domains have generated substantial statistical-modeling work, and the methods and intuitions transfer with some care.
 
-**Track and field**: The marathon and 100m dash have been the subject of extensive record-forecasting work since the 1990s. Hilary and Frees (1991) used regression on running records to predict the marathon would break two hours by 2030; the actual sub-two performance (Eliud Kipchoge, 2019) came earlier, though under non-record-eligible conditions. The 100m sprint records have been modeled with EVT and various asymptotic models, with predictions of an ultimate floor around 9.4-9.5 seconds (current WR is 9.58 by Usain Bolt, 2009; no further improvement in 17 years). The pattern is similar to cubing: deceleration as the floor approaches, occasional bursts when a generational talent emerges, and difficulty pinning down the ultimate asymptote.
+**Track and field**: The marathon and 100m dash have been the subject of extensive record-forecasting work since the 1990s. Michael Joyner's 1991 physiological-model paper estimated a human marathon lower limit near 1:57:58, well below the world records of that era; the actual sub-two performance (Eliud Kipchoge, 2019) came under non-record-eligible conditions and the official record sits just above two hours. The 100m sprint records have been modeled with EVT and various asymptotic models, with predictions of an ultimate floor around 9.4-9.5 seconds (current WR is 9.58 by Usain Bolt, 2009; no further improvement in 17 years). The pattern is similar to cubing: deceleration as the floor approaches, occasional bursts when a generational talent emerges, and difficulty pinning down the ultimate asymptote.
 
 **Swimming**: World records in competitive swimming have been heavily influenced by suit technology (the LZR Racer era from 2008-2009 produced a wave of records that were partially rolled back when the suits were banned). This is a clear case of a "method/hardware jump" of the kind we worry about for cubing, and it left a discontinuity in the records that smooth models cannot capture.
 
