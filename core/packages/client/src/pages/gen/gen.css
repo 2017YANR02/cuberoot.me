@@ -44,7 +44,6 @@
     gap: 1rem;
     /* sticky bar 背景拉满视口宽度,但内容用动态 padding 锁在 ≤980px 中央 */
     padding: 1.25rem max(2rem, calc((100vw - 980px) / 2)) 1rem;
-    border-bottom: 1px solid var(--gen-border);
     background: color-mix(in srgb, var(--gen-bg) 88%, transparent);
     position: sticky;
     top: 0;
@@ -89,8 +88,9 @@
 .gen-main {
     max-width: 980px;
     margin: 0 auto;
-    padding: 1.25rem 1.5rem 3rem;
+    padding: 0.25rem 1.5rem 3rem;
 }
+
 
 /* 非 WCA 项目已合并进 WcaEventSelector(appendEvents prop),同一行 flex-wrap。 */
 
@@ -147,6 +147,9 @@
     flex-wrap: wrap;
     gap: 8px 24px;
     align-items: center;
+}
+.gen-tn-config-row:empty {
+    margin: 0;
 }
 
 .gen-tn-config-group {
@@ -473,7 +476,7 @@
     background: transparent;
     border-color: transparent;
     padding: 0;
-    margin: 0 0 1rem;
+    margin: 0 0 8px;
     justify-content: center;
 }
 .gen-page .wca-stats-event-selector .event-btn {

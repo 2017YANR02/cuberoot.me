@@ -60,7 +60,7 @@ export default function GenPage() {
   // running that during page idle (rather than after the user clicks Generate)
   // is the single biggest win for perceived latency.
   useEffect(() => {
-    prewarmScramble('333', '444', '555');
+    prewarmScramble('333', '444', '555', '333fm');
   }, []);
 
   // Shared 打乱图 visibility. Persisted to localStorage so the choice survives
