@@ -15,7 +15,7 @@
  */
 import * as THREE from 'three';
 import { HALF_MID, LAYER_HEIGHT } from './sq1Geometry';
-import { applySq1Move, moveToString, type Sq1Move } from './sq1State';
+import { applySq1Move, moveToString, snapValidLayerTurn, type Sq1Move } from './sq1State';
 import type Sq1Cube from './Sq1Cube';
 import tweener from '../tweener';
 import CubeGroup from '../group';
@@ -153,15 +153,30 @@ export function sq1DragApply(start: Sq1TurnDrag, delta: number): void {
   }
 }
 
-/** Snap Δθ to nearest 30° unit, tween from current → snapped end, commit
- *  state + history. Returns the committed move (null if 0 units = snap back). */
+/** Snap Δθ to nearest *slash-valid* 30° unit, tween from current → snapped
+ *  end, commit state + history. Returns the committed move (null if 0 units =
+ *  snap back).
+ *
+ *  Shape constraint: not every 30° step is legal — landing with a corner
+ *  straddling the slice cut (slot 5|6 or 11|0) would make `/` impossible and
+ *  cause a visible "pop" on next slice. We delegate the search to
+ *  `snapValidLayerTurn` which enumerates U ∈ [-6, 6], skips those whose
+ *  resulting state isn't slash-valid, and returns the closest valid unit (0
+ *  if every non-zero step is farther than no-op). */
 export function sq1DragCommit(
   cube: Sq1Cube,
   start: Sq1TurnDrag,
   delta: number,
 ): Sq1Move | null {
-  const units = Math.round(delta / (Math.PI / 6));
-  const snapAngle = units * (Math.PI / 6);
+  // Raw drag in 30°-units, sign = drag direction (R_y(+delta) is applied).
+  // Map to the layer's state-U: top R_y(δ) ↔ move.top = -δ/(π/6); bot ↔ +δ/(π/6).
+  const rawUnits = delta / (Math.PI / 6);
+  const targetU = start.layer === 'top' ? -rawUnits : rawUnits;
+  const validU = snapValidLayerTurn(cube.state, start.layer, targetU);
+  // visualUnits is what gets rotated around +Y in pivot space (matches the
+  // direction the user's finger went). Inverse of the layer→state mapping.
+  const visualUnits = start.layer === 'top' ? -validU : validU;
+  const snapAngle = visualUnits * (Math.PI / 6);
   const qSnap = new THREE.Quaternion().setFromAxisAngle(Y_AXIS, snapAngle);
   // Capture current pivot state (drag rotation already applied).
   const curQuats = start.starts.map((s) => s.pivot.quaternion.clone());
@@ -170,7 +185,7 @@ export function sq1DragCommit(
   const endQuats = start.starts.map((s) => qSnap.clone().multiply(s.quat));
   const endPoss = start.starts.map((s) => s.pos.clone().applyQuaternion(qSnap));
 
-  const frames = Math.max(2, Math.round(CubeGroup.tweenDuration(Math.max(0.5, Math.abs(units) / 3))));
+  const frames = Math.max(2, Math.round(CubeGroup.tweenDuration(Math.max(0.5, Math.abs(visualUnits) / 3))));
   tweener.tween(0, 1, frames, (v) => {
     for (let i = 0; i < start.starts.length; i++) {
       start.starts[i].pivot.quaternion.slerpQuaternions(curQuats[i], endQuats[i], v);
@@ -180,12 +195,10 @@ export function sq1DragCommit(
     return v >= 1;
   });
 
-  if (units === 0) return null;
-  // beginMove convention: pivot rotated by -top·30°. We rotated by +snapAngle =
-  // +units·30°. So top = -units. Bot pivots use +bot·30° → bot = +units.
+  if (validU === 0) return null;
   const move: Sq1Move = start.layer === 'top'
-    ? { kind: 'turn', top: -units, bot: 0 }
-    : { kind: 'turn', top: 0, bot: units };
+    ? { kind: 'turn', top: validU, bot: 0 }
+    : { kind: 'turn', top: 0, bot: validU };
   cube.state = applySq1Move(cube.state, move);
   cube.history.record(moveToString(move));
   cube.dirty = true;
