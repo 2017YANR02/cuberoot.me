@@ -776,6 +776,10 @@ CREATE INDEX wrt_year         ON wca_results_top (event_id, is_avg, comp_year, v
 CREATE INDEX wrt_country_year ON wca_results_top (event_id, is_avg, person_country_id, comp_year, value) INCLUDE (id);
 -- /comp 页面 fast-path: 单 comp 拉全部成绩,无 event 过滤.约 +150 MB.
 CREATE INDEX wrt_comp_lookup  ON wca_results_top (comp_id);
+-- /comp/<id> 赛前 PR 查询: WHERE wca_id IN (300+) AND event_id IN (...) AND comp_date < ?.
+-- 必须按 wca_id 起首才能每选手区间小段扫,EXPLAIN 105ms;原 6 个索引都 event_id 起首 → seq scan 12M 行 58s 池堵.
+-- 同 migrations/0007_wrt_prior_pr_index.sql,但 CI 每周 DROP+CREATE,migration 之后再 apply 已晚,必须建在 load.sql 里.约 +505 MB.
+CREATE INDEX wrt_prior_pr     ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
 
 TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;

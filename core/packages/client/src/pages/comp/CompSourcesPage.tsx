@@ -7,11 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './comp.css';
 
 export default function CompSourcesPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('数据源', 'Sources');
 
   return (
     <div className="comp-sources-page">

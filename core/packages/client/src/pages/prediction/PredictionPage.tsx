@@ -23,6 +23,7 @@ import { TheoryDeepDive } from './components/TheoryDeepDive';
 import { MethodCompareSection } from './components/MethodCompare';
 import { CrossSportSection } from './components/CrossSport';
 import { MilestoneTableSection } from './components/MilestoneTable';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './prediction.css';
 
 /** 取最后一行 (物理下界单次) 的 T 值 — 优先用显式 t_phys_single, 其次 decomp 末行计算 */
@@ -63,6 +64,7 @@ export default function PredictionPage() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const isZh = lang === 'zh';
+  useDocumentTitle('预测', 'Prediction');
 
   const [data, setData] = useState<AllEvents | null>(null);
   const [err, setErr] = useState<string | null>(null);

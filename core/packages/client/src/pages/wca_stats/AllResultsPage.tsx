@@ -19,9 +19,11 @@ import { ClearButton } from '../../components/ClearButton';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
+import { compLinkProps } from '../../utils/comp_link';
 import LangToggle from '../../components/LangToggle';
 import CountrySelect, { useCountries } from './CountrySelect';
 import ShowToggle, { type ShowMode } from './ShowToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 
 const EVENTS = [
@@ -57,6 +59,7 @@ type Data =
 export default function AllResultsPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('全部成绩', 'All Results');
   const [params, setParams] = useSearchParams();
 
   const show: ShowMode = (params.get('show') === 'persons') ? 'persons' : 'results';
@@ -267,9 +270,9 @@ export default function AllResultsPage() {
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
                     <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                     <td>
-                      <a href={`https://www.worldcubeassociation.org/competitions/${r.compId}`} target="_blank" rel="noopener noreferrer">
+                      <Link {...compLinkProps(r.compId)}>
                         <CompCell compId={r.compId} compName={r.compName} isZh={isZh} />
-                      </a>
+                      </Link>
                     </td>
                     <td className="wse-attempts-col">{formatAttempts(r.attempts, event, type, r.value)}</td>
                   </tr>
@@ -321,9 +324,9 @@ export default function AllResultsPage() {
                     <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                     <td>
                       {r.compId ? (
-                        <a href={`https://www.worldcubeassociation.org/competitions/${r.compId}`} target="_blank" rel="noopener noreferrer">
+                        <Link {...compLinkProps(r.compId)}>
                           <CompCell compId={r.compId} compName={r.compName} isZh={isZh} />
-                        </a>
+                        </Link>
                       ) : ''}
                     </td>
                     <td className="wse-attempts-col">

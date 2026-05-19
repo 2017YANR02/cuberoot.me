@@ -338,12 +338,7 @@ export function isRecordCodeAllowedFor(code: string, personIso2: string | null |
   return ISO2_TO_CONTINENT[personIso2.toUpperCase()] === cont;
 }
 
-// ── 比赛搜索 URL ──
-
-/** WCA 比赛链接 */
-export function wcaCompUrl(compWcaId: string): string {
-  return `https://www.worldcubeassociation.org/competitions/${compWcaId}`;
-}
+// ── WCA 链接 ──
 
 /** WCA 选手链接 */
 export function wcaPersonUrl(personId: string): string {

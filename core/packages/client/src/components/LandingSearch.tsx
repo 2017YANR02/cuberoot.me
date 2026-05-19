@@ -14,6 +14,7 @@ import { displayCuberName } from '../utils/name_utils';
 import { loadComps, searchComps, type Comp } from '../utils/comp_search';
 import { compNameZh } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
+import { compLinkProps } from '../utils/comp_link';
 import { localizeCity } from '../utils/city_localize';
 import { formatDateRangeIso } from '../utils/date_range';
 import './landing_search.css';
@@ -258,11 +259,9 @@ export default function LandingSearch({ cards, lang }: Props) {
                   const displayName = stripWcaPrefix(zhName || c.name);
                   const cityStr = c.city ? localizeCity(c.city, isZh) : '';
                   return (
-                    <a
+                    <Link
                       key={c.id}
-                      href={`https://www.worldcubeassociation.org/competitions/${c.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...compLinkProps(c.id)}
                       className="landing-search-item landing-search-item--rich"
                       onClick={closeAfter}
                     >
@@ -274,7 +273,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                           {cityStr ? ` · ${cityStr}` : ''}
                         </span>
                       </span>
-                    </a>
+                    </Link>
                   );
                 })}
               </div>

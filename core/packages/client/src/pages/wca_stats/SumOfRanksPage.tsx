@@ -13,6 +13,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import CountrySelect, { useCountries } from './CountrySelect';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 
 const ACTIVE_EVENTS = [
@@ -36,6 +37,7 @@ interface Row {
 export default function SumOfRanksPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('名次和', 'Sum of Ranks');
   const [params, setParams] = useSearchParams();
   const type = (params.get('type') ?? 'single') as 'single' | 'average';
   const country = params.get('country') ?? '';

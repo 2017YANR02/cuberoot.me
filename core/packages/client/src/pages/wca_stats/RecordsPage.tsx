@@ -23,10 +23,12 @@ import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
 import { CompCell } from '../../components/CompCell/CompCell';
+import { compLinkProps } from '../../utils/comp_link';
 import { RecordBadge } from '../../components/RecordBadge';
 import { RegionPicker } from '../../components/RegionPicker';
 import { ALL_EVENT_IDS } from './event_constants';
 import { formatAttempts } from './AllResultsPage';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 import './records.css';
 
@@ -52,6 +54,7 @@ type Show = 'history' | 'mixed';
 export default function RecordsPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('纪录', 'Records');
   const [params, setParams] = useSearchParams();
 
   const show: Show = params.get('show') === 'mixed' ? 'mixed' : 'history';
@@ -286,9 +289,9 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
               </a>
             </td>
             <td>
-              <a href={`https://www.worldcubeassociation.org/competitions/${r.c}`} target="_blank" rel="noopener noreferrer">
+              <Link {...compLinkProps(r.c)}>
                 <CompCell compId={r.c} compName={r.cn} isZh={isZh} />
-              </a>
+              </Link>
             </td>
             <td className="wse-detail-cell">{r.d}</td>
             <td className="wse-attempts-col">

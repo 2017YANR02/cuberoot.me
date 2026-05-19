@@ -3,6 +3,7 @@
  */
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { MathText } from './Tex';
 
 interface QA { q: { zh: string; en: string }; a: { zh: string; en: string } }
 
@@ -137,7 +138,7 @@ export default function FaqSection({ isZh }: Props) {
                 <ChevronDown size={16} className={`god-faq-chev ${open ? 'is-open' : ''}`} />
               </button>
               {open && (
-                <div className="god-faq-a">{isZh ? qa.a.zh : qa.a.en}</div>
+                <div className="god-faq-a"><MathText>{isZh ? qa.a.zh : qa.a.en}</MathText></div>
               )}
             </div>
           );
@@ -149,7 +150,7 @@ export default function FaqSection({ isZh }: Props) {
         {GLOSSARY.map((g, i) => (
           <div key={i} className="god-glossary-row">
             <dt>{g.term}</dt>
-            <dd>{isZh ? g.def.zh : g.def.en}</dd>
+            <dd><MathText>{isZh ? g.def.zh : g.def.en}</MathText></dd>
           </div>
         ))}
       </dl>

@@ -55,7 +55,16 @@
 .gen-title { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .gen-title-icon { color: var(--gen-accent); flex-shrink: 0; }
 /* nowrap 保险:窄屏 header 内宽紧张时,4 字标题别再被压成 1 字一行竖排。 */
-.gen-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; white-space: nowrap; }
+.gen-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; }
+.gen-title-help {
+    display: inline-flex;
+    align-items: center;
+    color: var(--gen-text-mute);
+    opacity: 0.6;
+    text-decoration: none;
+    transition: opacity 0.15s, color 0.15s;
+}
+.gen-title-help:hover { opacity: 1; color: var(--gen-accent); }
 .gen-title-sub { color: var(--gen-text-mute); font-size: 0.8rem; letter-spacing: 0.02em; }
 
 .gen-main {
@@ -63,6 +72,8 @@
     margin: 0 auto;
     padding: 1.25rem 1.5rem 3rem;
 }
+
+/* 非 WCA 项目已合并进 WcaEventSelector(appendEvents prop),同一行 flex-wrap。 */
 
 .gen-controls {
     background: var(--gen-surface);

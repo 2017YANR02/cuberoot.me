@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 import { syncLangToUrl } from '../../i18n';
 
@@ -146,6 +147,7 @@ const IS_TOUCH = typeof window !== 'undefined' && ('ontouchstart' in window || (
 export default function TimerPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('计时器', 'Timer');
   const settings = useSettings();
   useApplyTheme();
 

@@ -13,6 +13,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { apiUrl } from '../../utils/api_base';
 import LangToggle from '../../components/LangToggle';
 import CountrySelect, { useCountries } from './CountrySelect';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wca_stats_extra.css';
 
 const EVENTS = [
@@ -33,6 +34,7 @@ interface Row {
 export default function SuccessRatePage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('完成率', 'Success Rate');
   const [params, setParams] = useSearchParams();
   const event = params.get('event') ?? '333bf';
   const country = params.get('country') ?? '';

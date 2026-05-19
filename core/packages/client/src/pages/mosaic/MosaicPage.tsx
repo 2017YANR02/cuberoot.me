@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './state/store';
 import type { Stage } from './state/types';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './mosaic.css';
 
 const UploadStage = lazy(() => import('./stages/UploadStage'));
@@ -34,6 +35,7 @@ function stageComponent(stage: Stage) {
 
 export default function MosaicPage() {
   const { t } = useTranslation();
+  useDocumentTitle('马赛克', 'Mosaic');
   const stage = useMosaicStore(s => s.stage);
   const resetAll = useMosaicStore(s => s.resetAll);
   const goToStage = useMosaicStore(s => s.goToStage);

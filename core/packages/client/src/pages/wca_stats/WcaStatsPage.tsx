@@ -8,6 +8,7 @@ import { HelpCircle } from 'lucide-react';
 import { hasAbout } from '../wca_about/registry';
 import { getLangQuery } from '../../i18n';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryToIso2, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
 import { stripWcaPrefix } from '../../utils/comp_localize';
@@ -16,6 +17,7 @@ import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
 import { translateCellText, translatePersonLink, stripChineseParens } from './wca_translations';
+import { rewriteWcaCompUrl, prefetchComp } from '../../utils/comp_link';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import LangToggle from '../../components/LangToggle';
@@ -223,10 +225,12 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
         }
         displayText = stripWcaPrefix(displayText);
       }
+      const internalHref = compId ? rewriteWcaCompUrl(url) : null;
+      const prefetch = compId ? () => prefetchComp(compId) : undefined;
       parts.push(
-        <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">
-          {displayText}
-        </a>
+        internalHref
+          ? <Link key={`${segIdx}-${match.index}`} to={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
+          : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
       );
       lastIndex = match.index + match[0].length;
     }
@@ -1006,6 +1010,7 @@ export default function WcaStatsPage() {
   const { statId } = useParams<{ statId: string }>();
   const { i18n } = useTranslation();
   const [data, setData] = useState<StatData | null>(null);
+  useDocumentTitle(data?.titleZh ?? 'WCA 统计', data?.title ?? 'WCA Stats');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

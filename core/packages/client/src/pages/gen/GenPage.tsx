@@ -8,12 +8,13 @@
  */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import { Shuffle } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Shuffle, HelpCircle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { prewarmScramble } from '../../utils/cubingScramble';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import QuickMode from './QuickMode';
 import TNoodleMode from './TNoodleMode';
 import './gen.css';
@@ -52,6 +53,7 @@ export default function GenPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  useDocumentTitle('打乱生成器', 'Scramble Generator');
 
   // Prewarm the heaviest random-state scramblers while the user is reading the
   // event selector. 444/555 each pay a ~3s pruning-table build on first call;
@@ -100,7 +102,17 @@ export default function GenPage() {
       <header className="gen-header">
         <div className="gen-title">
           <Shuffle size={20} className="gen-title-icon" />
-          <h1>{t('打乱生成器', 'Scramble Generator')}</h1>
+          <h1>
+            {t('打乱生成器', 'Scramble Generator')}
+            <Link
+              to="/scramble/gen-about"
+              className="gen-title-help"
+              title={t('生成器是怎么工作的?', 'How does the generator work?')}
+              aria-label={t('查看打乱生成器说明', 'About the scramble generator')}
+            >
+              <HelpCircle size={18} strokeWidth={1.75} />
+            </Link>
+          </h1>
         </div>
         <LiquidGlassChips<Mode>
           className="gen-mode-chips"

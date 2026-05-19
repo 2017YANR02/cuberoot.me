@@ -42,6 +42,8 @@ const DISPLAY_ZH: Record<string, string> = {
   '333oh': '单手', '333fm': '最少步', '333ft': '脚拧',
   'minx': '五魔', 'pyram': '金字塔', 'clock': '魔表', 'skewb': '斜转', 'sq1': 'SQ1',
   'magic': '八板', 'mmagic': '十二板', '333mbo': '旧多盲',
+  // 非 WCA(cubing.js twizzleEvents)
+  'fto': 'FTO', 'master_tetraminx': '四阶金字塔', 'kilominx': '二阶五魔', 'redi_cube': 'Redi', 'baby_fto': '二阶 FTO',
 };
 
 const DISPLAY_EN: Record<string, string> = {
@@ -50,6 +52,8 @@ const DISPLAY_EN: Record<string, string> = {
   '333oh': 'OH', '333fm': 'FMC', '333ft': 'Feet',
   'minx': 'Mega', 'pyram': 'Pyra', 'clock': 'Clock', 'skewb': 'Skewb', 'sq1': 'SQ1',
   'magic': 'Magic', 'mmagic': 'M.Magic', '333mbo': 'MBO',
+  // 非 WCA(cubing.js twizzleEvents)
+  'fto': 'FTO', 'master_tetraminx': 'Master Tetra', 'kilominx': 'Kilominx', 'redi_cube': 'Redi', 'baby_fto': 'Baby FTO',
 };
 
 /** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。

@@ -13,6 +13,7 @@ import { Flag, Eye } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '../alg/CaseThumb';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './trainer.css';
 
 const PUZZLE_LABEL: Record<AlgPuzzle, string> = {
@@ -40,6 +41,7 @@ const RECOGNIZE_SETS: Record<AlgPuzzle, string[]> = {
 export default function TrainerLandingPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('训练器', 'Trainer');
 
   const [puzzle, setPuzzle] = useState<AlgPuzzle>('3x3');
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});

@@ -73,6 +73,8 @@ CREATE INDEX IF NOT EXISTS wrt_wca_id ON wca_results_top (event_id, is_avg, wca_
 CREATE INDEX IF NOT EXISTS wrt_comp_id ON wca_results_top (event_id, is_avg, comp_id, value);
 -- /comp 页面 fast-path: 单 comp 拉全部成绩,无 event 过滤
 CREATE INDEX IF NOT EXISTS wrt_comp_lookup ON wca_results_top (comp_id);
+-- /comp/<id> 赛前 PR 查询专用,见 migrations/0007_wrt_prior_pr_index.sql
+CREATE INDEX IF NOT EXISTS wrt_prior_pr ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
 -- 年份/月份: 走 main 索引 + comp_date 过滤(不专门索引,跳过 cap=2GB 索引膨胀)
 
 -- ── wca_cohort_ranks: 参赛届别排行 (~10M 行) ──

@@ -11,6 +11,7 @@ import Fuse from 'fuse.js';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { isAdmin } from '../../stores/auth_store';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
@@ -152,6 +153,7 @@ function SiteRow({ site, lang, admin, canMoveUp, canMoveDown, onEdit, onDelete, 
 export default function SitesPage() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  useDocumentTitle('网站导航', 'Sites Directory');
   const admin = isAdmin();
 
   const [params, setParams] = useSearchParams();

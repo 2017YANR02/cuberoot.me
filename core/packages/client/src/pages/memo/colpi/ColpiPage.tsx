@@ -25,6 +25,7 @@ import {
 } from '../../../utils/colpi_api';
 import LanguagePicker, { LangPopup } from './LanguagePicker';
 import { LANG_MAP, langDisplay } from './langs';
+import { useDocumentTitle } from '../../../utils/useDocumentTitle';
 
 type LangFilter = string;   // any of LANGS codes
 type ViewMode = 'all' | 'mine';
@@ -87,6 +88,7 @@ function validateWordInput(word: string, isZh: boolean): string | null {
 export default function ColpiPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('Colpi 训练', 'Colpi');
   const user = useAuthStore(s => s.user);
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const navigate = useNavigate();

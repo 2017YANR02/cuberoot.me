@@ -883,6 +883,16 @@ function PuzzleSettings({
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
           <div className="sim-puzzle-toggles">
+            <label className="sim-toggle">
+              <span>{t('拖空白', 'Drag empty')}</span>
+              <select
+                value={settings.dragEmpty}
+                onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate')}
+              >
+                <option value="orbit">{t('视角', 'Orbit')}</option>
+                <option value="rotate">{t('转体', 'Rotate')}</option>
+              </select>
+            </label>
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
             {!isTwistyLocal && <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />}

@@ -3,11 +3,13 @@
  * 跨所有年份按 MM-DD lookup `/stats/all_past_comps.json`。
  */
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { Flag } from '../../utils/flag';
 import { loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { localizeCity } from '../../utils/city_localize';
+import { compLinkProps } from '../../utils/comp_link';
 import { RecordBadge } from '../../components/RecordBadge';
 import { useDayMatches, type DayMatch } from './use_calendar_data';
 import './on_this_day.css';
@@ -192,14 +194,12 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
                   {ms.map((m) => (
                     <li key={m.comp.id} className="otd-item">
                       <Flag iso2={m.comp.country} className="otd-flag" />
-                      <a
+                      <Link
                         className="otd-comp-name"
-                        href={`https://www.worldcubeassociation.org/competitions/${m.comp.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        {...compLinkProps(m.comp.id)}
                       >
                         {localizeCompName(m.comp.id, m.comp.name, isZh)}
-                      </a>
+                      </Link>
                       <span className="otd-meta">
                         <MapPin size={12} className="otd-icon" />
                         <span>{localizeCity(m.comp.city, isZh)}</span>

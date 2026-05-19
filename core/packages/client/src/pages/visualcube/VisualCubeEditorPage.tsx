@@ -26,6 +26,7 @@ import {
   type ICubeOptions,
 } from '@cuberoot/visualcube';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import CubingPreview from '../timer/cube/CubingPreview';
@@ -686,6 +687,7 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
 export default function VisualCubeEditorPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('魔方可视化', 'VisualCube');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const [searchParams, setSearchParams] = useSearchParams();

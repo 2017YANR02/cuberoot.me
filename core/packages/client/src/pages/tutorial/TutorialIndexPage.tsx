@@ -12,6 +12,7 @@ import {
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from './useTutorialCatalog';
 import { TutorialCard } from './TutorialCard';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './tutorial.css';
 
 type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
@@ -62,6 +63,7 @@ export default function TutorialIndexPage() {
   const { catalog, loading, error } = useTutorialCatalog();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('教程', 'Tutorial');
   const pageLang: Lang = isZh ? 'zh' : 'en';
   const [searchParams] = useSearchParams();
   const showHidden = searchParams.get('show') === 'hidden';

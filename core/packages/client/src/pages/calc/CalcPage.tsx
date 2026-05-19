@@ -21,6 +21,7 @@ import { EventSelector } from './components/EventSelector';
 import { SimButtons } from './components/SimButtons';
 import { ProgressSliders } from './components/ProgressSliders';
 import AverageMode from './average_mode/AverageMode';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './calc.css';
 
 type CalcTab = 'compare' | 'average';
@@ -43,6 +44,7 @@ async function requestWakeLock(): Promise<void> {
 export function CalcPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  useDocumentTitle('成绩计算器', 'Score Calculator');
   const event = useCalcStore(s => s.event);
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
   const initDone = useRef(false);

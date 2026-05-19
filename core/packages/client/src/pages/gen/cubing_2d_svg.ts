@@ -22,6 +22,12 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
   'sq1': 'square1',
   'minx': 'megaminx',
   'clock': 'clock',
+  // 非 WCA(cubing.js twizzleEvents):走 TwistyPlayer 2D 渲染
+  'fto': 'fto',
+  'master_tetraminx': 'master_tetraminx',
+  'kilominx': 'kilominx',
+  'redi_cube': 'redi_cube',
+  'baby_fto': 'baby_fto',
 };
 
 function normalizeAlg(puzzle: string, alg: string): string {
