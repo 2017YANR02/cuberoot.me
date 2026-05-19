@@ -12,10 +12,13 @@ export type FaceTable = readonly { letter: string; normal: readonly [number, num
 interface Orbit { latitude: number; longitude: number; distance: number; }
 
 export interface FaceOverlayOptions {
-  /** true = 字母按屏幕方位自动 re-assign:visible vertex 屏幕 y 最小 → 第 1 个 letter,
-   *  剩下按 x asc → 第 2/3,4-th vertex(背面)→ 最后 letter。pyraminx 用,
-   *  让 U/L/R 永远在屏幕顶/左下/右下。faces 顺序就是 [U,L,R,B...]。 */
+  /** true = 字母按屏幕方位自动 re-assign:visible 第 1 letter 给最高,剩下按 x asc → 第 2/3。
+   *  剩余 letter 落到 back face(隐藏)。pyraminx / skewb 用:整体转后 letter 不跟 piece。 */
   screenSlot?: boolean;
+  /** screenSlot mode 下,前几个 slot 算"可见"(剩下当 back 隐藏)。
+   *  pyraminx 4 vertex → 默认 3 (slotLetters.length - 1)。
+   *  skewb 6 面 → 必须显式 3 (corner-on view 看到 3 面)。 */
+  visibleSlotCount?: number;
 }
 
 const LABEL_RADIUS = 1.5;
@@ -31,16 +34,17 @@ export default class FaceOverlay {
   private alpha = 0;
   private target = 0;
   private screenSlot: boolean;
+  private visibleSlotCount: number;
   /** 按 screenSlot mode 排好的字母序列(默认 = 输入 faces 的 letter 顺序)。 */
   private slotLetters: string[];
   /** Cube state 相对于 default 的累积旋转 quat(w,x,y,z 顺序)。
-   *  跟 TwistySection 的整体转 commit 同步:每次 commit Uv/y 等会乘进来。
-   *  layout 投影前用这个 quat 旋转每个 face 的 default normal,让 label 跟 piece(而非 world 轴)。 */
+   *  layout 投影前用这个 quat 旋转每个 face 的 default normal,label 跟着原 piece 走。 */
   private cubeOrientation: [number, number, number, number] = [1, 0, 0, 0];
 
   constructor(host: HTMLElement, faces: FaceTable, options: FaceOverlayOptions = {}) {
     this.host = host;
     this.screenSlot = options.screenSlot ?? false;
+    this.visibleSlotCount = options.visibleSlotCount ?? (faces.length - 1);
     this.slotLetters = faces.map(f => f.letter);
     const cs = window.getComputedStyle(host);
     if (cs.position === 'static') host.style.position = 'relative';
@@ -143,10 +147,10 @@ export default class FaceOverlay {
     // 默认 mode (skewb/megaminx) normal 是 face center,需 visDot > 0 表示
     // face 朝向镜头(背面被 cube body 挡)。
     const eyeLen = Math.hypot(ex, ey, ez) || 1;
-    // cubeOrientation 旋转每个 default normal 到 world(label 跟 piece,不跟 world 轴)
+    // cubeOrientation 旋转每个 default normal 到 world(label 跟原 piece)
+    // screenSlot mode 下 letter 会被屏幕方位重 assign,所以 piece-follow 不影响显示。
     const [qw, qx, qy, qz] = this.cubeOrientation;
     const rotateByOrientation = (v: [number, number, number]): [number, number, number] => {
-      // q * (0,v) * q^-1 展开;q=(w,x,y,z)
       const ix = qw * v[0] + qy * v[2] - qz * v[1];
       const iy = qw * v[1] + qz * v[0] - qx * v[2];
       const iz = qw * v[2] + qx * v[1] - qy * v[0];
@@ -194,8 +198,6 @@ export default class FaceOverlay {
       // 不过我们没存 vzCam,这里 cheap:用 sy 做近似(顶 vertex y 小,底 vertex y 大),
       // 改用 visibility + 限 3 名:取 visible 列表里 vzCam 最负的 3 个(离镜头近)。
       const visibleWithZ = projected.map((p, i) => {
-        // 跟 projected 一致用 rotateByOrientation 后的 normal,这样 cubeOrientation 旋转
-        // 顶点时 vzCam 排序也跟着转(否则 pyraminx 顶部 vertex 跟不上 commit)
         const [nx, ny, nz] = rotateByOrientation(p.lab.n);
         const px = nx * LABEL_RADIUS - ex, py = ny * LABEL_RADIUS - ey, pz = nz * LABEL_RADIUS - ez;
         const vzCam = -(px * fx + py * fy + pz * fz);
@@ -204,8 +206,8 @@ export default class FaceOverlay {
       // vzCam = -forward_distance (negative when in front)。最负 = forward 最远。
       // sort by vzCam DESC → 最近镜头在前,最远在最后(应隐藏为 B)
       visibleWithZ.sort((a, b) => b.vzCam - a.vzCam);
-      // 前 (slotLetters.length - 1) 个 = 最近 → visible U/L/R slot;最后 1 个 = B(最远,隐藏)
-      const nVisSlot = this.slotLetters.length - 1; // 3 for pyraminx
+      // 前 nVisSlot 个 = 最近 → 屏幕"顶/左/右"3 slot;剩下 = 背面隐藏
+      const nVisSlot = this.visibleSlotCount; // 3 for pyraminx (4-1), 3 for skewb (显式传)
       const slotted = visibleWithZ.slice(0, nVisSlot);
       const backIdx = visibleWithZ.slice(nVisSlot).map(x => x.i);
       // 给 backIdx 强制 hide
