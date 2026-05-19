@@ -37,6 +37,7 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
+const WcaStatAboutPage = lazy(() => import('./pages/wca_about/WcaStatAboutPage'));
 // NOTE: WCA 选手详情(/wca/persons/:wcaId);搜索入口已并入 WcaStatsIndex 顶部搜索框
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
@@ -320,6 +321,7 @@ function App() {
         <Route path="/wca/success-rate" element={<Suspense fallback={<div>Loading...</div>}><SuccessRatePage /></Suspense>} />
         <Route path="/wca/all-events-done" element={<Suspense fallback={<div>Loading...</div>}><AllEventsDonePage /></Suspense>} />
         <Route path="/wca/sum-of-ranks" element={<Suspense fallback={<div>Loading...</div>}><SumOfRanksPage /></Suspense>} />
+        <Route path="/wca/about/:id" element={<Suspense fallback={<div>Loading...</div>}><WcaStatAboutPage /></Suspense>} />
         {/* /wca/* 子页面(原 top-level /calendar /globe /viz /prediction /comp,2026-05 迁入 /wca 命名空间) */}
         <Route path="/wca/calendar" element={<Suspense fallback={<div>Loading...</div>}><CalendarPage /></Suspense>} />
         <Route path="/wca/calendar/stats" element={<Suspense fallback={<div>Loading...</div>}><CalendarStatsPage /></Suspense>} />

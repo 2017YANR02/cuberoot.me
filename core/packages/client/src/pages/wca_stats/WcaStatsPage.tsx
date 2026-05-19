@@ -2,8 +2,11 @@
 // 支持 4 种 JSON 输出模式：rows / sections / panels / metricPanels
 // 路由：/wca/:statId
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { HelpCircle } from 'lucide-react';
+import { hasAbout } from '../wca_about/registry';
+import { getLangQuery } from '../../i18n';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryToIso2, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
@@ -18,6 +21,7 @@ import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import LangToggle from '../../components/LangToggle';
 import Top10HistoryPage from './Top10HistoryPage';
 import './wca_stats.css';
+import '../wca_about/wca_about.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
 interface StatHeader {
@@ -1159,7 +1163,19 @@ export default function WcaStatsPage() {
         <div className="wca-stats-header-nav">
           <LangToggle />
         </div>
-        <h1>{isZh ? data.titleZh : data.title}</h1>
+        <h1>
+          {isZh ? data.titleZh : data.title}
+          {statId && hasAbout(statId) && (
+            <Link
+              to={`/wca/about/${statId}${getLangQuery()}`}
+              className="wca-stats-title-help"
+              title={isZh ? '查看算法说明' : 'Algorithm explanation'}
+              aria-label={isZh ? '查看算法说明' : 'Algorithm explanation'}
+            >
+              <HelpCircle size={20} strokeWidth={1.75} />
+            </Link>
+          )}
+        </h1>
         {data.note && (
           <p className="wca-stats-note">{isZh ? (data.noteZh ?? data.note) : data.note}</p>
         )}
