@@ -51,7 +51,7 @@ export function HeadlineBar({ eventSummaries, isZh }: Props) {
       </div>
       <div className="pred-headline-bar-foot">
         {isZh
-          ? '红 (≥95%) = 物理下界已贴脸 · 橙 (80-95%) = 紧逼 · 黄 (60-80%) = 仍有 1.5× 提升空间 · 灰 = 远未到墙'
+          ? '红 (≥ 95%) = 物理下界已贴脸  橙 (80-95%) = 紧逼  黄 (60-80%) = 仍有 1.5× 提升空间  灰 = 远未到墙'
           : 'Red (≥95%) = at wall · Orange (80–95%) = closing in · Yellow (60–80%) = 1.5× headroom remaining · Grey = far from wall'}
       </div>
     </div>

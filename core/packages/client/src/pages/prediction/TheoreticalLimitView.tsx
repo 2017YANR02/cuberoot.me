@@ -123,7 +123,7 @@ export default function TheoreticalLimitView({ event, limit, fittedL, isZh }: Pr
       {/* 已验证 reconstructions */}
       {limit.best_reconstructions && limit.best_reconstructions.length > 0 && (
         <>
-          <h4>{isZh ? '已验证 reconstruction' : 'Verified Reconstructions'}</h4>
+          <h4>{isZh ? '已验证复盘' : 'Verified Reconstructions'}</h4>
           <table className="pred-tlimit-table">
             <thead>
               <tr>
@@ -178,7 +178,7 @@ export default function TheoreticalLimitView({ event, limit, fittedL, isZh }: Pr
         <div className="pred-tlimit-contrast">
           <strong>{isZh ? '曲线拟合 L vs 物理下界 T_phys' : 'Curve-fit L vs Physical Floor T_phys'}</strong>
           <p className="pred-note">
-            {isZh ? `曲线拟合给出 L = ${formatVal(fittedL, event.scale)},但这只是历史轨迹的渐近值,不是物理极限。 ` : `Curve fit yields L = ${formatVal(fittedL, event.scale)}, but this is the asymptote of the observed trajectory, not the physical floor. `}
+            {isZh ? `曲线拟合给出 L = ${formatVal(fittedL, event.scale)},但这只是历史轨迹的渐近值,不是物理极限。` : `Curve fit yields L = ${formatVal(fittedL, event.scale)}, but this is the asymptote of the observed trajectory, not the physical floor. `}
             {isZh ? limit.why_fit_differs_zh : limit.why_fit_differs_en}
           </p>
         </div>

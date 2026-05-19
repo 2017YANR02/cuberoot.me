@@ -407,7 +407,44 @@ const SCRIPT_TOPICS: Topic[] = [
   },
 ];
 
-const EXTRA_TOPICS: Topic[] = [...MARKUP_TOPICS, ...SCRIPT_TOPICS];
+const TYPESET_TOPICS: Topic[] = [
+  {
+    slug: 'latex',
+    href: '/code/language/latex',
+    zh: {
+      title: 'LaTeX',
+      sub: '数学排版的事实标准',
+      tagline: '1978 Knuth 写 TeX, 1985 Lamport 在 SRI 包装成 LaTeX。40 年里成 arXiv / 物理 / 数学 / CS 论文的母语, 2026 仍在演化 LaTeX3',
+    },
+    en: {
+      title: 'LaTeX',
+      sub: 'De-facto standard for math typesetting',
+      tagline: 'Knuth wrote TeX in 1978; Leslie Lamport wrapped it as LaTeX at SRI in 1985. Forty years on it is the native tongue of arXiv and most physics / math / CS papers, with LaTeX3 still maturing in 2026',
+    },
+    accent: '#008080',
+    logo: <span className="topic-glyph">TeX</span>,
+    available: true,
+  },
+  {
+    slug: 'katex',
+    href: '/code/language/katex',
+    zh: {
+      title: 'KaTeX',
+      sub: '浏览器里 100× 速度的 LaTeX 数学',
+      tagline: '2013 Khan Academy (Emily Eisenberg + Sophie Alpert) 发布, 同步渲染 ~1ms/式。2026 GitHub / Notion / Obsidian / Discourse 全在用, 浏览器数学事实默认',
+    },
+    en: {
+      title: 'KaTeX',
+      sub: 'LaTeX math in the browser, 100× MathJax speed',
+      tagline: 'Released by Khan Academy in 2013 (Emily Eisenberg + Sophie Alpert). Sync render, ~1ms per equation. By 2026 the default math renderer on GitHub, Notion, Obsidian and Discourse',
+    },
+    accent: '#329F73',
+    logo: <span className="topic-glyph">KX</span>,
+    available: true,
+  },
+];
+
+const EXTRA_TOPICS: Topic[] = [...MARKUP_TOPICS, ...TYPESET_TOPICS, ...SCRIPT_TOPICS];
 
 function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
   const text = t[lang];
@@ -529,15 +566,15 @@ export default function CodeLandingPage() {
       <section className="code-landing-section">
         <div className="code-landing-section-head">
           <div className="code-landing-section-tag">
-            // {lang === 'zh' ? '标记 / 脚本 / 查询' : 'Markup / script / query'}
+            // {lang === 'zh' ? '标记 / 排版 / 脚本 / 查询' : 'Markup / typesetting / script / query'}
           </div>
           <h2 className="code-landing-section-title">
             {lang === 'zh' ? '不是编程语言,但绕不开' : 'Not programming languages — but unavoidable'}
           </h2>
           <p className="code-landing-section-sub">
             {lang === 'zh'
-              ? 'HTML / CSS 是声明式标记与样式;Bash / SQL 是脚本与查询。每天都写,但通常不在"编程语言"的清单里'
-              : 'HTML / CSS are declarative markup and styling; Bash and SQL are scripting and query. Daily tools, rarely on the "programming language" list'}
+              ? 'HTML / CSS 是声明式标记与样式;LaTeX / KaTeX 是数学与文档排版;Bash / SQL 是脚本与查询。每天都写,但通常不在"编程语言"的清单里'
+              : 'HTML / CSS are declarative markup and styling; LaTeX / KaTeX are typesetting; Bash and SQL are scripting and query. Daily tools, rarely on the "programming language" list'}
           </p>
         </div>
         <div className="code-landing-grid">

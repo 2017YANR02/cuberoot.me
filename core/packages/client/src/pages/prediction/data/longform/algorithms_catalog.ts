@@ -21,7 +21,7 @@ The U-perm is the simplest PLL. Three edges cycle while three corners stay solve
 
 Recognition for Ua: the three solved corners form a "headlight" pattern (two same-colored stickers on one face), and the cycle direction is counter-clockwise as viewed from above. A useful cue: if you see solid bars on three sides of the U layer and one bar with the wrong middle edge, then check which way that middle edge "wants" to go — left of the front means Ua, right means Ub. Common alternative: \\\`R2 U' R' U' R U R U R U' R\\\` (a non-slice version useful when your M-slice fingertrick is weak or you are doing a one-handed solve).
 
-Common mistakes: confusing Ua with Ub direction — many beginners memorize only one and mirror the cube to handle the other, which costs an AUF. Famous tutorials: J Perm's beginner U-perm video has been viewed over a million times on YouTube. Yiheng Wang in his 4.48 world record performed a U-perm in approximately 0.5 seconds with no recognition pause.
+Common mistakes: confusing Ua with Ub direction — many beginners memorize only one and mirror the cube to handle the other, which costs an AUF. Famous tutorials: J Perm's beginner U-perm video has been viewed over a million times on YouTube. Yiheng Wang in his 4.48 Ao5 world record performed U-perms in approximately 0.5 seconds with no recognition pause.
 
 ### Ub-perm
 
@@ -145,7 +145,7 @@ Recognition: bar on one side, "Y" shape formed by the diagonal corner swap visib
 
 ### PLL Skip
 
-PLL skip is not technically a case but is mentioned for completeness. Probability: 1/72. The cube is already solved after OLL. World-class execution: 0 seconds, just stop the timer. Skip rate over a 100-solve session: typically 1-2 skips. Famous: many world records have ended in PLL skips, including Lucas Etter's 4.90 (with H-perm, not skip) and Yiheng Wang's 4.48 (which ended cleanly without skip — pure skill).
+PLL skip is not technically a case but is mentioned for completeness. Probability: 1/72. The cube is already solved after OLL. World-class execution: 0 seconds, just stop the timer. Skip rate over a 100-solve session: typically 1-2 skips. Famous: many world records have ended in PLL skips, including Lucas Etter's 4.90 (which ended in H-perm, not skip). Yiheng Wang's 4.48 Ao5 world record was likewise built on consistent execution rather than a single lucky skip.
 
 ## OLL: All 57 Orientation Cases
 
@@ -153,9 +153,9 @@ OLL — Orientation of the Last Layer — is the penultimate step in CFOP. After
 
 OLLs are conventionally numbered 1 through 57 following the Beyer-Hardwick numbering scheme (consolidated around 2003). They are grouped by the pattern they create on the top face. We proceed family by family. Each entry: number, name if any, algorithm, STM count, recognition cue.
 
-### Family 1: Edges-Only Cross (OLL 21-27 — All Corners Oriented)
+### Family 1: All Edges Oriented (OLL 21-27 — the OCLL / Sune family)
 
-These are the cases where all four edges are already correctly oriented, forming a cross on top. Only corners need rotating. They are also called "OCLL" (Orientation of the Corners of the Last Layer) when isolated.
+These are the cases where all four edges are already correctly oriented, forming a cross on top. Only corners need rotating. They are also called "OCLL" (Orientation of the Corners of the Last Layer) when isolated, and collectively the "Sune family" because the basic Sune and Antisune triggers underlie most of them.
 
 **OLL 21 — H, Double Sune.** Algorithm: \\\`R U R' U R U' R' U R U2 R'\\\`. STM: 11. Recognition: all four corners need rotating, two adjacent need clockwise rotation and two need counter-clockwise — the "cross" pattern on top with four yellow corners visible only on side faces. World-class: 0.9s.
 
@@ -171,9 +171,9 @@ These are the cases where all four edges are already correctly oriented, forming
 
 **OLL 27 — Sune.** Algorithm: \\\`R U R' U R U2 R'\\\`. STM: 7. Recognition: three corners need clockwise rotation; "fish" pointing the other way. World-class: 0.5s. Probability: each Sune/Antisune is 2/216 individually. The Sune family (21-27) totals 7 cases.
 
-### Family 2: Edges-Only Cases with No Cross (OLL 1-7)
+### Family 2: Dot / Square cases (OLL 1-8 — no edges oriented or square-shape edges)
 
-These are the line / dot variations where 0 edges are oriented and corners may be oriented or not. Actually, this is incorrect terminology. Let me restate: OLL 1-7 are the "all edges flipped" cases (no yellow on top edges). They form sub-cases by the corner pattern.
+OLL 1-4 are the "dot" cases where zero edges are oriented (only the U-face center is yellow). OLL 5-8 are the "square" cases where two adjacent yellow edges form a 2x2-block shape on top. Together OLL 1-8 cover the dot and square shapes that are visually most distinct from the cross-on-top of family 1.
 
 **OLL 1 — Dot, Cross.** Algorithm: \\\`R U2 R' U' R U R' U' R U' R'\\\`. STM: 11. Recognition: only the center of the U face is yellow; all four edges have yellow on the side, all four corners are in various unoriented states.
 
@@ -187,13 +187,13 @@ These are the line / dot variations where 0 edges are oriented and corners may b
 
 **OLL 6 — Square other.** Algorithm: \\\`r U2 R' U' R U' r'\\\`. STM: 7. Recognition: mirror of OLL 5.
 
-**OLL 7 — Sune Variant.** Algorithm: \\\`r U R' U R U2 r'\\\`. STM: 7. Recognition: variation of the Sune pattern with non-cross edges.
+**OLL 7 — Small lightning bolt.** Algorithm: \\\`r U R' U R U2 r'\\\`. STM: 7. Recognition: a small "lightning bolt" of three yellow stickers with the wide-r setup; cousin of OLL 8.
 
-### Family 3: Line and L Cases (OLL 8-14)
+**OLL 8 — Small lightning bolt mirror.** Algorithm: \\\`r' U' R U' R' U2 r\\\`. STM: 7. Recognition: mirror of OLL 7.
+
+### Family 3: Line and L Cases (OLL 9-14)
 
 These have two yellow edges adjacent (an L-shape) or opposite (a line).
-
-**OLL 8.** Algorithm: \\\`r' U' R U' R' U2 r\\\`. STM: 7. Recognition: Sune mirror with non-cross.
 
 **OLL 9.** Algorithm: \\\`R U R' U' R' F R2 U R' U' F'\\\`. STM: 11. Recognition: fish + L edges.
 
@@ -207,9 +207,9 @@ These have two yellow edges adjacent (an L-shape) or opposite (a line).
 
 **OLL 14.** Algorithm: \\\`R' F R U R' F' R F U' F'\\\`. STM: 10. Recognition: mirror of 13.
 
-### Family 4: All Edges Down / Side Bars (OLL 15-20)
+### Family 4: Wide-move shape cases (OLL 15-20)
 
-These cases have specific configurations of side bars.
+These cases mix lightning-bolt and dot-like shapes that share a wide-move (r / r') setup; OLL 17-20 in particular are commonly grouped with the dot family because they share a no-edges-oriented top.
 
 **OLL 15.** Algorithm: \\\`r' U' r R' U' R U r' U r\\\`. STM: 10. Recognition: specific side bar pattern with two side stickers per bar.
 
@@ -305,11 +305,11 @@ The standard F2L numbering follows the Fridrich numbering scheme. Pairs can be s
 
 **F2L 3 — Easy case, corner on top, edge above slot.** Algorithm: \\\`U R U' R'\\\`. STM: 4. The simplest possible F2L case — corner and edge already paired, just insert.
 
-**F2L 4 — Easy case, mirror.** Algorithm: \\\`y' U' L' U L\\\`. STM: 5 (with rotation).
+**F2L 4 — Easy case, mirror.** Algorithm: \\\`y' U' L' U L\\\`. STM: 4 (rotations are not counted as STM).
 
 **F2L 5 — Edge in slot, corner on top.** Algorithm: \\\`U R U2 R' U R U' R'\\\`. STM: 8. Setup the corner over the slot, then insert.
 
-**F2L 6 — Mirror of 5.** Algorithm: \\\`y' U' L' U2 L U' L' U L y\\\`. STM: 9.
+**F2L 6 — Mirror of 5.** Algorithm: \\\`y' U' L' U2 L U' L' U L\\\`. STM: 8 (rotations not counted).
 
 **F2L 7 — Corner in slot, edge on top, both unsolved.** Algorithm: \\\`R U' R' U2 R U' R'\\\`. STM: 7.
 
@@ -325,7 +325,7 @@ The standard F2L numbering follows the Fridrich numbering scheme. Pairs can be s
 
 **F2L 13 — Corner UFR, edge UL.** Algorithm: \\\`U' R U' R' U R U R'\\\`. STM: 8.
 
-**F2L 14 — Mirror of 13.** Algorithm: \\\`y' U L' U L U' L' U' L y\\\`. STM: 9.
+**F2L 14 — Mirror of 13.** Algorithm: \\\`y' U L' U L U' L' U' L\\\`. STM: 8 (rotations not counted).
 
 **F2L 15 — Corner UBR, edge UR.** Algorithm: \\\`y U' R' U R U R' U' R y'\\\`. STM: 9.
 
@@ -373,7 +373,7 @@ The standard F2L numbering follows the Fridrich numbering scheme. Pairs can be s
 
 **F2L 37 — Pair in line, no swap needed.** Algorithm: \\\`U R U R' U2 R U' R'\\\`. STM: 8.
 
-**F2L 38 — Hard, both yellow up.** Algorithm: \\\`R U R' U' R U2 R' U' R U R'\\\`. STM: 11. Often optimized differently per cuber.
+**F2L 38 — Hard case, awkward orientation.** This case is one of several typically optimized per cuber rather than executed from a single canonical sequence; a specific algorithm depends on the pair's exact starting position and is best learned from a case-trainer such as cstimer.net or J Perm's F2L trainer.
 
 **F2L 39.** Algorithm: \\\`U' R U R' U R U' R'\\\`. STM: 8.
 
@@ -381,29 +381,29 @@ The standard F2L numbering follows the Fridrich numbering scheme. Pairs can be s
 
 **F2L 41 — Edge flipped, corner in.** Algorithm: \\\`R U' R' U R U' R' U2 R U R'\\\`. STM: 11. Rare case requiring extraction-and-reinsert.
 
-The 41 F2L cases were canonized roughly in the 1980s by Jessica Fridrich and standardized in the early speedcubing community in the late 1990s. Many subset enumerations exist depending on whether you separate by slot. The 41 figure counts only the back-right slot; mirror cases for the other slots are typically intuited or generated by symmetry. Top cubers often know 41 × 4 = 164 algorithms by direct memory rather than rotating the cube. Tymon Kolasinski has stated in interviews that he knows roughly 200 F2L algorithms by automatic reflex.
+The 41 F2L cases were canonized roughly in the 1980s by Jessica Fridrich and standardized in the early speedcubing community in the late 1990s. Many subset enumerations exist depending on whether you separate by slot. The 41 figure counts only the back-right slot; mirror cases for the other slots are typically intuited or generated by symmetry. Top cubers often know 41 × 4 = 164 algorithms by direct memory rather than rotating the cube, and some have learned additional optimized variants for common sub-cases.
 
 ## ZBLL: 493 Last-Layer Cases
 
-ZBLL — Zbigniew (Zborowski) Bruno Last Layer — is a method where after F2L the last layer's edges are already correctly oriented (a state achievable through ZBLS, F2LL, or the VHF2L family). With edges oriented, only corners need to be permuted and oriented, giving 27 × 24 = 648 cases. Filtering for distinct cases up to U-face rotation: 493 cases.
+ZBLL — Zborowski-Bruchem Last Layer, named for Zbigniew Zborowski and Ron van Bruchem — is a one-look last-layer step that assumes the last-layer edges are already oriented (a state reachable through ZBLS, VHF2L, ZZ's EO step, and similar approaches). With edges oriented, the last layer only needs corner orientation plus full corner-and-edge permutation. The case count works out to 7 corner-orientation (OCLL) sub-families × 72 edge permutations for the asymmetric families (Sune, Antisune, T, U, L, Pi) plus 48 for the H sub-family (where extra symmetry collapses cases), giving 493 cases total once symmetric duplicates are removed.
 
-The ZBLL set is partitioned into 7 sub-families based on the corner orientation pattern (the OCLL case):
+The ZBLL set is partitioned into 7 sub-families based on the corner-orientation pattern (the OCLL case). The standard counts per family, after collapsing duplicates under U-face rotation and reflection, are:
 
-**Sub-family Solved (OCLL skip):** 27 cases × U-rotations / symmetry = 5 cases (after factoring symmetry). All corners already oriented; permutation only. These ZBLLs are essentially the PLLs but with the corner constraint that they preserve orientation. Average length: 8-12 STM.
+**Sub-family Sune (OCLL 27):** 72 cases. Three corners need a clockwise twist; the underlying OCLL is the 7-move Sune \\\`R U R' U R U2 R'\\\`. ZBLLs in this family pair the Sune trigger with an edge-preserving permutation, and tend to have the shortest algorithms because the OCLL itself is short.
 
-**Sub-family Sune:** 27 cases per U-rotation. Three corners need clockwise twist. Notable: this sub-family has the most aesthetically clean algorithms because the underlying OCLL is short. Sune-A1 (named for adjacent edge swap with Sune corner state) algorithm: \\\`R U R' U R U2 R'\\\` is the OCLL alone; the full ZBLL combines it with an edge-preserving permutation.
+**Sub-family Antisune (OCLL 26):** 72 cases. Mirror of Sune; algorithms typically 11-14 STM.
 
-**Sub-family Antisune:** Mirror of Sune. 27 cases. Algorithms typically run 11-14 STM.
+**Sub-family T (OCLL 33):** 72 cases. Two adjacent corners need clockwise twist, two need counter-clockwise.
 
-**Sub-family H:** Both adjacent corner pairs twist in opposite directions. 24 cases (extra symmetry reduces count). The H-OLL itself is \\\`R U R' U R U' R' U R U2 R'\\\` (11 STM).
+**Sub-family U (OCLL 23, "headlights"):** 72 cases. Two adjacent corners solved, two opposite need twist.
 
-**Sub-family Pi:** Two diagonal corners twist clockwise, two counter-clockwise. 27 cases.
+**Sub-family L (OCLL 24, "chameleon"):** 72 cases. One corner solved, three need twist in an L-pattern.
 
-**Sub-family T:** Two adjacent corners need clockwise, two need counter-clockwise in T-pattern. 27 cases. Notable case: T-S1 (Sune-like adj swap) has algorithm \\\`R U2 R' U2 R' F R F' R U' R'\\\`.
+**Sub-family Pi (OCLL 22):** 72 cases. Two diagonal corners twist clockwise, two counter-clockwise.
 
-**Sub-family U:** Three corners flipped in U-shape pattern; one corner solved. 27 cases.
+**Sub-family H (OCLL 21):** 48 cases. Both adjacent corner pairs twist 180°. The 4-fold symmetry of the H corner pattern collapses what would otherwise be 72 cases into 48. The H-OCLL itself is \\\`R U R' U R U' R' U R U2 R'\\\` (11 STM).
 
-Total enumeration: 5 + 27 + 27 + 24 + 27 + 27 + 27 = 164 — wait, this is not 493. The correct count requires summing without the symmetry reduction for each non-solved family: 27 × 7 = 189 per OCLL family, but with rotational and reflective symmetry factored: the total is actually less. The widely-cited 493 figure includes mirror cases (some ZBLLs are reached by mirror-image of others but use distinct optimal algorithms). The canonical reference is Andy Klise's ZBLL document.
+Total: 6 × 72 + 48 = 480 cases of corner-orientation + edge-permutation work. Together with the 13 distinct ZBLLs in the OCLL-solved family (which overlap with PLL but are usually counted separately when teaching ZBLL), the widely-cited figure is **493 cases**. The canonical reference is Andy Klise's ZBLL document.
 
 Notable ZBLL algorithms beloved by the community:
 
@@ -414,13 +414,13 @@ Notable ZBLL algorithms beloved by the community:
 - **Antisune-Z1** (Antisune + Z): \\\`R U2 R' U' R U' R' U R U' R' U' R U R'\\\` (15 STM).
 - **Sune-Z1**: \\\`R U R' U R U2 R' U' R U' R'\\\` (11 STM).
 
-ZBLL is the largest single-look last-layer set commonly used in competition. Learning all 493 is a multi-year commitment. The major ZBLL practitioners include Sebastian Tronto, J Perm (whose famous tutorials cover many of these), Antoine Cantin, Yuxuan Wang. As of 2026, fewer than 200 cubers worldwide are estimated to know full ZBLL. Even the world's best CFOP solvers (Tymon Kolasinski, Yiheng Wang) use only partial ZBLL (typically the easier 100-200 cases) and fall back to OLL/PLL for the harder cases.
+ZBLL is the largest single-look last-layer set commonly used in competition. Learning all 493 is a multi-year commitment. Well-known ZBLL practitioners and documenters include J Perm (whose tutorials cover many of these), Antoine Cantin, and Yuxuan Wang. As of 2026, fewer than 200 cubers worldwide are estimated to know full ZBLL. Even the world's best CFOP solvers (Tymon Kolasinski, Yiheng Wang) use only partial ZBLL (typically the easier 100-200 cases) and fall back to OLL/PLL for the harder cases.
 
-## COLL: 42 Corner Orientation and Permutation Cases
+## COLL: 40 Corner Orientation and Permutation Cases
 
 COLL — Corners of the Last Layer — solves the last layer corners (both orient and permute) while preserving edge orientation. If edges happen to be permuted too, the solve is done; otherwise, a single EPLL follows.
 
-COLL has 42 cases (sometimes counted as 40 plus 2 trivials). Within each OCLL case, there are 6 corner permutations: solved (1), adjacent-swap (3 different adjacent), diagonal-swap (2 different). Multiplied by the 7 OCLL cases gives 7×6 = 42, but the OCLL-solved case is just EPLL itself, so 6+(6×6) = 42 distinct.
+COLL is most commonly counted as **40 cases** — 6 distinct corner permutations within each of the 6 non-solved OCLL families (Sune, Antisune, T, U, L, Pi), giving 36, plus 4 cases in the H-family (where extra symmetry reduces the count). The OCLL-solved sub-family is just EPLL and is usually treated separately. Some references give "42" when they include trivial EPLL cases or count symmetry-related variants; the canonical "speedcubing" count is 40.
 
 Notable COLLs:
 
@@ -463,7 +463,7 @@ WV is notable because after it, only PLL remains (corners-oriented). Average len
 
 - **WV 1 (corner FFR yellow-front, edge UF white-up):** \\\`R U R' U' R U2 R'\\\` — wait that's Sune. The full WV alg is \\\`U R U' R' U R U' R' U R U2 R'\\\` (11 STM).
 - **WV 7:** \\\`R U R' U2 R U' R' U R U2 R'\\\` (10 STM).
-- **WV 14:** \\\`U2 R U R' U' R U R'\\\` (8 STM).
+- **WV 14:** A specific 8-STM case; the canonical sequence is best looked up on speedcubedb.com WV since the algorithm depends on which numbering convention (Lars Vandenbergh vs Bob Burton) the cuber learned from.
 
 ## SV: 27 Summer Variation Cases
 
@@ -513,7 +513,7 @@ Fingertricks: R' with right index pull, F with right thumb push, R with right ri
 
 ### Hedgeslammer (F R' F' R)
 
-Mirror of sledgehammer. Used in F2L 12, end of certain OLLs. Execution: same as sledgehammer. The name "hedgeslammer" is jocular community jargon — there is no formal meaning; the right hedge is the right side from a hedge / corner perspective.
+Mirror of sledgehammer. Used in F2L 12, end of certain OLLs. Execution: same as sledgehammer. The name "hedgeslammer" is a playful spoonerism on "sledgehammer" coined by the speedsolving community; there is no formal meaning beyond the wordplay.
 
 ### Niklas (R U' L' U R' U' L)
 
@@ -575,7 +575,7 @@ The standard cubing notation, used in all algorithm references in this document:
 - z = whole cube rotates around the F-B axis in F's direction
 - Lowercase or capital: same meaning for rotations.
 
-**WCA scramble notation:** Scrambles use the same Singmaster notation. Standard scramble length is 19-20 moves for a 3x3 (specifically 20 moves for World Cube Association regulations as of 2018). The TNoodle scramble generator produces random-state scrambles, ensuring uniform distribution across the cube's 4.3 × 10^19 states.
+**WCA scramble notation:** Scrambles use the same Singmaster notation. TNoodle, the WCA's official scramble generator, produces random-state scrambles for 3x3: it samples uniformly from the cube's 4.3 × 10^19 states and then outputs a sequence (typically 18-22 moves long, varying with the sampled state) that brings a solved cube into that scrambled state. There is no fixed mandated scramble length.
 
 **Color orientation:** Standard cubing scrambles assume white face up, green face front (Western convention). Some Asian conventions use yellow up, red front. The algorithm strings are equivalent under rotation.
 
@@ -583,11 +583,11 @@ The standard cubing notation, used in all algorithm references in this document:
 
 The current canonical algorithm sets are the product of decades of community curation. A short history of where they came from:
 
-**1980-1985: Singmaster era.** David Singmaster published "Notes on Rubik's Magic Cube" in 1980. The book introduced the notation we still use. Singmaster's "blindfold method" gave the world the first complete solving system, and the "Notes" included roughly 50 of what would become the standard algorithms. Many of his 1980 algorithms are still optimal today, including the basic Sune (R U R' U R U2 R') and the basic A-perm.
+**1980-1985: Singmaster era.** David Singmaster published "Notes on Rubik's 'Magic Cube'" in 1980. The book introduced the notation we still use, and laid out a corners-first beginner method along with discussion of cycles and commutators. The "Notes" included algorithms that are still useful today, including early forms of the Sune (R U R' U R U2 R') and the basic A-perm. (Blindfold solving as a discipline emerged separately in the 2000s and is not what Singmaster's book describes.)
 
-**1981-1985: Jessica Fridrich.** A Czech mathematician and lifelong cuber, Fridrich developed what would become the CFOP method (Cross, F2L, OLL, PLL) and computed the canonical 41 F2L cases, 57 OLLs, and 21 PLLs. Her method was originally published in Czech in 1981 and translated to English in the late 1980s. The "Fridrich method" became synonymous with CFOP. She also independently invented several G-perms.
+**1981-1997: Jessica Fridrich.** A Czech cuber (and later mathematician), Fridrich developed what would become the CFOP method (Cross, F2L, OLL, PLL) over more than a decade, computing canonical 41 F2L cases, 57 OLLs, and 21 PLLs. Her complete method was published in English on her personal website in 1997 — that publication, not any earlier magazine article, is the canonical source for the system. The "Fridrich method" name attached itself to the published reference. She also documented G-perm variants and a number of OLL refinements.
 
-**1990-2000: Speedcubing.com era.** The website speedcubing.com (now a historical resource) was the first major online compilation of algorithm sets. Lars Petrus, Marc Waterman, and others contributed. The community standardized OLL/PLL numbering during this period.
+**Late 1990s-2003: Lars Petrus's lar5.com and the first online compilations.** Lars Petrus's personal website (lar5.com) was the most influential pre-forum cubing site, hosting his eponymous block-building method and early algorithm references. Through the late 1990s, a handful of cubers (Marc Waterman among them) maintained algorithm pages that the community would converge on after speedsolving.com launched.
 
 **2003-2008: Beyer-Hardwick canon.** Ron van Bruchem, Ton Dennenbroek, and other early competition cubers organized algorithm sheets through speedsolving.com, J Perm tutorials, and personal websites. The official OLL numbering scheme — now used in every textbook — was settled around 2003.
 
@@ -601,7 +601,7 @@ The single largest online algorithm database, with over 25,000 individual algori
 
 ### J Perm
 
-The YouTube channel of cuber Dylan Wang (handle "J Perm") has tutorials for every PLL, every OLL, and most ZBLL subsets. J Perm's videos are responsible for teaching CFOP to perhaps half of all cubers under 18 in the English-speaking world.
+The YouTube channel of Canadian cuber Dylan Miller (handle "J Perm") has tutorials for every PLL, every OLL, and most ZBLL subsets. J Perm's videos are responsible for teaching CFOP to perhaps half of all cubers under 18 in the English-speaking world.
 
 ### Algorithm Sheets
 
@@ -615,13 +615,11 @@ The community wiki at speedsolving.com hosts algorithm pages, method description
 
 A single named algorithm (like "T-perm") typically has 3-5 popular versions, plus dozens of niche variants. The history of T-perm versions:
 
-**T-perm v1 (1985, Fridrich):** \\\`R U R' U' R' F R2 U' R' U' R U R' F'\\\`. 14 moves. Used through the early 2000s.
+**T-perm canonical (Fridrich-era publication):** \\\`R U R' U' R' F R2 U' R' U' R U R' F'\\\`. 14 moves. This is the algorithm published in Fridrich's 1997 web reference and used essentially unchanged ever since.
 
-**T-perm v2 (2003, "the modern T"):** Same algorithm but with adjusted fingertricks — the R U R' U' starting block is now executed at higher TPS thanks to better grip.
+**T-perm modern fingertricks:** Same algorithm, refined over the 2000s and 2010s as community fingertricks evolved — the R U R' U' starting block is now executed at higher TPS thanks to better grip habits, and the closing R U R' F' sequence is chunked as a single fluid motion by most sub-10 solvers.
 
-**T-perm v3 (2008-2012, "the slice T"):** \\\`R U R' U' R' F R2 U' R' U' R U M' F\\\`. 13 moves. Uses M' slice to save one R move. Some cubers prefer this version; others find the M' fingertrick disruptive.
-
-**T-perm v4 (current standard):** Back to the original 14-move version. The "slice T" was found to be slower in practice for most cubers due to slice timing.
+**T-perm one-handed variant:** OH solvers sometimes use the same 14-move sequence with a left-thumb F press, or substitute a longer R-and-U-only setup that avoids F entirely.
 
 Similar version histories exist for every named PLL and OLL. The OLL 21 (H-OLL), for example, has at least 6 distinct versions ranging from 9 to 12 moves.
 
@@ -650,15 +648,15 @@ For example, the inverse of the sexy move R U R' U' is U R U' R'. Both versions 
 
 ### Stickering and Color Schemes
 
-The standard color scheme for speedcubing is BOY (Blue, Orange, Yellow) opposite WGR (White, Green, Red). Specifically: White opposite Yellow, Green opposite Blue, Red opposite Orange, with Green and Yellow on adjacent faces such that looking at white face up, green is front and red is right.
+The standard color scheme for speedcubing is the "Western" scheme: White opposite Yellow, Green opposite Blue, Red opposite Orange, with the BOY chirality — when Blue, Orange, and Yellow meet at a corner, they appear in clockwise order looking at that corner from outside the cube. Concretely, with white face up, green is conventionally front and red on the right; the corner where blue, orange, and yellow meet (the BOY corner) is then the back-right-bottom corner.
 
-This scheme is mandatory for WCA competition use. Other schemes exist (Japanese scheme reverses Yellow and White) but are non-standard. All algorithms in this document assume BOY/WGR convention.
+This scheme (with the BOY chirality) is the WCA competition default. Other schemes exist (the Japanese scheme swaps Blue and Yellow) but are non-standard. All algorithms in this document assume Western / BOY convention.
 
 ### Cube Hardware and Algorithm Execution
 
-The hardware on which an algorithm is executed matters. A "fast" algorithm on a fast cube (GAN 12, MoYu Weilong WRM 2025) is not necessarily fast on a slow cube. The choice of algorithm sometimes depends on cube characteristics: magnet strength (heavier magnets favor certain fingertricks), corner-cutting (better cutting allows wider slice moves), and quietness (some cubers prefer silent cubes that constrain finger speed slightly).
+The hardware on which an algorithm is executed matters. A "fast" algorithm on a fast cube (GAN 13 M MagLev, MoYu Super WeiLong V2) is not necessarily fast on a slow cube. The choice of algorithm sometimes depends on cube characteristics: magnet strength (heavier magnets favor certain fingertricks), corner-cutting (better cutting allows wider slice moves), and quietness (some cubers prefer silent cubes that constrain finger speed slightly).
 
-The mainstream "speedcube" of 2026 is the GAN 13 (released early 2026), MoYu Weilong WRM 2026 (released late 2025), and a few others. All support sub-7-second solves comfortably; the differences are in style preference rather than absolute speed.
+The mainstream "speedcube" of 2026 includes the GAN 13 M MagLev, MoYu Super WeiLong V2, and several other flagship 3x3s; product cycles run roughly yearly and the specific best-of-class shifts. All current top-tier 3x3s support sub-7-second solves comfortably; the differences are in style preference rather than absolute speed.
 
 ## Recognition Patterns by Algorithm Family
 
@@ -682,7 +680,7 @@ OLL recognition uses pattern templates. The cuber looks at the top face and matc
 - **Cross of yellow (cross-pattern):** OLL 21-27 (all edges oriented).
 - **Line of yellow:** OLL 51-56 region.
 - **L-shape (two edges adjacent):** OLL 45-50.
-- **Dot (no edges oriented):** OLL 1-7.
+- **Dot (no edges oriented):** OLL 1-4 (plus several closely related cases in the OLL 17-20 region).
 
 Within each pattern, the corner orientation distinguishes the specific case.
 
@@ -690,7 +688,7 @@ Within each pattern, the corner orientation distinguishes the specific case.
 
 F2L recognition is unique: it must happen during execution, not before. After each pair insertion, the cuber's eyes flick to find the next pair. Top cubers achieve "lookahead" — they identify the next pair while still inserting the current one, eliminating recognition pauses.
 
-The 10x10 grid of "next pair lookahead" is one of the most-trained skills in CFOP. Sebastian Tronto's solve videos famously show his eyes never pausing — every pair flows directly to the next.
+The 10x10 grid of "next pair lookahead" is one of the most-trained skills in CFOP. Feliks Zemdegs's coaching videos famously show his eyes never pausing — every pair flows directly to the next. (Sebastiano Tronto, sometimes confused with these CFOP lookahead exemplars, is actually one of FMC's most prominent solvers — holder of the 16-move FMC single world record — rather than a speed-solving CFOP specialist.)
 
 ## Algorithm Practice Methodology
 
@@ -711,7 +709,7 @@ Some algorithms are used vastly more often than others:
 - **Sexy move:** Used in ~80% of all F2L pairs and ~40% of OLL cases. The most-executed sequence in cubing.
 - **Sledgehammer:** Used in ~30% of F2L cases.
 - **OLL 45 (T-shape):** Most common OLL after the cross-family. Used ~3% of solves.
-- **OLL 21 (Sune):** Used ~5% of solves (combining with similar Sune-related cases).
+- **OLL 27 (Sune) / OLL 26 (Antisune):** Together used in ~5% of solves; the rest of the OLL 21-27 Sune family adds another few percent.
 - **T-perm:** Used ~5.6% of solves.
 - **Ja-perm:** Used ~5.6% of solves.
 - **N-perms:** Used ~11% of solves combined; least-favored due to length.
@@ -736,7 +734,7 @@ While this document focuses on 3x3, the algorithmic patterns transfer:
 
 - **2x2:** Roughly 7 distinct OLL/PLL combinations (after symmetry); easily learned in one afternoon.
 - **4x4:** Same OLL/PLL as 3x3, plus parity cases (OLL parity ~7 moves, PLL parity ~15 moves).
-- **5x5:** Same as 4x4 but no parity (odd-layered cubes don't have parity).
+- **5x5:** Same OLL/PLL as 3x3; because 5x5 has fixed centers and true midges, it has no 4x4-style OLL or PLL parity, though it still has its own edge-pairing parity quirks during reduction.
 - **Megaminx:** Similar PLL set (21 cases) plus a distinct OLL set.
 - **Pyraminx:** Trivial algorithm sets; commonly memorized in 30 minutes.
 - **Skewb:** ~7 distinct algorithm cases.
@@ -770,7 +768,7 @@ This catalog has covered, in some level of detail:
 - 57 OLL cases (algorithm + recognition for each, grouped by pattern family)
 - 41 F2L cases (algorithm + recognition for each)
 - 7 ZBLL sub-families with selected case algorithms
-- 42 COLL cases (overview + selected algorithms)
+- 40 COLL cases (overview + selected algorithms)
 - 4 EPLL cases (covered within PLL section)
 - 32 VHF2L cases (overview)
 - 27 WV cases (overview + selected algorithms)
@@ -925,7 +923,7 @@ CP is the ZZ-CT method's corner permutation step. 12 cases (after symmetry). Ave
 This document has now covered every major algorithm family used in modern 3x3 speedcubing. The total algorithm count enumerated or referenced is approximately:
 
 - 21 PLL + 57 OLL + 41 F2L = 119 (foundational CFOP)
-- 493 ZBLL + 42 COLL + 4 EPLL = 539 (CFOP/ZB extensions)
+- 493 ZBLL + 40 COLL + 4 EPLL = 537 (CFOP/ZB extensions)
 - 27 WV + 27 SV + 108 HLS + 432 VLS = 594 (last-slot extensions)
 - 332 OLLCP + 32 VHF2L = 364 (other extensions)
 - 3915 1LLL (theoretical maximum)
@@ -979,7 +977,7 @@ The PLL probability distribution is not uniform, and understanding it shapes alg
 
 Note that there are 16 asymmetric PLLs (Aa, Ab, F, Ga-Gd, Ja, Jb, T, V, Y, Na, Nb, Ra, Rb) plus 4 mirror pairs (Ua/Ub, etc.) plus 4 symmetric cases (H, Z, E, skip), totaling 21 distinct cases.
 
-The implications: a cuber will encounter T-perm and Ja-perm approximately 4 times more often than H-perm. This means investing time in optimizing the T-perm algorithm pays off proportionally more than optimizing H-perm. Many elite cubers have published their personal "T-perm version" with custom fingertrick refinements that save 0.05-0.10 seconds per execution. Over a year of practice (10,000+ T-perms), this micro-optimization saves hundreds of seconds of cumulative time.
+The implications: T-perm and Ja-perm, at 4/72 each, occur four times more often than H-perm (1/72). This means investing time in optimizing the T-perm algorithm pays off proportionally more than optimizing H-perm. Many elite cubers have published their personal "T-perm version" with custom fingertrick refinements that save 0.05-0.10 seconds per execution. Over a year of practice (10,000+ T-perms), this micro-optimization saves hundreds of seconds of cumulative time.
 
 The N-perms (Na, Nb) deserve special mention here. Combined probability 8/72 (11.1%), making them collectively one of the most-encountered PLL families. Yet because they are the slowest to execute (1.3-1.5 seconds vs 0.6-0.8 for most other PLLs), they cost approximately twice as much time per occurrence as the average PLL. Every N-perm slowdown adds 0.7 seconds to a solve compared to an average PLL. Over a solve average, N-perms contribute disproportionately to time consumption. This is why algorithm-optimization research disproportionately focuses on N-perm variants.
 
@@ -1042,7 +1040,7 @@ Examples from real world records:
 
 **Lucas Etter's 4.90 (Nov 2015):** Etter recognized the OLL (a Sune variant) instantly and the PLL (H-perm) was visible during the OLL. His total recognition time was effectively 0 seconds.
 
-**Yiheng Wang's 4.48 (April 2024):** Wang's lookahead during F2L meant he saw the OLL case while completing his last F2L pair. The OLL was instantly recognized. The PLL was a U-perm, easily recognized in 0.2 seconds.
+**Yiheng Wang's 4.48 Ao5 (June 2023, Mofunland Cruise Open 2023):** Wang's lookahead during F2L meant he saw the OLL case while completing his last F2L pair on every solve in the average. OLLs were instantly recognized; recognition pauses across the five solves were effectively zero.
 
 **Max Park's 3.13 (June 2023):** The fastest official solve as of late 2023. Park's recognition was effectively automatic throughout — every step's case was anticipated.
 

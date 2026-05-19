@@ -171,7 +171,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
             <span>{isZh ? 'WR 单次' : 'WR Single'} <strong>{dispVal(lastWR?.value ?? null)}</strong></span>
             {lastWR && <span>· {stripParen(lastWR.person_name)} ({lastWR.country_id})</span>}
             {fitSingle && <span>· L = <strong>{formatVal(fitSingle.L, event.scale)}</strong></span>}
-            <span className="pred-event-summary-hint">{isZh ? '点击展开' : 'click to expand'}</span>
+            <span className="pred-event-summary-hint">{isZh ? '展开详情' : 'click to expand'}</span>
           </div>
         </summary>
 
@@ -180,10 +180,10 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           <div className="pred-333-inline-cta-text">
             <div className="pred-333-inline-cta-eyebrow">{isZh ? '深度阅读' : 'Deep Dive'}</div>
             <div className="pred-333-inline-cta-title">
-              {isZh ? '3x3 极限预测 — 25 章节 / 24 万字英文长文' : '3x3 Ultimate Limits — 25 sections, ~240k English words'}
+              {isZh ? '3x3 极限预测 — 25 章节, 24 万字英文长文' : '3x3 Ultimate Limits — 25 sections, ~240k English words'}
             </div>
             <div className="pred-333-inline-cta-desc">
-              {isZh ? '历史 / 方法 / 数学 / 硬件 / 生物力学 / 训练 / 顶级选手 / 统计建模 — 独立路由阅读' : 'History · methods · math · hardware · biomech · training · top cubers · stats — dedicated route'}
+              {isZh ? '历史, 方法, 数学, 硬件, 生物力学, 训练, 顶级选手, 统计建模 — 独立路由阅读' : 'History · methods · math · hardware · biomech · training · top cubers · stats — dedicated route'}
             </div>
           </div>
           <ArrowRight size={20} />
@@ -205,7 +205,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           <div className="pred-card-sub">{isZh ? '次主纪录被刷新' : 'distinct improvements'}</div>
         </div>
         <div className="pred-card">
-          <div className="pred-card-label">{isZh ? '累计 cuber' : 'Cumulative cubers'}</div>
+          <div className="pred-card-label">{isZh ? '累计选手' : 'Cumulative cubers'}</div>
           <div className="pred-card-value">{totalCubers}</div>
           <div className="pred-card-sub">{isZh ? `${peakYear} 年峰值 ${peakCubers.toLocaleString()}` : `peak ${peakCubers.toLocaleString()} (${peakYear})`}</div>
         </div>
@@ -268,8 +268,8 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       <p>
         {isZh ? (
           <>
-            从 {data.wr_by_year[0]?.year} 至 {data.wr_by_year.at(-1)?.year}, {event.name_zh} 的 WR 单次从 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `, 即 ${ratio.toFixed(1)} 倍压缩` : ''}.
-            数据涵盖 {yearsCovered} 个年份, {totalCubers} 累计 cuber-年.
+            从 {data.wr_by_year[0]?.year} 到 {data.wr_by_year.at(-1)?.year},{event.name_zh} 的 WR 单次从 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `,共缩了 ${ratio.toFixed(1)} 倍` : ''}。
+            数据覆盖 {yearsCovered} 年,累计 {totalCubers} 选手-年。
           </>
         ) : (
           <>
@@ -411,8 +411,8 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       <p className="pred-note">
         {isZh ? (
           <>
-            <strong>注:</strong> Top-N 是 "<em>该年内</em>排名 N 的最好成绩",每年独立采样,<strong>不是单调下降的</strong>。
-            2020-2021 抬头是 COVID 比赛大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明显,因为深度位置的"那一年还在比的最末位"是少数几次出赛、没机会刷低 PB 的 newcomer;Top 1 / Top 10 抖动小是因为顶尖选手没受影响。
+            <strong>注:</strong> Top-N 是「<em>该年内</em>排名 N 的最好成绩」,每年独立采样,<strong>不是单调下降的</strong>。
+            2020-2021 抬头是 COVID 比赛大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明显,因为这个位置是当年还在比的最末尾,由出赛次数少, 没机会刷低 PB 的新人占据;Top 1 / Top 10 抖动小,是因为顶尖选手基本没受影响。
           </>
         ) : (
           <>
