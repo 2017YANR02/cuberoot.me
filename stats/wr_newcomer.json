@@ -752,33 +752,6 @@
                     ],
                     [
                       2,
-                      "[Steven Wang](https://www.worldcubeassociation.org/persons/2013WANG63)",
-                      "22",
-                      "USA",
-                      "2017-10-15",
-                      "[FMC Americas 2017](https://www.worldcubeassociation.org/competitions/FMCAmericas2017)",
-                      "22 DNF DNF"
-                    ],
-                    [
-                      3,
-                      "[Galih Arya Santosa](https://www.worldcubeassociation.org/persons/2016SANT40)",
-                      "22",
-                      "Indonesia",
-                      "2026-04-11",
-                      "[Leeds Spring 2026](https://www.worldcubeassociation.org/competitions/LeedsSpring2026)",
-                      "22"
-                    ],
-                    [
-                      4,
-                      "[Kieran Dizon](https://www.worldcubeassociation.org/persons/2015DIZO02)",
-                      "22",
-                      "USA",
-                      "2017-10-15",
-                      "[FMC Americas 2017](https://www.worldcubeassociation.org/competitions/FMCAmericas2017)",
-                      "22 DNF DNF"
-                    ],
-                    [
-                      5,
                       "[Yasunari Kumekawa (粂川泰成)](https://www.worldcubeassociation.org/persons/2022KUME01)",
                       "22",
                       "Japan",
@@ -787,7 +760,7 @@
                       "22 34 25"
                     ],
                     [
-                      6,
+                      3,
                       "[Shota Wakabayashi (若林翔太)](https://www.worldcubeassociation.org/persons/2023KADO01)",
                       "22",
                       "Japan",
@@ -796,25 +769,34 @@
                       "22 27 28"
                     ],
                     [
+                      4,
+                      "[Steven Wang](https://www.worldcubeassociation.org/persons/2013WANG63)",
+                      "22",
+                      "USA",
+                      "2017-10-15",
+                      "[FMC Americas 2017](https://www.worldcubeassociation.org/competitions/FMCAmericas2017)",
+                      "22 DNF DNF"
+                    ],
+                    [
+                      5,
+                      "[Galih Arya Santosa](https://www.worldcubeassociation.org/persons/2016SANT40)",
+                      "22",
+                      "Indonesia",
+                      "2026-04-11",
+                      "[Leeds Spring 2026](https://www.worldcubeassociation.org/competitions/LeedsSpring2026)",
+                      "22"
+                    ],
+                    [
+                      6,
+                      "[Kieran Dizon](https://www.worldcubeassociation.org/persons/2015DIZO02)",
+                      "22",
+                      "USA",
+                      "2017-10-15",
+                      "[FMC Americas 2017](https://www.worldcubeassociation.org/competitions/FMCAmericas2017)",
+                      "22 DNF DNF"
+                    ],
+                    [
                       7,
-                      "[Mosfikul Islam](https://www.worldcubeassociation.org/persons/2023ISLA08)",
-                      "23",
-                      "Bangladesh",
-                      "2023-09-22",
-                      "[Chattogram Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChattogramCubeOpen2023)",
-                      "23"
-                    ],
-                    [
-                      8,
-                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
-                      "23",
-                      "Japan",
-                      "2023-11-26",
-                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
-                      "23 28 26"
-                    ],
-                    [
-                      9,
                       "[Jihan Lee (이지한)](https://www.worldcubeassociation.org/persons/2025LEEJ41)",
                       "23",
                       "Korea",
@@ -823,13 +805,31 @@
                       "23 24 26"
                     ],
                     [
-                      10,
-                      "[Yuki Sako](https://www.worldcubeassociation.org/persons/2023SAKO02)",
-                      "24",
+                      8,
+                      "[Mosfikul Islam](https://www.worldcubeassociation.org/persons/2023ISLA08)",
+                      "23",
+                      "Bangladesh",
+                      "2023-09-22",
+                      "[Chattogram Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChattogramCubeOpen2023)",
+                      "23"
+                    ],
+                    [
+                      9,
+                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
+                      "23",
                       "Japan",
                       "2023-11-26",
                       "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
-                      "24 27 23"
+                      "23 28 26"
+                    ],
+                    [
+                      10,
+                      "[Thomas Heiden](https://www.worldcubeassociation.org/persons/2019HEID03)",
+                      "24",
+                      "Austria",
+                      "2022-07-23",
+                      "[Mallorca Open 2022](https://www.worldcubeassociation.org/competitions/MallorcaOpen2022)",
+                      "24"
                     ]
                   ]
                 },
@@ -1592,12 +1592,12 @@
                     ],
                     [
                       10,
-                      "[Greehith Annabathina](https://www.worldcubeassociation.org/persons/2022ANNA01)",
-                      "12:05.00",
-                      "India",
-                      "2023-08-11",
-                      "[Hyderabad Cube Open 2023](https://www.worldcubeassociation.org/competitions/HyderabadCubeOpen2023)",
-                      "12:05.00 DNF DNF"
+                      "[Xiangjie Li (李祥杰)](https://www.worldcubeassociation.org/persons/2016LIXI04)",
+                      "11:31.00",
+                      "China",
+                      "2026-05-16",
+                      "[Please Don't DNF Beijing 2026](https://www.worldcubeassociation.org/competitions/PleaseDontDNFBeijing2026)",
+                      "11:31.00 17:17.00 16:37.00"
                     ]
                   ]
                 },
@@ -5532,21 +5532,21 @@
                     ],
                     [
                       9,
-                      "[E-chan Jeon (전이찬)](https://www.worldcubeassociation.org/persons/2019JEON05)",
-                      "4.08",
-                      "Korea",
-                      "2023-09-24",
-                      "[Ansan Autumn 2023](https://www.worldcubeassociation.org/competitions/AnsanAutumn2023)",
-                      "5.02 DNF 4.08 5.39 DNF"
-                    ],
-                    [
-                      10,
                       "[Supakrit Sanghiran (ศุภกฤต สังข์หิรัญ)](https://www.worldcubeassociation.org/persons/2022SANG08)",
                       "4.08",
                       "Thailand",
                       "2022-12-31",
                       "[Krungthep Farewell 2022](https://www.worldcubeassociation.org/competitions/KrungthepFarewell2022)",
                       "5.88 4.08 7.22 5.22 5.03"
+                    ],
+                    [
+                      10,
+                      "[E-chan Jeon (전이찬)](https://www.worldcubeassociation.org/persons/2019JEON05)",
+                      "4.08",
+                      "Korea",
+                      "2023-09-24",
+                      "[Ansan Autumn 2023](https://www.worldcubeassociation.org/competitions/AnsanAutumn2023)",
+                      "5.02 DNF 4.08 5.39 DNF"
                     ]
                   ]
                 },
@@ -5916,21 +5916,21 @@
                     ],
                     [
                       9,
+                      "[Jiaye Cheng (程嘉烨)](https://www.worldcubeassociation.org/persons/2026CHEN19)",
+                      "9:08.64",
+                      "China",
+                      "2026-05-16",
+                      "[Please Don't DNF Beijing 2026](https://www.worldcubeassociation.org/competitions/PleaseDontDNFBeijing2026)",
+                      "DNF 9:08.64 DNF"
+                    ],
+                    [
+                      10,
                       "[Thiago Han](https://www.worldcubeassociation.org/persons/2022HANT01)",
                       "9:18.50",
                       "Brazil",
                       "2022-03-13",
                       "[Cambridge Challenge 2022](https://www.worldcubeassociation.org/competitions/CambridgeChallenge2022)",
                       "9:18.50 DNF DNF"
-                    ],
-                    [
-                      10,
-                      "[Alvin Cheng Hiu Yeung (鄭曉洋)](https://www.worldcubeassociation.org/persons/2019YEUN01)",
-                      "9:22.53",
-                      "Hong Kong",
-                      "2019-12-08",
-                      "[Big 'n Blind Guangzhou 2019](https://www.worldcubeassociation.org/competitions/BignBlindGuangzhou2019)",
-                      "9:22.53 DNF DNF"
                     ]
                   ]
                 },
@@ -9740,21 +9740,21 @@
                     ],
                     [
                       5,
-                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
-                      "25.67",
-                      "Japan",
-                      "2023-11-26",
-                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
-                      "23 28 26"
-                    ],
-                    [
-                      6,
                       "[Shota Wakabayashi (若林翔太)](https://www.worldcubeassociation.org/persons/2023KADO01)",
                       "25.67",
                       "Japan",
                       "2023-11-26",
                       "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
                       "22 27 28"
+                    ],
+                    [
+                      6,
+                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
+                      "25.67",
+                      "Japan",
+                      "2023-11-26",
+                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
+                      "23 28 26"
                     ],
                     [
                       7,
@@ -10028,21 +10028,21 @@
                     ],
                     [
                       5,
-                      "[Yifan Luo (骆奕帆)](https://www.worldcubeassociation.org/persons/2021LUOY02)",
-                      "2.62",
-                      "China",
-                      "2023-11-25",
-                      "[Hefei Winter Open 2023](https://www.worldcubeassociation.org/competitions/HefeiWinterOpen2023)",
-                      "1.93 2.56 1.74 4.43 3.38"
-                    ],
-                    [
-                      6,
                       "[Guran Li (李顾然)](https://www.worldcubeassociation.org/persons/2026LIGU01)",
                       "2.62",
                       "China",
                       "2026-01-10",
                       "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
                       "2.65 2.28 2.50 2.71 DNF"
+                    ],
+                    [
+                      6,
+                      "[Yifan Luo (骆奕帆)](https://www.worldcubeassociation.org/persons/2021LUOY02)",
+                      "2.62",
+                      "China",
+                      "2023-11-25",
+                      "[Hefei Winter Open 2023](https://www.worldcubeassociation.org/competitions/HefeiWinterOpen2023)",
+                      "1.93 2.56 1.74 4.43 3.38"
                     ],
                     [
                       7,
@@ -10499,6 +10499,15 @@
                     ],
                     [
                       4,
+                      "[Xiangjie Li (李祥杰)](https://www.worldcubeassociation.org/persons/2016LIXI04)",
+                      "15:08.00",
+                      "China",
+                      "2026-05-16",
+                      "[Please Don't DNF Beijing 2026](https://www.worldcubeassociation.org/competitions/PleaseDontDNFBeijing2026)",
+                      "11:31.00 17:17.00 16:37.00"
+                    ],
+                    [
+                      5,
                       "[Jareth Soong Ying Rui (宋颖锐)](https://www.worldcubeassociation.org/persons/2016SOON01)",
                       "17:14.00",
                       "Singapore",
@@ -10507,7 +10516,7 @@
                       "16:32.00 20:32.00 14:37.00"
                     ],
                     [
-                      5,
+                      6,
                       "[Gabriel Angelo V. Hilado](https://www.worldcubeassociation.org/persons/2022HILA02)",
                       "18:39.00",
                       "Philippines",
@@ -10516,7 +10525,7 @@
                       "18:21.00 17:37.00 19:58.00"
                     ],
                     [
-                      6,
+                      7,
                       "[Eddy Deturche](https://www.worldcubeassociation.org/persons/2014DETU01)",
                       "18:41.00",
                       "France",
@@ -10525,7 +10534,7 @@
                       "19:10.00 17:42.00 19:12.00"
                     ],
                     [
-                      7,
+                      8,
                       "[Takeo Nagoshi (名越丈雄)](https://www.worldcubeassociation.org/persons/2022NAGO03)",
                       "18:54.00",
                       "Japan",
@@ -10534,7 +10543,7 @@
                       "17:29.00 19:49.00 19:24.00"
                     ],
                     [
-                      8,
+                      9,
                       "[Conan Mo](https://www.worldcubeassociation.org/persons/2020MOCO01)",
                       "22:13.00",
                       "Australia",
@@ -14498,6 +14507,15 @@
                     ],
                     [
                       4,
+                      "[Xiangjie Li (李祥杰)](https://www.worldcubeassociation.org/persons/2016LIXI04)",
+                      "15:08.00",
+                      "China",
+                      "2026-05-16",
+                      "[Please Don't DNF Beijing 2026](https://www.worldcubeassociation.org/competitions/PleaseDontDNFBeijing2026)",
+                      "11:31.00 17:17.00 16:37.00"
+                    ],
+                    [
+                      5,
                       "[Jareth Soong Ying Rui (宋颖锐)](https://www.worldcubeassociation.org/persons/2016SOON01)",
                       "17:14.00",
                       "Singapore",
@@ -14506,7 +14524,7 @@
                       "16:32.00 20:32.00 14:37.00"
                     ],
                     [
-                      5,
+                      6,
                       "[Gabriel Angelo V. Hilado](https://www.worldcubeassociation.org/persons/2022HILA02)",
                       "18:39.00",
                       "Philippines",
@@ -14515,7 +14533,7 @@
                       "18:21.00 17:37.00 19:58.00"
                     ],
                     [
-                      6,
+                      7,
                       "[Eddy Deturche](https://www.worldcubeassociation.org/persons/2014DETU01)",
                       "18:41.00",
                       "France",
@@ -14524,7 +14542,7 @@
                       "19:10.00 17:42.00 19:12.00"
                     ],
                     [
-                      7,
+                      8,
                       "[Takeo Nagoshi (名越丈雄)](https://www.worldcubeassociation.org/persons/2022NAGO03)",
                       "18:54.00",
                       "Japan",
@@ -14533,7 +14551,7 @@
                       "17:29.00 19:49.00 19:24.00"
                     ],
                     [
-                      8,
+                      9,
                       "[Conan Mo](https://www.worldcubeassociation.org/persons/2020MOCO01)",
                       "22:13.00",
                       "Australia",

@@ -84,6 +84,14 @@
                 ],
                 [
                   4,
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "3.41",
+                  "Poland",
+                  "2026-05-16",
+                  "[GLS Gdańsk IV 2026](https://www.worldcubeassociation.org/competitions/GLSGdanskIV2026)"
+                ],
+                [
+                  5,
                   "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
                   "3.50",
                   "USA",
@@ -91,7 +99,7 @@
                   "[Ohio State RPAC Cube Clash 2024](https://www.worldcubeassociation.org/competitions/OhioStateRPACCubeClash2024)"
                 ],
                 [
-                  5,
+                  6,
                   "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
                   "3.61",
                   "China",
@@ -99,20 +107,12 @@
                   "[Start of Summer Beijing 2026](https://www.worldcubeassociation.org/competitions/StartofSummerBeijing2026)"
                 ],
                 [
-                  6,
+                  7,
                   "[Matty Hiroto Inaba](https://www.worldcubeassociation.org/persons/2016INAB01)",
                   "3.64",
                   "USA",
                   "2026-02-21",
                   "[PBs in Palisades Open 2026](https://www.worldcubeassociation.org/competitions/PBsinPalisadesOpen2026)"
-                ],
-                [
-                  7,
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "3.70",
-                  "Poland",
-                  "2026-02-21",
-                  "[Amore Amorebieta Open 2026](https://www.worldcubeassociation.org/competitions/AmoreAmorebietaOpen2026)"
                 ],
                 [
                   8,
@@ -375,10 +375,10 @@
                 [
                   8,
                   "[Ciarán Beahan](https://www.worldcubeassociation.org/persons/2012BEAH01)",
-                  "36.09",
+                  "35.69",
                   "Ireland",
-                  "2025-12-06",
-                  "[Manchester 5x5 Day 2025](https://www.worldcubeassociation.org/competitions/Manchester5x5Day2025)"
+                  "2026-05-16",
+                  "[Roscommon Cubing 2026](https://www.worldcubeassociation.org/competitions/RoscommonCubing2026)"
                 ],
                 [
                   9,
@@ -780,6 +780,14 @@
                 ],
                 [
                   5,
+                  "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+                  "6.59",
+                  "USA",
+                  "2026-05-16",
+                  "[Westerns Warmup Riverside B 2026](https://www.worldcubeassociation.org/competitions/WesternsWarmupRiversideB2026)"
+                ],
+                [
+                  6,
                   "[Jonas Pilhöfer](https://www.worldcubeassociation.org/persons/2019PILH01)",
                   "6.65",
                   "Germany",
@@ -787,20 +795,12 @@
                   "[Rhein-Neckar Breakdown 2025](https://www.worldcubeassociation.org/competitions/RheinNeckarBreakdown2025)"
                 ],
                 [
-                  6,
+                  7,
                   "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
                   "6.69",
                   "China",
                   "2025-11-09",
                   "[Guangzhou Small Cubes 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSmallCubes2025)"
-                ],
-                [
-                  7,
-                  "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-                  "6.72",
-                  "USA",
-                  "2025-10-04",
-                  "[Nub Open Trabuco Hills Fall 2025](https://www.worldcubeassociation.org/competitions/NubOpenTrabucoHillsFall2025)"
                 ],
                 [
                   8,
@@ -1178,19 +1178,19 @@
               "rows": [
                 [
                   1,
+                  "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+                  "3.48",
+                  "USA",
+                  "2026-05-16",
+                  "[RCBC Cube Day NJ 2026](https://www.worldcubeassociation.org/competitions/RCBCCubeDayNJ2026)"
+                ],
+                [
+                  2,
                   "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
                   "3.62",
                   "USA",
                   "2025-07-12",
                   "[White Rock Back to Square-1 2025](https://www.worldcubeassociation.org/competitions/WhiteRocksBacktoSquare12025)"
-                ],
-                [
-                  2,
-                  "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-                  "3.63",
-                  "USA",
-                  "2026-04-05",
-                  "[Side Events in Palisades 2026](https://www.worldcubeassociation.org/competitions/SideEventsinPalisades2026)"
                 ],
                 [
                   3,
@@ -6484,9 +6484,17 @@
               "titleZh": "SQ1",
               "rows": [
                 [
+                  "3.48",
+                  "3.87%",
+                  "3",
+                  "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+                  "2026-05-16",
+                  "[RCBC Cube Day NJ 2026](https://www.worldcubeassociation.org/competitions/RCBCCubeDayNJ2026)"
+                ],
+                [
                   "3.62",
                   "0.28%",
-                  "311",
+                  "308",
                   "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
                   "2025-07-12",
                   "[White Rock Back to Square-1 2025](https://www.worldcubeassociation.org/competitions/WhiteRocksBacktoSquare12025)"
@@ -8337,19 +8345,19 @@
                 ],
                 [
                   9,
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "4.97",
+                  "Poland",
+                  "2026-05-16",
+                  "[GLS Gdańsk IV 2026](https://www.worldcubeassociation.org/competitions/GLSGdanskIV2026)"
+                ],
+                [
+                  10,
                   "[Yize Dong (董一泽)](https://www.worldcubeassociation.org/persons/2023DONG20)",
                   "4.98",
                   "China",
                   "2026-04-11",
                   "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)"
-                ],
-                [
-                  10,
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "5.00",
-                  "Poland",
-                  "2026-01-24",
-                  "[Winter Holiday Czarna Woda 2026](https://www.worldcubeassociation.org/competitions/WinterHolidayCzarnaWoda2026)"
                 ]
               ]
             },
@@ -8862,10 +8870,10 @@
                 [
                   10,
                   "[Liam Chen](https://www.worldcubeassociation.org/persons/2014CHEN37)",
-                  "18.14",
+                  "17.97",
                   "USA",
-                  "2025-02-23",
-                  "[Flushing Glow Open AM 2025](https://www.worldcubeassociation.org/competitions/FlushingGlowOpenAM2025)"
+                  "2026-05-16",
+                  "[Qualifying Cougars WV 2026](https://www.worldcubeassociation.org/competitions/QualifyingCougarsWV2026)"
                 ]
               ]
             },
@@ -9259,6 +9267,14 @@
                 ],
                 [
                   6,
+                  "[Caleb Wolf Dunn](https://www.worldcubeassociation.org/persons/2022DUNN03)",
+                  "2.70",
+                  "United Kingdom",
+                  "2026-05-16",
+                  "[Weston-super-Mare Spring 2026](https://www.worldcubeassociation.org/competitions/WestonsuperMareSpring2026)"
+                ],
+                [
+                  7,
                   "[Ivan ThanhDanh Duong](https://www.worldcubeassociation.org/persons/2022DUON09)",
                   "2.71",
                   "USA",
@@ -9266,7 +9282,7 @@
                   "[Race the Clock MN 2025](https://www.worldcubeassociation.org/competitions/RacetheClockMN2025)"
                 ],
                 [
-                  7,
+                  8,
                   "[Alessandro Diomampo](https://www.worldcubeassociation.org/persons/2023DIOM01)",
                   "2.73",
                   "USA",
@@ -9274,7 +9290,7 @@
                   "[Agoura Winter 2026](https://www.worldcubeassociation.org/competitions/AgouraWinter2026)"
                 ],
                 [
-                  8,
+                  9,
                   "[Fiona Bao](https://www.worldcubeassociation.org/persons/2022BAOF01)",
                   "2.75",
                   "USA",
@@ -9282,20 +9298,12 @@
                   "[Fredericksburg Winter AM 2026](https://www.worldcubeassociation.org/competitions/FredericksburgWinterAM2026)"
                 ],
                 [
-                  9,
+                  10,
                   "[Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11)",
                   "2.75",
                   "Australia",
                   "2025-10-02",
                   "[Australian Nationals 2025](https://www.worldcubeassociation.org/competitions/AustralianNationals2025)"
-                ],
-                [
-                  10,
-                  "[Caleb Wolf Dunn](https://www.worldcubeassociation.org/persons/2022DUNN03)",
-                  "2.88",
-                  "United Kingdom",
-                  "2025-10-18",
-                  "[Manchester Clock Day 2025](https://www.worldcubeassociation.org/competitions/ManchesterClockDay2025)"
                 ]
               ]
             },

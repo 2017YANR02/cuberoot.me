@@ -228,6 +228,18 @@
                 ],
                 [
                   4,
+                  "[Imanuel Müller](https://www.worldcubeassociation.org/persons/2022MULL02)",
+                  "5.78",
+                  "Germany",
+                  "2026-05-15",
+                  "[Hessen Mini Open 2026](https://www.worldcubeassociation.org/competitions/HessenMiniOpen2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "5.78"
+                  }
+                ],
+                [
+                  5,
                   "[Matty Hiroto Inaba](https://www.worldcubeassociation.org/persons/2016INAB01)",
                   "5.80",
                   "USA",
@@ -239,7 +251,7 @@
                   }
                 ],
                 [
-                  5,
+                  6,
                   "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
                   "5.98",
                   "Brazil",
@@ -251,7 +263,7 @@
                   }
                 ],
                 [
-                  6,
+                  7,
                   "[Philipp Weyer](https://www.worldcubeassociation.org/persons/2010WEYE01)",
                   "6.03",
                   "Germany",
@@ -263,7 +275,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
                   "6.12",
                   "Russia",
@@ -275,7 +287,7 @@
                   }
                 ],
                 [
-                  8,
+                  9,
                   "[Brennen Lin](https://www.worldcubeassociation.org/persons/2016LINB01)",
                   "6.18",
                   "Canada",
@@ -287,7 +299,7 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Kyle Santucci](https://www.worldcubeassociation.org/persons/2016SANT08)",
                   "6.20",
                   "Canada",
@@ -296,18 +308,6 @@
                   {
                     "_type": "solves",
                     "csv": "6.20"
-                  }
-                ],
-                [
-                  10,
-                  "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
-                  "6.23",
-                  "Korea",
-                  "2024-06-22",
-                  "[Korea Qualifier - Seoul C 2024](https://www.worldcubeassociation.org/competitions/KoreaQualifierSeoulC2024)",
-                  {
-                    "_type": "solves",
-                    "csv": "6.23"
                   }
                 ]
               ]
@@ -378,6 +378,18 @@
                 ],
                 [
                   6,
+                  "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+                  "21.63",
+                  "Poland",
+                  "2026-05-16",
+                  "[GSKR w Poznaniu 2026](https://www.worldcubeassociation.org/competitions/GSKRwPoznaniu2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "21.63"
+                  }
+                ],
+                [
+                  7,
                   "[Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16)",
                   "21.72",
                   "Vietnam",
@@ -386,18 +398,6 @@
                   {
                     "_type": "solves",
                     "csv": "21.72"
-                  }
-                ],
-                [
-                  7,
-                  "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-                  "22.16",
-                  "Poland",
-                  "2024-03-02",
-                  "[Glasgow Spring 2024](https://www.worldcubeassociation.org/competitions/GlasgowSpring2024)",
-                  {
-                    "_type": "solves",
-                    "csv": "22.16"
                   }
                 ],
                 [
@@ -1548,6 +1548,18 @@
                 ],
                 [
                   9,
+                  "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
+                  "2.93",
+                  "Poland",
+                  "2026-05-16",
+                  "[Nagawczyna Side Open 2026](https://www.worldcubeassociation.org/competitions/NagawczynaSideOpen2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "2.93"
+                  }
+                ],
+                [
+                  10,
                   "[Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11)",
                   "2.98",
                   "Australia",
@@ -1556,18 +1568,6 @@
                   {
                     "_type": "solves",
                     "csv": "2.98"
-                  }
-                ],
-                [
-                  10,
-                  "[Caleb Wolf Dunn](https://www.worldcubeassociation.org/persons/2022DUNN03)",
-                  "3.00",
-                  "United Kingdom",
-                  "2024-11-01",
-                  "[Rubik's UK Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2024)",
-                  {
-                    "_type": "solves",
-                    "csv": "3.00"
                   }
                 ]
               ]
@@ -11545,6 +11545,18 @@
                 ],
                 [
                   5,
+                  "[Caleb Wolf Dunn](https://www.worldcubeassociation.org/persons/2022DUNN03)",
+                  "2.74",
+                  "United Kingdom",
+                  "2026-05-16",
+                  "[Weston-super-Mare Spring 2026](https://www.worldcubeassociation.org/competitions/WestonsuperMareSpring2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "2.70,2.78"
+                  }
+                ],
+                [
+                  6,
                   "[Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11)",
                   "2.77",
                   "Australia",
@@ -11556,7 +11568,7 @@
                   }
                 ],
                 [
-                  6,
+                  7,
                   "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
                   "2.78",
                   "USA",
@@ -11568,7 +11580,19 @@
                   }
                 ],
                 [
-                  7,
+                  8,
+                  "[Jonathan Wang (王嘉洺)](https://www.worldcubeassociation.org/persons/2022WANG23)",
+                  "2.85",
+                  "Canada",
+                  "2026-05-16",
+                  "[Wasaga Beach Spring 2026](https://www.worldcubeassociation.org/competitions/WasagaBeachSpring2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "3.03,2.66"
+                  }
+                ],
+                [
+                  9,
                   "[Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03)",
                   "2.87",
                   "Poland",
@@ -11580,7 +11604,7 @@
                   }
                 ],
                 [
-                  8,
+                  10,
                   "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
                   "2.93",
                   "USA",
@@ -11589,30 +11613,6 @@
                   {
                     "_type": "solves",
                     "csv": "3.04,2.82"
-                  }
-                ],
-                [
-                  9,
-                  "[Ivan ThanhDanh Duong](https://www.worldcubeassociation.org/persons/2022DUON09)",
-                  "2.94",
-                  "USA",
-                  "2025-11-29",
-                  "[Minnesota Championship 2025](https://www.worldcubeassociation.org/competitions/MinnesotaChampionship2025)",
-                  {
-                    "_type": "solves",
-                    "csv": "3.21,2.66"
-                  }
-                ],
-                [
-                  10,
-                  "[Lachlan Adams-Romyn](https://www.worldcubeassociation.org/persons/2022ADAM01)",
-                  "2.96",
-                  "Australia",
-                  "2025-10-02",
-                  "[Australian Nationals 2025](https://www.worldcubeassociation.org/competitions/AustralianNationals2025)",
-                  {
-                    "_type": "solves",
-                    "csv": "3.03,2.88"
                   }
                 ]
               ]

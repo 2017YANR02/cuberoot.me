@@ -104,6 +104,12 @@
       "Thailand"
     ],
     [
+      "[VERK XV 2026](https://www.worldcubeassociation.org/competitions/VERKXV2026)",
+      "10.64",
+      11,
+      "Finland"
+    ],
+    [
       "[Around the Clock Israel 2024](https://www.worldcubeassociation.org/competitions/AroundtheClockIsrael2024)",
       "10.61",
       54,
@@ -194,16 +200,16 @@
       "Sweden"
     ],
     [
-      "[Kanta-Hämeen Vääntelyt 2026](https://www.worldcubeassociation.org/competitions/KantaHameenKuutionvaantelyt2026)",
-      "9.82",
-      22,
-      "Finland"
-    ],
-    [
       "[Björneborg Winter 2023](https://www.worldcubeassociation.org/competitions/BjorneborgWinter2023)",
       "9.82",
       11,
       "Sweden"
+    ],
+    [
+      "[Kanta-Hämeen Vääntelyt 2026](https://www.worldcubeassociation.org/competitions/KantaHameenKuutionvaantelyt2026)",
+      "9.82",
+      22,
+      "Finland"
     ],
     [
       "[Czech Open 2009](https://www.worldcubeassociation.org/competitions/CzechOpen2009)",
@@ -512,16 +518,16 @@
       "Netherlands"
     ],
     [
-      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
-      "9.00",
-      34,
-      "New Zealand"
-    ],
-    [
       "[Bulacan Open 2010](https://www.worldcubeassociation.org/competitions/BulacanOpen2010)",
       "9.00",
       16,
       "Philippines"
+    ],
+    [
+      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
+      "9.00",
+      34,
+      "New Zealand"
     ],
     [
       "[Danish Open 2014](https://www.worldcubeassociation.org/competitions/DanishOpen2014)",
@@ -614,22 +620,16 @@
       "Netherlands"
     ],
     [
-      "[New York Championship 2025](https://www.worldcubeassociation.org/competitions/NewYorkChampionship2025)",
-      "8.82",
-      66,
-      "United States"
-    ],
-    [
       "[Rebild Open 2014](https://www.worldcubeassociation.org/competitions/RebildOpen2014)",
       "8.82",
       22,
       "Denmark"
     ],
     [
-      "[Manchester Spring 2024](https://www.worldcubeassociation.org/competitions/ManchesterSpring2024)",
-      "8.81",
-      116,
-      "United Kingdom"
+      "[New York Championship 2025](https://www.worldcubeassociation.org/competitions/NewYorkChampionship2025)",
+      "8.82",
+      66,
+      "United States"
     ]
   ]
 }

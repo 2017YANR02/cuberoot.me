@@ -102,15 +102,15 @@
       null
     ],
     [
-      67,
-      "[Junqi Feng (冯骏骐)](https://www.worldcubeassociation.org/persons/2015FENG12)",
-      "[Nanjing Autumn 2015](https://www.worldcubeassociation.org/competitions/NanjingAutumn2015)",
+      68,
+      "[Roman Sokolovskyi](https://www.worldcubeassociation.org/persons/2021SOKO03)",
+      "[Cubes Masters Zhytomyr 2021](https://www.worldcubeassociation.org/competitions/CubesMastersZhytomyr2021)",
       null
     ],
     [
       67,
-      "[Roman Sokolovskyi](https://www.worldcubeassociation.org/persons/2021SOKO03)",
-      "[Cubes Masters Zhytomyr 2021](https://www.worldcubeassociation.org/competitions/CubesMastersZhytomyr2021)",
+      "[Junqi Feng (冯骏骐)](https://www.worldcubeassociation.org/persons/2015FENG12)",
+      "[Nanjing Autumn 2015](https://www.worldcubeassociation.org/competitions/NanjingAutumn2015)",
       null
     ],
     [
@@ -295,6 +295,12 @@
     ],
     [
       55,
+      "[Artur Miralles Hernàndez](https://www.worldcubeassociation.org/persons/2015HERN17)",
+      "[Barcelona FME Open 2015](https://www.worldcubeassociation.org/competitions/BarcelonaFMEOpen2015)",
+      null
+    ],
+    [
+      55,
       "[Sam Shaw](https://www.worldcubeassociation.org/persons/2016SHAW02)",
       "[Exeter Open 2016](https://www.worldcubeassociation.org/competitions/ExeterOpen2016)",
       null
@@ -309,6 +315,12 @@
       55,
       "[Mattia Pasquini](https://www.worldcubeassociation.org/persons/2019PASQ01)",
       "[Swisscubing Cup I 2019](https://www.worldcubeassociation.org/competitions/SwisscubingCupI2019)",
+      null
+    ],
+    [
+      55,
+      "[Annye Bennett](https://www.worldcubeassociation.org/persons/2022BENN11)",
+      "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
       null
     ],
     [
@@ -327,12 +339,6 @@
       54,
       "[Jonathan Tilahun](https://www.worldcubeassociation.org/persons/2014TILA01)",
       "[Slow n Steady Fall 2015](https://www.worldcubeassociation.org/competitions/SlownSteadyFall2015)",
-      null
-    ],
-    [
-      54,
-      "[Artur Miralles Hernàndez](https://www.worldcubeassociation.org/persons/2015HERN17)",
-      "[Barcelona FME Open 2015](https://www.worldcubeassociation.org/competitions/BarcelonaFMEOpen2015)",
       null
     ],
     [
@@ -357,12 +363,6 @@
       54,
       "[Adhiyan Kumaresan](https://www.worldcubeassociation.org/persons/2022KUMA05)",
       "[Central Washington Spring 2022](https://www.worldcubeassociation.org/competitions/CentralWashingtonSpring2022)",
-      null
-    ],
-    [
-      54,
-      "[Annye Bennett](https://www.worldcubeassociation.org/persons/2022BENN11)",
-      "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
       null
     ],
     [
@@ -415,6 +415,18 @@
     ],
     [
       52,
+      "[Jaden Thompson](https://www.worldcubeassociation.org/persons/2016THOM01)",
+      "[BASC 8 2016](https://www.worldcubeassociation.org/competitions/BASC82016)",
+      null
+    ],
+    [
+      52,
+      "[Brandon Villadolid](https://www.worldcubeassociation.org/persons/2019VILL03)",
+      "[Hudson Valley Winter 2019](https://www.worldcubeassociation.org/competitions/HudsonValleyWinter2019)",
+      null
+    ],
+    [
+      52,
       "[Pep Edén](https://www.worldcubeassociation.org/persons/2021EDEN01)",
       "[Swedish Championship 2021](https://www.worldcubeassociation.org/competitions/SwedishChampionship2021)",
       null
@@ -445,12 +457,6 @@
     ],
     [
       51,
-      "[Jaden Thompson](https://www.worldcubeassociation.org/persons/2016THOM01)",
-      "[BASC 8 2016](https://www.worldcubeassociation.org/competitions/BASC82016)",
-      null
-    ],
-    [
-      51,
       "[Sean Hartman](https://www.worldcubeassociation.org/persons/2016HART02)",
       "[For The Love Of Cubing 2016](https://www.worldcubeassociation.org/competitions/ForTheLoveOfCubing2016)",
       null
@@ -465,12 +471,6 @@
       51,
       "[Parist Pariyakanok (พริษฐ์ ปริยกนก)](https://www.worldcubeassociation.org/persons/2018PARI07)",
       "[Bangkok Cube Day Summer 2018](https://www.worldcubeassociation.org/competitions/BangkokCubeDaySummer2018)",
-      null
-    ],
-    [
-      51,
-      "[Brandon Villadolid](https://www.worldcubeassociation.org/persons/2019VILL03)",
-      "[Hudson Valley Winter 2019](https://www.worldcubeassociation.org/competitions/HudsonValleyWinter2019)",
       null
     ],
     [
@@ -577,14 +577,14 @@
     ],
     [
       49,
-      "[Riley Dexter](https://www.worldcubeassociation.org/persons/2016DEXT01)",
-      "[Cubing Classic 2016](https://www.worldcubeassociation.org/competitions/CubingClassic2016)",
+      "[Shenghai Fang (方胜海)](https://www.worldcubeassociation.org/persons/2016FANG01)",
+      "[Shanghai Spring 2016](https://www.worldcubeassociation.org/competitions/ShanghaiSpring2016)",
       null
     ],
     [
       49,
-      "[Shenghai Fang (方胜海)](https://www.worldcubeassociation.org/persons/2016FANG01)",
-      "[Shanghai Spring 2016](https://www.worldcubeassociation.org/competitions/ShanghaiSpring2016)",
+      "[Riley Dexter](https://www.worldcubeassociation.org/persons/2016DEXT01)",
+      "[Cubing Classic 2016](https://www.worldcubeassociation.org/competitions/CubingClassic2016)",
       null
     ],
     [
