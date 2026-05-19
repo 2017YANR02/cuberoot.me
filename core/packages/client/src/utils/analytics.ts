@@ -49,22 +49,13 @@ async function sendPv(path: string, ref: string): Promise<{ id: number | null; t
 }
 
 function sendDwell(id: number, ms: number, ticket: string): void {
-  const body = JSON.stringify({ id, ms, t: ticket });
-  // navigator.sendBeacon is the right tool here — survives page unload.
-  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-    try {
-      const blob = new Blob([body], { type: 'application/json' });
-      navigator.sendBeacon(apiUrl('/v1/analytics/dwell'), blob);
-      return;
-    } catch {
-      // fall through to fetch
-    }
-  }
-  // Fallback for very old browsers / sendBeacon disabled.
+  // 不用 sendBeacon — 它硬编码 credentials='include',会触发 CORS preflight 失败.
+  // fetch + keepalive 在 pagehide/visibilitychange 上现代浏览器都能可靠送出,
+  // payload 仅 ~80B,远低于 64KB keepalive 配额.
   fetch(apiUrl('/v1/analytics/dwell'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body,
+    body: JSON.stringify({ id, ms, t: ticket }),
     keepalive: true,
     credentials: 'omit',
   }).catch(() => {});

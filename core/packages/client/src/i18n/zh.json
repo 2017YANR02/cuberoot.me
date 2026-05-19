@@ -43,8 +43,8 @@
     "sortReset": "恢复默认排序"
   },
   "recon": {
-    "title": "还原复盘",
-    "subtitle": "魔方比赛的还原复盘与分析",
+    "title": "复盘",
+    "subtitle": "魔方比赛的复盘与分析",
     "solver": "选手",
     "date": "日期",
     "competition": "比赛",

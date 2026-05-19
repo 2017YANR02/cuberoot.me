@@ -1,5 +1,6 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { HelpCircle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import NemesizerBrand from './components/NemesizerBrand';
@@ -34,7 +35,17 @@ export default function NemesizerPage() {
         <LangToggle />
       </div>
 
-      <NemesizerBrand isZh={isZh} />
+      <div className="nemesizer-brand-row">
+        <NemesizerBrand isZh={isZh} />
+        <Link
+          to="/nemesizer-about"
+          className="nemesizer-title-help"
+          title={isZh ? '这页是干啥的?' : 'What is this page?'}
+          aria-label={isZh ? '查看说明' : 'About this page'}
+        >
+          <HelpCircle size={18} strokeWidth={1.75} />
+        </Link>
+      </div>
 
       <div className="nemesizer-tabs">
         <TabBtn active={mode === 'standard'} onClick={() => setMode('standard')}>{isZh ? '宿敌' : 'Nemeses'}</TabBtn>

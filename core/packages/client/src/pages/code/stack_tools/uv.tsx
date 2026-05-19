@@ -148,3 +148,5 @@ export const UV: StackTool = {
     { label: 'pyx beta (2025-08)', href: 'https://astral.sh/blog/introducing-pyx' },
   ],
 };
+
+export default UV;

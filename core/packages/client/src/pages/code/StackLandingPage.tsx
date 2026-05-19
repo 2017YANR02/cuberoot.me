@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
-import { STACK_TOOLS, type StackTool } from './stack_data';
+import { STACK_TOOLS_META, type StackToolMeta } from './stack_data';
 import './stack_landing.css';
 
 const GROUPS: { id: 'frontend' | 'backend' | 'edge' | 'dev'; zh: { title: string; sub: string }; en: { title: string; sub: string } }[] = [
@@ -28,7 +28,7 @@ const GROUPS: { id: 'frontend' | 'backend' | 'edge' | 'dev'; zh: { title: string
   },
 ];
 
-function ToolCard({ tool, lang }: { tool: StackTool; lang: 'zh' | 'en' }) {
+function ToolCard({ tool, lang }: { tool: StackToolMeta; lang: 'zh' | 'en' }) {
   const t = tool[lang];
   return (
     <Link
@@ -137,7 +137,7 @@ export default function StackLandingPage() {
 
       <main className="stack-landing-main">
         {GROUPS.map((g) => {
-          const tools = STACK_TOOLS.filter((t) => t.group === g.id);
+          const tools = STACK_TOOLS_META.filter((t) => t.group === g.id);
           const text = g[lang];
           return (
             <section key={g.id} className="stack-group">

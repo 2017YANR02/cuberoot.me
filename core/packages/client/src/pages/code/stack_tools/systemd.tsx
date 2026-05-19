@@ -147,3 +147,5 @@ export const SYSTEMD: StackTool = {
     { label: 'systemd 260 release notes', href: 'https://github.com/systemd/systemd/releases/tag/v260' },
   ],
 };
+
+export default SYSTEMD;

@@ -52,7 +52,7 @@ export default function ReconDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const reconTitle = (() => {
-    const fallback = isZh ? '录像还原' : 'Reconstruction';
+    const fallback = isZh ? '复盘' : 'Reconstruction';
     if (!solve) return fallback;
     const parts: string[] = [];
     const t = solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null);

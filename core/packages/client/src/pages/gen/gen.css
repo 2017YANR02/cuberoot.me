@@ -67,6 +67,25 @@
 .gen-title-help:hover { opacity: 1; color: var(--gen-accent); }
 .gen-title-sub { color: var(--gen-text-mute); font-size: 0.8rem; letter-spacing: 0.02em; }
 
+/* 比赛 chip 激活时,GenPage header 弹出的 slot,TNoodleMode 通过 portal 注入
+   CompPicker / 已加载 comp chip / 已 generated readonly 标题。flex: 1 把它推开
+   占用 title 跟 chip 之间的中间空间。 */
+.gen-comp-header-slot {
+    flex: 1 1 280px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+.gen-comp-header-slot .gen-control-group {
+    flex: 1;
+    min-width: 0;
+}
+.gen-comp-header-slot .gen-tn-comp-picker,
+.gen-comp-header-slot .gen-tn-comp-input,
+.gen-comp-header-slot .gen-tn-comp-display {
+    width: 100%;
+}
+
 .gen-main {
     max-width: 980px;
     margin: 0 auto;
@@ -389,17 +408,11 @@
     /* Preserve injected '\n' for megaminx 7-line layout; spaces still wrap on narrow screens. */
     white-space: pre-wrap;
 }
-/* Per-line spans for multi-line scrambles (mega) — mirrors tnoodle PDF
-   alternating-row highlighting (#E6E6E6, MIN_LINES_HIGHLIGHTING=4). Color
-   tracks the current --gen-text so dark mode gets a subtle darker tint
-   instead of a glaring near-white stripe — the PDF light look stays
-   identical because .gen-tn-sheets.has-preview locks --gen-text to #181716. */
+/* Per-line spans for multi-line scrambles (mega / sq1). 不再隔行灰底:
+   隔行 highlighting 是 tnoodle PDF 的视觉,web 上跟用户预期不符,统一拿掉。 */
 .gen-scramble-line, .gen-tn-attempt-line .gen-scramble-line {
     display: block;
     padding: 0 4px;
-}
-.gen-scramble-line.is-hl {
-    background: color-mix(in srgb, var(--gen-text) 8%, transparent);
 }
 
 .gen-copy-btn {
@@ -510,29 +523,42 @@
 }
 
 /* mode chips: 视觉走 LiquidGlassChips 组件;这里只管布局/响应式。
-   窄屏 header 让 4 个 mode chip 占满第二行居中,避免 4 字标题被压竖排。 */
+   窄屏 header: 标题 + chip + 中文 + 主题 一行排齐;slot(比赛搜索框)占第二行。 */
 @media (max-width: 700px) {
-    .gen-header { flex-wrap: wrap; gap: 8px 12px; padding: 0.9rem 1rem 0.75rem; }
-    .gen-mode-chips {
-        order: 99;
+    .gen-header { flex-wrap: wrap; gap: 6px 8px; padding: 0.9rem 0.8rem 0.75rem; }
+    .gen-title { flex: 0 1 auto; gap: 4px; }
+    .gen-title h1 { font-size: 0.95rem; }
+    .gen-title-help { display: none; }  /* 窄屏不渲染 ?,给右上 lang/theme 让位 */
+    .gen-mode-chips { padding: 2px; }
+    .gen-mode-chips .lg-chips-chip { padding: 3px 8px; font-size: 0.75rem; }
+    .gen-header .lang-toggle { margin-left: auto; }
+    .gen-comp-header-slot {
+        order: 100;
         flex: 1 0 100%;
-        justify-content: center;
     }
-}
-@media (max-width: 380px) {
-    .gen-mode-chips .lg-chips-chip { padding: 4px 10px; font-size: 0.8rem; }
 }
 
 /* ───────── TNoodle mode ───────── */
 .gen-tn-controls {
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
-    align-items: end;
+    align-items: center;
+    justify-content: flex-start;
     margin-bottom: 1rem;
 }
 @media (max-width: 700px) {
-    .gen-tn-controls { grid-template-columns: 1fr; }
+    /* 改用 flex,所有 control-group 自然紧贴左边、自动 wrap。
+       grid 1fr 会把右侧 col 撑满让按钮看起来"中间",flex 让它们靠左。 */
+    .gen-tn-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .gen-tn-controls > .gen-control-group { min-width: 0; }
+    .gen-tn-controls > .gen-control-group.gen-control-actions { width: auto; }
 }
 /* 加载完(.is-loaded):按钮脱出 grid 流右浮,输入框独占整行让比赛名真居中 */
 @media (min-width: 701px) {
@@ -583,6 +609,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     font-size: 1.05rem;
     font-weight: 600;
     color: var(--gen-text);
@@ -1078,19 +1105,6 @@
     user-select: text;
     /* Mega scrambles carry '\n' between face cycles; preserve them here. */
     white-space: pre-wrap;
-    /* PDF MIN_LINES_HIGHLIGHTING:每隔一行用浅灰底纹。我们用 repeating gradient
-       直接按 line-height (1.5em) 切条纹,wrap 后视觉自动对齐,不需要 JS 分行。
-       1.5em 对应 line-height: 1.5 与 font-size 的乘积,刚好 1 行高度。
-       颜色绑 --gen-text 8% 跟随主题:浅色页 ≈ 原 #e6e6e6,深色页变成微弱的
-       浅色细带,不再像之前那样在 dark 上糊成一条亮白条。 */
-    --gen-stripe-color: color-mix(in srgb, var(--gen-text) 8%, transparent);
-    background: repeating-linear-gradient(
-        to bottom,
-        transparent 0,
-        transparent 1.5em,
-        var(--gen-stripe-color) 1.5em,
-        var(--gen-stripe-color) 3em
-    );
 }
 .gen-tn-attempt-line + .gen-tn-attempt-line { margin-top: 2px; }
 .gen-tn-attempt-preview {

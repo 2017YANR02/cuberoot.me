@@ -6,15 +6,19 @@
  * 两条路径共用 SheetView + PDF 管道。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import NumberCommitInput from '../../components/NumberCommitInput';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
+import HighOrderNxNInput from '../../components/HighOrderNxNInput';
+import { activeEventOf } from './active_view';
 import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { CompPicker } from '../../components/CompPicker';
 import { CompCell } from '../../components/CompCell/CompCell';
+import { ClearButton } from '../../components/ClearButton';
 import { loadComps, type Comp } from '../../utils/comp_search';
 import { loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
@@ -23,11 +27,16 @@ import { fetchCompName } from '../../utils/comp_wcif';
 import { apiUrl } from '../../utils/api_base';
 import { eventDisplayName } from '../../utils/wca_events';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '../../utils/cubingScramble';
+import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '../../utils/cstimerScramble';
+import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '../../utils/shapeModScramble';
 
 // 给 selector 当 availableEvents 用,涵盖 WCA + 非 WCA。
-const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS]);
+const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS]);
+const TN_APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND];
+const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.id);
+const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
 import {
-  ALLOWED_FORMATS, FORMAT_LABEL, formatAttempts, DEFAULT_EXTRA_COUNT,
+  allowedFormats, FORMAT_LABEL, formatAttempts, DEFAULT_EXTRA_COUNT,
   defaultEventConfig, defaultRoundConfig,
   type EventConfig, type WcaFormat,
 } from './wca_round';
@@ -44,6 +53,9 @@ interface Props {
   isZh: boolean;
   showPreview: boolean;
   onTogglePreview: () => void;
+  /** GenPage header 提供的 portal 目标:CompPicker(及 loaded/readonly 两个变体)
+   *  会通过 createPortal 渲染到这里。null 时 fallback 回 body 内联。 */
+  compHeaderSlot?: HTMLDivElement | null;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -62,7 +74,7 @@ function groupIdxOf(g: string): number {
   return c >= 65 && c <= 90 ? c - 65 : 0;
 }
 function inferFormat(event: string, nonExtraCount: number): WcaFormat {
-  const allowed = ALLOWED_FORMATS[event] ?? ['1'];
+  const allowed = allowedFormats(event);
   const COUNT: Record<WcaFormat, number> = { 'a': 5, 'm': 3, '5': 5, '3': 3, '2': 2, '1': 1 };
   return allowed.find((f) => COUNT[f] === nonExtraCount) ?? allowed[0];
 }
@@ -145,7 +157,7 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
   return sheets;
 }
 
-export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: Props) {
+export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, compHeaderSlot }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlComp = searchParams.get('comp') ?? '';
 
@@ -203,6 +215,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
     () => [
       ...TNOODLE_WCA_EVENTS.filter((e) => events[e]),
       ...TWIZZLE_NONWCA_EVENTS.filter((e) => events[e]),
+      ...CSTIMER_EVENT_ORDER.filter((e) => events[e]),
+      ...SHAPE_MOD_EVENT_ORDER.filter((e) => events[e]),
       ...customNxN,
     ],
     [events, customNxN],
@@ -217,18 +231,16 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
     });
   };
 
-  // 高阶 NxN 输入(8-50)。回车 / blur 后作为 event 加入配置。
-  const [highNxNInput, setHighNxNInput] = useState<string>('');
-  const addHighNxN = (raw: string) => {
-    const n = parseInt(raw, 10);
-    if (!isFinite(n) || n < 8 || n > 50) return;
+  // 高阶 NxN 入选 → defaultEventConfig 兜底。
+  const addHighNxN = (n: number) => {
     const id = `nxn${n}`;
     setEvents((prev) => {
       if (prev[id]) return prev;
       return { ...prev, [id]: defaultEventConfig(id) };
     });
-    setHighNxNInput('');
   };
+  // 「其他」展开态:控制高阶 NxN 输入框的显隐(view 模式自身已隐藏整块)。
+  const [otherExpanded, setOtherExpanded] = useState(false);
 
   const setRoundCount = (e: string, count: number) => {
     setEvents((prev) => {
@@ -284,13 +296,26 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
     return n;
   }, [enabledEvents, events]);
 
-  const scrambleTypeFor = (ev: string): string =>
-    (ev === '333mbf' || ev === '333mbo') ? '333bf' : ev;
+  // Map event → cache/scramble key. WCA MBLD shares 333bf scramble; shape mods
+  // borrow scramble from underlying WCA event (Pyramorphix → 222, Mirror → 333);
+  // cstimer events keep their own id (worker dispatches by it).
+  const scrambleTypeFor = (ev: string): string => {
+    if (ev === '333mbf' || ev === '333mbo') return '333bf';
+    if (isShapeModEvent(ev)) return shapeModSourceEvent(ev) ?? ev;
+    return ev;
+  };
+
+  // Generate one scramble. Routed by type: cstimer ids → worker bridge;
+  // everything else → cubing.js / TNoodle pool.
+  const generateOne = async (type: string): Promise<string> => {
+    if (isCstimerEvent(type)) return cstimerScramble(type);
+    return (await tnoodleRandomScramble(type)) ?? '';
+  };
 
   const drawScramble = async (type: string): Promise<string> => {
     const q = cacheRef.current[type];
     if (q && q.length > 0) return q.shift() ?? '';
-    return (await tnoodleRandomScramble(type)) ?? '';
+    return generateOne(type);
   };
 
   // 后台预生成:用户在 configure 模式下调整时,按当前配置算出每种 scramble type
@@ -324,7 +349,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
       (async () => {
         try {
           while ((cacheRef.current[type]?.length ?? 0) < (cacheTargetRef.current[type] ?? 0)) {
-            const s = await tnoodleRandomScramble(type);
+            const s = await generateOne(type);
             if (!cacheRef.current[type]) cacheRef.current[type] = [];
             cacheRef.current[type].push(s ?? '');
           }
@@ -574,9 +599,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
     () => Array.from(new Set((sheets ?? []).map((s) => s.event))),
     [sheets],
   );
-  const activeView = viewedEvent && eventsInSheets.includes(viewedEvent)
-    ? viewedEvent
-    : eventsInSheets[0];
+  const activeView = activeEventOf(viewedEvent, eventsInSheets);
   const sheetsInEvent = sheets ? sheets.filter((s) => s.event === activeView) : [];
   const roundIdxsInEvent = useMemo(
     () => Array.from(new Set(sheetsInEvent.map((s) => s.roundIdx))).sort((a, b) => a - b),
@@ -594,42 +617,51 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
   const fmtKB = (b: number) => `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
   const placeholder = t('输入 WCA 比赛或链接,或自定义比赛名', 'Enter a WCA comp / link, or a custom name');
 
-  return (
-    <>
-      <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
-        <div
-          className="gen-control-group"
-          onKeyDown={(e) => {
-            // 回车在 picker 里:目前不触发 mock 生成(避免误触);走 picker pick / URL paste / 顶部按钮
-            if (e.key === 'Enter' && loadedCompId && !loaded) e.preventDefault();
-          }}
-        >
-          {loadedCompId ? (
-            <div className="gen-tn-comp-display">
-              <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} />
-            </div>
-          ) : loaded ? (
-            // mock 已生成:输入框 readonly,显示标题
-            <input
-              type="text"
-              className="gen-tn-comp-input"
-              value={compInput || `Scrambles for ${todayIso()}`}
-              readOnly
-              onChange={() => { /* readonly */ }}
-            />
-          ) : (
-            <CompPicker
-              className="gen-tn-comp-picker"
-              value={compInput}
-              onChange={setCompInput}
-              onUrlPaste={(wcaId) => loadWca(wcaId)}
-              onPick={onPickComp}
-              isZh={isZh}
-              placeholder={placeholder}
-            />
-          )}
+  // picker 三态:已加载真比赛 / mock 已生成(标题 readonly) / picker 输入态
+  const compPickerNode = (
+    <div
+      className="gen-control-group"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && loadedCompId && !loaded) e.preventDefault();
+      }}
+    >
+      {loadedCompId ? (
+        <div className="gen-tn-comp-display">
+          <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} />
+          <ClearButton
+            variant="standalone"
+            onClick={reset}
+            isZh={isZh}
+            ariaLabel={t('取消比赛', 'Clear competition')}
+            title={t('取消比赛', 'Clear competition')}
+          />
         </div>
-        <div className="gen-control-group gen-control-actions">
+      ) : loaded ? (
+        <input
+          type="text"
+          className="gen-tn-comp-input"
+          value={compInput || `Scrambles for ${todayIso()}`}
+          readOnly
+          onChange={() => { /* readonly */ }}
+        />
+      ) : (
+        <CompPicker
+          className="gen-tn-comp-picker"
+          value={compInput}
+          onChange={setCompInput}
+          onUrlPaste={(wcaId) => loadWca(wcaId)}
+          onPick={onPickComp}
+          isZh={isZh}
+          placeholder={placeholder}
+        />
+      )}
+    </div>
+  );
+
+  const controlsNode = (
+    <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
+      {!compHeaderSlot && compPickerNode}
+      <div className="gen-control-group gen-control-actions">
           {loaded ? (
             <button
               type="button"
@@ -711,6 +743,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
           )}
         </div>
       </div>
+  );
+
+  return (
+    <>
+      {/* picker 提到 GenPage header (跟 chip 一行);slot 不可用就 fallback 回 body */}
+      {compHeaderSlot ? createPortal(compPickerNode, compHeaderSlot) : null}
 
       {error && <div className="gen-tn-empty" style={{ color: 'var(--gen-accent)' }}>{error}</div>}
 
@@ -720,9 +758,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
         // 通过 appendEvents 同行 flex-wrap,不分两段。
         <WcaEventSelector
           availableEvents={new Set(eventsInSheets)}
-          selectedEvent={activeView}
+          selectedEvent={activeView ?? undefined}
           onSelect={setViewedEvent}
-          appendEvents={TWIZZLE_NONWCA_APPEND}
+          appendEvents={TN_APPEND_EVENTS}
+          collapsibleAppend
           onlyAvailable
           isZh={isZh}
         />
@@ -731,6 +770,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
         <WcaEventSelector
           availableEvents={TNOODLE_EVENT_SET}
           onlyAvailable
+          collapsibleAppend
+          onExpandedChange={setOtherExpanded}
           selectedEvents={new Set(Object.keys(events))}
           badges={Object.fromEntries(Object.entries(events).map(([ev, cfg]) => [ev, cfg.rounds.length]))}
           onToggle={(ev) => {
@@ -743,32 +784,23 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
             }
           }}
           onRemove={toggleEvent}
-          appendEvents={TWIZZLE_NONWCA_APPEND}
+          appendEvents={TN_APPEND_EVENTS}
           isZh={isZh}
         />
       )}
 
-      {/* 配置条:高阶 NxN + 5x5 打乱模式 共一行,view 模式隐藏 */}
+      {/* 配置条:高阶 NxN(随「其他」展开) + 5x5 打乱模式(选了 5x5 才显),view 模式隐藏整块 */}
       {!loaded && (
         <div className="gen-tn-config-row">
-          <div className="gen-tn-config-group">
-            <label className="gen-tn-config-label">{t('高阶 NxN', 'High-order NxN')}</label>
-            <input
-              type="number"
-              min={8}
-              max={50}
-              value={highNxNInput}
-              placeholder="8-50"
-              onChange={(e) => setHighNxNInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') addHighNxN(highNxNInput); }}
-              onBlur={() => { if (highNxNInput) addHighNxN(highNxNInput); }}
-              className="gen-count-input"
-              style={{ width: '72px' }}
-            />
-          </div>
+          {otherExpanded && (
+            <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN} />
+          )}
           <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
         </div>
       )}
+
+      {/* 生成 / 预览 / 清空 按钮行 — 放在 selector + config 之后,events 列表之前 */}
+      {controlsNode}
 
       {loaded ? null : enabledEvents.length === 0 ? (
         <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
@@ -795,13 +827,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview }: P
                   {cfg.rounds.map((r, ri) => (
                     <div key={ri} className="gen-tn-round-row">
                       <span className="gen-tn-round-num">R{ri + 1}</span>
-                      {ALLOWED_FORMATS[ev].length > 1 ? (
+                      {allowedFormats(ev).length > 1 ? (
                         <select
                           className="gen-tn-format-select"
                           value={r.format}
                           onChange={(e) => updateRound(ev, ri, { format: e.target.value as WcaFormat })}
                         >
-                          {ALLOWED_FORMATS[ev].map((f) => (
+                          {allowedFormats(ev).map((f) => (
                             <option key={f} value={f}>{FORMAT_LABEL[f]}</option>
                           ))}
                         </select>

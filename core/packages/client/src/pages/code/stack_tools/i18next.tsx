@@ -148,3 +148,5 @@ export const I18NEXT: StackTool = {
     { label: 'GitHub · i18next/react-i18next', href: 'https://github.com/i18next/react-i18next' },
   ],
 };
+
+export default I18NEXT;

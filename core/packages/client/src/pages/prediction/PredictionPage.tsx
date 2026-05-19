@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Menu, X as XIcon } from 'lucide-react';
+import { ArrowLeft, Menu, X as XIcon, HelpCircle } from 'lucide-react';
 import { LineChart, type Series } from './charts';
 import { fitExpFloor, type DataPoint } from './models';
 import { EVENTS, formatVal, toDisplay, toDisplayAvg } from './events';
@@ -278,6 +278,14 @@ export default function PredictionPage() {
         <article className="pred-article">
           <h1 className="pred-title">
             {isZh ? '速拧的尽头: 全 WCA 项目极限预测' : 'The Limits of Speedcubing: WCA-Wide Forecast'}
+            <Link
+              to="/wca/prediction-about"
+              className="pred-title-help"
+              title={isZh ? '这页是干啥的?' : 'What is this page?'}
+              aria-label={isZh ? '查看说明' : 'About this page'}
+            >
+              <HelpCircle size={18} strokeWidth={1.75} />
+            </Link>
           </h1>
           <p className="pred-subtitle">
             {isZh

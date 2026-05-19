@@ -147,3 +147,5 @@ export const GIT: StackTool = {
     { label: 'Jujutsu (jj)', href: 'https://github.com/jj-vcs/jj' },
   ],
 };
+
+export default GIT;

@@ -19,6 +19,8 @@ import RidgelineCanvas from './components/RidgelineCanvas';
 import { Flag } from '../../utils/flag';
 import { personFlagIso2, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
+import { Link } from 'react-router-dom';
+import { HelpCircle } from 'lucide-react';
 import './viz.css';
 
 // NOTE: WCA 项目列表
@@ -177,7 +179,17 @@ export default function VizPage() {
       {/* 顶部标题区 */}
       <header className="header">
         <div className="title-block">
-          <h1 id="playerName">{titleNode}</h1>
+          <h1 id="playerName">
+            {titleNode}
+            <Link
+              to="/wca/viz-about"
+              className="viz-title-help"
+              title={isZh ? '这页是干啥的?' : 'What is this page?'}
+              aria-label={isZh ? '查看说明' : 'About this page'}
+            >
+              <HelpCircle size={16} strokeWidth={1.75} />
+            </Link>
+          </h1>
           <div className="subtitle" id="playerMeta">{metaNode}</div>
         </div>
         <ModeSelector />

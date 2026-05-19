@@ -144,3 +144,5 @@ export const PM2: StackTool = {
     { label: 'Startup hook (systemd)', href: 'https://pm2.keymetrics.io/docs/usage/startup/' },
   ],
 };
+
+export default PM2;

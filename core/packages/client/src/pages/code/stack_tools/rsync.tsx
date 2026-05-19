@@ -143,3 +143,5 @@ export const RSYNC: StackTool = {
     { label: 'NEWS — full changelog', href: 'https://download.samba.org/pub/rsync/NEWS' },
   ],
 };
+
+export default RSYNC;

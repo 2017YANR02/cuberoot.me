@@ -17,6 +17,16 @@
 }
 
 .wse-header { margin-bottom: 24px; }
+.wse-title-row { display: inline-flex; align-items: center; gap: 8px; }
+.wse-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #9c8c7e;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.wse-title-help:hover { opacity: 1; color: #D97757; }
 .wse-header-row {
   display: flex;
   justify-content: space-between;

@@ -142,7 +142,19 @@
   margin: 0 0 6px;
   letter-spacing: -0.01em;
   scroll-margin-top: 60px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
+.pred-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted-foreground);
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.pred-title-help:hover { opacity: 1; color: var(--accent); }
 .pred-subtitle {
   color: var(--muted-foreground);
   font-size: 14px;

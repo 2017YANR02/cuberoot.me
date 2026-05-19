@@ -1,9 +1,10 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef, useContext, createContext, useState } from 'react';
 import type { ReactNode, CSSProperties } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
-import { STACK_TOOLS } from './stack_data';
+import { STACK_TOOLS_META, loadStackTool } from './stack_data';
+import type { StackTool } from './stack_tool_types';
 import './ts_intro.css';
 import './stack_intro.css';
 
@@ -21,18 +22,27 @@ export default function StackToolPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const tool = STACK_TOOLS.find((t) => t.slug === slug);
-  const idx = tool ? STACK_TOOLS.findIndex((t) => t.slug === slug) : -1;
-  const prev = idx > 0 ? STACK_TOOLS[idx - 1] : null;
-  const next = idx >= 0 && idx < STACK_TOOLS.length - 1 ? STACK_TOOLS[idx + 1] : null;
+  const meta = STACK_TOOLS_META.find((t) => t.slug === slug);
+  const idx = meta ? STACK_TOOLS_META.findIndex((t) => t.slug === slug) : -1;
+  const prev = idx > 0 ? STACK_TOOLS_META[idx - 1] : null;
+  const next = idx >= 0 && idx < STACK_TOOLS_META.length - 1 ? STACK_TOOLS_META[idx + 1] : null;
+
+  const [detail, setDetail] = useState<StackTool | null>(null);
 
   useEffect(() => {
-    if (tool) {
-      document.title = lang === 'zh' ? `${tool.name} — CubeRoot` : `${tool.name} — CubeRoot`;
-    }
-  }, [tool, lang]);
+    if (!slug || !meta) return;
+    setDetail(null);
+    let cancelled = false;
+    loadStackTool(slug).then((d) => { if (!cancelled) setDetail(d); });
+    return () => { cancelled = true; };
+  }, [slug, meta]);
 
   useEffect(() => {
+    if (meta) document.title = `${meta.name} — CubeRoot`;
+  }, [meta]);
+
+  useEffect(() => {
+    if (!detail) return;
     const root = rootRef.current;
     if (!root) return;
 
@@ -109,34 +119,32 @@ export default function StackToolPage() {
       cancelAnimationFrame(raf);
       anchors.forEach((a) => a.removeEventListener('click', onAnchorClick));
     };
-  }, [slug]);
+  }, [detail]);
 
-  if (!tool) {
-    return <Navigate to="/code/stack" replace />;
-  }
+  if (!meta) return <Navigate to="/code/stack" replace />;
 
-  const t = tool[lang];
+  const mt = meta[lang];
+  const t = detail ? detail[lang] : null;
 
-  // Override the TS palette per-tool. Reuses .ts-intro-root visual system.
   const themeVars: CSSProperties = {
-    ['--ts' as string]: tool.accent,
-    ['--ts-bright' as string]: tool.bright,
-    ['--ts-soft' as string]: `${tool.accent}33`,
-    ['--ts-glow' as string]: `${tool.bright}73`,
+    ['--ts' as string]: meta.accent,
+    ['--ts-bright' as string]: meta.bright,
+    ['--ts-soft' as string]: `${meta.accent}33`,
+    ['--ts-glow' as string]: `${meta.bright}73`,
   };
 
   return (
     <LangCtx.Provider value={lang}>
       <div ref={rootRef} className="ts-intro-root stack-tool-root" style={themeVars}>
         <div className="grid-bg" />
-        <div className="glow glow-tl" style={{ background: `radial-gradient(circle, ${tool.accent}66 0%, transparent 70%)` }} />
-        <div className="glow glow-br" style={{ background: `radial-gradient(circle, ${tool.accent}55 0%, transparent 70%)`, opacity: 0.25 }} />
+        <div className="glow glow-tl" style={{ background: `radial-gradient(circle, ${meta.accent}66 0%, transparent 70%)` }} />
+        <div className="glow glow-br" style={{ background: `radial-gradient(circle, ${meta.accent}55 0%, transparent 70%)`, opacity: 0.25 }} />
 
         <nav className="nav">
           <Link className="nav-logo" to="/code/stack">
-            <span className="stack-nav-glyph" style={{ background: tool.accent }}>{tool.glyph}</span>
-            <span>{tool.name}</span>
-            <span className="nav-tag">: {t.tagline}</span>
+            <span className="stack-nav-glyph" style={{ background: meta.accent }}>{meta.glyph}</span>
+            <span>{meta.name}</span>
+            <span className="nav-tag">: {mt.tagline}</span>
           </Link>
           <ul className="nav-links">
             <li><a href="#what"><L zh="何为" en="What" /></a></li>
@@ -151,32 +159,38 @@ export default function StackToolPage() {
         </nav>
 
         <main id="top">
-          {/* Hero */}
+          {/* Hero — META alone is enough for instant render */}
           <section className="hero">
-            <div className="hero-tag">// {tool.group} · {lang === 'zh' ? '诞生' : 'born'} {tool.since} · v{tool.version}</div>
+            <div className="hero-tag">// {meta.group} · {lang === 'zh' ? '诞生' : 'born'} {meta.since} · v{meta.version}</div>
             <h1 className="hero-title">
-              <span className="hero-name">{tool.name}</span>
+              <span className="hero-name">{meta.name}</span>
               <span className="hero-colon">:</span>
-              <span className="hero-type">{t.tagline}</span>
+              <span className="hero-type">{mt.tagline}</span>
             </h1>
-            <p className="hero-sub">{t.heroSub}</p>
-            <div className="hero-stats">
-              {tool.heroStats.map((stat, i) => (
-                <div className="stat" key={i}>
-                  <span className="stat-num">{stat.num}<small>{stat.unit ?? ''}</small></span>
-                  <span className="stat-label">{lang === 'zh' ? stat.zh : stat.en}</span>
+            {detail && t ? (
+              <>
+                <p className="hero-sub">{t.heroSub}</p>
+                <div className="hero-stats">
+                  {detail.heroStats.map((stat, i) => (
+                    <div className="stat" key={i}>
+                      <span className="stat-num">{stat.num}<small>{stat.unit ?? ''}</small></span>
+                      <span className="stat-label">{lang === 'zh' ? stat.zh : stat.en}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+                <div className="hero-floats">
+                  {detail.floats.map((f, i) => (
+                    <span className={`float f${i + 1}`} key={i}>{f}</span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="hero-sub" style={{ opacity: 0.5 }}>{mt.role}</p>
+            )}
             <div className="hero-cube">
-              <div className="hero-cube-face f-front stack-hero-face" style={{ background: tool.accent }}>
-                <span className="stack-hero-glyph">{tool.glyph}</span>
+              <div className="hero-cube-face f-front stack-hero-face" style={{ background: meta.accent }}>
+                <span className="stack-hero-glyph">{meta.glyph}</span>
               </div>
-            </div>
-            <div className="hero-floats">
-              {tool.floats.map((f, i) => (
-                <span className={`float f${i + 1}`} key={i}>{f}</span>
-              ))}
             </div>
             <a className="scroll-cue" href="#what">
               <span>scroll</span>
@@ -184,150 +198,158 @@ export default function StackToolPage() {
             </a>
           </section>
 
-          {/* 01 What */}
-          <section className="section" id="what">
-            <header className="sec-head">
-              <span className="sec-num">01</span>
-              <h2 className="sec-title"><L zh="何为" en="What is" /> <code>{tool.name}</code></h2>
-              <p className="sec-desc">{t.whatDesc}</p>
-            </header>
-            <div className="stack-intro-prose stack-prose-wide">
-              {lang === 'zh' ? tool.intro.zh : tool.intro.en}
-            </div>
-          </section>
-
-          {/* 02 History */}
-          <section className="section" id="history">
-            <header className="sec-head">
-              <span className="sec-num">02</span>
-              <h2 className="sec-title"><L zh="来路" en="History" /> <code>: Timeline</code></h2>
-              <p className="sec-desc">{t.historyDesc}</p>
-            </header>
-            <ol className="timeline">
-              {tool.history.map((it, i) => (
-                <li className={`tl-item${it.highlight ? ' highlight' : ''}`} key={i}>
-                  <div className="tl-year">{it.year}</div>
-                  <div className="tl-card">
-                    <h3>{it[lang].title}</h3>
-                    <p>{it[lang].desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          {/* 03 Concepts */}
-          <section className="section" id="concepts">
-            <header className="sec-head">
-              <span className="sec-num">03</span>
-              <h2 className="sec-title">{t.conceptsTitle} <code>: Atoms</code></h2>
-              <p className="sec-desc">{t.conceptsDesc}</p>
-            </header>
-            <div className="ts-grid stack-concept-grid">
-              {tool.concepts.map((card, i) => (
-                <div className="ts-card" key={i}>
-                  <div className="ts-tag">{card.tag}</div>
-                  <h3>{card[lang].title}</h3>
-                  <p>{card[lang].desc}</p>
-                  {card.code && <pre className="ts-code"><code>{card.code}</code></pre>}
+          {detail && t ? (
+            <>
+              {/* 01 What */}
+              <section className="section" id="what">
+                <header className="sec-head">
+                  <span className="sec-num">01</span>
+                  <h2 className="sec-title"><L zh="何为" en="What is" /> <code>{meta.name}</code></h2>
+                  <p className="sec-desc">{t.whatDesc}</p>
+                </header>
+                <div className="stack-intro-prose stack-prose-wide">
+                  {lang === 'zh' ? detail.intro.zh : detail.intro.en}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          {/* 04 Why */}
-          <section className="section" id="why">
-            <header className="sec-head">
-              <span className="sec-num">04</span>
-              <h2 className="sec-title"><L zh="为何要选" en="Why pick" /> <code>{tool.name}</code></h2>
-              <p className="sec-desc">{t.whyDesc}</p>
-            </header>
-            <div className="why-grid">
-              {tool.whyCards.map((w, i) => (
-                <div className="why-card" key={i}>
-                  <div className="why-icon">{w.icon}</div>
-                  <h3>{w[lang].title}</h3>
-                  <p>{w[lang].desc}</p>
-                  {w.code && <pre className="ts-code why-code"><code>{w.code}</code></pre>}
+              {/* 02 History */}
+              <section className="section" id="history">
+                <header className="sec-head">
+                  <span className="sec-num">02</span>
+                  <h2 className="sec-title"><L zh="来路" en="History" /> <code>: Timeline</code></h2>
+                  <p className="sec-desc">{t.historyDesc}</p>
+                </header>
+                <ol className="timeline">
+                  {detail.history.map((it, i) => (
+                    <li className={`tl-item${it.highlight ? ' highlight' : ''}`} key={i}>
+                      <div className="tl-year">{it.year}</div>
+                      <div className="tl-card">
+                        <h3>{it[lang].title}</h3>
+                        <p>{it[lang].desc}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              {/* 03 Concepts */}
+              <section className="section" id="concepts">
+                <header className="sec-head">
+                  <span className="sec-num">03</span>
+                  <h2 className="sec-title">{t.conceptsTitle} <code>: Atoms</code></h2>
+                  <p className="sec-desc">{t.conceptsDesc}</p>
+                </header>
+                <div className="ts-grid stack-concept-grid">
+                  {detail.concepts.map((card, i) => (
+                    <div className="ts-card" key={i}>
+                      <div className="ts-tag">{card.tag}</div>
+                      <h3>{card[lang].title}</h3>
+                      <p>{card[lang].desc}</p>
+                      {card.code && <pre className="ts-code"><code>{card.code}</code></pre>}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          {/* 05 Adopters */}
-          <section className="section" id="adopters">
-            <header className="sec-head">
-              <span className="sec-num">05</span>
-              <h2 className="sec-title">{t.adoptersTitle} <code>: WhoUses</code></h2>
-              <p className="sec-desc">{t.adoptersDesc}</p>
-            </header>
-            <div className="adopter-grid">
-              {tool.adopters.map((a, i) => {
-                const inner = (
-                  <>
-                    <div className="adopter-name">{a.name}</div>
-                    <div className="adopter-note">{lang === 'zh' ? a.zhNote : a.enNote}</div>
-                  </>
-                );
-                return a.href ? (
-                  <a key={i} href={a.href} target="_blank" rel="noopener noreferrer" className={`adopter-card${a.highlight ? ' is-highlight' : ''}`}>
-                    {inner}
-                  </a>
-                ) : (
-                  <div key={i} className={`adopter-card${a.highlight ? ' is-highlight' : ''}`}>{inner}</div>
-                );
-              })}
-            </div>
-          </section>
+              {/* 04 Why */}
+              <section className="section" id="why">
+                <header className="sec-head">
+                  <span className="sec-num">04</span>
+                  <h2 className="sec-title"><L zh="为何要选" en="Why pick" /> <code>{meta.name}</code></h2>
+                  <p className="sec-desc">{t.whyDesc}</p>
+                </header>
+                <div className="why-grid">
+                  {detail.whyCards.map((w, i) => (
+                    <div className="why-card" key={i}>
+                      <div className="why-icon">{w.icon}</div>
+                      <h3>{w[lang].title}</h3>
+                      <p>{w[lang].desc}</p>
+                      {w.code && <pre className="ts-code why-code"><code>{w.code}</code></pre>}
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-          {/* 06 Cuberoot */}
-          <section className="section" id="cuberoot">
-            <header className="sec-head">
-              <span className="sec-num">06</span>
-              <h2 className="sec-title"><L zh="它在 cuberoot.me 上做什么" en="What it does on cuberoot.me" /></h2>
-              <p className="sec-desc">{t.role}</p>
-            </header>
-            <div className="stack-intro-prose stack-prose-wide stack-prose-quote">
-              {lang === 'zh' ? tool.cuberoot.zh : tool.cuberoot.en}
-            </div>
-          </section>
+              {/* 05 Adopters */}
+              <section className="section" id="adopters">
+                <header className="sec-head">
+                  <span className="sec-num">05</span>
+                  <h2 className="sec-title">{t.adoptersTitle} <code>: WhoUses</code></h2>
+                  <p className="sec-desc">{t.adoptersDesc}</p>
+                </header>
+                <div className="adopter-grid">
+                  {detail.adopters.map((a, i) => {
+                    const inner = (
+                      <>
+                        <div className="adopter-name">{a.name}</div>
+                        <div className="adopter-note">{lang === 'zh' ? a.zhNote : a.enNote}</div>
+                      </>
+                    );
+                    return a.href ? (
+                      <a key={i} href={a.href} target="_blank" rel="noopener noreferrer" className={`adopter-card${a.highlight ? ' is-highlight' : ''}`}>
+                        {inner}
+                      </a>
+                    ) : (
+                      <div key={i} className={`adopter-card${a.highlight ? ' is-highlight' : ''}`}>{inner}</div>
+                    );
+                  })}
+                </div>
+              </section>
 
-          {/* 07 Outlook */}
-          <section className="section" id="outlook">
-            <header className="sec-head">
-              <span className="sec-num">07</span>
-              <h2 className="sec-title">{t.outlookTitle} <code>: TheRoadAhead</code></h2>
-              <p className="sec-desc">{t.outlookDesc}</p>
-            </header>
-            <div className="future-grid">
-              {tool.outlook.map((card, i) => (
-                <article className={`future-card${card.hot ? ' hot' : ''}${card.big ? ' big' : ''}`} key={i}>
-                  <div className="future-tag">{card.tag}</div>
-                  <h3 className="future-title">{card[lang].title}</h3>
-                  <div className="future-body">{card[lang].body}</div>
-                </article>
-              ))}
-            </div>
-          </section>
+              {/* 06 Cuberoot */}
+              <section className="section" id="cuberoot">
+                <header className="sec-head">
+                  <span className="sec-num">06</span>
+                  <h2 className="sec-title"><L zh="它在 cuberoot.me 上做什么" en="What it does on cuberoot.me" /></h2>
+                  <p className="sec-desc">{t.role}</p>
+                </header>
+                <div className="stack-intro-prose stack-prose-wide stack-prose-quote">
+                  {lang === 'zh' ? detail.cuberoot.zh : detail.cuberoot.en}
+                </div>
+              </section>
 
-          {tool.links.length > 0 && (
-            <section className="section stack-links-section">
-              <header className="sec-head">
-                <span className="sec-num">08</span>
-                <h2 className="sec-title"><L zh="链接" en="Links" /></h2>
-              </header>
-              <ul className="stack-links-list">
-                {tool.links.map((l) => (
-                  <li key={l.href}>
-                    <a href={l.href} target="_blank" rel="noopener noreferrer">
-                      <span>{l.label}</span>
-                      <span className="stack-link-host">{(() => {
-                        try { return new URL(l.href).host; } catch { return ''; }
-                      })()}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {/* 07 Outlook */}
+              <section className="section" id="outlook">
+                <header className="sec-head">
+                  <span className="sec-num">07</span>
+                  <h2 className="sec-title">{t.outlookTitle} <code>: TheRoadAhead</code></h2>
+                  <p className="sec-desc">{t.outlookDesc}</p>
+                </header>
+                <div className="future-grid">
+                  {detail.outlook.map((card, i) => (
+                    <article className={`future-card${card.hot ? ' hot' : ''}${card.big ? ' big' : ''}`} key={i}>
+                      <div className="future-tag">{card.tag}</div>
+                      <h3 className="future-title">{card[lang].title}</h3>
+                      <div className="future-body">{card[lang].body}</div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              {detail.links.length > 0 && (
+                <section className="section stack-links-section">
+                  <header className="sec-head">
+                    <span className="sec-num">08</span>
+                    <h2 className="sec-title"><L zh="链接" en="Links" /></h2>
+                  </header>
+                  <ul className="stack-links-list">
+                    {detail.links.map((l) => (
+                      <li key={l.href}>
+                        <a href={l.href} target="_blank" rel="noopener noreferrer">
+                          <span>{l.label}</span>
+                          <span className="stack-link-host">{(() => {
+                            try { return new URL(l.href).host; } catch { return ''; }
+                          })()}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          ) : (
+            <section className="section" style={{ minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--text-faint)', fontFamily: 'var(--mono)', fontSize: 13, letterSpacing: '.15em' }}>LOADING…</span>
             </section>
           )}
         </main>

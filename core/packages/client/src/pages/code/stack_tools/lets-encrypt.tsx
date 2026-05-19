@@ -147,3 +147,5 @@ export const LETSENCRYPT: StackTool = {
     { label: 'crt.sh — CT log search', href: 'https://crt.sh' },
   ],
 };
+
+export default LETSENCRYPT;

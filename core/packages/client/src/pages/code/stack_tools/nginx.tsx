@@ -145,3 +145,5 @@ export const NGINX: StackTool = {
     { label: 'GitHub mirror', href: 'https://github.com/nginx/nginx' },
   ],
 };
+
+export default NGINX;

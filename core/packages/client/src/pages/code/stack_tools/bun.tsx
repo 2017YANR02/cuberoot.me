@@ -148,3 +148,5 @@ export const BUN: StackTool = {
     { label: 'Bun vs Node compat', href: 'https://bun.sh/docs/runtime/nodejs-apis' },
   ],
 };
+
+export default BUN;

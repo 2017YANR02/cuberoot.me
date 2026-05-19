@@ -119,7 +119,7 @@ export default function ReconSubmitPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('提交录像还原', 'Submit Reconstruction');
+  useDocumentTitle('提交复盘', 'Submit Reconstruction');
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());

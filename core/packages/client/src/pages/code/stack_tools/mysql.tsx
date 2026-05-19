@@ -149,3 +149,5 @@ export const MYSQL: StackTool = {
     { label: 'WCA results export', href: 'https://www.worldcubeassociation.org/export/results' },
   ],
 };
+
+export default MYSQL;

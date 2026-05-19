@@ -606,7 +606,19 @@
     letter-spacing: -0.01em;
     margin: 0 0.3rem 0 0;
     color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
+.globe-page .globe-title-help {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-sub);
+    opacity: 0.5;
+    text-decoration: none;
+    transition: opacity 0.15s, color 0.15s;
+}
+.globe-page .globe-title-help:hover { opacity: 1; color: var(--accent); }
 
 .globe-page .globe-logo-link {
     display: inline-flex;

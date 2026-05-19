@@ -146,3 +146,5 @@ export const TAILWIND: StackTool = {
     { label: 'v4.3 release notes', href: 'https://tailwindcss.com/blog/tailwindcss-v4-3' },
   ],
 };
+
+export default TAILWIND;

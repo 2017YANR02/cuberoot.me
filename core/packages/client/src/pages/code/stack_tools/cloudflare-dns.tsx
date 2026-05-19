@@ -144,3 +144,5 @@ export const CLOUDFLARE_DNS: StackTool = {
     { label: 'API reference', href: 'https://developers.cloudflare.com/api/' },
   ],
 };
+
+export default CLOUDFLARE_DNS;

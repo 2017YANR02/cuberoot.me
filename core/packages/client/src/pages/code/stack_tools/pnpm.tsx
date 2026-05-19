@@ -147,3 +147,5 @@ export const PNPM: StackTool = {
     { label: 'Workspaces', href: 'https://pnpm.io/workspaces' },
   ],
 };
+
+export default PNPM;

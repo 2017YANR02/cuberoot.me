@@ -145,3 +145,5 @@ export const TAILSCALE: StackTool = {
     { label: 'Headscale (OSS)', href: 'https://github.com/juanfont/headscale' },
   ],
 };
+
+export default TAILSCALE;

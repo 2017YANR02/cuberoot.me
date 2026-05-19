@@ -142,3 +142,5 @@ export const CLAUDE_CODE: StackTool = {
     { label: 'MCP spec', href: 'https://modelcontextprotocol.io' },
   ],
 };
+
+export default CLAUDE_CODE;
