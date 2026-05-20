@@ -28,15 +28,9 @@ import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import AlgPlayer from '../../components/AlgPlayer';
 import { CaseThumb } from './CaseThumb';
-import { compactSq1Alg } from '../gen/sq1_svg';
+import { formatScrambleForEvent } from '../gen/sq1_svg';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './alg.css';
-
-/** sq1 algs/setups under /alg/sq1 are shown stripped of parens/commas/spaces.
- *  AlgPlayer still gets the raw form — its `normalizeAlgForTwisty` canonicalizes. */
-function displayAlg(puzzle: AlgPuzzle, alg: string): string {
-  return puzzle === 'sq1' ? compactSq1Alg(alg) : alg;
-}
 
 /** F2L `c.setup` is canonical (FR slot disturbed). For other oris, append a `y`-rotation
  *  so the disturbed slot ends up at the right visual position (cube also rotates with it,
@@ -104,7 +98,7 @@ function sanitizeAlgHtml(html: string): string {
 
 function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; algHtml?: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const [copied, setCopied] = useState(false);
-  const algShown = displayAlg(puzzle, alg);
+  const algShown = formatScrambleForEvent(puzzle, alg);
   return (
     <>
       <div
@@ -587,7 +581,7 @@ export default function AlgCategoryPage() {
                           {c.setup && (
                             <div className="alg-case-standard">
                               <Shuffle size={13} className="alg-case-icon" aria-label={isZh ? '打乱' : 'Setup'} />
-                              <code>{displayAlg(puzzleParam, c.setup)}</code>
+                              <code>{formatScrambleForEvent(puzzleParam, c.setup)}</code>
                             </div>
                           )}
                         </div>
