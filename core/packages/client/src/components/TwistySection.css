@@ -30,3 +30,34 @@
   background: color-mix(in srgb, var(--accent, #5b8cff) 12%, transparent);
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #5b8cff) 35%, transparent);
 }
+
+/* 长按进度环:pointerdown 立刻显示在按下位置,300ms conic 圈满 → commit 模式生效。
+   pointer-events:none 保持透传,不抢 cubing.js camera drag。
+   @property 让 --p (angle) 可 animate;否则 conic-gradient 不能逐帧。 */
+@property --skewb-ring-p {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.twisty-skewb-ring {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  --skewb-ring-p: 0deg;
+  background: conic-gradient(var(--accent, #5b8cff) var(--skewb-ring-p), transparent var(--skewb-ring-p));
+  -webkit-mask: radial-gradient(circle, transparent 16px, black 17px, black 23px, transparent 24px);
+          mask: radial-gradient(circle, transparent 16px, black 17px, black 23px, transparent 24px);
+  z-index: 6;
+}
+.twisty-skewb-ring--armed {
+  opacity: 0.85;
+  animation: skewbLongPressFill 300ms linear forwards;
+}
+@keyframes skewbLongPressFill {
+  from { --skewb-ring-p: 0deg; }
+  to   { --skewb-ring-p: 360deg; }
+}
