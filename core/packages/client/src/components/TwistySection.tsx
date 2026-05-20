@@ -624,137 +624,110 @@ export default function TwistySection({
     };
   }, [playerNonce, puzzle]);
 
-  // skewb 长按 x/x' commit:overlay 默认 pointer-events:none,普通拖动由 cubing.js
-  // 处理 camera (lat + lon)。section 容器 capture-phase 监听 pointerdown:
-  // 300ms 内位移 < 10px → 长按生效,overlay 抢 pointerCapture 进 commit 模式
-  // (cubing.js 收 pointercancel 自动停 drag);后续每 80px |Δy| 触发 1 个 x/x'
-  // (experimentalAddMove → cubing.js 内置 ~500ms 动画,连发自动 tempo-scale)。
-  const skewbOverlayRef = useRef<HTMLDivElement | null>(null);
+  // skewb 拖动直接 commit x/x':任何纵向 pointermove 累 80px / 1 commit。
+  // cubing.js 同时收到 pointer events (overlay 默认 pointer-events:none) → 处理横拖 lon。
+  // lat lock:pointerdown 锁定 down 时的 lat,orbit fresh listener 把 cubing.js 拖出的
+  // lat 变化 reset 回 lockedLat → 纵拖不卡 ±90° 限位,横拖 lon 不受影响。
   useEffect(() => {
     if (puzzle !== 'skewb') return;
-    const el = skewbOverlayRef.current;
-    const section = el?.parentElement;
+    const section = containerRef.current?.parentElement;
     const player = playerInstRef.current;
-    if (!el || !section || !player) return;
+    if (!section || !player) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = (player as any).experimentalModel;
-    if (!m?.alg || !m?.timestampRequest) return;
+    const sceneModel = m?.twistySceneModel;
+    if (!sceneModel?.orbitCoordinates || !sceneModel?.orbitCoordinatesRequest) return;
 
-    const LONG_PRESS_MS = 300;
-    const MOVE_TOLERANCE = 14;  // 14px 容纳触屏轻微抖动
     const PIXELS_PER_COMMIT = 80;
-
-    let armedTimer: number | null = null;
-    let armedPid = -1;
-    let armedX = 0, armedY = 0;
-    let commitMode = false;
-    let commitPid = -1;
-    let commitLastY = 0;
-
-    // 进度环 DOM: pointerdown 立刻显示在按下位置,300ms 圈满 → 进 commit 模式。
-    // 不抢 pointer events,纯视觉提示用户在长按。位移超 tolerance 或松手 → 隐藏。
-    const ring = document.createElement('div');
-    ring.className = 'twisty-skewb-ring';
-    el.appendChild(ring);
-    const showRing = (x: number, y: number) => {
-      const r = el.getBoundingClientRect();
-      ring.style.left = `${x - r.left}px`;
-      ring.style.top = `${y - r.top}px`;
-      ring.classList.remove('twisty-skewb-ring--armed');
-      // force reflow 让 animation 重启
-      void ring.offsetWidth;
-      ring.classList.add('twisty-skewb-ring--armed');
-    };
-    const hideRing = () => {
-      ring.classList.remove('twisty-skewb-ring--armed');
-    };
+    const UNLOCK_DELAY_MS = 600;  // pointerup 后保留 lockedLat 等 cubing.js inertia 平息
+    let active = false;
+    let locking = false;
+    let activePid = -1;
+    let downY = 0;
+    let committedSteps = 0;
+    let lockedLat: number | null = null;
+    let resetting = false;
+    let unlockTimer: number | null = null;
+    // 持续跟踪 latest orbit,sectionDown 同步读取 = down 时刻的真实 lat。
+    let latestLat: number | null = null;
 
     const commit = (move: string) => {
       try { player.experimentalAddMove(move); } catch { /* */ }
     };
 
-    const enterCommit = (pid: number) => {
-      commitMode = true;
-      commitPid = pid;
-      commitLastY = armedY;
-      el.style.pointerEvents = 'auto';
-      el.classList.add('twisty-skewb-overlay--active');
-      hideRing();
-      try { el.setPointerCapture(pid); } catch { /* */ }
-    };
-
-    const exitCommit = (pid: number) => {
-      commitMode = false;
-      commitPid = -1;
-      el.style.pointerEvents = 'none';
-      el.classList.remove('twisty-skewb-overlay--active');
-      try { el.releasePointerCapture(pid); } catch { /* */ }
-    };
-
-    const clearArmed = () => {
-      if (armedTimer != null) window.clearTimeout(armedTimer);
-      armedTimer = null;
-      armedPid = -1;
-      hideRing();
+    const onOrbit = (o: { latitude: number; longitude: number; distance: number }) => {
+      latestLat = o.latitude;
+      if (!locking || resetting) return;
+      // locking 但还没 lock(latestLat 此前 null)→ 第一次 fresh fire 时立刻锁
+      if (lockedLat === null) { lockedLat = o.latitude; return; }
+      if (Math.abs(o.latitude - lockedLat) < 1e-3) return;
+      resetting = true;
+      try {
+        sceneModel.orbitCoordinatesRequest.set({
+          latitude: lockedLat,
+          longitude: o.longitude,
+          distance: o.distance,
+        });
+      } catch { /* */ }
+      resetting = false;
     };
 
     const sectionDown = (e: PointerEvent) => {
-      if (commitMode) return;
+      if (active) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      armedPid = e.pointerId;
-      armedX = e.clientX;
-      armedY = e.clientY;
-      showRing(e.clientX, e.clientY);
-      if (armedTimer != null) window.clearTimeout(armedTimer);
-      armedTimer = window.setTimeout(() => {
-        armedTimer = null;
-        if (armedPid !== -1) enterCommit(armedPid);
-      }, LONG_PRESS_MS);
+      active = true;
+      locking = true;
+      activePid = e.pointerId;
+      downY = e.clientY;
+      committedSteps = 0;
+      if (unlockTimer != null) { window.clearTimeout(unlockTimer); unlockTimer = null; }
+      if (lockedLat === null) lockedLat = latestLat;  // 若 trailing window 内有上次锁,沿用
     };
     const sectionMove = (e: PointerEvent) => {
-      if (armedTimer == null || e.pointerId !== armedPid) return;
-      const dx = e.clientX - armedX;
-      const dy = e.clientY - armedY;
-      if (Math.hypot(dx, dy) > MOVE_TOLERANCE) clearArmed();
+      if (!active || e.pointerId !== activePid) return;
+      const dy = e.clientY - downY;
+      const target = Math.trunc(dy / PIXELS_PER_COMMIT);
+      const delta = target - committedSteps;
+      if (delta === 0) return;
+      // dy 增大(向下拖)→ commit x';dy 减小(向上拖)→ commit x
+      const move = delta > 0 ? "x'" : 'x';
+      const n = Math.abs(delta);
+      for (let i = 0; i < n; i++) commit(move);
+      committedSteps = target;
     };
     const sectionUp = (e: PointerEvent) => {
-      if (e.pointerId === armedPid) clearArmed();
+      if (e.pointerId !== activePid) return;
+      active = false;
+      activePid = -1;
+      committedSteps = 0;
+      // 延迟 unlock:cubing.js 的 inertia 动画在 pointerup 后还会继续改 lat 几百 ms,
+      // 这段时间保持 locking=true 让 onOrbit 继续 reset 回 lockedLat。
+      if (unlockTimer != null) window.clearTimeout(unlockTimer);
+      unlockTimer = window.setTimeout(() => {
+        unlockTimer = null;
+        if (!active) {
+          locking = false;
+          lockedLat = null;
+        }
+      }, UNLOCK_DELAY_MS);
     };
 
-    const overlayMove = (e: PointerEvent) => {
-      if (!commitMode || e.pointerId !== commitPid) return;
-      const dy = e.clientY - commitLastY;
-      if (Math.abs(dy) < PIXELS_PER_COMMIT) return;
-      const steps = Math.floor(Math.abs(dy) / PIXELS_PER_COMMIT);
-      const sign = dy > 0 ? 1 : -1;
-      const move = dy > 0 ? "x'" : 'x';
-      for (let i = 0; i < steps; i++) commit(move);
-      commitLastY += sign * steps * PIXELS_PER_COMMIT;
-    };
-    const overlayUp = (e: PointerEvent) => {
-      if (e.pointerId !== commitPid) return;
-      exitCommit(e.pointerId);
-    };
-
+    // 预热 latestLat:effect 跑后立刻取一次,避免用户首次 down 时 latestLat 还是 null
+    sceneModel.orbitCoordinates.get().then((o: { latitude: number }) => {
+      if (typeof o?.latitude === 'number' && latestLat === null) latestLat = o.latitude;
+    }).catch(() => { /* */ });
+    sceneModel.orbitCoordinates.addFreshListener(onOrbit);
     section.addEventListener('pointerdown', sectionDown, true);
     section.addEventListener('pointermove', sectionMove, true);
     section.addEventListener('pointerup', sectionUp, true);
     section.addEventListener('pointercancel', sectionUp, true);
-    el.addEventListener('pointermove', overlayMove);
-    el.addEventListener('pointerup', overlayUp);
-    el.addEventListener('pointercancel', overlayUp);
     return () => {
-      if (armedTimer != null) window.clearTimeout(armedTimer);
+      if (unlockTimer != null) window.clearTimeout(unlockTimer);
+      try { sceneModel.orbitCoordinates.removeFreshListener(onOrbit); } catch { /* */ }
       section.removeEventListener('pointerdown', sectionDown, true);
       section.removeEventListener('pointermove', sectionMove, true);
       section.removeEventListener('pointerup', sectionUp, true);
       section.removeEventListener('pointercancel', sectionUp, true);
-      el.removeEventListener('pointermove', overlayMove);
-      el.removeEventListener('pointerup', overlayUp);
-      el.removeEventListener('pointercancel', overlayUp);
-      el.style.pointerEvents = '';
-      el.classList.remove('twisty-skewb-overlay--active');
-      try { ring.remove(); } catch { /* */ }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, playerNonce]);
@@ -762,7 +735,6 @@ export default function TwistySection({
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
       <div ref={containerRef} className="twisty-container" />
-      {puzzle === 'skewb' && <div ref={skewbOverlayRef} className="twisty-skewb-overlay" />}
     </div>
   );
 }
