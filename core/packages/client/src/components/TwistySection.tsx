@@ -624,68 +624,115 @@ export default function TwistySection({
     };
   }, [playerNonce, puzzle]);
 
-  // skewb pixel-based 无限 x/x' chain:透明 overlay 接管所有 pointer 事件,
-  // cubing.js drag 完全失效 → camera 不动。每 PIXELS_PER_COMMIT 像素 |Δy| 触发 1 commit。
-  // Δy 参考点每次 commit 后移动,连续同方向拖可累积无数次。
+  // skewb 长按 x/x' commit:overlay 默认 pointer-events:none,普通拖动由 cubing.js
+  // 处理 camera (lat + lon)。section 容器 capture-phase 监听 pointerdown:
+  // 300ms 内位移 < 10px → 长按生效,overlay 抢 pointerCapture 进 commit 模式
+  // (cubing.js 收 pointercancel 自动停 drag);后续每 80px |Δy| 触发 1 个 x/x'
+  // (experimentalAddMove → cubing.js 内置 ~500ms 动画,连发自动 tempo-scale)。
   const skewbOverlayRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (puzzle !== 'skewb') return;
     const el = skewbOverlayRef.current;
+    const section = el?.parentElement;
     const player = playerInstRef.current;
-    if (!el || !player) return;
+    if (!el || !section || !player) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = (player as any).experimentalModel;
     if (!m?.alg || !m?.timestampRequest) return;
 
+    const LONG_PRESS_MS = 300;
+    const MOVE_TOLERANCE = 10;
     const PIXELS_PER_COMMIT = 80;
-    let active = false;
-    let pid = -1;
-    let lastY = 0;
+
+    let armedTimer: number | null = null;
+    let armedPid = -1;
+    let armedX = 0, armedY = 0;
+    let commitMode = false;
+    let commitPid = -1;
+    let commitLastY = 0;
 
     const commit = (move: string) => {
-      // experimentalAddMove 触发 cubing.js 内置 ~500ms 动画(rapid 连发自动 tempo-scale 串行)。
-      // 该方法已被 player 初始化时 wrap,会自动 onUserMove → SimPage 同步 alg / URL / textarea。
-      // 禁用 `player.alg= + timestampRequest.set('end')` — 直接跳末尾,没动画。
-      try {
-        player.experimentalAddMove(move);
-      } catch { /* */ }
+      try { player.experimentalAddMove(move); } catch { /* */ }
     };
 
-    const onDown = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      active = true;
-      pid = e.pointerId;
-      lastY = e.clientY;
-      try { el.setPointerCapture(e.pointerId); } catch { /* */ }
-      e.preventDefault();
+    const enterCommit = (pid: number) => {
+      commitMode = true;
+      commitPid = pid;
+      commitLastY = armedY;
+      el.style.pointerEvents = 'auto';
+      el.classList.add('twisty-skewb-overlay--active');
+      try { el.setPointerCapture(pid); } catch { /* */ }
     };
-    const onMove = (e: PointerEvent) => {
-      if (!active || e.pointerId !== pid) return;
-      const dy = e.clientY - lastY;
+
+    const exitCommit = (pid: number) => {
+      commitMode = false;
+      commitPid = -1;
+      el.style.pointerEvents = 'none';
+      el.classList.remove('twisty-skewb-overlay--active');
+      try { el.releasePointerCapture(pid); } catch { /* */ }
+    };
+
+    const clearArmed = () => {
+      if (armedTimer != null) window.clearTimeout(armedTimer);
+      armedTimer = null;
+      armedPid = -1;
+    };
+
+    const sectionDown = (e: PointerEvent) => {
+      if (commitMode) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      armedPid = e.pointerId;
+      armedX = e.clientX;
+      armedY = e.clientY;
+      if (armedTimer != null) window.clearTimeout(armedTimer);
+      armedTimer = window.setTimeout(() => {
+        armedTimer = null;
+        if (armedPid !== -1) enterCommit(armedPid);
+      }, LONG_PRESS_MS);
+    };
+    const sectionMove = (e: PointerEvent) => {
+      if (armedTimer == null || e.pointerId !== armedPid) return;
+      const dx = e.clientX - armedX;
+      const dy = e.clientY - armedY;
+      if (Math.hypot(dx, dy) > MOVE_TOLERANCE) clearArmed();
+    };
+    const sectionUp = (e: PointerEvent) => {
+      if (e.pointerId === armedPid) clearArmed();
+    };
+
+    const overlayMove = (e: PointerEvent) => {
+      if (!commitMode || e.pointerId !== commitPid) return;
+      const dy = e.clientY - commitLastY;
       if (Math.abs(dy) < PIXELS_PER_COMMIT) return;
       const steps = Math.floor(Math.abs(dy) / PIXELS_PER_COMMIT);
       const sign = dy > 0 ? 1 : -1;
-      // dy > 0 (drag down) → commit x'(对齐 cubing.js orbit 旧约定:lat 增 → x')
-      // dy < 0 (drag up)   → commit x
       const move = dy > 0 ? "x'" : 'x';
       for (let i = 0; i < steps; i++) commit(move);
-      lastY += sign * steps * PIXELS_PER_COMMIT;
+      commitLastY += sign * steps * PIXELS_PER_COMMIT;
     };
-    const onUp = (e: PointerEvent) => {
-      if (e.pointerId !== pid) return;
-      active = false;
-      try { el.releasePointerCapture(e.pointerId); } catch { /* */ }
+    const overlayUp = (e: PointerEvent) => {
+      if (e.pointerId !== commitPid) return;
+      exitCommit(e.pointerId);
     };
 
-    el.addEventListener('pointerdown', onDown);
-    el.addEventListener('pointermove', onMove);
-    el.addEventListener('pointerup', onUp);
-    el.addEventListener('pointercancel', onUp);
+    section.addEventListener('pointerdown', sectionDown, true);
+    section.addEventListener('pointermove', sectionMove, true);
+    section.addEventListener('pointerup', sectionUp, true);
+    section.addEventListener('pointercancel', sectionUp, true);
+    el.addEventListener('pointermove', overlayMove);
+    el.addEventListener('pointerup', overlayUp);
+    el.addEventListener('pointercancel', overlayUp);
     return () => {
-      el.removeEventListener('pointerdown', onDown);
-      el.removeEventListener('pointermove', onMove);
-      el.removeEventListener('pointerup', onUp);
-      el.removeEventListener('pointercancel', onUp);
+      if (armedTimer != null) window.clearTimeout(armedTimer);
+      section.removeEventListener('pointerdown', sectionDown, true);
+      section.removeEventListener('pointermove', sectionMove, true);
+      section.removeEventListener('pointerup', sectionUp, true);
+      section.removeEventListener('pointercancel', sectionUp, true);
+      el.removeEventListener('pointermove', overlayMove);
+      el.removeEventListener('pointerup', overlayUp);
+      el.removeEventListener('pointercancel', overlayUp);
+      el.style.pointerEvents = '';
+      el.classList.remove('twisty-skewb-overlay--active');
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, playerNonce]);
