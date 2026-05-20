@@ -89,6 +89,13 @@ export function saveSettings(s: SimSettings): void {
 
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
 function mapSensitivity(v: number): number { return 0.05 + (v / 100) * 0.7; }   // 0.05 ~ 0.75 (整体 -50%)
+/** 拖空白 orbit 用的 radians-per-pixel。v=50 → 0.01 (历史硬编码默认),v∈[0,100] → [0.00125, 0.01875]。
+ *  NxN/SQ1 共享。Twisty 由 cubing.js 自管不接入。 */
+export function mapOrbitK(v: number): number { return mapSensitivity(v) / 40; }
+/** SQ1 turn-drag 角速度缩放。v=100 → 4.0,v=50 → ~2.13,v=0 → ~0.27。整体放大 4×
+ *  让 turn 跟得上手指 — 原 1:1 polar atan2 实际拖完一格需要大段位移,放大后更跟手。
+ *  贴片不再严格跟手指,符合"灵敏度低 = 转得慢"的 slider 语义。 */
+export function mapTurnDragFactor(v: number): number { return mapSensitivity(v) / 0.75 * 4; }
 function mapScale(v: number): number { return 0.5 + v / 100; }                  // 0.5 ~ 1.5
 function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        // 2 ~ 10
 // upstream cuber 的镜头映射:50 居中,两端到 ±π/2

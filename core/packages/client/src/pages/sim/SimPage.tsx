@@ -92,7 +92,7 @@ const CLICK_RULES_3X3: Record<string, { sign: string; reverse: boolean }> = {
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
-import { loadSettings, saveSettings, applySettings, type SimSettings } from './SettingDrawer';
+import { loadSettings, saveSettings, applySettings, mapOrbitK, mapTurnDragFactor, type SimSettings } from './SettingDrawer';
 import PlayerControls from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
@@ -250,7 +250,7 @@ export default function SimPage() {
     // (rotate 模式不走这里;走 controller.handleMove 旧路径 = upstream snap+record 行为)
     const Q = Math.PI / 2;
     world.controller.onOrbit = (dx, dy) => {
-      const k = 0.01;
+      const k = mapOrbitK(settingsRef.current.sensitivity);
       world.scene.rotation.y += dx * k;
       world.scene.rotation.x += dy * k;
       const cube = asNxN(world);
@@ -644,8 +644,10 @@ export default function SimPage() {
           const w = worldRef.current;
           const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
           if (d != null) {
-            sq1DragLastDelta = d;
-            sq1DragApply(sq1Drag, d);
+            // sensitivity 缩放:factor<1 时贴片不再 1:1 跟手指,但 turn 速率随 slider。
+            const scaled = d * mapTurnDragFactor(settingsRef.current.sensitivity);
+            sq1DragLastDelta = scaled;
+            sq1DragApply(sq1Drag, scaled);
             w.dirty = true;
           }
           return;
@@ -656,7 +658,7 @@ export default function SimPage() {
           const dy = e.clientY - sq1LastY;
           sq1LastX = e.clientX;
           sq1LastY = e.clientY;
-          const k = 0.01;
+          const k = mapOrbitK(settingsRef.current.sensitivity);
           world.scene.rotation.y += dx * k;
           world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
           world.scene.updateMatrix();
@@ -665,8 +667,10 @@ export default function SimPage() {
         }
         // 等待 threshold 决定 turn vs 视角
         if (sq1Pending && !sq1MovedPastThreshold && !pinching) {
-          const dx = e.clientX - sq1DownX;
-          const dy = e.clientY - sq1DownY;
+          // sq1DownX/Y 是 canvas-local;dx/dy 必须用 localX/Y 同坐标系才对,
+          // 否则 sim-header 那 ~49px 会让 threshold 秒过 + 方向判定全错。
+          const dx = localX - sq1DownX;
+          const dy = localY - sq1DownY;
           if (Math.hypot(dx, dy) >= SQ1_DRAG_THRESHOLD_PX) {
             sq1MovedPastThreshold = true;
             const w = worldRef.current;
@@ -685,30 +689,47 @@ export default function SimPage() {
             if (sq1Drag?.kind === 'slice') {
               // Mid-slab hit → 一次性 slash 动画(不跟手指);后续 move 已被
               // sq1MovedPastThreshold gate 挡住,松手时 sq1Drag 已 null,不走 commit。
+              // dy < 0 (向上拖) → 反向 180° 弧;dy > 0 (向下拖) → 默认弧。
+              // state 层 180° 等价,只是 axis-angle tween 走反方向。
               const c2 = w.cube as Sq1Cube;
-              const ok = c2.twister.twist({ kind: 'slice' }, false, true);
+              const sliceDir: 1 | -1 = (localY < sq1DownY) ? -1 : 1;
+              const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
               if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
               sq1Drag = null;
             } else if (sq1Drag) {
+              // U/D 右半 + 主纵向拖 → 升级为 slash(避免跟同区域的 turn 误碰:
+              // 横向 / 斜向仍走 turn-drag)。dy 符号决定 sliceDir,跟中腰拖一致。
+              if (sq1Drag.startEastHalf && Math.abs(dy) > Math.abs(dx) * 1.5) {
+                const c2 = w.cube as Sq1Cube;
+                const sliceDir: 1 | -1 = (dy < 0) ? -1 : 1;
+                const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
+                if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+                sq1Drag = null;
+                return;
+              }
               // turn-drag — 从 down 角度开始, 立即 apply 当前 delta 让贴片不卡顿
               const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
               if (d != null) {
-                sq1DragLastDelta = d;
-                sq1DragApply(sq1Drag, d);
+                const scaled = d * mapTurnDragFactor(settingsRef.current.sensitivity);
+                sq1DragLastDelta = scaled;
+                sq1DragApply(sq1Drag, scaled);
                 w.dirty = true;
               }
             } else {
               // sq1DragStart returned null = ray miss = 不在 cube 上 → 切视角。
               // 命中 cap / 侧壁 → turn-drag;命中 equator → slice (上面已处理)。
               sq1Rotating = true;
-              sq1LastX = sq1DownX;
-              sq1LastY = sq1DownY;
+              // sq1DownX/Y 是 canvas-local (减过 rect.left/top),后面 dx2/dy2 用 viewport
+              // 的 e.clientX/Y 算,要先把 down 位置转回 viewport,否则会把 sim-header
+              // 那 ~49px 偏移当成 pitch jump 突变。
+              sq1LastX = sq1DownX + rmove.left;
+              sq1LastY = sq1DownY + rmove.top;
               // 把 threshold 内积累的位移补上, 否则手指会原地卡一下
               const dx2 = e.clientX - sq1LastX;
               const dy2 = e.clientY - sq1LastY;
               sq1LastX = e.clientX;
               sq1LastY = e.clientY;
-              const k = 0.01;
+              const k = mapOrbitK(settingsRef.current.sensitivity);
               world.scene.rotation.y += dx2 * k;
               world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy2 * k));
               world.scene.updateMatrix();
@@ -768,8 +789,19 @@ export default function SimPage() {
         }
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
-      // sq1 slash 走 PlayerControls 的"/" 按钮 / 实体键盘 / alg textarea 直接输入,
-      // tap-on-side 启发式跟 bot-face ray 撞冲突易误触,不做。
+      // 单击中腰 → 触发 slash(方向默认 +1)。turn-drag 已在上面消化,
+      // 单击只剩"没过 threshold + raycast 命中 equator"这一种安全情形,
+      // 不会跟 bot-face turn-drag 冲突(turn-drag 必走 threshold 分支)。
+      if (sq1Pending && !sq1MovedPastThreshold && worldRef.current?.puzzleKind === 'sq1') {
+        const w = worldRef.current;
+        if (w.cube instanceof Sq1Cube) {
+          const hit = sq1DragStart(w.cube, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+          if (hit?.kind === 'slice') {
+            const ok = w.cube.twister.twist({ kind: 'slice' }, false, true, 1);
+            if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+          }
+        }
+      }
       sq1Pending = false;
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
