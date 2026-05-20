@@ -891,7 +891,7 @@ function CompInfoPanel({
   }
   if (info.event_change_deadline_date) {
     const d = toIsoDate(new Date(info.event_change_deadline_date));
-    rows.push({ label: isZh ? '改项目截止' : 'Event change deadline', value: d });
+    rows.push({ label: isZh ? '修改截止' : 'Event change deadline', value: d });
   }
   if (info.waiting_list_deadline_date) {
     const d = toIsoDate(new Date(info.waiting_list_deadline_date));
