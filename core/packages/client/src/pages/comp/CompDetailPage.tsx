@@ -41,6 +41,15 @@ interface User {
   name: string;
   wcaid: string;
   region: string;
+  // server 端 enrichComp 已解析填充 — WS patch 时拿这两个字段直接做 tag 推断,免再 fetch 国家/洲映射.
+  countryId?: string;
+  continentId?: string;
+}
+
+interface CompRecordsSnapshot {
+  wr: Record<string, number>;  // "event|isAvg" → value
+  cr: Record<string, number>;  // "event|isAvg|continent_id" → value
+  nr: Record<string, number>;  // "event|isAvg|country_id" → value
 }
 
 interface RoundMeta {
@@ -93,6 +102,8 @@ interface CompData {
   fetchedAt: number;
   /** wca_db 路径预填:每选手本比赛前累积 PB(centiseconds).Psych Sheet 直接消费,避免逐选手调 WCA API 触发 429. */
   personalRecords?: Record<string, Record<string, { single?: number; average?: number }>>;
+  /** cubing / wca_live 路径预填:WR/CR/NR 快照(仅本场涉及国家/洲),WS patch 用. */
+  currentRecords?: CompRecordsSnapshot;
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────
@@ -111,6 +122,32 @@ function regionToIso2(region: string): string {
  *       注意:对很老的比赛,选手当前 PR 远好于当年成绩,此路径会漏标 — 必须靠 wca_db 路径补.
  *  注: WCA 已收录该比赛的话,PB 会包含本比赛的成绩,此时只有"最好那把"相等 = PR;
  *  比赛进行中的话,PB 不包含,首次 sub-PB 就算 PR。 */
+/** 给 WS 实时推送的成绩做 record tag 推断 — 跟 server enrichComp/inferTag 同款逻辑.
+ *  cubing.com / WCA Live 在 WCA 公示前 sr/ar 通常为空,但成绩可能已破纪录;snapshot 来自
+ *  comp 初次 fetch 时 server 算好回传的 CompRecordsSnapshot. */
+function inferLiveRecordTag(
+  value: number,
+  eventId: string,
+  isAvg: boolean,
+  user: User | undefined,
+  snapshot: CompRecordsSnapshot | undefined,
+): string {
+  if (!snapshot || !value || value <= 0) return '';
+  const k = `${eventId}|${isAvg ? '1' : '0'}`;
+  const wrMin = snapshot.wr[k];
+  if (wrMin !== undefined && value <= wrMin) return 'WR';
+  if (!user) return '';
+  if (user.continentId) {
+    const crMin = snapshot.cr[`${k}|${user.continentId}`];
+    if (crMin !== undefined && value <= crMin) return 'CR';
+  }
+  if (user.countryId) {
+    const nrMin = snapshot.nr[`${k}|${user.countryId}`];
+    if (nrMin !== undefined && value <= nrMin) return 'NR';
+  }
+  return '';
+}
+
 function classifyPr(result: LiveResult, pb: PbByEvent | null): { singlePr: boolean; averagePr: boolean } {
   // server 已算好,直接用(undefined = wca_db 之外的源,继续走 WCA REST 回退)
   if (result.pS !== undefined || result.pA !== undefined) {
@@ -382,6 +419,17 @@ export default function CompDetailPage() {
         const r = patch.result;
         // 只接收本比赛的事件 (server 会按 competitionId 过滤,这里再防一道)
         if (r.c !== prev.compId) return prev;
+        // WS 推送的 sr/ar 在 WCA 公示前通常为空 — 拿 server 给的 currentRecords 快照推断,
+        // 跟初次 HTTP 快照里 server enrichComp 同款.已有 tag 的不动.
+        const u = prev.users[String(r.n)];
+        if (r.b > 0 && !r.sr) {
+          const tag = inferLiveRecordTag(r.b, r.e, false, u, prev.currentRecords);
+          if (tag) r.sr = tag;
+        }
+        if (r.a > 0 && !r.ar) {
+          const tag = inferLiveRecordTag(r.a, r.e, true, u, prev.currentRecords);
+          if (tag) r.ar = tag;
+        }
         const key = `${r.e}:${r.r}`;
         const arr = prev.resultsByRound[key] || [];
         const nextArr = applyResultPatch(arr, patch);
@@ -441,6 +489,18 @@ export default function CompDetailPage() {
     setData(prev => {
       if (!prev) return prev;
       const key = `${update.eventId}:${update.roundTypeId}`;
+      // WCA Live subscription 推整轮 — 给每条空 sr/ar 用 snapshot 推断 (跟 WS / 初次 HTTP 同款).
+      for (const r of update.rows) {
+        const u = prev.users[String(r.n)];
+        if (r.b > 0 && !r.sr) {
+          const tag = inferLiveRecordTag(r.b, r.e, false, u, prev.currentRecords);
+          if (tag) r.sr = tag;
+        }
+        if (r.a > 0 && !r.ar) {
+          const tag = inferLiveRecordTag(r.a, r.e, true, u, prev.currentRecords);
+          if (tag) r.ar = tag;
+        }
+      }
       return {
         ...prev,
         resultsByRound: { ...prev.resultsByRound, [key]: update.rows },

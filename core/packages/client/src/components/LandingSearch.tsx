@@ -81,13 +81,27 @@ export default function LandingSearch({ cards, lang }: Props) {
   const qRaw = query.trim();
   const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
 
+  // 用 requestIdleCallback 在空闲时段预拉 comps + persons 索引,首屏 LCP 不受影响,
+  // 等用户点搜索框敲字时数据通常已在内存,体感跟 CalendarPage 的同步过滤一致。
   useEffect(() => {
-    if (!xSearchEnabled || xLoaded) return;
-    Promise.all([
-      loadPersonsIndex().catch(() => null),
-      loadComps().then(arr => { compsRef.current = arr; }).catch(() => null),
-    ]).then(() => setXLoaded(true));
-  }, [xSearchEnabled, xLoaded]);
+    let cancelled = false;
+    const kick = () => {
+      if (cancelled) return;
+      Promise.all([
+        loadPersonsIndex().catch(() => null),
+        loadComps().then(arr => { compsRef.current = arr; }).catch(() => null),
+      ]).then(() => { if (!cancelled) setXLoaded(true); });
+    };
+    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
+    type CIC = (id: number) => void;
+    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: CIC };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(kick, { timeout: 2000 });
+      return () => { cancelled = true; w.cancelIdleCallback?.(id); };
+    }
+    const id = setTimeout(kick, 200);
+    return () => { cancelled = true; clearTimeout(id); };
+  }, []);
 
   useEffect(() => {
     if (!xSearchEnabled) {
