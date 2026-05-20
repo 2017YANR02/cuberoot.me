@@ -26,6 +26,7 @@ import { renderUnfoldedSvgForEvent, eventToCubeSize } from './cube_unfolded_svg'
 import { getScramble2DSvg } from './cubing_2d_svg';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './clock_svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from './sq1_svg';
+import { renderMirrorBlocksScrambleSvg } from './mirror_blocks_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './mega_svg';
 import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from './pyraminx_svg';
 import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from './skewb_svg';
@@ -592,7 +593,9 @@ async function renderPage(
       void isExtra;
       if (hdr.showPreview) {
         let portedSvg: string | null = null;
-        if (sheet.event === 'clock') {
+        if (sheet.event === 'mirror_333') {
+          portedSvg = renderMirrorBlocksScrambleSvg(a.scramble);
+        } else if (sheet.event === 'clock') {
           portedSvg = renderClockScrambleSvg(a.scramble, hdr.eventColors?.clock ?? DEFAULT_CLOCK_COLORS);
         } else if (sheet.event === 'sq1') {
           portedSvg = renderSq1ScrambleSvg(a.scramble, hdr.eventColors?.sq1 ?? DEFAULT_SQ1_COLORS);
