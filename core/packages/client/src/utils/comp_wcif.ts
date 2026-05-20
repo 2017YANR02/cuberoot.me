@@ -111,8 +111,15 @@ export interface CubingZhMeta {
   reopenAt: string | null;
 }
 const EMPTY_ZH: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null };
-const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v1-';
+// v2: 空结果短缓存,populated 才长缓存——新比赛公示当天首访拿不到时不要锁死 7 天
+const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v2-';
+const ZH_EMPTY_TTL_MS = 60 * 60 * 1000; // 1h
+const ZH_FULL_TTL_MS = 7 * CACHE_TTL_MS; // 7d
 const zhInflight = new Map<string, Promise<CubingZhMeta>>();
+
+function isEmptyZh(m: CubingZhMeta): boolean {
+  return !m.location && !m.withdrawDeadline && !m.reopenAt;
+}
 
 export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
   if (!wcaId) return EMPTY_ZH;
@@ -120,7 +127,8 @@ export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
     const raw = localStorage.getItem(ZH_CACHE_PREFIX + wcaId);
     if (raw) {
       const { t, v } = JSON.parse(raw) as { t: number; v: CubingZhMeta };
-      if (Date.now() - t <= 7 * CACHE_TTL_MS) return v;
+      const ttl = isEmptyZh(v) ? ZH_EMPTY_TTL_MS : ZH_FULL_TTL_MS;
+      if (Date.now() - t <= ttl) return v;
     }
   } catch { /* ignore */ }
   const existing = zhInflight.get(wcaId);
