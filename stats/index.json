@@ -73,6 +73,11 @@
           "titleZh": "移动平均"
         },
         {
+          "id": "birthday_pbs",
+          "titleEn": "Personal records where the time equals the date",
+          "titleZh": "个人纪录成绩等于当日日期"
+        },
+        {
           "id": "smallest_diff_between_single_and_average",
           "titleEn": "Smallest difference between a single and an average",
           "titleZh": "单次与平均差距最小"

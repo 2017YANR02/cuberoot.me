@@ -111,6 +111,8 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'average_of': () => import('../statistics/average_of.js'),
   // NOTE: 阶段 E — bar chart race 风格的 top-10 历史演化
   'top10_history': () => import('../statistics/top10_history.js'),
+  // NOTE: 趣味:历史 PR 中成绩 M.DD 等于比赛日期 M月DD日
+  'birthday_pbs': () => import('../statistics/birthday_pbs.js'),
 };
 
 async function main() {
