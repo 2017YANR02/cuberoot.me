@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw, Settings, ChevronRight, Shuffle, Keyboard, Grid3x3 } from 'lucide-react';
-import { Alg } from 'cubing/alg';
+import { Alg, Move } from 'cubing/alg';
 import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
@@ -125,7 +125,11 @@ export default function PlayerControls({
     if (!algDraft.trim()) return [];
     try {
       const cleaned = cleanForPlayer(algDraft);
-      return [...new Alg(cleaned).experimentalLeafMoves()].map((m) => new TwistAction(m.toString()));
+      const out: TwistAction[] = [];
+      for (const node of new Alg(cleaned).expand().childAlgNodes()) {
+        if (node instanceof Move) out.push(new TwistAction(node.toString()));
+      }
+      return out;
     } catch {
       return [];
     }
@@ -197,7 +201,10 @@ export default function PlayerControls({
       return;
     }
     try {
-      const n = [...new Alg(algBefore).experimentalLeafMoves()].length;
+      let n = 0;
+      for (const node of new Alg(algBefore).expand().childAlgNodes()) {
+        if (node instanceof Move) n++;
+      }
       jumpToStep(n);
     } catch { /* ignore */ }
   }, [jumpToStep, isSq1]);
