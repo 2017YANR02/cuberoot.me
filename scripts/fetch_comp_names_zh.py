@@ -35,7 +35,7 @@ API_DELAY_SEC = 0.3
 
 
 def fetch_url(url, raw=False):
-    """带重试的 HTTP 请求。"""
+    """带重试的 HTTP 请求。失败时抛 RuntimeError——避免静默写入 partial 缓存导致数据丢失。"""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     for attempt in range(3):
         try:
@@ -46,7 +46,7 @@ def fetch_url(url, raw=False):
         except (urllib.error.HTTPError, urllib.error.URLError, OSError) as e:
             print(f"  [WARN] 请求失败 ({e}), 重试 {attempt+1}/3...")
             time.sleep(2)
-    return "" if raw else []
+    raise RuntimeError(f"fetch failed after 3 retries: {url}")
 
 
 def _detect_total_pages(html):
@@ -271,15 +271,16 @@ def main():
     print("=== 构建中国比赛英文名 → 中文名映射 ===\n")
     start = time.time()
 
-    # NOTE: --refresh 增量模式：只刷新第 1 页（最新比赛）和 WCA API 缓存
+    # NOTE: --refresh 必须清掉所有 cubing.com 页缓存 —— 新增比赛会让 alias 跨页位移，
+    # 只清 page_1 会让"原来在 page_1 末尾的比赛被挤到 page_2"那一批从输出里消失。
     if "--refresh" in sys.argv:
-        p1 = CACHE_DIR / "page_1.html"
+        page_caches = list(CACHE_DIR.glob("page_*.html"))
+        for p in page_caches:
+            p.unlink()
         wca = CACHE_DIR / "wca_cn_comps.json"
-        if p1.exists():
-            p1.unlink()
         if wca.exists():
             wca.unlink()
-        print("[INFO] 增量模式：已清除第 1 页和 WCA API 缓存\n")
+        print(f"[INFO] 增量模式：已清除 {len(page_caches)} 个 cubing.com 页缓存 + WCA API 缓存\n")
 
     # Step 1: cubing.com → [(alias, zh_name, start_date), ...]
     print("[Step 1] 从 cubing.com 提取中文名...")
