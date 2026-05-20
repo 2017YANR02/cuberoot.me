@@ -22,6 +22,7 @@ import { opsRoutes } from './routes/ops.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
+import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 
 const app = new Hono();
 
@@ -91,6 +92,14 @@ ensureCube555Daemon().catch(err => {
 getCurrentRecords().catch(err => {
   console.error('[current_records] startup warm failed:', err);
 });
+
+// 中国大陆比赛中文元数据(cubing.com 地点 + 退/重开报名时间)预热:
+// 启动 30s 后扫一遍 all_upcoming_comps.json 的 CN 比赛,DB 缺/>7d 的串行 scrape;
+// 之后每天跑一次。pm2 重启即触发,新公示比赛最坏窗口 ~24h(单条 miss 仍走写穿 fallback)。
+setTimeout(() => {
+  warmCnCompZh();
+  setInterval(warmCnCompZh, 24 * 60 * 60 * 1000);
+}, 30_000);
 
 const PORT = Number(process.env.PORT) || 3001;
 
