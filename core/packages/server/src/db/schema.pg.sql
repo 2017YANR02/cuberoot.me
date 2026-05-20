@@ -347,6 +347,17 @@ CREATE TABLE wiki_additions (
 );
 CREATE INDEX idx_wiki_additions_term ON wiki_additions (term_id, created_at) WHERE deleted_at IS NULL;
 
+-- ── 22. cn_comp_zh (中国大陆比赛 cubing.com 中文地点缓存) ──
+-- migration 0012_cn_comp_zh.sql
+-- 写穿:miss 时 server 端 scrape cubing.com 后 upsert;启动 30s 后 + 每天遍历 upcoming CN 比赛预热。
+CREATE TABLE cn_comp_zh (
+  wca_id            VARCHAR(80) PRIMARY KEY,
+  location_zh       TEXT,
+  withdraw_deadline VARCHAR(32),
+  reopen_at         VARCHAR(32),
+  fetched_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ── 21. ops_commands (/code/ops runbook 命令 + 提示词) ──
 -- migration 0010_ops_commands.sql / 0011_seed_ops_commands.sql
 -- admin 编辑走 X-Admin-Key (server/routes/ops.ts),public GET 5min cache

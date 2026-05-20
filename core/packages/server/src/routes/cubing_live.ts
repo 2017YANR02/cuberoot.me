@@ -13,7 +13,7 @@ import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { query } from '../db/connection.js';
 import { enrichComp, type CompRecordsSnapshot } from '../utils/current_records.js';
-import { getUpcomingCnCompName } from '../utils/upcoming_comps_cache.js';
+import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -1246,73 +1246,22 @@ function trimToOnlyRound(data: CompData, eventId: string, roundId: string): Comp
   };
 }
 
-// ─── /v1/cubing-zh: 中国大陆比赛 Chinese 元数据(scrape cubing.com) ───────
-// cubing.com 是国内魔方赛事网,出 venue/address/details 合并的中文地点 + 退赛/重开报名时间.
-// 仅查 wca_competitions.country_id='China' 时才出击;其它国家直接 null.
-interface CubingZhMeta {
-  location: string | null;
-  withdrawDeadline: string | null; // "YYYY-MM-DD HH:MM:SS"
-  reopenAt: string | null;
-}
-const cubingZhCache = new Map<string, { at: number; meta: CubingZhMeta }>();
-const CUBING_ZH_TTL_MS = 7 * 24 * 60 * 60_000;
-const EMPTY_ZH_META: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null };
-
-function extractDdLeadingText(html: string, label: string): string | null {
-  const re = new RegExp(`<dt>\\s*${label}\\s*<\\/dt>\\s*<dd>([\\s\\S]*?)<\\/dd>`);
-  const m = html.match(re);
-  if (!m) return null;
-  // dd 里可能套 <div class="text-info">...</div>(暂停报名说明),只取首个 tag 之前的纯文本.
-  const lead = m[1].split('<')[0].replace(/\s+/g, ' ').trim();
-  return lead || null;
-}
-
+// ─── /v1/cubing-zh: 中国大陆比赛中文元数据 ───────
+// cubing.com 详情页的"地点"(合并 venue/address/details) + 退赛/重开报名时间。
+// 走 PG cn_comp_zh 写穿:DB 命中秒返回,miss → scrape → upsert;启动 + 每日 warm batch
+// 已预填全部 upcoming CN 比赛。详 utils/cn_comp_zh_cache.ts。
 cubingLiveRoutes.get('/cubing-zh/:wcaId', async (c) => {
   const wcaId = c.req.param('wcaId');
   if (!/^[A-Za-z0-9]{1,80}$/.test(wcaId)) return c.json({ error: 'invalid id' }, 400);
-  const cached = cubingZhCache.get(wcaId);
-  if (cached && Date.now() - cached.at < CUBING_ZH_TTL_MS) {
-    c.header('Cache-Control', 'public, max-age=604800');
-    return c.json(cached.meta);
-  }
   try {
-    const rows = await query<{ name: string; country_id: string }>(
-      `SELECT name, country_id FROM wca_competitions WHERE id = ?`,
-      [wcaId],
-    );
-    // 新公示比赛还没进 wca_competitions (WCA developer dump 周更),走 all_upcoming_comps.json 兜底
-    let compName: string | null = null;
-    if (rows.length > 0 && rows[0].country_id === 'China') {
-      compName = rows[0].name;
-    } else if (rows.length === 0) {
-      compName = await getUpcomingCnCompName(wcaId);
-    }
-    if (!compName) {
-      cubingZhCache.set(wcaId, { at: Date.now(), meta: EMPTY_ZH_META });
-      c.header('Cache-Control', 'public, max-age=604800');
-      return c.json(EMPTY_ZH_META);
-    }
-    const slug = compName.trim().replace(/['`‘’]/g, '').replace(/\s+/g, '-');
-    const res = await fetch(`${CUBING_BASE}/competition/${encodeURIComponent(slug)}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-      },
-    });
-    const meta: CubingZhMeta = { ...EMPTY_ZH_META };
-    if (res.ok) {
-      const html = await res.text();
-      meta.location = extractDdLeadingText(html, '地点');
-      meta.withdrawDeadline = extractDdLeadingText(html, '退赛截止时间');
-      meta.reopenAt = extractDdLeadingText(html, '重开报名时间');
-    }
-    cubingZhCache.set(wcaId, { at: Date.now(), meta });
-    c.header('Cache-Control', 'public, max-age=604800');
+    const meta = await getCnCompZh(wcaId);
+    const isEmpty = !meta.location && !meta.withdrawDeadline && !meta.reopenAt;
+    // 命中数据缓存 7d;空(非 CN / cubing.com 无页面)只缓存 1h
+    c.header('Cache-Control', isEmpty ? 'public, max-age=3600' : 'public, max-age=604800');
     return c.json(meta);
   } catch (e) {
     console.warn(`[cubing-zh] ${wcaId}:`, (e as Error).message);
-    return c.json(EMPTY_ZH_META);
+    return c.json({ location: null, withdrawDeadline: null, reopenAt: null });
   }
 });
 
