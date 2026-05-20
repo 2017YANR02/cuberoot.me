@@ -10,17 +10,23 @@
   margin-bottom: 12px;
 }
 
-/* skewb pointer overlay: 透明 + 接管所有 pointer 事件,cubing.js drag 收不到。
-   纵向拖动累积 Δy → commit x/x'。横向位移忽略 → 无任何 y/z 旋转产生。
-   覆盖整个 .twisty-container 区域。 */
+/* skewb 长按 commit 模式 overlay。默认 pointer-events:none — cubing.js 拿到 camera drag
+   (左右 lon / 上下 lat)。长按 300ms 不动后 JS 切到 active:抢 pointerCapture +
+   接收后续 pointermove → 累积 |Δy| / 80px commit x/x'。松手退出。 */
 .twisty-skewb-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  pointer-events: none;
   touch-action: none;
-  cursor: ns-resize;
   background: transparent;
   z-index: 5;
+  transition: background 120ms ease;
+}
+.twisty-skewb-overlay--active {
+  cursor: ns-resize;
+  background: color-mix(in srgb, var(--accent, #5b8cff) 12%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #5b8cff) 35%, transparent);
 }
