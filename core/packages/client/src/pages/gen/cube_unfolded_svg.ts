@@ -2,33 +2,37 @@
  * Render an NxN cube state as an unfolded WCA-net SVG (white-top / green-front).
  *
  * Pure string output, no DOM, no async, no shadow root, no styles. Every fill
- * is inlined as an attribute so svg2pdf.js renders perfectly. Fast: ~1ms per
- * scramble vs hundreds of ms for spinning up a TwistyPlayer 2D.
+ * is inlined as an attribute so svg2pdf.js renders perfectly.
  *
- * Layout (in cell units, viewBox 0 0 4N 3N):
+ * Layout (in cell units, viewBox 0 0 4N+5*GAP 3N+4*GAP):
  *
  *           [U]
  *      [L] [F] [R] [B]
  *           [D]
  *
- * Sticker indexing follows visualcube's CubeData convention (verified: for
- * each face, `face[row*N+col]` is the sticker at (row, col) when looking at
- * that face from outside in standard orientation — U/D viewed with F at the
- * bottom/top of view respectively, L/F/R/B with U at top).
+ * State simulator is the shared `nnn_sim.ts` (cstimer port). Per-face flip
+ * convention matches cstimer's `nnnImage.face` — L/B mirror horizontally, D
+ * mirrors vertically — so the unfolded view shows each face as if viewed
+ * from outside in standard orientation (U/D with F at the bottom-edge/top-edge,
+ * L/F/R/B with U at top).
+ *
+ * Was previously on visualcube `CubeData` (face arrays + .map() per turn). At
+ * N=300 that allocates a 90000-element Array per face-rotation × ~6000 moves
+ * → seconds of GC pressure. The cstimer sim is in-place Uint8Array, faster +
+ * unified with mirror-blocks renderer.
  */
-import { CubeData, parseAlgorithm, Face, AllFaces } from '@cuberoot/visualcube';
+import { simulateNxN, FACE_D, FACE_L, FACE_B, FACE_U, FACE_R, FACE_F } from './nnn_sim';
 
-// Tnoodle CubePuzzle.java defaultColorScheme — pure WCA hexes.
-// (Java Color.WHITE/RED/GREEN/etc are #ffffff/#ff0000/#00ff00 etc, plus
-//  L = new Color(255, 128, 0) "orange heraldic tincture".)
-const WCA_COLORS: Record<number, string> = {
-  [Face.U]: '#FFFFFF',
-  [Face.D]: '#FFFF00',
-  [Face.F]: '#00FF00',
-  [Face.B]: '#0000FF',
-  [Face.L]: '#FF8000',
-  [Face.R]: '#FF0000',
-};
+// WCA colors keyed by cstimer face id (D L B U R F = 0..5). Matches tnoodle
+// CubePuzzle.java defaultColorScheme.
+const WCA_COLORS: string[] = [
+  '#FFFF00', // D yellow
+  '#FF8000', // L orange (heraldic tincture)
+  '#0000FF', // B blue
+  '#FFFFFF', // U white
+  '#FF0000', // R red
+  '#00FF00', // F green
+];
 
 // Tnoodle CubePuzzle: cubieSize=10, gap=2 → gap-as-fraction-of-cubie = 0.2.
 // Stickers stroke is svglite default (1px on cubieSize=10) → 0.1 of a cubie.
@@ -54,7 +58,7 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
   '777': '7x7x7',
 };
 
-/** Synthetic id for high-order NxN (N ≥ 8) without a WCA event: `nxn8`..`nxn50`. */
+/** Synthetic id for high-order NxN (N ≥ 8) without a WCA event: `nxn8`..`nxn300`. */
 const NXN_HIGH_RE = /^nxn(\d+)$/;
 export function eventToCubeSize(event: string): number | null {
   const p = EVENT_TO_PUZZLE[event];
@@ -62,7 +66,7 @@ export function eventToCubeSize(event: string): number | null {
   const m = NXN_HIGH_RE.exec(event);
   if (m) {
     const n = parseInt(m[1], 10);
-    if (n >= 2 && n <= 50) return n;
+    if (n >= 2 && n <= 300) return n;
   }
   return null;
 }
@@ -75,53 +79,37 @@ export function renderUnfoldedSvgForEvent(event: string, scramble: string): stri
 }
 
 export function renderUnfoldedSvg(N: number, scramble: string): string {
-  const cd = new CubeData(N);
-  for (const f of AllFaces) {
-    cd.faces[f] = Array(N * N).fill(WCA_COLORS[f]);
-  }
-  try {
-    const turns = parseAlgorithm(scramble);
-    for (const t of turns) cd.turn(t);
-  } catch (e) {
-    console.warn('[cube_unfolded_svg] parseAlgorithm failed', scramble, e);
-  }
+  const posit = simulateNxN(N, scramble);
+  const s2 = N * N;
 
-  // Tnoodle CubePuzzle layout (CubePuzzle.java getCubeViewWidth/Height):
-  //   total width  = (size*cubie + gap)*4 + gap = 4*N + 5*GAP   (cell units)
-  //   total height = (size*cubie + gap)*3 + gap = 3*N + 4*GAP
-  // Face origins (in cell units):
-  //   L = (gap, 2*gap + N)
-  //   U = (2*gap + N, gap)
-  //   F = (2*gap + N, 2*gap + N)
-  //   R = (3*gap + 2N, 2*gap + N)
-  //   B = (4*gap + 3N, 2*gap + N)
-  //   D = (2*gap + N, 3*gap + 2N)
+  // Tnoodle CubePuzzle layout — same width/height as before:
+  //   total width  = (cubie+gap)*4 + gap = 4*N + 5*GAP
+  //   total height = (cubie+gap)*3 + gap = 3*N + 4*GAP
   const w = 4 * N + 5 * GAP;
   const h = 3 * N + 4 * GAP;
+  // Face origin (NW corner of N×N grid) keyed by cstimer face id 0..5.
+  const FACE_OFFSETS: [number, number][] = [];
+  FACE_OFFSETS[FACE_D] = [2 * GAP + N,       3 * GAP + 2 * N];
+  FACE_OFFSETS[FACE_L] = [GAP,                2 * GAP + N];
+  FACE_OFFSETS[FACE_B] = [4 * GAP + 3 * N,   2 * GAP + N];
+  FACE_OFFSETS[FACE_U] = [2 * GAP + N,       GAP];
+  FACE_OFFSETS[FACE_R] = [3 * GAP + 2 * N,   2 * GAP + N];
+  FACE_OFFSETS[FACE_F] = [2 * GAP + N,       2 * GAP + N];
+
   const parts: string[] = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
-  // Tnoodle's puzzle SVG is transparent; the gray cell background is drawn by
-  // the PDF renderer behind the image, and shows through the face gaps.
 
-  const offsets: Record<number, [number, number]> = {
-    [Face.U]: [2 * GAP + N, GAP],
-    [Face.L]: [GAP, 2 * GAP + N],
-    [Face.F]: [2 * GAP + N, 2 * GAP + N],
-    [Face.R]: [3 * GAP + 2 * N, 2 * GAP + N],
-    [Face.B]: [4 * GAP + 3 * N, 2 * GAP + N],
-    [Face.D]: [2 * GAP + N, 3 * GAP + 2 * N],
-  };
-
-  for (const f of AllFaces) {
-    const [ox, oy] = offsets[f];
-    const stickers = cd.faces[f] as string[];
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
-        const color = stickers[r * N + c] ?? '#000000';
-        const x = ox + c;
-        const y = oy + r;
+  for (let f = 0; f < 6; f++) {
+    const [ox, oy] = FACE_OFFSETS[f];
+    for (let i = 0; i < N; i++) {
+      // L/B faces mirror horizontally relative to internal posit (verbatim cstimer convention)
+      const x = (f === FACE_L || f === FACE_B) ? N - 1 - i : i;
+      for (let j = 0; j < N; j++) {
+        // D face mirrors vertically
+        const y = (f === FACE_D) ? N - 1 - j : j;
+        const color = WCA_COLORS[posit[f * s2 + y * N + x]];
         parts.push(
-          `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}" stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
+          `<rect x="${ox + i}" y="${oy + j}" width="1" height="1" fill="${color}" stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
         );
       }
     }

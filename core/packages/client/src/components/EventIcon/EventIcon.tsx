@@ -23,7 +23,7 @@ export function EventIcon({ event, className, title }: EventIconProps) {
     const cls = `cubing-icon ${UNOFFICIAL_ICON_CLASS[id]}${className ? ` ${className}` : ''}`;
     return <span className={cls} title={title} aria-label={id} />;
   }
-  // 高阶 NxN(`nxn8`..`nxn50`)字体里没图标,统一退回 7x7 视觉。
+  // 高阶 NxN(`nxn8`..`nxn300`)字体里没图标,统一退回 7x7 视觉。
   const iconId = /^nxn\d+$/.test(id) ? '777' : id;
   const cls = `cubing-icon event-${iconId}${className ? ` ${className}` : ''}`;
   return <span className={cls} title={title} aria-label={id} />;

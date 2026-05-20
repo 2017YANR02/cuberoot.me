@@ -204,7 +204,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, [flagVer]);
 
-  // 高阶 NxN(nxn8..nxn50)按 N 升序排,接在 WCA 21 项之后。
+  // 高阶 NxN(nxn8..nxn300)按 N 升序排,接在 WCA 21 项之后。
   const customNxN = useMemo(
     () => Object.keys(events)
       .filter((id) => /^nxn\d+$/.test(id))

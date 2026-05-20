@@ -315,7 +315,7 @@ export async function pooledScramble(event: string): Promise<string | null> {
   const nxnHigh = NXN_HIGH_RE.exec(event);
   if (nxnHigh) {
     const n = parseInt(nxnHigh[1], 10);
-    if (n >= 2 && n <= 50) return randomMoveScrambleNxN(n);
+    if (n >= 2 && n <= 300) return randomMoveScrambleNxN(n);
     return null;
   }
   const wcaId = toWcaEventId(event);
