@@ -83,7 +83,7 @@ export default class Sq1Twister {
    *  block at this seam. (Scramble loading uses applyMoveInstant via setup
    *  / push, which bypass this check — typed scrambles play exactly as
    *  written even if they pop.) */
-  twist(move: Sq1Move, fast: boolean, force: boolean): boolean {
+  twist(move: Sq1Move, fast: boolean, force: boolean, sliceDir?: 1 | -1): boolean {
     if (move.kind === 'slice' && !isSlashValid(this.cube.state)) return false;
     if (fast) {
       this.cube.applyMoveInstant(move);
@@ -94,7 +94,7 @@ export default class Sq1Twister {
       this.activeTween = null;
     }
     if (this.activeTween) return false;
-    this._animate(move);
+    this._animate(move, sliceDir);
     return true;
   }
 
@@ -141,8 +141,18 @@ export default class Sq1Twister {
     this._animate(next);
   }
 
-  private _animate(move: Sq1Move): void {
-    const anims: PieceAnim[] = this.cube.beginMove(move);
+  private _animate(move: Sq1Move, sliceDir?: 1 | -1): void {
+    // dir 优先级:显式参数 > state.sliceSolved 推断 > +1。
+    // queue 播放 / 单步 scrub 不传 dir,走 sliceSolved:从 solved 出发第 1 个
+    // slice = -1 (R2 视觉,东半顶层向前翻下来),翻面后下一个 = +1,依次交替。
+    // 手 drag 触发显式传 dy 符号,不走这条。
+    let dir: 1 | -1 = 1;
+    if (sliceDir !== undefined) {
+      dir = sliceDir;
+    } else if (move.kind === 'slice') {
+      dir = this.cube.state.sliceSolved ? -1 : 1;
+    }
+    const anims: PieceAnim[] = this.cube.beginMove(move, dir);
     // Magnitude in 90° units, so CubeGroup.tweenDuration gives the same curve
     // NxN twists use: 30° → 0.5×frames, 90° → frames, 180° → ~1.33×frames.
     const d = move.kind === 'slice'

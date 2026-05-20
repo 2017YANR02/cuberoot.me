@@ -14,7 +14,7 @@
  * then commit state + history (mirrors what Sq1Cube.finishMove does).
  */
 import * as THREE from 'three';
-import { HALF_MID, LAYER_HEIGHT } from './sq1Geometry';
+import { HALF_MID, LAYER_HEIGHT, W, WEDGE_HALF_CHORD } from './sq1Geometry';
 import { applySq1Move, moveToString, snapValidLayerTurn, type Sq1Move } from './sq1State';
 import type Sq1Cube from './Sq1Cube';
 import tweener from '../tweener';
@@ -30,6 +30,9 @@ export interface Sq1TurnDrag {
   layer: 'top' | 'bot';
   startAngle: number;
   starts: { pivot: THREE.Object3D; quat: THREE.Quaternion; pos: THREE.Vector3 }[];
+  /** Hit point lay east of the slice chord (即 slice 那侧)。SimPage 用这个 +
+   *  threshold-cross 时 dx/dy 主分量来决定是否把 turn-drag 升级成 slash。 */
+  startEastHalf: boolean;
 }
 
 /** Mid-slab hit. Carries no state — SimPage fires a one-shot slice animation
@@ -115,7 +118,10 @@ export function sq1DragStart(
       quat: p.pivot.quaternion.clone(),
       pos: p.pivot.position.clone(),
     }));
-  return { kind: 'turn', layer, startAngle: Math.atan2(refZ, refX), starts };
+  // east-of-chord 半边:跟 Sq1Cube.beginMove 的 slice 测试同一条 chord(法线 SLICE_AXIS)。
+  // refX/refZ 取的是 layer 参考平面上 hit 点,跟 turn-drag 起手 atan2 一致。
+  const startEastHalf = refX * W + refZ * WEDGE_HALF_CHORD > 0;
+  return { kind: 'turn', layer, startAngle: Math.atan2(refZ, refX), starts, startEastHalf };
 }
 
 /** Re-raycast onto the same plane and return the Δθ since start (radians,

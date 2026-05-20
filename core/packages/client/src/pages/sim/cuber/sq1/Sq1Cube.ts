@@ -155,8 +155,12 @@ export default class Sq1Cube extends THREE.Group {
   }
 
   /** Compute the per-piece animation plan for a move. Caller (Sq1Twister)
-   *  tweens between startQuat/Pos → endQuat/Pos and then calls finishMove. */
-  beginMove(move: Sq1Move): PieceAnim[] {
+   *  tweens between startQuat/Pos → endQuat/Pos and then calls finishMove.
+   *
+   *  `sliceDir` (slice only): +1 = default arc (east half flips top→back),
+   *  -1 = reversed arc (east half flips top→front, "向上拖" 手感). 180° 在
+   *  state 上等价,只是 axis-angle tween 走反弧。 */
+  beginMove(move: Sq1Move, sliceDir: 1 | -1 = 1): PieceAnim[] {
     const anims: PieceAnim[] = [];
     if (move.kind === 'turn') {
       const Y = new THREE.Vector3(0, 1, 0);
@@ -172,7 +176,8 @@ export default class Sq1Cube extends THREE.Group {
         }
       }
     } else {
-      const sliceDelta = new THREE.Quaternion().setFromAxisAngle(SLICE_AXIS, Math.PI);
+      const sliceAngle = sliceDir * Math.PI;
+      const sliceDelta = new THREE.Quaternion().setFromAxisAngle(SLICE_AXIS, sliceAngle);
       const probe = new THREE.Vector3();
       for (const p of this.pieces) {
         // pivot.matrix is the piece's transform IN CUBE-LOCAL frame
@@ -183,11 +188,11 @@ export default class Sq1Cube extends THREE.Group {
         probe.set(W, 0, isCorner ? -W : 0);
         probe.applyMatrix4(p.pivot.matrix);
         if (probe.x * W + probe.z * WEDGE_HALF_CHORD > 0.5) {
-          anims.push(this._makeAnim(p.pivot, sliceDelta, SLICE_AXIS, Math.PI));
+          anims.push(this._makeAnim(p.pivot, sliceDelta, SLICE_AXIS, sliceAngle));
         }
       }
       for (const m of this.middle) {
-        if (m.side === 1) anims.push(this._makeAnim(m.pivot, sliceDelta, SLICE_AXIS, Math.PI));
+        if (m.side === 1) anims.push(this._makeAnim(m.pivot, sliceDelta, SLICE_AXIS, sliceAngle));
       }
     }
     return anims;
