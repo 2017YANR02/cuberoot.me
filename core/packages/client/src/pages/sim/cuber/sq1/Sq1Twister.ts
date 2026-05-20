@@ -33,14 +33,17 @@ export default class Sq1Twister {
 
   /** Flush all pending tweens to their end states. */
   finish(): void {
+    // 必须先把 queue 抽空。tweener.finish 同步触发当前 tween 的 v=1 callback,
+    // callback 里会 `_kick()` 从 queue 取下一步启动 NEW tween → activeTween=NEW;
+    // 紧接着外层 `this.activeTween = null` 会把 NEW 引用抹掉,tweener 还在 update
+    // 那个 NEW tween 但本对象追踪不到 → orphan,reset 后还在改 pivot → pop。
+    // 先 splice 队列让 _kick 无活可干,this.activeTween=null 才是真终结。
+    const pending = this.queue.splice(0);
     if (this.activeTween) {
       tweener.finish(this.activeTween);
       this.activeTween = null;
     }
-    while (this.queue.length > 0) {
-      const m = this.queue.shift()!;
-      this.cube.applyMoveInstant(m);
-    }
+    for (const m of pending) this.cube.applyMoveInstant(m);
   }
 
   /** Reset cube and apply scramble instantly. Clears history. */
