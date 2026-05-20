@@ -334,14 +334,9 @@ export default function TwistySection({
     pyraminx: { thresholdDeg: 120, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // 校准 (.tmp/png/mega_lon-71_alg-RU vs mega_lon0_alg-RUUvi)
     megaminx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
-    // skewb 只接 R-axis(+X)纵向拖动 → commit x/x';横向拖动只 orbit 视角不 commit。
-    // 转体集合 = {x, x'} 的所有叠加 (x4=identity)。
-    skewb: {
-      thresholdDeg: 90,
-      axes: [
-        { name: 'R', axis: [1, 0, 0], moveCW: 'x', moveCCW: "x'" },
-      ],
-    },
+    // skewb 走自己的 pixel-based effect (横/纵两轴 80px = 1 commit),不在这里配。
+    // (this entry kept empty 以让 ROTATE_CONFIG['skewb'] 仍存在供 algToOrientation 等用)
+    skewb: { thresholdDeg: 90, axes: [] },
   };
   const currentAlgRef = useRef(alg);
   useEffect(() => { currentAlgRef.current = alg; }, [alg]);
@@ -392,7 +387,7 @@ export default function TwistySection({
     const player = playerInstRef.current;
     const cfg = ROTATE_CONFIG[puzzle];
     if (!player || !cfg) return;
-    // skewb 走自己的 pixel-based pointer overlay (无限 x/x' chain),跳过 orbit-commit。
+    // skewb 走自己的 pixel-based pointer overlay (无限 x/y chain),跳过 orbit-commit。
     if (puzzle === 'skewb') return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = (player as any).experimentalModel;
@@ -624,10 +619,11 @@ export default function TwistySection({
     };
   }, [playerNonce, puzzle]);
 
-  // skewb 拖动直接 commit x/x':任何纵向 pointermove 累 80px / 1 commit。
-  // cubing.js 同时收到 pointer events (overlay 默认 pointer-events:none) → 处理横拖 lon。
-  // lat lock:pointerdown 锁定 down 时的 lat,orbit fresh listener 把 cubing.js 拖出的
-  // lat 变化 reset 回 lockedLat → 纵拖不卡 ±90° 限位,横拖 lon 不受影响。
+  // skewb 拖动直接 commit x/y:横拖 80px/y/y'、纵拖 80px/x/x'。
+  // cubing.js 同时收到 pointer events (overlay 默认 pointer-events:none) → 想改 lat/lon。
+  // orbit fresh listener 把 cubing.js 拖出的 lat/lon 偏移 reset 回 lockedLat/lockedLon
+  // → camera 视觉不动,只有 cube alg state 跟着 y/x 累计转,无限 chain。
+  // pointerup 后延迟 600ms 解锁让 cubing.js inertia 平息。
   useEffect(() => {
     if (puzzle !== 'skewb') return;
     const section = containerRef.current?.parentElement;
@@ -639,17 +635,18 @@ export default function TwistySection({
     if (!sceneModel?.orbitCoordinates || !sceneModel?.orbitCoordinatesRequest) return;
 
     const PIXELS_PER_COMMIT = 80;
-    const UNLOCK_DELAY_MS = 600;  // pointerup 后保留 lockedLat 等 cubing.js inertia 平息
+    const UNLOCK_DELAY_MS = 600;
     let active = false;
     let locking = false;
     let activePid = -1;
-    let downY = 0;
-    let committedSteps = 0;
+    let downX = 0, downY = 0;
+    let committedX = 0, committedY = 0;
     let lockedLat: number | null = null;
+    let lockedLon: number | null = null;
     let resetting = false;
     let unlockTimer: number | null = null;
-    // 持续跟踪 latest orbit,sectionDown 同步读取 = down 时刻的真实 lat。
     let latestLat: number | null = null;
+    let latestLon: number | null = null;
 
     const commit = (move: string) => {
       try { player.experimentalAddMove(move); } catch { /* */ }
@@ -657,15 +654,18 @@ export default function TwistySection({
 
     const onOrbit = (o: { latitude: number; longitude: number; distance: number }) => {
       latestLat = o.latitude;
+      latestLon = o.longitude;
       if (!locking || resetting) return;
-      // locking 但还没 lock(latestLat 此前 null)→ 第一次 fresh fire 时立刻锁
-      if (lockedLat === null) { lockedLat = o.latitude; return; }
-      if (Math.abs(o.latitude - lockedLat) < 1e-3) return;
+      if (lockedLat === null) lockedLat = o.latitude;
+      if (lockedLon === null) lockedLon = o.longitude;
+      const dLat = Math.abs(o.latitude - lockedLat);
+      const dLon = Math.abs(o.longitude - lockedLon);
+      if (dLat < 1e-3 && dLon < 1e-3) return;
       resetting = true;
       try {
         sceneModel.orbitCoordinatesRequest.set({
           latitude: lockedLat,
-          longitude: o.longitude,
+          longitude: lockedLon,
           distance: o.distance,
         });
       } catch { /* */ }
@@ -678,43 +678,59 @@ export default function TwistySection({
       active = true;
       locking = true;
       activePid = e.pointerId;
+      downX = e.clientX;
       downY = e.clientY;
-      committedSteps = 0;
+      committedX = 0;
+      committedY = 0;
       if (unlockTimer != null) { window.clearTimeout(unlockTimer); unlockTimer = null; }
-      if (lockedLat === null) lockedLat = latestLat;  // 若 trailing window 内有上次锁,沿用
+      if (lockedLat === null) lockedLat = latestLat;
+      if (lockedLon === null) lockedLon = latestLon;
     };
     const sectionMove = (e: PointerEvent) => {
       if (!active || e.pointerId !== activePid) return;
+      const dx = e.clientX - downX;
       const dy = e.clientY - downY;
-      const target = Math.trunc(dy / PIXELS_PER_COMMIT);
-      const delta = target - committedSteps;
-      if (delta === 0) return;
-      // dy 增大(向下拖)→ commit x';dy 减小(向上拖)→ commit x
-      const move = delta > 0 ? "x'" : 'x';
-      const n = Math.abs(delta);
-      for (let i = 0; i < n; i++) commit(move);
-      committedSteps = target;
+      // 横轴 commit y/y':dx > 0 (向右拖) → y',dx < 0 (向左拖) → y
+      // 校准约定:cubing.js camera lon drag 右 → cube 视觉相对左转 (CCW 从上看) ≡ y',
+      //          所以横拖 → 对应 cube state alg 加 y'。
+      const tx = Math.trunc(dx / PIXELS_PER_COMMIT);
+      const deltaX = tx - committedX;
+      if (deltaX !== 0) {
+        const move = deltaX > 0 ? "y'" : 'y';
+        const n = Math.abs(deltaX);
+        for (let i = 0; i < n; i++) commit(move);
+        committedX = tx;
+      }
+      // 纵轴 commit x/x':dy > 0 (向下拖) → x',dy < 0 (向上拖) → x
+      const ty = Math.trunc(dy / PIXELS_PER_COMMIT);
+      const deltaY = ty - committedY;
+      if (deltaY !== 0) {
+        const move = deltaY > 0 ? "x'" : 'x';
+        const n = Math.abs(deltaY);
+        for (let i = 0; i < n; i++) commit(move);
+        committedY = ty;
+      }
     };
     const sectionUp = (e: PointerEvent) => {
       if (e.pointerId !== activePid) return;
       active = false;
       activePid = -1;
-      committedSteps = 0;
-      // 延迟 unlock:cubing.js 的 inertia 动画在 pointerup 后还会继续改 lat 几百 ms,
-      // 这段时间保持 locking=true 让 onOrbit 继续 reset 回 lockedLat。
+      committedX = 0;
+      committedY = 0;
       if (unlockTimer != null) window.clearTimeout(unlockTimer);
       unlockTimer = window.setTimeout(() => {
         unlockTimer = null;
         if (!active) {
           locking = false;
           lockedLat = null;
+          lockedLon = null;
         }
       }, UNLOCK_DELAY_MS);
     };
 
-    // 预热 latestLat:effect 跑后立刻取一次,避免用户首次 down 时 latestLat 还是 null
-    sceneModel.orbitCoordinates.get().then((o: { latitude: number }) => {
+    sceneModel.orbitCoordinates.get().then((o: { latitude: number; longitude: number }) => {
       if (typeof o?.latitude === 'number' && latestLat === null) latestLat = o.latitude;
+      if (typeof o?.longitude === 'number' && latestLon === null) latestLon = o.longitude;
     }).catch(() => { /* */ });
     sceneModel.orbitCoordinates.addFreshListener(onOrbit);
     section.addEventListener('pointerdown', sectionDown, true);
