@@ -49,6 +49,14 @@ Get-Service | Where-Object Name -match mysql  # 服务状态
 - 复杂结构覆盖 `toJson()`（如 `world_records_by_country.ts` 加 `years` + `cumulative`）
 - `transform` 同步——要副查询 override `async toJson()`：`dbQuery` → 存 instance → `super.toJson()`
 
+## panels: ranking / history 惯例
+
+输出 `panels: [{id:'ranking',...},{id:'history',...}]` 时严格按 WCA 站惯例:
+- **ranking** = 每人在该 (event, type) 下只保留最快一条,按速度升序(top N 或全量)
+- **history** = 用 `filterWrHistory` (`src/core/format_date.ts`) 跑 metric 的 running min,得到全球该指标的破纪录沿革;最后 `.reverse()` 新→旧。History header 须含 `Improvement` + `Days` 两列(`calcDays` 算保持天数)
+- panel id 字面用 `'history'`,`PanelsView` 看到这个 id 才会 mount `WrHistoryChart`(单调线图)。**别用 `'all'`/`'list'` 等代名,丢失图表**
+- 不是 "所有 PR 按时间列表" — 那是错的语义。参考 `wr_bpa.ts` + `RoundMetric.transform`
+
 ## 前端 row 渲染
 
 `WcaStatsPage.renderCell`：
