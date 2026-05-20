@@ -12,12 +12,14 @@ import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import { parseSq1Scramble, type Sq1Move } from './cuber/sq1/sq1State';
+import { formatScrambleForEvent } from '../gen/sq1_svg';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
 import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
 import { isTwistyPuzzle, type SimPuzzle } from './SimPage';
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { WheelPicker } from '../../components/WheelPicker';
 import { Slider, Toggle, KeymapModal, DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, type SimSettings } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
@@ -94,7 +96,11 @@ export default function PlayerControls({
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [kbVariant, setKbVariant] = useState<'alg' | 'qwerty' | null>(null);
+  // 移动端默认开按键映射键盘(实体键盘点不到),桌面端默认收起。SSR 一律按"非移动"
+  // 走第一帧 null,客户端 hydrate 后 useIsMobile 再纠正 — 此处用 lazy initializer 避
+  // 免水合不一致。
+  const isMobile = useIsMobile();
+  const [kbVariant, setKbVariant] = useState<'alg' | 'qwerty' | null>(() => isMobile ? 'qwerty' : null);
   const [speed, setSpeed] = useState(1);
   // speed 同步到 twist 内部 tween 时长 (CubeGroup.frames 默认 30)。
   // 这样打乱 (twister.push 走 callback 链) 跟 alg 播放共用同一速度。
@@ -162,6 +168,9 @@ export default function PlayerControls({
   // animateScramble 路径:setup 写入会触发 useEffect → jumpToStep(0) instant 应用,
   // 跟动画播放冲突。set 此 ref 让 useEffect skip 一次。
   const animatingScrambleRef = useRef(false);
+  /** 连点 Shuffle 时,后发 click 的 tnoodle await 可能先返回 → 先发 click 后返回会
+   *  覆盖。每发 click 自增 + await 后核对,旧请求直接 drop。 */
+  const scrambleReqIdRef = useRef(0);
 
   // setup / alg / actions 变化时重置到当前 step(或 0)
   useEffect(() => {
@@ -336,11 +345,13 @@ export default function PlayerControls({
   // settings.animateScramble:false=写入 setup → useEffect → twister.setup() instant 应用;
   //                          true=animatingScrambleRef 让 useEffect skip,自己 reset+twister.push 慢动画。
   const handleScramble = useCallback(async () => {
+    const reqId = ++scrambleReqIdRef.current;
     // Twisty puzzles: no cuber world. animateScramble=false → 写 setup (instant
     // baseline);true → 清 setup + 写 alg + 让 TwistyPlayer 从头自动播 (jumpToStart
     // + play 经 player.experimentalModel.playController)。
     if (isTwistyMode) {
       const scramble = (await tnoodleRandomScramble(puzzleKind as string)) ?? '';
+      if (reqId !== scrambleReqIdRef.current) return;
       if (settings.animateScramble && scramble) {
         // setup 清空,alg 设为 scramble,player 自动 jumpToStart + play
         const setupEl = setupElRef.current;
@@ -380,9 +391,12 @@ export default function PlayerControls({
     let scramble: string | null = null;
     if (isSq1) {
       scramble = await tnoodleRandomScramble('sq1');
+      if (reqId !== scrambleReqIdRef.current) return;
+      if (scramble) scramble = formatScrambleForEvent('sq1', scramble);
     } else if (order >= 2 && order <= 7) {
       const eventId = `${order}${order}${order}`;
       scramble = await tnoodleRandomScramble(eventId);
+      if (reqId !== scrambleReqIdRef.current) return;
     }
     if (!scramble) {
       // SQ1: tnoodle hard-required. Fall back to '' to skip if upstream fails.

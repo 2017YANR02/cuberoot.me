@@ -22,6 +22,7 @@ import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEven
 import type { RoundSheetInput } from './tnoodle_pdf';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
+import { formatScrambleForEvent } from './sq1_svg';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -212,7 +213,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
             evWallEnd[ev] = !(ev in evWallEnd) || t1 > evWallEnd[ev] ? t1 : evWallEnd[ev];
             evDurations[ev].push(t1 - t0);
             if (reqIdRef.current !== myId) return;
-            if (s) buckets[ev].push(s);
+            if (s) buckets[ev].push(formatScrambleForEvent(ev, s));
             done += 1;
             setGenProgress({ done, total });
           }),

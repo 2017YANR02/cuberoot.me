@@ -90,11 +90,30 @@ export function canonicalSq1Alg(alg: string): string {
 }
 
 /** Re-emit a sq1 alg in compact `tb/tb/...` form (no parens, no commas, no spaces).
- *  For DISPLAY only — safe round-trip iff every |t|, |b| ≤ 9 (sq1 turns are [-5..6] in practice). */
+ *  `(t, 0)` 简成 single `t` 仅当两侧都是 `/` (或字符串边界) —— 真 WCA 打乱 turn/slice
+ *  必交替,总成立。否则保留 `tb`,免 `35/3/` 类左边界缺失 → `353/` 被 greedy 当成
+ *  `(35, 3) /`。两 turn 中间没 `/` 的非 WCA 输入仍可能歧义 (e.g. `(3,0)(3,0)` →
+ *  `3030` → `(303, 0)`);compact 只为 canonical scramble 显示用。
+ *  DISPLAY only — safe round-trip iff every |t|, |b| ≤ 9 (sq1 turns are [-5..6] in practice). */
 export function compactSq1Alg(alg: string): string {
-  return parseSq1Tokens(alg).map((tok) =>
-    tok.kind === 'slice' ? '/' : `${tok.top}${tok.bot}`,
-  ).join('');
+  const toks = parseSq1Tokens(alg);
+  return toks.map((tok, i) => {
+    if (tok.kind === 'slice') return '/';
+    const prev = toks[i - 1];
+    const next = toks[i + 1];
+    const leftBound = !prev || prev.kind === 'slice';
+    const rightBound = !next || next.kind === 'slice';
+    if (tok.bot === 0 && leftBound && rightBound) return `${tok.top}`;
+    return `${tok.top}${tok.bot}`;
+  }).join('');
+}
+
+/** 按 event id 把 sq1 alg/scramble 收成 compact 短形以便显示;其它 event 原样返回。
+ *  /alg 公式表 + /sim 打乱框 + /scramble/gen?mode=batch 自练 sheet 三处共用,保持
+ *  视觉一致。TNoodleMode (mode=comp) 是 WCA 官方风格 sheet,留 canonical 形式不走
+ *  这条。 */
+export function formatScrambleForEvent(event: string, scramble: string): string {
+  return event === 'sq1' ? compactSq1Alg(scramble) : scramble;
 }
 
 /** Parse + apply a WCA-spec sq1 scramble. Accepts every form parseSq1Tokens does. */
