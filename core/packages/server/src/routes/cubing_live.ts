@@ -12,6 +12,7 @@ import { streamSSE } from 'hono/streaming';
 import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { query } from '../db/connection.js';
+import { peekCurrentRecords, inferRecordTag } from '../utils/current_records.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -394,6 +395,28 @@ const ROUND_NAME: Record<string, string> = {
   b: 'B Final',
   h: 'Final',
 };
+
+/** 给 cubing.com / WCA Live 源的 result 补 record tag.
+ *  这两个源在 WCA 公示前 sr/ar 通常为空,但成绩可能已破 WR/CR/NR — 拿 wca_results_top
+ *  当前 MIN 比一下补上,避免错误显示成 "PR".已有 tag 的不动.
+ *  非阻塞:无缓存时立即返回(后台已触发加载),首请求不会被慢 SQL 卡住. */
+function enrichRecordTags(data: CompData): void {
+  const recs = peekCurrentRecords();
+  if (!recs) return;
+  for (const list of Object.values(data.resultsByRound)) {
+    for (const lr of list) {
+      const region = data.users[String(lr.n)]?.region ?? '';
+      if (lr.b > 0 && !lr.sr) {
+        const tag = inferRecordTag(lr.b, lr.e, false, region, recs);
+        if (tag) lr.sr = tag;
+      }
+      if (lr.a > 0 && !lr.ar) {
+        const tag = inferRecordTag(lr.a, lr.e, true, region, recs);
+        if (tag) lr.ar = tag;
+      }
+    }
+  }
+}
 
 async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
   onProgress?.({ step: 'wca.fetch', done: 0, total: 2 });
@@ -870,7 +893,7 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
     onProgress?.({ step: 'wca_live.results', done: i + 1, total: roundLinks.length });
   }
 
-  return {
+  const data: CompData = {
     slug: wcaId,
     wcaLiveId: internalId,
     source: 'wca_live',
@@ -883,6 +906,8 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
     membersByFilter: { females: [], children: [], newcomers: [] },
     fetchedAt: Date.now(),
   };
+  enrichRecordTags(data);
+  return data;
 }
 
 async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetchedMeta?: ScrapedMeta): Promise<CompData> {
@@ -917,7 +942,7 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     }
   }
 
-  return {
+  const data: CompData = {
     slug: wcaId,
     cubingSlug,
     source: 'cubing',
@@ -930,6 +955,8 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     membersByFilter,
     fetchedAt: Date.now(),
   };
+  enrichRecordTags(data);
+  return data;
 }
 
 /** /competition/{slug}/competitors HTML scrape.
