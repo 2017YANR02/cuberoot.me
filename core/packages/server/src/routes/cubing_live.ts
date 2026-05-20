@@ -12,7 +12,7 @@ import { streamSSE } from 'hono/streaming';
 import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { query } from '../db/connection.js';
-import { peekCurrentRecords, inferRecordTag } from '../utils/current_records.js';
+import { enrichComp, type CompRecordsSnapshot } from '../utils/current_records.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -23,6 +23,10 @@ interface User {
   name: string;
   wcaid: string;
   region: string;
+  // 由 enrichComp() 解析填充 — client 不需要再 fetch country/continent 映射,
+  // 直接用这两个字段 + comp.currentRecords 做 WS 推送的 tag 推断.
+  countryId?: string;
+  continentId?: string;
 }
 
 interface RoundMeta {
@@ -84,6 +88,9 @@ interface CompData {
   /** wca_db 路径预填:每选手在本比赛之前的累积 PB(centiseconds),供 Psych Sheet 排序用.
    *  避免 client 直连 WCA API 触发 429.形态: wcaid → eventId → { single?, average? } */
   personalRecords?: Record<string, Record<string, { single?: number; average?: number }>>;
+  /** cubing / wca_live 路径预填:WR/CR/NR 快照(仅本场涉及国家/洲),
+   *  client 拿去给 WS 实时推送的成绩做同样的 tag 推断. */
+  currentRecords?: CompRecordsSnapshot;
 }
 
 // ─── HTML scraping ─────────────────────────────────────────────────────────
@@ -396,26 +403,14 @@ const ROUND_NAME: Record<string, string> = {
   h: 'Final',
 };
 
-/** 给 cubing.com / WCA Live 源的 result 补 record tag.
- *  这两个源在 WCA 公示前 sr/ar 通常为空,但成绩可能已破 WR/CR/NR — 拿 wca_results_top
- *  当前 MIN 比一下补上,避免错误显示成 "PR".已有 tag 的不动.
- *  非阻塞:无缓存时立即返回(后台已触发加载),首请求不会被慢 SQL 卡住. */
+/** 给 cubing.com / WCA Live 源的 data 补 record 相关信息:
+ *  - users[*].countryId / continentId 解析填充
+ *  - 现有 results 的空 sr/ar 用 wca_results_top 当前 MIN 推断填充
+ *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
+ *  非阻塞:无 records 缓存时全部跳过(首请求秒出,fallback 到原行为). */
 function enrichRecordTags(data: CompData): void {
-  const recs = peekCurrentRecords();
-  if (!recs) return;
-  for (const list of Object.values(data.resultsByRound)) {
-    for (const lr of list) {
-      const region = data.users[String(lr.n)]?.region ?? '';
-      if (lr.b > 0 && !lr.sr) {
-        const tag = inferRecordTag(lr.b, lr.e, false, region, recs);
-        if (tag) lr.sr = tag;
-      }
-      if (lr.a > 0 && !lr.ar) {
-        const tag = inferRecordTag(lr.a, lr.e, true, region, recs);
-        if (tag) lr.ar = tag;
-      }
-    }
-  }
+  const snapshot = enrichComp(data.users, data.resultsByRound);
+  if (snapshot) data.currentRecords = snapshot;
 }
 
 async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
