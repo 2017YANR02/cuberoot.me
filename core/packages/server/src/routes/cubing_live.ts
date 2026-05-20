@@ -13,6 +13,7 @@ import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { query } from '../db/connection.js';
 import { enrichComp, type CompRecordsSnapshot } from '../utils/current_records.js';
+import { getUpcomingCnCompName } from '../utils/upcoming_comps_cache.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -1279,12 +1280,19 @@ cubingLiveRoutes.get('/cubing-zh/:wcaId', async (c) => {
       `SELECT name, country_id FROM wca_competitions WHERE id = ?`,
       [wcaId],
     );
-    if (rows.length === 0 || rows[0].country_id !== 'China') {
+    // 新公示比赛还没进 wca_competitions (WCA developer dump 周更),走 all_upcoming_comps.json 兜底
+    let compName: string | null = null;
+    if (rows.length > 0 && rows[0].country_id === 'China') {
+      compName = rows[0].name;
+    } else if (rows.length === 0) {
+      compName = await getUpcomingCnCompName(wcaId);
+    }
+    if (!compName) {
       cubingZhCache.set(wcaId, { at: Date.now(), meta: EMPTY_ZH_META });
       c.header('Cache-Control', 'public, max-age=604800');
       return c.json(EMPTY_ZH_META);
     }
-    const slug = rows[0].name.trim().replace(/['`‘’]/g, '').replace(/\s+/g, '-');
+    const slug = compName.trim().replace(/['`‘’]/g, '').replace(/\s+/g, '-');
     const res = await fetch(`${CUBING_BASE}/competition/${encodeURIComponent(slug)}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',

@@ -12,11 +12,11 @@
  * Cache: in-memory 1h + nginx proxy_cache_valid 1h (use_stale 兜 cubing.com 挂的情况)
  */
 import { Hono } from 'hono';
+import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 
 export const cnCompNamesRoutes = new Hono();
 
 const CUBING_LIST_URL = 'https://cubing.com/competition?page=1';
-const UPCOMING_JSON_URL = 'https://cuberoot.me/stats/all_upcoming_comps.json';
 const TTL_MS = 60 * 60 * 1000; // 1h
 const FETCH_TIMEOUT_MS = 10_000;
 
@@ -34,31 +34,27 @@ let inflight: Promise<CachedPayload> | null = null;
 const ROW_RE = /<td>(\d{4}-\d{2}-\d{2})(?:~(?:\d{4}-)?(?:\d{2}-)?\d{2})?<\/td>\s*<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https:\/\/cubing\.com\/(?:competition|live)\/([^"?]+)"[^>]*>([\s\S]*?)<\/a>/g;
 const TAG_STRIP_RE = /<[^>]+>/g;
 
-interface UpcomingComp {
-  id: string;
-  name: string;
-  country?: string; // ISO2 string like 'CN'
-}
-
-function fetchWithTimeout(url: string, ms: number): Promise<Response> {
+async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, {
-    signal: ctrl.signal,
-    headers: { 'User-Agent': 'cuberoot.me-server/1.0 (+https://cuberoot.me)' },
-  }).finally(() => clearTimeout(t));
+  try {
+    return await fetch(url, {
+      signal: ctrl.signal,
+      headers: { 'User-Agent': 'cuberoot.me-server/1.0 (+https://cuberoot.me)' },
+    });
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 async function build(): Promise<CachedPayload> {
-  const [pageRes, upcomingRes] = await Promise.all([
+  const [pageRes, upcoming] = await Promise.all([
     fetchWithTimeout(CUBING_LIST_URL, FETCH_TIMEOUT_MS),
-    fetchWithTimeout(UPCOMING_JSON_URL, FETCH_TIMEOUT_MS),
+    getUpcomingComps(),
   ]);
   if (!pageRes.ok) throw new Error(`cubing.com page1 HTTP ${pageRes.status}`);
-  if (!upcomingRes.ok) throw new Error(`all_upcoming_comps.json HTTP ${upcomingRes.status}`);
 
   const html = await pageRes.text();
-  const upcoming = (await upcomingRes.json()) as UpcomingComp[];
 
   // CN comp WCA ID → comp.name
   const idToName = new Map<string, string>();

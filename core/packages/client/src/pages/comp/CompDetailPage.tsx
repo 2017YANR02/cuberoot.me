@@ -26,6 +26,7 @@ import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
 import { fetchCompInfo, fetchCompRounds, fetchCubingZh, type CompInfo, type CubingZhMeta } from '../../utils/comp_wcif';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { formatDateRangeIso, toIsoDate } from '../../utils/date_range';
+import { localizeCity } from '../../utils/city_localize';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { formatWcaResult } from '../../utils/wca_format_result';
@@ -935,7 +936,7 @@ function CompInfoPanel({
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null; rounds: Record<string, number> | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
-  const cityStr = [info.city, country].filter(Boolean).join(isZh ? '、' : ', ');
+  const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join(isZh ? '、' : ', ');
   const rows: { label: string; value: React.ReactNode }[] = [];
   if (dateStr) rows.push({ label: isZh ? '日期' : 'Date', value: dateStr });
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
