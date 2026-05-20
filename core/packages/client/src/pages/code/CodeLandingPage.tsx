@@ -314,6 +314,23 @@ const TOPICS: Topic[] = [
     logo: <span className="topic-glyph">Hs</span>,
     available: true,
   },
+  {
+    slug: 'wasm',
+    href: '/code/language/wasm',
+    zh: {
+      title: 'WebAssembly',
+      sub: 'Web 的通用字节码',
+      tagline: '2015 W3C 四家共建,2017 同年四浏览器齐发 MVP,2025 Component Model 1.0。Figma / Photoshop Web / Cloudflare Workers 都跑在它上面',
+    },
+    en: {
+      title: 'WebAssembly',
+      sub: 'A universal bytecode for the web',
+      tagline: 'W3C four-vendor effort from 2015; MVP shipped by all four browsers in 2017; Component Model 1.0 in 2025. Figma, Photoshop on the Web, Cloudflare Workers all run on it',
+    },
+    accent: '#654FF0',
+    logo: <span className="topic-glyph">Wa</span>,
+    available: true,
+  },
 ];
 
 const MARKUP_TOPICS: Topic[] = [

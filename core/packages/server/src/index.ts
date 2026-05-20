@@ -20,6 +20,7 @@ import { scramble555Routes } from './routes/scramble_555.js';
 import { opsRoutes } from './routes/ops.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
+import { getCurrentRecords } from './utils/current_records.js';
 
 const app = new Hono();
 
@@ -80,6 +81,13 @@ loadNemesizerDataset().catch(err => {
 // 503 until daemon emits READY. CUBE555_DISABLED=1 skips spawn entirely.
 ensureCube555Daemon().catch(err => {
   console.error('[cube555] startup failed, /v1/scramble/555-rs will return 503:', err);
+});
+
+// Warm current-records cache(WR/CR/NR from wca_results_top,首次 ~5-10s 全扫).
+// 后台跑,不阻塞 listener.正常运行期 24h TTL,/comp 页 fallback 用 peekCurrentRecords()
+// 立即返;若启动后 5-10s 内有请求进来,enrich 跳过(原行为)— 仅短窗影响.
+getCurrentRecords().catch(err => {
+  console.error('[current_records] startup warm failed:', err);
 });
 
 const PORT = Number(process.env.PORT) || 3001;
