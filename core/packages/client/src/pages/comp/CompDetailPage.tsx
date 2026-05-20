@@ -309,9 +309,13 @@ export default function CompDetailPage() {
       // 任一来源先返回成绩(wca_db / SSE done)就 finish,其它路径自动作废.
       let done = false;
       let es: EventSource | null = null;
-      const finishWith = (j: CompData) => {
+      const finishWith = async (j: CompData) => {
         if (done) return;
         done = true;
+        // 等中文名 map(comp_names_zh.json + /v1/cn-comp-names 兜底)合并完才首渲,
+        // 否则中文模式下会"先英文后中文"闪一下。main.tsx 启动即 fire 过一次,
+        // 这里 await 通常立刻 resolve。
+        await loadFlagData();
         setData(j);
         rememberRecent(j.slug, j.name);
         setProgress(null);

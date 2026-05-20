@@ -184,19 +184,20 @@ let _flagDataVersion = 0;
  * @returns 当前版本号（用于 useEffect 依赖）
  */
 export function loadFlagData(): Promise<number> {
-  if (_personCountries && _compCountries) return Promise.resolve(_flagDataVersion);
   if (!_loadPromise) {
     _loadPromise = Promise.all([
       fetch('/stats/person_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/stats/comp_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/stats/comp_names_zh.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-    ]).then(([persons, comps, compZh]) => {
+    ]).then(async ([persons, comps, compZh]) => {
       _personCountries = persons;
       _compCountries = comps;
       _compNamesZh = compZh as Record<string, string>;
+      // 兜底端点合并完才 resolve。/v1/cn-comp-names 有 nginx 1h cache + server in-memory,
+      // 命中 < 50ms。await 进流程是为了 CompDetailPage / 列表渲染时新公示 CN 比赛也直接中文
+      // (不会"先英文后中文闪一下")。失败已在内部 swallow,不会 hang。
+      await refreshCnCompNamesFallback();
       _flagDataVersion++;
-      // 异步兜底:不阻塞首屏,新数据到了再 bump version 触发 re-render
-      void refreshCnCompNamesFallback();
     });
   }
   return _loadPromise.then(() => _flagDataVersion);
@@ -211,14 +212,10 @@ async function refreshCnCompNamesFallback(): Promise<void> {
     if (!r.ok) return;
     const j = (await r.json()) as { names?: Record<string, string> };
     if (!j.names || !_compNamesZh) return;
-    let added = 0;
     for (const [k, v] of Object.entries(j.names)) {
-      if (!_compNamesZh[k]) {
-        _compNamesZh[k] = v;
-        added++;
-      }
+      if (!_compNamesZh[k]) _compNamesZh[k] = v;
     }
-    if (added > 0) _flagDataVersion++;
+    // 调用方在 await 完后统一 bump _flagDataVersion,这里不重复
   } catch {
     // 静默失败 — 静态 JSON 仍然可用,只是新公示赛事可能没中文
   }
