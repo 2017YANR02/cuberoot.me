@@ -1,3 +1,5 @@
+import { apiUrl } from './api_base';
+
 // NOTE: WCA country_id / country.name → ISO 3166-1 alpha-2 映射
 // 用于前端渲染国旗（flag-icons CSS 库需要小写 ISO2 代码）
 // 数据源：WCA countries 表（https://www.worldcubeassociation.org/export/developer）
@@ -176,7 +178,9 @@ let _flagDataVersion = 0;
 
 /**
  * 异步加载 person_countries.json + comp_countries.json + comp_names_zh.json（幂等）
- * NOTE: comp_names_zh.json 由 compute_index.ts 从 recon_aux_data.json 提取
+ * NOTE: comp_names_zh.json 静态版每天 UTC 20:00 CI 刷一次,
+ *       /v1/cn-comp-names 兜底 24h 内新公示但未进静态 JSON 的中国比赛
+ *       (后到先到、覆盖静态,version 触发组件 re-render)。
  * @returns 当前版本号（用于 useEffect 依赖）
  */
 export function loadFlagData(): Promise<number> {
@@ -191,9 +195,33 @@ export function loadFlagData(): Promise<number> {
       _compCountries = comps;
       _compNamesZh = compZh as Record<string, string>;
       _flagDataVersion++;
+      // 异步兜底:不阻塞首屏,新数据到了再 bump version 触发 re-render
+      void refreshCnCompNamesFallback();
     });
   }
   return _loadPromise.then(() => _flagDataVersion);
+}
+
+async function refreshCnCompNamesFallback(): Promise<void> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5_000);
+    const r = await fetch(apiUrl('/v1/cn-comp-names'), { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return;
+    const j = (await r.json()) as { names?: Record<string, string> };
+    if (!j.names || !_compNamesZh) return;
+    let added = 0;
+    for (const [k, v] of Object.entries(j.names)) {
+      if (!_compNamesZh[k]) {
+        _compNamesZh[k] = v;
+        added++;
+      }
+    }
+    if (added > 0) _flagDataVersion++;
+  } catch {
+    // 静默失败 — 静态 JSON 仍然可用,只是新公示赛事可能没中文
+  }
 }
 
 /** 当前版本号（供 React state 对比） */
