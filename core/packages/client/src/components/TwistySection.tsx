@@ -641,7 +641,7 @@ export default function TwistySection({
     if (!m?.alg || !m?.timestampRequest) return;
 
     const LONG_PRESS_MS = 300;
-    const MOVE_TOLERANCE = 10;
+    const MOVE_TOLERANCE = 14;  // 14px 容纳触屏轻微抖动
     const PIXELS_PER_COMMIT = 80;
 
     let armedTimer: number | null = null;
@@ -650,6 +650,24 @@ export default function TwistySection({
     let commitMode = false;
     let commitPid = -1;
     let commitLastY = 0;
+
+    // 进度环 DOM: pointerdown 立刻显示在按下位置,300ms 圈满 → 进 commit 模式。
+    // 不抢 pointer events,纯视觉提示用户在长按。位移超 tolerance 或松手 → 隐藏。
+    const ring = document.createElement('div');
+    ring.className = 'twisty-skewb-ring';
+    el.appendChild(ring);
+    const showRing = (x: number, y: number) => {
+      const r = el.getBoundingClientRect();
+      ring.style.left = `${x - r.left}px`;
+      ring.style.top = `${y - r.top}px`;
+      ring.classList.remove('twisty-skewb-ring--armed');
+      // force reflow 让 animation 重启
+      void ring.offsetWidth;
+      ring.classList.add('twisty-skewb-ring--armed');
+    };
+    const hideRing = () => {
+      ring.classList.remove('twisty-skewb-ring--armed');
+    };
 
     const commit = (move: string) => {
       try { player.experimentalAddMove(move); } catch { /* */ }
@@ -661,6 +679,7 @@ export default function TwistySection({
       commitLastY = armedY;
       el.style.pointerEvents = 'auto';
       el.classList.add('twisty-skewb-overlay--active');
+      hideRing();
       try { el.setPointerCapture(pid); } catch { /* */ }
     };
 
@@ -676,6 +695,7 @@ export default function TwistySection({
       if (armedTimer != null) window.clearTimeout(armedTimer);
       armedTimer = null;
       armedPid = -1;
+      hideRing();
     };
 
     const sectionDown = (e: PointerEvent) => {
@@ -684,6 +704,7 @@ export default function TwistySection({
       armedPid = e.pointerId;
       armedX = e.clientX;
       armedY = e.clientY;
+      showRing(e.clientX, e.clientY);
       if (armedTimer != null) window.clearTimeout(armedTimer);
       armedTimer = window.setTimeout(() => {
         armedTimer = null;
@@ -733,6 +754,7 @@ export default function TwistySection({
       el.removeEventListener('pointercancel', overlayUp);
       el.style.pointerEvents = '';
       el.classList.remove('twisty-skewb-overlay--active');
+      try { ring.remove(); } catch { /* */ }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, playerNonce]);
