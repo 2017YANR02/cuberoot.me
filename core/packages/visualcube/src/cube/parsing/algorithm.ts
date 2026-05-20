@@ -8,7 +8,10 @@ export interface Turn {
   slices: number
 }
 
-const turnRegex = /([2-9]+)?([UuFfRrDdLlBbMESxyz])(w)?(\d+\'|\'\d+|\d+|\')?/g
+// 注意 layer 前缀用 `\d+` 不再 `[2-9]+` —— 旧规则只接 2..99 (实际只 2-9 那段),
+// `10Rw` 静默退化成 `Rw`,N>=20 阶 random-move 打乱的图全乱。`safeSlices` 已
+// 在 CubeData 侧截顶,这里放开数位即可。
+const turnRegex = /(\d+)?([UuFfRrDdLlBbMESxyz])(w)?(\d+\'|\'\d+|\d+|\')?/g
 
 const Opposite: Record<TurnType, TurnType> = {
   [TurnType.None]: TurnType.None,
@@ -115,7 +118,7 @@ function preprocessAlgorithm(algorithm: string): string {
   // guarantees we only catch single-layer notation, not slice/rotation.
   // Lookbehind `(?<=^|[\s()'])` ensures the leading digit starts a token —
   // otherwise `U2R` (no space) would be mis-rewritten by the leading `2R`.
-  r = r.replace(/(?<=^|[\s()'])([2-9][0-9]?)([UDLRFB])(?!w)([23]?'?)/g, (_m, layers: string, face: string, mod: string) => {
+  r = r.replace(/(?<=^|[\s()'])([2-9]|[1-9]\d+)([UDLRFB])(?!w)([23]?'?)/g, (_m, layers: string, face: string, mod: string) => {
     const lowerFace = face.toLowerCase()
     const hasPrime = mod.indexOf("'") >= 0
     const power = mod.replace("'", '')

@@ -17,6 +17,7 @@ import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '../pages/gen/sq1_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '../pages/gen/mega_svg';
 import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from '../pages/gen/pyraminx_svg';
 import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from '../pages/gen/skewb_svg';
+import { renderMirrorBlocksScrambleSvg } from '../pages/gen/mirror_blocks_svg';
 import { renderUnfoldedSvgForEvent, eventToCubeSize } from '../pages/gen/cube_unfolded_svg';
 import { isShapeModEvent, shapeModSourceEvent } from '../utils/shapeModScramble';
 
@@ -84,6 +85,8 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1
   // tnoodle-port branches — synchronous custom SVGs. Returns early.
   const customSvg = useMemo(() => {
     try {
+      // Mirror Blocks 走专属渲染 (cstimer port),不能让 shape-mod 兜底降级到普通 333 net
+      if (event === 'mirror_333') return renderMirrorBlocksScrambleSvg(scramble);
       if (eff === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
       if (eff === 'sq1')   return renderSq1ScrambleSvg(scramble,   sq1Colors   ?? DEFAULT_SQ1_COLORS);
       if (eff === 'minx')  return renderMegaScrambleSvg(scramble,  megaColors  ?? DEFAULT_MEGA_COLORS);
