@@ -29,7 +29,7 @@
   padding: 56px 32px 80px;
 }
 
-/* dark 模式提亮品牌深蓝 — #1F3A6E 在 #1c1917 底上对比度太低 */
+/* dark 模式提亮品牌深蓝 — #1F3A6E 在 #171717 底上对比度太低 */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) .arch-page { --accent: #6B8FCE; }
 }

@@ -250,14 +250,23 @@
   width: 30px;
   height: 22px;
 }
-.comp-detail-title-link {
-  color: inherit;
-  text-decoration: none;
+.comp-detail-title-name { color: inherit; }
+.comp-title-icon {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s, opacity 0.15s;
+  margin-left: 2px;
 }
-.comp-detail-title-link:hover { color: var(--accent); }
+.comp-title-icon img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.comp-title-icon:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
 .comp-detail-meta {
   display: flex;
   align-items: center;
@@ -272,10 +281,6 @@
   column-gap: 14px;
   row-gap: 4px;
   margin: 8px 0 16px;
-  padding: 10px 14px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--muted) 35%, transparent);
   font-size: 0.88rem;
 }
 .comp-info-row {
@@ -375,7 +380,6 @@
     grid-template-columns: 1fr;
     column-gap: 0;
     row-gap: 6px;
-    padding: 10px 12px;
   }
   .comp-info-row {
     display: grid;
@@ -494,8 +498,16 @@
   color: var(--foreground);
   border-bottom-color: var(--accent);
 }
-.comp-psych-eventbar {
+.comp-psych-eventbar,
+.comp-event-bar {
   margin-bottom: 12px;
+}
+.comp-event-bar .wca-stats-event-selector,
+.comp-psych-eventbar .wca-stats-event-selector {
+  --evsel-bg: transparent;
+  --evsel-border: transparent;
+  --evsel-padding: 0;
+  --evsel-margin: 0;
 }
 .comp-selectors {
   display: flex;
@@ -514,7 +526,7 @@
   min-width: 0;
   max-width: 100%;
 }
-.comp-round-select { min-width: 280px; flex: 1; }
+.comp-round-select { width: auto; max-width: 100%; }
 .comp-filter-select { min-width: 120px; }
 .comp-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -746,6 +758,96 @@ td.is-pr {
   font-weight: 700;
 }
 
+/* CuberModal 行点击 → 打开 RoundResultModal */
+.comp-modal-row-clickable { cursor: pointer; }
+.comp-modal-row-clickable:hover td {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* ── RoundResultModal (wca-live 风格单轮详情:扁平深色,无 header/footer 分割) ── */
+.comp-modal-backdrop-2 { z-index: 110; }
+
+.comp-round-modal {
+  background: var(--popover, var(--background));
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  max-width: 380px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 50%, transparent);
+}
+/* 单轮弹窗一片同色,不要 header/footer 分割条 */
+.comp-round-modal .comp-modal-header {
+  background: transparent;
+  border-bottom: none;
+  padding: 18px 20px 8px;
+  align-items: flex-start;
+}
+.comp-round-modal .comp-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  gap: 10px;
+}
+.comp-round-modal-place {
+  color: var(--foreground);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.comp-round-modal-body {
+  padding: 6px 20px 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.comp-round-modal-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.comp-round-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.comp-round-modal-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.comp-round-modal-value {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+.comp-round-modal .comp-modal-footer {
+  border-top: none;
+  padding: 4px 12px 12px;
+}
+.comp-round-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.comp-round-modal .comp-modal-close-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.comp-round-modal .comp-modal-close-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
 /* ── 移动端 ───────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
@@ -767,6 +869,8 @@ td.is-pr {
   .comp-modal-title { font-size: 0.95rem; gap: 6px; }
   .comp-modal-body { padding: 10px; }
   .td-person { gap: 6px; }
+  .comp-round-modal { max-height: 95vh; }
+  .comp-round-modal-body { padding: 12px; gap: 12px; }
 }
 
 /* ─── /comp/sources unified flow ───────────────────────────────────── */

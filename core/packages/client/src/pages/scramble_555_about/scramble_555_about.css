@@ -1,13 +1,13 @@
 /* /scramble/555-about — 5x5 打乱方法对照页 */
 
 .s555-page {
-    --s555-bg: #FAF9F5;
+    --s555-bg: #fafafa;
     --s555-surface: #FFFFFF;
-    --s555-text: #181716;
-    --s555-text-sub: #6F6E6B;
+    --s555-text: #171717;
+    --s555-text-sub: #737373;
     --s555-text-mute: #95938E;
-    --s555-border: #E5E4DF;
-    --s555-border-strong: #CCCAC2;
+    --s555-border: #e5e5e5;
+    --s555-border-strong: #d4d4d4;
     --s555-accent: #C15F3C;
     --s555-accent-soft: rgba(193, 95, 60, 0.08);
     --s555-wca: #2563EB;

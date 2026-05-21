@@ -1,11 +1,11 @@
 /* /frame-count-about */
 .fca-page {
-  --fca-bg: #FAF9F5;
+  --fca-bg: #fafafa;
   --fca-surface: #FFFFFF;
-  --fca-text: #181716;
-  --fca-text-sub: #6F6E6B;
+  --fca-text: #171717;
+  --fca-text-sub: #737373;
   --fca-text-mute: #95938E;
-  --fca-border: #E5E4DF;
+  --fca-border: #e5e5e5;
   --fca-accent: #2563EB;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

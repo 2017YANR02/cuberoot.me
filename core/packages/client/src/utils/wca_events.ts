@@ -47,6 +47,8 @@ const DISPLAY_ZH: Record<string, string> = {
   'magic': '八板', 'mmagic': '十二板', '333mbo': '旧多盲',
   // 非 WCA(cubing.js twizzleEvents)
   'fto': 'FTO', 'master_tetraminx': '四阶金字塔', 'kilominx': '二阶五魔', 'redi_cube': 'Redi', 'baby_fto': '二阶 FTO',
+  // 非 WCA cubing.com 自定义项目
+  'funny': '趣味',
 };
 
 const DISPLAY_EN: Record<string, string> = {
@@ -57,6 +59,8 @@ const DISPLAY_EN: Record<string, string> = {
   'magic': 'Magic', 'mmagic': 'M.Magic', '333mbo': 'MBO',
   // 非 WCA(cubing.js twizzleEvents)
   'fto': 'FTO', 'master_tetraminx': 'Master Tetra', 'kilominx': 'Kilominx', 'redi_cube': 'Redi', 'baby_fto': 'Baby FTO',
+  // 非 WCA cubing.com 自定义项目
+  'funny': 'Funny',
 };
 
 /** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。

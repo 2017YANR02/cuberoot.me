@@ -149,7 +149,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       const gy = PAD.t + chartH - (g / maxCount) * chartH;
       elements.push(
         <line key={`gy-${g}`} x1={PAD.l} y1={gy} x2={PAD.l + chartW} y2={gy}
-          stroke="rgba(255,235,220,0.08)" strokeWidth={1} />,
+          stroke="rgba(255, 255, 255,0.08)" strokeWidth={1} />,
         <text key={`gyl-${g}`} x={PAD.l - 6} y={gy + 4} fill="#aaa" fontSize={12}
           textAnchor="end">{g}</text>,
       );
@@ -177,7 +177,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
         if (subBarW > 8 && (bins[b] >= 3 || nP === 1)) {
           elements.push(
             <text key={`bt-${si}-${b}`} x={x + subBarW / 2} y={y - 3}
-              fill="#f0ebe3" fontSize={10} textAnchor="middle">{bins[b]}</text>,
+              fill="#ededed" fontSize={10} textAnchor="middle">{bins[b]}</text>,
           );
         }
       }
@@ -221,7 +221,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       const gy = PAD.t + chartH - (g / 5) * chartH;
       elements.push(
         <line key={`kgy-${g}`} x1={PAD.l} y1={gy} x2={PAD.l + chartW} y2={gy}
-          stroke="rgba(255,235,220,0.08)" strokeWidth={1} />,
+          stroke="rgba(255, 255, 255,0.08)" strokeWidth={1} />,
       );
     }
 
@@ -313,9 +313,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       const x = xScale(val);
       elements.push(
         <line key={`bxg-${val}`} x1={x} y1={PAD.t} x2={x} y2={PAD.t + chartH}
-          stroke="rgba(255,235,220,0.08)" strokeWidth={1} />,
+          stroke="rgba(255, 255, 255,0.08)" strokeWidth={1} />,
         <text key={`bxl-${val}`} x={x} y={PAD.t + chartH + 16}
-            fill="#9c8c7e" fontSize={11} textAnchor="middle">{val.toFixed(1)}</text>,
+            fill="#a3a3a3" fontSize={11} textAnchor="middle">{val.toFixed(1)}</text>,
       );
     });
 
@@ -355,7 +355,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
           fill={color} fillOpacity={0.25} stroke={color} strokeWidth={1.5} rx={3} />,
         // Median
         <line key={`bmed-${si}`} x1={xScale(median)} y1={cy - boxHeight * 0.35}
-          x2={xScale(median)} y2={cy + boxHeight * 0.35} stroke="#f0ebe3" strokeWidth={2} />,
+          x2={xScale(median)} y2={cy + boxHeight * 0.35} stroke="#ededed" strokeWidth={2} />,
       );
 
       // Outliers
@@ -374,7 +374,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       <line key="bxaxis" x1={PAD.l} y1={PAD.t + chartH} x2={PAD.l + chartW} y2={PAD.t + chartH}
         stroke="#6e6050" strokeWidth={1} />,
       <text key="bxlabel" x={PAD.l + chartW / 2} y={H - 6}
-        fill="#9c8c7e" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+        fill="#a3a3a3" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
     );
   }
 
@@ -392,9 +392,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       <rect key={`lr-${i}`} x={lx} y={ly} width={12} height={12} fill={p.color} rx={2} />,
       <text key={`ln-${i}`} x={lx + 16} y={ly + 10} fill="#e8ddd4" fontSize={12}
         textAnchor="start" fontWeight="bold">{label}</text>,
-      <text key={`lm-${i}`} x={lx + 2} y={ly + 10 + 16} fill="#9c8c7e" fontSize={11}
+      <text key={`lm-${i}`} x={lx + 2} y={ly + 10 + 16} fill="#a3a3a3" fontSize={11}
         textAnchor="start">μ = {mean.toFixed(2)}s</text>,
-      <text key={`ls-${i}`} x={lx + 2} y={ly + 10 + 32} fill="#9c8c7e" fontSize={11}
+      <text key={`ls-${i}`} x={lx + 2} y={ly + 10 + 32} fill="#a3a3a3" fontSize={11}
         textAnchor="start">σ = {std.toFixed(2)}s</text>,
     );
   });
@@ -427,9 +427,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       {/* Tooltip */}
       {tooltipInfo && (
         <div style={{
-          position: 'absolute', background: 'rgba(28,25,23,0.92)', color: '#f0ebe3',
+          position: 'absolute', background: 'rgba(28,25,23,0.92)', color: '#ededed',
           padding: '6px 10px', borderRadius: 6, fontSize: 12, pointerEvents: 'none',
-          whiteSpace: 'nowrap', zIndex: 10, border: '1px solid rgba(255,235,220,0.15)',
+          whiteSpace: 'nowrap', zIndex: 10, border: '1px solid rgba(255, 255, 255,0.15)',
           left: tooltipInfo.x, top: tooltipInfo.y,
         }}>
           {tooltipInfo.text}

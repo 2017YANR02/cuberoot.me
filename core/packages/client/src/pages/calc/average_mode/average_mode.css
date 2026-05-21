@@ -2,11 +2,11 @@
 
 .avg-mode {
     --avg-surface: #FFFFFF;
-    --avg-text: #181716;
-    --avg-text-sub: #6F6E6B;
+    --avg-text: #171717;
+    --avg-text-sub: #737373;
     --avg-text-mute: #95938E;
-    --avg-border: #E5E4DF;
-    --avg-border-strong: #CCCAC2;
+    --avg-border: #e5e5e5;
+    --avg-border-strong: #d4d4d4;
     --avg-accent: #C15F3C;
     --avg-accent-soft: rgba(193, 95, 60, 0.08);
     --avg-pb: #B45D2C;

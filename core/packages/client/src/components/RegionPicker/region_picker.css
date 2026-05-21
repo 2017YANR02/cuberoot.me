@@ -4,11 +4,11 @@
 
 .region-picker {
   --rp-bg: var(--surface, #fff);
-  --rp-bg-hover: var(--surface-alt, #f5f4ee);
-  --rp-bg-active: var(--border, #e5e4df);
-  --rp-text: var(--text, #181716);
-  --rp-text-sub: var(--text-sub, #6f6e6b);
-  --rp-border: var(--border, #e5e4df);
+  --rp-bg-hover: var(--surface-alt, #f5f5f5);
+  --rp-bg-active: var(--border, #e5e5e5);
+  --rp-text: var(--text, #171717);
+  --rp-text-sub: var(--text-sub, #737373);
+  --rp-border: var(--border, #e5e5e5);
   --rp-border-hover: var(--border-strong, #ccc);
   --rp-popup-bg: var(--surface, #fff);
   --rp-popup-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);

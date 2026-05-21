@@ -1,4 +1,4 @@
-/* 共享语言切换 — 裸文字 "中文 | English",当前 lang 加重色 */
+/* 共享语言切换 — 裸图标按钮,无外框 (CLAUDE.md 不加多余外框规则) */
 
 .lang-toggle {
   display: inline-flex;
@@ -6,12 +6,10 @@
   padding: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
   color: var(--muted-foreground);
-  line-height: 1.2;
+  cursor: pointer;
   transition: color 0.15s;
+  flex-shrink: 0;
 }
 
 .lang-toggle:hover {
@@ -24,9 +22,8 @@
   bottom: 20px;
   right: 20px;
   z-index: 1000;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
   background: var(--card);
-  border: 1px solid var(--border-default);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 20%, transparent);
 }

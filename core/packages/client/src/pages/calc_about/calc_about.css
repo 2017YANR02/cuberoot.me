@@ -1,11 +1,11 @@
 /* /calc-about */
 .calca-page {
-  --calca-bg: #FAF9F5;
+  --calca-bg: #fafafa;
   --calca-surface: #FFFFFF;
-  --calca-text: #181716;
-  --calca-text-sub: #6F6E6B;
+  --calca-text: #171717;
+  --calca-text-sub: #737373;
   --calca-text-mute: #95938E;
-  --calca-border: #E5E4DF;
+  --calca-border: #e5e5e5;
   --calca-accent: #059669;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

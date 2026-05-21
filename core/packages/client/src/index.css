@@ -98,35 +98,35 @@ img[src$="ChineseTaipei.svg"] {
   border-radius: 3px;
 }
 
-/* NOTE: Claude 风格暖棕/珊瑚系。light 默认 + dark 反盖,详见 DESIGN.md / THEMING.md。 */
+/* NOTE: 中性灰底 + 珊瑚 accent。light 默认 + dark 反盖,详见 DESIGN.md / THEMING.md。 */
 
 :root {
   color-scheme: light dark;
 
   /* Legacy dark tokens（旧页继续用,Phase 2 逐页迁移掉） */
-  --bg-primary: #1c1917;
-  --bg-secondary: #231f1c;
-  --bg-card: #2a2520;
-  --bg-card-hover: #332e28;
-  --text-primary: #f0ebe3;
-  --text-secondary: #9c8c7e;
+  --bg-primary: #171717;
+  --bg-secondary: #1f1f1f;
+  --bg-card: #262626;
+  --bg-card-hover: #333333;
+  --text-primary: #ededed;
+  --text-secondary: #a3a3a3;
   --accent-glow: rgba(217, 119, 87, 0.25);
-  --border-dark: rgba(255, 235, 220, 0.1);
+  --border-dark: rgba(255, 255, 255, 0.1);
 
   /* shadcn 风新 token,light 默认 */
-  --background: #FAF9F5;
-  --foreground: #181716;
+  --background: #fafafa;
+  --foreground: #171717;
   --card: #FFFFFF;
-  --card-foreground: #181716;
+  --card-foreground: #171717;
   --popover: #FFFFFF;
-  --popover-foreground: #181716;
-  --primary: #181716;
-  --primary-foreground: #FAF9F5;
-  --secondary: #F5F4EE;
-  --secondary-foreground: #181716;
-  --muted: #F5F4EE;
-  --muted-foreground: #6F6E6B;
-  --faint-foreground: #9F9D97;
+  --popover-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --faint-foreground: #a3a3a3;
   --accent: #C15F3C;
   --accent-foreground: #FFFFFF;
   --accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -136,9 +136,9 @@ img[src$="ChineseTaipei.svg"] {
   --signal-warning: #d4a259;
   --signal-info: #4a9eff;
   --signal-danger: #e05c5c;
-  --border-default: #E5E4DF;
-  --border-strong: #CCCAC2;
-  --input: #E5E4DF;
+  --border-default: #e5e5e5;
+  --border-strong: #d4d4d4;
+  --input: #e5e5e5;
   --ring: var(--accent);
 
   --radius: 12px;
@@ -149,21 +149,21 @@ img[src$="ChineseTaipei.svg"] {
 /* NOTE: 不能用 :where() 包,会让特异性变 0 被 :root 默认值压过去 */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) {
-    --background: #1c1917;
-    --foreground: #f0ebe3;
-    --card: #232020;
-    --card-foreground: #f0ebe3;
-    --popover: #2a2520;
-    --popover-foreground: #f0ebe3;
-    --primary: #f0ebe3;
-    --primary-foreground: #181716;
-    --secondary: #2a2520;
-    --secondary-foreground: #f0ebe3;
-    --muted: #2a2520;
-    --muted-foreground: #9c8c7e;
-    --faint-foreground: #7A736A;
+    --background: #171717;
+    --foreground: #ededed;
+    --card: #1f1f1f;
+    --card-foreground: #ededed;
+    --popover: #262626;
+    --popover-foreground: #ededed;
+    --primary: #ededed;
+    --primary-foreground: #171717;
+    --secondary: #262626;
+    --secondary-foreground: #ededed;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --faint-foreground: #737373;
     --accent: #d97757;
-    --accent-foreground: #181716;
+    --accent-foreground: #171717;
     --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
     --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
     --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
@@ -172,21 +172,21 @@ img[src$="ChineseTaipei.svg"] {
 }
 
 html[data-theme=dark] {
-  --background: #1c1917;
-  --foreground: #f0ebe3;
-  --card: #232020;
-  --card-foreground: #f0ebe3;
-  --popover: #2a2520;
-  --popover-foreground: #f0ebe3;
-  --primary: #f0ebe3;
-  --primary-foreground: #181716;
-  --secondary: #2a2520;
-  --secondary-foreground: #f0ebe3;
-  --muted: #2a2520;
-  --muted-foreground: #9c8c7e;
-  --faint-foreground: #7A736A;
+  --background: #171717;
+  --foreground: #ededed;
+  --card: #1f1f1f;
+  --card-foreground: #ededed;
+  --popover: #262626;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #ededed;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --faint-foreground: #737373;
   --accent: #d97757;
-  --accent-foreground: #181716;
+  --accent-foreground: #171717;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
   --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
@@ -206,21 +206,21 @@ html:has(.records-page),
 html:has(.recon-page),
 html:has(.tr-page) {
   color-scheme: dark;
-  --background: #1c1917;
-  --foreground: #f0ebe3;
-  --card: #232020;
-  --card-foreground: #f0ebe3;
-  --popover: #2a2520;
-  --popover-foreground: #f0ebe3;
-  --primary: #f0ebe3;
-  --primary-foreground: #181716;
-  --secondary: #2a2520;
-  --secondary-foreground: #f0ebe3;
-  --muted: #2a2520;
-  --muted-foreground: #9c8c7e;
-  --faint-foreground: #7A736A;
+  --background: #171717;
+  --foreground: #ededed;
+  --card: #1f1f1f;
+  --card-foreground: #ededed;
+  --popover: #262626;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #ededed;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --faint-foreground: #737373;
   --accent: #d97757;
-  --accent-foreground: #181716;
+  --accent-foreground: #171717;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
   --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
@@ -230,20 +230,20 @@ html:has(.tr-page) {
 html:has(.battle-container) {
   color-scheme: dark;
   --background: #000;
-  --foreground: #f0ebe3;
+  --foreground: #ededed;
   --card: #0a0a0a;
-  --card-foreground: #f0ebe3;
+  --card-foreground: #ededed;
   --popover: #0a0a0a;
-  --popover-foreground: #f0ebe3;
-  --primary: #f0ebe3;
-  --primary-foreground: #181716;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #171717;
   --secondary: #1a1a1a;
-  --secondary-foreground: #f0ebe3;
+  --secondary-foreground: #ededed;
   --muted: #1a1a1a;
-  --muted-foreground: #9c8c7e;
-  --faint-foreground: #7A736A;
+  --muted-foreground: #a3a3a3;
+  --faint-foreground: #737373;
   --accent: #d97757;
-  --accent-foreground: #181716;
+  --accent-foreground: #171717;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
   --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);

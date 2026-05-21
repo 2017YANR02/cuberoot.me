@@ -1,13 +1,13 @@
 /* /alg/commutator — port of nbwzx/commutator with site styling */
 
 .cmt-page {
-    --cmt-bg: #FAF9F5;
+    --cmt-bg: #fafafa;
     --cmt-surface: #FFFFFF;
-    --cmt-text: #181716;
-    --cmt-text-sub: #6F6E6B;
+    --cmt-text: #171717;
+    --cmt-text-sub: #737373;
     --cmt-text-mute: #95938E;
-    --cmt-border: #E5E4DF;
-    --cmt-border-strong: #CCCAC2;
+    --cmt-border: #e5e5e5;
+    --cmt-border-strong: #d4d4d4;
     --cmt-accent: #C15F3C;
     --cmt-accent-soft: rgba(193, 95, 60, 0.08);
     --cmt-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

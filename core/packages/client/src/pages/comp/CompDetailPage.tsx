@@ -15,7 +15,7 @@ import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
 import { RecordBadge } from '../../components/RecordBadge';
-import { eventDisplayName } from '../../utils/wca_events';
+import { eventDisplayName, isWcaEvent } from '../../utils/wca_events';
 import { displayCuberName } from '../../utils/name_utils';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { countryName } from '../../utils/country_name';
@@ -24,8 +24,7 @@ import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { apiUrl } from '../../utils/api_base';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
-import { fetchCompInfo, fetchCompRounds, fetchCubingZh, type CompInfo, type CubingZhMeta } from '../../utils/comp_wcif';
-import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
+import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '../../utils/comp_wcif';
 import { formatDateRangeIso, toIsoDate } from '../../utils/date_range';
 import { localizeCity } from '../../utils/city_localize';
 import WcaEventSelector from '../../components/WcaEventSelector';
@@ -77,8 +76,8 @@ interface EventMeta {
 interface LiveResult {
   i: number; c: number; n: number; e: string; r: string; f: string;
   b: number; a: number; v: number[]; sr: string; ar: string | number;
-  // wca_db 路径预先计算的历史 PR 标志(comp_date 之前累积 PB 比较 + 同比赛内按 round 顺序)
-  pS?: boolean; pA?: boolean;
+  // wca_db 路径预先计算的历史 PR rank (1=PR, 2/3/...=历史第 N 快, undefined=无历史)
+  pS?: number; pA?: number;
 }
 
 interface MembersByFilter {
@@ -150,23 +149,35 @@ function inferLiveRecordTag(
   return '';
 }
 
-function classifyPr(result: LiveResult, pb: PbByEvent | null): { singlePr: boolean; averagePr: boolean } {
-  // server 已算好,直接用(undefined = wca_db 之外的源,继续走 WCA REST 回退)
+function classifyPr(result: LiveResult, pb: PbByEvent | null): { singleRank: number | null; averageRank: number | null } {
+  // server 已算好 rank,直接用 (1 = PR, 2/3/... = 历史第 N 快, undefined = 无历史数据)
   if (result.pS !== undefined || result.pA !== undefined) {
-    return { singlePr: !!result.pS, averagePr: !!result.pA };
+    return {
+      singleRank: result.pS ?? null,
+      averageRank: result.pA ?? null,
+    };
   }
-  if (!pb) return { singlePr: false, averagePr: false };
+  // 回退路径 (cubing.com / WCA REST):只知道是否破 PR 没有 rank → true 映射成 1, false → null
+  if (!pb) return { singleRank: null, averageRank: null };
   const entry = pb[result.e];
   if (!entry) {
-    // 之前没拿过该项目 PR ⇒ 任意有效成绩都算 PR
-    return { singlePr: result.b > 0, averagePr: result.a > 0 };
+    return {
+      singleRank: result.b > 0 ? 1 : null,
+      averageRank: result.a > 0 ? 1 : null,
+    };
   }
   const sBest = entry.single?.best ?? Infinity;
   const aBest = entry.average?.best ?? Infinity;
   return {
-    singlePr: result.b > 0 && result.b <= sBest,
-    averagePr: result.a > 0 && result.a <= aBest,
+    singleRank: (result.b > 0 && result.b <= sBest) ? 1 : null,
+    averageRank: (result.a > 0 && result.a <= aBest) ? 1 : null,
   };
+}
+
+/** rank → 'PR' / 'PR2' / 'PR3' / ... null */
+function prBadgeFor(rank: number | null | undefined): string | null {
+  if (!rank) return null;
+  return rank === 1 ? 'PR' : `PR${rank}`;
 }
 
 /** 把 cubing.com 的 centiseconds 格式化为显示字符串。
@@ -269,20 +280,17 @@ export default function CompDetailPage() {
 
   // PR map: wcaid → PbByEvent. null = fetched, no data.
   const [pbVer, setPbVer] = useState(0); // bump to force re-render after prefetch
-  const [openedCuber, setOpenedCuber] = useState<number | null>(null);
+  // 两层弹窗: round = 单轮详情(wca-live 风格), all = 选手全轮成绩表
+  type ModalState =
+    | { kind: 'round'; number: number; eventId: string; roundId: string }
+    | { kind: 'all'; number: number };
+  const [modal, setModal] = useState<ModalState | null>(null);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
   const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
-  const [compRounds, setCompRounds] = useState<Record<string, number> | null>(null);
   useEffect(() => {
     if (!slug) return;
     let cancel = false;
     fetchCompInfo(slug).then(info => { if (!cancel) setCompInfo(info); }).catch(() => {});
-    fetchCompRounds(slug).then(wcif => {
-      if (cancel) return;
-      const counts: Record<string, number> = {};
-      for (const [eid, formats] of Object.entries(wcif)) counts[eid] = formats.length;
-      if (Object.keys(counts).length > 0) setCompRounds(counts);
-    }).catch(() => {});
     return () => { cancel = true; };
   }, [slug]);
   useEffect(() => {
@@ -771,12 +779,41 @@ export default function CompDetailPage() {
     );
   }
 
-  const roundOptions = data.events
-    .flatMap(ev => ev.rs.map(rd => ({ ev, rd, key: roundKey(ev.i, rd.i) })))
-    .filter(o => (data.resultsByRound[o.key] || []).length > 0 || o.rd.s === 2);
-  // 比赛已完全结束时,每条 round 都标"已结束"是冗余信息 — 整体折叠掉.
-  // 部分结束时仍标(区分已开 vs 待开).rd.s===2 (实时) 独立显示不受影响.
-  const allRoundsFinished = roundOptions.length > 0 && roundOptions.every(o => o.rd.s === 1);
+  // 顶部项目选择器:WCA 21 项 + 非 WCA(funny 等)放 appendEvents
+  const availableEventIds = new Set(data.events.filter(e => isWcaEvent(e.i)).map(e => e.i));
+  const nonWcaEvents = data.events
+    .filter(e => !isWcaEvent(e.i))
+    .map(e => ({ id: e.i, iconClass: '', textLabel: eventDisplayName(e.i, isZh) }));
+  // 当前 event 有效 round 序列(有成绩 / 实时);切轮就在这里 cycle
+  const validRoundsFor = (eventId: string) => {
+    const ev = data.events.find(e => e.i === eventId);
+    if (!ev) return [];
+    return ev.rs.filter(rd =>
+      (data.resultsByRound[roundKey(ev.i, rd.i)] || []).length > 0 || rd.s === 2
+    );
+  };
+  // badge:在选中的 event 上显示当前是第几轮 (1=初赛, 2=复赛...);未选中不显示
+  const eventBadges: Record<string, number> = {};
+  if (eventParam && roundParam) {
+    const rounds = validRoundsFor(eventParam);
+    const idx = rounds.findIndex(rd => rd.i === roundParam);
+    if (idx >= 0) eventBadges[eventParam] = idx + 1;
+  }
+  const onSelectEvent = (newEventId: string) => {
+    const ev = data.events.find(e => e.i === newEventId);
+    if (!ev) return;
+    const valid = validRoundsFor(newEventId);
+    // 没 result/live 也能切 (有些 round 用 combined id 'd/g/c/b' 在 resultsByRound 里没建索引);fall back 到 ev.rs
+    const cycleRounds = valid.length > 0 ? valid : ev.rs;
+    if (cycleRounds.length === 0) return;
+    if (newEventId === eventParam) {
+      const curIdx = cycleRounds.findIndex(rd => rd.i === roundParam);
+      const nextIdx = (curIdx + 1) % cycleRounds.length;
+      onChangeRound(roundKey(newEventId, cycleRounds[nextIdx].i));
+    } else {
+      onChangeRound(roundKey(newEventId, cycleRounds[0].i));
+    }
+  };
 
   const filterOptions = [
     { value: 'all', labelZh: '全部', labelEn: 'All' },
@@ -788,7 +825,7 @@ export default function CompDetailPage() {
   return (
     <div className="comp-detail-page">
       <div className="comp-top-bar">
-        <LangToggle variant="fixed" />
+        <LangToggle />
         <ThemeToggle />
       </div>
 
@@ -798,23 +835,23 @@ export default function CompDetailPage() {
           <h1 className="comp-detail-title">
             {(() => {
               const iso2 = compFlagIso2(slug);
-              const href = isWca
-                ? `https://www.worldcubeassociation.org/competitions/${data.slug}`
-                : isWcaLive
-                  ? `https://live.worldcubeassociation.org/competitions/${data.slug}`
-                  : `https://cubing.com/live/${data.cubingSlug || data.slug}`;
-              const titleLabel = isWca ? 'WCA' : isWcaLive ? 'WCA Live' : 'cubing.com';
+              const cubingSlug = data.cubingSlug || decodeEntities(data.name).trim().replace(/\s+/g, '-');
+              const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
+              const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
+              const base = import.meta.env.BASE_URL;
               return (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="comp-detail-title-link"
-                  title={titleLabel}
-                >
+                <>
                   {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
-                  {localizeCompName(slug, decodeEntities(data.name), isZh)}
-                </a>
+                  <span className="comp-detail-title-name">{localizeCompName(slug, decodeEntities(data.name), isZh)}</span>
+                  {iso2 === 'cn' && (
+                    <a href={cubingUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="cubing.com">
+                      <img src={base + 'icons/upstream/cubingcom.ico'} alt="cubing.com" />
+                    </a>
+                  )}
+                  <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
+                    <img src={base + 'icons/upstream/wca.svg'} alt="WCA" />
+                  </a>
+                </>
               );
             })()}
           </h1>
@@ -852,7 +889,19 @@ export default function CompDetailPage() {
           </div>
         </header>
 
-        {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} rounds={compRounds} />}
+        {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
+
+        <div className="comp-event-bar">
+          <WcaEventSelector
+            availableEvents={availableEventIds}
+            selectedEvent={eventParam}
+            onSelect={onSelectEvent}
+            isZh={isZh}
+            onlyAvailable
+            badges={eventBadges}
+            appendEvents={nonWcaEvents}
+          />
+        </div>
 
         <div className="comp-view-tabs">
           <button
@@ -874,20 +923,6 @@ export default function CompDetailPage() {
         {viewParam === 'live' ? (
           <>
             <div className="comp-selectors">
-              <select
-                className="comp-select comp-round-select"
-                value={currentRound ? roundKey(currentRound.ev.i, currentRound.rd.i) : ''}
-                onChange={e => onChangeRound(e.target.value)}
-              >
-                {roundOptions.map(o => (
-                  <option key={o.key} value={o.key}>
-                    {eventDisplayName(o.ev.i, isZh)} - {roundDisplayName(o.rd.name, isZh)}
-                    {o.rd.s === 2 ? ` - ${isZh ? '实时' : 'Live'}` : (!allRoundsFinished && o.rd.s === 1 ? ` - ${isZh ? '已结束' : 'Finished'}` : '')}
-                    {' '}({o.rd.rn})
-                  </option>
-                ))}
-              </select>
-
               {!isWca && (
                 <select
                   className="comp-select comp-filter-select"
@@ -908,7 +943,13 @@ export default function CompDetailPage() {
               isZh={isZh}
               pbMap={pbMap}
               advancers={advancers}
-              onClickCuber={n => setOpenedCuber(n)}
+              onClickCuber={n => {
+                if (currentRound) {
+                  setModal({ kind: 'round', number: n, eventId: currentRound.ev.i, roundId: currentRound.rd.i });
+                } else {
+                  setModal({ kind: 'all', number: n });
+                }
+              }}
             />
           </>
         ) : (
@@ -918,18 +959,32 @@ export default function CompDetailPage() {
             eventId={psychEventId}
             onChangeEvent={onChangePsychEvent}
             pbMap={pbMap}
-            onClickCuber={n => setOpenedCuber(n)}
+            onClickCuber={n => setModal({ kind: 'all', number: n })}
           />
         )}
       </div>
 
-      {openedCuber !== null && (
+      {modal?.kind === 'round' && (
+        <RoundResultModal
+          number={modal.number}
+          eventId={modal.eventId}
+          roundId={modal.roundId}
+          data={data}
+          compName={compNameTitle}
+          isZh={isZh}
+          pbMap={pbMap}
+          onShowAll={() => setModal({ kind: 'all', number: modal.number })}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.kind === 'all' && (
         <CuberModal
-          number={openedCuber}
+          number={modal.number}
           data={data}
           isZh={isZh}
           pbMap={pbMap}
-          onClose={() => setOpenedCuber(null)}
+          onSelectRound={(eventId, roundId) => setModal({ kind: 'round', number: modal.number, eventId, roundId })}
+          onClose={() => setModal(null)}
         />
       )}
     </div>
@@ -939,8 +994,8 @@ export default function CompDetailPage() {
 // ─── CompInfoPanel: 比赛元数据(日期/城市/地址/详情/网站) ─────────────────
 
 function CompInfoPanel({
-  info, isZh, cubingZh, rounds,
-}: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null; rounds: Record<string, number> | null }) {
+  info, isZh, cubingZh,
+}: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
   const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join(isZh ? '、' : ', ');
@@ -982,35 +1037,7 @@ function CompInfoPanel({
     if (info.venue_address) rows.push({ label: isZh ? '地址' : 'Address', value: info.venue_address });
     if (info.venue_details) rows.push({ label: isZh ? '详情' : 'Details', value: info.venue_details });
   }
-  if (info.website) {
-    rows.push({
-      label: isZh ? '网站' : 'Website',
-      value: (
-        <a href={info.website} target="_blank" rel="noopener noreferrer" className="comp-info-link">
-          {info.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-          <ExternalLink size={12} />
-        </a>
-      ),
-    });
-  }
-  if (rounds && Object.keys(rounds).length > 0) {
-    const orderSet = new Set<string>(WCA_EVENT_ORDER);
-    const order: string[] = [...WCA_EVENT_ORDER, ...Object.keys(rounds).filter(e => !orderSet.has(e))];
-    const ordered = order.filter(e => rounds[e] != null);
-    rows.push({
-      label: isZh ? '项目' : 'Events',
-      value: (
-        <span className="comp-info-events">
-          {ordered.map(eid => (
-            <span key={eid} className="comp-info-event">
-              <EventIcon event={eid} className="comp-info-event-icon" title={eventDisplayName(eid, isZh)} />
-              <span className="comp-info-event-rounds">{rounds[eid]}</span>
-            </span>
-          ))}
-        </span>
-      ),
-    });
-  }
+  // 网站链接已转移到标题右侧的 site icon,不再 push 行
   if (rows.length === 0) return null;
   const activeRows = rows.filter(r => !r.past);
   const pastRows = rows.filter(r => r.past);
@@ -1128,7 +1155,9 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             const u = users[String(r.n)];
             if (!u) return null;
             const pb = pbMap[u.wcaid];
-            const { singlePr, averagePr } = classifyPr(r, pb);
+            const { singleRank, averageRank } = classifyPr(r, pb);
+            const singleBadge = prBadgeFor(singleRank);
+            const averageBadge = prBadgeFor(averageRank);
             const isOdd = idx % 2 === 1;
             const advanced = advancers?.has(r.n);
             const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
@@ -1152,7 +1181,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                       {formatLive(r.a, r.e, true)}
                       {r.ar
                         ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                        : averagePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                        : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
                     </span>
                   </td>
                 )}
@@ -1161,7 +1190,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                     {formatLive(r.b, r.e, false)}
                     {r.sr
                       ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                      : singlePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                      : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
                   </span>
                 </td>
                 {Array.from({ length: attemptCount }).map((_, i) => (
@@ -1350,10 +1379,11 @@ interface CuberModalProps {
   data: CompData;
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
+  onSelectRound: (eventId: string, roundId: string) => void;
   onClose: () => void;
 }
 
-function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
+function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: CuberModalProps) {
   const u = data.users[String(number)];
   // 收集该选手所有 round 的结果, 按 event/round 顺序
   const rows = useMemo(() => {
@@ -1440,26 +1470,32 @@ function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
                     {g.entries.map(en => {
                       const { result } = en;
                       const isAverageFormat = en.rd.f === 'a' || en.rd.f === 'm' || en.rd.f === '';
-                      const { singlePr, averagePr } = classifyPr(result, pb);
+                      const { singleRank, averageRank } = classifyPr(result, pb);
+                      const singleBadge = prBadgeFor(singleRank);
+                      const averageBadge = prBadgeFor(averageRank);
                       // place: locate cuber within round results sorted as-displayed
                       const arr = data.resultsByRound[roundKey(en.ev.i, en.rd.i)] || [];
                       const idx = arr.findIndex(rr => rr.n === number);
                       const place = idx >= 0 && result.b !== 0 ? idx + 1 : '-';
                       return (
-                        <tr key={`${en.ev.i}:${en.rd.i}`}>
+                        <tr
+                          key={`${en.ev.i}:${en.rd.i}`}
+                          className="comp-modal-row-clickable"
+                          onClick={() => onSelectRound(en.ev.i, en.rd.i)}
+                        >
                           <td>{roundDisplayName(en.rd.name, isZh)}</td>
                           <td>{place}</td>
                           <td>
                             {formatLive(result.b, result.e, false)}
                             {result.sr
                               ? <RecordBadge record={result.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                              : singlePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                              : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
                           </td>
                           <td>
                             {isAverageFormat ? formatLive(result.a, result.e, true) : ''}
                             {isAverageFormat && (result.ar
                               ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                              : averagePr ? <RecordBadge record="PR" variant="inline" /> : null)}
+                              : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
                           </td>
                           {Array.from({ length: 5 }).map((_, i) => (
                             <td key={i}>{formatLive(result.v[i] ?? 0, result.e, false)}</td>
@@ -1474,6 +1510,127 @@ function CuberModal({ number, data, isZh, pbMap, onClose }: CuberModalProps) {
           )}
         </div>
         <footer className="comp-modal-footer">
+          <button type="button" className="comp-modal-close-btn" onClick={onClose}>
+            {isZh ? '关闭' : 'Close'}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ─── RoundResultModal: 单轮成绩详情(WCA Live 风格) ──────────────────────
+
+interface RoundResultModalProps {
+  number: number;
+  eventId: string;
+  roundId: string;
+  data: CompData;
+  compName: string;
+  isZh: boolean;
+  pbMap: Record<string, PbByEvent | null>;
+  onShowAll: () => void;
+  onClose: () => void;
+}
+
+function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, onShowAll, onClose }: RoundResultModalProps) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const u = data.users[String(number)];
+  const ev = data.events.find(e => e.i === eventId);
+  const rd = ev?.rs.find(r => r.i === roundId);
+  const arr = data.resultsByRound[roundKey(eventId, roundId)] || [];
+  const result = arr.find(rr => rr.n === number);
+  const idx = arr.findIndex(rr => rr.n === number);
+
+  if (!u || !ev || !rd || !result) return null;
+
+  const pb = pbMap[u.wcaid];
+  const { singleRank, averageRank } = classifyPr(result, pb);
+  const singleBadge = prBadgeFor(singleRank);
+  const averageBadge = prBadgeFor(averageRank);
+  const isAverageFormat = rd.f === 'a' || rd.f === 'm' || rd.f === '';
+  const place = idx >= 0 && result.b !== 0 ? idx + 1 : null;
+  const iso2 = regionToIso2(u.region);
+  const attempts = result.v.filter(v => v !== 0);
+
+  return (
+    <div className="comp-modal-backdrop comp-modal-backdrop-2" onClick={onClose}>
+      <div className="comp-round-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+        <header className="comp-modal-header">
+          <div className="comp-modal-title">
+            <Flag iso2={iso2} className="comp-flag" />
+            <span>{displayCuberName(u.name, isZh)}</span>
+            {place !== null && <span className="comp-round-modal-place">#{place}</span>}
+          </div>
+          <button type="button" className="comp-modal-close" onClick={onClose} aria-label="Close">
+            <XIcon size={18} />
+          </button>
+        </header>
+        <div className="comp-round-modal-body">
+          <div className="comp-round-modal-subtitle">
+            {compName}, {eventDisplayName(ev.i, isZh)}{isZh ? '' : ' '}{roundDisplayName(rd.name, isZh)}
+          </div>
+          <section className="comp-round-modal-section">
+            <div className="comp-round-modal-label">{isZh ? '详情' : 'Attempts'}</div>
+            <div className="comp-round-modal-value">
+              {attempts.length === 0
+                ? '—'
+                : (() => {
+                    // ao5 (format 'a') 满 5 次:最好最差打括号 (WCA 惯例)
+                    const isAo5 = rd.f === 'a' && attempts.length === 5;
+                    if (!isAo5) return attempts.map(v => formatLive(v, result.e, false)).join(', ');
+                    let bestIdx = -1, worstIdx = -1;
+                    let bestVal = Infinity, worstVal = -Infinity;
+                    let dnfIdx = -1;
+                    attempts.forEach((v, i) => {
+                      if (v === -1 || v === -2) { if (dnfIdx < 0) dnfIdx = i; return; }
+                      if (v > 0 && v < bestVal) { bestVal = v; bestIdx = i; }
+                      if (v > 0 && v > worstVal) { worstVal = v; worstIdx = i; }
+                    });
+                    if (dnfIdx >= 0) worstIdx = dnfIdx;
+                    return attempts.map((v, i) => {
+                      const s = formatLive(v, result.e, false);
+                      return (i === bestIdx || i === worstIdx) ? `(${s})` : s;
+                    }).join(', ');
+                  })()}
+            </div>
+          </section>
+          <section className="comp-round-modal-section">
+            <div className="comp-round-modal-label">{isZh ? '平均' : 'Average'}</div>
+            <div className="comp-round-modal-value">
+              {isAverageFormat && result.a !== 0 ? (
+                <span className="record-num-cell">
+                  {formatLive(result.a, result.e, true)}
+                  {result.ar
+                    ? <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
+                    : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                </span>
+              ) : '—'}
+            </div>
+          </section>
+          <section className="comp-round-modal-section">
+            <div className="comp-round-modal-label">{isZh ? '单次' : 'Best'}</div>
+            <div className="comp-round-modal-value">
+              {result.b !== 0 ? (
+                <span className="record-num-cell">
+                  {formatLive(result.b, result.e, false)}
+                  {result.sr
+                    ? <RecordBadge record={result.sr} variant="inline" iso2={iso2} />
+                    : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                </span>
+              ) : '—'}
+            </div>
+          </section>
+        </div>
+        <footer className="comp-modal-footer comp-round-modal-footer">
+          <button type="button" className="comp-modal-close-btn" onClick={onShowAll}>
+            {isZh ? '所有' : 'All'}
+          </button>
           <button type="button" className="comp-modal-close-btn" onClick={onClose}>
             {isZh ? '关闭' : 'Close'}
           </button>

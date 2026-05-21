@@ -18,7 +18,7 @@
 .vkb-suggest-btn {
     flex: 1;
     background: none;
-    color: #f0ebe3;
+    color: #ededed;
     border: none;
     border-left: 1px solid rgba(255, 255, 255, 0.15);
     padding: 8px 4px;
@@ -75,7 +75,7 @@
 .vkb-trigger-btn {
     flex: 0 0 auto;
     background: rgba(255, 255, 255, 0.1);
-    color: #f0ebe3;
+    color: #ededed;
     border: none;
     border-radius: 12px;
     padding: 6px 12px;
@@ -107,7 +107,7 @@
     border: none;
     border-radius: 6px;
     background: #3a3a3c;
-    color: #f0ebe3;
+    color: #ededed;
     font-size: 1.05rem;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
     font-weight: 500;
@@ -247,7 +247,7 @@
 /* NOTE: 高亮态——蓝色背景白字 */
 .vkb-popup-item.active {
     background: #007AFF;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 /* NOTE: 修饰键禁用态——光标前无英文字母时变灰 */
@@ -259,13 +259,13 @@
 /* NOTE: Shift 激活态——白底深色文字提示大写模式 */
 .vkb-shift-on {
     background: #fff !important;
-    color: #332e28 !important;
+    color: #333333 !important;
 }
 
 /* NOTE: Capslock 态——蓝底白字 */
 .vkb-capslock {
     background: #007AFF !important;
-    color: #f0ebe3 !important;
+    color: #ededed !important;
 }
 
 /* NOTE: QWERTY 行左右空白占位——复刻 iOS 键盘 ASDF 行缩进 */

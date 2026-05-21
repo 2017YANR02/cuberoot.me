@@ -14,6 +14,7 @@ import {
 } from './wca_api';
 import { loadFlagData } from '../../../utils/country_flags';
 import LangToggle from '../../../components/LangToggle';
+import ThemeToggle from '../../../components/ThemeToggle';
 import PersonHero from './sections/PersonHero';
 import PersonPRTable from './sections/PersonPRTable';
 import PersonTabs from './sections/PersonTabs';
@@ -97,6 +98,7 @@ function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId
       </Link>
       <div className="wp-header-right">
         <LangToggle />
+        <ThemeToggle />
         {wcaId && (
           <a
             href={`https://www.worldcubeassociation.org/persons/${wcaId}`}

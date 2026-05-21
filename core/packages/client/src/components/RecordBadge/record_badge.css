@@ -34,6 +34,16 @@
 .record-cr { background: #facc15; color: #000; }
 .record-nr { background: #16a34a; color: #000; }
 .record-pr { background: #2563eb; }
+
+/* PR<N> (N≥2) 选手历史第 N 快 — 裸文字, 无外框, 跟 .record-badge 同字号同字重.
+   .record-num-cell 内继承 .record-badge--inline 的绝对定位, 跟 PR(=PR1) 占同一位置. */
+.record-pr-rank {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    white-space: nowrap;
+    line-height: 1.3;
+}
 .record-wcr { background: #f97316; color: #fff; }
 .record-other { background: #6b7280; color: #fff; }
 
