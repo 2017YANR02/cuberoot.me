@@ -3,6 +3,7 @@
  * Auth 走 wca_access_token / cuberoot_jwt（同 alg_sets_api 模式）。
  */
 import { API_ORIGIN } from './api_base';
+import { authHeaders, handleApi } from './admin_api';
 
 const BASE = API_ORIGIN + '/v1/colpi';
 
@@ -38,32 +39,12 @@ export interface ColpiWord {
   updatedAt: string;
 }
 
-function getToken(): string | null {
-  return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
-}
-
-function headers(json = true): HeadersInit {
-  const token = getToken();
-  const h: Record<string, string> = {};
-  if (json) h['Content-Type'] = 'application/json';
-  if (token) h['Authorization'] = `Bearer ${token}`;
-  return h;
-}
-
-async function handle<T>(r: Response): Promise<T> {
-  if (!r.ok) {
-    const err = await r.json().catch(() => ({ error: r.statusText }));
-    throw new Error(err.error || `HTTP ${r.status}`);
-  }
-  return r.json();
-}
-
 export async function fetchWords(lang: string = 'all'): Promise<Record<string, ColpiWord[]>> {
-  return handle(await fetch(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: headers(false) }));
+  return handleApi(await fetch(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: authHeaders(false) }));
 }
 
 export async function fetchRecent(limit = 20): Promise<ColpiWord[]> {
-  return handle(await fetch(`${BASE}/recent?limit=${limit}`, { headers: headers(false) }));
+  return handleApi(await fetch(`${BASE}/recent?limit=${limit}`, { headers: authHeaders(false) }));
 }
 
 export interface SubmitInput {
@@ -76,8 +57,8 @@ export interface SubmitInput {
 }
 
 export async function submitWord(body: SubmitInput): Promise<ColpiWord> {
-  return handle(await fetch(`${BASE}/words`, {
-    method: 'POST', headers: headers(), body: JSON.stringify(body),
+  return handleApi(await fetch(`${BASE}/words`, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
@@ -90,27 +71,23 @@ export interface PatchInput {
 }
 
 export async function patchWord(id: number, body: PatchInput): Promise<ColpiWord> {
-  return handle(await fetch(`${BASE}/words/${id}`, {
-    method: 'PATCH', headers: headers(), body: JSON.stringify(body),
+  return handleApi(await fetch(`${BASE}/words/${id}`, {
+    method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
 export async function deleteWord(id: number): Promise<void> {
-  const r = await fetch(`${BASE}/words/${id}`, { method: 'DELETE', headers: headers(false) });
-  if (!r.ok) {
-    const err = await r.json().catch(() => ({ error: r.statusText }));
-    throw new Error(err.error || `HTTP ${r.status}`);
-  }
+  await handleApi<unknown>(await fetch(`${BASE}/words/${id}`, { method: 'DELETE', headers: authHeaders(false) }));
 }
 
 export async function setVote(id: number, dir: 1 | -1): Promise<{ score: number; myVote: 1 | -1 }> {
-  return handle(await fetch(`${BASE}/words/${id}/vote`, {
-    method: 'PUT', headers: headers(), body: JSON.stringify({ dir }),
+  return handleApi(await fetch(`${BASE}/words/${id}/vote`, {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify({ dir }),
   }));
 }
 
 export async function clearVote(id: number): Promise<{ score: number; myVote: null }> {
-  return handle(await fetch(`${BASE}/words/${id}/vote`, {
-    method: 'DELETE', headers: headers(false),
+  return handleApi(await fetch(`${BASE}/words/${id}/vote`, {
+    method: 'DELETE', headers: authHeaders(false),
   }));
 }

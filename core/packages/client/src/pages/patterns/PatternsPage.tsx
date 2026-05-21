@@ -1,7 +1,8 @@
 /**
- * /scramble/pattern — gallery of famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7.
- * Top tabs switch puzzle size; second row filters by category. Click a card to
- * open a modal with TwistyPlayer playback (solved → pattern animation).
+ * /scramble/pattern — gallery of famous pretty patterns for every WCA event.
+ * Top row WcaEventSelector switches the puzzle (2x2, 3x3-7x7, pyraminx, megaminx,
+ * skewb, sq1, clock). Second row filters by category. Click a card to open a
+ * modal with TwistyPlayer playback (solved → pattern animation).
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,11 +10,16 @@ import { Sparkles, X, Copy, Check } from 'lucide-react';
 import { Alg } from 'cubing/alg';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import WcaEventSelector from '../../components/WcaEventSelector';
 import { VisualCube } from '../../components/VisualCube';
+import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import TwistySection from '../../components/TwistySection';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
+import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from '../gen/clock_svg';
 import {
-  PATTERNS, CATEGORY_LABEL, PUZZLE_SIZES, PUZZLE_LABEL, patternPuzzle,
+  PATTERNS, CATEGORY_LABEL, PUZZLE_SIZES, PUZZLE_LABEL,
+  PUZZLE_TO_EVENT, EVENT_TO_PUZZLE,
+  patternPuzzle, twistyPuzzleId,
   type Category, type Pattern, type PuzzleSize,
 } from './patterns_data';
 import './patterns.css';
@@ -23,6 +29,60 @@ type Filter = typeof ALL | Category;
 
 function inverseOf(algStr: string): string {
   try { return new Alg(algStr).invert().toString(); } catch { return algStr; }
+}
+
+/** Puzzle → PuzzleSVG kind. Returns null for NxN (use VisualCube) or clock (no preview). */
+function puzzleSvgKind(size: PuzzleSize): PuzzleKind | null {
+  if (size === 'pyraminx') return 'pyraminx';
+  if (size === 'megaminx') return 'megaminx';
+  if (size === 'skewb') return 'skewb';
+  if (size === 'sq1') return 'sq1';
+  return null;
+}
+
+/** NxN dimension if applicable, else null. */
+function nxnSize(size: PuzzleSize): number | null {
+  if (size === '2x2x2') return 2;
+  if (size === '3x3x3') return 3;
+  if (size === '4x4x4') return 4;
+  if (size === '5x5x5') return 5;
+  if (size === '6x6x6') return 6;
+  if (size === '7x7x7') return 7;
+  return null;
+}
+
+function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number }) {
+  const puzzle = patternPuzzle(pattern);
+  const n = nxnSize(puzzle);
+  if (n !== null) {
+    return (
+      <VisualCube
+        algorithm={inverseOf(pattern.alg)}
+        view="iso"
+        size={size}
+        puzzleSize={n}
+        alt={pattern.name_en}
+      />
+    );
+  }
+  const kind = puzzleSvgKind(puzzle);
+  if (kind) {
+    return <PuzzleSVG kind={kind} case={pattern.alg} size={size} />;
+  }
+  if (puzzle === 'clock') {
+    // Clock notation is a scramble (forward), no inversion needed.
+    let svg = '';
+    try { svg = renderClockScrambleSvg(pattern.alg, DEFAULT_CLOCK_COLORS); } catch { svg = ''; }
+    return svg
+      ? <div className="pat-card-clock" style={{ width: size, height: size }} dangerouslySetInnerHTML={{ __html: svg }} />
+      : <div className="pat-card-noprev" aria-label={pattern.name_en}><Sparkles size={36} /><div className="pat-card-noprev-label">Clock</div></div>;
+  }
+  return (
+    <div className="pat-card-noprev" aria-label={pattern.name_en}>
+      <Sparkles size={36} />
+      <div className="pat-card-noprev-label">{PUZZLE_LABEL[puzzle]}</div>
+    </div>
+  );
 }
 
 export default function PatternsPage() {
@@ -57,6 +117,17 @@ export default function PatternsPage() {
     if (filter !== ALL && !categories.includes(filter)) setFilter(ALL);
   }, [filter, categories]);
 
+  // Available event IDs = whatever puzzles actually have patterns.
+  const availableEvents = useMemo(() => {
+    const set = new Set<string>();
+    for (const sz of PUZZLE_SIZES) {
+      if (PATTERNS.some((p) => patternPuzzle(p) === sz)) {
+        set.add(PUZZLE_TO_EVENT[sz]);
+      }
+    }
+    return set;
+  }, []);
+
   const openPattern: Pattern | null = openId
     ? PATTERNS.find((p) => p.id === openId) ?? null
     : null;
@@ -68,21 +139,24 @@ export default function PatternsPage() {
           <Sparkles size={20} className="pat-title-icon" />
           <h1>{t('图案集', 'Cube Patterns')}</h1>
         </div>
-        <select
-          className="pat-puzzle-select"
-          aria-label={t('阶数', 'Puzzle size')}
-          value={puzzle}
-          onChange={(e) => setPuzzle(e.target.value as PuzzleSize)}
-        >
-          {PUZZLE_SIZES.filter((sz) => PATTERNS.some((p) => patternPuzzle(p) === sz)).map((sz) => (
-            <option key={sz} value={sz}>{PUZZLE_LABEL[sz]}</option>
-          ))}
-        </select>
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
 
       <main className="pat-main">
+        <div className="pat-puzzle-row">
+          <WcaEventSelector
+            availableEvents={availableEvents}
+            onlyAvailable
+            isZh={lang === 'zh'}
+            selectedEvent={PUZZLE_TO_EVENT[puzzle]}
+            onSelect={(id) => {
+              const next = EVENT_TO_PUZZLE[id];
+              if (next) setPuzzle(next);
+            }}
+          />
+        </div>
+
         <nav className="pat-filters" role="tablist">
           <button
             type="button"
@@ -105,29 +179,27 @@ export default function PatternsPage() {
           ))}
         </nav>
 
-        <ul className="pat-grid">
-          {visiblePatterns.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                className="pat-card"
-                onClick={() => setOpenId(p.id)}
-              >
-                <div className="pat-card-preview">
-                  <VisualCube
-                    algorithm={inverseOf(p.alg)}
-                    view="iso"
-                    size={120}
-                    puzzleSize={Number(patternPuzzle(p)[0])}
-                    alt={p.name_en}
-                  />
-                </div>
-                <div className="pat-card-name">{lang === 'zh' ? p.name_zh : p.name_en}</div>
-                <div className="pat-card-meta">{CATEGORY_LABEL[p.category][lang]}</div>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {visiblePatterns.length === 0 ? (
+          <div className="pat-empty">{t('暂无图案', 'No patterns yet')}</div>
+        ) : (
+          <ul className="pat-grid">
+            {visiblePatterns.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className="pat-card"
+                  onClick={() => setOpenId(p.id)}
+                >
+                  <div className="pat-card-preview">
+                    <PatternThumb pattern={p} />
+                  </div>
+                  <div className="pat-card-name">{lang === 'zh' ? (p.name_zh || p.name_en) : p.name_en}</div>
+                  <div className="pat-card-meta">{CATEGORY_LABEL[p.category][lang]}</div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </main>
 
       {openPattern && (
@@ -161,6 +233,8 @@ function PatternModal({
   };
 
   const moveCount = pattern.alg.split(/\s+/).filter(Boolean).length;
+  const puzzleId = twistyPuzzleId(patternPuzzle(pattern));
+  const displayName = lang === 'zh' ? (pattern.name_zh || pattern.name_en) : pattern.name_en;
 
   return (
     <div className="pat-modal-overlay" onClick={onClose} role="dialog">
@@ -168,14 +242,14 @@ function PatternModal({
         <button type="button" className="pat-modal-close" onClick={onClose} aria-label="close">
           <X size={18} />
         </button>
-        <h2 className="pat-modal-title">{lang === 'zh' ? pattern.name_zh : pattern.name_en}</h2>
+        <h2 className="pat-modal-title">{displayName}</h2>
         <div className="pat-modal-meta">
           <span className="pat-modal-cat">{CATEGORY_LABEL[pattern.category][lang]}</span>
           <span className="pat-modal-count">{moveCount} {t('步', 'moves')}</span>
         </div>
         <div className="pat-modal-twisty">
           {/* setupAlg empty → starts solved; alg plays the pattern animation. */}
-          <TwistySection puzzle={patternPuzzle(pattern)} scramble="" alg={pattern.alg} />
+          <TwistySection puzzle={puzzleId} scramble="" alg={pattern.alg} />
         </div>
         <div className="pat-modal-alg-row">
           <code className="pat-modal-alg">{pattern.alg}</code>

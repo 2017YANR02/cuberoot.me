@@ -11,9 +11,10 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Search, X, Pencil, MessageSquarePlus, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2 } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
+import { ClearButton } from '../../components/ClearButton';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import {
@@ -205,11 +206,7 @@ export default function WikiPage() {
             autoComplete="off"
             spellCheck={false}
           />
-          {query && (
-            <button type="button" className="wiki-search-clear" onClick={() => setQuery('')} aria-label={isZh ? '清除' : 'Clear'}>
-              <X size={14} />
-            </button>
-          )}
+          {query && <ClearButton onClick={() => setQuery('')} isZh={isZh} preserveFocus />}
         </div>
 
         {q && (

@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './ruby_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 const RUBY_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -498,11 +492,10 @@ export default function RubyIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'Ruby : 程序员幸福为本 · Matz / DHH / Shopify 的三十年'
-      : 'Ruby : Optimised for programmer happiness — three decades of Matz, DHH and Shopify';
-  }, [lang]);
+  useDocumentTitle(
+    'Ruby : 程序员幸福为本 · Matz / DHH / Shopify 的三十年',
+    'Ruby : Optimised for programmer happiness — three decades of Matz, DHH and Shopify',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

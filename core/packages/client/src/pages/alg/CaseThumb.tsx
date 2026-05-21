@@ -7,6 +7,7 @@
  * shape and set.
  */
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
+import { toWca as toWcaSkewb } from '@cuberoot/shared/skewb-notation';
 import { VisualCube } from '../../components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
 import { apiUrl } from '../../utils/api_base';
@@ -22,7 +23,7 @@ export function srPuzzleKind(p: AlgPuzzle): PuzzleKind | null {
   if (p === 'sq1')      return 'sq1-net';
   if (p === 'megaminx') return 'megaminx-top';
   if (p === 'pyraminx') return 'pyraminx';
-  if (p === 'skewb')    return 'skewb';
+  if (p === 'skewb')    return 'skewb-top';
   return null;
 }
 
@@ -71,7 +72,11 @@ export function CaseThumb({
   }
   if (SR_PUZZLES.includes(puzzle)) {
     const kind = srPuzzleKind(puzzle)!;
-    const driver = setup && setup.trim() ? { alg: setup } : { case: alg };
+    // Skewb's only set (sarahs-advanced) uses Sarah/Algorithm notation. Translate
+    // to cubing.js-style WCA + y rotations + F so the local engine (which now
+    // supports all 8 corners + x/y/z) can render the case state.
+    const xform = puzzle === 'skewb' ? (s: string) => toWcaSkewb(s, 'sarah') : (s: string) => s;
+    const driver = setup && setup.trim() ? { alg: xform(setup) } : { case: xform(alg) };
     return <PuzzleSVG kind={kind} {...driver} size={size} />;
   }
   if (maskOverride) {

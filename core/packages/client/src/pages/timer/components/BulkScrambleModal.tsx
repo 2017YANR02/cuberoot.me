@@ -3,26 +3,12 @@ import type { EventId } from '../types';
 import { EVENTS } from '../types';
 import { generateScramble } from '../scramble';
 import { warmup333 } from '../scramble/kociemba/random_state';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   defaultEvent: EventId;
   isZh: boolean;
   onClose: () => void;
-}
-
-/** True iff viewport ≤ 480px. Drives full-width modal + tap-friendly controls. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
 }
 
 export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props) {
@@ -33,7 +19,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
   const [copied, setCopied] = useState(false);
   const titleId = useId();
   const firstSelectRef = useRef<HTMLSelectElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };

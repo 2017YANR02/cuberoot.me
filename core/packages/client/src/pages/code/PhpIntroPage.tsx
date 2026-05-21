@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './php_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 /* Stylised <?php glyph — official PHP purple square + open-tag wordmark.
  * Elephant felt too cute for the comeback-story tone; the open tag is the
@@ -480,11 +474,10 @@ export default function PhpIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'PHP : 仍跑着 75% 的网络 — Lerdorf 的简历计数器走过 30 年'
-      : 'PHP : still running 75% of the web — Lerdorf\'s resume counter, 30 years on';
-  }, [lang]);
+  useDocumentTitle(
+    'PHP : 仍跑着 75% 的网络 — Lerdorf 的简历计数器走过 30 年',
+    'PHP : still running 75% of the web — Lerdorf\'s resume counter, 30 years on',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

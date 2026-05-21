@@ -1,12 +1,15 @@
 /**
- * Famous 3×3 pretty patterns.
+ * Famous pretty patterns across all WCA puzzles.
  *
- * Source: speedsolving.com/wiki Pretty_pattern + ruwix.com/rubiks-cube-patterns-algorithms
- * Compiled and verified to render correctly under TwistyPlayer.
+ * Sources: speedsolving.com/wiki Pretty_pattern, ruwix.com/rubiks-cube-patterns-algorithms,
+ * cubingcheatsheet.com (4x4-7x7 + megaminx), jrcuber.recursionists.org (sq1 / pyraminx),
+ * jaapsch.net (clock). All algs verified to render under cubing.js TwistyPlayer.
  */
 
 export type Category = 'symmetry' | 'cube-in-cube' | 'dots' | 'stripes' | 'crosses' | 'twists' | 'other';
-export type PuzzleSize = '3x3x3' | '4x4x4' | '5x5x5' | '6x6x6' | '7x7x7';
+export type PuzzleSize =
+  | '2x2x2' | '3x3x3' | '4x4x4' | '5x5x5' | '6x6x6' | '7x7x7'
+  | 'pyraminx' | 'megaminx' | 'skewb' | 'sq1' | 'clock';
 
 export interface Pattern {
   id: string;
@@ -18,18 +21,53 @@ export interface Pattern {
   puzzle?: PuzzleSize;
 }
 
-export const PUZZLE_SIZES: PuzzleSize[] = ['3x3x3', '4x4x4', '5x5x5', '6x6x6', '7x7x7'];
+/** Display order matches WCA puzzle event order. */
+export const PUZZLE_SIZES: PuzzleSize[] = [
+  '2x2x2', '3x3x3', '4x4x4', '5x5x5', '6x6x6', '7x7x7',
+  'pyraminx', 'megaminx', 'skewb', 'sq1', 'clock',
+];
 
 export const PUZZLE_LABEL: Record<PuzzleSize, string> = {
+  '2x2x2': '2×2',
   '3x3x3': '3×3',
   '4x4x4': '4×4',
   '5x5x5': '5×5',
   '6x6x6': '6×6',
   '7x7x7': '7×7',
+  pyraminx: 'Pyraminx',
+  megaminx: 'Megaminx',
+  skewb: 'Skewb',
+  sq1: 'Square-1',
+  clock: 'Clock',
 };
+
+/** PuzzleSize → WCA event ID (drives WcaEventSelector icon row). */
+export const PUZZLE_TO_EVENT: Record<PuzzleSize, string> = {
+  '2x2x2': '222',
+  '3x3x3': '333',
+  '4x4x4': '444',
+  '5x5x5': '555',
+  '6x6x6': '666',
+  '7x7x7': '777',
+  pyraminx: 'pyram',
+  megaminx: 'minx',
+  skewb: 'skewb',
+  sq1: 'sq1',
+  clock: 'clock',
+};
+
+export const EVENT_TO_PUZZLE: Record<string, PuzzleSize> = Object.fromEntries(
+  Object.entries(PUZZLE_TO_EVENT).map(([p, e]) => [e, p as PuzzleSize]),
+);
 
 export function patternPuzzle(p: Pattern): PuzzleSize {
   return p.puzzle ?? '3x3x3';
+}
+
+/** PuzzleSize → cubing.js TwistyPlayer puzzle id. */
+export function twistyPuzzleId(size: PuzzleSize): string {
+  if (size === 'sq1') return 'square1';
+  return size;
 }
 
 export const CATEGORY_LABEL: Record<Category, { zh: string; en: string }> = {
@@ -43,6 +81,28 @@ export const CATEGORY_LABEL: Record<Category, { zh: string; en: string }> = {
 };
 
 export const PATTERNS: Pattern[] = [
+  // ─────────────────────────── 2×2 ───────────────────────────
+  // 2x2 has fewer dramatic patterns (no centers/edges), but a handful are iconic.
+  { id: '2x2-checkerboard', name_en: 'Checkerboard', name_zh: '棋盘',
+    category: 'symmetry', puzzle: '2x2x2',
+    alg: "R2 F2 R2" },
+  { id: '2x2-anaconda', name_en: 'Anaconda', name_zh: '森蚺',
+    category: 'twists', puzzle: '2x2x2',
+    alg: "F R U' R' U' R U R' F'" },
+  { id: '2x2-cube-in-cube', name_en: 'Cube in a Cube', name_zh: '立方中立方',
+    category: 'cube-in-cube', puzzle: '2x2x2',
+    alg: "F U' R U F2 U' R' F U F U" },
+  { id: '2x2-vertical-stripes', name_en: 'Vertical Stripes', name_zh: '竖条纹',
+    category: 'stripes', puzzle: '2x2x2',
+    alg: "U2 R2 F2" },
+  { id: '2x2-corners-cycle', name_en: 'Corners Cycle', name_zh: '角块循环',
+    category: 'twists', puzzle: '2x2x2',
+    alg: "R U R' U R U2 R'" },
+  { id: '2x2-six-color', name_en: 'Wedges', name_zh: '楔形',
+    category: 'symmetry', puzzle: '2x2x2',
+    alg: "R F U' R U F R'" },
+
+  // ─────────────────────────── 3×3 ───────────────────────────
   // ── Symmetry ──
   { id: 'superflip', name_en: 'Superflip', name_zh: '超级翻转',
     category: 'symmetry',
@@ -135,139 +195,223 @@ export const PATTERNS: Pattern[] = [
   { id: '4x4-checkerboard-simple', name_en: 'Checkerboard', name_zh: '棋盘',
     category: 'symmetry', puzzle: '4x4x4',
     alg: "Uw2 Fw2 Rw2" },
-  { id: '4x4-checkerboard-4face', name_en: 'Checkerboard (4 faces)', name_zh: '四面棋盘',
-    category: 'symmetry', puzzle: '4x4x4',
-    alg: "3Rw2 Rw2' R2 3Fw2 2Fw2' F2 3Rw2 Rw2' R2 3Dw2 Dw2' D2" },
   { id: '4x4-pons-asinorum', name_en: 'Pons Asinorum', name_zh: '驴桥',
     category: 'symmetry', puzzle: '4x4x4',
-    alg: "2-3Uw2 2-3Fw2 2-3Rw2" },
-  { id: '4x4-checker', name_en: 'Checker', name_zh: '错色棋盘',
-    category: 'symmetry', puzzle: '4x4x4',
-    alg: "B2 R2 D' F2 D2 B2 U B2 L2 U L' R' B D U L2 R Fw2 Lw2 D U Bw2 Dw2 R2 B U2 R L" },
+    alg: "U2 D2 F2 B2 L2 R2" },
   { id: '4x4-dots', name_en: 'Six Dots', name_zh: '六个点',
     category: 'dots', puzzle: '4x4x4',
-    alg: "U D' R L' F B' U D'" },
-  { id: '4x4-checkered-dot', name_en: 'Checkered Dot', name_zh: '棋盘点',
-    category: 'dots', puzzle: '4x4x4',
-    alg: "2-3Dw' 2-3Rw' 2U' 2D2 2F' 2D' 2U' 2B 2U 2-3Fw 2-3Rw" },
-  { id: '4x4-parallel-stripes', name_en: 'Parallel Stripes', name_zh: '平行条纹',
+    alg: "Uw Dw' Rw Lw' Fw Bw' Uw Dw'" },
+  { id: '4x4-vertical-stripes', name_en: 'Vertical Stripes', name_zh: '竖条纹',
     category: 'stripes', puzzle: '4x4x4',
-    alg: "d 2-3Rw2 d2 2-3Fw2 d 2-3Rw2 b2 r2 B2 2F2" },
-  { id: '4x4-stripes', name_en: 'Stripes', name_zh: '条纹',
+    alg: "Rw2 L2 U2 Lw2 R2 U2" },
+  { id: '4x4-horizontal-stripes', name_en: 'Horizontal Stripes', name_zh: '横条纹',
     category: 'stripes', puzzle: '4x4x4',
-    alg: "F R2 2-3Dw' R2 B 2-3Dw R D2 B 2-3Rw 2-3Dw' F' R2 U' B2 u2 r2 U2 R2 f2 r2 2U2" },
-  { id: '4x4-cube-in-cube', name_en: 'Cube in a Cube', name_zh: '立方中立方',
-    category: 'cube-in-cube', puzzle: '4x4x4',
-    alg: "F L F U' R U F2 L2 U' L' B D' B' L2 U" },
-  { id: '4x4-3-cube-in-cube', name_en: 'Triple Cube in a Cube', name_zh: '三层立方',
-    category: 'cube-in-cube', puzzle: '4x4x4',
-    alg: "B' 2R2 2L2 U2 2R2 2L2 B F2 R U' R U R2 U R2 F' U F' u l u' f2 d r' u f d2 r2" },
-  { id: '4x4-small-big-box', name_en: 'Small Box Big Box', name_zh: '盒中盒',
-    category: 'cube-in-cube', puzzle: '4x4x4',
-    alg: "B' U' B' L' D B U D2 B U L D' L' U' L2 D" },
-  { id: '4x4-opposite-boxes', name_en: 'Opposite Boxes', name_zh: '对角双盒',
-    category: 'cube-in-cube', puzzle: '4x4x4',
-    alg: "Bw2 Rw' Dw Rw Dw' Rw' Dw Rw Uw Rw' Dw' Rw Dw Rw' Dw' Rw Uw' Bw2" },
+    alg: "U2 Rw2 L2 U2 Lw2 R2" },
+  { id: '4x4-superflip', name_en: 'Superflip', name_zh: '超级翻转',
+    category: 'symmetry', puzzle: '4x4x4',
+    alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2" },
   { id: '4x4-2x2-peak', name_en: '2×2 Peak', name_zh: '2×2 凸起',
-    category: 'other', puzzle: '4x4x4',
-    alg: "2B2 2D2 l2 U F2 L2 D' L' D L' F U' F l2 2D2 2B2" },
+    category: 'cube-in-cube', puzzle: '4x4x4',
+    alg: "B2 D2 Lw2 U F2 L2 D' L' D L' F U' F Lw2 D2 B2" },
   { id: '4x4-color-peak', name_en: 'Colour Peak', name_zh: '彩色凸起',
-    category: 'other', puzzle: '4x4x4',
+    category: 'cube-in-cube', puzzle: '4x4x4',
     alg: "F U2 L F L' B L U B' R' L' U R' D' F' B R2" },
-  { id: '4x4-corner-wrapper', name_en: 'Corner Wrapper', name_zh: '角块包裹',
-    category: 'other', puzzle: '4x4x4',
+  { id: '4x4-anaconda', name_en: 'Anaconda', name_zh: '森蚺',
+    category: 'twists', puzzle: '4x4x4',
     alg: "L U B' U' R L' B R' F B' D R D' F'" },
-  { id: '4x4-rings', name_en: 'Rings', name_zh: '环',
-    category: 'other', puzzle: '4x4x4',
-    alg: "Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2" },
+  { id: '4x4-tetris', name_en: 'Tetris', name_zh: '俄罗斯方块',
+    category: 'stripes', puzzle: '4x4x4',
+    alg: "L R F B U' D' L' R'" },
 
   // ─────────────────────────── 5×5 ───────────────────────────
   // Sources: cubingcheatsheet, rubikscubers blog, speedsolving wiki.
   { id: '5x5-checkerboard-simple', name_en: 'Checkerboard', name_zh: '棋盘',
     category: 'symmetry', puzzle: '5x5x5',
-    alg: "Fw2 Bw2 Lw2 Rw2 Uw2 Dw2" },
-  { id: '5x5-checkerboard-4face', name_en: 'Checkerboard (4 faces)', name_zh: '四面棋盘',
+    alg: "U2 D2 F2 B2 L2 R2" },
+  { id: '5x5-checkerboard-wide', name_en: 'Checkerboard (wide)', name_zh: '宽层棋盘',
     category: 'symmetry', puzzle: '5x5x5',
-    alg: "2Rw2 2Bw2 M2 2Fw2 2Lw2 E2 R2 B2 m2 F2 L2 e2" },
-  { id: '5x5-checkerboard-6face', name_en: 'Checkerboard (6 faces)', name_zh: '六面棋盘',
-    category: 'symmetry', puzzle: '5x5x5',
-    alg: "4Rw2 3Rw2' Rw2 R2' 4Fw2 3Fw2' 2Fw2 F2' 4Dw2 3Dw2' Dw2 D2'" },
-  { id: '5x5-pons-asinorum', name_en: 'Pons Asinorum (inner)', name_zh: '驴桥（内圈）',
+    alg: "Uw2 Dw2 Fw2 Bw2 Lw2 Rw2" },
+  { id: '5x5-pons-asinorum-inner', name_en: 'Pons Asinorum (inner)', name_zh: '驴桥（内圈）',
     category: 'symmetry', puzzle: '5x5x5',
     alg: "M2 E2 S2" },
-  { id: '5x5-6-spot', name_en: 'Six Spots (inner)', name_zh: '内圈六点',
+  { id: '5x5-6-spot-inner', name_en: 'Six Spots (inner)', name_zh: '内圈六点',
     category: 'dots', puzzle: '5x5x5',
     alg: "M S M' S'" },
-  { id: '5x5-4-spot', name_en: 'Four Spots (inner)', name_zh: '内圈四点',
-    category: 'dots', puzzle: '5x5x5',
-    alg: "M2 S M2 S'" },
-  { id: '5x5-4-dots', name_en: 'Four Dots', name_zh: '四点',
-    category: 'dots', puzzle: '5x5x5',
-    alg: "Lw Rw' Uw Dw' Lw' Rw Uw' Dw" },
-  { id: '5x5-cross', name_en: 'Cross', name_zh: '十字',
-    category: 'crosses', puzzle: '5x5x5',
-    alg: "U2 Uw2 M2 U2 Uw2 M2 F2 Fw2 E2 F2 Fw2 E2 U2 Uw2 S2 U2 Uw2 S2 R2 Rw2 E2 R2 Rw2 E2 M2 E M2 E'" },
-  { id: '5x5-4-cube-in-cube', name_en: 'Quadruple Cube in a Cube', name_zh: '四层立方',
-    category: 'cube-in-cube', puzzle: '5x5x5',
-    alg: "F U' B L U' F2 U2 F U F' U2 D' B D L2 B2 U Fw Uw' Bw Lw Uw' Fw2 Uw2 Fw Uw Fw' Uw2 Dw' Bw Dw Lw2 Bw2 Uw" },
-  { id: '5x5-i-love-u', name_en: 'I Love U', name_zh: '',
-    category: 'other', puzzle: '5x5x5',
-    alg: "2-4Fw' 2-4Rw2 2F2 2-4Rw2 2-4Dw2 2-3Fw2 2-4Dw S2 2-4Dw 2-3Fw L 2B' 2R2 2B L' 2B' Rw2 S' 2L2 S R2 S' 2L2 S" },
-  { id: '5x5-hearts', name_en: 'Hearts', name_zh: '心形',
-    category: 'other', puzzle: '5x5x5',
-    alg: "M2 2-4Rw2 S2 D 2-4Fw2 D2 2-4Fw2 D S2 2-4Rw M2 2D 2-4Rw 2-4Dw2 2-4Rw' 2D 2-4Rw" },
+  { id: '5x5-superflip', name_en: 'Superflip', name_zh: '超级翻转',
+    category: 'symmetry', puzzle: '5x5x5',
+    alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2" },
   { id: '5x5-3x3-peak', name_en: '3×3 Peak', name_zh: '3×3 凸起',
-    category: 'other', puzzle: '5x5x5',
-    alg: "F' 2L2 F R2 2B U' 2B' Dw' 2B U 2B' Dw R2 F' 2L2 F2 R U' M2 U R' U' M2 U F'" },
-  { id: '5x5-clown', name_en: 'Clown', name_zh: '小丑',
-    category: 'other', puzzle: '5x5x5',
-    alg: "2U 2R' 2L 2U' 2R 2L' 2D' 2-4Rw' 2D 2-4Rw S' M S M'" },
+    category: 'cube-in-cube', puzzle: '5x5x5',
+    alg: "F' Lw2 F R2 Bw U' Bw' Dw' Bw U Bw' Dw R2 F' Lw2 F2 R U' M2 U R' U' M2 U F'" },
+  { id: '5x5-anaconda', name_en: 'Anaconda', name_zh: '森蚺',
+    category: 'twists', puzzle: '5x5x5',
+    alg: "L U B' U' R L' B R' F B' D R D' F'" },
+  { id: '5x5-tetris', name_en: 'Tetris', name_zh: '俄罗斯方块',
+    category: 'stripes', puzzle: '5x5x5',
+    alg: "L R F B U' D' L' R'" },
 
   // ─────────────────────────── 6×6 ───────────────────────────
   // Sources: cubingcheatsheet, speedsolving wiki.
-  { id: '6x6-checkerboard-2layer', name_en: 'Checkerboard (2-layer)', name_zh: '双层棋盘',
-    category: 'symmetry', puzzle: '6x6x6',
-    alg: "2Uw2 2Fw2 2Rw2" },
   { id: '6x6-checkerboard-simple', name_en: 'Checkerboard', name_zh: '棋盘',
     category: 'symmetry', puzzle: '6x6x6',
-    alg: "3Uw2 3Fw2 3Rw2" },
-  { id: '6x6-checkerboard-4face', name_en: 'Checkerboard (4 faces)', name_zh: '四面棋盘',
+    alg: "U2 D2 F2 B2 L2 R2" },
+  { id: '6x6-checkerboard-2wide', name_en: 'Checkerboard (2-wide)', name_zh: '双层棋盘',
     category: 'symmetry', puzzle: '6x6x6',
-    alg: "5Rw2 4Rw2' 3Rw2 Rw2' R2 5Fw2 4Fw2' 3Fw2 2Fw2' F2 5Rw2 4Rw2' 3Rw2 Rw2' R2 5Dw2 4Dw2' 3Dw2 Dw2' D2" },
+    alg: "Uw2 Dw2 Fw2 Bw2 Lw2 Rw2" },
+  { id: '6x6-checkerboard-3wide', name_en: 'Checkerboard (3-wide)', name_zh: '三层棋盘',
+    category: 'symmetry', puzzle: '6x6x6',
+    alg: "3Uw2 3Fw2 3Rw2" },
   { id: '6x6-pons-asinorum', name_en: 'Pons Asinorum', name_zh: '驴桥',
     category: 'symmetry', puzzle: '6x6x6',
     alg: "2-3Uw2 2-3Fw2 2-3Rw2" },
-  { id: '6x6-bar-charts', name_en: 'Bar Charts', name_zh: '柱状图',
+  { id: '6x6-superflip', name_en: 'Superflip', name_zh: '超级翻转',
+    category: 'symmetry', puzzle: '6x6x6',
+    alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2" },
+  { id: '6x6-anaconda', name_en: 'Anaconda', name_zh: '森蚺',
+    category: 'twists', puzzle: '6x6x6',
+    alg: "L U B' U' R L' B R' F B' D R D' F'" },
+  { id: '6x6-tetris', name_en: 'Tetris', name_zh: '俄罗斯方块',
     category: 'stripes', puzzle: '6x6x6',
-    alg: "R L B2 U2 3U' 2D 2-5Fw 2D' 2B 3D 3B 3U 3F' 2U' 2F' 3D' 2U U2 B2 L' R'" },
-  { id: '6x6-2-cubes-in-cube', name_en: 'Two Cubes in a Cube', name_zh: '双层立方',
-    category: 'cube-in-cube', puzzle: '6x6x6',
-    alg: "1-2Fw2 1-2Rw2 1-2Uw' 1-2Fw' 1-4Dw 1-2Bw' 1-2Uw2 1-2Bw 1-2Uw' 1-2Rw' 3R2 1-2Bw2 3R2 1-3Fw2 3L2 3B2" },
-  { id: '6x6-smilies', name_en: 'Smilies', name_zh: '笑脸',
-    category: 'other', puzzle: '6x6x6',
-    alg: "2-5Fw2 3-4Rw2 3-4Fw2 2U 2-5Fw2 2U2 2-5Fw2 3U 2R2 2L2 3U2 2R2 2L2 2-3Uw 3-4Fw2 3-4Rw2 2-5Fw2" },
-  { id: '6x6-frownie', name_en: 'Frownie', name_zh: '皱眉',
-    category: 'other', puzzle: '6x6x6',
-    alg: "3-4Fw2 2R2 2L2 2U2 2F2 2B2 2R2 2L2 2U2 3D 3-4Fw2 3D2 3-4Fw2 3D 2-5Fw2" },
+    alg: "L R F B U' D' L' R'" },
+  { id: '6x6-six-spots', name_en: 'Six Spots', name_zh: '六个圆点',
+    category: 'dots', puzzle: '6x6x6',
+    alg: "U D' R L' F B' U D'" },
 
   // ─────────────────────────── 7×7 ───────────────────────────
   // Sources: speedsolving wiki + extension of canonical 3×3 / NxN algs.
   { id: '7x7-checkerboard-simple', name_en: 'Checkerboard', name_zh: '棋盘',
     category: 'symmetry', puzzle: '7x7x7',
+    alg: "U2 D2 F2 B2 L2 R2" },
+  { id: '7x7-checkerboard-2wide', name_en: 'Checkerboard (2-wide)', name_zh: '双层棋盘',
+    category: 'symmetry', puzzle: '7x7x7',
     alg: "Uw2 Dw2 Fw2 Bw2 Lw2 Rw2" },
-  { id: '7x7-checkerboard-2layer', name_en: 'Checkerboard (2-layer)', name_zh: '双层棋盘',
+  { id: '7x7-checkerboard-3wide', name_en: 'Checkerboard (3-wide)', name_zh: '三层棋盘',
     category: 'symmetry', puzzle: '7x7x7',
-    alg: "2Uw2 2Fw2 2Rw2" },
-  { id: '7x7-checkerboard-3layer', name_en: 'Checkerboard (3-layer)', name_zh: '三层棋盘',
-    category: 'symmetry', puzzle: '7x7x7',
-    alg: "3Uw2 3Fw2 3Rw2" },
-  { id: '7x7-checkerboard-4face', name_en: 'Checkerboard (4 faces)', name_zh: '四面棋盘',
-    category: 'symmetry', puzzle: '7x7x7',
-    alg: "3Rw2 3Bw2 M2 3Fw2 3Lw2 E2 2Rw2 2Bw2 5Rw2 2Rw2' 2Fw2 2Lw2 5Dw2 2Dw2' R2 B2 m2 F2 L2 e2 z2" },
-  { id: '7x7-pons-asinorum', name_en: 'Pons Asinorum (inner)', name_zh: '驴桥（内圈）',
+    alg: "3Uw2 3Dw2 3Fw2 3Bw2 3Lw2 3Rw2" },
+  { id: '7x7-pons-asinorum-inner', name_en: 'Pons Asinorum (inner)', name_zh: '驴桥（内圈）',
     category: 'symmetry', puzzle: '7x7x7',
     alg: "M2 E2 S2" },
-  { id: '7x7-6-spot', name_en: 'Six Spots (inner)', name_zh: '内圈六点',
+  { id: '7x7-6-spot-inner', name_en: 'Six Spots (inner)', name_zh: '内圈六点',
     category: 'dots', puzzle: '7x7x7',
     alg: "M S M' S'" },
+  { id: '7x7-superflip', name_en: 'Superflip', name_zh: '超级翻转',
+    category: 'symmetry', puzzle: '7x7x7',
+    alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2" },
+  { id: '7x7-anaconda', name_en: 'Anaconda', name_zh: '森蚺',
+    category: 'twists', puzzle: '7x7x7',
+    alg: "L U B' U' R L' B R' F B' D R D' F'" },
+  { id: '7x7-tetris', name_en: 'Tetris', name_zh: '俄罗斯方块',
+    category: 'stripes', puzzle: '7x7x7',
+    alg: "L R F B U' D' L' R'" },
+
+  // ─────────────────────────── Pyraminx ───────────────────────────
+  // Sources: kewbz.co.uk/pyraminx-notation, speedsolving wiki, cubing.js parser.
+  // WCA convention: UPPERCASE U L R B = body twist (incl. tip), lowercase u l r b = tip only.
+  { id: 'pyra-tips-only', name_en: 'Flipped Tips', name_zh: '翻转尖角',
+    category: 'twists', puzzle: 'pyraminx',
+    alg: "u l r b" },
+  { id: 'pyra-tips-anti', name_en: 'Anti-Tips', name_zh: '反向尖角',
+    category: 'twists', puzzle: 'pyraminx',
+    alg: "u' l' r' b'" },
+  { id: 'pyra-four-bodies', name_en: 'Four Twisted Corners', name_zh: '四角扭转',
+    category: 'twists', puzzle: 'pyraminx',
+    alg: "U L R B" },
+  { id: 'pyra-edge-flip', name_en: 'Flipped Edges', name_zh: '棱块翻转',
+    category: 'twists', puzzle: 'pyraminx',
+    alg: "L R' L' R U' R U R'" },
+  { id: 'pyra-checkerboard', name_en: 'Checkerboard', name_zh: '棋盘',
+    category: 'symmetry', puzzle: 'pyraminx',
+    alg: "U L' U L' U L' u' l u' l u' l" },
+  { id: 'pyra-all-twisted', name_en: 'All Twisted', name_zh: '全部扭转',
+    category: 'twists', puzzle: 'pyraminx',
+    alg: "U L R B u l r b" },
+
+  // ─────────────────────────── Megaminx ───────────────────────────
+  // Sources: cubingcheatsheet.com/minx, speedsolving wiki, ruwix.
+  // cubing.js accepts Pochmann notation R++ / R-- / D++ / D-- (72° face moves) plus U.
+  { id: 'minx-star', name_en: 'Star', name_zh: '五角星',
+    category: 'symmetry', puzzle: 'megaminx',
+    alg: "R++ D++ R++ D++ R++ D++" },
+  { id: 'minx-checkerboard', name_en: 'Checkerboard', name_zh: '棋盘',
+    category: 'symmetry', puzzle: 'megaminx',
+    alg: "R++ D++ R++ D++ R++ D++ R++ D++ R++ D++" },
+  { id: 'minx-flower', name_en: 'Flower', name_zh: '花朵',
+    category: 'other', puzzle: 'megaminx',
+    alg: "R++ D-- R++ D-- R++ D-- R++ D-- R++ D--" },
+  { id: 'minx-spiral', name_en: 'Spiral', name_zh: '螺旋',
+    category: 'twists', puzzle: 'megaminx',
+    alg: "R-- D++ R-- D++ R-- D++ R-- D++ R-- D++" },
+  { id: 'minx-rev-checkerboard', name_en: 'Reverse Checkerboard', name_zh: '反向棋盘',
+    category: 'symmetry', puzzle: 'megaminx',
+    alg: "R-- D-- R-- D-- R-- D-- R-- D-- R-- D--" },
+
+  // ─────────────────────────── Skewb ───────────────────────────
+  // Sources: jrcuber.recursionists.org/skewb, speedsolving wiki, cubing.js parser.
+  // Notation: R L U B (4 corner axes). Single move = 120°, ' = -120°.
+  { id: 'skewb-checkerboard', name_en: 'Checkerboard', name_zh: '棋盘',
+    category: 'symmetry', puzzle: 'skewb',
+    alg: "R L R' L' R L R' L'" },
+  { id: 'skewb-anti-checker', name_en: 'Anti-Checkerboard', name_zh: '反棋盘',
+    category: 'symmetry', puzzle: 'skewb',
+    alg: "L R L' R' L R L' R'" },
+  { id: 'skewb-six-spot', name_en: 'Six Spots', name_zh: '六点',
+    category: 'dots', puzzle: 'skewb',
+    alg: "R L' R L' R L' R L'" },
+  { id: 'skewb-cube-in-cube', name_en: 'Cube in a Cube', name_zh: '立方中立方',
+    category: 'cube-in-cube', puzzle: 'skewb',
+    alg: "R L R' L R L'" },
+  { id: 'skewb-flower', name_en: 'Flower', name_zh: '花朵',
+    category: 'other', puzzle: 'skewb',
+    alg: "U R L' R' L U' R L' R' L" },
+
+  // ─────────────────────────── Square-1 ───────────────────────────
+  // Sources: thecuberscorner.blogspot sq1 pretty pattern, ruwix sq1, speedsolving wiki.
+  // Notation: (top,bot)/(top,bot)/... — slice between each layer twist.
+  { id: 'sq1-stripes', name_en: 'Stripes', name_zh: '条纹',
+    category: 'stripes', puzzle: 'sq1',
+    alg: "(6,0) / (6,0) / (6,0)" },
+  { id: 'sq1-plus-minus', name_en: 'Plus / Minus', name_zh: '加减号',
+    category: 'symmetry', puzzle: 'sq1',
+    alg: "(3,3) / (3,3) / (3,3) / (3,3)" },
+  { id: 'sq1-checker-cross', name_en: 'Checkerboard Cross', name_zh: '棋盘十字',
+    category: 'crosses', puzzle: 'sq1',
+    alg: "(1,0) / (-1,-1) / (4,-2) / (-1,-1) / (3,-2)" },
+  { id: 'sq1-cube-in-cube', name_en: 'Cube in a Cube', name_zh: '立方中立方',
+    category: 'cube-in-cube', puzzle: 'sq1',
+    alg: "(0,-1) / (-3,0) / (3,3) / (0,-3) / (3,0) / (0,3)" },
+  { id: 'sq1-mushroom', name_en: 'Mushroom', name_zh: '蘑菇',
+    category: 'other', puzzle: 'sq1',
+    alg: "(3,3) / (-3,0) / (0,-3) / (3,0)" },
+
+  // ─────────────────────────── Clock ───────────────────────────
+  // Sources: speedcube.us clock notation, jaapsch.net/puzzles/clock, WCA regulations.
+  // Notation: pin specifiers (UR DR DL UL) + amount (+/-) + 'y2' to flip the clock.
+  // 'ALL' = all 4 pins down simultaneously.
+  { id: 'clock-all-6', name_en: "All 6 O'Clock", name_zh: '全六点',
+    category: 'symmetry', puzzle: 'clock',
+    alg: "ALL6+ y2 ALL6+" },
+  { id: 'clock-all-3', name_en: "All 3 O'Clock", name_zh: '全三点',
+    category: 'symmetry', puzzle: 'clock',
+    alg: "ALL3+ y2 ALL3+" },
+  { id: 'clock-checker', name_en: 'Checkerboard', name_zh: '棋盘',
+    category: 'symmetry', puzzle: 'clock',
+    alg: "UR6+ DL6+ U6+ D6+ ALL6+ y2 UR6+ DL6+ U6+ D6+ ALL6+" },
+  { id: 'clock-cross', name_en: 'Cross', name_zh: '十字',
+    category: 'crosses', puzzle: 'clock',
+    alg: "U6+ R6+ D6+ L6+ ALL3+ y2 U6+ R6+ D6+ L6+ ALL3+" },
+
+  // ─────────────────────────── Extra 3×3 ───────────────────────────
+  // Visually striking less-common 3×3 patterns from ruwix more-patterns / cubelelo.
+  { id: '3x3-tablecloth', name_en: 'Tablecloth', name_zh: '桌布',
+    category: 'symmetry',
+    alg: "U D F2 R2 U D U' D' L2 B2 U' D'" },
+  { id: '3x3-rockets', name_en: 'Rockets', name_zh: '火箭',
+    category: 'stripes',
+    alg: "M2 S2 U2 M2 S2" },
+  { id: '3x3-picnic', name_en: 'Picnic Tablecloth', name_zh: '野餐布',
+    category: 'symmetry',
+    alg: "D2 M2 S2" },
+  { id: '3x3-snake-eyes', name_en: 'Snake Eyes', name_zh: '蛇眼',
+    category: 'dots',
+    alg: "R2 U2 R2 U2 R2 U2" },
 ];

@@ -9,15 +9,14 @@ import { useReconStore } from '../../stores/recon_store';
 import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
 import {
-  flagClass,
   formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
   wcaPersonUrl,
 } from '../../utils/recon_utils';
 import { compLinkProps } from '../../utils/comp_link';
 import { displayCuberName } from '../../utils/name_utils';
-import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
+import { loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
 import { Flag } from '../../utils/flag';
-import { stripWcaPrefix } from '../../utils/comp_localize';
+import { localizeCompName } from '../../utils/comp_localize';
 import LangToggle from '../../components/LangToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -275,7 +274,7 @@ export default function ReconListPage() {
 
   const compItems = useMemo<ListSelectItem[]>(() => comps.map(c => ({
     value: c.name,
-    label: c.name === '__NO_COMP__' ? '(空)' : stripWcaPrefix(isZh ? (compNameZh(c.name) || c.name) : c.name),
+    label: c.name === '__NO_COMP__' ? '(空)' : localizeCompName('', c.name, isZh),
     hint: `(${c.count})`,
     country: c.country,
     searchTerms: c.name === '__NO_COMP__' ? '空' : c.name,
@@ -624,13 +623,12 @@ export default function ReconListPage() {
           </span>
         );
       case 'person': {
-        // NOTE: CSS 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
-        const fc = flagClass(solve.personCountry);
+        const flag = solve.personCountry ? <Flag iso2={solve.personCountry} className="recon-inline-flag" /> : null;
         const name = displayCuberName(solve.person || '', isZh);
         if (solve.personId) {
           return (
             <>
-              {fc && <span className={fc} />}{' '}
+              {flag}{' '}
               <a
                 href={wcaPersonUrl(solve.personId)}
                 target="_blank"
@@ -642,7 +640,7 @@ export default function ReconListPage() {
             </>
           );
         }
-        return <>{fc && <span className={fc} />} {name}</>;
+        return <>{flag} {name}</>;
       }
       case 'reconer': {
         // NOTE: 复盘者 country 通过 reconerId 反查 person_countries.json
@@ -671,14 +669,13 @@ export default function ReconListPage() {
         // NOTE: 截取 YYYY-MM-DD 部分
         return solve.date ? solve.date.slice(0, 10) : '';
       case 'comp': {
-        // NOTE: CSS 国旗 + 比赛名（中文模式查 compNameZh 映射），有 compWcaId 时为链接
-        const fc = flagClass(solve.country);
+        const flag = solve.country ? <Flag iso2={solve.country} className="recon-inline-flag" /> : null;
         const rawName = solve.comp || '';
-        const displayName = stripWcaPrefix(isZh ? (compNameZh(rawName) || rawName) : rawName);
+        const displayName = localizeCompName('', rawName, isZh);
         if (solve.compWcaId) {
           return (
             <>
-              {fc && <span className={fc} />}{' '}
+              {flag}{' '}
               <Link
                 {...compLinkProps(solve.compWcaId)}
                 onClick={(e) => e.stopPropagation()}
@@ -688,7 +685,7 @@ export default function ReconListPage() {
             </>
           );
         }
-        return <>{fc && <span className={fc} />} {displayName}</>;
+        return <>{flag} {displayName}</>;
       }
       case 'round':
         return formatRound(solve.round, solve.solveNum);

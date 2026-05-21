@@ -116,70 +116,98 @@ async function main() {
     console.log(`STATS_FILTER active: ${filterIds.join(', ')} (${orderedIds.length} matched)`);
   }
 
-  console.log(`Computing ${orderedIds.length} statistics (serial)`);
+  // 并行度:opt-in via PARALLEL=N。默认 1 = 原串行行为。聚合 stat (wr_metric/wr_aoxr/
+  // average_of) 有类级缓存依赖必须保持串行,这里只并行 priority 段之后的"light rest"。
+  const parallel = Math.max(1, Math.min(8, Number(process.env['PARALLEL'] || '1') || 1));
+
   const totalStart = Date.now();
   let passed = 0;
   let failed = 0;
+  let doneCount = 0;
+  const total = orderedIds.length;
 
-  for (let i = 0; i < orderedIds.length; i++) {
-    const statId = orderedIds[i];
+  type RunOutcome = { success: boolean; isHeavy: boolean; duration: string; mem: number; tag: string };
+
+  async function runOne(statId: string): Promise<RunOutcome> {
     const startTime = Date.now();
     const isHeavy = HEAVY_STATS.has(statId);
     const shouldIsolate = isHeavy && !AGGREGATE_IDS.has(statId);
 
     if (shouldIsolate) {
-      // NOTE: 重量级统计——在子进程中隔离执行，退出后 OS 回收全部 RSS
       const { success } = await runIsolated(statId);
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
-      if (success) {
-        console.log(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  [${mem}MB] [HEAVY:isolated]`);
-        passed++;
-      } else {
-        console.error(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  FAILED [HEAVY:isolated]`);
-        failed++;
-      }
-    } else {
-      // NOTE: 普通/聚合统计——在主进程内执行
-      try {
-        const mod = await REGISTRY[statId]();
-        const StatClass = Object.values(mod).find(
-          (v): v is new () => import('../core/statistic.js').Statistic =>
-            typeof v === 'function' && v.prototype
-        );
-
-        if (!StatClass) throw new Error(`模块 ${statId} 中未找到统计类`);
-
-        let stat: InstanceType<typeof StatClass> | null = new StatClass();
-        let json: Record<string, unknown> | null = await stat.toJson() as unknown as Record<string, unknown>;
-
-        stat = null;
-        if (global.gc) global.gc();
-
-        const outputPath = resolve(outputDir, `${statId}.json`);
-        writeFileSync(outputPath, JSON.stringify(json, null, 2), 'utf-8');
-
-        json = null;
-        if (global.gc) global.gc();
-
-        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-        const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
-        const tag = isHeavy ? ' [HEAVY]' : '';
-        console.log(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  [${mem}MB]${tag}`);
-        passed++;
-      } catch (err) {
-        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.error(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  FAILED`);
-        console.error(`    ${err instanceof Error ? err.message : String(err)}`);
-        failed++;
-      }
+      return { success, isHeavy, duration, mem, tag: ' [HEAVY:isolated]' };
     }
+    try {
+      const mod = await REGISTRY[statId]();
+      const StatClass = Object.values(mod).find(
+        (v): v is new () => import('../core/statistic.js').Statistic =>
+          typeof v === 'function' && v.prototype
+      );
+      if (!StatClass) throw new Error(`模块 ${statId} 中未找到统计类`);
 
-    // NOTE: 聚合统计完成后清除基类缓存
+      let stat: InstanceType<typeof StatClass> | null = new StatClass();
+      let json: Record<string, unknown> | null = await stat.toJson() as unknown as Record<string, unknown>;
+      stat = null;
+      if (global.gc) global.gc();
+
+      const outputPath = resolve(outputDir, `${statId}.json`);
+      writeFileSync(outputPath, JSON.stringify(json, null, 2), 'utf-8');
+      json = null;
+      if (global.gc) global.gc();
+
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
+      return { success: true, isHeavy, duration, mem, tag: isHeavy ? ' [HEAVY]' : '' };
+    } catch (err) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.error(`    ${err instanceof Error ? err.message : String(err)}`);
+      return { success: false, isHeavy, duration, mem: 0, tag: ' FAILED' };
+    }
+  }
+
+  async function execAndLog(statId: string): Promise<void> {
+    const out = await runOne(statId);
+    doneCount += 1;
+    if (out.success) {
+      console.log(`  [${doneCount}/${total}] ${statId.padEnd(50)} ${out.duration.padStart(6)}s  [${out.mem}MB]${out.tag}`);
+      passed++;
+    } else {
+      console.error(`  [${doneCount}/${total}] ${statId.padEnd(50)} ${out.duration.padStart(6)}s ${out.tag}`);
+      failed++;
+    }
     if (AGGREGATE_CACHE_CLEANUP[statId]) {
       AGGREGATE_CACHE_CLEANUP[statId]();
       if (global.gc) global.gc();
     }
+  }
+
+  // priority + aggregate 段:必须串行
+  const prioritySet = new Set(PRIORITY_STATS);
+  const prioritySeq = orderedIds.filter(id => prioritySet.has(id));
+  const restIds = orderedIds.filter(id => !prioritySet.has(id));
+
+  console.log(`Computing ${total} statistics (priority serial ${prioritySeq.length}, rest parallel=${parallel} × ${restIds.length})`);
+
+  for (const id of prioritySeq) {
+    await execAndLog(id);
+  }
+
+  // rest:opt-in 并行,默认串行。pLimit 微型实现避免新依赖。
+  if (parallel <= 1) {
+    for (const id of restIds) await execAndLog(id);
+  } else {
+    let cursor = 0;
+    const workers: Promise<void>[] = [];
+    const next = async (): Promise<void> => {
+      while (cursor < restIds.length) {
+        const i = cursor++;
+        await execAndLog(restIds[i]);
+      }
+    };
+    for (let w = 0; w < parallel; w++) workers.push(next());
+    await Promise.all(workers);
   }
 
   const totalDuration = ((Date.now() - totalStart) / 1000).toFixed(1);

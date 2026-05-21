@@ -32,7 +32,7 @@ import {
 } from '../utils/comp_records';
 import { formatWcaResult } from '../utils/wca_format_result';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
-import { stripWcaPrefix } from '../utils/comp_localize';
+import { localizeCompName } from '../utils/comp_localize';
 import { compLinkProps } from '../utils/comp_link';
 import { defaultCancelledCutoffIso, isCancelledComp, compNameMatches } from '../utils/comp_search';
 import { localizeCity } from '../utils/city_localize';
@@ -135,11 +135,10 @@ function monthGridStart(year: number, month: number): Date {
 
 // ── 国旗 ──────────────────────────────────────────────────────────────────
 
-// NOTE: TW 特判和 flag-icons 类名统一在 utils/flag.tsx；这里只是个 span/img className 绑定的 thin wrapper
-// 中文模式下比赛名本地化: upcoming JSON 的 name_zh（追踪选手近期赛）→ comp_names_zh.json 的英→中映射 → 兜底英文
-function localizeName(c: { name: string; name_zh?: string }, isZh: boolean): string {
-  const resolved = !isZh ? c.name : (c.name_zh || compNameZh(c.name) || c.name);
-  return stripWcaPrefix(resolved);
+// 中文模式下比赛名本地化:upcoming JSON 的 name_zh(追踪选手近期赛)→ comp_names_zh.json 的英→中映射 → 兜底英文。
+// 走单一入口 localizeCompName,c.name_zh 通过 explicitNameZh 传进去。
+function localizeName(c: { id?: string; name: string; name_zh?: string }, isZh: boolean): string {
+  return localizeCompName(c.id ?? '', c.name, isZh, { explicitNameZh: c.name_zh });
 }
 
 /** 报名时段渲染：未到 → "X 开放报名"；进行中 → "报名中（X 截止）"；已截止 → "报名已截止"。

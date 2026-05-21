@@ -4,6 +4,8 @@
  * 复用根目录 /callback.html 处理回调，登录后自动跳回来源页
  */
 import { create } from 'zustand';
+import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
+export { ADMIN_WCA_IDS };
 
 // ── 类型 ──
 
@@ -39,9 +41,6 @@ const SESSION_KEY = 'wca_user';
 const TOKEN_KEY = 'wca_access_token';
 const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
-
-// NOTE: 管理员列表（前端仅控制 UI 显示，后端独立校验）
-export const ADMIN_WCA_IDS = ['2017YANR02'];
 
 // ── 工具函数 ──
 
@@ -115,6 +114,5 @@ export function getWcaId(): string {
 
 /** 判断当前用户是否为管理员 */
 export function isAdmin(): boolean {
-  const user = useAuthStore.getState().user;
-  return user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  return isAdminWcaId(useAuthStore.getState().user?.wcaId);
 }

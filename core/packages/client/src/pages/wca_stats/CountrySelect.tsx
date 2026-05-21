@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Flag } from '../../utils/flag';
 import { countryName } from '../../utils/country_name';
+import { ClearButton } from '../../components/ClearButton';
 
 export interface CountryOption {
   id: string;
@@ -64,14 +65,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
             <span>{isZh ? '全球' : 'Worldwide'}</span>
           )}
         </button>
-        {value && (
-          <button
-            type="button"
-            className="wse-country-clear"
-            onClick={() => onChange('')}
-            aria-label={isZh ? '清除' : 'Clear'}
-          >×</button>
-        )}
+        {value && <ClearButton onClick={() => onChange('')} isZh={isZh} preserveFocus />}
       </div>
       {open && (
         <div className="wse-country-popup">

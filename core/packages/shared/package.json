@@ -20,6 +20,14 @@
       "node": "./dist/skewb_pyramid_svg.js",
       "default": "./src/skewb_pyramid_svg.ts"
     },
+    "./skewb-notation": {
+      "node": "./dist/skewb_notation.js",
+      "default": "./src/skewb_notation.ts"
+    },
+    "./admin": {
+      "node": "./dist/admin.js",
+      "default": "./src/admin.ts"
+    },
     "./data/*.json": "./data/*.json"
   },
   "scripts": {

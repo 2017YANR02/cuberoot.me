@@ -4,6 +4,7 @@
  * 用于复盘详情页另解列表点击 → 跳到干净页面只看动画 + 解法。
  */
 import { useEffect, useState, useRef, useMemo } from 'react';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert } from 'lucide-react';
@@ -20,17 +21,6 @@ import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import '../../recon.css';
 import './recon_submit.css';
 import './recon_detail.css';
-
-function useIsMobile(): boolean {
-  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
-    const handler = (e: MediaQueryListEvent) => setM(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-  return m;
-}
 
 export default function AltViewPage() {
   const { parentId, altIdx } = useParams<{ parentId: string; altIdx: string }>();

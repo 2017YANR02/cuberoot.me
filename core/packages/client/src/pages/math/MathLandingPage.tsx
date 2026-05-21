@@ -5,7 +5,7 @@
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
@@ -23,6 +23,12 @@ const CARDS: Card[] = [
     Icon: InfinityIcon,
     zh: { title: '上帝之数', desc: '17 个 WCA 项目的群直径 (精确值 / 上下界) + 群论 + 现场 BFS' },
     en: { title: "God's number", desc: 'Cayley-graph diameter for all 17 WCA puzzles (exact / bounds) + group theory + live BFS' },
+  },
+  {
+    to: '/math/demigod',
+    Icon: Dices,
+    zh: { title: '半神之数', desc: 'Merino & Subercaseaux 2024:用 500k 样本 + Hoeffding 证 D ≤ 36,概率上界互动版' },
+    en: { title: "Demigod's number", desc: 'Merino & Subercaseaux 2024: 500k samples + Hoeffding prove D ≤ 36 — the high-probability bound interactive' },
   },
   {
     to: '/math/group',

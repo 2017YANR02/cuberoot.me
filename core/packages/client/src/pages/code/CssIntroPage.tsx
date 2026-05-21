@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './css_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 /* CSS3 shield logo — pentagon similar to HTML5 but blue + "3" */
 const CSS_LOGO_SVG = (
@@ -464,11 +458,10 @@ export default function CssIntroPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [baTab, setBaTab] = useState<'clearfix' | 'cols' | 'cq' | 'centre'>('clearfix');
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'CSS : 30 年声明式样式语言 — 1994 CERN 提案到 2026 平台追上来'
-      : "CSS : 30 years of declarative styling — from CERN 1994 to 'the platform caught up'";
-  }, [lang]);
+  useDocumentTitle(
+    'CSS : 30 年声明式样式语言 — 1994 CERN 提案到 2026 平台追上来',
+    "CSS : 30 years of declarative styling — from CERN 1994 to 'the platform caught up'",
+  );
 
   useEffect(() => {
     const root = rootRef.current;
