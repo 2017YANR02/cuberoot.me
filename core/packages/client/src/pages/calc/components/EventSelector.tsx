@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useCalcStore, solveCountForEvent } from '../stores/calc_store';
 import { setCurrentEvent } from '../engine/calc_engine';
 import { eventDisplayName } from '../../../utils/wca_events';
+import { CubingIcon } from '../../../components/EventIcon/EventIcon';
 
 const EVENT_IDS = [
   '333', '222', '444', '555', '666', '777',
@@ -38,7 +39,7 @@ export function EventSelector() {
           data-tooltip={eventDisplayName(id, isZh)}
           onClick={() => handleSelect(id)}
         >
-          <span className={`cubing-icon event-${id}`} />
+          <CubingIcon icon={`event-${id}`} />
         </button>
       ))}
     </div>

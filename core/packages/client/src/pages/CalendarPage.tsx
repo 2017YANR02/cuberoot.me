@@ -41,6 +41,7 @@ import { expandCountrySelection } from '../utils/continent';
 import { fetchCompRounds } from '../utils/comp_wcif';
 import { CuberSearchInput } from '../components/CuberSearchInput';
 import { ClearButton } from '../components/ClearButton';
+import { CubingIcon } from '../components/EventIcon/EventIcon';
 import { fetchUserUpcoming, type WcaPersonLite } from '../utils/wca_api';
 import OnThisDayModal from './calendar/OnThisDayModal';
 import MonthGrid from '../components/MonthGrid';
@@ -505,7 +506,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
               const r = rounds[ev];
               return (
                 <div key={ev} className="modal-event">
-                  <span className={`cubing-icon event-${eid}`} />
+                  <CubingIcon icon={`event-${eid}`} />
                   {r ? <span className="modal-event-rounds">{r}</span> : <span className="modal-event-rounds modal-event-rounds--placeholder">·</span>}
                 </div>
               );
@@ -519,7 +520,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
               {recordEntries.map((r, idx) => (
                 <li key={idx} className="modal-record-item">
                   <RecordBadge record={r.t} />
-                  <span className={`cubing-icon event-${r.e}`} />
+                  <CubingIcon icon={`event-${r.e}`} />
                   <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
                   <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
                   <a
@@ -557,9 +558,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
                         const wrClass = evt.wr === 'current' ? ' wr-current' : evt.wr === 'former' ? ' wr-former' : '';
                         const wrTitle = evt.wr === 'current' ? t('upcoming.wrCurrent') : evt.wr === 'former' ? t('upcoming.wrFormer') : '';
                         return (
-                          <span
+                          <CubingIcon
                             key={evt.id}
-                            className={`cubing-icon event-${eid}${wrClass}`}
+                            icon={`event-${eid}`}
+                            className={wrClass.trim() || undefined}
                             title={wrTitle || undefined}
                           />
                         );
@@ -1638,7 +1640,7 @@ export default function CalendarPage() {
                 aria-pressed={active}
                 title={cycleHint}
               >
-                <span className={`cubing-icon event-${eid}`} />
+                <CubingIcon icon={`event-${eid}`} />
                 <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
                   {badge}
                 </span>
