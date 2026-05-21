@@ -86,7 +86,7 @@ WHERE round_type_id IN ('c', 'f') AND pos > 3;`,
   related: [
     { id: 'worst_result_on_podium', titleZh: '领奖台最差成绩', titleEn: 'Worst result on podium', hintZh: '镜像 stat — 拿了奖牌的最慢成绩', hintEn: 'Mirror stat — the slowest results that still medalled' },
     { id: 'most_4th_places', titleZh: '最多第四名', titleEn: 'Most 4th places', hintZh: '按选手算"差一点"的累积次数', hintEn: 'Per-person tally of near-misses' },
-    { id: 'best_result_off_podium', toStat: true, titleZh: '直接打开排行', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目的"差点拿奖"完整 top 10', hintEn: 'Full per-event top 10 of off-podium bests' },
+    { id: 'best_result_off_podium', toStat: true, titleZh: '直接打开排名', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目的"差点拿奖"完整 top 10', hintEn: 'Full per-event top 10 of off-podium bests' },
   ],
 };
 
@@ -372,7 +372,7 @@ ORDER BY start_date;`,
   related: [
     { id: 'most_finals', titleZh: '进入决赛最多', titleEn: 'Most finals', hintZh: '类似时间纵深的累积量,但不限"赢"', hintEn: 'Career-depth tally, no win requirement' },
     { id: 'most_4th_places', titleZh: '最多第四名', titleEn: 'Most 4th places', hintZh: '另一种"差一点"的画像', hintEn: 'A different shade of near-misses' },
-    { id: 'most_competitions_before_winning', toStat: true, titleZh: '直接打开排行', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目"等最久"的 10 人', hintEn: '10 longest waits per event' },
+    { id: 'most_competitions_before_winning', toStat: true, titleZh: '直接打开排名', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目"等最久"的 10 人', hintEn: '10 longest waits per event' },
   ],
 };
 
@@ -761,7 +761,7 @@ WHERE round_type_id IN ('c', 'f') AND pos <= 3;`,
   related: [
     { id: 'best_result_off_podium', titleZh: '最佳非领奖台成绩', titleEn: 'Best result off podium', hintZh: '镜像 stat —— 没进领奖台的最快成绩', hintEn: 'Mirror stat — fastest results that missed the podium' },
     { id: 'most_podiums_at_single_competition', titleZh: '单场比赛登台最多', titleEn: 'Most podiums at single comp', hintZh: '同口径下的"登台"另一切片', hintEn: 'Another slice of the podium concept' },
-    { id: 'worst_result_on_podium', toStat: true, titleZh: '直接打开排行', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目"奖牌地板"top 10', hintEn: 'Live per-event top 10 of slowest podiums' },
+    { id: 'worst_result_on_podium', toStat: true, titleZh: '直接打开排名', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目"奖牌地板"top 10', hintEn: 'Live per-event top 10 of slowest podiums' },
   ],
 };
 

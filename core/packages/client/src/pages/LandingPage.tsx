@@ -463,7 +463,7 @@ export default function LandingPage() {
         <img src={import.meta.env.BASE_URL + 'icons/wca.svg'} alt="WCA" className="wca-hero-logo" />
         <div className="wca-hero-meta">
           <div className="wca-hero-title">{lang === 'zh' ? 'WCA 统计' : 'WCA Statistics'}</div>
-          <div className="wca-hero-sub">{lang === 'zh' ? '魔方世界所有数据切片 · 80+ 自动生成排行 · 周更' : 'Every slice of the cubing world · 80+ auto-generated rankings · updated weekly'}</div>
+          <div className="wca-hero-sub">{lang === 'zh' ? '魔方世界所有数据切片 · 80+ 自动生成排名 · 周更' : 'Every slice of the cubing world · 80+ auto-generated rankings · updated weekly'}</div>
         </div>
         <div className="wca-hero-arrow" aria-hidden="true">→</div>
       </Link>

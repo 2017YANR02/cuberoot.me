@@ -47,7 +47,7 @@ interface AllEvents {
 
 const SECTIONS = [
   { id: 'tldr',          labelZh: '一句话结论',  labelEn: 'Top Line' },
-  { id: 'headline',      labelZh: '撞墙排行',    labelEn: 'Closest to Wall' },
+  { id: 'headline',      labelZh: '撞墙排名',    labelEn: 'Closest to Wall' },
   { id: 'overview',      labelZh: '跨项目总览',  labelEn: 'Cross-Event Grid' },
   { id: 'theory-deep',   labelZh: '数学硬墙',    labelEn: 'Math Walls' },
   { id: 'methods-compare', labelZh: '方法对比',  labelEn: 'Method Comparison' },
@@ -378,7 +378,7 @@ export default function PredictionPage() {
 
           {/* Headline bar chart */}
           <section className="pred-section" id="headline">
-            <h2>{isZh ? '撞墙排行: 一张图看完 16 项' : 'Wall-Closeness Ranking: All 16 Events at a Glance'}</h2>
+            <h2>{isZh ? '撞墙排名: 一张图看完 16 项' : 'Wall-Closeness Ranking: All 16 Events at a Glance'}</h2>
             <p>
               {isZh
                 ? '横轴 = 物理下界 / 当前 WR (%)。越靠右 = 剩余空间越小。这个指标比「WR 是多少」更能反映「项目成熟度」: ratio 99% 的项目即使数字看上去吓人 (比如 0.30 秒),也几乎不会再有大幅改写;ratio 50% 的项目即使数字慢 (Wang 3.08 → Zajder 2.76 → 还能 ~1.5),突破才刚开始。'

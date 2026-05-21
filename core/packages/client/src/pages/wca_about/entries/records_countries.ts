@@ -355,7 +355,7 @@ HAVING delegated >= 5`,
   ],
   related: [
     { id: 'most_delegated_competitions', titleZh: '代表总场次榜', titleEn: 'Total delegated comps', hintZh: '不除年数,纯累计', hintEn: 'No yearly rate, pure cumulative' },
-    { id: 'delegated_competition_per_year', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '年均效率排行', hintEn: 'Comps-per-year ranking' },
+    { id: 'delegated_competition_per_year', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '年均效率排名', hintEn: 'Comps-per-year ranking' },
   ],
 };
 
