@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
 import { STACK_TOOLS_META, type StackToolMeta } from './stack_data';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './stack_landing.css';
 
 const GROUPS: { id: 'frontend' | 'backend' | 'edge' | 'dev'; zh: { title: string; sub: string }; en: { title: string; sub: string } }[] = [
@@ -57,9 +57,7 @@ export default function StackLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? '技术栈 — CubeRoot' : 'Stack — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('技术栈', 'Stack');
 
   return (
     <div className="stack-landing">

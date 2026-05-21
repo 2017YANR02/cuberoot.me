@@ -6,6 +6,7 @@ import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '../../utils/name_utils';
 import { Flag } from '../../utils/flag';
 import ThemeToggle from '../../components/ThemeToggle';
+import { ClearButton } from '../../components/ClearButton';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './wb.css';
 
@@ -69,11 +70,7 @@ export default function WbPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('搜索:选手 / 项目 / 国家', 'Search cuber / event / country')}
           />
-          {query && (
-            <button className="wb-search-clear" onClick={() => setQuery('')} aria-label="clear">
-              ✕
-            </button>
-          )}
+          {query && <ClearButton onClick={() => setQuery('')} isZh={lang === 'zh'} preserveFocus />}
         </div>
 
         {data && data.tabs.length > 0 && (

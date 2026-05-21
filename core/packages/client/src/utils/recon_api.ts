@@ -7,84 +7,36 @@ import type {
 } from '@cuberoot/shared';
 import { getWcaId } from '../stores/auth_store';
 import { API_ORIGIN } from './api_base';
+import { authHeaders, handleApi } from './admin_api';
 
 const API_BASE = API_ORIGIN + '/v1/recon';
 
-// ── 认证 ──
-
-/** 获取认证 token（优先 JWT，回退 WCA access_token） */
-function getToken(): string | null {
-  // NOTE: 优先使用自签 JWT（365 天有效期），WCA access_token 仅 2 小时
-  return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
-}
-
-/** 构建带 Bearer token 的 headers */
-function authHeaders(json = true): HeadersInit {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (json) headers['Content-Type'] = 'application/json';
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  return headers;
-}
-
 // ── 通用请求（RESTful 风格） ──
 
-/** GET 请求——支持路径参数和 query 参数 */
 async function apiGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, window.location.origin);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  const resp = await fetch(url.toString(), { headers: authHeaders(false) });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(err.error || `API error ${resp.status}`);
-  }
-  return resp.json();
+  return handleApi<T>(await fetch(url.toString(), { headers: authHeaders(false) }));
 }
 
-/** POST 请求 */
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const url = new URL(`${API_BASE}${path}`, window.location.origin);
-  const resp = await fetch(url.toString(), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(err.error || `API error ${resp.status}`);
-  }
-  return resp.json();
+  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+  }));
 }
 
-/** PUT 请求 */
 async function apiPut<T>(path: string, body: unknown): Promise<T> {
-  const url = new URL(`${API_BASE}${path}`, window.location.origin);
-  const resp = await fetch(url.toString(), {
-    method: 'PUT',
-    headers: authHeaders(),
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(err.error || `API error ${resp.status}`);
-  }
-  return resp.json();
+  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
+  }));
 }
 
-/** DELETE 请求 */
 async function apiDelete<T>(path: string): Promise<T> {
-  const url = new URL(`${API_BASE}${path}`, window.location.origin);
-  const resp = await fetch(url.toString(), {
-    method: 'DELETE',
-    headers: authHeaders(false),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(err.error || `API error ${resp.status}`);
-  }
-  return resp.json();
+  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE', headers: authHeaders(false),
+  }));
 }
 
 // ── Recon CRUD ──

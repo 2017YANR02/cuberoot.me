@@ -12,8 +12,7 @@ import { ClearButton } from './ClearButton';
 import { Flag } from '../utils/flag';
 import { displayCuberName } from '../utils/name_utils';
 import { loadComps, searchComps, type Comp } from '../utils/comp_search';
-import { compNameZh } from '../utils/country_flags';
-import { stripWcaPrefix } from '../utils/comp_localize';
+import { localizeCompName } from '../utils/comp_localize';
 import { compLinkProps } from '../utils/comp_link';
 import { localizeCity } from '../utils/city_localize';
 import { formatDateRangeIso } from '../utils/date_range';
@@ -269,8 +268,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
               <div className="landing-search-grid">
                 {compMatches.map(c => {
-                  const zhName = isZh ? compNameZh(c.name) : '';
-                  const displayName = stripWcaPrefix(zhName || c.name);
+                  const displayName = localizeCompName(c.id, c.name, isZh);
                   const cityStr = c.city ? localizeCity(c.city, isZh) : '';
                   return (
                     <Link

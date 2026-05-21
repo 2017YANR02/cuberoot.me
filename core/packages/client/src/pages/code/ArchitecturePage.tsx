@@ -1,4 +1,4 @@
-import { useEffect, useContext, createContext, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -7,15 +7,9 @@ import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import COMMITS_DATA from './timeline_commits.json';
 import MonthGrid from '../../components/MonthGrid';
+import { LangCtx, L, useLang, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './architecture.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 // ─── SVG 1: 系统全景图 ────────────────────────────
 function SystemTopoSVG() {
@@ -116,12 +110,6 @@ function PackageDepsSVG() {
         <text x="160" y="266" className="d-sub d-mono">Hono + PG</text>
       </g>
 
-      <g className="d-pkg d-pkg-app">
-        <rect x="520" y="40" width="160" height="64" rx="8" />
-        <text x="600" y="68" className="d-title">stats-ui</text>
-        <text x="600" y="86" className="d-sub d-mono">consumed by client</text>
-      </g>
-
       <g className="d-pkg d-pkg-iso">
         <rect x="520" y="220" width="160" height="64" rx="8" />
         <text x="600" y="248" className="d-title">stats-build</text>
@@ -136,14 +124,9 @@ function PackageDepsSVG() {
         <line x1="240" y1="240" x2="320" y2="172" />
         <polygon points="320,172 314,176 313,168" />
       </g>
-      <g className="d-edge">
-        <line x1="240" y1="72" x2="520" y2="72" />
-        <polygon points="520,72 512,68 512,76" />
-        <text x="380" y="62" className="d-edge-label">imports</text>
-      </g>
 
       <text x="380" y="306" className="d-caption">
-        client / server 都依赖 shared (纯类型) · stats-ui 被 client 引 · stats-build 独立 CLI
+        client / server 都依赖 shared (纯类型) · stats-build 独立 CLI
       </text>
     </svg>
   );
@@ -407,11 +390,6 @@ const PACKAGES: Pkg[] = [
     zh: { role: 'WCA 统计独立管道',         bullet: ['80+ SQL-driven 统计', '周更 CI, ~2 小时跑完', '基于 jonatanklosko/wca_statistics 重写'] },
     en: { role: 'WCA stats standalone pipeline', bullet: ['80+ SQL-driven stats', 'Weekly CI, ~2h end to end', 'TS rewrite of jonatanklosko/wca_statistics'] },
   },
-  {
-    name: 'stats-ui', size: '~3k LOC',
-    zh: { role: '统计页通用渲染壳',         bullet: ['给 80+ stat 提供一致 UI', 'client 通过 lazy() 加载', '表 + 折线 + 热图 + 分组排序'] },
-    en: { role: 'Generic stats rendering shell', bullet: ['Uniform UI for 80+ stat pages', 'client lazy-loads it', 'Tables, line charts, heatmaps, grouped sort'] },
-  },
 ];
 
 interface Mod {
@@ -452,7 +430,7 @@ const DECISIONS: Decision[] = [
   { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/vite 装着, src/index.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/vite + a single @import "tailwindcss" in src/index.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.' },
   { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 一等公民;路由声明式;5 MB 依赖比 express 干净一个量级。',                en: 'TS-first; declarative routing; ~5MB deps vs Express noisy stack.' },
   { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
-  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '5 个 workspace (client / server / shared / stats-build / stats-ui), 一份 pnpm-lock。硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。底层 registry 仍是 npm (registry.npmjs.org), pnpm 只是更快的客户端。', en: 'Five workspaces (client / server / shared / stats-build / stats-ui), one pnpm-lock. Hard-linked node_modules saves disk; Turbo runs only changed packages. The underlying registry is still npm (registry.npmjs.org) — pnpm is just a faster client.' },
+  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '4 个核心 workspace (client / server / shared / stats-build), 一份 pnpm-lock。硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。底层 registry 仍是 npm (registry.npmjs.org), pnpm 只是更快的客户端。', en: 'Four core workspaces (client / server / shared / stats-build), one pnpm-lock. Hard-linked node_modules saves disk; Turbo runs only changed packages. The underlying registry is still npm (registry.npmjs.org) — pnpm is just a faster client.' },
   { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '11 个 store (6 全局 + 5 页面级)。无 Provider, create() 返回 hook, 选 selector 拿切片。auth 走 storage 事件跨标签同步, settings/sessions 用 persist 中间件落 localStorage。打包后约 1 KB。', en: '11 stores (6 global + 5 page-local). No Provider — create() returns a hook, components select slices. auth syncs across tabs via the storage event; settings/sessions persist to localStorage via middleware. ~1 KB bundle cost.' },
   { topic: 'Static host', pick: '云服务器 nginx',   alt: 'Vercel / Netlify',      zh: '同台机 nginx + API + DB, localhost 内 hop;Vercel 这种 SaaS 跑国内打不开。',        en: 'Same VM hosts nginx + API + DB; localhost hops; Vercel SaaS is unreachable from China.' },
   { topic: 'Theme tokens', pick: 'shadcn 命名 + hex + color-mix', alt: 'oklch / Material 3 / Radix Colors', zh: '8 页双主题切换。命名跟 OSS 标准 shadcn (AI 写代码命中率高);色值 hex (调研 30+ 大厂含 Anthropic console 自己,0 家把 oklch 当主品牌 token);衍生用 color-mix(in srgb) 跟 Anthropic CDS 实战用法 (644 处) 对齐。', en: 'Dark/light across 8 pages. Naming follows shadcn (OSS standard, friendly to AI code-gen); hex values (surveyed 30+ big-co incl. Anthropic console — zero use oklch as primary brand tokens); derivations via color-mix(in srgb) aligning with Anthropic CDS (644 production uses).' },
@@ -1201,9 +1179,7 @@ export default function ArchitecturePage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? '站点架构 — CubeRoot' : 'Site Architecture — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('站点架构', 'Site Architecture');
 
   return (
     <LangCtx.Provider value={lang}>

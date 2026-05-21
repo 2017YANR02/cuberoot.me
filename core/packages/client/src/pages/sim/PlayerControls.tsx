@@ -16,6 +16,7 @@ import { formatScrambleForEvent } from '../gen/sq1_svg';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
 import { tnoodleRandomScramble, randomMoveScrambleNxN } from '../../utils/cubingScramble';
+import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import { isTwistyPuzzle, type SimPuzzle } from './SimPage';
 import AlgInput from '../../components/AlgInput';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
@@ -87,6 +88,11 @@ interface Props {
   twistyPlayerRef?: RefObject<any>;
   /** Dev 性能采样回调:打乱 click → 画面上屏总耗时 (ms) + setup CPU 纯耗时 (ms) */
   onScrambleTime?: (ms: number, cpuMs?: number) => void;
+  /** Skewb-only:Sarah/Algorithm 记号 vs WCA。owner SimPage,持久化 localStorage。
+   *  PlayerControls render 选择器(仅 skewb),写在 player.alg 时不直接用——
+   *  SimPage 把 alg/setup 投给 TwistySection 时已统一翻成 WCA。 */
+  skewbNotation?: SkewbNotation;
+  onSkewbNotationChange?: (n: SkewbNotation) => void;
 }
 
 export default function PlayerControls({
@@ -95,6 +101,7 @@ export default function PlayerControls({
   settings, onSettingsChange,
   keymap, onKeymapChange, onResetKeymap,
   userMoveRef, twistyPlayerRef, onScrambleTime,
+  skewbNotation, onSkewbNotationChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isTwistyMode = isTwistyPuzzle(puzzleKind);
@@ -515,6 +522,17 @@ export default function PlayerControls({
           }}
           onCaretChange={handleCaretSync}
         />
+        {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
+          <select
+            className="sim-player-mode"
+            value={skewbNotation}
+            onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
+            title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
+          >
+            <option value="wca">WCA</option>
+            <option value="sarah">Sarah</option>
+          </select>
+        )}
       </div>
       {!isTwistyMode && (
       <div className="sim-player-row">

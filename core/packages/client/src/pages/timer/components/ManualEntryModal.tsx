@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import type { EventId, Penalty, Solve } from '../types';
 import { makeSolve } from '../storage/db';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   event: EventId;
@@ -51,21 +52,6 @@ function parseTimeStr(input: string): { ms: number; penalty: Penalty } | null {
   return { ms: total, penalty };
 }
 
-/** True iff viewport ≤ 480px. Drives full-width modal + tap-friendly inputs. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
-}
-
 export default function ManualEntryModal({ event, currentScramble, isZh, onClose, onSubmit }: Props) {
   const [timeStr, setTimeStr] = useState('');
   const [scramble, setScramble] = useState('');
@@ -74,7 +60,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
   const [stepCount, setStepCount] = useState('');
   const titleId = useId();
   const firstInputRef = useRef<HTMLInputElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   const isFmc = event === '333fm';
 

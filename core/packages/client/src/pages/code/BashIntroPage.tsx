@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './bash_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 // Inline SVG: terminal window with a $ prompt + blinking caret
 const BASH_LOGO_SVG = (
@@ -491,11 +485,10 @@ export default function BashIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'Bash : 1989 Brian Fox · 装在每台机器上 · DevOps 默认胶水'
-      : 'Bash : 1989 Brian Fox · pre-installed everywhere · the DevOps default';
-  }, [lang]);
+  useDocumentTitle(
+    'Bash : 1989 Brian Fox · 装在每台机器上 · DevOps 默认胶水',
+    'Bash : 1989 Brian Fox · pre-installed everywhere · the DevOps default',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

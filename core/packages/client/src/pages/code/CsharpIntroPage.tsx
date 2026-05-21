@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './csharp_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 // 256x256 official-purple logo with stylised C# glyph
 const CS_LOGO_SVG = (
@@ -485,11 +479,10 @@ export default function CsharpIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'C# : Hejlsberg 的第三门语言, .NET 的灵魂 — 26 年长青'
-      : 'C# : Hejlsberg\'s third language, soul of .NET — 26 years and counting';
-  }, [lang]);
+  useDocumentTitle(
+    'C# : Hejlsberg 的第三门语言, .NET 的灵魂 — 26 年长青',
+    'C# : Hejlsberg\'s third language, soul of .NET — 26 years and counting',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

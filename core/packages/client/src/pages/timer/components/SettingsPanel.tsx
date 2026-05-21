@@ -15,32 +15,13 @@ import { exportSolvesCsv } from '../storage/export_csv';
 import { reanalyzeAll } from '../storage/reanalyze';
 import { eventInfo, type EventId } from '../types';
 import { WCA_COLORS } from '../cube/colors';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   isZh: boolean;
   onClose: () => void;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
-}
-
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-    return window.matchMedia('(max-width: 768px)').matches;
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-    const mq = window.matchMedia('(max-width: 768px)');
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', handler);
-      return () => mq.removeEventListener('change', handler);
-    }
-    // Safari < 14 fallback
-    mq.addListener(handler);
-    return () => mq.removeListener(handler);
-  }, []);
-  return isMobile;
 }
 
 interface AccordionSectionProps {

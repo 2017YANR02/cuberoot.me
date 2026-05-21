@@ -4,8 +4,7 @@
 import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Flag } from '../utils/flag';
 import { loadComps, searchComps, isCancelledComp, type Comp } from '../utils/comp_search';
-import { compNameZh } from '../utils/country_flags';
-import { stripWcaPrefix } from '../utils/comp_localize';
+import { localizeCompName } from '../utils/comp_localize';
 import { localizeCity } from '../utils/city_localize';
 import { formatDateRangeIso } from '../utils/date_range';
 import { ClearButton } from './ClearButton';
@@ -53,11 +52,10 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
   const [focused, setFocused] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // NOTE: 中文模式下,失焦时把已知 WCA 比赛名(英文)显示成中文(用户未输入仍可通过原值搜索)。聚焦/编辑时显原值
+  // 中文模式下,失焦时把已知 WCA 比赛名(英文)显示成中文(用户未输入仍可通过原值搜索)。聚焦/编辑时显原值
   const displayValue = (() => {
     if (!isZh || focused || !value) return value;
-    const zh = compNameZh(value);
-    return zh ? stripWcaPrefix(zh) : value;
+    return localizeCompName('', value, true);
   })();
 
   const ensureLoaded = useCallback(async () => {
@@ -135,7 +133,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
             </button>
           ))}
           {!disableSuggestions && results.map(c => {
-            const zh = isZh ? compNameZh(c.name) : '';
+            const displayName = localizeCompName(c.id, c.name, !!isZh);
             const cancelled = isCancelledComp(c);
             return (
               <button
@@ -146,7 +144,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
               >
                 <Flag iso2={c.country} />
                 <span className="comp-picker-main">
-                  <span className="comp-picker-name">{stripWcaPrefix(zh || c.name)}</span>
+                  <span className="comp-picker-name">{displayName}</span>
                   <span className="comp-picker-meta">
                     <span className="comp-picker-id">{c.id}</span>
                     {c.city ? <> · {localizeCity(c.city, !!isZh)}</> : null}

@@ -1,20 +1,12 @@
-import { useEffect, createContext, useContext } from 'react';
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './algorithm_intro.css';
 import './cfop_solver.css';
 
 const ACCENT = '#E879A6';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 const FIG_BASE = '/images/algorithms/cfop';
 
@@ -22,9 +14,7 @@ export default function CfopStdSolverPage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? 'CFOP 多阶段求解器 — CubeRoot' : 'CFOP multi-stage solver — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('CFOP 多阶段求解器', 'CFOP multi-stage solver');
 
   return (
     <LangCtx.Provider value={lang}>

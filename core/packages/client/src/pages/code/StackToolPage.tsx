@@ -1,20 +1,14 @@
-import { useEffect, useRef, useContext, createContext, useState } from 'react';
-import type { ReactNode, CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
 import { STACK_TOOLS_META, loadStackTool } from './stack_data';
 import type { StackTool } from './stack_tool_types';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './ts_intro.css';
 import './stack_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 export default function StackToolPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -37,9 +31,7 @@ export default function StackToolPage() {
     return () => { cancelled = true; };
   }, [slug, meta]);
 
-  useEffect(() => {
-    if (meta) document.title = `${meta.name} — CubeRoot`;
-  }, [meta]);
+  useDocumentTitle(meta?.name ?? '', meta?.name ?? '');
 
   useEffect(() => {
     if (!detail) return;

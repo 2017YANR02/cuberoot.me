@@ -1,17 +1,11 @@
-import { useEffect, useRef, useContext, createContext, useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './latex_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 function TeX({ src }: { src: string }) {
   const html = useMemo(() => katex.renderToString(src, { throwOnError: false, output: 'html', strict: 'ignore' }), [src]);
@@ -660,11 +654,10 @@ export default function LatexIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'LaTeX : 数学排版的事实标准 — 1978→2026'
-      : 'LaTeX : the de-facto standard for typesetting math — 1978→2026';
-  }, [lang]);
+  useDocumentTitle(
+    'LaTeX : 数学排版的事实标准 — 1978→2026',
+    'LaTeX : the de-facto standard for typesetting math — 1978→2026',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

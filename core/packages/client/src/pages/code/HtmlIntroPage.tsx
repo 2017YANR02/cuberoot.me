@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './html_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 const HTML_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -620,11 +614,10 @@ export default function HtmlIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'HTML : 不是编程语言, 但每个 UI 都从这里开始 — 1989→2026'
-      : 'HTML : not a programming language, but every UI starts here — 1989→2026';
-  }, [lang]);
+  useDocumentTitle(
+    'HTML : 不是编程语言, 但每个 UI 都从这里开始 — 1989→2026',
+    'HTML : not a programming language, but every UI starts here — 1989→2026',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

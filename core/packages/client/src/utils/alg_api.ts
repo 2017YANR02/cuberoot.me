@@ -4,35 +4,16 @@
  */
 import type { AlgSubmission } from '@cuberoot/shared';
 import { API_ORIGIN } from './api_base';
+import { authHeaders, handleApi } from './admin_api';
 
 const API_BASE = API_ORIGIN + '/v1/alg';
-
-function getToken(): string | null {
-  return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
-}
-
-function authHeaders(json = true): HeadersInit {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (json) headers['Content-Type'] = 'application/json';
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  return headers;
-}
-
-async function handleResponse<T>(resp: Response): Promise<T> {
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: resp.statusText }));
-    throw new Error(err.error || `API error ${resp.status}`);
-  }
-  return resp.json();
-}
 
 /** List every user-submitted alg for one set (puzzle + set slug). */
 export async function listSubmissions(puzzle: string, setSlug: string): Promise<AlgSubmission[]> {
   const resp = await fetch(`${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}/submissions`, {
     headers: authHeaders(false),
   });
-  return handleResponse<AlgSubmission[]>(resp);
+  return handleApi<AlgSubmission[]>(resp);
 }
 
 /** Submit a new alg under (puzzle, set, caseName). Requires login. */
@@ -49,7 +30,7 @@ export async function addSubmission(
     headers: authHeaders(),
     body: JSON.stringify({ alg, notes }),
   });
-  return handleResponse<AlgSubmission>(resp);
+  return handleApi<AlgSubmission>(resp);
 }
 
 /** Edit your own submission (admins can edit anyone's, and admins can also re-target caseName). */
@@ -62,7 +43,7 @@ export async function updateSubmission(
     headers: authHeaders(),
     body: JSON.stringify(fields),
   });
-  return handleResponse<AlgSubmission>(resp);
+  return handleApi<AlgSubmission>(resp);
 }
 
 /** Delete your own submission (admins can delete anyone's). */
@@ -71,5 +52,5 @@ export async function deleteSubmission(id: number): Promise<{ ok: boolean }> {
     method: 'DELETE',
     headers: authHeaders(false),
   });
-  return handleResponse<{ ok: boolean }>(resp);
+  return handleApi<{ ok: boolean }>(resp);
 }

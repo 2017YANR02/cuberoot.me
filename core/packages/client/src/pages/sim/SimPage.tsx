@@ -17,6 +17,7 @@ import Cubelet from './cuber/cubelet';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
+import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import Sq1Cube from './cuber/sq1/Sq1Cube';
 import tweener from './cuber/tweener';
 import { sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, type Sq1DragStart } from './cuber/sq1/sq1Drag';
@@ -166,6 +167,17 @@ export default function SimPage() {
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     try { return localStorage.getItem('sim.fullscreen') === '1'; } catch { return false; }
   });
+  // Skewb notation choice — only meaningful when puzzleKind === 'skewb'. The
+  // alg URL param stays in user-facing notation; we translate Sarah → WCA when
+  // handing alg/setup to the cubing.js TwistyPlayer (which only speaks WCA).
+  const [skewbNotation, setSkewbNotationState] = useState<SkewbNotation>(() => {
+    try { return localStorage.getItem('sim.skewb.notation') === 'sarah' ? 'sarah' : 'wca'; }
+    catch { return 'wca'; }
+  });
+  const setSkewbNotation = useCallback((n: SkewbNotation) => {
+    setSkewbNotationState(n);
+    try { localStorage.setItem('sim.skewb.notation', n); } catch { /* private mode */ }
+  }, []);
   useEffect(() => {
     try { localStorage.setItem('sim.fullscreen', fullscreen ? '1' : '0'); } catch { /* private mode */ }
   }, [fullscreen]);
@@ -1127,8 +1139,11 @@ export default function SimPage() {
           {twisty ? (
             <TwistySection
               puzzle={puzzleParam}
-              scramble={setupParam}
-              alg={algParam}
+              // Skewb-only: translate Sarah → WCA so cubing.js plays the alg the
+              // user intended. URL stays in original notation; TwistyPlayer sees
+              // WCA. For other twisty puzzles (pyraminx/megaminx), pass through.
+              scramble={puzzleParam === 'skewb' ? toWcaSkewb(setupParam, skewbNotation) : setupParam}
+              alg={puzzleParam === 'skewb' ? toWcaSkewb(algParam, skewbNotation) : algParam}
               fillPane
               twistOnClick
               playerRef={twistyPlayerRef}
@@ -1181,6 +1196,8 @@ export default function SimPage() {
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
             userMoveRef={userMoveRef}
             twistyPlayerRef={twistyPlayerRef}
+            skewbNotation={skewbNotation}
+            onSkewbNotationChange={setSkewbNotation}
             onScrambleTime={IS_DEV ? (ms, cpuMs) => {
               statsRef.current.scrambleMs = ms;
               if (cpuMs != null) statsRef.current.setupCpuMs = cpuMs;

@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw, Info } from 'lucide-react';
+import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw, Info, Shuffle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
@@ -860,6 +860,14 @@ export default function CompDetailPage() {
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     <img src={base + 'icons/upstream/wca.svg'} alt="WCA" />
                   </a>
+                  <Link
+                    to={`/scramble/gen?comp=${encodeURIComponent(slug)}`}
+                    className="comp-title-icon comp-title-icon-lucide"
+                    title={isZh ? '查看打乱' : 'View scrambles'}
+                    aria-label={isZh ? '查看打乱' : 'View scrambles'}
+                  >
+                    <Shuffle size={18} strokeWidth={1.75} />
+                  </Link>
                 </>
               );
             })()}

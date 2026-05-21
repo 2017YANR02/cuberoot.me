@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
@@ -627,7 +627,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     >
       {loadedCompId ? (
         <div className="gen-tn-comp-display">
-          <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} />
+          <Link
+            to={`/wca/comp/${encodeURIComponent(loadedCompId)}`}
+            className="gen-tn-comp-link"
+            title={t('查看比赛成绩', 'View competition results')}
+          >
+            <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} />
+          </Link>
           <ClearButton
             variant="standalone"
             onClick={reset}

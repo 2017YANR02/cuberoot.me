@@ -1,27 +1,17 @@
-import { useEffect, createContext, useContext } from 'react';
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './algorithm_intro.css';
 
 const ACCENT = '#7BD389';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 export default function KociembaPage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? 'Kociemba 二阶段 — CubeRoot' : 'Kociemba two-phase — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('Kociemba 二阶段', 'Kociemba two-phase');
 
   return (
     <LangCtx.Provider value={lang}>

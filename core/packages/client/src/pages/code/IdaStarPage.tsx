@@ -1,18 +1,12 @@
-import { useEffect, useContext, createContext } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './algorithm_intro.css';
 
 const ACCENT = '#5BA8FF';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 interface Section {
   num: string;
@@ -576,9 +570,7 @@ export default function IdaStarPage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? 'IDA* + 剪枝表 — CubeRoot' : 'IDA* + prune tables — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('IDA* + 剪枝表', 'IDA* + prune tables');
 
   return (
     <LangCtx.Provider value={lang}>

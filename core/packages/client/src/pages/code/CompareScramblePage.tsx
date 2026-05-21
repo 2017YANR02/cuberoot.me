@@ -1,16 +1,9 @@
-import { useEffect, useContext, createContext } from 'react';
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './compare.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useContext(LangCtx) === 'zh' ? zh : en}</>;
-}
 
 interface Snippet {
   slug: string;
@@ -542,11 +535,7 @@ export default function CompareScramblePage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? '17 种语言, 一个打乱解析器 — CubeRoot'
-      : 'One scramble parser, seventeen languages — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('17 种语言, 一个打乱解析器', 'One scramble parser, seventeen languages');
 
   return (
     <LangCtx.Provider value={lang}>

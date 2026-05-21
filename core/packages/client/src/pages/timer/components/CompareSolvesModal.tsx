@@ -8,7 +8,7 @@
  */
 
 import type { JSX } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
@@ -16,6 +16,7 @@ import { formatMs } from '../stats';
 import { computeStageSegments } from '../reconstruct/stage_segments';
 import type { StageSegments } from '../reconstruct/stage_segments';
 import { eventInfo } from '../types';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import './reconstruct.css';
 
 interface Props {
@@ -118,25 +119,9 @@ function overallTps(seg: StageSegments | null, totalMs: number): number | null {
   return h / (totalMs / 1000);
 }
 
-function useIsMobile(maxWidth = 480): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    // Safari < 14 fallback would need addListener; modern browsers OK
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [maxWidth]);
-  return isMobile;
-}
-
 export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Props) {
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   const segA = useMemo(() => getOrCompute(solveA), [solveA]);
   const segB = useMemo(() => getOrCompute(solveB), [solveB]);

@@ -124,7 +124,7 @@ export const TURBO: StackTool = {
     zh: (
       <>
         <p>cuberoot.me 整个 <code>core/</code> 目录就是一个 pnpm workspace + Turborepo 项目。<code>core/turbo.json</code> 一共 17 行, 声明了 4 个 task:<code>build</code> (依赖 <code>^build</code>, 输出 <code>dist/**</code>)、<code>dev</code> (不缓存, 持久化)、<code>typecheck</code> (依赖 <code>^build</code>)、<code>lint</code> (无依赖)。</p>
-        <p>5 个 workspace 包靠 dependsOn 串成图: <code>@cuberoot/client</code> 和 <code>@cuberoot/server</code> 都依赖 <code>@cuberoot/shared</code>, 跑 <code>turbo typecheck</code> 时, shared 的 build 自动跑在 client/server 的 typecheck 之前。<code>scramble-stats-build</code> / <code>stats-ui</code> 是独立子图, 不动主链路。</p>
+        <p>workspace 包靠 dependsOn 串成图: <code>@cuberoot/client</code> 和 <code>@cuberoot/server</code> 都依赖 <code>@cuberoot/shared</code>, 跑 <code>turbo typecheck</code> 时, shared 的 build 自动跑在 client/server 的 typecheck 之前。<code>scramble-stats-build</code> / <code>stats-build</code> 是独立子图, 不动主链路。</p>
         <p>实际命令落在 <code>core/package.json</code>:<code>pnpm dev:client</code> = <code>turbo dev --filter=@cuberoot/client</code>, <code>pnpm typecheck</code> = <code>turbo typecheck</code> 跑全 workspace。日常改 client 只动一个 chunk, build 用 turbo 跑只会重跑改动影响到的包, 没改的从 <code>node_modules/.cache/turbo/</code> 秒命中。</p>
         <p>暂时没启用 remote cache — 单人项目 + CI 跑得够快, 没动力搭后端。如果以后 CI 跑时间长到要分钟级, 接 Vercel 自家 remote cache 或自建 S3 兼容 backend 都是十分钟的事, turbo 这边一行 token 就接上。</p>
       </>
@@ -132,7 +132,7 @@ export const TURBO: StackTool = {
     en: (
       <>
         <p>The whole <code>core/</code> directory is one pnpm workspace + Turborepo project. <code>core/turbo.json</code> is 17 lines declaring four tasks: <code>build</code> (dependsOn <code>^build</code>, outputs <code>dist/**</code>), <code>dev</code> (uncached, persistent), <code>typecheck</code> (dependsOn <code>^build</code>), <code>lint</code> (no deps).</p>
-        <p>Five workspace packages thread together via dependsOn: <code>@cuberoot/client</code> and <code>@cuberoot/server</code> both depend on <code>@cuberoot/shared</code>, so <code>turbo typecheck</code> runs shared's build before either client or server typecheck. <code>scramble-stats-build</code> / <code>stats-ui</code> form independent subgraphs that don't touch the main chain.</p>
+        <p>Workspace packages thread together via dependsOn: <code>@cuberoot/client</code> and <code>@cuberoot/server</code> both depend on <code>@cuberoot/shared</code>, so <code>turbo typecheck</code> runs shared's build before either client or server typecheck. <code>scramble-stats-build</code> / <code>stats-build</code> form independent subgraphs that don't touch the main chain.</p>
         <p>Daily commands live in <code>core/package.json</code>: <code>pnpm dev:client</code> = <code>turbo dev --filter=@cuberoot/client</code>, <code>pnpm typecheck</code> = <code>turbo typecheck</code> across the workspace. Editing one client chunk only re-runs the affected packages — unchanged ones hit <code>node_modules/.cache/turbo/</code> in milliseconds.</p>
         <p>No remote cache wired yet — single-author project, local CI is fast enough, no motivation to host a backend. If CI runs ever climb into minutes, wiring up Vercel's hosted remote cache or a self-hosted S3-compatible backend is a ten-minute job — turbo only needs the token.</p>
       </>

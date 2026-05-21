@@ -42,6 +42,8 @@ export function stripWcaPrefix(s: string): string {
 export interface LocalizeCompOpts {
   /** id → name_zh 映射(GlobePage 从 upcoming_comps.json 构建) */
   upcomingNameZhById?: Map<string, string> | null;
+  /** 调用方已知的 name_zh (单条 comp 自带 name_zh 字段时直接传,免去 Map 包装) */
+  explicitNameZh?: string | null;
 }
 
 export function localizeCompName(
@@ -53,6 +55,7 @@ export function localizeCompName(
   if (!name) return name;
   const resolved = (() => {
     if (!isZh) return name;
+    if (opts?.explicitNameZh) return opts.explicitNameZh;
     const zh1 = opts?.upcomingNameZhById?.get(id);
     if (zh1) return zh1;
     const zh2 = compNameZh(name);

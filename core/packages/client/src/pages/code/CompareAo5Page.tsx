@@ -1,16 +1,9 @@
-import { useEffect, useContext, createContext } from 'react';
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './compare.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useContext(LangCtx) === 'zh' ? zh : en}</>;
-}
 
 interface Snippet {
   slug: string;
@@ -396,11 +389,7 @@ export default function CompareAo5Page() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? '17 种语言, 一个 Ao5 — CubeRoot'
-      : 'One Ao5, Seventeen Languages — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('17 种语言, 一个 Ao5', 'One Ao5, Seventeen Languages');
 
   return (
     <LangCtx.Provider value={lang}>

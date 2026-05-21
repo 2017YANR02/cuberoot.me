@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { WcaAuthUser } from '../types';
+import { BANNED_WCA_IDS, isAdminWcaId } from '../admin';
 
 // NOTE: WCA OAuth 配置（implicit grant 不需要 client_secret）
 const CONFIG = {
@@ -15,12 +16,6 @@ const CONFIG = {
 const SESSION_KEY = 'wca_user';
 const STATE_KEY = 'wca_oauth_state';
 const TOKEN_KEY = 'wca_access_token';
-
-// NOTE: 管理员 WCA ID 列表（前端硬编码，仅控制 UI 显示）
-const ADMIN_WCA_IDS = ['2017YANR02'];
-
-// NOTE: 黑名单 WCA ID 列表 — 这些用户无法登录（前后端同步）
-const BANNED_WCA_IDS: string[] = [];
 
 // ── 非 hook 版本（纯函数，供非组件场景使用） ──
 
@@ -46,10 +41,7 @@ function clearSession(): void {
 export const WcaAuth = {
   getUser: readUser,
   isLoggedIn: () => readUser() !== null,
-  isAdmin: () => {
-    const u = readUser();
-    return u !== null && ADMIN_WCA_IDS.includes(u.wcaId);
-  },
+  isAdmin: () => isAdminWcaId(readUser()?.wcaId),
   getAccessToken: () => localStorage.getItem(TOKEN_KEY) || '',
   logout: clearSession,
 };
@@ -61,10 +53,7 @@ export function useWcaAuth() {
 
   const isLoggedIn = user !== null;
 
-  const isAdmin = useMemo(
-    () => user !== null && ADMIN_WCA_IDS.includes(user.wcaId),
-    [user]
-  );
+  const isAdmin = useMemo(() => isAdminWcaId(user?.wcaId), [user]);
 
   /** NOTE: 跳转到 WCA 授权页（implicit grant） */
   const login = useCallback(() => {

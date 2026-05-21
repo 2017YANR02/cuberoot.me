@@ -5,6 +5,8 @@
  */
 import type { Context } from 'hono';
 import jwt from 'jsonwebtoken';
+import { ADMIN_WCA_IDS, BANNED_WCA_IDS } from '@cuberoot/shared/admin';
+export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
@@ -217,11 +219,6 @@ export function validateRow(row: Record<string, unknown>): string[] {
 }
 
 // ── WCA 认证 ──
-
-// NOTE: 管理员 WCA ID 列表
-export const ADMIN_WCA_IDS = ['2017YANR02'];
-// NOTE: 黑名单 WCA ID
-const BANNED_WCA_IDS: string[] = [];
 
 interface WcaUser {
   wcaId: string;

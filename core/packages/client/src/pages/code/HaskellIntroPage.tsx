@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './haskell_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 /* Inline logo: the angle-arrow >λ= mark.
    No external assets — drawn from primitives only. */
@@ -475,11 +469,10 @@ export default function HaskellIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'Haskell : 纯函数 · 惰性 · 类型类 — 影响所有人, 自己不必爆款'
-      : 'Haskell : pure, lazy, type-classed — the language that quietly shaped everyone else';
-  }, [lang]);
+  useDocumentTitle(
+    'Haskell : 纯函数 · 惰性 · 类型类 — 影响所有人, 自己不必爆款',
+    'Haskell : pure, lazy, type-classed — the language that quietly shaped everyone else',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

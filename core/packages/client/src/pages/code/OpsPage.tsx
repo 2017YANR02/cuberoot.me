@@ -5,9 +5,9 @@ import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Termi
 import LangToggle from '../../components/LangToggle';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from './ops_api';
+import { type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './ops.css';
-
-type Lang = 'zh' | 'en';
 type CategoryId = 'db' | 'build' | 'deploy' | 'backup' | 'prompt';
 
 interface CategoryDef {
@@ -171,9 +171,7 @@ export default function OpsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ mode: 'add' | 'edit'; op?: OpCommand } | null>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? '运维 — CubeRoot' : 'Ops — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('运维', 'Ops');
 
   const refresh = () => {
     setErr(null);

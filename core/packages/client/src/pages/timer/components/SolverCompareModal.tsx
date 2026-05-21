@@ -17,26 +17,12 @@ import {
   type MethodId,
   type SolveResult,
 } from '../solver/methods';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   scramble: string;
   isZh: boolean;
   onClose: () => void;
-}
-
-/** True iff viewport ≤ 480px. Drives accordion-style layout below. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
 }
 
 interface MethodOutcome {
@@ -50,7 +36,7 @@ interface MethodOutcome {
 export default function SolverCompareModal({ scramble, isZh, onClose }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   const [outcomes, setOutcomes] = useState<MethodOutcome[]>(() =>
     METHOD_REGISTRY.map(m => ({ id: m.id, result: null, ms: null })),

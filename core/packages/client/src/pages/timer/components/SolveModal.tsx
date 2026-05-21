@@ -3,6 +3,7 @@ import type { Solve, Penalty } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { CubePreview } from '../cube';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZh: boolean; totalMs: number }) {
   const memo = bld.memoMs;
@@ -76,21 +77,6 @@ interface Props {
   onOpenReconstruct?: () => void;
 }
 
-/** True iff viewport ≤ 480px. Drives the mobile layout overrides below. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
-}
-
 export default function SolveModal({ solve, index, isZh, onClose, onChangePenalty, onChangeComment, onDelete, onOpenReconstruct }: Props) {
   // Comment state is initialized once per modal-mount; the parent passes
   // `key={solve.id}` so a different solve remounts (and re-initializes) us.
@@ -98,7 +84,7 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
   const [editing, setEditing] = useState(false);
   const titleId = useId();
   const firstButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
