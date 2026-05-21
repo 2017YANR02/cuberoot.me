@@ -1,5 +1,5 @@
 /**
- * 全项目排行 — 累加各项世界(或国家)排名
+ * 全项目排名 — 累加各项世界(或国家)排名
  * /wca/sum-of-ranks
  */
 import { useEffect, useState } from 'react';
@@ -93,7 +93,7 @@ export default function SumOfRanksPage() {
           <LangToggle />
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '全项目排行' : 'Sum of Ranks'}
+          {isZh ? '全项目排名' : 'Sum of Ranks'}
           <Link
             to="/wca/about/sum-of-ranks"
             className="wse-title-help"

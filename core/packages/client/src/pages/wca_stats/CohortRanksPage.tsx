@@ -1,5 +1,5 @@
 /**
- * 参赛届别排行 — 同届(首参赛年)内排名
+ * 参赛届别排名 — 同届(首参赛年)内排名
  * /wca/cohort-ranks
  */
 import { useEffect, useMemo, useState } from 'react';
@@ -87,7 +87,7 @@ export default function CohortRanksPage() {
           <LangToggle />
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '参赛届别排行' : 'Cohort Ranks'}
+          {isZh ? '参赛届别排名' : 'Cohort Ranks'}
           <Link
             to="/wca/about/cohort-ranks"
             className="wse-title-help"

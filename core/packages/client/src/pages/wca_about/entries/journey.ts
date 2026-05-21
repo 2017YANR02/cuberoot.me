@@ -775,7 +775,7 @@ const most_completed_solves: AboutEntry = {
   badgeEn: 'Person',
   introZh: [
     'WCA 不存"成功还原数"汇总字段 —— 这条统计深入到 `result_attempts` 子表,逐 attempt 数 `value > 0` 的次数,再按 6 个维度(比赛/选手/国家/大洲/年份/项目)聚合 top 20。',
-    '是个 `GroupedStatistic` —— 一个 SQL 拉全表,TS 端 6 次重分组。"还原数"是绝对值排行,跟比赛数 / PR 数都不一样 —— 一个 BLD 多盲选手一场可能贡献两位数 solve。',
+    '是个 `GroupedStatistic` —— 一个 SQL 拉全表,TS 端 6 次重分组。"还原数"是绝对值排名,跟比赛数 / PR 数都不一样 —— 一个 BLD 多盲选手一场可能贡献两位数 solve。',
   ],
   introEn: [
     'WCA stores no "completed solves" aggregate — this drilldown hits the `result_attempts` subtable, counts `value > 0` per attempt, then re-aggregates across 6 dimensions (comp / person / country / continent / year / event) for top-20 each.',

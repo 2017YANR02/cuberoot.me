@@ -106,7 +106,7 @@ export default function VizAboutPage() {
         <h2 className="va-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="va-refs">
           <li>
-            <Link to="/wca/all-results">{t('全成绩排行', 'All Results')}</Link>
+            <Link to="/wca/all-results">{t('全成绩排名', 'All Results')}</Link>
             {t(' — 所有选手成绩的可分页搜索。', ' — paginated search over every WCA result.')}
           </li>
           <li>
@@ -114,7 +114,7 @@ export default function VizAboutPage() {
             {t(' — 速拧成绩的数学极限预测报告。', ' — mathematical limit forecasts for speedcubing results.')}
           </li>
           <li>
-            <Link to="/wca/cohort-ranks">{t('届别排行', 'Cohort Ranks')}</Link>
+            <Link to="/wca/cohort-ranks">{t('届别排名', 'Cohort Ranks')}</Link>
             {t(' — 按首参赛年分组看生涯 PB 排名。', ' — lifetime PB rankings grouped by first-competition year.')}
           </li>
         </ul>

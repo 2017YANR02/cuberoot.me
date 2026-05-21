@@ -85,7 +85,7 @@ export default function PredictionAboutPage() {
           <Arrow />
           <Step
             step={2}
-            title={t('撞墙排行', 'Closest to Wall')}
+            title={t('撞墙排名', 'Closest to Wall')}
             body={t(
               '16 个项目按"当前 WR / 物理下界"比值排序。比值越接近 1 代表越接近极限。3×3 BLD / 5×5 BLD 等通常在顶部。',
               '16 events ranked by current WR / physics-floor ratio. Closer to 1.0 = closer to the limit. 3×3 BLD and 5×5 BLD typically top the list.',
@@ -122,7 +122,7 @@ export default function PredictionAboutPage() {
             {t(' — 单选手成绩分布 KDE 可视化。', ' — per-cuber result distribution KDE visualisation.')}
           </li>
           <li>
-            <Link to="/wca/all-results">{t('全成绩排行', 'All Results')}</Link>
+            <Link to="/wca/all-results">{t('全成绩排名', 'All Results')}</Link>
             {t(' — 查看任意项目的历史 WR 排列。', ' — browse historical WR progressions per event.')}
           </li>
         </ul>

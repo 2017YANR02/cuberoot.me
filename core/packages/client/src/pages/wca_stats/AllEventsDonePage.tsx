@@ -1,5 +1,5 @@
 /**
- * 全项目达成排行榜 — 完成全 17 项 WCA 项目的人,按耗时升序
+ * 全项目达成排名 — 完成全 17 项 WCA 项目的人,按耗时升序
  * /wca/all-events-done
  */
 import { useEffect, useState } from 'react';
@@ -76,7 +76,7 @@ export default function AllEventsDonePage() {
           <LangToggle />
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '全项目达成排行榜' : 'All Events Achievement'}
+          {isZh ? '全项目达成排名' : 'All Events Achievement'}
           <Link
             to="/wca/about/all-events-done"
             className="wse-title-help"

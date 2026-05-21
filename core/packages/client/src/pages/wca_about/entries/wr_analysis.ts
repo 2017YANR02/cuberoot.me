@@ -105,8 +105,8 @@ ORDER BY start_date;`,
   related: [
     { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: '同库的 WR 指标总集 — single/average/bao5/wao5/mo5/bpa/wpa/...', hintEn: 'Sibling stat — all WR metrics: single/average/bao5/wao5/mo5/bpa/wpa/...' },
     { id: 'average_of', titleZh: '滚动平均 (Rolling Average)', titleEn: 'Rolling Average', hintZh: '跨比赛的 N-次滑动平均,对照口径', hintEn: 'Sliding N-window average across comps — sibling concept' },
-    { id: 'best_round', titleZh: '最佳轮次', titleEn: 'Best round', hintZh: '单轮 average 排行(不跨轮平均)', hintEn: 'Single round average leaderboard (no cross-round avg)' },
-    { id: 'wr_aoxr', toStat: true, titleZh: '直接打开 AoXR 排行', titleEn: 'Jump to AoXR ranking', hintZh: '看实际数据 / 项目切换', hintEn: 'Live data + event picker' },
+    { id: 'best_round', titleZh: '最佳轮次', titleEn: 'Best round', hintZh: '单轮 average 排名(不跨轮平均)', hintEn: 'Single round average leaderboard (no cross-round avg)' },
+    { id: 'wr_aoxr', toStat: true, titleZh: '直接打开 AoXR 排名', titleEn: 'Jump to AoXR ranking', hintZh: '看实际数据 / 项目切换', hintEn: 'Live data + event picker' },
   ],
 };
 
@@ -321,7 +321,7 @@ for (const def of METRIC_DEFS) {
 };
 
 // ──── wr_dominance ──────────────────────────────────────────────────────────
-// 屠榜 — 当前 WR 持有者在全历史排行榜上自己的成绩比第 2 名所有人都好的数量
+// 屠榜 — 当前 WR 持有者在全历史排名上自己的成绩比第 2 名所有人都好的数量
 const wr_dominance: AboutEntry = {
   id: 'wr_dominance',
   titleZh: '屠榜 (Dominance)',
@@ -835,7 +835,7 @@ ORDER BY result.person_id, competition.start_date, round_type.rank;`,
     { id: 'average_of', titleZh: '滚动平均 (Rolling Average)', titleEn: 'Rolling Average', hintZh: '另一类持续表现指标,但允许个别失手', hintEn: 'A different sustained-form lens — tolerates occasional slips' },
     { id: 'longest_streak_of_personal_records', titleZh: '最长 PR streak', titleEn: 'Longest PR streak', hintZh: '"连续刷 PB" 的姊妹 streak 指标', hintEn: 'Sibling streak metric — consecutive PB refreshes' },
     { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: '单轮指标视角', hintEn: 'Within-round metric lens' },
-    { id: 'consecutive_sub_5_average', toStat: true, titleZh: '直接打开 streak 排行', titleEn: 'Jump to streak leaderboard', hintZh: '看谁连续多少场过线', hintEn: 'See who has held the line for how long' },
+    { id: 'consecutive_sub_5_average', toStat: true, titleZh: '直接打开 streak 排名', titleEn: 'Jump to streak leaderboard', hintZh: '看谁连续多少场过线', hintEn: 'See who has held the line for how long' },
   ],
 };
 
