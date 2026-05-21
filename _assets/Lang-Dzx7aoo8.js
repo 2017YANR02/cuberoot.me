@@ -1,0 +1,1 @@
+import{a as e}from"./chunk-Byb_VWJN.js";import{t}from"./react-BHPi-aqk.js";import{t as n}from"./jsx-runtime-DhG3BTtD.js";var r=e(t(),1),i=n(),a=(0,r.createContext)(`zh`),o=()=>(0,r.useContext)(a);function s({zh:e,en:t}){return(0,i.jsx)(i.Fragment,{children:o()===`zh`?e:t})}export{a as n,o as r,s as t};
