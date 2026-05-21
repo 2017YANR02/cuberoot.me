@@ -43,6 +43,7 @@ export default function SumOfRanksPage() {
   const country = params.get('country') ?? '';
   const eventsParam = params.get('events') ?? '';
   const hidePodium = params.get('hidePodium') === '1';
+  const fourthKing = params.get('bestMisser') === '4';
   const page = parseInt(params.get('page') ?? '1', 10);
   const size = parseInt(params.get('size') ?? '100', 10);
 
@@ -76,11 +77,13 @@ export default function SumOfRanksPage() {
     url.searchParams.set('size', String(size));
     if (country) url.searchParams.set('country', country);
     if (eventsParam && eventsParam !== '__none__') url.searchParams.set('events', eventsParam);
-    if (hidePodium) url.searchParams.set('hidePodium', '1');
+    // bestMisser 优先于 hidePodium(后端也是 mutex)
+    if (fourthKing) url.searchParams.set('bestMisser', '4');
+    else if (hidePodium) url.searchParams.set('hidePodium', '1');
     fetch(url.toString().replace(window.location.origin, ''))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [type, country, eventsParam, hidePodium, page, size, isZh]);
+  }, [type, country, eventsParam, hidePodium, fourthKing, page, size, isZh]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isCountryMode = !!country;
@@ -103,7 +106,7 @@ export default function SumOfRanksPage() {
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last)'}</p>
+        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入。"未登领奖台" / "殿军之王" 按比赛决赛(final round)实际名次过滤' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" / "Fourth-place king" filter by actual final-round position'}</p>
       </header>
 
       <div className="wse-filters">
@@ -115,12 +118,38 @@ export default function SumOfRanksPage() {
             <option value="average">{isZh ? '平均' : 'Average'}</option>
           </select>
         </div>
-        <div className="wse-filter" style={{ minWidth: 120 }}>
-          <label>{isZh ? '隐藏' : 'Hide'}</label>
-          <label className="wse-toggle" style={{ height: 34, alignItems: 'center', display: 'flex' }}>
-            <input type="checkbox" checked={hidePodium} onChange={e => update('hidePodium', e.target.checked ? '1' : '')} />
-            {isZh ? '隐藏登过奖台' : 'Hide podium-ers'}
-          </label>
+        <div className="wse-filter" style={{ minWidth: 220 }}>
+          <label>{isZh ? '过滤' : 'Filter'}</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: 34, justifyContent: 'center' }}>
+            <label className="wse-toggle" style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
+              <input
+                type="checkbox"
+                checked={hidePodium}
+                onChange={e => {
+                  const next = new URLSearchParams(params);
+                  if (e.target.checked) { next.set('hidePodium', '1'); next.delete('bestMisser'); }
+                  else { next.delete('hidePodium'); }
+                  next.delete('page');
+                  setParams(next, { replace: false });
+                }}
+              />
+              {isZh ? '未登领奖台' : 'No podium'}
+            </label>
+            <label className="wse-toggle" style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
+              <input
+                type="checkbox"
+                checked={fourthKing}
+                onChange={e => {
+                  const next = new URLSearchParams(params);
+                  if (e.target.checked) { next.set('bestMisser', '4'); next.delete('hidePodium'); }
+                  else { next.delete('bestMisser'); }
+                  next.delete('page');
+                  setParams(next, { replace: false });
+                }}
+              />
+              {isZh ? '殿军之王(最佳名次=4)' : 'Fourth-place king (best=4)'}
+            </label>
+          </div>
         </div>
         <div className="wse-filter" style={{ minWidth: '100%' }}>
           <label>{isZh ? '项目(已选 ' + selectedSet.size + ' / 17)' : `Events (${selectedSet.size}/17 selected)`}</label>
