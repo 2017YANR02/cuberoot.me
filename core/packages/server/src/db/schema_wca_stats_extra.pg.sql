@@ -132,7 +132,8 @@ CREATE INDEX IF NOT EXISTS aed_country_done ON wca_all_events_done (country_id, 
 -- ── wca_person_ranks: 全项目排行 (~300k 行) ──
 -- 一行 = (person, is_avg).每行存 17 项的 world_rank + country_rank 数组(对齐 ACTIVE_EVENTS 顺序).
 -- 默认按 total_world_rank 排序;子集排序 API 用 array 索引算和.
--- "未登奖台" toggle = has_podium=FALSE.
+-- "未登奖台" toggle = (best_final_pos = 0 OR best_final_pos > 3);
+-- "殿军之王" = best_final_pos = 4.
 CREATE TABLE IF NOT EXISTS wca_person_ranks (
   wca_id              VARCHAR(20) NOT NULL,
   is_avg              BOOLEAN NOT NULL,
@@ -140,7 +141,7 @@ CREATE TABLE IF NOT EXISTS wca_person_ranks (
   events_done         SMALLINT NOT NULL,
   total_world_rank    INTEGER NOT NULL,    -- SUM(world_rank);缺项=该项参赛人数+1
   total_country_rank  INTEGER NOT NULL,
-  has_podium          BOOLEAN NOT NULL,    -- 任一项 world_rank<=3
+  best_final_pos      SMALLINT NOT NULL,   -- 跨 event 累积:final round (round_type c/f) 的 MIN(pos>0);0=从未在 final 拿过有效成绩
   ranks_world         INTEGER[] NOT NULL,  -- 17 元素,对应 ACTIVE_EVENTS 顺序;0=该项无成绩
   ranks_country       INTEGER[] NOT NULL,
   PRIMARY KEY (wca_id, is_avg)
