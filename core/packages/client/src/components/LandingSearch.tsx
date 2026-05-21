@@ -36,11 +36,11 @@ export interface LandingSearchCard {
 const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
   { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
   { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
-  { path: '/wca/all-results',      zh: '全部成绩排行', en: 'All Results' },
-  { path: '/wca/cohort-ranks',     zh: '参赛届别排行', en: 'Cohort Ranks' },
+  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results' },
+  { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks' },
   { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
   { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
-  { path: '/wca/sum-of-ranks',     zh: '全项目排行',   en: 'Sum of Ranks' },
+  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks' },
 ];
 
 const MIN_LEN_LATIN = 2;

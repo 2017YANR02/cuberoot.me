@@ -137,7 +137,7 @@ export default function CalendarStatsPage() {
   const countryScope = useMemo(() => computeScope(countryAnim.idx), [computeScope, countryAnim.idx]);
   const eventScope = useMemo(() => computeScope(eventAnim.idx), [computeScope, eventAnim.idx]);
 
-  // ── 国家排行（用 countryScope） ──
+  // ── 国家排名（用 countryScope） ──
   const { byCountry, countryTotal } = useMemo(() => {
     const m = new Map<string, number>();
     let total = 0;
@@ -321,7 +321,7 @@ export default function CalendarStatsPage() {
       {totalComps > 0 && (
         <section className="cs-section">
           <h2 className="cs-section-title">
-            {isZh ? '比赛数 · 国家排行' : 'Top countries'}
+            {isZh ? '比赛数 · 国家排名' : 'Top countries'}
             <SectionPlayControls anim={countryAnim} isZh={isZh} />
             <span className="cs-scope-tag">{scopeLabelOf(countryScope)} · {countryTotal.toLocaleString()}</span>
           </h2>

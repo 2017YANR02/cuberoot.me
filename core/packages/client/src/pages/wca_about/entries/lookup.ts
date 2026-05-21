@@ -87,17 +87,17 @@ ORDER BY gs.best_value NULLS LAST;`,
     '`onlyFirst` does not require the three golds to be in the same year — across a career is fine.',
   ],
   related: [
-    { id: 'sum-of-ranks', titleZh: '全项目排行', titleEn: 'Sum of Ranks', hintZh: '另一个"全能选手"指标 — 把世界排名相加', hintEn: 'Another all-rounder lens — sum of world ranks instead of podiums' },
+    { id: 'sum-of-ranks', titleZh: '全项目排名', titleEn: 'Sum of Ranks', hintZh: '另一个"全能选手"指标 — 把世界排名相加', hintEn: 'Another all-rounder lens — sum of world ranks instead of podiums' },
     { id: 'all-events-done', titleZh: '全项目达成', titleEn: 'All Events Done', hintZh: '从首参赛到 17 项都至少完赛一次的耗时', hintEn: 'Days from first comp to having at least one result in all 17 events' },
     { id: 'wr_aoxr', titleZh: 'AoXR — 跨轮平均', titleEn: 'AoXR — across-round average', hintZh: '同样靠 WR 列表筛人 — has_wr=TRUE 选手集合的交集', hintEn: 'Also keyed off the WR list — overlaps the has_wr=TRUE cohort' },
-    { id: 'grand-slam', toStat: true, titleZh: '直接打开大满贯排行', titleEn: 'Open the Grand Slam table', hintZh: '看实际选手 / 项目切换 / 全金过滤', hintEn: 'Live table + event picker + only-gold toggle' },
+    { id: 'grand-slam', toStat: true, titleZh: '直接打开大满贯排名', titleEn: 'Open the Grand Slam table', hintZh: '看实际选手 / 项目切换 / 全金过滤', hintEn: 'Live table + event picker + only-gold toggle' },
   ],
 };
 
 // ──── all-results ──────────────────────────────────────────────────────────
 const all_results: AboutEntry = {
   id: 'all-results',
-  titleZh: '全部成绩排行 — 全 11M 行的可分页搜索',
+  titleZh: '全部成绩排名 — 全 11M 行的可分页搜索',
   titleEn: 'All Results — paginated search over every WCA result',
   badgeZh: '查询',
   badgeEn: 'Lookup',
@@ -186,7 +186,7 @@ ORDER BY q.value ASC, q.wca_id ASC;`,
     '`333mbf` has no average — `type=average` returns 400 rather than silently empty.',
   ],
   related: [
-    { id: 'cohort-ranks', titleZh: '参赛届别排行', titleEn: 'Cohort Ranks', hintZh: '同库的另一种切片:按首参赛年分组', hintEn: 'Same dataset sliced by first-competition year' },
+    { id: 'cohort-ranks', titleZh: '参赛届别排名', titleEn: 'Cohort Ranks', hintZh: '同库的另一种切片:按首参赛年分组', hintEn: 'Same dataset sliced by first-competition year' },
     { id: 'wr_aoxr', titleZh: 'AoXR — 跨轮平均', titleEn: 'AoXR — across-round average', hintZh: '更窄的衍生指标 — 单场比赛多轮 average 平均', hintEn: 'A narrower derivative — averaging round averages within one comp' },
     { id: 'all-results', toStat: true, titleZh: '直接打开全成绩表', titleEn: 'Open the All Results table', hintZh: '看翻页 + 过滤 + 搜索的实际表现', hintEn: 'Live table — pagination + filters + free-text search' },
   ],
@@ -195,7 +195,7 @@ ORDER BY q.value ASC, q.wca_id ASC;`,
 // ──── cohort-ranks ─────────────────────────────────────────────────────────
 const cohort_ranks: AboutEntry = {
   id: 'cohort-ranks',
-  titleZh: '参赛届别排行 — 按"首参赛年"分组排名',
+  titleZh: '参赛届别排名 — 按"首参赛年"分组排名',
   titleEn: 'Cohort Ranks — leaderboards bucketed by year of first comp',
   badgeZh: '排名',
   badgeEn: 'Ranking',
@@ -273,9 +273,9 @@ LIMIT ? OFFSET ?;`,
     'Ties share a rank (`assignRanks()` compares `prevVal`); PG ORDER BY adds `wca_id ASC` for stable pagination.',
   ],
   related: [
-    { id: 'all-results', titleZh: '全部成绩排行', titleEn: 'All Results', hintZh: '同源数据,不分 cohort 的全局视图', hintEn: 'Same source, global view without cohort bucketing' },
-    { id: 'sum-of-ranks', titleZh: '全项目排行', titleEn: 'Sum of Ranks', hintZh: '世界排名衍生指标 — 17 项相加', hintEn: 'Another rank-derived metric — sums world ranks across 17 events' },
-    { id: 'cohort-ranks', toStat: true, titleZh: '直接打开届别排行', titleEn: 'Open the cohort table', hintZh: '看届别 / 项目 / 国家切换', hintEn: 'Live table — cohort / event / country switches' },
+    { id: 'all-results', titleZh: '全部成绩排名', titleEn: 'All Results', hintZh: '同源数据,不分 cohort 的全局视图', hintEn: 'Same source, global view without cohort bucketing' },
+    { id: 'sum-of-ranks', titleZh: '全项目排名', titleEn: 'Sum of Ranks', hintZh: '世界排名衍生指标 — 17 项相加', hintEn: 'Another rank-derived metric — sums world ranks across 17 events' },
+    { id: 'cohort-ranks', toStat: true, titleZh: '直接打开届别排名', titleEn: 'Open the cohort table', hintZh: '看届别 / 项目 / 国家切换', hintEn: 'Live table — cohort / event / country switches' },
   ],
 };
 
@@ -288,7 +288,7 @@ const success_rate: AboutEntry = {
   badgeEn: 'Person',
   introZh: [
     '每人每项目算一个比率:`solved / attempted`,其中 `attempted` 计入所有非 DNS 的 `best`(`best != 0`,含 DNF 和 valid),`solved` 只数 `best > 0`(valid)。直观地说就是"举手了的次数里成功的占比"。',
-    '主要用在盲拧 / FMC / 大盲这种高 DNF 项目 — `333bf` 默认进页面,3 次起步就能上榜。每项目排行按 `pct_x10000` 降序,同分再按 `attempted` 降序(尝试多的同分排前)。',
+    '主要用在盲拧 / FMC / 大盲这种高 DNF 项目 — `333bf` 默认进页面,3 次起步就能上榜。每项目排名按 `pct_x10000` 降序,同分再按 `attempted` 降序(尝试多的同分排前)。',
   ],
   introEn: [
     'Per person, per event: `solved / attempted`. `attempted` counts every non-DNS `best` (i.e. `best != 0`, including DNFs); `solved` counts only `best > 0` (valid). Intuitively: "of all times they showed up to the table, what fraction stuck".',
@@ -482,7 +482,7 @@ LIMIT ? OFFSET ?;`,
 // ──── sum-of-ranks ─────────────────────────────────────────────────────────
 const sum_of_ranks: AboutEntry = {
   id: 'sum-of-ranks',
-  titleZh: '全项目排行 — 17 项世界排名之和',
+  titleZh: '全项目排名 — 17 项世界排名之和',
   titleEn: 'Sum of Ranks — sum of world ranks across all 17 events',
   badgeZh: '排名',
   badgeEn: 'Ranking',
@@ -582,7 +582,7 @@ ORDER BY subset_total ASC;`,
   related: [
     { id: 'grand-slam', titleZh: '大满贯', titleEn: 'Grand Slam', hintZh: '另一种"全能"过滤 — 看顶尖一行;sum-of-ranks 看分布', hintEn: 'Sibling all-rounder filter — Grand Slam is the elite cut; sum-of-ranks shows the spread' },
     { id: 'all-events-done', titleZh: '全项目达成', titleEn: 'All Events Done', hintZh: '前置条件 — 没集齐 17 项,sum 里会扛缺项惩罚', hintEn: 'Precondition — anyone short of 17 events eats the missing-event penalty here' },
-    { id: 'cohort-ranks', titleZh: '参赛届别排行', titleEn: 'Cohort Ranks', hintZh: '单项目按届别看,sum-of-ranks 全项目无届别', hintEn: 'Single event by cohort; sum-of-ranks aggregates all events without cohorting' },
+    { id: 'cohort-ranks', titleZh: '参赛届别排名', titleEn: 'Cohort Ranks', hintZh: '单项目按届别看,sum-of-ranks 全项目无届别', hintEn: 'Single event by cohort; sum-of-ranks aggregates all events without cohorting' },
     { id: 'sum-of-ranks', toStat: true, titleZh: '直接打开 Sum of Ranks', titleEn: 'Open Sum of Ranks', hintZh: '看默认 17 项 + 子集 picker + hidePodium 切换', hintEn: 'Live table — default 17 events + subset picker + hidePodium toggle' },
   ],
 };

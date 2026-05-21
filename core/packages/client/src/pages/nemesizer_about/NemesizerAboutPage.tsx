@@ -109,7 +109,7 @@ export default function NemesizerAboutPage() {
         <h2 className="nema-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="nema-refs">
           <li>
-            <Link to="/wca/all-results">{t('全成绩排行', 'All Results')}</Link>
+            <Link to="/wca/all-results">{t('全成绩排名', 'All Results')}</Link>
             {t(' — 按项目搜索任意选手的历史成绩。', ' — search any cuber\'s results by event.')}
           </li>
           <li>
