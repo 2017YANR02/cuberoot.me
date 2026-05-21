@@ -28,9 +28,16 @@ export interface SimSettings {
   animateScramble: boolean;
   /** 画布背景:false=纯色 (var --background),true=透明棋盘格 (twizzle 风格) */
   checkeredBg: boolean;
-  /** 拖魔方背景空白:'orbit' = 自由切视角 (改 scene.rotation,不进 move list);
-   *  'rotate' = 整体转 (NxN 记 x/y/z 进 move list,其它 puzzle 退化为 90° snap orbit)。 */
-  dragEmpty: 'orbit' | 'rotate';
+  /** 解法回放模式:
+   *  - 'moves'     = 默认。cube 起点 = setup,alg 向前播,看 alg 把魔方拧成什么。
+   *  - 'algorithm' = cube 终点 = setup(setup 为空 → 还原态),起点 = setup·alg⁻¹,
+   *                  看 alg 把打乱"解开"。等价 cubing.js setupAnchor='end'。 */
+  playbackMode: 'moves' | 'algorithm';
+  /** 拖魔方背景空白:
+   *  - 'orbit'  = 自由切视角,跨 ±π/2 时自动 commit y/y'/x/x' 进 move list (NxN);
+   *  - 'rotate' = 整体转 (NxN 记 x/y/z 进 move list,松手 snap 90°);
+   *  - 'view'   = 纯切视角,不 commit 任何 move,绿面是 F 就一直是 F。 */
+  dragEmpty: 'orbit' | 'rotate' | 'view';
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
@@ -60,6 +67,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   hint: false,
   animateScramble: false,
   checkeredBg: false,
+  playbackMode: 'moves',
   dragEmpty: 'orbit',
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },

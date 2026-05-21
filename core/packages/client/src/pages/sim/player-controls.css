@@ -105,6 +105,16 @@
   text-align: right;
 }
 
+.sim-player-mode {
+  font-size: 12px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-left: 6px;
+}
+
 .sim-player-speed {
   display: inline-flex;
   align-items: center;

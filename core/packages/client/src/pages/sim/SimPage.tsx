@@ -254,6 +254,12 @@ export default function SimPage() {
       world.scene.rotation.y += dx * k;
       world.scene.rotation.x += dy * k;
       const cube = asNxN(world);
+      // view 模式:纯改 scene.rotation,不 commit y/x move,绿面永远是 F。
+      if (settingsRef.current.dragEmpty === 'view') {
+        world.scene.updateMatrix();
+        world.dirty = true;
+        return;
+      }
       if (cube) {
         // cuber AXIS_VECTOR.y = (0,-1,0), .x = (-1,0,0) — 负轴约定:
         // y move 视觉 = three.js R_y(-π/2),y' = R_y(+π/2)。

@@ -82,7 +82,9 @@ export interface TwistySettings {
   speed: number;
   hint: boolean;
   /** 'orbit' = 自由 orbit (默认 cubing.js 行为);'rotate' = pointerup 后 snap cameraLat/Long 到 90° 整数倍 */
-  dragEmpty?: 'orbit' | 'rotate';
+  dragEmpty?: 'orbit' | 'rotate' | 'view';
+  /** 'moves' (默认) = cubing.js setupAnchor 'start';'algorithm' = 'end' (从 setup·alg⁻¹ 播到 setup) */
+  playbackMode?: 'moves' | 'algorithm';
 }
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
@@ -309,10 +311,13 @@ export default function TwistySection({
     try { player.cameraDistance = dist; } catch { /* */ }
     try { player.tempoScale = tempo; } catch { /* */ }
     try { player.hintFacelets = settings.hint ? 'floating' : 'none'; } catch { /* */ }
+    // playbackMode → cubing.js setupAnchor (start = 'moves' / end = 'algorithm')。
+    // end 模式下 cube 终点 = setup,起点 = setup·alg⁻¹。
+    try { player.experimentalSetupAnchor = settings.playbackMode === 'algorithm' ? 'end' : 'start'; } catch { /* */ }
     prevYawRef.current = settings.viewAngle;
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
-  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings, playerNonce]);
+  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.playbackMode, settings, playerNonce]);
 
   // 实时整体转 commit:user 拖动 cube,累积旋转 ≥ 对称阈值时自动 commit alg + camera reset。
   // 视觉无缝要求:commit 瞬间 cube state + camera 同步切换,绕过 cubing.js 的
@@ -530,7 +535,7 @@ export default function TwistySection({
   //   skewb (立方体): 90°
   //   megaminx (十二面体): 72° (5 重对称 — 面轴)
   // cubing.js 自带 orbit 我们不拦截,只在松手后修正。
-  const dragEmptyRef = useRef<'orbit' | 'rotate'>('orbit');
+  const dragEmptyRef = useRef<'orbit' | 'rotate' | 'view'>('orbit');
   useEffect(() => { dragEmptyRef.current = settings?.dragEmpty ?? 'orbit'; }, [settings?.dragEmpty]);
   useEffect(() => {
     const el = containerRef.current;
