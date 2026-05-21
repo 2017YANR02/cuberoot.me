@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '../pages/wca_stats/event_constants';
 import { eventDisplayName } from '../utils/wca_events';
+import { CubingIcon } from './EventIcon/EventIcon';
 import './WcaEventSelector.css';
 
 interface WcaEventSelectorProps {
@@ -95,7 +96,7 @@ export default function WcaEventSelector({
             data-event={id}
             onClick={handleClick}
           >
-            <span className={`cubing-icon event-${id}`} />
+            <CubingIcon icon={`event-${id}`} />
             {badges?.[id] !== undefined && (
               <span className="event-btn-badge">{badges[id]}</span>
             )}
@@ -136,7 +137,7 @@ export default function WcaEventSelector({
             onClick={() => (isMulti ? onToggle!(id) : onSelect?.(id))}
           >
             {iconClass
-              ? <span className={`cubing-icon ${iconClass}`} />
+              ? <CubingIcon icon={iconClass} />
               : <span className="event-text-label">{textLabel ?? id}</span>}
             {badges?.[id] !== undefined && (
               <span className="event-btn-badge">{badges[id]}</span>
