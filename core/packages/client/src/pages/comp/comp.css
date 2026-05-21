@@ -498,12 +498,10 @@
   color: var(--foreground);
   border-bottom-color: var(--accent);
 }
-.comp-psych-eventbar,
 .comp-event-bar {
   margin-bottom: 12px;
 }
-.comp-event-bar .wca-stats-event-selector,
-.comp-psych-eventbar .wca-stats-event-selector {
+.comp-event-bar .wca-stats-event-selector {
   --evsel-bg: transparent;
   --evsel-border: transparent;
   --evsel-padding: 0;
