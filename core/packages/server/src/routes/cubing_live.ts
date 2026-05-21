@@ -1101,12 +1101,14 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
       if (known.length > 0) {
         const fastKey = `${wcaId}:wca`;
         // 上次 fallback 到 cubing 的决策还在缓存窗内 → 秒返回,跳过 WCA + probe.
+        // 全 round finished 的成绩不再变,放宽到 wca TTL(1h);否则正常 60s 兜底.
         // (WCA REST 公示成绩前的几天/几周内反复打开就走这条.)
         const cubingCacheKey = `${wcaId}:cubing`;
         const cubingCached = cache.get(cubingCacheKey);
-        if (cubingCached && Date.now() - cubingCached.fetchedAt < ttlFor('cubing')
-            && Object.values(cubingCached.resultsByRound).some(arr => arr.length > 0)) {
-          return cubingCached;
+        if (cubingCached && Object.values(cubingCached.resultsByRound).some(arr => arr.length > 0)) {
+          const allFinished = cubingCached.events.every(ev => ev.rs.every(rd => rd.s === 1));
+          const ttl = allFinished ? ttlFor('wca') : ttlFor('cubing');
+          if (Date.now() - cubingCached.fetchedAt < ttl) return cubingCached;
         }
         const cachedFast = cache.get(fastKey);
         if (cachedFast && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
