@@ -18,6 +18,7 @@ import { CompCell } from '../../components/CompCell/CompCell';
 import { ClearButton } from '../../components/ClearButton';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { displayCuberName } from '../../utils/name_utils';
+import { RecordBadge } from '../../components/RecordBadge';
 import { apiUrl } from '../../utils/api_base';
 import { compLinkProps } from '../../utils/comp_link';
 import LangToggle from '../../components/LangToggle';
@@ -41,6 +42,7 @@ interface ResultRow {
   countryId: string; iso2: string | null;
   compId: string; compName: string | null; compDate: string | null;
   attempts: number[];
+  record: string | null;
 }
 
 interface PersonRow {
@@ -277,7 +279,12 @@ export default function AllResultsPage() {
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                       <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
                     </td>
-                    <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
+                    <td className="wse-value-col">
+                      <span className="record-num-cell">
+                        {formatWcaResult(r.value, event, type)}
+                        {r.record && <RecordBadge record={r.record} variant="inline" iso2={r.iso2} />}
+                      </span>
+                    </td>
                     <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                     <td>
                       <Link {...compLinkProps(r.compId)}>

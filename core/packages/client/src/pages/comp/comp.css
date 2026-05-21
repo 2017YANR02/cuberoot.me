@@ -320,6 +320,56 @@
   color: var(--foreground);
   line-height: 1;
 }
+.comp-info-past-popover {
+  position: relative;
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.comp-info-past-trigger {
+  background: none;
+  border: none;
+  padding: 2px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+}
+.comp-info-past-trigger:hover { color: var(--foreground); background: var(--muted); }
+.comp-info-past-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  padding: 10px 12px;
+  background: var(--popover, var(--background));
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  font-size: 0.85rem;
+}
+.comp-info-past-popover:hover .comp-info-past-panel,
+.comp-info-past-popover:focus-within .comp-info-past-panel,
+.comp-info-past-popover[data-open='true'] .comp-info-past-panel {
+  display: block;
+}
+.comp-info-past-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 12px;
+  row-gap: 4px;
+  margin: 0;
+}
+.comp-info-past-item { display: contents; }
+.comp-info-past-item dt {
+  color: var(--muted-foreground);
+  margin: 0;
+}
+.comp-info-past-item dd { margin: 0; }
 @media (max-width: 480px) {
   .comp-info-panel {
     grid-template-columns: 1fr;
@@ -510,7 +560,6 @@
 }
 .comp-table tbody td {
   padding: 7px 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
   white-space: nowrap;
 }
 .comp-table tbody tr:last-child td { border-bottom: none; }
@@ -522,6 +571,16 @@
 
 .td-no { color: var(--muted-foreground); }
 .th-avg, .td-avg, .th-best, .td-best { font-variant-numeric: tabular-nums; }
+.comp-table thead th.th-avg,
+.comp-table thead th.th-best,
+.comp-table tbody td.td-avg,
+.comp-table tbody td.td-best {
+  text-align: right;
+}
+.comp-table thead th.th-avg,
+.comp-table thead th.th-best {
+  padding-right: 32px;
+}
 .td-avg { font-weight: 600; }
 .td-attempt {
   font-variant-numeric: tabular-nums;

@@ -234,16 +234,20 @@ function EventRoundsList({
                   {r.pos > 0 ? r.pos : '—'}
                 </td>
                 <td className="wp-cell-result">
-                  {formatWcaResult(r.best, eventId, 'single')}
-                  {r.regional_single_record
-                    ? <> <RecordBadge record={r.regional_single_record} variant="inline" /></>
-                    : pf?.bestIsPb && <> <RecordBadge record="PR" variant="inline" /></>}
+                  <span className="record-num-cell">
+                    {formatWcaResult(r.best, eventId, 'single')}
+                    {r.regional_single_record
+                      ? <RecordBadge record={r.regional_single_record} variant="inline" />
+                      : pf?.bestIsPb && <RecordBadge record="PR" variant="inline" />}
+                  </span>
                 </td>
                 <td className="wp-cell-result">
-                  {formatWcaResult(r.average, eventId, 'average')}
-                  {r.regional_average_record
-                    ? <> <RecordBadge record={r.regional_average_record} variant="inline" /></>
-                    : pf?.averageIsPb && <> <RecordBadge record="PR" variant="inline" /></>}
+                  <span className="record-num-cell">
+                    {formatWcaResult(r.average, eventId, 'average')}
+                    {r.regional_average_record
+                      ? <RecordBadge record={r.regional_average_record} variant="inline" />
+                      : pf?.averageIsPb && <RecordBadge record="PR" variant="inline" />}
+                  </span>
                 </td>
                 <td className="wp-cell-attempts">
                   <AttemptsList attempts={r.attempts} best={r.best} eventId={eventId} />
