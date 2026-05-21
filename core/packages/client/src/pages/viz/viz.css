@@ -15,7 +15,7 @@
   --text-primary: rgba(255, 255, 255, 0.92);
   --text-secondary: rgba(255, 255, 255, 0.55);
   --text-muted: rgba(255, 255, 255, 0.3);
-  --border-subtle: rgba(255, 235, 220, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.08);
   --glow-cyan: rgba(0, 230, 255, 0.3);
 }
 
@@ -332,7 +332,7 @@ h1 {
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 235, 220, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   outline: none;
   position: relative;
   z-index: 2;
@@ -418,11 +418,11 @@ h1 {
 kbd {
   display: inline-block;
   padding: 1px 5px;
-  border: 1px solid rgba(255, 235, 220, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  background: rgba(255, 235, 220, 0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* ─── 脊线图区域 ─── */
@@ -461,7 +461,7 @@ kbd {
   background: transparent;
 }
 .ridgeline-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(255, 235, 220, 0.12);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 3px;
 }
 .ridgeline-wrapper::-webkit-scrollbar-thumb:hover {
@@ -848,7 +848,7 @@ input:checked + .toggle-pill::after {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 235, 220, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.15);
   border-top-color: var(--accent-cyan);
   border-radius: 50%;
   animation: spinLoader 0.7s linear infinite;
@@ -908,7 +908,7 @@ input:checked + .toggle-pill::after {
   z-index: 1000;
   width: 360px;
   background: rgba(16, 16, 32, 0.97);
-  border: 1px solid rgba(255, 235, 220, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
@@ -942,11 +942,11 @@ input:checked + .toggle-pill::after {
   color: var(--text-secondary);
 }
 .viz-page .wca-pp-spinner {
-  border-color: rgba(255, 235, 220, 0.15);
+  border-color: rgba(255, 255, 255, 0.15);
   border-top-color: var(--accent-cyan);
 }
 
 /* 头像圈背景 */
 .viz-page .wca-pp-avatar {
-  background: rgba(255, 235, 220, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }

@@ -1,11 +1,11 @@
 /* /nemesizer-about */
 .nema-page {
-  --nema-bg: #FAF9F5;
+  --nema-bg: #fafafa;
   --nema-surface: #FFFFFF;
-  --nema-text: #181716;
-  --nema-text-sub: #6F6E6B;
+  --nema-text: #171717;
+  --nema-text-sub: #737373;
   --nema-text-mute: #95938E;
-  --nema-border: #E5E4DF;
+  --nema-border: #e5e5e5;
   --nema-accent: #B45309;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

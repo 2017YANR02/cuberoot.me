@@ -63,10 +63,12 @@ interface LiveResult {
   v: number[];      // attempts (centiseconds)
   sr: string;       // single record marker
   ar: string | number; // average record marker
-  // 历史 PR 标志(仅 wca_db 路径填充):该值在本比赛开始日之前是否为该选手该项目首次达成
-  // 同比赛内多轮按 round_type_id 顺序累积,后置轮也能识别 PR.
-  pS?: boolean;     // single is PR at this comp's date
-  pA?: boolean;     // average is PR at this comp's date
+  // 历史 PR 排名(仅 wca_db 路径填充):该值在本比赛开始日之前的该选手该项目所有历史成绩中排第几.
+  // dense rank:同值同 rank;1 = PR(最快);2/3/... = 历史第 N 快.
+  // 同比赛内多轮按 round_type_id 顺序累积,后置轮也参与累积排名.
+  // undefined = 无历史数据或非 wca_db 路径(cubing.com 等).
+  pS?: number;      // single rank
+  pA?: number;      // average rank
 }
 
 type SourceId = 'cubing' | 'wca' | 'wca_live' | 'wca_db';
@@ -660,12 +662,12 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
     (resultsByRound[key] ||= []).push(lr);
   }
 
-  // ── 历史 PR 检测 + personalRecords 预填 ────────────────────────────
-  // 对该比赛每位选手每项目,查 wca_results_top 中 comp_date < 本比赛日期的累积最佳;
-  // 然后按 ROUND_ORDER 升序遍历本比赛各轮 (1 → 2 → 3 → f),用 running best 标 pS/pA.
-  // 同一比赛内后置轮(决赛)若打破前轮 + 历史最佳,也会被标 PR.
-  // 同时把 priorBest 转成 personalRecords 塞进返回,供 client Psych Sheet 排序使用 —
-  // 避免 client 逐选手直连 WCA API /persons/<id> 触发 429.
+  // ── 历史 PR rank 检测 + personalRecords 预填 ─────────────────────────
+  // 对该比赛每位选手每项目,拉 wca_results_top 中 comp_date < 本比赛日期的全部 distinct 值;
+  // 然后按 ROUND_ORDER 升序遍历本比赛各轮 (1 → 2 → 3 → f),为每条结果计算 dense rank:
+  //   rank = (历史已见过的、严格小于本值的 distinct 值数) + 1
+  //   旧成绩 rank 在它发生那一刻冻结(本算法只 prepend 历史 + 累积本场,符合时间序冻结语义).
+  // personalRecords 仍预填 (slot.single/average = 该选手该项目的历史最快值),供 Psych Sheet 排序.
   const personalRecords: Record<string, Record<string, { single?: number; average?: number }>> = {};
   const compDate = rows[0].comp_date;
   const wcaIdsInComp = [...numByWcaId.keys()];
@@ -673,23 +675,33 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
   if (compDate && wcaIdsInComp.length > 0 && eventIdsInComp.length > 0) {
     const idQs = wcaIdsInComp.map(() => '?').join(',');
     const evQs = eventIdsInComp.map(() => '?').join(',');
-    const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; best_val: number }>(
-      `SELECT wca_id, event_id, is_avg, MIN(value) AS best_val
+    const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number }>(
+      `SELECT DISTINCT wca_id, event_id, is_avg, value
        FROM wca_results_top
        WHERE wca_id IN (${idQs})
          AND event_id IN (${evQs})
          AND comp_date < ?
-       GROUP BY wca_id, event_id, is_avg`,
+         AND value > 0`,
       [...wcaIdsInComp, ...eventIdsInComp, compDate],
     );
-    // wca_id|event_id|is_avg(0|1) → best
-    const priorBest = new Map<string, number>();
+    // (wca_id|event_id|is_avg) → Set of distinct values seen historically
+    const seenValues = new Map<string, Set<number>>();
+    const bestValueByKey = new Map<string, number>();
     for (const pr of priorRows) {
-      priorBest.set(`${pr.wca_id}|${pr.event_id}|${pr.is_avg ? '1' : '0'}`, pr.best_val);
-      const perEvent = (personalRecords[pr.wca_id] ||= {});
-      const slot = (perEvent[pr.event_id] ||= {});
-      if (pr.is_avg) slot.average = pr.best_val;
-      else slot.single = pr.best_val;
+      const k = `${pr.wca_id}|${pr.event_id}|${pr.is_avg ? '1' : '0'}`;
+      let set = seenValues.get(k);
+      if (!set) { set = new Set(); seenValues.set(k, set); }
+      set.add(pr.value);
+      const curBest = bestValueByKey.get(k);
+      if (curBest === undefined || pr.value < curBest) bestValueByKey.set(k, pr.value);
+    }
+    // 用 bestValueByKey 填 personalRecords (供 Psych Sheet)
+    for (const [k, best] of bestValueByKey) {
+      const [wcaId, eventId, isAvgStr] = k.split('|');
+      const perEvent = (personalRecords[wcaId] ||= {});
+      const slot = (perEvent[eventId] ||= {});
+      if (isAvgStr === '1') slot.average = best;
+      else slot.single = best;
     }
     // 按 (wca_id, event_id) 分组本比赛 results,按 round 升序处理
     const groups = new Map<string, LiveResult[]>();
@@ -701,19 +713,28 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
       if (!arr) { arr = []; groups.set(k, arr); }
       arr.push(lr);
     }
+    const rankFor = (v: number, seen: Set<number>): number => {
+      let distinctLess = 0;
+      for (const s of seen) if (s < v) distinctLess++;
+      return distinctLess + 1;
+    };
     for (const [k, arr] of groups) {
       arr.sort((a, b) => (ROUND_ORDER[a.r] ?? 99) - (ROUND_ORDER[b.r] ?? 99));
       const [wcaIdKey, eventIdKey] = k.split('|');
-      let runSingle = priorBest.get(`${wcaIdKey}|${eventIdKey}|0`) ?? Infinity;
-      let runAvg    = priorBest.get(`${wcaIdKey}|${eventIdKey}|1`) ?? Infinity;
+      const singleKey = `${wcaIdKey}|${eventIdKey}|0`;
+      const avgKey    = `${wcaIdKey}|${eventIdKey}|1`;
+      let singleSeen = seenValues.get(singleKey);
+      if (!singleSeen) { singleSeen = new Set(); seenValues.set(singleKey, singleSeen); }
+      let avgSeen = seenValues.get(avgKey);
+      if (!avgSeen) { avgSeen = new Set(); seenValues.set(avgKey, avgSeen); }
       for (const lr of arr) {
-        if (lr.b > 0 && lr.b <= runSingle) {
-          lr.pS = true;
-          runSingle = lr.b;
+        if (lr.b > 0) {
+          lr.pS = rankFor(lr.b, singleSeen);
+          singleSeen.add(lr.b);
         }
-        if (lr.a > 0 && lr.a <= runAvg) {
-          lr.pA = true;
-          runAvg = lr.a;
+        if (lr.a > 0) {
+          lr.pA = rankFor(lr.a, avgSeen);
+          avgSeen.add(lr.a);
         }
       }
     }

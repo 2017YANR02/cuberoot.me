@@ -1,11 +1,11 @@
 /* ── Globe Page：theme 通过 .is-dark / .is-light 切换 ── */
 .globe-page {
     /* 默认浅色（被 .is-dark override） */
-    --bg: #FAF9F5;
+    --bg: #fafafa;
     --surface: #FFFFFF;
-    --text: #181716;
-    --text-sub: #6F6E6B;
-    --border: #E5E4DF;
+    --text: #171717;
+    --text-sub: #737373;
+    --border: #e5e5e5;
     --accent: #C15F3C;
     --accent-soft: rgba(193, 95, 60, 0.12);
 
@@ -963,7 +963,7 @@
 }
 
 /* ── WcaPersonPicker 搜索框 —— 强制黑字 ── */
-.wca-pp-input { color: #181716; background: #FFF; }
+.wca-pp-input { color: #171717; background: #FFF; }
 .wca-pp-input::placeholder { color: #9B9994; }
 
 /* ── Cuber 模式 ── */

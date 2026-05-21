@@ -80,8 +80,8 @@ export default function LiquidGlassTestPage() {
       {/* 右:控制面板 */}
       <div
         style={{
-          background: '#1c1917',
-          color: '#f0ebe3',
+          background: '#171717',
+          color: '#ededed',
           padding: 24,
           overflowY: 'auto',
           borderLeft: '1px solid rgba(255,255,255,0.08)',
@@ -89,7 +89,7 @@ export default function LiquidGlassTestPage() {
         }}
       >
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Controls</h2>
-        <p style={{ fontSize: 11, color: '#9c8c7e', marginBottom: 20 }}>
+        <p style={{ fontSize: 11, color: '#a3a3a3', marginBottom: 20 }}>
           /liquid-glass-test · 独立沙盒,不影响其他页面
         </p>
 
@@ -97,7 +97,7 @@ export default function LiquidGlassTestPage() {
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as Mode)}
-            style={{ width: '100%', padding: '6px 8px', background: '#232020', color: '#f0ebe3', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6 }}
+            style={{ width: '100%', padding: '6px 8px', background: '#1f1f1f', color: '#ededed', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6 }}
           >
             <option value="standard">standard</option>
             <option value="polar">polar</option>
@@ -127,7 +127,7 @@ export default function LiquidGlassTestPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#f0ebe3' }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#ededed' }}>{label}</div>
       {children}
     </div>
   );

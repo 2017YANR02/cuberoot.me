@@ -1,11 +1,11 @@
 /* /wca/prediction-about */
 .pa-page {
-  --pa-bg: #FAF9F5;
+  --pa-bg: #fafafa;
   --pa-surface: #FFFFFF;
-  --pa-text: #181716;
-  --pa-text-sub: #6F6E6B;
+  --pa-text: #171717;
+  --pa-text-sub: #737373;
   --pa-text-mute: #95938E;
-  --pa-border: #E5E4DF;
+  --pa-border: #e5e5e5;
   --pa-accent: #DC2626;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

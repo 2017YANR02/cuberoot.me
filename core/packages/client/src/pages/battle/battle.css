@@ -115,9 +115,9 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 235, 220, 0.1);
+    background: rgba(255, 255, 255, 0.1);
     border: none;
-    color: #f0ebe3;
+    color: #ededed;
     font-size: 1.2rem;
     display: flex;
     align-items: center;
@@ -128,7 +128,7 @@
 }
 
 .back-btn:hover {
-    background: rgba(255, 235, 220, 0.2);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* ==========================================================
@@ -175,7 +175,7 @@
     object-fit: contain;
     opacity: 0.9;
     border-radius: 6px;
-    background: rgba(255, 235, 220, 0.05);
+    background: rgba(255, 255, 255, 0.05);
     padding: 4px;
     pointer-events: none;
     user-select: none;
@@ -286,8 +286,8 @@
 }
 
 .penalty-trigger:not(:disabled):hover {
-    background: rgba(255, 235, 220, 0.08);
-    color: #f0ebe3;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ededed;
     border-color: #8a7a6a;
 }
 
@@ -344,13 +344,13 @@
 }
 
 .penalty-option:hover {
-    background: rgba(255, 235, 220, 0.08);
-    color: #f0ebe3;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ededed;
 }
 
 .penalty-option.active {
-    color: #f0ebe3;
-    background: rgba(255, 235, 220, 0.12);
+    color: #ededed;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 /* NOTE: 中间栏内的罚时菜单 — 向下弹出（朝各自玩家区域）
@@ -376,7 +376,7 @@
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    border: 1px solid #332e28;
+    border: 1px solid #333333;
     background: transparent;
     color: #d8c8b8;
     display: inline-flex;
@@ -390,14 +390,14 @@
 }
 
 .event-btn:hover {
-    background: rgba(255, 235, 220, 0.08);
+    background: rgba(255, 255, 255, 0.08);
     border-color: #6e6050;
 }
 
 .event-btn.active {
     background: rgba(217, 119, 87, 0.2);
     border-color: #d97757;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 /* NOTE: 非 WCA 项目(FTO/Kilo)无 cubing-icon → 落回简写文字 chip */
@@ -440,9 +440,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #332e28;
+    border: 1px solid #333333;
     border-radius: 8px;
-    background: rgba(255, 235, 220, 0.04);
+    background: rgba(255, 255, 255, 0.04);
     color: #d8c8b8;
     cursor: pointer;
     padding: 0;
@@ -464,15 +464,15 @@
 }
 
 .event-overlay-item:hover {
-    background: rgba(255, 235, 220, 0.08);
+    background: rgba(255, 255, 255, 0.08);
     border-color: #6e6050;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 .event-overlay-item.active {
-    background: rgba(217, 119, 87, 0.2);
-    border-color: #d97757;
-    color: #f0ebe3;
+    background: #2e7d32;
+    border-color: #4caf50;
+    color: #fff;
 }
 
 @media (max-width: 480px) {
@@ -500,12 +500,12 @@
     align-items: center;
     justify-content: space-between;
     padding: 4px 12px;
-    --bar-color-left: #1c1917;
-    --bar-color-right: #1c1917;
+    --bar-color-left: #171717;
+    --bar-color-right: #171717;
     --bar-text-color: #d8c8b8;
-    background: linear-gradient(to right, var(--bar-color-left), #1c1917, var(--bar-color-right));
-    border-top: 1px solid rgba(255, 235, 220, 0.08);
-    border-bottom: 1px solid rgba(255, 235, 220, 0.08);
+    background: linear-gradient(to right, var(--bar-color-left), #171717, var(--bar-color-right));
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     min-height: 40px;
     flex-shrink: 0;
     color: var(--bar-text-color);
@@ -555,7 +555,7 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid #332e28;
+    border: 1px solid #333333;
     background: transparent;
     color: #8a7a6a;
     font-size: 1rem;
@@ -567,8 +567,8 @@
 }
 
 .middle-btn:hover {
-    background: rgba(255, 235, 220, 0.08);
-    color: #f0ebe3;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ededed;
     border-color: #6e6050;
 }
 
@@ -625,7 +625,7 @@
     overflow-y: auto;
     transform: translateY(100%);
     transition: transform 0.25s ease;
-    border-top: 1px solid #332e28;
+    border-top: 1px solid #333333;
 }
 
 .settings-overlay.visible .settings-panel {
@@ -644,7 +644,7 @@
     font-size: 1.1rem;
     font-weight: 700;
     text-align: center;
-    color: #f0ebe3;
+    color: #ededed;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -697,11 +697,11 @@
 
 .mode-seg-btn.active {
     background: rgba(217, 119, 87, 0.25);
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 .mode-seg-btn:hover:not(.active) {
-    background: rgba(255, 235, 220, 0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .settings-group {
@@ -753,7 +753,7 @@
 .puzzle-btn {
     padding: 8px 4px;
     border-radius: 6px;
-    border: 1px solid #332e28;
+    border: 1px solid #333333;
     background: transparent;
     color: #aaa;
     font-size: 0.8rem;
@@ -783,13 +783,13 @@
 }
 
 .puzzle-btn:hover {
-    background: rgba(255, 235, 220, 0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .puzzle-btn.active {
     background: rgba(217, 119, 87, 0.2);
     border-color: #d97757;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 /* --- 设置操作按钮 --- */
@@ -797,7 +797,7 @@
     width: 100%;
     padding: 10px;
     border-radius: 8px;
-    border: 1px solid #332e28;
+    border: 1px solid #333333;
     background: transparent;
     color: #d8c8b8;
     font-size: 0.9rem;
@@ -812,7 +812,7 @@
 }
 
 .settings-action-btn:hover {
-    background: rgba(255, 235, 220, 0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .settings-action-btn.danger {
@@ -872,8 +872,8 @@ input:checked+.slider:before {
 
 /* NOTE: 设置面板下拉选择框 */
 .settings-select {
-    background: #231f1c;
-    color: #f0ebe3;
+    background: #1f1f1f;
+    color: #ededed;
     border: 1px solid #555;
     border-radius: 6px;
     padding: 4px 8px;
@@ -936,8 +936,8 @@ body.solo .bottom-nav {
     left: 0;
     right: 0;
     height: 56px;
-    background: #1c1917;
-    border-top: 1px solid rgba(255, 235, 220, 0.1);
+    background: #171717;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 300;
     justify-content: space-around;
     align-items: center;
@@ -998,7 +998,7 @@ body.solo .scramble-img {
 .goal-progress {
     position: relative;
     height: 18px;
-    background: rgba(255, 235, 220, 0.06);
+    background: rgba(255, 255, 255, 0.06);
     border-radius: 9px;
     margin-top: 6px;
     overflow: hidden;
@@ -1018,7 +1018,7 @@ body.solo .scramble-img {
     text-align: center;
     font-size: 11px;
     line-height: 18px;
-    color: #f0ebe3;
+    color: #ededed;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -1050,7 +1050,7 @@ body.solo .scramble-img {
     left: 50%;
     transform: translateX(-50%) translateY(-100px);
     background: linear-gradient(135deg, #1a2332 0%, #2c4a6e 100%);
-    color: #f0ebe3;
+    color: #ededed;
     padding: 12px 24px;
     border-radius: 24px;
     font-size: 16px;
@@ -1077,7 +1077,7 @@ body.solo .scramble-img {
     position: fixed;
     inset: 0;
     /* NOTE: 全屏铺满，纯黑背景（与原版一致） */
-    background: #1c1917;
+    background: #171717;
     z-index: 200;
     display: flex;
     flex-direction: column;
@@ -1092,7 +1092,7 @@ body.solo .scramble-img {
 }
 
 .history-panel {
-    background: #1c1917;
+    background: #171717;
     width: 100%;
     /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
     height: calc(100vh - 56px);
@@ -1165,7 +1165,7 @@ body.solo .scramble-img {
     font-size: 0.65rem;
     font-weight: 700;
     color: #8a7a6a;
-    background: rgba(255, 235, 220, 0.06);
+    background: rgba(255, 255, 255, 0.06);
     padding: 1px 4px;
     border-radius: 3px;
     min-width: 18px;
@@ -1198,8 +1198,8 @@ body.solo .scramble-img {
 }
 
 .round-modal {
-    background: #1c1917;
-    border: 1px solid #332e28;
+    background: #171717;
+    border: 1px solid #333333;
     border-radius: 12px;
     width: 100%;
     max-width: 560px;
@@ -1222,7 +1222,7 @@ body.solo .scramble-img {
 .round-modal-title {
     font-size: 1rem;
     font-weight: 700;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 .round-modal-date {
@@ -1237,7 +1237,7 @@ body.solo .scramble-img {
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: rgba(255, 235, 220, 0.03);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 8px;
 }
 
@@ -1272,7 +1272,7 @@ body.solo .scramble-img {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-size: 2.4rem;
     font-weight: 700;
-    color: #f0ebe3;
+    color: #ededed;
     font-variant-numeric: tabular-nums;
     line-height: 1;
 }
@@ -1320,8 +1320,8 @@ body.solo .scramble-img {
     line-height: 1.5;
     color: #d8c8b8;
     word-break: break-word;
-    background: rgba(255, 235, 220, 0.04);
-    border: 1px solid #332e28;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #333333;
     border-radius: 6px;
     padding: 10px 12px;
     user-select: text;
@@ -1366,7 +1366,7 @@ body.solo .scramble-img {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid #332e28;
+    border-bottom: 1px solid #333333;
     flex-shrink: 0;
     gap: 8px;
 }
@@ -1374,7 +1374,7 @@ body.solo .scramble-img {
 .history-title {
     font-weight: 700;
     font-size: 1rem;
-    color: #f0ebe3;
+    color: #ededed;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -1425,14 +1425,14 @@ body.solo .scramble-img {
     align-items: baseline;
     padding: 6px 16px;
     font-size: 0.85rem;
-    border-bottom: 1px solid rgba(255, 235, 220, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     cursor: pointer;
     transition: background 0.1s;
     gap: 6px;
 }
 
 .history-item:hover {
-    background: rgba(255, 235, 220, 0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .history-item .h-idx {
@@ -1444,7 +1444,7 @@ body.solo .scramble-img {
 
 .history-item .h-time {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
-    color: #f0ebe3;
+    color: #ededed;
     font-size: 0.95rem;
     min-width: 80px;
     text-align: right;
@@ -1506,7 +1506,7 @@ body.solo .scramble-img {
 }
 
 .history-action-btn:hover {
-    background: #332e28;
+    background: #333333;
     border-color: #8a7a6a;
 }
 
@@ -1566,7 +1566,7 @@ body.solo .scramble-img {
 
 .trend-chart {
     padding: 8px 12px;
-    border-bottom: 1px solid #332e28;
+    border-bottom: 1px solid #333333;
 }
 
 .trend-svg {
@@ -1612,11 +1612,11 @@ body.solo .scramble-img {
 .ao-chip.active {
     border-color: var(--chip-color);
     color: var(--chip-color);
-    background: rgba(255, 235, 220, 0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .ao-chip:hover {
-    background: rgba(255, 235, 220, 0.08);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* ==========================================================
@@ -1693,7 +1693,7 @@ body.solo .scramble-img {
 }
 
 .ao-detail-close:hover {
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 .ao-detail-item {
@@ -1706,7 +1706,7 @@ body.solo .scramble-img {
 }
 
 .ao-detail-item:nth-child(odd) {
-    background: rgba(255, 235, 220, 0.03);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .ao-detail-idx {
@@ -1810,7 +1810,7 @@ body.solo .scramble-img {
 .bg-image-btn {
     height: 32px;
     padding: 0 12px;
-    border: 1px solid #332e28;
+    border: 1px solid #333333;
     border-radius: 6px;
     background: transparent;
     color: #aaa;
@@ -1820,14 +1820,14 @@ body.solo .scramble-img {
 }
 
 .bg-image-btn:hover {
-    background: rgba(255, 235, 220, 0.05);
-    color: #f0ebe3;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ededed;
 }
 
 .bg-image-btn.has-image {
     background: rgba(217, 119, 87, 0.2);
     border-color: #d97757;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 .bg-reset-btn {
@@ -1887,7 +1887,7 @@ body.solo .scramble-img {
 .segmented-btn.active {
     background: #2c4a6e;
     border-color: #e8a27a;
-    color: #f0ebe3;
+    color: #ededed;
 }
 
 .segmented-btn:hover:not(.active) {
@@ -1907,7 +1907,7 @@ body.solo .scramble-img {
 }
 
 .sim-row:nth-child(odd) {
-    background: rgba(255, 235, 220, 0.03);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .sim-label {
@@ -1916,7 +1916,7 @@ body.solo .scramble-img {
 }
 
 .sim-value {
-    color: #f0ebe3;
+    color: #ededed;
     font-size: 18px;
     font-weight: 700;
 }
@@ -1950,7 +1950,7 @@ body.solo .scramble-img {
 .session-overview-table td {
     padding: 6px 8px;
     color: #d8c8b8;
-    border-bottom: 1px solid rgba(255, 235, 220, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .session-overview-table tr:hover td {

@@ -1,13 +1,13 @@
 /* /patterns — gallery */
 
 .pat-page {
-    --pat-bg: #FAF9F5;
+    --pat-bg: #fafafa;
     --pat-surface: #FFFFFF;
-    --pat-text: #181716;
-    --pat-text-sub: #6F6E6B;
+    --pat-text: #171717;
+    --pat-text-sub: #737373;
     --pat-text-mute: #95938E;
-    --pat-border: #E5E4DF;
-    --pat-border-strong: #CCCAC2;
+    --pat-border: #e5e5e5;
+    --pat-border-strong: #d4d4d4;
     --pat-accent: #C15F3C;
     --pat-accent-soft: rgba(193, 95, 60, 0.08);
 
@@ -157,11 +157,11 @@
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
     html:not([data-theme=light]) .pat-page {
-        --pat-bg: #1c1917;
-        --pat-surface: #232020;
-        --pat-text: #f0ebe3;
-        --pat-text-sub: #9c8c7e;
-        --pat-text-mute: #7A736A;
+        --pat-bg: #171717;
+        --pat-surface: #1f1f1f;
+        --pat-text: #ededed;
+        --pat-text-sub: #a3a3a3;
+        --pat-text-mute: #737373;
         --pat-border: rgba(240, 235, 227, 0.1);
         --pat-border-strong: rgba(240, 235, 227, 0.2);
         --pat-accent: #d97757;
@@ -169,11 +169,11 @@
     }
 }
 html[data-theme=dark] .pat-page {
-    --pat-bg: #1c1917;
-    --pat-surface: #232020;
-    --pat-text: #f0ebe3;
-    --pat-text-sub: #9c8c7e;
-    --pat-text-mute: #7A736A;
+    --pat-bg: #171717;
+    --pat-surface: #1f1f1f;
+    --pat-text: #ededed;
+    --pat-text-sub: #a3a3a3;
+    --pat-text-mute: #737373;
     --pat-border: rgba(240, 235, 227, 0.1);
     --pat-border-strong: rgba(240, 235, 227, 0.2);
     --pat-accent: #d97757;

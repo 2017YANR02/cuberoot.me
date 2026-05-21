@@ -18,7 +18,7 @@ export default function CompSourcesPage() {
   return (
     <div className="comp-sources-page">
       <div className="comp-top-bar">
-        <LangToggle variant="fixed" />
+        <LangToggle />
         <ThemeToggle />
       </div>
 

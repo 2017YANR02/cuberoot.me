@@ -1,13 +1,13 @@
 /* /scramble/gen-about — 打乱生成器说明页 */
 
 .ga-page {
-    --ga-bg: #FAF9F5;
+    --ga-bg: #fafafa;
     --ga-surface: #FFFFFF;
-    --ga-text: #181716;
-    --ga-text-sub: #6F6E6B;
+    --ga-text: #171717;
+    --ga-text-sub: #737373;
     --ga-text-mute: #95938E;
-    --ga-border: #E5E4DF;
-    --ga-border-strong: #CCCAC2;
+    --ga-border: #e5e5e5;
+    --ga-border-strong: #d4d4d4;
     --ga-accent: #C15F3C;
     --ga-accent-soft: rgba(193, 95, 60, 0.08);
 

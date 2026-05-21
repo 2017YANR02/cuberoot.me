@@ -11,7 +11,7 @@ dark/light 切换已落地 (2026-05-14)。token 在 `src/index.css :root`,toggle
 | # | 页 | 路由 | 当前主题 | 当前 token 化 | 命名空间 |
 |---|---|---|---|---|---|
 | 1 | trainer | `/trainer` | dark | ⚠️ 半 token + 伪 token (`var(--text-color, #ECEAE3)`)+ rgba 硬码 | 无,需新建 |
-| 2 | battle | `/battle` | dark(纯黑 AMOLED)| ❌ 全硬码 `#000 #f0ebe3` | 无,需新建 |
+| 2 | battle | `/battle` | dark(纯黑 AMOLED)| ❌ 全硬码 `#000 #ededed` | 无,需新建 |
 | 3 | memo (colpi) | `/memo/colpi` | light | ✅ 严格 token | `--c-*` |
 | 4 | alg | `/alg` | **跟随系统**(已完成)| ✅ token + `prefers-color-scheme` | `--alg-*` |
 | 5 | wca-stats | `/wca` 家族 | dark | ❌ 硬码(2026-05-14 刚清掉伪 token)| 无,需新建 |
@@ -41,15 +41,15 @@ dark/light 切换已落地 (2026-05-14)。token 在 `src/index.css :root`,toggle
   color-scheme: light dark;
 
   /* 中性 light */
-  --background:        #FAF9F5;
+  --background:        #fafafa;
   --surface:           #FFFFFF;          /* card / popup / modal 默认 */
   --surface-elevated:  #FFFFFF;
-  --surface-muted:     #F5F4EE;          /* alt bg / hover */
-  --foreground:        #181716;          /* 主文字 */
-  --muted-foreground:  #6F6E6B;          /* 副信息 */
-  --faint-foreground:  #9F9D97;          /* 弱化 / disabled */
-  --border-default:    #E5E4DF;
-  --border-strong:     #CCCAC2;
+  --surface-muted:     #f5f5f5;          /* alt bg / hover */
+  --foreground:        #171717;          /* 主文字 */
+  --muted-foreground:  #737373;          /* 副信息 */
+  --faint-foreground:  #a3a3a3;          /* 弱化 / disabled */
+  --border-default:    #e5e5e5;
+  --border-strong:     #d4d4d4;
 
   /* 信号(light/dark 同色相,饱和度可按需要在反盖时调) */
   --signal-success: #5aac7e;
@@ -61,15 +61,15 @@ dark/light 切换已落地 (2026-05-14)。token 在 `src/index.css :root`,toggle
 /* 跟系统 dark + 显式 dark 都生效;[data-theme=light] 显式 override 时不进 */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) {
-    --background:        #1c1917;
-    --surface:           #232020;
-    --surface-elevated:  #2a2520;
-    --surface-muted:     #1f1c1a;
-    --foreground:        #f0ebe3;
-    --muted-foreground:  #9c8c7e;   /* 暖灰,跟 Claude 调性 */
-    --faint-foreground:  #7A736A;
-    --border-default:    rgba(255, 235, 220, 0.1);
-    --border-strong:     rgba(255, 235, 220, 0.2);
+    --background:        #171717;
+    --surface:           #1f1f1f;
+    --surface-elevated:  #262626;
+    --surface-muted:     #1f1f1f;
+    --foreground:        #ededed;
+    --muted-foreground:  #a3a3a3;   /* 中性灰 */
+    --faint-foreground:  #737373;
+    --border-default:    rgba(255, 255, 255, 0.1);
+    --border-strong:     rgba(255, 255, 255, 0.2);
     /* signal 通常 light/dark 同值就够,实在刺眼再单独调 */
   }
 }
@@ -100,7 +100,7 @@ html[data-theme=dark] {
 | `--bg-primary --bg-secondary --bg-card --bg-card-hover` | dark 棕 | **保留**,用旧名字的页(timer / training / home / etc)继续用 |
 | `--text-primary --text-secondary` | dark 米色 | **保留** |
 | `--accent --accent-glow` | terracotta dark | **保留**,但要意识到这跟某些 page-scope 的 `--accent`(light)同名,page-scope 会赢 |
-| `--border` | `rgba(255, 235, 220, 0.1)` 深色透明 | **改名 `--border-dark`**,落地新 light token 时不能用 `--border` 这个名字 → 用 `--border-default` |
+| `--border` | `rgba(255, 255, 255, 0.1)` 深色透明 | **改名 `--border-dark`**,落地新 light token 时不能用 `--border` 这个名字 → 用 `--border-default` |
 | `--success --warning --danger` | dark | **改名为 `--signal-*`** 对齐新 token,grep 替换 |
 
 落地代码时**先做 rename**(--border → --border-dark, --success → --signal-success 等),再加新 light 中性 token。
@@ -111,7 +111,7 @@ html[data-theme=dark] {
 
 **`prefers-color-scheme` + `[data-theme]` 双轨**:
 
-> ⚠️ **坑**: 不要把 `html:not([data-theme=light])` 包在 `:where()` 里 —— `:where()` 特异性是 0,会被 `:root { --background: #FAF9F5 }` (特异性 0,1,0) 压过去,@media 反盖**完全不生效**。直接用 `html:not([data-theme=light])` (特异性 0,1,1) 才赢得过。
+> ⚠️ **坑**: 不要把 `html:not([data-theme=light])` 包在 `:where()` 里 —— `:where()` 特异性是 0,会被 `:root { --background: #fafafa }` (特异性 0,1,0) 压过去,@media 反盖**完全不生效**。直接用 `html:not([data-theme=light])` (特异性 0,1,1) 才赢得过。
 
 
 - 跟系统:`@media (prefers-color-scheme: dark) { html:not([data-theme=light]) { ... } }`
@@ -152,8 +152,8 @@ ThemeToggle 三态(对齐 claude.ai):
 | 4 | memo (colpi) | light | 同上,`--c-bg/text/border/muted` 改用 :root,`--c-active` 留;`--c-filled --c-empty` 留(语义化卡片色)| 30min |
 | 5 | calc | light | body bg 提到 .calc-page 内,中性色用 :root,~50 处硬码替换 | 1.5h |
 | 6 | trainer | dark | 先清伪 token (`var(--text-color, #ECEAE3)` → `--foreground`),rgba 硬码替换为 `:root` 中性 | 1h |
-| 7 | battle | dark | `#000 #f0ebe3` 替换为 `--background --foreground`(注意 battle 是纯黑 AMOLED,base bg 跟一般 dark 不同 → 可能需要 `.battle-container` 内单独反盖 `--background: #000`)| 1.5h |
-| 8 | wca-stats | dark | 把刚清掉伪 token 的硬码 (`#f0ebe3 #1a1a1a #aaa #888`) 替换为 :root 中性;7 个家族文件统一 | 2-3h |
+| 7 | battle | dark | `#000 #ededed` 替换为 `--background --foreground`(注意 battle 是纯黑 AMOLED,base bg 跟一般 dark 不同 → 可能需要 `.battle-container` 内单独反盖 `--background: #000`)| 1.5h |
+| 8 | wca-stats | dark | 把刚清掉伪 token 的硬码 (`#ededed #1a1a1a #aaa #888`) 替换为 :root 中性;7 个家族文件统一 | 2-3h |
 
 **总计:8-10 小时**(分散在多个 PR 推,每页独立验证)
 
@@ -161,9 +161,9 @@ ThemeToggle 三态(对齐 claude.ai):
 
 ### 迁移策略:统一 (不是兼容)
 
-发现某页硬码值跟 DESIGN.md canonical token 不一致时,**默认让页面跟 token 走,而不是改 token 去保现状**。例:某页 `background: #FAFAFA` 但 `--background: #FAF9F5`,直接换成 `var(--background)`,不为这页发明 `#FAFAFA` 变体。
+发现某页硬码值跟 DESIGN.md canonical token 不一致时,**默认让页面跟 token 走,而不是改 token 去保现状**。例:某页 `background: #FAFAFA` 但 `--background: #fafafa`,直接换成 `var(--background)`,不为这页发明 `#FAFAFA` 变体。
 
-例外:battle 的 AMOLED 纯黑 `#000` —— 这是设计意图,需要在 `.battle-container` 内 page-scope 反盖 `--background: #000`,不要"统一"成 `#1c1917`。
+例外:battle 的 AMOLED 纯黑 `#000` —— 这是设计意图,需要在 `.battle-container` 内 page-scope 反盖 `--background: #000`,不要"统一"成 `#171717`。
 
 ThemeToggle 默认值 = `system`(对齐 macOS / Win11 / iOS 现代 UX 主流)。这意味着 OS 设深色的用户进站,目前的 4 个 light 页 (memo/calc/wb/calendar) 上线即自动 dark。是预期行为。
 

@@ -57,3 +57,71 @@ export function computeProgress(
 export function singleIsValid(v: number): boolean {
   return isValidValue(v);
 }
+
+export interface RankFlag {
+  /** 该成绩发生当时,在本 person 此 (event, metric) 历史已有成绩中的名次 (dense rank).
+   *  1 = 当时是 PR (含并列), 2 = 当时第 2 快, ... null = 无效 (DNF/DNS/0)
+   *  rank 一经赋值即冻结,后续更好成绩不会"挤掉"它. */
+  singleRank: number | null;
+  averageRank: number | null;
+}
+
+// 时间序轮次顺序: 用于同一比赛内 round 排序 (老轮次在前). 与展示用的 ROUND_ORDER 相反.
+// h=0 round (extras / heat-like), 1/d=first round, 2/g=quarter, 3=semi, b/c/f=finals.
+const CHRONO_ROUND_ORDER: Record<string, number> = {
+  'h': 0, '1': 1, 'd': 1, '2': 2, 'g': 2, '3': 3, 'sf': 3, 'b': 4, 'c': 4, 'f': 5,
+};
+
+/** 时间序 PR rank: 按 (comp.start_date, round, result.id) 时间序遍历本 person 全部成绩,
+ *  每条新成绩 v 的 rank = (已见过的、严格优于 v 的不同值数 + 1) (dense rank, 并列同 rank).
+ *  旧成绩 rank 在它发生时就被冻结,后续更好成绩不影响.
+ *  无效成绩 (DNF/DNS/0) rank = null,渲染时不出 badge. */
+export function computePrRank(
+  results: WcaResultRow[],
+  comps: WcaCompetition[],
+): Map<number, RankFlag> {
+  const compDate = new Map(comps.map(c => [c.id, c.start_date]));
+
+  const sorted = results.slice().sort((a, b) => {
+    const da = compDate.get(a.competition_id) ?? '';
+    const db = compDate.get(b.competition_id) ?? '';
+    if (da !== db) return da.localeCompare(db);
+    if (a.competition_id !== b.competition_id) return a.competition_id.localeCompare(b.competition_id);
+    const ra = CHRONO_ROUND_ORDER[a.round_type_id] ?? 99;
+    const rb = CHRONO_ROUND_ORDER[b.round_type_id] ?? 99;
+    if (ra !== rb) return ra - rb;
+    return a.id - b.id;
+  });
+
+  const out = new Map<number, RankFlag>();
+  // 每个 (event, metric) 各维护一个 "已见过的值" 集合 (用于算 dense rank)
+  const singlesSeen = new Map<string, Set<number>>();
+  const averagesSeen = new Map<string, Set<number>>();
+
+  const rankFor = (v: number, seen: Set<number>): number => {
+    let distinctLess = 0;
+    for (const s of seen) if (s < v) distinctLess++;
+    return distinctLess + 1;
+  };
+
+  for (const r of sorted) {
+    const eid = r.event_id;
+    let singleRank: number | null = null;
+    let averageRank: number | null = null;
+    if (isValidValue(r.best)) {
+      const seen = singlesSeen.get(eid) ?? new Set<number>();
+      singleRank = rankFor(r.best, seen);
+      seen.add(r.best);
+      singlesSeen.set(eid, seen);
+    }
+    if (isValidValue(r.average)) {
+      const seen = averagesSeen.get(eid) ?? new Set<number>();
+      averageRank = rankFor(r.average, seen);
+      seen.add(r.average);
+      averagesSeen.set(eid, seen);
+    }
+    out.set(r.id, { singleRank, averageRank });
+  }
+  return out;
+}
+

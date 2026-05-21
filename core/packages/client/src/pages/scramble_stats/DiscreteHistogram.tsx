@@ -169,7 +169,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
               const fill = `url(#${gradIdFor(si)})`;
               const isClickable = clickableSet.has(v);
               const isSelected = selectedBin === v;
-              const defaultStroke = s.stroke ?? (needsStroke(s.fillColors) ? '#CCCAC2' : undefined);
+              const defaultStroke = s.stroke ?? (needsStroke(s.fillColors) ? '#d4d4d4' : undefined);
               const stroke = isSelected ? '#C15F3C' : defaultStroke;
               const strokeW = isSelected ? 2 : (defaultStroke ? 1 : 0);
               const rectW = Math.max(barW - 1, 0.5);

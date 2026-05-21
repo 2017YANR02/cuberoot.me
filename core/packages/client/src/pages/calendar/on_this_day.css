@@ -2,11 +2,11 @@
    外壳 .modal-overlay / .modal-panel / .modal-close 复用 upcoming_comps.css。 */
 
 .otd-panel {
-    --otd-text: #181716;
-    --otd-text-sub: #6F6E6B;
+    --otd-text: #171717;
+    --otd-text-sub: #737373;
     --otd-text-mute: #95938E;
-    --otd-border: #E5E4DF;
-    --otd-border-strong: #CCCAC2;
+    --otd-border: #e5e5e5;
+    --otd-border-strong: #d4d4d4;
     --otd-surface: #FBF8F3;
     --otd-accent: #C15F3C;
     --otd-accent-soft: rgba(193, 95, 60, 0.08);

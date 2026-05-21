@@ -4,11 +4,11 @@
     /* 默认 dark 主题（沿用 /calc 风格） */
     --wp-bg: #1c1c1e;
     --wp-text: rgba(255, 255, 255, 0.45);
-    --wp-text-active: #f0ebe3;
-    --wp-highlight: rgba(255, 235, 220, 0.1);
+    --wp-text-active: #ededed;
+    --wp-highlight: rgba(255, 255, 255, 0.1);
     --wp-text-fade-2: rgba(255, 255, 255, 0.35);
-    --wp-text-fade-3: rgba(255, 235, 220, 0.25);
-    --wp-text-fade-4: rgba(255, 235, 220, 0.15);
+    --wp-text-fade-3: rgba(255, 255, 255, 0.25);
+    --wp-text-fade-4: rgba(255, 255, 255, 0.15);
     --wp-highlight-h: 34px;
 
     position: relative;
