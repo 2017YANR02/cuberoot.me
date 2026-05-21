@@ -451,6 +451,9 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   const country = c.req.query('country') ?? '';
   const eventsParam = c.req.query('events') ?? '';
   const hidePodium = c.req.query('hidePodium') === '1' || c.req.query('hidePodium') === 'true';
+  // bestMisser: 命中 best_final_pos = N(殿军之王 = 4).bestMisser>0 时 hidePodium 被忽略.
+  const bestMisserRaw = parseInt(c.req.query('bestMisser') ?? '0', 10);
+  const bestMisser = Number.isFinite(bestMisserRaw) && bestMisserRaw > 0 ? bestMisserRaw : 0;
   const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
   const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
 
@@ -480,7 +483,12 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   const where: string[] = [`pr.is_avg = ?`];
   const params: unknown[] = [isAvg];
   if (isCountryMode) { where.push(`pr.country_id = ?`); params.push(cn.id); }
-  if (hidePodium) where.push(`pr.has_podium = FALSE`);
+  if (bestMisser > 0) {
+    where.push(`pr.best_final_pos = ?`);
+    params.push(bestMisser);
+  } else if (hidePodium) {
+    where.push(`(pr.best_final_pos = 0 OR pr.best_final_pos > 3)`);
+  }
 
   // 如果是默认全 17 项 — 走索引,直接 ORDER BY 聚合好的 total
   if (orderCol) {
@@ -518,7 +526,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
-      type, country: cn.id, hidePodium, page, size, total,
+      type, country: cn.id, hidePodium, bestMisser, page, size, total,
       events: ACTIVE_EVENTS,
       rows: rows.map(r => ({
         wcaId: r.wca_id, name: r.person_name,
@@ -586,7 +594,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    type, country: cn.id, hidePodium, page, size, total,
+    type, country: cn.id, hidePodium, bestMisser, page, size, total,
     events: ACTIVE_EVENTS,
     selectedEvents: eventIdxs!.map(i => ACTIVE_EVENTS[i]),
     rows: rows.map(r => ({

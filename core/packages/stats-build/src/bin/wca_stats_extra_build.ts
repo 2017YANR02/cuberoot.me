@@ -312,6 +312,11 @@ async function main() {
   const grandSlamStream = createWriteStream(resolve(outDir, 'wca_grand_slam.copy.tsv'));
   let allTopCount = 0, cohortCount = 0, gsCount = 0;
 
+  // 每人在所有 WCA 比赛 final round(roundTypeId='f'/'c')里取得过的最佳名次 (MIN pos>0).
+  // 跨所有 event 累积. 0 = 从未在任何 final 拿过有效成绩.
+  // wca_person_ranks.best_final_pos 用它,支撑"无牌"过滤 (>3) 和"殿军之王"(=4).
+  const bestFinalPos = new Map<string, number>();
+
   // grand slam 累积 (per event):collect from finals at championship comps
   // 结构: gsAcc[(event, person)] = { worldChampComp, worldChampPos, contChampComp, contChampPos, natChampComp, natChampPos, hasWr }
   // 因为有的人可能多次出现,我们取 BEST(pos 最小)的那次.
@@ -459,9 +464,15 @@ async function main() {
         allTopCount++;
       }
 
+      // best_final_pos: 跨 event 累积每人 final round 最佳名次
+      const isFinal = r.roundTypeId === 'c' || r.roundTypeId === 'f';
+      if (isFinal && r.pos > 0) {
+        const cur = bestFinalPos.get(r.pid);
+        if (cur == null || r.pos < cur) bestFinalPos.set(r.pid, r.pos);
+      }
+
       // grand_slam: 只 finals + 领奖台(pos<=3)
       if (gsForEvent) {
-        const isFinal = r.roundTypeId === 'c' || r.roundTypeId === 'f';
         if (isFinal && r.pos > 0 && r.pos <= 3) {
           let g = gsForEvent.get(r.pid);
           if (!g) {
@@ -672,11 +683,12 @@ async function main() {
   }
   for (const pid of allActivePids) {
     const country = personCountry.get(pid) ?? '';
+    const bfp = bestFinalPos.get(pid) ?? 0;
     // single
     {
       const ranksW: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
       const ranksC: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
-      let totalW = 0, totalC = 0, doneN = 0, podium = false;
+      let totalW = 0, totalC = 0, doneN = 0;
       for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
         const r = eventRanks[i]!.single.get(pid);
         if (r) {
@@ -685,7 +697,6 @@ async function main() {
           totalW += r.wr;
           totalC += r.cr;
           doneN++;
-          if (r.wr <= 3) podium = true;
         } else {
           // 缺项默认: participants+1
           totalW += eventParticipantsSingle[i]! + 1;
@@ -693,7 +704,7 @@ async function main() {
         }
       }
       prStream.write(
-        `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bool(podium)}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
+        `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
       );
       prCount++;
     }
@@ -701,7 +712,7 @@ async function main() {
     {
       const ranksW: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
       const ranksC: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
-      let totalW = 0, totalC = 0, doneN = 0, podium = false;
+      let totalW = 0, totalC = 0, doneN = 0;
       for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
         // 333mbf 没有 average — 跳过(填 0)
         if (ACTIVE_EVENTS[i] === '333mbf') {
@@ -714,14 +725,13 @@ async function main() {
           totalW += r.wr;
           totalC += r.cr;
           doneN++;
-          if (r.wr <= 3) podium = true;
         } else {
           totalW += eventParticipantsAvg[i]! + 1;
           totalC += eventParticipantsAvg[i]! + 1;
         }
       }
       prStream.write(
-        `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bool(podium)}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
+        `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
       );
       prCount++;
     }
@@ -794,7 +804,7 @@ TRUNCATE wca_person_ranks;
 \\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
 \\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
-\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, has_podium, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
+\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();

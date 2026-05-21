@@ -62,13 +62,15 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon }[] = 
   { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator },
 ];
 
-const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
+const LOOKUP_ITEMS: { path: string; extraQuery?: string; zh: string; en: string }[] = [
   { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
   { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results' },
   { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks' },
   { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
   { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
   { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks' },
+  { path: '/wca/sum-of-ranks',     extraQuery: 'hidePodium=1',    zh: '全能但无牌', en: 'All-Around · No Podium' },
+  { path: '/wca/sum-of-ranks',     extraQuery: 'bestMisser=4',    zh: '殿军之王',   en: 'Fourth-Place King' },
 ];
 
 // NOTE: 选手 / 比赛跨库搜索阈值。英文/数字 q.length >= 2 才发,中文/包含 unicode 1 字符即可
@@ -290,11 +292,14 @@ export default function WcaStatsIndex() {
               <h2>{isZh ? '查询' : 'Lookup'}</h2>
             </div>
             <div className="wca-stats-index-grid">
-              {lookupVisible.map(it => (
-                <Link key={it.path} to={`${it.path}${langQuery}`} className="wca-stats-index-card">
-                  {isZh ? it.zh : it.en}
-                </Link>
-              ))}
+              {lookupVisible.map(it => {
+                const to = it.extraQuery ? `${it.path}${langQuery}&${it.extraQuery}` : `${it.path}${langQuery}`;
+                return (
+                  <Link key={`${it.path}|${it.extraQuery ?? ''}`} to={to} className="wca-stats-index-card">
+                    {isZh ? it.zh : it.en}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
