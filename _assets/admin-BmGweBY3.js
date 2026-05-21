@@ -1,0 +1,1 @@
+var e=[`2017YANR02`];function t(t){return!!t&&e.includes(t)}export{t as n,e as t};
