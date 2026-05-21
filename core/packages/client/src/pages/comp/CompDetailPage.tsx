@@ -29,6 +29,7 @@ import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '
 import { formatDateRangeIso, toIsoDate } from '../../utils/date_range';
 import { localizeCity } from '../../utils/city_localize';
 import WcaEventSelector from '../../components/WcaEventSelector';
+import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { rememberRecent } from './CompIndexPage';
@@ -102,8 +103,9 @@ interface CompData {
   resultsByRound: Record<string, LiveResult[]>;
   membersByFilter?: MembersByFilter;
   fetchedAt: number;
-  /** wca_db 路径预填:每选手本比赛前累积 PB(centiseconds).Psych Sheet 直接消费,避免逐选手调 WCA API 触发 429. */
-  personalRecords?: Record<string, Record<string, { single?: number; average?: number }>>;
+  /** wca_db 路径预填:形态 wcaid → eventId → CompPersonalRecordSlot.
+   *  Psych Sheet 直接消费,避免逐选手调 WCA API 触发 429. */
+  personalRecords?: Record<string, Record<string, CompPersonalRecordSlot>>;
   /** cubing / wca_live 路径预填:WR/CR/NR 快照(仅本场涉及国家/洲),WS patch 用. */
   currentRecords?: CompRecordsSnapshot;
 }
@@ -309,6 +311,7 @@ export default function CompDetailPage() {
   const roundParam = searchParams.get('round') || '';
   const filterParam = searchParams.get('filter') || 'all';
   const viewParam = (searchParams.get('view') === 'psych' ? 'psych' : 'live') as 'live' | 'psych';
+  const isPsych = viewParam === 'psych';
   const psychEventParam = searchParams.get('psychEvent') || '';
   const sourceParam = searchParams.get('source'); // 'wca' | 'cubing' | null=auto
 
@@ -318,12 +321,15 @@ export default function CompDetailPage() {
     setError(null);
     setProgress(null);
     return new Promise<void>((resolve) => {
-      // 任一来源先返回成绩(wca_db / SSE done)就 finish,其它路径自动作废.
+      // 任一来源先返回成绩就 finish,其它路径自动作废.
+      // partial=true (?only=ev:rd 轻量响应) 允许先 setData 解 loading,但不置 done —
+      // 后到的 full 数据仍要覆盖,否则切轮 / 切 event 时其它 round 全空.
       let done = false;
+      let resolved = false;
       let es: EventSource | null = null;
-      const finishWith = async (j: CompData) => {
+      const resolveOnce = () => { if (!resolved) { resolved = true; resolve(); } };
+      const finishWith = async (j: CompData, partial = false) => {
         if (done) return;
-        done = true;
         // 等中文名 map(comp_names_zh.json + /v1/cn-comp-names 兜底)合并完才首渲,
         // 否则中文模式下会"先英文后中文"闪一下。main.tsx 启动即 fire 过一次,
         // 这里 await 通常立刻 resolve。
@@ -331,8 +337,10 @@ export default function CompDetailPage() {
         setData(j);
         rememberRecent(j.slug, j.name);
         setProgress(null);
+        resolveOnce();
+        if (partial) return;
+        done = true;
         if (es) { try { es.close(); } catch { /* ignore */ } }
-        resolve();
       };
       const failWith = (msg: string) => {
         if (done) return;
@@ -340,7 +348,7 @@ export default function CompDetailPage() {
         setError(msg);
         setProgress(null);
         if (es) { try { es.close(); } catch { /* ignore */ } }
-        resolve();
+        resolveOnce();
       };
 
       // SSE 主路径 (cubing/wca_live 实时源用 progress 显示).
@@ -399,7 +407,7 @@ export default function CompDetailPage() {
           const only = `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`;
           fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db&only=${only}`))
             .then(r => r.ok ? r.json() : null)
-            .then(j => { if (j) finishWith(j); })
+            .then(j => { if (j) finishWith(j, /* partial */ true); })
             .catch(() => { /* ignore */ });
         }
         fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`))
@@ -676,8 +684,8 @@ export default function CompDetailPage() {
         const pb: PbByEvent = {};
         for (const [ev, slot] of Object.entries(byEvent)) {
           pb[ev] = {
-            single: slot.single ? { best: slot.single, world_rank: 0, continental_rank: 0, national_rank: 0 } : undefined,
-            average: slot.average ? { best: slot.average, world_rank: 0, continental_rank: 0, national_rank: 0 } : undefined,
+            single: slot.single ? { best: slot.single, world_rank: 0, continental_rank: 0, national_rank: 0, recordTag: slot.singleTag } : undefined,
+            average: slot.average ? { best: slot.average, world_rank: 0, continental_rank: 0, national_rank: 0, recordTag: slot.averageTag } : undefined,
           };
         }
         obj[wcaId] = pb;
@@ -878,9 +886,11 @@ export default function CompDetailPage() {
                 })}
               </div>
             )}
-            <span className="comp-detail-fetched">
-              {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
-            </span>
+            {!isWca && (
+              <span className="comp-detail-fetched">
+                {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
+              </span>
+            )}
             {!isWca && <LiveIndicator status={wsStatus} isZh={isZh} />}
             {!isWca && wsStatus !== 'open' && (
               <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={isZh ? '刷新' : 'Refresh'}>
@@ -895,11 +905,12 @@ export default function CompDetailPage() {
         <div className="comp-event-bar">
           <WcaEventSelector
             availableEvents={availableEventIds}
-            selectedEvent={eventParam}
-            onSelect={onSelectEvent}
+            selectedEvent={isPsych ? psychEventId : eventParam}
+            onSelect={isPsych ? onChangePsychEvent : onSelectEvent}
             isZh={isZh}
             onlyAvailable
-            badges={eventBadges}
+            allowAll={isPsych}
+            badges={isPsych ? {} : eventBadges}
             appendEvents={nonWcaEvents}
           />
         </div>
@@ -907,21 +918,21 @@ export default function CompDetailPage() {
         <div className="comp-view-tabs">
           <button
             type="button"
-            className={`comp-view-tab${viewParam === 'live' ? ' is-active' : ''}`}
+            className={`comp-view-tab${!isPsych ? ' is-active' : ''}`}
             onClick={() => onChangeView('live')}
           >
             {isZh ? '成绩' : (isWca ? 'Results' : 'Live')}
           </button>
           <button
             type="button"
-            className={`comp-view-tab${viewParam === 'psych' ? ' is-active' : ''}`}
+            className={`comp-view-tab${isPsych ? ' is-active' : ''}`}
             onClick={() => onChangeView('psych')}
           >
             {isZh ? '预排名' : 'Psych Sheet'}
           </button>
         </div>
 
-        {viewParam === 'live' ? (
+        {!isPsych ? (
           <>
             <div className="comp-selectors">
               {!isWca && (
@@ -958,7 +969,6 @@ export default function CompDetailPage() {
             data={data}
             isZh={isZh}
             eventId={psychEventId}
-            onChangeEvent={onChangePsychEvent}
             pbMap={pbMap}
             onClickCuber={n => setModal({ kind: 'all', number: n })}
           />
@@ -1217,14 +1227,11 @@ interface PsychSheetProps {
   data: CompData;
   isZh: boolean;
   eventId: string;
-  onChangeEvent: (id: string) => void;
   pbMap: Record<string, PbByEvent | null>;
   onClickCuber: (number: number) => void;
 }
 
-function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }: PsychSheetProps) {
-  const availableEvents = useMemo(() => new Set(data.events.map(e => e.i)), [data.events]);
-
+function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProps) {
   // 每位选手参赛的项目集合(用于"选手名单"模式右侧 icon 行)
   const userEvents = useMemo(() => {
     const map = new Map<number, string[]>();
@@ -1259,7 +1266,9 @@ function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }:
         const pb = u.wcaid ? pbMap[u.wcaid] : null;
         const single = pb?.[eventId]?.single?.best;
         const average = pb?.[eventId]?.average?.best;
-        return { n, u, single, average };
+        const singleTag = pb?.[eventId]?.single?.recordTag;
+        const averageTag = pb?.[eventId]?.average?.recordTag;
+        return { n, u, single, average, singleTag, averageTag };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
     arr.sort((x, y) => {
@@ -1279,16 +1288,6 @@ function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }:
 
   return (
     <>
-      <div className="comp-psych-eventbar">
-        <WcaEventSelector
-          availableEvents={availableEvents}
-          selectedEvent={eventId}
-          onSelect={onChangeEvent}
-          isZh={isZh}
-          allowAll
-          onlyAvailable
-        />
-      </div>
       <div className="comp-table-wrap">
         <table className="comp-table">
           {eventId ? (
@@ -1318,8 +1317,22 @@ function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }:
                           {displayCuberName(row.u.name, isZh)}
                         </button>
                       </td>
-                      <td className="td-avg">{row.average ? formatWcaResult(row.average, eventId, 'average') : '—'}</td>
-                      <td className="td-best">{row.single ? formatWcaResult(row.single, eventId, 'single') : '—'}</td>
+                      <td className="td-avg">
+                        {row.average ? (
+                          <span className="record-num-cell">
+                            {formatWcaResult(row.average, eventId, 'average')}
+                            {row.averageTag && <RecordBadge record={row.averageTag} variant="inline" iso2={regionToIso2(row.u.region)} />}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td className="td-best">
+                        {row.single ? (
+                          <span className="record-num-cell">
+                            {formatWcaResult(row.single, eventId, 'single')}
+                            {row.singleTag && <RecordBadge record={row.singleTag} variant="inline" iso2={regionToIso2(row.u.region)} />}
+                          </span>
+                        ) : '—'}
+                      </td>
                     </tr>
                   );
                 })}
