@@ -14,6 +14,22 @@
     margin-left: 3px;
 }
 
+/* 数值 + 内联 record badge 的单元 wrapper:
+   数字右对齐;badge 左锚到 (number_end + ~4px) 这条线,跨行/跨 badge 类型 badge 左缘对齐 (PR/WR/OcR 的首字母在同一 x)。
+   即使无 badge 也 reserve padding-right 保证同列数字对齐。 */
+.record-num-cell {
+    position: relative;
+    display: inline-block;
+    padding-right: 22px;
+}
+.record-num-cell .record-badge--inline {
+    position: absolute;
+    left: calc(100% - 18px);
+    top: -2px;
+    margin-left: 0;
+    vertical-align: baseline;
+}
+
 .record-wr { background: #dc2626; }
 .record-cr { background: #facc15; color: #000; }
 .record-nr { background: #16a34a; color: #000; }

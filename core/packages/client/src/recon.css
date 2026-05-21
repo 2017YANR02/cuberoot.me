@@ -286,6 +286,13 @@
 .col-avg, .col-dsingle { font-weight: 600; }
 .col-round { text-align: center; }
 .col-official { text-align: center; }
+.recon-table .col-dsingle,
+.recon-table .col-avg,
+.recon-table .col-aoxr,
+.recon-table .col-single,
+.recon-table .col-stm,
+.recon-table .col-tps,
+.recon-table .col-idx { text-align: right; }
 
 .col-solver {
   max-width: 140px;

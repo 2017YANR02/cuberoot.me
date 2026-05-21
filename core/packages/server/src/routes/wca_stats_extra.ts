@@ -199,13 +199,14 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const rows = await query<{
     value: number; wca_id: string; person_country_id: string;
     iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
-    attempts: number[] | null; person_name: string;
+    attempts: number[] | null; person_name: string; record_tag: string | null;
   }>(
     `
     SELECT q.value, q.wca_id, t.person_country_id,
            co.iso2 AS iso2,
            t.comp_id, c.name AS comp_name, t.comp_date,
-           t.attempts, p.name AS person_name
+           t.attempts, p.name AS person_name,
+           t.record_tag
     FROM (
       SELECT t.id, t.value, t.wca_id
       FROM wca_results_top t
@@ -237,6 +238,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
       countryId: r.person_country_id, iso2: r.iso2,
       compId: r.comp_id, compName: r.comp_name, compDate: r.comp_date,
       attempts: r.attempts ?? [],
+      record: r.record_tag || null,
     })),
   });
 });

@@ -7,10 +7,10 @@
  * PR 标志: 启动后异步 prefetch 该 round 所有 WCA ID 的 personal_records,
  *         result.b/.a ≤ pre-comp PR(或本比赛之前的更优) → 标黄。
  */
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw, Info } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { Flag } from '../../utils/flag';
@@ -22,6 +22,7 @@ import { countryName } from '../../utils/country_name';
 import { localizeCompName } from '../../utils/comp_localize';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { apiUrl } from '../../utils/api_base';
+import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
 import { fetchCompInfo, fetchCompRounds, fetchCubingZh, type CompInfo, type CubingZhMeta } from '../../utils/comp_wcif';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
@@ -246,6 +247,8 @@ export default function CompDetailPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [searchParams, setSearchParams] = useSearchParams();
+  const user = useAuthStore(s => s.user);
+  const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
   // 老 URL (Xuzhou-Zenith-2026) → 重定向到 WCA ID 形态
   useEffect(() => {
     if (rawSlug && rawSlug !== slug) {
@@ -816,7 +819,7 @@ export default function CompDetailPage() {
             })()}
           </h1>
           <div className="comp-detail-meta">
-            {data.availableSources && data.availableSources.length > 1 && (
+            {isAdmin && data.availableSources && data.availableSources.length > 1 && (
               <div className="comp-source-toggle" role="group" aria-label={isZh ? '数据源' : 'Data source'}>
                 {data.availableSources.map(s => {
                   const label = s === 'wca' || s === 'wca_db' ? 'WCA' : s === 'wca_live' ? 'WCA Live' : 'cubing.com';
@@ -857,7 +860,7 @@ export default function CompDetailPage() {
             className={`comp-view-tab${viewParam === 'live' ? ' is-active' : ''}`}
             onClick={() => onChangeView('live')}
           >
-            {isZh ? (isWca ? '成绩' : '直播成绩') : (isWca ? 'Results' : 'Live')}
+            {isZh ? '成绩' : (isWca ? 'Results' : 'Live')}
           </button>
           <button
             type="button"
@@ -941,28 +944,38 @@ function CompInfoPanel({
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
   const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join(isZh ? '、' : ', ');
-  const rows: { label: string; value: React.ReactNode }[] = [];
+  // 截止/报名类条目过了今天就 past — 收纳到折叠区,日期(比赛日)永远显示
+  const todayIso = toIsoDate(new Date());
+  const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
+  const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
   if (dateStr) rows.push({ label: isZh ? '日期' : 'Date', value: dateStr });
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
   const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
   if (regOpenIso && regCloseIso) {
-    rows.push({ label: isZh ? '报名时间' : 'Registration', value: formatDateRangeIso(regOpenIso, regCloseIso) });
+    rows.push({
+      label: isZh ? '报名时间' : 'Registration',
+      value: formatDateRangeIso(regOpenIso, regCloseIso),
+      past: isPast(regCloseIso),
+    });
   }
   if (cubingZh?.withdrawDeadline) {
-    rows.push({ label: '退赛截止', value: cubingZh.withdrawDeadline });
+    rows.push({ label: '退赛截止', value: cubingZh.withdrawDeadline, past: isPast(cubingZh.withdrawDeadline) });
   }
   if (cubingZh?.reopenAt) {
-    rows.push({ label: '重开报名', value: cubingZh.reopenAt });
+    rows.push({ label: '重开报名', value: cubingZh.reopenAt, past: isPast(cubingZh.reopenAt) });
   }
   if (info.event_change_deadline_date) {
     const d = toIsoDate(new Date(info.event_change_deadline_date));
-    rows.push({ label: isZh ? '修改截止' : 'Event change deadline', value: d });
+    rows.push({ label: isZh ? '修改截止' : 'Event change deadline', value: d, past: isPast(d) });
   }
   if (info.waiting_list_deadline_date) {
     const d = toIsoDate(new Date(info.waiting_list_deadline_date));
-    rows.push({ label: isZh ? '候补截止' : 'Waiting list deadline', value: d });
+    rows.push({ label: isZh ? '候补截止' : 'Waiting list deadline', value: d, past: isPast(d) });
   }
-  if (cityStr) rows.push({ label: isZh ? '城市' : 'City', value: cityStr });
+  // 中文 + cubingZh.location 时,地点字符串已含市/省,城市行冗余,省掉
+  if (cityStr && !(isZh && cubingZh?.location)) {
+    rows.push({ label: isZh ? '城市' : 'City', value: cityStr });
+  }
   if (cubingZh?.location) {
     rows.push({ label: '地点', value: cubingZh.location });
   } else {
@@ -999,15 +1012,80 @@ function CompInfoPanel({
     });
   }
   if (rows.length === 0) return null;
+  const activeRows = rows.filter(r => !r.past);
+  const pastRows = rows.filter(r => r.past);
+  return (
+    <CompInfoRows activeRows={activeRows} pastRows={pastRows} isZh={isZh} />
+  );
+}
+
+function CompInfoRows({
+  activeRows, pastRows, isZh,
+}: {
+  activeRows: { label: string; value: React.ReactNode }[];
+  pastRows: { label: string; value: React.ReactNode }[];
+  isZh: boolean;
+}) {
   return (
     <dl className="comp-info-panel">
-      {rows.map(r => (
+      {activeRows.map((r, i) => (
         <div key={r.label} className="comp-info-row">
           <dt className="comp-info-label">{r.label}</dt>
-          <dd className="comp-info-value">{r.value}</dd>
+          <dd className="comp-info-value">
+            {r.value}
+            {i === 0 && pastRows.length > 0 && (
+              <PastRowsPopover rows={pastRows} isZh={isZh} />
+            )}
+          </dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+function PastRowsPopover({
+  rows, isZh,
+}: { rows: { label: string; value: React.ReactNode }[]; isZh: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return (
+    <span
+      ref={ref}
+      className="comp-info-past-popover"
+      data-open={open ? 'true' : 'false'}
+    >
+      <button
+        type="button"
+        className="comp-info-past-trigger"
+        onClick={() => setOpen(o => !o)}
+        aria-label={isZh ? `已过期 ${rows.length} 项` : `${rows.length} past`}
+      >
+        <Info size={14} />
+      </button>
+      <div className="comp-info-past-panel" role="dialog">
+        <dl className="comp-info-past-list">
+          {rows.map(r => (
+            <div key={r.label} className="comp-info-past-item">
+              <dt>{r.label}</dt>
+              <dd>{r.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </span>
   );
 }
 
@@ -1039,7 +1117,6 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
         <thead>
           <tr>
             <th className="th-place">{isZh ? '名次' : 'Place'}</th>
-            <th className="th-no">{isZh ? '号' : 'No.'}</th>
             <th className="th-person">{isZh ? '选手' : 'Person'}</th>
             {showAvg && <th className="th-avg">{isZh ? '平均' : 'Average'}</th>}
             <th className="th-best">{isZh ? '单次' : 'Best'}</th>
@@ -1058,7 +1135,6 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             return (
               <tr key={r.i || `${r.n}:${idx}`} className={cls}>
                 <td className="td-place">{r.b === 0 ? '-' : (idx + 1)}</td>
-                <td className="td-no">{r.n}</td>
                 <td className="td-person">
                   <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                   <button
@@ -1072,17 +1148,21 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 </td>
                 {showAvg && (
                   <td className="td-avg">
-                    {formatLive(r.a, r.e, true)}
-                    {r.ar
-                      ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                      : averagePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                    <span className="record-num-cell">
+                      {formatLive(r.a, r.e, true)}
+                      {r.ar
+                        ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
+                        : averagePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                    </span>
                   </td>
                 )}
                 <td className="td-best">
-                  {formatLive(r.b, r.e, false)}
-                  {r.sr
-                    ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                    : singlePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                  <span className="record-num-cell">
+                    {formatLive(r.b, r.e, false)}
+                    {r.sr
+                      ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
+                      : singlePr ? <RecordBadge record="PR" variant="inline" /> : null}
+                  </span>
                 </td>
                 {Array.from({ length: attemptCount }).map((_, i) => (
                   <td key={i} className="td-attempt">{formatLive(r.v[i] ?? 0, r.e, false)}</td>
@@ -1091,7 +1171,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             );
           })}
           {results.length === 0 && (
-            <tr><td colSpan={5 + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
+            <tr><td colSpan={4 + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
           )}
         </tbody>
       </table>
@@ -1161,9 +1241,9 @@ function PsychSheet({ data, isZh, eventId, onChangeEvent, pbMap, onClickCuber }:
   const rosterRows = useMemo(() => {
     if (eventId) return [];
     const all = Object.values(data.users);
-    all.sort((a, b) => displayCuberName(a.name, isZh).localeCompare(displayCuberName(b.name, isZh)));
+    all.sort((a, b) => a.number - b.number);
     return all;
-  }, [data, eventId, isZh]);
+  }, [data, eventId]);
 
   return (
     <>

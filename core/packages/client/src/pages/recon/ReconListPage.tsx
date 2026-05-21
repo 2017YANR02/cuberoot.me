@@ -616,12 +616,12 @@ export default function ReconListPage() {
       case 'rawTime':
         // NOTE: Single 列——优先 value 字段（含 DNF/(5.09) 括号格式），缺失时回退到 rawTime 格式化
         return (
-          <>
+          <span className="record-num-cell">
             {solve.value || formatTime(solve.rawTime)}
             {solve.regionalSingleRecord && (
-              <> <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} /></>
+              <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
             )}
-          </>
+          </span>
         );
       case 'person': {
         // NOTE: CSS 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
@@ -695,10 +695,10 @@ export default function ReconListPage() {
       case 'average': {
         const dim = !roundFirstIds.has(solve.id) ? ' recon-cell-dim' : '';
         return (
-          <span className={`recon-cell${dim}`}>
+          <span className={`record-num-cell${dim}`}>
             {formatAvg(solve.average)}
             {solve.regionalAverageRecord && (
-              <> <RecordBadge record={solve.regionalAverageRecord} variant="inline" iso2={solve.personCountry} /></>
+              <RecordBadge record={solve.regionalAverageRecord} variant="inline" iso2={solve.personCountry} />
             )}
           </span>
         );
@@ -706,10 +706,10 @@ export default function ReconListPage() {
       case 'aoType': {
         const dim = !roundFirstIds.has(solve.id) ? ' recon-cell-dim' : '';
         return (
-          <span className={`recon-cell${dim}`}>
+          <span className={`record-num-cell${dim}`}>
             {formatAoXR(solve.aoType)}
             {solve.regionalAoxrRecord && (
-              <> <RecordBadge record={solve.regionalAoxrRecord} variant="inline" iso2={solve.personCountry} /></>
+              <RecordBadge record={solve.regionalAoxrRecord} variant="inline" iso2={solve.personCountry} />
             )}
           </span>
         );
