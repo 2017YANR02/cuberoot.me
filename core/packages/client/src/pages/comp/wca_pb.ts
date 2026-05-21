@@ -10,6 +10,8 @@ export interface PbEntry {
   world_rank: number;
   continental_rank: number;
   national_rank: number;
+  // wca_db 路径塞的:best 那条 result 的区域纪录 marker (WR/AsR/NR/...);REST 路径无此字段.
+  recordTag?: string;
 }
 
 export interface PbByEvent {

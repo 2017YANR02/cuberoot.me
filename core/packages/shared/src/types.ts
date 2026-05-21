@@ -96,6 +96,16 @@ export interface WcaUserTimes {
   country: string;
 }
 
+/** /comp 页 Psych Sheet 用:每选手每项目本比赛前累积 PB(centiseconds) + best 那条 result 的
+ *  区域纪录 marker.server (wca_db 路径) 预算,client 直接消费,避免逐选手并发 fetch WCA REST 触发 429. */
+export interface CompPersonalRecordSlot {
+  single?: number;
+  average?: number;
+  /** best 那条 result 的 regional record tag (WR/AsR/NR/...);仅非空非 'PR' 时填. */
+  singleTag?: string;
+  averageTag?: string;
+}
+
 // ── Recon 复盘模块类型 ──
 
 /**

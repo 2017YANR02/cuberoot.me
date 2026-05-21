@@ -11,6 +11,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
+import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
 import { enrichComp, type CompRecordsSnapshot } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
@@ -88,9 +89,9 @@ interface CompData {
   resultsByRound: Record<string, LiveResult[]>; // key = "<event>:<round>"
   membersByFilter: MembersByFilter; // 哪些 user number 属于 females / children / newcomers
   fetchedAt: number;
-  /** wca_db 路径预填:每选手在本比赛之前的累积 PB(centiseconds),供 Psych Sheet 排序用.
-   *  避免 client 直连 WCA API 触发 429.形态: wcaid → eventId → { single?, average? } */
-  personalRecords?: Record<string, Record<string, { single?: number; average?: number }>>;
+  /** wca_db 路径预填:形态 wcaid → eventId → CompPersonalRecordSlot.
+   *  避免 client 直连 WCA API 触发 429. */
+  personalRecords?: Record<string, Record<string, CompPersonalRecordSlot>>;
   /** cubing / wca_live 路径预填:WR/CR/NR 快照(仅本场涉及国家/洲),
    *  client 拿去给 WS 实时推送的成绩做同样的 tag 推断. */
   currentRecords?: CompRecordsSnapshot;
@@ -668,7 +669,7 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
   //   rank = (历史已见过的、严格小于本值的 distinct 值数) + 1
   //   旧成绩 rank 在它发生那一刻冻结(本算法只 prepend 历史 + 累积本场,符合时间序冻结语义).
   // personalRecords 仍预填 (slot.single/average = 该选手该项目的历史最快值),供 Psych Sheet 排序.
-  const personalRecords: Record<string, Record<string, { single?: number; average?: number }>> = {};
+  const personalRecords: Record<string, Record<string, CompPersonalRecordSlot>> = {};
   const compDate = rows[0].comp_date;
   const wcaIdsInComp = [...numByWcaId.keys()];
   const eventIdsInComp = [...eventMap.keys()];
@@ -702,6 +703,34 @@ async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise
       const slot = (perEvent[eventId] ||= {});
       if (isAvgStr === '1') slot.average = best;
       else slot.single = best;
+    }
+    // best 那条 result 的 record_tag (区域纪录 marker).DISTINCT ON 按 (wca_id,event_id,is_avg)
+    // 取 value 升序第一条;同值多条按 record_tag 优先级 (WR > 大洲 > NR > PR/空) 排.
+    // 'PR' / '' 跳过 — PR 在 Psych Sheet 是冗余 (每条都是 PR),仅区域纪录有信息量.
+    const tagRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; record_tag: string }>(
+      `SELECT DISTINCT ON (wca_id, event_id, is_avg)
+         wca_id, event_id, is_avg, record_tag
+       FROM wca_results_top
+       WHERE wca_id IN (${idQs})
+         AND event_id IN (${evQs})
+         AND comp_date < ?
+         AND value > 0
+       ORDER BY wca_id, event_id, is_avg, value ASC,
+         CASE record_tag
+           WHEN 'WR' THEN 1
+           WHEN 'AsR' THEN 2 WHEN 'OcR' THEN 2 WHEN 'AfR' THEN 2
+           WHEN 'NAR' THEN 2 WHEN 'SAR' THEN 2 WHEN 'CR' THEN 2
+           WHEN 'NR' THEN 3
+           ELSE 4
+         END ASC`,
+      [...wcaIdsInComp, ...eventIdsInComp, compDate],
+    );
+    for (const tr of tagRows) {
+      if (!tr.record_tag || tr.record_tag === 'PR') continue;
+      const perEvent = (personalRecords[tr.wca_id] ||= {});
+      const slot = (perEvent[tr.event_id] ||= {});
+      if (tr.is_avg) slot.averageTag = tr.record_tag;
+      else slot.singleTag = tr.record_tag;
     }
     // 按 (wca_id, event_id) 分组本比赛 results,按 round 升序处理
     const groups = new Map<string, LiveResult[]>();
