@@ -132,12 +132,24 @@ WcaStatsPage.tsx (React 通用渲染器)
 | `core/packages/client/src/pages/calc/components/EventSelector.tsx` | CalcPage 的项目选择器（与 calc_store 耦合，**不能直接 import**，但 JSX 结构可参考） |
 | `core/packages/client/src/pages/calc/calc.css` L115-165 | `.event-btn` + `.cubing-icon` 样式（浅色主题，注意 stats 页面是深色！） |
 
-### 外部依赖（已在 index.html 中加载，无需额外引入）
+### 图标渲染（无外部依赖）
 
-```html
-<!-- cubing-icons 字体图标 CDN — 提供 .cubing-icon.event-333 等 class -->
-<link rel="stylesheet" href="https://cdn.cubing.net/v0/css/@cubing/icons/css" />
+项目图标已迁出 cubing-icons 字体,改用内联 SVG。SVG 源在 `components/EventIcon/svg/{event,unofficial,penalty}/`(来自 `github.com/cubing/icons`)。
+
+```tsx
+import { EventIcon, CubingIcon } from '../../components/EventIcon/EventIcon';
+
+// 已有 event id(归一化):
+<EventIcon event="3x3" />        // 等价 event="333";内部 toWcaEventId 归一
+<EventIcon event="333oh" className="my-class" title="3x3 OH" />
+
+// 已知 cubing-icons class key(直接渲染 SVG):
+<CubingIcon icon="event-333" />
+<CubingIcon icon="unofficial-fto" />
+<CubingIcon icon="penalty-A6c" />
 ```
+
+CSS 控大小用 `font-size`(SVG 走 1em),颜色用 `color`(SVG `fill: currentColor`)。所有现存 `.cubing-icon { font-size; color }` 规则零改动继续生效。
 
 ## 三、核心数据结构
 
@@ -339,8 +351,8 @@ JSON 结构：`data.metricPanels: MetricPanel[]`，每个 MetricPanel 内有 `pa
 
 ## 七、关键注意事项
 
-1. **cubing-icons 字体已全局加载**：`<span className="cubing-icon event-333" />` 即可显示图标，无需引入额外 CSS
-2. **Tailwind `::before` 冲突**：如果 cubing-icon 图标不显示，需要在 CSS 中添加 `.cubing-icon::before { content: revert; --tw-content: revert; }`（参考 `calc.css` L20）
+1. **图标用内联 SVG，不再是字体**：`<EventIcon event="333" />` 或 `<CubingIcon icon="event-333" />`。**禁** `<span className="cubing-icon event-333" />`(原 font glyph 渲染机制已撤除,这种写法只会画空 span)。
+2. **加新 unofficial 图标**：先确认 SVG 在 `components/EventIcon/svg/unofficial/<name>.svg`(从 `D:\cube\icons\src\svg\unofficial\` 拷),再在 `utils/cubingScramble.ts` 的 `TWIZZLE_NONWCA_APPEND` 加 `{ id, iconClass: 'unofficial-<name>' }` 映射。
 3. **section title 匹配**：JSON 中 section 的 `title` 字段是英文全名（如 `"Rubik's Cube"`），用 `EVENT_NAME_TO_ID[title]` 映射；`titleZh` 是中文名
 4. **metricPanels 的 disabled 联动**：这是最复杂的部分——当用户选择 777 时，BAo5/WAo5 等 Ao5 专属 metric 没有数据（因为 777 是 Mo3），需要灰掉对应的 metric 按钮
 

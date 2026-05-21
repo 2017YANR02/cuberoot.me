@@ -1514,11 +1514,6 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
             ))
           )}
         </div>
-        <footer className="comp-modal-footer">
-          <button type="button" className="comp-modal-close-btn" onClick={onClose}>
-            {isZh ? '关闭' : 'Close'}
-          </button>
-        </footer>
       </div>
     </div>
   );
@@ -1635,9 +1630,6 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
         <footer className="comp-modal-footer comp-round-modal-footer">
           <button type="button" className="comp-modal-close-btn" onClick={onShowAll}>
             {isZh ? '所有' : 'All'}
-          </button>
-          <button type="button" className="comp-modal-close-btn" onClick={onClose}>
-            {isZh ? '关闭' : 'Close'}
           </button>
         </footer>
       </div>
