@@ -6,8 +6,8 @@
 //   (WCA dump 不存 round-level 日期,只有比赛起止)
 // - 输出 panels: [ranking, history]
 //     ranking — 每人每 (event, type) 只保留最快一条,按速度升序
-//     history — "全世界最快生日 PR"的沿革:对每个 (event, type),按时间正序过滤
-//               出 running min,即每次刷新历史最快生日 PR 的时刻(reverse 后新→旧)
+//     history — "全世界最快日期匹配 PR" 的沿革:对每个 (event, type),按时间正序过滤
+//               出 running min,即每次刷新历史最快日期匹配 PR 的时刻(reverse 后新→旧)
 //               跟 wr_bpa 等 RoundMetric 的 history 同语义
 // - sections title = "EventName - Single/Average" → WcaStatsPage 自动启用项目选择器
 //   + 单次/平均 pill bar(EVENT_NAME_TO_ID 反查 + ' - ' 后缀检测)
@@ -26,13 +26,13 @@ const TIME_EVENT_IDS = [
 ];
 const TIME_EVENT_SET = new Set(TIME_EVENT_IDS);
 
-export class BirthdayPbs extends Statistic {
+export class DateMatchPr extends Statistic {
   constructor() {
     super();
-    this.title = 'Personal records where the time equals the date';
-    this.titleZh = '个人纪录成绩等于当日日期';
-    this.note = 'PRs where the result (formatted as M.DD seconds) matches the competition day (month M, day DD). Ranking shows each person\'s fastest birthday-PR per event and metric. History shows the running-best progression: each new fastest birthday-PR ever achieved worldwide.';
-    this.noteZh = '历史上所有 PR 中,成绩格式化为 M.DD 秒时,恰好等于比赛当天的"M月DD日"。排名 = 每人每项目每类型只保留最快一条。历史 = 历史上"全世界最快生日 PR"被一步步刷新的沿革。';
+    this.title = 'PRs where the time equals the date';
+    this.titleZh = '日期匹配 PR';
+    this.note = 'PRs where the result (formatted as M.DD seconds) matches the competition day (month M, day DD). Ranking shows each person\'s fastest date-match PR per event and metric. History shows the running-best progression: each new fastest date-match PR ever achieved worldwide.';
+    this.noteZh = '历史上所有 PR 中,成绩格式化为 M.DD 秒时,恰好等于比赛当天的"M月DD日"。排名 = 每人每项目每类型只保留最快一条。历史 = 历史上"全世界最快日期匹配 PR"被一步步刷新的沿革。';
   }
 
   // NOTE: 复合查询用 toJson 覆写,query() 不用
@@ -131,7 +131,7 @@ export class BirthdayPbs extends Statistic {
         });
     };
 
-    // NOTE: History 视图 — "全世界最快生日 PR" 沿革
+    // NOTE: History 视图 — "全世界最快日期匹配 PR" 沿革
     // filterWrHistory 按日期正序扫描,保留每次 metric 创历史新低的记录
     // 每行带 Improvement(对上次的提升 %)+ Days(距下次刷新天数,最新一条用 today)
     // reverse 后展示顺序新→旧(对齐 wr_bpa 等 RoundMetric history)

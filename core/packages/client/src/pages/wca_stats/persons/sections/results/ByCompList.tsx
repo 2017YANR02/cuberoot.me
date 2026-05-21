@@ -4,12 +4,13 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
+import { InfoTooltip } from '../../../../../components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
 import { EventIcon } from '../../../../../components/EventIcon';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { compLinkProps } from '../../../../../utils/comp_link';
 import { RecordBadge } from '../../../../../components/RecordBadge';
-import { computeProgress } from '../../logic/progress';
+import { computePrRank } from '../../logic/progress';
 import type { WcaResultRow, WcaCompetition } from '../../wca_api';
 
 interface Props {
@@ -26,6 +27,18 @@ const ROUND_ORDER: Record<string, number> = {
   '1': 5, 'd': 5,// first / combined-first
   'h': 6,
 };
+
+// 表头 round 列 tooltip 文本 (中英),解释 R1/R2/R3/Fi/C-*/h 等缩写
+const ROUND_HINT_ZH = `轮次缩写:
+R1 / R2 / R3 — 初赛 / 复赛 / 半决赛 (打满 5 把)
+Fi — 决赛
+C- 前缀 (组合赛制) — 带 cutoff,前几把过线才能继续打完整 Ao5
+h — head-to-head 1v1 淘汰 (非 WCA 项目)`;
+const ROUND_HINT_EN = `Round abbreviations:
+R1 / R2 / R3 — First / Second / Third Round (full attempts)
+Fi — Final
+C- prefix (Combined) — cutoff format; must beat cutoff in first attempts to continue full Ao5
+h — Head-to-head (1v1 elimination, non-WCA)`;
 
 function roundLabel(rt: string, _isZh: boolean): string {
   // 用 Fi / R3 / R2 / R1 缩写,中英文一致
@@ -49,8 +62,8 @@ function roundClass(rt: string): string {
 export default function ByCompList({ results, comps, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const progress = useMemo(() =>
-    results && comps ? computeProgress(results, comps) : new Map(),
+  const prRank = useMemo(() =>
+    results && comps ? computePrRank(results, comps) : new Map(),
     [results, comps],
   );
 
@@ -98,7 +111,12 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                 <thead>
                   <tr>
                     <th>{t('项目', 'Event')}</th>
-                    <th>{t('轮次', 'Round')}</th>
+                    <th>
+                      <span className="wp-th-info">
+                        {t('轮次', 'Round')}
+                        <InfoTooltip content={t(ROUND_HINT_ZH, ROUND_HINT_EN)} />
+                      </span>
+                    </th>
                     <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
                     <th>{t('单次', 'Single')}</th>
                     <th>{t('平均', 'Avg')}</th>
@@ -107,7 +125,9 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                 </thead>
                 <tbody>
                   {rows.map((r) => {
-                    const pf = progress.get(r.id);
+                    const rank = prRank.get(r.id);
+                    const singleRank = rank?.singleRank ?? null;
+                    const averageRank = rank?.averageRank ?? null;
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
                     return (
@@ -131,7 +151,9 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                             {formatWcaResult(r.best, r.event_id, 'single')}
                             {r.regional_single_record
                               ? <RecordBadge record={r.regional_single_record} variant="inline" />
-                              : pf?.bestIsPb && <RecordBadge record="PR" variant="inline" />}
+                              : singleRank
+                                ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
+                                : null}
                           </span>
                         </td>
                         <td className="wp-cell-result">
@@ -139,7 +161,9 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                             {formatWcaResult(r.average, r.event_id, 'average')}
                             {r.regional_average_record
                               ? <RecordBadge record={r.regional_average_record} variant="inline" />
-                              : pf?.averageIsPb && <RecordBadge record="PR" variant="inline" />}
+                              : averageRank
+                                ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
+                                : null}
                           </span>
                         </td>
                         <td className="wp-cell-attempts">
@@ -170,8 +194,8 @@ function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: n
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         return (
-          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''}`}>
-            {isBracketed(attempts, i) ? `(${formatted})` : formatted}
+          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isBracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
+            {formatted}
           </span>
         );
       })}

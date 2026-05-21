@@ -173,7 +173,7 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     const yPx = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * plotH;
 
     // Grid
-    ctx.strokeStyle = 'rgba(255,235,220,0.06)';
+    ctx.strokeStyle = 'rgba(255, 255, 255,0.06)';
     ctx.lineWidth = 1;
     const yStep = yRange > 60 ? 20 : yRange > 20 ? 10 : yRange > 8 ? 2 : yRange > 3 ? 1 : 0.5;
     ctx.fillStyle = 'rgba(240,235,227,0.45)';
@@ -310,7 +310,7 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
         }}
       />
       <div ref={tipRef} className="wr-chart-tooltip" style={{
-        position: 'absolute', background: 'rgba(28,25,23,0.92)', color: '#f0ebe3',
+        position: 'absolute', background: 'rgba(28,25,23,0.92)', color: '#ededed',
         padding: '4px 8px', borderRadius: 4, fontSize: 11, pointerEvents: 'none',
         display: 'none', whiteSpace: 'nowrap', zIndex: 10,
       }} />

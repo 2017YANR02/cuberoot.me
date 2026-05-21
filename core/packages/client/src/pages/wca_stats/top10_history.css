@@ -2,10 +2,10 @@
 .t10h-page {
   /* 视觉硬码 dark,锁 dark token */
   color-scheme: dark;
-  --background: #1c1917;
-  --foreground: #f0ebe3;
-  --muted-foreground: #9c8c7e;
-  --faint-foreground: #7A736A;
+  --background: #171717;
+  --foreground: #ededed;
+  --muted-foreground: #a3a3a3;
+  --faint-foreground: #737373;
 
   max-width: 1280px;
   margin: 0 auto;

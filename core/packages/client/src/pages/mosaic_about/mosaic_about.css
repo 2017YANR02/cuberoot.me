@@ -1,11 +1,11 @@
 /* /mosaic-about */
 .moa-page {
-  --moa-bg: #FAF9F5;
+  --moa-bg: #fafafa;
   --moa-surface: #FFFFFF;
-  --moa-text: #181716;
-  --moa-text-sub: #6F6E6B;
+  --moa-text: #171717;
+  --moa-text-sub: #737373;
   --moa-text-mute: #95938E;
-  --moa-border: #E5E4DF;
+  --moa-border: #e5e5e5;
   --moa-accent: #C026D3;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

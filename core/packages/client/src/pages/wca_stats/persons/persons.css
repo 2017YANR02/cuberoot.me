@@ -1,17 +1,17 @@
 /* ──────────────────────────────────────────────────────────────────────────
  *  /wca/persons/:wcaId  —  选手详情页
- *  设计令牌沿用 /wb 系列的 light theme.
+ *  双主题:base = light,@media + [data-theme=dark] 翻 dark
  *  类名前缀 wp- = "wca persons"(避免与全局 .wca-* 冲突).
  * ────────────────────────────────────────────────────────────────────────── */
 
 .wp-page {
-    --wp-bg: #FAF9F5;
+    --wp-bg: #fafafa;
     --wp-surface: #FFFFFF;
-    --wp-text: #181716;
-    --wp-text-sub: #6F6E6B;
+    --wp-text: #171717;
+    --wp-text-sub: #737373;
     --wp-text-mute: #95938E;
-    --wp-border: #E5E4DF;
-    --wp-border-strong: #CCCAC2;
+    --wp-border: #e5e5e5;
+    --wp-border-strong: #d4d4d4;
     --wp-accent: #C15F3C;
     --wp-accent-soft: rgba(193, 95, 60, 0.08);
     --wp-blue: #2A6BB0;
@@ -34,6 +34,32 @@
     min-height: 100dvh;
 }
 
+/* ── Dark 反盖:只翻中性 token,品牌 accent 沿用 light 值 ─────────────────
+   THEMING.md 双轨规约:@media (跟系统) + [data-theme=dark] (显式切),
+   :where() 会让 specificity=0,不要包。 */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .wp-page {
+        --wp-bg: #171717;
+        --wp-surface: #1f1f1f;
+        --wp-text: #ededed;
+        --wp-text-sub: #a3a3a3;
+        --wp-text-mute: #737373;
+        --wp-border: rgba(255, 255, 255, 0.1);
+        --wp-border-strong: rgba(255, 255, 255, 0.2);
+        --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+html[data-theme=dark] .wp-page {
+    --wp-bg: #171717;
+    --wp-surface: #1f1f1f;
+    --wp-text: #ededed;
+    --wp-text-sub: #a3a3a3;
+    --wp-text-mute: #737373;
+    --wp-border: rgba(255, 255, 255, 0.1);
+    --wp-border-strong: rgba(255, 255, 255, 0.2);
+    --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
 /* ── Header / Loading ────────────────────────────────────────────────── */
 .wp-header {
     display: flex;
@@ -41,7 +67,7 @@
     gap: 12px;
     padding: 14px 24px;
     border-bottom: 1px solid var(--wp-border);
-    background: rgba(255, 255, 255, 0.85);
+    background: color-mix(in srgb, var(--wp-surface) 85%, transparent);
     backdrop-filter: blur(8px);
     position: sticky; top: 0; z-index: 10;
 }
@@ -152,13 +178,10 @@
     color: var(--wp-text);
     font-variant-numeric: tabular-nums;
 }
-/* Claude.ai 标题用的是付费 Copernicus,取项目已加载的 Fraunces 作免费近似(opsz 变重轴) */
 .wp-hero-id {
-    font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1rem;
     font-weight: 500;
     letter-spacing: 0.01em;
-    font-variation-settings: 'opsz' 144;
 }
 .wp-hero-id-link { display: inline-flex; }
 .wp-hero-id-favicon { display: inline-block; vertical-align: middle; }
@@ -249,7 +272,7 @@
 .wp-pr-table tbody tr:last-child th,
 .wp-pr-table tbody tr:last-child td { border-bottom: none; }
 .wp-pr-table tbody tr:hover td,
-.wp-pr-table tbody tr:hover th { background: rgba(0,0,0,0.02); }
+.wp-pr-table tbody tr:hover th { background: color-mix(in srgb, var(--wp-text) 4%, transparent); }
 
 .wp-cell-event {
     text-align: left !important;
@@ -476,7 +499,22 @@
     gap: 4px 12px;
     justify-content: start;
 }
+/* 每个 .wp-att 都用 ::before/::after 预留括号宽度,opacity:0 不显示;
+   .wp-att-trimmed 时翻 1 显出来。这样所有格子有等宽的括号占位,
+   小数点跨行对齐;复制时伪元素内容不进剪贴板,粘出来是干净数字。
+   参考 WCA 官网 wca.scss: &.solve { &::before/::after / &.trimmed }. */
+/* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
+.wp-th-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
 .wp-att { text-align: right; }
+.wp-att::before { content: "("; opacity: 0; }
+.wp-att::after  { content: ")"; opacity: 0; }
+.wp-att-trimmed::before,
+.wp-att-trimmed::after { opacity: 1; }
 .wp-att-best { color: var(--wp-text); font-weight: 600; }
 /* 区域记录徽章统一走 RecordBadge / record_badge.css,本页不再覆写 */
 
@@ -509,7 +547,7 @@
 }
 .wp-comps-table tbody tr:hover td,
 .wp-event-stats-table tbody tr:hover td,
-.wp-lit-table tbody tr:hover td { background: rgba(0,0,0,0.015); }
+.wp-lit-table tbody tr:hover td { background: color-mix(in srgb, var(--wp-text) 3%, transparent); }
 .wp-th-narrow { width: 50px; text-align: center !important; }
 .wp-th-sortable { cursor: pointer; user-select: none; }
 .wp-th-sortable:hover { color: var(--wp-text); }

@@ -116,7 +116,7 @@ export default function DrillModal({
     width: '100%',
     boxSizing: 'border-box',
     background: '#1a1a1d',
-    color: '#f0ebe3',
+    color: '#ededed',
     border: '1px solid #444',
     borderRadius: 6,
     padding: isMobile ? '10px 12px' : '6px 10px',

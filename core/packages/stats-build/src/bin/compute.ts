@@ -112,7 +112,7 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   // NOTE: 阶段 E — bar chart race 风格的 top-10 历史演化
   'top10_history': () => import('../statistics/top10_history.js'),
   // NOTE: 趣味:历史 PR 中成绩 M.DD 等于比赛日期 M月DD日
-  'birthday_pbs': () => import('../statistics/birthday_pbs.js'),
+  'date_match_pr': () => import('../statistics/date_match_pr.js'),
 };
 
 async function main() {

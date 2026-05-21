@@ -40,7 +40,7 @@ const STAT_CATEGORIES = [
     iconName: 'BarChart3',
     ids: ['best_potential_fmc_mean', 'best_round', 'most_frequent_results',
           'moving_average', 'smallest_diff_between_single_and_average', 'yearly_rankings',
-          'birthday_pbs'],
+          'date_match_pr'],
   },
   {
     nameEn: 'Podiums & Honors', nameZh: '领奖台与荣誉',
@@ -139,7 +139,7 @@ const TITLE_ZH_OVERRIDES: Record<string, string> = {
   world_championship_records: '世锦赛纪录',
   world_records_by_country: '各国世界纪录数',
   world_records_by_person: '选手世界纪录数',
-  birthday_pbs: '个人纪录成绩等于当日日期',
+  date_match_pr: '日期匹配 PR',
 };
 
 // NOTE: 数字填充排序——确保 "Ao5" 排在 "Ao12" 前面

@@ -1,11 +1,11 @@
 /* /recon-about */
 .rca-page {
-  --rca-bg: #FAF9F5;
+  --rca-bg: #fafafa;
   --rca-surface: #FFFFFF;
-  --rca-text: #181716;
-  --rca-text-sub: #6F6E6B;
+  --rca-text: #171717;
+  --rca-text-sub: #737373;
   --rca-text-mute: #95938E;
-  --rca-border: #E5E4DF;
+  --rca-border: #e5e5e5;
   --rca-accent: #D97757;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

@@ -3,12 +3,12 @@
  * ========================================================================== */
 
 .scramble-stats-page {
-  --bg:            #FAF9F5;
+  --bg:            #fafafa;
   --surface:       #FFFFFF;
-  --text:          #181716;
-  --text-sub:      #6F6E6B;
-  --border:        #E5E4DF;
-  --border-strong: #CCCAC2;
+  --text:          #171717;
+  --text-sub:      #737373;
+  --border:        #e5e5e5;
+  --border-strong: #d4d4d4;
   --accent:        #C15F3C;
   --accent-soft:   rgba(193, 95, 60, 0.08);
 
@@ -447,10 +447,10 @@
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) .scramble-stats-page {
-    --bg: #1c1917;
-    --surface: #232020;
-    --text: #f0ebe3;
-    --text-sub: #9c8c7e;
+    --bg: #171717;
+    --surface: #1f1f1f;
+    --text: #ededed;
+    --text-sub: #a3a3a3;
     --border: rgba(240, 235, 227, 0.1);
     --border-strong: rgba(240, 235, 227, 0.2);
     --accent: #d97757;
@@ -458,10 +458,10 @@
   }
 }
 html[data-theme=dark] .scramble-stats-page {
-  --bg: #1c1917;
-  --surface: #232020;
-  --text: #f0ebe3;
-  --text-sub: #9c8c7e;
+  --bg: #171717;
+  --surface: #1f1f1f;
+  --text: #ededed;
+  --text-sub: #a3a3a3;
   --border: rgba(240, 235, 227, 0.1);
   --border-strong: rgba(240, 235, 227, 0.2);
   --accent: #d97757;

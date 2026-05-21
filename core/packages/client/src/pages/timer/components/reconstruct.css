@@ -53,7 +53,7 @@
 .reconstruct-stat-num {
   font-family: 'JetBrains Mono', monospace;
   font-size: 22px;
-  color: #f0ebe3;
+  color: #ededed;
   line-height: 1.2;
 }
 .reconstruct-stat-label {
@@ -147,7 +147,7 @@
   text-align: right;
 }
 .reconstruct-move-token {
-  color: #f0ebe3;
+  color: #ededed;
   font-weight: bold;
 }
 .reconstruct-move-ts,
@@ -231,7 +231,7 @@
 .reconstruct-stage-time {
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  color: #f0ebe3;
+  color: #ededed;
   margin-top: 2px;
 }
 .reconstruct-stage-tps {
@@ -271,7 +271,7 @@
 }
 .reconstruct-playback-toggle:hover {
   background: #1a1a1d;
-  color: #f0ebe3;
+  color: #ededed;
 }
 
 .reconstruct-playback {
@@ -319,7 +319,7 @@
 }
 .reconstruct-playback-buttons button:hover:not(:disabled) {
   background: #24242a;
-  color: #f0ebe3;
+  color: #ededed;
 }
 .reconstruct-playback-buttons button:disabled {
   opacity: 0.4;

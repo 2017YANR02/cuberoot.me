@@ -87,7 +87,7 @@ export default function CompIndexPage() {
   return (
     <div className="comp-index-page">
       <div className="comp-top-bar">
-        <LangToggle variant="fixed" />
+        <LangToggle />
         <ThemeToggle />
       </div>
 

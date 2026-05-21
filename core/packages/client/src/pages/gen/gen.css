@@ -21,13 +21,13 @@
 
 
 .gen-page {
-    --gen-bg: #FAF9F5;
+    --gen-bg: #fafafa;
     --gen-surface: #FFFFFF;
-    --gen-text: #181716;
-    --gen-text-sub: #6F6E6B;
+    --gen-text: #171717;
+    --gen-text-sub: #737373;
     --gen-text-mute: #95938E;
-    --gen-border: #E5E4DF;
-    --gen-border-strong: #CCCAC2;
+    --gen-border: #e5e5e5;
+    --gen-border-strong: #d4d4d4;
     --gen-accent: #C15F3C;
     --gen-accent-soft: rgba(193, 95, 60, 0.08);
 
@@ -471,31 +471,19 @@
     background: var(--gen-accent-soft);
 }
 
-/* WcaEventSelector 默认深色主题(wca-stats),在 /scramble/gen 奶白底上去掉外框 */
+/* WcaEventSelector 在 /scramble/gen 奶白底上的主题:只调变量,active 绿色锁死不动 */
 .gen-page .wca-stats-event-selector {
-    background: transparent;
-    border-color: transparent;
-    padding: 0;
-    margin: 0 0 8px;
+    --evsel-bg: transparent;
+    --evsel-border: transparent;
+    --evsel-padding: 0;
+    --evsel-margin: 0 0 8px;
+    --evbtn-bg: transparent;
+    --evbtn-bg-hover: var(--gen-accent-soft);
+    --evbtn-border-hover: var(--gen-border);
+    --evbtn-icon: var(--gen-text-sub);
+    --evbtn-icon-hover: var(--gen-text);
     justify-content: center;
 }
-.gen-page .wca-stats-event-selector .event-btn {
-    background: transparent;
-    border-color: transparent;
-}
-.gen-page .wca-stats-event-selector .event-btn .cubing-icon { color: var(--gen-text-sub); }
-.gen-page .wca-stats-event-selector .event-btn:hover {
-    background: var(--gen-accent-soft);
-    border-color: var(--gen-border);
-}
-.gen-page .wca-stats-event-selector .event-btn:hover .cubing-icon { color: var(--gen-text); }
-/* 已选 / 当前查看 = 深橙 */
-.gen-page .wca-stats-event-selector .event-btn.active {
-    background: var(--gen-accent);
-    border-color: var(--gen-accent);
-}
-.gen-page .wca-stats-event-selector .event-btn.active .cubing-icon { color: #fff; }
-.gen-page .wca-stats-event-selector .event-btn.disabled { opacity: 0.3; }
 
 /* ───────── EventSelect on light theme ─────────
    The shared EventSelect component is styled for the dark-theme pages
@@ -1151,11 +1139,11 @@
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
     html:not([data-theme=light]) .gen-page {
-        --gen-bg: #1c1917;
-        --gen-surface: #232020;
-        --gen-text: #f0ebe3;
-        --gen-text-sub: #9c8c7e;
-        --gen-text-mute: #7A736A;
+        --gen-bg: #171717;
+        --gen-surface: #1f1f1f;
+        --gen-text: #ededed;
+        --gen-text-sub: #a3a3a3;
+        --gen-text-mute: #737373;
         --gen-border: rgba(240, 235, 227, 0.1);
         --gen-border-strong: rgba(240, 235, 227, 0.2);
         --gen-accent: #d97757;
@@ -1163,11 +1151,11 @@
     }
 }
 html[data-theme=dark] .gen-page {
-    --gen-bg: #1c1917;
-    --gen-surface: #232020;
-    --gen-text: #f0ebe3;
-    --gen-text-sub: #9c8c7e;
-    --gen-text-mute: #7A736A;
+    --gen-bg: #171717;
+    --gen-surface: #1f1f1f;
+    --gen-text: #ededed;
+    --gen-text-sub: #a3a3a3;
+    --gen-text-mute: #737373;
     --gen-border: rgba(240, 235, 227, 0.1);
     --gen-border-strong: rgba(240, 235, 227, 0.2);
     --gen-accent: #d97757;

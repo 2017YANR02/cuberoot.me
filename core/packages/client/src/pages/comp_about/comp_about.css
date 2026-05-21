@@ -1,11 +1,11 @@
 /* /wca/comp-about */
 .ca-page {
-  --ca-bg: #FAF9F5;
+  --ca-bg: #fafafa;
   --ca-surface: #FFFFFF;
-  --ca-text: #181716;
-  --ca-text-sub: #6F6E6B;
+  --ca-text: #171717;
+  --ca-text-sub: #737373;
   --ca-text-mute: #95938E;
-  --ca-border: #E5E4DF;
+  --ca-border: #e5e5e5;
   --ca-accent: #2563EB;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

@@ -3,13 +3,13 @@
  */
 
 .wcaa-page {
-    --wcaa-bg: #FAF9F5;
+    --wcaa-bg: #fafafa;
     --wcaa-surface: #FFFFFF;
-    --wcaa-text: #181716;
-    --wcaa-text-sub: #6F6E6B;
+    --wcaa-text: #171717;
+    --wcaa-text-sub: #737373;
     --wcaa-text-mute: #95938E;
-    --wcaa-border: #E5E4DF;
-    --wcaa-border-strong: #CCCAC2;
+    --wcaa-border: #e5e5e5;
+    --wcaa-border-strong: #d4d4d4;
     --wcaa-accent: #C15F3C;
     --wcaa-accent-soft: rgba(193, 95, 60, 0.08);
     --wcaa-blue: #2563EB;

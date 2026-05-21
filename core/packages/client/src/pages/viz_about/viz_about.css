@@ -1,11 +1,11 @@
 /* /wca/viz-about */
 .va-page {
-  --va-bg: #FAF9F5;
+  --va-bg: #fafafa;
   --va-surface: #FFFFFF;
-  --va-text: #181716;
-  --va-text-sub: #6F6E6B;
+  --va-text: #171717;
+  --va-text-sub: #737373;
   --va-text-mute: #95938E;
-  --va-border: #E5E4DF;
+  --va-border: #e5e5e5;
   --va-accent: #D97706;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

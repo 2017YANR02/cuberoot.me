@@ -1,11 +1,11 @@
 /* /wca/calendar-about */
 .cala-page {
-  --cala-bg: #FAF9F5;
+  --cala-bg: #fafafa;
   --cala-surface: #FFFFFF;
-  --cala-text: #181716;
-  --cala-text-sub: #6F6E6B;
+  --cala-text: #171717;
+  --cala-text-sub: #737373;
   --cala-text-mute: #95938E;
-  --cala-border: #E5E4DF;
+  --cala-border: #e5e5e5;
   --cala-accent: #0F766E;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

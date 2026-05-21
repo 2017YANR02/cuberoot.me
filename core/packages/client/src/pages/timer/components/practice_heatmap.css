@@ -25,7 +25,7 @@
 }
 
 .tc-heatmap-total {
-  color: #f0ebe3;
+  color: #ededed;
   font-size: 12px;
 }
 
@@ -70,7 +70,7 @@
 .tc-heatmap-year-btn:hover:not(:disabled) {
   background: #1f3a55;
   border-color: #5b9dd9;
-  color: #f0ebe3;
+  color: #ededed;
 }
 
 .tc-heatmap-year-btn:disabled {
@@ -79,7 +79,7 @@
 }
 
 .tc-heatmap-year-label {
-  color: #f0ebe3;
+  color: #ededed;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   min-width: 32px;
@@ -108,7 +108,7 @@
 }
 
 .tc-heatmap-month-hover:hover {
-  fill: #f0ebe3;
+  fill: #ededed;
 }
 
 .tc-heatmap-dow {
@@ -130,7 +130,7 @@
 }
 
 .tc-heatmap-cell:hover {
-  stroke: #f0ebe3;
+  stroke: #ededed;
 }
 
 .tc-heatmap-cell-out {

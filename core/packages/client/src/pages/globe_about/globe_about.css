@@ -1,11 +1,11 @@
 /* /wca/globe-about */
 .gla-page {
-  --gla-bg: #FAF9F5;
+  --gla-bg: #fafafa;
   --gla-surface: #FFFFFF;
-  --gla-text: #181716;
-  --gla-text-sub: #6F6E6B;
+  --gla-text: #171717;
+  --gla-text-sub: #737373;
   --gla-text-mute: #95938E;
-  --gla-border: #E5E4DF;
+  --gla-border: #e5e5e5;
   --gla-accent: #7C3AED;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
