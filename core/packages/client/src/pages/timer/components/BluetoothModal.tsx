@@ -8,31 +8,17 @@
  *    solved indicator) and a "reset state" + "disconnect" button.
  */
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { detectBluetoothEnv, envAdvice } from '../bluetooth';
 import type { BluetoothCubeHandle } from '../bluetooth';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   isZh: boolean;
   cube: BluetoothCubeHandle;
   onClose: () => void;
   onConnect: () => Promise<void>;
-}
-
-/** True iff viewport ≤ 480px. Drives the mobile layout overrides below. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
 }
 
 const SUPPORTED_CUBES_ZH = [
@@ -55,7 +41,7 @@ const SUPPORTED_CUBES_EN = [
 export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

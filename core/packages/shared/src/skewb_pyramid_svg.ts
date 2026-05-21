@@ -102,61 +102,189 @@ function fmt(n: number): string {
 }
 
 /**
- * WCA Regulations #12h skewb state engine. image[face][sticker] indexing matches
- * tnoodle's SkewbState (URFDLB face order, 0=center, 1=TL, 2=TR, 3=BL, 4=BR
- * per face's local frame), but the move semantics use WCA-corner naming.
+ * Skewb state engine — 8 corner-turns + 3 whole-cube rotations.
+ *
+ * Move semantics: each corner X (one of the 8 cube corners) names a 120° CW
+ * rotation (viewed from outside X) of the half-cube containing X. The 4 corners
+ * in the half + 3 face-centers adjacent to X cycle; the opposite half stays put.
+ *
+ * WCA Regulations #12h covers 4 of the 8 corners (R=DRB, U=ULB, L=DLF, B=DLB);
+ * cubing.js's skewb notation mapper additionally defines F=UFR, D=DFR. The other
+ * two corners (ULF, URB) aren't reachable by a single letter and are expressed
+ * via conjugates (y'-F-y for ULF, y-F-y' for URB) — see Sarah-notation translator.
+ *
+ * image[face][sticker] indexing matches tnoodle's SkewbState (URFDLB face order,
+ * 0=center, 1-4=corners in face-local TL/TR/BL/BR positions).
+ *
+ * Implementation: rotation matrices for all 8 corners (precomputed) drive a
+ * generic permutation: face-normals and corner-positions are mapped through R,
+ * stickers reseated accordingly. Whole-cube x/y/z rotations follow the same
+ * permutation kernel but apply to all 8 corners + 6 centers.
  */
+
+type Vec3 = readonly [number, number, number];
+type Mat3 = ReadonlyArray<ReadonlyArray<number>>;
+
+// 6 face normals (URFDLB face order, axis-aligned unit vectors).
+const FACE_NORMALS: ReadonlyArray<Vec3> = [
+  [0, 1, 0],   // 0: U
+  [1, 0, 0],   // 1: R
+  [0, 0, 1],   // 2: F
+  [0, -1, 0],  // 3: D
+  [-1, 0, 0],  // 4: L
+  [0, 0, -1],  // 5: B
+];
+
+// 8 corner positions in cube vertex coords (±1, ±1, ±1).
+const CORNERS: ReadonlyArray<Vec3> = [
+  [-1, 1, 1],   // 0: ULF
+  [1, 1, 1],    // 1: URF (= Sarah F)
+  [1, 1, -1],   // 2: URB
+  [-1, 1, -1],  // 3: ULB (= WCA U)
+  [-1, -1, 1],  // 4: DLF (= WCA L)
+  [1, -1, 1],   // 5: DRF (= cubing.js D)
+  [1, -1, -1],  // 6: DRB (= WCA R)
+  [-1, -1, -1], // 7: DLB (= WCA B)
+];
+
+/** "CW from outside corner" 120° rotation matrices, one per corner. Hand-derived
+ *  to match the WCA convention for the 4 named corners (R/U/L/B) and cubing.js's
+ *  skewb mapper for F/D, then carried through to the remaining ULF/URB via the
+ *  same construction (xyz=+1 corners use Pattern A, xyz=-1 corners use A^T). */
+const CORNER_TURN_MATS: ReadonlyArray<Mat3> = [
+  // 0 ULF (xyz=-1)
+  [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],
+  // 1 URF (xyz=+1, Sarah F)
+  [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+  // 2 URB (xyz=-1, Sarah R)
+  [[0, 0, -1], [1, 0, 0], [0, -1, 0]],
+  // 3 ULB (xyz=+1, WCA U)
+  [[0, -1, 0], [0, 0, -1], [1, 0, 0]],
+  // 4 DLF (xyz=+1, WCA L)
+  [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],
+  // 5 DRF (xyz=-1, cubing.js D / Sarah d|f)
+  [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
+  // 6 DRB (xyz=+1, WCA R)
+  [[0, -1, 0], [0, 0, 1], [-1, 0, 0]],
+  // 7 DLB (xyz=-1, WCA B)
+  [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+];
+
+/** [face][cornerIdx] → sticker idx (1-4), or -1 if corner is not on that face.
+ *  Encodes the face-local TL/TR/BL/BR layout (matches tnoodle's SkewbState). */
+const FACE_CORNER_STICKER: ReadonlyArray<ReadonlyArray<number>> = [
+  // 0 U: 1=ULB(3), 2=URB(2), 3=ULF(0), 4=URF(1)
+  [3, 4, 2, 1, -1, -1, -1, -1],
+  // 1 R: 1=URF(1), 2=URB(2), 3=DRF(5), 4=DRB(6)
+  [-1, 1, 2, -1, -1, 3, 4, -1],
+  // 2 F: 1=ULF(0), 2=URF(1), 3=DLF(4), 4=DRF(5)
+  [1, 2, -1, -1, 3, 4, -1, -1],
+  // 3 D: 1=DLF(4), 2=DRF(5), 3=DLB(7), 4=DRB(6)
+  [-1, -1, -1, -1, 1, 2, 4, 3],
+  // 4 L: 1=ULB(3), 2=ULF(0), 3=DLB(7), 4=DLF(4)
+  [2, -1, -1, 1, 4, -1, -1, 3],
+  // 5 B: 1=URB(2), 2=ULB(3), 3=DRB(6), 4=DLB(7)
+  [-1, -1, 1, 2, -1, -1, 3, 4],
+];
+
+const WCA_LETTER_TO_CORNER: Record<string, number> = {
+  R: 6, U: 3, L: 4, B: 7, F: 1, D: 5,
+};
+
+// Standard right-handed 90° rotation matrices (WCA x/y/z convention).
+const X_ROT: Mat3 = [[1, 0, 0], [0, 0, -1], [0, 1, 0]];
+const Y_ROT: Mat3 = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]];
+const Z_ROT: Mat3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]];
+
+function matVec(M: Mat3, v: Vec3): Vec3 {
+  return [
+    M[0][0] * v[0] + M[0][1] * v[1] + M[0][2] * v[2],
+    M[1][0] * v[0] + M[1][1] * v[1] + M[1][2] * v[2],
+    M[2][0] * v[0] + M[2][1] * v[1] + M[2][2] * v[2],
+  ];
+}
+
+function findFace(n: Vec3): number {
+  for (let i = 0; i < 6; i++) {
+    const f = FACE_NORMALS[i];
+    if (f[0] === n[0] && f[1] === n[1] && f[2] === n[2]) return i;
+  }
+  return -1;
+}
+
+function findCorner(p: Vec3): number {
+  for (let i = 0; i < 8; i++) {
+    const c = CORNERS[i];
+    if (c[0] === p[0] && c[1] === p[1] && c[2] === p[2]) return i;
+  }
+  return -1;
+}
+
 class SkewbStateWCA {
   image: number[][] = Array.from({ length: 6 }, (_, i) => Array(5).fill(i));
 
-  private static swap3(a: number[][], f1: number, s1: number, f2: number, s2: number, f3: number, s3: number) {
-    const t = a[f1][s1]; a[f1][s1] = a[f2][s2]; a[f2][s2] = a[f3][s3]; a[f3][s3] = t;
+  private cornerTurnOnce(cornerIdx: number) {
+    const X = CORNERS[cornerIdx];
+    const R = CORNER_TURN_MATS[cornerIdx];
+    const old = this.image.map((row) => [...row]);
+
+    // 1) Face centers on X's half (3 faces adjacent to X).
+    for (let face = 0; face < 6; face++) {
+      const n = FACE_NORMALS[face];
+      if (n[0] * X[0] + n[1] * X[1] + n[2] * X[2] <= 0) continue;
+      const destFace = findFace(matVec(R, n));
+      this.image[destFace][0] = old[face][0];
+    }
+
+    // 2) Corners in X's half (X + 3 edge-neighbors). Their stickers cycle.
+    for (let c = 0; c < 8; c++) {
+      const C = CORNERS[c];
+      if (C[0] * X[0] + C[1] * X[1] + C[2] * X[2] <= 0) continue;
+      const newCornerIdx = findCorner(matVec(R, C));
+      for (let face = 0; face < 6; face++) {
+        const srcSticker = FACE_CORNER_STICKER[face][c];
+        if (srcSticker < 0) continue;
+        const destFace = findFace(matVec(R, FACE_NORMALS[face]));
+        const destSticker = FACE_CORNER_STICKER[destFace][newCornerIdx];
+        this.image[destFace][destSticker] = old[face][srcSticker];
+      }
+    }
   }
 
-  private turnOnce(axis: number) {
-    const im = this.image;
-    const sw = SkewbStateWCA.swap3;
-    switch (axis) {
-      case 0: // R: CW around DRB. Centers R→B→D→R. Half = {DRB, DRF, URB, DLB}.
-        sw(im, 1, 0, 3, 0, 5, 0);
-        sw(im, 1, 4, 3, 4, 5, 3); // DRB self
-        sw(im, 1, 2, 3, 2, 5, 4);
-        sw(im, 5, 1, 1, 3, 3, 3);
-        sw(im, 0, 2, 2, 4, 4, 3);
-        break;
-      case 1: // U: CW around ULB. Centers U→L→B→U. Half = {ULB, ULF, URB, DLB}.
-        sw(im, 4, 0, 0, 0, 5, 0);
-        sw(im, 4, 1, 0, 1, 5, 2); // ULB self
-        sw(im, 4, 3, 0, 3, 5, 1);
-        sw(im, 5, 4, 4, 2, 0, 2);
-        sw(im, 3, 3, 2, 1, 1, 2);
-        break;
-      case 2: // L: CW around DLF. Centers D→L→F→D. Half = {DLF, DLB, DRF, ULF}.
-        sw(im, 4, 0, 3, 0, 2, 0);
-        sw(im, 4, 4, 3, 1, 2, 3); // DLF self
-        sw(im, 4, 3, 3, 2, 2, 1);
-        sw(im, 5, 4, 1, 3, 0, 3);
-        sw(im, 3, 3, 2, 4, 4, 2);
-        break;
-      case 3: // B: CW around DLB. Centers D→B→L→D. Half = {DLB, DLF, DRB, ULB}.
-        sw(im, 5, 0, 3, 0, 4, 0);
-        sw(im, 5, 4, 3, 3, 4, 3); // DLB self
-        sw(im, 5, 3, 3, 1, 4, 1);
-        sw(im, 3, 4, 4, 4, 5, 2);
-        sw(im, 1, 4, 2, 3, 0, 1);
-        break;
+  private rotationOnce(M: Mat3) {
+    const old = this.image.map((row) => [...row]);
+    for (let face = 0; face < 6; face++) {
+      const destFace = findFace(matVec(M, FACE_NORMALS[face]));
+      this.image[destFace][0] = old[face][0];
+      for (let c = 0; c < 8; c++) {
+        const srcSticker = FACE_CORNER_STICKER[face][c];
+        if (srcSticker < 0) continue;
+        const newCornerIdx = findCorner(matVec(M, CORNERS[c]));
+        const destSticker = FACE_CORNER_STICKER[destFace][newCornerIdx];
+        this.image[destFace][destSticker] = old[face][srcSticker];
+      }
     }
   }
 
   applyMove(token: string) {
     if (!token) return;
-    const m = /^([RULBrulb])(['2]?)$/.exec(token.trim());
+    const m = /^([RULBFDxyz])(['2]?)$/.exec(token.trim());
     if (!m) return;
-    const ch = m[1].toUpperCase();
-    const dir = m[2] === "'" ? 2 : 1;
-    const axis = 'RULB'.indexOf(ch);
-    if (axis < 0) return;
-    for (let i = 0; i < dir; i++) this.turnOnce(axis);
+    const ch = m[1];
+    const suffix = m[2];
+
+    if (ch === 'x' || ch === 'y' || ch === 'z') {
+      const M = ch === 'x' ? X_ROT : ch === 'y' ? Y_ROT : Z_ROT;
+      const n = suffix === "'" ? 3 : suffix === '2' ? 2 : 1;
+      for (let i = 0; i < n; i++) this.rotationOnce(M);
+      return;
+    }
+
+    const cornerIdx = WCA_LETTER_TO_CORNER[ch];
+    if (cornerIdx === undefined) return;
+    // 3X = identity, so X2 ≡ X' (both = 2 CW turns).
+    const turns = suffix === '' ? 1 : 2;
+    for (let i = 0; i < turns; i++) this.cornerTurnOnce(cornerIdx);
   }
 
   applyAlgorithm(scramble: string) {

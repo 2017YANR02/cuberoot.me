@@ -17,7 +17,7 @@ import youtubeLogo from '../../assets/youtube_logo.svg';
 import bilibiliLogo from '../../assets/bilibili_logo.svg';
 import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, deleteAlternative } from '../../utils/recon_api';
 import {
-  formatTime, flagClass,
+  formatTime,
   isBldEvent, getPuzzleId, wcaPersonUrl,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
 } from '../../utils/recon_utils';
@@ -25,9 +25,9 @@ import { compLinkProps } from '../../utils/comp_link';
 import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
 import { EventIcon } from '../../components/EventIcon';
-import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
+import { loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
 import { Flag } from '../../utils/flag';
-import { stripWcaPrefix } from '../../utils/comp_localize';
+import { localizeCompName } from '../../utils/comp_localize';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '../../utils/wca_results_api';
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
@@ -110,7 +110,7 @@ export default function ReconDetailPage() {
             {solve.event && (
               <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>
             )}
-            {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}
+            {solve.personCountry && <>{' '}<Flag iso2={solve.personCountry} className="recon-inline-flag" /></>}
             {' '}{displayCuberName(solve.person || '', isZh)}
             {' '}
             <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
@@ -122,13 +122,13 @@ export default function ReconDetailPage() {
           {solve.date && <span className="detail-meta-item">{solve.date.slice(0, 10)}</span>}
           {solve.comp && (
             <span className="detail-meta-item">
-              {solve.country && <span className={flagClass(solve.country)} />}
+              {solve.country && <Flag iso2={solve.country} className="recon-inline-flag" />}
               <span>
                 {solve.compWcaId ? (
                   <Link {...compLinkProps(solve.compWcaId)}>
-                    {stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
+                    {localizeCompName(solve.compWcaId ?? '', solve.comp, isZh)}
                   </Link>
-                ) : stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
+                ) : localizeCompName(solve.compWcaId ?? '', solve.comp, isZh)}
                 {solve.round && (isZh ? `，${localizeRound(solve.round, t)}` : `, ${localizeRound(solve.round, t)}`)}
               </span>
             </span>
@@ -419,7 +419,7 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
   }
 
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isLocal = host === 'localhost' || host === '127.0.0.1' || /^192\.168\./.test(host);
+  const isLocal = import.meta.env.DEV;
   const isCN = /(?:^|\.)cuberoot\.me$/.test(host);
 
   let embedUrls: string[];

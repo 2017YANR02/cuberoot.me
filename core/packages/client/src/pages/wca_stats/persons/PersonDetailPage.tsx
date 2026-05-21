@@ -18,6 +18,7 @@ import ThemeToggle from '../../../components/ThemeToggle';
 import PersonHero from './sections/PersonHero';
 import PersonPRTable from './sections/PersonPRTable';
 import PersonTabs from './sections/PersonTabs';
+import { useDocumentTitle } from '../../../utils/useDocumentTitle';
 import './persons.css';
 
 export default function PersonDetailPage() {
@@ -50,11 +51,8 @@ export default function PersonDetailPage() {
   }, [wcaId]);
 
   // tab title
-  useEffect(() => {
-    if (profile?.person?.name) {
-      document.title = `${profile.person.name} · WCA · cuberoot`;
-    }
-  }, [profile]);
+  const personName = profile?.person?.name ?? '';
+  useDocumentTitle(personName ? `${personName} · WCA` : '', personName ? `${personName} · WCA` : '');
 
   if (error) {
     return (

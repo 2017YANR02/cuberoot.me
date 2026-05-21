@@ -2828,9 +2828,8 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
               <div className="cuber-chip">
                 {flagIso2 && <Flag iso2={flagIso2} className="cuber-flag" />}
                 <span className="cuber-name">{displayCuberName(cuber.name, isZh)}</span>
-                <button className="cuber-clear" onClick={clearCuber} aria-label="Clear">
-                  <X size={14} strokeWidth={1.75} />
-                </button>
+                <ClearButton onClick={clearCuber} isZh={isZh} preserveFocus />
+
               </div>
             )}
             {!cuber && (

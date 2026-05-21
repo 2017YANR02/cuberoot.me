@@ -1,17 +1,11 @@
-import { useEffect, useRef, useContext, createContext, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './katex_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 function TeX({ src }: { src: string }) {
   const html = useMemo(
@@ -580,11 +574,10 @@ export default function KatexIntroPage() {
     { label: 'Chemistry', src: '\\ce{CO2 + C ->T[\\Delta] 2 CO}' },
   ];
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'KaTeX : 浏览器里 100× 速度的 LaTeX 数学渲染 — 2013→2026'
-      : 'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026';
-  }, [lang]);
+  useDocumentTitle(
+    'KaTeX : 浏览器里 100× 速度的 LaTeX 数学渲染 — 2013→2026',
+    'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

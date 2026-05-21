@@ -42,6 +42,37 @@
     padding: 1.25rem 1.5rem 3rem;
 }
 
+.pat-puzzle-row {
+    margin-bottom: 1rem;
+}
+
+.pat-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--pat-text-mute);
+    font-size: 0.95rem;
+}
+
+.pat-card-noprev {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--pat-text-mute);
+    background: color-mix(in srgb, var(--pat-accent) 4%, var(--pat-surface));
+    border-radius: 8px;
+}
+
+.pat-card-noprev-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
 .pat-puzzle-select {
     appearance: none;
     -webkit-appearance: none;

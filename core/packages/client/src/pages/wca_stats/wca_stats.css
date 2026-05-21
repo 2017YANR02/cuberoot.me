@@ -71,7 +71,6 @@
 
 /* ==========================================================================
    分段按钮（Tab / Metric 切换）
-   对标 Legacy stats_ui.css .segmented-btn（蓝色主题 #e8a27a）
    ========================================================================== */
 
 /* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
@@ -82,7 +81,7 @@
   vertical-align: middle;
 }
 
-/* ── Dedup toggle（iOS 药丸风格，与 Legacy stats_ui.css 对齐）───── */
+/* ── Dedup toggle（iOS 药丸风格）───── */
 .wca-stats-dedup-toggle {
   display: inline-flex;
   align-items: center;
@@ -974,7 +973,6 @@ input:checked + .wca-stats-toggle-pill::after {
 
 /* ==========================================================================
    Metric 按钮 disabled 状态（metricPanels 模式下项目无数据时）
-   对标 Legacy stats_ui.css L266-280
    ========================================================================== */
 
 .wca-stats-metric-btn.disabled {
@@ -991,7 +989,6 @@ input:checked + .wca-stats-toggle-pill::after {
 
 /* ==========================================================================
    AverageOfX — Solve List + Details 折叠
-   对标 Legacy stats_ui.css 的 .solve-list / .solve-details
    ========================================================================== */
 
 /* NOTE: 成绩标签——行内展示（≤12 个成绩） */

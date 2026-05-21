@@ -114,7 +114,8 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     stopInspectionTick();
     inspTickRef.current = window.setInterval(() => {
       const elapsed = performance.now() - inspectionStartRef.current;
-      setInspectionDisplayMs(elapsed);
+      // UI 只显示整秒,跨秒才写 state — 100ms tick × 15s = 150 次,跨秒只 15 次,省 135 次渲染。
+      setInspectionDisplayMs(prev => Math.floor(prev / 1000) === Math.floor(elapsed / 1000) ? prev : elapsed);
       if (!warned8Ref.current && elapsed >= 8000) {
         warned8Ref.current = true;
         play('warn-8');

@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './ts_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 const TS_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -441,11 +435,10 @@ export default function TsIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'TypeScript : JavaScript — AI 时代的事实标准'
-      : 'TypeScript : JavaScript — De Facto Language of the AI Era';
-  }, [lang]);
+  useDocumentTitle(
+    'TypeScript : JavaScript — AI 时代的事实标准',
+    'TypeScript : JavaScript — De Facto Language of the AI Era',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

@@ -56,12 +56,17 @@ export default function TrainerRunPage() {
   const deleteSolve = useTrainerStore(s => s.deleteSolve);
   const clearSolves = useTrainerStore(s => s.clearSolves);
 
-  // Live ms tick for running timer
+  // Live ms tick for running timer。用 rAF 平摊到帧率 (~60fps),100Hz setInterval 多 3x 渲染。
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (timerState !== TimerState.RUNNING) return;
-    const id = setInterval(() => setNow(Date.now()), 10);
-    return () => clearInterval(id);
+    let raf = 0;
+    const tick = () => {
+      setNow(Date.now());
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [timerState]);
 
   // Load session if needed

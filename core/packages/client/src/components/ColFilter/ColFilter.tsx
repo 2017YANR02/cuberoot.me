@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback, createContex
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Filter, X, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import './ColFilter.css';
 
 /** 给 popover children 用的关闭函数 — 比如 input 内按 Enter / iOS ✓ 时关掉 popover */
@@ -25,16 +26,6 @@ interface Props {
   onSortReset?: () => void;
 }
 
-function useIsMobile(): boolean {
-  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth <= 600);
-  useEffect(() => {
-    const f = () => setM(window.innerWidth <= 600);
-    window.addEventListener('resize', f);
-    return () => window.removeEventListener('resize', f);
-  }, []);
-  return m;
-}
-
 export function ColFilter({
   active, onClear, children, align = 'right',
   open: openProp, onOpenChange,
@@ -48,7 +39,7 @@ export function ColFilter({
     if (onOpenChange) onOpenChange(nextVal);
     else setInternalOpen(nextVal);
   }, [open, onOpenChange]);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(600);
   const btnRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left?: number; right?: number }>({ top: 0 });

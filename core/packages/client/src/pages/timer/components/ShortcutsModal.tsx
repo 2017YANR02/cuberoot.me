@@ -1,23 +1,9 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef } from 'react';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   isZh: boolean;
   onClose: () => void;
-}
-
-/** True iff viewport ≤ 480px. Drives the mobile layout overrides below. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
 }
 
 interface ShortcutRow {
@@ -58,7 +44,7 @@ const NAV: ShortcutRow[] = [
 export default function ShortcutsModal({ isZh, onClose }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

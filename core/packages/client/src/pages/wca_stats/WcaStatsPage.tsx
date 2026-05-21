@@ -10,8 +10,8 @@ import { getLangQuery } from '../../i18n';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
-import { countryToIso2, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
-import { stripWcaPrefix } from '../../utils/comp_localize';
+import { countryToIso2, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2 } from '../../utils/country_flags';
+import { localizeCompName } from '../../utils/comp_localize';
 import { Flag } from '../../utils/flag';
 import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
@@ -217,13 +217,9 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
           displayText = stripChineseParens(displayText);
         }
       }
-      // NOTE: 比赛名——中文模式查 compNamesZh 映射表（对标 Recon displayCompName）；显示前剥 "WCA "
+      // 比赛名走 localizeCompName 单一入口(中文 zh 映射 → stripWcaPrefix)。
       if (compId) {
-        if (isZh) {
-          const zhComp = compNameZh(displayText);
-          if (zhComp) displayText = zhComp;
-        }
-        displayText = stripWcaPrefix(displayText);
+        displayText = localizeCompName(compId, displayText, !!isZh);
       }
       const internalHref = compId ? rewriteWcaCompUrl(url) : null;
       const prefetch = compId ? () => prefetchComp(compId) : undefined;
@@ -630,7 +626,7 @@ function AoxRankingSection({ header, rows, isZh }: {
   );
 }
 
-// NOTE: Dedup 过滤——与 Legacy stats_ui.ts initHideDays0 对应
+// NOTE: Dedup 过滤
 // 规则 1: Days 列 == '0' 的行
 // 规则 2: 相邻行（表格降序排列）Start Comp 相同时，标记下方行（更旧的记录）
 function dedupRows(rows: unknown[][], header: StatHeader[]): unknown[][] {
@@ -808,7 +804,6 @@ function AoxSectionsView({ header, sections, isZh, selectedEvent }: {
 }
 
 // NOTE: SourcePanels 渲染——三级嵌套（如 wr_newcomer：metric → source → tab）
-// 对标 Legacy stats_ui.ts switchSource() + source-panel 切换
 function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel }: {
   sourcePanels: SourcePanel[];
   searchTerm: string;

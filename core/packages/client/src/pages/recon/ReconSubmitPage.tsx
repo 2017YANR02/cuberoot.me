@@ -24,7 +24,9 @@ import { EventIcon } from '../../components/EventIcon';
 import { RecordBadge } from '../../components/RecordBadge';
 import { displayCuberName } from '../../utils/name_utils';
 import { useAuthStore } from '../../stores/auth_store';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import LangToggle from '../../components/LangToggle';
+import { ClearButton } from '../../components/ClearButton';
 import '../../recon.css';
 import './recon_submit.css';
 import CubeKeyboardSection from '../../components/CubeKeyboardSection';
@@ -90,17 +92,6 @@ function toDateInput(val: string | null | undefined): string {
   const d = new Date(val);
   if (isNaN(d.getTime())) return '';
   return d.toISOString().slice(0, 10);
-}
-
-function useIsMobile(): boolean {
-  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
-    const handler = (e: MediaQueryListEvent) => setM(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-  return m;
 }
 
 export default function ReconSubmitPage() {
@@ -327,7 +318,8 @@ export default function ReconSubmitPage() {
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  // NOTE: CompPicker 选中比赛 — 一次性回填 name / id / country / date
+  // NOTE: CompPicker 选中比赛 — 一次性回填 name / id / country / date。
+  // 中文模式下 comp 字段存中文名(不去 WCA 前缀,数据存储沿用原 zh 映射结果),不进显示层 strip。
   const applyPickedComp = useCallback((c: Comp) => {
     const zh = isZh ? compNameZh(c.name) : '';
     setForm(prev => ({
@@ -907,9 +899,7 @@ export default function ReconSubmitPage() {
                   <Flag iso2={form.personCountry || ''} />
                   <span className="submit-solver-name">{displayCuberName(form.person || '', isZh)}</span>
                   {/* 锁定身份字段(edit 模式 / 从同轮次跳进来):不展示清除按钮 */}
-                  {!lockIdentity && (
-                    <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
-                  )}
+                  {!lockIdentity && <ClearButton onClick={clearSolver} isZh={isZh} preserveFocus />}
                 </div>
               ) : (
                 <WcaPersonPicker
@@ -989,9 +979,7 @@ export default function ReconSubmitPage() {
                   <Flag iso2={form.country || ''} />
                   <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
                   {/* 锁定身份字段:不展示清除按钮 */}
-                  {!lockIdentity && (
-                    <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
-                  )}
+                  {!lockIdentity && <ClearButton onClick={clearPickedComp} isZh={isZh} preserveFocus />}
                 </div>
               ) : lockIdentity ? (
                 <div className="submit-readonly-text">{form.comp || ''}</div>
@@ -1363,7 +1351,7 @@ export default function ReconSubmitPage() {
                 <div className="submit-solver-pill">
                   <Flag iso2={reconerCountry || ''} />
                   <span className="submit-solver-name">{displayCuberName(form.reconer || '', isZh)}</span>
-                  <button type="button" className="submit-solver-clear" onClick={clearReconer} aria-label="clear">✕</button>
+                  <ClearButton onClick={clearReconer} isZh={isZh} preserveFocus />
                 </div>
               ) : (
                 <WcaPersonPicker

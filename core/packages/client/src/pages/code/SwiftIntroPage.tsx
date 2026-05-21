@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './swift_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 const SWIFT_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -446,11 +440,7 @@ export default function SwiftIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'Swift : 苹果生态的钦定语言'
-      : 'Swift : Apple Ecosystem’s Native Tongue';
-  }, [lang]);
+  useDocumentTitle('Swift : 苹果生态的钦定语言', 'Swift : Apple Ecosystem’s Native Tongue');
 
   useEffect(() => {
     const root = rootRef.current;

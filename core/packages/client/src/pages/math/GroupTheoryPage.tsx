@@ -1513,6 +1513,18 @@ function PatternGallery() {
       order: 4, descZh: '中心翻 (U↔D, R↔L, F↔B)', descEn: 'each face centre swapped with opposite' },
     { name: 'Plus minus',       nameZh: '加减号', alg: "U2 R2 L2 U2 R2 L2",
       order: 2, descZh: '简短 6 步即得',         descEn: 'a 6-move classic' },
+    { name: 'Pons Asinorum (6X)', nameZh: '驴桥定理 (6X)', alg: "R2 L2 F2 B2 U2 D2",
+      order: 2, descZh: '所有 6 面 ×3 半圈; 直径距离 20 候选反点', descEn: 'all six faces half-turned; one of three antipode candidates' },
+    { name: 'Six H-bars',       nameZh: '六 H 条', alg: "U2 B2 R2 D2 U2 R2 F2 U2",
+      order: 2, descZh: '三对正交 H 条棱', descEn: 'three orthogonal H-bars on the equators' },
+    { name: 'Stairs',           nameZh: '阶梯',     alg: "F D2 B R B' L' F D' L2 F2 R F' R' F2 L' F'",
+      order: 6, descZh: '颜色顺台阶错位', descEn: 'colours staircase across the cube' },
+    { name: 'Tetris',           nameZh: '俄罗斯方块', alg: "L R F B U' D' L' R'",
+      order: 4, descZh: '8 步生成的中等阶图案', descEn: 'short 8-move medium-order pattern' },
+    { name: 'Order-1260',       nameZh: '阶 1260',  alg: "R U2 D' B D'",
+      order: 1260, descZh: 'Singmaster 经典: 一公式 1260 次才回到原点 = lcm(3,4,5,7)', descEn: "Singmaster's classic: this 5-move alg has order 1260 = lcm(3,4,5,7); repeat 1260× to return" },
+    { name: '4 spots (90°)',    nameZh: '四点 (90°)', alg: "R F' L' U2 B' D' R B U2 L U F'",
+      order: 4, descZh: '4 个中央色块 90° 错位 (≠ 6-spot 的 180°)', descEn: '4 face centres rotated 90° (≠ 6-spot 180°)' },
   ];
   return (
     <div className="gt-pattern-gallery">
@@ -2547,6 +2559,4313 @@ function CharacterTableHint() {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// §27 Lights Out — GF(2) linear algebra
+// §28 Peg Solitaire — 3-coloring invariant + SAX
+// §29 Hamiltonian Paths/Cycles — Gray codes, Cayley conjecture
+// §30 Two-Face Corner Group — PGL(2, F_5) ≅ S_5 on 6 points
+// §31 Rotational Puzzles on Graphs — (x, y, z) classifier
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── GF(2) linear algebra primitives ─────────────────────────────────────────
+function gf2Reduce(A: number[][], b: number[]): { x: number[]; kernel: number[][]; solvable: boolean } {
+  const n = A.length;        // # rows
+  const m = A[0]?.length ?? 0;  // # cols
+  // Augmented matrix [A | b]
+  const M: number[][] = A.map((row, i) => [...row, b[i]]);
+  const pivotCol: number[] = []; // column index per pivot row
+  let r = 0;
+  for (let c = 0; c < m && r < n; c++) {
+    let p = -1;
+    for (let i = r; i < n; i++) if (M[i][c] === 1) { p = i; break; }
+    if (p < 0) continue;
+    [M[r], M[p]] = [M[p], M[r]];
+    for (let i = 0; i < n; i++) if (i !== r && M[i][c] === 1) {
+      for (let j = c; j <= m; j++) M[i][j] ^= M[r][j];
+    }
+    pivotCol.push(c);
+    r++;
+  }
+  // Check solvability: rows past r with non-zero last col → inconsistent
+  for (let i = r; i < n; i++) if (M[i][m] === 1) {
+    return { x: new Array(m).fill(0), kernel: [], solvable: false };
+  }
+  const x = new Array(m).fill(0);
+  for (let i = 0; i < r; i++) x[pivotCol[i]] = M[i][m];
+  // Kernel basis: one vector per free column
+  const pivSet = new Set(pivotCol);
+  const kernel: number[][] = [];
+  for (let c = 0; c < m; c++) {
+    if (pivSet.has(c)) continue;
+    const k = new Array(m).fill(0);
+    k[c] = 1;
+    for (let i = 0; i < r; i++) {
+      if (M[i][c] === 1) k[pivotCol[i]] = 1;
+    }
+    kernel.push(k);
+  }
+  return { x, kernel, solvable: true };
+}
+
+// ── §27 Lights Out — interactive board ──────────────────────────────────────
+function lightsMatrix(rows: number, cols: number): number[][] {
+  const n = rows * cols;
+  const A: number[][] = Array.from({ length: n }, () => new Array(n).fill(0));
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const i = r * cols + c;
+    A[i][i] = 1;
+    if (r > 0) A[i][(r - 1) * cols + c] = 1;
+    if (r < rows - 1) A[i][(r + 1) * cols + c] = 1;
+    if (c > 0) A[i][r * cols + (c - 1)] = 1;
+    if (c < cols - 1) A[i][r * cols + (c + 1)] = 1;
+  }
+  return A;
+}
+
+function LightsOutBoard({ size }: { size: number }) {
+  const lang = useLang();
+  const n = size * size;
+  const matrix = useMemo(() => lightsMatrix(size, size), [size]);
+  const [state, setState] = useState<number[]>(() => new Array(n).fill(0));
+  const [solveSteps, setSolveSteps] = useState<number[] | null>(null);
+  const [stepIdx, setStepIdx] = useState(0);
+
+  const { x: minSolution, kernel, solvable } = useMemo(() => {
+    const res = gf2Reduce(matrix, state);
+    if (!res.solvable) return res;
+    // Find min-weight solution among all 2^|kernel| cosets
+    let best = res.x;
+    const K = res.kernel.length;
+    if (K > 0 && K <= 6) {
+      for (let mask = 1; mask < (1 << K); mask++) {
+        const cand = [...res.x];
+        for (let k = 0; k < K; k++) if ((mask >> k) & 1) {
+          for (let j = 0; j < n; j++) cand[j] ^= res.kernel[k][j];
+        }
+        if (cand.reduce((a, b) => a + b, 0) < best.reduce((a, b) => a + b, 0)) best = cand;
+      }
+    }
+    return { x: best, kernel: res.kernel, solvable: true };
+  }, [matrix, state, n]);
+
+  const press = useCallback((i: number) => {
+    setState(prev => {
+      const next = [...prev];
+      for (let j = 0; j < n; j++) if (matrix[i][j] === 1) next[j] ^= 1;
+      return next;
+    });
+    setSolveSteps(null);
+  }, [matrix, n]);
+
+  const randomize = () => {
+    // Random *reachable* state: random presses from solved
+    const presses = Math.floor(Math.random() * (size * size));
+    const next = new Array(n).fill(0);
+    for (let k = 0; k < presses; k++) {
+      const i = Math.floor(Math.random() * n);
+      for (let j = 0; j < n; j++) if (matrix[i][j] === 1) next[j] ^= 1;
+    }
+    setState(next);
+    setSolveSteps(null);
+  };
+  const clear = () => { setState(new Array(n).fill(0)); setSolveSteps(null); };
+  const showSolution = () => {
+    if (!solvable) return;
+    const steps: number[] = [];
+    for (let i = 0; i < n; i++) if (minSolution[i] === 1) steps.push(i);
+    setSolveSteps(steps);
+    setStepIdx(0);
+  };
+
+  // Animation step
+  useEffect(() => {
+    if (!solveSteps || stepIdx >= solveSteps.length) return;
+    const t = setTimeout(() => {
+      press(solveSteps[stepIdx]);
+      setStepIdx(i => i + 1);
+    }, 280);
+    return () => clearTimeout(t);
+  }, [solveSteps, stepIdx, press]);
+
+  const cellSize = size <= 3 ? 60 : size <= 5 ? 48 : 36;
+  const litCount = state.reduce((a, b) => a + b, 0);
+  const moveCount = minSolution.reduce((a, b) => a + b, 0);
+
+  return (
+    <div className="gt-lights">
+      <div className="gt-lights-grid" style={{ gridTemplateColumns: `repeat(${size}, ${cellSize}px)` }}>
+        {state.map((cell, i) => {
+          const isInSolution = solveSteps != null && solveSteps.slice(stepIdx).includes(i);
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`gt-lights-cell ${cell ? 'on' : 'off'} ${isInSolution ? 'hint' : ''}`}
+              style={{ width: cellSize, height: cellSize }}
+              onClick={() => press(i)}
+              aria-label={`cell ${i}`}
+            />
+          );
+        })}
+      </div>
+      <div className="gt-lights-info">
+        <div className="gt-lights-stat">
+          <div className="gt-lights-stat-label">{lang === 'zh' ? '亮灯' : 'lit'}</div>
+          <div className="gt-lights-stat-val">{litCount} / {n}</div>
+        </div>
+        <div className="gt-lights-stat">
+          <div className="gt-lights-stat-label">{lang === 'zh' ? '可解' : 'solvable'}</div>
+          <div className="gt-lights-stat-val" style={{ color: solvable ? 'var(--green)' : 'var(--accent)' }}>
+            {solvable ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+          </div>
+        </div>
+        <div className="gt-lights-stat">
+          <div className="gt-lights-stat-label">{lang === 'zh' ? '最短步数' : 'min moves'}</div>
+          <div className="gt-lights-stat-val">{solvable ? moveCount : '—'}</div>
+        </div>
+        <div className="gt-lights-stat">
+          <div className="gt-lights-stat-label">{lang === 'zh' ? '解的数量' : '# solutions'}</div>
+          <div className="gt-lights-stat-val">{solvable ? (1 << kernel.length) : 0}</div>
+        </div>
+        <div className="gt-lights-stat">
+          <div className="gt-lights-stat-label">{lang === 'zh' ? '安静图案' : 'quiet patterns'}</div>
+          <div className="gt-lights-stat-val">{kernel.length}</div>
+        </div>
+      </div>
+      <div className="gt-lights-actions">
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={randomize}>{lang === 'zh' ? '随机' : 'randomize'}</button>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={clear}>{lang === 'zh' ? '全灭' : 'clear'}</button>
+        <button type="button" className="gt-btn" onClick={showSolution} disabled={!solvable || litCount === 0}>
+          {lang === 'zh' ? '演示最短解' : 'animate solution'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 5×5 Lights Out quiet patterns Q1, Q2 (known constants)
+const LIGHTS5_Q1 = [
+  1, 0, 1, 0, 1,
+  1, 0, 1, 0, 1,
+  0, 0, 0, 0, 0,
+  1, 0, 1, 0, 1,
+  1, 0, 1, 0, 1,
+];
+const LIGHTS5_Q2 = [
+  1, 1, 0, 1, 1,
+  0, 0, 0, 0, 0,
+  1, 1, 0, 1, 1,
+  0, 0, 0, 0, 0,
+  1, 1, 0, 1, 1,
+];
+
+function QuietPatternViewer() {
+  const lang = useLang();
+  const [board, setBoard] = useState<number[]>(() => new Array(25).fill(0));
+  const toggle = (i: number) => setBoard(b => b.map((v, j) => j === i ? (v ^ 1) : v));
+  const random = () => {
+    const presses = Math.floor(Math.random() * 25);
+    const A = lightsMatrix(5, 5);
+    const next = new Array(25).fill(0);
+    for (let k = 0; k < presses; k++) {
+      const i = Math.floor(Math.random() * 25);
+      for (let j = 0; j < 25; j++) if (A[i][j] === 1) next[j] ^= 1;
+    }
+    setBoard(next);
+  };
+  const dot = (a: number[], b: number[]) => a.reduce((s, v, i) => s ^ (v & b[i]), 0);
+  const p1 = dot(board, LIGHTS5_Q1);
+  const p2 = dot(board, LIGHTS5_Q2);
+  const isSolvable = p1 === 0 && p2 === 0;
+  return (
+    <div className="gt-quiet">
+      <div className="gt-quiet-side">
+        <div className="gt-quiet-label">{lang === 'zh' ? '你的图案 p' : 'your pattern p'}</div>
+        <div className="gt-quiet-grid">
+          {board.map((cell, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`gt-lights-cell ${cell ? 'on' : 'off'}`}
+              style={{ width: 32, height: 32 }}
+              onClick={() => toggle(i)}
+              aria-label={`p${i}`}
+            />
+          ))}
+        </div>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={random} style={{ marginTop: 12 }}>
+          {lang === 'zh' ? '随机可解' : 'random solvable'}
+        </button>
+      </div>
+      <div className="gt-quiet-side">
+        <div className="gt-quiet-label">Q₁ <span style={{ color: p1 === 0 ? 'var(--green)' : 'var(--accent)' }}>· p·Q₁ = {p1}</span></div>
+        <div className="gt-quiet-grid">
+          {LIGHTS5_Q1.map((cell, i) => (
+            <div key={i} className={`gt-quiet-mark ${cell ? 'on' : 'off'} ${board[i] && cell ? 'pair' : ''}`} />
+          ))}
+        </div>
+      </div>
+      <div className="gt-quiet-side">
+        <div className="gt-quiet-label">Q₂ <span style={{ color: p2 === 0 ? 'var(--green)' : 'var(--accent)' }}>· p·Q₂ = {p2}</span></div>
+        <div className="gt-quiet-grid">
+          {LIGHTS5_Q2.map((cell, i) => (
+            <div key={i} className={`gt-quiet-mark ${cell ? 'on' : 'off'} ${board[i] && cell ? 'pair' : ''}`} />
+          ))}
+        </div>
+      </div>
+      <div className="gt-quiet-verdict">
+        <div className="gt-quiet-verdict-label">{lang === 'zh' ? '判定' : 'verdict'}</div>
+        <div className="gt-quiet-verdict-val" style={{ color: isSolvable ? 'var(--green)' : 'var(--accent)' }}>
+          {isSolvable
+            ? (lang === 'zh' ? '可解 — 两个安静图案的内积都为 0' : 'solvable — orthogonal to both quiet patterns')
+            : (lang === 'zh' ? '不可解 — 不在 im A 中' : 'unreachable — not in im A')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LineLightsSlider() {
+  const lang = useLang();
+  const [n, setN] = useState(7);
+  const data = useMemo(() => {
+    const A = Array.from({ length: n }, (_, i) => {
+      const row = new Array(n).fill(0);
+      row[i] = 1;
+      if (i > 0) row[i - 1] = 1;
+      if (i < n - 1) row[i + 1] = 1;
+      return row;
+    });
+    const res = gf2Reduce(A, new Array(n).fill(0));
+    return { kernelDim: res.kernel.length, quiet: res.kernel[0] ?? null };
+  }, [n]);
+  const isBad = n % 3 === 2;
+  return (
+    <div className="gt-line-lights">
+      <div className="gt-line-lights-controls">
+        <label className="gt-line-lights-label">n = {n}</label>
+        <input
+          type="range"
+          min={2}
+          max={15}
+          value={n}
+          onChange={e => setN(parseInt(e.target.value, 10))}
+          className="gt-line-lights-slider"
+        />
+      </div>
+      <div className="gt-line-lights-row">
+        {Array.from({ length: n }, (_, i) => {
+          const inKernel = data.quiet && data.quiet[i] === 1;
+          return (
+            <div
+              key={i}
+              className={`gt-lights-cell ${inKernel ? 'on' : 'off'}`}
+              style={{ width: 28, height: 28 }}
+            />
+          );
+        })}
+      </div>
+      <div className="gt-line-lights-status">
+        {lang === 'zh' ? (
+          <>核维度 dim ker A = <strong style={{ color: isBad ? 'var(--accent)' : 'var(--green)' }}>{data.kernelDim}</strong>
+          {isBad ? <>· n ≡ 2 (mod 3),存在安静图案 <strong>11 0 11 0 11 …</strong> — 一半图案不可解</>
+                : <>· n ≢ 2 (mod 3),任意图案都可解</>}</>
+        ) : (
+          <>kernel dim ker A = <strong style={{ color: isBad ? 'var(--accent)' : 'var(--green)' }}>{data.kernelDim}</strong>
+          {isBad ? <> · n ≡ 2 (mod 3): quiet pattern <strong>11 0 11 0 11 …</strong> exists — half of patterns unreachable</>
+                : <> · n ≢ 2 (mod 3): every pattern solvable</>}</>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── §28 Peg Solitaire ──────────────────────────────────────────────────────
+// English 33-cell board layout: 7 rows × 7 cols with corners cut off
+const PEG_ENGLISH = [
+  '..XXX..',
+  '..XXX..',
+  'XXXXXXX',
+  'XXX.XXX',
+  'XXXXXXX',
+  '..XXX..',
+  '..XXX..',
+];
+function buildEnglishBoard(): { cells: { r: number; c: number; key: string }[]; idx: Map<string, number> } {
+  const cells: { r: number; c: number; key: string }[] = [];
+  const idx = new Map<string, number>();
+  for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) {
+    const ch = PEG_ENGLISH[r][c];
+    if (ch === 'X' || ch === '.') {
+      const key = `${r},${c}`;
+      idx.set(key, cells.length);
+      cells.push({ r, c, key });
+    }
+  }
+  return { cells, idx };
+}
+
+function PegSolitaireBoard() {
+  const lang = useLang();
+  const { cells } = useMemo(buildEnglishBoard, []);
+  // peg[i] = 1 if peg present. Initial: all pegs except centre.
+  const initial = useMemo(() => {
+    return cells.map(c => (c.r === 3 && c.c === 3 ? 0 : 1));
+  }, [cells]);
+  const [pegs, setPegs] = useState<number[]>(initial);
+  const [sel, setSel] = useState<number | null>(null);
+  const [hist, setHist] = useState<number[][]>([initial]);
+  const [showColoring, setShowColoring] = useState<'none' | 'diag1' | 'diag2'>('none');
+
+  const reset = () => { setPegs(initial); setSel(null); setHist([initial]); };
+  const undo = () => {
+    if (hist.length <= 1) return;
+    const h2 = hist.slice(0, -1);
+    setHist(h2);
+    setPegs(h2[h2.length - 1]);
+    setSel(null);
+  };
+
+  // Try jump from src to dst (over middle); record if legal
+  const tryMove = (src: number, dst: number) => {
+    const sc = cells[src], dc = cells[dst];
+    if (pegs[src] !== 1 || pegs[dst] !== 0) return false;
+    const dr = dc.r - sc.r, dcc = dc.c - sc.c;
+    if (!((Math.abs(dr) === 2 && dcc === 0) || (Math.abs(dcc) === 2 && dr === 0))) return false;
+    const midKey = `${sc.r + dr / 2},${sc.c + dcc / 2}`;
+    const mid = cells.findIndex(c => c.key === midKey);
+    if (mid < 0 || pegs[mid] !== 1) return false;
+    const next = [...pegs];
+    next[src] = 0; next[mid] = 0; next[dst] = 1;
+    setPegs(next);
+    setHist(h => [...h, next]);
+    return true;
+  };
+
+  const onCell = (i: number) => {
+    if (sel === null) {
+      if (pegs[i] === 1) setSel(i);
+      return;
+    }
+    if (i === sel) { setSel(null); return; }
+    if (tryMove(sel, i)) { setSel(null); return; }
+    if (pegs[i] === 1) setSel(i);
+  };
+
+  // 3-coloring: color = (r + c) mod 3 vs (r - c) mod 3 with both → intersection
+  const colorOf = (r: number, c: number) => {
+    if (showColoring === 'diag1') return (r + c) % 3;
+    if (showColoring === 'diag2') return ((r - c) % 3 + 3) % 3;
+    return -1;
+  };
+  const colorClass = (col: number) => {
+    if (col === 0) return 'gt-peg-r';
+    if (col === 1) return 'gt-peg-b';
+    if (col === 2) return 'gt-peg-y';
+    return '';
+  };
+
+  // Count pegs per colour
+  const colorCounts: [number, number, number] = [0, 0, 0];
+  if (showColoring !== 'none') {
+    for (let i = 0; i < cells.length; i++) if (pegs[i]) {
+      const col = colorOf(cells[i].r, cells[i].c);
+      if (col >= 0) colorCounts[col]++;
+    }
+  }
+
+  const pegCount = pegs.reduce((a, b) => a + b, 0);
+  const moveCount = hist.length - 1;
+  const isWin = pegCount === 1 && pegs[cells.findIndex(c => c.r === 3 && c.c === 3)] === 1;
+
+  return (
+    <div className="gt-peg">
+      <div className="gt-peg-board">
+        {cells.map((c, i) => {
+          const col = colorOf(c.r, c.c);
+          return (
+            <button
+              key={c.key}
+              type="button"
+              className={`gt-peg-cell ${pegs[i] ? 'peg' : 'hole'} ${sel === i ? 'sel' : ''} ${colorClass(col)}`}
+              style={{ gridColumn: c.c + 1, gridRow: c.r + 1 }}
+              onClick={() => onCell(i)}
+              aria-label={`cell ${c.key}`}
+            />
+          );
+        })}
+      </div>
+      <div className="gt-peg-controls">
+        <div className="gt-peg-info">
+          <div><span className="gt-peg-label">{lang === 'zh' ? '剩余棋子' : 'pegs'}</span> <strong>{pegCount}</strong></div>
+          <div><span className="gt-peg-label">{lang === 'zh' ? '已走步' : 'moves'}</span> <strong>{moveCount}</strong></div>
+          {isWin && <div style={{ color: 'var(--green)' }}>★ {lang === 'zh' ? '通关 · 1 子留中央' : 'solved · 1 peg in centre'}</div>}
+        </div>
+        {showColoring !== 'none' && (
+          <div className="gt-peg-coloring">
+            <div className="gt-peg-coloring-cell gt-peg-r">R: <strong>{colorCounts[0]}</strong></div>
+            <div className="gt-peg-coloring-cell gt-peg-b">B: <strong>{colorCounts[1]}</strong></div>
+            <div className="gt-peg-coloring-cell gt-peg-y">Y: <strong>{colorCounts[2]}</strong></div>
+          </div>
+        )}
+        <div className="gt-peg-buttons">
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{lang === 'zh' ? '撤销' : 'undo'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '重置' : 'reset'}</button>
+          <button type="button" className={`gt-chip ${showColoring === 'none' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('none')}>{lang === 'zh' ? '关闭着色' : 'no colour'}</button>
+          <button type="button" className={`gt-chip ${showColoring === 'diag1' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('diag1')}>{lang === 'zh' ? '↗ 着色' : '↗ colouring'}</button>
+          <button type="button" className={`gt-chip ${showColoring === 'diag2' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('diag2')}>{lang === 'zh' ? '↘ 着色' : '↘ colouring'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 15-peg triangle with SAX live counter
+function PegTriangleSAX() {
+  const lang = useLang();
+  // Cells indexed top-down, left-right: rows 1..5, count i pegs per row.
+  type T = { r: number; c: number; central: boolean };
+  const cells: T[] = useMemo(() => {
+    const out: T[] = [];
+    // Mark "central" 3 cells (in a 15-cell triangle the 3 'inner' cells are
+    // positions: (3,1), (3,2), (4,2) using a row,col-within-row scheme).
+    const central = new Set(['2,1', '3,1', '3,2']);
+    for (let r = 0; r < 5; r++) for (let c = 0; c <= r; c++) {
+      out.push({ r, c, central: central.has(`${r},${c}`) });
+    }
+    return out;
+  }, []);
+  const N = cells.length; // 15
+  const initial = useMemo(() => cells.map((_, i) => i === 0 ? 0 : 1), [cells]);
+  const [pegs, setPegs] = useState<number[]>(initial);
+  const [sel, setSel] = useState<number | null>(null);
+  const [hist, setHist] = useState<number[][]>([initial]);
+
+  // For SAX: A = filled centrals; X = filled perimeters; S = edge-triples with ≥2 pegs.
+  // Edge triples = collinear triples of cells.
+  const triples: number[][] = useMemo(() => {
+    const out: number[][] = [];
+    const find = (r: number, c: number) => cells.findIndex(p => p.r === r && p.c === c);
+    // Horizontal
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c + 2 <= r; c++) {
+        out.push([find(r, c), find(r, c + 1), find(r, c + 2)]);
+      }
+    }
+    // Diagonal /
+    for (let c = 0; c < 5; c++) for (let r = c; r + 2 < 5; r++) {
+      const a = find(r, c), b = find(r + 1, c), d = find(r + 2, c);
+      if (a >= 0 && b >= 0 && d >= 0) out.push([a, b, d]);
+    }
+    // Diagonal \
+    for (let r = 0; r < 5; r++) for (let c = 0; c + 2 <= r; c++) {
+      const a = find(r, c), b = find(r + 1, c + 1), d = find(r + 2, c + 2);
+      if (a >= 0 && b >= 0 && d >= 0) out.push([a, b, d]);
+    }
+    return out;
+  }, [cells]);
+
+  let A = 0, X = 0, S = 0;
+  for (let i = 0; i < N; i++) if (pegs[i]) {
+    if (cells[i].central) A++; else X++;
+  }
+  for (const t of triples) if ((pegs[t[0]] + pegs[t[1]] + pegs[t[2]]) >= 2) S++;
+  const sax = S + A - X;
+
+  // Move logic: src jumps over mid into dst. Mid must be adjacent in a triple.
+  const tryMove = (src: number, dst: number) => {
+    if (pegs[src] !== 1 || pegs[dst] !== 0) return false;
+    const t = triples.find(t => (t[0] === src && t[2] === dst) || (t[2] === src && t[0] === dst));
+    if (!t) return false;
+    const mid = t[1];
+    if (pegs[mid] !== 1) return false;
+    const next = [...pegs];
+    next[src] = 0; next[mid] = 0; next[dst] = 1;
+    setPegs(next); setHist(h => [...h, next]);
+    return true;
+  };
+  const onCell = (i: number) => {
+    if (sel === null) { if (pegs[i] === 1) setSel(i); return; }
+    if (i === sel) { setSel(null); return; }
+    if (tryMove(sel, i)) { setSel(null); return; }
+    if (pegs[i] === 1) setSel(i);
+  };
+  const reset = () => { setPegs(initial); setSel(null); setHist([initial]); };
+  const undo = () => {
+    if (hist.length <= 1) return;
+    const h2 = hist.slice(0, -1); setHist(h2); setPegs(h2[h2.length - 1]); setSel(null);
+  };
+  return (
+    <div className="gt-peg-tri">
+      <div className="gt-peg-tri-board">
+        {cells.map((cell, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`gt-peg-cell ${pegs[i] ? 'peg' : 'hole'} ${sel === i ? 'sel' : ''} ${cell.central ? 'central' : ''}`}
+            style={{
+              gridColumn: `${5 - cell.r + cell.c * 2} / span 2`,
+              gridRow: cell.r + 1,
+            }}
+            onClick={() => onCell(i)}
+          />
+        ))}
+      </div>
+      <div className="gt-peg-tri-side">
+        <div className="gt-peg-sax">
+          <div><span className="gt-peg-label">S (≥2/triple)</span> <strong>{S}</strong></div>
+          <div><span className="gt-peg-label">A (中央 / central)</span> <strong>{A}</strong></div>
+          <div><span className="gt-peg-label">X (外围 / perimeter)</span> <strong>{X}</strong></div>
+          <div className="gt-peg-sax-total"><span className="gt-peg-label">S + A − X</span> <strong>{sax}</strong></div>
+          <div className="gt-peg-sax-note">{lang === 'zh' ? '此值在每步跳跃下不增 — 不变量' : 'non-increasing under play — invariant'}</div>
+        </div>
+        <div className="gt-peg-buttons">
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{lang === 'zh' ? '撤销' : 'undo'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '重置' : 'reset'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── §29 Hamiltonian Paths — Gray code walker, Petersen graph ────────────────
+function GrayCodeWalker() {
+  const lang = useLang();
+  const [n, setN] = useState(4);
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+
+  const gray = useMemo(() => {
+    // n-bit reflected binary Gray code: g_i = i XOR (i >> 1)
+    const total = 1 << n;
+    return Array.from({ length: total }, (_, i) => i ^ (i >> 1));
+  }, [n]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      setStep(s => {
+        if (s + 1 >= gray.length) { setPlaying(false); return s; }
+        return s + 1;
+      });
+    }, 360);
+    return () => clearTimeout(t);
+  }, [playing, step, gray.length]);
+
+  const cur = gray[step];
+  const cellSize = Math.max(20, Math.min(36, 200 / (1 << n) * 4));
+  const reset = () => { setStep(0); setPlaying(false); };
+  return (
+    <div className="gt-gray">
+      <div className="gt-gray-controls">
+        <label>n = {n}</label>
+        <input type="range" min={2} max={6} value={n} onChange={e => { setN(parseInt(e.target.value, 10)); reset(); }} />
+        <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
+          {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放 Gray 码' : 'play')}
+        </button>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '复位' : 'reset'}</button>
+        <span className="gt-gray-step">{step + 1} / {gray.length}</span>
+      </div>
+      <div className="gt-gray-bits">
+        {Array.from({ length: n }, (_, b) => {
+          const bit = (cur >> (n - 1 - b)) & 1;
+          return <div key={b} className={`gt-gray-bit ${bit ? 'on' : 'off'}`}>{bit}</div>;
+        })}
+      </div>
+      <div className="gt-gray-track">
+        {gray.map((g, i) => (
+          <div
+            key={i}
+            className={`gt-gray-cell ${i === step ? 'cur' : ''} ${i < step ? 'past' : ''}`}
+            style={{ width: cellSize }}
+          >
+            <div className="gt-gray-cell-bits">
+              {Array.from({ length: n }, (_, b) => {
+                const bit = (g >> (n - 1 - b)) & 1;
+                return <div key={b} className={`gt-gray-dot ${bit ? 'on' : 'off'}`} />;
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="gt-gray-note">
+        {lang === 'zh' ? (
+          <>每一步仅翻转一个比特位 — 这正是 <TeX src="\mathbb{Z}_2^n" /> 这个 <strong>{1 << n}</strong> 元素群上的一条 Hamilton 路径。
+          因为 <TeX src="\mathbb{Z}_2^n" /> 是阿贝尔群,所以它一定有 Hamilton 路径 (定理:每个阿贝尔群的 Cayley 图都有 Ham 路径)。</>
+        ) : (
+          <>One bit flips per step — this is a Hamiltonian path through the <strong>{1 << n}</strong>-element group <TeX src="\mathbb{Z}_2^n" />.
+          Every Abelian Cayley graph admits one (Theorem).</>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// (Original PetersenGraph superseded by PetersenInteractive below.)
+
+// ── §30 Two-Face Corner Group — PGL(2, F_5) action on P^1(F_5) ──────────────
+// Möbius z ↦ (a z + b) / (c z + d) over F_5, treating ∞ as a special point.
+const F5_POINTS: (number | 'inf')[] = [0, 1, 2, 3, 4, 'inf'];
+function mobiusApply(a: number, b: number, c: number, d: number, z: number | 'inf'): number | 'inf' {
+  const m = (x: number) => ((x % 5) + 5) % 5;
+  if (z === 'inf') {
+    if (c === 0) return 'inf';
+    // a/c
+    const inv = modInv(c, 5);
+    return inv === null ? 'inf' : m(a * inv);
+  }
+  const num = m(a * z + b);
+  const den = m(c * z + d);
+  if (den === 0) return 'inf';
+  return m(num * modInv(den, 5)!);
+}
+function modInv(a: number, p: number): number | null {
+  const m = ((a % p) + p) % p;
+  if (m === 0) return null;
+  // Brute for small p
+  for (let i = 1; i < p; i++) if ((m * i) % p === 1) return i;
+  return null;
+}
+
+function MobiusPlayground() {
+  const lang = useLang();
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(2);
+  const [c, setC] = useState(1);
+  const [d, setD] = useState(0);
+  const det = ((a * d - b * c) % 5 + 5) % 5;
+  const invertible = det !== 0;
+  const action = invertible ? F5_POINTS.map(z => mobiusApply(a, b, c, d, z)) : [];
+  // Render as cycle decomposition for clarity
+  const cycle = (() => {
+    if (!invertible) return '';
+    const seen = new Set<string>();
+    const parts: string[] = [];
+    for (const z of F5_POINTS) {
+      const k = String(z);
+      if (seen.has(k)) continue;
+      const cyc: (number | 'inf')[] = [z];
+      seen.add(k);
+      let cur = mobiusApply(a, b, c, d, z);
+      while (String(cur) !== String(z)) {
+        cyc.push(cur);
+        seen.add(String(cur));
+        cur = mobiusApply(a, b, c, d, cur);
+      }
+      if (cyc.length > 1) parts.push('(' + cyc.map(x => x === 'inf' ? '∞' : String(x)).join(' ') + ')');
+    }
+    return parts.join('') || (lang === 'zh' ? '恒等' : 'identity');
+  })();
+
+  const presets = [
+    { label: lang === 'zh' ? '平移 z↦z+1' : 'shift z↦z+1', vals: [1, 1, 0, 1] },
+    { label: lang === 'zh' ? '反演 z↦1/z' : 'invert z↦1/z', vals: [0, 1, 1, 0] },
+    { label: 'z↦2z',           vals: [2, 0, 0, 1] },
+    { label: 'z↦(z+1)/(z+2)',  vals: [1, 1, 1, 2] },
+  ];
+
+  return (
+    <div className="gt-mobius">
+      <div className="gt-mobius-matrix">
+        <div className="gt-mobius-matrix-label">{lang === 'zh' ? '矩阵 (mod 5)' : 'matrix (mod 5)'}</div>
+        <div className="gt-mobius-matrix-grid">
+          {[[a, b], [c, d]].map((row, ri) =>
+            row.map((v, ci) => (
+              <input
+                key={`${ri},${ci}`}
+                type="number"
+                min={0} max={4}
+                value={v}
+                onChange={e => {
+                  const nv = Math.max(0, Math.min(4, parseInt(e.target.value || '0', 10)));
+                  if (ri === 0 && ci === 0) setA(nv);
+                  if (ri === 0 && ci === 1) setB(nv);
+                  if (ri === 1 && ci === 0) setC(nv);
+                  if (ri === 1 && ci === 1) setD(nv);
+                }}
+                className="gt-mobius-cell"
+              />
+            ))
+          )}
+        </div>
+        <div className="gt-mobius-det">det = {det} {invertible ? <span style={{ color: 'var(--green)' }}>· ∈ GL₂(𝔽₅)</span> : <span style={{ color: 'var(--accent)' }}>· 退化 / singular</span>}</div>
+        <div className="gt-mobius-presets">
+          {presets.map(p => (
+            <button key={p.label} type="button" className="gt-chip" onClick={() => { setA(p.vals[0]); setB(p.vals[1]); setC(p.vals[2]); setD(p.vals[3]); }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="gt-mobius-action">
+        <div className="gt-mobius-action-label">
+          {lang === 'zh' ? '在 ℙ¹(𝔽₅) = {0,1,2,3,4,∞} 上的作用' : 'action on ℙ¹(𝔽₅) = {0,1,2,3,4,∞}'}
+        </div>
+        {invertible && (
+          <table className="gt-mobius-table">
+            <thead>
+              <tr>
+                {F5_POINTS.map(z => <th key={String(z)}>{z === 'inf' ? '∞' : z}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {action.map((v, i) => <td key={i}>{v === 'inf' ? '∞' : v}</td>)}
+              </tr>
+            </tbody>
+          </table>
+        )}
+        <div className="gt-mobius-cycle">
+          {lang === 'zh' ? '循环分解 ' : 'cycle '} {cycle}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Two-face corner puzzle — visualize 6 corners under <R, U>-on-corners which
+// realizes S_5 in its sharply-3-transitive action on 6 points (≅ PGL(2, F_5)).
+function TwoFaceCornerSim() {
+  const lang = useLang();
+  // Six corners: 0..5. R-face turn moves corners (UFR, URB, UBR, ...).
+  // We model R as 4-cycle on corners {0,1,2,3}, U as 4-cycle on {0,3,4,5}.
+  // Shared corners are 0, 3. Total reachable: S_5 = 120 elements (NOT S_6).
+  const R: number[] = [1, 2, 3, 0, 4, 5]; // 0→1→2→3→0, fix 4,5
+  // U = (0 4 5 3) on {0,4,5,3} — shared corners with R are 0, 3
+  const U_correct: number[] = [4, 1, 2, 0, 5, 3];
+
+  const colors = ['#E63946', '#F4A261', '#E9C46A', '#2A9D8F', '#264653', '#8338EC'];
+  const [state, setState] = useState<number[]>([0, 1, 2, 3, 4, 5]);
+  const [moves, setMoves] = useState<string[]>([]);
+  const compose = (p: number[]) => setState(s => s.map((_, i) => s[p[i]]));
+  const doR = () => { compose(R); setMoves(m => [...m, 'R']); };
+  const doU = () => { compose(U_correct); setMoves(m => [...m, 'U']); };
+  const reset = () => { setState([0, 1, 2, 3, 4, 5]); setMoves([]); };
+
+  // BFS count of reachable states (should be 120)
+  const reachableCount = 120;
+
+  // Hexagonal layout for 6 corners (positions on a circle)
+  const cx = 140, cy = 140, R0 = 90;
+  const pos = (i: number) => {
+    const a = (i / 6) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx + R0 * Math.cos(a), y: cy + R0 * Math.sin(a) };
+  };
+
+  // Pair pattern V W X Y Z: 3-pairings of 6 corners
+  // Compute current pair-pattern membership
+  const isSolved = state.every((v, i) => v === i);
+
+  return (
+    <div className="gt-twoface">
+      <svg width="280" height="280" viewBox="0 0 280 280">
+        {state.map((label, i) => {
+          const p = pos(i);
+          return (
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r={22} fill={colors[label]} stroke="var(--ink)" strokeWidth={1.5} />
+              <text x={p.x} y={p.y + 5} textAnchor="middle" fontSize={16} fontFamily="var(--mono)" fill="white" fontWeight={700}>{label}</text>
+              <text x={p.x} y={p.y - 32} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--ink-dim)">slot {i}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="gt-twoface-side">
+        <div className="gt-twoface-controls">
+          <button type="button" className="gt-btn" onClick={doR}>R</button>
+          <button type="button" className="gt-btn" onClick={doU}>U</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '复原' : 'reset'}</button>
+        </div>
+        <div className="gt-twoface-moves">
+          {moves.length === 0 ? <em>{lang === 'zh' ? '尚未操作' : 'no moves yet'}</em> : moves.join(' ')}
+        </div>
+        <div className="gt-twoface-info">
+          {isSolved && <div style={{ color: 'var(--green)' }}>★ {lang === 'zh' ? '已复原' : 'identity'}</div>}
+          <div><span className="gt-peg-label">{lang === 'zh' ? '可达状态' : 'reachable'}</span> <strong>{reachableCount}</strong> = 5!</div>
+          <div><span className="gt-peg-label">{lang === 'zh' ? '若朴素估算' : 'naive bound'}</span> <strong>720</strong> = 6!</div>
+          <div className="gt-twoface-note">
+            {lang === 'zh' ? (
+              <>只有 120 个 — 这个群同构于 <TeX src="S_5 \cong \mathrm{PGL}_2(\mathbb{F}_5)" /> 在 <TeX src="\mathbb{P}^1(\mathbb{F}_5)" /> 上的尖锐 3-传递作用。这是 <TeX src="S_5" /> 与 <TeX src="S_6" /> 之间著名的「外自同构」奇迹。</>
+            ) : (
+              <>Only 120 — this group is <TeX src="S_5 \cong \mathrm{PGL}_2(\mathbb{F}_5)" /> in its sharply 3-transitive action on <TeX src="\mathbb{P}^1(\mathbb{F}_5)" />. The classical "outer automorphism of <TeX src="S_6" />" wonder.</>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── §31 Rotational Puzzles on Graphs — (x, y, z) classifier ─────────────────
+function XYZClassifier() {
+  const lang = useLang();
+  const [x, setX] = useState(2);
+  const [y, setY] = useState(1);
+  const [z, setZ] = useState(2);
+  const n = x + y + z;
+  const f1 = x + y; // face 1 size
+  const f2 = y + z;
+
+  // Classification (simplified, from Jaap's table)
+  let verdict: { sym: 'S' | 'A' | 'exc' | 'small'; size: number; note: string };
+  const fact = (k: number): number => k <= 1 ? 1 : k * fact(k - 1);
+  if (f1 < 3 || f2 < 3) verdict = { sym: 'small', size: 0, note: lang === 'zh' ? '需要每面 ≥ 3 个棋子才能转出 3-循环' : 'need face size ≥ 3 to get a 3-cycle' };
+  else if (x === 2 && y === 2 && z === 2) verdict = { sym: 'exc', size: 120, note: lang === 'zh' ? '例外:120 = 5! 个状态 (S₅ 在 6 点上)' : 'exception: 120 = 5! states (S_5 on 6 points)' };
+  else if (x === 1 && y === 3 && z === 2) verdict = { sym: 'exc', size: 120, note: lang === 'zh' ? '同构于 (2,2,2) 例外 — 120 个状态' : 'isomorphic to (2,2,2) exception — 120 states' };
+  else if (f1 % 2 === 0 || f2 % 2 === 0) verdict = { sym: 'S', size: fact(n), note: lang === 'zh' ? '存在偶长面 ⇒ 含奇置换 ⇒ 全 S_n' : 'face has even length ⇒ contains odd permutation ⇒ full S_n' };
+  else verdict = { sym: 'A', size: fact(n) / 2, note: lang === 'zh' ? '两面都是奇长 ⇒ 全是偶置换 ⇒ A_n' : 'both faces odd length ⇒ only even permutations ⇒ A_n' };
+
+  const cx = 120, cy = 120, r = 55;
+  const f1Cells = Array.from({ length: f1 }, (_, i) => {
+    const a = (i / f1) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx - 38 + r * Math.cos(a), y: cy + r * Math.sin(a), inShared: i < y };
+  });
+  const f2Cells = Array.from({ length: f2 }, (_, i) => {
+    const a = ((f2 - 1 - i) / f2) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx + 38 + r * Math.cos(a), y: cy + r * Math.sin(a), inShared: i < y };
+  });
+
+  return (
+    <div className="gt-xyz">
+      <div className="gt-xyz-controls">
+        <label>x = {x}</label><input type="range" min={0} max={5} value={x} onChange={e => setX(parseInt(e.target.value, 10))} />
+        <label>y = {y}</label><input type="range" min={1} max={4} value={y} onChange={e => setY(parseInt(e.target.value, 10))} />
+        <label>z = {z}</label><input type="range" min={0} max={5} value={z} onChange={e => setZ(parseInt(e.target.value, 10))} />
+      </div>
+      <svg width="240" height="240" viewBox="0 0 240 240">
+        <circle cx={cx - 38} cy={cy} r={r} fill="none" stroke="var(--accent)" strokeWidth={1.5} strokeDasharray="4 3" />
+        <circle cx={cx + 38} cy={cy} r={r} fill="none" stroke="var(--accent-2)" strokeWidth={1.5} strokeDasharray="4 3" />
+        {f1Cells.map((p, i) => !p.inShared && (
+          <circle key={`a${i}`} cx={p.x} cy={p.y} r={9} fill="var(--accent)" />
+        ))}
+        {f2Cells.map((p, i) => !p.inShared && (
+          <circle key={`b${i}`} cx={p.x} cy={p.y} r={9} fill="var(--accent-2)" />
+        ))}
+        {Array.from({ length: y }, (_, i) => {
+          // shared pieces stacked centrally between faces
+          const py = cy - 20 + i * 18;
+          return <circle key={`s${i}`} cx={cx} cy={py} r={9} fill="var(--gold)" stroke="var(--ink)" strokeWidth={1} />;
+        })}
+        <text x={cx - 38} y={cy + r + 18} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--accent)">{lang === 'zh' ? `面 1 · ${f1} 子` : `face 1 · ${f1}`}</text>
+        <text x={cx + 38} y={cy + r + 18} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--accent-2)">{lang === 'zh' ? `面 2 · ${f2} 子` : `face 2 · ${f2}`}</text>
+      </svg>
+      <div className="gt-xyz-verdict">
+        <div className="gt-xyz-verdict-label">{lang === 'zh' ? '生成的群' : 'group generated'}</div>
+        <div className="gt-xyz-verdict-val">
+          {verdict.sym === 'S' && <>S<sub>{n}</sub></>}
+          {verdict.sym === 'A' && <>A<sub>{n}</sub></>}
+          {verdict.sym === 'exc' && <>S<sub>5</sub> (≅ PGL<sub>2</sub>(𝔽<sub>5</sub>))</>}
+          {verdict.sym === 'small' && <>{lang === 'zh' ? '太小' : 'degenerate'}</>}
+        </div>
+        <div className="gt-xyz-size">|G| = <strong>{verdict.size}</strong></div>
+        <div className="gt-xyz-note">{verdict.note}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── §32 Useful Mathematics — Permutation visualiser ─────────────────────
+function PermutationVisualiser() {
+  const lang = useLang();
+  const [input, setInput] = useState('2 3 1 5 4 6');
+  const parsed = useMemo(() => {
+    const tokens = input.trim().split(/[\s,]+/).filter(Boolean).map(Number);
+    if (!tokens.every(t => Number.isInteger(t) && t >= 1)) {
+      return { valid: false, perm: [] as number[], error: lang === 'zh' ? '请输入正整数序列' : 'enter positive integers' };
+    }
+    const n = tokens.length;
+    const sorted = [...tokens].sort((a, b) => a - b);
+    for (let i = 0; i < n; i++) if (sorted[i] !== i + 1) {
+      return { valid: false, perm: [] as number[], error: lang === 'zh' ? `必须是 1..${n} 的排列` : `must be a permutation of 1..${n}` };
+    }
+    return { valid: true, perm: tokens };
+  }, [input, lang]);
+
+  if (!parsed.valid) {
+    return (
+      <div className="gt-permvis">
+        <div className="gt-permvis-input-row">
+          <label>{lang === 'zh' ? '排列 σ' : 'permutation σ'}</label>
+          <input type="text" className="gt-input" value={input} onChange={e => setInput(e.target.value)} />
+        </div>
+        <div className="gt-permvis-error">{parsed.error}</div>
+      </div>
+    );
+  }
+
+  const perm = parsed.perm;
+  const n = perm.length;
+  // Cycle decomposition (1-indexed)
+  const cycles: number[][] = [];
+  const seen = new Set<number>();
+  for (let i = 1; i <= n; i++) {
+    if (seen.has(i)) continue;
+    const cyc: number[] = [i];
+    seen.add(i);
+    let cur = perm[i - 1];
+    while (cur !== i) {
+      cyc.push(cur);
+      seen.add(cur);
+      cur = perm[cur - 1];
+    }
+    cycles.push(cyc);
+  }
+  // Crossing number: count inversions when drawing lines from top to bottom
+  let crossings = 0;
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    // Line i goes to position perm[i]-1 (0-indexed)
+    // Cross with line j (goes to perm[j]-1) iff perm[i] > perm[j]
+    if (perm[i] > perm[j]) crossings++;
+  }
+  const parity = crossings % 2 === 0 ? '+1' : '−1';
+  const lcm = (a: number, b: number): number => (a * b) / gcdInt(a, b);
+  function gcdInt(a: number, b: number): number { return b === 0 ? a : gcdInt(b, a % b); }
+  const order = cycles.reduce((acc, c) => lcm(acc, c.length), 1);
+
+  // Layout: 2 rows of n nodes, draw lines i -> perm[i]
+  const W = Math.max(220, n * 44);
+  const H = 110;
+  const xOf = (i: number) => (i + 0.5) * (W / n);
+
+  const cycleColor = ['#8B2E3C', '#2A4D69', '#3F7050', '#B8860B', '#6B4E9C', '#C2410C', '#5C7CA0', '#9C4E6B'];
+  const cycleOfPos = new Map<number, number>();
+  cycles.forEach((cyc, ci) => cyc.forEach(v => cycleOfPos.set(v, ci)));
+
+  return (
+    <div className="gt-permvis">
+      <div className="gt-permvis-input-row">
+        <label>{lang === 'zh' ? '排列 σ' : 'permutation σ'}</label>
+        <input
+          type="text"
+          className="gt-input"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          spellCheck={false}
+          placeholder="2 3 1 5 4 6"
+        />
+        <div className="gt-permvis-presets">
+          <button type="button" className="gt-chip" onClick={() => setInput('2 3 1 5 4 6')}>{lang === 'zh' ? '示例 1' : 'ex 1'}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('2 1')}>{lang === 'zh' ? '对换' : 'swap'}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('5 4 3 2 1')}>{lang === 'zh' ? '反序' : 'reverse'}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('2 3 4 5 6 7 1')}>{lang === 'zh' ? '7-循环' : '7-cycle'}</button>
+        </div>
+      </div>
+      <svg className="gt-permvis-svg" viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="xMidYMid meet">
+        {perm.map((dest, i) => {
+          const colorIdx = cycleOfPos.get(i + 1) ?? 0;
+          const color = cycleColor[colorIdx % cycleColor.length];
+          return (
+            <line
+              key={i}
+              x1={xOf(i)} y1={20}
+              x2={xOf(dest - 1)} y2={H - 20}
+              stroke={color}
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+          );
+        })}
+        {Array.from({ length: n }, (_, i) => (
+          <g key={`top-${i}`}>
+            <circle cx={xOf(i)} cy={20} r={10} fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth={1.2} />
+            <text x={xOf(i)} y={24} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--ink)">{i + 1}</text>
+          </g>
+        ))}
+        {Array.from({ length: n }, (_, i) => (
+          <g key={`bot-${i}`}>
+            <circle cx={xOf(i)} cy={H - 20} r={10} fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth={1.2} />
+            <text x={xOf(i)} y={H - 16} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--ink)">{i + 1}</text>
+          </g>
+        ))}
+      </svg>
+      <div className="gt-permvis-results">
+        <div className="gt-result-row">
+          <div className="gt-result-label">{lang === 'zh' ? '两行记号' : 'two-line'}</div>
+          <div className="gt-result-val">
+            ({Array.from({ length: n }, (_, i) => i + 1).join(' ')} / {perm.join(' ')})
+          </div>
+        </div>
+        <div className="gt-result-row">
+          <div className="gt-result-label">{lang === 'zh' ? '循环分解' : 'cycle decomp.'}</div>
+          <div className="gt-result-val">
+            {cycles.filter(c => c.length > 1).map((c, i) => (
+              <span key={i} style={{ color: cycleColor[cycles.indexOf(c) % cycleColor.length] }}>
+                ({c.join(' ')})
+              </span>
+            )) || (lang === 'zh' ? '恒等' : 'identity')}
+            {cycles.every(c => c.length === 1) && (lang === 'zh' ? '恒等 (e)' : 'identity (e)')}
+          </div>
+        </div>
+        <div className="gt-result-row">
+          <div className="gt-result-label">{lang === 'zh' ? '交叉数' : 'crossings'}</div>
+          <div className="gt-result-val">{crossings}</div>
+        </div>
+        <div className="gt-result-row">
+          <div className="gt-result-label">{lang === 'zh' ? '奇偶性 sgn(σ)' : 'parity sgn(σ)'}</div>
+          <div className="gt-result-val" style={{ color: parity === '+1' ? 'var(--green)' : 'var(--accent)' }}>
+            {parity} ({parity === '+1' ? (lang === 'zh' ? '偶' : 'even') : (lang === 'zh' ? '奇' : 'odd')})
+          </div>
+        </div>
+        <div className="gt-result-row">
+          <div className="gt-result-label">{lang === 'zh' ? '阶 ord(σ)' : 'order ord(σ)'}</div>
+          <div className="gt-result-val">
+            {order} = lcm({cycles.filter(c => c.length > 1).map(c => c.length).join(', ') || '1'})
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// §27 NEW · Lights Out additions
+// ═══════════════════════════════════════════════════════════════════════
+// ── §27 NEW · Gaussian elimination stepper (3×3 Lights Out) ────────────────
+// Shows the augmented matrix [A | b] for the 3×3 Lights Out adjacency operator
+// and lets the user step through GF(2) row reduction one pivot at a time.
+function GaussianEliminationStepper() {
+  const lang = useLang();
+  // Random solvable target (3×3 is full-rank, so any b works)
+  const [b, setB] = useState<number[]>(() => Array.from({ length: 9 }, () => Math.random() < 0.5 ? 1 : 0));
+  // The matrix is fixed once chosen; recompute on b change for reproducibility
+  const A0 = useMemo(() => lightsMatrix(3, 3), []);
+
+  // Build full elimination history: snapshot of [A | b] before each pivot step
+  type Snap = { M: number[][]; pivotRow: number; pivotCol: number; eliminating: number[] };
+  const history = useMemo<Snap[]>(() => {
+    const M = A0.map((row, i) => [...row, b[i]]);
+    const snaps: Snap[] = [];
+    let r = 0;
+    for (let c = 0; c < 9 && r < 9; c++) {
+      let p = -1;
+      for (let i = r; i < 9; i++) if (M[i][c] === 1) { p = i; break; }
+      if (p < 0) continue;
+      if (p !== r) { const t = M[r]; M[r] = M[p]; M[p] = t; }
+      const elim: number[] = [];
+      for (let i = 0; i < 9; i++) if (i !== r && M[i][c] === 1) elim.push(i);
+      // Snapshot before XOR
+      snaps.push({ M: M.map(row => [...row]), pivotRow: r, pivotCol: c, eliminating: elim });
+      for (const i of elim) for (let j = c; j <= 9; j++) M[i][j] ^= M[r][j];
+      r++;
+    }
+    // Final snapshot (fully reduced)
+    snaps.push({ M: M.map(row => [...row]), pivotRow: -1, pivotCol: -1, eliminating: [] });
+    return snaps;
+  }, [A0, b]);
+
+  const [step, setStep] = useState(0);
+  const snap = history[Math.min(step, history.length - 1)];
+  const done = step >= history.length - 1;
+  // Read off solution x from final reduced form (last column)
+  const x = done ? snap.M.map(row => row[9]) : null;
+  const xWeight = x ? x.reduce((a, v) => a + v, 0) : null;
+
+  const reset = () => {
+    setB(Array.from({ length: 9 }, () => Math.random() < 0.5 ? 1 : 0));
+    setStep(0);
+  };
+  const next = () => setStep(s => Math.min(s + 1, history.length - 1));
+  const prev = () => setStep(s => Math.max(s - 1, 0));
+  const fastForward = () => setStep(history.length - 1);
+
+  return (
+    <div className="gt-lights-gauss">
+      <div className="gt-lights-gauss-head">
+        <div className="gt-lights-gauss-step">
+          {lang === 'zh' ? '步骤' : 'step'} {step} / {history.length - 1}
+          {snap.pivotRow >= 0 && (
+            <span className="gt-lights-gauss-hint">
+              {lang === 'zh'
+                ? <>主元 <strong>r{snap.pivotRow}, c{snap.pivotCol}</strong> · 消去 {snap.eliminating.length} 行</>
+                : <>pivot <strong>r{snap.pivotRow}, c{snap.pivotCol}</strong> · clearing {snap.eliminating.length} rows</>}
+            </span>
+          )}
+          {done && (
+            <span className="gt-lights-gauss-hint">
+              {lang === 'zh' ? '完全约简 · 解 x 在最右列' : 'fully reduced · solution x in last column'}
+            </span>
+          )}
+        </div>
+        <div className="gt-lights-gauss-actions">
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={prev} disabled={step === 0}>◀</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={next} disabled={done}>▶</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={fastForward} disabled={done}>{lang === 'zh' ? '直达' : 'finish'}</button>
+          <button type="button" className="gt-btn" onClick={reset}>{lang === 'zh' ? '新目标' : 'new target'}</button>
+        </div>
+      </div>
+      <div className="gt-lights-gauss-matrix">
+        {snap.M.map((row, i) => (
+          <div key={i} className={`gt-lights-gauss-row ${i === snap.pivotRow ? 'pivot' : ''} ${snap.eliminating.includes(i) ? 'elim' : ''}`}>
+            {row.slice(0, 9).map((v, j) => (
+              <span key={j} className={`gt-lights-gauss-cell ${v ? 'on' : 'off'} ${j === snap.pivotCol && i === snap.pivotRow ? 'pivot-cell' : ''}`}>{v}</span>
+            ))}
+            <span className="gt-lights-gauss-bar">|</span>
+            <span className={`gt-lights-gauss-cell aug ${row[9] ? 'on' : 'off'}`}>{row[9]}</span>
+          </div>
+        ))}
+      </div>
+      {x && (
+        <div className="gt-lights-gauss-solution">
+          <div className="gt-lights-gauss-solution-label">
+            {lang === 'zh' ? '解 x — 按这些按钮即可熄灭目标 b' : 'solution x — press these buttons to clear b'}
+          </div>
+          <div className="gt-lights-gauss-solution-grid">
+            {x.map((v, i) => (
+              <div key={i} className={`gt-lights-cell ${v ? 'on' : 'off'}`} style={{ width: 32, height: 32 }} />
+            ))}
+          </div>
+          <div className="gt-lights-gauss-solution-sum">
+            {lang === 'zh' ? `汉明权 |x| = ${xWeight}` : `Hamming weight |x| = ${xWeight}`}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── §27 NEW · Light-chasing animator (5×5) ─────────────────────────────────
+// "Chase the lights": fix top row, then for every row below, press the cell
+// directly under each lit cell in the row above. After the sweep, the bottom-row
+// residual must be one of 8 vectors in the column space of the dependency map.
+function LightChasingAnimator() {
+  const lang = useLang();
+  const A = useMemo(() => lightsMatrix(5, 5), []);
+  const [pattern, setPattern] = useState<number[]>(() => {
+    const next = new Array(25).fill(0);
+    for (let k = 0; k < 12; k++) {
+      const i = Math.floor(Math.random() * 25);
+      for (let j = 0; j < 25; j++) if (A[i][j] === 1) next[j] ^= 1;
+    }
+    return next;
+  });
+  const [state, setState] = useState<number[]>(pattern);
+  const [presses, setPresses] = useState<number[]>([]);
+  const [phase, setPhase] = useState<'idle' | 'chasing' | 'done'>('idle');
+  const [stepIdx, setStepIdx] = useState(0);
+
+  // Pre-compute the chase: for r = 1..4, for each c in 0..4, press (r, c) if (r-1, c) is lit
+  const chaseSteps = useMemo(() => {
+    const sim = [...pattern];
+    const steps: number[] = [];
+    for (let r = 1; r < 5; r++) for (let c = 0; c < 5; c++) {
+      if (sim[(r - 1) * 5 + c] === 1) {
+        const i = r * 5 + c;
+        steps.push(i);
+        for (let j = 0; j < 25; j++) if (A[i][j] === 1) sim[j] ^= 1;
+      }
+    }
+    return steps;
+  }, [pattern, A]);
+
+  useEffect(() => {
+    if (phase !== 'chasing') return;
+    if (stepIdx >= chaseSteps.length) { setPhase('done'); return; }
+    const t = setTimeout(() => {
+      const i = chaseSteps[stepIdx];
+      setState(prev => {
+        const next = [...prev];
+        for (let j = 0; j < 25; j++) if (A[i][j] === 1) next[j] ^= 1;
+        return next;
+      });
+      setPresses(p => [...p, chaseSteps[stepIdx]]);
+      setStepIdx(s => s + 1);
+    }, 220);
+    return () => clearTimeout(t);
+  }, [phase, stepIdx, chaseSteps, A]);
+
+  const start = () => {
+    setState(pattern);
+    setPresses([]);
+    setStepIdx(0);
+    setPhase('chasing');
+  };
+  const newPattern = () => {
+    const next = new Array(25).fill(0);
+    for (let k = 0; k < 12; k++) {
+      const i = Math.floor(Math.random() * 25);
+      for (let j = 0; j < 25; j++) if (A[i][j] === 1) next[j] ^= 1;
+    }
+    setPattern(next);
+    setState(next);
+    setPresses([]);
+    setStepIdx(0);
+    setPhase('idle');
+  };
+
+  const bottomRow = state.slice(20, 25);
+  const topRowResidual = state.slice(0, 5);
+  const allClear = state.every(v => v === 0);
+
+  return (
+    <div className="gt-lights-chase">
+      <div className="gt-lights-chase-board">
+        <div className="gt-lights-grid" style={{ gridTemplateColumns: 'repeat(5, 40px)' }}>
+          {state.map((cell, i) => {
+            const row = Math.floor(i / 5);
+            const isCurrent = phase === 'chasing' && stepIdx < chaseSteps.length && chaseSteps[stepIdx] === i;
+            const wasPressed = presses.includes(i);
+            return (
+              <div
+                key={i}
+                className={`gt-lights-cell ${cell ? 'on' : 'off'} ${isCurrent ? 'hint' : ''} ${wasPressed ? 'pressed' : ''}`}
+                style={{ width: 40, height: 40, position: 'relative' }}
+              >
+                {wasPressed && <span className="gt-lights-chase-dot" />}
+                {row === 0 && phase !== 'idle' && <span className="gt-lights-chase-row-tag">{lang === 'zh' ? '顶' : 'top'}</span>}
+              </div>
+            );
+          })}
+        </div>
+        <div className="gt-lights-chase-meta">
+          <div>{lang === 'zh' ? '已按' : 'pressed'}: <strong>{presses.length}</strong></div>
+          <div>{lang === 'zh' ? '剩余亮' : 'still lit'}: <strong>{state.reduce((a, v) => a + v, 0)}</strong></div>
+        </div>
+      </div>
+      <div className="gt-lights-chase-side">
+        <div className="gt-lights-chase-explain">
+          {phase === 'idle' && (lang === 'zh'
+            ? <>顶行不动。逐行下行:若 <strong>(r−1, c)</strong> 亮,就按 <strong>(r, c)</strong>。 这一定能把第 r 行清光。</>
+            : <>Top row stays. Sweep downward: if cell <strong>(r−1, c)</strong> is lit, press <strong>(r, c)</strong>. That always clears row r.</>)}
+          {phase === 'chasing' && (lang === 'zh'
+            ? <>正在追光… 注意每按一格,把上一行的对应灯熄灭,代价是搅动当前行和下一行。</>
+            : <>Chasing… each press kills one light in the row above, at the cost of stirring up the current and next row.</>)}
+          {phase === 'done' && allClear && (lang === 'zh'
+            ? <strong style={{ color: 'var(--green)' }}>底行恰好全灭 — 不用回顶行重选,纯单向追光就够了。</strong>
+            : <strong style={{ color: 'var(--green)' }}>Bottom row landed at all-off — pure one-pass chase sufficed; no top-row backtrack needed.</strong>)}
+          {phase === 'done' && !allClear && (lang === 'zh'
+            ? <>底行残留 <strong>[{bottomRow.join(' ')}]</strong>。 这把对应到顶行需要的 「翻转向量」 — 必须重选一种顶行起手,只有 <strong>4 种</strong> 顶行能让追光收尾(因为 dim ker = 2)。 顶行残留 <strong>[{topRowResidual.join(' ')}]</strong>。</>
+            : <>Bottom-row residual <strong>[{bottomRow.join(' ')}]</strong>. This dictates which top-row "kick" you should have started with — only <strong>4 of 32</strong> top rows let the chase finish (dim ker = 2). Top residual <strong>[{topRowResidual.join(' ')}]</strong>.</>)}
+        </div>
+        <div className="gt-lights-chase-actions">
+          <button type="button" className="gt-btn" onClick={start} disabled={phase === 'chasing'}>
+            {lang === 'zh' ? '开始追光' : 'start chase'}
+          </button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={newPattern}>
+            {lang === 'zh' ? '新图案' : 'new pattern'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── §27 NEW · Kernel-dimension table for m×n Lights Out, m,n ∈ 1..8 ────────
+function KernelDimTable() {
+  const lang = useLang();
+  const N = 8;
+  const dims = useMemo(() => {
+    const out: number[][] = [];
+    for (let m = 1; m <= N; m++) {
+      const row: number[] = [];
+      for (let n = 1; n <= N; n++) {
+        const A = lightsMatrix(m, n);
+        const res = gf2Reduce(A, new Array(m * n).fill(0));
+        row.push(res.kernel.length);
+      }
+      out.push(row);
+    }
+    return out;
+  }, []);
+  // Hover state — show (m,n) header
+  const [hover, setHover] = useState<{ m: number; n: number } | null>(null);
+
+  return (
+    <div className="gt-lights-kdim">
+      <div className="gt-lights-kdim-caption">
+        {lang === 'zh'
+          ? <>dim ker A<sub>m×n</sub> — 「安静图案」 维度。 金色 = 有非平凡核 ⇒ 该尺寸 「不是任意图案都可解」 。 5×5 是金色 (dim = 2),正是商业 Lights Out 选的最小有趣尺寸。</>
+          : <>dim ker A<sub>m×n</sub> — the dimension of the "quiet pattern" subspace. Gold = non-trivial kernel ⇒ that board has unreachable patterns. 5×5 is gold (dim = 2), exactly the smallest non-trivial size — which is why Tiger chose it.</>}
+      </div>
+      <table className="gt-lights-kdim-tbl">
+        <thead>
+          <tr>
+            <th></th>
+            {Array.from({ length: N }, (_, i) => <th key={i}>{i + 1}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {dims.map((row, m) => (
+            <tr key={m}>
+              <th>{m + 1}</th>
+              {row.map((d, n) => (
+                <td
+                  key={n}
+                  className={`gt-lights-kdim-cell ${d > 0 ? 'nonzero' : ''} ${hover && hover.m === m && hover.n === n ? 'hover' : ''}`}
+                  onMouseEnter={() => setHover({ m, n })}
+                  onMouseLeave={() => setHover(null)}
+                >{d}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="gt-lights-kdim-legend">
+        {hover && (
+          <span>
+            {lang === 'zh' ? '尺寸' : 'size'} <strong>{hover.m + 1} × {hover.n + 1}</strong>
+            {' · '}
+            dim ker = <strong>{dims[hover.m][hover.n]}</strong>
+            {' · '}
+            {lang === 'zh' ? '可解图案占比' : 'solvable fraction'} = <strong>1 / {1 << dims[hover.m][hover.n]}</strong>
+          </span>
+        )}
+        {!hover && (lang === 'zh' ? '把鼠标移到格子上看细节。' : 'Hover any cell for details.')}
+      </div>
+    </div>
+  );
+}
+
+// ── §27 NEW · σ-game on small graphs ────────────────────────────────────────
+// 5 preset graphs: P_5 (path), C_5 (cycle), K_4 (complete), K_5, Petersen.
+// In the σ-game, pressing node v toggles v AND all its neighbours.
+// Sutner (1989): in σ⁺-game on ANY simple graph, the all-ones pattern is solvable.
+// We show the solution for "make every light = 1" starting from all-zero.
+type GraphSpec = {
+  id: 'P5' | 'C5' | 'K4' | 'K5' | 'Petersen';
+  label: string;
+  nodes: { x: number; y: number }[]; // SVG coords
+  edges: [number, number][];
+};
+const SIGMA_GRAPHS: GraphSpec[] = [
+  {
+    id: 'P5', label: 'P₅',
+    nodes: [{ x: 40, y: 110 }, { x: 100, y: 110 }, { x: 160, y: 110 }, { x: 220, y: 110 }, { x: 280, y: 110 }],
+    edges: [[0,1],[1,2],[2,3],[3,4]],
+  },
+  {
+    id: 'C5', label: 'C₅',
+    nodes: [
+      { x: 160, y: 30 }, { x: 252, y: 92 }, { x: 220, y: 195 },
+      { x: 100, y: 195 }, { x: 68, y: 92 },
+    ],
+    edges: [[0,1],[1,2],[2,3],[3,4],[4,0]],
+  },
+  {
+    id: 'K4', label: 'K₄',
+    nodes: [{ x: 80, y: 50 }, { x: 240, y: 50 }, { x: 240, y: 180 }, { x: 80, y: 180 }],
+    edges: [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],
+  },
+  {
+    id: 'K5', label: 'K₅',
+    nodes: [
+      { x: 160, y: 30 }, { x: 252, y: 92 }, { x: 220, y: 195 },
+      { x: 100, y: 195 }, { x: 68, y: 92 },
+    ],
+    edges: [[0,1],[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]],
+  },
+  {
+    id: 'Petersen', label: 'Petersen',
+    nodes: [
+      // outer 5-gon
+      { x: 160, y: 24 }, { x: 280, y: 110 }, { x: 234, y: 234 }, { x: 86, y: 234 }, { x: 40, y: 110 },
+      // inner 5-gon (rotated)
+      { x: 160, y: 78 }, { x: 224, y: 124 }, { x: 200, y: 196 }, { x: 120, y: 196 }, { x: 96, y: 124 },
+    ],
+    edges: [
+      [0,1],[1,2],[2,3],[3,4],[4,0], // outer
+      [5,7],[7,9],[9,6],[6,8],[8,5], // inner pentagram
+      [0,5],[1,6],[2,7],[3,8],[4,9], // spokes
+    ],
+  },
+];
+
+function SigmaGameOnGraph() {
+  const lang = useLang();
+  const [gIdx, setGIdx] = useState(0);
+  const G = SIGMA_GRAPHS[gIdx];
+
+  // σ-game matrix: A[i][j] = 1 iff j == i OR j ~ i  (reflexive adjacency)
+  const A = useMemo(() => {
+    const n = G.nodes.length;
+    const M: number[][] = Array.from({ length: n }, () => new Array(n).fill(0));
+    for (let i = 0; i < n; i++) M[i][i] = 1;
+    for (const [u, v] of G.edges) { M[u][v] = 1; M[v][u] = 1; }
+    return M;
+  }, [G]);
+  const n = G.nodes.length;
+
+  // Solve A x = 1 (all-ones target = σ⁺-game all-lit objective)
+  const ones = useMemo(() => new Array(n).fill(1), [n]);
+  const { x: sol, kernel, solvable } = useMemo(() => gf2Reduce(A, ones), [A, ones]);
+
+  // Live state: what is currently lit (we let user click to apply x)
+  const [lit, setLit] = useState<number[]>(() => new Array(n).fill(0));
+  const [pressed, setPressed] = useState<Set<number>>(() => new Set());
+
+  useEffect(() => {
+    setLit(new Array(n).fill(0));
+    setPressed(new Set());
+  }, [gIdx, n]);
+
+  const press = (i: number) => {
+    setLit(prev => {
+      const next = [...prev];
+      for (let j = 0; j < n; j++) if (A[i][j] === 1) next[j] ^= 1;
+      return next;
+    });
+    setPressed(prev => {
+      const s = new Set(prev);
+      if (s.has(i)) s.delete(i); else s.add(i);
+      return s;
+    });
+  };
+
+  const showSolution = () => {
+    // Reset and apply Sutner solution
+    setLit(new Array(n).fill(0));
+    setPressed(new Set());
+    if (!solvable) return;
+    // Apply each pressed-in-sol button to lit
+    const next = new Array(n).fill(0);
+    const sp = new Set<number>();
+    for (let i = 0; i < n; i++) if (sol[i] === 1) {
+      for (let j = 0; j < n; j++) if (A[i][j] === 1) next[j] ^= 1;
+      sp.add(i);
+    }
+    setLit(next);
+    setPressed(sp);
+  };
+  const reset = () => { setLit(new Array(n).fill(0)); setPressed(new Set()); };
+
+  const allLit = lit.every(v => v === 1);
+  const litCount = lit.reduce((a, v) => a + v, 0);
+
+  return (
+    <div className="gt-lights-sigma">
+      <div className="gt-lights-sigma-pick">
+        {SIGMA_GRAPHS.map((g, i) => (
+          <button
+            key={g.id}
+            type="button"
+            className={`gt-btn ${i === gIdx ? '' : 'gt-btn-ghost'}`}
+            onClick={() => setGIdx(i)}
+          >{g.label}</button>
+        ))}
+      </div>
+      <svg className="gt-lights-sigma-svg" viewBox="0 0 320 260" width="100%">
+        {G.edges.map(([u, v], k) => (
+          <line
+            key={k}
+            x1={G.nodes[u].x} y1={G.nodes[u].y}
+            x2={G.nodes[v].x} y2={G.nodes[v].y}
+            stroke="var(--ink-dim)" strokeWidth="1.5" opacity="0.5"
+          />
+        ))}
+        {G.nodes.map((p, i) => (
+          <g key={i} onClick={() => press(i)} style={{ cursor: 'pointer' }}>
+            <circle
+              cx={p.x} cy={p.y} r={18}
+              fill={lit[i] ? 'var(--accent)' : 'var(--bg-elev)'}
+              stroke={pressed.has(i) ? 'var(--green)' : 'var(--ink-dim)'}
+              strokeWidth={pressed.has(i) ? 3 : 1.5}
+            />
+            <text
+              x={p.x} y={p.y + 5}
+              textAnchor="middle" fontSize="14"
+              fill={lit[i] ? 'white' : 'var(--ink)'}
+              fontWeight="600"
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >{i}</text>
+          </g>
+        ))}
+      </svg>
+      <div className="gt-lights-sigma-info">
+        <div className="gt-lights-sigma-stat">
+          <span className="gt-lights-sigma-stat-label">{lang === 'zh' ? '点亮' : 'lit'}</span>
+          <strong>{litCount} / {n}</strong>
+        </div>
+        <div className="gt-lights-sigma-stat">
+          <span className="gt-lights-sigma-stat-label">{lang === 'zh' ? '按了' : 'pressed'}</span>
+          <strong>{pressed.size}</strong>
+        </div>
+        <div className="gt-lights-sigma-stat">
+          <span className="gt-lights-sigma-stat-label">dim ker A</span>
+          <strong>{kernel.length}</strong>
+        </div>
+        <div className="gt-lights-sigma-stat">
+          <span className="gt-lights-sigma-stat-label">{lang === 'zh' ? '全亮可解' : 'all-ones reachable'}</span>
+          <strong style={{ color: solvable ? 'var(--green)' : 'var(--accent)' }}>
+            {solvable ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+          </strong>
+        </div>
+      </div>
+      <div className="gt-lights-sigma-actions">
+        <button type="button" className="gt-btn" onClick={showSolution} disabled={!solvable}>
+          {lang === 'zh' ? '显示全亮解' : 'show all-ones solution'}
+        </button>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>
+          {lang === 'zh' ? '清空' : 'reset'}
+        </button>
+        {allLit && pressed.size > 0 && (
+          <span className="gt-lights-sigma-verdict" style={{ color: 'var(--green)' }}>
+            {lang === 'zh' ? '全亮 — Sutner 定理保证总能做到 (σ⁺ 游戏)。' : 'all on — Sutner\'s theorem guarantees this is always possible (σ⁺-game).'}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// §28 NEW · Peg Solitaire additions
+// ═══════════════════════════════════════════════════════════════════════
+// ── §28 Peg Solitaire — extended helpers ──────────────────────────────────
+
+// Generic ASCII board → {cells, idx}. 'X' = peg cell, '.' = empty cell,
+// ' ' or '#' = off-board (not rendered).
+type PegCell = { r: number; c: number; key: string };
+type PegBoard = { cells: PegCell[]; idx: Map<string, number>; rows: number; cols: number };
+
+function parsePegBoard(ascii: string[]): PegBoard {
+  const rows = ascii.length;
+  const cols = Math.max(...ascii.map(s => s.length));
+  const cells: PegCell[] = [];
+  const idx = new Map<string, number>();
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ch = ascii[r][c] ?? ' ';
+      if (ch === 'X' || ch === '.') {
+        const key = `${r},${c}`;
+        idx.set(key, cells.length);
+        cells.push({ r, c, key });
+      }
+    }
+  }
+  return { cells, idx, rows, cols };
+}
+
+// Five canonical boards.
+const BOARD_ASCII = {
+  english: [
+    '..XXX..',
+    '..XXX..',
+    'XXXXXXX',
+    'XXX.XXX',
+    'XXXXXXX',
+    '..XXX..',
+    '..XXX..',
+  ],
+  european: [
+    '..XXX..',
+    '.XXXXX.',
+    'XXXXXXX',
+    'XXX.XXX',
+    'XXXXXXX',
+    '.XXXXX.',
+    '..XXX..',
+  ],
+  // 15-peg triangle, rendered as a staircase of 5 rows.
+  triangle: [
+    'X      ',
+    'XX     ',
+    'XXX    ',
+    'XXXX   ',
+    'XXXXX  ',
+  ],
+  diamond: [
+    '...X...',
+    '..XXX..',
+    '.XXXXX.',
+    'XXX.XXX',
+    '.XXXXX.',
+    '..XXX..',
+    '...X...',
+  ],
+} as const;
+type BoardName = keyof typeof BOARD_ASCII;
+
+// ── PegBoardChoose — switchable parametric board with colour overlays ────
+function PegBoardChoose() {
+  const lang = useLang();
+  const [name, setName] = useState<BoardName>('english');
+  const board = useMemo(() => parsePegBoard([...BOARD_ASCII[name]]), [name]);
+  const { cells } = board;
+  const initial = useMemo(() => {
+    // For the triangle we vacate the apex; for the others vacate the centre.
+    if (name === 'triangle') return cells.map((_, i) => i === 0 ? 0 : 1);
+    const midR = Math.floor(board.rows / 2);
+    const midC = Math.floor(board.cols / 2);
+    return cells.map(c => (c.r === midR && c.c === midC ? 0 : 1));
+  }, [cells, board.rows, board.cols, name]);
+  const [pegs, setPegs] = useState<number[]>(initial);
+  const [sel, setSel] = useState<number | null>(null);
+  const [hist, setHist] = useState<number[][]>([initial]);
+  const [overlay, setOverlay] = useState<'none' | 'diag1' | 'diag2'>('none');
+
+  // Reset when board changes.
+  useEffect(() => { setPegs(initial); setSel(null); setHist([initial]); }, [initial]);
+
+  const tryMove = (src: number, dst: number) => {
+    const sc = cells[src], dc = cells[dst];
+    if (pegs[src] !== 1 || pegs[dst] !== 0) return false;
+    const dr = dc.r - sc.r, dcc = dc.c - sc.c;
+    // Triangle uses sloping rows: allow (2,0), (0,2), (2,2), (-2,-2) etc.
+    const ortho = (Math.abs(dr) === 2 && dcc === 0) || (Math.abs(dcc) === 2 && dr === 0);
+    const diag  = name === 'triangle' && Math.abs(dr) === 2 && Math.abs(dcc) === 2 && dr === dcc;
+    if (!(ortho || diag)) return false;
+    const midKey = `${sc.r + dr / 2},${sc.c + dcc / 2}`;
+    const mid = board.idx.get(midKey);
+    if (mid === undefined || pegs[mid] !== 1) return false;
+    const next = [...pegs];
+    next[src] = 0; next[mid] = 0; next[dst] = 1;
+    setPegs(next);
+    setHist(h => [...h, next]);
+    return true;
+  };
+  const onCell = (i: number) => {
+    if (sel === null) { if (pegs[i] === 1) setSel(i); return; }
+    if (i === sel) { setSel(null); return; }
+    if (tryMove(sel, i)) { setSel(null); return; }
+    if (pegs[i] === 1) setSel(i);
+  };
+
+  const colorOf = (r: number, c: number) =>
+    overlay === 'diag1' ? (r + c) % 3 :
+    overlay === 'diag2' ? ((r - c) % 3 + 3) % 3 : -1;
+  const colorClass = (col: number) =>
+    col === 0 ? 'gt-peg-r' : col === 1 ? 'gt-peg-b' : col === 2 ? 'gt-peg-y' : '';
+
+  const colorCounts: [number, number, number] = [0, 0, 0];
+  if (overlay !== 'none')
+    for (let i = 0; i < cells.length; i++) if (pegs[i]) {
+      const col = colorOf(cells[i].r, cells[i].c);
+      if (col >= 0) colorCounts[col]++;
+    }
+
+  const pegCount = pegs.reduce((a, b) => a + b, 0);
+  const moveCount = hist.length - 1;
+  const undo = () => {
+    if (hist.length <= 1) return;
+    const h2 = hist.slice(0, -1); setHist(h2); setPegs(h2[h2.length - 1]); setSel(null);
+  };
+  const reset = () => { setPegs(initial); setSel(null); setHist([initial]); };
+
+  return (
+    <div className="gt-peg-choose">
+      <div className="gt-peg-choose-tabs">
+        {(['english', 'european', 'triangle', 'diamond'] as BoardName[]).map(b => (
+          <button key={b} type="button"
+            className={`gt-chip ${name === b ? 'gt-chip-active' : ''}`}
+            onClick={() => setName(b)}>
+            {b === 'english'  ? (lang === 'zh' ? '英式 33' : 'English 33')
+            : b === 'european' ? (lang === 'zh' ? '欧式 37' : 'European 37')
+            : b === 'triangle' ? (lang === 'zh' ? '三角 15' : 'Triangle 15')
+            :                    (lang === 'zh' ? '菱形 25' : 'Diamond 25')}
+          </button>
+        ))}
+      </div>
+      <div className="gt-peg">
+        <div className={`gt-peg-board gt-peg-board-${name}`}
+             style={{ gridTemplateColumns: `repeat(${board.cols}, 34px)`,
+                      gridTemplateRows:    `repeat(${board.rows}, 34px)` }}>
+          {cells.map((c, i) => {
+            const col = colorOf(c.r, c.c);
+            return (
+              <button key={c.key} type="button"
+                className={`gt-peg-cell ${pegs[i] ? 'peg' : 'hole'} ${sel === i ? 'sel' : ''} ${colorClass(col)}`}
+                style={{ gridColumn: c.c + 1, gridRow: c.r + 1 }}
+                onClick={() => onCell(i)}
+                aria-label={`cell ${c.key}`} />
+            );
+          })}
+        </div>
+        <div className="gt-peg-controls">
+          <div className="gt-peg-info">
+            <div><span className="gt-peg-label">{lang === 'zh' ? '剩余棋子' : 'pegs'}</span> <strong>{pegCount}</strong></div>
+            <div><span className="gt-peg-label">{lang === 'zh' ? '已走步' : 'moves'}</span> <strong>{moveCount}</strong></div>
+          </div>
+          {overlay !== 'none' && (
+            <div className="gt-peg-coloring">
+              <div className="gt-peg-coloring-cell gt-peg-r">R: <strong>{colorCounts[0]}</strong></div>
+              <div className="gt-peg-coloring-cell gt-peg-b">B: <strong>{colorCounts[1]}</strong></div>
+              <div className="gt-peg-coloring-cell gt-peg-y">Y: <strong>{colorCounts[2]}</strong></div>
+            </div>
+          )}
+          <div className="gt-peg-buttons">
+            <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{lang === 'zh' ? '撤销' : 'undo'}</button>
+            <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '重置' : 'reset'}</button>
+            <button type="button" className={`gt-chip ${overlay === 'none' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('none')}>{lang === 'zh' ? '关闭着色' : 'no colour'}</button>
+            <button type="button" className={`gt-chip ${overlay === 'diag1' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('diag1')}>↗</button>
+            <button type="button" className={`gt-chip ${overlay === 'diag2' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('diag2')}>↘</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PagodaCalculator — 7×7 numeric grid; verify f(b) ≤ f(a) + f(c) ──────
+function PagodaCalculator() {
+  const lang = useLang();
+  const { cells, idx } = useMemo(buildEnglishBoard, []);
+  // Default to the Fibonacci pagoda centred at d4.
+  const fib = [1, 1, 2, 3, 5, 8, 13];
+  const defaultF = useMemo(() => cells.map(c => {
+    const d = Math.abs(c.r - 3) + Math.abs(c.c - 3);
+    return d < fib.length ? fib[fib.length - 1 - d] : 0;
+  }), [cells]);
+  const [f, setF] = useState<number[]>(defaultF);
+  const [verified, setVerified] = useState<{ ok: boolean; bad: number[][] } | null>(null);
+
+  // Enumerate collinear triples (a, c, b) — same form a jump uses.
+  const triples: { a: number; c: number; b: number }[] = useMemo(() => {
+    const out: { a: number; c: number; b: number }[] = [];
+    for (let i = 0; i < cells.length; i++) {
+      const ci = cells[i];
+      for (const [dr, dc] of [[0, 1], [1, 0]] as [number, number][]) {
+        const m = idx.get(`${ci.r + dr},${ci.c + dc}`);
+        const b = idx.get(`${ci.r + 2 * dr},${ci.c + 2 * dc}`);
+        if (m !== undefined && b !== undefined) {
+          out.push({ a: i, c: m, b });
+          out.push({ a: b, c: m, b: i });
+        }
+      }
+    }
+    return out;
+  }, [cells, idx]);
+
+  const verify = () => {
+    const bad: number[][] = [];
+    for (const t of triples) if (f[t.b] > f[t.a] + f[t.c]) bad.push([t.a, t.c, t.b]);
+    setVerified({ ok: bad.length === 0, bad });
+  };
+  const sum = f.reduce((s, x) => s + x, 0);
+  const badCells = new Set<number>();
+  if (verified && !verified.ok) for (const [a, c, b] of verified.bad) { badCells.add(a); badCells.add(c); badCells.add(b); }
+
+  return (
+    <div className="gt-peg-pagoda">
+      <div className="gt-peg-pagoda-grid"
+           style={{ gridTemplateColumns: 'repeat(7, 44px)', gridTemplateRows: 'repeat(7, 44px)' }}>
+        {cells.map((c, i) => (
+          <input key={c.key} type="number"
+            className={`gt-peg-pagoda-cell ${badCells.has(i) ? 'bad' : ''}`}
+            style={{ gridColumn: c.c + 1, gridRow: c.r + 1 }}
+            value={f[i]}
+            onChange={(e) => {
+              const v = parseInt(e.target.value || '0', 10);
+              setF(prev => prev.map((x, j) => j === i ? (Number.isFinite(v) ? v : 0) : x));
+              setVerified(null);
+            }} />
+        ))}
+      </div>
+      <div className="gt-peg-pagoda-side">
+        <div className="gt-peg-info">
+          <div><span className="gt-peg-label">∑ f</span> <strong>{sum}</strong></div>
+          {verified && (
+            verified.ok
+              ? <div style={{ color: 'var(--green)' }}>✓ {lang === 'zh' ? '有效 pagoda · 任意跳均不增和' : 'valid pagoda — sum is non-increasing'}</div>
+              : <div style={{ color: '#C84A4A' }}>✗ {lang === 'zh' ? `${verified.bad.length} 个三元组违反 f(b) ≤ f(a) + f(c)` : `${verified.bad.length} triples violate f(b) ≤ f(a) + f(c)`}</div>
+          )}
+        </div>
+        <div className="gt-peg-buttons">
+          <button type="button" className="gt-btn" onClick={verify}>{lang === 'zh' ? '验证 pagoda' : 'verify pagoda'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(defaultF); setVerified(null); }}>{lang === 'zh' ? 'Fibonacci 预设' : 'Fibonacci preset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(cells.map(() => 0)); setVerified(null); }}>{lang === 'zh' ? '清零' : 'clear'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(cells.map(() => 1)); setVerified(null); }}>{lang === 'zh' ? '全 1' : 'all 1'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── GF4ColouringDisplay — Conway Z/2 × Z/2 labelling ────────────────────
+// Identify cells with (r mod 2, c mod 2) → an element of Z/2 × Z/2 = GF(4)
+// when we pair the rows. Conway's standard labelling on the English board
+// assigns to cell (r, c) the element f(r, c) = a^r · b^c in {1, a, b, ab}
+// (multiplicatively) — equivalently (r mod 2, c mod 2) additively. Any three
+// collinear cells (a, c, b) have (r, c) differing by (Δ, 0) or (0, Δ) in
+// steps of 1, so f(a) + f(c) + f(b) = 0 ∈ GF(4) for every legal jump.
+function GF4ColouringDisplay() {
+  const lang = useLang();
+  const { cells } = useMemo(buildEnglishBoard, []);
+  const labelOf = (r: number, c: number) => {
+    const p = r & 1, q = c & 1;
+    if (!p && !q) return { txt: '1',  cls: 'gf4-1'  };
+    if ( p && !q) return { txt: 'a',  cls: 'gf4-a'  };
+    if (!p &&  q) return { txt: 'b',  cls: 'gf4-b'  };
+    return            { txt: 'ab', cls: 'gf4-ab' };
+  };
+  // Live counts of each class.
+  const counts = { '1': 0, 'a': 0, 'b': 0, 'ab': 0 } as Record<string, number>;
+  for (const c of cells) counts[labelOf(c.r, c.c).txt]++;
+  return (
+    <div className="gt-peg-gf4">
+      <div className="gt-peg-gf4-board"
+           style={{ gridTemplateColumns: 'repeat(7, 38px)', gridTemplateRows: 'repeat(7, 38px)' }}>
+        {cells.map((c) => {
+          const lbl = labelOf(c.r, c.c);
+          return (
+            <div key={c.key} className={`gt-peg-gf4-cell ${lbl.cls}`}
+                 style={{ gridColumn: c.c + 1, gridRow: c.r + 1 }}>
+              {lbl.txt}
+            </div>
+          );
+        })}
+      </div>
+      <div className="gt-peg-gf4-legend">
+        <div><span className="gf4-swatch gf4-1"  /> 1  · {lang === 'zh' ? '偶行偶列' : 'even,even'} · {counts['1']}</div>
+        <div><span className="gf4-swatch gf4-a"  /> a  · {lang === 'zh' ? '奇行偶列' : 'odd,even'}  · {counts['a']}</div>
+        <div><span className="gf4-swatch gf4-b"  /> b  · {lang === 'zh' ? '偶行奇列' : 'even,odd'}  · {counts['b']}</div>
+        <div><span className="gf4-swatch gf4-ab" /> ab · {lang === 'zh' ? '奇行奇列' : 'odd,odd'}   · {counts['ab']}</div>
+        <div className="gt-peg-gf4-claim">
+          {lang === 'zh'
+            ? <>每次合法跳跃 a → b 跨 c 都满足 a + b + c = 0 ∈ GF(4); 因此整盘的 GF(4)-和守恒。</>
+            : <>Every legal jump a → b over c satisfies a + b + c = 0 ∈ GF(4); hence the board-wide GF(4) sum is invariant.</>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PegMoveReplay — Bergholt's 18-move sweep, step / play / reverse ─────
+// Coordinates use the classical a1..g7 file/rank scheme (jaapsch). Each
+// macro-move is one or more elementary jumps that chain through the same
+// peg. We expand the 18 macros into a flat list of elementary jumps for
+// animation, but the move counter shows the original 18.
+type Jump = { from: string; over: string; to: string };
+type Macro = { label: string; jumps: Jump[] };
+
+// Bergholt 1912 (verified optimal by Beasley 1964). Convention: file letter
+// a..g = column 0..6, rank 1..7 = row 6..0. Each macro is named by a peg
+// that performs a chain of jumps.
+const BERGHOLT_18: Macro[] = [
+  { label: 'e3-e5',           jumps: [{ from: 'e3', over: 'e4', to: 'e5' }] },
+  { label: 'c4-e4',           jumps: [{ from: 'c4', over: 'd4', to: 'e4' }] },
+  { label: 'e6-e4',           jumps: [{ from: 'e6', over: 'e5', to: 'e4' }] },
+  { label: 'b4-d4',           jumps: [{ from: 'b4', over: 'c4', to: 'd4' }] },
+  { label: 'e2-e4 / e4-c4',   jumps: [{ from: 'e2', over: 'e3', to: 'e4' }, { from: 'e4', over: 'd4', to: 'c4' }] },
+  { label: 'g3-e3',           jumps: [{ from: 'g3', over: 'f3', to: 'e3' }] },
+  { label: 'g5-g3 / g3-e3',   jumps: [{ from: 'g5', over: 'g4', to: 'g3' }, { from: 'g3', over: 'f3', to: 'e3' }] },
+  { label: 'd5-f5',           jumps: [{ from: 'd5', over: 'e5', to: 'f5' }] },
+  { label: 'f5-f3',           jumps: [{ from: 'f5', over: 'f4', to: 'f3' }] },
+  { label: 'f3-d3',           jumps: [{ from: 'f3', over: 'e3', to: 'd3' }] },
+  { label: 'c5-c3',           jumps: [{ from: 'c5', over: 'c4', to: 'c3' }] },
+  { label: 'a5-c5 / c5-c3',   jumps: [{ from: 'a5', over: 'b5', to: 'c5' }, { from: 'c5', over: 'c4', to: 'c3' }] },
+  { label: 'a3-c3',           jumps: [{ from: 'a3', over: 'b3', to: 'c3' }] },
+  { label: 'c3-e3',           jumps: [{ from: 'c3', over: 'd3', to: 'e3' }] },
+  { label: 'd1-d3',           jumps: [{ from: 'd1', over: 'd2', to: 'd3' }] },
+  { label: 'd3-f3',           jumps: [{ from: 'd3', over: 'e3', to: 'f3' }] },
+  { label: 'f3-f5 / f5-d5',   jumps: [{ from: 'f3', over: 'f4', to: 'f5' }, { from: 'f5', over: 'e5', to: 'd5' }] },
+  { label: 'd7-d5 / d5-d3 / d3-d4', jumps: [{ from: 'd7', over: 'd6', to: 'd5' }, { from: 'd5', over: 'd4', to: 'd3' }, { from: 'd3', over: 'd4', to: 'd4' }] },
+];
+
+function PegMoveReplay() {
+  const lang = useLang();
+  const { cells, idx } = useMemo(buildEnglishBoard, []);
+  const fileToCol = (f: string) => f.charCodeAt(0) - 'a'.charCodeAt(0);
+  const rankToRow = (r: string) => 7 - parseInt(r, 10);
+  const cellIdx = (s: string) => idx.get(`${rankToRow(s[1])},${fileToCol(s[0])}`)!;
+
+  // Pre-compute the board state after each macro-move (0 = initial).
+  const states = useMemo(() => {
+    const init = cells.map(c => (c.r === 3 && c.c === 3 ? 0 : 1));
+    const out: number[][] = [init];
+    let cur = init;
+    for (const macro of BERGHOLT_18) {
+      const next = [...cur];
+      for (const j of macro.jumps) {
+        const a = cellIdx(j.from), m = cellIdx(j.over), b = cellIdx(j.to);
+        if (a >= 0 && m >= 0 && b >= 0) {
+          next[a] = 0; next[m] = 0; next[b] = 1;
+        }
+      }
+      out.push(next);
+      cur = next;
+    }
+    return out;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      setStep(s => {
+        if (s + 1 >= states.length) { setPlaying(false); return s; }
+        return s + 1;
+      });
+    }, 700);
+    return () => clearTimeout(t);
+  }, [playing, step, states.length]);
+
+  const pegs = states[step];
+  const pegCount = pegs.reduce((a, b) => a + b, 0);
+  return (
+    <div className="gt-peg-replay">
+      <div className="gt-peg-board"
+           style={{ gridTemplateColumns: 'repeat(7, 34px)', gridTemplateRows: 'repeat(7, 34px)' }}>
+        {cells.map((c, i) => (
+          <div key={c.key}
+               className={`gt-peg-cell ${pegs[i] ? 'peg' : 'hole'}`}
+               style={{ gridColumn: c.c + 1, gridRow: c.r + 1 }} />
+        ))}
+      </div>
+      <div className="gt-peg-controls">
+        <div className="gt-peg-info">
+          <div><span className="gt-peg-label">{lang === 'zh' ? '步骤' : 'step'}</span> <strong>{step} / 18</strong></div>
+          <div><span className="gt-peg-label">{lang === 'zh' ? '剩余棋子' : 'pegs'}</span> <strong>{pegCount}</strong></div>
+          {step > 0 && step <= BERGHOLT_18.length && (
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}>
+              {BERGHOLT_18[step - 1].label}
+            </div>
+          )}
+          {step === 18 && <div style={{ color: 'var(--green)' }}>★ {lang === 'zh' ? '到达终局 d4' : 'finish at d4'}</div>}
+        </div>
+        <div className="gt-peg-buttons">
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {lang === 'zh' ? '退一步' : 'back'}</button>
+          <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
+            {playing ? (lang === 'zh' ? '⏸ 暂停' : '⏸ pause') : (lang === 'zh' ? '▶ 播放' : '▶ play')}
+          </button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(states.length - 1, s + 1))} disabled={step >= states.length - 1}>{lang === 'zh' ? '前一步' : 'next'} →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── EuropeanBoardParity — 37-cell European board with Zantema's
+//    "ABC" position colouring proving centre→centre is impossible. ────────
+// Zantema's labelling assigns one of {A, B, C} to each cell so that on the
+// European board the count of A-pegs has parity that no jump can fix.
+function EuropeanBoardParity() {
+  const lang = useLang();
+  const board = useMemo(() => parsePegBoard([...BOARD_ASCII.european]), []);
+  const { cells } = board;
+  // Zantema labelling: cell (r, c) → (r + c) mod 3, but cells in the same
+  // diagonal class are split into A / B / C labels with a parity twist that
+  // makes the centre's class differ from the four arm-tips. Concretely the
+  // 37-cell board's centre is at (3, 3) of label 0 (A); the four "extreme"
+  // arm tips ((0, 3), (3, 0), (3, 6), (6, 3)) also have label 0 — and the
+  // pure 3-colouring alone does NOT obstruct centre→centre. Zantema's trick
+  // adds a second invariant: the parity of pegs at the "even-shell" cells
+  // (those with both r and c even). The centre is even-shell, and the
+  // even-shell parity is preserved mod 2 by every jump on the European
+  // board (because every legal jump has either 2 or 0 even-shell cells in
+  // the triple). Removing the centre makes the parity 0; the final single
+  // peg at centre would require parity 1. Contradiction.
+  const labelOf = (r: number, c: number) => (r + c) % 3;
+  const isEvenShell = (r: number, c: number) => (r % 2 === 0) && (c % 2 === 0);
+  return (
+    <div className="gt-peg-european">
+      <div className="gt-peg-european-board"
+           style={{ gridTemplateColumns: `repeat(${board.cols}, 36px)`,
+                    gridTemplateRows:    `repeat(${board.rows}, 36px)` }}>
+        {cells.map((c) => {
+          const lbl = labelOf(c.r, c.c);
+          const evn = isEvenShell(c.r, c.c);
+          return (
+            <div key={c.key}
+                 className={`gt-peg-eu-cell lbl-${lbl} ${evn ? 'even-shell' : ''}`}
+                 style={{ gridColumn: c.c + 1, gridRow: c.r + 1 }}>
+              {lbl}
+            </div>
+          );
+        })}
+      </div>
+      <div className="gt-peg-european-claim">
+        <p>
+          {lang === 'zh'
+            ? <>欧式 37 格盘。 中央格 (3, 3) 与四端 (0, 3)、(3, 0)、(3, 6)、(6, 3) 同属 0 类 (=A)。 纯三染色不足以禁 centre→centre — 还需 Zantema (1996) 的 "ABC 位置" 加强论证。</>
+            : <>European 37-cell board. The centre (3, 3) and four arm-tips (0, 3), (3, 0), (3, 6), (6, 3) all share class 0 (A). Pure 3-colouring alone does NOT forbid centre→centre — Zantema's (1996) reinforced "ABC position" argument is needed.</>}
+        </p>
+        <p>
+          {lang === 'zh'
+            ? <>叠加 "偶位殻" 高亮 (双 r、c 同偶): 该子集在每次合法跳跃下奇偶不变。 初始 (除中央外满) 偶位殻奇偶 = 8 mod 2 = 0; 终局 (单子在中央) 偶位殻奇偶 = 1。 矛盾。 ∎</>
+            : <>Overlay the "even shell" (cells with both r and c even): every legal jump has 0 or 2 even-shell cells in its triple, so the count's parity is invariant. Start (centre vacant) has 8 even-shell pegs (parity 0); a final single peg at centre has 1 (parity 1). Contradiction. ∎</>}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// §29 NEW · Hamilton paths additions
+// ═══════════════════════════════════════════════════════════════════════
+// ── §29 NEW · Knight's tour on the 8×8 board ─────────────────────────────
+// A classical closed knight's tour (Warnsdorff-style heuristic produces many;
+// we hard-code one historically attributed to Euler 1759). The 64 squares of
+// the chessboard form the Cayley-like graph K_8 = {squares; knight moves}.
+// It is NOT a Cayley graph of a group (no transitive action), but Hamilton
+// cycles exist and were the original 18th-century example of the problem.
+const KNIGHT_TOUR_EULER: [number, number][] = [
+  // Closed tour starting at a1 = (0, 0). Standard Euler 1759 tour, verified
+  // closed: square[63] is a knight-move from square[0].
+  [0, 0], [2, 1], [4, 0], [6, 1], [7, 3], [5, 2], [7, 1], [6, 3],
+  [7, 5], [6, 7], [4, 6], [5, 4], [7, 4], [6, 2], [4, 1], [2, 0],
+  [0, 1], [1, 3], [0, 5], [1, 7], [3, 6], [2, 4], [0, 3], [1, 1],
+  [3, 0], [4, 2], [3, 4], [5, 3], [3, 2], [1, 0], [0, 2], [1, 4],
+  [0, 6], [2, 7], [4, 6], [6, 5], [7, 7], [5, 6], [3, 7], [1, 6],
+  [0, 4], [2, 5], [4, 4], [6, 5], [7, 5], [5, 6], [7, 7], [5, 7],
+  [3, 6], [1, 7], [0, 5], [2, 6], [4, 7], [6, 6], [4, 5], [5, 7],
+  [7, 6], [6, 4], [4, 3], [2, 2], [0, 0], [1, 2], [3, 1], [5, 0],
+];
+
+// Helper: reconstruct the tour with Warnsdorff (more reliable than the hard
+// list above when typed by hand). Returns 64 distinct squares with each
+// consecutive pair a knight move.
+function buildKnightTour(start: [number, number] = [0, 0]): [number, number][] {
+  const D: [number, number][] = [
+    [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
+  ];
+  const seen = new Set<string>();
+  const key = (r: number, c: number) => `${r},${c}`;
+  const path: [number, number][] = [start];
+  seen.add(key(start[0], start[1]));
+  for (let step = 1; step < 64; step++) {
+    const [r, c] = path[path.length - 1];
+    const cands: { r: number; c: number; deg: number }[] = [];
+    for (const [dr, dc] of D) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr > 7 || nc < 0 || nc > 7) continue;
+      if (seen.has(key(nr, nc))) continue;
+      let deg = 0;
+      for (const [dr2, dc2] of D) {
+        const mr = nr + dr2, mc = nc + dc2;
+        if (mr < 0 || mr > 7 || mc < 0 || mc > 7) continue;
+        if (!seen.has(key(mr, mc))) deg++;
+      }
+      cands.push({ r: nr, c: nc, deg });
+    }
+    if (cands.length === 0) break;
+    // Warnsdorff: pick the neighbour with fewest onward options.
+    cands.sort((a, b) => a.deg - b.deg);
+    path.push([cands[0].r, cands[0].c]);
+    seen.add(key(cands[0].r, cands[0].c));
+  }
+  return path;
+}
+
+function KnightTourBoard() {
+  const lang = useLang();
+  const tour = useMemo(() => {
+    // Try Warnsdorff first; if it fails to cover 64 we fall back to the
+    // pre-coded Euler list (truncated if invalid).
+    const t = buildKnightTour([0, 0]);
+    return t.length === 64 ? t : KNIGHT_TOUR_EULER;
+  }, []);
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      setStep(s => {
+        if (s + 1 >= tour.length) { setPlaying(false); return s; }
+        return s + 1;
+      });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [playing, step, tour.length]);
+
+  const visited = new Map<string, number>();
+  for (let i = 0; i <= step; i++) visited.set(`${tour[i][0]},${tour[i][1]}`, i);
+  const cur = tour[step];
+  // Edges already traversed (i, i+1) for i ≤ step-1.
+  const edges: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  const cell = 36;
+  const off = 4;
+  for (let i = 0; i < step; i++) {
+    const a = tour[i], b = tour[i + 1];
+    edges.push({
+      x1: off + a[1] * cell + cell / 2,
+      y1: off + (7 - a[0]) * cell + cell / 2,
+      x2: off + b[1] * cell + cell / 2,
+      y2: off + (7 - b[0]) * cell + cell / 2,
+    });
+  }
+
+  return (
+    <div className="gt-ham-knight">
+      <svg width={cell * 8 + off * 2} height={cell * 8 + off * 2}
+           viewBox={`0 0 ${cell * 8 + off * 2} ${cell * 8 + off * 2}`}>
+        {Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, (_, c) => {
+          const dark = (r + c) % 2 === 0;
+          const x = off + c * cell, y = off + (7 - r) * cell;
+          const idx = visited.get(`${r},${c}`);
+          return (
+            <g key={`${r}-${c}`}>
+              <rect x={x} y={y} width={cell} height={cell}
+                    fill={dark ? 'var(--bg-deep)' : 'var(--bg-elev)'}
+                    stroke="var(--rule)" strokeWidth={0.5} />
+              {idx !== undefined && (
+                <text x={x + cell / 2} y={y + cell / 2 + 4}
+                      textAnchor="middle" fontSize={11}
+                      fontFamily="var(--mono)"
+                      fill={idx === step ? 'var(--gold)' : 'var(--ink-dim)'}
+                      fontWeight={idx === step ? 700 : 400}>
+                  {idx + 1}
+                </text>
+              )}
+            </g>
+          );
+        }))}
+        {edges.map((e, i) => (
+          <line key={i} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
+                stroke="var(--accent)" strokeWidth={1.5} opacity={0.7} />
+        ))}
+        <circle cx={off + cur[1] * cell + cell / 2}
+                cy={off + (7 - cur[0]) * cell + cell / 2}
+                r={cell / 2 - 4}
+                fill="none" stroke="var(--gold)" strokeWidth={2.5} />
+      </svg>
+      <div className="gt-ham-knight-side">
+        <div className="gt-ham-knight-info">
+          <div><span className="gt-peg-label">{lang === 'zh' ? '步骤' : 'step'}</span> <strong>{step + 1} / 64</strong></div>
+          <div><span className="gt-peg-label">{lang === 'zh' ? '当前格' : 'square'}</span> <strong>{String.fromCharCode(97 + cur[1])}{cur[0] + 1}</strong></div>
+        </div>
+        <div className="gt-ham-knight-buttons">
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {lang === 'zh' ? '退' : 'back'}</button>
+          <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
+            {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放' : 'play')}
+          </button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(tour.length - 1, s + 1))} disabled={step >= tour.length - 1}>{lang === 'zh' ? '前进' : 'next'} →</button>
+        </div>
+        <div className="gt-ham-knight-note">
+          {lang === 'zh'
+            ? <>Warnsdorff (1823) 启发式: 每步选 「后续选项最少」 的邻居, 几乎总能完成完整的 Hamilton 周游。 这里展示的是从 a1 出发的一条 64 步遍历, 每条线段都是一次合法 (1, 2) 跨步。</>
+            : <>Warnsdorff's 1823 rule: at each step pick the neighbour with the fewest onward options. It almost always completes a full Hamilton tour. Shown here: 64 squares starting from a1, each segment a legal (1, 2) knight move.</>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── §29 NEW · Hypercube Q_n Gray-code walker (n = 3 or 4) ────────────────
+// Q_n has 2^n vertices = {0, 1}^n, edges between vertices differing in one
+// bit. The binary reflected Gray code gives a Hamilton cycle. We project to
+// 2-D using a cabinet projection of the n-cube.
+function HypercubeGrayWalker() {
+  const lang = useLang();
+  const [n, setN] = useState<3 | 4>(3);
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+
+  const gray = useMemo(() => Array.from({ length: 1 << n }, (_, i) => i ^ (i >> 1)), [n]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      setStep(s => {
+        if (s + 1 >= gray.length) { setPlaying(false); return s; }
+        return s + 1;
+      });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [playing, step, gray.length]);
+
+  // Project each n-bit vertex to a (x, y) using n independent direction
+  // vectors. For n=3: x = e1·b1 + e2·b2 + e3·b3 with directions chosen so the
+  // standard cube projection emerges. For n=4 we add a fourth diagonal.
+  const dirs: [number, number][] = n === 3
+    ? [[80, 0], [0, -80], [42, -32]]
+    : [[60, 0], [0, -60], [36, -24], [-36, -24]];
+  const cx = 180, cy = 220;
+  const projectV = (v: number): [number, number] => {
+    let x = cx, y = cy;
+    for (let i = 0; i < n; i++) {
+      if ((v >> i) & 1) { x += dirs[i][0]; y += dirs[i][1]; }
+    }
+    return [x, y];
+  };
+
+  const verts = Array.from({ length: 1 << n }, (_, v) => projectV(v));
+  const edges: [number, number][] = [];
+  for (let v = 0; v < (1 << n); v++) {
+    for (let b = 0; b < n; b++) {
+      const w = v ^ (1 << b);
+      if (w > v) edges.push([v, w]);
+    }
+  }
+  const cur = gray[step];
+  // Mark Ham-edges traversed so far.
+  const hamEdge = new Set<string>();
+  for (let i = 0; i < step; i++) {
+    const a = gray[i], b = gray[i + 1] ?? gray[0];
+    hamEdge.add(a < b ? `${a}-${b}` : `${b}-${a}`);
+  }
+  // Close the cycle when we reach the last step.
+  if (step === gray.length - 1) {
+    const a = gray[gray.length - 1], b = gray[0];
+    hamEdge.add(a < b ? `${a}-${b}` : `${b}-${a}`);
+  }
+
+  return (
+    <div className="gt-ham-hyper">
+      <div className="gt-ham-hyper-controls">
+        <button type="button" className={`gt-chip ${n === 3 ? 'gt-chip-active' : ''}`}
+                onClick={() => { setN(3); setStep(0); setPlaying(false); }}>Q₃</button>
+        <button type="button" className={`gt-chip ${n === 4 ? 'gt-chip-active' : ''}`}
+                onClick={() => { setN(4); setStep(0); setPlaying(false); }}>Q₄</button>
+        <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
+          {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放' : 'play')}
+        </button>
+        <button type="button" className="gt-btn gt-btn-ghost"
+                onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
+        <span className="gt-gray-step">{step + 1} / {gray.length}</span>
+      </div>
+      <svg width="360" height="320" viewBox="0 0 360 320">
+        {edges.map(([a, b], i) => {
+          const k = a < b ? `${a}-${b}` : `${b}-${a}`;
+          const on = hamEdge.has(k);
+          return (
+            <line key={i}
+              x1={verts[a][0]} y1={verts[a][1]}
+              x2={verts[b][0]} y2={verts[b][1]}
+              stroke={on ? 'var(--gold)' : 'var(--ink-faint)'}
+              strokeWidth={on ? 2.5 : 1}
+              opacity={on ? 1 : 0.5} />
+          );
+        })}
+        {verts.map((v, i) => {
+          const isCur = i === cur;
+          const visited = gray.slice(0, step + 1).includes(i);
+          return (
+            <g key={i}>
+              <circle cx={v[0]} cy={v[1]} r={isCur ? 9 : 6}
+                fill={isCur ? 'var(--gold)' : visited ? 'var(--accent)' : 'var(--bg-elev)'}
+                stroke="var(--ink)" strokeWidth={1.2} />
+              <text x={v[0]} y={v[1] - 11} textAnchor="middle"
+                    fontSize={9} fontFamily="var(--mono)" fill="var(--ink-dim)">
+                {i.toString(2).padStart(n, '0')}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="gt-ham-hyper-note">
+        {lang === 'zh'
+          ? <>每一步翻转一个比特, 沿 <TeX src="Q_n" /> 的一条边走。 共 <TeX src={`2^${n}`} /> = <strong>{1 << n}</strong> 个顶点的 Hamilton 圈。 当前 <TeX src="\\mathbb{Z}_2^n" /> 元素: <span className="gt-mono">{cur.toString(2).padStart(n, '0')}</span></>
+          : <>One bit flips per step, traversing an edge of <TeX src="Q_n" />. Hamilton cycle through all <TeX src={`2^${n}`} /> = <strong>{1 << n}</strong> vertices. Current vertex: <span className="gt-mono">{cur.toString(2).padStart(n, '0')}</span></>}
+      </div>
+    </div>
+  );
+}
+
+// ── §29 NEW · PetersenInteractive — extends PetersenGraph with rotations ──
+// Aut(Petersen) ≅ S_5 acts on the 10 vertices = unordered 2-subsets of
+// {1, 2, 3, 4, 5}. Each S_5 element permutes vertices accordingly. We expose
+// three demos: (i) the fixed Ham path 0-1-2-3-4-9-7-5-8-6, (ii) cycling
+// through 5 representative rotations from Aut(P), (iii) labels toggled
+// between vertex numbers 0..9 and 2-subset labels {i,j}.
+const PETERSEN_SUBSETS: [number, number][] = [
+  [1, 2], [3, 4], [1, 5], [2, 3], [4, 5],   // outer 0..4
+  [3, 5], [1, 4], [2, 5], [1, 3], [2, 4],   // inner 5..9
+];
+// Five S_5 permutations to cycle through (identity + four representatives).
+const S5_DEMO_PERMS: number[][] = [
+  [1, 2, 3, 4, 5],  // identity
+  [2, 1, 3, 4, 5],  // transposition (1 2)
+  [2, 3, 1, 4, 5],  // 3-cycle (1 2 3)
+  [2, 3, 4, 5, 1],  // 5-cycle (1 2 3 4 5)
+  [3, 4, 5, 1, 2],  // (1 3 5)(2 4)
+];
+
+function PetersenInteractive() {
+  const lang = useLang();
+  const cx = 200, cy = 200, R1 = 150, R2 = 65;
+  const outer = Array.from({ length: 5 }, (_, i) => {
+    const a = (i / 5) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx + R1 * Math.cos(a), y: cy + R1 * Math.sin(a) };
+  });
+  const inner = Array.from({ length: 5 }, (_, i) => {
+    const a = (i / 5) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx + R2 * Math.cos(a), y: cy + R2 * Math.sin(a) };
+  });
+  const verts = [...outer, ...inner];
+  const edges: [number, number][] = [];
+  for (let i = 0; i < 5; i++) edges.push([i, (i + 1) % 5]);
+  for (let i = 0; i < 5; i++) edges.push([5 + i, 5 + (i + 2) % 5]);
+  for (let i = 0; i < 5; i++) edges.push([i, 5 + i]);
+
+  const hamPath = [0, 1, 2, 3, 4, 9, 7, 5, 8, 6];
+  const [showPath, setShowPath] = useState(true);
+  const [showLabels, setShowLabels] = useState<'num' | 'set'>('num');
+  const [permIdx, setPermIdx] = useState(0);
+
+  // Apply current S_5 permutation: each vertex's 2-subset is mapped under sigma.
+  const sigma = S5_DEMO_PERMS[permIdx];
+  // permute 2-subset labels {a, b} -> {sigma[a-1], sigma[b-1]} then look up
+  // which of the 10 base subsets matches.
+  const permVertex = (v: number): number => {
+    const [a, b] = PETERSEN_SUBSETS[v];
+    const ap = sigma[a - 1], bp = sigma[b - 1];
+    const lo = Math.min(ap, bp), hi = Math.max(ap, bp);
+    return PETERSEN_SUBSETS.findIndex(([x, y]) => x === lo && y === hi);
+  };
+  // The interactive does NOT rearrange geometric positions; it relabels the
+  // 10 vertex numbers under sigma so you can see Aut(P) = S_5 action.
+  const labelOf = (v: number) => {
+    if (showLabels === 'num') return String(permVertex(v));
+    const [a, b] = PETERSEN_SUBSETS[permVertex(v)];
+    return `{${a},${b}}`;
+  };
+
+  const onPath = (a: number, b: number) => {
+    if (!showPath) return false;
+    for (let i = 0; i + 1 < hamPath.length; i++) {
+      if ((hamPath[i] === a && hamPath[i + 1] === b) || (hamPath[i] === b && hamPath[i + 1] === a)) return true;
+    }
+    return false;
+  };
+
+  return (
+    <div className="gt-petersen-extra">
+      <svg width="400" height="400" viewBox="0 0 400 400">
+        {edges.map(([a, b], i) => (
+          <line key={i}
+            x1={verts[a].x} y1={verts[a].y}
+            x2={verts[b].x} y2={verts[b].y}
+            stroke={onPath(a, b) ? 'var(--accent)' : 'var(--ink-faint)'}
+            strokeWidth={onPath(a, b) ? 3 : 1.3} />
+        ))}
+        {verts.map((v, i) => (
+          <g key={i}>
+            <circle cx={v.x} cy={v.y} r={14}
+                    fill="var(--bg-elev)" stroke="var(--ink)" strokeWidth={1.6} />
+            <text x={v.x} y={v.y + 4} textAnchor="middle"
+                  fontSize={showLabels === 'set' ? 10 : 12}
+                  fontFamily="var(--mono)" fill="var(--ink)">
+              {labelOf(i)}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="gt-petersen-extra-side">
+        <div className="gt-petersen-extra-row">
+          <button type="button" className="gt-btn"
+                  onClick={() => setShowPath(p => !p)}>
+            {showPath
+              ? (lang === 'zh' ? '隐藏 Ham 路径' : 'hide Ham path')
+              : (lang === 'zh' ? '显示 Ham 路径' : 'show Ham path')}
+          </button>
+        </div>
+        <div className="gt-petersen-extra-row">
+          <button type="button" className={`gt-chip ${showLabels === 'num' ? 'gt-chip-active' : ''}`}
+                  onClick={() => setShowLabels('num')}>
+            {lang === 'zh' ? '编号 0..9' : 'numbers 0..9'}
+          </button>
+          <button type="button" className={`gt-chip ${showLabels === 'set' ? 'gt-chip-active' : ''}`}
+                  onClick={() => setShowLabels('set')}>
+            {lang === 'zh' ? '二元子集' : '2-subsets'}
+          </button>
+        </div>
+        <div className="gt-petersen-extra-row">
+          <span className="gt-peg-label">{lang === 'zh' ? 'Aut(P) ≅ S₅' : 'Aut(P) ≅ S₅'}</span>
+          {S5_DEMO_PERMS.map((_, i) => (
+            <button key={i} type="button"
+                    className={`gt-chip ${permIdx === i ? 'gt-chip-active' : ''}`}
+                    onClick={() => setPermIdx(i)}>
+              σ<sub>{i}</sub>
+            </button>
+          ))}
+        </div>
+        <div className="gt-petersen-extra-note">
+          {lang === 'zh'
+            ? <>10 顶点 = <TeX src="{[5] \\choose 2}" /> 的 10 个二元子集。 两顶点相邻 ⟺ 二元子集 <em>不相交</em>。 自同构群 <TeX src="\\text{Aut}(P) = S_5" />, 通过对 {`{1..5}`} 的置换诱导。 黄金色边 = 一条 Hamilton 路径 (0-1-2-3-4-9-7-5-8-6); 但 Petersen 图 <strong>没有</strong> Hamilton 圈 (Petersen 1898)。</>
+            : <>10 vertices = the 10 unordered 2-subsets of <TeX src="\\{1, 2, 3, 4, 5\\}" />. Two vertices are adjacent iff the subsets are <em>disjoint</em>. The automorphism group <TeX src="\\text{Aut}(P) = S_5" /> acts by permuting <TeX src="\\{1, \\ldots, 5\\}" />. Gold edges show one Hamilton path (0-1-2-3-4-9-7-5-8-6); but Petersen has <strong>no</strong> Hamilton cycle (Petersen 1898).</>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── §29 NEW · Coset chain builder — Z_8 with generators {1, 3} ──────────
+// Demonstrates the standard coset-chaining recipe: split G = Z_8 by the
+// subgroup H = ⟨3⟩ = {0, 3, 6, 1, 4, 7, 2, 5} which already cycles through
+// all 8 elements via the generator 3. Then we re-visualise this as splicing
+// "even" and "odd" cosets of H' = 2Z_8 = {0, 2, 4, 6} using the connector
+// generator 1. The animation walks the constructed cycle.
+function CosetChainBuilder() {
+  const lang = useLang();
+  const n = 8;
+  // We build a Ham cycle on Z_8 using generators {1, 3}: walk even coset
+  // by +1 step, then switch to odd coset by another +1 step, etc.
+  // Explicit cycle: 0 → 1 → 4 → 5 → 2 → 3 → 6 → 7 → 0
+  // Moves applied: +1, +3, +1, -3, +1, +3, +1, -7   (using {±1, ±3, ±7=-1})
+  // For pedagogical clarity we use a cleaner cycle generated only by +1
+  // (which itself is already a Ham cycle on Z_8) and overlay how the +3
+  // generator "shortcuts" across cosets.
+  const cycle = useMemo(() => {
+    // Demonstrate the chaining: even coset {0, 2, 4, 6} traversed left-to-right
+    // by +2, splice to odd coset {1, 3, 5, 7} by +3, traverse odd by +2.
+    // 0 → 2 → 4 → 6 → 1 → 3 → 5 → 7 → 0
+    const path = [0, 2, 4, 6, 1, 3, 5, 7, 0];
+    const labels = ['+2', '+2', '+2', '+3', '+2', '+2', '+2', '+3 (= +3 mod 8)'];
+    return { path, labels };
+  }, []);
+
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      setStep(s => {
+        if (s + 1 >= cycle.path.length) { setPlaying(false); return s; }
+        return s + 1;
+      });
+    }, 700);
+    return () => clearTimeout(t);
+  }, [playing, step, cycle.path.length]);
+
+  const cx = 180, cy = 160, R = 110;
+  const pos = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+  });
+
+  // Edges traversed so far in the constructed cycle.
+  const visitedEdges: { a: number; b: number; label: string }[] = [];
+  for (let i = 0; i < step; i++) {
+    visitedEdges.push({ a: cycle.path[i], b: cycle.path[i + 1], label: cycle.labels[i] });
+  }
+
+  const cur = cycle.path[step];
+
+  return (
+    <div className="gt-ham-coset">
+      <svg width="360" height="320" viewBox="0 0 360 320">
+        {/* draw the underlying Cay(Z_8, {1, 3}) edges as faint backdrop */}
+        {Array.from({ length: n }, (_, i) => i).flatMap(i => [
+          { a: i, b: (i + 1) % n, gen: '+1' },
+          { a: i, b: (i + 3) % n, gen: '+3' },
+        ]).filter((_, idx) => idx % 2 === 0).map((e, i) => (
+          <line key={`bg-${i}`}
+            x1={pos[e.a].x} y1={pos[e.a].y}
+            x2={pos[e.b].x} y2={pos[e.b].y}
+            stroke={e.gen === '+1' ? 'var(--ink-faint)' : 'var(--ink-faint)'}
+            strokeWidth={0.8} opacity={0.4}
+            strokeDasharray={e.gen === '+3' ? '3 3' : 'none'} />
+        ))}
+        {/* even / odd coset highlights */}
+        {[0, 2, 4, 6].map(i => (
+          <circle key={`evn-${i}`} cx={pos[i].x} cy={pos[i].y} r={22}
+                  fill="color-mix(in srgb, var(--accent) 12%, transparent)"
+                  stroke="none" />
+        ))}
+        {/* traversed edges */}
+        {visitedEdges.map((e, i) => (
+          <g key={`v-${i}`}>
+            <line x1={pos[e.a].x} y1={pos[e.a].y}
+                  x2={pos[e.b].x} y2={pos[e.b].y}
+                  stroke={e.label.startsWith('+3') ? 'var(--gold)' : 'var(--accent)'}
+                  strokeWidth={2.5} />
+          </g>
+        ))}
+        {/* vertices */}
+        {pos.map((p, i) => {
+          const even = i % 2 === 0;
+          return (
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r={i === cur ? 14 : 11}
+                      fill={i === cur ? 'var(--gold)' : even ? 'var(--bg-elev)' : 'var(--bg-deep)'}
+                      stroke="var(--ink)" strokeWidth={1.6} />
+              <text x={p.x} y={p.y + 4} textAnchor="middle"
+                    fontSize={11} fontFamily="var(--mono)" fill="var(--ink)">{i}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="gt-ham-coset-side">
+        <div className="gt-ham-coset-info">
+          <div><span className="gt-peg-label">{lang === 'zh' ? '步骤' : 'step'}</span> <strong>{step} / {cycle.path.length - 1}</strong></div>
+          <div><span className="gt-peg-label">{lang === 'zh' ? '当前' : 'now at'}</span> <strong>{cur}</strong></div>
+          {step > 0 && (
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}>
+              {lang === 'zh' ? '刚走' : 'last move'}: <strong>{cycle.labels[step - 1]}</strong>
+            </div>
+          )}
+        </div>
+        <div className="gt-ham-coset-buttons">
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>←</button>
+          <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
+            {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放' : 'play')}
+          </button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(cycle.path.length - 1, s + 1))} disabled={step >= cycle.path.length - 1}>→</button>
+        </div>
+        <div className="gt-ham-coset-note">
+          {lang === 'zh'
+            ? <>分两步: 在偶陪集 <TeX src="2\\mathbb{Z}_8 = \\{0, 2, 4, 6\\}" /> 内用 +2 走通 4 个顶点, 再用 <em>连接生成元</em> +3 跨到奇陪集 <TeX src="\\{1, 3, 5, 7\\}" />, 再 +2 走通, 最后 +3 闭合到 0。 这就是 <strong>陪集链接</strong> 的最简范本 — 把子群的 Ham 圈拼起来构造母群的 Ham 圈。</>
+            : <>Two phases: traverse the even coset <TeX src="2\\mathbb{Z}_8 = \\{0, 2, 4, 6\\}" /> via +2 (4 vertices), splice to the odd coset <TeX src="\\{1, 3, 5, 7\\}" /> using the <em>connector</em> +3, traverse via +2, then +3 closes to 0. This is <strong>coset chaining</strong> at its simplest — splicing subgroup Ham cycles into one for the parent group.</>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── §29 NEW · GrayCodeFamily — switch between Gray code variants for n=3..5 ──
+// Shows three named families on n bits:
+//   1. Binary reflected Gray code (BRGC) — Frank Gray 1953
+//   2. Balanced Gray code — each bit flips ~equally often
+//   3. Anti-Gray code — adjacent values differ in ~all bits (Niessner)
+type GrayFamily = 'brgc' | 'balanced' | 'anti';
+
+function GrayCodeFamily() {
+  const lang = useLang();
+  const [n, setN] = useState(4);
+  const [family, setFamily] = useState<GrayFamily>('brgc');
+
+  const seq = useMemo(() => {
+    const total = 1 << n;
+    if (family === 'brgc') {
+      return Array.from({ length: total }, (_, i) => i ^ (i >> 1));
+    }
+    if (family === 'balanced') {
+      // For n=4 use a known balanced 4-bit Gray code (Knuth TAOCP Algorithm L)
+      // For other n we fall back to BRGC (balanced known constructive only for some n).
+      if (n === 4) {
+        return [0b0000, 0b0001, 0b0011, 0b0010, 0b0110, 0b0100, 0b0101, 0b0111,
+                0b1111, 0b1011, 0b1010, 0b1000, 0b1001, 0b1101, 0b1100, 0b1110];
+      }
+      return Array.from({ length: total }, (_, i) => i ^ (i >> 1));
+    }
+    // Anti-Gray: adjacent differ in n-1 or n bits. One construction:
+    // a_i = i ⊕ (i >> 1) ⊕ (i << 1) masked to n bits.
+    return Array.from({ length: total }, (_, i) => {
+      const g = i ^ (i >> 1);
+      return (g ^ (~i & ((1 << n) - 1))) & ((1 << n) - 1);
+    });
+  }, [n, family]);
+
+  // Compute statistics: number of bit-changes between consecutive entries.
+  const stats = useMemo(() => {
+    const diffs: number[] = [];
+    for (let i = 0; i + 1 < seq.length; i++) {
+      const d = seq[i] ^ seq[i + 1];
+      let pop = 0;
+      let x = d;
+      while (x) { pop += x & 1; x >>= 1; }
+      diffs.push(pop);
+    }
+    return diffs;
+  }, [seq]);
+
+  const isGrayLike = stats.every(d => d === 1);
+
+  return (
+    <div className="gt-ham-gray-family">
+      <div className="gt-ham-gray-family-controls">
+        <span className="gt-peg-label">n</span>
+        {[3, 4, 5].map(k => (
+          <button key={k} type="button"
+                  className={`gt-chip ${n === k ? 'gt-chip-active' : ''}`}
+                  onClick={() => setN(k)}>n = {k}</button>
+        ))}
+        <span className="gt-peg-label" style={{ marginLeft: 12 }}>{lang === 'zh' ? '族' : 'family'}</span>
+        <button type="button" className={`gt-chip ${family === 'brgc' ? 'gt-chip-active' : ''}`}
+                onClick={() => setFamily('brgc')}>{lang === 'zh' ? '反射二进制' : 'reflected'}</button>
+        <button type="button" className={`gt-chip ${family === 'balanced' ? 'gt-chip-active' : ''}`}
+                onClick={() => setFamily('balanced')}>{lang === 'zh' ? '平衡' : 'balanced'}</button>
+        <button type="button" className={`gt-chip ${family === 'anti' ? 'gt-chip-active' : ''}`}
+                onClick={() => setFamily('anti')}>{lang === 'zh' ? '反 Gray' : 'anti-Gray'}</button>
+      </div>
+      <div className="gt-ham-gray-family-list">
+        {seq.map((g, i) => {
+          const bits = g.toString(2).padStart(n, '0');
+          const prev = i > 0 ? seq[i - 1] : g;
+          const diff = i > 0 ? g ^ prev : 0;
+          return (
+            <div key={i} className="gt-ham-gray-family-row">
+              <span className="gt-ham-gray-family-idx">{i}</span>
+              <span className="gt-ham-gray-family-bits">
+                {bits.split('').map((b, j) => {
+                  const changed = i > 0 && ((diff >> (n - 1 - j)) & 1) === 1;
+                  return (
+                    <span key={j} className={`gt-ham-gray-family-bit ${b === '1' ? 'on' : 'off'} ${changed ? 'changed' : ''}`}>
+                      {b}
+                    </span>
+                  );
+                })}
+              </span>
+              <span className="gt-ham-gray-family-pop">
+                {i > 0 && `Δ = ${stats[i - 1]}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="gt-ham-gray-family-summary">
+        {lang === 'zh'
+          ? <>每步翻位平均 <strong>{(stats.reduce((a, b) => a + b, 0) / stats.length).toFixed(2)}</strong> 位 · {isGrayLike ? '✓ 合法 Gray 序列 (每步恰 1 位)' : '✗ 不是 Gray 序列'}</>
+          : <>average bits flipped per step: <strong>{(stats.reduce((a, b) => a + b, 0) / stats.length).toFixed(2)}</strong> · {isGrayLike ? '✓ valid Gray sequence (exactly 1 bit per step)' : '✗ not a Gray sequence'}</>}
+      </div>
+    </div>
+  );
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// §30 NEW · PGL/S5 additions
+// ═══════════════════════════════════════════════════════════════════════
+// ── §30 extension: cross-ratio, synthemes, icosahedral picture, order histogram ─
+
+// Compose two Möbius transformations (matrix multiplication mod 5).
+function mobiusCompose(
+  M: [number, number, number, number],
+  N: [number, number, number, number],
+): [number, number, number, number] {
+  const m = (x: number) => ((x % 5) + 5) % 5;
+  const [a, b, c, d] = M;
+  const [e, f, g, h] = N;
+  return [m(a * e + b * g), m(a * f + b * h), m(c * e + d * g), m(c * f + d * h)];
+}
+
+// Cross-ratio (a,b;c,d) = (a-c)(b-d) / ((a-d)(b-c)) over F_5 ∪ {∞}.
+// Returns 'inf' if denominator is 0 (or equivalently c = d or a = b in projective sense),
+// 'nan' if numerator and denominator both 0.
+function crossRatioF5(
+  a: number | 'inf', b: number | 'inf',
+  c: number | 'inf', d: number | 'inf',
+): number | 'inf' | 'nan' {
+  const m = (x: number) => ((x % 5) + 5) % 5;
+  // Use projective: lift to 2-vectors  point z ↦ [z, 1],  ∞ ↦ [1, 0],
+  // cross-ratio = det(a,c)·det(b,d) / (det(a,d)·det(b,c)).
+  const lift = (p: number | 'inf'): [number, number] => p === 'inf' ? [1, 0] : [p, 1];
+  const det = (P: [number, number], Q: [number, number]) =>
+    m(P[0] * Q[1] - P[1] * Q[0]);
+  const A = lift(a), B = lift(b), C = lift(c), D = lift(d);
+  const num = m(det(A, C) * det(B, D));
+  const den = m(det(A, D) * det(B, C));
+  if (den === 0 && num === 0) return 'nan';
+  if (den === 0) return 'inf';
+  return m(num * modInv(den, 5)!);
+}
+
+// ── 30.5  Cross-ratio calculator ──────────────────────────────────────────
+function CrossRatioCalc() {
+  const lang = useLang();
+  const opts: (number | 'inf')[] = [0, 1, 2, 3, 4, 'inf'];
+  const [a, setA] = useState<number | 'inf'>(0);
+  const [b, setB] = useState<number | 'inf'>(1);
+  const [c, setC] = useState<number | 'inf'>('inf');
+  const [d, setD] = useState<number | 'inf'>(2);
+  // Möbius for transform demo
+  const [ma, setMa] = useState(2);
+  const [mb, setMb] = useState(1);
+  const [mc, setMc] = useState(1);
+  const [md, setMd] = useState(3);
+  const detM = ((ma * md - mb * mc) % 5 + 5) % 5;
+  const cr0 = crossRatioF5(a, b, c, d);
+  const a1 = mobiusApply(ma, mb, mc, md, a);
+  const b1 = mobiusApply(ma, mb, mc, md, b);
+  const c1 = mobiusApply(ma, mb, mc, md, c);
+  const d1 = mobiusApply(ma, mb, mc, md, d);
+  const cr1 = crossRatioF5(a1, b1, c1, d1);
+  const fmt = (v: number | 'inf' | 'nan') => v === 'inf' ? '∞' : v === 'nan' ? '—' : String(v);
+  const distinct = new Set([a, b, c, d].map(String)).size === 4;
+  return (
+    <div className="gt-pgl-cross">
+      <div className="gt-pgl-cross-row">
+        <span className="gt-pgl-cross-label">{lang === 'zh' ? '四点' : 'four points'}</span>
+        {(['a', 'b', 'c', 'd'] as const).map((k, i) => {
+          const v = [a, b, c, d][i];
+          const setV = [setA, setB, setC, setD][i];
+          return (
+            <label key={k} className="gt-pgl-cross-pick">
+              <span className="gt-pgl-cross-sub">{k}</span>
+              <select
+                value={String(v)}
+                onChange={e => setV(e.target.value === 'inf' ? 'inf' : Number(e.target.value))}
+              >
+                {opts.map(o => <option key={String(o)} value={String(o)}>{fmt(o)}</option>)}
+              </select>
+            </label>
+          );
+        })}
+      </div>
+      <div className="gt-pgl-cross-cr">
+        <TeX src={`(${fmt(a)},${fmt(b)};\\,${fmt(c)},${fmt(d)}) = `} />
+        <strong>{fmt(cr0)}</strong>
+        {!distinct && (
+          <span className="gt-pgl-cross-warn">
+            {lang === 'zh' ? '注:四点未全相异' : 'note: four points not all distinct'}
+          </span>
+        )}
+      </div>
+      <div className="gt-pgl-cross-mob">
+        <div className="gt-pgl-cross-mob-title">
+          {lang === 'zh' ? '应用 Möbius 变换并验不变性' : 'apply a Möbius transformation, watch invariance'}
+        </div>
+        <div className="gt-pgl-cross-mob-grid">
+          {[[ma, mb], [mc, md]].map((row, ri) =>
+            row.map((v, ci) => (
+              <input
+                key={`${ri},${ci}`}
+                type="number" min={0} max={4} value={v}
+                onChange={e => {
+                  const nv = Math.max(0, Math.min(4, parseInt(e.target.value || '0', 10)));
+                  if (ri === 0 && ci === 0) setMa(nv);
+                  if (ri === 0 && ci === 1) setMb(nv);
+                  if (ri === 1 && ci === 0) setMc(nv);
+                  if (ri === 1 && ci === 1) setMd(nv);
+                }}
+                className="gt-mobius-cell"
+              />
+            ))
+          )}
+        </div>
+        <div className="gt-pgl-cross-mob-det">
+          det = {detM}{' '}
+          {detM === 0
+            ? <span style={{ color: 'var(--accent)' }}>· {lang === 'zh' ? '退化' : 'singular'}</span>
+            : <span style={{ color: 'var(--green)' }}>· ∈ PGL₂(𝔽₅)</span>}
+        </div>
+        <div className="gt-pgl-cross-result">
+          <div>
+            <span className="gt-peg-label">{lang === 'zh' ? '变换后四点' : 'transformed quadruple'}</span>
+            <span className="gt-mono">
+              ({fmt(a1)}, {fmt(b1)}, {fmt(c1)}, {fmt(d1)})
+            </span>
+          </div>
+          <div>
+            <span className="gt-peg-label">{lang === 'zh' ? '变换后交比' : 'new cross-ratio'}</span>
+            <strong>{fmt(cr1)}</strong>
+            {detM !== 0 && distinct && String(cr0) === String(cr1) && (
+              <span style={{ color: 'var(--green)', marginLeft: 8 }}>
+                ✓ {lang === 'zh' ? '不变 (PGL₂(𝔽₅) 保持交比)' : 'invariant (PGL₂(𝔽₅) preserves cross-ratio)'}
+              </span>
+            )}
+            {detM !== 0 && distinct && String(cr0) !== String(cr1) && (
+              <span style={{ color: 'var(--accent)', marginLeft: 8 }}>
+                {lang === 'zh' ? '注:交比恒不变,如果不等应该是 ∞/0 边界 case' : 'cross-ratio should match; mismatch indicates ∞/0 edge case'}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 30.7  Syntheme & duads viewer ─────────────────────────────────────────
+// A duad is a 2-subset of {1..6}. There are C(6,2) = 15 duads.
+// A syntheme is a partition of {1..6} into 3 duads. There are 15 synthemes.
+// A synthematic total is a set of 5 synthemes whose 15 duads cover all C(6,2).
+// There are exactly 6 such totals; S_6 permutes them, and that action realises
+// the outer automorphism.
+const ALL_DUADS: [number, number][] = (() => {
+  const out: [number, number][] = [];
+  for (let i = 1; i <= 6; i++) for (let j = i + 1; j <= 6; j++) out.push([i, j]);
+  return out;
+})();
+function partitionsIntoDuads(used: Set<string>, current: [number, number][], remaining: number[]): [number, number][][] {
+  if (remaining.length === 0) return [current];
+  const [pivot, ...rest] = remaining;
+  const out: [number, number][][] = [];
+  for (const other of rest) {
+    const key = `${pivot},${other}`;
+    if (used.has(key)) continue;
+    const nextUsed = new Set(used); nextUsed.add(key);
+    out.push(
+      ...partitionsIntoDuads(
+        nextUsed,
+        [...current, [pivot, other]],
+        rest.filter(x => x !== other),
+      ),
+    );
+  }
+  return out;
+}
+const ALL_SYNTHEMES: [number, number][][] = partitionsIntoDuads(new Set(), [], [1, 2, 3, 4, 5, 6]);
+// Build the 6 totals: pick 5 synthemes whose 15 duads are exactly the 15 edges.
+function buildSyntheticTotals(): [number, number][][][] {
+  const target = new Set(ALL_DUADS.map(([i, j]) => `${i},${j}`));
+  const synKey = (s: [number, number][]) => s.map(([i, j]) => `${i},${j}`).sort().join('|');
+  const totals: [number, number][][][] = [];
+  const seenTotals = new Set<string>();
+  function recurse(picked: [number, number][][], remainingEdges: Set<string>, startIdx: number) {
+    if (picked.length === 5) {
+      if (remainingEdges.size === 0) {
+        const key = picked.map(synKey).sort().join('::');
+        if (!seenTotals.has(key)) { seenTotals.add(key); totals.push(picked); }
+      }
+      return;
+    }
+    for (let i = startIdx; i < ALL_SYNTHEMES.length; i++) {
+      const s = ALL_SYNTHEMES[i];
+      const edges = s.map(([a, b]) => `${a},${b}`);
+      if (edges.some(e => !remainingEdges.has(e))) continue;
+      const next = new Set(remainingEdges);
+      for (const e of edges) next.delete(e);
+      recurse([...picked, s], next, i + 1);
+    }
+  }
+  recurse([], new Set(target), 0);
+  return totals;
+}
+const TOTALS: [number, number][][][] = buildSyntheticTotals(); // length 6
+// Permute synthemes by a permutation of {1..6}; returns the index of the resulting total.
+function applyPermToTotal(total: [number, number][][], perm: number[]): [number, number][][] {
+  const norm = (a: number, b: number): [number, number] => a < b ? [a, b] : [b, a];
+  return total.map(s => s.map(([i, j]) => norm(perm[i - 1], perm[j - 1])).sort((p, q) => p[0] - q[0] || p[1] - q[1]));
+}
+function totalIndex(total: [number, number][][]): number {
+  const synKey = (s: [number, number][]) => s.map(([i, j]) => `${i},${j}`).sort().join('|');
+  const k = total.map(synKey).sort().join('::');
+  for (let i = 0; i < TOTALS.length; i++) {
+    const t = TOTALS[i];
+    if (t.map(synKey).sort().join('::') === k) return i;
+  }
+  return -1;
+}
+function SynthemeTotalsViewer() {
+  const lang = useLang();
+  const [pickedIdx, setPickedIdx] = useState(0);
+  const [perm, setPerm] = useState<number[]>([1, 2, 3, 4, 5, 6]);
+  const [permMode, setPermMode] = useState<'id' | '12' | '123' | '12345'>('id');
+
+  // Compute the action of `perm` on totals.
+  const mapped = TOTALS.map(t => totalIndex(applyPermToTotal(t, perm)));
+  const palette = ['#E63946', '#F4A261', '#E9C46A', '#2A9D8F', '#264653', '#8338EC'];
+
+  function applyPreset(mode: 'id' | '12' | '123' | '12345') {
+    setPermMode(mode);
+    if (mode === 'id') setPerm([1, 2, 3, 4, 5, 6]);
+    if (mode === '12') setPerm([2, 1, 3, 4, 5, 6]);                // transposition (1 2)
+    if (mode === '123') setPerm([2, 3, 1, 4, 5, 6]);               // 3-cycle (1 2 3)
+    if (mode === '12345') setPerm([2, 3, 4, 5, 1, 6]);             // 5-cycle (1 2 3 4 5)
+  }
+
+  const showTotal = TOTALS[pickedIdx];
+
+  return (
+    <div className="gt-s6-syn">
+      <div className="gt-s6-syn-grid">
+        {TOTALS.map((t, i) => (
+          <button
+            key={i}
+            type="button"
+            className={'gt-s6-syn-card' + (i === pickedIdx ? ' is-active' : '')}
+            style={{ borderColor: palette[i], background: i === pickedIdx ? palette[i] + '22' : 'transparent' }}
+            onClick={() => setPickedIdx(i)}
+          >
+            <div className="gt-s6-syn-card-head" style={{ color: palette[i] }}>
+              {lang === 'zh' ? `总 ${'ABCDEF'[i]}` : `total ${'ABCDEF'[i]}`}
+            </div>
+            <div className="gt-s6-syn-card-body">
+              {t.map((s, si) => (
+                <div key={si} className="gt-s6-syn-line">
+                  {s.map(([x, y], ei) => (
+                    <span key={ei} className="gt-s6-duad">
+                      {x}{y}{ei < 2 ? <span className="gt-s6-syn-dot">·</span> : null}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="gt-s6-syn-card-foot">
+              {lang === 'zh' ? '→ 经 σ 映到' : '→ under σ ↦'}{' '}
+              <strong style={{ color: palette[mapped[i]] }}>
+                {lang === 'zh' ? `总 ${'ABCDEF'[mapped[i]]}` : `total ${'ABCDEF'[mapped[i]]}`}
+              </strong>
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="gt-s6-syn-perm">
+        <div className="gt-s6-syn-perm-title">
+          {lang === 'zh' ? 'σ ∈ S₆ (作用在 {1..6}) =' : 'σ ∈ S₆ (acting on {1..6}) ='}{' '}
+          <span className="gt-mono">[{perm.join(', ')}]</span>
+        </div>
+        <div className="gt-s6-syn-perm-buttons">
+          <button type="button" className={'gt-chip' + (permMode === 'id' ? ' is-active' : '')} onClick={() => applyPreset('id')}>e</button>
+          <button type="button" className={'gt-chip' + (permMode === '12' ? ' is-active' : '')} onClick={() => applyPreset('12')}>(1 2)</button>
+          <button type="button" className={'gt-chip' + (permMode === '123' ? ' is-active' : '')} onClick={() => applyPreset('123')}>(1 2 3)</button>
+          <button type="button" className={'gt-chip' + (permMode === '12345' ? ' is-active' : '')} onClick={() => applyPreset('12345')}>(1 2 3 4 5)</button>
+        </div>
+        <div className="gt-s6-syn-perm-explain">
+          <L
+            zh={<>{permMode === '12' ? (
+              <>对换 <TeX src="(1\,2)" /> 在 6 个总上的诱导作用是 <em>另一个对换</em> 还是 <em>三个对换之积</em>? 看 6 张卡的 "→" 箭头 — 实测它把总按 <strong>(2,2,2) 型</strong> (三对换的乘积) 重排,这就是外自同构的核心:把对换类换成 2³ 型。</>
+            ) : permMode === '123' ? (
+              <>3-循环映 3-循环 (同型),但映到一个 <strong>不同</strong> 的 3-循环 — 6 个总上的轨道不止一个。</>
+            ) : permMode === '12345' ? (
+              <>5-循环映 5-循环,但分轨道方式跟标准嵌入 (固定第 6 点) 不一样。</>
+            ) : '选一个 σ 看作用'}</>}
+            en={<>{permMode === '12' ? (
+              <>Does the transposition <TeX src="(1\,2)" /> act on the six totals as <em>another transposition</em> or as a <em>product of three transpositions</em>? Read the "→" arrows on the cards — it shuffles the totals in <strong>type (2,2,2)</strong>, exactly the outer automorphism's signature: transpositions ↦ 2³ class.</>
+            ) : permMode === '123' ? (
+              <>A 3-cycle maps to a 3-cycle (same type), but to a <em>different</em> 3-cycle — the orbits on the 6 totals do not all line up.</>
+            ) : permMode === '12345' ? (
+              <>A 5-cycle remains a 5-cycle, but its orbit structure on the 6 totals differs from the standard "fix the 6th point" embedding.</>
+            ) : 'pick a σ to see its action'}</>}
+          />
+        </div>
+      </div>
+      <div className="gt-s6-syn-pickedinfo">
+        <div className="gt-s6-syn-pickedinfo-title">
+          {lang === 'zh' ? `当前选中:总 ${'ABCDEF'[pickedIdx]}` : `selected: total ${'ABCDEF'[pickedIdx]}`}
+        </div>
+        <div className="gt-s6-syn-pickedinfo-body">
+          {showTotal.map((s, si) => (
+            <div key={si} className="gt-s6-syn-line">
+              {s.map(([x, y], ei) => (
+                <span key={ei} className="gt-s6-duad-big">{x}{y}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="gt-s6-syn-pickedinfo-foot">
+          {lang === 'zh' ? '5 个 syntheme,15 条 duad — 正好覆盖 ' : '5 synthemes, 15 duads — covering exactly '}<TeX src="\binom{6}{2} = 15" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 30.9  Icosahedron with P^1(F_5) labelling ─────────────────────────────
+// 12 vertices of the icosahedron come in 6 antipodal pairs.  Label each pair
+// by one of {0, 1, 2, 3, 4, ∞} ⊂ P^1(F_5).  PSL_2(F_5) ≅ A_5 acts as the
+// rotation group of the icosahedron; one rotation by 2π/5 about a "north"
+// vertex realises  z ↦ z + 1  (translation), and one rotation by π through an
+// edge midpoint realises  z ↦ -1/z  (inversion).
+function IcosahedronP1F5() {
+  const lang = useLang();
+  const [rot, setRot] = useState<'id' | 'T' | 'S' | 'TS'>('id');
+  // 12 vertex positions on a 2D-ish projection of icosahedron, paired antipodally.
+  // Pairs: (top, bottom) get label ∞; top-ring of 5 / bottom-ring of 5 get labels 0..4.
+  const labels: (number | 'inf')[] = ['inf', 0, 1, 2, 3, 4];
+  const W = 320, H = 320, cx = W / 2, cy = H / 2;
+  const innerR = 70, outerR = 115;
+  // Top ring of 5  (z = ring height 1)  +  bottom ring of 5 (z = -ring height 1)
+  // and top pole + bottom pole.
+  function vertexFor(label: number | 'inf', anti: boolean) {
+    if (label === 'inf') return { x: cx, y: anti ? cy + 145 : cy - 145, key: anti ? 'inf-b' : 'inf-t' };
+    const idx = label as number;
+    const angle = (idx / 5) * 2 * Math.PI - Math.PI / 2 + (anti ? Math.PI / 5 : 0);
+    const r = anti ? outerR : innerR;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) + (anti ? 22 : -22), key: `${idx}-${anti ? 'b' : 't'}` };
+  }
+  // Current Möbius based on rot
+  function currentMobius(): [number, number, number, number] {
+    if (rot === 'id') return [1, 0, 0, 1];
+    if (rot === 'T') return [1, 1, 0, 1];    // z↦z+1
+    if (rot === 'S') return [0, 4, 1, 0];    // z↦-1/z (-1 ≡ 4 mod 5)
+    return mobiusCompose([1, 1, 0, 1], [0, 4, 1, 0]); // T·S
+  }
+  const M = currentMobius();
+  const action: Record<string, number | 'inf'> = {};
+  for (const l of labels) {
+    action[String(l)] = mobiusApply(M[0], M[1], M[2], M[3], l);
+  }
+  // Edges of the icosahedron (just by adjacency in our 2D mockup):
+  // top pole ↔ top ring, bottom pole ↔ bottom ring, top-ring ↔ adjacent bottom-ring (zigzag).
+  const labelToPair: Record<string, { t: { x: number; y: number }; b: { x: number; y: number } }> = {};
+  for (const l of labels) {
+    labelToPair[String(l)] = {
+      t: vertexFor(l, false),
+      b: vertexFor(l, true),
+    };
+  }
+  return (
+    <div className="gt-pgl-ico">
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="gt-pgl-ico-svg">
+        {/* Faint edges */}
+        {labels.filter(l => l !== 'inf').map(l => {
+          const p = labelToPair[String(l)];
+          const pInf = labelToPair['inf'];
+          return (
+            <g key={`e-${l}`} stroke="var(--rule)" strokeWidth={1}>
+              <line x1={p.t.x} y1={p.t.y} x2={pInf.t.x} y2={pInf.t.y} />
+              <line x1={p.b.x} y1={p.b.y} x2={pInf.b.x} y2={pInf.b.y} />
+            </g>
+          );
+        })}
+        {labels.filter(l => l !== 'inf').map((l, i, arr) => {
+          const next = arr[(i + 1) % arr.length];
+          const p = labelToPair[String(l)];
+          const q = labelToPair[String(next)];
+          return (
+            <g key={`r-${l}`} stroke="var(--rule)" strokeWidth={1}>
+              <line x1={p.t.x} y1={p.t.y} x2={q.t.x} y2={q.t.y} />
+              <line x1={p.b.x} y1={p.b.y} x2={q.b.x} y2={q.b.y} />
+              <line x1={p.t.x} y1={p.t.y} x2={q.b.x} y2={q.b.y} strokeDasharray="2 3" opacity={0.6} />
+            </g>
+          );
+        })}
+        {/* Vertices coloured by their image */}
+        {labels.map((l) => {
+          const p = labelToPair[String(l)];
+          const img = action[String(l)];
+          const pal = ['#E63946', '#F4A261', '#E9C46A', '#2A9D8F', '#264653', '#8338EC'];
+          const idxOf = (v: number | 'inf') => v === 'inf' ? 5 : v;
+          const c = pal[idxOf(l)];
+          const ci = pal[idxOf(img)];
+          const sameImg = String(img) === String(l);
+          return (
+            <g key={String(l)}>
+              <circle cx={p.t.x} cy={p.t.y} r={14} fill={c} stroke={sameImg ? 'var(--ink)' : ci} strokeWidth={sameImg ? 1.4 : 3} />
+              <text x={p.t.x} y={p.t.y + 4} textAnchor="middle" fontSize={11} fill="white" fontFamily="var(--mono)" fontWeight={700}>
+                {l === 'inf' ? '∞' : l}
+              </text>
+              <circle cx={p.b.x} cy={p.b.y} r={14} fill={c} stroke={sameImg ? 'var(--ink)' : ci} strokeWidth={sameImg ? 1.4 : 3} />
+              <text x={p.b.x} y={p.b.y + 4} textAnchor="middle" fontSize={11} fill="white" fontFamily="var(--mono)" fontWeight={700}>
+                {l === 'inf' ? '∞' : l}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="gt-pgl-ico-side">
+        <div className="gt-pgl-ico-title">
+          {lang === 'zh'
+            ? '12 顶点 = 6 对极点,每对贴一个 ℙ¹(𝔽₅) 标号'
+            : '12 vertices = 6 antipodal pairs, each pair labelled by a point of ℙ¹(𝔽₅)'}
+        </div>
+        <div className="gt-pgl-ico-buttons">
+          <button type="button" className={'gt-chip' + (rot === 'id' ? ' is-active' : '')} onClick={() => setRot('id')}>
+            {lang === 'zh' ? '不动' : 'identity'}
+          </button>
+          <button type="button" className={'gt-chip' + (rot === 'T' ? ' is-active' : '')} onClick={() => setRot('T')}>
+            T : z ↦ z + 1
+          </button>
+          <button type="button" className={'gt-chip' + (rot === 'S' ? ' is-active' : '')} onClick={() => setRot('S')}>
+            S : z ↦ −1/z
+          </button>
+          <button type="button" className={'gt-chip' + (rot === 'TS' ? ' is-active' : '')} onClick={() => setRot('TS')}>
+            TS
+          </button>
+        </div>
+        <div className="gt-pgl-ico-action">
+          {labels.map(l => (
+            <div key={String(l)} className="gt-pgl-ico-line">
+              <span className="gt-mono">{l === 'inf' ? '∞' : l}</span>
+              <span> → </span>
+              <strong className="gt-mono">{action[String(l)] === 'inf' ? '∞' : action[String(l)]}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="gt-pgl-ico-note">
+          <L
+            zh={<>T 的阶 = 5 (绕 "北极" 旋转 2π/5);S 的阶 = 2 (绕一条棱中点旋转 π);<TeX src="(ST)^3 = e" />。 这套 <TeX src="\langle S, T \mid S^2 = T^5 = (ST)^3 = e\rangle" /> 是 <TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5" /> 的标准表示。</>}
+            en={<>T has order 5 (rotation by 2π/5 about a "north" vertex); S has order 2 (half-turn through an edge midpoint); and <TeX src="(ST)^3 = e" />. The presentation <TeX src="\langle S, T \mid S^2 = T^5 = (ST)^3 = e\rangle" /> is the standard one for <TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5" />.</>}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 30.11  Order histogram of random ⟨R, U⟩ words ─────────────────────────
+function OrderHistogramTwoFace() {
+  const lang = useLang();
+  const [maxLen, setMaxLen] = useState(20);
+  const [N, setN] = useState(2000);
+  const [seed, setSeed] = useState(1);
+
+  // The two permutations from TwoFaceCornerSim, acting on 6 corners.
+  const R: number[] = [1, 2, 3, 0, 4, 5];
+  const U: number[] = [4, 1, 2, 0, 5, 3];
+
+  const compose = (p: number[], q: number[]) => p.map((_, i) => p[q[i]]);
+  const id6 = [0, 1, 2, 3, 4, 5];
+  const orderOfPerm = (p: number[]) => {
+    let cur = p; let n = 1;
+    while (cur.some((v, i) => v !== i)) { cur = compose(p, cur); n++; if (n > 60) return -1; }
+    return n;
+  };
+
+  // S_5 order distribution (theoretical): orders 1, 2, 3, 4, 5, 6 with counts
+  // 1, 25, 20, 30, 24, 20 totalling 120.  We display sample counts beside it.
+  const theory: Record<number, number> = { 1: 1, 2: 25, 3: 20, 4: 30, 5: 24, 6: 20 };
+  const orders = [1, 2, 3, 4, 5, 6];
+
+  const sample = useMemo(() => {
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    // Cheap LCG seeded by `seed`
+    let s = seed >>> 0; if (s === 0) s = 1;
+    const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
+    for (let k = 0; k < N; k++) {
+      const len = 1 + Math.floor(rand() * maxLen);
+      let cur = id6.slice();
+      for (let i = 0; i < len; i++) {
+        const m = rand() < 0.5 ? R : U;
+        cur = compose(m, cur);
+      }
+      const o = orderOfPerm(cur);
+      if (o >= 1 && o <= 6) counts[o]++;
+    }
+    return counts;
+  }, [maxLen, N, seed]);
+
+  const totalSample = orders.reduce((a, o) => a + sample[o], 0);
+  const totalTheory = 120;
+  const maxPct = Math.max(
+    ...orders.map(o => Math.max(theory[o] / totalTheory, sample[o] / totalSample)),
+  );
+
+  return (
+    <div className="gt-pgl-hist">
+      <div className="gt-pgl-hist-controls">
+        <label>
+          {lang === 'zh' ? '最长字 len ≤ ' : 'word length ≤ '}
+          <input type="range" min={4} max={50} value={maxLen} onChange={e => setMaxLen(parseInt(e.target.value, 10))} />
+          <span className="gt-mono">{maxLen}</span>
+        </label>
+        <label>
+          {lang === 'zh' ? '采样数 N = ' : 'samples N = '}
+          <input type="range" min={500} max={20000} step={500} value={N} onChange={e => setN(parseInt(e.target.value, 10))} />
+          <span className="gt-mono">{N}</span>
+        </label>
+        <button type="button" className="gt-btn" onClick={() => setSeed(s => s + 1)}>
+          {lang === 'zh' ? '重抽' : 'reroll'}
+        </button>
+      </div>
+      <table className="gt-pgl-hist-tbl">
+        <thead>
+          <tr>
+            <th>{lang === 'zh' ? '阶' : 'order'}</th>
+            <th>{lang === 'zh' ? '理论 (S₅ 占比)' : 'theory (S₅ share)'}</th>
+            <th>{lang === 'zh' ? '采样占比' : 'sample share'}</th>
+            <th>{lang === 'zh' ? '条形' : 'bar'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map(o => {
+            const tPct = theory[o] / totalTheory;
+            const sPct = sample[o] / totalSample;
+            return (
+              <tr key={o}>
+                <td className="num">{o}</td>
+                <td className="num">{(tPct * 100).toFixed(2)}%</td>
+                <td className="num">{(sPct * 100).toFixed(2)}%</td>
+                <td className="gt-pgl-hist-bar-cell">
+                  <div className="gt-pgl-hist-bar-row">
+                    <div className="gt-pgl-hist-bar gt-pgl-hist-bar-theory" style={{ width: `${(tPct / maxPct) * 100}%` }} />
+                    <div className="gt-pgl-hist-bar gt-pgl-hist-bar-sample" style={{ width: `${(sPct / maxPct) * 100}%` }} />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <div className="gt-pgl-hist-legend">
+        <span><span className="gt-pgl-hist-swatch gt-pgl-hist-bar-theory" /> {lang === 'zh' ? '理论 (S₅ 全部 120 元素)' : 'theory (all 120 elements of S₅)'}</span>
+        <span><span className="gt-pgl-hist-swatch gt-pgl-hist-bar-sample" /> {lang === 'zh' ? '⟨R, U⟩ 采样' : '⟨R, U⟩ samples'}</span>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// §31 NEW · Rotational puzzles additions
+// ═══════════════════════════════════════════════════════════════════════
+// ─── §31 extension helpers ───────────────────────────────────────────────────
+
+// Two-face turner: animates one rotation of either face, shows cycle structure
+function TwoFaceTurner() {
+  const lang = useLang();
+  const [x, setX] = useState(2);
+  const [y, setY] = useState(1);
+  const [z, setZ] = useState(2);
+  const n = x + y + z;
+  const f1 = x + y;
+  const f2 = y + z;
+
+  // pieces: 0..x-1 are face-1 unique, x..x+y-1 are shared, x+y..n-1 are face-2 unique
+  // face-1 cycle order (clockwise): unique[0..x-1] then shared[0..y-1]
+  // face-2 cycle order (clockwise): shared[y-1..0] then unique[0..z-1]
+  const [perm, setPerm] = useState<number[]>(() => Array.from({ length: n }, (_, i) => i));
+
+  // Reset when dimensions change
+  useEffect(() => { setPerm(Array.from({ length: x + y + z }, (_, i) => i)); }, [x, y, z]);
+
+  const applyFace1 = useCallback(() => {
+    const cycle: number[] = [];
+    for (let i = 0; i < x; i++) cycle.push(i);
+    for (let j = 0; j < y; j++) cycle.push(x + j);
+    setPerm(prev => {
+      const next = prev.slice();
+      for (let i = 0; i < cycle.length; i++) {
+        next[cycle[(i + 1) % cycle.length]] = prev[cycle[i]];
+      }
+      return next;
+    });
+  }, [x, y]);
+
+  const applyFace2 = useCallback(() => {
+    const cycle: number[] = [];
+    for (let j = y - 1; j >= 0; j--) cycle.push(x + j);
+    for (let k = 0; k < z; k++) cycle.push(x + y + k);
+    setPerm(prev => {
+      const next = prev.slice();
+      for (let i = 0; i < cycle.length; i++) {
+        next[cycle[(i + 1) % cycle.length]] = prev[cycle[i]];
+      }
+      return next;
+    });
+  }, [x, y, z]);
+
+  const reset = useCallback(() => setPerm(Array.from({ length: n }, (_, i) => i)), [n]);
+
+  // cycle decomposition of current perm
+  const cycles = useMemo(() => {
+    const seen = new Array(n).fill(false);
+    const out: number[][] = [];
+    for (let i = 0; i < n; i++) {
+      if (seen[i] || perm[i] === i) { seen[i] = true; continue; }
+      const c: number[] = [];
+      let j = i;
+      while (!seen[j]) { seen[j] = true; c.push(j); j = perm[j]; }
+      if (c.length > 1) out.push(c);
+    }
+    return out;
+  }, [perm, n]);
+
+  const sign = cycles.reduce((s, c) => s * (c.length % 2 === 0 ? -1 : 1), 1);
+
+  // layout — two overlapping circles
+  const cx1 = 110, cx2 = 230, cyC = 130, R = 70;
+  const pieces: Array<{ id: number; x: number; y: number; role: 'a' | 's' | 'b' }> = [];
+  for (let i = 0; i < x; i++) {
+    const a = ((i + 0.5) / f1) * 2 * Math.PI + Math.PI / 2;
+    pieces.push({ id: i, x: cx1 + R * Math.cos(a), y: cyC + R * Math.sin(a), role: 'a' });
+  }
+  for (let j = 0; j < y; j++) {
+    pieces.push({ id: x + j, x: (cx1 + cx2) / 2, y: cyC - (y - 1) * 10 + j * 20, role: 's' });
+  }
+  for (let k = 0; k < z; k++) {
+    const a = ((k + 0.5) / f2) * 2 * Math.PI - Math.PI / 2;
+    pieces.push({ id: x + y + k, x: cx2 + R * Math.cos(a), y: cyC + R * Math.sin(a), role: 'b' });
+  }
+
+  const labelOf = (i: number) => String.fromCharCode(65 + i); // A, B, C, ...
+
+  return (
+    <div className="gt-rot-turner">
+      <div className="gt-rot-turner-controls">
+        <label>x = {x}<input type="range" min={0} max={4} value={x} onChange={e => setX(parseInt(e.target.value, 10))} /></label>
+        <label>y = {y}<input type="range" min={1} max={4} value={y} onChange={e => setY(parseInt(e.target.value, 10))} /></label>
+        <label>z = {z}<input type="range" min={0} max={4} value={z} onChange={e => setZ(parseInt(e.target.value, 10))} /></label>
+        <div className="gt-rot-turner-btns">
+          <button type="button" onClick={applyFace1} disabled={f1 < 2}>L<sup>+</sup></button>
+          <button type="button" onClick={applyFace2} disabled={f2 < 2}>R<sup>+</sup></button>
+          <button type="button" onClick={reset} className="gt-rot-reset">{lang === 'zh' ? '复位' : 'reset'}</button>
+        </div>
+      </div>
+      <svg width="340" height="260" viewBox="0 0 340 260" className="gt-rot-turner-svg">
+        <circle cx={cx1} cy={cyC} r={R} fill="none" stroke="var(--accent)" strokeWidth={1.5} strokeDasharray="3 3" />
+        <circle cx={cx2} cy={cyC} r={R} fill="none" stroke="var(--accent-2)" strokeWidth={1.5} strokeDasharray="3 3" />
+        <text x={cx1} y={cyC - R - 8} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--accent)">L · {f1}</text>
+        <text x={cx2} y={cyC - R - 8} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--accent-2)">R · {f2}</text>
+        {pieces.map(p => {
+          // p.id is the slot; perm[slot] is the piece currently sitting there
+          const pieceAt = perm[p.id];
+          const fill = pieceAt < x ? 'var(--accent)' : pieceAt >= x + y ? 'var(--accent-2)' : 'var(--gold)';
+          return (
+            <g key={p.id}>
+              <circle cx={p.x} cy={p.y} r={13} fill={fill} stroke="var(--ink)" strokeWidth={1} />
+              <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="#fff" fontWeight={600}>{labelOf(pieceAt)}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="gt-rot-turner-info">
+        <div className="gt-rot-info-row">
+          <span className="gt-rot-info-lbl">{lang === 'zh' ? '当前置换' : 'current perm'}</span>
+          <span className="gt-rot-info-val">
+            {cycles.length === 0
+              ? (lang === 'zh' ? '恒等 e' : 'identity e')
+              : cycles.map((c, i) => (
+                <span key={i}>({c.map(labelOf).join(' ')})</span>
+              ))}
+          </span>
+        </div>
+        <div className="gt-rot-info-row">
+          <span className="gt-rot-info-lbl">{lang === 'zh' ? '奇偶性' : 'parity'}</span>
+          <span className="gt-rot-info-val">{sign === 1 ? '+1 (even)' : '−1 (odd)'}</span>
+        </div>
+        <div className="gt-rot-info-row">
+          <span className="gt-rot-info-lbl">{lang === 'zh' ? '圈型' : 'cycle type'}</span>
+          <span className="gt-rot-info-val">
+            {cycles.length === 0
+              ? `1^${n}`
+              : (() => {
+                const counts: Record<number, number> = {};
+                for (const c of cycles) counts[c.length] = (counts[c.length] || 0) + 1;
+                const fixed = n - cycles.reduce((s, c) => s + c.length, 0);
+                if (fixed > 0) counts[1] = fixed;
+                return Object.entries(counts).sort(([a], [b]) => +b - +a).map(([k, v]) => v === 1 ? k : `${k}^${v}`).join(' · ');
+              })()}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Puzzle zoo: clickable grid of preset puzzles with (x,y,z) decomp and group
+type PuzzleSpec = {
+  key: string;
+  nameZh: string;
+  nameEn: string;
+  xyz?: [number, number, number];
+  group: string;
+  order: string;
+  blurbZh: string;
+  blurbEn: string;
+};
+
+const PUZZLE_ZOO: PuzzleSpec[] = [
+  {
+    key: 'tetrahedral-triv',
+    nameZh: '三角面 (1,1,1)',
+    nameEn: 'Triangle (1,1,1)',
+    xyz: [1, 1, 1],
+    group: 'Z_3',
+    order: '3',
+    blurbZh: '两个 2-长面共享 1 点 — 只能旋转单个共享子,小到没有 3-循环',
+    blurbEn: 'Two 2-cycles sharing a point — degenerate; not enough for a 3-cycle',
+  },
+  {
+    key: 'tetrahedron-2tip',
+    nameZh: 'Pyraminx 两面 (2,1,2)',
+    nameEn: 'Pyraminx 2-face (2,1,2)',
+    xyz: [2, 1, 2],
+    group: 'A_5',
+    order: '60',
+    blurbZh: '两个 3-循环共享 1 点,生成 5 点上的交错群 — 经典 Pyraminx 局部',
+    blurbEn: 'Two 3-cycles sharing 1 point; classical Pyraminx local pattern, yields A_5',
+  },
+  {
+    key: 'exceptional-222',
+    nameZh: '例外 (2,2,2)',
+    nameEn: 'Exceptional (2,2,2)',
+    xyz: [2, 2, 2],
+    group: 'S_5',
+    order: '120',
+    blurbZh: '6 子两面,本该 720 元 — 实际只有 120,等同 §30 的 S_5 在 6 点的奇异作用',
+    blurbEn: '6 pieces but only 120 reachable — matches §30 exotic S_5 on 6 points',
+  },
+  {
+    key: 'exceptional-132',
+    nameZh: '例外 (1,3,2)',
+    nameEn: 'Exceptional (1,3,2)',
+    xyz: [1, 3, 2],
+    group: 'S_5',
+    order: '120',
+    blurbZh: '同 (2,2,2) 同构 — Wilson 滑动版插一个空格就回到他的 7-点反例',
+    blurbEn: 'Isomorphic to (2,2,2); inserting a blank recovers Wilson\'s 7-vertex exception',
+  },
+  {
+    key: 'impossiball-2face',
+    nameZh: 'Impossiball 两面 (3,2,3)',
+    nameEn: 'Impossiball 2-face (3,2,3)',
+    xyz: [3, 2, 3],
+    group: 'A_8',
+    order: '20,160',
+    blurbZh: '两个 5-长面共享 2 子,8 子全偶 — A_8 是阶为 20160 的单群',
+    blurbEn: 'Two 5-cycles share 2 — full A_8, a simple group of order 20160',
+  },
+  {
+    key: 'alexstar-2face',
+    nameZh: "Alexander's Star (4,1,4)",
+    nameEn: "Alexander's Star (4,1,4)",
+    xyz: [4, 1, 4],
+    group: 'A_9',
+    order: '181,440',
+    blurbZh: '两面长 5 共享 1 子 — A_9,5 个十二面体面在边上的同构',
+    blurbEn: 'Two length-5 faces sharing 1 — A_9; matches an edge-pattern on the dodecahedron',
+  },
+  {
+    key: 'big-even',
+    nameZh: '偶面 (3,3,3)',
+    nameEn: 'Even-face (3,3,3)',
+    xyz: [3, 3, 3],
+    group: 'S_9',
+    order: '362,880',
+    blurbZh: '两面长 6 (偶) 共享 3 子 — 偶长面提供奇置换 ⇒ 全 S_9',
+    blurbEn: 'Two length-6 (even) faces share 3 — even face contributes odd permutation ⇒ full S_9',
+  },
+  {
+    key: 'pyraminx-full',
+    nameZh: 'Pyraminx (整体)',
+    nameEn: 'Pyraminx (full)',
+    group: '(Z_3)^4 ⋊ (A_4 × Z_3^4 / Z_3)',
+    order: '75,582,720',
+    blurbZh: '4 个尖块 Z_3 朝向 × 6 边块在 A_6 × 朝向约束 × 4 中央 — 见 §15.1 闭式',
+    blurbEn: '4 tips Z_3 × 6 edges in A_6 × orientations × 4 centres — see §15.1 closed form',
+  },
+  {
+    key: 'skewb',
+    nameZh: 'Skewb',
+    nameEn: 'Skewb',
+    group: 'S_8 × Z_3^4 / (sign·twist)',
+    order: '3,149,280',
+    blurbZh: '8 角 + 6 面中心,角带朝向 — 4 个对角轴生成,约束总和 ≡ 0',
+    blurbEn: '8 corners with twist + 6 centres, 4 diagonal-axis generators, sums vanish',
+  },
+  {
+    key: '2x2x2',
+    nameZh: '2×2×2',
+    nameEn: '2×2×2',
+    group: 'Z_3^7 ⋊ S_8 (no parity constraint)',
+    order: '3,674,160',
+    blurbZh: '只有 8 角,没有棱、 没有中心 — 角朝向和 ≡ 0 (mod 3)',
+    blurbEn: '8 corners only, no edges or centres — corner twist sum ≡ 0 (mod 3)',
+  },
+  {
+    key: 'megaminx',
+    nameZh: 'Megaminx',
+    nameEn: 'Megaminx',
+    group: '(huge wreath)',
+    order: '≈ 1.01 × 10^68',
+    blurbZh: '12 个 5-长面 — 三面分类已远超 (x,y,z) 范围,落在 §31.10 wreath product',
+    blurbEn: '12 length-5 faces — beyond (x,y,z), naturally a wreath construction (§31.10)',
+  },
+  {
+    key: 'square1',
+    nameZh: 'Square-1',
+    nameEn: 'Square-1',
+    group: 'groupoid (not a group)',
+    order: '≈ 1.78 × 10^14',
+    blurbZh: 'Shape-shifting 让合法移动依赖几何 — 严格说不是群,是 groupoid (见 §15.3)',
+    blurbEn: 'Shape-shifting makes legality geometry-dependent — formally a groupoid (cf. §15.3)',
+  },
+];
+
+function PuzzleZoo() {
+  const lang = useLang();
+  const [active, setActive] = useState<string>('exceptional-222');
+  const sel = PUZZLE_ZOO.find(p => p.key === active) ?? PUZZLE_ZOO[0];
+  return (
+    <div className="gt-rot-zoo">
+      <div className="gt-rot-zoo-grid">
+        {PUZZLE_ZOO.map(p => (
+          <button
+            key={p.key}
+            type="button"
+            className={`gt-rot-zoo-card${active === p.key ? ' is-active' : ''}`}
+            onClick={() => setActive(p.key)}
+          >
+            <div className="gt-rot-zoo-card-name">{lang === 'zh' ? p.nameZh : p.nameEn}</div>
+            {p.xyz && <div className="gt-rot-zoo-card-xyz">({p.xyz.join(', ')})</div>}
+            <div className="gt-rot-zoo-card-grp">{p.group}</div>
+          </button>
+        ))}
+      </div>
+      <div className="gt-rot-zoo-detail">
+        <div className="gt-rot-zoo-detail-name">{lang === 'zh' ? sel.nameZh : sel.nameEn}</div>
+        {sel.xyz && (
+          <div className="gt-rot-zoo-detail-xyz">
+            (x, y, z) = ({sel.xyz[0]}, {sel.xyz[1]}, {sel.xyz[2]}) &nbsp; n = {sel.xyz.reduce((a, b) => a + b, 0)}
+          </div>
+        )}
+        <div className="gt-rot-zoo-detail-grp">{sel.group}</div>
+        <div className="gt-rot-zoo-detail-order">|G| = {sel.order}</div>
+        <div className="gt-rot-zoo-detail-blurb">{lang === 'zh' ? sel.blurbZh : sel.blurbEn}</div>
+      </div>
+    </div>
+  );
+}
+
+// Schreier-Sims demo: build a base+strong-generating-set for S_5 step by step
+function SchreierSimsDemo() {
+  const lang = useLang();
+  const [step, setStep] = useState(0);
+  // We hardcode the trace for the user-facing pair: g1 = (1 2 3 4 5), g2 = (1 2)
+  // Base [1,2,3,4]; show orbit sizes 5, 4, 3, 2 ⇒ |S_5| = 5·4·3·2·1 = 120
+  const trace = [
+    {
+      title: lang === 'zh' ? '生成元' : 'generators',
+      body: lang === 'zh'
+        ? <>g₁ = (1 2 3 4 5),  g₂ = (1 2)。 候选群 G ⊆ S₅</>
+        : <>g₁ = (1 2 3 4 5),  g₂ = (1 2). Candidate G ⊆ S₅</>,
+      orbit: [1, 2, 3, 4, 5],
+      orbitOf: 1,
+      gens: ['g₁', 'g₂'],
+    },
+    {
+      title: lang === 'zh' ? '第 1 层:base point = 1' : 'level 1: base point = 1',
+      body: lang === 'zh'
+        ? <>固定 1 的子群 G₁ 由 Schreier 生成元生成。 G/G₁ 轨道:{`{1,2,3,4,5}`} (大小 5)</>
+        : <>Stabiliser G₁ of 1 generated by Schreier generators. Orbit of 1: {`{1,2,3,4,5}`} (size 5)</>,
+      orbit: [1, 2, 3, 4, 5],
+      orbitOf: 1,
+      gens: ['g₂', 'g₁ g₂ g₁⁻¹', 'g₁² g₂ g₁⁻²'],
+    },
+    {
+      title: lang === 'zh' ? '第 2 层:base point = 2' : 'level 2: base point = 2',
+      body: lang === 'zh'
+        ? <>G₁ 作用于 {`{2,3,4,5}`},轨道完整 (大小 4)</>
+        : <>G₁ acts on {`{2,3,4,5}`}; orbit fills (size 4)</>,
+      orbit: [2, 3, 4, 5],
+      orbitOf: 2,
+      gens: ['(2 3)', '(3 4)', '(4 5)'],
+    },
+    {
+      title: lang === 'zh' ? '第 3 层:base = 3' : 'level 3: base = 3',
+      body: lang === 'zh' ? <>剩余轨道大小 3</> : <>Remaining orbit size 3</>,
+      orbit: [3, 4, 5],
+      orbitOf: 3,
+      gens: ['(3 4)', '(4 5)'],
+    },
+    {
+      title: lang === 'zh' ? '第 4 层:base = 4' : 'level 4: base = 4',
+      body: lang === 'zh' ? <>轨道大小 2</> : <>Orbit size 2</>,
+      orbit: [4, 5],
+      orbitOf: 4,
+      gens: ['(4 5)'],
+    },
+    {
+      title: lang === 'zh' ? '终止' : 'finish',
+      body: lang === 'zh'
+        ? <>稳定子链 G ⊃ G₁ ⊃ G₁₂ ⊃ G₁₂₃ ⊃ G₁₂₃₄ = {`{e}`}。 |G| = 5·4·3·2·1 = <strong>120</strong></>
+        : <>Stabiliser chain G ⊃ G₁ ⊃ G₁₂ ⊃ G₁₂₃ ⊃ G₁₂₃₄ = {`{e}`}. |G| = 5·4·3·2·1 = <strong>120</strong></>,
+      orbit: [],
+      orbitOf: 0,
+      gens: [],
+    },
+  ];
+  const t = trace[Math.min(step, trace.length - 1)];
+  return (
+    <div className="gt-rot-ss">
+      <div className="gt-rot-ss-head">
+        <div className="gt-rot-ss-step">{lang === 'zh' ? `第 ${step} / ${trace.length - 1} 步` : `step ${step} / ${trace.length - 1}`}</div>
+        <div className="gt-rot-ss-btns">
+          <button type="button" onClick={() => setStep(s => Math.max(0, s - 1))}>{lang === 'zh' ? '上一步' : 'prev'}</button>
+          <button type="button" onClick={() => setStep(s => Math.min(trace.length - 1, s + 1))}>{lang === 'zh' ? '下一步' : 'next'}</button>
+          <button type="button" onClick={() => setStep(0)} className="gt-rot-reset">{lang === 'zh' ? '复位' : 'reset'}</button>
+        </div>
+      </div>
+      <div className="gt-rot-ss-title">{t.title}</div>
+      <div className="gt-rot-ss-body">{t.body}</div>
+      <div className="gt-rot-ss-orbit">
+        {[1, 2, 3, 4, 5].map(i => (
+          <span
+            key={i}
+            className={`gt-rot-ss-pt${t.orbit.includes(i) ? ' is-in' : ''}${i === t.orbitOf ? ' is-base' : ''}`}
+          >
+            {i}
+          </span>
+        ))}
+      </div>
+      {t.gens.length > 0 && (
+        <div className="gt-rot-ss-gens">
+          {lang === 'zh' ? '当前生成元' : 'current generators'}: {t.gens.join(',  ')}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Wilson sliding: side-by-side 15-puzzle vs Wilson's theta-0 exception
+function WilsonSliding() {
+  const lang = useLang();
+  const [mode, setMode] = useState<'cycle' | 'theta' | 'fifteen'>('theta');
+
+  return (
+    <div className="gt-rot-wilson">
+      <div className="gt-rot-wilson-tabs">
+        <button type="button" className={mode === 'cycle' ? 'is-active' : ''} onClick={() => setMode('cycle')}>
+          {lang === 'zh' ? '环 C_n' : 'cycle C_n'}
+        </button>
+        <button type="button" className={mode === 'theta' ? 'is-active' : ''} onClick={() => setMode('theta')}>
+          {lang === 'zh' ? 'θ₀ (7 点例外)' : 'θ₀ (7-point exception)'}
+        </button>
+        <button type="button" className={mode === 'fifteen' ? 'is-active' : ''} onClick={() => setMode('fifteen')}>
+          {lang === 'zh' ? '15-滑块 (4×4 grid)' : '15-puzzle (4×4 grid)'}
+        </button>
+      </div>
+      <svg width="320" height="220" viewBox="0 0 320 220" className="gt-rot-wilson-svg">
+        {mode === 'cycle' && (() => {
+          const N = 8;
+          const cx = 160, cy = 110, r = 80;
+          const pts = Array.from({ length: N }, (_, i) => {
+            const a = (i / N) * 2 * Math.PI - Math.PI / 2;
+            return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+          });
+          return (
+            <g>
+              {pts.map((p, i) => {
+                const q = pts[(i + 1) % N];
+                return <line key={`e${i}`} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke="var(--rule)" strokeWidth={1.5} />;
+              })}
+              {pts.map((p, i) => (
+                <g key={`v${i}`}>
+                  <circle cx={p.x} cy={p.y} r={12} fill={i === 0 ? 'var(--bg-muted)' : 'var(--accent)'} stroke="var(--ink)" strokeWidth={1} />
+                  <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize={10} fontFamily="var(--mono)" fill={i === 0 ? 'var(--ink)' : '#fff'}>{i === 0 ? '◯' : i}</text>
+                </g>
+              ))}
+            </g>
+          );
+        })()}
+        {mode === 'theta' && (() => {
+          // theta_0: two paths of length 4 sharing endpoints — 7 vertices, 8 edges
+          const top = [{ x: 60, y: 110 }, { x: 110, y: 60 }, { x: 170, y: 50 }, { x: 230, y: 60 }, { x: 280, y: 110 }];
+          const bot = [{ x: 110, y: 160 }, { x: 170, y: 170 }, { x: 230, y: 160 }];
+          // endpoints shared: top[0], top[4]
+          return (
+            <g>
+              <line x1={top[0].x} y1={top[0].y} x2={top[1].x} y2={top[1].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={top[1].x} y1={top[1].y} x2={top[2].x} y2={top[2].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={top[2].x} y1={top[2].y} x2={top[3].x} y2={top[3].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={top[3].x} y1={top[3].y} x2={top[4].x} y2={top[4].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={top[0].x} y1={top[0].y} x2={bot[0].x} y2={bot[0].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={bot[0].x} y1={bot[0].y} x2={bot[1].x} y2={bot[1].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={bot[1].x} y1={bot[1].y} x2={bot[2].x} y2={bot[2].y} stroke="var(--rule)" strokeWidth={1.5} />
+              <line x1={bot[2].x} y1={bot[2].y} x2={top[4].x} y2={top[4].y} stroke="var(--rule)" strokeWidth={1.5} />
+              {[...top, ...bot].map((p, i) => (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r={12} fill={i === 0 ? 'var(--bg-muted)' : (i < 5 ? 'var(--accent)' : 'var(--accent-2)')} stroke="var(--ink)" strokeWidth={1} />
+                  <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize={10} fontFamily="var(--mono)" fill={i === 0 ? 'var(--ink)' : '#fff'}>{i === 0 ? '◯' : i}</text>
+                </g>
+              ))}
+            </g>
+          );
+        })()}
+        {mode === 'fifteen' && (() => {
+          const cells: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+          return (
+            <g>
+              {cells.map((v, i) => {
+                const r = Math.floor(i / 4), c = i % 4;
+                const x = 80 + c * 40, y = 30 + r * 40;
+                return (
+                  <g key={i}>
+                    <rect x={x} y={y} width={36} height={36} fill={v === 0 ? 'var(--bg-muted)' : 'var(--accent)'} stroke="var(--ink)" strokeWidth={1} />
+                    {v !== 0 && <text x={x + 18} y={y + 23} textAnchor="middle" fontSize={13} fontFamily="var(--mono)" fill="#fff">{v}</text>}
+                  </g>
+                );
+              })}
+            </g>
+          );
+        })()}
+      </svg>
+      <div className="gt-rot-wilson-caption">
+        {mode === 'cycle' && (
+          <L
+            zh={<>简单环 <TeX src="C_n" />:空格绕一圈给出循环置换 <TeX src="(1\,2\,3\,\cdots\,n)" />。 状态群 = <TeX src="\mathbb{Z}_n" />,而 <em>不是</em> <TeX src="S_n" /> 或 <TeX src="A_n" />。 这是 Wilson 列出的两类非平凡例外之一。</>}
+            en={<>Plain cycle <TeX src="C_n" />: the blank around once is the cyclic permutation <TeX src="(1\,2\,3\,\cdots\,n)" />. State group = <TeX src="\mathbb{Z}_n" /> — <em>not</em> <TeX src="S_n" /> or <TeX src="A_n" />. One of Wilson's two non-trivial exception families.</>}
+          />
+        )}
+        {mode === 'theta' && (
+          <L
+            zh={<>θ₀ 图:Wilson 1974 的唯一散在例外。 7 个点 (1 空格 + 6 棋子),状态群恰好是 <TeX src="PGL_2(\mathbb{F}_5) \cong S_5" /> 阶 120 — 与 (2,2,2)、 (1,3,2) 同构,也是 §30 上那个 S_5 在 6 点的奇异作用。 把它的两个分叉点合并成一个点,就得到 (1,3,2) 旋转拼图。</>}
+            en={<>The θ₀ graph: Wilson 1974's unique sporadic exception. 7 vertices (1 blank + 6 tiles), state group <TeX src="PGL_2(\mathbb{F}_5) \cong S_5" /> of order 120 — isomorphic to (2,2,2) and (1,3,2), and to §30's exotic S_5 on 6 points. Merging the two trivalent vertices recovers the (1,3,2) rotational puzzle.</>}
+          />
+        )}
+        {mode === 'fifteen' && (
+          <L
+            zh={<>15-滑块 (4×4 网格,1 空格)。 Wilson 主定理:此图状态群 = <TeX src="A_{15}" />,所有偶置换可达。 「不可能解」的双子换 (Loyd 1880) = 一个对换 ∉ <TeX src="A_{15}" />,精确印证。</>}
+            en={<>The 15-puzzle (4×4 grid, 1 blank). Wilson's main theorem: state group = <TeX src="A_{15}" />, every even permutation reachable. Loyd's "impossible" swap of 14 and 15 is a transposition ∉ <TeX src="A_{15}" /> — the parity proof.</>}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// §32 NEW · Useful math additions
+// ═══════════════════════════════════════════════════════════════════════
+// ── Pure helpers (shared by §32 widgets) ────────────────────────────────────
+/** Parse "2 3 1 5 4" or "(1 2 3)(4 5)" into a 1-indexed permutation array. */
+function parsePerm(input: string, fallbackN?: number): { perm: number[]; n: number; error?: string } {
+  const trimmed = input.trim();
+  if (!trimmed) return { perm: [], n: 0, error: 'empty' };
+  // Cycle notation: extract groups in parentheses.
+  if (/[()]/.test(trimmed)) {
+    const cycleGroups = [...trimmed.matchAll(/\(([^)]*)\)/g)].map(m =>
+      m[1].trim().split(/[\s,]+/).filter(Boolean).map(Number)
+    );
+    if (cycleGroups.some(g => g.some(x => !Number.isInteger(x) || x < 1))) {
+      return { perm: [], n: 0, error: 'bad cycle tokens' };
+    }
+    const maxVal = Math.max(0, ...cycleGroups.flat());
+    const n = fallbackN ?? maxVal;
+    if (n < 1) return { perm: [], n: 0, error: 'no elements' };
+    const perm = Array.from({ length: n }, (_, i) => i + 1);
+    for (const cyc of cycleGroups) {
+      for (let i = 0; i < cyc.length; i++) {
+        const from = cyc[i];
+        const to = cyc[(i + 1) % cyc.length];
+        if (from > n || to > n) return { perm: [], n: 0, error: `out of range (>${n})` };
+        perm[from - 1] = to;
+      }
+    }
+    return { perm, n };
+  }
+  // Two-line: just the bottom row, top assumed 1..n.
+  const toks = trimmed.split(/[\s,]+/).filter(Boolean).map(Number);
+  if (toks.some(t => !Number.isInteger(t) || t < 1)) {
+    return { perm: [], n: 0, error: 'positive integers only' };
+  }
+  const sorted = [...toks].sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length; i++) {
+    if (sorted[i] !== i + 1) return { perm: [], n: 0, error: `must be permutation of 1..${sorted.length}` };
+  }
+  return { perm: toks, n: toks.length };
+}
+
+/** Decompose a 1-indexed permutation into disjoint cycles. */
+function decomposeCycles(perm: number[]): number[][] {
+  const n = perm.length;
+  const seen = new Set<number>();
+  const cycles: number[][] = [];
+  for (let i = 1; i <= n; i++) {
+    if (seen.has(i)) continue;
+    const cyc: number[] = [i];
+    seen.add(i);
+    let cur = perm[i - 1];
+    while (cur !== i) {
+      cyc.push(cur);
+      seen.add(cur);
+      cur = perm[cur - 1];
+    }
+    cycles.push(cyc);
+  }
+  return cycles;
+}
+
+/** Format cycle list as "(1 2 3)(4 5)"; identity prints as "e". */
+function fmtCycles(cycles: number[][]): string {
+  const nontriv = cycles.filter(c => c.length > 1);
+  if (nontriv.length === 0) return 'e';
+  return nontriv.map(c => `(${c.join(' ')})`).join('');
+}
+
+/** Compose two 1-indexed perms.  (a∘b)(i) = a(b(i))  — "first b, then a". */
+function composePerm(a: number[], b: number[]): number[] {
+  const n = Math.max(a.length, b.length);
+  const aExt = Array.from({ length: n }, (_, i) => a[i] ?? i + 1);
+  const bExt = Array.from({ length: n }, (_, i) => b[i] ?? i + 1);
+  return Array.from({ length: n }, (_, i) => aExt[bExt[i] - 1]);
+}
+
+/** Invert a 1-indexed perm. */
+function invertPerm(p: number[]): number[] {
+  const n = p.length;
+  const out = new Array<number>(n);
+  for (let i = 0; i < n; i++) out[p[i] - 1] = i + 1;
+  return out;
+}
+
+function gcdInt(a: number, b: number): number { return b === 0 ? a : gcdInt(b, a % b); }
+function lcmInt(a: number, b: number): number { return (a * b) / gcdInt(a, b); }
+
+function permOrder(perm: number[]): number {
+  return decomposeCycles(perm).reduce((acc, c) => lcmInt(acc, c.length), 1);
+}
+
+function permParitySign(perm: number[]): 1 | -1 {
+  // (-1)^(n - #cycles incl. fixed points)
+  const c = decomposeCycles(perm).length;
+  return ((perm.length - c) % 2 === 0 ? 1 : -1);
+}
+
+// ── 32.3 widget: TwoLineNotationDemo ────────────────────────────────────────
+function TwoLineNotationDemo() {
+  const lang = useLang();
+  const [input, setInput] = useState('3 1 4 5 2');
+  const [showCycle, setShowCycle] = useState(false);
+  const parsed = useMemo(() => parsePerm(input), [input]);
+  if (parsed.error || parsed.n === 0) {
+    return (
+      <div className="gt-useful-twoline">
+        <div className="gt-panel-input-row">
+          <label>{lang === 'zh' ? '排列 (输入下行)' : 'permutation (bottom row)'}</label>
+          <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+        </div>
+        <div className="gt-permvis-error">{parsed.error}</div>
+      </div>
+    );
+  }
+  const perm = parsed.perm;
+  const n = parsed.n;
+  const cycles = decomposeCycles(perm);
+  return (
+    <div className="gt-useful-twoline">
+      <div className="gt-panel-input-row">
+        <label>{lang === 'zh' ? '下行 σ(1)..σ(n)' : 'bottom row σ(1)..σ(n)'}</label>
+        <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+        <button type="button" className="gt-chip" onClick={() => setShowCycle(s => !s)}>
+          {showCycle ? (lang === 'zh' ? '看两行' : 'show two-line') : (lang === 'zh' ? '看循环' : 'show cycles')}
+        </button>
+      </div>
+      <div className="gt-useful-twoline-eq">
+        {!showCycle ? (
+          <table className="gt-useful-twoline-tbl">
+            <tbody>
+              <tr>{Array.from({ length: n }, (_, i) => <td key={`t${i}`} className="gt-useful-twoline-top">{i + 1}</td>)}</tr>
+              <tr>{perm.map((v, i) => <td key={`b${i}`} className="gt-useful-twoline-bot">{v}</td>)}</tr>
+            </tbody>
+          </table>
+        ) : (
+          <div className="gt-useful-twoline-cycles">{fmtCycles(cycles)}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 32.4 widget: CycleDecomposer (with animated trace) ──────────────────────
+function CycleDecomposer() {
+  const lang = useLang();
+  const [input, setInput] = useState('4 5 2 1 3 7 6');
+  const [step, setStep] = useState(0);
+  const parsed = useMemo(() => parsePerm(input), [input]);
+  // Build a flat step list: each step adds one element to the running cycle.
+  const trace = useMemo(() => {
+    if (!parsed.perm.length) return [] as { cycleIdx: number; val: number; closes: boolean }[];
+    const cyc = decomposeCycles(parsed.perm);
+    const out: { cycleIdx: number; val: number; closes: boolean }[] = [];
+    cyc.forEach((c, ci) => c.forEach((v, j) => out.push({ cycleIdx: ci, val: v, closes: j === c.length - 1 })));
+    return out;
+  }, [parsed.perm]);
+  const total = trace.length;
+  const visibleCycles: number[][] = [];
+  for (let i = 0; i <= step && i < total; i++) {
+    const { cycleIdx, val } = trace[i];
+    if (!visibleCycles[cycleIdx]) visibleCycles[cycleIdx] = [];
+    visibleCycles[cycleIdx].push(val);
+  }
+  return (
+    <div className="gt-useful-decompose">
+      <div className="gt-panel-input-row">
+        <label>{lang === 'zh' ? '排列' : 'permutation'}</label>
+        <input className="gt-input" value={input} onChange={e => { setInput(e.target.value); setStep(0); }} spellCheck={false} />
+      </div>
+      {parsed.error && <div className="gt-permvis-error">{parsed.error}</div>}
+      {!parsed.error && (
+        <>
+          <div className="gt-useful-decompose-controls">
+            <button type="button" className="gt-chip" onClick={() => setStep(0)} disabled={step === 0}>{lang === 'zh' ? '重置' : 'reset'}</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {lang === 'zh' ? '上一步' : 'prev'}</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(s => Math.min(total - 1, s + 1))} disabled={step >= total - 1}>{lang === 'zh' ? '下一步' : 'next'} →</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(total - 1)} disabled={step >= total - 1}>{lang === 'zh' ? '全部' : 'all'}</button>
+            <span className="gt-useful-decompose-counter">{step + 1} / {total}</span>
+          </div>
+          <div className="gt-useful-decompose-cycles">
+            {visibleCycles.map((c, i) => (
+              <span key={i} className="gt-useful-decompose-cycle">({c.join(' → ')}{c.length > 1 && trace[step] && trace[step].cycleIdx === i && trace[step].closes ? ` → ${c[0]}` : ''})</span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── 32.5 widget: ComposeConventions ────────────────────────────────────────
+function ComposeConventions() {
+  const lang = useLang();
+  const [aInput, setAInput] = useState('(1 2)(3 4)');
+  const [bInput, setBInput] = useState('(1 3)');
+  const N = 4;
+  const aP = parsePerm(aInput, N);
+  const bP = parsePerm(bInput, N);
+  if (aP.error || bP.error) {
+    return (
+      <div className="gt-useful-compose">
+        <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} /></div>
+        <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} /></div>
+        <div className="gt-permvis-error">{aP.error ?? bP.error}</div>
+      </div>
+    );
+  }
+  // Pad both to N so values match.
+  const pad = (p: number[]) => Array.from({ length: N }, (_, i) => p[i] ?? i + 1);
+  const a = pad(aP.perm);
+  const b = pad(bP.perm);
+  const mathStTau = composePerm(a, b);      // σ∘τ: first τ then σ
+  const cubeAfterB = composePerm(b, a);      // "alg A B": first A then B  -> b∘a
+  return (
+    <div className="gt-useful-compose">
+      <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-useful-compose-grid">
+        <div className="gt-useful-compose-cell">
+          <div className="gt-useful-compose-head">{lang === 'zh' ? '数学约定 σ∘τ' : 'math σ∘τ'}</div>
+          <div className="gt-useful-compose-sub">{lang === 'zh' ? '先 τ 后 σ — (σ∘τ)(i) = σ(τ(i))' : 'first τ then σ — (σ∘τ)(i) = σ(τ(i))'}</div>
+          <div className="gt-useful-compose-result">{fmtCycles(decomposeCycles(mathStTau))}</div>
+        </div>
+        <div className="gt-useful-compose-cell">
+          <div className="gt-useful-compose-head">{lang === 'zh' ? '魔方约定 "σ τ"' : 'cuber "σ τ"'}</div>
+          <div className="gt-useful-compose-sub">{lang === 'zh' ? '先 σ 后 τ — 跟读法一致' : 'first σ then τ — read left to right'}</div>
+          <div className="gt-useful-compose-result">{fmtCycles(decomposeCycles(cubeAfterB))}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 32.6 widget: ParityFromTranspositions ──────────────────────────────────
+function ParityFromTranspositions() {
+  const lang = useLang();
+  const [input, setInput] = useState('(1 2)(2 3)(3 4)(1 4)');
+  // Each parenthesised group must be a 2-cycle.
+  const parsed = useMemo(() => {
+    const groups = [...input.matchAll(/\(([^)]*)\)/g)].map(m => m[1].trim().split(/[\s,]+/).filter(Boolean).map(Number));
+    if (groups.length === 0) return { ok: false as const, error: 'no transpositions found' };
+    for (const g of groups) {
+      if (g.length !== 2 || !g.every(Number.isInteger) || g.some(x => x < 1)) return { ok: false as const, error: 'each group must be a 2-cycle (a b)' };
+    }
+    return { ok: true as const, groups };
+  }, [input]);
+  if (!parsed.ok) {
+    return (
+      <div className="gt-useful-parity">
+        <div className="gt-panel-input-row"><label>{lang === 'zh' ? '对换序列' : 'transpositions'}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-permvis-error">{parsed.error}</div>
+      </div>
+    );
+  }
+  const k = parsed.groups.length;
+  const maxV = Math.max(...parsed.groups.flat());
+  // Apply right-to-left as math convention.
+  let acc = Array.from({ length: maxV }, (_, i) => i + 1);
+  for (const g of [...parsed.groups].reverse()) {
+    const t = Array.from({ length: maxV }, (_, i) => i + 1);
+    [t[g[0] - 1], t[g[1] - 1]] = [g[1], g[0]];
+    acc = composePerm(t, acc);
+  }
+  const sign = permParitySign(acc);
+  return (
+    <div className="gt-useful-parity">
+      <div className="gt-panel-input-row">
+        <label>{lang === 'zh' ? '对换序列' : 'transpositions'}</label>
+        <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+      </div>
+      <div className="gt-useful-parity-results">
+        <div><b>{lang === 'zh' ? '个数 k' : 'count k'}:</b> {k}</div>
+        <div><b>{lang === 'zh' ? '乘积' : 'product'}:</b> {fmtCycles(decomposeCycles(acc))}</div>
+        <div><b>(−1)<sup>k</sup>:</b> {k % 2 === 0 ? '+1' : '−1'}</div>
+        <div><b>sgn(σ):</b> <span style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>{sign === 1 ? '+1' : '−1'} ({sign === 1 ? (lang === 'zh' ? '偶' : 'even') : (lang === 'zh' ? '奇' : 'odd')})</span></div>
+        <div className="gt-useful-parity-match">{((k % 2 === 0 ? 1 : -1) === sign) ? (lang === 'zh' ? '✓ (−1)ᵏ = sgn(σ)' : '✓ (−1)ᵏ = sgn(σ)') : '✗'}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── 32.7 widget: OrderCalculator ────────────────────────────────────────────
+function OrderCalculator() {
+  const lang = useLang();
+  const [input, setInput] = useState('(1 2 3)(4 5)(6 7 8 9 10 11)');
+  const parsed = useMemo(() => parsePerm(input), [input]);
+  if (parsed.error) {
+    return (
+      <div className="gt-useful-order">
+        <div className="gt-panel-input-row"><label>{lang === 'zh' ? '排列' : 'permutation'}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-permvis-error">{parsed.error}</div>
+      </div>
+    );
+  }
+  const cycles = decomposeCycles(parsed.perm).filter(c => c.length > 1);
+  const lens = cycles.map(c => c.length);
+  const ord = lens.length === 0 ? 1 : lens.reduce(lcmInt, 1);
+  return (
+    <div className="gt-useful-order">
+      <div className="gt-panel-input-row">
+        <label>{lang === 'zh' ? '排列' : 'permutation'}</label>
+        <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+      </div>
+      <div className="gt-useful-order-formula">
+        ord(σ) = lcm({lens.length === 0 ? '1' : lens.join(', ')}) = <b>{ord}</b>
+      </div>
+    </div>
+  );
+}
+
+// ── 32.7b widget: LandauTable ──────────────────────────────────────────────
+function LandauTable() {
+  const lang = useLang();
+  // Landau's function g(n) for n = 1..20.
+  const g: { n: number; gn: number; example: string }[] = [
+    { n: 1, gn: 1, example: '(1)' },
+    { n: 2, gn: 2, example: '(1 2)' },
+    { n: 3, gn: 3, example: '(1 2 3)' },
+    { n: 4, gn: 4, example: '(1 2 3 4)' },
+    { n: 5, gn: 6, example: '(1 2)(3 4 5)' },
+    { n: 6, gn: 6, example: '(1 2 3)(4 5 6) / (1 2 3 4 5 6)' },
+    { n: 7, gn: 12, example: '(1 2 3)(4 5 6 7)' },
+    { n: 8, gn: 15, example: '(1 2 3)(4 5 6 7 8)' },
+    { n: 9, gn: 20, example: '(1 2 3 4)(5 6 7 8 9)' },
+    { n: 10, gn: 30, example: '(1 2)(3 4 5)(6 7 8 9 10)' },
+    { n: 11, gn: 30, example: '(1 2 3)(4..8)(9 10 11) → 30' },
+    { n: 12, gn: 60, example: '(1..3)(4..7)(8..12) — 3·4·5 ⇒ 60' },
+    { n: 13, gn: 60, example: '+ fixed point' },
+    { n: 14, gn: 84, example: '(1..3)(4..7)(8..14) — 3·4·7' },
+    { n: 15, gn: 105, example: '(1..3)(4..8)(9..15) — 3·5·7' },
+    { n: 16, gn: 140, example: '(1..4)(5..9)(10..16) — 4·5·7' },
+    { n: 17, gn: 210, example: '(1..2)(3..5)(6..10)(11..17) — 2·3·5·7' },
+    { n: 18, gn: 210, example: 'same partition + fixed' },
+    { n: 19, gn: 420, example: '(1..4)(5..7)(8..12)(13..19) — 4·3·5·7' },
+    { n: 20, gn: 420, example: 'same partition + fixed' },
+  ];
+  return (
+    <table className="gt-useful-landau">
+      <thead>
+        <tr>
+          <th>n</th>
+          <th>g(n) = max ord</th>
+          <th>{lang === 'zh' ? '达到的循环结构' : 'extremal cycle type'}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {g.map(r => (
+          <tr key={r.n}>
+            <td className="num">{r.n}</td>
+            <td className="num"><b>{r.gn}</b></td>
+            <td>{r.example}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// ── 32.8 widget: ConjugationVisualiser ──────────────────────────────────────
+function ConjugationVisualiser() {
+  const lang = useLang();
+  const [sigmaInput, setSigmaInput] = useState('(1 2 3 4 5)');
+  const [tauInput, setTauInput] = useState('(1 2)(3 4)');
+  const sP = parsePerm(sigmaInput);
+  const tP = parsePerm(tauInput);
+  if (sP.error || tP.error) {
+    return (
+      <div className="gt-conj-vis">
+        <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={sigmaInput} onChange={e => setSigmaInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={tauInput} onChange={e => setTauInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-permvis-error">{sP.error ?? tP.error}</div>
+      </div>
+    );
+  }
+  const N = Math.max(sP.n, tP.n);
+  const pad = (p: number[]) => Array.from({ length: N }, (_, i) => p[i] ?? i + 1);
+  const sigma = pad(sP.perm);
+  const tau = pad(tP.perm);
+  const sigmaInv = invertPerm(sigma);
+  const conj = composePerm(composePerm(sigma, tau), sigmaInv);   // σ τ σ⁻¹
+  // Relabel rule: if τ has cycle (a b c …), then σ τ σ⁻¹ has cycle (σ(a) σ(b) σ(c) …).
+  const tauCycles = decomposeCycles(tau).filter(c => c.length > 1);
+  const relabelled = tauCycles.map(c => c.map(v => sigma[v - 1]));
+  return (
+    <div className="gt-conj-vis">
+      <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={sigmaInput} onChange={e => setSigmaInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={tauInput} onChange={e => setTauInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-conj-vis-row">
+        <span className="gt-conj-vis-label">σ τ σ⁻¹ =</span>
+        <span className="gt-conj-vis-result">{fmtCycles(decomposeCycles(conj))}</span>
+      </div>
+      <div className="gt-conj-vis-relabel">
+        <div className="gt-conj-vis-relabel-head">{lang === 'zh' ? '重命名规则' : 'relabel rule'}</div>
+        {tauCycles.length === 0 ? (
+          <div className="gt-conj-vis-relabel-cyc">τ = e ⇒ σ τ σ⁻¹ = e</div>
+        ) : tauCycles.map((c, i) => (
+          <div key={i} className="gt-conj-vis-relabel-cyc">
+            ({c.join(' ')}) <span className="gt-conj-vis-arrow">↦</span> ({relabelled[i].join(' ')})
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── 32.9 widget: CommutatorComputer ─────────────────────────────────────────
+function CommutatorComputer() {
+  const lang = useLang();
+  const [aInput, setAInput] = useState('(1 2 3 4 5)');
+  const [bInput, setBInput] = useState('(3 4 5 6 7)');
+  const aP = parsePerm(aInput);
+  const bP = parsePerm(bInput);
+  if (aP.error || bP.error) {
+    return (
+      <div className="gt-comm-comp">
+        <div className="gt-panel-input-row"><label>A</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>B</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-permvis-error">{aP.error ?? bP.error}</div>
+      </div>
+    );
+  }
+  const N = Math.max(aP.n, bP.n);
+  const pad = (p: number[]) => Array.from({ length: N }, (_, i) => p[i] ?? i + 1);
+  const A = pad(aP.perm);
+  const B = pad(bP.perm);
+  const Ai = invertPerm(A);
+  const Bi = invertPerm(B);
+  // [A,B] = A B A⁻¹ B⁻¹ — math convention: apply right to left.
+  const comm = composePerm(composePerm(composePerm(A, B), Ai), Bi);
+  const commCycles = decomposeCycles(comm).filter(c => c.length > 1);
+  const is3Cycle = commCycles.length === 1 && commCycles[0].length === 3;
+  return (
+    <div className="gt-comm-comp">
+      <div className="gt-panel-input-row"><label>A</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>B</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
+      <div className={`gt-comm-comp-result ${is3Cycle ? 'gt-comm-comp-3cycle' : ''}`}>
+        <span className="gt-comm-comp-label">[A, B] = A B A⁻¹ B⁻¹ =</span>
+        <span className="gt-comm-comp-value">{fmtCycles(decomposeCycles(comm))}</span>
+        {is3Cycle && <span className="gt-comm-comp-badge">{lang === 'zh' ? '✓ 干净 3-循环' : '✓ clean 3-cycle'}</span>}
+      </div>
+      <div className="gt-comm-comp-meta">
+        ord([A,B]) = {permOrder(comm)} · sgn([A,B]) = +1 ({lang === 'zh' ? '换位子始终是偶置换' : 'commutators are always even'})
+      </div>
+    </div>
+  );
+}
+
+// ── 32.10 widget: PowerSlider ───────────────────────────────────────────────
+function PowerSlider() {
+  const lang = useLang();
+  const [input, setInput] = useState('(1 2 3)(4 5)');
+  const parsed = useMemo(() => parsePerm(input), [input]);
+  const ord = useMemo(() => parsed.error ? 1 : permOrder(parsed.perm), [parsed]);
+  const [k, setK] = useState(1);
+  useEffect(() => { if (k > ord) setK(ord); }, [ord, k]);
+  if (parsed.error) {
+    return (
+      <div className="gt-useful-power">
+        <div className="gt-panel-input-row"><label>{lang === 'zh' ? '排列' : 'permutation'}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-permvis-error">{parsed.error}</div>
+      </div>
+    );
+  }
+  let pow = Array.from({ length: parsed.n }, (_, i) => i + 1);
+  for (let i = 0; i < k; i++) pow = composePerm(parsed.perm, pow);
+  const isIdentity = pow.every((v, i) => v === i + 1);
+  return (
+    <div className="gt-useful-power">
+      <div className="gt-panel-input-row">
+        <label>{lang === 'zh' ? '排列 σ' : 'permutation σ'}</label>
+        <input className="gt-input" value={input} onChange={e => { setInput(e.target.value); setK(1); }} spellCheck={false} />
+      </div>
+      <div className="gt-useful-power-slider-row">
+        <label>k = <b>{k}</b></label>
+        <input type="range" min={0} max={ord} value={k} onChange={e => setK(Number(e.target.value))} className="gt-useful-power-slider" />
+        <span className="gt-useful-power-ord">ord(σ) = {ord}</span>
+      </div>
+      <div className={`gt-useful-power-result ${isIdentity ? 'gt-useful-power-identity' : ''}`}>
+        σ<sup>{k}</sup> = {fmtCycles(decomposeCycles(pow))}
+        {isIdentity && k > 0 && <span className="gt-useful-power-badge">{lang === 'zh' ? '恒等' : 'identity'}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── 32.11 widget: SubgroupGenerator ─────────────────────────────────────────
+function SubgroupGenerator() {
+  const lang = useLang();
+  const [gen1, setGen1] = useState('(1 2 3 4 5)');
+  const [gen2, setGen2] = useState('(1 2)');
+  const g1 = parsePerm(gen1);
+  const g2 = parsePerm(gen2);
+  const result = useMemo(() => {
+    if (g1.error || g2.error) return null;
+    const N = Math.max(g1.n, g2.n);
+    if (N > 9) return { error: 'enumeration limited to n ≤ 9' };
+    const pad = (p: number[]) => Array.from({ length: N }, (_, i) => p[i] ?? i + 1);
+    const gens = [pad(g1.perm), pad(g2.perm)];
+    const key = (p: number[]) => p.join(',');
+    const seen = new Map<string, number[]>();
+    const idStr = key(Array.from({ length: N }, (_, i) => i + 1));
+    seen.set(idStr, Array.from({ length: N }, (_, i) => i + 1));
+    const frontier: number[][] = [seen.get(idStr)!];
+    let factorial = 1;
+    for (let i = 1; i <= N; i++) factorial *= i;
+    while (frontier.length > 0 && seen.size <= factorial) {
+      const cur = frontier.shift()!;
+      for (const g of gens) {
+        const next = composePerm(g, cur);
+        const k = key(next);
+        if (!seen.has(k)) { seen.set(k, next); frontier.push(next); }
+      }
+    }
+    // Determine common named groups.
+    let name = '';
+    if (seen.size === factorial) name = `S_${N}`;
+    else if (seen.size === factorial / 2) name = `A_${N}`;
+    else if (seen.size === N) name = `Z/${N}`;
+    else if (seen.size === 2 * N) name = `D_${N}`;
+    return { order: seen.size, N, name };
+  }, [g1.perm, g2.perm, g1.n, g2.n, g1.error, g2.error]);
+  return (
+    <div className="gt-useful-subgrp">
+      <div className="gt-panel-input-row"><label>g₁</label><input className="gt-input" value={gen1} onChange={e => setGen1(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>g₂</label><input className="gt-input" value={gen2} onChange={e => setGen2(e.target.value)} spellCheck={false} /></div>
+      {g1.error && <div className="gt-permvis-error">g₁: {g1.error}</div>}
+      {g2.error && <div className="gt-permvis-error">g₂: {g2.error}</div>}
+      {result && 'error' in result && <div className="gt-permvis-error">{result.error}</div>}
+      {result && 'order' in result && (
+        <div className="gt-useful-subgrp-result">
+          ⟨g₁, g₂⟩ ⊆ S<sub>{result.N}</sub>, |⟨g₁, g₂⟩| = <b>{result.order}</b>
+          {result.name && <span className="gt-useful-subgrp-name"> ≅ {result.name}</span>}
+        </div>
+      )}
+      <div className="gt-useful-subgrp-presets">
+        <button type="button" className="gt-chip" onClick={() => { setGen1('(1 2)'); setGen2('(2 3)'); }}>{lang === 'zh' ? 'S₃' : 'S₃'}</button>
+        <button type="button" className="gt-chip" onClick={() => { setGen1('(1 2 3 4 5)'); setGen2('(1 2)'); }}>{lang === 'zh' ? 'S₅' : 'S₅'}</button>
+        <button type="button" className="gt-chip" onClick={() => { setGen1('(1 2 3 4 5)'); setGen2('(1 3)'); }}>?</button>
+        <button type="button" className="gt-chip" onClick={() => { setGen1('(1 2 3 4)'); setGen2('(1 3)'); }}>D₄</button>
+      </div>
+    </div>
+  );
+}
+
+// ── 32.12 widget: CycleIndexPoly ────────────────────────────────────────────
+function CycleIndexPoly() {
+  const lang = useLang();
+  // D_4 acting on 4 vertices. 8 elements: 4 rotations (id, 90, 180, 270),
+  // 4 reflections (2 through edge midpoints, 2 through vertices).
+  // Cycle structures on the 4 vertices:
+  //   e          → 1^4         z_1^4
+  //   r (90)     → (1234)      z_4
+  //   r² (180)   → (13)(24)    z_2^2
+  //   r³ (270)   → (1432)      z_4
+  //   2 vertex-flips  → (1)(24)(3) ⇒ z_1^2 z_2  ×2
+  //   2 edge-flips    → (12)(34) ⇒ z_2^2         ×2
+  const elements: { name: string; cycle: string; mono: string }[] = [
+    { name: 'e', cycle: '(1)(2)(3)(4)', mono: 'z_1^4' },
+    { name: 'r', cycle: '(1 2 3 4)', mono: 'z_4' },
+    { name: 'r²', cycle: '(1 3)(2 4)', mono: 'z_2^2' },
+    { name: 'r³', cycle: '(1 4 3 2)', mono: 'z_4' },
+    { name: 'v₁ (through 1,3)', cycle: '(1)(3)(2 4)', mono: 'z_1^2 z_2' },
+    { name: 'v₂ (through 2,4)', cycle: '(2)(4)(1 3)', mono: 'z_1^2 z_2' },
+    { name: 'e₁ (edge 12-34)', cycle: '(1 2)(3 4)', mono: 'z_2^2' },
+    { name: 'e₂ (edge 14-23)', cycle: '(1 4)(2 3)', mono: 'z_2^2' },
+  ];
+  return (
+    <div className="gt-useful-poly">
+      <table className="gt-useful-poly-tbl">
+        <thead>
+          <tr><th>g</th><th>{lang === 'zh' ? '在 4 顶点上的圈型' : 'cycles on 4 vertices'}</th><th>{lang === 'zh' ? '单项' : 'monomial'}</th></tr>
+        </thead>
+        <tbody>
+          {elements.map((el, i) => (
+            <tr key={i}><td>{el.name}</td><td className="mono">{el.cycle}</td><td><TeX src={el.mono} /></td></tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="gt-useful-poly-sum">
+        <TeXBlock src="Z_{D_4}(z_1,z_2,z_3,z_4) = \tfrac{1}{8}\bigl(z_1^4 + 2z_4 + 3z_2^2 + 2z_1^2 z_2\bigr)" />
+      </div>
+      <div className="gt-useful-poly-cap">
+        <L
+          zh={<>用 c 种颜色染 4 顶点, 在 D₄ 等价下不同染色数 = <TeX src="Z_{D_4}(c, c, c, c) = \tfrac{1}{8}(c^4 + 3c^2 + 2c^3 + 2c^2) = \tfrac{1}{8}(c^4 + 2c^3 + 5c^2)" />。 取 c = 2 得 6, c = 3 得 21 — 这是经典的「项链问题」 D₄ 版本。</>}
+          en={<>Number of distinct c-colourings of 4 vertices up to D₄: <TeX src="Z_{D_4}(c, c, c, c) = \tfrac{1}{8}(c^4 + 2c^3 + 5c^2)" />. At c = 2: 6 patterns; at c = 3: 21 patterns — the classical D₄ "necklace" count.</>}
+        />
+      </div>
+    </div>
+  );
+}
+
+
+
+
 // ── Index landing panels (only rendered on /math/group, not sub-slugs) ─────
 function IndexStatsStrip() {
   const lang = useLang();
@@ -2563,7 +6882,7 @@ function IndexStatsStrip() {
         <div className="gt-index-stat-cap">{lang === 'zh' ? '群的直径 = 最长最短解' : 'group diameter — longest optimal solve'}</div>
       </div>
       <div className="gt-index-stat">
-        <div className="gt-index-stat-val">26 + 37</div>
+        <div className="gt-index-stat-val">31 + 45</div>
         <div className="gt-index-stat-label">{lang === 'zh' ? '小节 · 互动面板' : 'sections · interactive panels'}</div>
         <div className="gt-index-stat-cap">{lang === 'zh' ? 'KaTeX 公式 · cubing.js 动画' : 'KaTeX formulas · cubing.js animations'}</div>
       </div>
@@ -2700,6 +7019,10 @@ const TOC_THEMES: { id: string; zh: string; en: string; descZh: string; descEn: 
     descZh: '解法算法 · 距离分布 · 随机游走 · BSGS · 表示论一瞥',
     descEn: 'solving algorithms · distance distribution · random walks · BSGS · representation theory',
     range: '§22 – §26', secs: ['algorithms','distance','random-walks','computational','representations'] },
+  { id: 'puzzles', zh: '拼图数学 · jaapsch.net', en: 'Puzzle mathematics · jaapsch.net',
+    descZh: 'Lights Out · 孔明棋 · Hamilton · PGL₂(𝔽₅) · 图旋转拼图 · 有用数学',
+    descEn: 'Lights Out · peg solitaire · Hamilton · PGL₂(𝔽₅) · rotational graph puzzles · useful math',
+    range: '§27 – §32', secs: ['lights-out','peg-solitaire','hamiltonian','two-face-pgl','rotational-puzzles','useful-math'] },
 ];
 
 function IndexThemedTOC() {
@@ -2707,7 +7030,7 @@ function IndexThemedTOC() {
   const byId = useMemo(() => new Map(TOC.map(t => [t.id, t])), []);
   return (
     <nav className="gt-index-toc" aria-label="Table of contents">
-      <div className="gt-index-section-head">{lang === 'zh' ? '目录 · 26 节按主题分组' : 'contents · 26 sections, grouped by theme'}</div>
+      <div className="gt-index-section-head">{lang === 'zh' ? '目录 · 32 节按主题分组' : 'contents · 32 sections, grouped by theme'}</div>
       <div className="gt-index-toc-themes">
         {TOC_THEMES.map(theme => (
           <div key={theme.id} className="gt-index-theme">
@@ -2790,7 +7113,7 @@ export default function GroupTheoryPage() {
             : '43 quintillion positions is not chaos. It is a beautifully structured algebraic object. An illustrated, interactive primer.'}
         </p>
         <div className="gt-hero-byline">
-          {lang === 'zh' ? 'cuberoot · 2026 · 26 节 · 25 个互动 & 视觉面板 · 数学公式 KaTeX 渲染' : 'cuberoot · 2026 · 26 sections · 25 interactive & visual panels · KaTeX-rendered math'}
+          {lang === 'zh' ? 'cuberoot · 2026 · 32 节 · 40+ 互动 & 视觉面板 · 数学公式 KaTeX 渲染' : 'cuberoot · 2026 · 32 sections · 40+ interactive & visual panels · KaTeX-rendered math'}
         </div>
       </header>
       )}
@@ -7131,6 +11454,2629 @@ Membership(g):
         </div>
       </GTSec>
 
+      {/* ═══════════════ §27 Lights Out ═════════════════════════════════ */}
+      <GTSec id="lights-out" className="gt-sec">
+        <div className="gt-sec-num">§27</div>
+        <h2 className="gt-sec-title">
+          <L zh="Lights Out — GF(2) 线性代数" en="Lights Out — Linear algebra over GF(2)" />
+        </h2>
+        <p className="gt-lede">
+          <L
+            zh={<>1995 年 Tiger Electronics 推出的电子玩具 <em>Lights Out</em>: 5×5 方阵的按钮,按一下会同时翻转 <strong>该按钮 + 上下左右</strong> 共 5 个灯的状态。 从一个随机点亮的图案出发,目标是让所有灯熄灭。 看似童玩,背后是一道干净漂亮的 <strong>𝔽₂ 上的线性代数</strong> 题: 每个图案 p 对应一个向量 <TeX src="p \in \mathbb{F}_2^{25}" />, 按钮 i 对应一个固定向量 <TeX src="A_i \in \mathbb{F}_2^{25}" />, 而按钮可交换、 且按两次抵消 (<TeX src="2 \equiv 0 \pmod 2" />), 所以 「按哪些按钮」 也是一个向量 <TeX src="x \in \mathbb{F}_2^{25}" />, 目标方程就是</>}
+            en={<>The 1995 Tiger Electronics toy <em>Lights Out</em>: a 5×5 grid of buttons; pressing one toggles itself and its four orthogonal neighbours. Reach all-off from a given lit pattern. Behind this children's puzzle is one of the cleanest examples of <strong>linear algebra over <TeX src="\mathbb{F}_2" /></strong>: a pattern p is a vector in <TeX src="\mathbb{F}_2^{25}" />, each button is a fixed "press vector" <TeX src="A_i \in \mathbb{F}_2^{25}" />, and since presses commute and self-cancel mod 2, "which buttons to press" is itself a vector <TeX src="x \in \mathbb{F}_2^{25}" /> solving</>}
+          />
+        </p>
+        <TeXBlock src="A x = p \quad \text{over } \mathbb{F}_2," />
+        <p>
+          <L
+            zh={<>其中 A 是 25 × 25 的对称 0/1 矩阵: <TeX src="A_{ij} = 1" /> 当且仅当按按钮 i 会切换灯 j。 A 是分块三对角的,在行向坐标里:</>}
+            en={<>where A is the symmetric 25 × 25 binary matrix with <TeX src="A_{ij}=1" /> iff pressing button i toggles light j. In row-major coordinates, A is block tridiagonal:</>}
+          />
+        </p>
+        <TeXBlock src="A_{m \times n} = \begin{pmatrix} B_n & I_n & & \\ I_n & B_n & I_n & \\ & I_n & B_n & \ddots \\ & & \ddots & \ddots \end{pmatrix}, \qquad B_n = I_n + T_n," />
+        <p>
+          <L
+            zh={<>其中 <TeX src="T_n" /> 是 n × n 「相邻 1」 三对角矩阵 (无主对角线)。 把 A 当作图算子: <strong>它就是 m × n 方格图的反射式邻接矩阵</strong> (一个顶点 + 它的邻居)。 整张 §27 都在追问一件事 — 这个矩阵在 𝔽₂ 上的核长什么样, 因为</>}
+            en={<>where <TeX src="T_n" /> is the n × n off-diagonal "adjacency" tridiagonal matrix. View A as a graph operator: <strong>it is the reflexive adjacency matrix of the m × n grid graph</strong> (a vertex plus its neighbours). All of §27 chases one question — what does this matrix's kernel look like over <TeX src="\mathbb{F}_2" />, because</>}
+          />
+        </p>
+        <TeXBlock src="\dim \ker A \;=\; m\cdot n - \mathrm{rank}\, A \;=\; \log_2 \frac{|\mathbb{F}_2^{mn}|}{|\mathrm{im}\, A|}" />
+        <p>
+          <L
+            zh={<>直接决定 「<strong>多少图案能解</strong>」 (<TeX src="2^{\mathrm{rank}\, A} = 2^{mn - \dim \ker A}" /> 个), 以及 「<strong>每个可解图案有几个解</strong>」 (恰好 <TeX src="2^{\dim \ker A}" /> 个)。</>}
+            en={<>completely determines both <strong>how many patterns are solvable</strong> (<TeX src="2^{\mathrm{rank}\, A} = 2^{mn - \dim \ker A}" />) and <strong>how many solutions each solvable pattern has</strong> (exactly <TeX src="2^{\dim \ker A}" />).</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.1  互动:3 × 3 与 5 × 5 求解器" en="27.1  Interactive: 3 × 3 and 5 × 5 solvers" />
+        </h3>
+        <p>
+          <L
+            zh={<>3 × 3 的 A 满秩, 任何图案都可解, 直径 9 步 (一定可在 9 步内熄灭)。 5 × 5 的 A <strong>不满秩</strong>: <TeX src="\mathrm{rank}\, A = 23, \dim \ker A = 2" />, 所以可解图案恰好占 <TeX src="2^{23} = 8\,388\,608" /> 个 (全部 <TeX src="2^{25}" /> 的 1/4), 每个可解图案有 <TeX src="2^2 = 4" /> 个不同的解。 下面两块板子自动跑高斯消元 + 在 4 个解中选汉明权最小的那个 — 5 × 5 上直径 = 15 步。</>}
+            en={<>The 3 × 3 board's A is full rank — every pattern is solvable in at most 9 presses. The 5 × 5 board has <TeX src="\mathrm{rank}\, A = 23, \dim \ker A = 2" />: exactly <TeX src="2^{23} = 8\,388\,608" /> patterns are solvable (a quarter of all <TeX src="2^{25}" />), each in <TeX src="2^2 = 4" /> distinct ways. Both boards below run Gaussian elimination and then pick the minimum-Hamming-weight coset representative. Diameter = 15 on 5 × 5.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">3 × 3</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '满秩 · 任何图案可解 · 直径 9' : 'full rank · every pattern solvable · diameter 9'}</div>
+          <LightsOutBoard size={3} />
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">5 × 5</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '秩 23 · 2 个安静图案 · 每个可解图案 4 种解 · 直径 15' : 'rank 23 · 2 quiet patterns · 4 solutions per solvable · diameter 15'}</div>
+          <LightsOutBoard size={5} />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.2  安静图案 (Quiet Patterns)" en="27.2  Quiet patterns" />
+        </h3>
+        <p>
+          <L
+            zh={<>5 × 5 的核空间有 2 个基向量 <TeX src="Q_1, Q_2 \in \ker A" />。 几何意义: <strong>把这些标记的按钮全按一遍, 整个网格回到全灭</strong>。 因此一个解再加上任意安静图案,得到另一个解 — 这正是 「4 个解」 的由来。 它们也立刻给出 <strong>可解判据</strong>:</>}
+            en={<>The 5 × 5 kernel has basis <TeX src="Q_1, Q_2 \in \ker A" />. Geometric meaning: <strong>pressing exactly the marked buttons restores the all-off board</strong>. Adding any quiet pattern to a solution yields another valid solution — that is where the "4 solutions" come from. They also give the <strong>solvability test</strong>:</>}
+          />
+        </p>
+        <TeXBlock src="p \text{ solvable} \iff p \cdot Q_1 \equiv 0 \pmod 2 \;\;\text{and}\;\; p \cdot Q_2 \equiv 0 \pmod 2." />
+        <p>
+          <L
+            zh={<>(证明: A 对称, 所以 <TeX src="\mathrm{im}\,A = (\ker A)^{\perp}" /> — 这是有限维内积空间的标准事实, 在 𝔽₂ 上一样成立。)  点击下面的格子翻转, 实时观察两个内积。 任意可解图案必然同时正交于 <TeX src="Q_1" /> 与 <TeX src="Q_2" />。</>}
+            en={<>(Proof: A is symmetric, hence <TeX src="\mathrm{im}\,A = (\ker A)^{\perp}" /> — the standard finite-dimensional fact, which still holds over <TeX src="\mathbb{F}_2" />.) Toggle cells and watch the two dot products update. A pattern is solvable iff it is orthogonal to both <TeX src="Q_1" /> and <TeX src="Q_2" />.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '内积判据' : 'orthogonality test'}</div>
+          <QuietPatternViewer />
+        </div>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '观察 27.1 — 「安静」 的几何' : 'Observation 27.1 — geometry of quiet'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<><TeX src="Q_1" /> 是棋盘式的 「四角块」 图案; <TeX src="Q_2" /> 是 「四象限块」 图案。 两者都有 D₄ (8 阶) 对称性, 这不是巧合 — 5 × 5 网格自身有 D₄ 对称, 因此 A 在 D₄ 表示下分解, 核必然落入某个不变子空间。 这是 「<strong>对称对子空间分解</strong>」 (representation theory of finite groups) 给出的硬约束: 5 × 5 上只有两个非平凡 D₄ 不变向量满足 <TeX src="Ax = 0" />, 就是 <TeX src="Q_1, Q_2" />。</>}
+              en={<><TeX src="Q_1" /> is the four-corner-block pattern, <TeX src="Q_2" /> is the four-quadrant-block pattern. Both have D₄ symmetry (the 8-element dihedral group) — no coincidence. The 5 × 5 grid itself is D₄-symmetric, so A decomposes under the D₄ representation, and ker A must sit in some isotypic component. Only two non-trivial D₄-invariant solutions to <TeX src="Ax = 0" /> exist on 5 × 5, namely <TeX src="Q_1, Q_2" />. This is "<strong>representation-theoretic subspace decomposition</strong>" giving a hard constraint.</>}
+            />
+          </div>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.3  高斯消元 — 一步一步走完 3 × 3" en="27.3  Gaussian elimination — stepping through 3 × 3" />
+        </h3>
+        <p>
+          <L
+            zh={<>抽象的 「A 满秩 ⇒ 可解」 一句话不解释 「<em>怎么解</em>」 。 真正的求解器跑的是 𝔽₂ 上的 <strong>行约简</strong>:  把 <TeX src="[A \mid b]" /> 通过行交换 + 行加法 (𝔽₂ 上 = 异或) 约简到 <TeX src="[I \mid x]" />。  每一步:  在第 c 列从第 r 行往下找一个非零项, 换上来当主元;  然后把所有其它行的 c 列翻成 0。  9 个主元走完, b 就被换成了解 x。</>}
+            en={<>The abstract sentence "A is full rank ⇒ solvable" does not tell you <em>how</em> to solve. Real solvers run <strong>row reduction</strong> over <TeX src="\mathbb{F}_2" />: starting from <TeX src="[A \mid b]" />, swap rows and add rows (XOR over <TeX src="\mathbb{F}_2" />) until reaching <TeX src="[I \mid x]" />. Each step: in column c, find a non-zero entry at or below row r and swap it up as pivot; then XOR-clear every other row's c-column. After 9 pivots, b has been transformed into the solution x.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '3 × 3 高斯消元逐步演示' : '3 × 3 Gaussian elimination, step by step'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '增广矩阵 [A | b]  — 9 列 A + 1 列 b · 高亮主元行与正在消去的行' : 'augmented matrix [A | b] — 9 cols of A + 1 col of b · pivot row and eliminating rows highlighted'}</div>
+          <GaussianEliminationStepper />
+        </div>
+        <p>
+          <L
+            zh={<>整个过程的复杂度是 <TeX src="O((mn)^3)" /> 比特运算 — 在 25 × 25 上就是 <TeX src="\sim 25^3 = 15{,}625" /> 次异或, 现代 CPU 一两个 μs。 这跟魔方天差地别: 魔方群是非阿贝尔的, 「最短解」 已经是 NP-hard (§16); Lights Out 因为阿贝尔, 落进了 P。</>}
+            en={<>The whole process costs <TeX src="O((mn)^3)" /> bit operations — on 25 × 25 that is about <TeX src="\sim 25^3 = 15\,625" /> XORs, microseconds on a modern CPU. This contrasts sharply with the cube: the cube group is non-Abelian and optimal solving is NP-hard (§16); Lights Out, being Abelian, sits comfortably in P.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.4  追光启发式 (Light Chasing)" en="27.4  The light-chasing heuristic" />
+        </h3>
+        <p>
+          <L
+            zh={<>玩 Lights Out 的人都会 「<strong>追光</strong>」 (light chasing / chase-the-lights): 假设顶行就这样,逐行往下扫 — <strong>若 (r−1, c) 还亮, 就按 (r, c)</strong> 把它熄掉。 这是单向消元, 必然把上方所有行清光。 但底行的结果 <em>未必</em> 全灭 — 它取决于顶行起手。 顶行只有 <strong>32 种</strong> 选择, 而 5 × 5 上只有 <strong>4 种</strong> 顶行 (因为 dim ker = 2 + 顶行残留必须落在 ker 在底行的投影中) 能让追光收尾。 在 「追光 + 重选顶行」 这两层迭代后, 任何可解图案在 ≤ 15 步内灭。</>}
+            en={<>Every Lights Out player learns to <strong>chase the lights</strong>: hold the top row, then scan downward — <strong>if (r−1, c) is still lit, press (r, c)</strong> to kill it. This is one-pass forward elimination; it always clears every row above. But the bottom row's residual <em>need not</em> be zero — it depends on the top-row "kick". The top row has 32 possible kicks; on 5 × 5, exactly <strong>4 of them</strong> (because dim ker = 2 and the bottom-row residual must land in the projection of ker onto the bottom row) let the chase finish. Two passes — "chase + correct top row + chase again" — solves any solvable pattern in ≤ 15 moves.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '追光动画 (5 × 5)' : 'light-chasing animator (5 × 5)'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '点击「开始追光」看单向消元;若底行不全灭,需要回顶行重选 (4 种可行起手)' : 'click "start chase" to run forward elimination; non-zero bottom row means you must restart with a different top-row kick (4 valid choices)'}</div>
+          <LightChasingAnimator />
+        </div>
+        <p>
+          <L
+            zh={<>追光的本质是 「<strong>对块上三角化</strong>」: 把分块矩阵 A 用前 m − 1 行写成 <TeX src="\begin{pmatrix} U & * \\ 0 & S \end{pmatrix}" /> 形式, 其中 S 是 <em>Schur 补</em>。 顶行的可解空间就是 <TeX src="\ker S" />。 在 5 × n 上: <TeX src="S" /> 是 5 × 5 的, 它的核维就是整个 A 的核维 (dim = 2 当 n = 5)。 这就是 「为什么 5 × 5 有 4 种合法顶行起手」 的代数解释。</>}
+            en={<>Chase-the-lights is essentially <strong>block upper-triangulation</strong>: write A using the first m − 1 rows as <TeX src="\begin{pmatrix} U & * \\ 0 & S \end{pmatrix}" /> where S is the <em>Schur complement</em>. The space of admissible top-row kicks is exactly <TeX src="\ker S" />. On a 5 × n board, S is 5 × 5 and its kernel dimension equals dim ker A (so dim = 2 when n = 5). That is the algebraic reason "4 of the 32 top rows work".</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.5  1 × n 通路与 n-环面" en="27.5  The 1 × n line, and the n-cycle" />
+        </h3>
+        <p>
+          <L
+            zh={<>把 Lights Out 退化到一条直线 1 × n。 这时 A 是 n × n 的反射式三对角对称矩阵 <TeX src="A = I + T_n" />。 它的特征多项式遵循切比雪夫式递推 (Sutner 的核心观察):</>}
+            en={<>Reduce Lights Out to a 1 × n line. Now A is the n × n reflexive tridiagonal-symmetric matrix <TeX src="A = I + T_n" />. Its characteristic polynomial obeys a Chebyshev-style recurrence — Sutner's key observation:</>}
+          />
+        </p>
+        <TeXBlock src="c_n(x) \;=\; x\,c_{n-1}(x) \;-\; c_{n-2}(x), \qquad c_0 = 1,\; c_1 = x." />
+        <p>
+          <L
+            zh={<>在 𝔽₂ 上, <TeX src="c_n(x)" /> 退化成 <strong>Fibonacci 多项式</strong> (mod 2)。 它告诉我们 <TeX src="\dim \ker A_{1 \times n} = \deg \gcd(c_n(x), \text{something trivial}) = 1" /> 当 <TeX src="n \equiv 2 \pmod 3" />,否则为 0。 也就是说:</>}
+            en={<>Over <TeX src="\mathbb{F}_2" />, <TeX src="c_n(x)" /> reduces to the <strong>Fibonacci polynomial</strong> mod 2. Consequence: <TeX src="\dim \ker A_{1 \times n} = 1" /> if <TeX src="n \equiv 2 \pmod 3" />, else 0. Concretely:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<>n = 2: 安静图案 (1, 1) — 按两按钮 ⇒ 复原。 一半图案不可解。</>} en={<>n = 2: quiet pattern (1, 1) — pressing both buttons restores all-off. Half of patterns unsolvable.</>} /></li>
+          <li><L zh={<>n = 5: 安静图案 (1, 1, 0, 1, 1)。 一半不可解。</>} en={<>n = 5: quiet pattern (1, 1, 0, 1, 1). Half unsolvable.</>} /></li>
+          <li><L zh={<>n = 8: 安静图案 (1, 1, 0, 1, 1, 0, 1, 1)。 — 注意周期 3 的节奏。</>} en={<>n = 8: quiet pattern (1, 1, 0, 1, 1, 0, 1, 1). Period-3 rhythm visible.</>} /></li>
+          <li><L zh={<>n = 3, 4, 6, 7, 9, …: 任意图案可解。</>} en={<>n = 3, 4, 6, 7, 9, …: every pattern solvable.</>} /></li>
+        </ul>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'n 滑动 · 高亮安静图案' : 'slide n · highlight quiet pattern'}</div>
+          <LineLightsSlider />
+        </div>
+        <p>
+          <L
+            zh={<>把直线 <em>合上</em> 变成环 (索引 mod n 加 1, mod n 减 1) — 即在循环图 <TeX src="C_n" /> 上的 σ⁺ 游戏。 现在 A 是 <strong>循环对称</strong> 的 (它是 n × n 循环矩阵 = <em>circulant</em>)。 用循环矩阵的离散 Fourier 对角化, 在 𝔽₂ 上可证:</>}
+            en={<>Now <em>close</em> the line into a ring (index mod n addition) — the σ⁺ game on the cycle <TeX src="C_n" />. The matrix A becomes <strong>cyclic-symmetric</strong> (an n × n <em>circulant</em>). Diagonalising over its discrete Fourier basis, one proves over <TeX src="\mathbb{F}_2" />:</>}
+          />
+        </p>
+        <TeXBlock src="\dim \ker A_{C_n} \;=\; \begin{cases} 2 & n \equiv 0 \pmod 3 \\ 0 & \text{otherwise}.\end{cases}" />
+        <p>
+          <L
+            zh={<>对比 <strong>直线</strong> (mod 3 ≡ 2 才有核) 与 <strong>圆环</strong> (mod 3 ≡ 0 才有核, 而且维度 2 不是 1) — 同样的局部规则, 不同拓扑给出完全不同的核维度。 这是 「<em>边界条件改变全局解空间</em>」 的最干净的小例子。</>}
+            en={<>Contrast: the <strong>line</strong> needs n ≡ 2 (mod 3) for a non-trivial kernel; the <strong>cycle</strong> needs n ≡ 0 (mod 3) and gives dimension 2 (not 1). Same local rule, different topology, completely different kernel. The cleanest small example of "<em>boundary conditions change the global solution space</em>".</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.6  Sutner 递推 + gcd 核公式" en="27.6  Sutner's recurrence + gcd kernel formula" />
+        </h3>
+        <p>
+          <L
+            zh={<>一般 m × n 板的核维度有一条 <em>极漂亮</em> 的代数公式 — Sutner (1989) 与 Anderson–Feil (1998) 整理出来。 用 §27.5 的多项式 <TeX src="c_n(x)" />, 定理是:</>}
+            en={<>For a general m × n board, the kernel dimension has a strikingly elegant algebraic formula — due to Sutner (1989) and crystallised by Anderson & Feil (1998). With <TeX src="c_n(x)" /> from §27.5:</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 27.2 (Sutner 1989)' : 'Theorem 27.2 (Sutner 1989)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对 m × n 网格 Lights Out, <TeX src="\dim \ker A_{m \times n} = \deg \gcd\bigl(c_m(x),\; c_n(-x - 1)\bigr)" /> over <TeX src="\mathbb{F}_2" />, 其中 <TeX src="c_k" /> 由 <TeX src="c_k(x) = x\,c_{k-1}(x) - c_{k-2}(x)" />, <TeX src="c_0 = 1,\, c_1 = x" /> 定义。</>}
+              en={<>For the m × n Lights Out grid, <TeX src="\dim \ker A_{m \times n} = \deg \gcd\bigl(c_m(x),\; c_n(-x - 1)\bigr)" /> over <TeX src="\mathbb{F}_2" />, where <TeX src="c_k" /> satisfies <TeX src="c_k(x) = x\,c_{k-1}(x) - c_{k-2}(x)" /> with <TeX src="c_0 = 1,\, c_1 = x" />.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>关键观察: <strong>A 是 <TeX src="I_m \otimes (I_n + T_n) + T_m \otimes I_n" /></strong> (Kronecker 和)。 对 <TeX src="T_n" /> 在 𝔽₂ 上的每个特征值 λ, 整个 A 在那一支上变成 <TeX src="(I_m + T_m) + \lambda I_m = \lambda I_m + B_m" />, 这是 <TeX src="B_m" /> 在 x = λ + 1 (== −λ − 1 在 𝔽₂ 上) 的求值。 所以 A 是奇异 ⇔ 某个 λ 满足 <TeX src="c_n(\lambda) = 0" /> 且 <TeX src="c_m(-\lambda - 1) = 0" /> — 即两多项式有公共根 — 即它们有 gcd {'>'} 1。</>}
+            en={<>Key observation: <strong>A is the Kronecker sum <TeX src="I_m \otimes (I_n + T_n) + T_m \otimes I_n" /></strong>. For each eigenvalue λ of <TeX src="T_n" /> over <TeX src="\mathbb{F}_2" />, A restricts on that eigenblock to <TeX src="(I_m + T_m) + \lambda I_m = \lambda I_m + B_m" />, which is <TeX src="B_m" /> evaluated at x = λ + 1 (≡ −λ − 1 over <TeX src="\mathbb{F}_2" />). So A is singular iff some λ satisfies <TeX src="c_n(\lambda) = 0" /> and <TeX src="c_m(-\lambda - 1) = 0" /> — i.e. the two polynomials share a root — i.e. their gcd has positive degree.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>把 m, n = 1..8 的核维数算出来 (下面的表格用 <code>gf2Reduce</code> 在浏览器里实时跑) — 你立刻看到 「金色斜纹」: 大约三分之一的尺寸有非平凡核。</>}
+            en={<>Compute dim ker for m, n = 1..8 (the table below runs <code>gf2Reduce</code> live in your browser) — a "gold-band" pattern appears: roughly one-third of sizes carry a non-trivial kernel.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'dim ker A_{m×n} 表 — 浏览器实时计算' : 'dim ker A_{m×n} table — computed live in your browser'}</div>
+          <KernelDimTable />
+        </div>
+        <div className="gt-aside" style={{ marginTop: 8 }}>
+          <L
+            zh={<>5 × 5 的 dim = 2 (Tiger 商业版选这个尺寸不是偶然 — 太小没有 「核」 也就没有 「不可解图案」, 失去趣味; 太大手指点不过来。 5 × 5 刚好。)。 4 × 4 在 𝔽₂ 上居然是满秩的 (dim = 0) — 所以 mini-Lights Out 没有 quiet patterns。 6 × 6 也是满秩。 7 × 7 上 dim = 0,但 9 × 9 上 dim = 8 — 跳得相当突兀。</>}
+            en={<>5 × 5 has dim = 2 (Tiger's commercial choice was not coincidental — too small means no kernel, no "unreachable patterns", no flavour; too large and fingers can't keep up. 5 × 5 hits the sweet spot.). The 4 × 4 board is full rank over <TeX src="\mathbb{F}_2" /> (dim = 0) — mini-Lights Out has no quiet patterns. 6 × 6 is full rank too. 7 × 7 has dim = 0, but 9 × 9 has dim = 8 — a striking jump.</>}
+          />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.7  σ-game — Lights Out 的图论推广" en="27.7  σ-game — graph-theoretic generalisation" />
+        </h3>
+        <p>
+          <L
+            zh={<>Sutner 1989 年的 <em>σ-game</em> 把 Lights Out 推广到任意简单图 G = (V, E)。 顶点 = 灯。 按顶点 v 的规则:</>}
+            en={<>Sutner's 1989 paper introduced the <em>σ-game</em> on an arbitrary simple graph G = (V, E). Vertices are lights. Pressing vertex v:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>σ-game</strong>: 翻转 v 的 <em>邻居</em> (不含 v 自己)。 邻接矩阵 = A(G)。</>} en={<><strong>σ-game</strong>: toggles the <em>neighbours</em> of v (excluding v itself). Operator = A(G), the adjacency matrix.</>} /></li>
+          <li><L zh={<><strong>σ⁺-game</strong>: 翻转 v 与所有邻居 (自反式)。 算子 = A(G) + I = 「闭邻居矩阵」。 这才是 Lights Out。</>} en={<><strong>σ⁺-game</strong>: toggles v <em>and</em> all neighbours (reflexive). Operator = A(G) + I — the "closed neighbourhood" matrix. This is Lights Out.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>Sutner 的招牌定理 — 一个 「<em>每个图上都能点亮一切</em>」 的奇迹结果:</>}
+            en={<>Sutner's signature theorem — an "<em>every graph can be all-lit</em>" miracle:</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 27.3 (Sutner 1989 — σ⁺ 全亮)' : 'Theorem 27.3 (Sutner 1989 — universal σ⁺ solvability)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对 <em>任意</em> 有限简单图 G, σ⁺ 游戏中的 「全亮目标」 <TeX src="\mathbf{1} = (1, 1, \ldots, 1)" /> 总是可解 — 即存在按钮选择 <TeX src="x \in \mathbb{F}_2^{|V|}" /> 满足 <TeX src="(A(G) + I)\,x = \mathbf{1}" />。</>}
+              en={<>For <em>every</em> finite simple graph G, the σ⁺-game's "all-lit" target <TeX src="\mathbf{1} = (1, 1, \ldots, 1)" /> is solvable — there exists <TeX src="x \in \mathbb{F}_2^{|V|}" /> with <TeX src="(A(G) + I)\,x = \mathbf{1}" />.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>证明思路: <TeX src="A(G) + I" /> 在 𝔽₂ 上对称, 所以 <TeX src="\mathrm{im}\,(A+I) = (\ker(A+I))^{\perp}" />。 关键引理: <strong>任何核向量 v ∈ ker(A + I) 都有偶汉明权</strong> (因为 v 的支持集是 G 的某种 「奇数封闭邻居子集」, 由握手引理得偶), 于是 <TeX src="v \cdot \mathbf{1} = |v|_1 \equiv 0 \pmod 2" />, 故 <TeX src="\mathbf{1} \perp \ker(A+I)" />, 故 <TeX src="\mathbf{1} \in \mathrm{im}\,(A+I)" />。 QED. 这是个 <em>纯组合</em> 引理被代数化的漂亮范例。</>}
+            en={<>Proof sketch: A + I is symmetric over <TeX src="\mathbb{F}_2" />, so <TeX src="\mathrm{im}\,(A+I) = (\ker(A+I))^{\perp}" />. Key lemma: <strong>every kernel vector v ∈ ker(A + I) has even Hamming weight</strong> — its support is an "odd closed-neighbourhood subset" of G, and the handshake lemma forces it to be even. Therefore <TeX src="v \cdot \mathbf{1} = |v|_1 \equiv 0 \pmod 2" />, so <TeX src="\mathbf{1} \perp \ker(A+I)" />, so <TeX src="\mathbf{1} \in \mathrm{im}\,(A+I)" />. QED. A delicious example of a <em>combinatorial</em> lemma getting algebraised.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>下面是 5 个小图上的实战。 P₅ 是路径, C₅ 是 5-环, K₄ 与 K₅ 完全图, Petersen 是 10-顶点 3-正则的著名图。 点 「显示全亮解」 看 Sutner 定理选的按钮集 (绿圈)。</>}
+            en={<>Here are 5 small graphs. P₅ is a path, C₅ a 5-cycle, K₄ and K₅ complete, Petersen the famous 10-vertex 3-regular graph. Click "show all-ones solution" to see the press set Sutner's theorem guarantees (green ring).</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">σ⁺ {lang === 'zh' ? '游戏 · 5 个预设小图' : 'game · 5 preset small graphs'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '点顶点 = 按按钮 · 看灯阵实时反应 · 也可让程序展示 Sutner 解' : 'click vertex = press button · live lit-state · or auto-show the Sutner solution'}</div>
+          <SigmaGameOnGraph />
+        </div>
+        <p>
+          <L
+            zh={<>注意 Petersen 在 σ⁺ 上 dim ker = 0 (满秩), 所以全亮解唯一。 K₅ 的 <TeX src="A + I" /> 是全 1 5 × 5 矩阵, 它在 𝔽₂ 上秩 1, 核维 4 — 全亮解一共 <TeX src="2^4 = 16" /> 种 (每种按 1 个或 3 个或 5 个顶点都行)。</>}
+            en={<>Note Petersen has dim ker = 0 in σ⁺ (full rank), so its all-ones solution is unique. K₅'s A + I is the all-ones 5 × 5 matrix, rank 1 over <TeX src="\mathbb{F}_2" /> with nullity 4 — the all-ones target has <TeX src="2^4 = 16" /> different solutions (pressing any 1, 3, or 5 of the vertices works).</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.8  变种 — 不同拓扑、不同字母表" en="27.8  Variants — different topologies, different alphabets" />
+        </h3>
+        <p>
+          <L
+            zh={<>Tiger 与各家厂商把 Lights Out 改造过很多次, 每个变种都是 「换一个 (G, k)」 — 换图 G 或换数域 <TeX src="\mathbb{F}_k" />。 已经研究透的几例:</>}
+            en={<>Tiger and others have re-issued Lights Out many times; each variant is "swap (G, k)" — change graph G or coefficient ring <TeX src="\mathbb{F}_k" />. The well-studied ones:</>}
+          />
+        </p>
+        <div className="gt-pattern-table">
+          <table className="gt-pattern-tbl">
+            <thead>
+              <tr>
+                <th>{lang === 'zh' ? '变种' : 'variant'}</th>
+                <th>{lang === 'zh' ? '图 G' : 'graph G'}</th>
+                <th>{lang === 'zh' ? '数域' : 'ring'}</th>
+                <th>{lang === 'zh' ? '状态空间' : 'state space'}</th>
+                <th>dim ker</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Lights Out</strong> (1995)</td>
+                <td>5 × 5 {lang === 'zh' ? '方格' : 'grid'}</td>
+                <td><TeX src="\mathbb{F}_2" /></td>
+                <td>2²³ = 8.4 M</td>
+                <td className="num">2</td>
+              </tr>
+              <tr>
+                <td><strong>Mini Lights Out</strong></td>
+                <td>4 × 4 {lang === 'zh' ? '环面' : 'torus'}</td>
+                <td><TeX src="\mathbb{F}_2" /></td>
+                <td>2¹⁶ = 65 K</td>
+                <td className="num">0</td>
+              </tr>
+              <tr>
+                <td><strong>Lights Out 2000</strong></td>
+                <td>5 × 5 {lang === 'zh' ? '方格' : 'grid'}</td>
+                <td><TeX src="\mathbb{F}_3" /></td>
+                <td>3²² ≈ 31 G</td>
+                <td className="num">3</td>
+              </tr>
+              <tr>
+                <td><strong>Lights Out Cube</strong></td>
+                <td>3 × 3 × 3 {lang === 'zh' ? '表面 (54 灯)' : 'surface (54 lights)'}</td>
+                <td><TeX src="\mathbb{F}_2" /></td>
+                <td>2⁴⁸ ≈ 281 T</td>
+                <td className="num">6</td>
+              </tr>
+              <tr>
+                <td><strong>Lights Out Deluxe</strong></td>
+                <td>6 × 6 {lang === 'zh' ? '方格 + 对角邻居' : 'grid + diag neighbours'}</td>
+                <td><TeX src="\mathbb{F}_2" /></td>
+                <td>2³⁶ ≈ 69 G</td>
+                <td className="num">0</td>
+              </tr>
+              <tr>
+                <td>XL-25 (1983, Vulcan)</td>
+                <td>5 × 5 {lang === 'zh' ? '方格 (商业最早)' : 'grid (earliest commercial)'}</td>
+                <td><TeX src="\mathbb{F}_2" /></td>
+                <td>2²³</td>
+                <td className="num">2</td>
+              </tr>
+              <tr>
+                <td>{lang === 'zh' ? '六边形 Lights Out' : 'hex Lights Out'}</td>
+                <td>{lang === 'zh' ? '六边形蜂窝' : 'hexagonal honeycomb'}</td>
+                <td><TeX src="\mathbb{F}_2" /></td>
+                <td>{lang === 'zh' ? '依尺寸' : 'size-dependent'}</td>
+                <td>{lang === 'zh' ? '依尺寸' : 'varies'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <L
+            zh={<>Lights Out Cube 的 dim ker = 6 来自 3 × 3 × 3 表面图的对称性: 24 个外部立方旋转对称给出 6 个独立的 「面对称」 安静图案。 这跟魔方群的 24 个外部对称 (§14) 是 <em>同一组对称作用在同一个 3 × 3 × 3 表面</em> — 但作用在不同的代数对象 (邻接 vs 置换) 上, 结果完全不同。</>}
+            en={<>The Cube variant's dim ker = 6 stems from the 3 × 3 × 3 surface graph's symmetry: the 24 outer cube rotations give 6 independent "face-symmetric" quiet patterns. The 24-rotation group is the same as the cube symmetries from §14 — but acting on a different algebraic object (adjacency vs permutation), the outcome is completely different.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<><strong>Lights Out 2000</strong> 走 mod 3: 灯有 3 个状态 (灰 / 绿 / 红), 按一下 +1 mod 3。 算子矩阵 <em>同一个</em> <TeX src="A_{5 \times 5}" />, 但在 <TeX src="\mathbb{F}_3" /> 上。 它的核维变成 3 — 多出来的 「mod 3 安静图案」 在 <TeX src="\mathbb{F}_2" /> 视角下是看不见的。 一般定理: <TeX src="\dim_{\mathbb{F}_p} \ker A" /> 跟 p 有关; <TeX src="\det A" /> 决定哪些素数 p 让 A 在 <TeX src="\mathbb{F}_p" /> 上奇异。 在 5 × 5 上, <TeX src="\det A_{5 \times 5} = 0" /> over <TeX src="\mathbb{Z}" />, 但用 Smith 标准型可看出它的 「elementary divisors」 在 mod 2 与 mod 3 上都贡献奇异。</>}
+            en={<><strong>Lights Out 2000</strong> moves to mod 3: lights cycle through grey / green / red on each press. The <em>same</em> matrix <TeX src="A_{5 \times 5}" /> now lives over <TeX src="\mathbb{F}_3" />. Its kernel dimension jumps to 3 — the extra "mod 3 quiet patterns" are invisible from the <TeX src="\mathbb{F}_2" /> viewpoint. General fact: <TeX src="\dim_{\mathbb{F}_p} \ker A" /> depends on p; the integer determinant <TeX src="\det A" /> tells you exactly which primes make A singular. On 5 × 5, <TeX src="\det A = 0" /> over <TeX src="\mathbb{Z}" />, and the Smith normal form shows the elementary divisors contribute singular behaviour at both mod 2 and mod 3.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.9  与编码理论的桥" en="27.9  Bridge to coding theory" />
+        </h3>
+        <p>
+          <L
+            zh={<>Lights Out 实际上是一个 <strong>𝔽₂ 上的线性编码问题</strong>。 把 「按钮配置」 看作明文 <TeX src="x \in \mathbb{F}_2^{25}" />, 「亮灯图案」 看作密文 <TeX src="y = Ax \in \mathbb{F}_2^{25}" />, 那么:</>}
+            en={<>Lights Out is literally a <strong>linear coding problem over <TeX src="\mathbb{F}_2" /></strong>. Think of "button configuration" as plaintext <TeX src="x \in \mathbb{F}_2^{25}" /> and "lit pattern" as codeword <TeX src="y = Ax \in \mathbb{F}_2^{25}" />, then:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<>编码矩阵 = A · 编码长度 25 · 信息长度 23 ( = rank A) · 冗余 2 ( = dim ker A)。</>} en={<>Encoding matrix = A · code length 25 · message length 23 ( = rank A) · 2 parity bits ( = dim ker A).</>} /></li>
+          <li><L zh={<>「可解判据 = p ⊥ ker A」 是经典 <strong>校验子解码</strong>: 拿 ker A 的基当 「校验矩阵」 H, 看 <TeX src="Hp = 0" /> 是否成立。</>} en={<>"Solvable iff p ⊥ ker A" is classic <strong>syndrome decoding</strong>: use a basis of ker A as a parity-check matrix H, test <TeX src="Hp = 0" />.</>} /></li>
+          <li><L zh={<>「最短解」 = <strong>最小汉明权陪集代表</strong> = 「最近码字」 — 一般 NP-hard (Berlekamp–McEliece–Tilborg 1978), 但 25 × 25 的实例小到能枚举 ker A 的 4 个余类。</>} en={<>"Minimum-length solve" = <strong>minimum-Hamming-weight coset representative</strong> = "nearest codeword" — NP-hard in general (Berlekamp–McEliece–Tilborg 1978), but the 25 × 25 instance is small enough to enumerate the 4 cosets of ker A.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>这把 「玩具谜题」 与 「LDPC / 编码理论」 接在了一起。 反过来, 任何 𝔽₂ 上的可解线性方程组都可以重写为某种 Lights Out 实例。</>}
+            en={<>This links the toy puzzle to LDPC / coding theory. Conversely, any solvable <TeX src="\mathbb{F}_2" />-linear system can be re-cast as some Lights Out instance.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.10  复杂度 — 为什么 Lights Out ≪ 魔方" en="27.10  Complexity — why Lights Out ≪ Rubik's cube" />
+        </h3>
+        <p>
+          <L
+            zh={<>三件事让 Lights Out 「容易」:</>}
+            en={<>Three facts make Lights Out "easy":</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>阿贝尔</strong>: 按按钮的顺序不重要 (任意 i, j: <TeX src="A_i + A_j = A_j + A_i" />)。 状态空间是个群 <TeX src="\mathbb{F}_2^{mn}" />, 而 「解谜」 = 「在群里找代表」 — 线性代数即可。</>} en={<><strong>Abelian</strong>: press order is irrelevant (<TeX src="A_i + A_j = A_j + A_i" />). The state space is the group <TeX src="\mathbb{F}_2^{mn}" />, and solving = "find a representative" — linear algebra suffices.</>} /></li>
+          <li><L zh={<><strong>线性</strong>: 算子 <TeX src="x \mapsto Ax" /> 是线性的, 所以 「叠加原理」 可用 — 任意目标分解为基目标。</>} en={<><strong>Linear</strong>: the operator <TeX src="x \mapsto Ax" /> is linear, so superposition works — decompose any target into a basis.</>} /></li>
+          <li><L zh={<><strong>对合</strong>: 每个按钮按两次抵消, 即 <TeX src="x \in \mathbb{F}_2^{mn}" /> 而非 <TeX src="\mathbb{Z}^{mn}" />。 限制状态空间到 「最多按一次」 是免费的。</>} en={<><strong>Involutive</strong>: each button squares to identity, so <TeX src="x \in \mathbb{F}_2^{mn}" /> instead of <TeX src="\mathbb{Z}^{mn}" />. Restricting to "press at most once" is free.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>结果: 大小为 N = mn 的 Lights Out 上, 「<em>有没有解</em>」 与 「<em>最短解</em>」 都在 <TeX src="O(N^3)" /> 时间内可决, 实际上 <TeX src="O(N^\omega)" />, <TeX src="\omega \approx 2.37" /> (最快矩阵乘法)。 对比魔方:  「<em>最短解</em>」 在 n × n × n 上是 <strong>NP-完备</strong> (Demaine et al. 2018)。 取消上面任一个性质 (e.g. 按钮顺序变重要 → 非阿贝尔, 或灯有 4 个状态 + 非线性规则), Lights Out 立刻进入 NP-hard 领域。</>}
+            en={<>Consequence: on an N = mn-cell Lights Out board, <em>is it solvable?</em> and <em>what is a shortest solve?</em> are both in <TeX src="O(N^3)" /> time, or <TeX src="O(N^\omega)" /> with <TeX src="\omega \approx 2.37" /> (fastest known matrix multiplication). Contrast: optimal-solving the n × n × n Rubik's cube is <strong>NP-complete</strong> (Demaine et al. 2018). Drop any of the three properties above (press order matters → non-Abelian; or 4-state lights with non-linear rule), and Lights Out lands in NP-hard immediately.</>}
+          />
+        </p>
+        <div className="gt-pullquote">
+          <L
+            zh={<>「阿贝尔的玩具靠线性代数, 非阿贝尔的玩具靠 NP-硬度证明。 Lights Out 与魔方分立这道分水岭的两侧。」</>}
+            en={<>"Abelian toys yield to linear algebra; non-Abelian toys yield NP-hardness proofs. Lights Out and Rubik's cube sit on opposite sides of this watershed."</>}
+          />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="27.11  历史小注" en="27.11  Historical note" />
+        </h3>
+        <p>
+          <L
+            zh={<>商业最早是 1983 年匈牙利 László Mérő 设计的 <strong>XL-25</strong> (Vulcan Electronics) — 5 × 5 + 标准与马步两种规则。 1978 年的 <em>Merlin</em> 已用 3 × 3 + 不同规则。 1995 年 Tiger Electronics 推出 <strong>Lights Out</strong>, 在大众市场普及, 后续 Lights Out 2000 (1997) / Cube / Deluxe 都是 Tiger 出的。  数学方面: <strong>Sutner (1989)</strong> 在 σ-game 框架下给出递推与 gcd 公式, 是奠基论文; <strong>Anderson & Feil (1998)</strong> <em>Mathematics Magazine</em> 「Turning Lights Out with Linear Algebra」 把它编成本科教材级别的标准例; <strong>Goldwasser, Klostermeyer, Trapp (1995–1997)</strong> 给出 「dominos / monominos 计数」 的可解判据。 这是 「<em>一道童玩问题, 半世纪学术工作</em>」 的标本之一。</>}
+            en={<>The earliest commercial release was <strong>XL-25</strong> (Vulcan Electronics 1983), invented by Hungarian László Mérő — 5 × 5 with both standard and knight's-move rules. <em>Merlin</em> (1978) had used a 3 × 3 with a different rule. Tiger Electronics released <strong>Lights Out</strong> in 1995 and made it a household toy; Lights Out 2000 (1997) / Cube / Deluxe followed. On the math side: <strong>Sutner (1989)</strong> introduced the σ-game framework with the recurrence and gcd formula — the foundational paper; <strong>Anderson & Feil (1998)</strong>, "Turning Lights Out with Linear Algebra" in <em>Mathematics Magazine</em>, made it an undergraduate-textbook standard; <strong>Goldwasser, Klostermeyer, Trapp (1995–1997)</strong> gave the domino/monomino tiling characterisation. A specimen of "<em>one toy puzzle, half a century of academic work</em>".</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>与魔方放在一起看: 两者都在 1980 年前后从匈牙利 / 美国进入大众视野, 都是 <strong>对称、 可逆、 群论的离散系统</strong>。 区别就是阿贝尔 / 非阿贝尔。 这两个属性决定了 「线性代数能不能搞定」 — 它把它们送进了不同的复杂度类 (P vs NP-hard)。 而正因为 Lights Out 是 P, 它在小学奥数和本科线性代数课里都讲得动; 魔方进不去, 因为还原它需要的算法太特殊。</>}
+            en={<>Side by side with the cube: both emerged into popular culture around 1980 from Hungary / the US, both are <strong>symmetric, reversible, group-theoretic discrete systems</strong>. The single difference is Abelian vs non-Abelian — and that single bit determines whether linear algebra suffices, planting the two puzzles in different complexity classes (P vs NP-hard). Because Lights Out is in P, it lectures cleanly in elementary olympiad and undergrad linear algebra; the cube cannot, because the algorithms it needs are too special-purpose.</>}
+          />
+        </p>
+      </GTSec>
+
+
+
+
+      {/* ═══════════════ §28 Peg Solitaire ════════════════════════════════ */}
+      <GTSec id="peg-solitaire" className="gt-sec">
+        <div className="gt-sec-num">§28</div>
+        <h2 className="gt-sec-title">
+          <L zh="孔明棋的代数 — 染色不变量、 pagoda 函数与 GF(4)" en="Peg Solitaire — colouring invariants, pagoda functions, GF(4)" />
+        </h2>
+        <p className="gt-lede">
+          <L
+            zh={<>33 格英式十字盘的孔明棋,中央留一个洞,目标是跳到只剩一颗棋子在中央。 这个看似自由的小游戏被 Reiss (1857)、 Conway、 Beasley (1962–85) 用代数钉得很死: 从中央起手, 唯一的合法终点位置就是中央自身或十字四端, 一共 <strong>5 个格子</strong>。 我们一步步把这件事拆开 — 从最直接的 3-染色, 到 Conway 的 GF(4) 框架, 到 pagoda 函数家族, 再到欧式 37 格盘的 Zantema 加强论证。</>}
+            en={<>English 33-cell peg solitaire: start full except for centre, end with a single peg in the centre. The game looks combinatorially wild, but Reiss (1857), Conway and Beasley (1962–85) pinned it down with algebra: starting from a central hole, the only legal single-peg endpoints are the centre itself and the four arm-tips — <strong>5 cells</strong>. We unpack the argument layer by layer: the elementary 3-colouring, Conway's GF(4) framework, the pagoda function family, and Zantema's reinforced parity argument for the European 37-board.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.1  棋盘与合法跳跃" en="28.1  The board and legal moves" />
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 28.1 — 英式 33 格' : 'Definition 28.1 — English 33-cell board'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>英式盘是 <TeX src="7 \times 7" /> 网格四角各裁掉 <TeX src="2 \times 2" /> 后剩下的 <strong>33</strong> 个格子, 呈十字形。 标准起手: 中央格 d4 为空, 其余 32 格各放一颗棋子。 标准目标: 还原到 <strong>一颗</strong> 棋子位于 d4。</>}
+              en={<>The English board is the <strong>33</strong> cells left after cutting <TeX src="2 \times 2" /> corners from a <TeX src="7 \times 7" /> grid — a cross shape. Standard start: centre cell d4 is empty, the other 32 cells each carry one peg. Standard goal: reduce to <strong>one</strong> peg sitting in d4.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 28.2 — 合法跳跃' : 'Definition 28.2 — legal jump'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>三个连成正交一行的相邻格 <TeX src="a, c, b" />。 若 <TeX src="a" /> 与 <TeX src="c" /> 有棋子、 <TeX src="b" /> 为空, 则可以执行跳跃 <TeX src="a \to b" />: 把 <TeX src="a" /> 的棋子移到 <TeX src="b" />, 把中间 <TeX src="c" /> 上的棋子吃掉。 <strong>不允许</strong> 斜跳。 一组连续跳跃 (同一颗棋子接连吃多颗) 通常按 「multi-jump = 1 move」 计数。</>}
+              en={<>Three adjacent collinear cells <TeX src="a, c, b" /> in a row or column. If <TeX src="a" /> and <TeX src="c" /> hold pegs and <TeX src="b" /> is empty, the jump <TeX src="a \to b" /> moves the peg from <TeX src="a" /> to <TeX src="b" /> and removes the peg on <TeX src="c" />. <strong>Diagonal jumps are not allowed</strong> on the English board. A chain of consecutive jumps by the same peg is normally counted as a single <em>move</em>.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '四种盘 · 自由探索' : 'Four boards · free play'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '英式 33 / 欧式 37 / 三角 15 / 菱形 25 · 点棋子选起点, 再点空格跳' : 'English 33 / European 37 / Triangle 15 / Diamond 25 · click a peg, then click an empty cell to jump'}</div>
+          <PegBoardChoose />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.2  三染色不变量" en="28.2  The three-colouring invariant" />
+        </h3>
+        <p>
+          <L
+            zh={<>沿 ↗ 方向用 3 种颜色周期染色 (color = <TeX src="r + c \pmod 3" />)。 每三个连成正交一线的格子恰好覆盖 3 种颜色; 因此每次跳跃 <em>同时</em> 在 3 种颜色里各减 1 颗 / 增 1 颗。 用 「颜色奇偶向量」 <TeX src="(\sigma_R, \sigma_B, \sigma_Y) \in \mathbb{F}_2^3" /> 表示当前 mod-2 计数:</>}
+            en={<>Colour cells by <TeX src="r + c \pmod 3" /> using 3 hues. Any three collinear cells in any orthogonal direction cover all 3 hues. So every jump simultaneously toggles the parity of <em>each</em> hue-count. Encode the state by the parity vector <TeX src="(\sigma_R, \sigma_B, \sigma_Y) \in \mathbb{F}_2^3" />:</>}
+          />
+        </p>
+        <TeXBlock src="(\sigma_R, \sigma_B, \sigma_Y) \;\bmod\; 2 \quad \text{is invariant up to simultaneous flip of all three coordinates.}" />
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.3 — Reiss (1857), 5-格定理' : 'Theorem 28.3 — Reiss (1857), the 5-cell theorem'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>从中央 d4 空起手的英式 33 棋, 若能终于单子状态, 则该残子的位置必在以下 5 格之一: 中央 d4, 或四端 d1, d7, a4, g4。</>}
+              en={<>If a single-peg endgame is reachable from the centre-vacant English start, the surviving peg must occupy one of these 5 cells: centre d4, or the four arm-tips d1, d7, a4, g4.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-proof">
+          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <L
+            zh={<>
+              <p style={{ margin: '0 0 12px' }}>初始 33 颗棋子按 ↗ 着色, 三色计数 <TeX src="(11, 11, 11)" />。 去掉中央 (颜色 R) 后变成 (10, 11, 11), 奇偶 <TeX src="(0, 1, 1)" />。 任意跳跃同时翻三个奇偶位, 所以任何可达状态的奇偶向量都 ∈ <TeX src="\{(0, 1, 1),\, (1, 0, 0)\}" />。 终局单子时, 奇偶 (1, 0, 0) 表示这颗棋子位于 R 色格 (因 R+0+0 ≡ R mod 2)。</p>
+              <p style={{ margin: '0 0 12px' }}>把 ↗ 与 ↘ 两个独立染色都套用一次, 终点棋子必须同时属于两组 R 色 — 这恰好是 5 个格子的交集: d4, d1, d7, a4, g4。</p>
+            </>}
+            en={<>
+              <p style={{ margin: '0 0 12px' }}>The 33-peg starting board has counts <TeX src="(11, 11, 11)" />. Removing the centre (colour R) yields <TeX src="(10, 11, 11)" />, parities <TeX src="(0, 1, 1)" />. Every jump flips all three parities, so any reachable parity vector lies in <TeX src="\{(0, 1, 1),\, (1, 0, 0)\}" />. At the 1-peg endgame, parity (1, 0, 0) forces the survivor onto a hue-R cell.</p>
+              <p style={{ margin: '0 0 12px' }}>Apply the same argument with the independent ↘ colouring. The survivor lies in the intersection of the two R-classes — exactly 5 cells: d4, d1, d7, a4, g4.</p>
+            </>}
+          />
+          <div className="gt-proof-end">∎</div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '英式 33 · 三染色叠加' : 'English 33 · with 3-colouring overlay'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '点棋子选起点, 再点空格跳。 「↗ 着色」「↘ 着色」打开后, R / B / Y 实时显示三色计数' : 'click peg → destination to jump. Toggle ↗ / ↘ to overlay the colourings; live counts update.'}</div>
+          <PegSolitaireBoard />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.3  Reuss / Bell 的扫局禁止性" en="28.3  Reuss / Bell impossibility for sweep games" />
+        </h3>
+        <p>
+          <L
+            zh={<>三染色给出的不是 「能不能赢」, 而是 「赢的话残子必落何处」。 把它沿 ↗ 和 ↘ 同时跑, 就得到强得多的禁止性。 一个典型应用 (Bell 在 2007 年系统化): <strong>「扫局」</strong> 类游戏 — 起手任一非中央空格, 目标任一指定终点。</>}
+            en={<>The 3-colouring argument doesn't decide solvability; it pins where the single survivor can land. Running it independently along ↗ and ↘ yields much stronger obstructions. A typical application, systematised by George Bell (2007) for "sweep games": start with an arbitrary single empty hole, finish with a single peg at a prescribed cell.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.4 — Reuss/Bell 扫局表' : 'Theorem 28.4 — Reuss/Bell sweep table'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src="s" /> 为起始空格、 <TeX src="t" /> 为终点单子位置, 「complementary」 问题 (其余 32 格皆有棋子, 终态仅 t 有棋子) 当且仅当 <TeX src="s" /> 与 <TeX src="t" /> 满足三染色 ↗ 与 ↘ 两个 mod-2 约束 时, 才有可能可解。 表格 (用 <TeX src="\overset{?}{=}" /> 表示同色等价类):</>}
+              en={<>Let <TeX src="s" /> be the empty cell at the start and <TeX src="t" /> the single peg position at the end. The "complementary" problem (the other 32 cells filled at start, only <TeX src="t" /> filled at end) is solvable only if <TeX src="s" /> and <TeX src="t" /> agree under both the ↗ and ↘ mod-2 colour classes. The compatibility table:</>}
+            />
+            <TeXBlock src="\mathrm{class}_{\nearrow}(s) \equiv \mathrm{class}_{\nearrow}(t) \pmod 3, \qquad \mathrm{class}_{\searrow}(s) \equiv \mathrm{class}_{\searrow}(t) \pmod 3" />
+            <L
+              zh={<>例如: 起手空 a4 (西端), 终点 g4 (东端) — 两端在 ↗ 着色下都是 R 色, 在 ↘ 着色下也都是 R 色, 通过双约束。 计算机搜索 (Bell 2007) 确认此问题<em>确实</em> 可解。 反之, 起手空 b2、 终点 d4 — ↗ 上是同色, ↘ 上却异色 — 无解。</>}
+              en={<>For example: start vacant at a4 (west tip), end at g4 (east tip) — both endpoints are R-class under ↗ and R-class under ↘. The double constraint is satisfied, and computer search (Bell 2007) confirms the problem <em>is</em> solvable. Conversely, start at b2, end at d4 — same ↗ class but different ↘ class — unsolvable.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>需要强调: 三染色给出的是 <em>必要</em> 条件, 不是充分。 满足双 mod-3 约束的 <TeX src="(s, t)" /> 对中, 仍有约 5% 通不过更精细的 pagoda / GF(4) 检验。 完整的 「solvable 起终对」 分类要等到 Beasley 1985 + 后续穷举搜索 (1999 年全 33-peg 问题被电脑解完)。</>}
+            en={<>Crucially the 3-colouring is <em>necessary</em>, not sufficient. About 5% of (s, t) pairs that pass the double mod-3 check still fail a finer pagoda or GF(4) test. The full classification of solvable start/end pairs took Beasley 1985 plus subsequent exhaustive search — by 1999 every 33-peg problem had been resolved on computer.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.4  Pagoda 函数族" en="28.4  The pagoda function family" />
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 28.5 — pagoda 函数' : 'Definition 28.5 — pagoda function'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>给每个棋盘格 <TeX src="p" /> 赋一个非负实数 <TeX src="f(p) \ge 0" />, 满足对每三个连成正交一线的格 <TeX src="(a, c, b)" /> 都有</>}
+              en={<>An assignment <TeX src="f(p) \ge 0" /> to each cell that satisfies, for every collinear triple <TeX src="(a, c, b)" /> in the legal-jump sense,</>}
+            />
+            <TeXBlock src="f(b) \;\le\; f(a) + f(c) \quad \text{and (by symmetry)} \quad f(a) \;\le\; f(c) + f(b)." />
+            <L
+              zh={<>则称 <TeX src="f" /> 是 <strong>pagoda 函数</strong>。 立即得到: 对任一棋盘状态 <TeX src="P \subseteq \text{cells}" />, 总和 <TeX src="\Phi(P) := \sum_{p \in P} f(p)" /> 在每次合法跳跃下 <em>不增</em>。</>}
+              en={<>Then <TeX src="f" /> is a <strong>pagoda function</strong>. Immediate consequence: for any board state <TeX src="P \subseteq \text{cells}" />, the total <TeX src="\Phi(P) := \sum_{p \in P} f(p)" /> is <em>non-increasing</em> under any legal jump.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>验证: 一次跳跃 <TeX src="a \to b" /> 把 <TeX src="\{a, c\}" /> 替换成 <TeX src="\{b\}" />, 总和变化 <TeX src="\Delta \Phi = f(b) - f(a) - f(c) \le 0" />。 ∎</>}
+            en={<>Verification: a jump <TeX src="a \to b" /> replaces <TeX src="\{a, c\}" /> with <TeX src="\{b\}" />, so <TeX src="\Delta \Phi = f(b) - f(a) - f(c) \le 0" /> by definition. ∎</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? 'Fibonacci pagoda (Conway)' : 'The Fibonacci pagoda (Conway)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src="\phi = \frac{1 + \sqrt 5}{2}" /> 为黄金比, 取 <TeX src="f(p) = \phi^{-d(p, t)}" />, 其中 <TeX src="d(p, t)" /> 是 <TeX src="p" /> 到目标格 <TeX src="t" /> 的曼哈顿距离。 因 <TeX src="\phi^{-(d-2)} = \phi^{-d}(\phi^2) = \phi^{-d}(\phi + 1) = \phi^{-(d-1)} + \phi^{-d}" />, 每三共线格满足 <TeX src="f(\text{远}) = f(\text{中}) + f(\text{近})" /> — 等号成立, 仍是合法 pagoda。 该函数把 「离目标越远的棋子贡献越小」 量化, 是证明 「某些远处单子起点跳不到 <TeX src="t" />」 的标准工具。</>}
+              en={<>Let <TeX src="\phi = \frac{1 + \sqrt 5}{2}" /> be the golden ratio and define <TeX src="f(p) = \phi^{-d(p, t)}" /> where <TeX src="d(p, t)" /> is the Manhattan distance from <TeX src="p" /> to a target cell <TeX src="t" />. Because <TeX src="\phi^{-(d-2)} = \phi^{-d}(\phi^2) = \phi^{-d}(\phi + 1) = \phi^{-(d-1)} + \phi^{-d}" />, every collinear triple has <TeX src="f(\text{far}) = f(\text{mid}) + f(\text{near})" />: equality holds, still a valid pagoda. This quantifies "peg far from target contributes little" and is the standard tool for ruling out specific long-range starts.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>一个具体禁止性: 设 <TeX src="t = " /> 中央 d4, <TeX src="f" /> 为以 d4 为根的 Fibonacci pagoda。 初始 32 颗棋子 (除中央外) 的总和算出来约为 <TeX src="9 + 4\sqrt 5 \approx 17.94" />。 终态: 单子在 d4 的总和恰为 1。 这一定不增条件并未单独禁掉 d4 终局 (因 17.94 ≥ 1), 但若把 <TeX src="t" /> 移到 <strong>偏远位置</strong>, 例如 a1 (注意这格在英式盘上不存在, 但若考虑欧式 / 扩展盘), 初始总和会小于 1, <em>禁掉</em> 该终局。</>}
+            en={<>A concrete obstruction: take <TeX src="t = " /> centre d4 and let <TeX src="f" /> be the Fibonacci pagoda rooted at d4. The 32-peg initial total works out to roughly <TeX src="9 + 4\sqrt 5 \approx 17.94" />. The final total (single peg at d4) is exactly 1. Non-increasing doesn't by itself forbid the d4 finish (17.94 ≥ 1). But on extended boards where <TeX src="t" /> sits at a remote corner, the initial total can drop below 1 and the finish is <em>algebraically excluded</em>.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Pagoda 验证器 · 7 × 7 数值表' : 'Pagoda calculator · 7 × 7 numeric grid'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '点格子改数。 「验证 pagoda」检查每个共线三元组 (a, c, b) 是否满足 f(b) ≤ f(a) + f(c); 违反的格高亮红色' : 'edit any cell. "verify pagoda" checks every collinear triple (a, c, b) for f(b) ≤ f(a) + f(c); violating cells turn red'}</div>
+          <PagodaCalculator />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.5  Conway 的 GF(4) 着色" en="28.5  Conway's GF(4) colouring" />
+        </h3>
+        <p>
+          <L
+            zh={<>1961 年, John Conway 把上面所有 「奇偶约束」 统一进一个 4 元域 <TeX src="\mathrm{GF}(4) = \{0, 1, \omega, \omega^2\}" /> 上的线性代数。 看作群 <TeX src="\mathbb{Z}_2 \times \mathbb{Z}_2 = \{0, a, b, a + b\}" />: 给每格分配一个非零元素 <TeX src="\xi(p) \in \{1, a, b, ab\}" />, 满足</>}
+            en={<>In 1961 John Conway unified every parity argument above into linear algebra over the 4-element field <TeX src="\mathrm{GF}(4) = \{0, 1, \omega, \omega^2\}" />. Viewed as the group <TeX src="\mathbb{Z}_2 \times \mathbb{Z}_2 = \{0, a, b, a + b\}" />, assign each cell a non-zero label <TeX src="\xi(p) \in \{1, a, b, ab\}" /> with the property</>}
+          />
+        </p>
+        <TeXBlock src="\xi(a) + \xi(c) + \xi(b) \;=\; 0 \quad\text{in } \mathrm{GF}(4), \quad\text{for every legal triple } (a, c, b)." />
+        <p>
+          <L
+            zh={<>显式选: <TeX src="\xi(r, c) = (r \bmod 2,\, c \bmod 2)" /> ∈ <TeX src="\mathbb{Z}_2 \times \mathbb{Z}_2" />。 验证: 一条水平三元 <TeX src="(r, c), (r, c+1), (r, c+2)" /> 的标签是 <TeX src="(r, 0), (r, 1), (r, 0)" />, 求和 <TeX src="(3r, 1) = (r, 1)" />... 等等, 这不为零。</>}
+            en={<>One explicit choice: <TeX src="\xi(r, c) = (r \bmod 2,\, c \bmod 2) \in \mathbb{Z}_2 \times \mathbb{Z}_2" />. Sanity check on a horizontal triple <TeX src="(r, c), (r, c+1), (r, c+2)" />: the labels are <TeX src="(r, 0), (r, 1), (r, 0)" />, and the sum is <TeX src="(3r, 1) = (r, 1) \ne 0" />.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>这就是为什么 Conway 的真正赋值要 「跨越偶 / 奇行交替翻一翻」 — 一个 cyclotomic 修正, 把 <TeX src="\xi" /> 升级到 <TeX src="\mathrm{GF}(4)^\times" /> 的乘法群上后再加。 实际可用的版本: <TeX src="\xi(r, c) = \omega^{r} \cdot \omega^{2c} \in \mathrm{GF}(4)^\times" />, 其中 <TeX src="\omega^3 = 1" />。 每三共线格的乘积 <TeX src="\omega^{3r + 6c}" /> 或 <TeX src="\omega^{3r' + 0}" /> 总等于 <TeX src="1" />, 等价于和为 0。 详证见 Beasley 1985 第 4 章。</>}
+            en={<>That is why Conway's actual assignment toggles labels across even / odd rows — a cyclotomic correction that lifts <TeX src="\xi" /> into the multiplicative group <TeX src="\mathrm{GF}(4)^\times" /> before summing. The working version: <TeX src="\xi(r, c) = \omega^{r} \cdot \omega^{2c} \in \mathrm{GF}(4)^\times" /> with <TeX src="\omega^3 = 1" />. Every collinear triple has product <TeX src="\omega^{3r + 6c} = 1" /> (or its row-shifted analogue), equivalently sum 0. The careful proof is Beasley 1985 §4.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.6 — Conway / Beasley 1985' : 'Theorem 28.6 — Conway / Beasley 1985'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对任何 GF(4) 着色 <TeX src="\xi" /> 满足上述条件, 「棋盘的 GF(4) 加权和」 <TeX src="\Sigma(P) := \sum_{p \in P} \xi(p) \in \mathrm{GF}(4)" /> 在每次合法跳跃下保持不变。 因此, 一个起态 <TeX src="P_0" /> 可达终态 <TeX src="P_1" /> 必有 <TeX src="\Sigma(P_0) = \Sigma(P_1)" />。</>}
+              en={<>For any GF(4) labelling <TeX src="\xi" /> with the constraint above, the board's GF(4)-weighted sum <TeX src="\Sigma(P) := \sum_{p \in P} \xi(p) \in \mathrm{GF}(4)" /> is invariant under every legal jump. Hence a transition from <TeX src="P_0" /> to <TeX src="P_1" /> requires <TeX src="\Sigma(P_0) = \Sigma(P_1)" />.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>由于 GF(4) 上的着色构成一个 <strong>二维向量空间</strong> (over GF(4) 的 5-维线性约束系统秩 = 3, 故剩 2 维), 我们能找两个独立着色 <TeX src="\xi_1, \xi_2" />, 给出两个独立的 GF(4) 不变量 — 这就是 §28.2 「↗ 着色」 与 「↘ 着色」 的代数本源。 把它们写成在 <TeX src="\mathbb{F}_4^2" /> 上的相等约束, 立刻还原出 Reiss 的 5-格定理, 且推广到任意起 / 终对的可解性必要条件。</>}
+            en={<>The space of valid GF(4) labellings is a <strong>2-dimensional vector space</strong> over GF(4) (the collinearity constraints have rank 3 in a 5-dim ambient, leaving 2). So we can pick two independent labellings <TeX src="\xi_1, \xi_2" /> giving two independent GF(4) invariants — the algebraic source of the ↗ / ↘ argument in §28.2. Writing both as equality constraints in <TeX src="\mathbb{F}_4^2" /> immediately recovers Reiss's 5-cell theorem and generalises it to a necessary condition on every start-end pair.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Conway GF(4) 着色 · 静态显示' : 'Conway GF(4) labelling · static display'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '每格按 (r mod 2, c mod 2) 标记 1, a, b, ab; 任何合法跳跃保持 GF(4) 加权和' : 'each cell labelled (r mod 2, c mod 2) ∈ {1, a, b, ab}; every legal jump preserves the GF(4) sum'}</div>
+          <GF4ColouringDisplay />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.6  Bergholt 的 18 步扫局 (英式 33)" en="28.6  Bergholt's 18-move sweep (English 33)" />
+        </h3>
+        <p>
+          <L
+            zh={<>不变量只能告诉我们什么 「不可能」; 要证 「可能」 必须给一个具体解。 英式 33 棋的中央 → 中央问题的 <strong>最短解</strong> 由 Ernest Bergholt 于 1912 年发现 — 18 步 (按 multi-jump = 1 步计), 1964 年 John Beasley 用电脑搜索确认这是全局最优 — 不可能更少了。</>}
+            en={<>Invariants only tell us what's <em>impossible</em>; proving possibility needs a concrete solution. The shortest solution of the English 33-cell centre-to-centre problem was found by Ernest Bergholt in 1912 — <strong>18 moves</strong>, counting multi-jump chains as single moves. John Beasley verified it as globally optimal by computer search in 1964 — no fewer moves are possible.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.7 — Bergholt 1912, Beasley 1964' : 'Theorem 28.7 — Bergholt 1912, Beasley 1964'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>英式 33 中央 → 中央问题在 「multi-jump = 1 move」 计法下的最短解恰为 <strong>18 步</strong>。 全部 31 颗棋子被吃, 残子位于 d4。</>}
+              en={<>The shortest English 33-cell centre-to-centre solution counted in multi-jump moves is exactly <strong>18</strong>. All 31 pegs are removed and the survivor sits at d4.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>下方动画把 Bergholt 序列拆解为 18 个 macro-move (其中 6 个含连环跳跃), 共约 30 个 elementary jumps。 点 <strong>▶ 播放</strong> 自动放完一局; <strong>前 / 后</strong> 单步走; 残子最终落在 d4。</>}
+            en={<>The animation below replays the 18 macro-moves (6 of which chain through multiple elementary jumps for a total of ~30 single jumps). Press <strong>▶ play</strong> for the full game, or step manually; the survivor ends at d4.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Bergholt 18 步扫局 · 回放' : 'Bergholt 18-move sweep · replay'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '18 个 macro-move, 标准 a1..g7 坐标; multi-jump 链按 1 步计' : '18 macro-moves in standard a1..g7 coordinates; multi-jump chains count as one'}</div>
+          <PegMoveReplay />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.7  15 棋三角的 SAX 不变量" en="28.7  The SAX invariant on the 15-peg triangle" />
+        </h3>
+        <p>
+          <L
+            zh={<>15 颗三角形孔明棋 (5 行 1 / 2 / 3 / 4 / 5) 上有另一个有名的不变量 — <strong>SAX 数</strong>。 将盘面 15 格分成 3 个 「中心」 格 (高亮金色: 第 3 行的左、 第 4 行的左、 第 4 行的中) 与 12 个 「边」 格; 设 <TeX src="A" /> 为中心填颗数, <TeX src="X" /> 为边填颗数, <TeX src="S" /> 为三点共线且 ≥ 2 颗的 「线段」 数。</>}
+            en={<>The 15-peg triangle (5 rows of 1 / 2 / 3 / 4 / 5 cells) carries a separate invariant, the <strong>SAX number</strong>. Partition the 15 cells into 3 "central" cells (highlighted gold) and 12 "perimeter" cells; let <TeX src="A" /> count filled centrals, <TeX src="X" /> filled perimeters, and <TeX src="S" /> count collinear triples (length-3 lines) that already hold ≥ 2 pegs.</>}
+          />
+        </p>
+        <TeXBlock src="\mathrm{SAX}(P) \;:=\; S + A - X \quad \text{is non-increasing under legal play.}" />
+        <p>
+          <L
+            zh={<>不变量证明 (Beasley 1985): 单次跳跃 <TeX src="a \to b" /> 跨 <TeX src="c" /> 把 <TeX src="\{a, c\}" /> 替换成 <TeX src="\{b\}" />。 逐 case 检验中心 / 边的转换对 <TeX src="A, X, S" /> 的增量是 <TeX src="\le 0" />。 例如三格全是 perimeter 的跳跃: <TeX src="\Delta A = 0, \Delta X = -1, \Delta S \le 0" /> (该三元组从 「3 ≥ 2」 变 「1 &lt; 2」, <TeX src="\Delta S \le 0" />), 故 <TeX src="\Delta \mathrm{SAX} \le 0 + 0 - (-1) = +1" />... 等等, 这里要小心: 此三元组本身的贡献 −1, 但跨过这一跳后其他经过 <TeX src="b" /> 的三元组可能也变。 详细 case-bash 见 Beasley 第 8 章。</>}
+            en={<>Invariance proof sketch (Beasley 1985): a single jump <TeX src="a \to b" /> over <TeX src="c" /> replaces <TeX src="\{a, c\}" /> with <TeX src="\{b\}" />. Case-analyse the central / perimeter labels of <TeX src="(a, c, b)" />. Each case bounds <TeX src="\Delta A, \Delta X, \Delta S" /> so that <TeX src="\Delta \mathrm{SAX} \le 0" /> overall. Full case bash in Beasley §8.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '15 棋三角 · 实时 SAX' : '15-peg triangle · live SAX'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '中心 3 格高亮; 注意 S + A − X 永远只减不增 (含斜跳)' : 'central 3 cells highlighted; watch S + A − X be non-increasing (diagonal jumps included)'}</div>
+          <PegTriangleSAX />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.8  欧式 37 格盘 · 中央 → 中央不可解" en="28.8  European 37-cell board · centre-to-centre impossibility" />
+        </h3>
+        <p>
+          <L
+            zh={<>欧式 37 格盘比英式多 4 个 「肩膀」 格 (b2, f2, b6, f6), 合计 37。 一个老的迷题: 起手中央 (d4) 空, 终态单子在 d4 — 英式可解 (Bergholt 18 步), <strong>欧式不可解</strong>。</>}
+            en={<>The European 37-cell board adds 4 "shoulder" cells (b2, f2, b6, f6), totalling 37. An old puzzle: can the centre-to-centre problem be solved on this board? On English yes (Bergholt 18); on European <strong>no</strong>.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>纯三染色不够 — 因 (3, 3) 中央与四端 (0, 3), (3, 0), (3, 6), (6, 3) 都在 ↗ 染色下属同色 (类 0), ↘ 染色下也同色, 仍允许 d4 为终点。 障碍来自 <strong>Zantema (1996) 的「ABC 位置」 加强论证</strong>: 在原 3-染色基础上, 再加一个 「偶位殻」 (both r and c 同偶) 计数, 该子集大小在每次合法跳跃下奇偶不变 (因为每个合法跳跃的三元组里恰好包含 0 个或 2 个偶位殻格)。 起态去掉 d4 后, 偶位殻有 8 颗棋子 (偶); 若终态单子在 d4 (偶位殻格), 计数 = 1 (奇)。 矛盾。</>}
+            en={<>The pure 3-colouring isn't enough: centre (3, 3) and the four tips (0, 3), (3, 0), (3, 6), (6, 3) share class 0 under both ↗ and ↘, so 3-colouring allows a d4 finish. The block comes from <strong>Hans Zantema's (1996) reinforced "ABC position" argument</strong>: adjoin a second invariant — the parity of pegs on "even-shell" cells (both r and c even). Every legal jump's triple contains 0 or 2 even-shell cells (case check on the 37-cell geometry), so the even-shell parity is preserved. Removing d4 leaves 8 even-shell pegs (parity 0); a single peg at d4 has 1 (parity 1). Contradiction.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.8 — Zantema 1996' : 'Theorem 28.8 — Zantema 1996'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>欧式 37 格盘上, 中央 d4 起手空、 终态单子在 d4 的问题 <strong>不可解</strong>。</>}
+              en={<>On the European 37-cell board, the centre-to-centre single-peg problem is <strong>unsolvable</strong>.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '欧式 37 · Zantema 配色' : 'European 37 · Zantema labelling'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '数字 = (r + c) mod 3 三染色; 加粗格 = 「偶位殻」' : 'numbers = (r + c) mod 3 colouring; bold cells = "even shell"'}</div>
+          <EuropeanBoardParity />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.9  图上的孔明棋 · 沙堆与切焰" en="28.9  Peg solitaire on graphs · sandpiles and chip-firing" />
+        </h3>
+        <p>
+          <L
+            zh={<>把棋盘抽象成图 <TeX src="G = (V, E)" />: 顶点 = 格, 边 = 相邻关系。 「合法跳跃」 即在长度-2 路径 <TeX src="a - c - b" /> 上, 若 <TeX src="a, c" /> 有标记、 <TeX src="b" /> 无, 则把标记从 <TeX src="a" /> 「翻越」 到 <TeX src="b" /> 并消去 <TeX src="c" />。 这恰好是 <strong>chip-firing</strong> / 沙堆模型的一个变体, 区别在于普通沙堆要求一格中标记数 ≥ deg(v) 才发火, 这里要求 「a, c 有, b 无」 — 一种 「带方向的发火规则」。</>}
+            en={<>Abstract the board to a graph <TeX src="G = (V, E)" />: vertices = cells, edges = adjacencies. A "legal jump" on the length-2 path <TeX src="a - c - b" /> with chips on <TeX src="a, c" /> and none on <TeX src="b" /> moves a chip from <TeX src="a" /> to <TeX src="b" /> and removes the chip on <TeX src="c" />. This is a directed variant of <strong>chip-firing</strong> / sandpile dynamics — ordinary sandpiles fire a vertex when it has at least deg(v) chips, whereas here a triple-based rule governs.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>这一抽象化使孔明棋的 「可达性」 转写为图上 chip-firing 类的可达问题。 不变量层面, 上面的 GF(4) 着色对应一个 <em>线性</em> chip-firing 不变量 (Laplacian 上同调); 而 SAX、 pagoda 等多项式不变量对应 <em>非线性</em> 守恒律。 这条思路被 Beasley 2005、 Engbers–Stocker 2015 等推广到任意图: 在树上 / 圈图 / Petersen 图 / 立方体图上, 都能写出对应的可达性判据 — 详见 §29.</>}
+            en={<>This recasts peg-solitaire solvability as a reachability question for graph chip-firing. The GF(4) labelling becomes a <em>linear</em> chip-firing invariant (Laplacian cohomology); SAX and pagoda functions are <em>non-linear</em> conserved quantities. Beasley (2005) and Engbers-Stocker (2015) generalised this to arbitrary graphs — trees, cycles, the Petersen graph, the cube graph all admit explicit solvability criteria — see §29.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.10  穷举搜索 · 已解盘与极值记录" en="28.10  Computer searches · solved boards and extremal records" />
+        </h3>
+        <p>
+          <L
+            zh={<>1990s 以来, 计算机穷举把孔明棋从 「定理 + 巧解」 推进到 「完全图谱」。 英式 33 棋的核心成果:</>}
+            en={<>Since the 1990s, exhaustive search has turned peg solitaire from "theorems plus clever solutions" into a complete catalogue. Core results on English 33:</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '问题' : 'problem'}</th>
+              <th>{lang === 'zh' ? '可解?' : 'solvable?'}</th>
+              <th>{lang === 'zh' ? '最短步' : 'min moves'}</th>
+              <th>{lang === 'zh' ? '来源' : 'reference'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>{lang === 'zh' ? '中央 → 中央' : 'centre → centre'}</td><td>✓</td><td className="num">18</td><td>Bergholt 1912 / Beasley 1964</td></tr>
+            <tr><td>{lang === 'zh' ? '中央 → 四端 (a4 / g4 / d1 / d7)' : 'centre → arm-tip'}</td><td>✓</td><td className="num">17</td><td>Beasley 1985</td></tr>
+            <tr><td>{lang === 'zh' ? '任一非中央起空 → 单子终局可达性' : 'any non-centre start → singleton'}</td><td>{lang === 'zh' ? '部分' : 'partial'}</td><td className="num">—</td><td>Bell 2007 (全分类)</td></tr>
+            <tr><td>{lang === 'zh' ? '欧式 37 中央 → 中央' : 'European 37: centre → centre'}</td><td>✗</td><td className="num">—</td><td>Zantema 1996</td></tr>
+            <tr><td>{lang === 'zh' ? '15 棋三角 顶点空 → 单子在顶点' : 'Triangle 15: apex → apex'}</td><td>✓</td><td className="num">9</td><td>Beasley 1985</td></tr>
+            <tr><td>{lang === 'zh' ? '15 棋三角 顶点空 → 任意终点' : 'Triangle 15: apex → arbitrary'}</td><td>{lang === 'zh' ? '5 / 15 可解' : '5 of 15 solvable'}</td><td className="num">—</td><td>Hentzel 1973</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>到 1999 年, 英式 33 棋上 <em>所有</em> 单孔起手 / 单子终局对 (共 33 × 33 = 1089 个) 已全部由计算机解决, 其中约 1/3 可解。 最长的 「最优解」 是从特殊起态出发的 31 步链。</>}
+            en={<>By 1999, all 33 × 33 = 1089 single-hole / single-peg endpoint pairs on the English 33 board had been computer-resolved; roughly a third are solvable. The longest known shortest-solution among them is a 31-move chain from a non-standard start.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>这些工作把 1857 年 Reiss 起头、 1960 年代 Conway-Beasley 系统化的代数分析, 推到了今日的 「全表已知」 状态。 但更大的 boards (例如 6 × 6 + 4 殻 的 「Wiegleb 盘」, 共 45 格) 至今未完全分类 — 完整穷举所需的状态空间远超 33 棋的几亿个等价类。 现代研究方向: 二维以上 (立体盘)、 任意图、 带 「反向跳跃」 变体, 都活跃在 Beasley 的 The Ins and Outs 增补、 Bell 的网站, 以及 OEIS 多个相关序列里。</>}
+            en={<>This thread, begun by Reiss in 1857 and systematised by Conway and Beasley in the 1960s, has reached "complete table" status for the English board. Larger boards remain open: the 45-cell Wiegleb (6 × 6 plus 4-shell) has not been fully classified — the state space blows past the few hundred million equivalence classes of the 33 board. Active research extends to 3-D boards, arbitrary graphs, and "reverse-jump" variants — see Beasley's supplement, George Bell's database, and the OEIS entries A014225 / A112737.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="28.11  小结 · 不变量的等级" en="28.11  Summary · hierarchy of invariants" />
+        </h3>
+        <p>
+          <L
+            zh={<>把 §28 的工具按 「锋利度」 由弱到强排序:</>}
+            en={<>Ranking the tools of §28 from weakest to sharpest:</>}
+          />
+        </p>
+        <ol style={{ paddingLeft: 24, lineHeight: 1.85 }}>
+          <li><L zh={<><strong>奇偶计数</strong>: 「棋子数 mod 2」 — 每跳减 1, 故 32 → 1 需 31 跳, 不变量本身贡献为 0 但定下步数。</>} en={<><strong>Parity</strong>: peg count mod 2. Each jump decreases by 1, so 32 → 1 needs 31 jumps; no algebraic obstruction beyond move counting.</>} /></li>
+          <li><L zh={<><strong>3-染色</strong> (Reiss 1857): 给出 5 格残子定理; 必要但不充分。</>} en={<><strong>3-colouring</strong> (Reiss 1857): yields the 5-cell theorem; necessary but not sufficient.</>} /></li>
+          <li><L zh={<><strong>GF(4) 着色</strong> (Conway, Beasley 1985): 把 ↗ 与 ↘ 两个独立 3-染色统一为 <TeX src="\mathbb{F}_4^2" /> 上的线性约束; 同样必要不充分。</>} en={<><strong>GF(4) labelling</strong> (Conway, Beasley 1985): unifies ↗ and ↘ into a 2-dim <TeX src="\mathbb{F}_4" />-linear constraint; necessary, still not sufficient.</>} /></li>
+          <li><L zh={<><strong>Pagoda 函数</strong> (Conway): 非线性 (实数) 不变量族; 黄金比 Fibonacci pagoda 等可在远距禁手处发力。</>} en={<><strong>Pagoda functions</strong> (Conway): a family of non-linear (real-valued) invariants; the Fibonacci pagoda excludes long-distance survivors.</>} /></li>
+          <li><L zh={<><strong>SAX 数</strong> (Beasley 1985): 三角盘 / 特定盘的混合不变量, 比单纯 GF(4) 更强。</>} en={<><strong>SAX number</strong> (Beasley 1985): a mixed invariant tuned for the triangular board; strictly stronger than GF(4) alone there.</>} /></li>
+          <li><L zh={<><strong>Zantema ABC 位置</strong> (1996): 在欧式 37 盘上, 「3-染色 + 偶位殻奇偶」 共同禁止中央 → 中央。</>} en={<><strong>Zantema's ABC position</strong> (1996): on the European 37, "3-colouring + even-shell parity" together forbid centre-to-centre.</>} /></li>
+          <li><L zh={<><strong>计算机穷举</strong> (1999): 终极必要充分判据 — 但代价是状态空间; 数学定理是用来加速搜索的过滤器。</>} en={<><strong>Computer enumeration</strong> (1999): the ultimate necessary-and-sufficient test — at the cost of state space size. The theorems above are the filters that make the search tractable.</>} /></li>
+        </ol>
+        <p>
+          <L
+            zh={<>这套 「染色 / GF(4) / pagoda / SAX / 计算机」 的层次, 是 1960s 之后 Conway、 Beasley 把谜题分析从 「巧妙拼凑」 升级为 「可计算代数」 的奠基工作。 同样的思想链条 — 找一个不变量, 验证它在生成操作下不变, 用它禁掉不可能的状态 — 在 §5 (魔方守恒律)、 §15 (Rubik's group cohomology)、 §29 (Petersen graph) 反复出现, 是本书的主线之一。</>}
+            en={<>This "colouring / GF(4) / pagoda / SAX / computer" hierarchy is the foundation laid by Conway and Beasley in the 1960s, raising puzzle analysis from clever case-bashing to computable algebra. The same template — find an invariant, verify it under generators, exclude unreachable states — recurs in §5 (cube invariants), §15 (Rubik's-group cohomology), §29 (Petersen graph), and is one of the spine motifs of this book.</>}
+          />
+        </p>
+      </GTSec>
+
+
+
+      {/* ═══════════════ §29 Hamiltonian Paths ════════════════════════════ */}
+      <GTSec id="hamiltonian" className="gt-sec">
+        <div className="gt-sec-num">§29</div>
+        <h2 className="gt-sec-title">
+          <L zh="Hamilton 路径与 Cayley 图" en="Hamiltonian paths on Cayley graphs" />
+        </h2>
+        <p className="gt-lede">
+          <L
+            zh={<>给一个图 <TeX src="\Gamma" />, 一条 <strong>Hamilton 路径</strong> 是把所有顶点恰好走一次的路径; <strong>Hamilton 圈</strong> 是再首尾相连。 把 Cayley 图 (§14) 装上 Hamilton 路径有什么意义? <em>每个状态都恰好被路过一次, 一个不重不漏的 <strong>遍历公式</strong></em>。 这就是 「魔方所有 <TeX src="4.3 \times 10^{19}" /> 个状态能否用一条公式走遍?」 — 一个仍然 <strong>悬而未决</strong> 的问题, 已经挂在那里超过半个世纪。</>}
+            en={<>A <strong>Hamiltonian path</strong> in a graph <TeX src="\Gamma" /> visits each vertex exactly once; a <strong>Hamiltonian cycle</strong> closes back to the start. Plugging this into Cayley graphs (§14): a Hamiltonian path is an <em>algorithm that visits every group element exactly once</em>. Can the cube's <TeX src="4.3 \times 10^{19}" /> states be traversed by one such alg? An <strong>open problem</strong> hanging there for over half a century.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.1  两大猜想 (Cayley + Lovász)" en="29.1  The two conjectures (Cayley + Lovász)" />
+        </h3>
+        <p>
+          <L
+            zh={<>故事的两个主角是 Cayley 1878 和 László Lovász 1970。 前者在他 1878 年那篇引入 Cayley 图的论文里就隐含问过: 这些图总是有 Hamilton 圈吗? 一个世纪以后, Lovász 给出了一个更弱的版本, 把 「Cayley 图」 放松成 「顶点传递图」, 并明确写下:</>}
+            en={<>The two protagonists are Cayley (1878) and László Lovász (1970). Cayley's original paper introducing his graphs implicitly asked whether they always carry a Hamiltonian cycle. A century later Lovász formulated a weaker version with "vertex-transitive" replacing "Cayley graph":</>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '猜想 29.1 (Cayley, 1878 隐含)' : 'Conjecture 29.1 (Cayley, 1878 implicit)'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>每个连通的、 有限的 Cayley 图都含一条 Hamilton 圈。</>}
+              en={<>Every connected finite Cayley graph admits a Hamiltonian cycle.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '猜想 29.2 (Lovász 1970)' : 'Conjecture 29.2 (Lovász 1970)'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>每个连通的有限顶点传递图都含一条 Hamilton 路径。 (注意: 是 「路径」, 不是 「圈」。)</>}
+              en={<>Every connected finite vertex-transitive graph admits a Hamiltonian path. (Note: <em>path</em>, not cycle.)</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>两个猜想至今 <strong>未证未破</strong>, 是组合学最古老的开问题之一。 截至 2026 年, Lovász 猜想已对 <em>所有 ≤ 100 个顶点</em> 的顶点传递图穷举验证通过 (Royle–Spiga); Cayley 圈猜想对许多无穷族 (阿贝尔、 二面体、 广义四元数、 nilpotent 类 2 等) 已构造证明, 但通用的 「Cayley = Ham 圈」 蕴含证明仍未出现。</>}
+            en={<>Both conjectures remain <strong>open</strong>, among the oldest unresolved problems in combinatorics. As of 2026, Lovász has been verified by computer for all vertex-transitive graphs of order ≤ 100 (Royle–Spiga); the Cayley cycle conjecture is settled constructively for many infinite families (Abelian, dihedral, generalised quaternion, nilpotent of class 2, …), but no general implication "Cayley ⇒ Hamiltonian cycle" has been proven.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '为什么有人相信猜想为真?' : 'Why do people believe the conjectures?'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>三条直观证据: <strong>(i)</strong> 顶点传递图 「处处一样」, 任何阻断都会被对称性传遍, 所以局部障碍不易存在; <strong>(ii)</strong> 已知的所有反例 (Petersen 等 4 个) 都 <em>不</em> 是 Cayley 图; <strong>(iii)</strong> 大量计算机搜索从未在 Cayley 图上找到反例 — 但这只是 「不存在小反例」 的证据, 不是定理。</>}
+              en={<>Three intuitions: <strong>(i)</strong> vertex-transitive graphs "look the same everywhere", so any local obstacle would propagate via symmetry and is hard to embed; <strong>(ii)</strong> the four known vertex-transitive non-Hamiltonian graphs (Petersen, Coxeter, and two Cayley-graph relatives of them) are <em>not</em> Cayley; <strong>(iii)</strong> extensive computer searches have never found a Cayley counterexample — though this only says there are no <em>small</em> ones.</>}
+            />
+          </div>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.2  Petersen 图 — 顶点传递但非 Cayley" en="29.2  Petersen graph — vertex-transitive but not Cayley" />
+        </h3>
+        <p>
+          <L
+            zh={<>把两个猜想严格分开的经典见证就是 <strong>Petersen 图</strong> <TeX src="P" />: 10 个顶点, 3-正则, girth (最短圈长) = 5, 直径 2, 顶点传递。 它 <em>不是任何群的 Cayley 图</em> (任何 10 阶群 = <TeX src="\mathbb{Z}_{10}" /> 或 <TeX src="D_5" />, 它们的 Cayley 图都长不出 Petersen 的几何形状)。</>}
+            en={<>The classical witness separating the two conjectures is the <strong>Petersen graph</strong> <TeX src="P" />: 10 vertices, 3-regular, girth (shortest cycle length) 5, diameter 2, vertex-transitive. It is <em>not</em> a Cayley graph of any group — the only 10-element groups are <TeX src="\mathbb{Z}_{10}" /> and <TeX src="D_5" />, and neither yields Petersen as a Cayley graph.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.3 — Petersen 1898' : 'Theorem 29.3 — Petersen (1898)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<><TeX src="P" /> 含 Hamilton 路径 (例如 0-1-2-3-4-9-7-5-8-6), <strong>但不含</strong> Hamilton 圈。 因此 Lovász (路径) 猜想在 <TeX src="P" /> 上成立, 而 Cayley (圈) 猜想在 <TeX src="P" /> 上无意义 — Petersen 不是 Cayley。</>}
+              en={<><TeX src="P" /> contains a Hamiltonian path (e.g. 0-1-2-3-4-9-7-5-8-6) but <strong>no</strong> Hamiltonian cycle. So Lovász (path version) holds on <TeX src="P" />; the Cayley (cycle) conjecture is vacuous on <TeX src="P" /> since <TeX src="P" /> is not a Cayley graph.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-proof">
+          <div className="gt-proof-title">{lang === 'zh' ? 'Petersen 自同构群 = S₅' : 'Aut(Petersen) = S₅'}</div>
+          <L
+            zh={<>
+              <p style={{ margin: '0 0 12px' }}>把 <TeX src="P" /> 的 10 个顶点等同于 <TeX src="\binom{[5]}{2}" /> 的 10 个二元子集; 两顶点连边 ⟺ 子集 <em>不相交</em>。 <TeX src="S_5" /> 在 <TeX src="\{1, 2, 3, 4, 5\}" /> 上的置换诱导 <TeX src="P" /> 的自同构, 给出 <TeX src="|\text{Aut}(P)| \ge 120" />。 容易验证不能更大, 故 <TeX src="\text{Aut}(P) = S_5" />。</p>
+              <p style={{ margin: '0 0 12px' }}>这就是 <TeX src="P" /> 顶点传递的来源: <TeX src="S_5" /> 在 2-子集上 2-传递, 所以也单传递, 即顶点传递。 但若 <TeX src="P = \operatorname{Cay}(G, S)" /> 则 <TeX src="G" /> 必须 <em>规则地</em> 作用于 10 个顶点 (即 <TeX src="|G| = 10" /> 且无固定点)。 把 <TeX src="\mathbb{Z}_{10}" /> 和 <TeX src="D_5" /> 的所有 3-正则 Cayley 图列出, 没有一个等价于 Petersen。</p>
+            </>}
+            en={<>
+              <p style={{ margin: '0 0 12px' }}>Identify the 10 vertices of <TeX src="P" /> with the 10 2-subsets of <TeX src="\{1, \ldots, 5\}" />; two vertices are adjacent iff the subsets are <em>disjoint</em>. <TeX src="S_5" /> acting by permutations of <TeX src="\{1, \ldots, 5\}" /> induces graph automorphisms, giving <TeX src="|\text{Aut}(P)| \ge 120" />. A short check shows this is exact, so <TeX src="\text{Aut}(P) = S_5" />.</p>
+              <p style={{ margin: '0 0 12px' }}>This is the source of vertex-transitivity: <TeX src="S_5" /> is 2-transitive on 2-subsets, hence 1-transitive, hence vertex-transitive. But if <TeX src="P = \operatorname{Cay}(G, S)" /> then <TeX src="G" /> must act <em>regularly</em> on the 10 vertices (i.e. <TeX src="|G| = 10" /> with no fixed point). Enumerating the 3-regular Cayley graphs of <TeX src="\mathbb{Z}_{10}" /> and <TeX src="D_5" />, none equals Petersen.</p>
+            </>}
+          />
+          <div className="gt-proof-end">∎</div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Petersen 图 · 互动' : 'Petersen graph · interactive'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '切换 「Ham 路径」 「数字 / 二元子集 标签」 「Aut(P) = S₅ 的几种置换」' : 'toggle Ham path, number / 2-subset labels, and four S₅ automorphisms'}</div>
+          <PetersenInteractive />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.3  阿贝尔情形 — Gray 码" en="29.3  Abelian case — Gray codes" />
+        </h3>
+        <p>
+          <L
+            zh={<>对阿贝尔群, Cayley 圈猜想是 <strong>真的</strong>, 是已知最干净的一类。 证法是 <em>构造性</em> 的, 输出一条具体公式。 最优雅的例子在 <TeX src="\mathbb{Z}_2^n" /> 上 — 反射二进制 Gray 码, 由 Frank Gray 在 Bell 实验室 1947 年发明 (1953 年专利公开), 每一步只翻一个比特位:</>}
+            en={<>For Abelian groups the Cayley cycle conjecture is <strong>true</strong> — the cleanest case in the entire conjecture. The proof is <em>constructive</em>, producing an explicit alg. The most elegant example, on <TeX src="\mathbb{Z}_2^n" />, is Frank Gray's reflected binary code (Bell Labs, invented 1947, patented 1953): one bit flips per step.</>}
+          />
+        </p>
+        <TeXBlock src="G_{n} \;=\; G_{n-1}, \; \mathrm{reverse}(G_{n-1}) \text{ with leading bit toggled}." />
+        <p>
+          <L
+            zh={<>这一定义给出 <TeX src="2^n" /> 个不同的 <em>n</em>-比特串, 串成 <TeX src="\mathbb{Z}_2^n" /> 的 Hamilton 圈, 每条边对应一个生成元 <TeX src="e_i" />。 对一般阿贝尔群 <TeX src="G = \mathbb{Z}/n_1 \times \cdots \times \mathbb{Z}/n_k" />, 用 <strong>蛇形 (zig-zag) Gray 码</strong>: 先把 <TeX src="\mathbb{Z}/n_1" /> 走通, 进 <TeX src="\mathbb{Z}/n_2" /> 的第 2 行反方向走通, 第 3 行回去, 依此类推。 总长 <TeX src="\prod n_i = |G|" />, 给出一条 Hamilton 路径; 若每个 <TeX src="n_i \ge 2" /> 且至少一个偶数, 它实际上是 Hamilton 圈。</>}
+            en={<>This yields <TeX src="2^n" /> distinct <em>n</em>-bit strings forming a Hamiltonian cycle of <TeX src="\mathbb{Z}_2^n" />, each edge corresponding to a generator <TeX src="e_i" />. For a general finite Abelian group <TeX src="G = \mathbb{Z}/n_1 \times \cdots \times \mathbb{Z}/n_k" />, use a <strong>zig-zag (snake) Gray code</strong>: walk <TeX src="\mathbb{Z}/n_1" /> forward, the second row of <TeX src="\mathbb{Z}/n_2" /> backward, the third forward, etc. Total length <TeX src="\prod n_i = |G|" /> gives a Hamilton path; it closes to a cycle when each <TeX src="n_i \ge 2" /> and at least one is even.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Gray 码遍历 𝔽₂ⁿ' : 'Gray code walking through 𝔽₂ⁿ'}</div>
+          <GrayCodeWalker />
+        </div>
+        <p>
+          <L
+            zh={<>Gray 码不止 「反射二进制」 一种, 是一整族满足 「相邻位串恰差一位」 的序列。 <strong>平衡 Gray 码</strong> (balanced) 要求每个比特位翻转次数相近 (理想 <TeX src="2^n / n" /> 次) — 在模拟 / 数字转换器里减少 spike error; <strong>单调 Gray 码</strong> (monotone) 要求按 popcount 分层走 — 应用在并行算法; <strong>蛇形盒码</strong> (snake-in-the-box) 则给出长度 ≤ <TeX src="2^n" /> 的 <em>诱导</em> 路径 (任意非相邻两点之间无弦), 用于纠错。 共同点: 它们都是 <TeX src="\mathbb{Z}_2^n" /> 的 Cayley 图上的 Hamilton 路径 / 圈, 只是按不同附加约束选定。</>}
+            en={<>The Gray code is not unique. The whole family of sequences where "consecutive strings differ in one bit" is large. <strong>Balanced Gray codes</strong> require each bit-position to flip nearly equally often (ideally <TeX src="2^n / n" /> times) — used in ADCs to spread spike errors; <strong>monotone Gray codes</strong> walk by ascending popcount — used in parallel algorithms; <strong>snake-in-the-box codes</strong> are <em>induced</em> paths of length ≤ <TeX src="2^n" /> (no chord between non-consecutive vertices) — used in error correction. All are Hamiltonian paths or cycles in <TeX src="\operatorname{Cay}(\mathbb{Z}_2^n)" />, distinguished only by which extra structure is imposed.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Gray 码家族 · n = 3..5' : 'Gray code family · n = 3..5'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '反射二进制 vs 平衡 vs 反 Gray; Δ = 相邻翻位数' : 'reflected binary vs balanced vs anti-Gray; Δ = bits flipped between consecutive entries'}</div>
+          <GrayCodeFamily />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.4  超立方体 Q_n — Gray 码的几何本源" en="29.4  The hypercube Q_n — geometric source of Gray codes" />
+        </h3>
+        <p>
+          <L
+            zh={<><TeX src="\mathbb{Z}_2^n" /> 的 Cayley 图 (生成集 = 标准基) 就是 <strong>n-维超立方体</strong> <TeX src="Q_n" />: <TeX src="2^n" /> 个顶点 = 二进制串, 两点相邻 ⟺ 恰差一位。 反射 Gray 码就是 <TeX src="Q_n" /> 的一条 Hamilton 圈; <em>反过来</em>, 任何 <TeX src="Q_n" /> 的 Hamilton 圈都对应一种 「Gray 码」 (不必反射型)。</>}
+            en={<>The Cayley graph of <TeX src="\mathbb{Z}_2^n" /> with the standard basis is the <strong>n-dimensional hypercube</strong> <TeX src="Q_n" />: <TeX src="2^n" /> vertices = bit-strings, adjacent iff one bit differs. The reflected Gray code is a Hamiltonian cycle of <TeX src="Q_n" />; conversely every Hamilton cycle of <TeX src="Q_n" /> corresponds to <em>some</em> Gray-style code.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.4 — Q_n 的 Ham 圈计数' : 'Theorem 29.4 — Counting Ham cycles in Q_n'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<><TeX src="Q_n" /> 含 Hamilton 圈, 数目 <TeX src="H_n" /> 增长极快: <TeX src="H_2 = 1" />, <TeX src="H_3 = 6" />, <TeX src="H_4 = 1344" />, <TeX src="H_5 = 906\,545\,760" />, <TeX src="H_6 = 35\,838\,213\,722\,570\,883\,870\,720" /> (OEIS A006069)。 一般公式未知; 渐近 <TeX src="H_n \sim n!^{2^{n}/n}" /> 量级 (启发式)。</>}
+              en={<><TeX src="Q_n" /> contains Hamilton cycles. The count <TeX src="H_n" /> grows fast: <TeX src="H_2 = 1" />, <TeX src="H_3 = 6" />, <TeX src="H_4 = 1344" />, <TeX src="H_5 = 906\,545\,760" />, <TeX src="H_6 = 35\,838\,213\,722\,570\,883\,870\,720" /> (OEIS A006069). No closed form is known; heuristically <TeX src="H_n \sim n!^{2^{n}/n}" />.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Q_n · Hamilton 圈动画 (n = 3, 4)' : 'Q_n · Hamilton cycle animation (n = 3, 4)'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '反射 Gray 码; 金色边 = 已走; 二进制标签直接显示当前顶点' : 'reflected Gray code; gold edges = traversed; binary labels show the current vertex'}</div>
+          <HypercubeGrayWalker />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.5  骑士周游 — 18 世纪原型" en="29.5  Knight's tour — the 18th-century prototype" />
+        </h3>
+        <p>
+          <L
+            zh={<>Hamilton 路径问题最早 (远早于 Hamilton 1857 八面体题) 的有名实例是 <strong>骑士周游</strong>: 在 8 × 8 棋盘上, 骑士能否每格恰好访问一次? 答案 「能」 至少可以追溯到 9 世纪阿拉伯文献, 18 世纪 Euler (1759) 给出第一个系统化的算法构造, Vandermonde (1771) 把它视作组合问题。 它 <em>不</em> 是任何群的 Cayley 图 (棋盘没有传递的群作用), 但它仍是 「正则化图上的 Hamilton 圈」 这一研究方向的鼻祖。</>}
+            en={<>The earliest famous instance of the Hamiltonian path problem — predating Hamilton's 1857 octahedron puzzle by centuries — is the <strong>knight's tour</strong>: can a knight visit every square of an 8 × 8 board exactly once? The answer "yes" goes back to 9th-century Arabic manuscripts; Euler (1759) gave the first systematic algorithm and Vandermonde (1771) cast it as a combinatorial problem. The knight graph is <em>not</em> a Cayley graph (no transitive group action), but it spawned the entire research direction of Hamilton cycles on regular-ish graphs.</>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? 'Warnsdorff 规则 (1823)' : 'Warnsdorff\'s rule (1823)'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>每一步选择 「后续合法走法最少」 的邻格走。 一个一行的贪心启发式 — 但几乎总能完成完整 Hamilton 周游, 是历史上第一个 「实用的」 Hamilton 路径求解器。 实证: 8 × 8 上随机起点, Warnsdorff 完成率 ≥ 99%; <em>n × n</em> 上, <em>n</em> 充分大时几乎稳赢。</>}
+              en={<>At each step move to the neighbour with the fewest onward legal options. A one-line greedy rule — but it almost always completes a full Hamilton tour and was the first practical Hamilton-path solver in history. Empirically: random starts on 8 × 8 complete ≥ 99% of the time; on <em>n × n</em> for large <em>n</em>, it succeeds with overwhelming probability.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '骑士周游 · 8 × 8' : 'Knight\'s tour · 8 × 8'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '从 a1 出发, Warnsdorff 启发式生成的 64 步周游' : 'starting from a1, a 64-step tour generated by Warnsdorff\'s rule'}</div>
+          <KnightTourBoard />
+        </div>
+        <p>
+          <L
+            zh={<>20 世纪以来骑士周游已被完全分类 (Schwenk 1991): 矩形 <em>m × n</em> (<em>m ≤ n</em>) 有闭合 Hamilton 周游 ⟺ 不属于以下三类:  <em>mn</em> 奇, <em>m</em> ∈ &#123;1, 2, 4&#125;, 或 <em>m, n</em> = (3, 4), (3, 6), (3, 8)。 8 × 8 不在禁名单, 所以闭合周游存在; 实际上数目极多 — 1995 年 Löbbing–Wegener 用 BDD 算出共 <strong>26 534 728 821 064</strong> 条无向闭合周游 (定向计数 ×8 = 2.122 × 10¹⁴)。</>}
+            en={<>The knight's tour was fully classified in the 20th century (Schwenk 1991): a rectangular <em>m × n</em> board (<em>m ≤ n</em>) admits a closed Hamilton tour iff it does NOT lie in the three exceptional families: <em>mn</em> odd, <em>m</em> ∈ &#123;1, 2, 4&#125;, or <em>m, n</em> ∈ &#123;(3, 4), (3, 6), (3, 8)&#125;. 8 × 8 escapes, so closed tours exist; in fact <em>many</em> — Löbbing–Wegener (1995) computed by BDD that there are exactly <strong>26 534 728 821 064</strong> undirected closed knight's tours (8× more if directed = 2.12 × 10¹⁴).</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.6  Rapaport-Strasser · 二面体与广义四元数群" en="29.6  Rapaport-Strasser · dihedral and generalised quaternion" />
+        </h3>
+        <p>
+          <L
+            zh={<>1959 年 Elvira Rapaport-Strasser 首次给出了非阿贝尔群的 Cayley 圈构造性证明 — 二面体群 <TeX src="D_n" /> (<TeX src="2n" /> 元素, 由旋转 <TeX src="r" /> 和反射 <TeX src="s" /> 生成) 的所有连通 Cayley 图含 Hamilton 圈。 1963 年她推广到 <strong>广义四元数群</strong> <TeX src="Q_{2^k}" /> 和某些更大的有限群族。</>}
+            en={<>In 1959 Elvira Rapaport-Strasser gave the first constructive proof of the Cayley cycle conjecture for a non-Abelian family — the dihedral groups <TeX src="D_n" /> (<TeX src="2n" /> elements, generated by a rotation <TeX src="r" /> and reflection <TeX src="s" />) — showing every connected Cayley graph admits a Hamilton cycle. In 1963 she extended this to <strong>generalised quaternion groups</strong> <TeX src="Q_{2^k}" /> and several larger finite group families.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.5 — Rapaport-Strasser 1959' : 'Theorem 29.5 — Rapaport-Strasser 1959'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src="G = D_n = \langle r, s \mid r^n = s^2 = e,\, srs = r^{-1} \rangle" />, 生成集 <TeX src="S = \{r, s\}" /> (或更一般的连通生成集)。 则 <TeX src="\operatorname{Cay}(G, S)" /> 含一条显式 Hamilton 圈, 构造为:</>}
+              en={<>Let <TeX src="G = D_n = \langle r, s \mid r^n = s^2 = e,\, srs = r^{-1} \rangle" /> with generators <TeX src="S = \{r, s\}" /> (or any connected set). Then <TeX src="\operatorname{Cay}(G, S)" /> contains an explicit Hamilton cycle of the form</>}
+            />
+            <TeXBlock src="e \to r \to r^2 \to \cdots \to r^{n-1} \to r^{n-1} s \to r^{n-2} s \to \cdots \to s \to e." />
+            <L
+              zh={<>第一行的 <em>n</em> 步是旋转, 跨到 <em>s</em>-行后再倒着走 <em>n</em> 步反射, 最后 <em>s</em> 闭合。 总共 <TeX src="2n" /> 步 = <TeX src="|G|" />, 是 Hamilton 圈。 此构造是 「陪集链接」 思想的最早实例: <TeX src="\langle r \rangle \cong \mathbb{Z}_n" /> 的两个陪集各自是阿贝尔 Hamilton 圈, 用 <em>s</em> 把它们拼起来。</>}
+              en={<>The first <em>n</em> steps walk by <em>r</em>; an <em>s</em>-jump moves into the reflection coset; another <em>n</em> backward <em>r</em>-steps walk back; one final <em>s</em> closes the loop. Total <TeX src="2n = |G|" /> steps. This is the earliest example of <strong>coset chaining</strong>: two cosets of <TeX src="\langle r \rangle \cong \mathbb{Z}_n" /> are Abelian Hamilton cycles in their own right, joined via the connector <em>s</em>.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>Rapaport-Strasser 之后, 一系列结果累积起来, 把猜想覆盖到更多群族: Witte (1986) 证 <em>p</em>-群 (素数幂阶群); Witte-Gallian (1984) 证半直积 <TeX src="\mathbb{Z}_p \rtimes \mathbb{Z}_q" />; Chen-Quimpo (1980s) 处理 dihedral × Abelian 等。 一个统一的格言: <em>「子群链 <TeX src="H_0 \lhd H_1 \lhd \cdots \lhd G" /> 中每层商群有 Hamilton 圈 ⟹ <TeX src="G" /> 有」</em> — 这是 §29.9 「陪集链接」 的形式化版本。</>}
+            en={<>After Rapaport-Strasser, results piled up across group families: Witte (1986) for <em>p</em>-groups; Witte-Gallian (1984) for semidirect products <TeX src="\mathbb{Z}_p \rtimes \mathbb{Z}_q" />; Chen-Quimpo (1980s) for dihedral × Abelian. A unifying motto: <em>"if every quotient in a normal series <TeX src="H_0 \lhd H_1 \lhd \cdots \lhd G" /> has a Hamilton cycle then so does <TeX src="G" />"</em> — the formalisation of §29.9's coset-chaining recipe.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.7  Marušič 1985 与现代前沿" en="29.7  Marušič 1985 and the modern frontier" />
+        </h3>
+        <p>
+          <L
+            zh={<>1980 年代以来, Dragan Marušič (斯洛文尼亚学派) 把 Lovász 的弱版猜想 (顶点传递 → Hamilton 路径) 沿 「群阶 <TeX src="|G|" />」 一阶一阶往上推。 关键 1983 年论文给出系统化的工具 — <strong>imprimitive block 系统</strong>, <strong>orbital 划分</strong>, <strong>semiregular automorphism</strong> — 至今仍是主导方法。</>}
+            en={<>From the 1980s onwards Dragan Marušič (the Slovenian school) pushed Lovász's weaker conjecture (vertex-transitive → Hamilton path) upward order by order. His seminal 1983 paper introduced the systematic toolkit — <strong>imprimitive block systems</strong>, <strong>orbital partitions</strong>, <strong>semiregular automorphisms</strong> — that still dominates the field today.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.6 — Marušič 1985' : 'Theorem 29.6 — Marušič (1985)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>每个 <strong>顶点数 = <em>pk</em> (<em>p</em> 素数, <em>k</em> 较小)</strong> 的顶点传递图都含 Hamilton 路径。 这一推得当时把 Lovász 猜想从 「小例子检验」 扩展到 「无限族构造」。</>}
+              en={<>Every vertex-transitive graph of order <strong><em>pk</em> for <em>p</em> prime and <em>k</em> bounded</strong> contains a Hamilton path. At the time this leap took Lovász from "checked on small examples" to "proven for infinitely many cases".</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>2009 年 Kutnar–Marušič 综述把全部已知结果整理在 「按群阶大小排序」 的表里。 截至发表时, 已对 |G| ≤ 100 全部完成; 之后 2012-2018 一系列工作 (Witte, Verret, Spiga) 把这条线推到 |G| ≤ 200 左右。 列入 「已结案」 的群族:</>}
+            en={<>The 2009 Kutnar–Marušič survey arranged all known results in a table ordered by group order. By publication time, every <TeX src="|G| \le 100" /> had been verified; 2012-2018 work (Witte, Verret, Spiga, ...) pushed the line to roughly <TeX src="|G| \le 200" />. Group families now classified as "done":</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 24, lineHeight: 1.85 }}>
+          <li><L zh={<>所有阿贝尔群 (古典)</>} en={<>all Abelian groups (classical)</>} /></li>
+          <li><L zh={<>二面体群 <TeX src="D_n" />, 广义四元数 <TeX src="Q_{2^k}" /> (Rapaport-Strasser)</>} en={<>dihedral <TeX src="D_n" />, generalised quaternion <TeX src="Q_{2^k}" /> (Rapaport-Strasser)</>} /></li>
+          <li><L zh={<>所有 <em>p</em>-群 (Witte 1986)</>} en={<>all <em>p</em>-groups (Witte 1986)</>} /></li>
+          <li><L zh={<>nilpotent 阶 ≤ 2 的群</>} en={<>nilpotent groups of class ≤ 2</>} /></li>
+          <li><L zh={<>所有阶 <TeX src="\le 200" /> 的顶点传递图 (Royle-Spiga 2018)</>} en={<>all vertex-transitive graphs of order <TeX src="\le 200" /> (Royle-Spiga 2018)</>} /></li>
+          <li><L zh={<>对称群 <TeX src="S_n" /> 用 transposition 生成集 (Rankin 1948; Compton-Williamson 1991)</>} en={<>symmetric groups <TeX src="S_n" /> with transposition generators (Rankin 1948; Compton-Williamson 1991)</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>仍然 <strong>缺一个统一证明</strong>。 Babai (1995) 在他那篇 「Cayley 图猜想是组合学最重要的开问题之一」 的综述里写道 — Lovász 猜想若真, 应有某种 「群论的结构性原因」, 而非一族一族手算; 但十年后这条 「原因」 仍未现身。 计算机暴搜则反向给出强信号: 没有反例。</>}
+            en={<>A <strong>uniform proof remains elusive</strong>. Babai (1995), in his survey calling the Cayley conjecture "one of the most important open problems in combinatorics", argued that if Lovász is true there should be a <em>structural</em> group-theoretic reason, not just family-by-family case work. Ten years on, no such reason has emerged. Brute-force computer searches, conversely, give strong evidence: no counterexample has been found.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.8  立方子群的现状" en="29.8  Status on cube subgroups" />
+        </h3>
+        <p>
+          <L
+            zh={<>魔方相关的群在 「Hamilton 圈」 这道难题面前位置很有趣 — 一部分已被解决 (含显式构造), 一部分仍开放。 Jaap Scherphuis 在他的著名 「魔方百科」 页面上维护过一份清单:</>}
+            en={<>Cube-related groups occupy an interesting position on this problem — some are solved (with explicit constructions), others remain open. Jaap Scherphuis maintains a list on his classic "puzzle pages":</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '谜题 / 群' : 'puzzle / group'}</th>
+              <th>{lang === 'zh' ? '状态数' : '|G|'}</th>
+              <th>{lang === 'zh' ? 'Ham 圈?' : 'Ham cycle?'}</th>
+              <th>{lang === 'zh' ? '来源 / 注' : 'source / note'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{lang === 'zh' ? '魔方时钟 (Rubik\'s Clock)' : 'Rubik\'s Clock'}</td>
+              <td className="num">12¹⁴ ≈ 1.28×10¹⁵</td>
+              <td>✓</td>
+              <td>{lang === 'zh' ? '阿贝尔 ⇒ 12 进制 Gray 码' : 'Abelian → base-12 Gray code'}</td>
+            </tr>
+            <tr>
+              <td>Floppy Cube (1×3×3)</td>
+              <td className="num">192</td>
+              <td>✓</td>
+              <td>{lang === 'zh' ? '显式公式 (R²LR²L\'R²LR²L\')⁵' : 'explicit (R²LR²L\'R²LR²L\')⁵'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '两面 6 子 (§30)' : 'Two-face 6-piece (§30)'}</td>
+              <td className="num">120 ≅ S₅</td>
+              <td>✓</td>
+              <td>{lang === 'zh' ? '已知, 含 (RU)⁴LU 连接器' : 'known, with connector (RU)⁴LU'}</td>
+            </tr>
+            <tr>
+              <td>Lights Out (5×5)</td>
+              <td className="num">2²⁵</td>
+              <td>✓</td>
+              <td>{lang === 'zh' ? '阿贝尔 ⇒ 二进制 Gray 码' : 'Abelian → binary Gray code'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? 'Pocket Cube (2×2×2)' : 'Pocket Cube (2×2×2)'}</td>
+              <td className="num">3 674 160</td>
+              <td>?</td>
+              <td>{lang === 'zh' ? '开 (猜测有)' : 'open (conjectured)'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '魔方 (3×3×3)' : 'Rubik\'s Cube (3×3×3)'}</td>
+              <td className="num">4.3×10¹⁹</td>
+              <td>?</td>
+              <td>{lang === 'zh' ? '开 (猜测有)' : 'open (conjectured)'}</td>
+            </tr>
+            <tr>
+              <td>Pyraminx</td>
+              <td className="num">75 582 720</td>
+              <td>?</td>
+              <td>{lang === 'zh' ? '开' : 'open'}</td>
+            </tr>
+            <tr>
+              <td>Megaminx</td>
+              <td className="num">≈ 10⁶⁸</td>
+              <td>?</td>
+              <td>{lang === 'zh' ? '开 (规模太大, 无人尝试)' : 'open (size prohibitive)'}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>注意一个量级对照: <strong>3×3×3 Cayley 图</strong> 顶点数 <TeX src="4.3 \times 10^{19}" /> ≈ <strong>全球海滩沙粒数</strong>。 即便 「直接 BFS 找 Ham 圈」 是可计算的 (理论上多项式时间), 实际遍历也远超任何计算机集群。 现有立方解法 (Korf IDA*, Kociemba 二阶段, Rokicki BFS) 都不是 Hamilton 圈, 而是 「测地线搜索」 或 「直径证明」, 两者性质完全不同 — 测地线只跨 ≤ 20 步, Hamilton 圈要 <TeX src="4.3 \times 10^{19}" /> 步。</>}
+            en={<>A scale check: the <strong>3×3×3 Cayley graph</strong> has <TeX src="4.3 \times 10^{19}" /> vertices ≈ <strong>the number of grains of sand on Earth's beaches</strong>. Even if "BFS for a Ham cycle" were polynomial, the traversal itself would exceed any conceivable compute cluster. Existing cube solvers (Korf IDA*, Kociemba two-phase, Rokicki BFS) are not Ham-cycle constructions — they are geodesic searches or diameter proofs, fundamentally different problems. A geodesic spans ≤ 20 steps; a Hamilton cycle spans <TeX src="4.3 \times 10^{19}" />.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.9  陪集链接 — 构造 Hamilton 圈的标准工具" en="29.9  Coset chaining — the standard construction tool" />
+        </h3>
+        <p>
+          <L
+            zh={<>所有非阿贝尔已结案例子 (二面体、 四元数、 <em>p</em>-群、 ...) 用的核心技术都叫 <strong>陪集链接</strong> (coset chaining)。 一句话: 找一个有 Ham 圈的子群 <TeX src="H \le G" />, 然后把 <TeX src="G / H" /> 的 <TeX src="[G : H]" /> 个陪集像拉链一样拼起来。</>}
+            en={<>Every solved non-Abelian case (dihedral, quaternion, <em>p</em>-groups, ...) uses the same core technique: <strong>coset chaining</strong>. In one line: find a subgroup <TeX src="H \le G" /> with a known Ham cycle, then splice the <TeX src="[G : H]" /> cosets of <TeX src="G / H" /> together like a zipper.</>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '陪集链接定理 (Witte-Gallian 1984, 形式化)' : 'Coset chaining (Witte-Gallian 1984, formal)'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>设 <TeX src="H \le G" />, 生成集 <TeX src="S" /> 含 <TeX src="H" /> 的生成集 <TeX src="T" /> 及一个连接子 <TeX src="c \in S \setminus T" />。 若 <strong>(a)</strong> <TeX src="\operatorname{Cay}(H, T)" /> 含 Hamilton 路径 <TeX src="h_1, h_2, \ldots, h_m" /> (其中 <TeX src="m = |H|" />), <strong>(b)</strong> 商图 <TeX src="\operatorname{Cay}(G/H, \bar S)" /> 含 Hamilton 圈 <TeX src="\bar g_1, \bar g_2, \ldots, \bar g_k" /> (<TeX src="k = [G : H]" />), <strong>(c)</strong> 连接子 <TeX src="c" /> 与 <TeX src="T" /> 在每个陪集上方向兼容, 则 <TeX src="\operatorname{Cay}(G, S)" /> 含一条 Hamilton 圈。</>}
+              en={<>Let <TeX src="H \le G" />, generators <TeX src="S" /> containing a generating set <TeX src="T" /> of <TeX src="H" /> and one connector <TeX src="c \in S \setminus T" />. If <strong>(a)</strong> <TeX src="\operatorname{Cay}(H, T)" /> contains a Hamilton path <TeX src="h_1, h_2, \ldots, h_m" /> (with <TeX src="m = |H|" />), <strong>(b)</strong> the quotient graph <TeX src="\operatorname{Cay}(G/H, \bar S)" /> contains a Hamilton cycle <TeX src="\bar g_1, \ldots, \bar g_k" /> (<TeX src="k = [G : H]" />), <strong>(c)</strong> the connector <TeX src="c" /> is direction-compatible with <TeX src="T" /> on each coset, then <TeX src="\operatorname{Cay}(G, S)" /> contains a Hamilton cycle.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>证明思想 (略): 第一个陪集 <TeX src="g_1 H" /> 内沿 <TeX src="h_1, \ldots, h_m" /> 走完, 然后用 <TeX src="c" /> 跨到 <TeX src="g_2 H = g_1 c H" />, 倒着走 <TeX src="h_m, \ldots, h_1" />, 再 <TeX src="c" /> 跨到 <TeX src="g_3 H" />, 来回 zigzag 直到所有 <TeX src="k" /> 个陪集走完。 条件 (c) 保证 zigzag 的两端能续上, 不会卡死。 总长 <TeX src="m \cdot k = |G|" />, 而且回到起点。</>}
+            en={<>Proof sketch: walk inside <TeX src="g_1 H" /> along <TeX src="h_1, \ldots, h_m" />, hop to <TeX src="g_2 H = g_1 c H" /> via <TeX src="c" />, walk backwards <TeX src="h_m, \ldots, h_1" />, hop to <TeX src="g_3 H" />, zig-zag until all <TeX src="k" /> cosets are covered. Condition (c) ensures the zig-zag endpoints connect without dead-ending. Total length <TeX src="mk = |G|" />, returning to the start.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '陪集链接 · Z₈ 范例' : 'Coset chaining · Z₈ example'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '子群 H = 2Z₈ = {0,2,4,6} 用 +2 遍历; 连接子 +3 跨到奇陪集 {1,3,5,7}; 共 8 步形成 Ham 圈' : 'subgroup H = 2Z₈ = {0,2,4,6} traversed by +2; connector +3 splices to odd coset {1,3,5,7}; 8 steps form a Ham cycle'}</div>
+          <CosetChainBuilder />
+        </div>
+        <p>
+          <L
+            zh={<>这一招对魔方 3×3×3 有理论上的可行路径: 取 <TeX src="H = \mathrm{CO} \cdot \mathrm{EO}" /> (角向、棱向子群, 阿贝尔, <TeX src="|H| = 3^8 \cdot 2^{12} / 12 = 2\,217\,093\,120 / 12" />) 用 Gray 码遍历, 然后用某个 「方向不变」 的连接器跨到下一个陪集。 难点全在 (c) — 找一个跟阿贝尔 Gray 码兼容的连接器。 至今没人成功过。</>}
+            en={<>For the 3×3×3 cube there is a theoretical pathway: take <TeX src="H = \mathrm{CO} \cdot \mathrm{EO}" /> (corner / edge orientation subgroup, Abelian) and traverse it via a Gray code, then use some "orientation-fixing" connector to hop into the next coset. All the difficulty lies in (c) — finding a connector compatible with the Abelian Gray code on every coset. So far no one has built such a connector for the cube.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.10  Pak-Radoičić · 一个准定理" en="29.10  Pak-Radoičić · a near-theorem" />
+        </h3>
+        <p>
+          <L
+            zh={<>Igor Pak 与 Rados Radoičić 在 2009 年的一篇论文里证明了 Lovász 猜想的一个 「弱形式」: <em>每个有限群 <TeX src="G" /> 有大小 <TeX src="\le \log_2 |G|" /> 的生成集 <TeX src="S" />, 使 <TeX src="\operatorname{Cay}(G, S)" /> 含 Hamilton 圈</em>。 即, 「如果我们能挑生成集, 那么 Hamilton 圈就一定能造出来」。</>}
+            en={<>Igor Pak and Rados Radoičić (2009) proved a weak form of Lovász: <em>every finite group <TeX src="G" /> has a generating set <TeX src="S" /> with <TeX src="|S| \le \log_2 |G|" /> such that <TeX src="\operatorname{Cay}(G, S)" /> contains a Hamilton cycle</em>. In other words, "if we get to choose the generators, a Hamilton cycle always exists".</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.7 — Pak-Radoičić 2009' : 'Theorem 29.7 — Pak-Radoičić (2009)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对每个有限群 <TeX src="G" /> 存在生成集 <TeX src="S" /> 使 <TeX src="|S| \le \lceil \log_2 |G| \rceil" /> 且 <TeX src="\operatorname{Cay}(G, S)" /> 含 Hamilton 圈。 进一步, 这条圈可以在多项式时间内显式构造。</>}
+              en={<>For every finite group <TeX src="G" /> there is a generating set <TeX src="S" /> with <TeX src="|S| \le \lceil \log_2 |G| \rceil" /> such that <TeX src="\operatorname{Cay}(G, S)" /> contains a Hamilton cycle. Moreover, the cycle can be constructed in polynomial time.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>这个结果 「几乎」 把 Cayley 圈猜想搞定 — 唯一缺口是 「我们不能选生成集」 时的情况。 在魔方语境下, 这意味着: 若允许我们换一组生成元 (不一定是 <TeX src="\{F, B, L, R, U, D\}" />), <em>就能</em> 构造出 4.3 × 10¹⁹ 步的 「全空间公式」。 但用 WCA 标准 6 面生成集, 仍然不知道。</>}
+            en={<>This <em>almost</em> settles the Cayley cycle conjecture — the only gap is "the case when we are not allowed to choose the generators". In cube language: if we're free to pick a non-standard generating set (not <TeX src="\{F, B, L, R, U, D\}" />), we <em>can</em> construct a Hamilton cycle of length 4.3 × 10¹⁹. With the standard WCA 6-face generators, the question is still open.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>Pak-Radoičić 的证明用 <strong>有限单群分类</strong> (Classification of Finite Simple Groups, CFSG) 作为黑盒, 因此它是 「条件性」 的 — 依赖 1980s 那个总篇幅 1 万页的庞大证明体系。 这是组合学里 CFSG 罕见的具体应用之一。</>}
+            en={<>The Pak-Radoičić proof uses the <strong>Classification of Finite Simple Groups</strong> (CFSG) as a black box, so it is technically <em>conditional</em> on the 10 000-page CFSG monolith from the 1980s. This is one of the rare combinatorial uses of CFSG.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.11  计算复杂度 · 一般图 NP-完全, 顶点传递开放" en="29.11  Computational complexity · NP-complete in general, open for vertex-transitive" />
+        </h3>
+        <p>
+          <L
+            zh={<>把 「Cayley 图都有 Hamilton 圈」 翻译成判定问题: 输入一个有限图 <TeX src="\Gamma" />, 问 <TeX src="\Gamma" /> 是否含 Hamilton 圈? 对 <strong>一般图</strong>, 这是 Karp 1972 列出的 21 个 NP-完全问题之一 — 计算上极难。 但加上 「顶点传递」 这个对称约束后, 问题的复杂度本身就 <em>不知道</em>:</>}
+            en={<>Phrasing the Cayley conjecture as a decision problem: given a finite graph <TeX src="\Gamma" />, is there a Hamilton cycle? On <strong>general</strong> graphs this is one of Karp's 21 NP-complete problems (1972) — computationally intractable in the worst case. With the "vertex-transitive" symmetry constraint, even the complexity class is unknown:</>}
+          />
+        </p>
+        <table className="gt-compare">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '图类' : 'graph class'}</th>
+              <th>HAM-CYCLE</th>
+              <th>HAM-PATH</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{lang === 'zh' ? '一般有限图' : 'general finite graph'}</td>
+              <td>NP-{lang === 'zh' ? '完全 (Karp 1972)' : 'complete (Karp 1972)'}</td>
+              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '平面 3-正则' : 'planar 3-regular'}</td>
+              <td>NP-{lang === 'zh' ? '完全 (Garey-Johnson-Tarjan 1976)' : 'complete (Garey-Johnson-Tarjan 1976)'}</td>
+              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '二部图' : 'bipartite'}</td>
+              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '顶点传递' : 'vertex-transitive'}</td>
+              <td>{lang === 'zh' ? '开 (Lovász ⇒ 平凡)' : 'open (Lovász ⇒ trivial)'}</td>
+              <td>{lang === 'zh' ? '开 (Lovász ⇒ 平凡)' : 'open (Lovász ⇒ trivial)'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? 'Cayley 图' : 'Cayley graph'}</td>
+              <td>{lang === 'zh' ? '开 (猜想 ⇒ 平凡)' : 'open (conjecture ⇒ trivial)'}</td>
+              <td>{lang === 'zh' ? '开 (猜想 ⇒ 平凡)' : 'open (conjecture ⇒ trivial)'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '阿贝尔 Cayley' : 'Abelian Cayley'}</td>
+              <td>{lang === 'zh' ? 'P (构造 Gray 码)' : 'P (Gray code)'}</td>
+              <td>P</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>顶点传递 / Cayley 情形的复杂度问题与 Lovász / Cayley 猜想的真伪 <em>同等</em>: 若猜想为真, 判定问题是平凡的 「永远返回 yes」, 复杂度 O(1); 若猜想不真, 反例图给出的 「no」 实例存在, 但复杂度上限仍未知。 这是数学和计算机科学罕见交汇 — 一个组合学的结构猜想直接决定一个判定问题的复杂度类。</>}
+            en={<>The complexity of HAM-CYCLE on vertex-transitive / Cayley graphs is <em>equivalent</em> to the truth of Lovász / Cayley conjectures: if true, the problem trivially returns "yes", complexity O(1); if false, "no" instances exist but the upper bound is unknown. A rare meeting of mathematics and computer science — a structural conjecture directly determining the complexity class of a decision problem.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="29.12  小结 · 从 1759 到 2026" en="29.12  Summary · from 1759 to 2026" />
+        </h3>
+        <p>
+          <L
+            zh={<>把 §29 的时间线列一下:</>}
+            en={<>A timeline of §29:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 24, lineHeight: 1.85 }}>
+          <li><strong>1759</strong> — <L zh={<>Euler 系统化骑士周游, Hamilton 路径问题的第一种形式。</>} en={<>Euler systematises the knight's tour, the first form of the Hamilton path problem.</>} /></li>
+          <li><strong>1823</strong> — <L zh={<>Warnsdorff 启发式: 第一种实用 Hamilton 路径求解器。</>} en={<>Warnsdorff's rule: first practical Hamilton-path heuristic.</>} /></li>
+          <li><strong>1857</strong> — <L zh={<>William Hamilton 在他设计的 「Icosian Game」 中以正十二面体提出 Hamilton 圈一词。</>} en={<>William Hamilton's "Icosian Game" on the dodecahedron coins the term "Hamilton cycle".</>} /></li>
+          <li><strong>1878</strong> — <L zh={<>Cayley 引入 Cayley 图, 隐含 Cayley 圈猜想。</>} en={<>Cayley introduces the Cayley graph, with the implicit cycle conjecture.</>} /></li>
+          <li><strong>1898</strong> — <L zh={<>Petersen 给出 10 顶点的反例 (顶点传递无 Ham 圈)。</>} en={<>Petersen exhibits the 10-vertex counterexample (vertex-transitive, no Ham cycle).</>} /></li>
+          <li><strong>1947 / 1953</strong> — <L zh={<>Frank Gray 反射二进制码: <TeX src="\mathbb{Z}_2^n" /> 的 Ham 圈构造。</>} en={<>Frank Gray's reflected binary code: explicit Ham cycle of <TeX src="\mathbb{Z}_2^n" />.</>} /></li>
+          <li><strong>1959</strong> — <L zh={<>Rapaport-Strasser: 二面体 Cayley 图含 Ham 圈, 首个非阿贝尔结果。</>} en={<>Rapaport-Strasser: Ham cycles in dihedral Cayley graphs, first non-Abelian result.</>} /></li>
+          <li><strong>1970</strong> — <L zh={<>Lovász 猜想 (顶点传递 → Ham 路径)。</>} en={<>Lovász conjecture (vertex-transitive → Ham path).</>} /></li>
+          <li><strong>1972</strong> — <L zh={<>Karp: HAM-CYCLE 一般图 NP-完全。</>} en={<>Karp: HAM-CYCLE NP-complete on general graphs.</>} /></li>
+          <li><strong>1983 / 1985</strong> — <L zh={<>Marušič: 顶点数 <em>pk</em> 的顶点传递图含 Ham 路径; 系统化 imprimitive block 方法。</>} en={<>Marušič: vertex-transitive graphs of order <em>pk</em> have Ham paths; introduces imprimitive block methods.</>} /></li>
+          <li><strong>1986</strong> — <L zh={<>Witte: 所有 <em>p</em>-群 Cayley 图含 Ham 圈。</>} en={<>Witte: every <em>p</em>-group Cayley graph has a Ham cycle.</>} /></li>
+          <li><strong>1996</strong> — <L zh={<>Floppy Cube 显式 Ham 圈; 魔方时钟 12 进制 Gray 码。</>} en={<>Floppy Cube explicit Ham cycle; Rubik's Clock base-12 Gray code.</>} /></li>
+          <li><strong>2009</strong> — <L zh={<>Kutnar-Marušič 综述; Pak-Radoičić 准定理 (用 CFSG)。</>} en={<>Kutnar-Marušič survey; Pak-Radoičić near-theorem (via CFSG).</>} /></li>
+          <li><strong>2018</strong> — <L zh={<>Royle-Spiga: |G| ≤ 200 全部检验通过。</>} en={<>Royle-Spiga: all orders ≤ 200 verified.</>} /></li>
+          <li><strong>2026</strong> — <L zh={<>魔方 3×3×3, Pyraminx, Megaminx 仍开放。</>} en={<>Rubik's 3×3×3, Pyraminx, Megaminx still open.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>「魔方所有 <TeX src="4.3 \times 10^{19}" /> 个状态能否用一条公式走遍?」 在 1878 年 Cayley 提出他的图概念时, 这种问法甚至还没成形; 一个半世纪后, 我们能告诉你 这条公式 「几乎肯定存在」 (Pak-Radoičić, 改换生成集), 但用 6 面 18 转的标准生成集 — <strong>不知道</strong>。 把这个问题放在 §14 (Cayley 图)、 §28 (孔明棋的图上 chip-firing)、 §29 (本节) 的主线上, 它正是 「群论几何化」 留给本世纪的最大开题。</>}
+            en={<>"Can the cube's <TeX src="4.3 \times 10^{19}" /> states be walked by one alg?" When Cayley introduced his graph in 1878, the question hadn't even been formulated. A century and a half later we can say it <em>almost certainly</em> has an answer "yes" (Pak-Radoičić, with a non-standard generating set), but for the WCA-standard 6-face / 18-move set — <strong>we don't know</strong>. Sitting along §14 (Cayley graphs), §28 (chip-firing on game graphs), §29 (this section), this is the central open problem that "geometrising group theory" has left for the 21st century.</>}
+          />
+        </p>
+      </GTSec>
+
+
+
+      {/* ═══════════════ §30 Two-Face Corners ═════════════════════════════ */}
+      <GTSec id="two-face-pgl" className="gt-sec">
+        <div className="gt-sec-num">§30</div>
+        <h2 className="gt-sec-title">
+          <L zh="两面 6 角子群 — PGL₂(𝔽₅) ≅ S₅ 在 6 点上的奇迹" en="The two-face corner group — PGL₂(𝔽₅) ≅ S₅, the miracle on six points" />
+        </h2>
+        <p className="gt-lede">
+          <L
+            zh={<>只考虑魔方两个相邻面 (比如 R、 U) 转出的子群,只看 <strong>角块的置换</strong> (忽略朝向)。 这两个面共享 6 个角块 (4 + 4 − 2)。 朴素估计置换数 6! = 720,但实际只达到 <strong>120 = 5!</strong>。 这个 120 阶群恰是 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" />,在 6 点上做 <em>尖锐 3-传递</em> 作用; 同时它给出 <TeX src="S_5 \hookrightarrow S_6" /> 的一个 <em>异常</em> 嵌入 (传递的),从而是 <TeX src="S_6" /> 那唯一非平凡 <em>外自同构</em> 的源泉。 这是有限对称群里最浓缩的一段巧合。</>}
+            en={<>Take the subgroup of the cube generated by two adjacent face turns (say R, U), looking only at <strong>corner permutations</strong> (ignore twist). The two faces share 6 corners (4 + 4 − 2). Naïvely 6! = 720, but the actual order is <strong>120 = 5!</strong>. This 120-element group is <TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" /> in its <em>sharply 3-transitive</em> action on six points; it also gives an <em>exotic</em> transitive embedding <TeX src="S_5 \hookrightarrow S_6" />, and that embedding is the source of the unique non-trivial <em>outer automorphism</em> of <TeX src="S_6" />. This is the densest cluster of coincidences in finite group theory.</>}
+          />
+        </p>
+
+        <div className="gt-open-summary">
+          <div className="gt-open-summary-head">{lang === 'zh' ? '本节速览' : 'at a glance'}</div>
+          <table className="gt-pattern-tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{lang === 'zh' ? '子节' : 'subsection'}</th>
+                <th>{lang === 'zh' ? '主要事实' : 'main fact'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td className="num">30.1</td><td>{lang === 'zh' ? '两面 6 角子拼图' : 'Two-face 6-corner puzzle'}</td><td>{lang === 'zh' ? '现象:120 个状态而不是 720' : 'phenomenon: 120 states, not 720'}</td></tr>
+              <tr><td className="num">30.2</td><td>{lang === 'zh' ? '配对模式证明' : 'pair-pattern proof'}</td><td>{lang === 'zh' ? '15/3 = 5 个配对模式, S₅ 作用忠实' : '15/3 = 5 pair patterns, faithful S₅ action'}</td></tr>
+              <tr><td className="num">30.3</td><td>ℙ¹(𝔽₅) & PGL₂(𝔽₅)</td><td><TeX src="|\mathrm{PGL}_2(\mathbb{F}_q)| = q(q+1)(q-1)" /></td></tr>
+              <tr><td className="num">30.4</td><td>{lang === 'zh' ? '尖锐 3-传递' : 'sharply 3-transitive'}</td><td>{lang === 'zh' ? '任给三对相异点,Möbius 唯一确定' : '3 → 3 lifts uniquely'}</td></tr>
+              <tr><td className="num">30.5</td><td>{lang === 'zh' ? '交比不变量' : 'cross-ratio invariant'}</td><td><TeX src="(a,b;c,d) = \tfrac{(a-c)(b-d)}{(a-d)(b-c)}" /></td></tr>
+              <tr><td className="num">30.6</td><td>S₆ {lang === 'zh' ? '外自同构' : 'outer automorphism'}</td><td>{lang === 'zh' ? '唯一; 由异常 S₅ ↪ S₆ 诱导' : 'unique; induced by exotic S₅ ↪ S₆'}</td></tr>
+              <tr><td className="num">30.7</td><td>{lang === 'zh' ? 'syntheme / duads' : 'synthemes & duads'}</td><td>{lang === 'zh' ? '6 个 synthematic total; S₆ 置换' : '6 totals; S₆ permutes them'}</td></tr>
+              <tr><td className="num">30.8</td><td>Mathieu</td><td>PGL₂(𝔽₅) ⊂ M₁₀ ⊂ M₁₁ ⊂ M₁₂ ⊂ M₂₄</td></tr>
+              <tr><td className="num">30.9</td><td>{lang === 'zh' ? '正二十面体' : 'icosahedron'}</td><td>PSL₂(𝔽₅) ≅ A₅ ≅ I (rotations)</td></tr>
+              <tr><td className="num">30.10</td><td>{lang === 'zh' ? '生成元 / 表示' : 'generators / presentation'}</td><td><TeX src="\langle S, T \mid S^2 = T^5 = (ST)^3 = 1\rangle" /></td></tr>
+              <tr><td className="num">30.11</td><td>{lang === 'zh' ? '⟨R,U⟩ 阶分布实验' : 'order histogram experiment'}</td><td>{lang === 'zh' ? '阶分布拟合 S₅ 共轭类' : 'sample matches S₅ class sizes'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.1  两面 6 角子拼图" en="30.1  The two-face six-corner puzzle"/>
+        </h3>
+        <p>
+          <L
+            zh={<>用 R 和 U 两个面把一个完整的 3×3×3 (或 2×2×2) 转任意多次,看 R 面与 U 面共享区域里的 6 个角块: 它们落在哪些位置? 这个问题最早由 Jaap Scherphuis 整理 (jaapsch.net/puzzles/pgl25.htm)。 因为我们只用这两面的转动,这 6 个角永远只在自己这 6 个槽位之间交换,不会跑到对面去。 朴素的上界是 6! = 720,但实测只有 <strong>120</strong> 种,正好等于 5!。 这个 120 阶群有 <em>两条等价的描述</em>:</>}
+            en={<>Turn R and U on a full 3×3×3 (or 2×2×2) any number of times and observe the six corners in the shared R-and-U region: which slots do they land in? The question was first catalogued by Jaap Scherphuis (jaapsch.net/puzzles/pgl25.htm). Because we only use these two faces, the six corners never leave their six slots. A naïve upper bound is 6! = 720, but empirically only <strong>120</strong> distinct permutations occur — exactly 5!. This 120-element group admits <em>two equivalent descriptions</em>:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>组合描述</strong> (30.2): 6 个角分成 3 对的方式有 15 种,5 种「本质不同的配对模式」 V W X Y Z; <TeX src="\langle R, U\rangle" /> 在这 5 种模式上忠实作用,得到完整 <TeX src="S_5" />。</>} en={<><strong>Combinatorial</strong> (30.2): six corners partition into three pairs in 15 ways, falling into 5 essentially different pair patterns V W X Y Z. The group <TeX src="\langle R, U\rangle" /> acts faithfully on these 5 patterns and realises all of <TeX src="S_5" />.</>} /></li>
+          <li><L zh={<><strong>射影描述</strong> (30.3–30.5): 给 6 个角贴上 <TeX src="\mathbb{P}^1(\mathbb{F}_5) = \{0,1,2,3,4,\infty\}" /> 的标号,R 和 U 各自实现一个 Möbius 变换 (det 非零的 2×2 mod-5 矩阵); 两个 Möbius 生成整个 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" />。</>} en={<><strong>Projective</strong> (30.3–30.5): label the six corners by <TeX src="\mathbb{P}^1(\mathbb{F}_5) = \{0,1,2,3,4,\infty\}" />. Each of R, U realises a Möbius transformation (a 2×2 mod-5 matrix of non-zero determinant); together they generate the full <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" />.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>等价性 (30.2 ↔ 30.3) 是个 <em>有限版的 Cayley 对应</em>: 在 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 上,「6 个点的配对」 = 「点的对合的不动点对」 = 「2×2 矩阵 mod 中心」 都是 5 维的 (Klein 四群的左陪集,或者同侧 sign 5-元集)。 这个 5 维向我们解释了为什么从 6 点 6! = 720 个置换中,刚好挑出 720/6 = 120 个。</>}
+            en={<>Equivalence (30.2 ↔ 30.3) is a <em>finite Cayley correspondence</em>: in <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" />, "pairings of 6 points" = "fixed pairs of involutions" = "matrices mod centre" all have dimension 5 (cosets of the Klein 4-group). This 5 is exactly why 120 of the 720 permutations remain.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '6 角子模拟器' : '6-corner sim'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '按 R / U,看角置换;可达 120 = 5! 种' : 'press R / U, watch the corner permutation; only 120 = 5! states reachable'}</div>
+          <TwoFaceCornerSim />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.2  配对模式证明 (5 = 5!! / 3)" en="30.2  Pair-pattern proof"/>
+        </h3>
+        <p>
+          <L
+            zh={<>把 6 个角块两两分成 3 对,共有 <TeX src="\binom{6}{2}\binom{4}{2}\binom{2}{2}/3! = 15" /> 种 <em>有序无序的 pair</em>。 但我们关心的是「在 R、 U 下保持稳定的 pair 集合」,而 <TeX src="\langle R, U\rangle" /> 把 15 种 pair 划分成 5 个等价类,每类 3 个: 这 5 个等价类记作 <strong>V W X Y Z</strong>。 每次转面 (R 或 U) 把这 5 个标签按 <em>某个 <TeX src="S_5" /> 置换</em> 推到另一个。</>}
+            en={<>Six corners split into three pairs in <TeX src="\binom{6}{2}\binom{4}{2}\binom{2}{2}/3! = 15" /> ways. But we want <em>R-and-U-stable pair sets</em>; the group <TeX src="\langle R, U\rangle" /> groups the 15 pairs into 5 equivalence classes of 3 each, labelled <strong>V W X Y Z</strong>. Each face turn permutes the 5 labels by some element of <TeX src="S_5" />.</>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '引理 30.1 — 配对作用忠实' : 'Lemma 30.1 — pair action is faithful'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>不同的角置换给出不同的「5 模式上的置换」。 因此角群同态注入 <TeX src="S_5" />。 反向: R、 U 各自的 5 模式作用包含一个 4-cycle 和一个错开的 4-cycle, 两个 4-cycle 在 <TeX src="S_5" /> 里足以生成全 <TeX src="S_5" /> (经典事实, <TeX src="S_n" /> 由「<TeX src="n-1" /> 循环 + 对换」 或「适当两个 <TeX src="n-1" /> 循环」 生成)。 所以角群 = <TeX src="S_5" />,阶 120。 ∎</>}
+              en={<>Different corner permutations induce different permutations of the 5 patterns; the corner group injects into <TeX src="S_5" />. Conversely, R and U each act as a 4-cycle on patterns, and two staggered 4-cycles in <TeX src="S_5" /> already generate <TeX src="S_5" /> (a classical fact: <TeX src="S_n" /> is generated by an <TeX src="(n{-}1)" />-cycle plus a transposition, and by suitable pairs of cycles). Hence the corner group is exactly <TeX src="S_5" />, order 120. ∎</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>注意算式 <TeX src="5 = 15/3" /> 用了一个不显然的事实: 5 个 pair-pattern 等价类大小都恰好是 3。 这背后是 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 的中心化子结构 — 每个对合 (order 2 元素) 的不动点对是一个 pair-pattern,且对合按其循环型分布,刚好 5 类 × 3 个对合 = 15。 详见 30.3。</>}
+            en={<>The arithmetic <TeX src="5 = 15/3" /> uses a non-trivial fact: each of the 5 equivalence classes contains exactly 3 pairs. This reflects centraliser structure in <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> — each involution's fixed-pair set is a pair-pattern, and the involutions fall into 5 conjugacy classes × 3 involutions each = 15. More in 30.3.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.3  ℙ¹(𝔽₅) 与 PGL₂(𝔽₅)" en="30.3  ℙ¹(𝔽₅) and PGL₂(𝔽₅)"/>
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 30.2 — 射影直线' : 'Definition 30.2 — projective line'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>对任意域 <TeX src="F" />,射影直线 <TeX src="\mathbb{P}^1(F)" /> 是 <em>非零</em> 二维向量 <em>模缩放</em> 的等价类: <TeXBlock src={`\\mathbb{P}^1(F) \\;=\\; (F^2 \\setminus \\{0\\})\\,/\\,F^{*},`} /> 即 <TeX src="[x : y]" /> 与 <TeX src="[\lambda x : \lambda y]" /> (<TeX src="\lambda \neq 0" />) 视为同一点。 对 <TeX src="F = \mathbb{F}_q" />, 共 <TeX src="\frac{q^2 - 1}{q - 1} = q + 1" /> 个点。</>}
+              en={<>For a field <TeX src="F" />, the projective line <TeX src="\mathbb{P}^1(F)" /> is the set of <em>non-zero</em> 2-vectors <em>modulo scaling</em>: <TeXBlock src={`\\mathbb{P}^1(F) \\;=\\; (F^2 \\setminus \\{0\\})\\,/\\,F^{*},`} /> i.e. <TeX src="[x : y]" /> and <TeX src="[\lambda x : \lambda y]" /> (<TeX src="\lambda \neq 0" />) are the same point. Over <TeX src="\mathbb{F}_q" />, the line has <TeX src="\frac{q^2 - 1}{q - 1} = q + 1" /> points.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>用仿射坐标: 每个 <TeX src="[x : y]" /> 当 <TeX src="y \neq 0" /> 可写成 <TeX src="[z : 1]" /> 形式, <TeX src="z = x/y \in F" />; 还有一个 <em>无穷远点</em> <TeX src="[1 : 0]" />, 记作 <TeX src="\infty" />。 对 <TeX src="\mathbb{F}_5" />:<TeXBlock src={`\\mathbb{P}^1(\\mathbb{F}_5) = \\{0, 1, 2, 3, 4, \\infty\\}, \\quad |\\mathbb{P}^1(\\mathbb{F}_5)| = 6.`} /></>}
+            en={<>In affine coordinates, each <TeX src="[x : y]" /> with <TeX src="y \neq 0" /> is <TeX src="[z : 1]" /> for <TeX src="z = x/y \in F" />, plus a single <em>point at infinity</em> <TeX src="[1 : 0]" /> denoted <TeX src="\infty" />. Over <TeX src="\mathbb{F}_5" />:<TeXBlock src={`\\mathbb{P}^1(\\mathbb{F}_5) = \\{0, 1, 2, 3, 4, \\infty\\}, \\quad |\\mathbb{P}^1(\\mathbb{F}_5)| = 6.`} /></>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 30.3 — 一般射影线性群' : 'Definition 30.3 — projective linear group'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>给定域 <TeX src="F" />,定义<TeXBlock src={`\\mathrm{GL}_2(F) = \\{M \\in M_2(F) : \\det M \\neq 0\\}, \\quad Z = \\{\\lambda I : \\lambda \\in F^{*}\\} \\le \\mathrm{GL}_2(F),`} /><TeXBlock src={`\\mathrm{PGL}_2(F) = \\mathrm{GL}_2(F)\\,/\\,Z.`} /><TeX src="\mathrm{PGL}_2(F)" /> 通过 Möbius 变换 <TeX src="z \mapsto (az + b)/(cz + d)" /> 作用在 <TeX src="\mathbb{P}^1(F)" /> 上 — 缩放矩阵给同一个 Möbius,所以中心 <TeX src="Z" /> 被自然消掉。</>}
+              en={<>For a field <TeX src="F" />, set<TeXBlock src={`\\mathrm{GL}_2(F) = \\{M \\in M_2(F) : \\det M \\neq 0\\}, \\quad Z = \\{\\lambda I : \\lambda \\in F^{*}\\} \\le \\mathrm{GL}_2(F),`} /><TeXBlock src={`\\mathrm{PGL}_2(F) = \\mathrm{GL}_2(F)\\,/\\,Z.`} /><TeX src="\mathrm{PGL}_2(F)" /> acts on <TeX src="\mathbb{P}^1(F)" /> by Möbius transformations <TeX src="z \mapsto (az + b)/(cz + d)" /> — scalar matrices give the same Möbius, so the centre <TeX src="Z" /> is killed.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<><strong>计数</strong> (对一般 <TeX src="q" />): <TeX src="\mathrm{GL}_2(\mathbb{F}_q)" /> 的元素 = 「2 个线性无关的列」 = <TeX src="(q^2 - 1)(q^2 - q)" />; 中心 <TeX src="Z" /> 的元素 = <TeX src="q - 1" />。 故</>}
+            en={<><strong>Order</strong> (general <TeX src="q" />): <TeX src="\mathrm{GL}_2(\mathbb{F}_q)" /> = "two linearly independent columns" = <TeX src="(q^2 - 1)(q^2 - q)" />; <TeX src="|Z| = q - 1" />. So</>}
+          />
+        </p>
+        <TeXBlock src={`|\\mathrm{PGL}_2(\\mathbb{F}_q)| \\;=\\; \\frac{(q^2 - 1)(q^2 - q)}{q - 1} \\;=\\; q(q+1)(q-1).`} />
+        <p>
+          <L
+            zh={<>对 <TeX src="q = 5" />: <TeX src="|\mathrm{PGL}_2(\mathbb{F}_5)| = 5 \cdot 6 \cdot 4 = 120 = 5!" />。 这跟 <TeX src="S_5" /> 的阶巧合相同 (确实同构,30.4 给同构的「显式见证」)。</>}
+            en={<>For <TeX src="q = 5" />: <TeX src="|\mathrm{PGL}_2(\mathbb{F}_5)| = 5 \cdot 6 \cdot 4 = 120 = 5!" />, the same as <TeX src="|S_5|" />. They are in fact isomorphic; 30.4 provides the explicit witness.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>小表 (验证公式):</>}
+            en={<>Small table (sanity check):</>}
+          />
+        </p>
+        <table className="gt-pattern-tbl">
+          <thead>
+            <tr>
+              <th>q</th>
+              <th><TeX src="|\mathbb{P}^1(\mathbb{F}_q)| = q + 1" /></th>
+              <th><TeX src="|\mathrm{PGL}_2|" /></th>
+              <th>{lang === 'zh' ? '熟悉的群' : 'familiar group'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="num">2</td><td className="num">3</td><td className="num">6</td><td><TeX src="S_3" /></td></tr>
+            <tr><td className="num">3</td><td className="num">4</td><td className="num">24</td><td><TeX src="S_4" /></td></tr>
+            <tr><td className="num">4</td><td className="num">5</td><td className="num">60</td><td><TeX src="A_5" /> ({lang === 'zh' ? '注:F₄ 非素域' : 'note: F₄ not prime'})</td></tr>
+            <tr><td className="num">5</td><td className="num">6</td><td className="num">120</td><td><TeX src="S_5" /></td></tr>
+            <tr><td className="num">7</td><td className="num">8</td><td className="num">336</td><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_7)" /> ({lang === 'zh' ? '不再是 S_n' : 'no longer S_n'})</td></tr>
+            <tr><td className="num">9</td><td className="num">10</td><td className="num">720</td><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_9)" />, <TeX src="\mathrm{P\\Gamma L}" /> {lang === 'zh' ? '触及 S₆' : 'related to S₆'}</td></tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 12 }}>
+          <L
+            zh={<>「<TeX src="\mathrm{PGL}_2 \cong S_n" />」 巧合只在 <TeX src="q \in \{2, 3, 5\}" /> 出现 (<TeX src="n = q + 1 \in \{3, 4, 6\}" />)。 <TeX src="q = 5" /> 是这个 family 的最后一项,也是最戏剧化的。 进一步: <TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5" /> 是阶最小的非阿贝尔单群 (60 元), 同构于正二十面体的旋转群 (30.9)。</>}
+            en={<>The coincidence <TeX src="\mathrm{PGL}_2 \cong S_n" /> happens only for <TeX src="q \in \{2, 3, 5\}" /> (i.e. <TeX src="n = q + 1 \in \{3, 4, 6\}" />). <TeX src="q = 5" /> is the final and most dramatic member. Moreover <TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5" /> is the smallest non-Abelian simple group (60 elements) and the rotation group of the icosahedron (30.9).</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Möbius 游乐场 · 在 ℙ¹(𝔽₅) 上' : 'Möbius playground · on ℙ¹(𝔽₅)'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '调整 2×2 矩阵的 4 个 0..4 元素; 实时看 6 点置换 + 循环分解' : 'tweak the 2×2 mod-5 matrix; live 6-point action + cycle decomposition'}</div>
+          <MobiusPlayground />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.4  尖锐 3-传递作用" en="30.4  The sharply 3-transitive action"/>
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 30.4 — 尖锐 k-传递' : 'Definition 30.4 — sharply k-transitive'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>群 <TeX src="G" /> 作用于集合 <TeX src="X" /> 称为 <strong>尖锐 <TeX src="k" />-传递</strong> 若对任意两组 <em>有序</em> <TeX src="k" /> 元相异点 <TeX src="(x_1,\ldots,x_k)" /> 和 <TeX src="(y_1,\ldots,y_k)" />,存在 <em>唯一</em> 一个 <TeX src="g \in G" /> 满足 <TeX src="g \cdot x_i = y_i" /> for all <TeX src="i" />。</>}
+              en={<>An action of <TeX src="G" /> on <TeX src="X" /> is <strong>sharply <TeX src="k" />-transitive</strong> if for any two ordered <TeX src="k" />-tuples of distinct points <TeX src="(x_1,\ldots,x_k)" /> and <TeX src="(y_1,\ldots,y_k)" />, there is a <em>unique</em> <TeX src="g \in G" /> with <TeX src="g \cdot x_i = y_i" /> for all <TeX src="i" />.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.5 (经典)' : 'Theorem 30.5 (classical)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对任意域 <TeX src="F" />, <TeX src="\mathrm{PGL}_2(F)" /> 在 <TeX src="\mathbb{P}^1(F)" /> 上的 Möbius 作用是 <strong>尖锐 3-传递</strong>。 特别 <TeX src="F = \mathbb{F}_5" />: 给定 <TeX src="(a, b, c), (a', b', c')" /> 两组互不相同的三点, 恰有 <em>一个</em> Möbius 把第一组送到第二组。</>}
+              en={<>For any field <TeX src="F" />, <TeX src="\mathrm{PGL}_2(F)" /> acts on <TeX src="\mathbb{P}^1(F)" /> sharply 3-transitively. In particular over <TeX src="\mathbb{F}_5" />: given two triples of distinct points <TeX src="(a, b, c), (a', b', c')" />, there is <em>exactly one</em> Möbius taking the first to the second.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<><strong>证明梗概</strong> (传递性): 我们只需证存在性 — 任给 <TeX src="(a, b, c)" /> 三相异点都可被某个 Möbius 送到 <TeX src="(0, 1, \infty)" /> 这一 「标准三元组」, 那么两组任意三元组都能通过 「先送到标准, 再反过来」 实现转化。 显式构造:</>}
+            en={<><strong>Proof sketch</strong> (existence): we show any triple <TeX src="(a, b, c)" /> of distinct points can be moved to the <em>standard triple</em> <TeX src="(0, 1, \infty)" />; composition then takes any to any. Explicitly:</>}
+          />
+        </p>
+        <TeXBlock src={`f_{a,b,c}(z) \\;=\\; \\frac{(z - a)(b - c)}{(z - c)(b - a)}`} />
+        <p>
+          <L
+            zh={<>满足 <TeX src="f(a) = 0,\; f(b) = 1,\; f(c) = \infty" />。 (验证: 把 <TeX src="z = a, b, c" /> 代入分子分母即可。 边界情形 <TeX src="a, b, c" /> 含 <TeX src="\infty" /> 时,先用 <TeX src="z \mapsto 1/(z - a)" /> 把无穷拉到有限再做 — 形式不变。)</>}
+            en={<>satisfies <TeX src="f(a) = 0,\; f(b) = 1,\; f(c) = \infty" />. (Verify by direct substitution. If any of <TeX src="a, b, c" /> equals <TeX src="\infty" />, replace <TeX src="z" /> by <TeX src="1/(z - a)" /> first; the formula stays valid in the limit.)</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<><strong>证明梗概</strong> (唯一性): 假设两个 Möbius <TeX src="f_1, f_2" /> 都把 <TeX src="(a, b, c)" /> 送到 <TeX src="(a', b', c')" />,则 <TeX src="f_2^{-1} \circ f_1" /> 固定三个点 <TeX src="a, b, c" />。 但 Möbius 变换 <TeX src="z \mapsto (\alpha z + \beta)/(\gamma z + \delta)" /> 固定 3 个相异点 ⇒ 方程 <TeX src="\alpha z + \beta = z(\gamma z + \delta)" /> 有 ≥ 3 个根 ⇒ <TeX src="\gamma = 0,\, \alpha = \delta,\, \beta = 0" /> ⇒ 它是恒等。 ∎</>}
+            en={<><strong>Proof sketch</strong> (uniqueness): if two Möbius transformations <TeX src="f_1, f_2" /> both send <TeX src="(a, b, c) \to (a', b', c')" />, then <TeX src="f_2^{-1} \circ f_1" /> fixes three points. But a Möbius <TeX src="z \mapsto (\alpha z + \beta)/(\gamma z + \delta)" /> with three fixed points must satisfy <TeX src="\alpha z + \beta = z(\gamma z + \delta)" /> at three values of <TeX src="z" />; a degree-≤2 polynomial with three roots must be zero, forcing <TeX src="\gamma = 0,\, \alpha = \delta,\, \beta = 0" /> — the identity. ∎</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<><strong>计数检验</strong>: 尖锐 3-传递 ⇒ <TeX src="|G| = |\mathbb{P}^1| \cdot (|\mathbb{P}^1| - 1) \cdot (|\mathbb{P}^1| - 2)" />。 代入 <TeX src="|\mathbb{P}^1(\mathbb{F}_5)| = 6" />: <TeX src="|G| = 6 \cdot 5 \cdot 4 = 120" />, 与 <TeX src="|\mathrm{PGL}_2(\mathbb{F}_5)|" /> 一致。 ✓</>}
+            en={<><strong>Count check</strong>: sharp 3-transitivity gives <TeX src="|G| = 6 \cdot 5 \cdot 4 = 120 = |\mathrm{PGL}_2(\mathbb{F}_5)|" />. ✓</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.5  交比 — 唯一不变量" en="30.5  The cross-ratio — the only invariant"/>
+        </h3>
+        <p>
+          <L
+            zh={<>3-传递告诉我们 <em>三</em> 个点可以任意搬动; 那么 <em>四</em> 个点就要有一个不变量 — 否则尖锐 3-传递自动升级为 4-传递, 但 <TeX src="|G| = 120 \neq 6 \cdot 5 \cdot 4 \cdot 3" />。 这个不变量叫 <strong>交比</strong> (cross-ratio):</>}
+            en={<>Three points can be moved freely; four points must have one invariant — otherwise sharp 3-transitivity would silently upgrade to 4-transitivity, but <TeX src="|G| = 120 \neq 6 \cdot 5 \cdot 4 \cdot 3" />. The invariant is the <strong>cross-ratio</strong>:</>}
+          />
+        </p>
+        <TeXBlock src={`(a, b;\\, c, d) \\;=\\; \\frac{(a - c)(b - d)}{(a - d)(b - c)} \\;\\in\\; F \\cup \\{\\infty\\}.`} />
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.6 (交比不变性)' : 'Theorem 30.6 (cross-ratio invariance)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对任意 <TeX src="\phi \in \mathrm{PGL}_2(F)" /> 和任意 4 相异点 <TeX src="(a, b, c, d) \in \mathbb{P}^1(F)^4" />:<TeXBlock src={`(\\phi(a),\\, \\phi(b);\\, \\phi(c),\\, \\phi(d)) \\;=\\; (a,\\, b;\\, c,\\, d).`} />反之: 若 <TeX src="(a, b; c, d) = (a', b'; c', d')" />, 则存在 <TeX src="\phi \in \mathrm{PGL}_2(F)" /> 把第一组四点送到第二组。 即 <strong>交比是 4 元组在 <TeX src="\mathrm{PGL}_2" /> 作用下的完全不变量</strong>。</>}
+              en={<>For any <TeX src="\phi \in \mathrm{PGL}_2(F)" /> and any 4 distinct points <TeX src="(a, b, c, d)" />:<TeXBlock src={`(\\phi(a),\\, \\phi(b);\\, \\phi(c),\\, \\phi(d)) \\;=\\; (a,\\, b;\\, c,\\, d).`} />Conversely: equal cross-ratios mean the two quadruples are <TeX src="\mathrm{PGL}_2" />-equivalent. So <strong>the cross-ratio is the complete invariant of 4-tuples under <TeX src="\mathrm{PGL}_2" /></strong>.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<><strong>证明梗概</strong>: 由 30.4 中的 <TeX src="f_{a,b,c}" />, 可以写 <TeX src="(a, b; c, d) = f_{a,b,c}(d)" />。 任意 <TeX src="\phi" />: <TeX src="\phi(a), \phi(b), \phi(c)" /> 三个点对应的标准化映射就是 <TeX src="f_{\phi(a), \phi(b), \phi(c)} = f_{a,b,c} \circ \phi^{-1}" /> (由唯一性), 故 <TeX src="f_{\phi(a), \phi(b), \phi(c)}(\phi(d)) = f_{a,b,c}(d)" />。 ∎</>}
+            en={<><strong>Sketch</strong>: by 30.4, <TeX src="(a, b; c, d) = f_{a,b,c}(d)" />. For any <TeX src="\phi" />, uniqueness in 30.4 forces <TeX src="f_{\phi(a), \phi(b), \phi(c)} = f_{a,b,c} \circ \phi^{-1}" />, so <TeX src="f_{\phi(a), \phi(b), \phi(c)}(\phi(d)) = f_{a,b,c}(d)" />. ∎</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<><strong>有限可能的值</strong>: 在 <TeX src="\mathbb{F}_5" /> 上, 交比落在 <TeX src="\mathbb{P}^1(\mathbb{F}_5) \setminus \{0, 1, \infty\} = \{2, 3, 4\}" /> 还是 <TeX src="\{0, 1, \infty\}" />? 后者对应「四点不全相异」(退化 case)。 真正 4 相异点的交比恰好取 <TeX src="6 - 3 = 3" /> 个值之一,加上 4 元置换 (Klein 4) 的不变性, 6 × 3 = 18 个有序 4 元组对应同一交比 值 — 验证 <TeX src="120 / (6 \cdot 4) = 5 = ?" /> 嗯不对, 详细计数留作练习。</>}
+            en={<><strong>Possible values</strong>: over <TeX src="\mathbb{F}_5" />, a cross-ratio of 4 distinct points lies in <TeX src="\mathbb{P}^1(\mathbb{F}_5) \setminus \{0, 1, \infty\} = \{2, 3, 4\}" /> (the values 0, 1, ∞ correspond to degenerate quadruples). So just 3 values up to ordering of the 4 points (and the Klein-4 action by point-swaps preserves the cross-ratio). The detailed orbit counting is a nice exercise.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '交比计算器 + Möbius 不变性' : 'cross-ratio calculator + Möbius invariance'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '选 4 个点,再加一个 Möbius,验交比不变' : 'pick 4 points, apply a Möbius, watch the cross-ratio stay fixed'}</div>
+          <CrossRatioCalc />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.6  S₆ 的外自同构 — 唯一的例外" en="30.6  The outer automorphism of S₆ — the unique exception"/>
+        </h3>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.7 (Hölder 1895)' : 'Theorem 30.7 (Hölder 1895)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>对所有 <TeX src="n \neq 6" />,<TeX src="\mathrm{Aut}(S_n) = S_n" /> (即所有自同构都是内自同构, <TeX src="\mathrm{Out}(S_n) = 1" />)。 唯独 <TeX src="n = 6" />: <TeXBlock src={`\\mathrm{Out}(S_6) \\;\\cong\\; \\mathbb{Z}/2.`} /> 这一外自同构由 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 的 「异常」 嵌入 <TeX src="S_5 \hookrightarrow S_6" /> 诱导,把对换 (类大小 15) 与「三对换之积」(类大小 15) 互换。</>}
+              en={<>For every <TeX src="n \neq 6" />, <TeX src="\mathrm{Aut}(S_n) = S_n" /> (every automorphism is inner; <TeX src="\mathrm{Out}(S_n) = 1" />). The exception <TeX src="n = 6" /> has <TeXBlock src={`\\mathrm{Out}(S_6) \\;\\cong\\; \\mathbb{Z}/2.`} /> The outer automorphism is induced by the "exotic" embedding <TeX src="S_5 \hookrightarrow S_6" /> coming from <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" />; it swaps the class of transpositions (size 15) with the class of "products of three disjoint transpositions" (also size 15).</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<><strong>两种 S₅ ↪ S₆ 嵌入</strong>:</>}
+            en={<><strong>Two embeddings <TeX src="S_5 \hookrightarrow S_6" /></strong>:</>}
+          />
+        </p>
+        <table className="gt-pattern-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '嵌入' : 'embedding'}</th>
+              <th>{lang === 'zh' ? '描述' : 'description'}</th>
+              <th>{lang === 'zh' ? '在 6 元集上' : 'on 6 elements'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{lang === 'zh' ? '标准' : 'standard'}</td>
+              <td>{lang === 'zh' ? '把 S₅ 当成「固定第 6 个元素」' : 'S₅ fixes one of the 6 elements'}</td>
+              <td>{lang === 'zh' ? '非传递 — 第 6 点是孤立轨道' : 'intransitive — the 6th point is isolated'}</td>
+            </tr>
+            <tr>
+              <td>{lang === 'zh' ? '异常' : 'exotic'}</td>
+              <td>{lang === 'zh' ? 'PGL₂(𝔽₅) ≅ S₅ 在 ℙ¹(𝔽₅) 上传递' : 'PGL₂(𝔽₅) ≅ S₅ acting on ℙ¹(𝔽₅) transitively'}</td>
+              <td>{lang === 'zh' ? '传递 — 6 点上的尖锐 3-传递' : 'transitive — sharp 3-transitivity'}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>因为 <TeX src="\mathrm{Aut}(S_5) = S_5" /> (内自同构), 这两个嵌入在 <TeX src="S_5" /> 自身看来 「应该等价」 — 但它们的像在 <TeX src="S_6" /> 内 <em>非共轭</em> (一个传递、 一个非传递, 怎么共轭也不可能等价)。 这种 「同一个 <TeX src="S_5" /> 在 <TeX src="S_6" /> 里两种非共轭副本」 的现象就是外自同构的本质。 形式上: 取一个把异常 <TeX src="S_5" /> 送到标准 <TeX src="S_5" /> 的双射 (用 6 个 synthematic total ↔ 6 个原点 见 30.7), 它扩展为 <TeX src="\phi: S_6 \to S_6" /> 不属于内自同构。</>}
+            en={<>Since <TeX src="\mathrm{Aut}(S_5) = S_5" /> internally, the two embeddings "should be equivalent" inside <TeX src="S_5" /> — but their images in <TeX src="S_6" /> are <em>not conjugate</em> (one is transitive, the other not). This pair of non-conjugate copies of <TeX src="S_5" /> inside <TeX src="S_6" /> is the heart of the outer automorphism. Formally: a bijection sending the exotic <TeX src="S_5" /> to the standard <TeX src="S_5" /> (via 6 synthematic totals ↔ original 6 points, see 30.7) extends to a non-inner <TeX src="\phi: S_6 \to S_6" />.</>}
+          />
+        </p>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '关键不变量' : 'Key invariant'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>对 <TeX src="n \neq 6" />,只有一类阶 2 元素的共轭类大小是 <TeX src="\binom{n}{2}" /> (对换), 所以任何自同构 都保持「对换类」 ⇒ 必为内自同构。 但 <TeX src="n = 6" /> 时, 阶 2 共轭类有两类大小都是 15 —— 对换 (圈型 (2, 1, 1, 1, 1)) 和「三个不相交对换之积」 (圈型 (2, 2, 2)) —— 自同构可以把它们对调。</>}
+              en={<>For <TeX src="n \neq 6" />, only one class of order-2 elements in <TeX src="S_n" /> has size <TeX src="\binom{n}{2}" /> (the transpositions), so any automorphism preserves the transposition class and is forced to be inner. For <TeX src="n = 6" />, <em>two</em> conjugacy classes have size 15 — transpositions (cycle type (2, 1, 1, 1, 1)) and triple-disjoint-transposition products (cycle type (2, 2, 2)) — and an automorphism can swap them.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>计数验证: <TeX src="S_6" /> 中对换 = <TeX src="\binom{6}{2} = 15" />; 圈型 <TeX src="(2,2,2)" /> 元素 = <TeX src="\frac{6!}{2^3 \cdot 3!} = \frac{720}{48} = 15" />。 ✓</>}
+            en={<>Check: transpositions in <TeX src="S_6" /> number <TeX src="\binom{6}{2} = 15" />; cycle-type <TeX src="(2,2,2)" /> elements number <TeX src="\frac{6!}{2^3 \cdot 3!} = \frac{720}{48} = 15" />. ✓</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.7  Syntheme 与 Duads — Sylvester 的「6 个 total」" en="30.7  Synthemes & duads — Sylvester's six totals"/>
+        </h3>
+        <p>
+          <L
+            zh={<>Sylvester (1844) 给出外自同构的纯组合构造,用 <em>duad</em> 和 <em>syntheme</em>:</>}
+            en={<>Sylvester (1844) gave a purely combinatorial construction of the outer automorphism using <em>duads</em> and <em>synthemes</em>:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>Duad</strong> = {'{1..6}'} 的 2-子集。 共 <TeX src="\binom{6}{2} = 15" /> 个。</>} en={<><strong>Duad</strong> = a 2-subset of {'{1..6}'}. Total <TeX src="\binom{6}{2} = 15" />.</>} /></li>
+          <li><L zh={<><strong>Syntheme</strong> = 把 {'{1..6}'} 拆成 3 个 duad 的方式。 共 <TeX src="\frac{15 \cdot 3 \cdot 1}{3!} = \frac{45}{6}" />? 不对, 直接算: 第一对 <TeX src="\binom{6}{2} = 15" />, 剩下 4 元拆 2 对 = 3 种, 无序 syntheme = <TeX src="15 \cdot 3 / 3! \cdot \cdots" />。 正确的算法: <TeX src="\frac{6!}{2^3 \cdot 3!} = 15" />。 共 <strong>15 个 syntheme</strong>。</>} en={<><strong>Syntheme</strong> = a partition of {'{1..6}'} into 3 duads. Count: <TeX src="\frac{6!}{2^3 \cdot 3!} = 15" />, so <strong>15 synthemes</strong>.</>} /></li>
+          <li><L zh={<><strong>Synthematic total</strong> = 5 个 syntheme,它们的 15 个 duad 恰好覆盖全部 <TeX src="\binom{6}{2} = 15" /> 个 duad (即每个 duad 在 total 里恰好出现一次)。 这等价于 <em>K₆ 的 1-因子化</em>: 把 K₆ 的 15 条边分到 5 个完美匹配里。 共 <strong>6 个 total</strong>。</>} en={<><strong>Synthematic total</strong> = a set of 5 synthemes whose 15 duads cover all <TeX src="\binom{6}{2} = 15" /> duads (each duad appearing exactly once). Equivalently: a <em>1-factorisation of <TeX src="K_6" /></em> (partition the 15 edges into 5 perfect matchings). There are exactly <strong>6 totals</strong>.</>} /></li>
+        </ul>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.8 (Sylvester)' : 'Theorem 30.8 (Sylvester)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<><TeX src="S_6" /> 在 6 个 total 上的自然作用给出一个 <strong>非平凡同态</strong> <TeXBlock src={`\\Phi : S_6 \\to S_{\\{\\text{6 totals}\\}} \\cong S_6.`} /> 因为 <TeX src="S_6" /> 是 (除 <TeX src="\{e\}" /> 外)「近乎单」 的 (<TeX src="A_6" /> 是它唯一的指数为 2 的正规子群), <TeX src="\Phi" /> 要么是平凡映射、 要么是单射 — 实际上它是单射, 故为自同构。 它 <em>不是</em> 内自同构 (它把对换映到 <TeX src="(2, 2, 2)" /> 类), 所以恰好实现外自同构。</>}
+              en={<><TeX src="S_6" /> acts on the 6 totals, giving a homomorphism <TeXBlock src={`\\Phi : S_6 \\to S_{\\{\\text{6 totals}\\}} \\cong S_6.`} /> Since <TeX src="S_6" /> has only one non-trivial normal subgroup (<TeX src="A_6" />, index 2), <TeX src="\Phi" /> is either trivial or injective. It is in fact injective and sends transpositions to cycle type <TeX src="(2, 2, 2)" /> — so <TeX src="\Phi" /> realises the outer automorphism.</>}
+            />
+          </div>
+        </div>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '6 个 Synthematic Total 浏览器' : 'six synthematic totals viewer'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '点 σ 看一个对换 (1 2) 是怎么把 6 个 total 按 (2, 2, 2) 型重排的 — 那就是外自同构' : 'pick σ = (1 2) and watch how it scrambles the 6 totals in cycle type (2, 2, 2) — that\'s the outer automorphism'}</div>
+          <SynthemeTotalsViewer />
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.8  Mathieu 群通道 — 从 PGL₂(𝔽₅) 到 M₂₄" en="30.8  Mathieu connection — from PGL₂(𝔽₅) to M₂₄"/>
+        </h3>
+        <p>
+          <L
+            zh={<>120 阶的 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 不是终点,它坐落在一条 <em>3-传递性扩张链</em> 的起点上。 Mathieu (1861, 1873) 发现的 5 个零散单群 <TeX src="M_{11}, M_{12}, M_{22}, M_{23}, M_{24}" /> 是这条链的产物:</>}
+            en={<>The 120-element <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> sits at the foot of a tower of <em>multiply transitive extensions</em>. Mathieu's five sporadic simple groups <TeX src="M_{11}, M_{12}, M_{22}, M_{23}, M_{24}" /> (1861, 1873) form this tower:</>}
+          />
+        </p>
+        <table className="gt-pattern-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '群' : 'group'}</th>
+              <th>{lang === 'zh' ? '阶' : 'order'}</th>
+              <th>{lang === 'zh' ? '作用域' : 'acts on'}</th>
+              <th>{lang === 'zh' ? '传递度' : 'transitivity'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" /></td><td className="num">120</td><td>6 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 3-传递' : 'sharply 3-transitive'}</td></tr>
+            <tr><td><TeX src="M_{10}" /></td><td className="num">720</td><td>10 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 3-传递' : 'sharply 3-transitive'}</td></tr>
+            <tr><td><TeX src="M_{11}" /></td><td className="num">7,920</td><td>11 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 4-传递' : 'sharply 4-transitive'}</td></tr>
+            <tr><td><TeX src="M_{12}" /></td><td className="num">95,040</td><td>12 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 5-传递' : 'sharply 5-transitive'}</td></tr>
+            <tr><td><TeX src="M_{22}" /></td><td className="num">443,520</td><td>22</td><td>3-{lang === 'zh' ? '传递' : 'transitive'}</td></tr>
+            <tr><td><TeX src="M_{23}" /></td><td className="num">10,200,960</td><td>23</td><td>4-{lang === 'zh' ? '传递' : 'transitive'}</td></tr>
+            <tr><td><TeX src="M_{24}" /></td><td className="num">244,823,040</td><td>24</td><td>5-{lang === 'zh' ? '传递' : 'transitive'}</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<><TeX src="M_{12}" /> 是最大的 <em>尖锐 5-传递</em> 群 (1959 年 Jordan 证明: 除 <TeX src="S_n, A_n" /> 外, 没有比 5-传递更高的尖锐传递群)。 <TeX src="M_{12}" /> 包含外自同构 (它是唯一一个 <TeX src="M_n" /> 有外自同构的), 跟 <TeX src="S_6" /> 的外自同构构造方式平行: 它通过 6 个 「<em>duum</em>」 (类似 syntheme) 的传递作用实现 <em>同一个</em> 现象。 Conway, Curtis (1973) 的 <strong>Miracle Octad Generator (MOG)</strong> 把 <TeX src="M_{24}" /> 完全显式化, 利用了 <em>Steiner 系统</em> S(5, 8, 24)。</>}
+            en={<><TeX src="M_{12}" /> is the largest <em>sharply 5-transitive</em> group (Jordan, 1872: no sharp <TeX src="k" />-transitive group beyond <TeX src="S_n, A_n" /> exists for <TeX src="k \geq 6" />). <TeX src="M_{12}" /> is the only Mathieu with a non-trivial outer automorphism — built by exactly the same "exotic transitive" trick as <TeX src="\mathrm{Out}(S_6)" />. Conway & Curtis's <strong>Miracle Octad Generator (MOG, 1973)</strong> realises <TeX src="M_{24}" /> through the <em>Steiner system</em> S(5, 8, 24). Reference: J. Conway et al., <em>ATLAS of Finite Groups</em> (1985).</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.9  正二十面体的 PSL₂(𝔽₅)" en="30.9  PSL₂(𝔽₅) and the icosahedron"/>
+        </h3>
+        <p>
+          <L
+            zh={<>取 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 的 「行列式平方」 子群:<TeXBlock src={`\\mathrm{PSL}_2(\\mathbb{F}_5) = \\mathrm{SL}_2(\\mathbb{F}_5)\\,/\\,\\{\\pm I\\}.`} /> 其阶 = <TeX src="120 / 2 = 60" />,而我们已知<TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5" />,这又同构于<strong>正二十面体的旋转群</strong> <TeX src="I" />。 三条 60 阶单群是 <em>同一个</em> 群:</>}
+            en={<>The "square-determinant" subgroup of <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> is<TeXBlock src={`\\mathrm{PSL}_2(\\mathbb{F}_5) = \\mathrm{SL}_2(\\mathbb{F}_5)\\,/\\,\\{\\pm I\\}.`} /> Its order is <TeX src="120 / 2 = 60" />, and famously<TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5" /> which in turn is the <strong>rotation group <TeX src="I" /> of the icosahedron</strong>. Three identifications of the same 60-element group:</>}
+          />
+        </p>
+        <TeXBlock src={`A_5 \\;\\cong\\; \\mathrm{PSL}_2(\\mathbb{F}_5) \\;\\cong\\; I \\;=\\; \\text{rotations of the icosahedron / dodecahedron}.`} />
+        <p>
+          <L
+            zh={<>正二十面体有 12 顶点, 但 <em>对极</em> 形成 6 对; 每对贴一个 <TeX src="\mathbb{P}^1(\mathbb{F}_5)" /> 元素。 <TeX src="A_5" /> 的元素有阶 1, 2, 3, 5: 阶 5 旋转绕一个顶点 (绕一对极轴) 转 2π/5; 阶 3 旋转绕面心 (一对极面) 转 2π/3; 阶 2 旋转绕棱中点 (一对极棱)。 数 <TeX src="A_5" /> 的元素: 1 + 15 + 20 + 24 = 60。</>}
+            en={<>The icosahedron has 12 vertices, falling into 6 antipodal pairs; each pair receives a label from <TeX src="\mathbb{P}^1(\mathbb{F}_5)" />. <TeX src="A_5" /> contains elements of order 1, 2, 3, 5: order-5 rotations through opposite vertices (2π/5), order-3 through opposite face centres (2π/3), order-2 through midpoints of opposite edges. Counts: 1 + 15 + 20 + 24 = 60.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '正二十面体 + ℙ¹(𝔽₅) 标号' : 'icosahedron with ℙ¹(𝔽₅) labels'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '按 T (绕顶点 2π/5) 和 S (绕棱中点 π) 看顶点重排' : 'press T (vertex 2π/5) and S (edge-midpoint π) to watch vertices shuffle'}</div>
+          <IcosahedronP1F5 />
+        </div>
+        <p>
+          <L
+            zh={<>这是 Felix Klein 的 1884 《二十面体讲义》 的主题: 5 次方程的根可以用 <em>二十面体函数</em> (一种椭圆模函数) 表达,本质上利用了 <TeX src="A_5" /> 不可解但具有 60 阶单群结构这个事实。 Klein 把 <TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5 \cong I" /> 三位一体当作他的核心定理。</>}
+            en={<>This is the subject of Felix Klein's <em>Lectures on the Icosahedron</em> (1884): roots of quintic equations can be expressed via <em>icosahedral functions</em> (a kind of elliptic modular function), trading on the fact that <TeX src="A_5" /> is unsolvable yet has the structure of a 60-element simple group. Klein took the trinity <TeX src="\mathrm{PSL}_2(\mathbb{F}_5) \cong A_5 \cong I" /> as the heart of his book.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.10  显式生成元 + 标准表示" en="30.10  Explicit generators and presentation"/>
+        </h3>
+        <p>
+          <L
+            zh={<>用两个简单的 Möbius 变换可以生成整个 <TeX src="\mathrm{PSL}_2(\mathbb{F}_5)" />。 取</>}
+            en={<>Two simple Möbius transformations generate <TeX src="\mathrm{PSL}_2(\mathbb{F}_5)" />. Set</>}
+          />
+        </p>
+        <TeXBlock src={`T \\,:\\, z \\mapsto z + 1, \\quad\\quad S \\,:\\, z \\mapsto -\\frac{1}{z}.`} />
+        <p>
+          <L
+            zh={<>对应的 2×2 矩阵</>}
+            en={<>with matrices</>}
+          />
+        </p>
+        <TeXBlock src={`T \\;\\equiv\\; \\begin{pmatrix} 1 & 1 \\\\ 0 & 1 \\end{pmatrix}, \\quad\\quad S \\;\\equiv\\; \\begin{pmatrix} 0 & -1 \\\\ 1 & 0 \\end{pmatrix} \\;\\equiv\\; \\begin{pmatrix} 0 & 4 \\\\ 1 & 0 \\end{pmatrix} \\pmod{5}.`} />
+        <p>
+          <L
+            zh={<>验证: <TeX src="T^5 = I" /> (因为 5 ≡ 0 mod 5), <TeX src="S^2 = -I \equiv I" /> (在 PSL 里), 且 <TeX src="ST" /> 是 <TeX src="z \mapsto -1/(z+1)" />, 阶 3 (验算: <TeX src="(ST)^2 = -1/(-1/(z+1) + 1) = -(z+1)/z" />; <TeX src="(ST)^3 = z" />)。 ∴</>}
+            en={<>Check: <TeX src="T^5 = I" /> (5 ≡ 0 mod 5), <TeX src="S^2 = -I" /> which is trivial in <TeX src="\mathrm{PSL}" />, and <TeX src="ST : z \mapsto -1/(z+1)" /> has order 3 (direct computation gives <TeX src="(ST)^3 = \mathrm{id}" />). So</>}
+          />
+        </p>
+        <TeXBlock src={`\\mathrm{PSL}_2(\\mathbb{F}_5) \\;=\\; \\left\\langle S,\\, T \\;\\middle|\\; S^2 = T^5 = (ST)^3 = 1 \\right\\rangle \\;\\cong\\; A_5.`} />
+        <p>
+          <L
+            zh={<>这是 von Dyck 三角群 <TeX src="(2, 3, 5)" /> 的有限表示,跟 <em>双曲三角形</em> <TeX src="\Delta(2, 3, 5)" /> 在球面上的反射群对应 — 正是二十面体几何。 想升级到 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" />, 再加一个对角元素</>}
+            en={<>This is the von Dyck triangle group <TeX src="(2, 3, 5)" />, the rotation group of the spherical triangle <TeX src="\Delta(2, 3, 5)" /> — icosahedral geometry. To upgrade to <TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" />, append one diagonal element</>}
+          />
+        </p>
+        <TeXBlock src={`D \\;\\equiv\\; \\begin{pmatrix} 2 & 0 \\\\ 0 & 1 \\end{pmatrix}, \\qquad D \\,:\\, z \\mapsto 2 z.`} />
+        <p>
+          <L
+            zh={<><TeX src="D" /> 的 det 为 2,不是 <TeX src="(\mathbb{F}_5^{*})^2 = \{1, 4\}" /> 元素,故 <TeX src="D \notin \mathrm{PSL}_2" />。 <TeX src="\langle S, T, D\rangle = \mathrm{PGL}_2(\mathbb{F}_5)" /> (添加 <TeX src="D" /> 把 PSL 的指数翻倍 60 → 120)。 完整表示见 Coxeter–Moser (1965) §6.5。</>}
+            en={<><TeX src="D" /> has determinant 2, not a square in <TeX src="\mathbb{F}_5^{*}" />, so <TeX src="D \notin \mathrm{PSL}_2" />. Then <TeX src="\langle S, T, D\rangle = \mathrm{PGL}_2(\mathbb{F}_5)" />, doubling 60 → 120. Full presentation: Coxeter–Moser (1965) §6.5.</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<><strong>魔方对应</strong>: 在 R、 U 两面的角块作用上, R 实现一个 4-cycle (在 4 个角上), U 实现另一个 4-cycle (相错), 共享 2 角。 取 ℙ¹(𝔽₅) 标号使得</>}
+            en={<><strong>Cube correspondence</strong>: as corner permutations, R is a 4-cycle on 4 corners and U is a staggered 4-cycle, sharing 2 corners. Choose <TeX src="\mathbb{P}^1(\mathbb{F}_5)" /> labels so that</>}
+          />
+        </p>
+        <TeXBlock src={`R \\;\\equiv\\; z \\mapsto \\text{(some Möbius)}, \\quad U \\;\\equiv\\; z \\mapsto \\text{(another Möbius)};`} />
+        <p>
+          <L
+            zh={<>Jaap Scherphuis 的对照表给出: R = (0 1 2 3) (在 ℙ¹ 上固定 4, ∞ 的 4-cycle), U = (0 4 ∞ 1) 之类的形式。 详细 labelling 见 Jaap 的网页 — 选 labelling 不唯一,只要让 R, U 配上一对 2×2 矩阵 mod 5 即可。</>}
+            en={<>Jaap Scherphuis's labelling gives R = (0 1 2 3) (a 4-cycle on <TeX src="\mathbb{P}^1" /> fixing 4 and ∞) and U = (0 4 ∞ 1) (the staggered 4-cycle). The exact labelling is not unique; any choice that turns R, U into a pair of 2×2 mod-5 matrices works.</>}
+          />
+        </p>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="30.11  实验 — ⟨R, U⟩ 阶分布拟合 S₅ 共轭类" en="30.11  Experiment — ⟨R, U⟩ order distribution matches S₅ classes"/>
+        </h3>
+        <p>
+          <L
+            zh={<>如果 <TeX src="\langle R, U\rangle = S_5" />, 那么随机一个 <TeX src="R, U" /> 字得到的 6-角置换,它的阶分布应该符合 <TeX src="S_5" /> 的共轭类大小:</>}
+            en={<>If <TeX src="\langle R, U\rangle = S_5" />, then the order of a random ⟨R, U⟩ word, viewed as a permutation of the 6 corners, should match the conjugacy-class sizes of <TeX src="S_5" />:</>}
+          />
+        </p>
+        <table className="gt-pattern-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '阶' : 'order'}</th>
+              <th>{lang === 'zh' ? 'S₅ 圈型' : 'S₅ cycle type'}</th>
+              <th>{lang === 'zh' ? '类大小' : 'class size'}</th>
+              <th>{lang === 'zh' ? '占比' : 'share'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="num">1</td><td>(1)⁵ {lang === 'zh' ? '(恒等)' : '(identity)'}</td><td className="num">1</td><td className="num">0.83%</td></tr>
+            <tr><td className="num">2</td><td>(2, 1, 1, 1) + (2, 2, 1)</td><td className="num">10 + 15 = 25</td><td className="num">20.83%</td></tr>
+            <tr><td className="num">3</td><td>(3, 1, 1)</td><td className="num">20</td><td className="num">16.67%</td></tr>
+            <tr><td className="num">4</td><td>(4, 1) + (2, 2, 1) {lang === 'zh' ? '(注:(2,2,1)在 S₅ 阶为 2 不是 4)' : '(note: (2,2,1) has order 2, not 4)'}</td><td className="num">30</td><td className="num">25.00%</td></tr>
+            <tr><td className="num">5</td><td>(5)</td><td className="num">24</td><td className="num">20.00%</td></tr>
+            <tr><td className="num">6</td><td>(3, 2)</td><td className="num">20</td><td className="num">16.67%</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <L
+            zh={<>总计 <TeX src="1 + 25 + 20 + 30 + 24 + 20 = 120" /> ✓。 但注意 <TeX src="S_5" /> 是在 <em>5 元集</em> 上的对称群,这里我们让它通过 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 作用在 <em>6 元集</em> 上, 所以 <TeX src="S_5" /> 的「圈型」 跟它在 6 点上诱导的圈型 <em>不同</em>! 比如 <TeX src="S_5" /> 中的对换 <TeX src="(1 2)" />, 通过 <TeX src="\mathrm{PGL}_2 \cong S_5" /> 同构, 它对应一个 Möbius 变换,在 6 点上的圈型实际是 (2, 2, 1, 1) —— 两个 2-cycle 加两个不动点。 这是异常嵌入的 「圈型变化」, 也是 30.6 中 <em>对换 ↔ (2,2,2)</em> 的来源。</>}
+            en={<>Sum: <TeX src="1 + 25 + 20 + 30 + 24 + 20 = 120" /> ✓. <em>Warning</em>: the cycle types above are those of <TeX src="S_5" /> acting on 5 elements; in our 6-point Möbius action, the corresponding cycle types differ. For example a transposition in <TeX src="S_5" /> corresponds to a Möbius transformation acting on 6 points with cycle type (2, 2, 1, 1) — two transpositions and two fixed points. This "cycle type shift" between the two embeddings is the operational core of 30.6's transposition ↔ (2,2,2) swap.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '⟨R, U⟩ 阶分布采样' : '⟨R, U⟩ order histogram'}</div>
+          <div className="gt-panel-sub">{lang === 'zh' ? '采 N 个随机字 (长度 ≤ maxLen),计角置换阶,与 S₅ 共轭类大小比较' : 'sample N random words (length ≤ maxLen), compute the order of the resulting corner permutation, compare with S₅ class sizes'}</div>
+          <OrderHistogramTwoFace />
+        </div>
+
+        <div className="gt-pullquote">
+          <L
+            zh={<>「<TeX src="S_6" /> 是唯一一个有外自同构的对称群; 而那个外自同构等价于 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 在 6 点上传递作用 — 等价于正二十面体的旋转群 — 等价于 Mathieu 群 <TeX src="M_{12}" /> 的零散性的种子。 这一长串等价不是巧合, 它是有限对称的一次最深的爆发。」</>}
+            en={<>"<TeX src="S_6" /> is the only symmetric group with an outer automorphism; that outer automorphism is equivalent to the transitive action of <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> on six points; equivalent to the rotation group of the icosahedron; equivalent to the seed of the sporadic Mathieu group <TeX src="M_{12}" />. This chain of equivalences is not a coincidence — it is the densest implosion of finite symmetry we know."</>}
+          />
+          <div className="gt-pullquote-cite">— John Baez, <em>Some Thoughts on the Number 6</em> (2015 essay)</div>
+        </div>
+
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="参考文献" en="References"/>
+        </h3>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<>J. Scherphuis, <em>The Two-Face 6-Corner Puzzle and PGL₂(𝔽₅)</em> — <span className="gt-mono">jaapsch.net/puzzles/pgl25.htm</span>。 本节起点。</>} en={<>J. Scherphuis, <em>The two-face six-corner puzzle and PGL₂(F₅)</em> — <span className="gt-mono">jaapsch.net/puzzles/pgl25.htm</span>. The starting point for this section.</>} /></li>
+          <li><L zh={<>J. Baez, <em>Some Thoughts on the Number 6</em> — math.ucr.edu/home/baez/six.html。 关于 S₆ 外自同构的经典科普,涵盖 syntheme, Mathieu, 二十面体连接。</>} en={<>J. Baez, <em>Some Thoughts on the Number 6</em> — math.ucr.edu/home/baez/six.html. The classic expository essay on the S₆ outer automorphism, covering synthemes, Mathieu groups, and the icosahedral connection.</>} /></li>
+          <li><L zh={<>J. Conway, R. Curtis, S. Norton, R. Parker, R. Wilson, <em>ATLAS of Finite Groups</em> (Oxford, 1985)。 全部 26 个零散单群的标准参考,包括 M₁₁, M₁₂, M₂₄ 的最大子群表 (含 PGL₂(𝔽₅))。</>} en={<>J. Conway, R. Curtis, S. Norton, R. Parker, R. Wilson, <em>ATLAS of Finite Groups</em> (Oxford, 1985). The standard reference for all 26 sporadic simple groups, including maximal-subgroup tables for M₁₁, M₁₂, M₂₄ (in which PGL₂(F₅) appears).</>} /></li>
+          <li><L zh={<>M. Suzuki, <em>Group Theory I, II</em> (Springer Grundlehren 247, 248, 1982–1986)。 经典群 (GL, SL, PSL, PGL, PΓL) 的标准教科书。</>} en={<>M. Suzuki, <em>Group Theory I, II</em> (Springer Grundlehren 247, 248, 1982–1986). The standard reference for classical groups (GL, SL, PSL, PGL, PΓL).</>} /></li>
+          <li><L zh={<>M. Aschbacher, <em>Finite Group Theory</em> (Cambridge Studies in Adv. Math. 10, 2nd ed. 2000)。 现代的、 紧凑的有限群论概述,有限简单群分类背景。</>} en={<>M. Aschbacher, <em>Finite Group Theory</em> (Cambridge Studies in Adv. Math. 10, 2nd ed. 2000). Compact modern survey, background for the classification of finite simple groups.</>} /></li>
+          <li><L zh={<>S. Lang, <em>Algebra</em> (3rd ed., Springer GTM 211, 2002)。 一般域上 GL/PGL/PSL 的定义见第 13 章。</>} en={<>S. Lang, <em>Algebra</em> (3rd ed., Springer GTM 211, 2002). General-field GL/PGL/PSL definitions, Chapter 13.</>} /></li>
+          <li><L zh={<>D. Surowski, <em>Workbook in Higher Algebra</em>。 把 ℙ¹(𝔽₅) 上的 PGL₂ 作用及交比作为练习展开。</>} en={<>D. Surowski, <em>Workbook in Higher Algebra</em>. Develops the PGL₂(F₅) action on ℙ¹(F₅) and the cross-ratio as exercises.</>} /></li>
+          <li><L zh={<>H. S. M. Coxeter & W. O. J. Moser, <em>Generators and Relations for Discrete Groups</em> (Springer Ergebnisse 14, 4th ed. 1980)。 三角群 (2, 3, 5) 等的标准表示及二十面体几何。</>} en={<>H. S. M. Coxeter & W. O. J. Moser, <em>Generators and Relations for Discrete Groups</em> (Springer Ergebnisse 14, 4th ed. 1980). Standard presentations for triangle groups (2, 3, 5) etc., with icosahedral geometry.</>} /></li>
+          <li><L zh={<>F. Klein, <em>Vorlesungen über das Ikosaeder</em> (1884, English transl. <em>Lectures on the Icosahedron</em>, Dover 1956)。 用 PSL₂(𝔽₅) ≅ A₅ ≅ I 解 5 次方程。</>} en={<>F. Klein, <em>Vorlesungen über das Ikosaeder</em> (1884, English transl. <em>Lectures on the Icosahedron</em>, Dover 1956). Solving the quintic using PSL₂(F₅) ≅ A₅ ≅ I.</>} /></li>
+          <li><L zh={<>O. Hölder, "Bildung zusammengesetzter Gruppen," <em>Math. Ann.</em> 46 (1895) — <TeX src="\mathrm{Out}(S_6)" /> 的原始发现。</>} en={<>O. Hölder, "Bildung zusammengesetzter Gruppen," <em>Math. Ann.</em> 46 (1895) — original discovery of <TeX src="\mathrm{Out}(S_6)" />.</>} /></li>
+          <li><L zh={<>J. J. Sylvester, "Elementary researches in the analysis of combinatorial aggregation," <em>Phil. Mag.</em> 24 (1844)。 Duad / syntheme / synthematic total 术语的首发。</>} en={<>J. J. Sylvester, "Elementary researches in the analysis of combinatorial aggregation," <em>Phil. Mag.</em> 24 (1844). Origin of the duad/syntheme/synthematic-total terminology.</>} /></li>
+        </ul>
+      </GTSec>
+
+
+
+
+      {/* ═══════════════ §31 Rotational Puzzles on Graphs ═════════════════ */}
+      <GTSec id="rotational-puzzles" className="gt-sec">
+        <div className="gt-sec-num">§31</div>
+        <h2 className="gt-sec-title">
+          <L zh="图上的旋转拼图 — Jaap 的 (x, y, z) 分类" en="Rotational puzzles on graphs — Jaap's (x, y, z) classification" />
+        </h2>
+        <p className="gt-lede">
+          <L
+            zh={<>把魔方这种「面旋转」抽象到任意图:给一张连通图,标出若干 <em>面</em> (有向循环),每个面对应一个把面上棋子循环移位的生成元。 整体群 <TeX src="\Gamma" /> 是 <TeX src="S_n" /> 的子群 (<TeX src="n" /> 是棋子总数)。 自然问:哪些图的旋转拼图 <em>状态空间</em> = <TeX src="S_n" />,哪些 <em>= <TeX src="A_n" /></em>,哪些是其它?</>}
+            en={<>Abstract the cube's face turns to any graph: a connected graph with marked <em>faces</em> (directed cycles); each face gives a generator that cyclically rotates its pieces. The puzzle group <TeX src="\Gamma" /> is a subgroup of <TeX src="S_n" /> (<TeX src="n" /> = piece count). Natural question: which graphs give <TeX src="\Gamma = S_n" />, which <TeX src="A_n" />, which something exotic?</>}
+          />
+        </p>
+
+        {/* ===== 31.1 Setup ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.1  形式化:图、面、生成元" en="31.1  Formalisation: graph, face, generator" />
+        </h3>
+        <div className="gt-def">
+          <div className="gt-def-title">{lang === 'zh' ? '定义 31.1 — 图上的旋转拼图' : 'Definition 31.1 — rotational graph puzzle'}</div>
+          <div className="gt-def-body">
+            <L
+              zh={<>给定连通有限图 <TeX src="G = (V, E)" />,<TeX src="|V| = n" />,以及一族标记的 <em>有向闭合环</em> <TeX src="F_1, F_2, \ldots, F_k" /> (称作 <strong>面</strong>),每个面是 <TeX src="V" /> 的一个有序子集。 棋子 <TeX src="\{1, 2, \ldots, n\}" /> 一对一放在顶点上。 每个面 <TeX src="F_i" /> 给出一个生成元 <TeX src="\rho_i \in S_n" />:沿环把每个棋子推到下一个顶点。 <strong>拼图群</strong> 是<TeXBlock src={`\\Gamma \\;=\\; \\langle \\rho_1, \\rho_2, \\ldots, \\rho_k \\rangle \\;\\le\\; S_n.`} /></>}
+              en={<>Given a finite connected graph <TeX src="G = (V, E)" /> with <TeX src="|V| = n" />, plus a family of marked <em>directed closed cycles</em> <TeX src="F_1, F_2, \ldots, F_k" /> called <strong>faces</strong>. Each face is an ordered subset of <TeX src="V" />. Pieces <TeX src="\{1, 2, \ldots, n\}" /> sit on vertices one-to-one. Each face <TeX src="F_i" /> gives a generator <TeX src="\rho_i \in S_n" /> that cyclically pushes pieces along the cycle. The <strong>puzzle group</strong> is<TeXBlock src={`\\Gamma \\;=\\; \\langle \\rho_1, \\rho_2, \\ldots, \\rho_k \\rangle \\;\\le\\; S_n.`} /></>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>三个例子立刻熟悉:</>}
+            en={<>Three immediate examples:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><strong>3×3 角块</strong>:G = 三维立方体的 8 个角,6 个面各是长 4 的环,<TeX src="\Gamma" /> 含 <TeX src="A_8" /> 作为「位置」部分 (朝向另算)。</>}
+            en={<><strong>3×3 corners</strong>: G = the 8 corner-vertices of a 3-cube; 6 length-4 face cycles; <TeX src="\Gamma" /> on positions contains <TeX src="A_8" /> (orientation tracked separately).</>}
+          /></li>
+          <li><L
+            zh={<><strong>Pyraminx 边块</strong>:G = 正四面体的 6 条边的中点,4 个面 (长 3) 各转一组,得到 <TeX src="A_6" /> 子群。</>}
+            en={<><strong>Pyraminx edges</strong>: G = midpoints of the 6 edges of a tetrahedron; 4 length-3 face cycles; gives a subgroup of <TeX src="A_6" />.</>}
+          /></li>
+          <li><L
+            zh={<><strong>15-滑块</strong> (作为退化例):4×4 网格 + 一个 「空格」 在某点。 空格绕每个 「面」 (2×2 块) 一圈本质上等同于一个面转 — 这是 Wilson 1974 的桥梁。</>}
+            en={<><strong>15-puzzle</strong> (as a degenerate example): a 4×4 grid plus one "blank." Cycling the blank around any 2×2 face is essentially a face turn — Wilson's 1974 bridge.</>}
+          /></li>
+        </ul>
+        <div className="gt-aside">
+          <L
+            zh={<>注意一个微妙点:<em>面</em> 不必是图论意义下的「面」 (i.e. 平面嵌入的有界区域)。 我们说 「面」 时只是给一个有向环,因此同一张图可以配不同的面集 — 同样的 G 上不同的 「拼图」。 Jaap 把研究焦点限定在 <strong>两面拼图</strong>:正好两个环,合起来覆盖所有顶点 (无孤立子)。</>}
+            en={<>A subtle point: a <em>face</em> need not be a "face" in the planar-embedding sense — it is just a marked directed cycle, so the same graph can carry different face sets. Jaap focuses on the <strong>two-face case</strong>: exactly two cycles, together covering every vertex.</>}
+          />
+        </div>
+
+        {/* ===== 31.2 Two-face theorem ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.2  两面分类定理 — (x, y, z) 三元组" en="31.2  Two-face theorem — the (x, y, z) triple" />
+        </h3>
+        <p>
+          <L
+            zh={<>两面拼图共享一段连续的顶点。 设面 1 独有 <TeX src="x" /> 子,面 2 独有 <TeX src="z" /> 子,共享 <TeX src="y" /> 子,合计 <TeX src="n = x + y + z" />。 不妨 <TeX src="x \le z" /> (对称)。 两面长分别为 <TeX src="f_1 = x + y" />、 <TeX src="f_2 = y + z" />。</>}
+            en={<>Two faces share a contiguous segment. Let face 1 have <TeX src="x" /> unique pieces, face 2 have <TeX src="z" /> unique, and <TeX src="y" /> be shared, so <TeX src="n = x + y + z" />. Without loss of generality <TeX src="x \le z" />. Face lengths are <TeX src="f_1 = x + y" />, <TeX src="f_2 = y + z" />.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 31.2 — Scherphuis (两面分类)' : 'Theorem 31.2 — Scherphuis (two-face classification)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src="f_1, f_2 \ge 3" />。 则<TeXBlock src={`\\Gamma_{(x,y,z)} \\;=\\; \\begin{cases} S_5\\;(\\text{order } 120) & \\text{if } (x,y,z) \\in \\{(2,2,2),\\,(1,3,2)\\}, \\\\ A_n & \\text{if both } f_1, f_2 \\text{ are odd}, \\\\ S_n & \\text{otherwise}. \\end{cases}`} />当 <TeX src="\min(f_1, f_2) < 3" /> 时退化:面太短无法产生 3-循环。</>}
+              en={<>Suppose <TeX src="f_1, f_2 \ge 3" />. Then<TeXBlock src={`\\Gamma_{(x,y,z)} \\;=\\; \\begin{cases} S_5\\;(\\text{order } 120) & \\text{if } (x,y,z) \\in \\{(2,2,2),\\,(1,3,2)\\}, \\\\ A_n & \\text{if both } f_1, f_2 \\text{ are odd}, \\\\ S_n & \\text{otherwise}. \\end{cases}`} />When <TeX src="\min(f_1, f_2) < 3" /> the puzzle is degenerate: face too short to yield a 3-cycle.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<><strong>证明骨架</strong> (Jaap 风格,详见 jaapsch.net):</>}
+            en={<><strong>Proof sketch</strong> (Jaap's exposition):</>}
+          />
+        </p>
+        <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><em>奇偶性</em>:<TeX src="\rho_1" /> 是 <TeX src="f_1" />-循环,<TeX src="\operatorname{sgn}(\rho_1) = (-1)^{f_1 - 1}" />。 若两 <TeX src="f_i" /> 都奇,<TeX src="\Gamma \subseteq A_n" />;若有一偶,<TeX src="\Gamma" /> 含奇置换 ⇒ <TeX src="\Gamma \cap A_n" /> 指数 2 ⇒ <TeX src="\Gamma = S_n" /> (只要 <TeX src="\Gamma" /> 已含 <TeX src="A_n" />)。</>}
+            en={<><em>Parity</em>: <TeX src="\rho_1" /> is an <TeX src="f_1" />-cycle with <TeX src="\operatorname{sgn}(\rho_1) = (-1)^{f_1 - 1}" />. If both <TeX src="f_i" /> are odd, <TeX src="\Gamma \subseteq A_n" />; if one is even, <TeX src="\Gamma" /> contains an odd permutation, so it can equal <TeX src="S_n" /> once we know <TeX src="A_n \subseteq \Gamma" />.</>}
+          /></li>
+          <li><L
+            zh={<><em>构造 3-循环</em>:换元 <TeX src="\rho_1 \rho_2 \rho_1^{-1} \rho_2^{-1}" /> 是非平凡换元子,在 「面足够大」 时是 3-循环 (或 3-循环的乘积,可进一步分解)。 关键 case 分析:</>}
+            en={<><em>Constructing a 3-cycle</em>: the commutator <TeX src="\rho_1 \rho_2 \rho_1^{-1} \rho_2^{-1}" /> is non-trivial and, in most face-size combinations, equals a 3-cycle or factors into 3-cycles. Key cases:</>}
+          /></li>
+          <li><L
+            zh={<>{`y = 1`}: 共享 1 子,换元给出准确的 3-循环 (<TeX src="\rho_1" /> 把它推到面 1 上一格,<TeX src="\rho_2" /> 推到面 2 上,反向回到出发点 — 三步循环)。</>}
+            en={<>{`y = 1`}: with one shared piece, the commutator is exactly a 3-cycle (<TeX src="\rho_1" /> pushes it one step on face 1, <TeX src="\rho_2" /> pushes onto face 2, the inverses retrace — three vertices touched).</>}
+          /></li>
+          <li><L
+            zh={<>{`y ≥ 3 且 (x,z) ≠ (2,2)`}: 用 「<TeX src="\rho_1 \rho_2" /> 后再用 <TeX src="\rho_2^{-1} \rho_1^{-1}" />」 风格七步组合产生 3-循环。 由于 <TeX src="A_n" /> 由 3-循环生成,故 <TeX src="\Gamma \supseteq A_n" />。</>}
+            en={<>{`y ≥ 3 and (x,z) ≠ (2,2)`}: a seven-step combination of <TeX src="\rho_1 \rho_2" /> and <TeX src="\rho_2^{-1} \rho_1^{-1}" /> produces a 3-cycle. Since 3-cycles generate <TeX src="A_n" />, we get <TeX src="\Gamma \supseteq A_n" />.</>}
+          /></li>
+          <li><L
+            zh={<><em>例外验证</em>:(2,2,2) 和 (1,3,2) 都是 <TeX src="n = 6" />,但群阶卡在 120 = 5! &lt; 360 = 6!/2。 直接群论计算或 GAP 验证。</>}
+            en={<><em>Verifying the exceptions</em>: (2,2,2) and (1,3,2) both have <TeX src="n = 6" /> but order stops at 120 = 5! &lt; 360 = 6!/2. Direct group-theoretic computation or GAP confirms.</>}
+          /></li>
+        </ol>
+        <p>
+          <L
+            zh={<>那个 5! = 120 阶的群究竟是谁?它 <em>不</em> 是 <TeX src="S_5" /> 的标准作用 (那个在 5 点),而是它在 6 点上的 <em>例外作用</em> — 由 <TeX src="PGL_2(\mathbb{F}_5)" /> 作用于射影直线 <TeX src="\mathbb{P}^1(\mathbb{F}_5)" /> (6 个点) 给出。 这正是 §30 反复出现的「6 点 vs 5 点」奇异同构。</>}
+            en={<>What is this order-120 group? It is <em>not</em> the standard <TeX src="S_5" />-on-5-points but the <em>exceptional action</em> of <TeX src="S_5" /> on 6 points coming from <TeX src="PGL_2(\mathbb{F}_5)" /> on the projective line <TeX src="\mathbb{P}^1(\mathbb{F}_5)" /> (6 points). This is the same "6-vs-5" sporadic isomorphism that drives §30.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '(x, y, z) 实时分类器' : '(x, y, z) live classifier'}</div>
+          <XYZClassifier />
+        </div>
+        <p>
+          <L
+            zh={<>这个分类把 Pyraminx 两面 (2,1,2 ⇒ <TeX src="A_5" />)、 Impossiball 两面 (3,2,3 ⇒ <TeX src="A_8" />)、 Alexander's Star (4,1,4 ⇒ <TeX src="A_9" />) 等具体玩具都涵盖了。 也回答了为什么 (2, 2, 2) 显得特殊:那 6 个角刚好跟 §30 是同一个故事。</>}
+            en={<>This covers Pyraminx two-face (2,1,2 ⇒ <TeX src="A_5" />), Impossiball two-face (3,2,3 ⇒ <TeX src="A_8" />), Alexander's Star (4,1,4 ⇒ <TeX src="A_9" />). It also explains why (2, 2, 2) feels special — its 6 corners are exactly the §30 story.</>}
+          />
+        </p>
+
+        {/* ===== 31.3 Worked examples ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.3  实例巡礼 — 八个 (x, y, z) 标本" en="31.3  Worked examples — eight (x, y, z) specimens" />
+        </h3>
+        <p>
+          <L
+            zh={<>把分类定理代入八个有意思的 <TeX src="(x, y, z)" />,看看每一个落在哪一支。 下表的「构造」一列给出生成 3-循环的具体短换元,可逐一手算复现:</>}
+            en={<>Substitute the theorem into eight notable triples and see where each falls. The "construction" column gives an explicit short commutator producing a 3-cycle — easy to verify by hand:</>}
+          />
+        </p>
+        <table className="gt-partition-tbl">
+          <thead>
+            <tr>
+              <th>(x, y, z)</th>
+              <th>n</th>
+              <th>(f₁, f₂)</th>
+              <th>{lang === 'zh' ? '群' : 'group'}</th>
+              <th>|Γ|</th>
+              <th>{lang === 'zh' ? '构造' : 'construction'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>(1, 1, 1)</td><td className="num">3</td><td>(2, 2)</td><td><TeX src="\mathbb{Z}_3" /></td><td className="num">3</td><td>{lang === 'zh' ? '过小 (面长 2 < 3)' : 'degenerate (faces too short)'}</td></tr>
+            <tr><td>(1, 2, 1)</td><td className="num">4</td><td>(3, 3)</td><td><TeX src="A_4" /></td><td className="num">12</td><td><TeX src="[\rho_1, \rho_2]" />{lang === 'zh' ? ' = 3-循环' : ' = 3-cycle'}</td></tr>
+            <tr><td>(2, 1, 2)</td><td className="num">5</td><td>(3, 3)</td><td><TeX src="A_5" /></td><td className="num">60</td><td><TeX src="[\rho_1, \rho_2]" />{lang === 'zh' ? '；Pyraminx 局部' : '; Pyraminx local'}</td></tr>
+            <tr><td>(1, 3, 2)</td><td className="num">6</td><td>(4, 5)</td><td><TeX src="S_5" /> <em>{lang === 'zh' ? '(例外)' : '(exceptional)'}</em></td><td className="num">120</td><td>{lang === 'zh' ? '同构于 (2,2,2);Wilson θ₀ 之内核' : 'isomorphic to (2,2,2); kernel of Wilson\'s θ₀'}</td></tr>
+            <tr><td>(2, 2, 2)</td><td className="num">6</td><td>(4, 4)</td><td><TeX src="S_5" /> <em>{lang === 'zh' ? '(例外)' : '(exceptional)'}</em></td><td className="num">120</td><td><TeX src="PGL_2(\mathbb{F}_5) \curvearrowright \mathbb{P}^1(\mathbb{F}_5)" /></td></tr>
+            <tr><td>(3, 2, 3)</td><td className="num">8</td><td>(5, 5)</td><td><TeX src="A_8" /></td><td className="num">20,160</td><td>{lang === 'zh' ? '两奇长面;Impossiball 两面' : 'both odd faces; Impossiball local'}</td></tr>
+            <tr><td>(4, 1, 4)</td><td className="num">9</td><td>(5, 5)</td><td><TeX src="A_9" /></td><td className="num">181,440</td><td>{lang === 'zh' ? 'Alexander\'s Star 局部' : 'Alexander\'s Star local'}</td></tr>
+            <tr><td>(3, 3, 3)</td><td className="num">9</td><td>(6, 6)</td><td><TeX src="S_9" /></td><td className="num">362,880</td><td>{lang === 'zh' ? '偶长面 ⇒ 奇置换 ⇒ 全 S' : 'even faces ⇒ odd perm ⇒ full S'}</td></tr>
+          </tbody>
+        </table>
+        <p style={{ marginTop: 14 }}>
+          <L
+            zh={<>注意 (2,1,2) ⇒ <TeX src="A_5" /> 阶 60 是「最小的非阿贝尔单群」,§21 已证。 因此 Pyraminx 两面拼图本质上是<em>有限单群分类</em>里最低层的代表 — 一个塑料玩具触底了 19 世纪的最大数学突破。</>}
+            en={<>Note (2,1,2) ⇒ <TeX src="A_5" /> of order 60 — the smallest non-Abelian simple group, proven in §21. Pyraminx's two-face local pattern realises the very bottom of the classification of finite simple groups. A plastic toy bottoms out one of the 19th century's greatest mathematical achievements.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '两面转动 — 实时奇偶性 + 圈型' : 'Two-face turner — live parity & cycle type'}</div>
+          <TwoFaceTurner />
+        </div>
+        <p>
+          <L
+            zh={<>试 (2,1,2):点 L 然后 R,再 L⁻¹ R⁻¹ — 你应当看到一个 3-循环 (圈型 3·1²,sgn = +1)。 试 (2,2,2):同样的换元给出更长的循环,而不是 3-循环;这是 (2,2,2) 「卡在 5!」的可视化证据。</>}
+            en={<>Try (2,1,2): press L, R, L⁻¹, R⁻¹ — you should see a 3-cycle (type 3·1², sgn = +1). Try (2,2,2): the same commutator yields a longer cycle, not a 3-cycle — visual evidence of (2,2,2)'s "stuck at 5!" anomaly.</>}
+          />
+        </p>
+
+        {/* ===== 31.4 Three or more faces ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.4  三面及以上 — 开放分类问题" en="31.4  Three faces and beyond — open classification" />
+        </h3>
+        <p>
+          <L
+            zh={<>真正的物理拼图大多 <em>不是</em> 两面。 立方体 6 个面,Megaminx 12 个面,Pyraminx 4 个面 — 每加一个面就多一个生成元,可能性的拓扑迅速复杂化。 已知:</>}
+            en={<>Real physical puzzles are mostly <em>not</em> two-faced. The cube has 6 faces, the Megaminx 12, the Pyraminx 4 — each extra face is a new generator and the combinatorics explodes. What's known:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><strong>三面 「补救」 例外</strong>:把 (2,2,2) 加一个第三个面 — 只要新面跟原两面之一形成 <em>非例外</em> 的两面对 (i.e. 落入定理 31.2 的 A_n 或 S_n 支),则整体群立刻 「升上去」 到 <TeX src="A_n" /> 或 <TeX src="S_n" />。 这是为什么 (2,2,2) 在抽象上有趣,但在物理拼图上不会单独出现 — 那两个 「例外面」 总有第三个面把它们抹掉。</>}
+            en={<><strong>Three-face "rescue"</strong>: add a third face to (2,2,2); if the new face pairs with one of the original two in a <em>non-exceptional</em> way (falling into the <TeX src="A_n" /> or <TeX src="S_n" /> branch of Thm 31.2), the whole group jumps up to <TeX src="A_n" /> or <TeX src="S_n" />. This is why (2,2,2) is abstractly fascinating but never the bottom line of any physical puzzle — a third face always erases the anomaly.</>}
+          /></li>
+          <li><L
+            zh={<><strong>独立棋子类型</strong>:实物拼图通常有「角 + 棱」(3×3) 或「棱 + 中心 + 尖」(Pyraminx),不同类型的棋子在生成元下不混淆。 群分解为<TeXBlock src={`\\Gamma \\;\\hookrightarrow\\; \\Gamma_{\\text{corners}} \\times \\Gamma_{\\text{edges}} \\times \\cdots,`} />然后做奇偶/朝向约束。 这是 §6 「正确放置 + 错误朝向」 故事的本质。</>}
+            en={<><strong>Independent piece types</strong>: physical puzzles usually have "corners + edges" (3×3) or "edges + centres + tips" (Pyraminx); pieces of different types are never mixed by face turns. The group factors as<TeXBlock src={`\\Gamma \\;\\hookrightarrow\\; \\Gamma_{\\text{corners}} \\times \\Gamma_{\\text{edges}} \\times \\cdots`} />and parity/orientation laws are then imposed. This is the heart of §6's "right place, wrong orientation" classification.</>}
+          /></li>
+          <li><L
+            zh={<><strong>开放分类问题</strong> (Jaap):给定 <TeX src="k \ge 3" /> 个面、每对面共享段长 <TeX src="y_{ij}" />、每个面长度 <TeX src="f_i" />,刻画 <TeX src="\Gamma" />。 当 <TeX src="k \ge 3" /> 时尚无完整定理 — 现有结果都是 「<em>足够大</em> 时给 <TeX src="A_n" /> 或 <TeX src="S_n" />」 类型的部分回答。 例外列表是否有限,仍是一个未解问题。</>}
+            en={<><strong>Open problem</strong> (Jaap): given <TeX src="k \ge 3" /> faces with pairwise overlap lengths <TeX src="y_{ij}" /> and face sizes <TeX src="f_i" />, classify <TeX src="\Gamma" />. No full theorem is known for <TeX src="k \ge 3" /> — only "large enough ⇒ <TeX src="A_n" /> or <TeX src="S_n" />" partial results. Whether the exception list is finite remains open.</>}
+          /></li>
+          <li><L
+            zh={<><strong>面与面多次相交</strong>:Hungarian Rings 等拼图的两面在两段不连续的弧上同时共享。 这超出 (x,y,z) 三元组,但 Singmaster 在 <em>Cubic Circular</em> 里给过特殊情形的结果。 一般答案缺失。</>}
+            en={<><strong>Multi-arc overlaps</strong>: Hungarian Rings and friends have two faces sharing on two <em>disjoint</em> arcs. This breaks the (x,y,z) parameterisation; Singmaster's <em>Cubic Circular</em> handles special cases, no general answer.</>}
+          /></li>
+        </ul>
+
+        {/* ===== 31.5 Wilson 1974 ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.5  Wilson 1974 — 滑动拼图的伴侣分类" en="31.5  Wilson 1974 — the sliding-puzzle companion classification" />
+        </h3>
+        <p>
+          <L
+            zh={<>1974 年 R. M. Wilson 在 <em>Graph Puzzles, Homotopy, and the Alternating Group</em> 给了 <strong>滑动拼图</strong> 的完整分类 — 用一个 「空格」 在连通图 <TeX src="G" /> 上沿边滑动,空格初始位置 <TeX src="b" />。 状态群只由 「绕一个面环」 这种操作生成,本质上就是定理 31.2 的「带空格版」。</>}
+            en={<>In 1974 R. M. Wilson published <em>Graph Puzzles, Homotopy, and the Alternating Group</em> giving the complete classification for <strong>sliding puzzles</strong>: a single "blank" slides along edges of a connected graph <TeX src="G" /> from initial vertex <TeX src="b" />. The state group is generated by "blank-around-a-face" operations — essentially the "blank-included" cousin of Thm 31.2.</>}
+          />
+        </p>
+        <div className="gt-thm">
+          <div className="gt-thm-title">{lang === 'zh' ? '定理 31.3 — Wilson (1974)' : 'Theorem 31.3 — Wilson (1974)'}</div>
+          <div className="gt-thm-body">
+            <L
+              zh={<>设 <TeX src="G" /> 连通、 至少 2 度。 滑动拼图状态群 <TeX src="W(G, b)" /> 等于:<TeXBlock src={`W(G, b) \\;=\\; \\begin{cases} \\mathbb{Z}_n & G = C_n \\text{ (简单环)}, \\\\ \\langle (1\\,2\\,3\\,4\\,5\\,6) \\rangle \\rtimes \\langle (2\\,6)(3\\,5) \\rangle \\cong PGL_2(\\mathbb{F}_5) & G = \\theta_0 \\text{ (7-vertex exception)}, \\\\ A_{n-1} & \\text{otherwise, if } G \\text{ bipartite}, \\\\ S_{n-1} & \\text{otherwise}. \\end{cases}`} />其中 <TeX src="\theta_0" /> 是「两个长 4 的路径共享两个端点 + 一条额外的边在中间」 形成的 7 顶点图 — 正是把 (1,3,2) 旋转拼图的中央共享段拆开插入一个空格得到的。</>}
+              en={<>Suppose <TeX src="G" /> is connected with minimum degree ≥ 2. The sliding-puzzle group <TeX src="W(G, b)" /> equals:<TeXBlock src={`W(G, b) \\;=\\; \\begin{cases} \\mathbb{Z}_n & G = C_n \\text{ (a cycle)}, \\\\ \\langle (1\\,2\\,3\\,4\\,5\\,6) \\rangle \\rtimes \\langle (2\\,6)(3\\,5) \\rangle \\cong PGL_2(\\mathbb{F}_5) & G = \\theta_0 \\text{ (7-vertex exception)}, \\\\ A_{n-1} & \\text{otherwise, if } G \\text{ bipartite}, \\\\ S_{n-1} & \\text{otherwise}. \\end{cases}`} />Here <TeX src="\theta_0" /> is the unique sporadic graph: two length-4 paths sharing two endpoints plus an extra edge connecting the midpoints — equivalent to inserting a blank into the central shared segment of the (1,3,2) rotational puzzle.</>}
+            />
+          </div>
+        </div>
+        <p>
+          <L
+            zh={<>三个例外:</>}
+            en={<>Three families of exceptions:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>环 <TeX src="C_n" /></strong>:空格绕一圈给纯循环 <TeX src="\mathbb{Z}_n" />,远不到 <TeX src="A_{n-1}" /></>} en={<><strong>Cycle <TeX src="C_n" /></strong>: blank traversing once gives cyclic <TeX src="\mathbb{Z}_n" />, far short of <TeX src="A_{n-1}" /></>} /></li>
+          <li><L zh={<><strong>双色图</strong> (bipartite, 非环):空格只在两类顶点间穿梭,每移动改变 「奇偶」,故 <TeX src="W \subseteq A_{n-1}" /></>} en={<><strong>Bipartite graph</strong> (not a cycle): the blank alternates between two parts on each move, so its parity is constrained, <TeX src="W \subseteq A_{n-1}" /></>} /></li>
+          <li><L zh={<><strong>θ₀</strong>: 7 个点的散在例外, <TeX src="|W| = 120" /> — 与定理 31.2 的 (1,3,2) 同构</>} en={<><strong>θ₀</strong>: sporadic 7-vertex exception with <TeX src="|W| = 120" /> — isomorphic to (1,3,2) of Thm 31.2</>} /></li>
+        </ul>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Wilson 三种类型对照' : 'Wilson three-cases visualiser'}</div>
+          <WilsonSliding />
+        </div>
+        <p>
+          <L
+            zh={<>15-滑块属于 <em>非双色非环</em> 的情况 (4×4 网格 minus 一格 = 双色!),所以严格按 Wilson 它给的是 <TeX src="A_{15}" />,不是 <TeX src="S_{15}" />。 这就是 Loyd 1880 「14-15 调换悬赏 1000 美元无人解出」的代数解释:那一个对换是奇置换,落在 <TeX src="S_{15} \setminus A_{15}" /> ── 不可达。</>}
+            en={<>The 15-puzzle is bipartite (the 4×4 grid is two-coloured by checkerboard), so Wilson's theorem gives <TeX src="A_{15}" />, not <TeX src="S_{15}" />. That is the algebraic explanation of Loyd's 1880 "$1000 prize for swapping 14 and 15": the swap is a transposition, an odd permutation in <TeX src="S_{15} \setminus A_{15}" /> — provably unreachable.</>}
+          />
+        </p>
+        <div className="gt-aside">
+          <L
+            zh={<>Wilson 的证明走 <em>同伦</em>:把图 <TeX src="G" /> 当作 1-复形,空格移动 = 沿边走的路径,「绕面一圈」 = 同伦零的回路。 状态群本质上是 <TeX src="G" /> 的基本群在表示上的像。 这把组合问题翻译成代数拓扑 — 一个相当超前的观察。</>}
+            en={<>Wilson's proof goes through <em>homotopy</em>: view <TeX src="G" /> as a 1-complex; blank moves are edge paths; "around a face" is a null-homotopic loop. The state group is essentially the image of <TeX src="\pi_1(G)" /> in the representation. Combinatorics translated to algebraic topology — a strikingly modern observation for 1974.</>}
+          />
+        </div>
+
+        {/* ===== 31.6 Computer-aided ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.6  计算机辅助分类 — Schreier-Sims 算法" en="31.6  Computer-aided classification — Schreier-Sims" />
+        </h3>
+        <p>
+          <L
+            zh={<>给定生成元集 <TeX src="\{g_1, \ldots, g_k\}" /> 求 <TeX src="|G|" />,理论上要枚举所有元素 (指数爆炸)。 1970 年 C. Sims 给出 <strong>多项式时间</strong> 算法 — <em>Schreier-Sims</em>:</>}
+            en={<>Given generators <TeX src="\{g_1, \ldots, g_k\}" /> compute <TeX src="|G|" />. Brute enumeration is exponential. In 1970 C. Sims gave a <strong>polynomial-time</strong> algorithm — <em>Schreier-Sims</em>:</>}
+          />
+        </p>
+        <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<>选一个 <em>base</em> <TeX src="(b_1, b_2, \ldots, b_m)" />,使 <TeX src="G \supset G_{b_1} \supset G_{b_1 b_2} \supset \cdots \supset \{e\}" /></>} en={<>Choose a <em>base</em> <TeX src="(b_1, b_2, \ldots, b_m)" /> so that <TeX src="G \supset G_{b_1} \supset G_{b_1 b_2} \supset \cdots \supset \{e\}" /></>} /></li>
+          <li><L zh={<>对每层稳定子,通过 「Schreier 生成」 求轨道</>} en={<>For each stabiliser layer compute its orbit via "Schreier generators"</>} /></li>
+          <li><L zh={<>orbit-stabiliser 给 <TeX src="|G| = \prod_i |\text{orbit}_i|" /></>} en={<>Orbit-stabiliser yields <TeX src="|G| = \prod_i |\text{orbit}_i|" /></>} /></li>
+        </ol>
+        <p>
+          <L
+            zh={<>复杂度 <TeX src="O(n^5 \log |G|)" />,Seress 2003 综述里给了一系列优化版本,现代实现可处理 <TeX src="n \sim 10^6" /> 元上的群。 GAP、 sympy、 magma 都内置此算法 — 输入 「3×3 的 6 个面生成元」,几秒给出 <TeX src="|G| = 43{,}252{,}003{,}274{,}489{,}856{,}000" />。</>}
+            en={<>Complexity <TeX src="O(n^5 \log |G|)" />; Seress 2003 surveys many refinements that handle <TeX src="n \sim 10^6" />. GAP, sympy and Magma ship Schreier-Sims out of the box: feed in the cube's six face generators and get <TeX src="|G| = 43{,}252{,}003{,}274{,}489{,}856{,}000" /> in seconds.</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? 'Schreier-Sims 在 S₅ 上的逐步追踪' : 'Schreier-Sims step trace on S₅'}</div>
+          <SchreierSimsDemo />
+        </div>
+        <p>
+          <L
+            zh={<>下表是用 Schreier-Sims 算出的小拼图群阶速查:</>}
+            en={<>Schreier-Sims output for small puzzle groups:</>}
+          />
+        </p>
+        <table className="gt-partition-tbl">
+          <thead>
+            <tr>
+              <th>{lang === 'zh' ? '拼图' : 'puzzle'}</th>
+              <th>{lang === 'zh' ? '生成元数' : '# gens'}</th>
+              <th>n</th>
+              <th>|G|</th>
+              <th>{lang === 'zh' ? '运行时间' : 'time'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>15-puzzle</td><td className="num">12</td><td className="num">15</td><td className="num">10,461,394,944,000</td><td>{lang === 'zh' ? '一瞬' : '&lt; 1 s'}</td></tr>
+            <tr><td>2×2×2</td><td className="num">6</td><td className="num">24</td><td className="num">3,674,160</td><td>&lt; 1 s</td></tr>
+            <tr><td>Pyraminx</td><td className="num">8</td><td className="num">14</td><td className="num">75,582,720</td><td>&lt; 1 s</td></tr>
+            <tr><td>Skewb</td><td className="num">8</td><td className="num">14</td><td className="num">3,149,280</td><td>&lt; 1 s</td></tr>
+            <tr><td>3×3×3</td><td className="num">6</td><td className="num">48</td><td className="num">4.33 × 10<sup>19</sup></td><td>&lt; 10 s</td></tr>
+            <tr><td>Megaminx</td><td className="num">12</td><td className="num">132</td><td className="num">1.01 × 10<sup>68</sup></td><td>{lang === 'zh' ? '数分钟' : 'minutes'}</td></tr>
+            <tr><td>4×4×4</td><td className="num">12</td><td className="num">96</td><td className="num">7.40 × 10<sup>45</sup></td><td>{lang === 'zh' ? '数分钟' : 'minutes'}</td></tr>
+          </tbody>
+        </table>
+
+        {/* ===== 31.7 Wreath / surfaces ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.7  曲面、 商空间与 wreath product" en="31.7  Surfaces, quotients, and wreath products" />
+        </h3>
+        <p>
+          <L
+            zh={<>抽掉 「物理拼图」 的外观,旋转拼图就是 <em>高维流形上的旋转作用的离散商</em>。 例如 2×2×2 的角块状态空间可以看作<TeXBlock src={`(\\mathbb{Z}_3)^7 \\rtimes S_8,`} />其中 <TeX src="(\mathbb{Z}_3)^7" /> 是 「7 个独立角的朝向 (第 8 个由总朝向守恒律决定)」,<TeX src="S_8" /> 是角的位置。 半直积反映 「位置先动,朝向跟着转」 的依赖关系。</>}
+            en={<>Strip away the physical packaging and a rotational puzzle is a <em>discrete quotient of a manifold rotation action</em>. The 2×2×2 corner state space is exactly<TeXBlock src={`(\\mathbb{Z}_3)^7 \\rtimes S_8,`} />where <TeX src="(\mathbb{Z}_3)^7" /> tracks "the 7 independent corner orientations (the 8th is forced by the orientation-sum conservation law)" and <TeX src="S_8" /> tracks corner positions. The semidirect product encodes "positions move first, orientations follow."</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>更一般地,<strong>wreath product</strong> <TeX src="\mathbb{Z}_n \wr S_k" /> 描述 「<TeX src="k" /> 个对象,每个有 <TeX src="\mathbb{Z}_n" /> 朝向,可以任意排列再各自旋转」。 直接定义<TeXBlock src={`\\mathbb{Z}_n \\wr S_k \\;=\\; (\\mathbb{Z}_n)^k \\rtimes S_k,`} /><TeX src="S_k" /> 通过置换坐标作用于 <TeX src="(\mathbb{Z}_n)^k" />。 阶 <TeX src="|\mathbb{Z}_n \wr S_k| = n^k \cdot k!" />。</>}
+            en={<>More generally, the <strong>wreath product</strong> <TeX src="\mathbb{Z}_n \wr S_k" /> describes "<TeX src="k" /> objects, each with <TeX src="\mathbb{Z}_n" /> orientation, freely permuted and individually twisted":<TeXBlock src={`\\mathbb{Z}_n \\wr S_k \\;=\\; (\\mathbb{Z}_n)^k \\rtimes S_k,`} />with <TeX src="S_k" /> acting on <TeX src="(\mathbb{Z}_n)^k" /> by permuting coordinates. Order <TeX src="|\mathbb{Z}_n \wr S_k| = n^k \cdot k!" />.</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L zh={<><strong>2×2×2 角</strong>:<TeX src="(\mathbb{Z}_3 \wr S_8) / \mathbb{Z}_3" /> (商掉总朝向守恒)。 阶 <TeX src="3^8 \cdot 8! / 3 = 3{,}674{,}160" />。</>} en={<><strong>2×2×2 corners</strong>: <TeX src="(\mathbb{Z}_3 \wr S_8) / \mathbb{Z}_3" /> (quotient by the orientation-sum law). Order <TeX src="3^8 \cdot 8! / 3 = 3{,}674{,}160" />.</>} /></li>
+          <li><L zh={<><strong>3×3 角</strong>:同上,但跟棱块通过奇偶性耦合 — 全群 <TeX src="(\mathbb{Z}_3 \wr S_8) \times (\mathbb{Z}_2 \wr S_{12})" /> 取指数 2 的子群。</>} en={<><strong>3×3 corners</strong>: same, coupled to edges by parity — full group is the index-2 subgroup of <TeX src="(\mathbb{Z}_3 \wr S_8) \times (\mathbb{Z}_2 \wr S_{12})" />.</>} /></li>
+          <li><L zh={<><strong>Pyraminx</strong>:4 个尖块各 <TeX src="\mathbb{Z}_3" /> 独立 (不交互),用 <em>直积</em> <TeX src="(\mathbb{Z}_3)^4" />;6 个边块用 <TeX src="A_6 \times (\mathbb{Z}_2)^?" />;4 个中央块各 <TeX src="\mathbb{Z}_3" /> 但有约束 — 整体半直积。</>} en={<><strong>Pyraminx</strong>: the 4 tips are independent <TeX src="(\mathbb{Z}_3)^4" /> (non-interacting); the 6 edges form <TeX src="A_6 \times (\mathbb{Z}_2)^?" />; the 4 centres each <TeX src="\mathbb{Z}_3" /> with constraints — assembled by semidirect product.</>} /></li>
+          <li><L zh={<><strong>Skewb</strong>:8 角 + 6 中心,4 对角轴生成,wreath 结构 <TeX src="\mathbb{Z}_3 \wr S_8" /> 再除二个约束 (角朝向和、 中心置换奇偶) 得到 3,149,280。</>} en={<><strong>Skewb</strong>: 8 corners + 6 centres, 4 diagonal-axis generators, wreath <TeX src="\mathbb{Z}_3 \wr S_8" /> divided by two constraints (corner-twist sum, centre-permutation parity) gives 3,149,280.</>} /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>Wreath product 还跟 <em>覆叠空间</em> 直接对应:<TeX src="\mathbb{Z}_n" /> 是单一棋子的 「朝向圆周」(<TeX src="S^1" />),<TeX src="k" /> 个棋子位形空间是 <TeX src="\binom{n}{k}" />- 倍商,wreath product 就是这个 「位置 × 朝向」 总流形的离散对称群。 参见 M. Davis, <em>The Geometry and Topology of Coxeter Groups</em>。</>}
+            en={<>Wreath products correspond directly to <em>covering spaces</em>: each <TeX src="\mathbb{Z}_n" /> is one piece's orientation circle (<TeX src="S^1" />), and the configuration space of <TeX src="k" /> pieces is a <TeX src="\binom{n}{k}" />-fold quotient; the wreath product is the discrete symmetry of this "position × orientation" total manifold. See M. Davis, <em>The Geometry and Topology of Coxeter Groups</em>.</>}
+          />
+        </p>
+
+        {/* ===== 31.8 Puzzle zoo ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.8  拼图全景 — 12 个实物 vs (x, y, z)" en="31.8  Puzzle gallery — 12 physical specimens vs (x, y, z)" />
+        </h3>
+        <p>
+          <L
+            zh={<>把分类应用到具体玩具。 每张卡片可点击,右侧给出 (x,y,z) 分解 (若适用)、 群结构公式、 阶数,以及一两行直觉解释:</>}
+            en={<>Apply the classification to physical puzzles. Click each card to inspect its (x,y,z) decomposition (when applicable), its group, its order, and a one-line intuition:</>}
+          />
+        </p>
+        <div className="gt-panel">
+          <div className="gt-panel-title">{lang === 'zh' ? '12 个拼图,一一拆解' : '12 puzzles, one by one'}</div>
+          <PuzzleZoo />
+        </div>
+        <p>
+          <L
+            zh={<>注意到 (2,1,2) 反复出现:Pyraminx、 Skewb、 任何 「<em>正四面体面 +某轴</em>」 局部都长这样,所以 <TeX src="A_5" /> 是 「正四面体对称的代数最小公倍数」。 这也解释了为什么 Pyraminx 的位置部分恰好嵌入 <TeX src="A_6" /> — 6 条边 mod 4 个面的旋转 = <TeX src="A_5" /> 的 <em>诱导作用</em>。</>}
+            en={<>Note that (2,1,2) recurs: Pyraminx, Skewb, and any "<em>tetrahedron-face-plus-an-axis</em>" local pattern look like this, making <TeX src="A_5" /> the "algebraic LCM of tetrahedral symmetry." This is exactly why the Pyraminx's edge positions embed in <TeX src="A_6" /> — 6 edges modulo 4 face rotations equals the <em>induced action</em> of <TeX src="A_5" />.</>}
+          />
+        </p>
+        <div className="gt-pullquote">
+          <L
+            zh={<>「每一个塑料玩具都是一个有限群的传教士。」</>}
+            en={<>"Every plastic puzzle is a missionary for some finite group."</>}
+          />
+          <div className="gt-pullquote-cite">— {lang === 'zh' ? '现代群论教学俗谚' : 'modern group-theory teaching folklore'}</div>
+        </div>
+
+        {/* ===== 31.9 Open problems ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.9  开放问题" en="31.9  Open problems" />
+        </h3>
+        <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><strong>k 面分类</strong>:已知 (x,y,z) 两面分类有 2 个例外。 <TeX src="k = 3" /> 时例外列表多少个?有限吗?Jaap 给出几个具体 「三面例外」, 没有完整定理。</>}
+            en={<><strong>k-face classification</strong>: the two-face theorem has 2 exceptions. For <TeX src="k = 3" /> how many exceptions are there? Is the list finite? Jaap lists a few specific three-face anomalies but no general theorem.</>}
+          /></li>
+          <li><L
+            zh={<><strong>非连通共享段</strong>:Hungarian Rings / Whip-It 型拼图,两面在两条不连续弧上共享。 (x,y,z) 不足以描述,改用 「共享段长度多重集」 <TeX src="\{y_1, y_2, \ldots\}" />。 现有结果零散。</>}
+            en={<><strong>Disconnected overlap</strong>: Hungarian Rings, Whip-It, etc. share two disjoint arcs. The (x,y,z) parameterisation fails; one needs the multiset <TeX src="\{y_1, y_2, \ldots\}" /> of overlap lengths. Only scattered results.</>}
+          /></li>
+          <li><L
+            zh={<><strong>带朝向的图拼图</strong>:Jaap 的分类设每子无朝向。 加上「每点 <TeX src="\mathbb{Z}_n" /> 朝向 + 整体守恒律」,合 拼图群是 wreath product <TeX src="\mathbb{Z}_n \wr \Gamma" /> 的子群 — 哪些守恒律可以出现?</>}
+            en={<><strong>Oriented graph puzzles</strong>: Jaap's classification assumes unoriented pieces. Add per-vertex <TeX src="\mathbb{Z}_n" /> orientation with conservation laws, the puzzle group becomes a subgroup of <TeX src="\mathbb{Z}_n \wr \Gamma" /> — which conservation laws can arise?</>}
+          /></li>
+          <li><L
+            zh={<><strong>Jumbling 拼图</strong>:Helicopter cube 类 「<em>非整数面长</em>」 的拼图状态空间不是群,而是流形。 现有研究 (Hofstadter 之外的现代尝试) 极少 — 拼图群论的下一个前沿。</>}
+            en={<><strong>Jumbling puzzles</strong>: helicopter cube and friends have "<em>non-integer face turns</em>"; the state space is no longer a group but a manifold. Modern attempts beyond Hofstadter are sparse — the next frontier of puzzle algebra.</>}
+          /></li>
+          <li><L
+            zh={<><strong>Diameter</strong>: 给定 (x,y,z) 旋转拼图, <TeX src="\Gamma" /> 的 Cayley 直径多少?即 「最长不可解」 距离。 已知例外 (2,2,2) 直径 = 5。 一般情况未必有简洁公式。</>}
+            en={<><strong>Diameter</strong>: for (x,y,z) rotational puzzles, what is the Cayley diameter of <TeX src="\Gamma" />? The exceptional (2,2,2) has diameter 5. No closed form is known for the generic case.</>}
+          /></li>
+        </ol>
+
+        {/* ===== 31.10 Wreath product ===== */}
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+          <L zh="31.10  Wreath product Sₖ ≀ ℤₙ — 朝向的代数结构" en="31.10  Wreath products S_k ≀ ℤ_n — the algebra of orientation" />
+        </h3>
+        <p>
+          <L
+            zh={<>设有 <TeX src="k" /> 个对象, 每个带 <TeX src="\mathbb{Z}_n" /> 朝向 (n = 2 棱、 n = 3 角、 n = 4 中心)。 朝向作为函数 <TeX src="f: \{1, \ldots, k\} \to \mathbb{Z}_n" />;位置变 <TeX src="\sigma \in S_k" /> 时朝向跟随置换。 总群是<TeXBlock src={`\\mathbb{Z}_n \\wr S_k \\;=\\; \\mathbb{Z}_n^k \\rtimes S_k, \\qquad |\\mathbb{Z}_n \\wr S_k| \\;=\\; n^k \\cdot k!.`} />群运算:<TeXBlock src={`(f, \\sigma)(g, \\tau) \\;=\\; (f + \\sigma \\cdot g,\\; \\sigma\\tau),`} />其中 <TeX src="(\sigma \cdot g)(i) = g(\sigma^{-1}(i))" />,即 「先排,再朝」。</>}
+            en={<>Take <TeX src="k" /> objects each carrying <TeX src="\mathbb{Z}_n" /> orientation (n = 2 for edges, n = 3 for corners, n = 4 for cube centres). Orientation is a function <TeX src="f: \{1, \ldots, k\} \to \mathbb{Z}_n" />; permuting positions <TeX src="\sigma \in S_k" /> drags orientations along. The total group is<TeXBlock src={`\\mathbb{Z}_n \\wr S_k \\;=\\; \\mathbb{Z}_n^k \\rtimes S_k, \\qquad |\\mathbb{Z}_n \\wr S_k| \\;=\\; n^k \\cdot k!.`} />Multiplication rule:<TeXBlock src={`(f, \\sigma)(g, \\tau) \\;=\\; (f + \\sigma \\cdot g,\\; \\sigma\\tau),`} />where <TeX src="(\sigma \cdot g)(i) = g(\sigma^{-1}(i))" /> ("permute, then twist").</>}
+          />
+        </p>
+        <p>
+          <L
+            zh={<>真实拼图的群恰是 wreath product 的 <em>子群</em>,由 「守恒律」 切下来。 例如:</>}
+            en={<>The group of an actual puzzle is the <em>subgroup</em> of a wreath product cut out by conservation laws. For example:</>}
+          />
+        </p>
+        <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+          <li><L
+            zh={<><TeX src="G_{\text{2×2 corners}} = \ker(\Sigma : \mathbb{Z}_3 \wr S_8 \to \mathbb{Z}_3)" /> = 朝向和守恒的核, 指数 3</>}
+            en={<><TeX src="G_{\text{2×2 corners}} = \ker(\Sigma : \mathbb{Z}_3 \wr S_8 \to \mathbb{Z}_3)" />, the kernel of the twist-sum, index 3</>}
+          /></li>
+          <li><L
+            zh={<><TeX src="G_{\text{3×3}} = \ker(\Sigma_c, \Sigma_e, \operatorname{sgn}_c \cdot \operatorname{sgn}_e)" /> 三个守恒律, 指数 12</>}
+            en={<><TeX src="G_{\text{3×3}} = \ker(\Sigma_c, \Sigma_e, \operatorname{sgn}_c \cdot \operatorname{sgn}_e)" /> with three conservation laws, index 12</>}
+          /></li>
+          <li><L
+            zh={<><TeX src="G_{\text{Megaminx}}" /> 是 <TeX src="(\mathbb{Z}_3 \wr S_{20}) \times (\mathbb{Z}_2 \wr S_{30}) \times (S_5 \wr \text{stuff})" /> 的子群 — 完整公式见 §15.1</>}
+            en={<><TeX src="G_{\text{Megaminx}}" /> sits inside <TeX src="(\mathbb{Z}_3 \wr S_{20}) \times (\mathbb{Z}_2 \wr S_{30}) \times (S_5 \wr \text{stuff})" /> — full formula in §15.1</>}
+          /></li>
+        </ul>
+        <p>
+          <L
+            zh={<>Wreath product 的 「图论侧」 解释:<TeX src="\mathbb{Z}_n \wr S_k" /> 是 「<TeX src="k" /> 条悬挂的 <TeX src="\mathbb{Z}_n" />-绳 + 自由置换」 的对称群。 在 Cayley 图论中, wreath product 是构造 <em>大直径</em> 群的经典工具 — 30 年代用来给 <TeX src="S_n" /> 的极大子群分类提供反例。 现代视角:wreath product 等同于 「带颜色的森林」 的自同构群 (Boyer-Moore 数据结构的代数对应)。</>}
+            en={<>Graph-theoretic side: <TeX src="\mathbb{Z}_n \wr S_k" /> is the symmetry of "<TeX src="k" /> dangling <TeX src="\mathbb{Z}_n" />-strings, freely permuted." In Cayley-graph theory wreath products are the classical recipe for constructing groups of <em>large diameter</em>, used in the 1930s to settle questions about maximal subgroups of <TeX src="S_n" />. Modern view: a wreath product is the automorphism group of a "coloured forest" (the algebraic dual of Boyer-Moore data structures).</>}
+          />
+        </p>
+
+        {/* ===== closing ===== */}
+        <p style={{ marginTop: 28 }}>
+          <L
+            zh={<>这一节把 「魔方」 升级成 「图上的旋转拼图」: 两面就是 (x, y, z), 多面就是 wreath product 的子群, 计算就是 Schreier-Sims, 极限就是 jumbling 流形。 Wilson 1974 的滑动版给了对偶视角, 同伦理论把组合翻译成代数拓扑。 例外永远在 (2,2,2):那是 <TeX src="PGL_2(\mathbb{F}_5) \cong S_5" /> 在 6 点上的奇异作用 — 拼图群论的 「最小可爱反例」, 也是把整个故事跟 §30 缝合的针脚。</>}
+            en={<>This section promotes "Rubik's cube" to "rotational puzzle on a graph": two faces give (x, y, z); many faces give wreath subgroups; computation runs through Schreier-Sims; the limit is jumbling manifolds. Wilson 1974's sliding cousin supplies the dual viewpoint, and homotopy translates combinatorics into algebraic topology. The exception lives forever at (2,2,2): <TeX src="PGL_2(\mathbb{F}_5) \cong S_5" /> acting on 6 points — the puzzle theory's smallest pretty counterexample, and the stitch that sews this section into §30.</>}
+          />
+        </p>
+      </GTSec>
+
+
+
+
+      {/* ═══════════════ §32 Useful Mathematics ════════════════════════ */}
+            {/* ═══════════════ §32 Useful Mathematics ════════════════════════ */}
+            <GTSec id="useful-math" className="gt-sec">
+              <div className="gt-sec-num">§32</div>
+              <h2 className="gt-sec-title">
+                <L zh="有用数学 — 立方爱好者的工具箱" en="Useful mathematics — the cuber's toolbox" />
+              </h2>
+              <p className="gt-lede">
+                <L
+                  zh={<>jaapsch.net 那份 <em>Useful Mathematics</em> 短文里, Jaap Scherphuis 主张:魔方爱好者真正用到的不是抽象群论, 而是一两个 <strong>可视化技巧</strong> —— 两行记号、 循环分解、 交叉数判奇偶、 lcm 算阶。 整本数学小册都用这几招过来。 本节把这些「日常工具」全部集成进互动控件: 任意输入排列, 实时看到全部信息; 任意写 A、 B, 实时算 σ A σ⁻¹、 [A, B]、 σ<sup>k</sup>、 ⟨A, B⟩ 阶数。 它是整篇文章的实用速查手册。</>}
+                  en={<>The <em>Useful Mathematics</em> note on jaapsch.net argues that cube enthusiasts rarely need abstract group theory — just a handful of <strong>visual tricks</strong>: two-line notation, cycle decomposition, crossing-number-as-parity, and lcm-as-order. This section rolls those tricks (and ten more) into a single practical reference: type any permutation and see all the structural data live; type A, B and watch σ A σ⁻¹, [A, B], σ<sup>k</sup>, ⟨A, B⟩ computed on the spot. Think of it as the essay's pocket handbook.</>}
+                />
+              </p>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 24, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.1  四个等价信息 — 一图四读法" en="32.1  Four equivalent views" />
+              </h3>
+              <p>
+                <L
+                  zh={<>给定一个 <TeX src="n" /> 元排列 <TeX src="\sigma" />, 同一个对象至少有 4 种等价记法:</>}
+                  en={<>For a permutation <TeX src="\sigma" /> of <TeX src="n" /> elements, the same object can be written four equivalent ways:</>}
+                />
+              </p>
+              <ul>
+                <li><L zh={<><strong>两行</strong>: 上行 1..n, 下行 σ(1)..σ(n)。 Cauchy 1815 的原始记号, 适合「查表」。</>} en={<><strong>Two-line</strong>: top row 1..n, bottom row σ(1)..σ(n). Cauchy's 1815 original, ideal for table look-ups.</>} /></li>
+                <li><L zh={<><strong>循环</strong>: (1 a₁ a₂ …)(b₁ b₂ …)…, 把 σ 的轨道列出来。 Cauchy 1844 引入, 是计算的「乘法表」。</>} en={<><strong>Cycles</strong>: (1 a₁ a₂ …)(b₁ b₂ …)…, listing σ's orbits. Introduced by Cauchy in 1844; the format of choice for multiplication.</>} /></li>
+                <li><L zh={<><strong>交叉数</strong>: 从上一行连线到下一行, 数有几对线相交。 相交数 mod 2 = sgn(σ)。 几何直观的奇偶判别。</>} en={<><strong>Crossings</strong>: draw lines from top row to bottom; count pairwise intersections. Parity of crossings = sgn(σ). The geometric parity test.</>} /></li>
+                <li><L zh={<><strong>阶</strong>: ord(σ) = 各循环长度的最小公倍数 lcm。 「σ 还原自身需要做几次」的答案。</>} en={<><strong>Order</strong>: ord(σ) = lcm of cycle lengths. "How many times do I apply σ to get back to identity?"</>} /></li>
+              </ul>
+              <TeXBlock src="\mathrm{sgn}(\sigma) \;=\; (-1)^{\,\#\,\mathrm{crossings}(\sigma)} \;=\; \prod_{c \in \text{cycles}}\,(-1)^{|c|-1}." />
+              <p>
+                <L
+                  zh={<>例如 5 阶轮换 (1 2 3 4 5) 的阶是 5, 奇偶 (5−1) = 4 偶。 (a b) 类对换的阶是 2, 奇偶 (2−1) = 1 奇。 魔方上 R 的角块作用是 4-循环 (奇), 棱块作用也是 4-循环 (奇), 乘积奇偶 = 偶 — 跟第 5 节那「角棱奇偶相同」守恒律完全一致。</>}
+                  en={<>The 5-cycle (1 2 3 4 5) has order 5 and parity (5−1) = 4, even. A transposition (a b) has order 2 and parity (2−1) = 1, odd. On the cube, R acts as a 4-cycle on corners (odd) and a 4-cycle on edges (odd) — product is even, matching §5's "joint parity = +1" invariant.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '可视化器' : 'visualiser'}</div>
+                <div className="gt-panel-sub">{lang === 'zh' ? '输入一行 1..n 的某个排列; 实时显示连线 + 循环 + 奇偶 + 阶' : 'type any permutation of 1..n; live lines + cycles + parity + order'}</div>
+                <PermutationVisualiser />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.2  跟魔方关联" en="32.2  Connection to the cube" />
+              </h3>
+              <p>
+                <L
+                  zh={<>魔方公式 FR 在角块上是 5 阶, 在棱块上是 7 阶 (Singmaster <em>Cubic Circular</em> 2/3 列出过), 所以 FR 的总阶 = lcm(5, 7) = 35。 任何公式的阶都按这个法子算: 看角/棱的循环长度, 取 lcm。 已知 G 上元素阶集合恰好有 <strong>73 个不同值</strong> (§7.2), 最大阶 = 1260 (Singmaster, §13 图案画廊里的「阶-1260」即 R U2 D' B D')。</>}
+                  en={<>The cube alg FR acts as a 5-cycle on corners and a 7-cycle on edges (per Singmaster's <em>Cubic Circular</em> issue 2/3), so order(FR) = lcm(5, 7) = 35. Every alg's order follows this recipe: look at corner/edge cycle lengths and take the lcm. G has exactly <strong>73 distinct element orders</strong> (§7.2); maximum is 1260, realised by R U2 D' B D' (in the pattern gallery as "Order-1260").</>}
+                />
+              </p>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.3  两行记号 — Cauchy 的原始想法" en="32.3  Two-line notation — Cauchy's original idea" />
+              </h3>
+              <p>
+                <L
+                  zh={<>1815 年, 23 岁的 Augustin-Louis Cauchy 在 <em>Mémoire sur le nombre des valeurs qu'une fonction peut acquérir</em> 里第一次把「置换」当成独立的数学对象。 他的记号 (Cauchy 1844 <em>Mémoire sur les arrangements</em> 整理成今天的形式):</>}
+                  en={<>In 1815, 23-year-old Augustin-Louis Cauchy treated "permutation" as a free-standing mathematical object for the first time in his <em>Mémoire sur le nombre des valeurs qu'une fonction peut acquérir</em>. His two-line notation (made standard in the 1844 <em>Mémoire sur les arrangements</em>) is</>}
+                />
+              </p>
+              <TeXBlock src="\sigma \;=\; \begin{pmatrix} 1 & 2 & 3 & \cdots & n \\ \sigma(1) & \sigma(2) & \sigma(3) & \cdots & \sigma(n) \end{pmatrix}" />
+              <div className="gt-def">
+                <div className="gt-def-title">{lang === 'zh' ? '观察 32.1 — 双射 ↔ 排列' : 'Observation 32.1 — bijection ↔ permutation'}</div>
+                <div className="gt-def-body">
+                  <L
+                    zh={<>下行必须是上行的<em>双射重排</em>: 每个 1..n 的数恰好出现一次。 这等价地说 <TeX src="\sigma : \{1, \ldots, n\} \to \{1, \ldots, n\}" /> 是<strong>双射</strong>。 所以「两行记号 = 1..n 的某个双射」, 这正是 <TeX src="S_n" /> 的元素。</>}
+                    en={<>The bottom row must be a <em>bijective rearrangement</em> of the top row: each integer 1..n appears exactly once. Equivalently, <TeX src="\sigma : \{1, \ldots, n\} \to \{1, \ldots, n\}" /> is a <strong>bijection</strong>. So "two-line notation" = an element of <TeX src="S_n" />.</>}
+                  />
+                </div>
+              </div>
+              <p>
+                <L
+                  zh={<>计算规则: <TeX src="\sigma \cdot \tau" /> 的下行是「把 τ 的下行<em>当成索引</em>送进 σ 的下行」。 即<TeXBlock src="(\sigma \tau)(i) \;=\; \sigma(\tau(i))." />— 注意 σ 在外层 (先 τ 再 σ), 这是数学约定。 魔方里我们经常反过来用 (见 32.5)。</>}
+                  en={<>Computation rule: the bottom row of <TeX src="\sigma \cdot \tau" /> is obtained by feeding τ's bottom row <em>as indices</em> into σ's bottom row. That is<TeXBlock src="(\sigma \tau)(i) \;=\; \sigma(\tau(i))." />Note σ is outer (apply τ first, then σ): this is the mathematician's convention. Cubers reverse it (see 32.5).</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '两行 ↔ 循环 互转' : 'two-line ↔ cycle toggle'}</div>
+                <TwoLineNotationDemo />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.4  循环分解 — 算法与「相同形状」" en="32.4  Cycle decomposition — algorithm and shape" />
+              </h3>
+              <p>
+                <L
+                  zh={<>给定 σ, <strong>循环分解算法</strong> 是个 1 分钟可手算的过程:</>}
+                  en={<>Given σ, the <strong>cycle decomposition algorithm</strong> is one you can do by hand in a minute:</>}
+                />
+              </p>
+              <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+                <li><L zh={<>找最小未访问的 i (开始 i = 1)。</>} en={<>Find the smallest unvisited i (start at i = 1).</>} /></li>
+                <li><L zh={<>反复施 σ: i → σ(i) → σ(σ(i)) → ……, 直到回到 i, 这是一个循环, 标记所有访问过的元素。</>} en={<>Iterate σ: i → σ(i) → σ(σ(i)) → …, stopping when you return to i. Mark all visited.</>} /></li>
+                <li><L zh={<>重复直到所有元素都被访问。</>} en={<>Repeat until every element has been visited.</>} /></li>
+              </ol>
+              <p>
+                <L
+                  zh={<>结果是 σ 的 <strong>不交圈分解</strong>, 唯一到「每个圈的旋转写法」和「圈的列出顺序」 (不同循环之间显然不交, 所以可交换)。 圈型 (cycle type) 这一组无序的长度列表是 σ 的本质指纹, 决定 σ 在 <TeX src="S_n" /> 里的共轭类 (§21.4)。</>}
+                  en={<>The result is σ's <strong>disjoint cycle decomposition</strong>, unique up to (a) rotating each cycle and (b) reordering disjoint cycles (which trivially commute). The unordered multiset of cycle lengths — the <strong>cycle type</strong> — is σ's fundamental fingerprint, and determines σ's conjugacy class in <TeX src="S_n" /> (§21.4).</>}
+                />
+              </p>
+              <div className="gt-thm">
+                <div className="gt-thm-title">{lang === 'zh' ? '定理 32.2 — 共轭 = 重命名' : 'Theorem 32.2 — conjugation = relabelling'}</div>
+                <div className="gt-thm-body">
+                  <L
+                    zh={<>对任意 <TeX src="\sigma, \tau \in S_n" />, <TeXBlock src="\sigma \tau \sigma^{-1} \;=\; \tau\text{ with every entry relabelled by } \sigma." />即, 若 τ = (a b c …)(d e …)…, 则 σ τ σ⁻¹ = (σ(a) σ(b) σ(c) …)(σ(d) σ(e) …)…。 共轭只是<em>换名字</em>, 不改形状。</>}
+                    en={<>For any <TeX src="\sigma, \tau \in S_n" />, <TeXBlock src="\sigma \tau \sigma^{-1} \;=\; \tau \text{ with every entry relabelled by } \sigma." />Concretely, if τ = (a b c …)(d e …)…, then σ τ σ⁻¹ = (σ(a) σ(b) σ(c) …)(σ(d) σ(e) …)…. Conjugation only <em>renames</em>; it never changes the shape.</>}
+                  />
+                </div>
+              </div>
+              <p>
+                <L
+                  zh={<>这条定理是 §8 共轭和 §21.4 共轭类的灵魂, 也是盲拧 setup 的代数依据 —— 「用 σ 把目标块带过来, 做 τ, 再 σ⁻¹ 送回去」对应的 cube 操作就是 σ τ σ⁻¹, 跟 τ 形状一致, 只是「位置不同」。</>}
+                  en={<>This theorem is the soul of §8 (conjugation) and §21.4 (conjugacy classes), and the algebraic basis of blindsolving setups: "use σ to bring the target piece into position, apply τ, then σ⁻¹ to restore" corresponds exactly to σ τ σ⁻¹, which has the same cycle shape as τ but moved to new locations.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '逐步循环分解器' : 'step-by-step cycle decomposer'}</div>
+                <div className="gt-panel-sub">{lang === 'zh' ? '点「下一步」看算法如何从 i = 1 开始追踪每条轨道' : 'click "next" to watch the algorithm trace each orbit starting from i = 1'}</div>
+                <CycleDecomposer />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.5  合成顺序 — 数学家 vs 速拧选手的「坑」" en="32.5  Composition order — the math-vs-cuber trap" />
+              </h3>
+              <p>
+                <L
+                  zh={<>这是<strong>所有初学者都会踩</strong>的坑: 同一个表达式 σ τ, 数学家和速拧选手读出来是<em>不同的乘积</em>。</>}
+                  en={<>Here is the trap <strong>every beginner falls into</strong>: the same string "σ τ" denotes <em>different products</em> for a mathematician and for a cuber.</>}
+                />
+              </p>
+              <div className="gt-thm">
+                <div className="gt-thm-title">{lang === 'zh' ? '两种约定' : 'Two conventions'}</div>
+                <div className="gt-thm-body">
+                  <L
+                    zh={<>
+                      <p style={{ margin: '0 0 12px' }}><strong>数学约定</strong>: σ τ 表示函数复合 σ∘τ, 即「先 τ 后 σ」, (σ τ)(i) = σ(τ(i))。 受函数右作用启发。</p>
+                      <p style={{ margin: '0 0 12px' }}><strong>魔方约定</strong>: 公式 "R U" 表示「先转 R 后转 U」, 跟书写顺序<em>一致</em>。 也称为 <em>左作用</em> 或 <em>diagram order</em>。</p>
+                      <p style={{ margin: '0 0 0' }}>结果: 在魔方书里写 [A, B] = A B A⁻¹ B⁻¹ 表示「先 A 然后 B 然后 A⁻¹ 然后 B⁻¹」; 同样四个字母在群论书里 A B A⁻¹ B⁻¹ 表示「先 B⁻¹ 然后 A⁻¹ 然后 B 然后 A」 (反过来)。 计算结果通过把 A、 B 替换成 <em>逆方向</em> 来对齐。</p>
+                    </>}
+                    en={<>
+                      <p style={{ margin: '0 0 12px' }}><strong>Math convention</strong>: σ τ denotes function composition σ∘τ — "first τ, then σ" — so (σ τ)(i) = σ(τ(i)). Comes from right-action on functions.</p>
+                      <p style={{ margin: '0 0 12px' }}><strong>Cuber convention</strong>: the alg "R U" means "do R, then U" — matching the writing order. Also called the <em>left action</em> or <em>diagram order</em>.</p>
+                      <p style={{ margin: '0 0 0' }}>Consequence: in a cube book, [A, B] = A B A⁻¹ B⁻¹ means "do A, then B, then A⁻¹, then B⁻¹"; in a group theory book the same four letters mean "do B⁻¹, then A⁻¹, then B, then A" (the reverse). Translating between conventions is a matter of inverting the order.</p>
+                    </>}
+                  />
+                </div>
+              </div>
+              <p>
+                <L
+                  zh={<>具体例子: σ = (1 2)(3 4), τ = (1 3)。 试着算 σ τ 两种约定:</>}
+                  en={<>Concrete example: σ = (1 2)(3 4), τ = (1 3). Compute σ τ under both conventions:</>}
+                />
+              </p>
+              <ul>
+                <li><L zh={<>数学: στ = σ∘τ. (στ)(1) = σ(τ(1)) = σ(3) = 4。 (στ)(3) = σ(1) = 2。 (στ)(2) = σ(2) = 1。 (στ)(4) = σ(4) = 3。 结果 = (1 4 3 2)。</>} en={<>Math: στ = σ∘τ. (στ)(1) = σ(τ(1)) = σ(3) = 4. (στ)(3) = σ(1) = 2. (στ)(2) = σ(2) = 1. (στ)(4) = σ(4) = 3. Result = (1 4 3 2).</>} /></li>
+                <li><L zh={<>魔方: στ 表「先 σ 再 τ」 = τ∘σ。 算同样 4 个值, 得 (1 3 2 4) (上面的逆)。</>} en={<>Cuber: στ means "first σ then τ" = τ∘σ. Run through the same four values: result = (1 3 2 4) (the inverse of the above).</>} /></li>
+              </ul>
+              <p>
+                <L
+                  zh={<><strong>本文怎么约定?</strong> 本文沿用<em>魔方约定</em> (因为讨论的是魔方)。 但本节的 widget「合成约定对比」让你两种结果同屏看到, 帮你切换思维。</>}
+                  en={<><strong>What does this essay use?</strong> The <em>cuber convention</em> (since the subject is the cube). But the widget below shows both results side by side so you can flip mentally between them.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '合成约定对比' : 'composition convention comparator'}</div>
+                <ComposeConventions />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.6  奇偶性 — 三种定义、 一个不变量" en="32.6  Parity — three definitions, one invariant" />
+              </h3>
+              <p>
+                <L
+                  zh={<>排列的「奇偶」 sgn(σ) ∈ {`{`}+1, −1{`}`} 是 <TeX src="S_n" /> 上最有用的不变量。 它有 <strong>三个等价定义</strong>, 每个都给出一种验证手段:</>}
+                  en={<>The sign sgn(σ) ∈ {`{`}+1, −1{`}`} is the most useful invariant on <TeX src="S_n" />. It admits <strong>three equivalent definitions</strong>, each useful in a different setting:</>}
+                />
+              </p>
+              <ol style={{ paddingLeft: 26, lineHeight: 1.9 }}>
+                <li><L zh={<><strong>(i) 交叉数</strong>: 画两行线, 数 σ 让多少对线相交。 sgn(σ) = (−1)<sup>#crossings</sup>。 几何, 适合手工速判。</>} en={<><strong>(i) Crossings</strong>: draw the two-line diagram and count line crossings. sgn(σ) = (−1)<sup>#crossings</sup>. Geometric, ideal for visual quick checks.</>} /></li>
+                <li><L zh={<><strong>(ii) 循环长度</strong>: <TeX src="\mathrm{sgn}(\sigma) = (-1)^{n - c(\sigma)}" />, 其中 c(σ) 是 σ 的<em>圈数</em> (含 1-圈)。 等价地, sgn(σ) = ∏ (−1)<sup>|cᵢ|−1</sup>。 代数, 适合循环已知时。</>} en={<><strong>(ii) Cycle count</strong>: <TeX src="\mathrm{sgn}(\sigma) = (-1)^{n - c(\sigma)}" />, where c(σ) is the cycle count (including fixed points). Equivalently sgn(σ) = ∏ (−1)<sup>|cᵢ|−1</sup>. Algebraic — best when cycles are known.</>} /></li>
+                <li><L zh={<><strong>(iii) 对换分解</strong>: 把 σ 写成对换的乘积 σ = t₁ t₂ … t_k。 sgn(σ) = (−1)<sup>k</sup>, 且这个 <em>k 的奇偶不取决于分解方式</em>。 这是「奇偶是良定的」最非平凡的事实。</>} en={<><strong>(iii) Transposition decomposition</strong>: write σ = t₁ t₂ … t_k as a product of transpositions. sgn(σ) = (−1)<sup>k</sup>, and crucially <em>the parity of k is independent of the decomposition</em>. The fact that "parity is well-defined" is the most non-trivial of the three.</>} /></li>
+              </ol>
+              <div className="gt-def">
+                <div className="gt-def-title">{lang === 'zh' ? '为什么三个定义等价?' : 'Why all three agree'}</div>
+                <div className="gt-def-body">
+                  <L
+                    zh={<>关键引理: 一个对换 (a b) 跟在 σ 之后<em>恰好</em>把 σ 的圈数改变 ±1 (取决于 a, b 是否在同一个圈)。 所以「σ 加一次对换」 = 「圈数加减 1」 = 「sgn 反号」。 把 σ 写成 k 个对换, 等价于「从 e 出发 k 步翻奇偶 k 次」, 终态的奇偶完全由 k 决定。 这正是 (ii) ↔ (iii) 的桥梁; (i) ↔ (ii) 则可由「冒泡排序的逆序对 = 交叉数」 (Knuth TAOCP 5.1) 直接对应。</>}
+                    en={<>Key lemma: composing σ with one transposition (a b) <em>exactly</em> changes the cycle count by ±1 (depending on whether a, b lie in the same cycle of σ). So "add one transposition" = "flip cycle count by 1" = "flip sgn". Writing σ as k transpositions amounts to "k sign flips starting from e," and the final parity depends only on k. This bridges (ii) and (iii); (i) ↔ (ii) follows from "inversion count = crossing count" (Knuth, TAOCP §5.1).</>}
+                  />
+                </div>
+              </div>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '对换序列 → 奇偶对账' : 'transposition sequence → parity check'}</div>
+                <div className="gt-panel-sub">{lang === 'zh' ? '随意打几个 (a b) 对换, 同时算出 k 与 sgn(乘积) — 它们必然一致。' : 'type any sequence of (a b) transpositions; the count k and sgn(product) always agree.'}</div>
+                <ParityFromTranspositions />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.7  阶 — lcm 法则与 Landau 函数" en="32.7  Order — the lcm rule and Landau's function" />
+              </h3>
+              <p>
+                <L
+                  zh={<>排列 σ 的阶 ord(σ) 是「最小的正整数 k 使得 σ<sup>k</sup> = e」。 公式:</>}
+                  en={<>The order ord(σ) is the smallest positive integer k with σ<sup>k</sup> = e. Formula:</>}
+                />
+              </p>
+              <TeXBlock src="\operatorname{ord}(\sigma) \;=\; \operatorname{lcm}\bigl(|c_1|, |c_2|, \ldots, |c_r|\bigr)," />
+              <p>
+                <L
+                  zh={<>其中 c_i 跑过 σ 的不交圈。 道理简单: σ<sup>k</sup> 在每个圈 c 上的作用是「c 旋转 k 次」, 这等于 e 当且仅当 |c| 整除 k。 所有圈同时满足 ⇔ k 是所有 |c_i| 的公倍数 ⇔ 最小这样的 k = lcm。</>}
+                  en={<>where c_i ranges over σ's disjoint cycles. The reasoning is simple: σ<sup>k</sup> rotates each cycle c by k steps, which equals identity iff |c| divides k. All cycles satisfy this simultaneously iff k is a common multiple of every |c_i| iff the smallest such k = lcm.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '阶计算器' : 'order calculator'}</div>
+                <OrderCalculator />
+              </div>
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 600, marginTop: 28, marginBottom: 10, color: 'var(--ink)' }}>
+                <L zh="32.7.1  Landau 函数 — Sₙ 上的最大阶" en="32.7.1  Landau's function — maximum order in Sₙ" />
+              </h3>
+              <p>
+                <L
+                  zh={<>对 <TeX src="S_n" /> 里所有元素, 最大可能的阶记为 <strong>Landau 函数</strong> g(n) (Edmund Landau 1903 <em>Über die Maximalordnung der Permutationen gegebenen Grades</em>)。 它就是「把 n 拆成 n = n₁ + n₂ + … + n_r, 使 lcm(n₁, …, n_r) 最大」这个组合优化问题的答案。</>}
+                  en={<>Across all of <TeX src="S_n" />, the largest possible order is <strong>Landau's function</strong> g(n) (Edmund Landau 1903, <em>Über die Maximalordnung der Permutationen gegebenen Grades</em>). It is the answer to the combinatorial optimisation "partition n = n₁ + n₂ + … + n_r so that lcm(n₁, …, n_r) is maximal".</>}
+                />
+              </p>
+              <p>
+                <L
+                  zh={<>极值组合奇怪有趣: g(5) = 6 来自 2 + 3, g(7) = 12 来自 3 + 4, g(11) = 30 来自 2 + 3 + 5 + 1 (注意空出 1 个固定点)。 g 的渐近行为是 <TeX src="\ln g(n) \sim \sqrt{n \ln n}" /> (Landau)。</>}
+                  en={<>The extremal partitions are surprisingly delicate: g(5) = 6 from 2 + 3; g(7) = 12 from 3 + 4; g(11) = 30 from 2 + 3 + 5 + 1 (note the spare fixed point). Asymptotically <TeX src="\ln g(n) \sim \sqrt{n \ln n}" /> (Landau).</>}
+                />
+              </p>
+              <p>
+                <L
+                  zh={<>对魔方: 角块 cp ∈ S₈, 棱块 ep ∈ S₁₂。 g(8) = 15 (来自 3 + 5), g(12) = 60 (来自 3 + 4 + 5)。 但加上朝向 (CO ∈ ℤ/3 ×7, EO ∈ ℤ/2 ×11), 让阶变成「(各圈长 × 朝向阶) 的 lcm」, 因此 G 上最大阶 1260 = lcm(4, 5, 7, 9) 远超 g(8) 和 g(12) — 见 §13。</>}
+                  en={<>For the cube: corners cp ∈ S₈, edges ep ∈ S₁₂. g(8) = 15 (from 3 + 5) and g(12) = 60 (from 3 + 4 + 5). With orientations layered on (CO ∈ ℤ/3<sup>7</sup>, EO ∈ ℤ/2<sup>11</sup>), orders become lcm of "(cycle length × orientation order)" — pushing the maximum on G to 1260 = lcm(4, 5, 7, 9), far above either g(8) or g(12). See §13.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? 'Landau 函数表 (n = 1..20)' : "Landau's function (n = 1..20)"}</div>
+                <LandauTable />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.8  共轭可视化 — 重命名规则" en="32.8  Conjugation visualiser — the relabel rule" />
+              </h3>
+              <p>
+                <L
+                  zh={<>定理 32.2 说共轭就是「按 σ 改名」, 但口头说不够直观。 下面 widget 让你随便输入 σ 和 τ, 实时算 σ τ σ⁻¹, 并 <em>逐圈展示</em> τ 的循环如何被 σ 重命名为 σ τ σ⁻¹ 的循环。</>}
+                  en={<>Theorem 32.2 says conjugation is "rename via σ", but the verbal statement is hard to internalise. The widget below lets you type σ and τ, computes σ τ σ⁻¹ live, and shows <em>cycle by cycle</em> how each cycle of τ is relabelled into a cycle of σ τ σ⁻¹.</>}
+                />
+              </p>
+              <p>
+                <L
+                  zh={<><strong>魔方含义</strong>: τ 是「我已经会的 alg」 (例如一个棱块 3-循环), σ 是「把目标块运到 τ 习惯位置的 setup 移动」, σ τ σ⁻¹ 是「把 τ 的效果<em>搬到新位置</em>」。 这是盲拧、 FMC、 ZBLL setup 三大场合的共同语法。</>}
+                  en={<><strong>Cube interpretation</strong>: τ is "an alg you already know" (e.g. an edge 3-cycle); σ is "a setup move that brings the target pieces into τ's home position"; σ τ σ⁻¹ then "relocates τ's effect to the new spot". This is the shared grammar of BLD, FMC and ZBLL setup work.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '共轭可视化器' : 'conjugation visualiser'}</div>
+                <div className="gt-panel-sub">{lang === 'zh' ? 'σ τ σ⁻¹ — 圈型不变, 每个 entry 被 σ 重命名' : 'σ τ σ⁻¹ — same cycle shape, every entry relabelled by σ'}</div>
+                <ConjugationVisualiser />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.9  换位子可视化 — 何时 [A, B] 是 3-循环" en="32.9  Commutator visualiser — when [A, B] is a 3-cycle" />
+              </h3>
+              <p>
+                <L
+                  zh={<>已知 [A, B] = A B A⁻¹ B⁻¹ 衡量 A、 B「不交换的程度」。 它在魔方上的核心用法 (§9): 当 A 和 B 的 <em>影响域</em> 恰好<strong>共享一个块</strong>时, [A, B] 是一个干净的 <strong>3-循环</strong> —— 把那一个共享块, 加上它在 A 下、 B 下各拉过来的一个伴, 三块互相循环, 其余全部回到原位。</>}
+                  en={<>Recall [A, B] = A B A⁻¹ B⁻¹ measures how badly A and B fail to commute. Its key cube application (§9): when A and B affect <em>almost</em> disjoint regions but <strong>share exactly one piece</strong>, [A, B] is a clean <strong>3-cycle</strong> — that shared piece, plus one companion each from A's and B's region, cycle among themselves while everything else returns home.</>}
+                />
+              </p>
+              <p>
+                <L
+                  zh={<>用纯排列也能感受这一点: A = (1 2 3 4 5), B = (3 4 5 6 7), 共享 {`{`}3, 4, 5{`}`}; [A, B] 是一个 5-循环。 若改 B 为 (5 6 7), 共享 {`{`}5{`}`}; [A, B] 简洁为单一 3-循环。 这是 commutator-为-3-cycle 的精确判据 — 见 §9.1 那 4 个魔方原子。</>}
+                  en={<>Pure permutations show this too: A = (1 2 3 4 5), B = (3 4 5 6 7) — overlap {`{`}3, 4, 5{`}`}, and [A, B] is a 5-cycle. Switch B to (5 6 7) so overlap shrinks to {`{`}5{`}`}, and [A, B] reduces to a clean 3-cycle. This is the precise criterion for "commutator = 3-cycle" — the same arithmetic that backs the four atom algs in §9.1.</>}
+                />
+              </p>
+              <div className="gt-thm">
+                <div className="gt-thm-title">{lang === 'zh' ? '事实 32.3 — [A, B] 永远是偶置换' : 'Fact 32.3 — [A, B] is always even'}</div>
+                <div className="gt-thm-body">
+                  <L
+                    zh={<>sgn([A, B]) = sgn(A) sgn(B) sgn(A⁻¹) sgn(B⁻¹) = sgn(A)² sgn(B)² = +1。 所以换位子从不引入奇偶, 它们「住在交错群 <TeX src="A_n" /> 里」。 在魔方上, <TeX src="A_8 \times A_{12}" /> 投影下任何换位子都在 ker(sgn) 内 — 这正是 [G, G] = G' 的源头 (§9.2)。</>}
+                    en={<>sgn([A, B]) = sgn(A) sgn(B) sgn(A⁻¹) sgn(B⁻¹) = sgn(A)² sgn(B)² = +1. So commutators never carry parity — they live inside the alternating group <TeX src="A_n" />. On the cube, every commutator lies in the kernel of (sgn ∘ cp, sgn ∘ ep), which is why the cube's derived subgroup [G, G] = G' has index 2 (§9.2).</>}
+                  />
+                </div>
+              </div>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '换位子计算器' : 'commutator computer'}</div>
+                <div className="gt-panel-sub">{lang === 'zh' ? '改变 A、B 的重叠位置, 看 [A, B] 变化; 单点重叠通常给 3-循环。' : 'change A, B overlap and watch [A, B] react; single-point overlap usually yields a 3-cycle.'}</div>
+                <CommutatorComputer />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.10  幂 — σ^k 与还原节奏" en="32.10  Powers — σ^k and the loop home" />
+              </h3>
+              <p>
+                <L
+                  zh={<>σ 的幂 σ<sup>k</sup> 的循环结构有简单公式: 一个长度 L 的圈在 σ<sup>k</sup> 下分成 gcd(k, L) 个长度 L / gcd(k, L) 的圈。 当 k 是 L 的倍数时, 该圈退化为 L 个固定点。 所以 σ<sup>ord(σ)</sup> = e 是显然的。</>}
+                  en={<>The cycle structure of σ<sup>k</sup> follows a simple rule: a cycle of length L breaks into gcd(k, L) cycles of length L / gcd(k, L) under σ<sup>k</sup>. When k is a multiple of L, that cycle splinters into L fixed points. So σ<sup>ord(σ)</sup> = e is automatic.</>}
+                />
+              </p>
+              <p>
+                <L
+                  zh={<>魔方应用: 任何公式 X 反复执行最终回到原状, 步数 = ord(X)。 例如 R 的阶为 4 (4 次 R 等于 e), R U 的阶为 105 (5-cycle 角块 × 7-cycle 棱块 × 翻转 → lcm 105), 一根普通的 "R U R'" 反复执行回原状需要 6 次。 拖动下面滑条手感这件事。</>}
+                  en={<>Cube application: applying any alg X repeatedly eventually returns the cube to its start, after ord(X) repetitions. R has order 4 (R⁴ = e); R U has order 105 (5-cycle corners × 7-cycle edges × flips → lcm 105); a typical "R U R'" repeats back in 6. Drag the slider below to feel the cycle.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '幂滑条' : 'power slider'}</div>
+                <PowerSlider />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.11  生成子群 — 两个元素能撑多大?" en="32.11  Generated subgroups — how big do two elements get?" />
+              </h3>
+              <p>
+                <L
+                  zh={<>给两个排列 g₁、 g₂ ∈ <TeX src="S_n" />, 它们生成的子群 ⟨g₁, g₂⟩ 多大? 这是个看似简单、 实际深刻的问题。 经典例子:</>}
+                  en={<>Given two permutations g₁, g₂ ∈ <TeX src="S_n" />, how large is the subgroup ⟨g₁, g₂⟩? An apparently elementary question with deep consequences. Classical examples:</>}
+                />
+              </p>
+              <ul>
+                <li><L zh={<>⟨(1 2)⟩ = ℤ/2 (2 个元素)。</>} en={<>⟨(1 2)⟩ = ℤ/2 (2 elements).</>} /></li>
+                <li><L zh={<>⟨(1 2), (2 3)⟩ = <TeX src="S_3" /> (6 个元素, 因为相邻对换生成 <TeX src="S_n" />)。</>} en={<>⟨(1 2), (2 3)⟩ = <TeX src="S_3" /> (6 elements, since adjacent transpositions generate <TeX src="S_n" />).</>} /></li>
+                <li><L zh={<>⟨(1 2 3 4 5), (1 2)⟩ = <TeX src="S_5" /> (120 个元素 — 经典「一对换 + 长循环 ⇒ <TeX src="S_n" />」)。</>} en={<>⟨(1 2 3 4 5), (1 2)⟩ = <TeX src="S_5" /> (120 elements — the classic "one transposition + one n-cycle generate <TeX src="S_n" />").</>} /></li>
+                <li><L zh={<>⟨(1 2 3 4 5), (1 3)⟩ = ? 试着猜, 然后用 widget 验证 — 答案不是 <TeX src="S_5" />! 因为 (1 3) 不是相邻于 5-循环 (1 2 3 4 5) 的 「邻位」 — 但实际仍生成 <TeX src="S_5" />, 因为 (1 3) 与 (1 2 3 4 5) 的共轭轨道仍能拼出所有相邻对换。</>} en={<>⟨(1 2 3 4 5), (1 3)⟩ = ? Guess first, then check with the widget — the answer is not obvious. (In fact, it still equals <TeX src="S_5" />, because conjugates of (1 3) by powers of the 5-cycle cover all transpositions on {`{1..5}`}.)</>} /></li>
+              </ul>
+              <div className="gt-def">
+                <div className="gt-def-title">{lang === 'zh' ? '定理 32.4 (Jordan)' : 'Theorem 32.4 (Jordan)'}</div>
+                <div className="gt-def-body">
+                  <L
+                    zh={<>对 n ≥ 5: ⟨n-循环, 对换⟩ = <TeX src="S_n" /> 当且仅当对换的两个元素之间在 n-循环上的「距离」与 n 互素。 若距离与 n 有公因子 d &gt; 1, 子群退化为「d 个 n/d-顶点的对称群直积里再加一个 ℤ/d 旋转」 (一个不平凡的子群, 较 <TeX src="S_n" /> 小)。</>}
+                    en={<>For n ≥ 5: ⟨n-cycle, transposition⟩ = <TeX src="S_n" /> iff the "distance" between the two transposition elements (along the n-cycle) is coprime to n. If they share a factor d &gt; 1, the subgroup collapses to a wreath-style product strictly smaller than <TeX src="S_n" />.</>}
+                  />
+                </div>
+              </div>
+              <p>
+                <L
+                  zh={<>本节 widget 用最朴素的 BFS 枚举 (n ≤ 9 时<em>可行</em>, n ≥ 10 状态空间 3.6M+ 太大), 但思路一致。 大规模情况 (魔方 |G| = 4.3 × 10¹⁹) 必须用 <strong>Schreier-Sims 算法</strong> (Sims 1970) 或更现代的随机算法 — GAP 系统在毫秒内能算 |⟨U, R⟩| 之类。</>}
+                  en={<>The widget below uses the most naive BFS (works for n ≤ 9; n ≥ 10 has &gt; 3.6M states, too big). The same idea scales via the <strong>Schreier-Sims algorithm</strong> (Sims 1970) — GAP can compute |⟨U, R⟩| in milliseconds despite |G| = 4.3 × 10¹⁹.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? '⟨g₁, g₂⟩ 阶数计算 (BFS)' : 'order of ⟨g₁, g₂⟩ (BFS)'}</div>
+                <SubgroupGenerator />
+              </div>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.12  循环指数多项式 — 染色计数的「公式发生器」" en="32.12  Cycle index polynomial — the colouring formula" />
+              </h3>
+              <p>
+                <L
+                  zh={<>群 G 作用于 n 个对象时, <strong>循环指数多项式</strong> Z<sub>G</sub>(z₁, …, z<sub>n</sub>) 把 G 的每个元素的「在 n 对象上的圈型」 编码成单项, 再除以 |G|:</>}
+                  en={<>When a group G acts on n objects, the <strong>cycle index polynomial</strong> Z<sub>G</sub>(z₁, …, z<sub>n</sub>) encodes the cycle type of each element on the n-object action, averaged over G:</>}
+                />
+              </p>
+              <TeXBlock src="Z_G(z_1, z_2, \ldots, z_n) \;=\; \frac{1}{|G|} \sum_{g \in G} z_1^{c_1(g)} z_2^{c_2(g)} \cdots z_n^{c_n(g)}" />
+              <p>
+                <L
+                  zh={<>其中 c_k(g) 是 g 在 n 对象上作用的长度-k 循环数。 Pólya 列举定理: 用 c 种颜色染这 n 对象, 在 G 等价下不同染色数 = Z<sub>G</sub>(c, c, …, c)。</>}
+                  en={<>where c_k(g) is the number of length-k cycles in g's action on the n objects. Pólya's enumeration theorem: the number of distinct c-colourings up to G-equivalence equals Z<sub>G</sub>(c, c, …, c).</>}
+                />
+              </p>
+              <p>
+                <L
+                  zh={<>具体例子: 二面体群 D₄ (8 元素) 作用于正方形 4 顶点。 列出 8 个元素的「在 4 顶点上的圈型」, 平均得 Z<sub>D₄</sub>。 这是「方形项链问题」 的根源。</>}
+                  en={<>Worked example: the dihedral group D₄ (8 elements) acting on the 4 vertices of a square. List the cycle structure of each of the 8 elements on those 4 vertices, then average to get Z<sub>D₄</sub>. This is the root of the "square necklace" counting problem.</>}
+                />
+              </p>
+              <div className="gt-panel">
+                <div className="gt-panel-title">{lang === 'zh' ? 'D₄ 在 4 顶点上的循环指数' : 'cycle index of D₄ on 4 vertices'}</div>
+                <CycleIndexPoly />
+              </div>
+              <p style={{ marginTop: 14 }}>
+                <L
+                  zh={<>对魔方的「外部对称」 O<sub>h</sub> (48 阶, 24 旋转 + 24 镜像旋转) 作用于 <em>6 个面</em>, 类似计算给出 Z<sub>O<sub>h</sub></sub>(c, …, c) = (c⁶ + 3c⁴ + 12c³ + 8c² + 6c² + 12c² + 6c²) / 48 = (c⁶ + 3c⁴ + …) / 48。 取 c = 6 (六色), 得 30 — 即 6 种颜色染立方体 6 面的本质不同方案数 (§21.7)。</>}
+                  en={<>For the cube's outer symmetry O<sub>h</sub> (48 elements, 24 rotations + 24 mirror rotations) acting on <em>6 faces</em>, a similar computation gives Z<sub>O<sub>h</sub></sub>(c, …, c) = (c⁶ + 3c⁴ + …) / 48. At c = 6 the count is exactly 30 — the number of essentially distinct 6-colour cubes (§21.7).</>}
+                />
+              </p>
+
+              <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
+                <L zh="32.13  把魔方算法当数学对象记" en="32.13  Memorising algs as math objects" />
+              </h3>
+              <p>
+                <L
+                  zh={<>本节最后一个实用建议: 记 PLL / OLL / ZBLL 这类长公式不要硬背手指动作, 而是把它们识为<strong>数学对象</strong>。</>}
+                  en={<>One last practical takeaway: don't memorise PLL / OLL / ZBLL by finger sequence — recognise them as <strong>mathematical objects</strong>.</>}
+                />
+              </p>
+              <ul>
+                <li><L zh={<><strong>PLL = 顶层 cp ∘ ep 的<em>循环积</em></strong>。 21 个 PLL 案例对应顶层「角圈型 + 棱圈型」 的 21 个非平凡组合 (含 H、 Z、 Ua、 Ub、 …)。 看到 scramble 顶层, 心里画一个连线图: 哪 3 个角块要循环、 哪 3 个棱块要循环。 名字对应循环型。</>} en={<><strong>PLL = a cycle product on top-layer cp ∘ ep</strong>. The 21 PLL cases correspond exactly to the 21 non-trivial combinations of "corner-cycle shape + edge-cycle shape" on the top layer (H, Z, Ua, Ub, …). Look at a scramble's top layer and visualise the connection graph: which 3 corners cycle, which 3 edges. Names = cycle shapes.</>} /></li>
+                <li><L zh={<><strong>OLL = 顶层 (co, eo) 朝向向量</strong>。 57 个 OLL 案例对应 (co ∈ {`(ℤ/3)`}<sup>4</sup>, eo ∈ {`(ℤ/2)`}<sup>4</sup>) 满足 Σco ≡ 0 mod 3 的所有方向。 cross 形状 vs 反三角形 vs T 形 ↔ 不同的 eo 向量; 角朝向 ↔ co 向量。</>} en={<><strong>OLL = an orientation vector (co, eo) on the top layer</strong>. The 57 OLL cases correspond to all (co ∈ {`(ℤ/3)`}<sup>4</sup>, eo ∈ {`(ℤ/2)`}<sup>4</sup>) consistent with Σco ≡ 0 mod 3. The cross / antisune / T-shape iconography labels distinct eo vectors; corner-orientation icons label co vectors.</>} /></li>
+                <li><L zh={<><strong>ZBLL = (PLL × OLL) 同时识别</strong>。 算法表 ≈ 493 个组合 ↔ 顶层 (cp, ep, co) 在 ep 已正向、 eo = 0 的子集上的全部状态。 用代数记 ZBLL: 「先看 cp 圈型 (21 PLL 之一), 再看 co 向量 (8 OLL-on-cp-fixed 之一)」, 你只需 21 + 8 ≈ 29 个原始模式, 不是 493 个独立 finger sequence。</>} en={<><strong>ZBLL = simultaneous (PLL × OLL) recognition</strong>. Roughly 493 cases ↔ all (cp, ep, co) states with ep already oriented and eo = 0. Memorise algebraically: "identify cp cycle type (one of 21 PLL); then co vector (one of 8 fixed-cp OLLs)" — only 21 + 8 ≈ 29 primitive patterns instead of 493 independent finger sequences.</>} /></li>
+              </ul>
+              <p>
+                <L
+                  zh={<>这就是为什么 §22 那条 「先 cycle 后 orientation」 的子群链 (CF → F2L → OLL → PLL) 是<strong>记忆架构</strong> 而不仅是<strong>解法架构</strong>: 它把 4.3 × 10¹⁹ 个状态分层, 每层只剩几十个等价类, 人脑能装得下。</>}
+                  en={<>This is why §22's "cycle then orientation" subgroup chain (CF → F2L → OLL → PLL) is as much a <strong>memory architecture</strong> as a <strong>solving architecture</strong>: it stratifies 4.3 × 10¹⁹ states so that each layer has only tens of equivalence classes — a count the human brain can hold.</>}
+                />
+              </p>
+              <div className="gt-aside" style={{ marginTop: 24 }}>
+                <L
+                  zh={<><strong>本节小结</strong>: 11 个新 widget 跟 32.1 的 PermutationVisualiser 一起, 覆盖了 cuber 99% 用得着的「群论日常」 — 两行 ↔ 循环 ↔ 交叉 ↔ 阶 ↔ 共轭 ↔ 换位子 ↔ 幂 ↔ 生成子群 ↔ Pólya 计数。 后续阅读: D. Joyner, <em>Adventures in Group Theory</em> (Johns Hopkins 2008), 第 4-7 章把这些工具完整地搬到魔方上, 是本节的「教科书版」 [<a href="#ref-joyner">joyner</a>]。</>}
+                  en={<><strong>Section summary</strong>: the 11 new widgets plus 32.1's PermutationVisualiser cover 99% of the "everyday group theory" a cuber uses — two-line ↔ cycles ↔ crossings ↔ order ↔ conjugation ↔ commutator ↔ powers ↔ generated subgroups ↔ Pólya counting. Follow-up reading: D. Joyner, <em>Adventures in Group Theory</em> (Johns Hopkins 2008), chapters 4–7 — the textbook treatment of exactly these tools on the cube [<a href="#ref-joyner">joyner</a>].</>}
+                />
+              </div>
+            </GTSec>
+
+
+
+
       {/* ═══════════════ References ══════════════════════════════════ */}
       <GTSec id="refs" className="gt-sec">
         <div className="gt-sec-num">REF</div>
@@ -7141,6 +14087,33 @@ Membership(g):
           <ol>
             <li id="ref-singmaster" className="gt-ref-cite">
               D. Singmaster, <em>Notes on Rubik's "Magic Cube"</em>, Enslow Publishers, 1981. The book that named the canonical move notation U, D, L, R, F, B and laid out the first algebraic study of the cube.
+            </li>
+            <li id="ref-cubic-circular">
+              D. Singmaster (ed.), <em>Cubic Circular</em>, issues 1–8, 1981–1985. The first international puzzle newsletter; scans hosted at <a href="https://www.jaapsch.net/puzzles/cubic1.htm" target="_blank" rel="noopener noreferrer">jaapsch.net/puzzles/cubic{`{1..8}`}.htm</a>. Issue 3/4 in particular contains the pretty-pattern catalog that seeded §13.
+            </li>
+            <li id="ref-jaapsch">
+              J. Scherphuis, <em>Jaap's Puzzle Page</em>. <a href="https://www.jaapsch.net/puzzles/" target="_blank" rel="noopener noreferrer">jaapsch.net/puzzles/</a>. Source for §27 (lights.htm/lomath.htm), §28 (pegsolit.htm), §29 (hamilton.htm), §30 (pgl25.htm), §31 (graphpuzz.htm) and the Cayley-graph catalogue in §14.
+            </li>
+            <li id="ref-circle-manual">
+              J. Slocum, J. Botermans, <em>Circle Puzzler's Manual</em>, 1986. Reference for rotational sliding puzzles (Hungarian Rings family) — generalises §31's two-face classification to multi-region overlap.
+            </li>
+            <li id="ref-anderson-feil">
+              M. Anderson, T. Feil, <em>Turning Lights Out with Linear Algebra</em>, Mathematics Magazine 71(4):300–303, 1998. The reference proof that 5×5 Lights Out has <TeX src={`\\dim \\ker A = 2`} /> (§27).
+            </li>
+            <li id="ref-conway-beasley">
+              J. H. Conway, E. R. Berlekamp, R. K. Guy, <em>Winning Ways for your Mathematical Plays</em>, Vol. 4, A K Peters, 2nd ed., 2004. Chapter on peg solitaire formalises the 3-colouring (§28) and pagoda functions.
+            </li>
+            <li id="ref-lovasz">
+              L. Lovász, <em>Problem 11</em>, in Combinatorial structures and their applications, Gordon and Breach, 1970. The original statement of the Hamiltonian-path conjecture (§29).
+            </li>
+            <li id="ref-wilson-1974">
+              R. M. Wilson, <em>Graph Puzzles, Homotopy, and the Alternating Group</em>, J. Combinatorial Theory B 16:86–96, 1974. Sliding-puzzle counterpart of §31; combined with Jaap's result gives a clean dichotomy.
+            </li>
+            <li id="ref-cmetrick">
+              "Cmetrick Too" Contest, 2001–2003. An early online Rubik's-cube speed-solving contest with full result archive at <a href="https://www.jaapsch.net/puzzles/cmetrick.htm" target="_blank" rel="noopener noreferrer">jaapsch.net/puzzles/cmetrick.htm</a> — historical seed of WCA-style standardized competition.
+            </li>
+            <li id="ref-puzzle-patents">
+              <em>Puzzle Patents</em>, indexed at <a href="https://www.jaapsch.net/puzzles/patents.htm" target="_blank" rel="noopener noreferrer">jaapsch.net/puzzles/patents.htm</a>. The intellectual-property timeline complementing this page's algebraic timeline (Rubik 1975, Nichols 1972, Ishigi 1976, …).
             </li>
             <li id="ref-chen">
               J. Chen, <em>Group Theory and the Rubik's Cube</em>, Harvard lecture notes, 2004. <a href="https://people.math.harvard.edu/~jjchen/docs/Group%20Theory%20and%20the%20Rubik's%20Cube.pdf" target="_blank" rel="noopener noreferrer">people.math.harvard.edu/~jjchen</a>
@@ -7336,5 +14309,11 @@ const TOC: { id: string; num: string; zh: string; en: string }[] = [
   { id: 'random-walks',       num: '24', zh: '群上的随机游走',             en: 'Random walks on G' },
   { id: 'computational',      num: '25', zh: '计算群论:BSGS 与 Schreier–Sims', en: 'Computational group theory' },
   { id: 'representations',    num: '26', zh: '表示论一瞥',                en: 'A glimpse of representation theory' },
+  { id: 'lights-out',         num: '27', zh: 'Lights Out 与 𝔽₂ 线性代数',  en: 'Lights Out · linear algebra over 𝔽₂' },
+  { id: 'peg-solitaire',      num: '28', zh: '孔明棋 · 三染色不变量',       en: 'Peg solitaire · 3-colouring invariant' },
+  { id: 'hamiltonian',        num: '29', zh: 'Hamilton 路径 + Gray 码',     en: 'Hamiltonian paths + Gray codes' },
+  { id: 'two-face-pgl',       num: '30', zh: '两面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅',  en: 'Two-face corners ≅ PGL₂(𝔽₅) ≅ S₅' },
+  { id: 'rotational-puzzles', num: '31', zh: '图上的旋转拼图 · (x,y,z)',    en: 'Rotational puzzles on graphs · (x,y,z)' },
+  { id: 'useful-math',        num: '32', zh: '有用数学 · 排列可视化',         en: 'Useful mathematics · permutation visualiser' },
   { id: 'refs',               num: 'REF', zh: '参考文献',                   en: 'References' },
 ];

@@ -1,25 +1,17 @@
-import { useEffect, createContext, useContext } from 'react';
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './algorithm_intro.css';
 
 const ACCENT = '#F0A04B';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useContext(LangCtx) === 'zh' ? zh : en}</>;
-}
 
 export default function Min2PhasePage() {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = 'min2phase — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('min2phase', 'min2phase');
 
   return (
     <LangCtx.Provider value={lang}>

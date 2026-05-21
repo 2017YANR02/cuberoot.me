@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './algorithms_landing.css';
 
 interface Topic {
@@ -97,9 +97,7 @@ export default function AlgorithmsLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? '算法导览 — CubeRoot' : 'Algorithms — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('算法导览', 'Algorithms');
 
   return (
     <div className="algos-landing">

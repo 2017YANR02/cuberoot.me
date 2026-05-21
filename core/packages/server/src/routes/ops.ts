@@ -10,7 +10,7 @@
  * Schema 见 migrations/0010_ops_commands.sql.
  */
 import { Hono } from 'hono';
-import { query, sql } from '../db/connection.js';
+import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
 export const opsRoutes = new Hono();
@@ -200,11 +200,17 @@ opsRoutes.put('/ops/commands/reorder', async (c) => {
     if (!existingSet.has(id)) return c.json({ error: `id ${id} not in this category` }, 400);
   }
 
-  await sql.begin(async (tx) => {
-    for (let i = 0; i < ids.length; i++) {
-      await tx`UPDATE ops_commands SET position = ${i} WHERE id = ${ids[i]} AND category = ${body.category as string}`;
-    }
-  });
+  // 单次 UPDATE FROM VALUES — 一次往返替 N 次 UPDATE。
+  const valuesSql = ids.map(() => '(?::text, ?::int)').join(', ');
+  const params: unknown[] = [];
+  ids.forEach((id, i) => { params.push(id, i); });
+  params.push(body.category);
+  await query(
+    `UPDATE ops_commands AS a SET position = v.pos
+     FROM (VALUES ${valuesSql}) AS v(id, pos)
+     WHERE a.id = v.id AND a.category = ?`,
+    params,
+  );
 
   return c.json({ ok: true });
 });

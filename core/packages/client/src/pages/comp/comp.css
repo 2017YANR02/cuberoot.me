@@ -264,8 +264,17 @@
   height: 22px;
   display: block;
 }
+.comp-title-icon-lucide {
+  color: var(--muted-foreground);
+}
+.comp-title-icon-lucide svg {
+  display: block;
+}
 .comp-title-icon:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.comp-title-icon-lucide:hover {
+  color: var(--foreground);
 }
 .comp-detail-meta {
   display: flex;

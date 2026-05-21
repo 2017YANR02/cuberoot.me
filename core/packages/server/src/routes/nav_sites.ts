@@ -9,7 +9,7 @@
  * Schema 见 migrations/0001_nav_sites.sql。
  */
 import { Hono } from 'hono';
-import { query, sql } from '../db/connection.js';
+import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
 export const navSitesRoutes = new Hono();
@@ -199,11 +199,17 @@ navSitesRoutes.put('/nav/sites/reorder', async (c) => {
     if (!existingSet.has(id)) return c.json({ error: `id ${id} not in this group` }, 400);
   }
 
-  await sql.begin(async (tx) => {
-    for (let i = 0; i < ids.length; i++) {
-      await tx`UPDATE nav_sites SET position = ${i} WHERE id = ${ids[i]} AND group_id = ${body.groupId as string}`;
-    }
-  });
+  // 单次 UPDATE FROM VALUES — 一次往返替 N 次 UPDATE。
+  const valuesSql = ids.map(() => '(?::bigint, ?::int)').join(', ');
+  const params: unknown[] = [];
+  ids.forEach((id, i) => { params.push(id, i); });
+  params.push(body.groupId);
+  await query(
+    `UPDATE nav_sites AS a SET position = v.pos
+     FROM (VALUES ${valuesSql}) AS v(id, pos)
+     WHERE a.id = v.id AND a.group_id = ?`,
+    params,
+  );
 
   return c.json({ ok: true });
 });

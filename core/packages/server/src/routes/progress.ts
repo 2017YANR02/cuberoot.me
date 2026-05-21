@@ -48,14 +48,20 @@ progressRoutes.post('/progress/:algSetId', async (c) => {
     return c.json({ error: 'userId and results are required' }, 400);
   }
 
-  // 批量插入
-  const sql = `INSERT INTO train_results (user_id, alg_set_id, case_id, time_ms, correct, created_at)
-               VALUES (?, ?, ?, ?, ?, to_timestamp(?::numeric / 1000.0) AT TIME ZONE 'UTC')`;
-
+  // 批量插入:单条 multi-row INSERT,200 条 RTT 从 200 次降到 1 次。
+  // correct 列 PG 端是 SMALLINT,driver 不接 boolean → 1/0。
+  const valuesSql = results
+    .map(() => `(?, ?, ?, ?, ?, to_timestamp(?::numeric / 1000.0) AT TIME ZONE 'UTC')`)
+    .join(', ');
+  const params: unknown[] = [];
   for (const r of results) {
-    // correct 列 PG 端是 SMALLINT,driver 不接 boolean,前端来的 true/false → 1/0
-    await query(sql, [userId, algSetId, r.caseId, r.timeMs, r.correct ? 1 : 0, r.timestamp]);
+    params.push(userId, algSetId, r.caseId, r.timeMs, r.correct ? 1 : 0, r.timestamp);
   }
+  await query(
+    `INSERT INTO train_results (user_id, alg_set_id, case_id, time_ms, correct, created_at)
+     VALUES ${valuesSql}`,
+    params,
+  );
 
   return c.json({ success: true, count: results.length });
 });

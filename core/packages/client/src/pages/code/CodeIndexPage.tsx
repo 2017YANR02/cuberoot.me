@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './code_index.css';
 
 interface Card {
@@ -121,9 +121,7 @@ export default function CodeIndexPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  useEffect(() => {
-    document.title = lang === 'zh' ? '代码 — CubeRoot' : 'Code — CubeRoot';
-  }, [lang]);
+  useDocumentTitle('代码', 'Code');
 
   return (
     <div className="code-index">

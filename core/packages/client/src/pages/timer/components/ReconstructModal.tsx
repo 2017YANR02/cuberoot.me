@@ -20,6 +20,7 @@ import { encodeReplayUrl } from '../share/encode';
 import { nxnSizeForEvent } from '../cube';
 import { memoize3bld } from '../solver/bld_helper';
 import PlaybackPanel from './PlaybackPanel';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import './reconstruct.css';
 
 interface Props {
@@ -46,22 +47,6 @@ const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 
 function formatSec(ms: number, digits = 2): string {
   return (ms / 1000).toFixed(digits) + 's';
-}
-
-/** True iff viewport ≤ 768px. Used to gate the mobile accordion behavior;
- *  desktop renders all sections expanded with no toggle. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 768px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
 }
 
 interface AccordionSectionProps {

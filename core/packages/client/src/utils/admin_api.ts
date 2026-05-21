@@ -6,12 +6,13 @@ function getToken(): string | null {
   return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
 }
 
-export function authHeaders(): HeadersInit {
+// 默认带 Content-Type: application/json;GET / DELETE 等无 body 路径传 false 跳过。
+export function authHeaders(json = true): HeadersInit {
   const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+  const h: Record<string, string> = {};
+  if (json) h['Content-Type'] = 'application/json';
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
 }
 
 export async function handleApi<T>(r: Response): Promise<T> {

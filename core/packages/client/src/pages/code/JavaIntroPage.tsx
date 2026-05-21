@@ -1,15 +1,9 @@
-import { useEffect, useRef, useContext, createContext } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LangCtx, L, type Lang } from './_intro/Lang';
+import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './java_intro.css';
-
-type Lang = 'zh' | 'en';
-const LangCtx = createContext<Lang>('zh');
-const useLang = () => useContext(LangCtx);
-
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  return <>{useLang() === 'zh' ? zh : en}</>;
-}
 
 const JAVA_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -448,11 +442,10 @@ export default function JavaIntroPage() {
   const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.title = lang === 'zh'
-      ? 'Java : Write Once, Run Anywhere — 30 年仍在 Top 3 的 JVM 故事'
-      : 'Java : Write Once, Run Anywhere — 30 years on, still top 3 on the JVM';
-  }, [lang]);
+  useDocumentTitle(
+    'Java : Write Once, Run Anywhere — 30 年仍在 Top 3 的 JVM 故事',
+    'Java : Write Once, Run Anywhere — 30 years on, still top 3 on the JVM',
+  );
 
   useEffect(() => {
     const root = rootRef.current;

@@ -14,6 +14,7 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 
 import { OLL_CASES } from '../scramble/algs/oll_cases';
 import { PLL_CASES } from '../scramble/algs/pll_cases';
 import type { DrillType } from '../scramble/drill';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Props {
   isZh: boolean;
@@ -22,21 +23,6 @@ interface Props {
   onPick: (type: DrillType, caseId: string) => void;
   onExit: () => void;
   onClose: () => void;
-}
-
-/** True iff viewport ≤ 480px (phone-sized). Drives larger tap targets + 3-col grid. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
 }
 
 export default function DrillModal({
@@ -51,7 +37,7 @@ export default function DrillModal({
   const [searchQuery, setSearchQuery] = useState('');
   const titleId = useId();
   const firstButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(480);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
