@@ -1089,7 +1089,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
   }
 
   // PG-known WCA shortcut: 当 wca_competitions 已收录这场 (announce → 周更 dump 覆盖),
-  // 直接跑 wca + 并行 cubing.com 报名表抓取,skip probe (~2s) + 串行 scrape (~1.2s).
+  // 直接跑 wca + 并行 cubing.com 报名表抓取 + probe,skip 串行 probe (~2s).
   // 缓存 / inflight dedup 跟原路径一致.过去比赛走 wca_db fast-path 不到这里.
   // wca_competitions 没收录的(刚宣布、dump 还没更新) fall through 到 probe 兜底.
   if (choice === 'auto') {
@@ -1100,31 +1100,54 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
       );
       if (known.length > 0) {
         const fastKey = `${wcaId}:wca`;
+        // 上次 fallback 到 cubing 的决策还在缓存窗内 → 秒返回,跳过 WCA + probe.
+        // (WCA REST 公示成绩前的几天/几周内反复打开就走这条.)
+        const cubingCacheKey = `${wcaId}:cubing`;
+        const cubingCached = cache.get(cubingCacheKey);
+        if (cubingCached && Date.now() - cubingCached.fetchedAt < ttlFor('cubing')
+            && Object.values(cubingCached.resultsByRound).some(arr => arr.length > 0)) {
+          return cubingCached;
+        }
         const cachedFast = cache.get(fastKey);
         if (cachedFast && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
-          return { ...cachedFast, availableSources: ['wca'] };
+          return { ...cachedFast, availableSources: cachedFast.availableSources ?? ['wca'] };
         }
         const pendingFast = inflight.get(fastKey);
-        if (pendingFast) return pendingFast.then(d => ({ ...d, availableSources: ['wca'] }));
+        if (pendingFast) return pendingFast.then(d => ({ ...d, availableSources: d.availableSources ?? ['wca'] }));
 
         const pFast = (async () => {
           const cubingSlug = wcaIdToCubingSlug(wcaId);
-          const [data, scraped] = await Promise.all([
+          const [data, probe, scraped] = await Promise.all([
             loadFromWca(wcaId, onProgress),
+            probeSources(wcaId),
             scrapeCompetitors(cubingSlug).catch(() => ({} as Record<string, User>)),
           ]);
+          const available: SourceId[] = ['wca'];
+          if (probe.cubingMeta) available.push('cubing');
+          if (probe.wcaLiveId) available.push('wca_live');
+
+          // WCA REST 还没公示成绩(刚结束的比赛 1~4 周内常见) + cubing.com 有数据
+          // → 直接走 cubing.com,events/users/results 全替换,前端不再看空表.
+          const wcaHasResults = Object.values(data.resultsByRound).some(arr => arr.length > 0);
+          if (!wcaHasResults && probe.cubingMeta) {
+            const cubingData = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
+            cubingData.availableSources = available;
+            cache.set(cubingCacheKey, cubingData);
+            return cubingData;
+          }
+
           let finalData = data;
           if (Object.keys(data.users).length === 0 && Object.keys(scraped).length > 0) {
             await enrichUsersWithChineseNames(scraped);
             finalData = { ...data, users: scraped, cubingSlug };
           }
-          finalData.availableSources = ['wca'];
+          finalData.availableSources = available;
           cache.set(fastKey, finalData);
           return finalData;
         })().finally(() => { inflight.delete(fastKey); });
 
         inflight.set(fastKey, pFast);
-        return pFast.then(d => ({ ...d, availableSources: ['wca'] }));
+        return pFast.then(d => ({ ...d, availableSources: d.availableSources ?? ['wca'] }));
       }
     } catch (e) {
       console.warn(`[cubing-live] PG known check failed for ${wcaId}:`, (e as Error).message);
