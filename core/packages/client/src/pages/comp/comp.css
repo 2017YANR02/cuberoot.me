@@ -600,6 +600,12 @@
   font-size: 0.85rem;
   text-align: right;
 }
+/* Ao5 trimmed (best/worst) 用 ::before/::after 显括号; 其他 attempt 同位置留透明括号占位
+   保列宽对齐, 复制时伪元素不进剪贴板 (跟 persons / WCA 官网一致) */
+.td-attempt::before { content: "("; opacity: 0; }
+.td-attempt::after  { content: ")"; opacity: 0; }
+.td-attempt-trimmed::before,
+.td-attempt-trimmed::after { opacity: 1; }
 
 .td-best.is-pr,
 .td-avg.is-pr,

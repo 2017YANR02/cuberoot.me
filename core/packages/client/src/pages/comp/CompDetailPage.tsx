@@ -22,6 +22,7 @@ import { countryName } from '../../utils/country_name';
 import { localizeCompName } from '../../utils/comp_localize';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { apiUrl } from '../../utils/api_base';
+import { isAo5Bracketed } from '../../utils/wca_ao5_brackets';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
 import { fetchPb, prefetchPbs, type PbByEvent } from './wca_pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '../../utils/comp_wcif';
@@ -1194,7 +1195,9 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   </span>
                 </td>
                 {Array.from({ length: attemptCount }).map((_, i) => (
-                  <td key={i} className="td-attempt">{formatLive(r.v[i] ?? 0, r.e, false)}</td>
+                  <td key={i} className={`td-attempt ${isAo5Bracketed(r.v, i) ? 'td-attempt-trimmed' : ''}`}>
+                    {formatLive(r.v[i] ?? 0, r.e, false)}
+                  </td>
                 ))}
               </tr>
             );
@@ -1498,7 +1501,9 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                               : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
                           </td>
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <td key={i}>{formatLive(result.v[i] ?? 0, result.e, false)}</td>
+                            <td key={i} className={`td-attempt ${isAo5Bracketed(result.v, i) ? 'td-attempt-trimmed' : ''}`}>
+                              {formatLive(result.v[i] ?? 0, result.e, false)}
+                            </td>
                           ))}
                         </tr>
                       );

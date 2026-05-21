@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { InfoTooltip } from '../../../../../components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
+import { isAo5Bracketed } from '../../../../../utils/wca_ao5_brackets';
 import { localizeCompName } from '../../../../../utils/comp_localize';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
@@ -141,18 +142,6 @@ function roundClass(rt: string): string {
   if (rt === '2' || rt === 'g') return 'wp-round-quarter';
   return 'wp-round-first';
 }
-function isBracketed(att: number[], idx: number): boolean {
-  if (att.length !== 5) return false;
-  const valid = att.map((v, i) => ({ v, i })).filter(({ v }) => v > 0);
-  if (valid.length === 0) return false;
-  const fail = att.findIndex((v) => v === -1 || v === -2);
-  let worstIdx: number;
-  if (fail >= 0) worstIdx = fail;
-  else worstIdx = att.indexOf(Math.max(...valid.map((x) => x.v)));
-  const bestIdx = att.indexOf(Math.min(...valid.map((x) => x.v)));
-  return idx === worstIdx || idx === bestIdx;
-}
-
 // 把 attempts 渲染为可折行的 inline 列表(支持 H2H 等 5+ 次的格式).
 function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
@@ -165,7 +154,7 @@ function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: n
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         return (
-          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isBracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
+          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
             {formatted}
           </span>
         );
