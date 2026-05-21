@@ -11,7 +11,7 @@ import { Alg, Move } from 'cubing/alg';
 import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
-import { parseSq1Scramble, type Sq1Move } from './cuber/sq1/sq1State';
+import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
 import { formatScrambleForEvent } from '../gen/sq1_svg';
 import { invertAlg, simplifyAlg, mirrorAlg } from '../../utils/cube3';
 import { cleanForPlayer, extractAlgFromText } from '../../utils/recon_alg_utils';
@@ -37,6 +37,16 @@ const OPP_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
   M: 'x',  // M 跟 L 同向
   E: 'y',  // E 跟 D 同向
 };
+
+/** SQ1 alg invert:倒序 + 每个 turn 的 top/bot 取负;slice 保持 slice。 */
+function invertSq1Moves(moves: Sq1Move[]): Sq1Move[] {
+  const out: Sq1Move[] = [];
+  for (let i = moves.length - 1; i >= 0; i--) {
+    const m = moves[i];
+    out.push(m.kind === 'slice' ? m : { kind: 'turn', top: -m.top, bot: -m.bot });
+  }
+  return out;
+}
 
 function normalizeTo1x1(action: TwistAction): TwistAction | null {
   const s = action.sign;
@@ -149,23 +159,34 @@ export default function PlayerControls({
     if (isSq1) {
       // SQ1: instant setup + instant n alg moves (no debounce). Same model as
       // /demo/sq1's caret-driven snap path. tweener finish() drains in-flight.
+      // playbackMode='algorithm':effective setup = setup + invert(alg moves)。
       const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
       sq1Cube.twister.finish();
-      sq1Cube.twister.setup(setupDraft);
+      const effSetup = settings.playbackMode === 'algorithm'
+        ? (setupDraft + ' ' + movesToString(invertSq1Moves(sq1Actions))).trim()
+        : setupDraft;
+      sq1Cube.twister.setup(effSetup);
       const target = Math.max(0, Math.min(n, sq1Actions.length));
       sq1Cube.applyMovesInstant(sq1Actions.slice(0, target));
       setStep(target);
       return;
     }
     const cube = world.cube as import('./cuber/cube').default;
+    // playbackMode='algorithm' (cubing.js setupAnchor='end'):cube 终点 = setup,起点 = setup·alg⁻¹。
+    // 等价于把 effective setup 改成 setupDraft + invert(algDraft),再正向播 n 步:
+    //   state(n) = setup · alg⁻¹ · (alg 前 n 步) = setup · (alg 后 (total-n) 步)⁻¹。
+    // 'algorithm' 模式下 setup 为空 + n=total = 还原态(alg 把魔方解开)。
+    const effectiveSetup = settings.playbackMode === 'algorithm'
+      ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
+      : setupDraft;
     // setupAsync: worker offload,主线程 UI 期间 60fps 不卡。N=200 ~5s 还是有,但用户能滚 / 切窗口
-    await cube.twister.setupAsync(setupDraft);
+    await cube.twister.setupAsync(effectiveSetup);
     const target = Math.max(0, Math.min(n, actions.length));
     for (let i = 0; i < target; i++) {
       cube.twister.twist(actions[i], true, true);
     }
     setStep(target);
-  }, [world, setupDraft, actions, sq1Actions, isSq1]);
+  }, [world, setupDraft, algDraft, actions, sq1Actions, isSq1, settings.playbackMode]);
 
   // applyMove (QWERTY 增量追加) 时 set 这个 ref,下面 actions-effect 跳过 reset 避免冲掉刚 twist 的状态
   const skipAutoResetRef = useRef(false);
@@ -176,7 +197,8 @@ export default function PlayerControls({
    *  覆盖。每发 click 自增 + await 后核对,旧请求直接 drop。 */
   const scrambleReqIdRef = useRef(0);
 
-  // setup / alg / actions 变化时重置到当前 step(或 0)
+  // setup / alg / actions 变化时停留在当前 step(jumpToStep 内部 clamp 到 total)。
+  // 加空格 / 改注释等不改 move 数的编辑保持原 step,不会闪一下还原态。
   useEffect(() => {
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
@@ -188,9 +210,9 @@ export default function PlayerControls({
       setStep(0);
       return;
     }
-    jumpToStep(0);
+    jumpToStep(stepRef.current);
   /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [setupDraft, actions, sq1Actions]);
+  }, [setupDraft, actions, sq1Actions, settings.playbackMode]);
 
   // caret 同步:从 textarea selectionStart 算前面有几个 move → jump
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
@@ -507,6 +529,15 @@ export default function PlayerControls({
         </button>
         <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')}><SkipForward size={14} /></button>
         <span className="sim-player-progress">{step} / {totalSteps}</span>
+        <select
+          className="sim-player-mode"
+          value={settings.playbackMode}
+          onChange={(e) => onSettingsChange({ ...settings, playbackMode: e.target.value as 'moves' | 'algorithm' })}
+          title={t('回放模式', 'Playback mode')}
+        >
+          <option value="moves">{t('正向', 'Moves')}</option>
+          <option value="algorithm">{t('解还原', 'Algorithm')}</option>
+        </select>
         <label className="sim-player-speed">
           <span>{speed.toFixed(2)}×</span>
           <input
@@ -912,10 +943,11 @@ function PuzzleSettings({
               <span>{t('拖空白', 'Drag empty')}</span>
               <select
                 value={settings.dragEmpty}
-                onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate')}
+                onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
               >
-                <option value="orbit">{t('视角', 'Orbit')}</option>
-                <option value="rotate">{t('转体', 'Rotate')}</option>
+                <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
+                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
+                <option value="view">{t('视角', 'View')}</option>
               </select>
             </label>
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />

@@ -90,9 +90,10 @@ export default class Controller {
   world: World;
   sensitivity = 0.5;
   /** 拖空白 (无 sticker hit) 时的语义:
-   *  'orbit'  — 累积 dx/dy 经 onOrbit 喂给外层改 scene.rotation,不进 move list。
-   *  'rotate' — upstream cuber 默认行为:snap 到 x/y/z 单轴 + 90° + 记 TwistAction。 */
-  dragEmpty: 'orbit' | 'rotate' = 'orbit';
+   *  'orbit'  — 累积 dx/dy 经 onOrbit 喂给外层改 scene.rotation,跨 ±π/2 commit y/x。
+   *  'rotate' — upstream cuber 默认行为:snap 到 x/y/z 单轴 + 90° + 记 TwistAction。
+   *  'view'   — 同 orbit 路径但 onOrbit 内不 commit,纯改 scene.rotation。 */
+  dragEmpty: 'orbit' | 'rotate' | 'view' = 'orbit';
   /** orbit 模式下每次 pointermove 触发,delta 是相对上一次的位移 (像素)。 */
   public onOrbit: ((dx: number, dy: number) => void) | null = null;
   /** orbit 模式下追踪上一次 move 坐标 (像素),用来算 delta。 */
@@ -235,7 +236,7 @@ export default class Controller {
         return;
       }
       // 拖空白 + orbit 模式 → 切到 orbit 分支,不走整体转
-      if (this.holder.index === -1 && this.dragEmpty === 'orbit') {
+      if (this.holder.index === -1 && (this.dragEmpty === 'orbit' || this.dragEmpty === 'view')) {
         this.dragging = false;
         this.orbiting = true;
         this.orbitLastX = this.down.x;
