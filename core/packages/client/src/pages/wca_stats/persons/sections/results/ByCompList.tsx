@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { InfoTooltip } from '../../../../../components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
+import { isAo5Bracketed } from '../../../../../utils/wca_ao5_brackets';
 import { EventIcon } from '../../../../../components/EventIcon';
 import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { compLinkProps } from '../../../../../utils/comp_link';
@@ -194,7 +195,7 @@ function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: n
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         return (
-          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isBracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
+          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
             {formatted}
           </span>
         );
@@ -203,18 +204,3 @@ function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: n
   );
 }
 
-// WCA 平均 5 次 (Ao5):去掉一最佳一最差.该函数判断该 attempt 是否在括号内显示.
-// 这里复用结构:5 次成绩里,best 与 worst 两个值用 () 包起来.DNF/DNS 优先视为 worst.
-function isBracketed(att: number[], idx: number): boolean {
-  if (att.length !== 5) return false;
-  const valid = att.map((v, i) => ({ v, i })).filter(({ v }) => v > 0);
-  if (valid.length === 0) return false;
-  // worst = DNF/DNS first, else max value
-  const fail = att.findIndex((v) => v === -1 || v === -2);
-  let worstIdx: number;
-  if (fail >= 0) worstIdx = fail;
-  else worstIdx = att.indexOf(Math.max(...valid.map((x) => x.v)));
-  // best = min positive; if all positive same, take first
-  const bestIdx = att.indexOf(Math.min(...valid.map((x) => x.v)));
-  return idx === worstIdx || idx === bestIdx;
-}
