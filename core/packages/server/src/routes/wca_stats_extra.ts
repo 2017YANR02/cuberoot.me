@@ -196,37 +196,39 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   // OFFSET 1M 走纯 Index Only Scan, ~250ms (Heap Fetches: 0,需 VACUUM 让 visibility map up-to-date).
   // 外层用 id PK 回表+三张字典表 join,只 enrich 100 行 ~10ms.
   // 直查 + LIMIT/OFFSET + 三 JOIN 的写法会让 PG 先 join 后 OFFSET,深页 ~10s+.
-  const rows = await query<{
-    value: number; wca_id: string; person_country_id: string;
-    iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
-    attempts: number[] | null; person_name: string; record_tag: string | null;
-  }>(
-    `
-    SELECT q.value, q.wca_id, t.person_country_id,
-           co.iso2 AS iso2,
-           t.comp_id, c.name AS comp_name, t.comp_date,
-           t.attempts, p.name AS person_name,
-           t.record_tag
-    FROM (
-      SELECT t.id, t.value, t.wca_id
-      FROM wca_results_top t
-      WHERE ${where.join(' AND ')}
-      ORDER BY t.value ASC, t.wca_id ASC
-      LIMIT ? OFFSET ?
-    ) q
-    JOIN wca_results_top t ON t.id = q.id
-    JOIN wca_persons p ON p.wca_id = t.wca_id
-    LEFT JOIN wca_countries co ON co.id = t.person_country_id
-    LEFT JOIN wca_competitions c ON c.id = t.comp_id
-    ORDER BY q.value ASC, q.wca_id ASC
-    `,
-    dataParams,
-  );
-
-  const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_results_top t WHERE ${where.join(' AND ')}`,
-    totalParams,
-  );
+  // rows + count 互不依赖,并行跑 — 冷启动 38s → ~19s.
+  const [rows, totalRow] = await Promise.all([
+    query<{
+      value: number; wca_id: string; person_country_id: string;
+      iso2: string | null; comp_id: string; comp_name: string | null; comp_date: string | null;
+      attempts: number[] | null; person_name: string; record_tag: string | null;
+    }>(
+      `
+      SELECT q.value, q.wca_id, t.person_country_id,
+             co.iso2 AS iso2,
+             t.comp_id, c.name AS comp_name, t.comp_date,
+             t.attempts, p.name AS person_name,
+             t.record_tag
+      FROM (
+        SELECT t.id, t.value, t.wca_id
+        FROM wca_results_top t
+        WHERE ${where.join(' AND ')}
+        ORDER BY t.value ASC, t.wca_id ASC
+        LIMIT ? OFFSET ?
+      ) q
+      JOIN wca_results_top t ON t.id = q.id
+      JOIN wca_persons p ON p.wca_id = t.wca_id
+      LEFT JOIN wca_countries co ON co.id = t.person_country_id
+      LEFT JOIN wca_competitions c ON c.id = t.comp_id
+      ORDER BY q.value ASC, q.wca_id ASC
+      `,
+      dataParams,
+    ),
+    query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM wca_results_top t WHERE ${where.join(' AND ')}`,
+      totalParams,
+    ),
+  ]);
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
 
   c.header('Cache-Control', CACHE_HEADER);
