@@ -23,6 +23,8 @@ import { setSearchDebug } from 'cubing/search';
 import { cstimerScramble444 } from './cstimer_444';
 import { fetch555Scramble, fetch555ScrambleBatch } from './scramble_555_server';
 import { get555Mode, on555ModeChange } from './scramble_555_mode';
+import { get333Mode, on333ModeChange } from './scramble_333_mode';
+import { m2pScramble333 } from './m2p_scramble';
 import { toWcaEventId } from './wca_events';
 
 // Tell cubing.js to start the next prefetched scramble the instant the
@@ -185,6 +187,16 @@ on555ModeChange(() => {
   refilling.delete('555');
 });
 
+// Same problem for 333 mode switching (wca ↔ m2p): scrambles cached from
+// one engine should not be served after the user switches engines, since
+// length distribution is slightly different. Clear the relevant pools.
+on333ModeChange(() => {
+  pool.set('333', []);
+  pool.set('333ft', []);
+  refilling.delete('333');
+  refilling.delete('333ft');
+});
+
 /**
  * Engine selector: 444 goes through cs0x7f's Threephase via cstimer_module
  * (in our own Web Worker pool, no wrapping overhead). Everything else stays
@@ -211,6 +223,13 @@ async function generateScramble(wcaId: string): Promise<string> {
   // 333ft / 333mbo use identical scrambles to 333 / 333mbf — cubing/scramble
   // doesn't ship scramblers for these retired events, so map to 333.
   const cubingId = wcaId === '333ft' || wcaId === '333mbo' ? '333' : wcaId;
+  // 3x3 engine selector — user can opt in to min2phase-rust (cs0x7f's Kociemba,
+  // ~10x faster than cubing.js's TS impl, same algorithm family, ±0.1 avg-len).
+  // Only the bare 3x3 scramble format is swapped — 333bf/333mbf keep their
+  // cubing.js-specific extended notation paths.
+  if (cubingId === '333' && get333Mode() === 'm2p') {
+    return m2pScramble333();
+  }
   const alg = await randomScrambleForEvent(cubingId);
   return alg.toString();
 }

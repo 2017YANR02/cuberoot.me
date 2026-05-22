@@ -50,8 +50,8 @@ export default function GenAboutPage() {
         <h1 className="ga-title">{t('打乱生成器是怎么工作的', 'How the scramble generator works')}</h1>
         <p className="ga-intro">
           {t(
-            '/scramble/gen 是站内的统一打乱生成入口。3 种模式覆盖从「比赛官方打乱表」到「随手出 N 条练习」到「自带打乱粘进来出图」的常见需求。所有 WCA 项目走 Lucas Garron 的 cubing.js 随机状态生成器(4×4 走 cs0x7f Threephase 走 Web Worker 池,5×5 可切到本站 cube555 daemon 真随机态)。除 WCA 21 项外另接入了三套非 WCA puzzle:cubing.js twizzleEvents 的 5 个(FTO / 四阶金字塔 / 二阶五魔 / Redi / 二阶 FTO);从 cs0x7f csTimer 引擎 vendor 进来的 31 个(齿轮/枫叶/恐龙/Sq2/SSq1/五魔金字塔/六阶五魔/直升机/cuboid 5 个/15-puzzle/8-puzzle 等);7 个 shape-mod 借用 WCA scramble(镜面/费舍尔/三阶金字塔/二阶金字塔/轴方/风火轮/幽灵/空心)。共 64 个 puzzle,非 WCA 默认折叠在「其他 ▾」chip 后,点开展示。',
-            '/scramble/gen is the unified scramble entry point. Three modes cover the common needs: "official WCA scramble sheet", "quick N scrambles to practice", "paste my own scrambles for preview". All WCA events go through Lucas Garron\'s cubing.js random-state scramblers (4×4 routes to cs0x7f Threephase via a Web Worker pool; 5×5 can switch to our server-side cube555 daemon for true random-state). Beyond WCA 21 we plug in three more sources: 5 random-state events from cubing.js twizzleEvents (FTO / Master Tetra / Kilominx / Redi / Baby FTO); 31 events vendored from cs0x7f csTimer (Gear / Ivy / Dino / Sq2 / SSq1 / Pyraminx Crystal / Gigaminx / Helicopter / 5 cuboids / 15-puzzle / 8-puzzle / …); 7 shape mods borrowing WCA scrambles (Mirror Blocks / Fisher / Mastermorphix / Pyramorphix / Axis / Windmill / Ghost / Void). 64 puzzles total; non-WCA ones collapse behind an "Other ▾" chip by default.',
+            '/scramble/gen 是站内的统一打乱生成入口。3 种模式覆盖从「比赛官方打乱表」到「随手出 N 条练习」到「自带打乱粘进来出图」的常见需求。所有 WCA 项目走 Lucas Garron 的 cubing.js 随机状态生成器(3×3 可切到 min2phase-rust 引擎,cs0x7f Kociemba 的 Rust port,~10× 快;4×4 走 cs0x7f Threephase 走 Web Worker 池;5×5 可切到本站 cube555 daemon 真随机态)。除 WCA 21 项外另接入了三套非 WCA puzzle:cubing.js twizzleEvents 的 5 个(FTO / 四阶金字塔 / 二阶五魔 / Redi / 二阶 FTO);从 cs0x7f csTimer 引擎 vendor 进来的 31 个(齿轮/枫叶/恐龙/Sq2/SSq1/五魔金字塔/六阶五魔/直升机/cuboid 5 个/15-puzzle/8-puzzle 等);7 个 shape-mod 借用 WCA scramble(镜面/费舍尔/三阶金字塔/二阶金字塔/轴方/风火轮/幽灵/空心)。共 64 个 puzzle,非 WCA 默认折叠在「其他 ▾」chip 后,点开展示。',
+            '/scramble/gen is the unified scramble entry point. Three modes cover the common needs: "official WCA scramble sheet", "quick N scrambles to practice", "paste my own scrambles for preview". All WCA events go through Lucas Garron\'s cubing.js random-state scramblers (3×3 can switch to the min2phase-rust engine — cs0x7f Kociemba ported to Rust, ~10× faster; 4×4 routes to cs0x7f Threephase via a Web Worker pool; 5×5 can switch to our server-side cube555 daemon for true random-state). Beyond WCA 21 we plug in three more sources: 5 random-state events from cubing.js twizzleEvents (FTO / Master Tetra / Kilominx / Redi / Baby FTO); 31 events vendored from cs0x7f csTimer (Gear / Ivy / Dino / Sq2 / SSq1 / Pyraminx Crystal / Gigaminx / Helicopter / 5 cuboids / 15-puzzle / 8-puzzle / …); 7 shape mods borrowing WCA scrambles (Mirror Blocks / Fisher / Mastermorphix / Pyramorphix / Axis / Windmill / Ghost / Void). 64 puzzles total; non-WCA ones collapse behind an "Other ▾" chip by default.',
           )}
         </p>
 
@@ -220,7 +220,18 @@ export default function GenAboutPage() {
             </thead>
             <tbody>
               <tr>
-                <td>2×2 / 3×3 / 3×3 BLD / OH / FT / FM / MBLD</td>
+                <td>3×3</td>
+                <td>{t('cubing.js (默认) 或 min2phase-rust', 'cubing.js (default) or min2phase-rust')}</td>
+                <td>{t('浏览器 (WASM)', 'browser (WASM)')}</td>
+                <td>
+                  {t(
+                    '默认 cubing.js TS 实现;切到 min2phase-rust(cs0x7f Kociemba 的 Rust port,117 KB WASM 懒加载)~10× 快,长度分布同算法等价。',
+                    'Default: cubing.js TS impl. Toggle to min2phase-rust (cs0x7f Kociemba ported to Rust, 117 KB WASM lazy-loaded) for ~10× speed, equivalent length distribution.',
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td>2×2 / 3×3 BLD / OH / FT / FM / MBLD</td>
                 <td>cubing.js</td>
                 <td>{t('浏览器', 'browser')}</td>
                 <td>{t('真随机状态,毫秒级', 'random-state, millisecond')}</td>
@@ -296,6 +307,40 @@ export default function GenAboutPage() {
           </table>
         </div>
 
+        <h2 className="ga-section-title">{t('3×3 引擎对比', '3×3 engine comparison')}</h2>
+        <p className="ga-section-intro">
+          {t(
+            '页面里选了 3×3 时,会出现一个 toggle 让你在两个引擎之间切。算法都是 Kociemba two-phase,只是实现不同 — 解出来的打乱步数分布几乎完全相同(±0.1 步),但生成速度差一个量级。同一台机器、同一标签页、各预热完后跑 100 个 random-state 打乱的实测:',
+            'When 3×3 is selected, a toggle appears to switch between the two engines. Both are Kociemba two-phase; only the implementation differs. Length distribution is essentially identical (±0.1 moves), but generation speed differs by an order of magnitude. Same machine, same tab, post-warmup, 100 random-state scrambles each:',
+          )}
+        </p>
+        <div className="ga-engine-table-wrap">
+          <table className="ga-engine-table">
+            <thead>
+              <tr>
+                <th>{t('指标', 'Metric')}</th>
+                <th>cubing.js (WCA)</th>
+                <th>min2phase-rust</th>
+                <th>{t('m2p 倍速', 'm2p speedup')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>{t('平均', 'avg')}</td><td>20.61 ms</td><td>1.44 ms</td><td>14.3×</td></tr>
+              <tr><td>p50</td><td>12.42 ms</td><td>1.21 ms</td><td>10.3×</td></tr>
+              <tr><td>p95</td><td>60.01 ms</td><td>3.49 ms</td><td>17.2×</td></tr>
+              <tr><td>max</td><td>250.63 ms</td><td>18.23 ms</td><td>13.7×</td></tr>
+              <tr><td>{t('平均长度', 'avg length')}</td><td>20.49</td><td>20.53</td><td>{t('~ 同', '~ same')}</td></tr>
+              <tr><td>{t('首次冷启', 'cold start')}</td><td>{t('~3 s(prewarm 后 ~30 ms)', '~3 s (with prewarm ~30 ms)')}</td><td>{t('~120 ms(含 WASM fetch)', '~120 ms (incl. WASM fetch)')}</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="ga-section-intro">
+          {t(
+            '为啥不直接换默认?WCA 官方那套是 Lucas Garron 的实现,生态默认值,保守不变默认。要更快就在 3×3 picker 里点切换,localStorage 持久。切换会清相应 pool,下一次 Generate 用新引擎填池。',
+            "Why not just switch defaults? cubing.js is Lucas Garron's implementation, the ecosystem default, and we keep it. Toggle in the 3×3 picker if you want speed; localStorage persists the choice. Switching clears the relevant pool so the next Generate refills with the new engine.",
+          )}
+        </p>
+
         <h2 className="ga-section-title">{t('快的秘密:三层池子', 'Why it feels fast: three layers of pool')}</h2>
         <ul className="ga-pool-list">
           <li>
@@ -349,6 +394,10 @@ export default function GenAboutPage() {
           <li>
             <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f/csTimer</a>
             {t(' — 非 WCA 31 个 puzzle 的打乱引擎来源(GPLv3),vendor 在 tools/cstimer-scramble/。', ' — Source of the 31 non-WCA puzzle scramble engines (GPLv3), vendored at tools/cstimer-scramble/.')}
+          </li>
+          <li>
+            <a href="https://github.com/RuiminYan/min2phase-rust" target="_blank" rel="noopener noreferrer">RuiminYan/min2phase-rust</a>
+            {t(' — 本站的 3×3 可选引擎。cs0x7f 原版 Java min2phase 的 Rust port,WASM 117 KB,~20% 比 Java 还快。GPL-3.0。', " — This site's 3×3 alt engine. Rust port of cs0x7f's Java min2phase, WASM 117 KB, ~20% faster than the Java original. GPL-3.0.")}
           </li>
           <li>
             <a href="https://www.worldcubeassociation.org/regulations/#article-4-scrambling" target="_blank" rel="noopener noreferrer">{t('WCA Regulation §4: Scrambling', 'WCA Regulation §4: Scrambling')}</a>
