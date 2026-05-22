@@ -12,7 +12,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
    - `packages/stats-build` — WCA 统计生成管道（独立 CI 周更）
-   - `packages/stats-ui` — 统计页 UI
 
 ## 12 个模块的归属（重要）
 

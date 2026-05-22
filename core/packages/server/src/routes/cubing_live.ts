@@ -29,6 +29,9 @@ interface User {
   // 直接用这两个字段 + comp.currentRecords 做 WS 推送的 tag 推断.
   countryId?: string;
   continentId?: string;
+  // 上手报名的项目 id 列表;未来比赛 /live 还没开时由 /competitors HTML 抓出,
+  // client psych sheet 据此过滤报名表(WCIF public 不含 registration 数据).
+  eventIds?: string[];
 }
 
 interface RoundMeta {
@@ -1007,7 +1010,9 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
 
 /** /competition/{slug}/competitors HTML scrape.
  *  WS 在比赛还没开始时只回个空 users — 此时 cubing.com 的网页版报名表是唯一公开来源.
- *  tbody 第一行是列汇总(40 / 5/35 / 35/5 / ...)— 用 "name 全是数字或 / " 的启发式过滤掉. */
+ *  tbody 第一行是列汇总(40 / 5/35 / 35/5 / ...)— 用 "name 全是数字或 / " 的启发式过滤掉.
+ *  thead 的 header-event th 给出每列对应的 event id,row 里相应 td 含 event-icon-{ev}
+ *  = 该选手报名了该项目;空 td = 未报名.psych sheet 据此过滤报名表. */
 async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): Promise<Record<string, User>> {
   onProgress?.({ step: 'cubing.results', done: 0, total: 1 });
   const url = `${CUBING_BASE}/competition/${encodeURIComponent(cubingSlug)}/competitors?lang=en`;
@@ -1023,29 +1028,55 @@ async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): P
   if (!res.ok) throw new Error(`cubing.com /competitors HTTP ${res.status}`);
   const html = await res.text();
 
+  // thead → event 列顺序 (header-event th 里嵌着 event-icon-{ev}).
+  const eventCols: string[] = [];
+  const theadMatch = html.match(/<thead[^>]*>([\s\S]*?)<\/thead>/);
+  if (theadMatch) {
+    const evRe = /<th class="header-event"[^>]*>[\s\S]*?event-icon-([a-z0-9]+)[\s\S]*?<\/th>/g;
+    let em: RegExpExecArray | null;
+    while ((em = evRe.exec(theadMatch[1])) !== null) eventCols.push(em[1]);
+  }
+
   const tbodyMatch = html.match(/<tbody>([\s\S]*?)<\/tbody>/);
   if (!tbodyMatch) return {};
   const tbody = tbodyMatch[1];
 
   const users: Record<string, User> = {};
-  const rowRe = /<tr[^>]*>\s*<td>(\d+)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([^<]*)<\/td>\s*<td>([^<]*)<\/td>/g;
   const wcaIdRe = /\/results\/person\/([A-Za-z0-9]+)/;
   const tagRe = /<[^>]+>/g;
-  let m: RegExpExecArray | null;
-  while ((m = rowRe.exec(tbody))) {
-    const number = parseInt(m[1], 10);
+  const trRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+  let trMatch: RegExpExecArray | null;
+  while ((trMatch = trRe.exec(tbody)) !== null) {
+    const inner = trMatch[1];
+    const cells: string[] = [];
+    const tdRe = /<td[^>]*>([\s\S]*?)<\/td>/g;
+    let cm: RegExpExecArray | null;
+    while ((cm = tdRe.exec(inner)) !== null) cells.push(cm[1]);
+    if (cells.length < 4) continue;
+
+    const number = parseInt(cells[0].replace(tagRe, ''), 10);
     if (!Number.isFinite(number)) continue;
-    const nameCell = m[2];
+    const nameCell = cells[1];
     const name = decodeHtmlEntities(nameCell.replace(tagRe, '')).trim();
     // tbody 第一行的列汇总行:name 槽位是 "5/35" 之类,过滤掉
     if (!name || /^[\d/&;\s]+$/.test(name)) continue;
     const wcaMatch = nameCell.match(wcaIdRe);
-    const region = decodeHtmlEntities(m[4]).replace(/&nbsp;/g, ' ').trim();
+    const region = decodeHtmlEntities(cells[3]).replace(/&nbsp;/g, ' ').replace(tagRe, '').trim();
+
+    const eventIds: string[] = [];
+    for (let i = 0; i < eventCols.length; i++) {
+      const cell = cells[4 + i];
+      if (cell && cell.includes(`event-icon-${eventCols[i]}`)) {
+        eventIds.push(eventCols[i]);
+      }
+    }
+
     users[String(number)] = {
       number,
       name,
       wcaid: wcaMatch ? wcaMatch[1] : '',
       region,
+      eventIds,
     };
   }
   onProgress?.({ step: 'cubing.results', done: 1, total: 1 });
