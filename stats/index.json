@@ -13,194 +13,32 @@
         {
           "id": "wr_metric",
           "titleEn": "Metric",
-          "titleZh": "指标",
-          "metrics": [
-            {
-              "id": "single",
-              "labelEn": "Single",
-              "labelZh": "单次"
-            },
-            {
-              "id": "average",
-              "labelEn": "Average",
-              "labelZh": "平均"
-            },
-            {
-              "id": "bao5",
-              "labelEn": "BAo5",
-              "labelZh": "BAo5"
-            },
-            {
-              "id": "wao5",
-              "labelEn": "WAo5",
-              "labelZh": "WAo5"
-            },
-            {
-              "id": "mo5",
-              "labelEn": "Mo5",
-              "labelZh": "Mo5"
-            },
-            {
-              "id": "bpa",
-              "labelEn": "BPA",
-              "labelZh": "BPA"
-            },
-            {
-              "id": "wpa",
-              "labelEn": "WPA",
-              "labelZh": "WPA"
-            },
-            {
-              "id": "median",
-              "labelEn": "Median",
-              "labelZh": "中位数"
-            },
-            {
-              "id": "bestc",
-              "labelEn": "Best Counting",
-              "labelZh": "最佳有效"
-            },
-            {
-              "id": "worstc",
-              "labelEn": "Worst Counting",
-              "labelZh": "最差有效"
-            },
-            {
-              "id": "worst",
-              "labelEn": "Worst",
-              "labelZh": "轮次最差成绩"
-            },
-            {
-              "id": "variance",
-              "labelEn": "Variance",
-              "labelZh": "方差"
-            },
-            {
-              "id": "ratio",
-              "labelEn": "Best/Avg",
-              "labelZh": "最佳/平均比值"
-            }
-          ]
+          "titleZh": "指标"
         },
         {
           "id": "wr_aoxr",
           "titleEn": "AoXR",
-          "titleZh": "AoXR",
-          "metrics": [
-            {
-              "id": "ao1r",
-              "labelEn": "Ao1R",
-              "labelZh": "Ao1R"
-            },
-            {
-              "id": "ao2r",
-              "labelEn": "Ao2R",
-              "labelZh": "Ao2R"
-            },
-            {
-              "id": "ao3r",
-              "labelEn": "Ao3R",
-              "labelZh": "Ao3R"
-            },
-            {
-              "id": "ao4r",
-              "labelEn": "Ao4R",
-              "labelZh": "Ao4R"
-            }
-          ]
+          "titleZh": "AoXR"
         },
         {
           "id": "wr_dominance",
           "titleEn": "Dominance",
-          "titleZh": "屠榜",
-          "metrics": [
-            {
-              "id": "single",
-              "labelEn": "Single",
-              "labelZh": "单次"
-            },
-            {
-              "id": "average",
-              "labelEn": "Average",
-              "labelZh": "平均"
-            }
-          ]
+          "titleZh": "屠榜"
         },
         {
           "id": "wr_non_pr",
           "titleEn": "Non-PR WR",
-          "titleZh": "非 PR",
-          "metrics": [
-            {
-              "id": "single",
-              "labelEn": "Single",
-              "labelZh": "单次"
-            },
-            {
-              "id": "average",
-              "labelEn": "Average",
-              "labelZh": "平均"
-            }
-          ]
+          "titleZh": "非 PR"
         },
         {
           "id": "wr_newcomer",
           "titleEn": "Newcomer",
-          "titleZh": "新人首个世界纪录",
-          "metrics": [
-            {
-              "id": "single",
-              "labelEn": "Single",
-              "labelZh": "单次"
-            },
-            {
-              "id": "average",
-              "labelEn": "Avg",
-              "labelZh": "平均"
-            }
-          ]
+          "titleZh": "新人首个世界纪录"
         },
         {
           "id": "average_of",
           "titleEn": "Rolling Average",
-          "titleZh": "滚动平均",
-          "metrics": [
-            {
-              "id": "ao3",
-              "labelEn": "Ao3",
-              "labelZh": "3 次均值"
-            },
-            {
-              "id": "ao5",
-              "labelEn": "Ao5",
-              "labelZh": "5 次均值"
-            },
-            {
-              "id": "ao12",
-              "labelEn": "Ao12",
-              "labelZh": "12 次均值"
-            },
-            {
-              "id": "ao25",
-              "labelEn": "Ao25",
-              "labelZh": "25 次均值"
-            },
-            {
-              "id": "ao50",
-              "labelEn": "Ao50",
-              "labelZh": "50 次均值"
-            },
-            {
-              "id": "ao100",
-              "labelEn": "Ao100",
-              "labelZh": "100 次均值"
-            },
-            {
-              "id": "ao1000",
-              "labelEn": "Ao1000",
-              "labelZh": "1000 次均值"
-            }
-          ]
+          "titleZh": "滚动平均"
         },
         {
           "id": "consecutive_sub_5_average",
@@ -236,7 +74,7 @@
         },
         {
           "id": "date_match_pr",
-          "titleEn": "Personal records where the time equals the date",
+          "titleEn": "PRs where the time equals the date",
           "titleZh": "日期匹配 PR"
         },
         {
