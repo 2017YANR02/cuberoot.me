@@ -47,6 +47,8 @@ interface User {
   // server 端 enrichComp 已解析填充 — WS patch 时拿这两个字段直接做 tag 推断,免再 fetch 国家/洲映射.
   countryId?: string;
   continentId?: string;
+  // 未来比赛 cubing.com /competitors HTML 抓出的报名项目列表;psych sheet 据此过滤报名表.
+  eventIds?: string[];
 }
 
 interface CompRecordsSnapshot {
@@ -1242,7 +1244,8 @@ interface PsychSheetProps {
 }
 
 function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProps) {
-  // 每位选手参赛的项目集合(用于"选手名单"模式右侧 icon 行)
+  // 每位选手参赛的项目集合(用于"选手名单"模式右侧 icon 行).
+  // 有成绩时从 resultsByRound 反推;未来比赛(无成绩)退回 user.eventIds.
   const userEvents = useMemo(() => {
     const map = new Map<number, string[]>();
     for (const ev of data.events) {
@@ -1255,6 +1258,11 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
         map.get(n)!.push(ev.i);
       }
     }
+    if (map.size === 0) {
+      for (const u of Object.values(data.users)) {
+        if (u.eventIds?.length) map.set(u.number, [...u.eventIds]);
+      }
+    }
     return map;
   }, [data]);
 
@@ -1265,6 +1273,12 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
     for (const rd of data.events.find(e => e.i === eventId)?.rs ?? []) {
       for (const r of data.resultsByRound[`${eventId}:${rd.i}`] ?? []) {
         numbers.add(r.n);
+      }
+    }
+    // 未来比赛还没成绩 → 退回 users.eventIds (cubing.com /competitors HTML 抓的报名表).
+    if (numbers.size === 0) {
+      for (const u of Object.values(data.users)) {
+        if (u.eventIds?.includes(eventId)) numbers.add(u.number);
       }
     }
     const rankKey = (v: number | undefined) => (v && v > 0 ? v : Infinity);

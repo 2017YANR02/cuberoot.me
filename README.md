@@ -23,7 +23,6 @@ cuberoot.me/
 │       ├── server/                # Hono + PostgreSQL 13 (WCA OAuth + user data + alg DB)
 │       ├── shared/                # Shared types
 │       ├── stats-build/           # WCA statistics pipeline (weekly CI)
-│       ├── stats-ui/              # Stats page UI
 │       ├── visualcube/            # In-house NxN cube SVG renderer
 │       └── ...                    # alg-build, scramble-stats-build, wb-build, vendor-sr-puzzlegen
 ├── stats/                         # Generated stats JSON (committed)

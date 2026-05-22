@@ -1,29 +1,34 @@
 ---
 name: wca-event
-description: "渲染 WCA 项目名 / 加 /wca 单项目选择器时用. (1) 项目名前必须 `<EventIcon>`(纯文字=bug),`components/EventIcon`. (2) /wca 子页选项目用 `<WcaEventSelector>` 21 图标行,不用 `<EventSelect>` 下拉. Triggers: 项目名, EventIcon, cubing-icon, WcaEventSelector, 项目选择器, event picker, eventDisplayName."
+description: "渲染 WCA 项目名/图标/选择器时用。(1) 图标走 `<EventIcon>` 或 `<CubingIcon>` (内联 SVG,components/EventIcon),禁 `<span className=\"cubing-icon ...\">` (空 span)。(2) /wca 子页选项目用 `<WcaEventSelector>` 21 图标行,不用 `<EventSelect>` 下拉。Triggers: 项目名, EventIcon, CubingIcon, cubing-icon, WcaEventSelector, 项目选择器, event picker, eventDisplayName."
 ---
 
 # 项目图标 + 选择器
 
-## 项目标签
+## 图标渲染（内联 SVG，源 `components/EventIcon/svg/`）
 
 ```tsx
-import { EventIcon } from '../../components/EventIcon';
+import { EventIcon, CubingIcon } from '../../components/EventIcon/EventIcon';
 import { eventDisplayName } from '../../utils/wca_events';
-<EventIcon event={ev} /> {eventDisplayName(ev, isZh)}
+
+<EventIcon event="3x3" /> {eventDisplayName(ev, isZh)}   // event id (短名都行)
+<CubingIcon icon="event-333" />                          // 已知 class key
+<CubingIcon icon="unofficial-fto" />                     // 非 WCA / penalty 同理
 ```
 
-`EventIcon` 接 `'333'`/`'3'`/`'oh'` 等任意短名。
+CSS 用 `font-size`(SVG=1em) + `color`(SVG fill=currentColor) — 现存规则零改动。
 
-禁:emoji / lucide / 自写 SVG;重写 short→id 映射;popup `innerHTML` 手拼 — 仿 `flagHtml` 用 `toWcaEventId`.
+禁:`<span className="cubing-icon ...">`(font 已撤,会渲空)/ emoji / lucide / 手写 SVG。
 
 ## /wca 单项目选择器
 
 ```tsx
-import WcaEventSelector from './WcaEventSelector';
-<WcaEventSelector availableEvents={EVENTS_SET} selectedEvent={event} onSelect={...} isZh={isZh} />
+<WcaEventSelector availableEvents={SET} selectedEvent={ev} onSelect={...} isZh={isZh} />
 ```
 
-放 filters **上方独立一行**,不塞进 filter 单元格。CSS 走 `WcaEventSelector.css`(组件自带 import)。
+放 filters **上方独立一行**。`allowAll` 加"全部"。多选传 `selectedEvents`+`onToggle`。
 
-要"全部"选项加 `allowAll` prop(`selectedEvent === ''` 时高亮"全部"按钮)。多选(如 `SumOfRanksPage`)用自定义复选 grid,不是这个组件。
+## 加新 unofficial 图标
+
+1. 拷 `D:\cube\icons\src\svg\unofficial\<name>.svg` 到 `components/EventIcon/svg/unofficial/`
+2. `utils/cubingScramble.ts` 的 `TWIZZLE_NONWCA_APPEND` 加 `{ id, iconClass: 'unofficial-<name>' }`
