@@ -16,6 +16,7 @@ import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { compLinkProps } from '../../../../../utils/comp_link';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computePrRank } from '../../logic/progress';
+import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../../../../utils/wca_round_meta';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
 
 interface Props {
@@ -106,42 +107,7 @@ export default function ByEventView({ profile, results, comps, eventId, isZh }: 
 }
 
 // ─── 全部成绩 (按比赛倒序的轮次表) ───────────────────────────────────────
-const ROUND_ORDER: Record<string, number> = {
-  'f': 0, 'c': 1, 'b': 2,
-  '3': 3,
-  '2': 4, 'g': 4,
-  '1': 5, 'd': 5,
-  'h': 6,
-};
-// 表头 round 列 tooltip 文本 (中英),解释 R1/R2/R3/Fi/C-*/h 等缩写
-const ROUND_HINT_ZH = `轮次缩写:
-R1 / R2 / R3 — 初赛 / 复赛 / 半决赛 (打满 5 把)
-Fi — 决赛
-C- 前缀 (组合赛制) — 带 cutoff,前几把过线才能继续打完整 Ao5
-h — head-to-head 1v1 淘汰 (非 WCA 项目)`;
-const ROUND_HINT_EN = `Round abbreviations:
-R1 / R2 / R3 — First / Second / Third Round (full attempts)
-Fi — Final
-C- prefix (Combined) — cutoff format; must beat cutoff in first attempts to continue full Ao5
-h — Head-to-head (1v1 elimination, non-WCA)`;
-
-function roundLabel(rt: string, _isZh: boolean): string {
-  // 用 Fi / R3 / R2 / R1 缩写,中英文一致
-  const map: Record<string, string> = {
-    'f': 'Fi', 'c': 'C-Fi', 'b': 'B-Fi',
-    '3': 'R3',
-    '2': 'R2', 'g': 'C-R2',
-    '1': 'R1', 'd': 'C-R1',
-    'h': 'R1',
-  };
-  return map[rt] ?? rt;
-}
-function roundClass(rt: string): string {
-  if (rt === 'f' || rt === 'c' || rt === 'b') return 'wp-round-final';
-  if (rt === '3') return 'wp-round-semi';
-  if (rt === '2' || rt === 'g') return 'wp-round-quarter';
-  return 'wp-round-first';
-}
+// 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
 // 把 attempts 渲染为可折行的 inline 列表(支持 H2H 等 5+ 次的格式).
 function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
@@ -236,7 +202,7 @@ function EventRoundsList({
                 </td>
                 <td>
                   <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
-                    {roundLabel(r.round_type_id, isZh)}
+                    {roundLabel(r.round_type_id)}
                   </span>
                 </td>
                 <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>

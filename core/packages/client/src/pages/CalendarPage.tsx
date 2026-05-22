@@ -748,6 +748,17 @@ function readMonthFromUrl(): Date | null {
   return new Date(y, m - 1, 1);
 }
 
+function readQFromUrl(): string {
+  const p = new URLSearchParams(window.location.search);
+  return p.get('q') ?? '';
+}
+
+type ViewMode = 'calendar' | 'compact' | 'list';
+function readViewFromUrl(): ViewMode | null {
+  const v = new URLSearchParams(window.location.search).get('view');
+  return v === 'calendar' || v === 'compact' || v === 'list' ? v : null;
+}
+
 // ── 列表视图 ──────────────────────────────────────────────────────────────
 // 不分月，按 start_date 倒序排列、按年分组；点行同样打开 CompModal。
 // 数据量可达 ~17k —— 用 fixed-height 虚拟滚动只渲染视口内 ~30 行，无上限。
@@ -989,7 +1000,7 @@ export default function CalendarPage() {
 
   const [data, setData] = useState<UpcomingData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [compQuery, setCompQuery] = useState('');
+  const [compQuery, setCompQuery] = useState(() => readQFromUrl());
   // 选手筛选: 静态层(top_cubers + cn_upcoming_registrations) 优先,API 兜底
   const [selectedCuber, setSelectedCuber] = useState<WcaPersonLite | null>(null);
   const [selectedCuberCompIds, setSelectedCuberCompIds] = useState<Set<string> | null>(null);
@@ -1012,7 +1023,7 @@ export default function CalendarPage() {
   // 缺 key = 不过滤此项目。chip 单击循环：undefined → 1 → ... → max → 'any' → undefined。
   // 'any' 状态在 UI 上仅通过 is-active 边框体现（badge 空），不显式写"≥1"等文字。
   const [eventFilters, setEventFilters] = useState<Record<string, 'any' | 1 | 2 | 3 | 4>>({});
-  const [viewMode, setViewMode] = useState<'calendar' | 'compact' | 'list'>('calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => readViewFromUrl() ?? 'calendar');
   // 列表视图下的年月范围过滤（YYYY-MM 字符串；不合规或空 = 不参与过滤）
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -1052,6 +1063,23 @@ export default function CalendarPage() {
     const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
     window.history.replaceState(null, '', newUrl);
   }, [viewDate]);
+
+  // NOTE: compQuery 变化时同步 URL ?q= — 支持从全站搜索 deep-link 跳进来,也方便分享筛选状态
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (compQuery) p.set('q', compQuery);
+    else p.delete('q');
+    const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [compQuery]);
+
+  // NOTE: viewMode 始终写入 URL ?view= — 避免同状态两种 URL 并存,改默认值时老链接也不漂移
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    p.set('view', viewMode);
+    const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [viewMode]);
 
   useEffect(() => {
     fetch('/stats/upcoming_comps.json')

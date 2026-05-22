@@ -30,6 +30,14 @@ import { Flag } from '../../utils/flag';
 import { localizeCompName } from '../../utils/comp_localize';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '../../utils/wca_results_api';
+import { fetchWcaPersonResults, fetchWcaPersonCompetitions, type WcaResultRow as WcaResultsRow, type WcaCompetition } from '../wca_stats/persons/wca_api';
+import { computePrRank } from '../wca_stats/persons/logic/progress';
+import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../utils/wca_round_meta';
+import { isAo5Bracketed } from '../../utils/wca_ao5_brackets';
+import { formatWcaResult } from '../../utils/wca_format_result';
+import { toWcaEventId } from '../../utils/wca_events';
+import { formatDateRangeIso } from '../../utils/date_range';
+import { InfoTooltip } from '../../components/InfoTooltip/InfoTooltip';
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -285,6 +293,11 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
         {/* 同轮次成绩导航 */}
         {solve.comp && solve.event && solve.round && (
           <SameRoundNav solve={solve} />
+        )}
+
+        {/* 同场比赛(同项目)同选手全轮次成绩表 — 视觉对齐 /wca/persons */}
+        {solve.compWcaId && solve.event && solve.personId && (
+          <SameCompEventTable solve={solve} />
         )}
 
         {/* 另解——任何登录用户都能投自己的解法 */}
@@ -723,6 +736,164 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * 同场比赛(同项目)同选手的全轮次成绩表 — 视觉对齐 /wca/persons/:wcaId 的 ByCompList 行式表格。
+ * 数据:WCA 个人成绩(全量,localStorage 24h cache)→ 过滤到 comp+event;PR 排名走 computePrRank。
+ * 行内有对应复盘时,行可点击跳到那条复盘。
+ */
+function SameCompEventTable({ solve }: { solve: ReconSolve }) {
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const [allResults, setAllResults] = useState<WcaResultsRow[] | null>(null);
+  const [allComps, setAllComps] = useState<WcaCompetition[] | null>(null);
+  const [reconByRound, setReconByRound] = useState<Map<string, number>>(new Map());
+
+  // 拉 WCA 个人成绩 + 比赛列表(用于 computePrRank 排序)
+  useEffect(() => {
+    if (!solve.personId) return;
+    fetchWcaPersonResults(solve.personId).then(setAllResults).catch(() => setAllResults([]));
+    fetchWcaPersonCompetitions(solve.personId).then(setAllComps).catch(() => setAllComps([]));
+  }, [solve.personId]);
+
+  // 同选手 + 同比赛 + 同项目下的所有复盘,按 round 索引(用于点击行跳转)
+  useEffect(() => {
+    listRecons().then(all => {
+      const m = new Map<string, number>();
+      for (const s of all) {
+        if (s.person === solve.person && s.comp === solve.comp && s.event === solve.event && s.round) {
+          if (!m.has(s.round)) m.set(s.round, s.id);
+        }
+      }
+      setReconByRound(m);
+    }).catch(() => { /* 静默 */ });
+  }, [solve.person, solve.comp, solve.event]);
+
+  // 过滤到本场 + 本项目,按 round 倒序(决赛在上)
+  const rows = useMemo(() => {
+    if (!allResults || !solve.compWcaId || !solve.event) return [];
+    const wcaEid = toWcaEventId(solve.event);
+    return allResults
+      .filter(r => r.competition_id === solve.compWcaId && r.event_id === wcaEid)
+      .sort((a, b) => (ROUND_ORDER[a.round_type_id] ?? 99) - (ROUND_ORDER[b.round_type_id] ?? 99));
+  }, [allResults, solve.compWcaId, solve.event]);
+
+  const prRank = useMemo(
+    () => (allResults && allComps ? computePrRank(allResults, allComps) : new Map()),
+    [allResults, allComps],
+  );
+
+  const comp = useMemo(
+    () => allComps?.find(c => c.id === solve.compWcaId) ?? null,
+    [allComps, solve.compWcaId],
+  );
+
+  if (rows.length === 0) return null;
+
+  const eventId = toWcaEventId(solve.event!);
+
+  return (
+    <div className="detail-section">
+      <div className="detail-section-label">{t('recon.sameCompEvent')}</div>
+      <div className="same-comp-event-table-wrap">
+        {comp && (
+          <div className="same-comp-event-table-header">
+            <span className="same-comp-event-table-comp">{comp.name}</span>
+            <span className="same-comp-event-table-date">
+              {formatDateRangeIso(comp.start_date, comp.end_date)}
+            </span>
+          </div>
+        )}
+        <div className="wp-table-scroll">
+          <table className="wp-bycomp-table same-comp-event-table">
+            <thead>
+              <tr>
+                <th>
+                  <span className="wp-th-info">
+                    {isZh ? '轮次' : 'Round'}
+                    <InfoTooltip content={isZh ? ROUND_HINT_ZH : ROUND_HINT_EN} />
+                  </span>
+                </th>
+                <th className="wp-th-narrow">{isZh ? '排名' : 'Pos'}</th>
+                <th>{isZh ? '单次' : 'Single'}</th>
+                <th>{isZh ? '平均' : 'Avg'}</th>
+                <th>{isZh ? '详细成绩' : 'Attempts'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => {
+                const rank = prRank.get(r.id);
+                const singleRank = rank?.singleRank ?? null;
+                const averageRank = rank?.averageRank ?? null;
+                const reconId = reconByRound.get(r.round_type_id);
+                const isCurrent = reconId === solve.id;
+                return (
+                  <tr
+                    key={r.id}
+                    className={`${reconId ? 'same-comp-event-row-has-recon' : ''} ${isCurrent ? 'same-comp-event-row-current' : ''}`}
+                    onClick={() => { if (reconId && !isCurrent) window.location.href = `/recon/${reconId}${isZh ? '?lang=zh' : ''}`; }}
+                  >
+                    <td>
+                      <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
+                        {roundLabel(r.round_type_id)}
+                      </span>
+                    </td>
+                    <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
+                      {r.pos > 0 ? r.pos : '—'}
+                    </td>
+                    <td className="wp-cell-result">
+                      <span className="record-num-cell">
+                        {formatWcaResult(r.best, eventId, 'single')}
+                        {r.regional_single_record
+                          ? <RecordBadge record={r.regional_single_record} variant="inline" />
+                          : singleRank
+                            ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
+                            : null}
+                      </span>
+                    </td>
+                    <td className="wp-cell-result">
+                      <span className="record-num-cell">
+                        {formatWcaResult(r.average, eventId, 'average')}
+                        {r.regional_average_record
+                          ? <RecordBadge record={r.regional_average_record} variant="inline" />
+                          : averageRank
+                            ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
+                            : null}
+                      </span>
+                    </td>
+                    <td className="wp-cell-attempts">
+                      <RoundAttempts attempts={r.attempts} best={r.best} eventId={eventId} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoundAttempts({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
+  if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
+  const validNums = attempts.filter(x => x > 0);
+  const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
+  return (
+    <span className="wp-attempts-flow">
+      {attempts.map((a, i) => {
+        if (a === undefined) return null;
+        const formatted = formatWcaResult(a, eventId, 'single');
+        const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
+        return (
+          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
+            {formatted}
+          </span>
+        );
+      })}
+    </span>
   );
 }
 
