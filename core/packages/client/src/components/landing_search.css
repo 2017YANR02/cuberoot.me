@@ -168,6 +168,13 @@
   margin-right: 0;
 }
 
+.landing-search-event-icon {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.85;
+}
+
 .landing-search-item-main {
   display: flex;
   flex-direction: column;
