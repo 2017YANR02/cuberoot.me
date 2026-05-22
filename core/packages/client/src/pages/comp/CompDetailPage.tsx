@@ -1181,18 +1181,20 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             const advanced = advancers?.has(r.n);
             const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
             return (
-              <tr key={r.i || `${r.n}:${idx}`} className={cls}>
+              <tr
+                key={r.i || `${r.n}:${idx}`}
+                className={`${cls} comp-row-clickable`}
+                onClick={() => onClickCuber(r.n)}
+              >
                 <td className="td-place">{r.b === 0 ? '-' : (idx + 1)}</td>
                 <td className="td-person">
                   <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                  <button
-                    type="button"
-                    className="cuber-link"
-                    onClick={() => onClickCuber(r.n)}
+                  <span
+                    className="cuber-name"
                     title={regionDisplay(u.region, isZh)}
                   >
                     {displayCuberName(u.name, isZh)}
-                  </button>
+                  </span>
                 </td>
                 {showAvg && (
                   <td className="td-avg">
@@ -1312,18 +1314,20 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
                 {psychRows.map((row, idx) => {
                   const isOdd = idx % 2 === 1;
                   return (
-                    <tr key={row.n} className={isOdd ? 'row-odd' : ''}>
+                    <tr
+                      key={row.n}
+                      className={`${isOdd ? 'row-odd' : ''} comp-row-clickable`}
+                      onClick={() => onClickCuber(row.n)}
+                    >
                       <td className="td-place">{idx + 1}</td>
                       <td className="td-person">
                         <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
-                        <button
-                          type="button"
-                          className="cuber-link"
-                          onClick={() => onClickCuber(row.n)}
+                        <span
+                          className="cuber-name"
                           title={regionDisplay(row.u.region, isZh)}
                         >
                           {displayCuberName(row.u.name, isZh)}
-                        </button>
+                        </span>
                       </td>
                       <td className="td-avg">
                         {row.average ? (
@@ -1363,18 +1367,20 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
                   const isOdd = idx % 2 === 1;
                   const evs = userEvents.get(u.number) ?? [];
                   return (
-                    <tr key={u.number} className={isOdd ? 'row-odd' : ''}>
+                    <tr
+                      key={u.number}
+                      className={`${isOdd ? 'row-odd' : ''} comp-row-clickable`}
+                      onClick={() => onClickCuber(u.number)}
+                    >
                       <td className="td-place">{idx + 1}</td>
                       <td className="td-person">
                         <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                        <button
-                          type="button"
-                          className="cuber-link"
-                          onClick={() => onClickCuber(u.number)}
+                        <span
+                          className="cuber-name"
                           title={regionDisplay(u.region, isZh)}
                         >
                           {displayCuberName(u.name, isZh)}
-                        </button>
+                        </span>
                       </td>
                       <td className="comp-roster-events">
                         {evs.map(e => (
@@ -1455,7 +1461,17 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
         <header className="comp-modal-header">
           <div className="comp-modal-title">
             <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-            <span className="cuber-link cuber-link-static">{displayCuberName(u.name, isZh)}</span>
+            {u.wcaid ? (
+              <Link
+                to={`/wca/persons/${u.wcaid}`}
+                className="cuber-link-modal"
+                onClick={onClose}
+              >
+                {displayCuberName(u.name, isZh)}
+              </Link>
+            ) : (
+              <span className="cuber-link-static">{displayCuberName(u.name, isZh)}</span>
+            )}
             {u.wcaid && (
               <a
                 className="comp-modal-wcaid"
@@ -1585,7 +1601,17 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
         <header className="comp-modal-header">
           <div className="comp-modal-title">
             <Flag iso2={iso2} className="comp-flag" />
-            <span>{displayCuberName(u.name, isZh)}</span>
+            {u.wcaid ? (
+              <Link
+                to={`/wca/persons/${u.wcaid}`}
+                className="cuber-link-modal"
+                onClick={onClose}
+              >
+                {displayCuberName(u.name, isZh)}
+              </Link>
+            ) : (
+              <span>{displayCuberName(u.name, isZh)}</span>
+            )}
             {place !== null && <span className="comp-round-modal-place">#{place}</span>}
           </div>
           <button type="button" className="comp-modal-close" onClick={onClose} aria-label="Close">

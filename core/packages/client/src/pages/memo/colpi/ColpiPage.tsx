@@ -15,6 +15,7 @@ import {
   Pencil, Trash2,
 } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
+import ThemeToggle from '../../../components/ThemeToggle';
 import WcaAuth from '../../../components/WcaAuth';
 import { Flag } from '../../../utils/flag';
 import { displayCuberName } from '../../../utils/name_utils';
@@ -443,6 +444,7 @@ export default function ColpiPage() {
             <span>{isZh ? '过滤' : 'Filter'}</span>
           </button>
           <LangToggle variant="inline" />
+          <ThemeToggle />
           <WcaAuth />
         </div>
       </header>

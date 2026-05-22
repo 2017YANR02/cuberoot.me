@@ -735,6 +735,52 @@
   pointer-events: none;
 }
 
+/* === Dark theme overrides ===
+ * 双主题:dark 时把 parchment / cream 单元格换深灰,白色输入框换成 panel,
+ * 否则跟 dark --background 反差刺眼。filled vs empty 用透明度区分。
+ */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) .colpi-page {
+    --c-filled: color-mix(in srgb, var(--foreground) 16%, transparent);
+    --c-empty:  color-mix(in srgb, var(--foreground) 6%, transparent);
+  }
+}
+html[data-theme=dark] .colpi-page {
+  --c-filled: color-mix(in srgb, var(--foreground) 16%, transparent);
+  --c-empty:  color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) .colpi-page .colpi-search input,
+  html:not([data-theme=light]) .colpi-page .colpi-pill-group,
+  html:not([data-theme=light]) .colpi-page .colpi-toggle-btn:not(.on),
+  html:not([data-theme=light]) .colpi-page .colpi-langpicker-trigger,
+  html:not([data-theme=light]) .colpi-page .colpi-detail-submit input,
+  html:not([data-theme=light]) .colpi-page .colpi-detail-submit select,
+  html:not([data-theme=light]) .colpi-page .colpi-detail-cancel,
+  html:not([data-theme=light]) .colpi-page .colpi-owner-actions button,
+  html:not([data-theme=light]) .colpi-page .colpi-detail-vote button:not(.is-voted-up):not(.is-voted-down),
+  html:not([data-theme=light]) .colpi-page .colpi-recent-vote button:not(.is-voted-up):not(.is-voted-down),
+  html:not([data-theme=light]) .colpi-page .colpi-flag-btn,
+  html:not([data-theme=light]) .colpi-page .colpi-mini-select {
+    background: var(--card);
+  }
+}
+html[data-theme=dark] .colpi-page .colpi-search input,
+html[data-theme=dark] .colpi-page .colpi-pill-group,
+html[data-theme=dark] .colpi-page .colpi-toggle-btn:not(.on),
+html[data-theme=dark] .colpi-page .colpi-langpicker-trigger,
+html[data-theme=dark] .colpi-page .colpi-detail-submit input,
+html[data-theme=dark] .colpi-page .colpi-detail-submit select,
+html[data-theme=dark] .colpi-page .colpi-detail-cancel,
+html[data-theme=dark] .colpi-page .colpi-owner-actions button,
+html[data-theme=dark] .colpi-page .colpi-detail-vote button:not(.is-voted-up):not(.is-voted-down),
+html[data-theme=dark] .colpi-page .colpi-recent-vote button:not(.is-voted-up):not(.is-voted-down),
+html[data-theme=dark] .colpi-page .colpi-flag-btn,
+html[data-theme=dark] .colpi-page .colpi-mini-select {
+  background: var(--card);
+}
+
 /* === Mobile === */
 @media (max-width: 640px) {
   .colpi-page { padding: 8px; font-size: 13px; }
