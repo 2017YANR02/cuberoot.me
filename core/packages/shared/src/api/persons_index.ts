@@ -13,14 +13,28 @@ interface Loaded {
 let loaded: Loaded | null = null;
 let loadPromise: Promise<Loaded> | null = null;
 
+// NOTE: 280k 条 lowercase 一次性 .map 会阻主线程 ~50-100ms。分批让出给浏览器,
+// 输入响应 / 动画不会卡。JSON.parse 本身没法分片,只能尽量在用户搜索前就完成。
+function yieldMain() { return new Promise<void>(r => setTimeout(r, 0)); }
+
 async function fetchAndParse(): Promise<Loaded> {
   const resp = await fetch(URL, { cache: 'force-cache' });
   if (!resp.ok) throw new Error(`persons index fetch ${resp.status}`);
   const ds = new DecompressionStream('gzip');
   const stream = resp.body!.pipeThrough(ds);
   const text = await new Response(stream).text();
+  await yieldMain();
   const records = JSON.parse(text) as Array<[string, string, string]>;
-  const haystacks = records.map(r => `${r[0].toLowerCase()}|${r[1].toLowerCase()}`);
+  await yieldMain();
+  const haystacks: string[] = new Array(records.length);
+  const CHUNK = 20000;
+  for (let i = 0; i < records.length; i += CHUNK) {
+    const end = Math.min(i + CHUNK, records.length);
+    for (let j = i; j < end; j++) {
+      haystacks[j] = `${records[j][0].toLowerCase()}|${records[j][1].toLowerCase()}`;
+    }
+    if (end < records.length) await yieldMain();
+  }
   return { records, haystacks };
 }
 

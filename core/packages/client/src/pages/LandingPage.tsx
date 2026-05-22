@@ -405,7 +405,8 @@ const SECTIONS: Section[] = [
 
 // NOTE: 全站搜索索引 — 模块级派生自 SECTIONS,跳过 comingSoon 卡;WCA 单独前置
 // (它是 hero,不在 SECTIONS 内,但搜索得能命中)。
-const SEARCH_CARDS: LandingSearchCard[] = [
+// export 出去给 /wca WcaStatsIndex 复用,两个搜索入口共享同一份卡片源。
+export const SEARCH_CARDS: LandingSearchCard[] = [
   { id: 'stats', href: '/wca', internal: true, nameEn: 'WCA', nameZh: 'WCA', sectionTitleEn: 'WCA', sectionTitleZh: 'WCA' },
   ...SECTIONS.flatMap(sec =>
     sec.cards
