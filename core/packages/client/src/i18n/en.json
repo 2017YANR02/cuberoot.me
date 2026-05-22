@@ -73,6 +73,7 @@
     "editHistory": "Edit History",
     "unknown": "unknown",
     "sameRound": "Same Round",
+    "sameCompEvent": "Same Competition",
     "addAttempt": "Add attempt #{{n}} (carry over round info)",
     "pasteAttempts": "Paste round times",
     "pasteAttemptsPlaceholder": "Paste here…",

@@ -12,6 +12,7 @@ import { CompCell } from '../../../../../components/CompCell/CompCell';
 import { compLinkProps } from '../../../../../utils/comp_link';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computePrRank } from '../../logic/progress';
+import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../../../../utils/wca_round_meta';
 import type { WcaResultRow, WcaCompetition } from '../../wca_api';
 
 interface Props {
@@ -20,45 +21,7 @@ interface Props {
   isZh: boolean;
 }
 
-const ROUND_ORDER: Record<string, number> = {
-  // 决赛在最上(展示按 round 倒序更直觉,与 cubing.pro 一致)
-  'f': 0, 'c': 1, 'b': 2,
-  '3': 3,        // semifinal
-  '2': 4, 'g': 4,// quarter / combined-quarter
-  '1': 5, 'd': 5,// first / combined-first
-  'h': 6,
-};
-
-// 表头 round 列 tooltip 文本 (中英),解释 R1/R2/R3/Fi/C-*/h 等缩写
-const ROUND_HINT_ZH = `轮次缩写:
-R1 / R2 / R3 — 初赛 / 复赛 / 半决赛 (打满 5 把)
-Fi — 决赛
-C- 前缀 (组合赛制) — 带 cutoff,前几把过线才能继续打完整 Ao5
-h — head-to-head 1v1 淘汰 (非 WCA 项目)`;
-const ROUND_HINT_EN = `Round abbreviations:
-R1 / R2 / R3 — First / Second / Third Round (full attempts)
-Fi — Final
-C- prefix (Combined) — cutoff format; must beat cutoff in first attempts to continue full Ao5
-h — Head-to-head (1v1 elimination, non-WCA)`;
-
-function roundLabel(rt: string, _isZh: boolean): string {
-  // 用 Fi / R3 / R2 / R1 缩写,中英文一致
-  const map: Record<string, string> = {
-    'f': 'Fi', 'c': 'C-Fi', 'b': 'B-Fi',
-    '3': 'R3',
-    '2': 'R2', 'g': 'C-R2',
-    '1': 'R1', 'd': 'C-R1',
-    'h': 'R1',
-  };
-  return map[rt] ?? rt;
-}
-
-function roundClass(rt: string): string {
-  if (rt === 'f' || rt === 'c' || rt === 'b') return 'wp-round-final';
-  if (rt === '3') return 'wp-round-semi';
-  if (rt === '2' || rt === 'g') return 'wp-round-quarter';
-  return 'wp-round-first';
-}
+// 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
 export default function ByCompList({ results, comps, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -141,7 +104,7 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                         </td>
                         <td>
                           <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
-                            {roundLabel(r.round_type_id, isZh)}
+                            {roundLabel(r.round_type_id)}
                           </span>
                         </td>
                         <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>

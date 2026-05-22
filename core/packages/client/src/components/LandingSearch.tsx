@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, Wrench,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '../i18n';
@@ -30,6 +30,36 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 export type LandingSearchCard = SiteSearchCard;
 
+const RECON_INITIAL_CAP = 10;
+const COMP_INITIAL_CAP = 10;
+
+// 共享:section header 右侧 "+N →"。to 给定则是导航链接,否则是 expand 按钮。
+function HeaderMore({ overflow, title, to, onClick }: {
+  overflow: number;
+  title: string;
+  to?: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
+      +{overflow}
+      <ArrowRight size={12} strokeWidth={1.75} />
+    </>
+  );
+  if (to) {
+    return (
+      <Link to={to} className="landing-search-header-more" onClick={onClick} title={title}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className="landing-search-header-more" onClick={onClick} title={title}>
+      {inner}
+    </button>
+  );
+}
+
 interface Props {
   cards: LandingSearchCard[];
   lang: 'zh' | 'en';
@@ -40,7 +70,6 @@ export default function LandingSearch({ cards, lang }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [expandedPersons, setExpandedPersons] = useState(false);
-  const [expandedComps, setExpandedComps] = useState(false);
   const [expandedRecons, setExpandedRecons] = useState(false);
   const [expandedGlossary, setExpandedGlossary] = useState(false);
   const navigate = useNavigate();
@@ -54,15 +83,15 @@ export default function LandingSearch({ cards, lang }: Props) {
     totalCount,
   } = useSiteSearch(query, 'eager', { cards });
 
-  // NOTE: 切 query → 折回默认页(50 条 + "+ N 更多" 按钮)。
+  // NOTE: 切 query → 折回默认页(展示 cap + "显示更多" 按钮)。比赛走跳转 /wca/calendar 不需要 expand state。
   useEffect(() => {
-    setExpandedPersons(false); setExpandedComps(false);
+    setExpandedPersons(false);
     setExpandedRecons(false); setExpandedGlossary(false);
   }, [q]);
 
   const visiblePersons = expandedPersons ? personMatches : personMatches.slice(0, INITIAL_RENDER_CAP);
-  const visibleComps = expandedComps ? compMatches : compMatches.slice(0, INITIAL_RENDER_CAP);
-  const visibleRecons = expandedRecons ? reconMatches : reconMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleComps = compMatches.slice(0, COMP_INITIAL_CAP);
+  const visibleRecons = expandedRecons ? reconMatches : reconMatches.slice(0, RECON_INITIAL_CAP);
   const visibleGlossary = expandedGlossary ? glossaryMatches : glossaryMatches.slice(0, INITIAL_RENDER_CAP);
 
   useEffect(() => {
@@ -264,6 +293,13 @@ export default function LandingSearch({ cards, lang }: Props) {
               <div className="landing-search-section-header">
                 <BookA size={14} strokeWidth={1.75} />
                 <h3>{isZh ? '术语' : 'Glossary'}</h3>
+                {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
+                  <HeaderMore
+                    overflow={glossaryMatches.length - INITIAL_RENDER_CAP}
+                    title={isZh ? `展开全部 ${glossaryMatches.length} 条` : `Expand all ${glossaryMatches.length}`}
+                    onClick={() => setExpandedGlossary(true)}
+                  />
+                )}
               </div>
               <div className="landing-search-grid">
                 {visibleGlossary.map(g => (
@@ -278,17 +314,6 @@ export default function LandingSearch({ cards, lang }: Props) {
                   </Link>
                 ))}
               </div>
-              {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
-                <button
-                  type="button"
-                  className="landing-search-more"
-                  onClick={() => setExpandedGlossary(true)}
-                >
-                  {isZh
-                    ? `显示更多 (+${glossaryMatches.length - INITIAL_RENDER_CAP})`
-                    : `Show more (+${glossaryMatches.length - INITIAL_RENDER_CAP})`}
-                </button>
-              )}
             </section>
           )}
 
@@ -313,11 +338,50 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
+          {personMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <UserRound size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '选手' : 'Persons'}</h3>
+                {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
+                  <HeaderMore
+                    overflow={personMatches.length - INITIAL_RENDER_CAP}
+                    title={isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`}
+                    onClick={() => setExpandedPersons(true)}
+                  />
+                )}
+              </div>
+              <div className="landing-search-grid">
+                {visiblePersons.map(p => (
+                  <Link
+                    key={p.wcaId}
+                    to={`/wca/persons/${p.wcaId}${langQuery}`}
+                    className="landing-search-item landing-search-item--rich"
+                    onClick={closeAfter}
+                  >
+                    <Flag iso2={p.iso2} className="country-flag" />
+                    <span className="landing-search-item-main">
+                      <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
+                      <span className="landing-search-item-meta">{p.wcaId}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {reconMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <ScanSearch size={14} strokeWidth={1.75} />
                 <h3>{isZh ? '复盘' : 'Recons'}</h3>
+                {!expandedRecons && reconMatches.length > RECON_INITIAL_CAP && (
+                  <HeaderMore
+                    overflow={reconMatches.length - RECON_INITIAL_CAP}
+                    title={isZh ? `展开全部 ${reconMatches.length} 条` : `Expand all ${reconMatches.length}`}
+                    onClick={() => setExpandedRecons(true)}
+                  />
+                )}
               </div>
               <div className="landing-search-grid">
                 {visibleRecons.map(r => (
@@ -344,17 +408,6 @@ export default function LandingSearch({ cards, lang }: Props) {
                   </Link>
                 ))}
               </div>
-              {!expandedRecons && reconMatches.length > INITIAL_RENDER_CAP && (
-                <button
-                  type="button"
-                  className="landing-search-more"
-                  onClick={() => setExpandedRecons(true)}
-                >
-                  {isZh
-                    ? `显示更多 (+${reconMatches.length - INITIAL_RENDER_CAP})`
-                    : `Show more (+${reconMatches.length - INITIAL_RENDER_CAP})`}
-                </button>
-              )}
             </section>
           )}
 
@@ -363,6 +416,14 @@ export default function LandingSearch({ cards, lang }: Props) {
               <div className="landing-search-section-header">
                 <CalendarDays size={14} strokeWidth={1.75} />
                 <h3>{isZh ? '比赛' : 'Competitions'}</h3>
+                {compMatches.length > COMP_INITIAL_CAP && (
+                  <HeaderMore
+                    overflow={compMatches.length - COMP_INITIAL_CAP}
+                    title={isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`}
+                    to={`/wca/calendar${langQuery}&view=list&q=${encodeURIComponent(q)}`}
+                    onClick={closeAfter}
+                  />
+                )}
               </div>
               <div className="landing-search-grid">
                 {visibleComps.map(c => {
@@ -387,53 +448,6 @@ export default function LandingSearch({ cards, lang }: Props) {
                   );
                 })}
               </div>
-              {!expandedComps && compMatches.length > INITIAL_RENDER_CAP && (
-                <button
-                  type="button"
-                  className="landing-search-more"
-                  onClick={() => setExpandedComps(true)}
-                >
-                  {isZh
-                    ? `显示更多 (+${compMatches.length - INITIAL_RENDER_CAP})`
-                    : `Show more (+${compMatches.length - INITIAL_RENDER_CAP})`}
-                </button>
-              )}
-            </section>
-          )}
-
-          {personMatches.length > 0 && (
-            <section className="landing-search-section">
-              <div className="landing-search-section-header">
-                <UserRound size={14} strokeWidth={1.75} />
-                <h3>{isZh ? '选手' : 'Persons'}</h3>
-              </div>
-              <div className="landing-search-grid">
-                {visiblePersons.map(p => (
-                  <Link
-                    key={p.wcaId}
-                    to={`/wca/persons/${p.wcaId}${langQuery}`}
-                    className="landing-search-item landing-search-item--rich"
-                    onClick={closeAfter}
-                  >
-                    <Flag iso2={p.iso2} className="country-flag" />
-                    <span className="landing-search-item-main">
-                      <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
-                      <span className="landing-search-item-meta">{p.wcaId}</span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-              {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
-                <button
-                  type="button"
-                  className="landing-search-more"
-                  onClick={() => setExpandedPersons(true)}
-                >
-                  {isZh
-                    ? `显示更多 (+${personMatches.length - INITIAL_RENDER_CAP})`
-                    : `Show more (+${personMatches.length - INITIAL_RENDER_CAP})`}
-                </button>
-              )}
             </section>
           )}
 

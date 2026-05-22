@@ -735,6 +735,114 @@
   color: #e8a27a;
 }
 
+/* --- 同场比赛(同项目)同选手全轮次成绩表 ---
+   视觉对齐 /wca/persons 的 ByCompList 行式表格;wp-* class 同名复用 (recon 页不加载 persons.css,
+   所以这里就地定义,token 直接 hardcode 暗色值,不与 persons.css 冲突)。 */
+.same-comp-event-table-wrap {
+  margin-top: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #1f1f1f;
+}
+
+.same-comp-event-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.same-comp-event-table-comp {
+  color: #ededed;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.same-comp-event-table-date {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.78rem;
+  color: #737373;
+}
+
+.same-comp-event-table .wp-cell-pos,
+.same-comp-event-table .wp-cell-attempts,
+.same-comp-event-table .wp-text-mute {
+  color: #a3a3a3;
+}
+
+.same-comp-event-table .wp-cell-result {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #ededed;
+}
+
+.same-comp-event-row-has-recon { cursor: pointer; }
+.same-comp-event-row-has-recon:hover td {
+  background: color-mix(in srgb, #ededed 4%, transparent);
+}
+.same-comp-event-row-current td {
+  background: rgba(232, 162, 122, 0.08);
+}
+
+/* 表格基础布局 — 复制自 persons.css .wp-bycomp-table */
+.wp-table-scroll { overflow-x: auto; }
+.same-comp-event-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.same-comp-event-table thead th {
+  padding: 8px 10px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  color: #a3a3a3;
+  font-weight: 500;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+.same-comp-event-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.same-comp-event-table tbody tr:last-child td { border-bottom: none; }
+
+.same-comp-event-table .wp-round-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.same-comp-event-table .wp-round-final { color: #4A8A4A; }
+.same-comp-event-table .wp-round-semi { color: #7757A8; }
+.same-comp-event-table .wp-round-quarter { color: #2A6BB0; }
+.same-comp-event-table .wp-round-first { color: #a3a3a3; }
+.same-comp-event-table .wp-pos-first { color: #C84A6F; font-weight: 700; }
+
+.same-comp-event-table .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
+.same-comp-event-table .wp-th-narrow { width: 50px; text-align: center !important; }
+
+.same-comp-event-table .wp-attempts-flow {
+  display: grid;
+  grid-template-columns: repeat(5, 7ch);
+  gap: 4px 12px;
+  justify-content: start;
+}
+.same-comp-event-table .wp-att { text-align: right; }
+.same-comp-event-table .wp-att::before { content: "("; opacity: 0; }
+.same-comp-event-table .wp-att::after { content: ")"; opacity: 0; }
+.same-comp-event-table .wp-att-trimmed::before,
+.same-comp-event-table .wp-att-trimmed::after { opacity: 1; }
+.same-comp-event-table .wp-att-best { color: #ededed; font-weight: 600; }
+
 .same-round-paste-btn {
   display: inline-flex;
   align-items: center;
