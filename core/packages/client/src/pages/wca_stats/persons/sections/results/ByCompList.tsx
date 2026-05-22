@@ -13,17 +13,19 @@ import { compLinkProps } from '../../../../../utils/comp_link';
 import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computePrRank } from '../../logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../../../../utils/wca_round_meta';
+import { findReconForAttempt } from '../../../../../utils/recon_attempt_lookup';
 import type { WcaResultRow, WcaCompetition } from '../../wca_api';
 
 interface Props {
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
+  reconLookup: Map<string, number> | null;
   isZh: boolean;
 }
 
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
-export default function ByCompList({ results, comps, isZh }: Props) {
+export default function ByCompList({ results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const prRank = useMemo(() =>
@@ -131,7 +133,15 @@ export default function ByCompList({ results, comps, isZh }: Props) {
                           </span>
                         </td>
                         <td className="wp-cell-attempts">
-                          <AttemptsList attempts={r.attempts} best={r.best} eventId={r.event_id} />
+                          <AttemptsList
+                            attempts={r.attempts}
+                            best={r.best}
+                            eventId={r.event_id}
+                            compId={r.competition_id}
+                            roundTypeId={r.round_type_id}
+                            reconLookup={reconLookup}
+                            isZh={isZh}
+                          />
                         </td>
                       </tr>
                     );
@@ -147,21 +157,35 @@ export default function ByCompList({ results, comps, isZh }: Props) {
 }
 
 // 把 attempts 渲染为可折行 inline 列表(支持 H2H 等 5+ 次的格式).
-function AttemptsList({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
+function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh }: {
+  attempts: number[];
+  best: number;
+  eventId: string;
+  compId: string;
+  roundTypeId: string;
+  reconLookup: Map<string, number> | null;
+  isZh: boolean;
+}) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter((x) => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
+  const langQuery = isZh ? '?lang=zh' : '';
   return (
     <span className="wp-attempts-flow">
       {attempts.map((a, i) => {
         if (a === undefined) return null;
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
-        return (
-          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
-            {formatted}
-          </span>
-        );
+        const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`;
+        const reconId = findReconForAttempt(reconLookup, compId, eventId, roundTypeId, i + 1);
+        if (reconId) {
+          return (
+            <Link key={i} to={`/recon/${reconId}${langQuery}`} className={`${cls} wp-att-recon`}>
+              {formatted}
+            </Link>
+          );
+        }
+        return <span key={i} className={cls}>{formatted}</span>;
       })}
     </span>
   );

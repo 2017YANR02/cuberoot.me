@@ -13,12 +13,13 @@ interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
+  reconLookup: Map<string, number> | null;
   isZh: boolean;
 }
 
 type Sub = 'event' | 'comp';
 
-export default function ResultsTab({ profile, results, comps, isZh }: Props) {
+export default function ResultsTab({ profile, results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const [sp, setSp] = useSearchParams();
   const rawSub = (sp.get('sub') ?? 'event').toLowerCase();
@@ -77,12 +78,13 @@ export default function ResultsTab({ profile, results, comps, isZh }: Props) {
             profile={profile}
             results={results}
             comps={comps}
+            reconLookup={reconLookup}
             eventId={activeEvent}
             isZh={isZh}
           />
         )}
         {sub === 'comp' && (
-          <ByCompList results={results} comps={comps} isZh={isZh} />
+          <ByCompList results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
         )}
       </Suspense>
     </div>
