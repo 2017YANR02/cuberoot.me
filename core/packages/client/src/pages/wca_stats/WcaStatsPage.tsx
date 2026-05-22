@@ -665,12 +665,10 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
   onSetActivePanel: (idx: number) => void;
   belowTabs?: React.ReactNode;
 }) {
-  // NOTE: Dedup 开关——默认 ON（与 Legacy 一致）
   const [dedup, setDedup] = useState(true);
+  const [metric, setMetric] = useState<string | null>(null);
   const panel = panels[activePanel] ?? panels[0];
-  if (!panel) return null;
 
-  // NOTE: 检测是否为 AoX 数据——ranking panel 含 _type:'solves' 的 Details 列
   const isAoxData = useMemo(() => {
     const rankingPanel = panels.find(p => p.id === 'ranking');
     if (!rankingPanel) return false;
@@ -681,25 +679,34 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
     );
   }, [panels]);
 
-  // NOTE: 是否显示 dedup toggle——仅 AoX 的 history 面板
-  const showDedup = isAoxData && panel.id === 'history';
+  const showDedup = isAoxData && panel?.id === 'history';
 
-  // NOTE: 对 history sections 应用 dedup 过滤
+  // section title 后缀 " - Single"/" - Average" 抽出来跟 panel tabs 同一行渲染
+  const metrics = useMemo(() => {
+    const set = new Set<string>();
+    panel?.sections.forEach(s => {
+      const i = s.title.lastIndexOf(' - ');
+      if (i >= 0) set.add(s.title.substring(i + 3));
+    });
+    return Array.from(set);
+  }, [panel]);
+  const activeMetric = metric && metrics.includes(metric) ? metric : metrics[0] ?? null;
+
   const dedupedSections = useMemo(() => {
+    if (!panel) return [];
     if (!showDedup || !dedup) return panel.sections;
-    return panel.sections.map(s => ({
-      ...s,
-      rows: dedupRows(s.rows, panel.header),
-    }));
+    return panel.sections.map(s => ({ ...s, rows: dedupRows(s.rows, panel.header) }));
   }, [panel, showDedup, dedup]);
 
-  // NOTE: 为 history 面板收集当前可见 section 的 rows（供折线图用）
+  const baseSections = showDedup && dedup ? dedupedSections : panel?.sections ?? [];
+  const activeSections = metrics.length >= 2 && activeMetric
+    ? baseSections.filter(s => s.title.endsWith(` - ${activeMetric}`))
+    : baseSections;
+
   const historyChartData = useMemo(() => {
-    if (panel.id !== 'history') return null;
-    const sections = dedup ? dedupedSections : panel.sections;
-    // 过滤出当前 selectedEvent 的 section rows
-    const visibleSections = selectedEvent
-      ? sections.filter(s => {
+    if (!panel || panel.id !== 'history') return null;
+    const visible = selectedEvent
+      ? activeSections.filter(s => {
           let eventId = EVENT_NAME_TO_ID[s.title];
           if (!eventId && s.title.includes(' - ')) {
             const eventName = s.title.substring(0, s.title.lastIndexOf(' - '));
@@ -707,16 +714,28 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
           }
           return eventId === selectedEvent;
         })
-      : sections;
-    const allRows = visibleSections.flatMap(s => s.rows);
+      : activeSections;
+    const allRows = visible.flatMap(s => s.rows);
     return allRows.length > 0 ? allRows : null;
-  }, [panel, isAoxData, selectedEvent, dedup, dedupedSections]);
+  }, [panel, selectedEvent, activeSections]);
 
-  // NOTE: 当前面板实际使用的 sections（dedup 后的或原始的）
-  const activeSections = showDedup && dedup ? dedupedSections : panel.sections;
+  if (!panel) return null;
 
   return (
     <>
+      {metrics.length >= 2 && (
+        <div className="wca-stats-tab-bar">
+          {metrics.map(m => (
+            <button
+              key={m}
+              className={`wca-stats-tab ${m === activeMetric ? 'active' : ''}`}
+              onClick={() => setMetric(m)}
+            >
+              {isZh ? (m === 'Single' ? '单次' : m === 'Average' ? '平均' : m) : m}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="wca-stats-tab-bar">
         {panels.map((p, i) => (
           <button
@@ -727,7 +746,6 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
             {isZh ? p.labelZh : p.labelEn}
           </button>
         ))}
-        {/* NOTE: Dedup toggle——与 Legacy iOS 药丸风格一致 */}
         {showDedup && (
           <label className="wca-stats-dedup-toggle">
             <span>{isZh ? '日期去重' : 'Dedup'}</span>
@@ -737,15 +755,13 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
         )}
       </div>
       {belowTabs}
-      {/* NOTE: History 面板——折线图在 sections 之上 */}
       {historyChartData && (
         <WrHistoryChart rows={historyChartData} header={panel.header} isZh={isZh} />
       )}
-      {/* NOTE: Ranking 面板——用 AoxRankingSection 替代普通 SectionsView */}
       {isAoxData && panel.id === 'ranking' ? (
         <AoxSectionsView
           header={panel.header}
-          sections={panel.sections}
+          sections={activeSections}
           isZh={isZh}
           selectedEvent={selectedEvent}
         />
