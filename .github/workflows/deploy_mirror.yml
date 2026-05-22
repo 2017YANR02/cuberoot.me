@@ -37,7 +37,7 @@ jobs:
           [ -d stats ] && cp -r stats _deploy/ || true
 
           # 4. 静态资源目录
-          for d in icons fonts vendor data ffmpeg textures donate analyze-worker images; do
+          for d in icons fonts data ffmpeg textures donate analyze-worker images; do
             [ -d "$d" ] && cp -r "$d" _deploy/ || true
           done
 
