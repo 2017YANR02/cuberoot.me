@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Search, Wrench,
   CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator, LayoutGrid,
-  type LucideIcon,
+  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '../../i18n';
 import LangToggle from '../../components/LangToggle';
@@ -21,6 +21,7 @@ import { localizeCity } from '../../utils/city_localize';
 import { formatDateRangeIso } from '../../utils/date_range';
 import { compLinkProps } from '../../utils/comp_link';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
+import { EventIcon } from '../../components/EventIcon/EventIcon';
 import { SEARCH_CARDS } from '../LandingPage';
 import {
   useSiteSearch, LOOKUP_ITEMS, METRIC_LABEL_OVERRIDE, INITIAL_RENDER_CAP,
@@ -62,6 +63,8 @@ export default function WcaStatsIndex() {
   const [query, setQuery] = useState('');
   const [expandedPersons, setExpandedPersons] = useState(false);
   const [expandedComps, setExpandedComps] = useState(false);
+  const [expandedRecons, setExpandedRecons] = useState(false);
+  const [expandedGlossary, setExpandedGlossary] = useState(false);
 
   const isZh = i18n.language === 'zh';
 
@@ -84,13 +87,20 @@ export default function WcaStatsIndex() {
   const {
     q, xSearchEnabled, xLoaded,
     cardMatches, toolMatches, lookupMatches, statMatches,
-    personMatches, compMatches, totalCount,
+    personMatches, compMatches,
+    reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    totalCount,
   } = useSiteSearch(query, 'lazy', { cards: SEARCH_CARDS });
 
   // NOTE: 切 query → 折回默认页(50 条 + "+ N 更多" 按钮),跟 LandingSearch 对齐。
-  useEffect(() => { setExpandedPersons(false); setExpandedComps(false); }, [q]);
+  useEffect(() => {
+    setExpandedPersons(false); setExpandedComps(false);
+    setExpandedRecons(false); setExpandedGlossary(false);
+  }, [q]);
   const visiblePersons = expandedPersons ? personMatches : personMatches.slice(0, INITIAL_RENDER_CAP);
   const visibleComps = expandedComps ? compMatches : compMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleRecons = expandedRecons ? reconMatches : reconMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleGlossary = expandedGlossary ? glossaryMatches : glossaryMatches.slice(0, INITIAL_RENDER_CAP);
 
   if (loading) {
     return (
@@ -348,6 +358,143 @@ export default function WcaStatsIndex() {
             </section>
           );
         })}
+
+        {q !== '' && aboutMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <BookOpen size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '算法说明' : 'About'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {aboutMatches.map(a => (
+                <Link key={a.id} to={`/wca/about/${a.id}${langQuery}`} className="wca-stats-index-card">
+                  {isZh ? a.titleZh : a.titleEn}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {q !== '' && stackMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <CodeIcon size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '技术栈' : 'Stack'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {stackMatches.map(s => (
+                <Link
+                  key={s.slug}
+                  to={`/code/stack/${s.slug}${langQuery}`}
+                  className="wca-stats-index-card wca-stats-index-card--rich"
+                >
+                  <span className="wca-stats-index-card-main">
+                    <span className="wca-stats-index-card-name">{s.name}</span>
+                    <span className="wca-stats-index-card-meta">{isZh ? s.zh.tagline : s.en.tagline}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {q !== '' && glossaryMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <BookA size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '术语' : 'Glossary'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {visibleGlossary.map(g => (
+                <Link
+                  key={g.slug}
+                  to={`/wiki${langQuery}#${g.slug}`}
+                  className="wca-stats-index-card wca-stats-index-card--rich"
+                >
+                  <span className="wca-stats-index-card-main">
+                    <span className="wca-stats-index-card-name">{g.head}</span>
+                    <span className="wca-stats-index-card-meta">{g.body.slice(0, 100)}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
+              <button
+                type="button"
+                className="wca-stats-index-more"
+                onClick={() => setExpandedGlossary(true)}
+              >
+                {isZh
+                  ? `显示更多 (+${glossaryMatches.length - INITIAL_RENDER_CAP})`
+                  : `Show more (+${glossaryMatches.length - INITIAL_RENDER_CAP})`}
+              </button>
+            )}
+          </section>
+        )}
+
+        {q !== '' && algSetMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <Library size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '公式库' : 'Algorithms'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {algSetMatches.map(a => (
+                <Link
+                  key={`${a.puzzle}/${a.setSlug}`}
+                  to={`/alg/${a.puzzle}/${a.setSlug}${langQuery}`}
+                  className="wca-stats-index-card"
+                >
+                  {a.puzzle} · {a.setSlug}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {q !== '' && reconMatches.length > 0 && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <ScanSearch size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '复盘' : 'Recons'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              {visibleRecons.map(r => (
+                <Link
+                  key={r.id}
+                  to={`/recon/${r.id}${langQuery}`}
+                  className="wca-stats-index-card wca-stats-index-card--rich"
+                >
+                  {r.personIso2 && <Flag iso2={r.personIso2} className="country-flag" />}
+                  <EventIcon event={r.event} className="wca-stats-index-event-icon" />
+                  <span className="wca-stats-index-card-main">
+                    <span className="wca-stats-index-card-name">
+                      {displayCuberName(r.person, isZh)} · {r.valueStr}
+                      {r.recordTag ? ` · ${r.recordTag}` : ''}
+                      {r.aoType ? ` · ${r.aoType}` : ''}
+                    </span>
+                    <span className="wca-stats-index-card-meta">
+                      {r.comp ? r.comp : ''}
+                      {r.comp && r.date ? ' · ' : ''}
+                      {r.date ?? ''}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {!expandedRecons && reconMatches.length > INITIAL_RENDER_CAP && (
+              <button
+                type="button"
+                className="wca-stats-index-more"
+                onClick={() => setExpandedRecons(true)}
+              >
+                {isZh
+                  ? `显示更多 (+${reconMatches.length - INITIAL_RENDER_CAP})`
+                  : `Show more (+${reconMatches.length - INITIAL_RENDER_CAP})`}
+              </button>
+            )}
+          </section>
+        )}
 
         {q !== '' && compMatches.length > 0 && (
           <section className="wca-stats-index-section">

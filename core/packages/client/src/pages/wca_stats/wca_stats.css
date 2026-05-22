@@ -904,6 +904,13 @@ input:checked + .wca-stats-toggle-pill::after {
   transition: all 0.12s;
 }
 
+.wca-stats-index-event-icon {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.85;
+}
+
 .wca-stats-index-more:hover {
   border-color: var(--accent);
   color: var(--accent);

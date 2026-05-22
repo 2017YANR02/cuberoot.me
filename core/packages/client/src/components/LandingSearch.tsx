@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, Wrench, type LucideIcon,
+  CalendarDays, LayoutGrid, Wrench,
+  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import { ClearButton } from './ClearButton';
@@ -20,6 +21,7 @@ import {
   INITIAL_RENDER_CAP,
   type SiteSearchCard,
 } from '../utils/site_search';
+import { EventIcon } from './EventIcon/EventIcon';
 import './landing_search.css';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -39,20 +41,29 @@ export default function LandingSearch({ cards, lang }: Props) {
   const [open, setOpen] = useState(false);
   const [expandedPersons, setExpandedPersons] = useState(false);
   const [expandedComps, setExpandedComps] = useState(false);
+  const [expandedRecons, setExpandedRecons] = useState(false);
+  const [expandedGlossary, setExpandedGlossary] = useState(false);
   const navigate = useNavigate();
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const {
     q, xSearchEnabled, xLoaded,
     cardMatches, toolMatches, lookupMatches, statMatches,
-    personMatches, compMatches, totalCount,
+    personMatches, compMatches,
+    reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    totalCount,
   } = useSiteSearch(query, 'eager', { cards });
 
   // NOTE: 切 query → 折回默认页(50 条 + "+ N 更多" 按钮)。
-  useEffect(() => { setExpandedPersons(false); setExpandedComps(false); }, [q]);
+  useEffect(() => {
+    setExpandedPersons(false); setExpandedComps(false);
+    setExpandedRecons(false); setExpandedGlossary(false);
+  }, [q]);
 
   const visiblePersons = expandedPersons ? personMatches : personMatches.slice(0, INITIAL_RENDER_CAP);
   const visibleComps = expandedComps ? compMatches : compMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleRecons = expandedRecons ? reconMatches : reconMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleGlossary = expandedGlossary ? glossaryMatches : glossaryMatches.slice(0, INITIAL_RENDER_CAP);
 
   useEffect(() => {
     if (!open) return;
@@ -204,6 +215,148 @@ export default function LandingSearch({ cards, lang }: Props) {
               </section>
             );
           })}
+
+          {aboutMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <BookOpen size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '算法说明' : 'About'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {aboutMatches.map(a => (
+                  <Link
+                    key={a.id}
+                    to={`/wca/about/${a.id}${langQuery}`}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{isZh ? a.titleZh : a.titleEn}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {stackMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <CodeIcon size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '技术栈' : 'Stack'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {stackMatches.map(s => (
+                  <Link
+                    key={s.slug}
+                    to={`/code/stack/${s.slug}${langQuery}`}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{s.name}</span>
+                    <span className="landing-search-item-meta">{isZh ? s.zh.tagline : s.en.tagline}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {glossaryMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <BookA size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '术语' : 'Glossary'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {visibleGlossary.map(g => (
+                  <Link
+                    key={g.slug}
+                    to={`/wiki${langQuery}#${g.slug}`}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{g.head}</span>
+                    <span className="landing-search-item-meta">{g.body.slice(0, 80)}</span>
+                  </Link>
+                ))}
+              </div>
+              {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
+                <button
+                  type="button"
+                  className="landing-search-more"
+                  onClick={() => setExpandedGlossary(true)}
+                >
+                  {isZh
+                    ? `显示更多 (+${glossaryMatches.length - INITIAL_RENDER_CAP})`
+                    : `Show more (+${glossaryMatches.length - INITIAL_RENDER_CAP})`}
+                </button>
+              )}
+            </section>
+          )}
+
+          {algSetMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Library size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '公式库' : 'Algorithms'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {algSetMatches.map(a => (
+                  <Link
+                    key={`${a.puzzle}/${a.setSlug}`}
+                    to={`/alg/${a.puzzle}/${a.setSlug}${langQuery}`}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{a.puzzle} · {a.setSlug}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {reconMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <ScanSearch size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '复盘' : 'Recons'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {visibleRecons.map(r => (
+                  <Link
+                    key={r.id}
+                    to={`/recon/${r.id}${langQuery}`}
+                    className="landing-search-item landing-search-item--rich"
+                    onClick={closeAfter}
+                  >
+                    {r.personIso2 && <Flag iso2={r.personIso2} className="country-flag" />}
+                    <EventIcon event={r.event} className="landing-search-event-icon" />
+                    <span className="landing-search-item-main">
+                      <span className="landing-search-item-name">
+                        {displayCuberName(r.person, isZh)} · {r.valueStr}
+                        {r.recordTag ? ` · ${r.recordTag}` : ''}
+                        {r.aoType ? ` · ${r.aoType}` : ''}
+                      </span>
+                      <span className="landing-search-item-meta">
+                        {r.comp ? r.comp : ''}
+                        {r.comp && r.date ? ' · ' : ''}
+                        {r.date ?? ''}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              {!expandedRecons && reconMatches.length > INITIAL_RENDER_CAP && (
+                <button
+                  type="button"
+                  className="landing-search-more"
+                  onClick={() => setExpandedRecons(true)}
+                >
+                  {isZh
+                    ? `显示更多 (+${reconMatches.length - INITIAL_RENDER_CAP})`
+                    : `Show more (+${reconMatches.length - INITIAL_RENDER_CAP})`}
+                </button>
+              )}
+            </section>
+          )}
 
           {compMatches.length > 0 && (
             <section className="landing-search-section">
