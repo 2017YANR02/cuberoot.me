@@ -1,56 +1,32 @@
 // 落地页全站搜索 — Hero 下拉浮层
-// 索引:landing 卡片 + /stats/index.json + 7 个 Lookup + persons(lazy) + comps(lazy)
-import { useState, useEffect, useMemo, useRef } from 'react';
+// 匹配逻辑统一在 utils/site_search.ts;这里只管下拉浮层的 UI 壳。
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, type LucideIcon,
+  CalendarDays, LayoutGrid, Wrench, type LucideIcon,
 } from 'lucide-react';
-import { loadPersonsIndex, searchLocalPersons, type WcaPerson } from '@cuberoot/shared';
 import { getLangQuery } from '../i18n';
 import { ClearButton } from './ClearButton';
 import { Flag } from '../utils/flag';
 import { displayCuberName } from '../utils/name_utils';
-import { loadComps, searchComps, type Comp } from '../utils/comp_search';
 import { localizeCompName } from '../utils/comp_localize';
 import { compLinkProps } from '../utils/comp_link';
 import { localizeCity } from '../utils/city_localize';
 import { formatDateRangeIso } from '../utils/date_range';
+import {
+  useSiteSearch,
+  METRIC_LABEL_OVERRIDE,
+  INITIAL_RENDER_CAP,
+  type SiteSearchCard,
+} from '../utils/site_search';
 import './landing_search.css';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
 };
 
-export interface LandingSearchCard {
-  id: string;
-  href: string;
-  internal: boolean;
-  nameEn: string;
-  nameZh: string;
-  sectionTitleEn: string;
-  sectionTitleZh: string;
-}
-
-const LOOKUP_ITEMS: { path: string; zh: string; en: string }[] = [
-  { path: '/nemesizer',                  zh: '宿敌',         en: 'Nemesizer' },
-  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
-  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results' },
-  { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks' },
-  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
-  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
-  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks' },
-];
-
-const MIN_LEN_LATIN = 2;
-const hasNonLatin = (s: string) => /[^\x00-\x7F]/.test(s);
-
-const PERSON_LIMIT = 8;
-const COMP_LIMIT = 8;
-
-interface StatEntry { id: string; titleEn: string; titleZh: string }
-interface StatCategory { nameEn: string; nameZh: string; iconName?: string; stats: StatEntry[] }
-interface StatIndex { categories: StatCategory[] }
+export type LandingSearchCard = SiteSearchCard;
 
 interface Props {
   cards: LandingSearchCard[];
@@ -61,95 +37,22 @@ export default function LandingSearch({ cards, lang }: Props) {
   const isZh = lang === 'zh';
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  const [statIndex, setStatIndex] = useState<StatIndex | null>(null);
-  const [personMatches, setPersonMatches] = useState<WcaPerson[]>([]);
-  const [compMatches, setCompMatches] = useState<Comp[]>([]);
-  const compsRef = useRef<Comp[] | null>(null);
-  const [xLoaded, setXLoaded] = useState(false);
+  const [expandedPersons, setExpandedPersons] = useState(false);
+  const [expandedComps, setExpandedComps] = useState(false);
   const navigate = useNavigate();
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetch('/stats/index.json')
-      .then(r => (r.ok ? r.json() : null))
-      .then((j: StatIndex | null) => { if (j) setStatIndex(j); })
-      .catch(() => {});
-  }, []);
+  const {
+    q, xSearchEnabled, xLoaded,
+    cardMatches, toolMatches, lookupMatches, statMatches,
+    personMatches, compMatches, totalCount,
+  } = useSiteSearch(query, 'eager', { cards });
 
-  const q = query.trim().toLowerCase();
-  const qRaw = query.trim();
-  const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
+  // NOTE: 切 query → 折回默认页(50 条 + "+ N 更多" 按钮)。
+  useEffect(() => { setExpandedPersons(false); setExpandedComps(false); }, [q]);
 
-  // 用 requestIdleCallback 在空闲时段预拉 comps + persons 索引,首屏 LCP 不受影响,
-  // 等用户点搜索框敲字时数据通常已在内存,体感跟 CalendarPage 的同步过滤一致。
-  useEffect(() => {
-    let cancelled = false;
-    const kick = () => {
-      if (cancelled) return;
-      Promise.all([
-        loadPersonsIndex().catch(() => null),
-        loadComps().then(arr => { compsRef.current = arr; }).catch(() => null),
-      ]).then(() => { if (!cancelled) setXLoaded(true); });
-    };
-    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
-    type CIC = (id: number) => void;
-    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: CIC };
-    if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(kick, { timeout: 2000 });
-      return () => { cancelled = true; w.cancelIdleCallback?.(id); };
-    }
-    const id = setTimeout(kick, 200);
-    return () => { cancelled = true; clearTimeout(id); };
-  }, []);
-
-  useEffect(() => {
-    if (!xSearchEnabled) {
-      setPersonMatches([]);
-      setCompMatches([]);
-      return;
-    }
-    const h = setTimeout(() => {
-      setPersonMatches(searchLocalPersons(qRaw, PERSON_LIMIT) ?? []);
-      setCompMatches(compsRef.current ? searchComps(qRaw, compsRef.current, COMP_LIMIT) : []);
-    }, 200);
-    return () => clearTimeout(h);
-  }, [qRaw, xSearchEnabled, xLoaded]);
-
-  const cardMatches = useMemo(() => {
-    if (q === '') return [];
-    return cards.filter(c =>
-      c.nameEn.toLowerCase().includes(q) ||
-      c.nameZh.toLowerCase().includes(q) ||
-      c.sectionTitleEn.toLowerCase().includes(q) ||
-      c.sectionTitleZh.toLowerCase().includes(q),
-    );
-  }, [q, cards]);
-
-  const statMatches = useMemo(() => {
-    if (!statIndex || q === '') return [] as { cat: StatCategory; stats: StatEntry[] }[];
-    return statIndex.categories
-      .map(cat => ({
-        cat,
-        stats: cat.stats.filter(s =>
-          s.titleEn.toLowerCase().includes(q) || s.titleZh.toLowerCase().includes(q),
-        ),
-      }))
-      .filter(g => g.stats.length > 0);
-  }, [q, statIndex]);
-
-  const lookupMatches = useMemo(() => {
-    if (q === '') return [];
-    return LOOKUP_ITEMS.filter(it =>
-      it.zh.toLowerCase().includes(q) || it.en.toLowerCase().includes(q),
-    );
-  }, [q]);
-
-  const totalCount =
-    cardMatches.length +
-    lookupMatches.length +
-    statMatches.reduce((s, g) => s + g.stats.length, 0) +
-    personMatches.length +
-    compMatches.length;
+  const visiblePersons = expandedPersons ? personMatches : personMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleComps = expandedComps ? compMatches : compMatches.slice(0, INITIAL_RENDER_CAP);
 
   useEffect(() => {
     if (!open) return;
@@ -215,14 +118,14 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
-          {lookupMatches.length > 0 && (
+          {toolMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
-                <Search size={14} strokeWidth={1.75} />
-                <h3>{isZh ? '查询' : 'Lookup'}</h3>
+                <Wrench size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '工具' : 'Tools'}</h3>
               </div>
               <div className="landing-search-grid">
-                {lookupMatches.map(it => (
+                {toolMatches.map(it => (
                   <Link
                     key={it.path}
                     to={`${it.path}${langQuery}`}
@@ -236,7 +139,31 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
-          {statMatches.map(({ cat, stats }) => {
+          {lookupMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Search size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '查询' : 'Lookup'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {lookupMatches.map(it => {
+                  const to = it.extraQuery ? `${it.path}${langQuery}&${it.extraQuery}` : `${it.path}${langQuery}`;
+                  return (
+                    <Link
+                      key={`${it.path}|${it.extraQuery ?? ''}`}
+                      to={to}
+                      className="landing-search-item"
+                      onClick={closeAfter}
+                    >
+                      <span className="landing-search-item-name">{isZh ? it.zh : it.en}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {statMatches.map(({ cat, items }) => {
             const Icon = ICON_MAP[cat.iconName || ''];
             return (
               <section key={cat.nameEn} className="landing-search-section">
@@ -245,16 +172,34 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <h3>{isZh ? cat.nameZh : cat.nameEn}</h3>
                 </div>
                 <div className="landing-search-grid">
-                  {stats.map(s => (
-                    <Link
-                      key={s.id}
-                      to={`/wca/${s.id}${langQuery}`}
-                      className="landing-search-item"
-                      onClick={closeAfter}
-                    >
-                      <span className="landing-search-item-name">{isZh ? s.titleZh : s.titleEn}</span>
-                    </Link>
-                  ))}
+                  {items.map(it => {
+                    if (it.kind === 'stat') {
+                      const s = it.stat;
+                      return (
+                        <Link
+                          key={`s:${s.id}`}
+                          to={`/wca/${s.id}${langQuery}`}
+                          className="landing-search-item"
+                          onClick={closeAfter}
+                        >
+                          <span className="landing-search-item-name">{isZh ? s.titleZh : s.titleEn}</span>
+                        </Link>
+                      );
+                    }
+                    const { parent, metric } = it;
+                    const parentTitle = isZh ? parent.titleZh : parent.titleEn;
+                    const metricLabel = METRIC_LABEL_OVERRIDE[metric.labelEn] ?? (isZh ? metric.labelZh : metric.labelEn);
+                    return (
+                      <Link
+                        key={`m:${parent.id}:${metric.id}`}
+                        to={`/wca/${parent.id}${langQuery}#metric=${metric.id}`}
+                        className="landing-search-item"
+                        onClick={closeAfter}
+                      >
+                        <span className="landing-search-item-name">{parentTitle} · {metricLabel}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             );
@@ -267,7 +212,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 <h3>{isZh ? '比赛' : 'Competitions'}</h3>
               </div>
               <div className="landing-search-grid">
-                {compMatches.map(c => {
+                {visibleComps.map(c => {
                   const displayName = localizeCompName(c.id, c.name, isZh);
                   const cityStr = c.city ? localizeCity(c.city, isZh) : '';
                   return (
@@ -289,6 +234,17 @@ export default function LandingSearch({ cards, lang }: Props) {
                   );
                 })}
               </div>
+              {!expandedComps && compMatches.length > INITIAL_RENDER_CAP && (
+                <button
+                  type="button"
+                  className="landing-search-more"
+                  onClick={() => setExpandedComps(true)}
+                >
+                  {isZh
+                    ? `显示更多 (+${compMatches.length - INITIAL_RENDER_CAP})`
+                    : `Show more (+${compMatches.length - INITIAL_RENDER_CAP})`}
+                </button>
+              )}
             </section>
           )}
 
@@ -299,7 +255,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 <h3>{isZh ? '选手' : 'Persons'}</h3>
               </div>
               <div className="landing-search-grid">
-                {personMatches.map(p => (
+                {visiblePersons.map(p => (
                   <Link
                     key={p.wcaId}
                     to={`/wca/persons/${p.wcaId}${langQuery}`}
@@ -314,6 +270,17 @@ export default function LandingSearch({ cards, lang }: Props) {
                   </Link>
                 ))}
               </div>
+              {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
+                <button
+                  type="button"
+                  className="landing-search-more"
+                  onClick={() => setExpandedPersons(true)}
+                >
+                  {isZh
+                    ? `显示更多 (+${personMatches.length - INITIAL_RENDER_CAP})`
+                    : `Show more (+${personMatches.length - INITIAL_RENDER_CAP})`}
+                </button>
+              )}
             </section>
           )}
 

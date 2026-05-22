@@ -183,6 +183,27 @@
   font-size: 0.9rem;
 }
 
+.landing-search-more {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.landing-search-more:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 @media (max-width: 640px) {
   .landing-search {
     margin-bottom: 1.75rem;

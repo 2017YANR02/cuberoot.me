@@ -147,24 +147,37 @@ function sortKey(title: string): string {
   return title.replace(/\d+/g, n => n.padStart(10, '0'));
 }
 
+interface MetricEntry {
+  id: string;
+  labelEn: string;
+  labelZh: string;
+}
+
 interface StatEntry {
   id: string;
   titleEn: string;
   titleZh: string;
+  metrics?: MetricEntry[];
 }
+
+interface RawMetricPanel { id?: string; labelEn?: string; labelZh?: string }
 
 function main() {
   // NOTE: 可用统计——REGISTRY 中排除 ALL_MERGED
   const availableIds = Object.keys(REGISTRY).filter(id => !ALL_MERGED.has(id));
 
-  // NOTE: 从已生成的 JSON 文件读取标题
-  const titles = new Map<string, { title: string; titleZh: string }>();
+  // NOTE: 从已生成的 JSON 文件读取标题 + metricPanels(供 LandingSearch 搜指标名)
+  const titles = new Map<string, { title: string; titleZh: string; metrics?: MetricEntry[] }>();
   for (const id of availableIds) {
     const jsonPath = resolve(DATA_DIR, `${id}.json`);
     if (existsSync(jsonPath)) {
       try {
         const data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
-        titles.set(id, { title: data.title || id, titleZh: data.titleZh || data.title || id });
+        const mp = Array.isArray(data.metricPanels) ? (data.metricPanels as RawMetricPanel[]) : null;
+        const metrics = mp
+          ? mp.filter(m => m.id && m.labelEn).map(m => ({ id: m.id!, labelEn: m.labelEn!, labelZh: m.labelZh || m.labelEn! }))
+          : undefined;
+        titles.set(id, { title: data.title || id, titleZh: data.titleZh || data.title || id, metrics });
       } catch {
         titles.set(id, { title: id, titleZh: id });
       }
@@ -179,7 +192,9 @@ function main() {
       .filter(id => titles.has(id))
       .map(id => {
         const t = titles.get(id)!;
-        return { id, titleEn: t.title, titleZh: TITLE_ZH_OVERRIDES[id] ?? t.titleZh };
+        const entry: StatEntry = { id, titleEn: t.title, titleZh: TITLE_ZH_OVERRIDES[id] ?? t.titleZh };
+        if (t.metrics && t.metrics.length > 0) entry.metrics = t.metrics;
+        return entry;
       });
 
     // NOTE: preserveOrder 为 true 保持 ids 数组原始顺序
@@ -207,7 +222,9 @@ function main() {
       iconName: 'Pin',
       stats: uncategorized.sort().map(id => {
         const t = titles.get(id)!;
-        return { id, titleEn: t.title, titleZh: TITLE_ZH_OVERRIDES[id] ?? t.titleZh };
+        const entry: StatEntry = { id, titleEn: t.title, titleZh: TITLE_ZH_OVERRIDES[id] ?? t.titleZh };
+        if (t.metrics && t.metrics.length > 0) entry.metrics = t.metrics;
+        return entry;
       }),
     });
   }
