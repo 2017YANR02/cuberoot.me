@@ -32,7 +32,7 @@ export class DateMatchPr extends Statistic {
     this.title = 'PRs where the time equals the date';
     this.titleZh = '日期匹配 PR';
     this.note = 'PRs where the result (formatted as M.DD seconds) matches the competition day (month M, day DD). Ranking shows each person\'s fastest date-match PR per event and metric. History shows the running-best progression: each new fastest date-match PR ever achieved worldwide.';
-    this.noteZh = '历史上所有 PR 中,成绩格式化为 M.DD 秒时,恰好等于比赛当天的"M月DD日"。排名 = 每人每项目每类型只保留最快一条。历史 = 历史上"全世界最快日期匹配 PR"被一步步刷新的沿革。';
+    this.noteZh = '成绩(秒)写成 M.DD 时正好等于比赛当天 M 月 DD 日的 PR。排名只保留每人每项目每类型的最快一条;历史是同一口径下世界纪录被逐次刷新的过程。';
   }
 
   // NOTE: 复合查询用 toJson 覆写,query() 不用
