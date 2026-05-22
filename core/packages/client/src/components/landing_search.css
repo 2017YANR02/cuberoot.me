@@ -103,6 +103,30 @@
   color: var(--muted-foreground);
 }
 
+.landing-search-header-more {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+  /* button reset (供 expand 按钮复用同一类) */
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.landing-search-header-more:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
 .landing-search-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -188,27 +212,6 @@
   text-align: center;
   color: var(--faint-foreground);
   font-size: 0.9rem;
-}
-
-.landing-search-more {
-  display: block;
-  width: 100%;
-  margin-top: 0.4rem;
-  padding: 0.45rem 0.75rem;
-  background: transparent;
-  border: 1px dashed var(--border-default);
-  border-radius: 8px;
-  color: var(--muted-foreground);
-  font-family: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.landing-search-more:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
 }
 
 @media (max-width: 640px) {

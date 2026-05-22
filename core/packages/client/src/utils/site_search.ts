@@ -16,6 +16,7 @@ import { loadPersonsIndex, searchLocalPersons, type WcaPerson, type ReconSolve }
 import { loadComps, searchComps, type Comp } from './comp_search';
 import { listRecons } from './recon_api';
 import { loadCachedSolves, saveCachedSolves } from './recon_cache';
+import { compNameZh, loadFlagData } from './country_flags';
 import { API_ORIGIN } from './api_base';
 import { ABOUT_REGISTRY } from '../pages/wca_about/registry';
 import { STACK_TOOLS_META, type StackToolMeta } from '../pages/code/stack_meta';
@@ -181,6 +182,7 @@ function buildReconRecord(r: ReconSolve): ReconRecord {
   const hay = [
     personRaw, r.personId ?? '', valueStr, r.value ?? '',
     r.event, r.comp ?? '', r.compWcaId ?? '',
+    compNameZh(r.comp ?? ''),
     r.note ?? '', r.caption ?? '',
     r.reconer ?? '', r.reconerId ?? '',
     r.aoType ?? '', recordTag, r.method ?? '',
@@ -193,6 +195,8 @@ let reconRecordsPromise: Promise<ReconRecord[] | null> | null = null;
 function loadReconRecords(): Promise<ReconRecord[] | null> {
   if (reconRecordsPromise) return reconRecordsPromise;
   reconRecordsPromise = (async () => {
+    // NOTE: 等 comp_names_zh 加载完再 build hay,否则搜中文比赛名(如"北京")只能匹到 r.comp 含括号中文的一条
+    await loadFlagData().catch(() => 0);
     const cached = loadCachedSolves();
     if (cached) {
       // 后台刷新缓存,但不阻塞首次搜索。
