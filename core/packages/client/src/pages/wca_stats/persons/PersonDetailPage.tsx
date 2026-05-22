@@ -13,6 +13,8 @@ import {
   type WcaPersonProfile, type WcaResultRow, type WcaCompetition,
 } from './wca_api';
 import { loadFlagData } from '../../../utils/country_flags';
+import { listRecons } from '../../../utils/recon_api';
+import { buildReconAttemptMap } from '../../../utils/recon_attempt_lookup';
 import LangToggle from '../../../components/LangToggle';
 import ThemeToggle from '../../../components/ThemeToggle';
 import PersonHero from './sections/PersonHero';
@@ -30,6 +32,7 @@ export default function PersonDetailPage() {
   const [profile, setProfile] = useState<WcaPersonProfile | null>(null);
   const [results, setResults] = useState<WcaResultRow[] | null>(null);
   const [comps, setComps] = useState<WcaCompetition[] | null>(null);
+  const [reconLookup, setReconLookup] = useState<Map<string, number> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,6 +49,10 @@ export default function PersonDetailPage() {
       .catch(() => { /* keep degraded UI */ });
     fetchWcaPersonCompetitions(wcaId)
       .then((c) => { if (!cancelled) setComps(c); })
+      .catch(() => { /* keep degraded UI */ });
+    // 拉本人复盘 → (compId, eventId, round, solveNum) → reconId 映射,attempt cell 命中可跳转
+    listRecons(wcaId)
+      .then((all) => { if (!cancelled) setReconLookup(buildReconAttemptMap(all)); })
       .catch(() => { /* keep degraded UI */ });
     return () => { cancelled = true; };
   }, [wcaId]);
@@ -81,7 +88,7 @@ export default function PersonDetailPage() {
       <main className="wp-main">
         <PersonHero profile={profile} results={results} isZh={isZh} />
         <PersonPRTable profile={profile} results={results} isZh={isZh} />
-        <PersonTabs profile={profile} results={results} comps={comps} isZh={isZh} />
+        <PersonTabs profile={profile} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
       </main>
     </div>
   );

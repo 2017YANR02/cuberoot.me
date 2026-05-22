@@ -18,10 +18,11 @@ interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
+  reconLookup: Map<string, number> | null;
   isZh: boolean;
 }
 
-export default function PersonTabs({ profile, results, comps, isZh }: Props) {
+export default function PersonTabs({ profile, results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const [sp, setSp] = useSearchParams();
   const raw = (sp.get('tab') ?? 'results').toLowerCase();
@@ -56,7 +57,7 @@ export default function PersonTabs({ profile, results, comps, isZh }: Props) {
       </div>
       <div className="wp-tab-body">
         <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}>
-          {active === 'results' && <ResultsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
+          {active === 'results' && <ResultsTab profile={profile} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />}
           {active === 'comps' && <CompsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {active === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
           {active === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}

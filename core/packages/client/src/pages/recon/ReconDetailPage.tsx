@@ -29,7 +29,7 @@ import { loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/count
 import { Flag } from '../../utils/flag';
 import { localizeCompName } from '../../utils/comp_localize';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
-import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '../../utils/wca_results_api';
+import { fetchAttempts, fetchCubingAttempts, fetchScrambles, matchRoundType } from '../../utils/wca_results_api';
 import { fetchWcaPersonResults, fetchWcaPersonCompetitions, type WcaResultRow as WcaResultsRow, type WcaCompetition } from '../wca_stats/persons/wca_api';
 import { computePrRank } from '../wca_stats/persons/logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../utils/wca_round_meta';
@@ -119,7 +119,12 @@ export default function ReconDetailPage() {
               <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>
             )}
             {solve.personCountry && <>{' '}<Flag iso2={solve.personCountry} className="recon-inline-flag" /></>}
-            {' '}{displayCuberName(solve.person || '', isZh)}
+            {' '}
+            {solve.personId ? (
+              <Link to={`/wca/persons/${solve.personId}${isZh ? '?lang=zh' : ''}`} className="detail-person-link">
+                {displayCuberName(solve.person || '', isZh)}
+              </Link>
+            ) : displayCuberName(solve.person || '', isZh)}
             {' '}
             <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
@@ -168,6 +173,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
   comments: ReconComment[];
   onUpdate: () => void;
 }) {
+  // SameCompEventTable 拿到 WCA 行后 SameRoundNav 完全冗余(同把成绩 + 5 把详细在表格同一行已展示),
+  // 通过 onHasRows 回调上来藏掉 SameRound。
+  const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -290,14 +298,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           )}
         </div>
 
-        {/* 同轮次成绩导航 */}
-        {solve.comp && solve.event && solve.round && (
+        {/* 同轮次成绩导航 — 当下面 SameCompEventTable 已拿到 WCA 行时整个被它涵盖,藏掉 */}
+        {solve.comp && solve.event && solve.round && !sameCompHasRows && (
           <SameRoundNav solve={solve} />
         )}
 
-        {/* 同场比赛(同项目)同选手全轮次成绩表 — 视觉对齐 /wca/persons */}
-        {solve.compWcaId && solve.event && solve.personId && (
-          <SameCompEventTable solve={solve} />
+        {/* 同场比赛(同项目)同选手全轮次成绩表 — 视觉对齐 /wca/persons
+            老 recon 数据可能 compWcaId 缺失,组件内会按 comp 名字 fallback 到 personComps 查 id。 */}
+        {solve.event && solve.personId && (solve.compWcaId || solve.comp) && (
+          <SameCompEventTable solve={solve} onHasRows={setSameCompHasRows} />
         )}
 
         {/* 另解——任何登录用户都能投自己的解法 */}
@@ -744,12 +753,13 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
  * 数据:WCA 个人成绩(全量,localStorage 24h cache)→ 过滤到 comp+event;PR 排名走 computePrRank。
  * 行内有对应复盘时,行可点击跳到那条复盘。
  */
-function SameCompEventTable({ solve }: { solve: ReconSolve }) {
+function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: (v: boolean) => void }) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const [allResults, setAllResults] = useState<WcaResultsRow[] | null>(null);
   const [allComps, setAllComps] = useState<WcaCompetition[] | null>(null);
-  const [reconByRound, setReconByRound] = useState<Map<string, number>>(new Map());
+  // 复盘按 round|solveNum 索引 — 用于把每把 attempt 渲染成跳转链接
+  const [reconByRoundSolve, setReconByRoundSolve] = useState<Map<string, number>>(new Map());
 
   // 拉 WCA 个人成绩 + 比赛列表(用于 computePrRank 排序)
   useEffect(() => {
@@ -758,27 +768,45 @@ function SameCompEventTable({ solve }: { solve: ReconSolve }) {
     fetchWcaPersonCompetitions(solve.personId).then(setAllComps).catch(() => setAllComps([]));
   }, [solve.personId]);
 
-  // 同选手 + 同比赛 + 同项目下的所有复盘,按 round 索引(用于点击行跳转)
   useEffect(() => {
     listRecons().then(all => {
       const m = new Map<string, number>();
       for (const s of all) {
-        if (s.person === solve.person && s.comp === solve.comp && s.event === solve.event && s.round) {
-          if (!m.has(s.round)) m.set(s.round, s.id);
+        if (s.person === solve.person && s.comp === solve.comp && s.event === solve.event && s.round && s.solveNum != null) {
+          m.set(`${s.round}|${s.solveNum}`, s.id);
         }
       }
-      setReconByRound(m);
+      setReconByRoundSolve(m);
     }).catch(() => { /* 静默 */ });
   }, [solve.person, solve.comp, solve.event]);
 
+  // 给定 WCA round_type_id + 1-based attempt 序号,返回对应复盘 id (走 ROUND_VARIANTS 兼容 cutoff 子型)
+  const findReconForCell = (roundTypeId: string, attemptNum: number): number | undefined => {
+    for (const reconRound of ['1', '2', '3', 'f']) {
+      if (matchRoundType(reconRound, roundTypeId)) {
+        const id = reconByRoundSolve.get(`${reconRound}|${attemptNum}`);
+        if (id) return id;
+      }
+    }
+    return undefined;
+  };
+
+  // 老数据 compWcaId 可能为 null — 按 comp 名字在 personComps 里找 id 兜底
+  const effectiveCompWcaId = useMemo(() => {
+    if (solve.compWcaId) return solve.compWcaId;
+    if (!allComps || !solve.comp) return null;
+    return allComps.find(c => c.name === solve.comp)?.id ?? null;
+  }, [solve.compWcaId, solve.comp, allComps]);
+
+  // rows 有内容时通知父组件藏掉 SameRoundNav (信息冗余)
   // 过滤到本场 + 本项目,按 round 倒序(决赛在上)
   const rows = useMemo(() => {
-    if (!allResults || !solve.compWcaId || !solve.event) return [];
+    if (!allResults || !effectiveCompWcaId || !solve.event) return [];
     const wcaEid = toWcaEventId(solve.event);
     return allResults
-      .filter(r => r.competition_id === solve.compWcaId && r.event_id === wcaEid)
+      .filter(r => r.competition_id === effectiveCompWcaId && r.event_id === wcaEid)
       .sort((a, b) => (ROUND_ORDER[a.round_type_id] ?? 99) - (ROUND_ORDER[b.round_type_id] ?? 99));
-  }, [allResults, solve.compWcaId, solve.event]);
+  }, [allResults, effectiveCompWcaId, solve.event]);
 
   const prRank = useMemo(
     () => (allResults && allComps ? computePrRank(allResults, allComps) : new Map()),
@@ -786,9 +814,11 @@ function SameCompEventTable({ solve }: { solve: ReconSolve }) {
   );
 
   const comp = useMemo(
-    () => allComps?.find(c => c.id === solve.compWcaId) ?? null,
-    [allComps, solve.compWcaId],
+    () => allComps?.find(c => c.id === effectiveCompWcaId) ?? null,
+    [allComps, effectiveCompWcaId],
   );
+
+  useEffect(() => { onHasRows(rows.length > 0); }, [rows.length, onHasRows]);
 
   if (rows.length === 0) return null;
 
@@ -827,14 +857,8 @@ function SameCompEventTable({ solve }: { solve: ReconSolve }) {
                 const rank = prRank.get(r.id);
                 const singleRank = rank?.singleRank ?? null;
                 const averageRank = rank?.averageRank ?? null;
-                const reconId = reconByRound.get(r.round_type_id);
-                const isCurrent = reconId === solve.id;
                 return (
-                  <tr
-                    key={r.id}
-                    className={`${reconId ? 'same-comp-event-row-has-recon' : ''} ${isCurrent ? 'same-comp-event-row-current' : ''}`}
-                    onClick={() => { if (reconId && !isCurrent) window.location.href = `/recon/${reconId}${isZh ? '?lang=zh' : ''}`; }}
-                  >
+                  <tr key={r.id}>
                     <td>
                       <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
                         {roundLabel(r.round_type_id)}
@@ -864,7 +888,15 @@ function SameCompEventTable({ solve }: { solve: ReconSolve }) {
                       </span>
                     </td>
                     <td className="wp-cell-attempts">
-                      <RoundAttempts attempts={r.attempts} best={r.best} eventId={eventId} />
+                      <RoundAttempts
+                        attempts={r.attempts}
+                        best={r.best}
+                        eventId={eventId}
+                        roundTypeId={r.round_type_id}
+                        currentReconId={solve.id}
+                        findReconForCell={findReconForCell}
+                        langQuery={isZh ? '?lang=zh' : ''}
+                      />
                     </td>
                   </tr>
                 );
@@ -877,7 +909,15 @@ function SameCompEventTable({ solve }: { solve: ReconSolve }) {
   );
 }
 
-function RoundAttempts({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
+function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, findReconForCell, langQuery }: {
+  attempts: number[];
+  best: number;
+  eventId: string;
+  roundTypeId: string;
+  currentReconId: number;
+  findReconForCell: (roundTypeId: string, attemptNum: number) => number | undefined;
+  langQuery: string;
+}) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter(x => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
@@ -887,11 +927,17 @@ function RoundAttempts({ attempts, best, eventId }: { attempts: number[]; best: 
         if (a === undefined) return null;
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
-        return (
-          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`}>
-            {formatted}
-          </span>
-        );
+        const reconId = findReconForCell(roundTypeId, i + 1);
+        const isCurrent = reconId === currentReconId;
+        const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''} ${isCurrent ? 'same-comp-event-att-current' : ''}`;
+        if (reconId && !isCurrent) {
+          return (
+            <Link key={i} to={`/recon/${reconId}${langQuery}`} className={`${cls} same-comp-event-att-link`}>
+              {formatted}
+            </Link>
+          );
+        }
+        return <span key={i} className={cls}>{formatted}</span>;
       })}
     </span>
   );

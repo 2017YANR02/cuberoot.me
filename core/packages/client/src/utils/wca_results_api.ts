@@ -19,7 +19,7 @@ const ROUND_VARIANTS: Record<string, string[]> = {
   'f': ['f', 'c', 'h'],
 };
 
-function matchRoundType(reconRound: string, wcaRoundTypeId: string): boolean {
+export function matchRoundType(reconRound: string, wcaRoundTypeId: string): boolean {
   const variants = ROUND_VARIANTS[reconRound];
   return variants ? variants.includes(wcaRoundTypeId) : wcaRoundTypeId === reconRound;
 }

@@ -516,6 +516,17 @@ html[data-theme=dark] .wp-page {
 .wp-att-trimmed::before,
 .wp-att-trimmed::after { opacity: 1; }
 .wp-att-best { color: var(--wp-text); font-weight: 600; }
+/* 命中复盘的把数 — accent 色 + hover 下划线,提示可点击 */
+.wp-att-recon {
+  color: var(--wp-accent);
+  text-decoration: none;
+  cursor: pointer;
+}
+.wp-att-recon:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
 /* 区域记录徽章统一走 RecordBadge / record_badge.css,本页不再覆写 */
 
 /* ── Comps tab table ─────────────────────────────────────────────── */
