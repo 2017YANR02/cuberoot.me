@@ -14,6 +14,7 @@ import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { prewarmScramble } from '../../utils/cubingScramble';
+import { get333Mode } from '../../utils/scramble_333_mode';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import QuickMode from './QuickMode';
 import TNoodleMode from './TNoodleMode';
@@ -61,6 +62,11 @@ export default function GenPage() {
   // is the single biggest win for perceived latency.
   useEffect(() => {
     prewarmScramble('333', '444', '555', '333fm');
+    // If the user has opted into the m2p engine, also fetch + init it during
+    // page idle so their first 3x3 Generate doesn't pay the 120KB + 100ms tax.
+    if (get333Mode() === 'm2p') {
+      void import('../../utils/m2p_scramble').then((m) => m.prewarmM2p());
+    }
   }, []);
 
   // Shared 打乱图 visibility. Persisted to localStorage so the choice survives

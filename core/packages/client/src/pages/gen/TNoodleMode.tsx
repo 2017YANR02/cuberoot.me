@@ -13,6 +13,7 @@ import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import NumberCommitInput from '../../components/NumberCommitInput';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
+import Scramble333ModePicker from '../../components/Scramble333ModePicker';
 import HighOrderNxNInput from '../../components/HighOrderNxNInput';
 import { activeEventOf } from './active_view';
 import LiquidGlassChips from '../../components/LiquidGlassChips';
@@ -802,6 +803,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN} />
           )}
           <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
+          <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
         </div>
       )}
 

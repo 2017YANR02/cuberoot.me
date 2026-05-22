@@ -10,6 +10,7 @@ import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown } from '
 import WcaEventSelector from '../../components/WcaEventSelector';
 import NumberCommitInput from '../../components/NumberCommitInput';
 import Scramble555ModePicker from '../../components/Scramble555ModePicker';
+import Scramble333ModePicker from '../../components/Scramble333ModePicker';
 import HighOrderNxNInput from '../../components/HighOrderNxNInput';
 import { EventIcon } from '../../components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '../../components/ScramblePreview2D';
@@ -368,6 +369,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
           </HighOrderNxNInput>
         )}
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
+        <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
       </div>
 
       <div className="gen-tn-controls" style={{ marginTop: '8px' }}>
