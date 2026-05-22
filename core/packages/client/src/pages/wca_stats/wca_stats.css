@@ -889,6 +889,27 @@ input:checked + .wca-stats-toggle-pill::after {
   font-size: 0.95rem;
 }
 
+.wca-stats-index-more {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 10px;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.wca-stats-index-more:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* 加载 / 错误 */
 .wca-stats-index-status {
   min-height: 60vh;
