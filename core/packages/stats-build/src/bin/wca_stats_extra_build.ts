@@ -464,9 +464,15 @@ async function main() {
         allTopCount++;
       }
 
-      // best_final_pos: 跨 event 累积每人 final round 最佳名次
+      // best_final_pos: 跨 event 累积每人 final round 最佳名次.
+      // 按那一轮的 format 决定排名值是否有效:
+      //   format 'a'/'m' (avg of 5 / mean of 3) — 必须 average > 0,否则就算 single 有效也没真发牌
+      //   format '1'/'2'/'3' (bo1/bo2/bo3) — 必须 best > 0
+      // 小场决赛 DNF 也会拿到 pos<=3 兜底,这层判定把它们过滤掉.
       const isFinal = r.roundTypeId === 'c' || r.roundTypeId === 'f';
-      if (isFinal && r.pos > 0) {
+      const rankByAvg = r.formatId === 'a' || r.formatId === 'm';
+      const validForMedal = rankByAvg ? r.average > 0 : r.best > 0;
+      if (isFinal && r.pos > 0 && validForMedal) {
         const cur = bestFinalPos.get(r.pid);
         if (cur == null || r.pos < cur) bestFinalPos.set(r.pid, r.pos);
       }
