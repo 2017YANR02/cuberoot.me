@@ -1,0 +1,1 @@
+var e=`recon_list_cache:v2`,t=10080*60*1e3;function n(n){try{let r=localStorage.getItem(e);if(!r)return null;let i=JSON.parse(r);return i.wcaId!==(n??``)||Date.now()-i.ts>t?null:i.data}catch{return null}}function r(t,n){try{let r={ts:Date.now(),wcaId:n??``,data:t};localStorage.setItem(e,JSON.stringify(r))}catch{}}export{r as n,n as t};
