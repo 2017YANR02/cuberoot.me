@@ -621,19 +621,22 @@ td.is-pr {
   font-weight: 700;
 }
 
-.cuber-link {
-  background: transparent;
-  border: none;
-  color: var(--accent);
-  cursor: pointer;
-  padding: 0;
-  font-size: inherit;
-  font-family: inherit;
-  text-align: left;
+.cuber-name {
+  color: var(--foreground);
+  font-weight: 500;
 }
-.cuber-link:hover { text-decoration: underline; }
-.cuber-link-static { cursor: default; text-decoration: none; }
-.cuber-link-static:hover { text-decoration: none; }
+.cuber-link-static { color: var(--foreground); cursor: default; text-decoration: none; }
+.cuber-link-modal {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: inherit;
+}
+.cuber-link-modal:hover { text-decoration: underline; }
+
+.comp-row-clickable { cursor: pointer; }
+.comp-row-clickable:hover td {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
 
 .td-person { display: flex; align-items: center; gap: 8px; }
 .comp-flag {
