@@ -17380,6 +17380,11 @@
       "country": "Spain",
       "iso2": "ES"
     },
+    "2023PECH02": {
+      "name": "Jakub Pecháč",
+      "country": "Slovakia",
+      "iso2": "SK"
+    },
     "2023POWE10": {
       "name": "Matthew Powell",
       "country": "Singapore",
@@ -30361,6 +30366,9 @@
     "HamiltonWinter2016": {
       "name": "Hamilton Winter 2016"
     },
+    "HamoyeJinju2026": {
+      "name": "Hamoye Jinju 2026"
+    },
     "HampshireAutumn2024": {
       "name": "Hampshire Autumn 2024"
     },
@@ -30741,6 +30749,9 @@
     },
     "HeerenveenOpen2024": {
       "name": "Heerenveen Open 2024"
+    },
+    "HefeiCubingLeague3x3I2026": {
+      "name": "Hefei Cubing League 3x3 I 2026"
     },
     "HefeiOpen2011": {
       "name": "Hefei Open 2011"
@@ -31368,6 +31379,9 @@
     },
     "HungarianAllRounder42024": {
       "name": "Hungarian All-Rounder 4 2024"
+    },
+    "HungarianAllRounder4Macskafo2025": {
+      "name": "Hungarian All-Rounder 4 2025"
     },
     "HungarianAllRounder5StarWars2025": {
       "name": "Hungarian All-Rounder 5 2025"
@@ -38686,6 +38700,9 @@
     "NoveMestoOpen2024": {
       "name": "Nové Mesto Open 2024"
     },
+    "NoveMestoOpen2026": {
+      "name": "Nové Mesto Open 2026"
+    },
     "NoviSadAutumn2021": {
       "name": "Novi Sad Autumn 2021"
     },
@@ -39237,6 +39254,9 @@
     },
     "OklahomaChampionship2025": {
       "name": "Oklahoma Championship 2025"
+    },
+    "OklahomaChampionship2026": {
+      "name": "Oklahoma Championship 2026"
     },
     "OklahomaFall2016": {
       "name": "Oklahoma Fall 2016"
@@ -42912,6 +42932,9 @@
     },
     "RutgersWinter2025": {
       "name": "Rutgers Winter 2025"
+    },
+    "RuzomberokOpen2026": {
+      "name": "Ružomberok Open 2026"
     },
     "RVASpring2018": {
       "name": "RVA Spring 2018"

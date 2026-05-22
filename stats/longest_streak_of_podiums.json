@@ -59,7 +59,7 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
-      99,
+      100,
       "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
       "3x3x3 Cube",
       "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
@@ -259,7 +259,7 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "2x2x2 Cube",
       "[Ankara Winter 2022](https://www.worldcubeassociation.org/competitions/AnkaraWinter2022)",
-      null
+      "[19 Mayıs Loba Ankara 2026](https://www.worldcubeassociation.org/competitions/19MayisLobaAnkara2026)"
     ],
     [
       55,
@@ -381,17 +381,17 @@
       null
     ],
     [
-      51,
-      "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
-      "Square-1",
-      "[Big Pine Open 2015](https://www.worldcubeassociation.org/competitions/BigPineOpen2015)",
+      52,
+      "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
+      "3x3x3 Cube",
+      "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
       null
     ],
     [
       51,
-      "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
-      "3x3x3 Cube",
-      "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
+      "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
+      "Square-1",
+      "[Big Pine Open 2015](https://www.worldcubeassociation.org/competitions/BigPineOpen2015)",
       null
     ],
     [
@@ -407,6 +407,13 @@
       "Pyraminx",
       "[Kristianstad Open 2009](https://www.worldcubeassociation.org/competitions/KristianstadOpen2009)",
       "[World Championship 2015](https://www.worldcubeassociation.org/competitions/WC2015)"
+    ],
+    [
+      49,
+      "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
+      "3x3x3 One-Handed",
+      "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
+      null
     ],
     [
       49,
@@ -434,13 +441,6 @@
       "[Andrés Hisashi Suzuki Cabrera](https://www.worldcubeassociation.org/persons/2016SUZU03)",
       "Square-1",
       "[Last Cubing Lima 2017](https://www.worldcubeassociation.org/competitions/LastCubingLima2017)",
-      null
-    ],
-    [
-      48,
-      "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
-      "3x3x3 One-Handed",
-      "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
       null
     ],
     [
@@ -556,6 +556,13 @@
       "[Steel City Sprint PA 2026](https://www.worldcubeassociation.org/competitions/SteelCitySprint2026)"
     ],
     [
+      43,
+      "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
+      "Pyraminx",
+      "[Qubes Don' Lie Bursa 2022](https://www.worldcubeassociation.org/competitions/QubesDonLieBursa2022)",
+      null
+    ],
+    [
       42,
       "[Przemysław Kaleta](https://www.worldcubeassociation.org/persons/2012KALE01)",
       "3x3x3 One-Handed",
@@ -564,17 +571,17 @@
     ],
     [
       42,
-      "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
-      "Pyraminx",
-      "[Qubes Don' Lie Bursa 2022](https://www.worldcubeassociation.org/competitions/QubesDonLieBursa2022)",
-      null
-    ],
-    [
-      42,
       "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
       "2x2x2 Cube",
       "[Buccaneer Bonanza 2022](https://www.worldcubeassociation.org/competitions/BuccaneerBonanza2022)",
       "[ODU Big Blue Winter 2024](https://www.worldcubeassociation.org/competitions/ODUBigBlueWinter2024)"
+    ],
+    [
+      42,
+      "[Kaique de Oliveira Neves](https://www.worldcubeassociation.org/persons/2022NEVE01)",
+      "2x2x2 Cube",
+      "[DNFools Boulevard 2023](https://www.worldcubeassociation.org/competitions/DNFoolsBoulevard2023)",
+      null
     ],
     [
       41,
@@ -617,13 +624,6 @@
       "Skewb",
       "[Idaho Summer B 2021](https://www.worldcubeassociation.org/competitions/IdahoSummerB2021)",
       "[OH in a Madison Ballroom 2023](https://www.worldcubeassociation.org/competitions/OHinaMadisonBallroom2023)"
-    ],
-    [
-      41,
-      "[Kaique de Oliveira Neves](https://www.worldcubeassociation.org/persons/2022NEVE01)",
-      "2x2x2 Cube",
-      "[DNFools Boulevard 2023](https://www.worldcubeassociation.org/competitions/DNFoolsBoulevard2023)",
-      null
     ],
     [
       40,
