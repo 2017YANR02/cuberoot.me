@@ -100,10 +100,13 @@ const MATCH_HARD_CAP = 500;
 export const INITIAL_RENDER_CAP = 50;
 
 // ── 多 token AND 匹配 ─────────────────────────────────────────────────────
-// 用户输入 "3.84 耿暄一" 或 "耿暄一 3.84" 都应当命中包含两词的同一 recon。
-// 每条 entry 预算好的小写 haystack;query 拆 token 后 every includes。
+// 用户输入 "3.84 耿暄一" / "耿暄一 3.84" / "耿暄一3.84"(无空格) 都应命中。
+// 拆 token 规则:空格拆 + 中英/数字边界自动拆(latin/digit ↔ non-ASCII)。
 function tokenize(q: string): string[] {
-  return q.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
+  const withBoundary = q
+    .replace(/([^\x00-\x7F])([a-z0-9])/gi, '$1 $2')
+    .replace(/([a-z0-9.])([^\x00-\x7F])/gi, '$1 $2');
+  return withBoundary.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
 }
 function allTokensIn(haystack: string, tokens: string[]): boolean {
   for (const t of tokens) if (!haystack.includes(t)) return false;
@@ -153,10 +156,6 @@ const STACK_ENTRIES: StackRecord[] = STACK_TOOLS_META.map(m => ({
 
 interface ReconRecord { hit: ReconHit; hay: string }
 
-function stripParensName(name: string): string {
-  return name.replace(/\s*\(([^)]+)\)\s*$/, '').trim() || name;
-}
-
 function reconValueStr(r: ReconSolve): string {
   // 优先用 average(用户搜 "3.84 wr平均" 期望命中 avg);否则 single value。
   if (typeof r.average === 'number' && r.average > 0) return r.average.toFixed(2);
@@ -165,12 +164,12 @@ function reconValueStr(r: ReconSolve): string {
 
 function buildReconRecord(r: ReconSolve): ReconRecord {
   const valueStr = reconValueStr(r);
+  // 选手名保留原始字符串("Xuanyi Geng (耿暄一)"),由 displayCuberName 按 lang 提取中/英。
   const personRaw = r.person ?? '';
-  const person = stripParensName(personRaw);
   const recordTag = r.regionalAverageRecord || r.regionalSingleRecord || r.regionalAoxrRecord || '';
   const hit: ReconHit = {
     id: r.id,
-    person,
+    person: personRaw,
     personIso2: (r.personCountry ?? '').toLowerCase(),
     valueStr,
     event: r.event,
