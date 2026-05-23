@@ -420,8 +420,10 @@ function enrichRecordTags(data: CompData): void {
   if (snapshot) data.currentRecords = snapshot;
 }
 
-/** 给 cubing / wca / wca_live 源的 data 补 Psych Sheet 用的 personalRecords:
- *  从 wca_results_top 取每位 wcaid 在该 comp.start_date 之前的最快 single / average + 区域 record tag.
+/** 给 cubing / wca / wca_live 源的 data 补 Psych Sheet 用的 personalRecords + per-result pS/pA dense rank:
+ *  从 wca_results_top 取每位 wcaid 在该 comp.start_date 之前的全部 distinct single / average 值,
+ *    - MIN 用来填 personalRecords[wcaid][eventId].single/average (Psych Sheet)
+ *    - 全部 distinct 值用来给本场每条 result 算 pS/pA dense rank (PR/PR2/PR3 标志)
  *  避免 client 直连 WCA API /persons/<id>(N 个 wcaid 触发 429,大比赛 Psych Sheet 全空).
  *  wca_competitions 没收录这场就 fallback 到 < CURRENT_DATE(刚宣布的比赛). */
 async function enrichPersonalRecords(data: CompData): Promise<void> {
@@ -444,15 +446,14 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
   const dateClause = compDate ? 'AND comp_date < ?' : 'AND comp_date < CURRENT_DATE';
   const params: unknown[] = compDate ? [...wcaIds, compDate] : [...wcaIds];
 
-  let bestRows: { wca_id: string; event_id: string; is_avg: boolean; best: number }[] = [];
+  let priorRows: { wca_id: string; event_id: string; is_avg: boolean; value: number }[] = [];
   try {
-    bestRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; best: number }>(
-      `SELECT wca_id, event_id, is_avg, MIN(value) AS best
+    priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number }>(
+      `SELECT DISTINCT wca_id, event_id, is_avg, value
        FROM wca_results_top
        WHERE wca_id IN (${idQs})
          AND value > 0
-         ${dateClause}
-       GROUP BY wca_id, event_id, is_avg`,
+         ${dateClause}`,
       params,
     );
   } catch (e) {
@@ -481,12 +482,25 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
     );
   } catch { /* tag 查不到不影响排序,继续 */ }
 
+  // (wca_id|event_id|is_avg) → distinct historical values + best
+  const seenValues = new Map<string, Set<number>>();
+  const bestValueByKey = new Map<string, number>();
+  for (const pr of priorRows) {
+    const k = `${pr.wca_id}|${pr.event_id}|${pr.is_avg ? '1' : '0'}`;
+    let set = seenValues.get(k);
+    if (!set) { set = new Set(); seenValues.set(k, set); }
+    set.add(pr.value);
+    const curBest = bestValueByKey.get(k);
+    if (curBest === undefined || pr.value < curBest) bestValueByKey.set(k, pr.value);
+  }
+
   const personalRecords: Record<string, Record<string, CompPersonalRecordSlot>> = {};
-  for (const r of bestRows) {
-    const perEvent = (personalRecords[r.wca_id] ||= {});
-    const slot = (perEvent[r.event_id] ||= {});
-    if (r.is_avg) slot.average = r.best;
-    else slot.single = r.best;
+  for (const [k, best] of bestValueByKey) {
+    const [wcaId, eventId, isAvgStr] = k.split('|');
+    const perEvent = (personalRecords[wcaId] ||= {});
+    const slot = (perEvent[eventId] ||= {});
+    if (isAvgStr === '1') slot.average = best;
+    else slot.single = best;
   }
   for (const tr of tagRows) {
     if (!tr.record_tag || tr.record_tag === 'PR') continue;
@@ -496,6 +510,45 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
     else slot.singleTag = tr.record_tag;
   }
   data.personalRecords = personalRecords;
+
+  // pS/pA dense rank:同 tryLoadFromWcaDb 逻辑,按 ROUND_ORDER 累积本场成绩参与排名.
+  // 比赛进行中(WCA 未收录),wca_results_top 不含本场,即用历史值算 PR/PR2/PR3.
+  const groups = new Map<string, LiveResult[]>();
+  for (const arr of Object.values(data.resultsByRound)) {
+    for (const lr of arr) {
+      const wcaIdForN = data.users[String(lr.n)]?.wcaid;
+      if (!wcaIdForN) continue;
+      const k = `${wcaIdForN}|${lr.e}`;
+      let g = groups.get(k);
+      if (!g) { g = []; groups.set(k, g); }
+      g.push(lr);
+    }
+  }
+  const rankFor = (v: number, seen: Set<number>): number => {
+    let distinctLess = 0;
+    for (const s of seen) if (s < v) distinctLess++;
+    return distinctLess + 1;
+  };
+  for (const [k, arr] of groups) {
+    arr.sort((a, b) => (ROUND_ORDER[a.r] ?? 99) - (ROUND_ORDER[b.r] ?? 99));
+    const [wcaIdKey, eventIdKey] = k.split('|');
+    const singleKey = `${wcaIdKey}|${eventIdKey}|0`;
+    const avgKey    = `${wcaIdKey}|${eventIdKey}|1`;
+    let singleSeen = seenValues.get(singleKey);
+    if (!singleSeen) { singleSeen = new Set(); seenValues.set(singleKey, singleSeen); }
+    let avgSeen = seenValues.get(avgKey);
+    if (!avgSeen) { avgSeen = new Set(); seenValues.set(avgKey, avgSeen); }
+    for (const lr of arr) {
+      if (lr.b > 0) {
+        lr.pS = rankFor(lr.b, singleSeen);
+        singleSeen.add(lr.b);
+      }
+      if (lr.a > 0) {
+        lr.pA = rankFor(lr.a, avgSeen);
+        avgSeen.add(lr.a);
+      }
+    }
+  }
 }
 
 async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
