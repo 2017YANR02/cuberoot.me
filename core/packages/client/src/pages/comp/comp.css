@@ -863,6 +863,29 @@ td.is-pr {
 .comp-round-modal .comp-modal-close-btn:hover {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
+.comp-modal-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: auto;
+}
+.comp-modal-copy-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.comp-modal-copy-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 /* ── 移动端 ───────────────────────────────────────────────────────── */
 

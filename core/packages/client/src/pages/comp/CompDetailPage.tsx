@@ -10,9 +10,8 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw, Info, Shuffle } from 'lucide-react';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';
+import HeaderToggles from '../../components/HeaderToggles';
 import { Flag } from '../../utils/flag';
 import { RecordBadge } from '../../components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '../../utils/wca_events';
@@ -852,10 +851,7 @@ export default function CompDetailPage() {
 
   return (
     <div className="comp-detail-page">
-      <div className="comp-top-bar">
-        <LangToggle />
-        <ThemeToggle />
-      </div>
+      <HeaderToggles className="comp-top-bar" />
 
       <div className="comp-table-section">
         <header className="comp-detail-header">
@@ -1602,6 +1598,8 @@ interface RoundResultModalProps {
 }
 
 function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, onShowAll, onClose }: RoundResultModalProps) {
+  const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -1625,6 +1623,66 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const place = idx >= 0 && result.b !== 0 ? idx + 1 : null;
   const iso2 = regionToIso2(u.region);
   const attempts = result.v.filter(v => v !== 0);
+
+  // single tag: cubing.com sr (WR/NR/CR/PR) 优先;否则 PR rank=1 也算 PR。average 同理。
+  // 只有 tag 非空才进 events 列表(wca-monitor 推送同逻辑:无 tag 不推)。
+  const singleTagForCopy = result.sr ? String(result.sr) : (singleRank === 1 ? 'PR' : '');
+  const avgTagForCopy = result.ar ? String(result.ar) : (averageRank === 1 ? 'PR' : '');
+  const canCopy = (singleTagForCopy && result.b > 0) || (avgTagForCopy && result.a > 0);
+
+  async function handleCopy() {
+    if (!result || !ev || !rd) return;
+    setCopyState('copying');
+    const compNameZh = localizeCompName(data.slug, decodeEntities(data.name), true);
+    const compNameEn = localizeCompName(data.slug, decodeEntities(data.name), false);
+    const compIso2 = compFlagIso2(data.slug);
+    const personIso2 = iso2.toUpperCase();
+    const url = window.location.href;
+    // previous_pr = 这场比赛之前选手的历史 PR (wca_pb fetch 来的);API 端用它判 tied,
+    // 不在前端做业务判定 — 跟 wca_pr_cache.is_tied_pr 同一判定函数 (Python 单源).
+    const prevSingle = pb?.[result.e]?.single?.best ?? null;
+    const prevAverage = pb?.[result.e]?.average?.best ?? null;
+    const events: Array<Record<string, unknown>> = [];
+    if (singleTagForCopy && result.b > 0) {
+      events.push({
+        tag: singleTagForCopy, rec_type: 'single', attempt_result: result.b,
+        event_id: result.e, person_name: u.name, person_iso2: personIso2,
+        comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
+        url, previous_pr: prevSingle,
+      });
+    }
+    if (avgTagForCopy && result.a > 0) {
+      events.push({
+        tag: avgTagForCopy, rec_type: 'average', attempt_result: result.a,
+        event_id: result.e, person_name: u.name, person_iso2: personIso2,
+        comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
+        url, previous_pr: prevAverage,
+      });
+    }
+    if (events.length === 0) {
+      setCopyState('nothing');
+      setTimeout(() => setCopyState('idle'), 1500);
+      return;
+    }
+    try {
+      const resp = await fetch(apiUrl('/v1/wca/format-record'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ events }),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json() as { cn: string; en: string; url: string; error?: string };
+      if (json.error) throw new Error(json.error);
+      const text = `${isZh ? json.cn : json.en}\n${json.url}`;
+      await navigator.clipboard.writeText(text);
+      setCopyState('done');
+      setTimeout(() => setCopyState('idle'), 2000);
+    } catch (e) {
+      console.error('[comp copy] failed:', e);
+      setCopyState('error');
+      setTimeout(() => setCopyState('idle'), 2000);
+    }
+  }
 
   return (
     <div className="comp-modal-backdrop comp-modal-backdrop-2" onClick={onClose}>
@@ -1706,6 +1764,28 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
           </section>
         </div>
         <footer className="comp-modal-footer comp-round-modal-footer">
+          {canCopy && (
+            <button
+              type="button"
+              className="comp-modal-copy-btn"
+              onClick={handleCopy}
+              disabled={copyState === 'copying'}
+              title={isZh ? '复制为推送文案' : 'Copy as push text'}
+            >
+              {copyState === 'done' ? <Check size={14} /> : <Copy size={14} />}
+              <span>
+                {copyState === 'done'
+                  ? (isZh ? '已复制' : 'Copied')
+                  : copyState === 'error'
+                    ? (isZh ? '失败' : 'Failed')
+                    : copyState === 'nothing'
+                      ? (isZh ? '无可复制' : 'Nothing')
+                      : copyState === 'copying'
+                        ? (isZh ? '复制中…' : 'Copying…')
+                        : (isZh ? '复制' : 'Copy')}
+              </span>
+            </button>
+          )}
           <button type="button" className="comp-modal-close-btn" onClick={onShowAll}>
             {isZh ? '所有' : 'All'}
           </button>
