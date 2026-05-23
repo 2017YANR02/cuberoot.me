@@ -846,9 +846,9 @@
   font-size: 0.78rem;
   font-weight: 600;
 }
-.same-comp-event-table .wp-round-final { color: #4A8A4A; }
-.same-comp-event-table .wp-round-semi { color: #7757A8; }
-.same-comp-event-table .wp-round-quarter { color: #2A6BB0; }
+.same-comp-event-table .wp-round-final,
+.same-comp-event-table .wp-round-semi,
+.same-comp-event-table .wp-round-quarter,
 .same-comp-event-table .wp-round-first { color: #a3a3a3; }
 .same-comp-event-table .wp-pos-first { color: #C84A6F; font-weight: 700; }
 
@@ -866,7 +866,7 @@
 .same-comp-event-table .wp-att::after { content: ")"; opacity: 0; }
 .same-comp-event-table .wp-att-trimmed::before,
 .same-comp-event-table .wp-att-trimmed::after { opacity: 1; }
-.same-comp-event-table .wp-att-best { color: #ededed; font-weight: 600; }
+/* best 不再用更亮色 — 统一跟其他 attempt 同色,只靠括号区分 trimmed */
 
 .same-round-paste-btn {
   display: inline-flex;
