@@ -481,11 +481,43 @@ html[data-theme=dark] .wp-page {
 .wp-round-tag {
     display: inline-block;
     font-size: 0.78rem; font-weight: 600;
+    color: var(--wp-text-sub);
 }
-.wp-round-final { color: var(--wp-green); }
-.wp-round-semi  { color: var(--wp-purple); }
-.wp-round-quarter { color: var(--wp-blue); }
-.wp-round-first { color: var(--wp-text-sub); }
+.wp-round-final, .wp-round-semi, .wp-round-quarter, .wp-round-first {
+    color: var(--wp-text-sub);
+}
+
+/* round tag 当作行内锚点链接 — 视觉同 span,hover 出下划线提示可点 */
+a.wp-round-tag-link {
+    text-decoration: none;
+    cursor: pointer;
+}
+a.wp-round-tag-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* 行可点击 cursor 提示 — 整行点击 → URL hash + 黄色高亮 */
+.wp-bycomp-table tbody tr.wp-row-anchorable {
+    cursor: pointer;
+}
+.wp-bycomp-table tbody tr.wp-row-anchorable:hover td {
+    background: color-mix(in srgb, var(--wp-text) 3%, transparent);
+}
+/* hash 锚点命中的行持续高亮 — 仿 WCA regulations 行级锚点黄底,直到下次切换 hash.
+   class 由 ByEventView / ByCompList useEffect 维护(SPA lazy mount 后 :target 不重绑) */
+.wp-bycomp-table tbody tr.wp-row-target td,
+.wp-bycomp-table tbody tr.wp-row-target:hover td {
+    background: rgba(255, 230, 90, 0.32);
+}
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td {
+        background: rgba(255, 213, 79, 0.18);
+    }
+}
+html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
+    background: rgba(255, 213, 79, 0.18);
+}
 
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
@@ -515,7 +547,7 @@ html[data-theme=dark] .wp-page {
 .wp-att::after  { content: ")"; opacity: 0; }
 .wp-att-trimmed::before,
 .wp-att-trimmed::after { opacity: 1; }
-.wp-att-best { color: var(--wp-text); font-weight: 600; }
+/* best 不再用更亮色 — 统一跟其他 attempt 同色,只靠括号区分 trimmed */
 /* 命中复盘的把数 — accent 色 + hover 下划线,提示可点击 */
 .wp-att-recon {
   color: var(--wp-accent);

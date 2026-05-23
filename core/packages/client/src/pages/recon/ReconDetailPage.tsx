@@ -36,6 +36,18 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { isAo5Bracketed } from '../../utils/wca_ao5_brackets';
 import { formatWcaResult } from '../../utils/wca_format_result';
 import { toWcaEventId } from '../../utils/wca_events';
+
+// 复盘头像选手名 Link → /wca/persons/:wcaId,带 hash 锚到本场比赛对应轮次行.
+function personLinkForSolve(solve: ReconSolve, isZh: boolean): string {
+  const search = isZh ? '?lang=zh' : '';
+  const compId = solve.compWcaId;
+  const eventId = solve.event ? toWcaEventId(solve.event) : null;
+  const round = solve.round;
+  if (compId && eventId && round) {
+    return `/wca/persons/${solve.personId}${search}#r-${compId}-${eventId}-${round}`;
+  }
+  return `/wca/persons/${solve.personId}${search}`;
+}
 import { formatDateRangeIso } from '../../utils/date_range';
 import { InfoTooltip } from '../../components/InfoTooltip/InfoTooltip';
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
@@ -121,7 +133,10 @@ export default function ReconDetailPage() {
             {solve.personCountry && <>{' '}<Flag iso2={solve.personCountry} className="recon-inline-flag" /></>}
             {' '}
             {solve.personId ? (
-              <Link to={`/wca/persons/${solve.personId}${isZh ? '?lang=zh' : ''}`} className="detail-person-link">
+              <Link
+                to={personLinkForSolve(solve, isZh)}
+                className="detail-person-link"
+              >
                 {displayCuberName(solve.person || '', isZh)}
               </Link>
             ) : displayCuberName(solve.person || '', isZh)}
