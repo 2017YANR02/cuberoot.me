@@ -622,32 +622,38 @@ export default function CompDetailPage() {
 
   // 后续 round 出现过的选手 = 晋级的人,在当前 round 表里浅绿色高亮
   // 决赛(最后一轮)没有"后续"——退化为高亮前三名(同绿色)
+  // 下一轮还没开始(且非决赛)——按 advance count (rd.n) 取当前轮前 N 名(含并列)预标
   const advancers = useMemo(() => {
     if (!data || !currentRound) return new Set<number>();
     const rs = currentRound.ev.rs;
     const idx = rs.findIndex(r => r.i === currentRound.rd.i);
     if (idx < 0) return new Set<number>();
-    const set = new Set<number>();
-    if (idx >= rs.length - 1) {
-      // filteredResults 已按 WCA 排名排好;取前 3 + 任何与第 3 名同 (avg, best) 的并列
-      const f = currentRound.rd.f;
-      const byAvg = f === 'a' || f === 'm' || f === '';
-      const keyOf = (r: LiveResult) => byAvg ? `${r.a}|${r.b}` : `${r.b}`;
+    const f = currentRound.rd.f;
+    const byAvg = f === 'a' || f === 'm' || f === '';
+    const keyOf = (r: LiveResult) => byAvg ? `${r.a}|${r.b}` : `${r.b}`;
+    const topN = (n: number): Set<number> => {
+      const out = new Set<number>();
       const valid = filteredResults.filter(r => r.b > 0);
-      if (valid.length === 0) return set;
-      const limit = Math.min(3, valid.length);
-      const thirdKey = keyOf(valid[limit - 1]);
+      if (valid.length === 0) return out;
+      const limit = Math.min(n, valid.length);
+      const cutoffKey = keyOf(valid[limit - 1]);
       for (let i = 0; i < valid.length; i++) {
-        if (i < limit) set.add(valid[i].n);
-        else if (keyOf(valid[i]) === thirdKey) set.add(valid[i].n);
+        if (i < limit) out.add(valid[i].n);
+        else if (keyOf(valid[i]) === cutoffKey) out.add(valid[i].n);
         else break;
       }
-      return set;
-    }
+      return out;
+    };
+    if (idx >= rs.length - 1) return topN(3);
+    const set = new Set<number>();
     for (let i = idx + 1; i < rs.length; i++) {
       const key = roundKey(currentRound.ev.i, rs[i].i);
       for (const r of data.resultsByRound[key] || []) set.add(r.n);
     }
+    if (set.size > 0) return set;
+    // RoundMeta.n 是"该轮容量(上一轮晋级进来)",所以"本轮晋级人数"= 下一轮的 n.
+    const nextN = rs[idx + 1]?.n ?? 0;
+    if (nextN > 0) return topN(nextN);
     return set;
   }, [data, currentRound, filteredResults]);
 

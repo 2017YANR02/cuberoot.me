@@ -370,6 +370,46 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
+          {compMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <CalendarDays size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '比赛' : 'Competitions'}</h3>
+                {compMatches.length > COMP_INITIAL_CAP && (
+                  <HeaderMore
+                    overflow={compMatches.length - COMP_INITIAL_CAP}
+                    title={isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`}
+                    to={`/wca/calendar${langQuery}&view=list&q=${encodeURIComponent(q)}`}
+                    onClick={closeAfter}
+                  />
+                )}
+              </div>
+              <div className="landing-search-grid">
+                {visibleComps.map(c => {
+                  const displayName = localizeCompName(c.id, c.name, isZh);
+                  const cityStr = c.city ? localizeCity(c.city, isZh) : '';
+                  return (
+                    <Link
+                      key={c.id}
+                      {...compLinkProps(c.id)}
+                      className="landing-search-item landing-search-item--rich"
+                      onClick={closeAfter}
+                    >
+                      <Flag iso2={c.country} className="country-flag" />
+                      <span className="landing-search-item-main">
+                        <span className="landing-search-item-name">{displayName}</span>
+                        <span className="landing-search-item-meta">
+                          {formatDateRangeIso(c.start_date, c.end_date)}
+                          {cityStr ? ` · ${cityStr}` : ''}
+                        </span>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {reconMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -407,46 +447,6 @@ export default function LandingSearch({ cards, lang }: Props) {
                     </span>
                   </Link>
                 ))}
-              </div>
-            </section>
-          )}
-
-          {compMatches.length > 0 && (
-            <section className="landing-search-section">
-              <div className="landing-search-section-header">
-                <CalendarDays size={14} strokeWidth={1.75} />
-                <h3>{isZh ? '比赛' : 'Competitions'}</h3>
-                {compMatches.length > COMP_INITIAL_CAP && (
-                  <HeaderMore
-                    overflow={compMatches.length - COMP_INITIAL_CAP}
-                    title={isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`}
-                    to={`/wca/calendar${langQuery}&view=list&q=${encodeURIComponent(q)}`}
-                    onClick={closeAfter}
-                  />
-                )}
-              </div>
-              <div className="landing-search-grid">
-                {visibleComps.map(c => {
-                  const displayName = localizeCompName(c.id, c.name, isZh);
-                  const cityStr = c.city ? localizeCity(c.city, isZh) : '';
-                  return (
-                    <Link
-                      key={c.id}
-                      {...compLinkProps(c.id)}
-                      className="landing-search-item landing-search-item--rich"
-                      onClick={closeAfter}
-                    >
-                      <Flag iso2={c.country} className="country-flag" />
-                      <span className="landing-search-item-main">
-                        <span className="landing-search-item-name">{displayName}</span>
-                        <span className="landing-search-item-meta">
-                          {formatDateRangeIso(c.start_date, c.end_date)}
-                          {cityStr ? ` · ${cityStr}` : ''}
-                        </span>
-                      </span>
-                    </Link>
-                  );
-                })}
               </div>
             </section>
           )}
