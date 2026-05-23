@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Search, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, Wrench, ArrowRight,
-  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
+  Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Clipboard, Film,
+  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import { ClearButton } from './ClearButton';
@@ -22,6 +22,9 @@ import {
   type SiteSearchCard,
 } from '../utils/site_search';
 import { EventIcon } from './EventIcon/EventIcon';
+import { useSpeechToText } from '../utils/useSpeechToText';
+import { detectPasteIntent } from '../utils/smart_paste';
+import { setPendingVideo } from '../utils/pending_video';
 import './landing_search.css';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -32,6 +35,46 @@ export type LandingSearchCard = SiteSearchCard;
 
 const RECON_INITIAL_CAP = 10;
 const COMP_INITIAL_CAP = 10;
+
+// 每天轮换的搜索框 placeholder。按本地日期取 day-of-year mod N,同一天稳定不变。
+const PLACEHOLDERS_ZH = [
+  '今天从哪里开始?',
+  '最近在参加什么比赛?',
+  '想查谁的成绩?',
+  '哪个项目的世界纪录?',
+  '想看哪一年的统计?',
+  '哪个公式还没背会?',
+  '今天练 PLL 还是 OLL?',
+  '上周末谁拿了冠军?',
+  '想复盘哪场比赛?',
+  '中国选手谁最快?',
+  '哪个赛事即将开始?',
+  '想学什么新方法?',
+];
+const PLACEHOLDERS_EN = [
+  'Where to start today?',
+  'Which comp are you at?',
+  'Look up a cuber?',
+  'Find a world record?',
+  'Browse stats by year?',
+  'Which alg to drill?',
+  'PLL or OLL today?',
+  'Who won last weekend?',
+  'Recon a recent solve?',
+  'Search a competition?',
+  'Try a new method?',
+  'Curious about an event?',
+];
+
+function dayOfYear(d: Date): number {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d.getTime() - start.getTime()) / 86400000);
+}
+
+function rotatingPlaceholder(isZh: boolean): string {
+  const list = isZh ? PLACEHOLDERS_ZH : PLACEHOLDERS_EN;
+  return list[dayOfYear(new Date()) % list.length];
+}
 
 // 共享:section header 右侧 "+N →"。to 给定则是导航链接,否则是 expand 按钮。
 function HeaderMore({ overflow, title, to, onClick }: {
@@ -69,6 +112,13 @@ export default function LandingSearch({ cards, lang }: Props) {
   const isZh = lang === 'zh';
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const { supported: micSupported, listening, start: micStart, stop: micStop } = useSpeechToText({
+    lang: isZh ? 'zh-CN' : 'en-US',
+    onResult: (text) => { setQuery(text); setOpen(true); },
+  });
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [expandedPersons, setExpandedPersons] = useState(false);
   const [expandedRecons, setExpandedRecons] = useState(false);
   const [expandedGlossary, setExpandedGlossary] = useState(false);
@@ -113,10 +163,78 @@ export default function LandingSearch({ cards, lang }: Props) {
     else window.location.href = c.href;
   };
 
+  /** Smart paste — 读剪贴板,识别 WCA URL / 打乱 / cubing.com 等并跳转;识别不出就当搜索词。 */
+  const onSmartPaste = async () => {
+    setPlusMenuOpen(false);
+    let text = '';
+    try { text = await navigator.clipboard.readText(); } catch { /* 权限拒绝 / 无 API */ }
+    if (!text) {
+      wrapRef.current?.querySelector('input')?.focus();
+      return;
+    }
+    const intent = detectPasteIntent(text);
+    if (intent) {
+      closeAfter();
+      navigate(intent.route);
+    } else {
+      setQuery(text);
+      setOpen(true);
+    }
+  };
+
+  /** 选/拖视频 → /frame-count 自动加载 */
+  const onVideoFile = (file: File | null | undefined) => {
+    if (!file || !file.type.startsWith('video/')) return;
+    setPendingVideo(file);
+    closeAfter();
+    setPlusMenuOpen(false);
+    navigate('/frame-count');
+  };
+
+  // 关掉菜单 — 点外部
+  useEffect(() => {
+    if (!plusMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setPlusMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [plusMenuOpen]);
+
   return (
     <div className="landing-search" ref={wrapRef}>
-      <div className="landing-search-input">
-        <Search size={16} strokeWidth={1.75} />
+      <div
+        className={`landing-search-input${dragging ? ' is-drag-over' : ''}`}
+        onDragOver={e => {
+          if (e.dataTransfer?.types.includes('Files')) {
+            e.preventDefault();
+            setDragging(true);
+          }
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => {
+          e.preventDefault();
+          setDragging(false);
+          onVideoFile(e.dataTransfer.files[0]);
+        }}
+      >
+        <button
+          type="button"
+          className="landing-search-plus"
+          onClick={() => setPlusMenuOpen(v => !v)}
+          title={isZh ? '智能粘贴 / 上传视频' : 'Smart paste / upload video'}
+          aria-label={isZh ? '添加' : 'Add'}
+          aria-expanded={plusMenuOpen}
+        >
+          <Plus size={18} strokeWidth={1.75} />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="video/*"
+          style={{ display: 'none' }}
+          onChange={e => onVideoFile(e.target.files?.[0])}
+        />
         <input
           type="text"
           value={query}
@@ -128,10 +246,50 @@ export default function LandingSearch({ cards, lang }: Props) {
               (e.target as HTMLInputElement).blur();
             }
           }}
-          placeholder={isZh ? '搜索页面 / 统计 / 选手 / 比赛…' : 'Search pages, stats, persons, comps…'}
+          placeholder={listening ? (isZh ? '请说…' : 'Listening…') : rotatingPlaceholder(isZh)}
         />
-        {q !== '' && <span className="landing-search-count">{totalCount}</span>}
-        {query !== '' && <ClearButton onClick={() => setQuery('')} isZh={isZh} preserveFocus />}
+        {query !== '' && (
+          <ClearButton
+            onClick={() => setQuery('')}
+            isZh={isZh}
+            variant="standalone"
+            className="landing-search-clear"
+            preserveFocus
+          />
+        )}
+        {plusMenuOpen && (
+          <div className="landing-search-plus-menu" role="menu">
+            <button type="button" role="menuitem" onClick={onSmartPaste}>
+              <Clipboard size={14} strokeWidth={1.75} />
+              <div className="landing-search-plus-menu-text">
+                <span className="landing-search-plus-menu-title">{isZh ? '智能粘贴' : 'Smart paste'}</span>
+                <span className="landing-search-plus-menu-sub">{isZh ? 'WCA URL / 打乱 / 公式' : 'WCA URL / scramble / alg'}</span>
+              </div>
+            </button>
+            <button type="button" role="menuitem" onClick={() => fileInputRef.current?.click()}>
+              <Film size={14} strokeWidth={1.75} />
+              <div className="landing-search-plus-menu-text">
+                <span className="landing-search-plus-menu-title">{isZh ? '上传视频数帧' : 'Upload video'}</span>
+                <span className="landing-search-plus-menu-sub">{isZh ? '逐帧计时,记录 split' : 'Per-frame timing & splits'}</span>
+              </div>
+            </button>
+          </div>
+        )}
+        {micSupported && (
+          <button
+            type="button"
+            className={`landing-search-mic${listening ? ' is-listening' : ''}`}
+            onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
+            title={listening
+              ? (isZh ? '停止录音' : 'Stop')
+              : (isZh ? '语音输入' : 'Voice input')}
+            aria-label={listening
+              ? (isZh ? '停止录音' : 'Stop')
+              : (isZh ? '语音输入' : 'Voice input')}
+          >
+            <Mic size={16} strokeWidth={1.75} />
+          </button>
+        )}
       </div>
 
       {showDropdown && (

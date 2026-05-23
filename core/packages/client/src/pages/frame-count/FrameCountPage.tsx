@@ -14,6 +14,7 @@ import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
 import LangToggle from '../../components/LangToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
+import { consumePendingVideo } from '../../utils/pending_video';
 
 import './frame-count.css';
 
@@ -1408,6 +1409,18 @@ export default function FrameCountPage() {
     dirHandleRef.current = null;
     videoNameInDirRef.current = null;
     loadFile(file);
+  }, [loadFile, tryLoadViaRememberedDir]);
+
+  // 落地页 + 按钮 / 拖入搜索框时塞进 pending_video,本页挂载消费 → 自动加载
+  useEffect(() => {
+    const pending = consumePendingVideo();
+    if (!pending) return;
+    (async () => {
+      if (await tryLoadViaRememberedDir(pending)) return;
+      dirHandleRef.current = null;
+      videoNameInDirRef.current = null;
+      loadFile(pending);
+    })();
   }, [loadFile, tryLoadViaRememberedDir]);
 
   // solves / fps 变更时,自动写回 splits.txt(只有通过 Folder 入口加载时才生效)

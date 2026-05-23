@@ -519,7 +519,6 @@
     .gen-header { flex-wrap: wrap; gap: 6px 8px; padding: 0.9rem 0.8rem 0.75rem; }
     .gen-title { flex: 0 1 auto; gap: 4px; }
     .gen-title h1 { font-size: 0.95rem; }
-    .gen-title-help { display: none; }  /* 窄屏不渲染 ?,给右上 lang/theme 让位 */
     .gen-mode-chips { padding: 2px; }
     .gen-mode-chips .lg-chips-chip { padding: 3px 8px; font-size: 0.75rem; }
     .gen-header .lang-toggle { margin-left: auto; }
