@@ -513,12 +513,13 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
 
   // pS/pA dense rank:同 tryLoadFromWcaDb 逻辑,按 ROUND_ORDER 累积本场成绩参与排名.
   // 比赛进行中(WCA 未收录),wca_results_top 不含本场,即用历史值算 PR/PR2/PR3.
+  // 无 wcaid 的 newcomer 也参与:用 competitor number 当 group key,seenValues 必空 → 第一次有效成绩 = PR.
   const groups = new Map<string, LiveResult[]>();
   for (const arr of Object.values(data.resultsByRound)) {
     for (const lr of arr) {
       const wcaIdForN = data.users[String(lr.n)]?.wcaid;
-      if (!wcaIdForN) continue;
-      const k = `${wcaIdForN}|${lr.e}`;
+      const personKey = wcaIdForN || `__n${lr.n}`;
+      const k = `${personKey}|${lr.e}`;
       let g = groups.get(k);
       if (!g) { g = []; groups.set(k, g); }
       g.push(lr);
