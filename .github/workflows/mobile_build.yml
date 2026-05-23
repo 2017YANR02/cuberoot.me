@@ -68,7 +68,9 @@ jobs:
 
       - name: Build APK
         working-directory: core/packages/client/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
