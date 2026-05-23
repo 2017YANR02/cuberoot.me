@@ -20,6 +20,7 @@ import WcaAuth from '../components/WcaAuth';
 import ThemeToggle from '../components/ThemeToggle';
 import LangToggle from '../components/LangToggle';
 import LandingSearch, { type LandingSearchCard } from '../components/LandingSearch';
+import OngoingComps from '../components/OngoingComps';
 import { useEffectiveTheme } from '../utils/theme';
 import './landing.css';
 
@@ -458,6 +459,7 @@ export default function LandingPage() {
       <h1 className="landing-tagline">{t('tagline')}</h1>
 
       <LandingSearch cards={SEARCH_CARDS} lang={lang} />
+      <OngoingComps lang={lang} />
 
       {/* WCA full-width hero — 顶层入口,不属于任何 section */}
       <Link to="/wca" className="wca-hero">
