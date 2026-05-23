@@ -478,7 +478,14 @@ export default function CompDetailPage() {
         return { ...prev, events, fetchedAt: Date.now() };
       }
       if (patch.kind === 'users') {
-        return { ...prev, users: { ...prev.users, ...patch.users }, fetchedAt: Date.now() };
+        // cubing.com WS users payload 没 eventIds/countryId/continentId(只有 server 抓的 /competitors HTML
+        // 和 enrichComp 才填),整体 spread 会把这些字段全清空 → Psych Sheet 报名表过滤失效.
+        // 保留 prev user 的额外字段,只覆盖 WS 携带的 4 个字段.
+        const mergedUsers: typeof prev.users = { ...prev.users };
+        for (const [k, wsUser] of Object.entries(patch.users)) {
+          mergedUsers[k] = { ...prev.users[k], ...wsUser };
+        }
+        return { ...prev, users: mergedUsers, fetchedAt: Date.now() };
       }
       return prev;
     });
