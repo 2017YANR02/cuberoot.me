@@ -43,6 +43,14 @@
 
 .calendar-page .upcoming-header {
     margin-bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 1rem;
+    align-items: start;
+}
+.calendar-page .upcoming-header-right {
+    grid-column: 2;
+    grid-row: 1 / span 2;
 }
 .calendar-page .upcoming-title {
     font-family: 'Fraunces', 'Times New Roman', serif;
@@ -79,7 +87,7 @@
     position: sticky;
     top: 0;
     background: var(--bg);
-    padding: 0.75rem 0;
+    padding: calc(0.75rem + var(--sat)) 0 0.75rem;
     margin-bottom: 0.5rem;
     z-index: 10;
     border-bottom: 1px solid transparent;
@@ -247,6 +255,8 @@
     z-index: 11;
     background: var(--bg);
     margin: 0;
+    /* list 模式下 toolbar 是 static,这一条 chip 行才真正贴 viewport top — PWA 灵动岛让位 */
+    padding-top: var(--sat);
     box-sizing: border-box;
     /* 横向溢出：header 不能由用户独立滚（trackpad 双指会让 header 与行错位）。
      * overflow-x: hidden 仍允许 JS 写 scrollLeft —— 移动端 list 滚动时同步，桌面则保持 0。 */

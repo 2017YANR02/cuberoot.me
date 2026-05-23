@@ -12,8 +12,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2 } from 'lucide-react';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import { ClearButton } from '../../components/ClearButton';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '../../stores/auth_store';
@@ -177,10 +176,7 @@ export default function WikiPage() {
           <ChevronLeft size={16} />
           <span>{isZh ? '首页' : 'Home'}</span>
         </Link>
-        <div className="wiki-header-right">
-          <LangToggle />
-          <ThemeToggle />
-        </div>
+        <HeaderToggles className="wiki-header-right" />
       </header>
 
       <main className="wiki-main">

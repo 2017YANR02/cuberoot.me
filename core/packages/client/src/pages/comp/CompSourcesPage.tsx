@@ -5,8 +5,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './comp.css';
 
@@ -17,10 +16,7 @@ export default function CompSourcesPage() {
 
   return (
     <div className="comp-sources-page">
-      <div className="comp-top-bar">
-        <LangToggle />
-        <ThemeToggle />
-      </div>
+      <HeaderToggles className="comp-top-bar" />
 
       <div className="comp-sources-wrap">
         <Link to="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>

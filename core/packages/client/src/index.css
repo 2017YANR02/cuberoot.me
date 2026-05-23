@@ -103,6 +103,13 @@ img[src$="ChineseTaipei.svg"] {
 :root {
   color-scheme: light dark;
 
+  /* iOS PWA standalone — viewport-fit=cover + black-translucent 让网页画到刘海/灵动岛/Home 指示器后。
+     一处定义,各 sticky/fixed 顶/侧/底元素 var(--sat) 等避开。桌面 / 普通 Safari portrait = 0px。 */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+
   /* Legacy dark tokens（旧页继续用,Phase 2 逐页迁移掉） */
   --bg-primary: #171717;
   --bg-secondary: #1f1f1f;
@@ -143,6 +150,28 @@ img[src$="ChineseTaipei.svg"] {
 
   --radius: 12px;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* iOS PWA — 顶端 sticky header 让位安全区。同公式 header 分组一处处理,避免各 page css 重复
+   hardcode env() 公式。`html :is(...)` specificity = 0,1,1,胜 page css 的 0,1,0,page 内
+   padding shorthand 写桌面值即可(桌面 inset=0 这里得到的值跟原 padding 相同)。 */
+@supports (padding-top: env(safe-area-inset-top)) {
+  /* About 13 页: 880px 居中 + 1.25rem 基线 */
+  html :is(
+    .ga-header, .ca-header, .calca-header, .cala-header, .fca-header,
+    .gla-header, .moa-header, .nema-header, .pa-header, .rca-header,
+    .s555-header, .va-header, .wcaa-header
+  ) {
+    padding: calc(1.25rem + var(--sat)) max(1.25rem, calc((100vw - 880px) / 2 + var(--sar))) 1rem max(1.25rem, calc((100vw - 880px) / 2 + var(--sal)));
+  }
+  /* God / Demigod: 980px 居中 + 1rem 基线 */
+  html :is(.god-header, .dg-header) {
+    padding: calc(1rem + var(--sat)) max(1rem, calc((100vw - 980px) / 2 + var(--sar))) 1rem max(1rem, calc((100vw - 980px) / 2 + var(--sal)));
+  }
+  /* Commutator / Patterns / WB: 固定 2rem 边距 + 1.25rem 基线 */
+  html :is(.cmt-header, .pat-header, .wb-header) {
+    padding: calc(1.25rem + var(--sat)) max(2rem, var(--sar)) 1rem max(2rem, var(--sal));
+  }
 }
 
 /* dark 反盖:跟系统 + 显式 [data-theme=dark];[data-theme=light] 强制 light 时不进 */

@@ -73,7 +73,7 @@
   top: 0;
   z-index: 10;
   margin: 0 -0.25rem 0.75rem;
-  padding: 0.5rem 0;
+  padding: calc(0.5rem + var(--sat)) 0 0.5rem;
   background: var(--background);
   display: flex;
   align-items: center;

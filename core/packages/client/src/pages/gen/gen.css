@@ -42,8 +42,12 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    /* sticky bar 背景拉满视口宽度,但内容用动态 padding 锁在 ≤980px 中央 */
-    padding: 1.25rem max(2rem, calc((100vw - 980px) / 2)) 1rem;
+    /* sticky bar 背景拉满视口宽度,但内容用动态 padding 锁在 ≤980px 中央。
+       padding-top + 左右 inset 让位 iOS PWA 刘海/灵动岛,--sat/--sar/--sal 见 index.css。 */
+    padding: calc(1.25rem + var(--sat))
+        max(2rem, calc((100vw - 980px) / 2 + var(--sar)))
+        1rem
+        max(2rem, calc((100vw - 980px) / 2 + var(--sal)));
     background: color-mix(in srgb, var(--gen-bg) 88%, transparent);
     position: sticky;
     top: 0;
@@ -516,7 +520,11 @@
 /* mode chips: 视觉走 LiquidGlassChips 组件;这里只管布局/响应式。
    窄屏 header: 标题 + chip + 中文 + 主题 一行排齐;slot(比赛搜索框)占第二行。 */
 @media (max-width: 700px) {
-    .gen-header { flex-wrap: wrap; gap: 6px 8px; padding: 0.9rem 0.8rem 0.75rem; }
+    .gen-header {
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        padding: calc(0.9rem + var(--sat)) max(0.8rem, var(--sar)) 0.75rem max(0.8rem, var(--sal));
+    }
     .gen-title { flex: 0 1 auto; gap: 4px; }
     .gen-title h1 { font-size: 0.95rem; }
     .gen-mode-chips { padding: 2px; }

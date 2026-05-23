@@ -11,8 +11,7 @@ import {
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '../../i18n';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import { ClearButton } from '../../components/ClearButton';
 import { Flag } from '../../utils/flag';
 import { displayCuberName } from '../../utils/name_utils';
@@ -139,10 +138,7 @@ export default function WcaStatsIndex() {
             {isZh ? 'WCA 统计' : 'WCA Statistics'}
           </h1>
         </div>
-        <div className="wca-stats-index-hero-right">
-          <LangToggle />
-          <ThemeToggle />
-        </div>
+        <HeaderToggles className="wca-stats-index-hero-right" />
       </header>
 
       <div className="wca-stats-index-toolbar">

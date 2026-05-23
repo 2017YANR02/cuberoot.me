@@ -15,7 +15,7 @@ import {
   type UpcomingCompRecord,
   type PastCompRecord,
 } from '@cuberoot/shared';
-import LangToggle from '../components/LangToggle';
+import HeaderToggles from '../components/HeaderToggles';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { displayCuberName } from '../utils/name_utils';
 import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
@@ -1469,8 +1469,8 @@ export default function CalendarPage() {
           <Link to="/wca/globe" className="globe-link">
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
           </Link>
-          <LangToggle variant="inline" />
         </div>
+        <HeaderToggles className="upcoming-header-right" />
       </header>
 
       <div className="toolbar">
