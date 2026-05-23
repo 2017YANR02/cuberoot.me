@@ -1305,6 +1305,8 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
           if (Object.keys(data.users).length === 0 && Object.keys(scraped).length > 0) {
             await enrichUsersWithChineseNames(scraped);
             finalData = { ...data, users: scraped, cubingSlug };
+            // loadFromWca 时 users 为空,enrichPersonalRecords 没活干;现在补完 wcaid 再跑.
+            await enrichPersonalRecords(finalData);
           }
           finalData.availableSources = available;
           cache.set(fastKey, finalData);
@@ -1353,10 +1355,19 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     else if (useSource === 'wca_live') data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId || undefined);
     else data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta || undefined);
 
-    // WCA 命中 announcement 但 users={} (未办的中国比赛 — /live 重定向所以 cubing probe 也 null) →
-    // 用 WCA cell_name 推 cubing slug 抓 /competitors 补报名表.源仍记 'wca',只是 users 来自 cubing 网页.
-    // /competitors HTML 只给英文名,在 server 端 JOIN wca_persons 拼"English (中文)"全名,
-    // 跟 wca_stats_extra.ts 8 处 JOIN wca_persons pattern 一致(targeted lookup 不走 client persons_index).
+    // 未来 / 进行中比赛 WCA REST 还没公示成绩 + cubing.com 有 /live 页 → 切到 cubing 拿报名表 + 历史 PR.
+    // 走 loadFromCubing 而不是只 scrape /competitors,这样能 enrichPersonalRecords (Psych Sheet 不空).
+    if (choice === 'auto' && data.source === 'wca' && Object.keys(data.users).length === 0 && probe.cubingMeta) {
+      try {
+        data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
+      } catch (e) {
+        console.warn(`[cubing-live] cubing fallback failed for ${wcaId}:`, (e as Error).message);
+      }
+    }
+
+    // WCA 命中 announcement 但 users={} 且 cubing probe 也 null (未办的中国比赛 — /live 重定向)
+    // → 用 WCA cell_name 推 cubing slug 直抓 /competitors 补报名表.源仍记 'wca'.
+    // /competitors HTML 只给英文名,在 server 端 JOIN wca_persons 拼"English (中文)"全名.
     if (choice === 'auto' && data.source === 'wca' && Object.keys(data.users).length === 0) {
       const cubingSlug = data.name.replace(/\s+/g, '-');
       try {
@@ -1364,6 +1375,9 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
         if (Object.keys(competitorUsers).length > 0) {
           await enrichUsersWithChineseNames(competitorUsers);
           data = { ...data, users: competitorUsers, cubingSlug };
+          // loadFromWca 时 users={} 跑了一遍 enrichPersonalRecords 没活干;
+          // 补完报名表后再拉一遍,Psych Sheet 才能出 PR.
+          await enrichPersonalRecords(data);
         }
       } catch (e) {
         console.warn(`[cubing-live] competitors fallback failed for ${cubingSlug}:`, (e as Error).message);
