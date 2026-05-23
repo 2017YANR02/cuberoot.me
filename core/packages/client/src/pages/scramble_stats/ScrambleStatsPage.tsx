@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import './scramble_stats.css';
@@ -346,10 +345,7 @@ export default function ScrambleStatsPage() {
     return (
       <div className="scramble-stats-page">
         <div className="scramble-stats-header">
-          <div className="scramble-stats-header-nav">
-            <LangToggle />
-            <ThemeToggle />
-          </div>
+          <HeaderToggles className="scramble-stats-header-nav" />
           <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
         </div>
         <div className="scramble-stats-error">{isZh ? '加载失败' : 'Load failed'}: {error}</div>
@@ -361,10 +357,7 @@ export default function ScrambleStatsPage() {
     return (
       <div className="scramble-stats-page">
         <div className="scramble-stats-header">
-          <div className="scramble-stats-header-nav">
-            <LangToggle />
-            <ThemeToggle />
-          </div>
+          <HeaderToggles className="scramble-stats-header-nav" />
           <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
         </div>
         <div className="scramble-stats-loading">{isZh ? '加载中…' : 'Loading…'}</div>
@@ -399,10 +392,7 @@ export default function ScrambleStatsPage() {
   return (
     <div className="scramble-stats-page">
       <div className="scramble-stats-header">
-        <div className="scramble-stats-header-nav">
-          <LangToggle />
-          <ThemeToggle />
-        </div>
+        <HeaderToggles className="scramble-stats-header-nav" />
         <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
         <p className="scramble-stats-note">{sourceText}</p>
       </div>

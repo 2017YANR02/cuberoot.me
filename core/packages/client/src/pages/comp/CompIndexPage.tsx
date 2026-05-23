@@ -8,8 +8,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X as XIcon, HelpCircle } from 'lucide-react';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import { Flag } from '../../utils/flag';
 import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
@@ -86,10 +85,7 @@ export default function CompIndexPage() {
 
   return (
     <div className="comp-index-page">
-      <div className="comp-top-bar">
-        <LangToggle />
-        <ThemeToggle />
-      </div>
+      <HeaderToggles className="comp-top-bar" />
 
       <h1 className="comp-page-title">
         {isZh ? 'WCA 比赛' : 'WCA Competitions'}

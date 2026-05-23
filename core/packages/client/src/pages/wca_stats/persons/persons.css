@@ -65,7 +65,7 @@ html[data-theme=dark] .wp-page {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 24px;
+    padding: calc(14px + var(--sat)) max(24px, var(--sar)) 14px max(24px, var(--sal));
     border-bottom: 1px solid var(--wp-border);
     background: color-mix(in srgb, var(--wp-surface) 85%, transparent);
     backdrop-filter: blur(8px);

@@ -167,7 +167,7 @@
   display: grid;
   grid-template-columns: 34px minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 2.2fr);
   gap: 12px;
-  padding: 7px 32px 7px 12px;
+  padding: calc(7px + var(--sat)) max(32px, var(--sar)) 7px max(12px, var(--sal));
   background: var(--sites-bg);
   border-bottom: 1px solid var(--sites-border);
   font-size: 11px;

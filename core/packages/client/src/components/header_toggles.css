@@ -1,0 +1,6 @@
+.header-toggles {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
