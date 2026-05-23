@@ -653,11 +653,13 @@ export default function CompDetailPage() {
 
   // ── prefetch PRs for current round ────────────────────────────────────
   // wca_db 源 server 已经给了 LiveResult.pS / pA 历史 PR 标志,classifyPr 优先用 server flag.
+  // server 也对其它源 (cubing/wca/wca_live) 预填了 data.personalRecords,client 不再发外部请求.
   // 跳过 client 端 WCA API prefetch — 否则 WC2019 这种大型赛事几千选手并发 fetch 直接触发 429.
 
   useEffect(() => {
     if (!data || !currentRound) return;
     if (data.source === 'wca_db') return;
+    if (data.personalRecords) return;
     const key = roundKey(currentRound.ev.i, currentRound.rd.i);
     const results = data.resultsByRound[key] || [];
     const wcaIds = results
