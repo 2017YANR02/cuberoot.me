@@ -1,0 +1,153 @@
+# 编译 cuberoot.me SPA 套壳 iOS .ipa + Android .apk
+# 给自己 iPhone / Android 侧载用,不上架 store
+#
+# 触发:
+#   1. workflow_dispatch — Actions tab 手按
+#   2. push 到 mobile-build 分支 — 用于 iterate
+#
+# 产物:
+#   cuberoot-android-apk  →  app-debug.apk           (ubuntu-latest, ~5 min)
+#   cuberoot-ios-ipa      →  cuberoot-unsigned.ipa   (macos-latest, ~15 min, 10x 单价)
+#
+# 安装:
+#   Android: 传 APK 到手机,允许"未知来源",点 APK 安装
+#   iOS:     Sideloadly + 免费 Apple ID 自签到 iPhone, 7 天有效
+name: Build Mobile Apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [mobile-build]
+    paths:
+      - 'core/packages/client/**'
+      - '.github/workflows/mobile_build.yml'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared workspace deps
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
+
+      - name: Build SPA
+        working-directory: core
+        run: pnpm --filter @cuberoot/client build
+
+      - name: Capacitor sync Android
+        working-directory: core/packages/client
+        run: pnpm exec cap sync android
+
+      - name: Build APK
+        working-directory: core/packages/client/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cuberoot-android-apk
+          path: core/packages/client/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared workspace deps
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
+
+      - name: Build SPA
+        working-directory: core
+        run: pnpm --filter @cuberoot/client build
+
+      - name: Capacitor sync iOS
+        working-directory: core/packages/client
+        run: pnpm exec cap sync ios
+
+      - name: Resolve SPM packages
+        working-directory: core/packages/client/ios/App
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project App.xcodeproj \
+            -scheme App
+
+      - name: Build unsigned archive
+        working-directory: core/packages/client/ios/App
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$PWD/build/App.xcarchive" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS=""
+
+      - name: Package unsigned IPA
+        working-directory: core/packages/client/ios/App
+        run: |
+          mkdir -p build/Payload
+          cp -R build/App.xcarchive/Products/Applications/App.app build/Payload/
+          cd build
+          zip -qr cuberoot-unsigned.ipa Payload
+          ls -lh cuberoot-unsigned.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cuberoot-ios-ipa
+          path: core/packages/client/ios/App/build/cuberoot-unsigned.ipa
+          retention-days: 14
+          if-no-files-found: error

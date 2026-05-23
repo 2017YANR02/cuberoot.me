@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: "Use when adding/editing user-visible text in React client. zh/en 双语:两种 pattern (`t()` + JSON key vs inline `isZh ? 'X' : 'Y'`),en.json/zh.json 必须 parallel。Triggers: \"中英双语\", \"i18n\", \"translate\", \"add Chinese/English\", \"LangToggle\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
+description: "Use when adding/editing user-visible text in React client. zh/en 双语:两种 pattern (`t()` + JSON key vs inline `isZh ? 'X' : 'Y'`),en.json/zh.json 必须 parallel。右上角 lang + theme 用 `<HeaderToggles />` 单组件,不要手写 `<LangToggle /> <ThemeToggle />` 一对。Triggers: \"中英双语\", \"i18n\", \"translate\", \"add Chinese/English\", \"LangToggle\", \"ThemeToggle\", \"HeaderToggles\", \"theme toggle\", \"主题切换\", \"右上角\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
 ---
 
 # i18n（core/packages/client）
@@ -21,7 +21,7 @@ const isZh = i18n.language === 'zh';
 ## 核心规则
 
 - 新 `t()` 键 **必须同时** 加到 en.json 和 zh.json，占位符 `{{x}}` 两边都要有
-- `<LangToggle variant="inline" />` 放 header 右端
+- 页面右上角 lang + theme 一律 `<HeaderToggles className="..." />`(`components/HeaderToggles.tsx`),自带 inline-flex + 8px gap;**禁** 手写 `<LangToggle /> <ThemeToggle />` 配 wrapper div(已有 13 处统一收口)。className 仅传布局/定位(grid/fixed/margin-left 等)
 - 全站 URL 永远带 `?lang=zh|en`：`App.tsx` 的 `<LangParamGuard>` 兜底（每次 location 变化 `replaceState` 补 lang），`<Link>` 推荐仍用 `getLangQuery()` 避免 URL bar 闪一帧无 lang
 - store / utils 等非组件模块：**别用 `t`**，把 `isZh` 当参数传进
 - `useEffect`/`useCallback` 里用 `t(...)` 要把 `t` 加进依赖
