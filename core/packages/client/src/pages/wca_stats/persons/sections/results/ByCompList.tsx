@@ -1,8 +1,8 @@
 // 按比赛:每场比赛一组,每行 (项目 / 轮次 / 排名 / 单次 / 平均 / 各次尝试).
 // 进步(PB)染色 + regional record 标签.
 
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { formatDateRangeIso } from '../../../../../utils/date_range';
 import { InfoTooltip } from '../../../../../components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
@@ -14,7 +14,27 @@ import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computePrRank } from '../../logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../../../../utils/wca_round_meta';
 import { findReconForAttempt } from '../../../../../utils/recon_attempt_lookup';
+import { ROUND_VARIANTS } from '../../../../../utils/wca_results_api';
 import type { WcaResultRow, WcaCompetition } from '../../wca_api';
+
+// hash 形如 #r-{compId}-{eventId}-{round}.按 ROUND_VARIANTS 反查 cutoff 子型 ('d'/'g'/'b' etc).
+function resolveHashRow(hash: string): HTMLElement | null {
+  if (!hash) return null;
+  const slug = hash.slice(1);
+  const direct = document.getElementById(slug);
+  if (direct) return direct;
+  const m = slug.match(/^(.+)-([^-]+)$/);
+  if (!m) return null;
+  const prefix = m[1];
+  const round = m[2];
+  const variants = ROUND_VARIANTS[round] ?? [round];
+  for (const v of variants) {
+    if (v === round) continue;
+    const el = document.getElementById(`${prefix}-${v}`);
+    if (el) return el;
+  }
+  return null;
+}
 
 interface Props {
   results: WcaResultRow[] | null;
@@ -27,6 +47,8 @@ interface Props {
 
 export default function ByCompList({ results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const prRank = useMemo(() =>
     results && comps ? computePrRank(results, comps) : new Map(),
@@ -54,6 +76,30 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
         compById, // unused but keeps closure happy
       }));
   }, [results, comps]);
+
+  // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
+  // 走 lazy import,:target 在 mount 后失效 → 手动 class,持续到 hash 改变.
+  const hash = location.hash;
+
+  useEffect(() => {
+    document.querySelectorAll('.wp-row-target').forEach((el) => el.classList.remove('wp-row-target'));
+    if (!grouped || !hash) return;
+    const el = resolveHashRow(hash);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('wp-row-target');
+  }, [grouped, hash]);
+
+  const buildAnchorTo = (compId: string, eventId: string, roundType: string) => ({
+    search: location.search,
+    hash: `#r-${compId}-${eventId}-${roundType}`,
+  });
+
+  // 整行点击 → 切 hash (replace 防历史污染);内部 Link/button 走自己 (closest 检查跳过).
+  const handleRowClick = (e: React.MouseEvent, compId: string, eventId: string, roundType: string) => {
+    if ((e.target as HTMLElement).closest('a, button')) return;
+    navigate(buildAnchorTo(compId, eventId, roundType), { replace: true });
+  };
 
   if (!grouped) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
   if (grouped.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
@@ -97,7 +143,12 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
                     return (
-                      <tr key={r.id}>
+                      <tr
+                        key={r.id}
+                        id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
+                        className="wp-row-anchorable"
+                        onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
+                      >
                         <td className="wp-cell-event">
                           {showEvent && <>
                             <EventIcon event={r.event_id} className="wp-event-icon-sm" />
@@ -105,9 +156,14 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                           </>}
                         </td>
                         <td>
-                          <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
+                          <Link
+                            to={buildAnchorTo(comp.id, r.event_id, r.round_type_id)}
+                            replace
+                            className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
+                            title={t('复制到链接', 'Copy link to this row')}
+                          >
                             {roundLabel(r.round_type_id)}
-                          </span>
+                          </Link>
                         </td>
                         <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                           {r.pos > 0 ? r.pos : '—'}

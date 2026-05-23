@@ -5473,3 +5473,387 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
     margin-left: 0;
   }
 }
+
+/* ═══════════════ §14.9-14.17  Cayley enriched components ═══════════════ */
+
+/* ── §14.9  SphereLogPlot ───────────────────────────────────────────────── */
+.gt-sphere-plot {
+  margin: 18px 0 8px;
+}
+.gt-sphere-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: color-mix(in srgb, var(--bg-elev) 60%, transparent);
+  border-radius: 10px;
+}
+.gt-sphere-grid {
+  stroke: var(--rule);
+  stroke-dasharray: 2 4;
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.gt-sphere-axis-text {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--ink-dim);
+}
+.gt-sphere-bar {
+  fill: color-mix(in srgb, var(--accent-2) 60%, transparent);
+  stroke: var(--accent-2);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 120ms;
+}
+.gt-sphere-bar-hover {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+.gt-sphere-bar-peak {
+  fill: color-mix(in srgb, var(--accent) 50%, var(--accent-2));
+  stroke: var(--accent);
+}
+.gt-sphere-ann {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+}
+.gt-sphere-peak {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--ink-dim);
+  letter-spacing: .04em;
+}
+.gt-sphere-approx {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--ink-faint);
+}
+.gt-sphere-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--bg-elev) 50%, transparent);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  min-height: 32px;
+  align-items: center;
+}
+.gt-sphere-readout-empty {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ── §14.10  SmallGroupCayleyExplorer ───────────────────────────────────── */
+.gt-sg-explorer {
+  margin: 18px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gt-sg-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.gt-sg-row-top {
+  padding: 6px 0;
+}
+.gt-sg-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.gt-sg-select {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 6px 10px;
+  background: var(--bg-elev);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  min-width: 220px;
+}
+.gt-sg-legend {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.gt-sg-legend-item {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.gt-sg-legend-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+.gt-sg-canvas {
+  background: color-mix(in srgb, var(--bg-elev) 60%, transparent);
+  border-radius: 10px;
+  padding: 12px;
+}
+.gt-sg-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.gt-sg-node {
+  cursor: pointer;
+}
+.gt-sg-node-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--ink);
+  pointer-events: none;
+  user-select: none;
+}
+.gt-sg-node:hover circle {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 60%, transparent));
+}
+.gt-sg-readout {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--bg-elev) 60%, transparent);
+  border-radius: 6px;
+  min-height: 38px;
+  align-items: center;
+}
+.gt-sg-readout-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gt-sg-readout-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.gt-sg-readout-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.gt-sg-readout-empty {
+  color: var(--ink-faint);
+  font-style: italic;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.gt-sg-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+.gt-sg-stat {
+  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--rule);
+}
+.gt-sg-stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.gt-sg-stat-val {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── §14.12  RandomWalkMixingPlot ───────────────────────────────────────── */
+.gt-mix-plot {
+  margin: 18px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gt-mix-svg {
+  width: 100%;
+  height: auto;
+  background: color-mix(in srgb, var(--bg-elev) 60%, transparent);
+  border-radius: 10px;
+}
+.gt-mix-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.gt-mix-cursor {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.gt-mix-cursor-dot {
+  fill: var(--accent-2);
+  stroke: var(--bg-elev);
+  stroke-width: 2;
+}
+.gt-mix-slider {
+  accent-color: var(--accent);
+}
+.gt-mix-step,
+.gt-mix-tv {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.gt-mix-dist {
+  display: flex;
+  gap: 2px;
+  height: 80px;
+  align-items: flex-end;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--bg-elev) 60%, transparent);
+  border-radius: 6px;
+}
+.gt-mix-dist-bar {
+  flex: 1;
+  min-width: 4px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+}
+.gt-mix-dist-bar-fill {
+  width: 100%;
+  border-radius: 2px;
+  transition: height 200ms ease-out, background 200ms;
+  min-height: 1px;
+}
+
+/* ── §14.17  CayleyReferences ───────────────────────────────────────────── */
+.gt-refs {
+  margin: 16px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.gt-refs-section {
+  border-left: 3px solid var(--accent-2);
+  padding-left: 16px;
+}
+.gt-refs-section-head {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: .01em;
+}
+.gt-refs-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gt-refs-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.gt-refs-item:last-child {
+  border-bottom: 0;
+}
+.gt-refs-meta {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.gt-refs-authors {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.gt-refs-year {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.gt-refs-title {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.gt-refs-title a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent);
+}
+.gt-refs-title a:hover {
+  color: var(--accent-2);
+  border-bottom-color: var(--accent-2);
+}
+.gt-refs-venue {
+  color: var(--ink-dim);
+  font-size: 13px;
+  font-style: italic;
+}
+.gt-refs-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+  padding-left: 12px;
+  border-left: 2px solid color-mix(in srgb, var(--accent-2) 30%, transparent);
+}
+
+/* Mobile adaptations */
+@media (max-width: 640px) {
+  .gt-sg-row-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .gt-sg-legend {
+    margin-left: 0;
+  }
+  .gt-sg-select {
+    width: 100%;
+    min-width: 0;
+  }
+  .gt-sg-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gt-sphere-readout {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .gt-refs-meta {
+    flex-direction: column;
+    gap: 0;
+  }
+  .gt-mix-dist {
+    height: 56px;
+    padding: 6px 8px;
+  }
+}

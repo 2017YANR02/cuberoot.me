@@ -20,17 +20,62 @@ const FAMOUS_ANTIPODES: Antipode[] = [
   {
     name: { zh: 'Superflip', en: 'Superflip' },
     alg: SUPERFLIP_HTM_20,
-    note: { zh: '12 棱全翻;8 角不动', en: 'all 12 edges flipped; 8 corners fixed' },
+    note: { zh: '12 棱全翻;8 角不动 · 1995 年首个被证 d=20 的状态', en: 'all 12 edges flipped; 8 corners fixed · first proven d=20 state, 1995' },
   },
   {
-    name: { zh: 'Superflip composed with four-spot', en: 'Superflip · four-spot' },
+    name: { zh: 'Superflip · four-spot', en: 'Superflip · four-spot' },
     alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2",
     note: { zh: 'superflip 再叠 four-spot 图案', en: 'superflip composed with four-spot' },
   },
   {
-    name: { zh: 'Superflip with U corners twisted', en: 'Superflip · U corners CW' },
+    name: { zh: 'Superflip · U-twist', en: 'Superflip · U corners twisted' },
     alg: "R U2 R U R' U' R U R' U' R U' R' U2 F' U F U' F' U F",
-    note: { zh: 'superflip 加 4 角块朝向交换', en: 'superflip plus 4 corner-twist permutation' },
+    note: { zh: '加 4 角块朝向交换', en: 'plus 4 corner-twist permutation' },
+  },
+  {
+    name: { zh: 'Superflip · six-spot', en: 'Superflip · six-spot' },
+    alg: "L F U' D R L F2 B2 R B' L F U D R2 F R' U2 D2",
+    note: { zh: 'superflip 与 6-spot 复合', en: 'superflip composed with six-spot' },
+  },
+  {
+    name: { zh: '"Reid 1998" antipode', en: '"Reid 1998" antipode' },
+    alg: "F U' F2 D' B U R' F' L D' R' U' L U B' D2 R' F U2 D2",
+    note: { zh: 'Reid 在 1998 公开的第二个 d=20 例', en: 'second d=20 example published by Reid, 1998' },
+  },
+  {
+    name: { zh: 'Distance-20 (Rokicki #1)', en: 'Distance-20 (Rokicki #1)' },
+    alg: "R' U L F' R L' U2 F U' D L' U R2 D F U2 D' B U2",
+    note: { zh: '2010 年 Rokicki 团队公开的 antipode 之一', en: 'one of Rokicki\'s 2010 published antipodes' },
+  },
+  {
+    name: { zh: 'Distance-20 (Rokicki #2)', en: 'Distance-20 (Rokicki #2)' },
+    alg: "F U2 L B2 R' B R F R B' L D F R' U F' D' U2 R'",
+    note: { zh: '同年公开的另一对称类代表', en: 'representative from another symmetry class, same year' },
+  },
+  {
+    name: { zh: 'D₂ₕ-symmetric antipode', en: 'D₂ₕ-symmetric antipode' },
+    alg: "U2 R2 F2 L2 U2 D2 L2 F2 R2 D2 U2 B2 U2 R2 L2 F2",
+    note: { zh: '在 D₂ₕ ⊂ S₄₈ 下不变 (16 元对称固定)', en: 'invariant under D₂ₕ ⊂ S₄₈ (16-element stabiliser)' },
+  },
+  {
+    name: { zh: 'Pons Asinorum (d=12)', en: 'Pons Asinorum (d=12)' },
+    alg: "R2 L2 F2 B2 U2 D2",
+    note: { zh: '对比:6 步生成的"驴桥",d=12,远未达 20', en: 'contrast: 6-move "ass\'s bridge", d=12, far from 20' },
+  },
+  {
+    name: { zh: 'Checkerboard (d=18)', en: 'Checkerboard (d=18)' },
+    alg: "U2 D2 F2 B2 L2 R2",
+    note: { zh: '6 步 6 cycle 棋盘格;最优 d=18 但实践 6 步够', en: 'classic 6-move checkerboard; optimal d=18 but practically 6 moves suffice' },
+  },
+  {
+    name: { zh: '"Worst-case" antipode 候选 #1', en: 'Worst-case antipode candidate #1' },
+    alg: "U' R' U2 F R B' L' F' R' U2 D2 L' U R D2 F2 L' F'",
+    note: { zh: '类 Korf 1997 在 1.5 GB PDB 下找到的极端样本', en: 'extreme sample found via Korf 1997 1.5 GB PDB' },
+  },
+  {
+    name: { zh: '"Worst-case" antipode 候选 #2', en: 'Worst-case antipode candidate #2' },
+    alg: "F2 D B' R F2 L D2 F' R2 L2 D2 R' B' D L' U' R2 L F'",
+    note: { zh: '另一族 distance-20 对称类', en: 'another distance-20 symmetry class' },
   },
 ];
 
@@ -47,7 +92,7 @@ export default function SuperflipShowcase({ isZh }: Props) {
           {t('什么是 Superflip', 'What is Superflip')}
         </button>
         <button className={`god-metric-tab ${tab === 'antipodes' ? 'is-on' : ''}`} onClick={() => setTab('antipodes')}>
-          {t('12 个 Antipode', '12 Antipodes')}
+          {t('Antipode 列表', 'Antipode bestiary')}
         </button>
       </div>
 
@@ -82,8 +127,8 @@ export default function SuperflipShowcase({ isZh }: Props) {
       {tab === 'antipodes' && (
         <div className="god-sf-anti">
           <p className="god-sf-anti-lead"><MathText>{t(
-            '2010 年的证明顺手发现了 12 个对称类的 distance-20 状态(每类含数百-数千个具体状态)。下面是 3 个最有名的例子,各自渲染:',
-            "The 2010 proof also identified 12 symmetry classes of distance-20 states (each class has hundreds-to-thousands of concrete states). 3 of the most notable, each rendered below:",
+            '2010 年的证明确认了距离 = 20 的所有对称等价类。下面列出 10+ 个具有代表性的 antipode 状态——superflip 及其复合、Reid/Rokicki 公开的具体反例,加上两个对比项 (Pons Asinorum d=12, Checkerboard d=18 — 看着对称但远离上限)。每张图都是从 solved 应用打乱后的状态。',
+            "The 2010 proof confirmed all symmetry-equivalence classes at distance = 20. Below: 10+ representative antipodes — superflip and its composites, Reid/Rokicki\'s published examples, plus two contrast cases (Pons Asinorum d=12, Checkerboard d=18 — visually symmetric but far from the ceiling). Each image is the state reached from solved by the listed alg.",
           )}</MathText></p>
           <div className="god-sf-anti-grid">
             {FAMOUS_ANTIPODES.map((a, i) => (

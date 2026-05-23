@@ -12,7 +12,7 @@ import { toWcaEventId } from './wca_events';
 import { apiUrl } from './api_base';
 
 /** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id 候选(包含 combined/cutoff 变体) */
-const ROUND_VARIANTS: Record<string, string[]> = {
+export const ROUND_VARIANTS: Record<string, string[]> = {
   '1': ['1', 'b', 'd'],
   '2': ['2', 'e'],
   '3': ['3', 'g'],

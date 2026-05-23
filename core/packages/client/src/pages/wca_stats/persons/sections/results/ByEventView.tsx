@@ -5,7 +5,7 @@
 //   4. 全部成绩 (按比赛倒序的轮次表,attempts 列)
 
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { InfoTooltip } from '../../../../../components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '../../../../../utils/wca_format_result';
@@ -18,6 +18,7 @@ import { RecordBadge } from '../../../../../components/RecordBadge';
 import { computePrRank } from '../../logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '../../../../../utils/wca_round_meta';
 import { findReconForAttempt } from '../../../../../utils/recon_attempt_lookup';
+import { ROUND_VARIANTS } from '../../../../../utils/wca_results_api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '../../wca_api';
 
 interface Props {
@@ -109,6 +110,26 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
   );
 }
 
+// hash 形如 #r-{compId}-{eventId}-{round}.如果 round 是 recon 端 ('1'/'2'/'3'/'f'),
+// 实际 WCA 行 id 可能是 'd'/'g'/'b'/'c' 等 cutoff 子型.按 ROUND_VARIANTS 反查.
+function resolveHashRow(hash: string): HTMLElement | null {
+  if (!hash) return null;
+  const slug = hash.slice(1);
+  const direct = document.getElementById(slug);
+  if (direct) return direct;
+  const m = slug.match(/^(.+)-([^-]+)$/);
+  if (!m) return null;
+  const prefix = m[1];
+  const round = m[2];
+  const variants = ROUND_VARIANTS[round] ?? [round];
+  for (const v of variants) {
+    if (v === round) continue;
+    const el = document.getElementById(`${prefix}-${v}`);
+    if (el) return el;
+  }
+  return null;
+}
+
 // ─── 全部成绩 (按比赛倒序的轮次表) ───────────────────────────────────────
 // 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
 // 把 attempts 渲染为可折行的 inline 列表(支持 H2H 等 5+ 次的格式).
@@ -159,7 +180,33 @@ function EventRoundsList({
   isZh: boolean;
 }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  const location = useLocation();
+  const navigate = useNavigate();
   const prRank = useMemo(() => computePrRank(results, comps), [results, comps]);
+
+  // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
+  // ByEventView 走 lazy import,数据 mount 时 :target 已失效,这里手动加 class.
+  // class 持续到下次切换 hash(useEffect 清旧加新).
+  const hash = location.hash;
+  useEffect(() => {
+    document.querySelectorAll('.wp-row-target').forEach((el) => el.classList.remove('wp-row-target'));
+    if (!hash) return;
+    const el = resolveHashRow(hash);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('wp-row-target');
+  }, [hash, rows]);
+
+  const buildAnchorTo = (compId: string, roundType: string) => ({
+    search: location.search,
+    hash: `#r-${compId}-${eventId}-${roundType}`,
+  });
+
+  // 整行点击 → 切 hash,只是点 td 空白处生效;内部 Link/button 走自己 (closest 'a, button' 时跳过).
+  const handleRowClick = (e: React.MouseEvent, compId: string, roundType: string) => {
+    if ((e.target as HTMLElement).closest('a, button')) return;
+    navigate(buildAnchorTo(compId, roundType), { replace: true });
+  };
 
   // 按比赛日期倒序,组内按 round_type 顺序(决赛在上).
   const sorted = useMemo(() => {
@@ -206,7 +253,12 @@ function EventRoundsList({
             const showComp = r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
             return (
-              <tr key={r.id} className={showComp ? 'wp-row-comp-first' : ''}>
+              <tr
+                key={r.id}
+                id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''}`}
+                onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
+              >
                 <td className="wp-cell-comp">
                   {showComp && cmp && (
                     <>
@@ -220,9 +272,14 @@ function EventRoundsList({
                   {showComp && !cmp && r.competition_id}
                 </td>
                 <td>
-                  <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
+                  <Link
+                    to={buildAnchorTo(r.competition_id, r.round_type_id)}
+                    replace
+                    className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
+                    title={t('复制到链接', 'Copy link to this row')}
+                  >
                     {roundLabel(r.round_type_id)}
-                  </span>
+                  </Link>
                 </td>
                 <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                   {r.pos > 0 ? r.pos : '—'}

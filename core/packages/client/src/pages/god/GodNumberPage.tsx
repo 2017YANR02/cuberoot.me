@@ -32,6 +32,10 @@ const SubgroupChain = lazy(() => import('./SubgroupChain'));
 const SuperflipShowcase = lazy(() => import('./SuperflipShowcase'));
 const OpenProblems = lazy(() => import('./OpenProblems'));
 const FaqSection = lazy(() => import('./FaqSection'));
+const CosetCompression = lazy(() => import('./CosetCompression'));
+const IdaStarTree = lazy(() => import('./IdaStarTree'));
+const TwoPhaseDemo = lazy(() => import('./TwoPhaseDemo'));
+const ProofAnimator = lazy(() => import('./ProofAnimator'));
 
 /* ───── helpers ────────────────────────────────────────────────────── */
 
@@ -281,6 +285,41 @@ export default function GodNumberPage() {
           </div>
         </section>
 
+        {/* ────────────── READING ROADMAP ────────────── */}
+        <section className="god-section">
+          <h2>{t('阅读路线', 'Reading roadmap')}</h2>
+          <p className="god-sec-lead">{t(
+            '本页从浅入深分 13 节,每节都可独立阅读。下面给一份"首次阅读建议路线"和一份"按兴趣跳读"。',
+            "The page has 13 sections, each readable in isolation. Below: a 'first-time' linear path and a 'by interest' jump-table.",
+          )}</p>
+          <div className="god-roadmap">
+            <div className="god-roadmap-col">
+              <h3>{t('第一次读 (~15 分钟)', 'First read (~15 min)')}</h3>
+              <ol className="god-roadmap-ol">
+                <li><b>{t('群论速通', 'Primer')}</b> — {t('搞懂"群、生成元、Cayley 图、直径"四个词', 'understand the four words: group / generators / Cayley graph / diameter')}</li>
+                <li><b>{t('度量切换', 'Metrics')}</b> — {t('明白 HTM vs QTM vs STM 之差', 'see why HTM ≠ QTM ≠ STM')}</li>
+                <li><b>{t('17 项目网格', '17-puzzle grid')}</b> — {t('扫一眼,知道哪些精确、哪些只有上下界', 'scan: which are proven, which are bounded')}</li>
+                <li><b>Superflip</b> — {t('看"最难"那一类状态长什么样', 'see what the "hardest" state actually looks like')}</li>
+                <li><b>{t('Rokicki 证明动画', 'Rokicki proof animator')}</b> — {t('7 帧搞懂 2010 年那 35 CPU-年到底在算什么', '7 frames: what those 35 CPU-years actually computed')}</li>
+              </ol>
+            </div>
+            <div className="god-roadmap-col">
+              <h3>{t('按兴趣跳读', 'Jump by interest')}</h3>
+              <ul className="god-roadmap-ul">
+                <li><span className="god-roadmap-tag">{t('数学', 'Math')}</span> {t('压缩链 → 阶段算法 → IDA*', 'Compression chain → Subgroup chain → IDA*')}</li>
+                <li><span className="god-roadmap-tag">{t('算法', 'Algorithm')}</span> {t('IDA* 树 → 两阶段求解器 → 算法 8 卡', 'IDA* tree → Two-phase demo → 8 algorithm cards')}</li>
+                <li><span className="god-roadmap-tag">{t('动手', 'Hands-on')}</span> {t('两阶段求解器 → 2×2 BFS → IDA* 滑块', 'Two-phase demo → 2×2 BFS → IDA* slider')}</li>
+                <li><span className="god-roadmap-tag">{t('历史', 'History')}</span> {t('证明动画 → 历史时间线 → 参考资料', 'Proof animator → Timeline → References')}</li>
+                <li><span className="god-roadmap-tag">{t('数据', 'Data')}</span> {t('距离分布 → 17 项目网格 → 增长图', 'Distance distribution → 17-puzzle grid → Growth chart')}</li>
+                <li><span className="god-roadmap-tag">{t('未解', 'Open')}</span> {t('未解之谜 → 4×4 / Megaminx gap', 'Open problems → 4×4 / Megaminx gap')}</li>
+              </ul>
+              <p className="god-roadmap-tip">
+                {t('💡 提示:页面所有公式可悬停查看 KaTeX 源;蓝色卡片表示"互动",一定要点开看。', '💡 Tip: hover any formula for KaTeX source; blue "interactive" cards reward clicking.')}
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* ────────────── GROUP-THEORY PRIMER ────────────── */}
         <section className="god-section">
           <h2>{t('两分钟群论速通', 'Two-minute group-theory primer')}</h2>
@@ -346,6 +385,32 @@ export default function GodNumberPage() {
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <SubgroupChain isZh={isZh} />
+          </Suspense>
+        </section>
+
+        {/* ────────────── COSET COMPRESSION (2010 proof structure) ────────────── */}
+        <section className="god-section">
+          <h2>{t('2010 证明的压缩链 — 互动:从 4.3×10¹⁹ 走到 80 个 super-coset', 'The 2010 proof\'s compression chain — interactive: 4.3×10¹⁹ down to ~80 super-cosets')}</h2>
+          <p className="god-sec-lead">{isZh ? (
+            <>2010 年的证明不是"逐状态扫一遍"。它把 <TeX src="4.3 \times 10^{19}" /> 状态用 4 层数学结构层层折叠:Lagrange 陪集 → 立方体对称商 → 集合覆盖 → 逐 super-coset IDA* 验证。每一层用不同的数学工具,合起来让 35 CPU-年成为可行。</>
+          ) : (
+            <>The 2010 proof isn't "scan every state". It folds <TeX src="4.3 \times 10^{19}" /> states through 4 mathematical layers: Lagrange cosets → cube-symmetry quotient → set-cover compression → per-super-coset IDA* verification. Each layer pulls in a different tool; together they make 35 CPU-years feasible.</>
+          )}</p>
+          <Suspense fallback={<div className="god-loading">…</div>}>
+            <CosetCompression isZh={isZh} />
+          </Suspense>
+        </section>
+
+        {/* ────────────── TWO-PHASE INTERACTIVE ────────────── */}
+        <section className="god-section">
+          <h2>{t('两阶段求解器 — 互动:把一次解拆成 Phase 1 + Phase 2', 'Two-phase solver — interactive: split a solve into Phase 1 + Phase 2')}</h2>
+          <p className="god-sec-lead">{isZh ? (
+            <>选一个 scramble,看 Kociemba 算法怎么先用几步把状态推进子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2}\rangle" />,再在 <TeX src="H" /> 里把它解掉。播放过程中"4 个不变量条形"会同步走零——这就是"进入 H"的几何含义。</>
+          ) : (
+            <>Pick a scramble and watch how Kociemba's algorithm first pushes the state into the subgroup <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2}\rangle" />, then solves inside <TeX src="H" />. The "4 invariant bars" drain to zero exactly when Phase 1 ends — that's the geometric meaning of "entering H".</>
+          )}</p>
+          <Suspense fallback={<div className="god-loading">…</div>}>
+            <TwoPhaseDemo isZh={isZh} />
           </Suspense>
         </section>
 
@@ -509,6 +574,19 @@ export default function GodNumberPage() {
             </div>
           </div>
 
+          {/* Interactive IDA* tree */}
+          <div className="god-algo-ida-block">
+            <h3>{t('IDA* + Pattern Database — 互动:启发函数怎么剪枝', 'IDA* + Pattern Database — interactive: how heuristics prune')}</h3>
+            <p className="god-sec-lead" style={{ marginBottom: 12 }}>{isZh ? (
+              <>下面是一棵教学版搜索树。换"启发函数 h(s)"或拖 f-阈值,看子树怎么被消掉。识别绿色叶子 = 找到 distance-8 解 (本树深度上限)。剪枝率上去 ⇒ Korf 启发更紧 ⇒ 搜索更快。</>
+            ) : (
+              <>A teaching-scale search tree. Switch the "heuristic h(s)" or drag the f-limit and watch subtrees collapse. Green leaf = a distance-8 solution (tree depth cap). Higher prune-rate ⇒ tighter heuristic ⇒ faster search.</>
+            )}</p>
+            <Suspense fallback={<div className="god-loading">…</div>}>
+              <IdaStarTree isZh={isZh} />
+            </Suspense>
+          </div>
+
           {/* IDA* pseudo-code */}
           <div className="god-algo-pseudo">
             <h3>{t('IDA* + Pattern Database 伪代码', 'IDA* + Pattern Database pseudocode')}</h3>
@@ -543,6 +621,19 @@ function dfs(state, max_depth, g):
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <OpenProblems isZh={isZh} />
+          </Suspense>
+        </section>
+
+        {/* ────────────── PROOF ANIMATOR ────────────── */}
+        <section className="god-section">
+          <h2>{t('两个里程碑证明 — 互动:逐帧讲', 'Two milestone proofs — interactive frame-by-frame')}</h2>
+          <p className="god-sec-lead">{isZh ? (
+            <>把"上帝之数 = 20"的两个关键证明各拆成几帧:Reid 1995 (下界 20,用 SGI Indigo 跑 90 小时) + Rokicki 2008→2010 (上界 20,Google 35 CPU-年)。每帧一句话 + 一个 SVG 图 + 一行公式。</>
+          ) : (
+            <>The two key "God's number = 20" proofs split into frames: Reid 1995 (lower bound 20, SGI Indigo 90 hours) + Rokicki 2008→2010 (upper bound 20, Google 35 CPU-years). One sentence + one SVG + one formula per frame.</>
+          )}</p>
+          <Suspense fallback={<div className="god-loading">…</div>}>
+            <ProofAnimator isZh={isZh} />
           </Suspense>
         </section>
 
