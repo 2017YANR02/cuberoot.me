@@ -11,8 +11,7 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import { getLangQuery } from '../../i18n';
 import { ABOUT_REGISTRY } from './registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './types';
@@ -163,10 +162,7 @@ export default function WcaStatAboutPage() {
             <ArrowLeft size={16} />
             <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
           </Link>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <LangToggle />
-            <ThemeToggle />
-          </div>
+          <HeaderToggles />
         </div>
         <main className="wcaa-main">
           <div className="wcaa-missing">
@@ -186,10 +182,7 @@ export default function WcaStatAboutPage() {
           <ArrowLeft size={16} />
           <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
         </Link>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <LangToggle />
-          <ThemeToggle />
-        </div>
+        <HeaderToggles />
       </div>
 
       <main className="wcaa-main">

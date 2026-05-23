@@ -27,7 +27,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 4rem 2rem 2rem;
+    /* PWA standalone 下顶/左/右让位刘海/灵动岛,见 index.css 的 --sat/--sar/--sal */
+    padding: calc(4rem + var(--sat)) max(2rem, var(--sar)) calc(2rem + var(--sab)) max(2rem, var(--sal));
     box-sizing: border-box;
 }
 

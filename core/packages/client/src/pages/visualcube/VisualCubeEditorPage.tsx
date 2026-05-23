@@ -1572,7 +1572,8 @@ const INLINE_CSS = `
 .vc-preview-wrap {
   position: sticky; top: 0; z-index: 5;
   display: flex; justify-content: center; align-items: center;
-  padding: 24px; background: #161616; border-radius: 4px;
+  padding: calc(24px + var(--sat)) max(24px, var(--sar)) 24px max(24px, var(--sal));
+  background: #161616; border-radius: 4px;
   /* Cap visible height so sticky stays usable when imageSize is large.
      The SVG's intrinsic dimensions still match imageSize (for download). */
   max-height: 45vh;

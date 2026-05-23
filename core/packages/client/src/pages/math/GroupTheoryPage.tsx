@@ -16,8 +16,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import LangToggle from '../../components/LangToggle';
-import ThemeToggle from '../../components/ThemeToggle';
+import HeaderToggles from '../../components/HeaderToggles';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import {
   identity, applyAlg, orderOf, invariants, invertAlg, conjugate, commutator,
@@ -8021,10 +8020,7 @@ export default function GroupTheoryPage() {
         {isIndex
           ? <Link to="/" className="gt-back">← {lang === 'zh' ? '返回' : 'home'}</Link>
           : <Link to="/math/group" className="gt-back">← {lang === 'zh' ? '目录' : 'contents'}</Link>}
-        <div className="gt-topbar-right">
-          <LangToggle />
-          <ThemeToggle />
-        </div>
+        <HeaderToggles className="gt-topbar-right" />
       </div>
 
       {isIndex && (
