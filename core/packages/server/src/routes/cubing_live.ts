@@ -1070,6 +1070,16 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     } catch (e) {
       console.warn(`[cubing-live] competitors scrape failed for ${cubingSlug}:`, (e as Error).message);
     }
+  } else {
+    // WS 给的 users 没 eventIds — Psych Sheet 还没出成绩的项目按报名表过滤靠这个字段.
+    // 进行中的比赛 (有部分轮成绩) 抓一份 /competitors HTML 把 eventIds 合并进 WS users.
+    try {
+      const scraped = await scrapeCompetitors(cubingSlug);
+      for (const [num, u] of Object.entries(users)) {
+        const s = scraped[num];
+        if (s?.eventIds && !u.eventIds) u.eventIds = s.eventIds;
+      }
+    } catch { /* 已有 users,enrich 失败不影响 */ }
   }
 
   const data: CompData = {
