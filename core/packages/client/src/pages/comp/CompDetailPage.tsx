@@ -1624,10 +1624,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const iso2 = regionToIso2(u.region);
   const attempts = result.v.filter(v => v !== 0);
 
-  // single tag: cubing.com sr (WR/NR/CR/PR) 优先;否则 PR rank=1 也算 PR。average 同理。
-  // 只有 tag 非空才进 events 列表(wca-monitor 推送同逻辑:无 tag 不推)。
-  const singleTagForCopy = result.sr ? String(result.sr) : (singleRank === 1 ? 'PR' : '');
-  const avgTagForCopy = result.ar ? String(result.ar) : (averageRank === 1 ? 'PR' : '');
+  // single tag: cubing.com sr (WR/NR/CR/PR) 优先,否则任何 PR rank(含 PR2/3/...)走 PR 模板;
+  // pr_rank>1 时 API 端把 "PR" 渲染成 "PR<rank>"(替代 /WRn 后缀)。average 同理。
+  const singleTagForCopy = result.sr ? String(result.sr) : (singleRank ? 'PR' : '');
+  const avgTagForCopy = result.ar ? String(result.ar) : (averageRank ? 'PR' : '');
   const canCopy = (singleTagForCopy && result.b > 0) || (avgTagForCopy && result.a > 0);
 
   async function handleCopy() {
@@ -1648,7 +1648,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
         tag: singleTagForCopy, rec_type: 'single', attempt_result: result.b,
         event_id: result.e, person_name: u.name, person_iso2: personIso2,
         comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
-        url, previous_pr: prevSingle,
+        url, previous_pr: prevSingle, pr_rank: singleRank,
       });
     }
     if (avgTagForCopy && result.a > 0) {
@@ -1656,7 +1656,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
         tag: avgTagForCopy, rec_type: 'average', attempt_result: result.a,
         event_id: result.e, person_name: u.name, person_iso2: personIso2,
         comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
-        url, previous_pr: prevAverage,
+        url, previous_pr: prevAverage, pr_rank: averageRank,
       });
     }
     if (events.length === 0) {
