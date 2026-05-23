@@ -1,8 +1,9 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import fs from 'fs'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 import { renderFromSimpleQuery } from '@cuberoot/visualcube'
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS, invertSq1Alg as invertSq1AlgDev } from './src/pages/gen/sq1_svg'
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './src/pages/gen/mega_svg'
@@ -172,7 +173,12 @@ self.addEventListener('activate', (e) => {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // 可选:在 .env.local 设 LOCAL_OUTBOUND=http://host:port 让 vite dev 的 /v1 出网经本地中转,
+  // 用于直连 https://api.cuberoot.me TLS handshake 异常的本地环境。空则跟之前一样直连。
+  const env = loadEnv(mode, process.cwd(), '');
+  const outboundAgent = env.LOCAL_OUTBOUND ? new HttpsProxyAgent(env.LOCAL_OUTBOUND) : undefined;
+  return {
   plugins: [react(), tailwindcss(), serveRepoRoot(), visualcubeDev(), devUnregisterSw()],
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
@@ -236,7 +242,9 @@ export default defineConfig({
         target: 'https://api.cuberoot.me',
         changeOrigin: true,
         secure: true,
+        ...(outboundAgent ? { agent: outboundAgent } : {}),
       },
     },
   },
+  };
 })
