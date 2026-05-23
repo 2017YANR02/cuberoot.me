@@ -420,6 +420,84 @@ function enrichRecordTags(data: CompData): void {
   if (snapshot) data.currentRecords = snapshot;
 }
 
+/** 给 cubing / wca / wca_live 源的 data 补 Psych Sheet 用的 personalRecords:
+ *  从 wca_results_top 取每位 wcaid 在该 comp.start_date 之前的最快 single / average + 区域 record tag.
+ *  避免 client 直连 WCA API /persons/<id>(N 个 wcaid 触发 429,大比赛 Psych Sheet 全空).
+ *  wca_competitions 没收录这场就 fallback 到 < CURRENT_DATE(刚宣布的比赛). */
+async function enrichPersonalRecords(data: CompData): Promise<void> {
+  const wcaIds: string[] = [];
+  for (const u of Object.values(data.users)) {
+    if (u.wcaid) wcaIds.push(u.wcaid);
+  }
+  if (wcaIds.length === 0) return;
+
+  let compDate: string | null = null;
+  try {
+    const rows = await query<{ start_date: string }>(
+      `SELECT start_date FROM wca_competitions WHERE id = ? LIMIT 1`,
+      [data.slug],
+    );
+    if (rows.length > 0 && rows[0].start_date) compDate = rows[0].start_date;
+  } catch { /* PG 错就 fallback */ }
+
+  const idQs = wcaIds.map(() => '?').join(',');
+  const dateClause = compDate ? 'AND comp_date < ?' : 'AND comp_date < CURRENT_DATE';
+  const params: unknown[] = compDate ? [...wcaIds, compDate] : [...wcaIds];
+
+  let bestRows: { wca_id: string; event_id: string; is_avg: boolean; best: number }[] = [];
+  try {
+    bestRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; best: number }>(
+      `SELECT wca_id, event_id, is_avg, MIN(value) AS best
+       FROM wca_results_top
+       WHERE wca_id IN (${idQs})
+         AND value > 0
+         ${dateClause}
+       GROUP BY wca_id, event_id, is_avg`,
+      params,
+    );
+  } catch (e) {
+    console.warn(`[cubing-live] prior-PR query failed for ${data.slug}:`, (e as Error).message);
+    return;
+  }
+
+  let tagRows: { wca_id: string; event_id: string; is_avg: boolean; record_tag: string }[] = [];
+  try {
+    tagRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; record_tag: string }>(
+      `SELECT DISTINCT ON (wca_id, event_id, is_avg)
+         wca_id, event_id, is_avg, record_tag
+       FROM wca_results_top
+       WHERE wca_id IN (${idQs})
+         AND value > 0
+         ${dateClause}
+       ORDER BY wca_id, event_id, is_avg, value ASC,
+         CASE record_tag
+           WHEN 'WR' THEN 1
+           WHEN 'AsR' THEN 2 WHEN 'OcR' THEN 2 WHEN 'AfR' THEN 2
+           WHEN 'NAR' THEN 2 WHEN 'SAR' THEN 2 WHEN 'CR' THEN 2
+           WHEN 'NR' THEN 3
+           ELSE 4
+         END ASC`,
+      params,
+    );
+  } catch { /* tag 查不到不影响排序,继续 */ }
+
+  const personalRecords: Record<string, Record<string, CompPersonalRecordSlot>> = {};
+  for (const r of bestRows) {
+    const perEvent = (personalRecords[r.wca_id] ||= {});
+    const slot = (perEvent[r.event_id] ||= {});
+    if (r.is_avg) slot.average = r.best;
+    else slot.single = r.best;
+  }
+  for (const tr of tagRows) {
+    if (!tr.record_tag || tr.record_tag === 'PR') continue;
+    const perEvent = (personalRecords[tr.wca_id] ||= {});
+    const slot = (perEvent[tr.event_id] ||= {});
+    if (tr.is_avg) slot.averageTag = tr.record_tag;
+    else slot.singleTag = tr.record_tag;
+  }
+  data.personalRecords = personalRecords;
+}
+
 async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<CompData> {
   onProgress?.({ step: 'wca.fetch', done: 0, total: 2 });
   // WCIF + results 并发.WCIF (~0.9s) 替代旧的 `/competitions/<id>` meta (~2.1s),省 ~1.2s 冷启.
@@ -522,7 +600,7 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
   }
   onProgress?.({ step: 'wca.transform', done: 1, total: 1 });
 
-  return {
+  const data: CompData = {
     slug: wcaId,
     source: 'wca',
     compId: 0,
@@ -534,6 +612,8 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
     membersByFilter: { females: [], children: [], newcomers: [] },
     fetchedAt: Date.now(),
   };
+  await enrichPersonalRecords(data);
+  return data;
 }
 
 // ─── WCA dump fast-path (PG wca_results_top) ──────────────────────────────
@@ -956,6 +1036,7 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
     fetchedAt: Date.now(),
   };
   enrichRecordTags(data);
+  await enrichPersonalRecords(data);
   return data;
 }
 
@@ -1005,6 +1086,7 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     fetchedAt: Date.now(),
   };
   enrichRecordTags(data);
+  await enrichPersonalRecords(data);
   return data;
 }
 

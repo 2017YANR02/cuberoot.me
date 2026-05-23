@@ -678,11 +678,13 @@ export default function CompDetailPage() {
 
   useEffect(() => {
     if (!data) return;
-    // wca_db 路径:server 已经把比赛前 PB 塞进 data.personalRecords,直接转 pbMap 给 Psych Sheet 用.
-    // 不发 client → WCA API 请求.rank 字段填 0(Psych Sheet 只用 best 值排序,不显示 rank).
-    if (data.source === 'wca_db') {
+    // server 把比赛前 PB 塞进 data.personalRecords 时直接转 pbMap 给 Psych Sheet 用 —
+    // wca_db (过去比赛) + cubing / wca / wca_live (未来 / 进行中) 都走这条.
+    // 不发 client → WCA API /persons/<id> 请求,避免大比赛 N 个 wcaid 触发 429.
+    // rank 字段填 0(Psych Sheet 只用 best 值排序,不显示 rank).
+    if (data.personalRecords) {
       const obj: Record<string, PbByEvent | null> = {};
-      for (const [wcaId, byEvent] of Object.entries(data.personalRecords ?? {})) {
+      for (const [wcaId, byEvent] of Object.entries(data.personalRecords)) {
         const pb: PbByEvent = {};
         for (const [ev, slot] of Object.entries(byEvent)) {
           pb[ev] = {
@@ -738,10 +740,10 @@ export default function CompDetailPage() {
   };
 
   // Psych Sheet: prefetch PRs for ALL competitors when entering view (cache dedupe handles dupes)
-  // wca_db 路径 server 已经给了 personalRecords,跳过 prefetch.
+  // server 已经给了 personalRecords 时跳过 prefetch — 所有源路径都已 enrichPersonalRecords.
   useEffect(() => {
     if (viewParam !== 'psych' || !data) return;
-    if (data.source === 'wca_db') return;
+    if (data.personalRecords) return;
     const wcaIds = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
     if (wcaIds.length === 0) return;
     let cancelled = false;
