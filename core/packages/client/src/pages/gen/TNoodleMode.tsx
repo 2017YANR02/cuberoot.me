@@ -48,6 +48,30 @@ import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
+// WCA 早年(TNoodle 普及前)很多比赛根本没上传过 scrambles —— 直接从随机池里剔除,
+// 别让 Shuffle 反复抽中肯定空的老比赛。2013 起 TNoodle 渐成默认,2013+ 命中率才稳。
+const SCRAMBLE_ERA_START = '2013-01-01';
+
+// 用户每抽中一场后,若 WCA API 返空(老比赛 / 后期未上传),就把 id 记到 localStorage,
+// 下次 Shuffle 跳过它。手动 picker 仍可输入这些 id —— 只过滤随机池。
+const EMPTY_SCRAMBLES_LS_KEY = 'gen.tn.empty_scrambles_comps.v1';
+function loadEmptyScrambleIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(EMPTY_SCRAMBLES_LS_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr.filter((x): x is string => typeof x === 'string')) : new Set();
+  } catch { return new Set(); }
+}
+function rememberEmptyScrambles(id: string) {
+  try {
+    const set = loadEmptyScrambleIds();
+    if (set.has(id)) return;
+    set.add(id);
+    localStorage.setItem(EMPTY_SCRAMBLES_LS_KEY, JSON.stringify([...set]));
+  } catch { /* swallow quota */ }
+}
+
 interface Props {
   t: (zh: string, en: string) => string;
   isZh: boolean;
@@ -484,6 +508,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         resolveName(),
       ]);
       if (!data || data.length === 0) {
+        rememberEmptyScrambles(compId);
         setError(t('未找到该比赛或暂无已公布的打乱', 'Competition not found or no published scrambles'));
         return;
       }
@@ -512,15 +537,18 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     loadWca(c.id, c.name);
   };
 
-  // 随机挑一场已结束/未取消/有项目的真比赛(才有可能拿到已公布打乱)。
-  // 用户拿到空打乱(loadWca 报"未找到") 时再点一下即可重摇。
+  // 随机挑一场已结束/未取消/有项目的真比赛 + 2013 后(TNoodle 时代,scrambles 命中率高) +
+  // 跳过历史抽过空的 id (rememberEmptyScrambles 累积)。
   const pickRandomComp = async () => {
     const all = await loadComps().catch(() => [] as Comp[]);
     const today = new Date().toISOString().slice(0, 10);
+    const known_empty = loadEmptyScrambleIds();
     const candidates = all.filter((c) =>
       !isCancelledComp(c) &&
       (c.events?.length ?? 0) > 0 &&
-      (c.end_date || c.start_date) < today
+      (c.end_date || c.start_date) < today &&
+      c.start_date >= SCRAMBLE_ERA_START &&
+      !known_empty.has(c.id)
     );
     if (candidates.length === 0) return;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
