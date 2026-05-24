@@ -1,0 +1,1 @@
+import"./react-BHPi-aqk.js";import"./jsx-runtime-DhG3BTtD.js";import"./katex.min-D5oGi97o.js";import"./Tex-CWvZw6On.js";import{i as e,n as t,r as n,t as r}from"./DistanceHistogram-zhA1RxKp.js";export{t as PAPER_DATA,n as PAPER_MEAN,e as PAPER_TOTAL,r as default};
