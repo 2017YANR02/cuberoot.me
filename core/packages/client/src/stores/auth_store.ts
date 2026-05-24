@@ -5,6 +5,7 @@
  */
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
+import { isCapacitorNative, openNativeOAuth, NATIVE_REDIRECT_URI } from '../utils/capacitor_oauth';
 export { ADMIN_WCA_IDS };
 
 // ── 类型 ──
@@ -35,7 +36,10 @@ interface AuthActions {
 const WCA_CLIENT_ID = 'mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4';
 const WCA_AUTHORIZE_URL = 'https://www.worldcubeassociation.org/oauth/authorize';
 // NOTE: 回调地址使用 React 路由（/auth/callback），与 BrowserRouter basename 对齐
-const REDIRECT_URI = window.location.origin + '/auth/callback';
+// Capacitor 原生 app 用 custom scheme deep link (见 utils/capacitor_oauth.ts)
+const REDIRECT_URI = isCapacitorNative()
+  ? NATIVE_REDIRECT_URI
+  : window.location.origin + '/auth/callback';
 
 const SESSION_KEY = 'wca_user';
 const TOKEN_KEY = 'wca_access_token';
@@ -74,7 +78,13 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
       `state=${encodeURIComponent(state)}`,
     ].join('&');
 
-    window.location.href = `${WCA_AUTHORIZE_URL}?${params}`;
+    const url = `${WCA_AUTHORIZE_URL}?${params}`;
+    if (isCapacitorNative()) {
+      // 原生 app: in-app browser 打 WCA,deep link 回 me.cuberoot.app://auth-callback
+      void openNativeOAuth(url);
+    } else {
+      window.location.href = url;
+    }
   },
 
   logout: () => {
