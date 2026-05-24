@@ -47,5 +47,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- WCA OAuth deep link: WCA 注册 redirect_uri=me.cuberoot.app://auth-callback -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>me.cuberoot.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>me.cuberoot.app</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

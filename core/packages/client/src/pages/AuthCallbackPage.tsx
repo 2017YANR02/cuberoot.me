@@ -4,6 +4,7 @@
  * 替代根目录 callback.html，使 React 应用在所有环境下自包含处理 OAuth 回调
  */
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { apiUrl } from '../utils/api_base';
@@ -17,12 +18,14 @@ let callbackProcessed = false;
 export default function AuthCallbackPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const navigate = useNavigate();
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (callbackProcessed) return;
     callbackProcessed = true;
     handleOAuthCallback();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleOAuthCallback() {
@@ -91,7 +94,15 @@ export default function AuthCallbackPage() {
       // NOTE: 跳回登录前的页面，无记录时 fallback 到 /recon
       const returnUrl = sessionStorage.getItem('wca_return_url') || '/recon';
       sessionStorage.removeItem('wca_return_url');
-      window.location.href = returnUrl;
+      // returnUrl 在 web 端是完整 URL,在 native 是 capacitor://localhost/... 这种;
+      // 提取 pathname + search + hash 用 React Router 内部跳转 (Capacitor webview
+      // 对未知文件路径会 404,不能 window.location.href= 整个 URL)
+      try {
+        const u = new URL(returnUrl, window.location.href);
+        navigate(u.pathname + u.search + u.hash, { replace: true });
+      } catch {
+        navigate('/recon', { replace: true });
+      }
     } catch (err) {
       setErrorMsg(isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`);
     }

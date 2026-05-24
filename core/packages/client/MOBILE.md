@@ -55,7 +55,7 @@ SPA 用了不少 modern web APIs。webview 兼容性参差:
 | WebGPU (maplibre 等) | ❌ | ❌ | 回 WebGL2 |
 | `/cstimer/` iframe | ❌ | ❌ | 走仓库根静态,prod build 没拷进 dist |
 | `/tools/*` iframe | ❌ | ❌ | 同上 |
-| WCA OAuth | ⚠️ | ⚠️ | redirect URI 是 `cuberoot.me`,跳出 app |
+| WCA OAuth | ✅ | ✅ | deep link `me.cuberoot.app://auth-callback` 回 app(WCA 后台须额外注册) |
 
 ### API 跨域
 
