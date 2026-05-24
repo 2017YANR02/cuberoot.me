@@ -8,6 +8,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import i18n from './i18n';
 import { TrainingPage } from './pages/TrainingPage';
 import AnalyticsBeacon from './components/AnalyticsBeacon';
+import { CapacitorBackButton } from './components/CapacitorBackButton';
 
 // NOTE: 新统一公式训练器（PLL/OLL/ZBLL/ZBLS,扩展中）
 const TrainerLandingPage = lazy(() => import('./pages/trainer/TrainerLandingPage'));
@@ -221,6 +222,7 @@ function App() {
     <BrowserRouter basename="/">
       <LangParamGuard />
       <AnalyticsBeacon />
+      <CapacitorBackButton />
       <Routes>
         {/* NOTE: 全站入口页（卡片网格） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
