@@ -558,17 +558,9 @@
     .gen-tn-controls > .gen-control-group { min-width: 0; }
     .gen-tn-controls > .gen-control-group.gen-control-actions { width: auto; }
 }
-/* 加载完(.is-loaded):按钮脱出 grid 流右浮,输入框独占整行让比赛名真居中 */
-@media (min-width: 701px) {
-    .gen-tn-controls.is-loaded {
-        position: relative;
-        grid-template-columns: 1fr;
-    }
-    .gen-tn-controls.is-loaded .gen-control-actions {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-    }
+/* 加载完(.is-loaded):actions 独占一行 right-aligned,正常 flow,不再 absolute */
+.gen-tn-controls.is-loaded {
+    justify-content: flex-end;
 }
 /* CompPicker + 随机按钮 一行,picker 撑满剩余宽,按钮等高 38。 */
 .gen-tn-comp-picker-row {

@@ -152,6 +152,7 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    margin: '0 auto',  // sq1 56px host 比 96px cell 窄,不加 auto 会贴边
   };
 
   if (customSvg) {
