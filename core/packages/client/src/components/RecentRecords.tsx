@@ -2,7 +2,8 @@
 // 数据走 /v1/wca/recent-records,Hono 后台 60s 轮询 WCA Live GraphQL
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, HelpCircle } from 'lucide-react';
+import { Trophy } from 'lucide-react';
+import { InfoTooltip } from './InfoTooltip/InfoTooltip';
 import { apiUrl } from '../utils/api_base';
 import { compLinkProps } from '../utils/comp_link';
 import { Flag } from '../utils/flag';
@@ -81,14 +82,12 @@ export default function RecentRecords({ lang }: Props) {
         <Trophy size={14} strokeWidth={1.75} />
         <span className="recent-records-title">{isZh ? '近期纪录' : 'Recent records'}</span>
         <span className="recent-records-count">{records.length}</span>
-        <span
-          className="recent-records-help"
-          title={isZh
-            ? '数据源自 WCA Live,近 10 天开赛比赛的 WR / CR / NR,服务器每分钟同步'
-            : 'From WCA Live — WR/CR/NR from comps started within the last 10 days, synced every minute'}
-        >
-          <HelpCircle size={13} strokeWidth={1.75} />
-        </span>
+        <InfoTooltip
+          iconSize={13}
+          content={isZh
+            ? '数据源自 WCA Live\n近 10 天开赛比赛的 WR / CR / NR\n服务器每分钟同步'
+            : 'From WCA Live\nWR / CR / NR from comps started within the last 10 days\nSynced every minute'}
+        />
       </div>
       <ul className="recent-records-list" style={listStyle}>
         {records.map(r => (

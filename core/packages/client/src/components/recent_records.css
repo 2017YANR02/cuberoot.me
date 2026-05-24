@@ -40,18 +40,6 @@
   letter-spacing: 0;
 }
 
-.recent-records-help {
-  display: inline-flex;
-  align-items: center;
-  color: var(--muted-foreground);
-  cursor: help;
-  transition: color 0.12s;
-}
-
-.recent-records-help:hover {
-  color: var(--accent);
-}
-
 .recent-records-list {
   list-style: none;
   margin: 0;
