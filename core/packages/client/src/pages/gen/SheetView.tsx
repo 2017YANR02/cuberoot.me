@@ -108,7 +108,9 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         {showPreview && (
           <td className="gen-tn-attempt-preview">
             {eventHasScramblePreview(event) && a.scramble && (() => {
-              const preview = <ScramblePreview2D event={event} scramble={a.scramble} size={48} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />;
+              // sq1 是 portrait 1:2,普通 48 会被压成很小;给它更大基准让 SVG 撑得开。
+              const previewSize = event === 'sq1' ? 56 : 48;
+              const preview = <ScramblePreview2D event={event} scramble={a.scramble} size={previewSize} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />;
               const href = visualcubeApiHref(event, a.scramble);
               return href ? (
                 <a
