@@ -17,7 +17,7 @@ const WCA_MONITOR_DIR = process.env.WCA_MONITOR_DIR || '/opt/wca-monitor';
 const PYTHON_BIN = process.env.PYTHON_BIN || 'python3';
 const SPAWN_TIMEOUT_MS = 5000;
 
-function runFormatCli(payload: unknown): Promise<{ cn: string; en: string; url: string }> {
+export function runFormatCli(payload: unknown): Promise<{ cn: string; en: string; url: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(PYTHON_BIN, [`${WCA_MONITOR_DIR}/format_cli.py`], {
       cwd: WCA_MONITOR_DIR,

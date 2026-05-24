@@ -475,7 +475,7 @@ export default function LandingPage() {
 
       <div className="cards-sections">
         {SECTIONS.map((sec) => (
-          <section key={sec.id} className="cards-section">
+          <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
             <div className="section-header">
               <div className="section-eyebrow">{lang === 'zh' ? sec.eyebrow.zh : sec.eyebrow.en}</div>
               <h2 className="section-title-serif">{lang === 'zh' ? sec.title.zh : sec.title.en}</h2>
