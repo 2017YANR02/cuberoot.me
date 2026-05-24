@@ -157,3 +157,61 @@ jobs:
           path: core/packages/client/ios/App/build/cuberoot-unsigned.ipa
           retention-days: 14
           if-no-files-found: error
+
+      # ─── iOS Simulator smoke test ───
+      # 用 iOS Simulator 跑一遍 app, 截图传 artifact, 让 AI 在没 Mac/iPhone 时也能看
+      # 真机 webview (WKWebView) 渲染结果。失败不阻塞 (continue-on-error), IPA 已经
+      # 上传完了, smoke 只是额外信号。
+
+      - name: Build for simulator
+        working-directory: core/packages/client/ios/App
+        continue-on-error: true
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/SimDD \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Boot iPhone 16 simulator
+        continue-on-error: true
+        run: |
+          xcrun simctl boot "iPhone 16" || true
+          xcrun simctl bootstatus "iPhone 16" -b
+
+      - name: Install + launch app
+        working-directory: core/packages/client/ios/App
+        continue-on-error: true
+        run: |
+          APP=$(find build/SimDD/Build/Products/Debug-iphonesimulator -maxdepth 1 -name "*.app" | head -1)
+          echo "APP=$APP"
+          xcrun simctl install booted "$APP"
+          xcrun simctl launch booted me.cuberoot.app
+          # 等 React + LandingPage + RecentRecords API 加载完
+          sleep 8
+
+      - name: Screenshot LandingPage
+        working-directory: core/packages/client/ios/App
+        continue-on-error: true
+        run: |
+          mkdir -p smoke
+          xcrun simctl io booted screenshot smoke/01-landing.png
+          # 滚屏看更多卡片 (单击 home indicator 区域 + drag 模拟; xcrun 没原生 swipe,
+          # 用 osascript 派 keyboard PageDown 给 simulator window — 大多数 web 页面认)
+          osascript -e 'tell application "Simulator" to activate' || true
+          osascript -e 'tell application "System Events" to key code 121' || true
+          sleep 1
+          xcrun simctl io booted screenshot smoke/02-scrolled.png
+          ls -la smoke/
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cuberoot-ios-smoke-screenshots
+          path: core/packages/client/ios/App/smoke/
+          retention-days: 14
+          if-no-files-found: warn
