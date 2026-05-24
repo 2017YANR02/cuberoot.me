@@ -58,6 +58,18 @@ SPA 用了不少 modern web APIs。webview 兼容性参差:
 | `/tools/*` iframe | ❌ | ❌ | 同上 |
 | WCA OAuth | ⚠️ | ⚠️ | redirect URI 是 `cuberoot.me`,跳出 app |
 
+### API 跨域
+
+app 里 webview origin = `capacitor://localhost` (iOS) / `https://localhost` (Android),
+直接 fetch `api.cuberoot.me/v1/*` 会被 webview CORS 拦死。两路兜底:
+
+1. **server CORS 白名单**(`core/packages/server/src/index.ts`)放了这俩 origin。
+2. **`CapacitorHttp` 插件**(在 `capacitor.config.ts` 已 enable)拦截 fetch 走原生 HTTP,
+   彻底绕开 webview CORS,无 preflight,无 `Access-Control-*` 要求。
+
+第 2 条是主防线,第 1 条是 fallback(某些 XHR / fetch 边界 case 可能仍走 webview)。
+新增 API endpoint 不需要再维护 CORS。
+
 打开 app 后**能用的**: 公式库 / 计时器 / 公式训练 / 比赛日历 / 统计图表 / recon / mosaic / calc 等纯前端页面。
 
 **不能用的**: 内嵌 cstimer / iframe tools / 录像帧数(老设备)/ 真随机 5x5(SAB)/ 登录依赖功能。

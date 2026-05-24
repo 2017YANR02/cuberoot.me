@@ -570,6 +570,27 @@
         bottom: 0;
     }
 }
+/* CompPicker + 随机按钮 一行,picker 撑满剩余宽,按钮等高 38。 */
+.gen-tn-comp-picker-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+    min-width: 0;
+}
+.gen-tn-comp-picker-row .gen-tn-comp-picker {
+    flex: 1;
+    min-width: 0;
+}
+.gen-tn-comp-random {
+    flex-shrink: 0;
+    height: 38px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .gen-tn-comp-input,
 .gen-tn-comp-picker > input {
     width: 100%;
@@ -983,11 +1004,6 @@
     margin-top: 1.5rem;
 }
 
-.gen-tn-round-chips-wrap {
-    display: flex;
-    justify-content: center;
-    margin-top: 0.75rem;
-}
 .gen-tn-sheet-title {
     font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
     font-size: 1.25rem;
