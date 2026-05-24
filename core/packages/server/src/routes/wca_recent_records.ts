@@ -95,7 +95,7 @@ const QUERY = `
         round {
           competitionEvent {
             event { id name }
-            competition { id name }
+            competition { id wcaId name }
           }
         }
       }
@@ -113,7 +113,7 @@ interface RawRecord {
     round: {
       competitionEvent: {
         event: { id: string; name: string };
-        competition: { id: string; name: string };
+        competition: { id: string; wcaId: string; name: string };
       };
     };
   };
@@ -143,7 +143,7 @@ async function getCompMeta(compId: string, compNameEn: string, personIso2: strin
 async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
   const cached = formattedCache.get(r.id);
   if (cached) return cached;
-  const compId = r.result.round.competitionEvent.competition.id;
+  const compId = r.result.round.competitionEvent.competition.wcaId;
   const compNameEn = r.result.round.competitionEvent.competition.name;
   const personIso2 = (r.result.person.country.iso2 || '').toUpperCase();
   const meta = await getCompMeta(compId, compNameEn, personIso2);
@@ -207,7 +207,7 @@ async function fetchOnce(): Promise<void> {
       personName: r.result.person.name,
       countryIso2: r.result.person.country.iso2,
       countryName: r.result.person.country.name,
-      competitionId: r.result.round.competitionEvent.competition.id,
+      competitionId: r.result.round.competitionEvent.competition.wcaId,
       formattedCn: formatted.cn,
       formattedEn: formatted.en,
     });
