@@ -1,0 +1,141 @@
+/* RecentRecords — 落地页右下 WCA Live 近期纪录列表 */
+
+.recent-records {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* loading 占位高度,避免列表到位时 CLS */
+.recent-records--loading {
+  min-height: 6rem;
+}
+
+.recent-records-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recent-records-header > svg {
+  color: var(--accent);
+}
+
+.recent-records-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0;
+}
+
+.recent-records-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.recent-records-row {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.4rem;
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+
+.recent-records-row:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.recent-records-badge {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.recent-records-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  color: var(--foreground);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.recent-records-line1 {
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-records-type {
+  color: var(--muted-foreground);
+}
+
+.recent-records-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.recent-records-line2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-records-flag {
+  width: 1.05em !important;
+  flex-shrink: 0;
+}
+
+.recent-records-person {
+  color: var(--foreground);
+}
+
+.recent-records-country {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 640px) {
+  .recent-records {
+    margin-bottom: 1.75rem;
+  }
+  .recent-records-row {
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0.5rem;
+    padding: 0.4rem 0.25rem;
+  }
+  .recent-records-line1 {
+    font-size: 0.86rem;
+    white-space: normal;
+  }
+  .recent-records-line2 {
+    font-size: 0.76rem;
+    white-space: normal;
+  }
+}
