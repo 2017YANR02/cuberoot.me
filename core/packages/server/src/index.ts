@@ -20,6 +20,7 @@ import { wikiRoutes } from './routes/wiki.js';
 import { scramble555Routes } from './routes/scramble_555.js';
 import { opsRoutes } from './routes/ops.js';
 import { wcaFormatRoutes } from './routes/wca_format.js';
+import { wcaRecentRecordsRoutes, startRecentRecordsPoller } from './routes/wca_recent_records.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
@@ -76,6 +77,7 @@ app.route('/v1', wikiRoutes);
 app.route('/v1', scramble555Routes);
 app.route('/v1', opsRoutes);
 app.route('/v1', wcaFormatRoutes);
+app.route('/v1', wcaRecentRecordsRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
@@ -89,6 +91,10 @@ loadNemesizerDataset().catch(err => {
 ensureCube555Daemon().catch(err => {
   console.error('[cube555] startup failed, /v1/scramble/555-rs will return 503:', err);
 });
+
+// WCA Live recentRecords 后台 60s 轮询 — 落地页右下角列表的同步源.
+// 启动立即拉一次,失败不影响 listener.
+startRecentRecordsPoller();
 
 // Warm current-records cache(WR/CR/NR from wca_results_top,首次 ~5-10s 全扫).
 // 后台跑,不阻塞 listener.正常运行期 24h TTL,/comp 页 fallback 用 peekCurrentRecords()

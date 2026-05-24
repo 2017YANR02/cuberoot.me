@@ -21,6 +21,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import LangToggle from '../components/LangToggle';
 import LandingSearch, { type LandingSearchCard } from '../components/LandingSearch';
 import OngoingComps from '../components/OngoingComps';
+import RecentRecords from '../components/RecentRecords';
 import { useEffectiveTheme } from '../utils/theme';
 import './landing.css';
 
@@ -460,6 +461,7 @@ export default function LandingPage() {
 
       <LandingSearch cards={SEARCH_CARDS} lang={lang} />
       <OngoingComps lang={lang} />
+      <RecentRecords lang={lang} />
 
       {/* WCA full-width hero — 顶层入口,不属于任何 section */}
       <Link to="/wca" className="wca-hero">
