@@ -9,7 +9,6 @@ import { Flag } from '../utils/flag';
 import { displayCuberName } from '../utils/name_utils';
 import { eventDisplayName } from '../utils/wca_events';
 import { formatWcaResult } from '../utils/wca_format_result';
-import { countryName } from '../utils/country_name';
 import { RecordBadge } from './RecordBadge/RecordBadge';
 import './recent_records.css';
 
@@ -99,9 +98,6 @@ export default function RecentRecords({ lang }: Props) {
               <span className="recent-records-line2">
                 <Flag iso2={r.countryIso2.toLowerCase()} className="recent-records-flag" />
                 <span className="recent-records-person">{displayCuberName(r.personName, isZh)}</span>
-                <span className="recent-records-country">
-                  {isZh ? '来自 ' : 'from '}{countryName(r.countryIso2.toLowerCase(), isZh) || r.countryName}
-                </span>
               </span>
             </Link>
           </li>

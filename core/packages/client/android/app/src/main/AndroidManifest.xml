@@ -22,6 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- WCA OAuth deep link: WCA 注册 redirect_uri=me.cuberoot.app://auth-callback -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="me.cuberoot.app" />
+            </intent-filter>
+
         </activity>
 
         <provider
