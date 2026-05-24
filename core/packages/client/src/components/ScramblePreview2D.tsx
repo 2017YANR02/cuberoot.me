@@ -142,9 +142,12 @@ export function ScramblePreview2D({ event, scramble, size = 60, clockColors, sq1
     };
   }, [puzzle, scramble, size]);
 
+  // SQ1 SVG 是 1:2 portrait,塞进 4:3 landscape host 后两侧大量留白 → 看起来很小。
+  // 给 sq1 用 portrait host,SVG 才能撑满,实际像素 ≈ 翻倍。
+  const isPortrait = eff === 'sq1';
   const hostStyle: CSSProperties = {
-    width: size * 2,
-    height: size * 1.5,
+    width: isPortrait ? size : size * 2,
+    height: isPortrait ? size * 2 : size * 1.5,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

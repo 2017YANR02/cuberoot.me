@@ -35,6 +35,8 @@ app.use('*', cors({
     'http://localhost:5173',              // Vite dev server
     'https://www.cuberoot.me',            // 生产环境（SPA）
     'https://cuberoot.me',                // 裸域 (含 GH Pages 海外线路)
+    'capacitor://localhost',              // Capacitor iOS app webview origin
+    'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
   ],
   credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
   maxAge: 86400,

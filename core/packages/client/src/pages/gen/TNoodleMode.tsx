@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff } from 'lucide-react';
+import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff, Shuffle } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import NumberCommitInput from '../../components/NumberCommitInput';
@@ -16,11 +16,10 @@ import Scramble555ModePicker from '../../components/Scramble555ModePicker';
 import Scramble333ModePicker from '../../components/Scramble333ModePicker';
 import HighOrderNxNInput from '../../components/HighOrderNxNInput';
 import { activeEventOf } from './active_view';
-import LiquidGlassChips from '../../components/LiquidGlassChips';
 import { CompPicker } from '../../components/CompPicker';
 import { CompCell } from '../../components/CompCell/CompCell';
 import { ClearButton } from '../../components/ClearButton';
-import { loadComps, type Comp } from '../../utils/comp_search';
+import { loadComps, isCancelledComp, type Comp } from '../../utils/comp_search';
 import { loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { type WcaScrambleRow } from '../../utils/wca_results_api';
@@ -410,8 +409,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 });
               }
             } else if (ev === '333fm') {
+              const type = scrambleTypeFor(ev);
               for (let a = 0; a < mainCount; a++) {
-                const s = await drawScramble(ev);
+                const s = await drawScramble(type);
                 await tick();
                 out.push({
                   event: ev, roundIdx: ri, groupIdx: g,
@@ -424,14 +424,15 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 });
               }
             } else {
+              const type = scrambleTypeFor(ev);
               const attempts: AttemptScramble[] = [];
               for (let i = 0; i < mainCount; i++) {
-                const s = await drawScramble(ev);
+                const s = await drawScramble(type);
                 attempts.push({ label: String(i + 1), scramble: s, isExtra: false });
                 await tick();
               }
               for (let i = 0; i < DEFAULT_EXTRA_COUNT; i++) {
-                const s = await drawScramble(ev);
+                const s = await drawScramble(type);
                 attempts.push({ label: `E${i + 1}`, scramble: s, isExtra: true });
                 await tick();
               }
@@ -448,7 +449,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       }
       if (!generateAbortRef.current) {
         setSheets(out);
-        setViewedEvent(out[0]?.event ?? null);
+        // viewedEvent = null 让 activeEventOf 落到默认 (333 若存在,否则首项)。
+        setViewedEvent(null);
+        setViewedRoundIdx(null);
       }
     } catch (err) {
       if (err !== ABORT_SENTINEL) console.error('[gen/comp] generate failed', err);
@@ -486,7 +489,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       }
       const built = buildSheetsFromWca(data);
       setSheets(built);
-      setViewedEvent(built[0]?.event ?? null);
+      // viewedEvent = null 让 activeEventOf 落到默认 (333 若存在,否则首项)。
+      setViewedEvent(null);
       setViewedRoundIdx(null);
       setLoadedCompId(compId);
       setLoadedCompName(name);
@@ -506,6 +510,21 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const onPickComp = (c: Comp) => {
     setCompInput(localizeCompName(c.id, c.name, isZh));
     loadWca(c.id, c.name);
+  };
+
+  // 随机挑一场已结束/未取消/有项目的真比赛(才有可能拿到已公布打乱)。
+  // 用户拿到空打乱(loadWca 报"未找到") 时再点一下即可重摇。
+  const pickRandomComp = async () => {
+    const all = await loadComps().catch(() => [] as Comp[]);
+    const today = new Date().toISOString().slice(0, 10);
+    const candidates = all.filter((c) =>
+      !isCancelledComp(c) &&
+      (c.events?.length ?? 0) > 0 &&
+      (c.end_date || c.start_date) < today
+    );
+    if (candidates.length === 0) return;
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    onPickComp(pick);
   };
 
   // URL ?comp=... → mount/变更时自动加载一次。
@@ -612,7 +631,21 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const visibleSheets = activeRoundIdx === null
     ? sheetsInEvent
     : sheetsInEvent.filter((s) => s.roundIdx === activeRoundIdx);
-  const roundLabel = (idx: number): string => idx === 3 ? t('决赛', 'Final') : `R${idx + 1}`;
+  // icon 角标:多轮时显示当前轮次缩写 (1/2/3/F),提示再次点击会循环。
+  const roundBadgeLabel = (idx: number): string => idx === 3 ? 'F' : `${idx + 1}`;
+  const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
+    ? { [activeView]: roundBadgeLabel(activeRoundIdx) }
+    : undefined;
+  // 单击 event icon:不同 event → 切到该 event (轮次重置成第一);同一 event 再点 → 循环到下一轮。
+  const onEventIconClick = (ev: string) => {
+    if (ev === activeView && roundIdxsInEvent.length > 1) {
+      const cur = activeRoundIdx === null ? -1 : roundIdxsInEvent.indexOf(activeRoundIdx);
+      const nextIdx = roundIdxsInEvent[(cur + 1) % roundIdxsInEvent.length];
+      setViewedRoundIdx(nextIdx);
+      return;
+    }
+    setViewedEvent(ev);
+  };
 
   const loaded = sheets && sheets.length > 0;
   const fmtKB = (b: number) => `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
@@ -652,15 +685,27 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           onChange={() => { /* readonly */ }}
         />
       ) : (
-        <CompPicker
-          className="gen-tn-comp-picker"
-          value={compInput}
-          onChange={setCompInput}
-          onUrlPaste={(wcaId) => loadWca(wcaId)}
-          onPick={onPickComp}
-          isZh={isZh}
-          placeholder={placeholder}
-        />
+        <div className="gen-tn-comp-picker-row">
+          <CompPicker
+            className="gen-tn-comp-picker"
+            value={compInput}
+            onChange={setCompInput}
+            onUrlPaste={(wcaId) => loadWca(wcaId)}
+            onPick={onPickComp}
+            isZh={isZh}
+            placeholder={placeholder}
+          />
+          <button
+            type="button"
+            className="gen-btn gen-tn-comp-random"
+            onClick={pickRandomComp}
+            title={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition')}
+            aria-label={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition')}
+            disabled={loading}
+          >
+            <Shuffle size={14} />
+          </button>
+        </div>
       )}
     </div>
   );
@@ -766,7 +811,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         <WcaEventSelector
           availableEvents={new Set(eventsInSheets)}
           selectedEvent={activeView ?? undefined}
-          onSelect={setViewedEvent}
+          onSelect={onEventIconClick}
+          badges={roundBadges}
           appendEvents={TN_APPEND_EVENTS}
           collapsibleAppend
           onlyAvailable
@@ -901,16 +947,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
       {loaded && activeView && (
         <>
-          {roundIdxsInEvent.length > 1 && activeRoundIdx !== null && (
-            <div className="gen-tn-round-chips-wrap">
-              <LiquidGlassChips<number>
-                items={roundIdxsInEvent}
-                value={activeRoundIdx}
-                onChange={setViewedRoundIdx}
-                getLabel={roundLabel}
-              />
-            </div>
-          )}
           <div className="gen-tn-sheets">
             {visibleSheets.map((sh, i) => (
               <SheetView
