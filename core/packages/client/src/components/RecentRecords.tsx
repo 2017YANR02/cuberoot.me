@@ -87,7 +87,7 @@ export default function RecentRecords({ lang }: Props) {
               className="recent-records-body"
             >
               <span className="recent-records-line1">
-                <span className="recent-records-event">{eventDisplayName(r.eventId, isZh)}</span>
+                <span className="recent-records-event">{isZh ? eventDisplayName(r.eventId, true) : r.eventName}</span>
                 <span className="recent-records-type">
                   {' '}{isZh ? (r.type === 'single' ? '单次' : '平均') : r.type}{' '}
                   {isZh ? '成绩' : 'of'}{' '}
