@@ -13,11 +13,13 @@ import { bootstrapTheme } from './utils/theme'
 import { loadFlagData } from './utils/country_flags'
 import { installCapacitorFetchRewrite } from './utils/capacitor_fetch_rewrite'
 import { installNativeOAuthHandler } from './utils/capacitor_oauth'
+import { installTestCommandHandler } from './utils/capacitor_test_commands'
 
 installLangNormalize()
 bootstrapTheme()
 void installCapacitorFetchRewrite()
 void installNativeOAuthHandler()
+void installTestCommandHandler()
 // 启动即预热 person_countries / comp_countries / comp_names_zh + /v1/cn-comp-names 兜底。
 // 让"点开比赛详情页"渲染时中文比赛名已 ready,不会"先英文后中文"闪烁。
 void loadFlagData()
