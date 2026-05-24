@@ -17,9 +17,13 @@ name: Build Mobile Apps
 on:
   workflow_dispatch:
   push:
-    branches: [mobile-build]
+    branches: [main, mobile-build]
     paths:
+      # 只在 SPA 代码 / shared 包 / capacitor 配置 / workflow 改时跑。
+      # 避免每个 stats/blog/docs commit 都触发 build。
       - 'core/packages/client/**'
+      - 'core/packages/shared/**'
+      - 'core/packages/visualcube/**'
       - '.github/workflows/mobile_build.yml'
 
 jobs:
