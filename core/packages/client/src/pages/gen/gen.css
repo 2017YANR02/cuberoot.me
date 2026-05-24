@@ -562,6 +562,14 @@
 .gen-tn-controls.is-loaded {
     justify-content: flex-end;
 }
+/* loaded 态下右下角操作按钮去外框,只保留 hover 反馈 */
+.gen-tn-controls.is-loaded .gen-btn {
+    border-color: transparent;
+    background: transparent;
+}
+.gen-tn-controls.is-loaded .gen-btn:hover:not(:disabled) {
+    background: var(--gen-accent-soft);
+}
 /* CompPicker + 随机按钮 一行,picker 撑满剩余宽,按钮等高 38。 */
 .gen-tn-comp-picker-row {
     display: flex;
