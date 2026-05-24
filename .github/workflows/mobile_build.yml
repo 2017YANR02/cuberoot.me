@@ -16,6 +16,11 @@ name: Build Mobile Apps
 
 on:
   workflow_dispatch:
+    inputs:
+      run_smoke:
+        description: 'iOS Simulator smoke test (装 app + 截多张图)'
+        type: boolean
+        default: false
   push:
     branches: [main, mobile-build]
     paths:
@@ -158,12 +163,14 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      # ─── iOS Simulator smoke test ───
-      # 用 iOS Simulator 跑一遍 app, 截图传 artifact, 让 AI 在没 Mac/iPhone 时也能看
-      # 真机 webview (WKWebView) 渲染结果。失败不阻塞 (continue-on-error), IPA 已经
-      # 上传完了, smoke 只是额外信号。
+      # ─── iOS Simulator smoke test (opt-in) ───
+      # 默认关。手动 `gh workflow run mobile_build.yml -f run_smoke=true` 才跑。
+      # 用 simctl openurl 把命令喂进 app (见 utils/capacitor_test_commands.ts) —
+      # navigate/scroll/theme 三个动作, 每个截一张图, 让 AI 不用 Mac/iPhone 也能验
+      # iOS webview 渲染。失败不阻塞 IPA 上传 (continue-on-error)。
 
       - name: Build for simulator
+        if: github.event_name == 'workflow_dispatch' && inputs.run_smoke == true
         working-directory: core/packages/client/ios/App
         continue-on-error: true
         run: |
@@ -178,12 +185,14 @@ jobs:
             CODE_SIGNING_REQUIRED=NO
 
       - name: Boot iPhone 16 simulator
+        if: github.event_name == 'workflow_dispatch' && inputs.run_smoke == true
         continue-on-error: true
         run: |
           xcrun simctl boot "iPhone 16" || true
           xcrun simctl bootstatus "iPhone 16" -b
 
       - name: Install + launch app
+        if: github.event_name == 'workflow_dispatch' && inputs.run_smoke == true
         working-directory: core/packages/client/ios/App
         continue-on-error: true
         run: |
@@ -194,22 +203,39 @@ jobs:
           # 等 React + LandingPage + RecentRecords API 加载完
           sleep 8
 
-      - name: Screenshot LandingPage
+      - name: Smoke screenshots (LandingPage / scroll / navigate / theme)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_smoke == true
         working-directory: core/packages/client/ios/App
         continue-on-error: true
         run: |
           mkdir -p smoke
-          xcrun simctl io booted screenshot smoke/01-landing.png
-          # 滚屏看更多卡片 (单击 home indicator 区域 + drag 模拟; xcrun 没原生 swipe,
-          # 用 osascript 派 keyboard PageDown 给 simulator window — 大多数 web 页面认)
-          osascript -e 'tell application "Simulator" to activate' || true
-          osascript -e 'tell application "System Events" to key code 121' || true
+          # 0. 主页顶部 (默认 light 主题)
+          xcrun simctl io booted screenshot smoke/01-landing-top.png
+
+          # 1. 滚到 TOOL 区 (CSS id = section-tool)
+          xcrun simctl openurl booted "me.cuberoot.app://test?cmd=scroll:%23section-tool"
           sleep 1
-          xcrun simctl io booted screenshot smoke/02-scrolled.png
+          xcrun simctl io booted screenshot smoke/02-landing-tool.png
+
+          # 2. 跳 /recon (CORS + CapacitorHttp 验证)
+          xcrun simctl openurl booted "me.cuberoot.app://test?cmd=navigate:/recon"
+          sleep 4
+          xcrun simctl io booted screenshot smoke/03-recon.png
+
+          # 3. 跳 /wca (/stats/* fetch wrapper 验证)
+          xcrun simctl openurl booted "me.cuberoot.app://test?cmd=navigate:/wca"
+          sleep 4
+          xcrun simctl io booted screenshot smoke/04-wca.png
+
+          # 4. 切深色 (theme tokens 验证)
+          xcrun simctl openurl booted "me.cuberoot.app://test?cmd=theme:dark"
+          sleep 1
+          xcrun simctl io booted screenshot smoke/05-wca-dark.png
+
           ls -la smoke/
 
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: github.event_name == 'workflow_dispatch' && inputs.run_smoke == true
         with:
           name: cuberoot-ios-smoke-screenshots
           path: core/packages/client/ios/App/smoke/
