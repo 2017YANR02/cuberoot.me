@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff, Shuffle } from 'lucide-react';
+import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
 import { EventIcon } from '../../components/EventIcon';
 import WcaEventSelector from '../../components/WcaEventSelector';
 import NumberCommitInput from '../../components/NumberCommitInput';
@@ -708,7 +708,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             aria-label={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition')}
             disabled={loading}
           >
-            <Shuffle size={14} />
+            <Dices size={14} />
           </button>
         </div>
       )}
@@ -720,15 +720,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {!compHeaderSlot && compPickerNode}
       <div className="gen-control-group gen-control-actions">
           {loaded ? (
-            <button
-              type="button"
-              className="gen-btn"
-              onClick={reset}
-              title={loadedCompId ? t('换一场比赛', 'Load another competition') : t('重新配置', 'Reconfigure')}
-              aria-label={loadedCompId ? t('换一场比赛', 'Load another competition') : t('重新配置', 'Reconfigure')}
-            >
-              {loadedCompId ? <Trash2 size={14} /> : <Edit3 size={14} />}
-            </button>
+            // loadedCompId 模式下顶部 picker 已有 × 清除按钮,这里不再重复;
+            // mock(loaded 但无 compId)模式顶部是 readonly 标题,需要 Edit3 回配置态。
+            loadedCompId ? null : (
+              <button
+                type="button"
+                className="gen-btn"
+                onClick={reset}
+                title={t('重新配置', 'Reconfigure')}
+                aria-label={t('重新配置', 'Reconfigure')}
+              >
+                <Edit3 size={14} />
+              </button>
+            )
           ) : loading ? (
             <ProgressButton
               primary
