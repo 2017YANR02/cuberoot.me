@@ -1422,6 +1422,14 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
           const ttl = allFinished ? ttlFor('wca') : ttlFor('cubing');
           if (Date.now() - cubingCached.fetchedAt < ttl) return cubingCached;
         }
+        // wca_live 兜底:非中国比赛 cubing.com 无收录,进行中走过 wca_live → 缓存命中秒返回.
+        const wcaLiveCacheKey = `${wcaId}:wca_live`;
+        const wcaLiveCached = cache.get(wcaLiveCacheKey);
+        if (wcaLiveCached && Object.values(wcaLiveCached.resultsByRound).some(arr => arr.length > 0)) {
+          const allFinished = wcaLiveCached.events.every(ev => ev.rs.every(rd => rd.s === 1));
+          const ttl = allFinished ? ttlFor('wca') : ttlFor('wca_live');
+          if (Date.now() - wcaLiveCached.fetchedAt < ttl) return wcaLiveCached;
+        }
         const cachedFast = cache.get(fastKey);
         if (cachedFast && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
           return { ...cachedFast, availableSources: cachedFast.availableSources ?? ['wca'] };
@@ -1436,6 +1444,11 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
         if (l2Cubing) {
           cache.set(cubingCacheKey, l2Cubing);
           return { ...l2Cubing, availableSources: l2Cubing.availableSources ?? ['cubing', 'wca'] };
+        }
+        const l2WcaLive = await readSnapshotL2(wcaId, 'wca_live');
+        if (l2WcaLive) {
+          cache.set(wcaLiveCacheKey, l2WcaLive);
+          return { ...l2WcaLive, availableSources: l2WcaLive.availableSources ?? ['wca_live', 'wca'] };
         }
         const pendingFast = inflight.get(fastKey);
         if (pendingFast) return pendingFast.then(d => ({ ...d, availableSources: d.availableSources ?? ['wca'] }));
@@ -1459,6 +1472,13 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
             cubingData.availableSources = available;
             setL1AndL2(cubingCacheKey, cubingData);
             return cubingData;
+          }
+          // 非中国比赛 cubing.com 无收录,改走 wca_live (国外赛进行中/刚结束 WCA REST 没公示都在那里).
+          if (!wcaHasResults && probe.wcaLiveId) {
+            const wcaLiveData = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId);
+            wcaLiveData.availableSources = available;
+            setL1AndL2(wcaLiveCacheKey, wcaLiveData);
+            return wcaLiveData;
           }
 
           let finalData = data;
