@@ -329,12 +329,11 @@ export default function CompDetailPage() {
       let resolved = false;
       let es: EventSource | null = null;
       const resolveOnce = () => { if (!resolved) { resolved = true; resolve(); } };
-      const finishWith = async (j: CompData, partial = false) => {
+      const finishWith = (j: CompData, partial = false) => {
         if (done) return;
-        // 等中文名 map(comp_names_zh.json + /v1/cn-comp-names 兜底)合并完才首渲,
-        // 否则中文模式下会"先英文后中文"闪一下。main.tsx 启动即 fire 过一次,
-        // 这里 await 通常立刻 resolve。
-        await loadFlagData();
+        // 不 await loadFlagData() — /v1/cn-comp-names 兜底 ~1s,会把首屏拖到 3s+.
+        // useEffect(() => loadFlagData().then(setFlagDataVer)) 已在 mount 时独立 fire,
+        // 完成后重渲染换上中文名 / 旗子;中文模式短暂英文过渡远胜整页卡 1s.
         setData(j);
         rememberRecent(j.slug, j.name);
         setProgress(null);
