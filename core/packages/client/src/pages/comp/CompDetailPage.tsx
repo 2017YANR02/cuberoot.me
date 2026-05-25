@@ -802,12 +802,12 @@ export default function CompDetailPage() {
       (data.resultsByRound[roundKey(ev.i, rd.i)] || []).length > 0 || rd.s === 2
     );
   };
-  // badge:在选中的 event 上显示当前是第几轮 (1=初赛, 2=复赛...);未选中不显示
-  const eventBadges: Record<string, number> = {};
+  // badge:选中 event 上显示「当前轮/总轮数」(1/4=初赛在 4 轮里);未选中不显示
+  const eventBadges: Record<string, string> = {};
   if (eventParam && roundParam) {
     const rounds = validRoundsFor(eventParam);
     const idx = rounds.findIndex(rd => rd.i === roundParam);
-    if (idx >= 0) eventBadges[eventParam] = idx + 1;
+    if (idx >= 0) eventBadges[eventParam] = `${idx + 1}/${rounds.length}`;
   }
   const onSelectEvent = (newEventId: string) => {
     const ev = data.events.find(e => e.i === newEventId);
@@ -1160,7 +1160,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
 
   return (
     <div className="comp-table-wrap">
-      <table className={`comp-table${compIso2 === 'cn' ? ' comp-table-cn' : ''}`}>
+      <table className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
             <th className="th-place">{isZh ? '名次' : 'Place'}</th>
