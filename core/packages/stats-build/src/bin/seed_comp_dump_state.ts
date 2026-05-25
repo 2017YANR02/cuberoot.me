@@ -69,13 +69,9 @@ async function main() {
   const bytes = statSync(tsvLocal).size;
   console.log(`[seed] wrote ${tsvLocal} (${count} rows, ${(bytes / 1024).toFixed(1)} KB)`);
 
-  console.log('[seed] scp → server:/tmp/');
-  execSync(`scp ${tsvLocal} root@cuberoot:/tmp/comp_dump_state_seed.tsv`, { stdio: 'inherit' });
-
-  console.log('[seed] applying on server PG (temp table + INSERT ON CONFLICT DO NOTHING)');
-  // 同事务:CREATE TEMP TABLE → \copy → INSERT ON CONFLICT DO NOTHING → 已存在的不被覆盖.
-  const psqlScript = `
-\\set ON_ERROR_STOP on
+  // 同事务:CREATE TEMP TABLE → \copy → INSERT ON CONFLICT DO NOTHING → 已存在的不覆盖.
+  const sqlLocal = join(tmpdir(), 'comp_dump_state_seed.sql');
+  writeFileSync(sqlLocal, `\\set ON_ERROR_STOP on
 BEGIN;
 CREATE TEMP TABLE _seed (comp_id VARCHAR(50), src_max_updated_at TIMESTAMP);
 \\copy _seed (comp_id, src_max_updated_at) FROM '/tmp/comp_dump_state_seed.tsv';
@@ -85,13 +81,17 @@ INSERT INTO comp_dump_state (comp_id, dumped_max_updated_at, dumped_at)
   ON CONFLICT (comp_id) DO NOTHING;
 SELECT COUNT(*) AS state_after FROM comp_dump_state;
 COMMIT;
-`.trim();
-  execSync(
-    `ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db" <<'SQL'\n${psqlScript}\nSQL`,
-    { stdio: 'inherit', shell: '/bin/bash' },
-  );
+`);
 
-  execSync(`ssh root@cuberoot "rm -f /tmp/comp_dump_state_seed.tsv"`, { stdio: 'inherit' });
+  console.log('[seed] scp tsv + sql → server:/tmp/');
+  // 一次 scp 两个文件;Windows / Unix 通用,不依赖 shell heredoc
+  execSync(`scp "${tsvLocal}" "${sqlLocal}" root@cuberoot:/tmp/`, { stdio: 'inherit' });
+
+  console.log('[seed] applying on server PG');
+  execSync(
+    `ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f /tmp/comp_dump_state_seed.sql && rm -f /tmp/comp_dump_state_seed.tsv /tmp/comp_dump_state_seed.sql"`,
+    { stdio: 'inherit' },
+  );
   console.log(`\n[seed] DONE in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 }
 
