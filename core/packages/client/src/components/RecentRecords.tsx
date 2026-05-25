@@ -1,17 +1,21 @@
 // 落地页右下:WCA Live 近 10 天 WR/CR/NR 列表(60s 同步)
 // 文案直接复用 /v1/wca/format-record 同款 Python 模板(server 端 spawn,按 id 缓存)
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
+import { Trophy, Copy, Check } from 'lucide-react';
 import { InfoTooltip } from './InfoTooltip/InfoTooltip';
 import { apiUrl } from '../utils/api_base';
 import { compLinkProps } from '../utils/comp_link';
+import { Flag } from '../utils/flag';
+import { eventDisplayName } from '../utils/wca_events';
+import { RecordBadge } from './RecordBadge/RecordBadge';
 import './recent_records.css';
 
 interface RecentRecord {
   id: string;
   tag: string;
   type: string;
+  eventId: string;
   competitionId: string;
   formattedCn: string;
   formattedEn: string;
@@ -24,9 +28,56 @@ interface ApiResponse {
 
 interface Props { lang: 'zh' | 'en' }
 
+/** 显示用:去掉 "纪录快讯!" / "BREAKING NEWS!" / "Breaking News!" 前缀。
+ *  剪贴板复制原文不变,推送场景里这个 prefix 是常用的钩子词。 */
+function stripPrefix(text: string): string {
+  return text.replace(/^(纪录快讯!\s*|BREAKING NEWS!\s*|Breaking News!\s*)/, '');
+}
+
+// 把 format_cli 输出里的项目段换成 eventDisplayName 短名。
+// zh: `<value><event>单次/平均...` → 用 `单次|平均` 作锚定位 event
+// en: `<value> <event> <tag>...` → 用 tag 词作锚
+function shortenEvent(text: string, eventId: string, isZh: boolean): string {
+  const short = eventDisplayName(eventId, isZh);
+  if (isZh) {
+    return text.replace(/^([\d:.,]+)(.+?)(单次|平均)/, (_m, val, _e, type) => `${val}${short}${type}`);
+  }
+  return text.replace(
+    /^([\d:.,]+\s)(\S+)(\s(?:WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
+    (_m, prefix, _e, tail) => `${prefix}${short}${tail}`,
+  );
+}
+
+/** 渲染 format_cli 输出文本:
+ *  - Regional Indicator emoji 对 → <Flag> SVG(Windows 字体不画 RI 显示成 "us")
+ *  - 裸 tag 字符 (WR/CR/NR/AsR/ER/NAR/SAR/OcR/AfR) → <RecordBadge> 彩色
+ *  - 但 /WR<数字> 是世界排名后缀,不替换(WCA Live tag 只到 WR/CR/NR 三层) */
+function renderFormatted(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)(?!\d)/gu;
+  let lastEnd = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastEnd) parts.push(text.slice(lastEnd, m.index));
+    if (m[1] && m[2]) {
+      const cp1 = m[1].codePointAt(0)! - 0x1F1E6;
+      const cp2 = m[2].codePointAt(0)! - 0x1F1E6;
+      const iso2 = String.fromCharCode(0x61 + cp1, 0x61 + cp2);
+      parts.push(<Flag key={`f${key++}`} iso2={iso2} className="recent-records-inline-flag" />);
+    } else if (m[3]) {
+      parts.push(<RecordBadge key={`b${key++}`} record={m[3]} variant="inline" />);
+    }
+    lastEnd = m.index + m[0].length;
+  }
+  if (lastEnd < text.length) parts.push(text.slice(lastEnd));
+  return parts;
+}
+
 export default function RecentRecords({ lang }: Props) {
   const isZh = lang === 'zh';
   const [records, setRecords] = useState<RecentRecord[] | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -39,32 +90,51 @@ export default function RecentRecords({ lang }: Props) {
         .catch(() => { if (mounted && records === null) setRecords([]); });
     };
 
-    pull();
-    timer = setInterval(pull, 60_000);
-    return () => { mounted = false; if (timer) clearInterval(timer); };
+    const kick = () => {
+      if (!mounted) return;
+      pull();
+      timer = setInterval(pull, 60_000);
+    };
+
+    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
+    type CIC = (id: number) => void;
+    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: CIC };
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    if (w.requestIdleCallback) {
+      idleId = w.requestIdleCallback(kick, { timeout: 2000 });
+    } else {
+      timeoutId = setTimeout(kick, 200);
+    }
+
+    return () => {
+      mounted = false;
+      if (idleId !== null) w.cancelIdleCallback?.(idleId);
+      if (timeoutId !== null) clearTimeout(timeoutId);
+      if (timer) clearInterval(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (records === null) {
-    return (
-      <div className="recent-records recent-records--loading">
-        <div className="recent-records-header">
-          <Trophy size={14} strokeWidth={1.75} />
-          <span className="recent-records-title">{isZh ? '近期纪录' : 'Recent records'}</span>
-        </div>
-      </div>
-    );
-  }
+  const filled = useMemo(
+    () => (records ?? []).filter(r => (isZh ? r.formattedCn : r.formattedEn)),
+    [records, isZh],
+  );
 
-  if (records.length === 0) return null;
-
-  // 服务器首次冷启 ~7s 内 formattedCn/En 还在 fill;过滤掉空文案兜底
-  const filled = records.filter(r => (isZh ? r.formattedCn : r.formattedEn));
-  if (filled.length === 0) return null;
+  if (records === null || filled.length === 0) return null;
 
   const wrCrCount = filled.filter(r => r.tag === 'WR' || r.tag === 'CR').length;
   const visibleRows = Math.max(wrCrCount, 5);
   const listStyle = { maxHeight: `calc(${visibleRows * 1.85}rem + 0.3rem)` };
+
+  function handleCopy(r: RecentRecord) {
+    const text = isZh ? r.formattedCn : r.formattedEn;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(r.id);
+      setTimeout(() => setCopiedId(c => c === r.id ? null : c), 1500);
+    }).catch(() => { /* ignore */ });
+  }
 
   return (
     <div className="recent-records">
@@ -80,13 +150,26 @@ export default function RecentRecords({ lang }: Props) {
         />
       </div>
       <ul className="recent-records-list" style={listStyle}>
-        {filled.map(r => (
-          <li key={r.id} className="recent-records-row">
-            <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
-              {isZh ? r.formattedCn : r.formattedEn}
-            </Link>
-          </li>
-        ))}
+        {filled.map(r => {
+          const text = isZh ? r.formattedCn : r.formattedEn;
+          const copied = copiedId === r.id;
+          return (
+            <li key={r.id} className="recent-records-row">
+              <button
+                type="button"
+                className="recent-records-copy"
+                onClick={() => handleCopy(r)}
+                title={isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy')}
+                aria-label={isZh ? '复制' : 'Copy'}
+              >
+                {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
+              </button>
+              <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
+                {renderFormatted(shortenEvent(stripPrefix(text), r.eventId, isZh))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

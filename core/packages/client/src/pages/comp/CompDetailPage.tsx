@@ -396,22 +396,22 @@ export default function CompDetailPage() {
         });
       };
 
-      // wca_db fast-path 和 SSE 并发竞速:
-      // - 过去比赛 wca_db 通常 100~200ms 出货(HTTP cache 命中即 instant),SSE 在 server 端也走 wca_db
-      //   同款 inflight dedup,client 一收到 wca_db 数据就关掉 SSE.
-      // - 未来比赛 wca_db 502/null,SSE 兜底 ~3s 完整跑.
-      // 不再串行等 1.2s RTT 才开 SSE — 那是 upcoming 比赛打开慢的主因.
-      // 用户显式选 cubing/wca_live/wca 时直接走 SSE,跳过 wca_db preflight.
-      if (!sourceParam || sourceParam === 'wca_db') {
+      // HTTP fast-path 和 SSE 并发竞速:
+      // - 过去比赛 server wca_db fast-path ~100-200ms 出货,HTTP cache 命中即 instant.
+      // - 未来比赛 server L2 缓存(PG)命中即秒返回,首次访问也走 HTTP,响应里就有完整数据.
+      // - 走 source=auto (不传 source) 让 nginx proxy_cache 吸收所有源,过去 / 未来 / 进行中通杀.
+      // - SSE 仅在 HTTP 失败 / 卡住时兜底,跑通也会替换为新数据.
+      // 用户显式选 cubing/wca_live/wca/wca_db 时直接走 SSE,跳过 fast-path.
+      if (!sourceParam) {
         // URL 已选定 event+round 时,?only=event:round 轻量请求(~3KB)优先命中
         if (eventParam && roundParam) {
           const only = `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`;
-          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db&only=${only}`))
+          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${only}`))
             .then(r => r.ok ? r.json() : null)
             .then(j => { if (j) finishWith(j, /* partial */ true); })
             .catch(() => { /* ignore */ });
         }
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?source=wca_db`))
+        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`))
           .then(r => r.ok ? r.json() : null)
           .then(j => { if (j) finishWith(j); })
           .catch(() => { /* ignore */ });

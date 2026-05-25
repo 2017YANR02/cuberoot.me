@@ -1,6 +1,6 @@
 // 落地页全站搜索 — Hero 下拉浮层
 // 匹配逻辑统一在 utils/site_search.ts;这里只管下拉浮层的 UI 壳。
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
@@ -21,7 +21,10 @@ import {
   INITIAL_RENDER_CAP,
   type SiteSearchCard,
 } from '../utils/site_search';
-import { EventIcon } from './EventIcon/EventIcon';
+// EventIcon 内联了所有 WCA 项目 SVG (~68KB gzip),只在搜索下拉的 recon 结果里用 — 首屏 lazy。
+const EventIcon = lazy(() =>
+  import('./EventIcon/EventIcon').then(m => ({ default: m.EventIcon })),
+);
 import { useSpeechToText } from '../utils/useSpeechToText';
 import { detectPasteIntent } from '../utils/smart_paste';
 import { setPendingVideo } from '../utils/pending_video';
@@ -590,7 +593,9 @@ export default function LandingSearch({ cards, lang }: Props) {
                     onClick={closeAfter}
                   >
                     {r.personIso2 && <Flag iso2={r.personIso2} className="country-flag" />}
-                    <EventIcon event={r.event} className="landing-search-event-icon" />
+                    <Suspense fallback={<span className="landing-search-event-icon" />}>
+                      <EventIcon event={r.event} className="landing-search-event-icon" />
+                    </Suspense>
                     <span className="landing-search-item-main">
                       <span className="landing-search-item-name">
                         {displayCuberName(r.person, isZh)} · {r.valueStr}
