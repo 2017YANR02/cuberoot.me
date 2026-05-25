@@ -1,0 +1,1 @@
+import{t as e}from"./createLucideIcon-BE-QTmrs.js";var t=e(`hexagon`,[[`path`,{d:`M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z`,key:`yt0hxn`}]]),n=e(`triangle`,[[`path`,{d:`M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z`,key:`14u9p9`}]]);export{t as n,n as t};

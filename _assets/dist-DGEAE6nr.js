@@ -1,1 +1,0 @@
-import{t as e}from"./dist-CxtROxt9.js";export{e as Capacitor};
