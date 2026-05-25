@@ -15,8 +15,7 @@ export function useDocumentTitle(zh: string, en: string): void {
   useEffect(() => {
     const page = (isZh ? zh : en).trim();
     document.title = page ? `${page}${SEP}${BRAND}` : BRAND;
-    return () => {
-      document.title = BRAND;
-    };
+    // No cleanup — title is reset by the next page's hook or by Next's RSC
+    // route transition. Cleanup raced with our own re-set on lang flip.
   }, [zh, en, isZh]);
 }
