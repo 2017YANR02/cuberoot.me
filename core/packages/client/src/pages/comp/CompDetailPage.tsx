@@ -977,6 +977,7 @@ export default function CompDetailPage() {
               isZh={isZh}
               pbMap={pbMap}
               advancers={advancers}
+              compIso2={compFlagIso2(slug)}
               onClickCuber={n => {
                 if (currentRound) {
                   setModal({ kind: 'round', number: n, eventId: currentRound.ev.i, roundId: currentRound.rd.i });
@@ -1159,9 +1160,11 @@ interface ResultsTableProps {
   pbMap: Record<string, PbByEvent | null>;
   advancers?: Set<number>;
   onClickCuber: (number: number) => void;
+  /** 比赛所在国家 ISO2 ('cn' / 'us' / ...) — 中国比赛固定选手列宽度,避免外国长名撑爆 */
+  compIso2?: string;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber }: ResultsTableProps) {
+function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2 }: ResultsTableProps) {
   if (!round) return null;
   const isAverageFormat = round.f === 'a' || round.f === 'm' || round.f === '';
   const showAvg = isAverageFormat;
@@ -1173,7 +1176,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
 
   return (
     <div className="comp-table-wrap">
-      <table className="comp-table">
+      <table className={`comp-table${compIso2 === 'cn' ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
             <th className="th-place">{isZh ? '名次' : 'Place'}</th>
