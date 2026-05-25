@@ -1,18 +1,16 @@
 // NOTE: 比赛名本地化(中文模式)——和 comp-names-zh skill 对齐的统一入口
-// 4 级查表(同 GlobePage.localizeCompName):
+// 3 级查表:
 //   1) 调用方传入的 upcomingNameZhById(可选,GlobePage 用 upcoming_comps.json 的 id→name_zh)
 //   2) comp_names_zh.json 英文名→中文名(走 country_flags 里 loadFlagData 已加载的 _compNamesZh)
-//   3) OpenCC 繁→简(名字本身已含 CJK 时)
-//   4) 兜底原英文名
+//   3) 兜底原名(已含 CJK 的繁体名保持繁体,WCA 数据里中国本土比赛本来就是简体)
 //
 // 调用前需先 await loadFlagData()(country_flags 里),否则 (2) 永远 miss
 //
 // 显示层统一去掉 "WCA "(含尾随空格,大小写不敏感) —— stripWcaPrefix
-import * as OpenCC from 'opencc-js';
 import { compNameZh } from './country_flags';
 
-const openccT2S = OpenCC.Converter({ from: 'tw', to: 'cn' });
-const CJK_RE = /[㐀-鿿豈-﫿]/;
+// NOTE: 用 \u escape 而不是字面 CJK,绕过 rolldown hash-placeholder 切多字节字符的 panic
+const CJK_RE = /[\u3400-\u9fff\uf900-\ufaff]/;
 
 /** 比赛名 display-only 归一化：
  *  1) 去掉所有 "WCA"（含可选尾随空格，大小写不敏感）
@@ -60,7 +58,6 @@ export function localizeCompName(
     if (zh1) return zh1;
     const zh2 = compNameZh(name);
     if (zh2) return zh2;
-    if (CJK_RE.test(name)) { try { return openccT2S(name); } catch { /* */ } }
     return name;
   })();
   return stripWcaPrefix(resolved);

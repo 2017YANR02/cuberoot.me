@@ -1,10 +1,8 @@
 // WCA 比赛城市名英→中本地化（含 CN / HK / MO / TW / 常见海外）。
 // 用法：`localizeCity(city, isZh)` —— 非中文模式 / 命中不到 → 原样返回。
-// 已含 CJK 字符（JP / HK / TW 比赛常见）走 OpenCC 简体化，未命中保持原文。
-import * as OpenCC from 'opencc-js';
+// 已含 CJK 字符（JP / HK / TW 比赛常见）原样返回(可能是繁体),未命中也保持原文。
 
-const openccT2S = OpenCC.Converter({ from: 'tw', to: 'cn' });
-const CJK_RE = /[㐀-鿿豈-﫿]/;
+const CJK_RE = /[\u3400-\u9fff\uf900-\ufaff]/;
 
 // 范围：覆盖 all_past_comps + all_upcoming_comps 中所有出现过的 CN / HK / MO / TW 城市，加少量耳熟能详的海外城市
 const CITY_ZH: Record<string, string> = {
@@ -75,13 +73,11 @@ export function normalizeCityKey(city: string): string {
   return s.trim();
 }
 
-/** city → 中文（中文模式下）。CJK 输入走 OpenCC T2S；非中文模式或未命中返回原文。 */
+/** city → 中文（中文模式下）。CJK 输入原样返回；非中文模式或未命中也返回原文。 */
 export function localizeCity(city: string, isZh: boolean): string {
   if (!city) return '';
   const key = normalizeCityKey(city);
   if (!isZh) return key;
-  if (CJK_RE.test(key)) {
-    try { return openccT2S(key); } catch { return key; }
-  }
+  if (CJK_RE.test(key)) return key;
   return CITY_ZH[key] ?? key;
 }
