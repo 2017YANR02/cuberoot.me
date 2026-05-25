@@ -1,0 +1,136 @@
+[
+  {
+    "name": "or18/RubiksSolverDemo",
+    "url": "https://github.com/or18/RubiksSolverDemo",
+    "zh": "3x3 求解器 demo + PWA 脚手架",
+    "en": "3×3 solver demo",
+    "long_en": "3×3 solver & trainer pages, PWA scaffolding"
+  },
+  {
+    "name": "jonatanklosko/wca_statistics",
+    "url": "https://github.com/jonatanklosko/wca_statistics",
+    "zh": "WCA 统计管道原型(本站为 TS 重写版)",
+    "en": "WCA statistics pipeline (TS rewrite here)",
+    "long_en": "statistics engine, SQL queries, plugin framework (TS rewrite)"
+  },
+  {
+    "name": "mihlefeld/Alg-Trainers",
+    "url": "https://github.com/mihlefeld/Alg-Trainers",
+    "zh": "公式训练器",
+    "en": "Algorithm trainer pages"
+  },
+  {
+    "name": "carykh/hthgrapher",
+    "url": "https://github.com/carykh/hthgrapher",
+    "zh": "HTH 计算器(已 port 为 React)",
+    "en": "Head-to-Head Ao5 calculator (React port)"
+  },
+  {
+    "name": "MatteoColombo/cube_challenge_timer",
+    "url": "https://github.com/MatteoColombo/cube_challenge_timer",
+    "zh": "1v1 对战计时器(已 port 为 React)",
+    "en": "1v1 battle timer logic (React port)"
+  },
+  {
+    "name": "cs0x7f/cstimer",
+    "url": "https://github.com/cs0x7f/cstimer",
+    "zh": "csTimer 计时器(integrated)+ 非 WCA 打乱引擎(/scramble/gen 30+ puzzle 走 vendor 进 tools/cstimer-scramble/)",
+    "en": "csTimer & WCA random-state scramble engine; non-WCA puzzle scramble engine for /scramble/gen (vendored in tools/cstimer-scramble/)",
+    "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/...) via classic Web Worker bridge"
+  },
+  {
+    "name": "cs0x7f/cube555",
+    "url": "https://github.com/cs0x7f/cube555",
+    "zh": "5x5 随机状态求解器(server-side daemon 驱动 /scramble/gen 5x5)",
+    "en": "5x5 random-state solver (server-side daemon powers /scramble/gen 5x5)",
+    "long_en": "five-phase reduction 5x5x5 solver — runs as a Java child process under our Hono server"
+  },
+  {
+    "name": "Roman-/mosaic",
+    "url": "https://github.com/Roman-/mosaic",
+    "zh": "魔方马赛克(已 port 为 React)",
+    "en": "Cube mosaic generator (React port)"
+  },
+  {
+    "name": "huazhechen/cuber",
+    "url": "https://github.com/huazhechen/cuber",
+    "zh": "/sim 的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)",
+    "en": "/sim three.js cube engine (originally Vue + Vuetify, ported to React)",
+    "long_en": "virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/sim`; original UI was Vue + Vuetify"
+  },
+  {
+    "name": "cubing/cubing.js",
+    "url": "https://github.com/cubing/cubing.js",
+    "zh": "/sim Pyraminx / Skewb / Megaminx 渲染走 cubing.js TwistyPlayer(复刻 alpha.twizzle.net/edit);Alg parser + 各项目 random-state scramble 也复用此库",
+    "en": "Pyraminx / Skewb / Megaminx in /sim use cubing.js TwistyPlayer (mirrors alpha.twizzle.net/edit); Alg parser + per-event random-state scramble also share this library",
+    "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages"
+  },
+  {
+    "name": "MeigenChou/DCTimer-Android",
+    "url": "https://github.com/MeigenChou/DCTimer-Android",
+    "zh": "BLE / 协议参考;对战计时器设计灵感",
+    "en": "BLE / protocol reference; battle-timer design inspiration",
+    "long_en": "design inspiration for the battle timer"
+  },
+  {
+    "name": "huizhiLLL/WCA-Nemesizer-API",
+    "url": "https://github.com/huizhiLLL/WCA-Nemesizer-API",
+    "zh": "宿敌算法参考(client-side TS 重写;UI 灵感 nemesizer.com)",
+    "en": "Nemesis algorithm reference (client-side TS reimpl; UI inspired by nemesizer.com)",
+    "long_en": "nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))"
+  },
+  {
+    "name": "roudai/VisualCubeEditor2",
+    "url": "https://github.com/roudai/VisualCubeEditor2",
+    "zh": "VisualCube GUI 编辑器(/visualcube UI 仿,渲染换为 @cuberoot/visualcube)",
+    "en": "VisualCube GUI editor (/visualcube UI replicated; renderer swapped to ours)",
+    "long_en": "Vue + sr-visualizer GUI cube image editor; UI replicated in React for the `/visualcube` page (renderer swapped to our `@cuberoot/visualcube` package)"
+  },
+  {
+    "name": "tdecker91/puzzle-gen",
+    "url": "https://github.com/tdecker91/puzzle-gen",
+    "zh": "非 NxN puzzle SVG 渲染(Square-1 / Megaminx / Pyraminx / Skewb)",
+    "en": "Non-NxN puzzle SVG renderer (Square-1 / Megaminx / Pyraminx / Skewb)",
+    "long_en": "non-cube WCA puzzle SVG renderer (`sr-puzzlegen` on npm; Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by `/visualcube`"
+  },
+  {
+    "name": "cube.rider.biz/visualcube.php",
+    "url": "https://cube.rider.biz/visualcube.php",
+    "zh": "PHP VisualCube(Cride5 / Yan / Kira 一脉);URL query API + 扩展 mask 形状 + fcs_format_alg 记号 → @cuberoot/visualcube",
+    "en": "PHP VisualCube (Cride5 / Yan / Kira lineage); URL query API + extended masks + fcs_format_alg notation",
+    "long_en": "PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`"
+  },
+  {
+    "name": "speedcubedb.com",
+    "url": "https://speedcubedb.com/",
+    "zh": "公式库(/algdb 数据源,2x2/3x3/4x4/5x5 alg sets,scraped)",
+    "en": "Algorithm database powering /algdb",
+    "long_en": "algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)"
+  },
+  {
+    "name": "nbwzx/commutator",
+    "url": "https://github.com/nbwzx/commutator",
+    "zh": "换位子分解 / 展开引擎(Zixing Wang;ES module 重封装,UI 重写 React)",
+    "en": "Commutator decomposition / expansion engine (Zixing Wang; ES module re-wrap, UI rebuilt in React)",
+    "long_en": "commutator decomposition / expansion engine (Zixing Wang) re-wrapped as ES module for the `/alg/commutator` tool; algorithm code unchanged from upstream, UI rebuilt in React"
+  },
+  {
+    "name": "speedsolving.com/wiki: Pretty Pattern",
+    "url": "https://www.speedsolving.com/wiki/index.php/Pretty_pattern",
+    "zh": "/patterns 图案算法来源",
+    "en": "Pattern algorithms for /patterns"
+  },
+  {
+    "name": "ruwix.com Rubik's Cube Patterns",
+    "url": "https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/",
+    "zh": "/patterns 图案算法来源",
+    "en": "Pattern algorithms for /patterns"
+  },
+  {
+    "name": "cubing.pro",
+    "url": "https://cubing.pro/",
+    "zh": "/wca 各子页 + 选手详情页 UI/概念参考",
+    "en": "UI / concept reference for /wca sub-pages + person detail page",
+    "long_en": "UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排名 / 当年成绩排名 / 参赛届别排名 / 项目成功率 / 全项目达成 / 全项目排名)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
+  }
+]
