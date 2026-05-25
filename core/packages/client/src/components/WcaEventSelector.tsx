@@ -19,6 +19,8 @@ interface WcaEventSelectorProps {
   onToggle?: (id: string) => void;
   /** 在每个图标右下角渲染一个小角标(用于显示轮数等附加信息)。 */
   badges?: Record<string, string | number>;
+  /** 右上角小角标(与 badges 共存,语义自由;用例:bottom=当前轮,top=总轮数)。 */
+  topBadges?: Record<string, string | number>;
   /** 只渲染 availableEvents 集合里的图标(隐藏其它,而非灰显)。 */
   onlyAvailable?: boolean;
   /** 给已选中的图标右上角加 × 直接移除。multi-select 才生效;不传不显示。 */
@@ -43,7 +45,7 @@ interface WcaEventSelectorProps {
 
 export default function WcaEventSelector({
   availableEvents, selectedEvent, onSelect, isZh, allowAll,
-  selectedEvents, onToggle, badges, onlyAvailable, onRemove, appendEvents,
+  selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
   collapsibleAppend, onExpandedChange,
 }: WcaEventSelectorProps) {
   const isMulti = !!(selectedEvents && onToggle);
@@ -100,6 +102,9 @@ export default function WcaEventSelector({
             {badges?.[id] !== undefined && (
               <span className="event-btn-badge">{badges[id]}</span>
             )}
+            {topBadges?.[id] !== undefined && !(isMulti && isActive && onRemove) && (
+              <span className="event-btn-badge event-btn-badge-top">{topBadges[id]}</span>
+            )}
             {isMulti && isActive && onRemove && (
               <span
                 className="event-btn-remove"
@@ -141,6 +146,9 @@ export default function WcaEventSelector({
               : <span className="event-text-label">{textLabel ?? id}</span>}
             {badges?.[id] !== undefined && (
               <span className="event-btn-badge">{badges[id]}</span>
+            )}
+            {topBadges?.[id] !== undefined && !(isMulti && isActive && onRemove) && (
+              <span className="event-btn-badge event-btn-badge-top">{topBadges[id]}</span>
             )}
             {isMulti && isActive && onRemove && (
               <span

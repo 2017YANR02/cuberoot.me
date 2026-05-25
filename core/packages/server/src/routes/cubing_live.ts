@@ -1670,6 +1670,24 @@ cubingLiveRoutes.get('/cubing-live-stream/:slug', async (c) => {
   });
 });
 
+/** 服务端推断默认轮 (跟 client 的 defaultRoundKey 同款:333 final > 333 latest > any latest).
+ *  用于首屏 ?only=auto:URL 没 event/round 时让 server 选 default,client 直接拿 trim 后 3KB. */
+function pickDefaultRound(data: CompData): { eventId: string; roundId: string } | null {
+  const has = (e: string, r: string) => (data.resultsByRound[`${e}:${r}`] ?? []).length > 0;
+  const ev333 = data.events.find(e => e.i === '333');
+  if (ev333) {
+    for (let i = ev333.rs.length - 1; i >= 0; i--) {
+      if (has(ev333.i, ev333.rs[i].i)) return { eventId: ev333.i, roundId: ev333.rs[i].i };
+    }
+  }
+  for (const ev of data.events) {
+    for (let i = ev.rs.length - 1; i >= 0; i--) {
+      if (has(ev.i, ev.rs[i].i)) return { eventId: ev.i, roundId: ev.rs[i].i };
+    }
+  }
+  return null;
+}
+
 /** 把 CompData 裁成只含焦点轮的小响应 (events/membersByFilter 元数据保留;users/resultsByRound/personalRecords 仅保留该轮选手).
  *  /comp/<slug>?event=333&round=f 首屏只需 16 行,完整 621KB 太重 — 走 ?only=333:f 仅 ~3KB. */
 function trimToOnlyRound(data: CompData, eventId: string, roundId: string): CompData {
@@ -1731,6 +1749,11 @@ cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
       'Cache-Control',
       data.source === 'wca_db' ? 'public, max-age=86400, immutable' : 'public, max-age=30',
     );
+    if (onlyRaw === 'auto') {
+      const pick = pickDefaultRound(data);
+      if (pick) return c.json(trimToOnlyRound(data, pick.eventId, pick.roundId));
+      return c.json(data); // 空赛事 fallback 完整
+    }
     if (onlyMatch) {
       return c.json(trimToOnlyRound(data, onlyMatch[1], onlyMatch[2]));
     }

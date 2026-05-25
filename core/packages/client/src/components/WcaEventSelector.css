@@ -93,6 +93,12 @@
   font-family: ui-monospace, monospace;
 }
 
+/* 右上小角标(语义:总数 / 上限) */
+.wca-stats-event-selector .event-btn-badge-top {
+  bottom: auto;
+  top: -4px;
+}
+
 /* 右上 × 移除按钮(multi-select + onRemove 才渲染) */
 .wca-stats-event-selector .event-btn-remove {
   position: absolute;
