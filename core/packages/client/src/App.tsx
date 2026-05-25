@@ -6,7 +6,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect, useState } from 'react';
 import i18n from './i18n';
-import { TrainingPage } from './pages/TrainingPage';
 import AnalyticsBeacon from './components/AnalyticsBeacon';
 import { CapacitorBackButton } from './components/CapacitorBackButton';
 
@@ -14,6 +13,9 @@ import { CapacitorBackButton } from './components/CapacitorBackButton';
 const TrainerLandingPage = lazy(() => import('./pages/trainer/TrainerLandingPage'));
 const TrainerSelectPage = lazy(() => import('./pages/trainer/TrainerSelectPage'));
 const TrainerRunPage = lazy(() => import('./pages/trainer/TrainerRunPage'));
+
+// /recognize/:algSetId — PLL 识别训练(named export 包成 default)
+const TrainingPage = lazy(() => import('./pages/TrainingPage').then(m => ({ default: m.TrainingPage })));
 
 // NOTE: LandingPage 懒加载 — 全站入口页（粒子系统 + 卡片）
 const LandingPage = lazy(() => import('./pages/LandingPage'));

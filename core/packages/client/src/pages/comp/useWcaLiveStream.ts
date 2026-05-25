@@ -3,10 +3,11 @@
 //
 // 跟现在 cubing.com WS 那套对称:初始快照走 server /v1/cubing-live(WCA Live 源),
 // 这里只负责后续增量。subscription 收到的 round 是完整 results 列表,直接整批替换。
+//
+// phoenix + @absinthe/socket 走动态 import — 这俩加传递依赖 ~20 KB gzip,
+// 静态 import 会被 CompDetailPage(主 bundle 内常驻)拉进所有页面首屏。
 
 import { useEffect, useRef, useState } from 'react';
-import { Socket as PhoenixSocket } from 'phoenix';
-import * as AbsintheSocket from '@absinthe/socket';
 import type { LiveResultRow, WsStatus } from './useLiveStream';
 
 const WCA_LIVE_WS = 'wss://live.worldcubeassociation.org/socket';
@@ -62,55 +63,71 @@ export function useWcaLiveStream({ rounds, numByWcaId, onRoundUpdate }: UseWcaLi
     if (rounds.length === 0) return;
     setStatus('connecting');
 
-    const phoenixSocket = new PhoenixSocket(WCA_LIVE_WS, {});
-    const absintheSocket = AbsintheSocket.create(phoenixSocket);
-
-    const notifiers: ReturnType<typeof AbsintheSocket.send>[] = [];
+    // 捕获到 cleanup 闭包里 — async 加载完才有值;cleanup 同步触发时若 null 就跳过
+    let phoenixSocket: { disconnect: () => void } | null = null;
+    let absintheSocket: unknown = null;
+    let AbsintheSocketMod: typeof import('@absinthe/socket') | null = null;
+    const notifiers: unknown[] = [];
     let alive = true;
+    let cancelled = false;
 
-    for (const link of rounds) {
-      const notifier = AbsintheSocket.send(absintheSocket, {
-        operation: ROUND_SUBSCRIPTION,
-        variables: { id: link.liveId },
-      });
-      AbsintheSocket.observe(absintheSocket, notifier, {
-        onAbort: () => setStatus('error'),
-        onError: () => setStatus('error'),
-        onStart: () => { if (alive) setStatus('open'); },
-        onResult: (resp: { data?: { roundUpdated?: { results: AbsRoundResult[]; format: { id: string } } }; errors?: unknown[] }) => {
-          const r = resp?.data?.roundUpdated;
-          if (!r) return;
-          const map = numByWcaIdRef.current;
-          const rows: LiveResultRow[] = [];
-          for (const res of r.results) {
-            const wid = res.person.wcaId;
-            const num = wid ? (map.get(wid) ?? 0) : 0; // 未知选手 num=0;UI 渲染会跳过
-            rows.push({
-              i: parseInt(res.id, 10) || 0, c: 0, n: num,
-              e: link.eventId, r: link.roundTypeId, f: r.format.id,
-              b: res.best ?? 0, a: res.average ?? 0,
-              v: res.attempts.map(a => a.result),
-              sr: res.singleRecordTag ?? '',
-              ar: res.averageRecordTag ?? '',
+    void (async () => {
+      const [{ Socket: PhoenixSocket }, AbsintheSocket] = await Promise.all([
+        import('phoenix'),
+        import('@absinthe/socket'),
+      ]);
+      if (cancelled) return;
+      AbsintheSocketMod = AbsintheSocket;
+      phoenixSocket = new PhoenixSocket(WCA_LIVE_WS, {});
+      absintheSocket = AbsintheSocket.create(phoenixSocket as Parameters<typeof AbsintheSocket.create>[0]);
+
+      for (const link of rounds) {
+        const notifier = AbsintheSocket.send(absintheSocket as Parameters<typeof AbsintheSocket.send>[0], {
+          operation: ROUND_SUBSCRIPTION,
+          variables: { id: link.liveId },
+        });
+        AbsintheSocket.observe(absintheSocket as Parameters<typeof AbsintheSocket.observe>[0], notifier, {
+          onAbort: () => setStatus('error'),
+          onError: () => setStatus('error'),
+          onStart: () => { if (alive) setStatus('open'); },
+          onResult: (resp: { data?: { roundUpdated?: { results: AbsRoundResult[]; format: { id: string } } }; errors?: unknown[] }) => {
+            const r = resp?.data?.roundUpdated;
+            if (!r) return;
+            const map = numByWcaIdRef.current;
+            const rows: LiveResultRow[] = [];
+            for (const res of r.results) {
+              const wid = res.person.wcaId;
+              const num = wid ? (map.get(wid) ?? 0) : 0; // 未知选手 num=0;UI 渲染会跳过
+              rows.push({
+                i: parseInt(res.id, 10) || 0, c: 0, n: num,
+                e: link.eventId, r: link.roundTypeId, f: r.format.id,
+                b: res.best ?? 0, a: res.average ?? 0,
+                v: res.attempts.map(a => a.result),
+                sr: res.singleRecordTag ?? '',
+                ar: res.averageRecordTag ?? '',
+              });
+            }
+            onUpdateRef.current({
+              eventId: link.eventId,
+              roundTypeId: link.roundTypeId,
+              format: r.format.id,
+              rows,
             });
-          }
-          onUpdateRef.current({
-            eventId: link.eventId,
-            roundTypeId: link.roundTypeId,
-            format: r.format.id,
-            rows,
-          });
-        },
-      });
-      notifiers.push(notifier);
-    }
+          },
+        });
+        notifiers.push(notifier);
+      }
+    })();
 
     return () => {
+      cancelled = true;
       alive = false;
-      for (const n of notifiers) {
-        try { AbsintheSocket.cancel(absintheSocket, n); } catch { /* noop */ }
+      if (AbsintheSocketMod && absintheSocket) {
+        for (const n of notifiers) {
+          try { AbsintheSocketMod.cancel(absintheSocket as Parameters<typeof AbsintheSocketMod.cancel>[0], n as Parameters<typeof AbsintheSocketMod.cancel>[1]); } catch { /* noop */ }
+        }
       }
-      try { phoenixSocket.disconnect(); } catch { /* noop */ }
+      try { phoenixSocket?.disconnect(); } catch { /* noop */ }
       setStatus('closed');
     };
   // rounds 重新 mount 才订阅,所以 dep 用 JSON 稳定 key 而不是数组引用
