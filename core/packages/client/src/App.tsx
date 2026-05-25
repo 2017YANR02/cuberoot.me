@@ -97,7 +97,9 @@ const ColpiPage = lazy(() => import('./pages/memo/colpi/ColpiPage'));
 const WbPage = lazy(() => import('./pages/wb/WbPage'));
 // NOTE: Comp — cubing.com 比赛直播查看 (按轮成绩 + 选手弹窗 + PR 标志)
 const CompIndexPage = lazy(() => import('./pages/comp/CompIndexPage'));
-const CompDetailPage = lazy(() => import('./pages/comp/CompDetailPage'));
+// CompDetailPage 非 lazy — 它是热门入口(每个比赛/recon/landing 链接都进它),
+// 直链冷启不付 lazy chunk RTT,prod 实测可省 ~150-250ms 首渲.
+import CompDetailPage from './pages/comp/CompDetailPage';
 const CompSourcesPage = lazy(() => import('./pages/comp/CompSourcesPage'));
 // NOTE: About 页 — 7 个工具卡片的说明页
 const CompAboutPage = lazy(() => import('./pages/comp_about/CompAboutPage'));

@@ -46,14 +46,15 @@ export function rewriteWcaCompUrl(url: string): string | null {
 }
 
 // ── Hover prefetch ──
-// /wca/comp/<id> 主接口大头是 TLS 握手(~2-3s 跨海) + 几十 ms 服务端 wca_db 查询.
-// hover/focus 时悄悄发 fetch 进浏览器 HTTP cache (server 头是 max-age=86400 immutable),
-// 真点击时 instant 出货.同 id 多次触发自动 dedupe.
+// /wca/comp/<id> 主接口大头是 TLS 握手 + 几十 ms 服务端查询.
+// hover/focus 时悄悄发 fetch 进浏览器 HTTP cache,真点击时 instant 出货.同 id 多次触发自动 dedupe.
+// 走 auto source (不传 source 参数):过去比赛走 wca_db (1d immutable),未来 / 进行中走 cubing/L2 (30s).
+// 之前硬编码 ?source=wca_db,未来比赛 wca_db 没数据 → 502,console 噪音.
 const _prefetched = new Set<string>();
 export function prefetchComp(compId: string): void {
   if (_prefetched.has(compId)) return;
   _prefetched.add(compId);
-  const url = apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}?source=wca_db`);
+  const url = apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`);
   fetch(url, { cache: 'force-cache' }).catch(() => { _prefetched.delete(compId); });
 }
 
