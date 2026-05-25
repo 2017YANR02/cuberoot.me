@@ -639,6 +639,19 @@ td.is-pr {
 }
 
 .td-person { display: flex; align-items: center; gap: 8px; }
+
+/* CN 比赛固定选手列宽 — 容得下 3 个汉字 + 旗子,避免少数外国长名 (e.g. Thomas Sonnenberg Jarner) 撑爆整列 */
+.comp-table-cn .th-person,
+.comp-table-cn .td-person {
+  width: 110px;
+  max-width: 110px;
+}
+.comp-table-cn .td-person .cuber-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .comp-flag {
   display: inline-block;
   width: 20px;
