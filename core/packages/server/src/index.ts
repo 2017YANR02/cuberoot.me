@@ -25,6 +25,7 @@ import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
+import { startPrewarmCron } from './routes/cubing_live.js';
 
 const app = new Hono();
 
@@ -110,6 +111,10 @@ setTimeout(() => {
   warmCnCompZh();
   setInterval(warmCnCompZh, 24 * 60 * 60 * 1000);
 }, 30_000);
+
+// /v1/cubing-live L2 缓存预热:启动 90s 后扫一遍 upcoming+recent (~700 个),之后每 10min 刷一遍.
+// pm2 重启 / 新部署后第一个用户访问已结束 / 报名中比赛都秒返回.
+startPrewarmCron();
 
 const PORT = Number(process.env.PORT) || 3001;
 

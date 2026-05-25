@@ -15,6 +15,7 @@ import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
 import { enrichComp, type CompRecordsSnapshot } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
+import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -353,6 +354,84 @@ function ttlFor(source: SourceId): number {
   // wca_live & cubing 都是实时源,缓存短.
   if (source === 'wca_db') return 12 * 60 * 60_000;
   return source === 'wca' ? WCA_CACHE_TTL_MS : CUBING_CACHE_TTL_MS;
+}
+
+// ─── L2: PG-persistent snapshot cache ──────────────────────────────────────
+// L1 (Map) 60s/12h 在 pm2 重启时清空.LiuzhouOpen2026 这种未来比赛冷启需要 probe + cubing.com
+// scrape + enrichPersonalRecords 共 ~2-3s,首次访问总卡.L2 落 PG,任何启动后第一个用户/cron
+// 命中即秒返回.每个 schema_version 一行,enrich 逻辑改时 bump 整体失效.
+
+const SCHEMA_VERSION = 1;
+
+const startDateCache = new Map<string, { d: string | null; at: number }>();
+const START_DATE_CACHE_TTL = 60 * 60_000;
+
+async function getCompStartDate(wcaId: string): Promise<string | null> {
+  const hit = startDateCache.get(wcaId);
+  if (hit && Date.now() - hit.at < START_DATE_CACHE_TTL) return hit.d;
+  try {
+    const rows = await query<{ start_date: string | null }>(
+      `SELECT start_date FROM wca_competitions WHERE id = ? LIMIT 1`,
+      [wcaId],
+    );
+    const d = rows[0]?.start_date || null;
+    startDateCache.set(wcaId, { d, at: Date.now() });
+    return d;
+  } catch {
+    return null;
+  }
+}
+
+/** L2 TTL 分层:wca_db 过去比赛 7d 不变;实时源按比赛日期距今天分档. */
+async function pickL2TtlMs(data: CompData): Promise<number> {
+  if (data.source === 'wca_db') return 7 * 24 * 60 * 60_000;
+  const sd = await getCompStartDate(data.slug);
+  if (!sd) return 10 * 60_000; // 未入 dump 的新公示比赛
+  const days = (Date.parse(sd) - Date.now()) / 86400_000;
+  if (days < -30) return 24 * 60 * 60_000;  // 已结束 30d+,接近静态
+  if (days < 2 && days > -2) return 60_000; // 比赛日 ±1d
+  if (days < 60) return 10 * 60_000;        // 报名中
+  return 24 * 60 * 60_000;                  // 远期
+}
+
+async function readSnapshotL2(wcaId: string, source: SourceId): Promise<CompData | null> {
+  try {
+    const rows = await query<{ payload: CompData }>(
+      `SELECT payload FROM comp_snapshots
+        WHERE wca_id = ? AND source = ? AND schema_version = ? AND expires_at > NOW()
+        LIMIT 1`,
+      [wcaId, source, SCHEMA_VERSION],
+    );
+    return rows[0]?.payload ?? null;
+  } catch (e) {
+    console.warn(`[cubing-live] L2 read failed ${wcaId}/${source}:`, (e as Error).message);
+    return null;
+  }
+}
+
+function writeSnapshotL2(data: CompData): void {
+  // fire-and-forget — 失败不影响请求.
+  (async () => {
+    try {
+      const ttl = await pickL2TtlMs(data);
+      await query(
+        `INSERT INTO comp_snapshots (wca_id, source, schema_version, payload, fetched_at, expires_at)
+         VALUES (?, ?, ?, ?::jsonb, NOW(), NOW() + (? || ' milliseconds')::interval)
+         ON CONFLICT (wca_id, source, schema_version) DO UPDATE SET
+           payload = EXCLUDED.payload,
+           fetched_at = NOW(),
+           expires_at = EXCLUDED.expires_at`,
+        [data.slug, data.source, SCHEMA_VERSION, data, String(ttl)],
+      );
+    } catch (e) {
+      console.warn(`[cubing-live] L2 write failed ${data.slug}/${data.source}:`, (e as Error).message);
+    }
+  })();
+}
+
+function setL1AndL2(key: string, data: CompData): void {
+  cache.set(key, data);
+  writeSnapshotL2(data);
 }
 
 /** WCA ID (e.g. XuzhouZenith2026) → cubing.com slug (Xuzhou-Zenith-2026)。
@@ -1290,6 +1369,12 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     if (cached && Date.now() - cached.fetchedAt < ttlFor('wca_db')) {
       return { ...cached, availableSources: ['wca_db'] };
     }
+    // L2: pm2 重启后 L1 空,从 PG 兜底.比 tryLoadFromWcaDb 全跑省 ~100-200ms (TOAST decompress + serialize).
+    const l2 = await readSnapshotL2(wcaId, 'wca_db');
+    if (l2) {
+      cache.set(cacheKey, l2);
+      return { ...l2, availableSources: ['wca_db'] };
+    }
     // 去重:大比赛 tryLoadFromWcaDb 的 prior-PR 查询 5+ 分钟,并发刷新会堆爆 PG 连接池 (max=10).
     // 同 comp 已在飞就 await 同一个 promise,不开新查询.
     let pending = inflightWcaDb.get(cacheKey);
@@ -1299,7 +1384,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
           const data = await tryLoadFromWcaDb(wcaId, onProgress);
           if (data) {
             data.availableSources = ['wca_db'];
-            cache.set(cacheKey, data);
+            setL1AndL2(cacheKey, data);
             return data;
           }
           return null;
@@ -1341,6 +1426,17 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
         if (cachedFast && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
           return { ...cachedFast, availableSources: cachedFast.availableSources ?? ['wca'] };
         }
+        // L2: PG snapshot 兜底. fastKey 是 wca 源;cubing 兜底走前一个分支已查过的 cubingCached.
+        const l2Fast = await readSnapshotL2(wcaId, 'wca');
+        if (l2Fast) {
+          cache.set(fastKey, l2Fast);
+          return { ...l2Fast, availableSources: l2Fast.availableSources ?? ['wca'] };
+        }
+        const l2Cubing = await readSnapshotL2(wcaId, 'cubing');
+        if (l2Cubing) {
+          cache.set(cubingCacheKey, l2Cubing);
+          return { ...l2Cubing, availableSources: l2Cubing.availableSources ?? ['cubing', 'wca'] };
+        }
         const pendingFast = inflight.get(fastKey);
         if (pendingFast) return pendingFast.then(d => ({ ...d, availableSources: d.availableSources ?? ['wca'] }));
 
@@ -1361,7 +1457,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
           if (!wcaHasResults && probe.cubingMeta) {
             const cubingData = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
             cubingData.availableSources = available;
-            cache.set(cubingCacheKey, cubingData);
+            setL1AndL2(cubingCacheKey, cubingData);
             return cubingData;
           }
 
@@ -1373,7 +1469,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
             await enrichPersonalRecords(finalData);
           }
           finalData.availableSources = available;
-          cache.set(fastKey, finalData);
+          setL1AndL2(fastKey, finalData);
           return finalData;
         })().finally(() => { inflight.delete(fastKey); });
 
@@ -1406,6 +1502,13 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.fetchedAt < ttlFor(cached.source)) {
     return { ...cached, availableSources };
+  }
+
+  // L2: PG snapshot 兜底.pm2 重启 / 新部署后第一个用户秒返回,不再走 cubing.com scrape.
+  const l2 = await readSnapshotL2(wcaId, useSource);
+  if (l2) {
+    cache.set(cacheKey, l2);
+    return { ...l2, availableSources };
   }
 
   // SSE 也参与去重 — 第二个 waiter 看不到 progress 事件(没传 onProgress 给已在飞的 worker),
@@ -1449,12 +1552,75 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     }
 
     data.availableSources = availableSources;
-    cache.set(`${wcaId}:${data.source}`, data);
+    setL1AndL2(`${wcaId}:${data.source}`, data);
     return data;
   })().finally(() => { inflight.delete(cacheKey); });
 
   inflight.set(cacheKey, p);
   return p;
+}
+
+// ─── Hot-comp prewarm ──────────────────────────────────────────────────────
+// 预热"热门集合": upcoming (next 60d) + 最近结束 (last 30d).
+// 跑完 L2 兜底所有这些比赛,任何用户首访秒返回.
+// 老比赛不预热,首访 ~100ms lazy 进 L2,后续 nginx proxy_cache 1d 兜底.
+
+const PREWARM_DELAY_MS = 1000;             // 串行间隔,避 cubing.com / WCA REST 限流
+const PREWARM_REFRESH_INTERVAL_MS = 10 * 60_000;  // 10min 整体刷新一遍
+let prewarming = false;
+
+async function listHotComps(): Promise<string[]> {
+  const ids = new Set<string>();
+  // 1. upcoming (announce 后 dump 还没更新的,从 stats/all_upcoming_comps.json)
+  try {
+    const upcoming = await getUpcomingComps();
+    for (const c of upcoming) ids.add(c.id);
+  } catch (e) {
+    console.warn('[prewarm] upcoming list failed:', (e as Error).message);
+  }
+  // 2. wca_competitions 内: 比赛日 ±2d + 最近结束 30d + 报名中 next 60d
+  try {
+    const rows = await query<{ id: string }>(
+      `SELECT id FROM wca_competitions
+        WHERE start_date BETWEEN CURRENT_DATE - INTERVAL '30 days' AND CURRENT_DATE + INTERVAL '60 days'`,
+    );
+    for (const r of rows) ids.add(r.id);
+  } catch (e) {
+    console.warn('[prewarm] wca_competitions list failed:', (e as Error).message);
+  }
+  return Array.from(ids);
+}
+
+export async function prewarmHotComps(): Promise<void> {
+  if (prewarming) return;
+  prewarming = true;
+  try {
+    const ids = await listHotComps();
+    console.log(`[prewarm] starting ${ids.length} hot comps`);
+    let ok = 0, fail = 0;
+    for (const wcaId of ids) {
+      try {
+        await loadComp(wcaId, 'auto');
+        ok++;
+      } catch {
+        fail++;
+      }
+      await new Promise(r => setTimeout(r, PREWARM_DELAY_MS));
+    }
+    console.log(`[prewarm] done ok=${ok} fail=${fail}`);
+  } catch (e) {
+    console.warn('[prewarm] sweep failed:', (e as Error).message);
+  } finally {
+    prewarming = false;
+  }
+}
+
+export function startPrewarmCron(): void {
+  // 启动延后 90s,让 current_records / cn_comp_zh warm 跑完再上.
+  setTimeout(() => {
+    prewarmHotComps();
+    setInterval(prewarmHotComps, PREWARM_REFRESH_INTERVAL_MS);
+  }, 90_000);
 }
 
 // ─── Routes ────────────────────────────────────────────────────────────────

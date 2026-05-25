@@ -9,11 +9,6 @@
   gap: 0.5rem;
 }
 
-/* loading 占位高度,避免列表到位时 CLS */
-.recent-records--loading {
-  min-height: 6rem;
-}
-
 .recent-records-header {
   display: inline-flex;
   align-items: center;
@@ -73,6 +68,10 @@
 }
 
 .recent-records-row {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.3rem 0.4rem;
   border-radius: 8px;
   transition: background 0.12s;
@@ -80,6 +79,26 @@
 
 .recent-records-row:hover {
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.recent-records-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.recent-records-copy:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .recent-records-badge {
@@ -112,6 +131,13 @@
   width: 1.05em !important;
   flex-shrink: 0;
   align-self: center;
+}
+
+/* 行内国旗 — 替换 emoji RI 后注入 */
+.recent-records-inline-flag {
+  width: 1.05em !important;
+  vertical-align: -0.15em;
+  display: inline-block;
 }
 
 @media (max-width: 640px) {
