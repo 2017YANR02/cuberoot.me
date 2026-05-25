@@ -26,7 +26,7 @@ export default function CompAboutPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  useDocumentTitle('WCA 比赛说明', 'WCA Competitions Guide');
+  useDocumentTitle('加载任意比赛', 'Load any competition');
 
   return (
     <div className="ca-page">
@@ -39,19 +39,27 @@ export default function CompAboutPage() {
       </div>
 
       <main className="ca-main">
-        <h1 className="ca-title">{t('WCA 比赛直播是怎么工作的', 'How the WCA Competitions page works')}</h1>
+        <h1 className="ca-title">{t('加载任意比赛', 'Load any competition')}</h1>
         <p className="ca-intro">
           {t(
-            '/wca/comp 是站内的比赛成绩查看入口。输入或搜索一场比赛,就能看到 cubing.com 上逐轮次、逐选手的实时成绩,包括 PR 标记、选手历史成绩弹窗、赛程心理表等。',
-            '/wca/comp is the competition results viewer. Search or paste a competition id to browse round-by-round results sourced from cubing.com — with PR highlights, per-person result history, and a psychsheet view.',
+            '/wca/comp 是站内的比赛成绩查看入口。输入或搜索一场比赛,就能看到逐轮次、逐选手的成绩,包括 PR 历史排名、选手成绩弹窗、Psych Sheet。已结束的比赛 50-400 毫秒出表,实时比赛走 WebSocket 推送。',
+            '/wca/comp is the competition results viewer. Search or paste a competition id to browse round-by-round results — with historical PR rank, per-person result modal, and Psych Sheet. Past comps render in 50-400ms; ongoing comps stream via WebSocket.',
+          )}
+        </p>
+
+        <h2 className="ca-section-title">{t('为什么瞬间加载', 'Why it loads instantly')}</h2>
+        <p className="ca-section-intro">
+          {t(
+            '已结束的 17000+ 场比赛预先 dump 成静态 JSON 文件,放在 nginx 静态目录。打开页面时客户端先 fetch /stats/comp/<比赛 id>.json — 同源,无 CORS,命中即跳过 API。从比赛列表 / 日历 / 地球视图点进来时,hover 阶段已经悄悄 prefetch 进浏览器缓存,真点击瞬间出货。每周一 CI 增量补新结束的比赛。',
+            'All 17000+ past comps are pre-dumped to static JSON in nginx static dir. Client fetches /stats/comp/<id>.json first — same-origin, no CORS, skips the API on hit. Hover-prefetch from list / calendar / globe pre-warms the browser cache so the click is instant. A weekly CI job incrementally adds newly finished comps.',
           )}
         </p>
 
         <h2 className="ca-section-title">{t('数据来源', 'Data sources')}</h2>
         <p className="ca-section-intro">
           {t(
-            '成绩数据来自两条路径:WCA 官方数据库(每周 dump)和 cubing.com 实时 API。两条路径在服务端合并,cubing.com 的数据优先(更新及时),WCA dump 作为历史补充。',
-            'Results flow through two paths: the WCA developer dump (weekly) and the cubing.com live API. The server merges both, with cubing.com taking priority for recency and the WCA dump filling historical gaps.',
+            '四条路径,server 端自动挑最合适的:wca_db(本地 WCA dump 拼装,过去比赛走这条,带历史 PR 排名)/ cubing.com(中国比赛进行中走这条,WebSocket 实时推)/ WCA Live(国外比赛实时官方源)/ WCA REST(已公示但还没在 dump 里的比赛)。静态 snapshot 走的就是 wca_db 路径冻结后的产物。',
+            'Four paths; server picks the best. wca_db (assembled from local WCA dump, used for past comps with historical PR rank) / cubing.com (Chinese ongoing comps via WebSocket) / WCA Live (international ongoing comps) / WCA REST (announced but not yet in dump). The static snapshot is just the wca_db output frozen to disk.',
           )}
         </p>
 
@@ -98,8 +106,8 @@ export default function CompAboutPage() {
         <h2 className="ca-section-title">{t('PR 标记规则', 'PR badge rules')}</h2>
         <p className="ca-section-intro">
           {t(
-            'PR(个人最佳)按 WCA 口径:该次成绩严格优于该选手在此之前所有比赛的相同类型最佳。表格里单次和平均各独立标记,浅蓝色表示同类项目当场首次超越。',
-            'PR (personal record) follows WCA conventions: the result strictly improves on all prior results for that person in that event type. Single and average are tracked independently; light-blue cells indicate the first improvement within this competition.',
+            '每条成绩标的不只是"是不是 PR",而是历史第几快:PR = 选手此项目历史最快,PR2 = 历史第 2 快,PR17 = 历史第 17 快,以此类推。计算口径:本比赛开始日期之前的全部历史成绩取 dense rank。这意味着旧比赛页面的 PR rank 在那一刻冻结 — 选手未来破纪录不会回头改老页面里的标志。单次和平均独立排名。',
+            'Each result is tagged not just "is PR" but its historical position: PR = fastest ever, PR2 = 2nd best, PR17 = 17th best, etc. Dense rank computed across all results before this competition\'s start date. Past-comp PR rank is frozen in time — future breakthroughs do not retroactively rewrite old pages. Single and average ranked independently.',
           )}
         </p>
 
