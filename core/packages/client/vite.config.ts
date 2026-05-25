@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 import fs from 'fs'
 import { HttpsProxyAgent } from 'https-proxy-agent'
@@ -179,7 +180,31 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const outboundAgent = env.LOCAL_OUTBOUND ? new HttpsProxyAgent(env.LOCAL_OUTBOUND) : undefined;
   return {
-  plugins: [react(), tailwindcss(), serveRepoRoot(), visualcubeDev(), devUnregisterSw()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    serveRepoRoot(),
+    visualcubeDev(),
+    devUnregisterSw(),
+    // 每次 build 出 chunk 分析到 .tmp/(gitignored):
+    //   bundle-stats.html — treemap,人类看
+    //   bundle-stats.json — raw data,AI/jq 读
+    ...(mode === 'production' ? [
+      visualizer({
+        filename: '.tmp/bundle-stats.html',
+        template: 'treemap',
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
+      visualizer({
+        filename: '.tmp/bundle-stats.json',
+        template: 'raw-data',
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ] : []),
+  ],
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
   build: {
