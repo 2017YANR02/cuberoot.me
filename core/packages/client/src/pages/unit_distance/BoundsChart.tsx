@@ -53,7 +53,7 @@ export default function BoundsChart() {
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const [delta, setDelta] = useState(0.10);
+  const [delta, setDelta] = useState(0.014);
 
   // Build sample arrays for each curve
   const xSamples = useMemo(() => {
