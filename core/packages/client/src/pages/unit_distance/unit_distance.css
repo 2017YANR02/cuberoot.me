@@ -366,6 +366,196 @@
   font-size: 0.9rem;
 }
 
+/* ─── two-circles K_{2,3} figure ───────────────────────────────────── */
+.ud-twocircles-fig {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 1.4rem;
+  background: var(--ud-surface-2);
+  border: 1px solid var(--ud-border);
+  border-radius: 8px;
+  padding: 0.8rem;
+}
+.ud-twocircles-svg {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  display: block;
+}
+
+/* ─── evidence cards (§4.5 why everyone believed) ──────────────────── */
+.ud-evidence-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+  margin: 1.2rem 0;
+}
+.ud-evidence-card {
+  background: var(--ud-surface-2);
+  border: 1px solid var(--ud-border);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ud-evidence-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ud-text-sub);
+}
+.ud-evidence-year {
+  font-family: var(--ud-mono);
+  font-size: 0.78rem;
+  color: var(--ud-text-mute);
+  letter-spacing: 0.05em;
+}
+.ud-evidence-author {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ud-text);
+}
+
+/* ─── distinct vs unit (§5.5) ─────────────────────────────────────── */
+.ud-dual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1.4rem 0;
+}
+.ud-dual-card {
+  background: var(--ud-surface);
+  border: 1px solid var(--ud-border);
+  border-radius: 10px;
+  padding: 0.95rem 1.05rem;
+}
+.ud-dual-h {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.005em;
+  margin-bottom: 0.2rem;
+}
+.ud-dual-q {
+  font-size: 0.85rem;
+  color: var(--ud-text-mute);
+  font-style: italic;
+  margin-bottom: 0.65rem;
+  line-height: 1.4;
+}
+.ud-dual-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  padding: 0.2rem 0;
+  border-top: 1px dashed var(--ud-border);
+}
+.ud-dual-row:first-of-type { border-top: 0; }
+.ud-status-open {
+  color: var(--ud-conj);
+  font-weight: 600;
+}
+.ud-status-solved {
+  color: var(--ud-new);
+  font-weight: 600;
+}
+
+/* ─── number-field glossary (§7.5) ────────────────────────────────── */
+.ud-glossary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.8rem;
+  margin: 1.2rem 0;
+}
+.ud-glossary-card {
+  background: var(--ud-surface);
+  border: 1px solid var(--ud-border);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ud-glossary-term {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ud-text);
+}
+.ud-glossary-formula {
+  font-size: 0.9rem;
+  background: var(--ud-surface-2);
+  border-radius: 5px;
+  padding: 0.3rem 0.55rem;
+  overflow-x: auto;
+}
+.ud-glossary-desc {
+  font-size: 0.86rem;
+  color: var(--ud-text-sub);
+  line-height: 1.55;
+}
+
+/* ─── mathematicians' reactions (§11) ─────────────────────────────── */
+.ud-reactions {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1.2rem 0;
+}
+.ud-reaction {
+  background: var(--ud-surface);
+  border-left: 3px solid var(--ud-accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0.85rem 1rem;
+}
+.ud-reaction-who {
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin-bottom: 0.4rem;
+}
+.ud-reaction-aff {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--ud-text-mute);
+  margin-left: 0.4rem;
+  font-style: italic;
+}
+.ud-reaction blockquote {
+  margin: 0;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--ud-accent) 25%, var(--ud-border));
+  font-style: italic;
+  color: var(--ud-text);
+  line-height: 1.7;
+  font-size: 0.93rem;
+}
+
+/* ─── open problems grid (§12) ────────────────────────────────────── */
+.ud-open-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.8rem;
+  margin: 1.2rem 0;
+}
+.ud-open-card {
+  background: var(--ud-surface-2);
+  border: 1px solid var(--ud-border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+.ud-open-h {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ud-accent);
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.005em;
+}
+.ud-open-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ud-text-sub);
+}
+
 /* ─── Erdős grid hero figure ───────────────────────────────────────── */
 .ud-hero-figure {
   margin: 1.2rem 0;
