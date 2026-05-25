@@ -250,7 +250,8 @@
   width: 30px;
   height: 22px;
 }
-.comp-detail-title-name { color: inherit; }
+.comp-detail-title-name { color: inherit; text-decoration: none; }
+.comp-detail-title-name:hover { text-decoration: underline; }
 .comp-title-icon {
   display: inline-flex;
   align-items: center;
