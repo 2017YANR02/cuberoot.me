@@ -48,14 +48,21 @@ export function rewriteWcaCompUrl(url: string): string | null {
 // ── Hover prefetch ──
 // /wca/comp/<id> 主接口大头是 TLS 握手 + 几十 ms 服务端查询.
 // hover/focus 时悄悄发 fetch 进浏览器 HTTP cache,真点击时 instant 出货.同 id 多次触发自动 dedupe.
-// 走 auto source (不传 source 参数):过去比赛走 wca_db (1d immutable),未来 / 进行中走 cubing/L2 (30s).
-// 之前硬编码 ?source=wca_db,未来比赛 wca_db 没数据 → 502,console 噪音.
+// 优先 same-origin 静态 snapshot (/stats/comp/<id>.json,过去比赛 100% 命中) — 命中即 < 100ms LCP,
+// 不动 server.缺失才 fallback 到 API (wca_db / cubing / L2 等).
 const _prefetched = new Set<string>();
 export function prefetchComp(compId: string): void {
   if (_prefetched.has(compId)) return;
   _prefetched.add(compId);
-  const url = apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`);
-  fetch(url, { cache: 'force-cache' }).catch(() => { _prefetched.delete(compId); });
+  // 静态先行 — fetch 进同源 cache,CompDetailPage 的 fast-path 直接命中
+  fetch(`/stats/comp/${encodeURIComponent(compId)}.json`, { cache: 'force-cache' })
+    .then(r => {
+      if (r.ok) return;
+      // 静态缺失 → 预热 API(未来 / 进行中比赛 / dump 还没覆盖的)
+      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`), { cache: 'force-cache' })
+        .catch(() => { _prefetched.delete(compId); });
+    })
+    .catch(() => { _prefetched.delete(compId); });
 }
 
 /** 返回 react-router `<Link>` 的 props,带 hover/focus/touch 预取。

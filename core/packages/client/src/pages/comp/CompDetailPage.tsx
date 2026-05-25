@@ -328,6 +328,7 @@ export default function CompDetailPage() {
       let done = false;
       let resolved = false;
       let es: EventSource | null = null;
+      const apiAbort = new AbortController();
       const resolveOnce = () => { if (!resolved) { resolved = true; resolve(); } };
       const finishWith = (j: CompData, partial = false) => {
         if (done) return;
@@ -341,6 +342,7 @@ export default function CompDetailPage() {
         if (partial) return;
         done = true;
         if (es) { try { es.close(); } catch { /* ignore */ } }
+        try { apiAbort.abort(); } catch { /* ignore */ }
       };
       const failWith = (msg: string) => {
         if (done) return;
@@ -402,15 +404,21 @@ export default function CompDetailPage() {
       // - SSE 仅在 HTTP 失败 / 卡住时兜底,跑通也会替换为新数据.
       // 用户显式选 cubing/wca_live/wca/wca_db 时直接走 SSE,跳过 fast-path.
       if (!sourceParam) {
+        // 静态 snapshot fast-path:过去比赛 dump 到 /stats/comp/<slug>.json,same-origin
+        // 命中 → 0ms LCP,绕过 nginx + server + PG.缺失静默 fallback 到 API.
+        fetch(`/stats/comp/${encodeURIComponent(slug)}.json`)
+          .then(r => r.ok ? r.json() : null)
+          .then(j => { if (j) finishWith(j); })
+          .catch(() => { /* ignore */ });
         // URL 已选定 event+round 时,?only=event:round 轻量请求(~3KB)优先命中
         if (eventParam && roundParam) {
           const only = `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`;
-          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${only}`))
+          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${only}`), { signal: apiAbort.signal })
             .then(r => r.ok ? r.json() : null)
             .then(j => { if (j) finishWith(j, /* partial */ true); })
             .catch(() => { /* ignore */ });
         }
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`))
+        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`), { signal: apiAbort.signal })
           .then(r => r.ok ? r.json() : null)
           .then(j => { if (j) finishWith(j); })
           .catch(() => { /* ignore */ });
