@@ -1,0 +1,115 @@
+# Dump past-comp snapshots → /www/wwwroot/toolkit/stats/comp/<slug>.json
+# 客户端走 /stats/comp/<slug>.json same-origin fast-path,绕过 server PG 查询。
+#
+# 触发:
+#   workflow_dispatch — 手动跑,可选 force/limit/cutoff_days
+#   cron 每周一 03:00 UTC（stats.yml 每周日 20:00 完跑后,新 wca_competitions 已入库）
+#
+# 流程:
+#   1. esbuild bundle dump 脚本成单 JS（含所有依赖 ~300KB)
+#   2. scp 上 server
+#   3. ssh 跑 dump（OUTPUT_DIR 直接写 nginx 静态目录,文件已存在 skip）
+#   4. 跑完 ls 一下报告新增数量
+name: Dump comp snapshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'FORCE=1 忽略已有文件全量 redump'
+        required: false
+        default: '0'
+      limit:
+        description: 'LIMIT=N 只跑前 N 场（0=无限）'
+        required: false
+        default: '0'
+      cutoff_days:
+        description: 'CUTOFF_DAYS（end_date < today-N 才 dump）'
+        required: false
+        default: '7'
+      force_slugs:
+        description: 'FORCE_SLUGS=A,B,C 只 dump 这些 slug（覆盖其它过滤）'
+        required: false
+        default: ''
+  schedule:
+    # UTC 周一 03:00 — stats.yml 周日 20:00 后 7 小时,wca_competitions 已最新
+    - cron: '0 3 * * 1'
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300  # 全量 bootstrap 估 2-4h,留余地
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install deps
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        working-directory: core
+        run: pnpm --filter @cuberoot/shared build
+
+      - name: Bundle dump script
+        working-directory: core
+        run: |
+          mkdir -p .tmp
+          pnpm --filter @cuberoot/server exec esbuild scripts/dump-past-comps.ts \
+            --bundle --platform=node --target=node22 --format=esm \
+            --outfile=../../.tmp/dump-past-comps.js \
+            --banner:js="import {createRequire} from 'module'; const require = createRequire(import.meta.url);"
+          ls -la .tmp/dump-past-comps.js
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp bundle to server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+            .tmp/dump-past-comps.js "$DEPLOY_USER@$DEPLOY_HOST:/tmp/dump-past-comps.js"
+
+      - name: Run dump (foreground, stream logs)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          FORCE: ${{ github.event.inputs.force || '0' }}
+          LIMIT: ${{ github.event.inputs.limit || '0' }}
+          CUTOFF_DAYS: ${{ github.event.inputs.cutoff_days || '7' }}
+          FORCE_SLUGS: ${{ github.event.inputs.force_slugs || '' }}
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p /www/wwwroot/toolkit/stats/comp && cd /root/core-api && \
+              OUTPUT_DIR=/www/wwwroot/toolkit/stats/comp \
+              CONCURRENCY=4 \
+              CUTOFF_DAYS=$CUTOFF_DAYS \
+              LIMIT=$LIMIT \
+              FORCE=$FORCE \
+              FORCE_SLUGS='$FORCE_SLUGS' \
+              node --env-file=.env /tmp/dump-past-comps.js"
+
+      - name: Report file count
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -n -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
+            "ls /www/wwwroot/toolkit/stats/comp/ | wc -l; du -sh /www/wwwroot/toolkit/stats/comp/"
