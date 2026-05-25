@@ -1,0 +1,1 @@
+import{n as e}from"./api_base-DYONKLqa.js";export{e as apiUrl};
