@@ -1,0 +1,1 @@
+import{t as e}from"./LangToggle-ETzSaVn1.js";import{t}from"./jsx-runtime-DhG3BTtD.js";import{t as n}from"./ThemeToggle-BQZ_nU1_.js";var r=t();function i({className:t}){return(0,r.jsxs)(`div`,{className:[`header-toggles`,t].filter(Boolean).join(` `),children:[(0,r.jsx)(e,{}),(0,r.jsx)(n,{})]})}export{i as t};

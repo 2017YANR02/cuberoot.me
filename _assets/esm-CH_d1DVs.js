@@ -1,1 +1,0 @@
-import{t as e}from"./preload-helper-pMktvWfG.js";import{c as t}from"./dist-BsQGDI2F.js";var n=t(`App`,{web:()=>e(()=>import(`./web-BL5_OMxz.js`).then(e=>new e.AppWeb),[])});export{n as App};
