@@ -292,6 +292,12 @@ importers:
 
   packages/client-next:
     dependencies:
+      '@ffmpeg/ffmpeg':
+        specifier: ^0.12.15
+        version: 0.12.15
+      '@ffmpeg/util':
+        specifier: ^0.12.2
+        version: 0.12.2
       mp4box:
         specifier: ^2.3.0
         version: 2.3.0
