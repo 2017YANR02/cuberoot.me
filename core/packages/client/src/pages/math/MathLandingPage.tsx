@@ -5,7 +5,7 @@
  */
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma, Dices } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
@@ -35,6 +35,12 @@ const CARDS: Card[] = [
     Icon: Sigma,
     zh: { title: '魔方与群', desc: '群论长文 26 节,25 个互动面板,KaTeX 渲染' },
     en: { title: 'Cube as a group', desc: '26-section group-theory essay, 25 interactive panels, KaTeX-rendered' },
+  },
+  {
+    to: '/math/unit-distance',
+    Icon: Ruler,
+    zh: { title: '单位距离问题', desc: 'OpenAI 2026:AI 自主推翻 Erdős 1946 平面单位距离猜想,5 个互动可视化' },
+    en: { title: 'Unit distance problem', desc: 'OpenAI 2026: AI autonomously disproves Erdős 1946 planar unit-distance conjecture — 5 interactive visualisations' },
   },
 ];
 

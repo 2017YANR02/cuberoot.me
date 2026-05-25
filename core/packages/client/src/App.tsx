@@ -69,6 +69,7 @@ const TrafficPage = lazy(() => import('./pages/traffic/TrafficPage'));
 const ScrambleHubPage = lazy(() => import('./pages/scramble/ScrambleHubPage'));
 const GodNumberPage = lazy(() => import('./pages/god/GodNumberPage'));
 const DemigodPage = lazy(() => import('./pages/demigod/DemigodPage'));
+const UnitDistancePage = lazy(() => import('./pages/unit_distance/UnitDistancePage'));
 const MathLandingPage = lazy(() => import('./pages/math/MathLandingPage'));
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
 const ScrambleSolverPage = lazy(() => import('./pages/scramble/solver/ScrambleSolverPage'));
@@ -417,6 +418,7 @@ function App() {
         <Route path="/math/group/:slug" element={<Suspense fallback={<div>Loading...</div>}><GroupTheoryPage /></Suspense>} />
         <Route path="/math/god" element={<Suspense fallback={<div>Loading...</div>}><GodNumberPage /></Suspense>} />
         <Route path="/math/demigod" element={<Suspense fallback={<div>Loading...</div>}><DemigodPage /></Suspense>} />
+        <Route path="/math/unit-distance" element={<Suspense fallback={<div>Loading...</div>}><UnitDistancePage /></Suspense>} />
         {/* 旧链接重定向 */}
         <Route path="/theory" element={<Navigate to="/math" replace />} />
         <Route path="/theory/group" element={<Navigate to="/math/group" replace />} />

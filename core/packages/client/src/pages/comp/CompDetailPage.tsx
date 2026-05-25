@@ -386,14 +386,15 @@ export default function CompDetailPage() {
           .then(r => r.ok ? r.json() : null)
           .then(j => { if (j) finishWith(j); })
           .catch(() => { /* ignore */ });
-        // URL 已选定 event+round 时,?only=event:round 轻量请求(~3KB)优先命中
-        if (eventParam && roundParam) {
-          const only = `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`;
-          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${only}`), { signal: apiAbort.signal })
-            .then(r => r.ok ? r.json() : null)
-            .then(j => { if (j) finishWith(j, /* partial */ true); })
-            .catch(() => { /* ignore */ });
-        }
+        // 轻量请求(~3KB)优先命中:URL 有 event/round 用之,否则 ?only=auto 让 server 选默认轮.
+        // 跨洋用户 LCP 关键路径:full 3MB 6s vs partial 3KB 300ms.
+        const onlyParam = eventParam && roundParam
+          ? `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`
+          : 'auto';
+        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${onlyParam}`), { signal: apiAbort.signal })
+          .then(r => r.ok ? r.json() : null)
+          .then(j => { if (j) finishWith(j, /* partial */ true); })
+          .catch(() => { /* ignore */ });
         fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`), { signal: apiAbort.signal })
           .then(r => r.ok ? r.json() : null)
           .then(j => { if (j) finishWith(j); })
@@ -802,12 +803,18 @@ export default function CompDetailPage() {
       (data.resultsByRound[roundKey(ev.i, rd.i)] || []).length > 0 || rd.s === 2
     );
   };
-  // badge:选中 event 上显示「当前轮/总轮数」(1/4=初赛在 4 轮里);未选中不显示
+  // 右上角:每个 event 都标总轮数 (含未选中);右下角:仅选中 event 标当前轮
   const eventBadges: Record<string, string> = {};
+  const eventTopBadges: Record<string, string> = {};
+  for (const ev of data.events) {
+    const rounds = validRoundsFor(ev.i);
+    const total = rounds.length > 0 ? rounds.length : ev.rs.length;
+    if (total > 0) eventTopBadges[ev.i] = `${total}`;
+  }
   if (eventParam && roundParam) {
     const rounds = validRoundsFor(eventParam);
     const idx = rounds.findIndex(rd => rd.i === roundParam);
-    if (idx >= 0) eventBadges[eventParam] = `${idx + 1}/${rounds.length}`;
+    if (idx >= 0) eventBadges[eventParam] = `${idx + 1}`;
   }
   const onSelectEvent = (newEventId: string) => {
     const ev = data.events.find(e => e.i === newEventId);
@@ -849,15 +856,22 @@ export default function CompDetailPage() {
               return (
                 <>
                   {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
-                  <span className="comp-detail-title-name">{localizeCompName(slug, decodeEntities(data.name), isZh)}</span>
+                  <a
+                    href={wcaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="comp-detail-title-name"
+                  >
+                    {localizeCompName(slug, decodeEntities(data.name), isZh)}
+                  </a>
+                  <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
+                    <img src={base + 'icons/upstream/wca.svg'} alt="WCA" />
+                  </a>
                   {iso2 === 'cn' && (
                     <a href={cubingUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="cubing.com">
                       <img src={base + 'icons/upstream/cubingcom.ico'} alt="cubing.com" />
                     </a>
                   )}
-                  <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
-                    <img src={base + 'icons/upstream/wca.svg'} alt="WCA" />
-                  </a>
                   <Link
                     to={`/scramble/gen?comp=${encodeURIComponent(slug)}`}
                     className="comp-title-icon comp-title-icon-lucide"
@@ -917,6 +931,7 @@ export default function CompDetailPage() {
             onlyAvailable
             allowAll={isPsych}
             badges={isPsych ? {} : eventBadges}
+            topBadges={isPsych ? {} : eventTopBadges}
             appendEvents={nonWcaEvents}
           />
         </div>
