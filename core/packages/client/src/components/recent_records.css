@@ -135,9 +135,15 @@
 
 /* 行内国旗 — 替换 emoji RI 后注入 */
 .recent-records-inline-flag {
-  width: 1.05em !important;
-  vertical-align: -0.15em;
+  width: 1.2em !important;
+  vertical-align: middle;
   display: inline-block;
+}
+
+/* 内联纪录徽章在 RecentRecords 上下文里按行高居中,不要 super 抬起 */
+.recent-records-body .record-badge--inline {
+  vertical-align: middle;
+  margin-left: 4px;
 }
 
 @media (max-width: 640px) {

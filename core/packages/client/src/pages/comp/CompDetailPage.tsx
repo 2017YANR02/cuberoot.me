@@ -184,35 +184,11 @@ function prBadgeFor(rank: number | null | undefined): string | null {
   return rank === 1 ? 'PR' : `PR${rank}`;
 }
 
-/** 把 cubing.com 的 centiseconds 格式化为显示字符串。
- *  注意 cubing.com 的 v[]/b/a 编码与 WCA 不完全一致:
- *    - 普通项目: centiseconds (单/平均都是)
- *    - FMC (333fm): single 是 raw moves; average 是 moves×100
- *    - MBLD (333mbf): 比赛中 cubing.com 用 1:DD/AA TIME 字符串,这里我们暂时按数字渲染
- *    - DNF = -1, DNS = -2, 空 = 0 → "" */
+/** 渲染 result value → 字符串.单一来源 utils/wca_format_result.ts (MBLD/FMC/sentinels 全覆盖).
+ *  wca_db 路径返回的是 raw WCA encoded value (0DDsssssMM for MBLD),必须走 formatWcaResult 解码;
+ *  cubing.com 实时源在 WCA 公示前可能给 string,但 LiveResult 类型已是 number,统一走这条. */
 function formatLive(value: number, eventId: string, isAverage: boolean): string {
-  if (value === -1) return 'DNF';
-  if (value === -2) return 'DNS';
-  if (value === 0) return '';
-
-  if (eventId === '333fm') {
-    if (!isAverage) return String(value);
-    return (value / 100).toFixed(2);
-  }
-  if (eventId === '333mbf') {
-    // raw encoding very rarely shows up live; fallback "x/y mm:ss" if possible
-    return String(value);
-  }
-
-  // centiseconds → m:ss.cc / s.cc
-  const total = value / 100;
-  const m = Math.floor(total / 60);
-  const s = total - m * 60;
-  if (m > 0) {
-    const sStr = s.toFixed(2).padStart(5, '0');
-    return `${m}:${sStr}`;
-  }
-  return s.toFixed(2);
+  return formatWcaResult(value, eventId, isAverage ? 'average' : 'single', { zero: 'empty' });
 }
 
 /** 每个 round 的稳定 key: "<event>:<round>"  */
