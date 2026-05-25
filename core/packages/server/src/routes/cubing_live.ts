@@ -771,7 +771,7 @@ interface WcaDbRow {
 }
 
 /** 返回 null 表示本地 dump 没有这场比赛 (有效信号,fall-through 给外部 probe);PG 报错才 throw. */
-async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<CompData | null> {
+export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): Promise<CompData | null> {
   onProgress?.({ step: 'wca_db.query', done: 0, total: 1 });
   const rows = await query<WcaDbRow>(
     `SELECT

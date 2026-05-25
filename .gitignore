@@ -54,4 +54,7 @@ tmp/
 # stats-build 中间产物 (historical_ranks 等)
 core/packages/stats-build/output/
 
+# past-comp snapshots dump (~800MB 17k 场,走 dump_comps.yml 直接 scp 到 server)
+stats/comp/
+
 .cc-connect/

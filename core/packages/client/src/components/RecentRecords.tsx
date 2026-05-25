@@ -40,7 +40,7 @@ function stripPrefix(text: string): string {
 function shortenEvent(text: string, eventId: string, isZh: boolean): string {
   const short = eventDisplayName(eventId, isZh);
   if (isZh) {
-    return text.replace(/^([\d:.,]+)(.+?)(单次|平均)/, (_m, val, _e, type) => `${val}${short}${type}`);
+    return text.replace(/^([\d:.,]+)(.+?)(单次|平均)/, (_m, val, _e, type) => `${val} ${short}${type}`);
   }
   return text.replace(
     /^([\d:.,]+\s)(\S+)(\s(?:WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
@@ -54,7 +54,7 @@ function shortenEvent(text: string, eventId: string, isZh: boolean): string {
  *  - 但 /WR<数字> 是世界排名后缀,不替换(WCA Live tag 只到 WR/CR/NR 三层) */
 function renderFormatted(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)(?!\d)/gu;
+  const re = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])|(?<![A-Za-z])(WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)(?![A-Za-z0-9])/gu;
   let lastEnd = 0;
   let key = 0;
   let m: RegExpExecArray | null;
