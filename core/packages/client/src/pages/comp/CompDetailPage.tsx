@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';
 import HeaderToggles from '../../components/HeaderToggles';
 import { Flag } from '../../utils/flag';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -1485,18 +1485,6 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
             ) : (
               <span className="cuber-link-static">{displayCuberName(u.name, isZh)}</span>
             )}
-            {u.wcaid && (
-              <a
-                className="comp-modal-wcaid"
-                href={`https://www.worldcubeassociation.org/persons/${u.wcaid}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="WCA"
-              >
-                {u.wcaid} <ExternalLink size={12} />
-              </a>
-            )}
-            <span className="comp-modal-region">{regionDisplay(u.region, isZh)}</span>
           </div>
           <button type="button" className="comp-modal-close" onClick={onClose} aria-label="Close">
             <XIcon size={18} />
@@ -1586,11 +1574,73 @@ interface RoundResultModalProps {
 function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, onShowAll, onClose }: RoundResultModalProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
 
+  // 弹窗一开就预取 format-record (server 端 spawn Python 大头 ~300ms-1s + RTT),
+  // 用户读成绩这 1-2 秒掩盖延迟;点 复制 时几乎只剩 clipboard.writeText.
+  const prefetchRef = useRef<Promise<{ cn: string; en: string; url: string } | null> | null>(null);
+  const prefetchKeyRef = useRef<string>('');
+  const hasEventsRef = useRef(false);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  useEffect(() => {
+    const u = data.users[String(number)];
+    const ev = data.events.find(e => e.i === eventId);
+    const rd = ev?.rs.find(r => r.i === roundId);
+    const arr = data.resultsByRound[roundKey(eventId, roundId)] || [];
+    const result = arr.find(rr => rr.n === number);
+    if (!u || !ev || !rd || !result) return;
+
+    const pb = pbMap[u.wcaid];
+    const { singleRank, averageRank } = classifyPr(result, pb);
+    const singleTagForCopy = result.sr ? String(result.sr) : (singleRank ? 'PR' : '');
+    const avgTagForCopy = result.ar ? String(result.ar) : (averageRank ? 'PR' : '');
+
+    const personIso2 = regionToIso2(u.region).toUpperCase();
+    const compNameZh = localizeCompName(data.slug, decodeEntities(data.name), true);
+    const compNameEn = localizeCompName(data.slug, decodeEntities(data.name), false);
+    const compIso2 = compFlagIso2(data.slug);
+    const url = window.location.href;
+    const events: Array<Record<string, unknown>> = [];
+    if (singleTagForCopy && result.b > 0) {
+      events.push({
+        tag: singleTagForCopy, rec_type: 'single', attempt_result: result.b,
+        event_id: result.e, person_name: u.name, person_iso2: personIso2,
+        comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
+        url, previous_pr: pb?.[result.e]?.single?.best ?? null, pr_rank: singleRank,
+      });
+    }
+    if (avgTagForCopy && result.a > 0) {
+      events.push({
+        tag: avgTagForCopy, rec_type: 'average', attempt_result: result.a,
+        event_id: result.e, person_name: u.name, person_iso2: personIso2,
+        comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
+        url, previous_pr: pb?.[result.e]?.average?.best ?? null, pr_rank: averageRank,
+      });
+    }
+    hasEventsRef.current = events.length > 0;
+    if (events.length === 0) return;
+
+    // 同一份 events 不重复 fetch (data 每轮 poll 会触发 effect)
+    const key = JSON.stringify(events);
+    if (key === prefetchKeyRef.current) return;
+    prefetchKeyRef.current = key;
+
+    prefetchRef.current = fetch(apiUrl('/v1/wca/format-record'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events }),
+    })
+      .then(async r => {
+        if (!r.ok) return null;
+        const json = await r.json() as { cn: string; en: string; url: string; error?: string };
+        return json.error ? null : json;
+      })
+      .catch(() => null);
+  }, [data, number, eventId, roundId, pbMap]);
 
   const u = data.users[String(number)];
   const ev = data.events.find(e => e.i === eventId);
@@ -1617,48 +1667,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const canCopy = (singleTagForCopy && result.b > 0) || (avgTagForCopy && result.a > 0);
 
   async function handleCopy() {
-    if (!result || !ev || !rd) return;
-    setCopyState('copying');
-    const compNameZh = localizeCompName(data.slug, decodeEntities(data.name), true);
-    const compNameEn = localizeCompName(data.slug, decodeEntities(data.name), false);
-    const compIso2 = compFlagIso2(data.slug);
-    const personIso2 = iso2.toUpperCase();
-    const url = window.location.href;
-    // previous_pr = 这场比赛之前选手的历史 PR (wca_pb fetch 来的);API 端用它判 tied,
-    // 不在前端做业务判定 — 跟 wca_pr_cache.is_tied_pr 同一判定函数 (Python 单源).
-    const prevSingle = pb?.[result.e]?.single?.best ?? null;
-    const prevAverage = pb?.[result.e]?.average?.best ?? null;
-    const events: Array<Record<string, unknown>> = [];
-    if (singleTagForCopy && result.b > 0) {
-      events.push({
-        tag: singleTagForCopy, rec_type: 'single', attempt_result: result.b,
-        event_id: result.e, person_name: u.name, person_iso2: personIso2,
-        comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
-        url, previous_pr: prevSingle, pr_rank: singleRank,
-      });
-    }
-    if (avgTagForCopy && result.a > 0) {
-      events.push({
-        tag: avgTagForCopy, rec_type: 'average', attempt_result: result.a,
-        event_id: result.e, person_name: u.name, person_iso2: personIso2,
-        comp_name: compNameZh, comp_name_en: compNameEn, comp_iso2: compIso2,
-        url, previous_pr: prevAverage, pr_rank: averageRank,
-      });
-    }
-    if (events.length === 0) {
+    if (!hasEventsRef.current || !prefetchRef.current) {
       setCopyState('nothing');
       setTimeout(() => setCopyState('idle'), 1500);
       return;
     }
+    setCopyState('copying');
     try {
-      const resp = await fetch(apiUrl('/v1/wca/format-record'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ events }),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json() as { cn: string; en: string; url: string; error?: string };
-      if (json.error) throw new Error(json.error);
+      const json = await prefetchRef.current;
+      if (!json) throw new Error('prefetch failed');
       const text = `${isZh ? json.cn : json.en}\n${json.url}`;
       await navigator.clipboard.writeText(text);
       setCopyState('done');
