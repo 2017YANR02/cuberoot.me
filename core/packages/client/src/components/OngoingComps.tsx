@@ -33,15 +33,35 @@ export default function OngoingComps({ lang }: Props) {
 
   useEffect(() => {
     let mounted = true;
-    loadComps().then(all => {
+
+    const kick = () => {
       if (!mounted) return;
-      const today = toIsoDate(new Date());
-      const ongoing = all.filter(
-        c => c.start_date <= today && (c.end_date || c.start_date) >= today,
-      );
-      setComps(ongoing);
-    }).catch(() => { if (mounted) setComps([]); });
-    return () => { mounted = false; };
+      loadComps().then(all => {
+        if (!mounted) return;
+        const today = toIsoDate(new Date());
+        const ongoing = all.filter(
+          c => c.start_date <= today && (c.end_date || c.start_date) >= today,
+        );
+        setComps(ongoing);
+      }).catch(() => { if (mounted) setComps([]); });
+    };
+
+    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
+    type CIC = (id: number) => void;
+    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: CIC };
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    if (w.requestIdleCallback) {
+      idleId = w.requestIdleCallback(kick, { timeout: 2000 });
+    } else {
+      timeoutId = setTimeout(kick, 200);
+    }
+
+    return () => {
+      mounted = false;
+      if (idleId !== null) w.cancelIdleCallback?.(idleId);
+      if (timeoutId !== null) clearTimeout(timeoutId);
+    };
   }, []);
 
   const groups = useMemo<CountryGroup[]>(() => {
