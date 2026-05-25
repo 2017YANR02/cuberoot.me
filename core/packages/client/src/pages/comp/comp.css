@@ -802,7 +802,7 @@ td.is-pr {
   border: 1px solid var(--border-default);
   border-radius: 8px;
   max-width: 380px;
-  width: 100%;
+  width: fit-content;
   max-height: 90vh;
   display: flex;
   flex-direction: column;

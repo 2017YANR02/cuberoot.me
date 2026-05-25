@@ -744,6 +744,28 @@ async function main() {
   }
   prStream.end();
 
+  // ── 9. wca_comp_updated_at: per-comp MAX(Results.updated_at) manifest ──
+  // 100% 一致用:dump_comps.yml 增量决策的 source-of-truth.
+  // Results.updated_at = MySQL 自动维护的 ON UPDATE CURRENT_TIMESTAMP,
+  // 任何 WCA 改成绩都会 bump.索引 index_Results_on_competitionId_and_updated_at 覆盖此查询.
+  console.log('[manifest] computing per-comp MAX(updated_at)...');
+  const [compMaxRows] = await conn.query<mysql.RowDataPacket[]>(
+    `SELECT competition_id, MAX(updated_at) AS src_max FROM results GROUP BY competition_id`,
+  );
+  let compMaxCount = 0;
+  {
+    const f = createWriteStream(resolve(outDir, 'wca_comp_updated_at.copy.tsv'));
+    for (const r of compMaxRows) {
+      const ts = r['src_max'];
+      if (!ts) continue;
+      const tsStr = ts instanceof Date ? ts.toISOString().slice(0, 19).replace('T', ' ') : String(ts);
+      f.write(`${pgEsc(r['competition_id'] as string)}\t${tsStr}\n`);
+      compMaxCount++;
+    }
+    f.end();
+  }
+  console.log(`  comp_updated_at  : ${compMaxCount} rows`);
+
   // ── flush 还在 buffer 的 stream ──
   await Promise.all([
     new Promise<void>(res => allTopStream.end(() => res())),
@@ -797,6 +819,14 @@ CREATE INDEX wrt_comp_lookup  ON wca_results_top (comp_id);
 -- 同 migrations/0007_wrt_prior_pr_index.sql,但 CI 每周 DROP+CREATE,migration 之后再 apply 已晚,必须建在 load.sql 里.约 +505 MB.
 CREATE INDEX wrt_prior_pr     ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
 
+-- wca_comp_updated_at: dump_comps.yml 增量 manifest;每天 DROP+CREATE,与 comp_dump_state
+-- 配对.NOTE: comp_dump_state 在 migrations/0015_comp_dump_state.sql 建,这里**不能动它**.
+DROP TABLE IF EXISTS wca_comp_updated_at;
+CREATE TABLE wca_comp_updated_at (
+  comp_id            VARCHAR(50)  PRIMARY KEY,
+  src_max_updated_at TIMESTAMP    NOT NULL
+);
+
 TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;
 TRUNCATE wca_cohort_ranks;
@@ -811,6 +841,7 @@ TRUNCATE wca_person_ranks;
 \\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
 \\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
+\\copy wca_comp_updated_at (comp_id, src_max_updated_at) FROM 'wca_comp_updated_at.copy.tsv';
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
@@ -826,6 +857,7 @@ ANALYZE wca_cohort_ranks;
 ANALYZE wca_success_rate;
 ANALYZE wca_all_events_done;
 ANALYZE wca_person_ranks;
+ANALYZE wca_comp_updated_at;
 `;
   writeFileSync(resolve(outDir, 'load.sql'), loadSql);
 
@@ -842,6 +874,7 @@ ANALYZE wca_person_ranks;
   console.log(`  success_rate      : ${srCount.toLocaleString()} rows, ${sizeMb('wca_success_rate.copy.tsv')} MB`);
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);
   console.log(`  person_ranks      : ${prCount.toLocaleString()} rows, ${sizeMb('wca_person_ranks.copy.tsv')} MB`);
+  console.log(`  comp_updated_at   : ${compMaxCount.toLocaleString()} rows, ${sizeMb('wca_comp_updated_at.copy.tsv')} MB`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
