@@ -1,0 +1,1 @@
+import{t as e}from"./preload-helper-pMktvWfG.js";import{c as t}from"./dist-BqNeSTBH.js";var n=t(`App`,{web:()=>e(()=>import(`./web-CUDTr7-4.js`).then(e=>new e.AppWeb),[])});export{n as App};

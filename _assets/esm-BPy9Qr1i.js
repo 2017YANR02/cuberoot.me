@@ -1,0 +1,1 @@
+import{t as e}from"./preload-helper-pMktvWfG.js";import{c as t}from"./dist-BqNeSTBH.js";var n=t(`Browser`,{web:()=>e(()=>import(`./web-lqON9gYD.js`).then(e=>new e.BrowserWeb),[])});export{n as Browser};
