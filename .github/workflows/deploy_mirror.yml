@@ -71,7 +71,9 @@ jobs:
 
           # --exclude='.*' 滤掉 git checkout 的 atomic-write 临时文件 (`.<name>.<rand>`)
           # 否则 rsync 扫到 tmp 后传输前 tmp 被 rename/删 → exit 24
-          rsync -rltz --delete --exclude='blog' --exclude='.*' --chmod=D755,F644 \
+          # --exclude='stats/comp/' past-comp snapshots 由 dump_comps.yml 直接 dump 到 server
+          # nginx 静态目录,不进 repo (~800MB 17k 场).不 exclude 的话 --delete 会清空!
+          rsync -rltz --delete --exclude='blog' --exclude='.*' --exclude='stats/comp/' --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             _deploy/ "${USER}@${HOST}:${PATH_REMOTE}/"
 
