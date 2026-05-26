@@ -113,3 +113,58 @@ export function formatRecord(val: string | undefined): { text: string; className
 export function wcaPersonUrl(personId: string): string {
   return `https://www.worldcubeassociation.org/persons/${personId}`;
 }
+
+// ── helpers ported from packages/client/src/utils/recon_utils.ts ──
+
+export function formatTimeInput(seconds: number | undefined | null): string {
+  if (seconds == null || isNaN(seconds) || seconds < 0) return '';
+  const ms = Math.round(seconds * 1000);
+  if (ms >= 60000) {
+    const m = Math.floor(ms / 60000);
+    const s = (ms % 60000) / 1000;
+    const sStr = s < 10 ? '0' + String(s) : String(s);
+    return `${m}:${sStr}`;
+  }
+  return String(ms / 1000);
+}
+
+export function parseTimeInput(raw: string): number {
+  if (!raw || !raw.trim()) return NaN;
+  const s = raw.trim();
+  const colonMatch = s.match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/);
+  if (colonMatch) {
+    return parseInt(colonMatch[1]) * 60 + parseFloat(colonMatch[2]);
+  }
+  const n = parseFloat(s);
+  if (isNaN(n)) return NaN;
+  if (Number.isInteger(n) && n >= 100 && !s.includes('.')) {
+    return n / 100;
+  }
+  return n;
+}
+
+export function isBldEvent(event: string): boolean {
+  return ['3bld', '4bld', '5bld', 'mbld'].includes(event);
+}
+
+export function attemptsPerRound(event: string): number {
+  if (event === 'mbld') return 1;
+  if (['6x6', '7x7', '3bld', '4bld', '5bld', 'fmc'].includes(event)) return 3;
+  return 5;
+}
+
+export function computeWcaAverage(attempts: (number | null)[], event: string): number | null {
+  const expected = attemptsPerRound(event);
+  if (expected === 1) return null;
+  const slice = attempts.slice(0, expected);
+  if (slice.length < expected || slice.some(v => v == null)) return null;
+  const norm = slice.map(v => (v! < 0 ? Infinity : v!));
+  const dnfs = norm.filter(v => v === Infinity).length;
+  if (expected === 3) {
+    if (dnfs > 0) return null;
+    return Math.round((norm[0] + norm[1] + norm[2]) / 3 * 100) / 100;
+  }
+  if (dnfs >= 2) return null;
+  const sorted = [...norm].sort((a, b) => a - b);
+  return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3 * 100) / 100;
+}
