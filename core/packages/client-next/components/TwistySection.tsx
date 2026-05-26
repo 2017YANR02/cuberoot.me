@@ -7,18 +7,20 @@
  * for 3x3x3, which is what this version covers.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TwistyPlayerCtor = new (init: Record<string, unknown>) => any;
 
 export default function TwistySection({
-  puzzle, scramble, alg, fillPane = false,
+  puzzle, scramble, alg, fillPane = false, playerRef: externalRef,
 }: {
   puzzle: string;
   scramble: string;
   alg: string;
   fillPane?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  playerRef?: MutableRefObject<any>;
 }) {
   const [Ctor, setCtor] = useState<TwistyPlayerCtor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,7 @@ export default function TwistySection({
       controlPanel: 'bottom-row',
     });
     playerInstRef.current = player;
+    if (externalRef) externalRef.current = player;
     player.style.colorScheme = 'light';
     if (fillPane) {
       const syncSize = () => {
@@ -63,6 +66,7 @@ export default function TwistySection({
       return () => {
         ro.disconnect();
         playerInstRef.current = null;
+        if (externalRef) externalRef.current = null;
       };
     }
     player.style.width = '100%';
@@ -71,6 +75,7 @@ export default function TwistySection({
     container.appendChild(player);
     return () => {
       playerInstRef.current = null;
+      if (externalRef) externalRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Ctor, puzzle, fillPane]);
