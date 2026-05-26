@@ -268,8 +268,8 @@ export default function TrainingPage() {
       {gameState === 'paused' && (
         <button className="btn-primary" onClick={resumePlay} style={{ fontSize: '1.2rem', padding: '0.75rem 2rem' }}>
           {results.length === 0
-            ? (isZh ? '开始' : 'Start')
-            : (isZh ? '继续' : 'Continue')} (Space)
+            ? (isZh ? '▶ 开始' : '▶ Start')
+            : (isZh ? '▶ 继续' : '▶ Continue')} (Space)
         </button>
       )}
 
