@@ -1,0 +1,91 @@
+'use client';
+
+/**
+ * /alg landing — port of packages/client/src/pages/alg/AlgIndexPage.tsx.
+ *
+ * Admin "Validate all" button stubbed for now — auth_store + ADMIN_WCA_IDS
+ * not yet ported into client-next. The validate-all flow re-enables once
+ * @cuberoot/shared exports the OAuth hook and we port useAuthStore.
+ */
+import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
+import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
+import LangToggle from '@/components/LangToggle';
+import ThemeToggle from '@/components/ThemeToggle';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { eventDisplayName } from '@/lib/wca-events';
+import './alg.css';
+
+export default function AlgIndexPage() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
+  useDocumentTitle('公式库', 'Algorithms');
+
+  return (
+    <div className="alg-root">
+      <div className="alg-index-header">
+        <div className="alg-index-header-row">
+          <h1 className="alg-index-title">{isZh ? '公式库' : 'Algorithm DB'}</h1>
+          <div className="alg-index-header-actions">
+            <ThemeToggle />
+            <LangToggle variant="inline" />
+          </div>
+        </div>
+        <p className="alg-index-subtitle">
+          {(isZh ? '魔方公式速查 — ' : 'Cube algorithm reference — ') +
+            ALG_PUZZLES.map((p) => eventDisplayName(p, isZh)).join(' / ')}
+        </p>
+        <p className="alg-index-credit">
+          {isZh ? '数据来源: ' : 'Source: '}
+          <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
+            speedcubedb.com
+          </a>
+        </p>
+      </div>
+
+      <div className="alg-puzzle-grid">
+        {ALG_PUZZLES.map((p) => {
+          const sets = ALG_CATALOG[p];
+          return (
+            <Link key={p} href={`/alg/${p}`} className="alg-puzzle-card">
+              <div className="alg-puzzle-name">
+                <EventIcon event={p} className="alg-puzzle-icon" />
+                <span>{eventDisplayName(p, isZh)}</span>
+              </div>
+              <div className="alg-puzzle-count">
+                {sets.length} {isZh ? '套公式' : 'sets'}
+              </div>
+              <div className="alg-puzzle-preview">
+                {sets.slice(0, 6).map((s) => (
+                  <span key={s.slug} className="alg-puzzle-chip">
+                    {isZh ? s.zh : s.en}
+                  </span>
+                ))}
+                {sets.length > 6 && (
+                  <span className="alg-puzzle-chip is-more">+{sets.length - 6}</span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+        <Link href="/alg/commutator" className="alg-puzzle-card">
+          <div className="alg-puzzle-name">
+            <span className="alg-puzzle-icon alg-bracket-icon" aria-hidden="true">
+              [,]
+            </span>
+            <span>{isZh ? '换位子' : 'Commutator'}</span>
+          </div>
+          <div className="alg-puzzle-count">
+            {isZh ? '换位子分解工具' : 'Commutator decomposer'}
+          </div>
+          <div className="alg-puzzle-preview">
+            <span className="alg-puzzle-chip">{isZh ? '分解' : 'Decompose'}</span>
+            <span className="alg-puzzle-chip">{isZh ? '展开' : 'Expand'}</span>
+            <span className="alg-puzzle-chip">Excel</span>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+}
