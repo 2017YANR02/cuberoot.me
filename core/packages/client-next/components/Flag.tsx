@@ -40,3 +40,21 @@ export function Flag({ iso2, className, imgClassName, spanClassName }: FlagProps
   const cls = extra ? `${info.className} ${extra}` : info.className;
   return <span className={cls} aria-label={info.ariaLabel} />;
 }
+
+export interface FlagHtmlOpts {
+  className?: string;
+  imgClassName?: string;
+  spanClassName?: string;
+}
+
+/** innerHTML / MapLibre popup 场景 */
+export function flagHtml(iso2: string, opts?: FlagHtmlOpts): string {
+  const info = flagInfo(iso2);
+  if (info.kind === 'img') {
+    const cls = opts?.imgClassName ?? opts?.className ?? '';
+    return `<img class="${cls}" src="${info.src}" alt="${info.alt}" />`;
+  }
+  const extra = opts?.spanClassName ?? opts?.className ?? '';
+  const cls = extra ? `${info.className} ${extra}` : info.className;
+  return `<span class="${cls}" aria-label="${info.ariaLabel}"></span>`;
+}
