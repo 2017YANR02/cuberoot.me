@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client/src/pages/wca_stats/RecordsPage.tsx.
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +44,7 @@ function regionUrl(region: string): string {
 
 type Show = 'history' | 'mixed';
 
-export default function RecordsPage() {
+function RecordsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('纪录', 'Records');
@@ -289,5 +289,13 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+export default function RecordsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <RecordsPageInner />
+    </Suspense>
   );
 }

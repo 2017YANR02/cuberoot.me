@@ -5,7 +5,7 @@
  * /wca/grand-slam
  * Ported from packages/client/src/pages/wca_stats/GrandSlamPage.tsx.
  */
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,7 @@ interface GsRow {
   nationalChamp: ChampInfo | null;
 }
 
-export default function GrandSlamPage() {
+function GrandSlamPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('大满贯', 'Grand Slam');
@@ -193,5 +193,13 @@ function champCell(c: { compId: string; name: string | null; pos: number | null 
   const medal = c.pos === 1 ? '🥇' : c.pos === 2 ? '🥈' : c.pos === 3 ? '🥉' : '';
   return (
     <span><CompCell compId={c.compId} compName={c.name} isZh={isZh} /> {medal}</span>
+  );
+}
+
+export default function GrandSlamPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <GrandSlamPageInner />
+    </Suspense>
   );
 }

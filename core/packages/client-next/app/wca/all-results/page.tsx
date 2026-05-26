@@ -7,7 +7,7 @@
  * /wca/all-results
  * Ported from packages/client/src/pages/wca_stats/AllResultsPage.tsx.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -59,7 +59,7 @@ type Data =
   | { mode: 'results'; rows: ResultRow[]; total: number }
   | { mode: 'persons'; rows: PersonRow[]; total: number };
 
-export default function AllResultsPage() {
+function AllResultsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('全部成绩', 'All Results');
@@ -388,4 +388,12 @@ export function formatAttempts(attempts: (number | null)[], event: string, type:
   }
   void value;
   return items.join('  ');
+}
+
+export default function AllResultsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <AllResultsPageInner />
+    </Suspense>
+  );
 }
