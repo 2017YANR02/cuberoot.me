@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1779783623315,
+      "tag": "0000_good_ben_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1779785086727,
+      "tag": "0001_medical_sir_ram",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779785988107,
+      "tag": "0002_fresh_swordsman",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1779787042468,
+      "tag": "0003_regular_venom",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779791294073,
+      "tag": "0004_awesome_guardsmen",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1779792351303,
+      "tag": "0005_flimsy_stature",
+      "breakpoints": true
+    }
+  ]
+}

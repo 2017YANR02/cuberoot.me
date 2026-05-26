@@ -1,0 +1,41 @@
+{
+  "name": "cube-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 3100",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3100",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx db/migrate.ts",
+    "db:seed": "tsx db/seed.ts"
+  },
+  "dependencies": {
+    "@types/mdx": "^2.0.13",
+    "alipay-sdk": "^4.14.0",
+    "better-sqlite3": "^12.10.0",
+    "drizzle-orm": "^0.45.2",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.6",
+    "next-mdx-remote": "^6.0.0",
+    "qrcode": "^1.5.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "stripe": "^22.1.1",
+    "wechatpay-node-v3": "^2.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
+    "tailwindcss": "^4.2.2",
+    "tsx": "^4.22.3",
+    "typescript": "^5.9.3"
+  }
+}
