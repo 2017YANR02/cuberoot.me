@@ -1,0 +1,1383 @@
+/* ==========================================================================
+ * CalendarPage — 浅色日历视图(Claude 风配色)
+ * ========================================================================== */
+
+.calendar-page {
+    /* 走 :root 通用 token,自动 light/dark 反盖。短名作 alias 保留以减少改动量。 */
+    --bg: var(--background);
+    --surface: var(--card);
+    --surface-alt: var(--muted);
+    --text: var(--foreground);
+    --text-sub: var(--muted-foreground);
+    --text-muted: var(--faint-foreground);
+    --border: var(--border-default);
+    /* --border-strong 跟 :root 同名 */
+    /* --accent 跟 :root 同名 */
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+    --accent-soft-strong: color-mix(in srgb, var(--accent) 22%, transparent);
+    --wr-current: #DC2626;
+    --wr-former: #D69755;
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 1.5rem 1.25rem 3rem;
+    box-sizing: border-box;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Back + Header ── */
+.calendar-page .back-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-sub);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    transition: color 0.15s;
+}
+.calendar-page .back-link:hover { color: var(--accent); }
+
+.calendar-page .upcoming-header {
+    margin-bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 1rem;
+    align-items: start;
+}
+.calendar-page .upcoming-header-right {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+.calendar-page .upcoming-title {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.25rem;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.calendar-page .calendar-title-help {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-sub);
+    opacity: 0.6;
+    text-decoration: none;
+    transition: opacity 0.15s, color 0.15s;
+    font-size: 1rem;
+}
+.calendar-page .calendar-title-help:hover { opacity: 1; color: var(--accent); }
+.calendar-page .upcoming-meta {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+}
+
+/* ── Toolbar ── */
+.calendar-page .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: calc(0.75rem + var(--sat)) 0 0.75rem;
+    margin-bottom: 0.5rem;
+    z-index: 10;
+    border-bottom: 1px solid transparent;
+}
+/* 列表模式下 toolbar 不 sticky —— 它的 stacking context 会困住国家下拉，让 chip 行 z:11 把它挡掉。
+ * chip 行本身就是列表的持久表头，toolbar 滚出视口对功能无影响。 */
+.calendar-page--list .toolbar {
+    position: static;
+}
+
+.calendar-page .search-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+}
+.calendar-page .search-box:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+/* 比赛搜索框 + 一键清空 ×（遵循全局规则：选择/搜索型输入有非空值时必出 ×） */
+.calendar-page .search-box-wrap {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+}
+.calendar-page .search-box-wrap .search-box {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    padding-right: 28px;
+}
+/* NOTE: RegionPicker 默认 width:220px,这里在 calendar 工具栏下让它走 min-width + flex */
+.calendar-page .country-filter { width: auto; min-width: 200px; }
+
+.calendar-page .mode-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+.calendar-page .mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .mode-btn:hover { color: var(--text); }
+.calendar-page .mode-btn.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.calendar-page .cancelled-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .cancelled-toggle:hover {
+    border-color: #C97A5C;
+    color: #A04A2E;
+}
+.calendar-page .cancelled-toggle.is-active {
+    background: #FCE9E3;
+    border-color: #C97A5C;
+    color: #A04A2E;
+}
+
+.calendar-page .mode-status {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.8rem;
+    text-align: center;
+}
+.calendar-page .mode-status.is-error {
+    background: #FCE9E3;
+    color: #A04A2E;
+}
+
+.calendar-page .event-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+.calendar-page .event-chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-height: 36px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 2px 0;
+    line-height: 1;
+    gap: 2px;
+}
+.calendar-page .event-chip:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.calendar-page .event-chip.is-active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.calendar-page .event-chip .cubing-icon {
+    font-size: 1.1rem;
+}
+.calendar-page .event-chip-rounds {
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    line-height: 1;
+    min-height: 0.7rem; /* 保留位置避免 chip 高度抖动 */
+}
+.calendar-page .event-chip-rounds.is-empty { visibility: hidden; }
+/* 列表模式下：chip 行同时承担表头 — 外层 sticky 到视口顶；内层 grid 与列表列对齐 */
+.calendar-page .event-chips--list-header {
+    /* month-bar 是 flex-wrap 容器，强占整行 */
+    flex-basis: 100%;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 11;
+    background: var(--bg);
+    margin: 0;
+    /* list 模式下 toolbar 是 static,这一条 chip 行才真正贴 viewport top — PWA 灵动岛让位 */
+    padding-top: var(--sat);
+    box-sizing: border-box;
+    /* 横向溢出：header 不能由用户独立滚（trackpad 双指会让 header 与行错位）。
+     * overflow-x: hidden 仍允许 JS 写 scrollLeft —— 移动端 list 滚动时同步，桌面则保持 0。 */
+    overflow-x: hidden;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+.calendar-page .event-chips--list-header::-webkit-scrollbar { display: none; }
+.calendar-page .event-chips-grid {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    /* 与 .comp-list-row 对齐 — row 是 absolute left:0 right:0 拿满 100%，
+     * grid 必须显式 100% 否则 overflow-x: auto 父级里会塌到 min-width，1fr 分配不一致 */
+    width: 100%;
+    min-width: var(--cl-min-width);
+    padding: 4px 12px;
+    box-sizing: border-box;
+}
+.calendar-page .event-chips--list-header .event-chip {
+    width: auto;
+    min-height: 32px;
+    justify-self: center;
+}
+.calendar-page .event-chips--list-header .cl-h-spacer {
+    /* 占位列：date / flag / name / city / cubers，无内容；
+     * height 0 让 chip 行决定整体高度 */
+    height: 0;
+}
+
+.calendar-page .globe-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+.calendar-page .globe-link:hover { text-decoration: underline; }
+
+.calendar-page .month-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0 0.75rem;
+}
+.calendar-page .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.calendar-page .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+.calendar-page .nav-today {
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .nav-today:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+.calendar-page .month-label {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-left: 0.75rem;
+    line-height: 1;
+}
+.calendar-page .month-label-btn {
+    background: transparent;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.calendar-page .month-label-btn:hover,
+.calendar-page .month-label-btn:focus-visible,
+.calendar-page .month-label-btn[aria-expanded="true"] {
+    background: var(--accent-soft);
+    outline: none;
+}
+.calendar-page .month-label-year {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--text-sub);
+    text-transform: uppercase;
+}
+.calendar-page .month-label-month {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.65rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    font-feature-settings: "tnum" 1;
+}
+
+/* ── Calendar Grid ── */
+.calendar-page .calendar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.calendar-page .weekday-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alt);
+}
+.calendar-page .weekday-cell {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.calendar-page .week-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* 第一行固定 day-number；track 行 minmax(22px, auto) —— 名字短保持 22px,某列名字长自动撑高 */
+    /* 末行 1fr 吸收 min-height 撑出的多余空间，保证 bar 紧贴 day-number 之下 */
+    grid-template-rows: 22px repeat(var(--tracks, 1), minmax(22px, auto)) 1fr;
+    grid-auto-rows: minmax(22px, auto);
+    border-bottom: 1px solid var(--border);
+    padding: 0 0 4px;
+    min-height: 120px;
+    position: relative;
+}
+.calendar-page .week-row:last-child { border-bottom: none; }
+
+.calendar-page .day-cell {
+    padding: 4px 6px 2px;
+    grid-row: 1 / -1;
+    /* NOTE: day-cell 占满整行（layer 1 背景），事件条叠加在上方 */
+    background: var(--surface);
+    position: relative;
+    min-width: 0;
+}
+.calendar-page .day-cell.out-of-month {
+    background: transparent;
+}
+.calendar-page .day-cell.is-today {
+    z-index: 1;
+}
+
+.calendar-page .day-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    text-align: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    width: fit-content;
+    margin: 0 auto;
+    font-family: inherit;
+}
+
+.calendar-page .day-number:hover {
+    background: var(--accent-soft, rgba(193, 95, 60, 0.08));
+    border-color: var(--accent, #C15F3C);
+    color: var(--accent, #C15F3C);
+}
+
+/* today: 实心红色圆,白色数字 — 取代之前 cell 外层 outline + 小框双重指示 */
+.calendar-page .day-cell.is-today .day-number {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+.calendar-page .day-cell.is-today .day-number:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
+}
+
+/* ── Event Bar ── */
+.calendar-page .event-bar {
+    /* 始终用 block + inline-block 子元素：徽章/国旗顶部对齐，名字以 inline 流动，
+     * 名字超长时第二行起从 bar 左边缘开始（不缩进）。track 行高 minmax(22px, auto)
+     * 让窄列长名字自动撑高所在 track 行（同周其它列也跟着高，但视觉一致）。 */
+    display: block;
+    min-width: 0;
+    min-height: 22px;
+    align-self: start;
+    margin: 1px 3px;
+    padding: 4px 7px;
+    line-height: 1.2;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--text);
+    font-size: 0.75rem;
+    font-family: inherit;
+    font-weight: 500;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.15s, opacity 0.15s;
+    z-index: 2;
+    position: relative;
+}
+.calendar-page .event-bar > * {
+    vertical-align: top;
+}
+.calendar-page .event-bar > .flag-span,
+.calendar-page .event-bar > .flag-img,
+.calendar-page .event-bar > .record-badge {
+    display: inline-block;
+    margin-right: 5px;
+}
+.calendar-page .event-bar:hover {
+    background: var(--accent-soft-strong);
+}
+.calendar-page .event-bar.is-clash {
+    background: var(--accent);
+    color: #FFF;
+}
+.calendar-page .event-bar.is-clash:hover { background: #AE5434; }
+.calendar-page .event-bar.is-none-top {
+    background: #EDECE8;
+    color: var(--text-sub);
+}
+.calendar-page .event-bar.is-none-top:hover { background: #E0DED9; }
+.calendar-page .event-bar.continues-prev {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: 0;
+}
+.calendar-page .event-bar.continues-next {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-right: 0;
+}
+.calendar-page .event-bar-name {
+    display: inline;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
+    min-width: 0;
+}
+
+/* ── Flag ── */
+.calendar-page .flag-span {
+    display: inline-block;
+    width: 14px;
+    height: 10.5px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.calendar-page .flag-img {
+    width: 14px;
+    height: 10.5px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* ── +N more ── */
+.calendar-page .more-btn {
+    margin: 1px 3px;
+    padding: 0 6px;
+    height: 22px;
+    background: transparent;
+    color: var(--text-sub);
+    font-size: 0.7rem;
+    font-family: inherit;
+    border: 1px dashed var(--border-strong);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 2;
+    position: relative;
+}
+.calendar-page .more-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+/* ── Month Stats + Legend ── */
+.calendar-page .month-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-size: 0.82rem;
+    color: var(--text-sub);
+}
+.calendar-page .month-stats > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.calendar-page .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    margin-bottom: 1.5rem;
+}
+.calendar-page .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.calendar-page .legend-swatch {
+    display: inline-block;
+    width: 18px;
+    height: 12px;
+    border-radius: 3px;
+}
+.calendar-page .legend-swatch.swatch-default { background: var(--accent-soft); }
+.calendar-page .legend-swatch.swatch-clash { background: var(--accent); }
+.calendar-page .legend-swatch.swatch-none-top { background: #EDECE8; }
+
+/* ── State Messages ── */
+.calendar-page .state-message {
+    text-align: center;
+    color: var(--text-sub);
+    padding: 3rem 1rem;
+    font-size: 0.9rem;
+}
+.calendar-page .state-error { color: var(--accent); }
+
+/* ── Modal ── */
+.calendar-page .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 23, 22, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8vh 1rem 2rem;
+    animation: modal-fade 0.18s ease-out;
+}
+@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.calendar-page .modal-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(24, 23, 22, 0.15);
+    width: 100%;
+    max-width: 560px;
+    padding: 1.5rem;
+    position: relative;
+    animation: modal-slide 0.2s ease-out;
+}
+@keyframes modal-slide {
+    from { transform: translateY(-12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.calendar-page .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--text-sub);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+.calendar-page .modal-close:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.calendar-page .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 2rem 0.5rem 0;
+    color: var(--text);
+    line-height: 1.25;
+}
+.calendar-page .modal-title a {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.calendar-page .modal-title a:hover { color: var(--accent); }
+.calendar-page .modal-title .flag-span,
+.calendar-page .modal-title .flag-img {
+    width: 24px;
+    height: 18px;
+}
+.calendar-page .day-list-panel .modal-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.calendar-page .day-list-country-name {
+    color: var(--text-sub);
+    font-size: 1.05rem;
+    font-weight: 400;
+}
+
+.calendar-page .modal-meta {
+    font-size: 0.88rem;
+    color: var(--text-sub);
+    margin-bottom: 0.75rem;
+}
+.calendar-page .modal-events {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    color: var(--text-sub);
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+}
+.calendar-page .modal-event {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    gap: 2px;
+}
+.calendar-page .modal-event-rounds {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.calendar-page .modal-event-rounds--placeholder {
+    opacity: 0.3;
+}
+
+.calendar-page .modal-cubers-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.calendar-page .modal-records {
+    margin-bottom: 1.25rem;
+}
+.calendar-page .modal-records-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+.calendar-page .modal-record-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.calendar-page .modal-record-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--surface-alt);
+    font-size: 0.82rem;
+}
+.calendar-page .modal-record-item .cubing-icon {
+    font-size: 18px;
+    color: var(--text-sub);
+}
+.calendar-page .modal-record-item .record-kind {
+    color: var(--text-sub);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.calendar-page .modal-record-item .record-value {
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+}
+.calendar-page .modal-record-item .record-person {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: inherit;
+    text-decoration: none;
+}
+.calendar-page .modal-record-item .record-person:hover {
+    color: var(--accent);
+}
+.calendar-page .modal-cuber-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.calendar-page .cuber-tag {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: var(--accent-soft);
+    border: 1px solid transparent;
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.78rem;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.calendar-page .cuber-tag:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft-strong);
+}
+.calendar-page .cuber-tag .event-label {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    margin-left: 2px;
+    display: inline-flex;
+    gap: 2px;
+}
+.calendar-page .cuber-tag .event-label .cubing-icon {
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.calendar-page .wr-current { color: var(--wr-current); }
+.calendar-page .wr-former { color: var(--wr-former); }
+
+.calendar-page .wr-legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    margin-bottom: 0.6rem;
+}
+.calendar-page .wr-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.calendar-page .wr-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+.calendar-page .wr-swatch.wr-current { background: var(--wr-current); }
+.calendar-page .wr-swatch.wr-former { background: var(--wr-former); }
+.calendar-page .wr-swatch.wr-top10 { background: var(--text-sub); }
+
+/* ── Day List Panel ── */
+.calendar-page .day-list-panel {
+    max-width: 440px;
+    max-height: calc(100vh - 10vh);
+    display: flex;
+    flex-direction: column;
+}
+.calendar-page .day-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+.calendar-page .day-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+    text-align: left;
+}
+.calendar-page .day-list-item:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.calendar-page .day-list-item .day-list-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.calendar-page .day-list-count {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    background: var(--surface-alt);
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+
+/* ── View toggle (Calendar / List) ── */
+.calendar-page .view-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+.calendar-page .view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .view-btn:hover { color: var(--text); }
+.calendar-page .view-btn.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* ── 列表视图（虚拟滚动 + 17 项目对齐网格） ── */
+/* 共享网格列模板：date | flag | name+city | event*21
+ * name+city 列宽由 JS 测当前过滤集 max name+city 实际宽度后注入 --cl-name-width；
+ * 默认 fallback 28rem。这样筛选短名（如"北京"）时 city 紧贴 events，不留多余空白；
+ * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
+ * 同时供 .comp-list-row（行）和 .event-chips--list-header（chip 行兼表头）使用 */
+.calendar-page {
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) repeat(21, 1.3rem);
+    --cl-min-width: 65rem;
+}
+.calendar-page .comp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.calendar-page .comp-list-empty {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 0.85rem;
+    padding: 3rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+/* 虚拟滚动容器 */
+.calendar-page .comp-list-virtual {
+    position: relative;
+    width: 100%;
+    min-width: var(--cl-min-width);
+}
+.calendar-page .comp-list-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+}
+/* chip 行最左侧的 sticky 年份 cell（替代 date 列占位） */
+.calendar-page .cl-year-cell {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.calendar-page .cl-year-num {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-feature-settings: "tnum" 1;
+    line-height: 1;
+}
+.calendar-page .cl-year-count {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    background: var(--surface-alt);
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+.calendar-page .comp-list-row {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    overflow: hidden;
+    transition: border-color 0.12s, background 0.12s;
+}
+.calendar-page .comp-list-row:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.calendar-page .comp-list-date {
+    color: var(--text-sub);
+    font-size: 0.78rem;
+}
+/* 跨年比赛日期: 两半各自 nowrap, 用 block 强制 ~ 后换行 */
+.calendar-page .cl-date-half {
+    display: block;
+    white-space: nowrap;
+}
+/* name + city 合并成一个 grid 列；内部用 flex 让 city 紧跟 name，多余空间留给 event chips。
+ * name 优先伸缩占空间，过长截断；city 在 name 之后短间距渲染。 */
+.calendar-page .comp-list-name-cell {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+    /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
+    margin-left: -6px;
+}
+.calendar-page .comp-list-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    font-weight: 500;
+    flex: 0 1 auto;
+}
+.calendar-page .comp-list-city {
+    color: var(--text-sub);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+.calendar-page .cl-event-cell {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+/* ── 已取消比赛 — 列表 / 日历 / day-list / modal 共享样式 ── */
+.calendar-page .comp-list-row.is-cancelled {
+    opacity: 0.55;
+}
+.calendar-page .comp-list-row.is-cancelled .comp-list-name,
+.calendar-page .comp-list-row.is-cancelled .comp-list-date {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+.calendar-page .event-bar.is-cancelled {
+    opacity: 0.55;
+}
+.calendar-page .event-bar.is-cancelled .event-bar-name {
+    text-decoration: line-through;
+}
+.calendar-page .day-list-item.is-cancelled {
+    opacity: 0.6;
+}
+.calendar-page .day-list-item.is-cancelled .day-list-item-name {
+    text-decoration: line-through;
+}
+.calendar-page .modal-title-name.is-cancelled {
+    text-decoration: line-through;
+}
+.calendar-page .modal-cancelled-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #A04A2E;
+    background: #FCE9E3;
+    border-radius: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+}
+
+/* ── 列表视图 · 年月范围过滤 ── */
+.calendar-page .date-range-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.calendar-page .date-range-pick {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-feature-settings: "tnum" 1;
+    cursor: pointer;
+    min-width: 6.5rem;
+    text-align: center;
+    transition: all 0.15s;
+}
+.calendar-page .date-range-pick:hover,
+.calendar-page .date-range-pick[aria-expanded="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.calendar-page .date-range-pick.is-empty {
+    color: var(--text-sub);
+    font-family: inherit;
+}
+.calendar-page .date-range-sep {
+    color: var(--text-sub);
+    font-size: 0.85rem;
+}
+.calendar-page .date-range-summary {
+    margin-left: 0.5rem;
+    color: var(--text-sub);
+    font-size: 0.8rem;
+}
+
+/* ── 月切换卷帘 + parallax 动画 ──
+   外层 .calendar 整体水平滑入,内部 day-cell 错峰跟进(parallax 慢一拍),
+   旗子再多延迟 80ms,形成"网格→cells→flags"的层叠纵深感。
+   只在 navDir 切换时触发(依赖 key remount),静止状态零开销。 */
+@keyframes calSlideForward {
+    from { transform: translateX(40px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes calSlideBack {
+    from { transform: translateX(-40px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes cellSlideForward {
+    from { transform: translateX(24px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes cellSlideBack {
+    from { transform: translateX(-24px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes flagPopIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+.calendar-page .calendar--slide-forward {
+    animation: calSlideForward 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.calendar-page .calendar--slide-back {
+    animation: calSlideBack 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.calendar-page .calendar--slide-forward .week-row,
+.calendar-page .calendar--slide-back .week-row {
+    animation-duration: 460ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: backwards;
+}
+.calendar-page .calendar--slide-forward .week-row { animation-name: cellSlideForward; }
+.calendar-page .calendar--slide-back    .week-row { animation-name: cellSlideBack; }
+/* 每周再 stagger 一点点 — 视觉上像浪一样从上往下涌 */
+.calendar-page .calendar--slide-forward .week-row:nth-child(2),
+.calendar-page .calendar--slide-back    .week-row:nth-child(2) { animation-delay: 30ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(3),
+.calendar-page .calendar--slide-back    .week-row:nth-child(3) { animation-delay: 60ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(4),
+.calendar-page .calendar--slide-back    .week-row:nth-child(4) { animation-delay: 90ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(5),
+.calendar-page .calendar--slide-back    .week-row:nth-child(5) { animation-delay: 120ms; }
+.calendar-page .calendar--slide-forward .week-row:nth-child(6),
+.calendar-page .calendar--slide-back    .week-row:nth-child(6) { animation-delay: 150ms; }
+/* 旗子在 cell 内 pop in,延迟比所在行再多 80ms,形成纵深 */
+.calendar-page .calendar--slide-forward .compact-flag-tile,
+.calendar-page .calendar--slide-back    .compact-flag-tile {
+    animation: flagPopIn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    animation-delay: 200ms;
+}
+.calendar-page .calendar--slide-forward .event-bar,
+.calendar-page .calendar--slide-back    .event-bar {
+    animation: flagPopIn 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: 200ms;
+}
+/* prefers-reduced-motion: 全部退化为简单 fade,不滑不弹 */
+@media (prefers-reduced-motion: reduce) {
+    .calendar-page .calendar--slide-forward,
+    .calendar-page .calendar--slide-back {
+        animation: none;
+    }
+    .calendar-page .calendar--slide-forward .week-row,
+    .calendar-page .calendar--slide-back .week-row,
+    .calendar-page .calendar--slide-forward .compact-flag-tile,
+    .calendar-page .calendar--slide-back .compact-flag-tile,
+    .calendar-page .calendar--slide-forward .event-bar,
+    .calendar-page .calendar--slide-back .event-bar {
+        animation: none;
+    }
+}
+
+/* ── 紧凑日历(国旗模式) ──
+   仅按 start_date 把比赛归到日格,不分 track,每个比赛 = 一个国旗 tile。
+   day-cell 直接 flex-wrap 排列旗子,一格能塞 24 面(桌面)/9 面(手机)。 */
+.calendar-page--compact .calendar--compact .week-row {
+    /* 紧凑模式不需要 track 行;让 day-cell 自然撑高 */
+    grid-template-rows: auto;
+    min-height: 80px;
+    /* 列宽随月内每列最大场数 sqrt 加权(周末更宽,工作日更窄)。
+     * compactColTemplate 在 React 里算出后通过 --compact-cols CSS 变量传进来。 */
+    grid-template-columns: var(--compact-cols, repeat(7, 1fr));
+}
+.calendar-page--compact .calendar--compact .weekday-header {
+    grid-template-columns: var(--compact-cols, repeat(7, 1fr));
+}
+.calendar-page--compact .calendar--compact .day-cell {
+    grid-row: 1;
+    padding: 4px 4px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+/* 紧凑模式下整个日格可点击 → 历年此日。空白 / day-number / flex 间隙都是 hit area。 */
+.calendar-page--compact .calendar--compact .day-cell.is-clickable {
+    cursor: pointer;
+}
+.calendar-page--compact .calendar--compact .day-cell.is-clickable:hover {
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+.calendar-page--compact .calendar--compact .day-cell.is-clickable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+.calendar-page--compact .calendar--compact .day-number {
+    /* 紧凑模式 day-number 改 span,样式继承 .day-number 但去掉 button 状态 */
+    pointer-events: none;
+}
+.compact-flag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-content: flex-start;
+    justify-content: center;
+}
+.compact-flag-tile {
+    position: relative;
+    width: 22px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    /* tile 自身不裁剪;flag 由 utils/flag.tsx 渲染为 22×16 */
+}
+.compact-flag-tile .flag-span,
+.compact-flag-tile .flag-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    display: block;
+}
+.compact-flag-tile:hover {
+    transform: scale(1.25);
+    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.compact-flag-tile.is-cancelled { opacity: 0.4; }
+.compact-flag-tile.is-cancelled::after {
+    /* 取消比赛叠一道斜线 */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom right,
+        transparent calc(50% - 0.5px),
+        var(--text-sub) calc(50% - 0.5px),
+        var(--text-sub) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px));
+    pointer-events: none;
+}
+/* 同国家当日 >1 场,右下角 N 提示 */
+.compact-flag-count {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    min-width: 11px;
+    height: 11px;
+    padding: 0 2px;
+    border-radius: 6px;
+    background: var(--text, #222);
+    color: var(--surface, #fff);
+    font-size: 0.55rem;
+    font-weight: 700;
+    line-height: 11px;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 0 0 1px var(--surface, #fff);
+}
+/* ── 响应式 ── */
+@media (max-width: 768px) {
+    .calendar-page .toolbar { gap: 0.4rem; }
+    .calendar-page .search-box { min-width: 100%; }
+    .calendar-page .search-box-wrap { min-width: 100%; max-width: 100%; }
+    .calendar-page .country-filter { flex: 1; min-width: 0; }
+    .calendar-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
+    .calendar-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
+    .calendar-page .week-row { min-height: 90px; }
+    .calendar-page .day-number { font-size: 0.7rem; }
+    .calendar-page .event-bar { font-size: 0.65rem; min-height: 18px; padding: 0 4px; gap: 3px; }
+    .calendar-page .event-bar .flag-span,
+    .calendar-page .event-bar .flag-img { width: 11px; height: 8px; }
+    .calendar-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
+    .calendar-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
+    /* 紧凑模式手机端:旗子缩小到 16×12,行高随当日国家数自然增长 */
+    .calendar-page--compact .calendar--compact .week-row { min-height: 70px; }
+    .calendar-page--compact .calendar--compact .day-cell { padding: 3px 3px 4px; }
+    .calendar-page--compact .compact-flag-grid { gap: 2px; }
+    .calendar-page--compact .compact-flag-tile { width: 16px; height: 12px; }
+    /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐 */
+    .calendar-page {
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.1rem);
+        --cl-min-width: 53rem;
+    }
+    .calendar-page .comp-list { overflow-x: auto; }
+    .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
+    .calendar-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
+    .calendar-page .comp-list-name-cell { margin-left: -4px; }
+    .calendar-page .comp-list-date { font-size: 0.7rem; }
+    .calendar-page .cl-event-cell { font-size: 0.65rem; }
+    .calendar-page .cl-year-num { font-size: 1rem; }
+    .calendar-page .date-range-pick { font-size: 0.72rem; padding: 0.3rem 0.5rem; min-width: 5.4rem; }
+}
+
+/* ── 年月选择浮层 ── */
+.calendar-page .ym-popover-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: transparent;
+}
+.calendar-page .ym-popover-panel {
+    position: fixed;
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+/* NOTE: 浅色主题覆盖（默认 dark） */
+.calendar-page .ym-popover-panel .wheel-picker {
+    --wp-bg: var(--surface);
+    --wp-text: #a8a69c;
+    --wp-text-active: var(--text);
+    --wp-highlight: var(--accent-soft);
+    --wp-text-fade-2: #b8b6ac;
+    --wp-text-fade-3: #d4d4d4;
+    --wp-text-fade-4: #e5e5e5;
+    min-height: 260px;
+}
