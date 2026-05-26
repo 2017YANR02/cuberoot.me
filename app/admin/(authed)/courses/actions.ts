@@ -47,6 +47,7 @@ function valuesFromForm(f: FormData): CourseInsert {
     level: String(f.get("level") ?? "入门") as CourseInsert["level"],
     format: String(f.get("format") ?? "录播系统课") as CourseInsert["format"],
     instructor: String(f.get("instructor") ?? "").trim(),
+    instructorId: trimOrNull(f.get("instructorId")),
     durationHours: Number(f.get("durationHours") ?? 0),
     lessons: Number(f.get("lessons") ?? 0),
     price: Number(f.get("price") ?? 0),

@@ -43,6 +43,34 @@
       "when": 1779792351303,
       "tag": "0005_flimsy_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1779795277825,
+      "tag": "0006_quick_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1779795915746,
+      "tag": "0007_low_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1779800000000,
+      "tag": "0008_phase3_search_fts",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1779810000000,
+      "tag": "0009_great_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

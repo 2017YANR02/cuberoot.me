@@ -1,12 +1,57 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { CubeEvent, CubeEventInsert, EventType, EventStatus } from "@/db/schema";
+import { searchEvents, searchEventsCount } from "@/lib/db/search";
+import type { PagedResult, ListOpts } from "@/lib/db/courses";
 
 export type { EventType, EventStatus };
 
 export async function list(): Promise<CubeEvent[]> {
   return db.select().from(schema.events).all();
+}
+
+export async function listPaged({
+  q,
+  page = 1,
+  pageSize = 12,
+}: ListOpts = {}): Promise<PagedResult<CubeEvent>> {
+  const safePage = Math.max(1, Math.floor(page));
+  const offset = (safePage - 1) * pageSize;
+  const query = q?.trim() ?? "";
+
+  if (query) {
+    const [items, total] = await Promise.all([
+      searchEvents(query, { limit: pageSize, offset }),
+      searchEventsCount(query),
+    ]);
+    return {
+      items,
+      total,
+      page: safePage,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
+  const totalRow = db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(schema.events)
+    .all();
+  const total = totalRow[0]?.n ?? 0;
+  const items = db
+    .select()
+    .from(schema.events)
+    .limit(pageSize)
+    .offset(offset)
+    .all();
+  return {
+    items,
+    total,
+    page: safePage,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
 }
 
 export async function findById(id: string): Promise<CubeEvent | undefined> {

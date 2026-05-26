@@ -1,6 +1,7 @@
-import type { Course } from "@/db/schema";
+import type { Course, Instructor } from "@/db/schema";
 import { Field, Input, TextArea, Select, FormActions, Submit } from "../../_components/Form";
 import { FormPanel, GhostLink } from "../../_components/Shell";
+import { UploadField } from "@/components/UploadField";
 import { saveCourse } from "./actions";
 
 const LEVELS = ["入门", "进阶", "高阶", "竞速"];
@@ -13,7 +14,13 @@ function toLocalInput(ts: number | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function CourseForm({ initial }: { initial?: Course }) {
+export function CourseForm({
+  initial,
+  instructors,
+}: {
+  initial?: Course;
+  instructors?: Instructor[];
+}) {
   const isNew = !initial;
   const outlineText = (initial?.outline ?? [])
     .map((o) => `${o.week} | ${o.topic}`)
@@ -63,9 +70,30 @@ export function CourseForm({ initial }: { initial?: Course }) {
           </Field>
         </div>
 
-        <Field label="讲师" htmlFor="instructor">
+        <Field label="讲师 (显示名)" htmlFor="instructor">
           <Input id="instructor" name="instructor" defaultValue={initial?.instructor ?? ""} />
         </Field>
+
+        {instructors && instructors.length > 0 ? (
+          <Field
+            label="关联讲师"
+            htmlFor="instructorId"
+            hint="选择后该讲师可在 /instructor 后台编辑此课"
+          >
+            <Select
+              id="instructorId"
+              name="instructorId"
+              defaultValue={initial?.instructorId ?? ""}
+            >
+              <option value="">未关联</option>
+              {instructors.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name} · {i.city} ({i.id})
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
 
         <div className="grid sm:grid-cols-3 gap-4">
           <Field label="时长 (小时)" htmlFor="durationHours">
@@ -145,20 +173,24 @@ export function CourseForm({ initial }: { initial?: Course }) {
           htmlFor="videoUrl"
           hint="支持 .mp4 / .webm 直链,或 bilibili / vimeo / youtube 嵌入页 URL"
         >
-          <Input
+          <UploadField
             id="videoUrl"
             name="videoUrl"
             defaultValue={initial?.videoUrl ?? ""}
             placeholder="https://"
+            accept="video/mp4,video/webm"
+            uploadLabel="上传视频 (mp4 / webm)"
           />
         </Field>
 
         <Field label="封面图 URL" htmlFor="coverUrl" hint="可选">
-          <Input
+          <UploadField
             id="coverUrl"
             name="coverUrl"
             defaultValue={initial?.coverUrl ?? ""}
             placeholder="https://"
+            accept="image/*"
+            uploadLabel="上传封面图"
           />
         </Field>
 

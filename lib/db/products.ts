@@ -1,12 +1,57 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Product, ProductInsert, ProductCategory } from "@/db/schema";
+import { searchProducts, searchProductsCount } from "@/lib/db/search";
+import type { PagedResult, ListOpts } from "@/lib/db/courses";
 
 export type { ProductCategory };
 
 export async function list(): Promise<Product[]> {
   return db.select().from(schema.products).all();
+}
+
+export async function listPaged({
+  q,
+  page = 1,
+  pageSize = 12,
+}: ListOpts = {}): Promise<PagedResult<Product>> {
+  const safePage = Math.max(1, Math.floor(page));
+  const offset = (safePage - 1) * pageSize;
+  const query = q?.trim() ?? "";
+
+  if (query) {
+    const [items, total] = await Promise.all([
+      searchProducts(query, { limit: pageSize, offset }),
+      searchProductsCount(query),
+    ]);
+    return {
+      items,
+      total,
+      page: safePage,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
+  const totalRow = db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(schema.products)
+    .all();
+  const total = totalRow[0]?.n ?? 0;
+  const items = db
+    .select()
+    .from(schema.products)
+    .limit(pageSize)
+    .offset(offset)
+    .all();
+  return {
+    items,
+    total,
+    page: safePage,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
 }
 
 export async function findById(id: string): Promise<Product | undefined> {

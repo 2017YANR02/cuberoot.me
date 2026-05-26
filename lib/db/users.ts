@@ -52,3 +52,36 @@ export async function setRole(id: string, role: UserRole): Promise<void> {
     .set({ role, updatedAt: now })
     .where(eq(schema.users.id, id));
 }
+
+export async function setInstructorLink(
+  id: string,
+  instructorId: string | null,
+): Promise<void> {
+  const now = Math.floor(Date.now() / 1000);
+  await db
+    .update(schema.users)
+    .set({ instructorId, updatedAt: now })
+    .where(eq(schema.users.id, id));
+}
+
+export async function createInstructorPlaceholder(
+  phone: string,
+  nickname: string,
+): Promise<User> {
+  const existing = await findByPhone(phone);
+  if (existing) return existing;
+  const now = Math.floor(Date.now() / 1000);
+  const values: UserInsert = {
+    id: newUserId(),
+    phone,
+    nickname,
+    avatar: null,
+    role: "instructor",
+    createdAt: now,
+    updatedAt: now,
+  };
+  await db.insert(schema.users).values(values);
+  const row = await findByPhone(phone);
+  if (!row) throw new Error("createInstructorPlaceholder failed");
+  return row;
+}

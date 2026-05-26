@@ -5,7 +5,16 @@ import { revalidatePath } from "next/cache";
 import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import { findById, setStatus } from "@/lib/db/applications";
-import { setRole } from "@/lib/db/users";
+import {
+  findByPhone,
+  setRole,
+  setInstructorLink,
+  createInstructorPlaceholder,
+} from "@/lib/db/users";
+import {
+  findByUserId as findInstructorByUserId,
+  setUserId as setInstructorUserId,
+} from "@/lib/db/instructors";
 import { newInstructorId } from "@/lib/auth-user";
 
 async function findInstructorByNameCity(name: string, city: string) {
@@ -27,15 +36,24 @@ export async function approveApplication(f: FormData) {
 
   await setStatus(id, "approved", note || null);
 
-  if (app.userId) {
-    await setRole(app.userId, "instructor");
+  // Resolve / create the linked user.
+  let userId = app.userId ?? null;
+  if (!userId && app.phone) {
+    const u =
+      (await findByPhone(app.phone)) ??
+      (await createInstructorPlaceholder(app.phone, app.name));
+    userId = u.id;
   }
 
-  // Dedupe by (name, city) to avoid double-insert on re-approve.
-  const existing = await findInstructorByNameCity(app.name, app.city);
-  if (!existing) {
+  // Reuse an existing instructor by (name, city), or by userId match, otherwise create.
+  let instructor = await findInstructorByNameCity(app.name, app.city);
+  if (!instructor && userId) {
+    instructor = await findInstructorByUserId(userId);
+  }
+  if (!instructor) {
+    const instructorId = newInstructorId();
     await db.insert(schema.instructors).values({
-      id: newInstructorId(),
+      id: instructorId,
       name: app.name,
       title: app.formats[0] ?? "魔方讲师",
       city: app.city,
@@ -44,8 +62,28 @@ export async function approveApplication(f: FormData) {
       yearsTeaching: 1,
       bestRecord: "—",
       bio: app.bio,
+      userId,
     });
+    instructor = {
+      id: instructorId,
+      name: app.name,
+      title: app.formats[0] ?? "魔方讲师",
+      city: app.city,
+      specialty: app.direction,
+      studentsTaught: 0,
+      yearsTeaching: 1,
+      bestRecord: "—",
+      bio: app.bio,
+      userId,
+    };
     revalidatePath("/instructors");
+  } else if (userId && instructor.userId !== userId) {
+    await setInstructorUserId(instructor.id, userId);
+  }
+
+  if (userId) {
+    await setRole(userId, "instructor");
+    await setInstructorLink(userId, instructor.id);
   }
 
   revalidatePath("/admin/applications");

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
+import { HeaderSearch } from "./HeaderSearch";
 
 const NAV = [
   { href: "/courses", label: "课程" },
@@ -54,6 +55,7 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
         </nav>
 
         <div className="ml-auto hidden md:flex items-center gap-2">
+          <HeaderSearch variant="desktop" />
           <Link
             href="/instructors/apply"
             className="rounded-md px-3 py-1.5 text-[14px] text-ink-2 hover:text-ink"
@@ -140,6 +142,7 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
                 <MobileLogout onDone={() => setOpen(false)} />
               </div>
             ) : null}
+            <HeaderSearch variant="mobile" onSubmit={() => setOpen(false)} />
           </div>
         </div>
       )}
@@ -185,6 +188,13 @@ function UserMenu({ user }: { user: HeaderUser }) {
       {open ? (
         <div className="absolute right-0 mt-1 w-44 rounded-md border border-line bg-white shadow-card overflow-hidden z-40">
           <Link
+            href="/me/courses"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            我的课程
+          </Link>
+          <Link
             href="/orders"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
@@ -198,13 +208,23 @@ function UserMenu({ user }: { user: HeaderUser }) {
           >
             我的邀请码
           </Link>
-          <Link
-            href="/instructors/apply"
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
-          >
-            申请成为讲师
-          </Link>
+          {user.role === "instructor" ? (
+            <Link
+              href="/instructor"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-[13px] text-brand-dark hover:bg-bg-soft"
+            >
+              讲师后台
+            </Link>
+          ) : (
+            <Link
+              href="/instructors/apply"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+            >
+              申请成为讲师
+            </Link>
+          )}
           <button
             type="button"
             onClick={logout}

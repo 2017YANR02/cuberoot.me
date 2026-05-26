@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
 
 export type CourseLevel = "入门" | "进阶" | "高阶" | "竞速";
 export type CourseFormat = "录播系统课" | "线上直播" | "一对一私教" | "线下家教";
@@ -25,27 +25,32 @@ export type CircleId = "newbie" | "speed" | "blind" | "campus";
 export type CouponDiscountType = "fixed" | "percent";
 export type CouponAppliesTo = "course" | "product" | "event" | "any";
 
-export const courses = sqliteTable("courses", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  subtitle: text("subtitle").notNull(),
-  level: text("level").$type<CourseLevel>().notNull(),
-  format: text("format").$type<CourseFormat>().notNull(),
-  instructor: text("instructor").notNull(),
-  durationHours: integer("duration_hours").notNull(),
-  lessons: integer("lessons").notNull(),
-  price: integer("price").notNull(),
-  studentsEnrolled: integer("students_enrolled").notNull(),
-  rating: real("rating").notNull(),
-  highlights: text("highlights", { mode: "json" }).$type<string[]>().notNull(),
-  outline: text("outline", { mode: "json" })
-    .$type<{ week: string; topic: string }[]>()
-    .notNull(),
-  tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
-  videoUrl: text("video_url"),
-  coverUrl: text("cover_url"),
-  nextLiveAt: integer("next_live_at"),
-});
+export const courses = sqliteTable(
+  "courses",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull(),
+    level: text("level").$type<CourseLevel>().notNull(),
+    format: text("format").$type<CourseFormat>().notNull(),
+    instructor: text("instructor").notNull(),
+    instructorId: text("instructor_id"),
+    durationHours: integer("duration_hours").notNull(),
+    lessons: integer("lessons").notNull(),
+    price: integer("price").notNull(),
+    studentsEnrolled: integer("students_enrolled").notNull(),
+    rating: real("rating").notNull(),
+    highlights: text("highlights", { mode: "json" }).$type<string[]>().notNull(),
+    outline: text("outline", { mode: "json" })
+      .$type<{ week: string; topic: string }[]>()
+      .notNull(),
+    tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
+    videoUrl: text("video_url"),
+    coverUrl: text("cover_url"),
+    nextLiveAt: integer("next_live_at"),
+  },
+  (t) => [index("courses_instructor_idx").on(t.instructorId)],
+);
 
 export const products = sqliteTable("products", {
   id: text("id").primaryKey(),
@@ -86,17 +91,22 @@ export const news = sqliteTable("news", {
   body: text("body"),
 });
 
-export const instructors = sqliteTable("instructors", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  title: text("title").notNull(),
-  city: text("city").notNull(),
-  specialty: text("specialty", { mode: "json" }).$type<string[]>().notNull(),
-  studentsTaught: integer("students_taught").notNull(),
-  yearsTeaching: integer("years_teaching").notNull(),
-  bestRecord: text("best_record").notNull(),
-  bio: text("bio").notNull(),
-});
+export const instructors = sqliteTable(
+  "instructors",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    title: text("title").notNull(),
+    city: text("city").notNull(),
+    specialty: text("specialty", { mode: "json" }).$type<string[]>().notNull(),
+    studentsTaught: integer("students_taught").notNull(),
+    yearsTeaching: integer("years_teaching").notNull(),
+    bestRecord: text("best_record").notNull(),
+    bio: text("bio").notNull(),
+    userId: text("user_id"),
+  },
+  (t) => [index("instructors_user_idx").on(t.userId)],
+);
 
 export const users = sqliteTable(
   "users",
@@ -106,10 +116,14 @@ export const users = sqliteTable(
     nickname: text("nickname").notNull(),
     avatar: text("avatar"),
     role: text("role").$type<UserRole>().notNull().default("user"),
+    instructorId: text("instructor_id"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  (t) => [index("users_phone_idx").on(t.phone)],
+  (t) => [
+    index("users_phone_idx").on(t.phone),
+    index("users_instructor_idx").on(t.instructorId),
+  ],
 );
 
 export const otpCodes = sqliteTable(
@@ -313,3 +327,76 @@ export type QrCode = typeof qrCodes.$inferSelect;
 export type QrCodeInsert = typeof qrCodes.$inferInsert;
 export type PaymentLog = typeof paymentLogs.$inferSelect;
 export type PaymentLogInsert = typeof paymentLogs.$inferInsert;
+
+export const lessons = sqliteTable(
+  "lessons",
+  {
+    id: text("id").primaryKey(),
+    courseId: text("course_id").notNull(),
+    idx: integer("idx").notNull(),
+    title: text("title").notNull(),
+    durationSec: integer("duration_sec"),
+    videoKey: text("video_key"),
+    videoUrl: text("video_url"),
+    free: integer("free", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("lessons_course_idx").on(t.courseId, t.idx)],
+);
+
+export const learningProgress = sqliteTable(
+  "learning_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    courseId: text("course_id").notNull(),
+    positionSec: integer("position_sec").notNull().default(0),
+    completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("learning_progress_user_lesson_unique").on(t.userId, t.lessonId),
+    index("learning_progress_user_course_idx").on(t.userId, t.courseId),
+  ],
+);
+
+export type Lesson = typeof lessons.$inferSelect;
+export type LessonInsert = typeof lessons.$inferInsert;
+export type LearningProgress = typeof learningProgress.$inferSelect;
+export type LearningProgressInsert = typeof learningProgress.$inferInsert;
+
+export type LogLevel = "error" | "warn";
+
+export const errorLogs = sqliteTable(
+  "error_logs",
+  {
+    id: text("id").primaryKey(),
+    ts: integer("ts").notNull(),
+    level: text("level").$type<LogLevel>().notNull().default("error"),
+    message: text("message").notNull(),
+    stack: text("stack"),
+    path: text("path"),
+    userId: text("user_id"),
+  },
+  (t) => [index("error_logs_ts_idx").on(t.ts)],
+);
+
+export const requestLogs = sqliteTable(
+  "request_logs",
+  {
+    id: text("id").primaryKey(),
+    ts: integer("ts").notNull(),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    status: integer("status").notNull(),
+    durationMs: integer("duration_ms").notNull(),
+    userId: text("user_id"),
+  },
+  (t) => [index("request_logs_ts_idx").on(t.ts)],
+);
+
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type ErrorLogInsert = typeof errorLogs.$inferInsert;
+export type RequestLog = typeof requestLogs.$inferSelect;
+export type RequestLogInsert = typeof requestLogs.$inferInsert;
