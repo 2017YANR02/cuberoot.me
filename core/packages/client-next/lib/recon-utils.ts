@@ -1,7 +1,78 @@
-// Minimal port from packages/client/src/utils/recon_utils.ts.
-// Provides record-badge helpers + wcaPersonUrl.
+// Port from packages/client/src/utils/recon_utils.ts.
 import { ISO2_TO_CONTINENT } from './continent';
 
+// ── Time formatting ──
+
+export function formatTime(seconds: number | undefined | null): string {
+  if (seconds === undefined || seconds === null || seconds < 0) return 'DNF';
+  if (seconds === 0) return '0.00';
+  const cs = Math.floor(seconds * 100);
+  const truncated = cs / 100;
+  if (truncated >= 60) {
+    const mins = Math.floor(truncated / 60);
+    const secs = truncated - mins * 60;
+    return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
+  }
+  return truncated.toFixed(2);
+}
+
+export function formatResult(val: number | undefined | null): string {
+  if (val == null) return '';
+  if (val >= 9999) return 'DNF';
+  if (typeof val !== 'number') return String(val);
+  return val.toFixed(3);
+}
+
+export function formatAvg(val: number | string | undefined | null): string {
+  if (val == null) return '';
+  const n = typeof val === 'number' ? val : parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  if (n >= 9999) return 'DNF';
+  if (n >= 60) {
+    const m = Math.floor(n / 60);
+    const s = (n % 60).toFixed(2);
+    return m + ':' + (parseFloat(s) < 10 ? '0' : '') + s;
+  }
+  return n.toFixed(2);
+}
+
+export function formatAoXR(aoType: string | undefined): string {
+  if (!aoType) return '';
+  const m = aoType.match(/^([\d.]+)\s+Ao(\d)R$/);
+  if (m) return m[1] + '(' + m[2] + ')';
+  const m2 = aoType.match(/^Ao(\d)R$/);
+  if (m2) return '(' + m2[1] + ')';
+  return aoType;
+}
+
+export function formatRound(round: string | undefined, solveNum: number | undefined): string {
+  if (!round) return '';
+  const display = /^\d+$/.test(round) ? `R${round}`
+    : round === 'f' ? 'Fi'
+      : round;
+  return display + (solveNum ? '#' + solveNum : '');
+}
+
+export function localizeRound(round: string | undefined, t: (k: string, opts?: Record<string, unknown>) => string): string {
+  if (!round) return '';
+  if (round === 'f') return t('recon.roundOption.final');
+  if (round === '1' || round === '2' || round === '3') return t(`recon.roundOption.r${round}`);
+  return t('recon.roundOption.numbered', { n: round });
+}
+
+// ── Event → puzzle id ──
+const PUZZLE_MAP: Record<string, string> = {
+  '3x3': '3x3x3', '2x2': '2x2x2', '4x4': '4x4x4', '5x5': '5x5x5',
+  '6x6': '6x6x6', '7x7': '7x7x7', '3bld': '3x3x3', '4bld': '4x4x4',
+  '5bld': '5x5x5', oh: '3x3x3', sq1: 'square1',
+  pyra: 'pyraminx', mega: 'megaminx', clock: 'clock', skewb: 'skewb',
+};
+
+export function getPuzzleId(event: string): string {
+  return PUZZLE_MAP[event] ?? '3x3x3';
+}
+
+// ── Record class ──
 export function getRecordClass(val: string): string {
   const v = val.toUpperCase();
   if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';

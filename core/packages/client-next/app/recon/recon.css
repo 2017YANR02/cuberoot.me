@@ -1,0 +1,605 @@
+/* ============================================================
+   Recon 复盘模块样式
+   移植自 recon/recon.css，适配 React 组件结构
+   ============================================================ */
+
+/* --- 页面容器 --- */
+.recon-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.recon-page h1 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #e5e5e5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.recon-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #95938E;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.recon-title-help:hover { opacity: 1; color: #e8a27a; }
+
+/* NOTE: 标题区行布局 — h1+副标题靠左，LangToggle 靠右（行业标准：header 内联） */
+.recon-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 0.8rem;
+}
+
+.recon-page-header > div {
+  min-width: 0;
+}
+
+.recon-page-header h1 {
+  margin-bottom: 0.25rem;
+}
+
+/* --- 工具栏 --- */
+.recon-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+/* NOTE: comp 筛选可宽点(比赛名长);record 紧凑 */
+.recon-comp-filter { flex: 1 1 240px; max-width: 320px; }
+.recon-record-filter { flex: 0 0 auto; min-width: 130px; }
+
+.recon-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recon-filters select {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #c0c0c0;
+  font-size: 0.85rem;
+  font-family: 'Inter', Arial, sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.recon-filters select:focus {
+  border-color: rgba(217, 119, 87, 0.5);
+}
+
+.recon-stats-count {
+  font-size: 0.8rem;
+  color: #5a5a5a;
+  white-space: nowrap;
+}
+
+/* NOTE: 添加复盘按钮——纯图标圆形 */
+.recon-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 119, 87, 0.4);
+  background: rgba(217, 119, 87, 0.15);
+  color: #e8a27a;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.recon-add-btn:hover {
+  background: rgba(217, 119, 87, 0.3);
+  color: #fff;
+}
+
+.recon-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 窄屏：toolbar 改 2 列网格,塞满空缺 */
+@media (max-width: 480px) {
+  .recon-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+  }
+  /* .recon-filters 透传：3 个 select 直接作为网格项 */
+  .recon-filters { display: contents; }
+  .recon-filters select,
+  .recon-filters .recon-event-filter,
+  .recon-filters .recon-solver-filter,
+  .recon-comp-filter,
+  .recon-record-filter { width: 100%; min-width: 0; max-width: none; }
+  .recon-actions { justify-content: flex-end; gap: 8px; }
+}
+
+/* --- 表格 --- */
+.recon-table-wrap {
+  /* NOTE: 不设 overflow——会困住 thead 的 position: sticky；过宽时由页面横滚 */
+  /* inline-block 让 wrap 收缩到 table 实际宽度,边框严丝合缝包住 table。
+     不用 block(默认 100% 父宽,table 比父窄时右边出空白 / table 比父宽时被切) */
+  display: inline-block;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* event 列 cubing-icon + 文字对齐 */
+.recon-event-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 同轮次 avg / aoxr 重复——非首把变淡（首把按 solveNum 最小决定） */
+.recon-cell-dim {
+  opacity: 0.35;
+}
+
+.recon-event-cell .cubing-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* 工具栏 EventSelect 滤镜——固定宽度避免随选项变化跳动 */
+.recon-event-filter {
+  min-width: 130px;
+}
+
+.recon-table {
+  width: auto;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.recon-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(22, 22, 22, 0.98);
+  backdrop-filter: blur(8px);
+  color: #8a8a8a;
+  font-weight: 600;
+  padding: 10px 6px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.recon-table thead th:hover {
+  color: #a3a3a3;
+}
+
+/* NOTE: 排序指示器 */
+.recon-table thead th.sort-asc::after { content: " ▲"; font-size: 0.7em; }
+.recon-table thead th.sort-desc::after { content: " ▼"; font-size: 0.7em; }
+
+/* 表头列标签 + 过滤器图标 */
+.recon-table thead th .col-label {
+  vertical-align: middle;
+}
+
+/* 列过滤器内的数值区间输入 */
+.recon-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+.recon-range-filter input {
+  flex: 1;
+  width: 0;
+  min-width: 60px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: #d4d4d4;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.recon-range-filter input:focus {
+  outline: none;
+  border-color: rgba(232, 162, 122, 0.5);
+}
+
+.recon-range-sep {
+  color: #737373;
+  font-size: 0.75rem;
+}
+
+/* 单输入框范围 filter 旁边的 ~ 按钮 (iOS Safari decimal 键盘缺 ~) */
+.recon-range-tilde-btn {
+  flex: 0 0 auto;
+  min-width: 28px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  color: #d4d4d4;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.recon-range-tilde-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.recon-range-tilde-btn:active {
+  background: rgba(232, 162, 122, 0.25);
+}
+
+/* --- 表格行 --- */
+.recon-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.recon-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.recon-table tbody td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* --- 列样式 --- */
+.col-idx {
+  font-size: 0.6rem;
+  color: #5a5a5a;
+  padding: 6px 4px;
+}
+
+.col-single {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  color: #e5e5e5;
+}
+
+.col-avg, .col-dsingle { font-weight: 600; }
+.col-round { text-align: center; }
+.col-official { text-align: center; }
+.recon-table .col-dsingle,
+.recon-table .col-avg,
+.recon-table .col-aoxr,
+.recon-table .col-single,
+.recon-table .col-stm,
+.recon-table .col-tps,
+.recon-table .col-idx { text-align: right; }
+
+.col-solver {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-reconer {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b5b5b5;
+}
+
+/* 表格内联国旗(列表页 reconer 列) — 兼顾 fi-xx span 与 TW SVG img */
+.recon-inline-flag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+img.recon-inline-flag {
+  width: 1.33em;
+  height: 1em;
+  object-fit: cover;
+}
+
+/* NOTE: 比赛名电脑端展全; 窄屏(<=480px)仍按 140px 截断保持现状 */
+.col-comp {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .col-comp { max-width: 140px; }
+}
+
+.col-recon-preview {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #909090;
+  font-size: 0.8rem;
+}
+
+/* --- Mono 列样式 --- */
+.mono { font-family: 'Roboto Mono', monospace; }
+
+/* NOTE: dsingle 列加粗+截断 */
+.col-dsingle {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* --- WCA/non-WCA toggle 按钮组 --- */
+.recon-type-toggle {
+  display: flex;
+  gap: 0;
+}
+
+.toggle-btn {
+  height: 36px;
+  padding: 0 14px;
+  font-size: 0.82rem;
+  font-family: 'Inter', Arial, sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #5a5a5a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.toggle-btn:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.toggle-btn:last-child {
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+
+.toggle-btn.active {
+  background: rgba(217, 119, 87, 0.2);
+  color: #e8b49a;
+  border-color: rgba(217, 119, 87, 0.4);
+}
+
+.toggle-btn.active + .toggle-btn.active {
+  border-left: 1px solid rgba(217, 119, 87, 0.4);
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #c0c0c0;
+}
+
+.toggle-btn.active:hover {
+  background: rgba(217, 119, 87, 0.3);
+  color: #f0d0b8;
+}
+
+/* --- 副标题 --- */
+.recon-subtitle {
+  color: #5a5a5a;
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+/* --- 链接样式 --- */
+.recon-table a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.recon-table a:hover {
+  color: #d97757;
+  text-decoration: underline;
+}
+
+/* --- Tooltip --- */
+td[data-tip] {
+  position: relative;
+}
+
+td[data-tip-show]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  z-index: 100;
+  padding: 4px 8px;
+  background: #1a1a1a;
+  color: #e5e5e5;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* --- 社区标记 --- */
+.community-row td:first-child {
+  border-left: 2px solid rgba(217, 119, 87, 0.4);
+}
+
+/* --- 分页 --- */
+.recon-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 1.5rem 0;
+}
+
+.recon-btn {
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #c0c0c0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.recon-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(217, 119, 87, 0.4);
+}
+
+.recon-showing {
+  font-size: 0.8rem;
+  color: #5a5a5a;
+}
+
+/* --- 加载 / 错误 --- */
+.recon-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #737373;
+  font-size: 0.95rem;
+}
+
+.recon-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 20px;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* --- WCA 登录区域 --- */
+.wca-auth-area {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.wca-login-btn {
+  background: rgba(217, 119, 87, 0.15);
+  border: 1px solid rgba(217, 119, 87, 0.4);
+  color: #e8a27a;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.wca-login-btn:hover {
+  background: rgba(217, 119, 87, 0.3);
+  color: #fff;
+}
+
+/* --- 空状态 --- */
+.recon-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #5a5a5a;
+}
+
+.recon-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+/* --- 评论区登录提示 --- */
+.detail-comment-login-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: #737373;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* --- Normalized Cross block (used in detail + submit pages) --- */
+.normalized-cross-block {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.normalized-cross-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.normalized-cross-title {
+  font-size: 0.78rem;
+  color: #a3a3a3;
+  letter-spacing: 0.02em;
+}
+
+.normalized-cross-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.normalized-cross-copy:hover {
+  color: #e8a27a;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.normalized-cross-body {
+  padding: 10px 14px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #e5e5e5;
+  word-break: break-word;
+}
+
+.normalized-cross-comment {
+  color: #737373;
+}

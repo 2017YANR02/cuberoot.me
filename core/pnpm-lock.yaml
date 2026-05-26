@@ -295,12 +295,18 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/stack-kernel':
+        specifier: workspace:*
+        version: link:../stack-kernel
       '@ffmpeg/ffmpeg':
         specifier: ^0.12.15
         version: 0.12.15
       '@ffmpeg/util':
         specifier: ^0.12.2
         version: 0.12.2
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3
       i18next:
         specifier: ^24.2.3
         version: 24.2.3(typescript@5.9.3)
@@ -310,6 +316,12 @@ importers:
       lucide-react:
         specifier: ^1.8.0
         version: 1.8.0(react@19.2.4)
+      mediainfo.js:
+        specifier: ^0.3.7
+        version: 0.3.7
+      mp4-muxer:
+        specifier: ^5.2.2
+        version: 5.2.2
       mp4box:
         specifier: ^2.3.0
         version: 2.3.0
@@ -328,9 +340,15 @@ importers:
       sr-puzzlegen:
         specifier: ^1.0.4
         version: 1.0.4
+      three:
+        specifier: ^0.183.2
+        version: 0.183.2
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
+      zustand:
+        specifier: ^5.0.12
+        version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
     devDependencies:
       '@types/katex':
         specifier: ^0.16.8
@@ -344,6 +362,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.14)
+      '@types/three':
+        specifier: ^0.183.1
+        version: 0.183.1
       typescript:
         specifier: ^5
         version: 5.9.3

@@ -10,24 +10,31 @@
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
+    "@cuberoot/stack-kernel": "workspace:*",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "cubing": "^0.63.3",
     "i18next": "^24.2.3",
     "katex": "^0.16.47",
     "lucide-react": "^1.8.0",
+    "mediainfo.js": "^0.3.7",
+    "mp4-muxer": "^5.2.2",
     "mp4box": "^2.3.0",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-i18next": "^15.7.4",
     "sr-puzzlegen": "^1.0.4",
-    "xlsx": "^0.18.5"
+    "three": "^0.183.2",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/katex": "^0.16.8",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.183.1",
     "typescript": "^5"
   }
 }
