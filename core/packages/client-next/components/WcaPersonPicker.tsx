@@ -1,0 +1,186 @@
+'use client';
+// Person search input — ported from packages/client/src/components/CuberSearchInput.tsx.
+// 3-tier query: static index (top cubers) → WCA /persons?q= → WCA ID regex direct lookup.
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Flag } from './Flag';
+import { displayCuberName } from '@/lib/name-utils';
+import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '@/lib/wca-api';
+import { ClearButton } from './ClearButton';
+import './wca-person-picker.css';
+
+interface Props {
+  value: WcaPersonLite | null;
+  onChange: (cuber: WcaPersonLite | null) => void;
+  /** Optional static index of "top cubers" for instant matches. */
+  staticCubers?: WcaPersonLite[];
+  matchCount?: number | null;
+  placeholder?: string;
+  isZh?: boolean;
+  className?: string;
+}
+
+const DEBOUNCE_MS = 300;
+const MAX_STATIC = 5;
+const MAX_API = 5;
+
+export function WcaPersonPicker({
+  value, onChange, staticCubers = [], matchCount, placeholder, isZh, className,
+}: Props) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [apiResults, setApiResults] = useState<WcaPersonLite[]>([]);
+  const [loading, setLoading] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  const staticMatches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [] as WcaPersonLite[];
+    const seen = new Set<string>();
+    const out: WcaPersonLite[] = [];
+    for (const c of staticCubers) {
+      if (out.length >= MAX_STATIC) break;
+      if (seen.has(c.id)) continue;
+      const haystack = `${c.name.toLowerCase()} ${c.id.toLowerCase()}`;
+      if (haystack.includes(q)) {
+        seen.add(c.id);
+        out.push(c);
+      }
+    }
+    return out;
+  }, [query, staticCubers]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) { setApiResults([]); setLoading(false); return; }
+    setLoading(true);
+    const handle = window.setTimeout(async () => {
+      try {
+        if (WCA_ID_REGEX.test(q.toUpperCase())) {
+          const p = await getPerson(q.toUpperCase());
+          setApiResults(p ? [p] : []);
+        } else {
+          const list = await searchPersons(q, MAX_API);
+          setApiResults(list);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, DEBOUNCE_MS);
+    return () => window.clearTimeout(handle);
+  }, [query]);
+
+  const apiFiltered = useMemo(() => {
+    const staticIds = new Set(staticMatches.map(c => c.id));
+    return apiResults.filter(c => !staticIds.has(c.id));
+  }, [apiResults, staticMatches]);
+
+  const handlePick = (cuber: WcaPersonLite) => {
+    onChange(cuber);
+    setQuery('');
+    setApiResults([]);
+    setOpen(false);
+    inputRef.current?.blur();
+  };
+
+  const handleClear = () => {
+    onChange(null);
+    setQuery('');
+    setApiResults([]);
+    setOpen(false);
+  };
+
+  if (value) {
+    return (
+      <div ref={wrapRef} className={`cuber-search ${className ?? ''}`.trim()}>
+        <div className="cuber-search-chip">
+          <Flag iso2={value.country_iso2} className="cuber-search-flag" />
+          <span className="cuber-search-chip-name">{displayCuberName(value.name, !!isZh)}</span>
+          <span className="cuber-search-chip-id">{value.id}</span>
+          {typeof matchCount === 'number' && (
+            <span className="cuber-search-chip-count">
+              {isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`}
+            </span>
+          )}
+          <ClearButton onClick={handleClear} isZh={isZh} />
+        </div>
+      </div>
+    );
+  }
+
+  const showDropdown = open && (loading || staticMatches.length > 0 || apiFiltered.length > 0 || query.trim().length > 0);
+  return (
+    <div ref={wrapRef} className={`cuber-search ${className ?? ''}`.trim()}>
+      <input
+        ref={inputRef}
+        type="text"
+        className={`search-box${query ? ' cuber-search-input--with-clear' : ''}`}
+        value={query}
+        onChange={e => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+      />
+      {query && (
+        <ClearButton
+          onClick={() => { setQuery(''); setApiResults([]); inputRef.current?.focus(); }}
+          isZh={isZh}
+          preserveFocus
+        />
+      )}
+      {showDropdown && (
+        <div className="cuber-search-popup">
+          {staticMatches.length > 0 && (
+            <div className="cuber-search-section">
+              <div className="cuber-search-section-label">★ {isZh ? '顶尖选手' : 'Top cubers'}</div>
+              {staticMatches.map(c => (
+                <CuberRow key={`s-${c.id}`} cuber={c} isZh={isZh} onPick={handlePick} />
+              ))}
+            </div>
+          )}
+          {apiFiltered.length > 0 && (
+            <div className="cuber-search-section">
+              <div className="cuber-search-section-label">{isZh ? 'WCA 数据库' : 'WCA database'}</div>
+              {apiFiltered.map(c => (
+                <CuberRow key={`a-${c.id}`} cuber={c} isZh={isZh} onPick={handlePick} />
+              ))}
+            </div>
+          )}
+          {loading && (
+            <div className="cuber-search-status">{isZh ? '搜索中…' : 'Searching…'}</div>
+          )}
+          {!loading && staticMatches.length === 0 && apiFiltered.length === 0 && query.trim().length > 0 && (
+            <div className="cuber-search-status">{isZh ? '未找到选手' : 'No matches'}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CuberRow({ cuber, isZh, onPick }: {
+  cuber: WcaPersonLite;
+  isZh?: boolean;
+  onPick: (c: WcaPersonLite) => void;
+}) {
+  return (
+    <button type="button" className="cuber-search-item" onClick={() => onPick(cuber)}>
+      <Flag iso2={cuber.country_iso2} className="cuber-search-flag" />
+      <span className="cuber-search-item-main">
+        <span className="cuber-search-item-name">{displayCuberName(cuber.name, !!isZh)}</span>
+        <span className="cuber-search-item-id">{cuber.id}</span>
+      </span>
+    </button>
+  );
+}
