@@ -4,7 +4,8 @@
  */
 
 export { default as CubePreview } from './CubePreview.tsx';
-export { default as CubingPreview } from './CubingPreview.tsx';
+/** @deprecated Import directly from `components/CubingPreview` instead. */
+export { default as CubingPreview } from '../../../components/CubingPreview.tsx';
 export { WCA_COLORS, nxnSizeForEvent } from './colors.ts';
 export {
   applyMoves,

@@ -34,14 +34,18 @@ export async function GET(
     return new Response('forbidden', { status: 403 });
   }
   const filePath = path.join(TOOLS_DIR, rel);
-  try {
-    const data = await fs.readFile(filePath);
-    const ext = path.extname(rel).toLowerCase();
-    const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
-    return new Response(new Uint8Array(data), {
-      headers: { 'content-type': contentType, 'cache-control': 'no-store' },
-    });
-  } catch {
-    return new Response('not found', { status: 404 });
+  const candidates = path.extname(rel) ? [filePath] : [filePath, path.join(filePath, 'index.html')];
+  for (const candidate of candidates) {
+    try {
+      const data = await fs.readFile(candidate);
+      const ext = path.extname(candidate).toLowerCase();
+      const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
+      return new Response(new Uint8Array(data), {
+        headers: { 'content-type': contentType, 'cache-control': 'no-store' },
+      });
+    } catch {
+      // try next candidate
+    }
   }
+  return new Response('not found', { status: 404 });
 }

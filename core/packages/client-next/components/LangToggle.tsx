@@ -1,7 +1,12 @@
 'use client';
 
 // Ported from packages/client/src/components/LangToggle.tsx.
+// Phase 3 [lang]: clicking the toggle swaps the URL's /<lang>/ segment via
+// router.replace so the user lands on the same page in the other locale
+// (e.g. /en/recon → /zh/recon). Falls back to syncLangToUrl on paths without
+// a [lang] segment (root '/', /auth/callback) so the cookie still updates.
 
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
@@ -55,12 +60,26 @@ function TranslateIcon({ size = 16, isZh }: { size?: number; isZh: boolean }) {
 
 export default function LangToggle({ variant = 'inline', className }: LangToggleProps) {
   const { i18n } = useTranslation();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isZh = i18n.language.startsWith('zh');
 
   const toggle = () => {
     const next = isZh ? 'en' : 'zh';
     void i18n.changeLanguage(next);
     syncLangToUrl(next);
+
+    // Phase 3 path swap: /en/foo → /zh/foo, /zh → /en, etc.
+    // If we're not on a [lang]-prefixed path (e.g. /auth/callback), bail —
+    // cookie has been updated, next navigation will pick the right locale.
+    if (!pathname) return;
+    const match = pathname.match(/^\/(en|zh)(\/.*)?$/);
+    if (!match) return;
+    const rest = match[2] ?? '';
+    const qs = searchParams?.toString();
+    const query = qs ? `?${qs}` : '';
+    router.replace(`/${next}${rest}${query}`);
   };
 
   const cls = ['lang-toggle', variant === 'fixed' ? 'lang-toggle--fixed' : '', className ?? '']
