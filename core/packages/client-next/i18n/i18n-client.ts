@@ -51,6 +51,7 @@ export function ensureLangInUrl(lang: string): void {
 export function syncLangToUrl(lang: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('trainer-lang', lang);
+  document.documentElement.lang = lang;
   // Mirror to cookie so proxy.ts can read it on the next SSR request and
   // render in the right language from the first paint (no en→zh flash).
   document.cookie = `lang=${lang}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
