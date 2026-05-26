@@ -1,0 +1,1651 @@
+/* ==========================================================================
+ * NOTE: FrameCountPage 专用样式
+ * ReconViewer 风格 — 灰白中性配色
+ * ========================================================================== */
+
+/* ── 页面基础 ── */
+.frame-count-page {
+  font-family: 'Inter', Arial, sans-serif;
+  background-color: #3a3a3a;
+  color: #e8e8e8;
+  /* NOTE: dvh 跟随 iOS Safari 工具栏伸缩，避免 vh 留黑边 */
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  touch-action: manipulation; /* 移动端禁用 pinch-zoom */
+  /* iOS 屏蔽长按放大镜 / 弹出菜单, 禁止文本选中 */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* 输入框仍允许选中 */
+.frame-count-page input,
+.frame-count-page textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* ── 顶部导航栏 ── */
+.fc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.fc-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #b0b0b0;
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.fc-back:hover { color: #fff; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+.fc-back svg { width: 16px; height: 16px; }
+
+.fc-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.fc-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #b0b0b0;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.fc-title-help:hover { opacity: 1; color: #fff; }
+
+.fc-shortcuts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #b0b0b0;
+  font-size: 0.72rem;
+  padding: 4px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.fc-shortcuts-btn:hover { color: #fff; }
+.fc-shortcuts-btn svg { width: 16px; height: 16px; }
+
+/* ── 主体布局：视频 + 右侧面板 ── */
+.fc-main {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.fc-video-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fc-solve-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ── 面板 ── */
+.fc-panel {
+  background: #4a4a4a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  transition: border-color 0.3s;
+}
+.fc-panel:hover { border-color: rgba(255,255,255,0.14); }
+
+/* ── 视频区域 ── */
+.fc-video-zone {
+  position: relative;
+  min-height: 300px;
+  max-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #4a4a4a;
+  flex: 1;
+}
+
+/* 当没有视频时居中 drop hint */
+.fc-video-zone > .fc-drop-hint {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 视频包装器 — 填满 video-zone 剩余高度, 视频按 contain 居中, 只可能单轴有黑边 */
+.fc-video-wrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  line-height: 0;
+  overflow: hidden;
+  touch-action: none; /* 允许自定义触摸事件（pan/zoom） */
+  user-select: none;
+}
+
+.fc-video-wrapper.fc-pannable { cursor: grab; }
+.fc-video-wrapper.fc-panning  { cursor: grabbing; }
+
+
+.fc-video-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: transparent;
+}
+
+/* WebCodecs 帧缓冲 canvas — 覆盖在 video 上，后退时显示 */
+.fc-canvas-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  display: none;
+  z-index: 2;
+  object-fit: contain;
+}
+.fc-canvas-overlay.active {
+  display: block;
+}
+
+/* 视频顶部工具栏 — 文件名 + 设置 + Change Video */
+.fc-video-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #3a3a3a;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* 桌面端: row 容器不影响布局 (children 直接参与外层 flex) */
+.fc-toolbar-row1,
+.fc-toolbar-row2 {
+  display: contents;
+}
+
+.fc-video-label {
+  font-size: 0.72rem;
+  color: #ccc;
+  padding: 3px 8px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fc-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 单位后缀包裹器 — wrapper 作为视觉框, input 透明无边框, suffix 紧跟 */
+.fc-input-unit-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 0 6px 0 0;
+  font-size: 0.75rem;
+}
+.fc-solve-header .fc-input-unit-wrap { font-size: 0.8rem; }
+.fc-input-suffix {
+  font-size: inherit;
+  color: #888;
+  pointer-events: none;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.fc-toolbar-sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+}
+
+.fc-change-video {
+  font-size: 0.72rem;
+  color: #999;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: color 0.2s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.fc-change-video:hover { color: #fff; }
+.fc-new-btn { padding: 4px; line-height: 0; }
+
+/* Export 按钮 */
+.fc-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #b0b0b0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.fc-export-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); }
+.fc-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fc-export-btn svg { width: 12px; height: 12px; }
+
+/* Export 下拉菜单 */
+.fc-export-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.fc-export-caret {
+  font-size: 0.65rem;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+.fc-export-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 170px;
+  background: #4a4a4a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 100;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fc-export-menu-item {
+  background: none;
+  border: none;
+  color: #ddd;
+  font-size: 0.78rem;
+  padding: 7px 12px;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.fc-export-menu-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* 工具栏图标按钮 */
+.fc-toolbar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.fc-toolbar-icon:hover { color: #fff; }
+.fc-toolbar-icon.active { color: #daa520; }
+
+/* 视频 overlay — 帧号/时间 */
+.fc-video-overlay {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);
+  z-index: 5;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* 裁切相关 */
+.fc-crop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: crosshair;
+}
+
+.fc-crop-selection {
+  position: absolute;
+  border: 2px dashed rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.08);
+}
+
+.fc-crop-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+/* 拖放提示 — 仅中间按钮可点, 外围区域只接受 drop, 不接 click */
+.fc-drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #888;
+  min-height: 300px;
+  width: 100%;
+  transition: all 0.3s;
+}
+.fc-drop-hint.dragging { background: rgba(255,255,255,0.06); color: #ccc; }
+.fc-drop-upload-btn {
+  background: transparent;
+  border: none;
+  padding: 12px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.fc-drop-upload-btn:hover { color: #bbb; background: rgba(255,255,255,0.04); }
+.fc-drop-upload-btn svg { width: 48px; height: 48px; opacity: 0.5; }
+.fc-drop-text { font-size: 1rem; font-weight: 600; }
+.fc-drop-sub { font-size: 0.8rem; opacity: 0.6; }
+.fc-file-input { display: none; }
+
+/* ── 控制栏 ── */
+.fc-controls-wrap {
+  padding: 0.75rem 1rem;
+  flex-shrink: 0;
+}
+
+/* ── iOS-style Timeline Trimmer ── */
+.fc-timeline-trimmer {
+  position: relative;
+  height: 44px;
+  border-radius: 6px;
+  overflow: visible;
+  margin-bottom: 0.5rem;
+  background: #2a2a2a;
+  user-select: none;
+}
+
+.fc-timeline-filmstrip {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fc-timeline-thumb {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+/* Dimmed overlay outside trim */
+.fc-timeline-dim {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+.fc-timeline-dim-left { left: 0; border-radius: 6px 0 0 6px; }
+.fc-timeline-dim-right { right: 0; border-radius: 0 6px 6px 0; }
+
+/* Trim handles */
+.fc-trim-handle {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 100%;
+  background: #e8c44a;
+  cursor: ew-resize;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  touch-action: none;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.fc-trim-handle:hover { background: #f0d060; }
+.fc-trim-handle-left { border-radius: 6px 0 0 6px; }
+.fc-trim-handle-right { border-radius: 0 6px 6px 0; }
+.fc-trim-chevron {
+  color: #333;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Top/bottom border between handles */
+.fc-trim-border {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-top: 2px solid #e8c44a;
+  border-bottom: 2px solid #e8c44a;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Playhead */
+.fc-timeline-playhead {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.6);
+  z-index: 6;
+  pointer-events: none;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+.fc-playhead-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(40,40,40,0.92);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+/* Seek overlay */
+.fc-timeline-seek-area {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 3;
+  touch-action: none;
+}
+
+/* Mark 三角标行 — 贴在时间轴下方 */
+.fc-mark-tri-row {
+  position: relative;
+  height: 14px;
+  margin-bottom: -4px;
+}
+.fc-mark-tri {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e34e3c;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  text-shadow: 0 0 2px rgba(0,0,0,0.6);
+  transition: color 0.1s, transform 0.1s;
+  user-select: none;
+}
+.fc-mark-tri:hover {
+  color: #ff6b56;
+  transform: translateX(-50%) scale(1.25);
+}
+.fc-mark-tri.selected {
+  color: #ffb347;
+  transform: translateX(-50%) scale(1.2);
+}
+
+/* Solve bands on timeline */
+.fc-solve-band {
+  position: absolute;
+  top: 0;
+  height: 14px;
+  background: #3e3e3e;
+  border: 1px solid #555;
+  border-radius: 3px;
+  cursor: pointer;
+  z-index: 4;
+  overflow: hidden;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fc-solve-band:hover {
+  background: #4a4a4a;
+  border-color: #777;
+}
+.fc-solve-band.active {
+  background: #5a4a1a;
+  border-color: #c8a030;
+  cursor: default;
+}
+.fc-solve-band-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #bbb;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+  pointer-events: none;
+  letter-spacing: 0.3px;
+}
+.fc-solve-band-mark {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(232, 196, 74, 0.85);
+  padding: 0 3px;
+  border-radius: 2px;
+  line-height: 1.3;
+  min-width: 12px;
+  text-align: center;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mark indicators on timeline */
+.fc-marker-mark {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 8px;
+  background: #e8c44a;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: 1px;
+  z-index: 5;
+}
+
+/* Controls */
+.fc-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.fc-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fc-ctrl-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
+.fc-ctrl-btn:active { transform: scale(0.92); }
+.fc-ctrl-btn svg { width: 14px; height: 14px; }
+.fc-ctrl-btn.play-btn { width: 38px; height: 38px; border-radius: 50%; }
+.fc-ctrl-btn.play-btn svg { width: 16px; height: 16px; }
+
+.fc-ctrl-sep {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 6px;
+}
+
+.fc-rate-group {
+  display: flex;
+  gap: 2px;
+}
+
+.fc-rate-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+  color: #999;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fc-rate-btn:hover { color: #ccc; border-color: rgba(255,255,255,0.2); }
+.fc-rate-btn.active { color: #fff; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); font-weight: 600; }
+
+.fc-ctrl-info {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.fc-ctrl-info strong { color: #fff; font-weight: 600; }
+
+/* ── 右侧 Solve 面板 ── */
+
+/* Solve 选择器 */
+.fc-solve-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+}
+
+.fc-solve-select {
+  flex: 0 1 auto;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.fc-solve-select:focus { border-color: rgba(255,255,255,0.35); }
+
+.fc-solve-header .fc-toolbar-time {
+  height: 32px !important;
+  box-sizing: border-box !important;
+  font-size: 0.8rem !important;
+}
+
+.fc-solve-btn {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.fc-solve-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.fc-solve-btn:active { transform: scale(0.92); }
+
+/* Marks 面板 */
+.fc-marks-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fc-marks-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  min-height: 100px;
+}
+
+.fc-marks-empty {
+  color: #888;
+  font-size: 0.8rem;
+  padding: 1.25rem 0.75rem 1.5rem;
+  line-height: 1.55;
+}
+.fc-marks-empty-heading {
+  color: #c8c8c8;
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+  text-align: center;
+}
+.fc-marks-empty-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.fc-marks-empty-steps li::marker {
+  color: #c8a14a;
+  font-weight: 600;
+}
+.fc-marks-empty kbd {
+  background: rgba(255,255,255,0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  margin: 0 2px;
+}
+
+.fc-mark-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s;
+}
+.fc-mark-row:hover { background: rgba(255,255,255,0.06); }
+.fc-mark-row.selected { background: rgba(255,255,255,0.12); }
+
+.fc-mark-idx {
+  color: #888;
+  min-width: 20px;
+}
+
+.fc-mark-time {
+  color: #ddd;
+  font-weight: 500;
+}
+
+.fc-mark-frame {
+  color: #999;
+}
+
+.fc-mark-diff {
+  margin-left: auto;
+  color: #e8c44a;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.fc-mark-total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+.fc-mark-total .fc-mark-idx { font-weight: 600; color: #aaa; }
+.fc-mark-total .fc-mark-diff { color: #e8c44a; font-weight: 600; }
+
+/* WCA 公式提示 — 在 marks 列表底部 */
+.fc-wca-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px 4px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #888;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.fc-wca-hint-label {
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 0.5px;
+}
+.fc-wca-hint-formula {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #bbb;
+}
+.fc-wca-hint-formula b {
+  color: #e8c44a;
+}
+
+/* 起表帧方法切换 (FPS / Timestamp) */
+.fc-method-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  margin-top: 6px;
+  font-size: 0.72rem;
+}
+.fc-method-toggle-label {
+  color: #888;
+  margin-right: 4px;
+  letter-spacing: 0.3px;
+}
+.fc-method-opt {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #aaa;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fc-method-opt:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ddd;
+}
+.fc-method-opt.active {
+  background: rgba(232, 196, 74, 0.15);
+  border-color: rgba(232, 196, 74, 0.45);
+  color: #e8c44a;
+  font-weight: 600;
+}
+.fc-method-wca-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  background: rgba(120, 200, 120, 0.18);
+  border: 1px solid rgba(120, 200, 120, 0.35);
+  color: #7ec87e;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 3px;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+/* 起表帧双方法预测展示 */
+.fc-start-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  margin-top: 4px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.fc-suggest-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.fc-suggest-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  color: #aaa;
+  font-size: 0.74rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fc-suggest-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fc-suggest-formula,
+.fc-suggest-formula-sub {
+  font-size: 0.7rem;
+  color: #888;
+  padding-left: 2px;
+  word-break: break-word;
+}
+.fc-suggest-formula b,
+.fc-suggest-formula-sub b {
+  color: #e8c44a;
+  font-weight: 700;
+}
+.fc-suggest-row:hover:not(.disabled) {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.15);
+}
+.fc-suggest-row.active {
+  border-color: rgba(232, 196, 74, 0.45);
+  background: rgba(232, 196, 74, 0.08);
+}
+.fc-suggest-row.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.fc-suggest-label {
+  flex: 1;
+  color: #999;
+}
+.fc-suggest-row.active .fc-suggest-label {
+  color: #e8c44a;
+  font-weight: 600;
+}
+.fc-suggest-arrow {
+  color: #666;
+}
+.fc-suggest-row.active .fc-suggest-arrow {
+  color: #e8c44a;
+}
+.fc-suggest-frame {
+  color: #e8c44a;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+}
+.fc-suggest-delta {
+  color: #ff9680;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* Mark 操作按钮 */
+.fc-mark-actions {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.fc-action-btn {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fc-action-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.fc-action-btn:active:not(:disabled) { transform: scale(0.95); }
+.fc-action-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── 底部标签面板 ── */
+.fc-bottom-panel {
+  margin-top: 0.75rem;
+  background: #4a4a4a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fc-tab-bar {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.fc-tab {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.fc-tab:hover { color: #ccc; }
+.fc-tab.active {
+  color: #fff;
+  border-bottom-color: #e8c44a;
+}
+
+.fc-tab-content {
+  padding: 10px 16px;
+}
+
+.fc-tab-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fc-tab-label {
+  font-size: 0.8rem;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.fc-tab-input {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  width: 100px;
+  transition: border-color 0.2s;
+}
+.fc-tab-input:focus { border-color: rgba(255,255,255,0.35); }
+.fc-tab-input::-webkit-inner-spin-button,
+.fc-tab-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.fc-tab-input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.fc-tab-input:disabled { opacity: 0.5; cursor: not-allowed; color: #888; }
+
+.fc-tab-select {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.fc-tab-select:focus { border-color: rgba(255,255,255,0.35); }
+
+.fc-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.fc-tab-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.fc-tab-btn:active { transform: scale(0.95); }
+.fc-tab-btn.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #fff; }
+.fc-tab-btn.reset { color: #e87c7c; border-color: rgba(232,124,124,0.3); }
+.fc-tab-btn.reset:hover { background: rgba(232,124,124,0.15); }
+.fc-tab-btn svg { width: 14px; height: 14px; }
+
+.fc-tab-sep {
+  width: 1px; height: 24px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.fc-tab-unit {
+  font-size: 0.75rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.fc-tab-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc-fps-auto {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: #6cc070;
+  background: rgba(108,192,112,0.1);
+  border: 1px solid rgba(108,192,112,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Toolbar Time 输入框 (宽度由 JSX 动态 style 根据内容设置) */
+.fc-toolbar-time {
+  border-radius: 6px !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  background: rgba(0,0,0,0.2) !important;
+  padding: 4px 6px !important;
+  font-size: 0.75rem !important;
+  flex-shrink: 0;
+}
+/* 在 fc-input-unit-wrap 内时, wrapper 承担视觉框, input 本身透明 */
+.fc-input-unit-wrap .fc-toolbar-time {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 4px 0 4px 6px !important;
+}
+
+/* WCA Start Frame 公式 */
+.fc-wca-formula {
+  font-size: 0.78rem;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+}
+.fc-wca-formula em {
+  font-style: italic;
+  color: #777;
+}
+
+/* ── WCA 模式 grid ── */
+.fc-wca-grid {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.fc-wca-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Toast 通知 ── */
+.fc-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 24px;
+  background: rgba(30,30,30,0.92);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  z-index: 1000;
+  animation: fc-fade-in 0.2s;
+  pointer-events: none;
+}
+
+@keyframes fc-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes fc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── 快捷键弹窗 ── */
+.fc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  animation: fc-modal-fade-in 0.15s;
+}
+
+@keyframes fc-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fc-modal {
+  background: #4a4a4a;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 360px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.fc-modal h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin: 0 0 1rem;
+}
+
+.fc-modal-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: none; border: none;
+  color: #999; font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.fc-modal-close:hover { color: #fff; }
+
+.fc-shortcut-section {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.08em;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.fc-shortcut-section:first-child { margin-top: 0; }
+
+.fc-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.fc-shortcut-action {
+  font-size: 0.82rem;
+  color: #ccc;
+}
+
+.fc-shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.fc-kbd {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-family: 'Inter', monospace;
+  color: #ddd;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ── Video Info Button + Popover ── */
+.fc-info-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.fc-info-btn {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+.fc-info-btn:hover { color: #fff; }
+/* 用 position: fixed 避开 .fc-video-zone 的 overflow:hidden 裁剪.
+   位置由 JS 根据按钮 getBoundingClientRect 动态算 top/left, 通过 --popover-top/--popover-left 传入. */
+.fc-info-popover {
+  position: fixed;
+  top: var(--popover-top, 0px);
+  left: var(--popover-left, 0px);
+  z-index: 1000;
+  min-width: 260px;
+  max-width: min(360px, 90vw);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  font-size: 0.78rem;
+  color: #ddd;
+  overscroll-behavior: contain;
+}
+.fc-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+.fc-info-row > span:first-child { color: #888; }
+.fc-info-row > span:last-child,
+.fc-info-row > code { color: #eee; text-align: right; }
+.fc-info-codec-str code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+.fc-info-sep {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 6px -12px;
+}
+.fc-info-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 3px;
+  vertical-align: middle;
+  border: 1px solid;
+}
+.fc-info-badge-warn {
+  color: #ffb347;
+  background: rgba(255,179,71,0.14);
+  border-color: rgba(255,179,71,0.4);
+}
+.fc-info-badge-ok {
+  color: #7ed4a0;
+  background: rgba(126,212,160,0.12);
+  border-color: rgba(126,212,160,0.35);
+}
+.fc-info-hint {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: rgba(215,119,87,0.15);
+  border: 1px solid rgba(215,119,87,0.35);
+  border-radius: 4px;
+  color: #f4a98c;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+/* ── Loading Progress Overlay ── */
+.fc-loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  min-width: 280px;
+  max-width: 90%;
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  color: #ddd;
+  /* 父 .fc-video-wrapper 设了 line-height:0, 必须显式覆盖否则文字重叠 */
+  line-height: 1.4;
+}
+.fc-loading-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #eee;
+  margin-bottom: 6px;
+}
+.fc-loading-stats {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.76rem;
+  color: #bbb;
+  margin-bottom: 8px;
+}
+.fc-loading-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fc-loading-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d77757, #e8a87c);
+  transition: width 0.2s linear;
+}
+
+/* ── Decode Error Card (overlay on video) ── */
+.fc-decode-error-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  max-width: min(560px, 92%);
+  background: #2a2a2a;
+  border: 1px solid rgba(215,119,87,0.4);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  color: #ddd;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.fc-decode-error-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f4a98c;
+  margin-bottom: 8px;
+}
+.fc-decode-error-body {
+  margin-bottom: 6px;
+}
+.fc-decode-error-codec {
+  font-size: 0.72rem;
+  color: #999;
+  margin-bottom: 10px;
+}
+.fc-decode-error-codec code {
+  color: #ccc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.fc-decode-error-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 0.76rem;
+  cursor: pointer;
+  user-select: none;
+}
+.fc-decode-error-toggle input {
+  accent-color: #d77757;
+  cursor: pointer;
+}
+.fc-decode-error-hint {
+  color: #aaa;
+  font-size: 0.76rem;
+  margin-bottom: 8px;
+}
+.fc-decode-error-cmds {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fc-decode-error-cmd {
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.fc-decode-error-cmd-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.fc-decode-error-cmd-label {
+  font-weight: 600;
+  color: #eee;
+  font-size: 0.8rem;
+}
+.fc-decode-error-cmd-desc {
+  color: #888;
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+.fc-decode-error-copy {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ddd;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.fc-decode-error-copy:hover { background: rgba(255,255,255,0.15); }
+.fc-decode-error-cmd-body {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  color: #b8d8b8;
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  /* 移动端恢复页面可滚动 (桌面端锁死 100vh, 手机端需竖排滚动) */
+  .frame-count-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .fc-solve-col {
+    overflow-y: visible;
+  }
+  .fc-main {
+    grid-template-columns: 1fr;
+  }
+  /* solve 面板回到 DOM 自然顺序 — 放在视频下面 */
+  .fc-video-overlay {
+    font-size: 1rem;
+  }
+
+  /* 手机端: Time 已移走, toolbar 合并为单行 (横向 flex + wrap), 不再分两行 */
+  .fc-video-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  /* row 容器透明, 子元素直接参与外层 flex (与桌面端一致) */
+  .fc-toolbar-row1,
+  .fc-toolbar-row2 {
+    display: contents;
+  }
+  /* 文件名按内容宽度显示 (ⓘ 紧挨其右), 超长可 shrink 并省略号 */
+  .fc-video-label {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Row 2: 图像变换按钮靠左, 其他紧随其后, Export 靠右 */
+  .fc-toolbar-row2 .fc-toolbar-controls {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+  .fc-toolbar-row2 .fc-change-video {
+    margin-left: 0;
+  }
+  /* 把变换组 (flip/rotate/crop) 推开, 让后面 New/Export/键盘 整组贴右; 比给 export 单独 margin-left:auto 更不易挤换行 */
+  .fc-toolbar-row2 .fc-toolbar-controls {
+    margin-right: auto;
+  }
+  /* 手机端不需要 Folder — 本地文件系统 API 在移动浏览器基本不可用 */
+  .fc-folder-btn {
+    display: none;
+  }
+  /* iOS Safari: input font-size < 16px 会触发自动放大整页. 强制 16px 防止 zoom. */
+  .frame-count-page input,
+  .frame-count-page input[type="text"],
+  .frame-count-page input[type="number"],
+  .frame-count-page select,
+  .frame-count-page textarea,
+  .fc-toolbar-time,
+  .fc-tab-input {
+    font-size: 16px !important;
+  }
+
+  /* 播放控制 + 倍速 合并为一行 (原本会 flex-wrap 成两行) */
+  .fc-controls {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 2px;
+  }
+  .fc-controls .fc-ctrl-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .fc-controls .fc-ctrl-btn.play-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .fc-controls .fc-ctrl-sep {
+    margin: 0 3px;
+  }
+  .fc-controls .fc-rate-btn {
+    padding: 3px 5px;
+    font-size: 0.65rem;
+  }
+
+  /* 手机窄屏: popover 改用视口定位, 避免被父容器 overflow 截断 / 右侧越界 */
+  .fc-info-popover {
+    min-width: 240px;
+    max-width: calc(100vw - 24px);
+  }
+  .fc-decode-error-card {
+    font-size: 0.75rem;
+    padding: 12px;
+  }
+  .fc-decode-error-title { font-size: 0.9rem; }
+  .fc-decode-error-cmd-body { font-size: 0.65rem; }
+}
