@@ -5,13 +5,12 @@
  *
  * TODO (deferred from full client port):
  *   - Per-column popover filters (ColFilter / ListSelect / EventSelect / RecordSelect)
- *   - WCA / non-WCA toggle
  *   - WcaAuth login button + admin actions
- *   - localizeCompName + flag data cache (uses placeholder iso2)
+ *   - localizeCompName (uses raw comp name)
  *   - Recon submit link is preserved but submit page itself is a TODO stub.
  *
- * Ported subset: fetch + display table with all standard columns, no filters.
- * Sortable headers (asc/desc/reset cycle) but no popover. Infinite scroll preserved.
+ * Ported: fetch + table + sortable headers + infinite scroll + flag column
+ * decorations + EventIcon in event col + WCA/non-WCA toggle.
  */
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -20,9 +19,13 @@ import { useTranslation } from 'react-i18next';
 import { Plus, HelpCircle, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import {
-  formatResult, formatTime, formatAvg, formatAoXR, formatRound, wcaPersonUrl,
+  formatTime, formatAvg, formatAoXR, formatRound, wcaPersonUrl,
 } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { Flag } from '@/components/Flag';
+import { EventIcon } from '@/components/EventIcon';
+import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
+import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { listRecons } from '@/lib/recon-api';
@@ -54,12 +57,32 @@ export default function ReconListPage() {
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+  // 两个 toggle 都激活 = 全部; 只激活一个 = 筛对应类型; 都关被禁止
+  const [showWca, setShowWca] = useState(true);
+  const [showNonWca, setShowNonWca] = useState(true);
+  // Force a rerender when person-country index finishes loading so the cells
+  // pick up reconer iso2. flagDataVersion() bumps on each successful load.
+  const [, setFlagVer] = useState(0);
 
   useEffect(() => {
     listRecons()
       .then(rows => { setAllSolves(rows); setLoading(false); })
       .catch((e: Error) => { setError(e.message); setLoading(false); });
   }, []);
+
+  useEffect(() => {
+    void loadFlagData().then(() => setFlagVer(flagDataVersion()));
+  }, []);
+
+  const handleToggleWca = useCallback(() => {
+    if (showWca && !showNonWca) return;  // 不允许两个都关
+    setShowWca((v) => !v);
+  }, [showWca, showNonWca]);
+
+  const handleToggleNonWca = useCallback(() => {
+    if (!showWca && showNonWca) return;
+    setShowNonWca((v) => !v);
+  }, [showWca, showNonWca]);
 
   const COLUMNS: Column[] = useMemo(() => [
     { key: 'rawTime', label: t('recon.col.single'), className: 'col-dsingle', sortable: true },
@@ -77,10 +100,18 @@ export default function ReconListPage() {
     { key: 'id', label: t('recon.col.id'), className: 'col-idx', sortable: true },
   ], [t]);
 
+  const filtered = useMemo(() => {
+    if (showWca && showNonWca) return allSolves;
+    return allSolves.filter((s) => {
+      const wca = isWcaEvent(s.event);
+      return wca ? showWca : showNonWca;
+    });
+  }, [allSolves, showWca, showNonWca]);
+
   const sorted = useMemo(() => {
-    if (!sortKey) return allSolves;
+    if (!sortKey) return filtered;
     const dir = sortDir === 'asc' ? 1 : -1;
-    return [...allSolves].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const av = (a as unknown as Record<string, unknown>)[sortKey];
       const bv = (b as unknown as Record<string, unknown>)[sortKey];
       if (av == null && bv == null) return 0;
@@ -89,7 +120,7 @@ export default function ReconListPage() {
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
       return String(av).localeCompare(String(bv)) * dir;
     });
-  }, [allSolves, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir]);
 
   const displayed = sorted.slice(0, displayCount);
   const hasMore = sorted.length > displayCount;
@@ -137,23 +168,45 @@ export default function ReconListPage() {
       case 'rawTime':
         return solve.value || formatTime(solve.rawTime);
       case 'person': {
+        const flag = solve.personCountry ? <Flag iso2={solve.personCountry} className="recon-inline-flag" /> : null;
         const name = displayCuberName(solve.person || '', isZh);
         if (solve.personId) {
           return (
-            <a href={wcaPersonUrl(solve.personId)} target="_blank" rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}>
-              {name}
-            </a>
+            <>
+              {flag}{' '}
+              <a href={wcaPersonUrl(solve.personId)} target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}>
+                {name}
+              </a>
+            </>
           );
         }
-        return name;
+        return <>{flag} {name}</>;
       }
-      case 'reconer':
-        return solve.reconer ? displayCuberName(solve.reconer, isZh) : '';
+      case 'reconer': {
+        if (!solve.reconer) return '';
+        const name = displayCuberName(solve.reconer, isZh);
+        const iso2 = solve.reconerId ? personFlagIso2(solve.reconerId) : '';
+        const flag = iso2 ? <Flag iso2={iso2} className="recon-inline-flag" /> : null;
+        if (solve.reconerId) {
+          return (
+            <>
+              {flag}{' '}
+              <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}>
+                {name}
+              </a>
+            </>
+          );
+        }
+        return <>{flag}{name}</>;
+      }
       case 'date':
         return solve.date ? solve.date.slice(0, 10) : '';
-      case 'comp':
-        return solve.comp || '';
+      case 'comp': {
+        const flag = solve.country ? <Flag iso2={solve.country} className="recon-inline-flag" /> : null;
+        return <>{flag} {solve.comp || ''}</>;
+      }
       case 'round':
         return formatRound(solve.round, solve.solveNum);
       case 'average':
@@ -165,7 +218,10 @@ export default function ReconListPage() {
       case 'tps':
         return solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '';
       case 'event':
-        return solve.event || '';
+        if (!solve.event) return '';
+        return isWcaEvent(solve.event)
+          ? <EventIcon event={solve.event} title={eventDisplayName(solve.event, isZh)} />
+          : solve.event;
       case 'method':
         return solve.method || '';
       case 'id':
@@ -200,6 +256,20 @@ export default function ReconListPage() {
       </div>
 
       <div className="recon-toolbar">
+        <div className="recon-type-toggle">
+          <button
+            className={`toggle-btn${showWca ? ' active' : ''}`}
+            onClick={handleToggleWca}
+          >
+            WCA
+          </button>
+          <button
+            className={`toggle-btn${showNonWca ? ' active' : ''}`}
+            onClick={handleToggleNonWca}
+          >
+            non-WCA
+          </button>
+        </div>
         <div className="recon-actions">
           <span className="recon-stats-count">
             {t('recon.count', { count: sorted.length })}
