@@ -1,4 +1,4 @@
-# 魔方开放社群 · cube_platform
+# 魔方开放社群 · cube-platform
 
 参考商业计划书《一站式魔方垂直综合服务平台》搭建的前端门户站。
 技术栈对齐 `D:\cube\cuberoot.me\core\packages\client-next`,改用 Next.js(不用 Vite)。

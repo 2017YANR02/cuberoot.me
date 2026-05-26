@@ -2,7 +2,7 @@
 
 ## 项目
 
-参考 `D:\cube\cube_platform\.tmp\魔方开放社群商业计划书.pdf` 搭的魔方门户站。技术栈对齐 `D:\cube\cuberoot.me\core\packages\client-next`,但改用 Next.js(不用 Vite)。
+参考 `D:\cube\cube-platform\.tmp\魔方开放社群商业计划书.pdf` 搭的魔方门户站。技术栈对齐 `D:\cube\cuberoot.me\core\packages\client-next`,但改用 Next.js(不用 Vite)。
 
 ## 技术栈
 
