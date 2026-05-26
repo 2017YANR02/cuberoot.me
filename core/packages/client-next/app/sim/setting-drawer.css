@@ -1,0 +1,436 @@
+.sim-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  z-index: 50;
+  animation: sim-fade-in 0.15s ease-out;
+}
+
+.sim-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 90vw);
+  background: var(--card);
+  border-left: 1px solid var(--border-default);
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 16px color-mix(in srgb, var(--foreground) 8%, transparent);
+  animation: sim-slide-in 0.2s ease-out;
+}
+
+@keyframes sim-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sim-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.sim-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+.sim-drawer-head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+.sim-drawer-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.sim-drawer-head button:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+
+.sim-drawer-body {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.sim-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.sim-slider-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--foreground);
+}
+.sim-slider-val {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0 4px;
+  width: 3.5em;
+  text-align: right;
+  font: inherit;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.sim-slider-val::-webkit-outer-spin-button,
+.sim-slider-val::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.sim-slider-val:hover { border-color: var(--border-default); }
+.sim-slider-val:focus {
+  outline: none;
+  border-color: var(--accent);
+  color: var(--foreground);
+}
+.sim-slider input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.sim-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.sim-toggle input[type=checkbox] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.sim-drawer-reset {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.sim-drawer-reset:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.sim-keymap {
+  font-size: 12px;
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.sim-keymap > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--foreground);
+  user-select: none;
+  outline: none;
+}
+.sim-keymap[open] > summary {
+  margin-bottom: 8px;
+}
+/* 抽屉里那个"打开快捷键 modal"按钮 */
+.sim-keymap-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.sim-keymap-open-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+/* keymap modal — z-index 比设置抽屉 (51) 高,backdrop 灰罩 */
+.sim-keymap-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: sim-fade-in 0.15s ease-out;
+}
+.sim-keymap-modal {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+.sim-keymap-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+.sim-keymap-modal-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.sim-keymap-modal-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.sim-keymap-modal-head button:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.sim-keymap-modal-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sim-keymap-title {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.sim-keymap-hint {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+}
+
+/* 键盘 grid */
+.sim-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sim-keyboard-row {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
+.sim-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 3px 0;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1;
+}
+.sim-key:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border-default));
+}
+.sim-key.empty {
+  background: transparent;
+}
+.sim-key.empty .sim-key-move {
+  color: var(--muted-foreground);
+  opacity: 0.45;
+}
+.sim-key.editing {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground, #fff);
+}
+.sim-key.editing .sim-key-label,
+.sim-key.editing .sim-key-move {
+  color: inherit;
+}
+.sim-key-label {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.sim-key-move {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* move picker (点击格子后弹出) */
+.sim-keymap-picker {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+.sim-keymap-picker-group + .sim-keymap-picker-group {
+  margin-top: 8px;
+}
+.sim-keymap-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sim-keymap-picker-btn {
+  min-width: 32px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+.sim-keymap-picker-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground, #fff);
+}
+.sim-keymap-picker-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.sim-keymap-picker-clear,
+.sim-keymap-picker-cancel {
+  flex: 1;
+  height: 26px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  cursor: pointer;
+}
+.sim-keymap-picker-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sim-keymap-picker-clear:not(:disabled):hover,
+.sim-keymap-picker-cancel:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+/* misc + reset */
+.sim-keymap-misc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  align-items: center;
+}
+.sim-keymap-misc kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1;
+}
+.sim-mouse-help {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--foreground);
+}
+.sim-mouse-help > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.sim-mouse-op {
+  color: var(--muted-foreground);
+}
+.sim-mouse-op kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1;
+}
+.sim-mouse-act {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--foreground);
+}
+
+.sim-keymap-reset {
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+.sim-keymap-reset:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
