@@ -1,0 +1,99 @@
+/* Records 页样式 — 对齐 wca_stats_extra.css 深色主题 token */
+
+.records-page .records-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.records-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* show toggle */
+.records-show-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+.records-show-toggle button {
+  padding: 6px 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--muted-foreground);
+}
+.records-show-toggle button:hover { color: var(--foreground); }
+.records-show-toggle button.active {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--foreground);
+}
+
+/* RegionPicker 颜色变量覆盖 — 默认 light theme,这里改成 wca-stats 深色 */
+.records-page .region-picker {
+  --rp-bg: rgba(255, 255, 255, 0.04);
+  --rp-bg-hover: rgba(255, 255, 255, 0.06);
+  --rp-bg-active: rgba(255, 255, 255, 0.10);
+  --rp-text: var(--foreground);
+  --rp-text-sub: var(--faint-foreground);
+  --rp-border: rgba(255, 255, 255, 0.12);
+  --rp-border-hover: rgba(255, 255, 255, 0.25);
+  --rp-popup-bg: #1f1f1f;
+  --rp-popup-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.records-type-sub {
+  color: var(--faint-foreground);
+  font-size: 12px;
+}
+
+.records-rank {
+  color: var(--faint-foreground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* mixed 模式下 event 分组 */
+.records-event-group { margin-top: 24px; }
+.records-event-group:first-child { margin-top: 0; }
+.records-event-h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  margin: 16px 0 8px;
+  color: var(--foreground);
+}
+.records-event-count {
+  font-size: 12px;
+  color: var(--faint-foreground);
+  font-weight: 400;
+}
+
+/* 移动端 */
+@media (max-width: 720px) {
+  .records-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .records-toolbar-row .region-picker,
+  .records-show-toggle {
+    width: 100%;
+  }
+  .records-show-toggle {
+    justify-content: stretch;
+  }
+  .records-show-toggle button {
+    flex: 1;
+  }
+  .records-table {
+    font-size: 12px;
+  }
+}

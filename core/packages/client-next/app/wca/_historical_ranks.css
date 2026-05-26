@@ -1,0 +1,306 @@
+.historical-ranks-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  color: #ededed;
+  background: #1a1a1a;
+  min-height: 100vh;
+}
+
+.hr-header {
+  margin-bottom: 24px;
+}
+
+.hr-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.hr-back {
+  color: #aaa;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+.hr-back:hover { color: #ededed; }
+
+.historical-ranks-page h1 {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.hr-subtitle {
+  margin: 0;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.hr-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin: 24px 0 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hr-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.hr-filter label {
+  font-size: 12px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hr-filter select,
+.hr-filter button,
+.hr-filter input {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 34px;
+}
+
+.hr-filter select:hover,
+.hr-filter input:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Country dropdown — 单格外观,× 浮在右侧像 search clear */
+.hr-country { position: relative; }
+
+.hr-country-trigger {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  height: 34px;
+  overflow: hidden;
+}
+.hr-country-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.hr-country-trigger > button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+  /* 重置 .hr-filter button 默认样式,trigger 自己接管外观 */
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+  padding: 6px 10px !important;
+  border-radius: 0 !important;
+}
+
+.hr-country-clear {
+  width: 28px !important;
+  padding: 0 !important;
+  font-size: 16px;
+  cursor: pointer;
+  color: #888;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  height: auto !important;
+}
+.hr-country-clear:hover { color: #ededed; }
+
+.hr-country-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  min-width: 220px;
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+.hr-country-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+.hr-country-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: inherit;
+}
+
+.hr-country-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.hr-country-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 12px !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  height: auto !important;
+}
+.hr-country-item:hover { background: rgba(255, 255, 255, 0.06) !important; }
+.hr-country-item.active { background: rgba(120, 160, 255, 0.15) !important; }
+
+/* Table */
+.hr-table-wrapper {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.hr-state {
+  padding: 40px;
+  text-align: center;
+  color: #aaa;
+}
+.hr-state-error { color: #ff7676; }
+
+.hr-result-meta {
+  font-size: 13px;
+  color: #aaa;
+  padding: 4px 8px 12px;
+}
+
+.hr-table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.hr-table th, .hr-table td { white-space: nowrap; }
+
+.hr-table th, .hr-table td {
+  padding: 4px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.4;
+}
+
+.hr-table th {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #aaa;
+}
+
+.hr-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+.hr-table a {
+  color: #d77757;
+  text-decoration: none;
+}
+.hr-table a:hover { text-decoration: underline; }
+
+.hr-rank-col {
+  text-align: right !important;
+  width: 50px;
+  font-variant-numeric: tabular-nums;
+  color: #aaa;
+}
+
+.hr-value-col {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.hr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0 8px;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.hr-pagination button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.hr-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hr-pagination select,
+.hr-pagination .paginator-input {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  height: 28px;
+  font-size: 13px;
+}
+.hr-pagination .paginator-input {
+  width: 64px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.hr-pagination .paginator-input::-webkit-outer-spin-button,
+.hr-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* 国旗 .country-flag / .country-flag-ct 统一规则在 index.css (全局),此处不再重复 */
+
+/* Mobile */
+@media (max-width: 600px) {
+  .historical-ranks-page { padding: 16px 8px; }
+  .hr-filters { padding: 12px; gap: 10px; }
+  .hr-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
+  .hr-table th, .hr-table td { padding: 6px 8px; font-size: 13px; }
+}

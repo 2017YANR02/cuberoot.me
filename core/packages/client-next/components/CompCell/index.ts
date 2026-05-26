@@ -1,0 +1,1 @@
+export { CompCell } from './CompCell';

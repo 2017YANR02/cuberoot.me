@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Dev fallback: /stats/* and /tools/* are static assets served from the repo root
+  // by the Vite plugin `serveRepoRoot`. Next has no equivalent yet, so rewrite to
+  // the production host. In prod, nginx serves these from /www/wwwroot/toolkit.
+  async rewrites() {
+    return [
+      { source: "/stats/:path*", destination: "https://cuberoot.me/stats/:path*" },
+      { source: "/tools/:path*", destination: "https://cuberoot.me/tools/:path*" },
+    ];
+  },
 };
 
 export default nextConfig;
