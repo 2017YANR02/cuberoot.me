@@ -1,0 +1,315 @@
+import { sqliteTable, text, integer, real, index, primaryKey } from "drizzle-orm/sqlite-core";
+
+export type CourseLevel = "入门" | "进阶" | "高阶" | "竞速";
+export type CourseFormat = "录播系统课" | "线上直播" | "一对一私教" | "线下家教";
+export type ProductCategory = "竞速魔方" | "配件" | "周边" | "异形";
+export type EventType = "WCA 官方赛" | "城市开放赛" | "线上挑战赛" | "社群交流赛";
+export type EventStatus = "报名中" | "即将开放" | "已结束";
+export type NewsCategory = "公告" | "赛事" | "教学" | "行业";
+export type UserRole = "user" | "instructor" | "admin";
+export type OrderType = "course" | "product" | "event";
+export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";
+export type PaymentLogKind =
+  | "callback"
+  | "refund"
+  | "manual_paid"
+  | "manual_cancel";
+export type PaymentMethod =
+  | "mock_wechat"
+  | "mock_alipay"
+  | "stripe"
+  | "wechat"
+  | "alipay";
+export type ApplicationStatus = "pending" | "approved" | "rejected";
+export type CircleId = "newbie" | "speed" | "blind" | "campus";
+export type CouponDiscountType = "fixed" | "percent";
+export type CouponAppliesTo = "course" | "product" | "event" | "any";
+
+export const courses = sqliteTable("courses", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle").notNull(),
+  level: text("level").$type<CourseLevel>().notNull(),
+  format: text("format").$type<CourseFormat>().notNull(),
+  instructor: text("instructor").notNull(),
+  durationHours: integer("duration_hours").notNull(),
+  lessons: integer("lessons").notNull(),
+  price: integer("price").notNull(),
+  studentsEnrolled: integer("students_enrolled").notNull(),
+  rating: real("rating").notNull(),
+  highlights: text("highlights", { mode: "json" }).$type<string[]>().notNull(),
+  outline: text("outline", { mode: "json" })
+    .$type<{ week: string; topic: string }[]>()
+    .notNull(),
+  tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
+  videoUrl: text("video_url"),
+  coverUrl: text("cover_url"),
+  nextLiveAt: integer("next_live_at"),
+});
+
+export const products = sqliteTable("products", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").$type<ProductCategory>().notNull(),
+  brand: text("brand").notNull(),
+  price: integer("price").notNull(),
+  originalPrice: integer("original_price"),
+  rating: real("rating").notNull(),
+  reviews: integer("reviews").notNull(),
+  description: text("description").notNull(),
+  features: text("features", { mode: "json" }).$type<string[]>().notNull(),
+  inStock: integer("in_stock", { mode: "boolean" }).notNull(),
+});
+
+export const events = sqliteTable("events", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  type: text("type").$type<EventType>().notNull(),
+  status: text("status").$type<EventStatus>().notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  city: text("city").notNull(),
+  venue: text("venue").notNull(),
+  capacity: integer("capacity").notNull(),
+  registered: integer("registered").notNull(),
+  fee: integer("fee").notNull(),
+  events: text("events", { mode: "json" }).$type<string[]>().notNull(),
+  description: text("description").notNull(),
+});
+
+export const news = sqliteTable("news", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  date: text("date").notNull(),
+  category: text("category").$type<NewsCategory>().notNull(),
+  excerpt: text("excerpt").notNull(),
+  body: text("body"),
+});
+
+export const instructors = sqliteTable("instructors", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  city: text("city").notNull(),
+  specialty: text("specialty", { mode: "json" }).$type<string[]>().notNull(),
+  studentsTaught: integer("students_taught").notNull(),
+  yearsTeaching: integer("years_teaching").notNull(),
+  bestRecord: text("best_record").notNull(),
+  bio: text("bio").notNull(),
+});
+
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    phone: text("phone").notNull().unique(),
+    nickname: text("nickname").notNull(),
+    avatar: text("avatar"),
+    role: text("role").$type<UserRole>().notNull().default("user"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [index("users_phone_idx").on(t.phone)],
+);
+
+export const otpCodes = sqliteTable(
+  "otp_codes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    phone: text("phone").notNull(),
+    code: text("code").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    consumedAt: integer("consumed_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("otp_codes_phone_idx").on(t.phone)],
+);
+
+export const orders = sqliteTable(
+  "orders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    type: text("type").$type<OrderType>().notNull(),
+    refId: text("ref_id").notNull(),
+    refTitle: text("ref_title").notNull(),
+    qty: integer("qty").notNull().default(1),
+    amount: integer("amount").notNull(),
+    discount: integer("discount").notNull().default(0),
+    couponCode: text("coupon_code"),
+    status: text("status").$type<OrderStatus>().notNull().default("pending"),
+    paymentMethod: text("payment_method").$type<PaymentMethod>(),
+    providerId: text("provider_id"),
+    paymentRaw: text("payment_raw", { mode: "json" }).$type<unknown>(),
+    createdAt: integer("created_at").notNull(),
+    paidAt: integer("paid_at"),
+    refundedAt: integer("refunded_at"),
+    refundAmount: integer("refund_amount"),
+  },
+  (t) => [
+    index("orders_user_idx").on(t.userId),
+    index("orders_status_idx").on(t.status),
+  ],
+);
+
+export const paymentLogs = sqliteTable(
+  "payment_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    orderId: text("order_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    kind: text("kind").$type<PaymentLogKind>().notNull(),
+    payload: text("payload", { mode: "json" }).$type<unknown>(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("payment_logs_order_created_idx").on(t.orderId, t.createdAt),
+  ],
+);
+
+export const instructorApplications = sqliteTable(
+  "instructor_applications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id"),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(),
+    city: text("city").notNull(),
+    wcaId: text("wca_id"),
+    direction: text("direction", { mode: "json" }).$type<string[]>().notNull(),
+    formats: text("formats", { mode: "json" }).$type<string[]>().notNull(),
+    bio: text("bio").notNull(),
+    status: text("status").$type<ApplicationStatus>().notNull().default("pending"),
+    reviewNote: text("review_note"),
+    createdAt: integer("created_at").notNull(),
+    reviewedAt: integer("reviewed_at"),
+  },
+  (t) => [
+    index("applications_status_idx").on(t.status),
+    index("applications_phone_idx").on(t.phone),
+  ],
+);
+
+export const posts = sqliteTable(
+  "posts",
+  {
+    id: text("id").primaryKey(),
+    authorId: text("author_id").notNull(),
+    circleId: text("circle_id").$type<CircleId>().notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    likes: integer("likes").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("posts_circle_idx").on(t.circleId),
+    index("posts_author_idx").on(t.authorId),
+    index("posts_created_idx").on(t.createdAt),
+  ],
+);
+
+export const comments = sqliteTable(
+  "comments",
+  {
+    id: text("id").primaryKey(),
+    postId: text("post_id").notNull(),
+    authorId: text("author_id").notNull(),
+    body: text("body").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("comments_post_idx").on(t.postId)],
+);
+
+export const postLikes = sqliteTable(
+  "post_likes",
+  {
+    postId: text("post_id").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.userId] })],
+);
+
+export type Course = typeof courses.$inferSelect;
+export type CourseInsert = typeof courses.$inferInsert;
+export type Product = typeof products.$inferSelect;
+export type ProductInsert = typeof products.$inferInsert;
+export type CubeEvent = typeof events.$inferSelect;
+export type CubeEventInsert = typeof events.$inferInsert;
+export type NewsItem = typeof news.$inferSelect;
+export type NewsItemInsert = typeof news.$inferInsert;
+export type Instructor = typeof instructors.$inferSelect;
+export type InstructorInsert = typeof instructors.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type UserInsert = typeof users.$inferInsert;
+export type OtpCode = typeof otpCodes.$inferSelect;
+export type OtpCodeInsert = typeof otpCodes.$inferInsert;
+export type Order = typeof orders.$inferSelect;
+export type OrderInsert = typeof orders.$inferInsert;
+export type InstructorApplication = typeof instructorApplications.$inferSelect;
+export type InstructorApplicationInsert = typeof instructorApplications.$inferInsert;
+export type Post = typeof posts.$inferSelect;
+export type PostInsert = typeof posts.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type CommentInsert = typeof comments.$inferInsert;
+export type PostLike = typeof postLikes.$inferSelect;
+export type PostLikeInsert = typeof postLikes.$inferInsert;
+
+export const eventsTrack = sqliteTable(
+  "events_track",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    payload: text("payload", { mode: "json" }).$type<Record<string, unknown> | null>(),
+    userId: text("user_id"),
+    anonId: text("anon_id"),
+    url: text("url"),
+    referer: text("referer"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("events_track_name_created_idx").on(t.name, t.createdAt)],
+);
+
+export const coupons = sqliteTable("coupons", {
+  code: text("code").primaryKey(),
+  discountType: text("discount_type").$type<CouponDiscountType>().notNull(),
+  discountValue: integer("discount_value").notNull(),
+  appliesTo: text("applies_to").$type<CouponAppliesTo>().notNull().default("any"),
+  minAmount: integer("min_amount").notNull().default(0),
+  maxUses: integer("max_uses").notNull().default(0),
+  uses: integer("uses").notNull().default(0),
+  expiresAt: integer("expires_at"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const inviteCodes = sqliteTable(
+  "invite_codes",
+  {
+    code: text("code").primaryKey(),
+    ownerId: text("owner_id").notNull(),
+    uses: integer("uses").notNull().default(0),
+    rewardCoupon: text("reward_coupon"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("invite_codes_owner_idx").on(t.ownerId)],
+);
+
+export const qrCodes = sqliteTable("qr_codes", {
+  code: text("code").primaryKey(),
+  label: text("label").notNull(),
+  target: text("target").notNull().default("/"),
+  scans: integer("scans").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+
+export type EventsTrack = typeof eventsTrack.$inferSelect;
+export type EventsTrackInsert = typeof eventsTrack.$inferInsert;
+export type Coupon = typeof coupons.$inferSelect;
+export type CouponInsert = typeof coupons.$inferInsert;
+export type InviteCode = typeof inviteCodes.$inferSelect;
+export type InviteCodeInsert = typeof inviteCodes.$inferInsert;
+export type QrCode = typeof qrCodes.$inferSelect;
+export type QrCodeInsert = typeof qrCodes.$inferInsert;
+export type PaymentLog = typeof paymentLogs.$inferSelect;
+export type PaymentLogInsert = typeof paymentLogs.$inferInsert;

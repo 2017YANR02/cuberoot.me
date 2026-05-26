@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+dist/
+.env.local
+.env*.local
+*.tsbuildinfo
+.DS_Store
+.tmp/
+data.db
+data.db-journal
+data.db-wal
+data.db-shm
+.playwright-mcp/
+.env
