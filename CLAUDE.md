@@ -6,7 +6,7 @@
 
 ## 技术栈
 
-Next 16 App Router + React 19 + TS5 + Tailwind v4(`@tailwindcss/postcss`)+ lucide-react。无 i18n、无 dark mode、无后端。全 SSG。
+Next 16 App Router + React 19 + TS5 + Tailwind v4(`@tailwindcss/postcss`)+ lucide-react + better-sqlite3 + Drizzle ORM。SSG + RSC + Server Actions,自带 admin 后台。
 
 ## 开发
 
@@ -14,66 +14,135 @@ Next 16 App Router + React 19 + TS5 + Tailwind v4(`@tailwindcss/postcss`)+ lucid
 pnpm install
 pnpm dev          # 127.0.0.1:3100 (固定端口,别改)
 pnpm build
-pnpm typecheck    # tsc --noEmit,改 .ts/.tsx 必跑
+pnpm typecheck    # tsgo --noEmit(@typescript/native-preview),改 .ts/.tsx 必跑
+pnpm db:generate / db:migrate / db:seed
 ```
 
-`pnpm dev` 端口被占就先 kill 旧进程,不要换端口启动。
+端口被占 `taskkill /F /IM node.exe` 杀旧 dev,**别换端口**。turbopack HMR 死循环闪屏:`rm -rf .next` 重启。
 
 ## 目录
 
-- `app/` App Router 页面,每个一级目录一个板块
-- `components/` 跨页复用,新建前先 Glob 同名
-- `data/*.ts` 原始 mock,仅作 `pnpm db:seed` 的源,页面不再直接 import
+- `app/` App Router 页面;`(authed)` 路由组走鉴权
+- `components/` 跨页复用,新建前 Glob 同名
+- `data/*.ts` 原始 mock,仅作 `pnpm db:seed` 的源,页面不直接 import
 - `db/` Drizzle schema / migrations / seed
-- `lib/db/*.ts` server-side data layer,页面通过这里读 DB
-- `app/admin/` 管理后台(单密码登录)
-- `.tmp/png/` AI 自己产的截图(已 gitignore)
+- `lib/db/*.ts` server-side data layer(都 `import "server-only"`,client 不能引)
+- `lib/{sms,storage,auth,payments,search}/` 各 provider / helper
+- `app/admin/` 管理后台,`app/instructor/` 讲师后台
+- `.tmp/png/` AI 自产截图(已 gitignore)
 
 ## 设计约定
 
-- 主色 `#2A5DF4`,全部走 `app/globals.css` 的 `@theme` token(`text-brand` / `bg-brand-soft` / `border-line` 等),禁硬码颜色
-- 卡片圆角 `rounded-[14px]`,边框 `border-line`,hover 走 `brand/40 + 阴影`
-- 不用 emoji,图标全用 lucide-react
-- 移动端默认折叠,Header 已自带 hamburger
-- Section 标题统一走 `components/Section.tsx`,eyebrow + title + subtitle
+- 主色 `#2A5DF4`,全走 `app/globals.css` 的 `@theme` token(`text-brand` / `bg-brand-soft` / `border-line`),禁硬码颜色
+- 卡片 `rounded-[14px] border-line`,hover `brand/40 + 阴影`,不加多余 border/background/padding
+- 不用 emoji,图标全 lucide-react
+- 移动端默认折叠,Header 自带 hamburger
+- Section 标题统一走 `components/Section.tsx`
 
 ## 数据库
 
-- better-sqlite3 + Drizzle ORM,DB 文件 `./data.db` (gitignored)
-- schema 在 `db/schema.ts`,业务表:courses / products / events / news / instructors / users / otp_codes / orders / instructor_applications / posts / comments / post_likes
-- 改 schema 后:`pnpm db:generate` 生成 migration,`pnpm db:migrate` 应用
-- `pnpm db:seed` 从 `data/*.ts` 灌数据(`onConflictDoUpdate`,可重复跑)
-- 页面读数据走 `lib/db/<resource>.ts` 的 `list()` / `findById(id)`,不要直接 import `@/data/*`
-- `lib/db/*` 都是 RSC-only(有 `import "server-only"`),不要在 client component 引
+DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业务表:
+
+- 基础:`users` / `otp_codes` / `instructors` / `instructor_applications`
+- 内容:`courses` / `lessons` / `products` / `events` / `news` / `posts` / `comments` / `post_likes`
+- 学习:`learning_progress`(user x lesson)
+- 交易:`orders` / `payment_logs` / `coupons` / `invite_codes`
+- 运营:`events_track` / `qr_codes`
+- 可观测:`error_logs` / `request_logs`(慢请求 >500ms 才记)
+
+页面读数据走 `lib/db/<resource>.ts` 的 `list()` / `listPaged({q,page,pageSize})` / `findById(id)`,不要直接 import `@/data/*`。
+
+## 鉴权
+
+- admin: cookie `cube_admin`(HMAC-SHA256,env `SESSION_SECRET`),`/admin/login` 单密码 `ADMIN_PASSWORD`(默 `admin123`)
+- 用户: cookie `cube_user`,手机号 + OTP 登录
+- 路由保护用 `proxy.ts`(Next 16 把 `middleware.ts` 改名 `proxy.ts`,exported function 也叫 `proxy`),covers `/admin/**` + `/instructor/**`
+- server-side 用 `requireUser()` / `requireAdmin()` / `requireInstructor()`(`lib/auth/*`)
 
 ## 内容 / 社群
 
-- Markdown 渲染走 `next-mdx-remote/rsc`,共享组件 `components/Markdown.tsx`(server-only)。资讯详情 `/news/[id]` 和帖子详情 `/community/posts/[id]` 都用它,Tailwind utility 自定义元素样式,不依赖 `@tailwindcss/typography`。
-- 资讯 `news.body` 字段存 markdown,admin 表单大 textarea 直接编辑。
-- 社群三表:`posts` (id, authorId, circleId, title, body, likes, createdAt) / `comments` (id, postId, authorId, body, createdAt) / `post_likes` (postId+userId 联合 PK,幂等防重赞)。点赞 / 评论 / 发帖走 `app/actions/community.ts` server actions,登录态用 `requireUser`。
-- 圈子枚举 `CircleId = 'newbie' | 'speed' | 'blind' | 'campus'`,元信息(名称 / 描述 / 成员数)集中在 `lib/db/posts.ts` 的 `CIRCLE_META`,community 圈子卡和过滤页 `/community/circle/[id]` 都从这里取。"加入圈子" 仅视觉按钮,不持久化关系。
-- 课程视频字段:`courses.videoUrl` / `coverUrl` / `nextLiveAt`。`components/CourseVideo.tsx` 按 URL 判断:`.mp4 / .webm` 直链走 `<video>`;`bilibili / vimeo / youtube` 走带 sandbox 的 `<iframe>`;其它兜底外链。无 `videoUrl` 不渲染视频区。`nextLiveAt` 存秒级 timestamp,详情页上方一个 brand-soft 小卡显示,无值不渲染。
+- Markdown 走 `next-mdx-remote/rsc`,共享 `components/Markdown.tsx`(server-only)。资讯 `news.body` + 帖子详情都用
+- 社群三表 `posts` / `comments` / `post_likes`,操作走 `app/actions/community.ts` server actions
+- 圈子枚举 `CircleId = 'newbie' | 'speed' | 'blind' | 'campus'`,元信息集中在 `lib/db/posts.ts` 的 `CIRCLE_META`;"加入圈子" 仅视觉按钮不持久化
+
+## 课程 / 付费墙 / 学习进度
+
+- 课程结构:`courses` (元信息 + price + instructorId) + `lessons` (idx / title / durationSec / videoKey / videoUrl / free)
+- 已购校验:`canAccessCourse(user, course, lesson?)` 返 `{allowed, reason}`,reason ∈ `price_zero / free_lesson / paid / not_logged_in / not_paid`
+- 视频取流走 `/api/lessons/[id]/video`(nodejs runtime),校验后 302 到 `signedVideoUrl(key)`。local storage 直接 `/uploads/<key>`,远端 TODO 真签名 URL 防盗链
+- 学习进度 `learning_progress`(`userId,lessonId` 唯一),`LessonPlayer` timeupdate 节流 10s 调 `updateProgress(lessonId,positionSec,completed)`
+- `/me/courses` 我的课程,`courseProgressPercent` 计算完成率,"继续学习" 跳最近 progress 的 lesson
+- admin `_LessonsPanel` 章节编辑,视频 `UploadField` 上传 mp4
+- 兼容老字段:`courses.videoUrl` / `coverUrl` 仍可用;`courses.nextLiveAt`(秒级 timestamp)无值不渲染
+
+## 搜索
+
+- SQLite FTS5(5 张虚拟表 + 15 触发器,见 `0008_phase3_search_fts.sql`)覆盖 courses / products / events / news / posts
+- CJK 用 `unicode61` 没法分词,自定 SQL 函数 `cube_seg` 在 `lib/search/segment.ts` 插空格;查询时 `buildFtsQuery(q)` 加前缀通配
+- 统一接口 `lib/db/search.ts` `searchCourses / Products / Events / News / Posts` + `searchAll(q, limitPerType)`
+- `/search?q=` 分组结果页;`HeaderSearch` 在 header 右侧;列表页用 `ListSearch` + `Pagination`(server 渲染分页)
+
+## 支付
+
+- provider 抽象 `lib/payments/`:`mock_wechat` / `mock_alipay` / `stripe` / `wechat` / `alipay`,接口返 `redirect | qrcode | done`
+- env 缺失 provider 自动 enabled:false;Stripe Checkout / WeChat V3 Native 扫码 / Alipay 电脑网站支付
+- 下单流程:`placeOrder({couponCode?})` server action → `startPayment(orderId, providerId)`;qrcode 走 `QrCodeModal` 3s 轮询 `/api/orders/[id]/status`
+- 回调统一 `app/api/payments/[provider]/callback/route.ts`(nodejs runtime),provider 可定义 response body
+- 退款 admin 走 `app/actions/refund.ts` `refundOrder`,写 `payment_logs`;对账 `/admin/reconcile`
+
+## 短信 / 存储 / 上传
+
+- SMS provider 抽象 `lib/sms/`:`console`(默认 fallback,只 log)/ `aliyun` / `tencent`,手写 V3 签名无 SDK 依赖。`SMS_PROVIDER` 空降级 console
+- Storage provider 抽象 `lib/storage/`:`local`(默认,落 `public/uploads/<yyyy-mm>/<uuid>.<ext>`)/ `r2` / `s3` / `oss` / `cos`,手写 sigv4 / OSS / COS 签名。`STORAGE_PROVIDER` 空走 local
+- 上传 `POST /api/upload`(admin 鉴权,200MiB 上限,multipart),返 `{url, key}`;client 走 `components/FileUpload.tsx` 真实进度,`UploadField` 拼输入框 + 上传
+
+## 可观测
+
+- `error_logs` 表 + `lib/db/logs.ts` `logError({level,message,stack?,path?,userId?})`;`app/global-error.tsx` 兜底
+- `request_logs` 慢请求 >500ms,`logSlowRequest({...})`;目前仅 payment callback 埋点,新 route 按同模板加
+- admin `/admin/logs` Tabs 切 errors / slow requests
+
+## 讲师后台
+
+- 字段:`users.role` (`user|instructor|admin`)、`users.instructorId`、`courses.instructorId`、`instructors.userId`
+- `/instructor/{,/courses,/students,/earnings}`,`requireInstructor()` 守门
+- 分成 70% 固定 `INSTRUCTOR_REVENUE_SHARE`(`lib/db/instructor-stats.ts`),月度汇总;**未做结算 `instructor_payouts` 表**,earnings 仅展示
+- admin 入驻审核通过自动建/绑定 user + 设 role + 双向关联 instructor
 
 ## 管理后台
 
-- 路径 `/admin`,默认密码 `admin123`,改环境变量 `ADMIN_PASSWORD`
-- session cookie HMAC 签名,密钥 env `SESSION_SECRET`(生产必设),失效 7 天
-- middleware 校验 `/admin/**` (除 `/admin/login`),未登录跳 login
-- 资源编辑用 server actions(`actions.ts`),数组字段在表单里是 textarea 一行一个;课程大纲格式 `Week N | 主题`
-- admin 路由 `robots: noindex`,不进入 sitemap
+- 路径 `/admin`,密码 `ADMIN_PASSWORD` env,session HMAC + cookie 7 天失效
+- 资源编辑用 server actions(`actions.ts`),数组字段 textarea 一行一个;课程大纲 `Week N | 主题`
+- admin 路由 `robots: noindex`,不进 sitemap
+
+## 增长 / 运营
+
+- SEO:`app/sitemap.ts` + `app/robots.ts` 动态拉 db;站点绝对 URL 走 `lib/site.ts` 读 `NEXT_PUBLIC_SITE_URL`(默 `http://127.0.0.1:3100`)。OG image `app/og/route.tsx` 用 `next/og` 出 1200x630 PNG。详情页 `generateMetadata` 注入 `openGraph` + `twitter` + `ogImageUrl(title)`
+- 埋点:`events_track` 表 + `POST /api/track`({name,payload?,url?}),客户端走 `lib/track.ts`。匿名 cookie `cube_anon`(non-httpOnly,1y)。自动埋:`page_view` / `signup` / `login` / `order_placed` / `post_created` / `qr_landing`。admin 看 `/admin/events-track`
+- 优惠券 / 邀请码:`coupons` / `invite_codes`,orders 带 `discount` + `couponCode`。下单 server action 接 `couponCode`,前端 `CouponBox` 调 `previewCoupon` 试算;新用户 `?invite=XX` 透传到 verify-otp,`applyInviteOnSignup` + `rewardCoupon` 透传 toast。用户在 `/me/invite` 看自己邀请码
+- 二维码落地:`qr_codes`;`/qr/[code]` 命中 `incrementScans`,target ≠ `/` 自动 302(预览加 `?stay=1`)。admin `/admin/qr` 批量生成(最大 500 一批)
+- 不接 GA / Plausible / Sentry / Posthog,埋点全自建
+
+## PWA
+
+- `public/manifest.json` + 手写 `public/sw.js`(无 workbox 依赖):cache-first 静态资源 + network-first HTML + api 透传 + offline fallback
+- 图标 `app/icons/[size]/route.tsx` 走 `next/og` SSG 出 192/512/maskable-512 PNG;`app/icon.tsx` + `apple-icon.tsx` Next 约定
+- `SwRegister` 仅 production 注册,dev 不注册避免 HMR 闹;`PwaInstallButton` 监听 `beforeinstallprompt`,iOS Safari 不触发(用户自己 → 添加到主屏幕)
+- 离线壳 `/offline`
+
+## 部署
+
+- `Dockerfile`(node:20-alpine multi-stage,Next standalone 输出,better-sqlite3 native 模块 + `db/migrations` 复制进 runner)
+- `docker-compose.yml` 单服务 + named volume `/data/data.db`,宿主 3100 → 容器 3000
+- `.env.example` 列出 `ADMIN_PASSWORD` / `SESSION_SECRET` / `NEXT_PUBLIC_SITE_URL` / `DB_PATH` / 支付 env / SMS env / STORAGE env
+- `next.config.ts` 设 `output: "standalone"` + `serverExternalPackages: ["wechatpay-node-v3","alipay-sdk"]`
+- 详见 `DEPLOY.md` 和 `HANDOFF.md`
 
 ## 常见坑
 
-- 日期显示禁用 `new Date("YYYY-MM-DD")`(SSR 时区会偏一天),直接字符串 split
-- 详情页 `params` 是 `Promise<{ id: string }>`,要 `await`
-- 动态路由必须导出 `generateStaticParams`,现在要 `async` 从 db 拉 id 列表
-- better-sqlite3 是 native 模块,首次装包后跑 `pnpm install` 触发 build(pnpm-workspace.yaml 已 allowBuilds)
-
-## 增长 / 运营 (Phase 4)
-
-- SEO:`app/sitemap.ts` + `app/robots.ts` 动态拉 db;站点绝对 URL 走 `lib/site.ts` 读 `NEXT_PUBLIC_SITE_URL`(默认 `http://127.0.0.1:3100`)。OG image `app/og/route.tsx` 用 `next/og` 出 1200x630 PNG,`/og?title=...`。所有详情页 `generateMetadata` 都注入 `openGraph` + `twitter` + 指向 `ogImageUrl(title)` 的图。
-- 埋点:`events_track` 表 + `POST /api/track`(`{name,payload?,url?}`,返 204),客户端走 `lib/track.ts`。匿名 cookie `cube_anon`(non-httpOnly,1y)。自动埋:`page_view`(`components/TrackPageView.tsx` 放 RootLayout Suspense 里)、`signup` / `login`(LoginForm 成功后)、`order_placed`(`TrackOnce` 在 `/orders/[id]` 首访)、`post_created`(`TrackOnce`,作者 30s 内首访)、`qr_landing`(`/qr/[code]`)。admin 查看 `/admin/events-track`。
-- 优惠券 / 邀请码:`coupons` / `invite_codes` 两表;orders 加 `discount` + `couponCode` 列。`lib/db/coupons.ts` `findActive(code,refType,amount)` 校验 active / expires / 上限 / appliesTo / minAmount;`lib/db/invites.ts` `getOrCreateForUser` / `applyInviteOnSignup`。下单流程 server action `placeOrder` 接 `couponCode`,前端 `components/CouponBox.tsx` 调 `previewCoupon` 试算后再提交;新用户首登带 `?invite=XX` 透传到 `verify-otp`,自动 `applyInviteOnSignup` 并把 `rewardCoupon` 通过 `?toast=invite_reward&coupon=` 透传给 next 页。用户走 `/me/invite` 看自己的邀请码 + 复制(`components/CopyButton.tsx`)。
-- 二维码落地:`qr_codes` 表;`/qr/[code]` 命中即 `incrementScans`,若 `target` 不是 `/` 自动 302(管理员预览加 `?stay=1`);未命中也响应通用欢迎页。admin `/admin/qr` 批量生成(前缀 + 数量),最大 500 一批。
-- 部署:`Dockerfile`(node:20-alpine multi-stage,Next standalone 输出,better-sqlite3 native 模块 + `db/migrations` 复制进 runner)。`docker-compose.yml` 单服务 + named volume `/data/data.db`,宿主端口 3100 → 容器 3000。`.env.example` 列出 `ADMIN_PASSWORD` / `SESSION_SECRET` / `NEXT_PUBLIC_SITE_URL` / `DB_PATH`。详见 `DEPLOY.md`。`next.config.ts` 设 `output: "standalone"`。
-- 不接 GA / Plausible / Sentry / Posthog,埋点全自建。
+- 日期显示禁用 `new Date("YYYY-MM-DD")`(SSR 时区偏一天),用字符串 split
+- 详情页 `params` / `searchParams` 是 Promise,要 `await`
+- 动态路由必须导出 `generateStaticParams`,要 `async` 从 db 拉 id 列表
+- better-sqlite3 native 模块,首次装包要 `pnpm install` 触发 build(pnpm-workspace.yaml 已 allowBuilds)
+- turbopack 在 Windows 偶发 panic + HMR 死循环闪屏:`rm -rf .next` 重启 dev
+- FTS5 触发器只覆盖 insert/update/delete,migration 里有一次性 backfill;新装环境跑完 migration 就好,不用手动同步
