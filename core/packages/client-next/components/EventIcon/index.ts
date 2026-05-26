@@ -1,1 +1,1 @@
-export { EventIcon } from './EventIcon';
+export { EventIcon, CubingIcon } from './EventIcon';

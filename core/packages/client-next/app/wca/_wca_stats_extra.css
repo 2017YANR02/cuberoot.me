@@ -1,0 +1,399 @@
+/* 6 个 cubing.pro 风格统计 tab 共享样式. 类名前缀 .wse- (wca-stats-extra). */
+
+.wse-page {
+  /* wse 视觉硬码 dark,锁 dark token */
+  color-scheme: dark;
+  --background: #171717;
+  --foreground: #ededed;
+  --muted-foreground: #a3a3a3;
+  --faint-foreground: #737373;
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  color: var(--foreground);
+  background: #1a1a1a;
+  min-height: 100vh;
+}
+
+.wse-header { margin-bottom: 24px; }
+.wse-title-row { display: inline-flex; align-items: center; gap: 8px; }
+.wse-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #a3a3a3;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.wse-title-help:hover { opacity: 1; color: #D97757; }
+.wse-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.wse-back {
+  color: var(--muted-foreground);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+.wse-back:hover { color: var(--foreground); }
+.wse-page h1 { margin: 0 0 8px; font-size: 1.75rem; font-weight: 700; }
+.wse-subtitle { margin: 0; color: var(--muted-foreground); font-size: 14px; }
+
+.wse-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin: 24px 0 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wse-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+.wse-filter label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.wse-filter select,
+.wse-filter > input,
+.wse-filter > button {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 34px;
+}
+.wse-filter select:hover,
+.wse-filter > input:hover { border-color: rgba(255, 255, 255, 0.25); }
+
+/* CountrySelect */
+.wse-country { position: relative; }
+.wse-country-trigger {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  height: 34px;
+  overflow: hidden;
+}
+.wse-country-trigger:hover { border-color: rgba(255, 255, 255, 0.25); }
+.wse-country-trigger > button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+  padding: 6px 10px !important;
+  border-radius: 0 !important;
+  color: inherit;
+  font-size: 14px;
+}
+.wse-country-clear {
+  width: 28px !important;
+  padding: 0 !important;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--faint-foreground);
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  height: auto !important;
+}
+.wse-country-clear:hover { color: var(--foreground); }
+.wse-country-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  min-width: 220px;
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+.wse-country-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted-foreground);
+}
+.wse-country-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: inherit;
+}
+.wse-country-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+.wse-country-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 12px !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  color: inherit;
+  font-size: 13px;
+  text-align: left;
+  height: auto !important;
+}
+.wse-country-item:hover { background: rgba(255, 255, 255, 0.06) !important; }
+.wse-country-item.active { background: rgba(120, 160, 255, 0.15) !important; }
+
+/* Toggle (chip) */
+.wse-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.wse-toggle input { accent-color: #d77757; }
+
+/* Table */
+.wse-table-wrapper {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px;
+  overflow-x: auto;
+}
+.wse-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.wse-state-error { color: #ff7676; }
+.wse-result-meta {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  padding: 4px 8px 12px;
+}
+.wse-table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.wse-table th, .wse-table td { white-space: nowrap; }
+.wse-table th, .wse-table td {
+  padding: 4px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.4;
+}
+.wse-table th {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.wse-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+.wse-table a { color: #d77757; text-decoration: none; }
+.wse-table a:hover { text-decoration: underline; }
+
+.wse-rank-col {
+  text-align: right !important;
+  width: 50px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+.wse-value-col {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.wse-attempts-col {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: #ccc;
+}
+
+/* Pagination */
+.wse-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0 8px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.wse-pagination button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.wse-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.wse-pagination select,
+.wse-pagination .paginator-input {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  height: 28px;
+  font-size: 13px;
+}
+.wse-pagination .paginator-input {
+  width: 64px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.wse-pagination .paginator-input::-webkit-outer-spin-button,
+.wse-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* sum-of-ranks 项目复选框 */
+.wse-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 4px 8px;
+  margin-top: 8px;
+}
+.wse-events-grid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.wse-events-grid label:hover { background: rgba(255, 255, 255, 0.04); }
+.wse-events-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.wse-events-bar button {
+  font-size: 12px;
+  padding: 3px 8px !important;
+  height: auto !important;
+}
+
+/* 数据细节列 */
+.wse-detail-cell {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.wse-detail-cell strong { color: var(--foreground); font-weight: 500; }
+
+/* Sum of ranks per-event mini cells */
+.wse-sor-evcell {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-size: 12px;
+  width: 38px;
+  padding: 4px 4px !important;
+}
+.wse-sor-evcell.podium-1 { color: #ffc107; font-weight: 600; }
+.wse-sor-evcell.podium-2 { color: #c0c0c0; font-weight: 600; }
+.wse-sor-evcell.podium-3 { color: #cd7f32; font-weight: 600; }
+.wse-sor-evcell.empty { color: #555; }
+
+/* Show toggle 所在 filter 不强制 140px min-width,让 toggle 后紧贴下一项 filter */
+.wse-filter.wse-filter-show { min-width: 0; }
+
+/* Show toggle (Persons / Results), segmented pill — 与其它 filter 同高 */
+.wse-show-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  align-self: flex-start;  /* 不被 .wse-filter 的 stretch 拉宽 → 避免右侧露空 */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  height: 34px;
+}
+.wse-show-toggle button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  padding: 0 16px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+.wse-show-toggle button:hover { color: var(--foreground); }
+.wse-show-toggle button.active {
+  background: rgba(120, 160, 255, 0.18);
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* Search input (with × clear button) */
+.wse-filter-q { min-width: 200px; flex: 1; }
+.wse-q-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.wse-q-wrap input {
+  flex: 1;
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 34px;
+}
+.wse-q-wrap input:hover { border-color: rgba(255, 255, 255, 0.25); }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .wse-page { padding: 16px 8px; }
+  .wse-filters { padding: 12px; gap: 10px; }
+  .wse-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
+  .wse-filter-q { flex: 1 0 100%; }
+  .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
+}

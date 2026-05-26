@@ -1,0 +1,1136 @@
+/* NOTE: WCA 统计页样式 — 暗色主题 + 现代表格 */
+
+/* 项目列：仅 cubing-icon */
+.wca-stats-table .wca-stats-event-icon {
+  font-size: 18px;
+  color: var(--muted-foreground);
+}
+
+.wca-stats-page {
+  /* wca-stats 详情子页是 dark-locked:实际锁见 index.css 的 html:has(.wca-stats-page) 块 */
+  width: fit-content;
+  min-width: min(100%, 800px);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 24px 32px;
+  min-height: 100vh;
+  color: var(--foreground);
+}
+
+/* 页面头部 */
+.wca-stats-header {
+  margin-bottom: 24px;
+}
+
+/* NOTE: back 链接 + LangToggle 这一行：左 back，右 toggle */
+.wca-stats-header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* WcaStatsIndex 标题行：h1 靠左，toggle 靠右 */
+.wca-stats-index-header {
+  margin-bottom: 28px;
+}
+
+.wca-stats-index-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #f9f4ef;
+}
+
+.wca-stats-back {
+  color: #e8a27a;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.wca-stats-back:hover {
+  color: #f0c0a0;
+}
+
+.wca-stats-header h1 {
+  margin: 12px 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #f9f4ef;
+}
+
+.wca-stats-note {
+  font-size: 14px;
+  color: #8a7a6a;
+  font-style: italic;
+  line-height: 1.5;
+  /* note 里的 \n 渲染为换行（如 wr_metric 第二行的 metric 术语表） */
+  white-space: pre-line;
+}
+
+/* ==========================================================================
+   分段按钮（Tab / Metric 切换）
+   ========================================================================== */
+
+/* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
+.wca-stats-tab-bar {
+  display: inline-flex;
+  gap: 0;
+  margin: 6px 12px 6px 0;
+  vertical-align: middle;
+}
+
+/* ── Dedup toggle（iOS 药丸风格）───── */
+.wca-stats-dedup-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  margin-left: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.wca-stats-dedup-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.wca-stats-toggle-pill {
+  position: relative;
+  width: 38px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.wca-stats-toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 12px;
+  background: white;
+  border-radius: 6px;
+  transition: all 0.25s;
+}
+
+input:checked + .wca-stats-toggle-pill {
+  background: #34c759;
+}
+
+input:checked + .wca-stats-toggle-pill::after {
+  width: 22px;
+  transform: translateX(12px);
+}
+
+/* 通用分段按钮基础样式 */
+.wca-stats-tab,
+.wca-stats-metric-btn {
+  padding: 8px 20px;
+  border: 1px solid #444444;
+  background: transparent;
+  color: #ececec;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all 0.2s;
+  border-radius: 0;
+}
+
+/* 首尾圆角 */
+.wca-stats-tab:first-child,
+.wca-stats-metric-btn:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.wca-stats-tab:last-of-type,
+.wca-stats-metric-btn:last-of-type {
+  border-radius: 0 6px 6px 0;
+}
+
+/* NOTE: 相邻按钮消除重复边框 */
+.wca-stats-tab + .wca-stats-tab,
+.wca-stats-metric-btn + .wca-stats-metric-btn {
+  border-left: none;
+}
+
+/* active 状态 */
+.wca-stats-tab.active,
+.wca-stats-metric-btn.active {
+  background: #1a6bc4;
+  border-color: #1a6bc4;
+  color: #f9f4ef;
+}
+
+/* panel-tab（排名/历史）与主 tab 统一同一蓝色 */
+.wca-stats-panel-tab.active {
+  background: #1a6bc4;
+  border-color: #1a6bc4;
+  color: #f9f4ef;
+}
+
+/* hover 状态 */
+.wca-stats-tab:hover:not(.active):not(.disabled),
+.wca-stats-metric-btn:hover:not(.active):not(.disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ==========================================================================
+   指标下拉药丸（MetricPanelsView — 对标 Legacy .metric-pill）
+   ========================================================================== */
+
+.wca-stats-metric-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #555555;
+  border-radius: 20px;
+  background: #2f2f2f;
+  color: #ececec;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+  margin: 6px 12px 6px 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.wca-stats-metric-pill:hover {
+  background: #3d3d3d;
+}
+
+.wca-stats-metric-pill-arrow {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  transition: transform 0.2s;
+}
+
+.wca-stats-metric-pill-arrow.open {
+  transform: rotate(180deg);
+}
+
+.wca-stats-metric-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  background: #2f2f2f;
+  border: 1px solid #555555;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.wca-stats-metric-option {
+  padding: 9px 16px;
+  font-size: 13px;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  display: block;
+}
+
+.wca-stats-metric-option:hover {
+  background: #3d3d3d;
+}
+
+.wca-stats-metric-option.active {
+  color: #d97757;
+  font-weight: 600;
+  background: rgba(217, 119, 87, 0.08);
+}
+
+.wca-stats-metric-option.disabled {
+  color: #555555;
+  cursor: not-allowed;
+}
+
+/* Metric Groups 下拉面板样式（metricPanels 分组模式）*/
+
+.wca-stats-metric-groups {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.wca-stats-metric-group {
+  margin-bottom: 8px;
+}
+
+.wca-stats-metric-group:last-child {
+  margin-bottom: 0;
+}
+
+.wca-stats-metric-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e8ea0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.wca-stats-metric-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #cccccc;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn:first-child {
+  border-radius: 6px;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn:last-child {
+  border-radius: 6px;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn + .wca-stats-metric-btn {
+  border-left: 1px solid transparent;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ececec;
+}
+
+/* 工具栏 */
+.wca-stats-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.wca-stats-search {
+  flex: 1;
+  max-width: 400px;
+  padding: 8px 14px;
+  border: 1px solid #444444;
+  border-radius: 8px;
+  background: #2f2f2f;
+  color: #ececec;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.wca-stats-search:focus {
+  border-color: #8a7a6a888;
+}
+
+.wca-stats-search::placeholder {
+  color: #6e6050;
+}
+
+.wca-stats-count {
+  font-size: 13px;
+  color: #8a7a6a;
+  white-space: nowrap;
+}
+
+/* NOTE: 表格容器填满父级宽度,内容更宽时横向滚动(2026-04 改:fit-content → 100%
+   让 wr_metric 嵌入的 top10 history bar chart race 边框与表格对齐) */
+.wca-stats-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #444444;
+  background: #212121;
+  width: 100%;
+  max-width: 100%;
+
+  /* Firefox: 细滚动条，默认透明 */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* hover 时 Firefox 显示半透明滚动条 */
+.wca-stats-table-wrapper:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* Webkit (Chrome / Edge / Safari) */
+.wca-stats-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.wca-stats-table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wca-stats-table-wrapper::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.wca-stats-table-wrapper:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* NOTE: 表格自适应内容宽度 */
+.wca-stats-table {
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.wca-stats-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.wca-stats-table th {
+  padding: 12px 16px;
+  background: #383838;
+  color: #8e8ea0;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #444444;
+  white-space: nowrap;
+}
+
+.wca-stats-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #333333;
+  white-space: nowrap;
+}
+
+/* 斑马纹 */
+.wca-stats-table tbody tr:nth-child(even) {
+  background: #292929;
+}
+
+.wca-stats-table tbody tr:hover {
+  background: #3d3d3d;
+}
+
+/* 链接 */
+.wca-stats-table a {
+  color: #e8a27a;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.wca-stats-table a:hover {
+  color: #f0c0a0;
+  text-decoration: underline;
+}
+
+/* 金牌数加粗 */
+.wca-stats-table strong {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Details 列——solve-list / solve-row
+   每 10 个成绩一行，等宽字体，对标 Legacy .solve-list
+   ========================================================================== */
+
+.solve-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.solve-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.solve-row span {
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: #cccccc;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* 折叠展示（>12 个成绩） */
+.solve-details summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: #8a7a6a888;
+  margin-bottom: 4px;
+  user-select: none;
+  list-style: none;
+}
+
+.solve-details summary::before {
+  content: '▶ ';
+  font-size: 10px;
+}
+
+.solve-details[open] summary::before {
+  content: '▼ ';
+}
+
+/* 加载 / 错误状态 */
+.wca-stats-loading,
+.wca-stats-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #8a7a6a;
+  font-size: 16px;
+}
+
+.wca-stats-error h2 {
+  color: #ff6b6b;
+  margin-bottom: 8px;
+}
+
+.wca-stats-error a {
+  color: #e8a27a;
+  margin-top: 16px;
+}
+
+/* ==========================================
+   Sections 模式——按项目分节展示
+   ========================================== */
+
+.wca-stats-section {
+  margin-bottom: 20px;
+}
+
+.wca-stats-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ececec;
+  background: #2f2f2f;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.wca-stats-section-title:hover {
+  background: #383838;
+}
+
+.wca-stats-section-count {
+  font-size: 12px;
+  color: #8a7a6a;
+  background: #333;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+/* 折叠箭头 */
+.wca-stats-chevron {
+  display: inline-block;
+  font-size: 10px;
+  color: #8a7a6a;
+  transition: transform 0.2s;
+}
+
+.wca-stats-chevron.open {
+  transform: rotate(90deg);
+}
+
+/* NOTE: Tab / Metric 样式已在文件顶部统一定义（L41-168） */
+
+/* 详情页 — 数据为空时的占位 */
+.wca-stats-empty-state {
+  margin-top: 40px;
+  padding: 40px 24px;
+  text-align: center;
+  border: 1px dashed #444444;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.wca-stats-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #cccccc;
+  margin-bottom: 6px;
+}
+
+.wca-stats-empty-hint {
+  font-size: 13px;
+  color: #8a7a6a;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   索引页 — 浅色主题（对齐首页 landing.css tokens）
+   ========================================================================== */
+
+.wca-stats-index {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 3rem 1.5rem 4rem;
+  max-width: none;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
+
+/* ── Hero 顶栏 ───────────────────────────────────────────── */
+
+.wca-stats-index-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+}
+
+.wca-stats-index-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.6rem;
+}
+
+.wca-stats-index-title {
+  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+  margin: 0 0 0.6rem;
+}
+
+.wca-stats-index-sub {
+  font-size: 0.92rem;
+  color: var(--muted-foreground);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.wca-stats-index-hero-right {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Toolbar：搜索 + tabs ───────────────────────────────── */
+
+.wca-stats-index-toolbar {
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.wca-stats-index-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 2.4rem 0.7rem 0.9rem; /* 右侧空 2.4rem 给 inline × 让位 */
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wca-stats-index-search:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.wca-stats-index-search > svg {
+  color: var(--faint-foreground);
+  flex-shrink: 0;
+}
+
+.wca-stats-index-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 0;
+  min-width: 0;
+}
+
+.wca-stats-index-search input::placeholder {
+  color: var(--faint-foreground);
+}
+
+.wca-stats-index-search-count {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Tabs */
+.wca-stats-index-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wca-stats-index-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.wca-stats-index-tab:hover {
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+.wca-stats-index-tab.active {
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
+}
+
+.wca-stats-index-tab.active svg {
+  color: var(--background);
+}
+
+.wca-stats-index-tab-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.7;
+  padding: 0 3px;
+}
+
+/* ── Body：分类 sections ────────────────────────────────── */
+
+.wca-stats-index-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.wca-stats-index-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.wca-stats-index-section-header svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.wca-stats-index-section-header h2 {
+  margin: 0;
+  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.wca-stats-index-section-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.wca-stats-index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.55rem;
+}
+
+.wca-stats-index-card {
+  display: block;
+  padding: 0.75rem 0.95rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 450;
+  line-height: 1.35;
+  transition: all 0.15s;
+}
+
+.wca-stats-index-card:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(24, 23, 22, 0.04);
+}
+
+/* 富信息卡片(选手 / 比赛搜索结果):国旗 + 主名 + 副文本 */
+.wca-stats-index-card--rich {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.wca-stats-index-card--rich .country-flag {
+  flex-shrink: 0;
+  width: 1.4em !important;
+  margin-right: 0;
+}
+
+.wca-stats-index-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wca-stats-index-card-name {
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wca-stats-index-card-meta {
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wca-stats-index-card--rich:hover .wca-stats-index-card-meta {
+  color: var(--muted-foreground);
+}
+
+/* 空搜索结果 */
+.wca-stats-index-empty {
+  padding: 3rem 0;
+  text-align: center;
+  color: var(--faint-foreground);
+  font-size: 0.95rem;
+}
+
+.wca-stats-index-more {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 10px;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.wca-stats-index-event-icon {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.85;
+}
+
+.wca-stats-index-more:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* 加载 / 错误 */
+.wca-stats-index-status {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 1rem;
+}
+
+.wca-stats-index-status-error h2 {
+  color: var(--destructive);
+  margin: 0 0 0.5rem;
+  font-weight: 500;
+}
+
+/* 工具卡片(大卡 + 图标 + 名字 — 跟 landing standard tier 视觉对齐) */
+.wca-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.55rem;
+}
+
+.wca-tool-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 120px;
+  padding: 1.5rem 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: border-color 150ms, color 150ms, transform 150ms, box-shadow 150ms;
+}
+
+.wca-tool-card:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(24, 23, 22, 0.04);
+}
+
+.wca-tool-card svg {
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .wca-stats-index {
+    padding: 2rem 1rem 3rem;
+  }
+  .wca-stats-index-hero {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .wca-stats-index-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .wca-stats-index-card {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.8rem;
+  }
+  .wca-tools-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .wca-tool-card {
+    min-height: 95px;
+    padding: 1rem 0.6rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* 项目选择器样式全部在 components/WcaEventSelector.css,这里不再重复 */
+
+/* ==========================================================================
+   Metric 按钮 disabled 状态（metricPanels 模式下项目无数据时）
+   ========================================================================== */
+
+.wca-stats-metric-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #6e6050;
+}
+
+.wca-stats-tab.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #6e6050;
+}
+
+/* ==========================================================================
+   AverageOfX — Solve List + Details 折叠
+   ========================================================================== */
+
+/* NOTE: 成绩标签——行内展示（≤12 个成绩） */
+.solve-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.solve-list span {
+  display: inline-block;
+  padding: 2px 5px;
+  background: rgba(138, 180, 248, 0.10);
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  color: #c8d6e5;
+  white-space: nowrap;
+}
+
+/* NOTE: 折叠容器（>12 个成绩） */
+.solve-details {
+  cursor: pointer;
+}
+
+.solve-details summary {
+  color: #e8a27a;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.solve-details summary:hover {
+  color: #f0c0a0;
+}
+
+.solve-details[open] .solve-list {
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   WR History 折线图
+   ========================================================================== */
+
+.wr-chart-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.wr-chart-wrap canvas {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+  background: #1f1f1f;
+}
+
+.wr-chart-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* ==========================================================================
+   国旗图标（对标 Legacy i18n.js _injectFlagStyles）
+   ========================================================================== */
+
+/* NOTE: 覆盖 flag-icons 默认尺寸，使国旗与表格文字对齐 */
+.country-flag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+  border-radius: 2px;
+  width: 1.25em !important;
+  line-height: 1em !important;
+}
+
+/* NOTE: Chinese Taipei 自定义梅花旗 SVG */
+.country-flag-ct {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+  width: 1.25em;
+  height: 0.9em;
+  border-radius: 2px;
+}
+
+/* ==========================================================================
+   语言切换按钮（固定右下角，对标 Legacy i18n.js toggle）
+   ========================================================================== */
+
+.wca-stats-lang-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 8px 16px;
+  border: 1px solid #555555;
+  border-radius: 20px;
+  background: #2f2f2f;
+  color: #ececec;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.wca-stats-lang-toggle:hover {
+  background: #3d3d3d;
+  border-color: #8a7a6a888;
+}
