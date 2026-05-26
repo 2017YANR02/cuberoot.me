@@ -1,0 +1,854 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ *  /wca/persons/:wcaId  —  选手详情页
+ *  双主题:base = light,@media + [data-theme=dark] 翻 dark
+ *  类名前缀 wp- = "wca persons"(避免与全局 .wca-* 冲突).
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.wp-page {
+    --wp-bg: #fafafa;
+    --wp-surface: #FFFFFF;
+    --wp-text: #171717;
+    --wp-text-sub: #737373;
+    --wp-text-mute: #95938E;
+    --wp-border: #e5e5e5;
+    --wp-border-strong: #d4d4d4;
+    --wp-accent: #C15F3C;
+    --wp-accent-soft: rgba(193, 95, 60, 0.08);
+    --wp-blue: #2A6BB0;
+    --wp-blue-soft: rgba(42, 107, 176, 0.10);
+    --wp-green: #4A8A4A;
+    --wp-green-soft: rgba(74, 138, 74, 0.10);
+    --wp-orange: #E07F3C;
+    --wp-orange-soft: rgba(224, 127, 60, 0.10);
+    --wp-purple: #7757A8;
+    --wp-pink: #C84A6F;
+    --wp-pink-soft: rgba(200, 74, 111, 0.08);
+    --wp-gold: #C9A24E;
+    --wp-silver: #A6A8AB;
+    --wp-bronze: #B07051;
+    --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--wp-bg);
+    color: var(--wp-text);
+    min-height: 100dvh;
+}
+
+/* ── Dark 反盖:只翻中性 token,品牌 accent 沿用 light 值 ─────────────────
+   THEMING.md 双轨规约:@media (跟系统) + [data-theme=dark] (显式切),
+   :where() 会让 specificity=0,不要包。 */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .wp-page {
+        --wp-bg: #171717;
+        --wp-surface: #1f1f1f;
+        --wp-text: #ededed;
+        --wp-text-sub: #a3a3a3;
+        --wp-text-mute: #737373;
+        --wp-border: rgba(255, 255, 255, 0.1);
+        --wp-border-strong: rgba(255, 255, 255, 0.2);
+        --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+html[data-theme=dark] .wp-page {
+    --wp-bg: #171717;
+    --wp-surface: #1f1f1f;
+    --wp-text: #ededed;
+    --wp-text-sub: #a3a3a3;
+    --wp-text-mute: #737373;
+    --wp-border: rgba(255, 255, 255, 0.1);
+    --wp-border-strong: rgba(255, 255, 255, 0.2);
+    --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Header / Loading ────────────────────────────────────────────────── */
+.wp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: calc(14px + var(--sat)) max(24px, var(--sar)) 14px max(24px, var(--sal));
+    border-bottom: 1px solid var(--wp-border);
+    background: color-mix(in srgb, var(--wp-surface) 85%, transparent);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 10;
+}
+.wp-back {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 12px 6px 8px; border-radius: 8px;
+    color: var(--wp-text-sub); text-decoration: none; font-size: 0.85rem;
+}
+.wp-back:hover { color: var(--wp-text); background: var(--wp-accent-soft); }
+.wp-header-right {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+}
+.wp-source-link {
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--wp-border);
+    color: var(--wp-text-sub); text-decoration: none;
+    font-size: 0.78rem;
+}
+.wp-source-link:hover { color: var(--wp-accent); border-color: var(--wp-accent); }
+
+.wp-main {
+    max-width: 1100px; margin: 0 auto;
+    padding: 24px 24px 64px;
+    display: flex; flex-direction: column; gap: 16px;
+}
+.wp-loading, .wp-empty, .wp-error {
+    text-align: center; padding: 32px 16px; font-size: 0.9rem;
+    color: var(--wp-text-sub);
+}
+.wp-error { color: #B71234; }
+.wp-loading-inline { padding: 16px; color: var(--wp-text-sub); font-size: 0.85rem; }
+.wp-error-inline { padding: 8px 16px; color: #B71234; font-size: 0.85rem; }
+.wp-text-mute { color: var(--wp-text-mute); }
+
+/* ── 通用 card / section ────────────────────────────────────────────── */
+.wp-card {
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 14px;
+    box-shadow: var(--wp-shadow);
+    overflow: hidden;
+}
+.wp-section-h {
+    margin: 24px 0 12px;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--wp-text);
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────── */
+.wp-hero-card {
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 14px;
+    box-shadow: var(--wp-shadow);
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 16px;
+}
+.wp-hero-avatar-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--wp-border);
+}
+.wp-hero-avatar {
+    width: 100px; height: 100px; border-radius: 50%;
+    overflow: hidden; flex-shrink: 0;
+    background: var(--wp-bg); border: 1px solid var(--wp-border);
+}
+.wp-hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.wp-hero-avatar-fb {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: var(--wp-text-mute);
+    background: linear-gradient(135deg, var(--wp-bg), var(--wp-accent-soft));
+}
+.wp-hero-name {
+    margin: 0;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.6rem; font-weight: 500;
+    color: var(--wp-text); letter-spacing: -0.01em;
+    text-align: center;
+}
+.wp-hero-table {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border: 1px solid var(--wp-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.wp-hero-cell {
+    padding: 14px 16px;
+    text-align: center;
+    border-right: 1px solid var(--wp-border);
+}
+.wp-hero-cell:last-child { border-right: none; }
+.wp-hero-cell-label {
+    font-size: 0.72rem;
+    color: var(--wp-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+.wp-hero-cell-value {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.95rem;
+    color: var(--wp-text);
+    font-variant-numeric: tabular-nums;
+}
+.wp-hero-id {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+.wp-hero-id-link { display: inline-flex; }
+.wp-hero-id-favicon { display: inline-block; vertical-align: middle; }
+
+.wp-flag { width: 24px; height: 18px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
+.wp-flag-sm { width: 18px; height: 13px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
+
+/* pill (count badge) */
+.wp-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 32px; padding: 1px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem; font-weight: 600;
+    color: white;
+}
+.wp-pill-green  { background: #4DAF50; }
+.wp-pill-blue   { background: #2A6BB0; }
+.wp-pill-orange { background: #E07F3C; }
+.wp-pill-sep    { color: var(--wp-text-mute); }
+
+/* ── PR table ──────────────────────────────────────────────────────── */
+.wp-pr-card { padding: 16px; }
+.wp-pr-toolbar {
+    display: flex; justify-content: flex-end; align-items: center;
+    margin-bottom: 12px;
+}
+.wp-toggle-group {
+    display: inline-flex;
+    border: 1px solid var(--wp-border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    background: var(--wp-bg);
+}
+.wp-toggle-btn {
+    padding: 6px 12px;
+    border: none; background: transparent;
+    color: var(--wp-text-sub);
+    font-size: 0.82rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.wp-toggle-btn:hover { color: var(--wp-text); }
+.wp-toggle-btn.is-active {
+    background: var(--wp-surface);
+    color: var(--wp-blue);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    font-weight: 600;
+}
+
+.wp-table-scroll { overflow-x: auto; }
+
+.wp-pr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.wp-pr-table thead th {
+    background: var(--wp-bg);
+    color: var(--wp-text-sub);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--wp-border);
+    text-align: center;
+    white-space: nowrap;
+}
+.wp-pr-table .wp-th-event { text-align: left; padding-left: 16px; }
+.wp-pr-table .wp-th-group {
+    border-bottom: 1px solid var(--wp-border);
+    color: var(--wp-text);
+    font-size: 0.78rem;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+}
+.wp-pr-table .wp-th-podium { text-align: center; }
+.wp-pr-table tbody th, .wp-pr-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--wp-border);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.wp-pr-table tbody tr:last-child th,
+.wp-pr-table tbody tr:last-child td { border-bottom: none; }
+.wp-pr-table tbody tr:hover td,
+.wp-pr-table tbody tr:hover th { background: color-mix(in srgb, var(--wp-text) 4%, transparent); }
+
+.wp-cell-event {
+    text-align: left !important;
+    padding-left: 16px !important;
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 500;
+    color: var(--wp-text);
+}
+.wp-event-icon { font-size: 1.05rem; color: var(--wp-text); }
+.wp-event-icon-sm { font-size: 0.95rem; color: var(--wp-text); }
+.wp-event-icon-md { font-size: 1.4rem; color: var(--wp-text); }
+.wp-event-icon-xs { font-size: 0.85rem; color: var(--wp-text); margin-right: 4px; }
+.wp-event-name { color: var(--wp-text); }
+.wp-cell-result {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--wp-text);
+}
+
+/* rank tier color (1-3 red / 4-10 green / 11-100 blue / 100+ gray) */
+.wp-rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid transparent;
+}
+.wp-rank-tier-1 { background: var(--wp-pink); color: white; }
+.wp-rank-tier-2 { background: var(--wp-green); color: white; }
+.wp-rank-tier-3 { background: var(--wp-blue); color: white; }
+.wp-rank-tier-4 { background: var(--wp-bg); color: var(--wp-text-sub); border-color: var(--wp-border); }
+.wp-rank-tier-mute { background: var(--wp-bg); color: var(--wp-text-mute); border-color: var(--wp-border); }
+
+/* podium chip */
+.wp-podium-chips { display: inline-flex; gap: 4px; }
+.wp-podium-chip {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 2px 6px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 600;
+    border: 1px solid;
+}
+.wp-podium-chip-gold   { color: var(--wp-gold);   border-color: var(--wp-gold);   background: rgba(201,162,78,0.10); }
+.wp-podium-chip-silver { color: var(--wp-silver); border-color: var(--wp-silver); background: rgba(166,168,171,0.12); }
+.wp-podium-chip-bronze { color: var(--wp-bronze); border-color: var(--wp-bronze); background: rgba(176,112,81,0.10); }
+
+.wp-pr-footer {
+    display: flex; gap: 16px; justify-content: flex-end;
+    padding: 12px 4px 4px;
+    font-size: 0.82rem;
+    color: var(--wp-text-sub);
+}
+.wp-checkbox {
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+}
+.wp-checkbox input { accent-color: var(--wp-blue); }
+
+/* ── Tabs ─────────────────────────────────────────────────────────── */
+.wp-tabs-card { padding: 0; }
+.wp-tabs-bar {
+    display: flex; gap: 8px;
+    padding: 16px 24px 0;
+    border-bottom: 1px solid var(--wp-border);
+    overflow-x: auto;
+    overflow-y: hidden; /* 显式禁 vertical;否则 overflow-x:auto 会隐式让 y 也变 auto → sub-pixel 误差触发 scrollbar */
+}
+.wp-tab-btn {
+    background: transparent; border: none;
+    padding: 10px 4px;
+    margin-bottom: -1px;
+    color: var(--wp-text-sub);
+    font-size: 0.92rem; font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+}
+.wp-tab-btn:hover { color: var(--wp-text); }
+.wp-tab-btn.is-active {
+    color: var(--wp-blue);
+    border-bottom-color: var(--wp-blue);
+    font-weight: 600;
+}
+.wp-tab-body { padding: 16px 24px 24px; }
+
+/* ── Sub-tabs (按比赛/按项目) ─────────────────────────────────────── */
+.wp-subtab-bar {
+    display: flex; gap: 16px;
+    border-bottom: 1px solid var(--wp-border);
+    margin-bottom: 16px;
+}
+.wp-subtab-btn {
+    background: transparent; border: none;
+    padding: 8px 4px; margin-bottom: -1px;
+    color: var(--wp-text-sub); font-size: 0.88rem;
+    cursor: pointer; border-bottom: 2px solid transparent;
+}
+.wp-subtab-btn:hover { color: var(--wp-text); }
+.wp-subtab-btn.is-active {
+    color: var(--wp-blue); border-bottom-color: var(--wp-blue);
+    font-weight: 600;
+}
+
+.wp-event-strip {
+    display: inline-flex; flex-wrap: wrap; gap: 4px;
+    align-items: center;
+}
+.wp-event-strip-tabs {
+    padding: 8px 0 12px;
+    border-bottom: 1px solid var(--wp-border);
+    margin-bottom: 16px;
+    justify-content: center;
+}
+.wp-event-tab {
+    background: transparent; border: 1px solid transparent;
+    padding: 6px 8px; border-radius: 8px;
+    cursor: pointer;
+    color: var(--wp-text-sub);
+}
+.wp-event-tab:hover { color: var(--wp-text); }
+.wp-event-tab.is-active {
+    color: var(--wp-blue);
+    border-color: var(--wp-blue);
+    background: var(--wp-blue-soft);
+}
+
+.wp-subsubtab-bar {
+    display: flex; gap: 16px;
+    border-bottom: 1px solid var(--wp-border);
+    margin-bottom: 12px;
+}
+.wp-subsubtab-btn {
+    background: transparent; border: none;
+    padding: 6px 4px; margin-bottom: -1px;
+    color: var(--wp-text-sub); font-size: 0.82rem;
+    cursor: pointer; border-bottom: 2px solid transparent;
+}
+.wp-subsubtab-btn:hover { color: var(--wp-text); }
+.wp-subsubtab-btn.is-active {
+    color: var(--wp-blue); border-bottom-color: var(--wp-blue);
+    font-weight: 600;
+}
+
+/* ── 按比赛 (ByCompList) ─────────────────────────────────────────── */
+.wp-bycomp { display: flex; flex-direction: column; gap: 16px; }
+.wp-bycomp-block {
+    border: 1px solid var(--wp-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--wp-surface);
+}
+.wp-bycomp-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--wp-bg);
+    border-bottom: 1px solid var(--wp-border);
+    gap: 12px; flex-wrap: wrap;
+}
+.wp-bycomp-name {
+    color: var(--wp-text); text-decoration: none; font-weight: 600; font-size: 0.92rem;
+}
+.wp-bycomp-name:hover { color: var(--wp-accent); }
+.wp-bycomp-date {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.78rem; color: var(--wp-text-mute);
+}
+.wp-bycomp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.wp-bycomp-table thead th {
+    padding: 8px 10px; text-align: left;
+    background: var(--wp-bg);
+    color: var(--wp-text-sub);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--wp-border);
+    white-space: nowrap;
+}
+.wp-bycomp-table tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--wp-border);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.wp-bycomp-table tbody tr:last-child td { border-bottom: none; }
+/* per-event 全部成绩 表格内的 comp 单元格:比赛名 + 日期 stacked,首行加顶部分隔线 */
+.wp-bycomp-table .wp-cell-comp {
+    display: table-cell; min-width: 0;
+    vertical-align: top;
+    padding-top: 10px;
+}
+.wp-bycomp-table .wp-cell-comp-date {
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.74rem; color: var(--wp-text-mute);
+}
+.wp-bycomp-table tbody tr.wp-row-comp-first td {
+    border-top: 1px solid var(--wp-border-strong);
+}
+.wp-bycomp-table tbody tr.wp-row-comp-first:first-child td { border-top: none; }
+
+.wp-round-tag {
+    display: inline-block;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--wp-text-sub);
+}
+.wp-round-final, .wp-round-semi, .wp-round-quarter, .wp-round-first {
+    color: var(--wp-text-sub);
+}
+
+/* round tag 当作行内锚点链接 — 视觉同 span,hover 出下划线提示可点 */
+a.wp-round-tag-link {
+    text-decoration: none;
+    cursor: pointer;
+}
+a.wp-round-tag-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* 行可点击 cursor 提示 — 整行点击 → URL hash + 黄色高亮 */
+.wp-bycomp-table tbody tr.wp-row-anchorable {
+    cursor: pointer;
+}
+.wp-bycomp-table tbody tr.wp-row-anchorable:hover td {
+    background: color-mix(in srgb, var(--wp-text) 3%, transparent);
+}
+/* hash 锚点命中的行持续高亮 — 仿 WCA regulations 行级锚点黄底,直到下次切换 hash.
+   class 由 ByEventView / ByCompList useEffect 维护(SPA lazy mount 后 :target 不重绑) */
+.wp-bycomp-table tbody tr.wp-row-target td,
+.wp-bycomp-table tbody tr.wp-row-target:hover td {
+    background: rgba(255, 230, 90, 0.32);
+}
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td {
+        background: rgba(255, 213, 79, 0.18);
+    }
+}
+html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
+    background: rgba(255, 213, 79, 0.18);
+}
+
+.wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+.wp-pos-first { color: var(--wp-pink); font-weight: 700; }
+.wp-cell-attempt { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+/* 详细成绩单元格 — H2H 等 5+ 次的格式:每行 5 个,多了自动换行;
+   每行各自 grid 不能自动跨行对齐,所以列宽给定值用 ch 让行间对齐 */
+.wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+.wp-attempts-flow {
+    display: grid;
+    grid-template-columns: repeat(5, 7ch);
+    gap: 4px 12px;
+    justify-content: start;
+}
+/* 每个 .wp-att 都用 ::before/::after 预留括号宽度,opacity:0 不显示;
+   .wp-att-trimmed 时翻 1 显出来。这样所有格子有等宽的括号占位,
+   小数点跨行对齐;复制时伪元素内容不进剪贴板,粘出来是干净数字。
+   参考 WCA 官网 wca.scss: &.solve { &::before/::after / &.trimmed }. */
+/* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
+.wp-th-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.wp-att { text-align: right; }
+.wp-att::before { content: "("; opacity: 0; }
+.wp-att::after  { content: ")"; opacity: 0; }
+.wp-att-trimmed::before,
+.wp-att-trimmed::after { opacity: 1; }
+/* best 不再用更亮色 — 统一跟其他 attempt 同色,只靠括号区分 trimmed */
+/* 命中复盘的把数 — accent 色 + hover 下划线,提示可点击 */
+.wp-att-recon {
+  color: var(--wp-accent);
+  text-decoration: none;
+  cursor: pointer;
+}
+.wp-att-recon:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+/* 区域记录徽章统一走 RecordBadge / record_badge.css,本页不再覆写 */
+
+/* ── Comps tab table ─────────────────────────────────────────────── */
+.wp-comps-table, .wp-event-stats-table, .wp-lit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+.wp-comps-table thead th,
+.wp-event-stats-table thead th,
+.wp-lit-table thead th {
+    padding: 10px 12px;
+    background: var(--wp-bg);
+    color: var(--wp-text-sub);
+    font-weight: 500;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--wp-border);
+    text-align: left;
+    white-space: nowrap;
+}
+.wp-comps-table tbody td,
+.wp-event-stats-table tbody td,
+.wp-lit-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--wp-border);
+    vertical-align: middle;
+}
+.wp-comps-table tbody tr:hover td,
+.wp-event-stats-table tbody tr:hover td,
+.wp-lit-table tbody tr:hover td { background: color-mix(in srgb, var(--wp-text) 3%, transparent); }
+.wp-th-narrow { width: 50px; text-align: center !important; }
+.wp-th-sortable { cursor: pointer; user-select: none; }
+.wp-th-sortable:hover { color: var(--wp-text); }
+.wp-cell-narrow { text-align: center; }
+.wp-cell-mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.82rem; }
+.wp-cell-date { color: var(--wp-text-sub); }
+.wp-cell-comp { display: flex; align-items: center; gap: 8px; min-width: 200px; }
+.wp-link-comp { color: var(--wp-blue); text-decoration: none; font-weight: 500; }
+.wp-link-comp:hover { color: var(--wp-accent); text-decoration: underline; }
+.wp-cell-events .wp-event-strip { gap: 6px; }
+.wp-cell-num { text-align: right; font-variant-numeric: tabular-nums; }
+.wp-cell-fail { color: var(--wp-orange); }
+.wp-table-footer {
+    padding: 12px;
+    text-align: right;
+    color: var(--wp-text-mute);
+    font-size: 0.78rem;
+}
+
+/* ── Charts ─────────────────────────────────────────────────────── */
+.wp-chart-wrap {
+    position: relative;
+    width: 100%; max-width: 100%;
+    border: 1px solid var(--wp-border);
+    border-radius: 10px;
+    background: var(--wp-surface);
+    padding: 8px;
+    margin-bottom: 16px;
+}
+.wp-chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.wp-chart-grid { stroke: var(--wp-border); stroke-width: 1; }
+.wp-chart-axis { fill: var(--wp-text-mute); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+.wp-chart-line { fill: none; stroke-width: 1.5; }
+.wp-chart-line-single { stroke: var(--wp-blue); }
+.wp-chart-line-avg    { stroke: var(--wp-green); }
+.wp-chart-dot         { stroke: white; stroke-width: 1; }
+.wp-chart-dot-single  { fill: var(--wp-blue); }
+.wp-chart-dot-avg     { fill: var(--wp-green); }
+.wp-chart-hover-line  { stroke: var(--wp-text-mute); stroke-width: 1; stroke-dasharray: 3 3; }
+.wp-chart-legend      { fill: var(--wp-text-sub); font-size: 11px; }
+
+.wp-chart-tip {
+    position: absolute;
+    top: 16px;
+    background: rgba(24,23,22,0.92); color: white;
+    padding: 8px 10px; border-radius: 6px;
+    font-size: 0.78rem;
+    pointer-events: none;
+    max-width: 240px;
+}
+.wp-chart-tip-title { font-weight: 600; margin-bottom: 4px; }
+.wp-chart-tip-k { color: rgba(255,255,255,0.7); }
+.wp-chart-tip-left  { transform: translateX(-100%); margin-left: -8px; }
+.wp-chart-tip-right { margin-left: 8px; }
+
+.wp-dist-bar { fill: var(--wp-blue); opacity: 0.85; }
+
+/* 同时设 stroke (path / rect 用) + fill (circle dot / legend rect 用) */
+.wp-rank-line-snr { stroke: #1f3f78; fill: #1f3f78; }
+.wp-rank-line-scr { stroke: #6ab15a; fill: #6ab15a; }
+.wp-rank-line-swr { stroke: #c39316; fill: #c39316; }
+.wp-rank-line-anr { stroke: #b71234; fill: #b71234; }
+.wp-rank-line-acr { stroke: #5fa3c7; fill: #5fa3c7; }
+.wp-rank-line-awr { stroke: #2c7a4b; fill: #2c7a4b; }
+/* path 强制 fill: none — selector specificity (0,2,0) 高于上面单一 class (0,1,0),
+   覆盖 .wp-rank-line-* 的 fill,防止曲线下方被填色变成大色块 */
+.wp-chart-svg .wp-chart-line { fill: none; }
+
+/* ── Milestones ─────────────────────────────────────────────────── */
+.wp-milestones { display: flex; flex-direction: column; gap: 16px; }
+.wp-ms-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+}
+.wp-ms-count { color: var(--wp-text-sub); font-size: 0.88rem; }
+.wp-ms-order {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--wp-border); background: var(--wp-surface);
+    color: var(--wp-text-sub); font-size: 0.78rem; cursor: pointer;
+}
+.wp-ms-order:hover { color: var(--wp-text); }
+.wp-ms-filters {
+    background: var(--wp-bg);
+    border: 1px solid var(--wp-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.wp-ms-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wp-ms-filter-label { color: var(--wp-text-sub); font-size: 0.85rem; min-width: 80px; }
+.wp-ms-chip {
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 0.78rem; cursor: pointer;
+    border: 1px solid var(--wp-border-strong);
+    background: var(--wp-surface); color: var(--wp-text);
+}
+.wp-ms-chip.is-off { opacity: 0.35; text-decoration: line-through; }
+.wp-ms-slider { flex: 1; max-width: 240px; accent-color: var(--wp-blue); }
+.wp-ms-num { width: 64px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--wp-border); font: inherit; }
+.wp-ms-pct { color: var(--wp-text-sub); font-size: 0.85rem; }
+
+.wp-ms-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.wp-ms-item {
+    display: flex; gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--wp-border);
+    border-left: 3px solid var(--wp-blue);
+    border-radius: 8px;
+    background: var(--wp-surface);
+}
+.wp-ms-date {
+    flex: 0 0 90px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--wp-text-sub);
+    padding-top: 2px;
+}
+.wp-ms-body { flex: 1; }
+.wp-ms-text { font-size: 0.92rem; color: var(--wp-text); margin-bottom: 4px; }
+.wp-ms-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.wp-ms-tag {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 0.72rem;
+    background: var(--wp-bg);
+    border: 1px solid var(--wp-border);
+    color: var(--wp-text-sub);
+}
+.wp-ms-tag-event { color: var(--wp-blue); }
+.wp-ms-tag-medal { color: var(--wp-gold); border-color: var(--wp-gold); background: rgba(201,162,78,0.08); }
+.wp-ms-tag-record { color: var(--wp-pink); border-color: var(--wp-pink); background: var(--wp-pink-soft); }
+
+/* per-type accent color (left border) */
+.wp-ms-item.mt-first { border-left-color: var(--wp-blue); }
+.wp-ms-item.mt-nth   { border-left-color: var(--wp-purple); }
+.wp-ms-item.mt-imp   { border-left-color: var(--wp-green); }
+.wp-ms-item.mt-pod   { border-left-color: var(--wp-gold); }
+.wp-ms-item.mt-bf    { border-left-color: var(--wp-orange); }
+.wp-ms-item.mt-rec   { border-left-color: var(--wp-pink); background: var(--wp-pink-soft); }
+.wp-ms-item.mt-gs    { border-left-color: #1f3f78; background: rgba(31,63,120,0.05); }
+.wp-ms-item.mt-cb    { border-left-color: var(--wp-text-mute); }
+
+.wp-ms-chip.mt-first { border-color: var(--wp-blue); color: var(--wp-blue); }
+.wp-ms-chip.mt-nth   { border-color: var(--wp-purple); color: var(--wp-purple); }
+.wp-ms-chip.mt-imp   { border-color: var(--wp-green); color: var(--wp-green); }
+.wp-ms-chip.mt-pod   { border-color: var(--wp-gold); color: var(--wp-gold); }
+.wp-ms-chip.mt-bf    { border-color: var(--wp-orange); color: var(--wp-orange); }
+.wp-ms-chip.mt-rec   { border-color: var(--wp-pink); color: var(--wp-pink); }
+.wp-ms-chip.mt-gs    { border-color: #1f3f78; color: #1f3f78; }
+.wp-ms-chip.mt-cb    { border-color: var(--wp-text-mute); color: var(--wp-text-mute); }
+
+/* ── Lit cities ─────────────────────────────────────────────────── */
+.wp-lit { display: flex; flex-direction: column; gap: 16px; }
+.wp-lit-banner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid var(--wp-border);
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--wp-blue-soft), transparent 70%);
+    flex-wrap: wrap;
+}
+.wp-lit-banner-icon { color: var(--wp-blue); flex-shrink: 0; }
+.wp-lit-banner-text { flex: 1; min-width: 200px; color: var(--wp-text); font-size: 0.9rem; }
+.wp-lit-banner-cta {
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: var(--wp-blue);
+    color: white;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.wp-lit-banner-cta:hover { background: #1f558a; }
+.wp-lit-stats {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.88rem;
+    color: var(--wp-text-sub);
+    padding: 0 4px;
+}
+.wp-lit-stats strong { color: var(--wp-text); font-weight: 600; }
+
+/* ── Search page ────────────────────────────────────────────────── */
+.wp-search-card {
+    max-width: 520px;
+    margin: 56px auto 0;
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 16px;
+    box-shadow: var(--wp-shadow);
+    padding: 36px 32px 28px;
+    text-align: center;
+}
+.wp-search-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--wp-accent-soft);
+    color: var(--wp-accent);
+    margin-bottom: 12px;
+}
+.wp-search-title {
+    margin: 0 0 6px;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.5rem; font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--wp-text);
+}
+.wp-search-hint {
+    margin: 0 0 20px;
+    color: var(--wp-text-sub); font-size: 0.88rem;
+}
+/* WcaPersonPicker inline 模式 panel 是 absolute → 撑不开父高度.
+ * 给容器 min-height 保证 absolute 浮层下面的 examples 不会被压上去. */
+.wp-search-picker {
+    position: relative;
+    min-height: 64px;
+    margin-bottom: 18px;
+}
+.wp-search-picker .wca-pp-panel {
+    width: 100% !important;
+    left: 0 !important;
+}
+.wp-search-examples {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; align-items: center;
+    font-size: 0.78rem;
+    margin-top: 4px;
+}
+.wp-search-examples-label { color: var(--wp-text-mute); margin-right: 4px; }
+.wp-search-example {
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--wp-border);
+    background: var(--wp-bg);
+    color: var(--wp-text-sub);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.wp-search-example:hover {
+    border-color: var(--wp-accent);
+    color: var(--wp-accent);
+    background: var(--wp-accent-soft);
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+    .wp-header { padding: 10px 12px; }
+    .wp-main { padding: 12px 12px 48px; }
+    .wp-hero-card { padding: 16px; gap: 12px; }
+    .wp-hero-table { grid-template-columns: 1fr 1fr; }
+    .wp-hero-cell { border-right: none; border-bottom: 1px solid var(--wp-border); }
+    .wp-hero-cell:nth-child(odd) { border-right: 1px solid var(--wp-border); }
+    .wp-hero-cell:nth-last-child(-n+2) { border-bottom: none; }
+    .wp-pr-card, .wp-tab-body { padding: 12px; }
+    .wp-tabs-bar { padding: 12px 12px 0; }
+    .wp-pr-table thead th, .wp-pr-table tbody th, .wp-pr-table tbody td { padding: 6px 6px; }
+    .wp-rank { min-width: 22px; padding: 1px 4px; font-size: 0.7rem; }
+    .wp-bycomp-table thead th, .wp-bycomp-table tbody td { padding: 6px 6px; }
+    .wp-ms-date { flex-basis: 78px; }
+}
