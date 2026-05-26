@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client/src/pages/wca_stats/AllEventsDonePage.tsx.
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +29,7 @@ interface Row {
   totalCompCount: number;
 }
 
-export default function AllEventsDonePage() {
+function AllEventsDonePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('全项目达成', 'All Events Done');
@@ -155,5 +155,13 @@ export default function AllEventsDonePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AllEventsDonePage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <AllEventsDonePageInner />
+    </Suspense>
   );
 }
