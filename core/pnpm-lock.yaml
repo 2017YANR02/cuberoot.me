@@ -310,6 +310,12 @@ importers:
       cubing:
         specifier: ^0.63.3
         version: 0.63.3
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
+      echarts-for-react:
+        specifier: ^3.0.6
+        version: 3.0.6(echarts@6.0.0)(react@19.2.4)
       i18next:
         specifier: ^24.2.3
         version: 24.2.3(typescript@5.9.3)
