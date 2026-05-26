@@ -1,0 +1,162 @@
+/* RecentRecords — 落地页右下 WCA Live 近期纪录列表 */
+
+.recent-records {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recent-records-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recent-records-header > svg {
+  color: var(--accent);
+}
+
+.recent-records-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0;
+}
+
+.recent-records-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.4rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  /* WCA Live 风格:固定高度 + 内部滚动条,右侧留出滚动条空间避免内容跳。
+     max-height 由组件按 max(WR+CR 数, 5) 行算出,inline style 覆盖 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 细滚动条,跟 token 协调 */
+.recent-records-list::-webkit-scrollbar {
+  width: 8px;
+}
+.recent-records-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.recent-records-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 4px;
+}
+.recent-records-list::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--foreground) 28%, transparent);
+}
+.recent-records-list {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent;
+}
+
+.recent-records-row {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+
+.recent-records-row:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.recent-records-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.recent-records-copy:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.recent-records-badge {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.recent-records-body {
+  display: block;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.88rem;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-records-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.recent-records-event,
+.recent-records-type,
+.recent-records-person {
+  color: var(--foreground);
+}
+
+.recent-records-flag {
+  width: 1.05em !important;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* 行内国旗 — 替换 emoji RI 后注入 */
+.recent-records-inline-flag {
+  width: 1.2em !important;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+/* 内联纪录徽章在 RecentRecords 上下文里按行高居中,不要 super 抬起 */
+.recent-records-body .record-badge--inline {
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+@media (max-width: 640px) {
+  .recent-records {
+    margin-bottom: 1.75rem;
+  }
+  .recent-records-row {
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0.5rem;
+    padding: 0.3rem 0.25rem;
+  }
+  .recent-records-body {
+    font-size: 0.84rem;
+    gap: 0.3rem;
+  }
+}
