@@ -1,0 +1,242 @@
+'use client';
+// Alternative submit/edit form — ported from packages/client/src/pages/recon/AltSubmitPage.tsx.
+// Functional port: TwistySection live preview + plain solution textarea; caret-sync hook included.
+// Deferred from Vite: ReconAutofill suggestions popup (depends on ~1.3k lines of cubing math deps),
+// real-time stats panel (computeAllStats).
+
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
+import { TriangleAlert, ArrowLeft, LogIn } from 'lucide-react';
+import type { ReconSolve } from '@cuberoot/shared';
+import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
+import { getPuzzleId } from '@/lib/recon-utils';
+import { useAuthStore } from '@/lib/auth-store';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import LangToggle from '@/components/LangToggle';
+import TwistySection from '@/components/TwistySection';
+import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import '../../recon.css';
+
+interface Props {
+  parentId: string;
+  editIdx?: number;
+}
+
+export default function AltSubmitForm({ parentId, editIdx }: Props) {
+  const isMobile = useIsMobile();
+  const isEditing = editIdx != null;
+  const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  useDocumentTitle('提交替代解', 'Submit Alternative');
+  const user = useAuthStore(s => s.user);
+  const login = useAuthStore(s => s.login);
+  const currentWcaId = user?.wcaId || '';
+
+  const [parent, setParent] = useState<ReconSolve | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [solution, setSolution] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const solutionRef = useRef<HTMLTextAreaElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!parentId) return;
+    getRecon(Number(parentId))
+      .then(p => {
+        setParent(p);
+        if (isEditing && editIdx != null) {
+          const alt = p.alternatives?.[editIdx];
+          if (alt) setSolution(alt.solution);
+          else setError(t('recon.notFound'));
+        }
+        setLoading(false);
+      })
+      .catch((e: Error) => { setError(e.message); setLoading(false); });
+  }, [parentId, isEditing, editIdx, t]);
+
+  const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
+  const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
+
+  const [debouncedSolution, setDebouncedSolution] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSolution(solution), 500);
+    return () => clearTimeout(timer);
+  }, [solution]);
+
+  const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
+    if (!playerRef.current) return;
+    const offset = el.selectionStart;
+    const textBefore = el.value.substring(0, offset);
+    const algBefore = extractAlgFromText(textBefore);
+    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
+    syncPlayerToMoveCount(playerRef.current, moves.length);
+  }, []);
+
+  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }, []);
+
+  useEffect(() => {
+    if (solutionRef.current) autoResize(solutionRef.current);
+  }, [solution, autoResize]);
+
+  useEffect(() => {
+    if (solutionRef.current) handleCursorSync(solutionRef.current);
+  }, [debouncedSolution, handleCursorSync]);
+
+  const handleSubmit = async () => {
+    const trimmed = solution.trim();
+    if (!trimmed || !parentId) return;
+    setSubmitting(true);
+    try {
+      if (isEditing && editIdx != null) {
+        await updateAlternative(Number(parentId), editIdx, trimmed);
+      } else {
+        await addAlternative(Number(parentId), trimmed);
+      }
+      router.push(`/recon/${parentId}`);
+    } catch (e) {
+      setError((e as Error).message);
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+  }
+  if (error || !parent) {
+    return (
+      <div className="recon-page">
+        <div className="recon-error"><TriangleAlert size={16} /> {error || t('recon.notFound')}</div>
+      </div>
+    );
+  }
+  if (!currentWcaId) {
+    return (
+      <div className="recon-page">
+        <div className="recon-page-header">
+          <div>
+            <Link href={`/recon/${parentId}`} className="recon-back-link">
+              <ArrowLeft size={14} /> {isZh ? '返回详情' : 'Back'}
+            </Link>
+          </div>
+          <LangToggle />
+        </div>
+        <div style={{ padding: 24, textAlign: 'center' }}>
+          <p style={{ marginBottom: 16 }}>{isZh ? '需要登录才能提交另解。' : 'Login required to submit an alternative.'}</p>
+          <button type="button" className="recon-btn" onClick={() => login()}>
+            <LogIn size={14} /> {isZh ? '登录 WCA' : 'Sign in with WCA'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="recon-page submit-page">
+      <div className="submit-header">
+        <div className="detail-header">
+          <div className="detail-header-nav">
+            <Link href={`/recon/${parentId}`} className="recon-back-link">
+              <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
+            </Link>
+            <LangToggle />
+          </div>
+          <h1>{isEditing ? t('recon.editAlternative') : t('recon.addAlternative')}</h1>
+        </div>
+      </div>
+
+      <div className="submit-layout">
+        {!isMobile && (
+          <div className="submit-player-pane">
+            {scramble && parent.event && parent.event !== 'sq1' && (
+              <TwistySection
+                puzzle={puzzle}
+                scramble={scramble}
+                alg={cleanForPlayer(debouncedSolution)}
+                playerRef={playerRef}
+                fillPane
+              />
+            )}
+          </div>
+        )}
+
+        <div className="submit-form-pane">
+          <div className="submit-form alt-submit-form">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.scramble')}</span>
+              <textarea
+                rows={1}
+                value={scramble}
+                readOnly
+                className="submit-input-locked alt-submit-scramble"
+                title={isZh ? '继承自原 solve,不可编辑' : 'Inherited from original, read-only'}
+              />
+            </label>
+
+            {isMobile && scramble && parent.event && parent.event !== 'sq1' && (
+              <div className="submit-inline-player">
+                <TwistySection
+                  puzzle={puzzle}
+                  scramble={scramble}
+                  alg={cleanForPlayer(debouncedSolution)}
+                  playerRef={playerRef}
+                  fillPane
+                />
+              </div>
+            )}
+
+            <div className="submit-field submit-block">
+              <span className="submit-label">{t('recon.solution')} *</span>
+              <textarea
+                ref={(el) => {
+                  (solutionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+                  autoResize(el);
+                }}
+                value={solution}
+                onChange={(e) => {
+                  setSolution(e.target.value);
+                  autoResize(e.currentTarget);
+                  handleCursorSync(e.currentTarget);
+                }}
+                onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+                onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+                placeholder={t('recon.writeAlternative')}
+                className="submit-solution-textarea"
+                rows={6}
+                autoFocus
+              />
+            </div>
+
+            <div className="submit-actions">
+              <button
+                type="button"
+                className="recon-btn"
+                onClick={() => router.push(`/recon/${parentId}`)}
+              >
+                {t('recon.cancel')}
+              </button>
+              <button
+                type="button"
+                className="recon-btn recon-btn-edit"
+                onClick={handleSubmit}
+                disabled={submitting || !solution.trim()}
+              >
+                {submitting ? t('recon.posting') : (isEditing ? t('recon.save') : t('recon.addAlternative'))}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
