@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { OTP_CONFIG, createCode, lastSentWithin } from "@/lib/db/otp";
+import { getActive, isConsoleFallback } from "@/lib/sms/registry";
+import { logError } from "@/lib/db/logs";
 
 export const runtime = "nodejs";
 
@@ -28,9 +30,32 @@ export async function POST(req: NextRequest) {
 
   const { code, expiresAt } = await createCode(phone);
 
-  // Stub: print to server console instead of sending SMS.
-  // eslint-disable-next-line no-console
-  console.log(`[otp] phone=${phone} code=${code} expiresAt=${expiresAt}`);
+  const provider = getActive();
+  let sent: { ok: true } | { ok: false; error: string };
+  try {
+    sent = await provider.sendOtp(phone, code);
+  } catch (e) {
+    const err = e as Error;
+    sent = { ok: false, error: err.message };
+  }
+
+  // Always echo to server log in console fallback so devs can complete the flow.
+  if (isConsoleFallback()) {
+    // eslint-disable-next-line no-console
+    console.log(`[otp] phone=${phone} code=${code} expiresAt=${expiresAt}`);
+  }
+
+  if (!sent.ok) {
+    await logError({
+      level: "error",
+      message: `sms_send_failed: ${sent.error}`,
+      path: "/api/auth/send-otp",
+    });
+    return NextResponse.json(
+      { ok: false, error: "短信发送失败,请重试" },
+      { status: 502 },
+    );
+  }
 
   return NextResponse.json({ ok: true, expiresIn: OTP_CONFIG.TTL_SEC });
 }

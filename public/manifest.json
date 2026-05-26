@@ -1,0 +1,22 @@
+{
+  "name": "魔方开放社群",
+  "short_name": "魔方社群",
+  "description": "一站式魔方垂直综合服务平台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2A5DF4",
+  "scope": "/",
+  "lang": "zh-CN",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/192", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/512", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "课程", "url": "/courses" },
+    { "name": "社群", "url": "/community" },
+    { "name": "我的", "url": "/me/courses" }
+  ]
+}

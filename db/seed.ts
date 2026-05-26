@@ -9,11 +9,17 @@ import { EVENTS } from "../data/events";
 import { NEWS } from "../data/news";
 import { INSTRUCTORS } from "../data/instructors";
 import type { CircleId } from "./schema";
+import { segmentCjk } from "../lib/search/segment";
 
 const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), "data.db");
 
 const sqlite = new Database(DB_PATH);
 sqlite.pragma("journal_mode = WAL");
+// FTS5 triggers from migration 0008 call cube_seg(...) — must register so
+// upserts during seeding don't fail.
+sqlite.function("cube_seg", { deterministic: true }, (v: unknown) =>
+  segmentCjk(v),
+);
 const db = drizzle(sqlite, { schema });
 
 async function main() {

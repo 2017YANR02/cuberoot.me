@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomBytes } from "node:crypto";
 import { recordEvent } from "@/lib/db/track";
+import { logError } from "@/lib/db/logs";
 import { USER_COOKIE, verifyUserToken } from "@/lib/auth-user";
 
 export const runtime = "nodejs";
@@ -56,6 +57,19 @@ export async function POST(req: NextRequest) {
     url,
     referer,
   });
+
+  // Mirror client-reported render errors into error_logs for /admin/logs.
+  if (name === "render_error" && payload) {
+    const msg = typeof payload.message === "string" ? payload.message : "render_error";
+    const stack = typeof payload.stack === "string" ? payload.stack : null;
+    await logError({
+      level: "error",
+      message: msg,
+      stack,
+      path: url ?? null,
+      userId: userId ?? null,
+    });
+  }
 
   const res = new NextResponse(null, { status: 204 });
   if (setCookie) {

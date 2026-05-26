@@ -1,12 +1,35 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Clock, Users, Star, BookOpen, CheckCircle2, Clock3 } from "lucide-react";
-import { list as listCourses, findById as findCourse } from "@/lib/db/courses";
+import {
+  Clock,
+  Users,
+  Star,
+  BookOpen,
+  CheckCircle2,
+  Clock3,
+  Lock,
+  PlayCircle,
+} from "lucide-react";
+import {
+  list as listCourses,
+  findById as findCourse,
+  hasUserPaidForCourse,
+} from "@/lib/db/courses";
+import { listByCourse as listLessons } from "@/lib/db/lessons";
+import { courseProgressPercent } from "@/lib/db/progress";
+import { getCurrentUser } from "@/lib/auth-user";
 import { Badge } from "@/components/Badge";
 import { CourseVideo } from "@/components/CourseVideo";
 import { CouponBox } from "@/components/CouponBox";
 import { ogImageUrl } from "@/lib/site";
 import { placeOrderFromForm } from "@/app/actions/order";
+
+function formatDuration(sec: number | null | undefined): string {
+  if (!sec || sec <= 0) return "—";
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 function formatLiveTime(ts: number): string {
   const d = new Date(ts * 1000);
@@ -47,6 +70,14 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
   const course = await findCourse(id);
   if (!course) notFound();
 
+  const [lessons, user] = await Promise.all([listLessons(id), getCurrentUser()]);
+  const isFreeCourse = course.price === 0;
+  const paid = user ? await hasUserPaidForCourse(user.id, id) : false;
+  const progress =
+    user && paid
+      ? await courseProgressPercent(user.id, id)
+      : { percent: 0, completed: 0, total: lessons.length };
+
   return (
     <>
       <section className="bg-brand-tint border-b border-line">
@@ -72,23 +103,56 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
 
             <aside className="rounded-[14px] border border-line bg-white p-6">
               <div className="text-[13px] text-ink-3">价格</div>
-              <div className="mt-1 text-[36px] font-semibold text-brand leading-none">¥{course.price}</div>
+              <div className="mt-1 text-[36px] font-semibold text-brand leading-none">
+                {isFreeCourse ? "免费" : `¥${course.price}`}
+              </div>
               <div className="text-[12px] text-ink-3 mt-1">
                 {course.format === "一对一私教" ? "按节购买,首节可申请试听" : "一次购买,长期回看"}
               </div>
-              <CouponBox
-                type="course"
-                refId={course.id}
-                amount={course.price}
-                submitLabel="立即报名"
-                action={placeOrderFromForm}
-              />
+              {paid || isFreeCourse ? (
+                <Link
+                  href={
+                    lessons[0]
+                      ? `/courses/${course.id}/learn/${lessons[0].id}`
+                      : `/courses/${course.id}`
+                  }
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-brand py-2.5 text-[14px] font-medium text-white hover:bg-brand-dark transition"
+                >
+                  {paid ? "继续学习" : "开始学习"}
+                </Link>
+              ) : (
+                <CouponBox
+                  type="course"
+                  refId={course.id}
+                  amount={course.price}
+                  submitLabel="立即报名"
+                  action={placeOrderFromForm}
+                />
+              )}
               <button
                 className="mt-2 w-full rounded-md border border-line bg-white py-2.5 text-[14px] font-medium text-ink-2 hover:border-brand hover:text-brand transition"
                 type="button"
               >
                 咨询教练
               </button>
+
+              {paid && progress.total > 0 ? (
+                <div className="mt-5 border-t border-line pt-4">
+                  <div className="flex items-center justify-between text-[12px] text-ink-3">
+                    <span>学习进度</span>
+                    <span className="text-ink">
+                      已学 {progress.completed} / {progress.total} 节
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
+                    <div
+                      className="h-full bg-brand transition-[width]"
+                      style={{ width: `${progress.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mt-5 border-t border-line pt-4 text-[12px] text-ink-3">
                 授课老师 · <span className="text-ink">{course.instructor}</span>
               </div>
@@ -133,6 +197,65 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
               </li>
             ))}
           </ol>
+
+          {lessons.length > 0 ? (
+            <>
+              <h2 className="text-[20px] font-semibold text-ink mt-12 mb-5">课程目录</h2>
+              <ol className="border border-line rounded-[14px] divide-y divide-line bg-white">
+                {lessons.map((lesson) => {
+                  const unlocked = isFreeCourse || lesson.free || paid;
+                  const tag = isFreeCourse
+                    ? null
+                    : lesson.free && !paid
+                      ? { label: "试看", tone: "brand" as const }
+                      : paid
+                        ? { label: "已购", tone: "muted" as const }
+                        : { label: "锁定", tone: "lock" as const };
+                  const Inner = (
+                    <div className="flex items-center gap-4 px-5 py-4">
+                      <span className="w-8 shrink-0 font-mono text-[12px] text-ink-3">
+                        {String(lesson.idx).padStart(2, "0")}
+                      </span>
+                      <span className="flex-1 text-[14px] text-ink">
+                        {lesson.title}
+                      </span>
+                      <span className="hidden sm:inline text-[12px] text-ink-3 font-mono">
+                        {formatDuration(lesson.durationSec)}
+                      </span>
+                      {tag ? (
+                        <span
+                          className={
+                            tag.tone === "brand"
+                              ? "inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand-dark"
+                              : tag.tone === "lock"
+                                ? "inline-flex items-center gap-1 rounded-full bg-bg-soft px-2 py-0.5 text-[11px] text-ink-3"
+                                : "inline-flex items-center gap-1 rounded-full bg-bg-soft px-2 py-0.5 text-[11px] text-ink-2"
+                          }
+                        >
+                          {tag.tone === "lock" ? <Lock size={11} /> : <PlayCircle size={11} />}
+                          {tag.label}
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                  return (
+                    <li key={lesson.id}>
+                      {unlocked ? (
+                        <Link
+                          href={`/courses/${course.id}/learn/${lesson.id}`}
+                          className="block hover:bg-brand-tint transition"
+                        >
+                          {Inner}
+                        </Link>
+                      ) : (
+                        <div className="cursor-not-allowed opacity-70">{Inner}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          ) : null}
         </div>
 
         <aside>

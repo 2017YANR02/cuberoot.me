@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import { SiteHeader, type HeaderUser } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TrackPageView } from "@/components/TrackPageView";
+import { SwRegister } from "@/components/SwRegister";
+import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { getCurrentUser } from "@/lib/auth-user";
 import { getSiteUrl, ogImageUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
@@ -17,6 +19,12 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "魔方社群",
+  },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -35,6 +43,12 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#2A5DF4",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const u = await getCurrentUser();
   const headerUser: HeaderUser | null = u
@@ -49,6 +63,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Suspense fallback={null}>
           <TrackPageView />
         </Suspense>
+        <SwRegister />
+        <PwaInstallButton />
       </body>
     </html>
   );

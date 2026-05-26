@@ -12,6 +12,22 @@ export async function findById(id: string): Promise<Instructor | undefined> {
   return rows[0];
 }
 
+export async function findByUserId(userId: string): Promise<Instructor | undefined> {
+  const rows = db
+    .select()
+    .from(schema.instructors)
+    .where(eq(schema.instructors.userId, userId))
+    .all();
+  return rows[0];
+}
+
+export async function setUserId(id: string, userId: string | null): Promise<void> {
+  await db
+    .update(schema.instructors)
+    .set({ userId })
+    .where(eq(schema.instructors.id, id));
+}
+
 export async function upsert(values: InstructorInsert): Promise<void> {
   await db
     .insert(schema.instructors)
@@ -27,6 +43,7 @@ export async function upsert(values: InstructorInsert): Promise<void> {
         yearsTeaching: values.yearsTeaching,
         bestRecord: values.bestRecord,
         bio: values.bio,
+        userId: values.userId ?? null,
       },
     });
 }

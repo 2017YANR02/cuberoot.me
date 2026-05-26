@@ -15,6 +15,7 @@ const RESOURCES = [
   { key: "invites", label: "邀请码" },
   { key: "qr", label: "二维码" },
   { key: "events-track", label: "埋点" },
+  { key: "logs", label: "日志" },
 ];
 
 export default function AuthedLayout({ children }: { children: React.ReactNode }) {

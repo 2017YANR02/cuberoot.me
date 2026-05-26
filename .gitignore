@@ -13,3 +13,5 @@ data.db-wal
 data.db-shm
 .playwright-mcp/
 .env
+public/uploads/*
+!public/uploads/.gitkeep

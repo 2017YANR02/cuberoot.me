@@ -3,6 +3,14 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth-user";
+import { logError } from "@/lib/db/logs";
+
+function isNextControlFlow(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false;
+  const digest = (e as { digest?: unknown }).digest;
+  if (typeof digest !== "string") return false;
+  return digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND");
+}
 import { findById as findCourse } from "@/lib/db/courses";
 import { findById as findProduct } from "@/lib/db/products";
 import { findById as findEvent } from "@/lib/db/events";
@@ -48,6 +56,22 @@ async function resolveRef(
 }
 
 export async function placeOrder(input: PlaceInput): Promise<void> {
+  try {
+    return await placeOrderImpl(input);
+  } catch (e) {
+    if (isNextControlFlow(e)) throw e;
+    const err = e as Error;
+    await logError({
+      level: "error",
+      message: `placeOrder:${err.message}`,
+      stack: err.stack,
+      path: "actions/order/placeOrder",
+    });
+    throw e;
+  }
+}
+
+async function placeOrderImpl(input: PlaceInput): Promise<void> {
   const user = await getCurrentUser();
   if (!user) {
     const next = orderEntryPath(input.type, input.refId);
@@ -152,6 +176,22 @@ const VALID_PROVIDER_IDS: ProviderId[] = [
 ];
 
 export async function startPayment(orderId: string, providerId: ProviderId): Promise<void> {
+  try {
+    return await startPaymentImpl(orderId, providerId);
+  } catch (e) {
+    if (isNextControlFlow(e)) throw e;
+    const err = e as Error;
+    await logError({
+      level: "error",
+      message: `startPayment:${providerId}:${err.message}`,
+      stack: err.stack,
+      path: "actions/order/startPayment",
+    });
+    throw e;
+  }
+}
+
+async function startPaymentImpl(orderId: string, providerId: ProviderId): Promise<void> {
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/orders/${orderId}`)}`);
   const order = await findByIdForUser(orderId, user.id);

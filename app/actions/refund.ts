@@ -8,6 +8,14 @@ import { findById, setRefunded } from "@/lib/db/orders";
 import { write as writePaymentLog } from "@/lib/db/payment-logs";
 import { getProvider } from "@/lib/payments/registry";
 import type { ProviderId } from "@/lib/payments/types";
+import { logError } from "@/lib/db/logs";
+
+function isNextControlFlow(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false;
+  const digest = (e as { digest?: unknown }).digest;
+  if (typeof digest !== "string") return false;
+  return digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND");
+}
 
 async function requireAdmin(): Promise<void> {
   const c = await cookies();
@@ -18,6 +26,25 @@ async function requireAdmin(): Promise<void> {
 }
 
 export async function refundOrder(
+  orderId: string,
+  reason?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    return await refundOrderImpl(orderId, reason);
+  } catch (e) {
+    if (isNextControlFlow(e)) throw e;
+    const err = e as Error;
+    await logError({
+      level: "error",
+      message: `refundOrder:${err.message}`,
+      stack: err.stack,
+      path: "actions/refund/refundOrder",
+    });
+    return { ok: false, error: "internal_error" };
+  }
+}
+
+async function refundOrderImpl(
   orderId: string,
   reason?: string,
 ): Promise<{ ok: boolean; error?: string }> {
