@@ -81,7 +81,7 @@ server {
 SQLite 文件就一份。最简备份:
 
 ```
-cp /var/lib/docker/volumes/cube_platform_cube-data/_data/data.db \
+cp /var/lib/docker/volumes/cube-platform_cube-data/_data/data.db \
    /backup/cube-data.db.bak.$(date +%F)
 ```
 
