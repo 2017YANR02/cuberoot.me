@@ -1,0 +1,83 @@
+diff --git a/dist/lib/cubing/chunks/chunk-44CFF24P.js b/dist/lib/cubing/chunks/chunk-44CFF24P.js
+index ab9360c4df58e62fc2bf359474b1078aef6c2671..12f564dc4ccc52a3684ed01f559365a88e6eb9b8 100644
+--- a/dist/lib/cubing/chunks/chunk-44CFF24P.js
++++ b/dist/lib/cubing/chunks/chunk-44CFF24P.js
+@@ -10,13 +10,28 @@ import {
+ } from "./chunk-O6HEZXGY.js";
+ 
+ // src/cubing/search/worker-workarounds/index.ts
++// PATCHED for cuberoot.me Next.js compatibility:
++// Vite resolves `new URL('./search-worker-entry.js', import.meta.url)` at build
++// time via its worker plugin. Next/Turbopack does not, so all 3 fallback URL
++// strategies hand back a URL whose sibling chunks (chunk-7GUL3OBQ.js,
++// inside-*.js, ...) cannot be fetched by the spawned module worker, and worker
++// instantiation fails. We host the entire cubing/chunks/ directory at
++// `/cubing-chunks/*` via a Next route handler so the worker can resolve all its
++// sibling imports relative to its own import.meta.url. In browser contexts we
++// always return that URL; on Node (server-side) we fall back to original logic.
++function _cuberootBrowserWorkerURL() {
++  return new URL("/cubing-chunks/search-worker-entry.js", globalThis.location.origin);
++}
+ function searchWorkerURLImportMetaResolve() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   return import.meta.resolve("./search-worker-entry.js");
+ }
+ function searchWorkerURLNewURLImportMetaURL() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   return new URL("./search-worker-entry.js", import.meta.url);
+ }
+ async function searchWorkerURLEsbuildWorkaround() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   exposeAPI.expose = false;
+   return (await import("./search-worker-entry.js")).WORKER_ENTRY_FILE_URL;
+ }
+diff --git a/dist/lib/cubing/chunks/chunk-M7YKTETT.js b/dist/lib/cubing/chunks/chunk-M7YKTETT.js
+index 5885234a4618f2c1e11b681fbc0d3db4437625d2..479774b57c11e5442ba0855ecc2b583986063c34 100644
+--- a/dist/lib/cubing/chunks/chunk-M7YKTETT.js
++++ b/dist/lib/cubing/chunks/chunk-M7YKTETT.js
+@@ -10,13 +10,20 @@ import {
+ } from "./chunk-O6HEZXGY.js";
+ 
+ // src/cubing/search/worker-workarounds/index.ts
++// PATCHED for cuberoot.me Next.js compatibility (also in chunk-44CFF24P.js / chunk-OUM32GEA.js).
++function _cuberootBrowserWorkerURL() {
++  return new URL("/cubing-chunks/search-worker-entry.js", globalThis.location.origin);
++}
+ function searchWorkerURLImportMetaResolve() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   return import.meta.resolve("./search-worker-entry.js");
+ }
+ function searchWorkerURLNewURLImportMetaURL() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   return new URL("./search-worker-entry.js", import.meta.url);
+ }
+ async function searchWorkerURLEsbuildWorkaround() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   exposeAPI.expose = false;
+   return (await import("./search-worker-entry.js")).WORKER_ENTRY_FILE_URL;
+ }
+diff --git a/dist/lib/cubing/chunks/chunk-OUM32GEA.js b/dist/lib/cubing/chunks/chunk-OUM32GEA.js
+index ec9f5854540223e58bee5478134ef15a2a437f6f..9763ec6eab320c82f0ad2fa39aa21ed8237df39d 100644
+--- a/dist/lib/cubing/chunks/chunk-OUM32GEA.js
++++ b/dist/lib/cubing/chunks/chunk-OUM32GEA.js
+@@ -10,13 +10,20 @@ import {
+ } from "./chunk-O6HEZXGY.js";
+ 
+ // src/cubing/search/worker-workarounds/index.ts
++// PATCHED for cuberoot.me Next.js compatibility (also in chunk-44CFF24P.js / chunk-M7YKTETT.js).
++function _cuberootBrowserWorkerURL() {
++  return new URL("/cubing-chunks/search-worker-entry.js", globalThis.location.origin);
++}
+ function searchWorkerURLImportMetaResolve() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   return import.meta.resolve("./search-worker-entry.js");
+ }
+ function searchWorkerURLNewURLImportMetaURL() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   return new URL("./search-worker-entry.js", import.meta.url);
+ }
+ async function searchWorkerURLEsbuildWorkaround() {
++  if (typeof globalThis.location !== "undefined") return _cuberootBrowserWorkerURL();
+   exposeAPI.expose = false;
+   return (await import("./search-worker-entry.js")).WORKER_ENTRY_FILE_URL;
+ }

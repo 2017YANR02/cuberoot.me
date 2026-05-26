@@ -3,7 +3,7 @@
 #
 # 触发:
 #   workflow_dispatch — 手动跑,可选 force/limit/cutoff_days
-#   cron 每周一 03:00 UTC（stats.yml 每周日 20:00 完跑后,新 wca_competitions 已入库）
+#   cron 每天 03:00 UTC(stats.yml 每天 20:00 完跑后,新 wca_competitions 已入库)
 #
 # 流程:
 #   1. esbuild bundle dump 脚本成单 JS（含所有依赖 ~300KB)
@@ -32,8 +32,8 @@ on:
         required: false
         default: ''
   schedule:
-    # UTC 周一 03:00 — stats.yml 周日 20:00 后 7 小时,wca_competitions 已最新
-    - cron: '0 3 * * 1'
+    # UTC 每天 03:00 — stats.yml 前一天 20:00 后 7 小时,wca_competitions 已最新
+    - cron: '0 3 * * *'
 
 jobs:
   dump:
