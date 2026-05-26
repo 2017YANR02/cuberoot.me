@@ -37,6 +37,9 @@ export function detectLanguage(): string {
 
 export function ensureLangInUrl(lang: string): void {
   if (typeof window === 'undefined') return;
+  // Persist to cookie so proxy.ts can SSR with the right language on next
+  // navigation (no en→zh flash for returning users).
+  document.cookie = `lang=${lang}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
   const params = new URLSearchParams(window.location.search);
   if (params.get('lang') === lang) return;
   params.set('lang', lang);
@@ -48,6 +51,9 @@ export function ensureLangInUrl(lang: string): void {
 export function syncLangToUrl(lang: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('trainer-lang', lang);
+  // Mirror to cookie so proxy.ts can read it on the next SSR request and
+  // render in the right language from the first paint (no en→zh flash).
+  document.cookie = `lang=${lang}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
   const url = new URL(window.location.href);
   url.searchParams.set('lang', lang);
   history.replaceState(null, '', url.toString());

@@ -26,3 +26,6 @@ pnpm-debug.log*
 
 # Turborepo
 .turbo/
+
+# AI-generated screenshots, debug images (per global rule)
+.tmp/
