@@ -12,6 +12,7 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "i18next": "^24.2.3",
+    "katex": "^0.16.47",
     "lucide-react": "^1.8.0",
     "mp4box": "^2.3.0",
     "next": "16.2.6",
@@ -20,6 +21,7 @@
     "react-i18next": "^15.7.4"
   },
   "devDependencies": {
+    "@types/katex": "^0.16.8",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
