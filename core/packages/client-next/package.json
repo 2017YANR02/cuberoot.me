@@ -6,12 +6,14 @@
     "dev": "next dev -H 127.0.0.1 -p 3000",
     "build": "next build",
     "start": "next start -H 127.0.0.1 -p 3000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "typecheck:tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@absinthe/socket": "^0.2.1",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/stack-kernel": "workspace:*",
+    "@cuberoot/visualcube": "workspace:*",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@mapbox/vector-tile": "^2.0.4",
@@ -40,6 +42,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-i18next": "^15.7.4",
+    "scramble-display": "^0.59.1",
     "sr-puzzlegen": "^1.0.4",
     "svg2pdf.js": "^2.7.0",
     "three": "^0.183.2",
@@ -48,6 +51,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/katex": "^0.16.8",
     "@types/node": "^20",
@@ -55,6 +59,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.183.1",
+    "@typescript/native-preview": "7.0.0-dev.20260517.1",
     "esbuild": "^0.27.4",
     "tailwindcss": "^4.2.2",
     "typescript": "^5"

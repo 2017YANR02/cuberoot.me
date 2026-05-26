@@ -1,0 +1,304 @@
+/* ============================================================
+   虚拟键盘样式——iOS 深色风格，对齐 Cube Keyboard App
+   1:1 移植自 recon/recon.css L2135-2380
+   ============================================================ */
+
+/* NOTE: 联想建议条——iOS 风格全宽横条，竖线分隔 */
+.vkb-suggest-bar {
+    display: flex;
+    align-items: center;
+    background: #1c1c1e;
+    border-radius: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    min-height: 36px;
+}
+
+/* NOTE: 每个建议项——等分宽度，文字居中，竖线用 border-left 实现 */
+.vkb-suggest-btn {
+    flex: 1;
+    background: none;
+    color: #ededed;
+    border: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px 4px;
+    font-size: 0.82rem;
+    font-weight: 400;
+    text-align: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+/* NOTE: 第一项不需要左竖线 */
+.vkb-suggest-btn:first-child {
+    border-left: none;
+}
+
+.vkb-suggest-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* NOTE: 键盘容器——深色背景，顶部圆角，贴在 textarea 下方 */
+.vkb {
+    background: #2c2c2e;
+    border-radius: 0 0 10px 10px;
+    padding: 8px 6px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* NOTE: 键盘页面——flex 列布局和行间距 */
+.vkb-page {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* NOTE: 触发器栏——横向滑动容器 */
+.vkb-triggers {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 2px 4px 6px 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    touch-action: pan-x;
+}
+
+.vkb-triggers::-webkit-scrollbar {
+    display: none;
+}
+
+/* NOTE: 触发器按钮——Pill 样式 */
+.vkb-trigger-btn {
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ededed;
+    border: none;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.vkb-trigger-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+/* NOTE: 每行用 flex 均匀分布按键 */
+.vkb-row {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+/* NOTE: 通用按键样式——圆角深灰方块，白色文字 */
+.vkb-row button {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    border: none;
+    border-radius: 6px;
+    background: #3a3a3c;
+    color: #ededed;
+    font-size: 1.05rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+    -webkit-touch-callout: none;
+}
+
+/* NOTE: 触摸反馈——放大 + 阴影 */
+.vkb-row button:active {
+    background: #555558;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    transition: none;
+}
+
+/* --- 底部功能行：space 和 return 宽度更大 --- */
+.vkb-space {
+    flex: 3 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.02em;
+    color: #8e8e93 !important;
+}
+
+.vkb-return {
+    flex: 2 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.02em;
+    color: #8e8e93 !important;
+}
+
+/* NOTE: 功能按键（🌐 / ⌫）稍小 */
+.vkb-fn {
+    flex: 0 0 44px !important;
+    font-size: 1.1rem !important;
+}
+
+/* NOTE: 退格按键蓝色 */
+.vkb-fn-del {
+    color: #007AFF !important;
+}
+
+/* CubeKeyboardSection 桌面端 toggle 按钮 — 展开/收起虚拟键盘 */
+.vkb-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #a3a3a3;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.vkb-toggle:hover { background: rgba(255, 255, 255, 0.06); color: #d4d4d4; }
+.vkb-toggle.active {
+    background: rgba(217, 119, 87, 0.15);
+    border-color: rgba(217, 119, 87, 0.4);
+    color: #e8a27a;
+}
+
+/* NOTE: 记号入口按钮——space 左侧 ✎ 图标,iOS 蓝 */
+.vkb-marks-trigger {
+    color: #007AFF !important;
+    font-size: 1.05rem !important;
+}
+
+/* NOTE: 记号弹层——比长按弹层略大,复用白底圆角面板 */
+.vkb-marks-popup .vkb-popup-item {
+    padding: 10px 16px;
+    font-size: 1.2rem;
+    user-select: none;
+}
+.vkb-marks-popup .vkb-popup-item:active {
+    background: #007AFF;
+    color: #fff;
+}
+/* NOTE: 让面板内 <u>/<u.wavy>/<s> 渲染对(项目约定的 finger-trick 标签) */
+.vkb-marks-popup u {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+.vkb-marks-popup u.wavy {
+    text-decoration: underline wavy;
+    text-decoration-thickness: 1.5px;
+}
+.vkb-marks-popup s {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+}
+
+/* --- 长按弹出气泡——iOS 风格白色圆角面板 --- */
+.vkb-popup {
+    position: fixed;
+    z-index: 9999;
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+}
+
+/* NOTE: 底部三角箭头 */
+.vkb-popup::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #fff;
+}
+
+/* NOTE: 每个变体选项 */
+.vkb-popup-item {
+    padding: 8px 14px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #000;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.1s;
+}
+
+/* NOTE: 高亮态——蓝色背景白字 */
+.vkb-popup-item.active {
+    background: #007AFF;
+    color: #ededed;
+}
+
+/* NOTE: 修饰键禁用态——光标前无英文字母时变灰 */
+.vkb-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* NOTE: Shift 激活态——白底深色文字提示大写模式 */
+.vkb-shift-on {
+    background: #fff !important;
+    color: #333333 !important;
+}
+
+/* NOTE: Capslock 态——蓝底白字 */
+.vkb-capslock {
+    background: #007AFF !important;
+    color: #ededed !important;
+}
+
+/* NOTE: QWERTY 行左右空白占位——复刻 iOS 键盘 ASDF 行缩进 */
+.vkb-spacer {
+    pointer-events: none;
+}
+
+/* NOTE: 手势说明条——小字灰色 */
+.vkb-gesture-hint {
+    margin: 6px 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0;
+    list-style: none;
+}
+
+.vkb-gesture-hint span {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 0.68rem;
+    padding: 0 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+}
+
+.vkb-gesture-hint span:last-child {
+    border-right: none;
+}
+
+/* NOTE: 手势词——略暗，结果字符略亮 */
+.vkb-gesture-hint em {
+    font-style: normal;
+    color: rgba(255, 255, 255, 0.2);
+}

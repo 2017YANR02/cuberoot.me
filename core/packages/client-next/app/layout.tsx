@@ -12,17 +12,17 @@ export const metadata: Metadata = {
   description: "Cubing toolkit — solver, recon, training, WCA statistics.",
 };
 
+// SSR boots at lang="en"; client switches to ?lang=/cookie/navigator in
+// I18nProvider's useEffect → first paint flashes en→zh for zh users.
+// suppressHydrationWarning on <body> silences the resulting React diff
+// warning (every i18n'd string differs server vs client first render).
+// Long-term fix: migrate to /[lang]/ path prefix so server knows the locale
+// before render (Vercel / next-intl pattern).
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // SSR boots at lang="en"; client switches to ?lang=/cookie/navigator in
-  // I18nProvider's useEffect → first paint flashes en→zh for zh users.
-  // suppressHydrationWarning on <body> silences the resulting React diff
-  // warning (every i18n'd string differs server vs client first render).
-  // Long-term fix: migrate to /[lang]/ path prefix so server knows the locale
-  // before render (Vercel / next-intl pattern). Tracked as Phase 3 task.
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

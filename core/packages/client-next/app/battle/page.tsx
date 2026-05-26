@@ -24,19 +24,12 @@ import VsHistoryPanel from './_components/VsHistoryPanel';
 import { MilestoneToast } from './_components/AdvancedFeatures';
 import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-// TODO(timer subagent): CubingPreview lives in /timer/cube/; once timer ports
-// land, swap this stub for the shared component. Battle UI works without it
-// (scramble preview is hidden when component returns null).
+import CubingPreview from '@/components/CubingPreview';
 import BattleEventPicker from './_components/BattleEventPicker';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 
 import './battle.css';
-
-function CubingPreview(_props: { event: string; scramble: string; className?: string }) {
-  // Stub: deferred until timer subagent ports /timer/cube/CubingPreview.
-  return null;
-}
 
 // NOTE: 根据打乱字符串长度自动计算字号缩放因子
 // ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7

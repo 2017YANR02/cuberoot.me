@@ -17,7 +17,7 @@ export function TutorialCard({ entry, lang }: TutorialCardProps) {
     entry.slug;
 
   return (
-    <Link href={`/tutorial/p/${entry.slug}`} className="tutorial-card">
+    <Link href={`/tutorial/${entry.slug}`} className="tutorial-card">
       <div className="tutorial-card-thumb">
         {entry.thumb ? (
           <img src={entry.thumb} alt="" loading="lazy" decoding="async" />
