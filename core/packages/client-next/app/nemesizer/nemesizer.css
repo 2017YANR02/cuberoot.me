@@ -1,0 +1,424 @@
+.nemesizer-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 20px 48px;
+  color: #ddd;
+}
+
+.nemesizer-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.nemesizer-title-help {
+  display: inline-flex;
+  align-items: center;
+  color: #8e8ea0;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+  align-self: flex-end;
+  margin-bottom: 22px;
+}
+.nemesizer-title-help:hover { opacity: 1; color: #5b6dd9; }
+
+.nemesizer-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 28px 0 20px;
+}
+.nemesizer-brand-logo {
+  width: 36px;
+  height: 36px;
+  display: inline-block;
+  background: linear-gradient(135deg, #5b6dd9, #8b9cf0);
+  border-radius: 6px;
+  position: relative;
+  flex-shrink: 0;
+}
+.nemesizer-brand-logo::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  background: #fff;
+  clip-path: polygon(0 60%, 33% 60%, 33% 40%, 66% 40%, 66% 20%, 100% 20%, 100% 100%, 0 100%);
+}
+.nemesizer-brand-title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.nemesizer-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #333;
+}
+.nemesizer-tab {
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  color: #8e8ea0;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s;
+}
+.nemesizer-tab:hover { color: #ddd; }
+.nemesizer-tab.active {
+  color: #fff;
+  border-bottom-color: #e91e63;
+  font-weight: 600;
+}
+
+.nemesizer-search {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 20px auto;
+  max-width: 520px;
+}
+.nemesizer-search input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 15px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-bottom: 2px solid #666;
+  color: #fff;
+  outline: none;
+  border-radius: 0;
+}
+.nemesizer-search input:focus { border-bottom-color: #5b6dd9; }
+.nemesizer-btn-pink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e91e63;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.nemesizer-btn-pink:hover { background: #c2185b; }
+.nemesizer-btn-pink:disabled { opacity: 0.4; cursor: default; }
+
+.nemesizer-btn-blue {
+  padding: 8px 14px;
+  background: #3f51b5;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nemesizer-btn-blue:hover { background: #303f9f; }
+.nemesizer-btn-blue:disabled { opacity: 0.5; cursor: default; }
+
+.nemesizer-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8e8ea0;
+}
+
+.nemesizer-view-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  max-width: 640px;
+  margin: 16px auto;
+  justify-items: start;
+}
+.nemesizer-view-group label {
+  font-size: 14px;
+  color: #ddd;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.nemesizer-view-group input[type="radio"] { accent-color: #5b6dd9; }
+
+.nemesizer-scope {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 12px 0;
+}
+.nemesizer-scope label {
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.nemesizer-show-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin: 8px 0 18px;
+  font-size: 14px;
+}
+
+.nemesizer-summary {
+  text-align: center;
+  margin: 16px 0 12px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.nemesizer-table-wrap {
+  max-width: 1000px;
+  margin: 16px auto;
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.nemesizer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #ddd;
+}
+.nemesizer-table th {
+  padding: 12px 14px;
+  background: #262626;
+  color: #8e8ea0;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+.nemesizer-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  white-space: nowrap;
+}
+.nemesizer-table tr:last-child td { border-bottom: none; }
+.nemesizer-table tr:hover td { background: #262626; }
+
+.nemesizer-link-btn {
+  color: #5b6dd9;
+  text-decoration: none;
+  font-size: 14px;
+}
+.nemesizer-link-btn:hover { text-decoration: underline; }
+
+.nemesizer-row-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.nemesizer-h2h-cell-better { background: #33d47a33; color: #6eeaa4; font-weight: 600; }
+.nemesizer-h2h-cell-worse  { background: #d43c3c33; color: #e87474; }
+.nemesizer-h2h-cell-none   { color: #555; font-style: italic; }
+
+.nemesizer-stats-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #333;
+}
+.nemesizer-stats-tabs button {
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  color: #8e8ea0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  text-transform: uppercase;
+}
+.nemesizer-stats-tabs button.active {
+  color: #fff;
+  border-bottom-color: #e91e63;
+}
+
+.nemesizer-whatif-grid {
+  max-width: 720px;
+  margin: 16px auto;
+}
+.nemesizer-whatif-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #2a2a2a;
+}
+.nemesizer-whatif-row input {
+  padding: 6px 10px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #fff;
+  outline: none;
+  border-radius: 3px;
+  font-size: 14px;
+  width: 100px;
+}
+
+.nemesizer-small-muted {
+  font-size: 13px;
+  color: #8e8ea0;
+}
+
+.nemesizer-results-summary {
+  text-align: center;
+  margin: 12px 0;
+  color: #bbb;
+  font-size: 14px;
+}
+
+.nemesizer-flag-icon {
+  display: inline-block;
+  width: 22px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.nemesizer-footer {
+  margin-top: 48px;
+  padding: 16px 8px;
+  border-top: 1px solid #2a2a2a;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.6;
+}
+.nemesizer-footer a { color: #aaa; }
+.nemesizer-footer a:hover { color: #ec4899; }
+
+.nemesizer-sort {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+.nemesizer-sort select {
+  background: #1a1a1a;
+  color: #ddd;
+  border: 1px solid #444;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.nemesizer-sort label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── WcaPersonPicker dark-theme overrides — 照搬 viz 的方案 ───
+   shared/WcaPersonPicker 默认浅色 + inline 模式整个 panel position:absolute，
+   在 nemesizer 深色页面里又丑又错位。这里：
+   - panel 改 static（输入框回到文档流）
+   - results 单独 absolute 浮在输入下方
+   - 颜色全部黑底浅字 */
+
+.nemesizer-picker-wrap {
+  position: relative;
+  margin: 20px auto;
+  max-width: 520px;
+  z-index: 10;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-inline,
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-panel {
+  position: static;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  width: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input-wrap {
+  padding: 0;
+  border-bottom: none;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-bottom: 2px solid #666;
+  border-radius: 0;
+  color: #fff;
+  font-size: 15px;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input::placeholder {
+  color: #888;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input:focus {
+  border-bottom-color: #ec4899;
+  box-shadow: none;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: 4px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-results:empty {
+  display: none;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-item {
+  color: #ddd;
+  padding: 10px 14px;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-item:hover {
+  background: rgba(236, 72, 153, 0.12);
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-name { color: #f0f0f0; }
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-id   { color: #888; }
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-status { color: #888; }
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-spinner {
+  border-color: #333;
+  border-top-color: #ec4899;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-avatar {
+  background: rgba(255, 255, 255, 0.06);
+}
