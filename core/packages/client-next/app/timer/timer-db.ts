@@ -15,6 +15,7 @@
 export type EventId =
   | '333' | '222' | '444' | '555' | '666' | '777'
   | '333oh' | '333fm' | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
+  | '333bld' | '444bld' | '555bld' | '333mbld'
   | 'custom';
 
 export type Penalty = 'ok' | '+2' | 'DNF';
@@ -27,6 +28,8 @@ export interface Solve {
   event: EventId;
   ts: number;
   comment?: string;
+  /** BLD memo split (ms), set via Enter mid-solve when bldMemo setting on. */
+  memoMs?: number;
 }
 
 export interface EventInfo {
@@ -48,6 +51,10 @@ export const EVENTS: EventInfo[] = [
   { id: 'sq1', nameEn: 'Square-1', nameZh: 'SQ-1' },
   { id: 'mega', nameEn: 'Megaminx', nameZh: '五魔' },
   { id: 'clock', nameEn: 'Clock', nameZh: '魔表' },
+  { id: '333bld', nameEn: '3x3 BLD', nameZh: '三盲' },
+  { id: '444bld', nameEn: '4x4 BLD', nameZh: '四盲' },
+  { id: '555bld', nameEn: '5x5 BLD', nameZh: '五盲' },
+  { id: '333mbld', nameEn: '3x3 MBLD', nameZh: '多盲' },
   { id: 'custom', nameEn: 'Custom', nameZh: '自定义' },
 ];
 

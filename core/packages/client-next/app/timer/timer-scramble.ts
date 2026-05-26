@@ -15,6 +15,7 @@ const TIMER_TO_WCA: Partial<Record<EventId, string>> = {
   '222': '222', '333': '333', '444': '444', '555': '555', '666': '666', '777': '777',
   '333oh': '333oh', '333fm': '333fm',
   pyra: 'pyram', skewb: 'skewb', sq1: 'sq1', mega: 'minx', clock: 'clock',
+  '333bld': '333bld', '444bld': '444bld', '555bld': '555bld', '333mbld': '333bld',
 };
 
 const FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
