@@ -238,30 +238,307 @@
 
 .tmr-solve-modal-actions button { padding: 6px 14px; }
 
-.tmr-pb-toast {
+/* PB toast — full card with title + value + trophy. */
+.tmr-pb-card {
   position: fixed;
-  top: 64px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 900;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: #34c759;
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
-  pointer-events: none;
-  animation: tmr-toast-pop 2.4s ease forwards;
+  top: 16px;
+  right: 16px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #2a3d4d 0%, #345169 100%);
+  border: 1px solid #4d7a99;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  animation: tmr-pb-in 0.3s ease;
+}
+.tmr-pb-icon { color: #ffd66b; flex-shrink: 0; }
+.tmr-pb-title { font-weight: 600; }
+.tmr-pb-val { font-variant-numeric: tabular-nums; color: #ffd66b; }
+@keyframes tmr-pb-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes tmr-toast-pop {
-  0% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
-  10%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+/* Inspection countdown — show numerals in big timer with amber tint. */
+.tmr-stage.inspecting .tmr-display { color: #ff9500; }
+.tmr-display.inspecting { font-variant-numeric: tabular-nums; }
+
+/* BLD memo split overlay inside stage. */
+.tmr-memo-split {
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--foreground) 75%, transparent);
+}
+
+/* Locked-scramble pill */
+.tmr-scramble-lock {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: color-mix(in srgb, var(--foreground) 75%, transparent);
+}
+
+/* Charts section between stats bar and history */
+.tmr-charts-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.tmr-chart-block h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .tmr-charts-section { grid-template-columns: 1fr; }
+}
+
+/* ── Generic modal styles (settings / stats / sessions / cstimer / etc.) ── */
+
+.tmr-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, black 50%, transparent);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tmr-modal {
+  background: var(--background);
+  color: var(--foreground);
+  border-radius: 10px;
+  padding: 18px;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+.tmr-modal-wide { max-width: 620px; }
+
+.tmr-modal h3 { margin: 0 0 12px; font-size: 16px; }
+
+.tmr-modal .scramble {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.75;
+  margin: 0 0 16px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border-radius: 6px;
+  word-break: break-word;
+}
+
+.tmr-modal-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tmr-modal-row button { flex: 1; }
+
+.tmr-modal textarea {
+  width: 100%;
+  min-height: 72px;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  background: transparent;
+  color: var(--foreground);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.tmr-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.tmr-modal-head h3 { margin: 0; }
+
+.tmr-modal-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.tmr-modal-foot button { padding: 6px 14px; }
+
+.tmr-icon-btn {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 6px;
+  color: var(--foreground);
+  padding: 4px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tmr-icon-btn:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+/* SettingsModal grid */
+.tmr-settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tmr-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.tmr-setting-row input[type="checkbox"] { margin-right: 6px; }
+.tmr-setting-row select,
+.tmr-setting-row input[type="number"] {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+/* StatsModal */
+.tmr-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.tmr-stats-cell {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border-radius: 6px;
+}
+.tmr-stats-cell-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+}
+.tmr-stats-cell-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+}
+.tmr-stats-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tmr-stats-chart-title {
+  font-size: 11.5px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+/* SessionManagerModal */
+.tmr-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.tmr-session-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.tmr-session-row.active { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.tmr-session-pick {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: left;
+}
+.tmr-session-name { font-weight: 500; }
+.tmr-session-count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+/* cstimer per-session import list */
+.tmr-cstimer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 8px 0;
+}
+.tmr-cstimer-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.tmr-cstimer-row:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.tmr-cstimer-name { font-size: 13px; }
+.tmr-cstimer-event {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  opacity: 0.65;
+}
+.tmr-cstimer-count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  opacity: 0.7;
 }
 
 @media (max-width: 600px) {
   .tmr-stats-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tmr-scramble { font-size: 14px; }
+  .tmr-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tmr-header { flex-wrap: wrap; }
 }
+
+/* Backward-compat alias for older selector path (removed body now uses
+   .tmr-modal-row / .tmr-modal-foot). Keeping legacy class names too in case
+   anything still references them. */
+.tmr-solve-modal-backdrop { display: none; }
+.tmr-solve-modal { display: none; }
+.tmr-solve-modal-row { display: none; }
+.tmr-solve-modal-actions { display: none; }

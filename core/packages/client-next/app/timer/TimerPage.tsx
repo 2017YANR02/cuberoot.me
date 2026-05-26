@@ -1,42 +1,39 @@
 'use client';
 
 /**
- * /timer — speed-cubing timer (Next.js port, minimal viable build).
+ * /timer — speed-cubing timer (Next.js port).
  *
- * Implements the core flow:
- *   - Event picker (WCA + custom)
- *   - Random-state scramble via cubing.js
- *   - SPACE / touch hold-and-release timer state machine
- *   - +2 / DNF / delete / comment per solve
- *   - aoN stats (ao5 / ao12 / best ao5 / best single)
- *   - IndexedDB-backed history per event (localStorage fallback)
- *   - Import / export JSON
+ * Feature parity v1: SPACE-hold + WCA inspection (15s + auto +2 / DNF), Web
+ * Audio cues + voice cues, BLD memo split (Enter), histogram + ao5/ao12 trend
+ * charts, PB toast (single / ao5 / ao12), settings modal, session manager,
+ * scramble lock + offset, cstimer JSON import, manual entry, JSON export /
+ * import, comments + penalties per solve.
  *
- * Deferred — too big for this pass; the Vite source ports them across ~130
- * sub-files (1634-line TimerPage.tsx + bluetooth/, sound/, scramble/, etc.):
- *   - Bluetooth smart-cube drivers (gan / giiker / gocube / moyu / qiyi)
- *   - Stackmat decoder (audio jack)
- *   - WCA inspection (countdown + ±2 / DNF auto-penalty)
- *   - Audio cues (metronome / voice / inspection warnings)
- *   - Histogram / trend / heatmap charts
- *   - cstimer JSON import / Speedstacks CSV export
- *   - Reconstruction / SolverHints / drill mode / trainer subset / BLD memo
- *   - 26 modal dialogs (settings / sessions / stats / share / etc.)
- *   - PB toast w/ best-of-best / best-aoN celebration ladders
- *   - Multistage timing (cross / F2L / OLL / PLL splits)
- *
- * Re-enable plan: port each sub-module under app/timer/ and wire incrementally.
- * See packages/client/src/pages/timer/{components,scramble,storage,sound,
- * bluetooth,stackmat,reconstruct,multistage,settings}/ for source layout.
+ * TODO — deferred features (kept in the original Vite TimerPage.tsx, 1634
+ * lines, but not ported in this pass):
+ *   - Bluetooth smart-cube drivers (gan / giiker / gocube / moyu / qiyi):
+ *     Web Bluetooth doesn't work in non-localhost prod from a vanilla web
+ *     context anyway, and the driver layer is ~6 files × 200 LOC each.
+ *   - Stackmat decoder (Web Audio input from a headphone jack).
+ *   - CFOP case-stats + multistage (cross / F2L / OLL / PLL splits) — depends
+ *     on the analyzer worker, separate Phase 4 effort.
+ *   - Drill mode / trainer subset modals.
+ *   - Practice heatmap, hour-by-hour chart, scatter chart.
+ *   - Reconstruction modal + WCA records overlay.
+ *   - 3D cube preview + live cube state.
+ *   - cstimer CSV export, Speedstacks CSV.
+ *   - Multi-stage timing (cross / F2L / OLL / PLL split keys).
+ *   - PB ladder + best-of-best celebration toasts.
  */
 
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
-  ChevronLeft, Download, Plus, RefreshCw, Trash2, Upload,
+  BarChart3, ChevronLeft, Download, FileJson, ListPlus, Plus, RefreshCw,
+  Settings as SettingsIcon, Trash2, Upload, Wrench,
 } from 'lucide-react';
 import LangToggle from '@/components/LangToggle';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -48,12 +45,23 @@ import {
 } from './timer-db';
 import { generateScramble } from './timer-scramble';
 import { averageOfN, bestAverageOfN, bestSingle, formatMs } from './timer-stats';
+import { useTimer, type SolveResult } from './useTimer';
+import { useBldMemo, isBldEvent } from './useBldMemo';
+import { getSettings, updateSettings, useTimerSettings } from './timer-settings';
+import { play, setSoundSettings, warmupSound } from './timer-sound';
+import HistogramChart from './components/HistogramChart';
+import TrendChart from './components/TrendChart';
+import PbToast, { type PbKind } from './components/PbToast';
+import SettingsModal from './components/SettingsModal';
+import StatsModal from './components/StatsModal';
+import CstimerImportModal from './components/CstimerImportModal';
+import ScrambleControlsModal from './components/ScrambleControlsModal';
+import SessionManagerModal from './components/SessionManagerModal';
 import './timer.css';
+// Charts CSS pulled here so the SVGs in StatsModal also pick it up without a
+// duplicate import.
+import './components/charts.css';
 
-type Phase = 'idle' | 'holding' | 'ready' | 'running' | 'stopped';
-
-const HOLD_MS = 350;
-const TICK_MS = 30;
 const EVENT_STORAGE_KEY = 'cuberoot.timer.event';
 
 export default function TimerPage() {
@@ -62,25 +70,84 @@ export default function TimerPage() {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   useDocumentTitle('计时器', 'Timer');
 
+  const settings = useTimerSettings();
+
+  // Keep the sound module in sync with settings.
+  useEffect(() => {
+    setSoundSettings({
+      enabled: settings.soundsEnabled,
+      volume: settings.volume,
+      voiceInspection: settings.voiceInspection,
+    });
+  }, [settings.soundsEnabled, settings.volume, settings.voiceInspection]);
+
   const [event, setEvent] = useState<EventId>('333');
   const [scramble, setScramble] = useState<string>('');
   const [scrambling, setScrambling] = useState<boolean>(false);
+  const [scrambleLocked, setScrambleLocked] = useState<boolean>(false);
   const [solves, setSolves] = useState<Solve[]>([]);
-  const [phase, setPhase] = useState<Phase>('idle');
-  const [displayMs, setDisplayMs] = useState(0);
   const [modalSolveId, setModalSolveId] = useState<string | null>(null);
-  const [pb, setPb] = useState<string | null>(null);
+  const [pb, setPb] = useState<{ kind: PbKind; value: string } | null>(null);
 
-  const phaseRef = useRef<Phase>('idle');
-  const startTsRef = useRef(0);
-  const tickRef = useRef<number | null>(null);
-  const holdTimerRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number | null>(null);
+  // Modals
+  const [showSettings, setShowSettings] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showCstimerImport, setShowCstimerImport] = useState(false);
+  const [showScrambleControls, setShowScrambleControls] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
 
-  const setPhaseSafe = useCallback((p: Phase) => {
-    phaseRef.current = p;
-    setPhase(p);
-  }, []);
+  // ── Solve recording (called by useTimer.onSolve) ──────────────────────────
+
+  const handleStopped = useCallback((res: SolveResult) => {
+    const penalty: Penalty = res.autoPenalty;
+    const solve = makeSolve({
+      event,
+      scramble,
+      timeMs: res.timeMs,
+      penalty,
+    });
+    const memoExtract = bldMemoRef.current?.extractFinal();
+    const finalSolve: Solve = memoExtract ? { ...solve, memoMs: memoExtract.memoMs } : solve;
+
+    void addSolve(finalSolve);
+    setSolves((prev) => {
+      const next = [...prev, finalSolve];
+      // PB detection — uses the *next* list (includes the just-recorded solve).
+      if (settings.pbToast) {
+        const eff = effectiveMs(finalSolve);
+        const prevBest = bestSingle(prev);
+        if (Number.isFinite(eff) && (prevBest == null || eff < prevBest)) {
+          setPb({ kind: 'single', value: formatMs(eff, settings.precision) });
+        } else {
+          // ao5 / ao12 PB?
+          for (const n of [5, 12] as const) {
+            const newAo = averageOfN(next, n);
+            const prevBestAo = bestAverageOfN(prev, n);
+            if (newAo !== null && Number.isFinite(newAo) && (prevBestAo == null || newAo < prevBestAo)) {
+              setPb({ kind: n === 5 ? 'ao5' : 'ao12', value: formatMs(newAo, settings.precision) });
+              break;
+            }
+          }
+        }
+      }
+      return next;
+    });
+
+    // Roll next scramble unless locked.
+    if (!scrambleLocked) void refreshScramble();
+  }, [event, scramble, scrambleLocked, settings.pbToast, settings.precision]);
+
+  const timer = useTimer(handleStopped);
+  const bldMemoEnabled = settings.bldMemo && isBldEvent(event);
+  const bldMemo = useBldMemo({
+    phase: timer.phase,
+    displayMs: timer.displayMs,
+    enabled: bldMemoEnabled,
+  });
+  const bldMemoRef = useRef(bldMemo);
+  useEffect(() => { bldMemoRef.current = bldMemo; }, [bldMemo]);
+
+  // ── Persistence ───────────────────────────────────────────────────────────
 
   // Restore last event on mount.
   useEffect(() => {
@@ -91,13 +158,11 @@ export default function TimerPage() {
     } catch { /* ignore */ }
   }, []);
 
-  // Persist event on change.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try { localStorage.setItem(EVENT_STORAGE_KEY, event); } catch { /* ignore */ }
   }, [event]);
 
-  // Load solves on event change.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -107,7 +172,8 @@ export default function TimerPage() {
     return () => { cancelled = true; };
   }, [event]);
 
-  // Generate scramble on event change.
+  // ── Scramble lifecycle ────────────────────────────────────────────────────
+
   const refreshScramble = useCallback(async () => {
     setScrambling(true);
     try {
@@ -121,97 +187,51 @@ export default function TimerPage() {
     }
   }, [event]);
 
+  // First scramble + refresh when event changes (and not locked).
+  const eventRef = useRef(event);
   useEffect(() => {
-    refreshScramble();
-  }, [refreshScramble]);
-
-  // ── Timer state machine ────────────────────────────────────────────────────
-
-  const stopTick = useCallback(() => {
-    if (tickRef.current !== null) {
-      window.clearInterval(tickRef.current);
-      tickRef.current = null;
-    }
-  }, []);
-
-  const stopHoldTimer = useCallback(() => {
-    if (holdTimerRef.current !== null) {
-      window.clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
-  }, []);
-
-  const onPressDown = useCallback(() => {
-    const cur = phaseRef.current;
-    if (cur === 'running') {
-      // Stop the timer.
-      stopTick();
-      const final = performance.now() - startTsRef.current;
-      setDisplayMs(final);
-      lastTimeRef.current = final;
-      setPhaseSafe('stopped');
-
-      const solve = makeSolve({ event, scramble, timeMs: final });
-      void addSolve(solve);
-      setSolves((prev) => [...prev, solve]);
-      // Auto-roll next scramble.
+    if (eventRef.current !== event) {
+      eventRef.current = event;
       void refreshScramble();
+      timer.reset();
+    } else if (!scramble) {
+      void refreshScramble();
+    }
+  }, [event, refreshScramble, scramble, timer]);
 
-      // PB toast?
-      const prevBest = bestSingle(solves);
-      if (prevBest == null || final < prevBest) {
-        setPb(t('个人最佳!', 'Personal best!'));
-        window.setTimeout(() => setPb(null), 2400);
-      }
-      return;
+  const handleSkip = useCallback(async (n: number) => {
+    for (let i = 0; i < Math.max(0, n - 1); i++) {
+      try { await generateScramble(event); } catch { /* ignore */ }
     }
-    if (cur === 'idle' || cur === 'stopped') {
-      setPhaseSafe('holding');
-      stopHoldTimer();
-      holdTimerRef.current = window.setTimeout(() => {
-        if (phaseRef.current === 'holding') setPhaseSafe('ready');
-      }, HOLD_MS);
-    }
-  }, [stopTick, setPhaseSafe, stopHoldTimer, event, scramble, refreshScramble, solves, t]);
+    await refreshScramble();
+  }, [event, refreshScramble]);
 
-  const onPressUp = useCallback(() => {
-    const cur = phaseRef.current;
-    if (cur === 'ready') {
-      stopHoldTimer();
-      setDisplayMs(0);
-      startTsRef.current = performance.now();
-      setPhaseSafe('running');
-      stopTick();
-      tickRef.current = window.setInterval(() => {
-        setDisplayMs(performance.now() - startTsRef.current);
-      }, TICK_MS);
-      return;
-    }
-    if (cur === 'holding') {
-      stopHoldTimer();
-      setPhaseSafe(lastTimeRef.current !== null ? 'stopped' : 'idle');
-    }
-  }, [setPhaseSafe, stopHoldTimer, stopTick]);
+  // ── Keyboard ──────────────────────────────────────────────────────────────
 
-  // Keyboard.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      if (showSettings || showStats || showCstimerImport || showScrambleControls || showSessions || modalSolveId) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      if (e.repeat) {
+
+      if (e.code === 'Enter' && bldMemoEnabled && timer.phase === 'running') {
         e.preventDefault();
+        bldMemoRef.current?.markMemo();
         return;
       }
+      if (e.code !== 'Space') return;
+      if (e.repeat) { e.preventDefault(); return; }
       e.preventDefault();
-      onPressDown();
+      warmupSound();
+      timer.onPressDown();
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      if (showSettings || showStats || showCstimerImport || showScrambleControls || showSessions || modalSolveId) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.code !== 'Space') return;
       e.preventDefault();
-      onPressUp();
+      timer.onPressUp();
     };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -219,26 +239,9 @@ export default function TimerPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp]);
+  }, [bldMemoEnabled, modalSolveId, showCstimerImport, showScrambleControls, showSessions, showSettings, showStats, timer]);
 
-  // Cleanup.
-  useEffect(() => () => {
-    stopTick();
-    stopHoldTimer();
-  }, [stopTick, stopHoldTimer]);
-
-  // Touch.
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    onPressDown();
-  }, [onPressDown]);
-
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    onPressUp();
-  }, [onPressUp]);
-
-  // ── Solve actions ──────────────────────────────────────────────────────────
+  // ── Solve actions ─────────────────────────────────────────────────────────
 
   const setSolvePenalty = useCallback(async (id: string, penalty: Penalty) => {
     const ix = solves.findIndex((s) => s.id === id);
@@ -247,6 +250,7 @@ export default function TimerPage() {
     const newList = [...solves];
     newList[ix] = next;
     setSolves(newList);
+    if (penalty !== 'ok') play('penalty');
     await updateSolve(next);
   }, [solves]);
 
@@ -269,10 +273,8 @@ export default function TimerPage() {
     if (!window.confirm(t('清空当前项目的所有成绩?', 'Clear all solves for this event?'))) return;
     await clearEvent(event);
     setSolves([]);
-    lastTimeRef.current = null;
-    setDisplayMs(0);
-    setPhaseSafe('idle');
-  }, [event, setPhaseSafe, t]);
+    timer.reset();
+  }, [event, timer, t]);
 
   const handleExport = useCallback(async () => {
     const json = await exportAllJson();
@@ -288,12 +290,9 @@ export default function TimerPage() {
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleImport = useCallback(() => fileInputRef.current?.click(), []);
 
-  const handleImport = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -308,16 +307,39 @@ export default function TimerPage() {
     }
   }, [event, t]);
 
-  // ── Display ─────────────────────────────────────────────────────────────────
+  const handleCstimerImported = useCallback(async (_byEvent: Map<string, Solve[]>) => {
+    const list = await loadSolves(event);
+    setSolves(list);
+  }, [event]);
 
+  // ── Display ───────────────────────────────────────────────────────────────
+
+  const phase = timer.phase;
   const displayText = useMemo(() => {
-    if (phase === 'running') return formatMs(displayMs, 2);
-    if (phase === 'holding' || phase === 'ready') return formatMs(0, 2);
-    if (phase === 'stopped' && lastTimeRef.current != null) {
-      return formatMs(lastTimeRef.current, 2);
+    if (phase === 'inspecting') {
+      const remaining = Math.max(0, settings.inspection - Math.floor(timer.inspectionDisplayMs / 1000));
+      return String(remaining);
     }
-    return formatMs(0, 2);
-  }, [phase, displayMs]);
+    if (phase === 'running' && settings.hideTime) return '…';
+    if (phase === 'running') return formatMs(timer.displayMs, settings.precision);
+    if (phase === 'holding' || phase === 'ready') return formatMs(0, settings.precision);
+    if (timer.lastMs !== null) return formatMs(timer.lastMs, settings.precision);
+    return formatMs(0, settings.precision);
+  }, [phase, timer.displayMs, timer.inspectionDisplayMs, timer.lastMs, settings.inspection, settings.precision, settings.hideTime]);
+
+  const stageHint = useMemo(() => {
+    switch (phase) {
+      case 'idle': return t('按住空格 / 触摸开始', 'Hold SPACE / tap to start');
+      case 'inspecting': return t('再按一下开始按住', 'Press again to start holding');
+      case 'holding': return t('继续按住…', 'Keep holding…');
+      case 'ready': return t('松开开始!', 'Release to start!');
+      case 'running': return bldMemoEnabled
+        ? t('Enter 标记记忆完成 · 按一下停止', 'Enter marks memo · press to stop')
+        : t('再按一下停止', 'Press to stop');
+      case 'stopped': return t('点击成绩查看 / 添加 +2 DNF', 'Click chip below to edit / add +2 DNF');
+      default: return '';
+    }
+  }, [phase, bldMemoEnabled, t]);
 
   const ao5 = useMemo(() => averageOfN(solves, 5), [solves]);
   const ao12 = useMemo(() => averageOfN(solves, 12), [solves]);
@@ -329,6 +351,16 @@ export default function TimerPage() {
     () => solves.find((s) => s.id === modalSolveId) ?? null,
     [solves, modalSolveId],
   );
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    warmupSound();
+    timer.onPressDown();
+  }, [timer]);
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    timer.onPressUp();
+  }, [timer]);
 
   return (
     <div className="tmr-page">
@@ -349,6 +381,9 @@ export default function TimerPage() {
             </option>
           ))}
         </select>
+        <button type="button" className="tmr-action-btn" onClick={() => setShowSessions(true)} title={t('会话', 'Sessions')}>
+          <ListPlus size={14} />
+        </button>
         <button
           type="button"
           className="tmr-action-btn"
@@ -358,37 +393,28 @@ export default function TimerPage() {
         >
           <RefreshCw size={14} />
         </button>
-        <button
-          type="button"
-          className="tmr-action-btn"
-          onClick={handleExport}
-          title={t('导出 JSON', 'Export JSON')}
-        >
+        <button type="button" className="tmr-action-btn" onClick={() => setShowScrambleControls(true)} title={t('打乱控制', 'Scramble controls')}>
+          <Wrench size={14} />
+        </button>
+        <button type="button" className="tmr-action-btn" onClick={() => setShowStats(true)} title={t('统计', 'Stats')}>
+          <BarChart3 size={14} />
+        </button>
+        <button type="button" className="tmr-action-btn" onClick={() => setShowCstimerImport(true)} title={t('cstimer 导入', 'cstimer import')}>
+          <FileJson size={14} />
+        </button>
+        <button type="button" className="tmr-action-btn" onClick={handleExport} title={t('导出 JSON', 'Export JSON')}>
           <Download size={14} />
         </button>
-        <button
-          type="button"
-          className="tmr-action-btn"
-          onClick={handleImport}
-          title={t('导入 JSON', 'Import JSON')}
-        >
+        <button type="button" className="tmr-action-btn" onClick={handleImport} title={t('导入 JSON', 'Import JSON')}>
           <Upload size={14} />
         </button>
-        <button
-          type="button"
-          className="tmr-action-btn"
-          onClick={handleClearAll}
-          title={t('清空当前项目', 'Clear event')}
-        >
+        <button type="button" className="tmr-action-btn" onClick={handleClearAll} title={t('清空当前项目', 'Clear event')}>
           <Trash2 size={14} />
         </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json"
-          onChange={handleFile}
-          style={{ display: 'none' }}
-        />
+        <button type="button" className="tmr-action-btn" onClick={() => setShowSettings(true)} title={t('设置', 'Settings')}>
+          <SettingsIcon size={14} />
+        </button>
+        <input ref={fileInputRef} type="file" accept="application/json" onChange={handleFile} style={{ display: 'none' }} />
         <LangToggle variant="inline" />
         <ThemeToggle />
       </header>
@@ -398,6 +424,7 @@ export default function TimerPage() {
           <span className="tmr-scramble-text">
             {scrambling ? t('打乱中…', 'Scrambling…') : (scramble || t('无打乱', 'No scramble'))}
           </span>
+          {scrambleLocked && <span className="tmr-scramble-lock">{t('已锁定', 'Locked')}</span>}
         </div>
       </div>
 
@@ -405,36 +432,41 @@ export default function TimerPage() {
         className={`tmr-stage ${phase}`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        onMouseDown={(e) => {
-          // Don't intercept clicks on header buttons; only the stage area.
-          if (e.button !== 0) return;
-          onPressDown();
-        }}
-        onMouseUp={(e) => {
-          if (e.button !== 0) return;
-          onPressUp();
-        }}
+        onMouseDown={(e) => { if (e.button === 0) { warmupSound(); timer.onPressDown(); } }}
+        onMouseUp={(e) => { if (e.button === 0) timer.onPressUp(); }}
         role="button"
         tabIndex={0}
       >
-        <div className="tmr-display">{displayText}</div>
-        <div className="tmr-stage-hint">
-          {phase === 'idle' && t('按住空格 / 触摸开始', 'Hold SPACE / tap to start')}
-          {phase === 'holding' && t('继续按住…', 'Keep holding…')}
-          {phase === 'ready' && t('松开开始!', 'Release to start!')}
-          {phase === 'running' && t('再按一下停止', 'Press to stop')}
-          {phase === 'stopped' && t('点击成绩查看 / 添加 +2 DNF', 'Click chip below to edit / add +2 DNF')}
-        </div>
+        <div className={`tmr-display ${phase === 'inspecting' ? 'inspecting' : ''}`}>{displayText}</div>
+        {bldMemoEnabled && bldMemo.memoMs !== undefined && (
+          <div className="tmr-memo-split">
+            {t('记忆', 'Memo')}: {formatMs(bldMemo.memoMs, settings.precision)}
+          </div>
+        )}
+        <div className="tmr-stage-hint">{stageHint}</div>
       </div>
 
       <div className="tmr-stats-bar">
-        <Stat label={t('当前', 'Current')} val={lastTimeRef.current} />
-        <Stat label={t('ao5', 'ao5')} val={ao5} />
-        <Stat label={t('ao12', 'ao12')} val={ao12} />
-        <Stat label={t('单次最快', 'Best')} val={single} />
-        <Stat label={t('最佳 ao5', 'Best ao5')} val={bestAo5} />
-        <Stat label={t('数量', 'Count')} val={solves.length} suffix={t(' 次', '')} format="num" />
+        <Stat label={t('当前', 'Current')} val={timer.lastMs} precision={settings.precision} />
+        <Stat label="ao5" val={ao5} precision={settings.precision} />
+        <Stat label="ao12" val={ao12} precision={settings.precision} />
+        <Stat label={t('单次最快', 'Best')} val={single} precision={settings.precision} />
+        <Stat label={t('最佳 ao5', 'Best ao5')} val={bestAo5} precision={settings.precision} />
+        <Stat label={t('数量', 'Count')} val={solves.length} suffix={t(' 次', '')} format="num" precision={settings.precision} />
       </div>
+
+      {settings.showCharts && (
+        <section className="tmr-charts-section">
+          <div className="tmr-chart-block">
+            <h3>{t('分布', 'Distribution')}</h3>
+            <HistogramChart solves={solves} isZh={isZh} />
+          </div>
+          <div className="tmr-chart-block">
+            <h3>{t('趋势', 'Trend')}</h3>
+            <TrendChart solves={solves} isZh={isZh} />
+          </div>
+        </section>
+      )}
 
       <section className="tmr-history">
         <h2>{t('最近成绩', 'Recent solves')}</h2>
@@ -454,11 +486,9 @@ export default function TimerPage() {
                 onClick={() => setModalSolveId(s.id)}
                 title={s.scramble}
               >
-                <span style={{ opacity: 0.6, fontSize: 11 }}>
-                  #{solves.length - i}
-                </span>
+                <span style={{ opacity: 0.6, fontSize: 11 }}>#{solves.length - i}</span>
                 <span>
-                  {isDnf ? 'DNF' : formatMs(eff, 2)}
+                  {isDnf ? 'DNF' : formatMs(eff, settings.precision)}
                   {isPlus2 ? '+' : ''}
                 </span>
               </button>
@@ -471,39 +501,77 @@ export default function TimerPage() {
         <SolveModal
           solve={modalSolve}
           isZh={isZh}
+          precision={settings.precision}
           onClose={() => setModalSolveId(null)}
           onSetPenalty={(p) => setSolvePenalty(modalSolve.id, p)}
           onSetComment={(c) => setSolveComment(modalSolve.id, c)}
-          onDelete={() => {
-            void removeSolve(modalSolve.id);
-            setModalSolveId(null);
-          }}
+          onDelete={() => { void removeSolve(modalSolve.id); setModalSolveId(null); }}
         />
       )}
 
-      {pb && <div className="tmr-pb-toast">{pb}</div>}
+      {pb && (
+        <PbToast
+          kind={pb.kind}
+          value={pb.value}
+          isZh={isZh}
+          onClose={() => setPb(null)}
+        />
+      )}
 
-      <ManualAddBar event={event} scramble={scramble} onAdd={(timeMs) => {
-        const solve = makeSolve({ event, scramble, timeMs });
-        void addSolve(solve);
-        setSolves((prev) => [...prev, solve]);
-      }} isZh={isZh} />
+      <ManualAddBar
+        event={event}
+        scramble={scramble}
+        onAdd={(timeMs) => {
+          const solve = makeSolve({ event, scramble, timeMs });
+          void addSolve(solve);
+          setSolves((prev) => [...prev, solve]);
+        }}
+        isZh={isZh}
+      />
+
+      {showSettings && <SettingsModal isZh={isZh} onClose={() => setShowSettings(false)} />}
+      {showStats && <StatsModal solves={solves} isZh={isZh} onClose={() => setShowStats(false)} />}
+      {showCstimerImport && (
+        <CstimerImportModal
+          isZh={isZh}
+          onClose={() => setShowCstimerImport(false)}
+          onImported={handleCstimerImported}
+        />
+      )}
+      {showScrambleControls && (
+        <ScrambleControlsModal
+          isZh={isZh}
+          locked={scrambleLocked}
+          onSetLocked={setScrambleLocked}
+          onSkip={(n) => void handleSkip(n)}
+          onClose={() => setShowScrambleControls(false)}
+        />
+      )}
+      {showSessions && (
+        <SessionManagerModal
+          isZh={isZh}
+          currentEvent={event}
+          onPickEvent={setEvent}
+          onClose={() => setShowSessions(false)}
+        />
+      )}
     </div>
   );
 }
 
 function Stat({
-  label, val, suffix, format,
+  label, val, suffix, format, precision,
 }: {
   label: string;
   val: number | null | undefined;
   suffix?: string;
   format?: 'time' | 'num';
+  precision: 2 | 3;
 }) {
   let display = '—';
   if (val != null && Number.isFinite(val)) {
     if (format === 'num') display = String(val);
-    else display = formatMs(val as number, 2);
+    else display = formatMs(val as number, precision);
   } else if (val === Infinity) {
     display = 'DNF';
   }
@@ -516,10 +584,11 @@ function Stat({
 }
 
 function SolveModal({
-  solve, isZh, onClose, onSetPenalty, onSetComment, onDelete,
+  solve, isZh, precision, onClose, onSetPenalty, onSetComment, onDelete,
 }: {
   solve: Solve;
   isZh: boolean;
+  precision: 2 | 3;
   onClose: () => void;
   onSetPenalty: (p: Penalty) => void;
   onSetComment: (c: string) => void;
@@ -530,41 +599,30 @@ function SolveModal({
   useEffect(() => { setComment(solve.comment ?? ''); }, [solve.id, solve.comment]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
   return (
-    <div className="tmr-solve-modal-backdrop" onClick={onClose}>
-      <div className="tmr-solve-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="tmr-modal-backdrop" onClick={onClose}>
+      <div className="tmr-modal" onClick={(e) => e.stopPropagation()}>
         <h3>
-          {formatMs(effectiveMs(solve), 2)}
+          {formatMs(effectiveMs(solve), precision)}
           {solve.penalty === '+2' ? ' (+2)' : ''}
           {solve.penalty === 'DNF' ? ' DNF' : ''}
         </h3>
+        {solve.memoMs !== undefined && (
+          <p style={{ fontSize: 12, opacity: 0.7, margin: '0 0 8px' }}>
+            {t('记忆', 'Memo')}: {formatMs(solve.memoMs, precision)} ·
+            {' '}{t('执行', 'Exec')}: {formatMs(Math.max(0, solve.timeMs - solve.memoMs), precision)}
+          </p>
+        )}
         <pre className="scramble">{solve.scramble || t('无打乱', '(no scramble)')}</pre>
-        <div className="tmr-solve-modal-row">
-          <button
-            type="button"
-            className="tmr-action-btn"
-            aria-pressed={solve.penalty === 'ok'}
-            onClick={() => onSetPenalty('ok')}
-          >OK</button>
-          <button
-            type="button"
-            className="tmr-action-btn"
-            aria-pressed={solve.penalty === '+2'}
-            onClick={() => onSetPenalty('+2')}
-          >+2</button>
-          <button
-            type="button"
-            className="tmr-action-btn"
-            aria-pressed={solve.penalty === 'DNF'}
-            onClick={() => onSetPenalty('DNF')}
-          >DNF</button>
+        <div className="tmr-modal-row">
+          <button type="button" className="tmr-action-btn" aria-pressed={solve.penalty === 'ok'} onClick={() => onSetPenalty('ok')}>OK</button>
+          <button type="button" className="tmr-action-btn" aria-pressed={solve.penalty === '+2'} onClick={() => onSetPenalty('+2')}>+2</button>
+          <button type="button" className="tmr-action-btn" aria-pressed={solve.penalty === 'DNF'} onClick={() => onSetPenalty('DNF')}>DNF</button>
         </div>
         <textarea
           placeholder={t('备注 (可选)', 'Comment (optional)')}
@@ -572,13 +630,11 @@ function SolveModal({
           onChange={(e) => setComment(e.target.value)}
           onBlur={() => onSetComment(comment)}
         />
-        <div className="tmr-solve-modal-actions">
+        <div className="tmr-modal-foot">
           <button type="button" className="tmr-action-btn" onClick={onDelete}>
             <Trash2 size={13} /> {t('删除', 'Delete')}
           </button>
-          <button type="button" className="tmr-action-btn" onClick={onClose}>
-            {t('关闭', 'Close')}
-          </button>
+          <button type="button" className="tmr-action-btn" onClick={onClose}>{t('关闭', 'Close')}</button>
         </div>
       </div>
     </div>
@@ -608,11 +664,7 @@ function ManualAddBar({
   if (!open) {
     return (
       <div style={{ padding: '0 16px 24px' }}>
-        <button
-          type="button"
-          className="tmr-action-btn"
-          onClick={() => setOpen(true)}
-        >
+        <button type="button" className="tmr-action-btn" onClick={() => setOpen(true)}>
           <Plus size={13} /> {t('手动添加成绩', 'Add solve manually')}
         </button>
         <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.5 }}>
@@ -644,17 +696,12 @@ function ManualAddBar({
           color: 'inherit',
         }}
       />
-      <button type="button" className="tmr-action-btn" onClick={submit}>
-        {t('保存', 'Save')}
-      </button>
-      <button type="button" className="tmr-action-btn" onClick={() => setOpen(false)}>
-        {t('取消', 'Cancel')}
-      </button>
+      <button type="button" className="tmr-action-btn" onClick={submit}>{t('保存', 'Save')}</button>
+      <button type="button" className="tmr-action-btn" onClick={() => setOpen(false)}>{t('取消', 'Cancel')}</button>
     </div>
   );
 }
 
-/** "12.34" / "1:23.45" / "DNF" → ms. */
 function parseTimeInput(s: string): number | null {
   const trimmed = s.trim();
   if (!trimmed) return null;
@@ -670,3 +717,7 @@ function parseTimeInput(s: string): number | null {
   if (!Number.isFinite(n)) return null;
   return Math.round(n * 1000);
 }
+
+// Re-export to ensure the warmup helper isn't tree-shaken away from the bundle
+// (Settings/test sanity check).
+export { warmupSound, getSettings, updateSettings };
