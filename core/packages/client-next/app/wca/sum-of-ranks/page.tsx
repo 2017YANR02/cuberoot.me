@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client/src/pages/wca_stats/SumOfRanksPage.tsx.
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +34,7 @@ interface Row {
   ranks: number[];
 }
 
-export default function SumOfRanksPage() {
+function SumOfRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('名次和', 'Sum of Ranks');
@@ -238,5 +238,13 @@ export default function SumOfRanksPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SumOfRanksPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <SumOfRanksPageInner />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client/src/pages/wca_stats/CohortRanksPage.tsx.
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ interface Row {
   countryId: string; iso2: string | null;
 }
 
-export default function CohortRanksPage() {
+function CohortRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('届别排名', 'Cohort Ranks');
@@ -175,5 +175,13 @@ export default function CohortRanksPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CohortRanksPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <CohortRanksPageInner />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client/src/pages/wca_stats/HistoricalRanksPage.tsx.
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -49,7 +49,7 @@ interface RanksResponse {
   rows: RankRow[];
 }
 
-export default function HistoricalRanksPage() {
+function HistoricalRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('历史排名', 'Historical Ranks');
@@ -213,5 +213,13 @@ export default function HistoricalRanksPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HistoricalRanksPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+      <HistoricalRanksPageInner />
+    </Suspense>
   );
 }
