@@ -1,65 +1,540 @@
 'use client';
 
 /**
- * /scramble/analyzer — stub. The full Vite implementation walks a 3x3 scramble
- * through every CFOP first-stage variant (cross / xcross / xxcross / xxxcross
- * × std / EO / pair / pseudo / pseudo_pair) via a Web Worker that owns the
- * legacy speedcubedb cube model + dictionaries.
+ * /scramble/analyzer — 3x3 scramble CFOP analyzer.
  *
- * Deferred because:
- *   - 966-line analyzer.worker.ts uses Vite-specific
- *     `new Worker(new URL('./worker/analyzer.worker.ts', import.meta.url))`
- *     pattern. Next 16's path resolution for this differs (see HANDOFF.md
- *     yellow-light #3); needs reworking + verification.
- *   - Imports `randomScrambleForEvent` from utils/scramble which is a thin
- *     shim over the timer subagent's nxnxn / others scramble code (not yet
- *     ported into client-next/lib/).
- *   - Imports TwistySection (cubing.js TwistyPlayer wrapper) which is not yet
- *     in client-next/components/.
- *   - The legacy obfuscated `boohoo/hs/zbh.js` data files must NOT be
- *     modified (see CLAUDE memory `project_analyze_route`); they need to be
- *     copied verbatim to client-next/public/ and reachable via importScripts.
- *
- * Source: packages/client/src/pages/analyze/{AnalyzePage.tsx,
- * analyze_worker_client.ts, worker/analyzer.worker.ts, analyze.css}.
+ * Ported from packages/client/src/pages/analyze/AnalyzePage.tsx.
+ * The classic-worker assets (analyzer.js + boohoo/hs/zbh/xcross/eocross/pair/
+ * pseudo-cross/pseudo-pair) are copied verbatim under
+ * client-next/public/analyze-worker/ and loaded via `new Worker('/analyze-worker/analyzer.js')`.
+ * Random 3x3 scramble uses cubing.js to avoid pulling in the timer scramble
+ * tree (owned by another subagent).
  */
 
-import Link from 'next/link';
-import { HelpCircle } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
+import {
+  Analyzer,
+  CROSS_COLORS,
+  matchesCategory,
+  type CrossColor,
+  type Howfar,
+  type Stage,
+  type Variant,
+  type Solution,
+  type WorkerVariant,
+} from './analyze_worker_client';
 import LangToggle from '@/components/LangToggle';
 import ThemeToggle from '@/components/ThemeToggle';
+import TwistySection from '@/components/TwistySection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import './analyze.css';
 
-export default function AnalyzePage() {
+const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
+
+const COLOR_CHAR: Record<CrossColor, string> = {
+  Yellow: 'y', White: 'w', Red: 'r', Orange: 'o', Blue: 'b', Green: 'g',
+};
+const CHAR_COLOR: Record<string, CrossColor> = {
+  y: 'Yellow', w: 'White', r: 'Red', o: 'Orange', b: 'Blue', g: 'Green',
+};
+
+const EXAMPLE_SCRAMBLES: Array<{ name: string; scramble: string }> = [
+  { name: 'WR avg seed', scramble: "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'" },
+  { name: 'easy cross', scramble: "F R U' R' U' R U R' F' R U R' U' R' F R F'" },
+  { name: 'OLL skip-friendly', scramble: "U L D R2 B2 D B2 U R2 U' F2 R2 U2 R' B D' U2 L2 B' F" },
+  { name: 'long path', scramble: "U2 L2 F' D2 F' U2 L2 B R2 B2 R' D' R2 F' R F2 U' B' L" },
+  { name: 'opposite pair', scramble: 'R L' },
+];
+
+type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
+
+const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
+  White: { zh: '白', en: 'White' },
+  Yellow: { zh: '黄', en: 'Yellow' },
+  Red: { zh: '红', en: 'Red' },
+  Orange: { zh: '橙', en: 'Orange' },
+  Blue: { zh: '蓝', en: 'Blue' },
+  Green: { zh: '绿', en: 'Green' },
+};
+
+async function randomThreeByThreeScramble(): Promise<string> {
+  const { randomScrambleForEvent } = await import('cubing/scramble');
+  const alg = await randomScrambleForEvent('333');
+  return alg.toString();
+}
+
+function FilterChip(props: { active: boolean; title: string; amount: number; onClick: () => void }) {
+  return (
+    <button
+      className={`analyze-filter-chip${props.active ? ' is-active' : ''}`}
+      onClick={props.onClick}
+    >
+      <span className="analyze-filter-title">{props.title}</span>
+      <span className="analyze-filter-amount">{props.amount}</span>
+    </button>
+  );
+}
+
+function AnalyzePageInner() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   useDocumentTitle('打乱分析', 'Scramble Analyzer');
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialScramble = searchParams.get('scramble')?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE;
+  const workerVariant: WorkerVariant = searchParams.get('worker') === 'legacy' ? 'legacy' : 'ts';
+
+  const [scramble, setScramble] = useState(initialScramble);
+  const [howfar, setHowfar] = useState<Howfar>(() => {
+    const urlV = Number(searchParams.get('howfar'));
+    if (urlV === 1 || urlV === 2 || urlV === 3 || urlV === 4) return urlV;
+    if (typeof localStorage === 'undefined') return 4;
+    const v = Number(localStorage.getItem('analyze.howfar'));
+    return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
+  });
+  const [stage, setStage] = useState<Stage>(() => {
+    const valid: Stage[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
+    const urlV = searchParams.get('stage');
+    if (urlV && (valid as string[]).includes(urlV)) return urlV as Stage;
+    if (typeof localStorage === 'undefined') return 'cross';
+    const v = localStorage.getItem('analyze.stage');
+    if (v && (valid as string[]).includes(v)) return v as Stage;
+    return 'cross';
+  });
+  const [variant, setVariant] = useState<Variant>(() => {
+    const valid: Variant[] = ['std', 'eo', 'pair', 'pseudo', 'pseudo_pair'];
+    const urlV = searchParams.get('variant');
+    if (urlV && (valid as string[]).includes(urlV)) return urlV as Variant;
+    if (typeof localStorage === 'undefined') return 'std';
+    const v = localStorage.getItem('analyze.variant');
+    if (v && (valid as string[]).includes(v)) return v as Variant;
+    return 'std';
+  });
+  const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
+    const urlColors = searchParams.get('colors');
+    if (urlColors !== null) {
+      const set = new Set(Array.from(urlColors.toLowerCase()).map((ch) => CHAR_COLOR[ch]).filter(Boolean) as CrossColor[]);
+      return Object.fromEntries(CROSS_COLORS.map((c) => [c, set.has(c)])) as Record<CrossColor, boolean>;
+    }
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('analyze.colors') || 'null');
+        if (saved && typeof saved === 'object') {
+          const out = Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
+          for (const c of CROSS_COLORS) if (typeof saved[c] === 'boolean') out[c] = saved[c];
+          return out;
+        }
+      } catch { /* corrupt entry */ }
+    }
+    return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
+  });
+
+  useEffect(() => { try { localStorage.setItem('analyze.howfar', String(howfar)); } catch { /* */ } }, [howfar]);
+  useEffect(() => { try { localStorage.setItem('analyze.stage', stage); } catch { /* */ } }, [stage]);
+  useEffect(() => { try { localStorage.setItem('analyze.variant', variant); } catch { /* */ } }, [variant]);
+  useEffect(() => { try { localStorage.setItem('analyze.colors', JSON.stringify(colors)); } catch { /* */ } }, [colors]);
+
+  // Sync URL params (replace, not push).
+  useEffect(() => {
+    const next = new URLSearchParams(Array.from(searchParams.entries()));
+    const trimmed = scramble.trim();
+    if (trimmed) next.set('scramble', trimmed.replace(/ /g, '_'));
+    else next.delete('scramble');
+    if (howfar !== 4) next.set('howfar', String(howfar)); else next.delete('howfar');
+    if (stage !== 'cross') next.set('stage', stage); else next.delete('stage');
+    if (variant !== 'std') next.set('variant', variant); else next.delete('variant');
+    const checked = CROSS_COLORS.filter((c) => colors[c]);
+    if (checked.length === CROSS_COLORS.length) next.delete('colors');
+    else next.set('colors', checked.map((c) => COLOR_CHAR[c]).join(''));
+    const q = next.toString();
+    router.replace(q ? `?${q}` : '?', { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scramble, howfar, stage, variant, colors]);
+
+  const [running, setRunning] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [crossesCovered, setCrossesCovered] = useState(0);
+  const [pairsCovered, setPairsCovered] = useState(0);
+  const [llCovered, setLlCovered] = useState(0);
+  const [solutions, setSolutions] = useState<Solution[]>([]);
+  const [analyzedScramble, setAnalyzedScramble] = useState('');
+  const [filter, setFilter] = useState<FilterMode>('all');
+  const [openIdx, setOpenIdx] = useState<Set<number>>(new Set());
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
+  const [variantUnsupported, setVariantUnsupported] = useState<boolean>(false);
+  const analyzerRef = useRef<Analyzer>(new Analyzer());
+  const startTimeRef = useRef<number>(0);
+
+  useEffect(() => () => analyzerRef.current.terminate(), []);
+
+  const counts = useMemo(() => {
+    let full = 0, ollSkip = 0, pllSkip = 0, llSkip = 0;
+    for (const sol of solutions) {
+      const stages = sol[3];
+      const hasOll = stages.includes('OLL');
+      const hasPll = stages.includes('PLL');
+      if (hasOll && hasPll) full++;
+      if (!hasOll) ollSkip++;
+      if (!hasPll) pllSkip++;
+      if (!hasOll && !hasPll) llSkip++;
+    }
+    return { all: solutions.length, full, ollSkip, pllSkip, llSkip };
+  }, [solutions]);
+
+  const filtered = useMemo(() => solutions.filter((s) => matchesCategory(s[3], filter)), [solutions, filter]);
+
+  const displayed = useMemo(() => {
+    const out: Array<{ idx: number; sol: Solution }> = [];
+    let count = 0;
+    for (let i = 0; i < filtered.length; i++) {
+      count++;
+      const sol = filtered[i];
+      const stages = sol[3];
+      const isSkip = !stages.includes('OLL') || !stages.includes('PLL');
+      if ((count >= 500 && !isSkip) || count > 1000) continue;
+      out.push({ idx: i, sol });
+    }
+    return out;
+  }, [filtered]);
+
+  function runAnalyze() {
+    if (running) return;
+    const trimmed = scramble.trim();
+    if (!trimmed) return;
+    setRunning(true);
+    setErrorMsg(null);
+    setSolutions([]);
+    setCrossesCovered(0);
+    setPairsCovered(0);
+    setLlCovered(0);
+    setOpenIdx(new Set());
+    setAnalyzedScramble(trimmed);
+    setFilter('all');
+    setElapsedMs(null);
+    setXcrossFallback(false);
+    setVariantUnsupported(false);
+    startTimeRef.current = performance.now();
+    analyzerRef.current.start(
+      { scramble: trimmed, crosscolors: colors, howfar, variant, stage },
+      {
+        onProgress: (p) => {
+          if (p.totalnumcross !== undefined) setCrossesCovered(p.totalnumcross);
+          if (p.pairscovered !== undefined) setPairsCovered(p.pairscovered);
+          if (p.llcovered !== undefined) setLlCovered(p.llcovered);
+        },
+        onDone: (sols, meta) => {
+          setSolutions(sols);
+          setElapsedMs(Math.round(performance.now() - startTimeRef.current));
+          setRunning(false);
+          setXcrossFallback(meta?.xcrossFallback ?? false);
+          setVariantUnsupported(meta?.variantUnsupported ?? false);
+        },
+        onError: (err) => {
+          console.error('[analyze] worker error', err);
+          const msg = err instanceof ErrorEvent ? err.message : err.message;
+          setErrorMsg(msg || t('分析失败,请检查打乱格式', 'Analysis failed, check scramble notation'));
+          setRunning(false);
+        },
+      },
+      workerVariant,
+    );
+  }
+
+  function toggleOpen(i: number) {
+    const next = new Set(openIdx);
+    if (next.has(i)) next.delete(i); else next.add(i);
+    setOpenIdx(next);
+  }
+
+  function copyAlg(i: number, sol: Solution, e: React.MouseEvent) {
+    e.stopPropagation();
+    const text = `${analyzedScramble}\n\n\n${sol[1]}\n\n\n${sol[0]}HTM`;
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedIdx(i);
+      setTimeout(() => setCopiedIdx((c) => (c === i ? null : c)), 1200);
+    }).catch(() => { /* clipboard blocked */ });
+  }
+
+  async function fillRandom() {
+    try {
+      const s = await randomThreeByThreeScramble();
+      if (s) setScramble(s);
+    } catch (err) {
+      console.warn('random scramble failed', err);
+    }
+  }
 
   return (
-    <div style={{ padding: 16, maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
-        <LangToggle variant="inline" />
-        <ThemeToggle />
+    <div className="analyze-page">
+      <header className="analyze-header">
+        <div className="analyze-header-row">
+          <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
+          <LangToggle variant="inline" className="analyze-lang-toggle" />
+          <ThemeToggle />
+        </div>
+        <p className="analyze-sub">
+          {t(
+            '枚举给定 3x3 打乱所有合理的 CFOP 解法（白十字 / 黄十字 / 任意颜色十字 + F2L + OLL + PLL）。',
+            'Enumerate every reasonable CFOP solution for a 3x3 scramble (cross on any color + F2L + OLL + PLL).',
+          )}
+        </p>
+      </header>
+
+      <div className="analyze-input-row">
+        <button
+          className="analyze-shuffle"
+          onClick={fillRandom}
+          disabled={running}
+          title={t('生成随机 WCA 打乱', 'Generate random WCA scramble')}
+          aria-label={t('生成随机打乱', 'Generate random scramble')}
+        >
+          <Shuffle size={14} />
+        </button>
+        <input
+          className="analyze-scramble"
+          type="text"
+          value={scramble}
+          onChange={(e) => setScramble(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') runAnalyze(); }}
+          placeholder={t('输入打乱（标准 WCA 记号）', 'Scramble (WCA notation)')}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          inputMode="text"
+        />
+        <button
+          className="analyze-go"
+          onClick={runAnalyze}
+          disabled={running || !scramble.trim()}
+        >
+          {running ? <Loader2 size={16} className="analyze-spin" /> : null}
+          {t('分析', 'Analyze')}
+        </button>
       </div>
 
-      <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {isZh ? '打乱分析器' : 'Scramble Analyzer'}
-      </h1>
+      <div className="analyze-examples">
+        <span className="analyze-examples-label">
+          <Shuffle size={12} />
+          {t('示例', 'Examples')}:
+        </span>
+        {EXAMPLE_SCRAMBLES.map((ex) => (
+          <button
+            key={ex.scramble}
+            className="analyze-example"
+            onClick={() => { setScramble(ex.scramble); }}
+            disabled={running}
+            title={ex.scramble}
+          >
+            {ex.name}
+          </button>
+        ))}
+      </div>
 
-      <p style={{ opacity: 0.7 }}>
-        {isZh
-          ? '迁移中: CFOP 第一阶段全空间分析(cross / xcross / xxcross / xxxcross × std / EO / pair / pseudo)。Vite 版本仍可用,见 '
-          : 'Migration in progress: CFOP first-stage full-space analyzer (cross / xcross / xxcross / xxxcross × std / EO / pair / pseudo). Vite version still works, see '}
-        <a href="https://cuberoot.me/scramble/analyzer" target="_blank" rel="noopener noreferrer">cuberoot.me/scramble/analyzer</a>
-        {isZh ? '。' : '.'}
-      </p>
+      <div className="analyze-filters">
+        <label className="analyze-control">
+          <span>{t('变体', 'Variant')}</span>
+          <select
+            value={variant}
+            onChange={(e) => setVariant(e.target.value as Variant)}
+            disabled={running}
+          >
+            <option value="std">{t('标准', 'Standard')}</option>
+            <option value="eo">EOCross</option>
+            <option value="pair">{t('十字+基态', 'Cross + Pair')}</option>
+            <option value="pseudo">{t('伪十字', 'Pseudo')}</option>
+            <option value="pseudo_pair">{t('伪十字+基态', 'Pseudo + Pair')}</option>
+          </select>
+        </label>
+        <label className="analyze-control">
+          <span>{t('阶段', 'Stage')}</span>
+          <select
+            value={stage}
+            onChange={(e) => setStage(e.target.value as Stage)}
+            disabled={running}
+          >
+            <option value="cross">Cross</option>
+            <option value="xcross">XCross</option>
+            <option value="xxcross">XXCross</option>
+            <option value="xxxcross">XXXCross</option>
+          </select>
+        </label>
+        <select
+          value={howfar}
+          onChange={(e) => setHowfar(Number(e.target.value) as Howfar)}
+          disabled={running}
+          className="analyze-howfar"
+        >
+          <option value={4}>{t('完整解法', 'Full Solve')}</option>
+          <option value={3}>Cross+3</option>
+          <option value={2}>Cross+2</option>
+          <option value={1}>Cross+1</option>
+        </select>
+        {CROSS_COLORS.map((c) => (
+          <label key={c} className={`analyze-color analyze-color-${c.toLowerCase()}`}>
+            <input
+              type="checkbox"
+              checked={colors[c]}
+              onChange={(e) => setColors((prev) => ({ ...prev, [c]: e.target.checked }))}
+              disabled={running}
+            />
+            <span className="analyze-color-swatch" />
+            <span>{COLOR_LABEL[c][lang]}</span>
+          </label>
+        ))}
+      </div>
 
-      <p style={{ opacity: 0.5, fontSize: '0.85rem' }}>
-        {isZh
-          ? '阻塞点: Vite Worker URL 模式、obfuscated boohoo/hs/zbh.js 数据文件、TwistySection 组件 — 见 HANDOFF.md 黄灯 #3。'
-          : 'Blockers: Vite Worker URL pattern, obfuscated boohoo/hs/zbh.js data files, TwistySection component — see HANDOFF.md yellow-light #3.'}
-      </p>
+      {errorMsg && (
+        <div className="analyze-error" role="alert">
+          {errorMsg}
+        </div>
+      )}
+
+      {xcrossFallback && variant === 'std' && stage === 'xcross' && (
+        <div className="analyze-error" role="status">
+          {t(
+            'XCross wasm 未返回任何解 — 已降级到 cross 启发式搜索。',
+            'XCross wasm returned no valid solutions — fell back to cross heuristic search.',
+          )}
+        </div>
+      )}
+
+      {variantUnsupported && (
+        <div className="analyze-error" role="status">
+          {t(
+            '当前 变体 × 阶段 组合尚未实现 — 目前可用:Standard 全部 4 档,Pseudo + Cross (pCross)。',
+            'This Variant × Stage combination is not yet wired. Available: Standard (all 4 stages), Pseudo + Cross (pCross).',
+          )}
+        </div>
+      )}
+
+      {xcrossFallback && variant === 'pseudo' && stage === 'cross' && (
+        <div className="analyze-error" role="status">
+          {t(
+            'pCross wasm 在搜索深度内未找到 Δ≠0 的伪解 — 已退回普通 cross 启发式。',
+            'pCross wasm found no Δ≠0 pseudo solutions within depth bound — fell back to regular cross heuristic.',
+          )}
+        </div>
+      )}
+
+      <div className="analyze-stats">
+        <div
+          className="analyze-stat-row"
+          title={t(
+            '深度 ≤ max(5, 最优+2);非仅最优,含近优变体。每色上限 100 条,可能撞顶。',
+            'Depth ≤ max(5, optimal+2); near-optimal variants included, not just the best. Capped at 100 per color.',
+          )}
+        >
+          <span>{t('十字解法数', 'Crosses covered')}:</span>
+          <strong>{crossesCovered}</strong>
+        </div>
+        <div className="analyze-stat-row">
+          <span>{t('F2L 解法数', 'F2L pair solutions covered')}:</span>
+          <strong>{pairsCovered}</strong>
+        </div>
+        <div className="analyze-stat-row">
+          <span>{t('顶层解法数', 'Last layer solutions covered')}:</span>
+          <strong>{llCovered}</strong>
+        </div>
+        <div className="analyze-stat-row">
+          <span>{t('总解法数', 'Total solutions covered')}:</span>
+          <strong>{solutions.length}</strong>
+          {elapsedMs !== null && (
+            <span className="analyze-elapsed">
+              {(elapsedMs / 1000).toFixed(2)}s
+              {workerVariant === 'legacy' ? ` · ${t('遗留 worker', 'legacy worker')}` : ''}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {solutions.length > 0 && (
+        <div className="analyze-results">
+          <h2>{t('结果', 'Results')}</h2>
+          <div className="analyze-result-filters">
+            <FilterChip active={filter === 'all'} title={t('全部解法', 'All Solves')} amount={counts.all} onClick={() => setFilter('all')} />
+            <FilterChip active={filter === 'full-step'} title={t('完整步骤', 'Full Step')} amount={counts.full} onClick={() => setFilter('full-step')} />
+            <FilterChip active={filter === 'oll-skip'} title={t('跳O', 'OLL Skip')} amount={counts.ollSkip} onClick={() => setFilter('oll-skip')} />
+            <FilterChip active={filter === 'pll-skip'} title={t('跳P', 'PLL Skip')} amount={counts.pllSkip} onClick={() => setFilter('pll-skip')} />
+            <FilterChip active={filter === 'll-skip'} title={t('跳顶层', 'LL Skip')} amount={counts.llSkip} onClick={() => setFilter('ll-skip')} />
+          </div>
+
+          <div className="analyze-solutions">
+            {displayed.map(({ idx, sol }) => {
+              const open = openIdx.has(idx);
+              const stages = sol[3];
+              const dataOll = stages.includes('OLL');
+              const dataPll = stages.includes('PLL');
+              return (
+                <div
+                  key={idx}
+                  className="analyze-solution"
+                  data-oll={dataOll}
+                  data-pll={dataPll}
+                >
+                  <button
+                    className="analyze-solution-title"
+                    onClick={() => toggleOpen(idx)}
+                  >
+                    {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    <span>{sol[0]}HTM</span>
+                    <span className="analyze-title-right">
+                      {!dataOll && <span className="analyze-skip-tag">{t('跳O', 'OLL skip')}</span>}
+                      {!dataPll && <span className="analyze-skip-tag">{t('跳P', 'PLL skip')}</span>}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className="analyze-copy-btn"
+                        onClick={(e) => copyAlg(idx, sol, e)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') copyAlg(idx, sol, e as unknown as React.MouseEvent); }}
+                        aria-label={t('复制', 'Copy')}
+                        title={t('复制完整解法', 'Copy full solution')}
+                      >
+                        {copiedIdx === idx ? <Check size={13} /> : <Copy size={13} />}
+                      </span>
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="analyze-solution-content">
+                      <TwistySection puzzle="3x3x3" scramble={analyzedScramble} alg={sol[1]} />
+                      <pre>{`${analyzedScramble}\n\n\n${sol[1]}\n\n\n${sol[0]}HTM`}</pre>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {filtered.length > displayed.length && (
+              <div className="analyze-more-hint">
+                {t(
+                  `还有 ${filtered.length - displayed.length} 个解法未展示（仅显示前 1000 条 + 全部跳过解）`,
+                  `${filtered.length - displayed.length} more solutions hidden (showing first 1000 + all skip cases)`,
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <footer className="analyze-footer">
+        {t('算法移植自', 'Algorithm ported from')}{' '}
+        <a href="https://speedcubedb.com/analyze" target="_blank" rel="noopener noreferrer">
+          speedcubedb.com/analyze
+        </a>
+      </footer>
     </div>
+  );
+}
+
+export default function AnalyzePage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
+      <AnalyzePageInner />
+    </Suspense>
   );
 }
