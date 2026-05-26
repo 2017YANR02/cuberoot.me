@@ -29,7 +29,7 @@ import LangToggle from '../../components/LangToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 import { PuzzleSVG, type PuzzleKind } from '../../components/PuzzleSVG';
-import CubingPreview from '../timer/cube/CubingPreview';
+import CubingPreview from '../../components/CubingPreview';
 import { invertAlg } from '../../utils/alg_ops';
 import InteractiveCubeNet, { type PaintColor } from './InteractiveCubeNet';
 import { SOLVED_FACELET } from '../scramble/solver/facelet';

@@ -22,7 +22,7 @@ import VsHistoryPanel from './VsHistoryPanel';
 import { MilestoneToast } from './AdvancedFeatures';
 import LangToggle from '../../components/LangToggle';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
-import CubingPreview from '../timer/cube/CubingPreview';
+import CubingPreview from '../../components/CubingPreview';
 import BattleEventPicker from './BattleEventPicker';
 import { EventIcon } from '../../components/EventIcon';
 import { isWcaEvent } from '../../utils/wca_events';

@@ -15,7 +15,7 @@
 
 import type { JSX } from 'react';
 import type { EventId } from '../types.ts';
-import CubingPreview from './CubingPreview.tsx';
+import CubingPreview from '../../../components/CubingPreview.tsx';
 import { nxnSizeForEvent } from './colors.ts';
 
 interface CubePreviewProps {

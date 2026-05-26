@@ -1,0 +1,254 @@
+// 跨项目的数学/方法/硬件等元数据 — 给 ScalingSection / TheorySection / CrossSport / Milestones 用
+// 数据校核 2026-05 (research agents 已 verify by source URLs)
+
+// ──────────────────────────────────────────────────────────
+// God's number 演化 + 距离分布
+// ──────────────────────────────────────────────────────────
+
+export const GODS_NUMBER_HISTORY: Array<{ year: number; bound_htm: number; who: string; note_en: string; note_zh: string }> = [
+  { year: 1981, bound_htm: 52, who: 'Morwen Thistlethwaite', note_en: 'four-stage group reduction', note_zh: '四阶段群约简' },
+  { year: 1990, bound_htm: 42, who: 'Hans Kloosterman', note_en: 'improved cosets', note_zh: '改进余类' },
+  { year: 1995, bound_htm: 29, who: 'Michael Reid', note_en: 'pruning tables', note_zh: '剪枝表' },
+  { year: 2007, bound_htm: 26, who: 'Kunkle & Cooperman', note_en: 'parallel coset search', note_zh: '并行余类搜索' },
+  { year: 2008, bound_htm: 22, who: 'Tomas Rokicki', note_en: 'symmetry reduction', note_zh: '对称约简' },
+  { year: 2010, bound_htm: 20, who: 'Rokicki / Kociemba / Davidson / Dethridge', note_en: '~35 CPU-years on donated Google compute (proven optimal)', note_zh: '~35 CPU-年的 Google 算力 (proven optimal)' },
+];
+
+/** Distribution of optimal HTM depth for uniformly random 3x3 scrambles.
+ *  Source: kociemba.org/moves20.htm, derived from cube20.org's full counts. */
+export const OPTIMAL_HTM_DISTRIBUTION: Array<{ htm: number; fraction: number }> = [
+  { htm: 13, fraction: 0.0000001 },
+  { htm: 14, fraction: 0.000007 },
+  { htm: 15, fraction: 0.00046 },
+  { htm: 16, fraction: 0.0264 },
+  { htm: 17, fraction: 0.2664 },
+  { htm: 18, fraction: 0.6700 },
+  { htm: 19, fraction: 0.0341 },
+  { htm: 20, fraction: 1e-9 },
+];
+
+export const GODS_NUMBER_FACTS = {
+  htm: { value: 20, year: 2010, citation: 'Rokicki et al. SIAM J. Discrete Math. 27(2)' },
+  qtm: { value: 26, year: 2014, citation: 'Rokicki + Davidson — only superflip × four spot composites need 26' },
+  stm: { value: '18 ≤ ? ≤ 20', year: '—', citation: 'No published proof; superflip optimal STM = 16' },
+  bigCube: { value: 'Θ(n² / log n)', year: 2011, citation: 'Demaine, Demaine, Eisenstat, Lubiw, Winslow — arXiv:1106.5736' },
+  npc: { value: 'NP-complete', year: 2017, citation: 'Demaine, Eisenstat, Rudoy — STACS 2018' },
+};
+
+// ──────────────────────────────────────────────────────────
+// 方法移动数对比 (CFOP/Roux/ZZ/...)
+// ──────────────────────────────────────────────────────────
+
+export interface MethodRow {
+  method: string;
+  family: 'CFOP-lineage' | 'Roux' | 'Petrus' | 'ZZ' | 'Mehta' | 'Beginner';
+  avg_stm_low: number;
+  avg_stm_high: number;
+  theoretical_floor_stm: number;
+  alg_count: number | string;
+  pros_en: string;
+  cons_en: string;
+  pros_zh: string;
+  cons_zh: string;
+  top_user?: string;
+  source_url?: string;
+}
+
+export const METHOD_TABLE: MethodRow[] = [
+  {
+    method: 'CFOP (vanilla)',
+    family: 'CFOP-lineage',
+    avg_stm_low: 55,
+    avg_stm_high: 58,
+    theoretical_floor_stm: 45,
+    alg_count: 78,
+    pros_en: 'lowest recognition; most resources; best lookahead patterns',
+    cons_en: 'two-step LL bottleneck (OLL→PLL)',
+    pros_zh: '识别最简单, 资料最全, F2L lookahead 模式最熟',
+    cons_zh: 'LL 两步识别瓶颈 (OLL→PLL)',
+    top_user: 'Yiheng Wang — WR single 3.08',
+    source_url: 'https://www.cubeskills.com/blog/what-are-the-limits',
+  },
+  {
+    method: 'CFOP + ZBLL only',
+    family: 'CFOP-lineage',
+    avg_stm_low: 52,
+    avg_stm_high: 55,
+    theoretical_floor_stm: 45,
+    alg_count: 493,
+    pros_en: '1-look LL when EO is given; saves ~3 STM vs OLL+PLL',
+    cons_en: 'recognition cost; EO must come from F2L',
+    pros_zh: '已知 EO 时 LL 一步看完 (省 ~3 步)',
+    cons_zh: '识别成本, EO 必须从 F2L 自然产生',
+    top_user: 'Tymon Kolasiński',
+    source_url: 'https://www.speedsolving.com/wiki/index.php/ZBLL',
+  },
+  {
+    method: 'ZB = ZBLS + ZBLL (full)',
+    family: 'CFOP-lineage',
+    avg_stm_low: 49,
+    avg_stm_high: 52,
+    theoretical_floor_stm: 43,
+    alg_count: 795,
+    pros_en: 'EO controlled in last F2L pair, true 1-alg LL',
+    cons_en: 'ZBLS recognition is hard; ~800 algs to learn',
+    pros_zh: 'F2L 最后一对内嵌 EO, LL 1 个 alg 解决',
+    cons_zh: 'ZBLS 识别难度大, ~800 个 alg 要背',
+    top_user: 'Xuanyi Geng — WR Ao5 3.71',
+    source_url: 'https://www.speedsolving.com/wiki/index.php/ZB_Method',
+  },
+  {
+    method: '1LLL',
+    family: 'CFOP-lineage',
+    avg_stm_low: 48,
+    avg_stm_high: 51,
+    theoretical_floor_stm: 42,
+    alg_count: 3915,
+    pros_en: 'theoretical "true" last-layer 1-alg',
+    cons_en: 'recognition close to impossible at sub-3s; only Eduardo Damasceno has fully learned',
+    pros_zh: '理论上的"完全 1-alg LL"',
+    cons_zh: 'sub-3 速度下识别接近不可能, 至今只有 Damasceno 学完',
+    top_user: 'Eduardo Silva Damasceno (2022, learner not WR holder)',
+    source_url: 'https://www.speedsolving.com/wiki/index.php/1LLL',
+  },
+  {
+    method: 'Roux',
+    family: 'Roux',
+    avg_stm_low: 45,
+    avg_stm_high: 48,
+    theoretical_floor_stm: 40,
+    alg_count: '~50 (CMLL) + intuitive M/U/E',
+    pros_en: 'lowest STM; heavy slice → HTM penalty',
+    cons_en: 'M-slice fingertricks hard at extreme TPS; no sub-4 single yet',
+    pros_zh: 'STM 最低, 但 slice 多 → HTM 反而吃亏',
+    cons_zh: 'M-slice 极限 TPS 难度大, 至今无 sub-4 单次',
+    top_user: 'Kian Mansour, Sean Patrick Villanueva — ceiling sub-6 Ao5',
+    source_url: 'https://www.speedsolving.com/wiki/index.php/Roux_method',
+  },
+  {
+    method: 'ZZ + ZBLL',
+    family: 'ZZ',
+    avg_stm_low: 45,
+    avg_stm_high: 50,
+    theoretical_floor_stm: 42,
+    alg_count: 493,
+    pros_en: 'EOLine fixes all bad edges up front → R/U/L only F2L',
+    cons_en: 'EOLine identification can be slow',
+    pros_zh: 'EOLine 前置消除所有坏边, F2L 只用 R/U/L',
+    cons_zh: 'EOLine 识别比 cross 慢',
+    top_user: 'Phil Yu',
+    source_url: 'https://zzmethod.com/',
+  },
+  {
+    method: 'Petrus + ZBLL',
+    family: 'Petrus',
+    avg_stm_low: 45,
+    avg_stm_high: 50,
+    theoretical_floor_stm: 40,
+    alg_count: 493,
+    pros_en: 'fewest moves of any speedmethod (low 40s achievable)',
+    cons_en: 'block-building lookahead very difficult',
+    pros_zh: '所有速拧方法中步数最少 (40 出头可达)',
+    cons_zh: '块构造 lookahead 极难',
+    top_user: 'Lars Petrus, Devin Corr-Robinett',
+    source_url: 'https://lar5.com/cube/',
+  },
+  {
+    method: 'Mehta',
+    family: 'Mehta',
+    avg_stm_low: 48,
+    avg_stm_high: 53,
+    theoretical_floor_stm: 42,
+    alg_count: '~600',
+    pros_en: 'newer method, EO-first, low-STM/high-TPS hybrid',
+    cons_en: 'small community, no top-50 user',
+    pros_zh: '较新方法, EO 优先, 低 STM 高 TPS 混合',
+    cons_zh: '社区小, 暂无 top-50 使用',
+    top_user: '—',
+    source_url: 'https://devagio.github.io/Mehta/',
+  },
+];
+
+// ──────────────────────────────────────────────────────────
+// NxN STM scaling — 区分 "步数 vs N" 与 "时间 vs N"
+// 步数: Θ(n² / log n), 经验 ~ n^1.8
+// 时间: 步数 × (1/TPS_at_N) ≈ n^1.8 × n^0.7 ~ n^2.5
+// ──────────────────────────────────────────────────────────
+
+export const NXN_REDUCTION_STM: Array<{ N: number; typical_stm: number; sustained_tps: number; current_wr_s: number | null }> = [
+  { N: 2, typical_stm: 9,   sustained_tps: 11, current_wr_s: 0.39 },
+  { N: 3, typical_stm: 55,  sustained_tps: 11, current_wr_s: 2.76 },
+  { N: 4, typical_stm: 80,  sustained_tps: 9,  current_wr_s: 15.18 },
+  { N: 5, typical_stm: 120, sustained_tps: 8,  current_wr_s: 29.49 },
+  { N: 6, typical_stm: 180, sustained_tps: 6.5, current_wr_s: 57.69 },
+  { N: 7, typical_stm: 250, sustained_tps: 5.5, current_wr_s: 92.92 },
+];
+
+// ──────────────────────────────────────────────────────────
+// 跨运动 / 跨技能 对比 — 现役 WR / 理论极限
+// ──────────────────────────────────────────────────────────
+
+export interface CrossSportRow {
+  sport_en: string;
+  sport_zh: string;
+  wr: string;
+  wr_holder: string;
+  wr_year: number;
+  theoretical_limit_en: string;
+  theoretical_limit_zh: string;
+  ratio_pct: number;  // 当前 WR 与理论极限的占比 (~100% = 已撞墙)
+  source_url?: string;
+}
+
+export const CROSS_SPORT_TABLE: CrossSportRow[] = [
+  { sport_en: 'Speedcubing 3x3 single', sport_zh: '速拧 3x3 单次', wr: '2.76 s', wr_holder: 'Zajder', wr_year: 2026, theoretical_limit_en: '~1.5 s (100-yr) / ~0.8 s (math wall)', theoretical_limit_zh: '~1.5 s (百年) / ~0.8 s (数学硬墙)', ratio_pct: 54 },
+  { sport_en: 'Speedcubing 2x2 single', sport_zh: '速拧 2x2 单次', wr: '0.39 s', wr_holder: 'Ye', wr_year: 2025, theoretical_limit_en: '~0.30 s', theoretical_limit_zh: '~0.30 s', ratio_pct: 77 },
+  { sport_en: '100m sprint', sport_zh: '100 米短跑', wr: '9.58 s', wr_holder: 'Bolt', wr_year: 2009, theoretical_limit_en: '~9.48 s (Denny 2008)', theoretical_limit_zh: '~9.48 s (Denny 2008 模型)', ratio_pct: 99, source_url: 'https://en.wikipedia.org/wiki/100_metres' },
+  { sport_en: 'Mile run', sport_zh: '一英里跑', wr: '3:43.13', wr_holder: 'El Guerrouj', wr_year: 1999, theoretical_limit_en: '~3:40 (Joyner / Peronnet)', theoretical_limit_zh: '~3:40 (Joyner / Peronnet)', ratio_pct: 99, source_url: 'https://en.wikipedia.org/wiki/Mile_run_world_record_progression' },
+  { sport_en: 'Marathon', sport_zh: '马拉松', wr: '1:59:30', wr_holder: 'Sawe', wr_year: 2026, theoretical_limit_en: '~1:57:58 (Joyner 1991)', theoretical_limit_zh: '~1:57:58 (Joyner 1991)', ratio_pct: 99 },
+  { sport_en: 'Sport Stacking cycle', sport_zh: '飞叠杯 cycle', wr: '4.739 s', wr_holder: 'Chan Keng Ian', wr_year: 2024, theoretical_limit_en: '~4.3 s (biomech)', theoretical_limit_zh: '~4.3 s (生物力学)', ratio_pct: 91 },
+  { sport_en: 'Speed Cards (memory)', sport_zh: '速记扑克', wr: '12.74 s', wr_holder: 'Bat-Enkh', wr_year: 2017, theoretical_limit_en: '~8 s (reaction-time floor)', theoretical_limit_zh: '~8 s (反应时间底)', ratio_pct: 63 },
+  { sport_en: 'Typing burst 15 s', sport_zh: '打字 15 秒突发', wr: '305 wpm', wr_holder: 'MythicalRocket', wr_year: 2023, theoretical_limit_en: '~300 wpm (anatomy ceiling)', theoretical_limit_zh: '~300 wpm (解剖上限)', ratio_pct: 100 },
+  { sport_en: 'SM64 70-star (RTA)', sport_zh: 'SM64 70 星速通', wr: '46:11', wr_holder: 'GreenSuigi', wr_year: 2026, theoretical_limit_en: 'TAS 42:58 (2012)', theoretical_limit_zh: 'TAS 42:58 (2012)', ratio_pct: 93 },
+  { sport_en: 'NES Tetris score', sport_zh: 'NES 俄罗斯方块', wr: '40.2 M', wr_holder: 'Blue Scuti', wr_year: 2024, theoretical_limit_en: 'wall removed by rolling+rebirth (uncapped)', theoretical_limit_zh: '滚动法 + rebirth 后无上限', ratio_pct: 0 },
+];
+
+// ──────────────────────────────────────────────────────────
+// 单一项目的"未来里程碑预测" — 用于做大表 (event × milestone year)
+// ──────────────────────────────────────────────────────────
+
+export interface MilestoneForecast {
+  eventId: string;
+  current_wr: string;
+  current_year: number;
+  forecast_2030_en: string;
+  forecast_2030_zh: string;
+  forecast_2040_en: string;
+  forecast_2040_zh: string;
+  forecast_2050_en: string;
+  forecast_2050_zh: string;
+}
+
+/** 综合 (exp+floor curve fit, GEV extreme value, physical floor) 三类信号取中位
+ *  + 方法/硬件 regime shift 的 +/- 调整。每个数字带"自信带宽":
+ *    point — 70% 把握
+ *    range — 95% 把握
+ *  数字单位为人类可读 (s / m:ss / moves) */
+export const MILESTONE_FORECASTS: Record<string, MilestoneForecast> = {
+  '333':   { eventId: '333',   current_wr: '2.76 s',   current_year: 2026, forecast_2030_en: '~2.4 s [2.2–2.6]',  forecast_2030_zh: '~2.4 s [2.2–2.6]',  forecast_2040_en: '~2.0 s [1.7–2.3]',  forecast_2040_zh: '~2.0 s [1.7–2.3]',  forecast_2050_en: '~1.7 s [1.5–2.0]',  forecast_2050_zh: '~1.7 s [1.5–2.0]' },
+  '222':   { eventId: '222',   current_wr: '0.39 s',   current_year: 2025, forecast_2030_en: '~0.36 s [0.34–0.38]', forecast_2030_zh: '~0.36 s [0.34–0.38]', forecast_2040_en: '~0.32 s [0.30–0.35]', forecast_2040_zh: '~0.32 s [0.30–0.35]', forecast_2050_en: '~0.30 s [floor]',   forecast_2050_zh: '~0.30 s [触底]' },
+  '444':   { eventId: '444',   current_wr: '15.18 s',  current_year: 2025, forecast_2030_en: '~13 s',  forecast_2030_zh: '~13 s',  forecast_2040_en: '~11 s',  forecast_2040_zh: '~11 s',  forecast_2050_en: '~9 s',   forecast_2050_zh: '~9 s' },
+  '555':   { eventId: '555',   current_wr: '29.49 s',  current_year: 2026, forecast_2030_en: '~26 s',  forecast_2030_zh: '~26 s',  forecast_2040_en: '~22 s',  forecast_2040_zh: '~22 s',  forecast_2050_en: '~19 s',  forecast_2050_zh: '~19 s' },
+  '666':   { eventId: '666',   current_wr: '57.69 s',  current_year: 2025, forecast_2030_en: '~52 s',  forecast_2030_zh: '~52 s',  forecast_2040_en: '~44 s',  forecast_2040_zh: '~44 s',  forecast_2050_en: '~38 s',  forecast_2050_zh: '~38 s' },
+  '777':   { eventId: '777',   current_wr: '1:32.92',  current_year: 2026, forecast_2030_en: '~1:25',  forecast_2030_zh: '~1:25',  forecast_2040_en: '~1:12',  forecast_2040_zh: '~1:12',  forecast_2050_en: '~1:05',  forecast_2050_zh: '~1:05' },
+  '333oh': { eventId: '333oh', current_wr: '5.66 s',   current_year: 2024, forecast_2030_en: '~5.0 s', forecast_2030_zh: '~5.0 s', forecast_2040_en: '~4.4 s', forecast_2040_zh: '~4.4 s', forecast_2050_en: '~4.0 s', forecast_2050_zh: '~4.0 s' },
+  '333bf': { eventId: '333bf', current_wr: '11.67 s',  current_year: 2026, forecast_2030_en: '~10 s',  forecast_2030_zh: '~10 s',  forecast_2040_en: '~8 s',   forecast_2040_zh: '~8 s',   forecast_2050_en: '~6 s',   forecast_2050_zh: '~6 s' },
+  '333fm': { eventId: '333fm', current_wr: '16',       current_year: 2024, forecast_2030_en: '15 [bound 13]', forecast_2030_zh: '15 [下界 13]', forecast_2040_en: '14',     forecast_2040_zh: '14',     forecast_2050_en: '13',     forecast_2050_zh: '13' },
+  'clock': { eventId: 'clock', current_wr: '1.53 s',   current_year: 2025, forecast_2030_en: '~1.4 s', forecast_2030_zh: '~1.4 s', forecast_2040_en: '~1.2 s', forecast_2040_zh: '~1.2 s', forecast_2050_en: '~1.0 s', forecast_2050_zh: '~1.0 s' },
+  'minx':  { eventId: 'minx',  current_wr: '21.85 s',  current_year: 2026, forecast_2030_en: '~20 s',  forecast_2030_zh: '~20 s',  forecast_2040_en: '~16 s',  forecast_2040_zh: '~16 s',  forecast_2050_en: '~13 s',  forecast_2050_zh: '~13 s' },
+  'pyram': { eventId: 'pyram', current_wr: '0.73 s',   current_year: 2023, forecast_2030_en: '~0.65 s', forecast_2030_zh: '~0.65 s', forecast_2040_en: '~0.55 s', forecast_2040_zh: '~0.55 s', forecast_2050_en: '~0.50 s', forecast_2050_zh: '~0.50 s' },
+  'skewb': { eventId: 'skewb', current_wr: '0.73 s',   current_year: 2026, forecast_2030_en: '~0.65 s', forecast_2030_zh: '~0.65 s', forecast_2040_en: '~0.55 s', forecast_2040_zh: '~0.55 s', forecast_2050_en: '~0.50 s', forecast_2050_zh: '~0.50 s' },
+  'sq1':   { eventId: 'sq1',   current_wr: '3.40 s',   current_year: 2026, forecast_2030_en: '~3.0 s', forecast_2030_zh: '~3.0 s', forecast_2040_en: '~2.5 s', forecast_2040_zh: '~2.5 s', forecast_2050_en: '~2.2 s', forecast_2050_zh: '~2.2 s' },
+  '444bf': { eventId: '444bf', current_wr: '51.96 s',  current_year: 2023, forecast_2030_en: '~45 s',  forecast_2030_zh: '~45 s',  forecast_2040_en: '~35 s',  forecast_2040_zh: '~35 s',  forecast_2050_en: '~28 s',  forecast_2050_zh: '~28 s' },
+  '555bf': { eventId: '555bf', current_wr: '1:58.59',  current_year: 2026, forecast_2030_en: '~1:45',  forecast_2030_zh: '~1:45',  forecast_2040_en: '~1:25',  forecast_2040_zh: '~1:25',  forecast_2050_en: '~1:10',  forecast_2050_zh: '~1:10' },
+};

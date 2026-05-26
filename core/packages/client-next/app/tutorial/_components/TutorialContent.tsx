@@ -67,15 +67,8 @@ export function TutorialContent({ html }: TutorialContentProps) {
         const href = el.attribs.href ?? '';
         if (href.startsWith('/tutorial/')) {
           const className = el.attribs.class;
-          // Vite SPA used /tutorial/<slug>; Next route puts posts at /tutorial/p/<slug>.
-          // Don't rewrite /tutorial (root) or /tutorial/c/* (category) — only bare post slug.
-          let nextHref = href;
-          const rest = href.slice('/tutorial/'.length);
-          if (rest && !rest.startsWith('c/') && !rest.startsWith('p/')) {
-            nextHref = `/tutorial/p/${rest}`;
-          }
           return (
-            <Link href={nextHref} className={className}>
+            <Link href={href} className={className}>
               {domToReact(el.children, options)}
             </Link>
           );

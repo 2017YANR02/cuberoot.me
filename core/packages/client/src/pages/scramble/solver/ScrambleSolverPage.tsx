@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import LangToggle from '../../../components/LangToggle';
 import { useDocumentTitle } from '../../../utils/useDocumentTitle';
-import CubingPreview from '../../timer/cube/CubingPreview';
+import CubingPreview from '../../../components/CubingPreview';
 import { faceletToCubie, validateFacelet } from './facelet';
 import {
   formatMoves,

@@ -1,0 +1,242 @@
+/* =============================================================
+   Pure-SVG charts for the /timer page.
+   Match the dark theme in timer.css; transparent svg background.
+   ============================================================= */
+
+.tc-chart {
+  display: block;
+  background: transparent;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: visible;
+  /* Responsive default — caller may override via inline style or container CSS. */
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+}
+
+.tc-chart text {
+  fill: #aaa;
+  font-size: 11px;
+}
+
+.tc-chart .axis-tick {
+  fill: #888;
+  font-size: 11px;
+}
+
+.tc-chart .grid-line {
+  stroke: #1f1f23;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.tc-chart .axis-line {
+  stroke: #2a2a2e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.tc-chart .empty-msg {
+  fill: #555;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Histogram */
+.tc-hist .bar {
+  fill: #5b9dd9;
+  transition: fill 0.12s;
+}
+.tc-hist .bar:hover { fill: #8bbde8; }
+.tc-hist .bar-empty {
+  fill: #1a1a1d;
+}
+.tc-hist .peak-label {
+  fill: #aaa;
+  font-size: 11px;
+}
+
+/* Trend */
+.tc-trend .curve { fill: none; }
+.tc-trend .curve-single { stroke: #888; stroke-width: 1; }
+.tc-trend .curve-ao5    { stroke: #5b9dd9; stroke-width: 1.5; }
+.tc-trend .curve-ao12   { stroke: #6abf6a; stroke-width: 2; }
+.tc-trend .curve-ao100  { stroke: #b07acc; stroke-width: 2.5; }
+
+.tc-trend .legend-text {
+  fill: #aaa;
+  font-size: 11px;
+}
+
+/* Scatter */
+.tc-scatter .scatter-dot {
+  fill: #5b9dd9;
+  stroke: none;
+  transition: fill 0.12s, r 0.12s;
+}
+.tc-scatter .scatter-dot:hover {
+  fill: #8bbde8;
+}
+.tc-scatter .scatter-dot-plus2 {
+  fill: #d9a05b;
+}
+.tc-scatter .scatter-dot-plus2:hover {
+  fill: #e8bd8b;
+}
+.tc-scatter .scatter-dot-dnf {
+  fill: none;
+  stroke: #d04848;
+  stroke-width: 1.2;
+}
+.tc-scatter .scatter-ao12 {
+  stroke: #6abf6a;
+  stroke-width: 1.25;
+  opacity: 0.55;
+  fill: none;
+}
+.tc-scatter .scatter-pb {
+  stroke: #b07acc;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  shape-rendering: crispEdges;
+}
+.tc-scatter .scatter-pb-label {
+  fill: #b07acc;
+  font-size: 11px;
+}
+
+/* HourChart — replaces former inline styles so CSS can tune them */
+.tc-hour-title {
+  fill: #aaa;
+  font-size: 12px;
+}
+.tc-hour-median-tick {
+  fill: #6abf6a;
+  font-size: 11px;
+}
+.tc-hour-bar {
+  fill: #5b9dd9;
+}
+.tc-hour-bar-empty {
+  fill: #1a1a1d;
+}
+.tc-hour-median-dot {
+  fill: #6abf6a;
+  stroke: #1a1a1d;
+  stroke-width: 1;
+}
+
+/* Two-panel HourChart layout: side-by-side on desktop, stack on mobile.
+   Each child SVG keeps width:100% via .tc-chart, so flex-basis controls split. */
+.tc-hour-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.tc-hour-wrap > .tc-chart,
+.tc-hour-wrap > svg.tc-chart {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+/* Charts section in StatsModal */
+.stats-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.stats-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stats-chart-title {
+  font-size: 0.85em;
+  opacity: 0.75;
+  margin: 0;
+}
+.stats-chart-card .tc-chart {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+.stats-charts svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.chart-empty-hint {
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.55;
+  padding: 6px 0;
+}
+
+@media (max-width: 600px) {
+  .stats-chart-title {
+    font-size: 0.8em;
+  }
+  /* On narrow screens the SVG scales down, so labels become tiny.
+     Bump font sizes proportionally — they live inside viewBox so this
+     compensates. Numbers chosen to keep readability around ~7-8px effective. */
+  .tc-chart text,
+  .tc-chart .axis-tick,
+  .tc-hist .peak-label,
+  .tc-scatter .scatter-pb-label,
+  .tc-hour-median-tick {
+    font-size: 13px;
+  }
+  .tc-hour-title {
+    font-size: 14px;
+  }
+  .tc-trend .legend-text {
+    font-size: 13px;
+  }
+}
+
+/* StatsModal mobile tab bar — hidden on desktop, shown on mobile.
+   Desktop keeps the existing vertical stack: tab bar is display:none,
+   and all [data-tab] sections are visible. */
+.stats-tab-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .stats-tab-bar {
+    display: flex;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 6px 0;
+    margin-bottom: 8px;
+    background: #1a1a1d;
+    border-bottom: 1px solid #2a2a2e;
+  }
+  .stats-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+    font-size: 0.85em;
+    background: transparent;
+    color: #aaa;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .stats-tab.active {
+    background: #2a2a2e;
+    color: #fff;
+    border-color: #3a3a3e;
+  }
+
+  /* Hide non-active tab sections. The wrapper carries .stats-tab-<id>
+     and individual sections carry data-tab="<id>". */
+  .stats-modal-body.stats-tab-overview [data-tab]:not([data-tab="overview"]) { display: none; }
+  .stats-modal-body.stats-tab-charts   [data-tab]:not([data-tab="charts"])   { display: none; }
+  .stats-modal-body.stats-tab-cases    [data-tab]:not([data-tab="cases"])    { display: none; }
+}

@@ -489,8 +489,6 @@ export default function TimerPage() {
   // Anything else with a face letter (U/D/F/B/L/R, with or without lowercase
   // wide / `w` suffix) or slice (M/E/S) counts as illegal.
   const [inspectionIllegalCount, setInspectionIllegalCount] = useState(0);
-  const inspectionIllegalCountRef = useRef(0);
-  useEffect(() => { inspectionIllegalCountRef.current = inspectionIllegalCount; }, [inspectionIllegalCount]);
   // Reset the counter every time inspection starts fresh.
   const prevPhaseRef = useRef(timer.phase);
   useEffect(() => {
@@ -498,7 +496,6 @@ export default function TimerPage() {
     if (timer.phase === 'inspecting' && prev !== 'inspecting' && prev !== 'holding') {
       // Entering inspection from idle/stopped — reset. (holding/inspecting
       // ping-pongs while the user holds-then-releases too early; preserve.)
-      inspectionIllegalCountRef.current = 0;
       setInspectionIllegalCount(0);
     }
     prevPhaseRef.current = timer.phase;
@@ -875,7 +872,7 @@ export default function TimerPage() {
         }
         return;
       }
-      if (e.code === 'KeyD') {
+      if (e.code === 'KeyD' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
         if (last) {
           const p: Penalty = last.penalty === 'DNF' ? 'ok' : 'DNF';
           updateSolve(last.id, { penalty: p }); setLastPenalty(p);

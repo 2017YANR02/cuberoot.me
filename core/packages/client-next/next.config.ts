@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../../"),
 
+  // Keep trailing slashes intact so /tools/cstimer/ stays as-is and the
+  // iframe's relative URLs resolve to /tools/cstimer/css/... not /tools/css/...
+  // (matches Vite's serveRepoRoot behavior). Pages without slashes still work
+  // because the [...slug] route handler accepts either.
+  skipTrailingSlashRedirect: true,
+
   transpilePackages: ["mp4box", "mediainfo.js"],
   // esbuild ships native binaries + README — Turbopack chokes on .md files.
   // Mark it external so the route handler can require() it at runtime.
@@ -41,7 +47,12 @@ const nextConfig: NextConfig = {
   // catch-alls so route handler always matches; rewrites kept ONLY for /v1/*.
   async rewrites() {
     return {
-      beforeFiles: [],
+      beforeFiles: [
+        // Legacy WCA OAuth callback URL — registered with WCA as /callback.html.
+        // Internal rewrite (not redirect) so the URL bar stays /callback.html and
+        // WCA's exact redirect_uri match still passes. Same page as /auth/callback.
+        { source: "/callback.html", destination: "/auth/callback" },
+      ],
       afterFiles: [
         // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.
         // In prod, apiUrl() builds absolute https://api.cuberoot.me URLs directly.
@@ -49,6 +60,41 @@ const nextConfig: NextConfig = {
       ],
       fallback: [],
     };
+  },
+
+  // 1:1 with packages/client/src/App.tsx <Navigate> redirects. Query strings
+  // auto-pass through (e.g. /analyze?lang=zh → /scramble/analyzer?lang=zh).
+  // /average → /calc?tab=average merges with any incoming ?lang=zh.
+  // permanent: true = 308 (cached forever); these URL renames are stable.
+  async redirects() {
+    return [
+      // Back-compat for the earlier Next port shape /tutorial/p/<slug>; Vite uses /tutorial/<slug>.
+      { source: "/tutorial/p/:slug", destination: "/tutorial/:slug", permanent: true },
+      { source: "/analyze", destination: "/scramble/analyzer", permanent: true },
+      { source: "/average", destination: "/calc?tab=average", permanent: true },
+      { source: "/scramble-stats", destination: "/scramble/stats", permanent: true },
+      { source: "/gen", destination: "/scramble/gen", permanent: true },
+      { source: "/patterns", destination: "/scramble/pattern", permanent: true },
+      { source: "/upcoming-comps", destination: "/wca/calendar", permanent: true },
+      { source: "/theory", destination: "/math", permanent: true },
+      { source: "/theory/group", destination: "/math/group", permanent: true },
+      { source: "/theory/god", destination: "/math/god", permanent: true },
+      { source: "/scramble/god", destination: "/math/god", permanent: true },
+      { source: "/code/ts", destination: "/code/language/ts", permanent: true },
+      { source: "/code/rust", destination: "/code/language/rust", permanent: true },
+      { source: "/code/go", destination: "/code/language/go", permanent: true },
+      { source: "/code/python", destination: "/code/language/python", permanent: true },
+      { source: "/code/c", destination: "/code/language/c", permanent: true },
+      { source: "/code/cpp", destination: "/code/language/cpp", permanent: true },
+      { source: "/code/zig", destination: "/code/language/zig", permanent: true },
+      { source: "/code/swift", destination: "/code/language/swift", permanent: true },
+      { source: "/code/kotlin", destination: "/code/language/kotlin", permanent: true },
+      { source: "/code/java", destination: "/code/language/java", permanent: true },
+      { source: "/code/javascript", destination: "/code/language/javascript", permanent: true },
+      { source: "/code/mojo", destination: "/code/language/mojo", permanent: true },
+      { source: "/code/compare", destination: "/code/language/compare", permanent: true },
+      { source: "/code/scramble", destination: "/code/language/scramble", permanent: true },
+    ];
   },
 };
 
