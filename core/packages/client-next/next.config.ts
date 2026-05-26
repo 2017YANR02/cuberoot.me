@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/stats/:path*", destination: "https://cuberoot.me/stats/:path*" },
       { source: "/tools/:path*", destination: "https://cuberoot.me/tools/:path*" },
+      // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.
+      // In prod, apiUrl() builds absolute https://api.cuberoot.me URLs directly.
+      { source: "/v1/:path*", destination: "https://api.cuberoot.me/v1/:path*" },
     ];
   },
 };
