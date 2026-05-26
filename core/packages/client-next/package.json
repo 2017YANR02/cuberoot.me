@@ -29,6 +29,7 @@
     "react-dom": "19.2.4",
     "react-i18next": "^15.7.4",
     "sr-puzzlegen": "^1.0.4",
+    "svg2pdf.js": "^2.7.0",
     "three": "^0.183.2",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.12"
