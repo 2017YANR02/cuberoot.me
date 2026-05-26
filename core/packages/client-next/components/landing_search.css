@@ -1,0 +1,373 @@
+/* LandingSearch — Hero 下拉浮层。token 来自 :root + .landing-page */
+
+.landing-search {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 2.5rem;
+}
+
+.landing-search-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem 0.75rem 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* 落地搜索框内 standalone X — 流式排版,放在 mic 按钮左侧 */
+.landing-search-clear {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  color: var(--faint-foreground);
+}
+.landing-search-clear:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.landing-search-input:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* 拖视频文件到搜索框上 */
+.landing-search-input.is-drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* + 按钮的弹出菜单 */
+.landing-search-plus-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 60;
+  min-width: 220px;
+  padding: 0.4rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.landing-search-plus-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.landing-search-plus-menu button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.landing-search-plus-menu button > svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.landing-search-plus-menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.landing-search-plus-menu-title {
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.landing-search-plus-menu-sub {
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  line-height: 1.2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .landing-search-plus-menu {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.landing-search-input > svg {
+  color: var(--faint-foreground);
+  flex-shrink: 0;
+}
+
+/* 智能粘贴 + 按钮(左侧,顶替原先的搜索图标位置) */
+.landing-search-plus {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin-left: -6px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--faint-foreground);
+  transition: color 0.12s, background 0.12s, transform 0.12s;
+}
+
+.landing-search-plus:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.landing-search-plus:active {
+  transform: scale(0.92);
+}
+
+.landing-search-input input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 0;
+}
+
+.landing-search-input input::placeholder {
+  color: var(--faint-foreground);
+}
+
+.landing-search-count {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.landing-search-mic {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--faint-foreground);
+  transition: color 0.12s, background 0.12s;
+}
+
+.landing-search-mic:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.landing-search-mic.is-listening {
+  color: #e54848;
+  background: color-mix(in srgb, #e54848 15%, transparent);
+  animation: landing-search-mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes landing-search-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, #e54848 45%, transparent); }
+  50%      { box-shadow: 0 0 0 6px color-mix(in srgb, #e54848 0%, transparent); }
+}
+
+/* ── 下拉面板 ── */
+.landing-search-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .landing-search-panel {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.landing-search-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.landing-search-section-header svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.landing-search-section-header h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.landing-search-header-more {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+  /* button reset (供 expand 按钮复用同一类) */
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.landing-search-header-more:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.landing-search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.4rem;
+}
+
+.landing-search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.landing-search-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.landing-search-item-name {
+  font-weight: 500;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.landing-search-item-meta {
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.landing-search-item:hover .landing-search-item-meta {
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+/* 富信息项(选手 / 比赛):国旗 + 主名 + 副文本 横排 */
+.landing-search-item--rich {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.landing-search-item--rich .country-flag {
+  flex-shrink: 0;
+  width: 1.4em !important;
+  margin-right: 0;
+}
+
+.landing-search-event-icon {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.85;
+}
+
+.landing-search-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.landing-search-empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--faint-foreground);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .landing-search {
+    margin-bottom: 1.75rem;
+  }
+  .landing-search-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing-search-panel {
+    max-height: 60vh;
+  }
+}

@@ -1,0 +1,146 @@
+import type { StackTool } from '../_lib/stack_tool_types';
+import { k, v, s, n, f, p, c, t } from '../_lib/stack_tool_types';
+
+// ─── Hono 4 ─────────────────────────────────────────────────────────────────
+
+export const HONO: StackTool = {
+  slug: 'hono',
+  name: 'Hono',
+  version: '4.12',
+  since: '2022-01',
+  group: 'backend',
+  accent: '#FF5C00',
+  bright: '#FF9858',
+  glyph: '炎',
+  floats: ['app.get', 'c.json', 'middleware', 'validator', 'RPC', 'hc<T>', 'JSX', 'adapter', 'Workers', 'Node', 'Web Std', 'Request'],
+  zh: {
+    tagline: 'TS-first 多运行时 web 框架',
+    role: '本站后端 API 的整个壳。Hono 4 + Node 22 + pm2, 22 个端点跑在 127.0.0.1:3001。',
+    heroSub: <>"炎" 在日语里是 flame。Yusuke Wada 2022 年用 TypeScript 给 Cloudflare Workers 写的一个微型 router, ~10KB。四年后它涵盖 Workers / Deno / Bun / Node / Lambda 五个运行时, 周下载 ~2000 万。一份 <code>typeof app</code> 通过 RPC 直接流到客户端的 fetch 调用处, 整条链零生成代码。</>,
+    whatDesc: <>Hono 是一个 <strong>web 标准 + TypeScript 优先</strong> 的微框架。它不引入自己的 Request / Response 抽象 —— 直接用浏览器 <code>Request</code> / <code>Response</code>。同一份 app 在测试里、Workers 上、Node 下能跑出几乎一样的行为。</>,
+    historyDesc: <>从 2022 年 1 月 Yusuke Wada 在 Cloudflare Workers 上写的一个 ~10KB router, 到 2026 年 v4.12 周下载 2000 万, 四年。中间一次大重写 (v4 加 JSX renderer + presets + RPC), 但 API 几乎没破坏过 —— Express 用户跨过去几乎不用学。</>,
+    conceptsTitle: 'app + middleware + validator',
+    conceptsDesc: <>核心 API 极小:<code>app.get/post(path, ...handlers)</code> 加 <code>c.json()</code>。其它都是 middleware 组合或者 RPC 类型推导这种"不出现在运行时"的东西。</>,
+    whyDesc: <>2026 年选 Node 后端框架, Express (JS 时代、零类型) 和 Fastify (schema-first 跟 TS 推导打架) 都没把 TS 优先做对。Hono 是少数 TS-first 而且端到端类型贯穿的那一个。</>,
+    adoptersTitle: '谁在用',
+    adoptersDesc: <>Cloudflare 自家 D1 / KV / Workers AI 文档示例几乎全是 Hono。Clerk、Unkey、cdnjs 这些以小巧 API 著称的服务也跑 Hono。生态从 Workers 蔓延到一般 Node 服务。</>,
+    cuberootDesc: <>2025-03-24 从 Fastify 切到 Hono, 一天迁完。22 个端点 (WCA OAuth + sessions + recon / alg / training CRUD + WCA stats reads + nemesizer) 全部跑在 Node 22 LTS, pm2 cluster mode 1 instance, 接 nginx 反代到 <code>api.cuberoot.me</code>。</>,
+    outlookTitle: '当下与前景',
+    outlookDesc: <>Hono 已经是 Workers 生态的事实标准, Node 端也在替 Express。下一步是 JSR 一等公民、Standard Schema (替代 zod-specific 绑定) 全面落地、以及 RPC 客户端跟 React Server Actions 的更深整合。</>,
+  },
+  en: {
+    tagline: 'TS-first multi-runtime web framework',
+    role: "The whole backend API shell on this site. Hono 4 + Node 22 + pm2, 22 endpoints on 127.0.0.1:3001.",
+    heroSub: <>"炎" means flame in Japanese. Yusuke Wada wrote it in TypeScript for Cloudflare Workers in 2022, a ~10KB micro-router. Four years later it spans Workers / Deno / Bun / Node / Lambda — five runtimes, ~20M weekly npm downloads. A single <code>typeof app</code> flows through RPC straight to the client's fetch call site; zero generated code in the loop.</>,
+    whatDesc: <>Hono is a <strong>Web-Standards + TypeScript-first</strong> micro framework. It refuses its own Request / Response abstraction — just uses the browser <code>Request</code> / <code>Response</code>. The same app behaves nearly identically in tests, on Workers, and on Node.</>,
+    historyDesc: <>From a ~10KB router Yusuke Wada wrote for Cloudflare Workers in January 2022 to v4.12 at ~20M weekly downloads in 2026, four years. One major rewrite (v4 added JSX renderer + presets + RPC), but the API has stayed near-stable — an Express user can move over with almost no learning.</>,
+    conceptsTitle: 'app + middleware + validator',
+    conceptsDesc: <>The core API is tiny: <code>app.get/post(path, ...handlers)</code> plus <code>c.json()</code>. Everything else is middleware composition or RPC type inference (which doesn't appear at runtime at all).</>,
+    whyDesc: <>Picking a Node backend framework in 2026, Express (JS-era, untyped) and Fastify (schema-first style fights TS inference) both fail to put TS first. Hono is one of the few that's TS-first with end-to-end types flowing through.</>,
+    adoptersTitle: 'Who uses it',
+    adoptersDesc: <>Cloudflare's own D1 / KV / Workers AI docs are almost all Hono samples. Clerk, Unkey, cdnjs — services known for small APIs — also run Hono. Adoption spread from Workers into general Node services.</>,
+    cuberootDesc: <>On 2025-03-24 the API was swapped from Fastify to Hono in a single day. 22 endpoints (WCA OAuth + sessions, recon / alg / training CRUD, WCA stats reads, nemesizer) all run on Node 22 LTS under pm2 cluster mode, one instance, behind an nginx reverse proxy at <code>api.cuberoot.me</code>.</>,
+    outlookTitle: 'Now and next',
+    outlookDesc: <>Hono is already the de-facto standard in the Workers ecosystem and is replacing Express on Node. Next up: first-class JSR, Standard Schema landing (replacing zod-specific bindings), and deeper integration between the RPC client and React Server Actions.</>,
+  },
+  heroStats: [
+    { num: '4', unit: '.12', zh: <>当前稳定版 <em>2026-05 · 4.12.18</em></>, en: <>current stable <em>2026-05 · 4.12.18</em></> },
+    { num: '20', unit: 'M', zh: <>npm 周下载 <em>2026-05</em></>, en: <>weekly npm downloads <em>2026-05</em></> },
+    { num: '14', unit: 'KB', zh: <>核心大小 (min+gz) <em>无运行时依赖</em></>, en: <>core size, min+gz <em>zero runtime deps</em></> },
+    { num: '22', zh: <>本站后端端点 <em>cuberoot.me /v1/*</em></>, en: <>backend endpoints on this site <em>cuberoot.me /v1/*</em></> },
+  ],
+  intro: {
+    zh: (
+      <>
+        <p>Hono 是 Yusuke Wada (<code>@yusukebe</code>) 2022 年 1 月 19 日发布的库。最初的目标只有一个:给 Cloudflare Workers 写一个 TypeScript router, 因为当时 Workers 上 Express 跑不起来, hono 之前的几个 Workers 框架要么没类型要么 API 难看。第一个版本 ~10KB, 只有 <code>app.get</code> / <code>app.post</code> / <code>c.text</code>, 没了。</p>
+        <p>2023 年 2 月 v2 加 Deno / Bun / Node / Lambda adapter, 一份代码跑五个运行时。当时业界没第二家做到。5 月 v3 引入 Stacks 和 RPC —— 从 <code>typeof app</code> 推导出客户端的 fetch 类型, 服务端改一个返回字段, 客户端 IDE 立刻红。这一刻 Hono 才不再是 "Workers 上的 Express", 而是 "TS-first 的 web 框架"。</p>
+        <p>2024 年 1 月 v4 主版本:JSX renderer、presets (hono/tiny / hono/quick)、production-ready RPC、JSR 发布。从这版起被大规模生产采纳。2026 年 5 月 v4.12.18 周下载 2000 万, Cloudflare D1 / KV、Clerk、Unkey、cdnjs 都跑它。本站 2025-03-24 从 Fastify 切过来, 24 小时迁完, 主要动力是 TS 端到端推导 + 依赖只有 5MB (Fastify ~50MB)。</p>
+      </>
+    ),
+    en: (
+      <>
+        <p>Hono is a library Yusuke Wada (<code>@yusukebe</code>) released on 2022-01-19. The original goal was singular: a TypeScript router for Cloudflare Workers. Express didn't run on Workers at the time, and the earlier Workers frameworks were either untyped or awkward. The first release was ~10KB — just <code>app.get</code> / <code>app.post</code> / <code>c.text</code>, nothing else.</p>
+        <p>February 2023's v2 added Deno / Bun / Node / Lambda adapters: one codebase, five runtimes. No other framework did that at the time. May's v3 introduced Stacks and RPC — derive the client's fetch types straight from <code>typeof app</code>. Change a server response field and the client IDE turns red instantly. That release upgraded Hono from "Express on Workers" to "TS-first web framework."</p>
+        <p>January 2024 v4 was the major rewrite: JSX renderer, presets (hono/tiny / hono/quick), production-ready RPC, JSR publish. Large-scale production adoption started here. As of May 2026 v4.12.18 hits 20M weekly downloads; Cloudflare D1 / KV, Clerk, Unkey, cdnjs all run on Hono. This site swapped from Fastify on 2025-03-24, the migration took 24 hours, driven by end-to-end TS inference and 5MB total deps (Fastify is ~50MB).</p>
+      </>
+    ),
+  },
+  history: [
+    { year: '2022·01', zh: { title: <>v0.0.1 — Workers 专用</>, desc: <>1 月 19 日 Yusuke Wada 在 GitHub 发首个版本。~10KB, 只有 router + Context, 唯一目标平台是 Cloudflare Workers。</> }, en: { title: <>v0.0.1 — Workers only</>, desc: <>January 19: Yusuke Wada publishes the first release on GitHub. ~10KB, router + Context only, Cloudflare Workers as the sole target.</> } },
+    { year: '2022·07', zh: { title: <>v1 — API 稳定</>, desc: <>路由 / 中间件 / Context 三件套 API 定型, 开始有外部贡献者写第三方中间件, 文档站立。生态雏形出现。</> }, en: { title: <>v1 — API stabilizes</>, desc: <>Routing, middleware, and Context APIs settle. External contributors start writing third-party middleware; the docs site launches. The ecosystem takes shape.</> } },
+    { year: '2023·02', zh: { title: <>v2 — 多运行时</>, desc: <>加 Deno / Bun / Node / Lambda adapter。"一份代码跑五个运行时" 这个独家卖点在 2023 年没第二家做到。</> }, en: { title: <>v2 — multi-runtime</>, desc: <>Adds Deno / Bun / Node / Lambda adapters. "One codebase, five runtimes" was a unique selling point in 2023; nobody else delivered it.</> } },
+    { year: '2023·05', zh: { title: <>v3 — RPC + Stacks</>, desc: <>从 <code>typeof app</code> 推导客户端 fetch 类型。服务端改返回 schema, 客户端 IDE 立刻红波浪线 — 这是 Hono 第一次有"非微框架"的杀招。</> }, en: { title: <>v3 — RPC + Stacks</>, desc: <>Derives the client fetch types from <code>typeof app</code>. Edit the server's return schema and the client IDE goes red immediately — Hono's first "not just a micro framework" feature.</> } },
+    { year: '2024·01', zh: { title: <>v4 — 主版本</>, desc: <>JSX renderer、presets (hono/tiny / hono/quick)、production-ready RPC、JSR 同步发布。大型项目开始把它当 production stack。</> }, en: { title: <>v4 — major release</>, desc: <>JSX renderer, presets (hono/tiny / hono/quick), production-ready RPC, JSR publish. Large projects start treating it as a production stack.</> } },
+    { year: '2024·06', zh: { title: <>Cloudflare 钦定</>, desc: <>Cloudflare 官方 D1 / KV / Workers AI 文档示例几乎一边倒用 Hono。这不是 sponsorship, 是工程师选型自然结果。</> }, en: { title: <>Cloudflare blessing</>, desc: <>Cloudflare's official D1 / KV / Workers AI docs samples are overwhelmingly Hono. Not sponsorship — it's what their engineers picked.</> } },
+    { year: '2025·03', highlight: true, zh: { title: <>cuberoot.me 从 Fastify 切到 Hono</>, desc: <>2025-03-24 一天迁完 18 个端点。动力是 TS-first 端到端类型 + 依赖只有 5MB。同一天 nginx 反代到 127.0.0.1:3001 跑通。</> }, en: { title: <>cuberoot.me swaps Fastify → Hono</>, desc: <>2025-03-24, all 18 endpoints migrated in one day. The drivers were end-to-end TS inference and a 5MB dependency footprint. nginx reverse proxy to 127.0.0.1:3001 came up the same day.</> } },
+    { year: '2025·11', zh: { title: <>Standard Schema</>, desc: <>v4.7 起原生支持 Standard Schema, validator 不再绑死 zod, valibot / arktype / yup 都能直接接。"换 schema 库不用换框架" 第一次成立。</> }, en: { title: <>Standard Schema</>, desc: <>v4.7 ships native Standard Schema support; the validator no longer hard-binds to zod — valibot / arktype / yup all plug in directly. "Swap schema libs without swapping framework" works for the first time.</> } },
+    { year: '2026·05', highlight: true, zh: { title: <>v4.12.18 / 当前稳定</>, desc: <>2026-05-06 最新点 release。npm 周下载 2000 万, 是 Express 之后 Node 后端框架第二大。本站后端跑这版。</> }, en: { title: <>v4.12.18 / current stable</>, desc: <>Latest patch on 2026-05-06. 20M weekly npm downloads — the second-largest Node backend framework after Express. The site's backend runs this version.</> } },
+  ],
+  concepts: [
+    { tag: 'A', zh: { title: <>app.get / app.post</>, desc: <>路由声明。返回值是 app 本身, 链式调用堆。每条路由的入参 / 返回类型都参与 RPC 推导。</> }, en: { title: <>app.get / app.post</>, desc: <>Route declarations. Return value is the app itself; calls chain. Each route's input / output types feed RPC inference.</> }, code: <code>{k('const')} {v('app')} = {k('new')} {f('Hono')}();{'\n\n'}{v('app')}{'\n'}  .{f('get')}({s('"/health"')}, ({v('c')}) =&gt; {v('c')}.{f('text')}({s('"ok"')})){'\n'}  .{f('get')}({s('"/me"')}, ({v('c')}) =&gt; {v('c')}.{f('json')}({'{ '}{p('id')}: {n('1')} {'}'}));</code> },
+    { tag: 'B', zh: { title: <>Context — c.json / c.text</>, desc: <>每个 handler 拿到一个 Context, 上面挂当前 request / response 的所有接口。<code>c.json()</code> 自动设 content-type 并参与 RPC 返回类型推导。</> }, en: { title: <>Context — c.json / c.text</>, desc: <>Each handler receives a Context with all request / response APIs attached. <code>c.json()</code> auto-sets content-type and contributes to the RPC return type.</> }, code: <code>{v('app')}.{f('get')}({s('"/user/:id"')}, ({v('c')}) =&gt; {'{'}{'\n'}  {k('const')} {v('id')} = {v('c')}.{f('req')}.{f('param')}({s('"id"')});{'\n'}  {k('return')} {v('c')}.{f('json')}({'{ '}{p('id')}, {p('name')}: {s('"foo"')} {'}'});{'\n'}{'}'});</code> },
+    { tag: 'C', zh: { title: <>middleware</>, desc: <>函数链式 use。约定 <code>await next()</code>, 前后都能跑代码 (跟 Koa 一致)。CORS / auth / logging / cache 全部走这一套。</> }, en: { title: <>middleware</>, desc: <>Functions chained via <code>use</code>. Convention is <code>await next()</code> with logic on both sides (Koa-style). CORS / auth / logging / cache all go through this pattern.</> }, code: <code>{v('app')}.{f('use')}({s('"/*"')}, {f('cors')}({'{ '}{p('origin')}: [{s('"https://cuberoot.me"')}] {'}'}));{'\n\n'}{v('app')}.{f('use')}({s('"/me"')}, {k('async')} ({v('c')}, {v('next')}) =&gt; {'{'}{'\n'}  {k('if')} (!{v('c')}.{p('req')}.{f('header')}({s('"x-session"')})) {k('return')} {v('c')}.{f('json')}({'{ '}{p('error')}: {s('"unauth"')} {'}'}, {n('401')});{'\n'}  {k('await')} {f('next')}();{'\n'}{'}'});</code> },
+    { tag: 'D', zh: { title: <>validator (Standard Schema)</>, desc: <>用 zod / valibot / arktype 描述 body / query, validator 中间件挂上去, 后续 handler 直接拿到类型化的 data, 不合规自动 400。</> }, en: { title: <>validator (Standard Schema)</>, desc: <>Describe body / query with zod / valibot / arktype, attach the validator middleware, and handlers receive typed data downstream. Invalid input auto-returns 400.</> }, code: <code>{k('import')} {'{ '}{v('zValidator')} {'}'} {k('from')} {s('"@hono/zod-validator"')};{'\n\n'}{v('app')}.{f('post')}({'\n'}  {s('"/alg"')},{'\n'}  {f('zValidator')}({s('"json"')}, {v('AlgSchema')}),{'\n'}  ({v('c')}) =&gt; {v('c')}.{f('json')}({v('c')}.{f('req')}.{f('valid')}({s('"json"')})){'\n'});</code> },
+    { tag: 'E', zh: { title: <>RPC — hc&lt;AppType&gt;</>, desc: <><code>typeof app</code> 在客户端 <code>hc&lt;AppType&gt;()</code> 一吃, 所有路径 / 入参 / 返回类型直接出来, 没有 codegen、没有 OpenAPI yaml。</> }, en: { title: <>RPC — hc&lt;AppType&gt;</>, desc: <>Hand <code>typeof app</code> to <code>hc&lt;AppType&gt;()</code> on the client and all paths / inputs / return types are inferred — no codegen, no OpenAPI yaml.</> }, code: <code>{c('// server.ts')}{'\n'}{k('export')} {k('type')} {t('AppType')} = {k('typeof')} {v('app')};{'\n\n'}{c('// client.ts')}{'\n'}{k('const')} {v('api')} = {f('hc')}&lt;{t('AppType')}&gt;({s('"/api"')});{'\n'}{k('const')} {v('user')} = {k('await')} (({k('await')} {v('api')}.{p('user')}[{s('":id"')}].{f('$get')}({'{ '}{p('param')}: {'{ '}{p('id')}: {s('"1"')} {'}'} {'}'}))).{f('json')}();</code> },
+    { tag: 'F', zh: { title: <>adapters</>, desc: <>同一份 app, 不同的入口 export 给不同运行时。<code>hono/cloudflare-workers</code> / <code>hono/node-server</code> / <code>hono/bun</code> / <code>hono/deno</code> / <code>hono/lambda</code>。</> }, en: { title: <>adapters</>, desc: <>The same app, different entry exports per runtime. <code>hono/cloudflare-workers</code> / <code>hono/node-server</code> / <code>hono/bun</code> / <code>hono/deno</code> / <code>hono/lambda</code>.</> }, code: <code>{c('// Node')}{'\n'}{k('import')} {'{ '}{v('serve')} {'}'} {k('from')} {s('"@hono/node-server"')};{'\n'}{f('serve')}({'{ '}{p('fetch')}: {v('app')}.{p('fetch')}, {p('port')}: {n('3001')} {'}'});{'\n\n'}{c('// Workers — just export default app')}{'\n'}{k('export')} {k('default')} {v('app')};</code> },
+    { tag: 'G', zh: { title: <>JSX renderer</>, desc: <>v4 起内置 <code>hono/jsx</code>, 能在服务端 stream HTML。简单的 / 不要 React hydration 的页面用它直接出, 不用上 React。</> }, en: { title: <>JSX renderer</>, desc: <>From v4, <code>hono/jsx</code> is built in for streaming HTML on the server. Simple, non-hydrating pages can be served directly without bringing React in.</> }, code: <code>{v('app')}.{f('get')}({s('"/og.svg"')}, ({v('c')}) =&gt; {v('c')}.{f('render')}({'\n'}  &lt;{f('svg')} {p('xmlns')}={s('"http://www.w3.org/2000/svg"')}&gt;{'\n'}    &lt;{f('text')}&gt;hello&lt;/{f('text')}&gt;{'\n'}  &lt;/{f('svg')}&gt;{'\n'}));</code> },
+    { tag: 'H', zh: { title: <>error handling</>, desc: <><code>app.onError</code> 统一捕异常, <code>app.notFound</code> 接 404。HTTPException 可以从 handler 内 throw, 自动转 JSON 错误响应。</> }, en: { title: <>error handling</>, desc: <><code>app.onError</code> for centralized exception handling, <code>app.notFound</code> for 404. Throw <code>HTTPException</code> from a handler and Hono auto-converts it to a JSON error response.</> }, code: <code>{v('app')}.{f('onError')}(({v('err')}, {v('c')}) =&gt; {'{'}{'\n'}  {k('if')} ({v('err')} {k('instanceof')} {t('HTTPException')}) {k('return')} {v('err')}.{f('getResponse')}();{'\n'}  {k('return')} {v('c')}.{f('json')}({'{ '}{p('error')}: {v('err')}.{p('message')} {'}'}, {n('500')});{'\n'}{'}'});</code> },
+  ],
+  whyCards: [
+    { icon: '⌬', zh: { title: <>TS-first 端到端类型</>, desc: <>服务端改一个返回字段, 客户端 IDE 立刻红。没有 codegen、没有 OpenAPI 同步问题。Fastify 的 schema-first + JSON Schema 路线推不到这一档。</> }, en: { title: <>TS-first, end-to-end types</>, desc: <>Edit a server return field and the client IDE goes red instantly. No codegen, no OpenAPI sync drift. Fastify's schema-first + JSON Schema path can't reach this.</> }, code: <>{k('export')} {k('type')} {t('App')} = {k('typeof')} {v('app')};</> },
+    { icon: '⚖', zh: { title: <>5MB 依赖, 14KB 核心</>, desc: <>核心包 min+gz 14KB, 装完整个 server 项目 node_modules 大约 5MB。Fastify 同等功能 ~50MB, Express 加几个中间件就到 30MB。</> }, en: { title: <>5MB deps, 14KB core</>, desc: <>Core is 14KB min+gz; a complete server project's node_modules sits around 5MB. Fastify with the same feature set is ~50MB; Express plus a few middlewares hits 30MB.</> }, code: <>{c('// du -sh node_modules')}{'\n'}{c('// 5.2M  hono server')}{'\n'}{c('// 48M   fastify equiv')}</> },
+    { icon: '⌗', zh: { title: <>Web Standards 不另起炉灶</>, desc: <>不发明 <code>req</code> / <code>res</code>, 直接用浏览器 <code>Request</code> / <code>Response</code>。测试里 <code>new Request()</code> 喂进 <code>app.fetch</code> 就是真请求, 不需要 mock。</> }, en: { title: <>Doesn't reinvent Web Standards</>, desc: <>No bespoke <code>req</code> / <code>res</code> — uses the browser <code>Request</code> / <code>Response</code>. In tests, <code>new Request()</code> into <code>app.fetch</code> is a real request, no mocking required.</> }, code: <>{k('await')} {v('app')}.{f('fetch')}({k('new')} {f('Request')}({s('"/ping"')}));</> },
+    { icon: '⚐', zh: { title: <>多运行时一份代码</>, desc: <>Workers / Deno / Bun / Node / Lambda 五个 runtime 同一份 app, 只换 export adapter。本站现在跑 Node, 如果哪天要切 Workers, 改一行 import。</> }, en: { title: <>Multi-runtime from one codebase</>, desc: <>Workers / Deno / Bun / Node / Lambda — five runtimes share the same app, only the export adapter differs. The site runs on Node; switching to Workers would be a one-line import change.</> }, code: <>{c('// node → workers: one line')}{'\n'}{k('export')} {k('default')} {v('app')};</> },
+    { icon: '⏚', zh: { title: <>middleware 跟 Koa 一脉相承</>, desc: <>async + <code>await next()</code> 模式, Express 老 callback hell 不再。CORS / auth / cache / logging 全部走一致语义。</> }, en: { title: <>Middleware in the Koa lineage</>, desc: <>async + <code>await next()</code> pattern; no Express-era callback hell. CORS / auth / cache / logging all share consistent semantics.</> }, code: <>{v('app')}.{f('use')}({s('"/*"')}, {k('async')} ({v('c')}, {v('next')}) =&gt; {'{'} {k('await')} {f('next')}(); {'}'});</> },
+    { icon: '⌖', zh: { title: <>validator 不绑 zod</>, desc: <>v4.7 起接 Standard Schema, zod / valibot / arktype / yup 都能直接挂。换 schema 库不动框架。</> }, en: { title: <>Validator isn't zod-locked</>, desc: <>v4.7+ supports Standard Schema; zod / valibot / arktype / yup all plug in directly. Swap schema libs without touching framework code.</> }, code: <>{k('import')} {'{ '}{v('vValidator')} {'}'} {k('from')} {s('"@hono/valibot-validator"')};</> },
+    { icon: '⌁', zh: { title: <>测试容易得过分</>, desc: <>没有 Express 的 <code>supertest</code> 套娃, 直接 <code>app.fetch(new Request(...))</code> 拿 Response 看。Vitest 里一个文件就能测全部 22 个端点。</> }, en: { title: <>Trivially testable</>, desc: <>No Express-style <code>supertest</code> ceremony — just <code>app.fetch(new Request(...))</code> and inspect the Response. Vitest can cover all 22 endpoints in one file.</> }, code: <>{k('const')} {v('r')} = {k('await')} {v('app')}.{f('fetch')}({k('new')} {f('Request')}({s('"/me"')}));</> },
+    { icon: '⚙', zh: { title: <>RPC 客户端不需要任何插件</>, desc: <>不用 tRPC、不用 protobuf、不用生成代码。<code>typeof app</code> 一吃就完事, 类型从 server 文件直接流到 client 文件。</> }, en: { title: <>RPC client needs no plugins</>, desc: <>No tRPC, no protobuf, no codegen. Eat <code>typeof app</code> and you're done; types flow from the server file straight into the client.</> }, code: <>{k('const')} {v('api')} = {f('hc')}&lt;{t('App')}&gt;({s('"/api"')});</> },
+    { icon: '⌒', zh: { title: <>启动快、内存小</>, desc: <>Node 上 cold start ~50ms, 内存 ~30MB。pm2 cluster mode 单 instance 已经够撑本站 22 个端点全部峰值流量。</> }, en: { title: <>Fast start, small footprint</>, desc: <>~50ms cold start on Node, ~30MB RAM. One pm2 cluster instance handles peak traffic across all 22 endpoints.</> }, code: <>{c('// pm2 list')}{'\n'}{c('// core-api  online  30M')}</> },
+  ],
+  adopters: [
+    { name: 'Cloudflare D1 / KV', href: 'https://developers.cloudflare.com', highlight: true, zhNote: '官方文档示例几乎全 Hono', enNote: 'Official docs samples are nearly all Hono' },
+    { name: 'Cloudflare Workers AI', href: 'https://developers.cloudflare.com/workers-ai', highlight: true, zhNote: 'AI gateway 示例标配', enNote: 'Standard sample stack for the AI gateway' },
+    { name: 'Clerk', href: 'https://clerk.com', highlight: true, zhNote: 'Edge SDK 路由层走 Hono', enNote: 'Edge SDK routing layer on Hono' },
+    { name: 'Unkey', href: 'https://unkey.com', zhNote: 'API key 管理服务, Workers + Hono', enNote: 'API key management, Workers + Hono' },
+    { name: 'cdnjs', href: 'https://cdnjs.com', zhNote: '内部 API 切到 Hono', enNote: 'Internal APIs moved to Hono' },
+    { name: 'Apollo Router', href: 'https://www.apollographql.com', zhNote: '部分边缘路由走 Hono', enNote: 'Some edge routes run on Hono' },
+    { name: 'Vercel Edge functions', href: 'https://vercel.com', zhNote: '官方文档 edge 示例之一', enNote: 'One of the official edge samples' },
+    { name: 'Discord 内部 API', zhNote: '社区报告若干内部 API 已迁', enNote: 'Community reports of internal API migrations' },
+    { name: 'Drizzle ORM docs', href: 'https://orm.drizzle.team', zhNote: '官方 starter 模板用 Hono', enNote: 'Starter template ships with Hono' },
+    { name: 'Bun examples', href: 'https://bun.sh', zhNote: 'Bun 文档 server 示例走 Hono', enNote: 'Bun docs server examples use Hono' },
+    { name: 'cuberoot.me', highlight: true, zhNote: '本站后端 22 个端点全部 Hono 4', enNote: 'This site — all 22 backend endpoints on Hono 4' },
+  ],
+  outlook: [
+    { tag: <>HOT · 2026</>, hot: true, big: true, zh: { title: <>Edge 默认框架</>, body: <><p>Cloudflare Workers / Deno Deploy / Bun deploy 三家边缘平台的官方文档示例几乎都默认 Hono。这不是合作 sponsorship, 是工程师自然选型 — 五个运行时一份代码 + TS-first 的组合, 边缘场景没有竞品。</p><p>意味着接下来"想去 edge 的 Node 项目"几乎没有选 Hono 之外的理由。Express 在 edge 跑不动, Fastify 没有非 Node 的 adapter。</p></> }, en: { title: <>The default edge framework</>, body: <><p>Official docs from Cloudflare Workers / Deno Deploy / Bun deploy nearly all default to Hono. Not sponsorship — it's organic engineer choice. Five runtimes, one codebase, plus TS-first: no edge competition.</p><p>The practical consequence: a Node project planning a move to the edge has essentially no reason to pick anything else. Express can't run there; Fastify lacks non-Node adapters.</p></> } },
+    { tag: 'RPC', big: true, zh: { title: <>RPC vs tRPC vs RSC Actions</>, body: <><p>Hono RPC、tRPC、React Server Actions 三家正在抢"前后端类型一致" 这件事。Hono 的优势是不要任何额外 client 库 / 协议, 缺点是 GraphQL-like 灵活组合做不到。下一年三家会进一步分化用户。</p></> }, en: { title: <>RPC vs tRPC vs RSC Actions</>, body: <><p>Hono RPC, tRPC, and React Server Actions are competing for "shared frontend-backend types." Hono's edge is zero extra client library / protocol; the downside is no GraphQL-like flexible composition. The user split will sharpen over the next year.</p></> } },
+    { tag: 'STD', zh: { title: <>Standard Schema 全面落地</>, body: <><p>v4.7 后 validator 不再绑 zod。意味着 zod / valibot / arktype / yup 在 Hono 里完全平权, 团队可以为不同接口挑最合适的 schema 库。<code>@hono/zod-validator</code> 不再是必选。</p></> }, en: { title: <>Standard Schema lands fully</>, body: <><p>From v4.7, the validator no longer binds to zod. zod / valibot / arktype / yup are equal citizens inside Hono; teams can pick the right schema lib per endpoint. <code>@hono/zod-validator</code> is no longer mandatory.</p></> } },
+    { tag: 'DATA', zh: { title: <>npm 周下载 2000 万</>, body: <><p>2026-05 数据:hono 包周下载约 2000 万。Express 仍是 ~3500 万但增长停滞, Fastify ~600 万。Node 后端框架的第二位置已经稳固, 三年内大概会反超 Express。</p></> }, en: { title: <>20M weekly downloads</>, body: <><p>2026-05: ~20M weekly downloads for the hono package. Express still leads at ~35M but growth is flat; Fastify sits around 6M. Hono's #2 slot in Node backend frameworks is stable, and a crossover with Express within three years looks plausible.</p></> } },
+    { tag: 'EDGE', zh: { title: <>边界:复杂的 Node-native API</>, body: <><p>底层 <code>http</code> 模块、<code>net.Socket</code>、<code>process.send</code> 这类 Node-only API, Hono 的 Web Standards 抽象会有点别扭。极端低层场景仍然要 Express / Fastify 直接 hook 进 Node IPC。</p></> }, en: { title: <>Boundary: deep Node-native APIs</>, body: <><p>Low-level <code>http</code> hooks, <code>net.Socket</code>, <code>process.send</code> — Web-Standards abstractions are awkward there. Extreme low-level use cases still want Express / Fastify hooked directly into Node IPC.</p></> } },
+  ],
+  cuberoot: {
+    zh: (
+      <>
+        <p>本站后端 2025-03-24 从 Fastify 切到 Hono, 24 小时完成迁移。<code>packages/server</code> 整个壳 ~400 行入口 + 22 个 route handler 文件, 跑在 Node 22 LTS 上, pm2 cluster mode 单 instance。云 VM 上 nginx 把 <code>api.cuberoot.me</code> 反代到 <code>127.0.0.1:3001</code>。</p>
+        <p>22 个端点覆盖:WCA OAuth (5 个端点, 登录回调 / token refresh / /me / sign-out / state validate) + recon 写读 (3 个) + alg_sets / alg_cases CRUD (5 个, 含 admin) + training 数据 (3 个) + WCA stats 缓存读 (3 个, 24h 缓存命中率高) + nemesizer 服务 (3 个, 启动时把 .bin.gz 加载进内存)。所有路由通过 <code>app.route(prefix, subApp)</code> 模块化, 单个文件不超 200 行。</p>
+        <p>CORS allowlist 写在 <code>core/packages/server/src/index.ts</code>, 通过 <code>cuberoot.me</code> / <code>www.cuberoot.me</code> / <code>dev.cuberoot.me</code> / Tailscale <code>*.ts.net</code> 几个域。Validator 走 <code>@hono/zod-validator</code> + zod schema, 错误统一通过 <code>app.onError</code> 翻译成 <code>{`{ error: string }`}</code> JSON。session token 在 PostgreSQL 13 <code>sessions</code> 表, middleware 提早 reject 未带 cookie 的请求。</p>
+        <p>客户端 fetch 全部走 <code>utils/api_base.ts</code> 的 <code>apiUrl()</code>。<code>import.meta.env.DEV</code> 切 dev/prod API base (不能用 hostname 检查, LAN / Tailscale / 隧道域名都不匹配)。RPC 类型暂时没启用 — <code>typeof app</code> 在 monorepo 里通过 <code>@cuberoot/shared</code> 包导出, 但 client 仍用 plain <code>fetch</code> 因为大多数端点是手写的 retry / cache 逻辑包裹, RPC 反而麻烦。</p>
+      </>
+    ),
+    en: (
+      <>
+        <p>The backend swapped from Fastify to Hono on 2025-03-24, migration done in 24 hours. The <code>packages/server</code> shell is ~400 lines of entry plus 22 route handler files, running on Node 22 LTS under pm2 cluster mode, one instance. On the cloud VM, nginx reverse-proxies <code>api.cuberoot.me</code> to <code>127.0.0.1:3001</code>.</p>
+        <p>The 22 endpoints cover: WCA OAuth (5 endpoints — login callback, token refresh, /me, sign-out, state validate) + recon read/write (3) + alg_sets / alg_cases CRUD (5, including admin) + training data (3) + cached WCA stats reads (3, 24h cache, high hit rate) + nemesizer service (3, loads .bin.gz into memory at startup). All routes are modularized via <code>app.route(prefix, subApp)</code> — no single file exceeds 200 lines.</p>
+        <p>The CORS allowlist lives in <code>core/packages/server/src/index.ts</code>, permitting <code>cuberoot.me</code> / <code>www.cuberoot.me</code> / <code>dev.cuberoot.me</code> / Tailscale <code>*.ts.net</code>. Validation goes through <code>@hono/zod-validator</code> + zod schemas, with <code>app.onError</code> translating errors uniformly into <code>{`{ error: string }`}</code> JSON. Session tokens are stored in the PostgreSQL 13 <code>sessions</code> table; middleware rejects cookie-less requests early.</p>
+        <p>Client fetches all go through <code>apiUrl()</code> in <code>utils/api_base.ts</code>. <code>import.meta.env.DEV</code> toggles dev/prod API base (a hostname check would miss LAN / Tailscale / tunnel domains). RPC types aren't enabled yet — <code>typeof app</code> can be exported via <code>@cuberoot/shared</code>, but the client still uses plain <code>fetch</code> because most endpoints wrap hand-rolled retry / cache logic that RPC just complicates.</p>
+      </>
+    ),
+  },
+  links: [
+    { label: 'hono.dev', href: 'https://hono.dev' },
+    { label: 'GitHub · honojs/hono', href: 'https://github.com/honojs/hono' },
+    { label: 'RPC docs', href: 'https://hono.dev/docs/guides/rpc' },
+    { label: 'Yusuke Wada', href: 'https://github.com/yusukebe' },
+  ],
+};
+
+export default HONO;

@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
-  // POC: frame-count 用 mp4box.js (cjs/esm 混) + @ffmpeg/* (worker + WASM) + mediainfo.js.
-  // Turbopack 大多数情况能直接处理,有问题时把包名放进来强制走 transpile.
+  // Self-contained server bundle for systemd `next start`. In a pnpm monorepo
+  // Next traces from packages/client-next/ by default and misses .pnpm-linked
+  // deps (@swc/helpers, @next/env). Point tracing at the workspace root so the
+  // tracer walks node_modules/.pnpm/ properly.
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
+
   transpilePackages: ["mp4box", "mediainfo.js"],
 
   // @ffmpeg/ffmpeg 多线程 WASM 需要 cross-origin isolation (SharedArrayBuffer).

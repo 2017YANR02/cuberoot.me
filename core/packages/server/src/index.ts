@@ -35,8 +35,10 @@ const app = new Hono();
 app.use('*', cors({
   origin: [
     'http://localhost:5173',              // Vite dev server
+    'http://localhost:3000',              // Next dev server
     'https://www.cuberoot.me',            // 生产环境（SPA）
     'https://cuberoot.me',                // 裸域 (含 GH Pages 海外线路)
+    'https://next.cuberoot.me',           // Next 子域并行验证
     'capacitor://localhost',              // Capacitor iOS app webview origin
     'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
   ],
