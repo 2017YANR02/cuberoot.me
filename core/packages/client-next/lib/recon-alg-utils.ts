@@ -37,6 +37,35 @@ export function cleanForAlgCubingNet(text: string): string {
   return cleaned.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/** Sync a TwistyPlayer instance to a specific move count along its current alg. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function syncPlayerToMoveCount(player: any, moveCount: number) {
+  if (!player) return;
+  try {
+    const model = player.experimentalModel;
+    if (!model || !model.indexer) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    model.indexer.get().then((indexer: any) => {
+      try {
+        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
+          const totalMoves = typeof indexer.numAnimatedLeaves === 'function'
+            ? indexer.numAnimatedLeaves()
+            : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
+          if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
+            player.timestamp = indexer.algDuration();
+          } else {
+            player.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
+          }
+        }
+      } catch {
+        /* indexer not ready / shape mismatch */
+      }
+    }).catch(() => { /* not ready */ });
+  } catch {
+    /* experimentalModel inaccessible (older cubing.js) */
+  }
+}
+
 export function extractAlgFromText(text: string): string {
   if (!text) return '';
   const lines = text.split('\n');
