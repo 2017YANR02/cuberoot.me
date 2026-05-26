@@ -6,8 +6,8 @@ on:
     paths:
       - 'core/packages/stats-build/src/**/*.ts'
   schedule:
-    # UTC 周日 20:00
-    - cron: '0 20 * * 0'
+    # UTC 每天 20:00 — WCA dump 上游天更
+    - cron: '0 20 * * *'
   workflow_dispatch:
     inputs:
       stats_filter:
@@ -207,6 +207,7 @@ jobs:
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id load.sql wca_competitions.copy.tsv wca_grand_slam.copy.tsv \
             wca_results_top.copy.tsv wca_cohort_ranks.copy.tsv \
             wca_success_rate.copy.tsv wca_all_events_done.copy.tsv wca_person_ranks.copy.tsv \
+            wca_comp_updated_at.copy.tsv \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_stats_extra/"
 
       - name: Apply WCA stats extra on server

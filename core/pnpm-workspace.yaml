@@ -3,4 +3,6 @@ packages:
 allowBuilds:
   core-js: true
   esbuild: true
-  sharp: false  # next/image native build,POC 不用图片优化跳过
+  sharp: false # next/image native build,POC 不用图片优化跳过
+patchedDependencies:
+  cubing@0.63.3: patches/cubing@0.63.3.patch
