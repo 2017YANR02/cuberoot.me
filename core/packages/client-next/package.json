@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@absinthe/socket": "^0.2.1",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/stack-kernel": "workspace:*",
     "@ffmpeg/ffmpeg": "^0.12.15",
@@ -25,6 +26,7 @@
     "mp4-muxer": "^5.2.2",
     "mp4box": "^2.3.0",
     "next": "16.2.6",
+    "phoenix": "^1.8.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-i18next": "^15.7.4",
@@ -37,6 +39,7 @@
   "devDependencies": {
     "@types/katex": "^0.16.8",
     "@types/node": "^20",
+    "@types/phoenix": "^1.6.7",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.183.1",

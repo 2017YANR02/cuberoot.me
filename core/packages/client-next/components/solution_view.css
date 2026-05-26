@@ -1,0 +1,66 @@
+/* SolutionView 共享样式 — 详情页和编辑页(标准化只读视图)都用 */
+
+.detail-solution-text {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #d4d4d4;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  margin: 0;
+}
+
+/* 阶段注释行高亮 (// xxx) */
+.recon-step-label {
+  color: #e8a27a;
+  font-weight: 500;
+}
+
+/* 解法文本中的可视闪烁光标 */
+.detail-cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.1em;
+  background: #e8a27a;
+  vertical-align: text-bottom;
+  animation: detail-cursor-blink 0.8s step-end infinite;
+  margin: 0 -0.5px;
+  /* span 内含 U+200B 占位以便 splitText/光标定位生效 — 但 select-copy 不能把
+     ZW 一起带进剪贴板，否则用户复制粘贴回去会污染 alg 让 cubing.js 不可播 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+@keyframes detail-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Cross 行就地切换图标(标准化/原始) */
+.recon-cross-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #a3a3a3;
+  cursor: pointer;
+  padding: 1px 4px;
+  margin-left: 6px;
+  user-select: none;
+}
+.recon-cross-toggle:hover {
+  color: #e8a27a;
+  border-color: rgba(232, 162, 122, 0.4);
+}
+.recon-cross-toggle.active {
+  color: #e8a27a;
+  border-color: rgba(232, 162, 122, 0.55);
+  background: rgba(232, 162, 122, 0.08);
+}
