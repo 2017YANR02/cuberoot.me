@@ -292,6 +292,9 @@ importers:
 
   packages/client-next:
     dependencies:
+      '@absinthe/socket':
+        specifier: ^0.2.1
+        version: 0.2.1(phoenix@1.8.7)
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
@@ -340,6 +343,9 @@ importers:
       next:
         specifier: 16.2.6
         version: 16.2.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      phoenix:
+        specifier: ^1.8.7
+        version: 1.8.7
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -352,6 +358,9 @@ importers:
       sr-puzzlegen:
         specifier: ^1.0.4
         version: 1.0.4
+      svg2pdf.js:
+        specifier: ^2.7.0
+        version: 2.7.0(jspdf@4.2.1)
       three:
         specifier: ^0.183.2
         version: 0.183.2
@@ -368,6 +377,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.41
+      '@types/phoenix':
+        specifier: ^1.6.7
+        version: 1.6.7
       '@types/react':
         specifier: ^19
         version: 19.2.14

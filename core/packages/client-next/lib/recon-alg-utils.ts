@@ -66,6 +66,71 @@ export function syncPlayerToMoveCount(player: any, moveCount: number) {
   }
 }
 
+// ── Token position helpers (caret-driven sync) ──
+
+export interface TokenPosition {
+  start: number;
+  end: number;
+  text: string;
+}
+
+const TOKEN_RE = /[RUFLDBrufldbxyzMSE]w?[2']?'?/g;
+
+export function findTokenPositions(text: string): TokenPosition[] {
+  if (!text) return [];
+  const tokens: TokenPosition[] = [];
+  const lines = text.split('\n');
+  let offset = 0;
+  for (const line of lines) {
+    const commentIdx = line.indexOf('//');
+    const instrPart = commentIdx >= 0 ? line.substring(0, commentIdx) : line;
+    TOKEN_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = TOKEN_RE.exec(instrPart)) !== null) {
+      tokens.push({
+        start: offset + m.index,
+        end: offset + m.index + m[0].length,
+        text: m[0],
+      });
+    }
+    offset += line.length + 1;
+  }
+  return tokens;
+}
+
+export function snapToTokenBoundary(cursorPos: number, positions: TokenPosition[]): number {
+  if (positions.length === 0) return cursorPos;
+  for (let i = 0; i < positions.length; i++) {
+    const t = positions[i];
+    if (cursorPos > t.start && cursorPos < t.end) {
+      const prevEnd = i > 0 ? positions[i - 1].end : 0;
+      const distPrev = cursorPos - prevEnd;
+      const distEnd = t.end - cursorPos;
+      return distPrev <= distEnd ? prevEnd : t.end;
+    }
+  }
+  for (let j = positions.length - 1; j >= 0; j--) {
+    if (cursorPos >= positions[j].end) {
+      return positions[j].end;
+    }
+  }
+  return 0;
+}
+
+export function countMovesExpanded(alg: string): number {
+  if (!alg) return 0;
+  let expanded = alg;
+  let prev: string;
+  do {
+    prev = expanded;
+    expanded = expanded.replace(/\(([^()]*)\)(\d+)/g, (_, body: string, n: string) => {
+      const reps = parseInt(n, 10);
+      return Array(reps).fill(body.trim()).join(' ');
+    });
+  } while (expanded !== prev);
+  return expanded.trim().split(/\s+/).filter(t => t.length > 0).length;
+}
+
 export function extractAlgFromText(text: string): string {
   if (!text) return '';
   const lines = text.split('\n');
