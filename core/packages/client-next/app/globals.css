@@ -1,3 +1,8 @@
+@import "tailwindcss";
+@source "../app/**/*.{tsx,ts,jsx,js}";
+@source "../components/**/*.{tsx,ts,jsx,js}";
+@import "flag-icons/css/flag-icons.min.css";
+
 /* Ported from packages/client/src/index.css (tokens + base only — page-specific
    styles will land beside their pages during migration). */
 

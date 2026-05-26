@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import I18nProvider from "@/i18n/I18nProvider";
 import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
+import "./fonts.css";
 import "./globals.css";
 
 // Title is owned by pages via the useDocumentTitle hook (bilingual zh/en).
@@ -23,6 +24,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link id="app-favicon" rel="icon" href="/icons/CubeRoot.png" />
+        {/* 关键字体预加载 — 正文 Inter 400 / 500 加快首屏 */}
+        <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-sync-scripts -- inline bootstrap, must run before CSS */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
