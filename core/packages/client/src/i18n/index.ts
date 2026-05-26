@@ -34,6 +34,9 @@ if (!initParams.get('lang')) {
 // NOTE: 同步到 localStorage
 localStorage.setItem('trainer-lang', detectedLang);
 
+// 同步 <html lang>,index.html 里写死 'en' — zh 用户原本不会更新。
+document.documentElement.lang = detectedLang;
+
 i18n.use(initReactI18next).init({
   resources: {
     zh: { translation: zh },
@@ -47,6 +50,7 @@ i18n.use(initReactI18next).init({
 // NOTE: 切换语言时同步 URL（对标 Legacy i18n.js setLocale L704-722）
 export function syncLangToUrl(lang: string): void {
   localStorage.setItem('trainer-lang', lang);
+  document.documentElement.lang = lang;
   const url = new URL(window.location.href);
   url.searchParams.set('lang', lang);
   history.replaceState(null, '', url.toString());
