@@ -1,26 +1,24 @@
 'use client';
 
 /**
- * /sim — 3D cube simulator (Next.js port).
+ * /sim — 虚拟魔方 Playground / Player / Algs / Director (Next.js port).
  *
- * TODO (deferred from initial port — see packages/client/src/pages/sim/SimPage.tsx):
- *   - PlayerControls (alg input / scramble / playback) — depends on ~30 components &
- *     utils (AlgInput, CubeVirtualKeyboard, WheelPicker, cubingScramble, m2p WASM,
- *     scramble_555 server, 333 m2p, cstimer_444, recon_alg_utils, cube3, etc.)
- *   - AlgsPanel (algorithm library browser) — depends on @cuberoot/shared alg loader
- *   - DirectorPanel (video export) — depends on sim_export + recon_alg_utils
- *   - TwistySection (cubing.js TwistyPlayer fallback for skewb/pyraminx/megaminx)
- *   - SettingDrawer (verbose settings UI) — uses minimal defaults below instead
- *   - keymap (custom keyboard bindings) — fixed defaults below instead
+ * SimPage handles the full client-side simulator (cuber engine + AlgsPanel +
+ * DirectorPanel + PlayerControls). It's dynamically imported to keep the
+ * THREE.js / cubing.js bundle off the SSR path.
  *
- * This shell renders the huazhechen/cuber engine (3D NxN cube via THREE.js) with
- * default 3x3 settings, mouse orbit, and keyboard moves. Enough to validate that
- * the cuber engine + Toucher + setup.worker bundle correctly under Next 16 Turbopack.
+ * Deferred (vs Vite parity):
+ *   - Twisty puzzles (pyraminx / skewb / megaminx) — TwistySection not ported.
+ *   - AlgInput → plain <textarea> (markable/autospace skipped).
+ *   - CubeVirtualKeyboard / SimQwertyKeypad.
+ *   - tnoodleRandomScramble pool + m2p WASM + cstimer_444 + 555-rs server.
+ *   - PerfOverlay (dev HUD).
  */
 
 import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 
-const SimViewer = dynamic(() => import('./SimViewer'), {
+const SimPage = dynamic(() => import('./SimPage'), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
@@ -29,6 +27,16 @@ const SimViewer = dynamic(() => import('./SimViewer'), {
   ),
 });
 
-export default function SimPage() {
-  return <SimViewer />;
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
+          <p style={{ color: '#888' }}>Loading…</p>
+        </div>
+      }
+    >
+      <SimPage />
+    </Suspense>
+  );
 }

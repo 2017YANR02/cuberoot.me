@@ -1,0 +1,124 @@
+.sim-director {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--card);
+  border-top: 1px solid var(--border-default);
+}
+
+.sim-director-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.sim-director-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.sim-director-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sim-director-btn.recording {
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+.sim-director-ext {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.sim-director-time {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.sim-director-hint {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.sim-export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 24px;
+}
+
+.sim-export-card {
+  width: min(720px, calc(100vw - 48px));
+  padding: 24px 28px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.sim-export-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sim-export-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  background: #000;
+  border-radius: 6px;
+}
+
+.sim-export-bar {
+  height: 8px;
+  background: #2a2a2a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sim-export-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4d8eff, #66c8ff);
+  transition: width 0.3s ease-out;
+}
+
+.sim-export-msg {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.4em;
+}
+
+.sim-export-cancel {
+  align-self: flex-end;
+  padding: 6px 18px;
+  font-size: 13px;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #ddd;
+  cursor: pointer;
+}
+
+.sim-export-cancel:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
