@@ -60,7 +60,27 @@ const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
   Green: { zh: '绿', en: 'Green' },
 };
 
+// cubing.js's search worker normally bootstraps via `import.meta.resolve(...)`
+// which Turbopack can't follow. The esbuild-workaround path uses a plain
+// dynamic import that Turbopack DOES statically follow. Apply once before
+// the first scramble call.
+let cubingWorkerHintApplied = false;
+async function applyCubingWorkerHint(): Promise<void> {
+  if (cubingWorkerHintApplied) return;
+  cubingWorkerHintApplied = true;
+  try {
+    const { setSearchDebug } = await import('cubing/search');
+    setSearchDebug({
+      prioritizeEsbuildWorkaroundForWorkerInstantiation: true,
+      showWorkerInstantiationWarnings: false,
+    });
+  } catch (err) {
+    console.warn('[analyzer] setSearchDebug not available', err);
+  }
+}
+
 async function randomThreeByThreeScramble(): Promise<string> {
+  await applyCubingWorkerHint();
   const { randomScrambleForEvent } = await import('cubing/scramble');
   const alg = await randomScrambleForEvent('333');
   return alg.toString();
