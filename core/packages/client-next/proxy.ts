@@ -61,6 +61,10 @@ const MIGRATED_PATHS: readonly string[] = [
   '/calc',
   // batch 7 — code subtree
   '/code',
+  // batch 8 — memo / nemesizer / recognize
+  '/memo',
+  '/nemesizer',
+  '/recognize',
 ];
 
 function isMigrated(pathname: string): boolean {
