@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import dns from "node:dns";
+
+// Force IPv4 first for upstream rewrites — node fetch's default IPv6-first
+// order causes intermittent `getaddrinfo ENOTFOUND` on api.cuberoot.me proxy
+// when AAAA lookup hangs and fails before A is tried. Set at module load so
+// it applies to every next dev/build/start invocation.
+dns.setDefaultResultOrder("ipv4first");
 
 const isProd = process.env.NODE_ENV === "production";
 
