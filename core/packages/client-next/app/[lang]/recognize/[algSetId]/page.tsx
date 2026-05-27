@@ -5,7 +5,7 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import OnScreenKeyboard from '@/components/OnScreenKeyboard';
-import { useSessionStore } from '@/lib/session-store';
+import { useSessionStore, useSessionHydrated } from '@/lib/session-store';
 import { scrambleForCase, inverseScramble } from '@/lib/scramble-generator';
 import {
   isPllLetter,
@@ -28,6 +28,7 @@ export default function TrainingPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('识别训练', 'Recognition Training');
+  const hydrated = useSessionHydrated();
 
   const gameState = useSessionStore((s) => s.gameState);
   const trainMode = useSessionStore((s) => s.trainMode);
@@ -59,8 +60,9 @@ export default function TrainingPage() {
     : '';
 
   useEffect(() => {
+    if (!hydrated) return;
     setInitial();
-  }, [setInitial]);
+  }, [setInitial, hydrated]);
 
   useEffect(() => {
     if (prevMistakeRef.current === '' && mistake !== '') {
@@ -170,6 +172,10 @@ export default function TrainingPage() {
     }
     return '';
   };
+
+  if (!hydrated) {
+    return <div className="training-page" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-mute)' }} />;
+  }
 
   if (gameState === 'evaluationDone') {
     const mistakeCount = results.filter((r) => r.mistake !== '').length;

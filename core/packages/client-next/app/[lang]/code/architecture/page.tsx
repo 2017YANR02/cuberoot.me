@@ -102,8 +102,8 @@ function PackageDepsSVG() {
 
       <g className="d-pkg d-pkg-app">
         <rect x="80" y="40" width="160" height="64" rx="8" />
-        <text x="160" y="68" className="d-title">client</text>
-        <text x="160" y="86" className="d-sub d-mono">React 19 + Vite</text>
+        <text x="160" y="68" className="d-title">client-next</text>
+        <text x="160" y="86" className="d-sub d-mono">React 19 + Next.js 16</text>
       </g>
 
       <g className="d-pkg d-pkg-app">
@@ -194,147 +194,6 @@ function StatsPipelineSVG() {
   );
 }
 
-// ─── SVG 5: Dev HMR 三入口推导 ───────────────────
-function HmrTripleEntrySVG() {
-  return (
-    <svg viewBox="0 0 980 680" className="diagram-svg" role="img" aria-label="Dev HMR triple entry">
-      {/* 顶部:3 个 page 入口 */}
-      <g className="d-box d-box-user">
-        <rect x="20" y="14" width="300" height="100" rx="10" />
-        <text x="170" y="40" className="d-title">Laptop</text>
-        <text x="170" y="64" className="d-sub d-mono">http://localhost:5173/</text>
-        <text x="170" y="88" className="d-sub">port = "5173"  ·  http</text>
-      </g>
-
-      <g className="d-box d-box-user">
-        <rect x="340" y="14" width="300" height="100" rx="10" />
-        <text x="490" y="40" className="d-title">Phone · 同 WiFi</text>
-        <text x="490" y="64" className="d-sub d-mono">https://alienware.tail171d80.ts.net/</text>
-        <text x="490" y="88" className="d-sub">port = ""  ·  https</text>
-      </g>
-
-      <g className="d-box d-box-user">
-        <rect x="660" y="14" width="300" height="100" rx="10" />
-        <text x="810" y="40" className="d-title">Phone · 蜂窝/外网</text>
-        <text x="810" y="64" className="d-sub d-mono">https://dev.cuberoot.me/</text>
-        <text x="810" y="88" className="d-sub">port = ""  ·  https</text>
-      </g>
-
-      {/* 三条箭头下来 */}
-      <g className="d-arrow">
-        <line x1="170" y1="114" x2="170" y2="158" />
-        <polygon points="170,158 165,150 175,150" />
-      </g>
-      <g className="d-arrow">
-        <line x1="490" y1="114" x2="490" y2="158" />
-        <polygon points="490,158 485,150 495,150" />
-      </g>
-      <g className="d-arrow">
-        <line x1="810" y1="114" x2="810" y2="158" />
-        <polygon points="810,158 805,150 815,150" />
-      </g>
-
-      {/* 中间:共享的 /@vite/client */}
-      <g className="d-pkg d-pkg-shared">
-        <rect x="40" y="158" width="900" height="140" rx="10" />
-        <text x="490" y="186" className="d-title">/@vite/client — 同一份 JS, 三边都拉这一份</text>
-        <text x="490" y="214" className="d-code">
-          socketProtocol = <tspan className="d-code-fall">null</tspan> || (protocol === "https:" ? "wss" : "ws")
-        </text>
-        <text x="490" y="238" className="d-code">
-          hmrPort = <tspan className="d-code-fall">null</tspan>
-        </text>
-        <text x="490" y="262" className="d-code">
-          socketHost = hostname + ":" + (hmrPort || URL.port) + "/"
-        </text>
-        <text x="490" y="286" className="d-sub">短路求值:null 为假 → fallback 到 page URL 自身的值</text>
-      </g>
-
-      {/* 三条分叉箭头到各自推导 box */}
-      <g className="d-arrow">
-        <line x1="170" y1="298" x2="170" y2="342" />
-        <polygon points="170,342 165,334 175,334" />
-      </g>
-      <g className="d-arrow">
-        <line x1="490" y1="298" x2="490" y2="342" />
-        <polygon points="490,342 485,334 495,334" />
-      </g>
-      <g className="d-arrow">
-        <line x1="810" y1="298" x2="810" y2="342" />
-        <polygon points="810,342 805,334 815,334" />
-      </g>
-
-      {/* 推导出来的 ws URL */}
-      <g>
-        <rect x="20" y="342" width="300" height="100" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
-        <text x="170" y="370" className="d-title">→ Laptop 推导出</text>
-        <text x="170" y="400" className="d-code d-code-strong">ws://localhost:5173/</text>
-        <text x="170" y="424" className="d-sub">port "5173" 直接代入</text>
-      </g>
-
-      <g>
-        <rect x="340" y="342" width="300" height="100" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
-        <text x="490" y="370" className="d-title">→ WiFi 推导出</text>
-        <text x="490" y="400" className="d-code d-code-strong">wss://alienware...ts.net:/</text>
-        <text x="490" y="424" className="d-sub">尾巴 ":" 规范化, wss 默认 443</text>
-      </g>
-
-      <g>
-        <rect x="660" y="342" width="300" height="100" rx="10" fill="#ECF1EC" stroke="#B5CAB5" strokeWidth="1.5" />
-        <text x="810" y="370" className="d-title">→ 蜂窝 推导出</text>
-        <text x="810" y="400" className="d-code d-code-strong">wss://dev.cuberoot.me:/</text>
-        <text x="810" y="424" className="d-sub">同款规则, wss 默认 443</text>
-      </g>
-
-      {/* 底部链路:3 条不同的中继回到同一个 Vite server */}
-
-      {/* Laptop direct */}
-      <g className="d-arrow d-arrow-hot">
-        <line x1="170" y1="442" x2="380" y2="620" />
-        <polygon points="380,620 370,617 374,610" />
-        <text x="210" y="540" className="d-label">direct TCP</text>
-      </g>
-
-      {/* WiFi via Funnel */}
-      <g>
-        <rect x="340" y="466" width="300" height="48" rx="6" fill="#F4ECEA" stroke="#DDBCB1" strokeWidth="1.5" strokeDasharray="4 3" />
-        <text x="490" y="486" className="d-title">Tailscale Funnel</text>
-        <text x="490" y="504" className="d-sub d-mono">edge :443 → 127.0.0.1:5173</text>
-      </g>
-      <g className="d-arrow d-arrow-hot">
-        <line x1="490" y1="442" x2="490" y2="466" />
-        <polygon points="490,466 485,458 495,458" />
-      </g>
-      <g className="d-arrow d-arrow-hot">
-        <line x1="490" y1="514" x2="490" y2="620" />
-        <polygon points="490,620 485,612 495,612" />
-      </g>
-
-      {/* 蜂窝 via nginx + frp 反向隧道 */}
-      <g>
-        <rect x="660" y="466" width="300" height="48" rx="6" fill="#F4ECEA" stroke="#DDBCB1" strokeWidth="1.5" strokeDasharray="4 3" />
-        <text x="810" y="486" className="d-title">nginx + frp 反向隧道</text>
-        <text x="810" y="504" className="d-sub d-mono">VPS :443 → frp :7100 → PC :5173</text>
-      </g>
-      <g className="d-arrow d-arrow-hot">
-        <line x1="810" y1="442" x2="810" y2="466" />
-        <polygon points="810,466 805,458 815,458" />
-      </g>
-      <g className="d-arrow d-arrow-hot">
-        <line x1="810" y1="514" x2="600" y2="620" />
-        <polygon points="600,620 610,617 608,610" />
-      </g>
-
-      {/* 最终的 Vite WS server (居中底部) */}
-      <g className="d-box d-box-server">
-        <rect x="340" y="620" width="300" height="60" rx="10" />
-        <text x="490" y="644" className="d-title d-title-lg">Vite HTTP + WS</text>
-        <text x="490" y="664" className="d-sub d-mono">127.0.0.1:5173 · 单端口共享</text>
-      </g>
-    </svg>
-  );
-}
-
 // ─── SVG 6: 移动端 build 管道 ─────────────────────
 function MobilePipelineSVG() {
   return (
@@ -342,7 +201,7 @@ function MobilePipelineSVG() {
       {/* 顶 source */}
       <g className="d-box d-box-user">
         <rect x="280" y="14" width="340" height="68" rx="10" />
-        <text x="450" y="42" className="d-title">SPA dist (Vite build)</text>
+        <text x="450" y="42" className="d-title">static bundle (Next build)</text>
         <text x="450" y="64" className="d-sub d-mono">pnpm exec cap sync</text>
       </g>
 
@@ -446,8 +305,8 @@ const LAYERS: Layer[] = [
   },
   {
     num: '02',
-    zh: { name: '前端',     one: '一个 SPA, 24+ 工具页, React Router 切路由', tech: <>React 19 · Vite 8 · TypeScript · cubing.js · Tailwind 4 (base 层)</> },
-    en: { name: 'Frontend', one: 'One SPA, 24+ tool pages, React Router',     tech: <>React 19 · Vite 8 · TypeScript · cubing.js · Tailwind 4 (base layer)</> },
+    zh: { name: '前端',     one: 'Next.js App Router, 24+ 工具页, /[lang] 路径前缀切语言', tech: <>React 19 · Next.js 16 (Turbopack) · TypeScript · cubing.js · Tailwind 4 (base 层)</> },
+    en: { name: 'Frontend', one: 'Next.js App Router, 24+ tool pages, /[lang] path-prefix locale',     tech: <>React 19 · Next.js 16 (Turbopack) · TypeScript · cubing.js · Tailwind 4 (base layer)</> },
   },
   {
     num: '03',
@@ -469,9 +328,14 @@ interface Pkg {
 }
 const PACKAGES: Pkg[] = [
   {
+    name: 'client-next', size: '~140k LOC',
+    zh: { role: 'Next.js 16 App Router — 整个前端',     bullet: ['app/[lang]/* 一个工具一目录, /[lang] 路径前缀切语言', 'components/ 跨页复用', 'lib/ 工具函数 (apiUrl / flag / format_result)', 'Zustand 11 个 store (auth / settings / sessions / 等)'] },
+    en: { role: 'Next.js 16 App Router — the whole frontend', bullet: ['app/[lang]/* — one folder per tool, /[lang] path-prefix locale', 'components/ — shared widgets', 'lib/ — helpers (apiUrl / flag / format_result)', '11 Zustand stores (auth / settings / sessions / etc.)'] },
+  },
+  {
     name: 'client', size: '~120k LOC',
-    zh: { role: 'React SPA — 整个前端',     bullet: ['pages/ 一个工具一目录', 'components/ 跨页复用', 'utils/ 工具函数 (apiUrl / flag / format_result)', 'stores/ Zustand 11 个 store (auth / settings / sessions / 等)'] },
-    en: { role: 'React SPA — the whole frontend', bullet: ['pages/ — one folder per tool', 'components/ — shared widgets', 'utils/ — helpers (apiUrl / flag / format_result)', 'stores/ — 11 Zustand stores (auth / settings / sessions / etc.)'] },
+    zh: { role: '已退役 SPA — 仅 vite.cuberoot.me 回滚兜底', bullet: ['Phase 4 (2026-05-27) 切到 client-next', '不再加新功能', '保留作主域 swap 紧急回滚'] },
+    en: { role: 'Retired SPA — vite.cuberoot.me rollback only', bullet: ['Phase 4 (2026-05-27) cut over to client-next', 'No new features land here', 'Kept as emergency rollback for the main-domain swap'] },
   },
   {
     name: 'server', size: '~8k LOC',
@@ -524,13 +388,14 @@ interface Decision {
 }
 const DECISIONS: Decision[] = [
   { topic: 'Framework',   pick: 'React 19',         alt: 'Vue / Svelte',          zh: '生态最广;cubing.js / sr-puzzlegen 等魔方库的示例都是 React;团队熟。',                en: 'Widest ecosystem; cubing.js / sr-puzzlegen samples are React; team familiarity.' },
-  { topic: 'Bundler',     pick: 'Vite 8',           alt: 'Webpack / Turbopack',   zh: 'Dev server 启动 < 1s;HMR 即时;ESM 原生;tsc -b 增量 12s。',                          en: 'Sub-1s dev start; instant HMR; native ESM; tsc -b 12s incremental.' },
-  { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/vite 装着, src/index.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/vite + a single @import "tailwindcss" in src/index.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.' },
+  { topic: 'Framework',   pick: 'Next.js 16 (App Router)', alt: 'Remix / TanStack Start / 纯 Vite SPA', zh: 'App Router + RSC + 服务端 streaming 一体, Turbopack dev/build; 双部署 (systemd standalone + Vercel) 同一份代码。Phase 4 (2026-05) 从 React Router SPA 整体切过来。', en: 'App Router + RSC + server streaming in one; Turbopack dev/build; one codebase deploys to both systemd standalone and Vercel. Cut over from React Router SPA in Phase 4 (2026-05).' },
+  { topic: 'Bundler',     pick: 'Turbopack',        alt: 'Webpack / Vite',        zh: 'Next.js 16 自带, dev incremental compile + prod build 都走它;首次冷编 30-90s, 之后增量 sub-second。',                          en: 'Bundled with Next.js 16, drives both dev incremental compile and prod build; first cold compile 30-90s, then sub-second incremental.' },
+  { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/postcss 装着, app/globals.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/postcss + a single @import "tailwindcss" in app/globals.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.' },
   { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 一等公民;路由声明式;5 MB 依赖比 express 干净一个量级。',                en: 'TS-first; declarative routing; ~5MB deps vs Express noisy stack.' },
   { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
   { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '4 个核心 workspace (client / server / shared / stats-build), 一份 pnpm-lock。硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。底层 registry 仍是 npm (registry.npmjs.org), pnpm 只是更快的客户端。', en: 'Four core workspaces (client / server / shared / stats-build), one pnpm-lock. Hard-linked node_modules saves disk; Turbo runs only changed packages. The underlying registry is still npm (registry.npmjs.org) — pnpm is just a faster client.' },
   { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '11 个 store (6 全局 + 5 页面级)。无 Provider, create() 返回 hook, 选 selector 拿切片。auth 走 storage 事件跨标签同步, settings/sessions 用 persist 中间件落 localStorage。打包后约 1 KB。', en: '11 stores (6 global + 5 page-local). No Provider — create() returns a hook, components select slices. auth syncs across tabs via the storage event; settings/sessions persist to localStorage via middleware. ~1 KB bundle cost.' },
-  { topic: 'Static host', pick: '云服务器 nginx',   alt: 'Vercel / Netlify',      zh: '同台机 nginx + API + DB, localhost 内 hop;Vercel 这种 SaaS 跑国内打不开。',        en: 'Same VM hosts nginx + API + DB; localhost hops; Vercel SaaS is unreachable from China.' },
+  { topic: 'Hosting',     pick: '云服务器 nginx + Vercel (DNS 分线路)', alt: '单 Vercel / 单 nginx', zh: 'DNS 按线路分流, 同一份 Next.js 代码两边跑。国内线路 → 境内云服务器 nginx → systemd Next standalone (反代 :3002, deploy_next.yml CI 自动 scp + 原子 swap);其他线路 → Vercel Hobby edge (push GitHub 自动部署)。后端 Hono+PG 始终在同一台云服务器, Vercel 端通过 api.cuberoot.me 调。', en: 'Split-horizon DNS, same Next.js codebase on both. CN line → in-country nginx → systemd Next standalone (reverse-proxy :3002, deploy_next.yml CI auto scp + atomic swap); other lines → Vercel Hobby edge (push-to-GitHub auto-deploy). Backend Hono+PG stays on the same cloud VM; Vercel side hits it via api.cuberoot.me.' },
   { topic: 'Theme tokens', pick: 'shadcn 命名 + hex + color-mix', alt: 'oklch / Material 3 / Radix Colors', zh: '8 页双主题切换。命名跟 OSS 标准 shadcn (AI 写代码命中率高);色值 hex (调研 30+ 大厂含 Anthropic console 自己,0 家把 oklch 当主品牌 token);衍生用 color-mix(in srgb) 跟 Anthropic CDS 实战用法 (644 处) 对齐。', en: 'Dark/light across 8 pages. Naming follows shadcn (OSS standard, friendly to AI code-gen); hex values (surveyed 30+ big-co incl. Anthropic console — zero use oklch as primary brand tokens); derivations via color-mix(in srgb) aligning with Anthropic CDS (644 production uses).' },
 ];
 
@@ -547,8 +412,8 @@ const DETAILS: Detail[] = [
   },
   {
     title: 'apiUrl() 是唯一的 fetch 入口',
-    zh: <>客户端不能硬编码 origin。<code>utils/api_base.ts</code> 的 <code>apiUrl()</code> 用 <code>import.meta.env.DEV</code> 切换:dev 走 Vite proxy, prod 打 <code>api.cuberoot.me</code>。hostname 检测会被 Tailscale / LAN IP 骗到, 绝对禁用。</>,
-    en: <>Client never hardcodes origin. <code>utils/api_base.ts</code> uses <code>import.meta.env.DEV</code>: dev → Vite proxy, prod → <code>api.cuberoot.me</code>. <code>hostname</code> checks get fooled by Tailscale / LAN IP — banned.</>,
+    zh: <>客户端不能硬编码 origin。<code>lib/api-base.ts</code> 的 <code>apiUrl()</code> 用 <code>import.meta.env.DEV</code> 切换:dev 走 <code>next.config.ts</code> 里 <code>rewrites()</code> 反代 <code>api.cuberoot.me</code>, prod 直打 <code>api.cuberoot.me</code>。<code>hostname</code> 检测会被 Tailscale / LAN IP 骗到, 绝对禁用。</>,
+    en: <>Client never hardcodes origin. <code>lib/api-base.ts</code> uses <code>import.meta.env.DEV</code>: dev → <code>next.config.ts</code> <code>rewrites()</code> proxy to <code>api.cuberoot.me</code>, prod → direct <code>api.cuberoot.me</code>. <code>hostname</code> checks get fooled by Tailscale / LAN IP — banned.</>,
   },
   {
     title: 'cubing.js + sr-puzzlegen + visualcube 三件套',
@@ -595,7 +460,7 @@ interface Stage { id: StageId; zh: string; en: string; sub: string; }
 const TRACER_STAGES: Stage[] = [
   { id: 'browser', zh: '浏览器',           en: 'Browser',           sub: 'fetch / nav' },
   { id: 'edge',    zh: 'cuberoot.me nginx', en: 'cuberoot.me nginx', sub: 'static + try_files' },
-  { id: 'spa',     zh: 'SPA 启动',          en: 'SPA boot',          sub: 'React + Router' },
+  { id: 'spa',     zh: 'Next 启动',         en: 'Next boot',         sub: 'App Router + RSC' },
   { id: 'fetch',   zh: 'apiUrl() fetch',    en: 'apiUrl() fetch',    sub: 'utils/api_base.ts' },
   { id: 'api',     zh: 'api.cuberoot.me nginx', en: 'api.cuberoot.me nginx', sub: 'proxy_cache 24h' },
   { id: 'hono',    zh: 'Hono server',       en: 'Hono server',       sub: 'pm2 · :3001' },
@@ -618,8 +483,8 @@ const TRACER_PATTERNS: Pattern[] = [
     lit: ['browser', 'edge', 'spa'],
     cacheHit: false,
     eta: '~200ms 首次  ·  完全不打 API',
-    zh: { label: '打开首页', detail: '纯 SPA 加载:nginx try_files 返回 index.html, 浏览器跑 SPA, React Router 渲染 LandingPage。一个 API 都不调。' },
-    en: { label: 'Open home', detail: 'Pure SPA load: nginx try_files returns index.html, browser runs SPA, React Router renders LandingPage. Zero API calls.' },
+    zh: { label: '打开首页', detail: 'nginx 反代 Next standalone (:3002), Next App Router 服务端渲染 LandingPage 并 stream HTML 回浏览器, 客户端 hydrate。一个 API 都不调。' },
+    en: { label: 'Open home', detail: 'nginx reverse-proxies Next standalone (:3002), Next App Router server-renders LandingPage and streams HTML back; client hydrates. Zero API calls.' },
   },
   {
     id: 'recon-fresh',
@@ -627,8 +492,8 @@ const TRACER_PATTERNS: Pattern[] = [
     lit: ['browser', 'edge', 'spa', 'fetch', 'api', 'hono', 'pg'],
     cacheHit: false,
     eta: '~40ms (API 部分)',
-    zh: { label: '首次打开复盘', detail: 'SPA 启动后调 apiUrl("/v1/recon/abc")。/v1/recon/* 不在 24h cache 白名单, 整条管道穿透:Hono 查 PG, 反序列化, 返回 JSON。' },
-    en: { label: 'First-time recon view', detail: 'After SPA boots, fetch apiUrl("/v1/recon/abc"). /v1/recon/* is not in the 24h proxy_cache allowlist, so the request flows through to Hono → PG, deserializes, returns JSON.' },
+    zh: { label: '首次打开复盘', detail: 'Next 服端渲染 shell 返回后, 客户端 hydrate 调 apiUrl("/v1/recon/abc")。/v1/recon/* 不在 24h cache 白名单, 整条管道穿透:Hono 查 PG, 反序列化, 返回 JSON。' },
+    en: { label: 'First-time recon view', detail: 'After Next streams the SSR shell back, the client hydrates and fetches apiUrl("/v1/recon/abc"). /v1/recon/* is not in the 24h proxy_cache allowlist, so the request flows through to Hono → PG, deserializes, returns JSON.' },
   },
   {
     id: 'wca-cached',
@@ -645,8 +510,8 @@ const TRACER_PATTERNS: Pattern[] = [
     lit: ['browser', 'edge'],
     cacheHit: false,
     eta: '< 10ms (静态)',
-    zh: { label: '打开 fork 内部页', detail: 'fork 项目的内部页面 (iframe src)。nginx 直接服 /tools/cstimer/ 静态 HTML, 没 SPA, 没 API。从 React 路由 /cstimer 进来时再加一层 SPA + iframe 套娃。' },
-    en: { label: 'Fork inner page', detail: 'Inside-iframe page of a forked project. nginx serves /tools/cstimer/ static HTML directly — no SPA, no API. From the React route /cstimer, you wrap an extra SPA + iframe around this.' },
+    zh: { label: '打开 fork 内部页', detail: 'fork 项目的内部页面 (iframe src)。nginx 直接服 /tools/cstimer/ 静态 HTML, 不打 Next, 不打 API。从 Next 路由 /cstimer 进来时再加一层 Next page + iframe 套娃。' },
+    en: { label: 'Fork inner page', detail: 'Inside-iframe page of a forked project. nginx serves /tools/cstimer/ static HTML directly — no Next, no API. From the Next route /cstimer, you wrap an extra Next page + iframe around this.' },
   },
 ];
 
@@ -1314,8 +1179,8 @@ export default function ArchitecturePage() {
           </h1>
           <p className="arch-hero-lede">
             <L
-              zh={<>一个 24+ 工具页的魔方站, 跑在一台云服务器上。前端是 React 19 SPA, 后端是 Hono + PostgreSQL, WCA 统计有一条独立的周更管道。下面这页把每一层讲清楚 — 从一个鼠标点击, 到 DOM 更新, 中间发生了什么。</>}
-              en={<>A cube-tools site with 24+ tool pages, running on a single cloud VM. Frontend is a React 19 SPA, backend is Hono + PostgreSQL, and the WCA statistics pipeline runs separately on a weekly cadence. This page walks every layer — from a mouse click to a DOM update, and everything in between.</>}
+              zh={<>一个 24+ 工具页的魔方站, 同份 Next.js 16 代码两边跑 (境内云服务器 + Vercel edge, DNS 分线路)。后端是 Hono + PostgreSQL, WCA 统计有一条独立的周更管道。下面这页把每一层讲清楚 — 从一个鼠标点击, 到 DOM 更新, 中间发生了什么。</>}
+              en={<>A cube-tools site with 24+ tool pages — one Next.js 16 codebase deployed two ways (in-country cloud VM + Vercel edge, split-horizon DNS). Backend is Hono + PostgreSQL, and the WCA statistics pipeline runs separately on a weekly cadence. This page walks every layer — from a mouse click to a DOM update, and everything in between.</>}
             />
           </p>
           <div className="arch-hero-stats">
@@ -1334,8 +1199,8 @@ export default function ArchitecturePage() {
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>站点的一切都坐在一台云服务器上。nginx 既服静态 SPA 也反代 Hono API;Hono 通过本地 socket 打 PG。GH Pages 是兜底镜像, 跑国内挂了 cuberoot.me 才会用到。</>}
-              en={<>Everything sits on one cloud VM. nginx serves both the static SPA and reverse-proxies the Hono API; Hono talks to PG over a local socket. GitHub Pages is a fallback mirror — used only when cuberoot.me itself is down.</>}
+              zh={<>境内一切都坐在一台云服务器上:nginx 反代 systemd Next standalone (:3002) + Hono API (:3001);Hono 通过本地 socket 打 PG。境外用户走 Vercel edge, 同份 Next 代码; 拉的还是同一个 api.cuberoot.me。vite.cuberoot.me 保留旧 SPA dist 作主域 swap 紧急回滚兜底。</>}
+              en={<>In-country everything sits on one cloud VM: nginx reverse-proxies systemd Next standalone (:3002) + Hono API (:3001); Hono talks to PG over a local socket. Overseas users hit Vercel edge running the same Next code; the API call still resolves to api.cuberoot.me. vite.cuberoot.me retains the retired SPA dist as emergency rollback if the main-domain Next swap breaks.</>}
             />
           </p>
           <div className="arch-diagram">
@@ -1406,10 +1271,13 @@ export default function ArchitecturePage() {
           <pre className="arch-code">{`Browser
   │  GET cuberoot.me/recon/abc
   ▼
-nginx :443    →  try_files → index.html  (SPA fallback)
+nginx :443    →  proxy_pass :3002  (境内:systemd Next standalone)
+  │            ↘  Vercel edge      (其他线路:同份 Next 代码)
+  ▼
+Next App Router  →  SSR shell stream → 客户端 hydrate
   │
   ▼
-React SPA   →  fetch(apiUrl('/v1/recon/abc'))
+client  →  fetch(apiUrl('/v1/recon/abc'))
                           │
                           ▼
                 nginx :443 (api.cuberoot.me)
@@ -1470,7 +1338,7 @@ React SPA   →  fetch(apiUrl('/v1/recon/abc'))
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">06</span>
-            <h2 className="arch-sec-title"><L zh="部署:五个域名, 一台机器" en="Deploy: five hosts, one machine" /></h2>
+            <h2 className="arch-sec-title"><L zh="部署:六个域名, DNS 分线路" en="Deploy: six hosts, split-horizon DNS" /></h2>
           </div>
           <table className="arch-tbl">
             <thead><tr>
@@ -1479,10 +1347,11 @@ React SPA   →  fetch(apiUrl('/v1/recon/abc'))
               <th><L zh="作用" en="Role" /></th>
             </tr></thead>
             <tbody>
-              <tr><td><code>cuberoot.me</code></td><td><L zh="云服务器 nginx" en="Cloud nginx" /></td><td><L zh="主站, SPA 入口" en="Primary site, SPA entry" /></td></tr>
-              <tr><td><code>www.cuberoot.me</code></td><td><L zh="同台, 301" en="Same VM, 301" /></td><td><L zh="apex 与 www 互通" en="apex / www mutual redirect" /></td></tr>
-              <tr><td><code>api.cuberoot.me</code></td><td><L zh="同台 nginx 反代 :3001" en="Same VM, nginx → :3001" /></td><td><L zh="Hono API + 24h proxy_cache" en="Hono API + 24h proxy_cache" /></td></tr>
-              <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨:同台 nginx alias / GH Pages" en="Dual: nginx alias / GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze),境内主路径快,境外走子域" en="WordPress static archive (frozen 2026-05); main path serves CN, subdomain serves oversea" /></td></tr>
+              <tr><td><code>cuberoot.me</code><br/><code>www.cuberoot.me</code></td><td><L zh="DNS 分线路 — 国内 ISP → 境内云服务器 nginx → systemd Next standalone :3002;其他线路 → Vercel Hobby edge (同份代码 push 即部署)" en="Split-horizon DNS — CN ISP → in-country nginx → systemd Next standalone :3002; other lines → Vercel Hobby edge (same code, push-to-deploy)" /></td><td><L zh="主站, Next.js 16 App Router" en="Primary site, Next.js 16 App Router" /></td></tr>
+              <tr><td><code>api.cuberoot.me</code></td><td><L zh="同台云服务器 nginx 反代 :3001" en="Cloud VM nginx → :3001" /></td><td><L zh="Hono API + 24h proxy_cache" en="Hono API + 24h proxy_cache" /></td></tr>
+              <tr><td><code>next.cuberoot.me</code></td><td><L zh="同 systemd cuberoot-next :3002 (别名)" en="Same systemd cuberoot-next :3002 (alias)" /></td><td><L zh="Staging 别名 / 直连境内 Next 不绕 DNS" en="Staging alias / direct-to-CN-Next bypassing DNS" /></td></tr>
+              <tr><td><code>vite.cuberoot.me</code></td><td><L zh="同台 nginx 服 toolkit dist (Vite SPA 退役归档)" en="Same nginx serving toolkit dist (retired Vite SPA archive)" /></td><td><L zh="主域 swap 出问题时一键回滚" en="One-click rollback if the main-domain Next swap fails" /></td></tr>
+              <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨:同台 nginx alias / 境外 GH Pages" en="Dual: nginx alias / oversea GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze)" en="WordPress static archive (frozen 2026-05)" /></td></tr>
             </tbody>
           </table>
         </section>
@@ -1536,80 +1405,12 @@ React SPA   →  fetch(apiUrl('/v1/recon/abc'))
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">09</span>
-            <h2 className="arch-sec-title"><L zh="Dev HMR:一份 JS, 三个入口都能热更" en="Dev HMR: one JS, three entries, all hot-reload" /></h2>
-          </div>
-          <p className="arch-sec-lede">
-            <L
-              zh={<>开发时 PC 走 <code>http://localhost:5173/</code> (本机直连, 飞快, 无 TLS), 同 WiFi 手机走 <code>https://alienware.tail171d80.ts.net/</code> (Tailscale Funnel 公网可达), 蜂窝/外网手机走 <code>https://dev.cuberoot.me/</code> (自有云服务器 nginx + frp 反向隧道回 PC vite)。三个入口共用同一份 <code>/@vite/client</code> JS, 却要分别拉 <code>ws</code> / <code>wss</code>、不同端口才能连到同一个 HMR server。Vite 是怎么"一份 JS 满足三边"的。</>}
-              en={<>In dev, the PC visits <code>http://localhost:5173/</code> (direct, fast, plain HTTP), same-WiFi phones visit <code>https://alienware.tail171d80.ts.net/</code> (public via Tailscale Funnel), and cellular/off-network phones visit <code>https://dev.cuberoot.me/</code> (self-hosted VM nginx + frp reverse tunnel back to the PC). All three entries pull the same <code>/@vite/client</code> JS, yet each needs a different scheme (<code>ws</code>/<code>wss</code>) and port to reach the same HMR server. Here's how Vite makes one JS satisfy all three.</>}
-            />
-          </p>
-          <div className="arch-diagram">
-            <HmrTripleEntrySVG />
-          </div>
-          <pre className="arch-code">{`// ❌ BEFORE  — vite.config.ts 写了:  hmr: { clientPort: 443, protocol: 'wss' }
-//    Vite 把字面量烤进 /@vite/client, 两端都被强制走 wss://...:443/
-const socketProtocol = "wss" || (importMetaUrl.protocol === "https:" ? "wss" : "ws");
-const hmrPort = 443;
-const socketHost = \`\${importMetaUrl.hostname}:\${hmrPort || importMetaUrl.port}/\`;
-// localhost 拿到:  wss://localhost:443/        ← 本机 443 没监听, HMR 死
-
-// ✅ AFTER  — 删掉整段 hmr 配置
-//    Vite 注入 null, 客户端 || 短路回退到 page URL 自身的值
-const socketProtocol = null || (importMetaUrl.protocol === "https:" ? "wss" : "ws");
-const hmrPort = null;
-const socketHost = \`\${importMetaUrl.hostname}:\${hmrPort || importMetaUrl.port}/\`;
-// localhost 拿到:  ws://localhost:5173/        ← page 是 http:5173, ws 也是 ws:5173
-// Funnel   拿到:  wss://alienware...ts.net:/  ← URL 末尾的孤 ":" 被规范化, 走 wss 默认 443`}</pre>
-          <div className="arch-details">
-            <article className="arch-detail">
-              <h3 className="arch-detail-title"><L zh="坑:写死 clientPort 等于「全员遵守一个入口」" en="The trap: a hardcoded clientPort enforces one entry on everyone" /></h3>
-              <p className="arch-detail-body">
-                <L
-                  zh={<>Vite 在 dev server 启动时把 HMR 配置烤成 <code>/@vite/client</code> 里的字面量 — 一次烤好, 之后所有浏览器拿到的是同一份。所以 <code>clientPort: 443</code> 让 Funnel 入口通的同时, 也让 localhost 入口去连不存在的 <code>wss://localhost:443</code>, 一起踩坑。</>}
-                  en={<>Vite bakes the HMR config into <code>/@vite/client</code> at dev-server startup — once baked, every browser receives the same file. So <code>clientPort: 443</code> made the Funnel entry work AND made the localhost entry try a non-existent <code>wss://localhost:443</code>. Same trap for everyone.</>}
-                />
-              </p>
-            </article>
-            <article className="arch-detail">
-              <h3 className="arch-detail-title"><L zh="解法:删 override, 让 page URL 自己说话" en="The fix: delete the override, let the page URL speak" /></h3>
-              <p className="arch-detail-body">
-                <L
-                  zh={<>删掉 <code>hmr</code> 整段, Vite 把客户端里的 <code>__HMR_PORT__</code> / <code>__HMR_PROTOCOL__</code> 注成 <code>null</code>。客户端用 <code>null || X</code> 短路 fallback 到 <code>importMetaUrl.port</code> / <code>protocol</code> — 浏览器加载这份 JS 时的 URL 就是事实。两端各自拿到自己该用的值, 不需要服务端任何条件分发。</>}
-                  en={<>After deleting the <code>hmr</code> block, Vite injects <code>__HMR_PORT__</code> / <code>__HMR_PROTOCOL__</code> as <code>null</code>. The client falls through <code>null || X</code> to <code>importMetaUrl.port</code> / <code>protocol</code> — the URL of the JS itself. Each entry computes its own correct values, no server-side conditional needed.</>}
-                />
-              </p>
-            </article>
-            <article className="arch-detail">
-              <h3 className="arch-detail-title"><L zh="关键巧合:URL.port 对默认端口返回空串" en="The hidden trick: URL.port returns '' for default ports" /></h3>
-              <p className="arch-detail-body">
-                <L
-                  zh={<>这是 URL 规范的细节:对 <code>https://host/</code>, <code>new URL(...).port</code> 返回 <strong>空串</strong>, 不是 <code>"443"</code>。所以手机端拼出来的 ws URL 长这样:<code>wss://host:/</code> — 末尾一个孤零零的 <code>":"</code>。浏览器规范化这种 URL 时直接把 <code>":"</code> 去掉, 端口回退到 scheme 默认 443 — 也正好是 Funnel 暴露的公开端口。两边天然对齐。</>}
-                  en={<>This is a quiet URL-spec detail: for <code>https://host/</code>, <code>new URL(...).port</code> returns <strong>an empty string</strong>, not <code>"443"</code>. So the phone derives <code>wss://host:/</code> — a stray trailing <code>":"</code> and nothing after. Browsers normalize that away and fall back to the scheme default 443 — which happens to be exactly Funnel's public port. Things line up for free.</>}
-                />
-              </p>
-            </article>
-            <article className="arch-detail">
-              <h3 className="arch-detail-title"><L zh="为什么反代单端口能同时跑 HTTP + WS" en="Why a single reverse-proxy port carries HTTP and WS together" /></h3>
-              <p className="arch-detail-body">
-                <L
-                  zh={<>Vite dev server 是一个 <code>http.Server</code>, 在 5173 上同时接 HTTP 请求和 <code>Upgrade: websocket</code> 升级。所以无论是 Funnel 的 <code>:443 → :5173</code>, 还是 <code>dev.cuberoot.me</code> 的 nginx <code>:443 → frp :7100 → :5173</code>, 单条映射既转 HTML/JS 静态请求也转 WS upgrade — 一个端口够用。HMR 不需要为反代单独再开一条规则。前提:nginx 里要有 <code>proxy_set_header Upgrade $http_upgrade; Connection $connection_upgrade;</code> 让 ws 升级头不被默认 HTTP/1.0 反代吞掉(<code>ops/nginx/www.cuberoot.me.conf</code> 顶部那段 map 就是干这事)。</>}
-                  en={<>Vite's dev server is one <code>http.Server</code> handling both regular HTTP and <code>Upgrade: websocket</code> on port 5173. So whether the route is Funnel's <code>:443 → :5173</code> or <code>dev.cuberoot.me</code>'s nginx <code>:443 → frp :7100 → :5173</code>, a single mapping carries both the static HTML/JS and the WS upgrade — one port is enough. HMR doesn't need a separate rule. Prerequisite: nginx must forward the Upgrade/Connection headers (<code>proxy_set_header Upgrade $http_upgrade; Connection $connection_upgrade;</code>), otherwise the default HTTP/1.0 proxy mode silently strips them — see the <code>map</code> at the top of <code>ops/nginx/www.cuberoot.me.conf</code>.</>}
-                />
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section className="arch-sec">
-          <div className="arch-sec-head">
-            <span className="arch-sec-num">10</span>
             <h2 className="arch-sec-title"><L zh="一次请求穿越几层:点 tab 看高亮" en="A request walks the stack: click a tab to highlight" /></h2>
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>第 03 节给了"理想读请求"的时间轴, 但实际不是所有 URL 都走全程。点下面 4 个 tab, 看每种请求各点亮哪些层 — 有的连 SPA 都不启动, 有的在 nginx 那层就 hit cache 返回, 有的整条管道穿透。</>}
-              en={<>Section 03 sketches the "ideal read" timeline, but real URLs don't all walk the full path. Click the four tabs below to see which stages each pattern lights up — some never boot the SPA, some hit cache at nginx, some pierce all the way through.</>}
+              zh={<>第 03 节给了"理想读请求"的时间轴, 但实际不是所有 URL 都走全程。点下面 4 个 tab, 看每种请求各点亮哪些层 — 有的连 Next 都不启动, 有的在 nginx 那层就 hit cache 返回, 有的整条管道穿透。</>}
+              en={<>Section 03 sketches the "ideal read" timeline, but real URLs don't all walk the full path. Click the four tabs below to see which stages each pattern lights up — some never boot Next, some hit cache at nginx, some pierce all the way through.</>}
             />
           </p>
           <div className="arch-diagram tracer-frame">
@@ -1619,7 +1420,7 @@ const socketHost = \`\${importMetaUrl.hostname}:\${hmrPort || importMetaUrl.port
 
         <section className="arch-sec">
           <div className="arch-sec-head">
-            <span className="arch-sec-num">11</span>
+            <span className="arch-sec-num">10</span>
             <h2 className="arch-sec-title"><L zh="移动端:一份 SPA, 两个 webview 套壳" en="Mobile: one SPA, two webview shells" /></h2>
           </div>
           <p className="arch-sec-lede">
@@ -1690,7 +1491,7 @@ const socketHost = \`\${importMetaUrl.hostname}:\${hmrPort || importMetaUrl.port
 
         <section className="arch-sec">
           <div className="arch-sec-head">
-            <span className="arch-sec-num">12</span>
+            <span className="arch-sec-num">11</span>
             <h2 className="arch-sec-title"><L zh="时间线:近一年的关键改动" en="Timeline: the past year's key changes" /></h2>
           </div>
           <p className="arch-sec-lede">
