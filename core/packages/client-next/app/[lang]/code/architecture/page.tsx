@@ -660,6 +660,20 @@ interface TLEntry {
 }
 const TIMELINE: TLEntry[] = [
   {
+    date: '2026-05-27',
+    tag: 'migration',
+    zh: {
+      title: 'Phase 4 完成: 主域从 Vite SPA 切到 Next.js',
+      body: 'cuberoot.me 主域换底:中国 ISP 用户 → 境内 nginx → systemd cuberoot-next (Next standalone),海外用户 → Vercel edge → 同份 Next 代码。DNS 阿里云分线路。旧 Vite SPA 退役到 vite.cuberoot.me 作回滚兜底。GH Pages 镜像不再用。',
+      expand: '架构骨架不变(后端 Hono+PG 不动),前端框架换 React Router → Next.js App Router + Turbopack,新代码在 packages/client-next/。同一份 Next 代码两边跑:境内 = systemd 标准 next standalone(deploy_next.yml CI build + tar + scp + 原子 swap + 健康检查),海外 = Vercel Hobby 自动从 GitHub 部署。Vercel 上踩到 3 个坑:(1) standalone + outputFileTracingRoot 跟 Vercel Turbopack 撞 manifest ENOENT (vercel/next.js#88579), VERCEL=1 env gate 跳过;(2) /stats/* /tools/* 在 Vercel 没打进 bundle, route handler 加 fallback fetch vite.cuberoot.me;(3) /zh/wca/comp/[slug] 必须 force-dynamic 否则 useSearchParams 抛 DYNAMIC_SERVER_USAGE 500。海外 cert HTTP-01 challenge 1 分钟内签发, 全程零 downtime。',
+    },
+    en: {
+      title: 'Phase 4: main domain swapped from Vite SPA to Next.js',
+      body: 'cuberoot.me cuts over: China ISPs → in-country nginx → systemd cuberoot-next (Next standalone); overseas → Vercel edge → same Next code. Alibaba split-horizon DNS. The retired Vite SPA stays at vite.cuberoot.me as rollback. GH Pages mirror is now disabled.',
+      expand: 'Backend skeleton unchanged (Hono+PG); front-end framework swaps React Router → Next.js App Router + Turbopack, new code lives in packages/client-next/. One Next codebase runs in two places: in-country = standard Next standalone on systemd (deploy_next.yml CI build + tar + scp + atomic swap + health check), overseas = Vercel Hobby auto-deploy from GitHub. Three Vercel-specific gotchas: (1) standalone + outputFileTracingRoot trip Vercel Turbopack into manifest ENOENT (vercel/next.js#88579) — gated by VERCEL=1 env; (2) /stats/* and /tools/* are not bundled into Vercel functions — route handlers fall back to vite.cuberoot.me; (3) /zh/wca/comp/[slug] needs force-dynamic or useSearchParams throws DYNAMIC_SERVER_USAGE 500. HTTP-01 cert issued under a minute, zero user-visible downtime.',
+    },
+  },
+  {
     date: '2026-05-14',
     tag: 'feature',
     zh: {

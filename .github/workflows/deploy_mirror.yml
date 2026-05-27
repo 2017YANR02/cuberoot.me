@@ -1,14 +1,11 @@
-# 每次 push 或其他 CI 完成后，直接 rsync 仓库静态文件到云（镜像）
-# 目标：www.cuberoot.me（与 GH Pages 镜像保持一致）
-name: Deploy Mirror to cuberoot
+# Phase 4 (2026-05-27): 主域 cuberoot.me 已切换到 Next.js (境内 nginx → systemd cuberoot-next,
+# 海外 → Vercel),GH Pages 不再作为镜像入口。本 workflow 自动触发已停,保留 workflow_dispatch
+# 以便短期回滚:如果 cuberoot.me 切回 Vite SPA 同时需要 GH Pages 镜像,手动 run 一次即可。
+# 长期稳定后(~2026-06-10)可直接删本文件 + 仓库根的 SPA 残留 (_assets/ index.html 等)。
+name: Deploy Mirror to cuberoot (DISABLED — Phase 4 swap)
 
 on:
-  push:
-    branches: [main]
-  workflow_run:
-    workflows: ["Update Stats", "Update Upcoming Comps", "Deploy Core"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
