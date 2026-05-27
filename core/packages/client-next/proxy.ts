@@ -59,6 +59,8 @@ const MIGRATED_PATHS: readonly string[] = [
   // batch 6 — alg library + calc
   '/alg',
   '/calc',
+  // batch 7 — code subtree
+  '/code',
 ];
 
 function isMigrated(pathname: string): boolean {
