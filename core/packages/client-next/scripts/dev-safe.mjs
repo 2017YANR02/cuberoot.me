@@ -35,7 +35,13 @@ const nextBin = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
 const child = spawn(process.execPath, [nextBin, 'dev', '-H', '127.0.0.1', '-p', '3000'], {
   cwd: ROOT,
   stdio: 'inherit',
-  env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=3072' },
+  env: {
+    ...process.env,
+    // V8 heap cap (catches pure JS leaks; turbopack Rust mem is outside this).
+    // dns-result-order=ipv4first avoids intermittent getaddrinfo ENOTFOUND on
+    // upstream rewrites when AAAA lookup stalls.
+    NODE_OPTIONS: '--max-old-space-size=3072 --dns-result-order=ipv4first',
+  },
 });
 
 const PID = child.pid;
@@ -63,30 +69,46 @@ function killTree(pid) {
   }
 }
 
+// Total cap covers ALL node procs (turbopack forks workers that don't
+// inherit our PriorityClass via Node's spawn — we re-apply each tick).
+const TOTAL_RAM_CAP_MB = 5000;
+
 let watchdogActive = true;
 const watchdog = setInterval(() => {
   if (!watchdogActive) return;
-  let rssMB;
+  let parentMB, totalMB, count;
   try {
     const out = execSync(
-      `pwsh -NoProfile -Command "(Get-Process -Id ${PID} -ErrorAction SilentlyContinue).WS"`,
+      `pwsh -NoProfile -Command "$ps = Get-Process node -EA SilentlyContinue; $ps | ForEach-Object { if ($_.PriorityClass -ne 'BelowNormal') { try { $_.PriorityClass = 'BelowNormal' } catch {} } }; $p = $ps | Where-Object Id -eq ${PID}; $sum = ($ps | Measure-Object WS -Sum).Sum; '{0} {1} {2}' -f ($p.WS), $sum, $ps.Count"`,
       { encoding: 'utf8', timeout: 4000 },
     ).trim();
-    if (!out) {
-      console.log('[dev-safe] dev process gone, watchdog exits');
+    if (!out || out.startsWith(' ')) {
+      console.log('[dev-safe] parent process gone, watchdog exits');
       clearInterval(watchdog);
       watchdogActive = false;
       return;
     }
-    rssMB = Math.round(Number(out) / 1048576);
+    const [pWS, sumWS, n] = out.split(' ');
+    parentMB = Math.round(Number(pWS || 0) / 1048576);
+    totalMB = Math.round(Number(sumWS || 0) / 1048576);
+    count = Number(n || 0);
   } catch {
     return;
   }
 
-  appendFileSync(STATUS_LOG, `${new Date().toISOString()} PID=${PID} RAM=${rssMB}MB\n`);
+  appendFileSync(STATUS_LOG, `${new Date().toISOString()} parent=${parentMB}MB total_node=${totalMB}MB (${count} procs)\n`);
 
-  if (rssMB > RAM_CAP_MB) {
-    const msg = `${new Date().toISOString()} KILL PID=${PID} RSS=${rssMB}MB > cap=${RAM_CAP_MB}MB`;
+  if (totalMB > TOTAL_RAM_CAP_MB) {
+    const msg = `${new Date().toISOString()} KILL total node RSS=${totalMB}MB > cap=${TOTAL_RAM_CAP_MB}MB (${count} procs)`;
+    console.error(`[dev-safe] ${msg}`);
+    writeFileSync(KILL_LOG, msg + '\n');
+    killTree(PID);
+    clearInterval(watchdog);
+    watchdogActive = false;
+    process.exit(1);
+  }
+  if (parentMB > RAM_CAP_MB) {
+    const msg = `${new Date().toISOString()} KILL parent PID=${PID} RSS=${parentMB}MB > cap=${RAM_CAP_MB}MB`;
     console.error(`[dev-safe] ${msg}`);
     writeFileSync(KILL_LOG, msg + '\n');
     killTree(PID);
