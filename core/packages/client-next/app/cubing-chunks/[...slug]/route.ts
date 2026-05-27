@@ -1,21 +1,18 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { build } from "esbuild";
 
-// Anchor on this file's URL (process.cwd is unreliable across dev/build).
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-// app/cubing-chunks/[...slug]/route.ts → packages/client-next/
-const CLIENT_NEXT_DIR = path.resolve(HERE, "..", "..", "..");
-const CUBING_CHUNKS_DIR = path.resolve(
-  CLIENT_NEXT_DIR,
-  "node_modules",
-  "cubing",
-  "dist",
-  "lib",
-  "cubing",
-  "chunks",
-);
+// Resolve cubing's chunks dir via createRequire so it works regardless of
+// where Next/Vercel places the route handler (was using a relative
+// fileURLToPath(import.meta.url) walk-up which silently 404s on Vercel
+// when the lambda bundle layout differs from local).
+const req = createRequire(import.meta.url);
+// cubing/package.json gives an absolute path to cubing's root anywhere on disk.
+const CUBING_PKG_JSON = req.resolve("cubing/package.json");
+const CUBING_ROOT = path.dirname(CUBING_PKG_JSON);
+const CUBING_CHUNKS_DIR = path.join(CUBING_ROOT, "dist", "lib", "cubing", "chunks");
+const CLIENT_NEXT_DIR = path.resolve(CUBING_ROOT, "..", ".."); // for esbuild absWorkingDir (node_modules host)
 
 const CONTENT_TYPE: Record<string, string> = {
   ".js": "application/javascript; charset=UTF-8",
