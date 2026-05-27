@@ -42,6 +42,18 @@ const nextConfig: NextConfig = {
   // esbuild-bundles it into a self-contained ESM (mirroring Vite's worker
   // pre-bundling). Required because Turbopack does not produce
   // worker-runtime-independent bundles for nested module workers.
+  //
+  // The route handler reads cubing chunks via fs.readFile at runtime, so
+  // Next's static import tracer never sees them and they get omitted from
+  // both Vercel functions and the systemd standalone bundle. Force-include
+  // here. Match resolves from outputFileTracingRoot (monorepo root when
+  // standalone, project root on Vercel).
+  outputFileTracingIncludes: {
+    "/cubing-chunks/[...slug]": [
+      "../../node_modules/cubing/dist/lib/cubing/chunks/**",
+      "./node_modules/cubing/dist/lib/cubing/chunks/**",
+    ],
+  },
 
   // COOP/COEP 只发给真用 SharedArrayBuffer (cubeopt-wasm) 的 /scramble/solver。
   // 历史 nginx 把 analyzer 一起套了 — 但 analyzer 用 classic worker + emscripten
