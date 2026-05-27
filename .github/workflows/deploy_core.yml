@@ -37,19 +37,20 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      # 构建前端
-      - name: Build client
-        working-directory: core
-        run: pnpm --filter @cuberoot/client build
-
-      # @cuberoot/shared subpath imports (server reads dist/*.js via node export
-      # condition). visualcube 同理: server bundle 通过 node→dist/index.js 解析。
-      # 这两个 dist/ 必须先存在 esbuild 才能拉进 bundle。
+      # @cuberoot/shared + @cuberoot/visualcube 必须在 client / server bundle 之前 build:
+      # - server.bundle.js (esbuild --bundle): @cuberoot/shared subpath + visualcube 走 node→dist/*.js 条件
+      # - client sw.ts (esbuild via build_sw.mjs): visualcube exports.default 已是 ./dist/index.js
+      #   (commit de021a36a 为让 Turbopack 认得改的);esbuild 浏览器 bundle 也走 default → 需 dist 存在
       - name: Build shared deps
         working-directory: core
         run: |
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
+
+      # 构建前端
+      - name: Build client
+        working-directory: core
+        run: pnpm --filter @cuberoot/client build
 
       # esbuild --bundle 把 server src + 全部 deps (含写得烂的 sr-puzzlegen,
       # 无扩展名 ESM)打成单个 dist/server.bundle.js,Node 严格模式直接跑。
