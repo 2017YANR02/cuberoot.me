@@ -1,0 +1,107 @@
+/* RecordSelect——自定义下拉，匹配 .submit-field input 的尺寸/边框风格 */
+
+.record-select {
+  position: relative;
+  display: block;
+}
+
+.record-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e5e5e5;
+  font-size: 0.88rem;
+  font-family: 'Inter', Arial, sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.record-select-trigger:focus-visible {
+  border-color: rgba(217, 119, 87, 0.5);
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
+}
+
+.record-select-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 1em;
+  min-width: 0;
+}
+
+.record-select-chevron {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.record-select-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #888;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.record-select-clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e5e5;
+}
+
+.record-select-empty {
+  color: #5a5a5a;
+  font-size: 0.85rem;
+}
+
+.record-select-count {
+  color: #888;
+  font-size: 0.78rem;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.record-select-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.record-select-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.record-select-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.record-select-item--active {
+  background: rgba(217, 119, 87, 0.15);
+}

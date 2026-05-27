@@ -9,10 +9,9 @@
  *    ported yet. Plain textarea retains paste / typing / caret sync — the
  *    main "live preview while editing" UX is intact.
  *  - No CubeVirtualKeyboard (defer; mobile users can use system kbd).
- *  - No twisty puzzles (pyraminx/skewb/megaminx) — TwistySection isn't ported.
- *    PuzzleSettings hides the picker entries; only NxN + SQ1 are selectable.
- *  - tnoodleRandomScramble is replaced by direct cubing.js + RandomMoveNxN
- *    inline (no cstimer_444 worker pool, no 555 server, no m2p WASM).
+ *  - Scramble path uses tnoodleRandomScramble (lib/cubing-scramble.ts), which
+ *    routes to cubing.js + the in-app pool. NxN N≥8 falls back to inline
+ *    random-move (cheap, no solver needed).
  */
 
 import {
@@ -37,6 +36,9 @@ import CubeGroup from './cuber/group';
 import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
 import { invertAlg, simplifyAlg, mirrorAlg } from '@/lib/cube3';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
+import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
   Slider, Toggle, KeymapModal,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS,
@@ -46,8 +48,7 @@ import { type KeyMove } from './keymap';
 import { WheelPicker } from '@/components/WheelPicker';
 import './player-controls.css';
 
-/** Random-move NxN scrambler — inlined from utils/cubingScramble.ts so we don't
- *  pull in the cstimer_444 / scramble_555_server / m2p WASM chain.  */
+/** Random-move NxN scrambler for N≥8 (no solver). */
 const SCRAMBLE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
 const SCRAMBLE_AXIS_OF: Record<string, number> = {
   U: 0, D: 0, L: 1, R: 1, F: 2, B: 2,
@@ -79,14 +80,12 @@ function randomMoveScrambleNxN(N: number): string {
   return moves.join(' ');
 }
 
-async function wcaRandomScramble(eventId: string): Promise<string> {
-  const { randomScrambleForEvent } = await import('cubing/scramble');
-  const a = await randomScrambleForEvent(eventId);
-  return a.toString();
-}
-
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1';
+export type SimPuzzle = number | 'sq1' | 'pyraminx' | 'skewb' | 'megaminx';
+
+function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' {
+  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
+}
 
 const SAME_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
   R: 'x', U: 'y', F: 'z', S: 'z',
@@ -129,6 +128,13 @@ interface Props {
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
   userMoveRef?: RefObject<((action: TwistAction | string) => void) | null>;
+  /** TwistyPlayer instance for pyraminx/skewb/megaminx — used by animateScramble
+   *  to drive jumpToStart + play after the alg is set. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  twistyPlayerRef?: RefObject<any>;
+  /** Skewb-only: Sarah vs WCA notation. Owner SimPage persists in localStorage. */
+  skewbNotation?: SkewbNotation;
+  onSkewbNotationChange?: (n: SkewbNotation) => void;
 }
 
 export default function PlayerControls({
@@ -136,9 +142,11 @@ export default function PlayerControls({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   settings, onSettingsChange,
   keymap, onKeymapChange, onResetKeymap,
-  userMoveRef,
+  userMoveRef, twistyPlayerRef,
+  skewbNotation, onSkewbNotationChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
+  const isTwistyMode = isTwistyPuzzle(puzzleKind);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -288,7 +296,7 @@ export default function PlayerControls({
 
   const appendUserMove = useCallback((action: TwistAction | string) => {
     let moveText = typeof action === 'string' ? action : action.value;
-    if (typeof action !== 'string' && !isSq1 && world && world.cube.order === 1) {
+    if (typeof action !== 'string' && !isSq1 && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
       if (!norm) return;
       moveText = norm.value;
@@ -308,7 +316,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [onAlgChange, isSq1, world]);
+  }, [onAlgChange, isSq1, isTwistyMode, world]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -318,7 +326,7 @@ export default function PlayerControls({
 
   // QWERTY: keymap → twist + append (no virtual keyboard, just hard keys).
   const applyMove = useCallback((k: KeyMove) => {
-    if (isSq1) return;
+    if (isSq1 || isTwistyMode) return;
     let action: TwistAction | null = new TwistAction(k.sign, !!k.reverse, 1);
     let moveText = action.value;
     if (world && world.cube.order === 1) {
@@ -340,18 +348,68 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSq1, onAlgChange]);
+  }, [world, isSq1, isTwistyMode, onAlgChange]);
 
   const handleScramble = useCallback(async () => {
     const reqId = ++scrambleReqIdRef.current;
+    // Twisty puzzles (pyraminx/skewb/megaminx) — no cuber world. Route to
+    // tnoodleRandomScramble (cubing.js + pool). animateScramble=false writes
+    // setup (instant baseline); true clears setup, sets alg, and drives the
+    // TwistyPlayer to jumpToStart + play.
+    if (isTwistyMode) {
+      let twistyScramble = '';
+      try {
+        twistyScramble = (await tnoodleRandomScramble(puzzleKind as string)) ?? '';
+      } catch (err) {
+        console.warn('[sim] twisty scramble failed:', err);
+      }
+      if (reqId !== scrambleReqIdRef.current) return;
+      if (settings.animateScramble && twistyScramble) {
+        if (setupElRef.current) {
+          setupElRef.current.value = '';
+          setupElRef.current.style.height = 'auto';
+          setupElRef.current.style.height = setupElRef.current.scrollHeight + 'px';
+        }
+        setSetupDraft('');
+        onSetupChange('');
+        if (algElRef.current) {
+          algElRef.current.value = twistyScramble;
+          algElRef.current.style.height = 'auto';
+          algElRef.current.style.height = algElRef.current.scrollHeight + 'px';
+        }
+        skipAutoResetRef.current = true;
+        setAlgDraft(twistyScramble);
+        onAlgChange(twistyScramble);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const p = twistyPlayerRef?.current as unknown as { jumpToStart?: (opts?: unknown) => void; play?: () => void } | null;
+            try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
+            try { p?.play?.(); } catch { /* */ }
+          });
+        });
+        return;
+      }
+      if (setupElRef.current) {
+        setupElRef.current.value = twistyScramble;
+        setupElRef.current.style.height = 'auto';
+        setupElRef.current.style.height = setupElRef.current.scrollHeight + 'px';
+      }
+      setSetupDraft(twistyScramble);
+      onSetupChange(twistyScramble);
+      return;
+    }
     if (!world) return;
     let scramble: string | null = null;
     try {
       if (isSq1) {
-        scramble = await wcaRandomScramble('sq1');
+        // tnoodle output for sq1 is `(t, b) / (t, b) / ...`. compactSq1Alg
+        // collapses it to the canonical `1023030...` shorthand the textarea
+        // shows on /scramble/gen and that parseSq1Tokens also accepts.
+        const raw = await tnoodleRandomScramble('sq1');
+        scramble = raw ? formatScrambleForEvent('sq1', raw) : '';
       } else if (order >= 2 && order <= 7) {
         const eventId = `${order}${order}${order}`;
-        scramble = await wcaRandomScramble(eventId);
+        scramble = await tnoodleRandomScramble(eventId);
       } else {
         scramble = randomMoveScrambleNxN(order);
       }
@@ -361,6 +419,8 @@ export default function PlayerControls({
     }
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
+    // SQ1 always animates — instant apply would be visually indistinguishable
+    // from no rotation. The animation is the whole point.
     const animate = isSq1 || settings.animateScramble;
     if (animate) {
       animatingScrambleRef.current = true;
@@ -382,7 +442,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, settings.animateScramble, onSetupChange]);
+  }, [world, order, isSq1, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
   return (
     <div className="sim-player">
@@ -438,8 +498,20 @@ export default function PlayerControls({
             handleCaretSync(el.value, el.selectionStart ?? 0);
           }}
         />
+        {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
+          <select
+            className="sim-player-mode"
+            value={skewbNotation}
+            onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
+            title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
+          >
+            <option value="wca">WCA</option>
+            <option value="sarah">Sarah</option>
+          </select>
+        )}
       </div>
 
+      {!isTwistyMode && (
       <div className="sim-player-row">
         <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
@@ -473,12 +545,13 @@ export default function PlayerControls({
           />
         </label>
       </div>
+      )}
 
       <div className="sim-player-tools">
         <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
-        {!isSq1 && <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>}
-        {!isSq1 && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!isSq1 && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!isSq1 && !isTwistyMode && <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>}
+        {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+        {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
       </div>
 
@@ -589,7 +662,8 @@ function PuzzleSettings({
   onResetKeymap: () => void;
 }) {
   const isSq1Local = puzzleKind === 'sq1';
-  const isNxNLocal = !isSq1Local;
+  const isTwistyLocal = isTwistyPuzzle(puzzleKind);
+  const isNxNLocal = !isSq1Local && !isTwistyLocal;
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -669,15 +743,18 @@ function PuzzleSettings({
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <select
                 className="sim-puzzle-select"
-                value={isSq1Local ? 'sq1' : 'nxn'}
+                value={isTwistyLocal ? puzzleKind : (isSq1Local ? 'sq1' : 'nxn')}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v === 'sq1') onPuzzleChange('sq1');
+                  if (v === 'sq1' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
                   else onPuzzleChange(order || 3);
                 }}
               >
                 <option value="nxn">{t('NxN', 'NxN')}</option>
                 <option value="sq1">{t('Square-1', 'Square-1')}</option>
+                <option value="pyraminx">{t('金字塔', 'Pyraminx')}</option>
+                <option value="skewb">{t('斜转', 'Skewb')}</option>
+                <option value="megaminx">{t('五魔', 'Megaminx')}</option>
               </select>
             </div>
             {isNxNLocal && (

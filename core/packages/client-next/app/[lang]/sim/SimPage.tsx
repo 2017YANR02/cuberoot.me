@@ -3,25 +3,16 @@
 /**
  * /sim — 虚拟魔方 Playground / Player / Algs / Director (Next.js port).
  *
- * Vite source: packages/client/src/pages/sim/SimPage.tsx (~1254 lines).
+ * Vite source: packages/client/src/pages/sim/SimPage.tsx.
  *
- * Deferred from this port:
- *   - Twisty puzzles (pyraminx / skewb / megaminx) — depend on TwistySection
- *     which isn't ported to client-next yet. NxN + SQ1 fully work.
- *   - cubing.js TwistyPlayer playback fallback path → no twisty puzzle picker
- *   - PerfOverlay dev-only HUD
- *   - AlgInput / CubeVirtualKeyboard — PlayerControls uses plain <textarea>.
- *   - tnoodleRandomScramble pool / m2p WASM / cstimer_444 worker — falls back
- *     to direct cubing.js random-state for 2–7 + inline random-move for N≥8.
- *
- * Everything else (cuber/* engine, NxN clicks, drag-orbit, SQ1 drag, scrambles,
- * playback, algs library, export to mp4, settings) is ported full-fidelity.
+ * Twisty puzzles (pyraminx / skewb / megaminx) render via cubing.js
+ * TwistyPlayer (see components/TwistySection). NxN + SQ1 use the local
+ * huazhechen/cuber WebGL engine in cuber/.
  */
 
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
@@ -45,8 +36,10 @@ import {
 } from './cuber/sq1/sq1Drag';
 import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
 import { FACE } from './cuber/define';
+import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import LangToggle from '@/components/LangToggle';
 import ThemeToggle from '@/components/ThemeToggle';
+import TwistySection from '@/components/TwistySection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   loadSettings, saveSettings, applySettings,
@@ -59,6 +52,13 @@ import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
 import './sim.css';
+
+/** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
+export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx'] as const;
+export type TwistyPuzzle = typeof TWISTY_PUZZLES[number];
+export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
+  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
+}
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1. */
 function asNxN(world: World): Cube | null {
@@ -146,10 +146,12 @@ export default function SimPage() {
     const raw = searchParams?.get('puzzle');
     if (!raw) return 3;
     if (raw === 'sq1') return 'sq1';
+    if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
   }, [searchParams]);
+  const twisty = isTwistyPuzzle(puzzleParam);
 
   const writeSearch = useCallback((mutate: (p: URLSearchParams) => void) => {
     if (!searchParams) return;
@@ -164,6 +166,10 @@ export default function SimPage() {
   const toucherRef = useRef<Toucher | null>(null);
   const wasCompleteRef = useRef(false);
   const userMoveRef = useRef<((action: TwistAction | string) => void) | null>(null);
+  // pyraminx / skewb / megaminx TwistyPlayer instance — used by PlayerControls
+  // to jumpToStart + play during animateScramble.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const twistyPlayerRef = useRef<any>(null);
 
   const [order, setOrder] = useState<number>(3);
   const [puzzleKind, setPuzzleKind] = useState<SimPuzzle>(3);
@@ -171,6 +177,16 @@ export default function SimPage() {
     if (typeof window === 'undefined') return false;
     try { return localStorage.getItem('sim.fullscreen') === '1'; } catch { return false; }
   });
+  // Skewb notation choice — only meaningful when puzzleKind === 'skewb'.
+  const [skewbNotation, setSkewbNotationState] = useState<SkewbNotation>(() => {
+    if (typeof window === 'undefined') return 'wca';
+    try { return localStorage.getItem('sim.skewb.notation') === 'sarah' ? 'sarah' : 'wca'; }
+    catch { return 'wca'; }
+  });
+  const setSkewbNotation = useCallback((n: SkewbNotation) => {
+    setSkewbNotationState(n);
+    try { localStorage.setItem('sim.skewb.notation', n); } catch { /* private */ }
+  }, []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try { localStorage.setItem('sim.fullscreen', fullscreen ? '1' : '0'); } catch { /* private */ }
@@ -218,8 +234,12 @@ export default function SimPage() {
     });
   }, []);
 
-  // World init — single effect, no twisty branch.
+  // World init. Twisty puzzles (pyraminx/skewb/megaminx) don't use the cuber
+  // engine — they render via cubing.js TwistyPlayer in <TwistySection> below.
+  // [twisty] in deps lets cleanup tear down a live cuber instance when the
+  // user switches NxN ↔ twisty.
   useEffect(() => {
+    if (twisty) return;
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -683,7 +703,7 @@ export default function SimPage() {
       toucherRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [twisty]);
 
   const handlePuzzle = useCallback((kind: SimPuzzle) => {
     setPuzzleKind(kind);
@@ -692,6 +712,9 @@ export default function SimPage() {
     const writeUrl = () => writeSearch((np) => {
       if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
     });
+    // Twisty puzzles don't use World — just update URL. The world-init
+    // effect's [twisty] dep tears down the live cuber instance.
+    if (isTwistyPuzzle(kind)) { writeUrl(); return; }
     if (!world || world.puzzleKind === kind) { writeUrl(); return; }
     world.setPuzzle(kind);
     wasCompleteRef.current = true;
@@ -704,8 +727,13 @@ export default function SimPage() {
     handlePuzzle(n);
   }, [handlePuzzle]);
 
-  // URL puzzle param → cube.
+  // URL puzzle param → cube. For twisty puzzles there's no world to sync —
+  // mirror to local puzzleKind state so PlayerControls renders correctly.
   useEffect(() => {
+    if (isTwistyPuzzle(puzzleParam)) {
+      setPuzzleKind(puzzleParam);
+      return;
+    }
     if (!worldRef.current) return;
     if (worldRef.current.puzzleKind === puzzleParam) return;
     handlePuzzle(puzzleParam);
@@ -821,6 +849,25 @@ export default function SimPage() {
 
       <div className="sim-body">
         <div className="sim-canvas-wrap" ref={containerRef}>
+          {twisty ? (
+            <TwistySection
+              puzzle={puzzleParam}
+              // Skewb-only: translate Sarah → WCA so cubing.js plays the alg the
+              // user intended. URL stays in original notation; TwistyPlayer sees
+              // WCA. For pyraminx/megaminx, pass through.
+              scramble={puzzleParam === 'skewb' ? toWcaSkewb(setupParam, skewbNotation) : setupParam}
+              alg={puzzleParam === 'skewb' ? toWcaSkewb(algParam, skewbNotation) : algParam}
+              fillPane
+              twistOnClick
+              playerRef={twistyPlayerRef}
+              settings={settings}
+              onUserMove={(moveText) => {
+                // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
+                // to skip TwistAction parsing which would eat multi-char families.
+                userMoveRef.current?.(moveText);
+              }}
+            />
+          ) : null}
           <button
             className="sim-fullscreen-exit"
             onClick={() => setFullscreen(!fullscreen)}
@@ -841,7 +888,7 @@ export default function SimPage() {
             <AlgsPanel
               onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
               onOrderChange={handleOrder}
-              disabled={false}
+              disabled={twisty}
             />
           </CollapsibleSection>
           <PlayerControls
@@ -860,21 +907,26 @@ export default function SimPage() {
             onKeymapChange={setKeymap}
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
             userMoveRef={userMoveRef}
+            twistyPlayerRef={twistyPlayerRef}
+            skewbNotation={skewbNotation}
+            onSkewbNotationChange={setSkewbNotation}
           />
-          <CollapsibleSection
-            open={directorOpen}
-            onToggle={() => setDirectorOpen((o) => !o)}
-            icon={Film}
-            label={t('录制', 'Record')}
-          >
-            <DirectorPanel
-              getCanvas={getCanvas}
-              getWorld={getWorld}
-              getRenderer={getRenderer}
-              setup={setupParam}
-              alg={algParam}
-            />
-          </CollapsibleSection>
+          {!twisty && (
+            <CollapsibleSection
+              open={directorOpen}
+              onToggle={() => setDirectorOpen((o) => !o)}
+              icon={Film}
+              label={t('录制', 'Record')}
+            >
+              <DirectorPanel
+                getCanvas={getCanvas}
+                getWorld={getWorld}
+                getRenderer={getRenderer}
+                setup={setupParam}
+                alg={algParam}
+              />
+            </CollapsibleSection>
+          )}
         </aside>
       </div>
     </div>
