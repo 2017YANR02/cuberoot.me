@@ -13,25 +13,34 @@ export const metadata: Metadata = {
   description: "Cubing toolkit — solver, recon, training, WCA statistics.",
 };
 
-function pickLang(cookieLang: string | undefined, acceptLang: string): 'zh' | 'en' {
+function pickLang(
+  headerLang: string | null,
+  cookieLang: string | undefined,
+  acceptLang: string,
+): 'zh' | 'en' {
+  // x-lang is set by proxy.ts on /zh/* /en/* paths — URL locale wins over
+  // cookie so /zh/foo always renders zh, even on first visit.
+  if (headerLang === 'zh' || headerLang === 'en') return headerLang;
   if (cookieLang === 'zh' || cookieLang === 'en') return cookieLang;
   return acceptLang.toLowerCase().includes('zh') ? 'zh' : 'en';
 }
 
-// Phase 3 [lang] migration: server-side lang resolution from cookie (set by
-// proxy.ts on ?lang= or /zh/ /en/ paths) + Accept-Language fallback. This sets
-// <html lang> on the server, matching what I18nProvider boots client i18n
-// with — so /zh/foo URLs no longer have the en→zh first-paint flash. Bare
-// paths still flash for first-time visitors (no cookie yet) until they pick a
-// lang once, after which the cookie carries it.
+// Phase 3 [lang] migration: server-side lang resolution prefers the x-lang
+// request header set by proxy.ts (URL-derived), then cookie, then
+// Accept-Language. Owning i18n at root means [lang]/layout doesn't need its
+// own I18nProvider — nested providers were deadlocking Turbopack dev.
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const acceptLang = (await headers()).get('accept-language') ?? '';
-  const lang = pickLang(cookieStore.get('lang')?.value, acceptLang);
+  const h = await headers();
+  const lang = pickLang(
+    h.get('x-lang'),
+    cookieStore.get('lang')?.value,
+    h.get('accept-language') ?? '',
+  );
 
   return (
     <html lang={lang} suppressHydrationWarning>
