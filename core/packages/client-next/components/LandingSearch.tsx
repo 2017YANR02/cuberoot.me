@@ -1,44 +1,57 @@
 'use client';
 
 /**
- * Landing-page site search — STUB port of packages/client/src/components/LandingSearch.tsx.
+ * Landing-page site search — full port of packages/client/src/components/LandingSearch.tsx.
  *
- * Deferred from the full Vite original (which is 631 lines + a 473-line utils/site_search.ts
- * with dynamic indices for persons / comps / recons / glossary / alg-sets / stats / about /
- * stack tools, plus useSpeechToText + smart_paste). Porting all of that into client-next
- * would balloon this PR — and the static landing cards are by far the most-clicked search
- * targets anyway.
+ * Data layer lives in lib/site-search.ts (cards/tools/lookups/stats/persons/comps/
+ * recons/glossary/about/stack/algSets — 11 categories total). This component is
+ * the dropdown UI shell.
  *
- * What this stub does:
- *   - Free-text input filters the `cards` prop in memory (substring against name+section).
- *   - On Enter (or on dropdown click), navigates to the card's href via next/link.
- *   - Drop-zone for video files → setPendingVideo + router.push('/frame-count').
- *   - No speech, no smart paste, no person/comp/recon search.
- *
- * When the full search is needed, port site_search.ts in full as a follow-up.
+ * Next.js adaptations (vs Vite):
+ *  - next/link Link href + useRouter().push instead of react-router
+ *  - [lang] path prefix `/${lang}/...` in hrefs instead of ?lang= query
+ *  - EventIcon lazy-loaded via next/dynamic (was React.lazy in Vite)
+ *  - useSpeechToText / smart_paste removed for now (nice-to-have, defer)
  */
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Search, Film, LayoutGrid } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import {
+  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Film,
+  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
+} from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
+import { Flag } from '@/components/Flag';
+import { displayCuberName } from '@/lib/cuber-name-display';
+import { localizeCompName } from '@/lib/comp-localize';
+import { compLinkProps } from '@/lib/comp-link';
+import { localizeCity } from '@/lib/city-localize';
+import { formatDateRangeIso } from '@/lib/wca-date';
+import {
+  useSiteSearch,
+  METRIC_LABEL_OVERRIDE,
+  INITIAL_RENDER_CAP,
+  type SiteSearchCard,
+} from '@/lib/site-search';
 import { setPendingVideo } from '@/lib/pending-video';
 import './landing_search.css';
 
-export interface LandingSearchCard {
-  id: string;
-  href: string;
-  internal: boolean;
-  nameEn: string;
-  nameZh: string;
-  sectionTitleEn: string;
-  sectionTitleZh: string;
-}
+// EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
+const EventIcon = dynamic(
+  () => import('@/components/EventIcon/EventIcon').then(m => ({ default: m.EventIcon })),
+  { ssr: false },
+);
 
-interface Props {
-  cards: LandingSearchCard[];
-  lang: 'zh' | 'en';
-}
+const ICON_MAP: Record<string, LucideIcon> = {
+  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
+};
+
+export type LandingSearchCard = SiteSearchCard;
+
+const RECON_INITIAL_CAP = 10;
+const COMP_INITIAL_CAP = 10;
 
 const PLACEHOLDERS_ZH = [
   '今天从哪里开始?',
@@ -48,6 +61,11 @@ const PLACEHOLDERS_ZH = [
   '想看哪一年的统计?',
   '哪个公式还没背会?',
   '今天练 PLL 还是 OLL?',
+  '上周末谁拿了冠军?',
+  '想复盘哪场比赛?',
+  '中国选手谁最快?',
+  '哪个赛事即将开始?',
+  '想学什么新方法?',
 ];
 const PLACEHOLDERS_EN = [
   'Where to start today?',
@@ -57,6 +75,11 @@ const PLACEHOLDERS_EN = [
   'Browse stats by year?',
   'Which alg to drill?',
   'PLL or OLL today?',
+  'Who won last weekend?',
+  'Recon a recent solve?',
+  'Search a competition?',
+  'Try a new method?',
+  'Curious about an event?',
 ];
 
 function dayOfYear(d: Date): number {
@@ -69,37 +92,68 @@ function rotatingPlaceholder(isZh: boolean): string {
   return list[dayOfYear(new Date()) % list.length];
 }
 
-function tokenize(q: string): string[] {
-  const withBoundary = q
-    .replace(/([^\x00-\x7F])([a-z0-9])/gi, '$1 $2')
-    .replace(/([a-z0-9.])([^\x00-\x7F])/gi, '$1 $2');
-  return withBoundary.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
+function HeaderMore({ overflow, title, href, onClick }: {
+  overflow: number;
+  title: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
+      +{overflow}
+      <ArrowRight size={12} strokeWidth={1.75} />
+    </>
+  );
+  if (href) {
+    return (
+      <Link href={href} className="landing-search-header-more" onClick={onClick} title={title}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className="landing-search-header-more" onClick={onClick} title={title}>
+      {inner}
+    </button>
+  );
 }
 
-function allTokensIn(haystack: string, tokens: string[]): boolean {
-  for (const t of tokens) if (!haystack.includes(t)) return false;
-  return true;
+interface Props {
+  cards: LandingSearchCard[];
+  lang: 'zh' | 'en';
 }
 
 export default function LandingSearch({ cards, lang }: Props) {
   const isZh = lang === 'zh';
+  const params = useParams<{ lang?: string }>();
+  const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : `/${lang}`;
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedPersons, setExpandedPersons] = useState(false);
+  const [expandedRecons, setExpandedRecons] = useState(false);
+  const [expandedGlossary, setExpandedGlossary] = useState(false);
   const router = useRouter();
+  const wrapRef = useRef<HTMLDivElement>(null);
 
-  const q = query.trim().toLowerCase();
-  const tokens = useMemo(() => tokenize(q), [q]);
+  const {
+    q, xSearchEnabled, xLoaded,
+    cardMatches, toolMatches, lookupMatches, statMatches,
+    personMatches, compMatches,
+    reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    totalCount,
+  } = useSiteSearch(query, 'eager', { cards });
 
-  const cardMatches = useMemo(() => {
-    if (q === '' || tokens.length === 0) return [];
-    return cards.filter(c => {
-      const hay = `${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}`.toLowerCase();
-      return allTokensIn(hay, tokens);
-    });
-  }, [cards, q, tokens]);
+  useEffect(() => {
+    setExpandedPersons(false);
+    setExpandedRecons(false); setExpandedGlossary(false);
+  }, [q]);
+
+  const visiblePersons = expandedPersons ? personMatches : personMatches.slice(0, INITIAL_RENDER_CAP);
+  const visibleComps = compMatches.slice(0, COMP_INITIAL_CAP);
+  const visibleRecons = expandedRecons ? reconMatches : reconMatches.slice(0, RECON_INITIAL_CAP);
+  const visibleGlossary = expandedGlossary ? glossaryMatches : glossaryMatches.slice(0, INITIAL_RENDER_CAP);
 
   useEffect(() => {
     if (!open) return;
@@ -112,6 +166,13 @@ export default function LandingSearch({ cards, lang }: Props) {
 
   const showDropdown = open && q !== '';
 
+  // Prepend [lang] segment to internal paths. Vite uses ?lang= query;
+  // Next uses /<lang>/* path prefix.
+  const langHref = (path: string, extraQuery?: string): string => {
+    const url = `${langPrefix}${path}`;
+    return extraQuery ? `${url}?${extraQuery}` : url;
+  };
+
   const closeAfter = () => { setOpen(false); setQuery(''); };
   const goCard = (c: LandingSearchCard) => {
     closeAfter();
@@ -123,7 +184,7 @@ export default function LandingSearch({ cards, lang }: Props) {
     if (!file || !file.type.startsWith('video/')) return;
     setPendingVideo(file);
     closeAfter();
-    router.push('/frame-count');
+    router.push(`${langPrefix}/frame-count`);
   };
 
   return (
@@ -188,7 +249,7 @@ export default function LandingSearch({ cards, lang }: Props) {
 
       {showDropdown && (
         <div className="landing-search-panel">
-          {cardMatches.length > 0 ? (
+          {cardMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <LayoutGrid size={14} strokeWidth={1.75} />
@@ -196,33 +257,322 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
               <div className="landing-search-grid">
                 {cardMatches.map(c => (
-                  c.internal ? (
-                    <Link
-                      key={c.id}
-                      href={c.href}
-                      className="landing-search-item"
-                      onClick={closeAfter}
-                    >
-                      <span className="landing-search-item-name">{isZh ? c.nameZh : c.nameEn}</span>
-                      <span className="landing-search-item-meta">{isZh ? c.sectionTitleZh : c.sectionTitleEn}</span>
-                    </Link>
-                  ) : (
-                    <a
-                      key={c.id}
-                      href={c.href}
-                      className="landing-search-item"
-                      onClick={closeAfter}
-                    >
-                      <span className="landing-search-item-name">{isZh ? c.nameZh : c.nameEn}</span>
-                      <span className="landing-search-item-meta">{isZh ? c.sectionTitleZh : c.sectionTitleEn}</span>
-                    </a>
-                  )
+                  <button
+                    type="button"
+                    key={c.id}
+                    className="landing-search-item"
+                    onClick={() => goCard(c)}
+                  >
+                    <span className="landing-search-item-name">{isZh ? c.nameZh : c.nameEn}</span>
+                    <span className="landing-search-item-meta">{isZh ? c.sectionTitleZh : c.sectionTitleEn}</span>
+                  </button>
                 ))}
               </div>
             </section>
-          ) : (
+          )}
+
+          {toolMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Wrench size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '工具' : 'Tools'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {toolMatches.map(it => (
+                  <Link
+                    key={it.path}
+                    href={langHref(it.path)}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{isZh ? it.zh : it.en}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {lookupMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Search size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '查询' : 'Lookup'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {lookupMatches.map(it => (
+                  <Link
+                    key={`${it.path}|${it.extraQuery ?? ''}`}
+                    href={langHref(it.path, it.extraQuery)}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{isZh ? it.zh : it.en}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {statMatches.map(({ cat, items }) => {
+            const Icon = ICON_MAP[cat.iconName || ''];
+            return (
+              <section key={cat.nameEn} className="landing-search-section">
+                <div className="landing-search-section-header">
+                  {Icon && <Icon size={14} strokeWidth={1.75} />}
+                  <h3>{isZh ? cat.nameZh : cat.nameEn}</h3>
+                </div>
+                <div className="landing-search-grid">
+                  {items.map(it => {
+                    if (it.kind === 'stat') {
+                      const s = it.stat;
+                      return (
+                        <Link
+                          key={`s:${s.id}`}
+                          href={langHref(`/wca/${s.id}`)}
+                          className="landing-search-item"
+                          onClick={closeAfter}
+                        >
+                          <span className="landing-search-item-name">{isZh ? s.titleZh : s.titleEn}</span>
+                        </Link>
+                      );
+                    }
+                    const { parent, metric } = it;
+                    const parentTitle = isZh ? parent.titleZh : parent.titleEn;
+                    const metricLabel = METRIC_LABEL_OVERRIDE[metric.labelEn] ?? (isZh ? metric.labelZh : metric.labelEn);
+                    return (
+                      <Link
+                        key={`m:${parent.id}:${metric.id}`}
+                        href={`${langHref(`/wca/${parent.id}`)}#metric=${metric.id}`}
+                        className="landing-search-item"
+                        onClick={closeAfter}
+                      >
+                        <span className="landing-search-item-name">{parentTitle} · {metricLabel}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+
+          {aboutMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <BookOpen size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '算法说明' : 'About'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {aboutMatches.map(a => (
+                  <Link
+                    key={a.id}
+                    href={langHref(`/wca/about/${a.id}`)}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{isZh ? a.titleZh : a.titleEn}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {stackMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <CodeIcon size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '技术栈' : 'Stack'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {stackMatches.map(s => (
+                  <Link
+                    key={s.slug}
+                    href={langHref(`/code/stack/${s.slug}`)}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{s.name}</span>
+                    <span className="landing-search-item-meta">{isZh ? s.zh.tagline : s.en.tagline}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {glossaryMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <BookA size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '术语' : 'Glossary'}</h3>
+                {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
+                  <HeaderMore
+                    overflow={glossaryMatches.length - INITIAL_RENDER_CAP}
+                    title={isZh ? `展开全部 ${glossaryMatches.length} 条` : `Expand all ${glossaryMatches.length}`}
+                    onClick={() => setExpandedGlossary(true)}
+                  />
+                )}
+              </div>
+              <div className="landing-search-grid">
+                {visibleGlossary.map(g => (
+                  <Link
+                    key={g.slug}
+                    href={`${langHref('/wiki')}#${g.slug}`}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{g.head}</span>
+                    <span className="landing-search-item-meta">{g.body.slice(0, 80)}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {algSetMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Library size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '公式库' : 'Algorithms'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {algSetMatches.map(a => (
+                  <Link
+                    key={`${a.puzzle}/${a.setSlug}`}
+                    href={langHref(`/alg/${a.puzzle}/${a.setSlug}`)}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{a.puzzle} · {a.setSlug}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {personMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <UserRound size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '选手' : 'Persons'}</h3>
+                {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
+                  <HeaderMore
+                    overflow={personMatches.length - INITIAL_RENDER_CAP}
+                    title={isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`}
+                    onClick={() => setExpandedPersons(true)}
+                  />
+                )}
+              </div>
+              <div className="landing-search-grid">
+                {visiblePersons.map(p => (
+                  <Link
+                    key={p.wcaId}
+                    href={langHref(`/wca/persons/${p.wcaId}`)}
+                    className="landing-search-item landing-search-item--rich"
+                    onClick={closeAfter}
+                  >
+                    <Flag iso2={p.iso2} className="country-flag" />
+                    <span className="landing-search-item-main">
+                      <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
+                      <span className="landing-search-item-meta">{p.wcaId}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {compMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <CalendarDays size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '比赛' : 'Competitions'}</h3>
+                {compMatches.length > COMP_INITIAL_CAP && (
+                  <HeaderMore
+                    overflow={compMatches.length - COMP_INITIAL_CAP}
+                    title={isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`}
+                    href={langHref(`/wca/calendar`, `view=list&q=${encodeURIComponent(q)}`)}
+                    onClick={closeAfter}
+                  />
+                )}
+              </div>
+              <div className="landing-search-grid">
+                {visibleComps.map(c => {
+                  const displayName = localizeCompName(c.id, c.name, isZh);
+                  const cityStr = c.city ? localizeCity(c.city, isZh) : '';
+                  const linkProps = compLinkProps(c.id);
+                  // compLinkProps returns { href, ... }; href is bare /wca/comp/<slug> — prefix lang.
+                  const href = linkProps.href.startsWith('/') ? `${langPrefix}${linkProps.href}` : linkProps.href;
+                  return (
+                    <Link
+                      key={c.id}
+                      {...linkProps}
+                      href={href}
+                      className="landing-search-item landing-search-item--rich"
+                      onClick={closeAfter}
+                    >
+                      <Flag iso2={c.country} className="country-flag" />
+                      <span className="landing-search-item-main">
+                        <span className="landing-search-item-name">{displayName}</span>
+                        <span className="landing-search-item-meta">
+                          {formatDateRangeIso(c.start_date, c.end_date)}
+                          {cityStr ? ` · ${cityStr}` : ''}
+                        </span>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {reconMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <ScanSearch size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '复盘' : 'Recons'}</h3>
+                {!expandedRecons && reconMatches.length > RECON_INITIAL_CAP && (
+                  <HeaderMore
+                    overflow={reconMatches.length - RECON_INITIAL_CAP}
+                    title={isZh ? `展开全部 ${reconMatches.length} 条` : `Expand all ${reconMatches.length}`}
+                    onClick={() => setExpandedRecons(true)}
+                  />
+                )}
+              </div>
+              <div className="landing-search-grid">
+                {visibleRecons.map(r => (
+                  <Link
+                    key={r.id}
+                    href={langHref(`/recon/${r.id}`)}
+                    className="landing-search-item landing-search-item--rich"
+                    onClick={closeAfter}
+                  >
+                    {r.personIso2 && <Flag iso2={r.personIso2} className="country-flag" />}
+                    <EventIcon event={r.event} className="landing-search-event-icon" />
+                    <span className="landing-search-item-main">
+                      <span className="landing-search-item-name">
+                        {displayCuberName(r.person, isZh)} · {r.valueStr}
+                        {r.recordTag ? ` · ${r.recordTag}` : ''}
+                        {r.aoType ? ` · ${r.aoType}` : ''}
+                      </span>
+                      <span className="landing-search-item-meta">
+                        {r.comp ? r.comp : ''}
+                        {r.comp && r.date ? ' · ' : ''}
+                        {r.date ?? ''}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {totalCount === 0 && (xLoaded || !xSearchEnabled) && (
             <div className="landing-search-empty">
               {isZh ? '未找到匹配项' : 'No matches found.'}
+            </div>
+          )}
+          {totalCount === 0 && xSearchEnabled && !xLoaded && (
+            <div className="landing-search-empty">
+              {isZh ? '搜索中…' : 'Searching…'}
             </div>
           )}
         </div>
