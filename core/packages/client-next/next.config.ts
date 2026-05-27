@@ -26,6 +26,14 @@ const nextConfig: NextConfig = {
     outputFileTracingRoot: path.join(__dirname, "../../"),
   }),
 
+  // Tree-shake named exports from large libs that ship a barrel index.
+  // three / maplibre-gl / katex re-export hundreds of symbols; importing
+  // one barely-used helper drags the whole bundle. This hint tells Next
+  // to rewrite imports per-symbol so unused branches drop.
+  experimental: {
+    optimizePackageImports: ["three", "maplibre-gl", "katex"],
+  },
+
   // Keep trailing slashes intact so /tools/cstimer/ stays as-is and the
   // iframe's relative URLs resolve to /tools/cstimer/css/... not /tools/css/...
   // (matches Vite's serveRepoRoot behavior). Pages without slashes still work
