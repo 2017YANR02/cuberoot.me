@@ -334,8 +334,8 @@ const PACKAGES: Pkg[] = [
   },
   {
     name: 'client', size: '~120k LOC',
-    zh: { role: '已退役 SPA — 仅 vite.cuberoot.me 回滚兜底', bullet: ['Phase 4 (2026-05-27) 切到 client-next', '不再加新功能', '保留作主域 swap 紧急回滚'] },
-    en: { role: 'Retired SPA — vite.cuberoot.me rollback only', bullet: ['Phase 4 (2026-05-27) cut over to client-next', 'No new features land here', 'Kept as emergency rollback for the main-domain swap'] },
+    zh: { role: '已退役 SPA — 仅本地 localhost:5173 兜底', bullet: ['Phase 4 (2026-05-27) 切到 client-next', '不再加新功能', '本地 dev 对比 / 回滚源码留存'] },
+    en: { role: 'Retired SPA — local localhost:5173 only', bullet: ['Phase 4 (2026-05-27) cut over to client-next', 'No new features land here', 'Kept locally for dev comparison / rollback source'] },
   },
   {
     name: 'server', size: '~8k LOC',
