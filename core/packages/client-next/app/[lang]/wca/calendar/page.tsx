@@ -47,7 +47,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { countryName } from '@/lib/country-name';
 import { expandCountrySelection } from '@/lib/continent';
 import { fetchCompRounds } from '@/lib/comp-wcif';
-import { CuberSearchInput } from '@/components/CuberSearchInput';
+import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon';
 import { fetchUserUpcoming, type WcaPersonLite } from '@/lib/wca-api';
@@ -931,9 +931,22 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   useEffect(() => {
     const el = pageRef.current;
     if (!el) return;
-    const visibleComps = items.slice(range.start, range.end).map((it) => it.comp);
-    const px = measureMaxNameCityPx(visibleComps, isZh, el.clientWidth);
-    el.style.setProperty('--cl-name-width', `${px}px`);
+    const apply = () => {
+      const visibleComps = items.slice(range.start, range.end).map((it) => it.comp);
+      const px = measureMaxNameCityPx(visibleComps, isZh, el.clientWidth);
+      el.style.setProperty('--cl-name-width', `${px}px`);
+    };
+    apply();
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(apply);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
   }, [range.start, range.end, items, isZh, pageRef]);
 
   // 卸载时清理 — 切回日历模式不留 stale --cl-name-width
@@ -1500,7 +1513,7 @@ function CalendarPageInner() {
             <ClearButton onClick={() => setCompQuery('')} isZh={isZh} />
           )}
         </div>
-        <CuberSearchInput
+        <WcaPersonPicker
           className="search-box-cuber"
           value={selectedCuber}
           onChange={setSelectedCuber}

@@ -261,110 +261,122 @@ export default function CompDetailPage() {
   const psychEventParam = searchParams?.get('psychEvent') || '';
   const sourceParam = searchParams?.get('source');
 
-  const load = useCallback(() => {
+  const load = useCallback((): { promise: Promise<void>; cancel: () => void } => {
     setError(null);
     setProgress(null);
-    return new Promise<void>((resolve) => {
-      let done = false;
-      let resolved = false;
-      let es: EventSource | null = null;
-      const apiAbort = new AbortController();
-      const resolveOnce = () => { if (!resolved) { resolved = true; resolve(); } };
-      const finishWith = (j: CompData, partial = false) => {
-        if (done) return;
-        setData(j);
-        rememberRecent(j.slug, j.name);
-        setProgress(null);
-        resolveOnce();
-        if (partial) return;
-        done = true;
-        if (es) { try { es.close(); } catch { /* ignore */ } }
-        try { apiAbort.abort(); } catch { /* ignore */ }
-      };
-      const failWith = (msg: string) => {
-        if (done) return;
-        done = true;
-        setError(msg);
-        setProgress(null);
-        if (es) { try { es.close(); } catch { /* ignore */ } }
-        resolveOnce();
-      };
+    let done = false;
+    let resolved = false;
+    let es: EventSource | null = null;
+    const apiAbort = new AbortController();
+    let resolveOuter: () => void = () => {};
+    const promise = new Promise<void>((resolve) => { resolveOuter = resolve; });
+    const resolveOnce = () => { if (!resolved) { resolved = true; resolveOuter(); } };
+    const cancel = () => {
+      if (done) return;
+      done = true;
+      if (es) { try { es.close(); } catch { /* ignore */ } }
+      try { apiAbort.abort(); } catch { /* ignore */ }
+      resolveOnce();
+    };
+    const finishWith = (j: CompData, partial = false) => {
+      if (done) return;
+      setData(j);
+      rememberRecent(j.slug, j.name);
+      setProgress(null);
+      resolveOnce();
+      if (partial) return;
+      done = true;
+      if (es) { try { es.close(); } catch { /* ignore */ } }
+      try { apiAbort.abort(); } catch { /* ignore */ }
+    };
+    const failWith = (msg: string) => {
+      if (done) return;
+      done = true;
+      setError(msg);
+      setProgress(null);
+      if (es) { try { es.close(); } catch { /* ignore */ } }
+      resolveOnce();
+    };
 
-      const startSse = () => {
-        const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
-        const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
-        es = new EventSource(url);
-        const fallback = () => {
-          if (done) return;
-          es?.close();
-          fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`))
-            .then(async r => {
-              if (!r.ok) {
-                const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
-                throw new Error(j.error || `HTTP ${r.status}`);
-              }
-              return r.json();
-            })
-            .then(j => finishWith(j))
-            .catch(e => failWith((e as Error).message));
-        };
-        es.addEventListener('progress', (ev) => {
-          if (done) return;
-          try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch { /* ignore */ }
-        });
-        es.addEventListener('done', (ev) => {
-          try {
-            const j = JSON.parse((ev as MessageEvent).data) as CompData;
-            finishWith(j);
-          } catch (e) {
-            failWith((e as Error).message);
-          }
-        });
-        es.addEventListener('error', (ev) => {
-          if (done) return;
-          try {
-            const dataStr = (ev as MessageEvent).data;
-            if (dataStr) {
-              const j = JSON.parse(dataStr);
-              if (j.error) setError(j.error);
+    const startSse = () => {
+      const q = sourceParam ? `?source=${encodeURIComponent(sourceParam)}` : '';
+      const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
+      es = new EventSource(url);
+      const fallback = () => {
+        if (done) return;
+        es?.close();
+        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`), { signal: apiAbort.signal })
+          .then(async r => {
+            if (!r.ok) {
+              const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+              throw new Error(j.error || `HTTP ${r.status}`);
             }
-          } catch { /* ignore */ }
-          fallback();
-        });
+            return r.json();
+          })
+          .then(j => finishWith(j))
+          .catch(e => { if ((e as Error).name !== 'AbortError') failWith((e as Error).message); });
       };
+      es.addEventListener('progress', (ev) => {
+        if (done) return;
+        try { setProgress(JSON.parse((ev as MessageEvent).data)); } catch { /* ignore */ }
+      });
+      es.addEventListener('done', (ev) => {
+        try {
+          const j = JSON.parse((ev as MessageEvent).data) as CompData;
+          finishWith(j);
+        } catch (e) {
+          failWith((e as Error).message);
+        }
+      });
+      es.addEventListener('error', (ev) => {
+        if (done) return;
+        try {
+          const dataStr = (ev as MessageEvent).data;
+          if (dataStr) {
+            const j = JSON.parse(dataStr);
+            if (j.error) setError(j.error);
+          }
+        } catch { /* ignore */ }
+        fallback();
+      });
+    };
 
-      if (!sourceParam) {
-        fetch(`/stats/comp/${encodeURIComponent(slug)}.json`)
-          .then(r => r.ok ? r.json() : null)
-          .then(j => { if (j) finishWith(j); })
-          .catch(() => { /* ignore */ });
-        const onlyParam = eventParam && roundParam
-          ? `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`
-          : 'auto';
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${onlyParam}`), { signal: apiAbort.signal })
-          .then(r => r.ok ? r.json() : null)
-          .then(j => { if (j) finishWith(j, /* partial */ true); })
-          .catch(() => { /* ignore */ });
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`), { signal: apiAbort.signal })
-          .then(r => r.ok ? r.json() : null)
-          .then(j => { if (j) finishWith(j); })
-          .catch(() => { /* ignore */ });
-      }
-      startSse();
-    });
+    if (!sourceParam) {
+      fetch(`/stats/comp/${encodeURIComponent(slug)}.json`, { signal: apiAbort.signal })
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if (j) finishWith(j); })
+        .catch(() => { /* ignore */ });
+      const onlyParam = eventParam && roundParam
+        ? `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`
+        : 'auto';
+      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${onlyParam}`), { signal: apiAbort.signal })
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if (j) finishWith(j, /* partial */ true); })
+        .catch(() => { /* ignore */ });
+      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`), { signal: apiAbort.signal })
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if (j) finishWith(j); })
+        .catch(() => { /* ignore */ });
+    }
+    startSse();
+    return { promise, cancel };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, sourceParam]);
 
   useEffect(() => {
     let cancel = false;
     setLoading(true);
-    load().finally(() => { if (!cancel) setLoading(false); });
-    return () => { cancel = true; };
+    const handle = load();
+    handle.promise.finally(() => { if (!cancel) setLoading(false); });
+    return () => {
+      cancel = true;
+      handle.cancel();
+    };
   }, [load]);
 
   const refresh = async () => {
     setRefreshing(true);
-    await load();
+    await load().promise;
     setRefreshing(false);
   };
 

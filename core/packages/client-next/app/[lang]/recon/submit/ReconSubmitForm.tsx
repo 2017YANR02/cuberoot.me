@@ -33,6 +33,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { RecordSelect } from '@/components/RecordSelect';
 import TwistySection from '@/components/TwistySection';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
+import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -1206,22 +1207,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   crossNormalized={true}
                 />
               ) : (
-                <textarea
-                  ref={solutionRef}
-                  defaultValue={form.solution || ''}
+                <AlgInput
+                  // Underlying textarea: AlgInput exposes it via elementRef (markable=false).
+                  // Cast is safe because we always render textarea here.
+                  elementRef={solutionRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+                  initialText={form.solution || ''}
                   className="submit-solution-textarea"
                   rows={6}
                   spellCheck={false}
-                  inputMode={isMobile ? 'none' : undefined}
+                  autoSpace
+                  autoResize
                   style={{ overflow: 'hidden', resize: 'none', fontFamily: 'monospace' }}
-                  onInput={e => {
-                    const el = e.target as HTMLTextAreaElement;
-                    setField('solution', el.value);
-                    autoResize(el);
-                    handleCursorSync(el);
+                  onChange={(text) => {
+                    setField('solution', text);
+                    if (solutionRef.current) handleCursorSync(solutionRef.current);
                   }}
-                  onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-                  onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+                  onClick={() => {
+                    if (solutionRef.current) handleCursorSync(solutionRef.current);
+                  }}
                   onBlur={() => {
                     const el = solutionRef.current;
                     if (!el) return;
