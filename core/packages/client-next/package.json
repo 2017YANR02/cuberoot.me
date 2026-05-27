@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node scripts/dev-safe.mjs",
-    "build": "pnpm -F @cuberoot/shared build && pnpm -F @cuberoot/visualcube build && next build",
+    "build": "pnpm -F @cuberoot/shared build && pnpm -F @cuberoot/visualcube build && node scripts/build-cubing-worker.mjs && next build",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
