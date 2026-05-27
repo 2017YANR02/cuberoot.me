@@ -1,18 +1,36 @@
-import { promises as fs } from "node:fs";
+import { promises as fs, existsSync } from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
-// Resolve cubing's chunks dir via createRequire so it works regardless of
-// where Next/Vercel places the route handler (was using a relative
-// fileURLToPath(import.meta.url) walk-up which silently 404s on Vercel
-// when the lambda bundle layout differs from local).
-const req = createRequire(import.meta.url);
-// cubing/package.json gives an absolute path to cubing's root anywhere on disk.
-const CUBING_PKG_JSON = req.resolve("cubing/package.json");
-const CUBING_ROOT = path.dirname(CUBING_PKG_JSON);
-const CUBING_CHUNKS_DIR = path.join(CUBING_ROOT, "dist", "lib", "cubing", "chunks");
-const CLIENT_NEXT_DIR = path.resolve(CUBING_ROOT, "..", ".."); // for esbuild absWorkingDir (node_modules host)
+// Find cubing's chunks dir by probing several candidate locations:
+// - Local dev: walk-up from this file → packages/client-next/node_modules/cubing/...
+// - Vercel function bundle: cwd-relative (project root = client-next)
+// - Standalone w/ outputFileTracingRoot=monorepo: cwd-relative + ../../ host
+// First match wins; the helper runs at module-load so all subsequent fs ops
+// use a known good absolute path.
+function findCubingChunksDir(): { chunks: string; nodeModulesHost: string } {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const cwd = process.cwd();
+  const candidates = [
+    path.resolve(here, "..", "..", "..", "node_modules", "cubing"),
+    path.resolve(cwd, "node_modules", "cubing"),
+    path.resolve(cwd, "..", "..", "node_modules", "cubing"),
+    path.resolve(cwd, "..", "..", "..", "node_modules", "cubing"),
+  ];
+  for (const root of candidates) {
+    const chunks = path.join(root, "dist", "lib", "cubing", "chunks");
+    if (existsSync(chunks)) {
+      return { chunks, nodeModulesHost: path.resolve(root, "..", "..") };
+    }
+  }
+  // Fall back to the first candidate so logs show the path actually tried.
+  return {
+    chunks: path.join(candidates[0], "dist", "lib", "cubing", "chunks"),
+    nodeModulesHost: path.resolve(candidates[0], "..", ".."),
+  };
+}
+const { chunks: CUBING_CHUNKS_DIR, nodeModulesHost: CLIENT_NEXT_DIR } = findCubingChunksDir();
 
 const CONTENT_TYPE: Record<string, string> = {
   ".js": "application/javascript; charset=UTF-8",
