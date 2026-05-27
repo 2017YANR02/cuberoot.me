@@ -48,10 +48,23 @@ const nextConfig: NextConfig = {
   // both Vercel functions and the systemd standalone bundle. Force-include
   // here. Match resolves from outputFileTracingRoot (monorepo root when
   // standalone, project root on Vercel).
+  // Bundle the cubing chunks dir + cubing's siblings (puzzle-geometry / alg referenced
+  // via `../puzzle-geometry/index.js`) + runtime npm deps esbuild has to resolve at
+  // request time. Without these the route handler's esbuild.build() throws
+  // 'Could not resolve "random-uint-below"' and similar.
+  // Patterns are relative to outputFileTracingRoot. With pnpm, real files live under
+  // node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/; include both layouts so
+  // probe path matches whether we're on Vercel or systemd.
   outputFileTracingIncludes: {
     "/cubing-chunks/[...slug]": [
-      "../../node_modules/cubing/dist/lib/cubing/chunks/**",
-      "./node_modules/cubing/dist/lib/cubing/chunks/**",
+      "../../node_modules/cubing/dist/**",
+      "./node_modules/cubing/dist/**",
+      "../../node_modules/.pnpm/cubing@*/node_modules/cubing/dist/**",
+      "./node_modules/.pnpm/cubing@*/node_modules/cubing/dist/**",
+      "../../node_modules/random-uint-below/**",
+      "./node_modules/random-uint-below/**",
+      "../../node_modules/.pnpm/random-uint-below@*/node_modules/random-uint-below/**",
+      "./node_modules/.pnpm/random-uint-below@*/node_modules/random-uint-below/**",
     ],
   },
 
