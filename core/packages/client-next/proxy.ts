@@ -47,6 +47,15 @@ const MIGRATED_PATHS: readonly string[] = [
   '/sim',
   '/site',
   '/wb',
+  // batch 5 — 8 trainer variants (each is a single page.tsx)
+  '/cross_trainer',
+  '/eocross_trainer',
+  '/pairing_trainer',
+  '/pseudo_pairing_trainer',
+  '/pseudo_xcross_trainer',
+  '/xcross_pairing_trainer',
+  '/xcross_trainer',
+  '/xxcross_trainer',
 ];
 
 function isMigrated(pathname: string): boolean {
