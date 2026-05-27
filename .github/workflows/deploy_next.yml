@@ -70,13 +70,15 @@ jobs:
           chmod 600 ~/.ssh/id
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: scp tarball
+      - name: scp tarball + systemd unit
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           scp -i ~/.ssh/id /tmp/cuberoot-next.tar.gz \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.tar.gz"
+          scp -i ~/.ssh/id ops/systemd/cuberoot-next.service \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.service"
 
       # Server side: atomic-ish swap.
       # 1. extract to staging dir
@@ -116,32 +118,14 @@ jobs:
           fi
           mv "$STAGE" "$LIVE"
 
-          # systemd unit may still point at the old `next start` entry — update
-          # if needed (idempotent: keeps the unit aligned with standalone layout).
-          STANDALONE_UNIT="[Unit]
-Description=Next.js SPA for next.cuberoot.me (standalone build)
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/www/wwwroot/toolkit-next/core/packages/client-next
-Environment=\"NODE_ENV=production\"
-Environment=\"PORT=3002\"
-Environment=\"HOSTNAME=127.0.0.1\"
-ExecStart=/root/.nvm/versions/node/v24.14.0/bin/node server.js
-Restart=on-failure
-RestartSec=3
-StandardOutput=append:/var/log/cuberoot-next.log
-StandardError=append:/var/log/cuberoot-next.log
-
-[Install]
-WantedBy=multi-user.target"
+          # Update systemd unit if changed (idempotent — only daemon-reload when needed)
           UNIT_FILE=/etc/systemd/system/cuberoot-next.service
-          if ! diff -q <(echo "$STANDALONE_UNIT") "$UNIT_FILE" >/dev/null 2>&1; then
-            echo "$STANDALONE_UNIT" > "$UNIT_FILE"
+          if ! cmp -s /tmp/cuberoot-next.service "$UNIT_FILE"; then
+            cp /tmp/cuberoot-next.service "$UNIT_FILE"
             systemctl daemon-reload
             echo "systemd unit updated"
           fi
+          rm -f /tmp/cuberoot-next.service
 
           systemctl restart cuberoot-next
 

@@ -1,0 +1,18 @@
+[Unit]
+Description=Next.js SPA for next.cuberoot.me (standalone build)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/www/wwwroot/toolkit-next/core/packages/client-next
+Environment="NODE_ENV=production"
+Environment="PORT=3002"
+Environment="HOSTNAME=127.0.0.1"
+ExecStart=/root/.nvm/versions/node/v24.14.0/bin/node server.js
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/var/log/cuberoot-next.log
+StandardError=append:/var/log/cuberoot-next.log
+
+[Install]
+WantedBy=multi-user.target
