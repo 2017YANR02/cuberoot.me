@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Brain, type LucideIcon } from 'lucide-react';
 import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import '../landing.css';
+import '../../landing.css';
 
 interface MemoCard {
   id: string;
