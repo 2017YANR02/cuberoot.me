@@ -1,0 +1,166 @@
+# 部署 @cuberoot/client-next 到 next.cuberoot.me (云服务器 systemd cuberoot-next)。
+# CI build → tar 标准 standalone 输出 → scp → 服务器原子替换 → systemctl restart。
+# 服务器拉不到 GitHub,所以 build 必须在 CI 跑。
+name: Deploy Next
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'core/packages/client-next/**'
+      - 'core/packages/shared/**'
+      - 'core/packages/visualcube/**'
+      - 'core/pnpm-lock.yaml'
+      - '.github/workflows/deploy_next.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      # build script in package.json prebuilds @cuberoot/shared + visualcube
+      # before `next build` (commit 889729fab). Standalone output ON because
+      # NODE_ENV=production + VERCEL!=1 (see next.config.ts isVercel gate).
+      - name: Build Next standalone
+        working-directory: core
+        env:
+          NODE_ENV: production
+        run: pnpm --filter @cuberoot/client-next build
+
+      # standalone output layout (with outputFileTracingRoot=monorepo root):
+      #   .next/standalone/core/packages/client-next/server.js  ← entry
+      #   .next/standalone/core/packages/client-next/.next/server/...
+      #   .next/standalone/node_modules/... (hoisted shared deps)
+      # static/ + public/ must be copied INTO the standalone tree manually
+      # (Next docs https://nextjs.org/docs/app/api-reference/config/next-config-js/output#automatically-copying-traced-files).
+      - name: Assemble deploy bundle
+        working-directory: core/packages/client-next
+        run: |
+          # static/ → standalone/core/packages/client-next/.next/static/
+          cp -r .next/static .next/standalone/core/packages/client-next/.next/static
+          # public/ → standalone/core/packages/client-next/public/
+          cp -r public .next/standalone/core/packages/client-next/public
+          # tar — preserve standalone tree as-is, server extracts straight in.
+          tar -czf /tmp/cuberoot-next.tar.gz -C .next/standalone .
+          ls -lh /tmp/cuberoot-next.tar.gz
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp tarball
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/id /tmp/cuberoot-next.tar.gz \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.tar.gz"
+
+      # Server side: atomic-ish swap.
+      # 1. extract to staging dir
+      # 2. snapshot current as .bak-$TS (one snapshot kept for rollback)
+      # 3. rename staging → live
+      # 4. restart systemd (Next standalone entry: node server.js)
+      # 5. If new dir's server fails to boot in 10s, roll back from .bak.
+      - name: Deploy + restart
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -e
+          LIVE=/www/wwwroot/toolkit-next
+          STAGE=/www/wwwroot/toolkit-next.new
+          TS=$(date +%s)
+          BACKUP=/www/wwwroot/toolkit-next.bak-$TS
+
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          tar -xzf /tmp/cuberoot-next.tar.gz -C "$STAGE"
+          rm -f /tmp/cuberoot-next.tar.gz
+
+          # standalone entry lives at core/packages/client-next/server.js
+          ENTRY="$STAGE/core/packages/client-next/server.js"
+          if [ ! -f "$ENTRY" ]; then
+            echo "ERROR: entry $ENTRY missing after extract"
+            ls -la "$STAGE/core/packages/client-next/" || true
+            exit 1
+          fi
+
+          # Snapshot current (only the latest backup is kept; cleanup older)
+          if [ -d "$LIVE" ]; then
+            find /www/wwwroot -maxdepth 1 -name 'toolkit-next.bak-*' -exec rm -rf {} +
+            mv "$LIVE" "$BACKUP"
+          fi
+          mv "$STAGE" "$LIVE"
+
+          # systemd unit may still point at the old `next start` entry — update
+          # if needed (idempotent: keeps the unit aligned with standalone layout).
+          STANDALONE_UNIT="[Unit]
+Description=Next.js SPA for next.cuberoot.me (standalone build)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/www/wwwroot/toolkit-next/core/packages/client-next
+Environment=\"NODE_ENV=production\"
+Environment=\"PORT=3002\"
+Environment=\"HOSTNAME=127.0.0.1\"
+ExecStart=/root/.nvm/versions/node/v24.14.0/bin/node server.js
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/var/log/cuberoot-next.log
+StandardError=append:/var/log/cuberoot-next.log
+
+[Install]
+WantedBy=multi-user.target"
+          UNIT_FILE=/etc/systemd/system/cuberoot-next.service
+          if ! diff -q <(echo "$STANDALONE_UNIT") "$UNIT_FILE" >/dev/null 2>&1; then
+            echo "$STANDALONE_UNIT" > "$UNIT_FILE"
+            systemctl daemon-reload
+            echo "systemd unit updated"
+          fi
+
+          systemctl restart cuberoot-next
+
+          # Health check: wait up to 15s for port 3002 to respond
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            if curl -fsS -o /dev/null http://127.0.0.1:3002/; then
+              echo "OK: cuberoot-next responding on :3002"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "ERROR: cuberoot-next did not respond on :3002 within 15s"
+          journalctl -u cuberoot-next --no-pager -n 30 || true
+          if [ -d "$BACKUP" ]; then
+            echo "rolling back..."
+            rm -rf "$LIVE"
+            mv "$BACKUP" "$LIVE"
+            systemctl restart cuberoot-next
+          fi
+          exit 1
+          REMOTE
