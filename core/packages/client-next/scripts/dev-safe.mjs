@@ -71,7 +71,10 @@ function killTree(pid) {
 
 // Total cap covers ALL node procs (turbopack forks workers that don't
 // inherit our PriorityClass via Node's spawn — we re-apply each tick).
-const TOTAL_RAM_CAP_MB = 5000;
+// 6 GB chosen so a single cold-compile of heavy pages like /zh/sim
+// (three.js + cuber/ subtree) can finish without getting SIGKILLed.
+// On 32 GB systems this is still comfortably below swap-thrash territory.
+const TOTAL_RAM_CAP_MB = 6000;
 
 let watchdogActive = true;
 const watchdog = setInterval(() => {
