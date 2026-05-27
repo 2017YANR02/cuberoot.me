@@ -4,7 +4,7 @@
  * 写出的 URL 保持一致(pzl + view=wca)。
  */
 import { apiUrl } from './api-base';
-import { eventToCubeSize } from '@/app/scramble/gen/_svg/cube_unfolded_svg';
+import { eventToCubeSize } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 
 /** Map WCA event id (incl. synthetic nxnN) → /v1/visualcube.svg pzl keyword.
  *  Returns null for events the server doesn't render (clock 目前无 server 渲染)。 */

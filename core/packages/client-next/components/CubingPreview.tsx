@@ -13,8 +13,8 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/app/scramble/gen/_svg/sq1_svg';
-import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/scramble/gen/_svg/mega_svg';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
+import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 
 interface CubingPreviewProps {
   /** Either a timer EventId or a WCA-style id (e.g. 'minx', 'pyram'). */
