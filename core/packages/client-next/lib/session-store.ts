@@ -1,6 +1,7 @@
 // Ported from packages/client/src/stores/sessionStore.ts
 'use client';
 
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import pllMap from '@cuberoot/shared/data/pll.json';
@@ -263,6 +264,10 @@ export const useSessionStore = create<SessionState & SessionActions>()(
     }),
     {
       name: 'cuberoot-session-store',
+      // Skip auto-hydration so SSR and first client render both see defaults
+      // (no React hydration mismatch). Components call useSessionHydrated()
+      // and gate render on it; the hook rehydrates from localStorage in effect.
+      skipHydration: true,
       partialize: (state) => ({
         gameState: state.gameState,
         trainMode: state.trainMode,
@@ -275,3 +280,12 @@ export const useSessionStore = create<SessionState & SessionActions>()(
     }
   )
 );
+
+export function useSessionHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    useSessionStore.persist.rehydrate();
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
