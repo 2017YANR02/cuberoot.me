@@ -40,6 +40,13 @@ const MIGRATED_PATHS: readonly string[] = [
   '/mosaic-about',
   '/nemesizer-about',
   '/recon-about',
+  // batch 4 — simple feature pages
+  '/battle',
+  '/frame-count',
+  '/mosaic',
+  '/sim',
+  '/site',
+  '/wb',
 ];
 
 function isMigrated(pathname: string): boolean {
