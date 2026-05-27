@@ -1,4 +1,4 @@
-import { promises as fs, existsSync } from "node:fs";
+import { promises as fs, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -12,24 +12,43 @@ import { build } from "esbuild";
 function findCubingChunksDir(): { chunks: string; nodeModulesHost: string; tried: string[] } {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const cwd = process.cwd();
-  const candidates = [
-    path.resolve(here, "..", "..", "..", "node_modules", "cubing"),
-    path.resolve(cwd, "node_modules", "cubing"),
-    path.resolve(cwd, "..", "..", "node_modules", "cubing"),
-    path.resolve(cwd, "..", "..", "..", "node_modules", "cubing"),
-    path.resolve(cwd, "..", "..", "..", "..", "node_modules", "cubing"),
+  // Hoisted layout (npm / Next standalone w/o pnpm) puts cubing directly under node_modules.
+  // pnpm layout (Vercel + systemd standalone) puts it under .pnpm/cubing@VER/node_modules/cubing.
+  const hoisted = [
+    path.resolve(here, "..", "..", "..", "node_modules"),
+    path.resolve(cwd, "node_modules"),
+    path.resolve(cwd, "..", "..", "node_modules"),
+    path.resolve(cwd, "..", "..", "..", "node_modules"),
+    path.resolve(cwd, "..", "..", "..", "..", "node_modules"),
   ];
   const tried: string[] = [];
-  for (const root of candidates) {
-    const chunks = path.join(root, "dist", "lib", "cubing", "chunks");
-    tried.push(chunks);
-    if (existsSync(chunks)) {
-      return { chunks, nodeModulesHost: path.resolve(root, "..", ".."), tried };
+  for (const nm of hoisted) {
+    // Direct hoist
+    const direct = path.join(nm, "cubing", "dist", "lib", "cubing", "chunks");
+    tried.push(direct);
+    if (existsSync(direct)) {
+      return { chunks: direct, nodeModulesHost: nm, tried };
+    }
+    // pnpm .pnpm/cubing@.../node_modules/cubing/...
+    const pnpmDir = path.join(nm, ".pnpm");
+    if (existsSync(pnpmDir)) {
+      let entries: string[] = [];
+      try { entries = readdirSync(pnpmDir); } catch { /* ignore */ }
+      const match = entries.find(e => e.startsWith("cubing@"));
+      if (match) {
+        const p = path.join(pnpmDir, match, "node_modules", "cubing", "dist", "lib", "cubing", "chunks");
+        tried.push(p);
+        if (existsSync(p)) {
+          return { chunks: p, nodeModulesHost: nm, tried };
+        }
+      } else {
+        tried.push(`${pnpmDir}/.pnpm/cubing@* (no match in ${entries.length} entries)`);
+      }
     }
   }
   return {
-    chunks: path.join(candidates[0], "dist", "lib", "cubing", "chunks"),
-    nodeModulesHost: path.resolve(candidates[0], "..", ".."),
+    chunks: tried[0]!,
+    nodeModulesHost: hoisted[0]!,
     tried,
   };
 }
