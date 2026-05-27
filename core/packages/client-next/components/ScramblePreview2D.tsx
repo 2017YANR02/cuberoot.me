@@ -14,28 +14,28 @@ import { useMemo, type CSSProperties } from 'react';
 import {
   renderClockScrambleSvg,
   DEFAULT_CLOCK_COLORS,
-} from '@/app/scramble/gen/_svg/clock_svg';
+} from '@/app/[lang]/scramble/gen/_svg/clock_svg';
 import {
   renderSq1ScrambleSvg,
   DEFAULT_SQ1_COLORS,
-} from '@/app/scramble/gen/_svg/sq1_svg';
+} from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
 import {
   renderMegaScrambleSvg,
   DEFAULT_MEGA_COLORS,
-} from '@/app/scramble/gen/_svg/mega_svg';
+} from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 import {
   renderPyraScrambleSvg,
   PYRA_DEFAULT_COLORS,
-} from '@/app/scramble/gen/_svg/pyraminx_svg';
+} from '@/app/[lang]/scramble/gen/_svg/pyraminx_svg';
 import {
   renderSkewbScrambleSvg,
   SKEWB_DEFAULT_COLORS,
-} from '@/app/scramble/gen/_svg/skewb_svg';
-import { renderMirrorBlocksScrambleSvg } from '@/app/scramble/gen/_svg/mirror_blocks_svg';
+} from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
+import { renderMirrorBlocksScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/mirror_blocks_svg';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
-} from '@/app/scramble/gen/_svg/cube_unfolded_svg';
+} from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 
 // Minimal shape-mod helpers inline — full table lives in client/utils/shapeModScramble.ts
 // (not yet ported). Only mirror_333 needs special-case handling here.

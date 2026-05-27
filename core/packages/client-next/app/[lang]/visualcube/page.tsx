@@ -44,26 +44,26 @@ import { PuzzleSVG, type PuzzleKind } from '@/components/PuzzleSVG';
 import { invertAlg } from '@/lib/cube3';
 import InteractiveCubeNet, {
   type PaintColor,
-} from '@/app/scramble/solver/_InteractiveCubeNet';
-import { SOLVED_FACELET } from '@/app/scramble/solver/facelet';
+} from '@/app/[lang]/scramble/solver/_InteractiveCubeNet';
+import { SOLVED_FACELET } from '@/app/[lang]/scramble/solver/facelet';
 import {
   renderSq1ScrambleSvg,
   DEFAULT_SQ1_COLORS,
   invertSq1Alg,
-} from '@/app/scramble/gen/_svg/sq1_svg';
+} from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
 import {
   renderMegaScrambleSvg,
   DEFAULT_MEGA_COLORS,
-} from '@/app/scramble/gen/_svg/mega_svg';
+} from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 import {
   renderPyraScrambleSvg,
   PYRA_DEFAULT_COLORS,
-} from '@/app/scramble/gen/_svg/pyraminx_svg';
+} from '@/app/[lang]/scramble/gen/_svg/pyraminx_svg';
 import {
   renderSkewbScrambleSvg,
   SKEWB_DEFAULT_COLORS,
-} from '@/app/scramble/gen/_svg/skewb_svg';
-import { renderUnfoldedSvg } from '@/app/scramble/gen/_svg/cube_unfolded_svg';
+} from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
+import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
