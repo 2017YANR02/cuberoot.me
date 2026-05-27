@@ -9,13 +9,19 @@ import dns from "node:dns";
 dns.setDefaultResultOrder("ipv4first");
 
 const isProd = process.env.NODE_ENV === "production";
+// VERCEL=1 set by Vercel build env. Vercel's adapter manages output its own
+// way; standalone + outputFileTracingRoot break Vercel's Turbopack path
+// resolution (vercel/next.js#88579 — doubles path, manifest ENOENT).
+const isVercel = process.env.VERCEL === "1";
 
 const nextConfig: NextConfig = {
-  // Self-contained server bundle for systemd `next start` (prod only). In dev,
-  // `output: standalone` + `outputFileTracingRoot` pointing at the workspace
-  // root makes Turbopack walk the entire monorepo node_modules on every change,
-  // which pegs CPU and makes the dev server stop responding. Limit to prod.
-  ...(isProd && {
+  // Self-contained server bundle for systemd `next start` on next.cuberoot.me
+  // (prod only). In dev, `output: standalone` + `outputFileTracingRoot`
+  // pointing at the workspace root makes Turbopack walk the entire monorepo
+  // node_modules on every change, which pegs CPU. On Vercel, omit both —
+  // Vercel handles bundling/tracing through its own adapter, and standalone
+  // conflicts with their Turbopack manifest expectations.
+  ...(isProd && !isVercel && {
     output: "standalone" as const,
     outputFileTracingRoot: path.join(__dirname, "../../"),
   }),
