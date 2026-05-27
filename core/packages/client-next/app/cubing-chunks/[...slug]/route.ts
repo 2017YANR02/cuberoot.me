@@ -9,7 +9,7 @@ import { build } from "esbuild";
 // - Standalone w/ outputFileTracingRoot=monorepo: cwd-relative + ../../ host
 // First match wins; the helper runs at module-load so all subsequent fs ops
 // use a known good absolute path.
-function findCubingChunksDir(): { chunks: string; nodeModulesHost: string } {
+function findCubingChunksDir(): { chunks: string; nodeModulesHost: string; tried: string[] } {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const cwd = process.cwd();
   const candidates = [
@@ -17,20 +17,25 @@ function findCubingChunksDir(): { chunks: string; nodeModulesHost: string } {
     path.resolve(cwd, "node_modules", "cubing"),
     path.resolve(cwd, "..", "..", "node_modules", "cubing"),
     path.resolve(cwd, "..", "..", "..", "node_modules", "cubing"),
+    path.resolve(cwd, "..", "..", "..", "..", "node_modules", "cubing"),
   ];
+  const tried: string[] = [];
   for (const root of candidates) {
     const chunks = path.join(root, "dist", "lib", "cubing", "chunks");
+    tried.push(chunks);
     if (existsSync(chunks)) {
-      return { chunks, nodeModulesHost: path.resolve(root, "..", "..") };
+      return { chunks, nodeModulesHost: path.resolve(root, "..", ".."), tried };
     }
   }
-  // Fall back to the first candidate so logs show the path actually tried.
   return {
     chunks: path.join(candidates[0], "dist", "lib", "cubing", "chunks"),
     nodeModulesHost: path.resolve(candidates[0], "..", ".."),
+    tried,
   };
 }
-const { chunks: CUBING_CHUNKS_DIR, nodeModulesHost: CLIENT_NEXT_DIR } = findCubingChunksDir();
+const probe = findCubingChunksDir();
+const CUBING_CHUNKS_DIR = probe.chunks;
+const CLIENT_NEXT_DIR = probe.nodeModulesHost;
 
 const CONTENT_TYPE: Record<string, string> = {
   ".js": "application/javascript; charset=UTF-8",
@@ -108,7 +113,20 @@ export async function GET(
         "cross-origin-embedder-policy": "require-corp",
       },
     });
-  } catch {
+  } catch (e) {
+    // Diagnostic — surface probe attempts so we can tell what Vercel actually shipped.
+    if (new URL(_req.url).searchParams.has("debug")) {
+      return new Response(
+        JSON.stringify({
+          err: String(e),
+          tried: probe.tried,
+          chunks: CUBING_CHUNKS_DIR,
+          cwd: process.cwd(),
+          here: path.dirname(fileURLToPath(import.meta.url)),
+        }, null, 2),
+        { status: 404, headers: { "content-type": "application/json" } },
+      );
+    }
     return new Response("not found", { status: 404 });
   }
 }
