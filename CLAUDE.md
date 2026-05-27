@@ -4,47 +4,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库布局
 
-仓库 `RuiminYan/cuberoot.me`(自定义域名 `cuberoot.me` 走 GH Pages CNAME),同时托管：
+仓库 `RuiminYan/cuberoot.me`(自定义域名 `cuberoot.me`),同时托管：
 
-1. **根目录的静态 HTML/JS**（来自多个 fork）—— 只读，不改。
+1. **根目录的静态 HTML/JS**（来自多个 fork + Phase 4 前 deploy_mirror.yml 同步的 Vite build 残留）—— 只读，不改;deploy_mirror 已停,残留长期会清。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
-   - `packages/client` — React 19 + Vite 8 SPA（主要工作区）
+   - `packages/client-next` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **主要工作区** (Phase 4 2026-05-27 切完)
+   - `packages/client` — React 19 + Vite 8 SPA (已退役,仅 vite.cuberoot.me 回滚兜底用,新功能不动)
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
+   - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
    - `packages/stats-build` — WCA 统计生成管道（独立 CI 周更）
 
 ## 12 个模块的归属（重要）
 
-首页（`LandingPage.tsx`）列出 12 个入口。部分是 fork 来的别人的代码，**不能改**：
+首页(`app/[lang]/page.tsx` 渲染 `components/LandingPage`)列出多入口。部分 fork 不能改:
 
 | 模块 | 路由 | 位置 | 来源 | 可改? |
 |------|------|------|------|-------|
-| Solver | `/solver` | 根目录静态 HTML | fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) | ❌ upstream |
-| Alg Trainer | `/alg-trainers` | 根目录静态 HTML | fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) | ❌ upstream |
-| csTimer | `/cstimer` | 根目录 `/cstimer/` | integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) | ❌ upstream |
+| Solver | `/solver` | 根目录静态 HTML(只本机 nginx serve,Vercel 上走 `tools/[...slug]` 反代 vite.cuberoot.me) | fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) | ❌ upstream |
+| Alg Trainer | `/alg-trainers` | 根目录静态 HTML(同上) | fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) | ❌ upstream |
+| csTimer | `/cstimer` | iframe → `/tools/cstimer/`(同上 fallback) | integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) | ❌ upstream |
 | WCA Stats（数据管道） | `/wca` | `core/packages/stats-build` | 基于 [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) 的 TS 重写 | ⚠️ 管道已重写，UI 自有 |
-| Score Calculator (HTH) | `/calc` | `core/packages/client/src/pages/calc/` | ported from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) | ✅ 已 port 为 React |
-| 1v1 Battle | `/battle` | `core/packages/client/src/pages/battle/` | ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) | ✅ 已 port 为 React |
-| Recon | `/recon` | `core/packages/client/src/pages/recon/` | 自有 | ✅ |
-| Trainer（公式计时训练，全 41 套） | `/trainer` | `core/packages/client/src/pages/trainer/` (Landing/Select/Run + components + trainer.css) | 自有 | ✅ |
-| Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client/src/pages/TrainingPage.tsx` | 自有 | ✅ |
-| Frame Count | `/frame-count` | `core/packages/client/src/pages/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
-| Distribution | `/wca/viz` | `core/packages/client/src/pages/viz/` | 自有 | ✅ |
-| Calendar (比赛日历) | `/wca/calendar` | `core/packages/client/src/pages/CalendarPage.tsx` | 自有 | ✅ |
-| Scramble（打乱难度分布） | `/scramble-stats` | `core/packages/client/src/pages/scramble_stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
-| Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client/src/pages/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ 已 port 为 React |
-| Blog | `cuberoot.me/blog/` | 不在本仓库 | 外部托管 | — |
+| Score Calculator (HTH) | `/calc` | `core/packages/client-next/app/[lang]/calc/` | ported from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) | ✅ |
+| 1v1 Battle | `/battle` | `core/packages/client-next/app/[lang]/battle/` | ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) | ✅ |
+| Recon | `/recon` | `core/packages/client-next/app/[lang]/recon/` | 自有 | ✅ |
+| Trainer（公式计时训练，全 41 套） | `/trainer` | `core/packages/client-next/app/[lang]/trainer/` | 自有 | ✅ |
+| Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client-next/app/[lang]/recognize/[algSetId]/` | 自有 | ✅ |
+| Frame Count | `/frame-count` | `core/packages/client-next/app/[lang]/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
+| Distribution | `/wca/viz` | `core/packages/client-next/app/[lang]/wca/viz/` | 自有 | ✅ |
+| Calendar (比赛日历) | `/wca/calendar` | `core/packages/client-next/app/[lang]/wca/calendar/` | 自有 | ✅ |
+| Scramble（打乱难度分布） | `/scramble/stats` | `core/packages/client-next/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
+| Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client-next/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
+| Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `RuiminYan/cuberoot-blog` | 外部托管 | — |
 
-改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。
+改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。同名 Vite 版本在 `packages/client/src/pages/*` 还在,但只作回滚兜底,**新功能只改 client-next**。
 
-## 部署拓扑
+## 部署拓扑 (Phase 4 后 — 2026-05-27)
 
-- **静态 SPA**:云服务器 nginx 服 `cuberoot.me` + `www.cuberoot.me`(apex 301 → www),vhost 见 `ops/nginx/www.cuberoot.me.conf`,root `/www/wwwroot/toolkit`。GH Pages 走 CNAME=`cuberoot.me`,境外 DNS 走 GH(同内容,deploy_mirror.yml rsync 同步)。改 nginx 走 `deploy_nginx.yml`(push `ops/nginx/**` 触发,scp + `nginx -t` + reload + 失败回滚 .bak)。
+- **主域 `cuberoot.me` / `www.cuberoot.me`** 走 **DNS 分线路** (阿里云 free DNS 分流):
+  - 中国 ISP 线路 (联通/电信/移动/教育网) → 境内服务器 IP → nginx `proxy_pass 127.0.0.1:3002` → systemd `cuberoot-next` (Next standalone)。vhost `ops/nginx/www.cuberoot.me.conf`,改 nginx 走 `deploy_nginx.yml`(scp + `nginx -t` + reload + 失败回滚 .bak)。
+  - 境外线路 → Vercel Hobby `cuberoot-me` project → 同一份 Next 代码 + Vercel edge。Vercel 自动从 GitHub main 跑 build,部署是 push-triggered。
+- **`vite.cuberoot.me`** — 退役 Vite SPA 兜底子域,境内服务器 nginx 服 `/www/wwwroot/toolkit`(主域 swap 出问题时手动改 nginx 一键回滚)。
+- **`next.cuberoot.me`** — 同一套 systemd `cuberoot-next` 反代 :3002,作 staging 子域 / 别名。
+- **systemd Next standalone 部署**:`deploy_next.yml`(push `core/packages/{client-next,shared,visualcube}/**` 触发) CI build → tar `.next/standalone/`(自带 node_modules) → scp → 服务器原子换 `/www/wwwroot/toolkit-next/` + 健康检查 :3002,挂了自动回滚 .bak。`start.sh` 包装定位 standalone entry,systemd unit 在 `ops/systemd/cuberoot-next.service`。
+- **Vercel build 特殊处理**:`next.config.ts` 用 `VERCEL=1` env gate,Vercel 上跳过 `output: standalone` + `outputFileTracingRoot`(否则 vercel/next.js#88579 撞 manifest ENOENT)。`app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 在 Vercel 上 fallback 拉 `vite.cuberoot.me/{stats,tools}/*`(stats 数据没打进 Vercel bundle)。
+- **CORS allowlist** 在 `core/packages/server/src/index.ts`,函数形式放行 `*.vercel.app`(Vercel preview 每 PR 一个 URL)+ `vite.cuberoot.me` + 主域。
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台云服务器,nginx 反代到 127.0.0.1:3001)。
-- **Blog (`/blog/` + `blog.cuberoot.me`)**:WordPress 静态归档双轨;境内 nginx alias 主路径,境外 GH Pages (`RuiminYan/cuberoot-blog` repo)。SPA 兜底处理旧 WP slug + 子域 fallback。Cert acme.sh + dns_ali 自动续。详 memory `reference_blog_subdomain`。
-- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(跨域到 `api.cuberoot.me`),不要硬编码 origin。CORS allowlist 在 `core/packages/server/src/index.ts`。
+- **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me CN nginx alias / 境外 GH Pages。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
+- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client-next 在 `lib/api-base.ts`),不要硬编码 origin。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
-- **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/(solver|analyzer)` 由 nginx 发 `COOP=same-origin` + `COEP=require-corp`(map `$request_uri` 控制,见 vhost),进 cross-origin isolated context;其它 24 张卡完全干净,登录回调 /me 不受影响。新增需要 SAB 的页面要更新 nginx map regex。SW (`src/sw.ts`) **不再注入 COI headers**,只剩 `/v1/visualcube.svg` 拦截那一条。
+- **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
+- **deploy_mirror.yml** 已禁(Phase 4 前 GH Pages 镜像用),保留 workflow_dispatch 短期回滚兜底。
 
 ## 开发命令
 
@@ -54,22 +64,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm install
-pnpm --filter @cuberoot/client dev            # http://127.0.0.1:5173/
-pnpm --filter @cuberoot/client typecheck      # tsgo (native Go port，~3s 冷 / ~1.2s 暖)
-pnpm --filter @cuberoot/client typecheck:tsc  # tsc -b incremental，对齐编辑器 TS server 行为
-pnpm --filter @cuberoot/client typecheck:ci   # tsc -b --force（清缓存全量，对齐 CI）
-pnpm --filter @cuberoot/client build
-pnpm --filter @cuberoot/client lint
+pnpm --filter @cuberoot/client-next dev            # http://127.0.0.1:3000/
+pnpm --filter @cuberoot/client-next typecheck      # tsgo (native Go port，~3s 冷 / ~1.2s 暖)
+pnpm --filter @cuberoot/client-next typecheck:tsc  # tsc -b incremental
+pnpm --filter @cuberoot/client-next build          # 会自动 prebuild @cuberoot/shared + visualcube
+pnpm --filter @cuberoot/client-next lint
+# 旧 Vite (回滚兜底，不日常开):
+pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 ```
 
 > **重要:**
-> 1. 日常用 `typecheck` (tsgo,native Go,3s 冷 / 1s 暖,Microsoft 官方 preview);怀疑 tsgo 漏报时用 `typecheck:tsc` (老 tsc -b);push 前 / CI 对齐用 `typecheck:ci` (`tsc -b --force`)。**禁** `tsc --noEmit` 走根 tsconfig (references-only 壳,typo 静默过)。
-> 2. **Dev server 永远在 `http://127.0.0.1:5173/`,不要 `pnpm dev`** (端口占用立刻挂)。要验证用 playwright 直接开。
-> 3. 磁盘不够 (worktree / pnpm install / build 失败时) 先 `df -h` 告诉我,别静默换方案。
+> 1. 日常用 `typecheck` (tsgo,native Go,3s 冷 / 1s 暖,Microsoft 官方 preview);怀疑 tsgo 漏报时用 `typecheck:tsc` (老 tsc -b)。**禁** `tsc --noEmit` 走根 tsconfig (references-only 壳,typo 静默过)。
+> 2. **Dev server 永远在 `http://127.0.0.1:3000/` (Next) 或 `127.0.0.1:5173/` (Vite,兜底)**,不要 `pnpm dev`(端口占用立刻挂)。要验证用 playwright 直接开。
+> 3. Windows Next dev 关窗口/Ctrl+C 可能留孤儿 node.exe (memory `feedback_windows_next_dev_restart`),改 globals/layout/next.config 看 chunk hash 是否变。
+> 4. 磁盘不够 (worktree / pnpm install / build 失败时) 先 `df -h` 告诉我,别静默换方案。
 
-- Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
-- Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
-- `serveRepoRoot` Vite 插件从仓库根 serve `/tools/`、`/stats/`、以及 upstream 静态页
+- Next dev 绑定 `127.0.0.1` (Windows Chrome IPv6 解析问题)
+- 本地 Next dev 调 `/v1/*` 走 next.config rewrites 反代 `https://api.cuberoot.me`,**本地开发不需要跑后端**
+- `app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 是 dev 服仓库根 stats/tools/ 用的 catch-all (mirror Vite `serveRepoRoot` 插件),Vercel 上 fallback vite.cuberoot.me
 - **凭据展开**：给用户云服务器 / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
 - **本地 PG**:docker `pg13`(5433 pwd `dev` db `cuberoot_db`,PG 13)。schema / load.sql 先本地验。
 
@@ -87,7 +99,7 @@ pnpm --filter @cuberoot/client lint
 
 - 响应简洁，不加多余注释，不做超出需求的抽象
 - 不新建文件除非必要，优先编辑已有文件
-- 改完跑 `pnpm --filter @cuberoot/client typecheck`（push 前 `typecheck:ci`）
+- 改完跑 `pnpm --filter @cuberoot/client-next typecheck`
 - UI 不用 emoji，用 lucide-react 图标
 - 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
 - 选择型 / 搜索型输入框非空时必须显示 `×` 清除按钮：统一用 `components/ClearButton.tsx`（`variant='inline'` 浮在 input 内，`'standalone'` 流式独立圆），别再写一份局部 `.xxx-clear` CSS
