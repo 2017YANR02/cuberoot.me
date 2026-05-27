@@ -72,6 +72,10 @@ const MIGRATED_PATHS: readonly string[] = [
   '/timer',
   // batch 11 — trainer (41-set CFOP/method trainer)
   '/trainer',
+  // batch 12 — tutorial / wca / wiki (final batch — all pages migrated)
+  '/tutorial',
+  '/wca',
+  '/wiki',
 ];
 
 function isMigrated(pathname: string): boolean {
