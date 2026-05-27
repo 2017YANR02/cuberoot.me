@@ -153,8 +153,10 @@ jobs:
           # Health check: wait up to 15s for port 3002 to respond AND serve
           # an actual rendered HTML page (not just any 2xx — Next can return
           # 200 while route handlers crash, so verify the landing markup).
+          # Hit /en/ directly because root `/` 308-redirects via proxy.ts
+          # middleware to /en or /zh (plain-text body, no `<html` marker).
           for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            BODY=$(curl -fsS http://127.0.0.1:3002/ 2>/dev/null || true)
+            BODY=$(curl -fsSL http://127.0.0.1:3002/en/ 2>/dev/null || true)
             if echo "$BODY" | grep -q "<html"; then
               echo "OK: cuberoot-next responding on :3002 with html marker"
               exit 0
@@ -162,7 +164,7 @@ jobs:
             sleep 1
           done
 
-          echo "ERROR: cuberoot-next did not serve html on :3002 within 15s"
+          echo "ERROR: cuberoot-next did not serve html on :3002/en/ within 15s"
           journalctl -u cuberoot-next --no-pager -n 30 || true
           if [ -d "$BACKUP" ]; then
             echo "rolling back..."
