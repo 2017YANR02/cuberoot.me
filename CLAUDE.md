@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **根目录的静态 HTML/JS**（来自多个 fork + Phase 4 前 deploy_mirror.yml 同步的 Vite build 残留）—— 只读，不改;deploy_mirror 已停,残留长期会清。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
    - `packages/client-next` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **主要工作区** (Phase 4 2026-05-27 切完)
-   - `packages/client` — React 19 + Vite 8 SPA (已退役,仅 vite.cuberoot.me 回滚兜底用,新功能不动)
+   - `packages/client` — React 19 + Vite 8 SPA (已退役,仅本地 `localhost:5173` 对比/兜底用,新功能不动;线上 vite.cuberoot.me 已下线)
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
    - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 模块 | 路由 | 位置 | 来源 | 可改? |
 |------|------|------|------|-------|
-| Solver | `/solver` | 根目录静态 HTML(只本机 nginx serve,Vercel 上走 `tools/[...slug]` 反代 vite.cuberoot.me) | fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) | ❌ upstream |
+| Solver | `/solver` | 根目录静态 HTML(只本机 nginx serve,Vercel 上走 `tools/[...slug]` 反代 static.cuberoot.me) | fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) | ❌ upstream |
 | Alg Trainer | `/alg-trainers` | 根目录静态 HTML(同上) | fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) | ❌ upstream |
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/`(同上 fallback) | integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) | ❌ upstream |
 | WCA Stats（数据管道） | `/wca` | `core/packages/stats-build` | 基于 [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) 的 TS 重写 | ⚠️ 管道已重写，UI 自有 |
@@ -41,17 +41,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 部署拓扑 (Phase 4 后 — 2026-05-27)
 
-- **主域 `cuberoot.me` / `www.cuberoot.me`** 走 **DNS 分线路** (阿里云 free DNS 分流):
-  - 中国 ISP 线路 (联通/电信/移动/教育网) → 境内服务器 IP → nginx `proxy_pass 127.0.0.1:3002` → systemd `cuberoot-next` (Next standalone)。vhost `ops/nginx/www.cuberoot.me.conf`,改 nginx 走 `deploy_nginx.yml`(scp + `nginx -t` + reload + 失败回滚 .bak)。
-  - 境外线路 → Vercel Hobby `cuberoot-me` project → 同一份 Next 代码 + Vercel edge。Vercel 自动从 GitHub main 跑 build,部署是 push-triggered。
-- **`vite.cuberoot.me`** — 退役 Vite SPA 兜底子域,境内服务器 nginx 服 `/www/wwwroot/toolkit`(主域 swap 出问题时手动改 nginx 一键回滚)。
+- **主域 `cuberoot.me` / `www.cuberoot.me`** 走 **DNS 分线路** (provider 自带分流):
+  - 一条线路 → 自有服务器 IP → nginx `proxy_pass 127.0.0.1:3002` → systemd `cuberoot-next` (Next standalone)。vhost `ops/nginx/www.cuberoot.me.conf`,改 nginx 走 `deploy_nginx.yml`(scp + `nginx -t` + reload + 失败回滚 .bak)。
+  - 另一条线路 → Vercel Hobby `cuberoot-me` project → 同一份 Next 代码 + Vercel edge。Vercel 自动从 GitHub main 跑 build,部署是 push-triggered。
+- **`static.cuberoot.me`** — 自有服务器 nginx 独立 vhost,只服 `/www/wwwroot/toolkit/{tools,stats}/`(forks 静态资源 + WCA stats JSON),CORS:* 给 Vercel function fallback。2026-05-27 替代退役的 `vite.cuberoot.me`。
 - **`next.cuberoot.me`** — 同一套 systemd `cuberoot-next` 反代 :3002,作 staging 子域 / 别名。
 - **systemd Next standalone 部署**:`deploy_next.yml`(push `core/packages/{client-next,shared,visualcube}/**` 触发) CI build → tar `.next/standalone/`(自带 node_modules) → scp → 服务器原子换 `/www/wwwroot/toolkit-next/` + 健康检查 :3002,挂了自动回滚 .bak。`start.sh` 包装定位 standalone entry,systemd unit 在 `ops/systemd/cuberoot-next.service`。
-- **Vercel build 特殊处理**:`next.config.ts` 用 `VERCEL=1` env gate,Vercel 上跳过 `output: standalone` + `outputFileTracingRoot`(否则 vercel/next.js#88579 撞 manifest ENOENT)。`app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 在 Vercel 上 fallback 拉 `vite.cuberoot.me/{stats,tools}/*`(stats 数据没打进 Vercel bundle)。
+- **Vercel build 特殊处理**:`next.config.ts` 用 `VERCEL=1` env gate,Vercel 上跳过 `output: standalone` + `outputFileTracingRoot`(否则 vercel/next.js#88579 撞 manifest ENOENT)。`app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 在 Vercel 上 fallback 拉 `static.cuberoot.me/{stats,tools}/*`(stats 数据 + forks 没打进 Vercel bundle,CORS 已开)。
 - **Vercel CLI 已装本机**(`ruiminyan` 登录态):`vercel logs https://www.cuberoot.me` 拉最近 100 条 function log,`| grep ' 5[0-9]{2} '` 过 5xx。用户报"vercel 报错"直接 CLI 自查,免截图。详见 memory `project_vercel_deployment`。
-- **CORS allowlist** 在 `core/packages/server/src/index.ts`,函数形式放行 `*.vercel.app`(Vercel preview 每 PR 一个 URL)+ `vite.cuberoot.me` + 主域。
-- **后端 API**:Hono 服 `api.cuberoot.me`(同一台云服务器,nginx 反代到 127.0.0.1:3001)。
-- **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me CN nginx alias / 境外 GH Pages。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
+- **CORS allowlist** 在 `core/packages/server/src/index.ts`,函数形式放行 `*.vercel.app`(Vercel preview 每 PR 一个 URL)+ 主域 + `next.cuberoot.me`。
+- **后端 API**:Hono 服 `api.cuberoot.me`(同一台自有服务器,nginx 反代到 127.0.0.1:3001)。
+- **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me 双轨(自有 nginx alias / GH Pages)按 DNS 分线路。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
 - 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client-next 在 `lib/api-base.ts`),不要硬编码 origin。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 - **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
@@ -82,7 +82,7 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 
 - Next dev 绑定 `127.0.0.1` (Windows Chrome IPv6 解析问题)
 - 本地 Next dev 调 `/v1/*` 走 next.config rewrites 反代 `https://api.cuberoot.me`,**本地开发不需要跑后端**
-- `app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 是 dev 服仓库根 stats/tools/ 用的 catch-all (mirror Vite `serveRepoRoot` 插件),Vercel 上 fallback vite.cuberoot.me
+- `app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 是 dev 服仓库根 stats/tools/ 用的 catch-all (mirror Vite `serveRepoRoot` 插件),Vercel 上 fallback static.cuberoot.me
 - **凭据展开**：给用户云服务器 / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
 - **本地 PG**:docker `pg13`(5433 pwd `dev` db `cuberoot_db`,PG 13)。schema / load.sql 先本地验。
 
