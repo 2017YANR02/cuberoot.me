@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3000",
+    "dev:safe": "node scripts/dev-safe.mjs",
     "build": "next build",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
