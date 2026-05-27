@@ -1,16 +1,16 @@
 // /stats/* handler:
 // - Local dev (next dev): serves from repo's stats/ directory.
-// - 境内 prod (nginx): never hit here, nginx ^~ /stats/ location returns first.
+// - Self-hosted prod (nginx): never hit here, nginx ^~ /stats/ location returns first.
 // - Vercel prod: stats/ NOT bundled (only core/packages/client-next is deployed)
-//   → fall back to fetching from vite.cuberoot.me which serves stats from
-//   /www/wwwroot/toolkit/stats/ via nginx.
+//   → fall back to fetching from static.cuberoot.me which serves stats from
+//   /www/wwwroot/toolkit/stats/ via nginx (CORS: *).
 // (Without this, /stats/all_upcoming_comps.json etc. 404 on Vercel.)
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERCEL_STATS_FALLBACK = 'https://vite.cuberoot.me/stats/';
+const VERCEL_STATS_FALLBACK = 'https://static.cuberoot.me/stats/';
 
 // app/stats/[...slug]/route.ts → 6 levels up = repo root, then 'stats'
 // (cuberoot.me/core/packages/client-next/app/stats/[...slug] → cuberoot.me/stats)
@@ -54,7 +54,7 @@ export async function GET(
     const data = await fs.readFile(filePath);
     return new Response(new Uint8Array(data), { headers });
   } catch {
-    // On Vercel, stats/ isn't bundled — fetch from境内 nginx fallback.
+    // On Vercel, stats/ isn't bundled — fetch from static.cuberoot.me fallback.
     if (process.env.VERCEL === '1') {
       try {
         const upstream = await fetch(VERCEL_STATS_FALLBACK + rel);

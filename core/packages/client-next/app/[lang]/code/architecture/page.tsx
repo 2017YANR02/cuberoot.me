@@ -387,7 +387,7 @@ interface Decision {
   en: string;
 }
 const DECISIONS: Decision[] = [
-  { topic: 'Framework',   pick: 'React 19',         alt: 'Vue / Svelte',          zh: '生态最广;cubing.js / sr-puzzlegen 等魔方库的示例都是 React;团队熟。',                en: 'Widest ecosystem; cubing.js / sr-puzzlegen samples are React; team familiarity.' },
+  { topic: 'UI library',  pick: 'React 19',         alt: 'Vue / Svelte / Solid',  zh: '生态最广;cubing.js / sr-puzzlegen 等魔方库的示例都是 React;团队熟。',                en: 'Widest ecosystem; cubing.js / sr-puzzlegen samples are React; team familiarity.' },
   { topic: 'Framework',   pick: 'Next.js 16 (App Router)', alt: 'Remix / TanStack Start / 纯 Vite SPA', zh: 'App Router + RSC + 服务端 streaming 一体, Turbopack dev/build; 双部署 (systemd standalone + Vercel) 同一份代码。Phase 4 (2026-05) 从 React Router SPA 整体切过来。', en: 'App Router + RSC + server streaming in one; Turbopack dev/build; one codebase deploys to both systemd standalone and Vercel. Cut over from React Router SPA in Phase 4 (2026-05).' },
   { topic: 'Bundler',     pick: 'Turbopack',        alt: 'Webpack / Vite',        zh: 'Next.js 16 自带, dev incremental compile + prod build 都走它;首次冷编 30-90s, 之后增量 sub-second。',                          en: 'Bundled with Next.js 16, drives both dev incremental compile and prod build; first cold compile 30-90s, then sub-second incremental.' },
   { topic: 'Styling',     pick: '手写语义化 CSS + Tailwind 4 base', alt: '纯 Tailwind / CSS-in-JS', zh: '主样式每页一份手写 CSS (compare.css / stack_landing.css 这类, 用 .compare-card 这种页面前缀语义名)。Tailwind 4 通过 @tailwindcss/postcss 装着, app/globals.css 一行 @import "tailwindcss" 拉进 preflight + utility 命名空间作 base 层兜底, 不写 className="flex p-4"。主题 token 走 shadcn 命名 + CSS 变量。', en: 'Per-page hand-written semantic CSS is the primary style layer (compare.css / stack_landing.css etc., page-prefixed names like .compare-card). Tailwind 4 is wired via @tailwindcss/postcss + a single @import "tailwindcss" in app/globals.css — it supplies preflight + a utility namespace as the base layer, but className="flex p-4" is not the idiom. Theme tokens use shadcn naming + CSS custom properties.' },
@@ -395,7 +395,7 @@ const DECISIONS: Decision[] = [
   { topic: 'Database',    pick: 'PostgreSQL 13',    alt: 'MariaDB / MongoDB',     zh: '2026-05 从 MariaDB 整体迁过来。jsonb / window function / partial index 比 MariaDB 强一档。', en: 'Migrated from MariaDB 2026-05. jsonb, window functions, partial indexes — a tier above MariaDB.' },
   { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: 'npm / yarn workspaces', zh: '4 个核心 workspace (client / server / shared / stats-build), 一份 pnpm-lock。硬链接 node_modules 省盘;Turbo 缓存只跑改动到的 package。底层 registry 仍是 npm (registry.npmjs.org), pnpm 只是更快的客户端。', en: 'Four core workspaces (client / server / shared / stats-build), one pnpm-lock. Hard-linked node_modules saves disk; Turbo runs only changed packages. The underlying registry is still npm (registry.npmjs.org) — pnpm is just a faster client.' },
   { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '11 个 store (6 全局 + 5 页面级)。无 Provider, create() 返回 hook, 选 selector 拿切片。auth 走 storage 事件跨标签同步, settings/sessions 用 persist 中间件落 localStorage。打包后约 1 KB。', en: '11 stores (6 global + 5 page-local). No Provider — create() returns a hook, components select slices. auth syncs across tabs via the storage event; settings/sessions persist to localStorage via middleware. ~1 KB bundle cost.' },
-  { topic: 'Hosting',     pick: '云服务器 nginx + Vercel (DNS 分线路)', alt: '单 Vercel / 单 nginx', zh: 'DNS 按线路分流, 同一份 Next.js 代码两边跑。国内线路 → 境内云服务器 nginx → systemd Next standalone (反代 :3002, deploy_next.yml CI 自动 scp + 原子 swap);其他线路 → Vercel Hobby edge (push GitHub 自动部署)。后端 Hono+PG 始终在同一台云服务器, Vercel 端通过 api.cuberoot.me 调。', en: 'Split-horizon DNS, same Next.js codebase on both. CN line → in-country nginx → systemd Next standalone (reverse-proxy :3002, deploy_next.yml CI auto scp + atomic swap); other lines → Vercel Hobby edge (push-to-GitHub auto-deploy). Backend Hono+PG stays on the same cloud VM; Vercel side hits it via api.cuberoot.me.' },
+  { topic: 'Hosting',     pick: '自有 VM nginx + Vercel (DNS 分线路)', alt: '单 Vercel / 单 nginx', zh: 'DNS 按线路分流, 同一份 Next.js 代码两边跑。一条线路 → 自有 VM nginx → systemd Next standalone (反代 :3002, deploy_next.yml CI 自动 scp + 原子 swap);另一条线路 → Vercel Hobby edge (push GitHub 自动部署)。后端 Hono+PG 始终在同一台 VM, Vercel 端通过 api.cuberoot.me 调。', en: 'Split-horizon DNS, same Next.js codebase on both. One line → self-hosted VM nginx → systemd Next standalone (reverse-proxy :3002, deploy_next.yml CI auto scp + atomic swap); the other line → Vercel Hobby edge (push-to-GitHub auto-deploy). Backend Hono+PG stays on the same VM; Vercel side hits it via api.cuberoot.me.' },
   { topic: 'Theme tokens', pick: 'shadcn 命名 + hex + color-mix', alt: 'oklch / Material 3 / Radix Colors', zh: '8 页双主题切换。命名跟 OSS 标准 shadcn (AI 写代码命中率高);色值 hex (调研 30+ 大厂含 Anthropic console 自己,0 家把 oklch 当主品牌 token);衍生用 color-mix(in srgb) 跟 Anthropic CDS 实战用法 (644 处) 对齐。', en: 'Dark/light across 8 pages. Naming follows shadcn (OSS standard, friendly to AI code-gen); hex values (surveyed 30+ big-co incl. Anthropic console — zero use oklch as primary brand tokens); derivations via color-mix(in srgb) aligning with Anthropic CDS (644 production uses).' },
 ];
 
@@ -529,13 +529,13 @@ const TIMELINE: TLEntry[] = [
     tag: 'migration',
     zh: {
       title: 'Phase 4 完成: 主域从 Vite SPA 切到 Next.js',
-      body: 'cuberoot.me 主域换底:中国 ISP 用户 → 境内 nginx → systemd cuberoot-next (Next standalone),海外用户 → Vercel edge → 同份 Next 代码。DNS 阿里云分线路。旧 Vite SPA 退役到 vite.cuberoot.me 作回滚兜底。GH Pages 镜像不再用。',
-      expand: '架构骨架不变(后端 Hono+PG 不动),前端框架换 React Router → Next.js App Router + Turbopack,新代码在 packages/client-next/。同一份 Next 代码两边跑:境内 = systemd 标准 next standalone(deploy_next.yml CI build + tar + scp + 原子 swap + 健康检查),海外 = Vercel Hobby 自动从 GitHub 部署。Vercel 上踩到 3 个坑:(1) standalone + outputFileTracingRoot 跟 Vercel Turbopack 撞 manifest ENOENT (vercel/next.js#88579), VERCEL=1 env gate 跳过;(2) /stats/* /tools/* 在 Vercel 没打进 bundle, route handler 加 fallback fetch vite.cuberoot.me;(3) /zh/wca/comp/[slug] 必须 force-dynamic 否则 useSearchParams 抛 DYNAMIC_SERVER_USAGE 500。海外 cert HTTP-01 challenge 1 分钟内签发, 全程零 downtime。',
+      body: 'cuberoot.me 主域换底:一条线路 → 自有 VM nginx → systemd cuberoot-next (Next standalone),另一条线路 → Vercel edge → 同份 Next 代码。DNS provider 自带分流。旧 Vite SPA 同期下线(2026-05-27),只保留本地 localhost:5173 作对比。GH Pages 镜像不再用。',
+      expand: '架构骨架不变(后端 Hono+PG 不动),前端框架换 React Router → Next.js App Router + Turbopack,新代码在 packages/client-next/。同一份 Next 代码两边跑:一条线路 = systemd 标准 next standalone(deploy_next.yml CI build + tar + scp + 原子 swap + 健康检查),另一条 = Vercel Hobby 自动从 GitHub 部署。Vercel 上踩到 3 个坑:(1) standalone + outputFileTracingRoot 跟 Vercel Turbopack 撞 manifest ENOENT (vercel/next.js#88579), VERCEL=1 env gate 跳过;(2) /stats/* /tools/* 在 Vercel 没打进 bundle, route handler 加 fallback fetch static.cuberoot.me;(3) /zh/wca/comp/[slug] 必须 force-dynamic 否则 useSearchParams 抛 DYNAMIC_SERVER_USAGE 500。cert HTTP-01 challenge 1 分钟内签发, 全程零 downtime。',
     },
     en: {
       title: 'Phase 4: main domain swapped from Vite SPA to Next.js',
-      body: 'cuberoot.me cuts over: China ISPs → in-country nginx → systemd cuberoot-next (Next standalone); overseas → Vercel edge → same Next code. Alibaba split-horizon DNS. The retired Vite SPA stays at vite.cuberoot.me as rollback. GH Pages mirror is now disabled.',
-      expand: 'Backend skeleton unchanged (Hono+PG); front-end framework swaps React Router → Next.js App Router + Turbopack, new code lives in packages/client-next/. One Next codebase runs in two places: in-country = standard Next standalone on systemd (deploy_next.yml CI build + tar + scp + atomic swap + health check), overseas = Vercel Hobby auto-deploy from GitHub. Three Vercel-specific gotchas: (1) standalone + outputFileTracingRoot trip Vercel Turbopack into manifest ENOENT (vercel/next.js#88579) — gated by VERCEL=1 env; (2) /stats/* and /tools/* are not bundled into Vercel functions — route handlers fall back to vite.cuberoot.me; (3) /zh/wca/comp/[slug] needs force-dynamic or useSearchParams throws DYNAMIC_SERVER_USAGE 500. HTTP-01 cert issued under a minute, zero user-visible downtime.',
+      body: 'cuberoot.me cuts over: one DNS line → self-hosted VM nginx → systemd cuberoot-next (Next standalone); the other line → Vercel edge → same Next code. DNS provider handles the split. The retired Vite SPA is taken down (2026-05-27), only local localhost:5173 kept for comparison. GH Pages mirror is now disabled.',
+      expand: 'Backend skeleton unchanged (Hono+PG); front-end framework swaps React Router → Next.js App Router + Turbopack, new code lives in packages/client-next/. One Next codebase runs in two places: one DNS line = standard Next standalone on systemd (deploy_next.yml CI build + tar + scp + atomic swap + health check), the other = Vercel Hobby auto-deploy from GitHub. Three Vercel-specific gotchas: (1) standalone + outputFileTracingRoot trip Vercel Turbopack into manifest ENOENT (vercel/next.js#88579) — gated by VERCEL=1 env; (2) /stats/* and /tools/* are not bundled into Vercel functions — route handlers fall back to static.cuberoot.me; (3) /zh/wca/comp/[slug] needs force-dynamic or useSearchParams throws DYNAMIC_SERVER_USAGE 500. HTTP-01 cert issued under a minute, zero user-visible downtime.',
     },
   },
   {
@@ -543,12 +543,12 @@ const TIMELINE: TLEntry[] = [
     tag: 'feature',
     zh: {
       title: '单日 5 件并发: /sim + /comp + 主题 token + blog 子域 + Nemesizer SaaS',
-      body: '(1) /sim 虚拟魔方 Playground 上线 (port huazhechen/cuber, three.js 引擎 + 4 模式 free play / replay / algs / record); (2) /comp cubing.com 直播比赛镜像 (直 WS 实时推送); (3) shadcn-style 主题 token 系统 + ThemeToggle (light/dark/system) + theme-tokens skill; (4) blog.cuberoot.me 子域分流 (CN nginx alias / 境外 GH Pages,WP 旧 slug 重定向); (5) Nemesizer server-side 化 (dataset+algo 移入 Hono,6 端点 + nginx 24h cache)。',
+      body: '(1) /sim 虚拟魔方 Playground 上线 (port huazhechen/cuber, three.js 引擎 + 4 模式 free play / replay / algs / record); (2) /comp cubing.com 直播比赛镜像 (直 WS 实时推送); (3) shadcn-style 主题 token 系统 + ThemeToggle (light/dark/system) + theme-tokens skill; (4) blog.cuberoot.me 子域 DNS 分线路 (nginx alias / GH Pages,WP 旧 slug 重定向); (5) Nemesizer server-side 化 (dataset+algo 移入 Hono,6 端点 + nginx 24h cache)。',
       expand: '/sim 总 14 文件 ~1400 行新增, cuber 引擎 ~2200 行 TS 完整 port + WCA 标准配色 + cubelet thickness 立体贴片 + AmbientLight ×π 修 r155+ 物理光照, 配 redo 栈 / 全键盘 / 设置抽屉 / 移动 24 键盘 / Player 回放 / Algs 库 (复用现有 /api/alg/sets) / Director (PNG 截图 + canvas captureStream MediaRecorder)。/comp 直 WS 取代 polling, 选手成绩即时更新 + flag/record badge/i18n。shadcn 主题用 hex token + color-mix 衍生 (禁硬码 #888 等), light-locked / dark-locked 页用 page-scope color-scheme 锁。blog 子域 acme.sh dns_ali 自动续, 同期 ruiminyan.github.io → cuberoot.me 全仓引用替换。Nemesizer 之前是 client 9MB bundle, 现在 server 启动加载 .bin.gz 进内存 + nginx /v1/nemesizer/* 24h 缓存 + pm2 reload on stats refresh。同日 landing 右上角 cluster 统一 + /about 页扩 + upstream logos + credits 单源 JSON (credits_data.json 驱动 README + /about) + RegionPicker 255 行新组件 + DESIGN.md 338 行 + THEMING.md 194 行图设/主题文档体系。',
     },
     en: {
       title: 'Five concurrent launches in one day: /sim + /comp + theme tokens + blog subdomain + Nemesizer SaaS',
-      body: '(1) /sim virtual cube Playground (port of huazhechen/cuber, three.js engine + 4 modes: free play / replay / algs / record); (2) /comp cubing.com live-competition mirror (direct WS push); (3) shadcn-style theme token system + ThemeToggle (light/dark/system) + theme-tokens skill; (4) blog.cuberoot.me subdomain split (CN nginx alias / oversea GH Pages, WP legacy slug redirect); (5) Nemesizer goes server-side (dataset + algo into Hono, six endpoints + 24h nginx cache).',
+      body: '(1) /sim virtual cube Playground (port of huazhechen/cuber, three.js engine + 4 modes: free play / replay / algs / record); (2) /comp cubing.com live-competition mirror (direct WS push); (3) shadcn-style theme token system + ThemeToggle (light/dark/system) + theme-tokens skill; (4) blog.cuberoot.me subdomain split-horizon DNS (nginx alias / GH Pages, WP legacy slug redirect); (5) Nemesizer goes server-side (dataset + algo into Hono, six endpoints + 24h nginx cache).',
       expand: '/sim: 14 files / ~1400 lines added; cuber\'s ~2200-line TS engine fully ported + WCA standard sticker colors + cubelet thickness for 3D tiles + AmbientLight ×π fix for r155+ physical lighting; redo stack / full keyboard map / settings drawer / 24-key mobile keypad / Player replay / Algs browser (reuses existing /api/alg/sets) / Director (PNG snapshot + canvas captureStream MediaRecorder). /comp uses direct WS instead of polling — live finishes + flag / record badge / i18n. shadcn theme uses hex tokens + color-mix derivations (no hand-coded #888 etc.); light-locked / dark-locked pages get page-scope color-scheme locks. Blog subdomain on acme.sh dns_ali auto-renew; same day finalised ruiminyan.github.io → cuberoot.me references repo-wide. Nemesizer was previously a 9MB client bundle; now the server preloads .bin.gz at startup + 24h nginx /v1/nemesizer/* cache + pm2 reload on stats refresh. Same day also: top-right cluster unified + /about expanded + upstream logos + credits single-source JSON (credits_data.json drives README + /about) + 255-line RegionPicker + 338-line DESIGN.md + 194-line THEMING.md documentation.',
     },
   },
@@ -810,12 +810,12 @@ const TIMELINE: TLEntry[] = [
     zh: {
       title: 'Firestore → PHP + MariaDB (自有云服务器)',
       body: '上线没几天的 Firestore 后端就被换成自有云服务器上自建的 PHP + MariaDB。第一次"自己运维一台机器"。',
-      expand: 'Firestore 跨境延迟太高 + 配额太复杂, 不适合主战场在国内的站点。这台云服务器后来也是现役那台的雏形 (2026-05 才把宝塔 panel 和 PHP 一起拆掉)。',
+      expand: 'Firestore 跨区延迟太高 + 配额太复杂, 不适合主要用户群单一地理位置的站点。这台 VM 后来也是现役那台的雏形 (2026-05 才把宝塔 panel 和 PHP 一起拆掉)。',
     },
     en: {
       title: 'Firestore → PHP + MariaDB (self-hosted VM)',
       body: 'Firestore — adopted only days earlier — was replaced with self-hosted PHP + MariaDB on a cloud VM. The first "run my own machine" moment.',
-      expand: 'Firestore had cross-border latency issues plus complicated quotas — wrong fit for a site whose audience is mostly in China. This VM later evolved into the current cloud-server (2026-05 finally stripped out baota panel + PHP together).',
+      expand: 'Firestore had cross-region latency issues plus complicated quotas — wrong fit for a site whose audience is concentrated in one geography. This VM later evolved into the current cloud-server (2026-05 finally stripped out baota panel + PHP together).',
     },
   },
   {
@@ -838,12 +838,12 @@ const TIMELINE: TLEntry[] = [
     zh: {
       title: 'Upcoming Comps 比赛追踪器上线',
       body: 'Upcoming Comps 页 (后来叫 /calendar): 列未来比赛 + 顶级选手 + 现/前 WR badge + 24h 缓存。',
-      expand: '数据源: WCA API + 中国大陆比赛接 cubing.com (因为 WCA API 不含中国大陆 NF 比赛)。这是站点第一个"有时效性"的页 — 不只看历史成绩, 还展望未来。后续 4-30 加列表视图, 4-28 加 /calendar/stats 子页。',
+      expand: '数据源: WCA API + 部分非官方比赛接 cubing.com (WCA API 不覆盖非官方 NF 比赛)。这是站点第一个"有时效性"的页 — 不只看历史成绩, 还展望未来。后续 4-30 加列表视图, 4-28 加 /calendar/stats 子页。',
     },
     en: {
       title: 'Upcoming Comps tracker launches',
       body: 'Upcoming Comps page (later renamed /calendar): lists future competitions + top cubers attending + current/former WR badges + 24h cache.',
-      expand: 'Data sources: WCA API + cubing.com for China mainland comps (the WCA API doesn\'t include China-mainland-NF events). This was the site\'s first "time-sensitive" page — not just historical data, but a forward view. Later 4-30 adds list view, 4-28 adds /calendar/stats subpage.',
+      expand: 'Data sources: WCA API + cubing.com for non-WCA comps (the WCA API doesn\'t include unofficial NF events). This was the site\'s first "time-sensitive" page — not just historical data, but a forward view. Later 4-30 adds list view, 4-28 adds /calendar/stats subpage.',
     },
   },
   {
@@ -1179,8 +1179,8 @@ export default function ArchitecturePage() {
           </h1>
           <p className="arch-hero-lede">
             <L
-              zh={<>一个 24+ 工具页的魔方站, 同份 Next.js 16 代码两边跑 (境内云服务器 + Vercel edge, DNS 分线路)。后端是 Hono + PostgreSQL, WCA 统计有一条独立的周更管道。下面这页把每一层讲清楚 — 从一个鼠标点击, 到 DOM 更新, 中间发生了什么。</>}
-              en={<>A cube-tools site with 24+ tool pages — one Next.js 16 codebase deployed two ways (in-country cloud VM + Vercel edge, split-horizon DNS). Backend is Hono + PostgreSQL, and the WCA statistics pipeline runs separately on a weekly cadence. This page walks every layer — from a mouse click to a DOM update, and everything in between.</>}
+              zh={<>一个 24+ 工具页的魔方站, 同份 Next.js 16 代码两边跑 (自有 VM + Vercel edge, DNS 分线路)。后端是 Hono + PostgreSQL, WCA 统计有一条独立的周更管道。下面这页把每一层讲清楚 — 从一个鼠标点击, 到 DOM 更新, 中间发生了什么。</>}
+              en={<>A cube-tools site with 24+ tool pages — one Next.js 16 codebase deployed two ways (self-hosted VM + Vercel edge, split-horizon DNS). Backend is Hono + PostgreSQL, and the WCA statistics pipeline runs separately on a weekly cadence. This page walks every layer — from a mouse click to a DOM update, and everything in between.</>}
             />
           </p>
           <div className="arch-hero-stats">
@@ -1199,8 +1199,8 @@ export default function ArchitecturePage() {
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>境内一切都坐在一台云服务器上:nginx 反代 systemd Next standalone (:3002) + Hono API (:3001);Hono 通过本地 socket 打 PG。境外用户走 Vercel edge, 同份 Next 代码; 拉的还是同一个 api.cuberoot.me。vite.cuberoot.me 保留旧 SPA dist 作主域 swap 紧急回滚兜底。</>}
-              en={<>In-country everything sits on one cloud VM: nginx reverse-proxies systemd Next standalone (:3002) + Hono API (:3001); Hono talks to PG over a local socket. Overseas users hit Vercel edge running the same Next code; the API call still resolves to api.cuberoot.me. vite.cuberoot.me retains the retired SPA dist as emergency rollback if the main-domain Next swap breaks.</>}
+              zh={<>一条线路一切都坐在一台自有 VM 上:nginx 反代 systemd Next standalone (:3002) + Hono API (:3001);Hono 通过本地 socket 打 PG。另一条线路走 Vercel edge, 同份 Next 代码; 拉的还是同一个 api.cuberoot.me。static.cuberoot.me 独立子域服 /tools /stats 给 Vercel function fallback 用。</>}
+              en={<>One line: everything sits on one self-hosted VM — nginx reverse-proxies systemd Next standalone (:3002) + Hono API (:3001); Hono talks to PG over a local socket. The other line hits Vercel edge running the same Next code; the API call still resolves to api.cuberoot.me. static.cuberoot.me is a dedicated subdomain serving /tools and /stats for the Vercel function fallback.</>}
             />
           </p>
           <div className="arch-diagram">
@@ -1271,8 +1271,8 @@ export default function ArchitecturePage() {
           <pre className="arch-code">{`Browser
   │  GET cuberoot.me/recon/abc
   ▼
-nginx :443    →  proxy_pass :3002  (境内:systemd Next standalone)
-  │            ↘  Vercel edge      (其他线路:同份 Next 代码)
+nginx :443    →  proxy_pass :3002  (一条线路:systemd Next standalone)
+  │            ↘  Vercel edge      (另一条线路:同份 Next 代码)
   ▼
 Next App Router  →  SSR shell stream → 客户端 hydrate
   │
@@ -1347,11 +1347,11 @@ client  →  fetch(apiUrl('/v1/recon/abc'))
               <th><L zh="作用" en="Role" /></th>
             </tr></thead>
             <tbody>
-              <tr><td><code>cuberoot.me</code><br/><code>www.cuberoot.me</code></td><td><L zh="DNS 分线路 — 国内 ISP → 境内云服务器 nginx → systemd Next standalone :3002;其他线路 → Vercel Hobby edge (同份代码 push 即部署)" en="Split-horizon DNS — CN ISP → in-country nginx → systemd Next standalone :3002; other lines → Vercel Hobby edge (same code, push-to-deploy)" /></td><td><L zh="主站, Next.js 16 App Router" en="Primary site, Next.js 16 App Router" /></td></tr>
+              <tr><td><code>cuberoot.me</code><br/><code>www.cuberoot.me</code></td><td><L zh="DNS 分线路 — 一条线路 → 自有 VM nginx → systemd Next standalone :3002;另一条线路 → Vercel Hobby edge (同份代码 push 即部署)" en="Split-horizon DNS — one line → self-hosted VM nginx → systemd Next standalone :3002; the other → Vercel Hobby edge (same code, push-to-deploy)" /></td><td><L zh="主站, Next.js 16 App Router" en="Primary site, Next.js 16 App Router" /></td></tr>
               <tr><td><code>api.cuberoot.me</code></td><td><L zh="同台云服务器 nginx 反代 :3001" en="Cloud VM nginx → :3001" /></td><td><L zh="Hono API + 24h proxy_cache" en="Hono API + 24h proxy_cache" /></td></tr>
-              <tr><td><code>next.cuberoot.me</code></td><td><L zh="同 systemd cuberoot-next :3002 (别名)" en="Same systemd cuberoot-next :3002 (alias)" /></td><td><L zh="Staging 别名 / 直连境内 Next 不绕 DNS" en="Staging alias / direct-to-CN-Next bypassing DNS" /></td></tr>
-              <tr><td><code>vite.cuberoot.me</code></td><td><L zh="同台 nginx 服 toolkit dist (Vite SPA 退役归档)" en="Same nginx serving toolkit dist (retired Vite SPA archive)" /></td><td><L zh="主域 swap 出问题时一键回滚" en="One-click rollback if the main-domain Next swap fails" /></td></tr>
-              <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨:同台 nginx alias / 境外 GH Pages" en="Dual: nginx alias / oversea GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze)" en="WordPress static archive (frozen 2026-05)" /></td></tr>
+              <tr><td><code>next.cuberoot.me</code></td><td><L zh="同 systemd cuberoot-next :3002 (别名)" en="Same systemd cuberoot-next :3002 (alias)" /></td><td><L zh="Staging 别名 / 直连 self-hosted Next 不绕 DNS" en="Staging alias / direct to self-hosted Next, bypassing DNS routing" /></td></tr>
+              <tr><td><code>static.cuberoot.me</code></td><td><L zh="同台 nginx 独立 vhost,仅服 /tools/ + /stats/ (CORS:*)" en="Same nginx, dedicated vhost serving only /tools/ + /stats/ (CORS:*)" /></td><td><L zh="给 Vercel function fallback 拉静态资源" en="Static-asset origin for Vercel function fallback" /></td></tr>
+              <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨 DNS 分线路:同台 nginx alias / GH Pages" en="Dual via split-horizon DNS: same-VM nginx alias / GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze)" en="WordPress static archive (frozen 2026-05)" /></td></tr>
             </tbody>
           </table>
         </section>
