@@ -1,0 +1,46 @@
+'use client';
+/**
+ * 虚拟键盘 + toggle 按钮 — 桌面默认收起、提供按钮展开;移动端强制打开,无按钮。
+ * Ported from packages/client/src/components/CubeKeyboardSection/CubeKeyboardSection.tsx.
+ */
+import { useState, type RefObject } from 'react';
+import { Keyboard } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import CubeVirtualKeyboard from './CubeVirtualKeyboard';
+
+interface Props {
+  target: RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
+  onInput?: () => void;
+  enableMarks?: boolean;
+}
+
+export default function CubeKeyboardSection({ target, onInput, enableMarks }: Props) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
+  const isMobile = useIsMobile();
+  const [showKeyboard, setShowKeyboard] = useState(false);
+
+  const visible = isMobile || showKeyboard;
+  const labelOn = isZh ? '隐藏虚拟键盘' : 'Hide keyboard';
+  const labelOff = isZh ? '显示虚拟键盘' : 'Show keyboard';
+
+  return (
+    <>
+      {!isMobile && (
+        <button
+          type="button"
+          className={`vkb-toggle${showKeyboard ? ' active' : ''}`}
+          onClick={() => setShowKeyboard(s => !s)}
+          aria-label={showKeyboard ? labelOn : labelOff}
+          title={showKeyboard ? labelOn : labelOff}
+        >
+          <Keyboard size={14} />
+        </button>
+      )}
+      {visible && (
+        <CubeVirtualKeyboard target={target} onInput={onInput} enableMarks={enableMarks} />
+      )}
+    </>
+  );
+}

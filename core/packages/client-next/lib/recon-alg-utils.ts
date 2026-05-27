@@ -151,3 +151,20 @@ export function extractAlgFromText(text: string): string {
     .join('\n');
   return cleanForPlayer(alg);
 }
+
+/**
+ * 规范化解法里的 `//` 注释标记:每行第一个 `//` 前后各**恰好**一个空格。
+ * - `R//x` / `R  //  x` → `R // x`
+ * - `R // x` (已规范) → 不变
+ * - `// comment` 行首注释 → 保持无前导空格,但 trailing 空格规范为 1
+ * - 一行多个 `//`:只处理第一个(第二个被视为注释文本里的内容)
+ */
+export function normalizeSolutionSlashes(text: string): string {
+  return text.split('\n').map(line => {
+    const idx = line.indexOf('//');
+    if (idx < 0) return line;
+    const before = line.slice(0, idx).replace(/[ \t]+$/, '');
+    const after = line.slice(idx + 2).replace(/^[ \t]+/, '');
+    return before === '' ? `// ${after}` : `${before} // ${after}`;
+  }).join('\n');
+}

@@ -193,6 +193,34 @@ export const FACE_COLORS: Record<string, string> = {
   B: '#3b82f6',
 };
 
+// ── Record dropdown options ──
+
+/** 纪录下拉选项 — 大洲精确到 AsR/AfR/ER/NAR/OcR/SAR(WCA API 原值)。含 cancelled 前缀 */
+export const RECORD_OPTIONS: string[] = (() => {
+  const types = ['WR', 'AsR', 'AfR', 'ER', 'NAR', 'OcR', 'SAR', 'NR', 'PR'];
+  const prefixes = ['', 'cancelled '];
+  const out: string[] = [];
+  for (const p of prefixes) for (const t of types) out.push(p + t);
+  return out;
+})();
+
+const RECORD_TO_CONTINENT: Record<string, string> = {
+  AfR: 'AF', AsR: 'AS', ER: 'EU', NAR: 'NA', SAR: 'SA', OcR: 'OC',
+};
+
+/**
+ * 给定选手国籍 iso2,该 record code 是否合法(不属于该选手大洲的洲际记录应禁用)。
+ * 不传 iso2 时一律允许。WR/NR/PR 永远允许。
+ */
+export function isRecordCodeAllowedFor(code: string, personIso2: string | null | undefined): boolean {
+  if (!code) return true;
+  const core = code.replace(/^cancell?ed?\s+/i, '').trim();
+  const cont = RECORD_TO_CONTINENT[core];
+  if (!cont) return true;
+  if (!personIso2) return true;
+  return ISO2_TO_CONTINENT[personIso2.toUpperCase()] === cont;
+}
+
 export function computeWcaAverage(attempts: (number | null)[], event: string): number | null {
   const expected = attemptsPerRound(event);
   if (expected === 1) return null;
