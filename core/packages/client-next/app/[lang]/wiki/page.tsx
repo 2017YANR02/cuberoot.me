@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2 } from 'lucide-react';
 import HeaderToggles from '@/components/HeaderToggles';
+import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
@@ -171,10 +172,10 @@ export default function WikiPage() {
   return (
     <div className="wiki-page">
       <header className="wiki-header">
-        <Link href="/" className="wiki-back">
+        <HomeLink className="wiki-back">
           <ChevronLeft size={16} />
           <span>{isZh ? '首页' : 'Home'}</span>
-        </Link>
+        </HomeLink>
         <HeaderToggles className="wiki-header-right" />
       </header>
 

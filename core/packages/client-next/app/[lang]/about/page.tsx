@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import LangToggle from '@/components/LangToggle';
+import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CREDITS from './credits_data.json';
 import './about.css';
@@ -19,10 +20,10 @@ export default function AboutPage() {
   return (
     <div className="about-page">
       <header className="about-header">
-        <Link href="/" className="about-back">
+        <HomeLink className="about-back">
           <ChevronLeft size={16} />
           <span>{isZh ? '首页' : 'Home'}</span>
-        </Link>
+        </HomeLink>
         <LangToggle />
       </header>
 
