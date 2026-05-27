@@ -66,7 +66,8 @@ export default function WcaStatsIndex() {
   const isZh = i18n.language === 'zh';
 
   useEffect(() => {
-    fetch('/stats/index.json')
+    const ac = new AbortController();
+    fetch('/stats/index.json', { signal: ac.signal })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -76,9 +77,11 @@ export default function WcaStatsIndex() {
         setLoading(false);
       })
       .catch(err => {
+        if (err.name === 'AbortError') return;
         setError(err.message);
         setLoading(false);
       });
+    return () => ac.abort();
   }, []);
 
   if (loading) {

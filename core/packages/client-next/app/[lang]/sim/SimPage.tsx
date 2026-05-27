@@ -16,7 +16,10 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
-import * as THREE from 'three';
+// THREE is type-only at module scope — runtime instance is dynamically imported
+// inside the world-init effect so the ~1.2MB three bundle doesn't ship with
+// pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
+import type * as THREE from 'three';
 import {
   ChevronLeft, ChevronRight,
   BookOpen, Film,
@@ -243,6 +246,16 @@ export default function SimPage() {
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
+
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
+
+    void (async () => {
+      // Dynamic import — keeps three (~1.2MB) out of the initial sim bundle.
+      // Only NxN / SQ1 puzzles instantiate the renderer; twisty puzzles
+      // (pyraminx/skewb/megaminx) skip this effect via the `twisty` guard.
+      const THREE = await import('three');
+      if (cancelled) return;
 
     const world = new World();
     worldRef.current = world;
@@ -682,25 +695,35 @@ export default function SimPage() {
     };
     loop();
 
+      cleanup = () => {
+        cancelAnimationFrame(raf);
+        window.removeEventListener('resize', resize);
+        ro.disconnect();
+        renderer.domElement.removeEventListener('wheel', onWheel);
+        renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+        renderer.domElement.removeEventListener('pointermove', onPointerMove);
+        renderer.domElement.removeEventListener('pointerup', onPointerUp);
+        renderer.domElement.removeEventListener('pointercancel', onPointerUp);
+        renderer.domElement.removeEventListener('contextmenu', onContextMenu);
+        if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
+        toucher.destroy();
+        if (renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+        renderer.dispose();
+        worldRef.current = null;
+        rendererRef.current = null;
+        toucherRef.current = null;
+      };
+      // If unmount happened during the await above, the cancelled-check at
+      // the top short-circuits; if it happens here (between resolve and
+      // cleanup assignment), the outer return below catches it.
+      if (cancelled) cleanup();
+    })();
+
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-      ro.disconnect();
-      renderer.domElement.removeEventListener('wheel', onWheel);
-      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
-      renderer.domElement.removeEventListener('pointermove', onPointerMove);
-      renderer.domElement.removeEventListener('pointerup', onPointerUp);
-      renderer.domElement.removeEventListener('pointercancel', onPointerUp);
-      renderer.domElement.removeEventListener('contextmenu', onContextMenu);
-      if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
-      toucher.destroy();
-      if (renderer.domElement.parentNode) {
-        renderer.domElement.parentNode.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-      worldRef.current = null;
-      rendererRef.current = null;
-      toucherRef.current = null;
+      cancelled = true;
+      cleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twisty]);
