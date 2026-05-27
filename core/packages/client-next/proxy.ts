@@ -34,6 +34,12 @@ const MIGRATED_PATHS: readonly string[] = [
   '/cstimer',
   '/documentation',
   '/solver',
+  // batch 3 — feature -about pages
+  '/calc-about',
+  '/frame-count-about',
+  '/mosaic-about',
+  '/nemesizer-about',
+  '/recon-about',
 ];
 
 function isMigrated(pathname: string): boolean {
