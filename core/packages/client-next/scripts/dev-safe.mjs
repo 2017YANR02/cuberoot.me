@@ -71,10 +71,11 @@ function killTree(pid) {
 
 // Total cap covers ALL node procs (turbopack forks workers that don't
 // inherit our PriorityClass via Node's spawn — we re-apply each tick).
-// 6 GB chosen so a single cold-compile of heavy pages like /zh/sim
-// (three.js + cuber/ subtree) can finish without getting SIGKILLed.
-// On 32 GB systems this is still comfortably below swap-thrash territory.
-const TOTAL_RAM_CAP_MB = 6000;
+// 8 GB: heavy pages cold-compile + accumulated chunks naturally drift to
+// 5.5-6.5 GB after browsing many routes. Below 8 leaves no headroom and
+// triggers spurious kills during normal browsing. 8 GB on a 32 GB system
+// is still ~25 % — BelowNormal keeps desktop responsive even at this size.
+const TOTAL_RAM_CAP_MB = 8000;
 
 let watchdogActive = true;
 const watchdog = setInterval(() => {
