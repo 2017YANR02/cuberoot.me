@@ -56,6 +56,9 @@ const MIGRATED_PATHS: readonly string[] = [
   '/xcross_pairing_trainer',
   '/xcross_trainer',
   '/xxcross_trainer',
+  // batch 6 — alg library + calc
+  '/alg',
+  '/calc',
 ];
 
 function isMigrated(pathname: string): boolean {
