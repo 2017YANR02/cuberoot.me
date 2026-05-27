@@ -20,7 +20,7 @@ type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
 function NemesizerInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('苦主', 'Nemesizer');
+  useDocumentTitle('宿敌', 'Nemesizer');
 
   const router = useRouter();
   const pathname = usePathname();

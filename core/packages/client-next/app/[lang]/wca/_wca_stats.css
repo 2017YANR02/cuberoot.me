@@ -365,14 +365,14 @@ input:checked + .wca-stats-toggle-pill::after {
   white-space: nowrap;
 }
 
-/* NOTE: 表格容器填满父级宽度,内容更宽时横向滚动(2026-04 改:fit-content → 100%
-   让 wr_metric 嵌入的 top10 history bar chart race 边框与表格对齐) */
+/* fit-content:窄表贴内容,不留右侧大空白;max-width 兜底防溢出。
+   Top10HistoryPage 嵌入未迁到 Next,Vite 的 wr_metric 对齐约束不适用。 */
 .wca-stats-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid #444444;
   background: #212121;
-  width: 100%;
+  width: fit-content;
   max-width: 100%;
 
   /* Firefox: 细滚动条，默认透明 */

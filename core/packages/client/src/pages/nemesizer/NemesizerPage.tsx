@@ -16,7 +16,7 @@ type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
 export default function NemesizerPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('苦主', 'Nemesizer');
+  useDocumentTitle('宿敌', 'Nemesizer');
   const [params, setParams] = useSearchParams();
   const mode = (params.get('mode') as Mode) || 'standard';
 

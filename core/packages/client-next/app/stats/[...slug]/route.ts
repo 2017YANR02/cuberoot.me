@@ -41,9 +41,17 @@ export async function GET(
     const data = await fs.readFile(filePath);
     const ext = path.extname(rel).toLowerCase();
     const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
-    return new Response(new Uint8Array(data), {
-      headers: { 'content-type': contentType, 'cache-control': 'no-store' },
-    });
+    const headers: Record<string, string> = {
+      'content-type': contentType,
+      'cache-control': 'no-store',
+    };
+    // /stats/scramble/downloads/* 是 explicit 下载入口 — 强制 attachment,
+    // 避免 Chrome text/plain inline 显示或 download 属性偶发失效。
+    if (rel.startsWith('scramble/downloads/')) {
+      const base = path.basename(rel);
+      headers['content-disposition'] = `attachment; filename="${base}"`;
+    }
+    return new Response(new Uint8Array(data), { headers });
   } catch {
     return new Response('not found', { status: 404 });
   }

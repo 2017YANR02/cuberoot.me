@@ -302,3 +302,24 @@ a {
 .btn-secondary:hover {
   border-color: var(--accent);
 }
+
+/* 国旗全局规则 — 必须在 globals 而非 page-scoped css,
+   否则不 import _wca_stats.css 的页面 (all-events-done / grand-slam / records 等)
+   渲染 TW 自定义 SVG 时无 width/height 约束 → 撑爆容器。
+   对齐 Vite 的 src/index.css。 */
+.country-flag {
+  display: inline-block !important;
+  vertical-align: middle;
+  margin-right: 5px;
+  border-radius: 2px;
+  width: 1.25em !important;
+  line-height: 1em !important;
+}
+
+.country-flag-ct {
+  display: inline-block !important;
+  vertical-align: middle;
+  margin-right: 5px;
+  width: 1.25em !important;
+  height: 0.9em !important;
+}

@@ -37,12 +37,15 @@ const nextConfig: NextConfig = {
   // pre-bundling). Required because Turbopack does not produce
   // worker-runtime-independent bundles for nested module workers.
 
-  // @ffmpeg/ffmpeg 多线程 WASM 需要 cross-origin isolation (SharedArrayBuffer).
-  // 全站打开成本低(纯 header),挂个 route 测一下;后续按 path 收窄.
+  // COOP/COEP 只发给真用 SharedArrayBuffer (cubeopt-wasm) 的 /scramble/solver。
+  // 历史 nginx 把 analyzer 一起套了 — 但 analyzer 用 classic worker + emscripten
+  // (无 SAB),COEP=require-corp 会拦住 /analyze-worker/analyzer.js (Chrome 即使
+  // 同源 classic worker 在 COEP 下也要 CORP);跟 Vite dev (无 COEP) 行为不一致。
+  // 全站打开会把所有跨域 <img> (WCA 头像) 拦死。
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: "/:lang(zh|en)?/scramble/solver",
         headers: [
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
@@ -105,6 +108,11 @@ const nextConfig: NextConfig = {
       { source: "/code/mojo", destination: "/code/language/mojo", permanent: true },
       { source: "/code/compare", destination: "/code/language/compare", permanent: true },
       { source: "/code/scramble", destination: "/code/language/scramble", permanent: true },
+      // /blog/* → blog.cuberoot.me (双轨:境内 nginx 在主域 vhost ^~ /blog/ alias 直 serve;
+      // next.cuberoot.me 没这个 alias,统一跳子域。Vite 由 SPA BlogRedirectFallback 兜底,
+      // Next 这里在 next.config 层直接发 redirect。)
+      { source: "/blog", destination: "https://blog.cuberoot.me/", permanent: false },
+      { source: "/blog/:path*", destination: "https://blog.cuberoot.me/:path*", permanent: false },
     ];
   },
 };
