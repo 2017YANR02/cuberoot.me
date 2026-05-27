@@ -22,6 +22,12 @@ type Locale = typeof SUPPORTED_LOCALES[number];
 // (e.g. '/math/god' matches '/math/god' but NOT '/math/godfather').
 const MIGRATED_PATHS: readonly string[] = [
   '/', // app/[lang]/page.tsx
+  '/about',
+  '/math',       // /math, /math/god, /math/demigod, /math/group/[slug], /math/unit-distance
+  '/visualcube', // /visualcube, /visualcube/stages
+  '/2x2x2',
+  '/ffmpeg-poc',
+  '/jsonEditor',
 ];
 
 function isMigrated(pathname: string): boolean {
@@ -86,10 +92,16 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(target, 308);
   }
 
-  // 3. If user is on a /<lang>/ path, refresh the cookie so the preference
-  //    sticks across bare-path visits and future SSR knows the lang.
+  // 3. If user is on a /<lang>/ path, refresh the cookie AND inject x-lang
+  //    request header so root layout SSR uses the URL locale (not cookie/AL).
+  //    Letting root own the i18n means we don't need a nested I18nProvider in
+  //    [lang]/layout — and that nested provider was the Turbopack dev death:
+  //    RSC serializer hits an internal loop with provider-nested-under-async-
+  //    root-layout on pages of any nontrivial size (audited 2026-05-26).
   if (locale) {
-    const res = NextResponse.next();
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-lang', locale);
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
     if (req.cookies.get('lang')?.value !== locale) {
       res.cookies.set('lang', locale, {
         maxAge: 60 * 60 * 24 * 365,

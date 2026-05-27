@@ -1,13 +1,17 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
-  // Self-contained server bundle for systemd `next start`. In a pnpm monorepo
-  // Next traces from packages/client-next/ by default and misses .pnpm-linked
-  // deps (@swc/helpers, @next/env). Point tracing at the workspace root so the
-  // tracer walks node_modules/.pnpm/ properly.
-  output: "standalone",
-  outputFileTracingRoot: path.join(__dirname, "../../"),
+  // Self-contained server bundle for systemd `next start` (prod only). In dev,
+  // `output: standalone` + `outputFileTracingRoot` pointing at the workspace
+  // root makes Turbopack walk the entire monorepo node_modules on every change,
+  // which pegs CPU and makes the dev server stop responding. Limit to prod.
+  ...(isProd && {
+    output: "standalone" as const,
+    outputFileTracingRoot: path.join(__dirname, "../../"),
+  }),
 
   // Keep trailing slashes intact so /tools/cstimer/ stays as-is and the
   // iframe's relative URLs resolve to /tools/cstimer/css/... not /tools/css/...
