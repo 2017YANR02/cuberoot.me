@@ -68,6 +68,8 @@ const MIGRATED_PATHS: readonly string[] = [
   // batch 9 — recon / scramble
   '/recon',
   '/scramble',
+  // batch 10 — timer
+  '/timer',
 ];
 
 function isMigrated(pathname: string): boolean {
