@@ -19,6 +19,11 @@ export default function WcaAuth() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // SSR 拿不到 localStorage 的 auth-store hydrated user → server 永远渲染登录按钮,
+  // client hydrated 出已登录 → DOM 不一致。mount 前固定渲染登录按钮占位,mount 后切真值。
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -28,7 +33,7 @@ export default function WcaAuth() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  if (!user) {
+  if (!mounted || !user) {
     return (
       <button
         type="button"

@@ -32,16 +32,26 @@ const app = new Hono();
 // CORS 配置——允许前端跨域请求
 // NOTE: GH Pages 服务的 cuberoot.me 跨域调 api.cuberoot.me,所以页面 origin 是 cuberoot.me。
 // maxAge 缓存 preflight 一天,减少海外用户的 OPTIONS 来回。
+// Phase 4 (2026-05-26): 主域切 Next 后 vite.cuberoot.me 留作回滚兜底;
+// *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', cors({
-  origin: [
-    'http://localhost:5173',              // Vite dev server
-    'http://localhost:3000',              // Next dev server
-    'https://www.cuberoot.me',            // 生产环境（SPA）
-    'https://cuberoot.me',                // 裸域 (含 GH Pages 海外线路)
-    'https://next.cuberoot.me',           // Next 子域并行验证
-    'capacitor://localhost',              // Capacitor iOS app webview origin
-    'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
-  ],
+  origin: (origin) => {
+    const allowed = new Set([
+      'http://localhost:5173',              // Vite dev server
+      'http://localhost:3000',              // Next dev server
+      'https://www.cuberoot.me',            // 生产环境（SPA）
+      'https://cuberoot.me',                // 裸域
+      'https://next.cuberoot.me',           // Next 子域并行验证
+      'https://vite.cuberoot.me',           // 旧 Vite 回滚兜底 (Phase 4)
+      'capacitor://localhost',              // Capacitor iOS app webview origin
+      'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
+    ]);
+    if (!origin) return '';                 // server-side / curl
+    if (allowed.has(origin)) return origin;
+    // Vercel preview / production deploy URL — *.vercel.app
+    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return origin;
+    return null;
+  },
   credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
   maxAge: 86400,
 }));

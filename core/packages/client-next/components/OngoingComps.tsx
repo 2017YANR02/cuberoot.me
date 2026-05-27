@@ -24,6 +24,7 @@ type Group =
   | { kind: 'date'; date: string; comps: Comp[] };
 
 const DEFAULT_VISIBLE = new Set(['cn', 'us']);
+const DEFAULT_DATE_ROWS = 1;
 
 function stripTrailingYear(s: string): string {
   return s.replace(/\s?\d{4}$/, '').trim();
@@ -162,10 +163,17 @@ export default function OngoingComps({ lang }: Props) {
   ];
 
   const isCountryMode = active === 'inProgress';
-  const visibleGroups = isCountryMode && !expanded
-    ? groups.filter(g => g.kind === 'country' && DEFAULT_VISIBLE.has(g.iso2))
-    : groups;
-  const hasCollapsible = isCountryMode && groups.some(g => g.kind === 'country' && !DEFAULT_VISIBLE.has(g.iso2));
+  let visibleGroups: Group[];
+  let hasCollapsible: boolean;
+  if (isCountryMode) {
+    visibleGroups = !expanded
+      ? groups.filter(g => g.kind === 'country' && DEFAULT_VISIBLE.has(g.iso2))
+      : groups;
+    hasCollapsible = groups.some(g => g.kind === 'country' && !DEFAULT_VISIBLE.has(g.iso2));
+  } else {
+    visibleGroups = !expanded ? groups.slice(0, DEFAULT_DATE_ROWS) : groups;
+    hasCollapsible = groups.length > DEFAULT_DATE_ROWS;
+  }
   const fallbackGroups = isCountryMode && !expanded && visibleGroups.length === 0
     ? groups.slice(0, 2)
     : visibleGroups;

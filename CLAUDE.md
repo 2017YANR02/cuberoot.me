@@ -48,7 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 开发命令
 
-包管理用 **pnpm 10**（不是 npm）。Windows 下按全局规则用 `pwsh`。
+包管理用 **pnpm 11**（不是 npm）。Windows 下按全局规则用 `pwsh`。
 
 **CWD 前提**:用户启动 Claude Code 前已 `cd D:\cube\cuberoot.me\core`(pnpm workspace 根)。所有 pnpm 命令直接跑。若 `pnpm install` 报 `ERR_PNPM_NO_PKG_MANIFEST` = CWD 在仓库根了,用 PowerShell tool `Set-Location core` 一次(别用 Bash tool 写 Windows 反斜杠路径,会被吞)。
 
