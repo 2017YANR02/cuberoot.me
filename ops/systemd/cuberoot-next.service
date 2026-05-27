@@ -13,8 +13,13 @@ Environment="HOSTNAME=127.0.0.1"
 ExecStart=/www/wwwroot/toolkit-next/start.sh
 Restart=on-failure
 RestartSec=3
-StandardOutput=append:/var/log/cuberoot-next.log
-StandardError=append:/var/log/cuberoot-next.log
+# Logs to systemd journal — built-in rotation + size limits via journald.conf.
+# View with `journalctl -u cuberoot-next -f`. Old file at /var/log/cuberoot-next.log
+# can be removed once journal coverage is confirmed.
+StandardOutput=journal
+StandardError=journal
+# Node high-concurrency file descriptors (default 1024 too low under load).
+LimitNOFILE=65535
 
 [Install]
 WantedBy=multi-user.target

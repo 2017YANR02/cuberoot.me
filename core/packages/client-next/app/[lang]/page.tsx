@@ -6,6 +6,7 @@
  * NOTE: particle-canvas code dropped — SHOW_PARTICLES was already false upstream.
  */
 import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,8 +24,16 @@ import WcaAuth from '@/components/WcaAuth';
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import LandingSearch, { type LandingSearchCard } from '@/components/LandingSearch';
-import OngoingComps from '@/components/OngoingComps';
-import RecentRecords from '@/components/RecentRecords';
+
+// Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
+// Min-height placeholders match approximate rendered sizes to avoid layout
+// shift on first paint.
+const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
+  loading: () => <div style={{ minHeight: 56 }} aria-hidden="true" />,
+});
+const RecentRecords = dynamic(() => import('@/components/RecentRecords'), {
+  loading: () => <div style={{ minHeight: 56 }} aria-hidden="true" />,
+});
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
