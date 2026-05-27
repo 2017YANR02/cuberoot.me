@@ -24,6 +24,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import HomeLink from '@/components/HomeLink';
 import * as THREE from 'three';
 import {
   ChevronLeft, ChevronRight,
@@ -809,9 +810,9 @@ export default function SimPage() {
   return (
     <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}${settings.checkeredBg ? ' sim-page--checkered' : ''}`}>
       <header className="sim-header">
-        <Link href="/" className="sim-back" title={t('返回', 'Back')}>
+        <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
-        </Link>
+        </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
         <div className="sim-spacer" />
         <LangToggle variant="inline" />

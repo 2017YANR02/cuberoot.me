@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import HeaderToggles from '@/components/HeaderToggles';
+import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   identity, applyAlg, orderOf, invariants, invertAlg, conjugate, commutator,
@@ -8023,7 +8024,7 @@ export default function GroupTheoryPage() {
     <div className="gt-page">
       <div className="gt-topbar">
         {isIndex
-          ? <Link href="/" className="gt-back">← {lang === 'zh' ? '返回' : 'home'}</Link>
+          ? <HomeLink className="gt-back">← {lang === 'zh' ? '返回' : 'home'}</HomeLink>
           : <Link href="/math/group" className="gt-back">← {lang === 'zh' ? '目录' : 'contents'}</Link>}
         <HeaderToggles className="gt-topbar-right" />
       </div>

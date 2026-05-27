@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '@/components/LangToggle';
+import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './code_index.css';
 
@@ -131,9 +132,9 @@ export default function CodeIndexPage() {
 
       <header className="code-index-head">
         <div className="code-index-topbar">
-          <Link href="/" className="code-index-back">
+          <HomeLink className="code-index-back">
             ← {lang === 'zh' ? '回首页' : 'Home'}
-          </Link>
+          </HomeLink>
           <LangToggle variant="inline" />
         </div>
         <h1 className="code-index-title">

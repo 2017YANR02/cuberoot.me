@@ -23,6 +23,7 @@ import HistoryPanel from './_components/HistoryPanel';
 import VsHistoryPanel from './_components/VsHistoryPanel';
 import { MilestoneToast } from './_components/AdvancedFeatures';
 import LangToggle from '@/components/LangToggle';
+import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
 import BattleEventPicker from './_components/BattleEventPicker';
@@ -590,9 +591,9 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
       {/* 中间操作按钮 */}
       <div className="middle-actions">
         <span className="key-hint">Enter ↑ · ↓ Space</span>
-        <a href="/" className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
+        <HomeLink className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
           <img src={'/' +'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
-        </a>
+        </HomeLink>
         <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>
           <ClipboardList size={16} />
         </button>

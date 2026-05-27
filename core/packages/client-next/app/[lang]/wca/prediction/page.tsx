@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
+import HomeLink from '@/components/HomeLink';
 import { ArrowLeft, Menu, X as XIcon, HelpCircle } from 'lucide-react';
 import { LineChart, type Series } from './_components/charts';
 import { fitExpFloor, type DataPoint } from './_components/models';
@@ -172,10 +173,10 @@ export default function PredictionPage() {
   return (
     <div className="pred-page pred-page-multi">
       <header className="pred-header">
-        <Link href="/" className="pred-back" aria-label="back">
+        <HomeLink className="pred-back" aria-label="back">
           <ArrowLeft size={16} />
           <span>{isZh ? '返回' : 'Back'}</span>
-        </Link>
+        </HomeLink>
         <button
           className="pred-toc-btn"
           onClick={() => setTocOpen(!tocOpen)}
