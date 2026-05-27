@@ -28,6 +28,12 @@ const MIGRATED_PATHS: readonly string[] = [
   '/2x2x2',
   '/ffmpeg-poc',
   '/jsonEditor',
+  // batch 2 — simple iframe / single-file pages
+  '/alg-trainers',
+  '/algTrainer',
+  '/cstimer',
+  '/documentation',
+  '/solver',
 ];
 
 function isMigrated(pathname: string): boolean {
