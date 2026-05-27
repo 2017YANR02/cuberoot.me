@@ -48,6 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`next.cuberoot.me`** — 同一套 systemd `cuberoot-next` 反代 :3002,作 staging 子域 / 别名。
 - **systemd Next standalone 部署**:`deploy_next.yml`(push `core/packages/{client-next,shared,visualcube}/**` 触发) CI build → tar `.next/standalone/`(自带 node_modules) → scp → 服务器原子换 `/www/wwwroot/toolkit-next/` + 健康检查 :3002,挂了自动回滚 .bak。`start.sh` 包装定位 standalone entry,systemd unit 在 `ops/systemd/cuberoot-next.service`。
 - **Vercel build 特殊处理**:`next.config.ts` 用 `VERCEL=1` env gate,Vercel 上跳过 `output: standalone` + `outputFileTracingRoot`(否则 vercel/next.js#88579 撞 manifest ENOENT)。`app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 在 Vercel 上 fallback 拉 `vite.cuberoot.me/{stats,tools}/*`(stats 数据没打进 Vercel bundle)。
+- **Vercel CLI 已装本机**(`ruiminyan` 登录态):`vercel logs https://www.cuberoot.me` 拉最近 100 条 function log,`| grep ' 5[0-9]{2} '` 过 5xx。用户报"vercel 报错"直接 CLI 自查,免截图。详见 memory `project_vercel_deployment`。
 - **CORS allowlist** 在 `core/packages/server/src/index.ts`,函数形式放行 `*.vercel.app`(Vercel preview 每 PR 一个 URL)+ `vite.cuberoot.me` + 主域。
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台云服务器,nginx 反代到 127.0.0.1:3001)。
 - **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me CN nginx alias / 境外 GH Pages。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
