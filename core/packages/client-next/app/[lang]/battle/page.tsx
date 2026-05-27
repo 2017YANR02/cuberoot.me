@@ -934,6 +934,11 @@ export default function BattlePage() {
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   // NOTE: 里程碑 Toast 消息队列
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  // SSR/client mismatch gate: battle_store 默认值从 localStorage 读 (mode/layout/...),
+  // SSR shim 返 null → 默认 1v1/versus,client 端读到用户真实值就不同,Next 16 hydration
+  // 会重建整树导致 scramble script 加载状态丢。SSR 出空占位,client 挂载后再 render。
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // NOTE: 同步 i18n.language → store.locale. 以 i18n 为权威源(LangToggle 改它),
   // 让 store 内部发双语消息(checkMilestone / speakAlert / fatigue toast)时用最新值.
@@ -1011,6 +1016,11 @@ export default function BattlePage() {
       setSettingsOpen(true);
     }
   }, [mode, store]);
+
+  if (!mounted) {
+    // SSR/first-paint placeholder — 避免 hydration mismatch 重建整树。
+    return <div className="battle-container" />;
+  }
 
   return (
     <div className={`battle-container${mode === '1v1' && store.layout === 'side' ? ' side-layout' : ''}`}>
