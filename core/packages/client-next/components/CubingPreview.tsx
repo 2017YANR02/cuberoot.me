@@ -120,9 +120,11 @@ export default function CubingPreview({ event, scramble, size = 14, className, v
         hintFacelets: 'none',
       });
       playerRef.current = player;
+      // NOTE: 不要设 display:block — cubing :host 用 display:grid 让 .wrapper
+      // 作为 grid item 撑满 host;block 会让 .wrapper (contain:size + 无显式 h)
+      // 塌成 0 高,SVG 渲染了但不可见。
       player.style.width = '100%';
       player.style.height = '100%';
-      player.style.display = 'block';
       host.appendChild(player);
     } catch (err) {
       console.warn(`[CubingPreview] TwistyPlayer init failed for ${plan.cubingPuzzle}`, err);
