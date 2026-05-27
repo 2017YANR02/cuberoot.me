@@ -31,18 +31,17 @@ const app = new Hono();
 
 // CORS 配置——允许前端跨域请求
 // NOTE: GH Pages 服务的 cuberoot.me 跨域调 api.cuberoot.me,所以页面 origin 是 cuberoot.me。
-// maxAge 缓存 preflight 一天,减少海外用户的 OPTIONS 来回。
-// Phase 4 (2026-05-26): 主域切 Next 后 vite.cuberoot.me 留作回滚兜底;
+// maxAge 缓存 preflight 一天,减少 edge 端的 OPTIONS 来回。
+// Phase 4 (2026-05-27): 主域全员切 Next; vite.cuberoot.me 已下线。
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', cors({
   origin: (origin) => {
     const allowed = new Set([
-      'http://localhost:5173',              // Vite dev server
+      'http://localhost:5173',              // Local Vite dev (legacy fallback only)
       'http://localhost:3000',              // Next dev server
-      'https://www.cuberoot.me',            // 生产环境（SPA）
+      'https://www.cuberoot.me',            // 主域
       'https://cuberoot.me',                // 裸域
       'https://next.cuberoot.me',           // Next 子域并行验证
-      'https://vite.cuberoot.me',           // 旧 Vite 回滚兜底 (Phase 4)
       'capacitor://localhost',              // Capacitor iOS app webview origin
       'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
     ]);
@@ -116,8 +115,8 @@ getCurrentRecords().catch(err => {
   console.error('[current_records] startup warm failed:', err);
 });
 
-// 中国大陆比赛中文元数据(cubing.com 地点 + 退/重开报名时间)预热:
-// 启动 30s 后扫一遍 all_upcoming_comps.json 的 CN 比赛,DB 缺/>7d 的串行 scrape;
+// 比赛中文元数据(cubing.com 地点 + 退/重开报名时间)预热:
+// 启动 30s 后扫一遍 all_upcoming_comps.json 的目标比赛,DB 缺/>7d 的串行 scrape;
 // 之后每天跑一次。pm2 重启即触发,新公示比赛最坏窗口 ~24h(单条 miss 仍走写穿 fallback)。
 setTimeout(() => {
   warmCnCompZh();

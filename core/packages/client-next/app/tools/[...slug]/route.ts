@@ -47,11 +47,11 @@ export async function GET(
       // try next candidate
     }
   }
-  // On Vercel, tools/ isn't bundled — fall back to vite.cuberoot.me which
-  // serves these via境内 nginx (matches stats route handler pattern).
+  // On Vercel, tools/ isn't bundled — fall back to static.cuberoot.me which
+  // serves these via nginx with CORS:* (matches stats route handler pattern).
   if (process.env.VERCEL === '1') {
     try {
-      const upstream = await fetch(`https://vite.cuberoot.me/tools/${rel}`);
+      const upstream = await fetch(`https://static.cuberoot.me/tools/${rel}`);
       if (!upstream.ok) return new Response('not found', { status: upstream.status });
       const ct = upstream.headers.get('content-type') ?? 'application/octet-stream';
       const buf = await upstream.arrayBuffer();
