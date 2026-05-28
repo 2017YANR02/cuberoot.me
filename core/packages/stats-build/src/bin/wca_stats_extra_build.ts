@@ -744,27 +744,41 @@ async function main() {
   }
   prStream.end();
 
-  // ── 9. wca_comp_updated_at: per-comp MAX(Results.updated_at) manifest ──
-  // 100% 一致用:dump_comps.yml 增量决策的 source-of-truth.
-  // Results.updated_at = MySQL 自动维护的 ON UPDATE CURRENT_TIMESTAMP,
-  // 任何 WCA 改成绩都会 bump.索引 index_Results_on_competitionId_and_updated_at 覆盖此查询.
-  console.log('[manifest] computing per-comp MAX(updated_at)...');
-  const [compMaxRows] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT competition_id, MAX(updated_at) AS src_max FROM results GROUP BY competition_id`,
+  // ── 9. wca_comp_updated_at: per-comp 内容指纹(content fingerprint)──
+  // dump_comps.yml 增量决策的 source-of-truth.
+  // 旧版存 MAX(updated_at),但 WCA 周期性批量重戳 updated_at 却不改成绩(2026-05-24:1.4 万场被顶高
+  //   → 全量误重 dump → 单机卡死)。改存「成绩值的聚合指纹」:只有真实成绩变动才让 hash 变,批量盖戳不影响。
+  //   = results 值(best/avg/pos/records 等) XOR result_attempts 每把 value。BIT_XOR 与行序无关、长度无上限;
+  //   两表分别 GROUP BY 再 JS 里 XOR 合并(避免 1:N join fan-out 让 BIT_XOR 偶数次自我抵消)。
+  console.log('[manifest] computing per-comp content fingerprint...');
+  const [resHashRows] = await conn.query<mysql.RowDataPacket[]>(
+    `SELECT competition_id AS comp_id,
+            BIT_XOR(CRC32(CONCAT_WS('|', id, person_id, event_id, round_type_id, pos, best, average,
+                                    regional_single_record, regional_average_record))) AS h
+       FROM results GROUP BY competition_id`,
   );
+  const [attHashRows] = await conn.query<mysql.RowDataPacket[]>(
+    `SELECT r.competition_id AS comp_id,
+            BIT_XOR(CRC32(CONCAT_WS('#', ra.result_id, ra.attempt_number, ra.value))) AS h
+       FROM result_attempts ra JOIN results r ON r.id = ra.result_id
+      GROUP BY r.competition_id`,
+  );
+  const compHash = new Map<string, bigint>();
+  for (const r of resHashRows) compHash.set(r['comp_id'] as string, BigInt((r['h'] ?? 0) as string | number));
+  for (const r of attHashRows) {
+    const id = r['comp_id'] as string;
+    compHash.set(id, (compHash.get(id) ?? 0n) ^ BigInt((r['h'] ?? 0) as string | number));
+  }
   let compMaxCount = 0;
   {
     const f = createWriteStream(resolve(outDir, 'wca_comp_updated_at.copy.tsv'));
-    for (const r of compMaxRows) {
-      const ts = r['src_max'];
-      if (!ts) continue;
-      const tsStr = ts instanceof Date ? ts.toISOString().slice(0, 19).replace('T', ' ') : String(ts);
-      f.write(`${pgEsc(r['competition_id'] as string)}\t${tsStr}\n`);
+    for (const [comp, h] of compHash) {
+      f.write(`${pgEsc(comp)}\t${h.toString()}\n`);
       compMaxCount++;
     }
     f.end();
   }
-  console.log(`  comp_updated_at  : ${compMaxCount} rows`);
+  console.log(`  comp_fingerprint : ${compMaxCount} rows`);
 
   // ── flush 还在 buffer 的 stream ──
   await Promise.all([
@@ -820,11 +834,12 @@ CREATE INDEX wrt_comp_lookup  ON wca_results_top (comp_id);
 CREATE INDEX wrt_prior_pr     ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
 
 -- wca_comp_updated_at: dump_comps.yml 增量 manifest;每天 DROP+CREATE,与 comp_dump_state
--- 配对.NOTE: comp_dump_state 在 migrations/0015_comp_dump_state.sql 建,这里**不能动它**.
+-- 配对.NOTE: comp_dump_state 在 migrations/0015+0016 建/改,这里**不能动它**.
+-- content_hash = 成绩值聚合指纹(见 builder 第 9 段),取代旧的 src_max_updated_at 时间戳.
 DROP TABLE IF EXISTS wca_comp_updated_at;
 CREATE TABLE wca_comp_updated_at (
-  comp_id            VARCHAR(50)  PRIMARY KEY,
-  src_max_updated_at TIMESTAMP    NOT NULL
+  comp_id      VARCHAR(50)  PRIMARY KEY,
+  content_hash BIGINT       NOT NULL
 );
 
 TRUNCATE wca_competitions       CASCADE;
@@ -841,7 +856,7 @@ TRUNCATE wca_person_ranks;
 \\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
 \\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
-\\copy wca_comp_updated_at (comp_id, src_max_updated_at) FROM 'wca_comp_updated_at.copy.tsv';
+\\copy wca_comp_updated_at (comp_id, content_hash) FROM 'wca_comp_updated_at.copy.tsv';
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();

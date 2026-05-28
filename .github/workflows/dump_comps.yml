@@ -92,7 +92,8 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           FORCE: ${{ github.event.inputs.force || '0' }}
-          LIMIT: ${{ github.event.inputs.limit || '0' }}
+          # 定时跑默认封顶 2000 场/次,大 delta 摊多天,绝不一次马拉松打死单机;手动 dispatch 仍可传 0 解封
+          LIMIT: ${{ github.event.inputs.limit || '2000' }}
           CUTOFF_DAYS: ${{ github.event.inputs.cutoff_days || '7' }}
           FORCE_SLUGS: ${{ github.event.inputs.force_slugs || '' }}
         run: |
@@ -100,12 +101,12 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "mkdir -p /www/wwwroot/toolkit/stats/comp && cd /root/core-api && \
               OUTPUT_DIR=/www/wwwroot/toolkit/stats/comp \
-              CONCURRENCY=4 \
+              CONCURRENCY=1 \
               CUTOFF_DAYS=$CUTOFF_DAYS \
               LIMIT=$LIMIT \
               FORCE=$FORCE \
               FORCE_SLUGS='$FORCE_SLUGS' \
-              node --env-file=.env /tmp/dump-past-comps.js"
+              nice -n 19 ionice -c 3 node --env-file=.env /tmp/dump-past-comps.js"
 
       - name: Report file count
         env:
