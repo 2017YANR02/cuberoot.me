@@ -321,6 +321,7 @@ export const qrCodes = sqliteTable("qr_codes", {
   intro: text("intro"),
   links: text("links", { mode: "json" }).$type<QrLink[]>(),
   term: text("term"),
+  quote: text("quote"),
   scans: integer("scans").notNull().default(0),
   createdAt: integer("created_at").notNull(),
 });

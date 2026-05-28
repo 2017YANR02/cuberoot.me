@@ -55,6 +55,7 @@ export async function saveQr(f: FormData): Promise<void> {
     title: String(f.get("title") ?? ""),
     intro: String(f.get("intro") ?? ""),
     term: String(f.get("term") ?? ""),
+    quote: String(f.get("quote") ?? ""),
     links: parseLinks(String(f.get("links") ?? "")),
   });
   revalidatePath("/admin/qr");

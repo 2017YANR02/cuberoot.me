@@ -7,7 +7,7 @@ import type { QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
 export type { QrCode, QrLink, QrType };
 
 export type QrUpdate = Partial<
-  Pick<QrCode, "label" | "type" | "target" | "title" | "intro" | "links" | "term">
+  Pick<QrCode, "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote">
 >;
 
 function normalize(code: string): string {
@@ -90,6 +90,7 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.title !== undefined) next.title = patch.title?.trim() || null;
   if (patch.intro !== undefined) next.intro = patch.intro?.trim() || null;
   if (patch.term !== undefined) next.term = patch.term?.trim() || null;
+  if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
   if (patch.links !== undefined) next.links = patch.links;
   if (Object.keys(next).length === 0) return;
   await db.update(schema.qrCodes).set(next).where(eq(schema.qrCodes.code, c));
