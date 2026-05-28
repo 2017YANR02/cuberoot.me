@@ -48,6 +48,9 @@ import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
 import TranslationsPicker from './TranslationsPicker';
 import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
+import CompCrossAnalysis from './CompCrossAnalysis';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { useCrossMap } from './useCrossMap';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -62,6 +65,14 @@ interface Props {
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+// 十字分析总开关(每行徽标 + 分布面板)。默认开,localStorage 记忆。
+const SHOW_CROSS_KEY = 'gen:showCross';
+function readShowCross(): boolean {
+  if (typeof localStorage === 'undefined') return true;
+  return localStorage.getItem(SHOW_CROSS_KEY) !== '0';
+}
+const NO_SCRAMBLES: string[] = [];
 
 // ── WCA load helpers (was ImportMode.tsx) ─────────────────────────────────
 const ROUND_INDEX: Record<string, number> = {
@@ -639,6 +650,23 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     () => Array.from(new Set((sheets ?? []).map((s) => s.event))),
     [sheets],
   );
+  // 3x3 cross-step analysis (XC Master 风):全 333 sheets 的最优十字步数。
+  const sheets333 = useMemo(() => (sheets ?? []).filter((s) => s.event === '333'), [sheets]);
+  const scrambles333 = useMemo(() => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const sh of sheets333) for (const a of sh.attempts) {
+      if (a.scramble && !seen.has(a.scramble)) { seen.add(a.scramble); out.push(a.scramble); }
+    }
+    return out;
+  }, [sheets333]);
+  const [showCross, setShowCrossState] = useState<boolean>(readShowCross);
+  const setShowCross = (v: boolean) => {
+    setShowCrossState(v);
+    try { localStorage.setItem(SHOW_CROSS_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+  };
+  // 关闭时传空数组 → hook 不建表、不计算,首屏纯打乱表零开销。
+  const cross333 = useCrossMap(showCross ? scrambles333 : NO_SCRAMBLES);
   const activeView = activeEventOf(viewedEvent, eventsInSheets);
   const sheetsInEvent = sheets ? sheets.filter((s) => s.event === activeView) : [];
   const roundIdxsInEvent = useMemo(
@@ -971,6 +999,20 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
       {loaded && activeView && (
         <>
+          {activeView === '333' && sheets333.length > 0 && (
+            <div className="gen-cx-switchrow">
+              <PillToggle
+                value={showCross}
+                onChange={setShowCross}
+                onLabel={t('十字分析', 'Cross analysis')}
+                offLabel={t('十字分析', 'Cross analysis')}
+                ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
+              />
+            </div>
+          )}
+          {activeView === '333' && sheets333.length > 0 && showCross && (
+            <CompCrossAnalysis sheets333={sheets333} crossMap={cross333.map} ready={cross333.ready} t={t} />
+          )}
           <div className="gen-tn-sheets">
             {visibleSheets.map((sh, i) => (
               <SheetView
@@ -979,6 +1021,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 isZh={isZh}
                 t={t}
                 showPreview={showPreview}
+                crossMap={showCross ? cross333.map : undefined}
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}
                 sq1Colors={!loadedCompId && sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
                 megaColors={!loadedCompId && sh.event === 'minx' ? events[sh.event]?.colors : undefined}

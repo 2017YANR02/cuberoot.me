@@ -6,25 +6,22 @@
 // Data: lib/comp-search.ts loadComps() — LandingSearch (when present) preloads, this shares the cache.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
 import { Flag } from '@/components/Flag';
 import { toIsoDate, formatDateRangeIso } from '@/lib/wca-date';
 import { countryName } from '@/lib/country-name';
+import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
 import './ongoing_comps.css';
 
 interface Props { lang: 'zh' | 'en' }
 
-type TabKey = 'upcoming' | 'inProgress' | 'past';
+type TabKey = 'upcoming' | 'inProgress' | 'past' | 'records';
 
 type Group =
   | { kind: 'country'; iso2: string; comps: Comp[] }
   | { kind: 'date'; date: string; comps: Comp[] };
-
-const DEFAULT_VISIBLE = new Set(['cn', 'us']);
-const DEFAULT_DATE_ROWS = 1;
 
 function stripTrailingYear(s: string): string {
   return s.replace(/\s?\d{4}$/, '').trim();
@@ -82,7 +79,7 @@ export default function OngoingComps({ lang }: Props) {
   const isZh = lang === 'zh';
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [tab, setTab] = useState<TabKey | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const { filled: records } = useRecentRecords(isZh);
 
   useEffect(() => {
     let mounted = true;
@@ -135,49 +132,32 @@ export default function OngoingComps({ lang }: Props) {
   }, [comps]);
 
   useEffect(() => {
-    if (tab !== null || !comps) return;
+    if (tab !== null) return;
     if (buckets.inProgress.length > 0) setTab('inProgress');
     else if (buckets.upcoming.length > 0) setTab('upcoming');
     else if (buckets.past.length > 0) setTab('past');
-  }, [tab, comps, buckets]);
-
-  useEffect(() => { setExpanded(false); }, [tab]);
+    else if (records.length > 0) setTab('records');
+  }, [tab, buckets, records]);
 
   const active = tab ?? 'inProgress';
-  const activeComps = buckets[active] ?? [];
+  const activeComps = active === 'records' ? [] : (buckets[active] ?? []);
 
   const groups = useMemo<Group[]>(() => {
     if (active === 'inProgress') return groupByCountry(activeComps);
     if (active === 'upcoming') return groupByDate(activeComps, 'start_date', true);
-    return groupByDate(activeComps, 'end_date', false);
+    if (active === 'past') return groupByDate(activeComps, 'end_date', false);
+    return [];
   }, [activeComps, active]);
 
-  if (!comps) return null;
   const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
-  if (total === 0) return null;
+  if (total === 0 && records.length === 0) return null;
 
   const tabs: { key: TabKey; zh: string; en: string; count: number }[] = [
-    { key: 'upcoming',   zh: '即将开赛', en: 'Upcoming',   count: buckets.upcoming.length },
-    { key: 'inProgress', zh: '正在进行', en: 'Right now',  count: buckets.inProgress.length },
-    { key: 'past',       zh: '近一月',   en: 'Past month', count: buckets.past.length },
+    { key: 'records',    zh: '纪录', en: 'Records',  count: records.length },
+    { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length },
+    { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length },
+    { key: 'past',       zh: '往期', en: 'Past',     count: buckets.past.length },
   ];
-
-  const isCountryMode = active === 'inProgress';
-  let visibleGroups: Group[];
-  let hasCollapsible: boolean;
-  if (isCountryMode) {
-    visibleGroups = !expanded
-      ? groups.filter(g => g.kind === 'country' && DEFAULT_VISIBLE.has(g.iso2))
-      : groups;
-    hasCollapsible = groups.some(g => g.kind === 'country' && !DEFAULT_VISIBLE.has(g.iso2));
-  } else {
-    visibleGroups = !expanded ? groups.slice(0, DEFAULT_DATE_ROWS) : groups;
-    hasCollapsible = groups.length > DEFAULT_DATE_ROWS;
-  }
-  const fallbackGroups = isCountryMode && !expanded && visibleGroups.length === 0
-    ? groups.slice(0, 2)
-    : visibleGroups;
-  const fallbackUsed = fallbackGroups !== visibleGroups;
 
   return (
     <div className="ongoing-comps">
@@ -196,13 +176,14 @@ export default function OngoingComps({ lang }: Props) {
               onClick={() => !disabled && setTab(t.key)}
             >
               <span>{isZh ? t.zh : t.en}</span>
-              {t.count > 0 && <span className="ongoing-comps-tab-count">{t.count}</span>}
             </button>
           );
         })}
       </div>
       <div className="ongoing-comps-groups">
-        {fallbackGroups.map(g => g.kind === 'country' ? (
+        {active === 'records' ? (
+          <RecentRecordsList filled={records} isZh={isZh} />
+        ) : groups.map(g => g.kind === 'country' ? (
           <div key={`c-${g.iso2}`} className="ongoing-comps-group">
             <Flag iso2={g.iso2} className="ongoing-comps-flag" />
             <div className="ongoing-comps-list">
@@ -236,16 +217,6 @@ export default function OngoingComps({ lang }: Props) {
             </div>
           </div>
         ))}
-        {(hasCollapsible && !fallbackUsed) && (
-          <button
-            type="button"
-            className="ongoing-comps-expand"
-            onClick={() => setExpanded(v => !v)}
-          >
-            {expanded ? <ChevronUp size={14} strokeWidth={1.75} /> : <ChevronDown size={14} strokeWidth={1.75} />}
-            {expanded ? (isZh ? '收起' : 'Collapse') : (isZh ? '更多…' : 'More…')}
-          </button>
-        )}
       </div>
     </div>
   );

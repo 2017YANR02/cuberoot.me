@@ -8,13 +8,18 @@
  * Rows are click-to-copy: clicking anywhere on a scramble row writes that
  * scramble to the clipboard and flashes `.is-copied` for ~1.2s.
  */
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { visualcubeApiHref } from '@/lib/visualcube-link';
+import { solveCross } from '@/lib/cross-solver';
 import type { WcaFormat } from './_wca-round';
 import ScrambleLines from './ScrambleLines';
+
+// CSS colour class per BADGE_ORDER slot (White Yellow Red Orange Blue Green).
+const BADGE_CLASS = ['cx-w', 'cx-y', 'cx-r', 'cx-o', 'cx-b', 'cx-g'];
 
 export interface AttemptScramble {
   /** Display label, e.g. "1", "2", "E1", "E2". For MBLD this is the cube number. */
@@ -51,9 +56,12 @@ interface SheetViewProps {
   /** Hide per-row preview thumbnail when false. Controls only the on-screen
    *  sheet — PDF visibility is decided by `generateTnoodlePdf` opts.showPreview. */
   showPreview?: boolean;
+  /** 333 only — scramble → optimal 6-colour cross lengths (BADGE_ORDER). When
+   *  present, each row shows the "C: 567766" badge + a white-cross reveal. */
+  crossMap?: Map<string, number[]>;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, crossMap }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const groupSuffix = (totalGroups ?? 1) > 1
     ? (isZh
@@ -69,6 +77,24 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     ? t('决赛', 'Final')
     : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const showCross = !!crossMap && event === '333';
+  const [openSol, setOpenSol] = useState<Set<number>>(new Set());
+  const solCacheRef = useRef<Map<string, string>>(new Map());
+  const toggleSol = (idx: number) => {
+    setOpenSol((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  };
+  const whiteCrossMoves = (scramble: string): string => {
+    const cached = solCacheRef.current.get(scramble);
+    if (cached !== undefined) return cached;
+    const sol = solveCross(scramble, 'White');
+    const text = sol ? (sol.moves.join(' ') || t('已是白十字', 'cross already solved')) : '—';
+    solCacheRef.current.set(scramble, text);
+    return text;
+  };
   const copyAttempt = async (idx: number, scramble: string) => {
     if (!scramble) return;
     try {
@@ -102,7 +128,40 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       >
         <td className="gen-tn-attempt-num">{a.label}</td>
         <td className="gen-tn-attempt-scramble">
-          <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
+          <div className="gen-tn-scr-line">
+            <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
+            {(() => {
+              const digits = showCross && a.scramble ? crossMap!.get(a.scramble) : undefined;
+              if (!digits) return null;
+              return (
+                <span
+                  className="gen-tn-cross-badge"
+                  title={t('白十字最少步 黄红橙蓝绿同列', 'Optimal cross HTM — White Yellow Red Orange Blue Green')}
+                >
+                  <span className="gen-tn-cross-c">C</span>
+                  {digits.map((d, ci) => (
+                    <b key={ci} className={`gen-tn-cx ${BADGE_CLASS[ci]}`}>{d}</b>
+                  ))}
+                </span>
+              );
+            })()}
+          </div>
+          {showCross && a.scramble && crossMap!.has(a.scramble) && (
+            <div className="gen-tn-cross-sol">
+              <button
+                type="button"
+                className="gen-tn-cross-sol-btn"
+                onClick={(e) => { e.stopPropagation(); toggleSol(i); }}
+                aria-expanded={openSol.has(i)}
+              >
+                {openSol.has(i) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                {t('查看白底解法', 'White cross solution')}
+              </button>
+              {openSol.has(i) && (
+                <code className="gen-tn-cross-sol-moves">{whiteCrossMoves(a.scramble)}</code>
+              )}
+            </div>
+          )}
           {copiedIdx === i && (
             <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
           )}

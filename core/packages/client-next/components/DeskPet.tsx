@@ -116,6 +116,22 @@ const VC: Record<ThemeId, [number, number]> = {
 const vpW = () => document.documentElement.clientWidth;
 const vpH = () => document.documentElement.clientHeight;
 
+// Clamp the bottom-right anchor (right/bottom px) so the pet's visual center
+// (fraction fx,fy of its square box) can approach either edge symmetrically,
+// leaving a 25%-of-box margin on every side. Replaces the old asymmetric
+// [0, vp-48] clamp, which pinned the box flush-right (art stopped short of the
+// right edge because the art only fills the box's center) yet let the box slide
+// almost fully off the left (art overflowed).
+const EDGE = 0.25;
+const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
+  const cw = vpW(), ch = vpH();
+  const mX = w * EDGE, mY = h * EDGE;
+  return {
+    right: Math.min(Math.max(mX - w * (1 - fx), right), cw - mX - w * (1 - fx)),
+    bottom: Math.min(Math.max(mY - h * (1 - fy), bottom), ch - mY - h * (1 - fy)),
+  };
+};
+
 const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
   z-index:40;pointer-events:none;--pet-scale:1;
@@ -231,12 +247,12 @@ export default function DeskPet() {
     }
     const r = root.getBoundingClientRect();
     const [fx, fy] = VC[character];
-    const cw = vpW(), ch = vpH();
-    const right = Math.min(Math.max(0, cw - pt.x - r.width * (1 - fx)), cw - 40);
-    const bottom = Math.min(Math.max(0, ch - pt.y - r.height * (1 - fy)), ch - 40);
-    root.style.right = right + 'px';
-    root.style.bottom = bottom + 'px';
-    try { localStorage.setItem(POS_KEY, JSON.stringify({ right, bottom })); } catch {}
+    const c = clampAnchor(
+      vpW() - pt.x - r.width * (1 - fx), vpH() - pt.y - r.height * (1 - fy),
+      r.width, r.height, fx, fy);
+    root.style.right = c.right + 'px';
+    root.style.bottom = c.bottom + 'px';
+    try { localStorage.setItem(POS_KEY, JSON.stringify({ right: c.right, bottom: c.bottom })); } catch {}
   }, [size, character]);
 
   // Place the context menu beside the pet (never over it): prefer right, then
@@ -274,8 +290,10 @@ export default function DeskPet() {
     try {
       const p = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
       if (p && typeof p.right === 'number' && typeof p.bottom === 'number') {
-        root.style.right = Math.min(Math.max(0, p.right), vpW() - 40) + 'px';
-        root.style.bottom = Math.min(Math.max(0, p.bottom), vpH() - 40) + 'px';
+        const rb = root.getBoundingClientRect();
+        const c = clampAnchor(p.right, p.bottom, rb.width, rb.height, VC[character][0], VC[character][1]);
+        root.style.right = c.right + 'px';
+        root.style.bottom = c.bottom + 'px';
       }
     } catch {}
 
@@ -387,7 +405,7 @@ export default function DeskPet() {
       }, 280);
     };
 
-    let sx = 0, sy = 0, baseR = 0, baseB = 0, moved = false;
+    let sx = 0, sy = 0, baseR = 0, baseB = 0, baseW = 0, baseH = 0, moved = false;
     let longPress: ReturnType<typeof setTimeout> | undefined;
     let suppressClick = false;
     const onDown = (e: PointerEvent) => {
@@ -400,6 +418,7 @@ export default function DeskPet() {
       const r = root.getBoundingClientRect();
       baseR = vpW() - r.right;
       baseB = vpH() - r.bottom;
+      baseW = r.width; baseH = r.height;
       if (!dnd && e.pointerType === 'mouse') setState('reactDrag', true);
       // touch / pen: long-press (no move) = context menu
       if (e.pointerType !== 'mouse') {
@@ -423,8 +442,10 @@ export default function DeskPet() {
         moved = true;
       }
       if (longPress && dist > 10) { clearTimeout(longPress); longPress = undefined; }
-      root.style.right = Math.min(Math.max(0, baseR - (e.clientX - sx)), vpW() - 48) + 'px';
-      root.style.bottom = Math.min(Math.max(0, baseB - (e.clientY - sy)), vpH() - 48) + 'px';
+      const c = clampAnchor(baseR - (e.clientX - sx), baseB - (e.clientY - sy),
+        baseW, baseH, VC[character][0], VC[character][1]);
+      root.style.right = c.right + 'px';
+      root.style.bottom = c.bottom + 'px';
     };
     const onUp = (e: PointerEvent) => {
       clearTimeout(longPress); longPress = undefined;

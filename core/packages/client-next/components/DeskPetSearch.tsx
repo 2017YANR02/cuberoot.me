@@ -10,10 +10,12 @@ import { SEARCH_CARDS } from '@/lib/landing-sections';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;inset:0;z-index:60;display:flex;
-  align-items:flex-start;justify-content:center;padding:max(12vh,48px) 16px 16px;
+  align-items:flex-end;justify-content:center;padding:16px 16px max(12vh,48px);
   background:color-mix(in srgb, var(--foreground) 38%, transparent);
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
 .deskpet-search-box{width:min(640px,94vw);will-change:transform,opacity;}
+/* Box is anchored to the bottom of the screen, so the results open upward. */
+.deskpet-search-box .landing-search-panel{top:auto;bottom:calc(100% + 0.5rem);}
 `;
 
 export default function DeskPetSearch({
