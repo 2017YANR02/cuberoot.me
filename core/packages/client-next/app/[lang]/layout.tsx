@@ -1,21 +1,17 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import I18nProvider from '@/i18n/I18nProvider';
 
 const SUPPORTED = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED[number];
 
-// Phase 3 [lang] migration: routes under app/[lang]/* get URL-driven locale
-// (/zh/foo, /en/foo). Root app/layout.tsx owns <html>/<body>, I18nProvider,
-// and reads x-lang (set by proxy.ts) → cookie → Accept-Language to pick lang.
-//
-// NOTE: this layout MUST NOT wrap children in another <I18nProvider>. Nesting
-// providers under an async-root layout deadlocks Turbopack dev — RSC
-// serializer enters an infinite loop on any nontrivial page (about, math/god,
-// etc), pegs CPU, OOMs the system. Audited 2026-05-26.
-//
-// NOTE: do not add `generateStaticParams` + `dynamicParams = false` here. The
-// root layout is dynamic (await cookies/headers), so child SSG conflicts with
-// parent dynamic-rendering and pegs Turbopack dev into an infinite recompile
-// loop, freezing the dev server. notFound() below handles unknown locales.
+// Prerender both locales at build → pages under here become static (root layout
+// is no longer dynamic). i18n is owned HERE (single provider, not nested under
+// root) and driven by the URL param. The single <Suspense> gives the pages that
+// call useSearchParams an ancestor boundary so static generation doesn't bail.
+export function generateStaticParams() {
+  return [{ lang: 'en' }, { lang: 'zh' }];
+}
 
 export default async function LangLayout({
   children,
@@ -26,5 +22,9 @@ export default async function LangLayout({
 }) {
   const { lang } = await params;
   if (!SUPPORTED.includes(lang as Locale)) notFound();
-  return children;
+  return (
+    <I18nProvider initialLang={lang as Locale}>
+      <Suspense>{children}</Suspense>
+    </I18nProvider>
+  );
 }
