@@ -4,8 +4,7 @@
 // Text rendering reuses the server-side Python format_cli template (id-cached).
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Trophy, Copy, Check } from 'lucide-react';
-import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { Copy, Check } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import { Flag } from '@/components/Flag';
@@ -27,8 +26,6 @@ interface ApiResponse {
   fetchedAt: number;
   records: RecentRecord[];
 }
-
-interface Props { lang: 'zh' | 'en' }
 
 function stripPrefix(text: string): string {
   return text.replace(/^(纪录快讯!\s*|BREAKING NEWS!\s*|Breaking News!\s*)/, '');
@@ -67,10 +64,11 @@ function renderFormatted(text: string): React.ReactNode[] {
   return parts;
 }
 
-export default function RecentRecords({ lang }: Props) {
-  const isZh = lang === 'zh';
+// Data hook — fetch + 60s sync + language-filtered list. Lifted out so the host
+// (OngoingComps) can show a tab with the count and render the list inside the
+// shared scroll panel.
+export function useRecentRecords(isZh: boolean) {
   const [records, setRecords] = useState<RecentRecord[] | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -114,11 +112,13 @@ export default function RecentRecords({ lang }: Props) {
     [records, isZh],
   );
 
-  if (records === null || filled.length === 0) return null;
+  return { records, filled };
+}
 
-  const wrCrCount = filled.filter(r => r.tag === 'WR' || r.tag === 'CR').length;
-  const visibleRows = Math.max(wrCrCount, 5);
-  const listStyle = { maxHeight: `calc(${visibleRows * 1.85}rem + 0.3rem)` };
+// Headless list — rendered inside the OngoingComps shared scroll panel (no own
+// header / max-height; the panel owns the title tab and the scrollbar).
+export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; isZh: boolean }) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function handleCopy(r: RecentRecord) {
     const text = isZh ? r.formattedCn : r.formattedEn;
@@ -130,40 +130,27 @@ export default function RecentRecords({ lang }: Props) {
   }
 
   return (
-    <div className="recent-records">
-      <div className="recent-records-header">
-        <Trophy size={14} strokeWidth={1.75} />
-        <span className="recent-records-title">{isZh ? '近期纪录' : 'Recent records'}</span>
-        <span className="recent-records-count">{filled.length}</span>
-        <InfoTooltip
-          iconSize={13}
-          content={isZh
-            ? '数据源自 WCA Live\n近 10 天开赛比赛的 WR / CR / NR\n服务器每分钟同步\n文案与详情弹窗复制按钮同模板'
-            : 'From WCA Live\nWR / CR / NR from comps started within the last 10 days\nSynced every minute\nText uses same template as the comp modal copy button'}
-        />
-      </div>
-      <ul className="recent-records-list" style={listStyle}>
-        {filled.map(r => {
-          const text = isZh ? r.formattedCn : r.formattedEn;
-          const copied = copiedId === r.id;
-          return (
-            <li key={r.id} className="recent-records-row">
-              <button
-                type="button"
-                className="recent-records-copy"
-                onClick={() => handleCopy(r)}
-                title={isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy')}
-                aria-label={isZh ? '复制' : 'Copy'}
-              >
-                {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
-              </button>
-              <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
-                {renderFormatted(shortenEvent(stripPrefix(text), r.eventId, isZh))}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <ul className="recent-records-list">
+      {filled.map(r => {
+        const text = isZh ? r.formattedCn : r.formattedEn;
+        const copied = copiedId === r.id;
+        return (
+          <li key={r.id} className="recent-records-row">
+            <button
+              type="button"
+              className="recent-records-copy"
+              onClick={() => handleCopy(r)}
+              title={isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy')}
+              aria-label={isZh ? '复制' : 'Copy'}
+            >
+              {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
+            </button>
+            <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
+              {renderFormatted(shortenEvent(stripPrefix(text), r.eventId, isZh))}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

@@ -21,9 +21,6 @@ import { TEXTS, SECTIONS } from '@/lib/landing-sections';
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
   loading: () => <div style={{ minHeight: 56 }} aria-hidden="true" />,
 });
-const RecentRecords = dynamic(() => import('@/components/RecentRecords'), {
-  loading: () => <div style={{ minHeight: 56 }} aria-hidden="true" />,
-});
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
@@ -63,7 +60,6 @@ export default function LandingPage() {
       <h1 className="landing-tagline">{t('tagline')}</h1>
 
       <OngoingComps lang={lang} />
-      <RecentRecords lang={lang} />
 
       {/* WCA full-width hero — top-level entry, not in any section */}
       <Link href="/wca" className="wca-hero" prefetch={false}>
