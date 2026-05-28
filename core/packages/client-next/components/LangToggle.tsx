@@ -6,7 +6,7 @@
 // (e.g. /en/recon → /zh/recon). Falls back to syncLangToUrl on paths without
 // a [lang] segment (root '/', /auth/callback) so the cookie still updates.
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
@@ -62,7 +62,6 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
   const { i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isZh = i18n.language.startsWith('zh');
 
   const toggle = () => {
@@ -77,8 +76,10 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
     const match = pathname.match(/^\/(en|zh)(\/.*)?$/);
     if (!match) return;
     const rest = match[2] ?? '';
-    const qs = searchParams?.toString();
-    const query = qs ? `?${qs}` : '';
+    // Read the query lazily here (not via useSearchParams at render) so this
+    // globally-mounted toggle doesn't force every page to bail to CSR during
+    // static prerender.
+    const query = typeof window !== 'undefined' ? window.location.search : '';
     router.replace(`/${next}${rest}${query}`);
   };
 

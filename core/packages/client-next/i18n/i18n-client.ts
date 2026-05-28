@@ -22,6 +22,12 @@ if (!i18n.isInitialized) {
     lng: 'en',
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
+    // Resources are bundled inline, so init synchronously: with the default
+    // (async) init + useSuspense, useTranslation suspends during SSG prerender
+    // and the [lang]/layout <Suspense> swallows it → empty static HTML. Sync
+    // init makes i18n ready at first render so pages prerender WITH content.
+    initImmediate: false,
+    react: { useSuspense: false },
   });
 }
 
