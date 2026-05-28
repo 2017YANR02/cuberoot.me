@@ -11,10 +11,11 @@
  * tree (owned by another subagent).
  */
 
-import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle, Dices } from 'lucide-react';
+import { solveCross } from '@/lib/cross-solver';
 import {
   Analyzer,
   CROSS_COLORS,
@@ -26,8 +27,6 @@ import {
   type Solution,
   type WorkerVariant,
 } from './analyze_worker_client';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import TwistySection from '@/components/TwistySection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './analyze.css';
@@ -41,14 +40,6 @@ const CHAR_COLOR: Record<string, CrossColor> = {
   y: 'Yellow', w: 'White', r: 'Red', o: 'Orange', b: 'Blue', g: 'Green',
 };
 
-const EXAMPLE_SCRAMBLES: Array<{ name: string; scramble: string }> = [
-  { name: 'WR avg seed', scramble: "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'" },
-  { name: 'easy cross', scramble: "F R U' R' U' R U R' F' R U R' U' R' F R F'" },
-  { name: 'OLL skip-friendly', scramble: "U L D R2 B2 D B2 U R2 U' F2 R2 U2 R' B D' U2 L2 B' F" },
-  { name: 'long path', scramble: "U2 L2 F' D2 F' U2 L2 B R2 B2 R' D' R2 F' R F2 U' B' L" },
-  { name: 'opposite pair', scramble: 'R L' },
-];
-
 type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
 
 const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
@@ -59,6 +50,20 @@ const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
   Blue: { zh: '蓝', en: 'Blue' },
   Green: { zh: '绿', en: 'Green' },
 };
+
+// WCA real-scramble pools: /stats/scramble/wca_cross/<letter>.json, bucketed by cross length.
+const COLOR_LETTER: Record<CrossColor, string> = {
+  White: 'W', Yellow: 'Y', Red: 'R', Orange: 'O', Blue: 'B', Green: 'G',
+};
+const ROUND_LABEL: Record<string, { zh: string; en: string }> = {
+  '0': { zh: '资格赛', en: 'Qualification' }, h: { zh: '资格赛', en: 'Qualification' },
+  '1': { zh: '第一轮', en: 'Round 1' }, d: { zh: '第一轮', en: 'Round 1' },
+  '2': { zh: '第二轮', en: 'Round 2' }, e: { zh: '第二轮', en: 'Round 2' },
+  '3': { zh: '复赛', en: 'Semi-Final' }, g: { zh: '第三轮', en: 'Round 3' },
+  c: { zh: '决赛', en: 'Final' }, f: { zh: '决赛', en: 'Final' }, b: { zh: 'B 决赛', en: 'B-Final' },
+};
+interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string }
+interface WcaFile { color: string; bins: Record<string, WcaEntry[]> }
 
 // cubing.js's search worker normally bootstraps via `import.meta.resolve(...)`
 // which Turbopack can't follow. The esbuild-workaround path uses a plain
@@ -176,6 +181,15 @@ function AnalyzePageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, howfar, stage, variant, colors]);
 
+  // WCA real-scramble pool + cross-step filter
+  const [wcaColor, setWcaColor] = useState<CrossColor>('White');
+  const [wcaBins, setWcaBins] = useState<number[] | null>(null);
+  const [wcaStep, setWcaStep] = useState<number | null>(null);
+  const [wcaMeta, setWcaMeta] = useState<WcaEntry | null>(null);
+  const [wcaLoading, setWcaLoading] = useState(false);
+  const [crossSol, setCrossSol] = useState<{ length: number; moves: string[] } | null>(null);
+  const wcaCacheRef = useRef<Map<string, WcaFile>>(new Map());
+
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [crossesCovered, setCrossesCovered] = useState(0);
@@ -291,13 +305,61 @@ function AnalyzePageInner() {
     }
   }
 
+  const loadWcaColor = useCallback(async (color: CrossColor): Promise<WcaFile | null> => {
+    const letter = COLOR_LETTER[color];
+    const cached = wcaCacheRef.current.get(letter);
+    if (cached) return cached;
+    setWcaLoading(true);
+    try {
+      const r = await fetch(`/stats/scramble/wca_cross/${letter}.json`);
+      if (!r.ok) throw new Error(String(r.status));
+      const data = (await r.json()) as WcaFile;
+      wcaCacheRef.current.set(letter, data);
+      return data;
+    } catch (err) {
+      console.warn('[wca-cross] load failed', err);
+      return null;
+    } finally {
+      setWcaLoading(false);
+    }
+  }, []);
+
+  const selectWcaColor = useCallback(async (color: CrossColor) => {
+    setWcaColor(color);
+    setWcaStep(null);
+    setWcaMeta(null);
+    const data = await loadWcaColor(color);
+    setWcaBins(data ? Object.keys(data.bins).map(Number).sort((a, b) => a - b) : null);
+  }, [loadWcaColor]);
+
+  const pickWca = useCallback((color: CrossColor, step: number) => {
+    const data = wcaCacheRef.current.get(COLOR_LETTER[color]);
+    const arr = data?.bins[String(step)];
+    if (!arr || !arr.length) return;
+    const entry = arr[Math.floor(Math.random() * arr.length)];
+    setScramble(entry.s);
+    setWcaStep(step);
+    setWcaMeta(entry);
+  }, []);
+
+  // Lazily load the default color's pool after first paint (208KB, only on idle).
+  useEffect(() => {
+    const t = setTimeout(() => { void selectWcaColor('White'); }, 300);
+    return () => clearTimeout(t);
+  }, [selectWcaColor]);
+
+  // Optimal cross solution for the loaded scramble (first call builds tables ~0.5s, then instant).
+  useEffect(() => {
+    if (!wcaMeta) { setCrossSol(null); return; }
+    const t = setTimeout(() => setCrossSol(solveCross(wcaMeta.s, wcaColor)), 0);
+    return () => clearTimeout(t);
+  }, [wcaMeta, wcaColor]);
+
   return (
     <div className="analyze-page">
       <header className="analyze-header">
         <div className="analyze-header-row">
           <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
-          <LangToggle variant="inline" className="analyze-lang-toggle" />
-          <ThemeToggle />
         </div>
         <p className="analyze-sub">
           {t(
@@ -339,23 +401,72 @@ function AnalyzePageInner() {
         </button>
       </div>
 
-      <div className="analyze-examples">
-        <span className="analyze-examples-label">
-          <Shuffle size={12} />
-          {t('示例', 'Examples')}:
+      <div className="analyze-wca">
+        <span className="analyze-wca-label">
+          <Dices size={13} />
+          {t('WCA 真实打乱', 'Real WCA scramble')}
         </span>
-        {EXAMPLE_SCRAMBLES.map((ex) => (
+        <select
+          className="analyze-wca-color"
+          value={wcaColor}
+          onChange={(e) => { void selectWcaColor(e.target.value as CrossColor); }}
+          disabled={running}
+          aria-label={t('十字颜色', 'Cross color')}
+        >
+          {CROSS_COLORS.map((c) => (
+            <option key={c} value={c}>
+              {t(`${COLOR_LABEL[c].zh}十字`, `${COLOR_LABEL[c].en} cross`)}
+            </option>
+          ))}
+        </select>
+        <div className="analyze-wca-steps">
+          {wcaBins && wcaBins.length ? (
+            wcaBins.map((b) => (
+              <button
+                key={b}
+                className={`analyze-wca-step${wcaStep === b ? ' is-active' : ''}`}
+                onClick={() => pickWca(wcaColor, b)}
+                disabled={running}
+                title={t(`${b} 步十字的真实打乱`, `Real scramble with a ${b}-move cross`)}
+              >
+                {b}
+              </button>
+            ))
+          ) : (
+            <Loader2 size={14} className="analyze-spin" aria-label={t('加载中', 'Loading')} />
+          )}
+        </div>
+        {wcaMeta && wcaStep != null && (
           <button
-            key={ex.scramble}
-            className="analyze-example"
-            onClick={() => { setScramble(ex.scramble); }}
-            disabled={running}
-            title={ex.scramble}
+            className="analyze-wca-reshuffle"
+            onClick={() => pickWca(wcaColor, wcaStep)}
+            disabled={running || wcaLoading}
+            title={t('同条件换一个', 'Another with same filter')}
           >
-            {ex.name}
+            <Shuffle size={13} />
+            {t('换一个', 'Shuffle')}
           </button>
-        ))}
+        )}
       </div>
+
+      {wcaMeta && (
+        <div className="analyze-wca-meta">
+          <span className="analyze-wca-comp">{wcaMeta.c}</span>
+          {wcaMeta.d && <span className="analyze-wca-date">{wcaMeta.d}</span>}
+          <span className="analyze-wca-round">
+            {ROUND_LABEL[wcaMeta.r]?.[lang] ?? wcaMeta.r}
+            {wcaMeta.g ? (lang === 'zh' ? ` ${wcaMeta.g} 组` : ` Group ${wcaMeta.g}`) : ''}
+            {` #${wcaMeta.n}`}
+          </span>
+          {wcaMeta.e !== '333' && <span className="analyze-wca-event">{wcaMeta.e}</span>}
+          {crossSol && (
+            <span className="analyze-wca-cross">
+              {t(`${COLOR_LABEL[wcaColor].zh}十字`, `${COLOR_LABEL[wcaColor].en} cross`)}
+              {' '}({crossSol.length}): {crossSol.moves.join(' ') || '—'}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="analyze-filters">
         <label className="analyze-control">

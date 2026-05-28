@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsx src/build.ts",
+    "build:wca-cross": "tsx src/build_wca_cross.ts",
     "scrape:algdb": "tsx bin/scrape_speedcubedb.ts"
   },
   "dependencies": {
