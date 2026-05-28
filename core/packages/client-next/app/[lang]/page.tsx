@@ -211,7 +211,7 @@ export default function LandingPage() {
       <RecentRecords lang={lang} />
 
       {/* WCA full-width hero — top-level entry, not in any section */}
-      <Link href="/wca" className="wca-hero">
+      <Link href="/wca" className="wca-hero" prefetch={false}>
         <img src="/icons/wca.svg" alt="WCA" className="wca-hero-logo" />
         <div className="wca-hero-meta">
           <div className="wca-hero-title">{lang === 'zh' ? 'WCA 统计' : 'WCA Statistics'}</div>
@@ -260,7 +260,7 @@ export default function LandingPage() {
                 }
                 if (card.internal) {
                   return (
-                    <Link key={card.id} href={card.href} className={className} id={`card-${card.id}`}>
+                    <Link key={card.id} href={card.href} className={className} id={`card-${card.id}`} prefetch={false}>
                       {content}
                     </Link>
                   );
@@ -278,7 +278,7 @@ export default function LandingPage() {
       </div>
 
       <div className="footer">
-        <Link href="/about" className="footer-about">{lang === 'zh' ? '关于' : 'About'}</Link>
+        <Link href="/about" className="footer-about" prefetch={false}>{lang === 'zh' ? '关于' : 'About'}</Link>
         <a
           href="https://github.com/RuiminYan/cuberoot.me"
           target="_blank"
