@@ -59,7 +59,9 @@ jobs:
           test -f "$ENTRY/server.js" || { echo "ERROR: $ENTRY/server.js missing"; find .next/standalone -name server.js; exit 1; }
           mkdir -p "$ENTRY/.next"
           cp -r .next/static "$ENTRY/.next/static"
-          [ -d public ] && cp -r public "$ENTRY/public"
+          # 拷 public 内容(不是目录本身):Next16 standalone 已自建 $ENTRY/public,
+          # `cp -r public $ENTRY/public` 会嵌套成 public/public 致全部静态资源 404
+          [ -d public ] && { mkdir -p "$ENTRY/public"; cp -r public/. "$ENTRY/public/"; }
           cp data.db "$ENTRY/seed-data.db"
           # 迁移器 + 迁移文件随包发出,部署时对持久库补未应用的迁移
           cp -r db/migrations "$ENTRY/db-migrations"
