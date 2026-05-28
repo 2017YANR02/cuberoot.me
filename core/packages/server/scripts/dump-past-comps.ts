@@ -35,7 +35,7 @@ const FORCE_SLUGS = (process.env.FORCE_SLUGS || '').split(',').map(s => s.trim()
 
 interface Target {
   slug: string;
-  srcMaxUpdatedAt: string | null;  // null = manifest 缺(legacy fallback 路径)
+  contentHash: string | null;  // 成绩内容指纹;null = manifest 缺(legacy fallback 路径)
 }
 
 async function existsFile(path: string): Promise<boolean> {
@@ -54,16 +54,16 @@ async function hasManifestTable(): Promise<boolean> {
 }
 
 async function listTargets(useManifest: boolean): Promise<Target[]> {
-  // FORCE_SLUGS:无视一切,直接 dump,从 manifest 取 watermark(没有就 null)
+  // FORCE_SLUGS:无视一切,直接 dump,从 manifest 取 content_hash(没有就 null)
   if (FORCE_SLUGS.length > 0) {
-    if (!useManifest) return FORCE_SLUGS.map(s => ({ slug: s, srcMaxUpdatedAt: null }));
+    if (!useManifest) return FORCE_SLUGS.map(s => ({ slug: s, contentHash: null }));
     const placeholders = FORCE_SLUGS.map(() => '?').join(',');
-    const rows = await query<{ comp_id: string; src_max_updated_at: string }>(
-      `SELECT comp_id, src_max_updated_at FROM wca_comp_updated_at WHERE comp_id IN (${placeholders})`,
+    const rows = await query<{ comp_id: string; content_hash: string }>(
+      `SELECT comp_id, content_hash FROM wca_comp_updated_at WHERE comp_id IN (${placeholders})`,
       FORCE_SLUGS,
     );
-    const found = new Map(rows.map(r => [r.comp_id, r.src_max_updated_at]));
-    return FORCE_SLUGS.map(s => ({ slug: s, srcMaxUpdatedAt: found.get(s) ?? null }));
+    const found = new Map(rows.map(r => [r.comp_id, r.content_hash]));
+    return FORCE_SLUGS.map(s => ({ slug: s, contentHash: found.get(s) ?? null }));
   }
 
   // Legacy fallback:manifest 表不存在,用 wca_competitions + 文件存在性
@@ -75,13 +75,13 @@ async function listTargets(useManifest: boolean): Promise<Target[]> {
         ${LIMIT > 0 ? `LIMIT ${LIMIT}` : ''}`,
       [String(CUTOFF_DAYS)],
     );
-    return rows.map(r => ({ slug: r.id, srcMaxUpdatedAt: null }));
+    return rows.map(r => ({ slug: r.id, contentHash: null }));
   }
 
-  // FORCE:走 manifest 拿 watermark,但忽略 comp_dump_state 比对
+  // FORCE:走 manifest 拿 content_hash,但忽略 comp_dump_state 比对
   if (FORCE) {
-    const rows = await query<{ comp_id: string; src_max_updated_at: string }>(
-      `SELECT u.comp_id, u.src_max_updated_at
+    const rows = await query<{ comp_id: string; content_hash: string }>(
+      `SELECT u.comp_id, u.content_hash
          FROM wca_comp_updated_at u
          JOIN wca_competitions c ON c.id = u.comp_id
         WHERE c.end_date < CURRENT_DATE - (? || ' days')::interval
@@ -89,32 +89,34 @@ async function listTargets(useManifest: boolean): Promise<Target[]> {
         ${LIMIT > 0 ? `LIMIT ${LIMIT}` : ''}`,
       [String(CUTOFF_DAYS)],
     );
-    return rows.map(r => ({ slug: r.comp_id, srcMaxUpdatedAt: r.src_max_updated_at }));
+    return rows.map(r => ({ slug: r.comp_id, contentHash: r.content_hash }));
   }
 
-  // 默认 100% 一致增量:LEFT JOIN state,只挑变了的 / 没 dump 过的
-  const rows = await query<{ comp_id: string; src_max_updated_at: string }>(
-    `SELECT u.comp_id, u.src_max_updated_at
+  // 默认增量:LEFT JOIN state,只挑「内容指纹变了 / 没 dump 过 / 还没记过 hash」的.
+  // 比的是成绩内容指纹(content_hash),WCA 批量重戳 updated_at 不会让 hash 变 → 不再误触发.
+  const rows = await query<{ comp_id: string; content_hash: string }>(
+    `SELECT u.comp_id, u.content_hash
        FROM wca_comp_updated_at u
        JOIN wca_competitions c ON c.id = u.comp_id
        LEFT JOIN comp_dump_state s ON s.comp_id = u.comp_id
       WHERE c.end_date < CURRENT_DATE - (? || ' days')::interval
-        AND (s.comp_id IS NULL OR u.src_max_updated_at > s.dumped_max_updated_at)
+        AND u.content_hash IS NOT NULL
+        AND (s.comp_id IS NULL OR s.dumped_content_hash IS NULL OR u.content_hash <> s.dumped_content_hash)
       ORDER BY c.end_date DESC
       ${LIMIT > 0 ? `LIMIT ${LIMIT}` : ''}`,
     [String(CUTOFF_DAYS)],
   );
-  return rows.map(r => ({ slug: r.comp_id, srcMaxUpdatedAt: r.src_max_updated_at }));
+  return rows.map(r => ({ slug: r.comp_id, contentHash: r.content_hash }));
 }
 
-async function upsertState(slug: string, srcMaxUpdatedAt: string): Promise<void> {
+async function upsertState(slug: string, contentHash: string): Promise<void> {
   await query(
-    `INSERT INTO comp_dump_state (comp_id, dumped_max_updated_at, dumped_at)
+    `INSERT INTO comp_dump_state (comp_id, dumped_content_hash, dumped_at)
        VALUES (?, ?, NOW())
        ON CONFLICT (comp_id) DO UPDATE SET
-         dumped_max_updated_at = EXCLUDED.dumped_max_updated_at,
+         dumped_content_hash = EXCLUDED.dumped_content_hash,
          dumped_at = NOW()`,
-    [slug, srcMaxUpdatedAt],
+    [slug, contentHash],
   );
 }
 
@@ -122,7 +124,7 @@ async function dumpOne(
   target: Target,
   useManifest: boolean,
 ): Promise<{ slug: string; ok: boolean; bytes?: number; ms?: number; err?: string; skipped?: boolean }> {
-  const { slug, srcMaxUpdatedAt } = target;
+  const { slug, contentHash } = target;
   const path = join(OUTPUT_DIR, `${slug}.json`);
 
   // Legacy fallback 路径:沿用文件存在性 skip
@@ -136,8 +138,8 @@ async function dumpOne(
     if (!data) return { slug, ok: false, err: 'no wca_db data' };
     const json = JSON.stringify(data);
     await writeFile(path, json);
-    if (useManifest && srcMaxUpdatedAt) {
-      await upsertState(slug, srcMaxUpdatedAt);
+    if (useManifest && contentHash) {
+      await upsertState(slug, contentHash);
     }
     return { slug, ok: true, bytes: json.length, ms: Date.now() - t0 };
   } catch (e) {
