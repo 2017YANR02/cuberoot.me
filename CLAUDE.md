@@ -121,7 +121,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - SEO:`app/sitemap.ts` + `app/robots.ts` 动态拉 db;站点绝对 URL 走 `lib/site.ts` 读 `NEXT_PUBLIC_SITE_URL`(默 `http://127.0.0.1:3100`)。OG image `app/og/route.tsx` 用 `next/og` 出 1200x630 PNG。详情页 `generateMetadata` 注入 `openGraph` + `twitter` + `ogImageUrl(title)`
 - 埋点:`events_track` 表 + `POST /api/track`({name,payload?,url?}),客户端走 `lib/track.ts`。匿名 cookie `cube_anon`(non-httpOnly,1y)。自动埋:`page_view` / `signup` / `login` / `order_placed` / `post_created` / `qr_landing`。admin 看 `/admin/events-track`
 - 优惠券 / 邀请码:`coupons` / `invite_codes`,orders 带 `discount` + `couponCode`。下单 server action 接 `couponCode`,前端 `CouponBox` 调 `previewCoupon` 试算;新用户 `?invite=XX` 透传到 verify-otp,`applyInviteOnSignup` + `rewardCoupon` 透传 toast。用户在 `/me/invite` 看自己邀请码
-- 二维码落地:`qr_codes`;`/qr/[code]` 命中 `incrementScans`,target ≠ `/` 自动 302(预览加 `?stay=1`)。admin `/admin/qr` 批量生成(最大 500 一批)
+- 二维码(活码):`qr_codes` 两类型 `redirect`(扫码直达 target)/ `landing`(落地页 `/qr/[code]` 聚合多链接),`incrementScans` 计扫,预览 `?stay=1`;admin `/admin/qr` 批量生成 + 编辑(类型/标题/简介/链接/术语/正面图/语录)。2x4cm 折叠卡 `components/QrCard.tsx`(正面图+语录 / 背面唯一码),`/admin/qr/cards` 打印,正面图存 `public/card/`(占位图带水印,印前换);链接解析 `lib/qr/links.ts`,svg `lib/qr/svg.ts`,编辑页实时预览 `_LiveCardPreview.tsx`
 - 不接 GA / Plausible / Sentry / Posthog,埋点全自建
 
 ## PWA
