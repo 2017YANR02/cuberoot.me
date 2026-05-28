@@ -9,6 +9,7 @@ import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
 import { listRecons } from '@/lib/recon-api';
 import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
+import { formatTime, formatAvg, expandContinentRecord } from '@/lib/recon-utils';
 import { API_ORIGIN } from '@/lib/api-base';
 import { ABOUT_REGISTRY } from '@/app/[lang]/wca/about/[id]/_lib/registry';
 import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/code/stack/_lib/stack_meta';
@@ -131,15 +132,21 @@ const STACK_ENTRIES: StackRecord[] = STACK_TOOLS_META.map(m => ({
 
 interface ReconRecord { hit: ReconHit; hay: string }
 
+// 与详情页头部 (recon/[id]/page.tsx) 口径一致:展示单次 (value ?? rawTime),average 仅兜底
 function reconValueStr(r: ReconSolve): string {
+  if (r.value) return r.value;
+  if (typeof r.rawTime === 'number') return formatTime(r.rawTime);
   if (typeof r.average === 'number' && r.average > 0) return r.average.toFixed(2);
-  return r.value ?? (typeof r.rawTime === 'number' ? r.rawTime.toFixed(2) : '');
+  return '';
 }
 
 function buildReconRecord(r: ReconSolve): ReconRecord {
   const valueStr = reconValueStr(r);
+  const avgStr = typeof r.average === 'number' && r.average > 0 ? formatAvg(r.average) : '';
   const personRaw = r.person ?? '';
-  const recordTag = r.regionalAverageRecord || r.regionalSingleRecord || r.regionalAoxrRecord || '';
+  // 详情页头部徽章用单次记录;存原始值 (CR),由 RecordBadge 按 iso2 展开成 AsR/ER/…
+  const recordTag = r.regionalSingleRecord || '';
+  const recordExpanded = expandContinentRecord(r.regionalSingleRecord, r.personCountry) || '';
   const hit: ReconHit = {
     id: r.id,
     person: personRaw,
@@ -152,12 +159,14 @@ function buildReconRecord(r: ReconSolve): ReconRecord {
     recordTag,
   };
   const hay = [
-    personRaw, r.personId ?? '', valueStr, r.value ?? '',
+    personRaw, r.personId ?? '', valueStr, r.value ?? '', avgStr,
     r.event, r.comp ?? '', r.compWcaId ?? '',
     compNameZh(r.comp ?? ''),
     r.note ?? '', r.caption ?? '',
     r.reconer ?? '', r.reconerId ?? '',
-    r.aoType ?? '', recordTag, r.method ?? '',
+    r.aoType ?? '',
+    r.regionalSingleRecord ?? '', r.regionalAverageRecord ?? '', r.regionalAoxrRecord ?? '',
+    recordExpanded, r.method ?? '',
     r.date ?? '',
   ].join('\n').toLowerCase();
   return { hit, hay };

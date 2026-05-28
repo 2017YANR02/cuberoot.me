@@ -13,17 +13,18 @@
  *  - EventIcon lazy-loaded via next/dynamic (was React.lazy in Vite)
  *  - useSpeechToText / smart_paste removed for now (nice-to-have, defer)
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
-  Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Film,
-  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, type LucideIcon,
+  Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Clipboard, Film,
+  ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
+import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compLinkProps } from '@/lib/comp-link';
@@ -36,6 +37,8 @@ import {
   type SiteSearchCard,
 } from '@/lib/site-search';
 import { setPendingVideo } from '@/lib/pending-video';
+import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -129,8 +132,14 @@ export default function LandingSearch({ cards, lang }: Props) {
   const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : `/${lang}`;
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const { supported: micSupported, listening, start: micStart, stop: micStop } = useSpeechToText({
+    lang: isZh ? 'zh-CN' : 'en-US',
+    onResult: (text) => { setQuery(text); setOpen(true); },
+  });
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
   const [expandedPersons, setExpandedPersons] = useState(false);
   const [expandedRecons, setExpandedRecons] = useState(false);
   const [expandedGlossary, setExpandedGlossary] = useState(false);
@@ -180,17 +189,60 @@ export default function LandingSearch({ cards, lang }: Props) {
     else window.location.href = c.href;
   };
 
+  // 直接在框里输入/粘贴 WCA URL / 打乱 / cubing.com 等 → 识别为对应工具的跳转意图
+  const pasteIntent = useMemo(() => detectPasteIntent(query), [query]);
+  const goPasteIntent = (intent: PasteIntent) => {
+    closeAfter();
+    setPlusMenuOpen(false);
+    router.push(`${langPrefix}${intent.route}`);
+  };
+
+  // Smart paste — 读剪贴板,识别 WCA URL / 打乱 / cubing.com 等并跳转;识别不出就当搜索词。
+  const onSmartPaste = async () => {
+    setPlusMenuOpen(false);
+    let text = '';
+    try { text = await navigator.clipboard.readText(); } catch { /* 权限拒绝 / 无 API */ }
+    if (!text) {
+      textInputRef.current?.focus();
+      return;
+    }
+    const intent = detectPasteIntent(text);
+    if (intent) {
+      goPasteIntent(intent);
+    } else {
+      setQuery(text);
+      setOpen(true);
+    }
+  };
+
   const onVideoFile = (file: File | null | undefined) => {
     if (!file || !file.type.startsWith('video/')) return;
     setPendingVideo(file);
     closeAfter();
+    setPlusMenuOpen(false);
     router.push(`${langPrefix}/frame-count`);
   };
+
+  useEffect(() => {
+    if (!plusMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setPlusMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [plusMenuOpen]);
 
   return (
     <div className="landing-search" ref={wrapRef}>
       <div
         className={`landing-search-input${dragging ? ' is-drag-over' : ''}`}
+        onMouseDown={e => {
+          // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
+          if (e.target === e.currentTarget) {
+            e.preventDefault();
+            textInputRef.current?.focus();
+          }
+        }}
         onDragOver={e => {
           if (e.dataTransfer?.types.includes('Files')) {
             e.preventDefault();
@@ -207,11 +259,12 @@ export default function LandingSearch({ cards, lang }: Props) {
         <button
           type="button"
           className="landing-search-plus"
-          onClick={() => fileInputRef.current?.click()}
-          title={isZh ? '上传视频数帧' : 'Upload video'}
-          aria-label={isZh ? '上传视频' : 'Upload video'}
+          onClick={() => setPlusMenuOpen(v => !v)}
+          title={isZh ? '智能粘贴 / 上传视频' : 'Smart paste / upload video'}
+          aria-label={isZh ? '添加' : 'Add'}
+          aria-expanded={plusMenuOpen}
         >
-          <Film size={18} strokeWidth={1.75} />
+          <Plus size={18} strokeWidth={1.75} />
         </button>
         <input
           ref={fileInputRef}
@@ -221,19 +274,25 @@ export default function LandingSearch({ cards, lang }: Props) {
           onChange={e => onVideoFile(e.target.files?.[0])}
         />
         <input
+          ref={textInputRef}
           type="text"
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
+          onPaste={e => {
+            const intent = detectPasteIntent(e.clipboardData.getData('text'));
+            if (intent) { e.preventDefault(); goPasteIntent(intent); }
+          }}
           onKeyDown={e => {
             if (e.key === 'Escape') {
               setOpen(false);
               (e.target as HTMLInputElement).blur();
-            } else if (e.key === 'Enter' && cardMatches.length > 0) {
-              goCard(cardMatches[0]);
+            } else if (e.key === 'Enter') {
+              if (pasteIntent) goPasteIntent(pasteIntent);
+              else if (cardMatches.length > 0) goCard(cardMatches[0]);
             }
           }}
-          placeholder={rotatingPlaceholder(isZh)}
+          placeholder={listening ? (isZh ? '请说…' : 'Listening…') : rotatingPlaceholder(isZh)}
         />
         {query !== '' && (
           <ClearButton
@@ -244,11 +303,64 @@ export default function LandingSearch({ cards, lang }: Props) {
             preserveFocus
           />
         )}
-        <Search size={16} strokeWidth={1.75} />
+        {plusMenuOpen && (
+          <div className="landing-search-plus-menu" role="menu">
+            <button type="button" role="menuitem" onClick={onSmartPaste}>
+              <Clipboard size={14} strokeWidth={1.75} />
+              <div className="landing-search-plus-menu-text">
+                <span className="landing-search-plus-menu-title">{isZh ? '智能粘贴' : 'Smart paste'}</span>
+                <span className="landing-search-plus-menu-sub">{isZh ? 'WCA URL / 打乱 / 公式' : 'WCA URL / scramble / alg'}</span>
+              </div>
+            </button>
+            <button type="button" role="menuitem" onClick={() => fileInputRef.current?.click()}>
+              <Film size={14} strokeWidth={1.75} />
+              <div className="landing-search-plus-menu-text">
+                <span className="landing-search-plus-menu-title">{isZh ? '上传视频数帧' : 'Upload video'}</span>
+                <span className="landing-search-plus-menu-sub">{isZh ? '逐帧计时,记录 split' : 'Per-frame timing & splits'}</span>
+              </div>
+            </button>
+          </div>
+        )}
+        {micSupported && (
+          <button
+            type="button"
+            className={`landing-search-mic${listening ? ' is-listening' : ''}`}
+            onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
+            title={listening
+              ? (isZh ? '停止录音' : 'Stop')
+              : (isZh ? '语音输入' : 'Voice input')}
+            aria-label={listening
+              ? (isZh ? '停止录音' : 'Stop')
+              : (isZh ? '语音输入' : 'Voice input')}
+          >
+            <Mic size={16} strokeWidth={1.75} />
+          </button>
+        )}
       </div>
 
       {showDropdown && (
         <div className="landing-search-panel">
+          {pasteIntent && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <Sparkles size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '智能识别' : 'Smart'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                <button
+                  type="button"
+                  className="landing-search-item"
+                  onClick={() => goPasteIntent(pasteIntent)}
+                >
+                  <span className="landing-search-item-name">{isZh ? pasteIntent.labelZh : pasteIntent.labelEn}</span>
+                  <span className="landing-search-item-meta">
+                    {query.trim().slice(0, 60)}{query.trim().length > 60 ? '…' : ''}
+                  </span>
+                </button>
+              </div>
+            </section>
+          )}
+
           {cardMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -550,7 +662,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     <span className="landing-search-item-main">
                       <span className="landing-search-item-name">
                         {displayCuberName(r.person, isZh)} · {r.valueStr}
-                        {r.recordTag ? ` · ${r.recordTag}` : ''}
+                        {r.recordTag && <RecordBadge record={r.recordTag} variant="inline" iso2={r.personIso2} />}
                         {r.aoType ? ` · ${r.aoType}` : ''}
                       </span>
                       <span className="landing-search-item-meta">
@@ -565,12 +677,12 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
-          {totalCount === 0 && (xLoaded || !xSearchEnabled) && (
+          {totalCount === 0 && !pasteIntent && (xLoaded || !xSearchEnabled) && (
             <div className="landing-search-empty">
               {isZh ? '未找到匹配项' : 'No matches found.'}
             </div>
           )}
-          {totalCount === 0 && xSearchEnabled && !xLoaded && (
+          {totalCount === 0 && !pasteIntent && xSearchEnabled && !xLoaded && (
             <div className="landing-search-empty">
               {isZh ? '搜索中…' : 'Searching…'}
             </div>
