@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next';
 
 // Next App Router serves this at /sitemap.xml on both Vercel and the
-// self-hosted standalone build. Canonical host is always the production
-// domain (preview/staging deploys still point search engines here).
-const BASE = 'https://cuberoot.me';
+// self-hosted standalone build. Canonical host is www (apex 301/307s to it),
+// so list the final non-redirecting URLs here regardless of which host or
+// preview/staging deploy actually serves the file.
+const BASE = 'https://www.cuberoot.me';
 
 // Curated indexable routes (locale prefix added below). Each yields
 // /en/<path> + /zh/<path> with hreflang alternates. Dynamic long-tail pages
