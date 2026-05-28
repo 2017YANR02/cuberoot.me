@@ -230,6 +230,15 @@
                     ],
                     [
                       8,
+                      "[CJ Garon](https://www.worldcubeassociation.org/persons/2026GARO01)",
+                      "6.67",
+                      "Philippines",
+                      "2026-05-24",
+                      "[Pasig Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/PasigSpeedcubingOpen2026)",
+                      "6.67 9.99 8.83 10.60 8.72"
+                    ],
+                    [
+                      9,
                       "[Nguyễn Văn Khánh](https://www.worldcubeassociation.org/persons/2022KHAN29)",
                       "6.70",
                       "Vietnam",
@@ -238,22 +247,13 @@
                       "6.70 6.98 8.74 8.04 11.49"
                     ],
                     [
-                      9,
+                      10,
                       "[Zirui Xu (许子睿)](https://www.worldcubeassociation.org/persons/2025XUZI02)",
                       "6.71",
                       "China",
                       "2025-03-15",
                       "[Linhai Newcomers 2025](https://www.worldcubeassociation.org/competitions/LinhaiNewcomers2025)",
                       "6.71 6.56 8.23 7.57 7.68"
-                    ],
-                    [
-                      10,
-                      "[Qixuan Zheng (郑岐轩)](https://www.worldcubeassociation.org/persons/2026ZHEN08)",
-                      "6.72",
-                      "China",
-                      "2026-03-07",
-                      "[Xianju NxN 2026](https://www.worldcubeassociation.org/competitions/XianjuNxN2026)",
-                      "6.72 7.63 9.63 8.97 12.43"
                     ]
                   ]
                 },
@@ -263,6 +263,15 @@
                   "rows": [
                     [
                       1,
+                      "[CJ Garon](https://www.worldcubeassociation.org/persons/2026GARO01)",
+                      "26.60",
+                      "Philippines",
+                      "2026-05-24",
+                      "[Pasig Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/PasigSpeedcubingOpen2026)",
+                      "26.60 30.70 34.64 29.89 33.41"
+                    ],
+                    [
+                      2,
                       "[Tianlan Geng (耿天澜)](https://www.worldcubeassociation.org/persons/2025GENG04)",
                       "27.38",
                       "China",
@@ -271,7 +280,7 @@
                       "27.38 29.23 28.47 27.61 DNF"
                     ],
                     [
-                      2,
+                      3,
                       "[Yiran Peng (彭弈然)](https://www.worldcubeassociation.org/persons/2017PENG04)",
                       "27.86",
                       "China",
@@ -280,7 +289,7 @@
                       "27.86 36.63 34.13 35.46 38.44"
                     ],
                     [
-                      3,
+                      4,
                       "[Neo Cuares](https://www.worldcubeassociation.org/persons/2023CUAR03)",
                       "28.05",
                       "Philippines",
@@ -289,7 +298,7 @@
                       "28.05 33.46 29.19 27.63 35.68"
                     ],
                     [
-                      4,
+                      5,
                       "[Shaoyi Liu (刘少一)](https://www.worldcubeassociation.org/persons/2024LIUS04)",
                       "28.09",
                       "China",
@@ -298,7 +307,7 @@
                       "28.09 35.29 1:15.92 24.54 28.83"
                     ],
                     [
-                      5,
+                      6,
                       "[Jiajun Liu (刘嘉俊)](https://www.worldcubeassociation.org/persons/2019LIUJ03)",
                       "28.10",
                       "China",
@@ -307,7 +316,7 @@
                       "28.10 26.86 34.29 29.50 33.07"
                     ],
                     [
-                      6,
+                      7,
                       "[Haokai Zeng (曾浩锴)](https://www.worldcubeassociation.org/persons/2024ZENG06)",
                       "28.43",
                       "China",
@@ -316,7 +325,7 @@
                       "28.43 33.70 33.51 32.11 33.97"
                     ],
                     [
-                      7,
+                      8,
                       "[Chongkui Chen (陈崇魁)](https://www.worldcubeassociation.org/persons/2023CHEC12)",
                       "28.62",
                       "China",
@@ -325,7 +334,7 @@
                       "28.62 35.71 27.61 1:01.09 32.81"
                     ],
                     [
-                      8,
+                      9,
                       "[Ziyu Liu (刘子鱼)](https://www.worldcubeassociation.org/persons/2025LIUZ08)",
                       "28.78",
                       "China",
@@ -334,22 +343,13 @@
                       "28.78 30.84 34.86 30.28 28.61"
                     ],
                     [
-                      9,
+                      10,
                       "[Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16)",
                       "29.67",
                       "Vietnam",
                       "2019-08-01",
                       "[CubingUSA Nationals 2019](https://www.worldcubeassociation.org/competitions/CubingUSANationals2019)",
                       "29.67 30.73 31.27 29.70 34.05"
-                    ],
-                    [
-                      10,
-                      "[Siddhesh Pore](https://www.worldcubeassociation.org/persons/2022PORE01)",
-                      "29.79",
-                      "India",
-                      "2022-06-25",
-                      "[Phoenix Cube Challenge 2022](https://www.worldcubeassociation.org/competitions/PhoenixCubeChallenge2022)",
-                      "29.79 30.99 41.03 35.79 31.71"
                     ]
                   ]
                 },
@@ -2415,9 +2415,17 @@
                   "titleZh": "四阶魔方",
                   "rows": [
                     [
+                      "26.60",
+                      "2.8%",
+                      "4",
+                      "[CJ Garon](https://www.worldcubeassociation.org/persons/2026GARO01)",
+                      "2026-05-24",
+                      "[Pasig Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/PasigSpeedcubingOpen2026)"
+                    ],
+                    [
                       "27.38",
                       "2.4%",
-                      "215",
+                      "211",
                       "[Tianlan Geng (耿天澜)](https://www.worldcubeassociation.org/persons/2025GENG04)",
                       "2025-10-25",
                       "[Beijing University 2025](https://www.worldcubeassociation.org/competitions/BeijingUniversity2025)"
@@ -4659,6 +4667,15 @@
                     ],
                     [
                       8,
+                      "[CJ Garon](https://www.worldcubeassociation.org/persons/2026GARO01)",
+                      "26.60",
+                      "Philippines",
+                      "2026-05-24",
+                      "[Pasig Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/PasigSpeedcubingOpen2026)",
+                      "26.60 30.70 34.64 29.89 33.41"
+                    ],
+                    [
+                      9,
                       "[Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16)",
                       "26.79",
                       "Vietnam",
@@ -4667,22 +4684,13 @@
                       "35.62 31.43 26.79 29.59 34.65"
                     ],
                     [
-                      9,
+                      10,
                       "[Nathaniel Timothy Sunil](https://www.worldcubeassociation.org/persons/2022SUNI01)",
                       "26.96",
                       "Ireland",
                       "2022-08-27",
                       "[Back to School Utah 2022](https://www.worldcubeassociation.org/competitions/BacktoSchoolUtah2022)",
                       "31.15 35.10 34.38 34.43 26.96"
-                    ],
-                    [
-                      10,
-                      "[Ruotong Jia (贾若桐)](https://www.worldcubeassociation.org/persons/2025JIAR01)",
-                      "27.25",
-                      "China",
-                      "2025-07-26",
-                      "[Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025)",
-                      "36.36 32.55 27.25 29.03 32.40"
                     ]
                   ]
                 },
@@ -9287,30 +9295,30 @@
                     ],
                     [
                       8,
+                      "[CJ Garon](https://www.worldcubeassociation.org/persons/2026GARO01)",
+                      "31.33",
+                      "Philippines",
+                      "2026-05-24",
+                      "[Pasig Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/PasigSpeedcubingOpen2026)",
+                      "26.60 30.70 34.64 29.89 33.41"
+                    ],
+                    [
+                      9,
+                      "[Jingxian Wu (吴敬贤)](https://www.worldcubeassociation.org/persons/2026WUJI07)",
+                      "31.57",
+                      "China",
+                      "2026-05-24",
+                      "[Liuzhou Open 2026](https://www.worldcubeassociation.org/competitions/LiuzhouOpen2026)",
+                      "31.54 33.59 28.07 29.59 DNF"
+                    ],
+                    [
+                      10,
                       "[Nguyễn Văn Khánh](https://www.worldcubeassociation.org/persons/2022KHAN29)",
                       "31.59",
                       "Vietnam",
                       "2022-07-16",
                       "[Ha Noi Summer 2022](https://www.worldcubeassociation.org/competitions/HaNoiSummer2022)",
                       "33.80 47.59 29.26 29.54 31.42"
-                    ],
-                    [
-                      9,
-                      "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
-                      "31.63",
-                      "USA",
-                      "2021-11-20",
-                      "[CalPoly SLO Fall 2021](https://www.worldcubeassociation.org/competitions/CalPolySLOFall2021)",
-                      "31.25 29.43 34.20 DNF 27.48"
-                    ],
-                    [
-                      10,
-                      "[Xiangmin Zhou (周向民)](https://www.worldcubeassociation.org/persons/2023ZHOU35)",
-                      "31.76",
-                      "China",
-                      "2023-12-24",
-                      "[Shenzhen Open 2023](https://www.worldcubeassociation.org/competitions/ShenzhenOpen2023)",
-                      "32.63 32.53 32.90 29.29 30.12"
                     ]
                   ]
                 },
@@ -9740,21 +9748,21 @@
                     ],
                     [
                       5,
-                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
-                      "25.67",
-                      "Japan",
-                      "2023-11-26",
-                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
-                      "23 28 26"
-                    ],
-                    [
-                      6,
                       "[Shota Wakabayashi (若林翔太)](https://www.worldcubeassociation.org/persons/2023KADO01)",
                       "25.67",
                       "Japan",
                       "2023-11-26",
                       "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
                       "22 27 28"
+                    ],
+                    [
+                      6,
+                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
+                      "25.67",
+                      "Japan",
+                      "2023-11-26",
+                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
+                      "23 28 26"
                     ],
                     [
                       7,
@@ -9776,21 +9784,21 @@
                     ],
                     [
                       9,
-                      "[Yasunari Kumekawa (粂川泰成)](https://www.worldcubeassociation.org/persons/2022KUME01)",
-                      "27.00",
-                      "Japan",
-                      "2025-07-27",
-                      "[FMC Asia 2025](https://www.worldcubeassociation.org/competitions/FMCAsia2025)",
-                      "22 34 25"
-                    ],
-                    [
-                      10,
                       "[Rodney Kinney](https://www.worldcubeassociation.org/persons/2025KINN03)",
                       "27.00",
                       "USA",
                       "2025-11-30",
                       "[Quiet Seattle November 2025](https://www.worldcubeassociation.org/competitions/QuietSeattleNovember2025)",
                       "28 27 26"
+                    ],
+                    [
+                      10,
+                      "[Yasunari Kumekawa (粂川泰成)](https://www.worldcubeassociation.org/persons/2022KUME01)",
+                      "27.00",
+                      "Japan",
+                      "2025-07-27",
+                      "[FMC Asia 2025](https://www.worldcubeassociation.org/competitions/FMCAsia2025)",
+                      "22 34 25"
                     ]
                   ]
                 },
@@ -10046,21 +10054,21 @@
                     ],
                     [
                       7,
-                      "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
-                      "2.63",
-                      "China",
-                      "2023-09-23",
-                      "[Kedah Cube Open 2023](https://www.worldcubeassociation.org/competitions/KedahCubeOpen2023)",
-                      "2.68 1.70 4.63 3.00 2.22"
-                    ],
-                    [
-                      8,
                       "[Zizhen Li (李子贞)](https://www.worldcubeassociation.org/persons/2024LIZI01)",
                       "2.63",
                       "China",
                       "2024-03-10",
                       "[Luoyang Spring 2024](https://www.worldcubeassociation.org/competitions/LuoyangSpring2024)",
                       "3.08 3.19 2.16 2.64 2.08"
+                    ],
+                    [
+                      8,
+                      "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
+                      "2.63",
+                      "China",
+                      "2023-09-23",
+                      "[Kedah Cube Open 2023](https://www.worldcubeassociation.org/competitions/KedahCubeOpen2023)",
+                      "2.68 1.70 4.63 3.00 2.22"
                     ],
                     [
                       9,
@@ -13268,6 +13276,15 @@
                     ],
                     [
                       5,
+                      "[CJ Garon](https://www.worldcubeassociation.org/persons/2026GARO01)",
+                      "30.15",
+                      "Philippines",
+                      "2026-05-24",
+                      "[Pasig Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/PasigSpeedcubingOpen2026)",
+                      "34.15 28.03 29.23 27.02 33.20"
+                    ],
+                    [
+                      6,
                       "[Jiajun Liu (刘嘉俊)](https://www.worldcubeassociation.org/persons/2019LIUJ03)",
                       "30.22",
                       "China",
@@ -13276,7 +13293,7 @@
                       "28.10 26.86 34.29 29.50 33.07"
                     ],
                     [
-                      6,
+                      7,
                       "[Yixin Luo (罗益鑫)](https://www.worldcubeassociation.org/persons/2025LUOY02)",
                       "30.29",
                       "China",
@@ -13285,7 +13302,7 @@
                       "30.47 37.24 31.27 24.56 29.12"
                     ],
                     [
-                      7,
+                      8,
                       "[Shaoyi Liu (刘少一)](https://www.worldcubeassociation.org/persons/2024LIUS04)",
                       "30.33",
                       "China",
@@ -13294,7 +13311,7 @@
                       "32.30 28.66 30.04 50.17 24.23"
                     ],
                     [
-                      8,
+                      9,
                       "[Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16)",
                       "30.57",
                       "Vietnam",
@@ -13303,22 +13320,13 @@
                       "29.67 30.73 31.27 29.70 34.05"
                     ],
                     [
-                      9,
+                      10,
                       "[Rodrigue Hermanne Rafanambinantsoa](https://www.worldcubeassociation.org/persons/2024RAFA04)",
                       "30.65",
                       "Madagascar",
                       "2024-05-04",
                       "[Cubing Mada 2024](https://www.worldcubeassociation.org/competitions/CubingMada2024)",
                       "30.69 30.45 30.82 34.36 30.20"
-                    ],
-                    [
-                      10,
-                      "[Ruotong Jia (贾若桐)](https://www.worldcubeassociation.org/persons/2025JIAR01)",
-                      "31.33",
-                      "China",
-                      "2025-07-26",
-                      "[Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025)",
-                      "36.36 32.55 27.25 29.03 32.40"
                     ]
                   ]
                 },
@@ -13748,21 +13756,21 @@
                     ],
                     [
                       5,
-                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
-                      "25.67",
-                      "Japan",
-                      "2023-11-26",
-                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
-                      "23 28 26"
-                    ],
-                    [
-                      6,
                       "[Shota Wakabayashi (若林翔太)](https://www.worldcubeassociation.org/persons/2023KADO01)",
                       "25.67",
                       "Japan",
                       "2023-11-26",
                       "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
                       "22 27 28"
+                    ],
+                    [
+                      6,
+                      "[Kazuya Ishii (石井一也)](https://www.worldcubeassociation.org/persons/2019ISHI07)",
+                      "25.67",
+                      "Japan",
+                      "2023-11-26",
+                      "[Ayase FMC 2023](https://www.worldcubeassociation.org/competitions/AyaseFMC2023)",
+                      "23 28 26"
                     ],
                     [
                       7,
@@ -13784,21 +13792,21 @@
                     ],
                     [
                       9,
-                      "[Rodney Kinney](https://www.worldcubeassociation.org/persons/2025KINN03)",
-                      "27.00",
-                      "USA",
-                      "2025-11-30",
-                      "[Quiet Seattle November 2025](https://www.worldcubeassociation.org/competitions/QuietSeattleNovember2025)",
-                      "28 27 26"
-                    ],
-                    [
-                      10,
                       "[Yasunari Kumekawa (粂川泰成)](https://www.worldcubeassociation.org/persons/2022KUME01)",
                       "27.00",
                       "Japan",
                       "2025-07-27",
                       "[FMC Asia 2025](https://www.worldcubeassociation.org/competitions/FMCAsia2025)",
                       "22 34 25"
+                    ],
+                    [
+                      10,
+                      "[Rodney Kinney](https://www.worldcubeassociation.org/persons/2025KINN03)",
+                      "27.00",
+                      "USA",
+                      "2025-11-30",
+                      "[Quiet Seattle November 2025](https://www.worldcubeassociation.org/competitions/QuietSeattleNovember2025)",
+                      "28 27 26"
                     ]
                   ]
                 },

@@ -960,6 +960,18 @@
                 ],
                 [
                   2,
+                  "[Adrien Neveu](https://www.worldcubeassociation.org/persons/2018NEVE02)",
+                  "19.67",
+                  "France",
+                  "2026-05-22",
+                  "[Barby Cube 2026](https://www.worldcubeassociation.org/competitions/BarbyCube2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "19.67"
+                  }
+                ],
+                [
+                  3,
                   "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
                   "19.67",
                   "Poland",
@@ -971,7 +983,7 @@
                   }
                 ],
                 [
-                  3,
+                  4,
                   "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
                   "19.67",
                   "Denmark",
@@ -983,7 +995,7 @@
                   }
                 ],
                 [
-                  4,
+                  5,
                   "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
                   "20.00",
                   "USA",
@@ -995,7 +1007,7 @@
                   }
                 ],
                 [
-                  5,
+                  6,
                   "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
                   "20.33",
                   "Singapore",
@@ -1007,7 +1019,7 @@
                   }
                 ],
                 [
-                  6,
+                  7,
                   "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
                   "20.33",
                   "Australia",
@@ -1019,7 +1031,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
                   "20.33",
                   "Indonesia",
@@ -1031,7 +1043,7 @@
                   }
                 ],
                 [
-                  8,
+                  9,
                   "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
                   "20.33",
                   "USA",
@@ -1043,7 +1055,7 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Levi Gibson](https://www.worldcubeassociation.org/persons/2018GIBS04)",
                   "20.33",
                   "USA",
@@ -1052,18 +1064,6 @@
                   {
                     "_type": "solves",
                     "csv": "20.33"
-                  }
-                ],
-                [
-                  10,
-                  "[Jaehyun Jeong (정재현)](https://www.worldcubeassociation.org/persons/2016JEON02)",
-                  "20.67",
-                  "Korea",
-                  "2026-04-18",
-                  "[Seoul Silent Shhpring 2026](https://www.worldcubeassociation.org/competitions/SeoulSilentShhpring2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "20.67"
                   }
                 ]
               ]
@@ -11833,6 +11833,18 @@
                 ],
                 [
                   8,
+                  "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+                  "5.76",
+                  "USA",
+                  "2026-05-22",
+                  "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "5.46,6.06"
+                  }
+                ],
+                [
+                  9,
                   "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)",
                   "5.77",
                   "Denmark",
@@ -11841,18 +11853,6 @@
                   {
                     "_type": "solves",
                     "csv": "5.74,5.79"
-                  }
-                ],
-                [
-                  9,
-                  "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
-                  "5.89",
-                  "USA",
-                  "2026-01-24",
-                  "[Wisconsin on Ice 2026](https://www.worldcubeassociation.org/competitions/WisconsinonIce2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "5.40,6.38"
                   }
                 ],
                 [
@@ -21182,6 +21182,18 @@
                 ],
                 [
                   2,
+                  "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
+                  "2.70",
+                  "USA",
+                  "2026-05-22",
+                  "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "2.45,2.26,3.39"
+                  }
+                ],
+                [
+                  3,
                   "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
                   "2.74",
                   "Poland",
@@ -21193,7 +21205,7 @@
                   }
                 ],
                 [
-                  3,
+                  4,
                   "[Karl Abarquez](https://www.worldcubeassociation.org/persons/2023ABAR02)",
                   "2.76",
                   "Philippines",
@@ -21202,18 +21214,6 @@
                   {
                     "_type": "solves",
                     "csv": "2.78,2.96,2.55"
-                  }
-                ],
-                [
-                  4,
-                  "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
-                  "2.76",
-                  "USA",
-                  "2025-08-22",
-                  "[Heartland Championship 2025](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2025)",
-                  {
-                    "_type": "solves",
-                    "csv": "2.70,2.63,2.96"
                   }
                 ],
                 [
