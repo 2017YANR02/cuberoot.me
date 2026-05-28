@@ -120,6 +120,50 @@ async function upsertState(slug: string, contentHash: string): Promise<void> {
   );
 }
 
+// ③b PR 涟漪 reconcile:某选手成绩变 → 其所有比赛的「当时是否 PR」标记会变,而那些比赛
+// 自身成绩行没动(content_hash 不变)→ content 增量抓不到。这里从 wca_results_top 算
+// per-person PR 指纹(PG 13 无 crc32/bit_xor,用 sum(hashtextextended)),指纹变了的选手 →
+// 把其所有比赛 dumped_content_hash 置 NULL,令 content picker 重烤。单条多-CTE 语句完成
+// (连接池下 temp 表跨 query 不可见,故不用 temp)。person_dump_state 缺 = migration 没应用 → 跳过.
+async function reconcilePersonRipple(): Promise<{ changed: number; armed: number }> {
+  const exists = await query<{ cnt: string }>(
+    `SELECT COUNT(*)::text AS cnt FROM information_schema.tables
+       WHERE table_schema='public' AND table_name='person_dump_state'`,
+  );
+  if (Number(exists[0]?.cnt ?? 0) === 0) return { changed: 0, armed: 0 };
+
+  const rows = await query<{ armed_comps: string; changed_persons: string }>(
+    `WITH pf AS (
+       SELECT wca_id AS person_id,
+              sum(hashtextextended(concat_ws('|', event_id, is_avg, value), 0)) AS pr_hash
+         FROM wca_results_top GROUP BY wca_id
+     ),
+     changed AS (
+       SELECT pf.person_id, pf.pr_hash FROM pf
+       LEFT JOIN person_dump_state s ON s.person_id = pf.person_id
+       WHERE s.person_id IS NULL OR s.dumped_pr_hash IS DISTINCT FROM pf.pr_hash
+     ),
+     ripple AS (
+       SELECT DISTINCT comp_id FROM wca_results_top
+        WHERE wca_id IN (SELECT person_id FROM changed)
+     ),
+     armed AS (
+       UPDATE comp_dump_state SET dumped_content_hash = NULL
+        WHERE comp_id IN (SELECT comp_id FROM ripple) AND dumped_content_hash IS NOT NULL
+       RETURNING comp_id
+     ),
+     up AS (
+       INSERT INTO person_dump_state (person_id, dumped_pr_hash, reconciled_at)
+       SELECT person_id, pr_hash, NOW() FROM changed
+       ON CONFLICT (person_id) DO UPDATE SET dumped_pr_hash = EXCLUDED.dumped_pr_hash, reconciled_at = NOW()
+       RETURNING 1
+     )
+     SELECT (SELECT count(*) FROM armed)::text  AS armed_comps,
+            (SELECT count(*) FROM changed)::text AS changed_persons`,
+  );
+  return { changed: Number(rows[0]?.changed_persons ?? 0), armed: Number(rows[0]?.armed_comps ?? 0) };
+}
+
 async function dumpOne(
   target: Target,
   useManifest: boolean,
@@ -153,6 +197,12 @@ async function main() {
 
   const useManifest = await hasManifestTable();
   console.log(`[dump] picker: ${useManifest ? 'watermark (wca_comp_updated_at + comp_dump_state)' : 'legacy (file-exists skip)'}`);
+
+  // ③b: 默认增量路径先 reconcile PR 涟漪(arm 受影响比赛),再 pick.FORCE/FORCE_SLUGS 是定向跑,跳过.
+  if (useManifest && !FORCE && FORCE_SLUGS.length === 0) {
+    const r = await reconcilePersonRipple();
+    console.log(`[reconcile] changed_persons=${r.changed} armed_comps=${r.armed}`);
+  }
 
   const targets = await listTargets(useManifest);
   console.log(`[dump] candidates: ${targets.length}`);
