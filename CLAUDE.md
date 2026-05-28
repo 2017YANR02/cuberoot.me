@@ -132,11 +132,15 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 
 ## 部署
 
-- `Dockerfile`(node:20-alpine multi-stage,Next standalone 输出,better-sqlite3 native 模块 + `db/migrations` 复制进 runner)
-- `docker-compose.yml` 单服务 + named volume `/data/data.db`,宿主 3100 → 容器 3000
-- `.env.example` 列出 `ADMIN_PASSWORD` / `SESSION_SECRET` / `NEXT_PUBLIC_SITE_URL` / `DB_PATH` / 支付 env / SMS env / STORAGE env
-- `next.config.ts` 设 `output: "standalone"` + `serverExternalPackages: ["wechatpay-node-v3","alipay-sdk"]`
-- 详见 `DEPLOY.md` 和 `HANDOFF.md`
+- 线上 https://platform.cuberoot.me(2026-05-28);push main → `.github/workflows/deploy.yml`(CI build + scp,学 mira)。
+- systemd `platform-next` 反代 :3004,unit 在 `ops/platform-next.service`(start.sh 定位 nvm node)。
+- nginx vhost 不在本 repo,在 cuberoot.me repo `ops/nginx/platform.cuberoot.me.conf`。
+- CI 两坑:node-version 必须 24(better-sqlite3 ABI);`db:migrate+seed` 排在 `next build` 前(`app/sitemap.ts` 构建期查 DB)。build 时设 `NEXT_PUBLIC_SITE_URL=https://platform.cuberoot.me`。
+- 持久库 `/var/lib/cube-platform/data.db`(`DB_PATH` env,部署目录外),重新部署不覆盖;首次从 bundle seed。
+- secrets:`DEPLOY_HOST/USER/SSH_KEY` 在 cube-platform repo,key 是专用 `platform-deploy-ci`(跟 mira / 主站分开)。
+- `ADMIN_PASSWORD` / `SESSION_SECRET` 线上仍是代码默认值(`admin123` / `dev-cube-secret-change-me`),要硬化在 systemd unit 加 `Environment=`(别 commit 真值)。
+- `next.config.ts` 设 `output: "standalone"` + `serverExternalPackages: ["wechatpay-node-v3","alipay-sdk"]`。
+- 备选:`Dockerfile` + `docker-compose.yml`(named volume `/data/data.db`)仍在,本地容器跑用;线上走上面的 systemd。
 
 ## 常见坑
 
