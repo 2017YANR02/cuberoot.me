@@ -1,5 +1,7 @@
+import Link from "next/link";
+import { Download } from "lucide-react";
 import { list } from "@/lib/db/qr";
-import { Card, PageHeader } from "../../_components/Shell";
+import { Card, PageHeader, PrimaryLink } from "../../_components/Shell";
 import { Field, FormActions, Input, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
 import { createQrBatch, deleteQr } from "./actions";
@@ -24,6 +26,11 @@ export default async function AdminQrPage({
       <PageHeader
         title="二维码 / 落地码"
         subtitle={`共 ${rows.length} 个 code,累计扫码 ${totalScans} 次。落地路径 /qr/[code]`}
+        actions={
+          rows.length > 0 ? (
+            <PrimaryLink href="/admin/qr/cards">卡片打印(全部)</PrimaryLink>
+          ) : undefined
+        }
       />
 
       <Card className="p-6 mb-6">
@@ -58,8 +65,9 @@ export default async function AdminQrPage({
             <thead className="bg-bg-soft text-ink-3">
               <tr>
                 <Th>Code</Th>
+                <Th>类型</Th>
                 <Th>批次标签</Th>
-                <Th>目标</Th>
+                <Th>目标 / 落地</Th>
                 <Th className="text-right">扫码次数</Th>
                 <Th>创建时间</Th>
                 <Th className="text-right">操作</Th>
@@ -69,27 +77,49 @@ export default async function AdminQrPage({
               {rows.map((r) => (
                 <tr key={r.code}>
                   <Td className="font-mono text-ink">
-                    <a
-                      href={`/qr/${r.code}?stay=1`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <Link
+                      href={`/admin/qr/${r.code}`}
                       className="hover:text-brand hover:underline"
                     >
                       {r.code}
-                    </a>
+                    </Link>
+                  </Td>
+                  <Td>
+                    <span
+                      className={
+                        "inline-block rounded-full px-2 py-0.5 text-[12px] " +
+                        (r.type === "landing"
+                          ? "bg-brand-soft text-brand"
+                          : "bg-bg-soft text-ink-3")
+                      }
+                    >
+                      {r.type === "landing" ? "聚合码" : "跳转码"}
+                    </span>
                   </Td>
                   <Td className="text-ink-2">{r.label}</Td>
-                  <Td className="text-ink-3 break-all">{r.target}</Td>
+                  <Td className="text-ink-3 break-all">
+                    {r.type === "landing"
+                      ? `聚合页 · ${r.links?.length ?? 0} 链接`
+                      : r.target}
+                  </Td>
                   <Td className="text-right text-ink">{r.scans}</Td>
                   <Td className="text-ink-3 whitespace-nowrap">{fmtDate(r.createdAt)}</Td>
-                  <Td className="text-right">
+                  <Td className="text-right whitespace-nowrap">
+                    <a
+                      href={`/api/qr/${r.code}/svg`}
+                      download={`qr-${r.code}.svg`}
+                      title="下载二维码 SVG"
+                      className="mr-3 inline-flex items-center align-middle text-ink-3 hover:text-brand transition"
+                    >
+                      <Download size={14} />
+                    </a>
                     <DeleteButton id={r.code} action={deleteQr} />
                   </Td>
                 </tr>
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <Td colSpan={6} className="text-center text-ink-3 py-8">
+                  <Td colSpan={7} className="text-center text-ink-3 py-8">
                     暂无 code,在上方批量生成
                   </Td>
                 </tr>

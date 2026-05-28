@@ -309,10 +309,18 @@ export const inviteCodes = sqliteTable(
   (t) => [index("invite_codes_owner_idx").on(t.ownerId)],
 );
 
+export type QrType = "redirect" | "landing";
+export type QrLink = { label: string; href: string; note?: string };
+
 export const qrCodes = sqliteTable("qr_codes", {
   code: text("code").primaryKey(),
   label: text("label").notNull(),
+  type: text("type").$type<QrType>().notNull().default("redirect"),
   target: text("target").notNull().default("/"),
+  title: text("title"),
+  intro: text("intro"),
+  links: text("links", { mode: "json" }).$type<QrLink[]>(),
+  term: text("term"),
   scans: integer("scans").notNull().default(0),
   createdAt: integer("created_at").notNull(),
 });

@@ -16,6 +16,7 @@ const COLS: { title: string; items: { href: string; label: string }[] }[] = [
       { href: "/news", label: "资讯" },
       { href: "/instructors", label: "讲师" },
       { href: "/about", label: "关于我们" },
+      { href: "/progress", label: "建设成果" },
     ],
   },
   {
