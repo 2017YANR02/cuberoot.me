@@ -153,6 +153,7 @@ const ROUTE_GROUPS: RouteGroupData[] = [
     icon: ScanLine,
     links: [
       { href: "/qr/demo-landing", label: "聚合落地页(示例)" },
+      { href: "/api/qr/demo-landing/svg", label: "二维码图(手机可扫)", ext: true },
       { href: "/qr/demo-redirect?stay=1", label: "跳转码(示例,预览不跳转)" },
     ],
   },
