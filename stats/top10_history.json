@@ -23610,6 +23610,9 @@
     "ChouchennOpen2017": {
       "name": "Chouchenn Open 2017"
     },
+    "ChristchurchAutumn2026": {
+      "name": "Christchurch Autumn 2026"
+    },
     "ChristchurchMindGames2024": {
       "name": "Christchurch Mind Games 2024"
     },
@@ -24899,6 +24902,9 @@
     },
     "CubeFactoryLeagueRogow2026": {
       "name": "Cube Factory League Rogów 2026"
+    },
+    "CubeFactoryLeagueZgierz2026": {
+      "name": "Cube Factory League Zgierz 2026"
     },
     "CubeFactorySummer2023": {
       "name": "Cube Factory Summer 2023"
@@ -31815,6 +31821,9 @@
     "IndalOpen2024": {
       "name": "IndalOpen 2024"
     },
+    "IndalOpenOClock2026": {
+      "name": "IndalOpen O'Clock 2026"
+    },
     "IndependenceCubeDay2018": {
       "name": "Independence Cube Day 2018"
     },
@@ -33776,6 +33785,9 @@
     },
     "KublordagJonkopingX2026": {
       "name": "Kublördag Jönköping X - 2026"
+    },
+    "KublordagLandvetterII2025": {
+      "name": "Kublördag Landvetter II: 2025"
     },
     "KublordagLandvetterIII2025": {
       "name": "Kublördag Landvetter III: 2025"
@@ -44064,6 +44076,9 @@
     "SharonWinter2016": {
       "name": "Sharon Winter 2016"
     },
+    "SheffieldSpring2026": {
+      "name": "Sheffield Spring 2026"
+    },
     "SheffieldSpringBBO2023": {
       "name": "Sheffield Spring - BBO 2023"
     },
@@ -44507,6 +44522,9 @@
     },
     "SingaporeCubingMayday2025": {
       "name": "Singapore Cubing Mayday 2025"
+    },
+    "SingaporeDNPM2026": {
+      "name": "Singapore DNPM 2026"
     },
     "SingaporeFreeze2024": {
       "name": "Singapore Freeze 2024"
@@ -45512,6 +45530,12 @@
     },
     "SpanishOpen2007": {
       "name": "Spanish Open 2007"
+    },
+    "SparkMelbourneAutumnSat2026": {
+      "name": "Spark Melbourne Autumn Sat 2026"
+    },
+    "SparkMelbourneAutumnSun2026": {
+      "name": "Spark Melbourne Autumn Sun 2026"
     },
     "SparkMelbourneFebruary2025": {
       "name": "Spark Melbourne February 2025"
@@ -49182,6 +49206,9 @@
     "UtahChampionship2025": {
       "name": "Utah Championship 2025"
     },
+    "UtahCubingClassic2026": {
+      "name": "Utah Cubing Classic 2026"
+    },
     "UtahCubingforCharity2017": {
       "name": "Utah Cubing for Charity 2017"
     },
@@ -49490,6 +49517,9 @@
     },
     "VarazdinOpen2024": {
       "name": "Varaždin Open 2024"
+    },
+    "VarbergOpen2026": {
+      "name": "Varberg Open 2026"
     },
     "VardagscubingIIHiveA2022": {
       "name": "Vardagscubing II - Hive A 2022"
@@ -49991,6 +50021,9 @@
     },
     "VltavaCubeMarch2026": {
       "name": "Vltava Cube: March 2026"
+    },
+    "VltavaCubeMay2026": {
+      "name": "Vltava Cube: May 2026"
     },
     "VolcanoinPuebla2023": {
       "name": "Volcano in Puebla 2023"

@@ -32,7 +32,7 @@
       "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)"
     ],
     [
-      252,
+      253,
       "[Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01)"
     ],
     [
@@ -144,7 +144,7 @@
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)"
     ],
     [
-      131,
+      133,
       "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
     ],
     [
@@ -212,12 +212,12 @@
       "[Diego Alejandro Casas Jimenez](https://www.worldcubeassociation.org/persons/2014JIME05)"
     ],
     [
-      115,
-      "[Mattheo de Wit](https://www.worldcubeassociation.org/persons/2015WITM01)"
+      116,
+      "[Cham J. Chambers](https://www.worldcubeassociation.org/persons/2017CHAM09)"
     ],
     [
       115,
-      "[Cham J. Chambers](https://www.worldcubeassociation.org/persons/2017CHAM09)"
+      "[Mattheo de Wit](https://www.worldcubeassociation.org/persons/2015WITM01)"
     ],
     [
       114,
@@ -226,6 +226,10 @@
     [
       114,
       "[Sean Hartman](https://www.worldcubeassociation.org/persons/2016HART02)"
+    ],
+    [
+      114,
+      "[Damir Zhanataev](https://www.worldcubeassociation.org/persons/2017ZHAD01)"
     ],
     [
       113,
@@ -244,10 +248,6 @@
       "[Nicolas Gertner Kilian](https://www.worldcubeassociation.org/persons/2013GERT01)"
     ],
     [
-      110,
-      "[Damir Zhanataev](https://www.worldcubeassociation.org/persons/2017ZHAD01)"
-    ],
-    [
       109,
       "[Chris Chi](https://www.worldcubeassociation.org/persons/2014CHIC01)"
     ],
@@ -261,7 +261,7 @@
     ],
     [
       107,
-      "[Raúl Cuevas Castillo](https://www.worldcubeassociation.org/persons/2018CAST11)"
+      "[Jules Desjardin](https://www.worldcubeassociation.org/persons/2010DESJ01)"
     ],
     [
       107,
@@ -269,7 +269,7 @@
     ],
     [
       107,
-      "[Jules Desjardin](https://www.worldcubeassociation.org/persons/2010DESJ01)"
+      "[Raúl Cuevas Castillo](https://www.worldcubeassociation.org/persons/2018CAST11)"
     ],
     [
       106,
@@ -313,10 +313,6 @@
     ],
     [
       101,
-      "[Mason Langenderfer](https://www.worldcubeassociation.org/persons/2013LANG03)"
-    ],
-    [
-      101,
       "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)"
     ],
     [
@@ -324,8 +320,16 @@
       "[Manuel Popayán](https://www.worldcubeassociation.org/persons/2017POPA01)"
     ],
     [
+      101,
+      "[Mason Langenderfer](https://www.worldcubeassociation.org/persons/2013LANG03)"
+    ],
+    [
       100,
       "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)"
+    ],
+    [
+      99,
+      "[Ben Stokes](https://www.worldcubeassociation.org/persons/2018STOK01)"
     ],
     [
       99,
@@ -334,10 +338,6 @@
     [
       98,
       "[Raymond Goslow](https://www.worldcubeassociation.org/persons/2014GOSL01)"
-    ],
-    [
-      97,
-      "[Ben Stokes](https://www.worldcubeassociation.org/persons/2018STOK01)"
     ],
     [
       97,
@@ -357,11 +357,7 @@
     ],
     [
       95,
-      "[Jacob Ambrose](https://www.worldcubeassociation.org/persons/2010AMBR01)"
-    ],
-    [
-      95,
-      "[Wilfrid Py](https://www.worldcubeassociation.org/persons/2016PYWI01)"
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)"
     ],
     [
       95,
@@ -369,7 +365,11 @@
     ],
     [
       95,
-      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)"
+      "[Wilfrid Py](https://www.worldcubeassociation.org/persons/2016PYWI01)"
+    ],
+    [
+      95,
+      "[Jacob Ambrose](https://www.worldcubeassociation.org/persons/2010AMBR01)"
     ],
     [
       94,
@@ -397,6 +397,10 @@
     ],
     [
       91,
+      "[Álvaro Aguilar Salobreña](https://www.worldcubeassociation.org/persons/2015SALO01)"
+    ],
+    [
+      91,
       "[Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01)"
     ],
     [
@@ -414,10 +418,6 @@
     [
       89,
       "[Jared Stinson](https://www.worldcubeassociation.org/persons/2014STIN01)"
-    ],
-    [
-      89,
-      "[Livia Kleiner](https://www.worldcubeassociation.org/persons/2013KLEI03)"
     ]
   ]
 }
