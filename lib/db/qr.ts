@@ -2,9 +2,13 @@ import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "@/db";
-import type { QrCode, QrCodeInsert } from "@/db/schema";
+import type { QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
 
-export type { QrCode };
+export type { QrCode, QrLink, QrType };
+
+export type QrUpdate = Partial<
+  Pick<QrCode, "label" | "type" | "target" | "title" | "intro" | "links" | "term">
+>;
 
 function normalize(code: string): string {
   return code.trim().toLowerCase();
@@ -75,6 +79,20 @@ export async function createBatch(values: {
     if (row) created.push(row);
   }
   return created;
+}
+
+export async function update(code: string, patch: QrUpdate): Promise<void> {
+  const c = normalize(code);
+  const next: QrUpdate = {};
+  if (patch.label !== undefined) next.label = patch.label.trim() || "未命名";
+  if (patch.type !== undefined) next.type = patch.type;
+  if (patch.target !== undefined) next.target = patch.target.trim() || "/";
+  if (patch.title !== undefined) next.title = patch.title?.trim() || null;
+  if (patch.intro !== undefined) next.intro = patch.intro?.trim() || null;
+  if (patch.term !== undefined) next.term = patch.term?.trim() || null;
+  if (patch.links !== undefined) next.links = patch.links;
+  if (Object.keys(next).length === 0) return;
+  await db.update(schema.qrCodes).set(next).where(eq(schema.qrCodes.code, c));
 }
 
 export async function remove(code: string): Promise<void> {

@@ -71,6 +71,13 @@
       "when": 1779810000000,
       "tag": "0009_great_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1779960272400,
+      "tag": "0010_bright_madame_masque",
+      "breakpoints": true
     }
   ]
 }
