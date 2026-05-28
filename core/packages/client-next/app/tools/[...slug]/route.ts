@@ -41,7 +41,7 @@ export async function GET(
       const ext = path.extname(candidate).toLowerCase();
       const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
       return new Response(new Uint8Array(data), {
-        headers: { 'content-type': contentType, 'cache-control': 'no-store' },
+        headers: { 'content-type': contentType, 'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400' },
       });
     } catch {
       // try next candidate
@@ -56,7 +56,7 @@ export async function GET(
       const ct = upstream.headers.get('content-type') ?? 'application/octet-stream';
       const buf = await upstream.arrayBuffer();
       return new Response(buf, {
-        headers: { 'content-type': ct, 'cache-control': 'no-store' },
+        headers: { 'content-type': ct, 'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400' },
       });
     } catch {
       return new Response('upstream error', { status: 502 });
