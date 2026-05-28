@@ -38,6 +38,7 @@ pnpm db:generate / db:migrate / db:seed
 - 不用 emoji,图标全 lucide-react
 - 移动端默认折叠,Header 自带 hamburger
 - Section 标题统一走 `components/Section.tsx`
+- 说明气泡用 `components/Tooltip.tsx`(桌面 hover / 手机点按,fixed 定位不被 overflow 裁剪)
 
 ## 数据库
 
