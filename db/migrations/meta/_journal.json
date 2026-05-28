@@ -78,6 +78,13 @@
       "when": 1779960272400,
       "tag": "0010_bright_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1779968963279,
+      "tag": "0011_lyrical_hawkeye",
+      "breakpoints": true
     }
   ]
 }

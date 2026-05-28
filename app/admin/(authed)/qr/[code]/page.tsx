@@ -144,6 +144,23 @@ export default async function AdminQrEditPage({
               </Field>
             </div>
 
+            <div className="rounded-md border border-line-soft bg-bg-soft p-4">
+              <div className="mb-3 text-[13px] font-medium text-ink-2">
+                打印卡正面 · 语录版
+              </div>
+              <Field
+                label="正面语录"
+                hint="第一行大字,其余行小字;留空则用默认语录轮换。背面是唯一二维码"
+              >
+                <TextArea
+                  name="quote"
+                  defaultValue={entry.quote ?? ""}
+                  placeholder={"慢就是快\n一次打乱 一次成长"}
+                  className="min-h-[70px]"
+                />
+              </Field>
+            </div>
+
             <FormActions>
               <Submit>保存</Submit>
             </FormActions>

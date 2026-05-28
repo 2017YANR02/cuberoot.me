@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { list, type QrCode } from "@/lib/db/qr";
 import { absoluteUrl, getSiteUrl } from "@/lib/site";
@@ -7,93 +8,109 @@ import { PrintButton } from "./_PrintButton";
 
 export const dynamic = "force-dynamic";
 
-// term 未填时按序轮换,给卡片"魔方术语"质感
-const FALLBACK_TERMS = ["CFOP", "OLL", "PLL", "F2L", "CROSS", "BLD", "ROUX", "ZBLL"];
+// 正面默认语录(未填时按序轮换);第一行大字,其余行小字
+const DEFAULT_QUOTES = [
+  "慢就是快\n一次打乱 一次成长",
+  "拧的是方块\n解的是心境",
+  "手指快\n不如脑子快",
+  "三阶之上\n皆是热爱",
+  "热爱可抵\n万次打乱",
+  "每一次复原\n都是新的开始",
+];
+
+// 魔方六面色,正面顶部装饰条
+const CUBE_STRIP = ["#C41E3A", "#FF8A00", "#FFD500", "#009E60", "#0051BA", "#FFFFFF"];
 
 const host = () => getSiteUrl().replace(/^https?:\/\//, "");
 
 // 物理尺寸 × 屏幕缩放变量 --s(屏幕放大方便看,打印时 --s=1 回到精确 mm)
 const m = (n: number) => `calc(var(--s) * ${n}mm)`;
 
-function Panel({
-  svg,
-  term,
-  code,
-  kind,
-}: {
-  svg: string;
-  term: string;
-  code: string;
-  kind: "front" | "back";
-}) {
+const PANEL_BASE: CSSProperties = {
+  width: m(20),
+  height: m(40),
+  padding: m(1.6),
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "space-between",
+  boxSizing: "border-box",
+};
+
+// 正面:魔方色块条 + 语录 + 品牌(无二维码)
+function FrontPanel({ quote }: { quote: string }) {
+  const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
+  const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
   return (
-    <div
-      style={{
-        width: m(20),
-        height: m(40),
-        padding: m(1.6),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "space-between",
-        boxSizing: "border-box",
-      }}
-    >
-      {kind === "front" ? (
-        <>
-          <div style={{ textAlign: "center", lineHeight: 1.15 }}>
-            <div style={{ fontSize: m(1.5), fontWeight: 700, color: "#2A5DF4" }}>
-              魔方开放社群
-            </div>
-            <div style={{ fontSize: m(1.2), color: "#9aa1ad" }}>cuberoot.me</div>
-          </div>
-          <div
-            style={{ width: m(16), height: m(16) }}
-            dangerouslySetInnerHTML={{ __html: svg }}
+    <div style={PANEL_BASE}>
+      <div style={{ display: "flex", gap: m(0.6) }}>
+        {CUBE_STRIP.map((c, i) => (
+          <span
+            key={i}
+            style={{
+              width: m(1.7),
+              height: m(1.7),
+              borderRadius: m(0.4),
+              background: c,
+              border: c === "#FFFFFF" ? `${m(0.18)} solid #E5E8EE` : "none",
+              boxSizing: "border-box",
+            }}
           />
-          <div
-            style={{
-              fontSize: m(2),
-              fontWeight: 800,
-              letterSpacing: m(0.3),
-              color: "#11111A",
-            }}
-          >
-            {term}
+        ))}
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          textAlign: "center",
+          gap: m(0.8),
+        }}
+      >
+        <div style={{ fontSize: m(2.8), fontWeight: 800, color: "#11111A", lineHeight: 1.15 }}>
+          {main}
+        </div>
+        {subs.map((s, i) => (
+          <div key={i} style={{ fontSize: m(1.4), color: "#6B7280", lineHeight: 1.3 }}>
+            {s}
           </div>
-        </>
-      ) : (
-        <>
-          <div
-            style={{
-              fontSize: m(1.5),
-              fontWeight: 600,
-              color: "#11111A",
-              textAlign: "center",
-              lineHeight: 1.25,
-            }}
-          >
-            扫码解锁
-            <br />
-            课程 / 商城 / 赛事 / 社群
-          </div>
-          <div
-            style={{ width: m(16), height: m(16) }}
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-          <div
-            style={{
-              fontSize: m(1.15),
-              color: "#9aa1ad",
-              fontFamily: "ui-monospace, monospace",
-              wordBreak: "break-all",
-              textAlign: "center",
-            }}
-          >
-            {host()}/qr/{code}
-          </div>
-        </>
-      )}
+        ))}
+      </div>
+      <div style={{ fontSize: m(1.4), fontWeight: 700, color: "#2A5DF4" }}>魔方开放社群</div>
+    </div>
+  );
+}
+
+// 背面:唯一二维码 + 文案 + 网址
+function BackPanel({ svg, code }: { svg: string; code: string }) {
+  return (
+    <div style={PANEL_BASE}>
+      <div
+        style={{
+          fontSize: m(1.5),
+          fontWeight: 600,
+          color: "#11111A",
+          textAlign: "center",
+          lineHeight: 1.25,
+        }}
+      >
+        扫码进社群
+        <br />
+        课程 / 商城 / 赛事 / 社群
+      </div>
+      <div style={{ width: m(17), height: m(17) }} dangerouslySetInnerHTML={{ __html: svg }} />
+      <div
+        style={{
+          fontSize: m(1.15),
+          color: "#9aa1ad",
+          fontFamily: "ui-monospace, monospace",
+          wordBreak: "break-all",
+          textAlign: "center",
+        }}
+      >
+        {host()}/qr/{code}
+      </div>
     </div>
   );
 }
@@ -132,7 +149,7 @@ export default async function QrCardsPage({
       <div className="no-print">
         <PageHeader
           title="二维码卡片打印"
-          subtitle={`2x4cm 折叠卡 · 共 ${rows.length} 张。每个单元正面(术语+码)| 折线 | 背面(码+网址),沿外框裁剪、对折即双面卡。`}
+          subtitle={`2x4cm 折叠卡 · 共 ${rows.length} 张。每个单元正面(语录)| 折线 | 背面(唯一二维码+网址),沿外框裁剪、对折即双面卡。`}
           actions={
             <div className="flex gap-2">
               <GhostLink href="/admin/qr">返回列表</GhostLink>
@@ -157,7 +174,7 @@ export default async function QrCardsPage({
       >
         {rows.map((r, idx) => {
           const svg = qrSvg(absoluteUrl(`/qr/${r.code}`));
-          const term = r.term?.trim() || FALLBACK_TERMS[idx % FALLBACK_TERMS.length];
+          const quote = r.quote?.trim() || DEFAULT_QUOTES[idx % DEFAULT_QUOTES.length];
           return (
             <div
               key={r.code}
@@ -168,9 +185,9 @@ export default async function QrCardsPage({
                 background: "#fff",
               }}
             >
-              <Panel svg={svg} term={term} code={r.code} kind="front" />
+              <FrontPanel quote={quote} />
               <div style={{ borderLeft: `${m(0.2)} dotted #c4c9d4` }} />
-              <Panel svg={svg} term={term} code={r.code} kind="back" />
+              <BackPanel svg={svg} code={r.code} />
             </div>
           );
         })}
