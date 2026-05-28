@@ -90,7 +90,7 @@
   text-align: center;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   pointer-events: none;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 /* 右上小角标(语义:总数 / 上限) */
@@ -151,7 +151,7 @@
   color: var(--evbtn-icon);
   transition: color 0.2s;
   white-space: nowrap;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 .wca-stats-event-selector .event-btn-text:hover .event-text-label { color: var(--evbtn-icon-hover); }
 .wca-stats-event-selector .event-btn-text.active .event-text-label { color: #fff; }
