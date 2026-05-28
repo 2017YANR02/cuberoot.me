@@ -2,7 +2,7 @@
 
 .recent-records {
   width: 100%;
-  max-width: 720px;
+  max-width: 1100px;
   margin: 0 auto 2.5rem;
   display: flex;
   flex-direction: column;
@@ -48,23 +48,21 @@
   overscroll-behavior: contain;
 }
 
-/* 细滚动条,跟 token 协调 */
+/* 滚动条,跟 token 协调。
+   不设 scrollbar-width/-color:Chromium 121+ 一旦给它们非 auto 值,就会禁用下面的
+   ::-webkit-scrollbar 自定义样式,退回偏细的原生条。 */
 .recent-records-list::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
 }
 .recent-records-list::-webkit-scrollbar-track {
   background: transparent;
 }
 .recent-records-list::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--foreground) 18%, transparent);
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-radius: 6px;
 }
 .recent-records-list::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--foreground) 28%, transparent);
-}
-.recent-records-list {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent;
+  background: color-mix(in srgb, var(--foreground) 32%, transparent);
 }
 
 .recent-records-row {
