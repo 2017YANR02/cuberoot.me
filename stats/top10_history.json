@@ -16295,6 +16295,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2021SAMP01": {
+      "name": "Albert Mandicó Sampol",
+      "country": "Spain",
+      "iso2": "ES"
+    },
     "2021SHEN01": {
       "name": "Edwin Shen",
       "country": "New Zealand",
@@ -17345,6 +17350,11 @@
       "country": "China",
       "iso2": "CN"
     },
+    "2023LIUY14": {
+      "name": "Yanbo Liu (刘彦博)",
+      "country": "China",
+      "iso2": "CN"
+    },
     "2023LOPE09": {
       "name": "Jordi Lleixà López",
       "country": "Spain",
@@ -17379,6 +17389,11 @@
       "name": "Miguel Ángel Meza",
       "country": "Spain",
       "iso2": "ES"
+    },
+    "2023MFOU01": {
+      "name": "Jaimy Mfoumou",
+      "country": "France",
+      "iso2": "FR"
     },
     "2023PECH02": {
       "name": "Jakub Pecháč",
@@ -18467,6 +18482,9 @@
     },
     "Andorra2018": {
       "name": "Andorra 2018"
+    },
+    "AndorranChampionship2024": {
+      "name": "Andorran Championship 2024"
     },
     "AndorranChampionship2025": {
       "name": "Andorran Championship 2025"
@@ -19712,6 +19730,9 @@
     },
     "BarbyCube2025": {
       "name": "Barby Cube 2025"
+    },
+    "BarbyCube2026": {
+      "name": "Barby Cube 2026"
     },
     "BarbyCube732017": {
       "name": "Barby Cube 73 2017"
@@ -25455,6 +25476,9 @@
     "CubingInTheVille2022": {
       "name": "Cubing in the Ville 2022"
     },
+    "CubingintheWoodsOH2026": {
+      "name": "Cubing in the Woods OH 2026"
+    },
     "CubinginWesterlyRI2026": {
       "name": "Cubing in Westerly RI 2026"
     },
@@ -29100,6 +29124,9 @@
     "GANCUBEPiDayPampanga2026": {
       "name": "GANCUBE Pi Day Pampanga 2026"
     },
+    "GANCubingVic2026": {
+      "name": "GAN CubingVic 2026"
+    },
     "GanOpen2023": {
       "name": "Gan Open 2023"
     },
@@ -30740,6 +30767,9 @@
     },
     "HeartlandChampionship2025": {
       "name": "Heartland Championship 2025"
+    },
+    "HeartlandChampionship2026": {
+      "name": "Heartland Championship 2026"
     },
     "HeartlandChampionships2017": {
       "name": "Heartland Champs 2017"
@@ -34668,6 +34698,9 @@
     "LittleVillageOpen2022": {
       "name": "Little Village Open 2022"
     },
+    "LiuzhouOpen2026": {
+      "name": "Liuzhou Open 2026"
+    },
     "LiverpoolSpring2026": {
       "name": "Liverpool Spring 2026"
     },
@@ -34697,6 +34730,9 @@
     },
     "LleidaOpen2022": {
       "name": "Lleida Open 2022"
+    },
+    "LleidaOpen2024": {
+      "name": "Lleida Open 2024"
     },
     "LleidaWinter2023": {
       "name": "Lleida Winter Open 2023"
@@ -34934,6 +34970,9 @@
     },
     "LovelandFall2022": {
       "name": "Loveland Fall 2022"
+    },
+    "LoveliestSolvesAuburn2026": {
+      "name": "Loveliest Solves Auburn 2026"
     },
     "LowcountryCubing2018": {
       "name": "Lowcountry Cubing 2018"
@@ -35423,6 +35462,9 @@
     },
     "ManchesterClockDay2025": {
       "name": "Manchester Clock Day 2025"
+    },
+    "ManchesterCLSecond2026": {
+      "name": "Manchester CL Second 2026"
     },
     "ManchesterFavouritesII2026": {
       "name": "Manchester Favourites II 2026"
@@ -36824,6 +36866,9 @@
     },
     "MinyonsdeTerrassaOpen2023": {
       "name": "Minyons de Terrassa Open 2023"
+    },
+    "MinyonsdeTerrassaOpen2025": {
+      "name": "Minyons de Terrassa Open 2025"
     },
     "MioveniRubikOpen2015": {
       "name": "Mioveni Rubik's Open 2015"
@@ -41790,6 +41835,9 @@
     "QuabbinSpring2017": {
       "name": "Quabbin Spring 2017"
     },
+    "QuabbinSpring2026": {
+      "name": "Quabbin Spring 2026"
+    },
     "QuabbinSummer2019": {
       "name": "Quabbin Summer 2019"
     },
@@ -42062,6 +42110,9 @@
     },
     "RealGeekcuberPucallpa2023": {
       "name": "Real Geekcuber Pucallpa 2023"
+    },
+    "ReauOpen2024": {
+      "name": "Réau Open 2024"
     },
     "RebelCountyColours2025": {
       "name": "Rebel County Colours 2025"
@@ -42885,6 +42936,9 @@
     "RubiXtremePiatraNeamt2017": {
       "name": "Rubi-Xtreme Piatra Neamt 2017"
     },
+    "RueilOpen2026": {
+      "name": "Rueil Open 2026"
+    },
     "RumboaBrasil2015": {
       "name": "Rumbo a Brasil 2015"
     },
@@ -43445,6 +43499,9 @@
     },
     "SaoLuisOpen2014": {
       "name": "São Luís Open 2014"
+    },
+    "SaoMiguelCubikon2025": {
+      "name": "São Miguel Cubikon 2025"
     },
     "SaoPauloOpen2009": {
       "name": "São Paulo Open 2009"
@@ -46599,6 +46656,9 @@
     "SwisscubingCupIII2024": {
       "name": "Swisscubing Cup III 2024"
     },
+    "SwisscubingCupIII2026": {
+      "name": "Swisscubing Cup III 2026"
+    },
     "SwisscubingCupIV2019": {
       "name": "Swisscubing Cup IV 2019"
     },
@@ -47201,6 +47261,9 @@
     },
     "TarnovoOpen2022": {
       "name": "Tarnovo Open 2022"
+    },
+    "TarracoOpen2025": {
+      "name": "Tarraco Open 2025"
     },
     "TarragonaOpen2024": {
       "name": "Tarragona Open 2024"
@@ -48996,6 +49059,9 @@
     "Uppsalaligan4Emoji2024": {
       "name": "Uppsalaligan 4: Emoji - 2024"
     },
+    "Uppsalaligan5Pouch2026": {
+      "name": "Uppsalaligan 5: Pouch - 2026"
+    },
     "UppsalaOpen2015": {
       "name": "Uppsala Open 2015"
     },
@@ -49784,6 +49850,9 @@
     },
     "VikingSummerOpen2014": {
       "name": "Viking Summer 2014"
+    },
+    "VilafrancaOpen2024": {
+      "name": "Vilafranca Open 2024"
     },
     "ViljandiVark2023": {
       "name": "Viljandi Värk 2023"
@@ -51353,6 +51422,9 @@
     },
     "XMadridOpen2025": {
       "name": "X-Madrid Open 2025"
+    },
+    "XMadridOpen2026": {
+      "name": "X-Madrid Open 2026"
     },
     "XMUMCubeOpen2023": {
       "name": "XMUM Cube Open 2023"

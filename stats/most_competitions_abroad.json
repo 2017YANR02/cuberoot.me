@@ -30,7 +30,7 @@
       "[Glen Goh Wee Zhuan (吴洧全)](https://www.worldcubeassociation.org/persons/2015ZHUA01)"
     ],
     [
-      179,
+      180,
       "[Ioannis Papadopoulos](https://www.worldcubeassociation.org/persons/2013PAPA01)"
     ],
     [
@@ -66,8 +66,12 @@
       "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)"
     ],
     [
-      133,
+      134,
       "[Nevins Chan Pak Hoong (陈百鸿)](https://www.worldcubeassociation.org/persons/2010CHAN20)"
+    ],
+    [
+      132,
+      "[Konstantin Jaehne](https://www.worldcubeassociation.org/persons/2015JAEH01)"
     ],
     [
       132,
@@ -78,10 +82,6 @@
       "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)"
     ],
     [
-      131,
-      "[Konstantin Jaehne](https://www.worldcubeassociation.org/persons/2015JAEH01)"
-    ],
-    [
       127,
       "[Anyu Zhang (张安宇)](https://www.worldcubeassociation.org/persons/2012ZHAN08)"
     ],
@@ -90,20 +90,24 @@
       "[Anto Kam (甘浩東)](https://www.worldcubeassociation.org/persons/2017TUNG13)"
     ],
     [
-      123,
+      124,
       "[Matteo Provasi](https://www.worldcubeassociation.org/persons/2009PROV01)"
     ],
     [
-      121,
+      122,
       "[Oleg Gritsenko](https://www.worldcubeassociation.org/persons/2011GRIT01)"
+    ],
+    [
+      121,
+      "[Achim Spies](https://www.worldcubeassociation.org/persons/2021SPIE01)"
     ],
     [
       121,
       "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)"
     ],
     [
-      120,
-      "[Achim Spies](https://www.worldcubeassociation.org/persons/2021SPIE01)"
+      118,
+      "[Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01)"
     ],
     [
       118,
@@ -116,10 +120,6 @@
     [
       117,
       "[Chan Tak Chuen (陳德泉)](https://www.worldcubeassociation.org/persons/2007CHUE01)"
-    ],
-    [
-      116,
-      "[Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01)"
     ],
     [
       113,
@@ -179,11 +179,11 @@
     ],
     [
       99,
-      "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
+      "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)"
     ],
     [
       99,
-      "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)"
+      "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
     ],
     [
       97,
@@ -191,11 +191,11 @@
     ],
     [
       96,
-      "[Max Kwok U Sam (郭愉琛)](https://www.worldcubeassociation.org/persons/2018SAMK01)"
+      "[Zoé de Moffarts](https://www.worldcubeassociation.org/persons/2010MOFF02)"
     ],
     [
       96,
-      "[Zoé de Moffarts](https://www.worldcubeassociation.org/persons/2010MOFF02)"
+      "[Max Kwok U Sam (郭愉琛)](https://www.worldcubeassociation.org/persons/2018SAMK01)"
     ],
     [
       93,
@@ -223,6 +223,10 @@
     ],
     [
       88,
+      "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)"
+    ],
+    [
+      88,
       "[Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01)"
     ],
     [
@@ -234,10 +238,6 @@
       "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)"
     ],
     [
-      87,
-      "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)"
-    ],
-    [
       86,
       "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)"
     ],
@@ -247,11 +247,11 @@
     ],
     [
       85,
-      "[Matteo Dummar](https://www.worldcubeassociation.org/persons/2017DUMM01)"
+      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
     ],
     [
       85,
-      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
+      "[Matteo Dummar](https://www.worldcubeassociation.org/persons/2017DUMM01)"
     ],
     [
       84,
@@ -266,12 +266,12 @@
       "[Ting Sheng Bao Yang](https://www.worldcubeassociation.org/persons/2008BAOY01)"
     ],
     [
-      79,
-      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)"
+      80,
+      "[Mohamed Ben Driss Chokri](https://www.worldcubeassociation.org/persons/2015CHOK01)"
     ],
     [
       79,
-      "[Mohamed Ben Driss Chokri](https://www.worldcubeassociation.org/persons/2015CHOK01)"
+      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)"
     ],
     [
       79,
@@ -283,11 +283,11 @@
     ],
     [
       78,
-      "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)"
+      "[Erik Tjong Kim Sang](https://www.worldcubeassociation.org/persons/2018SANG01)"
     ],
     [
       78,
-      "[Erik Tjong Kim Sang](https://www.worldcubeassociation.org/persons/2018SANG01)"
+      "[Emile Compion](https://www.worldcubeassociation.org/persons/2007COMP01)"
     ],
     [
       76,

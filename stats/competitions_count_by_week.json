@@ -243,12 +243,6 @@
     ],
     [
       58,
-      "25 May 2026",
-      "31 May 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-05-25&to_date=2026-05-31)"
-    ],
-    [
-      58,
       "24 Nov 2025",
       "30 Nov 2025",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2025-11-27&to_date=2025-12-01)"
@@ -270,6 +264,12 @@
       "26 Feb 2024",
       "3 Mar 2024",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2024-02-28&to_date=2024-03-03)"
+    ],
+    [
+      57,
+      "25 May 2026",
+      "31 May 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-05-25&to_date=2026-05-31)"
     ],
     [
       57,
@@ -561,6 +561,12 @@
     ],
     [
       49,
+      "22 Jun 2026",
+      "28 Jun 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-06-22&to_date=2026-06-30)"
+    ],
+    [
+      49,
       "16 Feb 2026",
       "22 Feb 2026",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-02-17&to_date=2026-02-22)"
@@ -603,12 +609,6 @@
     ],
     [
       48,
-      "15 Jun 2026",
-      "21 Jun 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-06-17&to_date=2026-06-21)"
-    ],
-    [
-      48,
       "8 Jun 2026",
       "14 Jun 2026",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-06-09&to_date=2026-06-15)"
@@ -636,6 +636,12 @@
       "20 Mar 2023",
       "26 Mar 2023",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2023-03-21&to_date=2023-03-26)"
+    ],
+    [
+      47,
+      "15 Jun 2026",
+      "21 Jun 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-06-17&to_date=2026-06-21)"
     ],
     [
       47,
@@ -942,12 +948,6 @@
       "21 Nov 2022",
       "27 Nov 2022",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2022-11-23&to_date=2022-11-27)"
-    ],
-    [
-      38,
-      "22 Jun 2026",
-      "28 Jun 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-06-22&to_date=2026-06-30)"
     ],
     [
       38,
@@ -1641,6 +1641,12 @@
     ],
     [
       23,
+      "29 Jun 2026",
+      "5 Jul 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-07-01&to_date=2026-07-05)"
+    ],
+    [
+      23,
       "7 Nov 2022",
       "13 Nov 2022",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2022-11-11&to_date=2022-11-13)"
@@ -1788,12 +1794,6 @@
       "22 May 2017",
       "28 May 2017",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2017-05-26&to_date=2017-05-29)"
-    ],
-    [
-      21,
-      "29 Jun 2026",
-      "5 Jul 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-07-01&to_date=2026-07-05)"
     ],
     [
       21,
@@ -2433,9 +2433,21 @@
     ],
     [
       14,
+      "24 Aug 2026",
+      "30 Aug 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-08-28&to_date=2026-08-30)"
+    ],
+    [
+      14,
       "10 Aug 2026",
       "16 Aug 2026",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-08-12&to_date=2026-08-16)"
+    ],
+    [
+      14,
+      "13 Jul 2026",
+      "19 Jul 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-07-15&to_date=2026-07-19)"
     ],
     [
       14,
@@ -2517,21 +2529,9 @@
     ],
     [
       13,
-      "24 Aug 2026",
-      "30 Aug 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-08-28&to_date=2026-08-30)"
-    ],
-    [
-      13,
       "17 Aug 2026",
       "23 Aug 2026",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-08-20&to_date=2026-08-23)"
-    ],
-    [
-      13,
-      "13 Jul 2026",
-      "19 Jul 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-07-15&to_date=2026-07-19)"
     ],
     [
       13,
@@ -2973,6 +2973,12 @@
     ],
     [
       10,
+      "3 Aug 2026",
+      "9 Aug 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-08-07&to_date=2026-08-09)"
+    ],
+    [
+      10,
       "21 Feb 2022",
       "27 Feb 2022",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2022-02-26&to_date=2022-02-27)"
@@ -3150,12 +3156,6 @@
       "28 Feb 2011",
       "6 Mar 2011",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2011-03-05&to_date=2011-03-06)"
-    ],
-    [
-      9,
-      "3 Aug 2026",
-      "9 Aug 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-08-07&to_date=2026-08-09)"
     ],
     [
       9,
@@ -3609,6 +3609,12 @@
     ],
     [
       7,
+      "31 Aug 2026",
+      "6 Sep 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-09-05&to_date=2026-09-06)"
+    ],
+    [
+      7,
       "14 Feb 2022",
       "20 Feb 2022",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2022-02-18&to_date=2022-02-20)"
@@ -3876,12 +3882,6 @@
       "7 Sep 2026",
       "13 Sep 2026",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-09-11&to_date=2026-09-13)"
-    ],
-    [
-      6,
-      "31 Aug 2026",
-      "6 Sep 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-09-05&to_date=2026-09-06)"
     ],
     [
       6,
@@ -4164,6 +4164,12 @@
       "11 Feb 2008",
       "17 Feb 2008",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2008-02-16&to_date=2008-02-17)"
+    ],
+    [
+      5,
+      "14 Sep 2026",
+      "20 Sep 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-09-19&to_date=2026-09-20)"
     ],
     [
       5,
@@ -4941,6 +4947,24 @@
     ],
     [
       3,
+      "2 Nov 2026",
+      "8 Nov 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-11-06&to_date=2026-11-08)"
+    ],
+    [
+      3,
+      "12 Oct 2026",
+      "18 Oct 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-10-16&to_date=2026-10-18)"
+    ],
+    [
+      3,
+      "5 Oct 2026",
+      "11 Oct 2026",
+      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-10-10&to_date=2026-10-11)"
+    ],
+    [
+      3,
       "11 Oct 2021",
       "17 Oct 2021",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2021-10-16&to_date=2021-10-17)"
@@ -5223,33 +5247,9 @@
     ],
     [
       2,
-      "2 Nov 2026",
-      "8 Nov 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-11-07&to_date=2026-11-07)"
-    ],
-    [
-      2,
       "26 Oct 2026",
       "1 Nov 2026",
       "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-10-31&to_date=2026-10-31)"
-    ],
-    [
-      2,
-      "12 Oct 2026",
-      "18 Oct 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-10-17&to_date=2026-10-18)"
-    ],
-    [
-      2,
-      "5 Oct 2026",
-      "11 Oct 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-10-10&to_date=2026-10-11)"
-    ],
-    [
-      2,
-      "14 Sep 2026",
-      "20 Sep 2026",
-      "[List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2026-09-19&to_date=2026-09-20)"
     ],
     [
       2,

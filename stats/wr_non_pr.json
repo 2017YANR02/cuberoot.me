@@ -718,6 +718,14 @@
                 ],
                 [
                   8,
+                  "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+                  "19",
+                  "USA",
+                  "2026-05-22",
+                  "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026)"
+                ],
+                [
+                  9,
                   "[Louis Sarthou](https://www.worldcubeassociation.org/persons/2012SART01)",
                   "19",
                   "France",
@@ -725,20 +733,12 @@
                   "[Aldeilla FMC Open 2023](https://www.worldcubeassociation.org/competitions/AldeillaFMCOpen2023)"
                 ],
                 [
-                  9,
+                  10,
                   "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
                   "19",
                   "Singapore",
                   "2024-11-24",
                   "[Please Be Quiet Luzon 2024](https://www.worldcubeassociation.org/competitions/PleaseBeQuietLuzon2024)"
-                ],
-                [
-                  10,
-                  "[Chris Chi](https://www.worldcubeassociation.org/persons/2014CHIC01)",
-                  "19",
-                  "USA",
-                  "2025-11-22",
-                  "[Park Slope PBQ 2025](https://www.worldcubeassociation.org/competitions/ParkSlopePBQ2025)"
                 ]
               ]
             },
@@ -992,11 +992,11 @@
                 ],
                 [
                   10,
-                  "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-                  "1.05",
-                  "Poland",
-                  "2019-04-06",
-                  "[Grudziądz Open 2019](https://www.worldcubeassociation.org/competitions/GrudziadzOpen2019)"
+                  "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
+                  "1.02",
+                  "USA",
+                  "2026-05-22",
+                  "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026)"
                 ]
               ]
             },
@@ -1014,6 +1014,14 @@
                 ],
                 [
                   2,
+                  "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
+                  "1.76",
+                  "USA",
+                  "2026-05-22",
+                  "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026)"
+                ],
+                [
+                  3,
                   "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
                   "1.77",
                   "USA",
@@ -1021,20 +1029,12 @@
                   "[Agoura Winter 2026](https://www.worldcubeassociation.org/competitions/AgouraWinter2026)"
                 ],
                 [
-                  3,
+                  4,
                   "[Alessandro Diomampo](https://www.worldcubeassociation.org/persons/2023DIOM01)",
                   "1.87",
                   "USA",
                   "2026-05-02",
                   "[Belmont Spring 2026](https://www.worldcubeassociation.org/competitions/BelmontSpring2026)"
-                ],
-                [
-                  4,
-                  "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
-                  "1.93",
-                  "USA",
-                  "2025-07-03",
-                  "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
                 ],
                 [
                   5,
@@ -1289,10 +1289,10 @@
                 [
                   4,
                   "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
-                  "1:11.34",
+                  "1:10.81",
                   "United Kingdom",
-                  "2025-05-24",
-                  "[Scottish Championship Blind 2025](https://www.worldcubeassociation.org/competitions/ScottishChampionshipBlindOff2025)"
+                  "2026-05-25",
+                  "[Manchester CL Second 2026](https://www.worldcubeassociation.org/competitions/ManchesterCLSecond2026)"
                 ],
                 [
                   5,
@@ -8376,10 +8376,10 @@
                 [
                   2,
                   "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-                  "0.94",
+                  "0.92",
                   "USA",
-                  "2026-03-21",
-                  "[Ohio State Madness 2026](https://www.worldcubeassociation.org/competitions/OhioStateMadness2026)"
+                  "2026-05-23",
+                  "[Cubing in the Woods OH 2026](https://www.worldcubeassociation.org/competitions/CubingintheWoodsOH2026)"
                 ],
                 [
                   3,
@@ -8838,10 +8838,10 @@
                 [
                   6,
                   "[Charles Daloz-Baltenberger](https://www.worldcubeassociation.org/persons/2018DALO01)",
-                  "16.72",
+                  "16.40",
                   "France",
-                  "2026-04-04",
-                  "[French Championship 2026](https://www.worldcubeassociation.org/competitions/FrenchChampionship2026)"
+                  "2026-05-22",
+                  "[Barby Cube 2026](https://www.worldcubeassociation.org/competitions/BarbyCube2026)"
                 ],
                 [
                   7,
@@ -9448,10 +9448,10 @@
                 [
                   7,
                   "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
-                  "5.62",
+                  "5.46",
                   "USA",
-                  "2026-01-17",
-                  "[No Sprinting NY 2026](https://www.worldcubeassociation.org/competitions/NoSprintingNY2026)"
+                  "2026-05-22",
+                  "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026)"
                 ],
                 [
                   8,
@@ -9493,6 +9493,14 @@
                 ],
                 [
                   2,
+                  "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+                  "1:25.62",
+                  "United Kingdom",
+                  "2026-05-25",
+                  "[Manchester CL Second 2026](https://www.worldcubeassociation.org/competitions/ManchesterCLSecond2026)"
+                ],
+                [
+                  3,
                   "[Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01)",
                   "1:29.58",
                   "Argentina",
@@ -9500,7 +9508,7 @@
                   "[Jaqueca Di Tella V2 2023](https://www.worldcubeassociation.org/competitions/JaquecaDiTellaV22023)"
                 ],
                 [
-                  3,
+                  4,
                   "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
                   "1:36.73",
                   "Sweden",
@@ -9508,20 +9516,12 @@
                   "[Jonsered Open 2026](https://www.worldcubeassociation.org/competitions/JonseredOpen2026)"
                 ],
                 [
-                  4,
+                  5,
                   "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
                   "1:39.52",
                   "China",
                   "2019-04-06",
                   "[Weihai Open 2019](https://www.worldcubeassociation.org/competitions/WeihaiOpen2019)"
-                ],
-                [
-                  5,
-                  "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
-                  "1:41.17",
-                  "United Kingdom",
-                  "2026-02-28",
-                  "[BL&D BLD Binningen 2026](https://www.worldcubeassociation.org/competitions/BLDBLDBinningen2026)"
                 ],
                 [
                   6,
@@ -9571,6 +9571,14 @@
               "rows": [
                 [
                   1,
+                  "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+                  "3:25.95",
+                  "United Kingdom",
+                  "2026-05-25",
+                  "[Manchester CL Second 2026](https://www.worldcubeassociation.org/competitions/ManchesterCLSecond2026)"
+                ],
+                [
+                  2,
                   "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
                   "4:11.66",
                   "China",
@@ -9578,7 +9586,7 @@
                   "[YJ Fest 2018](https://www.worldcubeassociation.org/competitions/YJFest2018)"
                 ],
                 [
-                  2,
+                  3,
                   "[Cale Schoon](https://www.worldcubeassociation.org/persons/2014SCHO02)",
                   "5:17.02",
                   "USA",
@@ -9586,7 +9594,7 @@
                   "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023)"
                 ],
                 [
-                  3,
+                  4,
                   "[Sora Wenjie Xu (徐文杰)](https://www.worldcubeassociation.org/persons/2016XUWE02)",
                   "6:29.84",
                   "China",
@@ -9594,7 +9602,7 @@
                   "[Please Be Quiet Xi'an 2025](https://www.worldcubeassociation.org/competitions/PleaseBeQuietXian2025)"
                 ],
                 [
-                  4,
+                  5,
                   "[Oliver Fritz](https://www.worldcubeassociation.org/persons/2014FRIT02)",
                   "7:36.59",
                   "Germany",
@@ -9602,7 +9610,7 @@
                   "[Twixmas Flen 2024](https://www.worldcubeassociation.org/competitions/TwixmasFlen2024)"
                 ],
                 [
-                  5,
+                  6,
                   "[Jordi Lleixà López](https://www.worldcubeassociation.org/persons/2023LOPE09)",
                   "8:06.19",
                   "Spain",
@@ -9610,7 +9618,7 @@
                   "[Parets Open 2026](https://www.worldcubeassociation.org/competitions/ParetsOpen2026)"
                 ],
                 [
-                  6,
+                  7,
                   "[Michael Ngan (顏律言)](https://www.worldcubeassociation.org/persons/2016NGAN02)",
                   "8:52.78",
                   "Hong Kong",
@@ -9618,7 +9626,7 @@
                   "[Hampshire Autumn 2025](https://www.worldcubeassociation.org/competitions/HampshireAutumn2025)"
                 ],
                 [
-                  7,
+                  8,
                   "[Callum Hales-Jepp](https://www.worldcubeassociation.org/persons/2012HALE01)",
                   "9:03.77",
                   "United Kingdom",
@@ -9626,7 +9634,7 @@
                   "[Chester Spring 2022](https://www.worldcubeassociation.org/competitions/ChesterSpring2022)"
                 ],
                 [
-                  8,
+                  9,
                   "[Jonathan Blöcher](https://www.worldcubeassociation.org/persons/2018BLOC01)",
                   "9:33.01",
                   "Germany",
@@ -9634,20 +9642,12 @@
                   "[Rubik's German Nationals 2025](https://www.worldcubeassociation.org/competitions/RubiksGermanNationals2025)"
                 ],
                 [
-                  9,
+                  10,
                   "[Witali Bułatow](https://www.worldcubeassociation.org/persons/2015BUAT01)",
                   "10:33.00",
                   "Poland",
                   "2018-09-15",
                   "[LLS VII Final 2018](https://www.worldcubeassociation.org/competitions/LLSVIIFinal2018)"
-                ],
-                [
-                  10,
-                  "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
-                  "10:44.00",
-                  "Germany",
-                  "2025-11-15",
-                  "[South Germany 2025](https://www.worldcubeassociation.org/competitions/SouthGermany2025)"
                 ]
               ]
             },
@@ -15505,9 +15505,17 @@
               "titleZh": "五盲",
               "rows": [
                 [
+                  "3:25.95",
+                  "18.16%",
+                  "3",
+                  "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+                  "2026-05-25",
+                  "[Manchester CL Second 2026](https://www.worldcubeassociation.org/competitions/ManchesterCLSecond2026)"
+                ],
+                [
                   "4:11.66",
                   "64.55%",
-                  "2932",
+                  "2929",
                   "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
                   "2018-05-18",
                   "[YJ Fest 2018](https://www.worldcubeassociation.org/competitions/YJFest2018)"

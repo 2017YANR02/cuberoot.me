@@ -889,17 +889,6 @@
           "22.00"
         ],
         [
-          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-          "20.00",
-          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
-          "21.00",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
-          "21.00"
-        ],
-        [
           "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -909,6 +898,17 @@
           "21.00",
           "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
           "21.33"
+        ],
+        [
+          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+          "20.00",
+          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
+          "21.00",
+          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "21.00"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
@@ -1229,9 +1229,9 @@
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#epyram_2)",
           "Second round",
           "4.64",
-          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
-          "1.52",
           "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "1.52",
+          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
           "1.52",
           "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
           "1.60"
@@ -1375,6 +1375,17 @@
           "3.07"
         ],
         [
+          "[Heartland Championship 2026](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2026/results/all#eclock_e)",
+          "Second round",
+          "8.85",
+          "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
+          "2.26",
+          "[Zachary Cribb](https://www.worldcubeassociation.org/persons/2022CRIB01)",
+          "3.21",
+          "[Max McGill](https://www.worldcubeassociation.org/persons/2023MCGI02)",
+          "3.38"
+        ],
+        [
           "[Manchester Clock Day 2025](https://www.worldcubeassociation.org/competitions/ManchesterClockDay2025/results/all#eclock_2)",
           "Second round",
           "8.89",
@@ -1439,17 +1450,6 @@
           "3.24",
           "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
           "3.29"
-        ],
-        [
-          "[Back to Downtown Singapore 2026](https://www.worldcubeassociation.org/competitions/BacktoDowntownSingapore2026/results/all#eclock_f)",
-          "Final",
-          "9.35",
-          "[Matthew Powell](https://www.worldcubeassociation.org/persons/2023POWE10)",
-          "2.82",
-          "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
-          "2.86",
-          "[Akash Sreedharan (ஆகாஷ் ஸ்ரீதரன்)](https://www.worldcubeassociation.org/persons/2019SREE06)",
-          "3.67"
         ]
       ]
     },
