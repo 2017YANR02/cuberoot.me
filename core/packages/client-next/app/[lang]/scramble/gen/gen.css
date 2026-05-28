@@ -1224,3 +1224,244 @@ html[data-theme=dark] .gen-page .gen-tn-clock-chip {
     background: var(--gen-surface);
     color: var(--gen-text);
 }
+
+/* ── 3x3 cross-step analysis (XC Master 风) ── */
+/* Cube-face colours tuned for legibility as small digits (white = grey, since
+   pure white is invisible on the cream/light sheet; the WCA white face). */
+.gen-page {
+    --gen-cx-w: #555555;
+    --gen-cx-y: #B8860B;
+    --gen-cx-r: #DC2626;
+    --gen-cx-o: #EA7317;
+    --gen-cx-b: #2563EB;
+    --gen-cx-g: #16A34A;
+    --gen-step-lo: #16A34A;
+}
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme=light]) .gen-page {
+        --gen-cx-w: #e5e5e5;
+        --gen-cx-y: #FACC15;
+        --gen-cx-r: #F87171;
+        --gen-cx-o: #FB923C;
+        --gen-cx-b: #60A5FA;
+        --gen-cx-g: #4ADE80;
+        --gen-step-lo: #34D399;
+    }
+}
+html[data-theme=dark] .gen-page {
+    --gen-cx-w: #e5e5e5;
+    --gen-cx-y: #FACC15;
+    --gen-cx-r: #F87171;
+    --gen-cx-o: #FB923C;
+    --gen-cx-b: #60A5FA;
+    --gen-cx-g: #4ADE80;
+    --gen-step-lo: #34D399;
+}
+
+/* per-scramble badge in the sheet rows */
+.gen-tn-scr-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.gen-tn-cross-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.78rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--gen-text) 6%, transparent);
+}
+.gen-tn-cross-c {
+    color: var(--gen-text-mute);
+    font-weight: 600;
+    margin-right: 3px;
+}
+.gen-tn-cx { font-weight: 700; }
+.gen-tn-cx.cx-w { color: var(--gen-cx-w); }
+.gen-tn-cx.cx-y { color: var(--gen-cx-y); }
+.gen-tn-cx.cx-r { color: var(--gen-cx-r); }
+.gen-tn-cx.cx-o { color: var(--gen-cx-o); }
+.gen-tn-cx.cx-b { color: var(--gen-cx-b); }
+.gen-tn-cx.cx-g { color: var(--gen-cx-g); }
+
+.gen-tn-cross-sol { margin-top: 4px; }
+.gen-tn-cross-sol-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 0.72rem;
+    color: var(--gen-text-sub);
+}
+.gen-tn-cross-sol-btn:hover { color: var(--gen-accent); }
+.gen-tn-cross-sol-moves {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    color: var(--gen-text);
+}
+
+/* competition distribution panel */
+.gen-cx-panel {
+    margin: 0 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+.gen-cx-toprow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.gen-cx-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--gen-text);
+}
+/* PillToggle(共享组件)在 gen 浅色双主题页的适配:组件原样式是给暗色锁定页的
+   硬编码 iOS 蓝 + 半透明白,这里换成主题 token + terracotta accent。 */
+.gen-page .pill-toggle {
+    height: 26px;
+    min-width: 96px;
+    background: color-mix(in srgb, var(--gen-text) 8%, transparent);
+    border-color: var(--gen-border);
+    color: var(--gen-text-sub);
+}
+.gen-page .pill-toggle:hover { border-color: var(--gen-border-strong); }
+.gen-page .pill-toggle.is-on {
+    background: var(--gen-accent);
+    border-color: var(--gen-accent);
+    color: #fff;
+}
+.gen-page .pill-toggle.is-on:hover {
+    background: color-mix(in srgb, var(--gen-accent) 90%, black);
+    border-color: color-mix(in srgb, var(--gen-accent) 90%, black);
+}
+
+.gen-cx-switchrow {
+    display: flex;
+    margin: 0.25rem 0 0.75rem;
+}
+
+.gen-cx-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+.gen-cx-tabs {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.gen-cx-tab {
+    border: 1px solid var(--gen-border);
+    background: transparent;
+    color: var(--gen-text-sub);
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.gen-cx-tab:hover { border-color: var(--gen-border-strong); color: var(--gen-text); }
+.gen-cx-tab.is-active {
+    background: var(--gen-accent-soft);
+    border-color: var(--gen-accent);
+    color: var(--gen-accent);
+    font-weight: 600;
+}
+
+.gen-cx-pending,
+.gen-cx-loading {
+    margin: 0.25rem 0 0.5rem;
+    font-size: 0.85rem;
+    color: var(--gen-text-sub);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gen-cx-rows { display: flex; flex-direction: column; gap: 8px; }
+.gen-cx-row { display: flex; align-items: center; gap: 12px; }
+.gen-cx-rowhead {
+    width: 88px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.gen-cx-rowname { font-size: 0.85rem; font-weight: 600; color: var(--gen-text); }
+.gen-cx-rowsub {
+    font-size: 0.72rem;
+    color: var(--gen-text-mute);
+    font-variant-numeric: tabular-nums;
+}
+.gen-cx-row .gen-cx-bar { flex: 1; min-width: 0; }
+.gen-cx-bar {
+    display: flex;
+    width: 100%;
+    height: 22px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--gen-text) 5%, transparent);
+}
+.gen-cx-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    overflow: hidden;
+}
+.gen-cx-seg-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff; /* on dynamic green→terracotta chip */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+.gen-cx-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.gen-cx-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: var(--gen-text-sub);
+    font-variant-numeric: tabular-nums;
+}
+.gen-cx-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .gen-cx-title { font-size: 0.95rem; }
+    .gen-cx-bar { height: 26px; }
+    .gen-cx-legend { gap: 3px 12px; }
+    .gen-cx-row { gap: 8px; }
+    .gen-cx-rowhead { width: 64px; }
+    .gen-cx-rowname { font-size: 0.8rem; }
+}
