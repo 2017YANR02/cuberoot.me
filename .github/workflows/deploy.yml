@@ -1,0 +1,156 @@
+# 部署 cube-platform 到 platform.cuberoot.me (云服务器 systemd platform-next,:3004)。
+# 服务器内存吃紧 + 拉不到 GitHub,所以 build 在 CI 跑,scp standalone 产物过去。
+# better-sqlite3 是原生模块,CI 必须用与服务器相同的 Node 大版本 (24),否则 ABI 不匹配加载失败。
+# 演示库在 CI 里 migrate+seed 成 seed-data.db 一起打包;服务器仅在
+# /var/lib/cube-platform/data.db 不存在时拷入 (持久 DB 不随重新部署被覆盖)。
+name: Deploy Cube Platform
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.tmp/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 必须排在 build 之前:静态页 (app/sitemap.ts 等) 在构建期就查 DB 预渲染,
+      # 没有已建表的 data.db 会报 "no such table"。seed 到默认路径 ./data.db,build 直接读它;
+      # 同一份库随包发出去作初始演示数据。
+      - name: Seed demo database
+        env:
+          DB_PATH: ./data.db
+        run: |
+          pnpm db:migrate
+          pnpm db:seed
+          # WAL checkpoint,让单个 .db 文件自包含 (无需带 -wal/-shm 边车)
+          node -e "const D=require('better-sqlite3');const d=new D(process.env.DB_PATH);d.pragma('wal_checkpoint(TRUNCATE)');d.close()"
+          ls -lh data.db
+
+      - name: Build Next standalone
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_SITE_URL: https://platform.cuberoot.me
+        run: pnpm build
+
+      # output:standalone 把入口产到 .next/standalone/server.js (非 monorepo,无嵌套)。
+      # static/ + public/ 必须手动拷进 standalone 树 (Next 文档要求)。
+      - name: Assemble deploy bundle
+        run: |
+          ENTRY=.next/standalone
+          test -f "$ENTRY/server.js" || { echo "ERROR: $ENTRY/server.js missing"; find .next/standalone -name server.js; exit 1; }
+          mkdir -p "$ENTRY/.next"
+          cp -r .next/static "$ENTRY/.next/static"
+          [ -d public ] && cp -r public "$ENTRY/public"
+          cp data.db "$ENTRY/seed-data.db"
+          # systemd 调用的 wrapper:定位最新 nvm Node 再起 server.js (服务器 node 仅在 nvm 下)
+          cat > "$ENTRY/start.sh" <<'EOF'
+          #!/bin/sh
+          cd "$(dirname "$0")"
+          NODE_DIR="$(ls -d /root/.nvm/versions/node/v* 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$NODE_DIR" ] || [ ! -x "$NODE_DIR/bin/node" ]; then
+            echo "ERROR: no node binary under /root/.nvm/versions/node/v*" >&2
+            exit 1
+          fi
+          exec "$NODE_DIR/bin/node" server.js
+          EOF
+          chmod +x "$ENTRY/start.sh"
+          tar -czf /tmp/cube-platform.tar.gz -C "$ENTRY" .
+          ls -lh /tmp/cube-platform.tar.gz
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp bundle + systemd unit
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/id /tmp/cube-platform.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cube-platform.tar.gz"
+          scp -i ~/.ssh/id ops/platform-next.service "$DEPLOY_USER@$DEPLOY_HOST:/tmp/platform-next.service"
+
+      # 服务器侧原子替换 + 健康检查 + 失败回滚 (镜像 mira 的 deploy.yml)。
+      - name: Deploy + restart
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -e
+          LIVE=/www/wwwroot/cube-platform
+          STAGE=/www/wwwroot/cube-platform.new
+          TS=$(date +%s)
+          BACKUP=/www/wwwroot/cube-platform.bak-$TS
+
+          rm -rf "$STAGE"; mkdir -p "$STAGE"
+          tar -xzf /tmp/cube-platform.tar.gz -C "$STAGE"
+          rm -f /tmp/cube-platform.tar.gz
+          [ -x "$STAGE/start.sh" ] || { echo "ERROR: start.sh missing"; exit 1; }
+          [ -f "$STAGE/server.js" ] || { echo "ERROR: server.js missing"; exit 1; }
+
+          # 持久 DB 放在部署目录之外;仅首次 (库不存在) 灌入种子,重新部署不覆盖
+          mkdir -p /var/lib/cube-platform
+          if [ ! -f /var/lib/cube-platform/data.db ]; then
+            cp "$STAGE/seed-data.db" /var/lib/cube-platform/data.db
+            echo "seeded /var/lib/cube-platform/data.db from bundle"
+          fi
+
+          if [ -d "$LIVE" ]; then
+            find /www/wwwroot -maxdepth 1 -name 'cube-platform.bak-*' -exec rm -rf {} +
+            mv "$LIVE" "$BACKUP"
+          fi
+          mv "$STAGE" "$LIVE"
+
+          UNIT=/etc/systemd/system/platform-next.service
+          if ! cmp -s /tmp/platform-next.service "$UNIT"; then
+            cp /tmp/platform-next.service "$UNIT"
+            systemctl daemon-reload
+            echo "systemd unit updated"
+          fi
+          rm -f /tmp/platform-next.service
+          systemctl enable platform-next >/dev/null 2>&1 || true
+          systemctl restart platform-next
+
+          # 健康检查:最多等 15s,:3004 返回 <500 即视为起来了
+          for i in $(seq 1 15); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3004/ 2>/dev/null || true)
+            if [ -n "$CODE" ] && [ "$CODE" -ge 200 ] && [ "$CODE" -lt 500 ]; then
+              echo "OK: platform-next responding on :3004 (HTTP $CODE)"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "ERROR: platform-next did not respond on :3004 within 15s"
+          journalctl -u platform-next --no-pager -n 40 || true
+          if [ -d "$BACKUP" ]; then
+            echo "rolling back..."
+            rm -rf "$LIVE"; mv "$BACKUP" "$LIVE"
+            systemctl restart platform-next
+          fi
+          exit 1
+          REMOTE
