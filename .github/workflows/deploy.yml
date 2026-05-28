@@ -3,6 +3,7 @@
 # better-sqlite3 是原生模块,CI 必须用与服务器相同的 Node 大版本 (24),否则 ABI 不匹配加载失败。
 # 演示库在 CI 里 migrate+seed 成 seed-data.db 一起打包;服务器仅在
 # /var/lib/cube-platform/data.db 不存在时拷入 (持久 DB 不随重新部署被覆盖)。
+# 持久库已存在时,部署会在 restart 前跑 migrate.cjs 对它补未应用的迁移 (drizzle 兼容)。
 name: Deploy Cube Platform
 
 on:
@@ -60,6 +61,9 @@ jobs:
           cp -r .next/static "$ENTRY/.next/static"
           [ -d public ] && cp -r public "$ENTRY/public"
           cp data.db "$ENTRY/seed-data.db"
+          # 迁移器 + 迁移文件随包发出,部署时对持久库补未应用的迁移
+          cp -r db/migrations "$ENTRY/db-migrations"
+          cp ops/migrate.cjs "$ENTRY/migrate.cjs"
           # systemd 调用的 wrapper:定位最新 nvm Node 再起 server.js (服务器 node 仅在 nvm 下)
           cat > "$ENTRY/start.sh" <<'EOF'
           #!/bin/sh
@@ -124,6 +128,18 @@ jobs:
             mv "$LIVE" "$BACKUP"
           fi
           mv "$STAGE" "$LIVE"
+
+          # 对持久库应用未跑过的迁移(自包含迁移器,drizzle __drizzle_migrations 兼容);
+          # 失败则回滚到上一版本,不让新代码碰到缺列的库
+          NODE_DIR="$(ls -d /root/.nvm/versions/node/v* 2>/dev/null | sort -V | tail -1)"
+          if ! DB_PATH=/var/lib/cube-platform/data.db MIGRATIONS_DIR="$LIVE/db-migrations" "$NODE_DIR/bin/node" "$LIVE/migrate.cjs"; then
+            echo "ERROR: db migration failed"
+            if [ -d "$BACKUP" ]; then
+              echo "rolling back..."
+              rm -rf "$LIVE"; mv "$BACKUP" "$LIVE"; systemctl restart platform-next
+            fi
+            exit 1
+          fi
 
           UNIT=/etc/systemd/system/platform-next.service
           if ! cmp -s /tmp/platform-next.service "$UNIT"; then
