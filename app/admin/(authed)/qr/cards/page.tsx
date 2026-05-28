@@ -12,6 +12,9 @@ const FALLBACK_TERMS = ["CFOP", "OLL", "PLL", "F2L", "CROSS", "BLD", "ROUX", "ZB
 
 const host = () => getSiteUrl().replace(/^https?:\/\//, "");
 
+// 物理尺寸 × 屏幕缩放变量 --s(屏幕放大方便看,打印时 --s=1 回到精确 mm)
+const m = (n: number) => `calc(var(--s) * ${n}mm)`;
+
 function Panel({
   svg,
   term,
@@ -26,9 +29,9 @@ function Panel({
   return (
     <div
       style={{
-        width: "20mm",
-        height: "40mm",
-        padding: "1.6mm",
+        width: m(20),
+        height: m(40),
+        padding: m(1.6),
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -39,20 +42,20 @@ function Panel({
       {kind === "front" ? (
         <>
           <div style={{ textAlign: "center", lineHeight: 1.15 }}>
-            <div style={{ fontSize: "1.5mm", fontWeight: 700, color: "#2A5DF4" }}>
+            <div style={{ fontSize: m(1.5), fontWeight: 700, color: "#2A5DF4" }}>
               魔方开放社群
             </div>
-            <div style={{ fontSize: "1.2mm", color: "#9aa1ad" }}>cuberoot.me</div>
+            <div style={{ fontSize: m(1.2), color: "#9aa1ad" }}>cuberoot.me</div>
           </div>
           <div
-            style={{ width: "16mm", height: "16mm" }}
+            style={{ width: m(16), height: m(16) }}
             dangerouslySetInnerHTML={{ __html: svg }}
           />
           <div
             style={{
-              fontSize: "2mm",
+              fontSize: m(2),
               fontWeight: 800,
-              letterSpacing: "0.3mm",
+              letterSpacing: m(0.3),
               color: "#11111A",
             }}
           >
@@ -63,7 +66,7 @@ function Panel({
         <>
           <div
             style={{
-              fontSize: "1.5mm",
+              fontSize: m(1.5),
               fontWeight: 600,
               color: "#11111A",
               textAlign: "center",
@@ -75,12 +78,12 @@ function Panel({
             课程 / 商城 / 赛事 / 社群
           </div>
           <div
-            style={{ width: "16mm", height: "16mm" }}
+            style={{ width: m(16), height: m(16) }}
             dangerouslySetInnerHTML={{ __html: svg }}
           />
           <div
             style={{
-              fontSize: "1.15mm",
+              fontSize: m(1.15),
               color: "#9aa1ad",
               fontFamily: "ui-monospace, monospace",
               wordBreak: "break-all",
@@ -114,11 +117,12 @@ export default async function QrCardsPage({
       <style
         dangerouslySetInnerHTML={{
           __html: `
+            .qr-sheet { --s: 2.4; }
             .qr-unit { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             @media print {
               @page { size: A4; margin: 8mm; }
               .no-print { display: none !important; }
-              .qr-sheet { gap: 0 !important; }
+              .qr-sheet { --s: 1 !important; gap: 0 !important; }
               body { background: #fff !important; }
             }
           `,
@@ -142,14 +146,14 @@ export default async function QrCardsPage({
           </div>
         ) : (
           <p className="mb-6 text-[12px] text-ink-3">
-            打印前在浏览器打印设置里勾选「背景图形」,否则二维码与配色不显示。
+            下方为放大预览,打印时自动回到实际 2×4cm。打印前在浏览器打印设置里勾选「背景图形」,否则二维码与配色不显示。
           </p>
         )}
       </div>
 
       <div
         className="qr-sheet flex flex-wrap"
-        style={{ gap: "2mm", alignContent: "flex-start" }}
+        style={{ gap: m(3), alignContent: "flex-start" }}
       >
         {rows.map((r, idx) => {
           const svg = qrSvg(absoluteUrl(`/qr/${r.code}`));
@@ -160,12 +164,12 @@ export default async function QrCardsPage({
               className="qr-unit"
               style={{
                 display: "flex",
-                border: "0.2mm dashed #c4c9d4",
+                border: `${m(0.2)} dashed #c4c9d4`,
                 background: "#fff",
               }}
             >
               <Panel svg={svg} term={term} code={r.code} kind="front" />
-              <div style={{ borderLeft: "0.2mm dotted #c4c9d4" }} />
+              <div style={{ borderLeft: `${m(0.2)} dotted #c4c9d4` }} />
               <Panel svg={svg} term={term} code={r.code} kind="back" />
             </div>
           );
