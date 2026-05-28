@@ -236,43 +236,137 @@
 
 /* ── Stats summary ── */
 
-.analyze-examples {
+/* ── WCA real-scramble + cross-step filter ── */
+
+.analyze-wca {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.8rem;
+    gap: 0.45rem 0.7rem;
+    margin-bottom: 0.6rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--az-border);
+    font-size: 0.82rem;
 }
 
-.analyze-examples-label {
+.analyze-wca-label {
     color: var(--az-text-mute);
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    margin-right: 0.15rem;
+    gap: 0.3rem;
 }
 
-.analyze-example {
+.analyze-wca-color {
+    background: var(--az-surface);
+    border: 1px solid var(--az-border-strong);
+    border-radius: 5px;
+    padding: 0.25rem 0.45rem;
+    font-size: 0.82rem;
+    color: var(--az-text);
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.analyze-wca-color:focus {
+    outline: none;
+    border-color: var(--az-accent);
+}
+
+.analyze-wca-steps {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 1.7rem;
+}
+
+.analyze-wca-step {
+    min-width: 1.9rem;
+    padding: 0.25rem 0.4rem;
     background: var(--az-surface);
     border: 1px solid var(--az-border);
     border-radius: 4px;
-    padding: 0.2rem 0.55rem;
-    cursor: pointer;
     color: var(--az-text-sub);
     font-family: inherit;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
-.analyze-example:hover:not(:disabled) {
+.analyze-wca-step:hover:not(:disabled) {
     background: var(--az-accent-soft);
     border-color: var(--az-accent);
     color: var(--az-accent);
 }
 
-.analyze-example:disabled {
+.analyze-wca-step.is-active {
+    background: var(--az-accent);
+    border-color: var(--az-accent);
+    color: #fff;
+}
+
+.analyze-wca-step:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.analyze-wca-reshuffle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--az-surface);
+    border: 1px solid var(--az-border);
+    border-radius: 4px;
+    padding: 0.25rem 0.55rem;
+    color: var(--az-text-sub);
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.analyze-wca-reshuffle:hover:not(:disabled) {
+    background: var(--az-accent-soft);
+    border-color: var(--az-accent);
+    color: var(--az-accent);
+}
+
+.analyze-wca-reshuffle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.analyze-wca-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.7rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.82rem;
+}
+
+.analyze-wca-comp {
+    color: var(--az-text);
+    font-weight: 500;
+}
+
+.analyze-wca-date,
+.analyze-wca-round {
+    color: var(--az-text-mute);
+}
+
+.analyze-wca-event {
+    color: var(--az-text-sub);
+    border: 1px solid var(--az-border);
+    border-radius: 3px;
+    padding: 0 0.3rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.analyze-wca-cross {
+    color: var(--az-text-sub);
+    font-family: var(--font-mono, monospace);
 }
 
 .analyze-elapsed {
