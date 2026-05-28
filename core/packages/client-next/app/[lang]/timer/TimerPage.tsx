@@ -27,7 +27,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as R
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import MoreMenu, { type MoreMenuItem } from './_components/MoreMenu';
 import { syncLangToUrl, getLangQuery } from '@/i18n/i18n-client';
@@ -1180,9 +1179,6 @@ export default function TimerPage() {
             <SettingsIcon size={14} />
           </button>
           <MoreMenu items={moreItems} isZh={isZh} />
-          <span className="tb-mobile-hide" style={{ display: 'inline-flex' }}>
-            <LangToggle />
-          </span>
         </div>
       </div>
 

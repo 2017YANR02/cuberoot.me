@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './compare.css';
@@ -403,7 +402,6 @@ export default function CompareAo5Page() {
             <Link href="/code/language" className="compare-back">
               ← <L zh="回 /code/language" en="Back to /code/language" />
             </Link>
-            <LangToggle variant="inline" />
           </div>
 
           <div className="compare-tag">

@@ -28,7 +28,6 @@ import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { consumePendingVideo } from '@/lib/pending-video';
 
@@ -2161,7 +2160,6 @@ export default function FrameCountPage() {
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </span>
-        <LangToggle variant="inline" className="fc-lang-toggle" />
       </header>
 
       {/* ── 主体：视频 + 右侧面板 ── */}

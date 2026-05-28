@@ -6,7 +6,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './globe_about.css';
 
@@ -37,7 +36,6 @@ export default function GlobeAboutPage() {
           <ArrowLeft size={16} />
           <span>{t('返回地球视图', 'Back to Globe')}</span>
         </Link>
-        <LangToggle />
       </div>
 
       <main className="gla-main">

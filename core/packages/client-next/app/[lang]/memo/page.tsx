@@ -8,7 +8,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Brain, type LucideIcon } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../landing.css';
 
@@ -31,8 +30,6 @@ export default function MemoLandingPage() {
 
   return (
     <div className="landing-page">
-      <LangToggle variant="fixed" />
-
       <h1 className="landing-tagline">{isZh ? '记忆' : 'Memo'}</h1>
 
       <div className="cards-container">

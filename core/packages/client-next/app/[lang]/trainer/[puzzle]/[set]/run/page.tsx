@@ -15,7 +15,6 @@ import { findCaseByKey } from '@/lib/trainer-case-key';
 import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList,
 } from '../../../_components/trainer-components';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../../trainer.css';
 
@@ -139,8 +138,6 @@ export default function TrainerRunPage() {
         <span style={{ fontSize: '1rem', color: '#aaa' }}>
           {puzzleParam} · {isZh ? meta.zh : meta.en}
         </span>
-        <div className="trainer-spacer" />
-        <LangToggle variant="inline" />
       </div>
 
       <div className="trainer-run">

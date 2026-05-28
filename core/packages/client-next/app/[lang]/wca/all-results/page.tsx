@@ -23,7 +23,6 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
-import LangToggle from '@/components/LangToggle';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import ShowToggle, { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -170,7 +169,6 @@ function AllResultsPageInner() {
       <header className="wse-header">
         <div className="wse-header-row">
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
-          <LangToggle />
         </div>
         <h1 className="wse-title-row">
           {isZh ? '排名' : 'Rankings'}

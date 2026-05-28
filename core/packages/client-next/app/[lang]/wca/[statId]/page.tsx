@@ -23,7 +23,6 @@ import { translateCellText, translatePersonLink, stripChineseParens } from '@/li
 import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
-import LangToggle from '@/components/LangToggle';
 import '../_wca_stats.css';
 
 interface StatHeader {
@@ -1076,9 +1075,6 @@ export default function WcaStatsPage() {
   return (
     <div className="wca-stats-page">
       <div className="wca-stats-header">
-        <div className="wca-stats-header-nav">
-          <LangToggle />
-        </div>
         <h1>{isZh ? data.titleZh : data.title}</h1>
         {data.note && (
           <p className="wca-stats-note">{isZh ? (data.noteZh ?? data.note) : data.note}</p>

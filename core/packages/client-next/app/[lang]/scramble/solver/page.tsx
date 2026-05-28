@@ -21,7 +21,6 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview2D from './_CubingPreview2D';
 import { faceletToCubie, validateFacelet } from './facelet';
@@ -498,7 +497,6 @@ function ScrambleSolverPageInner() {
       <style>{INLINE_CSS}</style>
       <header className="cubeopt-header">
         <h1>{t('最优解 (cubeopt)', 'Optimal Solver (cubeopt)')}</h1>
-        <LangToggle variant="inline" />
       </header>
 
       {mounted && !sabAvailable && (

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
+import DeskPet from "@/components/DeskPet";
 import "./fonts.css";
 import "./globals.css";
 
@@ -34,7 +35,10 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-sync-scripts -- inline bootstrap, must run before paint */}
         <script dangerouslySetInnerHTML={{ __html: LANG_BOOTSTRAP }} />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <DeskPet />
+      </body>
     </html>
   );
 }

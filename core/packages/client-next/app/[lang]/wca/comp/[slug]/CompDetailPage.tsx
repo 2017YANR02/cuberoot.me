@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -743,8 +742,6 @@ export default function CompDetailPage() {
 
   return (
     <div className="comp-detail-page">
-      <HeaderToggles className="comp-top-bar" />
-
       <div className="comp-table-section">
         <header className="comp-detail-header">
           <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>

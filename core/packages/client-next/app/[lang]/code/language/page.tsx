@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './code_landing.css';
 
@@ -517,7 +516,6 @@ export default function CodeLandingPage() {
           <Link href="/code" className="code-landing-back">
             ← /code
           </Link>
-          <LangToggle variant="inline" />
         </div>
         <h1 className="code-landing-title">
           <span className="code-landing-prefix">/</span>language

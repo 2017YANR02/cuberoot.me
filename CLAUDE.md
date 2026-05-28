@@ -55,6 +55,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client-next 在 `lib/api-base.ts`),不要硬编码 origin。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 - **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
+- **client-next 页面默认 SSG**(2026-05-28 起,~128 组静态走 CDN):根 `app/layout.tsx` 禁动态 API(cookies/headers),全局组件禁在 render 调 `useSearchParams`,否则整站退回动态 / CSR 空壳;语言归属在 `[lang]/layout`,i18n 走 `initImmediate:false` + `useSuspense:false`。
 - **deploy_mirror.yml** 已禁(Phase 4 前 GH Pages 镜像用),保留 workflow_dispatch 短期回滚兜底。
 
 ## 开发命令

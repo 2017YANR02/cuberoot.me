@@ -10,8 +10,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -27,10 +25,6 @@ export default function AlgIndexPage() {
       <div className="alg-index-header">
         <div className="alg-index-header-row">
           <h1 className="alg-index-title">{isZh ? '公式库' : 'Algorithm DB'}</h1>
-          <div className="alg-index-header-actions">
-            <ThemeToggle />
-            <LangToggle variant="inline" />
-          </div>
         </div>
         <p className="alg-index-subtitle">
           {(isZh ? '魔方公式速查 — ' : 'Cube algorithm reference — ') +

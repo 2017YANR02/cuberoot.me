@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { STACK_TOOLS_META, type StackToolMeta } from './_lib/stack_meta';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './stack_landing.css';
@@ -70,7 +69,6 @@ export default function StackLandingPage() {
           <Link href="/code" className="stack-landing-back">
             ← /code
           </Link>
-          <LangToggle variant="inline" />
         </div>
         <h1 className="stack-landing-title">
           <span className="stack-landing-prefix">/</span>stack

@@ -6,7 +6,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './prediction_about.css';
 
@@ -37,7 +36,6 @@ export default function PredictionAboutPage() {
           <ArrowLeft size={16} />
           <span>{t('返回极限预测', 'Back to Prediction')}</span>
         </Link>
-        <LangToggle />
       </div>
 
       <main className="pa-main">

@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLang } from '../../_lib/Lang';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 
 const TABS = [
   { path: '/code/architecture',           zh: '概览',    en: 'Overview'   },
@@ -43,10 +41,6 @@ export default function ArchNav() {
             {lang === 'zh' ? tab.zh : tab.en}
           </Link>
         ))}
-      </div>
-      <div className="arch-nav-end">
-        <ThemeToggle />
-        <LangToggle variant="inline" />
       </div>
     </nav>
   );

@@ -29,7 +29,6 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EVENTS, formatVal } from '../_components/events';
 import {
@@ -232,7 +231,6 @@ export default function LuckyLimitPage() {
         <button className="pred-lang" onClick={toggleLang}>
           {isZh ? 'EN' : '中文'}
         </button>
-        <ThemeToggle />
       </header>
 
       <article className="pred-article" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 28px 80px' }}>

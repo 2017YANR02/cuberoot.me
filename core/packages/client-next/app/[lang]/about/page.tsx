@@ -1,12 +1,9 @@
 'use client';
 
 // /about — port of packages/client/src/pages/AboutPage.tsx.
-// react-router-dom Link → next/link.
 
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CREDITS from './credits_data.json';
@@ -24,7 +21,6 @@ export default function AboutPage() {
           <ChevronLeft size={16} />
           <span>{isZh ? '首页' : 'Home'}</span>
         </HomeLink>
-        <LangToggle />
       </header>
 
       <main className="about-main">

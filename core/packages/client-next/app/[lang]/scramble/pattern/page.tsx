@@ -13,8 +13,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, X, Copy, Check } from 'lucide-react';
 import { Alg } from 'cubing/alg';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { VisualCube } from '@/components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '@/components/PuzzleSVG';
@@ -144,8 +142,6 @@ export default function PatternsPage() {
           <Sparkles size={20} className="pat-title-icon" />
           <h1>{t('图案集', 'Cube Patterns')}</h1>
         </div>
-        <LangToggle variant="inline" />
-        <ThemeToggle />
       </header>
 
       <main className="pat-main">

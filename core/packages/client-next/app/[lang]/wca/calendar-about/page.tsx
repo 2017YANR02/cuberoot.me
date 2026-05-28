@@ -6,7 +6,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calendar_about.css';
 
@@ -37,7 +36,6 @@ export default function CalendarAboutPage() {
           <ArrowLeft size={16} />
           <span>{t('返回比赛日历', 'Back to Calendar')}</span>
         </Link>
-        <LangToggle />
       </div>
 
       <main className="cala-main">

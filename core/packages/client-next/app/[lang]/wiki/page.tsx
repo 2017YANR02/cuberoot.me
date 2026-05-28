@@ -13,10 +13,8 @@
  * 1:1 port from packages/client/src/pages/wiki/WikiPage.tsx (Vite SPA).
  */
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2 } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -176,7 +174,6 @@ export default function WikiPage() {
           <ChevronLeft size={16} />
           <span>{isZh ? '首页' : 'Home'}</span>
         </HomeLink>
-        <HeaderToggles className="wiki-header-right" />
       </header>
 
       <main className="wiki-main">

@@ -23,7 +23,6 @@ import {
   type UpcomingCompRecord,
   type PastCompRecord,
 } from '@cuberoot/shared';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { displayCuberName } from '@/lib/name-utils';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
@@ -1497,7 +1496,6 @@ function CalendarPageInner() {
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
           </Link>
         </div>
-        <HeaderToggles className="upcoming-header-right" />
       </header>
 
       <div className="toolbar">
