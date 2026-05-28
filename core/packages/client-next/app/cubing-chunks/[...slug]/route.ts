@@ -117,7 +117,7 @@ export async function GET(
       return new Response(body, {
         headers: {
           "content-type": ct,
-          "cache-control": "no-store",
+          "cache-control": "public, s-maxage=2592000",
           "cross-origin-resource-policy": "same-origin",
           "cross-origin-embedder-policy": "require-corp",
         },
