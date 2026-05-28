@@ -54,16 +54,28 @@ export async function GET(
     const data = await fs.readFile(filePath);
     return new Response(new Uint8Array(data), { headers });
   } catch {
-    // On Vercel, stats/ isn't bundled — fetch from static.cuberoot.me fallback.
+    // On Vercel, stats/ isn't bundled. Redirect the client straight to
+    // static.cuberoot.me so the bytes never traverse Vercel Compute — proxying
+    // them (esp. all_past_comps.json 5.5MB / person_countries.json 5MB) is the
+    // dominant Fast Origin Transfer cost and was timing the function out (502).
+    // Exception: forced-download files keep the proxy so content-disposition
+    // survives (static nginx doesn't set it).
     if (process.env.VERCEL === '1') {
-      try {
-        const upstream = await fetch(VERCEL_STATS_FALLBACK + rel);
-        if (!upstream.ok) return new Response('not found', { status: upstream.status });
-        const buf = await upstream.arrayBuffer();
-        return new Response(buf, { headers });
-      } catch {
-        return new Response('upstream error', { status: 502 });
+      const upstreamUrl = VERCEL_STATS_FALLBACK + rel;
+      if (rel.startsWith('scramble/downloads/')) {
+        try {
+          const upstream = await fetch(upstreamUrl);
+          if (!upstream.ok) return new Response('not found', { status: upstream.status });
+          const buf = await upstream.arrayBuffer();
+          return new Response(buf, { headers });
+        } catch {
+          return new Response('upstream error', { status: 502 });
+        }
       }
+      return new Response(null, {
+        status: 307,
+        headers: { location: upstreamUrl, 'cache-control': 'public, s-maxage=86400' },
+      });
     }
     return new Response('not found', { status: 404 });
   }
