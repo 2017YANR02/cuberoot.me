@@ -43,7 +43,7 @@ export async function GET(
   const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
   const headers: Record<string, string> = {
     'content-type': contentType,
-    'cache-control': 'no-store',
+    'cache-control': 'public, s-maxage=3600, stale-while-revalidate=86400',
   };
   if (rel.startsWith('scramble/downloads/')) {
     const base = path.basename(rel);
