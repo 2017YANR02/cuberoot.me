@@ -38,7 +38,9 @@ export default function AuthedLayout({ children }: { children: React.ReactNode }
           <LogoutButton />
         </div>
       </aside>
-      <main className="px-5 md:px-8 py-8 bg-bg-soft">{children}</main>
+      <main className="px-5 md:px-8 py-8 bg-bg-soft">
+        <div className="mx-auto w-full max-w-[1180px]">{children}</div>
+      </main>
     </div>
   );
 }

@@ -13,5 +13,7 @@ data.db-wal
 data.db-shm
 .playwright-mcp/
 .env
+.password.md
+*.2do
 public/uploads/*
 !public/uploads/.gitkeep

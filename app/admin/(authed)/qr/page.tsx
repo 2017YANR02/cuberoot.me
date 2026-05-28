@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { list } from "@/lib/db/qr";
+import { Tooltip } from "@/components/Tooltip";
 import { Card, PageHeader, PrimaryLink } from "../../_components/Shell";
 import { Field, FormActions, Input, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
@@ -85,16 +86,24 @@ export default async function AdminQrPage({
                     </Link>
                   </Td>
                   <Td>
-                    <span
-                      className={
-                        "inline-block rounded-full px-2 py-0.5 text-[12px] " +
-                        (r.type === "landing"
-                          ? "bg-brand-soft text-brand"
-                          : "bg-bg-soft text-ink-3")
+                    <Tooltip
+                      content={
+                        r.type === "landing"
+                          ? "聚合码:扫码停在落地页 /qr/[code],展示标题 + 多个链接按钮,一张卡承载多个去处(名片场景)"
+                          : "跳转码:扫码直接打开「目标路径」那一个页面,不停留(目标留空 / 时退化为落地页)"
                       }
                     >
-                      {r.type === "landing" ? "聚合码" : "跳转码"}
-                    </span>
+                      <span
+                        className={
+                          "inline-block cursor-help rounded-full px-2 py-0.5 text-[12px] " +
+                          (r.type === "landing"
+                            ? "bg-brand-soft text-brand"
+                            : "bg-bg-soft text-ink-3")
+                        }
+                      >
+                        {r.type === "landing" ? "聚合码" : "跳转码"}
+                      </span>
+                    </Tooltip>
                   </Td>
                   <Td className="text-ink-2">{r.label}</Td>
                   <Td className="text-ink-3 break-all">
