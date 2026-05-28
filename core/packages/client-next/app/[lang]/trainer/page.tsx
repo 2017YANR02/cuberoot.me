@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Flag, Eye } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './trainer.css';
 
@@ -71,8 +70,6 @@ export default function TrainerLandingPage() {
             <option key={p} value={p}>{PUZZLE_LABEL[p]}</option>
           ))}
         </select>
-        <div className="trainer-spacer" />
-        <LangToggle variant="inline" />
       </div>
 
       {trainableSets.length === 0 && (

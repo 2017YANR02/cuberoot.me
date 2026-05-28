@@ -6,7 +6,6 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { STACK_TOOLS_META } from '../_lib/stack_meta';
 import { loadStackTool } from '../_lib/stack_data';
 import type { StackTool } from '../_lib/stack_tool_types';
@@ -158,7 +157,6 @@ export default function StackToolPage() {
             <li><a href="#cuberoot"><L zh="本站" en="Here" /></a></li>
             <li><a href="#outlook"><L zh="前景" en="Outlook" /></a></li>
           </ul>
-          <LangToggle variant="inline" />
         </nav>
 
         <main id="top">

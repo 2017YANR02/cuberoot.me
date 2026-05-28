@@ -6,7 +6,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../comp.css';
 
@@ -17,8 +16,6 @@ export default function CompSourcesPage() {
 
   return (
     <div className="comp-sources-page">
-      <HeaderToggles className="comp-top-bar" />
-
       <div className="comp-sources-wrap">
         <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
         <h1 className="comp-page-title">{isZh ? '数据流' : 'Data Flow'}</h1>

@@ -7,7 +7,6 @@ import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './_components/state/store';
 import type { Stage } from './_components/state/types';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './mosaic.css';
 
@@ -87,7 +86,6 @@ export default function MosaicPage() {
           {(stage === 'choose-method' || stage === 'choose-variant' || stage === 'adjust') && (
             <button className="mosaic-btn" onClick={resetAll}>＋ {t('mosaic.topbar.newMosaic')}</button>
           )}
-          <LangToggle variant="inline" />
         </div>
       </div>
 

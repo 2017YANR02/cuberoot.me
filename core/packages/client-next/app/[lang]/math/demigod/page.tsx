@@ -23,8 +23,6 @@ import { Suspense, lazy, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '../god/_components/Tex';
 import { PAPER_MEAN, PAPER_TOTAL } from './_components/DistanceHistogram';
@@ -85,10 +83,6 @@ export default function DemigodPage() {
           <ArrowLeft size={16} />
           <span>{t('返回 上帝之数', "Back to God's Number")}</span>
         </Link>
-        <div className="dg-header-right">
-          <LangToggle variant="inline" />
-          <ThemeToggle />
-        </div>
       </header>
 
       <main className="dg-main">

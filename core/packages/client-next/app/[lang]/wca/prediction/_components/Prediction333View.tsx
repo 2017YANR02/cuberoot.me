@@ -14,7 +14,6 @@ import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from 'lucid
 
 const ActiveSectionContext = createContext<string>('tldr');
 import { LineChart, type Series, type Band, type RefLine } from './charts';
-import ThemeToggle from '@/components/ThemeToggle';
 import { VisualCube } from '@/components/VisualCube';
 import {
   WR_SINGLE_HISTORY,
@@ -208,7 +207,6 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}
         </button>
         <button className="pred-lang" onClick={toggleLang}>{isZh ? 'EN' : '中文'}</button>
-        <ThemeToggle />
       </header>
 
       <div className="pred-layout">

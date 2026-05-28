@@ -19,7 +19,6 @@ import { fitExpFloor, type DataPoint } from './_components/models';
 import { EVENTS, formatVal, toDisplay, toDisplayAvg } from './_components/events';
 import { THEORETICAL_LIMITS } from './_components/theoretical_limits';
 import EventSection from './_components/EventSection';
-import ThemeToggle from '@/components/ThemeToggle';
 import { HeadlineBar } from './_components/components/HeadlineBar';
 import { MicroBar } from './_components/components/MicroBar';
 import { TheoryDeepDive } from './_components/components/TheoryDeepDive';
@@ -187,7 +186,6 @@ export default function PredictionPage() {
         <button className="pred-lang" onClick={toggleLang}>
           {isZh ? 'EN' : '中文'}
         </button>
-        <ThemeToggle />
       </header>
 
       <div className="pred-layout">

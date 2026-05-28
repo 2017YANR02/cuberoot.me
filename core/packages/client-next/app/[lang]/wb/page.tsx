@@ -12,7 +12,6 @@ import { useWbData } from './use_wb_data';
 import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { Flag } from '@/components/Flag';
-import ThemeToggle from '@/components/ThemeToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wb.css';
@@ -65,7 +64,6 @@ export default function WbPage() {
           <ExternalLink size={14} />
           <span>{t('数据源', 'Source')}</span>
         </a>
-        <ThemeToggle />
       </header>
 
       <div className="wb-toolbar">

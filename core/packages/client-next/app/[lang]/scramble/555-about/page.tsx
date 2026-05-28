@@ -11,7 +11,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './scramble_555_about.css';
 
@@ -88,7 +87,6 @@ export default function Scramble555AboutPage() {
           <ArrowLeft size={16} />
           <span>{t('返回打乱生成器', 'Back to scramble generator')}</span>
         </Link>
-        <LangToggle />
       </div>
 
       <main className="s555-main">

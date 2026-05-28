@@ -47,7 +47,6 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
-import LangToggle from '@/components/LangToggle';
 import { RecordBadge } from '@/components/RecordBadge';
 import TwistySection from '@/components/TwistySection';
 import SolutionView from '@/components/SolutionView';
@@ -131,9 +130,6 @@ export default function ReconDetailPage() {
     <div className="recon-page detail-page">
       <div className="detail-header-block">
         <div className="detail-header">
-          <div className="detail-header-nav">
-            <LangToggle />
-          </div>
           <h1 className="detail-title">
             {solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null)}
             <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />

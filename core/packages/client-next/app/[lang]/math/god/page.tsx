@@ -16,8 +16,6 @@ import { Suspense, lazy, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -228,10 +226,6 @@ export default function GodNumberPage() {
           <ArrowLeft size={16} />
           <span>{t('返回数学', 'Back to math hub')}</span>
         </Link>
-        <div className="god-header-right">
-          <LangToggle variant="inline" />
-          <ThemeToggle />
-        </div>
       </header>
 
       <main className="god-main">

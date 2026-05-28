@@ -11,7 +11,6 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
-import LangToggle from '@/components/LangToggle';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
@@ -77,7 +76,6 @@ function SuccessRatePageInner() {
       <header className="wse-header">
         <div className="wse-header-row">
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
-          <LangToggle />
         </div>
         <h1 className="wse-title-row">
           {isZh ? '项目成功率' : 'Event Success Rate'}

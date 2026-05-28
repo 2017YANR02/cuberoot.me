@@ -6,7 +6,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './recon_about.css';
 
@@ -37,7 +36,6 @@ export default function ReconAboutPage() {
           <ArrowLeft size={16} />
           <span>{t('返回复盘库', 'Back to Recon')}</span>
         </Link>
-        <LangToggle />
       </div>
 
       <main className="rca-main">

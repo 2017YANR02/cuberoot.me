@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -203,7 +202,6 @@ export default function OpsPage() {
       <div className="ops-shell">
         <div className="ops-topbar">
           <Link href="/code" className="ops-back">← /code</Link>
-          <LangToggle variant="inline" />
         </div>
 
         <header className="ops-hero">

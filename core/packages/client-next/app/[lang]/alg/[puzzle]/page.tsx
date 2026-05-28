@@ -12,8 +12,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -92,8 +90,6 @@ export default function AlgPuzzlePage() {
           <span>{eventDisplayName(puzzle, isZh)} {isZh ? '公式' : 'Algorithms'}</span>
         </h1>
         <span className="alg-cat-count">{sets.length} {isZh ? '套' : 'sets'}</span>
-        <ThemeToggle className="alg-lang-toggle" />
-        <LangToggle variant="inline" />
       </div>
 
       <div className="alg-bento">

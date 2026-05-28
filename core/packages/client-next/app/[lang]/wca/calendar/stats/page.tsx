@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { CountryInput } from '@/components/CountryInput';
 import { EventSelect } from '@/components/EventSelect';
 import { Flag } from '@/components/Flag';
@@ -189,7 +188,6 @@ export default function CalendarStatsPage() {
           </Link>
           <h1 className="cs-title">{isZh ? '比赛统计' : 'Competition stats'}</h1>
         </div>
-        <LangToggle />
       </header>
 
       <div className="cs-toolbar">

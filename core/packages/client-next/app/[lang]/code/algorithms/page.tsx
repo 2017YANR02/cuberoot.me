@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithms_landing.css';
 
@@ -108,7 +107,6 @@ export default function AlgorithmsLandingPage() {
       <header className="algos-landing-head">
         <div className="algos-landing-topbar">
           <Link href="/code" className="algos-landing-back">← /code</Link>
-          <LangToggle variant="inline" />
         </div>
         <h1 className="algos-landing-title">
           <span className="algos-landing-prefix">/</span>algorithms

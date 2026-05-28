@@ -39,7 +39,6 @@ import {
   type WcaCompDetail,
   type WcaPerson,
 } from '@cuberoot/shared';
-import LangToggle from '@/components/LangToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { displayCuberName } from '@/lib/name-utils';
 import { formatDateRangeIso } from '@/lib/wca-date';
@@ -2925,7 +2924,6 @@ export default function GlobeMapClient() {
           </div>
         )}
 
-        <LangToggle className="topbar-lang" />
         </>)}
       </div>
 

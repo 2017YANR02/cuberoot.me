@@ -19,7 +19,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '@/i18n/i18n-client';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../wca/_wca_stats.css';
 
@@ -115,7 +114,6 @@ export default function WcaStatsIndex() {
             {isZh ? 'WCA 统计' : 'WCA Statistics'}
           </h1>
         </div>
-        <HeaderToggles className="wca-stats-index-hero-right" />
       </header>
 
       <div className="wca-stats-index-toolbar">

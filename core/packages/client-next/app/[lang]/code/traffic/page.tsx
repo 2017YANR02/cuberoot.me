@@ -11,7 +11,6 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { ListSelect } from '@/components/ListSelect';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
@@ -107,7 +106,6 @@ export default function TrafficPage() {
             </Link>
             <h1 className="tr-title">{T('流量统计', 'Traffic')}</h1>
           </div>
-          <LangToggle variant="inline" />
         </header>
         <div className="tr-gate">
           <p>{T('登录后查看站内流量统计.', 'Sign in to view site traffic analytics.')}</p>
@@ -128,7 +126,6 @@ export default function TrafficPage() {
           </Link>
           <h1 className="tr-title">{T('流量统计', 'Traffic')}</h1>
         </div>
-        <LangToggle variant="inline" />
       </header>
 
       <div className="tr-toolbar">

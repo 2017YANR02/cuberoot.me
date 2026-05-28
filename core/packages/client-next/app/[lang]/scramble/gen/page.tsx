@@ -15,8 +15,6 @@ import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useSearchParams as useNextSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Shuffle, HelpCircle } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { prewarmScramble } from '@/lib/cubing-scramble';
 import { get333Mode } from '@/lib/scramble-333-mode';
@@ -160,8 +158,6 @@ function GenPageInner() {
           onChange={setMode}
           getLabel={(m) => t(MODE_LABELS[m].zh, MODE_LABELS[m].en)}
         />
-        <LangToggle variant="inline" />
-        <ThemeToggle />
       </header>
 
       <main className="gen-main">

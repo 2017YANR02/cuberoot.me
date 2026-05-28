@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import NemesizerBrand from './_components/NemesizerBrand';
 import StandardMode from './_modes/StandardMode';
@@ -37,11 +35,6 @@ function NemesizerInner() {
 
   return (
     <div className="nemesizer-page">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <ThemeToggle />
-        <LangToggle />
-      </div>
-
       <div className="nemesizer-brand-row">
         <NemesizerBrand isZh={isZh} />
         <Link

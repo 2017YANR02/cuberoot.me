@@ -14,7 +14,6 @@ import { ArrowLeft, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon } from '@/lib/recon-api';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../../recon.css';
 
@@ -67,7 +66,6 @@ export default function AltViewPage() {
           </Link>
           <h1>{displayCuberName(alt.addedBy || '', isZh)}</h1>
         </div>
-        <LangToggle />
       </div>
 
       <div className="recon-detail-stub">
