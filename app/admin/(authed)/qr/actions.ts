@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createBatch, remove, update, type QrLink, type QrType } from "@/lib/db/qr";
+import { createBatch, remove, update, type QrType } from "@/lib/db/qr";
+import { parseLinks } from "@/lib/qr/links";
 
 export async function createQrBatch(f: FormData): Promise<void> {
   const prefix = String(f.get("prefix") ?? "").trim();
@@ -24,25 +25,6 @@ export async function deleteQr(f: FormData): Promise<void> {
   redirect("/admin/qr");
 }
 
-// 每行 "标签 | 链接 | 备注(可选)";只写一段则当作 href,label 同值
-function parseLinks(raw: string): QrLink[] {
-  return raw
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((l) => {
-      const parts = l.split("|").map((p) => p.trim());
-      if (parts.length === 1) return { label: parts[0], href: parts[0] };
-      const [label, href, note] = parts;
-      return {
-        label: label || href || "链接",
-        href: href || "/",
-        note: note || undefined,
-      };
-    })
-    .filter((x) => x.href);
-}
-
 export async function saveQr(f: FormData): Promise<void> {
   const code = String(f.get("code") ?? "").trim();
   if (!code) redirect("/admin/qr");
@@ -56,6 +38,7 @@ export async function saveQr(f: FormData): Promise<void> {
     intro: String(f.get("intro") ?? ""),
     term: String(f.get("term") ?? ""),
     quote: String(f.get("quote") ?? ""),
+    frontArt: String(f.get("frontArt") ?? ""),
     links: parseLinks(String(f.get("links") ?? "")),
   });
   revalidatePath("/admin/qr");
