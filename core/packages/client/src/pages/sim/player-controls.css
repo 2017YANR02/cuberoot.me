@@ -26,7 +26,7 @@
   border-radius: 6px;
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 16px;
   line-height: 1.55;
   resize: none;
@@ -71,7 +71,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 15px;
   color: var(--muted-foreground);
 }
