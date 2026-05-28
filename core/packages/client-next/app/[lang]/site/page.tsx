@@ -160,7 +160,11 @@ function SitesPageInner() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   useDocumentTitle('网站导航', 'Sites Directory');
-  const admin = isAdmin();
+  // admin comes from the client-only auth store; gate on mount so SSR and the
+  // first client render agree (both non-admin) and don't trip a hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const admin = mounted && isAdmin();
 
   const params = useSearchParams();
   const router = useRouter();
