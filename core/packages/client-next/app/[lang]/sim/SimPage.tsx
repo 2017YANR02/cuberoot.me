@@ -40,8 +40,6 @@ import {
 import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
 import { FACE } from './cuber/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import TwistySection from '@/components/TwistySection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
@@ -866,8 +864,6 @@ export default function SimPage() {
         </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
         <div className="sim-spacer" />
-        <LangToggle variant="inline" />
-        <ThemeToggle />
       </header>
 
       <div className="sim-body">

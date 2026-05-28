@@ -14,7 +14,6 @@ import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import LangToggle from '@/components/LangToggle';
 import TwistySection from '@/components/TwistySection';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -129,7 +128,6 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
               <ArrowLeft size={14} /> {isZh ? '返回详情' : 'Back'}
             </Link>
           </div>
-          <LangToggle />
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>{isZh ? '需要登录才能提交另解。' : 'Login required to submit an alternative.'}</p>
@@ -149,7 +147,6 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
             <Link href={`/recon/${parentId}`} className="recon-back-link">
               <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
             </Link>
-            <LangToggle />
           </div>
           <h1>{isEditing ? t('recon.editAlternative') : t('recon.addAlternative')}</h1>
         </div>

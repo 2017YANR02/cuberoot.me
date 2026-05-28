@@ -26,7 +26,6 @@ import { Flag } from '@/components/Flag';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { listRecons } from '@/lib/recon-api';
 import './recon.css';
@@ -252,7 +251,6 @@ export default function ReconListPage() {
           </h1>
           <p className="recon-subtitle">{t('recon.subtitle')}</p>
         </div>
-        <LangToggle />
       </div>
 
       <div className="recon-toolbar">

@@ -18,8 +18,6 @@ import {
   Search, Eye, EyeOff, ThumbsUp, ThumbsDown, Flag as FlagIcon, X,
   Pencil, Trash2,
 } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import WcaAuth from '@/components/WcaAuth';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
@@ -458,8 +456,6 @@ export default function ColpiClient() {
             {hideOffensive ? <EyeOff size={14} /> : <Eye size={14} />}
             <span>{isZh ? '过滤' : 'Filter'}</span>
           </button>
-          <LangToggle variant="inline" />
-          <ThemeToggle />
           <WcaAuth />
         </div>
       </header>

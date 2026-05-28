@@ -19,7 +19,6 @@ import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import HeaderToggles from '@/components/HeaderToggles';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
@@ -8026,7 +8025,6 @@ export default function GroupTheoryPage() {
         {isIndex
           ? <HomeLink className="gt-back">← {lang === 'zh' ? '返回' : 'home'}</HomeLink>
           : <Link href="/math/group" className="gt-back">← {lang === 'zh' ? '目录' : 'contents'}</Link>}
-        <HeaderToggles className="gt-topbar-right" />
       </div>
 
       {isIndex && (

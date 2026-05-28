@@ -22,7 +22,6 @@ import type { PenaltyType } from './_components/engine/constants';
 import HistoryPanel from './_components/HistoryPanel';
 import VsHistoryPanel from './_components/VsHistoryPanel';
 import { MilestoneToast } from './_components/AdvancedFeatures';
-import LangToggle from '@/components/LangToggle';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
@@ -911,7 +910,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 
         {/* 语言 */}
         <div className="settings-group">
-          <LangToggle className="settings-action-btn" />
         </div>
       </div>
     </div>

@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import { getLangQuery } from '@/i18n/i18n-client';
 import { ABOUT_REGISTRY } from './_lib/registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './_lib/types';
@@ -166,7 +165,6 @@ export default function WcaStatAboutPage() {
             <ArrowLeft size={16} />
             <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
           </Link>
-          <HeaderToggles />
         </div>
         <main className="wcaa-main">
           <div className="wcaa-missing">
@@ -186,7 +184,6 @@ export default function WcaStatAboutPage() {
           <ArrowLeft size={16} />
           <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
         </Link>
-        <HeaderToggles />
       </div>
 
       <main className="wcaa-main">

@@ -16,7 +16,6 @@ import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 
 import Fuse from 'fuse.js';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isAdmin } from '@/lib/auth-store';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
@@ -342,8 +341,6 @@ function SitesPageInner() {
             </button>
           ))}
         </nav>
-
-        <LangToggle variant="inline" className="sites-lang" />
       </aside>
 
       <main className="sites-main">

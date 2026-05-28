@@ -37,7 +37,6 @@ import {
   Axis,
   type ICubeOptions,
 } from '@cuberoot/visualcube';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import { PuzzleSVG, type PuzzleKind } from '@/components/PuzzleSVG';
@@ -943,7 +942,6 @@ function VisualCubeEditorPageInner() {
           <Link className="vc-header-link" href="/visualcube/stages">
             {t('Stage 速查', 'Stages')}
           </Link>
-          <LangToggle variant="inline" />
         </div>
       </header>
 

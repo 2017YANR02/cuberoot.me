@@ -10,7 +10,6 @@ import { Flag } from '@/components/Flag';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
-import LangToggle from '@/components/LangToggle';
 import Paginator from '@/components/wca-stats/Paginator';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
@@ -116,7 +115,6 @@ function HistoricalRanksPageInner() {
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
             <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
           </Link>
-          <LangToggle />
         </div>
         <h1>{isZh ? '历史排名' : 'Historical Ranks'}</h1>
         <p className="wse-subtitle">

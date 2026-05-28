@@ -38,7 +38,6 @@ import SolutionView from '@/components/SolutionView';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import LangToggle from '@/components/LangToggle';
 import { displayCuberName } from '@/lib/name-utils';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -821,7 +820,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </Link>
             <h1>{isZh ? '提交复盘' : 'Submit Reconstruction'}</h1>
           </div>
-          <LangToggle />
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>
@@ -847,7 +845,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="submit-header">
         <div className="detail-header">
           <div className="detail-header-nav">
-            <LangToggle />
             <button type="button" className="recon-btn recon-btn--ghost" onClick={() => logout()} title={authUser.wcaId}>
               <LogOut size={14} /> {displayCuberName(authUser.name, isZh)}
             </button>

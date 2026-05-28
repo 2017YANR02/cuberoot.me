@@ -9,7 +9,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { VisualCube } from '@/components/VisualCube';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 interface StageEntry {
@@ -257,7 +256,6 @@ export default function VisualCubeStagesPage() {
           <Link className="vcs-link" href="/visualcube">
             {isZh ? '编辑器' : 'Editor'}
           </Link>
-          <LangToggle variant="inline" />
         </div>
       </header>
 

@@ -15,7 +15,6 @@ import {
 import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
 import { buildReconAttemptMap } from '@/lib/recon-attempt-lookup';
-import HeaderToggles from '@/components/HeaderToggles';
 import PersonHero from '@/components/persons/sections/PersonHero';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
 import PersonTabs from '@/components/persons/sections/PersonTabs';
@@ -99,7 +98,6 @@ function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId
         <span>{t('选手搜索', 'Search')}</span>
       </Link>
       <div className="wp-header-right">
-        <HeaderToggles />
         {wcaId && (
           <a
             href={`https://www.worldcubeassociation.org/persons/${wcaId}`}

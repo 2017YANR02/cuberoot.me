@@ -9,7 +9,6 @@ import { ArrowLeft, Flag } from 'lucide-react';
 import { ALG_PUZZLES, getAlgSetMeta, loadAlg, type AlgPuzzle } from '@cuberoot/shared';
 import { useTrainerStore } from '@/lib/trainer-store';
 import { CaseTreePicker } from '../../_components/trainer-components';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../trainer.css';
 
@@ -73,8 +72,6 @@ export default function TrainerSelectPage() {
         >
           <Flag size={14} /> {isZh ? '开始训练' : 'Start Training'} ({selectedSet.size})
         </button>
-        <div className="trainer-spacer" />
-        <LangToggle variant="inline" />
       </div>
 
       {cases.length === 0 ? (

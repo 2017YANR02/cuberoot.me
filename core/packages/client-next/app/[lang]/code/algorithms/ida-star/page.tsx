@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
@@ -581,7 +580,6 @@ export default function IdaStarPage() {
         <div className="algo-page-inner">
           <div className="algo-page-topbar">
             <Link href="/code/algorithms" className="algo-page-back">← /code/algorithms</Link>
-            <LangToggle variant="inline" />
           </div>
 
           <header className="algo-page-head">

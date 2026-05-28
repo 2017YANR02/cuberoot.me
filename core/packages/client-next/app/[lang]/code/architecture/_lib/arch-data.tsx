@@ -189,8 +189,8 @@ export const TRACER_PATTERNS: Pattern[] = [
     lit: ['browser', 'edge', 'spa'],
     cacheHit: false,
     eta: '~200ms 首次  ·  完全不打 API',
-    zh: { label: '打开首页', detail: 'nginx 反代 Next standalone (:3002), Next App Router 服务端渲染 LandingPage 并 stream HTML 回浏览器, 客户端 hydrate。一个 API 都不调。' },
-    en: { label: 'Open home', detail: 'nginx reverse-proxies Next standalone (:3002), Next App Router server-renders LandingPage and streams HTML back; client hydrates. Zero API calls.' },
+    zh: { label: '打开首页', detail: 'LandingPage 是构建期静态预渲染 (SSG) 的 HTML, 由 CDN / nginx 直出, 不进 Next 函数; 客户端 hydrate 后再 client 端取动态数据 (近期比赛 / 纪录)。' },
+    en: { label: 'Open home', detail: 'LandingPage is build-time static (SSG) HTML served straight from CDN / nginx — no Next function runs; the client hydrates and then fetches dynamic data (upcoming comps / records) client-side.' },
   },
   {
     id: 'recon-fresh',
@@ -228,6 +228,20 @@ export interface TLEntry {
   en: { title: string; body: string; expand: string };
 }
 export const TIMELINE: TLEntry[] = [
+  {
+    date: '2026-05-28',
+    tag: 'infra',
+    zh: {
+      title: 'Vercel 用量优化: 页面静态化 (SSG) + 大文件不过函数',
+      body: '固定页从动态 SSR 改成构建期静态预渲染 (SSG, ~128 组走 CDN 零计算);/stats/* 大 JSON 在 Vercel 改 307 重定向到 static.cuberoot.me (不再经函数中转, 顺带消掉大文件 502);首页链接关预取。函数调用 / CPU / 内存预期降到约 1/4。',
+      expand: '根因: 根 layout 渲染时 await cookies()/headers() 读语言, 把整树钉成动态, 每个页面每次访问都进 serverless 函数。改法: 语言归属下移到 [lang]/layout (I18nProvider initialLang + generateStaticParams en/zh), 根 layout 去动态 API 转静态, html[lang] 由内联脚本按 URL 设。踩到两个静态化坑: (1) react-i18next 默认 useSuspense + 异步 init, prerender 时 useTranslation suspend → 空 HTML, 改 initImmediate:false + useSuspense:false; (2) 全局挂载的 LangToggle 在 render 调 useSearchParams, 让每页 BAILOUT_TO_CLIENT_SIDE_RENDERING 出空壳, 改成 click 时读 window.location.search。~18 个查询驱动页 (WCA 统计表 / 打乱工具 / sim 等) 维持 SSG client-shell, 数据仍 client 端从 api.cuberoot.me 取。',
+    },
+    en: {
+      title: 'Vercel usage optimization: static prerender (SSG) + offload big files from functions',
+      body: 'Fixed pages move from per-request SSR to build-time static prerender (SSG; ~128 route-groups served from CDN, zero compute). On Vercel, /stats/* big JSON now 307-redirects to static.cuberoot.me (no longer proxied through a function, also clearing the big-file 502s); landing links drop prefetch. Function invocations / CPU / memory expected to drop to ~1/4.',
+      expand: 'Root cause: the root layout did await cookies()/headers() in render to resolve locale, opting the whole tree into dynamic rendering — every page hit a serverless function on each request. Fix: move locale ownership to [lang]/layout (I18nProvider initialLang + generateStaticParams en/zh), strip dynamic APIs from the root layout, set html[lang] via an inline script from the URL. Two SSG gotchas: (1) react-i18next defaults to useSuspense + async init, so useTranslation suspended during prerender → empty HTML; fixed with initImmediate:false + useSuspense:false. (2) the globally-mounted LangToggle called useSearchParams at render, forcing every page to BAILOUT_TO_CLIENT_SIDE_RENDERING (empty shell); switched to reading window.location.search on click. ~18 query-driven pages stay SSG client-shells; data still fetched client-side from api.cuberoot.me.',
+    },
+  },
   {
     date: '2026-05-27',
     tag: 'migration',

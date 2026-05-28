@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { X as XIcon, HelpCircle } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import { Flag } from '@/components/Flag';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -80,8 +79,6 @@ export default function CompIndexPage() {
 
   return (
     <div className="comp-index-page">
-      <HeaderToggles className="comp-top-bar" />
-
       <h1 className="comp-page-title">
         {isZh ? 'WCA 比赛' : 'WCA Competitions'}
         <Link

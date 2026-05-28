@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
@@ -142,7 +141,6 @@ function RecordsPageInner() {
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
             <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
           </Link>
-          <LangToggle />
         </div>
         <h1>{isZh ? '纪录' : 'Records'}</h1>
         <p className="wse-subtitle">

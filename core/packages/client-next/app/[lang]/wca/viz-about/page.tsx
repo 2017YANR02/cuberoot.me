@@ -6,7 +6,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './viz_about.css';
 
@@ -37,7 +36,6 @@ export default function VizAboutPage() {
           <ArrowLeft size={16} />
           <span>{t('返回成绩分布', 'Back to Distribution')}</span>
         </Link>
-        <LangToggle />
       </div>
 
       <main className="va-main">

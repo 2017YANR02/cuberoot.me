@@ -22,8 +22,6 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText, Sparkles } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
@@ -60,10 +58,6 @@ export default function UnitDistancePage() {
           <ArrowLeft size={16} />
           <span>{t('返回 数学', 'Back to Math')}</span>
         </Link>
-        <div className="ud-header-right">
-          <LangToggle variant="inline" />
-          <ThemeToggle />
-        </div>
       </header>
 
       <main className="ud-main">

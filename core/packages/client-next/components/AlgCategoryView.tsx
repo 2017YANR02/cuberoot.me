@@ -21,8 +21,6 @@ import {
   type AlgCase, type AlgFile, type AlgPuzzle,
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { CaseThumb } from '@/components/CaseThumb';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -285,8 +283,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         {data && !showSubgroupPicker && (
           <span className="alg-cat-count">{visibleCases.length} {isZh ? '个' : 'cases'}</span>
         )}
-        <ThemeToggle className="alg-lang-toggle" />
-        <LangToggle variant="inline" />
       </div>
 
       {data && !showSubgroupPicker && (() => {

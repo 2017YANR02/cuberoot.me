@@ -10,8 +10,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 interface Card {
@@ -59,10 +57,6 @@ export default function MathLandingPage() {
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
         <h1>{t('数学', 'Math')}</h1>
-        <div className="hub-toggles">
-          <LangToggle variant="inline" />
-          <ThemeToggle />
-        </div>
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (

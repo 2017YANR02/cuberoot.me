@@ -132,5 +132,12 @@
     "zh": "/wca 各子页 + 选手详情页 UI/概念参考",
     "en": "UI / concept reference for /wca sub-pages + person detail page",
     "long_en": "UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排名 / 当年成绩排名 / 参赛届别排名 / 项目成功率 / 全项目达成 / 全项目排名)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
+  },
+  {
+    "name": "rullerzhou-afk/clawd-on-desk",
+    "url": "https://github.com/rullerzhou-afk/clawd-on-desk",
+    "zh": "桌面 AI 桌宠;右下角 Clawd 像素螃蟹的动画与交互移植自此(Clawd 形象版权归 Anthropic,非官方粉丝作品)",
+    "en": "Desktop AI pet; the corner Clawd pixel crab ports its animations + interactions (Clawd character © Anthropic; unofficial fan use)",
+    "long_en": "desktop pixel pet that reacts to AI coding agents; its Clawd crab artwork + the idle eye-tracking / state-machine interaction model are ported into the site-wide web desk pet. The Clawd character is the property of Anthropic — this is an unofficial fan use."
   }
 ]

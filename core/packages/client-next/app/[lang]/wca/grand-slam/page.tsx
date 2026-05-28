@@ -19,7 +19,6 @@ import { loadFlagData } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 
@@ -89,7 +88,6 @@ function GrandSlamPageInner() {
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
             <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
           </Link>
-          <LangToggle />
         </div>
         <h1 className="wse-title-row">
           {isZh ? '大满贯' : 'Grand Slam'}

@@ -13,8 +13,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
-import LangToggle from '@/components/LangToggle';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 interface Card {
@@ -68,10 +66,6 @@ export default function ScrambleHubPage() {
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
         <h1>{t('打乱', 'Scramble')}</h1>
-        <div className="hub-toggles">
-          <LangToggle variant="inline" />
-          <ThemeToggle />
-        </div>
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (

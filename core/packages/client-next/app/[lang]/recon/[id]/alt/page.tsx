@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import LangToggle from '@/components/LangToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../recon.css';
 
@@ -25,7 +24,6 @@ export default function AltSubmitPage() {
           </Link>
           <h1>{isZh ? '提交另解' : 'Submit Alternative'}</h1>
         </div>
-        <LangToggle />
       </div>
       <div className="recon-detail-stub" style={{ padding: 24 }}>
         <p>
