@@ -18,8 +18,8 @@ const DEFAULT_QUOTES = [
 
 // 正面艺术背景图可选项(后台缩略图选择器 + 卡片轮换共用同一份注册表)
 export const FRONT_ARTS: { src: string; label: string }[] = [
-  { src: "/card/front-ink.png", label: "流彩泼墨" },
-  { src: "/card/front-city.png", label: "微缩世界" },
+  { src: "/card/front-ink.webp", label: "流彩泼墨" },
+  { src: "/card/front-city.webp", label: "微缩世界" },
 ];
 
 // 跳转码目标路径 → 中文目的地(背面文案用,告诉扫码人到底去哪)
