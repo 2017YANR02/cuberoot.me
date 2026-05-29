@@ -1,6 +1,6 @@
 # Scramble samples — std / xcross / Y / bin 2
-# Population in this bin: 22
-# Samples listed: 22 (all entries in this bin)
+# Population in this bin: 23
+# Samples listed: 23 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-05-29
 # Columns: id,scramble,bottom_color
@@ -27,3 +27,4 @@
 4240862001,F2 D R2 D B2 D' U F2 R' D' L R2 D' B D F2 U' B2 R',Y
 4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y
 5240283001,B' L D2 F2 L' F2 L2 R F2 D2 L2 B2 F R' U R' U' F' R2,Y
+5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y
