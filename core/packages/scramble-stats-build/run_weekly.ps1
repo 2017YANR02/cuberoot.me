@@ -10,7 +10,7 @@
 #       -> git commit&push + scp static。任一步失败即停 (ErrorActionPreference=Stop)。
 [CmdletBinding()]
 param(
-  [switch]$DryRun,        # 不下载(配 -SourceCsv)、不发布
+  [switch]$DryRun,        # 严格只读: 算新增规模即停, 不碰任何 master / 不解算 / 不发布
   [string]$SourceCsv,     # 测试源 (input 形状 csv) 替代下载 export
   [switch]$NoPublish,     # 跑完只更新本地 std.csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve      # 调试: 复用上次 solver 产出
@@ -45,6 +45,7 @@ function AppendData($master,$src,$skipHeader){
 Step '1/6 增量取数 (results export -> 新打乱)'
 $incrArgs = @('run','--project',$ScrambleDir,'python',(Join-Path $ScrambleDir 'incremental.py'))
 if($SourceCsv){ $incrArgs += @('--source-csv',$SourceCsv) }
+if($DryRun){ $incrArgs += '--dry-run' }   # 严格只读: 不覆写 competitions.tsv 等 master
 & uv @incrArgs
 if($LASTEXITCODE -ne 0){ throw 'incremental.py 失败' }
 
@@ -103,6 +104,7 @@ if($NoPublish){
   if(git -C $RepoRoot status --porcelain stats/scramble){
     git -C $RepoRoot commit -m "chore(scramble-stats): weekly cross-distribution refresh ($stamp, +$nNew scrambles)"
     git -C $RepoRoot push origin main
+    if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
     scp -r (Join-Path $RepoRoot 'stats\scramble') "${StaticHost}:${StaticDest}/"
     if($LASTEXITCODE -ne 0){ throw 'scp static 失败' }
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
