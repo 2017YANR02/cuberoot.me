@@ -33,16 +33,42 @@ export class CrossSolverWasm {
     solve_moves(scramble: string, variant: number, face: number, extra: number, cap: number): string;
 }
 
+/**
+ * F2LEO / Pseudo F2LEO 浏览器内求解(count-only)。小表:复用 mt_edge2/edge4/corn/edge
+ * + pt_cross(f2leo),pseudo 另现场建 4-seed cross + D-AUF xcross 剪枝表(~18MB,构造一次)。
+ * 不需要 pt_cross_C4E0 / huge 表。
+ */
+export class F2leoSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * 5 张表:pt_cross(f2leo cross 剪枝)+ mt_edge2/edge4/corn/edge(两变体共用)。
+     */
+    constructor(pt_cross: Uint8Array, mt_edge2: Uint8Array, mt_edge4: Uint8Array, mt_corn: Uint8Array, mt_edge: Uint8Array);
+    /**
+     * F2LEO 24 值:[cross×6, xcross×6, xxcross×6, xxxcross×6](6 = 已折叠 z0/z2/z3/z1/x3/x1)。
+     */
+    solve_f2leo(scramble: string): Uint32Array;
+    /**
+     * Pseudo F2LEO 24 值,顺序同上。
+     */
+    solve_pseudo_f2leo(scramble: string): Uint32Array;
+}
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
     readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
+    readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
+    readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

@@ -111,6 +111,75 @@ export class CrossSolverWasm {
     }
 }
 if (Symbol.dispose) CrossSolverWasm.prototype[Symbol.dispose] = CrossSolverWasm.prototype.free;
+
+/**
+ * F2LEO / Pseudo F2LEO 浏览器内求解(count-only)。小表:复用 mt_edge2/edge4/corn/edge
+ * + pt_cross(f2leo),pseudo 另现场建 4-seed cross + D-AUF xcross 剪枝表(~18MB,构造一次)。
+ * 不需要 pt_cross_C4E0 / huge 表。
+ */
+export class F2leoSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        F2leoSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_f2leosolverwasm_free(ptr, 0);
+    }
+    /**
+     * 5 张表:pt_cross(f2leo cross 剪枝)+ mt_edge2/edge4/corn/edge(两变体共用)。
+     * @param {Uint8Array} pt_cross
+     * @param {Uint8Array} mt_edge2
+     * @param {Uint8Array} mt_edge4
+     * @param {Uint8Array} mt_corn
+     * @param {Uint8Array} mt_edge
+     */
+    constructor(pt_cross, mt_edge2, mt_edge4, mt_corn, mt_edge) {
+        const ptr0 = passArray8ToWasm0(pt_cross, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passArray8ToWasm0(mt_edge4, wasm.__wbindgen_malloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passArray8ToWasm0(mt_edge, wasm.__wbindgen_malloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ret = wasm.f2leosolverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4);
+        this.__wbg_ptr = ret;
+        F2leoSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * F2LEO 24 值:[cross×6, xcross×6, xxcross×6, xxxcross×6](6 = 已折叠 z0/z2/z3/z1/x3/x1)。
+     * @param {string} scramble
+     * @returns {Uint32Array}
+     */
+    solve_f2leo(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.f2leosolverwasm_solve_f2leo(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * Pseudo F2LEO 24 值,顺序同上。
+     * @param {string} scramble
+     * @returns {Uint32Array}
+     */
+    solve_pseudo_f2leo(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.f2leosolverwasm_solve_pseudo_f2leo(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+}
+if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -136,6 +205,9 @@ function __wbg_get_imports() {
 const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_crosssolverwasm_free(ptr, 1));
+const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
 
 function getArrayU32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
