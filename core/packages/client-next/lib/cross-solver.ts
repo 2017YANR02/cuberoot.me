@@ -112,6 +112,11 @@ function parseScramble(scramble: string): number[] | null {
   return out;
 }
 
+/** True if every token is a face HTM move (no wide moves / rotations). */
+export function isHtmScramble(scramble: string): boolean {
+  return parseScramble(scramble) !== null;
+}
+
 export interface CrossSolution {
   length: number;
   moves: string[];

@@ -99,6 +99,15 @@
   color: var(--rp-text);
   font-weight: 600;
 }
+.region-picker-selected .region-picker-remove {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+.region-picker-selected:hover .region-picker-remove {
+  opacity: 1;
+  color: var(--accent);
+}
 .region-picker-search {
   display: flex;
   align-items: center;

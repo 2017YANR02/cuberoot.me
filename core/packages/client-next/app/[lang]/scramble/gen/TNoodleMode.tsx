@@ -51,6 +51,7 @@ import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
 import CompCrossAnalysis from './CompCrossAnalysis';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
+import { useCompSteps, normScramble } from './useCompSteps';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -73,6 +74,8 @@ function readShowCross(): boolean {
   return localStorage.getItem(SHOW_CROSS_KEY) !== '0';
 }
 const NO_SCRAMBLES: string[] = [];
+// 用 3x3 打乱、可做十字步数分析的项目(跳过 333mbf 多盲:一把多方块无法逐方块对应)。
+const FAMILY_333 = new Set(['333', '333oh', '333ft', '333fm', '333bf']);
 
 // ── WCA load helpers (was ImportMode.tsx) ─────────────────────────────────
 const ROUND_INDEX: Record<string, number> = {
@@ -650,24 +653,44 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     () => Array.from(new Set((sheets ?? []).map((s) => s.event))),
     [sheets],
   );
-  // 3x3 cross-step analysis (XC Master 风):全 333 sheets 的最优十字步数。
-  const sheets333 = useMemo(() => (sheets ?? []).filter((s) => s.event === '333'), [sheets]);
-  const scrambles333 = useMemo(() => {
+  // 3x3 系列(333/oh/ft/fm/bf)cross-step 分析:跟随当前事件视图。
+  const activeView = activeEventOf(viewedEvent, eventsInSheets);
+  const is333Family = FAMILY_333.has(activeView ?? '');
+  const analysisScrambles = useMemo(() => {
     const out: string[] = [];
+    if (!is333Family) return out;
     const seen = new Set<string>();
-    for (const sh of sheets333) for (const a of sh.attempts) {
-      if (a.scramble && !seen.has(a.scramble)) { seen.add(a.scramble); out.push(a.scramble); }
+    for (const sh of sheets ?? []) {
+      if (sh.event !== activeView) continue;
+      for (const a of sh.attempts) {
+        if (a.scramble && !seen.has(a.scramble)) { seen.add(a.scramble); out.push(a.scramble); }
+      }
     }
     return out;
-  }, [sheets333]);
+  }, [sheets, activeView, is333Family]);
   const [showCross, setShowCrossState] = useState<boolean>(readShowCross);
   const setShowCross = (v: boolean) => {
     setShowCrossState(v);
     try { localStorage.setItem(SHOW_CROSS_KEY, v ? '1' : '0'); } catch { /* swallow */ }
   };
-  // 关闭时传空数组 → hook 不建表、不计算,首屏纯打乱表零开销。
-  const cross333 = useCrossMap(showCross ? scrambles333 : NO_SCRAMBLES);
-  const activeView = activeEventOf(viewedEvent, eventsInSheets);
+  const [includeExtras, setIncludeExtras] = useState(true);
+  // 关闭 / 非 333 系列时传空 → hook 不建表、零开销。
+  const crossA = useCrossMap(showCross && is333Family ? analysisScrambles : NO_SCRAMBLES);
+  // 预计算步数表(历史比赛)共享给顶部分析 + 逐行徽标,只 fetch 一次。
+  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null);
+  // 逐行十字徽标:HTM 项目(333/oh/ft/fm)优先实时值,保证徽标数字与「查看白底解法」
+  // 解长一致;BF 带宽层定向实时解析不了,退回预计算的十字(comp_steps 前 6 列,正确)。
+  const rowCrossMap = useMemo(() => {
+    const m = new Map<string, number[]>();
+    if (!(showCross && is333Family)) return m;
+    for (const s of analysisScrambles) {
+      const d = crossA.map.get(s);
+      if (d) { m.set(s, d); continue; }
+      const pv = compSteps.map?.get(normScramble(s));
+      if (pv) m.set(s, pv.slice(0, 6));
+    }
+    return m;
+  }, [showCross, is333Family, analysisScrambles, compSteps.map, crossA.map]);
   const sheetsInEvent = sheets ? sheets.filter((s) => s.event === activeView) : [];
   const roundIdxsInEvent = useMemo(
     () => Array.from(new Set(sheetsInEvent.map((s) => s.roundIdx))).sort((a, b) => a - b),
@@ -999,7 +1022,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
       {loaded && activeView && (
         <>
-          {activeView === '333' && sheets333.length > 0 && (
+          {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
               <PillToggle
                 value={showCross}
@@ -1008,10 +1031,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 offLabel={t('十字分析', 'Cross analysis')}
                 ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
               />
+              {showCross && (
+                <PillToggle
+                  value={includeExtras}
+                  onChange={setIncludeExtras}
+                  onLabel={t('备打', 'Extras')}
+                  offLabel={t('备打', 'Extras')}
+                  ariaLabel={t('含备用打乱', 'Include extra scrambles')}
+                />
+              )}
             </div>
           )}
-          {activeView === '333' && sheets333.length > 0 && showCross && (
-            <CompCrossAnalysis sheets333={sheets333} scrambles={scrambles333} crossMap={cross333.map} ready={cross333.ready} t={t} />
+          {is333Family && sheetsInEvent.length > 0 && showCross && (
+            <CompCrossAnalysis sheets333={sheetsInEvent} scrambles={analysisScrambles} crossMap={crossA.map} ready={crossA.ready} pre={compSteps} includeExtras={includeExtras} t={t} />
           )}
           <div className="gen-tn-sheets">
             {visibleSheets.map((sh, i) => (
@@ -1021,7 +1053,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 isZh={isZh}
                 t={t}
                 showPreview={showPreview}
-                crossMap={showCross ? cross333.map : undefined}
+                crossMap={showCross && is333Family ? rowCrossMap : undefined}
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}
                 sq1Colors={!loadedCompId && sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
                 megaColors={!loadedCompId && sh.event === 'minx' ? events[sh.event]?.colors : undefined}

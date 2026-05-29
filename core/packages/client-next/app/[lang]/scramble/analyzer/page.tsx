@@ -67,7 +67,7 @@ const ROUND_LABEL: Record<string, { zh: string; en: string }> = {
   '3': { zh: '复赛', en: 'Semi-Final' }, g: { zh: '第三轮', en: 'Round 3' },
   c: { zh: '决赛', en: 'Final' }, f: { zh: '决赛', en: 'Final' }, b: { zh: 'B 决赛', en: 'B-Final' },
 };
-interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string }
+interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string; id?: string }
 interface WcaFile { color: string; bins: Record<string, WcaEntry[]> }
 
 // cubing.js's search worker normally bootstraps via `import.meta.resolve(...)`
@@ -540,6 +540,7 @@ function AnalyzePageInner() {
             {wcaMeta.g ? (lang === 'zh' ? ` ${wcaMeta.g} 组` : ` Group ${wcaMeta.g}`) : ''}
             {` #${wcaMeta.n}`}
           </span>
+          {wcaMeta.id && <span className="analyze-wca-id">{t('打乱序号', 'Scramble')} {wcaMeta.id}</span>}
           {wcaMeta.e !== '333' && <span className="analyze-wca-event">{wcaMeta.e}</span>}
           {crossSol && (
             <span className="analyze-wca-cross">
