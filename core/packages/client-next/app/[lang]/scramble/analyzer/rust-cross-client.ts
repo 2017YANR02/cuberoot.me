@@ -78,6 +78,25 @@ export function createRustCrossPool(maxSize: number): RustCrossPool {
     pw.w.postMessage(job.msg);
   }
 
+  // worker 不可用:标死,把在手任务重排;全死则让 ready / 排队任务带真实错误失败,
+  // 否则把任务交给空闲 worker 或按需预热,池继续可用。
+  function fail(pw: PoolWorker, err: Error, terminate = false) {
+    if (pw.dead) return;
+    pw.dead = true;
+    loading = false;
+    if (terminate) { try { pw.w.terminate(); } catch { /* */ } }
+    const job = pw.job;
+    pw.job = null;
+    if (job) queue.unshift(job);
+    if (all.every((p) => p.dead)) {
+      if (!anyReady) rejectReady(err);
+      while (queue.length) queue.shift()!.reject(err);
+    } else {
+      while (queue.length && idle.length) dispatch(idle.pop()!, queue.shift()!);
+      maybeSpawn();
+    }
+  }
+
   // ready 空闲 worker 领下一个排队任务,否则归 idle;顺带按需串行预热。
   function assign(pw: PoolWorker) {
     if (pw.dead) return;
@@ -108,33 +127,28 @@ export function createRustCrossPool(maxSize: number): RustCrossPool {
         assign(pw);
         return;
       }
+      if (m.type === 'error') {
+        const job = pw.job;
+        pw.job = null;
+        if (job) { job.reject(new Error(m.error)); assign(pw); return; } // 求解错误,worker 仍存活
+        // 无 job 的 error = init 阶段失败(取表 / WASM 实例化),worker 不可用
+        fail(pw, new Error(m.error || 'init failed'));
+        return;
+      }
       const job = pw.job;
       pw.job = null;
-      if (m.type === 'error') {
-        if (job) job.reject(new Error(m.error)); // 求解错误,worker 仍存活
-      } else if (job) {
+      if (job) {
         if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
         else if (m.type === 'moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
     };
-    // 致命错误(加载失败等):标死,把在手任务重排,无活 worker 时让排队任务/ready 失败。
+    // 致命错误(脚本加载失败 / WASM 内存被浏览器杀掉等,onerror 常无 message):标死处理。
     w.onerror = (e) => {
-      pw.dead = true;
-      loading = false;
-      const job = pw.job;
-      pw.job = null;
-      if (job) queue.unshift(job);
-      if (all.every((p) => p.dead)) {
-        const err = new Error(e.message || 'worker error');
-        if (!anyReady) rejectReady(err);
-        while (queue.length) queue.shift()!.reject(err);
-      } else {
-        // 还有活 worker:把任务塞给空闲者或预热
-        while (queue.length && idle.length) dispatch(idle.pop()!, queue.shift()!);
-        maybeSpawn();
-      }
+      const detail = e.message || (e.filename ? `load failed: ${e.filename}` : '')
+        || 'worker crashed (可能内存不足 / out of memory)';
+      fail(pw, new Error(detail), true);
     };
     w.postMessage(initMsg);
   }
