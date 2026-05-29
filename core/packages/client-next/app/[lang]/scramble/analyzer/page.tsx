@@ -28,6 +28,7 @@ import {
   type WorkerVariant,
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
+import RustCrossSection from './RustCrossSection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './analyze.css';
 
@@ -651,6 +652,8 @@ function AnalyzePageInner() {
           </div>
         </div>
       )}
+
+      <RustCrossSection scramble={scramble} lang={lang} />
 
       <footer className="analyze-footer">
         {t('算法移植自', 'Algorithm ported from')}{' '}
