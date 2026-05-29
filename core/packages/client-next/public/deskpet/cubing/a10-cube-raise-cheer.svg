@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a10 Celebration #2: cube-raise-cheer
+       T2 2.5D vertical-axis spin. Clawd holds the solved cube at belly, then on
+       the cheer beat RAISES it up (chest height, never above head for long) while
+       it spins about a vertical axis: a front face narrows to 0 as the next face
+       widens in, cycling WCA colours white->green->yellow->blue->white. Two right
+       faces share the vertical mid-edge, so it reads as a real 3D spin. Then the
+       cube lowers back to belly. Side-to-side happy step + confetti burst on raise.
+       8s seamless loop. -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: shadow-rc 8s infinite ease-in-out;
+      }
+      .stepper {
+        transform-box: view-box;
+        transform-origin: 7.5px 15px;
+        animation: step-rc 8s infinite ease-in-out;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: breathe-rc 8s infinite ease-in-out;
+      }
+      .arm-l { transform-box: fill-box; transform-origin: 100% 50%; animation: armL-rc 8s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 0% 50%;   animation: armR-rc 8s infinite ease-in-out; }
+      .eyes-rect  { animation: eyesRect-rc  8s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyesSmile-rc 8s infinite step-end; }
+
+      /* the whole cube rig raises then lowers */
+      .cube-rig {
+        transform-box: view-box;
+        transform-origin: 7.5px 12px;
+        animation: raise-rc 8s infinite cubic-bezier(.34,1.2,.64,1);
+      }
+      /* faceA = front face, faceB = right side face; both hinge at the cube's
+         RIGHT edge (x=10.5). Pivot is baked into the transform
+         (translate-scale-translate about x=10.5) because librsvg does not honour
+         transform-box:view-box origin. faceA's fill recolours green->blue so the
+         spin reads as more than two solved faces coming around. */
+      .faceA { animation: faceA-rc 8s infinite linear; }
+      .faceB { animation: faceB-rc 8s infinite linear; }
+      .faceA-fill { animation: fillA-rc 8s infinite step-end; }
+      .faceB-fill { animation: fillB-rc 8s infinite step-end; }
+
+      .confetti { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+      .k1 { animation: conf-rc 8s infinite ease-in; }
+      .k2 { animation: conf-rc 8s infinite ease-in; animation-delay: -1.3s; }
+      .k3 { animation: conf-rc 8s infinite ease-in; animation-delay: -2.6s; }
+      .k4 { animation: conf-rc 8s infinite ease-in; animation-delay: -3.9s; }
+      .k5 { animation: conf-rc 8s infinite ease-in; animation-delay: -5.2s; }
+      .k6 { animation: conf-rc 8s infinite ease-in; animation-delay: -6.5s; }
+
+      @keyframes shadow-rc {
+        0%, 100% { opacity: 0.5; transform: translateX(0) scaleX(1); }
+        25%      { opacity: 0.46; transform: translateX(-0.6px) scaleX(0.94); }
+        50%      { opacity: 0.5; transform: translateX(0) scaleX(1); }
+        75%      { opacity: 0.46; transform: translateX(0.6px) scaleX(0.94); }
+      }
+      /* gentle two-beat side step */
+      @keyframes step-rc {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        25%      { transform: translateX(-0.9px) rotate(-2deg); }
+        50%      { transform: translateX(0) rotate(0deg); }
+        75%      { transform: translateX(0.9px) rotate(2deg); }
+      }
+      @keyframes breathe-rc {
+        0%, 100% { transform: scale(1,1); }
+        18%      { transform: scale(0.99,1.012) translateY(-0.12px); }  /* lift on the raise */
+        50%      { transform: scale(1,1); }
+      }
+      /* arms lift the cube up during the raise (16-46%), back down after */
+      @keyframes armL-rc {
+        0%, 8%, 70%, 100% { transform: translate(2.0px,0.6px) rotate(34deg); }
+        20%, 44%          { transform: translate(1.4px,-2.6px) rotate(-8deg); }
+      }
+      @keyframes armR-rc {
+        0%, 8%, 70%, 100% { transform: translate(-2.0px,0.6px) rotate(-34deg); }
+        20%, 44%          { transform: translate(-1.4px,-2.6px) rotate(8deg); }
+      }
+      @keyframes eyesRect-rc  { 0%,13%{opacity:1;} 14%,60%{opacity:0;} 61%{opacity:1;} }
+      @keyframes eyesSmile-rc { 0%,13%{opacity:0;} 14%,60%{opacity:1;} 61%{opacity:0;} }
+
+      /* RAISE: belly(0) -> up ~3px (chest, brief) -> back to belly. Never lingers high. */
+      @keyframes raise-rc {
+        0%, 8%   { transform: translateY(0); }
+        24%, 40% { transform: translateY(-3px); }
+        56%, 100%{ transform: translateY(0); }
+      }
+      /* 2.5D spin about the cube's RIGHT edge (x=10.5). The front face squashes
+         to edge-on; the next face swings in from behind taking over the front;
+         fills recolour at the edge-on beats so the cube reads as continuously
+         turning through fresh solved faces. faceA carries the ODD reveals
+         (green, then blue), faceB carries the EVEN reveals (red, then yellow).
+         Pivot baked: translate(10.5) scaleX(s) translate(-10.5). 0%==100%. */
+      /* Revolving-door spin: faceA (green) and faceB (red) hand off with OVERLAP
+         so a coloured face is always present (no edge-on gap). The cube rotates
+         to reveal the right (red) face mid-loop, then rotates back to the green
+         front, so it reads as showing off two solved faces. Seamless: 0%==100%.
+         Each face also recolours mid-hidden so it reads as more than 2 faces. */
+      @keyframes faceA-rc {
+        0%   { transform: translate(10.5px,0) scaleX(1)    translate(-10.5px,0); }   /* green front */
+        22%  { transform: translate(10.5px,0) scaleX(0.04) translate(-10.5px,0); }   /* swung away */
+        62%  { transform: translate(10.5px,0) scaleX(0.04) translate(-10.5px,0); }   /* hidden (recolours to blue) */
+        84%  { transform: translate(10.5px,0) scaleX(1)    translate(-10.5px,0); }   /* blue front */
+        92%  { transform: translate(10.5px,0) scaleX(0.78) translate(-10.5px,0); }   /* recolour to green, easing */
+        100% { transform: translate(10.5px,0) scaleX(1)    translate(-10.5px,0); }   /* green front (loop start) */
+      }
+      @keyframes faceB-rc {
+        0%   { transform: translate(10.5px,0) scaleX(0.04) translate(-10.5px,0); }   /* hidden */
+        12%  { transform: translate(10.5px,0) scaleX(0.5)  translate(-10.5px,0); }   /* growing in as A shrinks */
+        34%  { transform: translate(10.5px,0) scaleX(1)    translate(-10.5px,0); }   /* red front */
+        56%  { transform: translate(10.5px,0) scaleX(0.5)  translate(-10.5px,0); }   /* shrinking as A blue grows */
+        74%  { transform: translate(10.5px,0) scaleX(0.04) translate(-10.5px,0); }   /* swung away */
+        100% { transform: translate(10.5px,0) scaleX(0.04) translate(-10.5px,0); }   /* hidden (loop start) */
+      }
+      /* fills recolour while the face is edge-on (invisible), so each emerging
+         face is a fresh solved colour. faceA: green (front 0%) then blue (front
+         70%); recolour to blue happens during its hidden window (~50%), and back
+         to green during the 80% edge-on so 100% starts green again. */
+      @keyframes fillA-rc {
+        0%, 30%   { fill: #00A04A; }  /* green (front at 0%) */
+        45%, 80%  { fill: #0E5FD9; }  /* blue (recoloured while hidden, front at 84%) */
+        90%, 100% { fill: #00A04A; }  /* green again for the loop start */
+      }
+      @keyframes fillB-rc {
+        0%, 100%  { fill: #E02029; }  /* red, the right side face */
+      }
+      @keyframes conf-rc {
+        0%   { opacity: 0; transform: translate(0,0) rotate(0deg); }
+        4%   { opacity: 1; }
+        100% { opacity: 0; transform: translate(var(--dx,2px), 17px) rotate(560deg); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3"  y="13" width="1" height="2"/>
+    <rect x="5"  y="13" width="1" height="2"/>
+    <rect x="9"  y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="stepper">
+    <g class="breathe">
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+      <rect class="arm-l" x="0"  y="9" width="2" height="2" fill="#DE886D"/>
+      <rect class="arm-r" x="13" y="9" width="2" height="2" fill="#DE886D"/>
+
+      <g class="eyes-rect" fill="#000000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+
+      <!-- ===== spinning cube cradled at belly (lowered) / chest (raised) =====
+           Cube spans x 4.5..10.5, hinge at the RIGHT edge (x=10.5). The front
+           face (faceA) is a full 3x3 that squashes toward the hinge as it spins
+           away; the side face (faceB) grows in from the hinge. Both 3x3 grids
+           (vertical + horizontal sticker gaps). Fills recolour at the edge-on
+           beat so each emerging face is a fresh solved colour. -->
+      <g class="cube-rig">
+        <rect x="4.4" y="9.7" width="6.2" height="4.9" fill="#0e0e12"/>
+        <!-- faceB (side) drawn first, behind; grows from right hinge -->
+        <g class="faceB">
+          <g class="faceB-fill" fill="#E02029">
+            <rect x="4.7" y="9.95" width="1.75" height="1.35"/>
+            <rect x="6.55" y="9.95" width="1.75" height="1.35"/>
+            <rect x="8.4" y="9.95" width="2.0"  height="1.35"/>
+            <rect x="4.7" y="11.45" width="1.75" height="1.35"/>
+            <rect x="6.55" y="11.45" width="1.75" height="1.35"/>
+            <rect x="8.4" y="11.45" width="2.0"  height="1.35"/>
+            <rect x="4.7" y="12.95" width="1.75" height="1.35"/>
+            <rect x="6.55" y="12.95" width="1.75" height="1.35"/>
+            <rect x="8.4" y="12.95" width="2.0"  height="1.35"/>
+          </g>
+        </g>
+        <!-- faceA (front) drawn on top; full when front, squashes to hinge -->
+        <g class="faceA">
+          <g class="faceA-fill" fill="#00A04A">
+            <rect x="4.7" y="9.95" width="1.75" height="1.35"/>
+            <rect x="6.55" y="9.95" width="1.75" height="1.35"/>
+            <rect x="8.4" y="9.95" width="2.0"  height="1.35"/>
+            <rect x="4.7" y="11.45" width="1.75" height="1.35"/>
+            <rect x="6.55" y="11.45" width="1.75" height="1.35"/>
+            <rect x="8.4" y="11.45" width="2.0"  height="1.35"/>
+            <rect x="4.7" y="12.95" width="1.75" height="1.35"/>
+            <rect x="6.55" y="12.95" width="1.75" height="1.35"/>
+            <rect x="8.4" y="12.95" width="2.0"  height="1.35"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- confetti burst (WCA colours) -->
+  <g>
+    <rect class="confetti k1" x="3"  y="3"  width="0.9" height="0.9" fill="#E02029" style="--dx:-3px"/>
+    <rect class="confetti k2" x="6"  y="2"  width="0.9" height="0.9" fill="#FDD500" style="--dx:2px"/>
+    <rect class="confetti k3" x="9"  y="3"  width="0.9" height="0.9" fill="#0E5FD9" style="--dx:3px"/>
+    <rect class="confetti k4" x="11" y="2"  width="0.9" height="0.9" fill="#FF7A00" style="--dx:-2px"/>
+    <rect class="confetti k5" x="4"  y="1"  width="0.9" height="0.9" fill="#FAFAFA" style="--dx:3px"/>
+    <rect class="confetti k6" x="8"  y="1"  width="0.9" height="0.9" fill="#00A04A" style="--dx:-3px"/>
+  </g>
+</svg>

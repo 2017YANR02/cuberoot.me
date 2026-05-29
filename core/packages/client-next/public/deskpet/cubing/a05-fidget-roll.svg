@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a05-fidget-roll : ambient desk-idle fidget, agent 5. Technique T2.
+       Clawd sits relaxed (slow breathing, sleepy half-lid eyes, one slow
+       blink), both claws cradling a small cube at belly height BELOW the
+       eyes. The cube does ONE lazy quarter spin about its vertical axis
+       per loop: a fresh-colour column rotates IN from the right side strip
+       and sweeps leftward across the 3x3 front face, the old leftmost
+       column rotating away off the left edge. A thin perspective side
+       sliver on the right shows the receding face (darker). The columns
+       visibly move relative to each other -> a true roll, not a flat spin.
+       Colour sequence rolls white -> green seamlessly (state@100 == @0).
+       8s seamless loop. -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: roll-shadow 8s infinite ease-in-out; }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: roll-breathe 8s infinite ease-in-out; }
+      .arm-l { animation: roll-arm-l 8s infinite ease-in-out; }
+      .arm-r { animation: roll-arm-r 8s infinite ease-in-out; }
+      .eyes-open  { animation: roll-eyes-open  8s infinite step-end; }
+      .eyes-sleep { opacity: 0; animation: roll-eyes-sleep 8s infinite step-end; }
+
+      /* three front columns slide left by one cell width (1.6) per loop.
+         #cols holds 4 columns of stickers (1 extra off the right edge) and a
+         clip keeps only the 3-wide window showing -> a fresh column enters
+         from the right side strip as the old one exits left. */
+      .cols { animation: roll-cols 8s infinite ease-in-out; }
+      .side-recede { animation: roll-side 8s infinite ease-in-out; }
+
+      @keyframes roll-shadow { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.46;transform:scaleX(.97);} }
+      @keyframes roll-breathe { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.012,.988) translateY(.16px);} }
+      @keyframes roll-arm-l { 0%,100%{transform:translateY(0);} 50%{transform:translateY(.18px);} }
+      @keyframes roll-arm-r { 0%,100%{transform:translateY(0);} 50%{transform:translateY(.18px);} }
+      @keyframes roll-eyes-open  { 0%{opacity:1;} 88%{opacity:0;} 95%{opacity:1;} }
+      @keyframes roll-eyes-sleep { 0%{opacity:0;} 88%{opacity:1;} 95%{opacity:0;} }
+
+      /* hold, then ease the columns left by exactly one cell (1.6), then hold.
+         start x within #cols = 0 ; after a full slide of -1.6 the column that
+         was col2 sits where col1 was -> identical picture if colours repeat.
+         We slide -1.6 then SNAP-reset invisibly is avoided: instead the 4th
+         (entering) column carries the SAME colour as col1, so at 100% the
+         translated picture == rest picture. */
+      @keyframes roll-cols {
+        0%, 12%    { transform: translateX(0); }
+        50%, 58%   { transform: translateX(-1.6px); }
+        88%, 100%  { transform: translateX(0); }
+      }
+      /* the right perspective sliver brightens slightly as a face rotates past */
+      @keyframes roll-side {
+        0%,100% { opacity: 0.55; }
+        40%     { opacity: 0.8; }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eyes-open" fill="#000000">
+      <rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/>
+    </g>
+    <g class="eyes-sleep" fill="none" stroke="#000000" stroke-width="0.7" stroke-linecap="round">
+      <line x1="3.6" y1="9" x2="5.4" y2="9"/><line x1="9.6" y1="9" x2="11.4" y2="9"/>
+    </g>
+
+    <!-- ===== CUBE ===== front face window x=4.3..9.1 (3 cols), y10.6..13.6 -->
+    <defs>
+      <clipPath id="roll-clip"><rect x="4.3" y="10.6" width="4.8" height="3.0"/></clipPath>
+    </defs>
+    <g>
+      <!-- dark cube body / outline -->
+      <rect x="4.0" y="10.4" width="6.0" height="3.4" fill="#0e0e12"/>
+
+      <!-- right perspective side sliver (receding face, darker green) -->
+      <g class="side-recede">
+        <rect x="9.1" y="10.7" width="0.85" height="0.9" fill="#067a3a"/>
+        <rect x="9.1" y="11.7" width="0.85" height="0.9" fill="#067a3a"/>
+        <rect x="9.1" y="12.7" width="0.85" height="0.8" fill="#067a3a"/>
+      </g>
+
+      <!-- front face: 4 columns inside clip, sliding left one cell per loop -->
+      <g clip-path="url(#roll-clip)">
+        <g class="cols">
+          <!-- col 1 (white) -->
+          <rect x="4.3"  y="10.7" width="1.45" height="0.9" fill="#FAFAFA"/>
+          <rect x="4.3"  y="11.7" width="1.45" height="0.9" fill="#FAFAFA"/>
+          <rect x="4.3"  y="12.7" width="1.45" height="0.8" fill="#FAFAFA"/>
+          <!-- col 2 (white) -->
+          <rect x="5.9"  y="10.7" width="1.45" height="0.9" fill="#FAFAFA"/>
+          <rect x="5.9"  y="11.7" width="1.45" height="0.9" fill="#FAFAFA"/>
+          <rect x="5.9"  y="12.7" width="1.45" height="0.8" fill="#FAFAFA"/>
+          <!-- col 3 (green : leading column already partly turned in) -->
+          <rect x="7.5"  y="10.7" width="1.45" height="0.9" fill="#00A04A"/>
+          <rect x="7.5"  y="11.7" width="1.45" height="0.9" fill="#00A04A"/>
+          <rect x="7.5"  y="12.7" width="1.45" height="0.8" fill="#00A04A"/>
+          <!-- col 4 (white : the entering column that restores the rest picture) -->
+          <rect x="9.1"  y="10.7" width="1.45" height="0.9" fill="#FAFAFA"/>
+          <rect x="9.1"  y="11.7" width="1.45" height="0.9" fill="#FAFAFA"/>
+          <rect x="9.1"  y="12.7" width="1.45" height="0.8" fill="#FAFAFA"/>
+        </g>
+      </g>
+    </g>
+
+    <g fill="#DE886D">
+      <rect class="arm-l" x="0"  y="11" width="2" height="2"/>
+      <rect class="arm-r" x="13" y="11" width="2" height="2"/>
+    </g>
+  </g>
+</svg>

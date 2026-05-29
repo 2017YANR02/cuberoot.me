@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import pllMap from '@cuberoot/shared/data/pll.json';
 import type { PllCaseInstance } from './scramble-generator';
+import { petReact } from './deskpet';
 import {
   allPllKeys,
   keysToCases,
@@ -161,6 +162,7 @@ export const useSessionStore = create<SessionState & SessionActions>()(
           });
         }
 
+        petReact(isCorrect ? 'happy' : 'reactAnnoyed');
         return isCorrect ? 'correct' : 'wrong';
       },
 

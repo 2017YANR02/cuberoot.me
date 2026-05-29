@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a10 Celebration #3: pb-sparkle-dance
+       T3 PIXEL SPRITE FRAMES. The solved cube is pre-drawn as 4 discrete pixel
+       frames (cube rotating about a vertical axis: front green -> 3/4 view ->
+       side red -> 3/4 view), shown one at a time via step-end visibility so it
+       reads as a crisp retro/LCD rotation. Clawd does a happy side-to-side
+       shimmy dance, blinks into a smile, and big "PB!" star sparkles burst in
+       sequence around it. 6s seamless loop (12 sprite ticks). -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: shadow-sd 6s infinite ease-in-out;
+      }
+      .dancer {
+        transform-box: view-box;
+        transform-origin: 7.5px 15px;
+        animation: shimmy-sd 6s infinite ease-in-out;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: breathe-sd 6s infinite ease-in-out;
+      }
+      .arm-l { transform-box: fill-box; transform-origin: 100% 0%; animation: armL-sd 6s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 0% 0%;   animation: armR-sd 6s infinite ease-in-out; }
+      .eyes-rect  { animation: eyesRect-sd  6s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyesSmile-sd 6s infinite step-end; }
+
+      /* cube sprite: 4 frames, one visible per quarter via step-end opacity.
+         A small bob keeps it lively (raise + lower on the down-beats). */
+      .cube-rig {
+        transform-box: view-box;
+        transform-origin: 7.5px 12px;
+        animation: cubebob-sd 6s infinite ease-in-out;
+      }
+      .frame { opacity: 0; }
+      /* f1 is the loop-start frame: base opacity 1 so a static first-frame
+         render (and t=0) shows it; the animation drives it 1->0 and back. */
+      .f1 { opacity: 1; animation: f1-sd 6s infinite step-end; }
+      .f2 { animation: f2-sd 6s infinite step-end; }
+      .f3 { animation: f3-sd 6s infinite step-end; }
+      .f4 { animation: f4-sd 6s infinite step-end; }
+
+      /* PB! star sparkles bursting in sequence */
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+      .s1 { animation: burst-sd 6s infinite ease-out; }
+      .s2 { animation: burst-sd 6s infinite ease-out; animation-delay: -1.5s; }
+      .s3 { animation: burst-sd 6s infinite ease-out; animation-delay: -3.0s; }
+      .s4 { animation: burst-sd 6s infinite ease-out; animation-delay: -4.5s; }
+
+      @keyframes shadow-sd {
+        0%, 100% { opacity: 0.5; transform: translateX(0) scaleX(1); }
+        25%      { opacity: 0.46; transform: translateX(0.7px) scaleX(0.93); }
+        50%      { opacity: 0.5; transform: translateX(0) scaleX(1); }
+        75%      { opacity: 0.46; transform: translateX(-0.7px) scaleX(0.93); }
+      }
+      /* happy shimmy: lean right, center, lean left, center */
+      @keyframes shimmy-sd {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        25%      { transform: translateX(1.0px) rotate(3deg); }
+        50%      { transform: translateX(0) rotate(0deg); }
+        75%      { transform: translateX(-1.0px) rotate(-3deg); }
+      }
+      @keyframes breathe-sd {
+        0%, 100% { transform: scale(1,1); }
+        12%, 62% { transform: scale(1.012,0.99) translateY(0.12px); }  /* knees-bend down-beat */
+        37%, 87% { transform: scale(0.99,1.012) translateY(-0.12px); } /* pop-up beat */
+      }
+      /* arms bob up/down with the dance, always cradling the cube */
+      @keyframes armL-sd {
+        0%, 100% { transform: translate(2.2px,1.0px) rotate(38deg); }
+        25%      { transform: translate(2.0px,-0.2px) rotate(30deg); }
+        50%      { transform: translate(2.2px,1.0px) rotate(38deg); }
+        75%      { transform: translate(2.4px,0.2px) rotate(44deg); }
+      }
+      @keyframes armR-sd {
+        0%, 100% { transform: translate(-2.2px,1.0px) rotate(-38deg); }
+        25%      { transform: translate(-2.4px,0.2px) rotate(-44deg); }
+        50%      { transform: translate(-2.2px,1.0px) rotate(-38deg); }
+        75%      { transform: translate(-2.0px,-0.2px) rotate(-30deg); }
+      }
+      @keyframes eyesRect-sd  { 0%{opacity:1;} 8%{opacity:0;} }
+      @keyframes eyesSmile-sd { 0%{opacity:0;} 8%{opacity:1;} 100%{opacity:1;} }
+      @keyframes cubebob-sd {
+        0%, 100% { transform: translateY(0); }
+        12%, 62% { transform: translateY(0.4px); }
+        37%, 87% { transform: translateY(-0.6px); }
+      }
+      /* 4 sprite frames, 25% each, seamless */
+      @keyframes f1-sd { 0%{opacity:1;} 25%{opacity:0;} 100%{opacity:0;} }
+      @keyframes f2-sd { 0%{opacity:0;} 25%{opacity:1;} 50%{opacity:0;} 100%{opacity:0;} }
+      @keyframes f3-sd { 0%{opacity:0;} 50%{opacity:1;} 75%{opacity:0;} 100%{opacity:0;} }
+      @keyframes f4-sd { 0%{opacity:0;} 75%{opacity:1;} 100%{opacity:0;} }
+      /* star burst: pop big then settle then fade */
+      @keyframes burst-sd {
+        0%        { opacity: 0; transform: scale(0.2) rotate(0deg); }
+        6%        { opacity: 1; transform: scale(1.4) rotate(20deg); }
+        12%       { opacity: 1; transform: scale(1) rotate(35deg); }
+        22%       { opacity: 0; transform: scale(0.6) rotate(45deg); }
+        100%      { opacity: 0; transform: scale(0.2) rotate(0deg); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3"  y="13" width="1" height="2"/>
+    <rect x="5"  y="13" width="1" height="2"/>
+    <rect x="9"  y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="dancer">
+    <g class="breathe">
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+      <rect class="arm-l" x="0"  y="9" width="2" height="2" fill="#DE886D"/>
+      <rect class="arm-r" x="13" y="9" width="2" height="2" fill="#DE886D"/>
+
+      <g class="eyes-rect" fill="#000000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+
+      <!-- ===== cube sprite frames, cradled at belly (x 5..10, y 9.7..14.7) =====
+           Each frame is a discrete pixel snapshot of the cube turning about a
+           vertical axis. Sticker gaps dark #16161b, outline #0e0e12. -->
+      <g class="cube-rig">
+
+        <!-- FRAME 1: front-on, solved GREEN 3x3 -->
+        <g class="frame f1">
+          <rect x="4.9" y="9.7" width="5.2" height="5.0" fill="#0e0e12"/>
+          <g fill="#00A04A">
+            <rect x="5.15" y="9.95" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="9.95" width="1.4" height="1.4"/>
+            <rect x="8.25" y="9.95" width="1.6" height="1.4"/>
+            <rect x="5.15" y="11.5" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="11.5" width="1.4" height="1.4"/>
+            <rect x="8.25" y="11.5" width="1.6" height="1.4"/>
+            <rect x="5.15" y="13.05" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="13.05" width="1.4" height="1.4"/>
+            <rect x="8.25" y="13.05" width="1.6" height="1.4"/>
+          </g>
+        </g>
+
+        <!-- FRAME 2: 3/4 turning right - green front (narrower) + red side wedge -->
+        <g class="frame f2">
+          <rect x="4.9" y="9.7" width="5.2" height="5.0" fill="#0e0e12"/>
+          <!-- green front, 2 columns -->
+          <g fill="#00A04A">
+            <rect x="5.15" y="9.95" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="9.95" width="1.15" height="1.4"/>
+            <rect x="5.15" y="11.5" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="11.5" width="1.15" height="1.4"/>
+            <rect x="5.15" y="13.05" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="13.05" width="1.15" height="1.4"/>
+          </g>
+          <!-- red side, perspective wedge (slightly tapered via 2 narrow cols) -->
+          <g fill="#E02029">
+            <rect x="8.05" y="9.95" width="0.9" height="1.4"/>
+            <rect x="9.05" y="9.95" width="0.8" height="1.4"/>
+            <rect x="8.05" y="11.5" width="0.9" height="1.4"/>
+            <rect x="9.05" y="11.5" width="0.8" height="1.4"/>
+            <rect x="8.05" y="13.05" width="0.9" height="1.4"/>
+            <rect x="9.05" y="13.05" width="0.8" height="1.4"/>
+          </g>
+        </g>
+
+        <!-- FRAME 3: side-on, solved RED 3x3 -->
+        <g class="frame f3">
+          <rect x="4.9" y="9.7" width="5.2" height="5.0" fill="#0e0e12"/>
+          <g fill="#E02029">
+            <rect x="5.15" y="9.95" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="9.95" width="1.4" height="1.4"/>
+            <rect x="8.25" y="9.95" width="1.6" height="1.4"/>
+            <rect x="5.15" y="11.5" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="11.5" width="1.4" height="1.4"/>
+            <rect x="8.25" y="11.5" width="1.6" height="1.4"/>
+            <rect x="5.15" y="13.05" width="1.4" height="1.4"/>
+            <rect x="6.7"  y="13.05" width="1.4" height="1.4"/>
+            <rect x="8.25" y="13.05" width="1.6" height="1.4"/>
+          </g>
+        </g>
+
+        <!-- FRAME 4: 3/4 turning toward front again - red side wedge + blue front
+             (a fresh solved face coming around) -->
+        <g class="frame f4">
+          <rect x="4.9" y="9.7" width="5.2" height="5.0" fill="#0e0e12"/>
+          <!-- red side wedge on the LEFT now -->
+          <g fill="#E02029">
+            <rect x="5.15" y="9.95" width="0.8" height="1.4"/>
+            <rect x="6.05" y="9.95" width="0.9" height="1.4"/>
+            <rect x="5.15" y="11.5" width="0.8" height="1.4"/>
+            <rect x="6.05" y="11.5" width="0.9" height="1.4"/>
+            <rect x="5.15" y="13.05" width="0.8" height="1.4"/>
+            <rect x="6.05" y="13.05" width="0.9" height="1.4"/>
+          </g>
+          <!-- blue front, 2 columns on the right -->
+          <g fill="#0E5FD9">
+            <rect x="7.15" y="9.95" width="1.15" height="1.4"/>
+            <rect x="8.45" y="9.95" width="1.4" height="1.4"/>
+            <rect x="7.15" y="11.5" width="1.15" height="1.4"/>
+            <rect x="8.45" y="11.5" width="1.4" height="1.4"/>
+            <rect x="7.15" y="13.05" width="1.15" height="1.4"/>
+            <rect x="8.45" y="13.05" width="1.4" height="1.4"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- PB! star sparkles bursting in sequence around clawd -->
+  <g>
+    <g class="spark s1" transform="translate(1 1)">
+      <rect x="-0.45" y="-1.3" width="0.9" height="2.6" fill="#FFE066"/>
+      <rect x="-1.3" y="-0.45" width="2.6" height="0.9" fill="#FFE066"/>
+      <rect x="-0.55" y="-0.55" width="1.1" height="1.1" fill="#FFF6C8"/>
+    </g>
+    <g class="spark s2" transform="translate(14 2)">
+      <rect x="-0.4" y="-1.1" width="0.8" height="2.2" fill="#FFE066"/>
+      <rect x="-1.1" y="-0.4" width="2.2" height="0.8" fill="#FFE066"/>
+      <rect x="-0.5" y="-0.5" width="1.0" height="1.0" fill="#FFF6C8"/>
+    </g>
+    <g class="spark s3" transform="translate(0 5)">
+      <rect x="-0.4" y="-1.1" width="0.8" height="2.2" fill="#FFE066"/>
+      <rect x="-1.1" y="-0.4" width="2.2" height="0.8" fill="#FFE066"/>
+      <rect x="-0.5" y="-0.5" width="1.0" height="1.0" fill="#FFF6C8"/>
+    </g>
+    <g class="spark s4" transform="translate(13 6)">
+      <rect x="-0.45" y="-1.3" width="0.9" height="2.6" fill="#FFE066"/>
+      <rect x="-1.3" y="-0.45" width="2.6" height="0.9" fill="#FFE066"/>
+      <rect x="-0.55" y="-0.55" width="1.1" height="1.1" fill="#FFF6C8"/>
+    </g>
+  </g>
+</svg>

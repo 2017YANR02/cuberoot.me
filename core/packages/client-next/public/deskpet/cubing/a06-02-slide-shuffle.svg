@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a06-02 slide-shuffle (agent 6, theme: scramble then solve)
+       Concept: a 2.5D cube (front face + right side face) cradled at the
+       belly. The front face starts solved white; coloured stickers
+       physically SLIDE from a side stash into the face one cell at a time
+       (a scramble building up via real translation), then slide back out
+       and the face returns to solved white. Emphasis: per-sticker MOVEMENT
+       (translate), not recolour. Side face shows depth (red). Clawd leans
+       and the eyes follow a sliding piece, blinking to a smile when solved.
+       9s loop. Front face x5.2..9.4 y9.4..13.6; side strip to its right.   -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: shadow-ss 9s infinite ease-in-out; }
+      .body { transform-box: view-box; transform-origin: 7.5px 13px; animation: body-ss 9s infinite ease-in-out; }
+
+      .arm-l, .arm-r { transform-box: fill-box; }
+      .arm-l { transform-origin: 0% 50%;   animation: arm-l-ss 9s infinite ease-in-out; }
+      .arm-r { transform-origin: 100% 50%; animation: arm-r-ss 9s infinite ease-in-out; }
+
+      .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: eyes-track-ss 9s infinite ease-in-out; }
+      .eyes-rect  { animation: eyes-rect-ss  9s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyes-smile-ss 9s infinite step-end; }
+
+      /* sliding stickers: each enters from the right stash to its target cell,
+         then later slides back out. translate-based = true positional motion. */
+      .slide { transform-box: view-box; }
+      .slideA { animation: slideA 9s infinite cubic-bezier(.5,.05,.4,1); }
+      .slideB { animation: slideB 9s infinite cubic-bezier(.5,.05,.4,1); }
+      .slideC { animation: slideC 9s infinite cubic-bezier(.5,.05,.4,1); }
+      .slideD { animation: slideD 9s infinite cubic-bezier(.5,.05,.4,1); }
+
+      @keyframes shadow-ss {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        50% { opacity: 0.55; transform: scaleX(1.04); }
+      }
+      @keyframes body-ss {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        18% { transform: translateX(-0.25px) rotate(-1.4deg); }
+        40% { transform: translateX(-0.3px) rotate(-1.7deg); }
+        62% { transform: translateX(0.15px) rotate(0.8deg); }
+        82% { transform: translateX(0.05px) rotate(0.3deg); }
+      }
+      /* both arms cradle the cube; gentle lift as pieces settle in */
+      @keyframes arm-l-ss {
+        0%, 100% { transform: rotate(0deg); }
+        20%, 60% { transform: rotate(-7deg); }
+        85% { transform: rotate(2deg); }
+      }
+      @keyframes arm-r-ss {
+        0%, 100% { transform: rotate(0deg); }
+        20%, 60% { transform: rotate(7deg); }
+        85% { transform: rotate(-2deg); }
+      }
+
+      /* SLIDE SCRIPT (9s). Pieces are parked off-face to the right at start
+         (their static x already includes the offset baked as translate=0 at
+         0%). They slide LEFT into a target cell, hold (scrambled), then slide
+         back right (solved/empty) before the loop. Stagger entry, exit. */
+      /* slideA -> top-right cell  : enters 6-16%, holds, exits 64-72% */
+      @keyframes slideA {
+        0%, 6% { transform: translate(3.6px, 0); opacity: 0; }
+        7% { opacity: 1; }
+        16%, 64% { transform: translate(0,0); opacity: 1; }
+        72% { transform: translate(3.6px, 0); opacity: 1; }
+        73%, 100% { transform: translate(3.6px, 0); opacity: 0; }
+      }
+      /* slideB -> middle-right cell : enters 14-24%, exits 56-64% */
+      @keyframes slideB {
+        0%, 14% { transform: translate(3.6px, 0); opacity: 0; }
+        15% { opacity: 1; }
+        24%, 56% { transform: translate(0,0); opacity: 1; }
+        64% { transform: translate(3.6px, 0); opacity: 1; }
+        65%, 100% { transform: translate(3.6px, 0); opacity: 0; }
+      }
+      /* slideC -> centre cell : enters from top 22-32%, exits 48-56% */
+      @keyframes slideC {
+        0%, 22% { transform: translate(0, -3.6px); opacity: 0; }
+        23% { opacity: 1; }
+        32%, 48% { transform: translate(0,0); opacity: 1; }
+        56% { transform: translate(0, -3.6px); opacity: 1; }
+        57%, 100% { transform: translate(0, -3.6px); opacity: 0; }
+      }
+      /* slideD -> bottom-left cell : enters from left 30-40%, exits 40-48% */
+      @keyframes slideD {
+        0%, 30% { transform: translate(-3.6px, 0); opacity: 0; }
+        31% { opacity: 1; }
+        40% { transform: translate(0,0); opacity: 1; }
+        48% { transform: translate(-3.6px, 0); opacity: 1; }
+        49%, 100% { transform: translate(-3.6px, 0); opacity: 0; }
+      }
+
+      @keyframes eyes-track-ss {
+        0%, 100% { transform: translate(0,0); }
+        16% { transform: translate(0.6px, 0.3px); }
+        32% { transform: translate(0.2px, 0.5px); }
+        46% { transform: translate(-0.4px, 0.5px); }
+        62% { transform: translate(0.5px, 0.2px); }
+      }
+      @keyframes eyes-rect-ss  { 0%{opacity:1;} 78%{opacity:0;} 92%{opacity:1;} }
+      @keyframes eyes-smile-ss { 0%{opacity:0;} 78%{opacity:1;} 92%{opacity:0;} }
+
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: spark-ss 9s infinite ease-out; }
+      @keyframes spark-ss {
+        0%, 76%, 96%, 100% { opacity: 0; transform: scale(0.4); }
+        78% { opacity: 1; transform: scale(1.3); }
+        84% { opacity: 1; transform: scale(1); }
+        93% { opacity: 0.3; transform: scale(0.6); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <!-- legs static -->
+  <g fill="#DE886D">
+    <rect x="3"  y="13" width="1" height="2"/>
+    <rect x="5"  y="13" width="1" height="2"/>
+    <rect x="9"  y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="body">
+    <!-- torso -->
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes -->
+    <g class="eyes">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- CUBE 2.5D: front white face + right side red face (parallelogram) -->
+    <g>
+      <!-- right side face (depth), darker red, slanted top/bottom -->
+      <polygon points="9.4,9.4 10.7,8.6 10.7,12.8 9.4,13.6" fill="#B01620"/>
+      <polygon points="9.4,9.4 10.7,8.6 10.7,9.9 9.4,10.7" fill="#C71823"/>
+      <polygon points="9.4,11 10.7,10.2 10.7,11.5 9.4,12.3" fill="#C71823"/>
+      <!-- top face sliver -->
+      <polygon points="5.2,9.4 6.5,8.6 10.7,8.6 9.4,9.4" fill="#E8E8E8"/>
+
+      <!-- front face dark backing -->
+      <rect x="5.1" y="9.3" width="4.4" height="4.4" fill="#0e0e12"/>
+      <!-- solved white base stickers (9 cells) -->
+      <g stroke="#16161b" stroke-width="0.16" fill="#FAFAFA">
+        <rect x="5.28" y="9.48"  width="1.24" height="1.24"/>
+        <rect x="6.68" y="9.48"  width="1.24" height="1.24"/>
+        <rect x="8.08" y="9.48"  width="1.24" height="1.24"/>
+        <rect x="5.28" y="10.88" width="1.24" height="1.24"/>
+        <rect x="6.68" y="10.88" width="1.24" height="1.24"/>
+        <rect x="8.08" y="10.88" width="1.24" height="1.24"/>
+        <rect x="5.28" y="12.28" width="1.24" height="1.24"/>
+        <rect x="6.68" y="12.28" width="1.24" height="1.24"/>
+        <rect x="8.08" y="12.28" width="1.24" height="1.24"/>
+      </g>
+
+      <!-- SLIDING coloured stickers that scramble the face.
+           Static fill+pos = their TARGET cell (so resvg rest shows a partial
+           scramble); at runtime they slide in/out via translate. -->
+      <rect class="slide slideA" x="8.08" y="9.48"  width="1.24" height="1.24" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+      <rect class="slide slideB" x="8.08" y="10.88" width="1.24" height="1.24" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+      <rect class="slide slideC" x="6.68" y="10.88" width="1.24" height="1.24" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+      <rect class="slide slideD" x="5.28" y="12.28" width="1.24" height="1.24" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+    </g>
+
+    <!-- arms cradle the cube (re-posed to the cube's lower sides) -->
+    <g fill="#DE886D">
+      <rect class="arm-l" x="3.3"  y="11.4" width="2" height="2"/>
+      <rect class="arm-r" x="9.9"  y="11.4" width="2" height="2"/>
+    </g>
+
+    <!-- solved sparkle -->
+    <g class="spark" fill="#FFE066">
+      <rect x="4.0" y="8.6" width="1" height="0.6"/>
+      <rect x="4.0" y="9.2" width="1" height="1"/>
+      <rect x="4.0" y="10.2" width="1" height="0.6"/>
+      <rect x="3.0" y="9.2" width="1" height="1"/>
+      <rect x="5.0" y="9.2" width="1" height="1"/>
+    </g>
+  </g>
+</svg>

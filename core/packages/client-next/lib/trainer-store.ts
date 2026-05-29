@@ -5,6 +5,7 @@ import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { generateScramble } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
+import { petReact } from './deskpet';
 
 export const TimerState = {
   NOT_RUNNING: 0,
@@ -171,6 +172,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
       timerState: TimerState.STOPPING,
       observingIdx: newSolves.length - 1,
     });
+    // Celebrate a new fastest single across the session.
+    if (solves.length > 0 && ms < Math.min(...solves.map(s => s.ms))) petReact('happy');
     setTimeout(() => get().pickRandomCase(), 0);
   },
 

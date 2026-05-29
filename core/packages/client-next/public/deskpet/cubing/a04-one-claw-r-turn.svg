@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a04-01 One-claw R-turn solve (T1 layer twist)
+       Left claw cradles a small cube held just in front of the belly
+       (below the eyes, eyes stay clear). Right claw flicks the cube's
+       right column 90deg (R), it snaps, returns, flicks back (R').
+       The right column of stickers visibly rotates as a layer about a
+       horizontal axis, so stickers rearrange relative to the static
+       left+mid columns. 7s loop. Eyes squint+track during the flick,
+       smile + spark on the satisfying snap.
+       Cube: 3 cells x 1.5 = 4.5 wide, x4.5..9, y10..14.5 (belly). -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: a-shadow 7s infinite ease-in-out;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: a-breathe 7s infinite ease-in-out;
+      }
+      .body-lean {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: a-lean 7s infinite ease-in-out;
+      }
+      .arm-cradle {
+        transform-box: fill-box;
+        transform-origin: 100% 100%;
+        animation: a-cradle 7s infinite ease-in-out;
+      }
+      .arm-flick {
+        transform-box: fill-box;
+        transform-origin: 0% 100%;
+        animation: a-flick 7s infinite ease-in-out;
+      }
+      .eyes-rect  { animation: a-eyes-rect  7s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: a-eyes-smile 7s infinite step-end; }
+      .eyes-shift {
+        transform-box: view-box;
+        transform-origin: 7.5px 9px;
+        animation: a-eyes-shift 7s infinite ease-in-out;
+      }
+      .rlayer {
+        transform-box: fill-box;
+        transform-origin: 50% 50%;
+        animation: a-rlayer 7s infinite cubic-bezier(.5,0,.2,1);
+      }
+      .spark {
+        transform-box: fill-box;
+        transform-origin: 50% 50%;
+        opacity: 0;
+        animation: a-spark 7s infinite ease-out;
+      }
+
+      @keyframes a-shadow {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        18%, 60% { opacity: 0.44; transform: scaleX(0.94); }
+      }
+      @keyframes a-breathe {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        50%      { transform: scale(1.012,0.988) translateY(0.14px); }
+      }
+      @keyframes a-lean {
+        0%, 100% { transform: rotate(0deg) translate(0,0); }
+        16%      { transform: rotate(1.4deg) translate(0.18px,0.04px); }
+        28%      { transform: rotate(0.4deg) translate(0.05px,0); }
+        56%      { transform: rotate(1.4deg) translate(0.18px,0.04px); }
+        68%      { transform: rotate(0.4deg) translate(0.05px,0); }
+      }
+      @keyframes a-cradle {
+        0%, 100% { transform: rotate(0deg) translate(0,0); }
+        50%      { transform: rotate(-3deg) translate(0,-0.1px); }
+      }
+      /* right arm: rest -> reach to top-right of cube -> flick down -> rest,
+         twice (R then R') */
+      @keyframes a-flick {
+        0%, 6%   { transform: rotate(0deg) translate(0,0); }
+        12%      { transform: rotate(-30deg) translate(-1.2px,-2.4px); }
+        16%      { transform: rotate(-26deg) translate(-1.2px,-2.4px); }
+        24%      { transform: rotate(10deg) translate(-0.6px,-0.4px); }
+        30%, 46% { transform: rotate(0deg) translate(0,0); }
+        52%      { transform: rotate(-30deg) translate(-1.2px,-2.4px); }
+        56%      { transform: rotate(-26deg) translate(-1.2px,-2.4px); }
+        64%      { transform: rotate(10deg) translate(-0.6px,-0.4px); }
+        70%, 100%{ transform: rotate(0deg) translate(0,0); }
+      }
+      /* right column turns about horizontal axis: scaleY collapses to a
+         thin edge mid-turn, snaps back; colours swap at the edge-on beat */
+      @keyframes a-rlayer {
+        0%, 14%  { transform: scaleY(1); }
+        18%      { transform: scaleY(0.16); }
+        22%, 50% { transform: scaleY(1); }
+        54%      { transform: scaleY(0.16); }
+        58%, 100%{ transform: scaleY(1); }
+      }
+      @keyframes a-eyes-rect {
+        0%   { opacity: 1; }
+        24%  { opacity: 0; }
+        30%  { opacity: 1; }
+        64%  { opacity: 0; }
+        70%  { opacity: 1; }
+      }
+      @keyframes a-eyes-smile {
+        0%   { opacity: 0; }
+        24%  { opacity: 1; }
+        30%  { opacity: 0; }
+        64%  { opacity: 1; }
+        70%  { opacity: 0; }
+      }
+      @keyframes a-eyes-shift {
+        0%, 100% { transform: translate(0,0); }
+        14%      { transform: translate(0.5px,0.15px); }
+        24%      { transform: translate(0.3px,0.15px); }
+        54%      { transform: translate(0.5px,0.15px); }
+        64%      { transform: translate(0.3px,0.15px); }
+      }
+      @keyframes a-spark {
+        0%, 19%, 30%, 55%, 66%, 100% { opacity: 0; transform: scale(0.4); }
+        21%  { opacity: 1; transform: scale(1.3); }
+        25%  { opacity: 0.9; transform: scale(1); }
+        57%  { opacity: 1; transform: scale(1.3); }
+        61%  { opacity: 0.9; transform: scale(1); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <g class="body-lean">
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+      <g class="eyes-shift">
+        <g class="eyes-rect" fill="#000">
+          <rect x="4" y="8" width="1" height="2"/>
+          <rect x="10" y="8" width="1" height="2"/>
+        </g>
+        <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3.5,9 4.5,8 5.5,9"/>
+          <polyline points="9.5,9 10.5,8 11.5,9"/>
+        </g>
+      </g>
+
+      <!-- ===== CUBE held in front of belly, below eyes =====
+           3x3 face, cell 1.5, x4.5..9, y10..14.5 -->
+      <g>
+        <!-- dark gap matrix slightly larger than face -->
+        <rect x="4.2" y="9.7" width="5.1" height="5.1" fill="#0e0e12"/>
+        <!-- top-edge sliver (cube depth) -->
+        <rect x="4.5" y="9.2" width="4.8" height="0.6" fill="#c46532"/>
+        <!-- right-edge sliver -->
+        <rect x="9.3" y="9.4" width="0.6" height="5.2" fill="#b85a2c"/>
+        <rect x="9.3" y="9.4" width="0.6" height="1.5" fill="#c46532"/>
+
+        <!-- left column (static) -->
+        <rect x="4.5" y="10"   width="1.4" height="1.4" fill="#E02029"/>
+        <rect x="4.5" y="11.55" width="1.4" height="1.4" fill="#00A04A"/>
+        <rect x="4.5" y="13.1"  width="1.4" height="1.4" fill="#FDD500"/>
+        <!-- mid column (static) -->
+        <rect x="6.05" y="10"   width="1.4" height="1.4" fill="#00A04A"/>
+        <rect x="6.05" y="11.55" width="1.4" height="1.4" fill="#FAFAFA"/>
+        <rect x="6.05" y="13.1"  width="1.4" height="1.4" fill="#0E5FD9"/>
+        <!-- right column = rotating layer -->
+        <g class="rlayer">
+          <rect x="7.6" y="10"   width="1.4" height="1.4" fill="#FF7A00"/>
+          <rect x="7.6" y="11.55" width="1.4" height="1.4" fill="#E02029"/>
+          <rect x="7.6" y="13.1"  width="1.4" height="1.4" fill="#FAFAFA"/>
+        </g>
+      </g>
+
+      <!-- left claw cradling under cube's left -->
+      <g class="arm-cradle" fill="#DE886D">
+        <rect x="2.5" y="13.6" width="2" height="1.6"/>
+      </g>
+      <!-- right claw flicking the right layer -->
+      <g class="arm-flick" fill="#DE886D">
+        <rect x="9.6" y="13.4" width="2" height="1.6"/>
+      </g>
+
+      <!-- spark on the snap, above cube right -->
+      <g class="spark">
+        <rect x="9.2" y="8.0" width="0.9" height="0.45" fill="#FFE066"/>
+        <rect x="9.2" y="8.45" width="0.9" height="0.8" fill="#FFE066"/>
+        <rect x="9.2" y="9.25" width="0.9" height="0.45" fill="#FFE066"/>
+        <rect x="8.45" y="8.45" width="0.75" height="0.8" fill="#FFE066"/>
+        <rect x="10.1" y="8.45" width="0.75" height="0.8" fill="#FFE066"/>
+      </g>
+    </g>
+  </g>
+</svg>

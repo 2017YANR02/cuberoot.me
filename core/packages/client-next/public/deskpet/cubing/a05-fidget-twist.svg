@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a05-fidget-twist : ambient desk-idle fidget, agent 5. Technique T1.
+       Clawd holds a flat-front 3x3 cube at belly height and idly performs
+       ONE relaxed R-style layer twist per loop: the right column turns
+       edge-on (scaleX -> 0 about the column's left seam) then a fresh set
+       of stickers rotates into view (the cells that the R move brings to
+       the front face visibly change colour). The right claw rides the turn;
+       clawd leans gently into it and gives a small satisfied ^^ smile beat
+       after the snap, then relaxes. Slow breathing throughout. 6s seamless
+       loop (right column colours + everything returns to start). -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: tw-shadow 6s infinite ease-in-out; }
+      .lean { transform-box: view-box; transform-origin: 7.5px 13px; animation: tw-lean 6s infinite ease-in-out; }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: tw-breathe 6s infinite ease-in-out; }
+      .arm-l { animation: tw-arm-l 6s infinite ease-in-out; }
+      .arm-r { animation: tw-arm-r 6s infinite ease-in-out; }
+      .eyes-open  { animation: tw-eyes-open  6s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: tw-eyes-smile 6s infinite step-end; }
+
+      /* right column turns edge-on about its LEFT seam (the layer pivot) */
+      .rcol { transform-box: fill-box; transform-origin: 0% 50%; animation: tw-rcol 6s infinite ease-in-out; }
+      /* the stickers shown ON the front of the turning column swap colour
+         at the edge-on midpoint, where the swap is hidden (scaleX≈0) */
+      .rc-top { animation: tw-rc-top 6s infinite step-end; }
+      .rc-mid { animation: tw-rc-mid 6s infinite step-end; }
+      .rc-bot { animation: tw-rc-bot 6s infinite step-end; }
+
+      @keyframes tw-shadow { 0%,100%{opacity:.5;transform:scaleX(1);} 30%{opacity:.47;transform:scaleX(1.02) translateX(.2px);} }
+      @keyframes tw-breathe { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.01,.99) translateY(.14px);} }
+      /* lean a touch right into the turn (0-30%), hold, ease back */
+      @keyframes tw-lean {
+        0%, 8%    { transform: rotate(0deg) translateX(0); }
+        30%       { transform: rotate(2.2deg) translateX(0.25px); }
+        46%       { transform: rotate(1.6deg) translateX(0.18px); }
+        70%, 100% { transform: rotate(0deg) translateX(0); }
+      }
+      /* left claw steady cradle, tiny breathe */
+      @keyframes tw-arm-l { 0%,100%{transform:translateY(0);} 50%{transform:translateY(.16px);} }
+      /* right claw rides the layer: lifts to push the turn at the first dip,
+         settles after, all pure-translate so it stays attached. */
+      @keyframes tw-arm-r {
+        0%, 8%    { transform: translate(0, 0); }
+        22%       { transform: translate(-0.5px, -0.6px); }
+        40%       { transform: translate(-0.15px, 0.2px); }
+        70%, 100% { transform: translate(0, 0); }
+      }
+      @keyframes tw-eyes-open  { 0%{opacity:1;} 40%{opacity:0;} 58%{opacity:1;} }
+      @keyframes tw-eyes-smile { 0%{opacity:0;} 40%{opacity:1;} 58%{opacity:0;} }
+
+      /* right column: full -> edge-on at the turn midpoint -> full.
+         flat at start, scaleX 0.04 at the hidden swap, flat again. */
+      /* TWO edge-on dips: a relaxed twist then an untwist. Both colour swaps
+         happen at the scaleX≈0 moments so they are hidden -> seamless. */
+      @keyframes tw-rcol {
+        0%, 8%    { transform: scaleX(1); }
+        22%       { transform: scaleX(0.04); }
+        40%, 62%  { transform: scaleX(1); }
+        76%       { transform: scaleX(0.04); }
+        92%, 100% { transform: scaleX(1); }
+      }
+      /* swap red -> blue hidden at 22% (twist), blue -> red hidden at 76%
+         (untwist). Front shows blue 22-76%, red elsewhere. Seamless. */
+      @keyframes tw-rc-top { 0%{fill:#E02029;} 22%{fill:#0E5FD9;} 76%{fill:#E02029;} 100%{fill:#E02029;} }
+      @keyframes tw-rc-mid { 0%{fill:#E02029;} 22%{fill:#0E5FD9;} 76%{fill:#E02029;} 100%{fill:#E02029;} }
+      @keyframes tw-rc-bot { 0%{fill:#E02029;} 22%{fill:#0E5FD9;} 76%{fill:#E02029;} 100%{fill:#E02029;} }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+   <g class="lean">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eyes-open" fill="#000000">
+      <rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/>
+    </g>
+    <g class="eyes-smile" fill="none" stroke="#000000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3.6,9 4.5,8.1 5.4,9"/>
+      <polyline points="9.6,9 10.5,8.1 11.4,9"/>
+    </g>
+
+    <!-- ===== CUBE : flat front 3x3, x4.0..9.7 , y10.5..13.7 ===== -->
+    <g>
+      <rect x="3.9" y="10.4" width="6.0" height="3.4" fill="#0e0e12"/>
+
+      <!-- left + middle columns (static face: white centre cross style) -->
+      <g>
+        <rect x="4.2" y="10.7" width="1.55" height="0.9" fill="#FDD500"/>
+        <rect x="4.2" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/>
+        <rect x="4.2" y="12.7" width="1.55" height="0.8" fill="#00A04A"/>
+        <rect x="5.9" y="10.7" width="1.55" height="0.9" fill="#FAFAFA"/>
+        <rect x="5.9" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/>
+        <rect x="5.9" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/>
+      </g>
+
+      <!-- RIGHT column : the turning layer -->
+      <g class="rcol">
+        <rect class="rc-top" x="7.6" y="10.7" width="1.55" height="0.9" fill="#E02029"/>
+        <rect class="rc-mid" x="7.6" y="11.7" width="1.55" height="0.9" fill="#E02029"/>
+        <rect class="rc-bot" x="7.6" y="12.7" width="1.55" height="0.8" fill="#E02029"/>
+      </g>
+    </g>
+
+    <g fill="#DE886D">
+      <rect class="arm-l" x="0"  y="11" width="2" height="2"/>
+      <rect class="arm-r" x="13" y="11" width="2" height="2"/>
+    </g>
+   </g>
+  </g>
+</svg>

@@ -1,0 +1,230 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a04-02 Show-off flick spin (T2 2.5D vertical-axis spin)
+       Cube cradled in the left claw at belly height. Right claw gives
+       it a flick and the cube spins about a VERTICAL axis: two faces
+       meet at a vertical seam (x=6.75). The left ("front") face
+       narrows toward the seam while the right ("side") face widens
+       out, then they cross and the colours cycle to the next face of
+       the cube (white -> green -> yellow -> blue ... ). Reads as a
+       real cube rotating, faces appearing & disappearing.
+       8s loop, 4 face swaps. Eyes follow the spin, satisfied wink + a
+       little spin-line whoosh. Cube ~4.6 wide, y10..14.5, below eyes. -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: a-shadow 8s infinite ease-in-out;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: a-breathe 8s infinite ease-in-out;
+      }
+      .arm-cradle {
+        transform-box: fill-box;
+        transform-origin: 100% 100%;
+        animation: a-cradle 8s infinite ease-in-out;
+      }
+      .arm-flick {
+        transform-box: fill-box;
+        transform-origin: 0% 100%;
+        animation: a-flick 8s infinite ease-in-out;
+      }
+      .eyes-rect  { animation: a-eyes-rect  8s infinite step-end; }
+      .eyes-wink  { opacity: 0; animation: a-eyes-wink 8s infinite step-end; }
+      .eyes-shift {
+        transform-box: view-box;
+        transform-origin: 7.5px 9px;
+        animation: a-eyes-shift 8s infinite ease-in-out;
+      }
+      /* left/front face: scaleX collapses to seam then re-opens */
+      .face-front {
+        transform-box: fill-box;
+        transform-origin: 100% 50%;        /* right edge = seam */
+        animation: a-front 8s infinite ease-in-out;
+      }
+      /* right/side face: scaleX opens from seam */
+      .face-side {
+        transform-box: fill-box;
+        transform-origin: 0% 50%;          /* left edge = seam */
+        animation: a-side 8s infinite ease-in-out;
+      }
+      /* colour cycling on the front-face stickers, stepping each swap */
+      .fc1 { animation: a-fc1 8s infinite step-end; }
+      .fc2 { animation: a-fc2 8s infinite step-end; }
+      .fc3 { animation: a-fc3 8s infinite step-end; }
+      /* colour cycling on the side-face stickers */
+      .sc1 { animation: a-sc1 8s infinite step-end; }
+      .sc2 { animation: a-sc2 8s infinite step-end; }
+      .sc3 { animation: a-sc3 8s infinite step-end; }
+      /* spin whoosh lines */
+      .whoosh { opacity: 0; animation: a-whoosh 8s infinite ease-out; }
+
+      @keyframes a-shadow {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        50%      { opacity: 0.46; transform: scaleX(0.96); }
+      }
+      @keyframes a-breathe {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        50%      { transform: scale(1.012,0.988) translateY(0.14px); }
+      }
+      @keyframes a-cradle {
+        0%, 100% { transform: rotate(0deg); }
+        50%      { transform: rotate(-2deg); }
+      }
+      /* one flick at the very start, then hands-off while it spins */
+      @keyframes a-flick {
+        0%       { transform: rotate(0deg) translate(0,0); }
+        4%       { transform: rotate(-26deg) translate(-1px,-2px); }
+        9%       { transform: rotate(14deg) translate(0.3px,0.3px); }
+        16%, 100%{ transform: rotate(0deg) translate(0,0); }
+      }
+      /* FRONT face width over one spin quarter = 25% of loop.
+         At each 25% boundary the front collapses to seam (0) and the
+         side is full; immediately after, colours have stepped and the
+         front re-opens. Continuous spin = 4 quarters per loop. */
+      @keyframes a-front {
+        0%   { transform: scaleX(1); }
+        25%  { transform: scaleX(0.04); }
+        25.01%{ transform: scaleX(0.04); }
+        50%  { transform: scaleX(1); }
+        75%  { transform: scaleX(0.04); }
+        100% { transform: scaleX(1); }
+      }
+      @keyframes a-side {
+        0%   { transform: scaleX(0.04); }
+        25%  { transform: scaleX(1); }
+        50%  { transform: scaleX(0.04); }
+        75%  { transform: scaleX(1); }
+        100% { transform: scaleX(0.04); }
+      }
+      /* eyes track the seam / lean toward the spin */
+      @keyframes a-eyes-shift {
+        0%, 100% { transform: translate(0,0); }
+        12%      { transform: translate(0.45px,0.1px); }
+        25%, 75% { transform: translate(0.2px,0.1px); }
+        50%      { transform: translate(-0.1px,0.1px); }
+      }
+      @keyframes a-eyes-rect {
+        0%   { opacity: 1; }
+        88%  { opacity: 0; }   /* wink near the end */
+        96%  { opacity: 1; }
+      }
+      @keyframes a-eyes-wink {
+        0%   { opacity: 0; }
+        88%  { opacity: 1; }   /* ^- one-eye wink */
+        96%  { opacity: 0; }
+      }
+      /* FRONT sticker colours, cycle each quarter:
+         W->G->Y->B (top), and complementary rows */
+      @keyframes a-fc1 {
+        0%, 25%  { fill: #FAFAFA; }
+        25.01%, 50% { fill: #00A04A; }
+        50.01%, 75% { fill: #FDD500; }
+        75.01%, 100%{ fill: #0E5FD9; }
+      }
+      @keyframes a-fc2 {
+        0%, 25%  { fill: #E02029; }
+        25.01%, 50% { fill: #FF7A00; }
+        50.01%, 75% { fill: #FAFAFA; }
+        75.01%, 100%{ fill: #00A04A; }
+      }
+      @keyframes a-fc3 {
+        0%, 25%  { fill: #FDD500; }
+        25.01%, 50% { fill: #0E5FD9; }
+        50.01%, 75% { fill: #E02029; }
+        75.01%, 100%{ fill: #FF7A00; }
+      }
+      /* SIDE sticker colours, offset one quarter ahead of front */
+      @keyframes a-sc1 {
+        0%, 25%  { fill: #00A04A; }
+        25.01%, 50% { fill: #FDD500; }
+        50.01%, 75% { fill: #0E5FD9; }
+        75.01%, 100%{ fill: #FAFAFA; }
+      }
+      @keyframes a-sc2 {
+        0%, 25%  { fill: #FF7A00; }
+        25.01%, 50% { fill: #FAFAFA; }
+        50.01%, 75% { fill: #00A04A; }
+        75.01%, 100%{ fill: #E02029; }
+      }
+      @keyframes a-sc3 {
+        0%, 25%  { fill: #0E5FD9; }
+        25.01%, 50% { fill: #E02029; }
+        50.01%, 75% { fill: #FF7A00; }
+        75.01%, 100%{ fill: #FDD500; }
+      }
+      @keyframes a-whoosh {
+        0%, 6%, 100% { opacity: 0; }
+        9%   { opacity: 0.8; }
+        15%  { opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eyes-shift">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4" y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <!-- wink: left eye smile-arc, right eye stays a happy line -->
+      <g class="eyes-wink" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <rect x="10" y="8.6" width="1" height="0.9" fill="#000" stroke="none"/>
+      </g>
+    </g>
+
+    <!-- ===== SPINNING CUBE, seam at x=6.75, y9.85..14.8 =====
+         Two faces share the vertical seam. Each face group carries its
+         OWN dark outline so the silhouette scales with the face; no
+         static backdrop (which read as a gap when faces narrowed). -->
+    <g>
+      <!-- FRONT (left) face: top depth sliver + dark frame + 3 stickers, collapses to seam -->
+      <g class="face-front">
+        <rect x="4.42" y="9.35" width="2.42" height="0.55" fill="#c46532"/>
+        <rect x="4.42" y="9.85" width="2.42" height="4.95" fill="#0e0e12"/>
+        <rect x="4.5" y="10"    width="2.15" height="1.45" class="fc1" fill="#FAFAFA"/>
+        <rect x="4.5" y="11.55" width="2.15" height="1.45" class="fc2" fill="#E02029"/>
+        <rect x="4.5" y="13.1"  width="2.15" height="1.45" class="fc3" fill="#FDD500"/>
+      </g>
+      <!-- SIDE (right) face: top depth sliver + dark frame + 3 stickers, opens from seam -->
+      <g class="face-side">
+        <rect x="6.66" y="9.35" width="2.42" height="0.55" fill="#a8502a"/>
+        <rect x="6.66" y="9.85" width="2.42" height="4.95" fill="#0e0e12"/>
+        <rect x="6.85" y="10"    width="2.15" height="1.45" class="sc1" fill="#00A04A"/>
+        <rect x="6.85" y="11.55" width="2.15" height="1.45" class="sc2" fill="#FF7A00"/>
+        <rect x="6.85" y="13.1"  width="2.15" height="1.45" class="sc3" fill="#0E5FD9"/>
+      </g>
+      <!-- vertical seam highlight at the spin axis (static) -->
+      <rect x="6.66" y="9.85" width="0.18" height="4.95" fill="#0e0e12"/>
+    </g>
+
+    <!-- spin whoosh arcs around the cube -->
+    <g class="whoosh" fill="none" stroke="#cfd8e8" stroke-width="0.35" stroke-linecap="round">
+      <path d="M4.0 10.4 q-1.0 1.8 0 3.6"/>
+      <path d="M9.5 10.4 q1.0 1.8 0 3.6"/>
+    </g>
+
+    <!-- left claw cradles cube -->
+    <g class="arm-cradle" fill="#DE886D">
+      <rect x="2.6" y="13.6" width="2" height="1.6"/>
+    </g>
+    <!-- right claw flicks -->
+    <g class="arm-flick" fill="#DE886D">
+      <rect x="9.0" y="13.4" width="2" height="1.6"/>
+    </g>
+  </g>
+</svg>

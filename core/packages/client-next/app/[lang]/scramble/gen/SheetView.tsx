@@ -5,21 +5,30 @@
  * cubing/scramble) and Import (load from WCA `/scrambles` endpoint) modes —
  * once we have a `RoundSheet`, the on-screen presentation is identical.
  *
- * Rows are click-to-copy: clicking anywhere on a scramble row writes that
- * scramble to the clipboard and flashes `.is-copied` for ~1.2s.
+ * Clicking the scramble opens it in /scramble/analyzer with `stage` set to the
+ * row's current step (per-row badge); the badge ("C 767665") is independently
+ * click-to-cycle through Cross → XC → XXC → XXXC → XXXXC; the index cell copies.
  */
-import { useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Copy } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { visualcubeApiHref } from '@/lib/visualcube-link';
-import { solveCross, isHtmScramble } from '@/lib/cross-solver';
+import { isHtmScramble } from '@/lib/cross-solver';
 import type { WcaFormat } from './_wca-round';
+import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
 
 // CSS colour class per BADGE_ORDER slot (White Yellow Red Orange Blue Green).
 const BADGE_CLASS = ['cx-w', 'cx-y', 'cx-r', 'cx-o', 'cx-b', 'cx-g'];
+// 逐行徽标点击循环顺序;label: cross='C',其它=大写指标名。
+const METRIC_CYCLE: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
+const metricBadgeLabel = (m: Metric): string => (m === 'cross' ? 'C' : m.toUpperCase());
+// metric → analyzer `stage` 查询值(analyzer 当前支持 cross/xcross/xxcross/xxxcross;
+// xxxxcross 先带上,等 analyzer 支持即生效,暂不支持时它会回落到 cross)。
+const METRIC_STAGE: Record<Metric, string> = { cross: 'cross', xc: 'xcross', xxc: 'xxcross', xxxc: 'xxxcross', xxxxc: 'xxxxcross' };
 
 export interface AttemptScramble {
   /** Display label, e.g. "1", "2", "E1", "E2". For MBLD this is the cube number. */
@@ -56,16 +65,20 @@ interface SheetViewProps {
   /** Hide per-row preview thumbnail when false. Controls only the on-screen
    *  sheet — PDF visibility is decided by `generateTnoodlePdf` opts.showPreview. */
   showPreview?: boolean;
-  /** 333 family (333/oh/ft/fm/bf) — scramble → optimal 6-colour cross lengths
-   *  (BADGE_ORDER). When present, each row shows the "C: 567766" badge; the
-   *  white-cross reveal appears only for HTM-parseable scrambles (bf carries
-   *  wide-move orientation, so its badge comes from precomputed data but the
-   *  live solver can't produce its solution). */
-  crossMap?: Map<string, number[]>;
+  /** 333 family (333/oh/ft/fm/bf) — 取某打乱在某指标下的 6 底色最优步数(BADGE_ORDER),
+   *  无数据返回 undefined。存在时每行显示可点击循环的 "C 767665" 徽标。 */
+  rowDigits?: (scramble: string, metric: Metric) => number[] | undefined;
+  /** 顶部指标 tab 选中的指标,作为每行徽标的默认值(逐行点击可覆盖)。 */
+  metric?: Metric;
+  /** 顶部变体下拉(std/eo/pair/...);跳分析器时作为 `variant` 查询带过去。 */
+  variant?: string;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, crossMap }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std' }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
+  const router = useRouter();
+  const params = useParams();
+  const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : (isZh ? '/zh' : '/en');
   const groupSuffix = (totalGroups ?? 1) > 1
     ? (isZh
       ? ` ${String.fromCharCode(65 + groupIdx)} 组`
@@ -80,23 +93,19 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     ? t('决赛', 'Final')
     : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const showCross = !!crossMap;
-  const [openSol, setOpenSol] = useState<Set<number>>(new Set());
-  const solCacheRef = useRef<Map<string, string>>(new Map());
-  const toggleSol = (idx: number) => {
-    setOpenSol((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx); else next.add(idx);
-      return next;
+  const showCross = !!rowDigits;
+  // 逐行徽标指标覆盖(按 scramble 字符串 key,过滤/重排都稳)。顶部 tab 变 → 全部回落到全局指标。
+  const [rowMetric, setRowMetric] = useState<Map<string, Metric>>(new Map());
+  useEffect(() => { setRowMetric(new Map()); }, [metric]);
+  const effMetric = (scr: string): Metric => rowMetric.get(scr) ?? metric;
+  const cycleMetric = (scr: string) => {
+    setRowMetric((prev) => {
+      const cur = prev.get(scr) ?? metric;
+      const next = METRIC_CYCLE[(METRIC_CYCLE.indexOf(cur) + 1) % METRIC_CYCLE.length];
+      const m = new Map(prev);
+      m.set(scr, next);
+      return m;
     });
-  };
-  const whiteCrossMoves = (scramble: string): string => {
-    const cached = solCacheRef.current.get(scramble);
-    if (cached !== undefined) return cached;
-    const sol = solveCross(scramble, 'White');
-    const text = sol ? (sol.moves.join(' ') || t('已是白十字', 'cross already solved')) : '—';
-    solCacheRef.current.set(scramble, text);
-    return text;
   };
   const copyAttempt = async (idx: number, scramble: string) => {
     if (!scramble) return;
@@ -105,6 +114,17 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       setCopiedIdx(idx);
       setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1200);
     } catch { /* swallow */ }
+  };
+  // 单击打乱 → 跳分析器(仅纯 HTM 三阶打乱可分析;非 3x3 / 含 wide-move 的打乱不跳)。
+  // 选中文字时不跳,避免误触。analyzer 用 `_` 分隔,空格替成下划线再交给 URLSearchParams 编码。
+  // 阶段跟随该行徽标当前指标,变体跟随顶部下拉,这样跳过去直接看到对应解法。
+  const openAnalyzer = (scramble: string, m: Metric) => {
+    if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
+    const q = new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') });
+    const stage = METRIC_STAGE[m];
+    if (stage && stage !== 'cross') q.set('stage', stage);
+    if (variant && variant !== 'std') q.set('variant', variant);
+    router.push(`${langPrefix}/scramble/analyzer?${q.toString()}`);
   };
   const colSpan = showPreview ? 3 : 2;
   const rows: ReactNode[] = [];
@@ -121,50 +141,58 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       a.isExtra ? 'is-extra' : '',
       copiedIdx === i ? 'is-copied' : '',
     ].filter(Boolean).join(' ');
+    const canAnalyze = !!a.scramble && isHtmScramble(a.scramble);
     rows.push(
       <tr
         key={i}
         className={rowCls}
-        onClick={() => copyAttempt(i, a.scramble)}
-        title={t('点击复制', 'Click to copy')}
-        style={{ cursor: a.scramble ? 'pointer' : 'default' }}
+        onClick={canAnalyze ? () => openAnalyzer(a.scramble, effMetric(a.scramble)) : undefined}
+        title={canAnalyze ? t('点击用分析器分析这条打乱', 'Click to open in analyzer') : undefined}
+        style={{ cursor: canAnalyze ? 'pointer' : 'default' }}
       >
-        <td className="gen-tn-attempt-num">{a.label}</td>
+        <td
+          className="gen-tn-attempt-num"
+          onClick={a.scramble ? (e) => { e.stopPropagation(); copyAttempt(i, a.scramble); } : undefined}
+          title={a.scramble ? t('复制打乱', 'Copy scramble') : undefined}
+          style={{ cursor: a.scramble ? 'pointer' : undefined }}
+        >
+          <span className="gen-tn-attempt-label">{a.label}</span>
+          {a.scramble && (
+            <button
+              type="button"
+              className="gen-tn-copy-btn"
+              onClick={(e) => { e.stopPropagation(); copyAttempt(i, a.scramble); }}
+              title={t('复制打乱', 'Copy scramble')}
+              aria-label={t('复制打乱', 'Copy scramble')}
+            >
+              <Copy size={13} />
+            </button>
+          )}
+        </td>
         <td className="gen-tn-attempt-scramble">
           <div className="gen-tn-scr-line">
             <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
             {(() => {
-              const digits = showCross && a.scramble ? crossMap!.get(a.scramble) : undefined;
-              if (!digits) return null;
+              // cross 数据存在 = 可分析的 333 行 → 显示徽标(可点击循环指标)。
+              if (!showCross || !a.scramble || !rowDigits!(a.scramble, 'cross')) return null;
+              const em = effMetric(a.scramble);
+              const digits = rowDigits!(a.scramble, em);
               return (
                 <span
-                  className="gen-tn-cross-badge"
-                  title={t('白十字最少步 黄红橙蓝绿同列', 'Optimal cross HTM — White Yellow Red Orange Blue Green')}
+                  className="gen-tn-cross-badge is-clickable"
+                  title={t('点击切换 十字/XC/XXC/XXXC/XXXXC', 'Click to cycle Cross / XC / XXC / XXXC / XXXXC')}
+                  onClick={(e) => { e.stopPropagation(); cycleMetric(a.scramble); }}
                 >
-                  <span className="gen-tn-cross-c">C</span>
-                  {digits.map((d, ci) => (
-                    <b key={ci} className={`gen-tn-cx ${BADGE_CLASS[ci]}`}>{d}</b>
-                  ))}
+                  <span className="gen-tn-cross-c">{metricBadgeLabel(em)}</span>
+                  {digits
+                    ? digits.map((d, ci) => (
+                        <b key={ci} className={`gen-tn-cx ${BADGE_CLASS[ci]}`}>{d}</b>
+                      ))
+                    : <b className="gen-tn-cx-na">–</b>}
                 </span>
               );
             })()}
           </div>
-          {showCross && a.scramble && crossMap!.has(a.scramble) && isHtmScramble(a.scramble) && (
-            <div className="gen-tn-cross-sol">
-              <button
-                type="button"
-                className="gen-tn-cross-sol-btn"
-                onClick={(e) => { e.stopPropagation(); toggleSol(i); }}
-                aria-expanded={openSol.has(i)}
-              >
-                {openSol.has(i) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                {t('查看白底解法', 'White cross solution')}
-              </button>
-              {openSol.has(i) && (
-                <code className="gen-tn-cross-sol-moves">{whiteCrossMoves(a.scramble)}</code>
-              )}
-            </div>
-          )}
           {copiedIdx === i && (
             <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
           )}

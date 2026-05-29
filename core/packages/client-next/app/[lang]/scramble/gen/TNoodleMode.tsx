@@ -57,8 +57,9 @@ import {
 } from '@/lib/cross-color-subset';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
-import { useCompSteps, normScramble, type CompStepsState } from './useCompSteps';
+import { useCompSteps, normScramble } from './useCompSteps';
 import { useF2leoStepMap } from './useF2leoStepMap';
+import { useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -78,16 +79,17 @@ const VARIANTS: { key: VariantKey; zh: string; en: string }[] = [
 // → 无数据时显示提示)。后端 comp_steps_<variant> 出齐后这些会自动秒载。
 const STD_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
 const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
-const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'none' }> = {
+// engine:'variant' = VariantSolverWasm 小表浏览器现算(pair 已接;eo/pseudo/pseudo_pair
+// solver 就绪后从 'none' 改 'variant')。'none' = 仅 comp_steps 预计算,无 client 引擎。
+const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
-  eo: { stages: STD_STAGES, engine: 'none' },
-  pair: { stages: F2L_STAGES, engine: 'none' },
-  pseudo: { stages: F2L_STAGES, engine: 'none' },
-  pseudo_pair: { stages: F2L_STAGES, engine: 'none' },
+  eo: { stages: STD_STAGES, engine: 'variant' },
+  pair: { stages: F2L_STAGES, engine: 'variant' },
+  pseudo: { stages: F2L_STAGES, engine: 'variant' },
+  pseudo_pair: { stages: F2L_STAGES, engine: 'variant' },
   f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
   pseudo_f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
 };
-const EMPTY_COMPSTEPS: CompStepsState = { map: null, ready: true };
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
 // 阶段下拉显示名(metric → 标签);XCross 系沿用 stats 写法,中英一致。
@@ -755,9 +757,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   // 关闭 / 非 333 / 非 std 引擎时不建 JS cross 表。
   const crossA = useCrossMap(showCross && is333Family && variantEngine === 'std' ? analysisScrambles : NO_SCRAMBLES);
-  // 预计算步数表:目前仅 std 有 comp_steps(其余待 comp_steps_<variant> 出齐),非 std 用空表。
-  const compStepsStd = useCompSteps(showCross && is333Family ? loadedCompId : null);
-  const compSteps = variant === 'std' ? compStepsStd : EMPTY_COMPSTEPS;
+  // 预计算步数表:每个变体取自己的 comp_steps 目录(命中秒出)。404 → std/f2leo 退实时
+  // 引擎;无 client 引擎的变体(eo/pair/pseudo/pseudo_pair)显示「暂无数据」而非永远转圈。
+  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, variant);
   const uncovered = useMemo(() => {
     if (!(showCross && is333Family) || !compSteps.ready) return NO_SCRAMBLES;
     if (!compSteps.map) return analysisScrambles;
@@ -784,29 +786,60 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     }
     return m;
   }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.fullReady, safeMetric]);
+  // pair / eo / pseudo / pseudo_pair:VariantSolverWasm 小表浏览器现算(comp_steps 未覆盖的打乱)。
+  const variantScrambles = variantEngine === 'variant' ? uncovered : NO_SCRAMBLES;
+  const variantLive = useVariantStepMap(
+    variantScrambles,
+    variantEngine === 'variant',
+    VARIANT_WASM_ID[variant] ?? 0,
+    vspec.stages.length,
+  );
+  const variantCrossMap = useMemo(() => {
+    const m = new Map<string, number[]>();
+    if (variantEngine === 'variant' && variantLive.map) for (const [s, v] of variantLive.map) m.set(s, v.slice(0, 6));
+    return m;
+  }, [variantEngine, variantLive.map, variantLive.done, variantLive.crossReady]);
+  const variantMetricMap = useMemo(() => {
+    const m = new Map<string, number[]>();
+    const off = METRIC_OFFSET[safeMetric];
+    if (variantEngine === 'variant' && variantLive.map) {
+      for (const [s, v] of variantLive.map) if (v.length >= off + 6) m.set(s, v.slice(off, off + 6));
+    }
+    return m;
+  }, [variantEngine, variantLive.map, variantLive.done, variantLive.fullReady, safeMetric]);
   // 按引擎统一选源喂 CompCrossAnalysis。cross 视图 gate 在 crossReady(秒出),深阶段 gate 在 fullReady。
-  const cxCrossMap = variantEngine === 'f2leo' ? f2leoCrossMap : (variantEngine === 'std' ? crossA.map : EMPTY_MAP_TN);
-  const cxReady = variantEngine === 'f2leo' ? f2leoLive.crossReady : (variantEngine === 'std' ? crossA.ready : true);
+  const cxCrossMap = variantEngine === 'f2leo' ? f2leoCrossMap
+    : variantEngine === 'variant' ? variantCrossMap
+    : (variantEngine === 'std' ? crossA.map : EMPTY_MAP_TN);
+  const cxReady = variantEngine === 'f2leo' ? f2leoLive.crossReady
+    : variantEngine === 'variant' ? variantLive.crossReady
+    : (variantEngine === 'std' ? crossA.ready : true);
   const cxStep: StepMapState = variantEngine === 'f2leo'
     ? { map: f2leoMetricMap, ready: f2leoLive.fullReady, done: f2leoLive.done, total: f2leoLive.total, error: f2leoLive.error }
-    : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
-  const cxStepUncovered = variantEngine === 'f2leo' ? f2leoScrambles.length : (variantEngine === 'std' ? stepUncovered.length : 0);
+    : variantEngine === 'variant'
+      ? { map: variantMetricMap, ready: variantLive.fullReady, done: variantLive.done, total: variantLive.total, error: variantLive.error }
+      : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
+  const cxStepUncovered = variantEngine === 'f2leo' ? f2leoScrambles.length
+    : variantEngine === 'variant' ? variantScrambles.length
+    : (variantEngine === 'std' ? stepUncovered.length : 0);
   // 逐行徽标取值(BADGE_ORDER 6 值),无数据 → undefined。
   const rowDigits = useCallback((scr: string, m: Metric): number[] | undefined => {
     const off = METRIC_OFFSET[m];
-    if (variantEngine === 'std') {
-      if (m === 'cross') { const d = crossA.map.get(scr); if (d) return d; }
-      const pv = compSteps.map?.get(normScramble(scr));
-      if (pv && pv.length >= off + 6) return pv.slice(off, off + 6);
-      if (m === safeMetric) return stepLive.map?.get(scr);
-      return undefined;
-    }
+    // std cross 优先 JS 实时表(未收录比赛也有值);其余统一先查 comp_steps,再退引擎。
+    if (variantEngine === 'std' && m === 'cross') { const d = crossA.map.get(scr); if (d) return d; }
+    const pv = compSteps.map?.get(normScramble(scr));
+    if (pv && pv.length >= off + 6) return pv.slice(off, off + 6);
+    if (variantEngine === 'std' && m === safeMetric) return stepLive.map?.get(scr);
     if (variantEngine === 'f2leo') {
       const fv = f2leoLive.map?.get(scr);
       if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
     }
+    if (variantEngine === 'variant') {
+      const fv = variantLive.map?.get(scr);
+      if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
+    }
     return undefined;
-  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, safeMetric]);
+  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, variantLive.map, safeMetric]);
   // 稳定引用:CompCrossAnalysis 把它当 sheets333,身份不稳会让上报 filter 的 effect
   // 每 render 都 fire → setState 循环。
   const sheetsInEvent = useMemo(
@@ -1269,7 +1302,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             </div>
           )}
           {is333Family && sheetsInEvent.length > 0 && showCross && (
-            <CompCrossAnalysis sheets333={analysisSheets} crossMap={cxCrossMap} ready={cxReady} pre={compSteps} step={cxStep} stepUncoveredCount={cxStepUncovered} includeExtras={includeExtras} metric={safeMetric} letters={cxLetters} onFilterChange={setCrossFilter} t={t} />
+            <CompCrossAnalysis sheets333={analysisSheets} crossMap={cxCrossMap} ready={cxReady} pre={compSteps} step={cxStep} stepUncoveredCount={cxStepUncovered} engineless={variantEngine === 'none'} includeExtras={includeExtras} metric={safeMetric} letters={cxLetters} onFilterChange={setCrossFilter} t={t} />
           )}
           <div className="gen-tn-sheets">
             {sheetsToRender.map((sh, i) => (

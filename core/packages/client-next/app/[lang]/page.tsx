@@ -9,10 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Heart } from 'lucide-react';
 import LandingCubeHero from '../_components/LandingCubeHero';
-import DonateModal from '../_components/DonateModal';
-import WcaAuth from '@/components/WcaAuth';
 import { TEXTS, SECTIONS } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
@@ -31,7 +28,6 @@ export default function LandingPage() {
   // the hook short-circuit to BRAND only.
   useDocumentTitle('', '');
   const { i18n } = useTranslation();
-  const [donateOpen, setDonateOpen] = useState(false);
   const effectiveTheme = useEffectiveTheme();
   // `mounted` flips on client after hydration; gates anything that differs
   // between SSR and CSR (theme-dependent logo src, hostname-based beian)
@@ -141,17 +137,6 @@ export default function LandingPage() {
           </svg>
           <span>GitHub</span>
         </a>
-
-        <button
-          className="footer-donate"
-          onClick={() => setDonateOpen(true)}
-          title={lang === 'zh' ? '赞助' : 'Donate'}
-        >
-          <Heart size={14} strokeWidth={1.8} />
-          <span>{lang === 'zh' ? '赞助' : 'Donate'}</span>
-        </button>
-
-        <WcaAuth />
       </div>
 
       {showBeian && (
@@ -171,8 +156,6 @@ export default function LandingPage() {
           </a>
         </div>
       )}
-
-      {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
     </div>
   );
 }

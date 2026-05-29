@@ -5,17 +5,21 @@
 // hide) as a horizontal toolbar below the search box. Lazy-loaded by DeskPet so
 // the site-search data layer only loads when the user actually opens search.
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { Maximize2, Coffee, Crosshair, EyeOff, Magnet } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Maximize2, Coffee, Crosshair, EyeOff, Magnet, Heart, Home, Sparkles, Shuffle } from 'lucide-react';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
+import WcaAuth from '@/components/WcaAuth';
+import DonateModal from '@/components/DonateModal';
+import DeskPetGallery from '@/components/DeskPetGallery';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:60;display:flex;
   align-items:flex-end;justify-content:center;padding:16px 16px max(12vh,48px);
   background:color-mix(in srgb, var(--foreground) 38%, transparent);
-  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .deskpet-search-box{width:min(640px,94vw);will-change:transform,opacity;}
 /* Box is anchored to the bottom of the screen, so the results open upward. */
 .deskpet-search-box .landing-search-panel{top:auto;bottom:calc(100% + 0.5rem);}
@@ -30,11 +34,18 @@ const CSS = `
 .deskpet-toolbar button:hover{background:var(--card);
   border-color:color-mix(in srgb, var(--foreground) 24%, transparent);}
 .deskpet-toolbar .icon-only{padding:8px;}
+.deskpet-toolbar button.is-active{background:var(--accent-soft);
+  border-color:color-mix(in srgb, var(--accent) 50%, transparent);color:var(--accent);}
 .deskpet-toolbar .icon-only.char-btn{padding:3px;overflow:hidden;}
 .deskpet-toolbar-thumb{width:26px;height:26px;object-fit:contain;}
 .deskpet-toolbar .sep{align-self:stretch;width:1px;margin:2px 2px;
   background:var(--border-default);}
 .deskpet-toolbar .header-toggles{gap:8px;padding:0 2px;}
+/* Auth dropdown opens upward — the toolbar sits at the bottom of the screen. */
+.deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
+@media (max-width:480px){
+  .deskpet-search-backdrop{padding-bottom:12px;}
+}
 `;
 
 export default function DeskPetSearch({
@@ -52,6 +63,8 @@ export default function DeskPetSearch({
   onResetPos,
   onCling,
   onHide,
+  randomMode,
+  onToggleRandom,
 }: {
   lang: 'zh' | 'en';
   origin?: { x: number; y: number } | null;
@@ -67,9 +80,14 @@ export default function DeskPetSearch({
   onResetPos: () => void;
   onCling: () => void;
   onHide: () => void;
+  randomMode: boolean;
+  onToggleRandom: () => void;
 }) {
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const [donateOpen, setDonateOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const router = useRouter();
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
 
@@ -135,6 +153,17 @@ export default function DeskPetSearch({
       <div className="deskpet-search-box" ref={boxRef}>
         <LandingSearch cards={SEARCH_CARDS} lang={lang} />
         <div className="deskpet-toolbar">
+          <button type="button" className="icon-only" onClick={() => { router.push(`/${lang}`); onClose(); }}
+            title={t('主页', 'Home')}>
+            <Home size={16} />
+          </button>
+          <HeaderToggles />
+          <WcaAuth />
+          <button type="button" className="icon-only" onClick={() => setDonateOpen(true)}
+            title={t('赞助', 'Donate')}>
+            <Heart size={16} />
+          </button>
+          <span className="sep" />
           <button type="button" className="icon-only char-btn" onClick={onCycleChar}
             title={`${t('形象', 'Character')}: ${charLabel}`}>
             <img src={charThumb} alt="" className="deskpet-toolbar-thumb"
@@ -144,8 +173,14 @@ export default function DeskPetSearch({
             title={`${t('大小', 'Size')}: ${sizeLabel}`}>
             <Maximize2 size={16} />
           </button>
-          <HeaderToggles />
-          <span className="sep" />
+          <button type="button" className="icon-only" onClick={() => setGalleryOpen(true)}
+            title={t('动画图鉴', 'Animations')}>
+            <Sparkles size={16} />
+          </button>
+          <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
+            title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>
+            <Shuffle size={16} />
+          </button>
           <button type="button" className="icon-only" onClick={onToggleRest}
             title={resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}>
             <Coffee size={16} />
@@ -164,6 +199,8 @@ export default function DeskPetSearch({
           </button>
         </div>
       </div>
+      {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
+      {galleryOpen && <DeskPetGallery lang={lang} onClose={() => setGalleryOpen(false)} />}
     </div>
   );
 }

@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a09 startle + 2.5D vertical-axis spin peek (agent 9)
+       Theme: cube reactions / peek.
+
+       Clawd peers over a small cube held in front. The cube spins
+       about a vertical axis (T2): a front-LEFT and front-RIGHT face
+       share a centre edge at x=7.5. As the spin advances the left
+       face foreshortens to ~0 while a NEW right face widens in, and
+       each face re-colours through the WCA sequence
+       (white/green -> yellow/blue). Reads as a real cube turning.
+
+       Reaction (8s loop): calm watch -> STARTLE when the new face
+       swings round (jolt up + eyes pop huge + red ! ) -> settle.
+
+       Cube ~6.6 wide, centred x=7.5, top edge y=10.0 (below eyes
+       y=8..10), bottom y=13.2. Eyes peek clearly above the cube.
+  -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: st-shadow 8s infinite ease-in-out; }
+      .st-breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: st-breathe 8s infinite ease-in-out; }
+      .st-jolt    { transform-box: view-box; transform-origin: 7.5px 14px; animation: st-jolt 8s infinite cubic-bezier(.34,1.56,.64,1); }
+      .st-arm-l { transform-box: fill-box; transform-origin: 100% 0%; animation: st-arm-l 8s infinite ease-in-out; }
+      .st-arm-r { transform-box: fill-box; transform-origin: 0% 0%;   animation: st-arm-r 8s infinite ease-in-out; }
+
+      .st-eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: st-eyes 8s infinite cubic-bezier(.34,1.56,.64,1); }
+
+      .st-face-l { transform-box: fill-box; transform-origin: 100% 50%; animation: st-face-l 8s infinite cubic-bezier(.45,0,.55,1); }
+      .st-face-r { transform-box: fill-box; transform-origin: 0% 50%;   animation: st-face-r 8s infinite cubic-bezier(.45,0,.55,1); }
+      .st-fl-c1 { animation: st-fl-c1 8s infinite step-end; }
+      .st-fl-c2 { opacity:0; animation: st-fl-c2 8s infinite step-end; }
+      .st-fr-c1 { animation: st-fr-c1 8s infinite step-end; }
+      .st-fr-c2 { opacity:0; animation: st-fr-c2 8s infinite step-end; }
+
+      .st-mark { transform-box: fill-box; transform-origin: 50% 100%; opacity: 0; animation: st-mark 8s infinite cubic-bezier(.34,1.56,.64,1); }
+
+      @keyframes st-shadow {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        50%      { opacity: 0.5; transform: scaleX(1); }
+        58%      { opacity: 0.6; transform: scaleX(1.06); }
+      }
+      @keyframes st-breathe {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        50%      { transform: scale(1.012,0.988) translateY(0.12px); }
+      }
+      @keyframes st-jolt {
+        0%, 50%, 100% { transform: translateY(0) rotate(0deg); }
+        55%           { transform: translateY(-0.8px) rotate(0deg); }
+        62%           { transform: translateY(0.2px) rotate(0deg); }
+        70%           { transform: translateY(0) rotate(0deg); }
+      }
+      @keyframes st-arm-l {
+        0%, 100% { transform: translate(0.7px,0.9px) rotate(34deg); }
+        55%      { transform: translate(0.4px,0.6px) rotate(26deg); }
+      }
+      @keyframes st-arm-r {
+        0%, 100% { transform: translate(-0.7px,0.9px) rotate(-34deg); }
+        55%      { transform: translate(-0.4px,0.6px) rotate(-26deg); }
+      }
+      @keyframes st-eyes {
+        0%, 45%   { transform: translateY(0.3px) scaleY(0.9); }
+        53%       { transform: translateY(-0.4px) scaleY(1.8); }
+        62%       { transform: translateY(-0.4px) scaleY(1.6); }
+        66%       { transform: translateY(-0.4px) scaleY(0.1); }
+        70%       { transform: translateY(-0.1px) scaleY(1.2); }
+        85%, 100% { transform: translateY(0.3px) scaleY(0.95); }
+      }
+      @keyframes st-face-l {
+        0%   { transform: scaleX(1);    }
+        45%  { transform: scaleX(0.06); }
+        50%  { transform: scaleX(0.02); }
+        55%  { transform: scaleX(0.06); }
+        100% { transform: scaleX(1);    }
+      }
+      @keyframes st-face-r {
+        0%   { transform: scaleX(0.02); }
+        45%  { transform: scaleX(0.95); }
+        50%  { transform: scaleX(1);    }
+        55%  { transform: scaleX(0.95); }
+        100% { transform: scaleX(0.02); }
+      }
+      @keyframes st-fl-c1 { 0% {opacity:1;} 50% {opacity:0;} }
+      @keyframes st-fl-c2 { 0% {opacity:0;} 50% {opacity:1;} }
+      @keyframes st-fr-c1 { 0% {opacity:1;} 50% {opacity:0;} }
+      @keyframes st-fr-c2 { 0% {opacity:0;} 50% {opacity:1;} }
+      @keyframes st-mark {
+        0%, 48%, 80%, 100% { opacity: 0; transform: scale(0.3) translateY(0); }
+        53%                { opacity: 1; transform: scale(1.4) translateY(-0.4px); }
+        62%                { opacity: 1; transform: scale(1) translateY(0); }
+        72%                { opacity: 0; transform: scale(0.7) translateY(0); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="st-breathe">
+    <g class="st-jolt">
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+      <rect class="st-arm-l" x="0"  y="9" width="2" height="2" fill="#DE886D"/>
+      <rect class="st-arm-r" x="13" y="9" width="2" height="2" fill="#DE886D"/>
+
+      <g class="st-eyes" fill="#000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+
+      <g class="st-mark">
+        <rect x="7" y="1.8" width="1" height="2.4" fill="#E02029"/>
+        <rect x="7" y="4.6" width="1" height="1"   fill="#E02029"/>
+      </g>
+
+      <!-- ===== CUBE: 2.5D vertical spin (top y=10.0, bottom y=13.2) ===== -->
+      <rect x="4.2" y="10.0" width="6.6" height="3.2" fill="#0e0e12"/>
+      <!-- LEFT face: 3 rows x 2 cols, foreshortens toward inner edge x=7.4 -->
+      <g class="st-face-l">
+        <g class="st-fl-c1">
+          <rect x="4.4"  y="10.2" width="1.45" height="0.85" fill="#FAFAFA"/>
+          <rect x="5.95" y="10.2" width="1.45" height="0.85" fill="#FAFAFA"/>
+          <rect x="4.4"  y="11.15" width="1.45" height="0.85" fill="#FAFAFA"/>
+          <rect x="5.95" y="11.15" width="1.45" height="0.85" fill="#FAFAFA"/>
+          <rect x="4.4"  y="12.1" width="1.45" height="0.9"  fill="#FAFAFA"/>
+          <rect x="5.95" y="12.1" width="1.45" height="0.9"  fill="#FAFAFA"/>
+        </g>
+        <g class="st-fl-c2">
+          <rect x="4.4"  y="10.2" width="1.45" height="0.85" fill="#FDD500"/>
+          <rect x="5.95" y="10.2" width="1.45" height="0.85" fill="#FDD500"/>
+          <rect x="4.4"  y="11.15" width="1.45" height="0.85" fill="#FDD500"/>
+          <rect x="5.95" y="11.15" width="1.45" height="0.85" fill="#FDD500"/>
+          <rect x="4.4"  y="12.1" width="1.45" height="0.9"  fill="#FDD500"/>
+          <rect x="5.95" y="12.1" width="1.45" height="0.9"  fill="#FDD500"/>
+        </g>
+      </g>
+      <!-- RIGHT face: 3 rows x 2 cols, widens from inner edge x=7.6 -->
+      <g class="st-face-r">
+        <g class="st-fr-c1">
+          <rect x="7.6"  y="10.2" width="1.45" height="0.85" fill="#00A04A"/>
+          <rect x="9.15" y="10.2" width="1.45" height="0.85" fill="#00A04A"/>
+          <rect x="7.6"  y="11.15" width="1.45" height="0.85" fill="#00A04A"/>
+          <rect x="9.15" y="11.15" width="1.45" height="0.85" fill="#00A04A"/>
+          <rect x="7.6"  y="12.1" width="1.45" height="0.9"  fill="#00A04A"/>
+          <rect x="9.15" y="12.1" width="1.45" height="0.9"  fill="#00A04A"/>
+        </g>
+        <g class="st-fr-c2">
+          <rect x="7.6"  y="10.2" width="1.45" height="0.85" fill="#0E5FD9"/>
+          <rect x="9.15" y="10.2" width="1.45" height="0.85" fill="#0E5FD9"/>
+          <rect x="7.6"  y="11.15" width="1.45" height="0.85" fill="#0E5FD9"/>
+          <rect x="9.15" y="11.15" width="1.45" height="0.85" fill="#0E5FD9"/>
+          <rect x="7.6"  y="12.1" width="1.45" height="0.9"  fill="#0E5FD9"/>
+          <rect x="9.15" y="12.1" width="1.45" height="0.9"  fill="#0E5FD9"/>
+        </g>
+      </g>
+      <!-- centre seam (shared vertical edge) -->
+      <rect x="7.4" y="10.0" width="0.2" height="3.2" fill="#16161b"/>
+    </g>
+  </g>
+</svg>

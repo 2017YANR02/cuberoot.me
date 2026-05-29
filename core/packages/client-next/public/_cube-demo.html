@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>3x3 spin demo</title>
+<style>
+  :root{
+    /* WCA scheme — opposite pairs: white/yellow, green/blue, red/orange */
+    --w:#FAFAFA; --y:#FDD500; --r:#E02029; --o:#FF7A00; --b:#0E5FD9; --g:#00A04A;
+    --body:#141414;
+  }
+  html,body{margin:0;height:100%;background:#0a0a0a;overflow:hidden;
+    display:grid;place-items:center;}
+  .scene{perspective:1100px;width:340px;height:340px;display:grid;place-items:center;}
+  .cube{position:relative;width:180px;height:180px;transform-style:preserve-3d;
+    animation:spin 9s linear infinite;}
+  @keyframes spin{
+    from{transform:rotateX(-22deg) rotateY(0deg);}
+    to  {transform:rotateX(-22deg) rotateY(360deg);}
+  }
+  .face{position:absolute;width:180px;height:180px;box-sizing:border-box;
+    display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+    gap:6px;padding:6px;background:var(--body);border-radius:12px;}
+  .st{border-radius:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.22);}
+  /* face placement (half-size = 90px) */
+  .U{transform:rotateX( 90deg) translateZ(90px);}
+  .D{transform:rotateX(-90deg) translateZ(90px);}
+  .F{transform:translateZ(90px);}
+  .B{transform:rotateY(180deg) translateZ(90px);}
+  .R{transform:rotateY( 90deg) translateZ(90px);}
+  .L{transform:rotateY(-90deg) translateZ(90px);}
+  .w{background:var(--w);} .y{background:var(--y);} .r{background:var(--r);}
+  .o{background:var(--o);} .b{background:var(--b);} .g{background:var(--g);}
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="cube">
+    <div class="face U"><i class="st w"></i><i class="st w"></i><i class="st w"></i><i class="st w"></i><i class="st w"></i><i class="st w"></i><i class="st w"></i><i class="st w"></i><i class="st w"></i></div>
+    <div class="face D"><i class="st y"></i><i class="st y"></i><i class="st y"></i><i class="st y"></i><i class="st y"></i><i class="st y"></i><i class="st y"></i><i class="st y"></i><i class="st y"></i></div>
+    <div class="face F"><i class="st g"></i><i class="st g"></i><i class="st g"></i><i class="st g"></i><i class="st g"></i><i class="st g"></i><i class="st g"></i><i class="st g"></i><i class="st g"></i></div>
+    <div class="face B"><i class="st b"></i><i class="st b"></i><i class="st b"></i><i class="st b"></i><i class="st b"></i><i class="st b"></i><i class="st b"></i><i class="st b"></i><i class="st b"></i></div>
+    <div class="face R"><i class="st r"></i><i class="st r"></i><i class="st r"></i><i class="st r"></i><i class="st r"></i><i class="st r"></i><i class="st r"></i><i class="st r"></i><i class="st r"></i></div>
+    <div class="face L"><i class="st o"></i><i class="st o"></i><i class="st o"></i><i class="st o"></i><i class="st o"></i><i class="st o"></i><i class="st o"></i><i class="st o"></i><i class="st o"></i></div>
+  </div>
+</div>
+<style>i{display:block;}</style>
+</body>
+</html>
