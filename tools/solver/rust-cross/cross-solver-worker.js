@@ -14,6 +14,8 @@
 
 let solver = null;
 let CrossSolverWasm = null;
+let f2leoSolver = null;
+let F2leoSolverWasm = null;
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -37,6 +39,11 @@ async function init(glueUrl, wasmUrl, tablesBase) {
     names.map((n) => fetchTable(`${tablesBase}/${n}.bin.gz`))
   );
   solver = new CrossSolverWasm(...tables);
+
+  // F2LEO / Pseudo F2LEO 复用 5 张表子集:pt_cross, mt_edge2, mt_edge4, mt_corn, mt_edge
+  // (跳过 index 1 的 pt_cross_C4E0 — f2leo 不需要)。pseudo 另在构造时现场建剪枝表。
+  F2leoSolverWasm = mod.F2leoSolverWasm;
+  f2leoSolver = new F2leoSolverWasm(tables[0], tables[2], tables[3], tables[4], tables[5]);
 }
 
 self.onmessage = async (e) => {
@@ -63,6 +70,14 @@ self.onmessage = async (e) => {
         msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50,
       );
       self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'f2leo') {
+      if (!f2leoSolver) throw new Error('f2leo solver not initialized');
+      const t0 = performance.now();
+      // 整变体一次算:返回 24 值 [cross,xc,xxc,xxxc] × 6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。
+      const out = msg.pseudo
+        ? f2leoSolver.solve_pseudo_f2leo(msg.scramble)
+        : f2leoSolver.solve_f2leo(msg.scramble);
+      self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     }
   } catch (err) {
     self.postMessage({ type: 'error', id: msg && msg.id, error: String(err && err.message || err) });
