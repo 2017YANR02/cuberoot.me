@@ -30,7 +30,7 @@ const CSS = `
 .deskpet-toolbar button:hover{background:var(--card);
   border-color:color-mix(in srgb, var(--foreground) 24%, transparent);}
 .deskpet-toolbar .icon-only{padding:8px;}
-.deskpet-toolbar .icon-only.char-btn{padding:3px;}
+.deskpet-toolbar .icon-only.char-btn{padding:3px;overflow:hidden;}
 .deskpet-toolbar-thumb{width:26px;height:26px;object-fit:contain;}
 .deskpet-toolbar .sep{align-self:stretch;width:1px;margin:2px 2px;
   background:var(--border-default);}
@@ -42,6 +42,7 @@ export default function DeskPetSearch({
   origin,
   onClose,
   charThumb,
+  charScale,
   charLabel,
   sizeLabel,
   resting,
@@ -56,6 +57,7 @@ export default function DeskPetSearch({
   origin?: { x: number; y: number } | null;
   onClose: () => void;
   charThumb: string;
+  charScale: number;
   charLabel: string;
   sizeLabel: string;
   resting: boolean;
@@ -135,7 +137,8 @@ export default function DeskPetSearch({
         <div className="deskpet-toolbar">
           <button type="button" className="icon-only char-btn" onClick={onCycleChar}
             title={`${t('形象', 'Character')}: ${charLabel}`}>
-            <img src={charThumb} alt="" className="deskpet-toolbar-thumb" />
+            <img src={charThumb} alt="" className="deskpet-toolbar-thumb"
+              style={charScale !== 1 ? { transform: `scale(${charScale})` } : undefined} />
           </button>
           <button type="button" className="icon-only" onClick={onCycleSize}
             title={`${t('大小', 'Size')}: ${sizeLabel}`}>

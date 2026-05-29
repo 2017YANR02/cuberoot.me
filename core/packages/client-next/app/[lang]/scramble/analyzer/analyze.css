@@ -273,10 +273,64 @@
 }
 
 .analyze-wca-steps {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
     min-height: 1.7rem;
+}
+
+/* 折叠态:跟「白十字」下拉同款的小按钮,只显示当前十字步数 */
+.analyze-wca-steptrigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.2rem;
+    min-width: 2.6rem;
+    background: var(--az-surface);
+    border: 1px solid var(--az-border-strong);
+    border-radius: 5px;
+    padding: 0.25rem 0.35rem 0.25rem 0.5rem;
+    font-size: 0.82rem;
+    color: var(--az-text);
+    cursor: pointer;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+}
+
+.analyze-wca-steptrigger:hover:not(:disabled),
+.analyze-wca-steptrigger[aria-expanded='true'] {
+    border-color: var(--az-accent);
+}
+
+.analyze-wca-steptrigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.analyze-wca-steptrigger svg {
+    color: var(--az-text-mute);
+    flex: 0 0 auto;
+}
+
+/* 展开态:浮层覆盖,不挤占布局;水平居中于触发按钮 */
+.analyze-wca-wheelpop {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    padding: 4px;
+    background: var(--az-surface);
+    border: 1px solid var(--az-border-strong);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px color-mix(in srgb, black 28%, transparent);
+    animation: az-wheelpop-in 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes az-wheelpop-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* WCA 步数滚筒:复用通用 WheelPicker,套 analyzer 主题 token(light/dark 自动翻) */
@@ -311,14 +365,13 @@
 .analyze-wca-reshuffle {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    justify-content: center;
     background: var(--az-surface);
     border: 1px solid var(--az-border);
     border-radius: 4px;
-    padding: 0.25rem 0.55rem;
+    padding: 0.3rem;
     color: var(--az-text-sub);
     font-family: inherit;
-    font-size: 0.78rem;
     cursor: pointer;
 }
 

@@ -37,6 +37,10 @@
   outline-offset: -1px;
   border-color: var(--ring);
 }
+/* placeholder(打乱 / 解法)走正文字体,跟上方「公式」标题一致,不用 mono */
+.sim-player-input::placeholder {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
 .sim-player-row button {
   display: inline-flex;

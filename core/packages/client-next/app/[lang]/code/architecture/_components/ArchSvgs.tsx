@@ -1,65 +1,84 @@
 export function SystemTopoSVG() {
   return (
-    <svg viewBox="0 0 880 480" className="diagram-svg" role="img" aria-label="System topology">
+    <svg viewBox="0 0 880 380" className="diagram-svg" role="img" aria-label="System topology">
+      <defs>
+        <marker id="topo-ah" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="context-stroke" />
+        </marker>
+      </defs>
+      {/* ── top lane: build / data ── */}
       <g className="d-box d-box-ext">
-        <rect x="340" y="20" width="200" height="60" rx="6" />
-        <text x="440" y="46" className="d-title">GitHub Actions</text>
-        <text x="440" y="64" className="d-sub">CI · 周更 · deploy</text>
+        <rect x="300" y="24" width="180" height="60" rx="6" />
+        <text x="390" y="50" className="d-title">WCA Public Dump</text>
+        <text x="390" y="68" className="d-sub">每周 · .sql + .tsv</text>
       </g>
       <g className="d-box d-box-ext">
-        <rect x="80" y="400" width="180" height="60" rx="6" />
-        <text x="170" y="426" className="d-title">WCA Public Dump</text>
-        <text x="170" y="444" className="d-sub">每周 · .sql + .tsv</text>
+        <rect x="560" y="24" width="180" height="60" rx="6" />
+        <text x="650" y="50" className="d-title">GitHub Actions</text>
+        <text x="650" y="68" className="d-sub">CI · 周更 · deploy</text>
+      </g>
+      {/* ── serving lane ── */}
+      <g className="d-box d-box-ext">
+        <rect x="30" y="24" width="200" height="78" rx="10" />
+        <text x="130" y="52" className="d-title">Vercel edge</text>
+        <text x="130" y="70" className="d-sub">同份 Next 代码</text>
+        <text x="130" y="88" className="d-sub d-mono">push 部署 · edge cache</text>
       </g>
       <g className="d-box d-box-user">
-        <rect x="20" y="200" width="180" height="80" rx="10" />
-        <text x="110" y="230" className="d-title">User Browser</text>
-        <text x="110" y="248" className="d-sub">Chrome / Safari / Edge</text>
-        <text x="110" y="266" className="d-sub d-mono">cuberoot.me</text>
+        <rect x="20" y="190" width="180" height="80" rx="10" />
+        <text x="110" y="220" className="d-title">User Browser</text>
+        <text x="110" y="238" className="d-sub">Chrome / Safari / Edge</text>
+        <text x="110" y="256" className="d-sub d-mono">cuberoot.me</text>
       </g>
       <g className="d-box d-box-server">
-        <rect x="320" y="130" width="240" height="230" rx="10" />
-        <text x="440" y="160" className="d-title d-title-lg">Cloud VM</text>
-        <text x="440" y="180" className="d-sub d-mono">one box, three services</text>
-        <line x1="340" y1="200" x2="540" y2="200" className="d-divider" />
+        <rect x="320" y="120" width="240" height="230" rx="10" />
+        <text x="440" y="150" className="d-title d-title-lg">Cloud VM</text>
+        <text x="440" y="170" className="d-sub d-mono">one box, three services</text>
+        <line x1="340" y1="190" x2="540" y2="190" className="d-divider" />
         <g>
-          <rect x="340" y="214" width="200" height="36" rx="4" className="d-inner d-inner-a" />
-          <text x="440" y="237" className="d-inner-text">nginx <tspan className="d-port">:443</tspan></text>
+          <rect x="340" y="204" width="200" height="36" rx="4" className="d-inner d-inner-a" />
+          <text x="440" y="227" className="d-inner-text">nginx <tspan className="d-port">:443</tspan></text>
         </g>
         <g>
-          <rect x="340" y="258" width="200" height="36" rx="4" className="d-inner d-inner-b" />
-          <text x="440" y="281" className="d-inner-text">Hono API <tspan className="d-port">:3001</tspan></text>
+          <rect x="340" y="248" width="200" height="36" rx="4" className="d-inner d-inner-b" />
+          <text x="440" y="271" className="d-inner-text">Hono API <tspan className="d-port">:3001</tspan></text>
         </g>
         <g>
-          <rect x="340" y="302" width="200" height="36" rx="4" className="d-inner d-inner-c" />
-          <text x="440" y="325" className="d-inner-text">PostgreSQL 13 <tspan className="d-port">:5432</tspan></text>
+          <rect x="340" y="292" width="200" height="36" rx="4" className="d-inner d-inner-c" />
+          <text x="440" y="315" className="d-inner-text">PostgreSQL 13 <tspan className="d-port">:5432</tspan></text>
         </g>
       </g>
       <g className="d-box d-box-ext">
-        <rect x="680" y="200" width="180" height="80" rx="10" />
-        <text x="770" y="230" className="d-title">GH Pages</text>
-        <text x="770" y="248" className="d-sub">fallback mirror</text>
-        <text x="770" y="266" className="d-sub d-mono">cuberoot.me (CNAME)</text>
+        <rect x="680" y="190" width="180" height="80" rx="10" />
+        <text x="770" y="218" className="d-title">GH Pages</text>
+        <text x="770" y="236" className="d-sub">fallback mirror</text>
+        <text x="770" y="254" className="d-sub d-mono">cuberoot.me (CNAME)</text>
+      </g>
+      {/* ── top-lane arrows ── */}
+      <g className="d-arrow d-arrow-cold">
+        <line x1="480" y1="54" x2="560" y2="54" markerEnd="url(#topo-ah)" />
+        <text x="520" y="44" className="d-label">pull weekly</text>
+      </g>
+      <g className="d-arrow d-arrow-cold">
+        <line x1="634" y1="84" x2="550" y2="120" markerEnd="url(#topo-ah)" />
+        <text x="614" y="104" className="d-label">scp · ssh</text>
+      </g>
+      {/* ── serving-lane arrows ── */}
+      <g className="d-arrow d-arrow-hot">
+        <line x1="200" y1="230" x2="320" y2="230" markerEnd="url(#topo-ah)" />
+        <text x="256" y="222" className="d-label">HTTPS</text>
       </g>
       <g className="d-arrow d-arrow-hot">
-        <line x1="200" y1="240" x2="320" y2="240" />
-        <polygon points="320,240 312,236 312,244" />
-        <text x="260" y="232" className="d-label">HTTPS</text>
+        <line x1="110" y1="190" x2="126" y2="102" markerEnd="url(#topo-ah)" />
+        <text x="66" y="150" className="d-label">split DNS</text>
       </g>
       <g className="d-arrow d-arrow-cold">
-        <line x1="680" y1="240" x2="560" y2="240" />
-        <polygon points="560,240 568,236 568,244" />
-        <text x="620" y="232" className="d-label">301</text>
+        <line x1="228" y1="100" x2="320" y2="200" markerEnd="url(#topo-ah)" />
+        <text x="250" y="128" className="d-label">api · static</text>
       </g>
       <g className="d-arrow d-arrow-cold">
-        <line x1="440" y1="80" x2="440" y2="130" />
-        <polygon points="440,130 436,122 444,122" />
-        <text x="455" y="110" className="d-label">scp · ssh</text>
-      </g>
-      <g className="d-arrow d-arrow-cold">
-        <line x1="200" y1="400" x2="380" y2="80" />
-        <polygon points="380,80 372,80 376,86" />
-        <text x="290" y="240" className="d-label" transform="rotate(-60 290 240)">pull weekly</text>
+        <line x1="680" y1="230" x2="560" y2="230" markerEnd="url(#topo-ah)" />
+        <text x="620" y="222" className="d-label">301</text>
       </g>
     </svg>
   );
@@ -68,6 +87,11 @@ export function SystemTopoSVG() {
 export function PackageDepsSVG() {
   return (
     <svg viewBox="0 0 760 320" className="diagram-svg" role="img" aria-label="Monorepo packages">
+      <defs>
+        <marker id="pkg-ah" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="context-stroke" />
+        </marker>
+      </defs>
       <g className="d-pkg d-pkg-shared">
         <rect x="320" y="130" width="120" height="60" rx="8" />
         <text x="380" y="158" className="d-title">shared</text>
@@ -89,12 +113,10 @@ export function PackageDepsSVG() {
         <text x="600" y="266" className="d-sub d-mono">CLI · 独立</text>
       </g>
       <g className="d-edge">
-        <line x1="240" y1="86" x2="320" y2="146" />
-        <polygon points="320,146 313,142 315,150" />
+        <line x1="240" y1="86" x2="320" y2="148" markerEnd="url(#pkg-ah)" />
       </g>
       <g className="d-edge">
-        <line x1="240" y1="240" x2="320" y2="172" />
-        <polygon points="320,172 314,176 313,168" />
+        <line x1="240" y1="240" x2="320" y2="170" markerEnd="url(#pkg-ah)" />
       </g>
       <text x="380" y="306" className="d-caption">
         client / server 都依赖 shared (纯类型) · stats-build 独立 CLI
