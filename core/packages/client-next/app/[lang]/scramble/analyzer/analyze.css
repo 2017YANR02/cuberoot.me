@@ -698,3 +698,7 @@ html[data-theme=dark] .analyze-page {
   .rcx-controls { gap: 10px; }
   .rcx-control select { min-width: 120px; }
 }
+
+.rcx-dot { color: var(--az-text-mute); font-size: 16px; line-height: 1; }
+.rcx-cell[data-empty="true"] { color: var(--az-text-mute); }
+.rcx-hint { color: var(--az-text-mute); font-size: 12px; margin: 2px 0 8px; }
