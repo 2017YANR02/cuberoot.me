@@ -4,8 +4,9 @@
 # 一键:        pwsh run_weekly.ps1
 # 干跑(只读):  pwsh run_weekly.ps1 -DryRun -SourceCsv D:\cube\scramble\wca_scramble\input\wca_scrambles_info.csv
 # 只本地不发布: pwsh run_weekly.ps1 -NoPublish
-# 只补某些变体: pwsh run_weekly.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair,pair)
-# 不补变体:     pwsh run_weekly.ps1 -Variants @()
+# 选变体补缺: pwsh run_weekly.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair)
+# pair 单独跑: pwsh run_weekly.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑)
+# 不补变体:   pwsh run_weekly.ps1 -Variants @()
 #
 # 流程: results export 下载/抽取 -> 增量 diff (vs std.csv) -> std_analyzer 全 5 阶段 -> 追加 std/no_wide_move/split_mbf
 #       -> 对每个变体按 "master no_wide_move 的 id - 该变体已有 id" 补缺 (分块 solve + 逐块校验追加, 可中断续跑)
@@ -17,7 +18,7 @@ param(
   [string]$SourceCsv,     # 测试源 (input 形状 csv) 替代下载 export
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 复用上次 std solver 产出, 跳过 std 解算
-  [string[]]$Variants = @('eo','pseudo','pseudo_pair','pair'),  # 跟 std 锁步补缺的变体 (@() = 只跑 std)
+  [string[]]$Variants = @('eo','pseudo','pseudo_pair'),  # 跟 std 锁步补缺的变体 (@()=只 std)。pair ~2/s 太慢, 默认不含, 需手动 -Variants pair
   [int]$ChunkSize = 20000 # 变体补缺分块大小: 逐块追加, 中断只丢当前块。pair ~2/s 一块约 2.8h, 其它快得多
 )
 $ErrorActionPreference = 'Stop'
@@ -34,7 +35,7 @@ $StaticHost  = 'root@cuberoot'                 # 免密 ssh 别名
 $StaticDest  = '/www/wwwroot/toolkit/stats'    # nginx 静态根 (self-hosted + Vercel fallback 都从这服)
 
 # 变体 -> analyzer exe。suffix 恒为 _<变体名>, 故输出文件名 = <输入名>_<变体名>.csv。
-# std 不在此: 它单独走 new_no_wide_move.txt 的全量 diff (见下)。pair ~2/s 最慢, 默认排最后。
+# std 不在此: 它单独走 new_no_wide_move.txt 的全量 diff (见下)。pair ~2/s 最慢, 不在默认 -Variants 里, 需显式 -Variants pair。
 $VARIANT_EXE = @{
   eo          = 'eo_cross_analyzer.exe'
   pseudo      = 'pseudo_analyzer.exe'
