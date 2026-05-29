@@ -6,7 +6,7 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { Maximize2, Moon, Crosshair, EyeOff } from 'lucide-react';
+import { Maximize2, Moon, Crosshair, EyeOff, Magnet } from 'lucide-react';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
@@ -48,6 +48,7 @@ export default function DeskPetSearch({
   onCycleSize,
   onToggleRest,
   onResetPos,
+  onCling,
   onHide,
 }: {
   lang: 'zh' | 'en';
@@ -61,6 +62,7 @@ export default function DeskPetSearch({
   onCycleSize: () => void;
   onToggleRest: () => void;
   onResetPos: () => void;
+  onCling: () => void;
   onHide: () => void;
 }) {
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -122,6 +124,10 @@ export default function DeskPetSearch({
           <button type="button" onClick={onToggleRest}>
             <Moon size={15} />
             {resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}
+          </button>
+          <button type="button" onClick={onCling}>
+            <Magnet size={15} />
+            {t('贴边', 'Cling')}
           </button>
           <button type="button" onClick={onResetPos}>
             <Crosshair size={15} />

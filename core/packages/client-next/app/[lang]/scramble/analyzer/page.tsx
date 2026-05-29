@@ -29,6 +29,9 @@ import {
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
 import RustCrossSection from './RustCrossSection';
+import { Flag } from '@/components/Flag';
+import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
+import { WheelPicker } from '@/components/WheelPicker';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './analyze.css';
 
@@ -90,6 +93,18 @@ async function randomThreeByThreeScramble(): Promise<string> {
   const { randomScrambleForEvent } = await import('cubing/scramble');
   const alg = await randomScrambleForEvent('333');
   return alg.toString();
+}
+
+// wca_cross 条目只有比赛名,没有 ID。WCA 比赛 ID = 比赛名 NFKD 去重音 + 删非字母数字
+// (世锦赛特例 WCYYYY)。据此反查 comp_countries 拿国旗,~92% 命中,未命中不显示。
+function compFlagFromName(name: string): string {
+  const id = name.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
+  let iso = compFlagIso2(id);
+  if (!iso) {
+    const m = name.match(/World Championship\s+(\d{4})/i);
+    if (m) iso = compFlagIso2(`WC${m[1]}`);
+  }
+  return iso;
 }
 
 function FilterChip(props: { active: boolean; title: string; amount: number; onClick: () => void }) {
@@ -189,6 +204,8 @@ function AnalyzePageInner() {
   const [wcaMeta, setWcaMeta] = useState<WcaEntry | null>(null);
   const [wcaLoading, setWcaLoading] = useState(false);
   const [crossSol, setCrossSol] = useState<{ length: number; moves: string[] } | null>(null);
+  const [wheelIdx, setWheelIdx] = useState(0); // 滚筒锚点 = wcaBins 的索引(兼容跳号)
+  const [, setFlagDataVer] = useState(0); // 国旗映射异步加载完后触发重渲染
   const wcaCacheRef = useRef<Map<string, WcaFile>>(new Map());
 
   const [running, setRunning] = useState(false);
@@ -356,6 +373,24 @@ function AnalyzePageInner() {
     return () => clearTimeout(t);
   }, [wcaMeta, wcaColor]);
 
+  // 国旗映射(comp_countries 等)首屏后异步拉,完成后重渲染让旗出现。
+  useEffect(() => { void loadFlagData().then(setFlagDataVer); }, []);
+
+  // bins 加载 / 换色后把滚筒居中到中间档(不自动取打乱,等用户滚定再取)。
+  useEffect(() => {
+    if (wcaBins && wcaBins.length) setWheelIdx(Math.floor(wcaBins.length / 2));
+  }, [wcaBins]);
+
+  const wheelRenderSlot = useCallback(
+    (i: number) => (wcaBins && wcaBins[i] != null ? String(wcaBins[i]) : ''),
+    [wcaBins],
+  );
+  const wheelSettle = useCallback((i: number) => {
+    if (wcaBins && wcaBins[i] != null) pickWca(wcaColor, wcaBins[i]);
+  }, [wcaBins, wcaColor, pickWca]);
+
+  const wcaFlagIso = wcaMeta ? compFlagFromName(wcaMeta.c) : '';
+
   return (
     <div className="analyze-page">
       <header className="analyze-header">
@@ -422,17 +457,20 @@ function AnalyzePageInner() {
         </select>
         <div className="analyze-wca-steps">
           {wcaBins && wcaBins.length ? (
-            wcaBins.map((b) => (
-              <button
-                key={b}
-                className={`analyze-wca-step${wcaStep === b ? ' is-active' : ''}`}
-                onClick={() => pickWca(wcaColor, b)}
-                disabled={running}
-                title={t(`${b} 步十字的真实打乱`, `Real scramble with a ${b}-move cross`)}
-              >
-                {b}
-              </button>
-            ))
+            <WheelPicker
+              className="analyze-wca-wheel"
+              value={wheelIdx}
+              minValue={0}
+              maxValue={wcaBins.length - 1}
+              renderSlot={wheelRenderSlot}
+              onChange={setWheelIdx}
+              onSettle={wheelSettle}
+              width={50}
+              slots={7}
+              itemHeight={28}
+              disabled={running}
+              ariaLabel={t('十字步数', 'Cross length')}
+            />
           ) : (
             <Loader2 size={14} className="analyze-spin" aria-label={t('加载中', 'Loading')} />
           )}
@@ -452,6 +490,7 @@ function AnalyzePageInner() {
 
       {wcaMeta && (
         <div className="analyze-wca-meta">
+          {wcaFlagIso && <Flag iso2={wcaFlagIso} className="analyze-wca-flag" />}
           <span className="analyze-wca-comp">{wcaMeta.c}</span>
           {wcaMeta.d && <span className="analyze-wca-date">{wcaMeta.d}</span>}
           <span className="analyze-wca-round">
