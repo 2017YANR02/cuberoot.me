@@ -40,7 +40,7 @@ interface ExamplesJson {
   sets: Record<string, ExamplesSet>;
 }
 
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
 type ColorMode = 'cn' | 'quad' | 'dual' | 'single';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
@@ -70,6 +70,8 @@ const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string }> = {
   pair: { en: 'Cross + Pair', zh: '十字+基态' },
   pseudo: { en: 'Pseudo', zh: '伪十字' },
   pseudo_pair: { en: 'Pseudo + Pair', zh: '伪十字+基态' },
+  f2leo: { en: 'F2LEO', zh: 'F2LEO' },
+  pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO' },
 };
 
 const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
@@ -93,6 +95,14 @@ const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
   xxxcross_pair: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross_pseudo_pair: { en: 'XXXCross', zh: 'XXXCross' },
+  f2leo_cross: { en: 'Cross', zh: '十字' },
+  pseudo_f2leo_cross: { en: 'Cross', zh: '十字' },
+  f2leo_xcross: { en: 'XCross', zh: 'XCross' },
+  pseudo_f2leo_xcross: { en: 'XCross', zh: 'XCross' },
+  f2leo_xxcross: { en: 'XXCross', zh: 'XXCross' },
+  pseudo_f2leo_xxcross: { en: 'XXCross', zh: 'XXCross' },
+  f2leo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
+  pseudo_f2leo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   f2l: { en: 'XXXXCross', zh: 'XXXXCross' },
   xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
   eo_xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },

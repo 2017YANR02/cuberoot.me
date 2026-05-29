@@ -5,7 +5,7 @@ description: "Use when regenerating `stats/scramble/*.json` or touching `core/pa
 
 # Scramble Stats Build
 
-把 `D:\cube\solver` 产的 5 份 CSV 聚合成 `stats/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。
+把 `D:\cube\solver` 产的 7 份 CSV 聚合成 `stats/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。某个变体 CSV 缺失时**跳过**(打 `[skip] <key>: missing CSV ...` 警告,不再抛错),回填后再纳入。
 
 ## 跑
 
@@ -44,6 +44,8 @@ CSV 数据全 gitignored(`D:/cube/scramble/`),几百 MB 永不进 git。`config.
 | `pair.csv` | `id` | `cross_pair xcross_pair xxcross_pair xxxcross_pair`（4 阶段） | 同上 |
 | `pseudo.csv` | `id` | `pseudo_cross … pseudo_xxxcross` | `z0,z2,z3,z1,x3,x1` |
 | `pseudo_pair.csv` | `id` | `pseudo_cross_pseudo_pair …` | 同上 |
+| `f2leo.csv` | `id` | `f2leo_cross f2leo_xcross f2leo_xxcross f2leo_xxxcross`（4 阶段,无 xxxxcross） | 同上 |
+| `pseudo_f2leo.csv` | `id` | `pseudo_f2leo_cross pseudo_f2leo_xcross pseudo_f2leo_xxcross pseudo_f2leo_xxxcross`（4 阶段,无 xxxxcross） | 同上 |
 
 列名 = `${stage}_${angle}`,**全部变体表头已统一**为 `id` + `_z0/_z2/_z3/_z1/_x3/_x1`(2026-05-29 把 pair 从老的 `scramble`+rotation 记号一并归一)。列**物理顺序**按 /solver UI 排(None / z2 / z' / z / x' / x),标签按 z^n / x^n 标准 cubing 记号(_z0=Y, _z2=W, _z3=O, _z1=R, _x3=G, _x1=B)。pair.csv 样本数比其他小(~112k vs 1.2M)是老快照残留,待回填。
 

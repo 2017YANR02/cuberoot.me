@@ -1,6 +1,6 @@
 # @cuberoot/scramble-stats-build
 
-把 `D:\cube\solver` 的 5 个分析器产物 CSV 聚合成 `stats/scramble/distribution.json`，供前端 `/scramble-stats` 页面使用。
+把 `D:\cube\solver` 的 7 个分析器产物 CSV 聚合成 `stats/scramble/distribution.json`，供前端 `/scramble-stats` 页面使用（缺失的变体 CSV 会被跳过）。
 
 ## 用法
 
@@ -13,7 +13,7 @@ cp config.yml.example config.yml
 pnpm --filter @cuberoot/scramble-stats-build build
 ```
 
-输入：`<csv_dir>/{std,eo,pair,pseudo,pseudo_pair}.csv`
+输入：`<csv_dir>/{std,eo,pair,pseudo,pseudo_pair,f2leo,pseudo_f2leo}.csv`（缺失的变体 CSV 会被跳过并打警告，不再抛错）
 输出：`<repo-root>/stats/scramble/distribution.json`
 
 ## 产出 schema
