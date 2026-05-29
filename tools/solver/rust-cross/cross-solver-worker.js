@@ -12,10 +12,8 @@
 // variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc。values 是普通 number[]。
 // moves.data = { len, combo, sols:string[] }(单格多解步骤,sols 带视角前缀)。
 
-let solver = null;
-let CrossSolverWasm = null;
-let f2leoSolver = null;
-let F2leoSolverWasm = null;
+let solver = null;       // CrossSolverWasm(std cross/xc..xxxxc),需 52MB pt_cross_C4E0
+let f2leoSolver = null;  // F2leoSolverWasm(f2leo / pseudo),只需小表子集
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -23,48 +21,49 @@ async function fetchTable(url) {
   const buf = await res.arrayBuffer();
   if (url.endsWith('.gz')) {
     const stream = new Response(buf).body.pipeThrough(new DecompressionStream('gzip'));
-    const out = await new Response(stream).arrayBuffer();
-    return new Uint8Array(out);
+    return new Uint8Array(await new Response(stream).arrayBuffer());
   }
   return new Uint8Array(buf);
 }
 
-async function init(glueUrl, wasmUrl, tablesBase) {
+// init 即按 `need` 拉所需表 + 建求解器,**然后**才发 ready —— 池子串行预热(同一时刻只
+// 一个 worker 在 init),靠这点避免 N 个 worker 同时 fetch 同批表把 dev server 打到
+// "Failed to fetch"。`need='f2leo'` 只拉 5 张小表(跳过 52MB pt_cross_C4E0),f2leo 池更快。
+async function init(glueUrl, wasmUrl, tablesBase, need) {
   const mod = await import(glueUrl);
   await mod.default(wasmUrl);
-  CrossSolverWasm = mod.CrossSolverWasm;
-
-  const names = ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'];
-  const tables = await Promise.all(
-    names.map((n) => fetchTable(`${tablesBase}/${n}.bin.gz`))
-  );
-  solver = new CrossSolverWasm(...tables);
-
-  // F2LEO / Pseudo F2LEO 复用 5 张表子集:pt_cross, mt_edge2, mt_edge4, mt_corn, mt_edge
-  // (跳过 index 1 的 pt_cross_C4E0 — f2leo 不需要)。pseudo 另在构造时现场建剪枝表。
-  F2leoSolverWasm = mod.F2leoSolverWasm;
-  f2leoSolver = new F2leoSolverWasm(tables[0], tables[2], tables[3], tables[4], tables[5]);
+  const get = (n) => fetchTable(`${tablesBase}/${n}.bin.gz`);
+  if (need === 'f2leo') {
+    // f2leo / pseudo 复用 5 张小表;pseudo 在首次求解时再现场建剪枝表。
+    const [a, c, d, e, f] = await Promise.all(['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get));
+    f2leoSolver = new mod.F2leoSolverWasm(a, c, d, e, f);
+  } else {
+    const [a, b, c, d, e, f] = await Promise.all(
+      ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
+    );
+    solver = new mod.CrossSolverWasm(a, b, c, d, e, f);
+  }
 }
 
 self.onmessage = async (e) => {
   const msg = e.data;
   try {
     if (msg.type === 'init') {
-      await init(msg.glueUrl, msg.wasmUrl, msg.tablesBase);
+      await init(msg.glueUrl, msg.wasmUrl, msg.tablesBase, msg.need);
       self.postMessage({ type: 'ready' });
     } else if (msg.type === 'solve') {
-      if (!solver) throw new Error('solver not initialized');
+      if (!solver) throw new Error('cross solver not initialized');
       const out = msg.cumulative
         ? solver.solve_cumulative(msg.scramble, msg.variant)
         : solver.solve(msg.scramble, msg.variant);
       self.postMessage({ type: 'result', id: msg.id, values: Array.from(out) });
     } else if (msg.type === 'face') {
-      if (!solver) throw new Error('solver not initialized');
+      if (!solver) throw new Error('cross solver not initialized');
       const t0 = performance.now();
       const v = solver.solve_face(msg.scramble, msg.variant, msg.face);
       self.postMessage({ type: 'face', id: msg.id, value: v, ms: performance.now() - t0 });
     } else if (msg.type === 'moves') {
-      if (!solver) throw new Error('solver not initialized');
+      if (!solver) throw new Error('cross solver not initialized');
       const t0 = performance.now();
       const json = solver.solve_moves(
         msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50,
@@ -77,6 +76,12 @@ self.onmessage = async (e) => {
       const out = msg.pseudo
         ? f2leoSolver.solve_pseudo_f2leo(msg.scramble)
         : f2leoSolver.solve_f2leo(msg.scramble);
+      self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'f2leo_stage') {
+      if (!f2leoSolver) throw new Error('f2leo solver not initialized');
+      const t0 = performance.now();
+      // 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc),cross 极快 → UI 先单算 cross 秒出。
+      const out = f2leoSolver.solve_f2leo_stage(msg.scramble, !!msg.pseudo, msg.stage | 0);
       self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     }
   } catch (err) {
