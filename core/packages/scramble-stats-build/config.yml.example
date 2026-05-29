@@ -1,5 +1,6 @@
 # 多 set 配置:每项一个数据来源,UI 上 dropdown 切换
-# 每个 set 的 CSV 目录里必须有 5 个文件:std.csv / eo.csv / pair.csv / pseudo.csv / pseudo_pair.csv
+# 每个 set 的 CSV 目录可含以下文件:std.csv / eo.csv / pair.csv / pseudo.csv / pseudo_pair.csv / f2leo.csv / pseudo_f2leo.csv
+# 缺失的变体 CSV 会被跳过并打警告(不再是必需,build 不再抛错)
 sets:
   - key: wca
     label: WCA
