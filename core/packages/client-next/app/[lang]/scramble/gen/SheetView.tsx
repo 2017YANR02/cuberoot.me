@@ -14,7 +14,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { visualcubeApiHref } from '@/lib/visualcube-link';
-import { solveCross } from '@/lib/cross-solver';
+import { solveCross, isHtmScramble } from '@/lib/cross-solver';
 import type { WcaFormat } from './_wca-round';
 import ScrambleLines from './ScrambleLines';
 
@@ -56,8 +56,11 @@ interface SheetViewProps {
   /** Hide per-row preview thumbnail when false. Controls only the on-screen
    *  sheet — PDF visibility is decided by `generateTnoodlePdf` opts.showPreview. */
   showPreview?: boolean;
-  /** 333 only — scramble → optimal 6-colour cross lengths (BADGE_ORDER). When
-   *  present, each row shows the "C: 567766" badge + a white-cross reveal. */
+  /** 333 family (333/oh/ft/fm/bf) — scramble → optimal 6-colour cross lengths
+   *  (BADGE_ORDER). When present, each row shows the "C: 567766" badge; the
+   *  white-cross reveal appears only for HTM-parseable scrambles (bf carries
+   *  wide-move orientation, so its badge comes from precomputed data but the
+   *  live solver can't produce its solution). */
   crossMap?: Map<string, number[]>;
 }
 
@@ -77,7 +80,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     ? t('决赛', 'Final')
     : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const showCross = !!crossMap && event === '333';
+  const showCross = !!crossMap;
   const [openSol, setOpenSol] = useState<Set<number>>(new Set());
   const solCacheRef = useRef<Map<string, string>>(new Map());
   const toggleSol = (idx: number) => {
@@ -146,7 +149,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
               );
             })()}
           </div>
-          {showCross && a.scramble && crossMap!.has(a.scramble) && (
+          {showCross && a.scramble && crossMap!.has(a.scramble) && isHtmScramble(a.scramble) && (
             <div className="gen-tn-cross-sol">
               <button
                 type="button"

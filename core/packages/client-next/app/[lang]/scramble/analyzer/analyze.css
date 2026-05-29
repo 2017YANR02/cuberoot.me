@@ -418,6 +418,12 @@
     color: var(--az-text-mute);
 }
 
+.analyze-wca-id {
+    color: var(--az-text-mute);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.76rem;
+}
+
 .analyze-wca-event {
     color: var(--az-text-sub);
     border: 1px solid var(--az-border);

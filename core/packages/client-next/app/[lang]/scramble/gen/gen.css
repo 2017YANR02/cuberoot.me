@@ -1261,10 +1261,9 @@ html[data-theme=dark] .gen-page {
 /* per-scramble badge in the sheet rows */
 .gen-tn-scr-line {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 4px;
 }
 .gen-tn-cross-badge {
     display: inline-flex;
@@ -1321,19 +1320,6 @@ html[data-theme=dark] .gen-page {
     flex-direction: column;
     gap: 0.9rem;
 }
-.gen-cx-toprow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-.gen-cx-title {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 650;
-    color: var(--gen-text);
-}
 /* PillToggle(共享组件)在 gen 浅色双主题页的适配:组件原样式是给暗色锁定页的
    硬编码 iOS 蓝 + 半透明白,这里换成主题 token + terracotta accent。 */
 .gen-page .pill-toggle {
@@ -1356,6 +1342,9 @@ html[data-theme=dark] .gen-page {
 
 .gen-cx-switchrow {
     display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
     margin: 0.25rem 0 0.75rem;
 }
 
@@ -1386,6 +1375,37 @@ html[data-theme=dark] .gen-page {
     color: var(--gen-accent);
     font-weight: 600;
 }
+
+/* 底色选择:模式下拉(六/四/双/单)+ swatch 选择器(单色 6 选 1 等) */
+.gen-cx-colorsel { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gen-cx-modesel {
+    border: 1px solid var(--gen-border);
+    background: transparent;
+    color: var(--gen-text-sub);
+    border-radius: 7px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.gen-cx-modesel:hover { border-color: var(--gen-border-strong); color: var(--gen-text); }
+.gen-cx-swatches { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.gen-cx-sw {
+    width: 15px; height: 15px; border-radius: 4px; display: inline-block;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gen-text) 22%, transparent);
+}
+.gen-cx-sw.cx-w { background: var(--gen-cx-w); }
+.gen-cx-sw.cx-y { background: var(--gen-cx-y); }
+.gen-cx-sw.cx-r { background: var(--gen-cx-r); }
+.gen-cx-sw.cx-o { background: var(--gen-cx-o); }
+.gen-cx-sw.cx-b { background: var(--gen-cx-b); }
+.gen-cx-sw.cx-g { background: var(--gen-cx-g); }
+.gen-cx-swbtn {
+    display: inline-flex; align-items: center; gap: 2px; line-height: 0;
+    padding: 4px; border: 1px solid transparent; border-radius: 7px;
+    background: none; cursor: pointer;
+}
+.gen-cx-swbtn:hover { border-color: var(--gen-border-strong); }
+.gen-cx-swbtn.is-on { border-color: var(--gen-accent); background: var(--gen-accent-soft); }
 
 .gen-cx-pending,
 .gen-cx-loading {
@@ -1458,7 +1478,6 @@ html[data-theme=dark] .gen-page {
 }
 
 @media (max-width: 480px) {
-    .gen-cx-title { font-size: 0.95rem; }
     .gen-cx-bar { height: 26px; }
     .gen-cx-legend { gap: 3px 12px; }
     .gen-cx-row { gap: 8px; }

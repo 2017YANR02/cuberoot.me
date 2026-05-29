@@ -112,10 +112,21 @@ interface Reservoir { samples: Sample[]; seen: number }
 
 function newRes(): Reservoir { return { samples: [], seen: 0 }; }
 
+// 固定种子 PRNG (mulberry32):reservoir 采样确定化 -> 输入不变则输出逐字节不变,
+// 周更只在真有新数据的 bin 产生 diff(否则 Math.random 每次全量 churn)。
+let rngState = 0x9e3779b9 >>> 0;
+function rand(): number {
+  rngState = (rngState + 0x6d2b79f5) >>> 0;
+  let t = rngState;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
 function reservoirAdd(r: Reservoir, s: Sample) {
   r.seen++;
   if (r.samples.length < K_DOWNLOAD) { r.samples.push(s); return; }
-  const j = Math.floor(Math.random() * r.seen);
+  const j = Math.floor(rand() * r.seen);
   if (j < K_DOWNLOAD) r.samples[j] = s;
 }
 
@@ -396,14 +407,15 @@ async function main() {
   const sets = resolveSets(config);
   console.log(`Configured ${sets.length} set(s): ${sets.map((s) => s.key).join(', ')}`);
 
-  const outDir = path.join(repoRoot, 'stats', 'data', 'scramble');
+  const outDir = path.join(repoRoot, 'stats', 'scramble');
   fs.mkdirSync(outDir, { recursive: true });
   // NOTE: 先把旧 downloads/ 整个干掉，避免残留上次 build 的 subset/bin 组合
   const downloadsDir = path.join(outDir, 'downloads');
   if (fs.existsSync(downloadsDir)) fs.rmSync(downloadsDir, { recursive: true, force: true });
   fs.mkdirSync(downloadsDir, { recursive: true });
 
-  const generatedAt = new Date().toISOString();
+  // SCRAMBLE_STATS_STAMP (周更编排传 export_date): 数据不变则时间戳不变 -> 无 spurious diff
+  const generatedAt = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString();
   const setsOut: Record<string, unknown> = {};
   const examplesSetsOut: Record<string, unknown> = {};
   let txtFilesWritten = 0;
