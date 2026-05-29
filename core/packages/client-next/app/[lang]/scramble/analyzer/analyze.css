@@ -342,9 +342,22 @@
     font-size: 0.82rem;
 }
 
+.analyze-wca-complink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+    color: inherit;
+}
+
 .analyze-wca-comp {
     color: var(--az-text);
     font-weight: 500;
+}
+
+.analyze-wca-complink:hover .analyze-wca-comp {
+    color: var(--az-accent);
+    text-decoration: underline;
 }
 
 .analyze-wca-date,
