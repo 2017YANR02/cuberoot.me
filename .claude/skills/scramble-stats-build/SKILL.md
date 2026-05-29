@@ -19,7 +19,7 @@ pnpm --filter @cuberoot/scramble-stats-build build
 sets:
   - key: wca
     label: WCA
-    csv_dir: D:/cube/scramble/wca_scramble/stat
+    csv_dir: D:/cube/scramble/wca_scramble/stats
     scrambles_txt: D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt
   - key: xcross_2_col_10f
     label: 10-step XCross dual-color states
@@ -41,11 +41,11 @@ CSV 数据全 gitignored(`D:/cube/scramble/`),几百 MB 永不进 git。`config.
 |---|---|---|---|
 | `std.csv` | `id` | `cross xcross xxcross xxxcross xxxxcross` | `z0 z2 z3 z1 x3 x1` |
 | `eo.csv` | `id` | `eo_cross … eo_xxxxcross`（5 阶段） | 同上 |
-| `pair.csv` | `scramble` | `cross_pair xcross_pair xxcross_pair xxxcross_pair` | **`'' z2 z' z x' x`** ← 特殊,直接用 rotation 串当后缀 |
+| `pair.csv` | `id` | `cross_pair xcross_pair xxcross_pair xxxcross_pair`（4 阶段） | 同上 |
 | `pseudo.csv` | `id` | `pseudo_cross … pseudo_xxxcross` | `z0,z2,z3,z1,x3,x1` |
 | `pseudo_pair.csv` | `id` | `pseudo_cross_pseudo_pair …` | 同上 |
 
-列名 = `${stage}_${angle}`（pair 空 angle 产生 `cross_pair_` 裸下划线）。列**物理顺序**按 /solver UI 排(None / z2 / z' / z / x' / x);标签按 z^n / x^n 标准 cubing 记号(_z0=Y, _z2=W, _z3=O, _z1=R, _x3=G, _x1=B)。pair 样本数比其他小（~112k vs 1.2M）是正常。
+列名 = `${stage}_${angle}`,**全部变体表头已统一**为 `id` + `_z0/_z2/_z3/_z1/_x3/_x1`(2026-05-29 把 pair 从老的 `scramble`+rotation 记号一并归一)。列**物理顺序**按 /solver UI 排(None / z2 / z' / z / x' / x),标签按 z^n / x^n 标准 cubing 记号(_z0=Y, _z2=W, _z3=O, _z1=R, _x3=G, _x1=B)。pair.csv 样本数比其他小(~112k vs 1.2M)是老快照残留,待回填。
 
 ## 朝向 = 底色（WCA 官方配色）
 

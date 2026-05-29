@@ -4,7 +4,7 @@ sets:
   - key: wca
     label: WCA
     label_zh: WCA
-    csv_dir: D:/cube/scramble/wca_scramble/stat
+    csv_dir: D:/cube/scramble/wca_scramble/stats
     scrambles_txt: D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt
   - key: xcross_2_col_10f
     label: dual-color 10f xcross
@@ -13,4 +13,4 @@ sets:
     scrambles_txt: D:/cube/scramble/xcross_2_col_10f/scrambles.txt
 
 # 老格式(单 set,等价于 sets: [{key: wca, ...}])仍兼容:
-# csv_dir: D:/cube/scramble/wca_scramble/stat
+# csv_dir: D:/cube/scramble/wca_scramble/stats
