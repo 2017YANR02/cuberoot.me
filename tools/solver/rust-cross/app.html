@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross Analyzer (Rust WASM)</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.6 system-ui, sans-serif; margin: 0 auto; max-width: 760px; padding: 20px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: #888; font-size: 12px; margin-bottom: 16px; }
+  label { display: block; margin: 10px 0 4px; font-weight: 600; }
+  textarea, select { width: 100%; box-sizing: border-box; font: inherit; padding: 6px 8px; }
+  textarea { font-family: ui-monospace, Consolas, monospace; resize: vertical; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .row > div { flex: 1; min-width: 120px; }
+  button { font: inherit; padding: 8px 20px; margin-top: 12px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  table { border-collapse: collapse; margin: 16px 0; width: 100%; }
+  th, td { border: 1px solid #8884; padding: 4px 10px; text-align: center; }
+  th { background: #8881; }
+  td.variant { text-align: left; font-weight: 600; }
+  #status { font-size: 12px; color: #888; min-height: 18px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Cross Analyzer <span style="font-weight:400;color:#888">— Rust → WASM</span></h1>
+<div class="sub">三阶 cross / xcross / xxcross / xxxcross / xxxxcross 最优步数,逐视角。小表可采纳启发式,后台 worker。</div>
+
+<label for="scr">Scramble</label>
+<textarea id="scr" rows="2">R U R' U' R' F R2 U' R' U' R U R' F'</textarea>
+
+<div class="row">
+  <div>
+    <label for="variant">Variant</label>
+    <select id="variant">
+      <option value="0">Cross</option>
+      <option value="1">XCross</option>
+      <option value="2">XXCross</option>
+      <option value="3">XXXCross</option>
+      <option value="4" selected>XXXXCross (F2L)</option>
+      <option value="c4">Cross → XXXXCross (累计)</option>
+    </select>
+  </div>
+</div>
+
+<button id="go" disabled>loading…</button>
+<div id="status"></div>
+<div id="out"></div>
+
+<script type="module">
+import { createCrossSolver } from './cross-solver-client.js';
+
+const FACES = ['D(z0)', 'U(z2)', 'L(z3)', 'R(z1)', 'F(x3)', 'B(x1)'];
+const NAMES = ['Cross', 'XCross', 'XXCross', 'XXXCross', 'XXXXCross'];
+const $ = (id) => document.getElementById(id);
+
+const cs = createCrossSolver({
+  workerUrl: new URL('./cross-solver-worker.js', import.meta.url),
+  glueUrl: new URL('./cross_solver.js', import.meta.url).href,
+  wasmUrl: new URL('./cross_solver_bg.wasm', import.meta.url).href,
+  tablesBase: new URL('./tables', import.meta.url).href,
+});
+
+const t0 = performance.now();
+cs.ready.then(() => {
+  $('go').disabled = false;
+  $('go').textContent = 'Analyze';
+  $('status').textContent = `ready (wasm + tables loaded in ${Math.round(performance.now() - t0)}ms)`;
+}).catch((e) => { $('status').textContent = 'init failed: ' + e.message; });
+
+function rowHtml(label, vals) {
+  return `<tr><td class="variant">${label}</td>` + vals.map((v) => `<td>${v}</td>`).join('') + '</tr>';
+}
+
+$('go').addEventListener('click', async () => {
+  const scr = $('scr').value.trim();
+  const sel = $('variant').value;
+  $('go').disabled = true; $('go').textContent = 'solving…';
+  $('out').innerHTML = '';
+  const ts = performance.now();
+  try {
+    let head = '<table><tr><th>Variant</th>' + FACES.map((f) => `<th>${f}</th>`).join('') + '</tr>';
+    let body = '';
+    if (sel === 'c4') {
+      const flat = await cs.solve(scr, 4, { cumulative: true }); // (4+1)*6 = 30
+      for (let v = 0; v < 5; v++) body += rowHtml(NAMES[v], Array.from(flat.slice(v * 6, v * 6 + 6)));
+    } else {
+      const v = parseInt(sel, 10);
+      const vals = await cs.solve(scr, v);
+      body = rowHtml(NAMES[v], Array.from(vals));
+    }
+    $('out').innerHTML = head + body + '</table>';
+    $('status').textContent = `solved in ${Math.round(performance.now() - ts)}ms`;
+  } catch (e) {
+    $('status').textContent = 'error: ' + e.message;
+  } finally {
+    $('go').disabled = false; $('go').textContent = 'Analyze';
+  }
+});
+</script>
+</body>
+</html>

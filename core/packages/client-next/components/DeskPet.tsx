@@ -3,14 +3,13 @@
 // Clawd web desk pet — ported interaction engine from clawd-on-desk renderer.js.
 // Idle = inline SVG with cursor eye-tracking; other states = <img> swap.
 // Only the crab body (theme hitBox) is interactive; the rest is click-through.
-// Right-click the crab → context menu (size / rest / reset / hide).
+// Click the crab → search overlay (which also hosts the size/char/rest/reset/hide
+// controls as a toolbar below the box). There is no separate right-click menu.
 // Drive from anywhere: window.dispatchEvent(new CustomEvent('clawd:state', { detail: 'happy' }))
 //                  or window.clawdPet?.set('thinking') / window.clawdPet?.idle()
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, Maximize2 } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import i18n from '@/i18n/i18n-client';
 
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
@@ -136,6 +135,7 @@ const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
   z-index:40;pointer-events:none;--pet-scale:1;
   width:calc(var(--pet-base) * var(--pet-scale));height:calc(var(--pet-base) * var(--pet-scale));}
+.clawd-deskpet.pet-front{z-index:61;} /* above the search backdrop (60) so it stays sharp */
 .clawd-deskpet[data-size=s]{--pet-base:192px;}
 .clawd-deskpet[data-size=m]{--pet-base:252px;}
 .clawd-deskpet[data-size=l]{--pet-base:324px;}
@@ -159,30 +159,6 @@ const CSS = `
   .clawd-deskpet[data-size=l]{--pet-base:240px;}
 }
 @media print{.clawd-deskpet{display:none;}}
-
-.clawd-menu{position:fixed;z-index:50;min-width:148px;padding:4px;border-radius:11px;
-  background:var(--popover);color:var(--popover-foreground);
-  border:1px solid var(--border-default);
-  box-shadow:0 10px 30px color-mix(in srgb, var(--foreground) 18%, transparent);
-  font:13px/1.4 ui-sans-serif,system-ui,sans-serif;user-select:none;}
-.clawd-menu .label{padding:5px 10px 3px;font-size:11px;color:var(--muted-foreground);}
-.clawd-menu .row{display:flex;gap:4px;padding:0 2px 2px;}
-.clawd-menu .row button{flex:1;display:flex;align-items:center;justify-content:center;
-  padding:6px 0;border-radius:7px;background:color-mix(in srgb, var(--foreground) 5%, transparent);}
-.clawd-menu .row button[data-on=true]{background:var(--accent-soft);color:var(--accent);}
-.clawd-menu>button{display:flex;align-items:center;width:100%;padding:7px 10px;border-radius:7px;
-  text-align:left;}
-.clawd-menu button{border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;}
-.clawd-menu>button:hover,.clawd-menu .row button:hover{
-  background:color-mix(in srgb, var(--foreground) 9%, transparent);}
-.clawd-menu hr{border:0;border-top:1px solid var(--border-default);margin:4px 6px;}
-.clawd-menu-bar{display:flex;align-items:center;gap:10px;padding:6px 8px;}
-.clawd-menu-bar>button{display:flex;align-items:center;justify-content:center;padding:4px;
-  border-radius:7px;background:transparent;}
-.clawd-menu-bar>button:hover{background:color-mix(in srgb, var(--foreground) 8%, transparent);}
-.clawd-menu-bar .header-toggles{gap:14px;margin-left:auto;}
-.clawd-menu-bar .lang-toggle,.clawd-menu-bar .theme-toggle-inline{color:var(--popover-foreground);}
-.clawd-menu-thumb{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;}
 `;
 
 export default function DeskPet() {
@@ -193,14 +169,11 @@ export default function DeskPet() {
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
-  const [menuPos, setMenuPos] = useState<{ left: number; top: number } | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const hitRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const ctrlRef = useRef<{ rest: () => void; wake: () => void; resetPos: () => void } | null>(null);
   // Visual-center screen point captured right before a size/character change,
   // so the pet's visual center stays put (scales about itself; characters land
@@ -254,29 +227,6 @@ export default function DeskPet() {
     root.style.bottom = c.bottom + 'px';
     try { localStorage.setItem(POS_KEY, JSON.stringify({ right: c.right, bottom: c.bottom })); } catch {}
   }, [size, character]);
-
-  // Place the context menu beside the pet (never over it): prefer right, then
-  // left, then above, then below — whichever has room; clamp to viewport.
-  useIsoLayout(() => {
-    if (!menu) { setMenuPos(null); return; }
-    const el = menuRef.current, root = rootRef.current;
-    if (!el) return;
-    const m = el.getBoundingClientRect();
-    const vw = vpW(), vh = vpH(), gap = 12, pad = 8;
-    const clampX = (x: number) => Math.min(Math.max(pad, x), vw - m.width - pad);
-    const clampY = (y: number) => Math.min(Math.max(pad, y), vh - m.height - pad);
-    let left: number, top: number;
-    const pet = root?.getBoundingClientRect();
-    if (pet) {
-      if (pet.right + gap + m.width <= vw - pad) { left = pet.right + gap; top = clampY(pet.top); }
-      else if (pet.left - gap - m.width >= pad) { left = pet.left - gap - m.width; top = clampY(pet.top); }
-      else if (pet.top - gap - m.height >= pad) { left = clampX(pet.right - m.width); top = pet.top - gap - m.height; }
-      else { left = clampX(pet.right - m.width); top = clampY(pet.bottom + gap); }
-    } else {
-      left = clampX(menu.x); top = clampY(menu.y);
-    }
-    setMenuPos({ left, top });
-  }, [menu]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -406,10 +356,9 @@ export default function DeskPet() {
     };
 
     let sx = 0, sy = 0, baseR = 0, baseB = 0, baseW = 0, baseH = 0, moved = false;
-    let longPress: ReturnType<typeof setTimeout> | undefined;
     let suppressClick = false;
     const onDown = (e: PointerEvent) => {
-      if (e.button === 2) return; // mouse right-click → onContextMenu handles it
+      if (e.button === 2) return; // ignore right mouse button (no context menu)
       suppressClick = false;
       dragging = true; moved = false;
       root.classList.add('dragging');
@@ -420,18 +369,6 @@ export default function DeskPet() {
       baseB = vpH() - r.bottom;
       baseW = r.width; baseH = r.height;
       if (!dnd && e.pointerType === 'mouse') setState('reactDrag', true);
-      // touch / pen: long-press (no move) = context menu
-      if (e.pointerType !== 'mouse') {
-        longPress = setTimeout(() => {
-          longPress = undefined;
-          dragging = false;
-          suppressClick = true;
-          root.classList.remove('dragging');
-          try { hit.releasePointerCapture(e.pointerId); } catch {}
-          if (!dnd) setState('idle', true);
-          setMenu({ x: sx, y: sy });
-        }, 450);
-      }
       e.preventDefault();
     };
     const onDragMove = (e: PointerEvent) => {
@@ -441,14 +378,12 @@ export default function DeskPet() {
         if (!moved && !dnd) setState('reactDrag', true); // first real move (covers touch)
         moved = true;
       }
-      if (longPress && dist > 10) { clearTimeout(longPress); longPress = undefined; }
       const c = clampAnchor(baseR - (e.clientX - sx), baseB - (e.clientY - sy),
         baseW, baseH, VC[character][0], VC[character][1]);
       root.style.right = c.right + 'px';
       root.style.bottom = c.bottom + 'px';
     };
     const onUp = (e: PointerEvent) => {
-      clearTimeout(longPress); longPress = undefined;
       if (!dragging) return;
       dragging = false;
       root.classList.remove('dragging');
@@ -503,7 +438,6 @@ export default function DeskPet() {
       clearTimeout(autoTimer);
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
-      clearTimeout(longPress);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('clawd:state', onExternal as EventListener);
       hit.removeEventListener('click', onClick);
@@ -515,26 +449,6 @@ export default function DeskPet() {
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
   }, [mounted, character]);
-
-  // close menu on outside interaction
-  useEffect(() => {
-    if (!menu) return;
-    const close = () => setMenu(null);
-    const onPointer = (e: PointerEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) close();
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    window.addEventListener('pointerdown', onPointer, true);
-    window.addEventListener('scroll', close, true);
-    window.addEventListener('resize', close);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('pointerdown', onPointer, true);
-      window.removeEventListener('scroll', close, true);
-      window.removeEventListener('resize', close);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [menu]);
 
   if (!mounted || hidden) return null;
 
@@ -572,7 +486,7 @@ export default function DeskPet() {
 
   return (
     <>
-      <div className="clawd-deskpet" data-size={size} data-char={character} ref={rootRef} aria-hidden>
+      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}`} data-size={size} data-char={character} ref={rootRef} aria-hidden>
         <style>{CSS}</style>
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45">
           <defs>
@@ -603,50 +517,27 @@ export default function DeskPet() {
         <div
           className="clawd-deskpet-hit"
           ref={hitRef}
-          title={t('点我搜索 拖动 右键/长按菜单', 'click to search · drag · right-click / long-press menu')}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setMenu({ x: e.clientX, y: e.clientY });
-          }}
+          title={t('点我搜索 / 拖动', 'click to search · drag')}
+          onContextMenu={(e) => e.preventDefault()}
         />
       </div>
 
-      {menu && (
-        <div className="clawd-menu" ref={menuRef}
-          style={{ left: menuPos?.left ?? -9999, top: menuPos?.top ?? -9999, visibility: menuPos ? 'visible' : 'hidden' }}>
-          <button onClick={() => {
-            const r = rootRef.current?.getBoundingClientRect();
-            const [fx, fy] = VC[character];
-            if (r) searchOriginRef.current = { x: r.left + r.width * fx, y: r.top + r.height * fy };
-            setSearchOpen(true); setMenu(null);
-          }}>
-            <Search size={14} style={{ marginRight: 8 }} />
-            {t('搜索', 'Search')}
-          </button>
-          <hr />
-          <div className="clawd-menu-bar">
-            <button onClick={cycleChar} title={`${t('形象', 'Character')}: ${charLabel}`}>
-              <img src={THEMES[character].thumb} alt="" className="clawd-menu-thumb" />
-            </button>
-            <button onClick={cycleSize} title={`${t('大小', 'Size')}: ${sizeLabel}`}>
-              <Maximize2 size={16} />
-            </button>
-            <HeaderToggles />
-          </div>
-          <hr />
-          <button onClick={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); setMenu(null); }}>
-            {resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}
-          </button>
-          <button onClick={() => { ctrlRef.current?.resetPos(); setMenu(null); }}>
-            {t('复位位置', 'Reset position')}
-          </button>
-          <button onClick={() => { setHidden(true); setMenu(null); }}>
-            {t('隐藏(刷新恢复)', 'Hide (until reload)')}
-          </button>
-        </div>
+      {searchOpen && (
+        <DeskPetSearch
+          lang={curLang}
+          origin={searchOriginRef.current}
+          onClose={() => setSearchOpen(false)}
+          charThumb={THEMES[character].thumb}
+          charLabel={charLabel}
+          sizeLabel={sizeLabel}
+          resting={resting}
+          onCycleChar={cycleChar}
+          onCycleSize={cycleSize}
+          onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
+          onResetPos={() => ctrlRef.current?.resetPos()}
+          onHide={() => { setHidden(true); setSearchOpen(false); }}
+        />
       )}
-
-      {searchOpen && <DeskPetSearch lang={curLang} origin={searchOriginRef.current} onClose={() => setSearchOpen(false)} />}
     </>
   );
 }
