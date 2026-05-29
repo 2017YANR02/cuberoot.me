@@ -702,3 +702,11 @@ html[data-theme=dark] .analyze-page {
 .rcx-dot { color: var(--az-text-mute); font-size: 16px; line-height: 1; }
 .rcx-cell[data-empty="true"] { color: var(--az-text-mute); }
 .rcx-hint { color: var(--az-text-mute); font-size: 12px; margin: 2px 0 8px; }
+
+.rcx-cell { line-height: 1.15; }
+.rcx-cell-n { display: block; }
+.rcx-cell-ms { display: block; font-size: 10px; color: var(--az-text-mute); font-variant-numeric: tabular-nums; }
+.rcx-cell.is-sel .rcx-cell-ms { color: color-mix(in srgb, #fff 75%, transparent); }
+.rcx-meta { font-size: 11px; color: var(--az-text-mute); margin: 4px 0 8px; }
+.rcx-compute-all { background: none; color: var(--az-accent); border: 1px solid var(--az-border-strong); }
+.rcx-sols-ms { color: var(--az-text-mute); font-weight: 400; }

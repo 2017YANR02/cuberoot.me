@@ -10,10 +10,14 @@
  * 对齐 or18 F2L solver 的能力(步骤 + 多解 + xxxxcross),用 Rust 等价替换。
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Loader2, Copy, Check } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
-import { createRustCross, type RustCross, type MovesResult } from './rust-cross-client';
+import { createRustCrossPool, type RustCrossPool, type MovesTimed } from './rust-cross-client';
+
+function fmtMs(ms: number): string {
+  return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
+}
 
 const VARIANT_LABELS = ['Cross', 'XCross', 'XXCross', 'XXXCross', 'XXXXCross (F2L)'];
 // 6 视角:rot ""/z2/z'/z/x'/x → 底面 D/U/L/R/F/B(app.html 同口径)
@@ -40,55 +44,82 @@ export default function RustCrossSection({ scramble, lang }: Props) {
   const [variant, setVariant] = useState(0);
   const [extra, setExtra] = useState(0); // 0=仅最优长度全部解;>0=含次优(+N)
   const [counts, setCounts] = useState<(number | null)[]>([null, null, null, null, null, null]);
+  const [times, setTimes] = useState<(number | null)[]>([null, null, null, null, null, null]);
   const [computing, setComputing] = useState(false);
   const [selFace, setSelFace] = useState<number | null>(null);
-  const [moves, setMoves] = useState<MovesResult | null>(null);
+  const [moves, setMoves] = useState<MovesTimed | null>(null);
   const [movesLoading, setMovesLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [runToken, setRunToken] = useState(0);
+  const [totalMs, setTotalMs] = useState<number | null>(null);
 
-  const csRef = useRef<RustCross | null>(null);
+  const csRef = useRef<RustCrossPool | null>(null);
   const scrambleRef = useRef(scramble);
   scrambleRef.current = scramble;
   const computeReq = useRef(0);
   const movesReq = useRef(0);
 
-  // 懒初始化:首次展开才起 worker + 拉表
+  // worker 池大小:手机 2、桌面 4(各 ~70MB 表),按需懒生成,既能并行又不 OOM。
+  const poolSize = useMemo(() => {
+    if (typeof navigator === 'undefined') return 2;
+    const hc = navigator.hardwareConcurrency || 4;
+    const mobile = typeof matchMedia !== 'undefined' && matchMedia('(max-width: 768px)').matches;
+    return Math.max(1, Math.min(mobile ? 2 : 4, hc - 1));
+  }, []);
+
+  // 懒初始化:首次展开才起池(首个 worker 拉表)
   useEffect(() => {
     if (!open || csRef.current) return;
     setStatus('loading');
-    const cs = createRustCross();
+    const cs = createRustCrossPool(poolSize);
     csRef.current = cs;
-    cs.ready
+    const timeout = new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error(t('加载超时(>60s),请重试或检查网络', 'load timeout (>60s) — retry or check network'))), 60000),
+    );
+    Promise.race([cs.ready, timeout])
       .then(() => setStatus('ready'))
       .catch((e) => { setStatus('error'); setErrMsg(e?.message || String(e)); });
-  }, [open]);
+  }, [open, poolSize]);
   useEffect(() => () => { csRef.current?.terminate(); }, []);
 
   // xxxxcross(变体 4)逐视角搜索昂贵(最坏单面数秒),不预算 6 个 —— 点格子才按需求解
-  // (对齐 or18:一次只解一个视角)。cross/xc/xxc/xxxc 便宜,逐格流式预算出概览。
+  // (对齐 or18:一次只解一个视角)。cross/xc/xxc/xxxc 便宜,并行预算出概览。
   const eager = variant <= 3;
 
-  const compute = useCallback(async () => {
+  // 并行算指定视角集合(跨 worker 池);回填 counts + times,报告总墙钟。
+  const computeFaces = useCallback(async (faces: number[]) => {
     const cs = csRef.current;
     if (!cs) return;
     const my = ++computeReq.current;
+    const scr = scrambleRef.current.trim();
+    if (!scr) return;
+    setComputing(true);
+    setTotalMs(null);
+    const wall = performance.now();
+    await Promise.all(faces.map(async (f) => {
+      try {
+        const r = await cs.solveFace(scr, variant, f);
+        if (computeReq.current !== my) return;
+        setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
+        setTimes((prev) => { const n = prev.slice(); n[f] = r.ms; return n; });
+      } catch { /* skip face */ }
+    }));
+    if (computeReq.current === my) {
+      setTotalMs(performance.now() - wall);
+      setComputing(false);
+    }
+  }, [variant]);
+
+  const compute = useCallback(async () => {
+    ++computeReq.current; // supersede in-flight
     setSelFace(null);
     setMoves(null);
     setCounts([null, null, null, null, null, null]);
+    setTimes([null, null, null, null, null, null]);
+    setTotalMs(null);
     if (!eager) { setComputing(false); return; } // 懒变体:不预算,等点击
-    setComputing(true);
-    const scr = scrambleRef.current.trim();
-    if (!scr) { setComputing(false); return; }
-    for (let f = 0; f < 6; f++) {
-      try {
-        const v = await cs.solveFace(scr, variant, f);
-        if (computeReq.current !== my) return;
-        setCounts((prev) => { const next = prev.slice(); next[f] = v; return next; });
-      } catch { /* skip face */ }
-    }
-    if (computeReq.current === my) setComputing(false);
-  }, [variant, eager]);
+    await computeFaces([0, 1, 2, 3, 4, 5]);
+  }, [eager, computeFaces]);
 
   // ready / 变体 / 手动触发 时重算(打乱改动不自动触发,走「计算」按钮)
   useEffect(() => {
@@ -106,8 +137,9 @@ export default function RustCrossSection({ scramble, lang }: Props) {
       const res = await cs.solveMoves(scrambleRef.current.trim(), variant, f, { extra, cap: 60 });
       if (movesReq.current === my) {
         setMoves(res);
-        // 懒变体点击后回填该格步数(solveMoves 返回 len = 最优步数)
+        // 点击后回填该格步数 + 计算耗时
         setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
+        setTimes((prev) => { const next = prev.slice(); next[f] = res.ms; return next; });
       }
     } catch (e) {
       if (movesReq.current === my) setErrMsg(String(e));
@@ -180,6 +212,21 @@ export default function RustCrossSection({ scramble, lang }: Props) {
                   {computing ? <Loader2 size={14} className="rcx-spin" /> : null}
                   {t('计算', 'Compute')}
                 </button>
+                {!eager && (
+                  <button
+                    className="rcx-compute rcx-compute-all"
+                    onClick={() => void computeFaces([0, 1, 2, 3, 4, 5])}
+                    disabled={computing}
+                    title={t(`${poolSize} 路并行`, `${poolSize}-way parallel`)}
+                  >
+                    {computing ? <Loader2 size={14} className="rcx-spin" /> : null}
+                    {t('全部 6 视角', 'All 6 faces')}
+                  </button>
+                )}
+              </div>
+              <div className="rcx-meta">
+                {t(`${poolSize} 路并行`, `${poolSize}-way parallel`)}
+                {totalMs != null && <span> · {t('总耗时', 'total')} {fmtMs(totalMs)}</span>}
               </div>
 
               <table className="rcx-table">
@@ -205,11 +252,16 @@ export default function RustCrossSection({ scramble, lang }: Props) {
                           data-empty={counts[i] == null}
                           title={t('点击求解该视角', 'Click to solve this orientation')}
                         >
-                          {counts[i] != null
-                            ? counts[i]
-                            : loading
-                              ? <Loader2 size={12} className="rcx-spin" />
-                              : <span className="rcx-dot">·</span>}
+                          {counts[i] != null ? (
+                            <>
+                              <span className="rcx-cell-n">{counts[i]}</span>
+                              {times[i] != null && <span className="rcx-cell-ms">{fmtMs(times[i]!)}</span>}
+                            </>
+                          ) : loading ? (
+                            <Loader2 size={12} className="rcx-spin" />
+                          ) : (
+                            <span className="rcx-dot">·</span>
+                          )}
                         </td>
                       );
                     })}
@@ -246,6 +298,7 @@ export default function RustCrossSection({ scramble, lang }: Props) {
                     <>
                       <div className="rcx-sols-count">
                         {t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)}
+                        <span className="rcx-sols-ms"> · {t('耗时', 'solved in')} {fmtMs(moves.ms)}</span>
                       </div>
                       <ol className="rcx-sols-list">
                         {moves.sols.map((sol, i) => (
