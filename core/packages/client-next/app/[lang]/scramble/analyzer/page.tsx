@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle, Dices } from 'lucide-react';
 import { solveCross } from '@/lib/cross-solver';
@@ -96,15 +97,17 @@ async function randomThreeByThreeScramble(): Promise<string> {
 }
 
 // wca_cross 条目只有比赛名,没有 ID。WCA 比赛 ID = 比赛名 NFKD 去重音 + 删非字母数字
-// (世锦赛特例 WCYYYY)。据此反查 comp_countries 拿国旗,~92% 命中,未命中不显示。
-function compFlagFromName(name: string): string {
-  const id = name.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
-  let iso = compFlagIso2(id);
-  if (!iso) {
-    const m = name.match(/World Championship\s+(\d{4})/i);
-    if (m) iso = compFlagIso2(`WC${m[1]}`);
-  }
-  return iso;
+// (世锦赛特例 WCYYYY)。据此反查 comp_countries 拿国旗 + 拼 /scramble/gen?comp= 链接,~92% 命中。
+function compStripId(name: string): string {
+  return name.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
+}
+function resolveComp(name: string): { id: string; iso: string } {
+  const strip = compStripId(name);
+  const iso = compFlagIso2(strip);
+  if (iso) return { id: strip, iso };
+  const m = name.match(/World Championship\s+(\d{4})/i);
+  if (m) { const wc = `WC${m[1]}`; const wcIso = compFlagIso2(wc); if (wcIso) return { id: wc, iso: wcIso }; }
+  return { id: strip, iso: '' };
 }
 
 function FilterChip(props: { active: boolean; title: string; amount: number; onClick: () => void }) {
@@ -389,7 +392,7 @@ function AnalyzePageInner() {
     if (wcaBins && wcaBins[i] != null) pickWca(wcaColor, wcaBins[i]);
   }, [wcaBins, wcaColor, pickWca]);
 
-  const wcaFlagIso = wcaMeta ? compFlagFromName(wcaMeta.c) : '';
+  const wcaComp = wcaMeta ? resolveComp(wcaMeta.c) : null;
 
   return (
     <div className="analyze-page">
@@ -490,8 +493,14 @@ function AnalyzePageInner() {
 
       {wcaMeta && (
         <div className="analyze-wca-meta">
-          {wcaFlagIso && <Flag iso2={wcaFlagIso} className="analyze-wca-flag" />}
-          <span className="analyze-wca-comp">{wcaMeta.c}</span>
+          <Link
+            href={`/${lang}/scramble/gen?comp=${wcaComp?.id ?? ''}`}
+            className="analyze-wca-complink"
+            title={t('在生成器中打开该比赛', 'Open this competition in the generator')}
+          >
+            {wcaComp?.iso && <Flag iso2={wcaComp.iso} className="analyze-wca-flag" />}
+            <span className="analyze-wca-comp">{wcaMeta.c}</span>
+          </Link>
           {wcaMeta.d && <span className="analyze-wca-date">{wcaMeta.d}</span>}
           <span className="analyze-wca-round">
             {ROUND_LABEL[wcaMeta.r]?.[lang] ?? wcaMeta.r}
