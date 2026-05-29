@@ -123,11 +123,6 @@
     flex: 0 0 auto;
 }
 
-.donate-icon-youtube { color: #FF0000; }
-.donate-icon-bilibili { color: #00A1D6; }
-.donate-icon-wechat { color: #07C160; }
-.donate-icon-qq { color: #1EBAFC; }
-.donate-icon-tiktok { color: #000000; }
 
 .donate-contact dd {
     margin: 0;
@@ -186,15 +181,11 @@
 .donate-contact code {
     font-family: 'SF Mono', Menlo, Consolas, monospace;
     font-size: 0.78rem;
-    padding: 1px 6px;
-    border-radius: 4px;
-    background: var(--surface);
-    border: 1px solid var(--border-dark);
     color: var(--text);
 }
 
 .donate-contact a {
-    color: var(--accent);
+    color: var(--text-sub);
     text-decoration: none;
 }
 
@@ -207,30 +198,6 @@
     text-align: center;
     font-size: 0.78rem;
     color: var(--text-sub);
-}
-
-/* Donate trigger button in footer */
-.landing-page .footer-donate {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: transparent;
-    border: none;
-    color: var(--text-sub);
-    font-family: inherit;
-    font-size: 0.75rem;
-    cursor: pointer;
-    padding: 0;
-    transition: color 0.15s;
-}
-
-.landing-page .footer-donate:hover {
-    color: var(--accent);
-}
-
-.landing-page .footer-donate svg {
-    color: #E0245E;
-    fill: #E0245E;
 }
 
 @media (max-width: 600px) {

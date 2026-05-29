@@ -201,6 +201,108 @@ export class F2leoSolverWasm {
     }
 }
 if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
+
+/**
+ * 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
+ * pair / eo / pseudo / pseudo_pair —— 各自 native analyzer 用 ~10GB+ huge 表「联合」
+ * 验证多槽是否解出,wasm 装不下;这里复用各 solver 的 `*_small` cascade:显式逐槽
+ * 追踪 + per-slot 小表(pt_cross_C4E0 等)既作可采纳下界又作 goal 验证,IDA* 首达即最优。
+ * 惰性按变体建(RefCell),只想看一个变体不顺带建别的。
+ *
+ * variant 编号:0=pair,1=eo,2=pseudo,3=pseudo_pair(后三个待接)。
+ */
+export class VariantSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        VariantSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_variantsolverwasm_free(ptr, 0);
+    }
+    /**
+     * 12 表:pair 用 mt_edge4/corn/edge + pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
+     * eo 另用 pt_cross + pt_ep4eo12 + mt_edge2 + mt_eo12 + mt_eo12_alt + mt_ep4。
+     * 仅存引用,惰性建 solver。(pseudo / pseudo_pair 接入时再扩。)
+     * @param {Uint8Array} pt_cross_c4e0
+     * @param {Uint8Array} pt_cross_ins_c4
+     * @param {Uint8Array} pt_pair_c4e0
+     * @param {Uint8Array} mt_edge4
+     * @param {Uint8Array} mt_corn
+     * @param {Uint8Array} mt_edge
+     * @param {Uint8Array} pt_cross
+     * @param {Uint8Array} pt_ep4eo12
+     * @param {Uint8Array} mt_edge2
+     * @param {Uint8Array} mt_eo12
+     * @param {Uint8Array} mt_eo12_alt
+     * @param {Uint8Array} mt_ep4
+     * @param {Uint8Array} pt_pscross
+     */
+    constructor(pt_cross_c4e0, pt_cross_ins_c4, pt_pair_c4e0, mt_edge4, mt_corn, mt_edge, pt_cross, pt_ep4eo12, mt_edge2, mt_eo12, mt_eo12_alt, mt_ep4, pt_pscross) {
+        const ptr0 = passArray8ToWasm0(pt_cross_c4e0, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray8ToWasm0(pt_cross_ins_c4, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passArray8ToWasm0(pt_pair_c4e0, wasm.__wbindgen_malloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArray8ToWasm0(mt_edge4, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ptr5 = passArray8ToWasm0(mt_edge, wasm.__wbindgen_malloc);
+        const len5 = WASM_VECTOR_LEN;
+        const ptr6 = passArray8ToWasm0(pt_cross, wasm.__wbindgen_malloc);
+        const len6 = WASM_VECTOR_LEN;
+        const ptr7 = passArray8ToWasm0(pt_ep4eo12, wasm.__wbindgen_malloc);
+        const len7 = WASM_VECTOR_LEN;
+        const ptr8 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
+        const len8 = WASM_VECTOR_LEN;
+        const ptr9 = passArray8ToWasm0(mt_eo12, wasm.__wbindgen_malloc);
+        const len9 = WASM_VECTOR_LEN;
+        const ptr10 = passArray8ToWasm0(mt_eo12_alt, wasm.__wbindgen_malloc);
+        const len10 = WASM_VECTOR_LEN;
+        const ptr11 = passArray8ToWasm0(mt_ep4, wasm.__wbindgen_malloc);
+        const len11 = WASM_VECTOR_LEN;
+        const ptr12 = passArray8ToWasm0(pt_pscross, wasm.__wbindgen_malloc);
+        const len12 = WASM_VECTOR_LEN;
+        const ret = wasm.variantsolverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5, ptr6, len6, ptr7, len7, ptr8, len8, ptr9, len9, ptr10, len10, ptr11, len11, ptr12, len12);
+        this.__wbg_ptr = ret;
+        VariantSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 整变体 24(pair/pseudo/pseudo_pair,4 阶段)/ 30(eo,5 阶段)值 × 6 视角(物理面序 z0/z2/z3/z1/x3/x1)。
+     * @param {string} scramble
+     * @param {number} variant
+     * @returns {Uint32Array}
+     */
+    solve(scramble, variant) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.variantsolverwasm_solve(this.__wbg_ptr, ptr0, len0, variant);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} stage
+     * @returns {Uint32Array}
+     */
+    solve_stage(scramble, variant, stage) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.variantsolverwasm_solve_stage(this.__wbg_ptr, ptr0, len0, variant, stage);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+}
+if (Symbol.dispose) VariantSolverWasm.prototype[Symbol.dispose] = VariantSolverWasm.prototype.free;
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -229,6 +331,9 @@ const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined'
 const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
+const VariantSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_variantsolverwasm_free(ptr, 1));
 
 function getArrayU32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;

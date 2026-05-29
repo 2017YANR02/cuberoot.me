@@ -1,0 +1,247 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a06-03 flicker-reveal (agent 6, theme: scramble then solve)
+       Concept: clawd holds a 3x3 face that RAPID-FLICKERS through six
+       discrete pre-drawn scramble frames (retro/LCD T3 sprite style, each a
+       distinct WCA-colour permutation) so the stickers visibly churn, then
+       SNAPS to a solved white face with a sparkle burst and a proud
+       smile-eye beat, holds, then a quick two-frame re-scramble loops it
+       back. Mood: excited reveal. The flicker uses step-end opacity so each
+       frame is a crisp swap, not a crossfade.
+       6.4s loop. Face x5.2..9.6 y9.4..13.8 at the belly; eyes peek over.    -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: shadow-fr 6.4s infinite ease-in-out; }
+      .body { transform-box: view-box; transform-origin: 7.5px 13px; animation: body-fr 6.4s infinite ease-in-out; }
+
+      .arm-l, .arm-r { transform-box: fill-box; }
+      .arm-l { transform-origin: 0% 50%;   animation: arm-l-fr 6.4s infinite ease-in-out; }
+      .arm-r { transform-origin: 100% 50%; animation: arm-r-fr 6.4s infinite ease-in-out; }
+
+      .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: eyes-shake-fr 6.4s infinite ease-in-out; }
+      .eyes-rect  { animation: eyes-rect-fr  6.4s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyes-smile-fr 6.4s infinite step-end; }
+
+      /* discrete cube frames toggled by step-end opacity (sprite flicker).
+         Flicker window 0-38%; solved 42-86%; re-scramble flicker 88-100%. */
+      .f1 { animation: f1 6.4s infinite step-end; }
+      .f2 { animation: f2 6.4s infinite step-end; }
+      .f3 { animation: f3 6.4s infinite step-end; }
+      .f4 { animation: f4 6.4s infinite step-end; }
+      .f5 { animation: f5 6.4s infinite step-end; }
+      .f6 { animation: f6 6.4s infinite step-end; }
+      .fsolved { animation: fsolved 6.4s infinite step-end; }
+
+      /* whole cube does a quick happy pop on the solve snap */
+      .cube { transform-box: view-box; transform-origin: 7.4px 11.6px; animation: cube-pop 6.4s infinite ease-out; }
+
+      @keyframes shadow-fr {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        20% { opacity: 0.45; transform: scaleX(0.95); }
+        44% { opacity: 0.58; transform: scaleX(1.06); }
+      }
+      @keyframes body-fr {
+        0%, 38% { transform: translateY(0) rotate(0deg); }
+        10% { transform: translateY(0.12px) rotate(-1deg); }
+        24% { transform: translateY(0.12px) rotate(1deg); }
+        43% { transform: translateY(-0.35px) rotate(0deg); }
+        50% { transform: translateY(0) rotate(0deg); }
+        86%, 100% { transform: translateY(0) rotate(0deg); }
+      }
+      /* arms shake a touch during the churn, settle proud on solve */
+      @keyframes arm-l-fr {
+        0%, 38% { transform: rotate(0deg); }
+        8% { transform: rotate(-5deg); }
+        20% { transform: rotate(4deg); }
+        43% { transform: rotate(-10deg); }
+        55%, 100% { transform: rotate(0deg); }
+      }
+      @keyframes arm-r-fr {
+        0%, 38% { transform: rotate(0deg); }
+        8% { transform: rotate(5deg); }
+        20% { transform: rotate(-4deg); }
+        43% { transform: rotate(10deg); }
+        55%, 100% { transform: rotate(0deg); }
+      }
+      @keyframes cube-pop {
+        0%, 40% { transform: scale(1); }
+        43% { transform: scale(1.12); }
+        50% { transform: scale(1); }
+        100% { transform: scale(1); }
+      }
+
+      /* sprite frame visibility — fast churn, then solved hold, then re-churn */
+      @keyframes f1 { 0%,5.99%{opacity:1;} 6%,87.99%{opacity:0;} 88%,93.99%{opacity:1;} 94%,100%{opacity:0;} }
+      @keyframes f2 { 0%,5.99%{opacity:0;} 6%,11.99%{opacity:1;} 12%,93.99%{opacity:0;} 94%,100%{opacity:1;} }
+      @keyframes f3 { 0%,11.99%{opacity:0;} 12%,18.99%{opacity:1;} 19%,100%{opacity:0;} }
+      @keyframes f4 { 0%,18.99%{opacity:0;} 19%,25.99%{opacity:1;} 26%,100%{opacity:0;} }
+      @keyframes f5 { 0%,25.99%{opacity:0;} 26%,32.99%{opacity:1;} 33%,100%{opacity:0;} }
+      @keyframes f6 { 0%,32.99%{opacity:0;} 33%,39.99%{opacity:1;} 40%,100%{opacity:0;} }
+      @keyframes fsolved { 0%,39.99%{opacity:0;} 40%,87.99%{opacity:1;} 88%,100%{opacity:0;} }
+
+      @keyframes eyes-shake-fr {
+        0%, 38% { transform: translate(0,0); }
+        8% { transform: translate(-0.3px,0.2px); }
+        20% { transform: translate(0.3px,0.2px); }
+        43% { transform: translate(0,-0.3px); }
+        55%, 100% { transform: translate(0,0); }
+      }
+      @keyframes eyes-rect-fr  { 0%{opacity:1;} 41%{opacity:0;} 84%{opacity:1;} }
+      @keyframes eyes-smile-fr { 0%{opacity:0;} 41%{opacity:1;} 84%{opacity:0;} }
+
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+      .sparkA { animation: sparkA 6.4s infinite ease-out; }
+      .sparkB { animation: sparkB 6.4s infinite ease-out; }
+      @keyframes sparkA {
+        0%, 39%, 70%, 100% { opacity: 0; transform: scale(0.3); }
+        42% { opacity: 1; transform: scale(1.4); }
+        50% { opacity: 1; transform: scale(1); }
+        66% { opacity: 0.2; transform: scale(0.6); }
+      }
+      @keyframes sparkB {
+        0%, 41%, 74%, 100% { opacity: 0; transform: scale(0.3); }
+        45% { opacity: 1; transform: scale(1.3); }
+        54% { opacity: 1; transform: scale(0.9); }
+        70% { opacity: 0.2; transform: scale(0.5); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <!-- legs static -->
+  <g fill="#DE886D">
+    <rect x="3"  y="13" width="1" height="2"/>
+    <rect x="5"  y="13" width="1" height="2"/>
+    <rect x="9"  y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="body">
+    <!-- torso -->
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes -->
+    <g class="eyes">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- CUBE: stacked sprite frames. dark backing always on. -->
+    <g class="cube">
+      <rect x="5.1" y="9.4" width="4.6" height="4.6" fill="#0e0e12"/>
+
+      <!-- frame 1 (static rest = visible scramble) -->
+      <g class="frm f1" opacity="1">
+        <rect class="px" x="5.28" y="9.58"  width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+      <!-- frame 2 -->
+      <g class="frm f2" opacity="0">
+        <rect x="5.28" y="9.58"  width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+      <!-- frame 3 -->
+      <g class="frm f3" opacity="0">
+        <rect x="5.28" y="9.58"  width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+      <!-- frame 4 -->
+      <g class="frm f4" opacity="0">
+        <rect x="5.28" y="9.58"  width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+      <!-- frame 5 -->
+      <g class="frm f5" opacity="0">
+        <rect x="5.28" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#E02029" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#FF7A00" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#00A04A" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+      <!-- frame 6 (last churn, mostly white forming) -->
+      <g class="frm f6" opacity="0">
+        <rect x="5.28" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+      <!-- solved white face -->
+      <g class="frm fsolved" opacity="0">
+        <rect x="5.28" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="9.58"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.04" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="5.28" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="6.74" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.50" width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+    </g>
+
+    <!-- arms cradle the cube -->
+    <g fill="#DE886D">
+      <rect class="arm-l" x="3.3"  y="11.0" width="2" height="2"/>
+      <rect class="arm-r" x="9.5"  y="11.0" width="2" height="2"/>
+    </g>
+
+    <!-- reveal sparkles (two, flanking the cube top) -->
+    <g class="spark sparkA" fill="#FFE066">
+      <rect x="9.8" y="8.0" width="1" height="0.6"/>
+      <rect x="9.8" y="8.6" width="1" height="1"/>
+      <rect x="9.8" y="9.6" width="1" height="0.6"/>
+      <rect x="8.8" y="8.6" width="1" height="1"/>
+      <rect x="10.8" y="8.6" width="1" height="1"/>
+    </g>
+    <g class="spark sparkB" fill="#FFF3B0">
+      <rect x="4.1" y="8.5" width="0.8" height="0.5"/>
+      <rect x="4.1" y="9.0" width="0.8" height="0.8"/>
+      <rect x="4.1" y="9.8" width="0.8" height="0.5"/>
+      <rect x="3.3" y="9.0" width="0.8" height="0.8"/>
+      <rect x="4.9" y="9.0" width="0.8" height="0.8"/>
+    </g>
+  </g>
+</svg>

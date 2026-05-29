@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a10 Celebration #1: victory-jump
+       Clawd cradles a solved 3x3 (front face, 3x3 sticker grid) at belly height.
+       Just before the loop's apex it snaps the final R layer (right column of
+       stickers rotates 90deg and clicks home) = "last move solved!". Then clawd
+       does two happy hops, confetti pixels rain down, smile-eyes + PB sparkle.
+       6s seamless loop. Layer twist = T1 (parts move relative to each other). -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: shadow-vj 6s infinite ease-in-out;
+      }
+      .hopper {
+        transform-box: view-box;
+        transform-origin: 7.5px 15px;
+        animation: hop-vj 6s infinite ease-in-out;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: breathe-vj 6s infinite ease-in-out;
+      }
+      .arm-l { transform-box: fill-box; transform-origin: 100% 0%; animation: armL-vj 6s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 0% 0%;   animation: armR-vj 6s infinite ease-in-out; }
+
+      .eyes-rect  { animation: eyesRect-vj  6s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyesSmile-vj 6s infinite step-end; }
+
+      /* the cube floats with the belly */
+      .cube {
+        transform-box: view-box;
+        transform-origin: 7.7px 12.4px;
+        animation: cube-vj 6s infinite ease-in-out;
+      }
+      /* R-layer turn: the green front column squashes toward its hinge (right
+         edge of the cube, x=10.0) while a WHITE side face grows in behind it,
+         so it reads as the right layer rotating about a vertical axis, then
+         snapping back to solved-green. Pivot baked into the transform
+         (translate-scale-translate about x=10.0) — librsvg ignores
+         transform-box:view-box origin, so we must bake it. */
+      .twist-front {
+        animation: twistFront-vj 6s infinite cubic-bezier(.5,0,.2,1);
+      }
+      .twist-side {
+        animation: twistSide-vj 6s infinite cubic-bezier(.5,0,.2,1);
+      }
+
+      .confetti { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+      .c1 { animation: conf-vj 6s infinite ease-in;  }
+      .c2 { animation: conf-vj 6s infinite ease-in; animation-delay: -1.1s; }
+      .c3 { animation: conf-vj 6s infinite ease-in; animation-delay: -2.0s; }
+      .c4 { animation: conf-vj 6s infinite ease-in; animation-delay: -2.9s; }
+      .c5 { animation: conf-vj 6s infinite ease-in; animation-delay: -3.7s; }
+      .c6 { animation: conf-vj 6s infinite ease-in; animation-delay: -4.6s; }
+
+      .pb { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0;
+            animation: pb-vj 6s infinite ease-out; }
+
+      @keyframes shadow-vj {
+        0%, 40%, 100% { opacity: 0.5; transform: scaleX(1); }
+        55%           { opacity: 0.3; transform: scaleX(0.78); }   /* airborne hop 1 */
+        70%           { opacity: 0.5; transform: scaleX(1); }
+        82%           { opacity: 0.32; transform: scaleX(0.8); }   /* hop 2 */
+        94%           { opacity: 0.5; transform: scaleX(1); }
+      }
+      /* sit still while turning the cube, then two hops after solve */
+      @keyframes hop-vj {
+        0%, 46%, 100% { transform: translateY(0); }
+        55%           { transform: translateY(-3.4px); }
+        66%           { transform: translateY(0); }
+        82%           { transform: translateY(-2.6px); }
+        92%           { transform: translateY(0); }
+      }
+      @keyframes breathe-vj {
+        0%, 100% { transform: scale(1,1); }
+        46%      { transform: scale(1.02,0.985) translateY(0.1px); }  /* anticipation crouch */
+        55%      { transform: scale(0.985,1.02) translateY(-0.1px); } /* stretch up */
+      }
+      /* both arms gently hold the cube, then throw up a tiny cheer on the hops */
+      @keyframes armL-vj {
+        0%, 44%, 100% { transform: translate(2.2px,1.0px) rotate(38deg); }
+        55%           { transform: translate(0.6px,-1.8px) rotate(-30deg); }
+        82%           { transform: translate(0.7px,-1.5px) rotate(-24deg); }
+      }
+      @keyframes armR-vj {
+        0%, 44%, 100% { transform: translate(-2.2px,1.0px) rotate(-38deg); }
+        55%           { transform: translate(-0.6px,-1.8px) rotate(30deg); }
+        82%           { transform: translate(-0.7px,-1.5px) rotate(24deg); }
+      }
+      @keyframes eyesRect-vj  { 0%,43%{opacity:1;} 44%{opacity:0;} }
+      @keyframes eyesSmile-vj { 0%,43%{opacity:0;} 44%,100%{opacity:1;} }
+      /* cube lifts a touch with the hops */
+      @keyframes cube-vj {
+        0%, 46%, 100% { transform: translateY(0); }
+        55%           { transform: translateY(-0.9px); }
+        82%           { transform: translateY(-0.6px); }
+      }
+      /* twist the last layer in (0->34%): green front column squashes to edge,
+         white side swings in, then snaps back solved. Hold the rest of loop. */
+      @keyframes twistFront-vj {
+        0%        { transform: translate(10px,0) scaleX(1)    translate(-10px,0); }
+        12%       { transform: translate(10px,0) scaleX(0.04) translate(-10px,0); }  /* edge-on */
+        22%       { transform: translate(10px,0) scaleX(0.04) translate(-10px,0); }
+        28%       { transform: translate(10px,0) scaleX(1)    translate(-10px,0); }
+        31%       { transform: translate(10px,0) scaleX(1.08) translate(-10px,0); }  /* click overshoot */
+        34%, 100% { transform: translate(10px,0) scaleX(1)    translate(-10px,0); }
+      }
+      @keyframes twistSide-vj {
+        0%        { transform: translate(10px,0) scaleX(0)    translate(-10px,0); }
+        12%       { transform: translate(10px,0) scaleX(1)    translate(-10px,0); }  /* shown when front edge-on */
+        22%       { transform: translate(10px,0) scaleX(1)    translate(-10px,0); }
+        28%, 100% { transform: translate(10px,0) scaleX(0)    translate(-10px,0); }
+      }
+      /* confetti: start above belly, fall + drift + spin, fade near floor */
+      @keyframes conf-vj {
+        0%   { opacity: 0; transform: translate(0,0) rotate(0deg); }
+        4%   { opacity: 1; }
+        100% { opacity: 0; transform: translate(var(--dx,2px), 16px) rotate(540deg); }
+      }
+      @keyframes pb-vj {
+        0%, 44%, 70%, 100% { opacity: 0; transform: scale(0.3); }
+        47%                { opacity: 1; transform: scale(1.4); }
+        52%                { opacity: 1; transform: scale(1); }
+        60%                { opacity: 0; transform: scale(0.7); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000000" opacity="0.5"/>
+
+  <!-- legs static on the floor -->
+  <g fill="#DE886D">
+    <rect x="3"  y="13" width="1" height="2"/>
+    <rect x="5"  y="13" width="1" height="2"/>
+    <rect x="9"  y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="hopper">
+    <g class="breathe">
+      <!-- torso -->
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+      <!-- arms cradle the cube -->
+      <rect class="arm-l" x="0"  y="9" width="2" height="2" fill="#DE886D"/>
+      <rect class="arm-r" x="13" y="9" width="2" height="2" fill="#DE886D"/>
+
+      <!-- eyes -->
+      <g class="eyes-rect" fill="#000000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+
+      <!-- ===== SOLVED 3x3 cube, front face, cradled at lower belly (x 5..10.4, y 9.7..15) ===== -->
+      <g class="cube">
+        <!-- cube body outline -->
+        <rect x="5.0" y="9.7" width="5.4" height="5.4" fill="#0e0e12"/>
+        <!-- left 2 columns: solved green face -->
+        <g fill="#00A04A">
+          <rect x="5.25" y="9.95" width="1.5" height="1.5"/>
+          <rect x="6.85" y="9.95" width="1.5" height="1.5"/>
+          <rect x="5.25" y="11.55" width="1.5" height="1.5"/>
+          <rect x="6.85" y="11.55" width="1.5" height="1.5"/>
+          <rect x="5.25" y="13.15" width="1.5" height="1.5"/>
+          <rect x="6.85" y="13.15" width="1.5" height="1.5"/>
+        </g>
+        <!-- white side face behind: grows in as the layer turns away -->
+        <g class="twist-side">
+          <rect x="8.45" y="9.95" width="1.5" height="1.5" fill="#FAFAFA"/>
+          <rect x="8.45" y="11.55" width="1.5" height="1.5" fill="#FAFAFA"/>
+          <rect x="8.45" y="13.15" width="1.5" height="1.5" fill="#FAFAFA"/>
+        </g>
+        <!-- right column = the twisting last layer (green when solved) -->
+        <g class="twist-front">
+          <rect x="8.45" y="9.95" width="1.5" height="1.5" fill="#00A04A"/>
+          <rect x="8.45" y="11.55" width="1.5" height="1.5" fill="#00A04A"/>
+          <rect x="8.45" y="13.15" width="1.5" height="1.5" fill="#00A04A"/>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- confetti pixels (drawn over body, raining from belly area) -->
+  <g>
+    <rect class="confetti c1" x="3"  y="4"  width="0.9" height="0.9" fill="#E02029" style="--dx:-3px"/>
+    <rect class="confetti c2" x="6"  y="3"  width="0.9" height="0.9" fill="#FDD500" style="--dx:1px"/>
+    <rect class="confetti c3" x="9"  y="4"  width="0.9" height="0.9" fill="#0E5FD9" style="--dx:3px"/>
+    <rect class="confetti c4" x="11" y="3"  width="0.9" height="0.9" fill="#FF7A00" style="--dx:-2px"/>
+    <rect class="confetti c5" x="5"  y="2"  width="0.9" height="0.9" fill="#FAFAFA" style="--dx:2px"/>
+    <rect class="confetti c6" x="8"  y="2"  width="0.9" height="0.9" fill="#00A04A" style="--dx:-1px"/>
+  </g>
+
+  <!-- PB starburst sparkle above clawd at the solve beat: 4-point twinkle -->
+  <g class="pb">
+    <rect x="6.6" y="0.6" width="2.4" height="0.8" fill="#FFE066"/>   <!-- horizontal beam -->
+    <rect x="7.4" y="-0.6" width="0.8" height="3.2" fill="#FFE066"/>  <!-- vertical beam -->
+    <rect x="6.0" y="-0.1" width="1.2" height="1.2" fill="#FFF2B0" transform="rotate(45 6.6 0.5)"/>  <!-- diag spark NW -->
+    <rect x="8.4" y="-0.1" width="1.2" height="1.2" fill="#FFF2B0" transform="rotate(45 9.0 0.5)"/>  <!-- diag spark NE -->
+    <rect x="7.5" y="0.7" width="0.6" height="0.6" fill="#FFFFFF"/>   <!-- hot core -->
+    <!-- accent specks -->
+    <rect x="3.5" y="2.2" width="0.7" height="0.7" fill="#FFE066"/>
+    <rect x="11.2" y="1.6" width="0.7" height="0.7" fill="#FFE066"/>
+  </g>
+</svg>

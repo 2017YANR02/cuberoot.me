@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a09 peek + double-take + layer twist (agent 9)
+       Theme: cube reactions / peek.
+
+       Clawd peeks OVER a small flat 3x3 cube held low at belly
+       height (eyes stay above the cube top edge). Story (9s loop):
+         0-10%   rest, eyes visible above cube
+         10-22%  peek down, eyes widen (surprise)
+         22-30%  double-take: eyes snap narrow then POP wide
+         30-58%  twist the TOP layer: the top row flips edge-on
+                 (scaleY -> 0, a thin line, like the layer rotating
+                 about a horizontal axis), the 3 stickers swap to a
+                 new colour set, then it un-flips. The mid+bottom
+                 rows stay put, so the top layer visibly turns
+                 RELATIVE to the rest and its stickers rearrange.
+         58-67%  satisfied smile-eye blink
+         67-100% settle to rest
+
+       Cube = T1 layer twist. ~7 wide, centred x=7.5,
+       top edge y=8.9, bottom y=13.4. Eyes at y=8 peek above.
+  -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: pk-shadow 9s infinite ease-in-out; }
+      .pk-breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: pk-breathe 9s infinite ease-in-out; }
+      .pk-lean    { transform-box: view-box; transform-origin: 7.5px 13px; animation: pk-lean 9s infinite ease-in-out; }
+      .pk-arm-l { transform-box: fill-box; transform-origin: 100% 0%; animation: pk-arm-l 9s infinite ease-in-out; }
+      .pk-arm-r { transform-box: fill-box; transform-origin: 0% 0%;   animation: pk-arm-r 9s infinite ease-in-out; }
+
+      .pk-eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: pk-eyes 9s infinite ease-in-out; }
+      .pk-eye-rect  { animation: pk-rect-vis  9s infinite step-end; }
+      .pk-eye-smile { opacity: 0; animation: pk-smile-vis 9s infinite step-end; }
+
+      /* top layer flips edge-on about its own horizontal mid-line (y=9.65) */
+      .pk-top { transform-box: view-box; transform-origin: 7.5px 9.65px; animation: pk-top 9s infinite ease-in-out; }
+      .pk-top-a { animation: pk-top-a 9s infinite step-end; }   /* original colours */
+      .pk-top-b { opacity: 0; animation: pk-top-b 9s infinite step-end; } /* turned-in colours */
+
+      .pk-mark { transform-box: fill-box; transform-origin: 50% 100%; opacity: 0; animation: pk-mark 9s infinite ease-out; }
+
+      @keyframes pk-shadow {
+        0%, 10%, 100% { opacity: 0.5; transform: scaleX(1); }
+        30%, 58%      { opacity: 0.42; transform: scaleX(0.93); }
+      }
+      @keyframes pk-breathe {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        12%      { transform: scale(1.015,0.985) translateY(0.18px); }
+        40%, 55% { transform: scale(1.008,0.992) translateY(0.1px); }
+        80%      { transform: scale(1.012,0.988) translateY(0.14px); }
+      }
+      @keyframes pk-lean {
+        0%, 10%, 100% { transform: translateY(0) rotate(0deg); }
+        18%           { transform: translateY(0.45px) rotate(0deg); }
+        30%           { transform: translateY(0.85px) rotate(-1deg); }
+        46%           { transform: translateY(0.9px) rotate(1deg); }
+        58%           { transform: translateY(0.55px) rotate(0deg); }
+        70%           { transform: translateY(0.1px) rotate(0deg); }
+      }
+      @keyframes pk-arm-l {
+        0%, 10%, 100% { transform: translate(0.6px,0.6px) rotate(30deg); }
+        30%, 58%      { transform: translate(0.7px,0.7px) rotate(36deg); }
+      }
+      @keyframes pk-arm-r {
+        0%, 10%, 100% { transform: translate(-0.6px,0.6px) rotate(-30deg); }
+        24%           { transform: translate(-0.7px,0.0px) rotate(-46deg); }
+        30%           { transform: translate(-0.6px,-0.2px) rotate(-54deg); }
+        44%           { transform: translate(-0.2px,-0.1px) rotate(-32deg); }
+        58%           { transform: translate(-0.6px,0.6px) rotate(-30deg); }
+      }
+      @keyframes pk-eyes {
+        0%, 9%, 100% { transform: translateY(0) scaleY(1); }
+        16%          { transform: translateY(0.4px) scaleY(1.35); }
+        23%          { transform: translateY(0.4px) scaleY(0.45); }
+        27%          { transform: translateY(0.4px) scaleY(1.5); }
+        38%          { transform: translateY(0.6px) scaleY(1.2); }
+        56%          { transform: translateY(0.5px) scaleY(1.15); }
+        60%          { transform: translateY(0.25px) scaleY(0.12); }
+        63%, 66%     { transform: translateY(0.25px) scaleY(1); }
+        67%          { transform: translateY(0.25px) scaleY(0.12); }
+      }
+      @keyframes pk-rect-vis  { 0% {opacity:1;} 60% {opacity:0;} 67% {opacity:1;} }
+      @keyframes pk-smile-vis { 0% {opacity:0;} 60% {opacity:1;} 67% {opacity:0;} }
+
+      /* layer turn: flip edge-on (scaleY->0) at 44%, swap colours, un-flip */
+      @keyframes pk-top {
+        0%, 34%   { transform: scaleY(1); }
+        44%       { transform: scaleY(0.06); }
+        46%       { transform: scaleY(0.06); }
+        54%       { transform: scaleY(1.08); }
+        58%, 100% { transform: scaleY(1); }
+      }
+      @keyframes pk-top-a { 0% {opacity:1;} 45% {opacity:0;} }
+      @keyframes pk-top-b { 0% {opacity:0;} 45% {opacity:1;} }
+      @keyframes pk-mark {
+        0%, 14%, 30%, 100% { opacity: 0; transform: scale(0.4) translateY(0); }
+        16%                { opacity: 1; transform: scale(1.3) translateY(-0.3px); }
+        19%                { opacity: 1; transform: scale(1) translateY(0); }
+        23%                { opacity: 0; transform: scale(0.6) translateY(0); }
+        24%                { opacity: 0; transform: scale(0.4) translateY(0); }
+        27%                { opacity: 1; transform: scale(1.3) translateY(-0.3px); }
+        30%                { opacity: 0; transform: scale(0.6) translateY(0); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="pk-breathe">
+    <g class="pk-lean">
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+      <rect class="pk-arm-l" x="0"  y="9" width="2" height="2" fill="#DE886D"/>
+      <rect class="pk-arm-r" x="13" y="9" width="2" height="2" fill="#DE886D"/>
+
+      <g class="pk-eyes">
+        <g class="pk-eye-rect" fill="#000">
+          <rect x="4"  y="8" width="1" height="2"/>
+          <rect x="10" y="8" width="1" height="2"/>
+        </g>
+        <g class="pk-eye-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3.5,9 4.5,8 5.5,9"/>
+          <polyline points="9.5,9 10.5,8 11.5,9"/>
+        </g>
+      </g>
+
+      <g class="pk-mark">
+        <rect x="7" y="2.0" width="1" height="2.3" fill="#FDD500"/>
+        <rect x="7" y="4.7" width="1" height="1" fill="#FDD500"/>
+      </g>
+
+      <!-- ===== CUBE (flat 3x3, held low; eyes peek over top edge y=8.9) ===== -->
+      <!-- dark cube body / gaps -->
+      <rect x="4.0" y="8.9" width="7.0" height="4.5" fill="#0e0e12"/>
+      <!-- fixed mid + bottom rows (do not move during the twist) -->
+      <g>
+        <rect x="4.25" y="10.45" width="2.0" height="1.35" fill="#FF7A00"/>
+        <rect x="6.5"  y="10.45" width="2.0" height="1.35" fill="#FAFAFA"/>
+        <rect x="8.75" y="10.45" width="2.0" height="1.35" fill="#E02029"/>
+        <rect x="4.25" y="12.0"  width="2.0" height="1.2"  fill="#0E5FD9"/>
+        <rect x="6.5"  y="12.0"  width="2.0" height="1.2"  fill="#FDD500"/>
+        <rect x="8.75" y="12.0"  width="2.0" height="1.2"  fill="#00A04A"/>
+      </g>
+      <!-- TOP layer: dark slab + 3 stickers; flips edge-on and swaps
+           colour set A -> B so the turn rearranges stickers -->
+      <g class="pk-top">
+        <rect x="4.0" y="8.9" width="7.0" height="1.55" fill="#0e0e12"/>
+        <g class="pk-top-a">
+          <rect x="4.25" y="9.05" width="2.0" height="1.2" fill="#FAFAFA"/>
+          <rect x="6.5"  y="9.05" width="2.0" height="1.2" fill="#00A04A"/>
+          <rect x="8.75" y="9.05" width="2.0" height="1.2" fill="#E02029"/>
+        </g>
+        <g class="pk-top-b">
+          <rect x="4.25" y="9.05" width="2.0" height="1.2" fill="#FDD500"/>
+          <rect x="6.5"  y="9.05" width="2.0" height="1.2" fill="#FAFAFA"/>
+          <rect x="8.75" y="9.05" width="2.0" height="1.2" fill="#0E5FD9"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { petReact } from '@/lib/deskpet';
 import MoreMenu, { type MoreMenuItem } from './_components/MoreMenu';
 import { syncLangToUrl, getLangQuery } from '@/i18n/i18n-client';
 
@@ -359,6 +360,7 @@ export default function TimerPage() {
       else if (isNew(beforeSingle, afterSingle)) { kind = 'single'; value = afterSingle; }
       if (kind && value !== null) {
         setPbToast({ kind, value: formatMs(value, settings.precision) });
+        petReact('happy');
       }
     }
 
@@ -366,6 +368,7 @@ export default function TimerPage() {
       ...prev,
       [ev]: [...(prev[ev] ?? []), solve],
     }));
+    if (res.autoPenalty === 'DNF') petReact('error');
     nextScramble();
   }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision]);
 
@@ -653,6 +656,7 @@ export default function TimerPage() {
 
   // ── Solve mutators ──────────────────────────────────────────────
   const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
+    if (patch.penalty === 'DNF') petReact('error');
     setByEvent(prev => ({
       ...prev,
       [event]: (prev[event] ?? []).map(s => s.id === solveId ? { ...s, ...patch } : s),

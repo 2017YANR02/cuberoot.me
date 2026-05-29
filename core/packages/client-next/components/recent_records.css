@@ -144,6 +144,19 @@
   margin-left: 4px;
 }
 
+/* 洲际纪录:在徽章前内联一个大洲剪影球 */
+.recent-records-continent-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.recent-records-continent-icon img {
+  width: 1.2em;
+  height: 1.2em;
+  display: block;
+  opacity: 0.85;
+}
+
 @media (max-width: 640px) {
   .recent-records {
     margin-bottom: 1.75rem;

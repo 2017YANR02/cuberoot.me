@@ -152,13 +152,17 @@ if($nNew -gt 0){
   Write-Host '没有新打乱; 跳过 std 解算/追加, 继续变体补缺。' -ForegroundColor Yellow
 }
 
-# ---- 4. 变体补缺 (eo/pseudo/pseudo_pair/pair 各自跟 master 锁步, 可中断续跑) ----
+# ---- 4. 变体补缺 (eo/pseudo/pseudo_pair/pair/f2leo 系 各自跟 master 锁步, 可中断续跑) ----
 $variantChanged = $false
+$compStepsChanged = $false   # f2leo 系变体有变 -> comp_steps_<variant> 需重算 (即便无新 std)
 if($Variants.Count -gt 0){
   Step "4 变体补缺: $($Variants -join ', ')"
   if(-not (Test-Path $MasterTxt)){ throw "master $MasterTxt 不存在" }
   foreach($v in $Variants){
-    if(Sync-Variant $v){ $variantChanged = $true }
+    if(Sync-Variant $v){
+      $variantChanged = $true
+      if($v -in @('f2leo','pseudo_f2leo')){ $compStepsChanged = $true }
+    }
   }
 } else {
   Write-Host '未指定变体补缺 (-Variants @())。' -ForegroundColor DarkGray
@@ -172,17 +176,23 @@ if(-not $stdChanged -and -not $variantChanged){
 # ---- 5. 重算 JSON (RNG 固定种子 + 稳定时间戳: 同一份数据重跑逐字节不变) ----
 $stamp = if(Test-Path (Join-Path $IncrDir 'export_date.txt')){ (Get-Content (Join-Path $IncrDir 'export_date.txt') -Raw).Trim() } else { Get-Date -Format 'yyyy-MM-dd' }
 $env:SCRAMBLE_STATS_STAMP = $stamp
-$extra = if($stdChanged){ ' + wca_cross + comp-steps' } else { '' }
+$extra = ''
+if($stdChanged){ $extra += ' + wca_cross' }
+if($stdChanged -or $compStepsChanged){ $extra += ' + comp-steps' }
 Step "5 重算 distribution.json$extra (stamp=$stamp)"
 Push-Location (Join-Path $RepoRoot 'core')
 try {
   pnpm --filter @cuberoot/scramble-stats-build build      # distribution.json 读全部变体, 任一变 -> 必重算
   if($LASTEXITCODE -ne 0){ throw 'build (distribution) 失败' }
   if($stdChanged){
-    # wca_cross / comp-steps 只依赖 std (cross 步数 + 比赛元数据), 只在有新 std 时重算
+    # wca_cross 只依赖 std cross 步数 + 比赛元数据, 只在有新 std 时重算
     pnpm --filter @cuberoot/scramble-stats-build build:wca-cross
     if($LASTEXITCODE -ne 0){ throw 'build:wca-cross 失败' }
-    pnpm --filter @cuberoot/scramble-stats-build build:comp-steps   # 每场预计算表(gen 页秒出), gitignore+只 scp
+  }
+  if($stdChanged -or $compStepsChanged){
+    # 每场预计算表(gen 页秒出, std + f2leo 系一把全产), gitignore+只 scp。
+    # std 变 -> std comp_steps 重算; f2leo 系变 -> 其 comp_steps 重算 (build 内按 csv 存在与否决定)。
+    pnpm --filter @cuberoot/scramble-stats-build build:comp-steps
     if($LASTEXITCODE -ne 0){ throw 'build:comp-steps 失败' }
   }
 } finally { Pop-Location }

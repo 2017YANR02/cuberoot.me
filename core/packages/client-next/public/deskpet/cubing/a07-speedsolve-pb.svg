@@ -1,0 +1,286 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a07-01 Speedsolve PB (T1 layer twist + full drama arc), 8s loop.
+       inspection -> frantic top-layer flurry (4 quarter turns snapping)
+       -> SOLVED settle + smile + sparkle -> reset.
+       Pixel timer: two 7-seg digits, frantically counts then freezes. -->
+  <defs>
+    <style><![CDATA[
+      #ground-shadow {
+        transform-box: view-box; transform-origin: 7.5px 15.5px;
+        animation: pb-shadow 8s infinite ease-in-out;
+      }
+      .body-breathe {
+        transform-box: view-box; transform-origin: 7.5px 13px;
+        animation: pb-body 8s infinite ease-in-out;
+      }
+      .arm-l, .arm-r { transform-box: fill-box; }
+      .arm-l { transform-origin: 100% 0%; animation: pb-arm-l 8s infinite ease-in-out; }
+      .arm-r { transform-origin: 0% 0%;   animation: pb-arm-r 8s infinite ease-in-out; }
+
+      .eyes-rect  { animation: pb-eyes-rect 8s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: pb-eyes-smile 8s infinite step-end; }
+      .eye-scan   { transform-box: view-box; transform-origin: 7.5px 9px; animation: pb-eye-scan 8s infinite ease-in-out; }
+
+      .cube { transform-box: view-box; transform-origin: 7.5px 11.5px; animation: pb-cube 8s infinite ease-in-out; }
+      /* top layer turns edge-on: scaleX squashes to 0 and back = a U turn viewed from front */
+      .cube-top { transform-box: view-box; transform-origin: 7.5px 10.45px; animation: pb-top 8s infinite ease-in-out; }
+      /* the 4 sticker color-sets each show during one quarter-turn segment */
+      .uset { opacity: 0; }
+      .uset0 { opacity: 1; animation: pb-u0 8s infinite step-end; }
+      .uset1 { animation: pb-u1 8s infinite step-end; }
+      .uset2 { animation: pb-u2 8s infinite step-end; }
+      .uset3 { animation: pb-u3 8s infinite step-end; }
+      .bot-solved { opacity: 0; animation: pb-bot 8s infinite step-end; }
+
+      .sweat { transform-box: fill-box; transform-origin: 50% 0%; opacity: 0; animation: pb-sweat 8s infinite ease-in; }
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: pb-spark 8s infinite ease-out; }
+
+      /* 7-seg digit segments: visibility per phase via step-end */
+      .seg { fill: #1d3b27; }
+      .on  { fill: #3CF06A; }
+
+      @keyframes pb-shadow {
+        0%, 12%, 100% { opacity: .5; transform: scaleX(1); }
+        40%           { opacity: .45; transform: scaleX(.96); }
+        75%           { opacity: .5; transform: scaleX(1); }
+        88%           { opacity: .55; transform: scaleX(1.05); }
+      }
+      @keyframes pb-body {
+        0%, 12%, 100% { transform: translateY(0) scale(1,1); }
+        20%           { transform: translateY(.1px) scale(1.008,.992); }
+        30%           { transform: translateY(.22px) scale(.99,1.01); }
+        45%           { transform: translateY(.05px) scale(1.012,.988); }
+        58%           { transform: translateY(.22px) scale(.99,1.01); }
+        70%           { transform: translateY(0) scale(1.01,.99); }
+        85%           { transform: translateY(-.7px) scale(1.02,.98); }
+        92%           { transform: translateY(0) scale(1,1); }
+      }
+      @keyframes pb-arm-l {
+        0%, 12%, 100% { transform: translate(2.4px,2.2px) rotate(38deg); }
+        24%           { transform: translate(2.4px,2.0px) rotate(44deg); }
+        36%, 60%      { transform: translate(2.4px,2.2px) rotate(38deg); }
+        48%           { transform: translate(2.4px,1.9px) rotate(46deg); }
+        85%           { transform: translate(2.5px,1.6px) rotate(52deg); }
+      }
+      @keyframes pb-arm-r {
+        0%, 12%, 100% { transform: translate(-2.4px,2.2px) rotate(-38deg); }
+        24%           { transform: translate(-2.4px,1.9px) rotate(-46deg); }
+        36%, 60%      { transform: translate(-2.4px,2.2px) rotate(-38deg); }
+        48%           { transform: translate(-2.4px,2.0px) rotate(-44deg); }
+        85%           { transform: translate(-2.5px,1.6px) rotate(-52deg); }
+      }
+      @keyframes pb-eyes-rect {
+        0% { opacity: 1; } 79% { opacity: 1; } 80% { opacity: 0; } 95% { opacity: 0; } 96% { opacity: 1; }
+      }
+      @keyframes pb-eyes-smile {
+        0% { opacity: 0; } 79% { opacity: 0; } 80% { opacity: 1; } 95% { opacity: 1; } 96% { opacity: 0; }
+      }
+      @keyframes pb-eye-scan {
+        0%   { transform: translate(-.6px,0); }
+        6%   { transform: translate(.6px,0); }
+        12%  { transform: translate(0,.15px); }
+        70%  { transform: translate(0,.15px); }
+        100% { transform: translate(-.6px,0); }
+      }
+      @keyframes pb-cube {
+        0%, 12%, 100% { transform: rotate(0deg) translateY(0); }
+        6%            { transform: rotate(-3deg) translateY(0); }
+        40%           { transform: rotate(1.5deg) translateY(.15px); }
+        58%           { transform: rotate(-1.5deg) translateY(.15px); }
+        72%           { transform: rotate(0deg) translateY(0); }
+        85%           { transform: rotate(0deg) translateY(-.5px); }
+      }
+      /* each turn: scaleX 1 -> ~0.05 (edge-on) -> 1, color set swaps at the thin moment */
+      @keyframes pb-top {
+        0%, 12%   { transform: scaleX(1); }
+        18%       { transform: scaleX(0.08); }
+        24%       { transform: scaleX(1); }
+        30%       { transform: scaleX(0.08); }
+        36%       { transform: scaleX(1); }
+        42%       { transform: scaleX(0.08); }
+        48%       { transform: scaleX(1); }
+        54%       { transform: scaleX(0.08); }
+        60%       { transform: scaleX(1); }
+        70%, 100% { transform: scaleX(1); }
+      }
+      /* color sets swap exactly when the band is edge-on (invisible thin).
+         uset0 = scramble (also the loop reset state); uset3 = solved white. */
+      @keyframes pb-u0 { 0%{opacity:1} 18%{opacity:0} 94%{opacity:0} 95%{opacity:1} 100%{opacity:1} }
+      @keyframes pb-u1 { 0%{opacity:0} 18%{opacity:1} 30%{opacity:0} 100%{opacity:0} }
+      @keyframes pb-u2 { 0%{opacity:0} 30%{opacity:1} 42%{opacity:0} 100%{opacity:0} }
+      @keyframes pb-u3 { 0%{opacity:0} 42%{opacity:1} 54%{opacity:0} 60%{opacity:1} 94%{opacity:1} 95%{opacity:0} 100%{opacity:0} }
+      /* bottom rows go solved-white during triumph, snap back to scramble at loop reset */
+      @keyframes pb-bot { 0%{opacity:0} 59%{opacity:0} 60%{opacity:1} 94%{opacity:1} 95%{opacity:0} 100%{opacity:0} }
+      @keyframes pb-sweat {
+        0%, 18%, 100% { opacity: 0; transform: translateY(0); }
+        24%           { opacity: .9; transform: translateY(0); }
+        40%           { opacity: .8; transform: translateY(1.6px); }
+        46%           { opacity: 0; transform: translateY(2.4px); }
+      }
+      @keyframes pb-spark {
+        0%, 80%, 95%, 100% { opacity: 0; transform: scale(.4); }
+        82%                { opacity: 1; transform: scale(1.4); }
+        86%                { opacity: 1; transform: scale(1); }
+        92%                { opacity: 0; transform: scale(.7); }
+      }
+
+      /* timer: ones-digit + tenths-digit, each is a stack of 0..9 glyphs
+         shown one at a time. We scroll a glyph column behind a clip. */
+      .reel-s { animation: pb-reel-s 8s infinite step-end; }
+      .reel-t { animation: pb-reel-t 8s infinite step-end; }
+      @keyframes pb-reel-s {
+        0%,12%   { transform: translateY(0); }
+        20%      { transform: translateY(-3px); }
+        32%      { transform: translateY(-6px); }
+        44%      { transform: translateY(-9px); }
+        56%      { transform: translateY(-12px); }
+        66%      { transform: translateY(-21px); }   /* land on 7 */
+        70%,100% { transform: translateY(-21px); }
+      }
+      @keyframes pb-reel-t {
+        0%,12%   { transform: translateY(0); }
+        16%      { transform: translateY(-3px); }
+        22%      { transform: translateY(-9px); }
+        30%      { transform: translateY(-6px); }
+        38%      { transform: translateY(-15px); }
+        46%      { transform: translateY(-24px); }
+        54%      { transform: translateY(-12px); }
+        62%      { transform: translateY(-27px); }
+        66%      { transform: translateY(-12px); }   /* land on 4 */
+        70%,100% { transform: translateY(-12px); }
+      }
+    ]]></style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="body-breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eye-scan">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4" y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- tiny pixel timer floating above-left (HUD, above head) -->
+    <g transform="translate(-1.0,1.0)">
+      <rect x="-0.4" y="-0.4" width="5.0" height="3.3" rx="0.4" fill="#16161b"/>
+      <clipPath id="clip-s"><rect x="-0.1" y="-0.3" width="1.7" height="3.0"/></clipPath>
+      <clipPath id="clip-t"><rect x="2.5" y="-0.3" width="1.7" height="3.0"/></clipPath>
+      <g clip-path="url(#clip-s)">
+        <g class="reel-s" fill="#3CF06A">
+          <text x="0.05" y="2.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+          <text x="0.05" y="5.3" font-size="2.7" font-family="monospace" font-weight="bold">1</text>
+          <text x="0.05" y="8.3" font-size="2.7" font-family="monospace" font-weight="bold">2</text>
+          <text x="0.05" y="11.3" font-size="2.7" font-family="monospace" font-weight="bold">3</text>
+          <text x="0.05" y="14.3" font-size="2.7" font-family="monospace" font-weight="bold">5</text>
+          <text x="0.05" y="17.3" font-size="2.7" font-family="monospace" font-weight="bold">6</text>
+          <text x="0.05" y="20.3" font-size="2.7" font-family="monospace" font-weight="bold">7</text>
+          <text x="0.05" y="23.3" font-size="2.7" font-family="monospace" font-weight="bold">7</text>
+        </g>
+      </g>
+      <rect x="1.85" y="1.9" width="0.55" height="0.55" fill="#3CF06A"/>
+      <g clip-path="url(#clip-t)">
+        <g class="reel-t" fill="#3CF06A">
+          <text x="2.6" y="2.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+          <text x="2.6" y="5.3" font-size="2.7" font-family="monospace" font-weight="bold">2</text>
+          <text x="2.6" y="8.3" font-size="2.7" font-family="monospace" font-weight="bold">8</text>
+          <text x="2.6" y="11.3" font-size="2.7" font-family="monospace" font-weight="bold">5</text>
+          <text x="2.6" y="14.3" font-size="2.7" font-family="monospace" font-weight="bold">1</text>
+          <text x="2.6" y="17.3" font-size="2.7" font-family="monospace" font-weight="bold">9</text>
+          <text x="2.6" y="20.3" font-size="2.7" font-family="monospace" font-weight="bold">3</text>
+          <text x="2.6" y="23.3" font-size="2.7" font-family="monospace" font-weight="bold">6</text>
+          <text x="2.6" y="26.3" font-size="2.7" font-family="monospace" font-weight="bold">4</text>
+        </g>
+      </g>
+    </g>
+
+    <g class="arm-l" fill="#DE886D"><rect x="0" y="9" width="2" height="2"/></g>
+    <g class="arm-r" fill="#DE886D"><rect x="13" y="9" width="2" height="2"/></g>
+
+    <!-- ===== CUBE (6.4 wide, belly height y=9.3..14.7, eyes at y=8 stay clear) ===== -->
+    <g class="cube">
+      <rect x="4.3" y="9.3" width="6.4" height="5.6" fill="#0e0e12"/>
+      <!-- bottom two rows: scrambled set, with a solved-white overlay for triumph -->
+      <g>
+        <rect x="4.55" y="11.45" width="1.9" height="1.35" fill="#E02029"/>
+        <rect x="6.55" y="11.45" width="1.9" height="1.35" fill="#00A04A"/>
+        <rect x="8.55" y="11.45" width="1.9" height="1.35" fill="#FDD500"/>
+        <rect x="4.55" y="12.9"  width="1.9" height="1.65" fill="#FF7A00"/>
+        <rect x="6.55" y="12.9"  width="1.9" height="1.65" fill="#E02029"/>
+        <rect x="8.55" y="12.9"  width="1.9" height="1.65" fill="#00A04A"/>
+      </g>
+      <!-- solved-white overlay over bottom rows during triumph -->
+      <g class="bot-solved">
+        <rect x="4.55" y="11.45" width="1.9" height="1.35" fill="#FAFAFA"/>
+        <rect x="6.55" y="11.45" width="1.9" height="1.35" fill="#FAFAFA"/>
+        <rect x="8.55" y="11.45" width="1.9" height="1.35" fill="#FAFAFA"/>
+        <rect x="4.55" y="12.9"  width="1.9" height="1.65" fill="#FAFAFA"/>
+        <rect x="6.55" y="12.9"  width="1.9" height="1.65" fill="#FAFAFA"/>
+        <rect x="8.55" y="12.9"  width="1.9" height="1.65" fill="#FAFAFA"/>
+      </g>
+      <!-- thin gap lines between bottom stickers (dark) for crisp grid -->
+      <g fill="#16161b">
+        <rect x="6.45" y="11.45" width="0.1" height="3.1"/>
+        <rect x="8.45" y="11.45" width="0.1" height="3.1"/>
+        <rect x="4.55" y="12.8" width="5.9" height="0.1"/>
+      </g>
+      <!-- top layer band: edge-on flip, color-set cycles each quarter turn -->
+      <g class="cube-top">
+        <rect x="4.45" y="9.45" width="6.1" height="2.0" fill="#0e0e12"/>
+        <!-- set 0: scramble start -->
+        <g class="uset uset0">
+          <rect x="4.55" y="9.55" width="1.9" height="1.8" fill="#0E5FD9"/>
+          <rect x="6.55" y="9.55" width="1.9" height="1.8" fill="#FAFAFA"/>
+          <rect x="8.55" y="9.55" width="1.9" height="1.8" fill="#FDD500"/>
+        </g>
+        <!-- set 1 -->
+        <g class="uset uset1">
+          <rect x="4.55" y="9.55" width="1.9" height="1.8" fill="#E02029"/>
+          <rect x="6.55" y="9.55" width="1.9" height="1.8" fill="#0E5FD9"/>
+          <rect x="8.55" y="9.55" width="1.9" height="1.8" fill="#FF7A00"/>
+        </g>
+        <!-- set 2 -->
+        <g class="uset uset2">
+          <rect x="4.55" y="9.55" width="1.9" height="1.8" fill="#00A04A"/>
+          <rect x="6.55" y="9.55" width="1.9" height="1.8" fill="#FDD500"/>
+          <rect x="8.55" y="9.55" width="1.9" height="1.8" fill="#0E5FD9"/>
+        </g>
+        <!-- set 3: solved white -->
+        <g class="uset uset3">
+          <rect x="4.55" y="9.55" width="1.9" height="1.8" fill="#FAFAFA"/>
+          <rect x="6.55" y="9.55" width="1.9" height="1.8" fill="#FAFAFA"/>
+          <rect x="8.55" y="9.55" width="1.9" height="1.8" fill="#FAFAFA"/>
+        </g>
+        <!-- top-row gap lines -->
+        <g fill="#16161b">
+          <rect x="6.45" y="9.55" width="0.1" height="1.8"/>
+          <rect x="8.45" y="9.55" width="0.1" height="1.8"/>
+        </g>
+      </g>
+    </g>
+
+    <g class="sweat"><rect x="12.4" y="6.4" width="0.9" height="1.3" rx="0.4" fill="#7FD4FF"/></g>
+
+    <g class="spark">
+      <rect x="12.2" y="6.0" width="1" height="0.5" fill="#FFE066"/>
+      <rect x="12.2" y="6.5" width="1" height="1" fill="#FFE066"/>
+      <rect x="12.2" y="7.5" width="1" height="0.5" fill="#FFE066"/>
+      <rect x="11.4" y="6.5" width="1" height="1" fill="#FFE066"/>
+      <rect x="13"   y="6.5" width="1" height="1" fill="#FFE066"/>
+    </g>
+  </g>
+</svg>

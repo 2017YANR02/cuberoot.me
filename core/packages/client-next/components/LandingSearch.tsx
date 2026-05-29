@@ -197,6 +197,34 @@ export default function LandingSearch({ cards, lang }: Props) {
     router.push(`${langPrefix}${intent.route}`);
   };
 
+  // Enter on the search box → jump to the first result, following the same
+  // top-to-bottom order the dropdown renders its sections in.
+  const pushInternal = (href: string) => { closeAfter(); router.push(href); };
+  const goFirstResult = () => {
+    if (yearMatch) { pushInternal(langHref('/wca/calendar', `year=${yearMatch}`)); return; }
+    if (pasteIntent) { goPasteIntent(pasteIntent); return; }
+    if (cardMatches.length > 0) { goCard(cardMatches[0]); return; }
+    if (toolMatches.length > 0) { pushInternal(langHref(toolMatches[0].path)); return; }
+    if (lookupMatches.length > 0) { pushInternal(langHref(lookupMatches[0].path, lookupMatches[0].extraQuery)); return; }
+    if (statMatches.length > 0 && statMatches[0].items.length > 0) {
+      const it = statMatches[0].items[0];
+      if (it.kind === 'stat') pushInternal(langHref(`/wca/${it.stat.id}`));
+      else pushInternal(`${langHref(`/wca/${it.parent.id}`)}#metric=${it.metric.id}`);
+      return;
+    }
+    if (aboutMatches.length > 0) { pushInternal(langHref(`/wca/about/${aboutMatches[0].id}`)); return; }
+    if (stackMatches.length > 0) { pushInternal(langHref(`/code/stack/${stackMatches[0].slug}`)); return; }
+    if (glossaryMatches.length > 0) { pushInternal(`${langHref('/wiki')}#${glossaryMatches[0].slug}`); return; }
+    if (algSetMatches.length > 0) { const a = algSetMatches[0]; pushInternal(langHref(`/alg/${a.puzzle}/${a.setSlug}`)); return; }
+    if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
+    if (compMatches.length > 0) {
+      const lp = compLinkProps(compMatches[0].id);
+      pushInternal(lp.href.startsWith('/') ? `${langPrefix}${lp.href}` : lp.href);
+      return;
+    }
+    if (reconMatches.length > 0) { pushInternal(langHref(`/recon/${reconMatches[0].id}`)); return; }
+  };
+
   // Smart paste — 读剪贴板,识别 WCA URL / 打乱 / cubing.com 等并跳转;识别不出就当搜索词。
   const onSmartPaste = async () => {
     setPlusMenuOpen(false);
@@ -323,8 +351,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               setOpen(false);
               (e.target as HTMLInputElement).blur();
             } else if (e.key === 'Enter') {
-              if (pasteIntent) goPasteIntent(pasteIntent);
-              else if (cardMatches.length > 0) goCard(cardMatches[0]);
+              goFirstResult();
             }
           }}
           placeholder={listening ? (isZh ? '请说…' : 'Listening…') : rotatingPlaceholder(isZh)}

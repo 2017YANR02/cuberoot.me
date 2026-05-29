@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a04-03 Snappy flick frames (T3 pixel sprite frames)
+       Clawd cradles the cube in the left claw; the right claw taps the
+       top. The cube is drawn as 6 discrete pre-drawn pixel FRAMES of a
+       U-layer solve, shown one at a time via step-end opacity toggles
+       (crisp retro/LCD cuts, no tweening). The top row of stickers
+       snaps through positions until it matches = solved. Frame 6 holds
+       on the solved beat. The cube does a tiny per-frame bob; eyes pop
+       wide + a "click" flash on the final solved snap.
+       6s loop, 6 frames x 1s each. Cube ~4.5 wide, y10..14.5, below eyes. -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: a-shadow 6s infinite step-end;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: a-breathe 6s infinite ease-in-out;
+      }
+      /* whole cube bobs one pixel-step per frame (LCD jump) */
+      .cube-bob {
+        transform-box: view-box;
+        transform-origin: 6.75px 12.4px;
+        animation: a-bob 6s infinite step-end;
+      }
+      .arm-cradle {
+        transform-box: fill-box;
+        transform-origin: 100% 100%;
+        animation: a-cradle 6s infinite step-end;
+      }
+      .arm-tap {
+        transform-box: fill-box;
+        transform-origin: 0% 100%;
+        animation: a-tap 6s infinite step-end;
+      }
+      /* discrete frame visibility, each shows 1/6 of the loop */
+      .f { opacity: 0; }
+      .f1 { animation: a-f1 6s infinite step-end; }
+      .f2 { animation: a-f2 6s infinite step-end; }
+      .f3 { animation: a-f3 6s infinite step-end; }
+      .f4 { animation: a-f4 6s infinite step-end; }
+      .f5 { animation: a-f5 6s infinite step-end; }
+      .f6 { animation: a-f6 6s infinite step-end; }
+      /* eyes: normal rect, then WIDE on the solved snap (frames 5-6) */
+      .eyes-norm { animation: a-eyes-norm 6s infinite step-end; }
+      .eyes-wide { opacity: 0; animation: a-eyes-wide 6s infinite step-end; }
+      /* click flash on the snap */
+      .click { opacity: 0; animation: a-click 6s infinite step-end; }
+
+      @keyframes a-shadow {
+        0%, 100%        { opacity: 0.5; }
+        16.66%, 50%, 83.33% { opacity: 0.44; }
+        33.33%, 66.66%  { opacity: 0.5; }
+      }
+      @keyframes a-breathe {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        50%      { transform: scale(1.012,0.988) translateY(0.14px); }
+      }
+      /* small crisp bob, one step per frame, settles flat on solved */
+      @keyframes a-bob {
+        0%      { transform: translateY(0); }
+        16.66%  { transform: translateY(-0.35px); }
+        33.33%  { transform: translateY(0.1px); }
+        50%     { transform: translateY(-0.3px); }
+        66.66%  { transform: translateY(0.08px); }
+        83.33%  { transform: translateY(0); }
+      }
+      /* right claw taps the top of the cube on each turn frame */
+      @keyframes a-tap {
+        0%      { transform: translate(0,0) rotate(0deg); }
+        16.66%  { transform: translate(-0.5px,-1.6px) rotate(-22deg); }
+        33.33%  { transform: translate(0,0) rotate(0deg); }
+        50%     { transform: translate(-0.5px,-1.6px) rotate(-22deg); }
+        66.66%  { transform: translate(0,0) rotate(0deg); }
+        83.33%  { transform: translate(-0.5px,-1.6px) rotate(-22deg); }
+      }
+      @keyframes a-cradle {
+        0%, 100% { transform: rotate(0deg); }
+        50%      { transform: rotate(-2deg); }
+      }
+      @keyframes a-f1 { 0%{opacity:1;} 16.66%{opacity:0;} 100%{opacity:0;} }
+      @keyframes a-f2 { 0%{opacity:0;} 16.66%{opacity:1;} 33.33%{opacity:0;} }
+      @keyframes a-f3 { 0%{opacity:0;} 33.33%{opacity:1;} 50%{opacity:0;} }
+      @keyframes a-f4 { 0%{opacity:0;} 50%{opacity:1;} 66.66%{opacity:0;} }
+      @keyframes a-f5 { 0%{opacity:0;} 66.66%{opacity:1;} 83.33%{opacity:0;} }
+      @keyframes a-f6 { 0%{opacity:0;} 83.33%{opacity:1;} 100%{opacity:0;} }
+      @keyframes a-eyes-norm {
+        0% { opacity: 1; }
+        66.66% { opacity: 0; }   /* wide takes over on the snap */
+        83.33% { opacity: 1; }
+      }
+      @keyframes a-eyes-wide {
+        0% { opacity: 0; }
+        66.66% { opacity: 1; }
+        83.33% { opacity: 0; }
+      }
+      @keyframes a-click {
+        0%, 66.65% { opacity: 0; }
+        66.66%     { opacity: 1; }
+        72%        { opacity: 0; }
+        100%       { opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes: normal -->
+    <g class="eyes-norm" fill="#000">
+      <rect x="4" y="8" width="1" height="2"/>
+      <rect x="10" y="8" width="1" height="2"/>
+    </g>
+    <!-- eyes: wide pop on the solved snap (bigger squares) -->
+    <g class="eyes-wide" fill="#000">
+      <rect x="3.7" y="7.7" width="1.5" height="2.4"/>
+      <rect x="9.8" y="7.7" width="1.5" height="2.4"/>
+    </g>
+
+    <!-- ===== CUBE as discrete pixel frames =====
+         Common geometry: 3x3 face, cell 1.4, x4.5..8.7, y10..14.2.
+         Mid + bottom rows constant; TOP row cycles each frame to read
+         as a U-turn shifting stickers, snapping to solved on f5/f6.
+         Each frame group also redraws the constant rows so a single
+         visible <g> is a complete cube (clean LCD swap). -->
+    <g class="cube-bob">
+      <!-- shared dark frame + top depth sliver (always on) -->
+      <rect x="4.42" y="9.4" width="4.36" height="0.55" fill="#c46532"/>
+      <rect x="4.42" y="9.92" width="4.36" height="4.36" fill="#0e0e12"/>
+
+      <!-- FRAME 1: scrambled top row -->
+      <g class="f f1">
+        <rect x="4.5" y="10"   width="1.36" height="1.36" fill="#FDD500"/>
+        <rect x="6.02" y="10"  width="1.36" height="1.36" fill="#0E5FD9"/>
+        <rect x="7.54" y="10"  width="1.36" height="1.36" fill="#E02029"/>
+      </g>
+      <!-- FRAME 2 -->
+      <g class="f f2">
+        <rect x="4.5" y="10"   width="1.36" height="1.36" fill="#E02029"/>
+        <rect x="6.02" y="10"  width="1.36" height="1.36" fill="#FDD500"/>
+        <rect x="7.54" y="10"  width="1.36" height="1.36" fill="#0E5FD9"/>
+      </g>
+      <!-- FRAME 3 -->
+      <g class="f f3">
+        <rect x="4.5" y="10"   width="1.36" height="1.36" fill="#0E5FD9"/>
+        <rect x="6.02" y="10"  width="1.36" height="1.36" fill="#E02029"/>
+        <rect x="7.54" y="10"  width="1.36" height="1.36" fill="#FDD500"/>
+      </g>
+      <!-- FRAME 4: one off from solved -->
+      <g class="f f4">
+        <rect x="4.5" y="10"   width="1.36" height="1.36" fill="#FAFAFA"/>
+        <rect x="6.02" y="10"  width="1.36" height="1.36" fill="#FAFAFA"/>
+        <rect x="7.54" y="10"  width="1.36" height="1.36" fill="#FDD500"/>
+      </g>
+      <!-- FRAME 5: SOLVED top row (snap) -->
+      <g class="f f5">
+        <rect x="4.5" y="10"   width="1.36" height="1.36" fill="#FAFAFA"/>
+        <rect x="6.02" y="10"  width="1.36" height="1.36" fill="#FAFAFA"/>
+        <rect x="7.54" y="10"  width="1.36" height="1.36" fill="#FAFAFA"/>
+      </g>
+      <!-- FRAME 6: hold solved -->
+      <g class="f f6">
+        <rect x="4.5" y="10"   width="1.36" height="1.36" fill="#FAFAFA"/>
+        <rect x="6.02" y="10"  width="1.36" height="1.36" fill="#FAFAFA"/>
+        <rect x="7.54" y="10"  width="1.36" height="1.36" fill="#FAFAFA"/>
+      </g>
+
+      <!-- MID row (constant) -->
+      <rect x="4.5" y="11.52" width="1.36" height="1.36" fill="#FAFAFA"/>
+      <rect x="6.02" y="11.52" width="1.36" height="1.36" fill="#FAFAFA"/>
+      <rect x="7.54" y="11.52" width="1.36" height="1.36" fill="#FAFAFA"/>
+      <!-- BOTTOM row (constant) -->
+      <rect x="4.5" y="13.04" width="1.36" height="1.36" fill="#FAFAFA"/>
+      <rect x="6.02" y="13.04" width="1.36" height="1.36" fill="#FAFAFA"/>
+      <rect x="7.54" y="13.04" width="1.36" height="1.36" fill="#FAFAFA"/>
+    </g>
+
+    <!-- click flash burst on the snap (small white cross + corners) -->
+    <g class="click" fill="#FFF6C8">
+      <rect x="6.35" y="7.6" width="0.7" height="0.55"/>
+      <rect x="3.4"  y="9.3" width="0.55" height="0.6"/>
+      <rect x="9.3"  y="9.3" width="0.55" height="0.6"/>
+      <rect x="6.45" y="8.05" width="0.5" height="0.5" fill="#FDD500"/>
+    </g>
+
+    <!-- left claw cradles -->
+    <g class="arm-cradle" fill="#DE886D">
+      <rect x="2.6" y="13.4" width="2" height="1.6"/>
+    </g>
+    <!-- right claw taps the top -->
+    <g class="arm-tap" fill="#DE886D">
+      <rect x="8.7" y="9.0" width="2" height="1.6"/>
+    </g>
+  </g>
+</svg>

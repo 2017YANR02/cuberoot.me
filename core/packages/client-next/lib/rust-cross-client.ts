@@ -9,7 +9,7 @@
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260529f';
+const V = 'v=20260530d';
 
 export interface MovesResult {
   len: number;
@@ -40,6 +40,10 @@ export interface RustCrossPool {
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
   /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。 */
   solveF2leoStage(scramble: string, pseudo: boolean, stage: number): Promise<number[]>;
+  /** 其余变体(0=pair/1=eo/2=pseudo/3=pseudo_pair)整变体 24/30 值 × 6 朝向(物理面序 z0/z2/z3/z1/x3/x1)。 */
+  solveVariant(scramble: string, variant: number): Promise<number[]>;
+  /** 变体单阶段 6 值(stage 0=cross.. ),cross 先出深阶段后台补。 */
+  solveVariantStage(scramble: string, variant: number, stage: number): Promise<number[]>;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -60,7 +64,7 @@ interface PoolWorker {
   dead: boolean;
 }
 
-export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' = 'cross'): RustCrossPool {
+export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' = 'cross'): RustCrossPool {
   const size = Math.max(1, maxSize);
   const all: PoolWorker[] = [];
   const idle: PoolWorker[] = [];
@@ -191,6 +195,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' = '
     },
     solveF2leoStage(scramble, pseudo, stage) {
       return submit({ type: 'f2leo_stage', id: nextId++, scramble, pseudo, stage }) as Promise<number[]>;
+    },
+    solveVariant(scramble, variant) {
+      return submit({ type: 'variant', id: nextId++, scramble, variant }) as Promise<number[]>;
+    },
+    solveVariantStage(scramble, variant, stage) {
+      return submit({ type: 'variant_stage', id: nextId++, scramble, variant, stage }) as Promise<number[]>;
     },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     terminate() { for (const pw of all) pw.w.terminate(); },

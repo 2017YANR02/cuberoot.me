@@ -65,12 +65,41 @@ export class F2leoSolverWasm {
     solve_pseudo_f2leo(scramble: string): Uint32Array;
 }
 
+/**
+ * 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
+ * pair / eo / pseudo / pseudo_pair —— 各自 native analyzer 用 ~10GB+ huge 表「联合」
+ * 验证多槽是否解出,wasm 装不下;这里复用各 solver 的 `*_small` cascade:显式逐槽
+ * 追踪 + per-slot 小表(pt_cross_C4E0 等)既作可采纳下界又作 goal 验证,IDA* 首达即最优。
+ * 惰性按变体建(RefCell),只想看一个变体不顺带建别的。
+ *
+ * variant 编号:0=pair,1=eo,2=pseudo,3=pseudo_pair(后三个待接)。
+ */
+export class VariantSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * 12 表:pair 用 mt_edge4/corn/edge + pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
+     * eo 另用 pt_cross + pt_ep4eo12 + mt_edge2 + mt_eo12 + mt_eo12_alt + mt_ep4。
+     * 仅存引用,惰性建 solver。(pseudo / pseudo_pair 接入时再扩。)
+     */
+    constructor(pt_cross_c4e0: Uint8Array, pt_cross_ins_c4: Uint8Array, pt_pair_c4e0: Uint8Array, mt_edge4: Uint8Array, mt_corn: Uint8Array, mt_edge: Uint8Array, pt_cross: Uint8Array, pt_ep4eo12: Uint8Array, mt_edge2: Uint8Array, mt_eo12: Uint8Array, mt_eo12_alt: Uint8Array, mt_ep4: Uint8Array, pt_pscross: Uint8Array);
+    /**
+     * 整变体 24(pair/pseudo/pseudo_pair,4 阶段)/ 30(eo,5 阶段)值 × 6 视角(物理面序 z0/z2/z3/z1/x3/x1)。
+     */
+    solve(scramble: string, variant: number): Uint32Array;
+    /**
+     * 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
+     */
+    solve_stage(scramble: string, variant: number, stage: number): Uint32Array;
+}
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
@@ -80,6 +109,9 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
+    readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
+    readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

@@ -52,7 +52,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
       thinking: 'clawd-working-thinking.svg', working: 'clawd-working-typing.svg',
       building: 'clawd-working-building.svg', groove: 'clawd-headphones-groove.svg',
       juggling: 'clawd-working-juggling.svg', sweeping: 'clawd-working-sweeping.svg',
-      carrying: 'clawd-working-carrying.svg', error: 'clawd-error.svg',
+      carrying: 'clawd-working-carrying.svg', cubing: 'clawd-cubing.svg',
+      error: 'clawd-error.svg',
       happy: 'clawd-happy.svg', notification: 'clawd-notification.svg',
       reading: 'clawd-idle-reading.svg', bubble: 'clawd-idle-bubble.svg',
       yawning: 'clawd-idle-yawn.svg', dozing: 'clawd-idle-doze.svg',
@@ -79,7 +80,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
       thinking: 'calico-thinking.apng', working: 'calico-working-typing.apng',
       building: 'calico-working-building.apng', groove: 'calico-working-conducting.apng',
       juggling: 'calico-working-juggling.apng', sweeping: 'calico-working-sweeping.apng',
-      carrying: 'calico-working-carrying.apng', error: 'calico-error.apng',
+      carrying: 'calico-working-carrying.apng', cubing: 'calico-working-juggling.apng',
+      error: 'calico-error.apng',
       happy: 'calico-happy.apng', notification: 'calico-notification.apng',
       reading: 'calico-idle.apng', bubble: 'calico-idle.apng',
       yawning: 'calico-yawning.apng', dozing: 'calico-dozing.apng',
@@ -105,7 +107,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
       thinking: 'cloudling-thinking.svg', working: 'cloudling-typing.svg',
       building: 'cloudling-building.svg', groove: 'cloudling-conducting.svg',
       juggling: 'cloudling-juggling.svg', sweeping: 'cloudling-sweeping.svg',
-      carrying: 'cloudling-carrying.svg', error: 'cloudling-error.svg',
+      carrying: 'cloudling-carrying.svg', cubing: 'cloudling-juggling.svg',
+      error: 'cloudling-error.svg',
       happy: 'cloudling-attention.svg', notification: 'cloudling-notification.svg',
       reading: 'cloudling-idle-reading.svg', bubble: 'cloudling-idle-reading.svg',
       yawning: 'cloudling-idle-to-dozing.svg', dozing: 'cloudling-dozing.svg',
@@ -240,6 +243,7 @@ export default function DeskPet() {
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
+  const [randomMode, setRandomMode] = useState(false);
   const pathname = usePathname();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -267,6 +271,7 @@ export default function DeskPet() {
       if (sz === 's' || sz === 'l') setSize(sz);
       const ch = localStorage.getItem(CHAR_KEY);
       if (ch === 'calico' || ch === 'cloudling') setCharacter(ch);
+      if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
     } catch {}
   }, []);
 
@@ -343,6 +348,7 @@ export default function DeskPet() {
     let dnd = false;
     let autoTimer: ReturnType<typeof setTimeout> | undefined;
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let randomTimer: ReturnType<typeof setTimeout> | undefined;
 
     // ── Mini (edge-cling) mode ── ported from clawd-on-desk mini.js + state.js
     let mini = false;
@@ -552,11 +558,21 @@ export default function DeskPet() {
     };
 
     let lastMove = 0;
+    // Random-play mode: instead of sleeping after idle, the pet performs a random
+    // pose every 1–3 min (skipped while dragged / resting; drive() honors mini-cling).
+    const RANDOM_POOL = ['thinking', 'working', 'building', 'groove', 'juggling', 'sweeping', 'carrying', 'cubing', 'happy', 'notification', 'reading', 'bubble', 'yawning', 'idle'];
+    const scheduleRandom = () => {
+      randomTimer = setTimeout(() => {
+        if (!dnd && !dragging) drive(RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)]);
+        scheduleRandom();
+      }, 60000 + Math.random() * 120000);
+    };
+
     const onMove = (e: PointerEvent) => {
       if (dnd || mini) return; // mini uses hover enter/leave; no eye-track / sleep timer
       const now = performance.now();
       if (now - lastMove > 16) { trackCursor(e.clientX, e.clientY); lastMove = now; }
-      if (asleep) exitRest(); else resetIdle();
+      if (asleep) exitRest(); else if (!randomMode) resetIdle();
     };
 
     const openSearch = () => {
@@ -708,13 +724,15 @@ export default function DeskPet() {
 
     // force: on character switch state is already 'idle', must repaint
     setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
-    if (!mini) resetIdle();
+    if (randomMode) scheduleRandom();
+    else if (!mini) resetIdle();
 
     return () => {
       clearTimeout(autoTimer);
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
       clearTimeout(miniTimer);
+      clearTimeout(randomTimer);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('clawd:state', onExternal as EventListener);
       hit.removeEventListener('click', onClick);
@@ -727,7 +745,7 @@ export default function DeskPet() {
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
-  }, [mounted, character]);
+  }, [mounted, character, randomMode]);
 
   if (!mounted || hidden) return null;
 
@@ -759,6 +777,14 @@ export default function DeskPet() {
     try { localStorage.setItem(CHAR_KEY, next); } catch {}
   };
   const charLabel = zh ? THEMES[character].label.zh : THEMES[character].label.en;
+
+  const toggleRandom = () => {
+    setRandomMode(m => {
+      const next = !m;
+      try { localStorage.setItem('clawd-deskpet-mode', next ? 'random' : 'default'); } catch {}
+      return next;
+    });
+  };
 
   const curLang: 'zh' | 'en' = zh ? 'zh' : 'en';
 
@@ -817,6 +843,8 @@ export default function DeskPet() {
           onResetPos={() => ctrlRef.current?.resetPos()}
           onCling={() => { ctrlRef.current?.cling(); setSearchOpen(false); }}
           onHide={() => { setHidden(true); setSearchOpen(false); }}
+          randomMode={randomMode}
+          onToggleRandom={toggleRandom}
         />
       )}
     </>

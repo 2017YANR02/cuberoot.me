@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a09 shy side-peek + pixel sprite-frame solve (agent 9)
+       Theme: cube reactions / peek.
+
+       A bashful, curious mood. Clawd peeks out from one side of a
+       small cube, then the other, eyes tracking and shy-blinking,
+       while the cube itself runs a SOLVE as discrete pixel sprite
+       frames (T3): six pre-drawn 3x3 states, scrambled -> solved,
+       shown one at a time via steps()-toggled visibility. Crisp
+       retro/LCD snap, no tweening.
+
+       Cube ~6.6 wide, centred x=7.5, top edge y=9.8 (below eyes
+       y=8..10), bottom y=13.4. Eyes peek over the top edge; the
+       side-peek shifts the whole upper body left/right so one eye
+       leads each peek.
+
+       10s loop:
+         0-22%   peek LEFT (body slides left, eyes look left, shy)
+         22-26%  shy blink
+         26-50%  peek RIGHT (body slides right, eyes look right)
+         50-54%  shy blink
+         54-78%  centre, watch the cube finish solving, happy
+         78-100% gentle settle / loop back to left
+       Cube frames advance once per ~1.66s across the whole loop
+       (6 frames over 10s) regardless of head peek.
+  -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: sh-shadow 10s infinite ease-in-out; }
+      .sh-breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: sh-breathe 10s infinite ease-in-out; }
+      /* upper body peeks side to side */
+      .sh-peek { transform-box: view-box; transform-origin: 7.5px 13px; animation: sh-peek 10s infinite cubic-bezier(.45,.05,.55,.95); }
+      .sh-arm-l { transform-box: fill-box; transform-origin: 100% 0%; animation: sh-arm-l 10s infinite ease-in-out; }
+      .sh-arm-r { transform-box: fill-box; transform-origin: 0% 0%;   animation: sh-arm-r 10s infinite ease-in-out; }
+
+      .sh-eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: sh-eyes 10s infinite ease-in-out; }
+      .sh-eye-rect  { animation: sh-rect-vis  10s infinite step-end; }
+      .sh-eye-smile { opacity: 0; animation: sh-smile-vis 10s infinite step-end; }
+
+      /* shy cheek blush dabs */
+      .sh-blush { opacity: 0; animation: sh-blush 10s infinite ease-in-out; }
+
+      /* cube sprite frames: 6 frames, each visible 1/6 of loop */
+      .cf { opacity: 0; }
+      .cf1 { animation: cf1 10s infinite step-end; }
+      .cf2 { animation: cf2 10s infinite step-end; }
+      .cf3 { animation: cf3 10s infinite step-end; }
+      .cf4 { animation: cf4 10s infinite step-end; }
+      .cf5 { animation: cf5 10s infinite step-end; }
+      .cf6 { animation: cf6 10s infinite step-end; }
+
+      @keyframes sh-shadow {
+        0%, 100% { opacity: 0.5; transform: translateX(0) scaleX(1); }
+        20%      { opacity: 0.46; transform: translateX(-0.4px) scaleX(0.95); }
+        40%      { opacity: 0.46; transform: translateX(0.4px) scaleX(0.95); }
+        66%      { opacity: 0.5; transform: translateX(0) scaleX(1); }
+      }
+      @keyframes sh-breathe {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        50%      { transform: scale(1.012,0.988) translateY(0.12px); }
+      }
+      /* peek left (-) then right (+) then centre. small head tilt for shy charm */
+      @keyframes sh-peek {
+        0%        { transform: translateX(0) rotate(0deg); }
+        12%, 22%  { transform: translateX(-1.4px) rotate(-3deg); }
+        26%       { transform: translateX(-1.0px) rotate(-2deg); }
+        38%, 50%  { transform: translateX(1.4px) rotate(3deg); }
+        54%       { transform: translateX(1.0px) rotate(2deg); }
+        66%, 78%  { transform: translateX(0) rotate(0deg); }
+        100%      { transform: translateX(0) rotate(0deg); }
+      }
+      /* arms hold the cube; lead-side hand lifts a touch on each peek */
+      @keyframes sh-arm-l {
+        0%, 100% { transform: translate(0.7px,0.8px) rotate(32deg); }
+        16%      { transform: translate(0.5px,0.5px) rotate(40deg); }
+        44%      { transform: translate(0.8px,1.0px) rotate(28deg); }
+      }
+      @keyframes sh-arm-r {
+        0%, 100% { transform: translate(-0.7px,0.8px) rotate(-32deg); }
+        16%      { transform: translate(-0.8px,1.0px) rotate(-28deg); }
+        44%      { transform: translate(-0.5px,0.5px) rotate(-40deg); }
+      }
+      /* eyes look toward the peek direction; shy soft squint */
+      @keyframes sh-eyes {
+        0%        { transform: translate(0,0) scaleY(1); }
+        12%, 22%  { transform: translate(-0.6px,0.15px) scaleY(0.8); }
+        26%       { transform: translate(-0.4px,0.1px) scaleY(0.85); }
+        38%, 50%  { transform: translate(0.6px,0.15px) scaleY(0.8); }
+        54%       { transform: translate(0.4px,0.1px) scaleY(0.85); }
+        66%, 78%  { transform: translate(0,0) scaleY(1); }
+        100%      { transform: translate(0,0) scaleY(1); }
+      }
+      /* shy blinks at 24% and 52%; happy smile-eyes during the watch 66-78 */
+      @keyframes sh-rect-vis {
+        0% {opacity:1;} 23.5% {opacity:0;} 25.5% {opacity:1;}
+        51.5% {opacity:0;} 53.5% {opacity:1;}
+        66% {opacity:0;} 78% {opacity:1;}
+      }
+      @keyframes sh-smile-vis {
+        0% {opacity:0;} 66% {opacity:1;} 78% {opacity:0;}
+      }
+      @keyframes sh-blush {
+        0%, 8%, 58%, 100% { opacity: 0; }
+        16%, 50%          { opacity: 0.85; }
+      }
+
+      /* 6 even slices: 0-16.6 / 16.6-33.3 / ... */
+      @keyframes cf1 { 0%{opacity:1;} 16.66%{opacity:0;} 100%{opacity:0;} }
+      @keyframes cf2 { 0%{opacity:0;} 16.66%{opacity:1;} 33.33%{opacity:0;} 100%{opacity:0;} }
+      @keyframes cf3 { 0%{opacity:0;} 33.33%{opacity:1;} 50%{opacity:0;} 100%{opacity:0;} }
+      @keyframes cf4 { 0%{opacity:0;} 50%{opacity:1;} 66.66%{opacity:0;} 100%{opacity:0;} }
+      @keyframes cf5 { 0%{opacity:0;} 66.66%{opacity:1;} 83.33%{opacity:0;} 100%{opacity:0;} }
+      @keyframes cf6 { 0%{opacity:0;} 83.33%{opacity:1;} 100%{opacity:0;} }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="sh-breathe">
+    <g class="sh-peek">
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+      <rect class="sh-arm-l" x="0"  y="9" width="2" height="2" fill="#DE886D"/>
+      <rect class="sh-arm-r" x="13" y="9" width="2" height="2" fill="#DE886D"/>
+
+      <!-- shy blush dabs -->
+      <g class="sh-blush" fill="#E8907A">
+        <rect x="2.6" y="9.6" width="1.4" height="0.9"/>
+        <rect x="11.0" y="9.6" width="1.4" height="0.9"/>
+      </g>
+
+      <!-- eyes -->
+      <g class="sh-eyes">
+        <g class="sh-eye-rect" fill="#000">
+          <rect x="4"  y="8" width="1" height="2"/>
+          <rect x="10" y="8" width="1" height="2"/>
+        </g>
+        <g class="sh-eye-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3.5,9 4.5,8 5.5,9"/>
+          <polyline points="9.5,9 10.5,8 11.5,9"/>
+        </g>
+      </g>
+
+      <!-- ===== CUBE sprite frames (flat 3x3, top y=9.8 bottom y=13.4) =====
+           Shared dark body; each frame supplies 9 sticker quads.
+           Sequence reads scrambled -> progressively solved -> solved.
+           Grid cols x: 4.45 / 6.55 / 8.65  (w 1.85)
+           Grid rows y: 9.95 / 11.15 / 12.35 (h 1.05) -->
+      <rect x="4.2" y="10.3" width="6.6" height="3.2" fill="#0e0e12"/>
+
+      <!-- frame 1: scrambled -->
+      <g class="cf cf1">
+        <rect x="4.45" y="10.45" width="1.85" height="0.95" fill="#FDD500"/><rect x="6.55" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="10.45" width="1.85" height="0.95" fill="#00A04A"/>
+        <rect x="4.45" y="11.45" width="1.85" height="0.95" fill="#0E5FD9"/><rect x="6.55" y="11.45" width="1.85" height="0.95" fill="#FAFAFA"/><rect x="8.65" y="11.45" width="1.85" height="0.95" fill="#FF7A00"/>
+        <rect x="4.45" y="12.45" width="1.85" height="0.95"  fill="#FF7A00"/><rect x="6.55" y="12.45" width="1.85" height="0.95"  fill="#00A04A"/><rect x="8.65" y="12.45" width="1.85" height="0.95"  fill="#0E5FD9"/>
+      </g>
+      <!-- frame 2 -->
+      <g class="cf cf2">
+        <rect x="4.45" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="10.45" width="1.85" height="0.95" fill="#00A04A"/>
+        <rect x="4.45" y="11.45" width="1.85" height="0.95" fill="#0E5FD9"/><rect x="6.55" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="11.45" width="1.85" height="0.95" fill="#FF7A00"/>
+        <rect x="4.45" y="12.45" width="1.85" height="0.95"  fill="#FF7A00"/><rect x="6.55" y="12.45" width="1.85" height="0.95"  fill="#FAFAFA"/><rect x="8.65" y="12.45" width="1.85" height="0.95"  fill="#0E5FD9"/>
+      </g>
+      <!-- frame 3 -->
+      <g class="cf cf3">
+        <rect x="4.45" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="10.45" width="1.85" height="0.95" fill="#FF7A00"/>
+        <rect x="4.45" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="11.45" width="1.85" height="0.95" fill="#FF7A00"/>
+        <rect x="4.45" y="12.45" width="1.85" height="0.95"  fill="#0E5FD9"/><rect x="6.55" y="12.45" width="1.85" height="0.95"  fill="#FAFAFA"/><rect x="8.65" y="12.45" width="1.85" height="0.95"  fill="#FF7A00"/>
+      </g>
+      <!-- frame 4 -->
+      <g class="cf cf4">
+        <rect x="4.45" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="10.45" width="1.85" height="0.95" fill="#E02029"/>
+        <rect x="4.45" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="11.45" width="1.85" height="0.95" fill="#FF7A00"/>
+        <rect x="4.45" y="12.45" width="1.85" height="0.95"  fill="#E02029"/><rect x="6.55" y="12.45" width="1.85" height="0.95"  fill="#FAFAFA"/><rect x="8.65" y="12.45" width="1.85" height="0.95"  fill="#FF7A00"/>
+      </g>
+      <!-- frame 5 -->
+      <g class="cf cf5">
+        <rect x="4.45" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="10.45" width="1.85" height="0.95" fill="#E02029"/>
+        <rect x="4.45" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="11.45" width="1.85" height="0.95" fill="#E02029"/>
+        <rect x="4.45" y="12.45" width="1.85" height="0.95"  fill="#E02029"/><rect x="6.55" y="12.45" width="1.85" height="0.95"  fill="#E02029"/><rect x="8.65" y="12.45" width="1.85" height="0.95"  fill="#FAFAFA"/>
+      </g>
+      <!-- frame 6: solved (all red) -->
+      <g class="cf cf6">
+        <rect x="4.45" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="10.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="10.45" width="1.85" height="0.95" fill="#E02029"/>
+        <rect x="4.45" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="6.55" y="11.45" width="1.85" height="0.95" fill="#E02029"/><rect x="8.65" y="11.45" width="1.85" height="0.95" fill="#E02029"/>
+        <rect x="4.45" y="12.45" width="1.85" height="0.95"  fill="#E02029"/><rect x="6.55" y="12.45" width="1.85" height="0.95"  fill="#E02029"/><rect x="8.65" y="12.45" width="1.85" height="0.95"  fill="#E02029"/>
+      </g>
+    </g>
+  </g>
+</svg>

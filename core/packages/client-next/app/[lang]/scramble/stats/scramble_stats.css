@@ -185,6 +185,8 @@
   padding: 2px 0;
 }
 .scramble-hist-legend-chips.clickable { cursor: pointer; }
+/* 四色:4 个底色排成 2x2,不再一长条 */
+.scramble-hist-legend-chips.is-quad { display: inline-grid; grid-template-columns: repeat(2, 14px); gap: 3px; }
 .scramble-hist-legend-chip {
   width: 14px;
   height: 14px;

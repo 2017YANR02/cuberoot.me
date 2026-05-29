@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a08-03 Turntable spin (2.5D vertical-axis).
+       The cube sits on clawd's upturned claws and spins about a
+       vertical axis like a display turntable. Two visible faces
+       share a vertical centre seam; the seam sweeps centre<->edge
+       so one face widens to full while the other narrows toward
+       zero, the shared centre edge bulging TALL when the faces are
+       equal width (2.5D depth). Faces recolour through the WCA set
+       as they swing around (left white->green, right red->orange).
+       Clawd watches with a proud smile-eye beat and a specular
+       glint slides across at the widest moment.
+       7s seamless loop: seam returns to start, colours return. -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: shadow 7s infinite ease-in-out; }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: breathe 7s infinite ease-in-out; }
+      .eyes-rect  { animation: eyes-rect  7s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyes-smile 7s infinite step-end; }
+      @keyframes shadow { 0%,100%{opacity:.5;} 50%{opacity:.5;} }
+      @keyframes breathe { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.01,.99) translateY(.12px);} }
+      @keyframes eyes-rect  { 0%{opacity:1;} 23%{opacity:1;} 25%{opacity:0;} 33%{opacity:1;} 100%{opacity:1;} }
+      @keyframes eyes-smile { 0%{opacity:0;} 23%{opacity:0;} 25%{opacity:1;} 33%{opacity:0;} 100%{opacity:0;} }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eyes-rect" fill="#000">
+      <rect x="4" y="8" width="1" height="2"/>
+      <rect x="10" y="8" width="1" height="2"/>
+    </g>
+    <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3.5,9 4.5,8 5.5,9"/>
+      <polyline points="9.5,9 10.5,8 11.5,9"/>
+    </g>
+
+    <rect x="0" y="11" width="2" height="2" fill="#DE886D">
+      <animateTransform attributeName="transform" type="rotate" values="-16 1 12; -20 1 12; -16 1 12" keyTimes="0;0.5;1" dur="7s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="13" y="11" width="2" height="2" fill="#DE886D">
+      <animateTransform attributeName="transform" type="rotate" values="16 14 12; 20 14 12; 16 14 12" keyTimes="0;0.5;1" dur="7s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- ===== TURNTABLE CUBE ===== -->
+    <polygon fill="#0e0e12" points="5.3,9.4 5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6 5.3,12.6"><animate attributeName="points" values="5.3,9.4 5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6 5.3,12.6;5.3,9.4 7.5,8.8 7.5,8.8 7.5,13.2 7.5,13.2 5.3,12.6;5.3,9.4 9.7,9.4 9.7,9.4 9.7,12.6 9.7,12.6 5.3,12.6;5.3,9.4 7.5,8.8 7.5,8.8 7.5,13.2 7.5,13.2 5.3,12.6;5.3,9.4 5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6 5.3,12.6" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#FAFAFA" points="5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6"><animate attributeName="points" values="5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6;5.3,9.4 7.5,8.8 7.5,13.2 5.3,12.6;5.3,9.4 9.7,9.4 9.7,12.6 5.3,12.6;5.3,9.4 7.5,8.8 7.5,13.2 5.3,12.6;5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/><animate attributeName="fill" values="#FAFAFA;#FAFAFA;#00A04A;#00A04A;#FAFAFA" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="discrete" repeatCount="indefinite"/></polygon>
+    <polygon fill="#E02029" points="9.7,9.4 5.3,9.4 5.3,12.6 9.7,12.6"><animate attributeName="points" values="9.7,9.4 5.3,9.4 5.3,12.6 9.7,12.6;9.7,9.4 7.5,8.8 7.5,13.2 9.7,12.6;9.7,9.4 9.7,9.4 9.7,12.6 9.7,12.6;9.7,9.4 7.5,8.8 7.5,13.2 9.7,12.6;9.7,9.4 5.3,9.4 5.3,12.6 9.7,12.6" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/><animate attributeName="fill" values="#E02029;#E02029;#FF7A00;#FF7A00;#E02029" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="discrete" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="5.3,10.31 5.3,10.31 5.3,10.31 5.3,10.63 5.3,10.63 5.3,10.63"><animate attributeName="points" values="5.3,10.31 5.3,10.31 5.3,10.31 5.3,10.63 5.3,10.63 5.3,10.63;5.3,10.31 6.4,10.18 7.5,10.05 7.5,10.49 6.4,10.56 5.3,10.63;5.3,10.31 7.5,10.05 9.7,10.31 9.7,10.63 7.5,10.49 5.3,10.63;5.3,10.31 6.4,10.18 7.5,10.05 7.5,10.49 6.4,10.56 5.3,10.63;5.3,10.31 5.3,10.31 5.3,10.31 5.3,10.63 5.3,10.63 5.3,10.63" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="5.3,11.37 5.3,11.37 5.3,11.37 5.3,11.69 5.3,11.69 5.3,11.69"><animate attributeName="points" values="5.3,11.37 5.3,11.37 5.3,11.37 5.3,11.69 5.3,11.69 5.3,11.69;5.3,11.37 6.4,11.44 7.5,11.51 7.5,11.95 6.4,11.82 5.3,11.69;5.3,11.37 7.5,11.51 9.7,11.37 9.7,11.69 7.5,11.95 5.3,11.69;5.3,11.37 6.4,11.44 7.5,11.51 7.5,11.95 6.4,11.82 5.3,11.69;5.3,11.37 5.3,11.37 5.3,11.37 5.3,11.69 5.3,11.69 5.3,11.69" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="9.7,10.31 7.5,10.05 5.3,10.31 5.3,10.63 7.5,10.49 9.7,10.63"><animate attributeName="points" values="9.7,10.31 7.5,10.05 5.3,10.31 5.3,10.63 7.5,10.49 9.7,10.63;9.7,10.31 8.6,10.18 7.5,10.05 7.5,10.49 8.6,10.56 9.7,10.63;9.7,10.31 9.7,10.31 9.7,10.31 9.7,10.63 9.7,10.63 9.7,10.63;9.7,10.31 8.6,10.18 7.5,10.05 7.5,10.49 8.6,10.56 9.7,10.63;9.7,10.31 7.5,10.05 5.3,10.31 5.3,10.63 7.5,10.49 9.7,10.63" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="9.7,11.37 7.5,11.51 5.3,11.37 5.3,11.69 7.5,11.95 9.7,11.69"><animate attributeName="points" values="9.7,11.37 7.5,11.51 5.3,11.37 5.3,11.69 7.5,11.95 9.7,11.69;9.7,11.37 8.6,11.44 7.5,11.51 7.5,11.95 8.6,11.82 9.7,11.69;9.7,11.37 9.7,11.37 9.7,11.37 9.7,11.69 9.7,11.69 9.7,11.69;9.7,11.37 8.6,11.44 7.5,11.51 7.5,11.95 8.6,11.82 9.7,11.69;9.7,11.37 7.5,11.51 5.3,11.37 5.3,11.69 7.5,11.95 9.7,11.69" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6"><animate attributeName="points" values="5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6;5.98,9.22 6.09,9.19 6.09,12.82 5.98,12.79;6.66,9.03 6.88,8.97 6.88,13.03 6.66,12.97;5.98,9.22 6.09,9.19 6.09,12.82 5.98,12.79;5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6"><animate attributeName="points" values="5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6;6.71,9.02 6.82,8.99 6.82,13.01 6.71,12.99;8.12,8.97 8.34,9.03 8.34,12.97 8.12,13.03;6.71,9.02 6.82,8.99 6.82,13.01 6.71,12.99;5.3,9.4 5.3,9.4 5.3,12.6 5.3,12.6" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="8.34,9.03 8.12,8.97 8.12,13.03 8.34,12.97"><animate attributeName="points" values="8.34,9.03 8.12,8.97 8.12,13.03 8.34,12.97;9.02,9.22 8.91,9.19 8.91,12.82 9.02,12.79;9.7,9.4 9.7,9.4 9.7,12.6 9.7,12.6;9.02,9.22 8.91,9.19 8.91,12.82 9.02,12.79;8.34,9.03 8.12,8.97 8.12,13.03 8.34,12.97" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+    <polygon fill="#16161b" points="6.88,8.97 6.66,9.03 6.66,12.97 6.88,13.03"><animate attributeName="points" values="6.88,8.97 6.66,9.03 6.66,12.97 6.88,13.03;8.29,9.02 8.18,8.99 8.18,13.01 8.29,12.99;9.7,9.4 9.7,9.4 9.7,12.6 9.7,12.6;8.29,9.02 8.18,8.99 8.18,13.01 8.29,12.99;6.88,8.97 6.66,9.03 6.66,12.97 6.88,13.03" keyTimes="0;0.25;0.5;0.75;1" dur="7s" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/></polygon>
+  </g>
+</svg>

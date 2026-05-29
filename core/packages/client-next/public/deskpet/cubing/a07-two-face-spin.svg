@@ -1,0 +1,288 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a07-02 Two-Face Spin Solve (T2 2.5D vertical-axis spin), 7s loop.
+       inspection -> cube spins about a vertical axis: a front-left face and a
+       front-right face share a center edge; one narrows to 0 as the other
+       widens in, with sticker colours cycling white/green/yellow/blue/orange/red,
+       reads as a real spin -> settles on a solved face + smile + bounce.
+       Mechanism: two 3-sticker face panels, each scaleX-anchored at the shared
+       center edge (x=7.5). When a panel hits scaleX~0 its colour-set swaps to the
+       next face, so faces appear & disappear like a turning cube. -->
+  <defs>
+    <style><![CDATA[
+      #ground-shadow {
+        transform-box: view-box; transform-origin: 7.5px 15.5px;
+        animation: tf-shadow 7s infinite ease-in-out;
+      }
+      .body-breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: tf-body 7s infinite ease-in-out; }
+      .arm-l, .arm-r { transform-box: fill-box; }
+      .arm-l { transform-origin: 100% 0%; animation: tf-arm-l 7s infinite ease-in-out; }
+      .arm-r { transform-origin: 0% 0%;   animation: tf-arm-r 7s infinite ease-in-out; }
+
+      .eyes-rect  { animation: tf-eyes-rect 7s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: tf-eyes-smile 7s infinite step-end; }
+      .eye-watch  { transform-box: view-box; transform-origin: 7.5px 9px; animation: tf-eye-watch 7s infinite ease-in-out; }
+
+      .cube { transform-box: view-box; transform-origin: 7.5px 11.6px; animation: tf-cube 7s infinite ease-in-out; }
+
+      /* left & right face panels anchored at the shared center edge x=7.5 */
+      .face-l { transform-box: view-box; transform-origin: 7.5px 11.6px; animation: tf-face-l 7s infinite ease-in-out; }
+      .face-r { transform-box: view-box; transform-origin: 7.5px 11.6px; animation: tf-face-r 7s infinite ease-in-out; }
+
+      /* colour-sets: left face cycles through faces A,B,C ; right cycles B,C,D ... */
+      .lcA { animation: tf-lcA 7s infinite step-end; }
+      .lcB { opacity:0; animation: tf-lcB 7s infinite step-end; }
+      .lcC { opacity:0; animation: tf-lcC 7s infinite step-end; }
+      .lcSolved { opacity:0; animation: tf-lcSolved 7s infinite step-end; }
+      .rcA { animation: tf-rcA 7s infinite step-end; }
+      .rcB { opacity:0; animation: tf-rcB 7s infinite step-end; }
+      .rcC { opacity:0; animation: tf-rcC 7s infinite step-end; }
+      .rcSolved { opacity:0; animation: tf-rcSolved 7s infinite step-end; }
+
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: tf-spark 7s infinite ease-out; }
+      .reel-s { animation: tf-reel-s 7s infinite step-end; }
+      .reel-t { animation: tf-reel-t 7s infinite step-end; }
+
+      @keyframes tf-shadow {
+        0%, 100% { opacity:.5; transform: scaleX(1); }
+        50%      { opacity:.5; transform: scaleX(1.02); }
+        86%      { opacity:.55; transform: scaleX(1.06); }
+      }
+      @keyframes tf-body {
+        0%, 14%, 100% { transform: translateY(0) scale(1,1); }
+        40%           { transform: translateY(.12px) scale(1.006,.994); }
+        72%           { transform: translateY(0) scale(1.01,.99); }
+        82%           { transform: translateY(-.6px) scale(1.02,.98); }   /* settle hop */
+        90%           { transform: translateY(0) scale(1,1); }
+      }
+      @keyframes tf-arm-l {
+        0%, 100% { transform: translate(2.5px,2.3px) rotate(40deg); }
+        50%      { transform: translate(2.5px,2.2px) rotate(42deg); }
+        82%      { transform: translate(2.6px,1.7px) rotate(50deg); }
+      }
+      @keyframes tf-arm-r {
+        0%, 100% { transform: translate(-2.5px,2.3px) rotate(-40deg); }
+        50%      { transform: translate(-2.5px,2.2px) rotate(-42deg); }
+        82%      { transform: translate(-2.6px,1.7px) rotate(-50deg); }
+      }
+      @keyframes tf-eyes-rect {
+        0%{opacity:1} 79%{opacity:1} 80%{opacity:0} 95%{opacity:0} 96%{opacity:1}
+      }
+      @keyframes tf-eyes-smile {
+        0%{opacity:0} 79%{opacity:0} 80%{opacity:1} 95%{opacity:1} 96%{opacity:0}
+      }
+      /* eyes follow the spin: drift L/R subtly */
+      @keyframes tf-eye-watch {
+        0%   { transform: translate(0,.1px); }
+        14%  { transform: translate(-.5px,.1px); }
+        30%  { transform: translate(.5px,.1px); }
+        46%  { transform: translate(-.5px,.1px); }
+        62%  { transform: translate(.5px,.1px); }
+        72%  { transform: translate(0,.1px); }
+        100% { transform: translate(0,.1px); }
+      }
+      @keyframes tf-cube {
+        0%, 14%, 100% { transform: rotate(0deg) translateY(0); }
+        8%            { transform: rotate(-2.5deg); }  /* inspection tilt */
+        72%           { transform: rotate(0deg) translateY(0); }
+        82%           { transform: rotate(0deg) translateY(-.45px); }
+      }
+      /* vertical-axis spin. Loop/rest state = balanced two-face 3/4 view
+         (both faces ~0.6 wide). During the spin each face alternately widens to
+         full (turning head-on) then shrinks toward edge-on while the OTHER face
+         opens, so faces appear & disappear = a true vertical-axis spin.
+         Colour-sets swap at each face's narrow moment. Settle = both full = solved.
+         At 95% snap back to the balanced rest view for a seamless loop. */
+      @keyframes tf-face-l {
+        0%, 12% { transform: scaleX(0.72); }
+        20%     { transform: scaleX(1); }
+        28%     { transform: scaleX(0.72); }
+        34%     { transform: scaleX(0.08); }    /* left turns edge-on, colour swaps */
+        40%     { transform: scaleX(0.72); }
+        48%     { transform: scaleX(1); }
+        56%     { transform: scaleX(0.72); }
+        62%     { transform: scaleX(0.08); }
+        68%     { transform: scaleX(0.72); }
+        74%     { transform: scaleX(1); }        /* settle: full front */
+        94%     { transform: scaleX(1); }
+        95%     { transform: scaleX(0.72); }       /* back to rest view */
+        100%    { transform: scaleX(0.72); }
+      }
+      @keyframes tf-face-r {
+        0%, 12% { transform: scaleX(0.72); }
+        20%     { transform: scaleX(0.08); }    /* right edge-on while left full */
+        28%     { transform: scaleX(0.72); }
+        34%     { transform: scaleX(1); }
+        40%     { transform: scaleX(0.72); }
+        48%     { transform: scaleX(0.08); }
+        56%     { transform: scaleX(0.72); }
+        62%     { transform: scaleX(1); }
+        68%     { transform: scaleX(0.72); }
+        74%     { transform: scaleX(1); }        /* settle: full front */
+        94%     { transform: scaleX(1); }
+        95%     { transform: scaleX(0.72); }
+        100%    { transform: scaleX(0.72); }
+      }
+      /* left face colour swaps at its narrow moments (34%, 62%), settle = solved,
+         loop back to A at 95%. */
+      @keyframes tf-lcA { 0%{opacity:1} 34%{opacity:0} 94%{opacity:0} 95%{opacity:1} 100%{opacity:1} }
+      @keyframes tf-lcB { 0%{opacity:0} 34%{opacity:1} 62%{opacity:0} 100%{opacity:0} }
+      @keyframes tf-lcC { 0%{opacity:0} 62%{opacity:1} 71%{opacity:0} 100%{opacity:0} }
+      @keyframes tf-lcSolved { 0%{opacity:0} 71%{opacity:0} 72%{opacity:1} 94%{opacity:1} 95%{opacity:0} 100%{opacity:0} }
+      /* right face colour swaps at its narrow moments (20%, 48%), settle = solved,
+         loop back to A at 95%. */
+      @keyframes tf-rcA { 0%{opacity:1} 20%{opacity:0} 94%{opacity:0} 95%{opacity:1} 100%{opacity:1} }
+      @keyframes tf-rcB { 0%{opacity:0} 20%{opacity:1} 48%{opacity:0} 100%{opacity:0} }
+      @keyframes tf-rcC { 0%{opacity:0} 48%{opacity:1} 71%{opacity:0} 100%{opacity:0} }
+      @keyframes tf-rcSolved { 0%{opacity:0} 71%{opacity:0} 72%{opacity:1} 94%{opacity:1} 95%{opacity:0} 100%{opacity:0} }
+      @keyframes tf-spark {
+        0%, 80%, 95%, 100% { opacity:0; transform: scale(.4); }
+        82%                { opacity:1; transform: scale(1.4); }
+        86%                { opacity:1; transform: scale(1); }
+        92%                { opacity:0; transform: scale(.7); }
+      }
+      @keyframes tf-reel-s {
+        0%,14%{transform:translateY(0)} 30%{transform:translateY(-3px)} 46%{transform:translateY(-6px)}
+        62%{transform:translateY(-9px)} 70%{transform:translateY(-12px)} 72%,100%{transform:translateY(-12px)} }
+      @keyframes tf-reel-t {
+        0%,14%{transform:translateY(0)} 22%{transform:translateY(-6px)} 34%{transform:translateY(-15px)}
+        46%{transform:translateY(-9px)} 58%{transform:translateY(-21px)} 70%{transform:translateY(-24px)}
+        72%,100%{transform:translateY(-24px)} }
+    ]]></style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="body-breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eye-watch">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4" y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- tiny pixel timer HUD above head -->
+    <g transform="translate(-1.0,1.0)">
+      <rect x="-0.4" y="-0.4" width="5.0" height="3.3" rx="0.4" fill="#16161b"/>
+      <clipPath id="tf-clip-s"><rect x="-0.1" y="-0.3" width="1.7" height="3.0"/></clipPath>
+      <clipPath id="tf-clip-t"><rect x="2.5" y="-0.3" width="1.7" height="3.0"/></clipPath>
+      <g clip-path="url(#tf-clip-s)">
+        <g class="reel-s" fill="#3CF06A">
+          <text x="0.05" y="2.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+          <text x="0.05" y="5.3" font-size="2.7" font-family="monospace" font-weight="bold">2</text>
+          <text x="0.05" y="8.3" font-size="2.7" font-family="monospace" font-weight="bold">4</text>
+          <text x="0.05" y="11.3" font-size="2.7" font-family="monospace" font-weight="bold">5</text>
+          <text x="0.05" y="14.3" font-size="2.7" font-family="monospace" font-weight="bold">6</text>
+        </g>
+      </g>
+      <rect x="1.85" y="1.9" width="0.55" height="0.55" fill="#3CF06A"/>
+      <g clip-path="url(#tf-clip-t)">
+        <g class="reel-t" fill="#3CF06A">
+          <text x="2.6" y="2.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+          <text x="2.6" y="5.3" font-size="2.7" font-family="monospace" font-weight="bold">3</text>
+          <text x="2.6" y="8.3" font-size="2.7" font-family="monospace" font-weight="bold">7</text>
+          <text x="2.6" y="11.3" font-size="2.7" font-family="monospace" font-weight="bold">1</text>
+          <text x="2.6" y="14.3" font-size="2.7" font-family="monospace" font-weight="bold">8</text>
+          <text x="2.6" y="17.3" font-size="2.7" font-family="monospace" font-weight="bold">5</text>
+          <text x="2.6" y="20.3" font-size="2.7" font-family="monospace" font-weight="bold">2</text>
+          <text x="2.6" y="23.3" font-size="2.7" font-family="monospace" font-weight="bold">9</text>
+          <text x="2.6" y="26.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+        </g>
+      </g>
+    </g>
+
+    <g class="arm-l" fill="#DE886D"><rect x="0" y="9" width="2" height="2"/></g>
+    <g class="arm-r" fill="#DE886D"><rect x="13" y="9" width="2" height="2"/></g>
+
+    <!-- ===== CUBE: two faces meeting at center edge x=7.5 ===== -->
+    <g class="cube">
+      <!-- backing / outline box -->
+      <rect x="4.0" y="9.0" width="7.0" height="5.4" fill="#0e0e12"/>
+
+      <!-- LEFT face panel (x 4.3..7.5) -->
+      <g class="face-l">
+        <!-- set A (start) -->
+        <g class="lcA">
+          <rect x="4.3" y="9.3" width="3.1" height="1.6" fill="#FAFAFA"/>
+          <rect x="4.3" y="11.0" width="3.1" height="1.6" fill="#00A04A"/>
+          <rect x="4.3" y="12.7" width="3.1" height="1.4" fill="#FDD500"/>
+        </g>
+        <!-- set B -->
+        <g class="lcB">
+          <rect x="4.3" y="9.3" width="3.1" height="1.6" fill="#FF7A00"/>
+          <rect x="4.3" y="11.0" width="3.1" height="1.6" fill="#E02029"/>
+          <rect x="4.3" y="12.7" width="3.1" height="1.4" fill="#0E5FD9"/>
+        </g>
+        <!-- set C -->
+        <g class="lcC">
+          <rect x="4.3" y="9.3" width="3.1" height="1.6" fill="#0E5FD9"/>
+          <rect x="4.3" y="11.0" width="3.1" height="1.6" fill="#FDD500"/>
+          <rect x="4.3" y="12.7" width="3.1" height="1.4" fill="#E02029"/>
+        </g>
+        <!-- SOLVED set: uniform white front face for triumph -->
+        <g class="lcSolved">
+          <rect x="4.3" y="9.3" width="3.1" height="1.6" fill="#FAFAFA"/>
+          <rect x="4.3" y="11.0" width="3.1" height="1.6" fill="#FAFAFA"/>
+          <rect x="4.3" y="12.7" width="3.1" height="1.4" fill="#FAFAFA"/>
+        </g>
+        <!-- horizontal gap lines -->
+        <g fill="#16161b">
+          <rect x="4.3" y="10.85" width="3.1" height="0.1"/>
+          <rect x="4.3" y="12.6" width="3.1" height="0.1"/>
+        </g>
+      </g>
+
+      <!-- RIGHT face panel (x 7.5..10.7) -->
+      <g class="face-r">
+        <g class="rcA">
+          <rect x="7.6" y="9.3" width="3.1" height="1.6" fill="#FDD500"/>
+          <rect x="7.6" y="11.0" width="3.1" height="1.6" fill="#0E5FD9"/>
+          <rect x="7.6" y="12.7" width="3.1" height="1.4" fill="#FAFAFA"/>
+        </g>
+        <g class="rcB">
+          <rect x="7.6" y="9.3" width="3.1" height="1.6" fill="#E02029"/>
+          <rect x="7.6" y="11.0" width="3.1" height="1.6" fill="#FF7A00"/>
+          <rect x="7.6" y="12.7" width="3.1" height="1.4" fill="#00A04A"/>
+        </g>
+        <g class="rcC">
+          <rect x="7.6" y="9.3" width="3.1" height="1.6" fill="#00A04A"/>
+          <rect x="7.6" y="11.0" width="3.1" height="1.6" fill="#FAFAFA"/>
+          <rect x="7.6" y="12.7" width="3.1" height="1.4" fill="#FDD500"/>
+        </g>
+        <g class="rcSolved">
+          <rect x="7.6" y="9.3" width="3.1" height="1.6" fill="#FAFAFA"/>
+          <rect x="7.6" y="11.0" width="3.1" height="1.6" fill="#FAFAFA"/>
+          <rect x="7.6" y="12.7" width="3.1" height="1.4" fill="#FAFAFA"/>
+        </g>
+        <g fill="#16161b">
+          <rect x="7.6" y="10.85" width="3.1" height="0.1"/>
+          <rect x="7.6" y="12.6" width="3.1" height="0.1"/>
+        </g>
+      </g>
+
+      <!-- center vertical edge highlight -->
+      <rect x="7.42" y="9.3" width="0.16" height="4.8" fill="#16161b"/>
+    </g>
+
+    <!-- triumph sparkle near cube top-right -->
+    <g class="spark">
+      <rect x="11.0" y="7.4" width="1" height="0.5" fill="#FFE066"/>
+      <rect x="11.0" y="7.9" width="1" height="1" fill="#FFE066"/>
+      <rect x="11.0" y="8.9" width="1" height="0.5" fill="#FFE066"/>
+      <rect x="10.2" y="7.9" width="1" height="1" fill="#FFE066"/>
+      <rect x="11.8" y="7.9" width="1" height="1" fill="#FFE066"/>
+    </g>
+  </g>
+</svg>

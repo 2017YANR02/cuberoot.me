@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a05-fidget-flip : ambient desk-idle fidget, agent 5. Technique T3.
+       Bored/chill clawd cradles a small cube and idly taps it with the
+       RIGHT claw, flipping it forward one face at a time.
+       The cube is drawn as 4 discrete pixel sprite frames (a forward roll:
+       white-top -> green-top -> yellow-top -> blue-top, with the visible
+       front band and a thin top sliver changing each frame) shown one at a
+       time via steps(4). Crisp retro/LCD frame-by-frame look (distinct from
+       the smooth siblings). A tiny head bob + tap lands on each step. Slow
+       8s loop, 2s per frame; frame 4 -> frame 1 is just the next step so the
+       loop is seamless. -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: fl-shadow 8s infinite steps(1); }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: fl-breathe 4s infinite ease-in-out; }
+      /* relaxed slow head bob, one dip per cube step (every 2s) */
+      .bob { transform-box: view-box; transform-origin: 7.5px 13px; animation: fl-bob 2s infinite ease-in-out; }
+      .arm-l { animation: fl-arm-l 8s infinite ease-in-out; }
+      /* right tapping claw : small down-tap synced to each 2s step */
+      .arm-r { animation: fl-arm-r 2s infinite ease-in-out; }
+      .eyes-lid { transform-box: view-box; transform-origin: 7.5px 9px; animation: fl-eyes 8s infinite ease-in-out; }
+
+      /* 4 cube sprite frames, each visible 25% of the 8s loop via steps(4) */
+      .cf { opacity: 0; }
+      .cf1 { opacity: 1; animation: fl-cf1 8s infinite steps(1); }
+      .cf2 { animation: fl-cf2 8s infinite steps(1); }
+      .cf3 { animation: fl-cf3 8s infinite steps(1); }
+      .cf4 { animation: fl-cf4 8s infinite steps(1); }
+
+      @keyframes fl-shadow { 0%,100%{opacity:.5;} }
+      @keyframes fl-breathe { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.01,.99) translateY(.12px);} }
+      /* head settles down a hair on the tap then back, each step */
+      @keyframes fl-bob { 0%,100%{transform:translateY(0) rotate(0deg);} 22%{transform:translateY(0.18px) rotate(0.6deg);} 60%{transform:translateY(0) rotate(0deg);} }
+      /* left claw : steady cradle, breathes a hair up/down */
+      @keyframes fl-arm-l { 0%,100%{transform:translateY(0);} 50%{transform:translateY(0.18px);} }
+      /* right claw : a gentle tap-down lands on each 2s step then lifts */
+      @keyframes fl-arm-r { 0%,100%{transform:translateY(-0.1px);} 16%{transform:translateY(0.6px);} 50%{transform:translateY(-0.1px);} }
+      /* sleepy lids: slow look-down each step, occasional bigger droop */
+      @keyframes fl-eyes { 0%,100%{transform:scaleY(0.8) translateY(0.1px);} 47%,53%{transform:scaleY(0.18) translateY(0.2px);} 60%{transform:scaleY(0.8) translateY(0.1px);} }
+
+      @keyframes fl-cf1 { 0%,24.9%{opacity:1;} 25%,100%{opacity:0;} }
+      @keyframes fl-cf2 { 0%,24.9%{opacity:0;} 25%,49.9%{opacity:1;} 50%,100%{opacity:0;} }
+      @keyframes fl-cf3 { 0%,49.9%{opacity:0;} 50%,74.9%{opacity:1;} 75%,100%{opacity:0;} }
+      @keyframes fl-cf4 { 0%,74.9%{opacity:0;} 75%,100%{opacity:1;} }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+   <g class="bob">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- sleepy half-lid eyes -->
+    <g class="eyes-lid" fill="#000000">
+      <rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/>
+    </g>
+
+    <!-- ===== CUBE : 4 discrete sprite frames, all at x4.0..9.7, y10.4..13.8.
+         Each frame = a 3x3 front face + a thin top sliver, rolled forward by
+         one row so the colours march white -> green -> yellow -> blue. ===== -->
+    <g>
+      <!-- shared dark cube body so the silhouette never flickers -->
+      <rect x="3.9" y="10.4" width="6.0" height="3.4" fill="#0e0e12"/>
+
+      <!-- FRAME 1 : white front, faint top sliver green -->
+      <g class="cf cf1">
+        <rect x="4.0" y="9.95" width="5.8" height="0.5" fill="#0a6a35"/>
+        <rect x="4.2" y="10.7" width="1.55" height="0.9" fill="#FAFAFA"/><rect x="5.9" y="10.7" width="1.55" height="0.9" fill="#FAFAFA"/><rect x="7.6" y="10.7" width="1.55" height="0.9" fill="#FAFAFA"/>
+        <rect x="4.2" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/><rect x="5.9" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/><rect x="7.6" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/>
+        <rect x="4.2" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/><rect x="5.9" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/><rect x="7.6" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/>
+      </g>
+
+      <!-- FRAME 2 : green rolling onto front top row, white sliding down -->
+      <g class="cf cf2">
+        <rect x="4.0" y="9.95" width="5.8" height="0.5" fill="#b09a00"/>
+        <rect x="4.2" y="10.7" width="1.55" height="0.9" fill="#00A04A"/><rect x="5.9" y="10.7" width="1.55" height="0.9" fill="#00A04A"/><rect x="7.6" y="10.7" width="1.55" height="0.9" fill="#00A04A"/>
+        <rect x="4.2" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/><rect x="5.9" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/><rect x="7.6" y="11.7" width="1.55" height="0.9" fill="#FAFAFA"/>
+        <rect x="4.2" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/><rect x="5.9" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/><rect x="7.6" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/>
+      </g>
+
+      <!-- FRAME 3 : yellow rolling on top, green mid, white bottom -->
+      <g class="cf cf3">
+        <rect x="4.0" y="9.95" width="5.8" height="0.5" fill="#0a3a8f"/>
+        <rect x="4.2" y="10.7" width="1.55" height="0.9" fill="#FDD500"/><rect x="5.9" y="10.7" width="1.55" height="0.9" fill="#FDD500"/><rect x="7.6" y="10.7" width="1.55" height="0.9" fill="#FDD500"/>
+        <rect x="4.2" y="11.7" width="1.55" height="0.9" fill="#00A04A"/><rect x="5.9" y="11.7" width="1.55" height="0.9" fill="#00A04A"/><rect x="7.6" y="11.7" width="1.55" height="0.9" fill="#00A04A"/>
+        <rect x="4.2" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/><rect x="5.9" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/><rect x="7.6" y="12.7" width="1.55" height="0.8" fill="#FAFAFA"/>
+      </g>
+
+      <!-- FRAME 4 : blue on top, yellow mid, green bottom -->
+      <g class="cf cf4">
+        <rect x="4.0" y="9.95" width="5.8" height="0.5" fill="#7a1016"/>
+        <rect x="4.2" y="10.7" width="1.55" height="0.9" fill="#0E5FD9"/><rect x="5.9" y="10.7" width="1.55" height="0.9" fill="#0E5FD9"/><rect x="7.6" y="10.7" width="1.55" height="0.9" fill="#0E5FD9"/>
+        <rect x="4.2" y="11.7" width="1.55" height="0.9" fill="#FDD500"/><rect x="5.9" y="11.7" width="1.55" height="0.9" fill="#FDD500"/><rect x="7.6" y="11.7" width="1.55" height="0.9" fill="#FDD500"/>
+        <rect x="4.2" y="12.7" width="1.55" height="0.8" fill="#00A04A"/><rect x="5.9" y="12.7" width="1.55" height="0.8" fill="#00A04A"/><rect x="7.6" y="12.7" width="1.55" height="0.8" fill="#00A04A"/>
+      </g>
+    </g>
+
+    <!-- claws cradle the cube from below; right one taps each step -->
+    <g fill="#DE886D">
+      <rect class="arm-l" x="0"  y="11" width="2" height="2"/>
+      <rect class="arm-r" x="13" y="11" width="2" height="2"/>
+    </g>
+   </g>
+  </g>
+</svg>

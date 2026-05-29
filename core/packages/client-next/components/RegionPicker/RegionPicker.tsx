@@ -4,12 +4,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';
+import { ContinentIcon, type ContinentSlug } from '@/components/ContinentIcon';
 import { countryName } from '@/lib/country-name';
 import { isContinentCode, type ContinentCode } from '@/lib/continent';
 import './region_picker.css';
 
 interface ContinentInfo {
-  slug: string;
+  slug: ContinentSlug;
   code: ContinentCode;
   zh: string;
   en: string;
@@ -23,15 +24,6 @@ const CONTINENTS: ContinentInfo[] = [
   { slug: 'oceania',      code: 'OC', zh: '大洋洲', en: 'Oceania' },
   { slug: 'southAmerica', code: 'SA', zh: '南美洲', en: 'South America' },
 ];
-
-function ContinentIcon({ slug }: { slug: string }) {
-  return (
-    <span className="region-picker-continent-icon">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/_assets/continent-icons/${slug}.svg`} alt="" />
-    </span>
-  );
-}
 
 interface SharedProps {
   isZh: boolean;
@@ -116,13 +108,13 @@ export function RegionPicker(props: RegionPickerProps) {
         const t = multiTokens[0];
         if (isContinentCode(t)) {
           const c = CONTINENTS.find(c => c.code === t);
-          return c ? <ContinentIcon slug={c.slug} /> : null;
+          return c ? <ContinentIcon slug={c.slug} className="region-picker-continent-icon" /> : null;
         }
         return <Flag iso2={t} spanClassName="country-flag" imgClassName="country-flag-ct" />;
       }
       return null;
     }
-    if (singleSelectedContinent) return <ContinentIcon slug={singleSelectedContinent.slug} />;
+    if (singleSelectedContinent) return <ContinentIcon slug={singleSelectedContinent.slug} className="region-picker-continent-icon" />;
     if (singleSelectedCountry) {
       return <Flag iso2={singleSelectedCountry} spanClassName="country-flag" imgClassName="country-flag-ct" />;
     }
@@ -209,7 +201,7 @@ export function RegionPicker(props: RegionPickerProps) {
                       onClick={cont ? () => toggleMultiContinent(cont.code) : () => toggleMultiCountry(t)}
                     >
                       {cont
-                        ? <ContinentIcon slug={cont.slug} />
+                        ? <ContinentIcon slug={cont.slug} className="region-picker-continent-icon" />
                         : <Flag iso2={t} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                       <span>{cont ? (isZh ? cont.zh : cont.en) : countryName(t, isZh)}</span>
                       <X size={13} className="region-picker-remove" />
@@ -233,7 +225,7 @@ export function RegionPicker(props: RegionPickerProps) {
                 className={`region-picker-item${isContinentActive(c) ? ' active' : ''}`}
                 onClick={isMulti ? () => toggleMultiContinent(c.code) : () => selectSingle(c.slug)}
               >
-                <ContinentIcon slug={c.slug} />
+                <ContinentIcon slug={c.slug} className="region-picker-continent-icon" />
                 <span>{isZh ? c.zh : c.en}</span>
               </button>
             ))}
