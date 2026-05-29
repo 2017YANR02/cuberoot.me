@@ -241,6 +241,7 @@ export interface SiteSearchResult {
   stackMatches: StackHit[];
   algSetMatches: AlgSetHit[];
   totalCount: number;
+  yearMatch: string | null;
   statIndexLoaded: boolean;
 }
 
@@ -418,6 +419,13 @@ export function useSiteSearch(
     return out;
   }, [q, tokens]);
 
+  // 纯 4 位年份(1982~2099)→ 让调用方置顶「该年比赛日历」直达,并把选手沉底
+  const yearMatch = useMemo(() => {
+    if (!/^(19|20)\d{2}$/.test(q)) return null;
+    const y = Number(q);
+    return y >= 1982 && y <= 2099 ? q : null;
+  }, [q]);
+
   const totalCount =
     cardMatches.length +
     toolMatches.length +
@@ -437,6 +445,7 @@ export function useSiteSearch(
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
     totalCount,
+    yearMatch,
     statIndexLoaded: statIndex !== null,
   };
 }

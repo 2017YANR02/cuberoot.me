@@ -26,11 +26,11 @@ const nextConfig: NextConfig = {
     outputFileTracingRoot: path.join(__dirname, "../../"),
   }),
 
-  // Dev-only: allow the frp tunnel / Tailscale hosts to hit /_next/* dev assets
-  // + HMR. Next 16 dev blocks cross-origin requests to internal resources unless
-  // the origin is listed here (mirrors Vite's server.allowedHosts). Ignored in
-  // prod/Vercel. dev.cuberoot.me → frp → 127.0.0.1:3000; *.ts.net → Tailscale.
-  allowedDevOrigins: ["dev.cuberoot.me", "*.cuberoot.me", "*.ts.net"],
+  // Dev-only: allow the frp tunnel host (dev.cuberoot.me → frp → 127.0.0.1:3000)
+  // to hit /_next/* dev assets + HMR. Next 16 dev blocks cross-origin requests to
+  // internal resources unless the origin is listed here (mirrors Vite's
+  // server.allowedHosts). Ignored in prod/Vercel.
+  allowedDevOrigins: ["dev.cuberoot.me", "*.cuberoot.me"],
 
   // Tree-shake named exports from large libs that ship a barrel index.
   // three / maplibre-gl / katex re-export hundreds of symbols; importing

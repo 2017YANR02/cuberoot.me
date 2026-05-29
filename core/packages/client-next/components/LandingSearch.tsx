@@ -151,7 +151,7 @@ export default function LandingSearch({ cards, lang }: Props) {
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
-    totalCount,
+    totalCount, yearMatch,
   } = useSiteSearch(query, 'eager', { cards });
 
   useEffect(() => {
@@ -231,6 +231,41 @@ export default function LandingSearch({ cards, lang }: Props) {
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
   }, [plusMenuOpen]);
+
+  // Persons section is rendered inline normally, but pushed to the bottom for a
+  // bare year query (e.g. "2026" matches every 2026-registered WCA ID prefix —
+  // noise the user didn't ask for; the year-calendar shortcut takes the top).
+  const personsSection = personMatches.length > 0 ? (
+    <section className="landing-search-section">
+      <div className="landing-search-section-header">
+        <UserRound size={14} strokeWidth={1.75} />
+        <h3>{isZh ? '选手' : 'Persons'}</h3>
+        {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
+          <HeaderMore
+            overflow={personMatches.length - INITIAL_RENDER_CAP}
+            title={isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`}
+            onClick={() => setExpandedPersons(true)}
+          />
+        )}
+      </div>
+      <div className="landing-search-grid">
+        {visiblePersons.map(p => (
+          <Link
+            key={p.wcaId}
+            href={langHref(`/wca/persons/${p.wcaId}`)}
+            className="landing-search-item landing-search-item--rich"
+            onClick={closeAfter}
+          >
+            <Flag iso2={p.iso2} className="country-flag" />
+            <span className="landing-search-item-main">
+              <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
+              <span className="landing-search-item-meta">{p.wcaId}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  ) : null;
 
   return (
     <div className="landing-search" ref={wrapRef}>
@@ -340,6 +375,24 @@ export default function LandingSearch({ cards, lang }: Props) {
 
       {showDropdown && (
         <div className="landing-search-panel">
+          {yearMatch && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <CalendarDays size={14} strokeWidth={1.75} />
+                <h3>{isZh ? '年份' : 'Year'}</h3>
+              </div>
+              <div className="landing-search-grid">
+                <Link
+                  href={langHref('/wca/calendar', `year=${yearMatch}`)}
+                  className="landing-search-item"
+                  onClick={closeAfter}
+                >
+                  <span className="landing-search-item-name">{isZh ? `${yearMatch} 年比赛日历` : `${yearMatch} competitions`}</span>
+                  <span className="landing-search-item-meta">{isZh ? '查看该年所有比赛' : 'All competitions that year'}</span>
+                </Link>
+              </div>
+            </section>
+          )}
           {pasteIntent && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -361,6 +414,10 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
+          {/* 纯年份查询只看年份相关(年份直达 + 比赛 + 选手沉底);
+              抑制这些泛文本匹配类,否则 tagline/术语里碰巧含 "2026" 的会混进来 */}
+          {!yearMatch && (
+          <>
           {cardMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -559,38 +616,10 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
             </section>
           )}
-
-          {personMatches.length > 0 && (
-            <section className="landing-search-section">
-              <div className="landing-search-section-header">
-                <UserRound size={14} strokeWidth={1.75} />
-                <h3>{isZh ? '选手' : 'Persons'}</h3>
-                {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
-                  <HeaderMore
-                    overflow={personMatches.length - INITIAL_RENDER_CAP}
-                    title={isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`}
-                    onClick={() => setExpandedPersons(true)}
-                  />
-                )}
-              </div>
-              <div className="landing-search-grid">
-                {visiblePersons.map(p => (
-                  <Link
-                    key={p.wcaId}
-                    href={langHref(`/wca/persons/${p.wcaId}`)}
-                    className="landing-search-item landing-search-item--rich"
-                    onClick={closeAfter}
-                  >
-                    <Flag iso2={p.iso2} className="country-flag" />
-                    <span className="landing-search-item-main">
-                      <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
-                      <span className="landing-search-item-meta">{p.wcaId}</span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </section>
+          </>
           )}
+
+          {!yearMatch && personsSection}
 
           {compMatches.length > 0 && (
             <section className="landing-search-section">
@@ -677,12 +706,14 @@ export default function LandingSearch({ cards, lang }: Props) {
             </section>
           )}
 
-          {totalCount === 0 && !pasteIntent && (xLoaded || !xSearchEnabled) && (
+          {yearMatch && personsSection}
+
+          {totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && (
             <div className="landing-search-empty">
               {isZh ? '未找到匹配项' : 'No matches found.'}
             </div>
           )}
-          {totalCount === 0 && !pasteIntent && xSearchEnabled && !xLoaded && (
+          {totalCount === 0 && !pasteIntent && !yearMatch && xSearchEnabled && !xLoaded && (
             <div className="landing-search-empty">
               {isZh ? '搜索中…' : 'Searching…'}
             </div>
