@@ -10,6 +10,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
 
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
@@ -116,15 +117,15 @@ const vpW = () => document.documentElement.clientWidth;
 const vpH = () => document.documentElement.clientHeight;
 
 // Clamp the bottom-right anchor (right/bottom px) so the pet's visual center
-// (fraction fx,fy of its square box) can approach either edge symmetrically,
-// leaving a 25%-of-box margin on every side. Replaces the old asymmetric
-// [0, vp-48] clamp, which pinned the box flush-right (art stopped short of the
-// right edge because the art only fills the box's center) yet let the box slide
-// almost fully off the left (art overflowed).
-const EDGE = 0.25;
+// (fraction fx,fy of its square box) may travel a touch PAST each viewport edge,
+// letting the art hang off / peek from the edge (upstream's edge-pinning). PEEK
+// is how far past the edge the visual center may go, as a fraction of box size:
+// at the limit ~half the centered art is clipped, so the pet clings to the edge.
+// (A positive value here would instead keep the art that far inside the edge.)
+const PEEK = 0.08;
 const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
   const cw = vpW(), ch = vpH();
-  const mX = w * EDGE, mY = h * EDGE;
+  const mX = -w * PEEK, mY = -h * PEEK;
   return {
     right: Math.min(Math.max(mX - w * (1 - fx), right), cw - mX - w * (1 - fx)),
     bottom: Math.min(Math.max(mY - h * (1 - fy), bottom), ch - mY - h * (1 - fy)),
@@ -169,6 +170,7 @@ export default function DeskPet() {
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
+  const pathname = usePathname();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -202,6 +204,16 @@ export default function DeskPet() {
     i18n.on('languageChanged', update);
     return () => { i18n.off('languageChanged', update); };
   }, []);
+
+  // Close the search overlay after a result navigates to a new page (the pet
+  // lives in the persistent root layout, so client navigation won't unmount it).
+  // Ignore locale-only changes so the toolbar's language toggle doesn't close it.
+  const prevPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    const page = (pathname || '').replace(/^\/(zh|en)(?=\/|$)/, '');
+    if (prevPathRef.current !== null && prevPathRef.current !== page) setSearchOpen(false);
+    prevPathRef.current = page;
+  }, [pathname]);
 
   // After a size or character change, re-anchor so the pet's visual center lands
   // on the captured point (grows/shrinks about itself; characters share one
@@ -334,31 +346,39 @@ export default function DeskPet() {
       if (asleep) exitRest(); else resetIdle();
     };
 
+    const openSearch = () => {
+      const r = root.getBoundingClientRect();
+      const [fx, fy] = VC[character];
+      searchOriginRef.current = { x: r.left + r.width * fx, y: r.top + r.height * fy };
+      setSearchOpen(true);
+    };
+
     let clicks = 0;
     let clickTimer: ReturnType<typeof setTimeout> | undefined;
     const onClick = () => {
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
       if (dnd || asleep) { exitRest(); return; }
+      // Touch: open synchronously inside the tap gesture so the search input can
+      // grab focus + raise the mobile keyboard (the debounced multi-click
+      // reactions below are mouse-only and would push focus past the gesture).
+      if (lastTouch) { openSearch(); return; }
       clicks++;
       clearTimeout(clickTimer);
       clickTimer = setTimeout(() => {
         if (clicks >= 4) setState('reactAnnoyed', true);
         else if (clicks === 2) setState('reactDouble', true);
-        else if (clicks === 1) { // single tap → search, growing from the pet
-          const r = root.getBoundingClientRect();
-          const [fx, fy] = VC[character];
-          searchOriginRef.current = { x: r.left + r.width * fx, y: r.top + r.height * fy };
-          setSearchOpen(true);
-        }
+        else if (clicks === 1) openSearch(); // single tap → search, growing from the pet
         clicks = 0;
       }, 280);
     };
 
     let sx = 0, sy = 0, baseR = 0, baseB = 0, baseW = 0, baseH = 0, moved = false;
     let suppressClick = false;
+    let lastTouch = false;
     const onDown = (e: PointerEvent) => {
       if (e.button === 2) return; // ignore right mouse button (no context menu)
+      lastTouch = e.pointerType !== 'mouse';
       suppressClick = false;
       dragging = true; moved = false;
       root.classList.add('dragging');

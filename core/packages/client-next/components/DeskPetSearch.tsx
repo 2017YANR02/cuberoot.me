@@ -72,6 +72,10 @@ export default function DeskPetSearch({
   useLayoutEffect(() => {
     const box = boxRef.current, backdrop = backdropRef.current;
     if (!box) return;
+    // Focus synchronously in the commit phase: on touch this still runs inside
+    // the tap gesture, so mobile browsers raise the keyboard (a deferred
+    // useEffect would land after the gesture and silently fail on iOS).
+    box.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
 
@@ -89,7 +93,6 @@ export default function DeskPetSearch({
   }, [origin]);
 
   useEffect(() => {
-    boxRef.current?.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
