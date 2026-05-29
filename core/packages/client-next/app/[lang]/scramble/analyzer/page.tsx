@@ -208,8 +208,10 @@ function AnalyzePageInner() {
   const [wcaLoading, setWcaLoading] = useState(false);
   const [crossSol, setCrossSol] = useState<{ length: number; moves: string[] } | null>(null);
   const [wheelIdx, setWheelIdx] = useState(0); // 滚筒锚点 = wcaBins 的索引(兼容跳号)
+  const [wheelOpen, setWheelOpen] = useState(false); // 滚筒默认折叠成数字按钮,点击才展开
   const [, setFlagDataVer] = useState(0); // 国旗映射异步加载完后触发重渲染
   const wcaCacheRef = useRef<Map<string, WcaFile>>(new Map());
+  const wheelWrapRef = useRef<HTMLDivElement>(null);
 
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -390,7 +392,20 @@ function AnalyzePageInner() {
   );
   const wheelSettle = useCallback((i: number) => {
     if (wcaBins && wcaBins[i] != null) pickWca(wcaColor, wcaBins[i]);
+    setWheelOpen(false); // 滚定即收起浮层
   }, [wcaBins, wcaColor, pickWca]);
+
+  // 滚筒展开后点外面 / Esc 收起
+  useEffect(() => {
+    if (!wheelOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (wheelWrapRef.current && !wheelWrapRef.current.contains(e.target as Node)) setWheelOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setWheelOpen(false); };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [wheelOpen]);
 
   const wcaComp = wcaMeta ? resolveComp(wcaMeta.c) : null;
 
@@ -458,22 +473,40 @@ function AnalyzePageInner() {
             </option>
           ))}
         </select>
-        <div className="analyze-wca-steps">
+        <div className="analyze-wca-steps" ref={wheelWrapRef}>
           {wcaBins && wcaBins.length ? (
-            <WheelPicker
-              className="analyze-wca-wheel"
-              value={wheelIdx}
-              minValue={0}
-              maxValue={wcaBins.length - 1}
-              renderSlot={wheelRenderSlot}
-              onChange={setWheelIdx}
-              onSettle={wheelSettle}
-              width={50}
-              slots={7}
-              itemHeight={28}
-              disabled={running}
-              ariaLabel={t('十字步数', 'Cross length')}
-            />
+            <>
+              <button
+                type="button"
+                className="analyze-wca-steptrigger"
+                onClick={() => setWheelOpen((o) => !o)}
+                disabled={running}
+                aria-label={t('十字步数', 'Cross length')}
+                aria-expanded={wheelOpen}
+                title={t('点击选择十字步数', 'Click to pick cross length')}
+              >
+                <span>{wcaBins[wheelIdx] != null ? t(`${wcaBins[wheelIdx]} 步`, String(wcaBins[wheelIdx])) : '—'}</span>
+                <ChevronDown size={13} />
+              </button>
+              {wheelOpen && (
+                <div className="analyze-wca-wheelpop">
+                  <WheelPicker
+                    className="analyze-wca-wheel"
+                    value={wheelIdx}
+                    minValue={0}
+                    maxValue={wcaBins.length - 1}
+                    renderSlot={wheelRenderSlot}
+                    onChange={setWheelIdx}
+                    onSettle={wheelSettle}
+                    width={50}
+                    slots={7}
+                    itemHeight={28}
+                    disabled={running}
+                    ariaLabel={t('十字步数', 'Cross length')}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <Loader2 size={14} className="analyze-spin" aria-label={t('加载中', 'Loading')} />
           )}
@@ -484,9 +517,9 @@ function AnalyzePageInner() {
             onClick={() => pickWca(wcaColor, wcaStep)}
             disabled={running || wcaLoading}
             title={t('同条件换一个', 'Another with same filter')}
+            aria-label={t('同条件换一个', 'Another with same filter')}
           >
             <Shuffle size={13} />
-            {t('换一个', 'Shuffle')}
           </button>
         )}
       </div>

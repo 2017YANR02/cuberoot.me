@@ -100,7 +100,9 @@ export default function StackLandingPage() {
             <span className="s-arrow">→</span>
             <span className="s-tok s-tok-edge">nginx :443</span>
             <span className="s-arrow">→</span>
-            <span className="s-tok s-tok-front">Next 16 (React 19 + App Router)</span>
+            <span className="s-tok s-tok-front">Next 16 :3002</span>
+            <span className="s-arrow">→</span>
+            <span className="s-tok s-tok-front">React 19 + App Router</span>
           </span>
         </div>
         <div className="stack-summary-row">

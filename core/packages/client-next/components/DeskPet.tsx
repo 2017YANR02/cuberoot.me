@@ -36,6 +36,7 @@ interface PetTheme {
   base: string;
   inlineIdle: boolean; // clawd uses the inline eye-tracking SVG for idle
   thumb: string;
+  thumbScale?: number; // zoom the toolbar thumb to crop dead viewBox margin
   label: { zh: string; en: string };
   files: Record<string, string>;
   mini: MiniTheme;
@@ -45,7 +46,7 @@ interface PetTheme {
 const THEMES: Record<ThemeId, PetTheme> = {
   clawd: {
     base: '/deskpet/', inlineIdle: true,
-    thumb: '/deskpet/clawd-happy.svg', label: { zh: '螃蟹', en: 'Clawd' },
+    thumb: '/deskpet/clawd-happy.svg', thumbScale: 1.6, label: { zh: '螃蟹', en: 'Clawd' },
     files: {
       idle: 'clawd-idle-reading.svg',
       thinking: 'clawd-working-thinking.svg', working: 'clawd-working-typing.svg',
@@ -98,7 +99,7 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   cloudling: {
     base: '/deskpet/cloudling/', inlineIdle: false,
-    thumb: '/deskpet/cloudling/cloudling-idle.svg', label: { zh: '云宝', en: 'Cloud' },
+    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud' },
     files: {
       idle: 'cloudling-idle.svg',
       thinking: 'cloudling-thinking.svg', working: 'cloudling-typing.svg',
@@ -806,6 +807,7 @@ export default function DeskPet() {
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
           charThumb={THEMES[character].thumb}
+          charScale={THEMES[character].thumbScale ?? 1}
           charLabel={charLabel}
           sizeLabel={sizeLabel}
           resting={resting}
