@@ -7,7 +7,7 @@
 #
 # 流程: results export 下载/抽取 -> 增量 diff (vs std.csv 已处理集合) -> std_analyzer 全 5 阶段
 #       -> 追加 std.csv/no_wide_move.txt/split_mbf.csv -> 重算 distribution+wca_cross
-#       -> git commit&push + scp static。任一步失败即停 (ErrorActionPreference=Stop)。
+#       -> git commit&push + tar 打包发布 static。任一步失败即停 (ErrorActionPreference=Stop)。
 [CmdletBinding()]
 param(
   [switch]$DryRun,        # 严格只读: 算新增规模即停, 不碰任何 master / 不解算 / 不发布
@@ -98,15 +98,23 @@ try {
 if($NoPublish){
   Step '5/6 发布 (跳过)'
 } else {
-  Step '5/6 commit & push + scp static'
+  Step '5/6 commit & push + tar 发布 static'
   git -C $RepoRoot pull --rebase --autostash origin main
   git -C $RepoRoot add stats/scramble
   if(git -C $RepoRoot status --porcelain stats/scramble){
     git -C $RepoRoot commit -m "chore(scramble-stats): weekly cross-distribution refresh ($stamp, +$nNew scrambles)"
     git -C $RepoRoot push origin main
     if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
-    scp -r (Join-Path $RepoRoot 'stats\scramble') "${StaticHost}:${StaticDest}/"
-    if($LASTEXITCODE -ne 0){ throw 'scp static 失败' }
+    # 发布 stats/scramble 到 static:打成单个 .tgz -> scp 一个文件(二进制安全,不走 pwsh 管道)
+    # -> 远端 untar 覆盖。比 scp -r 逐个传 ~1.5w 小文件快一个量级(166MB -> ~30MB 一次传完)。
+    $tgz = Join-Path $env:TEMP 'cuberoot_scramble_publish.tgz'
+    tar -czf $tgz -C (Join-Path $RepoRoot 'stats') scramble
+    if($LASTEXITCODE -ne 0){ throw 'tar 打包失败' }
+    scp $tgz "${StaticHost}:${StaticDest}/_publish.tgz"
+    if($LASTEXITCODE -ne 0){ throw 'scp tgz 失败' }
+    ssh $StaticHost "tar -xzf ${StaticDest}/_publish.tgz -C ${StaticDest} && rm -f ${StaticDest}/_publish.tgz"
+    if($LASTEXITCODE -ne 0){ throw '远端 untar 失败' }
+    Remove-Item $tgz -Force -ErrorAction SilentlyContinue
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }
 
