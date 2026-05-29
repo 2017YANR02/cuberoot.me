@@ -65,15 +65,19 @@ export default function RustCrossSection({ scramble, lang }: Props) {
   }, [open]);
   useEffect(() => () => { csRef.current?.terminate(); }, []);
 
-  // 逐格流式算 6 视角步数(慢变体 xxxxc 也能一格一格出)
+  // xxxxcross(变体 4)逐视角搜索昂贵(最坏单面数秒),不预算 6 个 —— 点格子才按需求解
+  // (对齐 or18:一次只解一个视角)。cross/xc/xxc/xxxc 便宜,逐格流式预算出概览。
+  const eager = variant <= 3;
+
   const compute = useCallback(async () => {
     const cs = csRef.current;
     if (!cs) return;
     const my = ++computeReq.current;
-    setComputing(true);
-    setCounts([null, null, null, null, null, null]);
     setSelFace(null);
     setMoves(null);
+    setCounts([null, null, null, null, null, null]);
+    if (!eager) { setComputing(false); return; } // 懒变体:不预算,等点击
+    setComputing(true);
     const scr = scrambleRef.current.trim();
     if (!scr) { setComputing(false); return; }
     for (let f = 0; f < 6; f++) {
@@ -84,7 +88,7 @@ export default function RustCrossSection({ scramble, lang }: Props) {
       } catch { /* skip face */ }
     }
     if (computeReq.current === my) setComputing(false);
-  }, [variant]);
+  }, [variant, eager]);
 
   // ready / 变体 / 手动触发 时重算(打乱改动不自动触发,走「计算」按钮)
   useEffect(() => {
@@ -100,7 +104,11 @@ export default function RustCrossSection({ scramble, lang }: Props) {
     setMoves(null);
     try {
       const res = await cs.solveMoves(scrambleRef.current.trim(), variant, f, { extra, cap: 60 });
-      if (movesReq.current === my) setMoves(res);
+      if (movesReq.current === my) {
+        setMoves(res);
+        // 懒变体点击后回填该格步数(solveMoves 返回 len = 最优步数)
+        setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
+      }
     } catch (e) {
       if (movesReq.current === my) setErrMsg(String(e));
     } finally {
@@ -187,21 +195,35 @@ export default function RustCrossSection({ scramble, lang }: Props) {
                 </thead>
                 <tbody>
                   <tr>
-                    {FACES.map((f, i) => (
-                      <td
-                        key={f.face}
-                        className={`rcx-cell${selFace === i ? ' is-sel' : ''}`}
-                        onClick={() => counts[i] != null && clickFace(i)}
-                        data-empty={counts[i] == null}
-                      >
-                        {counts[i] == null
-                          ? <Loader2 size={12} className="rcx-spin" />
-                          : counts[i]}
-                      </td>
-                    ))}
+                    {FACES.map((f, i) => {
+                      const loading = (eager && computing) || (selFace === i && movesLoading);
+                      return (
+                        <td
+                          key={f.face}
+                          className={`rcx-cell${selFace === i ? ' is-sel' : ''}`}
+                          onClick={() => clickFace(i)}
+                          data-empty={counts[i] == null}
+                          title={t('点击求解该视角', 'Click to solve this orientation')}
+                        >
+                          {counts[i] != null
+                            ? counts[i]
+                            : loading
+                              ? <Loader2 size={12} className="rcx-spin" />
+                              : <span className="rcx-dot">·</span>}
+                        </td>
+                      );
+                    })}
                   </tr>
                 </tbody>
               </table>
+              {!eager && (
+                <div className="rcx-hint">
+                  {t(
+                    'XXXXCross 单视角搜索较重,点任一视角格子按需求解(最坏数秒)。',
+                    'XXXXCross is heavy per orientation — click a face cell to solve it on demand (a few seconds worst case).',
+                  )}
+                </div>
+              )}
 
               {selFace !== null && (
                 <div className="rcx-sols">
