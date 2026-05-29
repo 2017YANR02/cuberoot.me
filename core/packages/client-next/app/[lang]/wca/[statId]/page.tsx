@@ -8,6 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { BarChart3, Play, Pause, ChevronRight, ChevronDown } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from '@/lib/event-constants';
@@ -116,6 +117,24 @@ function renderSolves(items: string[]): React.ReactNode {
   );
 }
 
+// 行内 *斜体* markdown（如 name_parts_count 的 "India *(28.81 %)*"）。
+// 只处理单星号；**粗体** 由 renderCell 整串匹配，[链接]() 由 renderSegment 处理。
+function renderInline(text: string, keyBase: string): React.ReactNode {
+  if (!text.includes('*')) return text;
+  const re = /\*([^*]+)\*/g;
+  const parts: React.ReactNode[] = [];
+  let last = 0, i = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(<em key={`${keyBase}-em-${i++}`}>{m[1]}</em>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  if (parts.length === 0) return text;
+  return parts.length === 1 ? parts[0] : <React.Fragment key={keyBase}>{parts}</React.Fragment>;
+}
+
 function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.ReactNode {
   if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'solves') {
     const cell = value as { _type: 'solves'; csv: string };
@@ -176,7 +195,7 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
 
     while ((match = linkRegex.exec(segment)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(segment.slice(lastIndex, match.index));
+        parts.push(renderInline(segment.slice(lastIndex, match.index), `${segIdx}-${lastIndex}`));
       }
       const url = match[2];
       const wcaId = extractWcaId(url);
@@ -208,7 +227,7 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
       lastIndex = match.index + match[0].length;
     }
     if (lastIndex < segment.length) {
-      parts.push(segment.slice(lastIndex));
+      parts.push(renderInline(segment.slice(lastIndex), `${segIdx}-end`));
     }
     return parts.length === 1 ? parts[0] : <React.Fragment key={segIdx}>{parts}</React.Fragment>;
   };
@@ -228,6 +247,10 @@ function shouldHideCountryCol(colKey: string, header: StatHeader[]): boolean {
   return header.some(h => h.key === 'person' || h.key === 'name');
 }
 
+// 超过 PAGE_SIZE 行只先渲染前 N 行 + “显示更多/全部”按钮，避免大表（最多 5202 行）
+// 一次性渲染全部 cell（markdown + flag + 本地化）卡死主线程。小分区不受影响。
+const PAGE_SIZE = 300;
+
 function StatsTable({ header, rows, searchTerm, isZh }: {
   header: StatHeader[];
   rows: unknown[][];
@@ -242,6 +265,11 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
     );
   }, [rows, searchTerm]);
 
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  useEffect(() => { setVisible(PAGE_SIZE); }, [rows, searchTerm]);
+  const shown = filtered.length > visible ? filtered.slice(0, visible) : filtered;
+  const remaining = filtered.length - shown.length;
+
   return (
     <div className="wca-stats-table-wrapper">
       <table className="wca-stats-table">
@@ -255,7 +283,7 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
           </tr>
         </thead>
         <tbody>
-          {filtered.map((row, i) => (
+          {shown.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => {
                 const colKey = header[j]?.key ?? '';
@@ -273,6 +301,16 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
           ))}
         </tbody>
       </table>
+      {remaining > 0 && (
+        <div className="wca-stats-more">
+          <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(v => v + PAGE_SIZE * 3)}>
+            {isZh ? `显示更多（还有 ${remaining} 行）` : `Show more (${remaining} left)`}
+          </button>
+          <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(filtered.length)}>
+            {isZh ? '全部显示' : 'Show all'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -314,7 +352,7 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
 
   return (
     <div className="wr-year-view">
-      <div className="wr-year-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0', flexWrap: 'wrap' }}>
+      <div className="wr-year-controls">
         <button
           type="button"
           onClick={() => {
@@ -323,22 +361,21 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
             setPlaying(true);
           }}
           className="wr-year-play-btn"
-          style={{ padding: '4px 10px', cursor: 'pointer' }}
           title={playing ? (isZh ? '暂停' : 'Pause') : (isZh ? '播放' : 'Play')}
           aria-label={playing ? 'Pause' : 'Play'}
         >
-          {playing ? '⏸' : '▶'}
+          {playing ? <Pause size={16} strokeWidth={2} /> : <Play size={16} strokeWidth={2} />}
         </button>
         <input
           type="range"
+          className="wr-year-slider"
           min={minYear}
           max={maxYear}
           step={1}
           value={year}
           onChange={e => { setPlaying(false); setYear(Number(e.target.value)); }}
-          style={{ flex: 1, minWidth: 200 }}
         />
-        <span style={{ minWidth: 140, fontVariantNumeric: 'tabular-nums' }}>
+        <span className="wr-year-label">
           {isZh ? `截至 ${year} 年` : `As of ${year}`}
         </span>
       </div>
@@ -430,7 +467,7 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
                 className="wca-stats-section-title"
                 onClick={() => toggleSection(section.title)}
               >
-                <span className={`wca-stats-chevron ${isCollapsed ? '' : 'open'}`}>▶</span>
+                <ChevronRight size={14} strokeWidth={2} className={`wca-stats-chevron ${isCollapsed ? '' : 'open'}`} />
                 {sectionTitle}
                 <span className="wca-stats-section-count">{section.rows.length}</span>
               </h3>
@@ -525,9 +562,11 @@ function AoxRankingSection({ header, rows, isZh }: {
               {hasSolves && (
                 <th style={{ textAlign: 'center', cursor: 'pointer', width: 34 }}
                   title={isZh ? '全选/取消' : 'Select all'}
-                  onClick={toggleAll}>📊</th>
+                  onClick={toggleAll}>
+                  <BarChart3 size={14} strokeWidth={1.75} style={{ verticalAlign: 'middle' }} />
+                </th>
               )}
-              {header.map(h => (
+              {header.map(h => shouldHideCountryCol(h.key, header) ? null : (
                 <th key={h.key} style={{ textAlign: h.align }}>
                   {isZh ? h.labelZh : h.label}
                 </th>
@@ -548,6 +587,7 @@ function AoxRankingSection({ header, rows, isZh }: {
                 )}
                 {row.map((cell, j) => {
                   const colKey = header[j]?.key ?? '';
+                  if (shouldHideCountryCol(colKey, header)) return null;
                   const isCountryCol = colKey === 'country';
                   const flagIso2 = isCountryCol ? countryToIso2(String(cell)) : '';
                   return (
@@ -882,7 +922,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
       ) : (
         <div ref={pillRef} className="wca-stats-metric-pill" onClick={() => setPillOpen(o => !o)}>
           <span>{currentLabel}</span>
-          <span className={`wca-stats-metric-pill-arrow${pillOpen ? ' open' : ''}`}>▼</span>
+          <ChevronDown size={14} strokeWidth={2} className={`wca-stats-metric-pill-arrow${pillOpen ? ' open' : ''}`} />
           {pillOpen && (
             <div className="wca-stats-metric-dropdown" onClick={e => e.stopPropagation()}>
               {allMetricItems.map(({ idx, label, disabled }) => (

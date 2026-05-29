@@ -14,7 +14,7 @@
     {
       "key": "winned_weeks",
       "label": "Winned weeks",
-      "labelZh": "Winned weeks",
+      "labelZh": "登顶周数",
       "align": "right"
     }
   ],
