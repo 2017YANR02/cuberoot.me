@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Loader2, Copy, Check } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
-import { createRustCrossPool, type RustCrossPool, type MovesTimed } from './rust-cross-client';
+import { createRustCrossPool, type RustCrossPool, type MovesTimed } from '@/lib/rust-cross-client';
 
 function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;

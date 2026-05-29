@@ -1011,7 +1011,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             </div>
           )}
           {activeView === '333' && sheets333.length > 0 && showCross && (
-            <CompCrossAnalysis sheets333={sheets333} crossMap={cross333.map} ready={cross333.ready} t={t} />
+            <CompCrossAnalysis sheets333={sheets333} scrambles={scrambles333} crossMap={cross333.map} ready={cross333.ready} t={t} />
           )}
           <div className="gen-tn-sheets">
             {visibleSheets.map((sh, i) => (

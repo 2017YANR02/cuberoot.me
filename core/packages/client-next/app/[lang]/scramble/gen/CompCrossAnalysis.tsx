@@ -14,17 +14,22 @@ import {
   type ColorBase, type Histogram,
 } from '@/lib/comp-cross';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { useStepMap, type StepMetric } from './useStepMap';
 import type { RoundSheet } from './SheetView';
 
-type Metric = 'cross' | 'xc' | 'xxc';
+type Metric = 'cross' | StepMetric;
 const METRICS: { key: Metric; label: string }[] = [
   { key: 'cross', label: '十字' },
   { key: 'xc', label: 'XC' },
   { key: 'xxc', label: 'XXC' },
+  { key: 'xxxc', label: 'XXXC' },
 ];
+const EMPTY_MAP: Map<string, number[]> = new Map();
 
 interface Props {
   sheets333: RoundSheet[];
+  /** 全部唯一 333 打乱(稳定引用);xc/xxc/xxxc 按需用它跑 Rust 求解。 */
+  scrambles: string[];
   crossMap: Map<string, number[]>;
   ready: boolean;
   t: (zh: string, en: string) => string;
@@ -65,10 +70,15 @@ function Bar({ hist, gMin, gMax }: { hist: Histogram; gMin: number; gMax: number
   );
 }
 
-export default function CompCrossAnalysis({ sheets333, crossMap, ready, t }: Props) {
+export default function CompCrossAnalysis({ sheets333, scrambles, crossMap, ready, t }: Props) {
   const [metric, setMetric] = useState<Metric>('cross');
   const [base, setBase] = useState<ColorBase>('white');
   const [includeExtras, setIncludeExtras] = useState(true);
+
+  // cross 走 lib 实时(crossMap);xc/xxc/xxxc 懒起 Rust 求解器算(metric=null 不建池)。
+  const step = useStepMap(scrambles, metric === 'cross' ? null : metric);
+  const activeMap = metric === 'cross' ? crossMap : (step.map ?? EMPTY_MAP);
+  const activeReady = metric === 'cross' ? ready : step.ready;
 
   const data = useMemo(() => {
     const byRound = new Map<number, { values: number[]; groups: Set<string> }>();
@@ -78,7 +88,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, t }: Pro
       const gkey = `${sh.roundIdx}:${sh.groupIdx}`;
       for (const a of sh.attempts) {
         if (!includeExtras && a.isExtra) continue;
-        const d = a.scramble ? crossMap.get(a.scramble) : undefined;
+        const d = a.scramble ? activeMap.get(a.scramble) : undefined;
         if (!d) continue;
         const v = baseValue(d, base);
         all.push(v);
@@ -93,7 +103,13 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, t }: Pro
       .sort((a, b) => a[0] - b[0])
       .map(([idx, r]) => ({ idx, groups: r.groups.size, hist: histogram(r.values) }));
     return { rounds, totalGroups: allGroups.size, totalHist: histogram(all) };
-  }, [sheets333, crossMap, base, includeExtras]);
+    // step.done:Rust map 是原地填充(引用不变),靠进度计数触发重算
+  }, [sheets333, activeMap, base, includeExtras, activeReady, step.done]);
+
+  const metricName = metric === 'cross' ? t('十字', 'Cross') : metric.toUpperCase();
+  const progressLabel = metric === 'cross'
+    ? t('计算十字步数中…', 'Computing cross lengths…')
+    : t(`计算 ${metricName} 步数中… (${step.done}/${step.total})`, `Computing ${metricName} lengths… (${step.done}/${step.total})`);
 
   const gMin = data.totalHist.min;
   const gMax = data.totalHist.max;
@@ -112,7 +128,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, t }: Pro
   return (
     <section className="gen-cx-panel">
       <div className="gen-cx-toprow">
-        <h2 className="gen-cx-title">{t('十字步数分布统计', 'Cross length distribution')}</h2>
+        <h2 className="gen-cx-title">{t(`${metricName}步数分布统计`, `${metricName} length distribution`)}</h2>
         <PillToggle
           value={includeExtras}
           onChange={setIncludeExtras}
@@ -149,19 +165,17 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, t }: Pro
         </div>
       </div>
 
-      {metric !== 'cross' ? (
-        <p className="gen-cx-pending">
-          {t(
-            'XC / XXC 最少步需要离线预计算管线,暂未接入(十字为浏览器实时计算)。',
-            'XC / XXC optimal lengths need the offline analyzer pipeline — not wired yet (Cross is computed live in-browser).',
-          )}
-        </p>
-      ) : !ready ? (
-        <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{t('计算十字步数中…', 'Computing cross lengths…')}</p>
+      {step.error ? (
+        <p className="gen-cx-pending">{t('计算失败', 'Computation failed')}: {step.error}</p>
+      ) : !activeReady && data.totalHist.total === 0 ? (
+        <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{progressLabel}</p>
       ) : data.totalHist.total === 0 ? (
         <p className="gen-cx-pending">{t('该比赛没有可分析的三阶打乱。', 'No analysable 3x3 scrambles in this competition.')}</p>
       ) : (
         <>
+          {!activeReady && (
+            <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{progressLabel}</p>
+          )}
           <ul className="gen-cx-legend">
             {legendSteps.map((s) => (
               <li key={s}>
