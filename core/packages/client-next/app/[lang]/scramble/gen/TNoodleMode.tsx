@@ -48,12 +48,56 @@ import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
 import TranslationsPicker from './TranslationsPicker';
 import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
-import CompCrossAnalysis from './CompCrossAnalysis';
+import CompCrossAnalysis, { type CrossFilter, type Metric, METRIC_OFFSET } from './CompCrossAnalysis';
+import { useStepMap, type StepMetric, type StepMapState } from './useStepMap';
+import {
+  activeLetters, COLOR_MODES, MODE_LABEL, BADGE_LETTERS,
+  OPPOSITE_PAIRS, COLOR_NAME, CX_CLASS, DEFAULT_COLOR_SEL,
+  type ColorMode, type ColorLetter,
+} from '@/lib/cross-color-subset';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
-import { useCompSteps, normScramble } from './useCompSteps';
+import { useCompSteps, normScramble, type CompStepsState } from './useCompSteps';
+import { useF2leoStepMap } from './useF2leoStepMap';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
+
+// 变体 (前端先做,后端数据后续接;key 与 /scramble/analyzer + /scramble/stats 对齐)。
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
+const VARIANTS: { key: VariantKey; zh: string; en: string }[] = [
+  { key: 'std', zh: '标准', en: 'Standard' },
+  { key: 'eo', zh: 'EO十字', en: 'EOCross' },
+  { key: 'pair', zh: '十字+基态', en: 'Cross + Pair' },
+  { key: 'pseudo', zh: '伪十字', en: 'Pseudo' },
+  { key: 'pseudo_pair', zh: '伪十字+基态', en: 'Pseudo + Pair' },
+  { key: 'f2leo', zh: 'F2LEO', en: 'F2LEO' },
+  { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO' },
+];
+// 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
+// F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成
+// → 无数据时显示提示)。后端 comp_steps_<variant> 出齐后这些会自动秒载。
+const STD_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
+const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
+const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'none' }> = {
+  std: { stages: STD_STAGES, engine: 'std' },
+  eo: { stages: STD_STAGES, engine: 'none' },
+  pair: { stages: F2L_STAGES, engine: 'none' },
+  pseudo: { stages: F2L_STAGES, engine: 'none' },
+  pseudo_pair: { stages: F2L_STAGES, engine: 'none' },
+  f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
+  pseudo_f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
+};
+const EMPTY_COMPSTEPS: CompStepsState = { map: null, ready: true };
+const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
+const EMPTY_MAP_TN: Map<string, number[]> = new Map();
+// 阶段下拉显示名(metric → 标签);XCross 系沿用 stats 写法,中英一致。
+const STAGE_LABEL: Record<Metric, { zh: string; en: string }> = {
+  cross: { zh: '十字', en: 'Cross' },
+  xc: { zh: 'XCross', en: 'XCross' },
+  xxc: { zh: 'XXCross', en: 'XXCross' },
+  xxxc: { zh: 'XXXCross', en: 'XXXCross' },
+  xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
+};
 
 interface Props {
   t: (zh: string, en: string) => string;
@@ -72,6 +116,12 @@ const SHOW_CROSS_KEY = 'gen:showCross';
 function readShowCross(): boolean {
   if (typeof localStorage === 'undefined') return true;
   return localStorage.getItem(SHOW_CROSS_KEY) !== '0';
+}
+// 分析范围:本轮(默认) / 全部轮次。localStorage 记忆。
+const SCOPE_ALL_KEY = 'gen:cxScopeAll';
+function readScopeAll(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  return localStorage.getItem(SCOPE_ALL_KEY) === '1';
 }
 const NO_SCRAMBLES: string[] = [];
 // 用 3x3 打乱、可做十字步数分析的项目(跳过 333mbf 多盲:一把多方块无法逐方块对应)。
@@ -674,24 +724,95 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     try { localStorage.setItem(SHOW_CROSS_KEY, v ? '1' : '0'); } catch { /* swallow */ }
   };
   const [includeExtras, setIncludeExtras] = useState(true);
-  // 关闭 / 非 333 系列时传空 → hook 不建表、零开销。
-  const crossA = useCrossMap(showCross && is333Family ? analysisScrambles : NO_SCRAMBLES);
-  // 预计算步数表(历史比赛)共享给顶部分析 + 逐行徽标,只 fetch 一次。
-  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null);
-  // 逐行十字徽标:HTM 项目(333/oh/ft/fm)优先实时值,保证徽标数字与「查看白底解法」
-  // 解长一致;BF 带宽层定向实时解析不了,退回预计算的十字(comp_steps 前 6 列,正确)。
-  const rowCrossMap = useMemo(() => {
+  // 分析范围:false=本轮(默认) / true=全部轮次。
+  const [analysisAll, setAnalysisAllState] = useState<boolean>(readScopeAll);
+  const setAnalysisAll = (v: boolean) => {
+    setAnalysisAllState(v);
+    try { localStorage.setItem(SCOPE_ALL_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+  };
+  // 十字分析里点某步 → 把命中打乱集合提上来,过滤下方打乱表(只渲染含命中打乱的 sheet)。
+  const [crossFilter, setCrossFilter] = useState<CrossFilter | null>(null);
+  // 指标 + 底色子集(原在 CompCrossAnalysis,提上来跟 toggles 同一行)。
+  const [variant, setVariant] = useState<VariantKey>('std');
+  const [metric, setMetric] = useState<Metric>('cross');
+  const [colorMode, setColorMode] = useState<ColorMode>(DEFAULT_COLOR_SEL.mode);
+  const [cxSingle, setCxSingle] = useState<ColorLetter>(DEFAULT_COLOR_SEL.single);
+  const [cxPair, setCxPair] = useState(DEFAULT_COLOR_SEL.pair);
+  const [cxQuadExcl, setCxQuadExcl] = useState(DEFAULT_COLOR_SEL.quadExcl);
+  const cxLetters = useMemo(
+    () => activeLetters({ mode: colorMode, single: cxSingle, pair: cxPair, quadExcl: cxQuadExcl }),
+    [colorMode, cxSingle, cxPair, cxQuadExcl],
+  );
+  const vspec = VARIANT_SPEC[variant];
+  const variantEngine = vspec.engine;
+  // metric 落在当前变体阶段集外(切变体后)→ 视为 cross,避免越界取数。
+  const safeMetric: Metric = vspec.stages.includes(metric) ? metric : 'cross';
+  // 切变体后复位越界 metric(同步 select)。
+  useEffect(() => {
+    if (!VARIANT_SPEC[variant].stages.includes(metric)) setMetric('cross');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant]);
+
+  // 关闭 / 非 333 / 非 std 引擎时不建 JS cross 表。
+  const crossA = useCrossMap(showCross && is333Family && variantEngine === 'std' ? analysisScrambles : NO_SCRAMBLES);
+  // 预计算步数表:目前仅 std 有 comp_steps(其余待 comp_steps_<variant> 出齐),非 std 用空表。
+  const compStepsStd = useCompSteps(showCross && is333Family ? loadedCompId : null);
+  const compSteps = variant === 'std' ? compStepsStd : EMPTY_COMPSTEPS;
+  const uncovered = useMemo(() => {
+    if (!(showCross && is333Family) || !compSteps.ready) return NO_SCRAMBLES;
+    if (!compSteps.map) return analysisScrambles;
+    return analysisScrambles.filter((s) => !compSteps.map!.has(normScramble(s)));
+  }, [showCross, is333Family, analysisScrambles, compSteps.ready, compSteps.map]);
+  // std:非 cross 指标走实时 cross-step WASM(comp_steps 未覆盖的打乱);cross 走 JS crossA。
+  const stepUncovered = variantEngine === 'std' && safeMetric !== 'cross' ? uncovered : NO_SCRAMBLES;
+  const stepLive = useStepMap(stepUncovered, stepUncovered.length === 0 ? null : (safeMetric as StepMetric));
+  // f2leo / pseudo_f2leo:整变体一次算全 24 值(浏览器当场算,无需预计算)。
+  const f2leoScrambles = variantEngine === 'f2leo' ? uncovered : NO_SCRAMBLES;
+  const f2leoLive = useF2leoStepMap(f2leoScrambles, variantEngine === 'f2leo', variant === 'pseudo_f2leo');
+  // f2leoLive(全 24)派生 cross-map + 当前 metric-map,复用现有 crossMap/step props(不改 CompCrossAnalysis)。
+  const f2leoCrossMap = useMemo(() => {
     const m = new Map<string, number[]>();
-    if (!(showCross && is333Family)) return m;
-    for (const s of analysisScrambles) {
-      const d = crossA.map.get(s);
-      if (d) { m.set(s, d); continue; }
-      const pv = compSteps.map?.get(normScramble(s));
-      if (pv) m.set(s, pv.slice(0, 6));
+    if (variantEngine === 'f2leo' && f2leoLive.map) for (const [s, v] of f2leoLive.map) m.set(s, v.slice(0, 6));
+    return m;
+    // f2leoLive 原地 mutate 同一 Map(引用不变),靠 done/ready 触发重算。
+  }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.ready]);
+  const f2leoMetricMap = useMemo(() => {
+    const m = new Map<string, number[]>();
+    const off = METRIC_OFFSET[safeMetric];
+    if (variantEngine === 'f2leo' && f2leoLive.map) {
+      for (const [s, v] of f2leoLive.map) if (v.length >= off + 6) m.set(s, v.slice(off, off + 6));
     }
     return m;
-  }, [showCross, is333Family, analysisScrambles, compSteps.map, crossA.map]);
-  const sheetsInEvent = sheets ? sheets.filter((s) => s.event === activeView) : [];
+  }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.ready, safeMetric]);
+  // 按引擎统一选源喂 CompCrossAnalysis。
+  const cxCrossMap = variantEngine === 'f2leo' ? f2leoCrossMap : (variantEngine === 'std' ? crossA.map : EMPTY_MAP_TN);
+  const cxReady = variantEngine === 'f2leo' ? f2leoLive.ready : (variantEngine === 'std' ? crossA.ready : true);
+  const cxStep: StepMapState = variantEngine === 'f2leo'
+    ? { map: f2leoMetricMap, ready: f2leoLive.ready, done: f2leoLive.done, total: f2leoLive.total, error: f2leoLive.error }
+    : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
+  const cxStepUncovered = variantEngine === 'f2leo' ? f2leoScrambles.length : (variantEngine === 'std' ? stepUncovered.length : 0);
+  // 逐行徽标取值(BADGE_ORDER 6 值),无数据 → undefined。
+  const rowDigits = useCallback((scr: string, m: Metric): number[] | undefined => {
+    const off = METRIC_OFFSET[m];
+    if (variantEngine === 'std') {
+      if (m === 'cross') { const d = crossA.map.get(scr); if (d) return d; }
+      const pv = compSteps.map?.get(normScramble(scr));
+      if (pv && pv.length >= off + 6) return pv.slice(off, off + 6);
+      if (m === safeMetric) return stepLive.map?.get(scr);
+      return undefined;
+    }
+    if (variantEngine === 'f2leo') {
+      const fv = f2leoLive.map?.get(scr);
+      if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
+    }
+    return undefined;
+  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, safeMetric]);
+  // 稳定引用:CompCrossAnalysis 把它当 sheets333,身份不稳会让上报 filter 的 effect
+  // 每 render 都 fire → setState 循环。
+  const sheetsInEvent = useMemo(
+    () => (sheets ? sheets.filter((s) => s.event === activeView) : []),
+    [sheets, activeView],
+  );
   const roundIdxsInEvent = useMemo(
     () => Array.from(new Set(sheetsInEvent.map((s) => s.roundIdx))).sort((a, b) => a - b),
     [sheetsInEvent],
@@ -699,9 +820,21 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const activeRoundIdx = viewedRoundIdx !== null && roundIdxsInEvent.includes(viewedRoundIdx)
     ? viewedRoundIdx
     : roundIdxsInEvent[0] ?? null;
-  const visibleSheets = activeRoundIdx === null
-    ? sheetsInEvent
-    : sheetsInEvent.filter((s) => s.roundIdx === activeRoundIdx);
+  const visibleSheets = useMemo(
+    () => (activeRoundIdx === null ? sheetsInEvent : sheetsInEvent.filter((s) => s.roundIdx === activeRoundIdx)),
+    [sheetsInEvent, activeRoundIdx],
+  );
+  // 分析范围:本轮(默认)只看当前轮,全部看该项目所有轮。决定分布面板口径 + 筛选范围。
+  const analysisSheets = analysisAll ? sheetsInEvent : visibleSheets;
+  // 十字筛选生效时(面板可见 + 选了某步):在分析范围内只留含命中打乱的 sheet,
+  // 且每个 sheet 只保留命中打乱行(label 不变,保住真实打乱序号);否则照常显示当前轮。
+  const activeCrossFilter = showCross && is333Family ? crossFilter : null;
+  const sheetsToRender = useMemo(() => {
+    if (!activeCrossFilter) return visibleSheets;
+    return analysisSheets
+      .map((sh) => ({ ...sh, attempts: sh.attempts.filter((a) => activeCrossFilter.scrambles.has(a.scramble)) }))
+      .filter((sh) => sh.attempts.length > 0);
+  }, [activeCrossFilter, analysisSheets, visibleSheets]);
   // icon 角标:多轮时显示当前轮次缩写 (1/2/3/F),提示再次点击会循环。
   const roundBadgeLabel = (idx: number): string => idx === 3 ? 'F' : `${idx + 1}`;
   const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
@@ -1027,10 +1160,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               <PillToggle
                 value={showCross}
                 onChange={setShowCross}
-                onLabel={t('十字分析', 'Cross analysis')}
-                offLabel={t('十字分析', 'Cross analysis')}
+                onLabel={t('分析', 'Analysis')}
+                offLabel={t('分析', 'Analysis')}
                 ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
               />
+              {showCross && roundIdxsInEvent.length > 1 && (
+                <PillToggle
+                  value={analysisAll}
+                  onChange={setAnalysisAll}
+                  onLabel={t('全部', 'All')}
+                  offLabel={t('本轮', 'This round')}
+                  ariaLabel={t('分析范围', 'Analysis scope')}
+                />
+              )}
               {showCross && (
                 <PillToggle
                   value={includeExtras}
@@ -1040,20 +1182,106 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                   ariaLabel={t('含备用打乱', 'Include extra scrambles')}
                 />
               )}
+              {showCross && (
+                <label className="gen-cx-sel">
+                  <span>{t('变体', 'Variant')}</span>
+                  <select
+                    className="gen-cx-modesel"
+                    value={variant}
+                    onChange={(e) => setVariant(e.target.value as VariantKey)}
+                    aria-label={t('变体', 'Variant')}
+                  >
+                    {VARIANTS.map((v) => (
+                      <option key={v.key} value={v.key}>{t(v.zh, v.en)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {showCross && (
+                <label className="gen-cx-sel">
+                  <span>{t('阶段', 'Stage')}</span>
+                  <select
+                    className="gen-cx-modesel"
+                    value={safeMetric}
+                    onChange={(e) => setMetric(e.target.value as Metric)}
+                    aria-label={t('阶段', 'Stage')}
+                  >
+                    {vspec.stages.map((mk) => (
+                      <option key={mk} value={mk}>{t(STAGE_LABEL[mk].zh, STAGE_LABEL[mk].en)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {showCross && (
+                <div className="gen-cx-colorsel">
+                  <select
+                    className="gen-cx-modesel"
+                    value={colorMode}
+                    onChange={(e) => setColorMode(e.target.value as ColorMode)}
+                    aria-label={t('底色模式', 'Bottom-colour mode')}
+                  >
+                    {COLOR_MODES.map((m) => (
+                      <option key={m} value={m}>{t(MODE_LABEL[m].zh, MODE_LABEL[m].en)}</option>
+                    ))}
+                  </select>
+                  <div className="gen-cx-swatches">
+                    {colorMode === 'cn' && BADGE_LETTERS.map((c) => (
+                      <i key={c} className={`gen-cx-sw ${CX_CLASS[c]}`} title={t(COLOR_NAME[c].zh, COLOR_NAME[c].en)} />
+                    ))}
+                    {colorMode === 'single' && BADGE_LETTERS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`gen-cx-swbtn${cxSingle === c ? ' is-on' : ''}`}
+                        onClick={() => setCxSingle(c)}
+                        title={t(COLOR_NAME[c].zh, COLOR_NAME[c].en)}
+                      >
+                        <i className={`gen-cx-sw ${CX_CLASS[c]}`} />
+                      </button>
+                    ))}
+                    {colorMode === 'dual' && OPPOSITE_PAIRS.map((p, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`gen-cx-swbtn${cxPair === i ? ' is-on' : ''}`}
+                        onClick={() => setCxPair(i)}
+                        title={p.map((c) => t(COLOR_NAME[c].zh, COLOR_NAME[c].en)).join(' / ')}
+                      >
+                        {p.map((c) => <i key={c} className={`gen-cx-sw ${CX_CLASS[c]}`} />)}
+                      </button>
+                    ))}
+                    {colorMode === 'quad' && OPPOSITE_PAIRS.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`gen-cx-swbtn is-quad${cxQuadExcl === i ? ' is-on' : ''}`}
+                        onClick={() => setCxQuadExcl(i)}
+                        title={`${t('排除', 'Exclude')} ${OPPOSITE_PAIRS[i].map((c) => t(COLOR_NAME[c].zh, COLOR_NAME[c].en)).join('/')}`}
+                      >
+                        {BADGE_LETTERS.filter((c) => !OPPOSITE_PAIRS[i].includes(c)).map((c) => (
+                          <i key={c} className={`gen-cx-sw ${CX_CLASS[c]}`} />
+                        ))}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {is333Family && sheetsInEvent.length > 0 && showCross && (
-            <CompCrossAnalysis sheets333={sheetsInEvent} scrambles={analysisScrambles} crossMap={crossA.map} ready={crossA.ready} pre={compSteps} includeExtras={includeExtras} t={t} />
+            <CompCrossAnalysis sheets333={analysisSheets} crossMap={cxCrossMap} ready={cxReady} pre={compSteps} step={cxStep} stepUncoveredCount={cxStepUncovered} includeExtras={includeExtras} metric={safeMetric} letters={cxLetters} onFilterChange={setCrossFilter} t={t} />
           )}
           <div className="gen-tn-sheets">
-            {visibleSheets.map((sh, i) => (
+            {sheetsToRender.map((sh, i) => (
               <SheetView
                 key={i}
                 sheet={sh}
                 isZh={isZh}
                 t={t}
                 showPreview={showPreview}
-                crossMap={showCross && is333Family ? rowCrossMap : undefined}
+                rowDigits={showCross && is333Family ? rowDigits : undefined}
+                metric={metric}
+                variant={variant}
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}
                 sq1Colors={!loadedCompId && sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
                 megaColors={!loadedCompId && sh.event === 'minx' ? events[sh.event]?.colors : undefined}

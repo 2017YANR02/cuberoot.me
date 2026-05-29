@@ -9,7 +9,7 @@
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260529b';
+const V = 'v=20260529c';
 
 export interface MovesResult {
   len: number;
@@ -36,6 +36,8 @@ export interface RustCrossPool {
     face: number,
     opts?: { extra?: number; cap?: number },
   ): Promise<MovesTimed>;
+  /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
+  solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
   size: number;
   terminate(): void;
 }
@@ -177,6 +179,9 @@ export function createRustCrossPool(maxSize: number): RustCrossPool {
         type: 'moves', id: nextId++, scramble, variant, face,
         extra: opts.extra ?? 0, cap: opts.cap ?? 50,
       }) as Promise<MovesTimed>;
+    },
+    solveF2leo(scramble, pseudo) {
+      return submit({ type: 'f2leo', id: nextId++, scramble, pseudo }) as Promise<number[]>;
     },
     terminate() { for (const pw of all) pw.w.terminate(); },
   };
