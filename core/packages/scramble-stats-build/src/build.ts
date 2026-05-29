@@ -69,6 +69,29 @@ const VARIANTS: VariantSpec[] = [
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
+  {
+    // F2LEO = cross 进度 + 自由 F2L 棱 EO 门控；4 阶段(无 xxxxcross,届时无自由棱)
+    key: 'f2leo',
+    file: 'f2leo.csv',
+    id_col: 'id',
+    stages: ['f2leo_cross', 'f2leo_xcross', 'f2leo_xxcross', 'f2leo_xxxcross'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
+  {
+    // Pseudo F2LEO = F2LEO + 角/棱槽解耦(off-by-D);4 阶段
+    key: 'pseudo_f2leo',
+    file: 'pseudo_f2leo.csv',
+    id_col: 'id',
+    stages: [
+      'pseudo_f2leo_cross',
+      'pseudo_f2leo_xcross',
+      'pseudo_f2leo_xxcross',
+      'pseudo_f2leo_xxxcross',
+    ],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
 ];
 
 interface Hist {
@@ -433,7 +456,10 @@ async function main() {
     for (const spec of VARIANTS) {
       const csvPath = path.join(setSpec.csv_dir, spec.file);
       if (!fs.existsSync(csvPath)) {
-        throw new Error(`Missing CSV: ${csvPath}`);
+        // 变体 CSV 尚未生成(如 f2leo / pseudo_f2leo 未 backfill)→ 跳过, 不进 distribution。
+        // 前端 dropdown 数据驱动, 缺的变体自动不显示; 待 backfill 出 CSV 后重算即纳入。
+        console.warn(`  [skip] ${spec.key}: missing CSV ${csvPath}`);
+        continue;
       }
       console.log(`Aggregating ${spec.key} from ${csvPath}`);
       const { sampleCount, json, previewExamples, pickedReservoirs } = await aggregateVariant(spec, csvPath, scrambleMap);
