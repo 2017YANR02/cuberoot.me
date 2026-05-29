@@ -21,12 +21,24 @@ const DeskPetSearch = dynamic(() => import('@/components/DeskPetSearch'), { ssr:
 
 type ThemeId = 'clawd' | 'calico' | 'cloudling';
 
+interface MiniTheme {
+  offsetRatio: number; // box overhangs the edge by offsetRatio*W; (1-ratio)*W stays on screen
+  // Edge-cling poses (the art is already drawn lying sideways). working/enterSleep
+  // optional: calico has no mini-working, falls back to staying put / sleep.
+  files: {
+    idle: string; peek: string; enter: string; crabwalk: string;
+    alert: string; happy: string; sleep: string;
+    working?: string; enterSleep?: string;
+  };
+}
+
 interface PetTheme {
   base: string;
   inlineIdle: boolean; // clawd uses the inline eye-tracking SVG for idle
   thumb: string;
   label: { zh: string; en: string };
   files: Record<string, string>;
+  mini: MiniTheme;
 }
 
 // State→asset maps mirror each clawd-on-desk theme.json `states`/`reactions`.
@@ -47,6 +59,16 @@ const THEMES: Record<ThemeId, PetTheme> = {
       reactDouble: 'clawd-react-double-jump.svg', reactAnnoyed: 'clawd-react-annoyed.svg',
       reactDrag: 'clawd-react-drag.svg',
     },
+    mini: {
+      offsetRatio: 0.486,
+      files: {
+        idle: 'clawd-mini-idle.svg', peek: 'clawd-mini-peek.svg',
+        enter: 'clawd-mini-enter.svg', crabwalk: 'clawd-mini-crabwalk.svg',
+        working: 'clawd-mini-typing.svg', alert: 'clawd-mini-alert.svg',
+        happy: 'clawd-mini-happy.svg', sleep: 'clawd-mini-sleep.svg',
+        enterSleep: 'clawd-mini-enter-sleep.svg',
+      },
+    },
   },
   calico: {
     base: '/deskpet/calico/', inlineIdle: false,
@@ -63,6 +85,15 @@ const THEMES: Record<ThemeId, PetTheme> = {
       sleeping: 'calico-sleeping.apng', waking: 'calico-waking.apng',
       reactDouble: 'calico-react-poke.apng', reactAnnoyed: 'calico-react-left.apng',
       reactDrag: 'calico-react-drag.apng',
+    },
+    mini: {
+      offsetRatio: 0.4,
+      files: {
+        idle: 'calico-mini-idle.apng', peek: 'calico-mini-peek.apng',
+        enter: 'calico-mini-enter.apng', crabwalk: 'calico-mini-crabwalk.apng',
+        alert: 'calico-mini-alert.apng', happy: 'calico-mini-happy.apng',
+        sleep: 'calico-mini-sleep.apng',
+      },
     },
   },
   cloudling: {
@@ -81,6 +112,16 @@ const THEMES: Record<ThemeId, PetTheme> = {
       reactDouble: 'cloudling-attention.svg', reactAnnoyed: 'cloudling-attention.svg',
       reactDrag: 'cloudling-react-drag.svg',
     },
+    mini: {
+      offsetRatio: 0.486,
+      files: {
+        idle: 'cloudling-mini-idle.svg', peek: 'cloudling-mini-peek.svg',
+        enter: 'cloudling-mini-enter-roll-in.svg', crabwalk: 'cloudling-mini-crabwalk.svg',
+        working: 'cloudling-mini-typing.svg', alert: 'cloudling-mini-alert.svg',
+        happy: 'cloudling-mini-happy.svg', sleep: 'cloudling-mini-sleep.svg',
+        enterSleep: 'cloudling-mini-enter-sleep.svg',
+      },
+    },
   },
 };
 
@@ -92,6 +133,14 @@ const AUTO: Record<string, number> = {
   waking: 1400, reactDouble: 1800, reactAnnoyed: 3000, reading: 14000, bubble: 12000,
 };
 
+// Mini (edge-cling) mode — ported from clawd-on-desk src/mini.js + state.js.
+// One-shot mini states auto-return to the mini rest pose after N ms.
+const MINI_AUTO: Record<string, number> = { 'mini-alert': 4000, 'mini-happy': 4000, 'mini-peek': 1500 };
+const MINI_ENTER_MS = 1200;       // play the mini-enter pose this long, then settle to mini-idle
+const CRABWALK_SPEED = 0.12;      // px/ms — sideways walk speed when entering via the toolbar
+const MINI_PEEK_FRAC = 0.1;       // hover peek nudges the pet this fraction of its width back on-screen
+const MINI_SNAP_FRAC = 0.32;      // on drop, if the visual center is within this fraction of W from an edge → cling
+
 // eye-tracking tuning (from clawd theme.json) — clawd only
 const MAX = 3, BODY_SCALE = 0.33, SHADOW_STRETCH = 0.15, SHADOW_SHIFT = 0.3;
 const REACH = MAX * 40;
@@ -99,6 +148,7 @@ const SLEEP_AFTER = 60000;
 const POS_KEY = 'clawd-deskpet-pos';
 const SIZE_KEY = 'clawd-deskpet-size';
 const CHAR_KEY = 'clawd-deskpet-char';
+const MINI_KEY = 'clawd-deskpet-mini'; // { edge, preRight, preBottom } — restore cling across reloads
 
 type Size = 's' | 'm' | 'l';
 
@@ -132,6 +182,19 @@ const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: nu
   };
 };
 
+// The `right` anchor (px from viewport right) that clings the box to an edge:
+// the box overhangs that edge by offsetRatio*w, leaving (1-offsetRatio)*w on
+// screen. peekPx nudges it that many px further on-screen (hover peek).
+const miniRightPx = (offsetRatio: number, edge: 'left' | 'right', w: number, peekPx = 0) =>
+  edge === 'right' ? -offsetRatio * w + peekPx : vpW() - w * (1 - offsetRatio) - peekPx;
+
+// mini state id → theme.mini.files key
+const MINI_KEYS: Record<string, keyof MiniTheme['files']> = {
+  'mini-idle': 'idle', 'mini-peek': 'peek', 'mini-enter': 'enter',
+  'mini-crabwalk': 'crabwalk', 'mini-working': 'working', 'mini-alert': 'alert',
+  'mini-happy': 'happy', 'mini-sleep': 'sleep', 'mini-enter-sleep': 'enterSleep',
+};
+
 const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
   z-index:40;pointer-events:none;--pet-scale:1;
@@ -153,6 +216,12 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-hit{left:20%;top:30%;width:60%;height:60%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
+/* Mini (edge-cling) mode: the art is drawn lying sideways; flip on the left edge
+   so it faces inward. The mini-anim class eases the slide-into-place / crabwalk /
+   peek nudge; plain drags clear it so they stay 1:1 with the pointer. */
+.clawd-deskpet.mini-anim{transition:right .14s ease-out,bottom .14s ease-out;}
+.clawd-deskpet.mini-left>img{transform:scaleX(-1);}
+.clawd-deskpet.mini-mode .clawd-deskpet-hit{left:0;top:0;width:100%;height:100%;}
 @media (max-width:768px){
   .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
   .clawd-deskpet[data-size=s]{--pet-base:144px;}
@@ -176,7 +245,7 @@ export default function DeskPet() {
   const svgRef = useRef<SVGSVGElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const hitRef = useRef<HTMLDivElement>(null);
-  const ctrlRef = useRef<{ rest: () => void; wake: () => void; resetPos: () => void } | null>(null);
+  const ctrlRef = useRef<{ rest: () => void; wake: () => void; cling: () => void; inMini: () => boolean; resetPos: () => void } | null>(null);
   // Visual-center screen point captured right before a size/character change,
   // so the pet's visual center stays put (scales about itself; characters land
   // on the same point) instead of drifting from the bottom-right anchor.
@@ -186,6 +255,9 @@ export default function DeskPet() {
   // Tracks the painted character so we can hide stale art during a switch
   // (the box rescales the instant data-char changes, before the img src swaps).
   const prevCharRef = useRef<ThemeId>(character);
+  // Edge-cling (mini) state, mirrored out of the engine closure so the
+  // size/character recenter effect can keep the pet pinned to its edge.
+  const miniRef = useRef<{ active: boolean; edge: 'left' | 'right' }>({ active: false, edge: 'right' });
 
   useEffect(() => {
     setMounted(true);
@@ -231,6 +303,11 @@ export default function DeskPet() {
       if (imgRef.current) imgRef.current.style.visibility = 'hidden';
     }
     const r = root.getBoundingClientRect();
+    // While clinging, a size change must re-pin to the edge, not recenter.
+    if (miniRef.current.active) {
+      root.style.right = miniRightPx(THEMES[character].mini.offsetRatio, miniRef.current.edge, r.width) + 'px';
+      return;
+    }
     const [fx, fy] = VC[character];
     const c = clampAnchor(
       vpW() - pt.x - r.width * (1 - fx), vpH() - pt.y - r.height * (1 - fy),
@@ -266,6 +343,16 @@ export default function DeskPet() {
     let autoTimer: ReturnType<typeof setTimeout> | undefined;
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
+    // ── Mini (edge-cling) mode ── ported from clawd-on-desk mini.js + state.js
+    let mini = false;
+    let miniEdge: 'left' | 'right' = 'right';
+    let miniTransitioning = false; // during enter/crabwalk — external state changes wait
+    let miniPeeked = false;        // hover-nudged on screen
+    let mouseOverPet = false;
+    let preMiniRight = 0, preMiniBottom = 0; // normal anchor to restore on exit
+    let miniTimer: ReturnType<typeof setTimeout> | undefined;
+    const syncMiniRef = () => { miniRef.current = { active: mini, edge: miniEdge }; };
+
     const applyEye = (ox: number, oy: number) => {
       eyes?.setAttribute('transform', `translate(${ox},${oy})`);
       const bdx = Math.round(ox * BODY_SCALE * 2) / 2;
@@ -280,23 +367,42 @@ export default function DeskPet() {
       if (s === state && !force) return;
       clearTimeout(autoTimer);
       state = s;
-      asleep = s === 'sleeping' || s === 'dozing';
-      if (s === 'idle' && theme.inlineIdle) {
+      const isMini = s.startsWith('mini-');
+      asleep = s === 'sleeping' || s === 'dozing' || s === 'mini-sleep';
+      if (!isMini && s === 'idle' && theme.inlineIdle) {
         img.style.display = 'none';
         svg.style.display = 'block';
         svg.style.visibility = ''; // clear any hide from a character switch
         applyEye(0, 0);
       } else {
         svg.style.display = 'none';
+        let file: string;
+        if (isMini) {
+          // calico lacks mini-working / mini-enter-sleep → fall back to idle / sleep.
+          file = theme.mini.files[MINI_KEYS[s]] || theme.mini.files.idle;
+        } else {
+          file = theme.files[s] || theme.files.working;
+        }
         // Reveal only once the new frame is decoded, so a character switch never
         // flashes the previous art at the new box scale.
         img.onload = () => { img.style.visibility = ''; };
-        img.src = theme.base + (theme.files[s] || theme.files.working) + '?_t=' + Date.now();
+        img.src = theme.base + file + '?_t=' + Date.now();
         img.style.display = 'block';
         if (img.complete) img.style.visibility = '';
       }
-      const back = AUTO[s];
-      if (back) autoTimer = setTimeout(() => setState('idle'), back);
+      const back = isMini ? MINI_AUTO[s] : AUTO[s];
+      if (back) autoTimer = setTimeout(() => {
+        if (isMini) onMiniAutoReturn(s);
+        else setState('idle');
+      }, back);
+    };
+
+    // After a one-shot mini pose (peek/alert/happy) finishes, settle back to the
+    // mini rest pose — staying nudged-in if the cursor is still over the pet.
+    const onMiniAutoReturn = (from: string) => {
+      if (!mini) return;
+      if (from === 'mini-peek') { miniPeeked = true; setState('mini-idle', true); return; }
+      setState(dnd ? 'mini-sleep' : (mouseOverPet ? 'mini-peek' : 'mini-idle'), true);
     };
 
     const trackCursor = (cx: number, cy: number) => {
@@ -328,19 +434,125 @@ export default function DeskPet() {
       dnd = true;
       clearTimeout(idleTimer);
       clearTimeout(autoTimer);
-      setState('sleeping', true);
+      setState(mini ? 'mini-sleep' : 'sleeping', true);
       setResting(true);
     };
     const exitRest = () => {
       dnd = false;
       setResting(false);
-      wakeUp();
-      resetIdle();
+      if (mini) { setState('mini-idle', true); }
+      else { wakeUp(); resetIdle(); }
+    };
+
+    // ── Mini-mode transitions ──
+    const miniRight = (peeked: boolean) =>
+      miniRightPx(theme.mini.offsetRatio, miniEdge, root.getBoundingClientRect().width,
+        peeked ? MINI_PEEK_FRAC * root.getBoundingClientRect().width : 0);
+
+    const persistMini = () => {
+      try { localStorage.setItem(MINI_KEY, JSON.stringify({ edge: miniEdge, preRight: preMiniRight, preBottom: preMiniBottom })); } catch {}
+    };
+
+    // Enter cling. viaMenu → crabwalk sideways to the edge first; drag-drop →
+    // slide straight into place. Both then play mini-enter, then settle to rest.
+    const enterMini = (edge: 'left' | 'right', viaMenu: boolean) => {
+      if (mini && !viaMenu) return;
+      const r = root.getBoundingClientRect();
+      preMiniRight = vpW() - r.right;
+      preMiniBottom = vpH() - r.bottom;
+      mini = true; miniEdge = edge; miniPeeked = false; miniTransitioning = true;
+      syncMiniRef();
+      clearTimeout(idleTimer); clearTimeout(autoTimer); clearTimeout(miniTimer);
+      root.classList.add('mini-mode');
+      root.classList.toggle('mini-left', edge === 'left');
+      const target = miniRight(false);
+      const settle = () => {
+        miniTransitioning = false;
+        setState(dnd ? 'mini-sleep' : 'mini-idle', true);
+      };
+      const playEnter = () => {
+        root.style.transition = '';
+        setState(dnd ? 'mini-enter-sleep' : 'mini-enter', true);
+        miniTimer = setTimeout(settle, MINI_ENTER_MS);
+      };
+      if (viaMenu) {
+        setState('mini-crabwalk', true);
+        const dist = Math.abs((vpW() - r.right) - target);
+        const dur = Math.max(250, Math.round(dist / CRABWALK_SPEED));
+        root.style.transition = `right ${dur}ms linear`;
+        root.style.right = target + 'px';
+        miniTimer = setTimeout(playEnter, dur + 30);
+      } else {
+        root.style.transition = 'right .14s ease-out';
+        root.style.right = target + 'px';
+        playEnter();
+      }
+      persistMini();
+    };
+
+    // Pull out of cling back into normal mode, keeping the on-screen position.
+    const liftFromMini = (pose?: string) => {
+      mini = false; miniTransitioning = false; miniPeeked = false; mouseOverPet = false;
+      syncMiniRef();
+      clearTimeout(miniTimer);
+      root.classList.remove('mini-mode', 'mini-left');
+      root.style.transition = '';
+      try { localStorage.removeItem(MINI_KEY); } catch {}
+      if (pose) setState(pose, true);
+    };
+
+    // Cursor over the clinging pet → nudge it on-screen and peek (mouse only).
+    const peekIn = () => { if (!mini || dnd || miniTransitioning) return; miniPeeked = true; root.style.transition = 'right .18s ease-out'; root.style.right = miniRight(true) + 'px'; };
+    const peekOut = () => { if (!mini) return; miniPeeked = false; root.style.transition = 'right .18s ease-out'; root.style.right = miniRight(false) + 'px'; };
+
+    // On drop: cling if the visual center landed within MINI_SNAP_FRAC of an edge.
+    const snapEdge = (): 'left' | 'right' | null => {
+      const r = root.getBoundingClientRect();
+      const vcx = r.left + r.width * VC[character][0];
+      const d = MINI_SNAP_FRAC * r.width;
+      if (vcx <= d) return 'left';
+      if (vcx >= vpW() - d) return 'right';
+      return null;
+    };
+
+    // Toolbar toggle: cling to the nearest edge (crabwalking over) or un-cling
+    // back to the pre-cling spot.
+    const clingViaMenu = () => {
+      if (mini) {
+        const pr = preMiniRight, pb = preMiniBottom;
+        liftFromMini(dnd ? 'sleeping' : 'idle');
+        const rb = root.getBoundingClientRect();
+        const c = clampAnchor(pr, pb, rb.width, rb.height, VC[character][0], VC[character][1]);
+        root.style.transition = 'right .2s ease-out, bottom .2s ease-out';
+        root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
+        if (!dnd) resetIdle();
+        return;
+      }
+      const r = root.getBoundingClientRect();
+      const vcx = r.left + r.width * VC[character][0];
+      enterMini(vcx <= vpW() / 2 ? 'left' : 'right', true);
+    };
+
+    // Map an external/driver state to the right pose, honoring mini mode.
+    const drive = (s: string) => {
+      if (dnd) return;
+      if (mini) {
+        if (miniTransitioning) return;
+        if (s === 'notification' || s === 'error') return setState('mini-alert', true);
+        if (s === 'happy') return setState('mini-happy', true);
+        if (s === 'working' || s === 'thinking' || s === 'juggling' || s === 'building' || s === 'sweeping' || s === 'carrying' || s === 'groove') {
+          if (theme.mini.files.working) return setState('mini-working', true);
+          return; // calico: keep current mini pose
+        }
+        if (s === 'idle') return setState(mouseOverPet ? 'mini-peek' : 'mini-idle', true);
+        return;
+      }
+      if (s === 'idle' || theme.files[s]) setState(s, true);
     };
 
     let lastMove = 0;
     const onMove = (e: PointerEvent) => {
-      if (dnd) return;
+      if (dnd || mini) return; // mini uses hover enter/leave; no eye-track / sleep timer
       const now = performance.now();
       if (now - lastMove > 16) { trackCursor(e.clientX, e.clientY); lastMove = now; }
       if (asleep) exitRest(); else resetIdle();
@@ -359,6 +571,8 @@ export default function DeskPet() {
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
       if (dnd || asleep) { exitRest(); return; }
+      // In cling mode a tap just opens search (no multi-click react poses).
+      if (mini) { openSearch(); return; }
       // Touch: open synchronously inside the tap gesture so the search input can
       // grab focus + raise the mobile keyboard (the debounced multi-click
       // reactions below are mouse-only and would push focus past the gesture).
@@ -382,21 +596,25 @@ export default function DeskPet() {
       suppressClick = false;
       dragging = true; moved = false;
       root.classList.add('dragging');
+      root.style.transition = ''; // a leftover mini slide would fight the 1:1 drag
       hit.setPointerCapture(e.pointerId);
       sx = e.clientX; sy = e.clientY;
       const r = root.getBoundingClientRect();
       baseR = vpW() - r.right;
       baseB = vpH() - r.bottom;
       baseW = r.width; baseH = r.height;
-      if (!dnd && e.pointerType === 'mouse') setState('reactDrag', true);
+      // While clinging, mousedown alone must not change the pose — a mere tap
+      // should still open search. The lift happens on the first real move.
+      if (!dnd && !mini && e.pointerType === 'mouse') setState('reactDrag', true);
       e.preventDefault();
     };
     const onDragMove = (e: PointerEvent) => {
       if (!dragging) return;
       const dist = Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy);
-      if (dist > 4) {
-        if (!moved && !dnd) setState('reactDrag', true); // first real move (covers touch)
+      if (dist > 4 && !moved) {
         moved = true;
+        if (mini) liftFromMini(dnd ? 'sleeping' : 'reactDrag'); // pull out of cling
+        else if (!dnd) setState('reactDrag', true); // first real move (covers touch)
       }
       const c = clampAnchor(baseR - (e.clientX - sx), baseB - (e.clientY - sy),
         baseW, baseH, VC[character][0], VC[character][1]);
@@ -410,6 +628,8 @@ export default function DeskPet() {
       try { hit.releasePointerCapture(e.pointerId); } catch {}
       if (moved) {
         suppressClick = true; // a real drag fires a trailing click — don't open search
+        const edge = snapEdge();
+        if (edge) { enterMini(edge, false); return; } // cling instead of free-floating
         try {
           localStorage.setItem(POS_KEY, JSON.stringify({
             right: parseInt(root.style.right || '20', 10),
@@ -417,15 +637,25 @@ export default function DeskPet() {
           }));
         } catch {}
       }
-      if (!dnd) { setState('idle', true); resetIdle(); }
+      if (!dnd && !mini) { setState('idle', true); resetIdle(); }
     };
 
     const onExternal = (e: Event) => {
-      if (dnd) return;
       const detail = (e as CustomEvent).detail;
       const s = typeof detail === 'string' ? detail : detail?.state;
-      if (typeof s !== 'string') return;
-      if (s === 'idle' || theme.files[s]) setState(s, true);
+      if (typeof s === 'string') drive(s);
+    };
+
+    // Hover the clinging pet (mouse only) → nudge it on-screen + peek pose.
+    const onEnter = (e: PointerEvent) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      mouseOverPet = true;
+      if (mini && !dnd && !miniTransitioning) { peekIn(); setState('mini-peek', true); }
+    };
+    const onLeave = (e: PointerEvent) => {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      mouseOverPet = false;
+      if (mini && !dnd && !miniTransitioning && !dragging) { peekOut(); setState('mini-idle', true); }
     };
 
     window.addEventListener('pointermove', onMove);
@@ -435,29 +665,55 @@ export default function DeskPet() {
     hit.addEventListener('pointermove', onDragMove);
     hit.addEventListener('pointerup', onUp);
     hit.addEventListener('pointercancel', onUp);
+    hit.addEventListener('pointerenter', onEnter);
+    hit.addEventListener('pointerleave', onLeave);
 
     ctrlRef.current = {
       rest: enterRest,
       wake: exitRest,
+      cling: clingViaMenu,
+      inMini: () => mini,
       resetPos: () => {
+        if (mini) liftFromMini(dnd ? 'sleeping' : 'idle');
         root.style.right = '';
         root.style.bottom = '';
-        try { localStorage.removeItem(POS_KEY); } catch {}
+        root.style.transition = '';
+        try { localStorage.removeItem(POS_KEY); localStorage.removeItem(MINI_KEY); } catch {}
+        if (!dnd) resetIdle();
       },
     };
 
     (window as unknown as { clawdPet?: object }).clawdPet = {
-      set: (s: string) => setState(s, true),
-      idle: () => setState('idle', true),
+      set: (s: string) => drive(s),
+      idle: () => drive('idle'),
+      cling: () => clingViaMenu(),
     };
 
-    setState('idle', true); // force: on character switch state is already 'idle', must repaint
-    resetIdle();
+    // Restore a saved cling (persists across reloads + character switches).
+    let restoredMini = false;
+    try {
+      const m = JSON.parse(localStorage.getItem(MINI_KEY) || 'null');
+      if (m && (m.edge === 'left' || m.edge === 'right')) {
+        mini = true; miniEdge = m.edge; miniPeeked = false;
+        preMiniRight = typeof m.preRight === 'number' ? m.preRight : 0;
+        preMiniBottom = typeof m.preBottom === 'number' ? m.preBottom : 0;
+        syncMiniRef();
+        root.classList.add('mini-mode');
+        root.classList.toggle('mini-left', miniEdge === 'left');
+        root.style.right = miniRight(false) + 'px';
+        restoredMini = true;
+      }
+    } catch {}
+
+    // force: on character switch state is already 'idle', must repaint
+    setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
+    if (!mini) resetIdle();
 
     return () => {
       clearTimeout(autoTimer);
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
+      clearTimeout(miniTimer);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('clawd:state', onExternal as EventListener);
       hit.removeEventListener('click', onClick);
@@ -465,6 +721,8 @@ export default function DeskPet() {
       hit.removeEventListener('pointermove', onDragMove);
       hit.removeEventListener('pointerup', onUp);
       hit.removeEventListener('pointercancel', onUp);
+      hit.removeEventListener('pointerenter', onEnter);
+      hit.removeEventListener('pointerleave', onLeave);
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
@@ -555,6 +813,7 @@ export default function DeskPet() {
           onCycleSize={cycleSize}
           onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
           onResetPos={() => ctrlRef.current?.resetPos()}
+          onCling={() => { ctrlRef.current?.cling(); setSearchOpen(false); }}
           onHide={() => { setHidden(true); setSearchOpen(false); }}
         />
       )}

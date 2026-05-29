@@ -274,41 +274,38 @@
 
 .analyze-wca-steps {
     display: inline-flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 0.3rem;
     min-height: 1.7rem;
 }
 
-.analyze-wca-step {
-    min-width: 1.9rem;
-    padding: 0.25rem 0.4rem;
-    background: var(--az-surface);
-    border: 1px solid var(--az-border);
-    border-radius: 4px;
-    color: var(--az-text-sub);
+/* WCA 步数滚筒:复用通用 WheelPicker,套 analyzer 主题 token(light/dark 自动翻) */
+.wheel-picker.analyze-wca-wheel {
+    min-height: 0;
+    height: 150px;
+    flex: 0 0 auto;
+    --wp-bg: color-mix(in srgb, var(--az-text) 6%, transparent);
+    --wp-text: var(--az-text-mute);
+    --wp-text-active: var(--az-accent);
+    --wp-highlight: var(--az-accent-soft);
+    --wp-text-fade-2: color-mix(in srgb, var(--az-text-mute) 65%, transparent);
+    --wp-text-fade-3: color-mix(in srgb, var(--az-text-mute) 42%, transparent);
+    --wp-text-fade-4: color-mix(in srgb, var(--az-text-mute) 22%, transparent);
+    --wp-highlight-h: 30px;
+}
+
+.analyze-wca-wheel .wheel-picker-item {
+    font-size: 0.95rem;
     font-family: inherit;
-    font-size: 0.82rem;
-    cursor: pointer;
-    text-align: center;
+    padding: 4px 0;
     font-variant-numeric: tabular-nums;
 }
 
-.analyze-wca-step:hover:not(:disabled) {
-    background: var(--az-accent-soft);
-    border-color: var(--az-accent);
-    color: var(--az-accent);
-}
-
-.analyze-wca-step.is-active {
-    background: var(--az-accent);
-    border-color: var(--az-accent);
-    color: #fff;
-}
-
-.analyze-wca-step:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.analyze-wca-flag {
+    width: 1.2em;
+    border-radius: 2px;
+    align-self: center;
+    box-shadow: 0 0 0 0.5px var(--az-border-strong);
 }
 
 .analyze-wca-reshuffle {
