@@ -53,14 +53,16 @@ self.onmessage = async (e) => {
       self.postMessage({ type: 'result', id: msg.id, values: Array.from(out) });
     } else if (msg.type === 'face') {
       if (!solver) throw new Error('solver not initialized');
+      const t0 = performance.now();
       const v = solver.solve_face(msg.scramble, msg.variant, msg.face);
-      self.postMessage({ type: 'face', id: msg.id, value: v });
+      self.postMessage({ type: 'face', id: msg.id, value: v, ms: performance.now() - t0 });
     } else if (msg.type === 'moves') {
       if (!solver) throw new Error('solver not initialized');
+      const t0 = performance.now();
       const json = solver.solve_moves(
         msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50,
       );
-      self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json) });
+      self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     }
   } catch (err) {
     self.postMessage({ type: 'error', id: msg && msg.id, error: String(err && err.message || err) });
