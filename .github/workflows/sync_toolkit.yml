@@ -1,0 +1,51 @@
+# 把 repo 根的 tools/ + stats/ 增量同步到静态服务器 /www/wwwroot/toolkit/。
+#
+# 背景:Phase 4 起 deploy_mirror.yml 停了自动触发,新增进这两个目录的文件不再
+# 自动上线 → 线上 404(境内 nginx `^~ /tools/` `^~ /stats/` root toolkit 直服;
+# 海外 Vercel route handler fallback 到 static.cuberoot.me = 同一份目录对外)。
+# 本 workflow 补这个缺口。详见 nginx vhost ops/nginx/www.cuberoot.me.conf。
+#
+# 安全:**纯增量,绝不 --delete** —— 服务器端 stats/comp/ (~800MB,dump_comps.yml
+# 直接 dump,不进 repo) 一旦被 --delete 清空就完了。rsync 只传 diff。
+#
+# 注意:path filter 在单次 push 改动 >300 文件时可能失效(见 deploy_core 同款坑),
+# 那种情况手动 `gh workflow run sync_toolkit.yml` 兜底。
+name: Sync static toolkit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/**'
+      - 'stats/**'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: rsync tools/ + stats/ to server (additive, no --delete)
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          REMOTE=/www/wwwroot/toolkit
+          # --exclude='.*'   git checkout 的 atomic-write 临时文件 (.<name>.<rand>)
+          # --exclude='/comp/' 锚定到传输根:stats/comp/ 是服务器端独有,排除掉
+          for dir in tools stats; do
+            [ -d "$dir" ] || continue
+            rsync -rltz --exclude='.*' --exclude='/comp/' --chmod=D755,F644 \
+              -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+              "$dir/" "${USER}@${HOST}:${REMOTE}/${dir}/"
+          done

@@ -50,6 +50,16 @@ export async function GET(
   // On Vercel, tools/ isn't bundled — fall back to static.cuberoot.me which
   // serves these via nginx with CORS:* (matches stats route handler pattern).
   if (process.env.VERCEL === '1') {
+    // rust-cross 的数据表(*.bin.gz,~27MB/冷加载)由 worker 内 fetch() 拉取,
+    // 能安全跟随跨域 307(static CORS:*)。直接跳转,bytes 不穿过 Vercel Compute
+    // —— 否则代理转发是 Fast Origin/Data Transfer 的主要消耗(同 /stats 优化)。
+    // worker.js / glue / wasm 体积小且须同源加载,仍走下面的代理。
+    if (rel.startsWith('solver/rust-cross/tables/')) {
+      return new Response(null, {
+        status: 307,
+        headers: { location: `https://static.cuberoot.me/tools/${rel}`, 'cache-control': 'public, s-maxage=86400' },
+      });
+    }
     try {
       const upstream = await fetch(`https://static.cuberoot.me/tools/${rel}`);
       if (!upstream.ok) return new Response('not found', { status: upstream.status });
