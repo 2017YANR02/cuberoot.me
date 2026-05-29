@@ -323,3 +323,86 @@ a {
   width: 1.25em !important;
   height: 0.9em !important;
 }
+
+/* 通用清空 ×(components/ClearButton.tsx 共享样式)—— Vite index.css 漏移植,补回。
+ * 苹果风:实心灰圆 + SVG 细线 ×,token 派生自动跟主题。inline 浮在 input 内,
+ * standalone 流式独立圆。缺这段时按钮塌成 0×0 看不见。 */
+.clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--foreground) 32%, transparent);
+  color: var(--background);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.clear-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+.clear-btn-icon {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+/* 流式布局独立按钮(不浮在输入框上)— 比赛标题 / 日期区间清空等场景 */
+.clear-btn--standalone {
+  position: static;
+  transform: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* 屏幕键盘(components/OnScreenKeyboard.tsx)—— Vite index.css 漏移植,补回。 */
+.on-screen-keyboard {
+  margin: 0.75rem 0;
+  padding: 0 1rem;
+  max-width: 500px;
+}
+.kbd-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.kbd-btn:hover {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.kbd-btn:active {
+  transform: scale(0.95);
+}
+@media (hover: none) {
+  .kbd-btn:not(:active):hover {
+    background: transparent;
+  }
+}
+
+/* WCA 多地代码(XW/XA/XE…)没有国旗,渲染成"空描边"占位(Flag.tsx 产出 flag-multi)。
+ * Vite index.css 漏移植,补回。复用 flag-icons .fi 尺寸,空底 + 边框对齐 WCA 配色。 */
+.fi.flag-multi {
+  background: transparent !important;
+  background-image: none !important;
+  box-sizing: border-box;
+}
+.fi.flag-multi-world {
+  border: 1.5px solid;
+  border-image: linear-gradient(to right, #1f4ea3 0%, #2a4fa3 30%, #c8102e 70%, #c8102e 100%) 1;
+}
+.fi.flag-multi-continent {
+  border: 1.5px solid #2c5aa0;
+  border-radius: 3px;
+}
