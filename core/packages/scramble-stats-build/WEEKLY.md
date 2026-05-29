@@ -32,7 +32,7 @@ pwsh core/packages/scramble-stats-build/run_weekly.ps1
 
 1. **取数** `incremental.py`:下 `results/v2/tsv`(~344 MB,按 export_date 缓存)→ 抽 `Scrambles.tsv` + `Competitions.tsv` → 过滤 333 系列 & **未处理的 scrambleId**(对 `std.csv` 已处理集合做差,能接住回填)→ 拆多盲(`|`→行)+ 去宽层 → `incremental/new_no_wide_move.txt`。顺便刷新 `competitions.tsv` + 写 `export_date.txt`。
 2. **solver** `std_analyzer.exe`:`CUBE_TABLE_DIR` + `CUBE_ALLOW_HUGE_TABLES=1` + `CUBE_RUN_FULL_STD=1`,stdin 喂文件名,`[PROG] N/total` 实时进度。热态 ~1 条/秒(16 核),冷启首条多花几分钟 mmap 巨表。
-3. **追加 master**(LF 安全):`stat/std.csv` ← solver 输出;`wca_scrambles_no_wide_move.txt` ← 新打乱;`input/wca_scrambles_split_mbf.csv` ← 新元数据。
+3. **追加 master**(LF 安全):`stats/std.csv` ← solver 输出;`wca_scrambles_no_wide_move.txt` ← 新打乱;`input/wca_scrambles_split_mbf.csv` ← 新元数据。
 4. **重算**:`build`(distribution.json + examples.json + 下载 txt)+ `build:wca-cross`(6 色池,每条带完整 `id` 含后三位)+ `build:comp-steps`(每场预计算十字步数表 `comp_steps/<id>.json`,gen 页"秒出"用,前端零解算)。RNG 固定种子 + `SCRAMBLE_STATS_STAMP`=export_date → distribution/wca_cross 数据不变则逐字节不变;comp_steps 是精确值(无随机/时间戳)。
 5. **发布**:`git add stats/scramble` → commit(英文 msg)→ `pull --rebase --autostash` → push(触发 Vercel)→ `scp stats/scramble` 到 static(self-hosted nginx + Vercel fallback 都从这服)。
 6. 完成。
@@ -43,7 +43,7 @@ pwsh core/packages/scramble-stats-build/run_weekly.ps1
 
 ## 数据(全 gitignore 在 `D:\cube\scramble\wca_scramble\`)
 
-`stat/std.csv`(主统计) `wca_scrambles_no_wide_move.txt`(打乱文本) `input/wca_scrambles_split_mbf.csv`(元数据) `competitions.tsv`(比赛名/日期) `incremental/`(每次的中间产物)。
+`stats/std.csv`(主统计) `wca_scrambles_no_wide_move.txt`(打乱文本) `input/wca_scrambles_split_mbf.csv`(元数据) `competitions.tsv`(比赛名/日期) `incremental/`(每次的中间产物)。
 
 ## 排错
 

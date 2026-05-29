@@ -10,7 +10,7 @@ interface VariantSpec {
   id_col: string;
   stages: string[];
   // NOTE: angle → canonical color letter (Y/R/W/O/B/G)
-  // std/eo/pseudo 用 z0..x3，pair 用 rotation 记号；两种 key 统一映射到颜色字母后脱离 angle 概念
+  // 全部变体表头后缀统一为 z0..x3(std 记号),映射到颜色字母后脱离 angle 概念
   angleToColor: Record<string, ColorLetter>;
   colFor: (stage: string, angle: string) => string;
 }
@@ -21,9 +21,6 @@ type ColorLetter = typeof COLOR_LETTERS[number];
 
 const ANGLE_COLOR_STD: Record<string, ColorLetter> = {
   z0: 'Y', z1: 'R', z2: 'W', z3: 'O', x1: 'B', x3: 'G',
-};
-const ANGLE_COLOR_PAIR: Record<string, ColorLetter> = {
-  '': 'Y', z: 'R', z2: 'W', "z'": 'O', x: 'B', "x'": 'G',
 };
 
 const VARIANTS: VariantSpec[] = [
@@ -46,9 +43,9 @@ const VARIANTS: VariantSpec[] = [
   {
     key: 'pair',
     file: 'pair.csv',
-    id_col: 'scramble',
+    id_col: 'id',
     stages: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
-    angleToColor: ANGLE_COLOR_PAIR,
+    angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
   {
@@ -236,7 +233,7 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     }
 
     const parts = line.split(',');
-    // NOTE: parts[0] 是 id（std/eo/pseudo/pseudo_pair 是整数；pair.csv 的 'scramble' 列其实也是整数 id）
+    // NOTE: parts[0] 是 id（全部变体首列均为整数 id）
     const id = parts[0];
     const scramble = scrambleMap.get(id);
     for (const stage of spec.stages) {
