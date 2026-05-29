@@ -8,7 +8,7 @@
     {
       "key": "diff",
       "label": "Diff",
-      "labelZh": "Diff",
+      "labelZh": "差值",
       "align": "right"
     },
     {
@@ -32,7 +32,7 @@
     {
       "key": "results",
       "label": "Results",
-      "labelZh": "Results",
+      "labelZh": "比赛",
       "align": "left"
     }
   ],
