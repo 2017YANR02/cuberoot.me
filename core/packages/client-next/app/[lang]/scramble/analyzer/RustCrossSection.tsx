@@ -52,6 +52,7 @@ export default function RustCrossSection({ scramble, lang }: Props) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [runToken, setRunToken] = useState(0);
   const [totalMs, setTotalMs] = useState<number | null>(null);
+  const [shown, setShown] = useState(0); // 解法逐条流式 reveal 的可见条数
 
   const csRef = useRef<RustCrossPool | null>(null);
   const scrambleRef = useRef(scramble);
@@ -159,6 +160,23 @@ export default function RustCrossSection({ scramble, lang }: Props) {
     if (selFace !== null) void fetchMoves(selFace);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extra]);
+
+  // 解法逐条流式出现(对齐用户期望:依次输出而非一次性糊上)。总时长封顶 ~1s,
+  // 条数多时按比例加大步长,既保留逐条节奏又不拖沓。
+  useEffect(() => {
+    if (!moves || movesLoading) { setShown(0); return; }
+    const total = moves.sols.length;
+    if (total === 0) { setShown(0); return; }
+    setShown(0);
+    const step = Math.max(1, Math.ceil(total / 32));
+    let n = 0;
+    const id = setInterval(() => {
+      n = Math.min(total, n + step);
+      setShown(n);
+      if (n >= total) clearInterval(id);
+    }, 30);
+    return () => clearInterval(id);
+  }, [moves, movesLoading]);
 
   const copySol = useCallback((i: number, sol: string) => {
     navigator.clipboard?.writeText(sol).then(() => {
@@ -297,11 +315,13 @@ export default function RustCrossSection({ scramble, lang }: Props) {
                   {moves && !movesLoading && (
                     <>
                       <div className="rcx-sols-count">
-                        {t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)}
+                        {shown < moves.sols.length
+                          ? t(`${shown} / ${moves.sols.length} 条解法`, `${shown} / ${moves.sols.length} solutions`)
+                          : t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)}
                         <span className="rcx-sols-ms"> · {t('耗时', 'solved in')} {fmtMs(moves.ms)}</span>
                       </div>
                       <ol className="rcx-sols-list">
-                        {moves.sols.map((sol, i) => (
+                        {moves.sols.slice(0, shown).map((sol, i) => (
                           <li key={i}>
                             <div className="rcx-sol-row">
                               <code>{sol}</code>
