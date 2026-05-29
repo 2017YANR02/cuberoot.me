@@ -60,4 +60,7 @@ stats/comp/
 # 每场预计算十字步数表 (~100MB 上万文件,scramble 周更生成,只 scp 到 static 不进 git)
 stats/scramble/comp_steps/
 
+# git-bash (MSYS2) 崩溃栈转储,纯本机噪音
+*.stackdump
+
 .cc-connect/
