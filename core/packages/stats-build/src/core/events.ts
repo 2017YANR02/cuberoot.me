@@ -179,6 +179,13 @@ export const HEADER_ZH: Record<string, string> = {
   'Improvement': '进步',
   'Period': '区间',
   'Mo3': 'Mo3',
+  // NOTE: 补漏——这些表头此前缺中文，zh 页显示英文
+  'Results': '比赛',
+  'Region': '地区',
+  'First win': '首冠',
+  'Moving average': '移动平均',
+  'Diff': '差值',
+  'Winned weeks': '登顶周数',
 };
 
 export function eventZh(name: string): string {
@@ -186,5 +193,7 @@ export function eventZh(name: string): string {
 }
 
 export function headerZh(name: string): string {
-  return HEADER_ZH[name] ?? name;
+  // NOTE: best_round 用尾随空格做唯一列名（'Result ' / 'Result  '），trim 后再查表
+  const key = name.trim();
+  return HEADER_ZH[key] ?? key;
 }
