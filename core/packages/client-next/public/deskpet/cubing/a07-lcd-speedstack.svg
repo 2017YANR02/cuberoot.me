@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a07-03 LCD Speedstack (T3 pixel sprite frames), 6s loop.
+       The cube is a tiny LCD screen replaying a solve: 6 pre-drawn pixel
+       frames (scramble -> solved) toggled crisply via step-end opacity, like a
+       retro stop-motion. Clawd: determined squint during the flurry of frames,
+       big ^^ smile on the solved frame. 7-seg style pixel timer counts in steps. -->
+  <defs>
+    <style><![CDATA[
+      #ground-shadow {
+        transform-box: view-box; transform-origin: 7.5px 15.5px;
+        animation: lc-shadow 6s infinite ease-in-out;
+      }
+      .body-breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: lc-body 6s infinite ease-in-out; }
+      .arm-l, .arm-r { transform-box: fill-box; }
+      .arm-l { transform-origin: 100% 0%; animation: lc-arm-l 6s infinite steps(1,end); }
+      .arm-r { transform-origin: 0% 0%;   animation: lc-arm-r 6s infinite steps(1,end); }
+
+      .eyes-rect   { animation: lc-eyes-rect 6s infinite step-end; }
+      .eyes-squint { opacity: 0; animation: lc-eyes-squint 6s infinite step-end; }
+      .eyes-smile  { opacity: 0; animation: lc-eyes-smile 6s infinite step-end; }
+
+      /* LCD screen flicker (subtle brightness pulse on the bezel glow) */
+      .screen-glow { animation: lc-glow 6s infinite step-end; }
+
+      /* 6 cube frames, crisp step-end visibility swaps */
+      .cf { opacity: 0; }
+      .cf0 { opacity: 1; animation: lc-f0 6s infinite step-end; }
+      .cf1 { animation: lc-f1 6s infinite step-end; }
+      .cf2 { animation: lc-f2 6s infinite step-end; }
+      .cf3 { animation: lc-f3 6s infinite step-end; }
+      .cf4 { animation: lc-f4 6s infinite step-end; }
+      .cf5 { animation: lc-f5 6s infinite step-end; }
+
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: lc-spark 6s infinite steps(1,end); }
+      .reel-s { animation: lc-reel-s 6s infinite step-end; }
+      .reel-t { animation: lc-reel-t 6s infinite step-end; }
+
+      @keyframes lc-shadow {
+        0%, 100% { opacity:.5; transform: scaleX(1); }
+        80%      { opacity:.55; transform: scaleX(1.05); }
+        86%      { opacity:.5; transform: scaleX(1); }
+      }
+      @keyframes lc-body {
+        0%, 8%, 100% { transform: translateY(0) scale(1,1); }
+        24%          { transform: translateY(.12px) scale(1.006,.994); }
+        40%          { transform: translateY(.12px) scale(.994,1.006); }
+        56%          { transform: translateY(.12px) scale(1.006,.994); }
+        66%          { transform: translateY(0) scale(1.01,.99); }
+        80%          { transform: translateY(-.7px) scale(1.025,.975); }  /* victory pop */
+        88%          { transform: translateY(0) scale(1,1); }
+      }
+      /* arms hold steady, give a quick double tap on each frame change (stop-motion feel) */
+      @keyframes lc-arm-l {
+        0%,8%   { transform: translate(2.5px,2.3px) rotate(40deg); }
+        20%     { transform: translate(2.5px,2.15px) rotate(43deg); }
+        32%     { transform: translate(2.5px,2.3px) rotate(40deg); }
+        44%     { transform: translate(2.5px,2.15px) rotate(43deg); }
+        56%     { transform: translate(2.5px,2.3px) rotate(40deg); }
+        80%     { transform: translate(2.6px,1.6px) rotate(52deg); }    /* fist pump */
+        90%,100%{ transform: translate(2.5px,2.3px) rotate(40deg); }
+      }
+      @keyframes lc-arm-r {
+        0%,8%   { transform: translate(-2.5px,2.3px) rotate(-40deg); }
+        14%     { transform: translate(-2.5px,2.15px) rotate(-43deg); }
+        26%     { transform: translate(-2.5px,2.3px) rotate(-40deg); }
+        38%     { transform: translate(-2.5px,2.15px) rotate(-43deg); }
+        50%     { transform: translate(-2.5px,2.3px) rotate(-40deg); }
+        80%     { transform: translate(-2.6px,1.6px) rotate(-52deg); }
+        90%,100%{ transform: translate(-2.5px,2.3px) rotate(-40deg); }
+      }
+      /* eyes: neutral rect at start, determined squint during the solve flurry,
+         big smile on the solved hold, back to rect for loop reset */
+      @keyframes lc-eyes-rect   { 0%{opacity:1} 9%{opacity:0} 92%{opacity:0} 93%{opacity:1} 100%{opacity:1} }
+      @keyframes lc-eyes-squint { 0%{opacity:0} 9%{opacity:1} 65%{opacity:0} 100%{opacity:0} }
+      @keyframes lc-eyes-smile  { 0%{opacity:0} 65%{opacity:1} 92%{opacity:0} 100%{opacity:0} }
+
+      @keyframes lc-glow { 0%{opacity:.55} 12%{opacity:.85} 24%{opacity:.55} 36%{opacity:.85} 48%{opacity:.6} 65%{opacity:1} 90%{opacity:1} 91%{opacity:.55} 100%{opacity:.55} }
+
+      /* frame swaps: F0 0-12, F1 12-24, F2 24-37, F3 37-50, F4 50-63, F5(solved) 63-91, reset to F0 91-100 */
+      @keyframes lc-f0 { 0%{opacity:1} 12%{opacity:0} 91%{opacity:0} 92%{opacity:1} 100%{opacity:1} }
+      @keyframes lc-f1 { 0%{opacity:0} 12%{opacity:1} 24%{opacity:0} 100%{opacity:0} }
+      @keyframes lc-f2 { 0%{opacity:0} 24%{opacity:1} 37%{opacity:0} 100%{opacity:0} }
+      @keyframes lc-f3 { 0%{opacity:0} 37%{opacity:1} 50%{opacity:0} 100%{opacity:0} }
+      @keyframes lc-f4 { 0%{opacity:0} 50%{opacity:1} 63%{opacity:0} 100%{opacity:0} }
+      @keyframes lc-f5 { 0%{opacity:0} 63%{opacity:1} 91%{opacity:0} 100%{opacity:0} }
+
+      @keyframes lc-spark {
+        0%,64%   { opacity:0; transform: scale(.3); }
+        66%      { opacity:1; transform: scale(1.4); }
+        72%      { opacity:1; transform: scale(1); }
+        82%      { opacity:0; transform: scale(.6); }
+        100%     { opacity:0; }
+      }
+      /* timer counts in discrete steps (stop-motion), freezes at solve */
+      @keyframes lc-reel-s {
+        0%,8%{transform:translateY(0)} 24%{transform:translateY(-3px)} 40%{transform:translateY(-6px)}
+        56%{transform:translateY(-9px)} 63%{transform:translateY(-12px)} 64%,100%{transform:translateY(-12px)} }
+      @keyframes lc-reel-t {
+        0%,8%{transform:translateY(0)} 12%{transform:translateY(-9px)} 24%{transform:translateY(-3px)}
+        37%{transform:translateY(-21px)} 50%{transform:translateY(-6px)} 56%{transform:translateY(-24px)}
+        63%{transform:translateY(-12px)} 64%,100%{transform:translateY(-12px)} }
+    ]]></style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="body-breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes: rect / squint / smile -->
+    <g class="eyes-rect" fill="#000">
+      <rect x="4" y="8" width="1" height="2"/>
+      <rect x="10" y="8" width="1" height="2"/>
+    </g>
+    <g class="eyes-squint" fill="#000">
+      <rect x="3.7" y="8.6" width="1.6" height="0.9"/>
+      <rect x="9.7" y="8.6" width="1.6" height="0.9"/>
+    </g>
+    <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3.5,9 4.5,8 5.5,9"/>
+      <polyline points="9.5,9 10.5,8 11.5,9"/>
+    </g>
+
+    <!-- tiny pixel timer HUD above head (LCD green) -->
+    <g transform="translate(-1.0,1.0)">
+      <rect x="-0.4" y="-0.4" width="5.0" height="3.3" rx="0.4" fill="#16161b"/>
+      <clipPath id="lc-clip-s"><rect x="-0.1" y="-0.3" width="1.7" height="3.0"/></clipPath>
+      <clipPath id="lc-clip-t"><rect x="2.5" y="-0.3" width="1.7" height="3.0"/></clipPath>
+      <g clip-path="url(#lc-clip-s)">
+        <g class="reel-s" fill="#3CF06A">
+          <text x="0.05" y="2.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+          <text x="0.05" y="5.3" font-size="2.7" font-family="monospace" font-weight="bold">1</text>
+          <text x="0.05" y="8.3" font-size="2.7" font-family="monospace" font-weight="bold">3</text>
+          <text x="0.05" y="11.3" font-size="2.7" font-family="monospace" font-weight="bold">4</text>
+          <text x="0.05" y="14.3" font-size="2.7" font-family="monospace" font-weight="bold">5</text>
+        </g>
+      </g>
+      <rect x="1.85" y="1.9" width="0.55" height="0.55" fill="#3CF06A"/>
+      <g clip-path="url(#lc-clip-t)">
+        <g class="reel-t" fill="#3CF06A">
+          <text x="2.6" y="2.3" font-size="2.7" font-family="monospace" font-weight="bold">0</text>
+          <text x="2.6" y="5.3" font-size="2.7" font-family="monospace" font-weight="bold">4</text>
+          <text x="2.6" y="8.3" font-size="2.7" font-family="monospace" font-weight="bold">9</text>
+          <text x="2.6" y="11.3" font-size="2.7" font-family="monospace" font-weight="bold">2</text>
+          <text x="2.6" y="14.3" font-size="2.7" font-family="monospace" font-weight="bold">6</text>
+          <text x="2.6" y="17.3" font-size="2.7" font-family="monospace" font-weight="bold">1</text>
+          <text x="2.6" y="20.3" font-size="2.7" font-family="monospace" font-weight="bold">8</text>
+          <text x="2.6" y="23.3" font-size="2.7" font-family="monospace" font-weight="bold">3</text>
+        </g>
+      </g>
+    </g>
+
+    <g class="arm-l" fill="#DE886D"><rect x="0" y="9" width="2" height="2"/></g>
+    <g class="arm-r" fill="#DE886D"><rect x="13" y="9" width="2" height="2"/></g>
+
+    <!-- ===== CUBE as a little LCD screen showing 6 solve frames ===== -->
+    <g>
+      <!-- bezel + screen glow -->
+      <rect class="screen-glow" x="3.9" y="9.0" width="7.2" height="5.7" rx="0.5" fill="#0e2b18"/>
+      <rect x="4.25" y="9.35" width="6.5" height="5.0" fill="#0e0e12"/>
+
+      <!-- frame group: each .cf is a full 3x3 face (3 cols x 3 rows). cell ~2.0w varies.
+           grid origin x=4.45..10.55 (6.1 wide), y=9.55..14.15 (4.6 tall). cols at 4.45,6.48,8.51; rows at 9.55,11.08,12.61 -->
+      <!-- F0: full scramble -->
+      <g class="cf cf0">
+        <rect x="4.45" y="9.55" width="1.9" height="1.4" fill="#E02029"/><rect x="6.48" y="9.55" width="1.9" height="1.4" fill="#FDD500"/><rect x="8.51" y="9.55" width="1.9" height="1.4" fill="#00A04A"/>
+        <rect x="4.45" y="11.08" width="1.9" height="1.4" fill="#0E5FD9"/><rect x="6.48" y="11.08" width="1.9" height="1.4" fill="#FF7A00"/><rect x="8.51" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="12.61" width="1.9" height="1.5" fill="#FDD500"/><rect x="6.48" y="12.61" width="1.9" height="1.5" fill="#00A04A"/><rect x="8.51" y="12.61" width="1.9" height="1.5" fill="#E02029"/>
+      </g>
+      <!-- F1 -->
+      <g class="cf cf1">
+        <rect x="4.45" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="9.55" width="1.9" height="1.4" fill="#FDD500"/><rect x="8.51" y="9.55" width="1.9" height="1.4" fill="#00A04A"/>
+        <rect x="4.45" y="11.08" width="1.9" height="1.4" fill="#0E5FD9"/><rect x="6.48" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="11.08" width="1.9" height="1.4" fill="#FF7A00"/>
+        <rect x="4.45" y="12.61" width="1.9" height="1.5" fill="#E02029"/><rect x="6.48" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="8.51" y="12.61" width="1.9" height="1.5" fill="#FDD500"/>
+      </g>
+      <!-- F2 -->
+      <g class="cf cf2">
+        <rect x="4.45" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="9.55" width="1.9" height="1.4" fill="#00A04A"/>
+        <rect x="4.45" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="11.08" width="1.9" height="1.4" fill="#FF7A00"/>
+        <rect x="4.45" y="12.61" width="1.9" height="1.5" fill="#0E5FD9"/><rect x="6.48" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="8.51" y="12.61" width="1.9" height="1.5" fill="#FDD500"/>
+      </g>
+      <!-- F3 -->
+      <g class="cf cf3">
+        <rect x="4.45" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="6.48" y="12.61" width="1.9" height="1.5" fill="#00A04A"/><rect x="8.51" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/>
+      </g>
+      <!-- F4 -->
+      <g class="cf cf4">
+        <rect x="4.45" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="6.48" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="8.51" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/>
+      </g>
+      <!-- F5: solved (same as F4 visually, kept distinct for hold) -->
+      <g class="cf cf5">
+        <rect x="4.45" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="9.55" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="6.48" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/><rect x="8.51" y="11.08" width="1.9" height="1.4" fill="#FAFAFA"/>
+        <rect x="4.45" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="6.48" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/><rect x="8.51" y="12.61" width="1.9" height="1.5" fill="#FAFAFA"/>
+      </g>
+
+      <!-- crisp grid gap lines on top of every frame -->
+      <g fill="#16161b">
+        <rect x="6.38" y="9.55" width="0.1" height="4.55"/>
+        <rect x="8.41" y="9.55" width="0.1" height="4.55"/>
+        <rect x="4.45" y="10.98" width="5.96" height="0.1"/>
+        <rect x="4.45" y="12.51" width="5.96" height="0.1"/>
+      </g>
+    </g>
+
+    <!-- victory sparkle by the screen -->
+    <g class="spark">
+      <rect x="11.0" y="7.3" width="1" height="0.5" fill="#FFE066"/>
+      <rect x="11.0" y="7.8" width="1" height="1" fill="#FFE066"/>
+      <rect x="11.0" y="8.8" width="1" height="0.5" fill="#FFE066"/>
+      <rect x="10.2" y="7.8" width="1" height="1" fill="#FFE066"/>
+      <rect x="11.8" y="7.8" width="1" height="1" fill="#FFE066"/>
+    </g>
+  </g>
+</svg>

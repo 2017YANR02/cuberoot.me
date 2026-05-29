@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a01-1  Isometric 3x3 sexy-move solve (R U R' U' then inverse, net identity).
+       Technique T1/T3 hybrid: 8 discrete isometric frames generated from a real
+       3x3 simulator (R/U turns), crossfaded so the layer reads as turning. The
+       cube visibly mixes then unmixes back to solved each loop. Stickers move
+       relative to each other (genuine R/U turns), never a flat spin. Clawd cradles
+       the cube at belly height, eyes track the turns, right claw nudges on each
+       move, smile + sparkle on the solved beat. -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px;
+        animation: sh 7.2s infinite ease-in-out; }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px;
+        animation: breathe 7.2s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 100% 50%;
+        animation: armL 7.2s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 0% 50%;
+        animation: armR 7.2s infinite ease-in-out; }
+      .eyes { transform-box: view-box; transform-origin: 7.5px 9px;
+        animation: eyes 7.2s infinite ease-in-out; }
+      .eyes-rect  { animation: rectVis  7.2s infinite step-end; }
+      .eyes-smile { opacity:0; animation: smileVis 7.2s infinite step-end; }
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity:0;
+        animation: spark 7.2s infinite ease-out; }
+      .cf  { opacity: 0; }
+      .cf0 { opacity: 1; animation: cf0 7.2s infinite ease-in-out; }
+      .cf1 { animation: cf1 7.2s infinite ease-in-out; }
+      .cf2 { animation: cf2 7.2s infinite ease-in-out; }
+      .cf3 { animation: cf3 7.2s infinite ease-in-out; }
+      .cf4 { animation: cf4 7.2s infinite ease-in-out; }
+      .cf5 { animation: cf5 7.2s infinite ease-in-out; }
+      .cf6 { animation: cf6 7.2s infinite ease-in-out; }
+      .cf7 { animation: cf7 7.2s infinite ease-in-out; }
+
+      @keyframes sh { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.44;transform:scaleX(.95);} }
+      @keyframes breathe { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.012,.988) translateY(.12px);} }
+      @keyframes armR {
+        0%,100%{transform:translate(0,0) rotate(0deg);}
+        10%,36%,58%,80%{transform:translate(-.7px,-.25px) rotate(-20deg);}
+        16%,42%,64%,86%{transform:translate(-.15px,0) rotate(-4deg);}
+      }
+      @keyframes armL {
+        0%,100%{transform:translate(0,0) rotate(0deg);}
+        24%,70%{transform:translate(.5px,-.2px) rotate(15deg);}
+      }
+      @keyframes eyes {
+        0%,100%{transform:translate(-.3px,.5px) scaleY(.9);}
+        30%{transform:translate(.4px,.55px) scaleY(.86);}
+        60%{transform:translate(-.4px,.5px) scaleY(.86);}
+      }
+      @keyframes rectVis  { 0%{opacity:1;} 90%{opacity:0;} 96%{opacity:1;} }
+      @keyframes smileVis { 0%{opacity:0;} 90%{opacity:1;} 96%{opacity:0;} }
+      @keyframes spark {
+        0%,88%,100%{opacity:0;transform:scale(.4);}
+        91%{opacity:1;transform:scale(1.3);} 94%{opacity:1;transform:scale(1);} 97%{opacity:0;transform:scale(.7);}
+      }
+      @keyframes cf0 {
+        0% { opacity:1; } 9% { opacity:1; } 13% { opacity:0; }
+        96% { opacity:0; } 100% { opacity:1; }
+      }
+      @keyframes cf1 {
+        0%,9% { opacity:0; } 13% { opacity:1; } 22% { opacity:1; } 26% { opacity:0; } 100% { opacity:0; }
+      }
+      @keyframes cf2 {
+        0%,22% { opacity:0; } 26% { opacity:1; } 33% { opacity:1; } 37% { opacity:0; } 100% { opacity:0; }
+      }
+      @keyframes cf3 {
+        0%,33% { opacity:0; } 37% { opacity:1; } 44% { opacity:1; } 48% { opacity:0; } 100% { opacity:0; }
+      }
+      @keyframes cf4 {
+        0%,44% { opacity:0; } 48% { opacity:1; } 55% { opacity:1; } 59% { opacity:0; } 100% { opacity:0; }
+      }
+      @keyframes cf5 {
+        0%,55% { opacity:0; } 59% { opacity:1; } 66% { opacity:1; } 70% { opacity:0; } 100% { opacity:0; }
+      }
+      @keyframes cf6 {
+        0%,66% { opacity:0; } 70% { opacity:1; } 77% { opacity:1; } 81% { opacity:0; } 100% { opacity:0; }
+      }
+      @keyframes cf7 {
+        0%,77% { opacity:0; } 81% { opacity:1; } 96% { opacity:1; } 100% { opacity:0; } 100% { opacity:0; }
+      }
+
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <g class="eyes">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7"
+         stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/><polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- isometric cube frames (stacked, crossfaded) -->
+    <g>
+      <g class="cf cf0" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#FAFAFA"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#FAFAFA"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#FAFAFA"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#FAFAFA"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#FAFAFA"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#00A04A"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#00A04A"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#00A04A"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#00A04A"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#00A04A"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#E02029"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#E02029"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#E02029"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#E02029"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#E02029"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf1" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#00A04A"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#00A04A"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#FAFAFA"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#FAFAFA"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#00A04A"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#00A04A"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#00A04A"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#FDD500"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FDD500"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#FDD500"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#E02029"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#E02029"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#E02029"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#E02029"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#E02029"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf2" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#FAFAFA"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#FAFAFA"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#00A04A"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#00A04A"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#00A04A"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#E02029"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#E02029"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#E02029"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FDD500"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#FDD500"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#FAFAFA"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#0E5FD9"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#0E5FD9"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#E02029"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#E02029"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf3" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#FAFAFA"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#FAFAFA"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#00A04A"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#00A04A"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#FF7A00"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#E02029"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#E02029"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#FAFAFA"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FAFAFA"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#00A04A"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#0E5FD9"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#E02029"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#E02029"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#0E5FD9"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#FAFAFA"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf4" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#FF7A00"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#00A04A"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#FAFAFA"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#FAFAFA"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#00A04A"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#00A04A"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#00A04A"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#FDD500"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FAFAFA"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#00A04A"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#E02029"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#E02029"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#FAFAFA"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#0E5FD9"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#FAFAFA"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf5" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#FAFAFA"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#FAFAFA"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#00A04A"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#00A04A"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#FF7A00"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#E02029"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#E02029"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#FAFAFA"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FAFAFA"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#00A04A"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#0E5FD9"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#E02029"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#E02029"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#0E5FD9"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#FAFAFA"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf6" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#FAFAFA"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#FAFAFA"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#00A04A"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#00A04A"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#00A04A"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#E02029"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#E02029"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#E02029"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FDD500"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#FDD500"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#FAFAFA"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#0E5FD9"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#0E5FD9"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#E02029"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#E02029"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+      <g class="cf cf7" ><polygon points="7.50,11.70 10.26,10.50 7.50,9.30 4.74,10.50" fill="#0e0e12"/><polygon points="7.50,11.70 4.74,10.50 4.74,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.70 10.26,10.50 10.26,12.42 7.50,13.62" fill="#0e0e12"/><polygon points="7.50,11.65 8.31,11.30 7.50,10.95 6.69,11.30" fill="#FAFAFA"/><polygon points="8.42,11.25 9.23,10.90 8.42,10.55 7.61,10.90" fill="#FAFAFA"/><polygon points="9.34,10.85 10.15,10.50 9.34,10.15 8.53,10.50" fill="#00A04A"/><polygon points="6.58,11.25 7.39,10.90 6.58,10.55 5.77,10.90" fill="#FAFAFA"/><polygon points="7.50,10.85 8.31,10.50 7.50,10.15 6.69,10.50" fill="#FAFAFA"/><polygon points="8.42,10.45 9.23,10.10 8.42,9.75 7.61,10.10" fill="#00A04A"/><polygon points="5.66,10.85 6.47,10.50 5.66,10.15 4.85,10.50" fill="#FAFAFA"/><polygon points="6.58,10.45 7.39,10.10 6.58,9.75 5.77,10.10" fill="#FAFAFA"/><polygon points="7.50,10.05 8.31,9.70 7.50,9.35 6.69,9.70" fill="#00A04A"/><polygon points="7.44,11.71 6.64,11.36 6.64,11.93 7.44,12.28" fill="#00A04A"/><polygon points="6.52,11.31 5.72,10.96 5.72,11.53 6.52,11.88" fill="#00A04A"/><polygon points="5.60,10.91 4.80,10.56 4.80,11.13 5.60,11.48" fill="#FDD500"/><polygon points="7.44,12.35 6.64,12.00 6.64,12.57 7.44,12.92" fill="#00A04A"/><polygon points="6.52,11.95 5.72,11.60 5.72,12.17 6.52,12.52" fill="#00A04A"/><polygon points="5.60,11.55 4.80,11.20 4.80,11.77 5.60,12.12" fill="#FDD500"/><polygon points="7.44,12.99 6.64,12.64 6.64,13.21 7.44,13.56" fill="#00A04A"/><polygon points="6.52,12.59 5.72,12.24 5.72,12.81 6.52,13.16" fill="#00A04A"/><polygon points="5.60,12.19 4.80,11.84 4.80,12.41 5.60,12.76" fill="#FDD500"/><polygon points="7.56,11.71 8.36,11.36 8.36,11.93 7.56,12.28" fill="#E02029"/><polygon points="8.48,11.31 9.28,10.96 9.28,11.53 8.48,11.88" fill="#E02029"/><polygon points="9.40,10.91 10.20,10.56 10.20,11.13 9.40,11.48" fill="#E02029"/><polygon points="7.56,12.35 8.36,12.00 8.36,12.57 7.56,12.92" fill="#E02029"/><polygon points="8.48,11.95 9.28,11.60 9.28,12.17 8.48,12.52" fill="#E02029"/><polygon points="9.40,11.55 10.20,11.20 10.20,11.77 9.40,12.12" fill="#E02029"/><polygon points="7.56,12.99 8.36,12.64 8.36,13.21 7.56,13.56" fill="#E02029"/><polygon points="8.48,12.59 9.28,12.24 9.28,12.81 8.48,13.16" fill="#E02029"/><polygon points="9.40,12.19 10.20,11.84 10.20,12.41 9.40,12.76" fill="#E02029"/></g>
+    </g>
+
+    <!-- arms cradling -->
+    <g fill="#DE886D">
+      <rect class="arm-l" x="3.0" y="10.6" width="2" height="2"/>
+      <rect class="arm-r" x="10.0" y="10.6" width="2" height="2"/>
+    </g>
+
+    <!-- solved sparkle beside head -->
+    <g class="spark" fill="#FFE066">
+      <rect x="11.8" y="5.4" width="1" height="0.6"/>
+      <rect x="11.8" y="6.0" width="1" height="1"/>
+      <rect x="11.8" y="7.0" width="1" height="0.6"/>
+      <rect x="10.8" y="6.0" width="1" height="1"/>
+      <rect x="12.8" y="6.0" width="1" height="1"/>
+    </g>
+  </g>
+</svg>

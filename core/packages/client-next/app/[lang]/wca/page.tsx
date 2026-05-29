@@ -10,16 +10,18 @@
  * box and renders only the curated category cards + Tools tab.
  * TODO: port useSiteSearch + SEARCH_CARDS once LandingPage is migrated.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
   CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator, Search,
+  ListOrdered, Users, Percent, LayoutGrid, Sigma, Crown, History,
   type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '@/i18n/i18n-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { STAT_ICONS } from './wca-stat-icons';
 import '../wca/_wca_stats.css';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -43,15 +45,15 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon }[] = 
   { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator },
 ];
 
-const LOOKUP_ITEMS: { path: string; zh: string; en: string; extraQuery?: string }[] = [
-  { path: '/wca/all-results',     zh: '排名',         en: 'Rankings' },
-  { path: '/wca/records',         zh: '纪录',         en: 'Records' },
-  { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks' },
-  { path: '/wca/success-rate',    zh: '完成率',       en: 'Success Rate' },
-  { path: '/wca/all-events-done', zh: '全项目达成',   en: 'All Events Done' },
-  { path: '/wca/sum-of-ranks',    zh: '名次和',       en: 'Sum of Ranks' },
-  { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam' },
-  { path: '/wca/historical',      zh: '历史排名',     en: 'Historical Ranks' },
+const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string }[] = [
+  { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy },
+  { path: '/wca/all-results',     zh: '排名',         en: 'Rankings',        Icon: ListOrdered },
+  { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks',    Icon: Users },
+  { path: '/wca/success-rate',    zh: '完成率',       en: 'Success Rate',    Icon: Percent },
+  { path: '/wca/all-events-done', zh: '全项目达成',   en: 'All Events Done', Icon: LayoutGrid },
+  { path: '/wca/sum-of-ranks',    zh: '名次和',       en: 'Sum of Ranks',    Icon: Sigma },
+  { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown },
+  { path: '/wca/historical',      zh: '历史排名',     en: 'Historical Ranks', Icon: History },
 ];
 
 export default function WcaStatsIndex() {
@@ -60,7 +62,9 @@ export default function WcaStatsIndex() {
   const [data, setData] = useState<IndexData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeCat, setActiveCat] = useState<string>(TOOLS);
+  const [activeKey, setActiveKey] = useState<string>(TOOLS);
+  const sectionEls = useRef<Map<string, HTMLElement>>(new Map());
+  const lockUntil = useRef(0); // 点 chip 后短暂锁定高亮,别被平滑滚动途中的 scroll-spy 改掉
 
   const isZh = i18n.language === 'zh';
 
@@ -83,6 +87,45 @@ export default function WcaStatsIndex() {
     return () => ac.abort();
   }, []);
 
+  // scroll-spy:active = 已滚过吸顶栏下沿的最后一个分区;到页底则强制锁定最后一个
+  // (末尾分区太短滚不到顶,IntersectionObserver 会漏掉,故用 scroll + bottom-snap)
+  useEffect(() => {
+    if (!data) return;
+    let raf = 0;
+    const LINE = 96; // 须 > section 的 scroll-margin-top(84),否则跳转后目标差一格
+    const compute = () => {
+      raf = 0;
+      if (Date.now() < lockUntil.current) return; // 跳转动画期间不抢高亮
+      const els = sectionEls.current;
+      const keys = [...els.keys()];
+      if (!keys.length) return;
+      if (Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 2) {
+        setActiveKey(keys[keys.length - 1]);
+        return;
+      }
+      let current = keys[0];
+      els.forEach((el, key) => {
+        if (el.getBoundingClientRect().top <= LINE) current = key;
+      });
+      setActiveKey(current);
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute); };
+    compute();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [data]);
+
+  const jumpTo = (key: string) => {
+    lockUntil.current = Date.now() + 800; // 锁住高亮到平滑滚动结束
+    setActiveKey(key);
+    sectionEls.current.get(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   if (loading) {
     return (
       <div className="wca-stats-index">
@@ -103,7 +146,20 @@ export default function WcaStatsIndex() {
   }
 
   const langQuery = getLangQuery();
-  const browseStats = data.categories.filter(c => c.nameEn === activeCat);
+
+  type Section = { key: string; zh: string; en: string; Icon?: LucideIcon; cat?: StatCategory };
+  const sections: Section[] = [
+    { key: TOOLS, zh: '工具', en: 'Tools', Icon: Wrench },
+    { key: LOOKUP, zh: '查询', en: 'Lookup', Icon: Search },
+    ...data.categories.map(cat => ({
+      key: cat.nameEn, zh: cat.nameZh, en: cat.nameEn, Icon: ICON_MAP[cat.iconName || ''], cat,
+    })),
+  ];
+
+  const registerSection = (key: string) => (el: HTMLElement | null) => {
+    if (el) sectionEls.current.set(key, el);
+    else sectionEls.current.delete(key);
+  };
 
   return (
     <div className="wca-stats-index">
@@ -118,98 +174,78 @@ export default function WcaStatsIndex() {
 
       <div className="wca-stats-index-toolbar">
         <div className="wca-stats-index-tabs">
-          <button
-            className={`wca-stats-index-tab ${activeCat === TOOLS ? 'active' : ''}`}
-            onClick={() => setActiveCat(TOOLS)}
-          >
-            <Wrench size={14} strokeWidth={1.75} />
-            <span>{isZh ? '工具' : 'Tools'}</span>
-          </button>
-          <button
-            className={`wca-stats-index-tab ${activeCat === LOOKUP ? 'active' : ''}`}
-            onClick={() => setActiveCat(LOOKUP)}
-          >
-            <Search size={14} strokeWidth={1.75} />
-            <span>{isZh ? '查询' : 'Lookup'}</span>
-          </button>
-          {data.categories.map(cat => {
-            const iconKey = cat.iconName || '';
-            const Icon = ICON_MAP[iconKey];
-            const active = activeCat === cat.nameEn;
-            return (
-              <button
-                key={cat.nameEn}
-                className={`wca-stats-index-tab ${active ? 'active' : ''}`}
-                onClick={() => setActiveCat(cat.nameEn)}
-                title={isZh ? cat.nameZh : cat.nameEn}
-              >
-                {Icon && <Icon size={14} strokeWidth={1.75} />}
-                <span>{isZh ? cat.nameZh : cat.nameEn}</span>
-              </button>
-            );
-          })}
+          {sections.map(sec => (
+            <button
+              key={sec.key}
+              className={`wca-stats-index-tab ${activeKey === sec.key ? 'active' : ''}`}
+              onClick={() => jumpTo(sec.key)}
+              title={isZh ? sec.zh : sec.en}
+            >
+              {sec.Icon && <sec.Icon size={14} strokeWidth={1.75} />}
+              <span>{isZh ? sec.zh : sec.en}</span>
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="wca-stats-index-body">
-        {activeCat === TOOLS && (
-          <section className="wca-stats-index-section">
+        {sections.map(sec => (
+          <section
+            key={sec.key}
+            id={`wca-sec-${sec.key}`}
+            data-key={sec.key}
+            ref={registerSection(sec.key)}
+            className="wca-stats-index-section"
+          >
             <div className="wca-stats-index-section-header">
-              <Wrench size={18} strokeWidth={1.75} />
-              <h2>{isZh ? '工具' : 'Tools'}</h2>
+              {sec.Icon && <sec.Icon size={18} strokeWidth={1.75} />}
+              <h2>{isZh ? sec.zh : sec.en}</h2>
             </div>
-            <div className="wca-tools-grid">
-              {WCA_TOOLS.map(it => (
-                <Link key={it.path} href={`${it.path}${langQuery}`} className="wca-tool-card">
-                  <it.Icon size={28} strokeWidth={1.5} />
-                  <span>{isZh ? it.zh : it.en}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
 
-        {activeCat === LOOKUP && (
-          <section className="wca-stats-index-section">
-            <div className="wca-stats-index-section-header">
-              <Search size={18} strokeWidth={1.75} />
-              <h2>{isZh ? '查询' : 'Lookup'}</h2>
-            </div>
-            <div className="wca-stats-index-grid">
-              {LOOKUP_ITEMS.map(it => {
-                const to = it.extraQuery ? `${it.path}${langQuery}&${it.extraQuery}` : `${it.path}${langQuery}`;
-                return (
-                  <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-stats-index-card">
-                    {isZh ? it.zh : it.en}
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {browseStats.map(cat => {
-          const Icon = ICON_MAP[cat.iconName || ''];
-          return (
-            <section key={cat.nameEn} className="wca-stats-index-section">
-              <div className="wca-stats-index-section-header">
-                {Icon && <Icon size={18} strokeWidth={1.75} />}
-                <h2>{isZh ? cat.nameZh : cat.nameEn}</h2>
-              </div>
-              <div className="wca-stats-index-grid">
-                {cat.stats.map(s => (
-                  <Link
-                    key={s.id}
-                    href={`/wca/${s.id}${langQuery}`}
-                    className="wca-stats-index-card"
-                  >
-                    {isZh ? s.titleZh : s.titleEn}
+            {sec.key === TOOLS && (
+              <div className="wca-tools-grid">
+                {WCA_TOOLS.map(it => (
+                  <Link key={it.path} href={`${it.path}${langQuery}`} className="wca-tool-card">
+                    <it.Icon size={28} strokeWidth={1.5} />
+                    <span>{isZh ? it.zh : it.en}</span>
                   </Link>
                 ))}
               </div>
-            </section>
-          );
-        })}
+            )}
+
+            {sec.key === LOOKUP && (
+              <div className="wca-tools-grid">
+                {LOOKUP_ITEMS.map(it => {
+                  const to = it.extraQuery ? `${it.path}${langQuery}&${it.extraQuery}` : `${it.path}${langQuery}`;
+                  return (
+                    <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-tool-card">
+                      <it.Icon size={28} strokeWidth={1.5} />
+                      <span>{isZh ? it.zh : it.en}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
+            {sec.cat && (
+              <div className="wca-stats-index-grid">
+                {sec.cat.stats.map(s => {
+                  const StatIcon = STAT_ICONS[s.id] || sec.Icon;
+                  return (
+                    <Link
+                      key={s.id}
+                      href={`/wca/${s.id}${langQuery}`}
+                      className="wca-stat-card"
+                    >
+                      {StatIcon && <StatIcon size={18} strokeWidth={1.5} />}
+                      <span>{isZh ? s.titleZh : s.titleEn}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        ))}
       </div>
     </div>
   );

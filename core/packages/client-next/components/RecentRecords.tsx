@@ -8,6 +8,7 @@ import { Copy, Check } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import { Flag } from '@/components/Flag';
+import { ContinentIcon, RECORD_BADGE_CONTINENT } from '@/components/ContinentIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import './recent_records.css';
@@ -56,6 +57,8 @@ function renderFormatted(text: string): React.ReactNode[] {
       const iso2 = String.fromCharCode(0x61 + cp1, 0x61 + cp2);
       parts.push(<Flag key={`f${key++}`} iso2={iso2} className="recent-records-inline-flag" />);
     } else if (m[3]) {
+      const slug = RECORD_BADGE_CONTINENT[m[3]];
+      if (slug) parts.push(<ContinentIcon key={`c${key++}`} slug={slug} className="recent-records-continent-icon" />);
       parts.push(<RecordBadge key={`b${key++}`} record={m[3]} variant="inline" />);
     }
     lastEnd = m.index + m[0].length;

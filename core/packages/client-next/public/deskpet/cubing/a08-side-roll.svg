@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a08-02 Side roll across the desk.
+       2.5D 3/4 view: cube shows a FRONT 3x3 face plus a thin
+       foreshortened TOP band, reading as a solid box on the desk.
+       Technique: rolls 90deg about its leading bottom edge,
+       tumbling rightward; on each landing the face colours cycle
+       (front red->white->orange->white...) and the transform
+       resets, so it reads as a cube continuously rolling right
+       in front of clawd. Eyes (square) track it; a dust puff
+       pops at each landing. The cube top band stays below the
+       eyes (y=8) so the face is never buried.
+       8s loop, 4 quarter-rolls, colours return to start. -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box; transform-origin: 7.5px 15.5px;
+        animation: shadow 8s infinite ease-in-out;
+      }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: breathe 8s infinite ease-in-out; }
+      .eye-track { animation: eye-track 8s infinite ease-in-out; }
+      .eyes-rect  { animation: eyes-rect  8s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyes-smile 8s infinite step-end; }
+
+      @keyframes shadow {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        50%      { opacity: 0.46; transform: scaleX(0.97); }
+      }
+      @keyframes breathe {
+        0%, 100% { transform: scale(1, 1) translateY(0); }
+        50%      { transform: scale(1.012, 0.988) translateY(0.14px); }
+      }
+      @keyframes eye-track {
+        0%   { transform: translate(-0.6px, 0px); }
+        24%  { transform: translate(-0.2px, 0.1px); }
+        49%  { transform: translate(0.3px, 0.15px); }
+        74%  { transform: translate(0.7px, 0.15px); }
+        99%  { transform: translate(1.0px, 0.15px); }
+        100% { transform: translate(-0.6px, 0px); }
+      }
+      @keyframes eyes-rect  { 0% { opacity: 1; } 49% { opacity: 1; } 51% { opacity: 0; } 57% { opacity: 1; } 100% { opacity: 1; } }
+      @keyframes eyes-smile { 0% { opacity: 0; } 49% { opacity: 0; } 51% { opacity: 1; } 57% { opacity: 0; } 100% { opacity: 0; } }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <!-- torso -->
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes (square) tracking the roll -->
+    <g class="eye-track">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- arms: gentle ready bob -->
+    <rect x="0"  y="9.5" width="2" height="2" fill="#DE886D">
+      <animateTransform attributeName="transform" type="rotate"
+        values="0 1 9.5; -6 1 9.5; 0 1 9.5" keyTimes="0;0.5;1" dur="8s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="13" y="9.5" width="2" height="2" fill="#DE886D">
+      <animateTransform attributeName="transform" type="rotate"
+        values="0 14 9.5; 6 14 9.5; 0 14 9.5" keyTimes="0;0.5;1" dur="8s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- dust puffs at landings -->
+    <g fill="#C9C9CF">
+      <rect x="5.6" y="12.6" width="0.6" height="0.6">
+        <animate attributeName="opacity" values="0;0;0.7;0;0" keyTimes="0;0.20;0.25;0.33;1" dur="8s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="7.4" y="12.6" width="0.6" height="0.6">
+        <animate attributeName="opacity" values="0;0;0.7;0;0" keyTimes="0;0.45;0.50;0.58;1" dur="8s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="9.2" y="12.6" width="0.6" height="0.6">
+        <animate attributeName="opacity" values="0;0;0.7;0;0" keyTimes="0;0.70;0.75;0.83;1" dur="8s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+
+    <!-- ===== ROLLING CUBE =====
+         Front face: x 5.5..9.5, y 9..13 (4x4). Top band above it.
+         Pivot for a rightward roll = bottom-right corner (9.5,13).
+         Travel hops 4 times then resets; colours cycle each roll. -->
+    <g id="cube-travel">
+      <animateTransform attributeName="transform" type="translate"
+        values="-1.4 0; -1.4 0; -0.4 0; 0.6 0; 1.6 0; -1.4 0"
+        keyTimes="0;0.05;0.30;0.55;0.80;1"
+        dur="8s" repeatCount="indefinite"/>
+
+      <g id="roller">
+        <animateTransform attributeName="transform" type="rotate"
+          values="0 9.5 13;
+                  0 9.5 13; -90 9.5 13;
+                  0 9.5 13; -90 9.5 13;
+                  0 9.5 13; -90 9.5 13;
+                  0 9.5 13; -90 9.5 13; -90 9.5 13"
+          keyTimes="0;
+                    0.05;0.24;
+                    0.30;0.49;
+                    0.55;0.74;
+                    0.80;0.99;1"
+          calcMode="spline"
+          keySplines="0 0 1 1;
+                      .42 0 .12 1;.42 0 .12 1;
+                      .42 0 .12 1;.42 0 .12 1;
+                      .42 0 .12 1;.42 0 .12 1;
+                      .42 0 .12 1;0 0 1 1"
+          dur="8s" repeatCount="indefinite"/>
+
+        <!-- TOP face band: parallelogram receding up-right.
+             front-top edge (5.5,9)-(9.5,9); back-top shifted
+             up-right (6.6,7.9)-(10.6,7.9). 3 stickers cycle. -->
+        <polygon points="5.5,9 9.5,9 10.6,7.9 6.6,7.9" fill="#0e0e12"/>
+        <polygon points="5.65,8.9 6.95,8.9 8.0,8.0 6.7,8.0" fill="#FAFAFA">
+          <animate attributeName="fill" values="#FAFAFA;#FAFAFA;#00A04A;#FDD500;#0E5FD9;#FAFAFA"
+            keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/>
+        </polygon>
+        <polygon points="7.1,8.9 8.4,8.9 9.45,8.0 8.15,8.0" fill="#FAFAFA">
+          <animate attributeName="fill" values="#FAFAFA;#FAFAFA;#00A04A;#FDD500;#0E5FD9;#FAFAFA"
+            keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/>
+        </polygon>
+        <polygon points="8.55,8.9 9.85,8.9 10.5,8.0 9.6,8.0" fill="#FAFAFA">
+          <animate attributeName="fill" values="#FAFAFA;#FAFAFA;#00A04A;#FDD500;#0E5FD9;#FAFAFA"
+            keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/>
+        </polygon>
+
+        <!-- FRONT face 3x3: each sticker cycles red->white->orange->blue
+             so each quarter-roll lands a new face colour. size 1.1, gap 0.1 -->
+        <rect x="5.5" y="9" width="4" height="4" fill="#0e0e12"/>
+        <g>
+          <rect x="5.65" y="9.15"  width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="6.95" y="9.15"  width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="8.25" y="9.15"  width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="5.65" y="10.45" width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="6.95" y="10.45" width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="8.25" y="10.45" width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="5.65" y="11.75" width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="6.95" y="11.75" width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="8.25" y="11.75" width="1.1" height="1.1" fill="#E02029"><animate attributeName="fill" values="#E02029;#E02029;#FAFAFA;#FF7A00;#0E5FD9;#E02029" keyTimes="0;0.24;0.49;0.74;0.99;1" calcMode="discrete" dur="8s" repeatCount="indefinite"/></rect>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

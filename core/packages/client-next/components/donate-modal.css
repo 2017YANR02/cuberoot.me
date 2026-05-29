@@ -1,0 +1,211 @@
+.donate-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 23, 22, 0.55);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: donate-fade 0.15s ease-out;
+}
+
+@keyframes donate-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.donate-modal {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border-dark);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    padding: 1.5rem 1.75rem 1.25rem;
+    max-width: 560px;
+    width: 100%;
+    color: var(--text);
+}
+
+.donate-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-sub);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.donate-close:hover {
+    color: var(--text);
+    background: var(--accent-soft);
+}
+
+.donate-title {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text);
+}
+
+.donate-qr-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.donate-qr {
+    margin: 0;
+    flex: 1 1 0;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.donate-qr img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+    background: #fff;
+    display: block;
+}
+
+.donate-qr figcaption {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+}
+
+.donate-contact {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-dark);
+    border-radius: 10px;
+    background: var(--accent-soft);
+    font-size: 0.8rem;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.donate-contact-row {
+    display: grid;
+    grid-template-columns: 6em 1fr;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.donate-contact dt {
+    margin: 0;
+    color: var(--text-sub);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.donate-contact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    color: var(--text-sub);
+    flex: 0 0 auto;
+}
+
+
+.donate-contact dd {
+    margin: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.donate-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-dark);
+    border-radius: 5px;
+    padding: 2px 5px;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.donate-copy-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--surface);
+}
+
+.donate-copy-btn:active {
+    transform: translateY(1px);
+}
+
+/* Link-only rows (YouTube / Bilibili): icon-label clickable, no value column */
+.donate-contact-row-link-wrap {
+    grid-template-columns: 1fr;
+}
+
+.donate-contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-sub);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s;
+    width: fit-content;
+}
+
+.donate-contact-link:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.donate-contact code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+}
+
+.donate-contact a {
+    color: var(--text-sub);
+    text-decoration: none;
+}
+
+.donate-contact a:hover {
+    text-decoration: underline;
+}
+
+.donate-thanks {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-sub);
+}
+
+@media (max-width: 600px) {
+    .donate-qr-row {
+        flex-direction: column;
+        align-items: center;
+    }
+    .donate-qr {
+        max-width: 260px;
+    }
+}

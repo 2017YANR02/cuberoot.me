@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a03-lcd-twist: pixel/LCD sprite frames of a 2.5D cube doing U-layer turns.
+       The cube shows a top (U) face + a front (F) face. 4 discrete frames flipped
+       by CSS steps(4) rotate the U layer in 90-deg snaps: the 8 outer top stickers
+       cycle clockwise and the front face's top row changes colour as new side
+       comes around. 4 quarter-turns = 360 deg, so it loops seamlessly. A faint
+       LCD scanline-flicker overlay sells the retro display. Clawd watches it turn,
+       quick double-blink. Crisp flat WCA quads, dark gaps, no blur. -->
+  <defs>
+    <style>
+      #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px;
+        animation: shadow 4.8s infinite ease-in-out; }
+      .breathe { transform-box: view-box; transform-origin: 7.5px 13px;
+        animation: breathe 4.8s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 100% 50%;
+        animation: arm-l 4.8s infinite steps(4); }
+      .arm-r { transform-box: fill-box; transform-origin: 0% 50%;
+        animation: arm-r 4.8s infinite steps(4); }
+      .eyes-grp { transform-box: view-box; transform-origin: 7.5px 9px;
+        animation: blink 4.8s infinite ease-in-out; }
+
+      /* 4 twist frames, crisp quarter snaps */
+      .tf { opacity: 0; }
+      #t0 { animation: t0 4.8s infinite steps(1); }
+      #t1 { animation: t1 4.8s infinite steps(1); }
+      #t2 { animation: t2 4.8s infinite steps(1); }
+      #t3 { animation: t3 4.8s infinite steps(1); }
+      @keyframes t0 { 0%,25% { opacity:1 } 25.01%,100% { opacity:0 } }
+      @keyframes t1 { 0%,25% { opacity:0 } 25.01%,50% { opacity:1 } 50.01%,100% { opacity:0 } }
+      @keyframes t2 { 0%,50% { opacity:0 } 50.01%,75% { opacity:1 } 75.01%,100% { opacity:0 } }
+      @keyframes t3 { 0%,75% { opacity:0 } 75.01%,100% { opacity:1 } }
+
+      /* LCD scanline flicker — very faint, fast, retro display feel */
+      .scan { opacity: 0.08; animation: scan 0.4s infinite steps(2); }
+
+      @keyframes shadow {
+        0%,100% { opacity:0.5; transform: scaleX(1); }
+        50%     { opacity:0.46; transform: scaleX(0.97); }
+      }
+      @keyframes breathe {
+        0%,100% { transform: scale(1,1) translateY(0); }
+        50%     { transform: scale(1.012,0.988) translateY(0.15px); }
+      }
+      /* hands give a little turning nudge on each quarter snap */
+      @keyframes arm-l {
+        0%   { transform: rotate(0deg) translate(0.3px,-0.3px); }
+        25%  { transform: rotate(6deg) translate(0.45px,-0.5px); }
+        50%  { transform: rotate(0deg) translate(0.3px,-0.3px); }
+        75%  { transform: rotate(6deg) translate(0.45px,-0.5px); }
+        100% { transform: rotate(0deg) translate(0.3px,-0.3px); }
+      }
+      @keyframes arm-r {
+        0%   { transform: rotate(0deg) translate(-0.3px,-0.3px); }
+        25%  { transform: rotate(-6deg) translate(-0.45px,-0.5px); }
+        50%  { transform: rotate(0deg) translate(-0.3px,-0.3px); }
+        75%  { transform: rotate(-6deg) translate(-0.45px,-0.5px); }
+        100% { transform: rotate(0deg) translate(-0.3px,-0.3px); }
+      }
+      @keyframes blink {
+        0%,40%,46%,88%,94%,100% { transform: scaleY(1); }
+        43%,91%                 { transform: scaleY(0.12); }
+      }
+      @keyframes scan { 0% { opacity:0.05 } 100% { opacity:0.12 } }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <!-- legs static -->
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <!-- torso -->
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes -->
+    <g class="eyes-grp" fill="#000">
+      <rect x="4" y="8" width="1" height="2"/>
+      <rect x="10" y="8" width="1" height="2"/>
+    </g>
+
+    <!-- arms -->
+    <rect class="arm-l" x="0"  y="10" width="2" height="2" fill="#DE886D"/>
+    <rect class="arm-r" x="13" y="10" width="2" height="2" fill="#DE886D"/>
+
+    <!-- ===== CUBE: 2.5D top(U)+front(F), 4 U-turn frames ===== -->
+    <!-- Front face square: corners (5.7,10.2)(9.3,10.2)(9.3,13.4)(5.7,13.4),
+         drawn as 3x3 = 1.1 cells. Top face rhombus sits above the front-top edge.
+         Top rhombus corners: FL(5.7,10.2) FR(9.3,10.2) BR(10.4,9.0) BL(6.8,9.0).
+         Front face stays solid red (F never moves on a U turn). Top face U
+         stickers rotate; the FRONT-TOP edge sticker (front face row0) changes
+         colour each quarter (the side colour rotating into view). -->
+    <g id="cube-stage">
+
+      <!-- ============ T0 ============ -->
+      <g id="t0" class="tf">
+        <!-- top face base (dark) -->
+        <polygon points="5.7,10.2 9.3,10.2 10.4,9.0 6.8,9.0" fill="#0e0e12"/>
+        <!-- front face base (dark) -->
+        <polygon points="5.7,10.2 9.3,10.2 9.3,13.4 5.7,13.4" fill="#0e0e12"/>
+        <!-- TOP FACE 3x3 (U = white solved-ish, with one yellow corner marker) -->
+        <!-- row back -->
+        <polygon points="6.93,9.13 8.07,9.13 8.45,8.83 7.31,8.83" fill="#FAFAFA"/>
+        <polygon points="8.2,9.13 9.34,9.13 9.72,8.83 8.58,8.83"  fill="#FAFAFA"/>
+        <polygon points="9.47,9.13 10.27,9.13 10.27,9.05 9.85,8.83" fill="#FDD500"/>
+        <!-- row mid -->
+        <polygon points="6.55,9.5 7.69,9.5 8.07,9.2 6.93,9.2" fill="#FAFAFA"/>
+        <polygon points="7.82,9.5 8.96,9.5 9.34,9.2 8.2,9.2"  fill="#FAFAFA"/>
+        <polygon points="9.09,9.5 10.05,9.5 10.4,9.2 9.47,9.2" fill="#FAFAFA"/>
+        <!-- row front -->
+        <polygon points="5.78,10.12 7.55,10.12 7.69,9.57 6.55,9.57" fill="#00A04A"/>
+        <polygon points="7.62,10.12 8.62,10.12 8.96,9.57 7.82,9.57" fill="#FAFAFA"/>
+        <polygon points="8.69,10.12 9.22,10.12 9.97,9.57 9.09,9.57" fill="#FAFAFA"/>
+        <!-- FRONT FACE 3x3 (red, top row = green side coming round on T0) -->
+        <!-- row0 (top, the moving edge) -->
+        <rect x="5.85" y="10.35" width="1.06" height="0.92" fill="#00A04A"/>
+        <rect x="6.97" y="10.35" width="1.06" height="0.92" fill="#00A04A"/>
+        <rect x="8.09" y="10.35" width="1.06" height="0.92" fill="#00A04A"/>
+        <!-- row1 -->
+        <rect x="5.85" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <!-- row2 -->
+        <rect x="5.85" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+      </g>
+
+      <!-- ============ T1 (U turned 90: top corner marker moved, front edge -> red) ============ -->
+      <g id="t1" class="tf">
+        <polygon points="5.7,10.2 9.3,10.2 10.4,9.0 6.8,9.0" fill="#0e0e12"/>
+        <polygon points="5.7,10.2 9.3,10.2 9.3,13.4 5.7,13.4" fill="#0e0e12"/>
+        <polygon points="6.93,9.13 8.07,9.13 8.45,8.83 7.31,8.83" fill="#FDD500"/>
+        <polygon points="8.2,9.13 9.34,9.13 9.72,8.83 8.58,8.83"  fill="#FAFAFA"/>
+        <polygon points="9.47,9.13 10.27,9.13 10.27,9.05 9.85,8.83" fill="#FAFAFA"/>
+        <polygon points="6.55,9.5 7.69,9.5 8.07,9.2 6.93,9.2" fill="#FAFAFA"/>
+        <polygon points="7.82,9.5 8.96,9.5 9.34,9.2 8.2,9.2"  fill="#FAFAFA"/>
+        <polygon points="9.09,9.5 10.05,9.5 10.4,9.2 9.47,9.2" fill="#FAFAFA"/>
+        <polygon points="5.78,10.12 7.55,10.12 7.69,9.57 6.55,9.57" fill="#FAFAFA"/>
+        <polygon points="7.62,10.12 8.62,10.12 8.96,9.57 7.82,9.57" fill="#FAFAFA"/>
+        <polygon points="8.69,10.12 9.22,10.12 9.97,9.57 9.09,9.57" fill="#FF7A00"/>
+        <!-- front face: top row now orange side -->
+        <rect x="5.85" y="10.35" width="1.06" height="0.92" fill="#FF7A00"/>
+        <rect x="6.97" y="10.35" width="1.06" height="0.92" fill="#FF7A00"/>
+        <rect x="8.09" y="10.35" width="1.06" height="0.92" fill="#FF7A00"/>
+        <rect x="5.85" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="5.85" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+      </g>
+
+      <!-- ============ T2 (U turned 180) ============ -->
+      <g id="t2" class="tf">
+        <polygon points="5.7,10.2 9.3,10.2 10.4,9.0 6.8,9.0" fill="#0e0e12"/>
+        <polygon points="5.7,10.2 9.3,10.2 9.3,13.4 5.7,13.4" fill="#0e0e12"/>
+        <polygon points="6.93,9.13 8.07,9.13 8.45,8.83 7.31,8.83" fill="#FAFAFA"/>
+        <polygon points="8.2,9.13 9.34,9.13 9.72,8.83 8.58,8.83"  fill="#FAFAFA"/>
+        <polygon points="9.47,9.13 10.27,9.13 10.27,9.05 9.85,8.83" fill="#FAFAFA"/>
+        <polygon points="6.55,9.5 7.69,9.5 8.07,9.2 6.93,9.2" fill="#FAFAFA"/>
+        <polygon points="7.82,9.5 8.96,9.5 9.34,9.2 8.2,9.2"  fill="#FAFAFA"/>
+        <polygon points="9.09,9.5 10.05,9.5 10.4,9.2 9.47,9.2" fill="#FAFAFA"/>
+        <polygon points="5.78,10.12 7.55,10.12 7.69,9.57 6.55,9.57" fill="#FDD500"/>
+        <polygon points="7.62,10.12 8.62,10.12 8.96,9.57 7.82,9.57" fill="#FAFAFA"/>
+        <polygon points="8.69,10.12 9.22,10.12 9.97,9.57 9.09,9.57" fill="#00A04A"/>
+        <!-- front face: top row now blue side -->
+        <rect x="5.85" y="10.35" width="1.06" height="0.92" fill="#0E5FD9"/>
+        <rect x="6.97" y="10.35" width="1.06" height="0.92" fill="#0E5FD9"/>
+        <rect x="8.09" y="10.35" width="1.06" height="0.92" fill="#0E5FD9"/>
+        <rect x="5.85" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="5.85" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+      </g>
+
+      <!-- ============ T3 (U turned 270) ============ -->
+      <g id="t3" class="tf">
+        <polygon points="5.7,10.2 9.3,10.2 10.4,9.0 6.8,9.0" fill="#0e0e12"/>
+        <polygon points="5.7,10.2 9.3,10.2 9.3,13.4 5.7,13.4" fill="#0e0e12"/>
+        <polygon points="6.93,9.13 8.07,9.13 8.45,8.83 7.31,8.83" fill="#FAFAFA"/>
+        <polygon points="8.2,9.13 9.34,9.13 9.72,8.83 8.58,8.83"  fill="#FAFAFA"/>
+        <polygon points="9.47,9.13 10.27,9.13 10.27,9.05 9.85,8.83" fill="#FAFAFA"/>
+        <polygon points="6.55,9.5 7.69,9.5 8.07,9.2 6.93,9.2" fill="#FAFAFA"/>
+        <polygon points="7.82,9.5 8.96,9.5 9.34,9.2 8.2,9.2"  fill="#FAFAFA"/>
+        <polygon points="9.09,9.5 10.05,9.5 10.4,9.2 9.47,9.2" fill="#FDD500"/>
+        <polygon points="5.78,10.12 7.55,10.12 7.69,9.57 6.55,9.57" fill="#FAFAFA"/>
+        <polygon points="7.62,10.12 8.62,10.12 8.96,9.57 7.82,9.57" fill="#FAFAFA"/>
+        <polygon points="8.69,10.12 9.22,10.12 9.97,9.57 9.09,9.57" fill="#FAFAFA"/>
+        <!-- front face: top row now white side -->
+        <rect x="5.85" y="10.35" width="1.06" height="0.92" fill="#FAFAFA"/>
+        <rect x="6.97" y="10.35" width="1.06" height="0.92" fill="#FAFAFA"/>
+        <rect x="8.09" y="10.35" width="1.06" height="0.92" fill="#FAFAFA"/>
+        <rect x="5.85" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="11.33" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="5.85" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="6.97" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+        <rect x="8.09" y="12.31" width="1.06" height="0.92" fill="#E02029"/>
+      </g>
+
+      <!-- sticker seams + LCD scanlines overlay (covers whole cube) -->
+      <g class="scan">
+        <rect x="5.7" y="10.6" width="3.6" height="0.12" fill="#000"/>
+        <rect x="5.7" y="11.4" width="3.6" height="0.12" fill="#000"/>
+        <rect x="5.7" y="12.2" width="3.6" height="0.12" fill="#000"/>
+        <rect x="5.7" y="13.0" width="3.6" height="0.12" fill="#000"/>
+      </g>
+    </g>
+  </g>
+</svg>

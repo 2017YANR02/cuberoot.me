@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a06-01 layer-solve (agent 6, theme: scramble then solve)
+       Concept: clawd cradles a 3x3 face. The 9 stickers start scrambled
+       (mixed WCA colours), then over a short alg the colours re-sort and
+       snap to a solved green face, then the loop reseeds the scramble.
+       T1-style: each sticker is its own quad, colours cycle via step-end;
+       a right-column "twist" overlay squashes (reads as a 90deg layer turn)
+       and the hands give little turning nudges on the snaps.
+       Static fills = the scrambled rest state (frame 0). 8s loop.
+       Cube spans x5.2..10 y9..12.6 (belly, below the eye row at y=8).      -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: shadow-ls 8s infinite ease-in-out;
+      }
+      .body-breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: breathe-ls 8s infinite ease-in-out;
+      }
+      .arm-l, .arm-r { transform-box: fill-box; }
+      .arm-l { transform-origin: 0% 50%;   animation: arm-l-ls 8s infinite ease-in-out; }
+      .arm-r { transform-origin: 100% 50%; animation: arm-r-ls 8s infinite ease-in-out; }
+
+      .eyes { transform-box: view-box; transform-origin: 7.5px 9px; }
+      .eyes-rect  { animation: eyes-rect-ls  8s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyes-smile-ls 8s infinite step-end; }
+
+      .cube { transform-box: view-box; transform-origin: 7.4px 11.9px; animation: cube-jerk 8s infinite ease-in-out; }
+
+      .st { stroke: #16161b; stroke-width: 0.16; }
+      .s0 { animation: c0 8s infinite step-end; }
+      .s1 { animation: c1 8s infinite step-end; }
+      .s2 { animation: c2 8s infinite step-end; }
+      .s3 { animation: c3 8s infinite step-end; }
+      .s4 { animation: c4 8s infinite step-end; }
+      .s5 { animation: c5 8s infinite step-end; }
+      .s6 { animation: c6 8s infinite step-end; }
+      .s7 { animation: c7 8s infinite step-end; }
+      .s8 { animation: c8 8s infinite step-end; }
+
+      .twist-col { transform-box: view-box; transform-origin: 8.84px 11.9px; animation: twist-col 8s infinite ease-in-out; }
+
+      @keyframes shadow-ls {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        12%, 28%, 44% { opacity: 0.42; transform: scaleX(0.92); }
+        72% { opacity: 0.55; transform: scaleX(1.05); }
+      }
+      @keyframes breathe-ls {
+        0%, 100% { transform: scale(1,1) translateY(0); }
+        50% { transform: scale(1.01,0.99) translateY(0.12px); }
+      }
+      @keyframes arm-l-ls {
+        0%, 100% { transform: rotate(0deg); }
+        12% { transform: rotate(-12deg); }
+        15% { transform: rotate(3deg); }
+        28% { transform: rotate(-12deg); }
+        31% { transform: rotate(3deg); }
+        44% { transform: rotate(-12deg); }
+        47% { transform: rotate(3deg); }
+        72% { transform: rotate(0deg); }
+      }
+      @keyframes arm-r-ls {
+        0%, 100% { transform: rotate(0deg); }
+        12% { transform: rotate(12deg); }
+        15% { transform: rotate(-3deg); }
+        28% { transform: rotate(12deg); }
+        31% { transform: rotate(-3deg); }
+        44% { transform: rotate(12deg); }
+        47% { transform: rotate(-3deg); }
+        72% { transform: rotate(0deg); }
+      }
+      @keyframes cube-jerk {
+        0%, 8% { transform: rotate(0deg) scale(1); }
+        12% { transform: rotate(-6deg) scale(1); }
+        16% { transform: rotate(0deg) scale(1); }
+        24% { transform: rotate(0deg) scale(1); }
+        28% { transform: rotate(5deg) scale(1); }
+        32% { transform: rotate(0deg) scale(1); }
+        40% { transform: rotate(0deg) scale(1); }
+        44% { transform: rotate(-4deg) scale(1); }
+        48% { transform: rotate(0deg) scale(1); }
+        72%, 80% { transform: rotate(0deg) scale(1); }
+        74% { transform: rotate(0deg) scale(1.08); }
+        100% { transform: rotate(0deg) scale(1); }
+      }
+      @keyframes twist-col {
+        0%, 24% { opacity: 0; transform: scaleX(1); }
+        25% { opacity: 1; transform: scaleX(1); }
+        28% { opacity: 1; transform: scaleX(0.12); }
+        31% { opacity: 1; transform: scaleX(1); }
+        33% { opacity: 0; transform: scaleX(1); }
+        100% { opacity: 0; }
+      }
+
+      /* COLOUR SCRIPTS — solved colour = green #00A04A.
+         0-12% scramble hold; snaps at 12 / 28 / 44; solved 44-100%. */
+      @keyframes c0 { 0%{fill:#FDD500;} 12%{fill:#FF7A00;} 28%{fill:#00A04A;} 44%,100%{fill:#00A04A;} }
+      @keyframes c1 { 0%{fill:#0E5FD9;} 12%{fill:#00A04A;} 28%{fill:#00A04A;} 44%,100%{fill:#00A04A;} }
+      @keyframes c2 { 0%{fill:#E02029;} 12%{fill:#0E5FD9;} 28%{fill:#FDD500;} 44%,100%{fill:#00A04A;} }
+      @keyframes c3 { 0%{fill:#00A04A;} 12%{fill:#00A04A;} 28%{fill:#00A04A;} 44%,100%{fill:#00A04A;} }
+      @keyframes c4 { 0%{fill:#FF7A00;} 12%{fill:#FDD500;} 28%{fill:#00A04A;} 44%,100%{fill:#00A04A;} }
+      @keyframes c5 { 0%{fill:#FAFAFA;} 12%{fill:#E02029;} 28%{fill:#0E5FD9;} 44%,100%{fill:#00A04A;} }
+      @keyframes c6 { 0%{fill:#00A04A;} 12%{fill:#FAFAFA;} 28%{fill:#00A04A;} 44%,100%{fill:#00A04A;} }
+      @keyframes c7 { 0%{fill:#FDD500;} 12%{fill:#00A04A;} 28%{fill:#FAFAFA;} 44%,100%{fill:#00A04A;} }
+      @keyframes c8 { 0%{fill:#0E5FD9;} 12%{fill:#FF7A00;} 28%{fill:#FDD500;} 44%,100%{fill:#00A04A;} }
+
+      @keyframes eyes-rect-ls  { 0%{opacity:1;} 72%{opacity:0;} 90%{opacity:1;} }
+      @keyframes eyes-smile-ls { 0%{opacity:0;} 72%{opacity:1;} 90%{opacity:0;} }
+
+      .spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: spark-ls 8s infinite ease-out; }
+      @keyframes spark-ls {
+        0%, 70%, 92%, 100% { opacity: 0; transform: scale(0.4); }
+        72% { opacity: 1; transform: scale(1.3); }
+        78% { opacity: 1; transform: scale(1); }
+        88% { opacity: 0.3; transform: scale(0.6); }
+      }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <!-- legs static -->
+  <g fill="#DE886D">
+    <rect x="3"  y="13" width="1" height="2"/>
+    <rect x="5"  y="13" width="1" height="2"/>
+    <rect x="9"  y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="body-breathe">
+    <!-- torso -->
+    <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+    <!-- eyes -->
+    <g class="eyes">
+      <g class="eyes-rect" fill="#000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+    </g>
+
+    <!-- CUBE: 3x3 face held at the belly, x5.1..9.7 y9.7..14.3 -->
+    <g class="cube">
+      <rect x="5.1" y="9.6" width="4.6" height="4.6" fill="#0e0e12"/>
+      <!-- stickers 1.28 wide, 0.18 gap; origin x=5.28 y=9.78.
+           Static fill = scramble (0%) so resvg shows the scramble at rest. -->
+      <rect class="st s0" x="5.28" y="9.78"  width="1.28" height="1.28" fill="#FDD500"/>
+      <rect class="st s1" x="6.74" y="9.78"  width="1.28" height="1.28" fill="#0E5FD9"/>
+      <rect class="st s2" x="8.20" y="9.78"  width="1.28" height="1.28" fill="#E02029"/>
+      <rect class="st s3" x="5.28" y="11.24" width="1.28" height="1.28" fill="#00A04A"/>
+      <rect class="st s4" x="6.74" y="11.24" width="1.28" height="1.28" fill="#FF7A00"/>
+      <rect class="st s5" x="8.20" y="11.24" width="1.28" height="1.28" fill="#FAFAFA"/>
+      <rect class="st s6" x="5.28" y="12.70" width="1.28" height="1.28" fill="#00A04A"/>
+      <rect class="st s7" x="6.74" y="12.70" width="1.28" height="1.28" fill="#FDD500"/>
+      <rect class="st s8" x="8.20" y="12.70" width="1.28" height="1.28" fill="#0E5FD9"/>
+
+      <!-- right-column twist overlay (hidden at rest, opacity 0 default) -->
+      <g class="twist-col" opacity="0">
+        <rect x="8.20" y="9.78"  width="1.28" height="1.28" fill="#FAFAFA" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="11.24" width="1.28" height="1.28" fill="#0E5FD9" stroke="#16161b" stroke-width="0.16"/>
+        <rect x="8.20" y="12.70" width="1.28" height="1.28" fill="#FDD500" stroke="#16161b" stroke-width="0.16"/>
+      </g>
+    </g>
+
+    <!-- arms grip cube sides (re-posed statically to the cube edges; the
+         animation rotates them around the grip point for turning nudges) -->
+    <g fill="#DE886D">
+      <rect class="arm-l" x="3.3"  y="11.0" width="2" height="2"/>
+      <rect class="arm-r" x="9.5"  y="11.0" width="2" height="2"/>
+    </g>
+
+    <!-- "solved!" sparkle, top-right of cube -->
+    <g class="spark" fill="#FFE066">
+      <rect x="10.2" y="8.4" width="1" height="0.6"/>
+      <rect x="10.2" y="9.0" width="1" height="1"/>
+      <rect x="10.2" y="10.0" width="1" height="0.6"/>
+      <rect x="9.2"  y="9.0" width="1" height="1"/>
+      <rect x="11.2" y="9.0" width="1" height="1"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="500" height="500">
+  <!-- a08-01 Top-down U-turn.
+       Camera looks straight down on the U face of a 3x3.
+       The 9 top stickers form a 3x3 grid centred at (7.5, 10.5)
+       so it sits on clawd's belly with the eyes (y=8) clear above.
+       Technique T1: the U layer rotates 90deg CW and snaps every
+       beat, cycling 4 quarter turns back to solved over one loop.
+       Solved U face = white; coloured side tabs hang over each
+       edge so a quarter turn visibly rearranges the ring.
+       Centre stays white (never moves).
+       The ring rotation uses SMIL animateTransform with explicit
+       centre (rotate ... 7.5 10.5) for crisp 90deg snaps; body
+       breathe / look-down / eye-swap use CSS @keyframes house
+       style. 6s seamless loop. -->
+  <defs>
+    <style>
+      #ground-shadow {
+        transform-box: view-box;
+        transform-origin: 7.5px 15.5px;
+        animation: shadow 6s infinite ease-in-out;
+      }
+      .breathe {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: breathe 6s infinite ease-in-out;
+      }
+      .look-down {
+        transform-box: view-box;
+        transform-origin: 7.5px 13px;
+        animation: look-down 6s infinite ease-in-out;
+      }
+      .eyes-rect  { animation: eyes-rect  6s infinite step-end; }
+      .eyes-smile { opacity: 0; animation: eyes-smile 6s infinite step-end; }
+
+      @keyframes shadow {
+        0%, 100% { opacity: 0.5; transform: scaleX(1); }
+        50%      { opacity: 0.44; transform: scaleX(0.96); }
+      }
+      @keyframes breathe {
+        0%, 100% { transform: scale(1, 1) translateY(0); }
+        50%      { transform: scale(1.01, 0.99) translateY(0.12px); }
+      }
+      @keyframes look-down {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50%      { transform: translateY(0.22px) rotate(0.5deg); }
+      }
+      @keyframes eyes-rect  { 0% { opacity: 1; } 22% { opacity: 1; } 24% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 1; } }
+      @keyframes eyes-smile { 0% { opacity: 0; } 22% { opacity: 0; } 24% { opacity: 1; } 30% { opacity: 0; } 100% { opacity: 0; } }
+    </style>
+  </defs>
+
+  <rect id="ground-shadow" x="3" y="15" width="9" height="1" fill="#000" opacity="0.5"/>
+
+  <g fill="#DE886D">
+    <rect x="3" y="13" width="1" height="2"/>
+    <rect x="5" y="13" width="1" height="2"/>
+    <rect x="9" y="13" width="1" height="2"/>
+    <rect x="11" y="13" width="1" height="2"/>
+  </g>
+
+  <g class="breathe">
+    <g class="look-down">
+      <!-- torso -->
+      <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
+
+      <!-- eyes (square) -->
+      <g class="eyes-rect" fill="#000">
+        <rect x="4"  y="8" width="1" height="2"/>
+        <rect x="10" y="8" width="1" height="2"/>
+      </g>
+      <g class="eyes-smile" fill="none" stroke="#000" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3.5,9 4.5,8 5.5,9"/>
+        <polyline points="9.5,9 10.5,8 11.5,9"/>
+      </g>
+
+      <!-- arms reach down+inward to cradle the cube on the belly.
+           gentle nudge in/out synced to the breathe loop. -->
+      <g fill="#DE886D">
+        <rect x="0" y="10.5" width="2" height="2">
+          <animateTransform attributeName="transform" type="translate"
+            values="0.7,-1.4; 0.4,-1.2; 0.7,-1.4" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="13" y="10.5" width="2" height="2">
+          <animateTransform attributeName="transform" type="translate"
+            values="-0.7,-1.4; -0.4,-1.2; -0.7,-1.4" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+
+      <!-- ===== TOP-DOWN CUBE (U face), centred at 7.5,10.5 =====
+           dark cube body / edge -->
+      <rect x="5.0" y="8.0" width="5.0" height="5.0" fill="#0e0e12"/>
+
+      <!-- centre sticker: never rotates, always white -->
+      <rect x="6.9" y="9.9" width="1.2" height="1.2" fill="#FAFAFA"/>
+
+      <!-- rotating ring of 8 white stickers + coloured edge tabs.
+           SMIL rotate with explicit centre 7.5 10.5. discrete-ish
+           snap: ease then hold via spline keyTimes. -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate"
+          values="0 7.5 10.5;
+                  0 7.5 10.5; 90 7.5 10.5; 90 7.5 10.5;
+                  90 7.5 10.5; 180 7.5 10.5; 180 7.5 10.5;
+                  180 7.5 10.5; 270 7.5 10.5; 270 7.5 10.5;
+                  270 7.5 10.5; 360 7.5 10.5; 360 7.5 10.5"
+          keyTimes="0;
+                    0.04;0.20;0.29;
+                    0.29;0.45;0.54;
+                    0.54;0.70;0.79;
+                    0.79;0.95;1"
+          calcMode="spline"
+          keySplines="0 0 1 1;
+                      .5 0 .2 1;0 0 1 1;0 0 1 1;
+                      .5 0 .2 1;0 0 1 1;0 0 1 1;
+                      .5 0 .2 1;0 0 1 1;0 0 1 1;
+                      .5 0 .2 1;0 0 1 1"
+          dur="6s" repeatCount="indefinite"/>
+
+        <rect x="5.3" y="8.3"  width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="6.9" y="8.3"  width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="8.5" y="8.3"  width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="8.5" y="9.9"  width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="8.5" y="11.5" width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="6.9" y="11.5" width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="5.3" y="11.5" width="1.2" height="1.2" fill="#FAFAFA"/>
+        <rect x="5.3" y="9.9"  width="1.2" height="1.2" fill="#FAFAFA"/>
+
+        <!-- top edge tabs (red) -->
+        <rect x="5.3" y="7.8"  width="1.2" height="0.5" fill="#E02029"/>
+        <rect x="6.9" y="7.8"  width="1.2" height="0.5" fill="#E02029"/>
+        <rect x="8.5" y="7.8"  width="1.2" height="0.5" fill="#E02029"/>
+        <!-- right edge tabs (green) -->
+        <rect x="9.7" y="8.3"  width="0.5" height="1.2" fill="#00A04A"/>
+        <rect x="9.7" y="9.9"  width="0.5" height="1.2" fill="#00A04A"/>
+        <rect x="9.7" y="11.5" width="0.5" height="1.2" fill="#00A04A"/>
+        <!-- bottom edge tabs (orange) -->
+        <rect x="5.3" y="12.7" width="1.2" height="0.5" fill="#FF7A00"/>
+        <rect x="6.9" y="12.7" width="1.2" height="0.5" fill="#FF7A00"/>
+        <rect x="8.5" y="12.7" width="1.2" height="0.5" fill="#FF7A00"/>
+        <!-- left edge tabs (blue) -->
+        <rect x="4.8" y="8.3"  width="0.5" height="1.2" fill="#0E5FD9"/>
+        <rect x="4.8" y="9.9"  width="0.5" height="1.2" fill="#0E5FD9"/>
+        <rect x="4.8" y="11.5" width="0.5" height="1.2" fill="#0E5FD9"/>
+      </g>
+    </g>
+  </g>
+</svg>

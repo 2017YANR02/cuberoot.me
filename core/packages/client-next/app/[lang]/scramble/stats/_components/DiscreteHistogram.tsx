@@ -266,7 +266,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           return (
             <div
               key={`lg${i}`}
-              className={`scramble-hist-legend-chips${clickable ? ' clickable' : ''}`}
+              className={`scramble-hist-legend-chips${clickable ? ' clickable' : ''}${chips.length === 4 ? ' is-quad' : ''}`}
               onClick={s.onLegendClick}
               title={clickable ? s.legendHint : undefined}
             >
