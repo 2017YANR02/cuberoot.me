@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRustCrossPool, type RustCrossPool } from '@/lib/rust-cross-client';
 
-export type StepMetric = 'xc' | 'xxc' | 'xxxc';
-const VARIANT: Record<StepMetric, number> = { xc: 1, xxc: 2, xxxc: 3 };
+export type StepMetric = 'xc' | 'xxc' | 'xxxc' | 'xxxxc';
+const VARIANT: Record<StepMetric, number> = { xc: 1, xxc: 2, xxxc: 3, xxxxc: 4 };
 
 // BADGE_ORDER [White,Yellow,Red,Orange,Blue,Green] → Rust 面序号 (D0 U1 L2 R3 F4 B5)。
 // solved 朝向 U=White D=Yellow F=Green B=Blue R=Red L=Orange(见 lib/cross-solver),

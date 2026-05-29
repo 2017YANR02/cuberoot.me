@@ -14,24 +14,7 @@ export function crossDigits(scramble: string): number[] | null {
   return BADGE_ORDER.map((c) => r[c]);
 }
 
-// Which color base the distribution counts. white = U only; wy = best of
-// white/yellow; cn = best of all six (full colour-neutral).
-export type ColorBase = 'white' | 'wy' | 'cn';
-
-export const COLOR_BASES: readonly ColorBase[] = ['white', 'wy', 'cn'];
-
-export const COLOR_BASE_LABEL: Record<ColorBase, { zh: string; en: string }> = {
-  white: { zh: '只看白底', en: 'White only' },
-  wy: { zh: '白黄取优', en: 'White / Yellow' },
-  cn: { zh: '六色底取优', en: 'Full CN' },
-};
-
-/** Reduce a 6-colour digit array (BADGE_ORDER) to the value counted under `base`. */
-export function baseValue(digits: number[], base: ColorBase): number {
-  if (base === 'white') return digits[0];
-  if (base === 'wy') return Math.min(digits[0], digits[1]);
-  return Math.min(...digits);
-}
+// 底色子集模型(六/四/双/单 + 6 选 1)已抽到 lib/cross-color-subset.ts,两处复用。
 
 export interface Histogram {
   /** Total scrambles counted. */

@@ -2,7 +2,7 @@
 
 // Ported from packages/client/src/components/RegionPicker/RegionPicker.tsx.
 import { useEffect, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
 import { isContinentCode, type ContinentCode } from '@/lib/continent';
@@ -197,6 +197,27 @@ export function RegionPicker(props: RegionPickerProps) {
             />
           </div>
           <div className="region-picker-list">
+            {isMulti && multiTokens.length > 0 && !ql && (
+              <>
+                <div className="region-picker-section">{isZh ? '已选' : 'Selected'}</div>
+                {multiTokens.map(t => {
+                  const cont = isContinentCode(t) ? CONTINENTS.find(c => c.code === t) : undefined;
+                  return (
+                    <button
+                      key={`sel-${t}`}
+                      className="region-picker-item region-picker-selected"
+                      onClick={cont ? () => toggleMultiContinent(cont.code) : () => toggleMultiCountry(t)}
+                    >
+                      {cont
+                        ? <ContinentIcon slug={cont.slug} />
+                        : <Flag iso2={t} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                      <span>{cont ? (isZh ? cont.zh : cont.en) : countryName(t, isZh)}</span>
+                      <X size={13} className="region-picker-remove" />
+                    </button>
+                  );
+                })}
+              </>
+            )}
             {showWorld && (
               <button
                 className={`region-picker-item${isWorldActive ? ' active' : ''}`}
