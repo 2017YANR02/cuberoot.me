@@ -114,8 +114,12 @@ if (Symbol.dispose) CrossSolverWasm.prototype[Symbol.dispose] = CrossSolverWasm.
 
 /**
  * F2LEO / Pseudo F2LEO 浏览器内求解(count-only)。小表:复用 mt_edge2/edge4/corn/edge
- * + pt_cross(f2leo),pseudo 另现场建 4-seed cross + D-AUF xcross 剪枝表(~18MB,构造一次)。
+ * + pt_cross(f2leo),pseudo 另现场建 4-seed cross + D-AUF xcross 剪枝表(~18MB)。
  * 不需要 pt_cross_C4E0 / huge 表。
+ *
+ * **惰性建表**:构造器只存表引用(~0ms),不建剪枝表;首次调到 f2leo / pseudo 时才
+ * 各自建一次(~2s,RefCell 缓存)。这样 std-only 的 worker 完全不付这笔钱,且只想看
+ * 一个变体时不会顺带建另一个。单线程 wasm 用 RefCell 做内部可变。
  */
 export class F2leoSolverWasm {
     __destroy_into_raw() {
@@ -130,6 +134,7 @@ export class F2leoSolverWasm {
     }
     /**
      * 5 张表:pt_cross(f2leo cross 剪枝)+ mt_edge2/edge4/corn/edge(两变体共用)。
+     * 仅存引用,不建剪枝表(惰性,见 struct 文档)。
      * @param {Uint8Array} pt_cross
      * @param {Uint8Array} mt_edge2
      * @param {Uint8Array} mt_edge4
@@ -161,6 +166,22 @@ export class F2leoSolverWasm {
         const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.f2leosolverwasm_solve_f2leo(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → UI 先单算 cross 秒出,
+     * 深阶段后台补。pseudo=true 走伪变体。
+     * @param {string} scramble
+     * @param {boolean} pseudo
+     * @param {number} stage
+     * @returns {Uint32Array}
+     */
+    solve_f2leo_stage(scramble, pseudo, stage) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.f2leosolverwasm_solve_f2leo_stage(this.__wbg_ptr, ptr0, len0, pseudo, stage);
         var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v2;

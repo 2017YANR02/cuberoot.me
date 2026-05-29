@@ -774,8 +774,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     const m = new Map<string, number[]>();
     if (variantEngine === 'f2leo' && f2leoLive.map) for (const [s, v] of f2leoLive.map) m.set(s, v.slice(0, 6));
     return m;
-    // f2leoLive 原地 mutate 同一 Map(引用不变),靠 done/ready 触发重算。
-  }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.ready]);
+    // f2leoLive 原地 mutate 同一 Map(引用不变),靠 done/crossReady 触发重算。
+  }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.crossReady]);
   const f2leoMetricMap = useMemo(() => {
     const m = new Map<string, number[]>();
     const off = METRIC_OFFSET[safeMetric];
@@ -783,12 +783,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       for (const [s, v] of f2leoLive.map) if (v.length >= off + 6) m.set(s, v.slice(off, off + 6));
     }
     return m;
-  }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.ready, safeMetric]);
-  // 按引擎统一选源喂 CompCrossAnalysis。
+  }, [variantEngine, f2leoLive.map, f2leoLive.done, f2leoLive.fullReady, safeMetric]);
+  // 按引擎统一选源喂 CompCrossAnalysis。cross 视图 gate 在 crossReady(秒出),深阶段 gate 在 fullReady。
   const cxCrossMap = variantEngine === 'f2leo' ? f2leoCrossMap : (variantEngine === 'std' ? crossA.map : EMPTY_MAP_TN);
-  const cxReady = variantEngine === 'f2leo' ? f2leoLive.ready : (variantEngine === 'std' ? crossA.ready : true);
+  const cxReady = variantEngine === 'f2leo' ? f2leoLive.crossReady : (variantEngine === 'std' ? crossA.ready : true);
   const cxStep: StepMapState = variantEngine === 'f2leo'
-    ? { map: f2leoMetricMap, ready: f2leoLive.ready, done: f2leoLive.done, total: f2leoLive.total, error: f2leoLive.error }
+    ? { map: f2leoMetricMap, ready: f2leoLive.fullReady, done: f2leoLive.done, total: f2leoLive.total, error: f2leoLive.error }
     : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
   const cxStepUncovered = variantEngine === 'f2leo' ? f2leoScrambles.length : (variantEngine === 'std' ? stepUncovered.length : 0);
   // 逐行徽标取值(BADGE_ORDER 6 值),无数据 → undefined。
