@@ -6,13 +6,13 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { Maximize2, Moon, Crosshair, EyeOff, Magnet } from 'lucide-react';
+import { Maximize2, Coffee, Crosshair, EyeOff, Magnet } from 'lucide-react';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
 
 const CSS = `
-.deskpet-search-backdrop{position:fixed;inset:0;z-index:60;display:flex;
+.deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:60;display:flex;
   align-items:flex-end;justify-content:center;padding:16px 16px max(12vh,48px);
   background:color-mix(in srgb, var(--foreground) 38%, transparent);
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
@@ -30,7 +30,8 @@ const CSS = `
 .deskpet-toolbar button:hover{background:var(--card);
   border-color:color-mix(in srgb, var(--foreground) 24%, transparent);}
 .deskpet-toolbar .icon-only{padding:8px;}
-.deskpet-toolbar-thumb{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;}
+.deskpet-toolbar .icon-only.char-btn{padding:3px;}
+.deskpet-toolbar-thumb{width:26px;height:26px;object-fit:contain;}
 .deskpet-toolbar .sep{align-self:stretch;width:1px;margin:2px 2px;
   background:var(--border-default);}
 .deskpet-toolbar .header-toggles{gap:8px;padding:0 2px;}
@@ -100,6 +101,28 @@ export default function DeskPetSearch({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Mobile keyboard: position:fixed tracks the layout viewport, which doesn't
+  // shrink when the on-screen keyboard opens — so the bottom-anchored box ends
+  // up hidden behind it. Pin the backdrop to the visual viewport instead, so
+  // align-items:flex-end keeps the search box just above the keyboard.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const apply = () => {
+      const b = backdropRef.current;
+      if (!b) return;
+      b.style.height = `${vv.height}px`;
+      b.style.top = `${vv.offsetTop}px`;
+    };
+    apply();
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    return () => {
+      vv.removeEventListener('resize', apply);
+      vv.removeEventListener('scroll', apply);
+    };
+  }, []);
+
   return (
     <div
       className="deskpet-search-backdrop"
@@ -110,32 +133,31 @@ export default function DeskPetSearch({
       <div className="deskpet-search-box" ref={boxRef}>
         <LandingSearch cards={SEARCH_CARDS} lang={lang} />
         <div className="deskpet-toolbar">
-          <button type="button" className="icon-only" onClick={onCycleChar}
+          <button type="button" className="icon-only char-btn" onClick={onCycleChar}
             title={`${t('形象', 'Character')}: ${charLabel}`}>
             <img src={charThumb} alt="" className="deskpet-toolbar-thumb" />
           </button>
-          <button type="button" onClick={onCycleSize}
+          <button type="button" className="icon-only" onClick={onCycleSize}
             title={`${t('大小', 'Size')}: ${sizeLabel}`}>
             <Maximize2 size={16} />
-            {sizeLabel}
           </button>
           <HeaderToggles />
           <span className="sep" />
-          <button type="button" onClick={onToggleRest}>
-            <Moon size={15} />
-            {resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}
+          <button type="button" className="icon-only" onClick={onToggleRest}
+            title={resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}>
+            <Coffee size={16} />
           </button>
-          <button type="button" onClick={onCling}>
-            <Magnet size={15} />
-            {t('贴边', 'Cling')}
+          <button type="button" className="icon-only" onClick={onCling}
+            title={t('贴边', 'Cling')}>
+            <Magnet size={16} />
           </button>
-          <button type="button" onClick={onResetPos}>
-            <Crosshair size={15} />
-            {t('复位', 'Reset')}
+          <button type="button" className="icon-only" onClick={onResetPos}
+            title={t('复位', 'Reset')}>
+            <Crosshair size={16} />
           </button>
-          <button type="button" onClick={onHide}>
-            <EyeOff size={15} />
-            {t('隐藏(刷新恢复)', 'Hide (until reload)')}
+          <button type="button" className="icon-only" onClick={onHide}
+            title={t('隐藏,刷新后恢复', 'Hide, restored on reload')}>
+            <EyeOff size={16} />
           </button>
         </div>
       </div>
