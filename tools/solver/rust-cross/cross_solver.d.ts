@@ -88,6 +88,14 @@ export class VariantSolverWasm {
      */
     solve(scramble: string, variant: number): Uint32Array;
     /**
+     * 单格(variant × stage × face)多解步骤,返回 JSON 串(同 CrossSolverWasm::solve_moves 形状
+     * {"len","combo","sols"})。variant:0=pair,1=eo,2=pseudo,3=pseudo_pair;stage:0=cross 系起。
+     * extra:超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
+     * 步骤带视角前缀:多数变体即 ROTS[face];**eo** 因破坏 y 对称,最优可能只在 rot·y 帧达成,
+     * 故前缀用 enumerate_small 返回的真实帧(可能形如 "x' y",含两个旋转 token)。
+     */
+    solve_moves(scramble: string, variant: number, face: number, stage: number, extra: number, cap: number): string;
+    /**
      * 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
      */
     solve_stage(scramble: string, variant: number, stage: number): Uint32Array;
@@ -111,6 +119,7 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
     readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
