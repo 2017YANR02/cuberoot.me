@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / B / bin 2
-# Population in this bin: 115
-# Samples listed: 115 (all entries in this bin)
+# Population in this bin: 125
+# Samples listed: 125 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-29
+# Generated: 2026-05-30
 # Columns: id,scramble,bottom_color
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B
@@ -120,3 +120,13 @@
 5179558001,D2 F2 D B2 L2 U' F2 B L2 D L B' F2 U' B R2 F' D2,B
 5212288001,B R2 B' D B' U2 D2 L F2 U D2 F B U2 D2 L2 F' D2 B',B
 5274683001,F B2 R2 D2 B' L B' D2 B2 U' L2 D2 F2 R2 L2 U' B2 D L2,B
+5340890008,B' D2 L R B2 U2 L2 U2 L2 B L' D2 U' L2 B L F U2 L' B' L',B
+5402872005,B' R D' U B2 U F2 D' F2 D' R F' D B' R' D L U L B',B
+5419667001,R' D R' B F R2 D2 B' U2 B' F' D B R2 D' F' U',B
+5452967001,U' F' L2 B2 R2 U' B2 D' L2 B2 F2 R' F' D' L2 R2 B2 R' U2,B
+5513183001,B R2 U' F2 B' D' B U2 R2 F2 U D F2 D' B2 L2 D2 L,B
+5572466001,D L2 R2 D L2 R2 F2 L2 B' U' B2 D2 L2 B2 D2 L B D2 F',B
+5590077001,D2 F U2 R' B2 L B2 L2 R' B2 L2 B L D' F R2 U' R',B
+5613709001,L' F B U R' B2 R U' F2 L2 B2 R2 U' R2 F U R D,B
+5615214001,U B2 U' L2 U L2 R2 D' R2 B R' B2 R2 F R' F' L' B' U B R,B
+5663630001,B' R L' U2 R D2 B' R U2 R2 B2 L2 U F2 B2 R2 U2 L,B
