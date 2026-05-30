@@ -250,18 +250,18 @@
           "0.54 1.26 2.10 DNF 1.53"
         ],
         [
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "**0.55**",
-          "United States",
-          "[Algorithms in Archbold 2026](https://www.worldcubeassociation.org/competitions/AlgorithmsinArchbold2026)",
-          "1.23 0.55 1.16 0.98 0.97"
-        ],
-        [
           "[William Lavoie](https://www.worldcubeassociation.org/persons/2023LAVO01)",
           "**0.55**",
           "Canada",
           "[Cubes Tranchés à Québec AM 2026](https://www.worldcubeassociation.org/competitions/CubesTranchesaQuebecAM2026)",
           "1.59 2.48 3.20 1.03 0.55"
+        ],
+        [
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "**0.55**",
+          "United States",
+          "[Algorithms in Archbold 2026](https://www.worldcubeassociation.org/competitions/AlgorithmsinArchbold2026)",
+          "1.23 0.55 1.16 0.98 0.97"
         ]
       ]
     },
@@ -333,11 +333,11 @@
           "1.15 1.11 0.89 1.59 0.65"
         ],
         [
-          "[Matias Marcantoni-Nunez](https://www.worldcubeassociation.org/persons/2022NUNE03)",
+          "[Igor Gładysz](https://www.worldcubeassociation.org/persons/2022GLAD01)",
           "**1.06**",
-          "United States",
-          "[GA Cuber Jackets Spring 2026](https://www.worldcubeassociation.org/competitions/GACuberJacketsSpring2026)",
-          "3.23 1.02 1.00 0.92 1.16"
+          "Poland",
+          "[All Rounders Katowice I 2026](https://www.worldcubeassociation.org/competitions/AllRoundersKatowiceI2026)",
+          "1.43 0.94 0.51 0.81 2.05"
         ]
       ]
     },
@@ -1120,39 +1120,11 @@
           "18 22 20"
         ],
         [
-          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
-          "**18**",
-          "Singapore",
-          "[FMCanton Nansha 2026](https://www.worldcubeassociation.org/competitions/FMCantonNansha2026)",
-          "18 19 21"
-        ],
-        [
-          "[Alexander Wheeler](https://www.worldcubeassociation.org/persons/2014WHEE01)",
-          "**18**",
-          "United States",
-          "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)",
-          "23 18 21"
-        ],
-        [
-          "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
-          "**18**",
-          "Indonesia",
-          "[FMCanton Nansha 2026](https://www.worldcubeassociation.org/competitions/FMCantonNansha2026)",
-          "18 23 25"
-        ],
-        [
           "[Tianze Xu (徐天泽)](https://www.worldcubeassociation.org/persons/2015XUTI01)",
           "**18**",
           "China",
           "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
           "27 18 23"
-        ],
-        [
-          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
-          "**18**",
-          "Sweden",
-          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026)",
-          "22 23 18"
         ],
         [
           "[Qinghong Zeng (曾庆鸿)](https://www.worldcubeassociation.org/persons/2019ZENG04)",
@@ -1162,6 +1134,13 @@
           "18 29 24"
         ],
         [
+          "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
+          "**18**",
+          "Indonesia",
+          "[FMCanton Nansha 2026](https://www.worldcubeassociation.org/competitions/FMCantonNansha2026)",
+          "18 23 25"
+        ],
+        [
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "**18**",
           "Poland",
@@ -1169,11 +1148,32 @@
           "23 18 21"
         ],
         [
-          "[Grzegorz Łuczyna](https://www.worldcubeassociation.org/persons/2005LUCZ01)",
+          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
+          "**18**",
+          "Singapore",
+          "[FMCanton Nansha 2026](https://www.worldcubeassociation.org/competitions/FMCantonNansha2026)",
+          "18 19 21"
+        ],
+        [
+          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
+          "**18**",
+          "Sweden",
+          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026)",
+          "22 23 18"
+        ],
+        [
+          "[Alexander Wheeler](https://www.worldcubeassociation.org/persons/2014WHEE01)",
+          "**18**",
+          "United States",
+          "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)",
+          "23 18 21"
+        ],
+        [
+          "[Jack Lee](https://www.worldcubeassociation.org/persons/2012LEEJ05)",
           "**19**",
-          "Poland",
-          "[Fun with FM in Warsaw 2026](https://www.worldcubeassociation.org/competitions/FunwithFMinWarsaw2026)",
-          "19 28 29"
+          "Canada",
+          "[For the Love of FMC USA 2026](https://www.worldcubeassociation.org/competitions/FortheLoveofFMCUSA2026)",
+          "27 19 DNF"
         ]
       ]
     },
@@ -1217,13 +1217,6 @@
           "18 22 20"
         ],
         [
-          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
-          "**20.33**",
-          "United States",
-          "[For the Love of FMC USA 2026](https://www.worldcubeassociation.org/competitions/FortheLoveofFMCUSA2026)",
-          "21 19 21"
-        ],
-        [
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "**20.33**",
           "Poland",
@@ -1231,18 +1224,25 @@
           "21 20 20"
         ],
         [
-          "[Fabio Schwandt](https://www.worldcubeassociation.org/persons/2014SCHW02)",
-          "**20.67**",
-          "United Kingdom",
-          "[FMC Cheltenham Winter 2026](https://www.worldcubeassociation.org/competitions/FMCCheltenhamWinter2026)",
-          "21 21 20"
+          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
+          "**20.33**",
+          "United States",
+          "[For the Love of FMC USA 2026](https://www.worldcubeassociation.org/competitions/FortheLoveofFMCUSA2026)",
+          "21 19 21"
         ],
         [
-          "[Alexander Wheeler](https://www.worldcubeassociation.org/persons/2014WHEE01)",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
           "**20.67**",
-          "United States",
-          "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)",
-          "23 18 21"
+          "France",
+          "[Europe FMC Friends Winter 2026](https://www.worldcubeassociation.org/competitions/EuropeFMCFriendsWinter2026)",
+          "22 20 20"
+        ],
+        [
+          "[Dewei Tan (譚得唯)](https://www.worldcubeassociation.org/persons/2024TAND01)",
+          "**20.67**",
+          "Hong Kong, China",
+          "[SacQuiet Spring 2026](https://www.worldcubeassociation.org/competitions/SacQuietSpring2026)",
+          "22 19 21"
         ],
         [
           "[Jaehyun Jeong (정재현)](https://www.worldcubeassociation.org/persons/2016JEON02)",
@@ -1507,18 +1507,18 @@
           "24.45 27.58 24.97 27.52 24.24"
         ],
         [
-          "[Aidan Grainger](https://www.worldcubeassociation.org/persons/2018GRAI01)",
-          "**26.60**",
-          "United Kingdom",
-          "[Crewe Spring 2026](https://www.worldcubeassociation.org/competitions/CreweSpring2026)",
-          "27.16 24.93 27.70 30.91 24.32"
-        ],
-        [
           "[Alexander Vujcich](https://www.worldcubeassociation.org/persons/2019VUJC01)",
           "**26.60**",
           "New Zealand",
           "[A New Year in Auckland 2026](https://www.worldcubeassociation.org/competitions/ANewYearinAuckland2026)",
           "28.03 27.82 26.60 25.38 24.15"
+        ],
+        [
+          "[Aidan Grainger](https://www.worldcubeassociation.org/persons/2018GRAI01)",
+          "**26.60**",
+          "United Kingdom",
+          "[Crewe Spring 2026](https://www.worldcubeassociation.org/competitions/CreweSpring2026)",
+          "27.16 24.93 27.70 30.91 24.32"
         ],
         [
           "[Stephanie Rose Martin](https://www.worldcubeassociation.org/persons/2023MARA10)",
@@ -1604,18 +1604,18 @@
           "2.90 2.19 0.90 1.91 1.58"
         ],
         [
-          "[Matias Marcantoni-Nunez](https://www.worldcubeassociation.org/persons/2022NUNE03)",
-          "**0.96**",
-          "United States",
-          "[GA Cuber Jackets Spring 2026](https://www.worldcubeassociation.org/competitions/GACuberJacketsSpring2026)",
-          "3.98 0.96 2.23 2.97 2.76"
-        ],
-        [
           "[Marek Dojtrowski](https://www.worldcubeassociation.org/persons/2023DOJT01)",
           "**0.96**",
           "Poland",
           "[Cube Factory League Jeżów 2026](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueJezow2026)",
           "2.41 3.40 3.35 0.96 3.19"
+        ],
+        [
+          "[Matias Marcantoni-Nunez](https://www.worldcubeassociation.org/persons/2022NUNE03)",
+          "**0.96**",
+          "United States",
+          "[GA Cuber Jackets Spring 2026](https://www.worldcubeassociation.org/competitions/GACuberJacketsSpring2026)",
+          "3.98 0.96 2.23 2.97 2.76"
         ],
         [
           "[Aratz Larruzea](https://www.worldcubeassociation.org/persons/2022LARR02)",
@@ -1673,18 +1673,18 @@
           "1.47 1.32 1.43 1.46 2.64"
         ],
         [
-          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
-          "**1.47**",
-          "United States",
-          "[Edgemont Cubing 2026](https://www.worldcubeassociation.org/competitions/EdgemontCubing2026)",
-          "1.34 1.23 1.24 1.82 DNF"
-        ],
-        [
           "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
           "**1.47**",
           "Russia",
           "[Prlekija Open 2026](https://www.worldcubeassociation.org/competitions/PrlekijaOpen2026)",
           "1.44 1.41 1.91 1.19 1.55"
+        ],
+        [
+          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
+          "**1.47**",
+          "United States",
+          "[Edgemont Cubing 2026](https://www.worldcubeassociation.org/competitions/EdgemontCubing2026)",
+          "1.34 1.23 1.24 1.82 DNF"
         ],
         [
           "[Matouš Keder](https://www.worldcubeassociation.org/persons/2022KEDE01)",
@@ -1984,13 +1984,6 @@
           "1.46 1.57 1.53 DNF 1.64"
         ],
         [
-          "[Dominic Redisi](https://www.worldcubeassociation.org/persons/2019REDI02)",
-          "**1.68**",
-          "United States",
-          "[Georgia Championship 2026](https://www.worldcubeassociation.org/competitions/GeorgiaChampionship2026)",
-          "1.28 1.45 1.43 2.15 2.52"
-        ],
-        [
           "[Alex Rosado Saez de Langarica](https://www.worldcubeassociation.org/persons/2023LANG03)",
           "**1.68**",
           "Spain",
@@ -1998,11 +1991,11 @@
           "1.37 2.14 1.88 1.80 1.28"
         ],
         [
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "**1.72**",
+          "[Dominic Redisi](https://www.worldcubeassociation.org/persons/2019REDI02)",
+          "**1.68**",
           "United States",
-          "[Gobbler Cube Day Winter 2026](https://www.worldcubeassociation.org/competitions/GobblerCubeDayWinter2026)",
-          "1.92 1.49 1.53 1.72 2.62"
+          "[Georgia Championship 2026](https://www.worldcubeassociation.org/competitions/GeorgiaChampionship2026)",
+          "1.28 1.45 1.43 2.15 2.52"
         ],
         [
           "[Pep Edén](https://www.worldcubeassociation.org/persons/2021EDEN01)",
@@ -2010,6 +2003,13 @@
           "Sweden",
           "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026)",
           "1.63 1.64 1.90 3.64 1.36"
+        ],
+        [
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "**1.72**",
+          "United States",
+          "[Gobbler Cube Day Winter 2026](https://www.worldcubeassociation.org/competitions/GobblerCubeDayWinter2026)",
+          "1.92 1.49 1.53 1.72 2.62"
         ]
       ]
     },
