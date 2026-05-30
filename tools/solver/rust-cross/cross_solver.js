@@ -287,6 +287,34 @@ export class VariantSolverWasm {
         return v2;
     }
     /**
+     * 单格(variant × stage × face)多解步骤,返回 JSON 串(同 CrossSolverWasm::solve_moves 形状
+     * {"len","combo","sols"})。variant:0=pair,1=eo,2=pseudo,3=pseudo_pair;stage:0=cross 系起。
+     * extra:超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
+     * 步骤带视角前缀:多数变体即 ROTS[face];**eo** 因破坏 y 对称,最优可能只在 rot·y 帧达成,
+     * 故前缀用 enumerate_small 返回的真实帧(可能形如 "x' y",含两个旋转 token)。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} face
+     * @param {number} stage
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, variant, face, stage, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.variantsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, stage, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
      * 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
      * @param {string} scramble
      * @param {number} variant
