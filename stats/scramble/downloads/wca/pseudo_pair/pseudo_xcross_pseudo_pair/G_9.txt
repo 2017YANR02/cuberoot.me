@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / G / bin 9
-# Population in this bin: 9
-# Samples listed: 9 (all entries in this bin)
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-29
+# Generated: 2026-05-30
 # Columns: id,scramble,bottom_color
 
 23724001,R2 U2 R' B2 D2 U2 R' U2 R' F L2 B' R D2 R2 U' F' D' B' R' B' L,G
@@ -14,3 +14,5 @@
 4487498001,L2 D U2 L2 B2 D' B2 R2 B D R F' U' L' F' R' B' F D B R',G
 4989542001,F2 D L2 D F2 D2 L2 F2 L' D' F' L' U' B' R F2 L2 B' R',G
 5147235001,U B2 R' U2 F2 R2 B2 U2 F2 D' B' D U' L' U2 R B' D' F,G
+5384059035,D B2 L2 D2 B2 U L2 D2 F D U' R F' L D' B' R' B' U2,G
+5515801001,U2 L2 B U' L2 D L2 F2 D' R2 L B' R' D' R2 U L B U,G

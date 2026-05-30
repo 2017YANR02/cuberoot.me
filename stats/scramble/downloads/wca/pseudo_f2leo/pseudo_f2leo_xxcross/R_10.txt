@@ -1,0 +1,11 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 10
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-05-30
+# Columns: id,scramble,bottom_color
+
+3944891001,U2 F D2 R2 B F2 U2 L U' L F2 D B L2 D L F',R
+3944920001,U2 B' D2 L B2 D2 U2 R' B2 R' U2 B2 R2 B' D2 R' U L F2 D,R
+3944925001,F2 L2 U R2 U R2 U' L2 U L B D' L' R F' D2 B2 D',R
+5665279001,B D F' U L2 F' B R D' F' U2 D2 F R2 F U2 F U' B',R

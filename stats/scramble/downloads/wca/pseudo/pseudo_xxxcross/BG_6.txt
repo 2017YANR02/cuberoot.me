@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / BG / bin 6
-# Population in this bin: 132
-# Samples listed: 132 (all entries in this bin)
+# Population in this bin: 139
+# Samples listed: 139 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-29
+# Generated: 2026-05-30
 # Columns: id,scramble,bottom_color
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B
@@ -137,3 +137,10 @@
 5126839001,B D2 R' L' U2 L2 D R2 F' D2 B2 U2 B R2 D2 F' D',G
 5146314001,F' L' D2 B U2 B' U2 B R2 U2 R' U R' B' D,B
 5164045001,B2 R2 U R2 U' R2 F2 L' F L' R2 U' B2 R' U2 L F2,B
+5300212001,F D F2 D2 B' U' L2 D2 B' R U2 F2 B2 D2 L F2 R' B,B
+5392357001,D2 L B' R2 F' D2 L2 F' R2 B' U2 L2 F2 R F2 U' L' F' R' B F' L,B
+5439193001,U2 F L U' R D' L D' L2 F2 R' L' B2 D2 F2 D2 B' L,G
+5572645001,F' L D' R F B' L' U L' F U' F2 U' B2 U2 R2 F2 D F2 B2,G
+5624269001,R F2 D2 B2 U2 R B2 L B2 D' R B' R2 B2 F D2 L2 F2,G
+5632126001,L' F' R2 U2 L2 U2 B F L2 F' R' F R2 D' R B2 L R F2 L',G
+5635651001,R' U' B R' F' R F' B U B2 R2 D L2 U2 B2 U' L' D R',B

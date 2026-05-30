@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGOR / bin 1
-# Population in this bin: 44
-# Samples listed: 44 (all entries in this bin)
+# Population in this bin: 48
+# Samples listed: 48 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-29
+# Generated: 2026-05-30
 # Columns: id,scramble,bottom_color
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G
@@ -49,3 +49,7 @@
 4883556001,R' F2 R D2 F2 R' U B' U F L' F2 U2 L2 U2 B' L,G
 4951582001,L' D2 L F2 R' F2 D2 R F2 L2 F L B2 R' F' U' L' B' U,G
 5049359001,R B2 F L2 U L2 B2 D L2 F2 L2 R' F' L U' R2 B U2 B2,O
+5506110001,L' R2 F2 D2 F2 R' D2 L2 U' R' F2 R2 F' D2 B2 L' R' U2,O
+5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R
+5522222001,F2 B' U2 L D2 L' F' U2 F L' D' R2 U2 R2 F2 D L2 D2 F,B
+5569118001,R2 F B2 L2 U' B2 D2 U B2 L2 F' U R' B' U' L' B2 D R2,O

@@ -1,9 +1,10 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 1
-# Population in this bin: 2
-# Samples listed: 2 (all entries in this bin)
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-29
+# Generated: 2026-05-30
 # Columns: id,scramble,bottom_color
 
 724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R
 3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R
+5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R
