@@ -9,7 +9,7 @@
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260530d';
+const V = 'v=20260530e';
 
 export interface MovesResult {
   len: number;
@@ -44,6 +44,14 @@ export interface RustCrossPool {
   solveVariant(scramble: string, variant: number): Promise<number[]>;
   /** 变体单阶段 6 值(stage 0=cross.. ),cross 先出深阶段后台补。 */
   solveVariantStage(scramble: string, variant: number, stage: number): Promise<number[]>;
+  /** 变体单格(variant × stage × face)多解步骤 + 计算耗时。eo 的步骤前缀可能含尾随 y(破 y 对称)。 */
+  solveVariantMoves(
+    scramble: string,
+    variant: number,
+    face: number,
+    stage: number,
+    opts?: { extra?: number; cap?: number },
+  ): Promise<MovesTimed>;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -151,7 +159,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       pw.job = null;
       if (job) {
         if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
-        else if (m.type === 'moves') job.resolve({ ...m.data, ms: m.ms });
+        else if (m.type === 'moves' || m.type === 'variant_moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
@@ -201,6 +209,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     },
     solveVariantStage(scramble, variant, stage) {
       return submit({ type: 'variant_stage', id: nextId++, scramble, variant, stage }) as Promise<number[]>;
+    },
+    solveVariantMoves(scramble, variant, face, stage, opts = {}) {
+      return submit({
+        type: 'variant_moves', id: nextId++, scramble, variant, face, stage,
+        extra: opts.extra ?? 0, cap: opts.cap ?? 20,
+      }) as Promise<MovesTimed>;
     },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     terminate() { for (const pw of all) pw.w.terminate(); },
