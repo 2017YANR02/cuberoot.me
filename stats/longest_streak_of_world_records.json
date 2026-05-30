@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.33",
+      "8.34",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.12",
+      "8.13",
       9,
       "7x7x7 Cube",
       "Average",
@@ -111,7 +111,7 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
-      "6.88",
+      "6.89",
       7,
       "4x4x4 Blindfolded",
       "Average",
@@ -417,7 +417,7 @@
       "[Magic Revenge 2012](https://www.worldcubeassociation.org/competitions/MagicRevenge2012)"
     ],
     [
-      "2.62",
+      "2.63",
       5,
       "5x5x5 Blindfolded",
       "Single",
@@ -795,7 +795,7 @@
       "[Medan 10th Anniversary 2019](https://www.worldcubeassociation.org/competitions/Medan10thAnniversary2019)"
     ],
     [
-      "1.66",
+      "1.67",
       3,
       "5x5x5 Cube",
       "Single",
@@ -994,21 +994,21 @@
     ],
     [
       "1.38",
-      6,
-      "7x7x7 Cube",
-      "Average",
-      "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
-      "[Hefei Spring 2012](https://www.worldcubeassociation.org/competitions/HefeiSpring2012)",
-      "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013)"
-    ],
-    [
-      "1.38",
       2,
       "Square-1",
       "Average",
       "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
       "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
       "Still active"
+    ],
+    [
+      "1.38",
+      6,
+      "7x7x7 Cube",
+      "Average",
+      "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
+      "[Hefei Spring 2012](https://www.worldcubeassociation.org/competitions/HefeiSpring2012)",
+      "[World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013)"
     ],
     [
       "1.36",
@@ -1299,6 +1299,15 @@
       "[Krung Thep Open 2011](https://www.worldcubeassociation.org/competitions/KrungThepOpen2011)"
     ],
     [
+      "0.91",
+      2,
+      "5x5x5 Cube",
+      "Average",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
+      "Still active"
+    ],
+    [
       "0.90",
       4,
       "3x3x3 One-Handed",
@@ -1306,15 +1315,6 @@
       "[Yumu Tabuchi (田渕雄夢)](https://www.worldcubeassociation.org/persons/2006TABU02)",
       "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009)",
       "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010)"
-    ],
-    [
-      "0.90",
-      2,
-      "5x5x5 Cube",
-      "Average",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
-      "Still active"
     ],
     [
       "0.90",
@@ -1868,20 +1868,20 @@
     [
       "0.38",
       2,
-      "Square-1",
-      "Average",
-      "[Dylan Baumbach](https://www.worldcubeassociation.org/persons/2019BAUM02)",
-      "[DFW Back to School 2024](https://www.worldcubeassociation.org/competitions/DFWBacktoSchool2024)",
-      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)"
-    ],
-    [
-      "0.38",
-      2,
       "Rubik's Cube",
       "Average",
       "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
       "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
       "Still active"
+    ],
+    [
+      "0.38",
+      2,
+      "Square-1",
+      "Average",
+      "[Dylan Baumbach](https://www.worldcubeassociation.org/persons/2019BAUM02)",
+      "[DFW Back to School 2024](https://www.worldcubeassociation.org/competitions/DFWBacktoSchool2024)",
+      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)"
     ],
     [
       "0.37",
