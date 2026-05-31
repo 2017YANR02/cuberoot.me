@@ -146,27 +146,57 @@ interface MinimalResult {
   ar: string | number;
 }
 
-function inferTag(
+interface MinimalRound { i: string; }
+interface MinimalEvent { i: string; rs: MinimalRound[]; }
+
+/** WCA round_type_id 的大致时序(轮次 metadata 缺失时兜底). */
+const DEFAULT_ROUND_RANK: Record<string, number> = {
+  '0': 0,
+  d: 1, '1': 1,
+  e: 2, '2': 2,
+  g: 3, '3': 3,
+  b: 4, c: 4, f: 4, h: 4,
+};
+function roundRank(roundId: string, order: string[] | undefined): number {
+  if (order) {
+    const idx = order.indexOf(roundId);
+    if (idx >= 0) return idx;
+  }
+  return DEFAULT_ROUND_RANK[roundId] ?? 99;
+}
+
+function valueOf(lr: MinimalResult, isAvg: boolean): number {
+  return isAvg ? lr.a : lr.b;
+}
+
+/** 按 running min 判定 tag(WR>CR>NR),并把更好的成绩并入各 scope 的 running min.
+ *  传进来的是赛前基线的进度副本:同场比赛里破纪录后会逐步压低门槛,
+ *  这样初赛破纪录、后置轮较慢的成绩就不会再被误标(无赛前基线的 scope 不追踪,同原行为). */
+function stepRecord(
   value: number,
   eventId: string,
   isAvg: boolean,
   u: MinimalUser | undefined,
-  recs: CurrentRecords,
+  runWr: Map<string, number>,
+  runCr: Map<string, number>,
+  runNr: Map<string, number>,
 ): string {
-  if (!value || value <= 0) return '';
   const k = `${eventId}|${isAvg ? '1' : '0'}`;
-  const wrMin = recs.wr.get(k);
-  if (wrMin !== undefined && value <= wrMin) return 'WR';
-  if (!u) return '';
-  if (u.continentId) {
-    const crMin = recs.cr.get(`${k}|${u.continentId}`);
-    if (crMin !== undefined && value <= crMin) return 'CR';
-  }
-  if (u.countryId) {
-    const nrMin = recs.nr.get(`${k}|${u.countryId}`);
-    if (nrMin !== undefined && value <= nrMin) return 'NR';
-  }
-  return '';
+  const wrMin = runWr.get(k);
+  const crKey = u?.continentId ? `${k}|${u.continentId}` : null;
+  const nrKey = u?.countryId ? `${k}|${u.countryId}` : null;
+  const crMin = crKey ? runCr.get(crKey) : undefined;
+  const nrMin = nrKey ? runNr.get(nrKey) : undefined;
+
+  let tag = '';
+  if (wrMin !== undefined && value <= wrMin) tag = 'WR';
+  else if (crMin !== undefined && value <= crMin) tag = 'CR';
+  else if (nrMin !== undefined && value <= nrMin) tag = 'NR';
+
+  if (wrMin !== undefined && value < wrMin) runWr.set(k, value);
+  if (crKey && crMin !== undefined && value < crMin) runCr.set(crKey, value);
+  if (nrKey && nrMin !== undefined && value < nrMin) runNr.set(nrKey, value);
+  return tag;
 }
 
 /** 综合处理一场比赛的数据:
@@ -178,6 +208,7 @@ function inferTag(
 export function enrichComp(
   users: Record<string, MinimalUser>,
   resultsByRound: Record<string, MinimalResult[]>,
+  events?: MinimalEvent[],
 ): CompRecordsSnapshot | null {
   const recs = peekCurrentRecords();
   if (!recs) return null;
@@ -193,16 +224,39 @@ export function enrichComp(
     }
   }
 
-  for (const list of Object.values(resultsByRound)) {
-    for (const lr of list) {
-      const u = users[String(lr.n)];
-      if (lr.b > 0 && !lr.sr) {
-        const tag = inferTag(lr.b, lr.e, false, u, recs);
-        if (tag) lr.sr = tag;
-      }
-      if (lr.a > 0 && !lr.ar) {
-        const tag = inferTag(lr.a, lr.e, true, u, recs);
-        if (tag) lr.ar = tag;
+  // running min:赛前基线的进度副本.按 (event → round 时序) 处理,轮内按成绩升序(先处理本轮最好的),
+  // 破纪录后压低门槛 → 同场后置轮的较慢成绩不再被误标(snapshot 仍返回赛前基线供 WS 推断).
+  const runWr = new Map(recs.wr);
+  const runCr = new Map(recs.cr);
+  const runNr = new Map(recs.nr);
+
+  const orderByEvent: Record<string, string[]> = {};
+  if (events) for (const ev of events) orderByEvent[ev.i] = ev.rs.map(r => r.i);
+
+  const groupsByEvent: Record<string, { roundId: string; list: MinimalResult[] }[]> = {};
+  for (const [key, list] of Object.entries(resultsByRound)) {
+    const sep = key.indexOf(':');
+    const eventId = sep >= 0 ? key.slice(0, sep) : key;
+    const roundId = sep >= 0 ? key.slice(sep + 1) : '';
+    (groupsByEvent[eventId] ||= []).push({ roundId, list });
+  }
+
+  for (const [eventId, groups] of Object.entries(groupsByEvent)) {
+    const order = orderByEvent[eventId];
+    groups.sort((a, b) => roundRank(a.roundId, order) - roundRank(b.roundId, order));
+    for (const isAvg of [false, true] as const) {
+      for (const g of groups) {
+        const ordered = [...g.list].sort((x, y) => valueOf(x, isAvg) - valueOf(y, isAvg));
+        for (const lr of ordered) {
+          const val = valueOf(lr, isAvg);
+          if (val <= 0) continue;
+          const already = isAvg ? lr.ar : lr.sr;
+          const tag = stepRecord(val, eventId, isAvg, users[String(lr.n)], runWr, runCr, runNr);
+          if (tag && !already) {
+            if (isAvg) lr.ar = tag;
+            else lr.sr = tag;
+          }
+        }
       }
     }
   }
