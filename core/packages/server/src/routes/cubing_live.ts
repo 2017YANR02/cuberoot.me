@@ -1690,7 +1690,9 @@ export function startPrewarmCron(): void {
 // 推断的 WR/CR/NR,供首页"纪录"列表合并展示(/v1/wca/recent-records 读取).
 // 纯内存 + getCompStartDate(缓存)— 无额外网络.
 
-const RECORD_TAGS = new Set(['WR', 'CR', 'NR']);
+// cubing 源走 enrichComp 只产生泛化 CR;wca 源是 WCA REST 的精确 tag(AsR/ER/...)。
+// 两者都收,洲际纪录(刚结束未公示的 wca 源比赛)才不会漏出首页。
+const RECORD_TAGS = new Set(['WR', 'CR', 'NR', 'AsR', 'ER', 'NAR', 'SAR', 'AfR', 'OcR']);
 const INFERRED_RECENT_WINDOW_DAYS = 10;  // 跟 WCA Live recentRecords 默认窗口对齐
 
 export interface InferredRecord {
@@ -1711,7 +1713,11 @@ export async function extractInferredRecords(): Promise<InferredRecord[]> {
   const out: InferredRecord[] = [];
   const now = Date.now();
   for (const data of cache.values()) {
-    if (data.source !== 'cubing') continue;
+    // 纳入 cubing(WCA REST 无数据的 CN 比赛)+ wca(刚结束、WCA REST 已录成绩但 record
+    // 未公示 ratify、tag 由 enrichRecordTags 本地推断的比赛)。这两类纪录都还没进 WCA Live
+    // recentRecords feed,需本地补上。排除 wca_db(已公示历史,feed 已含)/ wca_live(本就在 feed)。
+    // dedup(competitionId|eventId|type|value)+ 10 天窗兜底防与 feed 重复。
+    if (data.source !== 'cubing' && data.source !== 'wca') continue;
     const sd = await getCompStartDate(data.slug);
     if (sd) {
       const days = (now - Date.parse(sd)) / 86400_000;
