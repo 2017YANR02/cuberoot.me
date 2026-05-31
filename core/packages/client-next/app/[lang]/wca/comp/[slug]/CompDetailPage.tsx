@@ -305,7 +305,16 @@ export default function CompDetailPage() {
   const eventParam = searchParams?.get('event') || '';
   const roundParam = searchParams?.get('round') || '';
   const filterParam = searchParams?.get('filter') || 'all';
-  const viewParam = (searchParams?.get('view') === 'psych' ? 'psych' : 'live') as 'live' | 'psych';
+  const explicitView = searchParams?.get('view');
+  // 未来/未开始比赛无任何成绩 → 默认显示预排名;有成绩或用户显式选择则按选择.
+  const hasResults = useMemo(
+    () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
+    [data],
+  );
+  const viewParam: 'live' | 'psych' =
+    explicitView === 'psych' ? 'psych'
+      : explicitView === 'live' ? 'live'
+        : (data && !hasResults) ? 'psych' : 'live';
   const isPsych = viewParam === 'psych';
   const psychEventParam = searchParams?.get('psychEvent') || '';
   const sourceParam = searchParams?.get('source');
@@ -686,8 +695,7 @@ export default function CompDetailPage() {
 
   const onChangeView = (value: 'live' | 'psych') => {
     const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    if (value === 'live') next.delete('view');
-    else next.set('view', 'psych');
+    next.set('view', value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
     setSearchParams(next);
   };
 
