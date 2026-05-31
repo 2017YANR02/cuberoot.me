@@ -21,7 +21,7 @@ pwsh core/packages/scramble-stats-build/run_weekly.ps1
 | `-NoPublish` | 跑完只更新本地 std.csv + JSON,不 commit/push/scp(想先 review) |
 | `-SkipSolve` | 调试:复用上次 std solver 产出,跳过 std 解算 |
 | `-Variants <list>` | 跟 std 锁步补缺的变体,默认 `eo,pseudo,pseudo_pair`;`@()`=只 std。**pair / f2leo / pseudo_f2leo 不在默认**:pair ~2/s 太慢(全量补 ~165h);f2leo/pseudo_f2leo 是小表分析器(不碰 huge 表),要显式 `-Variants pair` 或 `-Variants f2leo,pseudo_f2leo`(首跑全量回填) |
-| `-ChunkSize <n>` | 变体补缺分块大小(默认 20000):逐块校验+追加,中断只丢当前块、下次自动续 |
+| `-ChunkSize <n>` | 变体补缺分块大小(显式则覆盖每变体默认 `$VARIANT_CHUNK`:eo/pair=2000、其余 20000):逐块校验+追加,中断只丢当前块、下次自动续 |
 
 ## 前置(一次性)
 
@@ -35,7 +35,7 @@ pwsh core/packages/scramble-stats-build/run_weekly.ps1
 1. **取数** `incremental.py`:下 `results/v2/tsv`(~344 MB,按 export_date 缓存)→ 抽 `Scrambles.tsv` + `Competitions.tsv` → 过滤 333 系列 & **未处理的 scrambleId**(对 `std.csv` 已处理集合做差,能接住回填)→ 拆多盲(`|`→行)+ 去宽层 → `incremental/new_no_wide_move.txt`。顺便刷新 `competitions.tsv` + 写 `export_date.txt`。(std 无新增也**不早退**,继续走变体补缺。)
 2. **std solver** `std_analyzer.exe`:`CUBE_TABLE_DIR` + `CUBE_ALLOW_HUGE_TABLES=1` + `CUBE_RUN_FULL_STD=1`,stdin 喂文件名,`[PROG] N/total` 实时进度。热态 **std ~115 条/秒**(16 核),冷启首条多花几分钟 mmap 巨表。
 3. **追加 std master**(LF 安全):`stats/std.csv` ← solver 输出;`wca_scrambles_no_wide_move.txt` ← 新打乱(=变体补缺基准);`input/wca_scrambles_split_mbf.csv` ← 新元数据。
-4. **变体补缺**(`-Variants`,默认 eo/pseudo/pseudo_pair):每个变体算 `master no_wide_move 的 id − 该变体 csv 已有 id = 待补` → 对应 analyzer(`solver-rust/target/release/<v>_analyzer.exe`,env 同需 huge)**分块 solve + 逐块校验行数后追加**,中断可续(下次重算 missing 自动接上)。实测速率 pseudo_pair ~35/s、pseudo ~18/s、pair ~2/s(eo 未测、慢)。**pair 不在默认**:全量补 ~165h,显式 `-Variants pair` 分批跑。**f2leo / pseudo_f2leo 也不在默认**(opt-in):它们是小表分析器(`f2leo_analyzer.exe` / `pseudo_f2leo_analyzer.exe`,常驻 ~40MB,只用 mt_edge2/edge4/corn/edge + 自建 ~18MB xcross + ~272KB cross 剪枝表,**不碰 huge 表、不需要 `CUBE_ALLOW_HUGE_TABLES`**),显式 `-Variants f2leo,pseudo_f2leo`,首跑全量回填全部 ~1.29M id。
+4. **变体补缺**(`-Variants`,默认 eo/pseudo/pseudo_pair):每个变体算 `master no_wide_move 的 id − 该变体 csv 已有 id = 待补` → 对应 analyzer(`solver-rust/target/release/<v>_analyzer.exe`,env 同需 huge)**分块 solve + 逐块校验行数后追加**,中断可续(下次重算 missing 自动接上)。实测速率(16 核、huge 表全模式,2026-05-30 核实):**pseudo ~390/s、pseudo_pair ~47/s**(旧记 18/35 偏低)、**eo ~0.9/s**(~13M 节点/条,全量 89.5k ≈ 27h,最慢长极)、pair ~2/s。**analyzer 是整块 `rayon par_iter` 攒进内存 Vec、跑完才一次性写 CSV**(`executor.rs::run_batch`),故中断丢在飞的整块 → chunk 越小 save point 越密。每变体默认 chunk 见脚本 `$VARIANT_CHUNK`(eo/pair=2000≈37min、其余=20000≈9-18min),显式 `-ChunkSize` 覆盖全部。**pair 不在默认**:全量补 ~165h,显式 `-Variants pair` 分批跑。**f2leo / pseudo_f2leo 也不在默认**(opt-in):它们是小表分析器(`f2leo_analyzer.exe` / `pseudo_f2leo_analyzer.exe`,常驻 ~40MB,只用 mt_edge2/edge4/corn/edge + 自建 ~18MB xcross + ~272KB cross 剪枝表,**不碰 huge 表、不需要 `CUBE_ALLOW_HUGE_TABLES`**),显式 `-Variants f2leo,pseudo_f2leo`,首跑全量回填全部 ~1.29M id。
 5. **重算**:`build`(distribution.json + examples.json + 下载 txt,**读全部变体故任一变即重算**)+ 仅当有新 std 时再跑 `build:wca-cross`(6 色池,每条带完整 `id` 含后三位)+ `build:comp-steps`(每场预计算表 `comp_steps/<id>.json`,gen 页"秒出")。RNG 固定种子 + `SCRAMBLE_STATS_STAMP`=export_date → 数据不变则产物逐字节不变。
 6. **发布**:`git add stats/scramble` → commit(英文 msg)→ `pull --rebase --autostash` → push(触发 Vercel)→ tar 打包 `scp` 到 static(self-hosted nginx + Vercel fallback 都从这服)。
 
