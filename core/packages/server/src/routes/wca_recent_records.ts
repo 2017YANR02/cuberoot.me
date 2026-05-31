@@ -13,6 +13,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { runFormatCli } from './wca_format.js';
+import { extractInferredRecords, type InferredRecord } from './cubing_live.js';
 import { query } from '../db/connection.js';
 
 export const wcaRecentRecordsRoutes = new Hono();
@@ -21,6 +22,7 @@ const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
 const POLL_INTERVAL_MS = 60_000;
 const FETCH_TIMEOUT_MS = 15_000;
 const SITE_BASE = 'https://www.cuberoot.me';
+const INFERRED_CAP = 40;  // 首页一次最多并入多少条中国比赛推断纪录
 
 export interface RecentRecord {
   id: string;
@@ -174,6 +176,69 @@ async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
   return out;
 }
 
+/** 中国比赛(cubing.com)推断纪录的格式化 — 走与 WCA Live 同款 format_cli 模板 + getCompMeta.
+ *  缓存键 = rec.id(含成绩值/tag),成绩更新自动重算. */
+async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: string }> {
+  const cached = formattedCache.get(rec.id);
+  if (cached) return cached;
+  const personIso2 = rec.personIso2.toUpperCase();
+  const meta = await getCompMeta(rec.compId, rec.compNameEn, personIso2);
+  const event = {
+    tag: rec.tag,
+    rec_type: rec.type,
+    attempt_result: rec.attemptResult,
+    event_id: rec.eventId,
+    person_name: rec.personName,
+    person_iso2: personIso2,
+    comp_name: meta.nameZh || rec.compNameEn,
+    comp_name_en: rec.compNameEn,
+    comp_iso2: meta.iso2.toUpperCase(),
+    url: `${SITE_BASE}/wca/comp/${rec.compId}`,
+    previous_pr: null,
+    pr_rank: null,
+  };
+  let out: { cn: string; en: string };
+  try {
+    const r2 = await runFormatCli({ events: [event] });
+    out = { cn: r2.cn, en: r2.en };
+  } catch (e) {
+    console.warn('[recent-records] format_cli failed for inferred', rec.id, ':', (e as Error).message);
+    out = { cn: '', en: '' };
+  }
+  formattedCache.set(rec.id, out);
+  return out;
+}
+
+/** 取 cubing.com 中国比赛缓存里的推断纪录,排序 + 截断 + 格式化成 RecentRecord. */
+async function buildInferredRecords(): Promise<RecentRecord[]> {
+  const raw = await extractInferredRecords();
+  const tagRank = (t: string) => (t === 'WR' ? 0 : t === 'CR' ? 1 : 2);
+  raw.sort((a, b) =>
+    tagRank(a.tag) - tagRank(b.tag) ||
+    (b.startDate ?? '').localeCompare(a.startDate ?? '') ||
+    a.attemptResult - b.attemptResult,
+  );
+  const out: RecentRecord[] = [];
+  for (const rec of raw.slice(0, INFERRED_CAP)) {
+    const f = await formatInferred(rec);
+    out.push({
+      id: rec.id,
+      tag: rec.tag,
+      type: rec.type,
+      attemptResult: rec.attemptResult,
+      eventId: rec.eventId,
+      eventName: rec.eventId,
+      personName: rec.personName,
+      countryIso2: rec.personIso2,
+      countryName: '',
+      competitionId: rec.compId,
+      formattedCn: f.cn,
+      formattedEn: f.en,
+    });
+  }
+  return out;
+}
+
 async function fetchOnce(): Promise<void> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
@@ -212,7 +277,24 @@ async function fetchOnce(): Promise<void> {
       formattedEn: formatted.en,
     });
   }
-  snapshot = { fetchedAt: Date.now(), records };
+
+  // 并入 cubing.com 中国比赛的推断纪录(WCA 公示前不在 WCA Live feed 里).放前面 —— 是进行中的最新赛事.
+  // 失败不影响 WCA Live 主列表.dedup: 同一纪录极少同时出现在两源(cubing CN 比赛不在 WCA Live).
+  let inferred: RecentRecord[] = [];
+  try {
+    inferred = await buildInferredRecords();
+  } catch (e) {
+    console.warn('[recent-records] inferred build failed:', (e as Error).message);
+  }
+  const seen = new Set<string>();
+  const merged: RecentRecord[] = [];
+  for (const r of [...inferred, ...records]) {
+    const k = `${r.competitionId}|${r.eventId}|${r.type}|${r.attemptResult}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    merged.push(r);
+  }
+  snapshot = { fetchedAt: Date.now(), records: merged };
 }
 
 function refresh(): Promise<void> {
