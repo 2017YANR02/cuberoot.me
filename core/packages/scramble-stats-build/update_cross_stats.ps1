@@ -223,7 +223,7 @@ if($NoPublish){
     $parts = @($stamp)
     if($stdChanged){ $parts += "+$nNew scrambles" }
     if($variantChanged){ $parts += "variants: $($Variants -join '/')" }
-    git -C $RepoRoot commit -m "chore(scramble-stats): weekly refresh ($($parts -join ', '))"
+    git -C $RepoRoot commit -m "chore(scramble-stats): incremental refresh ($($parts -join ', '))"
     git -C $RepoRoot push origin main
     if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
     # 发布 stats/scramble 到 static: 打成单个 .tgz -> scp 一个文件(二进制安全, 不走 pwsh 管道)
