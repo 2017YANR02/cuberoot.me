@@ -34,7 +34,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'eo', stages: 5, fbRows: 1_240_119, rate: 0.9, tier: 'huge', zhWhy: 'xxxxcross 全枚举 ~13M 节点每条, 唯一长极', enWhy: 'xxxxcross full enumeration ~13M nodes/case — the long pole' },
   { key: 'pseudo', stages: 4, fbRows: 1_289_663, rate: 390, tier: 'huge', zhWhy: '槽解耦 + 强剪枝, 最快', enWhy: 'slot-decoupled + strong pruning, fastest' },
   { key: 'pseudo_pair', stages: 4, fbRows: 1_289_663, rate: 47, tier: 'huge', zhWhy: '角槽棱槽耦合, 搜索较重', enWhy: 'corner/edge slot coupling, heavier search' },
-  { key: 'pair', stages: 4, fbRows: 112_841, rate: 2, tier: 'huge', zhWhy: '不在默认周更, 全量回填 ~165h', enWhy: 'off the default weekly run, full backfill ~165h' },
+  { key: 'pair', stages: 4, fbRows: 112_841, rate: 2, tier: 'huge', zhWhy: '不在默认补缺, 全量回填 ~165h', enWhy: 'off the default run, full backfill ~165h' },
   { key: 'f2leo', stages: 4, fbRows: 252, rate: 7.4, tier: 'small', zhWhy: '深阶段弱剪枝, 不碰 huge 表; 仅 2 场种子', enWhy: 'weak deep-stage pruning, no huge tables; 2 seed comps only' },
   { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 7.4, tier: 'small', zhWhy: '同 f2leo, 仅 2 场种子', enWhy: 'same as f2leo, 2 seed comps only' },
 ];
