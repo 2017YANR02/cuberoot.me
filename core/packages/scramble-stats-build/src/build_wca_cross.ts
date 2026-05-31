@@ -13,6 +13,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { makeRng } from './prng';
 
 const K = 200; // reservoir size per (color, bin)
 
@@ -22,21 +23,14 @@ const COLOR_COL: Record<string, string> = {
 };
 const COLOR_LETTERS = Object.keys(COLOR_COL);
 
-// 固定种子 PRNG (mulberry32):reservoir 采样确定化 -> 输入不变则 wca_cross JSON 逐字节不变。
-let rngState = 0x9e3779b9 >>> 0;
-function rand(): number {
-  rngState = (rngState + 0x6d2b79f5) >>> 0;
-  let t = rngState;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
+// 固定种子 PRNG (mulberry32, 见 prng.ts):reservoir 采样确定化 -> 输入不变则 wca_cross JSON 逐字节不变。
+const rng = makeRng(0x9e3779b9);
 
 interface Reservoir { samples: string[]; seen: number }
 function resAdd(r: Reservoir, id: string) {
   r.seen++;
   if (r.samples.length < K) { r.samples.push(id); return; }
-  const j = Math.floor(rand() * r.seen);
+  const j = Math.floor(rng() * r.seen);
   if (j < K) r.samples[j] = id;
 }
 
