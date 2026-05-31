@@ -29,7 +29,7 @@ $ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSiz
 
 # ---- 本机布局 ----
 $ScrambleDir = 'D:\cube\scramble\wca_scramble'
-$SolverDir   = 'D:\cube\solver-rust'
+$SolverDir   = 'D:\cube\cuberoot.me\solver'
 $RepoRoot    = 'D:\cube\cuberoot.me'
 $RelDir      = Join-Path $SolverDir 'target\release'
 $StdAnalyzer = Join-Path $RelDir 'std_analyzer.exe'
