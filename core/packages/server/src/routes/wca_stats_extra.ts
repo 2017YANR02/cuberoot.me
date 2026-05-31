@@ -611,64 +611,63 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
 // ── 8. /v1/wca/person-best-ranks ──
 // 选手个人 "历史最佳排名":每个项目 single / average 取得过的最低 world/continent/country rank,
-// 以及取得该 rank 时的成绩值.PR 表 "历史最佳排名" 切换用.
+// 以及取得该 rank 时的成绩值 + 年份.PR 表 "历史最佳排名" 切换用.
 //
-// 用 *月级* 表 historical_ranks_monthly_snapshot,不用年级表:
-//   1. 排名在一年内会衰减(别人后来居上),真正的峰值排名出现在刚刷 PB 的那个月,
-//      年末快照会错过它(eg 2018ZHAH02 三盲地区排名 2019-05 峰值 12,年末已掉到 17,
-//      年表 min=15 ≠ 真实峰值 12).月表 min=12 才是本人达到过的最佳.
-//   2. 月级表有 (wca_id, event_id, ...) 主索引 (hrms_person);年级表 wca_id 在主键末尾、
-//      无 wca_id 前导索引 → WHERE wca_id=? 全表扫 7.5M 行 ~10s.换月表走索引 ~25ms.
+// 数据来自预计算专表 historical_best_ranks(每 选手×项目 一行,wca_id 打头主键).
+// 该表由 stats-build/historical_ranks_build.ts 逐场重放算出(per-competition order-statistics):
+// 名次 = "该场比赛结束、当前所有已结束比赛重排"时的位置,取生涯最小 —— 即选手在排名站看到过的最佳值
+// (区别于年末/月末快照的近似:年表会低估到 15,月表 12,本表精确到按比赛口径仍是 12,且全站精确).
 wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
     return c.json({ error: 'Invalid wcaId' }, 400);
   }
 
-  // 一次取出该选手全部月份/项目的 snapshot,服务端 in-memory 取每档最小 rank.
   const rows = await query<{
     event_id: string;
-    year: number;
-    single: number | null;
-    average: number | null;
-    single_world_rank: number | null;
-    single_country_rank: number | null;
-    single_continent_rank: number | null;
-    avg_world_rank: number | null;
-    avg_country_rank: number | null;
-    avg_continent_rank: number | null;
+    s_world_rank: number | null; s_world_value: number | null; s_world_year: number | null;
+    s_cont_rank: number | null; s_cont_value: number | null; s_cont_year: number | null;
+    s_country_rank: number | null; s_country_value: number | null; s_country_year: number | null;
+    a_world_rank: number | null; a_world_value: number | null; a_world_year: number | null;
+    a_cont_rank: number | null; a_cont_value: number | null; a_cont_year: number | null;
+    a_country_rank: number | null; a_country_value: number | null; a_country_year: number | null;
   }>(
     `
-    SELECT event_id, year, single, average,
-           single_world_rank, single_country_rank, single_continent_rank,
-           avg_world_rank, avg_country_rank, avg_continent_rank
-    FROM historical_ranks_monthly_snapshot
+    SELECT event_id,
+           s_world_rank, s_world_value, s_world_year,
+           s_cont_rank, s_cont_value, s_cont_year,
+           s_country_rank, s_country_value, s_country_year,
+           a_world_rank, a_world_value, a_world_year,
+           a_cont_rank, a_cont_value, a_cont_year,
+           a_country_rank, a_country_value, a_country_year
+    FROM historical_best_ranks
     WHERE wca_id = ?
     `,
     [wcaId],
   );
 
   type Best = { rank: number; year: number; value: number | null };
+  const cell = (rank: number | null, value: number | null, year: number | null): Best | undefined =>
+    rank && rank > 0 ? { rank, year: year ?? 0, value } : undefined;
+
   const out: Record<string, {
     single?: { world?: Best; continent?: Best; country?: Best };
     average?: { world?: Best; continent?: Best; country?: Best };
   }> = {};
 
   for (const r of rows) {
-    const e = (out[r.event_id] ??= {});
-    const upd = (cur: Best | undefined, rank: number | null, value: number | null): Best | undefined => {
-      if (rank === null || rank <= 0) return cur;
-      if (!cur || rank < cur.rank) return { rank, year: r.year, value };
-      return cur;
+    out[r.event_id] = {
+      single: {
+        world: cell(r.s_world_rank, r.s_world_value, r.s_world_year),
+        continent: cell(r.s_cont_rank, r.s_cont_value, r.s_cont_year),
+        country: cell(r.s_country_rank, r.s_country_value, r.s_country_year),
+      },
+      average: {
+        world: cell(r.a_world_rank, r.a_world_value, r.a_world_year),
+        continent: cell(r.a_cont_rank, r.a_cont_value, r.a_cont_year),
+        country: cell(r.a_country_rank, r.a_country_value, r.a_country_year),
+      },
     };
-    e.single ??= {};
-    e.average ??= {};
-    e.single.world = upd(e.single.world, r.single_world_rank, r.single);
-    e.single.continent = upd(e.single.continent, r.single_continent_rank, r.single);
-    e.single.country = upd(e.single.country, r.single_country_rank, r.single);
-    e.average.world = upd(e.average.world, r.avg_world_rank, r.average);
-    e.average.continent = upd(e.average.continent, r.avg_continent_rank, r.average);
-    e.average.country = upd(e.average.country, r.avg_country_rank, r.average);
   }
 
   c.header('Cache-Control', CACHE_HEADER);
