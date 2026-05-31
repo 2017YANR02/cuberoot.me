@@ -405,6 +405,7 @@ export default function SimPage() {
       }, 250);
     };
     const onWheel = (e: WheelEvent) => {
+      if (settingsRef.current.lockView) return;
       e.preventDefault();
       const w = worldRef.current;
       if (!w) return;
@@ -461,6 +462,7 @@ export default function SimPage() {
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1)) {
         e.preventDefault();
+        if (settingsRef.current.lockView) return;
         mousePanning = true;
         panLastX = e.clientX;
         panLastY = e.clientY;
@@ -601,6 +603,7 @@ export default function SimPage() {
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pinching && activePointers.size === 2) {
         e.preventDefault();
+        if (settingsRef.current.lockView) return;
         const [a, b] = [...activePointers.values()];
         const ratio = dist(a, b) / Math.max(pinchStartDist, 1);
         world.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, pinchStartScale * ratio));
