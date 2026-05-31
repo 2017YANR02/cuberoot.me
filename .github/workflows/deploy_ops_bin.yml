@@ -40,7 +40,9 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+          # 注意:此处 ssh 不能带 -n —— 远端脚本经 heredoc 走 stdin,-n 会把 stdin 重定向到
+          # /dev/null 丢掉整个 heredoc,bash -s 收不到任何命令 → 静默空跑(报 success 却什么都没部署).
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
             "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
           set -e
           DEST=/usr/local/bin
