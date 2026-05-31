@@ -1,0 +1,37 @@
+[package]
+name = "cube_solver"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cube_solver"
+path = "src/lib.rs"
+# cdylib 给 wasm-pack 出 .wasm;rlib 给 native bins / tests 链接。
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "std_analyzer"
+path = "src/bin/std_analyzer.rs"
+
+[features]
+# big-tables(默认):原生批处理,XXCross+ 走 ~20GB 精确 pair 表(现状不变)。
+# wasm-small:浏览器友好,XXCross+ 走 pt_cross_C4E0(52MB)单槽 max 可采纳启发式,
+#            仍返回最优解(与 big 逐格 bit-exact),只是搜索更深。Phase 3 据此编 WASM。
+default = ["big-tables"]
+big-tables = []
+wasm-small = []
+
+# native:磁盘 mmap + 多核并行(WASM 不用)。
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+memmap2 = "0.9"
+rayon = "1.10"
+
+# wasm:bindgen 胶水。求解器确定性,无需 getrandom。
+# crate 与 wasm-bindgen CLI 版本必须精确匹配(见构建脚本注释)。
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
