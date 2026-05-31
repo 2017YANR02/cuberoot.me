@@ -19,7 +19,7 @@ param(
   [switch]$DryRun,        # 严格只读: 算新增规模即停, 不碰任何 master / 不解算 / 不发布
   [string]$SourceCsv,     # 测试源 (input 形状 csv) 替代下载 export
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
-  [switch]$SkipSolve,     # 调试: 复用上次 std solver 产出, 跳过 std 解算
+  [switch]$SkipSolve,     # 调试: 跳过 incremental + std 解算, 复用上次取数/solver 产出, 直接走追加/变体/发布
   [string[]]$Variants = @('eo','pseudo','pseudo_pair'),  # 跟 std 锁步补缺的变体 (@()=只 std)。pair / f2leo / pseudo_f2leo 默认不含(pair ~2/s 太慢; f2leo 系首次需全量补), 需手动 -Variants 指定
   [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
   [int]$MaxChunks = 0      # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
@@ -133,11 +133,17 @@ function Sync-Variant($Name){
 
 # ---- 1. 增量取数 ----
 Step '1 增量取数 (results export -> 新打乱)'
-$incrArgs = @('run','--project',$ScrambleDir,'python',(Join-Path $ScrambleDir 'incremental.py'))
-if($SourceCsv){ $incrArgs += @('--source-csv',$SourceCsv) }
-if($DryRun){ $incrArgs += '--dry-run' }   # 严格只读: 不覆写 competitions.tsv 等 master
-& uv @incrArgs
-if($LASTEXITCODE -ne 0){ throw 'incremental.py 失败' }
+if($SkipSolve){
+  # 调试: incremental 启动会清掉上次 solver 产出, 故 -SkipSolve 时连它一起跳过, 复用上次
+  # new_no_wide_move.txt + new_no_wide_move_std.csv 直接走追加/变体/发布 (不重算 diff)。
+  Write-Host '[SkipSolve] 跳过 incremental.py, 复用上次取数 + std solver 产出 (调试)。' -ForegroundColor Yellow
+} else {
+  $incrArgs = @('run','--project',$ScrambleDir,'python',(Join-Path $ScrambleDir 'incremental.py'))
+  if($SourceCsv){ $incrArgs += @('--source-csv',$SourceCsv) }
+  if($DryRun){ $incrArgs += '--dry-run' }   # 严格只读: 不覆写 competitions.tsv 等 master
+  & uv @incrArgs
+  if($LASTEXITCODE -ne 0){ throw 'incremental.py 失败' }
+}
 
 $newTxt = Join-Path $IncrDir 'new_no_wide_move.txt'
 $nNew = if((Test-Path $newTxt) -and (Lc $newTxt) -gt 0){ Lc $newTxt } else { 0 }
@@ -232,14 +238,16 @@ if($NoPublish){
     git -C $RepoRoot push origin main
     if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
     # 发布 stats/scramble 到 static: 打成单个 .tgz -> scp 一个文件(二进制安全, 不走 pwsh 管道)
-    # -> 远端 untar 覆盖。比 scp -r 逐个传 ~1.5w 小文件快一个量级。
+    # -> 远端原子替换。比 scp -r 逐个传 ~1.5w 小文件快一个量级。
     $tgz = Join-Path $env:TEMP 'cuberoot_scramble_publish.tgz'
     tar -czf $tgz -C (Join-Path $RepoRoot 'stats') scramble
     if($LASTEXITCODE -ne 0){ throw 'tar 打包失败' }
     scp $tgz "${StaticHost}:${StaticDest}/_publish.tgz"
     if($LASTEXITCODE -ne 0){ throw 'scp tgz 失败' }
-    ssh $StaticHost "tar -xzf ${StaticDest}/_publish.tgz -C ${StaticDest} && rm -f ${StaticDest}/_publish.tgz"
-    if($LASTEXITCODE -ne 0){ throw '远端 untar 失败' }
+    # 原子替换 + 清理孤儿: 解到 scramble.new -> 换上 (旧的暂留 scramble.prev 兜底) -> 删旧 + tgz。
+    # 直接覆盖式 untar 不删"本次不再产出"的旧文件(如某 bin 样本数超 1000 不再出 txt), 故整目录替换。
+    ssh $StaticHost "set -e; cd '${StaticDest}'; rm -rf scramble.new scramble.prev; mkdir scramble.new; tar -xzf _publish.tgz -C scramble.new --strip-components=1; if [ -d scramble ]; then mv scramble scramble.prev; fi; mv scramble.new scramble; rm -rf scramble.prev _publish.tgz"
+    if($LASTEXITCODE -ne 0){ throw '远端原子替换失败' }
     Remove-Item $tgz -Force -ErrorAction SilentlyContinue
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }
