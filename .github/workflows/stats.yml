@@ -191,10 +191,24 @@ jobs:
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
 
       # ── WCA stats extra:6 个 cubing.pro 风格 stats(grand_slam / all_results 等) ──
+      # 增量:先拉服务器现有 per-comp 指纹,builder 只重灌指纹变动比赛的 wca_results_top 行
+      # (不再每天全量 DROP+重建翻倍撑爆磁盘).拉取失败/脚本未部署 → 空文件 → builder 退回全量(安全兜底).
+      - name: Fetch current fingerprints (incremental wca_results_top)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
+            "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/dump_fingerprints.sh' \
+            > "$GITHUB_WORKSPACE/core/packages/stats-build/prev_fp.tsv" 2>/dev/null || true
+          echo "fetched $(wc -l < "$GITHUB_WORKSPACE/core/packages/stats-build/prev_fp.tsv" 2>/dev/null || echo 0) fingerprint rows"
+
       - name: Build WCA stats extra
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
+          # builder 清空 output/ 目录,故旧指纹放在 package 根而非 output 内.缺此文件 → 全量模式.
+          PREV_FINGERPRINTS: ${{ github.workspace }}/core/packages/stats-build/prev_fp.tsv
         run: npx tsx src/bin/wca_stats_extra_build.ts
 
       - name: Upload WCA stats extra TSVs to server
@@ -202,12 +216,11 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         working-directory: core/packages/stats-build/output/wca_stats_extra
+        # scp 整个 output 目录:增量 / 全量产出的文件集不同
+        # (全量含 wca_results_top.copy.tsv;增量含 wca_results_top_delta.tsv + wca_results_top_del.txt).
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_stats_extra && rm -rf /tmp/wca_stats_extra/*'
-          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id load.sql wca_competitions.copy.tsv wca_grand_slam.copy.tsv \
-            wca_results_top.copy.tsv wca_cohort_ranks.copy.tsv \
-            wca_success_rate.copy.tsv wca_all_events_done.copy.tsv wca_person_ranks.copy.tsv \
-            wca_comp_updated_at.copy.tsv \
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id ./* \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_stats_extra/"
 
       - name: Apply WCA stats extra on server
