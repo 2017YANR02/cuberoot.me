@@ -610,15 +610,22 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 });
 
 // ── 8. /v1/wca/person-best-ranks ──
-// 选手个人 "历史最佳排名":每个项目 single / average 在 historical_ranks_snapshot 全年区间里取得过的最低
-// world_rank / country_rank,以及取得该 rank 时的年份和成绩值.PR 表 "历史最佳排名" 切换用.
+// 选手个人 "历史最佳排名":每个项目 single / average 取得过的最低 world/continent/country rank,
+// 以及取得该 rank 时的成绩值.PR 表 "历史最佳排名" 切换用.
+//
+// 用 *月级* 表 historical_ranks_monthly_snapshot,不用年级表:
+//   1. 排名在一年内会衰减(别人后来居上),真正的峰值排名出现在刚刷 PB 的那个月,
+//      年末快照会错过它(eg 2018ZHAH02 三盲地区排名 2019-05 峰值 12,年末已掉到 17,
+//      年表 min=15 ≠ 真实峰值 12).月表 min=12 才是本人达到过的最佳.
+//   2. 月级表有 (wca_id, event_id, ...) 主索引 (hrms_person);年级表 wca_id 在主键末尾、
+//      无 wca_id 前导索引 → WHERE wca_id=? 全表扫 7.5M 行 ~10s.换月表走索引 ~25ms.
 wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
     return c.json({ error: 'Invalid wcaId' }, 400);
   }
 
-  // 一次取出该选手全部年份/项目的 snapshot,服务端 in-memory 聚合.
+  // 一次取出该选手全部月份/项目的 snapshot,服务端 in-memory 取每档最小 rank.
   const rows = await query<{
     event_id: string;
     year: number;
@@ -635,7 +642,7 @@ wcaStatsExtraRoutes.get('/wca/person-best-ranks', async (c) => {
     SELECT event_id, year, single, average,
            single_world_rank, single_country_rank, single_continent_rank,
            avg_world_rank, avg_country_rank, avg_continent_rank
-    FROM historical_ranks_snapshot
+    FROM historical_ranks_monthly_snapshot
     WHERE wca_id = ?
     `,
     [wcaId],
