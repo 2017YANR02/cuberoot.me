@@ -84,6 +84,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/solvers',
+    glyph: '◈',
+    accent: '#2DD4BF',
+    zh: {
+      title: '求解器',
+      sub: 'Solver Fleet',
+      tagline: '魔方分阶段求解器舰队:本机原生分析器与浏览器 WASM 的回填进度、吞吐、内存占用',
+      meta: '7 原生分析器 / ~34GB 表 / 静态快照',
+    },
+    en: {
+      title: 'Solvers',
+      sub: 'Solver Fleet',
+      tagline: 'The staged cube-solver fleet: native analyzers and browser WASM — backfill coverage, throughput, memory',
+      meta: '7 native analyzers / ~34GB tables / snapshot',
+    },
+  },
+  {
     href: '/code/traffic',
     glyph: '↗',
     accent: '#F0A04B',

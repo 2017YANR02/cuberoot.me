@@ -1,13 +1,13 @@
 #!/usr/bin/env pwsh
-# WCA 十字步数分布 周更增量管道 (仅本地: 需 solver 的 ~34GB 表 + ~16GB 内存余量)
+# WCA 十字步数分布 手动增量刷新管道 (按需触发, 非定时; 仅本地: 需 solver 的 ~34GB 表 + ~16GB 内存余量)
 #
-# 一键:        pwsh run_weekly.ps1
-# 干跑(只读):  pwsh run_weekly.ps1 -DryRun -SourceCsv D:\cube\scramble\wca_scramble\input\wca_scrambles_info.csv
-# 只本地不发布: pwsh run_weekly.ps1 -NoPublish
-# 选变体补缺: pwsh run_weekly.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair)
-# pair 单独跑: pwsh run_weekly.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑)
-# f2leo 系:   pwsh run_weekly.ps1 -Variants f2leo,pseudo_f2leo  (小表 ~40MB 不碰 huge, 首次需全量补, 默认不含)
-# 不补变体:   pwsh run_weekly.ps1 -Variants @()
+# 一键:        pwsh update_cross_stats.ps1
+# 干跑(只读):  pwsh update_cross_stats.ps1 -DryRun -SourceCsv D:\cube\scramble\wca_scramble\input\wca_scrambles_info.csv
+# 只本地不发布: pwsh update_cross_stats.ps1 -NoPublish
+# 选变体补缺: pwsh update_cross_stats.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair)
+# pair 单独跑: pwsh update_cross_stats.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑)
+# f2leo 系:   pwsh update_cross_stats.ps1 -Variants f2leo,pseudo_f2leo  (小表 ~40MB 不碰 huge, 首次需全量补, 默认不含)
+# 不补变体:   pwsh update_cross_stats.ps1 -Variants @()
 #
 # 流程: results export 下载/抽取 -> 增量 diff (vs std.csv) -> std_analyzer 全 5 阶段 -> 追加 std/no_wide_move/split_mbf
 #       -> 对每个变体按 "master no_wide_move 的 id - 该变体已有 id" 补缺 (分块 solve + 逐块校验追加, 可中断续跑)
