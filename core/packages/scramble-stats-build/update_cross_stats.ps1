@@ -7,6 +7,7 @@
 # 选变体补缺: pwsh update_cross_stats.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair)
 # pair 单独跑: pwsh update_cross_stats.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑)
 # f2leo 系:   pwsh update_cross_stats.ps1 -Variants f2leo,pseudo_f2leo  (小表 ~40MB 不碰 huge, 首次需全量补, 默认不含)
+# 只跑一两块: pwsh update_cross_stats.ps1 -Variants eo -MaxChunks 1     (eo 一块=2000≈40min, 跑完照常发布, 还差的下次续; 免人工盯/kill)
 # 不补变体:   pwsh update_cross_stats.ps1 -Variants @()
 #
 # 流程: results export 下载/抽取 -> 增量 diff (vs std.csv) -> std_analyzer 全 5 阶段 -> 追加 std/no_wide_move/split_mbf
@@ -20,7 +21,8 @@ param(
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 复用上次 std solver 产出, 跳过 std 解算
   [string[]]$Variants = @('eo','pseudo','pseudo_pair'),  # 跟 std 锁步补缺的变体 (@()=只 std)。pair / f2leo / pseudo_f2leo 默认不含(pair ~2/s 太慢; f2leo 系首次需全量补), 需手动 -Variants 指定
-  [int]$ChunkSize = 20000 # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
+  [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
+  [int]$MaxChunks = 0      # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
 )
 $ErrorActionPreference = 'Stop'
 $ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSize 覆盖每变体默认
@@ -103,7 +105,7 @@ function Sync-Variant($Name){
   # 4. 分块: 写块输入 -> analyzer (stdout 丢弃, 进度走 stderr) -> 校验行数 -> 追加 -> 删中间产物
   $inTxt  = Join-Path $IncrDir "sync_$Name.txt"
   $outCsv = Join-Path $IncrDir ("sync_{0}_{0}.csv" -f $Name)
-  $done=0
+  $done=0; $chunksRun=0
   for($i=0; $i -lt $total; $i += $chunk){
     $cnt=[Math]::Min($chunk, $total-$i)
     $slice=$missing.GetRange($i, $cnt)
@@ -116,11 +118,16 @@ function Sync-Variant($Name){
     if($got -ne $cnt){ throw "[$Name] 块行数 $got != 输入 $cnt" }
     AppendData $csv $outCsv $true
     Remove-Item $outCsv -Force
-    $done += $cnt
+    $done += $cnt; $chunksRun++
     Write-Host "[$Name] $done/$total"
+    if($MaxChunks -gt 0 -and $chunksRun -ge $MaxChunks){
+      Write-Host "[$Name] 已达 -MaxChunks $MaxChunks, 停止 (还差 $($total-$done) 条, 下次 run 自动续)。" -ForegroundColor Yellow
+      break
+    }
   }
   Remove-Item $inTxt -Force -ErrorAction SilentlyContinue
-  Write-Host "[$Name] 完成, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Green
+  if($done -ge $total){ Write-Host "[$Name] 完成, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Green }
+  else { Write-Host "[$Name] 部分补缺 $done/$total, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Yellow }
   return $true
 }
 
