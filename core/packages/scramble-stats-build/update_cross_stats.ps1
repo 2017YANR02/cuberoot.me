@@ -138,7 +138,8 @@ if($SkipSolve){
   # new_no_wide_move.txt + new_no_wide_move_std.csv 直接走追加/变体/发布 (不重算 diff)。
   Write-Host '[SkipSolve] 跳过 incremental.py, 复用上次取数 + std solver 产出 (调试)。' -ForegroundColor Yellow
 } else {
-  $incrArgs = @('run','--project',$ScrambleDir,'python',(Join-Path $ScrambleDir 'incremental.py'))
+  $incrPy = Join-Path $PSScriptRoot 'incremental.py'   # 脚本在仓库内(进 git), 数据目录走 --data-dir 注入
+  $incrArgs = @('run','--project',$ScrambleDir,'python',$incrPy,'--data-dir',$ScrambleDir)
   if($SourceCsv){ $incrArgs += @('--source-csv',$SourceCsv) }
   if($DryRun){ $incrArgs += '--dry-run' }   # 严格只读: 不覆写 competitions.tsv 等 master
   & uv @incrArgs
