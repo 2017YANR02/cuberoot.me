@@ -19,7 +19,8 @@
 cuberoot.me/
 ├── core/                          # pnpm + Turbo monorepo (all new work lives here)
 │   └── packages/
-│       ├── client/                # React 19 + Vite 8 SPA
+│       ├── client-next/           # React 19 + Next.js 16 (App Router) ← primary workspace
+│       ├── client/                # React 19 + Vite 8 SPA (retired, local fallback only)
 │       ├── server/                # Hono + PostgreSQL 13 (WCA OAuth + user data + alg DB)
 │       ├── shared/                # Shared types
 │       ├── stats-build/           # WCA statistics pipeline (weekly CI)
@@ -30,10 +31,10 @@ cuberoot.me/
 └── *.html                         # Legacy static pages (upstream forks)
 ```
 
-- **Frontend**: React 19, Vite 8, TypeScript, react-i18next (EN/ZH), react-router
+- **Frontend**: React 19 + Next.js 16 (App Router, Turbopack), TypeScript, react-i18next (EN/ZH). Legacy Vite 8 SPA kept only as a local fallback.
 - **Backend**: Hono + PostgreSQL 13, fronted by nginx
 - **Pipeline**: TypeScript + MySQL (WCA dump) via GitHub Actions, weekly refresh
-- **Hosting**: self-hosted nginx (primary) + GitHub Pages mirror
+- **Hosting**: self-hosted nginx + Vercel edge (DNS split-routing)
 
 ---
 
@@ -44,26 +45,26 @@ Requires **pnpm 11** and **Node 20+**.
 ```bash
 pnpm install
 
-# Dev server at http://127.0.0.1:5173/
-pnpm --filter @cuberoot/client dev
+# Dev server at http://127.0.0.1:3000/
+pnpm --filter @cuberoot/client-next dev
 
-# Type check (fast, daily)
-pnpm --filter @cuberoot/client typecheck
+# Type check (fast, daily — tsgo native)
+pnpm --filter @cuberoot/client-next typecheck
 
-# Type check (CI-equivalent, before push)
-pnpm --filter @cuberoot/client typecheck:ci
+# Type check (tsc -b incremental, when in doubt)
+pnpm --filter @cuberoot/client-next typecheck:tsc
 
 # Production build
-pnpm --filter @cuberoot/client build
+pnpm --filter @cuberoot/client-next build
 ```
 
-The Recon API is proxied to production via Vite, so you can develop the full SPA without running the backend locally.
+The backend API is proxied to production via Next.js rewrites, so you can develop the full app without running the backend locally.
 
 ---
 
 ## 🌏 Internationalization
 
-Every user-facing tool ships in **English** and **简体中文**, switchable from the footer on every page. Cubing notation (R, U, F2, y'…) stays in English by convention.
+Every user-facing tool ships in **English** and **简体中文**, switchable from the toggle in the top-right corner of every page. Cubing notation (R, U, F2, y'…) stays in English by convention.
 
 ---
 

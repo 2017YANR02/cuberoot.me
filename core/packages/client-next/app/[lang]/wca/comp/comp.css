@@ -601,7 +601,10 @@
 .comp-table thead th.th-best {
   padding-right: 32px;
 }
-.td-avg { font-weight: 600; }
+.td-avg, .td-best { font-weight: 400; }
+/* 排序所依据的那一列 (单次 or 平均) 加粗 */
+.comp-table td.is-rank-col,
+.comp-table thead th.is-rank-col { font-weight: 700; }
 .td-attempt {
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);

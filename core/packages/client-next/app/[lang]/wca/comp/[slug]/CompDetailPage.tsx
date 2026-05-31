@@ -161,6 +161,56 @@ function formatLive(value: number, eventId: string, isAverage: boolean): string 
   return formatWcaResult(value, eventId, isAverage ? 'average' : 'single', { zero: 'empty' });
 }
 
+// 盲拧项目:上游不计算平均,需从 attempts 现算并展示 (3BLD 今年起 bo5 → 展示 ao5;4/5BLD 仍 bo3 → 展示 mo3).
+// 三者都按单次排名,平均只作附加列.
+const BLIND_AVG_EVENTS = new Set(['333bf', '444bf', '555bf']);
+function isBlindAvgEvent(eventId: string): boolean { return BLIND_AVG_EVENTS.has(eventId); }
+
+// 按平均排名的赛制:ao5 ('a')、mo3 ('m')、未知 ('').盲拧 bo5/bo3 ('5'/'3') 仍按单次排名.
+function isAvgRankedFormat(f: string): boolean {
+  return f === 'a' || f === 'm' || f === '';
+}
+
+// WCA 平均/均值取整:≥10 分钟取到整秒,否则取到百分秒.
+function roundWcaAvg(cs: number): number {
+  if (cs >= 60000) return Math.round(cs / 100) * 100;
+  return Math.round(cs);
+}
+
+// 从一轮 attempts 算 WCA 平均:5 次有效 → ao5 (去掉最好+最差);3 次 → mo3 (直接均值).
+// 失败次数过多 → DNF (-1);非 3/5 次 → 0.
+function computeWcaAverage(attempts: number[]): number {
+  const counted = attempts.filter(v => v !== 0);
+  const n = counted.length;
+  if (n !== 3 && n !== 5) return 0;
+  const fails = counted.filter(v => v < 0).length;
+  if (n === 5) {
+    if (fails >= 2) return -1;
+    const sorted = [...counted].sort((a, b) => (a < 0 ? Infinity : a) - (b < 0 ? Infinity : b));
+    const mid = sorted.slice(1, 4);
+    return roundWcaAvg(mid.reduce((s, v) => s + v, 0) / mid.length);
+  }
+  if (fails >= 1) return -1;
+  return roundWcaAvg(counted.reduce((s, v) => s + v, 0) / n);
+}
+
+// 展示/排名用的平均值:上游有值用上游,否则盲拧项目现算.
+function effectiveAvg(r: LiveResult): number {
+  if (r.a && r.a !== 0) return r.a;
+  if (isBlindAvgEvent(r.e)) return computeWcaAverage(r.v);
+  return r.a;
+}
+
+// WCA ID (PleaseBeQuietXian2025) → cubing.com dash slug (Please-Be-Quiet-Xian-2025)。
+// 镜像 server cubing_live.ts 的 wcaIdToCubingSlug;data.name 带撇号/标点会 404,必须从无标点的 slug 推导。
+function wcaIdToCubingSlug(wcaId: string): string {
+  return wcaId
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/(\d)([A-Z])/g, '$1-$2')
+    .replace(/([A-Z])(\d)/g, '$1-$2')
+    .replace(/(?<!\d)([a-z])(\d)/g, '$1-$2');
+}
+
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
 
 const ROUND_NAME_ZH: Record<string, string> = {
@@ -260,7 +310,8 @@ export default function CompDetailPage() {
   const psychEventParam = searchParams?.get('psychEvent') || '';
   const sourceParam = searchParams?.get('source');
 
-  const load = useCallback((): { promise: Promise<void>; cancel: () => void } => {
+  const load = useCallback((opts?: { fresh?: boolean }): { promise: Promise<void>; cancel: () => void } => {
+    const fresh = opts?.fresh ?? false;
     setError(null);
     setProgress(null);
     let done = false;
@@ -340,24 +391,24 @@ export default function CompDetailPage() {
       });
     };
 
-    if (!sourceParam) {
-      fetch(`/stats/comp/${encodeURIComponent(slug)}.json`, { signal: apiAbort.signal })
-        .then(r => r.ok ? r.json() : null)
-        .then(j => { if (j) finishWith(j); })
-        .catch(() => { /* ignore */ });
-      const onlyParam = eventParam && roundParam
-        ? `${encodeURIComponent(eventParam)}:${encodeURIComponent(roundParam)}`
-        : 'auto';
-      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}?only=${onlyParam}`), { signal: apiAbort.signal })
-        .then(r => r.ok ? r.json() : null)
-        .then(j => { if (j) finishWith(j, /* partial */ true); })
-        .catch(() => { /* ignore */ });
-      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}`), { signal: apiAbort.signal })
-        .then(r => r.ok ? r.json() : null)
-        .then(j => { if (j) finishWith(j); })
-        .catch(() => { /* ignore */ });
+    // 默认走 Vercel 边缘缓存代理 (/api/comp/:slug):离用户近,命中即秒返,s-maxage=30 + SWR
+    // 让跨洋 RTT / 上游现拉成本全落后台.初始数据只是引导,WS 实时层 (useLiveStream / useWcaLiveStream)
+    // 随后几秒内补丁到最新,所以最多 30s 旧的缓存完全安全.
+    // source 覆盖 / 手动刷新 (fresh) / 边缘代理失败 → 直连 SSE 兜底 (带进度).
+    if (sourceParam || fresh) {
+      startSse();
+    } else {
+      fetch(`/api/comp/${encodeURIComponent(slug)}`, { signal: apiAbort.signal })
+        .then(async r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(j => finishWith(j))
+        .catch((e) => {
+          if ((e as Error).name === 'AbortError' || done) return;
+          startSse();
+        });
     }
-    startSse();
     return { promise, cancel };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, sourceParam]);
@@ -375,7 +426,7 @@ export default function CompDetailPage() {
 
   const refresh = async () => {
     setRefreshing(true);
-    await load().promise;
+    await load({ fresh: true }).promise;
     setRefreshing(false);
   };
 
@@ -532,11 +583,11 @@ export default function CompDetailPage() {
       }
     }
     const f = currentRound.rd.f;
-    const byAvg = f === 'a' || f === 'm' || f === '';
+    const byAvg = isAvgRankedFormat(f);
     const rankKey = (v: number) => (v > 0 ? v : Infinity);
     const cmp = (a: number, b: number) => a < b ? -1 : a > b ? 1 : 0;
     return arr.slice().sort((x, y) => {
-      const primary = byAvg ? cmp(rankKey(x.a), rankKey(y.a)) : cmp(rankKey(x.b), rankKey(y.b));
+      const primary = byAvg ? cmp(rankKey(effectiveAvg(x)), rankKey(effectiveAvg(y))) : cmp(rankKey(x.b), rankKey(y.b));
       if (primary !== 0) return primary;
       return cmp(rankKey(x.b), rankKey(y.b));
     });
@@ -548,8 +599,8 @@ export default function CompDetailPage() {
     const idx = rs.findIndex(r => r.i === currentRound.rd.i);
     if (idx < 0) return new Set<number>();
     const f = currentRound.rd.f;
-    const byAvg = f === 'a' || f === 'm' || f === '';
-    const keyOf = (r: LiveResult) => byAvg ? `${r.a}|${r.b}` : `${r.b}`;
+    const byAvg = isAvgRankedFormat(f);
+    const keyOf = (r: LiveResult) => byAvg ? `${effectiveAvg(r)}|${r.b}` : `${r.b}`;
     const topN = (n: number): Set<number> => {
       const out = new Set<number>();
       const valid = filteredResults.filter(r => r.b > 0);
@@ -748,7 +799,7 @@ export default function CompDetailPage() {
           <h1 className="comp-detail-title">
             {(() => {
               const iso2 = compFlagIso2(slug);
-              const cubingSlug = data.cubingSlug || decodeEntities(data.name).trim().replace(/\s+/g, '-');
+              const cubingSlug = data.cubingSlug || wcaIdToCubingSlug(data.slug);
               const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
               const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
               return (
@@ -1057,8 +1108,9 @@ interface ResultsTableProps {
 
 function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2 }: ResultsTableProps) {
   if (!round) return null;
-  const isAverageFormat = round.f === 'a' || round.f === 'm' || round.f === '';
-  const showAvg = isAverageFormat;
+  const isAverageFormat = isAvgRankedFormat(round.f);
+  const showAvg = isAverageFormat || isBlindAvgEvent(round.e);
+  const singleFirst = !isAverageFormat; // 按单次排名的项目 (含 3 盲 bo5 / 4/5 盲 bo3):单次列在平均列前
   const formatAttempts = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
   const maxRowAttempts = results.reduce((m, r) => Math.max(m, r.v.length), 0);
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
@@ -1070,8 +1122,11 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
           <tr>
             <th className="th-place">{isZh ? '名次' : 'Place'}</th>
             <th className="th-person">{isZh ? '选手' : 'Person'}</th>
-            {showAvg && <th className="th-avg">{isZh ? '平均' : 'Average'}</th>}
-            <th className="th-best">{isZh ? '单次' : 'Best'}</th>
+            {(() => {
+              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '平均' : 'Average'}</th> : null;
+              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '单次' : 'Best'}</th>;
+              return singleFirst ? [bestTh, avgTh] : [avgTh, bestTh];
+            })()}
             <th className="th-detail" colSpan={attemptCount}>{isZh ? '详情' : 'Detail'}</th>
           </tr>
         </thead>
@@ -1102,24 +1157,29 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                     {displayCuberName(u.name, isZh)}
                   </span>
                 </td>
-                {showAvg && (
-                  <td className="td-avg">
-                    <span className="record-num-cell">
-                      {formatLive(r.a, r.e, true)}
-                      {r.ar
-                        ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                        : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
-                    </span>
-                  </td>
-                )}
-                <td className="td-best">
-                  <span className="record-num-cell">
-                    {formatLive(r.b, r.e, false)}
-                    {r.sr
-                      ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                      : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
-                  </span>
-                </td>
+                {(() => {
+                  const avgCell = showAvg ? (
+                    <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
+                      <span className="record-num-cell">
+                        {formatLive(effectiveAvg(r), r.e, true)}
+                        {r.ar
+                          ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
+                          : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                      </span>
+                    </td>
+                  ) : null;
+                  const bestCell = (
+                    <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
+                      <span className="record-num-cell">
+                        {formatLive(r.b, r.e, false)}
+                        {r.sr
+                          ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
+                          : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                      </span>
+                    </td>
+                  );
+                  return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
+                })()}
                 {Array.from({ length: attemptCount }).map((_, i) => (
                   <td key={i} className={`td-attempt ${isAo5Bracketed(r.v, i) ? 'td-attempt-trimmed' : ''}`}>
                     {formatLive(r.v[i] ?? 0, r.e, false)}
@@ -1129,7 +1189,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             );
           })}
           {results.length === 0 && (
-            <tr><td colSpan={4 + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
+            <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
           )}
         </tbody>
       </table>
@@ -1166,6 +1226,15 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
     return map;
   }, [data]);
 
+  // 按单次排名的项目 (盲拧 + bo1/bo2/bo3 等非平均赛制):预排名也按单次排序、单次列在前.
+  const singleRanked = useMemo(() => {
+    if (!eventId) return false;
+    if (isBlindAvgEvent(eventId)) return true;
+    const ev = data.events.find(e => e.i === eventId);
+    const fmt = ev?.rs[ev.rs.length - 1]?.f ?? '';
+    return !isAvgRankedFormat(fmt);
+  }, [data, eventId]);
+
   const psychRows = useMemo(() => {
     if (!eventId) return [];
     const numbers = new Set<number>();
@@ -1194,12 +1263,17 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
     arr.sort((x, y) => {
+      if (singleRanked) {
+        const bySingle = cmp(rankKey(x.single), rankKey(y.single));
+        if (bySingle !== 0) return bySingle;
+        return cmp(rankKey(x.average), rankKey(y.average));
+      }
       const byAvg = cmp(rankKey(x.average), rankKey(y.average));
       if (byAvg !== 0) return byAvg;
       return cmp(rankKey(x.single), rankKey(y.single));
     });
     return arr;
-  }, [data, eventId, pbMap]);
+  }, [data, eventId, pbMap, singleRanked]);
 
   const rosterRows = useMemo(() => {
     if (eventId) return [];
@@ -1217,8 +1291,11 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
               <tr>
                 <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
                 <th className="th-person">{isZh ? '选手' : 'Person'}</th>
-                <th className="th-avg">{isZh ? '平均 PR' : 'Average PR'}</th>
-                <th className="th-best">{isZh ? '单次 PR' : 'Single PR'}</th>
+                {(() => {
+                  const avgTh = <th key="avg" className={`th-avg${!singleRanked ? ' is-rank-col' : ''}`}>{isZh ? '平均' : 'Average'}</th>;
+                  const singleTh = <th key="single" className={`th-best${singleRanked ? ' is-rank-col' : ''}`}>{isZh ? '单次' : 'Single'}</th>;
+                  return singleRanked ? [singleTh, avgTh] : [avgTh, singleTh];
+                })()}
               </tr>
             </thead>
             <tbody>
@@ -1240,22 +1317,29 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
                         {displayCuberName(row.u.name, isZh)}
                       </span>
                     </td>
-                    <td className="td-avg">
-                      {row.average ? (
-                        <span className="record-num-cell">
-                          {formatWcaResult(row.average, eventId, 'average')}
-                          {row.averageTag && <RecordBadge record={row.averageTag} variant="inline" iso2={regionToIso2(row.u.region)} />}
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className="td-best">
-                      {row.single ? (
-                        <span className="record-num-cell">
-                          {formatWcaResult(row.single, eventId, 'single')}
-                          {row.singleTag && <RecordBadge record={row.singleTag} variant="inline" iso2={regionToIso2(row.u.region)} />}
-                        </span>
-                      ) : '—'}
-                    </td>
+                    {(() => {
+                      const avgCell = (
+                        <td key="avg" className={`td-avg${!singleRanked ? ' is-rank-col' : ''}`}>
+                          {row.average ? (
+                            <span className="record-num-cell">
+                              {formatWcaResult(row.average, eventId, 'average')}
+                              <RecordBadge record={row.averageTag || 'PR'} variant="inline" iso2={regionToIso2(row.u.region)} />
+                            </span>
+                          ) : '—'}
+                        </td>
+                      );
+                      const singleCell = (
+                        <td key="single" className={`td-best${singleRanked ? ' is-rank-col' : ''}`}>
+                          {row.single ? (
+                            <span className="record-num-cell">
+                              {formatWcaResult(row.single, eventId, 'single')}
+                              <RecordBadge record={row.singleTag || 'PR'} variant="inline" iso2={regionToIso2(row.u.region)} />
+                            </span>
+                          ) : '—'}
+                        </td>
+                      );
+                      return singleRanked ? [singleCell, avgCell] : [avgCell, singleCell];
+                    })()}
                   </tr>
                 );
               })}
@@ -1400,7 +1484,7 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                   <tbody>
                     {g.entries.map(en => {
                       const { result } = en;
-                      const isAverageFormat = en.rd.f === 'a' || en.rd.f === 'm' || en.rd.f === '';
+                      const isAverageFormat = isAvgRankedFormat(en.rd.f) || isBlindAvgEvent(en.ev.i);
                       const { singleRank, averageRank } = classifyPr(result, pb);
                       const singleBadge = prBadgeFor(singleRank);
                       const averageBadge = prBadgeFor(averageRank);
@@ -1422,7 +1506,7 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                               : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
                           </td>
                           <td>
-                            {isAverageFormat ? formatLive(result.a, result.e, true) : ''}
+                            {isAverageFormat ? formatLive(effectiveAvg(result), result.e, true) : ''}
                             {isAverageFormat && (result.ar
                               ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} />
                               : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
@@ -1539,7 +1623,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const { singleRank, averageRank } = classifyPr(result, pb);
   const singleBadge = prBadgeFor(singleRank);
   const averageBadge = prBadgeFor(averageRank);
-  const isAverageFormat = rd.f === 'a' || rd.f === 'm' || rd.f === '';
+  const isAverageFormat = isAvgRankedFormat(rd.f) || isBlindAvgEvent(eventId);
   const place = idx >= 0 && result.b !== 0 ? idx + 1 : null;
   const iso2 = regionToIso2(u.region);
   const attempts = result.v.filter(v => v !== 0);
@@ -1602,7 +1686,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
               {attempts.length === 0
                 ? '—'
                 : (() => {
-                    const isAo5 = rd.f === 'a' && attempts.length === 5;
+                    const isAo5 = (rd.f === 'a' || rd.f === '5') && attempts.length === 5;
                     if (!isAo5) return attempts.map(v => formatLive(v, result.e, false)).join(', ');
                     let bestIdx = -1, worstIdx = -1;
                     let bestVal = Infinity, worstVal = -Infinity;
@@ -1623,9 +1707,9 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
           <section className="comp-round-modal-section">
             <div className="comp-round-modal-label">{isZh ? '平均' : 'Average'}</div>
             <div className="comp-round-modal-value">
-              {isAverageFormat && result.a !== 0 ? (
+              {isAverageFormat && effectiveAvg(result) !== 0 ? (
                 <span className="record-num-cell">
-                  {formatLive(result.a, result.e, true)}
+                  {formatLive(effectiveAvg(result), result.e, true)}
                   {result.ar
                     ? <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
                     : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}

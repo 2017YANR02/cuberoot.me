@@ -21,6 +21,9 @@ import type { RowDataPacket } from 'mysql2';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PER_EVENT_DIR = resolve(__dirname, '../../../../../stats/top10_history');
 
+// NOTE: per-event 进度/内存日志默认静默(CI 干净),本地调 OOM 时 STATS_VERBOSE=1 打开
+const VERBOSE = process.env.STATS_VERBOSE === '1';
+
 const TOP_K_EVER = 30;
 const ALL_EVENTS = [
   '333','222','444','555','666','777','333bf','333fm','333oh',
@@ -148,7 +151,7 @@ export class Top10History extends Statistic {
       const singleOnly = SINGLE_ONLY_EVENTS.has(eventId);
       const isAo5 = AO5_EVENTS.has(eventId);
       const tag = singleOnly ? 'single' : (isAo5 ? 'all' : 'single+avg');
-      process.stdout.write(`  Top10 history ${eventId} (${tag})...`);
+      if (VERBOSE) process.stdout.write(`  Top10 history ${eventId} (${tag})...`);
 
       // NOTE: SQL — Ao5 events 加 LEFT JOIN result_attempts + GROUP_CONCAT 拉 attempts
       const sql = isAo5
@@ -171,7 +174,7 @@ export class Top10History extends Statistic {
       if (rawRows.length === 0) {
         rawRows = null;
         if (global.gc) global.gc();
-        console.log(` skip (no data)`);
+        if (VERBOSE) console.log(` skip (no data)`);
         continue;
       }
 
@@ -217,7 +220,7 @@ export class Top10History extends Statistic {
 
       const dt = ((Date.now() - t) / 1000).toFixed(1);
       const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
-      console.log(` ${summary.join(' ')} (${dt}s) [${mem}MB]`);
+      if (VERBOSE) console.log(` ${summary.join(' ')} (${dt}s) [${mem}MB]`);
     }
 
     const persons = await this.fetchPersons(allPids);
@@ -245,7 +248,7 @@ export class Top10History extends Statistic {
     }
 
     const dtAll = ((Date.now() - tAll) / 1000).toFixed(1);
-    console.log(`  Total: ${Object.keys(eventOutputs).length} events, ` +
+    if (VERBOSE) console.log(`  Total: ${Object.keys(eventOutputs).length} events, ` +
       `${Object.keys(persons).length} persons, ${Object.keys(comps).length} comps in ${dtAll}s`);
 
     return {

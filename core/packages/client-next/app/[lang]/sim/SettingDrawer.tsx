@@ -30,6 +30,8 @@ export interface SimSettings {
   animateScramble: boolean;
   /** 画布背景:false=纯色 (var --background),true=透明棋盘格 (twizzle 风格) */
   checkeredBg: boolean;
+  /** 锁定大小+位置:禁滚轮/捏合缩放 + 中右键/双指平移;旋转视角和转动仍可用 */
+  lockView: boolean;
   /** 解法回放模式:
    *  - 'moves'     = 默认。cube 起点 = setup,alg 向前播,看 alg 把魔方拧成什么。
    *  - 'algorithm' = cube 终点 = setup(setup 为空 → 还原态),起点 = setup·alg⁻¹,
@@ -69,6 +71,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   hint: false,
   animateScramble: false,
   checkeredBg: false,
+  lockView: false,
   playbackMode: 'moves',
   dragEmpty: 'orbit',
   coreColor: '#202020',

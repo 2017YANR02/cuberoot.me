@@ -139,8 +139,10 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               return (
                 <tr key={eid}>
                   <th scope="row" className="wp-cell-event">
-                    <EventIcon event={eid} className="wp-event-icon" />
-                    <span className="wp-event-name">{t(eventNameZh(eid), eventNameEn(eid))}</span>
+                    <span className="wp-event-inner">
+                      <EventIcon event={eid} className="wp-event-icon" />
+                      <span className="wp-event-name">{t(eventNameZh(eid), eventNameEn(eid))}</span>
+                    </span>
                   </th>
                   {showRanks && <td><RankCell r={sRank.world} /></td>}
                   {showRanks && <td><RankCell r={sRank.continent} /></td>}
