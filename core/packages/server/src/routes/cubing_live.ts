@@ -13,7 +13,7 @@ import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
-import { enrichComp, type CompRecordsSnapshot } from '../utils/current_records.js';
+import { enrichComp, resolvePersonIso2, type CompRecordsSnapshot } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 
@@ -361,7 +361,8 @@ function ttlFor(source: SourceId): number {
 // scrape + enrichPersonalRecords 共 ~2-3s,首次访问总卡.L2 落 PG,任何启动后第一个用户/cron
 // 命中即秒返回.每个 schema_version 一行,enrich 逻辑改时 bump 整体失效.
 
-const SCHEMA_VERSION = 1;
+// v2: 同场比赛内纪录推进式判定(初赛破纪录后,后置轮较慢成绩不再误标 WR/CR/NR).
+const SCHEMA_VERSION = 2;
 
 const startDateCache = new Map<string, { d: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
@@ -1641,6 +1642,67 @@ export function startPrewarmCron(): void {
     prewarmHotComps();
     setInterval(prewarmHotComps, PREWARM_REFRESH_INTERVAL_MS);
   }, 90_000);
+}
+
+// ─── Inferred records (中国比赛 via cubing.com) ─────────────────────────────
+// WCA Live 的 recentRecords 只含 WCA Live 平台的比赛;cubing.com 上的中国比赛在 WCA
+// 公示前不在那个 feed 里.这里从 prewarm 已缓存的 cubing 源 CompData 抽出 enrichComp
+// 推断的 WR/CR/NR,供首页"纪录"列表合并展示(/v1/wca/recent-records 读取).
+// 纯内存 + getCompStartDate(缓存)— 无额外网络.
+
+const RECORD_TAGS = new Set(['WR', 'CR', 'NR']);
+const INFERRED_RECENT_WINDOW_DAYS = 10;  // 跟 WCA Live recentRecords 默认窗口对齐
+
+export interface InferredRecord {
+  id: string;            // 稳定且含 值/tag — 当格式化缓存键,成绩变了自动重算
+  compId: string;        // wca id (slug)
+  compNameEn: string;
+  eventId: string;
+  roundId: string;
+  type: 'single' | 'average';
+  tag: string;           // WR | CR | NR(format_cli 按 personIso2 把 CR 渲成 AsR/ER/...)
+  attemptResult: number; // centiseconds
+  personName: string;    // 原始(可能 "English (中文)")
+  personIso2: string;    // 大写
+  startDate: string | null;
+}
+
+export async function extractInferredRecords(): Promise<InferredRecord[]> {
+  const out: InferredRecord[] = [];
+  const now = Date.now();
+  for (const data of cache.values()) {
+    if (data.source !== 'cubing') continue;
+    const sd = await getCompStartDate(data.slug);
+    if (sd) {
+      const days = (now - Date.parse(sd)) / 86400_000;
+      if (days > INFERRED_RECENT_WINDOW_DAYS || days < -2) continue;
+    }
+    const compNameEn = decodeHtmlEntities(data.name);
+    for (const [key, list] of Object.entries(data.resultsByRound)) {
+      const roundId = key.slice(key.indexOf(':') + 1);
+      for (const r of list) {
+        const sr = typeof r.sr === 'string' ? r.sr : '';
+        const ar = typeof r.ar === 'string' ? r.ar : '';
+        const wantS = r.b > 0 && RECORD_TAGS.has(sr);
+        const wantA = r.a > 0 && RECORD_TAGS.has(ar);
+        if (!wantS && !wantA) continue;
+        const u = data.users[String(r.n)];
+        if (!u) continue;
+        const personIso2 = resolvePersonIso2(u.region, u.countryId).toUpperCase();
+        if (wantS) out.push({
+          id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
+          compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
+          tag: sr, attemptResult: r.b, personName: u.name, personIso2, startDate: sd,
+        });
+        if (wantA) out.push({
+          id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
+          compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
+          tag: ar, attemptResult: r.a, personName: u.name, personIso2, startDate: sd,
+        });
+      }
+    }
+  }
+  return out;
 }
 
 // ─── Routes ────────────────────────────────────────────────────────────────

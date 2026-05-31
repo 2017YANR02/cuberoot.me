@@ -24,6 +24,7 @@ export interface CurrentRecords {
   iso2ToCountryId: Map<string, string>;      // iso2 lowercase → wca country id
   nameToCountryId: Map<string, string>;      // country name lowercase → wca country id
   countryIdToContinent: Map<string, string>; // wca country id → continent_id
+  countryIdToIso2: Map<string, string>;      // wca country id → iso2 lowercase
 }
 
 /** 发给 client 的 records 快照(仅本场比赛涉及的国家/洲).client 用同样的 key 规则做 lookup. */
@@ -47,8 +48,12 @@ async function load(): Promise<CurrentRecords | null> {
     const iso2ToCountryId = new Map<string, string>();
     const nameToCountryId = new Map<string, string>();
     const countryIdToContinent = new Map<string, string>();
+    const countryIdToIso2 = new Map<string, string>();
     for (const c of countryRows) {
-      if (c.iso2) iso2ToCountryId.set(c.iso2.toLowerCase(), c.id);
+      if (c.iso2) {
+        iso2ToCountryId.set(c.iso2.toLowerCase(), c.id);
+        countryIdToIso2.set(c.id, c.iso2.toLowerCase());
+      }
       nameToCountryId.set(c.name.toLowerCase(), c.id);
       countryIdToContinent.set(c.id, c.continent_id);
     }
@@ -87,7 +92,7 @@ async function load(): Promise<CurrentRecords | null> {
 
     const ms = Date.now() - t0;
     console.log(`[current_records] loaded WR=${wr.size} NR=${nr.size} CR=${cr.size} in ${ms}ms`);
-    return { wr, cr, nr, iso2ToCountryId, nameToCountryId, countryIdToContinent };
+    return { wr, cr, nr, iso2ToCountryId, nameToCountryId, countryIdToContinent, countryIdToIso2 };
   } catch (e) {
     console.warn('[current_records] load failed:', (e as Error).message);
     return null;
@@ -129,6 +134,24 @@ function resolveCountryId(region: string, recs: CurrentRecords): string | null {
   if (r.length === 2) return recs.iso2ToCountryId.get(r.toLowerCase()) ?? null;
   if (recs.countryIdToContinent.has(r)) return r;
   return recs.nameToCountryId.get(r.toLowerCase()) ?? null;
+}
+
+/** 选手 region / enrichComp 解析出的 countryId → iso2(小写).无缓存 / 无法解析返 ''.
+ *  format_cli 拿 person_iso2 把通用 CR 渲染成 AsR/ER/... 的洲际记录,所以必须给准. */
+export function resolvePersonIso2(region: string, countryId?: string): string {
+  const recs = peekCurrentRecords();
+  if (recs && countryId) {
+    const iso2 = recs.countryIdToIso2.get(countryId);
+    if (iso2) return iso2;
+  }
+  const r = (region || '').trim();
+  if (r.length === 2) return r.toLowerCase();
+  if (recs && r) {
+    const cid = recs.nameToCountryId.get(r.toLowerCase());
+    const iso2 = cid ? recs.countryIdToIso2.get(cid) : undefined;
+    if (iso2) return iso2;
+  }
+  return '';
 }
 
 interface MinimalUser {
