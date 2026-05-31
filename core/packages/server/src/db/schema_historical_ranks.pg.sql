@@ -63,13 +63,16 @@ CREATE TABLE IF NOT EXISTS historical_ranks_snapshot (
 -- 主查询索引:按 (event, year) 出全球榜或国家榜
 CREATE INDEX IF NOT EXISTS hrs_single_wr ON historical_ranks_snapshot (event_id, year, single_world_rank) WHERE single_world_rank > 0;
 CREATE INDEX IF NOT EXISTS hrs_avg_wr ON historical_ranks_snapshot (event_id, year, avg_world_rank) WHERE avg_world_rank > 0;
+-- ⚠️ 别删 hrs_*_cr!它们 pg_stat 里 idx_scan 常年=0(地区筛选视图冷),看着像死索引,
+--    但实测删掉后 /wca/historical 的地区视图退化成整张 7.5M 行表的全表扫 → 每次 ~10 秒(实测 China/333)。
+--    idx_scan=0 ≠ 可删:这俩是 historical_ranks.ts 地区分支(WHERE event=year=country_id ORDER BY country_rank)的承重墙。
 CREATE INDEX IF NOT EXISTS hrs_single_cr ON historical_ranks_snapshot (event_id, year, country_id, single_country_rank) WHERE single_country_rank > 0;
 CREATE INDEX IF NOT EXISTS hrs_avg_cr ON historical_ranks_snapshot (event_id, year, country_id, avg_country_rank) WHERE avg_country_rank > 0;
 
 -- ── 4b. historical_ranks_monthly_snapshot: 每月末的累积最佳快照 ──
 -- 跟 4. snapshot 同结构,但分辨率到月.smart-emit:仅当该月本人有 result 时才 emit 一行.
 -- 用途:选手页"历史成绩排名曲线"按月画点,跟 cubing.pro 视觉对齐.
--- 估容量:~8M 行 / ~2GB 含索引 (vs 年级表 7.5M / 1.7GB).
+-- 实测容量:~4.25M 行 / ~600 MB(瘦身后,仅 hrms_person 一个索引;migration 0019 删了死索引 + PK).
 CREATE TABLE IF NOT EXISTS historical_ranks_monthly_snapshot (
   event_id              VARCHAR(20) NOT NULL,
   year                  SMALLINT NOT NULL,
@@ -83,15 +86,14 @@ CREATE TABLE IF NOT EXISTS historical_ranks_monthly_snapshot (
   single_continent_rank INTEGER NOT NULL DEFAULT 0,
   avg_world_rank        INTEGER NOT NULL DEFAULT 0,
   avg_country_rank      INTEGER NOT NULL DEFAULT 0,
-  avg_continent_rank    INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (event_id, year, month, wca_id)
+  avg_continent_rank    INTEGER NOT NULL DEFAULT 0
+  -- 无 PK:派生表,每周 TRUNCATE+\copy 全量重灌,唯一性由 builder 确定性 emit 保证;
+  --        查询只按 wca_id 走 hrms_person。原 PK (event,year,month,wca_id) 从不被查询用,已删 (migration 0019)。
 );
 
--- 选手页查询索引:按 (wca_id, event) 拉出整条时间序列(主索引就足够,wca_id 在 PK 末尾不利)
+-- 选手页查询索引(本表唯一在用的索引):按 (wca_id, event) 拉出整条时间序列
 CREATE INDEX IF NOT EXISTS hrms_person ON historical_ranks_monthly_snapshot (wca_id, event_id, year, month);
--- (event, year, month) 查每月榜单,跟年级表索引同 pattern
-CREATE INDEX IF NOT EXISTS hrms_single_wr ON historical_ranks_monthly_snapshot (event_id, year, month, single_world_rank) WHERE single_world_rank > 0;
-CREATE INDEX IF NOT EXISTS hrms_avg_wr    ON historical_ranks_monthly_snapshot (event_id, year, month, avg_world_rank)    WHERE avg_world_rank > 0;
+-- 注:原 hrms_single_wr / hrms_avg_wr("按月世界榜")已删 — 全站无该功能,从无查询走过。见 migration 0019。
 
 -- ── 4c. historical_best_ranks: 每 (选手, 项目) 的"历史最佳名次" ──
 -- 精确口径:按比赛逐场重放(per-competition incremental order-statistics / Fenwick),
