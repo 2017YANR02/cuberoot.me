@@ -1636,12 +1636,52 @@ export async function prewarmHotComps(): Promise<void> {
   }
 }
 
+// ─── Fast prewarm: 正在进行的比赛 (比赛日 ±2d) ──────────────────────────────
+// 这些比赛 L1/L2 TTL 只有 60s,10min 的整体 prewarm 兜不住中间的冷窗.单独每 65s
+// (略大于 60s TTL,确保每轮都真正回源刷新) 刷这十来场,让边缘 SWR 后台重验 /
+// 首个用户回源时命中 ~1.5s 的热上游,而非 3-20s 冷拉.
+const FAST_PREWARM_INTERVAL_MS = 65_000;
+const FAST_PREWARM_DELAY_MS = 400;
+let fastPrewarming = false;
+
+async function listOngoingComps(): Promise<string[]> {
+  try {
+    const rows = await query<{ id: string }>(
+      `SELECT id FROM wca_competitions
+        WHERE start_date BETWEEN CURRENT_DATE - INTERVAL '2 days' AND CURRENT_DATE + INTERVAL '2 days'`,
+    );
+    return rows.map(r => r.id);
+  } catch (e) {
+    console.warn('[fast-prewarm] list failed:', (e as Error).message);
+    return [];
+  }
+}
+
+export async function fastPrewarmOngoing(): Promise<void> {
+  if (fastPrewarming) return;
+  fastPrewarming = true;
+  try {
+    const ids = await listOngoingComps();
+    for (const wcaId of ids) {
+      try { await loadComp(wcaId, 'auto'); } catch { /* ignore */ }
+      await new Promise(r => setTimeout(r, FAST_PREWARM_DELAY_MS));
+    }
+  } finally {
+    fastPrewarming = false;
+  }
+}
+
 export function startPrewarmCron(): void {
   // 启动延后 90s,让 current_records / cn_comp_zh warm 跑完再上.
   setTimeout(() => {
     prewarmHotComps();
     setInterval(prewarmHotComps, PREWARM_REFRESH_INTERVAL_MS);
   }, 90_000);
+  // 正在进行的比赛单独高频刷,延后 100s 错开整体 prewarm 的启动峰值.
+  setTimeout(() => {
+    fastPrewarmOngoing();
+    setInterval(fastPrewarmOngoing, FAST_PREWARM_INTERVAL_MS);
+  }, 100_000);
 }
 
 // ─── Inferred records (中国比赛 via cubing.com) ─────────────────────────────
