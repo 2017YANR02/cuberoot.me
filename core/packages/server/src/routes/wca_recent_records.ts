@@ -142,14 +142,36 @@ async function getCompMeta(compId: string, compNameEn: string, personIso2: strin
   return meta;
 }
 
-async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
-  const cached = formattedCache.get(r.id);
+// format_cli 熔断器 — 外部 Python (/opt/wca-monitor) 启动时会拉 WCA 官网排名,
+// 官网不可达时每条都卡满 spawn 超时 (67 条 × 5s ≈ 5.5min/轮,后台 60s 轮询永远跑不完一轮)。
+// 任一条失败即跳闸,冷却期内不再 spawn 直接返空;空文案不写缓存,client 已能降级渲染,
+// 网络恢复后下一轮自动补回花哨文案。
+const FORMAT_CLI_COOLDOWN_MS = 5 * 60_000;
+let formatCliDownUntil = 0;
+
+/** spawn format_cli 拿 cn/en,带 id 缓存 + 熔断 + 仅缓存非空结果。 */
+async function runFormatCached(id: string, event: Record<string, unknown>): Promise<{ cn: string; en: string }> {
+  const cached = formattedCache.get(id);
   if (cached) return cached;
+  if (Date.now() < formatCliDownUntil) return { cn: '', en: '' };
+  try {
+    const r2 = await runFormatCli({ events: [event] });
+    const out = { cn: r2.cn, en: r2.en };
+    if (out.cn || out.en) formattedCache.set(id, out);  // 仅缓存有效文案,失败下轮重试
+    return out;
+  } catch (e) {
+    formatCliDownUntil = Date.now() + FORMAT_CLI_COOLDOWN_MS;
+    console.warn('[recent-records] format_cli failed for', id, '— breaker tripped:', (e as Error).message);
+    return { cn: '', en: '' };
+  }
+}
+
+async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
   const compId = r.result.round.competitionEvent.competition.wcaId;
   const compNameEn = r.result.round.competitionEvent.competition.name;
   const personIso2 = (r.result.person.country.iso2 || '').toUpperCase();
   const meta = await getCompMeta(compId, compNameEn, personIso2);
-  const event = {
+  return runFormatCached(r.id, {
     tag: r.tag,
     rec_type: r.type,
     attempt_result: r.attemptResult,
@@ -162,28 +184,15 @@ async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
     url: `${SITE_BASE}/wca/comp/${compId}`,
     previous_pr: null,
     pr_rank: null,
-  };
-  let out: { cn: string; en: string };
-  try {
-    const r2 = await runFormatCli({ events: [event] });
-    out = { cn: r2.cn, en: r2.en };
-  } catch (e) {
-    // format_cli 不可用 (dev 本地无 Python 模板) → 兜底纯文本
-    console.warn('[recent-records] format_cli failed for', r.id, ':', (e as Error).message);
-    out = { cn: '', en: '' };
-  }
-  formattedCache.set(r.id, out);
-  return out;
+  });
 }
 
 /** 中国比赛(cubing.com)推断纪录的格式化 — 走与 WCA Live 同款 format_cli 模板 + getCompMeta.
  *  缓存键 = rec.id(含成绩值/tag),成绩更新自动重算. */
 async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: string }> {
-  const cached = formattedCache.get(rec.id);
-  if (cached) return cached;
   const personIso2 = rec.personIso2.toUpperCase();
   const meta = await getCompMeta(rec.compId, rec.compNameEn, personIso2);
-  const event = {
+  return runFormatCached(rec.id, {
     tag: rec.tag,
     rec_type: rec.type,
     attempt_result: rec.attemptResult,
@@ -196,17 +205,7 @@ async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: st
     url: `${SITE_BASE}/wca/comp/${rec.compId}`,
     previous_pr: null,
     pr_rank: null,
-  };
-  let out: { cn: string; en: string };
-  try {
-    const r2 = await runFormatCli({ events: [event] });
-    out = { cn: r2.cn, en: r2.en };
-  } catch (e) {
-    console.warn('[recent-records] format_cli failed for inferred', rec.id, ':', (e as Error).message);
-    out = { cn: '', en: '' };
-  }
-  formattedCache.set(rec.id, out);
-  return out;
+  });
 }
 
 /** 取 cubing.com 中国比赛缓存里的推断纪录,排序 + 截断 + 格式化成 RecentRecord. */

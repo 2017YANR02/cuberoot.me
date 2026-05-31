@@ -9,7 +9,9 @@ import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import { Flag } from '@/components/Flag';
 import { ContinentIcon, RECORD_BADGE_CONTINENT } from '@/components/ContinentIcon';
-import { eventDisplayName } from '@/lib/wca-events';
+import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
+import { formatWcaResult } from '@/lib/wca-format-result';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import './recent_records.css';
 
@@ -19,6 +21,11 @@ interface RecentRecord {
   type: string;
   eventId: string;
   competitionId: string;
+  // Structured fields — used for the client-side fallback when the server's
+  // pre-rendered formattedCn/En are empty (format_cli down / timing out).
+  attemptResult: number;
+  personName: string;
+  countryIso2: string;
   formattedCn: string;
   formattedEn: string;
 }
@@ -41,6 +48,40 @@ function shortenEvent(text: string, eventId: string, isZh: boolean): string {
     /^([\d:.,]+\s)(\S+)(\s(?:WR|CR|NR|AsR|ER|NAR|SAR|OcR|AfR)\b)/,
     (_m, prefix, _e, tail) => `${prefix}${short}${tail}`,
   );
+}
+
+// Fallback when the server's pre-rendered text is missing (format_cli down /
+// timing out). Build the line from the structured fields the API still returns.
+function fallbackTypeLabel(kind: 'single' | 'average', isZh: boolean): string {
+  if (isZh) return kind === 'average' ? '平均' : '单次';
+  return kind === 'average' ? ' Avg' : '';
+}
+
+function renderFallback(r: RecentRecord, isZh: boolean): React.ReactNode[] {
+  const kind = r.type === 'average' ? 'average' : 'single';
+  const eid = toWcaEventId(r.eventId);
+  const time = formatWcaResult(r.attemptResult, eid, kind);
+  const ev = eventDisplayName(r.eventId, isZh);
+  const name = displayCuberName(r.personName, isZh);
+  const iso2 = (r.countryIso2 || '').toLowerCase();
+  const contSlug = RECORD_BADGE_CONTINENT[r.tag];
+  const nodes: React.ReactNode[] = [];
+  if (iso2) nodes.push(<Flag key="f" iso2={iso2} className="recent-records-inline-flag" />);
+  nodes.push(<span key="t">{time} </span>);
+  nodes.push(<span key="e">{ev}{fallbackTypeLabel(kind, isZh)} </span>);
+  if (contSlug) nodes.push(<ContinentIcon key="c" slug={contSlug} className="recent-records-continent-icon" />);
+  nodes.push(<RecordBadge key="b" record={r.tag} variant="inline" />);
+  if (name) nodes.push(<span key="n"> {name}</span>);
+  return nodes;
+}
+
+function fallbackText(r: RecentRecord, isZh: boolean): string {
+  const kind = r.type === 'average' ? 'average' : 'single';
+  const eid = toWcaEventId(r.eventId);
+  const time = formatWcaResult(r.attemptResult, eid, kind);
+  const ev = eventDisplayName(r.eventId, isZh);
+  const name = displayCuberName(r.personName, isZh);
+  return `${time} ${ev}${fallbackTypeLabel(kind, isZh)} ${r.tag} ${name}`.replace(/\s+/g, ' ').trim();
 }
 
 function renderFormatted(text: string): React.ReactNode[] {
@@ -110,8 +151,12 @@ export function useRecentRecords(isZh: boolean) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep records that either have server-rendered text or enough structured
+  // fields to render a client-side fallback (format_cli timing out → text empty).
   const filled = useMemo(
-    () => (records ?? []).filter(r => (isZh ? r.formattedCn : r.formattedEn)),
+    () => (records ?? []).filter(
+      r => (isZh ? r.formattedCn : r.formattedEn) || (r.eventId && r.attemptResult > 0),
+    ),
     [records, isZh],
   );
 
@@ -124,7 +169,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function handleCopy(r: RecentRecord) {
-    const text = isZh ? r.formattedCn : r.formattedEn;
+    const text = (isZh ? r.formattedCn : r.formattedEn) || fallbackText(r, isZh);
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(r.id);
@@ -149,7 +194,9 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
               {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
             </button>
             <Link {...compLinkProps(r.competitionId)} className="recent-records-body">
-              {renderFormatted(shortenEvent(stripPrefix(text), r.eventId, isZh))}
+              {text
+                ? renderFormatted(shortenEvent(stripPrefix(text), r.eventId, isZh))
+                : renderFallback(r, isZh)}
             </Link>
           </li>
         );
