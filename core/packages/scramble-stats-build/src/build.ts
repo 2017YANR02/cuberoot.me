@@ -133,7 +133,7 @@ interface Reservoir { samples: Sample[]; seen: number }
 function newRes(): Reservoir { return { samples: [], seen: 0 }; }
 
 // 固定种子 PRNG (mulberry32):reservoir 采样确定化 -> 输入不变则输出逐字节不变,
-// 周更只在真有新数据的 bin 产生 diff(否则 Math.random 每次全量 churn)。
+// 增量刷新只在真有新数据的 bin 产生 diff(否则 Math.random 每次全量 churn)。
 let rngState = 0x9e3779b9 >>> 0;
 function rand(): number {
   rngState = (rngState + 0x6d2b79f5) >>> 0;
@@ -434,7 +434,7 @@ async function main() {
   if (fs.existsSync(downloadsDir)) fs.rmSync(downloadsDir, { recursive: true, force: true });
   fs.mkdirSync(downloadsDir, { recursive: true });
 
-  // SCRAMBLE_STATS_STAMP (周更编排传 export_date): 数据不变则时间戳不变 -> 无 spurious diff
+  // SCRAMBLE_STATS_STAMP (增量管道传 export_date): 数据不变则时间戳不变 -> 无 spurious diff
   const generatedAt = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString();
   const setsOut: Record<string, unknown> = {};
   const examplesSetsOut: Record<string, unknown> = {};
