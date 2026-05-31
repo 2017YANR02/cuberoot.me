@@ -28,7 +28,7 @@ interface NativeSolver {
   zhWhy: string; enWhy: string;
 }
 
-// 原生分析器 (solver-rust/target/release/*_analyzer.exe). rate 为 2026-05-30 实测.
+// 原生分析器 (solver/target/release/*_analyzer.exe). rate 为 2026-05-30 实测.
 const NATIVE: NativeSolver[] = [
   { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '联合大表剪枝最强, 全 5 阶段', enWhy: 'strongest joint-table pruning, full 5 stages' },
   { key: 'eo', stages: 5, fbRows: 1_240_119, rate: 0.9, tier: 'huge', zhWhy: 'xxxxcross 全枚举 ~13M 节点每条, 唯一长极', enWhy: 'xxxxcross full enumeration ~13M nodes/case — the long pole' },
@@ -51,8 +51,8 @@ const BROWSER: BrowserSolver[] = [
   { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
 ];
 
-// 每个原生分析器实际 mmap 的磁盘表 (D:\cube\solver-rust\tables\, 大小为真实文件字节).
-// 源码核实自 solver-rust (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
+// 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
+// 源码核实自 solver/ (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
 // pseudo_pair_solver.rs / pair_solver.rs / f2leo_solver.rs / pseudo_f2leo_solver.rs),
 // 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
