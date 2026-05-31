@@ -24,8 +24,8 @@ sets:
   - key: xcross_2_col_10f
     label: 10-step XCross dual-color states
     label_zh: 双色底 XCross 10步状态
-    csv_dir: D:/cube/state/xcross_2_col_10f/stat
-    scrambles_txt: D:/cube/state/xcross_2_col_10f/scrambles.txt
+    csv_dir: D:/cube/scramble/xcross_2_col_10f/stat
+    scrambles_txt: D:/cube/scramble/xcross_2_col_10f/scrambles.txt
 ```
 
 CSV 数据全 gitignored(`D:/cube/scramble/`),几百 MB 永不进 git。`config.yml` 也 gitignored,只 commit `config.yml.example`。

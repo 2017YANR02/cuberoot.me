@@ -50,8 +50,8 @@ $VARIANT_EXE = @{
 }
 
 # 每变体默认 chunk(显式 -ChunkSize 覆盖全部)。analyzer 攒完整块才写盘 + 追加 = 中断丢在飞的整块,
-# 故慢变体用小块换更密的 save point。实测速率: eo ~0.9/s(一块 2000≈37min)、pair ~2/s、
-# pseudo ~18/s、pseudo_pair ~35/s(2000 才 ~1min,重启占比高,故快变体保持 20000≈9-18min)。
+# 故慢变体用小块换更密的 save point。实测速率(2026-05-30, 16 核): eo ~0.9/s(一块 2000≈37min)、pair ~2/s、
+# pseudo ~390/s、pseudo_pair ~47/s(2000 才几十秒,重启占比高,故快变体保持 20000≈数分钟)。
 $VARIANT_CHUNK = @{
   eo           = 2000
   pair         = 2000
@@ -176,15 +176,11 @@ if($nNew -gt 0){
 
 # ---- 4. 变体补缺 (eo/pseudo/pseudo_pair/pair/f2leo 系 各自跟 master 锁步, 可中断续跑) ----
 $variantChanged = $false
-$compStepsChanged = $false   # f2leo 系变体有变 -> comp_steps_<variant> 需重算 (即便无新 std)
 if($Variants.Count -gt 0){
   Step "4 变体补缺: $($Variants -join ', ')"
   if(-not (Test-Path $MasterTxt)){ throw "master $MasterTxt 不存在" }
   foreach($v in $Variants){
-    if(Sync-Variant $v){
-      $variantChanged = $true
-      if($v -in @('f2leo','pseudo_f2leo')){ $compStepsChanged = $true }
-    }
+    if(Sync-Variant $v){ $variantChanged = $true }
   }
 } else {
   Write-Host '未指定变体补缺 (-Variants @())。' -ForegroundColor DarkGray
@@ -200,7 +196,7 @@ $stamp = if(Test-Path (Join-Path $IncrDir 'export_date.txt')){ (Get-Content (Joi
 $env:SCRAMBLE_STATS_STAMP = $stamp
 $extra = ''
 if($stdChanged){ $extra += ' + wca_cross' }
-if($stdChanged -or $compStepsChanged){ $extra += ' + comp-steps' }
+if($stdChanged -or $variantChanged){ $extra += ' + comp-steps' }
 Step "5 重算 distribution.json$extra (stamp=$stamp)"
 Push-Location (Join-Path $RepoRoot 'core')
 try {
@@ -211,9 +207,9 @@ try {
     pnpm --filter @cuberoot/scramble-stats-build build:wca-cross
     if($LASTEXITCODE -ne 0){ throw 'build:wca-cross 失败' }
   }
-  if($stdChanged -or $compStepsChanged){
-    # 每场预计算表(gen 页秒出, std + f2leo 系一把全产), gitignore+只 scp。
-    # std 变 -> std comp_steps 重算; f2leo 系变 -> 其 comp_steps 重算 (build 内按 csv 存在与否决定)。
+  if($stdChanged -or $variantChanged){
+    # 每场预计算表(gen 页秒出), gitignore+只 scp。任一变体(含 std)CSV 变 -> 对应 comp_steps_<v> 需重算
+    # (build_comp_steps 内按 csv 存在与否逐个产);否则变体-only 补缺会发布陈旧的 comp_steps_<v>。
     pnpm --filter @cuberoot/scramble-stats-build build:comp-steps
     if($LASTEXITCODE -ne 0){ throw 'build:comp-steps 失败' }
   }
@@ -225,12 +221,14 @@ if($NoPublish){
 } else {
   Step '6 commit & push + tar 发布 static'
   git -C $RepoRoot pull --rebase --autostash origin main
+  if($LASTEXITCODE -ne 0){ throw 'git pull --rebase 失败 (可能冲突, 仓库可能停在 rebase 中, 别继续 push)' }
   git -C $RepoRoot add stats/scramble
   if(git -C $RepoRoot status --porcelain stats/scramble){
     $parts = @($stamp)
     if($stdChanged){ $parts += "+$nNew scrambles" }
     if($variantChanged){ $parts += "variants: $($Variants -join '/')" }
     git -C $RepoRoot commit -m "chore(scramble-stats): incremental refresh ($($parts -join ', '))"
+    if($LASTEXITCODE -ne 0){ throw 'git commit 失败' }
     git -C $RepoRoot push origin main
     if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
     # 发布 stats/scramble 到 static: 打成单个 .tgz -> scp 一个文件(二进制安全, 不走 pwsh 管道)
