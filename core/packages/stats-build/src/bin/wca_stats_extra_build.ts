@@ -8,7 +8,7 @@
 //   NODE_OPTIONS='--expose-gc --max-old-space-size=12288' npx tsx src/bin/wca_stats_extra_build.ts
 
 import mysql from 'mysql2/promise';
-import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
+import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, existsSync, rmSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
@@ -145,6 +145,9 @@ async function main() {
   });
 
   const outDir = process.env.OUT_DIR || resolve(__dirname, '../../output/wca_stats_extra');
+  // 清旧产物:增量/全量两种模式的文件集不同(delta vs 全量 wca_results_top.copy.tsv),
+  // 上传步骤 scp 整个目录,残留旧文件会被一起发上去污染 apply.
+  rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   console.log(`[out] ${outDir}`);
 
@@ -202,6 +205,63 @@ async function main() {
     });
   }
   console.log(`  competitions=${comps.length}`);
+
+  // ── 2.5 per-comp 内容指纹 + 增量判定 ──
+  // 指纹 = 成绩值聚合(只有真实成绩变动才让 hash 变,WCA 批量盖 updated_at 不影响).
+  //   results 值 XOR result_attempts 每把 value;两表分别 GROUP BY 再 JS XOR 合并(避免 1:N join fan-out).
+  // 增量:CI build 前 ssh 拉服务器现有 wca_comp_updated_at 落到 PREV_FINGERPRINTS,
+  //   只重灌指纹变了的比赛的 wca_results_top 行,峰值从 6.8G 全表翻倍降到几 MB.
+  //   缺旧指纹文件(首次/拉取失败)→ incremental=false,退回全量 DROP+CREATE(现行为).
+  console.log('[fp] computing per-comp content fingerprint...');
+  const [resHashRows] = await conn.query<mysql.RowDataPacket[]>(
+    `SELECT competition_id AS comp_id,
+            BIT_XOR(CRC32(CONCAT_WS('|', id, person_id, event_id, round_type_id, pos, best, average,
+                                    regional_single_record, regional_average_record))) AS h
+       FROM results GROUP BY competition_id`,
+  );
+  const [attHashRows] = await conn.query<mysql.RowDataPacket[]>(
+    `SELECT r.competition_id AS comp_id,
+            BIT_XOR(CRC32(CONCAT_WS('#', ra.result_id, ra.attempt_number, ra.value))) AS h
+       FROM result_attempts ra JOIN results r ON r.id = ra.result_id
+      GROUP BY r.competition_id`,
+  );
+  const compHash = new Map<string, bigint>();
+  for (const r of resHashRows) compHash.set(r['comp_id'] as string, BigInt((r['h'] ?? 0) as string | number));
+  for (const r of attHashRows) {
+    const id = r['comp_id'] as string;
+    compHash.set(id, (compHash.get(id) ?? 0n) ^ BigInt((r['h'] ?? 0) as string | number));
+  }
+  (resHashRows as unknown as { length: number }).length = 0;
+  (attHashRows as unknown as { length: number }).length = 0;
+
+  // 写新指纹 manifest(全量,dump_comps.yml 增量也要它)
+  let compMaxCount = 0;
+  {
+    const f = createWriteStream(resolve(outDir, 'wca_comp_updated_at.copy.tsv'));
+    for (const [comp, h] of compHash) { f.write(`${pgEsc(comp)}\t${h.toString()}\n`); compMaxCount++; }
+    f.end();
+  }
+
+  // 读旧指纹 + 算 changed 集 + 旧指纹守卫值(count/sum,apply 前服务器侧再算一遍比对)
+  const oldCompHash = new Map<string, bigint>();
+  const prevFpPath = process.env.PREV_FINGERPRINTS;
+  if (prevFpPath && existsSync(prevFpPath)) {
+    for (const line of readFileSync(prevFpPath, 'utf-8').split('\n')) {
+      if (!line) continue;
+      const tab = line.indexOf('\t');
+      if (tab < 0) continue;
+      oldCompHash.set(line.slice(0, tab), BigInt(line.slice(tab + 1).trim()));
+    }
+  }
+  const incremental = oldCompHash.size > 0;
+  const changedComps = new Set<string>();
+  if (incremental) {
+    for (const [c, h] of compHash) if (oldCompHash.get(c) !== h) changedComps.add(c);
+    for (const c of oldCompHash.keys()) if (!compHash.has(c)) changedComps.add(c); // 删除的比赛
+  }
+  let oldFpSum = 0n;
+  for (const h of oldCompHash.values()) oldFpSum += h;
+  console.log(`[fp] mode=${incremental ? 'incremental' : 'full'} old=${oldCompHash.size} new=${compHash.size} changed=${changedComps.size}`);
 
   // ── 3. championships: 用于 grand_slam ──
   console.log('[champ] loading championships...');
@@ -307,10 +367,14 @@ async function main() {
   for (const ev of ACTIVE_EVENTS) successAcc.set(ev, new Map());
 
   // 输出 stream
-  const allTopStream = createWriteStream(resolve(outDir, 'wca_results_top.copy.tsv'));
+  // 增量模式 delta 文件名故意不带 .copy.tsv 后缀:apply_load.sh 预检拒空 *.copy.tsv,
+  // 而「无变动比赛」时 delta 合法为空(如同数据被重触发),不能让它触发预检 abort.
+  const wrtFile = incremental ? 'wca_results_top_delta.tsv' : 'wca_results_top.copy.tsv';
+  const allTopStream = createWriteStream(resolve(outDir, wrtFile));
   const cohortStream = createWriteStream(resolve(outDir, 'wca_cohort_ranks.copy.tsv'));
   const grandSlamStream = createWriteStream(resolve(outDir, 'wca_grand_slam.copy.tsv'));
   let allTopCount = 0, cohortCount = 0, gsCount = 0;
+  let fullTopTotal = 0; // 完整表应有行数(增量模式下 != allTopCount=delta 写入数)
 
   // 每人在所有 WCA 比赛 final round(roundTypeId='f'/'c')里取得过的最佳名次 (MIN pos>0).
   // 跨所有 event 累积. 0 = 从未在任何 final 拿过有效成绩.
@@ -444,24 +508,32 @@ async function main() {
         s.add(r.compId);
       }
 
-      // all_results_top: 全量流式写
+      // all_results_top: 增量模式只写「指纹变了的比赛」的行(delta);全量模式写全部.
+      // fullTopTotal 始终累计完整表应有行数,供 apply 后校验 wca_results_top count(*).
       // 末尾 3 列(round_type_id, format_id, record_tag)是为 /comp 页面准备的:
       // 同 (comp_id, event_id, round_type_id, wca_id) 下 is_avg=false/true 两行配对成一条完整成绩.
       const rt = pgEsc(r.roundTypeId);
       const fm = pgEsc(r.formatId);
+      const wrtWrite = !incremental || changedComps.has(r.compId);
       if (r.best > 0) {
-        const tag = pgEsc(r.regSingleRecord ?? '');
-        allTopStream.write(
-          `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
-        );
-        allTopCount++;
+        fullTopTotal++;
+        if (wrtWrite) {
+          const tag = pgEsc(r.regSingleRecord ?? '');
+          allTopStream.write(
+            `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
+          );
+          allTopCount++;
+        }
       }
       if (r.average > 0) {
-        const tag = pgEsc(r.regAvgRecord ?? '');
-        allTopStream.write(
-          `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
-        );
-        allTopCount++;
+        fullTopTotal++;
+        if (wrtWrite) {
+          const tag = pgEsc(r.regAvgRecord ?? '');
+          allTopStream.write(
+            `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
+          );
+          allTopCount++;
+        }
       }
 
       // best_final_pos: 跨 event 累积每人 final round 最佳名次.
@@ -744,41 +816,7 @@ async function main() {
   }
   prStream.end();
 
-  // ── 9. wca_comp_updated_at: per-comp 内容指纹(content fingerprint)──
-  // dump_comps.yml 增量决策的 source-of-truth.
-  // 旧版存 MAX(updated_at),但 WCA 周期性批量重戳 updated_at 却不改成绩(2026-05-24:1.4 万场被顶高
-  //   → 全量误重 dump → 单机卡死)。改存「成绩值的聚合指纹」:只有真实成绩变动才让 hash 变,批量盖戳不影响。
-  //   = results 值(best/avg/pos/records 等) XOR result_attempts 每把 value。BIT_XOR 与行序无关、长度无上限;
-  //   两表分别 GROUP BY 再 JS 里 XOR 合并(避免 1:N join fan-out 让 BIT_XOR 偶数次自我抵消)。
-  console.log('[manifest] computing per-comp content fingerprint...');
-  const [resHashRows] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT competition_id AS comp_id,
-            BIT_XOR(CRC32(CONCAT_WS('|', id, person_id, event_id, round_type_id, pos, best, average,
-                                    regional_single_record, regional_average_record))) AS h
-       FROM results GROUP BY competition_id`,
-  );
-  const [attHashRows] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT r.competition_id AS comp_id,
-            BIT_XOR(CRC32(CONCAT_WS('#', ra.result_id, ra.attempt_number, ra.value))) AS h
-       FROM result_attempts ra JOIN results r ON r.id = ra.result_id
-      GROUP BY r.competition_id`,
-  );
-  const compHash = new Map<string, bigint>();
-  for (const r of resHashRows) compHash.set(r['comp_id'] as string, BigInt((r['h'] ?? 0) as string | number));
-  for (const r of attHashRows) {
-    const id = r['comp_id'] as string;
-    compHash.set(id, (compHash.get(id) ?? 0n) ^ BigInt((r['h'] ?? 0) as string | number));
-  }
-  let compMaxCount = 0;
-  {
-    const f = createWriteStream(resolve(outDir, 'wca_comp_updated_at.copy.tsv'));
-    for (const [comp, h] of compHash) {
-      f.write(`${pgEsc(comp)}\t${h.toString()}\n`);
-      compMaxCount++;
-    }
-    f.end();
-  }
-  console.log(`  comp_fingerprint : ${compMaxCount} rows`);
+  // (per-comp 内容指纹 manifest 已在前面 §2.5 算好并写出 wca_comp_updated_at.copy.tsv)
 
   // ── flush 还在 buffer 的 stream ──
   await Promise.all([
@@ -788,18 +826,106 @@ async function main() {
   ]);
   await conn.end();
 
-  // ── 10. load.sql ──
-  const loadSql = `-- 由 wca_stats_extra_build.ts 生成,跑在服务器 PG 上.
--- cd <此目录> && PGPASSWORD=... psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f load.sql
+  // ── 10. del-list (增量) + load.sql ──
+  const wrtCols = 'event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts, round_type_id, format_id, record_tag';
+
+  // 6 张全局聚合小表 + 指纹 manifest:两模式都全量 TRUNCATE+重灌(任一成绩变这些排名都会动,无法增量;
+  // 但它们小,翻倍无所谓).边 COPY 边删源 TSV(同分区白占空间;\\copy 读完即删,\\! 不受事务影响).
+  const smallTables = `TRUNCATE wca_competitions       CASCADE;
+TRUNCATE wca_grand_slam;
+TRUNCATE wca_cohort_ranks;
+TRUNCATE wca_success_rate;
+TRUNCATE wca_all_events_done;
+TRUNCATE wca_person_ranks;
+
+\\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
+\\! rm -f wca_competitions.copy.tsv
+\\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
+\\! rm -f wca_grand_slam.copy.tsv
+\\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
+\\! rm -f wca_cohort_ranks.copy.tsv
+\\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
+\\! rm -f wca_success_rate.copy.tsv
+\\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
+\\! rm -f wca_all_events_done.copy.tsv
+\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
+\\! rm -f wca_person_ranks.copy.tsv`;
+
+  // VACUUM (ANALYZE):wca_results_top 走 Index Only Scan 跑深分页,必须更新 visibility map.
+  // 增量同样需要:DELETE 的 dead tuple 页 + delta 新页都要进 vmap,否则 IOS 退化 heap fetch.
+  const vacuumAnalyze = `VACUUM (ANALYZE) wca_results_top;
+ANALYZE wca_competitions;
+ANALYZE wca_grand_slam;
+ANALYZE wca_cohort_ranks;
+ANALYZE wca_success_rate;
+ANALYZE wca_all_events_done;
+ANALYZE wca_person_ranks;
+ANALYZE wca_comp_updated_at;`;
+
+  let loadSql: string;
+  if (incremental) {
+    // 增量:写变动比赛 del-list(temp 表 COPY 用),只删+重插指纹变动的比赛行.
+    let delTxt = '';
+    for (const c of changedComps) delTxt += pgEsc(c) + '\n';
+    writeFileSync(resolve(outDir, 'wca_results_top_del.txt'), delTxt);
+
+    loadSql = `-- 由 wca_stats_extra_build.ts 生成(增量:只重灌指纹变动比赛的 wca_results_top 行).
+-- changed=${changedComps.size} 场, delta=${allTopCount} 行 / 全表应有 ${fullTopTotal} 行.峰值仅几 MB.
 
 BEGIN;
 
--- 2026-05 wca_results_top schema 重构: 旧表有 country_filter NOT NULL 列,新 COPY 列名不一致.
--- apply.sh 不调 schema 文件,所以在这里 DROP+CREATE 自包含一次性迁移.以后日常重灌不再触发改动.
+-- 守卫:服务器现有 wca_comp_updated_at 指纹必须 == builder diff 所用的旧指纹(count + sum),
+-- 否则说明 build 拉取指纹后服务器又被改过 → delta 与真实状态失配 → abort 回滚,绝不写脏 wca_results_top.
+DO $$
+DECLARE c bigint; s numeric;
+BEGIN
+  SELECT count(*), COALESCE(sum(content_hash), 0) INTO c, s FROM wca_comp_updated_at;
+  IF c <> ${oldCompHash.size} OR s <> ${oldFpSum.toString()} THEN
+    RAISE EXCEPTION 'wca_stats_extra guard: server fp (count=%, sum=%) != builder old (count=${oldCompHash.size}, sum=${oldFpSum.toString()}); aborting incremental apply', c, s;
+  END IF;
+END $$;
+
+-- 增量替换 wca_results_top:删变动比赛旧行 + COPY 变动比赛新行.索引不重建,随 DML 增量维护.
+CREATE TEMP TABLE _wrt_del (comp_id VARCHAR(50)) ON COMMIT DROP;
+\\copy _wrt_del FROM 'wca_results_top_del.txt';
+\\! rm -f wca_results_top_del.txt
+DELETE FROM wca_results_top WHERE comp_id IN (SELECT comp_id FROM _wrt_del);
+\\copy wca_results_top (${wrtCols}) FROM '${wrtFile}';
+\\! rm -f ${wrtFile}
+
+-- 指纹 manifest 全量替换为新指纹(下次 build 的 old = 这次的 new);守卫已在上面读过旧值.
+TRUNCATE wca_comp_updated_at;
+\\copy wca_comp_updated_at (comp_id, content_hash) FROM 'wca_comp_updated_at.copy.tsv';
+\\! rm -f wca_comp_updated_at.copy.tsv
+
+${smallTables}
+
+-- 校验:增量后 wca_results_top 总行数必须 == 全表应有行数,对不上说明 delta 算漏/算重 → abort.
+DO $$
+DECLARE n bigint;
+BEGIN
+  SELECT count(*) INTO n FROM wca_results_top;
+  IF n <> ${fullTopTotal} THEN
+    RAISE EXCEPTION 'wca_results_top count % != expected ${fullTopTotal} after incremental apply; aborting', n;
+  END IF;
+END $$;
+
+INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
+  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
+
+COMMIT;
+
+${vacuumAnalyze}
+`;
+  } else {
+    // 全量:缺旧指纹(首次 / FORCE_FULL / CI 拉取失败)→ DROP+CREATE 重建.峰值 ~2×表,靠 TSV 边删压余量.
+    loadSql = `-- 由 wca_stats_extra_build.ts 生成(全量:DROP+CREATE 重建 wca_results_top).
+-- 缺旧指纹时走此路.apply.sh 不调 schema 文件,DROP+CREATE 在此自包含建表/迁移.
+
+BEGIN;
+
 DROP TABLE IF EXISTS wca_results_top CASCADE;
--- id BIGSERIAL: PG 深分页 late-join 模式专用. 内子查询 SELECT id 走 wrt_main 的 INCLUDE,
--- 外层用 PK 回表只 enrich 100 行. 见 routes/wca_stats_extra.ts /all-results.
--- 重灌后必须 VACUUM(visibility map 干净 → Index Only Scan 真生效, Heap Fetches: 0).
+-- id BIGSERIAL: PG 深分页 late-join(内子查询走 wrt_main INCLUDE,外层 PK 回表 enrich 100 行).
 CREATE TABLE wca_results_top (
   id                 BIGSERIAL PRIMARY KEY,
   event_id           VARCHAR(20) NOT NULL,
@@ -810,70 +936,42 @@ CREATE TABLE wca_results_top (
   comp_id            VARCHAR(50) NOT NULL,
   comp_date          DATE NOT NULL,
   attempts           INTEGER[],
-  -- 末尾 3 列服务 /comp 页面 fast-path (按 comp_id 拉所有 round 成绩):
-  -- (event, round_type, wca_id) 下 is_avg=false/true 两行合成一条成绩;record_tag 选 single/average 中相应那个.
   round_type_id      VARCHAR(2)  NOT NULL DEFAULT '',
   format_id          VARCHAR(2)  NOT NULL DEFAULT '',
   record_tag         VARCHAR(3)  NOT NULL DEFAULT '',
-  -- 派生年:为 (event, is_avg, year) ORDER BY value 翻页提供 leading index 列.
-  -- 不加 comp_date BETWEEN 过滤会让 PG 在 wrt_main 上线性 heap-fetch 跳过非目标年(老年份慢到 10s+).
   comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED
 );
 CREATE INDEX wrt_main         ON wca_results_top (event_id, is_avg, value, wca_id) INCLUDE (id);
 CREATE INDEX wrt_country      ON wca_results_top (event_id, is_avg, person_country_id, value);
 CREATE INDEX wrt_wca_id       ON wca_results_top (event_id, is_avg, wca_id, value);
 CREATE INDEX wrt_comp_id      ON wca_results_top (event_id, is_avg, comp_id, value);
--- year-aware 索引:任意年 worldwide / 大国家+年 翻页秒出.约 +825 MB.
 CREATE INDEX wrt_year         ON wca_results_top (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
 CREATE INDEX wrt_country_year ON wca_results_top (event_id, is_avg, person_country_id, comp_year, value) INCLUDE (id);
--- /comp 页面 fast-path: 单 comp 拉全部成绩,无 event 过滤.约 +150 MB.
 CREATE INDEX wrt_comp_lookup  ON wca_results_top (comp_id);
--- /comp/<id> 赛前 PR 查询: WHERE wca_id IN (300+) AND event_id IN (...) AND comp_date < ?.
--- 必须按 wca_id 起首才能每选手区间小段扫,EXPLAIN 105ms;原 6 个索引都 event_id 起首 → seq scan 12M 行 58s 池堵.
--- 同 migrations/0007_wrt_prior_pr_index.sql,但 CI 每周 DROP+CREATE,migration 之后再 apply 已晚,必须建在 load.sql 里.约 +505 MB.
 CREATE INDEX wrt_prior_pr     ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
 
--- wca_comp_updated_at: dump_comps.yml 增量 manifest;每天 DROP+CREATE,与 comp_dump_state
--- 配对.NOTE: comp_dump_state 在 migrations/0015+0016 建/改,这里**不能动它**.
--- content_hash = 成绩值聚合指纹(见 builder 第 9 段),取代旧的 src_max_updated_at 时间戳.
 DROP TABLE IF EXISTS wca_comp_updated_at;
 CREATE TABLE wca_comp_updated_at (
   comp_id      VARCHAR(50)  PRIMARY KEY,
   content_hash BIGINT       NOT NULL
 );
 
-TRUNCATE wca_competitions       CASCADE;
-TRUNCATE wca_grand_slam;
-TRUNCATE wca_cohort_ranks;
-TRUNCATE wca_success_rate;
-TRUNCATE wca_all_events_done;
-TRUNCATE wca_person_ranks;
-
-\\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
-\\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
-\\copy wca_results_top (event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts, round_type_id, format_id, record_tag) FROM 'wca_results_top.copy.tsv';
-\\copy wca_cohort_ranks (cohort_year, event_id, is_avg, wca_id, value, country_id, world_rank, country_rank) FROM 'wca_cohort_ranks.copy.tsv';
-\\copy wca_success_rate (event_id, wca_id, country_id, solved, attempted, pct_x10000) FROM 'wca_success_rate.copy.tsv';
-\\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
-\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
+-- results_top.copy.tsv(1.1G)删在尾部小表之前,腾出曾致 person_ranks ENOSPC 的那段空间.
+\\copy wca_results_top (${wrtCols}) FROM '${wrtFile}';
+\\! rm -f ${wrtFile}
 \\copy wca_comp_updated_at (comp_id, content_hash) FROM 'wca_comp_updated_at.copy.tsv';
+\\! rm -f wca_comp_updated_at.copy.tsv
+
+${smallTables}
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
 
 COMMIT;
 
--- VACUUM (ANALYZE) 而非纯 ANALYZE — wca_results_top 用 Index Only Scan 跑深分页,
--- 必须更新 visibility map 才能真正跳过 heap fetch (重灌后 1.7M 行所有页都 dirty).
-VACUUM (ANALYZE) wca_results_top;
-ANALYZE wca_competitions;
-ANALYZE wca_grand_slam;
-ANALYZE wca_cohort_ranks;
-ANALYZE wca_success_rate;
-ANALYZE wca_all_events_done;
-ANALYZE wca_person_ranks;
-ANALYZE wca_comp_updated_at;
+${vacuumAnalyze}
 `;
+  }
   writeFileSync(resolve(outDir, 'load.sql'), loadSql);
 
   // ── summary ──
@@ -881,10 +979,10 @@ ANALYZE wca_comp_updated_at;
   function sizeMb(name: string): string {
     try { return (statSync(resolve(outDir, name)).size / 1024 / 1024).toFixed(1); } catch { return '?'; }
   }
-  console.log(`\n=== Done in ${elapsed}s ===`);
+  console.log(`\n=== Done in ${elapsed}s (mode=${incremental ? `incremental, ${changedComps.size} changed comps` : 'full'}) ===`);
   console.log(`  competitions      : ${comps.length.toLocaleString()} rows, ${sizeMb('wca_competitions.copy.tsv')} MB`);
   console.log(`  grand_slam        : ${gsCount.toLocaleString()} rows, ${sizeMb('wca_grand_slam.copy.tsv')} MB`);
-  console.log(`  results_top       : ${allTopCount.toLocaleString()} rows, ${sizeMb('wca_results_top.copy.tsv')} MB`);
+  console.log(`  results_top       : ${allTopCount.toLocaleString()}${incremental ? `/${fullTopTotal.toLocaleString()}` : ''} rows, ${sizeMb(wrtFile)} MB`);
   console.log(`  cohort_ranks      : ${cohortCount.toLocaleString()} rows, ${sizeMb('wca_cohort_ranks.copy.tsv')} MB`);
   console.log(`  success_rate      : ${srCount.toLocaleString()} rows, ${sizeMb('wca_success_rate.copy.tsv')} MB`);
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);
