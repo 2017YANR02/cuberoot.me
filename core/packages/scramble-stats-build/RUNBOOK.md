@@ -1,4 +1,4 @@
-# 周更:WCA 十字步数分布增量管道
+# 十字统计刷新 (手动增量管道, 按需触发非定时)
 
 把 WCA 新公示的打乱(三阶 / 单手 / 脚拧 / 三盲 / 多盲 / FMC)增量算进 `cross / xc / xxc / xxxc / xxxxc × 6 底色` 的统计,刷新 `/scramble/stats` 全局分布图 + `/scramble/analyzer` 的真实打乱池。
 
@@ -7,7 +7,7 @@
 ## 一键
 
 ```pwsh
-pwsh core/packages/scramble-stats-build/run_weekly.ps1
+pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 ```
 
 下载最新 results export → 挑出未处理的新打乱 → std_analyzer 全 5 阶段 → 追加 master → 默认再跟 std 锁步补 eo/pseudo/pseudo_pair(按 id 缺补,分块可续)→ 重算 JSON → commit & push + scp static。任一步失败即停。
@@ -59,5 +59,5 @@ pwsh core/packages/scramble-stats-build/run_weekly.ps1
 ## 可选:定时
 
 用户选了手动一键。若要无人值守,Windows 任务计划程序加一条每周触发:
-`pwsh -NoProfile -File D:\cube\cuberoot.me\core\packages\scramble-stats-build\run_weekly.ps1`
+`pwsh -NoProfile -File D:\cube\cuberoot.me\core\packages\scramble-stats-build\update_cross_stats.ps1`
 (机器需开机 + 已登录态;失败会非零退出,可在任务里配重试/告警。)
