@@ -22,6 +22,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 | `-SkipSolve` | 调试:复用上次 std solver 产出,跳过 std 解算 |
 | `-Variants <list>` | 跟 std 锁步补缺的变体,默认 `eo,pseudo,pseudo_pair`;`@()`=只 std。**pair / f2leo / pseudo_f2leo 不在默认**:pair ~2/s 太慢(全量补 ~165h);f2leo/pseudo_f2leo 是小表分析器(不碰 huge 表),要显式 `-Variants pair` 或 `-Variants f2leo,pseudo_f2leo`(首跑全量回填) |
 | `-ChunkSize <n>` | 变体补缺分块大小(显式则覆盖每变体默认 `$VARIANT_CHUNK`:eo/pair=2000、其余 20000):逐块校验+追加,中断只丢当前块、下次自动续 |
+| `-MaxChunks <n>` | **每个变体最多跑 N 块就停**,之后照常重算 + 发布(还差的下次 run 自动续);`0`=补满(默认)。用于"只跑一两块"而无需人工中途 kill。例:`-Variants eo -MaxChunks 1` = 跑一块 eo(2000≈40min)→ 发布 |
 
 ## 前置(一次性)
 
