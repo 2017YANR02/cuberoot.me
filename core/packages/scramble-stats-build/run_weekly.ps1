@@ -20,9 +20,10 @@ param(
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 复用上次 std solver 产出, 跳过 std 解算
   [string[]]$Variants = @('eo','pseudo','pseudo_pair'),  # 跟 std 锁步补缺的变体 (@()=只 std)。pair / f2leo / pseudo_f2leo 默认不含(pair ~2/s 太慢; f2leo 系首次需全量补), 需手动 -Variants 指定
-  [int]$ChunkSize = 20000 # 变体补缺分块大小: 逐块追加, 中断只丢当前块。pair ~2/s 一块约 2.8h, 其它快得多
+  [int]$ChunkSize = 20000 # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
 )
 $ErrorActionPreference = 'Stop'
+$ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSize 覆盖每变体默认
 
 # ---- 本机布局 ----
 $ScrambleDir = 'D:\cube\scramble\wca_scramble'
@@ -44,6 +45,18 @@ $VARIANT_EXE = @{
   pair         = 'pair_analyzer.exe'
   f2leo        = 'f2leo_analyzer.exe'
   pseudo_f2leo = 'pseudo_f2leo_analyzer.exe'
+}
+
+# 每变体默认 chunk(显式 -ChunkSize 覆盖全部)。analyzer 攒完整块才写盘 + 追加 = 中断丢在飞的整块,
+# 故慢变体用小块换更密的 save point。实测速率: eo ~0.9/s(一块 2000≈37min)、pair ~2/s、
+# pseudo ~18/s、pseudo_pair ~35/s(2000 才 ~1min,重启占比高,故快变体保持 20000≈9-18min)。
+$VARIANT_CHUNK = @{
+  eo           = 2000
+  pair         = 2000
+  pseudo       = 20000
+  pseudo_pair  = 20000
+  f2leo        = 20000
+  pseudo_f2leo = 20000
 }
 
 function Step($m){ Write-Host "`n=== $m ===" -ForegroundColor Cyan }
@@ -69,6 +82,8 @@ function Sync-Variant($Name){
   $exe = Join-Path $RelDir $exeName
   $csv = Join-Path $ScrambleDir "stats\$Name.csv"
   if(-not (Test-Path $csv)){ throw "$csv 不存在" }
+  # 有效 chunk: 显式 -ChunkSize 覆盖;否则按变体默认(慢变体小块,save point 更密)
+  $chunk = if($ChunkExplicit){ $ChunkSize } elseif($VARIANT_CHUNK.ContainsKey($Name)){ $VARIANT_CHUNK[$Name] } else { $ChunkSize }
   # 1. 该变体已有 id 集
   $have=[System.Collections.Generic.HashSet[string]]::new()
   $first=$true
@@ -78,7 +93,7 @@ function Sync-Variant($Name){
   foreach($l in [IO.File]::ReadLines($MasterTxt)){ if(-not $l){continue}; $c=$l.IndexOf(','); if($c -le 0){continue}; if(-not $have.Contains($l.Substring(0,$c))){ [void]$missing.Add($l) } }
   $total=$missing.Count
   if($total -eq 0){ Write-Host "[$Name] 已最新 ($($have.Count) 条), 跳过。" -ForegroundColor DarkGray; return $false }
-  Write-Host "[$Name] 已有 $($have.Count) 条, 待补 $total 条 (chunk=$ChunkSize)" -ForegroundColor Yellow
+  Write-Host "[$Name] 已有 $($have.Count) 条, 待补 $total 条 (chunk=$chunk)" -ForegroundColor Yellow
   # 3. env: huge 表 + 清掉 std-only / NO_DIAG / SKIP 标志 -> 跑权威全模式, 与现存数据一致
   $env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'
   $env:CUBE_ALLOW_HUGE_TABLES = '1'
@@ -89,8 +104,8 @@ function Sync-Variant($Name){
   $inTxt  = Join-Path $IncrDir "sync_$Name.txt"
   $outCsv = Join-Path $IncrDir ("sync_{0}_{0}.csv" -f $Name)
   $done=0
-  for($i=0; $i -lt $total; $i += $ChunkSize){
-    $cnt=[Math]::Min($ChunkSize, $total-$i)
+  for($i=0; $i -lt $total; $i += $chunk){
+    $cnt=[Math]::Min($chunk, $total-$i)
     $slice=$missing.GetRange($i, $cnt)
     [IO.File]::WriteAllText($inTxt, ([string]::Join("`n",$slice)+"`n"), [Text.UTF8Encoding]::new($false))
     if(Test-Path $outCsv){ Remove-Item $outCsv -Force }
