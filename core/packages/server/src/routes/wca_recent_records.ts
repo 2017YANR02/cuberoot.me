@@ -15,6 +15,21 @@ import path from 'node:path';
 import { runFormatCli } from './wca_format.js';
 import { extractInferredRecords, type InferredRecord } from './cubing_live.js';
 import { query } from '../db/connection.js';
+import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
+
+// WCA Live 展示顺序(scoretaking.ex list_recent_records):
+//   ① tag 优先级 WR > CR(含洲际) > NR  ② WCA 官方项目顺序  ③ 成绩值升序
+const TAG_RANK: Record<string, number> = { WR: 0, CR: 1, NR: 2 };
+function recordTagRank(tag: string): number {
+  const r = TAG_RANK[tag];
+  if (r !== undefined) return r;
+  // 洲际记录(AsR/ER/NAR/SAR/AfR/OcR)与 CR 同级
+  return tag.endsWith('R') ? 1 : 3;
+}
+function recordEventRank(eventId: string): number {
+  const i = (WCA_EVENT_ORDER as readonly string[]).indexOf(eventId);
+  return i < 0 ? 999 : i;
+}
 
 export const wcaRecentRecordsRoutes = new Hono();
 
@@ -293,6 +308,12 @@ async function fetchOnce(): Promise<void> {
     seen.add(k);
     merged.push(r);
   }
+  // 跟 WCA Live 一致:tag(WR>CR>NR)→ 项目官方序 → 成绩升序.
+  merged.sort((a, b) =>
+    recordTagRank(a.tag) - recordTagRank(b.tag) ||
+    recordEventRank(a.eventId) - recordEventRank(b.eventId) ||
+    a.attemptResult - b.attemptResult,
+  );
   snapshot = { fetchedAt: Date.now(), records: merged };
 }
 

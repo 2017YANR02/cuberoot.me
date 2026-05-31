@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
    - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
    - `packages/stats-build` — WCA 统计生成管道（独立 CI 周更）
+3. **`solver/`** — 顶层(pnpm workspace 外,非 package)。魔方求解引擎(Rust,2026-05-31 从 `RuiminYan/cube-solver-rust` subtree 合入,该仓冻结存档,monorepo 为唯一源)。产 native 分析器喂 `/scramble/*` 数据管道(`update_cross_stats.ps1` 的 `$SolverDir` 指这)+ 编 WASM 给浏览器端。`target/ tables/(~34GB) pkg-web/ pkg-node/` 本地 gitignored(只本机有,repo/CI/线上都没有)。
 
 ## 12 个模块的归属（重要）
 
