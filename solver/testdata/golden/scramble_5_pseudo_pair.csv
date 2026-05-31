@@ -1,0 +1,6 @@
+id,pseudo_cross_pseudo_pair_z0,pseudo_cross_pseudo_pair_z2,pseudo_cross_pseudo_pair_z3,pseudo_cross_pseudo_pair_z1,pseudo_cross_pseudo_pair_x3,pseudo_cross_pseudo_pair_x1,pseudo_xcross_pseudo_pair_z0,pseudo_xcross_pseudo_pair_z2,pseudo_xcross_pseudo_pair_z3,pseudo_xcross_pseudo_pair_z1,pseudo_xcross_pseudo_pair_x3,pseudo_xcross_pseudo_pair_x1,pseudo_xxcross_pseudo_pair_z0,pseudo_xxcross_pseudo_pair_z2,pseudo_xxcross_pseudo_pair_z3,pseudo_xxcross_pseudo_pair_z1,pseudo_xxcross_pseudo_pair_x3,pseudo_xxcross_pseudo_pair_x1,pseudo_xxxcross_pseudo_pair_z0,pseudo_xxxcross_pseudo_pair_z2,pseudo_xxxcross_pseudo_pair_z3,pseudo_xxxcross_pseudo_pair_z1,pseudo_xxxcross_pseudo_pair_x3,pseudo_xxxcross_pseudo_pair_x1
+22001,6,6,6,4,7,5,7,7,7,6,8,6,9,9,9,8,9,9,10,11,11,11,11,11
+23001,6,6,5,5,5,5,6,7,5,7,7,5,8,7,7,9,9,8,10,10,10,11,12,11
+24001,6,6,6,6,6,5,7,7,8,6,7,7,9,8,10,8,8,8,12,11,11,11,12,12
+25001,6,5,4,6,5,6,7,7,6,7,6,7,9,8,8,9,9,9,11,11,11,11,11,12
+26001,3,6,6,4,6,5,3,6,7,4,6,6,7,9,9,5,8,7,9,11,11,7,10,10

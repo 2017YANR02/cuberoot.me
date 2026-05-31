@@ -1,0 +1,6 @@
+id,cross_z0,cross_z2,cross_z3,cross_z1,cross_x3,cross_x1,xcross_z0,xcross_z2,xcross_z3,xcross_z1,xcross_x3,xcross_x1,xxcross_z0,xxcross_z2,xxcross_z3,xxcross_z1,xxcross_x3,xxcross_x1,xxxcross_z0,xxxcross_z2,xxxcross_z3,xxxcross_z1,xxxcross_x3,xxxcross_x1,xxxxcross_z0,xxxxcross_z2,xxxxcross_z3,xxxxcross_z1,xxxxcross_x3,xxxxcross_x1
+22001,6,6,6,5,7,5,7,7,8,7,9,7,9,10,10,9,10,9,11,11,11,12,12,10,14,14,14,13,14,14
+23001,6,6,6,6,5,5,7,7,6,8,7,5,10,9,8,9,9,8,12,11,11,11,12,11,13,13,12,13,14,12
+24001,6,6,7,7,6,6,8,7,8,8,8,7,10,9,10,9,10,9,12,11,11,11,12,11,14,14,14,13,13,14
+25001,6,6,5,6,6,6,8,7,7,7,7,7,10,9,9,10,9,9,12,10,12,12,12,12,14,13,15,14,14,15
+26001,3,6,6,4,6,5,3,8,7,4,6,5,5,10,10,5,8,7,9,11,11,8,10,9,12,14,13,11,13,12
