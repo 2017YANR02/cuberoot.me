@@ -495,7 +495,7 @@ const ROUND_NAME: Record<string, string> = {
  *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
  *  非阻塞:无 records 缓存时全部跳过(首请求秒出,fallback 到原行为). */
 function enrichRecordTags(data: CompData): void {
-  const snapshot = enrichComp(data.users, data.resultsByRound);
+  const snapshot = enrichComp(data.users, data.resultsByRound, data.events);
   if (snapshot) data.currentRecords = snapshot;
 }
 
