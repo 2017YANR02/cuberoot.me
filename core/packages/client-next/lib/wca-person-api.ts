@@ -127,8 +127,8 @@ export interface PersonBestRanksResponse {
 }
 
 export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRanksResponse> {
-  // v3: 后端改读月级快照(取真实峰值排名,非年末值)→ 旧 localStorage 缓存须 miss
-  const key = `wca:bestRanks:v3:${wcaId}`;
+  // v4: 后端改读 historical_best_ranks 专表(逐场重放,按比赛结束口径精确)→ 旧缓存须 miss
+  const key = `wca:bestRanks:v4:${wcaId}`;
   const cached = cacheGet<PersonBestRanksResponse>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/person-best-ranks?wcaId=${encodeURIComponent(wcaId)}`));

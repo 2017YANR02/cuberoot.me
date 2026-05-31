@@ -179,7 +179,7 @@ jobs:
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_import && rm -rf /tmp/wca_import/*'
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id load.sql wca_continents.copy.tsv wca_countries.copy.tsv wca_persons.copy.tsv \
-            historical_ranks_snapshot.copy.tsv historical_ranks_monthly_snapshot.copy.tsv \
+            historical_ranks_snapshot.copy.tsv historical_ranks_monthly_snapshot.copy.tsv historical_best_ranks.copy.tsv \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_import/"
 
       - name: Apply historical ranks on server

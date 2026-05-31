@@ -93,6 +93,24 @@ CREATE INDEX IF NOT EXISTS hrms_person ON historical_ranks_monthly_snapshot (wca
 CREATE INDEX IF NOT EXISTS hrms_single_wr ON historical_ranks_monthly_snapshot (event_id, year, month, single_world_rank) WHERE single_world_rank > 0;
 CREATE INDEX IF NOT EXISTS hrms_avg_wr    ON historical_ranks_monthly_snapshot (event_id, year, month, avg_world_rank)    WHERE avg_world_rank > 0;
 
+-- ── 4c. historical_best_ranks: 每 (选手, 项目) 的"历史最佳名次" ──
+-- 精确口径:按比赛逐场重放(per-competition incremental order-statistics / Fenwick),
+-- 名次 = "该场比赛结束、当前所有已结束比赛一起重排时"选手的位置;取生涯最小。
+-- 每档(single/average × world/continent/country)各自独立取最小,并记下取得该名次时的成绩值+年份
+-- (各档可能来自不同时刻 —— 早年场次少、成绩慢但名次反而好)。
+-- *_rank=NULL 表示该项目该类型从无有效成绩。一行/选手/项目,wca_id 打头 → WHERE wca_id=? 走 PK。
+CREATE TABLE IF NOT EXISTS historical_best_ranks (
+  wca_id           VARCHAR(20) NOT NULL,
+  event_id         VARCHAR(20) NOT NULL,
+  s_world_rank     INTEGER, s_world_value     INTEGER, s_world_year     SMALLINT,
+  s_cont_rank      INTEGER, s_cont_value      INTEGER, s_cont_year      SMALLINT,
+  s_country_rank   INTEGER, s_country_value   INTEGER, s_country_year   SMALLINT,
+  a_world_rank     INTEGER, a_world_value     INTEGER, a_world_year     SMALLINT,
+  a_cont_rank      INTEGER, a_cont_value      INTEGER, a_cont_year      SMALLINT,
+  a_country_rank   INTEGER, a_country_value   INTEGER, a_country_year   SMALLINT,
+  PRIMARY KEY (wca_id, event_id)
+);
+
 -- ── 5. meta_historical: 元信息(导入时间戳等) ──
 CREATE TABLE IF NOT EXISTS meta_historical (
   key        VARCHAR(50) PRIMARY KEY,
