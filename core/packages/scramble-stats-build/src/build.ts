@@ -132,8 +132,9 @@ interface Reservoir { samples: Sample[]; seen: number }
 
 function newRes(): Reservoir { return { samples: [], seen: 0 }; }
 
-// 固定种子 PRNG (mulberry32):reservoir 采样确定化 -> 输入不变则输出逐字节不变,
-// 增量刷新只在真有新数据的 bin 产生 diff(否则 Math.random 每次全量 churn)。
+// 固定种子 PRNG (mulberry32):reservoir 采样确定化 -> 输入不变则输出逐字节不变。
+// rngState 在每个变体入口按 variant key 重置(见 aggregateVariant), 故增量只改一个变体时
+// 只有该变体自身的 bin 产生 diff, 不污染其它变体/set 的示例样本(否则全局 RNG 会被带偏 churn)。
 let rngState = 0x9e3779b9 >>> 0;
 function rand(): number {
   rngState = (rngState + 0x6d2b79f5) >>> 0;
@@ -187,6 +188,10 @@ const SUBSET_KEYS: string[] = (() => {
 })();
 
 async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>) {
+  // 每个 (set,variant) 调用前把 RNG 重置到随 variant key 确定的种子: reservoir 采样只依赖本变体自身数据,
+  // 不被上一个变体处理时的 rand() 次数带偏 -> 增量只改一个变体时, 其它变体/set 的示例样本不再 spurious churn。
+  rngState = 0x9e3779b9 >>> 0;
+  for (const ch of spec.key) rngState = (Math.imul(rngState, 31) + ch.charCodeAt(0)) >>> 0;
   // NOTE: per stage → per subset key → Hist
   const byStage: Record<string, Record<string, Hist>> = {};
   // NOTE: per stage → per subset key → Map<binValue, Reservoir>
