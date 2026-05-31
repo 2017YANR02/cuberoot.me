@@ -221,6 +221,61 @@
 .solv-foot-link { color: var(--muted-foreground); text-decoration: none; font-family: var(--font-mono); }
 .solv-foot-link:hover { color: var(--accent); }
 
+/* per-analyzer tables */
+.solv-tbl-intro { margin: 0 0 16px; font-size: 13px; color: var(--muted-foreground); line-height: 1.6; max-width: 64ch; }
+.solv-tbl {
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  overflow: hidden;
+}
+.solv-tbl-sum {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-mono);
+}
+.solv-tbl-sum::-webkit-details-marker { display: none; }
+.solv-tbl-sum::after {
+  content: '+';
+  width: 12px;
+  text-align: center;
+  color: var(--faint-foreground);
+  font-size: 15px;
+}
+.solv-tbl[open] .solv-tbl-sum::after { content: '\2212'; }
+.solv-tbl-tier { font-size: 11px; letter-spacing: 0.04em; color: var(--faint-foreground); }
+.solv-tbl-total { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--muted-foreground); }
+.solv-tbl-body {
+  padding: 2px 15px 15px;
+  border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+.solv-tbl-grp { margin-top: 13px; }
+.solv-tbl-grp-h {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.solv-tbl-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.solv-tbl-item:not(:last-child) { border-bottom: 1px solid color-mix(in srgb, var(--border-default) 30%, transparent); }
+.solv-tbl-name { flex: 1; color: var(--foreground); word-break: break-all; }
+.solv-tbl-sz { color: var(--muted-foreground); white-space: nowrap; }
+.solv-tbl-item-cond .solv-tbl-name, .solv-tbl-dag { color: var(--signal-warning); }
+.solv-tbl-built { margin: 13px 0 0; font-size: 12px; color: var(--muted-foreground); line-height: 1.55; }
+.solv-tbl-note { margin: 11px 0 0; font-size: 11.5px; color: var(--faint-foreground); line-height: 1.55; }
+
 @media (max-width: 600px) {
   .solv-page { padding: 22px 14px 64px; }
   .solv-sec-head { flex-wrap: wrap; }

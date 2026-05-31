@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Cpu, Database, Gauge, HardDrive, Globe, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
+import { Cpu, Database, Gauge, HardDrive, Globe, Layers, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './solvers.css';
 
@@ -50,6 +50,75 @@ const BROWSER: BrowserSolver[] = [
   { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
 ];
+
+// 每个原生分析器实际 mmap 的磁盘表 (D:\cube\solver-rust\tables\, 大小为真实文件字节).
+// 源码核实自 solver-rust (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
+// pseudo_pair_solver.rs / pair_solver.rs / f2leo_solver.rs / pseudo_f2leo_solver.rs),
+// 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
+// cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
+interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
+interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string }
+
+const TABLES: Record<string, SolverTbls> = {
+  std: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
+    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
+  },
+  eo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_eo12', b: 147468 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_ep4', b: 855372 }, { n: 'mt_eo12_alt', b: 147468 }],
+    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_ep4eo12', b: 12165136 }, { n: 'pt_cross_C4E0', b: 54743056 },
+      { n: 'pt_cross_C4E0E1', b: 1313832976 }, { n: 'pt_cross_C4E0E2', b: 1313832976 }, { n: 'pt_cross_C4E0E3', b: 1313832976 },
+      { n: 'pt_cross_C4C5E0', b: 1313832976 }, { n: 'pt_cross_C4C6E0', b: 1313832976 }, { n: 'pt_cross_C4C7E0', b: 1313832976 },
+      { n: 'pt_cross_C4C5C6', b: 1313832976 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 },
+      { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
+  },
+  pseudo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
+    prune: [{ n: 'pt_pscross', b: 139408 },
+      { n: 'pt_pscross_C4E0', b: 54743056 }, { n: 'pt_pscross_C4E1', b: 54743056 }, { n: 'pt_pscross_C4E2', b: 54743056 }, { n: 'pt_pscross_C4E3', b: 54743056 },
+      { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
+      { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
+      { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+  },
+  pseudo_pair: {
+    move: [{ n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge2', b: 38028 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_corn3', b: 653196 }],
+    prune: [{ n: 'pt_pscross_C4‥C7', b: 2280976, cnt: 4 },
+      { n: 'pt_pscross_ins_C4‥C7_diff0‥3', b: 2280976, cnt: 16 },
+      { n: 'pt_pspair_C4‥C7_E0‥E3', b: 304, cnt: 16 },
+      { n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
+      { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
+      { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
+      { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+  },
+  pair: {
+    move: [{ n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
+    prune: [{ n: 'pt_cross_ins_C4', b: 2280976 }, { n: 'pt_pair_C4E0', b: 304 }, { n: 'pt_cross_C4E0', b: 54743056 },
+      { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
+  },
+  f2leo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }],
+    prune: [{ n: 'pt_cross', b: 139408 }],
+    builtZh: '另现场 BFS 建 4 个单槽 XCross 剪枝表 (~18MB, 内存, 不落盘)',
+    builtEn: 'plus 4 per-slot XCross prune tables built in-RAM via BFS (~18MB, not on disk)',
+  },
+  pseudo_f2leo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }],
+    prune: [],
+    builtZh: '另现场建 pscross 剪枝 (~272KB) + 4 个单槽 psXCross 剪枝 (~18MB), 全在内存不落盘',
+    builtEn: 'plus pscross prune (~272KB) + 4 per-slot psXCross prune (~18MB) built in-RAM, none on disk',
+  },
+};
+
+function fmtBytes(b: number): string {
+  if (b >= 1_073_741_824) return (b / 1_073_741_824).toFixed(1) + ' GB';
+  if (b >= 1_048_576) return (b / 1_048_576).toFixed(b < 10_485_760 ? 1 : 0) + ' MB';
+  if (b >= 1024) return (b / 1024).toFixed(0) + ' KB';
+  return b + ' B';
+}
+function tblTotal(t: SolverTbls): number {
+  const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + x.b * (x.cnt ?? 1), 0);
+  return sum(t.move) + sum(t.prune);
+}
 
 interface Coverage { generatedAt: string; target: number; counts: Record<string, number>; }
 
@@ -227,6 +296,56 @@ export default function SolversPage() {
                 ? '每个分析器对整块任务跑 rayon par_iter 铺满 16 核; 表只读 mmap 跨进程共享。跨变体并发会各装一套不同的 GB 表 → 撞爆 32GB, 故串行。'
                 : 'Each analyzer runs rayon par_iter over a whole chunk across all 16 cores; tables shared read-only via mmap. Running variants concurrently loads distinct GB-scale tables → blows past 32GB, so they run serially.'}</p>
             </article>
+          </div>
+        </section>
+
+        {/* 每个求解器的表 */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Layers size={15} strokeWidth={2} />
+            <h2>{zh ? '每个求解器的表' : 'Tables per analyzer'}</h2>
+            <span className="solv-sec-note">{zh ? '源码核实 · full 全模式 · mmap' : 'source-verified · full mode · mmap'}</span>
+          </header>
+          <p className="solv-tbl-intro">{zh
+            ? '展开看每个原生分析器实际 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式下界); 大小为磁盘真实文件字节。'
+            : 'Expand to see the move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer mmaps; sizes are the real on-disk file bytes.'}</p>
+          <div className="solv-rows">
+            {NATIVE.map((s) => {
+              const t = TABLES[s.key];
+              if (!t) return null;
+              const hasCond = [...t.move, ...t.prune].some((x) => x.cond);
+              const item = (x: Tbl) => (
+                <div className={`solv-tbl-item${x.cond ? ' solv-tbl-item-cond' : ''}`} key={x.n}>
+                  <span className="solv-tbl-name">{x.n}{x.cond ? <span className="solv-tbl-dag"> †</span> : null}</span>
+                  <span className="solv-tbl-sz">{fmtBytes(x.b)}{x.cnt ? ` ×${x.cnt}` : ''}</span>
+                </div>
+              );
+              return (
+                <details className="solv-tbl" key={s.key}>
+                  <summary className="solv-tbl-sum">
+                    <span className="solv-row-name">{s.key}</span>
+                    <span className="solv-tbl-tier">{s.tier}</span>
+                    <span className="solv-tbl-total">{fmtBytes(tblTotal(t))}</span>
+                  </summary>
+                  <div className="solv-tbl-body">
+                    <div className="solv-tbl-grp">
+                      <div className="solv-tbl-grp-h">{zh ? '移动表 mt_*' : 'move tables mt_*'}</div>
+                      {t.move.map(item)}
+                    </div>
+                    {t.prune.length > 0 && (
+                      <div className="solv-tbl-grp">
+                        <div className="solv-tbl-grp-h">{zh ? '剪枝表 pt_*' : 'prune tables pt_*'}</div>
+                        {t.prune.map(item)}
+                      </div>
+                    )}
+                    {(zh ? t.builtZh : t.builtEn) && <p className="solv-tbl-built">{zh ? t.builtZh : t.builtEn}</p>}
+                    {hasCond && <p className="solv-tbl-note">{zh
+                      ? `† 对角剪枝表 (10.2GB), 仅默认全模式载入; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (省 ~10GB, 略损剪枝)。`
+                      : `† diagonal prune table (10.2GB), loaded only in full mode; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (saves ~10GB, weaker pruning).`}</p>}
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </section>
 
