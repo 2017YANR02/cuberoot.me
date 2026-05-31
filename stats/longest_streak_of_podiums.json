@@ -45,10 +45,17 @@
       null
     ],
     [
-      106,
+      107,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "5x5x5 Cube",
       "[Caltech Fall 2016](https://www.worldcubeassociation.org/competitions/CaltechFall2016)",
+      null
+    ],
+    [
+      102,
+      "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+      "3x3x3 Cube",
+      "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
       null
     ],
     [
@@ -57,13 +64,6 @@
       "4x4x4 Cube",
       "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-    ],
-    [
-      101,
-      "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-      "3x3x3 Cube",
-      "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
-      null
     ],
     [
       95,
@@ -80,7 +80,7 @@
       "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
     ],
     [
-      89,
+      90,
       "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
       "3x3x3 Cube",
       "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
@@ -136,7 +136,7 @@
       "[DFW Megacomp 2024](https://www.worldcubeassociation.org/competitions/DFWMegacomp2024)"
     ],
     [
-      69,
+      70,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "7x7x7 Cube",
       "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
@@ -388,17 +388,17 @@
       null
     ],
     [
-      51,
-      "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
-      "Square-1",
-      "[Big Pine Open 2015](https://www.worldcubeassociation.org/competitions/BigPineOpen2015)",
+      52,
+      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+      "Pyraminx",
+      "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
       null
     ],
     [
       51,
-      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
-      "Pyraminx",
-      "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
+      "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
+      "Square-1",
+      "[Big Pine Open 2015](https://www.worldcubeassociation.org/competitions/BigPineOpen2015)",
       null
     ],
     [

@@ -213,7 +213,7 @@
       null
     ],
     [
-      40,
+      41,
       "[Vako Marchilashvili (ვაკო მარჩილაშვილი)](https://www.worldcubeassociation.org/persons/2013MARC05)",
       "Georgia",
       "[Georgian Open 2013](https://www.worldcubeassociation.org/competitions/GeorgianOpen2013)",
@@ -248,17 +248,17 @@
       null
     ],
     [
-      38,
-      "[Oliver Pällo](https://www.worldcubeassociation.org/persons/2020PALL01)",
-      "Estonia",
-      "[Estonian Open 2020](https://www.worldcubeassociation.org/competitions/EstonianOpen2020)",
+      39,
+      "[Andro Gvaramadze](https://www.worldcubeassociation.org/persons/2018GVAR01)",
+      "Georgia",
+      "[Georgia Open 2018](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2018)",
       null
     ],
     [
       38,
-      "[Andro Gvaramadze](https://www.worldcubeassociation.org/persons/2018GVAR01)",
-      "Georgia",
-      "[Georgia Open 2018](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2018)",
+      "[Oliver Pällo](https://www.worldcubeassociation.org/persons/2020PALL01)",
+      "Estonia",
+      "[Estonian Open 2020](https://www.worldcubeassociation.org/competitions/EstonianOpen2020)",
       null
     ],
     [
@@ -402,6 +402,13 @@
       null
     ],
     [
+      31,
+      "[Christian Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR51)",
+      "Costa Rica",
+      "[Bekubes Costa Rica 2017](https://www.worldcubeassociation.org/competitions/BekubesCostaRica2017)",
+      null
+    ],
+    [
       30,
       "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
       "Sweden",
@@ -441,13 +448,6 @@
       "[Nestor Sanchez](https://www.worldcubeassociation.org/persons/2013SANC10)",
       "Dominican Republic",
       "[Republica Dominicana 2013](https://www.worldcubeassociation.org/competitions/RepublicaDominicana2013)",
-      null
-    ],
-    [
-      30,
-      "[Christian Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR51)",
-      "Costa Rica",
-      "[Bekubes Costa Rica 2017](https://www.worldcubeassociation.org/competitions/BekubesCostaRica2017)",
       null
     ],
     [
@@ -606,16 +606,16 @@
     ],
     [
       26,
-      "[Rafael de Andrade Cinoto](https://www.worldcubeassociation.org/persons/2007CINO01)",
-      "Brazil",
-      "[Torneio DRACO 2012](https://www.worldcubeassociation.org/competitions/TorneioDraco2012)",
-      null
-    ],
-    [
-      26,
       "[Kasparas Lienys](https://www.worldcubeassociation.org/persons/2018LIEN01)",
       "Lithuania",
       "[Kaunas Open 2018](https://www.worldcubeassociation.org/competitions/KaunasOpen2018)",
+      null
+    ],
+    [
+      25,
+      "[Rafael de Andrade Cinoto](https://www.worldcubeassociation.org/persons/2007CINO01)",
+      "Brazil",
+      "[Torneio DRACO 2012](https://www.worldcubeassociation.org/competitions/TorneioDraco2012)",
       null
     ],
     [
