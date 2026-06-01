@@ -83,6 +83,7 @@ import LiveCubeState from '../_components/LiveCubeState';
 import TimingSurface from './TimingSurface';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
+import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 
 import '../timer.css';
 import '../_components/charts/charts.css';
@@ -175,6 +176,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
   const isZh = i18n.language === 'zh';
   useDocumentTitle('计时器', 'Timer');
   const settings = useSettings();
+  const rankCountry = useRankCountry();
   useApplyTheme();
 
   const isMobile = useMediaQuery('(max-width: 480px)');
@@ -1273,7 +1275,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
                 <button className="qa-btn" data-no-timer onClick={nextScramble}>{isZh ? '换打乱' : 'Next'}</button>
               </div>
               <div className="shell-rank-slot">
-                <RankBadge eventId={event} centis={stoppedCentis} type="single" isZh={isZh} />
+                <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
               </div>
             </div>
           )}

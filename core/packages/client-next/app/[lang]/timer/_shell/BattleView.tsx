@@ -42,6 +42,7 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import RankBadge from './RankBadge';
+import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 
 import '@/app/[lang]/battle/battle.css';
 import './shell.css';
@@ -369,6 +370,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const oppIconRef = useRef<HTMLSpanElement>(null);
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const rankCountry = useRankCountry();
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
@@ -513,7 +515,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       {/* 排名徽章(回合结束后,本方有效成绩) */}
       {showRank && !player.isInspecting && (
         <div className="battle-rank-slot" data-no-timer>
-          <RankBadge eventId={myPuzzle} centis={rankCentis} type="single" isZh={isZh} />
+          <RankBadge eventId={myPuzzle} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} />
         </div>
       )}
 
