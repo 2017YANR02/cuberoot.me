@@ -22,7 +22,8 @@ param(
   [switch]$SkipSolve,     # 调试: 跳过 incremental + std 解算, 复用上次取数/solver 产出, 直接走追加/变体/发布
   [string[]]$Variants = @('eo','pseudo','pseudo_pair'),  # 跟 std 锁步补缺的变体 (@()=只 std)。pair / f2leo / pseudo_f2leo 默认不含(pair ~2/s 太慢; f2leo 系首次需全量补), 需手动 -Variants 指定
   [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
-  [int]$MaxChunks = 0      # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
+  [int]$MaxChunks = 0,     # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
+  [switch]$PublishOnly     # 跳过取数/解算/变体, 直接用当前 CSV 状态重算 distribution+comp-steps 并发布(把已落盘但未发布的累积变更推上线)
 )
 $ErrorActionPreference = 'Stop'
 $ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSize 覆盖每变体默认
@@ -132,6 +133,10 @@ function Sync-Variant($Name){
 }
 
 # ---- 1. 增量取数 ----
+if($PublishOnly){
+  Write-Host "[PublishOnly] 跳过取数/解算/变体补缺, 直接重算+发布当前 CSV 状态。" -ForegroundColor Yellow
+  $nNew = 0; $stdChanged = $false; $variantChanged = $true
+} else {
 Step '1 增量取数 (results export -> 新打乱)'
 if($SkipSolve){
   # 调试: incremental 启动会清掉上次 solver 产出, 故 -SkipSolve 时连它一起跳过, 复用上次
@@ -192,6 +197,7 @@ if($Variants.Count -gt 0){
 } else {
   Write-Host '未指定变体补缺 (-Variants @())。' -ForegroundColor DarkGray
 }
+}
 
 if(-not $stdChanged -and -not $variantChanged){
   Step '无任何数据变化, 结束。'
@@ -241,14 +247,36 @@ if($NoPublish){
     # 发布 stats/scramble 到 static: 打成单个 .tgz -> scp 一个文件(二进制安全, 不走 pwsh 管道)
     # -> 远端原子替换。比 scp -r 逐个传 ~1.5w 小文件快一个量级。
     $tgz = Join-Path $env:TEMP 'cuberoot_scramble_publish.tgz'
+    Write-Host "  [1/3] tar 打包 stats/scramble ..." -ForegroundColor DarkCyan
+    $t0 = Get-Date
     tar -czf $tgz -C (Join-Path $RepoRoot 'stats') scramble
     if($LASTEXITCODE -ne 0){ throw 'tar 打包失败' }
+    $mb = [math]::Round((Get-Item $tgz).Length/1MB,1)
+    Write-Host "  [1/3] tar 完成 ${mb} MB (用时 $([int]((Get-Date)-$t0).TotalSeconds)s)" -ForegroundColor DarkCyan
+    # scp 单次网络传输, 非 TTY 下无内置进度条; 故起一个后台 poller 每 3s 读远端 _publish.tgz 大小, 打 N/total MB。
+    Write-Host "  [2/3] scp ${mb} MB -> static (开始 $(Get-Date -Format HH:mm:ss)) ..." -ForegroundColor DarkCyan
+    $t1 = Get-Date
+    $poller = Start-Job -ArgumentList $StaticHost,$StaticDest,$mb -ScriptBlock {
+      param($h,$d,$total)
+      while($true){
+        Start-Sleep -Seconds 3
+        $sz = ssh $h "stat -c %s '$d/_publish.tgz' 2>/dev/null || echo 0" 2>$null
+        $cur = [math]::Round(([double]($sz)) / 1MB, 1)
+        if($cur -gt 0){ Write-Host "        scp ... ${cur}/${total} MB" -ForegroundColor DarkGray }
+      }
+    }
     scp $tgz "${StaticHost}:${StaticDest}/_publish.tgz"
-    if($LASTEXITCODE -ne 0){ throw 'scp tgz 失败' }
+    $scpExit = $LASTEXITCODE
+    Stop-Job $poller -ErrorAction SilentlyContinue; Receive-Job $poller -ErrorAction SilentlyContinue; Remove-Job $poller -Force -ErrorAction SilentlyContinue
+    if($scpExit -ne 0){ throw 'scp tgz 失败' }
+    $sec = [Math]::Max([int]((Get-Date)-$t1).TotalSeconds, 1)
+    Write-Host "  [2/3] scp 完成 (用时 ${sec}s, ~$([math]::Round($mb/$sec,1)) MB/s)" -ForegroundColor DarkCyan
     # 原子替换 + 清理孤儿: 解到 scramble.new -> 换上 (旧的暂留 scramble.prev 兜底) -> 删旧 + tgz。
     # 直接覆盖式 untar 不删"本次不再产出"的旧文件(如某 bin 样本数超 1000 不再出 txt), 故整目录替换。
+    Write-Host "  [3/3] 远端原子替换 + 解包 ..." -ForegroundColor DarkCyan
     ssh $StaticHost "set -e; cd '${StaticDest}'; rm -rf scramble.new scramble.prev; mkdir scramble.new; tar -xzf _publish.tgz -C scramble.new --strip-components=1; if [ -d scramble ]; then mv scramble scramble.prev; fi; mv scramble.new scramble; rm -rf scramble.prev _publish.tgz"
     if($LASTEXITCODE -ne 0){ throw '远端原子替换失败' }
+    Write-Host "  [3/3] 远端替换完成。" -ForegroundColor DarkCyan
     Remove-Item $tgz -Force -ErrorAction SilentlyContinue
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }
