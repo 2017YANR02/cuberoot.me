@@ -15,7 +15,6 @@ import Scramble333ModePicker from '@/components/Scramble333ModePicker';
 import HighOrderNxNInput from '@/components/HighOrderNxNInput';
 import { EventIcon } from '@/components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
-import { visualcubeApiHref } from '@/lib/visualcube-link';
 import { eventDisplayName } from '@/lib/wca-events';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { activeEventOf } from './_active-view';
@@ -533,19 +532,15 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
                         </td>
                         {showPreview && (
                           <td className="gen-tn-attempt-preview">
-                            {hasPreview && (() => {
-                              const preview = <ScramblePreview2D event={ev} scramble={s} size={48} />;
-                              const href = visualcubeApiHref(ev, s);
-                              return href ? (
-                                <a
-                                  href={href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  title={t('打开大图', 'Open full-size image')}
-                                >{preview}</a>
-                              ) : preview;
-                            })()}
+                            {hasPreview && (
+                              <ScramblePreview2D
+                                event={ev}
+                                scramble={s}
+                                size={48}
+                                fullSizeLink
+                                linkTitle={t('打开大图', 'Open full-size image')}
+                              />
+                            )}
                           </td>
                         )}
                       </tr>

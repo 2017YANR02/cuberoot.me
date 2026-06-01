@@ -10,7 +10,7 @@
  * synchronous custom SVG renderer, so no need to pull in cubing/twisty (which
  * triggers the search worker code path that conflicts with Turbopack prerender).
  */
-import { useMemo, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   renderClockScrambleSvg,
   DEFAULT_CLOCK_COLORS,
@@ -66,6 +66,12 @@ interface Props {
   clockColors?: Record<string, string>;
   sq1Colors?: Record<string, string>;
   megaColors?: Record<string, string>;
+  /** Wrap the preview in an <a> that opens this very SVG full-size in a new tab.
+   *  Keeps the popup pixel-identical to the thumbnail (same SVG string) instead
+   *  of a different server-rendered net. */
+  fullSizeLink?: boolean;
+  /** Tooltip for the full-size link (caller passes the i18n'd string). */
+  linkTitle?: string;
 }
 
 export function ScramblePreview2D({
@@ -75,6 +81,8 @@ export function ScramblePreview2D({
   clockColors,
   sq1Colors,
   megaColors,
+  fullSizeLink,
+  linkTitle,
 }: Props) {
   const eff = previewSource(event);
 
@@ -94,6 +102,20 @@ export function ScramblePreview2D({
     }
   }, [event, eff, scramble, clockColors, sq1Colors, megaColors]);
 
+  // Object URL of the exact same SVG, for the "open full-size" link. Create AND
+  // revoke inside one effect so React StrictMode's mount→unmount→remount (dev)
+  // can't leave a revoked URL in the DOM. Browser-only — never runs on SSR.
+  const [fullSizeHref, setFullSizeHref] = useState<string | null>(null);
+  useEffect(() => {
+    if (!fullSizeLink || !customSvg) {
+      setFullSizeHref(null);
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([customSvg], { type: 'image/svg+xml' }));
+    setFullSizeHref(url);
+    return () => URL.revokeObjectURL(url);
+  }, [fullSizeLink, customSvg]);
+
   const isPortrait = eff === 'sq1';
   const hostStyle: CSSProperties = {
     width: isPortrait ? size : size * 2,
@@ -106,10 +128,26 @@ export function ScramblePreview2D({
   };
 
   if (!customSvg) return null;
-  return (
+  const inner = (
     <div
       style={hostStyle}
       dangerouslySetInnerHTML={{ __html: customSvg }}
     />
   );
+  if (fullSizeLink && fullSizeHref) {
+    return (
+      <a
+        href={fullSizeHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        // stopPropagation: parent row has click-to-copy
+        onClick={(e) => e.stopPropagation()}
+        title={linkTitle}
+        style={{ display: 'inline-flex' }}
+      >
+        {inner}
+      </a>
+    );
+  }
+  return inner;
 }

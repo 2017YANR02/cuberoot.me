@@ -10,7 +10,7 @@
  *
  * Next.js port of packages/client/src/pages/gen/GenPage.tsx (1:1 shell).
  */
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useSearchParams as useNextSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -20,6 +20,18 @@ import { prewarmScramble } from '@/lib/cubing-scramble';
 import { get333Mode } from '@/lib/scramble-333-mode';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import QuickMode from './QuickMode';
+import { CUBE_FILL } from '@/lib/cube-colors';
+
+// 把全站魔方配色注入 gen 的 --gen-cx-* 变量(swatch 选择器 + 步数徽标共用,单一来源)。
+// cx-w/y/r/o/b/g = White/Yellow/Red/Orange/Blue/Green = U/D/R/L/B/F。
+const GEN_CX_VARS = {
+  '--gen-cx-w': CUBE_FILL.U,
+  '--gen-cx-y': CUBE_FILL.D,
+  '--gen-cx-r': CUBE_FILL.R,
+  '--gen-cx-o': CUBE_FILL.L,
+  '--gen-cx-b': CUBE_FILL.B,
+  '--gen-cx-g': CUBE_FILL.F,
+} as CSSProperties;
 import TNoodleMode from './TNoodleMode';
 import './gen.css';
 
@@ -132,7 +144,7 @@ function GenPageInner() {
   const [compHeaderSlot, setCompHeaderSlot] = useState<HTMLDivElement | null>(null);
 
   return (
-    <div className="gen-page">
+    <div className="gen-page" style={GEN_CX_VARS}>
       <header className="gen-header">
         <div className="gen-title">
           <Shuffle size={20} className="gen-title-icon" />
