@@ -6,7 +6,7 @@
 # 只本地不发布: pwsh update_cross_stats.ps1 -NoPublish
 # 选变体补缺: pwsh update_cross_stats.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair)
 # pair 单独跑: pwsh update_cross_stats.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑)
-# f2leo 系:   pwsh update_cross_stats.ps1 -Variants f2leo,pseudo_f2leo  (小表 ~40MB 不碰 huge, 首次需全量补, 默认不含)
+# f2leo 系:   pwsh update_cross_stats.ps1 -Variants f2leo,pseudo_f2leo  (大表快路径, 真实打乱实测: f2leo 用 huge 联合表 ~31/s, pseudo_f2leo 用 huge 电池 ~81/s; 首次需全量补, 默认不含)
 # 只跑一两块: pwsh update_cross_stats.ps1 -Variants eo -MaxChunks 1     (eo 一块=2000≈40min, 跑完照常发布, 还差的下次续; 免人工盯/kill)
 # 不补变体:   pwsh update_cross_stats.ps1 -Variants @()
 #
