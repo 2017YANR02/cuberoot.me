@@ -13,10 +13,10 @@ import { toWcaEventForRank } from '@/app/[lang]/timer/_shared/event-bridge';
 import { apiUrl } from '@/lib/api-base';
 
 export interface RankResult {
-  /** 1-based 世界排名(精确或饱和下界) */
+  /** 1-based 精确世界排名(按选手个人最佳去重,PR 严格小于本成绩的人数 + 1) */
   rank: number;
-  /** true = 成绩太慢,服务器扫描截断,rank 是下界,应渲染 "#N+" */
-  saturated: boolean;
+  /** 该 (event,type) 上榜选手总数 —— 用来算百分位 */
+  total: number;
 }
 
 /**
@@ -24,7 +24,7 @@ export interface RankResult {
  * @param eventId 计时器内部 EventId(可能是 relay/training/custom 等非 WCA 项).
  * @param centis  有效成绩,单位厘秒(centiseconds),正整数.
  * @param type    'single' | 'average'.
- * @returns {rank, saturated} | null（无 WCA 对应 / 网络错误 / 非法入参 -> null）.
+ * @returns {rank, total} | null（无 WCA 对应 / 网络错误 / 非法入参 -> null）.
  */
 export async function fetchRankFor(
   eventId: string,
@@ -46,9 +46,10 @@ export async function fetchRankFor(
     );
     const res = await fetch(url);
     if (!res.ok) return null;
-    const data = (await res.json()) as { rank?: unknown; saturated?: unknown };
+    const data = (await res.json()) as { rank?: unknown; total?: unknown };
     if (typeof data?.rank !== 'number' || !Number.isFinite(data.rank)) return null;
-    return { rank: data.rank, saturated: data.saturated === true };
+    const total = typeof data?.total === 'number' && Number.isFinite(data.total) ? data.total : 0;
+    return { rank: data.rank, total };
   } catch {
     return null; // 离线 / CORS / 超时 —— 优雅降级,徽章隐藏
   }

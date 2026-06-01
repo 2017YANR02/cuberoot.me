@@ -250,27 +250,82 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 //   GET /v1/wca/rank-for?event=333&type=single&centis=984
 //
 // 语义(重要):wca_results_top 是「一行一条成绩」(每人每场每轮都有行,同一人重复多次,见
-//   wca_stats_extra_build.ts L518-537 + schema 注释),不是「一行一人最佳」.因此朴素的
-//   COUNT(*) WHERE value < $x 会数到结果行(同一快手的多场成绩重复计数),严重高估名次.
-//   WCA 官方排名是「按选手个人最佳去重」(distinct person whose PB < value),所以这里必须
-//   count(DISTINCT wca_id).因为「某人 PB < x」等价于「该人存在任一行 value < x」,对去重计数
-//   而言用 value 范围里的 DISTINCT wca_id 即可,无需先 GROUP BY MIN.
+//   wca_stats_extra_build.ts + schema 注释),不是「一行一人最佳」.WCA 官方世界排名是「按选手
+//   个人最佳去重」(distinct person whose PB < value),所以名次 = 「PR 严格小于 value 的人数」+ 1.
 //
-// 性能/饱和:wca_results_top 现已无 cap(全量 ~11M 行,见 builder L32 + schema L46);名字里的
-//   `_top` 是历史遗留.所以没有固定行数 cap 可饱和;真正的成本风险是「慢成绩」——例如 60s 的
-//   333,value 范围几乎覆盖该项目全部 ~1.5M 行,每次 count(DISTINCT) 都要扫一大片.
-//   对策:把内层扫描用 ORDER BY value LIMIT SCAN_CAP 截断(走 wrt_main 索引的 Index Only Scan
-//   流式读,LIMIT 真截断),再对这最多 SCAN_CAP 行做 count(DISTINCT wca_id).
-//     - 快成绩:范围内结果行 < SCAN_CAP,全扫到 → 精确去重名次.
-//     - 慢成绩:内层在 SCAN_CAP 行处停下(便宜) → scanned == SCAN_CAP,说明该 value 以下结果行
-//       多于 SCAN_CAP,真实名次更靠后 → saturated=true,客户端渲染 "世界 #N+"(下界).
-//   SCAN_CAP=80000 行:333 单次里 sub-15s 的结果行远少于 8 万,日常成绩都能精确;只有非常慢的
-//   成绩才饱和,而那种成绩本就没必要给精确名次.
+// 方案(精确、全成绩有效、无饱和):对每个 (event, type) 懒构建一个「每个上榜选手的个人最佳」
+//   升序数组,内存缓存 24h,用二分查找(lowerBound)回答任意 value 的名次.这复刻
+//   utils/current_records.ts 的缓存范式(module-level cache + TTL + 懒构建 + in-flight Promise 去重).
 //
-// 索引:WHERE (event_id, is_avg, value 范围) ORDER BY value 直接吃 wrt_main
-//   (event_id,is_avg,value,wca_id) INCLUDE (id) 的 Index Only Scan(已 EXPLAIN 验证).
+//   - 构建一次:SELECT MIN(value) ... GROUP BY wca_id —— 该 (event,type) 每位上榜选手一条 PR,
+//     升序排好存成 Int32Array.这跟 current_records.ts 的 grouped-MIN 同表同代价,24h 才跑一次.
+//   - 查询:rank = lowerBound(arr, value) + 1(value 之前严格更小的 PR 个数 + 1);total = arr.length.
+//     不再有 SCAN_CAP / saturated —— 9.84s 与 20s 的 333 会落在数组里截然不同的位置,各自精确.
+//
+// 内存:只存排好序的 value(不存 wca_id).333 single ~数十万人 ≈ 1-2MB Int32Array.懒构建,只缓存
+//   实际被请求过的 (event,type),不预热全项目(服务器 RAM 紧张).
+//
+// 索引:GROUP BY wca_id 的 MIN(value) 走 wrt_main(event_id,is_avg,value,wca_id) Index Only Scan.
 // Cache-Control 同其它端点 1 天(每周才变).
-const RANK_SCAN_CAP = 80000;
+interface RankIndex {
+  /** 该 (event,type) 每位上榜选手的个人最佳(centiseconds),升序 */
+  values: Int32Array;
+  builtAt: number;
+}
+const RANK_TTL_MS = 24 * 60 * 60_000;
+const rankCache = new Map<string, RankIndex>();
+const rankInflight = new Map<string, Promise<RankIndex | null>>();
+
+async function buildRankIndex(event: string, isAvg: boolean): Promise<RankIndex | null> {
+  const t0 = Date.now();
+  try {
+    // 每位上榜选手在该 (event,type) 的个人最佳.value>0 排除 DNF(-1)/DNS(-2)/0.
+    const rows = await query<{ m: number }>(
+      `SELECT MIN(value)::int AS m
+       FROM wca_results_top
+       WHERE event_id = ? AND is_avg = ? AND value > 0
+       GROUP BY wca_id`,
+      [event, isAvg],
+    );
+    const values = new Int32Array(rows.length);
+    for (let i = 0; i < rows.length; i++) values[i] = Number(rows[i]!.m);
+    values.sort(); // Int32Array.sort 默认数值升序
+    console.log(`[rank-for] built ${event}|${isAvg ? 'avg' : 'single'} n=${values.length} in ${Date.now() - t0}ms`);
+    return { values, builtAt: Date.now() };
+  } catch (e) {
+    console.warn(`[rank-for] build failed ${event}|${isAvg ? 'avg' : 'single'}:`, (e as Error).message);
+    return null;
+  }
+}
+
+async function getRankIndex(event: string, isAvg: boolean): Promise<RankIndex | null> {
+  const key = `${event}|${isAvg ? '1' : '0'}`;
+  const cur = rankCache.get(key);
+  if (cur && Date.now() - cur.builtAt < RANK_TTL_MS) return cur;
+  const pending = rankInflight.get(key);
+  if (pending) return pending;
+  const p = (async () => {
+    const fresh = await buildRankIndex(event, isAvg);
+    if (fresh) rankCache.set(key, fresh);
+    rankInflight.delete(key);
+    return fresh;
+  })();
+  rankInflight.set(key, p);
+  return p;
+}
+
+/** 升序数组里第一个 >= target 的下标 = 严格小于 target 的元素个数. */
+function lowerBound(arr: Int32Array, target: number): number {
+  let lo = 0;
+  let hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (arr[mid]! < target) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
 wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
   const event = (c.req.query('event') ?? '').toLowerCase();
   const type = (c.req.query('type') ?? 'single').toLowerCase();
@@ -293,25 +348,15 @@ wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
   }
 
   const isAvg = type === 'average';
-  const row = await query<{ n: string; scanned: string }>(
-    `
-    SELECT count(DISTINCT wca_id)::int AS n, count(*)::int AS scanned
-    FROM (
-      SELECT wca_id
-      FROM wca_results_top
-      WHERE event_id = ? AND is_avg = ? AND value > 0 AND value < ?
-      ORDER BY value
-      LIMIT ?
-    ) s
-    `,
-    [event, isAvg, centis, RANK_SCAN_CAP],
-  );
-  const n = row[0] ? parseInt(row[0].n, 10) : 0;
-  const scanned = row[0] ? parseInt(row[0].scanned, 10) : 0;
-  const saturated = scanned >= RANK_SCAN_CAP;
+  const idx = await getRankIndex(event, isAvg);
+  if (!idx) return c.json({ error: 'Rank index unavailable' }, 503);
+
+  // rank = (PR 严格小于 value 的人数) + 1;total = 上榜选手数.精确,无饱和.
+  const rank = lowerBound(idx.values, centis) + 1;
+  const total = idx.values.length;
 
   c.header('Cache-Control', CACHE_HEADER);
-  return c.json({ event, type, value: centis, rank: n + 1, saturated });
+  return c.json({ event, type, value: centis, rank, total });
 });
 
 // ── 3. /v1/wca/cohort-ranks ──
