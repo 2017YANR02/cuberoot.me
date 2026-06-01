@@ -245,6 +245,75 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   });
 });
 
+// ── 2b. /v1/wca/rank-for ──
+// "我这个成绩放进 WCA 历史能排第几" —— 给 /timer 速拧计时器的世界排名徽章用.
+//   GET /v1/wca/rank-for?event=333&type=single&centis=984
+//
+// 语义(重要):wca_results_top 是「一行一条成绩」(每人每场每轮都有行,同一人重复多次,见
+//   wca_stats_extra_build.ts L518-537 + schema 注释),不是「一行一人最佳」.因此朴素的
+//   COUNT(*) WHERE value < $x 会数到结果行(同一快手的多场成绩重复计数),严重高估名次.
+//   WCA 官方排名是「按选手个人最佳去重」(distinct person whose PB < value),所以这里必须
+//   count(DISTINCT wca_id).因为「某人 PB < x」等价于「该人存在任一行 value < x」,对去重计数
+//   而言用 value 范围里的 DISTINCT wca_id 即可,无需先 GROUP BY MIN.
+//
+// 性能/饱和:wca_results_top 现已无 cap(全量 ~11M 行,见 builder L32 + schema L46);名字里的
+//   `_top` 是历史遗留.所以没有固定行数 cap 可饱和;真正的成本风险是「慢成绩」——例如 60s 的
+//   333,value 范围几乎覆盖该项目全部 ~1.5M 行,每次 count(DISTINCT) 都要扫一大片.
+//   对策:把内层扫描用 ORDER BY value LIMIT SCAN_CAP 截断(走 wrt_main 索引的 Index Only Scan
+//   流式读,LIMIT 真截断),再对这最多 SCAN_CAP 行做 count(DISTINCT wca_id).
+//     - 快成绩:范围内结果行 < SCAN_CAP,全扫到 → 精确去重名次.
+//     - 慢成绩:内层在 SCAN_CAP 行处停下(便宜) → scanned == SCAN_CAP,说明该 value 以下结果行
+//       多于 SCAN_CAP,真实名次更靠后 → saturated=true,客户端渲染 "世界 #N+"(下界).
+//   SCAN_CAP=80000 行:333 单次里 sub-15s 的结果行远少于 8 万,日常成绩都能精确;只有非常慢的
+//   成绩才饱和,而那种成绩本就没必要给精确名次.
+//
+// 索引:WHERE (event_id, is_avg, value 范围) ORDER BY value 直接吃 wrt_main
+//   (event_id,is_avg,value,wca_id) INCLUDE (id) 的 Index Only Scan(已 EXPLAIN 验证).
+// Cache-Control 同其它端点 1 天(每周才变).
+const RANK_SCAN_CAP = 80000;
+wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
+  const event = (c.req.query('event') ?? '').toLowerCase();
+  const type = (c.req.query('type') ?? 'single').toLowerCase();
+  const centisRaw = c.req.query('centis') ?? '';
+
+  if (!(ACTIVE_EVENTS as readonly string[]).includes(event)) {
+    return c.json({ error: 'Invalid event' }, 400);
+  }
+  if (type !== 'single' && type !== 'average') {
+    return c.json({ error: 'Invalid type' }, 400);
+  }
+  // 333mbf 无 average;333fm 的 average 是「平均步数」非时间,这里只支持 single
+  // (徽章对 333fm/333mbf 用 single).拒掉这些项目的 average 查询.
+  if (type === 'average' && (event === '333mbf' || event === '333fm')) {
+    return c.json({ error: 'No average for this event' }, 400);
+  }
+  const centis = Number(centisRaw);
+  if (!Number.isInteger(centis) || centis <= 0) {
+    return c.json({ error: 'Invalid centis' }, 400);
+  }
+
+  const isAvg = type === 'average';
+  const row = await query<{ n: string; scanned: string }>(
+    `
+    SELECT count(DISTINCT wca_id)::int AS n, count(*)::int AS scanned
+    FROM (
+      SELECT wca_id
+      FROM wca_results_top
+      WHERE event_id = ? AND is_avg = ? AND value > 0 AND value < ?
+      ORDER BY value
+      LIMIT ?
+    ) s
+    `,
+    [event, isAvg, centis, RANK_SCAN_CAP],
+  );
+  const n = row[0] ? parseInt(row[0].n, 10) : 0;
+  const scanned = row[0] ? parseInt(row[0].scanned, 10) : 0;
+  const saturated = scanned >= RANK_SCAN_CAP;
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({ event, type, value: centis, rank: n + 1, saturated });
+});
+
 // ── 3. /v1/wca/cohort-ranks ──
 wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
   const cohort = parseInt(c.req.query('cohort') ?? '0', 10);

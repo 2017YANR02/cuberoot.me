@@ -3,7 +3,7 @@
 // without duplicating the card list.
 
 import {
-  Film, ScanSearch, Swords, BookOpen, Shuffle, Library, BookMarked, BookA,
+  Film, ScanSearch, BookOpen, Shuffle, Library, BookMarked, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
   Brain, Box, Sigma, type LucideIcon,
 } from 'lucide-react';
@@ -77,8 +77,7 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。' },
     cards: [
       { id: 'cuberoot', href: '/trainer',      internal: true, tier: 'hero',     nameKey: 'cuberootTrainer' },
-      { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer', comingSoon: true },
-      { id: 'battle',   href: '/battle',       internal: true, tier: 'standard', Icon: Swords,    nameKey: 'battle' },
+      { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'utility',  nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },

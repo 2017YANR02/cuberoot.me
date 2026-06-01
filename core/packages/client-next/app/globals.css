@@ -1,4 +1,5 @@
 @import "tailwindcss";
+/* battle dark-lock removed — battle now dual-theme (2026-06-01) */
 @source "../app/**/*.{tsx,ts,jsx,js}";
 @source "../components/**/*.{tsx,ts,jsx,js}";
 @import "flag-icons/css/flag-icons.min.css";
@@ -70,6 +71,16 @@ body {
 
   --radius: 12px;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* timer state colors (Solo + Battle) */
+  --timer-idle: var(--foreground);
+  --timer-holding: var(--destructive);
+  --timer-ready: var(--signal-success);
+  --timer-running: var(--foreground);
+  --timer-warn8: color-mix(in srgb, var(--accent) 50%, var(--destructive));
+  --timer-warn12: color-mix(in srgb, var(--accent) 20%, var(--destructive));
+  --timer-plus2: var(--destructive);
+  --timer-dnf: var(--destructive);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -100,7 +111,8 @@ body {
    :root:has() lifts tokens to root so body bg flips with the container; without
    this, max-width pages leak light bg on the sides. These pages don't
    participate in ThemeToggle — always dark, by design.
-   Battle locks even darker (AMOLED black) — see block below. */
+   NOTE: Battle (.battle-container) is NO LONGER dark-locked — it now follows the
+   user's chosen theme via the :root token set (chrome tokenized in battle.css). */
 html:has(.trainer-root),
 html:has(.vc-editor-page),
 html:has(.wca-stats-page),
@@ -121,29 +133,6 @@ html:has(.tr-page) {
   --secondary: #262626;
   --secondary-foreground: #ededed;
   --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --faint-foreground: #737373;
-  --accent: #d97757;
-  --accent-foreground: #171717;
-  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
-  --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
-  --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
-  --input: color-mix(in srgb, var(--foreground) 10%, transparent);
-}
-
-html:has(.battle-container) {
-  color-scheme: dark;
-  --background: #000;
-  --foreground: #ededed;
-  --card: #0a0a0a;
-  --card-foreground: #ededed;
-  --popover: #0a0a0a;
-  --popover-foreground: #ededed;
-  --primary: #ededed;
-  --primary-foreground: #171717;
-  --secondary: #1a1a1a;
-  --secondary-foreground: #ededed;
-  --muted: #1a1a1a;
   --muted-foreground: #a3a3a3;
   --faint-foreground: #737373;
   --accent: #d97757;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs, pbSingleIndex } from '../_lib/stats';
@@ -18,6 +18,13 @@ interface Props {
    *  shown that lets the user pick multiple solves and delete them in one go.
    *  Parent (TimerPage) is responsible for the actual db.deleteSolves call. */
   onBulkDelete?: (ids: string[]) => void;
+  /** Quick per-row actions (right-click on desktop / long-press on mobile).
+   *  Wired to SoloView's existing penalty/delete handlers — no duplication.
+   *  When omitted the quick-action menu is disabled (normal row tap only). */
+  onQuickPenalty?: (id: string, penalty: Penalty) => void;
+  onQuickDelete?: (id: string) => void;
+  /** Open the full SolveModal at this solve (for the "Comment" action). */
+  onQuickComment?: (solve: Solve, index: number) => void;
 }
 
 /**
@@ -95,7 +102,10 @@ const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF'];
 const MOBILE_QUERY = '(max-width: 480px)';
 const MOBILE_TAG_CAP = 2;
 
-export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }: Props) {
+export default function HistoryPanel({
+  solves, isZh, onRowClick, onBulkDelete,
+  onQuickPenalty, onQuickDelete, onQuickComment,
+}: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
   // Selected solve ids in click-order (oldest first). When a 3rd id is clicked
@@ -144,6 +154,100 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [actionsOpen]);
+
+  // ── Quick-action menu (right-click desktop / long-press mobile) ────────
+  // Reuses SoloView's penalty/delete/comment handlers — no duplicate logic.
+  const quickEnabled = !!(onQuickPenalty || onQuickDelete || onQuickComment);
+  const [quickMenu, setQuickMenu] = useState<{ solve: Solve; index: number; x: number; y: number } | null>(null);
+  const quickMenuRef = useRef<HTMLDivElement | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressFiredRef = useRef(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const closeQuickMenu = useCallback(() => setQuickMenu(null), []);
+
+  // Dismiss on outside-tap / Esc / scroll.
+  useEffect(() => {
+    if (!quickMenu) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (quickMenuRef.current && quickMenuRef.current.contains(e.target as Node)) return;
+      closeQuickMenu();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeQuickMenu(); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', closeQuickMenu, true);
+    window.addEventListener('resize', closeQuickMenu);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', closeQuickMenu, true);
+      window.removeEventListener('resize', closeQuickMenu);
+    };
+  }, [quickMenu, closeQuickMenu]);
+
+  const openQuickMenuAt = useCallback((s: Solve, index: number, x: number, y: number) => {
+    if (!quickEnabled) return;
+    if (compareMode || selectMode) return;
+    setQuickMenu({ solve: s, index, x, y });
+  }, [quickEnabled, compareMode, selectMode]);
+
+  const handleRowContextMenu = useCallback((e: React.MouseEvent, s: Solve, index: number) => {
+    if (!quickEnabled || compareMode || selectMode) return;
+    e.preventDefault();
+    openQuickMenuAt(s, index, e.clientX, e.clientY);
+  }, [quickEnabled, compareMode, selectMode, openQuickMenuAt]);
+
+  const LONG_PRESS_MS = 450;
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleRowTouchStart = useCallback((e: React.TouchEvent, s: Solve, index: number) => {
+    if (!quickEnabled || compareMode || selectMode) return;
+    const t = e.touches[0];
+    if (!t) return;
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    longPressFiredRef.current = false;
+    cancelLongPress();
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressFiredRef.current = true;
+      // Bottom action-sheet: coordinates ignored on mobile (CSS pins it).
+      openQuickMenuAt(s, index, 0, 0);
+    }, LONG_PRESS_MS);
+  }, [quickEnabled, compareMode, selectMode, cancelLongPress, openQuickMenuAt]);
+
+  const handleRowTouchMove = useCallback((e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    const t = e.touches[0];
+    if (!start || !t) return;
+    if (Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) cancelLongPress();
+  }, [cancelLongPress]);
+
+  const handleRowTouchEnd = useCallback(() => { cancelLongPress(); }, [cancelLongPress]);
+
+  // Build the menu items for a given solve.
+  const setQuickPenalty = (s: Solve, p: Penalty) => {
+    onQuickPenalty?.(s.id, p);
+    closeQuickMenu();
+  };
+  const doQuickDelete = (s: Solve) => {
+    onQuickDelete?.(s.id);
+    closeQuickMenu();
+  };
+  const doQuickComment = (s: Solve, index: number) => {
+    onQuickComment?.(s, index);
+    closeQuickMenu();
+  };
+  const doCopyScramble = async (s: Solve) => {
+    try { await navigator.clipboard.writeText(s.scramble ?? ''); } catch { /* ignore */ }
+    closeQuickMenu();
+  };
 
   // Structured filters
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -902,6 +1006,10 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
           }
 
           const handleRowClick = () => {
+            // A long-press just opened the quick-action sheet — swallow the
+            // synthetic click that follows touchend so we don't also open the
+            // full modal.
+            if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
             if (compareMode) {
               handleSelectInCompare(s);
             } else if (selectMode) {
@@ -918,6 +1026,11 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
               title={rowTitle}
               style={rowStyle}
               onClick={handleRowClick}
+              onContextMenu={(e) => handleRowContextMenu(e, s, realIdx)}
+              onTouchStart={(e) => handleRowTouchStart(e, s, realIdx)}
+              onTouchMove={handleRowTouchMove}
+              onTouchEnd={handleRowTouchEnd}
+              onTouchCancel={handleRowTouchEnd}
             >
               {compareMode && (
                 <div
@@ -1110,6 +1223,82 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
           onClose={closeCompareModal}
         />
       )}
+      {quickMenu && (() => {
+        const s = quickMenu.solve;
+        const items = (
+          <>
+            <button
+              type="button"
+              role="menuitem"
+              className={`row-quick-item${s.penalty === 'ok' ? ' active' : ''}`}
+              onClick={() => setQuickPenalty(s, 'ok')}
+            >
+              <Check size={14} />
+              <span>{isZh ? '无罚时' : 'OK'}</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={`row-quick-item${s.penalty === '+2' ? ' active' : ''}`}
+              onClick={() => setQuickPenalty(s, '+2')}
+            >
+              <span className="row-quick-glyph">+2</span>
+              <span>+2</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={`row-quick-item${s.penalty === 'DNF' ? ' active' : ''}`}
+              onClick={() => setQuickPenalty(s, 'DNF')}
+            >
+              <span className="row-quick-glyph">DNF</span>
+              <span>DNF</span>
+            </button>
+            <div className="row-quick-sep" role="separator" />
+            <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickComment(s, quickMenu.index)}>
+              <MessageSquare size={14} />
+              <span>{isZh ? '评论' : 'Comment'}</span>
+            </button>
+            <button type="button" role="menuitem" className="row-quick-item" onClick={() => doCopyScramble(s)}>
+              <Clipboard size={14} />
+              <span>{isZh ? '复制打乱' : 'Copy scramble'}</span>
+            </button>
+            <div className="row-quick-sep" role="separator" />
+            <button type="button" role="menuitem" className="row-quick-item danger" onClick={() => doQuickDelete(s)}>
+              <Trash2 size={14} />
+              <span>{isZh ? '删除' : 'Delete'}</span>
+            </button>
+          </>
+        );
+        if (isMobile) {
+          return (
+            <div className="row-quick-sheet-backdrop" data-no-timer onClick={closeQuickMenu}>
+              <div className="row-quick-sheet" ref={quickMenuRef} role="menu" onClick={(e) => e.stopPropagation()}>
+                <div className="row-quick-sheet-head">
+                  #{quickMenu.index + 1} · {formatMs(effectiveMs(s))}
+                </div>
+                {items}
+              </div>
+            </div>
+          );
+        }
+        // Desktop: anchored popup. Clamp to viewport.
+        const MENU_W = 184, MENU_H = 300;
+        const left = Math.min(quickMenu.x, (typeof window !== 'undefined' ? window.innerWidth : 1280) - MENU_W - 8);
+        const top = Math.min(quickMenu.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - MENU_H - 8);
+        return (
+          <div
+            className="row-quick-menu"
+            data-no-timer
+            ref={quickMenuRef}
+            role="menu"
+            style={{ left: Math.max(8, left), top: Math.max(8, top) }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {items}
+          </div>
+        );
+      })()}
     </div>
   );
 }

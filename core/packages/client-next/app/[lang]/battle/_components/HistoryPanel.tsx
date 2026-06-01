@@ -16,8 +16,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
-import { formatTimePlain } from './engine/format_time';
-import { computeAo5, computeAverage, getEffectiveTimeFromEntry, computeSubXBreakdown } from './engine/stats';
+import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
+import { computeAo5, computeAverage, getEffectiveTimeFromEntry, computeSubXBreakdown } from '@/app/[lang]/timer/_shared/stats-core';
 import type { SolveEntry } from './engine/types';
 import {
   ManualInputDialog,
