@@ -12,10 +12,25 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 
 下载最新 results export → 挑出未处理的新打乱 → std_analyzer 全 5 阶段 → 追加 master → 默认再跟 std 锁步补 eo/pseudo/pseudo_pair(按 id 缺补,分块可续)→ 重算 JSON → commit & push + scp static。任一步失败即停。
 
+### 交互向导
+
+**真人终端裸跑(无任何参数)会自动进向导**。UI 移植自 `D:\cube\upload-video\upload.ps1`(原生配色 + `SetCursorPosition` 原地重绘):`↑↓` 移动、`Space` 多选切换、`Enter` 确认、`Esc` 取消。先在取数**前**问 TSV 来源,取数后扫描各变体待补条数并按实测速率估时,逐项问:
+
+0. **TSV 来源**(单选,仅当 `cache/` 有可用 zip 才问):下载官方最新 export / 用本地缓存最新 zip 不联网(后者等价 `-UseCached`,export_date 从文件名还原,stamp 仍稳定)。
+1. **补哪些变体**(多选 ■/□,带每变体待补数 + 估时):快捷键 `[A]`ll 全选、`[D]`efault 切默认组 `eo/pseudo/pseudo_pair`、`[O]`pt-in 切 `pair/f2leo/pseudo_f2leo`;数字 `1..6` 切单项。
+2. **每变体最多跑几块**(单选,数字键直选):补满 / 1 / 2 / 5 块(等价 `-MaxChunks N`)。
+3. **是否发布**(Yes/No,`●`/`○`):发布(push + scp)/ 仅本地(等价 `-NoPublish`)。
+
+最后打印「计划」总览 + 开始/取消 确认;选择直接套回 `$Variants/$MaxChunks/$NoPublish`,后续与 flag 路径完全一致。三个菜单函数 `Read-MultiSelect`/`Read-SingleSelect`/`Read-Confirm`;`Esc` 任一步取消都不改动 master/JSON。**顶部 `[Console]::OutputEncoding = UTF8` 是必须的** —— 否则中文 Windows 默认 GBK(936) 码页会把 `›`/`■`/`●` 等非 GBK 字形渲染成 `?`。
+
+触发判据:`-Interactive` 强制开;否则仅当**无任何参数 + 交互终端**(`[Console]::IsInputRedirected=False`)。**AI 工具 / 带任意 flag / 非交互终端(stdin 重定向)一律不弹**,走旧一键 —— 故 AI 自动化与定时任务行为不变。
+
 ### 开关
 
 | flag | 作用 |
 |---|---|
+| `-Interactive` | 强制走交互向导(见上);裸跑+真人终端时自动开,无需显式传 |
+| `-UseCached` | 取数不联网,用 `incremental/cache/` 里最新 `WCA_export_*.tsv.zip`(向导里也会问);无缓存则报错 |
 | `-DryRun` | 不下载(配 `-SourceCsv`)、不发布,验证流程 |
 | `-SourceCsv <path>` | 用本地 `input` 形状 csv 当源替代下载(测试) |
 | `-NoPublish` | 跑完只更新本地 std.csv + JSON,不 commit/push/scp(想先 review) |

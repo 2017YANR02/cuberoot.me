@@ -13,23 +13,23 @@ const CSS = `
   justify-content:center;padding:24px 16px;overflow:auto;
   background:color-mix(in srgb, var(--foreground) 45%, transparent);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
-.deskpet-gallery{position:relative;width:min(720px,96vw);max-height:88vh;overflow:auto;
+.deskpet-gallery{position:relative;width:min(960px,96vw);max-height:88vh;overflow:auto;
   background:var(--popover);border:1px solid var(--border-default);border-radius:16px;
   padding:20px 22px 24px;}
 .deskpet-gallery-title{margin:0 0 4px;font-size:1.05rem;font-weight:600;color:var(--foreground);text-align:center;}
 .deskpet-gallery-sub{margin:0 0 12px;font-size:.78rem;color:var(--muted-foreground);text-align:center;}
 .deskpet-gallery h3{margin:18px 0 10px;font-size:.82rem;color:var(--muted-foreground);font-weight:600;}
-.deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
-.deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:10px 4px;border-radius:10px;background:var(--muted);}
-.deskpet-gallery figure img{width:52px;height:52px;object-fit:contain;image-rendering:pixelated;}
-.deskpet-gallery figcaption{font-size:.7rem;color:var(--muted-foreground);text-align:center;line-height:1.2;}
+.deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  column-gap:6px;row-gap:2px;}
+.deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0;}
+.deskpet-gallery figure img{width:100%;aspect-ratio:1/1;height:auto;object-fit:contain;image-rendering:pixelated;}
+.deskpet-gallery figcaption{font-size:.74rem;color:var(--muted-foreground);text-align:center;line-height:1.2;
+  margin-top:-10px;}
 .deskpet-gallery-close{position:absolute;top:10px;right:12px;background:transparent;border:0;cursor:pointer;
   color:var(--muted-foreground);padding:6px;border-radius:8px;display:flex;}
 .deskpet-gallery-close:hover{background:var(--accent-soft);color:var(--foreground);}
 @media (max-width:480px){
-  .deskpet-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr));}
-  .deskpet-gallery figure img{width:44px;height:44px;}
+  .deskpet-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
 }
 `;
 

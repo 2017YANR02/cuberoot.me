@@ -60,6 +60,13 @@ export class F2leoSolverWasm {
      */
     solve_f2leo_stage(scramble: string, pseudo: boolean, stage: number): Uint32Array;
     /**
+     * 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤,返回 JSON {"len","combo","sols"}。
+     * pseudo=false → F2LEO,true → Pseudo F2LEO;两者破坏 y 对称(同 eo),最优可能只在 rot·y
+     * 帧达成,故步骤前缀用 enumerate_small 返回的真实帧(可能含尾 y,如 "x' y")。
+     * stage:0=cross/1=xc/2=xxc/3=xxxc;extra:超出最优步数(0=只最优长度全部解);cap:最多条数。
+     */
+    solve_moves(scramble: string, pseudo: boolean, face: number, stage: number, extra: number, cap: number): string;
+    /**
      * Pseudo F2LEO 24 值,顺序同上。
      */
     solve_pseudo_f2leo(scramble: string): Uint32Array;
@@ -116,6 +123,7 @@ export interface InitOutput {
     readonly f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
     readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+    readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
     readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];

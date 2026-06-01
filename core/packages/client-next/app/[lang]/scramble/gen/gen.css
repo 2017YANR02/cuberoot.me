@@ -1244,35 +1244,17 @@ html[data-theme=dark] .gen-page .gen-tn-clock-chip {
 }
 
 /* ── 3x3 cross-step analysis (XC Master 风) ── */
-/* Cube-face colours tuned for legibility as small digits (white = grey, since
-   pure white is invisible on the cream/light sheet; the WCA white face). */
+/* 步数数字色 = 标准魔方面色(lib/cube-colors,纯色,与 analyzer 视角格同源),
+   描边见 .gen-tn-cx 保证白/黄在浅底也可读。 */
 .gen-page {
-    --gen-cx-w: #555555;
-    --gen-cx-y: #B8860B;
-    --gen-cx-r: #DC2626;
-    --gen-cx-o: #EA7317;
-    --gen-cx-b: #2563EB;
-    --gen-cx-g: #16A34A;
     --gen-step-lo: #16A34A;
 }
 @media (prefers-color-scheme: dark) {
     html:not([data-theme=light]) .gen-page {
-        --gen-cx-w: #e5e5e5;
-        --gen-cx-y: #FACC15;
-        --gen-cx-r: #F87171;
-        --gen-cx-o: #FB923C;
-        --gen-cx-b: #60A5FA;
-        --gen-cx-g: #4ADE80;
         --gen-step-lo: #34D399;
     }
 }
 html[data-theme=dark] .gen-page {
-    --gen-cx-w: #e5e5e5;
-    --gen-cx-y: #FACC15;
-    --gen-cx-r: #F87171;
-    --gen-cx-o: #FB923C;
-    --gen-cx-b: #60A5FA;
-    --gen-cx-g: #4ADE80;
     --gen-step-lo: #34D399;
 }
 
@@ -1304,14 +1286,14 @@ html[data-theme=dark] .gen-page {
     font-weight: 600;
     margin-right: 3px;
 }
-.gen-tn-cx { font-weight: 700; }
+/* 数字色由组件按面注入纯魔方色(lib/cube-colors);细描边 = 文字色反向(浅底偏暗、
+   暗底偏亮),让白/黄在浅底、各色在暗底都立体可读。 */
+.gen-tn-cx {
+    font-weight: 700;
+    -webkit-text-stroke: 0.6px color-mix(in srgb, var(--gen-text) 50%, transparent);
+    paint-order: stroke fill;
+}
 .gen-tn-cx-na { font-weight: 700; color: var(--gen-text-mute); }
-.gen-tn-cx.cx-w { color: var(--gen-cx-w); }
-.gen-tn-cx.cx-y { color: var(--gen-cx-y); }
-.gen-tn-cx.cx-r { color: var(--gen-cx-r); }
-.gen-tn-cx.cx-o { color: var(--gen-cx-o); }
-.gen-tn-cx.cx-b { color: var(--gen-cx-b); }
-.gen-tn-cx.cx-g { color: var(--gen-cx-g); }
 
 /* competition distribution panel */
 .gen-cx-panel {

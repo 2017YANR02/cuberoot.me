@@ -695,87 +695,63 @@ html[data-theme=dark] .analyze-page {
     --az-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* ---- Rust WASM cross-step 区(并入 analyzer) ---- */
-.rcx { margin-top: 28px; }
-.rcx-toggle {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  background: none; border: none; padding: 8px 0; cursor: pointer;
-  color: var(--az-text); font-size: 15px; font-weight: 600; text-align: left;
-}
-.rcx-toggle-sub { color: var(--az-text-mute); font-size: 12px; font-weight: 400; }
-.rcx-body { margin-top: 8px; }
-.rcx-status {
-  display: flex; align-items: center; gap: 8px;
-  color: var(--az-text-sub); font-size: 13px; padding: 8px 0;
-}
-.rcx-err { color: var(--az-accent); }
-.rcx-spin { animation: analyze-spin 1s linear infinite; }
-
-.rcx-controls { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; margin: 8px 0 14px; }
-.rcx-control { display: flex; flex-direction: column; gap: 4px; }
-.rcx-control > span { font-size: 12px; color: var(--az-text-sub); }
-.rcx-control select {
-  font: inherit; padding: 6px 8px; min-width: 150px;
-  background: var(--az-surface); color: var(--az-text);
-  border: 1px solid var(--az-border-strong); border-radius: 6px;
-}
-.rcx-compute {
-  display: inline-flex; align-items: center; gap: 6px;
-  font: inherit; padding: 7px 18px; cursor: pointer; border-radius: 6px;
-  background: var(--az-accent); color: #fff; border: none;
-}
-.rcx-compute:disabled { opacity: .55; cursor: default; }
-
-.rcx-table { border-collapse: collapse; margin: 4px 0 8px; }
-.rcx-table th {
-  font-size: 12px; font-weight: 600; color: var(--az-text-sub);
-  padding: 4px 14px; text-align: center;
-}
-.rcx-rot { color: var(--az-text-mute); font-weight: 400; margin-left: 4px; }
-.rcx-cell {
-  padding: 8px 14px; text-align: center; min-width: 44px;
-  border: 1px solid var(--az-border); cursor: pointer;
-  font-variant-numeric: tabular-nums; font-size: 14px; color: var(--az-text);
-}
-.rcx-cell[data-empty="true"] { cursor: default; color: var(--az-text-mute); }
-.rcx-cell:hover:not([data-empty="true"]) { background: var(--az-accent-soft); }
-.rcx-cell.is-sel { background: var(--az-accent); color: #fff; border-color: var(--az-accent); }
-
-.rcx-sols { margin-top: 8px; }
-.rcx-sols-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
-.rcx-sols-face { color: var(--az-text-sub); font-size: 13px; }
-.rcx-combo { color: var(--az-text-mute); font-size: 12px; }
-.rcx-len { margin-left: auto; color: var(--az-accent); font-weight: 600; font-size: 13px; }
-.rcx-sols-count { color: var(--az-text-mute); font-size: 12px; margin-bottom: 6px; }
-.rcx-sols-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
-.rcx-sol-row { display: flex; align-items: center; gap: 10px; }
-.rcx-sol-row code {
-  font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px; color: var(--az-text);
-}
-.rcx-sol-len {
-  color: var(--az-text-mute); font-size: 11px; font-variant-numeric: tabular-nums;
-  min-width: 18px; text-align: right;
-}
-.rcx-sol-copy {
-  background: none; border: none; cursor: pointer; color: var(--az-text-mute);
-  display: inline-flex; align-items: center; padding: 2px;
-}
-.rcx-sol-copy:hover { color: var(--az-accent); }
-
-@media (max-width: 480px) {
-  .rcx-table { width: 100%; display: block; overflow-x: auto; }
-  .rcx-controls { gap: 10px; }
-  .rcx-control select { min-width: 120px; }
+/* ── PRIMARY: 逐阶段最优解 (StageSolver) ── */
+.analyze-primary {
+  margin-bottom: 1.5rem;
 }
 
-.rcx-dot { color: var(--az-text-mute); font-size: 16px; line-height: 1; }
-.rcx-cell[data-empty="true"] { color: var(--az-text-mute); }
-.rcx-hint { color: var(--az-text-mute); font-size: 12px; margin: 2px 0 8px; }
+.analyze-primary-title {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--az-text);
+}
 
-.rcx-cell { line-height: 1.15; }
-.rcx-cell-n { display: block; }
-.rcx-cell-ms { display: block; font-size: 10px; color: var(--az-text-mute); font-variant-numeric: tabular-nums; }
-.rcx-cell.is-sel .rcx-cell-ms { color: color-mix(in srgb, #fff 75%, transparent); }
-.rcx-meta { font-size: 11px; color: var(--az-text-mute); margin: 4px 0 8px; }
-.rcx-compute-all { background: none; color: var(--az-accent); border: 1px solid var(--az-border-strong); }
-.rcx-sols-ms { color: var(--az-text-mute); font-weight: 400; }
+.analyze-primary-sub {
+  margin: 0 0 0.85rem 0;
+  color: var(--az-text-sub);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ── SECONDARY: 全 CFOP 解法枚举(默认折叠) ── */
+.analyze-cfop {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--az-border);
+  padding-top: 1rem;
+}
+
+.analyze-cfop > summary {
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--az-text-sub);
+  padding: 0.25rem 0;
+  list-style: none;
+  user-select: none;
+}
+
+.analyze-cfop > summary::-webkit-details-marker {
+  display: none;
+}
+
+.analyze-cfop > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.45rem;
+  color: var(--az-text-mute);
+  transition: transform 120ms;
+}
+
+.analyze-cfop[open] > summary {
+  margin-bottom: 0.85rem;
+}
+
+.analyze-cfop[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.analyze-cfop > summary:hover {
+  color: var(--az-accent);
+}

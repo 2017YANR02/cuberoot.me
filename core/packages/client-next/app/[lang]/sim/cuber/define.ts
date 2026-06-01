@@ -6,14 +6,10 @@ export const FACE = {
 } as const;
 export type FACE = 0 | 1 | 2 | 3 | 4 | 5;
 
-// 标准 WCA 配色 (与 @cuberoot/visualcube ColorCode 对齐)
+// 标准 WCA 6 面色取自全站单一来源 lib/cube-colors;Core/Gray/High 是 sim 专属。
+import { CUBE_FILL } from "@/lib/cube-colors";
 export const COLORS: { [key: string]: string } = {
-  R: "#EE0000",
-  L: "#FFA100",
-  U: "#FFFFFF",
-  D: "#FEFE00",
-  F: "#00D800",
-  B: "#0000F2",
+  ...CUBE_FILL,
   Core: "#202020",
   Gray: "#808080",
   High: "#FF0080",

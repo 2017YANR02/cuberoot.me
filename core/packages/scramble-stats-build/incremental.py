@@ -18,6 +18,7 @@ WCA 打乱增量取数 (Phase 1)
 
 用法 (--data-dir 指向数据根, 或设 $SCRAMBLE_DATA_DIR; 编排器 update_cross_stats.ps1 自动传):
   uv run python incremental.py --data-dir DIR                    # 正常: 下载最新 export
+  uv run python incremental.py --data-dir DIR --use-cached       # 不联网: 用 cache/ 最新 export zip
   uv run python incremental.py --data-dir DIR --dry-run          # 只读: 算新增数, 不刷 competitions.tsv (master)
   uv run python incremental.py --data-dir DIR --export-zip X.zip # 用已下好的 zip
   uv run python incremental.py --data-dir DIR --tsv-dir DIR2     # 用已解压的 TSV 目录
@@ -27,9 +28,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import glob
 import io
 import json
 import os
+import re
 import sys
 import urllib.request
 import zipfile
@@ -117,6 +120,27 @@ def refresh_competitions(src_tsv: str, dest_tsv: str) -> None:
     print(f"  competitions.tsv 刷新 {n} 行 -> {dest_tsv}")
 
 
+def _download_with_progress(url: str, dest: str) -> None:
+    """流式下载 + 每 5% 打一行进度 (urlretrieve 无进度, 344MB 静默太久, 像卡死)。"""
+    with urllib.request.urlopen(url) as resp:
+        total = int(resp.headers.get("Content-Length") or 0)
+        done = 0
+        step = total // 20 if total else 0  # 每 5%
+        next_mark = step
+        with open(dest, "wb") as out:
+            while True:
+                chunk = resp.read(1 << 20)  # 1 MB
+                if not chunk:
+                    break
+                out.write(chunk)
+                done += len(chunk)
+                if total and done >= next_mark:
+                    print(f"    {done/1e6:.0f}/{total/1e6:.0f} MB ({done*100//total}%)", flush=True)
+                    next_mark += step
+        if not total:
+            print(f"    {done/1e6:.0f} MB (无 Content-Length)", flush=True)
+
+
 def fetch_export(args) -> tuple[str, dict]:
     """返回 (tsv_dir 含 Scrambles.tsv/Competitions.tsv, meta)。"""
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -126,6 +150,16 @@ def fetch_export(args) -> tuple[str, dict]:
 
     zip_path = args.export_zip
     meta: dict = {"source": "manual-zip", "export_date": "manual"}
+    if not zip_path and getattr(args, "use_cached", False):
+        # 用本地 cache/ 最新 export, 完全不联网。export_date 从文件名还原, 保住稳定 stamp。
+        cands = sorted(c for c in glob.glob(os.path.join(CACHE_DIR, "WCA_export_*.tsv.zip"))
+                       if zipfile.is_zipfile(c))
+        if not cands:
+            raise SystemExit("--use-cached 但 cache/ 无合法 export zip; 先正常下载一次")
+        zip_path = cands[-1]
+        m = re.search(r"WCA_export_(\d{4}-\d{2}-\d{2})", os.path.basename(zip_path))
+        meta = {"source": "cached", "export_date": m.group(1) if m else "cached"}
+        print(f"  用本地缓存 {zip_path} ({os.path.getsize(zip_path)/1e6:.0f} MB), export_date={meta['export_date']}, 不联网")
     if not zip_path:
         print(f"拉取 export 元数据 {EXPORT_META_URL}")
         with urllib.request.urlopen(EXPORT_META_URL) as r:
@@ -142,8 +176,8 @@ def fetch_export(args) -> tuple[str, dict]:
         else:
             if os.path.exists(zip_path):
                 print(f"  缓存残缺 (非合法 zip), 重新下载")
-            print(f"  下载 {url} -> {zip_path}")
-            urllib.request.urlretrieve(url, zip_path)
+            print(f"  下载 {url} -> {zip_path}", flush=True)
+            _download_with_progress(url, zip_path)
             if not zipfile.is_zipfile(zip_path):
                 raise SystemExit(f"下载的 export 不是合法 zip: {zip_path}")
             print(f"  下好 {os.path.getsize(zip_path)/1e6:.0f} MB")
@@ -161,12 +195,24 @@ def fetch_export(args) -> tuple[str, dict]:
 
 
 def _extract_to(z: zipfile.ZipFile, member: str, dest: str) -> None:
+    try:
+        total = z.getinfo(member).file_size
+    except KeyError:
+        total = 0
+    done = 0
+    step = 1 << 27  # 每 128 MB 报一次 (大 TSV 解压几十秒, 别静默)
+    next_mark = step
     with z.open(member) as src, open(dest, "wb") as dst:
         while True:
             chunk = src.read(1 << 20)
             if not chunk:
                 break
             dst.write(chunk)
+            done += len(chunk)
+            if done >= next_mark:
+                tail = f"/{total/1e6:.0f} MB" if total else " MB"
+                print(f"    解压 {os.path.basename(dest)} {done/1e6:.0f}{tail}", flush=True)
+                next_mark += step
     print(f"  解出 {member} -> {os.path.basename(dest)}")
 
 
@@ -213,7 +259,11 @@ def iter_source_rows(tsv_dir: str, args):
         missing = [c for c in ("id", "scramble", "event_id") if c not in cm]
         if missing:
             raise SystemExit(f"Scrambles.tsv 缺关键列 {missing}; 表头={header}")
+        seen = 0
         for row in rd:
+            seen += 1
+            if seen % 2_000_000 == 0:
+                print(f"  扫描 Scrambles.tsv {seen // 1_000_000}M 行 ...", file=sys.stderr, flush=True)
             ev = row[cm["event_id"]] if cm["event_id"] < len(row) else ""
             if ev not in EVENTS_333:
                 continue
@@ -243,6 +293,8 @@ def main() -> int:
     ap.add_argument("--export-zip")
     ap.add_argument("--tsv-dir")
     ap.add_argument("--source-csv")
+    ap.add_argument("--use-cached", action="store_true",
+                    help="用本地 cache/ 最新 export zip, 不联网/不查官方元数据 (export_date 从文件名还原)")
     ap.add_argument("--dry-run", action="store_true",
                     help="只读: 下载+算新增数, 不覆写 competitions.tsv (master)")
     ap.add_argument("--min-scramble-id", type=int, default=None,
