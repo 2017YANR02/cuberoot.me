@@ -16,7 +16,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle, Dices } from 'lucide-react';
-import { solveCross } from '@/lib/cross-solver';
+import { solveCross, normalizeScramble } from '@/lib/cross-solver';
 import {
   Analyzer,
   CROSS_COLORS,
@@ -265,6 +265,9 @@ function AnalyzePageInner() {
     if (running) return;
     const trimmed = scramble.trim();
     if (!trimmed) return;
+    // Re-orient wide moves / rotations (e.g. 3BLD's Rw2 suffix) back to white-top/
+    // green-front so the HTM-only analyzer reads the right cube; pure HTM is unchanged.
+    const analyzed = normalizeScramble(trimmed) ?? trimmed;
     setRunning(true);
     setErrorMsg(null);
     setSolutions([]);
@@ -272,14 +275,14 @@ function AnalyzePageInner() {
     setPairsCovered(0);
     setLlCovered(0);
     setOpenIdx(new Set());
-    setAnalyzedScramble(trimmed);
+    setAnalyzedScramble(analyzed);
     setFilter('all');
     setElapsedMs(null);
     setXcrossFallback(false);
     setVariantUnsupported(false);
     startTimeRef.current = performance.now();
     analyzerRef.current.start(
-      { scramble: trimmed, crosscolors: colors, howfar, variant, stage },
+      { scramble: analyzed, crosscolors: colors, howfar, variant, stage },
       {
         onProgress: (p) => {
           if (p.totalnumcross !== undefined) setCrossesCovered(p.totalnumcross);
