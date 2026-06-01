@@ -11,7 +11,7 @@
  *   - centis 为 null / DNF -> 不渲染.
  *   - eventId 无 WCA 对应(relay/training/custom)-> 不渲染.
  *   - fetch 失败 / 离线 -> 不渲染.绝不抛错、绝不挡渲染.
- *   - saturated(成绩太慢、服务器扫描截断)-> 渲染 "世界 #N+".
+ *   - 点开展开一行:比 ~X% 的同项目同类型成绩更快(X 由 rank/total 算).
  *   - loading -> 低调占位(不闪).
  *
  * Token-only:背景 var(--accent-soft),文字 var(--accent);顶级(世界前 100)用
@@ -107,8 +107,8 @@ export default function RankBadge({
     );
   }
 
-  const { rank, saturated } = result;
-  const topTier = !saturated && rank <= TOP_TIER;
+  const { rank, total } = result;
+  const topTier = rank <= TOP_TIER;
   const rankStr = rank.toLocaleString('en-US');
   const Icon = topTier ? Trophy : Globe;
   const color = topTier ? 'var(--signal-success)' : 'var(--accent)';
@@ -121,22 +121,24 @@ export default function RankBadge({
       ? 'average'
       : 'single';
 
-  const label = saturated
-    ? isZh
-      ? `世界 #${rankStr}+`
-      : `World #${rankStr}+`
-    : isZh
-      ? `世界 #${rankStr}`
-      : `World #${rankStr}`;
+  // 百分位:比 X% 的上榜成绩更快 = (1 - rank/total).clamp 到 [0, 99.9],>99 时保留 1 位小数.
+  let pct: number | null = null;
+  if (total > 0) {
+    const raw = (1 - rank / total) * 100;
+    pct = Math.max(0, Math.min(99.9, raw));
+  }
+  const pctStr = pct == null ? '' : pct > 99 ? pct.toFixed(1) : String(Math.round(pct));
 
-  // 展开说明:对成绩做诚实标注 —— 这是「放进 WCA 比赛历史成绩里」的名次,不是实时官方排名.
-  const detail = saturated
+  const label = isZh ? `世界 #${rankStr}` : `World #${rankStr}`;
+
+  // 展开说明:百分位 —— 「放进 WCA 比赛历史成绩里」更快过多少人,非实时官方排名.
+  const detail = pct == null
     ? isZh
-      ? `排在 WCA ${eventName}${typeWord}第 ${rankStr} 名开外(历史比赛成绩,非实时官方排名)`
-      : `Beyond #${rankStr} among WCA ${eventName} ${typeWord}s (historical competition results, not a live official rank)`
-    : isZh
       ? `历史上排在 WCA ${eventName}${typeWord}第 ${rankStr} 名(对比 WCA 比赛成绩,非实时官方排名)`
-      : `Ranks #${rankStr} among all WCA ${eventName} ${typeWord}s (vs WCA competition results, not a live official rank)`;
+      : `Ranks #${rankStr} among all WCA ${eventName} ${typeWord}s (vs WCA competition results, not a live official rank)`
+    : isZh
+      ? `比 ~${pctStr}% 的 WCA ${eventName}${typeWord}更快(对比历史比赛成绩,非实时官方排名)`
+      : `faster than ~${pctStr}% of WCA ${eventName} ${typeWord}s (vs historical competition results, not a live official rank)`;
 
   return (
     <span
