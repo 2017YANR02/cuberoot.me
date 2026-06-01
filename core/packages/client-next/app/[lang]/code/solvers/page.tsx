@@ -119,7 +119,8 @@ function fmtBytes(b: number): string {
   return b + ' B';
 }
 function tblTotal(t: SolverTbls): number {
-  const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + x.b * (x.cnt ?? 1), 0);
+  // cond 表(对角剪枝, 各 ~10GB)可选 / 可跳过, 不计入头部总和。
+  const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + (x.cond ? 0 : x.b * (x.cnt ?? 1)), 0);
   return sum(t.move) + sum(t.prune);
 }
 
@@ -336,8 +337,8 @@ export default function SolversPage() {
                     )}
                     {(zh ? t.builtZh : t.builtEn) && <p className="solv-tbl-built">{zh ? t.builtZh : t.builtEn}</p>}
                     {hasCond && <p className="solv-tbl-note">{zh
-                      ? `† 对角剪枝表 (10.2GB), 仅默认全模式载入; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (省 ~10GB, 略损剪枝)。`
-                      : `† diagonal prune table (10.2GB), loaded only in full mode; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (saves ~10GB, weaker pruning).`}</p>}
+                      ? `† 对角剪枝表 (10.2GB) 可选, 未计入上方总和; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (略损剪枝)。`
+                      : `† diagonal prune table (10.2GB), optional, excluded from the total above; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (weaker pruning).`}</p>}
                   </div>
                 </details>
               );
