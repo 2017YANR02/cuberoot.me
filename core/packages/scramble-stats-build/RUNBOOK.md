@@ -20,7 +20,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 | `-SourceCsv <path>` | 用本地 `input` 形状 csv 当源替代下载(测试) |
 | `-NoPublish` | 跑完只更新本地 std.csv + JSON,不 commit/push/scp(想先 review) |
 | `-SkipSolve` | 调试:跳过 incremental + std 解算,复用上次取数/solver 产出(`new_no_wide_move.txt` + `_std.csv`),直接走追加/变体/发布。需上一次正常 run 留下的产物 |
-| `-Variants <list>` | 跟 std 锁步补缺的变体,默认 `eo,pseudo,pseudo_pair`;`@()`=只 std。**pair / f2leo / pseudo_f2leo 不在默认**:pair ~2/s 太慢(全量补 ~165h);f2leo/pseudo_f2leo 是小表分析器(不碰 huge 表),要显式 `-Variants pair` 或 `-Variants f2leo,pseudo_f2leo`(首跑全量回填) |
+| `-Variants <list>` | 跟 std 锁步补缺的变体,默认 `eo,pseudo,pseudo_pair`;`@()`=只 std。**pair / f2leo / pseudo_f2leo 不在默认**:pair ~2/s 太慢(全量补 ~165h);f2leo/pseudo_f2leo 现走大表快路径(真实打乱实测 f2leo 用 huge 联合表 ~31/s、pseudo_f2leo 用 huge 电池 ~81/s,均需 CUBE_ALLOW_HUGE_TABLES=1 已默认设;首跑全量回填),要显式 `-Variants pair` 或 `-Variants f2leo,pseudo_f2leo` |
 | `-ChunkSize <n>` | 变体补缺分块大小(显式则覆盖每变体默认 `$VARIANT_CHUNK`:eo/pair=2000、其余 20000):逐块校验+追加,中断只丢当前块、下次自动续 |
 | `-MaxChunks <n>` | **每个变体最多跑 N 块就停**,之后照常重算 + 发布(还差的下次 run 自动续);`0`=补满(默认)。用于"只跑一两块"而无需人工中途 kill。例:`-Variants eo -MaxChunks 1` = 跑一块 eo(2000≈40min)→ 发布 |
 
@@ -46,7 +46,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 
 ## 数据(全 gitignore 在 `D:\cube\scramble\wca_scramble\`)
 
-`stats/{std,eo,pseudo,pseudo_pair,pair,f2leo,pseudo_f2leo}.csv`(各变体统计,表头统一 `id`+`_z0/_z2/_z3/_z1/_x3/_x1`;f2leo/pseudo_f2leo 系小表分析器产出,只 4 阶段无 xxxxcross,不碰 huge 表) `wca_scrambles_no_wide_move.txt`(打乱文本=变体补缺基准) `input/wca_scrambles_split_mbf.csv`(元数据) `competitions.tsv`(比赛名/日期) `incremental/`(每次的中间产物 + 变体补缺的 `sync_*.txt`/`sync_*_*.csv`)。
+`stats/{std,eo,pseudo,pseudo_pair,pair,f2leo,pseudo_f2leo}.csv`(各变体统计,表头统一 `id`+`_z0/_z2/_z3/_z1/_x3/_x1`;f2leo/pseudo_f2leo 只 4 阶段无 xxxxcross,大表快路径产出) `wca_scrambles_no_wide_move.txt`(打乱文本=变体补缺基准) `input/wca_scrambles_split_mbf.csv`(元数据) `competitions.tsv`(比赛名/日期) `incremental/`(每次的中间产物 + 变体补缺的 `sync_*.txt`/`sync_*_*.csv`)。
 
 ## 排错
 

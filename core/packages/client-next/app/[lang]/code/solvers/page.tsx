@@ -23,8 +23,8 @@ interface NativeSolver {
   key: string;
   stages: number;
   fbRows: number; // 回退行数 (fetch 失败时用)
-  rate: number; // tasks/sec, native, 16 核 (curated, 2026-05-30 实测)
-  tier: 'huge' | 'small';
+  rate: number; // tasks/sec, native, 16 核 (curated, 2026-05-30 实测; f2leo 系 2026-05-31)
+  tier: 'huge' | 'mid' | 'small';
   zhWhy: string; enWhy: string;
 }
 
@@ -35,8 +35,8 @@ const NATIVE: NativeSolver[] = [
   { key: 'pseudo', stages: 4, fbRows: 1_289_663, rate: 390, tier: 'huge', zhWhy: '槽解耦 + 强剪枝, 最快', enWhy: 'slot-decoupled + strong pruning, fastest' },
   { key: 'pseudo_pair', stages: 4, fbRows: 1_289_663, rate: 47, tier: 'huge', zhWhy: '角槽棱槽耦合, 搜索较重', enWhy: 'corner/edge slot coupling, heavier search' },
   { key: 'pair', stages: 4, fbRows: 112_841, rate: 2, tier: 'huge', zhWhy: '不在默认补缺, 全量回填 ~165h', enWhy: 'off the default run, full backfill ~165h' },
-  { key: 'f2leo', stages: 4, fbRows: 252, rate: 7.4, tier: 'small', zhWhy: '深阶段弱剪枝, 不碰 huge 表; 仅 2 场种子', enWhy: 'weak deep-stage pruning, no huge tables; 2 seed comps only' },
-  { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 7.4, tier: 'small', zhWhy: '同 f2leo, 仅 2 场种子', enWhy: 'same as f2leo, 2 seed comps only' },
+  { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: '联合大表剪枝 (同 std huge 表) + 自由棱 EO 门控, 4 阶段无 xxxxcross', enWhy: 'joint big-table pruning (same huge tables as std) + free-edge EO gating, 4 stages no xxxxcross' },
+  { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: 'pseudo 大表电池 (C4E + corner2/3 + edge2/3) max + 自由棱 EO, 4 阶段无 xxxxcross', enWhy: 'pseudo big-table battery (C4E + corner2/3 + edge2/3) max + free-edge EO, 4 stages no xxxxcross' },
 ];
 
 interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLatency: string; enLatency: string; }
@@ -96,16 +96,19 @@ const TABLES: Record<string, SolverTbls> = {
       { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
   },
   f2leo: {
-    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }],
-    prune: [{ n: 'pt_cross', b: 139408 }],
-    builtZh: '另现场 BFS 建 4 个单槽 XCross 剪枝表 (~18MB, 内存, 不落盘)',
-    builtEn: 'plus 4 per-slot XCross prune tables built in-RAM via BFS (~18MB, not on disk)',
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
+    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
+    builtZh: 'cross 阶段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 复用 std 的 pair huge 表 + 叶子门控自由 F2L 棱 EO',
+    builtEn: 'cross via pt_cross; xcross via pt_cross_C4E0; xxcross/xxxcross reuse std pair huge tables + leaf EO gating on free F2L edges',
   },
   pseudo_f2leo: {
-    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }],
-    prune: [],
-    builtZh: '另现场建 pscross 剪枝 (~272KB) + 4 个单槽 psXCross 剪枝 (~18MB), 全在内存不落盘',
-    builtEn: 'plus pscross prune (~272KB) + 4 per-slot psXCross prune (~18MB) built in-RAM, none on disk',
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
+    prune: [{ n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
+      { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
+      { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
+      { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+    builtZh: 'combo 启发式 = max(每对 C4E, 角组 corner2/3, 棱组 edge2/3) + 叶子门控自由棱 EO;另现场建 pscross 剪枝 (~272KB, 内存) 供 cross 阶段',
+    builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage',
   },
 };
 
@@ -278,17 +281,10 @@ export default function SolversPage() {
           <div className="solv-mem">
             <article className="solv-mem-card">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> huge</div>
-              <div className="solv-mem-list">std / eo / pseudo / pseudo_pair / pair</div>
+              <div className="solv-mem-list">std / eo / pseudo / pseudo_pair / pair / f2leo / pseudo_f2leo</div>
               <p>{zh
-                ? 'mmap GB 级联合剪枝表 (CEE/CCE/C4C5C6 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。'
-                : 'GB-scale joint prune tables (CEE/CCE/C4C5C6) via mmap. eo peaks ~24GB working set but only ~0.1GB private — tables are read-only shared mmap.'}</p>
-            </article>
-            <article className="solv-mem-card">
-              <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> small</div>
-              <div className="solv-mem-list">f2leo / pseudo_f2leo</div>
-              <p>{zh
-                ? '~40MB: mt_edge2/4 + corn + edge + pt_cross + 现场 BFS 建 xcross 剪枝。不碰 huge 表, 因此深阶段慢。'
-                : '~40MB: mt_edge2/4 + corn + edge + pt_cross + on-the-fly BFS xcross pruning. No huge tables, so deep stages are slow.'}</p>
+                ? 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。'
+                : 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating.'}</p>
             </article>
             <article className="solv-mem-card solv-mem-wide">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> {zh ? '并行' : 'parallelism'}</div>
