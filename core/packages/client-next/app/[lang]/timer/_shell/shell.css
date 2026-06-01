@@ -1,0 +1,1015 @@
+/* ============================================================
+   Timer shell (Phase 1) — dctimer-inspired clean layout.
+   Token-only (no hardcoded hex). No card-framing boxes; layering
+   via margin/gap + hairline color-mix dividers. Dual-theme: tokens
+   auto-flip light/dark. lucide icons only, no emoji.
+   ============================================================ */
+
+:root {
+  /* hairline divider used across the shell */
+  --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --shell-chip: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.timer-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+
+/* ── Topbar ─────────────────────────────────────────────── */
+.shell-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+  min-height: 48px;
+  border-bottom: 1px solid var(--shell-divider);
+}
+.shell-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.shell-topbar-rank {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+.shell-rank-idle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--faint-foreground);
+  letter-spacing: 0.02em;
+}
+.shell-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shell-toggles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Mode pill — green-active segmented control (project convention). */
+.shell-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--shell-chip);
+  border: 1px solid var(--shell-divider);
+}
+.shell-mode-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.shell-mode-opt:hover { color: var(--foreground); }
+.shell-mode-opt.active {
+  background: var(--signal-success);
+  color: var(--accent-foreground);
+}
+
+/* Event pill + popover */
+.shell-event-pick { position: relative; }
+.shell-event-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 999px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms;
+}
+.shell-event-btn:hover { background: var(--shell-hover); }
+.shell-event-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.shell-event-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 41;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
+  max-width: min(92vw, 560px);
+}
+
+/* ── Main column ────────────────────────────────────────── */
+.shell-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+/* The timing surface fills the available space; press target. */
+.timing-surface {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 16px;
+  touch-action: none;            /* kill 300ms delay + double-fire */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+.timing-surface-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  /* digits optically above true-center */
+  transform: translateY(-4%);
+}
+.timing-surface .timer-display {
+  font-family: var(--font-mono);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--timer-idle);
+  font-variant-numeric: tabular-nums;
+  transition: color 120ms;
+}
+.timing-surface .timer-display.holding         { color: var(--timer-holding); }
+.timing-surface .timer-display.ready           { color: var(--timer-ready); }
+.timing-surface .timer-display.running         { color: var(--timer-running); }
+.timing-surface .timer-display.dnf             { color: var(--muted-foreground); }
+.timing-surface .timer-display.inspection         { color: var(--accent); }
+.timing-surface .timer-display.inspection-warn-8  { color: var(--timer-warn8); }
+.timing-surface .timer-display.inspection-warn-12 { color: var(--timer-warn12); }
+.timing-surface .timer-display.inspection-plus2   { color: var(--timer-plus2); }
+.timing-surface .timer-display.inspection-dnf     { color: var(--timer-dnf); }
+
+/* Scramble slot (top, centered) */
+.timing-surface-scramble {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(94%, 900px);
+  display: flex;
+  justify-content: center;
+}
+.timing-surface-scramble .scramble-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: clamp(13px, 2.2vw, 18px);
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  text-align: center;
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+.timing-surface-scramble .scramble-strip:hover { color: var(--foreground); }
+.timing-surface-scramble .scramble-strip.compact { font-size: clamp(12px, 1.8vw, 15px); }
+.timing-surface-scramble .scramble-text { word-break: break-word; }
+.timing-surface-scramble .scramble-empty { color: var(--faint-foreground); }
+.scramble-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  flex: none;
+  transition: background 120ms, color 120ms;
+}
+.scramble-refresh:hover { background: var(--shell-hover); color: var(--foreground); }
+
+/* Corner net (top-right) */
+.timing-surface-corner {
+  position: absolute;
+  top: 56px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  z-index: 2;
+}
+.shell-corner-net { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.shell-corner-net .cube-preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 8px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.shell-corner-net .cube-preview-toggle:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-corner-net .cube-preview-toggle svg { display: block; }
+.shell-corner-net-img {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.shell-corner-net-img svg { display: block; max-width: 26vw; height: auto; max-height: 16dvh; }
+
+/* Idle hint / inspection hint */
+.timing-surface .timer-hint {
+  font-size: 14px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.timing-surface .timer-hint code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--shell-chip);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.timing-surface .inspection-illegal-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  font-size: 12px;
+}
+
+/* Stage splits + bld chips */
+.timing-surface .timer-stage-splits {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.timing-surface .stage-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+.timing-surface .stage-chip.done { color: var(--signal-success); }
+.timing-surface .stage-chip-action {
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+/* Target indicator */
+.timing-surface .timer-target-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.timing-surface .timer-target-indicator.overshot { color: var(--destructive); }
+
+/* Stopped row: quick actions + rank badge */
+.shell-stopped-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: shell-fade-up 200ms ease;
+}
+.shell-rank-slot { display: flex; justify-content: center; min-height: 24px; }
+@keyframes shell-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.timing-surface .timer-quick-actions {
+  /* Override legacy timer.css `.timer-quick-actions { position:absolute; bottom:16px }`
+     which pulled this row out of flow and floated it over the digits on short
+     viewports. In the redesigned shell it must flow inside .shell-stopped-row,
+     always below the digits with the column gap. */
+  position: static;
+  bottom: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.timing-surface .qa-btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.timing-surface .qa-btn:hover { background: var(--shell-hover); }
+.timing-surface .qa-btn.active { border-color: var(--accent); color: var(--accent); }
+.timing-surface .qa-btn.danger:hover { border-color: var(--destructive); color: var(--destructive); }
+
+/* Target overshot / pulse on the digits */
+.timing-surface.target-overshot .timer-display.running { color: var(--destructive); }
+.timing-surface.target-pulse-good .timer-display { color: var(--signal-success); }
+.timing-surface.target-pulse-bad .timer-display  { color: var(--destructive); }
+
+/* ── Under-surface chrome (goal / subset / hints) ───────── */
+.shell-undersurface {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 6px 12px;
+}
+.shell-undersurface:empty { display: none; }
+.trainer-subset-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.trainer-subset-btn:hover { background: var(--shell-hover); }
+
+/* ── Stat rail (desktop 4-stat) / peek line (phone) ─────── */
+.shell-stat-rail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--shell-divider);
+}
+.shell-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+}
+.shell-stat-lbl { font-size: 11px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.04em; }
+.shell-stat-val { font-size: 16px; color: var(--foreground); }
+
+.shell-swipe-hint {
+  padding: 4px 12px 10px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--faint-foreground);
+}
+
+/* ── Distraction-free fade while running ────────────────── */
+.timer-shell.is-solving .surface-chrome {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.surface-chrome { transition: opacity 120ms ease; }
+/* keep the digits + their immediate sub-content visible while running */
+.timer-shell.is-solving .timing-surface .surface-chrome { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-chrome,
+  .timer-shell.is-solving .surface-chrome { transition: none; }
+  .shell-stopped-row { animation: none; }
+  .timer-display { transition: none; }
+}
+
+/* ── Bottom bar (Times / Chart / Tools) ─────────────────── */
+.shell-bottombar {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--shell-divider);
+  padding-bottom: env(safe-area-inset-bottom);
+  /* Solid surface so the bottom-right deskpet (z-index:40) cannot show
+     through the bar — the bar is lifted to z-index:41 below. */
+  background: var(--background);
+}
+.shell-bottombar-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 120ms, background 120ms;
+}
+.shell-bottombar-btn:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-bottombar-btn.active { color: var(--accent); }
+
+/* ── Side panel: phone sheet / desktop rail ─────────────── */
+.shell-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--foreground) 32%, transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.shell-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  color: var(--card-foreground);
+}
+.shell-panel--sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  max-height: 78dvh;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border-top: 1px solid var(--border-default);
+  box-shadow: 0 -8px 28px color-mix(in srgb, var(--foreground) 20%, transparent);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: shell-sheet-up 200ms ease;
+}
+@keyframes shell-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.shell-panel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--shell-divider);
+}
+.shell-panel-tab {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.shell-panel-tab:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-panel-tab.active { background: var(--accent-soft); color: var(--accent); }
+.shell-panel-close {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.shell-panel-close:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px 18px;
+}
+
+/* Tools tab list */
+.shell-tools-list { display: flex; flex-direction: column; gap: 2px; }
+.shell-tools-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.shell-tools-item:hover { background: var(--shell-hover); }
+.shell-tools-item:disabled { opacity: 0.4; cursor: default; }
+.shell-tools-item.danger { color: var(--destructive); }
+.shell-tools-icon { display: inline-flex; color: var(--muted-foreground); }
+.shell-tools-item.danger .shell-tools-icon { color: var(--destructive); }
+
+/* ── Session switcher (top of Times tab) ────────────────── */
+.session-switcher { position: relative; margin-bottom: 10px; }
+.session-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 10px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.session-trigger:hover { background: var(--shell-hover); }
+.session-trigger-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-trigger-caret { color: var(--muted-foreground); flex: none; }
+.session-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border-radius: 12px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
+  overflow: hidden;
+}
+.session-menu-list { max-height: 280px; overflow-y: auto; padding: 4px; }
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  padding: 2px;
+}
+.session-item.active { background: var(--accent-soft); }
+.session-name-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.session-name-btn:hover { background: var(--shell-hover); }
+.session-item.active .session-name-btn { color: var(--accent); }
+.session-check { color: var(--accent); flex: none; }
+.session-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-item-actions { display: flex; align-items: center; gap: 1px; flex: none; }
+.session-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.session-icon-btn:hover { background: var(--shell-hover); color: var(--foreground); }
+.session-icon-btn.danger:hover { color: var(--destructive); }
+.session-icon-btn.confirm { color: var(--signal-success); }
+.session-icon-btn:disabled { opacity: 0.35; cursor: default; }
+.session-icon-btn:disabled:hover { background: transparent; color: var(--muted-foreground); }
+.session-menu-footer { border-top: 1px solid var(--shell-divider); padding: 4px; }
+.session-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+}
+.session-add-btn:hover { background: var(--shell-hover); }
+.session-rename {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 2px;
+}
+.session-rename-input-wrap { position: relative; flex: 1; min-width: 0; }
+.session-rename-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 28px 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+  font-family: inherit;
+}
+.session-rename-input-wrap input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ── Time-list quick-action menu (right-click / long-press) ─ */
+.row-quick-menu {
+  position: fixed;
+  z-index: 90;
+  min-width: 180px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+.row-quick-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.row-quick-item:hover { background: var(--shell-hover); }
+.row-quick-item.active { color: var(--accent); }
+.row-quick-item.active::after { content: ''; }
+.row-quick-item.danger { color: var(--destructive); }
+.row-quick-item svg { flex: none; color: var(--muted-foreground); }
+.row-quick-item.active svg { color: var(--accent); }
+.row-quick-item.danger svg { color: var(--destructive); }
+.row-quick-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  flex: none;
+}
+.row-quick-item.active .row-quick-glyph { color: var(--accent); }
+.row-quick-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--shell-divider);
+}
+
+/* Mobile: bottom action-sheet variant. */
+.row-quick-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: color-mix(in srgb, var(--foreground) 32%, transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.row-quick-sheet {
+  width: 100%;
+  padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  background: var(--card);
+  color: var(--card-foreground);
+  border-top: 1px solid var(--border-default);
+  box-shadow: 0 -8px 28px color-mix(in srgb, var(--foreground) 20%, transparent);
+  animation: shell-sheet-up 200ms ease;
+}
+.row-quick-sheet-head {
+  padding: 12px 12px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--shell-divider);
+  margin-bottom: 4px;
+}
+.row-quick-sheet .row-quick-item { padding: 13px 12px; font-size: 15px; }
+.row-quick-sheet .row-quick-sep { margin: 4px 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .row-quick-sheet { animation: none; }
+}
+
+/* Chart tab */
+.shell-chart-tab { display: flex; flex-direction: column; gap: 12px; }
+.shell-chart-switch { display: flex; flex-wrap: wrap; gap: 6px; }
+.shell-chart-chip {
+  padding: 5px 12px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 999px;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  cursor: pointer;
+}
+.shell-chart-chip:hover { color: var(--foreground); }
+.shell-chart-chip.active { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.shell-chart-canvas { display: flex; justify-content: center; }
+.shell-panel-statgrid { margin-bottom: 8px; }
+
+/* ── Desktop dock (>=1024px): rail on the right ─────────── */
+@media (min-width: 1024px) {
+  .timer-shell {
+    display: grid;
+    grid-template-columns: 1fr 0;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "topbar  panel"
+      "main    panel"
+      "bottom  panel";
+    transition: grid-template-columns 160ms ease;
+  }
+  .timer-shell.panel-open { grid-template-columns: 1fr 360px; }
+  .shell-topbar { grid-area: topbar; }
+  .shell-main { grid-area: main; }
+  .shell-bottombar { grid-area: bottom; }
+  .shell-panel--rail {
+    grid-area: panel;
+    border-left: 1px solid var(--shell-divider);
+    background: var(--background);
+    overflow: hidden;
+  }
+  /* Bottom bar becomes a slim tab strip on desktop. */
+  .shell-bottombar { border-top: 1px solid var(--shell-divider); }
+  .shell-bottombar-btn { flex-direction: row; gap: 6px; padding: 10px; font-size: 13px; }
+  .shell-sheet-backdrop { display: none; }
+}
+
+/* ── Phone (<480px) ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
+  /* Icon-only mode pill on phone — keep a clean >=36px tap target with the
+     lucide Timer / Swords glyph centered; active stays green (locked above). */
+  .shell-mode-opt {
+    width: 38px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+  .shell-mode-opt span { display: none; }
+  .shell-mode-opt svg { width: 18px; height: 18px; }
+  .shell-event-btn { padding: 5px 10px; font-size: 12px; }
+  .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
+  .shell-stat-rail { gap: 14px; padding: 8px 10px 10px; flex-wrap: wrap; }
+  .shell-stat-val { font-size: 14px; }
+  .timing-surface-scramble { top: 8px; }
+  .timing-surface-corner { top: 48px; right: 10px; }
+}
+
+/* Hide the slim desktop-only Bluetooth status button label on small screens
+   handled by tb-btn rules in timer.css. */
+
+/* ── Misc shell-only widgets ────────────────────────────── */
+.shell-battle-notice {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  pointer-events: none;
+}
+.shell-info-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--foreground) 18%, transparent);
+  font-size: 13px;
+}
+.shell-info-toast button {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Enlarged cube net overlay */
+.shell-net-enlarge {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--foreground) 40%, transparent);
+}
+.shell-net-enlarge-inner {
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+}
+.shell-net-enlarge-inner svg { max-width: 84vw; height: auto; max-height: 70dvh; }
+
+/* Penalty action sheet (swipe-up) */
+.shell-penalty-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 62;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  background: var(--card);
+  border-top: 1px solid var(--border-default);
+  animation: shell-sheet-up 200ms ease;
+}
+.shell-penalty-sheet .qa-btn {
+  flex: 1;
+  min-width: 70px;
+  padding: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  font-size: 15px;
+  cursor: pointer;
+}
+.shell-penalty-sheet .qa-btn.active { border-color: var(--accent); color: var(--accent); }
+.shell-penalty-sheet .qa-btn.danger { color: var(--destructive); }
+@media (prefers-reduced-motion: reduce) {
+  .shell-panel--sheet, .shell-penalty-sheet { animation: none; }
+}
+
+/* tb-btn used in topbar — token-clean override (legacy timer.css has hex). */
+.shell-topbar .tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 8px;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.shell-topbar .tb-btn:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-topbar .tb-btn.connected { color: var(--signal-success); border-color: color-mix(in srgb, var(--signal-success) 40%, transparent); }
+
+/* ── Global-overlay coexistence (deskpet / auth avatar) ────────
+   Timer-scoped only — we do NOT touch the global DeskPet / WcaAuth
+   components. The deskpet is a fixed bottom-right pixel character at
+   z-index:40; the auth avatar is a fixed bottom-left global control.
+   Both can sit over the timer's own chrome, so we lift the timer
+   topbar / docked rail / bottom bar / bottom sheet above the deskpet
+   and give the bottom rows left-clearance for the avatar. */
+
+/* (a) Timer chrome must sit above the deskpet (z-index:40). The bottom
+   sheet / penalty sheet already use 60-62; the persistent chrome rows
+   default to auto (below 40), so raise them. */
+.timer-shell .shell-topbar { position: relative; z-index: 41; background: var(--background); }
+.timer-shell .shell-bottombar { position: relative; z-index: 41; }
+.timer-shell .shell-stat-rail { position: relative; z-index: 41; background: var(--background); }
+@media (min-width: 1024px) {
+  /* Docked right rail covers exactly where the deskpet rests. */
+  .timer-shell .shell-panel--rail { position: relative; z-index: 42; }
+}
+
+/* (b) Distraction-free: fade the deskpet out while a solve is running.
+   `.timer-shell.is-solving` is the shell-root toggle (set in SoloView
+   while phase === 'running' && !prefers-reduced-motion). :has() lets a
+   timer-scoped rule reach the body-level global overlay without editing
+   the deskpet component. */
+body:has(.timer-shell.is-solving) .clawd-deskpet {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 120ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  body:has(.timer-shell.is-solving) .clawd-deskpet { transition: none; }
+}
+
+/* (b2) Hide the deskpet whenever any timer sheet / action-sheet / dropdown menu
+   / modal overlay is open. The pet is a fixed bottom-right pixel character at
+   z-index:40; an open bottom-sheet / quick-action sheet sits in the same screen
+   corner, and on phones the pet can paint over the sheet's last row. Rather than
+   fight stacking contexts per-surface, we make the pet step aside while a
+   surface is up (it reappears on close). Same :has() approach as is-solving —
+   we never touch the global DeskPet component. Covers Solo (timer-shell sheets/
+   menus) AND Battle (battle-container overlays/sheets). */
+body:has(.timer-shell .shell-sheet-backdrop) .clawd-deskpet,
+body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
+body:has(.timer-shell .row-quick-sheet-backdrop) .clawd-deskpet,
+body:has(.timer-shell .row-quick-menu) .clawd-deskpet,
+body:has(.timer-shell .shell-net-enlarge) .clawd-deskpet,
+body:has(.timer-shell .shell-event-pop) .clawd-deskpet,
+body:has(.battle-container .settings-overlay.visible) .clawd-deskpet,
+body:has(.battle-container .history-overlay.visible) .clawd-deskpet,
+body:has(.battle-container .vs-history-panel) .clawd-deskpet,
+body:has(.battle-container .event-overlay) .clawd-deskpet,
+body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
+  /* hide the pet (not just fade) so it never intercepts taps on the sheet */
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: opacity 120ms ease;
+}
+
+/* (c) Bottom-left auth avatar clearance: keep the bottom stat line + swipe
+   hint clear of the ~56px bottom-left global avatar zone so the
+   "ao5 / best …" labels never sit under it. Symmetric padding so the
+   centered stats stay centered (no visual de-centering). The z-index lift
+   above already keeps the rows painting over the avatar; this just stops
+   the leftmost label from being physically hidden behind it. */
+.timer-shell .shell-stat-rail { padding-left: 60px; padding-right: 60px; }
+.timer-shell .shell-swipe-hint { padding-left: 60px; padding-right: 60px; }
+
+/* Fullscreen: hide chrome rows, keep just the surface. */
+.timer-shell.fullscreen .shell-topbar,
+.timer-shell.fullscreen .shell-bottombar,
+.timer-shell.fullscreen .shell-stat-rail,
+.timer-shell.fullscreen .shell-undersurface,
+.timer-shell.fullscreen .shell-swipe-hint {
+  display: none;
+}

@@ -16,8 +16,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useBattleStore, findBestAverage } from './engine/battle_store';
-import { formatTimePlain } from './engine/format_time';
-import { computeAo5, computeAverage, getEffectiveTimeFromEntry, isPBSingleAt } from './engine/stats';
+import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
+import { computeAo5, computeAverage, getEffectiveTimeFromEntry, isPBSingleAt } from '@/app/[lang]/timer/_shared/stats-core';
 import { PUZZLES } from './engine/constants';
 import type { SolveEntry } from './engine/types';
 
@@ -592,7 +592,7 @@ export function shareResultCard(history: SolveEntry[], puzzleId: string, locale:
   ctx.fillStyle = '#4a5568';
   ctx.font = '11px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('cuberoot.me/battle', 200, 480);
+  ctx.fillText('cuberoot.me/timer', 200, 480);
 
   // 下载或分享
   canvas.toBlob((blob) => {

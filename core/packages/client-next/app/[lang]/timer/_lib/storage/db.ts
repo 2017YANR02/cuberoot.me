@@ -1,54 +1,144 @@
 /**
- * localStorage-backed solve store. Solves are grouped per event (no session
- * concept). Round 1E will extend with cstimer-JSON / CSV / Speedstacks I/O —
- * see `import_export.ts` (sibling).
+ * localStorage-backed solve store.
  *
- * Schema versioned via `version` field so we can migrate later.
+ * v3 adds a SESSION layer on top of the v2 per-event model (cstimer / dctimer
+ * style named sessions). loadAll()/saveAll() still operate on the ACTIVE
+ * session so existing SoloView calls keep working; new listSessions() /
+ * setActiveSession() / createSession() / … manage the session set.
+ *
+ * Migration chain (loses no data):
+ *   v1 (sessions[] → flat byEvent) → v2 (byEvent) → v3 (single "default"
+ *   session holding the migrated byEvent, marked active).
+ *
+ * Schema versioned via `version` so we can migrate later.
  */
 
 import type { EventId, Solve } from '../types';
 import { getSettings } from '../settings';
 
-const KEY = 'cuberoot-timer.v2';
-const LEGACY_KEY = 'cuberoot-timer.v1';
+const KEY = 'cuberoot-timer.v3';
+const LEGACY_V2_KEY = 'cuberoot-timer.v2';
+const LEGACY_V1_KEY = 'cuberoot-timer.v1';
 const BACKUP_KEY_PREFIX = 'cuberoot-timer.backup.v1.';
 const BACKUP_KEEP = 10;
 
-interface DbShape {
+type ByEvent = Partial<Record<EventId, Solve[]>>;
+
+export interface SessionMeta {
+  id: string;
+  name: string;
+  createdTs: number;
+}
+
+interface DbShapeV3 {
+  version: 3;
+  sessions: SessionMeta[];
+  activeSessionId: string;
+  /** sessionId → (event id → solves, oldest → newest). */
+  dataBySession: Record<string, ByEvent>;
+}
+
+interface DbShapeV2 {
   version: 2;
-  /** event id → solves (oldest → newest). */
-  byEvent: Partial<Record<EventId, Solve[]>>;
+  byEvent: ByEvent;
 }
 
-function emptyDb(): DbShape {
-  return { version: 2, byEvent: {} };
+function genSessionId(): string {
+  return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-function loadRaw(): DbShape {
+function defaultSessionName(): string {
+  // Best-effort i18n at migration time (settings/i18n may not be loaded yet).
+  try {
+    if (typeof navigator !== 'undefined' && /^zh/i.test(navigator.language || '')) return '默认';
+  } catch { /* ignore */ }
+  return 'Default';
+}
+
+function emptyDb(): DbShapeV3 {
+  const id = genSessionId();
+  return {
+    version: 3,
+    sessions: [{ id, name: defaultSessionName(), createdTs: Date.now() }],
+    activeSessionId: id,
+    dataBySession: { [id]: {} },
+  };
+}
+
+/** Build a v3 db that wraps a single migrated byEvent into a default session. */
+function wrapByEventAsDefaultSession(byEvent: ByEvent): DbShapeV3 {
+  const id = genSessionId();
+  return {
+    version: 3,
+    sessions: [{ id, name: defaultSessionName(), createdTs: Date.now() }],
+    activeSessionId: id,
+    dataBySession: { [id]: byEvent },
+  };
+}
+
+/** v1 sessions[] → flat byEvent. */
+function v1ToByEvent(parsed: { sessions?: Array<{ event: EventId; solves: Solve[] }> }): ByEvent {
+  const byEvent: ByEvent = {};
+  for (const sess of parsed.sessions ?? []) {
+    if (!byEvent[sess.event]) byEvent[sess.event] = [];
+    byEvent[sess.event]!.push(...sess.solves);
+  }
+  for (const k of Object.keys(byEvent) as EventId[]) {
+    byEvent[k]!.sort((a, b) => a.ts - b.ts);
+  }
+  return byEvent;
+}
+
+function isValidV3(v: unknown): v is DbShapeV3 {
+  if (!v || typeof v !== 'object') return false;
+  const o = v as Partial<DbShapeV3>;
+  return (
+    o.version === 3 &&
+    Array.isArray(o.sessions) &&
+    o.sessions.length > 0 &&
+    typeof o.activeSessionId === 'string' &&
+    !!o.dataBySession &&
+    typeof o.dataBySession === 'object'
+  );
+}
+
+/** Repair invariants we depend on (active id exists, every session has data). */
+function normalizeV3(db: DbShapeV3): DbShapeV3 {
+  const sessions = db.sessions.length > 0
+    ? db.sessions
+    : [{ id: genSessionId(), name: defaultSessionName(), createdTs: Date.now() }];
+  const dataBySession = { ...db.dataBySession };
+  for (const s of sessions) {
+    if (!dataBySession[s.id] || typeof dataBySession[s.id] !== 'object') dataBySession[s.id] = {};
+  }
+  let activeSessionId = db.activeSessionId;
+  if (!sessions.some(s => s.id === activeSessionId)) activeSessionId = sessions[0].id;
+  return { version: 3, sessions, activeSessionId, dataBySession };
+}
+
+function loadRaw(): DbShapeV3 {
   try {
     const s = localStorage.getItem(KEY);
     if (s) {
-      const parsed = JSON.parse(s) as Partial<DbShape>;
+      const parsed = JSON.parse(s) as unknown;
+      if (isValidV3(parsed)) return normalizeV3(parsed);
+    }
+    // Migrate forward: v2 first, then v1.
+    const v2 = localStorage.getItem(LEGACY_V2_KEY);
+    if (v2) {
+      const parsed = JSON.parse(v2) as Partial<DbShapeV2>;
       if (parsed.version === 2 && parsed.byEvent && typeof parsed.byEvent === 'object') {
-        return { version: 2, byEvent: parsed.byEvent };
+        const migrated = wrapByEventAsDefaultSession(parsed.byEvent);
+        saveRaw(migrated);
+        return migrated;
       }
     }
-    // One-time migration from v1 (sessions[] → flat byEvent[]).
-    const v1 = localStorage.getItem(LEGACY_KEY);
+    const v1 = localStorage.getItem(LEGACY_V1_KEY);
     if (v1) {
       const parsed = JSON.parse(v1) as { version?: number; sessions?: Array<{ event: EventId; solves: Solve[] }> };
       if (parsed.version === 1 && Array.isArray(parsed.sessions)) {
-        const byEvent: DbShape['byEvent'] = {};
-        for (const sess of parsed.sessions) {
-          if (!byEvent[sess.event]) byEvent[sess.event] = [];
-          byEvent[sess.event]!.push(...sess.solves);
-        }
-        // Sort each event's solves chronologically.
-        for (const k of Object.keys(byEvent) as EventId[]) {
-          byEvent[k]!.sort((a, b) => a.ts - b.ts);
-        }
-        const migrated: DbShape = { version: 2, byEvent };
-        try { localStorage.setItem(KEY, JSON.stringify(migrated)); } catch { /* quota; tolerate */ }
+        const migrated = wrapByEventAsDefaultSession(v1ToByEvent(parsed));
+        saveRaw(migrated);
         return migrated;
       }
     }
@@ -58,7 +148,7 @@ function loadRaw(): DbShape {
   }
 }
 
-function saveRaw(db: DbShape): void {
+function saveRaw(db: DbShapeV3): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(db));
   } catch {
@@ -66,22 +156,92 @@ function saveRaw(db: DbShape): void {
   }
 }
 
-/* ---------- Public API ---------- */
+/** Read the active session's byEvent map (always an object). */
+function activeByEvent(db: DbShapeV3): ByEvent {
+  return db.dataBySession[db.activeSessionId] ?? {};
+}
+
+/* ---------- Public API: solves (active session) ---------- */
 
 export function loadAll(): Record<string, Solve[]> {
   const db = loadRaw();
-  return db.byEvent as Record<string, Solve[]>;
+  return activeByEvent(db) as Record<string, Solve[]>;
 }
 
 let _saveCounter = 0;
 
 export function saveAll(byEvent: Record<string, Solve[]>): void {
-  saveRaw({ version: 2, byEvent: byEvent as DbShape['byEvent'] });
+  const db = loadRaw();
+  db.dataBySession[db.activeSessionId] = byEvent as ByEvent;
+  saveRaw(db);
   _saveCounter++;
   const every = getSettings().autoBackupEvery | 0;
   if (every > 0 && _saveCounter % every === 0) {
     pushBackup();
   }
+}
+
+/* ---------- Public API: sessions ---------- */
+
+export function listSessions(): SessionMeta[] {
+  return loadRaw().sessions.slice();
+}
+
+export function getActiveSessionId(): string {
+  return loadRaw().activeSessionId;
+}
+
+export function setActiveSession(id: string): void {
+  const db = loadRaw();
+  if (!db.sessions.some(s => s.id === id)) return;
+  if (db.activeSessionId === id) return;
+  db.activeSessionId = id;
+  saveRaw(db);
+}
+
+/** Create a new (empty) session and return its id. Does NOT switch to it. */
+export function createSession(name: string): string {
+  const db = loadRaw();
+  const id = genSessionId();
+  const trimmed = name.trim();
+  db.sessions.push({ id, name: trimmed || defaultSessionName(), createdTs: Date.now() });
+  db.dataBySession[id] = {};
+  saveRaw(db);
+  return id;
+}
+
+export function renameSession(id: string, name: string): void {
+  const db = loadRaw();
+  const s = db.sessions.find(x => x.id === id);
+  if (!s) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  s.name = trimmed;
+  saveRaw(db);
+}
+
+/** Wipe a session's solves (keep the session). */
+export function clearSession(id: string): void {
+  const db = loadRaw();
+  if (!db.sessions.some(s => s.id === id)) return;
+  db.dataBySession[id] = {};
+  saveRaw(db);
+}
+
+/**
+ * Delete a session and its solves. Refuses to delete the last session.
+ * If the active session is deleted, falls back to the first remaining one.
+ * Returns the (possibly new) active session id, or null if refused.
+ */
+export function deleteSession(id: string): string | null {
+  const db = loadRaw();
+  if (db.sessions.length <= 1) return null;
+  if (!db.sessions.some(s => s.id === id)) return db.activeSessionId;
+  db.sessions = db.sessions.filter(s => s.id !== id);
+  delete db.dataBySession[id];
+  if (db.activeSessionId === id) db.activeSessionId = db.sessions[0].id;
+  saveRaw(db);
+  return db.activeSessionId;
 }
 
 /* ---------- Auto-backup ---------- */
@@ -144,34 +304,32 @@ export function newId(): string {
 }
 
 /**
- * JSON export — full DB contents as a downloadable string.
+ * JSON export — full DB contents as a downloadable string (v3, all sessions).
  */
 export function exportJson(): string {
   return JSON.stringify(loadRaw(), null, 2);
 }
 
 /**
- * Native JSON import — replaces contents. Returns true on success.
+ * Native JSON import — replaces contents. Accepts v3 (all sessions), v2
+ * (byEvent → wrapped into a default session), or v1 (sessions[] → byEvent →
+ * default session). Returns true on success.
  * For cstimer's export format, see `importCstimerJson` in `import_export.ts`.
  */
 export function importJson(json: string): boolean {
   try {
-    const parsed = JSON.parse(json);
-    if (parsed.version === 2 && parsed.byEvent && typeof parsed.byEvent === 'object') {
-      saveRaw({ version: 2, byEvent: parsed.byEvent });
+    const parsed = JSON.parse(json) as unknown;
+    if (isValidV3(parsed)) {
+      saveRaw(normalizeV3(parsed));
       return true;
     }
-    if (parsed.version === 1 && Array.isArray(parsed.sessions)) {
-      // Accept v1 format too (from older exports of this app).
-      const byEvent: DbShape['byEvent'] = {};
-      for (const sess of parsed.sessions as Array<{ event: EventId; solves: Solve[] }>) {
-        if (!byEvent[sess.event]) byEvent[sess.event] = [];
-        byEvent[sess.event]!.push(...sess.solves);
-      }
-      for (const k of Object.keys(byEvent) as EventId[]) {
-        byEvent[k]!.sort((a, b) => a.ts - b.ts);
-      }
-      saveRaw({ version: 2, byEvent });
+    const o = parsed as { version?: number; byEvent?: ByEvent; sessions?: Array<{ event: EventId; solves: Solve[] }> };
+    if (o.version === 2 && o.byEvent && typeof o.byEvent === 'object') {
+      saveRaw(wrapByEventAsDefaultSession(o.byEvent));
+      return true;
+    }
+    if (o.version === 1 && Array.isArray(o.sessions)) {
+      saveRaw(wrapByEventAsDefaultSession(v1ToByEvent(o)));
       return true;
     }
     return false;
@@ -181,40 +339,46 @@ export function importJson(json: string): boolean {
 }
 
 /**
- * Replace all solves for a single event. Other events are untouched.
- * Used by csTimer per-session import.
+ * Replace all solves for a single event in the ACTIVE session. Other events
+ * are untouched. Used by csTimer per-session import.
  */
 export function replaceSolves(eventId: EventId, solves: Solve[]): void {
   const db = loadRaw();
-  db.byEvent[eventId] = solves.slice().sort((a, b) => a.ts - b.ts);
+  const be = activeByEvent(db);
+  be[eventId] = solves.slice().sort((a, b) => a.ts - b.ts);
+  db.dataBySession[db.activeSessionId] = be;
   saveRaw(db);
 }
 
 /**
- * Append solves to a single event, preserving chronological order.
- * Used by csTimer per-session import.
+ * Append solves to a single event in the ACTIVE session, preserving
+ * chronological order. Used by csTimer per-session import.
  */
 export function appendSolves(eventId: EventId, solves: Solve[]): void {
   const db = loadRaw();
-  const existing = db.byEvent[eventId] ?? [];
-  db.byEvent[eventId] = [...existing, ...solves].sort((a, b) => a.ts - b.ts);
+  const be = activeByEvent(db);
+  const existing = be[eventId] ?? [];
+  be[eventId] = [...existing, ...solves].sort((a, b) => a.ts - b.ts);
+  db.dataBySession[db.activeSessionId] = be;
   saveRaw(db);
 }
 
 /**
- * Bulk update existing solves for one event by id. Solves not present in the
- * `updates` array are left untouched; ids in `updates` that don't exist in
- * the event are silently dropped (the event might have been deleted between
- * scan + write). Single read + single write — used by the reanalyze migration.
+ * Bulk update existing solves for one event (active session) by id. Solves not
+ * present in the `updates` array are left untouched; ids in `updates` that
+ * don't exist in the event are silently dropped. Single read + single write —
+ * used by the reanalyze migration.
  */
 export function updateSolves(eventId: EventId, updates: Solve[]): void {
   if (updates.length === 0) return;
   const db = loadRaw();
-  const existing = db.byEvent[eventId];
+  const be = activeByEvent(db);
+  const existing = be[eventId];
   if (!existing || existing.length === 0) return;
   const byId = new Map<string, Solve>();
   for (const u of updates) byId.set(u.id, u);
-  db.byEvent[eventId] = existing.map(s => byId.get(s.id) ?? s);
+  be[eventId] = existing.map(s => byId.get(s.id) ?? s);
+  db.dataBySession[db.activeSessionId] = be;
   saveRaw(db);
 }
 

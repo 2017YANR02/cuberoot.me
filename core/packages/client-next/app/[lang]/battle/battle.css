@@ -20,7 +20,9 @@
 }
 
 .battle-container {
-    /* battle 是 dark-locked + AMOLED 纯黑:实际锁见 index.css 的 html:has(.battle-container) 块 */
+    /* dual-theme: chrome 走 token,跟随用户主题翻 light/dark(见 globals.css 已移除
+       的 html:has(.battle-container) dark-lock)。每位玩家自定义背景(--bg-color/
+       --bg-image)只盖 .player-area::before,不影响 chrome token。 */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--background);
     color: var(--foreground);
@@ -88,19 +90,19 @@
 
 /* NOTE: 红灯/绿灯状态 — 通过时间文字颜色传达，不覆盖自定义背景 */
 .player-area.state-ready .time-display {
-    color: #ef5350;
-    text-shadow: 0 0 20px rgba(239, 83, 80, 0.6);
+    color: var(--timer-holding);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--timer-holding) 55%, transparent);
 }
 
 .player-area.state-can-start .time-display {
-    color: #66bb6a;
-    text-shadow: 0 0 20px rgba(102, 187, 106, 0.6);
+    color: var(--timer-ready);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--timer-ready) 55%, transparent);
 }
 
-/* NOTE: 观察中时间显示为红色（同 DCTimer） */
+/* NOTE: 观察中时间显示为警示色（warn token） */
 .player-area.state-inspecting .time-display {
-    color: #ff1744;
-    text-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
+    color: var(--signal-warning);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--signal-warning) 55%, transparent);
 }
 
 /* ==========================================================
@@ -115,9 +117,9 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--foreground) 10%, transparent);
     border: none;
-    color: #ededed;
+    color: var(--foreground);
     font-size: 1.2rem;
     display: flex;
     align-items: center;
@@ -128,7 +130,7 @@
 }
 
 .back-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, var(--foreground) 20%, transparent);
 }
 
 /* ==========================================================
@@ -137,7 +139,7 @@
 
 .scramble-text {
     font-size: calc(clamp(0.8rem, 2.8vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
-    color: var(--scramble-color, var(--player-text-color, #ccc));
+    color: var(--scramble-color, var(--player-text-color, var(--muted-foreground)));
     text-shadow: none;
     text-align: center;
     line-height: 1.35;
@@ -158,7 +160,7 @@
 }
 
 .scramble-text .loading {
-    color: #6e6050;
+    color: var(--faint-foreground);
     font-style: italic;
 }
 
@@ -175,7 +177,7 @@
     object-fit: contain;
     opacity: 0.9;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
     padding: 4px;
     pointer-events: none;
     user-select: none;
@@ -198,7 +200,7 @@
     letter-spacing: 0.02em;
     text-align: center;
     font-variant-numeric: tabular-nums;
-    color: var(--player-text-color, #fff);
+    color: var(--player-text-color, var(--foreground));
     text-shadow: none;
     min-height: 1.2em;
     display: flex;
@@ -209,7 +211,7 @@
 .ao5-display {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: clamp(0.7rem, 2.5vw, 0.9rem);
-    color: #6e6050;
+    color: var(--faint-foreground);
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
@@ -218,7 +220,7 @@
 .opponent-display {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-size: clamp(1.0rem, 3.5vw, 1.3rem);
-    color: #6e6050;
+    color: var(--faint-foreground);
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
@@ -244,11 +246,11 @@
 
 /* ===== 状态颜色变化 ===== */
 .time-display.penalty-plus2 {
-    color: #ffa726;
+    color: var(--timer-plus2);
 }
 
 .time-display.penalty-dnf {
-    color: #ef5350;
+    color: var(--timer-dnf);
 }
 
 .trophy-icon {
@@ -274,9 +276,9 @@
     gap: 8px;
     padding: 6px 14px;
     border-radius: 6px;
-    border: 1px solid #444;
+    border: 1px solid var(--border-strong);
     background: transparent;
-    color: #aaa;
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -286,9 +288,9 @@
 }
 
 .penalty-trigger:not(:disabled):hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ededed;
-    border-color: #8a7a6a;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    color: var(--foreground);
+    border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
 }
 
 .penalty-trigger:disabled {
@@ -314,13 +316,13 @@
     transform: translateX(-50%) scaleY(0.8);
     transform-origin: bottom center;
     min-width: 100px;
-    background: #1c1c1c;
-    border: 1px solid #444;
+    background: var(--popover);
+    border: 1px solid var(--border-default);
     border-radius: 8px;
     padding: 4px 0;
     list-style: none;
     z-index: 50;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 -4px 16px color-mix(in srgb, var(--foreground) 24%, transparent);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease, transform 0.15s ease;
@@ -336,7 +338,7 @@
     padding: 8px 18px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #aaa;
+    color: var(--muted-foreground);
     cursor: pointer;
     text-align: center;
     transition: background 0.1s ease;
@@ -344,13 +346,13 @@
 }
 
 .penalty-option:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ededed;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    color: var(--foreground);
 }
 
 .penalty-option.active {
-    color: #ededed;
-    background: rgba(255, 255, 255, 0.12);
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 
 /* NOTE: 中间栏内的罚时菜单 — 向下弹出（朝各自玩家区域）
@@ -361,7 +363,7 @@
     top: calc(100% + 6px);
     transform-origin: top center;
     transform: translateX(-50%) scaleY(0.8);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 24%, transparent);
 }
 
 .middle-bar .penalty-dropdown.open .penalty-menu {
@@ -376,9 +378,9 @@
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    border: 1px solid #333333;
+    border: 1px solid var(--border-default);
     background: transparent;
-    color: #d8c8b8;
+    color: var(--muted-foreground);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -390,14 +392,14 @@
 }
 
 .event-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: #6e6050;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    border-color: var(--border-strong);
 }
 
 .event-btn.active {
-    background: rgba(217, 119, 87, 0.2);
-    border-color: #d97757;
-    color: #ededed;
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--foreground);
 }
 
 /* NOTE: 非 WCA 项目(FTO/Kilo)无 cubing-icon → 落回简写文字 chip */
@@ -415,7 +417,7 @@
     position: absolute;
     inset: 0;
     z-index: 5;
-    background: rgba(15, 12, 10, 0.92);
+    background: color-mix(in srgb, var(--background) 92%, transparent);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     display: flex;
@@ -440,10 +442,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #333333;
+    border: 1px solid var(--border-default);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.04);
-    color: #d8c8b8;
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+    color: var(--muted-foreground);
     cursor: pointer;
     padding: 0;
     transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
@@ -464,15 +466,15 @@
 }
 
 .event-overlay-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: #6e6050;
-    color: #ededed;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    border-color: var(--border-strong);
+    color: var(--foreground);
 }
 
 .event-overlay-item.active {
-    background: #2e7d32;
-    border-color: #4caf50;
-    color: #fff;
+    background: var(--signal-success);
+    border-color: var(--signal-success);
+    color: var(--accent-foreground);
 }
 
 @media (max-width: 480px) {
@@ -500,12 +502,12 @@
     align-items: center;
     justify-content: space-between;
     padding: 4px 12px;
-    --bar-color-left: #171717;
-    --bar-color-right: #171717;
-    --bar-text-color: #d8c8b8;
-    background: linear-gradient(to right, var(--bar-color-left), #171717, var(--bar-color-right));
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    --bar-color-left: var(--background);
+    --bar-color-right: var(--background);
+    --bar-text-color: var(--muted-foreground);
+    background: linear-gradient(to right, var(--bar-color-left), var(--background), var(--bar-color-right));
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
     min-height: 40px;
     flex-shrink: 0;
     color: var(--bar-text-color);
@@ -516,7 +518,7 @@
     align-items: center;
     gap: 6px;
     font-size: 0.9rem;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
 }
 
 /* NOTE: Player 2（左侧）的比分旋转 180° — 仅 versus 布局（side 布局不旋转） */
@@ -532,7 +534,7 @@
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-weight: 700;
     font-size: 1rem;
-    color: var(--bar-text-color, #fff);
+    color: var(--foreground);
     font-variant-numeric: tabular-nums;
     display: flex;
     align-items: center;
@@ -540,7 +542,7 @@
 }
 
 .score-trophy {
-    color: #e8a27a;
+    color: var(--signal-success);
     margin: 0 4px;
     vertical-align: middle;
 }
@@ -555,9 +557,9 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid #333333;
+    border: 1px solid var(--border-default);
     background: transparent;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-size: 1rem;
     display: flex;
     align-items: center;
@@ -567,9 +569,45 @@
 }
 
 .middle-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ededed;
-    border-color: #6e6050;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    color: var(--foreground);
+    border-color: var(--border-strong);
+}
+
+/* NOTE: 中间栏的主题/语言切换 — 紧凑图标按钮,跟 .middle-btn 等高对齐;
+   不必离开对战即可切主题/语言(与 Solo 一致) */
+.middle-actions .battle-toggles {
+    gap: 4px;
+}
+
+.middle-actions .battle-toggles .lang-toggle,
+.middle-actions .battle-toggles .theme-toggle-inline {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--muted-foreground);
+    justify-content: center;
+}
+
+.middle-actions .battle-toggles .lang-toggle:hover,
+.middle-actions .battle-toggles .theme-toggle-inline:hover {
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    color: var(--foreground);
+    border-color: var(--border-strong);
+}
+
+/* 窄屏:键盘提示已隐藏,工具条收紧避免挤压比分 */
+@media (max-width: 480px) {
+    .middle-actions {
+        gap: 5px;
+    }
+    .middle-actions .battle-toggles .lang-toggle,
+    .middle-actions .battle-toggles .theme-toggle-inline {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 /* NOTE: CubeRoot logo — 限制尺寸与中间按钮对齐 */
@@ -587,7 +625,7 @@
 /* NOTE: 桌面端键盘快捷键提示（触摸设备隐藏） */
 .key-hint {
     font-size: 0.65rem;
-    color: #6e6050;
+    color: var(--faint-foreground);
     letter-spacing: 0.03em;
     white-space: nowrap;
 }
@@ -618,14 +656,15 @@
 }
 
 .settings-panel {
-    background: #1e1a16;
+    background: var(--card);
+    color: var(--card-foreground);
     padding: 24px;
     position: fixed;
     inset: 0;
     overflow-y: auto;
     transform: translateY(100%);
     transition: transform 0.25s ease;
-    border-top: 1px solid #333333;
+    border-top: 1px solid var(--border-default);
 }
 
 .settings-overlay.visible .settings-panel {
@@ -644,7 +683,7 @@
     font-size: 1.1rem;
     font-weight: 700;
     text-align: center;
-    color: #ededed;
+    color: var(--foreground);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -656,9 +695,9 @@
     top: 50%;
     transform: translateY(-50%);
     background: none;
-    border: 1px solid #444;
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     width: 32px;
     height: 32px;
     font-size: 1rem;
@@ -670,14 +709,14 @@
 }
 
 .settings-x-btn:hover {
-    border-color: #e53935;
-    color: #e53935;
+    border-color: var(--destructive);
+    color: var(--destructive);
 }
 
 /* NOTE: 模式分段选择器 */
 .mode-seg {
     display: inline-flex;
-    border: 1px solid #444;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     overflow: hidden;
     background: transparent;
@@ -687,7 +726,7 @@
     padding: 8px 24px;
     background: transparent;
     border: none;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -696,12 +735,12 @@
 }
 
 .mode-seg-btn.active {
-    background: rgba(217, 119, 87, 0.25);
-    color: #ededed;
+    background: var(--accent-soft);
+    color: var(--accent);
 }
 
 .mode-seg-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .settings-group {
@@ -710,7 +749,7 @@
 
 .settings-label {
     font-size: 0.9rem;
-    color: #6e6050;
+    color: var(--muted-foreground);
     margin-bottom: 12px;
     letter-spacing: 1px;
     font-weight: 500;
@@ -721,7 +760,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 0;
-    color: #eee;
+    color: var(--foreground);
     font-size: 1rem;
 }
 
@@ -732,12 +771,12 @@
 
 .slider-row input[type="range"] {
     width: 100%;
-    accent-color: #2196F3;
+    accent-color: var(--accent);
     margin-top: 4px;
 }
 
 .delay-value {
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     min-width: 50px;
     text-align: right;
@@ -753,9 +792,9 @@
 .puzzle-btn {
     padding: 8px 4px;
     border-radius: 6px;
-    border: 1px solid #333333;
+    border: 1px solid var(--border-default);
     background: transparent;
-    color: #aaa;
+    color: var(--muted-foreground);
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -783,13 +822,13 @@
 }
 
 .puzzle-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .puzzle-btn.active {
-    background: rgba(217, 119, 87, 0.2);
-    border-color: #d97757;
-    color: #ededed;
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--foreground);
 }
 
 /* --- 设置操作按钮 --- */
@@ -797,9 +836,9 @@
     width: 100%;
     padding: 10px;
     border-radius: 8px;
-    border: 1px solid #333333;
+    border: 1px solid var(--border-default);
     background: transparent;
-    color: #d8c8b8;
+    color: var(--foreground);
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -812,16 +851,16 @@
 }
 
 .settings-action-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .settings-action-btn.danger {
-    color: #ef5350;
-    border-color: rgba(239, 83, 80, 0.3);
+    color: var(--destructive);
+    border-color: color-mix(in srgb, var(--destructive) 35%, transparent);
 }
 
 .settings-action-btn.danger:hover {
-    background: rgba(239, 83, 80, 0.1);
+    background: color-mix(in srgb, var(--destructive) 12%, transparent);
 }
 
 /* Toggle Switch 样式 */
@@ -845,7 +884,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #444;
+    background-color: color-mix(in srgb, var(--foreground) 30%, transparent);
     transition: .4s;
     border-radius: 24px;
 }
@@ -857,13 +896,13 @@
     width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: white;
+    background-color: var(--background);
     transition: .2s;
     border-radius: 50%;
 }
 
 input:checked+.slider {
-    background-color: #2196F3;
+    background-color: var(--accent);
 }
 
 input:checked+.slider:before {
@@ -872,9 +911,9 @@ input:checked+.slider:before {
 
 /* NOTE: 设置面板下拉选择框 */
 .settings-select {
-    background: #1f1f1f;
-    color: #ededed;
-    border: 1px solid #555;
+    background: var(--background);
+    color: var(--foreground);
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 0.85rem;
@@ -883,7 +922,7 @@ input:checked+.slider:before {
 }
 
 .settings-select:focus {
-    border-color: #4fc3f7;
+    border-color: var(--accent);
 }
 
 /* ==========================================================
@@ -906,7 +945,7 @@ body.solo .key-hint {
 .solo-stats-display {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: clamp(0.65rem, 2.2vw, 0.85rem);
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
@@ -917,7 +956,7 @@ body.solo .key-hint {
 .memo-display {
     font-family: Inter, sans-serif;
     font-size: 0.85rem;
-    color: #4fc3f7;
+    color: var(--signal-info);
     margin-top: 4px;
 }
 
@@ -936,8 +975,8 @@ body.solo .bottom-nav {
     left: 0;
     right: 0;
     height: 56px;
-    background: #171717;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--background);
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
     z-index: 300;
     justify-content: space-around;
     align-items: center;
@@ -953,7 +992,7 @@ body.solo .bottom-nav {
     gap: 2px;
     background: none;
     border: none;
-    color: #6e6050;
+    color: var(--muted-foreground);
     font-size: 0.65rem;
     cursor: pointer;
     padding: 6px 0;
@@ -962,21 +1001,12 @@ body.solo .bottom-nav {
 }
 
 .nav-tab.active {
-    color: #4fc3f7;
+    color: var(--accent);
 }
 
-/* NOTE: PNG 图标模拟 iOS tab bar template rendering — 1:1 翻译自原版 battle.css 行 1384~1393 */
-.nav-tab .nav-tab-icon {
-    /* NOTE: grayscale + brightness 将黄色底变为灰色轮廓 */
-    filter: grayscale(1) brightness(0.6);
-    transition: filter 0.15s;
-}
-
-.nav-tab.active .nav-tab-icon {
-    /* NOTE: active 状态：hue-rotate 148deg 精确映射黄色(51°)→目标天蓝(199°)，匹配 #4fc3f7 */
-    filter: grayscale(0) brightness(0.85) hue-rotate(148deg) saturate(1.8);
-}
-
+/* NOTE: 计时 tab 图标已是 lucide SVG(currentColor),颜色直接跟 .nav-tab/.active
+   走 token — 不再用旧 PNG 的 grayscale/hue-rotate filter(那会盖掉 token 色)。 */
+.nav-tab .nav-tab-icon,
 .nav-tab svg {
     transition: color 0.15s;
 }
@@ -998,7 +1028,7 @@ body.solo .scramble-img {
 .goal-progress {
     position: relative;
     height: 18px;
-    background: rgba(255, 255, 255, 0.06);
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
     border-radius: 9px;
     margin-top: 6px;
     overflow: hidden;
@@ -1018,8 +1048,8 @@ body.solo .scramble-img {
     text-align: center;
     font-size: 11px;
     line-height: 18px;
-    color: #ededed;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    color: var(--foreground);
+    text-shadow: 0 1px 2px color-mix(in srgb, var(--background) 70%, transparent);
 }
 
 /* ==========================================================
@@ -1032,12 +1062,12 @@ body.solo .scramble-img {
 }
 
 .stat-ao:hover {
-    color: #e8a27a;
+    color: var(--accent);
     text-decoration: underline;
 }
 
 .stat-sep {
-    color: #4a5568;
+    color: var(--faint-foreground);
 }
 
 /* ==========================================================
@@ -1049,8 +1079,8 @@ body.solo .scramble-img {
     top: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(-100px);
-    background: linear-gradient(135deg, #1a2332 0%, #2c4a6e 100%);
-    color: #ededed;
+    background: var(--popover);
+    color: var(--popover-foreground);
     padding: 12px 24px;
     border-radius: 24px;
     font-size: 16px;
@@ -1059,8 +1089,8 @@ body.solo .scramble-img {
     z-index: 99999;
     opacity: 0;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(138, 180, 248, 0.3);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--foreground) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
     pointer-events: none;
 }
 
@@ -1076,8 +1106,8 @@ body.solo .scramble-img {
 .history-overlay {
     position: fixed;
     inset: 0;
-    /* NOTE: 全屏铺满，纯黑背景（与原版一致） */
-    background: #171717;
+    /* NOTE: 全屏铺满,跟随主题背景 */
+    background: var(--background);
     z-index: 200;
     display: flex;
     flex-direction: column;
@@ -1092,7 +1122,7 @@ body.solo .scramble-img {
 }
 
 .history-panel {
-    background: #171717;
+    background: var(--background);
     width: 100%;
     /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
     height: calc(100vh - 56px);
@@ -1126,7 +1156,7 @@ body.solo .scramble-img {
 
 .vs-separator {
     font-size: 0.7rem;
-    color: #6e6050;
+    color: var(--faint-foreground);
     text-align: center;
 }
 
@@ -1164,8 +1194,8 @@ body.solo .scramble-img {
     flex-shrink: 0;
     font-size: 0.65rem;
     font-weight: 700;
-    color: #8a7a6a;
-    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
     padding: 1px 4px;
     border-radius: 3px;
     min-width: 18px;
@@ -1187,7 +1217,7 @@ body.solo .scramble-img {
 .round-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: color-mix(in srgb, var(--foreground) 55%, transparent);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 100;
@@ -1198,14 +1228,15 @@ body.solo .scramble-img {
 }
 
 .round-modal {
-    background: #171717;
-    border: 1px solid #333333;
+    background: var(--popover);
+    color: var(--popover-foreground);
+    border: 1px solid var(--border-default);
     border-radius: 12px;
     width: 100%;
     max-width: 560px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--foreground) 28%, transparent);
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1222,13 +1253,13 @@ body.solo .scramble-img {
 .round-modal-title {
     font-size: 1rem;
     font-weight: 700;
-    color: #ededed;
+    color: var(--foreground);
 }
 
 .round-modal-date {
     font-size: 0.85rem;
     font-weight: 400;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
 }
 
 .round-modal-times {
@@ -1237,7 +1268,7 @@ body.solo .scramble-img {
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.03);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
     border-radius: 8px;
 }
 
@@ -1253,7 +1284,7 @@ body.solo .scramble-img {
     align-items: center;
     gap: 4px;
     font-size: 0.85rem;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-weight: 700;
     letter-spacing: 0.05em;
 }
@@ -1272,24 +1303,24 @@ body.solo .scramble-img {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-size: 2.4rem;
     font-weight: 700;
-    color: #ededed;
+    color: var(--foreground);
     font-variant-numeric: tabular-nums;
     line-height: 1;
 }
 
 .round-modal-side.is-winner .round-modal-time {
-    color: #66bb6a;
+    color: var(--signal-success);
 }
 
 .round-modal-penalty {
     font-size: 0.75rem;
-    color: #ff9800;
+    color: var(--signal-warning);
     font-weight: 700;
 }
 
 .round-modal-vs {
     font-size: 0.85rem;
-    color: #6e6050;
+    color: var(--faint-foreground);
     font-weight: 700;
     letter-spacing: 0.1em;
 }
@@ -1309,7 +1340,7 @@ body.solo .scramble-img {
 .round-modal-scramble-label {
     font-size: 0.7rem;
     font-weight: 700;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -1318,10 +1349,10 @@ body.solo .scramble-img {
     font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 1rem;
     line-height: 1.5;
-    color: #d8c8b8;
+    color: var(--foreground);
     word-break: break-word;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid #333333;
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+    border: 1px solid var(--border-default);
     border-radius: 6px;
     padding: 10px 12px;
     user-select: text;
@@ -1337,8 +1368,8 @@ body.solo .scramble-img {
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1px solid #4a2a26;
-    color: #ef5350;
+    border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
+    color: var(--destructive);
     width: 36px;
     height: 36px;
     padding: 0;
@@ -1348,8 +1379,8 @@ body.solo .scramble-img {
 }
 
 .round-modal-delete:hover {
-    background: rgba(239, 83, 80, 0.1);
-    border-color: #e53935;
+    background: color-mix(in srgb, var(--destructive) 12%, transparent);
+    border-color: var(--destructive);
 }
 
 @media (max-width: 480px) {
@@ -1366,7 +1397,7 @@ body.solo .scramble-img {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid #333333;
+    border-bottom: 1px solid var(--border-default);
     flex-shrink: 0;
     gap: 8px;
 }
@@ -1374,21 +1405,21 @@ body.solo .scramble-img {
 .history-title {
     font-weight: 700;
     font-size: 1rem;
-    color: #ededed;
+    color: var(--foreground);
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
 .vs-trophy {
-    color: #e8a27a;
+    color: var(--signal-success);
     flex-shrink: 0;
 }
 
 .history-stats {
     flex: 1;
     font-size: 0.75rem;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     text-align: right;
     font-family: 'Inter', sans-serif;
 }
@@ -1397,9 +1428,9 @@ body.solo .scramble-img {
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    border: 1px solid #444;
+    border: 1px solid var(--border-strong);
     background: transparent;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     cursor: pointer;
     display: flex;
@@ -1410,8 +1441,8 @@ body.solo .scramble-img {
 }
 
 .history-close-btn:hover {
-    border-color: #e53935;
-    color: #e53935;
+    border-color: var(--destructive);
+    color: var(--destructive);
 }
 
 .history-list {
@@ -1425,18 +1456,18 @@ body.solo .scramble-img {
     align-items: baseline;
     padding: 6px 16px;
     font-size: 0.85rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
     cursor: pointer;
     transition: background 0.1s;
     gap: 6px;
 }
 
 .history-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .history-item .h-idx {
-    color: #6e6050;
+    color: var(--faint-foreground);
     font-size: 0.75rem;
     min-width: 28px;
     text-align: right;
@@ -1444,37 +1475,37 @@ body.solo .scramble-img {
 
 .history-item .h-time {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
-    color: #ededed;
+    color: var(--foreground);
     font-size: 0.95rem;
     min-width: 80px;
     text-align: right;
 }
 
 .history-item .h-time.h-best {
-    color: #66bb6a;
+    color: var(--signal-success);
 }
 
 .history-item .h-time.h-worst {
-    color: #ef5350;
+    color: var(--destructive);
 }
 
 .history-item .h-time.h-plus2 {
-    color: #ffa726;
+    color: var(--signal-warning);
 }
 
 .history-item .h-time.h-dnf {
-    color: #ef5350;
+    color: var(--destructive);
 }
 
 .history-item .h-ao5 {
-    color: #6e6050;
+    color: var(--faint-foreground);
     font-size: 0.75rem;
     min-width: 60px;
 }
 
 .history-item .h-scramble {
     flex: 1;
-    color: #444;
+    color: var(--faint-foreground);
     font-size: 0.7rem;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1484,21 +1515,21 @@ body.solo .scramble-img {
 .history-item.expanded .h-scramble {
     white-space: normal;
     word-break: break-word;
-    color: #777;
+    color: var(--muted-foreground);
 }
 
 .history-empty {
     padding: 32px 16px;
     text-align: center;
-    color: #6e6050;
+    color: var(--faint-foreground);
     font-size: 0.85rem;
 }
 
 .history-action-btn {
     background: none;
-    border: 1px solid #444;
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
-    color: #d8c8b8;
+    color: var(--foreground);
     font-size: 0.85rem;
     padding: 2px 8px;
     cursor: pointer;
@@ -1506,8 +1537,8 @@ body.solo .scramble-img {
 }
 
 .history-action-btn:hover {
-    background: #333333;
-    border-color: #8a7a6a;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    border-color: var(--muted-foreground);
 }
 
 .h-delete {
@@ -1517,7 +1548,7 @@ body.solo .scramble-img {
     padding: 2px;
     opacity: 0.55;
     transition: opacity 0.15s, color 0.15s, background 0.15s;
-    color: #d8c8b8;
+    color: var(--muted-foreground);
     border-radius: 4px;
     display: inline-flex;
     align-items: center;
@@ -1531,8 +1562,8 @@ body.solo .scramble-img {
 
 .h-delete:hover {
     opacity: 1;
-    color: #ef5350;
-    background: rgba(239, 83, 80, 0.1);
+    color: var(--destructive);
+    background: color-mix(in srgb, var(--destructive) 12%, transparent);
 }
 
 /* NOTE: 触屏没 hover,直接保持比较亮 */
@@ -1543,7 +1574,7 @@ body.solo .scramble-img {
 }
 
 .h-memo {
-    color: #4fc3f7;
+    color: var(--signal-info);
     font-size: 0.7rem;
 }
 
@@ -1553,7 +1584,7 @@ body.solo .scramble-img {
 }
 
 .h-date {
-    color: #6b7a8d;
+    color: var(--faint-foreground);
     font-size: 11px;
     margin-left: auto;
     white-space: nowrap;
@@ -1566,7 +1597,7 @@ body.solo .scramble-img {
 
 .trend-chart {
     padding: 8px 12px;
-    border-bottom: 1px solid #333333;
+    border-bottom: 1px solid var(--border-default);
 }
 
 .trend-svg {
@@ -1580,7 +1611,7 @@ body.solo .scramble-img {
     gap: 12px;
     padding: 4px 0 2px;
     font-size: 0.7rem;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
 }
 
 .trend-legend span {
@@ -1600,9 +1631,9 @@ body.solo .scramble-img {
 
 .ao-chip {
     background: transparent;
-    border: 1px solid #444;
+    border: 1px solid var(--border-strong);
     border-radius: 12px;
-    color: #6e6050;
+    color: var(--muted-foreground);
     font-size: 0.7rem;
     padding: 2px 10px;
     cursor: pointer;
@@ -1612,11 +1643,11 @@ body.solo .scramble-img {
 .ao-chip.active {
     border-color: var(--chip-color);
     color: var(--chip-color);
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .ao-chip:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 /* ==========================================================
@@ -1635,8 +1666,8 @@ body.solo .scramble-img {
     display: inline-block;
     padding: 3px 10px;
     border-radius: 12px;
-    background: rgba(138, 180, 248, 0.12);
-    color: #e8a27a;
+    background: var(--accent-soft);
+    color: var(--accent);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -1651,7 +1682,7 @@ body.solo .scramble-img {
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: rgba(0, 0, 0, 0.6);
+    background: color-mix(in srgb, var(--foreground) 55%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1659,15 +1690,16 @@ body.solo .scramble-img {
 }
 
 .ao-detail-panel {
-    background: #1a2332;
-    border: 1px solid #2c4a6e;
+    background: var(--popover);
+    color: var(--popover-foreground);
+    border: 1px solid var(--border-default);
     border-radius: 12px;
     padding: 16px;
     min-width: 260px;
     max-width: 90vw;
     max-height: 70vh;
     overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--foreground) 24%, transparent);
 }
 
 .ao-detail-header {
@@ -1679,21 +1711,21 @@ body.solo .scramble-img {
 
 .ao-detail-header h3 {
     margin: 0;
-    color: #e8a27a;
+    color: var(--accent);
     font-size: 18px;
 }
 
 .ao-detail-close {
     background: none;
     border: none;
-    color: #6b7a8d;
+    color: var(--muted-foreground);
     font-size: 20px;
     cursor: pointer;
     padding: 4px 8px;
 }
 
 .ao-detail-close:hover {
-    color: #ededed;
+    color: var(--foreground);
 }
 
 .ao-detail-item {
@@ -1702,26 +1734,26 @@ body.solo .scramble-img {
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 14px;
-    color: #d8c8b8;
+    color: var(--foreground);
 }
 
 .ao-detail-item:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.03);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 
 .ao-detail-idx {
-    color: #6b7a8d;
+    color: var(--muted-foreground);
     min-width: 36px;
 }
 
 .ao-trimmed-best {
-    color: #4caf50;
+    color: var(--signal-success);
     opacity: 0.6;
     text-decoration: line-through;
 }
 
 .ao-trimmed-worst {
-    color: #ef5350;
+    color: var(--destructive);
     opacity: 0.6;
     text-decoration: line-through;
 }
@@ -1745,17 +1777,17 @@ body.solo .scramble-img {
     flex-wrap: wrap;
     gap: 6px;
     padding: 6px 8px;
-    border-bottom: 1px solid #2c4a6e;
+    border-bottom: 1px solid var(--border-default);
 }
 
 .history-tool-btn {
     flex: 1;
     min-width: 60px;
     padding: 6px 8px;
-    border: 1px solid #2c4a6e;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
     border-radius: 8px;
-    background: rgba(138, 180, 248, 0.08);
-    color: #e8a27a;
+    background: var(--accent-soft);
+    color: var(--accent);
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
@@ -1768,7 +1800,7 @@ body.solo .scramble-img {
 }
 
 .history-tool-btn:active {
-    background: rgba(138, 180, 248, 0.2);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* ==========================================================
@@ -1786,7 +1818,7 @@ body.solo .scramble-img {
 
 .bg-row-label {
     font-size: 0.85rem;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-weight: 600;
     min-width: 24px;
 }
@@ -1801,7 +1833,7 @@ body.solo .scramble-img {
     width: 32px;
     height: 32px;
     padding: 0;
-    border: 2px solid #444;
+    border: 2px solid var(--border-strong);
     border-radius: 6px;
     cursor: pointer;
     background: none;
@@ -1810,46 +1842,46 @@ body.solo .scramble-img {
 .bg-image-btn {
     height: 32px;
     padding: 0 12px;
-    border: 1px solid #333333;
+    border: 1px solid var(--border-default);
     border-radius: 6px;
     background: transparent;
-    color: #aaa;
+    color: var(--muted-foreground);
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .bg-image-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #ededed;
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+    color: var(--foreground);
 }
 
 .bg-image-btn.has-image {
-    background: rgba(217, 119, 87, 0.2);
-    border-color: #d97757;
-    color: #ededed;
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .bg-reset-btn {
     width: 32px;
     height: 32px;
-    border: 2px solid #444;
+    border: 2px solid var(--border-strong);
     border-radius: 6px;
     background: none;
-    color: #8a7a6a;
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     cursor: pointer;
     transition: border-color 0.2s, color 0.2s;
 }
 
 .bg-reset-btn:hover {
-    border-color: #e53935;
-    color: #e53935;
+    border-color: var(--destructive);
+    color: var(--destructive);
 }
 
 .bg-error-msg {
     font-size: 0.75rem;
-    color: #ef5350;
+    color: var(--destructive);
     margin-top: 4px;
     text-align: center;
     flex-basis: 100%;
@@ -1861,9 +1893,9 @@ body.solo .scramble-img {
 
 .segmented-btn {
     padding: 4px 14px;
-    border: 1px solid #4a6785;
+    border: 1px solid var(--border-strong);
     background: transparent;
-    color: #e8a27a;
+    color: var(--accent);
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -1885,13 +1917,13 @@ body.solo .scramble-img {
 }
 
 .segmented-btn.active {
-    background: #2c4a6e;
-    border-color: #e8a27a;
-    color: #ededed;
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .segmented-btn:hover:not(.active) {
-    background: rgba(138, 180, 248, 0.08);
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .sim-results {
@@ -1907,16 +1939,16 @@ body.solo .scramble-img {
 }
 
 .sim-row:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.03);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 
 .sim-label {
-    color: #e8a27a;
+    color: var(--accent);
     font-size: 14px;
 }
 
 .sim-value {
-    color: #ededed;
+    color: var(--foreground);
     font-size: 18px;
     font-weight: 700;
 }
@@ -1927,7 +1959,7 @@ body.solo .scramble-img {
 }
 
 .heatmap-title {
-    color: #6b7a8d;
+    color: var(--muted-foreground);
     font-size: 12px;
     margin-bottom: 8px;
     text-align: center;
@@ -1940,21 +1972,21 @@ body.solo .scramble-img {
 }
 
 .session-overview-table th {
-    color: #e8a27a;
+    color: var(--accent);
     font-weight: 600;
     padding: 6px 8px;
-    border-bottom: 1px solid #2c4a6e;
+    border-bottom: 1px solid var(--border-default);
     text-align: left;
 }
 
 .session-overview-table td {
     padding: 6px 8px;
-    color: #d8c8b8;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--muted-foreground);
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .session-overview-table tr:hover td {
-    background: rgba(138, 180, 248, 0.05);
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .load-more-wrapper {
@@ -2004,8 +2036,8 @@ body.solo .scramble-img {
     width: 1px;
     background: linear-gradient(to bottom,
             transparent 5%,
-            rgba(240, 235, 227, 0.15) 20%,
-            rgba(240, 235, 227, 0.15) 80%,
+            color-mix(in srgb, var(--foreground) 15%, transparent) 20%,
+            color-mix(in srgb, var(--foreground) 15%, transparent) 80%,
             transparent 95%);
     align-self: stretch;
     flex-shrink: 0;
@@ -2013,8 +2045,8 @@ body.solo .scramble-img {
 
 /* side 布局中间栏保持水平 */
 .side-layout .middle-bar {
-    border-top: 1px solid rgba(240, 235, 227, 0.1);
-    border-bottom: 1px solid rgba(240, 235, 227, 0.1);
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 /* side 布局下 ao5 和 opponent 显示适配 */
@@ -2029,4 +2061,54 @@ body.solo .scramble-img {
 /* side 布局下隐藏键盘提示（横屏空间有限） */
 .side-layout .key-hint {
     display: none;
+}
+/* ==========================================================
+   BattleView 集成新增样式 (Phase 3 — 对战并入 /timer)
+   author token-clean / 适配旧 dark-locked 表;旧 .event-overlay-grid
+   被 WcaEventSelector 替代,这里只管包裹尺寸 + 对手区图标拆分。
+   ========================================================== */
+
+/* WcaEventSelector overlay 包裹:充满 .player-area,居中可滚动 */
+.event-overlay-inner {
+    width: 100%;
+    max-width: 760px;
+    max-height: 100%;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+}
+.event-overlay-inner .wca-stats-event-selector {
+    justify-content: center;
+}
+
+/* 对手区:lucide Swords 图标静态渲染 + 时间子 span(RAF 只写时间) */
+.opponent-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+}
+.opponent-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--faint-foreground);
+}
+.opponent-time {
+    display: inline-block;
+    min-width: 1em;
+}
+
+/* 回合结束排名徽章 — 计时数字下方,不计时显示;不要在按住区域内触发计时 */
+.battle-rank-slot {
+    margin-top: 2px;
+    display: flex;
+    justify-content: center;
+    min-height: 1.4em;
+}
+
+/* Solo 底部导航里的模式 pill(solo 无 middle-bar,pill 塞这里) */
+.bottom-nav-mode {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
 }

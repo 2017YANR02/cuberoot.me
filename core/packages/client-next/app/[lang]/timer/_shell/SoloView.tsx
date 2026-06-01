@@ -1,0 +1,1465 @@
+'use client';
+
+/**
+ * SoloView — the redesigned Solo timer (Phase 1 shell).
+ *
+ * This is the LOGIC OWNER for the solo timer. It carries every hook / state /
+ * handler / modal that previously lived in TimerPage.tsx (useTimer, useSettings,
+ * scramble gen + warmup333, byEvent storage, bluetooth, stackmat, multistage,
+ * bldMemo, all power modals, fullscreen, ?replay deep-link, import/export) —
+ * NOTHING was removed. Only the *visual layout* (the JSX return) was rebuilt
+ * into the new shell: topbar + TimingSurface + a docked side panel (desktop) /
+ * bottom sheet (phone), with a distraction-free fade while running, pointer
+ * input, and swipe shortcuts.
+ *
+ * The engine itself (_lib/useTimer + _lib/scramble + _lib/storage) is untouched.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
+  Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
+  FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
+  Eye, EyeOff, ListOrdered, LineChart, RefreshCw, X,
+} from 'lucide-react';
+import HeaderToggles from '@/components/HeaderToggles';
+import WcaEventSelector from '@/components/WcaEventSelector';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { petReact } from '@/lib/deskpet';
+import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
+import { syncLangToUrl } from '@/i18n/i18n-client';
+
+import { generateScramble, registerScramble } from '../_lib/scramble';
+import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
+import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
+import { useTimer } from '../_lib/useTimer';
+import { formatMs, bestSingle, bestAverageOfN, summarize } from '../_lib/stats';
+import type { EventId, Penalty, Solve } from '../_lib/types';
+import { EVENTS, isBldEvent } from '../_lib/types';
+import {
+  loadAll, saveAll, exportJson, importJson, makeSolve,
+  importCstimerJson, exportCsv, exportSpeedstacks,
+} from '../_lib/storage/db';
+import { formatTargetTime, useApplyTheme, useSettings } from '../_lib/settings';
+import { warmupSound } from '../_lib/sound';
+import { getMetronome } from '../_lib/sound/metronome';
+import { useBluetoothCube } from '../_lib/bluetooth';
+import { useAutoReady } from '../_lib/bluetooth/auto_ready';
+import { useStackmat } from '../_lib/stackmat';
+import { useMultiStage } from '../_lib/multistage';
+import { useBldMemo } from '../_lib/useBldMemo';
+
+import StatsPanel from '../_components/StatsPanel';
+import CaseStatsPanel from '../_components/CaseStatsPanel';
+import HistoryPanel from '../_components/HistoryPanel';
+import SolveModal from '../_components/SolveModal';
+import ReconstructModal from '../_components/ReconstructModal';
+import { decodeReplayParam } from '../_lib/share/decode';
+import { extractReplayParam } from '../_lib/share/paste_import';
+import SettingsPanel from '../_components/SettingsPanel';
+import GoalProgress from '../_components/GoalProgress';
+import PbToast, { type PbKind } from '../_components/PbToast';
+import ShortcutsModal from '../_components/ShortcutsModal';
+import BluetoothModal from '../_components/BluetoothModal';
+import TrainerSubsetModal from '../_components/TrainerSubsetModal';
+import StatsModal from '../_components/StatsModal';
+import ManualEntryModal from '../_components/ManualEntryModal';
+import SolverModal from '../_components/SolverModal';
+import BulkScrambleModal from '../_components/BulkScrambleModal';
+import DrillModal from '../_components/DrillModal';
+import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
+import SolverHints from '../_components/SolverHints';
+import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
+import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
+import HistogramChart from '../_components/charts/HistogramChart';
+import TrendChart from '../_components/charts/TrendChart';
+import ScatterChart from '../_components/charts/ScatterChart';
+import HourChart from '../_components/charts/HourChart';
+import PracticeHeatmap from '../_components/charts/PracticeHeatmap';
+import { CubePreview } from '../_lib/cube';
+import LiveCubeState from '../_components/LiveCubeState';
+
+import TimingSurface from './TimingSurface';
+import RankBadge from './RankBadge';
+import SessionSwitcher from './SessionSwitcher';
+
+import '../timer.css';
+import '../_components/charts/charts.css';
+import '../_components/charts/practice_heatmap.css';
+import './shell.css';
+
+const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
+
+/** Timer EventIds that map to a real WCA event (drive WcaEventSelector
+ *  active state). The rest render via appendEvents. */
+const WCA_SELECTABLE = new Set<string>([
+  '333', '222', '444', '555', '666', '777', '333oh', '333fm',
+  '333bf', 'minx', 'pyram', 'clock', 'skewb', 'sq1', '444bf', '555bf', '333mbf',
+]);
+
+/** Non-WCA / training events surfaced in the picker as the "Other" append
+ *  group. iconClass '' renders the textLabel. */
+const APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; label?: string; textLabel?: string }> = [
+  { id: '333ni',  iconClass: 'event-333bf', label: '3x3 NI / 三盲 NI' },
+  { id: '333mr',  iconClass: '', textLabel: 'MR' },
+  { id: '666bld', iconClass: '', textLabel: '6BLD' },
+  { id: '777bld', iconClass: '', textLabel: '7BLD' },
+  // magic / mmagic render in the main grid (they're in ALL_EVENT_IDS with
+  // proper labels) — keeping them here too would duplicate under onlyAvailable.
+  { id: 'r3',     iconClass: '', textLabel: 'R3' },
+  { id: 'r4',     iconClass: '', textLabel: 'R4' },
+  { id: 'r5',     iconClass: '', textLabel: 'R5' },
+  { id: 'cross',  iconClass: '', textLabel: 'Cross' },
+  { id: 'f2l',    iconClass: '', textLabel: 'F2L' },
+  { id: 'll',     iconClass: '', textLabel: 'LL' },
+  { id: 'oll',    iconClass: '', textLabel: 'OLL' },
+  { id: 'pll',    iconClass: '', textLabel: 'PLL' },
+  { id: 'coll',   iconClass: '', textLabel: 'COLL' },
+  { id: 'cmll',   iconClass: '', textLabel: 'CMLL' },
+  { id: 'zbll',   iconClass: '', textLabel: 'ZBLL' },
+  { id: 'eg1',    iconClass: '', textLabel: 'EG-1' },
+  { id: 'eg2',    iconClass: '', textLabel: 'EG-2' },
+  { id: 'custom', iconClass: '', textLabel: 'Custom' },
+];
+
+/** Map a timer EventId -> the id the WcaEventSelector renders as active. */
+function eventToSelectorId(ev: EventId): string {
+  if (ev === '333bld') return '333bf';
+  if (ev === '333mbld') return '333mbf';
+  if (ev === '444bld') return '444bf';
+  if (ev === '555bld') return '555bf';
+  if (ev === 'mega') return 'minx';
+  if (ev === 'pyra') return 'pyram';
+  return ev;
+}
+/** Inverse: selector id -> timer EventId. */
+function selectorIdToEvent(id: string): EventId {
+  if (id === '333bf') return '333bld';
+  if (id === '333mbf') return '333mbld';
+  if (id === '444bf') return '444bld';
+  if (id === '555bf') return '555bld';
+  if (id === 'minx') return 'mega';
+  if (id === 'pyram') return 'pyra';
+  return id as EventId;
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(query);
+    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
+}
+
+const IS_TOUCH = typeof window !== 'undefined' && ('ontouchstart' in window || (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints! > 0);
+
+type PanelTab = 'times' | 'chart' | 'tools';
+type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
+
+/** Slot rendered by TimerShell into the topbar between the mode pill and the
+ *  right-hand toggles. SoloView fills it via portal-free render-prop. */
+interface SoloViewProps {
+  /** The mode pill node, injected by the shell to live at the topbar left. */
+  modePill?: React.ReactNode;
+}
+
+export default function SoloView({ modePill }: SoloViewProps) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  useDocumentTitle('计时器', 'Timer');
+  const settings = useSettings();
+  useApplyTheme();
+
+  const isMobile = useMediaQuery('(max-width: 480px)');
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
+  // Cube preview Eye toggle — default ON (visible) on phone per redesign.
+  const [previewHidden, setPreviewHidden] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const legacy = localStorage.getItem('timer.mobilePreviewHidden');
+    if (legacy !== null && localStorage.getItem('timer.preview.hidden') === null) {
+      try { localStorage.setItem('timer.preview.hidden', legacy); } catch { /* ignore */ }
+    }
+    return localStorage.getItem('timer.preview.hidden') === '1';
+  });
+  useEffect(() => {
+    try { localStorage.setItem('timer.preview.hidden', previewHidden ? '1' : '0'); } catch { /* ignore */ }
+  }, [previewHidden]);
+  // Enlarged corner net (phone tap-to-enlarge).
+  const [previewEnlarged, setPreviewEnlarged] = useState(false);
+
+  // ── Side panel (desktop rail / phone bottom sheet) ──────────────
+  const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
+  const [chartKind, setChartKind] = useState<ChartKind>('histogram');
+
+  // ── State: per-event solve lists ────────────────────────────────
+  const [byEvent, setByEvent] = useState<Record<string, Solve[]>>(() => {
+    if (typeof window === 'undefined') return {};
+    return loadAll();
+  });
+  // Skip the very first save (loadAll → saveAll round-trip is a no-op) and any
+  // save triggered by a session switch (we just re-loaded the active session's
+  // data; writing it straight back is harmless but pointless).
+  const skipNextSaveRef = useRef(true);
+  useEffect(() => {
+    if (skipNextSaveRef.current) { skipNextSaveRef.current = false; return; }
+    saveAll(byEvent);
+  }, [byEvent]);
+
+  // Re-load the active session's solves after a session switch / clear / delete.
+  // db.setActiveSession() has already persisted the new active id, so loadAll()
+  // now returns that session's byEvent. Suppress the resulting save effect.
+  const reloadActiveSession = useCallback(() => {
+    skipNextSaveRef.current = true;
+    setByEvent(loadAll());
+    setLastPenalty(null);
+  }, []);
+
+  const [event, setEvent] = useState<EventId>(() => {
+    if (typeof window === 'undefined') return '333';
+    const stored = localStorage.getItem('cuberoot-timer.event');
+    const valid = EVENTS.some(e => e.id === stored);
+    return valid ? (stored as EventId) : '333';
+  });
+  useEffect(() => { localStorage.setItem('cuberoot-timer.event', event); }, [event]);
+
+  const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);
+
+  // ── Kociemba warmup (3x3 random-state) ─────────────────────────
+  const [kociembaReady, setKociembaReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    warmup333().then(() => {
+      if (cancelled) return;
+      registerScramble('333', () => randomState333Sync());
+      registerScramble('333oh', () => randomState333Sync());
+      registerScramble('333fm', () => randomState333Sync());
+      setKociembaReady(true);
+    }).catch(err => {
+      console.error('[timer] kociemba warmup failed:', err);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Drill mode ──────────────────────────────────────────────────
+  const [drillTarget, setDrillTarget] = useState<{ type: DrillType; id: string } | null>(null);
+  const [drillModalOpen, setDrillModalOpen] = useState(false);
+  const drillAllowed = ['333', '333oh', '333fm', 'oll', 'pll'].includes(event);
+  useEffect(() => {
+    if (!drillAllowed && drillTarget) setDrillTarget(null);
+  }, [drillAllowed, drillTarget]);
+
+  // ── Scramble ────────────────────────────────────────────────────
+  const [scrambleNonce, setScrambleNonce] = useState(0);
+  const scramble = useMemo(
+    () => {
+      if (drillTarget && drillAllowed) {
+        const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
+        if (ds) return ds.scramble;
+      }
+      return generateScramble(event);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [event, scrambleNonce, kociembaReady, drillTarget, drillAllowed],
+  );
+  const nextScramble = useCallback(() => { setScrambleNonce(n => n + 1); }, []);
+
+  // ── Solve recording ─────────────────────────────────────────────
+  const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
+  const [pbToast, setPbToast] = useState<{ kind: PbKind; value: string } | null>(null);
+  // Generic undo/info toast for swipe-delete etc.
+  const [infoToast, setInfoToast] = useState<{ msg: string; undo?: () => void } | null>(null);
+  const byEventRef = useRef(byEvent);
+  useEffect(() => { byEventRef.current = byEvent; }, [byEvent]);
+  const pbToastEnabledRef = useRef(settings.pbToast);
+  useEffect(() => { pbToastEnabledRef.current = settings.pbToast; }, [settings.pbToast]);
+  const scrambleAtStartRef = useRef<string>(scramble);
+  const eventAtStartRef = useRef<EventId>(event);
+  const caseIdAtStartRef = useRef<string | null>(null);
+  const movesRef = useRef<Array<{ m: string; ts: number }>>([]);
+  const solveStartTsRef = useRef<number>(0);
+
+  const isNxNEvent = ['222','333','444','555','666','777','333oh','333fm'].includes(event);
+  const multiStageActive = settings.multiStage && isNxNEvent;
+  const bldMemoActive = settings.bldMemo && isBldEvent(event);
+  const multiStageRef = useRef<ReturnType<typeof useMultiStage> | null>(null);
+  const bldMemoRef = useRef<ReturnType<typeof useBldMemo> | null>(null);
+
+  const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
+    const ev = eventAtStartRef.current;
+    const wasNxN = ['222','333','444','555','666','777','333oh','333fm'].includes(ev);
+    const wasBld = isBldEvent(ev);
+    const stages = (settings.multiStage && wasNxN)
+      ? multiStageRef.current?.extractFinal(res.timeMs)
+      : undefined;
+    const bld = (settings.bldMemo && wasBld)
+      ? bldMemoRef.current?.extractFinal()
+      : undefined;
+    const solve = makeSolve({
+      timeMs: res.timeMs,
+      scramble: scrambleAtStartRef.current,
+      event: ev,
+      penalty: res.autoPenalty,
+    });
+    if (stages) solve.stages = stages;
+    if (bld) solve.bld = bld;
+    if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
+    if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
+    setLastPenalty(res.autoPenalty);
+
+    if (pbToastEnabledRef.current) {
+      const before = byEventRef.current[ev] ?? [];
+      const after = [...before, solve];
+      const beforeSingle = bestSingle(before);
+      const afterSingle = bestSingle(after);
+      const beforeAo5 = bestAverageOfN(before, 5);
+      const afterAo5 = bestAverageOfN(after, 5);
+      const beforeAo12 = bestAverageOfN(before, 12);
+      const afterAo12 = bestAverageOfN(after, 12);
+      const isNew = (b: number | null, a: number | null): boolean =>
+        a !== null && Number.isFinite(a) && (b === null || !Number.isFinite(b) || a < b);
+      let kind: PbKind | null = null;
+      let value: number | null = null;
+      if (isNew(beforeAo12, afterAo12))      { kind = 'ao12';   value = afterAo12; }
+      else if (isNew(beforeAo5, afterAo5))   { kind = 'ao5';    value = afterAo5; }
+      else if (isNew(beforeSingle, afterSingle)) { kind = 'single'; value = afterSingle; }
+      if (kind && value !== null) {
+        setPbToast({ kind, value: formatMs(value, settings.precision) });
+        petReact('happy');
+      }
+    }
+
+    setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), solve] }));
+    if (res.autoPenalty === 'DNF') petReact('error');
+    nextScramble();
+  }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision]);
+
+  const timer = useTimer(recordSolve);
+
+  const multiStage = useMultiStage({ phase: timer.phase, displayMs: timer.displayMs, enabled: multiStageActive });
+  useEffect(() => { multiStageRef.current = multiStage; }, [multiStage]);
+
+  const bldMemo = useBldMemo({ phase: timer.phase, displayMs: timer.displayMs, enabled: bldMemoActive });
+  useEffect(() => { bldMemoRef.current = bldMemo; }, [bldMemo]);
+
+  useEffect(() => {
+    if (timer.phase !== 'running') {
+      scrambleAtStartRef.current = scramble;
+      eventAtStartRef.current = event;
+      caseIdAtStartRef.current = TRAINER_KINDS.has(event)
+        ? getLastPickedCase(event as TrainerKind)
+        : null;
+    } else {
+      movesRef.current = [];
+      solveStartTsRef.current = performance.now();
+    }
+  }, [timer.phase, scramble, event]);
+
+  // ── Bluetooth smart cube ────────────────────────────────────────
+  const phaseSnapshotRef = useRef(timer.phase);
+  useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
+  const consumeFacesRef = useRef<(faces: import('../_lib/cube/state').CubeFaces) => void>(() => {});
+  useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
+  const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
+
+  const bluetoothCube = useBluetoothCube({
+    onMove: (move: string, ts: number) => {
+      const faces = bluetoothCubeRef.current?.getFaces();
+      if (faces) consumeFacesRef.current(faces);
+      for (const sub of bluetoothSubscribersRef.current) {
+        try { sub(move, ts); } catch (err) { console.error('[bt-broadcast]', err); }
+      }
+    },
+    onSolved: () => {
+      if (phaseSnapshotRef.current === 'running') timer.onPressDown();
+    },
+  });
+
+  useAutoReady({
+    enabled: settings.bluetoothAutoReady !== 'off' && bluetoothCube.status.connected,
+    mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
+    onReady: () => {
+      const ph = timer.phase;
+      if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') {
+        warmupSound();
+        timer.onPressDown();
+      }
+    },
+    onMoveSubscriber: (cb) => {
+      const subs = bluetoothSubscribersRef.current;
+      subs.add(cb);
+      return () => { subs.delete(cb); };
+    },
+  });
+  const bluetoothCubeRef = useRef<typeof bluetoothCube | null>(null);
+  useEffect(() => { bluetoothCubeRef.current = bluetoothCube; }, [bluetoothCube]);
+
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const recorder = (m: string, ts: number) => {
+      if (phaseSnapshotRef.current !== 'running') return;
+      movesRef.current.push({ m, ts: ts - solveStartTsRef.current });
+    };
+    subs.add(recorder);
+    return () => { subs.delete(recorder); };
+  }, []);
+
+  // ── Live cube-state mirror ──────────────────────────────────────
+  const [liveMoves, setLiveMoves] = useState<string[]>([]);
+  useEffect(() => { setLiveMoves([]); }, [scramble]);
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const mirror = (m: string) => { setLiveMoves(prev => [...prev, m]); };
+    subs.add(mirror);
+    return () => { subs.delete(mirror); };
+  }, []);
+
+  // ── WCA inspection-phase move classification ───────────────────
+  const [inspectionIllegalCount, setInspectionIllegalCount] = useState(0);
+  const prevPhaseRef = useRef(timer.phase);
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    if (timer.phase === 'inspecting' && prev !== 'inspecting' && prev !== 'holding') {
+      setInspectionIllegalCount(0);
+    }
+    prevPhaseRef.current = timer.phase;
+  }, [timer.phase]);
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const inspector = (m: string) => {
+      const ph = phaseSnapshotRef.current;
+      if (ph !== 'inspecting' && ph !== 'holding' && ph !== 'ready') return;
+      const trimmed = m.trim();
+      if (!trimmed) return;
+      if (/^[xyzXYZ][2']?$/.test(trimmed)) return;
+      if (/[UDFBLRMESudfblr]/.test(trimmed)) setInspectionIllegalCount(c => c + 1);
+    };
+    subs.add(inspector);
+    return () => { subs.delete(inspector); };
+  }, []);
+
+  // ── Stackmat ────────────────────────────────────────────────────
+  const stackmatRecordRef = useRef<((ms: number) => void) | null>(null);
+  stackmatRecordRef.current = (ms: number) => {
+    const solve = makeSolve({ timeMs: ms, scramble: scrambleAtStartRef.current, event, penalty: 'ok' });
+    setLastPenalty('ok');
+    setByEvent(prev => ({ ...prev, [event]: [...(prev[event] ?? []), solve] }));
+    nextScramble();
+  };
+  const stackmat = useStackmat({ onStop: (ms) => stackmatRecordRef.current?.(ms) });
+
+  // ── Metronome ───────────────────────────────────────────────────
+  useEffect(() => {
+    const m = getMetronome();
+    const active = settings.metronomeOn && (timer.phase === 'inspecting' || timer.phase === 'running');
+    if (active) {
+      if (!m.isRunning()) m.start(settings.metronomeBpm);
+      else m.setBpm(settings.metronomeBpm);
+    } else if (m.isRunning()) {
+      m.stop();
+    }
+    return () => { m.stop(); };
+  }, [settings.metronomeOn, settings.metronomeBpm, timer.phase]);
+
+  // ── Press input wiring (pointer + mouse fallback) ───────────────
+  const { onPressDown, onPressUp, reset } = timer;
+  const solvesRef = useRef(solves);
+  useEffect(() => { solvesRef.current = solves; }, [solves]);
+
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const digitsRef = useRef<HTMLDivElement | null>(null);
+  const touchActiveRef = useRef(false);
+  const lastTouchEndTsRef = useRef(0);
+  // Swipe gesture tracking (idle/stopped only).
+  const swipeStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const swipeMovedRef = useRef(false);
+
+  const shouldIgnoreTimerTarget = useCallback((target: EventTarget | null): boolean => {
+    if (!(target instanceof Element)) return false;
+    return target.closest('button, a, input, textarea, select, [contenteditable="true"], [data-no-timer]') !== null;
+  }, []);
+
+  // Keep stable refs to the swipe-action handlers (defined after mutators).
+  const swipeActionsRef = useRef<{ del: () => void; next: () => void; penalty: () => void }>({
+    del: () => {}, next: () => {}, penalty: () => {},
+  });
+
+  // Native pointer listeners with { passive: false } so preventDefault works
+  // on iOS. Pointer events unify mouse/touch and (with touch-action:none in
+  // CSS) eliminate the 300ms delay + synthetic double-fire. We keep the
+  // shouldIgnoreTimerTarget guard verbatim. A movement threshold protects a
+  // hold-to-arm from being eaten by a swipe.
+  useEffect(() => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    const SWIPE_THRESHOLD = 48; // px before a drag counts as a swipe
+    const TAP_SLOP = 10;        // px wobble still counts as a press
+
+    const isIdleOrStopped = () => {
+      const ph = phaseSnapshotRef.current;
+      return ph === 'idle' || ph === 'stopped';
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (shouldIgnoreTimerTarget(e.target)) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
+      touchActiveRef.current = true;
+      swipeMovedRef.current = false;
+      swipeStartRef.current = (e.pointerType !== 'mouse' && isIdleOrStopped())
+        ? { x: e.clientX, y: e.clientY, t: performance.now() }
+        : null;
+      warmupSound();
+      onPressDown();
+    };
+    const handlePointerMove = (e: PointerEvent) => {
+      const start = swipeStartRef.current;
+      if (!start || !touchActiveRef.current) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (!swipeMovedRef.current && Math.hypot(dx, dy) > TAP_SLOP) {
+        // Movement crossed the tap-slop: this is a drag, not a hold. Cancel
+        // the arm so we never start the timer on a swipe.
+        swipeMovedRef.current = true;
+        touchActiveRef.current = false;
+        reset();
+      }
+    };
+    const handlePointerUp = (e: PointerEvent) => {
+      const start = swipeStartRef.current;
+      swipeStartRef.current = null;
+      // Swipe shortcut path: a drag that already cancelled the arm.
+      if (start && swipeMovedRef.current) {
+        const dx = e.clientX - start.x;
+        const dy = e.clientY - start.y;
+        const adx = Math.abs(dx), ady = Math.abs(dy);
+        if (Math.max(adx, ady) >= SWIPE_THRESHOLD) {
+          if (adx > ady) {
+            if (dx < 0) swipeActionsRef.current.del();
+            else swipeActionsRef.current.next();
+          } else if (dy < 0) {
+            swipeActionsRef.current.penalty();
+          }
+        }
+        swipeMovedRef.current = false;
+        lastTouchEndTsRef.current = performance.now();
+        return;
+      }
+      if (!touchActiveRef.current) return;
+      e.preventDefault();
+      touchActiveRef.current = false;
+      lastTouchEndTsRef.current = performance.now();
+      onPressUp();
+    };
+    const handlePointerCancel = () => {
+      swipeStartRef.current = null;
+      swipeMovedRef.current = false;
+      if (!touchActiveRef.current) return;
+      touchActiveRef.current = false;
+      lastTouchEndTsRef.current = performance.now();
+      onPressUp();
+    };
+
+    el.addEventListener('pointerdown', handlePointerDown, { passive: false });
+    el.addEventListener('pointermove', handlePointerMove, { passive: false });
+    el.addEventListener('pointerup', handlePointerUp, { passive: false });
+    el.addEventListener('pointercancel', handlePointerCancel, { passive: false });
+    return () => {
+      el.removeEventListener('pointerdown', handlePointerDown);
+      el.removeEventListener('pointermove', handlePointerMove);
+      el.removeEventListener('pointerup', handlePointerUp);
+      el.removeEventListener('pointercancel', handlePointerCancel);
+    };
+  }, [onPressDown, onPressUp, reset, shouldIgnoreTimerTarget]);
+
+  // Mouse handlers on the React node are now redundant (pointerdown covers
+  // mouse) but kept as a no-op guard so child buttons stay isolated and we
+  // never double-fire if a browser emits both. With touch-action:none +
+  // pointer events the synthetic mouse path is suppressed; these stay inert.
+  const onCenterMouseDown = useCallback((_e: ReactMouseEvent<HTMLDivElement>) => {}, []);
+  const onCenterMouseUp = useCallback((_e: ReactMouseEvent<HTMLDivElement>) => {}, []);
+
+  // ── Solve mutators ──────────────────────────────────────────────
+  const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
+    if (patch.penalty === 'DNF') petReact('error');
+    setByEvent(prev => ({
+      ...prev,
+      [event]: (prev[event] ?? []).map(s => s.id === solveId ? { ...s, ...patch } : s),
+    }));
+  }, [event]);
+
+  const deleteSolve = useCallback((solveId: string) => {
+    setByEvent(prev => ({
+      ...prev,
+      [event]: (prev[event] ?? []).filter(s => s.id !== solveId),
+    }));
+  }, [event]);
+
+  const changeLastPenalty = useCallback((p: Penalty) => {
+    const last = solves[solves.length - 1];
+    if (!last) return;
+    updateSolve(last.id, { penalty: p });
+    setLastPenalty(p);
+  }, [solves, updateSolve]);
+
+  const deleteLastSolve = useCallback(() => {
+    const last = solves[solves.length - 1];
+    if (!last) return;
+    if (!confirm(isZh ? '删除最后一次成绩？' : 'Delete last solve?')) return;
+    deleteSolve(last.id);
+    setLastPenalty(null);
+  }, [solves, deleteSolve, isZh]);
+
+  // Swipe-delete: no confirm dialog (gesture intent is clear), restore via
+  // the undo toast instead.
+  const swipeDeleteLast = useCallback(() => {
+    const last = solves[solves.length - 1];
+    if (!last) return;
+    const ev = event;
+    deleteSolve(last.id);
+    setLastPenalty(null);
+    setInfoToast({
+      msg: isZh ? '已删除最后一次成绩' : 'Deleted last solve',
+      undo: () => {
+        setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), last] }));
+        setLastPenalty(last.penalty);
+      },
+    });
+  }, [solves, event, deleteSolve, isZh]);
+
+  const clearAll = useCallback(() => {
+    if (!solves.length) return;
+    const evName = EVENTS.find(e => e.id === event);
+    if (!confirm(isZh
+      ? `清空当前项目「${evName?.nameZh}」的所有 ${solves.length} 次成绩？`
+      : `Clear all ${solves.length} solves of "${evName?.nameEn}"?`,
+    )) return;
+    setByEvent(prev => ({ ...prev, [event]: [] }));
+    setLastPenalty(null);
+  }, [event, isZh, solves.length]);
+
+  // Penalty action sheet (swipe-up).
+  const [penaltySheetOpen, setPenaltySheetOpen] = useState(false);
+  const openPenaltySheet = useCallback(() => {
+    if (solves.length === 0) return;
+    setPenaltySheetOpen(true);
+  }, [solves.length]);
+
+  useEffect(() => {
+    swipeActionsRef.current = {
+      del: swipeDeleteLast,
+      next: nextScramble,
+      penalty: openPenaltySheet,
+    };
+  }, [swipeDeleteLast, nextScramble, openPenaltySheet]);
+
+  // ── Target-time (time-attack) ──────────────────────────────────
+  const targetMs = useMemo<number | null>(() => {
+    const v = settings.targetMsByEvent?.[event];
+    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
+  }, [settings.targetMsByEvent, event]);
+  const isOvershot = timer.phase === 'running' && targetMs !== null && timer.displayMs > targetMs;
+  const [stopPulse, setStopPulse] = useState<'good' | 'bad' | null>(null);
+  const prevTimerPhaseRef = useRef(timer.phase);
+  useEffect(() => {
+    const prev = prevTimerPhaseRef.current;
+    if (timer.phase === 'stopped' && prev !== 'stopped' && targetMs !== null && Number.isFinite(timer.displayMs)) {
+      setStopPulse(timer.displayMs <= targetMs ? 'good' : 'bad');
+      const handle = window.setTimeout(() => setStopPulse(null), 1000);
+      prevTimerPhaseRef.current = timer.phase;
+      return () => window.clearTimeout(handle);
+    }
+    prevTimerPhaseRef.current = timer.phase;
+  }, [timer.phase, timer.displayMs, targetMs]);
+
+  // ── Modals ──────────────────────────────────────────────────────
+  const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
+  const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('replay');
+    if (!raw) return;
+    const decoded = decodeReplayParam(raw);
+    if (!decoded) {
+      console.warn('[timer] invalid ?replay= payload');
+    } else {
+      const ephemeral: Solve = {
+        id: `replay-${Date.now()}`,
+        timeMs: decoded.totalMs,
+        penalty: 'ok',
+        scramble: decoded.scramble,
+        event: decoded.event,
+        ts: Date.now(),
+        moves: decoded.moves.length > 0 ? decoded.moves : undefined,
+      };
+      setReconstructSolve(ephemeral);
+    }
+    params.delete('replay');
+    const qs = params.toString();
+    const newUrl = window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash;
+    history.replaceState(null, '', newUrl);
+  }, []);
+
+  const handlePasteReplay = useCallback(() => {
+    const raw = window.prompt(isZh ? '粘贴 replay URL 或 token：' : 'Paste a replay URL or token:', '');
+    if (raw === null) return;
+    const param = extractReplayParam(raw);
+    if (!param) { alert(isZh ? '未识别为 replay URL。' : 'Not a recognizable replay URL.'); return; }
+    const decoded = decodeReplayParam(param);
+    if (!decoded) { alert(isZh ? 'replay 数据无法解码。' : 'Failed to decode replay payload.'); return; }
+    const ephemeral: Solve = {
+      id: `replay-${Date.now()}`,
+      timeMs: decoded.totalMs,
+      penalty: 'ok',
+      scramble: decoded.scramble,
+      event: decoded.event,
+      ts: Date.now(),
+      moves: decoded.moves.length > 0 ? decoded.moves : undefined,
+    };
+    setReconstructSolve(ephemeral);
+  }, [isZh]);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [solverOpen, setSolverOpen] = useState(false);
+  const [bulkScrambleOpen, setBulkScrambleOpen] = useState(false);
+
+  // ── Fullscreen ──────────────────────────────────────────────────
+  const [fullscreen, setFullscreen] = useState(false);
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen?.();
+        setFullscreen(true);
+      } else {
+        await document.exitFullscreen?.();
+        setFullscreen(false);
+      }
+    } catch { /* needs gesture */ }
+  }, []);
+  useEffect(() => {
+    const onFs = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────
+  const phaseRef = useRef(timer.phase);
+  useEffect(() => { phaseRef.current = timer.phase; }, [timer.phase]);
+  const anyModalOpen =
+    settingsOpen || shortcutsOpen || bluetoothOpen ||
+    trainerSubsetOpen !== null || statsModalOpen ||
+    manualEntryOpen || solverOpen || bulkScrambleOpen ||
+    drillModalOpen || penaltySheetOpen ||
+    modalSolve !== null || reconstructSolve !== null;
+  const anyModalOpenRef = useRef(anyModalOpen);
+  useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (anyModalOpenRef.current) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.code === 'Space') { e.preventDefault(); warmupSound(); onPressDown(); return; }
+      if (e.code === 'Escape') { reset(); return; }
+      const ph = phaseRef.current;
+      if (ph === 'running' && multiStageActive) {
+        if (e.code === 'Digit1' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { multiStageRef.current?.markStage('cross'); return; }
+        if (e.code === 'Digit2' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { multiStageRef.current?.markStage('f2l'); return; }
+        if (e.code === 'Digit3' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { multiStageRef.current?.markStage('oll'); return; }
+      }
+      if (ph === 'running' && bldMemoActive && e.code === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault(); bldMemoRef.current?.markMemo(); return;
+      }
+      if (ph === 'holding' || ph === 'ready' || ph === 'running' || ph === 'inspecting') return;
+      const cur = solvesRef.current;
+      const last = cur[cur.length - 1];
+      if (e.code === 'KeyZ' && !e.ctrlKey && !e.metaKey) {
+        if (last) { deleteSolve(last.id); setLastPenalty(null); }
+        return;
+      }
+      if (e.code === 'Digit2' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        if (last) { const p: Penalty = last.penalty === '+2' ? 'ok' : '+2'; updateSolve(last.id, { penalty: p }); setLastPenalty(p); }
+        return;
+      }
+      if (e.code === 'KeyD' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+        if (last) { const p: Penalty = last.penalty === 'DNF' ? 'ok' : 'DNF'; updateSolve(last.id, { penalty: p }); setLastPenalty(p); }
+        return;
+      }
+      const m = e.code.match(/^Digit([1-9])$/);
+      if (m && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        const n = Number(m[1]);
+        const idx = cur.length - n;
+        if (idx >= 0) setModalSolve({ s: cur[idx], idx });
+        return;
+      }
+      if (e.code === 'Comma') { nextScramble(); return; }
+      if (e.code === 'KeyF') { toggleFullscreen(); }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (anyModalOpenRef.current) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.code === 'Space') { e.preventDefault(); onPressUp(); }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
+
+  // ── Import / export ─────────────────────────────────────────────
+  const handleExport = useCallback(() => {
+    const json = exportJson();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+  const handleExportCsv = useCallback(() => {
+    const csv = exportCsv(byEvent);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }, [byEvent]);
+  const handleExportSs = useCallback(() => {
+    const txt = exportSpeedstacks(solves);
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `cuberoot-timer-${event}-${new Date().toISOString().slice(0, 10)}.ss.txt`; a.click();
+    URL.revokeObjectURL(url);
+  }, [event, solves]);
+  const handleImport = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.txt';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result);
+        if (importJson(text)) { setByEvent(loadAll()); return; }
+        const cs = importCstimerJson(text);
+        if (cs) {
+          setByEvent(prev => {
+            const merged = { ...prev };
+            for (const [evId, list] of Object.entries(cs)) {
+              merged[evId] = [...(merged[evId] ?? []), ...list].sort((a, b) => a.ts - b.ts);
+            }
+            return merged;
+          });
+          alert(isZh ? `从 cstimer 导入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成绩。` : `Imported ${Object.values(cs).reduce((n, l) => n + l.length, 0)} solves from cstimer.`);
+          return;
+        }
+        alert(isZh ? '导入失败：文件格式无效。' : 'Import failed: invalid file.');
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, [isZh]);
+
+  // ── More menu items ─────────────────────────────────────────────
+  const moreItems = useMemo<MoreMenuItem[]>(() => [
+    ...(isMobile ? [
+      {
+        icon: <Mic size={14} />,
+        label: stackmat.status.listening
+          ? (isZh ? 'Stackmat 监听中（点击停止）' : 'Stackmat listening (stop)')
+          : (isZh ? '启用 Stackmat（麦克风）' : 'Enable Stackmat (mic)'),
+        onClick: async () => {
+          if (stackmat.status.listening) stackmat.stop();
+          else {
+            try { await stackmat.start(); }
+            catch (err) { alert(isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`); }
+          }
+        },
+      },
+      { icon: <BarChart3 size={14} />, label: isZh ? '统计' : 'Stats', onClick: () => setStatsModalOpen(true) },
+      {
+        icon: <Globe size={14} />, label: isZh ? '语言：EN' : 'Language: 中文',
+        onClick: () => { const next = isZh ? 'en' : 'zh'; i18n.changeLanguage(next); syncLangToUrl(next); },
+      },
+    ] : []),
+    ...(drillAllowed && !drillTarget ? [{
+      icon: <Crosshair size={14} />, label: isZh ? '专项练习' : 'Drill mode', onClick: () => setDrillModalOpen(true),
+    }] : []),
+    { icon: <Keyboard size={14} />, label: isZh ? '快捷键' : 'Shortcuts', onClick: () => setShortcutsOpen(true) },
+    { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: isZh ? '全屏' : 'Fullscreen', onClick: toggleFullscreen },
+    { icon: <Bluetooth size={14} />, label: isZh ? '智能魔方' : 'Smart cube', onClick: () => setBluetoothOpen(true) },
+    { icon: <Upload size={14} />, label: isZh ? '导入（自动识别 cstimer JSON）' : 'Import (auto-detects cstimer JSON)', onClick: handleImport },
+    { icon: <Download size={14} />, label: isZh ? '导出 JSON' : 'Export JSON', onClick: handleExport },
+    { icon: <FileSpreadsheet size={14} />, label: isZh ? '导出 CSV' : 'Export CSV', onClick: handleExportCsv },
+    { icon: <FileText size={14} />, label: isZh ? '导出 Speedstacks' : 'Export Speedstacks', onClick: handleExportSs },
+    { icon: <Plus size={14} />, label: isZh ? '手动录入' : 'Manual entry', onClick: () => setManualEntryOpen(true) },
+    { icon: <Link2 size={14} />, label: isZh ? '粘贴 replay 链接' : 'Paste replay URL', onClick: handlePasteReplay },
+    { icon: <Wrench size={14} />, label: isZh ? '通用求解器' : 'Solver', onClick: () => setSolverOpen(true) },
+    { icon: <ListPlus size={14} />, label: isZh ? '批量打乱' : 'Bulk scrambles', onClick: () => setBulkScrambleOpen(true) },
+    { icon: <Printer size={14} />, label: isZh ? '打印' : 'Print', onClick: () => window.print() },
+    { icon: <Trash2 size={14} />, label: isZh ? '清空当前项目' : 'Clear current event', onClick: clearAll, danger: true, disabled: !solves.length },
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n]);
+
+  const allSolves = useMemo(() => {
+    const out: Solve[] = [];
+    for (const list of Object.values(byEvent)) out.push(...list);
+    return out;
+  }, [byEvent]);
+
+  // ── Derived display (digits text + color class) ─────────────────
+  const stats = useMemo(() => summarize(solves), [solves]);
+  const inspectionLimit = settings.inspection;
+  const colorClass = useMemo(() => {
+    if (timer.phase === 'holding') return 'holding';
+    if (timer.phase === 'ready') return 'ready';
+    if (timer.phase === 'running') return 'running';
+    if (timer.phase === 'inspecting') {
+      const sec = Math.floor(timer.inspectionDisplayMs / 1000);
+      if (sec >= inspectionLimit + 2) return 'inspection-dnf';
+      if (sec >= inspectionLimit) return 'inspection-plus2';
+      if (sec >= 12) return 'inspection-warn-12';
+      if (sec >= 8) return 'inspection-warn-8';
+      return 'inspection';
+    }
+    if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'dnf';
+    return '';
+  }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, lastPenalty]);
+
+  const digitsText = useMemo(() => {
+    if (timer.phase === 'inspecting') {
+      const remaining = Math.max(0, Math.ceil((inspectionLimit * 1000 - timer.inspectionDisplayMs) / 1000));
+      if (timer.inspectionDisplayMs > inspectionLimit * 1000 + 2000) return 'DNF';
+      if (timer.inspectionDisplayMs > inspectionLimit * 1000) return '+2';
+      return remaining.toString();
+    }
+    if (timer.phase === 'running') {
+      return settings.hideTime ? '…' : formatMs(timer.displayMs, 2).replace(/\.\d+$/, '');
+    }
+    if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'DNF';
+    if (timer.phase === 'stopped' && lastPenalty === '+2') return formatMs(timer.displayMs + 2000, settings.precision) + '+';
+    return formatMs(timer.displayMs, settings.precision);
+  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision]);
+
+  const fontSize = `calc(clamp(64px, 14vw, 192px) * ${settings.timerFontScale})`;
+
+  // Rank badge centis from the last effective time (DNF -> null).
+  const stoppedCentis = useMemo<number | null>(() => {
+    if (timer.phase !== 'stopped') return null;
+    if (lastPenalty === 'DNF' || !Number.isFinite(timer.displayMs)) return null;
+    const ms = lastPenalty === '+2' ? timer.displayMs + 2000 : timer.displayMs;
+    return Math.round(ms / 10);
+  }, [timer.phase, timer.displayMs, lastPenalty]);
+
+  const eventInfoCurrent = EVENTS.find(e => e.id === event);
+  const printEventName = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
+  const eventLabel = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
+
+  // Available set for the selector: every WCA id we map to + the append ids +
+  // magic/mmagic (rendered in the main grid via ALL_EVENT_IDS, not appended).
+  // With onlyAvailable the selector renders ONLY this set, so 333ft / 333mbo
+  // (never timer events) are dropped instead of showing as stray disabled icons.
+  const availableEvents = useMemo(() => new Set<string>([
+    ...WCA_SELECTABLE, 'magic', 'mmagic', ...APPEND_EVENTS.map(e => e.id),
+  ]), []);
+  const selectorActiveId = eventToSelectorId(event);
+
+  // Picker dropdown open state (the topbar event pill opens the icon grid).
+  const [eventPickerOpen, setEventPickerOpen] = useState(false);
+
+  const distractionFree = timer.phase === 'running' && !prefersReducedMotion;
+
+  const togglePanel = useCallback((tab: PanelTab) => {
+    setPanelTab(prev => (prev === tab ? null : tab));
+  }, []);
+
+  // Auto-dismiss the info toast.
+  useEffect(() => {
+    if (!infoToast) return;
+    const h = window.setTimeout(() => setInfoToast(null), 5000);
+    return () => window.clearTimeout(h);
+  }, [infoToast]);
+
+  // ── Side-panel body ─────────────────────────────────────────────
+  const renderPanelBody = () => {
+    if (panelTab === 'times') {
+      return (
+        <>
+          <SessionSwitcher isZh={isZh} onSessionsChanged={reloadActiveSession} />
+          <div className="shell-panel-statgrid">
+            <StatsPanel solves={solves} isZh={isZh} event={event} />
+            <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
+          </div>
+          <HistoryPanel
+            solves={solves}
+            isZh={isZh}
+            onRowClick={(s, idx) => setModalSolve({ s, idx })}
+            onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
+            onQuickDelete={(id) => deleteSolve(id)}
+            onQuickComment={(s, idx) => setModalSolve({ s, idx })}
+          />
+        </>
+      );
+    }
+    if (panelTab === 'chart') {
+      return (
+        <div className="shell-chart-tab">
+          <div className="shell-chart-switch">
+            {([
+              ['histogram', isZh ? '分布' : 'Histogram'],
+              ['trend', isZh ? '趋势' : 'Trend'],
+              ['scatter', isZh ? '散点' : 'Scatter'],
+              ['hour', isZh ? '时段' : 'Hour'],
+              ['heatmap', isZh ? '日历' : 'Heatmap'],
+            ] as const).map(([k, lbl]) => (
+              <button
+                key={k}
+                type="button"
+                className={`shell-chart-chip${chartKind === k ? ' active' : ''}`}
+                onClick={() => setChartKind(k as ChartKind)}
+              >{lbl}</button>
+            ))}
+          </div>
+          <div className="shell-chart-canvas">
+            {chartKind === 'histogram' && <HistogramChart solves={solves} isZh={isZh} width={300} height={150} />}
+            {chartKind === 'trend' && <TrendChart solves={solves} isZh={isZh} width={300} height={170} />}
+            {chartKind === 'scatter' && <ScatterChart solves={solves} isZh={isZh} width={300} height={170} />}
+            {chartKind === 'hour' && <HourChart solves={solves} isZh={isZh} width={300} height={150} />}
+            {chartKind === 'heatmap' && <PracticeHeatmap solves={solves} isZh={isZh} cellSize={11} />}
+          </div>
+        </div>
+      );
+    }
+    // tools
+    return (
+      <div className="shell-tools-list">
+        {moreItems.map((it, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`shell-tools-item${it.danger ? ' danger' : ''}`}
+            disabled={it.disabled}
+            onClick={() => { if (!it.disabled) it.onClick(); }}
+          >
+            {it.icon && <span className="shell-tools-icon">{it.icon}</span>}
+            <span>{it.label}</span>
+          </button>
+        ))}
+        <button type="button" className="shell-tools-item" onClick={() => setSettingsOpen(true)}>
+          <span className="shell-tools-icon"><SettingsIcon size={14} /></span>
+          <span>{isZh ? '设置' : 'Settings'}</span>
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${isDesktop && panelTab ? ' panel-open' : ''}`}
+      data-solving={timer.phase === 'running' ? 'true' : undefined}
+    >
+      <div className="print-only-header">
+        <h1>{isZh ? '魔方计时器 — ' : 'Cube Timer — '}{printEventName}</h1>
+        <div className="print-meta">{new Date().toLocaleString()} · {solves.length} {isZh ? '次' : 'solves'}</div>
+      </div>
+
+      {/* ── Topbar ──────────────────────────────────────────── */}
+      <header className="shell-topbar surface-chrome">
+        <div className="shell-topbar-left">
+          {modePill}
+          <div className="shell-event-pick">
+            <button
+              type="button"
+              className="shell-event-btn"
+              onClick={() => setEventPickerOpen(o => !o)}
+              aria-expanded={eventPickerOpen}
+              title={isZh ? '项目' : 'Event'}
+            >
+              <span className="shell-event-label">{eventLabel}</span>
+            </button>
+            {eventPickerOpen && (
+              <>
+                <div className="shell-event-backdrop" onClick={() => setEventPickerOpen(false)} />
+                <div className="shell-event-pop">
+                  <WcaEventSelector
+                    availableEvents={availableEvents}
+                    isZh={isZh}
+                    selectedEvent={selectorActiveId}
+                    onSelect={(id) => { setEvent(selectorIdToEvent(id)); setEventPickerOpen(false); }}
+                    appendEvents={APPEND_EVENTS}
+                    collapsibleAppend
+                    onlyAvailable
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="shell-topbar-rank">
+          {timer.phase !== 'stopped' && (
+            <span className="shell-rank-idle">{isZh ? '世界 #—' : 'World #—'}</span>
+          )}
+        </div>
+        <div className="shell-topbar-right">
+          <button
+            type="button"
+            className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
+            onClick={() => setBluetoothOpen(true)}
+            title={bluetoothCube.status.connected
+              ? (isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`)
+              : (isZh ? '智能魔方（iOS 用 Bluefy）' : 'Smart cube (use Bluefy on iOS)')}
+          >
+            <Bluetooth size={14} />
+          </button>
+          <HeaderToggles className="shell-toggles" />
+          <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
+            <SettingsIcon size={14} />
+          </button>
+          <MoreMenu items={moreItems} isZh={isZh} />
+        </div>
+      </header>
+
+      {/* ── Main column ─────────────────────────────────────── */}
+      <div className="shell-main">
+        <TimingSurface
+          phase={timer.phase}
+          colorClass={colorClass}
+          fontSize={fontSize}
+          digits={digitsText}
+          digitsRef={digitsRef}
+          surfaceRef={surfaceRef}
+          className={`${isOvershot ? 'target-overshot' : ''} ${stopPulse ? `target-pulse-${stopPulse}` : ''}`.trim()}
+          onMouseDown={onCenterMouseDown}
+          onMouseUp={onCenterMouseUp}
+          scrambleSlot={
+            <div
+              className={`scramble-strip${settings.compactScramble ? ' compact' : ''}`}
+              onClick={() => {
+                const action = settings.scrambleClickAction;
+                if (action === 'none') return;
+                if (action === 'copy') { try { void navigator.clipboard.writeText(scramble); } catch { /* ignore */ } return; }
+                nextScramble();
+              }}
+              title={settings.scrambleClickAction === 'copy'
+                ? (isZh ? '点击复制打乱' : 'Click to copy')
+                : settings.scrambleClickAction === 'none'
+                  ? (isZh ? '点击无操作' : 'Click disabled')
+                  : (isZh ? '点击换一个打乱' : 'Click to refresh')}
+            >
+              <span className="scramble-text">{scramble || <span className="scramble-empty">—</span>}</span>
+              <button
+                type="button"
+                className="scramble-refresh"
+                data-no-timer
+                onClick={(e) => { e.stopPropagation(); nextScramble(); }}
+                title={isZh ? '换一个打乱' : 'New scramble'}
+              >
+                <RefreshCw size={14} />
+              </button>
+            </div>
+          }
+          cornerSlot={settings.showCubePreview ? (
+            <div className={`shell-corner-net${previewHidden ? ' hidden' : ''}`}>
+              <button
+                type="button"
+                className="cube-preview-toggle"
+                data-no-timer
+                onClick={() => setPreviewHidden(h => !h)}
+                title={previewHidden ? (isZh ? '显示打乱预览' : 'Show preview') : (isZh ? '隐藏打乱预览' : 'Hide preview')}
+                aria-label={previewHidden ? (isZh ? '显示打乱预览' : 'Show scramble preview') : (isZh ? '隐藏打乱预览' : 'Hide scramble preview')}
+              >
+                {previewHidden ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+              {!previewHidden && (
+                <button
+                  type="button"
+                  className="shell-corner-net-img"
+                  data-no-timer
+                  onClick={() => setPreviewEnlarged(true)}
+                  title={isZh ? '点击放大' : 'Tap to enlarge'}
+                >
+                  <CubePreview event={event} scramble={scramble} size={isMobile ? 10 : 14} colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
+                </button>
+              )}
+            </div>
+          ) : undefined}
+        >
+          {/* sub-content under the digits */}
+          {timer.phase === 'running' && targetMs !== null && (
+            <div className={`timer-target-indicator${isOvershot ? ' overshot' : ''}`}>
+              <Target size={12} />
+              <span className="target-label">{isZh ? '目标' : 'target'} {formatTargetTime(targetMs)}</span>
+              <span className="target-sep">·</span>
+              <span className="target-delta">
+                {(() => {
+                  const deltaMs = targetMs - timer.displayMs;
+                  const sign = deltaMs >= 0 ? '+' : '-';
+                  return `${sign}${(Math.abs(deltaMs) / 1000).toFixed(2)}s`;
+                })()}
+              </span>
+            </div>
+          )}
+          {timer.phase === 'idle' && (
+            <div className="timer-hint">
+              {IS_TOUCH
+                ? (isZh ? <>按住屏幕{settings.inspection > 0 ? '开始观察' : '进入准备'}</> : <>Tap and hold to {settings.inspection > 0 ? 'inspect' : 'ready'}</>)
+                : (isZh ? <>按住 <code>空格</code> {settings.inspection > 0 ? '开始观察' : '进入准备'}</> : <>Hold <code>Space</code> to {settings.inspection > 0 ? 'inspect' : 'ready'}</>)}
+            </div>
+          )}
+          {timer.phase === 'inspecting' && (
+            <>
+              <div className="timer-hint">{isZh ? '观察中… 再按空格开始上手' : 'Inspecting… press space again to grip'}</div>
+              {inspectionIllegalCount > 0 && (
+                <div className="inspection-illegal-warn" title={isZh ? 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF' : 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'}>
+                  <AlertTriangle size={14} />
+                  <span>{isZh ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）` : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`}</span>
+                </div>
+              )}
+            </>
+          )}
+          {timer.phase === 'running' && multiStageActive && (
+            <div className="timer-stage-splits">
+              <span className={`stage-chip ${multiStage.liveStages.cross !== undefined ? 'done' : ''}`}>
+                {isZh ? '十字' : 'Cross'}{multiStage.liveStages.cross !== undefined ? ` ${formatMs(multiStage.liveStages.cross)}` : ''}
+              </span>
+              <span className={`stage-chip ${multiStage.liveStages.f2l !== undefined ? 'done' : ''}`}>
+                F2L{multiStage.liveStages.f2l !== undefined ? ` ${formatMs(multiStage.liveStages.f2l)}` : ''}
+              </span>
+              <span className={`stage-chip ${multiStage.liveStages.oll !== undefined ? 'done' : ''}`}>
+                OLL{multiStage.liveStages.oll !== undefined ? ` ${formatMs(multiStage.liveStages.oll)}` : ''}
+              </span>
+            </div>
+          )}
+          {timer.phase === 'running' && bldMemoActive && (
+            <div className="timer-stage-splits">
+              {bldMemo.memoMs === undefined ? (
+                <button
+                  type="button"
+                  className="stage-chip stage-chip-action"
+                  data-no-timer
+                  onClick={(e) => { e.stopPropagation(); bldMemoRef.current?.markMemo(); }}
+                >{isZh ? '记忆中… 按 Enter 或点这里' : 'Memo… press Enter or tap'}</button>
+              ) : (
+                <>
+                  <span className="stage-chip done">{isZh ? '记忆' : 'Memo'} {formatMs(bldMemo.memoMs)}</span>
+                  <span className="stage-chip">{isZh ? '执行中…' : 'Executing…'}</span>
+                </>
+              )}
+            </div>
+          )}
+          {timer.phase === 'stopped' && solves.length > 0 && (
+            <div className="shell-stopped-row">
+              <div className="timer-quick-actions">
+                <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} data-no-timer onClick={() => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2')}>+2</button>
+                <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} data-no-timer onClick={() => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF')}>DNF</button>
+                <button className="qa-btn danger" data-no-timer onClick={deleteLastSolve}>{isZh ? '删除' : 'Delete'}</button>
+                <button className="qa-btn" data-no-timer onClick={nextScramble}>{isZh ? '换打乱' : 'Next'}</button>
+              </div>
+              <div className="shell-rank-slot">
+                <RankBadge eventId={event} centis={stoppedCentis} type="single" isZh={isZh} />
+              </div>
+            </div>
+          )}
+        </TimingSurface>
+
+        {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
+        <div className="shell-undersurface surface-chrome">
+          <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
+          {(event === 'oll' || event === 'pll') && (() => {
+            const total = event === 'oll' ? OLL_CASES.length : PLL_CASES.length;
+            const subset = event === 'oll' ? settings.ollSubset : settings.pllSubset;
+            const sel = subset && subset.length > 0 ? subset.length : null;
+            return (
+              <button type="button" className="trainer-subset-btn" onClick={() => setTrainerSubsetOpen(event === 'oll' ? 'oll' : 'pll')} title={isZh ? '选择训练子集' : 'Pick training subset'}>
+                {sel !== null ? (isZh ? `子集 (${sel}/${total})` : `Subset (${sel}/${total})`) : (isZh ? `全部 (${total})` : `All (${total})`)}
+              </button>
+            );
+          })()}
+        </div>
+        {event === '333' && <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} /></div>}
+        {(event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1' || event === 'mega') && (
+          <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
+        )}
+
+        {/* Desktop persistent 4-stat rail / phone peek-stat line */}
+        <div className="shell-stat-rail surface-chrome">
+          <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
+          <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
+          <span className="shell-stat"><span className="shell-stat-lbl">{isZh ? '最佳' : 'best'}</span> <span className="shell-stat-val">{stats.best}</span></span>
+          <span className="shell-stat"><span className="shell-stat-lbl">σ</span> <span className="shell-stat-val">{stats.sd}</span></span>
+        </div>
+
+        {/* Phone swipe-hint row (auto-hides after a few solves) */}
+        {isMobile && solves.length < 3 && (
+          <div className="shell-swipe-hint surface-chrome">
+            {isZh ? '左滑删除   右滑换打乱   上滑罚分' : 'swipe ← delete   → new   ↑ penalty'}
+          </div>
+        )}
+      </div>
+
+      {/* ── Side panel: desktop dock / phone bottom sheet ────── */}
+      <nav className="shell-bottombar surface-chrome">
+        <button type="button" className={`shell-bottombar-btn${panelTab === 'times' ? ' active' : ''}`} onClick={() => togglePanel('times')}>
+          <ListOrdered size={18} /><span>{isZh ? '成绩' : 'Times'}</span>
+        </button>
+        <button type="button" className={`shell-bottombar-btn${panelTab === 'chart' ? ' active' : ''}`} onClick={() => togglePanel('chart')}>
+          <LineChart size={18} /><span>{isZh ? '图表' : 'Chart'}</span>
+        </button>
+        <button type="button" className={`shell-bottombar-btn${panelTab === 'tools' ? ' active' : ''}`} onClick={() => togglePanel('tools')}>
+          <Wrench size={18} /><span>{isZh ? '工具' : 'Tools'}</span>
+        </button>
+      </nav>
+
+      {panelTab && (
+        <>
+          {!isDesktop && <div className="shell-sheet-backdrop" onClick={() => setPanelTab(null)} />}
+          <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
+            <div className="shell-panel-tabs">
+              <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{isZh ? '成绩' : 'Times'}</button>
+              <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{isZh ? '图表' : 'Chart'}</button>
+              <button type="button" className={`shell-panel-tab${panelTab === 'tools' ? ' active' : ''}`} onClick={() => setPanelTab('tools')}>{isZh ? '工具' : 'Tools'}</button>
+              <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={isZh ? '关闭' : 'Close'}><X size={16} /></button>
+            </div>
+            <div className="shell-panel-body">{renderPanelBody()}</div>
+          </aside>
+        </>
+      )}
+
+      {/* ── Enlarged cube net ────────────────────────────────── */}
+      {previewEnlarged && settings.showCubePreview && (
+        <div className="shell-net-enlarge" onClick={() => setPreviewEnlarged(false)}>
+          <div className="shell-net-enlarge-inner" onClick={(e) => e.stopPropagation()}>
+            <CubePreview event={event} scramble={scramble} size={40} colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Penalty action sheet (swipe-up) ──────────────────── */}
+      {penaltySheetOpen && (
+        <div className="shell-sheet-backdrop" onClick={() => setPenaltySheetOpen(false)}>
+          <div className="shell-penalty-sheet" onClick={(e) => e.stopPropagation()}>
+            <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} onClick={() => { changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2'); setPenaltySheetOpen(false); }}>+2</button>
+            <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} onClick={() => { changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF'); setPenaltySheetOpen(false); }}>DNF</button>
+            <button className="qa-btn" onClick={() => { changeLastPenalty('ok'); setPenaltySheetOpen(false); }}>OK</button>
+            <button className="qa-btn danger" onClick={() => { setPenaltySheetOpen(false); deleteLastSolve(); }}>{isZh ? '删除' : 'Delete'}</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modals (unchanged) ───────────────────────────────── */}
+      {modalSolve && (() => {
+        const liveIdx = solves.findIndex(x => x.id === modalSolve.s.id);
+        const displayIdx = liveIdx >= 0 ? liveIdx : modalSolve.idx;
+        const isLatest = liveIdx >= 0 && liveIdx === solves.length - 1;
+        return (
+          <SolveModal
+            key={modalSolve.s.id}
+            solve={modalSolve.s}
+            index={displayIdx}
+            isZh={isZh}
+            onClose={() => setModalSolve(null)}
+            onChangePenalty={(p) => {
+              updateSolve(modalSolve.s.id, { penalty: p });
+              setModalSolve({ ...modalSolve, s: { ...modalSolve.s, penalty: p } });
+              if (isLatest) setLastPenalty(p);
+            }}
+            onChangeComment={(text) => {
+              updateSolve(modalSolve.s.id, { comment: text });
+              setModalSolve({ ...modalSolve, s: { ...modalSolve.s, comment: text } });
+            }}
+            onDelete={() => { deleteSolve(modalSolve.s.id); setModalSolve(null); if (isLatest) setLastPenalty(null); }}
+            onOpenReconstruct={() => setReconstructSolve(modalSolve.s)}
+          />
+        );
+      })()}
+
+      {reconstructSolve && (
+        <ReconstructModal key={reconstructSolve.id} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} />
+      )}
+
+      {settingsOpen && <SettingsPanel isZh={isZh} event={event} onClose={() => setSettingsOpen(false)} />}
+
+      <PbToast kind={pbToast?.kind ?? null} value={pbToast?.value ?? ''} isZh={isZh} onClose={() => setPbToast(null)} />
+
+      {infoToast && (
+        <div className="shell-info-toast" role="status">
+          <span>{infoToast.msg}</span>
+          {infoToast.undo && (
+            <button type="button" onClick={() => { infoToast.undo?.(); setInfoToast(null); }}>{isZh ? '撤销' : 'Undo'}</button>
+          )}
+        </div>
+      )}
+
+      {shortcutsOpen && <ShortcutsModal isZh={isZh} onClose={() => setShortcutsOpen(false)} />}
+      {trainerSubsetOpen && <TrainerSubsetModal kind={trainerSubsetOpen} isZh={isZh} onClose={() => setTrainerSubsetOpen(null)} />}
+
+      {bluetoothOpen && (
+        <BluetoothModal
+          isZh={isZh}
+          cube={bluetoothCube}
+          onClose={() => setBluetoothOpen(false)}
+          onConnect={async () => {
+            try { await bluetoothCube.connect(); }
+            catch (err) {
+              const msg = (err as Error).message ?? String(err);
+              if (msg !== 'NO_WEB_BLUETOOTH') alert(isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`);
+            }
+          }}
+        />
+      )}
+
+      {statsModalOpen && <StatsModal event={event} solves={solves} isZh={isZh} onClose={() => setStatsModalOpen(false)} />}
+
+      {manualEntryOpen && (
+        <ManualEntryModal
+          event={event}
+          currentScramble={scramble}
+          isZh={isZh}
+          onClose={() => setManualEntryOpen(false)}
+          onSubmit={(solve) => {
+            setByEvent(prev => ({ ...prev, [solve.event]: [...(prev[solve.event] ?? []), solve] }));
+            setLastPenalty(solve.penalty);
+            setManualEntryOpen(false);
+          }}
+        />
+      )}
+
+      {solverOpen && <SolverModal isZh={isZh} onClose={() => setSolverOpen(false)} />}
+      {bulkScrambleOpen && <BulkScrambleModal defaultEvent={event} isZh={isZh} onClose={() => setBulkScrambleOpen(false)} />}
+
+      {drillModalOpen && (
+        <DrillModal
+          isZh={isZh}
+          activeCase={drillTarget}
+          initialType={event === 'pll' ? 'pll' : 'oll'}
+          onPick={(type, id) => { setDrillTarget({ type, id }); setScrambleNonce(n => n + 1); }}
+          onExit={() => setDrillTarget(null)}
+          onClose={() => setDrillModalOpen(false)}
+        />
+      )}
+
+      {bluetoothCube.status.connected && (
+        <div className="timer-live-cube" title={isZh ? '智能魔方实时状态（每次拧动同步）' : 'Live smart-cube state (updates per move)'}>
+          <LiveCubeState event={event} scramble={scramble} moves={liveMoves} size={120} />
+        </div>
+      )}
+    </div>
+  );
+}
