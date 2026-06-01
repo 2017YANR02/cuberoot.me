@@ -248,6 +248,43 @@ impl F2leoSolverWasm {
             self.f2leo.borrow().as_ref().unwrap().get_stage(&alg, st)
         }
     }
+
+    /// 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤,返回 JSON {"len","combo","sols"}。
+    /// pseudo=false → F2LEO,true → Pseudo F2LEO;两者破坏 y 对称(同 eo),最优可能只在 rot·y
+    /// 帧达成,故步骤前缀用 enumerate_small 返回的真实帧(可能含尾 y,如 "x' y")。
+    /// stage:0=cross/1=xc/2=xxc/3=xxxc;extra:超出最优步数(0=只最优长度全部解);cap:最多条数。
+    pub fn solve_moves(
+        &self,
+        scramble: &str,
+        pseudo: bool,
+        face: u32,
+        stage: u32,
+        extra: u32,
+        cap: u32,
+    ) -> String {
+        let alg = string_to_alg(scramble);
+        let rot = ROTS[(face as usize).min(5)];
+        let stage = stage.min(3) as usize;
+        let cap = cap as usize;
+        let label = |combo: &[usize]| {
+            combo
+                .iter()
+                .map(|&s| SLOT_LABELS[s.min(3)])
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        let (len, frame, combo, sols) = if pseudo {
+            self.ensure_pseudo();
+            let b = self.pseudo.borrow();
+            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap)
+        } else {
+            self.ensure_f2leo();
+            let b = self.f2leo.borrow();
+            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap)
+        };
+        let strs: Vec<String> = sols.iter().map(|p| fmt_moves(&frame, p)).collect();
+        sols_json(len, &label(&combo), &strs)
+    }
 }
 
 /// 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。

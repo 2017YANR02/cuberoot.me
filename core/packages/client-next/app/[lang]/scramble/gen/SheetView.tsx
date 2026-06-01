@@ -10,19 +10,29 @@
  * click-to-cycle through Cross → XC → XXC → XXXC → XXXXC; the index cell copies.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { Copy } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Copy, ExternalLink } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
-import { visualcubeApiHref } from '@/lib/visualcube-link';
 import { isAnalysableScramble } from '@/lib/cross-solver';
+import type { Method } from '@/components/StageSolver';
 import type { WcaFormat } from './_wca-round';
 import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
+import { CUBE_FILL, BADGE_FACE_ORDER } from '@/lib/cube-colors';
 
-// CSS colour class per BADGE_ORDER slot (White Yellow Red Orange Blue Green).
-const BADGE_CLASS = ['cx-w', 'cx-y', 'cx-r', 'cx-o', 'cx-b', 'cx-g'];
+// StageSolver 拉 ~27MB WASM 表 + TwistyPlayer 3D,首屏没必要打进 gen 包;
+// 行内展开第一次点开时才按需加载(ssr:false,纯 client 组件)。
+const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
+
+// gen 变体 key 与 StageSolver Method 一一对应(std/eo/pair/pseudo/pseudo_pair/f2leo/pseudo_f2leo)。
+const VARIANT_METHODS = new Set<string>(['std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo']);
+const variantToMethod = (v: string): Method => (VARIANT_METHODS.has(v) ? (v as Method) : 'std');
+// metric → StageSolver initialStage 索引(cross=0 / xc=1 / xxc=2 / xxxc=3 / xxxxc=4)。
+const METRIC_STAGE_IDX: Record<Metric, number> = { cross: 0, xc: 1, xxc: 2, xxxc: 3, xxxxc: 4 };
+
 // 逐行徽标点击循环顺序;label: cross='C',其它=大写指标名。
 const METRIC_CYCLE: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
 const metricBadgeLabel = (m: Metric): string => (m === 'cross' ? 'C' : m.toUpperCase());
@@ -93,6 +103,8 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     ? t('决赛', 'Final')
     : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  // 行内展开:一次只展开一条(手风琴),按 scramble 字符串记忆(过滤/重排都稳)。
+  const [expanded, setExpanded] = useState<string | null>(null);
   const showCross = !!rowDigits;
   // 逐行徽标指标覆盖(按 scramble 字符串 key,过滤/重排都稳)。顶部 tab 变 → 全部回落到全局指标。
   const [rowMetric, setRowMetric] = useState<Map<string, Metric>>(new Map());
@@ -115,16 +127,20 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1200);
     } catch { /* swallow */ }
   };
-  // 单击打乱 → 跳分析器(仅纯 HTM 三阶打乱可分析;非 3x3 / 含 wide-move 的打乱不跳)。
-  // 选中文字时不跳,避免误触。analyzer 用 `_` 分隔,空格替成下划线再交给 URLSearchParams 编码。
-  // 阶段跟随该行徽标当前指标,变体跟随顶部下拉,这样跳过去直接看到对应解法。
-  const openAnalyzer = (scramble: string, m: Metric) => {
+  // 单击打乱 → 行内展开 StageSolver(就地看具体解法 + 动画),不再跳走。
+  // 选中文字时不展开,避免误触。展开是手风琴:再点同一条收起,点别条切换。
+  const toggleExpand = (scramble: string) => {
     if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
+    setExpanded((cur) => (cur === scramble ? null : scramble));
+  };
+  // 在分析器中打开(深链):保留原 URL 契约(空格替下划线 + stage + variant),
+  // 让用户仍能跳到完整分析器页面。用真 <a href> 让中键/Ctrl+点新开页。
+  const analyzerHref = (scramble: string, m: Metric) => {
     const q = new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') });
     const stage = METRIC_STAGE[m];
     if (stage && stage !== 'cross') q.set('stage', stage);
     if (variant && variant !== 'std') q.set('variant', variant);
-    router.push(`${langPrefix}/scramble/analyzer?${q.toString()}`);
+    return `${langPrefix}/scramble/analyzer?${q.toString()}`;
   };
   const colSpan = showPreview ? 3 : 2;
   const rows: ReactNode[] = [];
@@ -137,17 +153,19 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         </tr>,
       );
     }
+    const isExpanded = expanded === a.scramble;
     const rowCls = [
       a.isExtra ? 'is-extra' : '',
       copiedIdx === i ? 'is-copied' : '',
+      isExpanded ? 'is-expanded' : '',
     ].filter(Boolean).join(' ');
     const canAnalyze = !!a.scramble && isAnalysableScramble(a.scramble);
     rows.push(
       <tr
         key={i}
         className={rowCls}
-        onClick={canAnalyze ? () => openAnalyzer(a.scramble, effMetric(a.scramble)) : undefined}
-        title={canAnalyze ? t('点击用分析器分析这条打乱', 'Click to open in analyzer') : undefined}
+        onClick={canAnalyze ? () => toggleExpand(a.scramble) : undefined}
+        title={canAnalyze ? t('点击展开解法', 'Click to expand solutions') : undefined}
         style={{ cursor: canAnalyze ? 'pointer' : 'default' }}
       >
         <td
@@ -186,7 +204,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                   <span className="gen-tn-cross-c">{metricBadgeLabel(em)}</span>
                   {digits
                     ? digits.map((d, ci) => (
-                        <b key={ci} className={`gen-tn-cx ${BADGE_CLASS[ci]}`}>{d}</b>
+                        <b key={ci} className="gen-tn-cx" style={{ color: CUBE_FILL[BADGE_FACE_ORDER[ci]] }}>{d}</b>
                       ))
                     : <b className="gen-tn-cx-na">–</b>}
                 </span>
@@ -202,22 +220,66 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
             {eventHasScramblePreview(event) && a.scramble && (() => {
               // sq1 是 portrait 1:2,普通 48 会被压成很小;给它更大基准让 SVG 撑得开。
               const previewSize = event === 'sq1' ? 56 : 48;
-              const preview = <ScramblePreview2D event={event} scramble={a.scramble} size={previewSize} clockColors={clockColors} sq1Colors={sq1Colors} megaColors={megaColors} />;
-              const href = visualcubeApiHref(event, a.scramble);
-              return href ? (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}  /* 否则会触发整行 click-to-copy */
-                  title={t('打开大图', 'Open full-size image')}
-                >{preview}</a>
-              ) : preview;
+              return (
+                <ScramblePreview2D
+                  event={event}
+                  scramble={a.scramble}
+                  size={previewSize}
+                  clockColors={clockColors}
+                  sq1Colors={sq1Colors}
+                  megaColors={megaColors}
+                  fullSizeLink
+                  linkTitle={t('打开大图', 'Open full-size image')}
+                />
+              );
             })()}
           </td>
         )}
       </tr>,
     );
+    // 行内解法面板:点开后整行(跨所有列)展开 StageSolver,就地看具体解法 + 动画。
+    if (isExpanded && canAnalyze) {
+      const em = effMetric(a.scramble);
+      rows.push(
+        <tr key={`exp-${i}`} className="gen-tn-solver-row">
+          {/* colSpan 行内面板:去掉 td 默认 padding/border,让 StageSolver 占满整行宽。 */}
+          <td colSpan={colSpan} style={{ padding: 0, borderTop: 'none' }}>
+            <div
+              style={{ width: '100%', margin: '4px 0 8px', display: 'flex', flexDirection: 'column', gap: 6 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <a
+                  href={analyzerHref(a.scramble, em)}
+                  onClick={(e) => {
+                    // 普通左键走 client 导航;中键/Ctrl/Cmd/Shift 保留浏览器新开页默认行为
+                    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+                    e.preventDefault();
+                    router.push(analyzerHref(a.scramble, em));
+                  }}
+                  title={t('在分析器中打开', 'Open in analyzer')}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    textDecoration: 'none', cursor: 'pointer', padding: '2px 4px',
+                    font: 'inherit', fontSize: '0.78rem', color: 'var(--gen-accent)',
+                  }}
+                >
+                  <ExternalLink size={13} />
+                  <span>{t('分析器', 'Analyzer')}</span>
+                </a>
+              </div>
+              <StageSolver
+                scramble={a.scramble}
+                lang={isZh ? 'zh' : 'en'}
+                initialMethod={variantToMethod(variant)}
+                initialStage={METRIC_STAGE_IDX[em]}
+                compact
+              />
+            </div>
+          </td>
+        </tr>,
+      );
+    }
   });
   return (
     <div className="gen-tn-sheet">

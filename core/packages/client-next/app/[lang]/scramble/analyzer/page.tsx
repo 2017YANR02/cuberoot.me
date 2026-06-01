@@ -29,7 +29,7 @@ import {
   type WorkerVariant,
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
-import RustCrossSection from './RustCrossSection';
+import StageSolver from '@/components/StageSolver';
 import { Flag } from '@/components/Flag';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { WheelPicker } from '@/components/WheelPicker';
@@ -554,6 +554,27 @@ function AnalyzePageInner() {
         </div>
       )}
 
+      <section className="analyze-primary">
+        <h2 className="analyze-primary-title">
+          {t('逐阶段最优解 (Rust WASM)', 'Optimal Stage Solver (Rust WASM)')}
+        </h2>
+        <p className="analyze-primary-sub">
+          {t(
+            '逐视角最优步数 + 具体转动 + 多解 + 动画,支持标准 / EO / Pair / Pseudo / F2LEO 等 7 种方法',
+            'per-orientation optimal length + actual moves + multiple solutions + animation; 7 methods',
+          )}
+        </p>
+        <StageSolver scramble={scramble} lang={lang} />
+      </section>
+
+      <details className="analyze-cfop">
+        <summary>
+          {t(
+            '全 CFOP 解法枚举(十字 + F2L + OLL + PLL)',
+            'Full CFOP solution enumerator (Cross + F2L + OLL + PLL)',
+          )}
+        </summary>
+
       <div className="analyze-filters">
         <label className="analyze-control">
           <span>{t('变体', 'Variant')}</span>
@@ -738,14 +759,13 @@ function AnalyzePageInner() {
         </div>
       )}
 
-      <RustCrossSection scramble={scramble} lang={lang} />
-
       <footer className="analyze-footer">
         {t('算法移植自', 'Algorithm ported from')}{' '}
         <a href="https://speedcubedb.com/analyze" target="_blank" rel="noopener noreferrer">
           speedcubedb.com/analyze
         </a>
       </footer>
+      </details>
     </div>
   );
 }

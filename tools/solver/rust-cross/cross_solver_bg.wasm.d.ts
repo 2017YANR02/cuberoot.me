@@ -12,6 +12,7 @@ export const crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: n
 export const f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
 export const f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
 export const f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+export const f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
 export const f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
 export const variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
 export const variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];

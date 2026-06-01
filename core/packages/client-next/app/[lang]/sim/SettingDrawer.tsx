@@ -7,6 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { CUBE_FILL } from '@/lib/cube-colors';
 import World from './cuber/world';
 import CubeGroup from './cuber/group';
 import Cubelet from './cuber/cubelet';
@@ -48,15 +49,15 @@ export interface SimSettings {
   faceColors: { U: string; D: string; L: string; R: string; F: string; B: string };
 }
 
-/** WCA 标准 6 面色 — 跟 cuber/define.ts COLORS 一致 */
-export const DEFAULT_FACE_COLORS = {
-  U: '#FFFFFF',
-  D: '#FEFE00',
-  L: '#FFA100',
-  R: '#EE0000',
-  F: '#00D800',
-  B: '#0000F2',
-} as const;
+/** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
+export const DEFAULT_FACE_COLORS: { U: string; D: string; L: string; R: string; F: string; B: string } = {
+  U: CUBE_FILL.U,
+  D: CUBE_FILL.D,
+  L: CUBE_FILL.L,
+  R: CUBE_FILL.R,
+  F: CUBE_FILL.F,
+  B: CUBE_FILL.B,
+};
 
 export const DEFAULT_SETTINGS: SimSettings = {
   sensitivity: 50,

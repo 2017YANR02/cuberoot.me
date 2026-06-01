@@ -1,0 +1,215 @@
+/* StageSolver — 自包含逐阶段解法浏览器(analyzer + gen 共用)。
+   page-scope 调色板 --sv-*(镜像 analyzer --az-*,light/dark 自动翻),不依赖某页全局 token。 */
+
+.stsv {
+  --sv-surface: #ffffff;
+  --sv-text: #171717;
+  --sv-text-sub: #737373;
+  --sv-text-mute: #95938e;
+  --sv-border: #e5e5e5;
+  --sv-border-strong: #d4d4d4;
+  --sv-accent: #c15f3c;
+  --sv-accent-soft: color-mix(in srgb, #c15f3c 8%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .stsv {
+    --sv-surface: #1f1f1f;
+    --sv-text: #ededed;
+    --sv-text-sub: #a3a3a3;
+    --sv-text-mute: #737373;
+    --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
+    --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
+    --sv-accent: #d97757;
+    --sv-accent-soft: color-mix(in srgb, #d97757 16%, transparent);
+  }
+}
+html[data-theme='dark'] .stsv {
+  --sv-surface: #1f1f1f;
+  --sv-text: #ededed;
+  --sv-text-sub: #a3a3a3;
+  --sv-text-mute: #737373;
+  --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
+  --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
+  --sv-accent: #d97757;
+  --sv-accent-soft: color-mix(in srgb, #d97757 16%, transparent);
+}
+
+/* ── status ── */
+.stsv-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sv-text-sub);
+  font-size: 13px;
+  padding: 8px 0;
+}
+.stsv-err { color: var(--sv-accent); }
+.stsv-spin { animation: stsv-spin 1s linear infinite; }
+@keyframes stsv-spin { to { transform: rotate(360deg); } }
+
+/* ── controls ── */
+.stsv-controls {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+.stsv-control { display: flex; flex-direction: column; gap: 4px; }
+.stsv-control > span { font-size: 12px; color: var(--sv-text-sub); }
+.stsv-control select {
+  font: inherit;
+  padding: 6px 8px;
+  min-width: 150px;
+  background: var(--sv-surface);
+  color: var(--sv-text);
+  border: 1px solid var(--sv-border-strong);
+  border-radius: 6px;
+}
+.stsv-control select:focus { outline: none; border-color: var(--sv-accent); }
+.stsv-compute {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  padding: 7px 18px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: var(--sv-accent);
+  color: #fff;
+  border: none;
+}
+.stsv-compute:disabled { opacity: 0.55; cursor: default; }
+.stsv-compute-all {
+  background: none;
+  color: var(--sv-accent);
+  border: 1px solid var(--sv-border-strong);
+}
+.stsv-meta { font-size: 11px; color: var(--sv-text-mute); margin: 0 0 10px; }
+.stsv-hint { color: var(--sv-text-mute); font-size: 12px; margin: 2px 0 8px; }
+
+/* ── 6 视角对比 ── */
+.stsv-angles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+/* 视角格 = 该底面十字色填充(--face-bg / --face-fg 由组件注入),不再写字母。 */
+.stsv-angle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 46px;
+  padding: 8px 12px;
+  background: var(--face-bg, var(--sv-surface));
+  /* 边框 = 自身色压暗一档,白格也有清晰边缘 */
+  border: 1px solid color-mix(in srgb, var(--face-bg, var(--sv-border)) 72%, black);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--face-fg, var(--sv-text));
+  font: inherit;
+}
+.stsv-angle[data-empty='true'] { opacity: 0.38; }
+.stsv-angle:hover { filter: brightness(1.07); }
+/* 选中:用 accent 描边而非改背景,保留底面色可辨 */
+.stsv-angle.is-sel { outline: 3px solid var(--sv-accent); outline-offset: 2px; }
+.stsv-angle-n { font-size: 18px; font-weight: 700; line-height: 1; color: var(--face-fg, var(--sv-text)); }
+.stsv-angle-dot { color: var(--face-fg, var(--sv-text-mute)); font-size: 16px; line-height: 1; }
+.stsv-angle-best {
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  font-size: 9px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--sv-accent);
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* ── result: 解法列表 + 共享播放器 ── */
+.stsv-result {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+.stsv-sols { flex: 1; min-width: 0; }
+.stsv-sols-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.stsv-sols-head strong { font-size: 14px; color: var(--sv-text); }
+.stsv-sols-face { display: inline-flex; align-items: center; }
+.stsv-sols-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sv-text) 28%, transparent);
+}
+.stsv-combo { color: var(--sv-text-mute); font-size: 12px; }
+.stsv-len { margin-left: auto; color: var(--sv-accent); font-weight: 600; font-size: 13px; }
+.stsv-sols-count { color: var(--sv-text-mute); font-size: 12px; margin-bottom: 6px; }
+.stsv-sols-ms { color: var(--sv-text-mute); }
+.stsv-sols-more { color: var(--sv-accent); }
+.stsv-empty { color: var(--sv-text-mute); font-size: 13px; padding: 6px 0; }
+
+.stsv-sols-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.stsv-sol-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.stsv-sol-row:hover { background: var(--sv-accent-soft); }
+.stsv-sol-row.is-active { background: var(--sv-accent-soft); border-color: var(--sv-accent); }
+.stsv-sol-row code {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--sv-text);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+.stsv-sol-len { color: var(--sv-text-mute); font-size: 11px; min-width: 16px; text-align: right; }
+.stsv-sol-play,
+.stsv-sol-copy {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sv-text-mute);
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  flex: 0 0 auto;
+}
+.stsv-sol-play:hover,
+.stsv-sol-copy:hover { color: var(--sv-accent); }
+.stsv-sol-row.is-active .stsv-sol-play { color: var(--sv-accent); }
+
+/* 共享播放器:右侧固定,跟随页面滚动黏顶 */
+.stsv-player {
+  flex: 0 0 300px;
+  position: sticky;
+  top: 12px;
+}
+.stsv-player twisty-player { width: 100%; max-width: 100%; }
+.stsv-compact .stsv-player { flex-basis: 240px; }
+
+/* ── 窄屏 ── */
+@media (max-width: 720px) {
+  .stsv-result { flex-direction: column-reverse; }
+  .stsv-player { position: static; flex-basis: auto; width: 100%; max-width: 320px; margin: 0 auto; }
+}
+@media (max-width: 480px) {
+  .stsv-controls { gap: 10px; }
+  .stsv-control select { min-width: 120px; }
+  .stsv-angle { min-width: 48px; padding: 6px 8px 8px; }
+}
