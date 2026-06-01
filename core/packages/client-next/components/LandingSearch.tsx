@@ -218,8 +218,7 @@ export default function LandingSearch({ cards, lang }: Props) {
     if (algSetMatches.length > 0) { const a = algSetMatches[0]; pushInternal(langHref(`/alg/${a.puzzle}/${a.setSlug}`)); return; }
     if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (compMatches.length > 0) {
-      const lp = compLinkProps(compMatches[0].id);
-      pushInternal(lp.href.startsWith('/') ? `${langPrefix}${lp.href}` : lp.href);
+      pushInternal(compLinkProps(compMatches[0].id, undefined, lang).href);
       return;
     }
     if (reconMatches.length > 0) { pushInternal(langHref(`/recon/${reconMatches[0].id}`)); return; }
@@ -281,6 +280,7 @@ export default function LandingSearch({ cards, lang }: Props) {
           <Link
             key={p.wcaId}
             href={langHref(`/wca/persons/${p.wcaId}`)}
+            prefetch={false}
             className="landing-search-item landing-search-item--rich"
             onClick={closeAfter}
           >
@@ -525,6 +525,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                         <Link
                           key={`s:${s.id}`}
                           href={langHref(`/wca/${s.id}`)}
+                          prefetch={false}
                           className="landing-search-item"
                           onClick={closeAfter}
                         >
@@ -539,6 +540,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                       <Link
                         key={`m:${parent.id}:${metric.id}`}
                         href={`${langHref(`/wca/${parent.id}`)}#metric=${metric.id}`}
+                        prefetch={false}
                         className="landing-search-item"
                         onClick={closeAfter}
                       >
@@ -562,6 +564,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <Link
                     key={a.id}
                     href={langHref(`/wca/about/${a.id}`)}
+                    prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
@@ -583,6 +586,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <Link
                     key={s.slug}
                     href={langHref(`/code/stack/${s.slug}`)}
+                    prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
@@ -634,6 +638,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <Link
                     key={`${a.puzzle}/${a.setSlug}`}
                     href={langHref(`/alg/${a.puzzle}/${a.setSlug}`)}
+                    prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
@@ -666,14 +671,10 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {visibleComps.map(c => {
                   const displayName = localizeCompName(c.id, c.name, isZh);
                   const cityStr = c.city ? localizeCity(c.city, isZh) : '';
-                  const linkProps = compLinkProps(c.id);
-                  // compLinkProps returns { href, ... }; href is bare /wca/comp/<slug> — prefix lang.
-                  const href = linkProps.href.startsWith('/') ? `${langPrefix}${linkProps.href}` : linkProps.href;
                   return (
                     <Link
                       key={c.id}
-                      {...linkProps}
-                      href={href}
+                      {...compLinkProps(c.id, undefined, lang)}
                       className="landing-search-item landing-search-item--rich"
                       onClick={closeAfter}
                     >
@@ -710,6 +711,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <Link
                     key={r.id}
                     href={langHref(`/recon/${r.id}`)}
+                    prefetch={false}
                     className="landing-search-item landing-search-item--rich"
                     onClick={closeAfter}
                   >

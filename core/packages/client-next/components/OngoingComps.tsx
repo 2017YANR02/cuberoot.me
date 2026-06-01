@@ -190,7 +190,7 @@ export default function OngoingComps({ lang }: Props) {
               {g.comps.map(c => (
                 <Link
                   key={c.id}
-                  {...compLinkProps(c.id)}
+                  {...compLinkProps(c.id, undefined, lang)}
                   className="ongoing-comps-chip"
                   title={`${c.name}  ${formatDateRangeIso(c.start_date, c.end_date)}`}
                 >
@@ -206,7 +206,7 @@ export default function OngoingComps({ lang }: Props) {
               {g.comps.map(c => (
                 <Link
                   key={c.id}
-                  {...compLinkProps(c.id)}
+                  {...compLinkProps(c.id, undefined, lang)}
                   className="ongoing-comps-chip"
                   title={`${c.name}  ${formatDateRangeIso(c.start_date, c.end_date)}`}
                 >
