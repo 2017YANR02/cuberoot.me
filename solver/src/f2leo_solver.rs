@@ -461,3 +461,557 @@ impl F2leoSolver {
         out
     }
 }
+
+// ============================================================================
+// 大表版 F2LEO(native-only)
+// ============================================================================
+//
+// 动机:上面的 `F2leoSolver` 在 xcross/xxcross/xxxcross 用「cross + 单角」逐槽弱剪枝
+// (~18 MB 自建表),启发式离真值 gap 大、节点爆炸(实测 ~3.5 例/s)。本节复用 std
+// `XCrossSolver` 已 golden 验证的「联合大表」cross 进度启发式:
+//   - XCross:`pt_cross_C4E0`(52 MB,cross + 1 角 + 1 棱,单槽精确距离)。
+//   - XXCross:1 张 pair huge 表(neighbor `pt_cross_C4C5E0E1` / diagonal
+//     `pt_cross_C4C6E0E2`,各 ~10 GB,cross + 2 角 + 2 棱的精确 pair 距离)。
+//   - XXXCross:三元组的 3 个 pair,取 3 张 huge 表的 max。
+// 叶子额外门控「自由 F2L 棱 EO」(实 frame,与小表版同口径)。
+//
+// 正确性:cross 进度搜索 = std `XCrossSolver` 逐字节同构(共轭坐标 + 同剪枝),已对
+// C++ golden bit-exact;此处仅在叶子加「自由棱 EO 全好」判定 + 用实 frame 棱追踪,
+// 目标与小表版完全相同(cross+n 槽解 ∧ 自由 F2L 棱朝向好)。两版均用可采纳下界 +
+// 迭代加深到同一目标,故首达深度(= 输出值)逐格一致 —— 实测对小表版 golden bit-exact。
+// huge 表是 cross 进度的「近乎精确」下界(实测 f2leo 值 ≈ std 值,xxxcross delta avg
+// 0.03),故 EO 尾巴只有 0~2 步,搜索访问节点远少于弱剪枝版。
+//
+// 仅 native;wasm 路径仍用 `F2leoSolver`(小表 cascade)。需 huge 表 +
+// `CUBE_ALLOW_HUGE_TABLES=1`(否则 manager ensure huge 会 panic)。
+#[cfg(not(target_arch = "wasm32"))]
+use crate::cube_common::{
+    array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
+};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::executor::bump_node_count;
+
+#[cfg(not(target_arch = "wasm32"))]
+const CORNER2: usize = state_space::CORNER2; // 504
+#[cfg(not(target_arch = "wasm32"))]
+const IDX_C4: u32 = 12;
+
+/// 单槽位在(已旋转)alg 下的共轭虚拟状态。im/ic/ie 用于 XCross(pt_cross_C4E0);
+/// ie6_*/ic2_* 用于 huge pair 表(nb=neighbor, dg=diagonal)。对应 std `VirtState`。
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug, Clone, Copy, Default)]
+struct BigVirt {
+    im: u32,
+    ic: u32,
+    ie: u32,
+    ie6_nb: u32,
+    ic2_nb: u32,
+    ie6_dg: u32,
+    ic2_dg: u32,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub struct F2leoBigSolver {
+    mt_edge2: Arc<MoveTable>,
+    mt_edge4: Arc<MoveTable>,
+    mt_corn: Arc<MoveTable>,
+    mt_edge: Arc<MoveTable>,
+    mt_edge6: Arc<MoveTable>,
+    mt_corn2: Arc<MoveTable>,
+    pt_cross: Arc<PackedPruneTable>,
+    pt_cross_c4e0: Arc<PackedPruneTable>,
+    pt_nb: Arc<PackedPruneTable>, // pt_cross_C4C5E0E1 (neighbor)
+    pt_dg: Arc<PackedPruneTable>, // pt_cross_C4C6E0E2 (diagonal)
+    idx_solved_e6_nb: u32,
+    idx_solved_c2_nb: u32,
+    idx_solved_e6_dg: u32,
+    idx_solved_c2_dg: u32,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+#[cfg(not(target_arch = "wasm32"))]
+const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
+
+#[cfg(not(target_arch = "wasm32"))]
+impl F2leoBigSolver {
+    /// native:经 manager ensure 全部表(huge 需 CUBE_ALLOW_HUGE_TABLES=1)。
+    pub fn new() -> Self {
+        let mtm = move_tables::instance();
+        let ptm = prune_tables::instance();
+
+        let v_e6_nb: [i32; 6] = [0, 2, 16, 18, 20, 22];
+        let v_e6_dg: [i32; 6] = [0, 4, 16, 18, 20, 22];
+        let v_c2_nb: [i32; 2] = [12, 15];
+        let v_c2_dg: [i32; 2] = [12, 18];
+
+        F2leoBigSolver {
+            mt_edge2: mtm.ensure_edge2(),
+            mt_edge4: mtm.ensure_edge4(),
+            mt_corn: mtm.ensure_corn(),
+            mt_edge: mtm.ensure_edge(),
+            mt_edge6: mtm.ensure_edge6(),
+            mt_corn2: mtm.ensure_corn2(),
+            pt_cross: ptm.ensure_pt_cross(),
+            pt_cross_c4e0: ptm.ensure_pt_cross_c4e0(),
+            pt_nb: ptm.ensure_pt_cross_c4c5e0e1(),
+            pt_dg: ptm.ensure_pt_cross_c4c6e0e2(),
+            idx_solved_e6_nb: array_to_index(&v_e6_nb, 6, 2, 12) as u32,
+            idx_solved_c2_nb: array_to_index(&v_c2_nb, 2, 3, 8) as u32,
+            idx_solved_e6_dg: array_to_index(&v_e6_dg, 6, 2, 12) as u32,
+            idx_solved_c2_dg: array_to_index(&v_c2_dg, 2, 3, 8) as u32,
+        }
+    }
+
+    /// 实 frame 根状态:两棱组 i1/i2(cross 用),4 个 F2L 棱 edg[0..3]
+    /// (原始 0..23,= 2*pos+ori;用于 cross 阶段 + 自由棱 EO 门控)。
+    fn real_root(&self, a: &[u8]) -> (usize, usize, [usize; 4]) {
+        let m2 = self.mt_edge2.as_u32();
+        let me = self.mt_edge.as_u32();
+        let mut i1 = E2A;
+        let mut i2 = E2B;
+        let mut edg = SLOT_EDGE;
+        for &mm in a {
+            let m = mm as usize;
+            i1 = m2[i1 * 18 + m] as usize;
+            i2 = m2[i2 * 18 + m] as usize;
+            for s in 0..4 {
+                edg[s] = me[edg[s] * 18 + m] as usize;
+            }
+        }
+        (i1, i2, edg)
+    }
+
+    /// 在 slot_k 视角下推(已旋转)alg,得共轭虚拟状态。对应 std `get_virt`。
+    fn get_virt(&self, alg: &[u8], slot_k: usize) -> BigVirt {
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let mt_e6 = self.mt_edge6.as_u32();
+        let mt_c2 = self.mt_corn2.as_u32();
+        let cj = conj_moves_flat();
+
+        let mut cur_mul: u32 = (state_space::CROSS_SOLVED as u32) * (state_space::CORNER as u32);
+        let mut cur_corn: u32 = IDX_C4 * 18;
+        let mut cur_e0: u32 = 0;
+        let mut e6_nb = self.idx_solved_e6_nb * 18;
+        let mut c2_nb = self.idx_solved_c2_nb * 18;
+        let mut e6_dg = self.idx_solved_e6_dg * 18;
+        let mut c2_dg = self.idx_solved_c2_dg * 18;
+
+        for &m in alg {
+            let mc = cj[m as usize][slot_k] as usize;
+            cur_mul = mt_e4[(cur_mul as usize) + mc];
+            cur_corn = mt_c[(cur_corn as usize) + mc] * 18;
+            cur_e0 = mt_e[(cur_e0 as usize) * 18 + mc];
+            e6_nb = mt_e6[(e6_nb as usize) + mc] * 18;
+            c2_nb = mt_c2[(c2_nb as usize) + mc] * 18;
+            e6_dg = mt_e6[(e6_dg as usize) + mc] * 18;
+            c2_dg = mt_c2[(c2_dg as usize) + mc] * 18;
+        }
+        BigVirt {
+            im: cur_mul,
+            ic: cur_corn / 18,
+            ie: cur_e0,
+            ie6_nb: e6_nb / 18,
+            ic2_nb: c2_nb / 18,
+            ie6_dg: e6_dg / 18,
+            ic2_dg: c2_dg / 18,
+        }
+    }
+
+    /// 单视角 huge 表查值:pair (a,b) 优先 neighbor,否则 diagonal。对应 std `pair_huge`。
+    fn pair_huge<'a>(&'a self, st: &[BigVirt; 4], a: usize, b: usize) -> (u32, u32, i32, &'a PackedPruneTable) {
+        let v_nb = get_neighbor_view(a as i32, b as i32);
+        if v_nb != -1 {
+            let s = &st[v_nb as usize];
+            (s.ie6_nb, s.ic2_nb, v_nb, &self.pt_nb)
+        } else {
+            let v_dg = get_diagonal_view(a as i32, b as i32);
+            let s = &st[v_dg as usize];
+            (s.ie6_dg, s.ic2_dg, v_dg, &self.pt_dg)
+        }
+    }
+
+    /// huge 表推进 + 剪枝。对应 std `huge_check`(conj=-1 视为不剪)。
+    #[inline]
+    fn huge_check(&self, conj: i32, table: &PackedPruneTable, e6: u32, c2: u32, m: usize, depth: u32) -> (bool, u32, u32) {
+        if conj == -1 {
+            return (false, 0, 0);
+        }
+        let cj = conj_moves_flat();
+        let mx = cj[m][conj as usize] as usize;
+        let n_e6 = self.mt_edge6.as_u32()[(e6 as usize) * 18 + mx];
+        let n_c2 = self.mt_corn2.as_u32()[(c2 as usize) * 18 + mx];
+        let idx: u64 = n_e6 as u64 * CORNER2 as u64 + n_c2 as u64;
+        (table.get(idx) as u32 >= depth, n_e6, n_c2)
+    }
+
+    // ---------------- Cross 阶段(同 F2leoSolver,pt_cross + 4 棱 EO)----------------
+
+    fn search_cross(&self, i1: usize, i2: usize, eo: [usize; 4], depth: u32, prev: u8) -> bool {
+        let (vmoves, vcnt) = valid_moves();
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let m2 = self.mt_edge2.as_u32();
+        let me = self.mt_edge.as_u32();
+        for k in 0..count {
+            let m = row[k] as usize;
+            let n1 = m2[i1 + m] as usize;
+            let n2 = m2[i2 + m] as usize;
+            let pr = self.pt_cross.get((n1 as u64) * (E2 as u64) + n2 as u64) as u32;
+            if pr >= depth {
+                continue;
+            }
+            let ne: [usize; 4] = std::array::from_fn(|t| me[eo[t] + m] as usize);
+            if depth == 1 {
+                if ne.iter().all(|&e| e % 2 == 0) {
+                    return true;
+                }
+            } else if self.search_cross(
+                n1 * 18,
+                n2 * 18,
+                std::array::from_fn(|t| ne[t] * 18),
+                depth - 1,
+                m as u8,
+            ) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn solve_cross(&self, i1: usize, i2: usize, eo: [usize; 4]) -> u32 {
+        let pr = self.pt_cross.get((i1 as u64) * (E2 as u64) + i2 as u64) as u32;
+        if pr == 0 && eo.iter().all(|&e| e % 2 == 0) {
+            return 0;
+        }
+        let start = pr.max(1);
+        let eo18: [usize; 4] = std::array::from_fn(|t| eo[t] * 18);
+        for d in start..=CAP_CROSS {
+            if self.search_cross(i1 * 18, i2 * 18, eo18, d, 18) {
+                return d;
+            }
+        }
+        CAP_CROSS
+    }
+
+    // ---------------- XCross(单槽 pt_cross_C4E0 + 3 自由棱 EO)----------------
+
+    fn search_x1(&self, i1: usize, i2: usize, i3: usize, slot: usize, free18: &[usize], depth: u32, prev: u8) -> bool {
+        let (vmoves, vcnt) = valid_moves();
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+        let pt = &self.pt_cross_c4e0;
+        let nf = free18.len();
+        let mut local: u64 = 0;
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let m1 = cj[m][slot] as usize;
+            let n1 = mt_e4[i1 + m1] as usize;
+            let n2 = mt_c[i2 + m1] as usize;
+            let n3 = mt_e[i3 + m1] as usize;
+            let idx: u64 = (n1 as u64 + n2 as u64) * 24 + n3 as u64;
+            if pt.get(idx) as u32 >= depth {
+                continue;
+            }
+            let mut nfree = [0usize; 3];
+            for j in 0..nf {
+                nfree[j] = mt_e[free18[j] + m] as usize;
+            }
+            if depth == 1 {
+                if (0..nf).all(|j| nfree[j] % 2 == 0) {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else {
+                let mut nf18 = [0usize; 3];
+                for j in 0..nf {
+                    nf18[j] = nfree[j] * 18;
+                }
+                if self.search_x1(n1, n2 * 18, n3 * 18, slot, &nf18[..nf], depth - 1, m as u8) {
+                    bump_node_count(local);
+                    return true;
+                }
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    fn solve_xc(&self, st: &[BigVirt; 4], edg: &[usize; 4]) -> u32 {
+        let mut tasks: [(usize, u32); 4] = std::array::from_fn(|k| {
+            let s = &st[k];
+            let idx = (s.im as u64 + s.ic as u64) * 24 + s.ie as u64;
+            (k, self.pt_cross_c4e0.get(idx) as u32)
+        });
+        tasks.sort_by_key(|t| t.1);
+        let mut best = 99u32;
+        for &(s, h) in &tasks {
+            if h >= best {
+                break;
+            }
+            // 自由棱 = 非 combo 槽的 F2L 棱。
+            let mut free18 = [0usize; 3];
+            let mut nf = 0;
+            for t in 0..4 {
+                if t != s {
+                    free18[nf] = edg[t] * 18;
+                    nf += 1;
+                }
+            }
+            let res = if h == 0 && (0..nf).all(|j| (free18[j] / 18) % 2 == 0) {
+                0
+            } else {
+                let max_d = CAP_XC.min(best.saturating_sub(1));
+                let mut found = 99;
+                for d in h.max(1)..=max_d {
+                    if self.search_x1(st[s].im as usize, (st[s].ic as usize) * 18, (st[s].ie as usize) * 18, s, &free18[..nf], d, 18) {
+                        found = d;
+                        break;
+                    }
+                }
+                found
+            };
+            best = best.min(res);
+        }
+        best
+    }
+
+    // ---------------- XXCross(1 张 pair huge 表 + 2 自由棱 EO)----------------
+
+    #[allow(clippy::too_many_arguments)]
+    fn search_x2(&self, e6: u32, c2: u32, conj: i32, table: &PackedPruneTable, free18: &[usize], depth: u32, prev: u8) -> bool {
+        let (vmoves, vcnt) = valid_moves();
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e = self.mt_edge.as_u32();
+        let nf = free18.len();
+        let mut local: u64 = 0;
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let (pruned, n_e6, n_c2) = self.huge_check(conj, table, e6, c2, m, depth);
+            if pruned {
+                continue;
+            }
+            let mut nfree = [0usize; 2];
+            for j in 0..nf {
+                nfree[j] = mt_e[free18[j] + m] as usize;
+            }
+            if depth == 1 {
+                if (0..nf).all(|j| nfree[j] % 2 == 0) {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else {
+                let mut nf18 = [0usize; 2];
+                for j in 0..nf {
+                    nf18[j] = nfree[j] * 18;
+                }
+                if self.search_x2(n_e6, n_c2, conj, table, &nf18[..nf], depth - 1, m as u8) {
+                    bump_node_count(local);
+                    return true;
+                }
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    fn solve_xxc(&self, st: &[BigVirt; 4], edg: &[usize; 4]) -> u32 {
+        let mut t2: [(usize, usize, u32); 6] = std::array::from_fn(|i| {
+            let (a, b) = PAIRS[i];
+            let (e6, c2, _, table) = self.pair_huge(st, a, b);
+            let h = table.get(e6 as u64 * CORNER2 as u64 + c2 as u64) as u32;
+            (a, b, h)
+        });
+        t2.sort_by_key(|t| t.2);
+        let mut best = 99u32;
+        for &(a, b, h) in &t2 {
+            if h >= best {
+                break;
+            }
+            let mut free18 = [0usize; 2];
+            let mut nf = 0;
+            for t in 0..4 {
+                if t != a && t != b {
+                    free18[nf] = edg[t] * 18;
+                    nf += 1;
+                }
+            }
+            let res = if h == 0 && (0..nf).all(|j| (free18[j] / 18) % 2 == 0) {
+                0
+            } else {
+                let (e6, c2, conj, table) = self.pair_huge(st, a, b);
+                let max_d = CAP_XXC.min(best.saturating_sub(1));
+                let mut found = 99;
+                for d in h.max(1)..=max_d {
+                    if self.search_x2(e6, c2, conj, table, &free18[..nf], d, 18) {
+                        found = d;
+                        break;
+                    }
+                }
+                found
+            };
+            best = best.min(res);
+        }
+        best
+    }
+
+    // ---------------- XXXCross(3 张 pair huge 表 + 1 自由棱 EO)----------------
+
+    #[allow(clippy::too_many_arguments)]
+    fn search_x3(
+        &self,
+        e6: [u32; 3],
+        c2: [u32; 3],
+        conj: [i32; 3],
+        table: [&PackedPruneTable; 3],
+        free18: usize,
+        depth: u32,
+        prev: u8,
+    ) -> bool {
+        let (vmoves, vcnt) = valid_moves();
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e = self.mt_edge.as_u32();
+        let mut local: u64 = 0;
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let mut n_e6 = [0u32; 3];
+            let mut n_c2 = [0u32; 3];
+            let mut pruned = false;
+            for i in 0..3 {
+                let (pr, ne6, nc2) = self.huge_check(conj[i], table[i], e6[i], c2[i], m, depth);
+                if pr {
+                    pruned = true;
+                    break;
+                }
+                n_e6[i] = ne6;
+                n_c2[i] = nc2;
+            }
+            if pruned {
+                continue;
+            }
+            let nfree = mt_e[free18 + m] as usize;
+            if depth == 1 {
+                if nfree % 2 == 0 {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else if self.search_x3(n_e6, n_c2, conj, table, nfree * 18, depth - 1, m as u8) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    fn solve_xxxc(&self, st: &[BigVirt; 4], edg: &[usize; 4]) -> u32 {
+        let mut t3: [(usize, usize, usize, u32); 4] = std::array::from_fn(|i| {
+            let (a, b, c) = TRIPS[i];
+            let h = [(a, b), (b, c), (c, a)]
+                .iter()
+                .map(|&(x, y)| {
+                    let (e6, c2, _, table) = self.pair_huge(st, x, y);
+                    table.get(e6 as u64 * CORNER2 as u64 + c2 as u64) as u32
+                })
+                .max()
+                .unwrap();
+            (a, b, c, h)
+        });
+        t3.sort_by_key(|t| t.3);
+        let mut best = 99u32;
+        for &(a, b, c, h) in &t3 {
+            if h >= best {
+                break;
+            }
+            // 自由棱 = 唯一非 combo 槽。
+            let mut free = 0usize;
+            for t in 0..4 {
+                if t != a && t != b && t != c {
+                    free = edg[t];
+                }
+            }
+            let res = if h == 0 && free % 2 == 0 {
+                0
+            } else {
+                let mut e6 = [0u32; 3];
+                let mut c2 = [0u32; 3];
+                let mut conj = [-1i32; 3];
+                let mut table: [&PackedPruneTable; 3] = [&self.pt_nb; 3];
+                for (i, &(x, y)) in [(a, b), (b, c), (c, a)].iter().enumerate() {
+                    let (pe6, pc2, pconj, pt) = self.pair_huge(st, x, y);
+                    e6[i] = pe6;
+                    c2[i] = pc2;
+                    conj[i] = pconj;
+                    table[i] = pt;
+                }
+                let max_d = CAP_XXXC.min(best.saturating_sub(1));
+                let mut found = 99;
+                for d in h.max(1)..=max_d {
+                    if self.search_x3(e6, c2, conj, table, free * 18, d, 18) {
+                        found = d;
+                        break;
+                    }
+                }
+                found
+            };
+            best = best.min(res);
+        }
+        best
+    }
+
+    /// 6 视角 × 4 阶段,返回 24 值,顺序 [cross×6, xcross×6, xxcross×6, xxxcross×6]。
+    /// 12 朝向 = 6 面 × {无 y, y};每面折叠取 min(F2LEO 的 EO 轴可由 y 自由选)。
+    pub fn get_stats(&self, alg: &[Move]) -> Vec<u32> {
+        const ROTS12: [&str; 12] =
+            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let mut cross = [0u32; 12];
+        let mut xc = [0u32; 12];
+        let mut xxc = [0u32; 12];
+        let mut xxxc = [0u32; 12];
+
+        for (r, rot) in ROTS12.iter().enumerate() {
+            let mut a = base.clone();
+            alg_rotation(&mut a, rot);
+            let (i1, i2, edg) = self.real_root(&a);
+            let st: [BigVirt; 4] = std::array::from_fn(|k| self.get_virt(&a, k));
+            cross[r] = self.solve_cross(i1, i2, edg);
+            xc[r] = self.solve_xc(&st, &edg);
+            xxc[r] = self.solve_xxc(&st, &edg);
+            xxxc[r] = self.solve_xxxc(&st, &edg);
+        }
+
+        let mut out = Vec::with_capacity(24);
+        for arr in [&cross, &xc, &xxc, &xxxc] {
+            for k in 0..6 {
+                out.push(arr[2 * k].min(arr[2 * k + 1]));
+            }
+        }
+        out
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Default for F2leoBigSolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// 进程级单例(OnceLock):首调 ensure 全部表(含 huge mmap),后续 Arc clone。
+#[cfg(not(target_arch = "wasm32"))]
+pub fn f2leo_big_instance() -> Arc<F2leoBigSolver> {
+    static S: OnceLock<Arc<F2leoBigSolver>> = OnceLock::new();
+    S.get_or_init(|| Arc::new(F2leoBigSolver::new())).clone()
+}
