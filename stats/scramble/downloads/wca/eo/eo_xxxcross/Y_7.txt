@@ -1,6 +1,6 @@
 # Scramble samples — eo / eo_xxxcross / Y / bin 7
-# Population in this bin: 8
-# Samples listed: 8 (all entries in this bin)
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-05-30
 # Columns: id,scramble,bottom_color
@@ -13,3 +13,4 @@
 2261587001,R D R B2 D' R L D' B U2 L2 U2 B' R2 U2 F' D,Y
 3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y
 4381056012,F2 L U2 B2 F2 R2 U2 D' L U' R2 D2 B2 U' R' D',Y
+5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y
