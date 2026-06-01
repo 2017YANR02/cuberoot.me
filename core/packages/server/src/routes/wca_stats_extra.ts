@@ -276,42 +276,72 @@ const RANK_TTL_MS = 24 * 60 * 60_000;
 const rankCache = new Map<string, RankIndex>();
 const rankInflight = new Map<string, Promise<RankIndex | null>>();
 
-async function buildRankIndex(event: string, isAvg: boolean): Promise<RankIndex | null> {
+// scope: 'W' 世界 | `N:<countryId>` 国家 | `K:<continentId>` 大洲.
+// 国家/大洲 scope 懒构建,只缓存被请求过的(用户多半只查自己一个国家 + 一个大洲).
+async function buildRankIndex(event: string, isAvg: boolean, scope: string): Promise<RankIndex | null> {
   const t0 = Date.now();
   try {
-    // 每位上榜选手在该 (event,type) 的个人最佳.value>0 排除 DNF(-1)/DNS(-2)/0.
-    const rows = await query<{ m: number }>(
-      `SELECT MIN(value)::int AS m
-       FROM wca_results_top
-       WHERE event_id = ? AND is_avg = ? AND value > 0
-       GROUP BY wca_id`,
-      [event, isAvg],
-    );
+    // 每位上榜选手在该 (event,type[,地域]) 的个人最佳.value>0 排除 DNF(-1)/DNS(-2)/0.
+    let sql: string;
+    const params: unknown[] = [event, isAvg];
+    if (scope === 'W') {
+      sql = `SELECT MIN(value)::int AS m FROM wca_results_top
+             WHERE event_id = ? AND is_avg = ? AND value > 0
+             GROUP BY wca_id`;
+    } else if (scope.startsWith('N:')) {
+      sql = `SELECT MIN(value)::int AS m FROM wca_results_top
+             WHERE event_id = ? AND is_avg = ? AND value > 0 AND person_country_id = ?
+             GROUP BY wca_id`;
+      params.push(scope.slice(2));
+    } else {
+      // 'K:<continentId>' —— join wca_countries 取该大洲全部国家
+      sql = `SELECT MIN(t.value)::int AS m FROM wca_results_top t
+             JOIN wca_countries co ON co.id = t.person_country_id
+             WHERE t.event_id = ? AND t.is_avg = ? AND t.value > 0 AND co.continent_id = ?
+             GROUP BY t.wca_id`;
+      params.push(scope.slice(2));
+    }
+    const rows = await query<{ m: number }>(sql, params);
     const values = new Int32Array(rows.length);
     for (let i = 0; i < rows.length; i++) values[i] = Number(rows[i]!.m);
     values.sort(); // Int32Array.sort 默认数值升序
-    console.log(`[rank-for] built ${event}|${isAvg ? 'avg' : 'single'} n=${values.length} in ${Date.now() - t0}ms`);
+    console.log(`[rank-for] built ${event}|${isAvg ? 'avg' : 'single'}|${scope} n=${values.length} in ${Date.now() - t0}ms`);
     return { values, builtAt: Date.now() };
   } catch (e) {
-    console.warn(`[rank-for] build failed ${event}|${isAvg ? 'avg' : 'single'}:`, (e as Error).message);
+    console.warn(`[rank-for] build failed ${event}|${isAvg ? 'avg' : 'single'}|${scope}:`, (e as Error).message);
     return null;
   }
 }
 
-async function getRankIndex(event: string, isAvg: boolean): Promise<RankIndex | null> {
-  const key = `${event}|${isAvg ? '1' : '0'}`;
+async function getRankIndex(event: string, isAvg: boolean, scope: string): Promise<RankIndex | null> {
+  const key = `${event}|${isAvg ? '1' : '0'}|${scope}`;
   const cur = rankCache.get(key);
   if (cur && Date.now() - cur.builtAt < RANK_TTL_MS) return cur;
   const pending = rankInflight.get(key);
   if (pending) return pending;
   const p = (async () => {
-    const fresh = await buildRankIndex(event, isAvg);
+    const fresh = await buildRankIndex(event, isAvg, scope);
     if (fresh) rankCache.set(key, fresh);
     rankInflight.delete(key);
     return fresh;
   })();
   rankInflight.set(key, p);
   return p;
+}
+
+// 解析国家入参(iso2 或 WCA country id)-> {id, continentId, iso2}.查不到返回 null.
+async function resolveCountryFull(
+  input: string,
+): Promise<{ id: string; continentId: string; iso2: string } | null> {
+  if (!input) return null;
+  const col = input.length === 2 ? 'iso2' : 'id';
+  const val = input.length === 2 ? input.toUpperCase() : input;
+  const rows = await query<{ id: string; continent_id: string; iso2: string | null }>(
+    `SELECT id, continent_id, iso2 FROM wca_countries WHERE ${col} = ? LIMIT 1`,
+    [val],
+  );
+  if (rows.length === 0) return null;
+  return { id: rows[0]!.id, continentId: rows[0]!.continent_id, iso2: rows[0]!.iso2 ?? '' };
 }
 
 /** 升序数组里第一个 >= target 的下标 = 严格小于 target 的元素个数. */
@@ -348,15 +378,37 @@ wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
   }
 
   const isAvg = type === 'average';
-  const idx = await getRankIndex(event, isAvg);
-  if (!idx) return c.json({ error: 'Rank index unavailable' }, 503);
+  const worldIdx = await getRankIndex(event, isAvg, 'W');
+  if (!worldIdx) return c.json({ error: 'Rank index unavailable' }, 503);
 
   // rank = (PR 严格小于 value 的人数) + 1;total = 上榜选手数.精确,无饱和.
-  const rank = lowerBound(idx.values, centis) + 1;
-  const total = idx.values.length;
+  const rank = lowerBound(worldIdx.values, centis) + 1;
+  const total = worldIdx.values.length;
+
+  const resp: Record<string, unknown> = { event, type, value: centis, rank, total };
+
+  // 可选 country -> 额外给 NR(国家)/ CR(大洲)排名.查不到国家就只返世界排名.
+  const countryInput = (c.req.query('country') ?? '').trim();
+  if (countryInput) {
+    const cn = await resolveCountryFull(countryInput);
+    if (cn) {
+      const [natIdx, contIdx] = await Promise.all([
+        getRankIndex(event, isAvg, `N:${cn.id}`),
+        getRankIndex(event, isAvg, `K:${cn.continentId}`),
+      ]);
+      resp.country = cn.iso2 || cn.id;
+      resp.continent = cn.continentId;
+      if (natIdx) {
+        resp.national = { rank: lowerBound(natIdx.values, centis) + 1, total: natIdx.values.length };
+      }
+      if (contIdx) {
+        resp.continental = { rank: lowerBound(contIdx.values, centis) + 1, total: contIdx.values.length };
+      }
+    }
+  }
 
   c.header('Cache-Control', CACHE_HEADER);
-  return c.json({ event, type, value: centis, rank, total });
+  return c.json(resp);
 });
 
 // ── 3. /v1/wca/cohort-ranks ──

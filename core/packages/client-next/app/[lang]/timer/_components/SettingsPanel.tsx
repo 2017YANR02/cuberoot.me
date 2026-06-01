@@ -18,6 +18,7 @@ import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { CountryInput } from '@/components/CountryInput';
 
 interface Props {
   isZh: boolean;
@@ -941,6 +942,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
             <span className="hint">{isZh
               ? '刷新单次/Ao5/Ao12 最佳时显示 3 秒'
               : 'shows for 3s when single/ao5/ao12 PB is broken'}</span>
+          </Row>
+          <Row label={isZh ? '排名地区' : 'Ranking region'}>
+            <CountryInput
+              value={(s.rankCountry ?? '').toLowerCase()}
+              onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
+              placeholder={isZh ? '国家(留空只显 WR)' : 'Country (blank = WR only)'}
+            />
+            <span className="hint">{isZh
+              ? '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入'
+              : 'adds CR (continent) / NR (national) ranks; auto-filled when signed in'}</span>
           </Row>
         </AccordionSection>
 

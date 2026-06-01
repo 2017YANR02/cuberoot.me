@@ -127,11 +127,17 @@ export interface TimerSettings {
    * calendar day. Per-event variants are intentionally deferred.
    */
   dailySolveGoal?: number | null;
+
+  /**
+   * 排名徽章的「用户国家」(ISO2,如 'US' / 'CN')。空 = 不限定,徽章只显 WR(世界);
+   * 设了才额外显 CR(大洲)/ NR(国家)。未设时前端回退登录 WCA 账号的国家。
+   */
+  rankCountry?: string;
 }
 
 export const DEFAULTS: TimerSettings = {
   inspection: 0,
-  soundsEnabled: true,
+  soundsEnabled: false,
   volume: 0.5,
   hideTime: false,
   theme: 'dark',
@@ -161,6 +167,7 @@ export const DEFAULTS: TimerSettings = {
   pbToast: true,
   targetMsByEvent: {},
   dailySolveGoal: null,
+  rankCountry: '',
 };
 
 /**

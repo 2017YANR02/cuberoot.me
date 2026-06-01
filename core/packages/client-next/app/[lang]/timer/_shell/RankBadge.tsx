@@ -1,25 +1,26 @@
 'use client';
 
 /**
- * RankBadge — "世界 #N" 徽章.
+ * RankBadge — "WR / CR / NR" 排名徽章.
  *
  * 给定一个有效成绩(厘秒),问服务器「这成绩放进 WCA 历史能排第几」(按选手个人最佳
- * 去重的世界排名),渲染成 accent-soft 药丸.点一下展开一行说明.
+ * 去重的排名),渲染成一排 accent-soft 药丸:WR(世界)始终显示,传了用户国家时再加
+ * CR(大洲)/ NR(国家).点任意药丸展开一行说明.
  *
- * 契约(Phase 0 锁定,Solo / Battle 共用):
- *   <RankBadge eventId={timer EventId} centis={有效成绩厘秒 | null} type='single'|'average' isZh? className? />
+ * 契约(Solo / Battle 共用):
+ *   <RankBadge eventId={EventId} centis={有效成绩厘秒 | null} type='single'|'average'
+ *              country?='US' isZh? className? />
  *   - centis 为 null / DNF -> 不渲染.
  *   - eventId 无 WCA 对应(relay/training/custom)-> 不渲染.
  *   - fetch 失败 / 离线 -> 不渲染.绝不抛错、绝不挡渲染.
- *   - 点开展开一行:比 ~X% 的同项目同类型成绩更快(X 由 rank/total 算).
- *   - loading -> 低调占位(不闪).
+ *   - country 缺省 / 服务端未部署 NR/CR -> 只显 WR.
  *
- * Token-only:背景 var(--accent-soft),文字 var(--accent);顶级(世界前 100)用
- * var(--signal-success) + Trophy 图标,其它用 Globe.
+ * Token-only:背景 var(--accent-soft);顶尖名次用 var(--signal-success) + Trophy,
+ * 其它用 var(--accent) + 地域图标.
  */
 import { useEffect, useState } from 'react';
-import { Globe, Trophy } from 'lucide-react';
-import { fetchRankFor, type RankResult } from '@/lib/rank-client';
+import { Globe, Map as MapIcon, MapPin, Trophy } from 'lucide-react';
+import { fetchRankFor, type RankResult, type RegionRank } from '@/lib/rank-client';
 import { toWcaEventForRank, eventDisplayName } from '@/app/[lang]/timer/_shared/event-bridge';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 
@@ -29,17 +30,21 @@ export interface RankBadgeProps {
   /** 有效成绩,单位厘秒;null 或 DNF -> 不渲染 */
   centis: number | null;
   type: 'single' | 'average';
+  /** 用户国家 iso2(如 'US' / 'CN');传了才查 NR/CR */
+  country?: string;
   isZh?: boolean;
   className?: string;
 }
 
-// 顶级阈值:世界前 100 视为顶尖,换金杯 + 绿色
-const TOP_TIER = 100;
+type Scope = 'WR' | 'CR' | 'NR';
+// 顶尖阈值(各档不同):到这个名次内换金杯 + 绿色
+const TOP_TIER: Record<Scope, number> = { WR: 100, CR: 20, NR: 3 };
 
 export default function RankBadge({
   eventId,
   centis,
   type,
+  country,
   isZh = false,
   className,
 }: RankBadgeProps) {
@@ -59,7 +64,7 @@ export default function RankBadge({
     let alive = true;
     setState('loading');
     setExpanded(false);
-    fetchRankFor(eventId, centis as number, type)
+    fetchRankFor(eventId, centis as number, type, country || undefined)
       .then((r) => {
         if (!alive) return;
         if (r) {
@@ -78,109 +83,67 @@ export default function RankBadge({
     return () => {
       alive = false;
     };
-  }, [valid, eventId, centis, type]);
+  }, [valid, eventId, centis, type, country]);
 
   if (!valid || state === 'none') return null;
 
   // loading:低调占位药丸,不闪
   if (state === 'loading' || !result) {
     return (
-      <span
-        className={className}
-        aria-busy="true"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.35em',
-          padding: '0.2em 0.6em',
-          borderRadius: '999px',
-          background: 'var(--accent-soft)',
-          color: 'var(--muted-foreground)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.82em',
-          opacity: 0.6,
-        }}
-      >
-        <Globe size="1em" aria-hidden />
-        {isZh ? '世界 #…' : 'World #…'}
+      <span className={`rank-badge-row${className ? ` ${className}` : ''}`} aria-busy="true">
+        <span className="rank-pill rank-pill--loading">
+          <Globe size="1em" aria-hidden />
+          {isZh ? 'WR …' : 'WR …'}
+        </span>
       </span>
     );
   }
 
-  const { rank, total } = result;
-  const topTier = rank <= TOP_TIER;
-  const rankStr = rank.toLocaleString('en-US');
-  const Icon = topTier ? Trophy : Globe;
-  const color = topTier ? 'var(--signal-success)' : 'var(--accent)';
   const eventName = eventDisplayName(wcaEvent, isZh);
   const typeWord = isZh
-    ? type === 'average'
-      ? '平均'
-      : '单次'
-    : type === 'average'
-      ? 'average'
-      : 'single';
+    ? type === 'average' ? '平均' : '单次'
+    : type === 'average' ? 'average' : 'single';
 
-  // 百分位:比 X% 的上榜成绩更快 = (1 - rank/total).clamp 到 [0, 99.9],>99 时保留 1 位小数.
-  let pct: number | null = null;
-  if (total > 0) {
-    const raw = (1 - rank / total) * 100;
-    pct = Math.max(0, Math.min(99.9, raw));
-  }
-  const pctStr = pct == null ? '' : pct > 99 ? pct.toFixed(1) : String(Math.round(pct));
+  const ICON: Record<Scope, typeof Globe> = { WR: Globe, CR: MapIcon, NR: MapPin };
+  const SCOPE_ZH: Record<Scope, string> = { WR: '世界', CR: '大洲', NR: '全国' };
+  const SCOPE_EN: Record<Scope, string> = { WR: 'World', CR: 'Continent', NR: 'National' };
 
-  const label = isZh ? `世界 #${rankStr}` : `World #${rankStr}`;
+  const pills: { scope: Scope; data: RegionRank }[] = [{ scope: 'WR', data: result.world }];
+  if (result.continental) pills.push({ scope: 'CR', data: result.continental });
+  if (result.national) pills.push({ scope: 'NR', data: result.national });
 
-  // 展开说明:百分位 —— 「放进 WCA 比赛历史成绩里」更快过多少人,非实时官方排名.
-  const detail = pct == null
-    ? isZh
-      ? `历史上排在 WCA ${eventName}${typeWord}第 ${rankStr} 名(对比 WCA 比赛成绩,非实时官方排名)`
-      : `Ranks #${rankStr} among all WCA ${eventName} ${typeWord}s (vs WCA competition results, not a live official rank)`
-    : isZh
-      ? `比 ~${pctStr}% 的 WCA ${eventName}${typeWord}更快(对比历史比赛成绩,非实时官方排名)`
-      : `faster than ~${pctStr}% of WCA ${eventName} ${typeWord}s (vs historical competition results, not a live official rank)`;
+  // 展开说明:把各档名次摊开 + 免责声明(对比历史比赛成绩,非实时官方排名).
+  const parts = pills.map(({ scope, data }) => {
+    const n = data.rank.toLocaleString('en-US');
+    return isZh ? `${SCOPE_ZH[scope]} #${n}` : `${SCOPE_EN[scope]} #${n}`;
+  });
+  const detail = isZh
+    ? `${parts.join(' · ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
+    : `${parts.join(' · ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`;
 
   return (
-    <span
-      className={className}
-      style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25em' }}
-    >
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        title={detail}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.35em',
-          padding: '0.2em 0.6em',
-          borderRadius: '999px',
-          border: 'none',
-          background: 'var(--accent-soft)',
-          color,
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.82em',
-          fontWeight: 600,
-          cursor: 'pointer',
-          lineHeight: 1.4,
-        }}
-      >
-        <Icon size="1em" aria-hidden />
-        {label}
-      </button>
-      {expanded && (
-        <span
-          style={{
-            color: 'var(--muted-foreground)',
-            fontSize: '0.72em',
-            lineHeight: 1.4,
-            maxWidth: '22em',
-          }}
-        >
-          {detail}
-        </span>
-      )}
+    <span className={`rank-badge-row${className ? ` ${className}` : ''}`}>
+      <span className="rank-pills">
+        {pills.map(({ scope, data }) => {
+          const top = data.rank <= TOP_TIER[scope];
+          const Icon = top ? Trophy : ICON[scope];
+          return (
+            <button
+              key={scope}
+              type="button"
+              className={`rank-pill${top ? ' rank-pill--top' : ''}`}
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              title={detail}
+            >
+              <Icon size="1em" aria-hidden />
+              {scope}
+              {data.rank.toLocaleString('en-US')}
+            </button>
+          );
+        })}
+      </span>
+      {expanded && <span className="rank-detail">{detail}</span>}
     </span>
   );
 }

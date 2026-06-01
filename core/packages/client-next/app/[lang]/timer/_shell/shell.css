@@ -5,6 +5,18 @@
    auto-flip light/dark. lucide icons only, no emoji.
    ============================================================ */
 
+/* 7-segment LCD digit font — same self-hosted face Battle uses, so Solo's
+   giant readout matches /timer?mode=battle. Declared here (not relying on
+   battle.css) since Solo never loads battle.css. Same src as battle's
+   @font-face → browser dedupes the download. */
+@font-face {
+  font-family: 'Segment7Standard';
+  src: url('/fonts/Segment7Standard.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* hairline divider used across the shell */
   --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
@@ -150,21 +162,45 @@
   cursor: pointer;
 }
 .timing-surface-core {
+  /* Only the digits live in normal flow; sub-content is absolutely positioned
+     (see .timing-surface-sub) so the readout is the sole thing being centered
+     and never shifts vertically when the phase swaps its sub-content. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
   /* digits optically above true-center */
   transform: translateY(-4%);
 }
 .timing-surface .timer-display {
-  font-family: var(--font-mono);
-  font-weight: 200;
+  /* Segment7Standard = battle's 7-segment LCD digits; var(--font-mono) is the
+     self-contained per-glyph fallback for colon / DNF / + (no CDN). */
+  font-family: 'Segment7Standard', var(--font-mono);
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   color: var(--timer-idle);
   font-variant-numeric: tabular-nums;
+  /* No LCD glow — legacy timer.css adds a text-shadow halo per state; kill it
+     here (shell.css loads after timer.css → wins at equal specificity). */
+  text-shadow: none;
   transition: color 120ms;
+}
+/* Sub-content (idle hint / running target / stopped quick-actions) floats just
+   below the digits without being part of the centered flow, so pressing space
+   (idle hint -> none) no longer makes the digits drop. */
+.timing-surface-sub {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: min(92vw, 540px);
 }
 .timing-surface .timer-display.holding         { color: var(--timer-holding); }
 .timing-surface .timer-display.ready           { color: var(--timer-ready); }
@@ -326,6 +362,46 @@
   animation: shell-fade-up 200ms ease;
 }
 .shell-rank-slot { display: flex; justify-content: center; min-height: 24px; }
+
+/* Rank badge — WR / CR / NR pills (shared by Solo stopped-row + Battle player).
+   Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
+.rank-badge-row {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.rank-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rank-pill--top { color: var(--signal-success); }
+.rank-pill--loading { color: var(--muted-foreground); opacity: 0.6; cursor: default; }
+.rank-detail {
+  color: var(--muted-foreground);
+  font-size: 0.72em;
+  line-height: 1.4;
+  max-width: 24em;
+  text-align: center;
+}
 @keyframes shell-fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -356,6 +432,38 @@
 .timing-surface .qa-btn:hover { background: var(--shell-hover); }
 .timing-surface .qa-btn.active { border-color: var(--accent); color: var(--accent); }
 .timing-surface .qa-btn.danger:hover { border-color: var(--destructive); color: var(--destructive); }
+
+/* PB celebration toast — floating overlay. MUST be position:fixed so it stays
+   out of the .timer-shell grid (desktop), otherwise it auto-places as an
+   unnamed grid item and stretches the topbar row, shifting the digits down. */
+.tmr-pb-card {
+  position: fixed;
+  top: max(70px, calc(env(safe-area-inset-top) + 64px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  max-width: 90vw;
+  animation: tmr-pb-in 220ms ease;
+}
+.tmr-pb-icon { color: var(--signal-success); flex-shrink: 0; }
+.tmr-pb-title { font-weight: 600; font-size: 14px; white-space: nowrap; }
+.tmr-pb-val { font-size: 14px; color: var(--foreground); }
+@keyframes tmr-pb-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .tmr-pb-card { animation: none; } }
 
 /* Target overshot / pulse on the digits */
 .timing-surface.target-overshot .timer-display.running { color: var(--destructive); }

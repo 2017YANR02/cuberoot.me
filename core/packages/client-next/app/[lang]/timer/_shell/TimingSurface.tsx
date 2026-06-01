@@ -80,7 +80,9 @@ export default function TimingSurface({
         >
           {digits}
         </div>
-        {children}
+        {/* Sub-content floats below the digits (absolutely positioned in CSS)
+            so the giant readout never shifts as the phase swaps what's here. */}
+        <div className="timing-surface-sub">{children}</div>
       </div>
     </div>
   );
