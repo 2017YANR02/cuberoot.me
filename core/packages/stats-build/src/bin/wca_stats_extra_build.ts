@@ -24,6 +24,10 @@ const ACTIVE_EVENTS = [
 ] as const;
 type ActiveEvent = typeof ACTIVE_EVENTS[number];
 const EVENT_INDEX = new Map<string, number>(ACTIVE_EVENTS.map((e, i) => [e, i]));
+// 已废止但仍可查询的项目.person_ranks 数组在 ACTIVE_EVENTS 后追加这 4 项 → RANK_EVENTS(21).
+// sum-of-ranks 选择器可勾选,但 total/events_done 只算 ACTIVE_EVENTS(默认榜单口径不变).
+const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'] as const;
+const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS] as const;
 
 const CURRENT_YEAR = new Date().getUTCFullYear();
 const YEAR_RANGE_START = 2003;
@@ -405,11 +409,8 @@ async function main() {
 
   // wca_competition_id 列表(已在 wca_competitions 写过)
 
-  // 21 events including non-active(为 cohort_ranks / 全成绩排行也需要历史项)
-  const ALL_KNOWN_EVENTS = [
-    ...ACTIVE_EVENTS,
-    '333ft','magic','mmagic','333mbo',  // 已废止但仍可查询
-  ];
+  // 21 events including non-active(为 cohort_ranks / 全成绩排行 / person_ranks 废止项列也需要历史项)
+  const ALL_KNOWN_EVENTS = RANK_EVENTS;
 
   for (const eventId of ALL_KNOWN_EVENTS) {
     const tev = Date.now();
@@ -722,15 +723,17 @@ async function main() {
   aedStream.end();
 
   // ── 9. wca_person_ranks: 全项目排行 ──
-  // 使用 accByEvent(per event PB)+ assignRanks 全球排名 → 每人 17 项的 wr/cr 数组
+  // 使用 accByEvent(per event PB)+ assignRanks 全球排名 → 每人 21 项(RANK_EVENTS)的 wr/cr 数组.
+  // total_*/events_done 只算前 17 项(ACTIVE_EVENTS,默认榜单口径);后 4 项废止项只填数组,
+  // 供 sum-of-ranks 子集 API 显式勾选时按需求和(见 server wca_stats_extra.ts).
   console.log('[pr] writing person_ranks...');
-  // 先算每个 active event 的全球+国家 ranks(对所有人)
+  // 先算每个 event(含废止项)的全球+国家 ranks(对所有人)
   const eventRanks: { single: Map<string, { wr: number; cr: number; val: number }>; avg: Map<string, { wr: number; cr: number; val: number }> }[] = [];
   // 也记录每个 event 的参赛人数(用作缺项默认 rank)
   const eventParticipantsSingle: number[] = [];
   const eventParticipantsAvg: number[] = [];
-  for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
-    const ev = ACTIVE_EVENTS[i]!;
+  for (let i = 0; i < RANK_EVENTS.length; i++) {
+    const ev = RANK_EVENTS[i]!;
     const acc = accByEvent.get(ev) ?? new Map<string, Acc>();
     const sList: Array<{ wcaId: string; val: number; country: string }> = [];
     const aList: Array<{ wcaId: string; val: number; country: string }> = [];
@@ -764,8 +767,8 @@ async function main() {
     const bfp = bestFinalPos.get(pid) ?? 0;
     // single
     {
-      const ranksW: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
-      const ranksC: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
+      const ranksW: number[] = new Array(RANK_EVENTS.length).fill(0);
+      const ranksC: number[] = new Array(RANK_EVENTS.length).fill(0);
       let totalW = 0, totalC = 0, doneN = 0;
       for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
         const r = eventRanks[i]!.single.get(pid);
@@ -781,6 +784,11 @@ async function main() {
           totalC += eventParticipantsSingle[i]! + 1;
         }
       }
+      // 废止项:只填数组,不计入 total/doneN
+      for (let i = ACTIVE_EVENTS.length; i < RANK_EVENTS.length; i++) {
+        const r = eventRanks[i]!.single.get(pid);
+        if (r) { ranksW[i] = r.wr; ranksC[i] = r.cr; }
+      }
       prStream.write(
         `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
       );
@@ -788,8 +796,8 @@ async function main() {
     }
     // average
     {
-      const ranksW: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
-      const ranksC: number[] = new Array(ACTIVE_EVENTS.length).fill(0);
+      const ranksW: number[] = new Array(RANK_EVENTS.length).fill(0);
+      const ranksC: number[] = new Array(RANK_EVENTS.length).fill(0);
       let totalW = 0, totalC = 0, doneN = 0;
       for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
         // 333mbf 没有 average — 跳过(填 0)
@@ -807,6 +815,11 @@ async function main() {
           totalW += eventParticipantsAvg[i]! + 1;
           totalC += eventParticipantsAvg[i]! + 1;
         }
+      }
+      // 废止项 avg:只填数组(333mbo 无 average → map 空 → 留 0),不计入 total/doneN
+      for (let i = ACTIVE_EVENTS.length; i < RANK_EVENTS.length; i++) {
+        const r = eventRanks[i]!.avg.get(pid);
+        if (r) { ranksW[i] = r.wr; ranksC[i] = r.cr; }
       }
       prStream.write(
         `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
 import { EventIcon } from '@/components/EventIcon';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
@@ -21,6 +22,11 @@ const ACTIVE_EVENTS = [
   'minx','pyram','clock','skewb','sq1',
   '444bf','555bf','333mbf',
 ];
+// 默认榜单 = 17 活跃项;另追加 4 个废止项(脚拧/八板/十二板/旧多盲)作可勾选额外项,默认不选.
+// 顺序须与 server RANK_EVENTS 一致(ranks 数组按此对齐).
+const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'];
+const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS];
+const RANK_EVENT_SET = new Set(RANK_EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
 interface Row {
@@ -49,6 +55,7 @@ function SumOfRanksPageInner() {
   const size = parseInt(params.get('size') ?? '100', 10);
 
   const selectedSet = new Set(eventsParam ? eventsParam.split(',').filter(Boolean) : ACTIVE_EVENTS);
+  const selectedCount = RANK_EVENTS.filter(e => selectedSet.has(e)).length;
   const pushSearch = (next: URLSearchParams) => {
     const qs = next.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -62,8 +69,9 @@ function SumOfRanksPageInner() {
   const toggleEvent = (ev: string) => {
     const cur = new Set(selectedSet);
     if (cur.has(ev)) cur.delete(ev); else cur.add(ev);
-    if (cur.size === ACTIVE_EVENTS.length) update('events', '');
-    else update('events', Array.from(cur).join(','));
+    // 恰好选中 17 活跃项 → 折叠成默认(空 param,走快路径);否则按 RANK_EVENTS 顺序序列化
+    if (cur.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => cur.has(e))) update('events', '');
+    else update('events', RANK_EVENTS.filter(e => cur.has(e)).join(','));
   };
   const selectAll = () => update('events', '');
   const clearAll = () => update('events', '__none__');
@@ -155,19 +163,18 @@ function SumOfRanksPageInner() {
           </div>
         </div>
         <div className="wse-filter" style={{ minWidth: '100%' }}>
-          <label>{isZh ? '项目(已选 ' + selectedSet.size + ' / 17)' : `Events (${selectedSet.size}/17 selected)`}</label>
+          <label>{isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`}</label>
           <div className="wse-events-bar">
-            <button type="button" onClick={selectAll}>{isZh ? '全选' : 'All'}</button>
+            <button type="button" onClick={selectAll}>{isZh ? '全选活跃项' : 'Active'}</button>
             <button type="button" onClick={clearAll}>{isZh ? '清除' : 'None'}</button>
           </div>
-          <div className="wse-events-grid">
-            {ACTIVE_EVENTS.map(ev => (
-              <label key={ev}>
-                <input type="checkbox" checked={selectedSet.has(ev)} onChange={() => toggleEvent(ev)} />
-                <EventIcon event={ev} /> {ev}
-              </label>
-            ))}
-          </div>
+          <WcaEventSelector
+            availableEvents={RANK_EVENT_SET}
+            selectedEvents={selectedSet}
+            onToggle={toggleEvent}
+            isZh={isZh}
+            onlyAvailable
+          />
         </div>
       </div>
 
@@ -183,7 +190,7 @@ function SumOfRanksPageInner() {
                   <th className="wse-rank-col">#</th>
                   <th>{isZh ? '选手' : 'Person'}</th>
                   <th>{isZh ? '国家' : 'Country'}</th>
-                  {ACTIVE_EVENTS.map(ev => (
+                  {RANK_EVENTS.map(ev => (
                     <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
                       <EventIcon event={ev} />
                     </th>
@@ -202,7 +209,7 @@ function SumOfRanksPageInner() {
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                       <span>{r.countryId}</span>
                     </td>
-                    {ACTIVE_EVENTS.map((ev, j) => {
+                    {RANK_EVENTS.map((ev, j) => {
                       const rk = r.ranks[j] ?? 0;
                       const cls = rk > 0 && rk <= 3 ? `wse-sor-evcell podium-${rk}` :
                                   rk === 0 ? 'wse-sor-evcell empty' : 'wse-sor-evcell';
