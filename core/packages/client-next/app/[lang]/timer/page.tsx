@@ -1,25 +1,25 @@
 'use client';
 
 /**
- * /timer — speed-cubing timer (Next.js port).
+ * /timer — speed-cubing timer (Next.js, redesigned shell).
  *
- * The implementation lives in `./TimerPage`. It's dynamically imported so the
- * cubing.js scramble bundle stays off the server render path.
- *
- * Minimal viable port — full feature set TODO list in TimerPage.tsx header.
+ * The implementation lives in `_shell/TimerShell` (mode host) → SoloView. It's
+ * dynamically imported with ssr:false so the cubing.js scramble bundle stays
+ * off the server render path and the page remains SSG (first paint = calm
+ * Solo, mode read from ?mode after mount).
  */
 
 import dynamic from 'next/dynamic';
 
-const TimerPage = dynamic(() => import('./TimerPage'), {
+const TimerShell = dynamic(() => import('./_shell/TimerShell'), {
   ssr: false,
   loading: () => (
     <div style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
-      <p style={{ color: '#888' }}>Loading timer…</p>
+      <p style={{ color: 'var(--muted-foreground)' }}>Loading timer…</p>
     </div>
   ),
 });
 
 export default function Page() {
-  return <TimerPage />;
+  return <TimerShell />;
 }

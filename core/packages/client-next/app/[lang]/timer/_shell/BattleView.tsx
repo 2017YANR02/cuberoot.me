@@ -1,35 +1,50 @@
-/**
- * BattlePage — 对战计时器主页面
- * 1:1 翻译自 battle/index.html + battle.js init()
- *
- * NOTE: 核心组件结构：
- * - Player Area (上方, rotated 180°) — 1v1 模式时显示
- * - Middle Bar（比分 + 设置/全屏/历史按钮）
- * - Player Area (下方)
- * - Bottom Nav（Solo 模式 tab 导航）
- */
-
 'use client';
+
+/**
+ * BattleView — the 对战 (1v1 Battle) mode hosted inside /timer.
+ *
+ * This is the battle experience moved out of app/[lang]/battle/page.tsx. The
+ * engine (battle_store.ts) + the RAF DOM-write display hooks are kept
+ * BEHAVIORALLY UNTOUCHED — they still write timeRef.innerHTML and the per-player
+ * opponent-N span directly with ZERO per-tick React render. Components + engine
+ * are imported from their original folder (app/[lang]/battle/_components/...) to
+ * avoid a risky Windows directory git-mv while the dev watcher holds files.
+ *
+ * Changes vs the old standalone page:
+ *   - accepts the shell `modePill` and renders it into the battle middle-bar
+ *   - default mode is 1v1 (the face of 对战); the internal solo/1v1 toggle stays
+ *   - per-player event picker uses components/WcaEventSelector (green active)
+ *     instead of BattleEventPicker + the in-area overlay grid
+ *   - the ⚔️ emoji opponent prefix + icon_timer.png nav icon are replaced with
+ *     lucide Swords / Timer (no-emoji rule); the RAF path writes ONLY the time
+ *     string into a child span, the icon is rendered once in JSX
+ *   - per-player RankBadge after a round ends; hidden while solving
+ *   - imports re-pointed to timer/_shared (stats-core / format)
+ */
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff } from 'lucide-react';
-import { useBattleStore } from './_components/engine/battle_store';
-import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from './_components/engine/constants';
-import { formatTime } from './_components/engine/format_time';
-import { computeAo5 } from './_components/engine/stats';
-import type { PenaltyType } from './_components/engine/constants';
-import HistoryPanel from './_components/HistoryPanel';
-import VsHistoryPanel from './_components/VsHistoryPanel';
-import { MilestoneToast } from './_components/AdvancedFeatures';
+import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
+import { useBattleStore } from '@/app/[lang]/battle/_components/engine/battle_store';
+import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
+import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
+import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
+import type { PenaltyType } from '@/app/[lang]/battle/_components/engine/constants';
+import HistoryPanel from '@/app/[lang]/battle/_components/HistoryPanel';
+import VsHistoryPanel from '@/app/[lang]/battle/_components/VsHistoryPanel';
+import { MilestoneToast } from '@/app/[lang]/battle/_components/AdvancedFeatures';
 import HomeLink from '@/components/HomeLink';
+import HeaderToggles from '@/components/HeaderToggles';
+import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
-import BattleEventPicker from './_components/BattleEventPicker';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
+import RankBadge from './RankBadge';
 
-import './battle.css';
+import '@/app/[lang]/battle/battle.css';
+import './shell.css';
 
 // NOTE: 根据打乱字符串长度自动计算字号缩放因子
 // ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
@@ -38,6 +53,28 @@ function getScrambleAutoScale(scramble: string): number {
   const len = scramble.length;
   if (len <= 100) return 1;
   return Math.max(0.7, Math.sqrt(100 / len));
+}
+
+// NOTE: battle 的 18 个项目里有两个非 WCA(fto / kilominx)，走 appendEvents 文字标签。
+// 其余直接映射到 ALL_EVENT_IDS 的 WCA id(333mbf / minx / pyram 等本就一致)。
+const BATTLE_WCA_IDS = new Set<string>(
+  PUZZLES.map(p => p.id).filter(id => isWcaEvent(id)),
+);
+const BATTLE_APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textLabel?: string }> = [
+  { id: 'fto', iconClass: '', textLabel: 'FTO' },
+  { id: 'kilominx', iconClass: '', textLabel: 'Kilominx' },
+];
+const BATTLE_AVAILABLE_EVENTS = new Set<string>([
+  ...BATTLE_WCA_IDS,
+  ...BATTLE_APPEND_EVENTS.map(e => e.id),
+]);
+
+// NOTE: 有效成绩 ms → RankBadge 厘秒(DNF/未完成 → null)
+function effectiveCentis(time: number, penalty: PenaltyType): number | null {
+  if (penalty === PENALTY.DNF) return null;
+  if (time <= 0) return null;
+  const ms = penalty === PENALTY.PLUS2 ? time + 2000 : time;
+  return Math.round(ms / 10);
 }
 
 // NOTE: 加载 scramble_module.js 全局脚本（打乱引擎）
@@ -104,9 +141,6 @@ function useKeyboardControls() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const store = useBattleStore.getState();
 
-      // NOTE: 设置面板打开时不响应键盘
-      // (由 React 状态控制，无需 DOM 检查)
-
       const playerId = KEY_MAP[e.key];
       if (playerId === undefined) return;
 
@@ -141,6 +175,7 @@ function useKeyboardControls() {
 
 // NOTE: 计时器动画 hook — 通过 RAF 直接写 DOM（不走 React state）
 // 1:1 翻译自 battle.js startTimerAnimation()（行 918~934）
+// 唯一改动:对手区域只写时间到 #opponent-N 子 span,⚔️ 图标由 JSX 静态渲染一次。
 function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivElement | null>) {
   const rafRef = useRef<number | null>(null);
 
@@ -157,18 +192,19 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
             return;
           }
           const elapsed = performance.now() - cp.startTime;
-          const timeStr = curr.showTime ? formatTime(elapsed, curr.timerPrecision) : '⏱️';
+          const timeStr = curr.showTime ? formatTime(elapsed, curr.timerPrecision) : '';
           if (timeRef.current) {
             timeRef.current.innerHTML = timeStr;
           }
           // NOTE: 对手已停表时，在对手区域实时显示此玩家还在跑的时间
           // 1:1 翻译自 battle.js startTimerAnimation()（行 928~930）
+          // 只写时间到 #opponent-N 子 span(图标静态)
           if (curr.mode === '1v1') {
             const oppId = 1 - playerId;
             if (curr.players[oppId].hasFinished) {
               const oppEl = document.getElementById(`opponent-${oppId}`);
               if (oppEl) {
-                oppEl.innerHTML = '⚔️ ' + timeStr;
+                oppEl.innerHTML = timeStr;
               }
             }
           }
@@ -217,7 +253,8 @@ function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDiv
 
 // NOTE: 对手成绩显示 hook — 在本方区域显示对手的最终成绩
 // 1:1 翻译自 battle.js renderOpponent() 调用逻辑（行 616~618, 996~1001）
-function useOpponentDisplay(playerId: number) {
+// 只写时间到 #opponent-N 子 span(⚔️ 图标由 JSX 静态渲染)
+function useOpponentDisplay(playerId: number, iconRef: React.RefObject<HTMLSpanElement | null>) {
   useEffect(() => {
     const unsubscribe = useBattleStore.subscribe((state) => {
       if (state.mode !== '1v1') return;
@@ -233,14 +270,16 @@ function useOpponentDisplay(playerId: number) {
         const effTime = opp.penalty === PENALTY.DNF ? Infinity
           : (opp.penalty === PENALTY.PLUS2 ? opp.time + 2000 : opp.time);
         const label = effTime === Infinity ? 'DNF' : formatTime(effTime, state.timerPrecision);
-        el.innerHTML = '⚔️ ' + label;
+        el.innerHTML = label;
+        if (iconRef.current) iconRef.current.style.display = '';
       } else if (!opp.hasFinished && !opp.isTiming) {
         // NOTE: 回合重置 → 清空对手成绩
         el.innerHTML = '';
+        if (iconRef.current) iconRef.current.style.display = 'none';
       }
     });
     return () => unsubscribe();
-  }, [playerId]);
+  }, [playerId, iconRef]);
 }
 
 // ===== PenaltyDropdown 组件 =====
@@ -255,7 +294,6 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
   const enabled = player.hasFinished && !player.isTiming && player.time > 0;
 
   // NOTE: 原生事件阻止冒泡 — 必须用原生而非 React 合成事件
-  // 因为父级 TimerArea 现在使用原生 addEventListener，React stopPropagation 无法阻止原生监听器
   useEffect(() => {
     const el = dropdownRef.current;
     if (!el) return;
@@ -328,16 +366,18 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
+  const oppIconRef = useRef<HTMLSpanElement>(null);
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
   // NOTE: Inspection 倒计时显示
   useInspectionDisplay(playerId, timeRef);
   // NOTE: 对手成绩显示（1v1 模式）
-  useOpponentDisplay(playerId);
+  useOpponentDisplay(playerId, oppIconRef);
 
-  // NOTE: 原生 pointer 事件处理 — 使用 addEventListener 而非 React 合成事件
-  // React 的 onPointerDown 在移动端 Safari/Chrome 上不可靠，原生事件与 legacy 版一致且稳定
+  // NOTE: 原生 pointer 事件处理 — 每位玩家独立 pointerId(两个拇指可独立 arm)
   useEffect(() => {
     const el = areaRef.current;
     if (!el) return;
@@ -391,7 +431,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     };
   }, [playerId]);
 
-  // NOTE: 获取区域 CSS 类名
   const areaClasses = [
     'player-area',
     rotated ? 'rotated' : '',
@@ -414,12 +453,11 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     const suffix = player.penalty === PENALTY.PLUS2
       ? '<span class="plus-suffix">+</span>'
       : '';
-    let html = formatTime(displayTime, store.timerPrecision) + suffix;
+    const html = formatTime(displayTime, store.timerPrecision) + suffix;
 
     return html;
   };
 
-  // NOTE: 时间显示 CSS 类
   const timeClasses = [
     'time-display',
     player.penalty === PENALTY.PLUS2 ? 'penalty-plus2' : '',
@@ -428,11 +466,9 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     store.winner === -1 && player.hasFinished ? 'winner' : '',
   ].filter(Boolean).join(' ');
 
-  // NOTE: Ao5 行内容
   const ao5 = computeAo5(player.solveHistory);
   const ao5Text = ao5 === null ? '' : (ao5 === Infinity ? 'ao5: DNF' : 'ao5: ' + formatTime(ao5, store.timerPrecision));
 
-  // NOTE: 每位玩家用自己的 scramble / loading
   const myScramble = store.scrambles[playerId];
   const myLoading = store.scrambleLoadings[playerId];
   const myPuzzle = store.puzzleIds[playerId];
@@ -440,7 +476,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
     : (myScramble || '');
 
-  // NOTE: 玩家自定义背景:CSS 变量传给 .player-area::before 伪元素
   const bgColor = store.bgColors[playerId];
   const bgImage = store.bgImages[playerId];
   const bgStyle: React.CSSProperties = {
@@ -448,6 +483,12 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     '--bg-color': bgColor || '',
     '--bg-opacity': String(store.bgOpacity),
   } as React.CSSProperties;
+
+  // NOTE: 回合结束(本方完成且未计时)显示 RankBadge
+  const showRank = player.hasFinished && !player.isTiming && player.time > 0;
+  const rankCentis = showRank ? effectiveCentis(player.time, player.penalty) : null;
+  // 对手已完成才显示对手区(图标默认隐藏,subscribe 控制显隐)
+  const oppShown = store.players[1 - playerId].hasFinished && !store.players[1 - playerId].isTiming;
 
   return (
     <div
@@ -469,15 +510,27 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         dangerouslySetInnerHTML={{ __html: renderTimeContent() }}
       />
 
+      {/* 排名徽章(回合结束后,本方有效成绩) */}
+      {showRank && !player.isInspecting && (
+        <div className="battle-rank-slot" data-no-timer>
+          <RankBadge eventId={myPuzzle} centis={rankCentis} type="single" isZh={isZh} />
+        </div>
+      )}
+
       {/* Ao5 统计 */}
       <div
         className="ao5-display"
         dangerouslySetInnerHTML={{ __html: ao5Text }}
       />
 
-      {/* 对手成绩（仅 versus 布局，side 布局不需要——两人并排能直接看到对方） */}
+      {/* 对手成绩（仅 versus 布局）— ⚔️ 用 lucide Swords 静态渲染,RAF 只写时间到子 span */}
       {store.mode === '1v1' && store.layout === 'versus' && (
-        <div className="opponent-display" id={`opponent-${playerId}`} />
+        <div className="opponent-display">
+          <span className="opponent-icon" ref={oppIconRef} style={{ display: oppShown ? '' : 'none' }}>
+            <Swords size={14} />
+          </span>
+          <span id={`opponent-${playerId}`} className="opponent-time" />
+        </div>
       )}
 
       {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
@@ -487,7 +540,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         )}
       </div>
 
-      {/* Event picker 全区域覆盖 — 由 middle-bar 上的图标按钮触发 */}
+      {/* Event picker 全区域覆盖 — 由 middle-bar 上的图标按钮触发,改用 WcaEventSelector */}
       {store.eventPickerOpen[playerId] && (
         <EventPickerOverlay playerId={playerId as 0 | 1} />
       )}
@@ -496,7 +549,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 }
 
 // ===== EventPickerOverlay 组件 =====
-// 覆盖整个 player-area 的项目网格,自适应区域大小,无 popup 溢出问题
+// 覆盖整个 player-area,内部用项目站全站统一的 WcaEventSelector(绿色 active)
 
 function EventPickerOverlay({ playerId }: { playerId: 0 | 1 }) {
   const store = useBattleStore();
@@ -506,7 +559,6 @@ function EventPickerOverlay({ playerId }: { playerId: 0 | 1 }) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // NOTE: 父级 .player-area 用原生 addEventListener 处理 pointerdown/up 进入计时状态。
-  //   React 合成事件的 stopPropagation 不能阻止已注册的原生监听器,必须用原生 stopPropagation。
   useEffect(() => {
     const el = overlayRef.current;
     if (!el) return;
@@ -526,49 +578,81 @@ function EventPickerOverlay({ playerId }: { playerId: 0 | 1 }) {
     store.setEventPickerOpen(playerId, false);
   };
 
-  const renderIcon = (id: string) => {
-    if (isWcaEvent(id)) return <EventIcon event={id} />;
-    return <span className="event-fallback">{PUZZLES.find(x => x.id === id)?.name.en || id}</span>;
-  };
-
   return (
     <div
       ref={overlayRef}
       className="event-overlay"
+      data-no-timer
       onClick={(e) => {
         // NOTE: 点空白处关闭
         if (e.target === e.currentTarget) store.setEventPickerOpen(playerId, false);
       }}
     >
-      <div className="event-overlay-grid">
-        {PUZZLES.map(p => {
-          const name = p.name[isZh ? 'zh' : 'en'] || p.name.en;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              className={`event-overlay-item${p.id === value ? ' active' : ''}`}
-              onClick={() => select(p.id)}
-              aria-label={name}
-              title={name}
-            >
-              {renderIcon(p.id)}
-            </button>
-          );
-        })}
+      <div className="event-overlay-inner">
+        <WcaEventSelector
+          availableEvents={BATTLE_AVAILABLE_EVENTS}
+          isZh={isZh}
+          selectedEvent={value}
+          onSelect={select}
+          appendEvents={BATTLE_APPEND_EVENTS}
+          onlyAvailable
+        />
       </div>
     </div>
   );
 }
 
-// ===== MiddleBar 组件 =====
-// 1:1 翻译自 battle/index.html middle-bar 结构
+// ===== BattleEventButton — middle-bar 上的 trigger 图标 =====
+function BattleEventButton({ playerId }: { playerId: 0 | 1 }) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const value = useBattleStore(s => s.puzzleIds[playerId]);
+  const isOpen = useBattleStore(s => s.eventPickerOpen[playerId]);
+  const setOpen = useBattleStore(s => s.setEventPickerOpen);
 
-function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () => void; onHistoryClick?: () => void }) {
+  const renderIcon = (id: string) => {
+    if (isWcaEvent(id)) return <EventIcon event={id} />;
+    const p = PUZZLES.find(x => x.id === id);
+    return <span className="event-fallback">{p?.name.en || id}</span>;
+  };
+
+  const currentName = (() => {
+    const p = PUZZLES.find(x => x.id === value);
+    return p ? (p.name[isZh ? 'zh' : 'en'] || p.name.en) : value;
+  })();
+
+  return (
+    <button
+      type="button"
+      className={`event-btn${isOpen ? ' active' : ''}`}
+      onClick={(e) => { e.stopPropagation(); setOpen(playerId, !isOpen); }}
+      aria-label={currentName}
+      title={currentName}
+    >
+      {renderIcon(value)}
+    </button>
+  );
+}
+
+// ===== MiddleBar 组件 =====
+// 1:1 翻译自 battle/index.html middle-bar 结构 + 模式 pill 注入
+
+function MiddleBar({
+  onSettingsClick,
+  onHistoryClick,
+  modePill,
+}: {
+  onSettingsClick: () => void;
+  onHistoryClick?: () => void;
+  modePill?: React.ReactNode;
+}) {
   const store = useBattleStore();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const { players, winner, layout } = store;
+  const effTheme = useEffectiveTheme();
+  // NOTE: logo 跟随主题 — dark 用白字版,light 用深字版(否则白 logo 在浅底看不见)
+  const logoSrc = effTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
 
   // NOTE: versus 布局 → P1(上方/旋转180°) 在左，P0(下方) 在右
   //       side   布局 → P0(左) 在左，P1(右) 在右 — 与计时区域位置一致
@@ -576,23 +660,26 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
   const rightId = layout === 'side' ? 1 : 0;
 
   return (
-    <div className="middle-bar">
+    <div className="middle-bar" data-no-timer>
       {/* 左侧比分 + 项目 + 罚时 */}
       <div className="score-section">
         <span className="score-value">
           {players[leftId].points}
           {(winner === leftId || winner === -1) && <Trophy className="score-trophy" size={14} />}
         </span>
-        <BattleEventPicker playerId={leftId as 0 | 1} />
+        <BattleEventButton playerId={leftId as 0 | 1} />
         <PenaltyDropdown playerId={leftId} />
       </div>
 
       {/* 中间操作按钮 */}
       <div className="middle-actions">
+        {modePill}
         <span className="key-hint">Enter ↑ · ↓ Space</span>
         <HomeLink className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
-          <img src={'/' +'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
+          <img src={logoSrc} alt="CubeRoot" height="24" />
         </HomeLink>
+        {/* 主题 / 语言切换 — 与 Solo 一致,不必离开对战即可切 */}
+        <HeaderToggles className="battle-toggles" />
         <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>
           <ClipboardList size={16} />
         </button>
@@ -607,7 +694,7 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
           {(winner === rightId || winner === -1) && <Trophy className="score-trophy" size={14} />}
           {players[rightId].points}
         </span>
-        <BattleEventPicker playerId={rightId as 0 | 1} />
+        <BattleEventButton playerId={rightId as 0 | 1} />
         <PenaltyDropdown playerId={rightId} />
       </div>
     </div>
@@ -616,7 +703,6 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
 
 
 // ===== BackgroundSettingsGroup 组件 =====
-// 每位玩家独立的背景色 / 背景图 / 重置;不透明度双方共用
 
 function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
   const store = useBattleStore();
@@ -646,7 +732,6 @@ function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
       }
     };
     reader.readAsDataURL(file);
-    // NOTE: 重置 input 让用户能再次上传同一文件触发 change
     e.target.value = '';
   };
 
@@ -717,7 +802,6 @@ function BackgroundSettingsGroup({ mode, isZh }: { mode: string; isZh: boolean }
 }
 
 // ===== SettingsPanel 组件 =====
-// 1:1 翻译自 battle/index.html settings-panel 结构
 
 function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const store = useBattleStore();
@@ -752,7 +836,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           </div>
         </div>
 
-        {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的 BattleEventPicker */}
+        {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的项目按钮 */}
         {store.mode === 'solo' && (
           <div className="settings-group">
             <div className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</div>
@@ -907,10 +991,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             {isZh ? '全部重置' : 'Reset All'}
           </button>
         </div>
-
-        {/* 语言 */}
-        <div className="settings-group">
-        </div>
       </div>
     </div>
   );
@@ -918,7 +998,12 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 
 // ===== 主组件 =====
 
-export default function BattlePage() {
+interface BattleViewProps {
+  /** 注入到 battle middle-bar 的模式 pill */
+  modePill?: React.ReactNode;
+}
+
+export default function BattleView({ modePill }: BattleViewProps) {
   useScrambleScript();
   useKeyboardControls();
 
@@ -928,18 +1013,25 @@ export default function BattlePage() {
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // NOTE: 1v1 历史面板
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
-  // NOTE: 里程碑 Toast 消息队列
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  // SSR/client mismatch gate: battle_store 默认值从 localStorage 读 (mode/layout/...),
-  // SSR shim 返 null → 默认 1v1/versus,client 端读到用户真实值就不同,Next 16 hydration
-  // 会重建整树导致 scramble script 加载状态丢。SSR 出空占位,client 挂载后再 render。
+  // SSG/first-paint gate: battle_store 默认值从 localStorage 读 (mode/layout/...),
+  // SSR shim 返 null → 默认 1v1/versus,client 端读到真实值就不同。SSG /timer 页
+  // 出空占位,client 挂载后再 render(镜像 TimerShell 的 mounted 门控)。
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  // NOTE: 同步 i18n.language → store.locale. 以 i18n 为权威源(LangToggle 改它),
-  // 让 store 内部发双语消息(checkMilestone / speakAlert / fatigue toast)时用最新值.
+  // NOTE: 进入对战模式默认 1v1(对战的主面;内部 solo/1v1 toggle 仍在 Settings 可切)
+  const defaultedRef = useRef(false);
+  useEffect(() => {
+    if (defaultedRef.current) return;
+    defaultedRef.current = true;
+    if (useBattleStore.getState().mode === 'solo') {
+      useBattleStore.getState().setMode('1v1');
+    }
+  }, []);
+
+  // NOTE: 同步 i18n.language → store.locale
   useEffect(() => {
     useBattleStore.getState().setLocale(i18n.language);
   }, [i18n.language]);
@@ -956,7 +1048,6 @@ export default function BattlePage() {
 
   // NOTE: 初始化 store — 加载历史 + 生成第一个打乱
   useEffect(() => {
-    // NOTE: 等 scramble_module.js 加载完毕再初始化
     const checkAndInit = () => {
       if (typeof window.scrMgr !== 'undefined') {
         useBattleStore.getState().init();
@@ -975,7 +1066,7 @@ export default function BattlePage() {
     };
   }, [mode]);
 
-  // NOTE: 页面加载时同步 scrambleScale CSS 变量（localStorage 已保存值，但 CSS 变量需要手动初始化）
+  // NOTE: 同步 scrambleScale CSS 变量
   useEffect(() => {
     document.documentElement.style.setProperty('--scramble-scale', String(store.scrambleScale));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -988,17 +1079,14 @@ export default function BattlePage() {
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       const s = useBattleStore.getState();
       if (s.mode !== '1v1') return;
-      // NOTE: 用户横屏 → side；竖屏 → versus
       s.setLayout(e.matches ? 'side' : 'versus');
     };
-    // 初始化时也检查一次
     handleChange(mql);
 
     mql.addEventListener('change', handleChange);
     return () => mql.removeEventListener('change', handleChange);
   }, [mode]);
 
-  // NOTE: 设置面板关闭回调
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
     if (mode === 'solo') {
@@ -1006,7 +1094,6 @@ export default function BattlePage() {
     }
   }, [mode, store]);
 
-  // NOTE: 设置面板打开（1v1 用 state，Solo 用 tab）
   const handleSettingsClick = useCallback(() => {
     if (mode === 'solo') {
       store.switchTab('settings');
@@ -1016,18 +1103,17 @@ export default function BattlePage() {
   }, [mode, store]);
 
   if (!mounted) {
-    // SSR/first-paint placeholder — 避免 hydration mismatch 重建整树。
+    // SSG/first-paint placeholder — 避免 hydration mismatch 重建整树。
     return <div className="battle-container" />;
   }
 
   return (
     <div className={`battle-container${mode === '1v1' && store.layout === 'side' ? ' side-layout' : ''}`}>
 
-
       {/* === Side 布局：左右分屏，每侧独立 scramble === */}
       {mode === '1v1' && store.layout === 'side' && (
         <>
-          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} />
+          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} modePill={modePill} />
           <div className="side-players">
             <TimerArea playerId={0} />
             <div className="side-divider" />
@@ -1040,7 +1126,7 @@ export default function BattlePage() {
       {mode === '1v1' && store.layout === 'versus' && (
         <>
           <TimerArea playerId={1} rotated />
-          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} />
+          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} modePill={modePill} />
           <TimerArea playerId={0} />
         </>
       )}
@@ -1050,37 +1136,30 @@ export default function BattlePage() {
         <TimerArea playerId={0} />
       )}
 
-      {/* 底部导航栏 — Solo 模式，1:1 翻译自 battle/index.html 行 366~379 */}
+      {/* 底部导航栏 — Solo 模式;模式 pill 也塞在这里(solo 没 middle-bar) */}
       {mode === 'solo' && (
-        <nav className="bottom-nav">
+        <nav className="bottom-nav" data-no-timer>
+          <div className="bottom-nav-mode">{modePill}</div>
           <button
             className={`nav-tab${store.activeTab === 'timer' ? ' active' : ''}`}
             onClick={() => store.switchTab('timer')}
           >
-            {/* NOTE: 1:1 翻译自原版 icon_timer.png — 不擅自替换为 SVG */}
-            <img src={'/' +'icon_timer.png'} width="22" height="22" alt="Timer" className="nav-tab-icon" />
+            {/* lucide Timer 替代 icon_timer.png(no-emoji / no raster) */}
+            <TimerIcon size={22} className="nav-tab-icon" />
             <span>{isZh ? '计时' : 'Timer'}</span>
           </button>
           <button
             className={`nav-tab${store.activeTab === 'results' ? ' active' : ''}`}
             onClick={() => store.switchTab('results')}
           >
-            {/* NOTE: 列表图标 — 1:1 翻译自原版 SVG */}
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
+            <ClipboardList size={22} />
             <span>{isZh ? '成绩' : 'Results'}</span>
           </button>
           <button
             className={`nav-tab${store.activeTab === 'settings' ? ' active' : ''}`}
             onClick={() => store.switchTab('settings')}
           >
-            {/* NOTE: 齿轮图标 — 1:1 翻译自原版 SVG */}
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
+            <SettingsIcon size={22} />
             <span>{isZh ? '设置' : 'Settings'}</span>
           </button>
         </nav>
@@ -1114,4 +1193,3 @@ export default function BattlePage() {
     </div>
   );
 }
-

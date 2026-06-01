@@ -10,7 +10,7 @@ import type { PlayerState, SolveEntry, Session, WinnerValue, BattleMode, BattleL
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
-import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from './stats';
+import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
 
 // SSR shim: Next renders Server Components without window/localStorage.
 // We give a no-op store so module-level `localStorage.getItem(...)` calls don't
