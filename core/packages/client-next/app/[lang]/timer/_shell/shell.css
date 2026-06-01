@@ -395,6 +395,26 @@
 }
 .rank-pill--top { color: var(--signal-success); }
 .rank-pill--loading { color: var(--muted-foreground); opacity: 0.6; cursor: default; }
+/* Login nudge next to WR (shown only when signed-out + no country set) —
+   outline style so it reads as an action, not another rank. */
+.rank-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.rank-login-btn:hover { background: var(--accent-soft); }
 .rank-detail {
   color: var(--muted-foreground);
   font-size: 0.72em;
