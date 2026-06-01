@@ -289,23 +289,7 @@
 .wse-pagination .paginator-input::-webkit-outer-spin-button,
 .wse-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* sum-of-ranks 项目复选框 */
-.wse-events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 4px 8px;
-  margin-top: 8px;
-}
-.wse-events-grid label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-.wse-events-grid label:hover { background: rgba(255, 255, 255, 0.04); }
+/* sum-of-ranks 项目选择器 */
 .wse-events-bar {
   display: flex;
   flex-wrap: wrap;
