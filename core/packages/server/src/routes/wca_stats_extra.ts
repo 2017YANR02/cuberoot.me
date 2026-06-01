@@ -36,6 +36,10 @@ const ACTIVE_EVENTS = [
   'minx','pyram','clock','skewb','sq1',
   '444bf','555bf','333mbf',
 ] as const;
+// person_ranks 数组顺序:活跃 17 项(index 0-16,对齐 total_*)+ 4 个废止项(17-20).
+// 仅 sum-of-ranks 用;其余端点(/rank-for 等)仍只认 ACTIVE_EVENTS.
+const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'] as const;
+const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS] as const;
 
 const MAX_SIZE = 200;
 const DEFAULT_SIZE = 100;
@@ -629,17 +633,22 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
 
-  // 解析事件列表 → 索引集合(对齐 ACTIVE_EVENTS 顺序)
-  let eventIdxs: number[] | null = null;  // null = 全部 17 项
+  // 解析事件列表 → 索引集合(对齐 RANK_EVENTS 顺序;0-16=活跃项,17-20=废止项)
+  // eventIdxs=null 仅当选中"恰好活跃 17 项"(默认口径) → 走 total_* 索引快路径.
+  // 任何废止项 / 活跃项子集 → eventIdxs 非空,走子集求和路径.
+  let eventIdxs: number[] | null = null;
   if (eventsParam) {
     const arr = eventsParam.split(',').map(s => s.trim()).filter(Boolean);
-    const idxs: number[] = [];
+    const idxSet = new Set<number>();
     for (const e of arr) {
-      const i = ACTIVE_EVENTS.indexOf(e as typeof ACTIVE_EVENTS[number]);
-      if (i >= 0) idxs.push(i);
+      const i = RANK_EVENTS.indexOf(e as typeof RANK_EVENTS[number]);
+      if (i >= 0) idxSet.add(i);
     }
-    if (idxs.length === 0) return c.json({ error: 'Invalid events list' }, 400);
-    if (idxs.length < ACTIVE_EVENTS.length) eventIdxs = idxs;
+    if (idxSet.size === 0) return c.json({ error: 'Invalid events list' }, 400);
+    const idxs = [...idxSet].sort((a, b) => a - b);
+    // 恰好 = 活跃 17 项(sorted distinct,长度 17 且最大 index 16 ⟺ {0..16})
+    const isDefaultAll = idxs.length === ACTIVE_EVENTS.length && idxs[idxs.length - 1] === ACTIVE_EVENTS.length - 1;
+    if (!isDefaultAll) eventIdxs = idxs;
   }
 
   const isCountryMode = !!cn.id;
@@ -695,7 +704,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
       type, country: cn.id, hidePodium, bestMisser, page, size, total,
-      events: ACTIVE_EVENTS,
+      events: RANK_EVENTS,
       rows: rows.map(r => ({
         wcaId: r.wca_id, name: r.person_name,
         countryId: r.country_id, iso2: r.iso2,
@@ -763,8 +772,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
     type, country: cn.id, hidePodium, bestMisser, page, size, total,
-    events: ACTIVE_EVENTS,
-    selectedEvents: eventIdxs!.map(i => ACTIVE_EVENTS[i]),
+    events: RANK_EVENTS,
+    selectedEvents: eventIdxs!.map(i => RANK_EVENTS[i]),
     rows: rows.map(r => ({
       wcaId: r.wca_id, name: r.person_name,
       countryId: r.country_id, iso2: r.iso2,
