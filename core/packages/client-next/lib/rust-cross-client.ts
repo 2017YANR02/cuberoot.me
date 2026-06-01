@@ -6,6 +6,8 @@
 // 产物自包含在 /tools/solver/rust-cross/(dev 经 Next catch-all,prod 回退 static),
 // 27MB 表只在本组件首次展开时拉(每个 worker 各拉一次,HTTP 缓存命中后很快)。
 
+import { normalizeScramble } from './cross-solver';
+
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
@@ -174,6 +176,9 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
   }
 
   function submit(msg: Record<string, unknown>): Promise<unknown> {
+    // 含 Rw/Fw/旋转的打乱(如 3BLD 朝向尾缀)会让魔方偏离白顶绿前;Rust 端 string_to_alg
+    // 直接跳过无法识别 token 会静默算错,故先归正到白顶绿前的纯 HTM 再喂 worker。
+    if (typeof msg.scramble === 'string') msg.scramble = normalizeScramble(msg.scramble) ?? msg.scramble;
     return new Promise((resolve, reject) => {
       const job: Job = { msg, resolve, reject };
       const free = idle.pop();
