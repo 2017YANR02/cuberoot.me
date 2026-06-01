@@ -16,7 +16,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { visualcubeApiHref } from '@/lib/visualcube-link';
-import { isHtmScramble } from '@/lib/cross-solver';
+import { isAnalysableScramble } from '@/lib/cross-solver';
 import type { WcaFormat } from './_wca-round';
 import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
@@ -141,7 +141,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       a.isExtra ? 'is-extra' : '',
       copiedIdx === i ? 'is-copied' : '',
     ].filter(Boolean).join(' ');
-    const canAnalyze = !!a.scramble && isHtmScramble(a.scramble);
+    const canAnalyze = !!a.scramble && isAnalysableScramble(a.scramble);
     rows.push(
       <tr
         key={i}

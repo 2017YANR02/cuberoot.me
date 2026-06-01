@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Loader2, Copy, Check } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { createRustCrossPool, type RustCrossPool, type MovesTimed } from '@/lib/rust-cross-client';
+import { normalizeScramble } from '@/lib/cross-solver';
 
 function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
@@ -81,8 +82,10 @@ export default function RustCrossSection({ scramble, lang }: Props) {
 
   // 单池,need(cross / variant)变化(std↔变体)时重建 —— 两者装不同表集。
   const poolRef = useRef<{ pool: RustCrossPool; need: 'cross' | 'variant' } | null>(null);
-  const scrambleRef = useRef(scramble);
-  scrambleRef.current = scramble;
+  // 归正 Rw/Fw/旋转到白顶绿前再解(求解侧 pool 已归正;此处让 Twisty 预览与归正后的解法朝向一致)。
+  const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
+  const scrambleRef = useRef(normScramble);
+  scrambleRef.current = normScramble;
   const computeReq = useRef(0);
   const movesReq = useRef(0);
 

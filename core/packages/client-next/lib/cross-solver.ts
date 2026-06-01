@@ -100,21 +100,91 @@ function buildDist(color: CrossColor): Uint8Array {
   return dist;
 }
 
-/** Parse a scramble into move indices, or null if it contains a non-HTM token (wide move / rotation). */
+// ── Orientation handling for wide moves / rotations (e.g. WCA 3BLD's `Rw2`,
+// `Fw'` orientation suffix). A wide move tilts the cube off white-top/green-front;
+// we cancel that tilt so analysis runs on the re-oriented cube. Tables below were
+// derived from cubing.js and verified bit-exact (edge perm+ori) against
+// "scramble + corrective rotation restoring solved centres" over 5000 random
+// 3BLD-style scrambles (0 mismatches). See .tmp/gen_orient.mjs.
+type Face = 'U' | 'D' | 'F' | 'B' | 'R' | 'L';
+// ROT_FACE_PERM[g][m] = which physical face the move m turns after rotation g (g·m·g⁻¹).
+const ROT_FACE_PERM: Record<string, Record<Face, Face>> = {
+  x: { U: 'F', D: 'B', F: 'D', B: 'U', R: 'R', L: 'L' },
+  x2: { U: 'D', D: 'U', F: 'B', B: 'F', R: 'R', L: 'L' },
+  "x'": { U: 'B', D: 'F', F: 'U', B: 'D', R: 'R', L: 'L' },
+  y: { U: 'U', D: 'D', F: 'R', B: 'L', R: 'B', L: 'F' },
+  y2: { U: 'U', D: 'D', F: 'B', B: 'F', R: 'L', L: 'R' },
+  "y'": { U: 'U', D: 'D', F: 'L', B: 'R', R: 'F', L: 'B' },
+  z: { U: 'L', D: 'R', F: 'F', B: 'B', R: 'U', L: 'D' },
+  z2: { U: 'D', D: 'U', F: 'F', B: 'B', R: 'L', L: 'R' },
+  "z'": { U: 'R', D: 'L', F: 'F', B: 'B', R: 'D', L: 'U' },
+};
+// Each wide move ≡ a single face move on the opposite face, then a whole-cube
+// rotation. WIDE_DECOMP[token] = [face-move token, rotation token].
+const WIDE_DECOMP: Record<string, [string, string]> = {
+  Uw: ['D', 'y'], Uw2: ['D2', 'y2'], "Uw'": ["D'", "y'"],
+  Dw: ['U', "y'"], Dw2: ['U2', 'y2'], "Dw'": ["U'", 'y'],
+  Fw: ['B', 'z'], Fw2: ['B2', 'z2'], "Fw'": ["B'", "z'"],
+  Bw: ['F', "z'"], Bw2: ['F2', 'z2'], "Bw'": ["F'", 'z'],
+  Rw: ['L', 'x'], Rw2: ['L2', 'x2'], "Rw'": ["L'", "x'"],
+  Lw: ['R', "x'"], Lw2: ['R2', 'x2'], "Lw'": ["R'", 'x'],
+};
+const FACES: Face[] = ['U', 'D', 'F', 'B', 'R', 'L'];
+
+/** Compose rotation `rot` into the current orientation map (cur'[f] = cur[perm[f]]). */
+function rotateOrientation(cur: Record<Face, Face>, rot: string): Record<Face, Face> {
+  const perm = ROT_FACE_PERM[rot];
+  const next = {} as Record<Face, Face>;
+  for (const f of FACES) next[f] = cur[perm[f]];
+  return next;
+}
+
+/**
+ * Parse a scramble into fixed-frame face-move indices, cancelling wide moves and
+ * rotations so the result describes the cube re-oriented to white-top/green-front.
+ * Returns null only for tokens we can't reduce (slice moves, junk).
+ */
 function parseScramble(scramble: string): number[] | null {
   const out: number[] = [];
+  let cur: Record<Face, Face> = { U: 'U', D: 'D', F: 'F', B: 'B', R: 'R', L: 'L' };
+  const emit = (faceTok: string): boolean => {
+    // faceTok like "L" / "L2" / "L'": relabel its face through cur, keep amount.
+    const f = faceTok[0] as Face;
+    const phys = cur[f];
+    const i = MIDX.get(phys + faceTok.slice(1));
+    if (i === undefined) return false;
+    out.push(i);
+    return true;
+  };
   for (const tok of scramble.trim().split(/\s+/)) {
     if (!tok) continue;
-    const i = MIDX.get(tok);
-    if (i === undefined) return null;
-    out.push(i);
+    if (ROT_FACE_PERM[tok]) { cur = rotateOrientation(cur, tok); continue; }   // x / y / z (±)
+    const wide = WIDE_DECOMP[tok];
+    if (wide) {
+      if (!emit(wide[0])) return null;
+      cur = rotateOrientation(cur, wide[1]);
+      continue;
+    }
+    if (!emit(tok)) return null;                                               // plain face move
   }
   return out;
 }
 
-/** True if every token is a face HTM move (no wide moves / rotations). */
-export function isHtmScramble(scramble: string): boolean {
+/** True if the scramble reduces to analysable 3x3 face moves (wide moves & rotations OK). */
+export function isAnalysableScramble(scramble: string): boolean {
   return parseScramble(scramble) !== null;
+}
+
+/**
+ * Re-orient a scramble to white-top/green-front: cancel wide moves & rotations,
+ * returning an equivalent pure face-move (HTM) string for analysis engines that
+ * only parse the 18 face moves. Returns null if it can't be reduced (slice/junk);
+ * a pure-HTM scramble round-trips to itself.
+ */
+export function normalizeScramble(scramble: string): string | null {
+  const idx = parseScramble(scramble);
+  if (idx === null) return null;
+  return idx.map((i) => MOVE_NAMES[i]).join(' ');
 }
 
 export interface CrossSolution {
