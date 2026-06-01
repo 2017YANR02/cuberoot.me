@@ -120,48 +120,54 @@ async function upsertState(slug: string, contentHash: string): Promise<void> {
   );
 }
 
-// ③b PR 涟漪 reconcile:某选手成绩变 → 其所有比赛的「当时是否 PR」标记会变,而那些比赛
-// 自身成绩行没动(content_hash 不变)→ content 增量抓不到。这里从 wca_results_top 算
-// per-person PR 指纹(PG 13 无 crc32/bit_xor,用 sum(hashtextextended)),指纹变了的选手 →
-// 把其所有比赛 dumped_content_hash 置 NULL,令 content picker 重烤。单条多-CTE 语句完成
-// (连接池下 temp 表跨 query 不可见,故不用 temp)。person_dump_state 缺 = migration 没应用 → 跳过.
-async function reconcilePersonRipple(): Promise<{ changed: number; armed: number }> {
-  const exists = await query<{ cnt: string }>(
-    `SELECT COUNT(*)::text AS cnt FROM information_schema.tables
-       WHERE table_schema='public' AND table_name='person_dump_state'`,
-  );
-  if (Number(exists[0]?.cnt ?? 0) === 0) return { changed: 0, armed: 0 };
-
-  const rows = await query<{ armed_comps: string; changed_persons: string }>(
-    `WITH pf AS (
-       SELECT wca_id AS person_id,
-              sum(hashtextextended(concat_ws('|', event_id, is_avg, value), 0)) AS pr_hash
-         FROM wca_results_top GROUP BY wca_id
+// ③b 内容涟漪 reconcile:某「已 dump 过」的比赛成绩被改(content_hash 变)→ 其参赛者在该场之后
+// (comp_date 更晚)的比赛快照里的 per-person 历史字段会过期。这些字段(personalRecords / 区域纪录
+// tag / dense rank pS·pA)全是 tryLoadFromWcaDb 里按 `comp_date < 本场日期` 算的时间冻结量,故只有
+// 「改动场之后」的比赛受影响,之前的场次历史窗口不含本次改动 → 不动。把受影响的更晚比赛
+// dumped_content_hash 置 NULL,令 content picker 重烤。
+//   源只取「已 dump 过 且 content_hash 真变了」的比赛:
+//     - 没 dump 过的新比赛不当源(它自身走 listTargets 的 never-dumped 路径,且新比赛在最新日期 →
+//       之后没有更晚场次可涟漪;新成绩从不影响更早的旧比赛);
+//     - 已被涟漪标 NULL 的比赛也不当源(它是结果不是原因,避免过渡期自我级联放大)。
+//   旧逻辑无脑 arm 选手「所有」比赛(含更早的),是这条管道又重又慢的根因;这版用日期下界砍掉白刷。
+//   日期取 wca_competitions.start_date(= wca_results_top.comp_date 的去规范化值,与冻结口径一致),
+//   避免对 11M 行 wca_results_top 做聚合。单条多-CTE 语句完成(连接池下 temp 表跨 query 不可见)。
+//   (person_dump_state 表自此弃用,保留不删以便回滚。)
+async function reconcileRipple(): Promise<{ armed: number; persons: number; srcComps: number }> {
+  const rows = await query<{ armed_comps: string; affected_persons: string; src_comps: string }>(
+    `WITH src AS (
+       SELECT u.comp_id, c.start_date AS comp_date
+         FROM wca_comp_updated_at u
+         JOIN comp_dump_state  s ON s.comp_id = u.comp_id
+         JOIN wca_competitions c ON c.id      = u.comp_id
+        WHERE u.content_hash IS NOT NULL
+          AND s.dumped_content_hash IS NOT NULL
+          AND u.content_hash <> s.dumped_content_hash
      ),
-     changed AS (
-       SELECT pf.person_id, pf.pr_hash FROM pf
-       LEFT JOIN person_dump_state s ON s.person_id = pf.person_id
-       WHERE s.person_id IS NULL OR s.dumped_pr_hash IS DISTINCT FROM pf.pr_hash
+     person_min AS (
+       SELECT pc.wca_id, MIN(src.comp_date) AS min_changed
+         FROM src JOIN wca_results_top pc ON pc.comp_id = src.comp_id
+        GROUP BY pc.wca_id
      ),
      ripple AS (
-       SELECT DISTINCT comp_id FROM wca_results_top
-        WHERE wca_id IN (SELECT person_id FROM changed)
+       SELECT DISTINCT px.comp_id
+         FROM person_min pm
+         JOIN wca_results_top px ON px.wca_id = pm.wca_id AND px.comp_date > pm.min_changed
      ),
      armed AS (
        UPDATE comp_dump_state SET dumped_content_hash = NULL
         WHERE comp_id IN (SELECT comp_id FROM ripple) AND dumped_content_hash IS NOT NULL
        RETURNING comp_id
-     ),
-     up AS (
-       INSERT INTO person_dump_state (person_id, dumped_pr_hash, reconciled_at)
-       SELECT person_id, pr_hash, NOW() FROM changed
-       ON CONFLICT (person_id) DO UPDATE SET dumped_pr_hash = EXCLUDED.dumped_pr_hash, reconciled_at = NOW()
-       RETURNING 1
      )
-     SELECT (SELECT count(*) FROM armed)::text  AS armed_comps,
-            (SELECT count(*) FROM changed)::text AS changed_persons`,
+     SELECT (SELECT count(*) FROM armed)::text       AS armed_comps,
+            (SELECT count(*) FROM person_min)::text  AS affected_persons,
+            (SELECT count(*) FROM src)::text         AS src_comps`,
   );
-  return { changed: Number(rows[0]?.changed_persons ?? 0), armed: Number(rows[0]?.armed_comps ?? 0) };
+  return {
+    armed: Number(rows[0]?.armed_comps ?? 0),
+    persons: Number(rows[0]?.affected_persons ?? 0),
+    srcComps: Number(rows[0]?.src_comps ?? 0),
+  };
 }
 
 async function dumpOne(
@@ -198,10 +204,10 @@ async function main() {
   const useManifest = await hasManifestTable();
   console.log(`[dump] picker: ${useManifest ? 'watermark (wca_comp_updated_at + comp_dump_state)' : 'legacy (file-exists skip)'}`);
 
-  // ③b: 默认增量路径先 reconcile PR 涟漪(arm 受影响比赛),再 pick.FORCE/FORCE_SLUGS 是定向跑,跳过.
+  // ③b: 默认增量路径先 reconcile 内容涟漪(arm 受改动影响的更晚比赛),再 pick.FORCE/FORCE_SLUGS 定向跑,跳过.
   if (useManifest && !FORCE && FORCE_SLUGS.length === 0) {
-    const r = await reconcilePersonRipple();
-    console.log(`[reconcile] changed_persons=${r.changed} armed_comps=${r.armed}`);
+    const r = await reconcileRipple();
+    console.log(`[reconcile] src_comps=${r.srcComps} affected_persons=${r.persons} armed_comps=${r.armed}`);
   }
 
   const targets = await listTargets(useManifest);
