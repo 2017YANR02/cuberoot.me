@@ -5,10 +5,12 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle } from 'lucide-react';
+import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import type { WcaPersonLite } from '@/lib/wca-api';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
@@ -38,6 +40,14 @@ interface Row {
   subsetTotal?: number;
   ranks: number[];
 }
+
+interface ComboBest { rank: number; events: string[]; }
+interface PlayerBest {
+  wcaId: string; name: string; countryId: string; iso2: string | null;
+  best: { single?: ComboBest; average?: ComboBest };
+}
+interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
+interface Census { type: string; distinct: number; totalSubsets: number; rows: CensusRow[]; }
 
 function SumOfRanksPageInner() {
   const { i18n } = useTranslation();
@@ -75,11 +85,31 @@ function SumOfRanksPageInner() {
   };
   const selectAll = () => update('events', '');
   const clearAll = () => update('events', '__none__');
+  // 把"最优组合"应用到主榜单(组合是世界口径 → 清掉国家筛选 + 切到对应 type)
+  const applyCombo = (events: string[], comboType: 'single' | 'average') => {
+    const next = new URLSearchParams(params.toString());
+    next.set('type', comboType);
+    next.delete('country');
+    next.delete('page');
+    const set = new Set(events);
+    if (set.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => set.has(e))) next.delete('events');
+    else next.set('events', RANK_EVENTS.filter(e => set.has(e)).join(','));
+    pushSearch(next);
+  };
 
   const [data, setData] = useState<{ rows: Row[]; total: number; events: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const countries = useCountries();
+
+  // Q1: 指定选手最优组合
+  const [picked, setPicked] = useState<WcaPersonLite | null>(null);
+  const [pb, setPb] = useState<PlayerBest | null>(null);
+  const [pbLoading, setPbLoading] = useState(false);
+  // Q2: 名人堂(懒加载,展开才拉)
+  const [census, setCensus] = useState<Census | null>(null);
+  const [censusOpen, setCensusOpen] = useState(false);
+  const [censusExpanded, setCensusExpanded] = useState(false);
 
   useEffect(() => {
     if (eventsParam === '__none__') { setData(null); setError(isZh ? '请至少选择一个项目' : 'Select at least one event'); return; }
@@ -96,6 +126,23 @@ function SumOfRanksPageInner() {
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
   }, [type, country, eventsParam, hidePodium, fourthKing, page, size, isZh]);
+
+  // 选手最优组合
+  useEffect(() => {
+    if (!picked) { setPb(null); return; }
+    setPbLoading(true);
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(picked.id)}`))
+      .then(r => (r.ok ? r.json() : null))
+      .then(setPb).catch(() => setPb(null)).finally(() => setPbLoading(false));
+  }, [picked]);
+
+  // 名人堂(展开时 + type 变化时拉)
+  useEffect(() => {
+    if (!censusOpen) return;
+    setCensus(null); setCensusExpanded(false);
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/census?type=${type}`))
+      .then(r => (r.ok ? r.json() : null)).then(setCensus).catch(() => {});
+  }, [censusOpen, type]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isCountryMode = !!country;
@@ -176,6 +223,80 @@ function SumOfRanksPageInner() {
             onlyAvailable
           />
         </div>
+      </div>
+
+      {/* Q1: 指定选手最优项目组合 */}
+      <div className="sor-tool">
+        <label className="sor-tool-label">{isZh ? '查选手的最优项目组合' : "A cuber's best event combination"}</label>
+        <WcaPersonPicker
+          value={picked}
+          onChange={setPicked}
+          isZh={isZh}
+          placeholder={isZh ? '搜索选手名 / WCA ID' : 'Search name / WCA ID'}
+          className="sor-tool-picker"
+        />
+        {pbLoading && <div className="sor-tool-hint">{isZh ? '计算中…' : 'Loading…'}</div>}
+        {pb && !pbLoading && (
+          <div className="sor-pb">
+            <div className="sor-pb-head">
+              {pb.iso2 && <Flag iso2={pb.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+              <a href={`https://www.worldcubeassociation.org/persons/${pb.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(pb.name, isZh)}</a>
+            </div>
+            {(['single', 'average'] as const).every(tk => !pb.best[tk]) ? (
+              <div className="sor-tool-hint">{isZh ? '该选手暂无有效成绩' : 'No ranked results'}</div>
+            ) : (['single', 'average'] as const).map(tk => {
+              const b = pb.best[tk];
+              if (!b) return null;
+              return (
+                <div key={tk} className="sor-pb-row">
+                  <span className="sor-pb-type">{tk === 'single' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Average')}</span>
+                  <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
+                  <span className="sor-pb-events">{b.events.map(ev => <EventIcon key={ev} event={ev} />)}</span>
+                  <button type="button" className="sor-pb-apply" onClick={() => applyCombo(b.events, tk)}>{isZh ? '应用到榜单' : 'Apply'}</button>
+                </div>
+              );
+            })}
+            <div className="sor-pb-note">{isZh ? '在所有项目组合里,这个组合让 TA 的名次和排名最靠前(世界口径)' : 'The combination that puts them highest on the world sum-of-ranks board'}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Q2: 名人堂 — 谁当过名次和第一 */}
+      <div className="sor-census">
+        <button type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} aria-expanded={censusOpen}>
+          {censusOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          {isZh ? '名人堂:谁当过名次和第一?' : 'Hall of fame: who has ever been #1?'}
+        </button>
+        {censusOpen && (
+          <div className="sor-census-body">
+            {!census && <div className="sor-tool-hint">{isZh ? '加载中…' : 'Loading…'}</div>}
+            {census && (
+              <>
+                <p className="sor-census-lead">{isZh
+                  ? `在全部 ${census.totalSubsets.toLocaleString()} 种项目组合里,共有 ${census.distinct} 名选手当过"名次和第一"(${type === 'average' ? '平均' : '单次'},世界口径)。`
+                  : `Across all ${census.totalSubsets.toLocaleString()} combinations, ${census.distinct} cubers have been #1 (${type}, world).`}</p>
+                <ol className="sor-census-list">
+                  {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
+                    const share = r.subsetsWon / census.totalSubsets * 100;
+                    return (
+                      <li key={r.wcaId}>
+                        <span className="sor-census-rank">{r.rank}</span>
+                        {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                        <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
+                        <span className="sor-census-share">{share < 0.1 ? share.toFixed(3) : share.toFixed(1)}%</span>
+                      </li>
+                    );
+                  })}
+                </ol>
+                {census.rows.length > 12 && (
+                  <button type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
+                    {censusExpanded ? (isZh ? '收起' : 'Show less') : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="wse-table-wrapper">
