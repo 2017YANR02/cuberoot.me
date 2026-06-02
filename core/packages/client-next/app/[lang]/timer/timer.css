@@ -764,6 +764,63 @@
 .timer-modal .modal-actions button.primary { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
 .timer-modal .modal-actions button.primary:hover { background: #345169; }
 
+/* Solver-hints modal — wider than the default 480px so StageSolver's 6-angle
+   grid + solution list + 3D player fit (mobile override below clamps to 100%). */
+.timer-modal--solver { max-width: 860px; }
+
+/* The timer modal is hardcoded-dark (#1a1a1d) on every page theme, but
+   StageSolver colours follow the page theme (--sv-* + a few globals). On a
+   light-mode page that paints dark text on the dark modal → invisible. Lock the
+   standard dark palette here (same values as globals.css / StageSolver.css dark
+   block) so it stays legible regardless of the page's light/dark state. */
+.timer-modal--solver {
+  --foreground: #ededed;
+  --card: #1f1f1f;
+  --muted-foreground: #a3a3a3;
+  --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+.timer-modal--solver .stsv {
+  --sv-surface: #1f1f1f;
+  --sv-text: #ededed;
+  --sv-text-sub: #a3a3a3;
+  --sv-text-mute: #737373;
+  --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
+  --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
+  --sv-accent: #d97757;
+  --sv-accent-soft: color-mix(in srgb, #d97757 16%, transparent);
+}
+.solver-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.solver-modal-head h2 { margin: 0; }
+.solver-modal-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--shell-divider);
+  border-radius: 8px;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.solver-modal-x:hover { background: var(--shell-hover); color: var(--foreground); }
+.solver-modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: var(--muted-foreground);
+}
+.solver-modal-spin { animation: solver-modal-spin 0.8s linear infinite; }
+@keyframes solver-modal-spin { to { transform: rotate(360deg); } }
+
 /* --- SolveModal additions --- */
 .timer-modal .comment-textarea {
   width: 100%;
