@@ -201,7 +201,8 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                   title={t('点击切换 十字/XC/XXC/XXXC/XXXXC', 'Click to cycle Cross / XC / XXC / XXXC / XXXXC')}
                   onClick={(e) => { e.stopPropagation(); cycleMetric(a.scramble); }}
                 >
-                  <span className="gen-tn-cross-c">{metricBadgeLabel(em)}</span>
+                  {/* 该行指标与顶部「阶段」一致时不重复显示标签;被逐行切到不同指标才标出来 */}
+                  {em !== metric && <span className="gen-tn-cross-c">{metricBadgeLabel(em)}</span>}
                   {digits
                     ? digits.map((d, ci) => (
                         <b key={ci} className="gen-tn-cx" style={{ color: CUBE_FILL[BADGE_FACE_ORDER[ci]] }}>{d}</b>

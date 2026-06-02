@@ -1133,9 +1133,10 @@ impl PairSolver {
     }
 
     /// 给定 stage(0=cross_pair / 1=xcross_pair / 2=xxcross_pair / 3=xxxcross_pair),
-    /// 与 get_stage_small 同口径挑最优 (pair tgt + xcross 槽) task,枚举其
-    /// best_len..best_len+extra 步全部解(rot 帧 move 索引路径,cap 封顶)。
-    /// 返回 (best_len, combo 槽位[pair tgt 在首位,其后为 xcross 槽], 解集)。
+    /// 与 get_stage_small 同口径挑最优 (pair tgt + xcross 槽) task,枚举**所有并列最优**
+    /// (在同一 best_len 解出)的 combo,各自的 best_len..best_len+extra 步全部解
+    /// (rot 帧 move 索引路径,cap 封顶)。
+    /// 返回 (best_len, 每条解 (frame=rot, combo 槽位[pair tgt 在首位,其后为 xcross 槽], move 路径))。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -1143,7 +1144,7 @@ impl PairSolver {
         stage: usize,
         extra: u32,
         cap: usize,
-    ) -> (u32, Vec<usize>, Vec<Vec<u8>>) {
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         alg_rotation(&mut a, rot);
@@ -1193,58 +1194,74 @@ impl PairSolver {
         }
         tasks.sort_by_key(|t| t.2);
 
-        // argmin:复用 solve_small_task 求每个 task 长度,取最短(其后枚举该 task)。
+        // 复用 solve_small_task 求每个 task 长度,取 best_len = min,并收集**所有**
+        // 并列最优(长度 == best_len)的 task。用 `>`(非 `>=`)以便 h == best_len 的
+        // 候选也被评估(可能恰好并列)。best_len 逻辑(任一候选首次成功的深度)bit-exact 不变。
+        // bound=99(max_d=18 满阶段)而非running best_len:让 h == best_len 的并列候选
+        // 也搜到自身真实长度(原 argmin 的 bound 收紧是纯剪枝,不影响 min ⇒ best_len bit-exact)。
         let mut best_len = 99u32;
-        let mut best: (usize, Vec<usize>) = (tasks[0].0, tasks[0].1.clone());
+        let mut evaluated: Vec<(usize, Vec<usize>, u32)> = Vec::new();
         for (tgt, xc_slots, h) in &tasks {
-            if *h >= best_len {
-                continue;
-            }
-            let res = self.solve_small_task(&st, *tgt, xc_slots, *h, 0, best_len);
-            if res < best_len {
-                best_len = res;
-                best = (*tgt, xc_slots.clone());
-            }
-        }
-
-        let mut out: Vec<Vec<u8>> = Vec::new();
-        let (tgt, xc_slots) = best;
-        let mut combo = vec![tgt];
-        combo.extend(xc_slots.iter().copied());
-        if best_len == 0 || best_len >= 99 {
-            return (best_len.min(0), combo, out);
-        }
-
-        let sp = &st[tgt];
-        let mut xc = [(0usize, 0usize, 0usize, 0usize); 3];
-        for (j, &s) in xc_slots.iter().enumerate() {
-            xc[j] = (
-                st[s].im as usize,
-                (st[s].ic as usize) * 18,
-                (st[s].ie as usize) * 18,
-                s,
-            );
-        }
-        let n = xc_slots.len();
-        let mut path = Vec::new();
-        for d in best_len..=(best_len + extra).min(18) {
-            self.enum_small(
-                sp.im as usize,
-                (sp.ic as usize) * 18,
-                (sp.ie as usize) * 18,
-                tgt,
-                &xc[..n],
-                d,
-                18,
-                &mut path,
-                &mut out,
-                cap,
-            );
-            if out.len() >= cap {
+            if *h > best_len {
                 break;
             }
+            let res = self.solve_small_task(&st, *tgt, xc_slots, *h, 0, 99);
+            if res < best_len {
+                best_len = res;
+            }
+            evaluated.push((*tgt, xc_slots.clone(), res));
         }
-        (best_len, combo, out)
+
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        if best_len == 0 || best_len >= 99 {
+            return (best_len.min(0), out);
+        }
+
+        // 并列最优 task(长度 == best_len)。逐深度 d 外层、task 内层交错枚举,
+        // 使跨 task 也按长度升序;每条解带 frame=rot + 自己的 combo;cap 控总条数。
+        let tied: Vec<(usize, Vec<usize>)> = evaluated
+            .into_iter()
+            .filter(|(_, _, l)| *l == best_len)
+            .map(|(tgt, xc_slots, _)| (tgt, xc_slots))
+            .collect();
+        let mut path = Vec::new();
+        'outer: for d in best_len..=(best_len + extra).min(18) {
+            for (tgt, xc_slots) in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let sp = &st[*tgt];
+                let mut xc = [(0usize, 0usize, 0usize, 0usize); 3];
+                for (j, &s) in xc_slots.iter().enumerate() {
+                    xc[j] = (
+                        st[s].im as usize,
+                        (st[s].ic as usize) * 18,
+                        (st[s].ie as usize) * 18,
+                        s,
+                    );
+                }
+                let n = xc_slots.len();
+                let mut combo = vec![*tgt];
+                combo.extend(xc_slots.iter().copied());
+                let mut task_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_small(
+                    sp.im as usize,
+                    (sp.ic as usize) * 18,
+                    (sp.ie as usize) * 18,
+                    *tgt,
+                    &xc[..n],
+                    d,
+                    18,
+                    &mut path,
+                    &mut task_out,
+                    cap - out.len(),
+                );
+                for sol in task_out {
+                    out.push((rot.to_string(), combo.clone(), sol));
+                }
+            }
+        }
+        (best_len, out)
     }
 }
 
@@ -1350,7 +1367,7 @@ mod tests {
             for (ri, rot) in rots.iter().enumerate() {
                 for stage in 0..4usize {
                     let want = exp[stage * 6 + ri];
-                    let (len, combo, sols) = solver.enumerate_small(&alg, rot, stage, 0, 20);
+                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 200);
                     assert_eq!(
                         len, want,
                         "len mismatch `{}` rot={} stage={}: got {} want {}",
@@ -1359,13 +1376,29 @@ mod tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!sols.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(!items.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
                     // rot 后打乱基底。
                     let mut base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
                     alg_rotation(&mut base, rot);
-                    let tgt = combo[0];
-                    let xc_slots = &combo[1..];
-                    for sol in &sols {
+                    let st: [VirtState; 4] = std::array::from_fn(|s| solver.get_virt(&base, s));
+                    for (frame, combo, sol) in &items {
+                        // 无 frame solver:每条解 frame == 传入 rot。
+                        assert_eq!(
+                            frame.as_str(),
+                            *rot,
+                            "frame mismatch `{}` rot={} stage={}: {:?}",
+                            scr, rot, stage, frame
+                        );
+                        let tgt = combo[0];
+                        let xc_slots = &combo[1..];
+                        // 该 combo 必须在本 stage 下达成 best_len(合法并列)。
+                        let combo_len =
+                            solver.solve_small_task(&st, tgt, xc_slots, 0, 0, 99);
+                        assert_eq!(
+                            combo_len, len,
+                            "tied combo {:?} not best_len `{}` rot={} stage={}: combo_len={} best_len={}",
+                            combo, scr, rot, stage, combo_len, len
+                        );
                         assert_eq!(
                             sol.len() as u32,
                             len,

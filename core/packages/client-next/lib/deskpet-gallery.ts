@@ -15,11 +15,22 @@ export interface PetGalleryGroup {
   en: string;
   base: string;
   anims: PetAnim[];
+  // SVGs whose animation is driven by an embedded <script> (cloudling). Scripts
+  // don't run inside <img>, so these must render via <object> or they show a
+  // blank/initial frame. CSS-keyframe SVGs (cubing/clawd) and .apng animate in <img>.
+  scripted?: boolean;
+  // Optional CSS zoom: several characters are authored small inside a large canvas
+  // (cloud centered with float headroom; pixel crab/pig sitting low with jump
+  // headroom above), so they read tiny at native scale — bump to match the cats.
+  // The media cell clips overflow, so scaleOrigin anchors where the figure sits
+  // (e.g. 'center 82%' keeps a ground-standing sprite's feet in frame).
+  scale?: number;
+  scaleOrigin?: string;
 }
 
 export const PET_GALLERY: PetGalleryGroup[] = [
   {
-    id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/',
+    id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [
       { file: 'a01-iso-sexy-solve.svg', zh: '等距解魔方', en: 'Sexy-move solve' },
       { file: 'a01-iso-crank-solve.svg', zh: '转角解魔方', en: 'Corner crank' },
@@ -54,7 +65,7 @@ export const PET_GALLERY: PetGalleryGroup[] = [
     ],
   },
   {
-    id: 'clawd', zh: '螃蟹 Clawd', en: 'Clawd', base: '/deskpet/',
+    id: 'clawd', zh: '螃蟹 Clawd', en: 'Clawd', base: '/deskpet/', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [
       { file: 'clawd-idle-look.svg', zh: '待机', en: 'Idle' },
       { file: 'clawd-idle-bubble.svg', zh: '冒泡', en: 'Thought Bubble' },
@@ -99,7 +110,7 @@ export const PET_GALLERY: PetGalleryGroup[] = [
     ],
   },
   {
-    id: 'cloudling', zh: '云宝 Cloudling', en: 'Cloudling', base: '/deskpet/cloudling/',
+    id: 'cloudling', zh: '云宝 Cloudling', en: 'Cloudling', base: '/deskpet/cloudling/', scripted: true, scale: 1.5, scaleOrigin: 'center 45%',
     anims: [
       { file: 'cloudling-idle.svg', zh: '待机', en: 'Idle' },
       { file: 'cloudling-thinking.svg', zh: '思考', en: 'Thinking' },

@@ -14,8 +14,18 @@ export const THEME_KEY = 'theme';
 
 export function applyTheme(theme: Theme) {
   const root = document.documentElement;
-  if (theme === 'system') root.removeAttribute('data-theme');
-  else root.setAttribute('data-theme', theme);
+  if (theme === 'light' || theme === 'dark') {
+    root.setAttribute('data-theme', theme);
+    // Pin the browser-level color-scheme to the chosen theme. Without this the
+    // page keeps `color-scheme: light dark` (follows OS), so an explicit dark
+    // theme on an OS-light machine paints embedded <object>/<iframe> docs (the
+    // cloudling gallery) with an opaque white canvas backdrop.
+    root.style.colorScheme = theme;
+  } else {
+    // system: follow OS for both tokens and color-scheme
+    root.removeAttribute('data-theme');
+    root.style.colorScheme = '';
+  }
   applyFavicon();
 }
 
@@ -28,7 +38,7 @@ function applyFavicon() {
   link.href = href;
 }
 
-function readEffective(): EffectiveTheme {
+export function readEffective(): EffectiveTheme {
   const saved = (localStorage.getItem(THEME_KEY) as Theme | null) || 'system';
   if (saved === 'light' || saved === 'dark') return saved;
   return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';

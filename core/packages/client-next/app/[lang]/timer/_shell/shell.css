@@ -49,27 +49,11 @@
   gap: 10px;
   min-width: 0;
 }
-.shell-topbar-rank {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  min-width: 0;
-}
-.shell-rank-idle {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--faint-foreground);
-  letter-spacing: 0.02em;
-}
 .shell-topbar-right {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-.shell-toggles {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  margin-left: auto;   /* push toggles to the far right (no center rank slot) */
 }
 
 /* Mode pill — green-active segmented control (project convention). */
@@ -130,12 +114,32 @@
   top: calc(100% + 8px);
   left: 0;
   z-index: 41;
-  padding: 12px;
+  /* Give the popover a real width so the inner flex grid wraps to ~7 columns
+     instead of shrink-wrapping to a single 40px column (the overflow bug). */
+  width: min(92vw, 360px);
+  max-height: min(440px, 70dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px;
   border-radius: 12px;
   background: var(--popover);
   border: 1px solid var(--border-default);
   box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
-  max-width: min(92vw, 560px);
+}
+/* Strip the shared selector's own frame inside the popover (it already sits in
+   a framed popover — no double box) and retint its dark-locked tokens so the
+   icons stay legible in light theme too. The shared component CSS is off-limits;
+   we override only from this wrapper, with higher specificity. */
+.shell-event-pop .wca-stats-event-selector {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  --evbtn-bg: var(--shell-chip);
+  --evbtn-bg-hover: var(--shell-hover);
+  --evbtn-border-hover: var(--shell-divider);
+  --evbtn-icon: var(--muted-foreground);
+  --evbtn-icon-hover: var(--foreground);
 }
 
 /* ── Main column ────────────────────────────────────────── */
@@ -450,7 +454,8 @@
   transition: background 120ms, border-color 120ms;
 }
 .timing-surface .qa-btn:hover { background: var(--shell-hover); }
-.timing-surface .qa-btn.active { border-color: var(--accent); color: var(--accent); }
+.timing-surface .qa-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.timing-surface .qa-btn.danger { margin-left: 8px; }
 .timing-surface .qa-btn.danger:hover { border-color: var(--destructive); color: var(--destructive); }
 
 /* PB celebration toast — floating overlay. MUST be position:fixed so it stays
@@ -458,7 +463,12 @@
    unnamed grid item and stretches the topbar row, shifting the digits down. */
 .tmr-pb-card {
   position: fixed;
-  top: max(70px, calc(env(safe-area-inset-top) + 64px));
+  /* Sits in the empty band between the stopped-row (quick-actions + rank, which
+     hug the centered digits) and the bottom chrome (under-surface pills /
+     stat-rail / bottom-nav). The TOP is owned by the multi-line scramble strip,
+     so a top-anchored toast overlapped it on a PB; this band is clear on both
+     desktop and phone. */
+  bottom: calc(230px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
@@ -480,7 +490,7 @@
 .tmr-pb-title { font-weight: 600; font-size: 14px; white-space: nowrap; }
 .tmr-pb-val { font-size: 14px; color: var(--foreground); }
 @keyframes tmr-pb-in {
-  from { opacity: 0; transform: translate(-50%, -8px); }
+  from { opacity: 0; transform: translate(-50%, 8px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 @media (prefers-reduced-motion: reduce) { .tmr-pb-card { animation: none; } }
@@ -530,11 +540,18 @@
 .shell-stat-val { font-size: 16px; color: var(--foreground); }
 
 .shell-swipe-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 16px;
   padding: 4px 12px 10px;
-  text-align: center;
   font-size: 11px;
   color: var(--faint-foreground);
 }
+
+/* Solver-hint pills (de-boxed in SolverHints.tsx) brighten on hover. */
+.shell-undersurface .solver-hints button:hover { color: var(--foreground); }
 
 /* ── Distraction-free fade while running ────────────────── */
 .timer-shell.is-solving .surface-chrome {
@@ -945,11 +962,28 @@
   .shell-mode-opt span { display: none; }
   .shell-mode-opt svg { width: 18px; height: 18px; }
   .shell-event-btn { padding: 5px 10px; font-size: 12px; }
+  /* Anchor the picker to the viewport (not the off-center button) so a wide
+     grid never runs off the right edge; full-width with 8px gutters. */
+  .shell-event-pop {
+    position: fixed;
+    top: calc(48px + env(safe-area-inset-top));
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 68dvh;
+  }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
   .shell-stat-rail { gap: 14px; padding: 8px 10px 10px; flex-wrap: wrap; }
   .shell-stat-val { font-size: 14px; }
   .timing-surface-scramble { top: 8px; }
   .timing-surface-corner { top: 48px; right: 10px; }
+  /* Pin the refresh to the strip's top-right so it never wraps onto its own
+     orphaned line; bump it to a 40px touch target. */
+  .timing-surface-scramble .scramble-strip { position: relative; padding-right: 40px; }
+  .timing-surface-scramble .scramble-refresh { position: absolute; top: 0; right: 0; width: 40px; height: 40px; }
+  /* Clear the bottom-left global auth avatar so the leftmost nav button
+     (成绩 / Times) isn't under it; symmetric so the 3 flex:1 buttons stay centered. */
+  .timer-shell .shell-bottombar { padding-left: 56px; padding-right: 56px; }
 }
 
 /* Hide the slim desktop-only Bluetooth status button label on small screens
@@ -1064,6 +1098,25 @@
 }
 .shell-topbar .tb-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 .shell-topbar .tb-btn.connected { color: var(--signal-success); border-color: color-mix(in srgb, var(--signal-success) 40%, transparent); }
+
+/* Keyboard focus ring — the shell had none, so tab-focus fell back to the
+   near-invisible UA outline on the dark surface. Token-only, both themes. */
+.shell-mode-opt:focus-visible,
+.shell-event-btn:focus-visible,
+.shell-topbar .tb-btn:focus-visible,
+.scramble-refresh:focus-visible,
+.shell-corner-net .cube-preview-toggle:focus-visible,
+.timing-surface .qa-btn:focus-visible,
+.shell-bottombar-btn:focus-visible,
+.shell-panel-tab:focus-visible,
+.shell-undersurface .solver-hints button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* Print header meta: gap-separated spans (no middle-dot). */
+.print-meta { display: flex; justify-content: center; gap: 14px; }
 
 /* ── Global-overlay coexistence (deskpet / auth avatar) ────────
    Timer-scoped only — we do NOT touch the global DeskPet / WcaAuth

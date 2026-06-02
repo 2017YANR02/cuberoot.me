@@ -2089,7 +2089,7 @@ impl PseudoPairSmallSolver {
         stage: usize,
         extra: u32,
         cap: usize,
-    ) -> (u32, Vec<usize>, Vec<Vec<u8>>) {
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         alg_rotation(&mut a, rot);
         let st = self.initial_states(&a);
@@ -2185,39 +2185,58 @@ impl PseudoPairSmallSolver {
         }
         tasks.sort_by_key(|t| t.2);
 
-        // argmin 单 face:复用 solve_task 求每 task 长度,取最短 + 记 best task(同 pair/pseudo 模式)。
-        // 不再 pseudo_pair_get_stage_small 全 6 视角 count + 独立 probe —— 单 face 省 ~6× count + 1 探。
-        // solve_task 与 solve_stageN 同搜索 ⇒ best_len bit-exact;可采纳下界 ⇒ argmin 即真最优。
+        // best_len:每 task 各自最优长度的 min(逻辑不变)。solve_task 与 solve_stageN 同搜索
+        // ⇒ best_len bit-exact;可采纳下界 ⇒ argmin 即真最优。
+        // 与原版差异:break 用 `>`(非 `>=`)以便 h == best_len 的 task 也被评估(可能恰好并列);
+        // bound 传满阶段上界 21(⇒ max_d=min(20,20)=20)而非 best_len,使并列 task 的真实长度
+        // 可被检出(否则 bound=best_len 会让恰好 best_len 的 task 返回 99)。两处改动均不影响
+        // best_len 的取值:h==best_len 的 task 下界即 best_len,真实长度 >= best_len,只能并列、
+        // 永不拉低 best_len。
         let mut best_len = 99u32;
-        let mut best: Option<(PpPair, Vec<PpXc>)> = None;
+        let mut evaluated: Vec<(PpPair, Vec<PpXc>, u32)> = Vec::new();
         for (p, xc, h) in &tasks {
-            if *h >= best_len {
-                break; // tasks 按 h 升序,后续 h 只增。
+            if *h > best_len {
+                break; // tasks 按 h 升序,后续 h 只增;> best_len 不可能并列。
             }
-            let res = self.solve_task(p, xc, *h, 0, best_len);
+            let res = self.solve_task(p, xc, *h, 0, 21);
             if res < best_len {
                 best_len = res;
-                best = Some((*p, xc.clone()));
             }
+            evaluated.push((*p, xc.clone(), res));
         }
 
-        let mut combo: Vec<usize> = Vec::new();
-        let mut out: Vec<Vec<u8>> = Vec::new();
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
         if best_len == 0 || best_len >= 99 {
-            return (0, combo, out); // 已解(0 步)/ 异常:无 moves。
+            return (0, Vec::new()); // 已解(0 步)/ 异常:无 moves。
         }
-        let (p, xc) = best.expect("best_len<99 ⇒ best 已记");
-        combo.push(p.slot);
-        combo.extend(xc.iter().map(|q| q.slot));
+
+        // 并列最优(长度 == best_len)的全部 (pair, xcross 集)。逐深度 d 外层、候选内层交错
+        // 枚举,使跨候选也按长度升序;每条解带它自己的 frame(= rot,本 solver 无 frame)+ combo;
+        // cap 控总条数。
+        let tied: Vec<(PpPair, Vec<PpXc>)> = evaluated
+            .into_iter()
+            .filter(|(_, _, l)| *l == best_len)
+            .map(|(p, xc, _)| (p, xc))
+            .collect();
+        let frame = rot.to_string(); // 本 solver 无 frame:每条解 frame = 传入 rot 前缀。
 
         let mut path = Vec::new();
-        for d in best_len..=(best_len + extra).min(20) {
-            self.enum_collect(&p, &xc, d, 18, &mut path, &mut out, cap);
-            if out.len() >= cap {
-                break;
+        'outer: for d in best_len..=(best_len + extra).min(20) {
+            for (p, xc) in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let mut combo: Vec<usize> = Vec::with_capacity(1 + xc.len());
+                combo.push(p.slot);
+                combo.extend(xc.iter().map(|q| q.slot));
+                let mut combo_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_collect(p, xc, d, 18, &mut path, &mut combo_out, cap - out.len());
+                for sol in combo_out {
+                    out.push((frame.clone(), combo.clone(), sol));
+                }
             }
         }
-        (best_len, combo, out)
+        (best_len, out)
     }
 }
 
@@ -2349,10 +2368,10 @@ mod small_tests {
                 for stage in 0..4usize {
                     let want = exp[stage * 6 + ri];
                     let t = std::time::Instant::now();
-                    let (len, combo, sols) = solver.enumerate_small(&alg, rot, stage, 0, 20);
+                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20);
                     eprintln!(
                         "[pp-enum] rot={:?} stage={} len={} sols={} {:.0}ms",
-                        rot, stage, len, sols.len(), t.elapsed().as_secs_f64() * 1e3
+                        rot, stage, len, items.len(), t.elapsed().as_secs_f64() * 1e3
                     );
                     assert_eq!(
                         len, want,
@@ -2362,15 +2381,26 @@ mod small_tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!sols.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(!items.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
 
                     // rot 后打乱基底。
                     let mut base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
                     alg_rotation(&mut base, rot);
 
-                    let tgt = combo[0];
-                    let xc_slots = &combo[1..];
-                    for sol in &sols {
+                    // 无 frame solver:每条解 frame 必为传入 rot。
+                    for (frame, _, _) in &items {
+                        assert_eq!(
+                            frame.as_str(),
+                            *rot,
+                            "frame must equal rot `{}` rot={} stage={}: got {:?}",
+                            scr, rot, stage, frame
+                        );
+                    }
+
+                    // 每条解带自己的 combo;按 combo 各自 replay 校验,确保都是合法并列(都达成 best_len)。
+                    for (_, combo, sol) in &items {
+                        let tgt = combo[0];
+                        let xc_slots = &combo[1..];
                         assert_eq!(
                             sol.len() as u32,
                             len,

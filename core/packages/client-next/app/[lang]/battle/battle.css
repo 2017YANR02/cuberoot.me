@@ -574,39 +574,10 @@
     border-color: var(--border-strong);
 }
 
-/* NOTE: 中间栏的主题/语言切换 — 紧凑图标按钮,跟 .middle-btn 等高对齐;
-   不必离开对战即可切主题/语言(与 Solo 一致) */
-.middle-actions .battle-toggles {
-    gap: 4px;
-}
-
-.middle-actions .battle-toggles .lang-toggle,
-.middle-actions .battle-toggles .theme-toggle-inline {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border-default);
-    background: transparent;
-    color: var(--muted-foreground);
-    justify-content: center;
-}
-
-.middle-actions .battle-toggles .lang-toggle:hover,
-.middle-actions .battle-toggles .theme-toggle-inline:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    color: var(--foreground);
-    border-color: var(--border-strong);
-}
-
 /* 窄屏:键盘提示已隐藏,工具条收紧避免挤压比分 */
 @media (max-width: 480px) {
     .middle-actions {
         gap: 5px;
-    }
-    .middle-actions .battle-toggles .lang-toggle,
-    .middle-actions .battle-toggles .theme-toggle-inline {
-        width: 28px;
-        height: 28px;
     }
 }
 

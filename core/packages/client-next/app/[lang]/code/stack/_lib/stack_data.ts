@@ -5,6 +5,7 @@ import type { StackTool } from './stack_tool_types';
 // so dynamic() isn't appropriate — we use raw dynamic import() and resolve to .default.
 const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'bun': () => import('../_tools/bun'),
+  'capacitor': () => import('../_tools/capacitor'),
   'claude': () => import('../_tools/claude'),
   'claude-code': () => import('../_tools/claude-code'),
   'cloudflare-dns': () => import('../_tools/cloudflare-dns'),
@@ -18,6 +19,8 @@ const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'hono': () => import('../_tools/hono'),
   'i18next': () => import('../_tools/i18next'),
   'lets-encrypt': () => import('../_tools/lets-encrypt'),
+  'mac-mini': () => import('../_tools/mac-mini'),
+  'maplibre-gl': () => import('../_tools/maplibre-gl'),
   'monorepo': () => import('../_tools/monorepo'),
   'mysql': () => import('../_tools/mysql'),
   'next-js': () => import('../_tools/next-js'),
@@ -40,10 +43,13 @@ const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'tailwind': () => import('../_tools/tailwind'),
   'three': () => import('../_tools/three'),
   'turbo': () => import('../_tools/turbo'),
+  'turbopack': () => import('../_tools/turbopack'),
   'uv': () => import('../_tools/uv'),
   'vite': () => import('../_tools/vite'),
   'vitest': () => import('../_tools/vitest'),
   'webcodecs': () => import('../_tools/webcodecs'),
+  'windows': () => import('../_tools/windows'),
+  'zed': () => import('../_tools/zed'),
   'zustand': () => import('../_tools/zustand'),
 };
 
