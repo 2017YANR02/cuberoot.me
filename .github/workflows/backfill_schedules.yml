@@ -7,8 +7,11 @@
 #   cron 每天 01:00 UTC — stats.yml 20:00 灌新 wca_competitions、dump_comps 23:30 跑完后,
 #     补新公示比赛 + 刷新「未来/进行中」比赛赛程(已结束的冻结不再拉)
 #
-# 流程(同 dump_comps.yml):esbuild bundle → scp → 服务器 nice/ionice 低优先级跑。
-# 服务器能访问 worldcubeassociation.org + 写本地 PG;客户端只收 trim 后几十 KB。
+# 流程:esbuild bundle → 在 CI runner 上 fetch+trim(runner 直连 WCA 快)→ 经
+# SSH 本地转发隧道把 trim 后几十 KB 的行写进 prod PG。
+# 为何不在服务器上跑:prod 机器到 worldcubeassociation.org 仅 ~30KB/s,一个 10MB
+# 的大赛 WCIF 会把 fetch 超时打爆 → 大赛永远 skip、缓存空。runner 直连 WCA 快,
+# 只让 trim 后的小数据穿隧道回 PG(PG 只监听 127.0.0.1,隧道转发到它的 loopback)。
 name: Backfill comp schedules
 
 on:
@@ -27,13 +30,13 @@ on:
         required: false
         default: '0'
       concurrency:
-        description: 'CONCURRENCY 并发 WCIF 拉取数（默认 2，单场最大 ~10MB）'
+        description: 'CONCURRENCY 并发 WCIF 拉取数（runner 直连 WCA，默认 6，单场最大 ~10MB）'
         required: false
-        default: '2'
+        default: '6'
       delay_ms:
-        description: 'DELAY_MS 每 worker 拉取间隔毫秒（默认 300，礼让 WCA）'
+        description: 'DELAY_MS 每 worker 拉取间隔毫秒（默认 150，礼让 WCA）'
         required: false
-        default: '300'
+        default: '150'
   schedule:
     # UTC 01:00 — stats.yml(20:00) + dump_comps(23:30) 之后,错峰不与它们同时抢内存
     - cron: '0 1 * * *'
@@ -81,37 +84,33 @@ jobs:
           chmod 600 ~/.ssh/id
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: scp bundle to server
+      - name: Run backfill on runner (fast WCA) → prod PG over SSH tunnel
         working-directory: core
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
-            .tmp/backfill-schedules.js "$DEPLOY_USER@$DEPLOY_HOST:/tmp/backfill-schedules.js"
-
-      - name: Run backfill (foreground, stream logs)
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          # cron 默认封顶 3000 场/次摊多天,绝不一次马拉松打死单机;手动 dispatch 传 0 解封
+          # cron 默认封顶 3000 场/次摊多天;手动 dispatch 传 limit=0 解封跑全量 bootstrap
           LIMIT: ${{ github.event.inputs.limit || '3000' }}
           FORCE: ${{ github.event.inputs.force || '0' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
-          CONCURRENCY: ${{ github.event.inputs.concurrency || '2' }}
-          DELAY_MS: ${{ github.event.inputs.delay_ms || '300' }}
+          CONCURRENCY: ${{ github.event.inputs.concurrency || '6' }}
+          DELAY_MS: ${{ github.event.inputs.delay_ms || '150' }}
         run: |
-          # 守卫:所有旋钮必须是纯数字,杜绝 dispatch 输入注入进远端 shell
+          # 守卫:所有旋钮必须是纯数字,杜绝 dispatch 输入注入进 shell
           for v in "$LIMIT" "$FORCE" "$DRY_RUN" "$CONCURRENCY" "$DELAY_MS"; do
             case "$v" in *[!0-9]*|"") echo "::error::non-numeric input: '$v'"; exit 1 ;; esac
           done
-          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd /root/core-api && \
-              LIMIT=$LIMIT \
-              FORCE=$FORCE \
-              DRY_RUN=$DRY_RUN \
-              CONCURRENCY=$CONCURRENCY \
-              DELAY_MS=$DELAY_MS \
-              nice -n 19 ionice -c 3 node --env-file=.env /tmp/backfill-schedules.js"
+          # 只取 prod .env 里的 DB_* 凭据(不拉整份 secret 文件)
+          ssh -n -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
+            'grep -E "^DB_(HOST|PORT|USER|PASS|NAME)=" /root/core-api/.env' > db.env
+          # 本地转发隧道:runner:15432 → prod 127.0.0.1:5432(PG 只听 loopback)
+          ssh -fN -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=6 \
+            -i ~/.ssh/id -L 15432:127.0.0.1:5432 "$DEPLOY_USER@$DEPLOY_HOST"
+          # fetch+trim 在 runner 本地跑(直连 WCA 快);DB_USER/PASS/NAME 由 node --env-file
+          # 读 db.env(同 prod 解析器,密码含特殊字符也稳),DB_HOST/PORT 用真实 env 覆盖
+          # 指向隧道(Node:同名时 env 优先于 --env-file)
+          DB_HOST=127.0.0.1 DB_PORT=15432 \
+          LIMIT=$LIMIT FORCE=$FORCE DRY_RUN=$DRY_RUN CONCURRENCY=$CONCURRENCY DELAY_MS=$DELAY_MS \
+            node --env-file=db.env .tmp/backfill-schedules.js
+          rm -f db.env
           # 脚本自身打印 wca_competitions=N already_cached=M to_process=K + DONE ok/empty/skip,即报告
