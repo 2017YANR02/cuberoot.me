@@ -889,17 +889,6 @@
           "22.00"
         ],
         [
-          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-          "20.00",
-          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
-          "21.00",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
-          "21.00"
-        ],
-        [
           "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -909,6 +898,17 @@
           "21.00",
           "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
           "21.33"
+        ],
+        [
+          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+          "20.00",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
+          "21.00",
+          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "21.00"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
@@ -1229,9 +1229,9 @@
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#epyram_2)",
           "Second round",
           "4.64",
-          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
-          "1.52",
           "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "1.52",
+          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
           "1.52",
           "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
           "1.60"
@@ -1546,6 +1546,17 @@
           "2.06"
         ],
         [
+          "[Beskidy Cubing Days 2026](https://www.worldcubeassociation.org/competitions/BeskidyCubingDays2026/results/all#eskewb_1)",
+          "First round",
+          "5.86",
+          "[Kacper Górecki](https://www.worldcubeassociation.org/persons/2021GORE01)",
+          "1.82",
+          "[Szymon Ciepiela](https://www.worldcubeassociation.org/persons/2022CIEP01)",
+          "2.00",
+          "[Szymon Brągiel](https://www.worldcubeassociation.org/persons/2022BRAG03)",
+          "2.04"
+        ],
+        [
           "[CFL Justynów 2025](https://www.worldcubeassociation.org/competitions/CFLJustynow2025/results/all#eskewb_f)",
           "Final",
           "5.87",
@@ -1555,17 +1566,6 @@
           "2.19",
           "[Michał Denkiewicz](https://www.worldcubeassociation.org/persons/2021DENK01)",
           "2.31"
-        ],
-        [
-          "[Polish Championship 2024](https://www.worldcubeassociation.org/competitions/PolishChampionship2024/results/all#eskewb_f)",
-          "Final",
-          "5.88",
-          "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
-          "1.87",
-          "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
-          "2.00",
-          "[Michał Denkiewicz](https://www.worldcubeassociation.org/persons/2021DENK01)",
-          "2.01"
         ]
       ]
     },

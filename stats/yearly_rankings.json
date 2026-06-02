@@ -222,6 +222,13 @@
           "1.11 1.68 1.77 0.48 1.22"
         ],
         [
+          "[Imanuel Müller](https://www.worldcubeassociation.org/persons/2022MULL02)",
+          "**0.49**",
+          "Germany",
+          "[CuBonn Open 2026](https://www.worldcubeassociation.org/competitions/CuBonnOpen2026)",
+          "1.99 1.81 0.49 2.32 DNF"
+        ],
+        [
           "[Igor Gładysz](https://www.worldcubeassociation.org/persons/2022GLAD01)",
           "**0.51**",
           "Poland",
@@ -255,13 +262,6 @@
           "United States",
           "[Algorithms in Archbold 2026](https://www.worldcubeassociation.org/competitions/AlgorithmsinArchbold2026)",
           "1.23 0.55 1.16 0.98 0.97"
-        ],
-        [
-          "[William Lavoie](https://www.worldcubeassociation.org/persons/2023LAVO01)",
-          "**0.55**",
-          "Canada",
-          "[Cubes Tranchés à Québec AM 2026](https://www.worldcubeassociation.org/competitions/CubesTranchesaQuebecAM2026)",
-          "1.59 2.48 3.20 1.03 0.55"
         ]
       ]
     },
@@ -935,10 +935,10 @@
         ],
         [
           "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "**1:46.07**",
+          "**1:45.40**",
           "Poland",
-          "[Kostelec NxN 2026](https://www.worldcubeassociation.org/competitions/KostelecNxN2026)",
-          "1:46.52 1:49.84 1:41.85"
+          "[Cube4fun in Bełchatów 2026](https://www.worldcubeassociation.org/competitions/Cube4funinBelchatow2026)",
+          "1:42.10 1:48.47 1:45.62"
         ],
         [
           "[Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16)",
@@ -1148,6 +1148,13 @@
           "27 18 23"
         ],
         [
+          "[Chang Hong Liang (张泓量)](https://www.worldcubeassociation.org/persons/2016LIAN02)",
+          "**18**",
+          "Singapore",
+          "[Fewest Moves May Singapore 2026](https://www.worldcubeassociation.org/competitions/FewestMovesMaySingapore2026)",
+          "24 18 23"
+        ],
+        [
           "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
           "**18**",
           "Sweden",
@@ -1167,13 +1174,6 @@
           "Poland",
           "[FMC Norway 2026](https://www.worldcubeassociation.org/competitions/FMCNorway2026)",
           "23 18 21"
-        ],
-        [
-          "[Grzegorz Łuczyna](https://www.worldcubeassociation.org/persons/2005LUCZ01)",
-          "**19**",
-          "Poland",
-          "[Fun with FM in Warsaw 2026](https://www.worldcubeassociation.org/competitions/FunwithFMinWarsaw2026)",
-          "19 28 29"
         ]
       ]
     },
@@ -1300,6 +1300,13 @@
           "8.03 9.39 11.42 6.86 9.61"
         ],
         [
+          "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)",
+          "**6.86**",
+          "Russia",
+          "[Meppel Mayhem 2026](https://www.worldcubeassociation.org/competitions/MeppelMayhem2026)",
+          "6.86 9.72 10.40 12.51 10.32"
+        ],
+        [
           "[Pranav Gadge](https://www.worldcubeassociation.org/persons/2017GADG01)",
           "**6.88**",
           "India",
@@ -1319,13 +1326,6 @@
           "Peru",
           "[Steel's Cubes Lima 2026](https://www.worldcubeassociation.org/competitions/SteelsCubesLima2026)",
           "12.79 7.00 11.19 12.38 12.37"
-        ],
-        [
-          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-          "**7.08**",
-          "United States",
-          "[Ohio State Madness 2026](https://www.worldcubeassociation.org/competitions/OhioStateMadness2026)",
-          "11.78 8.16 10.59 7.08 10.54"
         ]
       ]
     },
@@ -1410,6 +1410,13 @@
       "titleZh": "Megaminx - Single",
       "rows": [
         [
+          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
+          "**21.04**",
+          "China",
+          "[Quanzhou Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouSummer2026)",
+          "21.04 27.74 28.66 26.11 29.29"
+        ],
+        [
           "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
           "**21.85**",
           "Russia",
@@ -1422,13 +1429,6 @@
           "New Zealand",
           "[NZ North Island Champs 2026](https://www.worldcubeassociation.org/competitions/NZNorthIslandChampionship2026)",
           "32.00 27.90 30.42 26.30 22.32"
-        ],
-        [
-          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
-          "**22.70**",
-          "China",
-          "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
-          "32.77 29.09 22.70 25.91 25.15"
         ],
         [
           "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
@@ -1487,10 +1487,10 @@
       "rows": [
         [
           "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
-          "**24.93**",
+          "**24.61**",
           "China",
-          "[Xianju Special 2026](https://www.worldcubeassociation.org/competitions/XianjuSpecial2026)",
-          "26.87 22.97 24.68 23.24 28.64"
+          "[Quanzhou Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouSummer2026)",
+          "28.81 24.38 21.55 23.08 26.38"
         ],
         [
           "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
@@ -1873,6 +1873,20 @@
           "3.25 1.57 1.70 0.73 1.56"
         ],
         [
+          "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
+          "**0.92**",
+          "China",
+          "[Quanzhou Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouSummer2026)",
+          "2.04 0.92 1.80 2.13 1.86"
+        ],
+        [
+          "[Łukasz Burliga](https://www.worldcubeassociation.org/persons/2013BURL01)",
+          "**0.96**",
+          "Poland",
+          "[Beskidy Cubing Days 2026](https://www.worldcubeassociation.org/competitions/BeskidyCubingDays2026)",
+          "2.40 4.81 3.58 0.96 4.24"
+        ],
+        [
           "[Kacper Górecki](https://www.worldcubeassociation.org/persons/2021GORE01)",
           "**0.96**",
           "Poland",
@@ -1885,6 +1899,13 @@
           "United States",
           "[Belmont Spring 2026](https://www.worldcubeassociation.org/competitions/BelmontSpring2026)",
           "1.84 3.82 2.05 4.00 0.97"
+        ],
+        [
+          "[Bartłomiej Owczarek](https://www.worldcubeassociation.org/persons/2013OWCZ01)",
+          "**0.98**",
+          "Poland",
+          "[Beskidy Cubing Days 2026](https://www.worldcubeassociation.org/competitions/BeskidyCubingDays2026)",
+          "2.98 3.54 4.43 0.98 3.60"
         ],
         [
           "[Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03)",
@@ -1913,27 +1934,6 @@
           "United States",
           "[3x3 in Madison 2026](https://www.worldcubeassociation.org/competitions/3x3inMadison2026)",
           "1.64 DNF 3.87 1.03 2.97"
-        ],
-        [
-          "[Szymon Brągiel](https://www.worldcubeassociation.org/persons/2022BRAG03)",
-          "**1.09**",
-          "Poland",
-          "[Dębica Cubing Winter 2026](https://www.worldcubeassociation.org/competitions/DebicaCubingWinter2026)",
-          "2.08 3.03 1.09 2.19 5.57"
-        ],
-        [
-          "[Sid Shivnath](https://www.worldcubeassociation.org/persons/2023SHIV05)",
-          "**1.09**",
-          "United States",
-          "[McBaja II 2026](https://www.worldcubeassociation.org/competitions/McBajaII2026)",
-          "3.82 2.68 DNF 1.09 DNF"
-        ],
-        [
-          "[Daniel Brem](https://www.worldcubeassociation.org/persons/2019BREM02)",
-          "**1.10**",
-          "Switzerland",
-          "[Ghem Ammò Vöia Da Cubaa 2026](https://www.worldcubeassociation.org/competitions/GhemAmmoVoiaDaCubaa2026)",
-          "3.34 2.75 2.68 3.27 1.10"
         ]
       ]
     },
@@ -2309,11 +2309,11 @@
           "2:31.32 2:08.97 2:06.39"
         ],
         [
-          "[Andrew Tao](https://www.worldcubeassociation.org/persons/2022TAOA01)",
-          "**2:39.01**",
-          "United States",
-          "[Multi Mayhem VA 2026](https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026)",
-          "2:26.06 2:35.45 2:55.52"
+          "[Yuhang Sun (孙煜航)](https://www.worldcubeassociation.org/persons/2019SUNY09)",
+          "**2:34.72**",
+          "China",
+          "[Quanzhou Blindfolded 2026](https://www.worldcubeassociation.org/competitions/QuanzhouBlindfolded2026)",
+          "2:26.28 2:56.97 2:20.92"
         ]
       ]
     },
@@ -2343,6 +2343,13 @@
           "3:05.94 DNF DNF"
         ],
         [
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "**3:10.62**",
+          "China",
+          "[Quanzhou Blindfolded 2026](https://www.worldcubeassociation.org/competitions/QuanzhouBlindfolded2026)",
+          "3:17.30 3:55.13 3:10.62"
+        ],
+        [
           "[Yeon Kyun Park (박연균)](https://www.worldcubeassociation.org/persons/2016PARK10)",
           "**3:16.09**",
           "Republic of Korea",
@@ -2362,13 +2369,6 @@
           "Australia",
           "[All Blind Adelaide 2026](https://www.worldcubeassociation.org/competitions/AllBlindAdelaide2026)",
           "DNF 3:22.25 DNF"
-        ],
-        [
-          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
-          "**3:25.25**",
-          "China",
-          "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
-          "3:25.25 DNF DNF"
         ],
         [
           "[Ezra Hirschi](https://www.worldcubeassociation.org/persons/2019HIRS01)",
@@ -2403,6 +2403,13 @@
           "United Kingdom",
           "[BL&D BLD Binningen 2026](https://www.worldcubeassociation.org/competitions/BLDBLDBinningen2026)",
           "3:24.75 3:06.22 2:55.23"
+        ],
+        [
+          "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+          "**3:27.68**",
+          "China",
+          "[Quanzhou Blindfolded 2026](https://www.worldcubeassociation.org/competitions/QuanzhouBlindfolded2026)",
+          "3:17.30 3:55.13 3:10.62"
         ],
         [
           "[Simon Praschl](https://www.worldcubeassociation.org/persons/2021PRAS02)",
@@ -2459,13 +2466,6 @@
           "Germany",
           "[BLD Open Fürth 2026](https://www.worldcubeassociation.org/competitions/BLDOpenFurth2026)",
           "7:32.49 7:21.76 6:50.41"
-        ],
-        [
-          "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
-          "**7:23.35**",
-          "United States",
-          "[DFW Quiet Qualifier 2026](https://www.worldcubeassociation.org/competitions/DFWQuietQualifier2026)",
-          "7:00.25 6:46.88 8:22.92"
         ]
       ]
     },
