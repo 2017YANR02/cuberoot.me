@@ -95,45 +95,92 @@
   outline-offset: 1px;
 }
 
-/* Stage — square box. The cube is the star: the transparent 3D cube canvas
-   (JS-appended) floats HIGH in the upper part of the stage; clawd's native body
-   sits at the bottom-center, fully visible, presenting the cube. The cube does
-   NOT overlap clawd's eyes/face. */
+/* Stage — square box where clawd HOLDS the real cube. The cube sits vertically
+   centered (the star); clawd's native body hugs it from BEHIND (eyes peek above
+   the cube's top edge, legs below); clawd's two native salmon claws grip the
+   cube's lower corners IN FRONT.
+
+   Tunable composition — edit these custom properties + re-screenshot, no code:
+     --cube-size   cube canvas edge as a fraction of the stage (mirror the JS
+                   cubeBoxFraction so the claw/body math matches the canvas)
+     --cube-cy     vertical center of the cube as a % of stage height
+     --clawd-w     clawd body sprite width as a % of stage width
+     --clawd-cx    clawd body horizontal center (% of stage width)
+     --clawd-top   clawd body sprite top edge (% of stage height) — push down so
+                   eyes land just above the cube's top edge
+     --claw-size   each claw block edge as a % of stage width
+     --claw-y      claws' vertical center (% of stage height) — the cube's lower
+                   front corners
+     --claw-left-x   left claw center (% of stage width)
+     --claw-right-x  right claw center (% of stage width) */
 .pll-perf-stage {
+  --cube-size: 52%;
+  --cube-cy: 50%;
+  --clawd-w: 66%;
+  --clawd-cx: 50%;
+  /* clawd's body content lives in the BOTTOM ~31% of its (-15 -25 45 45) viewBox,
+     so a negative top lifts the empty padding off-stage and lands the eyes just
+     above the cube's top edge while the cube occludes the lower torso. */
+  --clawd-top: -25%;
+  --claw-size: 14.5%;
+  --claw-y: 61%;
+  --claw-left-x: 37%;
+  --claw-right-x: 63%;
+
   position: relative;
   align-self: center;
   width: min(86vw, 56dvh);
   aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer; /* tap-to-play/pause */
 }
-/* Cube canvas — ~60% of the stage, floated into the UPPER part (center ≈ 34% of
-   stage height) so it hovers above clawd with clear open space around clawd's
-   face below. Sized in JS (renderer.setSize); the flex-centered canvas is nudged
-   up via translateY so its center lands high, not at 50%. */
+/* Cube canvas (z1) — sized in JS (renderer.setSize, ~--cube-size of the stage),
+   absolutely centered horizontally and at --cube-cy vertically. */
 .pll-perf-cube-canvas {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: var(--cube-cy);
   display: block;
   outline: none;
   touch-action: none;
   z-index: 1;
-  transform: translateY(-26%);
+  transform: translate(-50%, -50%);
 }
-/* Native clawd — anchored bottom-center, clearly visible below the cube. The
-   sprite's own viewBox padding (-15 -25 45 45) frames the body in the lower
-   portion; sized so clawd reads but the cube stays the focus. Breathe + blink
-   only — NO other motion. */
+/* Native clawd body (z0, BEHIND the cube) — sized via --clawd-w, top edge at
+   --clawd-top so the eyes peek above the cube and the lower torso is occluded by
+   the cube. The sprite's own viewBox padding (-15 -25 45 45) frames the body.
+   Breathe + blink only — NO other motion. */
 .pll-perf-clawd {
   position: absolute;
-  left: 50%;
-  bottom: 2%;
-  width: 46%;
+  left: var(--clawd-cx);
+  top: var(--clawd-top);
+  width: var(--clawd-w);
   height: auto;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* clawd's two native crab claws (z2, IN FRONT of the cube) — small salmon pixel
+   blocks gripping the cube's lower-left / lower-right corners. Pixel art:
+   image-rendering pixelated, no smoothing. NO fingers / arms / joints. */
+.pll-perf-claw {
+  position: absolute;
+  top: var(--claw-y);
+  width: var(--claw-size);
+  height: var(--claw-size);
+  pointer-events: none;
+  z-index: 2;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.pll-perf-claw-left {
+  left: var(--claw-left-x);
+  transform: translate(-50%, -50%);
+}
+.pll-perf-claw-right {
+  left: var(--claw-right-x);
+  /* mirror so the pincer notch faces inward toward the cube */
+  transform: translate(-50%, -50%) scaleX(-1);
 }
 
 /* Native clawd breathe + blink — copied VERBATIM from DeskPet.tsx so clawd is

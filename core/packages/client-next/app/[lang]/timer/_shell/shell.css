@@ -264,10 +264,10 @@
 }
 .scramble-refresh:hover { background: var(--shell-hover); color: var(--foreground); }
 
-/* Corner net (top-right) */
+/* Corner net (bottom-right) */
 .timing-surface-corner {
   position: absolute;
-  top: 56px;
+  bottom: 16px;
   right: 16px;
   display: flex;
   flex-direction: column;
@@ -522,22 +522,30 @@
 .trainer-subset-btn:hover { background: var(--shell-hover); }
 
 /* ── Stat rail (desktop 4-stat) / peek line (phone) ─────── */
+/* Session stats — vertical cstimer-style list pinned to the main area's
+   bottom-left corner (above the bottom bar). Display-only: pointer-events none
+   so taps fall straight through to the timing surface behind it. */
 .shell-stat-rail {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: 10px;
+  z-index: 3;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  padding: 10px 12px 14px;
-  border-top: 1px solid var(--shell-divider);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  pointer-events: none;
 }
 .shell-stat {
-  display: inline-flex;
+  display: flex;
   align-items: baseline;
   gap: 6px;
   font-family: var(--font-mono);
+  line-height: 1.55;
 }
-.shell-stat-lbl { font-size: 11px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.04em; }
-.shell-stat-val { font-size: 16px; color: var(--foreground); }
+.shell-stat-lbl { font-size: 11px; color: var(--muted-foreground); }
+.shell-stat-lbl::after { content: ':'; }
+.shell-stat-val { font-size: 14px; color: var(--foreground); font-variant-numeric: tabular-nums; }
 
 .shell-swipe-hint {
   display: flex;
@@ -973,10 +981,10 @@
     max-height: 68dvh;
   }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
-  .shell-stat-rail { gap: 14px; padding: 8px 10px 10px; flex-wrap: wrap; }
-  .shell-stat-val { font-size: 14px; }
+  .shell-stat-rail { bottom: 8px; }
+  .shell-stat-val { font-size: 13px; }
   .timing-surface-scramble { top: 8px; }
-  .timing-surface-corner { top: 48px; right: 10px; }
+  .timing-surface-corner { bottom: 10px; right: 10px; }
   /* Pin the refresh to the strip's top-right so it never wraps onto its own
      orphaned line; bump it to a 40px touch target. */
   .timing-surface-scramble .scramble-strip { position: relative; padding-right: 40px; }
@@ -1131,7 +1139,8 @@
    default to auto (below 40), so raise them. */
 .timer-shell .shell-topbar { position: relative; z-index: 41; background: var(--background); }
 .timer-shell .shell-bottombar { position: relative; z-index: 41; }
-.timer-shell .shell-stat-rail { position: relative; z-index: 41; background: var(--background); }
+/* stat-rail is now an absolute bottom-LEFT overlay (see .shell-stat-rail);
+   the bottom-RIGHT deskpet can't overlap it, so it needs no lift/solid bg. */
 @media (min-width: 1024px) {
   /* Docked right rail covers exactly where the deskpet rests. */
   .timer-shell .shell-panel--rail { position: relative; z-index: 42; }

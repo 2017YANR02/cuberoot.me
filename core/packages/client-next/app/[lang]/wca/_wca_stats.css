@@ -790,6 +790,28 @@ input:checked + .wca-stats-toggle-pill::after {
   scroll-margin-top: 84px;
 }
 
+/* 底部 footer:轻量信息行,自然高度 */
+.wca-stats-index-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem 0 2rem;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.wca-stats-index-footer a {
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.wca-stats-index-footer a:hover {
+  color: var(--foreground);
+}
+
 .wca-stats-index-section-header {
   display: flex;
   align-items: center;

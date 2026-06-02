@@ -64,6 +64,7 @@ export default function WcaStatsIndex() {
   const [loading, setLoading] = useState(true);
   const [activeKey, setActiveKey] = useState<string>(TOOLS);
   const sectionEls = useRef<Map<string, HTMLElement>>(new Map());
+  const tabsRef = useRef<HTMLDivElement>(null);
   const lockUntil = useRef(0); // 点 chip 后短暂锁定高亮,别被平滑滚动途中的 scroll-spy 改掉
 
   const isZh = i18n.language === 'zh';
@@ -87,18 +88,19 @@ export default function WcaStatsIndex() {
     return () => ac.abort();
   }, []);
 
-  // scroll-spy:active = 已滚过吸顶栏下沿的最后一个分区;到页底则强制锁定最后一个
-  // (末尾分区太短滚不到顶,IntersectionObserver 会漏掉,故用 scroll + bottom-snap)
+  // scroll-spy:分区顶部进入判定线(距视口顶 LINE)即高亮,到页底则兜底最后一个。LINE 取得比最矮
+  // 分区还小,保证点 chip 跳转(分区置顶到 84)后判定仍落在该分区、不回弹;footer 自然高度,底部零空白。
   useEffect(() => {
     if (!data) return;
+    const els = sectionEls.current;
+    if (!els.size) return;
+    const LINE = 300; // 判定线距视口顶 300px(须 < 84 + 最矮分区高度 ≈ 313,否则跳转后落到下个分区)
     let raf = 0;
-    const LINE = 96; // 须 > section 的 scroll-margin-top(84),否则跳转后目标差一格
     const compute = () => {
       raf = 0;
       if (Date.now() < lockUntil.current) return; // 跳转动画期间不抢高亮
-      const els = sectionEls.current;
       const keys = [...els.keys()];
-      if (!keys.length) return;
+      // 末尾分区到底也滚不到判定线,故到页底时直接锁定最后一个
       if (Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 2) {
         setActiveKey(keys[keys.length - 1]);
         return;
@@ -119,6 +121,19 @@ export default function WcaStatsIndex() {
       if (raf) cancelAnimationFrame(raf);
     };
   }, [data]);
+
+  // active chip 跟随横向滚动到可见区(窄屏 tabs 横向溢出时;宽屏 wrap 模式 scrollWidth=clientWidth 无副作用)
+  useEffect(() => {
+    const container = tabsRef.current;
+    if (!container) return;
+    const el = container.querySelector<HTMLElement>('.wca-stats-index-tab.active');
+    if (!el) return;
+    const elRect = el.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const delta = (elRect.left + elRect.width / 2) - (cRect.left + cRect.width / 2);
+    if (Math.abs(delta) < 1) return;
+    container.scrollTo({ left: container.scrollLeft + delta, behavior: 'smooth' });
+  }, [activeKey]);
 
   const jumpTo = (key: string) => {
     lockUntil.current = Date.now() + 800; // 锁住高亮到平滑滚动结束
@@ -173,7 +188,7 @@ export default function WcaStatsIndex() {
       </header>
 
       <div className="wca-stats-index-toolbar">
-        <div className="wca-stats-index-tabs">
+        <div className="wca-stats-index-tabs" ref={tabsRef}>
           {sections.map(sec => (
             <button
               key={sec.key}
@@ -246,6 +261,14 @@ export default function WcaStatsIndex() {
             )}
           </section>
         ))}
+        <footer className="wca-stats-index-footer">
+          <span>
+            {isZh ? '数据来源 ' : 'Data from '}
+            <a href="https://www.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer">WCA</a>
+          </span>
+          <Link href={`/about${langQuery}`} prefetch={false}>{isZh ? '关于' : 'About'}</Link>
+          <a href="https://github.com/RuiminYan/cuberoot.me" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </footer>
       </div>
     </div>
   );

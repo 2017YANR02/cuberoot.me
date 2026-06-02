@@ -158,8 +158,6 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-const IS_TOUCH = typeof window !== 'undefined' && ('ontouchstart' in window || (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints! > 0);
-
 type PanelTab = 'times' | 'chart' | 'tools';
 type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
 
@@ -1209,13 +1207,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
               </span>
             </div>
           )}
-          {timer.phase === 'idle' && (
-            <div className="timer-hint">
-              {IS_TOUCH
-                ? (isZh ? <>按住屏幕{settings.inspection > 0 ? '开始观察' : '进入准备'}</> : <>Tap and hold to {settings.inspection > 0 ? 'inspect' : 'ready'}</>)
-                : (isZh ? <>按住 <code>空格</code> {settings.inspection > 0 ? '开始观察' : '进入准备'}</> : <>Hold <code>Space</code> to {settings.inspection > 0 ? 'inspect' : 'ready'}</>)}
-            </div>
-          )}
           {timer.phase === 'inspecting' && (
             <>
               <div className="timer-hint">{isZh ? '观察中… 再按空格开始上手' : 'Inspecting… press space again to grip'}</div>
@@ -1291,14 +1282,16 @@ export default function SoloView({ modePill }: SoloViewProps) {
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        {/* Desktop persistent 4-stat rail / phone peek-stat line — only once
-            there's data (no bare "ao5 - ao12 -" dash row at idle). */}
+        {/* Session stats — vertical cstimer-style list, bottom-left of the main
+            area. Only once there's data (no bare dashes at idle). */}
         {solves.length > 0 && (
           <div className="shell-stat-rail surface-chrome">
+            <span className="shell-stat"><span className="shell-stat-lbl">{isZh ? '次数' : 'count'}</span> <span className="shell-stat-val">{stats.count}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">{isZh ? '最佳' : 'best'}</span> <span className="shell-stat-val">{stats.best}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">mo3</span> <span className="shell-stat-val">{stats.mo3}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">{isZh ? '最佳' : 'best'}</span> <span className="shell-stat-val">{stats.best}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">σ</span> <span className="shell-stat-val">{stats.sd}</span></span>
           </div>
         )}
 

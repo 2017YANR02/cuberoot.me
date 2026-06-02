@@ -419,6 +419,16 @@
 }
 .sor-census-toggle:hover { color: var(--accent); }
 .sor-census-body { margin-top: 4px; }
+.sor-census-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; margin: 6px 0 10px; }
+.sor-census-cancel { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground); cursor: pointer; }
+.sor-census-year { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground); }
+.sor-census-year select {
+  background: var(--card); color: var(--foreground);
+  border: 1px solid var(--input); border-radius: 6px; padding: 3px 8px; font-size: 13px;
+  font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.sor-census-chart { margin: 0 0 12px; }
+.sor-census-chart-hint { font-size: 11px; color: var(--faint-foreground); text-align: center; margin-top: 2px; }
 .sor-census-lead { margin: 0 0 10px; font-size: 13px; color: var(--muted-foreground); max-width: 640px; }
 .sor-census-list {
   list-style: none; margin: 0; padding: 0;

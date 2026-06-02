@@ -729,9 +729,12 @@ async function main() {
   console.log('[pr] writing person_ranks...');
   // 先算每个 event(含废止项)的全球+国家 ranks(对所有人)
   const eventRanks: { single: Map<string, { wr: number; cr: number; val: number }>; avg: Map<string, { wr: number; cr: number; val: number }> }[] = [];
-  // 也记录每个 event 的参赛人数(用作缺项默认 rank)
+  // 也记录每个 event 的参赛人数(用作缺项默认 rank).world 总和用全球计数,
+  // country 总和必须用"该国该项"计数(缺项 = 比该国倒数第一再差一名),否则国家榜罚分被全球量级放大.
   const eventParticipantsSingle: number[] = [];
   const eventParticipantsAvg: number[] = [];
+  const eventParticipantsCountrySingle: Map<string, number>[] = [];
+  const eventParticipantsCountryAvg: Map<string, number>[] = [];
   for (let i = 0; i < RANK_EVENTS.length; i++) {
     const ev = RANK_EVENTS[i]!;
     const acc = accByEvent.get(ev) ?? new Map<string, Acc>();
@@ -752,6 +755,12 @@ async function main() {
     eventRanks.push({ single: sMap, avg: aMap });
     eventParticipantsSingle.push(sList.length);
     eventParticipantsAvg.push(aList.length);
+    const csMap = new Map<string, number>();
+    for (const it of sList) csMap.set(it.country, (csMap.get(it.country) ?? 0) + 1);
+    eventParticipantsCountrySingle.push(csMap);
+    const caMap = new Map<string, number>();
+    for (const it of aList) caMap.set(it.country, (caMap.get(it.country) ?? 0) + 1);
+    eventParticipantsCountryAvg.push(caMap);
   }
 
   const prStream = createWriteStream(resolve(outDir, 'wca_person_ranks.copy.tsv'));
@@ -779,9 +788,9 @@ async function main() {
           totalC += r.cr;
           doneN++;
         } else {
-          // 缺项默认: participants+1
+          // 缺项默认: participants+1 (world 用全球计数, country 用该国该项计数)
           totalW += eventParticipantsSingle[i]! + 1;
-          totalC += eventParticipantsSingle[i]! + 1;
+          totalC += (eventParticipantsCountrySingle[i]!.get(country) ?? 0) + 1;
         }
       }
       // 废止项:只填数组,不计入 total/doneN
@@ -813,7 +822,7 @@ async function main() {
           doneN++;
         } else {
           totalW += eventParticipantsAvg[i]! + 1;
-          totalC += eventParticipantsAvg[i]! + 1;
+          totalC += (eventParticipantsCountryAvg[i]!.get(country) ?? 0) + 1;
         }
       }
       // 废止项 avg:只填数组(333mbo 无 average → map 空 → 留 0),不计入 total/doneN
