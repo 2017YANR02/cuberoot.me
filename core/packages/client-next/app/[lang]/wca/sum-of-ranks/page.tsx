@@ -1,11 +1,15 @@
 'use client';
 
 // Ported from packages/client/src/pages/wca_stats/SumOfRanksPage.tsx.
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
+
+// echarts-for-react 仅客户端(无 SSR),历史名人堂的时间线图用.
+const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 import Paginator from '@/components/wca-stats/Paginator';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -47,7 +51,8 @@ interface PlayerBest {
   best: { single?: ComboBest; average?: ComboBest };
 }
 interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
-interface Census { type: string; distinct: number; totalSubsets: number; rows: CensusRow[]; }
+interface Census { type: string; inclCancelled: boolean; year: number | null; years: number[]; distinct: number; totalSubsets: number; rows: CensusRow[]; }
+interface TimelinePoint { year: number; distinct: number; }
 
 function SumOfRanksPageInner() {
   const { i18n } = useTranslation();
@@ -110,6 +115,9 @@ function SumOfRanksPageInner() {
   const [census, setCensus] = useState<Census | null>(null);
   const [censusOpen, setCensusOpen] = useState(false);
   const [censusExpanded, setCensusExpanded] = useState(false);
+  const [censusCancelled, setCensusCancelled] = useState(false); // 含废止项(默认不含)
+  const [censusYear, setCensusYear] = useState<number | null>(null); // null = 最新年
+  const [timeline, setTimeline] = useState<TimelinePoint[] | null>(null);
 
   useEffect(() => {
     if (eventsParam === '__none__') { setData(null); setError(isZh ? '请至少选择一个项目' : 'Select at least one event'); return; }
@@ -136,16 +144,75 @@ function SumOfRanksPageInner() {
       .then(setPb).catch(() => setPb(null)).finally(() => setPbLoading(false));
   }, [picked]);
 
-  // 名人堂(展开时 + type 变化时拉)
+  // 名人堂某年名单(展开时 + type/含废止/年份变化时拉)
   useEffect(() => {
     if (!censusOpen) return;
     setCensus(null); setCensusExpanded(false);
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/census?type=${type}`))
+    const qs = new URLSearchParams({ type });
+    if (censusCancelled) qs.set('cancelled', '1');
+    if (censusYear != null) qs.set('year', String(censusYear));
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
       .then(r => (r.ok ? r.json() : null)).then(setCensus).catch(() => {});
-  }, [censusOpen, type]);
+  }, [censusOpen, type, censusCancelled, censusYear]);
+
+  // 名人堂历年人数时间线(年份变化不重拉,只随 type/含废止变)
+  useEffect(() => {
+    if (!censusOpen) { setTimeline(null); return; }
+    const qs = new URLSearchParams({ type, timeline: '1' });
+    if (censusCancelled) qs.set('cancelled', '1');
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
+      .then(r => (r.ok ? r.json() : null)).then(d => setTimeline(d?.points ?? null)).catch(() => {});
+  }, [censusOpen, type, censusCancelled]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isCountryMode = !!country;
+
+  // 时间线图 option(本页 dark-locked,echarts 不解析 CSS var → 运行时取 token 值)
+  const selYear = census?.year ?? null;
+  const chartOption = useMemo(() => {
+    if (!timeline || timeline.length === 0) return null;
+    const css = typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null;
+    const tok = (name: string, fallback: string) => (css?.getPropertyValue(name).trim() || fallback);
+    const accent = tok('--accent', '#d97757');
+    const fg = tok('--muted-foreground', '#a8a29e');
+    const grid = tok('--border-default', '#44403c');
+    return {
+      grid: { left: 6, right: 14, top: 16, bottom: 4, containLabel: true },
+      tooltip: {
+        trigger: 'axis' as const,
+        formatter: (ps: Array<{ axisValue: string; data: number }>) =>
+          `${ps[0]!.axisValue}<br/>${isZh ? '人数' : 'cubers'}: <b>${ps[0]!.data}</b>`,
+      },
+      xAxis: {
+        type: 'category' as const,
+        data: timeline.map(p => p.year),
+        axisLabel: { color: fg, fontSize: 10 },
+        axisLine: { lineStyle: { color: grid } },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        type: 'value' as const,
+        minInterval: 1,
+        axisLabel: { color: fg, fontSize: 10 },
+        splitLine: { lineStyle: { color: grid, opacity: 0.4 } },
+      },
+      series: [{
+        type: 'line' as const,
+        data: timeline.map(p => p.distinct),
+        smooth: true,
+        symbol: 'circle' as const,
+        symbolSize: (_v: number, p: { dataIndex: number }) => (timeline[p.dataIndex]!.year === selYear ? 10 : 4),
+        itemStyle: { color: accent },
+        lineStyle: { color: accent, width: 2 },
+        areaStyle: { color: accent, opacity: 0.12 },
+      }],
+    };
+  }, [timeline, selYear, isZh]);
+  const onChartEvents = useMemo(() => ({
+    click: (p: { dataIndex?: number }) => {
+      if (timeline && p.dataIndex != null) setCensusYear(timeline[p.dataIndex]!.year);
+    },
+  }), [timeline]);
 
   return (
     <div className="wse-page">
@@ -269,12 +336,32 @@ function SumOfRanksPageInner() {
         </button>
         {censusOpen && (
           <div className="sor-census-body">
+            <div className="sor-census-controls">
+              <label className="sor-census-cancel">
+                <input type="checkbox" checked={censusCancelled} onChange={e => setCensusCancelled(e.target.checked)} />
+                {isZh ? '含废止项' : 'Incl. cancelled'}
+              </label>
+              {census && census.years.length > 1 && census.year != null && (
+                <label className="sor-census-year">
+                  {isZh ? '截至' : 'As of'}
+                  <select value={census.year} onChange={e => setCensusYear(parseInt(e.target.value, 10))}>
+                    {[...census.years].reverse().map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </label>
+              )}
+            </div>
+            {chartOption && (
+              <div className="sor-census-chart">
+                <ReactECharts option={chartOption} style={{ height: 190, width: '100%' }} opts={{ renderer: 'canvas' }} onEvents={onChartEvents} />
+                <div className="sor-census-chart-hint">{isZh ? '历年“名次和第一”不同人数 — 点某年看名单' : 'Distinct #1-holders by year — click a year'}</div>
+              </div>
+            )}
             {!census && <div className="sor-tool-hint">{isZh ? '加载中…' : 'Loading…'}</div>}
             {census && (
               <>
                 <p className="sor-census-lead">{isZh
-                  ? `在全部 ${census.totalSubsets.toLocaleString()} 种项目组合里,共有 ${census.distinct} 名选手当过"名次和第一"(${type === 'average' ? '平均' : '单次'},世界口径)。`
-                  : `Across all ${census.totalSubsets.toLocaleString()} combinations, ${census.distinct} cubers have been #1 (${type}, world).`}</p>
+                  ? `截至 ${census.year} 年末,有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${censusCancelled ? ',含废止项' : ''},世界口径)。`
+                  : `As of end of ${census.year}, ${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${censusCancelled ? ', incl. cancelled' : ''}, world).`}</p>
                 <ol className="sor-census-list">
                   {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
                     const share = r.subsetsWon / census.totalSubsets * 100;

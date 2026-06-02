@@ -181,8 +181,9 @@ export default function PllPerformerOverlay({
       stage.appendChild(renderer.domElement);
       renderer.domElement.style.outline = 'none';
       renderer.domElement.style.display = 'block';
-      // Cube canvas floats in the UPPER part of the stage (CSS) so clawd's
-      // native body sits clearly below it, face unoccluded, presenting the cube.
+      // Cube canvas sits in the vertical CENTER of the stage (CSS) so clawd's
+      // native body hugs it from behind — eyes peeking above, claws gripping the
+      // lower corners in front.
       renderer.domElement.classList.add('pll-perf-cube-canvas');
 
       // Near-front PLL-recognition framing: U on top, white front, slight
@@ -196,7 +197,11 @@ export default function PllPerformerOverlay({
       // Slightly tighter framing than /sim so the cube fills the stage.
       world.perspective = 4;
 
-      const cubeBoxFraction = 0.6; // cube canvas ≈ 60% of the stage edge (spec §6)
+      // Cube canvas edge as a fraction of the stage edge. Mirrors the CSS
+      // --cube-size custom property (kept in sync so the claws/body math lines
+      // up with the rendered canvas). ~52% → prominent but leaves clawd's eyes
+      // peeking above and its claws gripping the lower corners.
+      const cubeBoxFraction = 0.52;
 
       const resize = () => {
         const stageEdge = Math.min(stage.clientWidth, stage.clientHeight);
@@ -418,10 +423,14 @@ export default function PllPerformerOverlay({
 
         {main && <p className="pll-perf-alg">{main}</p>}
 
-        {/* Stage: the transparent 3D cube canvas (JS-appended, floated HIGH) +
-            clawd's EXACT native body anchored bottom-center, presenting it. The
-            cube is the only motion; clawd only breathes + blinks. Tapping the
-            stage toggles play/pause (mobile convenience). */}
+        {/* Stage: clawd HOLDS the real cube. Z-order:
+              clawd body+face (z0, BEHIND — cube occludes the lower torso)
+              → transparent 3D cube canvas (z1, JS-appended, vertically centered)
+              → clawd's two native salmon pincer claws (z2, FRONT — gripping the
+                cube's lower-left / lower-right corners).
+            The cube is the only motion; clawd only breathes + blinks. Tapping
+            the stage toggles play/pause (mobile convenience). All key positions
+            are CSS custom properties on .pll-perf-stage for fine-tuning. */}
         <div
           className="pll-perf-stage"
           ref={stageRef}
@@ -429,7 +438,9 @@ export default function PllPerformerOverlay({
         >
           {/* Native clawd body — copied VERBATIM from DeskPet.tsx (same viewBox,
               coords, colors #DE886D / #000, .clawddp-breathe / .clawddp-blink).
-              NO arms, NO fingers; just the two static pincer nubs, 4 legs, 2 eyes. */}
+              NO arms, NO fingers; just the two static pincer nubs, 4 legs, 2 eyes.
+              Sits BEHIND the cube (z0); positioned so the eyes peek above the
+              cube's top edge and the legs peek below. */}
           <svg className="pll-perf-clawd" xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
             <g id="clawddp-shadow"><rect x="3" y="15" width="9" height="1" fill="#000" opacity=".5" /></g>
             <g id="clawddp-legs" fill="#DE886D">
@@ -444,6 +455,44 @@ export default function PllPerformerOverlay({
                 <rect x="4" y="8" width="1" height="2" /><rect x="10" y="8" width="1" height="2" />
               </g></g>
             </g></g>
+          </svg>
+
+          {/* clawd's TWO native crab claws — salmon #DE886D pixel blocks gripping
+              the cube's lower-LEFT and lower-RIGHT front corners, rendered IN
+              FRONT of the cube (z2). Each is a blocky pincer (palm block + a top
+              prong with a notch) — pixel art, image-rendering pixelated. NO
+              fingers, NO arm segments, NO joints: just clawd's own claw blocks.
+              Positions/size driven by CSS vars on .pll-perf-stage. */}
+          {/* Left claw — base block on the OUTER (left) side, two blocky prongs
+              extending inward (right) with a pixel gap between them: a crab
+              pincer opening toward the cube corner. */}
+          <svg
+            className="pll-perf-claw pll-perf-claw-left"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 10 10"
+            aria-hidden
+          >
+            {/* outer base block */}
+            <rect x="0" y="2" width="5" height="6" fill="#DE886D" />
+            {/* upper prong reaching inward */}
+            <rect x="5" y="2" width="4" height="2" fill="#DE886D" />
+            {/* lower prong reaching inward (gap between = the pincer mouth) */}
+            <rect x="5" y="6" width="4" height="2" fill="#DE886D" />
+          </svg>
+          {/* Right claw — same geometry as the left; mirrored via CSS scaleX(-1)
+              so its pincer mouth faces inward toward the cube corner. */}
+          <svg
+            className="pll-perf-claw pll-perf-claw-right"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 10 10"
+            aria-hidden
+          >
+            {/* outer base block */}
+            <rect x="0" y="2" width="5" height="6" fill="#DE886D" />
+            {/* upper prong reaching inward */}
+            <rect x="5" y="2" width="4" height="2" fill="#DE886D" />
+            {/* lower prong reaching inward (gap between = the pincer mouth) */}
+            <rect x="5" y="6" width="4" height="2" fill="#DE886D" />
           </svg>
         </div>
 

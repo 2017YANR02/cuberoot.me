@@ -13,7 +13,7 @@
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
  *   GET /v1/wca/sum-of-ranks?type=&country=&events=&hidePodium=&page=&size=
- *   GET /v1/wca/sum-of-ranks/census?type=                 (名次和第一名人堂普查)
+ *   GET /v1/wca/sum-of-ranks/census?type=&cancelled=&year=&timeline=  (历史名人堂:历年名次和第一)
  *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合)
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
@@ -787,37 +787,69 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 });
 
 // ── 7b. /v1/wca/sum-of-ranks/census ──
-// 谁当过"名次和第一":全 2^21-1 个项目组合普查的预计算结果(sor_census).distinct=共多少人.
-// 目前只有世界口径(scope='world');国家口径待补.
+// 历史名人堂:截至某年末, 全 2^17-1(仅活跃) / 2^21-1(含废止) 个项目组合普查谁当过"名次和第一".
+// 预计算专表 sor_census_yearly(数据源 historical_ranks_snapshot 年末快照 → Rust `sorcalc history`).
+//   ?type=single|average  ?cancelled=0|1(默认0=不含废止)  ?year=YYYY(默认最新年)
+//   ?timeline=1(返回历年 distinct 人数, 画时间线用)  ?limit=
 wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
   const type = (c.req.query('type') ?? 'single').toLowerCase();
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
   const isAvg = type === 'average';
+  const inclCancelled = c.req.query('cancelled') === '1' || c.req.query('cancelled') === 'true';
+  const totalSubsets = inclCancelled ? (2 ** 21 - 1) : (2 ** 17 - 1);
+
+  // 可选年份列表(供前端选择器)
+  const yearRows = await query<{ year: number }>(
+    `SELECT DISTINCT year FROM sor_census_yearly WHERE is_avg = ? AND incl_cancelled = ? ORDER BY year`,
+    [isAvg, inclCancelled],
+  );
+  const years = yearRows.map(r => r.year);
+  const maxYear = years.length ? years[years.length - 1]! : null;
+
+  // timeline 模式:历年 distinct 人数(GROUP BY year)
+  if (c.req.query('timeline') === '1') {
+    const pts = await query<{ year: number; cnt: string }>(
+      `SELECT year, COUNT(*) AS cnt FROM sor_census_yearly
+       WHERE is_avg = ? AND incl_cancelled = ? GROUP BY year ORDER BY year`,
+      [isAvg, inclCancelled],
+    );
+    c.header('Cache-Control', CACHE_HEADER);
+    return c.json({
+      type, inclCancelled, totalSubsets,
+      points: pts.map(p => ({ year: p.year, distinct: parseInt(p.cnt, 10) })),
+    });
+  }
+
   const limit = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('limit') ?? '200', 10)));
-  const scope = 'world';
+  const yearParam = parseInt(c.req.query('year') ?? '', 10);
+  const year = Number.isFinite(yearParam) && years.includes(yearParam) ? yearParam : maxYear;
+  if (year == null) {
+    c.header('Cache-Control', CACHE_HEADER);
+    return c.json({ type, inclCancelled, year: null, years, distinct: 0, totalSubsets, rows: [] });
+  }
 
   const rows = await query<{
     rank: number; wca_id: string; subsets_won: string;
     name: string; country_id: string; iso2: string | null;
   }>(
     `SELECT sc.rank, sc.wca_id, sc.subsets_won, p.name, p.country_id, co.iso2
-     FROM sor_census sc
+     FROM sor_census_yearly sc
      JOIN wca_persons p ON p.wca_id = sc.wca_id
      LEFT JOIN wca_countries co ON co.id = p.country_id
-     WHERE sc.is_avg = ? AND sc.scope = ? AND sc.country_id = ''
+     WHERE sc.is_avg = ? AND sc.incl_cancelled = ? AND sc.year = ?
      ORDER BY sc.rank ASC
      LIMIT ?`,
-    [isAvg, scope, limit],
+    [isAvg, inclCancelled, year, limit],
   );
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM sor_census WHERE is_avg = ? AND scope = ? AND country_id = ''`,
-    [isAvg, scope],
+    `SELECT COUNT(*) AS n FROM sor_census_yearly WHERE is_avg = ? AND incl_cancelled = ? AND year = ?`,
+    [isAvg, inclCancelled, year],
   );
   const distinct = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    type, scope, distinct, totalSubsets: (1 << 21) - 1,
+    type, inclCancelled, year, years, distinct, totalSubsets,
     rows: rows.map(r => ({
       rank: r.rank, wcaId: r.wca_id, name: r.name,
       countryId: r.country_id, iso2: r.iso2,

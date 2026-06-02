@@ -37,3 +37,20 @@ CREATE TABLE IF NOT EXISTS sor_player_best (
   best_events  TEXT NOT NULL,                   -- 逗号分隔 event id
   PRIMARY KEY (wca_id, is_avg, scope)
 );
+
+-- ── sor_census_yearly: 历史名人堂 (按年末快照) ──
+-- 一行 = (is_avg, incl_cancelled, year, 截至该年末当过"名次和第一"的某选手).
+-- 数据源 historical_ranks_snapshot (每年末全员重排) → Rust `sorcalc history` 逐年穷举.
+-- incl_cancelled=false → 仅 17 活跃项 (2^17-1 组合); true → 含 4 废止项 (2^21-1 组合).
+-- 历史冻结: 过去年份永不重算, 只偶尔刷新当前年 (DELETE year=Y 重灌). 与每日 stats 流水线无关.
+-- 某年 distinct = COUNT(*); 时间线 = GROUP BY year COUNT(*). 走 load_sor_yearly.sql 灌库.
+CREATE TABLE IF NOT EXISTS sor_census_yearly (
+  is_avg          BOOLEAN NOT NULL,
+  incl_cancelled  BOOLEAN NOT NULL,
+  year            INTEGER NOT NULL,
+  rank            INTEGER NOT NULL,             -- 1-based, 按 subsets_won 降序
+  wca_id          VARCHAR(20) NOT NULL,
+  subsets_won     BIGINT NOT NULL,
+  PRIMARY KEY (is_avg, incl_cancelled, year, wca_id)
+);
+CREATE INDEX IF NOT EXISTS sor_cy_lookup ON sor_census_yearly (is_avg, incl_cancelled, year, rank);

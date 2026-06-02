@@ -13,9 +13,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Star, CheckCircle2, Link2, Layers, ChevronRight } from 'lucide-react';
-import { solveCross, type CrossSolution, type Orientation } from '../_lib/solver/cross';
-import { solveEOLine, type EOLineSolution } from '../_lib/solver/eoline';
+import { Star, ChevronRight } from 'lucide-react';
 import {
   solveByMethodId,
   METHOD_REGISTRY,
@@ -25,11 +23,10 @@ import {
 import { solve2x2, solve2x2Face } from '../_lib/solver/cube2x2';
 import { solvePyra, solvePyraV } from '../_lib/solver/pyra';
 import { solveSkewb, solveSkewbFace } from '../_lib/solver/skewb';
-import { solve222Step, type Solve222Result } from '../_lib/solver/methods';
 import { solveSq1, type Sq1Result } from '../_lib/solver/sq1';
 import { solveMega, type MegaSolveResult } from '../_lib/solver/mega';
-import { recognizeForOrientation, type CfopRecognition } from '../_lib/components/cfop_recognize';
 import SolverCompareModal from './SolverCompareModal';
+import StageSolverModal from './StageSolverModal';
 
 type SmallEvent = '222' | 'pyra' | 'skewb';
 type Sq1Event = 'sq1';
@@ -55,31 +52,6 @@ interface Props {
   event?: '333' | SmallEvent | Sq1Event | MegaEvent;
 }
 
-interface Computed {
-  cross: CrossSolution[];
-  eoline: EOLineSolution;
-  recog: Record<Orientation, CfopRecognition>;
-  s222: Solve222Result;
-}
-
-const ORIENT_LABEL_ZH: Record<string, string> = {
-  D: '白(D)',
-  U: '黄(U)',
-  F: '绿(F)',
-  B: '蓝(B)',
-  L: '橙(L)',
-  R: '红(R)',
-};
-
-const ORIENT_LABEL_EN: Record<string, string> = {
-  D: 'D (white)',
-  U: 'U (yellow)',
-  F: 'F (green)',
-  B: 'B (blue)',
-  L: 'L (orange)',
-  R: 'R (red)',
-};
-
 export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
   if (event === 'sq1') {
     return <Sq1Hints scramble={scramble} isZh={isZh} />;
@@ -91,11 +63,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
     return <SmallPuzzleHints scramble={scramble} isZh={isZh} event={event} />;
   }
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [open, setOpen] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [computed, setComputed] = useState<Computed | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [computing, setComputing] = useState(false);
+  const [stageOpen, setStageOpen] = useState(false);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [stepOpen, setStepOpen] = useState(false);
@@ -119,50 +87,6 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
   useEffect(() => {
     setStepResults({ cfop: null, roux: null, petrus: null, zz: null, eodr: null, thistle: null });
   }, [scramble]);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const cacheKey = useMemo(() => scramble, [scramble]);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (!open) {
-      setComputed(null);
-      return;
-    }
-    setComputing(true);
-    setComputed(null);
-    let cancelled = false;
-    const t = setTimeout(() => {
-      if (cancelled) return;
-      try {
-        const cross = solveCross(scramble);
-        const eoline = solveEOLine(scramble);
-        const recog = {} as Record<Orientation, CfopRecognition>;
-        for (const sol of cross) {
-          recog[sol.orientation] = recognizeForOrientation(scramble, sol.orientation, sol.moves);
-        }
-        const s222 = solve222Step(scramble);
-        if (!cancelled) {
-          setComputed({ cross, eoline, recog, s222 });
-          setComputing(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setComputed({
-            cross: [],
-            eoline: { moves: '—', length: -1 },
-            recog: {} as Record<Orientation, CfopRecognition>,
-            s222: { corner: null, moves: [], length: -1 },
-          });
-          setComputing(false);
-        }
-      }
-    }, 0);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [open, cacheKey, scramble]);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -193,77 +117,20 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
 
   const stepResult = stepResults[methodId];
 
-  const labels = isZh ? ORIENT_LABEL_ZH : ORIENT_LABEL_EN;
   const title = isZh ? '解法提示' : 'Solver hints';
   const stepTitle = isZh ? '分步解法' : 'Step-by-step';
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const minCrossLen = useMemo(() => {
-    if (!computed) return -1;
-    let min = Infinity;
-    for (const s of computed.cross) {
-      if (s.length >= 0 && s.length < min) min = s.length;
-    }
-    return min === Infinity ? -1 : min;
-  }, [computed]);
 
   return (
     <div style={wrapperStyle}>
       <div className="solver-hints" style={hintsStyle}>
         <button
           type="button"
-          onClick={() => setOpen(o => !o)}
+          onClick={() => setStageOpen(true)}
           style={toggleBtnStyle}
-          aria-expanded={open}
         >
           <span>{title}</span>
-          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
+          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7 }} />
         </button>
-        {open && (
-          <div style={bodyStyle}>
-            {computing && (
-              <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {isZh ? '计算中…' : 'Computing…'}
-              </div>
-            )}
-            {computed && (
-              <>
-                {computed.cross.map(sol => {
-                  const isBest = sol.length >= 0 && sol.length === minCrossLen;
-                  const recog = computed.recog[sol.orientation];
-                  return (
-                    <CrossRow
-                      key={sol.orientation}
-                      sol={sol}
-                      label={labels[sol.orientation]}
-                      isBest={isBest}
-                      recog={recog}
-                      isZh={isZh}
-                    />
-                  );
-                })}
-                <div style={rowStyle}>
-                  <span style={labelStyle}>EOLine</span>
-                  <span style={countStyle}>
-                    {computed.eoline.length < 0 ? '—' : `${computed.eoline.length}`}
-                  </span>
-                  <span style={algStyle}>{computed.eoline.moves}</span>
-                </div>
-                <div style={rowStyle}>
-                  <span style={labelStyle}>
-                    2x2x2{computed.s222.corner ? ` (${computed.s222.corner})` : ''}
-                  </span>
-                  <span style={countStyle}>
-                    {computed.s222.length < 0 ? '—' : `${computed.s222.length}`}
-                  </span>
-                  <span style={algStyle}>
-                    {computed.s222.length < 0 ? '—' : computed.s222.moves.join(' ')}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </div>
       <div className="solver-hints" style={hintsStyle}>
         <button
@@ -326,6 +193,13 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
           </div>
         )}
       </div>
+      {stageOpen && (
+        <StageSolverModal
+          scramble={scramble}
+          isZh={isZh}
+          onClose={() => setStageOpen(false)}
+        />
+      )}
       {compareOpen && (
         <SolverCompareModal
           scramble={scramble}
@@ -333,63 +207,6 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
           onClose={() => setCompareOpen(false)}
         />
       )}
-    </div>
-  );
-}
-
-interface CrossRowProps {
-  sol: CrossSolution;
-  label: string;
-  isBest: boolean;
-  recog: CfopRecognition | undefined;
-  isZh: boolean;
-}
-
-function CrossRow({ sol, label, isBest, recog, isZh }: CrossRowProps) {
-  const f2lText = recog && recog.crossOk
-    ? `${recog.f2l.solved}/${recog.f2l.paired}/${recog.f2l.unpaired}`
-    : '—';
-
-  const showStage = recog && recog.crossOk && recog.stage !== 'cross';
-  const stageLabel = (() => {
-    if (!showStage || !recog) return null;
-    if (recog.stage === 'pll') return isZh ? '已完成' : 'Solved';
-    if (recog.stage === 'oll') return recog.pllLabel ?? (isZh ? 'OLL 完成' : 'OLL done');
-    if (recog.stage === 'f2l') return recog.ollLabel ?? (isZh ? 'F2L 完成' : 'F2L done');
-    return null;
-  })();
-
-  return (
-    <div style={crossBlockStyle}>
-      <div style={rowStyle}>
-        <span style={isBest ? labelBestStyle : labelStyle}>
-          {isBest && <Star size={12} style={{ verticalAlign: '-1px', marginRight: 3 }} />}
-          {isZh ? '十字' : 'Cross'} {label}
-        </span>
-        <span style={isBest ? countBestStyle : countStyle}>
-          {sol.length < 0 ? '—' : `${sol.length}`}
-        </span>
-        <span style={isBest ? algBestStyle : algStyle}>{sol.moves}</span>
-      </div>
-      <div style={subRowStyle}>
-        <span style={subLabelStyle}>
-          <Link2 size={11} style={{ verticalAlign: '-1px', marginRight: 3, opacity: 0.7 }} />
-          F2L
-        </span>
-        <span style={f2lTextStyle} title={isZh ? 'solved / paired / unpaired' : 'solved / paired / unpaired'}>
-          {f2lText}
-        </span>
-        {showStage && stageLabel && (
-          <span style={stageBadgeStyle}>
-            {recog && recog.stage === 'pll' ? (
-              <CheckCircle2 size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} />
-            ) : (
-              <Layers size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} />
-            )}
-            {stageLabel}
-          </span>
-        )}
-      </div>
     </div>
   );
 }
@@ -780,12 +597,6 @@ const bodyStyle: React.CSSProperties = {
   gap: 6,
 };
 
-const crossBlockStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 1,
-};
-
 const rowStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: '110px 32px 1fr',
@@ -793,26 +604,7 @@ const rowStyle: React.CSSProperties = {
   alignItems: 'baseline',
 };
 
-const subRowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '110px 60px 1fr',
-  gap: 8,
-  alignItems: 'baseline',
-  fontSize: 11.5,
-  opacity: 0.75,
-  paddingLeft: 14,
-};
-
 const subLabelStyle: React.CSSProperties = {
-  opacity: 0.85,
-};
-
-const f2lTextStyle: React.CSSProperties = {
-  fontVariantNumeric: 'tabular-nums',
-};
-
-const stageBadgeStyle: React.CSSProperties = {
-  fontSize: 11,
   opacity: 0.85,
 };
 
