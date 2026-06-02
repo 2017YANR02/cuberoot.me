@@ -5,7 +5,7 @@
 // runtime doesn't drive yet still preview). Overlay sits above the search backdrop.
 
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Boxes } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 
 const CSS = `
@@ -21,6 +21,19 @@ const CSS = `
 .deskpet-gallery h3{margin:18px 0 10px;font-size:.82rem;color:var(--muted-foreground);font-weight:600;}
 .deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
   column-gap:6px;row-gap:2px;}
+/* PLL 表演 launcher — a real interactive 3D cube, set apart from the static tiles.
+   Spans the whole grid row, accent-tinted, so it reads as a button not a thumbnail. */
+.deskpet-gallery-launch{grid-column:1/-1;display:flex;align-items:center;gap:10px;
+  width:100%;margin:0 0 8px;padding:12px 14px;cursor:pointer;text-align:left;
+  background:color-mix(in srgb, var(--accent) 14%, var(--card));
+  border:1px solid color-mix(in srgb, var(--accent) 40%, var(--border-default));
+  border-radius:12px;color:var(--foreground);}
+.deskpet-gallery-launch:hover{background:color-mix(in srgb, var(--accent) 22%, var(--card));
+  border-color:var(--accent);}
+.deskpet-gallery-launch svg{flex:none;color:var(--accent);}
+.deskpet-gallery-launch-text{display:flex;flex-direction:column;gap:1px;}
+.deskpet-gallery-launch-title{font-size:.86rem;font-weight:600;line-height:1.2;}
+.deskpet-gallery-launch-sub{font-size:.72rem;color:var(--muted-foreground);line-height:1.2;}
 .deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0;}
 /* square media cell; clips per-group scale (sprites are authored small with motion
    headroom) so a zoomed figure can't bleed onto its caption or neighbours. */
@@ -64,6 +77,24 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
           <section key={g.id}>
             <h3>{zh ? g.zh : g.en}</h3>
             <div className="deskpet-gallery-grid">
+              {g.id === 'cubing' && (
+                <button
+                  type="button"
+                  className="deskpet-gallery-launch"
+                  onClick={() => {
+                    onClose();
+                    window.dispatchEvent(new CustomEvent('clawd:perform'));
+                  }}
+                >
+                  <Boxes size={26} />
+                  <span className="deskpet-gallery-launch-text">
+                    <span className="deskpet-gallery-launch-title">{zh ? 'PLL 表演' : 'PLL Show'}</span>
+                    <span className="deskpet-gallery-launch-sub">
+                      {zh ? '点击启动真实 3D 魔方表演' : 'Launch the interactive 3D cube'}
+                    </span>
+                  </span>
+                </button>
+              )}
               {g.anims.map((a) => {
                 const zoom = g.scale
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
