@@ -381,3 +381,58 @@
   .wse-filter-q { flex: 1 0 100%; }
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
 }
+
+/* ── Sum-of-Ranks insights: 个人最优组合 (.sor-tool/.sor-pb) + 名人堂 (.sor-census) ── */
+.sor-tool { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
+.sor-tool-label { font-size: 13px; color: var(--muted-foreground); }
+.sor-tool-picker { max-width: 360px; }
+.sor-tool-hint { font-size: 13px; color: var(--faint-foreground); }
+
+.sor-pb {
+  display: flex; flex-direction: column; gap: 8px;
+  max-width: 520px; margin-top: 4px; padding: 12px 14px; border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.sor-pb-head { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.sor-pb-head a { color: var(--foreground); text-decoration: none; }
+.sor-pb-head a:hover { color: var(--accent); }
+.sor-pb-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sor-pb-type { font-size: 12px; color: var(--muted-foreground); min-width: 30px; }
+.sor-pb-rank { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sor-pb-events { display: inline-flex; align-items: center; gap: 2px; }
+.sor-pb-events :is(img, svg) { width: 20px; height: 20px; }
+.sor-pb-apply {
+  margin-left: auto; font-size: 12px; padding: 3px 10px; border-radius: 6px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+.sor-pb-apply:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.sor-pb-note { font-size: 12px; color: var(--faint-foreground); }
+
+.sor-census { margin: 0 0 16px; }
+.sor-census-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; padding: 6px 0; cursor: pointer;
+  color: var(--foreground); font-size: 14px; font-weight: 600;
+}
+.sor-census-toggle:hover { color: var(--accent); }
+.sor-census-body { margin-top: 4px; }
+.sor-census-lead { margin: 0 0 10px; font-size: 13px; color: var(--muted-foreground); max-width: 640px; }
+.sor-census-list {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 4px 16px;
+}
+.sor-census-list li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.sor-census-rank { min-width: 24px; text-align: right; color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
+.sor-census-list a { color: var(--foreground); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sor-census-list a:hover { color: var(--accent); }
+.sor-census-share { color: var(--muted-foreground); font-variant-numeric: tabular-nums; font-size: 12px; }
+.sor-census-more { margin-top: 10px; background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 4px 0; }
+.sor-census-more:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .sor-census-list { grid-template-columns: 1fr; }
+  .sor-pb-apply { margin-left: 0; }
+}

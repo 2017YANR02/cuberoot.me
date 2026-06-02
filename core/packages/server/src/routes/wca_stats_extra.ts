@@ -13,6 +13,8 @@
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
  *   GET /v1/wca/sum-of-ranks?type=&country=&events=&hidePodium=&page=&size=
+ *   GET /v1/wca/sum-of-ranks/census?type=                 (名次和第一名人堂普查)
+ *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合)
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
  *
@@ -781,6 +783,80 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
       subsetTotal: r.subset_total,
       ranks: isCountryMode ? r.ranks_country : r.ranks_world,
     })),
+  });
+});
+
+// ── 7b. /v1/wca/sum-of-ranks/census ──
+// 谁当过"名次和第一":全 2^21-1 个项目组合普查的预计算结果(sor_census).distinct=共多少人.
+// 目前只有世界口径(scope='world');国家口径待补.
+wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
+  const type = (c.req.query('type') ?? 'single').toLowerCase();
+  if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
+  const isAvg = type === 'average';
+  const limit = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('limit') ?? '200', 10)));
+  const scope = 'world';
+
+  const rows = await query<{
+    rank: number; wca_id: string; subsets_won: string;
+    name: string; country_id: string; iso2: string | null;
+  }>(
+    `SELECT sc.rank, sc.wca_id, sc.subsets_won, p.name, p.country_id, co.iso2
+     FROM sor_census sc
+     JOIN wca_persons p ON p.wca_id = sc.wca_id
+     LEFT JOIN wca_countries co ON co.id = p.country_id
+     WHERE sc.is_avg = ? AND sc.scope = ? AND sc.country_id = ''
+     ORDER BY sc.rank ASC
+     LIMIT ?`,
+    [isAvg, scope, limit],
+  );
+  const totalRow = await query<{ n: string }>(
+    `SELECT COUNT(*) AS n FROM sor_census WHERE is_avg = ? AND scope = ? AND country_id = ''`,
+    [isAvg, scope],
+  );
+  const distinct = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    type, scope, distinct, totalSubsets: (1 << 21) - 1,
+    rows: rows.map(r => ({
+      rank: r.rank, wcaId: r.wca_id, name: r.name,
+      countryId: r.country_id, iso2: r.iso2,
+      subsetsWon: parseInt(r.subsets_won, 10),
+    })),
+  });
+});
+
+// ── 7c. /v1/wca/sum-of-ranks/player-best?wcaId= ──
+// 指定选手的"最优项目组合":选哪些项目时名次和排名最靠前 + 能到第几(单次 & 平均都返回).
+// 预计算专表 sor_player_best.最优组合只取项目数最少的那个解.世界口径.
+wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+
+  const pers = await query<{ name: string; country_id: string; iso2: string | null }>(
+    `SELECT p.name, p.country_id, co.iso2
+     FROM wca_persons p LEFT JOIN wca_countries co ON co.id = p.country_id
+     WHERE p.wca_id = ? LIMIT 1`,
+    [wcaId],
+  );
+  if (pers.length === 0) return c.json({ error: 'Person not found' }, 404);
+
+  const rows = await query<{ is_avg: boolean; best_rank: number; best_events: string }>(
+    `SELECT is_avg, best_rank, best_events FROM sor_player_best WHERE wca_id = ? AND scope = 'world'`,
+    [wcaId],
+  );
+  const best: Record<string, { rank: number; events: string[] }> = {};
+  for (const r of rows) {
+    best[r.is_avg ? 'average' : 'single'] = {
+      rank: r.best_rank,
+      events: r.best_events ? r.best_events.split(',') : [],
+    };
+  }
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    wcaId, name: pers[0]!.name, countryId: pers[0]!.country_id, iso2: pers[0]!.iso2,
+    scope: 'world', best,
   });
 });
 
