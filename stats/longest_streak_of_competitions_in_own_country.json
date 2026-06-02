@@ -66,14 +66,14 @@
       null
     ],
     [
-      73,
+      74,
       "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
       null
     ],
     [
-      73,
+      74,
       "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
@@ -94,7 +94,7 @@
       null
     ],
     [
-      62,
+      63,
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
       "Hungary",
       "[Hungarian Nationals 2016](https://www.worldcubeassociation.org/competitions/HungarianNationals2016)",
@@ -263,6 +263,13 @@
     ],
     [
       38,
+      "[Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01)",
+      "Ireland",
+      "[Dublin Summer Solving 2024](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2024)",
+      null
+    ],
+    [
+      38,
       "[Joel Hernández](https://www.worldcubeassociation.org/persons/2007HERN02)",
       "El Salvador",
       "[Sivar Open 2015](https://www.worldcubeassociation.org/competitions/SivarOpen2015)",
@@ -273,13 +280,6 @@
       "[Tim McMahon](https://www.worldcubeassociation.org/persons/2009MCMA01)",
       "Australia",
       "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010)",
-      null
-    ],
-    [
-      37,
-      "[Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01)",
-      "Ireland",
-      "[Dublin Summer Solving 2024](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2024)",
       null
     ],
     [
@@ -368,6 +368,13 @@
     ],
     [
       32,
+      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
+      "Ireland",
+      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
+      null
+    ],
+    [
+      32,
       "[Oscar Alberto Ceballos Contreras](https://www.worldcubeassociation.org/persons/2013CONT01)",
       "Venezuela",
       "[Venezuela Open 2013](https://www.worldcubeassociation.org/competitions/VenezuelaOpen2013)",
@@ -392,13 +399,6 @@
       "[Laurids Abelsen Holm](https://www.worldcubeassociation.org/persons/2016HOLM04)",
       "Denmark",
       "[Vinderup Open 2016](https://www.worldcubeassociation.org/competitions/VinderupOpen2016)",
-      null
-    ],
-    [
-      31,
-      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
-      "Ireland",
-      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
       null
     ],
     [
@@ -515,6 +515,13 @@
     ],
     [
       27,
+      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
+      "Hungary",
+      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
+      null
+    ],
+    [
+      27,
       "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
       "Netherlands",
       "[Dutch Open 2003](https://www.worldcubeassociation.org/competitions/DutchOpen2003)",
@@ -588,13 +595,6 @@
       "[Bence Kiácz](https://www.worldcubeassociation.org/persons/2016KIAC01)",
       "Hungary",
       "[Hungarian Open 2019](https://www.worldcubeassociation.org/competitions/HungarianOpen2019)",
-      null
-    ],
-    [
-      26,
-      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
-      "Hungary",
-      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
       null
     ],
     [
@@ -732,9 +732,9 @@
     ],
     [
       24,
-      "[Ariunsaikhan Erdenebileg](https://www.worldcubeassociation.org/persons/2022ERDE06)",
-      "Mongolia",
-      "[Mongolia Championship 2022](https://www.worldcubeassociation.org/competitions/MongoliaChampionship2022)",
+      "[Jānis Zirnis](https://www.worldcubeassociation.org/persons/2013ZIRN01)",
+      "Latvia",
+      "[Sigulda Open 2023](https://www.worldcubeassociation.org/competitions/SiguldaOpen2023)",
       null
     ]
   ]

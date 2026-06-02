@@ -310,6 +310,11 @@
       "titleZh": "七阶魔方",
       "rows": [
         [
+          84,
+          "[Daniel Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA01)",
+          "[Sydals Open 2026](https://www.worldcubeassociation.org/competitions/SydalsOpen2026)"
+        ],
+        [
           83,
           "[Callum Hales-Jepp](https://www.worldcubeassociation.org/persons/2012HALE01)",
           "[Cork Spring 2023](https://www.worldcubeassociation.org/competitions/CorkSpring2023)"
@@ -353,11 +358,6 @@
           52,
           "[Will Russo](https://www.worldcubeassociation.org/persons/2015RUSS03)",
           "[Saint Mikes Winter VT 2026](https://www.worldcubeassociation.org/competitions/SaintMikesWinterVT2026)"
-        ],
-        [
-          47,
-          "[Piotr Olszewski](https://www.worldcubeassociation.org/persons/2013OLSZ02)",
-          "[Kolla Winter Cup 2024](https://www.worldcubeassociation.org/competitions/KollaWinterCup2024)"
         ]
       ]
     },
@@ -503,6 +503,11 @@
           "[Nebraska Championship 2024](https://www.worldcubeassociation.org/competitions/NebraskaChampionship2024)"
         ],
         [
+          108,
+          "[Piotr Olszewski](https://www.worldcubeassociation.org/persons/2013OLSZ02)",
+          "[MegaGame Rīga Open 2026](https://www.worldcubeassociation.org/competitions/MegaGameRigaOpen2026)"
+        ],
+        [
           105,
           "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
           "[Cuban Open 2016](https://www.worldcubeassociation.org/competitions/CubanOpen2016)"
@@ -521,11 +526,6 @@
           81,
           "[Bartłomiej Owczarek](https://www.worldcubeassociation.org/persons/2013OWCZ01)",
           "[North Slovakian Open 2024](https://www.worldcubeassociation.org/competitions/NorthSlovakianOpen2024)"
-        ],
-        [
-          77,
-          "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-          "[North Jersey Speedsolving A 2024](https://www.worldcubeassociation.org/competitions/NorthJerseySpeedsolvingA2024)"
         ]
       ]
     },
