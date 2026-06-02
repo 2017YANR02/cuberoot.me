@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Star, CheckCircle2, Link2, Layers } from 'lucide-react';
+import { Star, CheckCircle2, Link2, Layers, ChevronRight } from 'lucide-react';
 import { solveCross, type CrossSolution, type Orientation } from '../_lib/solver/cross';
 import { solveEOLine, type EOLineSolution } from '../_lib/solver/eoline';
 import {
@@ -217,7 +217,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
           aria-expanded={open}
         >
           <span>{title}</span>
-          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
         </button>
         {open && (
           <div style={bodyStyle}>
@@ -273,7 +273,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
           aria-expanded={stepOpen}
         >
           <span>{stepTitle}</span>
-          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{stepOpen ? '▾' : '▸'}</span>
+          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: stepOpen ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
         </button>
         {stepOpen && (
           <div style={bodyStyle}>
@@ -497,7 +497,7 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
           aria-expanded={open}
         >
           <span>{title}</span>
-          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
         </button>
         {open && (
           <div style={bodyStyle}>
@@ -602,7 +602,7 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
           aria-expanded={open}
         >
           <span>{title}</span>
-          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
         </button>
         {open && (
           <div style={bodyStyle}>
@@ -700,7 +700,7 @@ function MegaHints({ scramble, isZh }: MegaProps) {
           aria-expanded={open}
         >
           <span>{title}</span>
-          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
         </button>
         {open && (
           <div style={bodyStyle}>
@@ -742,30 +742,34 @@ function MegaHints({ scramble, isZh }: MegaProps) {
 
 const wrapperStyle: React.CSSProperties = {
   display: 'flex',
-  flexDirection: 'column',
-  gap: 6,
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  alignItems: 'flex-start',
+  gap: 8,
 };
 
+// Frameless: no border/background/radius — the open body lays out as a quiet
+// list under a compact pill trigger (project rule: no decorative card framing).
 const hintsStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  border: '1px solid var(--border, #333)',
-  borderRadius: 6,
-  background: 'var(--panel-bg, rgba(255,255,255,0.03))',
+  alignItems: 'flex-start',
+  minWidth: 0,
   fontSize: 13,
 };
 
 const toggleBtnStyle: React.CSSProperties = {
-  display: 'flex',
+  display: 'inline-flex',
   alignItems: 'center',
   gap: 6,
-  padding: '6px 10px',
-  background: 'transparent',
-  border: 'none',
-  color: 'inherit',
+  padding: '4px 12px',
+  background: 'var(--shell-chip)',
+  border: '1px solid var(--shell-divider)',
+  borderRadius: 999,
+  color: 'var(--muted-foreground)',
   cursor: 'pointer',
   fontSize: 13,
-  width: '100%',
+  width: 'auto',
   textAlign: 'left',
 };
 
@@ -823,7 +827,7 @@ const countStyle: React.CSSProperties = {
 };
 
 const algStyle: React.CSSProperties = {
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  fontFamily: 'var(--font-mono)',
   fontSize: 12.5,
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
@@ -833,20 +837,20 @@ const labelBestStyle: React.CSSProperties = {
   ...labelStyle,
   opacity: 1,
   fontWeight: 600,
-  color: 'var(--accent, #f5b400)',
+  color: 'var(--accent)',
 };
 
 const countBestStyle: React.CSSProperties = {
   ...countStyle,
   opacity: 1,
   fontWeight: 600,
-  color: 'var(--accent, #f5b400)',
+  color: 'var(--accent)',
 };
 
 const algBestStyle: React.CSSProperties = {
   ...algStyle,
   fontWeight: 600,
-  color: 'var(--accent, #f5b400)',
+  color: 'var(--accent)',
 };
 
 const tabStripStyle: React.CSSProperties = {
@@ -858,33 +862,30 @@ const tabStripStyle: React.CSSProperties = {
 };
 
 const tabStyle: React.CSSProperties = {
-  padding: '3px 8px',
+  padding: '3px 10px',
   background: 'transparent',
-  border: '1px solid var(--border, #333)',
-  borderRadius: 4,
-  color: 'inherit',
+  border: '1px solid var(--border-default)',
+  borderRadius: 999,
+  color: 'var(--muted-foreground)',
   fontSize: 12,
   cursor: 'pointer',
-  opacity: 0.75,
 };
 
 const tabActiveStyle: React.CSSProperties = {
   ...tabStyle,
-  background: 'var(--accent, #f5b400)',
-  color: '#111',
-  borderColor: 'var(--accent, #f5b400)',
+  background: 'var(--accent)',
+  color: 'var(--accent-foreground)',
+  borderColor: 'var(--accent)',
   fontWeight: 600,
-  opacity: 1,
 };
 
 const compareBtnStyle: React.CSSProperties = {
   marginLeft: 'auto',
-  padding: '3px 8px',
+  padding: '3px 10px',
   background: 'transparent',
-  border: '1px dashed var(--border, #555)',
-  borderRadius: 4,
-  color: 'inherit',
+  border: '1px dashed var(--border-default)',
+  borderRadius: 999,
+  color: 'var(--muted-foreground)',
   fontSize: 12,
   cursor: 'pointer',
-  opacity: 0.85,
 };

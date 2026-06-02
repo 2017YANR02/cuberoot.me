@@ -31,6 +31,7 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { rememberRecent } from '../page';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
+import ScheduleView from './ScheduleView';
 import '../comp.css';
 
 interface User {
@@ -311,11 +312,13 @@ export default function CompDetailPage() {
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
     [data],
   );
-  const viewParam: 'live' | 'psych' =
+  const viewParam: 'live' | 'psych' | 'schedule' =
     explicitView === 'psych' ? 'psych'
-      : explicitView === 'live' ? 'live'
-        : (data && !hasResults) ? 'psych' : 'live';
+      : explicitView === 'schedule' ? 'schedule'
+        : explicitView === 'live' ? 'live'
+          : (data && !hasResults) ? 'psych' : 'live';
   const isPsych = viewParam === 'psych';
+  const isSchedule = viewParam === 'schedule';
   const psychEventParam = searchParams?.get('psychEvent') || '';
   const sourceParam = searchParams?.get('source');
 
@@ -693,7 +696,7 @@ export default function CompDetailPage() {
     setSearchParams(next);
   };
 
-  const onChangeView = (value: 'live' | 'psych') => {
+  const onChangeView = (value: 'live' | 'psych' | 'schedule') => {
     const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
     next.set('view', value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
     setSearchParams(next);
@@ -881,24 +884,26 @@ export default function CompDetailPage() {
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
-        <div className="comp-event-bar">
-          <WcaEventSelector
-            availableEvents={availableEventIds}
-            selectedEvent={isPsych ? psychEventId : eventParam}
-            onSelect={isPsych ? onChangePsychEvent : onSelectEvent}
-            isZh={isZh}
-            onlyAvailable
-            allowAll={isPsych}
-            badges={isPsych ? {} : eventBadges}
-            topBadges={isPsych ? {} : eventTopBadges}
-            appendEvents={nonWcaEvents}
-          />
-        </div>
+        {!isSchedule && (
+          <div className="comp-event-bar">
+            <WcaEventSelector
+              availableEvents={availableEventIds}
+              selectedEvent={isPsych ? psychEventId : eventParam}
+              onSelect={isPsych ? onChangePsychEvent : onSelectEvent}
+              isZh={isZh}
+              onlyAvailable
+              allowAll={isPsych}
+              badges={isPsych ? {} : eventBadges}
+              topBadges={isPsych ? {} : eventTopBadges}
+              appendEvents={nonWcaEvents}
+            />
+          </div>
+        )}
 
         <div className="comp-view-tabs">
           <button
             type="button"
-            className={`comp-view-tab${!isPsych ? ' is-active' : ''}`}
+            className={`comp-view-tab${(!isPsych && !isSchedule) ? ' is-active' : ''}`}
             onClick={() => onChangeView('live')}
           >
             {isZh ? '成绩' : (isWca ? 'Results' : 'Live')}
@@ -910,9 +915,18 @@ export default function CompDetailPage() {
           >
             {isZh ? '预排名' : 'Psych Sheet'}
           </button>
+          <button
+            type="button"
+            className={`comp-view-tab${isSchedule ? ' is-active' : ''}`}
+            onClick={() => onChangeView('schedule')}
+          >
+            {isZh ? '赛程' : 'Schedule'}
+          </button>
         </div>
 
-        {!isPsych ? (
+        {isSchedule ? (
+          <ScheduleView slug={slug} isZh={isZh} />
+        ) : !isPsych ? (
           <>
             <div className="comp-selectors">
               {!isWca && (

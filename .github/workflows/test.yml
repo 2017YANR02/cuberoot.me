@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -35,24 +35,26 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck client
-        working-directory: core
-        run: pnpm --filter @cuberoot/client typecheck:ci
-
-      # esbuild bundle 只剥类型不检查,server 类型坏了 deploy_core build 仍能过
-      # → 必须 CI 真跑 tsc --noEmit 兜底。
-      # server tsconfig references shared + visualcube,tsc 启动校验它们 dist/.d.ts
-      # 必须存在(TS6305),所以先 build 这两个再 typecheck server。
+      # client-next typecheck 走 tsgo --noEmit,不像旧 tsc -b 会自建 project references,
+      # 它 import @cuberoot/shared + visualcube 的产物;server tsconfig references 这两个,
+      # tsc 启动校验它们的 dist/.d.ts 必须存在(TS6305)。所以先 build 再 typecheck。
+      # skewb-notation 测试也走 shared 的 node 导出(dist),同样要先 build。
       - name: Build shared deps
         working-directory: core
         run: |
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
 
+      - name: Typecheck client-next
+        working-directory: core
+        run: pnpm --filter @cuberoot/client-next typecheck
+
+      # esbuild bundle 只剥类型不检查,server 类型坏了 deploy_core build 仍能过
+      # → 必须 CI 真跑 tsc --noEmit 兜底。
       - name: Typecheck server
         working-directory: core
         run: pnpm --filter @cuberoot/server typecheck
 
       - name: Test
         working-directory: core
-        run: pnpm --filter @cuberoot/client test
+        run: pnpm --filter @cuberoot/client-next test

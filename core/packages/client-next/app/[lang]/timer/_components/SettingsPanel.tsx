@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, Download, FileSpreadsheet, RefreshCw, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import { warmupSound, play } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
@@ -14,6 +14,8 @@ import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } f
 import { parseCstimerExport, type CstimerSessionParsed } from '../_lib/storage/import_cstimer';
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
+import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type CloudBackupMeta } from '../_lib/storage/cloud';
+import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
@@ -25,6 +27,8 @@ interface Props {
   onClose: () => void;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
+  /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
+  onDataReplaced?: () => void;
 }
 
 interface AccordionSectionProps {
@@ -98,7 +102,7 @@ function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, set
   );
 }
 
-export default function SettingsPanel({ isZh, onClose, event }: Props) {
+export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: Props) {
   const s = useSettings();
   const isMobile = useIsMobile();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set(['timing']));
@@ -218,6 +222,69 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
   const [csvExportMsg, setCsvExportMsg] = useState<string | null>(null);
   const csvExportTimerRef = useRef<number | null>(null);
 
+  // ── Cloud backup state ──
+  const user = useAuthStore((st) => st.user);
+  const login = useAuthStore((st) => st.login);
+  const [cloudMsg, setCloudMsg] = useState<string | null>(null);
+  const cloudMsgTimerRef = useRef<number | null>(null);
+  const [cloudBusy, setCloudBusy] = useState(false);
+  const [cloudMeta, setCloudMeta] = useState<CloudBackupMeta | null>(null);
+
+  // Read the cloud snapshot metadata once when logged in (lightweight, no blob).
+  useEffect(() => {
+    if (!user) { setCloudMeta(null); return; }
+    let alive = true;
+    fetchBackupMeta()
+      .then((m) => { if (alive) setCloudMeta(m); })
+      .catch(() => { if (alive) setCloudMeta({ exists: false }); });
+    return () => { alive = false; };
+  }, [user]);
+
+  function flashCloudMsg(msg: string): void {
+    setCloudMsg(msg);
+    if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
+    cloudMsgTimerRef.current = window.setTimeout(() => {
+      setCloudMsg(null);
+      cloudMsgTimerRef.current = null;
+    }, 2500);
+  }
+
+  async function onCloudUpload(): Promise<void> {
+    setCloudBusy(true);
+    try {
+      const { updatedAt, solveCount, byteSize } = await uploadBackup();
+      setCloudMeta({ exists: true, solveCount, updatedAt, byteSize });
+      flashCloudMsg(isZh ? `已上传 ${solveCount} 条到云端` : `Uploaded ${solveCount} solves`);
+    } catch {
+      flashCloudMsg(isZh ? '上传失败,请重试' : 'Upload failed, try again');
+    } finally {
+      setCloudBusy(false);
+    }
+  }
+
+  async function onCloudRestore(): Promise<void> {
+    const ok = window.confirm(isZh
+      ? '将用云端备份覆盖本地全部成绩,本地未上传的成绩会丢失。确定继续?'
+      : 'This replaces ALL local solves with the cloud backup. Unsynced local solves will be lost. Continue?');
+    if (!ok) return;
+    setCloudBusy(true);
+    try {
+      const result = await restoreFromCloud();
+      if (result === 'ok') {
+        onDataReplaced?.();
+        flashCloudMsg(isZh ? '已从云端恢复' : 'Restored from cloud');
+      } else if (result === 'invalid') {
+        flashCloudMsg(isZh ? '云端备份损坏,无法恢复' : 'Cloud backup is corrupt');
+      } else {
+        flashCloudMsg(isZh ? '云端暂无备份' : 'No cloud backup yet');
+      }
+    } catch {
+      flashCloudMsg(isZh ? '恢复失败,请重试' : 'Restore failed, try again');
+    } finally {
+      setCloudBusy(false);
+    }
+  }
+
   // ── Reanalyze stage data state ──
   const [reanalyzeBusy, setReanalyzeBusy] = useState(false);
   const [reanalyzeProgress, setReanalyzeProgress] = useState<{ scanned: number; total: number } | null>(null);
@@ -229,6 +296,7 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
       if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
       if (csvExportTimerRef.current !== null) window.clearTimeout(csvExportTimerRef.current);
       if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
+      if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
     };
   }, []);
 
@@ -738,6 +806,68 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               {isZh ? '查看备份' : 'View backups'}
             </button>
           </Row>
+        </AccordionSection>
+
+        <AccordionSection
+          id="cloud"
+          title={isZh ? '云备份' : 'Cloud backup'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
+          {!user ? (
+            <Row label={isZh ? '登录' : 'Sign in'}>
+              <button className="hint-btn" onClick={() => login()}>
+                <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                {isZh ? '登录后备份到云端' : 'Sign in to back up'}
+              </button>
+              <span className="hint">{isZh
+                ? '用 WCA 账号登录,即可把全部成绩存到云端,在其它设备恢复'
+                : 'Sign in with WCA to store all solves in the cloud and restore them on other devices'}</span>
+            </Row>
+          ) : (
+            <>
+              <Row label={isZh ? '操作' : 'Actions'}>
+                <button
+                  className="hint-btn"
+                  disabled={cloudBusy}
+                  onClick={() => { void onCloudUpload(); }}
+                  title={isZh ? '把本地全部成绩上传到云端(覆盖云端旧备份)' : 'Upload all local solves to the cloud (replaces the cloud copy)'}
+                >
+                  <CloudUpload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                  {isZh ? '上传到云端' : 'Upload to cloud'}
+                </button>
+                <button
+                  className="hint-btn"
+                  disabled={cloudBusy}
+                  onClick={() => { void onCloudRestore(); }}
+                  title={isZh ? '用云端备份覆盖本地全部成绩' : 'Replace all local solves with the cloud backup'}
+                >
+                  <CloudDownload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                  {isZh ? '从云端恢复' : 'Restore from cloud'}
+                </button>
+              </Row>
+              <Row label="">
+                <span className="hint">{
+                  cloudMsg !== null
+                    ? cloudMsg
+                    : cloudMeta === null
+                      ? (isZh ? '正在读取云端状态…' : 'Checking cloud…')
+                      : cloudMeta.exists
+                        ? (isZh
+                            ? `云端 ${cloudMeta.solveCount ?? 0} 条,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`
+                            : `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`)
+                        : (isZh ? '云端暂无备份' : 'No cloud backup yet')
+                }</span>
+              </Row>
+              <Row label="">
+                <span className="hint">{isZh
+                  ? '恢复会用云端整库覆盖本地(含所有会话);计时器设置项不在备份内。'
+                  : 'Restore replaces ALL local sessions with the cloud copy; timer settings are not included.'}</span>
+              </Row>
+            </>
+          )}
         </AccordionSection>
 
         <AccordionSection

@@ -80,7 +80,7 @@ export const SECTIONS: Section[] = [
       { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
-      { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'utility',  nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
+      { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'standard', nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
     ],
   },
   {

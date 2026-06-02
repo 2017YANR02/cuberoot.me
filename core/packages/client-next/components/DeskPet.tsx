@@ -18,6 +18,8 @@ const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffe
 
 // Lazy: the search data layer (persons/comps indexes) only loads on open.
 const DeskPetSearch = dynamic(() => import('@/components/DeskPetSearch'), { ssr: false });
+// Lazy: three (~1.2MB) + the cuber engine only load when the PLL performer opens.
+const PllPerformerOverlay = dynamic(() => import('@/components/PllPerformerOverlay'), { ssr: false });
 
 type ThemeId = 'clawd' | 'calico' | 'cloudling';
 
@@ -242,6 +244,10 @@ export default function DeskPet() {
   const [hidden, setHidden] = useState(false);
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // PLL performer overlay — opened by the toolbar button or a `clawd:perform`
+  // CustomEvent (optional detail.caseName).
+  const [performOpen, setPerformOpen] = useState(false);
+  const [performCase, setPerformCase] = useState<string | undefined>(undefined);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
   const pathname = usePathname();
@@ -281,6 +287,21 @@ export default function DeskPet() {
     update();
     i18n.on('languageChanged', update);
     return () => { i18n.off('languageChanged', update); };
+  }, []);
+
+  // Open the PLL performer from anywhere:
+  //   window.dispatchEvent(new CustomEvent('clawd:perform', { detail: { caseName: 'Aa' } }))
+  // detail is optional (defaults to the first case). Verification scripts the
+  // bare `new CustomEvent('clawd:perform')` form.
+  useEffect(() => {
+    const onPerform = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { caseName?: string } | string | undefined;
+      const name = typeof detail === 'string' ? detail : detail?.caseName;
+      setPerformCase(name || undefined);
+      setPerformOpen(true);
+    };
+    window.addEventListener('clawd:perform', onPerform as EventListener);
+    return () => window.removeEventListener('clawd:perform', onPerform as EventListener);
   }, []);
 
   // Close the search overlay after a result navigates to a new page (the pet
@@ -845,6 +866,14 @@ export default function DeskPet() {
           onHide={() => { setHidden(true); setSearchOpen(false); }}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
+        />
+      )}
+
+      {performOpen && (
+        <PllPerformerOverlay
+          lang={curLang}
+          initialCaseName={performCase}
+          onClose={() => setPerformOpen(false)}
         />
       )}
     </>

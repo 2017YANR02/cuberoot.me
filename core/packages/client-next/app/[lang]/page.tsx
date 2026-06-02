@@ -77,10 +77,10 @@ export default function LandingPage() {
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {
-                const iconSize = card.tier === 'hero-side' ? 32
-                  : card.tier === 'medium' ? 28
-                  : card.tier === 'utility' ? 20
-                  : 24;
+                const iconSize = card.tier === 'hero-side' ? 36
+                  : card.tier === 'medium' ? 34
+                  : card.tier === 'utility' ? 22
+                  : 30;
                 const content = (
                   <>
                     <div className="card-icon">

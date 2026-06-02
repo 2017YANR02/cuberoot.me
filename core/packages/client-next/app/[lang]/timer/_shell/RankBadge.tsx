@@ -114,9 +114,13 @@ export default function RankBadge({
   const SCOPE_ZH: Record<Scope, string> = { WR: '世界', CR: '大洲', NR: '全国' };
   const SCOPE_EN: Record<Scope, string> = { WR: 'World', CR: 'Continent', NR: 'National' };
 
-  const pills: { scope: Scope; data: RegionRank }[] = [{ scope: 'WR', data: result.world }];
+  const pills: { scope: Scope; data: RegionRank }[] = [];
+  if (result.world) pills.push({ scope: 'WR', data: result.world });
   if (result.continental) pills.push({ scope: 'CR', data: result.continental });
   if (result.national) pills.push({ scope: 'NR', data: result.national });
+  // Defensive: a malformed / partial rank payload (missing world) must not crash
+  // the timer — just render nothing rather than read .rank off undefined.
+  if (pills.length === 0) return null;
 
   // 展开说明:把各档名次摊开 + 免责声明(对比历史比赛成绩,非实时官方排名).
   const parts = pills.map(({ scope, data }) => {
@@ -124,8 +128,8 @@ export default function RankBadge({
     return isZh ? `${SCOPE_ZH[scope]} #${n}` : `${SCOPE_EN[scope]} #${n}`;
   });
   const detail = isZh
-    ? `${parts.join(' · ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
-    : `${parts.join(' · ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`;
+    ? `${parts.join(' / ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
+    : `${parts.join(' / ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`;
 
   return (
     <span className={`rank-badge-row${className ? ` ${className}` : ''}`}>

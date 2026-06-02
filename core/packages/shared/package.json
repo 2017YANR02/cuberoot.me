@@ -15,6 +15,10 @@
       "node": "./dist/wca_events.js",
       "default": "./src/wca_events.ts"
     },
+    "./comp-schedule": {
+      "node": "./dist/comp_schedule.js",
+      "default": "./src/comp_schedule.ts"
+    },
     "./alg": "./src/alg.ts",
     "./skewb-pyramid-svg": {
       "node": "./dist/skewb_pyramid_svg.js",

@@ -49,6 +49,31 @@ html[data-theme='dark'] .stsv {
 .stsv-spin { animation: stsv-spin 1s linear infinite; }
 @keyframes stsv-spin { to { transform: rotate(360deg); } }
 
+/* ── 首次加载:列出要加载的表 + 内存占用 ── */
+.stsv-loading { padding: 4px 0; }
+.stsv-tables {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2px 18px;
+  max-width: 520px;
+}
+.stsv-tables li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+.stsv-tables code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--sv-text-sub);
+  white-space: nowrap;
+}
+.stsv-tables li span { color: var(--sv-text-mute); font-variant-numeric: tabular-nums; }
+.stsv-tables-total { margin-top: 6px; font-size: 12px; color: var(--sv-text-sub); }
+
 /* ── controls ── */
 .stsv-controls {
   display: flex;
@@ -82,12 +107,92 @@ html[data-theme='dark'] .stsv {
   border: none;
 }
 .stsv-compute:disabled { opacity: 0.55; cursor: default; }
-.stsv-compute-all {
+.stsv-diag {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
   background: none;
-  color: var(--sv-accent);
-  border: 1px solid var(--sv-border-strong);
+  border: none;
+  cursor: pointer;
+  color: var(--sv-text-mute);
 }
-.stsv-meta { font-size: 11px; color: var(--sv-text-mute); margin: 0 0 10px; }
+.stsv-diag:hover { color: var(--sv-accent); }
+
+/* 求解器信息弹窗(createPortal 到 body,用全站 token 不用 --sv-*) */
+.stsv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+.stsv-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--popover, var(--card));
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 25%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.stsv-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.stsv-modal-head strong { font-size: 15px; }
+.stsv-modal-x {
+  display: inline-flex;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  padding: 2px;
+}
+.stsv-modal-x:hover { color: var(--foreground); }
+.stsv-modal-kv { margin: 0 0 14px; display: flex; flex-direction: column; gap: 6px; }
+.stsv-modal-kv > div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.stsv-modal-kv dt { color: var(--muted-foreground); margin: 0; }
+.stsv-modal-kv dd { margin: 0; }
+.stsv-modal-tablehead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-default);
+}
+.stsv-modal-tablehead span { color: var(--muted-foreground); font-size: 11px; }
+.stsv-modal-tables {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 18px;
+}
+.stsv-modal-tables li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+.stsv-modal-tables code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.stsv-modal-tables li span { color: var(--faint-foreground, var(--muted-foreground)); }
+
+@media (max-width: 480px) {
+  .stsv-modal-tables { grid-template-columns: 1fr; }
+}
 .stsv-hint { color: var(--sv-text-mute); font-size: 12px; margin: 2px 0 8px; }
 
 /* ── 6 视角对比 ── */
@@ -136,6 +241,7 @@ html[data-theme='dark'] .stsv {
 /* ── result: 解法列表 + 共享播放器 ── */
 .stsv-result {
   display: flex;
+  flex-direction: row-reverse; /* 播放器在左,解法列表在右 */
   gap: 18px;
   align-items: flex-start;
   margin-top: 8px;
@@ -153,7 +259,6 @@ html[data-theme='dark'] .stsv {
 .stsv-combo { color: var(--sv-text-mute); font-size: 12px; }
 .stsv-len { margin-left: auto; color: var(--sv-accent); font-weight: 600; font-size: 13px; }
 .stsv-sols-count { color: var(--sv-text-mute); font-size: 12px; margin-bottom: 6px; }
-.stsv-sols-ms { color: var(--sv-text-mute); }
 .stsv-sols-more { color: var(--sv-accent); }
 .stsv-empty { color: var(--sv-text-mute); font-size: 13px; padding: 6px 0; }
 
@@ -179,6 +284,18 @@ html[data-theme='dark'] .stsv {
   overflow-x: auto;
 }
 .stsv-sol-len { color: var(--sv-text-mute); font-size: 11px; min-width: 16px; text-align: right; }
+/* 并列多槽时逐行标注槽位 */
+.stsv-sol-slot {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--sv-accent);
+  background: var(--sv-accent-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
 .stsv-sol-play,
 .stsv-sol-copy {
   background: none;

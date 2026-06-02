@@ -1799,16 +1799,20 @@ impl EOSmallSolver {
     }
 
     /// 给定 stage(0=eo_cross / 1=eo_xcross / .. / 4=eo_xxxxcross),求 best_len(=最优步数)
-    /// 并枚举其 best_len..best_len+extra 步全部最优解。返回 (best_len, frame, combo 槽位, 解集)。
+    /// 并枚举**所有并列最优**(同一最小求解深度成功)的 (frame, combo) 的解,每条带自己的
+    /// frame + combo 标签。返回 `(best_len, Vec<(frame, combo 槽位, move 路径)>)`。
     ///
     /// **不再单独调 eo_get_stage_small 求 best_len**(那会算全 6 视角的 12 sym,单 face 只
     /// 需 2 sym → ~6× 浪费)。枚举用的剪枝/叶子与 count 完全一致(可采纳下界)⇒ 首个出解的
     /// 深度 d 即真最优 = best_len。故从 root 下界起逐层加深,跨帧/跨 combo 按 h 升序探,首个
-    /// 出解的 (frame, combo, d) 即 (winning frame, best_combo, best_len),省掉独立 count + probe。
+    /// 出解的深度 d 即 best_len;该深度成功的**全部** (frame, combo) 都是并列最优。
     ///
-    /// **EO 特有:** EO 破坏 y-对称,best_len = `rot` 与 `rot·y` 两帧的 min。两帧候选合在一起
-    /// 按 h 升序探(同 h 下 rot 帧优先,稳定排序),返回的 `frame` 串(`rot` 或 `{rot} y`)即解的
-    /// 真实 rot 帧前缀(emit raw m)。stage 0 无 slot(只 EO+cross),combo 为空。
+    /// **EO 特有:** EO 破坏 y-对称,best_len = `rot` 与 `rot·y` 两帧的 min,并列槽可能跨帧
+    /// (rot vs rot·y)⇒ frame 必须**逐条**带(返回的 `frame` 串 `rot` 或 `{rot} y` 即该条解的
+    /// 真实 rot 帧前缀,emit raw m)。两帧候选合在一起按 h 升序探(同 h 下 rot 帧优先,稳定
+    /// 排序)。stage 0 无 slot(只 EO+cross),每条 combo 为空。
+    ///
+    /// best_len 后逐深度 d 外层、候选内层交错收集(跨候选也按长度升序);`cap` 是**总**条数上界。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -1816,7 +1820,7 @@ impl EOSmallSolver {
         stage: usize,
         extra: u32,
         cap: usize,
-    ) -> (u32, String, Vec<usize>, Vec<Vec<u8>>) {
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
         let frames = [rot.to_string(), y_frame];
@@ -1838,26 +1842,48 @@ impl EOSmallSolver {
             }
             roots.sort_by_key(|t| (t.0, t.1)); // 同 h 下 rot(frame 0)优先。
             let d0 = roots.iter().map(|t| t.0).min().unwrap_or(0);
-            for d in d0..=12 {
-                for &(h, fi, i1, i2, ieo) in &roots {
+
+            // 求 best_len(bd)= 首个有任一 root 出解的深度;并记录该深度成功的全部 root(并列)。
+            let mut best_len = 99u32;
+            let mut tied: Vec<usize> = Vec::new(); // root 在 roots 里的索引
+            'find0: for d in d0..=12 {
+                for (ri, &(h, _, i1, i2, ieo)) in roots.iter().enumerate() {
                     if h > d {
                         continue;
                     }
+                    let mut probe: Vec<Vec<u8>> = Vec::new();
+                    let mut path = Vec::new();
+                    self.enum_cross(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut probe, 1);
+                    if !probe.is_empty() {
+                        tied.push(ri);
+                    }
+                }
+                if !tied.is_empty() {
+                    best_len = d;
+                    break 'find0;
+                }
+            }
+            if best_len >= 99 {
+                return (0, Vec::new());
+            }
+
+            // 逐深度 d 外层、tied root 内层交错收集,跨 root 也按长度升序;cap 控总条数。
+            let mut items: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+            'collect0: for d in best_len..=(best_len + extra).min(12) {
+                for &ri in &tied {
+                    if items.len() >= cap {
+                        break 'collect0;
+                    }
+                    let (_, fi, i1, i2, ieo) = roots[ri];
                     let mut out: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut out, cap);
-                    if !out.is_empty() {
-                        for d2 in (d + 1)..=(d + extra).min(12) {
-                            if out.len() >= cap {
-                                break;
-                            }
-                            self.enum_cross(i1 * 18, i2 * 18, ieo, d2, 18, &mut path, &mut out, cap);
-                        }
-                        return (d, frames[fi].clone(), vec![], out);
+                    self.enum_cross(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut out, cap - items.len());
+                    for sol in out {
+                        items.push((frames[fi].clone(), vec![], sol));
                     }
                 }
             }
-            return (0, rot.to_string(), vec![], vec![]);
+            return (best_len, items);
         }
 
         // stage 1..4:每帧 4 槽 state + 候选 combos,跨帧统一按 h 升序迭代加深。
@@ -1897,32 +1923,60 @@ impl EOSmallSolver {
         };
 
         let d0 = cands.iter().map(|t| t.0).min().unwrap_or(0);
-        for d in d0..=20 {
-            for &(h, fi, ci) in &cands {
+
+        // 求 best_len(bd)= 首个有任一候选出解的深度;并记录该深度成功的全部候选(并列)。
+        let mut best_len = 99u32;
+        let mut tied: Vec<usize> = Vec::new(); // 候选在 cands 里的索引
+        'find: for d in d0..=20 {
+            for (ci, &(h, fi, cidx)) in cands.iter().enumerate() {
                 if h > d {
                     continue;
                 }
                 let st = &ctxs[fi];
-                let combo = combos[ci];
+                let combo = combos[cidx];
+                let n = combo.len();
+                let xc = mk_xc(st, combo);
+                let i_dep0 = (st[0].idep as usize) * 18;
+                let i_eo0 = (st[0].ieo as usize) * 18;
+                let mut probe: Vec<Vec<u8>> = Vec::new();
+                let mut path = Vec::new();
+                self.enum_small(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut probe, 1);
+                if !probe.is_empty() {
+                    tied.push(ci);
+                }
+            }
+            if !tied.is_empty() {
+                best_len = d;
+                break 'find;
+            }
+        }
+        if best_len >= 99 {
+            return (0, Vec::new());
+        }
+
+        // 逐深度 d 外层、tied 候选内层交错收集,跨候选也按长度升序;cap 控总条数。
+        let mut items: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        'collect: for d in best_len..=(best_len + extra).min(20) {
+            for &ci in &tied {
+                if items.len() >= cap {
+                    break 'collect;
+                }
+                let (_, fi, cidx) = cands[ci];
+                let st = &ctxs[fi];
+                let combo = combos[cidx];
                 let n = combo.len();
                 let xc = mk_xc(st, combo);
                 let i_dep0 = (st[0].idep as usize) * 18;
                 let i_eo0 = (st[0].ieo as usize) * 18;
                 let mut out: Vec<Vec<u8>> = Vec::new();
                 let mut path = Vec::new();
-                self.enum_small(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut out, cap);
-                if !out.is_empty() {
-                    for d2 in (d + 1)..=(d + extra).min(20) {
-                        if out.len() >= cap {
-                            break;
-                        }
-                        self.enum_small(&xc[..n], i_dep0, i_eo0, d2, 18, &mut path, &mut out, cap);
-                    }
-                    return (d, frames[fi].clone(), combo.to_vec(), out);
+                self.enum_small(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut out, cap - items.len());
+                for sol in out {
+                    items.push((frames[fi].clone(), combo.to_vec(), sol));
                 }
             }
         }
-        (0, rot.to_string(), vec![], vec![])
+        (best_len, items)
     }
 }
 
@@ -2005,11 +2059,12 @@ mod tests {
     /// enumerate_small 输出 move 序列正确性:
     ///   1. best_len == golden 值(逐格 bit-exact,5 阶段 ×6 视角,布局 stage*6+rot)
     ///   2. 每条解长度 == best_len(全是最优解)
-    ///   3. 把(返回 frame 帧打乱 ++ 解)重编码:stage 0 查 edge2 pt_cross+EO,
+    ///   3. 把(返回**逐条 frame** 帧打乱 ++ 解)重编码:stage 0 查 edge2 pt_cross+EO,
     ///      stage 1..4 查全局 ep4eo12 prune==0(EP4 cross 排列 + 全 12 棱 EO 解出)
     ///      且各 combo 槽 c4e0 prune==0(该槽 cross+角+棱解出)⇒ 序列真把所选 combo 解出。
-    ///   frame 可能是 `rot` 或 `rot y`(EO 破坏 y-对称,best_len 来自 y-配对的某一帧);
-    ///   emit 的就是该帧 raw m。
+    ///      ⇒ 每条返回项的 combo 在该 stage 下都达成 best_len(都是合法并列)。
+    ///   frame 可能是 `rot` 或 `rot y`(EO 破坏 y-对称,best_len 来自 y-配对的某一帧;并列项
+    ///   可能跨帧 ⇒ frame 逐条带);emit 的就是该帧 raw m。
     /// eo_xxxxcross 最慢,故只测 1 条打乱;若单阶段超 ~120s 收到前 3 rot(见报告)。
     ///   `cargo test --release --lib eo_enumerate_valid -- --ignored --nocapture`
     #[test]
@@ -2050,11 +2105,11 @@ mod tests {
                 for stage in 0..5usize {
                     let want = exp[stage * 6 + ri];
                     let t0 = std::time::Instant::now();
-                    let (len, frame, combo, sols) = solver.enumerate_small(&alg, rot, stage, 0, 20);
+                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20);
                     let dt = t0.elapsed();
                     eprintln!(
-                        "rot={:>2} stage={} -> len={} frame='{}' combo={:?} sols={} ({:.2?})",
-                        rot, stage, len, frame, combo, sols.len(), dt
+                        "rot={:>2} stage={} -> len={} items={} ({:.2?})",
+                        rot, stage, len, items.len(), dt
                     );
                     assert_eq!(
                         len, want,
@@ -2064,21 +2119,21 @@ mod tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!sols.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
-                    // 真实帧打乱基底(可能含尾随 y)。
-                    let mut base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-                    alg_rotation(&mut base, &frame);
-                    for sol in &sols {
+                    assert!(!items.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    for (frame, combo, sol) in &items {
                         assert_eq!(
                             sol.len() as u32,
                             len,
-                            "sol not optimal `{}` rot={} stage={}: {:?}",
-                            scr, rot, stage, sol
+                            "sol not optimal `{}` rot={} stage={}: frame='{}' {:?}",
+                            scr, rot, stage, frame, sol
                         );
-                        let mut full = base.clone();
+                        // 每条解带自己的 frame ⇒ 用该 frame 打乱基底(可能含尾随 y)。
+                        let mut full: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+                        alg_rotation(&mut full, frame);
                         full.extend_from_slice(sol);
                         if stage == 0 {
                             // eo_cross:edge2 cross 群 + EO 全解(pt_cross==0 && ieo==0)。
+                            assert!(combo.is_empty(), "stage 0 combo must be empty, got {:?}", combo);
                             let (c1, c2, ceo) = solver.rot_virt_cross(&full);
                             let pr = solver
                                 .pt_cross
@@ -2086,8 +2141,8 @@ mod tests {
                             assert_eq!(
                                 (pr, ceo),
                                 (0, 0),
-                                "eo_cross unsolved `{}` rot={} sol={:?} (pt_cross={} ieo={})",
-                                scr, rot, sol, pr, ceo
+                                "eo_cross unsolved `{}` rot={} frame='{}' sol={:?} (pt_cross={} ieo={})",
+                                scr, rot, frame, sol, pr, ceo
                             );
                             continue;
                         }
@@ -2097,17 +2152,18 @@ mod tests {
                         assert_eq!(
                             solver.h_ep4eo12(&sg),
                             0,
-                            "ep4eo12 unsolved `{}` rot={} stage={} sol={:?}",
-                            scr, rot, stage, sol
+                            "ep4eo12 unsolved `{}` rot={} stage={} frame='{}' sol={:?}",
+                            scr, rot, stage, frame, sol
                         );
-                        // 各 combo 槽:cross+角+棱(c4e0)解出。
-                        for &s in &combo {
+                        // 各 combo 槽:cross+角+棱(c4e0)解出 ⇒ 该 combo 在 best_len 下确达成(合法并列)。
+                        assert!(!combo.is_empty(), "stage {} combo must be non-empty", stage);
+                        for &s in combo {
                             let sx = solver.rot_virt(&full, s);
                             assert_eq!(
                                 solver.h_c4e0(&sx),
                                 0,
-                                "combo slot {} unsolved `{}` rot={} stage={} sol={:?}",
-                                s, scr, rot, stage, sol
+                                "combo slot {} unsolved `{}` rot={} stage={} frame='{}' sol={:?}",
+                                s, scr, rot, stage, frame, sol
                             );
                         }
                     }

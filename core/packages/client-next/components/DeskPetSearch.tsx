@@ -7,7 +7,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Maximize2, Coffee, Crosshair, EyeOff, Magnet, Heart, Home, Sparkles, Shuffle } from 'lucide-react';
+import { Maximize2, Coffee, Crosshair, EyeOff, Magnet, Heart, Home, Sparkles, Shuffle, Boxes } from 'lucide-react';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
@@ -176,6 +176,13 @@ export default function DeskPetSearch({
           <button type="button" className="icon-only" onClick={() => setGalleryOpen(true)}
             title={t('动画图鉴', 'Animations')}>
             <Sparkles size={16} />
+          </button>
+          <button type="button" className="icon-only" onClick={() => {
+            window.dispatchEvent(new CustomEvent('clawd:perform'));
+            onClose();
+          }}
+            title={t('PLL 表演', 'PLL Show')}>
+            <Boxes size={16} />
           </button>
           <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
             title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>

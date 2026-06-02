@@ -15,16 +15,23 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Loader2, Copy, Check, Play } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Loader2, Copy, Check, Play, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
-import { type MovesTimed, type RustCrossPool } from '@/lib/rust-cross-client';
+import { type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import './StageSolver.css';
 
 function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
+}
+
+function fmtBytes(b: number): string {
+  if (b >= 1048576) return `${(b / 1048576).toFixed(1)} MB`;
+  if (b >= 1024) return `${Math.round(b / 1024)} KB`;
+  return `${b} B`;
 }
 
 export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
@@ -41,7 +48,7 @@ const METHODS: { key: Method; label: string }[] = [
   { key: 'pseudo_f2leo', label: 'Pseudo F2LEO' },
 ];
 const STAGE_LABELS: Record<Method, string[]> = {
-  std: ['Cross', 'XC', 'XXC', 'XXXC', 'XXXXC (F2L)'],
+  std: ['Cross', 'XC', 'XXC', 'XXXC', 'XXXXC'],
   eo: ['EO Cross', 'EO XC', 'EO XXC', 'EO XXXC', 'EO XXXXC'],
   pair: ['Cross + Pair', 'XC + Pair', 'XXC + Pair', 'XXXC + Pair'],
   pseudo: ['Pseudo Cross', 'Pseudo XC', 'Pseudo XXC', 'Pseudo XXXC'],
@@ -105,11 +112,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [movesLoading, setMovesLoading] = useState(false);
   const [selSol, setSelSol] = useState(0); // 选中解法行(驱动共享播放器)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const [runToken, setRunToken] = useState(0);
   const [totalMs, setTotalMs] = useState<number | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false); // 求解器信息弹窗
   const [shown, setShown] = useState(0);
 
   const poolRef = useRef<RustCrossPool | null>(null);
+  // 共享 3D 播放器实例(TwistySection 回填),供解法行 ▷ 跳到开头并播放。
+  const playerRef = useRef<{ jumpToStart?: (o?: { flash?: boolean }) => void; play?: () => void } | null>(null);
   const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
   const scrambleRef = useRef(normScramble);
   scrambleRef.current = normScramble;
@@ -124,6 +133,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const stages = STAGE_LABELS[method];
   const eager = stage <= EAGER_MAX[method];
   const poolSize = useMemo(() => poolSizeForDevice(), []);
+  // 当前 need 首次要加载的表(按内存降序)+ 合计,用于 loading 提示。
+  const tableInfo = useMemo(() => {
+    const rows = TABLE_SETS[need]
+      .map((name) => ({ name, bytes: TABLE_BYTES[name] ?? 0 }))
+      .sort((a, b) => b.bytes - a.bytes);
+    return { rows, total: rows.reduce((s, r) => s + r.bytes, 0) };
+  }, [need]);
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
   useEffect(() => {
@@ -199,11 +215,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     await computeAll();
   }, [eager, computeAll]);
 
-  // ready / 方法 / 阶段 / 手动触发 时重算。
+  // ready / 方法 / 阶段 变化时:eager 阶段自动批算 6 面;重阶段只清空待用户点「计算」。
   useEffect(() => {
     if (status === 'ready') void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, method, stage, runToken]);
+  }, [status, method, stage]);
 
   // 打乱变化(WCA 选取 / 粘贴 / 编辑)→ 防抖后自动重算当前阶段。跳过首挂(上面已算)。
   useEffect(() => {
@@ -235,6 +251,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         setMoves(res);
         setSelSol(0);
         setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
+        // 新算出的解法载入后,把动画重置到开头(否则可能停在上一条的进度)。
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          try { playerRef.current?.jumpToStart?.({ flash: false }); } catch { /* */ }
+        }));
       }
     } catch (e) {
       if (movesReq.current === my) setErrMsg(String(e));
@@ -265,6 +285,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit]);
 
+  // 信息弹窗:Esc 关。
+  useEffect(() => {
+    if (!infoOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setInfoOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [infoOpen]);
+
   // 解法逐条流式出现。
   useEffect(() => {
     if (!moves || movesLoading) { setShown(0); return; }
@@ -288,21 +316,48 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     }).catch(() => { /* clipboard blocked */ });
   }, []);
 
-  // 最优(min)视角索引,用于「best」标记。
-  const bestFace = useMemo(() => {
-    let best = -1, bestV = Infinity;
-    counts.forEach((v, i) => { if (v != null && v < bestV) { bestV = v; best = i; } });
-    return best;
+  // 选中解法:都把动画重置到开头(切换解法不该停在上一条的进度);play=true 再从头播放。
+  // 双 rAF 等 alg 流到共享播放器生效后再 jumpToStart(同 sim PlayerControls 的写法)。
+  const selectSol = useCallback((i: number, play: boolean) => {
+    setSelSol(i);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const p = playerRef.current;
+      try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
+      if (play) { try { p?.play?.(); } catch { /* */ } }
+    }));
+  }, []);
+
+  // 最优步数(min),用于「best」标记 —— 所有并列最少的视角都算最优。
+  const bestVal = useMemo(() => {
+    let v = Infinity;
+    counts.forEach((c) => { if (c != null && c < v) v = c; });
+    return Number.isFinite(v) ? v : null;
   }, [counts]);
 
-  const selSolAlg = moves && moves.sols.length > 0 ? moves.sols[Math.min(selSol, moves.sols.length - 1)] : null;
+  const selSolAlg = moves && moves.sols.length > 0 ? moves.sols[Math.min(selSol, moves.sols.length - 1)].m : null;
 
   return (
     <section className={`stsv${compact ? ' stsv-compact' : ''}`}>
       {status === 'loading' && (
-        <div className="stsv-status">
-          <Loader2 size={14} className="stsv-spin" />
-          {t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
+        <div className="stsv-loading">
+          <div className="stsv-status">
+            <Loader2 size={14} className="stsv-spin" />
+            {t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
+          </div>
+          <ul className="stsv-tables">
+            {tableInfo.rows.map((r) => (
+              <li key={r.name}>
+                <code>{r.name}</code>
+                <span>{fmtBytes(r.bytes)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="stsv-tables-total">
+            {t(
+              `共 ${tableInfo.rows.length} 张表 ≈ ${fmtBytes(tableInfo.total)} · ${poolSize} 路并行各一份`,
+              `${tableInfo.rows.length} tables ≈ ${fmtBytes(tableInfo.total)} · one copy per worker × ${poolSize}`,
+            )}
+          </div>
         </div>
       )}
       {status === 'error' && (
@@ -332,31 +387,30 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 ))}
               </select>
             </label>
-            <button className="stsv-compute" onClick={() => setRunToken((x) => x + 1)} disabled={computing}>
+            <button
+              className="stsv-compute"
+              onClick={() => { wantAuto.current = true; void computeAll(); }}
+              disabled={computing}
+            >
               {computing ? <Loader2 size={14} className="stsv-spin" /> : null}
               {t('计算', 'Compute')}
             </button>
-            {!eager && (
-              <button
-                className="stsv-compute stsv-compute-all"
-                onClick={() => { wantAuto.current = true; void computeAll(); }}
-                disabled={computing}
-              >
-                {computing ? <Loader2 size={14} className="stsv-spin" /> : null}
-                {t('全部 6 视角', 'All 6 faces')}
-              </button>
-            )}
-          </div>
-          <div className="stsv-meta">
-            {t(`${poolSize} 路并行`, `${poolSize}-way parallel`)}
-            {totalMs != null && <span> · {t('总耗时', 'total')} {fmtMs(totalMs)}</span>}
+            <button
+              type="button"
+              className="stsv-diag"
+              onClick={() => setInfoOpen(true)}
+              title={t('求解器信息', 'Solver info')}
+              aria-label={t('求解器信息', 'Solver info')}
+            >
+              <Info size={15} />
+            </button>
           </div>
 
           {/* 6 视角对比:点格选视角;最优(min)视角带 best 标记 */}
           <div className="stsv-angles">
             {FACES.map((f, i) => {
               const loading = (eager && computing) || (selFace === i && movesLoading);
-              const isBest = i === bestFace && counts[i] != null;
+              const isBest = counts[i] != null && counts[i] === bestVal;
               return (
                 <button
                   key={f.face}
@@ -381,8 +435,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           {!eager && (
             <div className="stsv-hint">
               {t(
-                '该阶段单视角搜索较重,点任一视角按需求解(最坏数十秒)。',
-                'This stage is heavy per orientation — click a face to solve it on demand.',
+                '该阶段搜索较重,不自动算:点「计算」算全部 6 面,或点单个视角只算它(最坏数十秒)。',
+                'This stage is heavy, so it does not auto-run: click Compute for all 6 faces, or click one face to solve just it (up to tens of seconds).',
               )}
             </div>
           )}
@@ -398,9 +452,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   >
                     <i className="stsv-sols-swatch" style={{ background: CUBE_FILL[FACES[selFace].face] }} />
                   </span>
-                  {moves && moves.combo && moves.combo !== 'cross' && (
-                    <span className="stsv-combo">{t('槽位', 'slots')}: {moves.combo}</span>
-                  )}
                   {moves && <span className="stsv-len">{moves.len} HTM</span>}
                 </div>
 
@@ -421,23 +472,23 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       {moves.sols.length >= limit && (
                         <span className="stsv-sols-more">{t(' · 已达上限,可能更多', ' · capped, may be more')}</span>
                       )}
-                      <span className="stsv-sols-ms"> · {fmtMs(moves.ms)}</span>
                     </div>
                     <ol className="stsv-sols-list">
                       {moves.sols.slice(0, shown).map((sol, i) => (
                         <li
                           key={i}
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
-                          onClick={() => setSelSol(i)}
+                          onClick={() => selectSol(i, false)}
                         >
-                          <button className="stsv-sol-play" aria-label={t('播放', 'Play')} onClick={(e) => { e.stopPropagation(); setSelSol(i); }}>
+                          <button className="stsv-sol-play" aria-label={t('播放', 'Play')} onClick={(e) => { e.stopPropagation(); selectSol(i, true); }}>
                             <Play size={11} />
                           </button>
-                          <code>{sol}</code>
-                          <span className="stsv-sol-len">{moveLen(sol)}</span>
+                          {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
+                          <code>{sol.m}</code>
+                          <span className="stsv-sol-len">{moveLen(sol.m)}</span>
                           <button
                             className="stsv-sol-copy"
-                            onClick={(e) => { e.stopPropagation(); copySol(i, sol); }}
+                            onClick={(e) => { e.stopPropagation(); copySol(i, sol.m); }}
                             aria-label={t('复制', 'Copy')}
                           >
                             {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
@@ -452,12 +503,57 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               {/* 单个共享 3D 播放器:跟随选中解法行 */}
               {selSolAlg && (
                 <div className="stsv-player">
-                  <TwistySection puzzle="3x3x3" scramble={normScramble} alg={selSolAlg} />
+                  <TwistySection puzzle="3x3x3" scramble={normScramble} alg={selSolAlg} playerRef={playerRef} />
                 </div>
               )}
             </div>
           )}
         </>
+      )}
+
+      {infoOpen && createPortal(
+        <div className="stsv-modal-backdrop" onClick={() => setInfoOpen(false)}>
+          <div className="stsv-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="stsv-modal-head">
+              <strong>{t('求解器信息', 'Solver info')}</strong>
+              <button className="stsv-modal-x" onClick={() => setInfoOpen(false)} aria-label={t('关闭', 'Close')}>
+                <X size={16} />
+              </button>
+            </div>
+            <dl className="stsv-modal-kv">
+              <div>
+                <dt>{t('引擎', 'Engine')}</dt>
+                <dd>Rust → WASM · {t(`${poolSize} 路并行`, `${poolSize}-way`)}</dd>
+              </div>
+              {totalMs != null && (
+                <div>
+                  <dt>{t('6 视角总耗时', '6-face total')}</dt>
+                  <dd>{fmtMs(totalMs)}</dd>
+                </div>
+              )}
+              {moves && (
+                <div>
+                  <dt>{t('当前解法枚举', 'This enumeration')}</dt>
+                  <dd>{fmtMs(moves.ms)}</dd>
+                </div>
+              )}
+            </dl>
+            <div className="stsv-modal-tablehead">
+              {t(`剪枝表 ${tableInfo.rows.length} 张 ≈ ${fmtBytes(tableInfo.total)}`,
+                `Pruning tables: ${tableInfo.rows.length} ≈ ${fmtBytes(tableInfo.total)}`)}
+              <span>{t('每路 worker 各装一份', 'one copy per worker')}</span>
+            </div>
+            <ul className="stsv-modal-tables">
+              {tableInfo.rows.map((r) => (
+                <li key={r.name}>
+                  <code>{r.name}</code>
+                  <span>{fmtBytes(r.bytes)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>,
+        document.body,
       )}
     </section>
   );
