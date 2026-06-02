@@ -1,0 +1,225 @@
+/* Clawd PLL Performer — enlarged focused overlay. All colors via theme tokens.
+   z-index sits above the desk pet (~61); scrim + blur like DeskPetGallery. */
+
+.pll-perf-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 72;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--foreground) 45%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.pll-perf-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(640px, 94vw);
+  max-height: 92dvh;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 24px 60px -20px color-mix(in srgb, var(--foreground) 40%, transparent);
+  will-change: transform, opacity;
+}
+
+.pll-perf-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pll-perf-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.pll-perf-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pll-perf-close {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.pll-perf-close:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+
+.pll-perf-alg {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  word-break: break-word;
+}
+
+/* Case picker — full-width dropdown, required selection (no clear button). */
+.pll-perf-picker {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font: 13px/1.2 ui-sans-serif, system-ui, sans-serif;
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--input);
+  cursor: pointer;
+  appearance: auto;
+}
+.pll-perf-picker:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* Stage — square box. The cube is the star: the transparent 3D cube canvas
+   (JS-appended) floats HIGH in the upper part of the stage; clawd's native body
+   sits at the bottom-center, fully visible, presenting the cube. The cube does
+   NOT overlap clawd's eyes/face. */
+.pll-perf-stage {
+  position: relative;
+  align-self: center;
+  width: min(86vw, 56dvh);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; /* tap-to-play/pause */
+}
+/* Cube canvas — ~60% of the stage, floated into the UPPER part (center ≈ 34% of
+   stage height) so it hovers above clawd with clear open space around clawd's
+   face below. Sized in JS (renderer.setSize); the flex-centered canvas is nudged
+   up via translateY so its center lands high, not at 50%. */
+.pll-perf-cube-canvas {
+  position: relative;
+  display: block;
+  outline: none;
+  touch-action: none;
+  z-index: 1;
+  transform: translateY(-26%);
+}
+/* Native clawd — anchored bottom-center, clearly visible below the cube. The
+   sprite's own viewBox padding (-15 -25 45 45) frames the body in the lower
+   portion; sized so clawd reads but the cube stays the focus. Breathe + blink
+   only — NO other motion. */
+.pll-perf-clawd {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  width: 46%;
+  height: auto;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Native clawd breathe + blink — copied VERBATIM from DeskPet.tsx so clawd is
+   alive inside this overlay too (the keyframes live in DeskPet's inline <style>,
+   not globally, so they must be redeclared here). */
+.pll-perf-clawd .clawddp-breathe {
+  transform-origin: 7.5px 13px;
+  animation: clawddp-breathe 3.2s infinite ease-in-out;
+}
+.pll-perf-clawd .clawddp-blink {
+  transform-origin: 7.5px 9px;
+  animation: clawddp-blink 4s infinite ease-in-out;
+}
+@keyframes clawddp-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.02, 0.98) translate(0, 0.5px); }
+}
+@keyframes clawddp-blink {
+  0%, 10%, 100% { transform: scaleY(1); }
+  5% { transform: scaleY(0.1); }
+}
+
+/* Controls row — Play/Pause, Restart, speed chips. */
+.pll-perf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.pll-perf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font: 13px/1 ui-sans-serif, system-ui, sans-serif;
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+}
+.pll-perf-btn:hover {
+  background: var(--card);
+  border-color: color-mix(in srgb, var(--foreground) 24%, transparent);
+}
+
+.pll-perf-speeds {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.pll-perf-chip {
+  min-width: 44px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font: 12px/1 ui-sans-serif, system-ui, sans-serif;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.pll-perf-chip:hover {
+  color: var(--foreground);
+}
+.pll-perf-chip.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .pll-perf-panel {
+    padding: 14px;
+    gap: 10px;
+  }
+  .pll-perf-stage {
+    width: 94vw;
+  }
+  .pll-perf-controls {
+    flex-wrap: nowrap;
+  }
+}

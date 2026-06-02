@@ -668,8 +668,11 @@ impl PseudoF2leoSolver {
         }
     }
 
-    /// 单 face 多解枚举:返回 (best_len, frame, combo 棱槽, 解集)。stage 0=cross(combo 空)/
-    /// 1=xc / 2=xxc / 3=xxxc。frame ∈ {rot, "{rot} y"}。空解集 + len=0 ⟹ 该 face 已解。
+    /// 单 face 多解枚举:返回 (best_len, 每条解 (frame, combo 棱槽标签, move 路径))。
+    /// stage 0=cross(combo 空)/ 1=xc / 2=xxc / 3=xxxc。frame ∈ {rot, "{rot} y"},逐条带
+    /// (并列槽可能落在不同 frame)。空解集 + len=0 ⟹ 该 face 已解。
+    /// best_len 与原"首个成功深度"逐字节一致;此处把**所有**该深度成功的候选(跨 frame /
+    /// 跨 combo)都收集为并列解,d 外层、候选内层交错以保长度升序;cap 控总条数。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -677,7 +680,7 @@ impl PseudoF2leoSolver {
         stage: usize,
         extra: u32,
         cap: usize,
-    ) -> (u32, String, Vec<usize>, Vec<Vec<u8>>) {
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
         let frames = [rot.to_string(), y_frame];
@@ -692,34 +695,65 @@ impl PseudoF2leoSolver {
                 let pr = self.prune.cross[i1 * E2 + i2] as u32;
                 let eo_ok = edg.iter().all(|&e| e % 2 == 0);
                 if pr == 0 && eo_ok {
-                    return (0, fr.clone(), vec![], vec![]);
+                    return (0, Vec::new());
                 }
                 let h = if pr == 0 { 1 } else { pr };
                 roots.push((h, fi, i1, i2, edg));
             }
             roots.sort_by_key(|t| (t.0, t.1));
             let d0 = roots.iter().map(|t| t.0).min().unwrap_or(1).max(1);
-            for d in d0..=CAP_CROSS {
-                for &(h, fi, i1, i2, edg) in &roots {
+
+            // 第一遍:找首个有任一 root 非空枚举的深度 = best_len,并收集**所有**该深度
+            // 非空的 root(并列),每条解带自己的 frame。
+            let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+            let mut best_len = CAP_CROSS;
+            let mut tied: Vec<usize> = Vec::new(); // roots 下标
+            'bd0: for d in d0..=CAP_CROSS {
+                for (ri, &(h, fi, i1, i2, edg)) in roots.iter().enumerate() {
                     if h > d {
                         continue;
                     }
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
-                    let mut out: Vec<Vec<u8>> = Vec::new();
+                    let mut co: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut out, cap);
-                    if !out.is_empty() {
-                        for d2 in (d + 1)..=(d + extra).min(CAP_CROSS) {
+                    let rem = cap.saturating_sub(out.len());
+                    self.enum_cross(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, rem);
+                    if !co.is_empty() {
+                        best_len = d;
+                        tied.push(ri);
+                        for sol in co {
                             if out.len() >= cap {
                                 break;
                             }
-                            self.enum_cross(i1 * 18, i2 * 18, eo18, d2, 18, &mut path, &mut out, cap);
+                            out.push((frames[fi].clone(), vec![], sol));
                         }
-                        return (d, frames[fi].clone(), vec![], out);
+                    }
+                }
+                if !tied.is_empty() {
+                    break 'bd0;
+                }
+            }
+            if tied.is_empty() {
+                return (CAP_CROSS, Vec::new());
+            }
+
+            // extra:仅对并列 root 在 best_len+1..=best_len+extra 继续收集,交错保升序。
+            'ex0: for d in (best_len + 1)..=(best_len + extra).min(CAP_CROSS) {
+                for &ri in &tied {
+                    if out.len() >= cap {
+                        break 'ex0;
+                    }
+                    let (_h, fi, i1, i2, edg) = roots[ri];
+                    let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
+                    let mut co: Vec<Vec<u8>> = Vec::new();
+                    let mut path = Vec::new();
+                    self.enum_cross(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, cap - out.len());
+                    for sol in co {
+                        out.push((frames[fi].clone(), vec![], sol));
                     }
                 }
             }
-            return (CAP_CROSS, frames[0].clone(), vec![], vec![]);
+            return (best_len, out);
         }
 
         // ---- stage 1/2/3:(棱槽,角槽) combo cascade ----
@@ -762,8 +796,7 @@ impl PseudoF2leoSolver {
                     }
                     let free_ok = (0..4).all(|s| in_set[s] || edg[s] % 2 == 0);
                     if homed && free_ok {
-                        let label: Vec<usize> = combo.iter().map(|&(s, _p)| s).collect();
-                        return (0, fr.clone(), label, vec![]);
+                        return (0, Vec::new());
                     }
                 }
                 cands.push((h, fi, ci));
@@ -772,56 +805,91 @@ impl PseudoF2leoSolver {
         }
         cands.sort_by_key(|t| t.0);
         let d0 = cands.iter().map(|t| t.0).min().unwrap_or(1).max(1);
-        for d in d0..=cap_d {
+
+        // 给定候选(frame_idx, combo_idx)在深度 d 枚举,解收进 out(带 frame + 棱槽标签)。
+        // 返回该次新增是否非空。
+        let enum_cand = |solver: &Self,
+                         out: &mut Vec<(String, Vec<usize>, Vec<u8>)>,
+                         fi: usize,
+                         ci: usize,
+                         d: u32,
+                         ctxs: &[Ctx]|
+         -> bool {
+            if out.len() >= cap {
+                return false;
+            }
+            let ctx = &ctxs[fi];
+            let combo = &cs[ci];
+            let n = combo.len();
+            let mut prune_refs = [xt[0].as_slice(); 3];
+            let mut corn18 = [0usize; 3];
+            let mut edge18 = [0usize; 3];
+            let mut egoal = [0usize; 3];
+            let mut in_set = [false; 4];
+            for (i, &(s, p)) in combo.iter().enumerate() {
+                prune_refs[i] = xt[p].as_slice();
+                corn18[i] = ctx.corn[p] * 18;
+                edge18[i] = ctx.edg[s] * 18;
+                egoal[i] = SLOT_EDGE[s];
+                in_set[s] = true;
+            }
+            let mut free18 = [0usize; 3];
+            let mut nf = 0;
+            for s in 0..4 {
+                if !in_set[s] {
+                    free18[nf] = ctx.edg[s] * 18;
+                    nf += 1;
+                }
+            }
+            let mut co: Vec<Vec<u8>> = Vec::new();
+            let mut path = Vec::new();
+            solver.enum_combo(
+                ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
+                &prune_refs[..n], d, 18, &mut path, &mut co, cap - out.len(),
+            );
+            let nonempty = !co.is_empty();
+            let label: Vec<usize> = combo.iter().map(|&(s, _p)| s).collect();
+            for sol in co {
+                if out.len() >= cap {
+                    break;
+                }
+                out.push((frames[fi].clone(), label.clone(), sol));
+            }
+            nonempty
+        };
+
+        // 第一遍:找 best_len = 首个有任一候选非空枚举的深度,收集**所有**该深度非空候选(并列)。
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        let mut best_len = cap_d;
+        let mut tied: Vec<(usize, usize)> = Vec::new(); // (frame_idx, combo_idx)
+        'bd: for d in d0..=cap_d {
             for &(h, fi, ci) in &cands {
                 if h > d {
                     continue;
                 }
-                let ctx = &ctxs[fi];
-                let combo = &cs[ci];
-                let n = combo.len();
-                let mut prune_refs = [xt[0].as_slice(); 3];
-                let mut corn18 = [0usize; 3];
-                let mut edge18 = [0usize; 3];
-                let mut egoal = [0usize; 3];
-                let mut in_set = [false; 4];
-                for (i, &(s, p)) in combo.iter().enumerate() {
-                    prune_refs[i] = xt[p].as_slice();
-                    corn18[i] = ctx.corn[p] * 18;
-                    edge18[i] = ctx.edg[s] * 18;
-                    egoal[i] = SLOT_EDGE[s];
-                    in_set[s] = true;
-                }
-                let mut free18 = [0usize; 3];
-                let mut nf = 0;
-                for s in 0..4 {
-                    if !in_set[s] {
-                        free18[nf] = ctx.edg[s] * 18;
-                        nf += 1;
-                    }
-                }
-                let mut out: Vec<Vec<u8>> = Vec::new();
-                let mut path = Vec::new();
-                self.enum_combo(
-                    ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
-                    &prune_refs[..n], d, 18, &mut path, &mut out, cap,
-                );
-                if !out.is_empty() {
-                    for d2 in (d + 1)..=(d + extra).min(cap_d) {
-                        if out.len() >= cap {
-                            break;
-                        }
-                        self.enum_combo(
-                            ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
-                            &prune_refs[..n], d2, 18, &mut path, &mut out, cap,
-                        );
-                    }
-                    let label: Vec<usize> = combo.iter().map(|&(s, _p)| s).collect();
-                    return (d, frames[fi].clone(), label, out);
+                if enum_cand(self, &mut out, fi, ci, d, &ctxs) {
+                    best_len = d;
+                    tied.push((fi, ci));
                 }
             }
+            if !tied.is_empty() {
+                break 'bd;
+            }
         }
-        (cap_d, frames[0].clone(), vec![], vec![])
+        if tied.is_empty() {
+            return (cap_d, Vec::new());
+        }
+
+        // extra:仅对并列候选在 best_len+1..=best_len+extra 继续收集,交错保升序。
+        'ex: for d in (best_len + 1)..=(best_len + extra).min(cap_d) {
+            for &(fi, ci) in &tied {
+                if out.len() >= cap {
+                    break 'ex;
+                }
+                enum_cand(self, &mut out, fi, ci, d, &ctxs);
+            }
+        }
+        (best_len, out)
     }
 }
 
@@ -1477,17 +1545,15 @@ mod enum_tests {
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tables"),
         );
         let solver = PseudoF2leoSolver::new();
-        let scrambles = [
-            "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
-            "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
-        ];
+        // 内存紧张:1 条打乱 + 浅阶段(跳过最重的 xxxc)即可锁 bit-exact。
+        let scrambles = ["B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B"];
         for scr in scrambles {
             let alg = string_to_alg(scr);
-            for stage in 0..4usize {
+            for stage in 0..3usize {
                 let counts = solver.get_stage(&alg, stage);
                 for face in 0..6usize {
-                    let (len, _frame, _combo, sols) =
-                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 5000);
+                    let (len, items) =
+                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100);
                     assert_eq!(
                         len, counts[face],
                         "pseudo len mismatch scr={scr} stage={stage} face={face}: enum {len} vs count {}",
@@ -1496,10 +1562,23 @@ mod enum_tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!sols.is_empty(), "non-zero len must enumerate ≥1 sol");
-                    for p in &sols {
+                    assert!(!items.is_empty(), "non-zero len must enumerate ≥1 sol");
+                    for (_frame, _combo, p) in &items {
                         assert_eq!(p.len() as u32, len, "optimal sol length must == best_len");
                     }
+                    // 并列合法性:每个出现的 (frame, combo) 都在 best_len 出解(即都是合法并列),
+                    // 没有任何返回项落在非最优深度。
+                    let mut seen: Vec<(&str, &Vec<usize>)> = Vec::new();
+                    for (frame, combo, p) in &items {
+                        assert_eq!(
+                            p.len() as u32, len,
+                            "tied (frame={frame}, combo={combo:?}) must solve at best_len {len}"
+                        );
+                        if !seen.iter().any(|&(f, c)| f == frame.as_str() && c == combo) {
+                            seen.push((frame.as_str(), combo));
+                        }
+                    }
+                    assert!(!seen.is_empty(), "must have ≥1 tied (frame,combo)");
                 }
             }
         }

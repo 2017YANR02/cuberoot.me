@@ -11,12 +11,45 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260601a';
+const V = 'v=20260601c';
 
+// 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
+// (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
+export const TABLE_BYTES: Record<string, number> = {
+  pt_cross: 139408,
+  pt_cross_C4E0: 54743056,
+  pt_cross_ins_C4: 2280976,
+  pt_pair_C4E0: 304,
+  pt_ep4eo12: 12165136,
+  pt_pscross: 139408,
+  mt_edge2: 38028,
+  mt_edge4: 18247692,
+  mt_corn: 1740,
+  mt_edge: 1740,
+  mt_eo12: 147468,
+  mt_eo12_alt: 147468,
+  mt_ep4: 855372,
+};
+
+// 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
+export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant', string[]> = {
+  cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
+  f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
+  variant: [
+    'pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0', 'mt_edge4', 'mt_corn', 'mt_edge',
+    'pt_cross', 'pt_ep4eo12', 'mt_edge2', 'mt_eo12', 'mt_eo12_alt', 'mt_ep4', 'pt_pscross',
+  ],
+};
+
+/** 单条解法:m = 带视角前缀的步骤串;c = 该解的 F2L 槽位标签(如 "BL FR"),无槽阶段为空串。
+ *  并列最优时不同条可能是不同槽。 */
+export interface SolItem {
+  m: string;
+  c: string;
+}
 export interface MovesResult {
   len: number;
-  combo: string; // F2L 槽位标签(如 "BL FR")或 "cross"
-  sols: string[]; // 每条带视角前缀的步骤串
+  sols: SolItem[];
 }
 
 export interface FaceResult {

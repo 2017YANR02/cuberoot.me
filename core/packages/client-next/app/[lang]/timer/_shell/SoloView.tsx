@@ -23,11 +23,10 @@ import {
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
   Eye, EyeOff, ListOrdered, LineChart, RefreshCw, X,
 } from 'lucide-react';
-import HeaderToggles from '@/components/HeaderToggles';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { petReact } from '@/lib/deskpet';
-import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
+import { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
@@ -1079,7 +1078,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
     >
       <div className="print-only-header">
         <h1>{isZh ? '魔方计时器 — ' : 'Cube Timer — '}{printEventName}</h1>
-        <div className="print-meta">{new Date().toLocaleString()} · {solves.length} {isZh ? '次' : 'solves'}</div>
+        <div className="print-meta"><span>{new Date().toLocaleString()}</span><span>{solves.length} {isZh ? '次' : 'solves'}</span></div>
       </div>
 
       {/* ── Topbar ──────────────────────────────────────────── */}
@@ -1114,11 +1113,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
             )}
           </div>
         </div>
-        <div className="shell-topbar-rank">
-          {timer.phase !== 'stopped' && (
-            <span className="shell-rank-idle">{isZh ? '世界 #—' : 'World #—'}</span>
-          )}
-        </div>
         <div className="shell-topbar-right">
           <button
             type="button"
@@ -1130,11 +1124,9 @@ export default function SoloView({ modePill }: SoloViewProps) {
           >
             <Bluetooth size={14} />
           </button>
-          <HeaderToggles className="shell-toggles" />
           <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
             <SettingsIcon size={14} />
           </button>
-          <MoreMenu items={moreItems} isZh={isZh} />
         </div>
       </header>
 
@@ -1208,7 +1200,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
             <div className={`timer-target-indicator${isOvershot ? ' overshot' : ''}`}>
               <Target size={12} />
               <span className="target-label">{isZh ? '目标' : 'target'} {formatTargetTime(targetMs)}</span>
-              <span className="target-sep">·</span>
               <span className="target-delta">
                 {(() => {
                   const deltaMs = targetMs - timer.displayMs;
@@ -1269,10 +1260,10 @@ export default function SoloView({ modePill }: SoloViewProps) {
           {timer.phase === 'stopped' && solves.length > 0 && (
             <div className="shell-stopped-row">
               <div className="timer-quick-actions">
-                <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} data-no-timer onClick={() => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2')}>+2</button>
-                <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} data-no-timer onClick={() => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF')}>DNF</button>
-                <button className="qa-btn danger" data-no-timer onClick={deleteLastSolve}>{isZh ? '删除' : 'Delete'}</button>
-                <button className="qa-btn" data-no-timer onClick={nextScramble}>{isZh ? '换打乱' : 'Next'}</button>
+                <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} data-no-timer aria-pressed={lastPenalty === '+2'} aria-label={isZh ? '加 2 秒罚分' : 'Plus 2 penalty'} onClick={() => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2')}>+2</button>
+                <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} data-no-timer aria-pressed={lastPenalty === 'DNF'} aria-label="DNF" onClick={() => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF')}>DNF</button>
+                <button className="qa-btn" data-no-timer aria-label={isZh ? '换打乱' : 'New scramble'} onClick={nextScramble}>{isZh ? '换打乱' : 'Next'}</button>
+                <button className="qa-btn danger" data-no-timer aria-label={isZh ? '删除最后一次成绩' : 'Delete last solve'} onClick={deleteLastSolve}>{isZh ? '删除' : 'Delete'}</button>
               </div>
               <div className="shell-rank-slot">
                 <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
@@ -1300,18 +1291,23 @@ export default function SoloView({ modePill }: SoloViewProps) {
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        {/* Desktop persistent 4-stat rail / phone peek-stat line */}
-        <div className="shell-stat-rail surface-chrome">
-          <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
-          <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
-          <span className="shell-stat"><span className="shell-stat-lbl">{isZh ? '最佳' : 'best'}</span> <span className="shell-stat-val">{stats.best}</span></span>
-          <span className="shell-stat"><span className="shell-stat-lbl">σ</span> <span className="shell-stat-val">{stats.sd}</span></span>
-        </div>
+        {/* Desktop persistent 4-stat rail / phone peek-stat line — only once
+            there's data (no bare "ao5 - ao12 -" dash row at idle). */}
+        {solves.length > 0 && (
+          <div className="shell-stat-rail surface-chrome">
+            <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">{isZh ? '最佳' : 'best'}</span> <span className="shell-stat-val">{stats.best}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">σ</span> <span className="shell-stat-val">{stats.sd}</span></span>
+          </div>
+        )}
 
         {/* Phone swipe-hint row (auto-hides after a few solves) */}
         {isMobile && solves.length < 3 && (
           <div className="shell-swipe-hint surface-chrome">
-            {isZh ? '左滑删除   右滑换打乱   上滑罚分' : 'swipe ← delete   → new   ↑ penalty'}
+            <span>{isZh ? '← 删除' : '← delete'}</span>
+            <span>{isZh ? '→ 换打乱' : '→ new'}</span>
+            <span>{isZh ? '↑ 罚分' : '↑ penalty'}</span>
           </div>
         )}
       </div>
@@ -1396,7 +1392,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
         <ReconstructModal key={reconstructSolve.id} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} />
       )}
 
-      {settingsOpen && <SettingsPanel isZh={isZh} event={event} onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsPanel isZh={isZh} event={event} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}
 
       <PbToast kind={pbToast?.kind ?? null} value={pbToast?.value ?? ''} isZh={isZh} onClose={() => setPbToast(null)} />
 

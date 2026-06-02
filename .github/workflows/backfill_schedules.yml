@@ -1,0 +1,117 @@
+# Pre-collect every WCA competition's schedule into comp_schedule_cache so the
+# /v1/wca/comp/:id/schedule endpoint is an instant cache HIT for any comp — even
+# the first viewer (no on-view 10MB WCIF write-through).
+#
+# 触发:
+#   workflow_dispatch — 手动,首次全量 bootstrap 传 limit=0(~1-2h)
+#   cron 每天 01:00 UTC — stats.yml 20:00 灌新 wca_competitions、dump_comps 23:30 跑完后,
+#     补新公示比赛 + 刷新「未来/进行中」比赛赛程(已结束的冻结不再拉)
+#
+# 流程(同 dump_comps.yml):esbuild bundle → scp → 服务器 nice/ionice 低优先级跑。
+# 服务器能访问 worldcubeassociation.org + 写本地 PG;客户端只收 trim 后几十 KB。
+name: Backfill comp schedules
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'LIMIT=N 只处理前 N 场（0=全部；首次 bootstrap 传 0）'
+        required: false
+        default: '0'
+      force:
+        description: 'FORCE=1 忽略缓存全量重拉'
+        required: false
+        default: '0'
+      dry_run:
+        description: 'DRY_RUN=1 只报数量不拉取'
+        required: false
+        default: '0'
+      concurrency:
+        description: 'CONCURRENCY 并发 WCIF 拉取数（默认 2，单场最大 ~10MB）'
+        required: false
+        default: '2'
+      delay_ms:
+        description: 'DELAY_MS 每 worker 拉取间隔毫秒（默认 300，礼让 WCA）'
+        required: false
+        default: '300'
+  schedule:
+    # UTC 01:00 — stats.yml(20:00) + dump_comps(23:30) 之后,错峰不与它们同时抢内存
+    - cron: '0 1 * * *'
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300  # 全量 bootstrap ~20k 场估 1-2h,留余地
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install deps
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        working-directory: core
+        run: pnpm --filter @cuberoot/shared build
+
+      - name: Bundle backfill script
+        working-directory: core
+        run: |
+          mkdir -p .tmp
+          pnpm --filter @cuberoot/server exec esbuild scripts/backfill-schedules.ts \
+            --bundle --platform=node --target=node22 --format=esm \
+            --outfile=../../.tmp/backfill-schedules.js \
+            --banner:js="import {createRequire} from 'module'; const require = createRequire(import.meta.url);"
+          ls -la .tmp/backfill-schedules.js
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp bundle to server
+        working-directory: core
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+            .tmp/backfill-schedules.js "$DEPLOY_USER@$DEPLOY_HOST:/tmp/backfill-schedules.js"
+
+      - name: Run backfill (foreground, stream logs)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          # cron 默认封顶 3000 场/次摊多天,绝不一次马拉松打死单机;手动 dispatch 传 0 解封
+          LIMIT: ${{ github.event.inputs.limit || '3000' }}
+          FORCE: ${{ github.event.inputs.force || '0' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+          CONCURRENCY: ${{ github.event.inputs.concurrency || '2' }}
+          DELAY_MS: ${{ github.event.inputs.delay_ms || '300' }}
+        run: |
+          # 守卫:所有旋钮必须是纯数字,杜绝 dispatch 输入注入进远端 shell
+          for v in "$LIMIT" "$FORCE" "$DRY_RUN" "$CONCURRENCY" "$DELAY_MS"; do
+            case "$v" in *[!0-9]*|"") echo "::error::non-numeric input: '$v'"; exit 1 ;; esac
+          done
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd /root/core-api && \
+              LIMIT=$LIMIT \
+              FORCE=$FORCE \
+              DRY_RUN=$DRY_RUN \
+              CONCURRENCY=$CONCURRENCY \
+              DELAY_MS=$DELAY_MS \
+              nice -n 19 ionice -c 3 node --env-file=.env /tmp/backfill-schedules.js"
+          # 脚本自身打印 wca_competitions=N already_cached=M to_process=K + DONE ok/empty/skip,即报告

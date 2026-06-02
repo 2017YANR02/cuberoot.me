@@ -759,7 +759,7 @@ impl XCrossSolver {
         k: usize,
         extra: u32,
         cap: usize,
-    ) -> (u32, Vec<usize>, Vec<Vec<u8>>) {
+    ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
         const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
         const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
 
@@ -781,7 +781,8 @@ impl XCrossSolver {
             _ => 16,
         };
 
-        // 按启发式排序,solve_subset 求每个 combo 长度,取 argmin(= get_stats_small 口径)。
+        // 按启发式排序,solve_subset 求每个 combo 长度。求最优长度 best_len,并收集**所有**
+        // 并列最优(长度 == best_len)的 combo,而非只取第一个 argmin。
         let mut scored: Vec<(u32, Vec<usize>)> = combos
             .into_iter()
             .map(|c| (c.iter().map(|&s| h0[s]).max().unwrap(), c))
@@ -789,42 +790,56 @@ impl XCrossSolver {
         scored.sort_by_key(|t| t.0);
 
         let mut best_len = 99u32;
-        let mut best_combo = scored[0].1.clone();
+        let mut evaluated: Vec<(Vec<usize>, u32)> = Vec::new();
         for (h, c) in &scored {
-            if *h >= best_len {
+            // h 是该 combo 的可采纳下界;> 当前最优则不可能并列(后续 h 只增),停。
+            // 用 `>`(非 `>=`)以便 h == best_len 的 combo 也被评估(可能恰好并列)。
+            if *h > best_len {
                 break;
             }
             let res = self.solve_subset(&st, c, *h, 0, max_d);
             if res < best_len {
                 best_len = res;
-                best_combo = c.clone();
             }
+            evaluated.push((c.clone(), res));
         }
 
-        let mut out: Vec<Vec<u8>> = Vec::new();
+        let mut out: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
         if best_len == 0 || best_len >= 99 {
-            return (best_len.min(0), best_combo, out);
+            return (best_len.min(0), out);
         }
 
-        // 枚举 best_combo:best_len .. best_len+extra,逐层收集。
-        let n = best_combo.len();
-        let mut coords = [(0usize, 0usize, 0usize, 0usize); 4];
-        for (j, &s) in best_combo.iter().enumerate() {
-            coords[j] = (
-                st[s].im as usize,
-                (st[s].ic as usize) * 18,
-                (st[s].ie as usize) * 18,
-                s,
-            );
-        }
+        // 并列最优的 combo(长度 == best_len)。逐深度 d 外层、combo 内层交错枚举,
+        // 使跨 combo 也按长度升序;每条解带它自己的 combo;cap 控总条数。
+        let tied: Vec<Vec<usize>> = evaluated
+            .into_iter()
+            .filter(|(_, l)| *l == best_len)
+            .map(|(c, _)| c)
+            .collect();
         let mut path = Vec::new();
-        for d in best_len..=(best_len + extra).min(16) {
-            self.enumerate_multi(&coords[..n], d, 18, &mut path, &mut out, cap);
-            if out.len() >= cap {
-                break;
+        'outer: for d in best_len..=(best_len + extra).min(16) {
+            for combo in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let n = combo.len();
+                let mut coords = [(0usize, 0usize, 0usize, 0usize); 4];
+                for (j, &s) in combo.iter().enumerate() {
+                    coords[j] = (
+                        st[s].im as usize,
+                        (st[s].ic as usize) * 18,
+                        (st[s].ie as usize) * 18,
+                        s,
+                    );
+                }
+                let mut combo_out: Vec<Vec<u8>> = Vec::new();
+                self.enumerate_multi(&coords[..n], d, 18, &mut path, &mut combo_out, cap - out.len());
+                for sol in combo_out {
+                    out.push((combo.clone(), sol));
+                }
             }
         }
-        (best_len, best_combo, out)
+        (best_len, out)
     }
 
     /// 小表版 6 视角 × 4 阶段,返回 24 值,顺序 [xc×6, xxc×6, xxxc×6, xxxxc×6]。
@@ -1038,13 +1053,13 @@ mod tests {
         let solver = XCrossSolver::new(false);
 
         // k=4 = 全 4 槽 = xxxxcross;cap 拉高确保 14 步全部解都枚举出来
-        let (best_len, combo, sols) = solver.enumerate_best(&alg, "", 4, 0, 100_000);
+        let (best_len, items) = solver.enumerate_best(&alg, "", 4, 0, 100_000);
         assert_eq!(best_len, 14, "xxxxcross optimal must be 14, got {}", best_len);
-        assert_eq!(combo, vec![0, 1, 2, 3], "全 4 槽 combo");
+        assert!(items.iter().all(|(c, _)| *c == vec![0, 1, 2, 3]), "全 4 槽 combo");
 
-        let strs: Vec<String> = sols
+        let strs: Vec<String> = items
             .iter()
-            .map(|p| {
+            .map(|(_, p)| {
                 p.iter()
                     .map(|&m| MOVE_NAMES[m as usize])
                     .collect::<Vec<_>>()
@@ -1053,8 +1068,8 @@ mod tests {
             .collect();
 
         // 每条解长度都必须 = 14
-        for s in &sols {
-            assert_eq!(s.len(), 14, "all enumerated sols must be length 14");
+        for (_, p) in &items {
+            assert_eq!(p.len(), 14, "all enumerated sols must be length 14");
         }
 
         let target = "L D2 B L2 U' B R2 U' F2 B D R U2 L'";

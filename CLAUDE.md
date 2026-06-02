@@ -90,9 +90,9 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 
 ## 测试
 
-- vitest 在 `@cuberoot/client`,跑 `pnpm --filter @cuberoot/client test`(全集)或 `test:watch`
-- **`tests/analyzer_worker.test.ts` 跑 ~225s**(占全集 99%,CFOP 分析器全空间枚举 53×7457×42664×21380)。只改它以外的东西用 `pnpm --filter @cuberoot/client exec vitest run <path>` 单跑;**禁** `pnpm --filter X test -- <path>`(pnpm 透传 `--` 会被 vitest 吞掉、跑全集)
-- utils 纯函数测试放 `src/utils/*.test.ts`,跟源文件并排
+- vitest 在 `@cuberoot/client-next`(CI 跑这个),跑 `pnpm --filter @cuberoot/client-next test`(全集)或 `test:watch`。测试全在 `packages/client-next/tests/`,源文件走 `@/` alias import(`vitest.config.ts` 配的)。退役的 `@cuberoot/client` 仍保留同一份测试作回滚兜底,但不进 CI
+- **`tests/analyzer_worker.test.ts` 跑 ~225s**(占全集 99%,CFOP 分析器全空间枚举 53×7457×42664×21380)。只改它以外的东西用 `pnpm --filter @cuberoot/client-next exec vitest run <path>` 单跑;**禁** `pnpm --filter X test -- <path>`(pnpm 透传 `--` 会被 vitest 吞掉、跑全集)
+- 测试统一放 `packages/client-next/tests/*.test.ts`(不与源码并排,避开 Next App Router 的 `app/` 路由目录),纯函数 / 算法回归同一套
 - worker / 算法回归走 `tests/*.test.ts` + 一个 `_*_runner.cjs`(node:worker_threads + classic-worker globals shim),典型例子见 `tests/analyzer_worker.test.ts`
 - 改 worker / kociemba / scramble 生成器 / utils 必须配一组 fixture 测试,改前先看现有 `tests/` 里同类怎么写
 - CI 在 `.github/workflows/test.yml`,PR + push main 触发 typecheck + test

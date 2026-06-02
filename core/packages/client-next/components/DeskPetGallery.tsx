@@ -22,9 +22,16 @@ const CSS = `
 .deskpet-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
   column-gap:6px;row-gap:2px;}
 .deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0;}
-.deskpet-gallery figure img{width:100%;aspect-ratio:1/1;height:auto;object-fit:contain;image-rendering:pixelated;}
+/* square media cell; clips per-group scale (sprites are authored small with motion
+   headroom) so a zoomed figure can't bleed onto its caption or neighbours. */
+.deskpet-gallery-media{width:100%;aspect-ratio:1/1;overflow:hidden;display:flex;}
+.deskpet-gallery-media img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
+/* color-scheme:normal stops the object inheriting the page color-scheme (light dark);
+   otherwise Chrome paints the embedded SVG doc an opaque white canvas on OS-light
+   machines (visible as white tiles behind the clouds in dark mode). */
+.deskpet-gallery-media object{width:100%;height:100%;pointer-events:none;color-scheme:normal;}
 .deskpet-gallery figcaption{font-size:.74rem;color:var(--muted-foreground);text-align:center;line-height:1.2;
-  margin-top:-10px;}
+  margin-top:4px;}
 .deskpet-gallery-close{position:absolute;top:10px;right:12px;background:transparent;border:0;cursor:pointer;
   color:var(--muted-foreground);padding:6px;border-radius:8px;display:flex;}
 .deskpet-gallery-close:hover{background:var(--accent-soft);color:var(--foreground);}
@@ -57,12 +64,24 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
           <section key={g.id}>
             <h3>{zh ? g.zh : g.en}</h3>
             <div className="deskpet-gallery-grid">
-              {g.anims.map((a) => (
-                <figure key={a.file}>
-                  <img src={g.base + a.file} alt={zh ? a.zh : a.en} loading="lazy" />
-                  <figcaption>{zh ? a.zh : a.en}</figcaption>
-                </figure>
-              ))}
+              {g.anims.map((a) => {
+                const zoom = g.scale
+                  ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
+                  : undefined;
+                return (
+                  <figure key={a.file}>
+                    <div className="deskpet-gallery-media">
+                      {g.scripted ? (
+                        // script-driven SVG: <object> runs its animation; <img> would stay blank
+                        <object type="image/svg+xml" data={g.base + a.file} aria-label={zh ? a.zh : a.en} style={zoom} />
+                      ) : (
+                        <img src={g.base + a.file} alt={zh ? a.zh : a.en} loading="lazy" style={zoom} />
+                      )}
+                    </div>
+                    <figcaption>{zh ? a.zh : a.en}</figcaption>
+                  </figure>
+                );
+              })}
             </div>
           </section>
         ))}

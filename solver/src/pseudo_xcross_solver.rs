@@ -962,8 +962,10 @@ impl PseudoSmallSolver {
     }
 
     /// 给定 stage(0=cross / 1=xcross / 2=xxcross / 3=xxxcross),与 pseudo_get_stage_small
-    /// 同口径挑最优 task(corner slot 集),枚举其 best_len..best_len+extra 步全部解
-    /// (真实 rot 帧 move 索引路径,cap 封顶)。返回 (best_len, combo corner 槽位, 解集)。
+    /// 同口径挑最优 task(corner slot 集),枚举**所有并列最优**(在同一 best_len 解出)的
+    /// combo,各自 best_len..best_len+extra 步全部解(真实 rot 帧 move 索引路径,cap 封顶)。
+    /// pseudo 系无 frame:每条解的 frame = 传入的 `rot`。
+    /// 返回 (best_len, 每条解 (frame=rot, combo corner 槽位, move 路径))。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -971,7 +973,7 @@ impl PseudoSmallSolver {
         stage: usize,
         extra: u32,
         cap: usize,
-    ) -> (u32, Vec<usize>, Vec<Vec<u8>>) {
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         alg_rotation(&mut a, rot);
 
@@ -985,18 +987,22 @@ impl PseudoSmallSolver {
                 i2 = mt[i2 * 18 + m as usize] as usize;
             }
             let best_len = self.solve_cross(&a);
-            let mut out: Vec<Vec<u8>> = Vec::new();
+            let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
             if best_len == 0 {
-                return (0, vec![], out);
+                return (0, Vec::new());
             }
             let mut path = Vec::new();
             for d in best_len..=(best_len + extra).min(18) {
-                self.enum_cross(i1 * 18, i2 * 18, d, 18, &mut path, &mut out, cap);
+                let mut cross_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_cross(i1 * 18, i2 * 18, d, 18, &mut path, &mut cross_out, cap - out.len());
+                for sol in cross_out {
+                    out.push((rot.to_string(), vec![], sol));
+                }
                 if out.len() >= cap {
                     break;
                 }
             }
-            return (best_len, vec![], out);
+            return (best_len, out);
         }
 
         // ---- stage 1/2/3:多槽 pair cascade ----
@@ -1004,34 +1010,52 @@ impl PseudoSmallSolver {
         let mut tasks = self.build_tasks(&st, stage);
         tasks.sort_by_key(|t| t.1);
 
-        // argmin:复用 solve_pairs_task 求每 task 长度,取最短(其后枚举该 task)。
+        // 复用 solve_pairs_task 求每 task 长度,取 best_len = min,并收集**所有**并列最优
+        // (长度 == best_len)的 task。用 `>`(非 `>=`)以便 h == best_len 的候选也被评估
+        // (可能恰好并列);h 是可采纳下界,h == best_len 至多产出 best_len,不会改写 best_len
+        // ⇒ best_len 逻辑(任一候选首次成功的深度)bit-exact 不变。
         let mut best_len = 99u32;
-        let mut best: Vec<PsPair> = Vec::new();
+        let mut evaluated: Vec<(Vec<PsPair>, u32)> = Vec::new();
         for (pairs, h) in &tasks {
-            if *h >= best_len {
-                continue;
-            }
-            let res = self.solve_pairs_task(pairs, *h, 0, best_len);
-            if res < best_len {
-                best_len = res;
-                best = pairs.clone();
-            }
-        }
-
-        let combo: Vec<usize> = best.iter().map(|p| p.slot).collect();
-        let mut out: Vec<Vec<u8>> = Vec::new();
-        if best_len == 0 || best_len >= 99 {
-            return (best_len.min(0), combo, out);
-        }
-
-        let mut path = Vec::new();
-        for d in best_len..=(best_len + extra).min(18) {
-            self.enum_pairs(&best, d, 18, &mut path, &mut out, cap);
-            if out.len() >= cap {
+            if *h > best_len {
                 break;
             }
+            // bound=99(走内部满 cap 16),不传收缩的 best_len:否则真长==best_len 的并列 task
+            // 会被 max_d=best_len-1 搜空返回 99 而漏掉。满 cap 不改 best_len(min 不变),只让并列被检出。
+            let res = self.solve_pairs_task(pairs, *h, 0, 99);
+            if res < best_len {
+                best_len = res;
+            }
+            evaluated.push((pairs.clone(), res));
         }
-        (best_len, combo, out)
+
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        if best_len == 0 || best_len >= 99 {
+            return (best_len.min(0), out);
+        }
+
+        // 并列最优的 task(长度 == best_len)。逐深度 d 外层、task 内层交错枚举,
+        // 使跨 combo 也按长度升序;每条解带 frame=rot + 自己的 combo;cap 控总条数。
+        let tied: Vec<Vec<PsPair>> = evaluated
+            .into_iter()
+            .filter(|(_, l)| *l == best_len)
+            .map(|(pairs, _)| pairs)
+            .collect();
+        let mut path = Vec::new();
+        'outer: for d in best_len..=(best_len + extra).min(18) {
+            for pairs in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let combo: Vec<usize> = pairs.iter().map(|p| p.slot).collect();
+                let mut task_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_pairs(pairs, d, 18, &mut path, &mut task_out, cap - out.len());
+                for sol in task_out {
+                    out.push((rot.to_string(), combo.clone(), sol));
+                }
+            }
+        }
+        (best_len, out)
     }
 }
 
@@ -1226,12 +1250,14 @@ mod tests {
         PseudoSmallSolver::from_tables(mt_edge2, mt_edge4, mt_corn, mt_edge, pt_pscross)
     }
 
-    /// enumerate_small 输出的 move 序列正确性:
+    /// enumerate_small 输出的 move 序列正确性(新返回形状 (best_len, Vec<(frame, combo, sol)>)):
     ///   1. best_len == golden(逐格 bit-exact,4 阶段 ×6 视角)
     ///   2. 每条解长度 == best_len(全是最优解)
-    ///   3. 把(rot 后打乱 ++ 真实 move 解)经 solve_cross / initial_states 重新编码,
-    ///      stage 0 断言 pscross prune==0;stage 1/2/3 断言 combo 内每个 corner 槽存在某
-    ///      diff 使叶子条件 cc.h==0 && ie_rel[diff]==2*diff 成立 ⇒ 该序列真把所选 combo 解出。
+    ///   3. pseudo 系无 frame ⇒ 每条解 frame == rot
+    ///   4. 把(frame 帧打乱 ++ 真实 move 解)经 solve_cross / initial_states 重新编码,
+    ///      stage 0 断言 pscross prune==0;stage 1/2/3 断言该条自己的 combo 内每个 corner 槽
+    ///      存在某 diff 使叶子条件 cc.h==0 && ie_rel[diff]==2*diff 成立 ⇒ 该序列真把所选
+    ///      combo 解出(即每条并列解都是合法 best_len 解)。
     ///   cargo test --release --lib --manifest-path D:\cube\solver-rust\Cargo.toml \
     ///     -- --ignored pseudo_enumerate_valid --nocapture
     #[test]
@@ -1254,14 +1280,14 @@ mod tests {
                 for stage in 0..4usize {
                     let want = exp[stage * 6 + ri];
                     let t = Instant::now();
-                    let (len, combo, sols) = solver.enumerate_small(&alg, rot, stage, 0, 20);
+                    let (len, results) = solver.enumerate_small(&alg, rot, stage, 0, 20);
                     eprintln!(
                         "[enum] `{}` rot={:<3} stage={} len={} sols={} in {:.1}ms",
                         scr,
                         rot,
                         stage,
                         len,
-                        sols.len(),
+                        results.len(),
                         t.elapsed().as_secs_f64() * 1e3
                     );
                     assert_eq!(
@@ -1272,24 +1298,30 @@ mod tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!sols.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(!results.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
 
-                    // rot 后打乱基底。
-                    let mut base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-                    alg_rotation(&mut base, rot);
-
-                    for sol in &sols {
+                    for (frame, combo, sol) in &results {
+                        // pseudo 无 frame:每条解 frame 必为传入 rot。
+                        assert_eq!(
+                            frame.as_str(), *rot,
+                            "frame mismatch `{}` rot={} stage={}: got '{}'",
+                            scr, rot, stage, frame
+                        );
                         assert_eq!(
                             sol.len() as u32,
                             len,
                             "sol not optimal `{}` rot={} stage={}: {:?}",
                             scr, rot, stage, sol
                         );
-                        let mut full = base.clone();
+
+                        // frame(=rot)帧打乱基底。
+                        let mut full: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+                        alg_rotation(&mut full, frame);
                         full.extend_from_slice(sol);
 
                         if stage == 0 {
-                            // pseudo_cross:两棱组 pt_pscross == 0。
+                            // pseudo_cross:两棱组 pt_pscross == 0。combo 必空。
+                            assert!(combo.is_empty(), "cross combo nonempty `{}` rot={}", scr, rot);
                             let mt = solver.mt_edge2.as_u32();
                             let mut i1 = state_space::EDGE2_A_SOLVED;
                             let mut i2 = state_space::EDGE2_B_SOLVED;
@@ -1307,9 +1339,10 @@ mod tests {
                             continue;
                         }
 
-                        // stage 1/2/3:重编码 ConjState,combo 每个 corner 槽叶子条件成立。
+                        // stage 1/2/3:重编码 ConjState,该条自己的 combo 每个 corner 槽叶子
+                        // 条件成立 ⇒ 这条并列解确是合法 best_len 解。
                         let st = solver.initial_states(&full);
-                        for &c in &combo {
+                        for &c in combo {
                             let s = &st[c];
                             let solved = (0..4u32).any(|diff| {
                                 solver.cc.h(s.im, s.ic_b) == 0

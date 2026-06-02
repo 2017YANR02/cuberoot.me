@@ -34,7 +34,6 @@ import HistoryPanel from '@/app/[lang]/battle/_components/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/battle/_components/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/battle/_components/AdvancedFeatures';
 import HomeLink from '@/components/HomeLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
@@ -680,8 +679,6 @@ function MiddleBar({
         <HomeLink className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
           <img src={logoSrc} alt="CubeRoot" height="24" />
         </HomeLink>
-        {/* 主题 / 语言切换 — 与 Solo 一致,不必离开对战即可切 */}
-        <HeaderToggles className="battle-toggles" />
         <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>
           <ClipboardList size={16} />
         </button>

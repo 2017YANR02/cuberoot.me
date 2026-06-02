@@ -1,39 +1,50 @@
 'use client';
 
 // Ported from packages/client/src/components/ThemeToggle.tsx.
+// Two-state toggle: Light ⇄ Dark. No explicit "system" option — an unvisited
+// user still follows the OS (data-theme stays unset), but the button only ever
+// flips between the two concrete themes.
 
 import { useEffect, useState } from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
-import { THEME_KEY, applyTheme, type Theme } from '@/lib/theme';
-
-const ORDER: Theme[] = ['system', 'light', 'dark'];
+import { Sun, Moon } from 'lucide-react';
+import { THEME_KEY, applyTheme, readEffective, type EffectiveTheme } from '@/lib/theme';
 
 export default function ThemeToggle({ className }: { className?: string }) {
-  // SSR / first-paint must render a stable placeholder — server has no
-  // localStorage so it'd render 'system' (Monitor), and client reads
-  // 'light' (Sun) → hydration mismatch. Defer real icon until mount.
+  // SSR / first-paint must render a stable placeholder — the real theme isn't
+  // known until we can read localStorage / matchMedia on the client.
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<Theme>('system');
+  const [theme, setTheme] = useState<EffectiveTheme>('light');
+  // Whether the user has made an explicit choice (vs. still following the OS).
+  const [explicit, setExplicit] = useState(false);
 
   useEffect(() => {
-    const t = (localStorage.getItem(THEME_KEY) as Theme) || 'system';
-    setTheme(t);
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === 'light' || stored === 'dark') {
+      setTheme(stored);
+      setExplicit(true);
+    } else {
+      setTheme(readEffective());
+    }
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (mounted) applyTheme(theme);
-  }, [mounted, theme]);
+    // Only force the DOM when the user has chosen — otherwise leave the
+    // bootstrap's OS-following state (unset data-theme) intact.
+    if (mounted && explicit) applyTheme(theme);
+  }, [mounted, explicit, theme]);
 
   const cycle = () => {
-    const next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
+    const next: EffectiveTheme = theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem(THEME_KEY, next);
     setTheme(next);
+    setExplicit(true);
+    applyTheme(next);
     window.dispatchEvent(new Event('theme-change'));
   };
 
-  const Icon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
-  const label = theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : 'System';
+  const Icon = theme === 'dark' ? Moon : Sun;
+  const label = theme === 'dark' ? 'Dark' : 'Light';
   const cls = ['theme-toggle-inline', className].filter(Boolean).join(' ');
 
   if (!mounted) {
@@ -54,7 +65,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
       type="button"
       className={cls}
       onClick={cycle}
-      title={`Theme: ${label} (click to cycle)`}
+      title={`Theme: ${label} (click to toggle)`}
       aria-label={`Theme: ${label}`}
     >
       <Icon size={14} />

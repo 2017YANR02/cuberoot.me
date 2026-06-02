@@ -77,33 +77,37 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
   return (
     <div className="stats-panel">
       <h3>{isZh ? '统计' : 'Stats'}</h3>
-      <div style={{ marginBottom: 10, padding: '8px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.04)' }}>
-        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
-          {isZh ? '主成绩' : 'Primary'} · {pLabel}
+      <div className="stats-primary">
+        <div className="stats-primary-head">
+          {isZh ? '主成绩' : 'Primary'} <span className="stats-primary-sub">{pLabel}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 18, lineHeight: 1.4 }}>
-          <span style={{ opacity: 0.7, fontSize: 13 }}>{isZh ? '当前' : 'Current'}</span>
-          <span style={{ fontWeight: 600, opacity: primaryNow === '-' ? 0.4 : 1 }}>{primaryNow}</span>
+        <div className="stats-primary-row">
+          <span className="lbl">{isZh ? '当前' : 'Current'}</span>
+          <span className={`stats-primary-val ${primaryNow === '-' ? 'muted' : ''}`}>{primaryNow}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 18, lineHeight: 1.4 }}>
-          <span style={{ opacity: 0.7, fontSize: 13 }}>{isZh ? '最佳' : 'Best'}</span>
-          <span style={{ fontWeight: 600, opacity: primaryBest === '-' ? 0.4 : 1 }}>{primaryBest}</span>
+        <div className="stats-primary-row">
+          <span className="lbl">{isZh ? '最佳' : 'Best'}</span>
+          <span className={`stats-primary-val ${primaryBest === '-' ? 'muted' : ''}`}>{primaryBest}</span>
         </div>
       </div>
       {(() => {
-        // Compact mode: if fewer than 4 rows have non-empty values, only show
-        // populated rows + Count + Best (always pin those two), with a
-        // "Show all" toggle to reveal the full table. Once the user has Ao5
-        // / Mo3 / etc., the full table renders by default.
+        // Show a small core set by default (Count/Best/Mean/σ/Ao5/Ao12/Mo3),
+        // keep the long tail (all Best-of-N, Ao50/100/1000, customs) one tap
+        // away behind the toggle — so the rail isn't a 22-row scroll wall.
+        // Live BPA/WPA rows stay visible (they only exist mid-average), and on
+        // a fresh session (<4 populated) any populated row is pinned too.
         const populatedCount = rows.reduce((n, r) => n + (isEmptyVal(r.val) ? 0 : 1), 0);
-        const compact = populatedCount < 4 && !expanded;
-        const PIN = new Set([
+        const PRIMARY = new Set([
           isZh ? '总数' : 'Count',
           isZh ? '最佳' : 'Best',
+          isZh ? '平均' : 'Mean',
+          'σ', 'Ao5', 'Ao12', 'Mo3',
         ]);
-        const visible = compact
-          ? rows.filter(r => PIN.has(r.lbl) || !isEmptyVal(r.val))
-          : rows;
+        const isLive = (lbl: string) => lbl.startsWith('BPA/WPA');
+        const visible = expanded
+          ? rows
+          : rows.filter(r => PRIMARY.has(r.lbl) || isLive(r.lbl) || (populatedCount < 4 && !isEmptyVal(r.val)));
+        const hasExtras = rows.some(r => !PRIMARY.has(r.lbl) && !isLive(r.lbl));
         return (
           <>
             <div className="stats-grid">
@@ -114,7 +118,7 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
                 </div>
               ))}
             </div>
-            {populatedCount < 4 && (
+            {hasExtras && (
               <button
                 type="button"
                 className="stats-expand-toggle"

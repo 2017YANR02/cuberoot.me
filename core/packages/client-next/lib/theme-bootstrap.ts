@@ -7,7 +7,10 @@
 export const THEME_BOOTSTRAP = `(() => {
   try {
     var t = localStorage.getItem('theme');
-    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+      document.documentElement.style.colorScheme = t;
+    }
     var link = document.getElementById('app-favicon');
     if (link) {
       var eff = t;

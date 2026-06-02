@@ -197,6 +197,7 @@
     grid-column: span 6;
     grid-row: span 2;
     min-height: 360px;         /* 给 cube (max 280) + padding + name 足够空间 */
+    flex-direction: column;    /* 大魔方卡仍纵向:cube 占满 + 名字在下 */
 }
 
 .landing-page .card.tier-hero-side {
@@ -224,12 +225,13 @@
 }
 
 /* ── 卡片基础 ── */
+/* 图标 + 文字同一行:左图标右文字(tier-hero 大魔方卡例外,仍纵向) */
 .landing-page .card {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     padding: 1.5rem 1rem;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -262,14 +264,16 @@
 }
 
 .landing-page .card-name {
-    font-size: 0.95rem;
+    font-size: 1.2rem;
     font-weight: 600;
     letter-spacing: -0.01em;
     transition: color 0.18s ease;
 }
 
-.landing-page .card.tier-hero-side .card-name { font-size: 1.1rem; }
-.landing-page .card.tier-utility .card-name { font-size: 0.9rem; }
+.landing-page .card.tier-hero .card-name { font-size: 1rem; }
+.landing-page .card.tier-hero-side .card-name { font-size: 1.25rem; }
+.landing-page .card.tier-standard .card-name { font-size: 1.1rem; }
+.landing-page .card.tier-utility .card-name { font-size: 0.95rem; }
 
 /* ── 即将上线：灰显，不可点击 ── */
 .landing-page .card.is-disabled {
@@ -333,10 +337,15 @@
 
 /* ── csTimer logo ── */
 .landing-page .cstimer-logo {
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 5px;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6px;
     display: block;
+}
+.landing-page .card.tier-utility .cstimer-logo {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 5px;
 }
 
 /* ── 响应式 ── */
@@ -364,7 +373,7 @@
         grid-column: span 1;
         grid-row: auto;
         min-height: 100px;
-        flex-direction: column;
+        flex-direction: row;
         justify-content: center;
         padding: 1.25rem 0.75rem;
     }
@@ -372,6 +381,7 @@
         grid-column: span 2;
         min-height: 260px;          /* 给 cube + name 留够空间 */
         padding: 1rem 0.75rem 1rem;
+        flex-direction: column;     /* 大魔方卡仍纵向 */
     }
 }
 

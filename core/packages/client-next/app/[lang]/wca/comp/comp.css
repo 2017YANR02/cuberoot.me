@@ -486,6 +486,11 @@
   margin-left: auto;
   margin-right: auto;
 }
+/* Schedule needs the full content width (calendar timegrid), not fit-content. */
+.comp-table-section:has(.sched-subtoggle),
+.comp-table-section:has(.sched-loading) {
+  width: 100%;
+}
 .comp-view-tabs {
   display: flex;
   gap: 4px;
@@ -1283,5 +1288,165 @@ td.is-pr {
   .comp-lineage-fan-arrows > span:last-child::after {
     content: '↓';
     font-size: 1.2rem;
+  }
+}
+
+/* ── Schedule (赛程) ─────────────────────────────────────────────── */
+
+.sched-subtoggle { display: flex; gap: 4px; margin-bottom: 12px; }
+.sched-subtoggle-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 6px;
+  background: var(--card, var(--background)); color: var(--muted-foreground);
+  font-size: 0.88rem; font-weight: 500; cursor: pointer;
+}
+.sched-subtoggle-btn:hover { color: var(--foreground); border-color: var(--border-strong); }
+.sched-subtoggle-btn.is-active {
+  color: var(--accent-foreground); background: var(--accent); border-color: var(--accent);
+}
+
+.sched-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 60px 20px; color: var(--muted-foreground); font-size: 0.95rem;
+}
+.sched-loading-spinner { width: 22px; height: 22px; }
+.sched-empty, .sched-note { color: var(--muted-foreground); }
+.sched-empty { text-align: center; padding: 48px 20px; font-size: 0.95rem; }
+.sched-note { font-size: 0.82rem; margin: 0 0 10px; }
+
+/* Mobile day switcher (calendar) */
+.sched-day-switcher {
+  display: none; gap: 6px; margin-bottom: 10px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+}
+.sched-day-pill {
+  flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border-default);
+  border-radius: 16px; background: var(--card, var(--background));
+  color: var(--muted-foreground); font-size: 0.82rem; font-weight: 500;
+  white-space: nowrap; cursor: pointer;
+}
+.sched-day-pill.is-active { background: var(--accent); color: var(--accent-foreground); border-color: var(--accent); }
+
+/* Calendar grid */
+.sched-grid-container {
+  display: grid; grid-template-columns: 60px 1fr;
+  width: 100%; margin-inline: auto;
+  border: 1px solid var(--border-default); border-radius: 8px;
+  background: var(--background); overflow-x: auto;
+}
+.sched-time-gutter {
+  position: sticky; left: 0; z-index: 3;
+  background: color-mix(in srgb, var(--muted) 50%, var(--background));
+  border-right: 1px solid var(--border-default);
+  display: flex; flex-direction: column;
+  padding-top: 34px;
+}
+.sched-hour-label {
+  height: 56px; box-sizing: border-box; display: flex; align-items: flex-start;
+  justify-content: flex-end; padding: 2px 6px 0 0;
+  color: var(--muted-foreground); font-size: 0.72rem; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+.sched-days {
+  display: grid;
+  grid-auto-flow: column; grid-auto-columns: minmax(180px, 1fr);
+}
+.sched-day-headers {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(180px, 1fr);
+  position: sticky; top: 0; z-index: 2;
+}
+.sched-day-header {
+  height: 34px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--muted) 70%, var(--background));
+  border-bottom: 1px solid var(--border-default); border-left: 1px solid var(--border-default);
+  font-weight: 600; font-size: 0.85rem; color: var(--foreground);
+}
+.sched-day-column {
+  position: relative; border-left: 1px solid var(--border-default);
+  background-image: repeating-linear-gradient(
+    to bottom, transparent, transparent 55px,
+    color-mix(in srgb, var(--border-default) 50%, transparent) 55px,
+    color-mix(in srgb, var(--border-default) 50%, transparent) 56px);
+}
+.sched-block {
+  position: absolute; box-sizing: border-box; margin: 0 1px;
+  padding: 3px 5px; border-radius: 4px; overflow: hidden;
+  display: flex; flex-direction: column; gap: 1px;
+  font-size: 0.72rem; line-height: 1.15;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+.sched-block-icon { width: 12px; height: 12px; flex: none; display: inline-block; vertical-align: -1px; margin-right: 3px; }
+.sched-block-time { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.68rem; opacity: 0.92; }
+.sched-block-name { font-weight: 500; white-space: normal; word-break: break-word; }
+.sched-block-room { font-size: 0.64rem; opacity: 0.8; }
+.sched-block--other {
+  background: color-mix(in srgb, var(--muted-foreground) 35%, var(--background));
+  color: var(--foreground);
+}
+
+/* Table view */
+.sched-table-section { width: fit-content; max-width: 100%; }
+.sched-day-title { font-size: 1.02rem; font-weight: 600; color: var(--foreground); margin: 18px 0 10px; }
+.sched-table-section .sched-day-title:first-of-type { margin-top: 0; }
+.sched-details-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.sched-details-toggle label { cursor: pointer; user-select: none; font-size: 0.9rem; color: var(--foreground); font-weight: 500; }
+.sched-details-toggle input { cursor: pointer; accent-color: var(--accent); }
+.sched-table-wrap { display: inline-block; border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 16px; }
+.sched-table { width: auto; border-collapse: collapse; font-size: 0.9rem; }
+.sched-table thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: color-mix(in srgb, var(--muted) 80%, var(--background));
+  padding: 8px 10px; text-align: left; font-weight: 600; color: var(--foreground);
+  border-bottom: 1px solid var(--border-default); white-space: nowrap; font-size: 0.85rem;
+}
+.sched-table tbody td {
+  padding: 7px 10px; white-space: nowrap;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
+}
+.sched-table tbody tr:last-child td { border-bottom: none; }
+.sched-table tbody tr:nth-child(odd) { background: color-mix(in srgb, var(--foreground) 2.5%, transparent); }
+.sched-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.sched-table--details-hidden .sched-col-format,
+.sched-table--details-hidden .sched-col-timelimit,
+.sched-table--details-hidden .sched-col-cutoff,
+.sched-table--details-hidden .sched-col-proceed { display: none; }
+.sched-td-time { font-variant-numeric: tabular-nums; }
+.sched-td-activity { font-weight: 500; color: var(--foreground); }
+.sched-td-room, .sched-col-format, .sched-col-timelimit, .sched-col-cutoff, .sched-col-proceed {
+  color: var(--muted-foreground); font-size: 0.85rem;
+}
+
+/* Mobile <=480: calendar single-day (matches useIsMobile(480)) */
+@media (max-width: 480px) {
+  .sched-day-switcher { display: flex; }
+  .sched-grid-container { grid-template-columns: 48px 1fr; }
+  .sched-day-headers { display: none; }
+  .sched-time-gutter { padding-top: 0; }
+  .sched-days { grid-template-columns: 1fr !important; grid-auto-columns: 1fr; }
+  .sched-day-column { display: none; }
+  .sched-day-column.is-active { display: block; }
+  .sched-hour-label { font-size: 0.66rem; }
+}
+
+/* Mobile <768: table -> cards */
+@media (max-width: 767px) {
+  .sched-table-section { width: 100%; }
+  .sched-table-wrap { display: block; border: none; }
+  .sched-table { width: 100%; }
+  .sched-table thead { display: none; }
+  .sched-table tbody tr {
+    display: block; border: 1px solid var(--border-default); border-radius: 6px;
+    margin-bottom: 10px; padding: 8px 10px; background: var(--card, var(--background));
+  }
+  .sched-table tbody tr:nth-child(odd) { background: var(--card, var(--background)); }
+  .sched-table tbody td {
+    display: flex; justify-content: space-between; gap: 12px; padding: 4px 0;
+    white-space: normal; border-bottom: none;
+    border-top: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
+  }
+  .sched-table tbody td:first-child { border-top: none; }
+  .sched-table tbody td::before {
+    content: attr(data-label); font-weight: 600; color: var(--muted-foreground); font-size: 0.78rem;
   }
 }
