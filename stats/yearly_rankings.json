@@ -215,6 +215,13 @@
           "3.81 2.35 0.45 0.86 5.01"
         ],
         [
+          "[Aitor Ibañez Larrea](https://www.worldcubeassociation.org/persons/2023LARR09)",
+          "**0.47**",
+          "Spain",
+          "[Gares Open 2026](https://www.worldcubeassociation.org/competitions/GaresOpen2026)",
+          "1.47 3.31 1.09 1.81 0.47"
+        ],
+        [
           "[Yuki Gao](https://www.worldcubeassociation.org/persons/2019GAOY01)",
           "**0.48**",
           "China",
@@ -255,13 +262,6 @@
           "China",
           "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
           "0.54 1.26 2.10 DNF 1.53"
-        ],
-        [
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "**0.55**",
-          "United States",
-          "[Algorithms in Archbold 2026](https://www.worldcubeassociation.org/competitions/AlgorithmsinArchbold2026)",
-          "1.23 0.55 1.16 0.98 0.97"
         ]
       ]
     },
@@ -2475,10 +2475,17 @@
       "rows": [
         [
           "[Andrew Tao](https://www.worldcubeassociation.org/persons/2022TAOA01)",
-          "**59/63 1:00:02**",
+          "**60/64 1:00:00**",
           "United States",
-          "[New York Multimate PBQ IV 2026](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQIV2026)",
-          "DNS 59/63 1:00:02 54/64 1:00:00"
+          "[New York Multimate PBQ V 2026](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQV2026)",
+          "DNS 60/64 1:00:00 59/64 59:09"
+        ],
+        [
+          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+          "**61/68 58:32**",
+          "United States",
+          "[New York Multimate PBQ V 2026](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQV2026)",
+          "46/68 59:35 60/68 57:59 61/68 58:32"
         ],
         [
           "[Krzysztof Bober](https://www.worldcubeassociation.org/persons/2013BOBE01)",
@@ -2500,13 +2507,6 @@
           "United States",
           "[Richardshhhon 2026](https://www.worldcubeassociation.org/competitions/Richardshhhon2026)",
           "59/64 59:53 55/64 59:06 55/64 59:21"
-        ],
-        [
-          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-          "**58/64 59:01**",
-          "United States",
-          "[No Sprinting NY 2026](https://www.worldcubeassociation.org/competitions/NoSprintingNY2026)",
-          "58/64 59:01"
         ],
         [
           "[James Macdiarmid](https://www.worldcubeassociation.org/persons/2015MACD03)",
