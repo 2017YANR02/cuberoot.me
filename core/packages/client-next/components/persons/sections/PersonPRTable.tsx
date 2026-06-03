@@ -141,7 +141,6 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
                   <th scope="row" className="wp-cell-event">
                     <span className="wp-event-inner">
                       <EventIcon event={eid} className="wp-event-icon" />
-                      <span className="wp-event-name">{t(eventNameZh(eid), eventNameEn(eid))}</span>
                     </span>
                   </th>
                   {showRanks && <td><RankCell r={sRank.world} /></td>}
@@ -187,26 +186,4 @@ function PodiumChips({ gold, silver, bronze }: { gold: number; silver: number; b
       {bronze > 0 && <span className="wp-podium-chip wp-podium-chip-bronze" title="🥉">🥉{bronze}</span>}
     </span>
   );
-}
-
-// inline event name 表(避免再 import 一份;ALL_EVENT_IDS 已是规范)
-function eventNameZh(eid: string): string {
-  const map: Record<string, string> = {
-    '333': '三阶', '222': '二阶', '444': '四阶', '555': '五阶', '666': '六阶', '777': '七阶',
-    '333bf': '三盲', '333fm': '最少步', '333oh': '单手',
-    'minx': '五魔', 'pyram': '金字塔', 'clock': '魔表', 'skewb': '斜转', 'sq1': 'SQ1',
-    '444bf': '四盲', '555bf': '五盲', '333mbf': '多盲',
-    '333ft': '脚拧', 'magic': '八板', 'mmagic': '十二板', '333mbo': '旧多盲',
-  };
-  return map[eid] ?? eid;
-}
-function eventNameEn(eid: string): string {
-  const map: Record<string, string> = {
-    '333': '3x3', '222': '2x2', '444': '4x4', '555': '5x5', '666': '6x6', '777': '7x7',
-    '333bf': '3BLD', '333fm': 'FMC', '333oh': 'OH',
-    'minx': 'Mega', 'pyram': 'Pyra', 'clock': 'Clock', 'skewb': 'Skewb', 'sq1': 'SQ1',
-    '444bf': '4BLD', '555bf': '5BLD', '333mbf': 'MBLD',
-    '333ft': 'Feet', 'magic': 'Magic', 'mmagic': 'Master Magic', '333mbo': 'MBO',
-  };
-  return map[eid] ?? eid;
 }

@@ -45,7 +45,9 @@ interface Row {
   ranks: number[];
 }
 
-interface ComboBest { rank: number; events: string[]; }
+// combos = all subsets tied at `rank` (fewest events first, capped server-side); comboCount = full tied count.
+// `events` is the legacy single-combo shape — kept so the client renders before the server/data upgrade lands.
+interface ComboBest { rank: number; combos?: string[][]; events?: string[]; comboCount?: number; }
 interface PlayerBest {
   wcaId: string; name: string; countryId: string; iso2: string | null;
   best: { single?: ComboBest; average?: ComboBest };
@@ -57,6 +59,7 @@ interface TimelinePoint { year: number; distinct: number; }
 function SumOfRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const personHref = (id: string) => `/${isZh ? 'zh' : 'en'}/wca/persons/${id}`;
   useDocumentTitle('名次和', 'Sum of Ranks');
   const router = useRouter();
   const pathname = usePathname();
@@ -143,8 +146,8 @@ function SumOfRanksPageInner() {
     let done = false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 15000);
-    // v=2: bust 缓存里 average 半边还没灌时的旧 null 响应(浏览器 + nginx 都 24h 缓存)
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(picked.id)}&v=2`), { signal: ctrl.signal })
+    // v=3: bust 24h 缓存(浏览器 + nginx)里旧的单组合 {events} 响应,换成多组合 {combos,comboCount}
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(picked.id)}&v=3`), { signal: ctrl.signal })
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (!done) { setPb(d); setPbError(d == null); } })
       .catch(() => { if (!done) { setPb(null); setPbError(true); } })
@@ -318,7 +321,7 @@ function SumOfRanksPageInner() {
           <div className="sor-pb">
             <div className="sor-pb-head">
               {pb.iso2 && <Flag iso2={pb.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-              <a href={`https://www.worldcubeassociation.org/persons/${pb.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(pb.name, isZh)}</a>
+              <Link href={personHref(pb.wcaId)}>{displayCuberName(pb.name, isZh)}</Link>
             </div>
             {(() => {
               // 跟随顶部类型选择器: 选平均就看平均最优组合, 没有则提示(不再同时堆单次+平均).
@@ -335,16 +338,33 @@ function SumOfRanksPageInner() {
                   </div>
                 );
               }
+              const typeLabel = type === 'single' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Average');
+              const combos = b.combos ?? (b.events ? [b.events] : []);
+              const comboCount = b.comboCount ?? combos.length;
               return (
-                <div className="sor-pb-row">
-                  <span className="sor-pb-type">{type === 'single' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Average')}</span>
-                  <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
-                  <span className="sor-pb-events">{b.events.map(ev => <EventIcon key={ev} event={ev} />)}</span>
-                  <button type="button" className="sor-pb-apply" onClick={() => applyCombo(b.events, type)}>{isZh ? '应用到榜单' : 'Apply'}</button>
-                </div>
+                <>
+                  <div className="sor-pb-rank-line">
+                    <span className="sor-pb-type">{typeLabel}</span>
+                    <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
+                    {comboCount > 1 && (
+                      <span className="sor-pb-count">{isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`}</span>
+                    )}
+                  </div>
+                  <ul className="sor-pb-combos">
+                    {combos.map((evs, i) => (
+                      <li key={i} className="sor-pb-combo">
+                        <span className="sor-pb-events">{evs.map(ev => <EventIcon key={ev} event={ev} />)}</span>
+                        <button type="button" className="sor-pb-apply" onClick={() => applyCombo(evs, type)}>{isZh ? '应用到榜单' : 'Apply'}</button>
+                      </li>
+                    ))}
+                  </ul>
+                  {comboCount > combos.length && (
+                    <div className="sor-pb-note">{isZh ? `仅列出项目数最少的 ${combos.length} 种` : `Showing the ${combos.length} with fewest events`}</div>
+                  )}
+                </>
               );
             })()}
-            {pb.best[type] && <div className="sor-pb-note">{isZh ? '在所有项目组合里,这个组合让 TA 的名次和排名最靠前(世界口径)' : 'The combination that puts them highest on the world sum-of-ranks board'}</div>}
+            {pb.best[type] && <div className="sor-pb-note">{isZh ? '上面每个组合都能让 TA 的名次和排到该名次(世界口径)' : 'Each combination ties them at that sum-of-ranks position (world)'}</div>}
           </div>
         )}
       </div>
@@ -390,7 +410,7 @@ function SumOfRanksPageInner() {
                       <li key={r.wcaId}>
                         <span className="sor-census-rank">{r.rank}</span>
                         {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                        <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
+                        <Link href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         <span className="sor-census-share">{share < 0.1 ? share.toFixed(3) : share.toFixed(1)}%</span>
                       </li>
                     );
@@ -418,7 +438,6 @@ function SumOfRanksPageInner() {
                 <tr>
                   <th className="wse-rank-col">#</th>
                   <th>{isZh ? '选手' : 'Person'}</th>
-                  <th>{isZh ? '国家' : 'Country'}</th>
                   {RANK_EVENTS.map(ev => (
                     <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
                       <EventIcon event={ev} />
@@ -432,11 +451,10 @@ function SumOfRanksPageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                     <td>
-                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
-                    </td>
-                    <td>
-                      {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <span>{r.countryId}</span>
+                      <span className="wse-person-cell">
+                        {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                        <Link href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                      </span>
                     </td>
                     {RANK_EVENTS.map((ev, j) => {
                       const rk = r.ranks[j] ?? 0;

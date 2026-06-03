@@ -121,7 +121,6 @@ export default function EventStatsTab({ results, comps, isZh }: Props) {
             <tr key={r.eventId}>
               <th scope="row" className="wp-cell-event">
                 <EventIcon event={r.eventId} className="wp-event-icon" />
-                <span className="wp-event-name">{r.eventId}</span>
               </th>
               <td className="wp-cell-mono">{r.first || '—'}</td>
               <td className="wp-cell-mono">{r.last || '—'}</td>
