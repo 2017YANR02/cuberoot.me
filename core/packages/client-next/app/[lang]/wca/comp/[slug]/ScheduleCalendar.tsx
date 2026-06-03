@@ -8,26 +8,24 @@ import { useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import luxonPlugin from '@fullcalendar/luxon3';
-import { DateTime } from 'luxon';
 import { eventDisplayName } from '@/lib/wca-events';
 import {
   localizeActivityName, eventOfActivity, readableTextColor, dayHeaderLabel,
+  addDaysToKey,
   type ScheduleData,
 } from '@/lib/comp-schedule';
 
 // WCA's ACTIVITY_OTHER_GREY — non-event activities (check-in, lunch, ceremony).
 const OTHER_GREY = '#666666';
 
-const pad = (h: number) => `${String(h).padStart(2, '0')}:00:00`;
-
 export default function ScheduleCalendar({
-  data, tz, isZh, slotMinHour, slotMaxHour, dayKeys, mobileDayKey,
+  data, tz, isZh, slotMinTime, slotMaxTime, dayKeys, mobileDayKey,
 }: {
   data: ScheduleData;
   tz: string;
   isZh: boolean;
-  slotMinHour: number;
-  slotMaxHour: number;
+  slotMinTime: string;
+  slotMaxTime: string;
   dayKeys: string[];
   mobileDayKey?: string;
 }) {
@@ -49,14 +47,13 @@ export default function ScheduleCalendar({
     [data, isZh],
   );
 
+  // visibleRange as plain "YYYY-MM-DD" strings so FullCalendar reads them as
+  // timezone-agnostic markers — passing JS Dates makes it take the UTC fields,
+  // which shifts the column (and its header) a day off for east-of-UTC venues.
   const range = useMemo(() => {
     const keys = mobileDayKey ? [mobileDayKey] : dayKeys;
-    const start = DateTime.fromISO(keys[0], { zone: tz }).startOf('day');
-    const end = DateTime.fromISO(keys[keys.length - 1], { zone: tz })
-      .startOf('day')
-      .plus({ days: 1 });
-    return { start: start.toJSDate(), end: end.toJSDate() };
-  }, [dayKeys, mobileDayKey, tz]);
+    return { start: keys[0], end: addDaysToKey(keys[keys.length - 1], 1) };
+  }, [dayKeys, mobileDayKey]);
 
   return (
     <div className="sched-fc">
@@ -67,18 +64,27 @@ export default function ScheduleCalendar({
         allDaySlot={false}
         headerToolbar={false}
         nowIndicator={false}
-        slotMinTime={pad(slotMinHour)}
-        slotMaxTime={pad(Math.max(slotMaxHour, slotMinHour + 1))}
+        slotMinTime={slotMinTime}
+        slotMaxTime={slotMaxTime}
         slotDuration="00:15:00"
         slotLabelInterval="01:00:00"
         slotEventOverlap={false}
+        expandRows={false}
+        // Blocks shorter than this render time + title on one inline line rather
+        // than stacking two lines into a box too short to show them — so a 15-min
+        // round (~31px) stays readable instead of clipping its title.
+        eventShortHeight={34}
         height="auto"
         slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
         eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
         timeZone={tz}
         events={events}
         dayHeaderContent={(arg) => {
-          const key = DateTime.fromJSDate(arg.date, { zone: 'utc' }).toFormat('yyyy-MM-dd');
+          // arg.date is the real instant of this column's local midnight, so
+          // resolve the calendar day back in the venue timezone (not UTC).
+          const key = new Intl.DateTimeFormat('en-CA', {
+            timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+          }).format(arg.date);
           return dayHeaderLabel(key, tz, isZh);
         }}
         eventDidMount={(info) => {
