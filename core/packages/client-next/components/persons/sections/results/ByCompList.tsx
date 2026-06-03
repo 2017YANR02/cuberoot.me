@@ -159,10 +159,7 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
                       >
                         <td className="wp-cell-event">
-                          {showEvent && <>
-                            <EventIcon event={r.event_id} className="wp-event-icon-sm" />
-                            <span className="wp-event-name">{r.event_id}</span>
-                          </>}
+                          {showEvent && <EventIcon event={r.event_id} className="wp-event-icon-sm" />}
                         </td>
                         <td>
                           <Link

@@ -273,7 +273,7 @@ function AllResultsPageInner() {
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(r.name, isZh)}</a>
+                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
                     </td>
                     <td className="wse-value-col">
                       <span className="record-num-cell">
@@ -327,9 +327,9 @@ function AllResultsPageInner() {
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">
+                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
-                      </a>
+                      </Link>
                     </td>
                     <td className="wse-value-col">
                       {r.value != null ? formatWcaResult(r.value, event, type) : '—'}

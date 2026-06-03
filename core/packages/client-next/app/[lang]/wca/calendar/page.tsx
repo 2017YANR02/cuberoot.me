@@ -529,15 +529,13 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
                   <CubingIcon icon={`event-${r.e}`} />
                   <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
                   <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
-                  <a
-                    href={`https://www.worldcubeassociation.org/persons/${r.p}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}
                     className="record-person"
                   >
                     <SharedFlag iso2={personFlagIso2(r.p)} />
                     <span>{displayCuberName(r.n, isZh)}</span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -548,12 +546,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
             <div className="modal-cubers-title">{t('upcoming.topCubers', { count: comp.top_cubers.length })}</div>
             <div className="modal-cuber-list">
               {comp.top_cubers.map((c) => (
-                <a
+                <Link
                   key={c.id}
-                  href={`https://www.worldcubeassociation.org/persons/${c.id}`}
+                  href={`/${isZh ? 'zh' : 'en'}/wca/persons/${c.id}`}
                   className="cuber-tag"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   <SharedFlag iso2={personFlagIso2(c.id)} />
                   <span>{displayCuberName(c.name, isZh)}</span>
@@ -574,7 +570,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
                       })}
                     </span>
                   )}
-                </a>
+                </Link>
               ))}
             </div>
           </div>

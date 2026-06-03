@@ -270,9 +270,9 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
             <td className="wse-value-col">{formatWcaResult(r.v, r.e, r.t === 's' ? 'single' : 'average')}</td>
             <td>
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-              <a href={`https://www.worldcubeassociation.org/persons/${r.p}`} target="_blank" rel="noopener noreferrer">
+              <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}>
                 {displayCuberName(r.pn, isZh)}
-              </a>
+              </Link>
             </td>
             <td>
               <Link {...compLinkProps(r.c)}>
