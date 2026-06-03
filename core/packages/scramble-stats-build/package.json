@@ -7,6 +7,7 @@
     "build": "tsx src/build.ts",
     "build:wca-cross": "tsx src/build_wca_cross.ts",
     "build:comp-steps": "tsx src/build_comp_steps.ts",
+    "build:daily-god": "tsx src/build_daily_god.ts",
     "scrape:algdb": "tsx bin/scrape_speedcubedb.ts"
   },
   "dependencies": {

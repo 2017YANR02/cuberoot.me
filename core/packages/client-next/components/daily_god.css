@@ -1,0 +1,205 @@
+/* DailyGod — 落地页 tagline 下方「今日神打」栏:本批最简单打乱,变体×类型×底色切片。
+   双主题,走 :root token;底色 swatch/色点用魔方固定色(inline)。 */
+
+.daily-god {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.daily-god-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.daily-god-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+}
+
+.daily-god-date {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground);
+  margin-right: auto;
+}
+
+.daily-god-select {
+  appearance: none;
+  padding: 0.3rem 1.6rem 0.3rem 0.6rem;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--card)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E")
+    no-repeat right 0.45rem center / 0.85em;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.daily-god-select:hover { border-color: var(--border-strong); }
+.daily-god-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+/* 底色 swatch */
+.daily-god-colors {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+.dg-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--foreground) 30%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.dg-swatch:hover { transform: scale(1.1); }
+.dg-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
+}
+
+/* hero 卡 */
+.dg-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+.dg-hero-cube {
+  flex-shrink: 0;
+  line-height: 0;
+}
+.dg-hero-cube img { display: block; }
+.dg-hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+.dg-hero-steps {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.dg-hero-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 30%, transparent);
+  align-self: center;
+}
+.dg-hero-steps b {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.dg-hero-unit { font-size: 0.85rem; color: var(--muted-foreground); }
+.dg-hero-scramble {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  word-break: break-word;
+}
+.dg-hero-src {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  text-decoration: none;
+  color: var(--foreground);
+  margin-top: 0.1rem;
+}
+.dg-hero-src:hover .dg-src-comp { color: var(--accent); }
+.dg-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+.dg-src-comp { font-size: 0.85rem; font-weight: 600; }
+.dg-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
+
+.dg-empty {
+  padding: 1.2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--faint-foreground);
+  border: 1px dashed var(--border-default);
+  border-radius: 14px;
+}
+
+/* Top-5 列表 */
+.dg-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dg-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0.3rem;
+  border-top: 1px solid var(--border-default);
+}
+.dg-row-rank {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+  width: 1.1rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.dg-row-steps {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  width: 1.6rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.dg-row-comp {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+  text-decoration: none;
+  color: var(--foreground);
+  overflow: hidden;
+}
+.dg-row-comp:hover .dg-row-name { color: var(--accent); }
+.dg-row-name {
+  font-size: 0.84rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+.dg-row-sub {
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .dg-hero { flex-direction: column; align-items: stretch; text-align: left; }
+  .dg-hero-cube { align-self: center; }
+  .dg-row-sub { display: none; }
+}
