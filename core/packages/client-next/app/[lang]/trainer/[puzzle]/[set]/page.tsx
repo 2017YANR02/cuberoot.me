@@ -6,15 +6,12 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Flag } from 'lucide-react';
-import { ALG_PUZZLES, getAlgSetMeta, loadAlg, type AlgPuzzle } from '@cuberoot/shared';
+import { getAlgSetMeta, loadAlg } from '@cuberoot/shared';
 import { useTrainerStore } from '@/lib/trainer-store';
 import { CaseTreePicker } from '../../_components/trainer-components';
+import { resolveAlgPuzzle } from '../../_events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../trainer.css';
-
-function isPuzzle(s: string): s is AlgPuzzle {
-  return (ALG_PUZZLES as readonly string[]).includes(s);
-}
 
 export default function TrainerSelectPage() {
   const params = useParams<{ puzzle: string; set: string }>();
@@ -23,10 +20,11 @@ export default function TrainerSelectPage() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  const lang = isZh ? 'zh' : 'en';
   useDocumentTitle('公式训练', 'Algorithm Trainer');
 
-  const validPuzzle = isPuzzle(puzzleParam);
-  const meta = validPuzzle ? getAlgSetMeta(puzzleParam, setSlug) : undefined;
+  const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
+  const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
@@ -36,14 +34,14 @@ export default function TrainerSelectPage() {
   const storeSet = useTrainerStore(s => s.set);
 
   useEffect(() => {
-    if (!validPuzzle || !meta) return;
-    if (storePuzzle === puzzleParam && storeSet === setSlug && cases.length > 0) return;
-    loadAlg(puzzleParam, setSlug)
-      .then(d => loadSession(puzzleParam as AlgPuzzle, setSlug, d.cases))
+    if (!puzzle || !meta) return;
+    if (storePuzzle === puzzle && storeSet === setSlug && cases.length > 0) return;
+    loadAlg(puzzle, setSlug)
+      .then(d => loadSession(puzzle, setSlug, d.cases))
       .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzleParam, setSlug, validPuzzle, meta, storePuzzle, storeSet, cases.length, loadSession]);
+  }, [puzzle, setSlug, meta, storePuzzle, storeSet, cases.length, loadSession]);
 
-  if (!validPuzzle || !meta) {
+  if (!puzzle || !meta) {
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
@@ -59,15 +57,15 @@ export default function TrainerSelectPage() {
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
-        <Link href="/trainer" className="trainer-back">
+        <Link href={`/${lang}/trainer/${puzzleParam}`} className="trainer-back">
           <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzleParam} · {isZh ? meta.zh : meta.en}
+          {puzzle} · {isZh ? meta.zh : meta.en}
         </span>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
-          onClick={() => router.push(`/trainer/${puzzleParam}/${setSlug}/run`)}
+          onClick={() => router.push(`/${lang}/trainer/${puzzleParam}/${setSlug}/run`)}
           disabled={!canStart}
         >
           <Flag size={14} /> {isZh ? '开始训练' : 'Start Training'} ({selectedSet.size})
@@ -78,7 +76,7 @@ export default function TrainerSelectPage() {
         <div className="trainer-landing-empty">{isZh ? '加载中…' : 'Loading…'}</div>
       ) : (
         <CaseTreePicker
-          puzzle={puzzleParam as AlgPuzzle}
+          puzzle={puzzle}
           set={setSlug}
           cases={cases}
           selected={selectedSet}
