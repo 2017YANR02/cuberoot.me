@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
-  Settings, ChevronRight, Shuffle,
+  Settings, ChevronRight, Shuffle, Link2, Check,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './cuber/world';
@@ -112,6 +112,13 @@ function normalizeTo1x1(action: TwistAction): TwistAction | null {
   return null;
 }
 
+/** Grow / shrink a textarea to fit its content (rows={1} + this = auto-height). */
+function autosize(el: HTMLTextAreaElement | null): void {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 interface Props {
   world: World | null;
   alg: string;
@@ -156,6 +163,7 @@ export default function PlayerControls({
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     CubeGroup.frames = Math.max(2, Math.round(30 / speed));
@@ -169,6 +177,52 @@ export default function PlayerControls({
 
   useEffect(() => { setAlgDraft(alg); }, [alg]);
   useEffect(() => { setSetupDraft(setup ?? ''); }, [setup]);
+
+  // Keep both textareas sized to their content. The onInput handlers only fire
+  // on typing, so a value arriving via defaultValue (shared URL on first mount),
+  // an AlgsPanel pick, or a tool action would otherwise stay at the rows={1}
+  // height with content clipped by overflow:hidden — most visible on narrow
+  // screens where a long scramble/solution wraps to many lines. Sync the DOM
+  // value too, but never while the box is focused (would jump the caret).
+  useEffect(() => {
+    const el = setupElRef.current;
+    if (!el) return;
+    if (document.activeElement !== el && el.value !== setupDraft) el.value = setupDraft;
+    autosize(el);
+  }, [setupDraft]);
+  useEffect(() => {
+    const el = algElRef.current;
+    if (!el) return;
+    if (document.activeElement !== el && el.value !== algDraft) el.value = algDraft;
+    autosize(el);
+  }, [algDraft]);
+
+  // The needed height depends on wrap width, which shifts after the mono font
+  // loads and on viewport resize / rotation. The draft effects above measure
+  // too early (fallback font, pre-layout) and would leave the box clipped.
+  // Re-fit after fonts settle and whenever a textarea's *width* changes — the
+  // width guard skips our own height writes so this can't feedback-loop.
+  useEffect(() => {
+    const els = [setupElRef.current, algElRef.current].filter(Boolean) as HTMLTextAreaElement[];
+    if (!els.length) return;
+    const fit = () => els.forEach(autosize);
+    fit();
+    const fonts = (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts;
+    fonts?.ready?.then(fit).catch(() => { /* no FontFaceSet */ });
+    if (typeof ResizeObserver === 'undefined') return;
+    const lastW = new WeakMap<Element, number>();
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) {
+        const el = e.target as HTMLTextAreaElement;
+        const w = el.clientWidth;
+        if (lastW.get(el) === w) continue;
+        lastW.set(el, w);
+        autosize(el);
+      }
+    });
+    els.forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  }, []);
 
   const actions = useMemo<TwistAction[]>(() => {
     if (isSq1) return [];
@@ -297,6 +351,19 @@ export default function PlayerControls({
     if (algElRef.current) algElRef.current.value = next;
   };
 
+  // Copy the current page URL (puzzle + scramble + solution params) so the exact
+  // sim state can be shared. Works for any puzzle — the URL always carries state.
+  const copyTimerRef = useRef<number | null>(null);
+  useEffect(() => () => { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); }, []);
+  const handleCopyLink = useCallback(() => {
+    if (typeof window === 'undefined' || !navigator.clipboard?.writeText) return;
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setLinkCopied(true);
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1500);
+    }).catch(() => { /* clipboard denied */ });
+  }, []);
+
   const appendUserMove = useCallback((action: TwistAction | string) => {
     let moveText = typeof action === 'string' ? action : action.value;
     if (typeof action !== 'string' && !isSq1 && !isTwistyMode && world && world.cube.order === 1) {
@@ -314,8 +381,7 @@ export default function PlayerControls({
     const next = current.trimEnd() + sep + moveText + ' ';
     algEl.value = next;
     algEl.selectionStart = algEl.selectionEnd = next.length;
-    algEl.style.height = 'auto';
-    algEl.style.height = algEl.scrollHeight + 'px';
+    autosize(algEl);
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
@@ -370,15 +436,13 @@ export default function PlayerControls({
       if (settings.animateScramble && twistyScramble) {
         if (setupElRef.current) {
           setupElRef.current.value = '';
-          setupElRef.current.style.height = 'auto';
-          setupElRef.current.style.height = setupElRef.current.scrollHeight + 'px';
+          autosize(setupElRef.current);
         }
         setSetupDraft('');
         onSetupChange('');
         if (algElRef.current) {
           algElRef.current.value = twistyScramble;
-          algElRef.current.style.height = 'auto';
-          algElRef.current.style.height = algElRef.current.scrollHeight + 'px';
+          autosize(algElRef.current);
         }
         skipAutoResetRef.current = true;
         setAlgDraft(twistyScramble);
@@ -394,8 +458,7 @@ export default function PlayerControls({
       }
       if (setupElRef.current) {
         setupElRef.current.value = twistyScramble;
-        setupElRef.current.style.height = 'auto';
-        setupElRef.current.style.height = setupElRef.current.scrollHeight + 'px';
+        autosize(setupElRef.current);
       }
       setSetupDraft(twistyScramble);
       onSetupChange(twistyScramble);
@@ -440,8 +503,7 @@ export default function PlayerControls({
     }
     if (setupElRef.current) {
       setupElRef.current.value = scramble;
-      setupElRef.current.style.height = 'auto';
-      setupElRef.current.style.height = setupElRef.current.scrollHeight + 'px';
+      autosize(setupElRef.current);
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
@@ -459,8 +521,7 @@ export default function PlayerControls({
           placeholder={t('打乱', 'Scramble')}
           onInput={(e) => {
             const el = e.currentTarget;
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
+            autosize(el);
             setSetupDraft(el.value);
             onSetupChange(el.value);
           }}
@@ -486,8 +547,7 @@ export default function PlayerControls({
           placeholder={t('解法', 'Solution')}
           onInput={(e) => {
             const el = e.currentTarget;
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
+            autosize(el);
             setAlgDraft(el.value);
             onAlgChange(el.value);
             handleCaretSync(el.value, el.selectionStart ?? 0);
@@ -556,6 +616,14 @@ export default function PlayerControls({
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
+        <button
+          onClick={handleCopyLink}
+          className={linkCopied ? 'sim-link-copied' : undefined}
+          title={t('复制本页链接(含打乱 / 解法)', 'Copy this page link (with scramble / solution)')}
+        >
+          {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
+          {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
+        </button>
       </div>
 
       <PuzzleSettings

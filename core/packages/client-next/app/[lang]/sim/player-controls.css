@@ -154,6 +154,12 @@
 .sim-player-tools button:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
+.sim-player-tools button.sim-link-copied,
+.sim-player-tools button.sim-link-copied:hover {
+  border-color: var(--signal-success);
+  color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 12%, transparent);
+}
 
 .sim-puzzle {
   border: 1px solid var(--border-default);
