@@ -488,6 +488,13 @@ try {
     pnpm --filter @cuberoot/scramble-stats-build build:comp-steps
     if($LASTEXITCODE -ne 0){ throw 'build:comp-steps 失败' }
   }
+  if($nNew -gt 0 -or $variantChanged){
+    # 今日神打(daily_god.json): 最近一批新增打乱里各 (变体×类型×底色) 最简单的, 给首页 DailyGod 栏。
+    # build_daily_god 优先用本次 new_split_mbf, 无新增则回退 incremental/daily_god_batch.csv 快照 ->
+    # "只补某变体(如 f2leo/pseudo_f2leo)" 这种 nNew=0 的 run 也能把新变体纳入最近批次。须在步骤4之后。
+    pnpm --filter @cuberoot/scramble-stats-build build:daily-god
+    if($LASTEXITCODE -ne 0){ throw 'build:daily-god 失败' }
+  }
 } finally { Pop-Location }
 
 # ---- 6. 发布 ----

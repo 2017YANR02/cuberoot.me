@@ -481,3 +481,33 @@ export function dayHeaderLabel(dateKey: string, _timeZone: string, isZh: boolean
     timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric',
   }).format(dt);
 }
+
+// Full localized date for the WCA-style table heading "Schedule for <date>".
+// Mirrors luxon DATE_HUGE: en -> "Wednesday, June 3, 2026", zh -> "2026年6月3日星期三".
+export function fullDateLabel(dateKey: string, isZh: boolean): string {
+  const dt = new Date(`${dateKey}T00:00:00Z`);
+  return new Intl.DateTimeFormat(isZh ? 'zh-CN' : 'en-US', {
+    timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  }).format(dt);
+}
+
+// Locale-aware clock label like the WCA table (luxon TIME_SIMPLE):
+// en -> "6:30 PM", zh -> "18:30".
+export function simpleTimeLabel(utcIso: string, timeZone: string, isZh: boolean): string {
+  return new Intl.DateTimeFormat(isZh ? 'zh-CN' : 'en-US', {
+    timeZone, hour: 'numeric', minute: '2-digit',
+  }).format(new Date(utcIso));
+}
+
+// Short format code (Ao5 / Bo2 / Mo3) — untranslated, exactly as the WCA table shows.
+export function formatShort(fmt: string): string {
+  return FORMAT_NAME[fmt]?.enShort ?? fmt;
+}
+
+// Format cell for the table: cutoff rounds show "<cutoff format> / <round format>"
+// (e.g. "Bo2 / Ao5"), matching the WCA schedule table.
+export function formatCell(round: RoundInfo): string {
+  const main = formatShort(round.format);
+  if (round.cutoff) return `${formatShort(String(round.cutoff.numberOfAttempts))} / ${main}`;
+  return main;
+}

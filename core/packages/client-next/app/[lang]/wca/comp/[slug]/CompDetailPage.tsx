@@ -925,7 +925,7 @@ export default function CompDetailPage() {
         </div>
 
         {isSchedule ? (
-          <ScheduleView slug={slug} isZh={isZh} />
+          <ScheduleView slug={slug} isZh={isZh} compName={compNameTitle} />
         ) : !isPsych ? (
           <>
             <div className="comp-selectors">
