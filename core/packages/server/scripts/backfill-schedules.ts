@@ -28,6 +28,9 @@ import { trimWcif, type RawWcif } from '@cuberoot/shared/comp-schedule';
 const LIMIT = Number(process.env.LIMIT) || 0;
 const CONCURRENCY = Number(process.env.CONCURRENCY) || 2;
 const DELAY_MS = Number(process.env.DELAY_MS) || 300;
+// A championship WCIF is ~10MB; on a fast link (CI runner) it lands in seconds,
+// but allow generous headroom so a momentarily slow fetch still completes.
+const FETCH_TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS) || 90000;
 const FORCE = process.env.FORCE === '1';
 const DRY_RUN = process.env.DRY_RUN === '1';
 
@@ -73,7 +76,7 @@ async function upsert(id: string, data: unknown, endDate: string | null): Promis
 async function processOne(c: Candidate): Promise<'ok' | 'empty' | 'skip'> {
   let res: Response;
   try {
-    res = await fetch(WCIF_URL(c.id), { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30000) });
+    res = await fetch(WCIF_URL(c.id), { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   } catch {
     return 'skip'; // network / timeout → retry next run
   }
@@ -106,7 +109,7 @@ async function main(): Promise<void> {
   const candidates = await getCandidates();
   console.log(
     `[backfill] wca_competitions=${total[0]?.c} already_cached=${cached[0]?.c} ` +
-    `to_process=${candidates.length} (FORCE=${FORCE} LIMIT=${LIMIT || '∞'} CONCURRENCY=${CONCURRENCY} DELAY_MS=${DELAY_MS})`,
+    `to_process=${candidates.length} (FORCE=${FORCE} LIMIT=${LIMIT || '∞'} CONCURRENCY=${CONCURRENCY} DELAY_MS=${DELAY_MS} TIMEOUT=${FETCH_TIMEOUT_MS})`,
   );
   if (DRY_RUN) {
     console.log('[backfill] DRY_RUN — nothing fetched');
