@@ -116,7 +116,13 @@ const animAttr = (id, attr, dur, keyTimes, values, mode = 'linear') =>
 // sticker is nudged a hair out along its normal so it sorts just over its own
 // cubie face. Rigid motions keep the cheap flat shell (rigidElems) — they never
 // open a gap, so the extra volume would only cost bytes.
-const GAP = 0.03; // half the black plastic gap between adjacent cubies
+// GAP halved from the old 0.03 to 0.016 so the dark box faces of two adjacent
+// cubies nearly meet: the same-face grout shrinks to ~0.032 (a thin dark line) and
+// no longer lets the salmon background bleed through at rest (the seam-tone
+// must-fix). The cubie boxes still strictly DON'T overlap (HSZ < 0.5), so the
+// proven occlusion is untouched. The turn-opened gap (2*GAP) stays a visible dark
+// recess; its real depth/form comes from the slab underside + dark core, not this.
+const GAP = 0.016; // half the black plastic gap between adjacent cubies
 const STK = 0.04; // sticker inset from the cubie-face edge (variant-B border)
 const HSZ = 0.5 - GAP; // cubie half-size (a cell half-extent is 0.5)
 // Interior plastic, shaded per face orientation so an exposed wedge reads as a
@@ -136,16 +142,27 @@ function boxFace(c, h, n, inset = 0) {
   const s = h - inset;
   return [add(add(fc, u, -s), v, -s), add(add(fc, u, s), v, -s), add(add(fc, u, s), v, s), add(add(fc, u, -s), v, s)];
 }
-// 26 cubies; each = 6 black box faces + an inset sticker on each exterior face
+// 26 cubies; each = 6 black box faces + an inset sticker on each exterior face.
+// PLUS a 27th centre cubie kept as black-only "core" plastic. Normally hidden,
+// it is exposed only through a turning layer's gap — so a gap shows a solid dark
+// core (recessed plastic with form) instead of seeing straight through to the
+// background. Its faces are exposure-culled like any other, so it costs nothing
+// at rest and only appears where a turn opens it up. Exterior faces are tagged
+// `ext` so the exposure cull never drops them (they're skin).
 function buildCubies(colors = WCA) {
   const cubies = [];
   for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (let k = -1; k <= 1; k++) {
-    if (!i && !j && !k) continue; // hidden centre cubie
+    const isCore = !i && !j && !k;
     const c = [i * STEP, j * STEP, k * STEP], faces = [];
     for (const d of FACE_DIRS) {
       const ext = (d.n[0] && i === d.n[0]) || (d.n[1] && j === d.n[1]) || (d.n[2] && k === d.n[2]);
-      faces.push({ quad: boxFace(c, HSZ, d.n), normal: d.n.slice(), color: hexShade(PLASTIC, PLASTIC_SHADE[d.f]), black: true });
-      if (ext) faces.push({
+      // Exterior cubie face = HSZ dark box face (its own dark plastic surface) +
+      // an inset colour sticker 0.006 proud. The same-face grout between two
+      // adjacent cubies is the thin GAP (now narrow; see GAP) so the dark box
+      // faces nearly meet and the seam reads as dark recessed plastic, not the
+      // salmon background. Interior walls also kept at HSZ for the turn-gap form.
+      faces.push({ quad: boxFace(c, HSZ, d.n), normal: d.n.slice(), color: hexShade(PLASTIC, PLASTIC_SHADE[d.f]), black: true, ext: ext && !isCore });
+      if (ext && !isCore) faces.push({
         quad: boxFace(c, HSZ, d.n, STK).map((p) => add(p, d.n, 0.006)),
         normal: d.n.slice(), color: hexShade(colors[d.f], SHADE[d.f]),
       });
@@ -156,9 +173,20 @@ function buildCubies(colors = WCA) {
 }
 const rotCubie = (cb, M) => ({
   center: mv(M, cb.center),
-  faces: cb.faces.map((fa) => ({ quad: fa.quad.map((p) => mv(M, p)), normal: mv(M, fa.normal), color: fa.color, black: fa.black })),
+  faces: cb.faces.map((fa) => ({ quad: fa.quad.map((p) => mv(M, p)), normal: mv(M, fa.normal), color: fa.color, black: fa.black, ext: fa.ext })),
 });
-const cubieElems = (cubies) => cubies.flatMap((cb) => cb.faces);
+// Flatten cubies → faces, tagging each face with its parent cubie centre and the
+// 3D centre of the face quad. Exposure culling (drop buried interior black faces)
+// needs both: a face is buried iff another cubie sits flush against it.
+const cubieElems = (cubies) => cubies.flatMap((cb) =>
+  cb.faces.map((fa) => {
+    const fc = [
+      (fa.quad[0][0] + fa.quad[1][0] + fa.quad[2][0] + fa.quad[3][0]) / 4,
+      (fa.quad[0][1] + fa.quad[1][1] + fa.quad[2][1] + fa.quad[3][1]) / 4,
+      (fa.quad[0][2] + fa.quad[1][2] + fa.quad[2][2] + fa.quad[3][2]) / 4,
+    ];
+    return { ...fa, cubieCenter: cb.center, faceCenter: fc };
+  }));
 
 // solved rigid scene: 6 face backings + 54 sticker insets (colour faces only).
 function rigidElems(colors = WCA) {
@@ -240,7 +268,7 @@ function renderTrack(frames, view, { dur = '9s', paint = 'blackFirst' } = {}) {
 }
 
 // pleasant 3/4 resting pose (front + a side + top all visible)
-const POSE_3Q = rotY(38 * DEG);
+export const POSE_3Q = rotY(38 * DEG);
 
 // ── Frame builders ──
 // rigid pose track: whole cube posed by poseAt(t), solved scene shared each frame
@@ -257,10 +285,10 @@ function poseFrames(poseAt, frames, { offAt } = {}) {
 // layer-turn track. moveScript = [{ axis,'x'|'y'|'z', layer:-1|0|1, dir:±1,
 // frames:n, hold:n }]. Whole cubies rotate and settle permanently, so multi-move
 // sequences (solves) stay correct, and a turning layer is always a solid slab.
-function turnFrames(moveScript, pose, { restFrames = 0 } = {}) {
+export function turnFrames(moveScript, pose, { restFrames = 0 } = {}) {
   let cur = buildCubies();
   const frames = [];
-  const push = (cubies) => frames.push({ elems: cubieElems(cubies), pose, off: null });
+  const push = (cubies) => frames.push({ elems: cubieElems(cubies), pose, off: null, centers: cubies.map((cb) => cb.center) });
   for (let r = 0; r < restFrames; r++) push(cur);
   for (const m of moveScript) {
     const { axis, layer, dir, frames: mf = 6, hold = 0 } = m;
@@ -346,23 +374,329 @@ export function snapFrames({ dur = '6s', angles = [0, 35, 90, 145, 200, 270, 325
   return renderTrack(frames, makeView(vo), { dur });
 }
 
-// single / oscillating layer turn in an occlusion-friendly view
+// single / oscillating layer turn in an occlusion-friendly view.
+// Routed through the FLIPBOOK renderer: a layer turn opens a non-convex gap, so a
+// single fixed paint order is wrong mid-rotation; the flipbook draws every frame
+// as its own correctly depth-sorted set (correct by construction).
+// Frame track for a layerTurn config (exported so the verifier rebuilds the
+// EXACT same frames the renderer consumes — no drift between build and verify).
+export function layerTurnFrames({ move = { axis: 'y', layer: 1, dir: 1 }, frames = 9, mode = 'oscillate', pose = POSE_3Q, rest = 4 } = {}) {
+  const script = mode === 'oscillate'
+    ? [{ ...move, frames, hold: 3 }, { ...move, dir: -move.dir, frames, hold: 3 }]
+    : [{ ...move, frames, hold: 3 }];
+  return turnFrames(script, pose, { restFrames: rest });
+}
 export function layerTurn({
   dur = '5s', move = { axis: 'y', layer: 1, dir: 1 }, frames = 9,
   mode = 'oscillate', pose = POSE_3Q, rest = 4, view: vo = {},
 } = {}) {
-  const script = mode === 'oscillate'
-    ? [{ ...move, frames, hold: 3 }, { ...move, dir: -move.dir, frames, hold: 3 }]
-    : [{ ...move, frames, hold: 3 }];
-  return renderTrack(turnFrames(script, pose, { restFrames: rest }), makeView(vo), { dur, paint: 'depth' });
+  return renderFlip(layerTurnFrames({ move, frames, mode, pose, rest }), makeView(vo), { dur });
 }
 
-// scramble then solve (a move sequence then its inverse) — loops solved
-export function solve({ dur = '11s', moves, framesPerMove = 5, pose = POSE_3Q, view: vo = {} } = {}) {
+// scramble then solve (a move sequence then its inverse) — loops solved.
+// FLIPBOOK renderer (see layerTurn): glitch-free occlusion across the whole turn.
+export function solve({ dur = '11s', moves, framesPerMove = 4, pose = POSE_3Q, view: vo = {} } = {}) {
   const seq = moves || DEFAULT_SCRAMBLE;
   const script = seq.map((m) => ({ ...m, frames: framesPerMove, hold: 1 }))
     .concat(invert(seq).map((m) => ({ ...m, frames: framesPerMove, hold: 1 })));
-  return renderTrack(turnFrames(script, pose, { restFrames: 4 }), makeView(vo), { dur, paint: 'depth' });
+  return renderFlip(turnFrames(script, pose, { restFrames: 4 }), makeView(vo), { dur });
+}
+
+// =====================================================================
+// FLIPBOOK renderer (correct-by-construction occlusion).
+//
+// renderTrack keeps one stable element identity across the whole track and is
+// forced to pick ONE document order; SMIL cannot reorder, so a non-convex
+// mid-turn slab gets the wrong paint order on some frames. The flipbook trades
+// that away: every frame is rendered as its OWN complete, independently
+// depth-sorted set of <polygon>s, wrapped in a <g> that is only opacity:1 during
+// that frame's time-slice (discrete SMIL). Because each frame is sorted on its
+// own true depths, occlusion is right BY CONSTRUCTION — there is no shared order
+// to be wrong. Cost: stepped motion (mitigated by more frames) + bytes
+// (mitigated by dropping culled polys + gzip).
+// =====================================================================
+
+// ── exact per-pixel painter ordering helpers ──
+// A centroid depth-sort is WRONG when two overlapping quads' depth order flips
+// across their overlap (the slab juts out mid-turn): the farther-at-the-overlap
+// quad must be drawn first regardless of which centroid is nearer. So we build a
+// true partial order from per-pixel depth at the overlap and topologically sort.
+function _bary(p, a, b, c) {
+  const v0x = b[0] - a[0], v0y = b[1] - a[1];
+  const v1x = c[0] - a[0], v1y = c[1] - a[1];
+  const v2x = p[0] - a[0], v2y = p[1] - a[1];
+  const den = v0x * v1y - v1x * v0y;
+  if (Math.abs(den) < 1e-12) return null;
+  const v = (v2x * v1y - v1x * v2y) / den;
+  const w = (v0x * v2y - v2x * v0y) / den;
+  const u = 1 - v - w;
+  if (u < -1e-9 || v < -1e-9 || w < -1e-9) return null;
+  return [u, v, w];
+}
+// depth of screen point p on a quad (corners q, per-corner depths d); null if off
+function _quadDepthAt(p, q, d) {
+  let b = _bary(p, q[0], q[1], q[2]);
+  if (b) return b[0] * d[0] + b[1] * d[1] + b[2] * d[2];
+  b = _bary(p, q[0], q[2], q[3]);
+  if (b) return b[0] * d[0] + b[1] * d[2] + b[2] * d[3];
+  return null;
+}
+function _bbox(q) {
+  let a = Infinity, b = Infinity, c = -Infinity, e = -Infinity;
+  for (const [x, y] of q) { if (x < a) a = x; if (x > c) c = x; if (y < b) b = y; if (y > e) e = y; }
+  return [a, b, c, e];
+}
+// Sutherland–Hodgman: clip convex polygon `subject` against convex `clip`.
+// Returns the (convex) intersection polygon (possibly empty). Both CCW or CW is
+// fine as long as `clip` is convex (our quads are). Uses signed area sign of clip
+// to orient the inside half-plane test.
+function _clipPoly(subject, clip) {
+  // determine clip winding (sign of its signed area)
+  let area2 = 0;
+  for (let i = 0; i < clip.length; i++) {
+    const a = clip[i], b = clip[(i + 1) % clip.length];
+    area2 += a[0] * b[1] - b[0] * a[1];
+  }
+  const wind = area2 >= 0 ? 1 : -1; // +1 CCW
+  let out = subject;
+  for (let c = 0; c < clip.length; c++) {
+    if (out.length === 0) break;
+    const a = clip[c], b = clip[(c + 1) % clip.length];
+    const ex = b[0] - a[0], ey = b[1] - a[1];
+    const inside = (p) => wind * (ex * (p[1] - a[1]) - ey * (p[0] - a[0])) >= -1e-12;
+    const input = out; out = [];
+    for (let i = 0; i < input.length; i++) {
+      const cur = input[i], prv = input[(i + input.length - 1) % input.length];
+      const ci = inside(cur), pi = inside(prv);
+      if (ci) {
+        if (!pi) out.push(_lineIntersect(prv, cur, a, b));
+        out.push(cur);
+      } else if (pi) {
+        out.push(_lineIntersect(prv, cur, a, b));
+      }
+    }
+  }
+  return out;
+}
+function _lineIntersect(p1, p2, p3, p4) {
+  const x1 = p1[0], y1 = p1[1], x2 = p2[0], y2 = p2[1];
+  const x3 = p3[0], y3 = p3[1], x4 = p4[0], y4 = p4[1];
+  const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(den) < 1e-15) return p2.slice();
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+  return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+}
+function _polyArea(poly) {
+  let a = 0;
+  for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; a += p[0] * q[1] - q[0] * p[1]; }
+  return Math.abs(a) / 2;
+}
+function _polyCentroid(poly) {
+  let x = 0, y = 0;
+  for (const p of poly) { x += p[0]; y += p[1]; }
+  return [x / poly.length, y / poly.length];
+}
+// Decide draw order for a pair (A,B) by EXACT polygon intersection. Compute the
+// convex overlap region; if it has real area, compare each quad's true depth at
+// the overlap centroid (and a few interior points to be safe). Returns -1 if A
+// must be drawn BEFORE B (A is behind), +1 if A AFTER B (A nearer), 0 if no real
+// area overlap (separated or mere edge touch → no constraint). For a cube of
+// separated boxes the depth order is constant over the whole overlap, so the
+// centroid sample is exact; we still sample the overlap's vertices to be robust.
+function _pairOrder(A, B) {
+  const ba = _bbox(A.quad), bb = _bbox(B.quad);
+  if (ba[2] <= bb[0] + 1e-9 || bb[2] <= ba[0] + 1e-9 || ba[3] <= bb[1] + 1e-9 || bb[3] <= ba[1] + 1e-9) return 0;
+  const inter = _clipPoly(A.quad, B.quad);
+  if (inter.length < 3) return 0;
+  if (_polyArea(inter) < 1e-7) return 0; // sliver / edge touch → no real overlap
+  // sample points: centroid + each intersection vertex pulled slightly inward.
+  const ctr = _polyCentroid(inter);
+  const pts = [ctr];
+  for (const v of inter) pts.push([(v[0] + ctr[0]) / 2, (v[1] + ctr[1]) / 2]);
+  let nearA = 0, nearB = 0, maxSep = 0, maxSign = 0;
+  for (const p of pts) {
+    const da = _quadDepthAt(p, A.quad, A.dz);
+    const db = _quadDepthAt(p, B.quad, B.dz);
+    if (da === null || db === null) continue;
+    const diff = da - db;
+    if (diff > 1e-9) nearA++; else if (diff < -1e-9) nearB++;
+    if (Math.abs(diff) > maxSep) { maxSep = Math.abs(diff); maxSign = Math.sign(diff); }
+  }
+  if (nearA === 0 && nearB === 0) return 0;
+  const sign = (nearA === nearB) ? maxSign : (nearA > nearB ? 1 : -1);
+  return sign > 0 ? 1 : -1; // +1: A nearer → A after B. -1: A farther → A before B.
+}
+
+// project + cull + EXACT-order ONE frame into a list of {quad,color,depth,...}
+// `front-facing` = normal points at camera; back-facing polys are dropped.
+export function frameItems(frame, view) {
+  // Exposure cull: a black box face is buried when another cubie sits flush
+  // against it (neighbour centre is one STEP out along the face normal). Those
+  // interior faces never show a pixel yet tangle in depth (black-on-black
+  // z-fighting). We drop them. faceCentre + normal*STEP lands on the neighbour
+  // centre iff buried; a small tolerance covers the mid-turn easing. Stickers and
+  // exterior black faces are always kept. We need the per-frame cubie centres.
+  const centers = frame.centers || null;
+  const STEP_ = STEP; // 1.0
+  const buried = (el) => {
+    if (!el.black || el.ext || !centers || !el.faceCenter) return false; // exterior skin plates are never buried
+    const n = el.normal, fc = el.faceCenter;
+    // neighbour centre = faceCentre + n*(STEP - HSZ) = faceCentre + n*(0.5+GAP)
+    const d = STEP_ - HSZ; // 0.5 + GAP
+    const px = fc[0] + n[0] * d, py = fc[1] + n[1] * d, pz = fc[2] + n[2] * d;
+    for (const c of centers) {
+      const dx = c[0] - px, dy = c[1] - py, dz2 = c[2] - pz;
+      if (dx * dx + dy * dy + dz2 * dz2 < 0.06 * 0.06) return true; // a cubie is flush → buried
+    }
+    return false;
+  };
+  const items = [];
+  for (const el of frame.elems) {
+    if (!view.normalVisible(el.normal, frame.pose)) continue; // back-facing → skip
+    if (buried(el)) continue; // interior black face flush against a neighbour → skip
+    const quad = el.quad.map((p) => view.project(p, frame.pose, frame.off));
+    const dz = el.quad.map((p) => view.depth(p, frame.pose));
+    const depth = (dz[0] + dz[1] + dz[2] + dz[3]) / 4;
+    items.push({ quad, dz, depth, color: el.color, black: !!el.black, normal: el.normal });
+  }
+  const n = items.length;
+  // First pass: cheap, stable centroid order (far→near). This is the order we
+  // KEEP wherever two quads don't overlap (it's free), and a good starting point.
+  for (let i = 0; i < n; i++) items[i]._k = i;
+  items.sort((a, b) => (a.depth - b.depth) || ((a.black === b.black) ? 0 : (a.black ? -1 : 1)) || (a._k - b._k));
+
+  // Build the must-precede graph from true overlap depth. edge u→v means u must
+  // be painted before v (u is behind v at their overlap).
+  const adj = Array.from({ length: n }, () => []);
+  const indeg = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const ord = _pairOrder(items[i], items[j]);
+      if (ord === 0) continue;
+      // ord<0: i before j ; ord>0: j before i
+      const [u, v] = ord < 0 ? [i, j] : [j, i];
+      adj[u].push(v); indeg[v]++;
+    }
+  }
+  // Kahn topological sort; among ready nodes prefer the smaller centroid depth
+  // (keeps motion/order stable & close to the natural far→near look).
+  const ready = [];
+  const pushReady = (x) => {
+    // insertion by depth then original index (stable)
+    let lo = 0, hi = ready.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      const c = ready[mid];
+      if (items[c].depth < items[x].depth || (items[c].depth === items[x].depth && c < x)) lo = mid + 1; else hi = mid;
+    }
+    ready.splice(lo, 0, x);
+  };
+  for (let i = 0; i < n; i++) if (indeg[i] === 0) pushReady(i);
+  const order = [];
+  while (ready.length) {
+    const x = ready.shift();
+    order.push(x);
+    for (const v of adj[x]) if (--indeg[v] === 0) pushReady(v);
+  }
+  // If a cycle ever appears (shouldn't for separated solids), fall back to the
+  // centroid order for the leftovers so we never drop polygons.
+  if (order.length < n) {
+    const seen = new Set(order);
+    for (let i = 0; i < n; i++) if (!seen.has(i)) order.push(i);
+  }
+  return order.map((i) => items[i]);
+}
+
+// Render a frame track as a flipbook. Returns { polys, anims, stats, frameItems }.
+// `frameItems` (array of per-frame ordered item lists) is handed to the verifier
+// so it checks the EXACT polygons + EXACT order the SVG paints.
+export function renderFlip(frames, view, { dur = '9s' } = {}) {
+  const F = frames.length;
+  const stats = { minX: 1e9, maxX: -1e9, minY: 1e9, maxY: -1e9, nan: false, minVis: 99, maxVis: 0 };
+
+  // 1) Compute each frame's ordered, projected, depth-sorted polygon list.
+  const perItems = [];
+  for (let k = 0; k < F; k++) {
+    const items = frameItems(frames[k], view);
+    perItems.push(items);
+    let visCount = 0;
+    for (const it of items) {
+      if (!it.black) visCount++;
+      for (const [sx, sy] of it.quad) {
+        if (Number.isNaN(sx) || Number.isNaN(sy)) stats.nan = true;
+        stats.minX = Math.min(stats.minX, sx); stats.maxX = Math.max(stats.maxX, sx);
+        stats.minY = Math.min(stats.minY, sy); stats.maxY = Math.max(stats.maxY, sy);
+      }
+    }
+    stats.minVis = Math.min(stats.minVis, visCount);
+    stats.maxVis = Math.max(stats.maxVis, visCount);
+  }
+
+  // 2) Serialize each frame to its body string, then COALESCE byte-identical
+  //    consecutive frames (rest/settled holds are identical) into one shared <g>.
+  //    A group covers a contiguous run of frame indices; its body is emitted once
+  //    and shown across all those slots. This is a pure size win — the painted
+  //    polygons+order per frame are unchanged. (We coalesce only *consecutive*
+  //    equal frames so each group maps to one contiguous time-slice, keeping the
+  //    discrete-opacity schedule and the verifier's frame→group map trivial.)
+  const bodyOf = (items) => items.map((it) => `      <polygon points="${ptsStr(it.quad)}" fill="${it.color}"/>`).join('\n');
+  const bodies = perItems.map(bodyOf);
+  const groups = []; // { body, start, end }  end exclusive
+  for (let k = 0; k < F; k++) {
+    const last = groups[groups.length - 1];
+    if (last && bodies[k] === last.body) { last.end = k + 1; }
+    else groups.push({ body: bodies[k], start: k, end: k + 1 });
+  }
+
+  // 3) Discrete time grid over [0,1]; slot k spans [k/F,(k+1)/F). A group active
+  //    over [start,end) turns on at start/F and off at end/F. We emit a COMPACT
+  //    opacity track: only the on/off transition keyTimes for that group, not one
+  //    keyTime per frame. (group 0, which includes the rest at t=0, also closes
+  //    the loop: it's on at t=0 and back on at t=1.)
+  const frameToGroup = new Array(F);
+  groups.forEach((g, gi) => { for (let k = g.start; k < g.end; k++) frameToGroup[k] = gi; });
+  const t = (slot) => (slot / F).toFixed(5);
+  const polyParts = [];
+  const animParts = [];
+  groups.forEach((g, gi) => {
+    const gid = `f${gi}`;
+    const initOn = g.start === 0; // group covering t=0 starts visible
+    polyParts.push(`    <g id="${gid}" opacity="${initOn ? '1' : '0'}">\n${g.body}\n    </g>`);
+    // compact discrete schedule: keyTimes at 0, start, end (and 1). values are the
+    // group's opacity in each interval. Always include 0 and 1 endpoints.
+    const kts = [], vals = [];
+    const on = (slot) => slot >= g.start && slot < g.end;
+    // walk transition points: 0, start, end, F (=1). Dedup.
+    const cuts = Array.from(new Set([0, g.start, g.end, F])).sort((a, b) => a - b);
+    for (let ci = 0; ci < cuts.length; ci++) {
+      const slot = cuts[ci];
+      kts.push(t(slot));
+      // value that takes effect AT this keyTime and holds until the next: opacity
+      // during [slot, nextcut) = on(slot) ? 1 : 0. The very last keyTime (t=1)
+      // just needs to match the loop start (slot 0) so the wrap is seamless.
+      const valSlot = slot >= F ? 0 : slot;
+      vals.push(on(valSlot) ? '1' : '0');
+    }
+    animParts.push(
+      `      <animate xlink:href="#${gid}" attributeName="opacity" dur="${dur}" repeatCount="indefinite" calcMode="discrete" keyTimes="${kts.join(';')}" values="${vals.join(';')}"/>`);
+  });
+
+  return { polys: polyParts.join('\n'), anims: animParts.join('\n'), stats, frameItems: perItems, groups, frameToGroup };
+}
+
+// Build the solve frame-track (scramble → inverse) — same script as solve(), but
+// returns the raw frames so renderFlip / the verifier can consume them.
+export function solveFrames({ moves, framesPerMove = 4, pose = POSE_3Q, restFrames = 4 } = {}) {
+  const seq = moves || DEFAULT_SCRAMBLE;
+  const script = seq.map((m) => ({ ...m, frames: framesPerMove, hold: 1 }))
+    .concat(invert(seq).map((m) => ({ ...m, frames: framesPerMove, hold: 1 })));
+  return turnFrames(script, pose, { restFrames });
+}
+
+// Flipbook solve builder — drop-in replacement for solve() that is glitch-free.
+export function solveFlip({ dur = '9s', moves, framesPerMove = 4, restFrames = 4, pose = POSE_3Q, view: vo = {} } = {}) {
+  const frames = solveFrames({ moves, framesPerMove, pose, restFrames });
+  return renderFlip(frames, makeView(vo), { dur });
 }
 
 // colour flicker: scramble the stickers then resolve to solved (reveal) or v.v.
