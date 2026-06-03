@@ -16,6 +16,13 @@
   font-style: normal;
   font-display: swap;
 }
+/* Scramble notation font — same self-hosted face as /scramble/gen sheet rows,
+   so the scramble strip reads identically across the two tools. */
+@font-face {
+  font-family: 'LiberationMono';
+  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+  font-display: block;
+}
 
 :root {
   /* hairline divider used across the shell */
@@ -36,7 +43,10 @@
 
 /* ── Topbar ─────────────────────────────────────────────── */
 .shell-topbar {
-  display: flex;
+  /* 三列:[空白 1fr] [左组居中 auto] [右组贴右 1fr]。两侧 1fr 对称 -> 中列(单人/
+     对战 + 项目)真正水平居中,不受右侧 BT/设置 图标宽度影响,也不会重叠。 */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 10px;
   padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
@@ -44,17 +54,28 @@
   border-bottom: 1px solid var(--shell-divider);
 }
 .shell-topbar-left {
+  grid-column: 2;
+  justify-self: center;
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
 .shell-topbar-right {
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;   /* push toggles to the far right (no center rank slot) */
 }
+/* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
+.shell-topbar-brand {
+  grid-column: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+}
+.shell-topbar-brand img { height: 24px; width: auto; display: block; }
 
 /* Mode pill — green-active segmented control (project convention). */
 .shell-mode-pill {
@@ -236,7 +257,7 @@
   margin: 0;
   border: 0;
   background: transparent;
-  font-family: var(--font-mono);
+  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   font-size: clamp(13px, 2.2vw, 18px);
   line-height: 1.5;
   color: var(--muted-foreground);
@@ -264,18 +285,16 @@
 }
 .scramble-refresh:hover { background: var(--shell-hover); color: var(--foreground); }
 
-/* Corner net (bottom-right) */
-.timing-surface-corner {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  z-index: 2;
-}
-.shell-corner-net { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+/* Cube net — centered directly under the digits (Battle-style). Lives inside
+   the absolute .timing-surface-sub, so showing/hiding it never shifts the
+   digits. */
+.timing-surface-cube { display: flex; justify-content: center; }
+/* column-reverse → preview sits right under the digits, the eye toggle below it
+   (small + subtle); when hidden only the eye button remains, still centered. */
+/* --cube-h drives both the preview box AND its always-present reserve box, so
+   the eye toggle (below) never shifts whether the cube is shown or hidden. */
+.shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: min(30vw, 26dvh, 260px); }
+.shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }
 .shell-corner-net .cube-preview-toggle {
   display: inline-flex;
   align-items: center;
@@ -298,7 +317,9 @@
   background: transparent;
   cursor: pointer;
 }
-.shell-corner-net-img svg { display: block; max-width: 26vw; height: auto; max-height: 16dvh; }
+/* NoPreview text fallback (svg). The real cube is a fixed-px twisty-player div
+   sized via the `size` prop in SoloView; cap height for short viewports. */
+.shell-corner-net-img svg { display: block; max-width: 80vw; height: auto; max-height: 34dvh; }
 
 /* Idle hint / inspection hint */
 .timing-surface .timer-hint {
@@ -390,7 +411,8 @@
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-family: var(--font-mono);
+  /* 与 /wca/records 徽章一致的 Inter sans(含 loading 占位 "WR …");不用 mono. */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.82em;
   font-weight: 600;
   line-height: 1.4;
@@ -399,6 +421,11 @@
 }
 .rank-pill--top { color: var(--signal-success); }
 .rank-pill--loading { color: var(--muted-foreground); opacity: 0.6; cursor: default; }
+/* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
+   around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
+.rank-chip-inner { display: inline-flex; align-items: center; gap: 3px; }
+.rank-chip-sep { color: var(--faint-foreground); font-weight: 400; }
+.rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
 /* Login nudge next to WR (shown only when signed-out + no country set) —
    outline style so it reads as an action, not another rank. */
 .rank-login-btn {
@@ -570,6 +597,9 @@
 .surface-chrome { transition: opacity 120ms ease; }
 /* keep the digits + their immediate sub-content visible while running */
 .timer-shell.is-solving .timing-surface .surface-chrome { opacity: 0; }
+/* the cube net lives in flow under the digits — collapse it (not just fade) so
+   the running readout's sub-content sits right beneath the digits. */
+.timer-shell.is-solving .timing-surface-cube { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
@@ -984,7 +1014,6 @@
   .shell-stat-rail { bottom: 8px; }
   .shell-stat-val { font-size: 13px; }
   .timing-surface-scramble { top: 8px; }
-  .timing-surface-corner { bottom: 10px; right: 10px; }
   /* Pin the refresh to the strip's top-right so it never wraps onto its own
      orphaned line; bump it to a 40px touch target. */
   .timing-surface-scramble .scramble-strip { position: relative; padding-right: 40px; }

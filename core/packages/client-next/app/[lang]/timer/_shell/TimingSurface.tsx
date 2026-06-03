@@ -36,7 +36,8 @@ export interface TimingSurfaceProps {
   surfaceRef: RefObject<HTMLDivElement | null>;
   /** Scramble slot (top). Host renders the mono click-to-copy strip. */
   scrambleSlot?: ReactNode;
-  /** Corner net slot (top-right). Host renders CubePreview / toggle. */
+  /** Cube-net slot. Rendered centered directly under the digits (Battle-style)
+   *  as the first item of the sub area. Host renders CubePreview / toggle. */
   cornerSlot?: ReactNode;
   /** Hint / sub-content below the digits (idle hint, stage splits, quick
    *  actions, rank badge, target indicator…). */
@@ -71,7 +72,6 @@ export default function TimingSurface({
       onMouseUp={onMouseUp}
     >
       {scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
-      {cornerSlot && <div className="timing-surface-corner surface-chrome">{cornerSlot}</div>}
       <div className="timing-surface-core">
         <div
           ref={digitsRef}
@@ -81,8 +81,15 @@ export default function TimingSurface({
           {digits}
         </div>
         {/* Sub-content floats below the digits (absolutely positioned in CSS)
-            so the giant readout never shifts as the phase swaps what's here. */}
-        <div className="timing-surface-sub">{children}</div>
+            so the giant readout never shifts as the phase swaps what's here.
+            Order matches Battle (timer → rank/actions → cube): phase children
+            (rank / quick actions / target) sit right under the digits so they
+            stay visible, and the cube net trails at the bottom. When idle the
+            children are empty, so the cube still sits directly under the digits. */}
+        <div className="timing-surface-sub">
+          {children}
+          {cornerSlot && <div className="timing-surface-cube surface-chrome">{cornerSlot}</div>}
+        </div>
       </div>
     </div>
   );

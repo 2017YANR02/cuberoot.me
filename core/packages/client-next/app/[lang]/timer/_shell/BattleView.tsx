@@ -33,8 +33,7 @@ import type { PenaltyType } from '@/app/[lang]/battle/_components/engine/constan
 import HistoryPanel from '@/app/[lang]/battle/_components/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/battle/_components/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/battle/_components/AdvancedFeatures';
-import HomeLink from '@/components/HomeLink';
-import { useEffectiveTheme } from '@/lib/theme';
+import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -651,9 +650,6 @@ function MiddleBar({
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const { players, winner, layout } = store;
-  const effTheme = useEffectiveTheme();
-  // NOTE: logo 跟随主题 — dark 用白字版,light 用深字版(否则白 logo 在浅底看不见)
-  const logoSrc = effTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
 
   // NOTE: versus 布局 → P1(上方/旋转180°) 在左，P0(下方) 在右
   //       side   布局 → P0(左) 在左，P1(右) 在右 — 与计时区域位置一致
@@ -676,9 +672,7 @@ function MiddleBar({
       <div className="middle-actions">
         {modePill}
         <span className="key-hint">Enter ↑ · ↓ Space</span>
-        <HomeLink className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
-          <img src={logoSrc} alt="CubeRoot" height="24" />
-        </HomeLink>
+        <CubeRootLogo className="middle-logo" />
         <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>
           <ClipboardList size={16} />
         </button>

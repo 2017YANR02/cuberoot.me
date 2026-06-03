@@ -24,6 +24,9 @@ interface CubePreviewProps {
   event: EventId;
   scramble: string;
   size?: number;
+  /** Fix the rendered height across all puzzles (px number or CSS length
+   *  string for fluid sizing) — see CubingPreview. */
+  height?: number | string;
   className?: string;
   /** Reserved for future palette overrides; scramble-display uses its own
    * (WCA-correct) palette and ignores this. */
@@ -90,16 +93,19 @@ function baseNxnEvent(event: EventId): EventId | null {
 }
 
 export default function CubePreview(props: CubePreviewProps): JSX.Element {
-  const { event, scramble, visualization } = props;
+  const { event, scramble, visualization, height } = props;
   const size = props.size;
   const className = props.className;
   const v = visualization;
+  // NoPreview is a w8×h5 svg; derive its base unit from a numeric target height
+  // (a CSS-string height can't drive the svg, so fall back to the size prop).
+  const noPreviewSize = typeof height === 'number' ? Math.round(height / 5) : size;
 
   // NxN family (incl. BLD / OH / FM / MR / NI variants) → scramble-display
   // with the matching base nxn id.
   const baseNxn = baseNxnEvent(event);
   if (baseNxn !== null) {
-    return <CubingPreview event={baseNxn} scramble={scramble} size={size} className={className} visualization={v} />;
+    return <CubingPreview event={baseNxn} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
   }
 
   switch (event) {
@@ -108,17 +114,17 @@ export default function CubePreview(props: CubePreviewProps): JSX.Element {
     case 'sq1':
     case 'mega':
     case 'clock':
-      return <CubingPreview event={event} scramble={scramble} size={size} className={className} visualization={v} />;
+      return <CubingPreview event={event} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
     case 'r3':
     case 'r4':
     case 'r5':
-      return <CubingPreview event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} visualization={v} />;
+      return <CubingPreview event="333" scramble={firstNxnScramble(scramble)} size={size} height={height} className={className} visualization={v} />;
     case 'custom':
-      return <CubingPreview event="333" scramble={scramble} size={size} className={className} visualization={v} />;
+      return <CubingPreview event="333" scramble={scramble} size={size} height={height} className={className} visualization={v} />;
     case 'magic':
     case 'mmagic':
-      return <NoPreview size={size} className={className} />;
+      return <NoPreview size={noPreviewSize} className={className} />;
     default:
-      return <NoPreview size={size} className={className} />;
+      return <NoPreview size={noPreviewSize} className={className} />;
   }
 }

@@ -13,12 +13,11 @@
  * All animations use cubing.js TwistyPlayer; all invariants use the local
  * cube_state.ts module (verified against R, RU, superflip orders).
  */
-import { useEffect, useState, useMemo, useRef, useCallback, createContext, useContext, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
+import { SlugContext, GTSec, L, useLang, TeX, TeXBlock, type Lang } from './_components/primitives';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
@@ -28,44 +27,47 @@ import {
 } from './_components/cube_state';
 import './group_theory.css';
 
-// ── LaTeX rendering via KaTeX ───────────────────────────────────────────────
-function TeX({ src }: { src: string }) {
-  const html = useMemo(() => katex.renderToString(src, { throwOnError: false, output: 'html', strict: 'ignore' }), [src]);
-  return <span className="gt-tex" dangerouslySetInnerHTML={{ __html: html }} />;
-}
-function TeXBlock({ src }: { src: string }) {
-  const html = useMemo(() => katex.renderToString(src, { throwOnError: false, output: 'html', strict: 'ignore', displayMode: true }), [src]);
-  // Use <span> with display:block so it can sit inside <p> without hydration errors.
-  return <span className="gt-tex-block" dangerouslySetInnerHTML={{ __html: html }} />;
+// ── Extended sections §33–§62 (self-contained files, lazy-loaded per slug so the
+//    base page chunk stays lean — only the active section's code is fetched) ──
+const EXT_COMPONENTS: Record<string, ReturnType<typeof dynamic>> = {
+  'wreath-product': dynamic(() => import('./_components/sections/WreathProduct'), { ssr: false }),
+  'semidirect-product': dynamic(() => import('./_components/sections/SemidirectProduct'), { ssr: false }),
+  'sylow': dynamic(() => import('./_components/sections/SylowTheorems'), { ssr: false }),
+  'composition-series': dynamic(() => import('./_components/sections/CompositionSeries'), { ssr: false }),
+  'solvable-nilpotent': dynamic(() => import('./_components/sections/SolvableNilpotent'), { ssr: false }),
+  'abelian-classification': dynamic(() => import('./_components/sections/AbelianClassification'), { ssr: false }),
+  'automorphism-group': dynamic(() => import('./_components/sections/AutomorphismGroup'), { ssr: false }),
+  'cyclic-modular': dynamic(() => import('./_components/sections/CyclicModular'), { ssr: false }),
+  'dihedral': dynamic(() => import('./_components/sections/DihedralGroups'), { ssr: false }),
+  'platonic-symmetry': dynamic(() => import('./_components/sections/PlatonicSymmetry'), { ssr: false }),
+  'frieze-groups': dynamic(() => import('./_components/sections/FriezeGroups'), { ssr: false }),
+  'wallpaper-groups': dynamic(() => import('./_components/sections/WallpaperGroups'), { ssr: false }),
+  'point-groups-crystal': dynamic(() => import('./_components/sections/PointGroupsCrystal'), { ssr: false }),
+  'reflection-coxeter': dynamic(() => import('./_components/sections/ReflectionCoxeter'), { ssr: false }),
+  'plane-isometries': dynamic(() => import('./_components/sections/PlaneIsometries'), { ssr: false }),
+  'polya-cube-colorings': dynamic(() => import('./_components/sections/PolyaCubeColorings'), { ssr: false }),
+  'cycle-index': dynamic(() => import('./_components/sections/CycleIndex'), { ssr: false }),
+  'class-equation': dynamic(() => import('./_components/sections/ClassEquation'), { ssr: false }),
+  'character-table': dynamic(() => import('./_components/sections/CharacterTable'), { ssr: false }),
+  'young-tableaux': dynamic(() => import('./_components/sections/YoungTableaux'), { ssr: false }),
+  'representation-basics': dynamic(() => import('./_components/sections/RepresentationBasics'), { ssr: false }),
+  'fourier-on-groups': dynamic(() => import('./_components/sections/FourierOnGroups'), { ssr: false }),
+  'quaternion-group': dynamic(() => import('./_components/sections/QuaternionGroup'), { ssr: false }),
+  'free-groups': dynamic(() => import('./_components/sections/FreeGroups'), { ssr: false }),
+  'cayley-theorem': dynamic(() => import('./_components/sections/CayleyTheorem'), { ssr: false }),
+  'orbit-stabilizer': dynamic(() => import('./_components/sections/OrbitStabilizer'), { ssr: false }),
+  'matrix-lie-groups': dynamic(() => import('./_components/sections/MatrixLieGroups'), { ssr: false }),
+  'galois-connection': dynamic(() => import('./_components/sections/GaloisConnection'), { ssr: false }),
+  'growth-of-groups': dynamic(() => import('./_components/sections/GrowthOfGroups'), { ssr: false }),
+  'expander-ramanujan': dynamic(() => import('./_components/sections/ExpanderRamanujan'), { ssr: false }),
+};
+
+function NewSectionMount({ slug }: { slug: string }) {
+  const C = EXT_COMPONENTS[slug];
+  return C ? <C /> : null;
 }
 
-// ── Slug context for per-section pages ─────────────────────────────────────
-// Slug is undefined on the index page (just hero + TOC), or one of the TOC ids
-// on a section sub-page. GTSec renders only when its id matches the slug — so
-// a single big return body can serve both modes.
-const SlugContext = createContext<string | undefined>(undefined);
-
-function GTSec({ id, className, children }: { id: string; className?: string; children: ReactNode }) {
-  const slug = useContext(SlugContext);
-  if (slug !== id) return null;
-  return <section id={id} className={className}>{children}</section>;
-}
-
-// ── i18n helpers ────────────────────────────────────────────────────────────
-type Lang = 'zh' | 'en';
-function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
-  const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
-  return <>{lang === 'zh' ? zh : en}</>;
-}
-function useLang(): Lang {
-  const { i18n } = useTranslation();
-  return i18n.language.startsWith('zh') ? 'zh' : 'en';
-}
-
-// ── Inline TwistyPlayer ─────────────────────────────────────────────────────
-// Self-contained wrapper around cubing.js. Imported lazily to keep first paint
-// quick. Each instance has its own player.
+// ── Inline TwistyPlayer (local, non-exported — see _components/primitives.tsx note) ──
 function TwistyMini({
   alg,
   setupAlg,
@@ -116,6 +118,20 @@ function TwistyMini({
 
   return <div ref={containerRef} className="gt-cube-host" />;
 }
+
+// ── LaTeX rendering via KaTeX ───────────────────────────────────────────────
+// TeX, TeXBlock, SlugContext, GTSec, L, useLang, TwistyMini moved to ./_components/primitives
+
+// ── Slug context for per-section pages ─────────────────────────────────────
+// Slug is undefined on the index page (just hero + TOC), or one of the TOC ids
+// on a section sub-page. GTSec renders only when its id matches the slug — so
+// a single big return body can serve both modes.
+
+// ── i18n helpers ────────────────────────────────────────────────────────────
+
+// ── Inline TwistyPlayer ─────────────────────────────────────────────────────
+// Self-contained wrapper around cubing.js. Imported lazily to keep first paint
+// quick. Each instance has its own player.
 
 // ── §1 What is a group?  axiom table ───────────────────────────────────────
 function AxiomTable() {
@@ -7953,6 +7969,22 @@ const TOC_THEMES: { id: string; zh: string; en: string; descZh: string; descEn: 
     descZh: 'Lights Out · 孔明棋 · Hamilton · PGL₂(𝔽₅) · 图旋转拼图 · 有用数学',
     descEn: 'Lights Out · peg solitaire · Hamilton · PGL₂(𝔽₅) · rotational graph puzzles · useful math',
     range: '§27 – §32', secs: ['lights-out','peg-solitaire','hamiltonian','two-face-pgl','rotational-puzzles','useful-math'] },
+  { id: 'structure', zh: '群的结构', en: 'Structure of groups',
+    descZh: '圈积、半直积、Sylow、合成列、可解与幂零、阿贝尔分类、自同构群',
+    descEn: 'wreath, semidirect, Sylow, series, solvable & nilpotent, abelian, Aut',
+    range: '§33 – §39', secs: ['wreath-product','semidirect-product','sylow','composition-series','solvable-nilpotent','abelian-classification','automorphism-group'] },
+  { id: 'symmetry', zh: '对称与几何', en: 'Symmetry & geometry',
+    descZh: '循环群、二面体群、柏拉图立体、带饰群、墙纸群、点群、Coxeter、平面等距',
+    descEn: 'cyclic, dihedral, Platonic solids, frieze, wallpaper, point groups, Coxeter, isometries',
+    range: '§40 – §47', secs: ['cyclic-modular','dihedral','platonic-symmetry','frieze-groups','wallpaper-groups','point-groups-crystal','reflection-coxeter','plane-isometries'] },
+  { id: 'counting', zh: '计数与表示', en: 'Counting & representation',
+    descZh: 'Burnside–Pólya、轮换指标、类方程、特征标表、Young 图、不可约分解、傅里叶',
+    descEn: 'Burnside–Pólya, cycle index, class equation, character tables, Young tableaux, irreps, Fourier',
+    range: '§48 – §54', secs: ['polya-cube-colorings','cycle-index','class-equation','character-table','young-tableaux','representation-basics','fourier-on-groups'] },
+  { id: 'frontiers', zh: '更多群与前沿', en: 'More groups & frontiers',
+    descZh: '四元数群、自由群、Cayley 定理、轨道稳定子、矩阵与李群、伽罗瓦、增长、扩张图',
+    descEn: 'quaternions, free groups, Cayley, orbit–stabiliser, Lie groups, Galois, growth, expanders',
+    range: '§55 – §62', secs: ['quaternion-group','free-groups','cayley-theorem','orbit-stabilizer','matrix-lie-groups','galois-connection','growth-of-groups','expander-ramanujan'] },
 ];
 
 function IndexThemedTOC() {
@@ -7960,7 +7992,7 @@ function IndexThemedTOC() {
   const byId = useMemo(() => new Map(TOC.map(t => [t.id, t])), []);
   return (
     <nav className="gt-index-toc" aria-label="Table of contents">
-      <div className="gt-index-section-head">{lang === 'zh' ? '目录 · 32 节按主题分组' : 'contents · 32 sections, grouped by theme'}</div>
+      <div className="gt-index-section-head">{lang === 'zh' ? '目录 · 62 节按主题分组' : 'contents · 62 sections, grouped by theme'}</div>
       <div className="gt-index-toc-themes">
         {TOC_THEMES.map(theme => (
           <div key={theme.id} className="gt-index-theme">
@@ -8041,7 +8073,7 @@ export default function GroupTheoryPage() {
             : '43 quintillion positions is not chaos. It is a beautifully structured algebraic object. An illustrated, interactive primer.'}
         </p>
         <div className="gt-hero-byline">
-          {lang === 'zh' ? 'cuberoot · 2026 · 32 节 · 40+ 互动 & 视觉面板 · 数学公式 KaTeX 渲染' : 'cuberoot · 2026 · 32 sections · 40+ interactive & visual panels · KaTeX-rendered math'}
+          {lang === 'zh' ? 'cuberoot · 2026 · 62 节 · 100+ 互动 & 视觉面板 · 数学公式 KaTeX 渲染' : 'cuberoot · 2026 · 62 sections · 100+ interactive & visual panels · KaTeX-rendered math'}
         </div>
       </header>
       )}
@@ -15391,6 +15423,8 @@ Membership(g):
 
 
       {/* ═══════════════ References ══════════════════════════════════ */}
+      {!isIndex && slug && EXT_COMPONENTS[slug] && <NewSectionMount slug={slug} />}
+
       <GTSec id="refs" className="gt-sec">
         <div className="gt-sec-num">REF</div>
         <h2 className="gt-sec-title">
@@ -15628,5 +15662,35 @@ const TOC: { id: string; num: string; zh: string; en: string }[] = [
   { id: 'two-face-pgl',       num: '30', zh: '两面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅',  en: 'Two-face corners ≅ PGL₂(𝔽₅) ≅ S₅' },
   { id: 'rotational-puzzles', num: '31', zh: '图上的旋转拼图 · (x,y,z)',    en: 'Rotational puzzles on graphs · (x,y,z)' },
   { id: 'useful-math',        num: '32', zh: '有用数学 · 排列可视化',         en: 'Useful mathematics · permutation visualiser' },
+  { id: 'wreath-product',      num: '33', zh: '圈积 Wreath',                en: 'Wreath products' },
+  { id: 'semidirect-product',  num: '34', zh: '半直积',                    en: 'Semidirect products' },
+  { id: 'sylow',               num: '35', zh: 'Sylow 定理',                en: 'Sylow theorems' },
+  { id: 'composition-series',  num: '36', zh: '合成列与 Jordan–Hölder',    en: 'Composition series' },
+  { id: 'solvable-nilpotent',  num: '37', zh: '可解群与幂零群',            en: 'Solvable & nilpotent' },
+  { id: 'abelian-classification', num: '38', zh: '有限阿贝尔群基本定理',    en: 'Finite abelian groups' },
+  { id: 'automorphism-group',  num: '39', zh: '自同构群 Aut(G)',           en: 'Automorphism groups' },
+  { id: 'cyclic-modular',      num: '40', zh: '循环群与模算术',            en: 'Cyclic & modular' },
+  { id: 'dihedral',            num: '41', zh: '二面体群 Dₙ',               en: 'Dihedral groups' },
+  { id: 'platonic-symmetry',   num: '42', zh: '柏拉图立体的对称群',        en: 'Platonic symmetry' },
+  { id: 'frieze-groups',       num: '43', zh: '七种带饰群',                en: 'The 7 frieze groups' },
+  { id: 'wallpaper-groups',    num: '44', zh: '十七种墙纸群',              en: 'The 17 wallpaper groups' },
+  { id: 'point-groups-crystal', num: '45', zh: '点群与晶体学',             en: 'Point groups & crystals' },
+  { id: 'reflection-coxeter',  num: '46', zh: '反射群与 Coxeter 群',       en: 'Reflection & Coxeter' },
+  { id: 'plane-isometries',    num: '47', zh: '平面等距群',                en: 'Plane isometries' },
+  { id: 'polya-cube-colorings', num: '48', zh: '数立方体染色 (Burnside–Pólya)', en: 'Counting cube colourings' },
+  { id: 'cycle-index',         num: '49', zh: '轮换指标多项式',            en: 'Cycle-index polynomial' },
+  { id: 'class-equation',      num: '50', zh: '类方程',                    en: 'The class equation' },
+  { id: 'character-table',     num: '51', zh: '特征标表',                  en: 'Character tables' },
+  { id: 'young-tableaux',      num: '52', zh: 'Young 图与 Sₙ 表示',        en: 'Young tableaux' },
+  { id: 'representation-basics', num: '53', zh: '表示与不可约分解',        en: 'Representations' },
+  { id: 'fourier-on-groups',   num: '54', zh: '群上的傅里叶分析',          en: 'Fourier on groups' },
+  { id: 'quaternion-group',    num: '55', zh: '四元数群 Q₈',              en: 'Quaternion group Q₈' },
+  { id: 'free-groups',         num: '56', zh: '自由群与约简字',            en: 'Free groups' },
+  { id: 'cayley-theorem',      num: '57', zh: 'Cayley 定理',              en: "Cayley's theorem" },
+  { id: 'orbit-stabilizer',    num: '58', zh: '轨道–稳定子定理',          en: 'Orbit–stabiliser' },
+  { id: 'matrix-lie-groups',   num: '59', zh: '矩阵群与李群',              en: 'Matrix & Lie groups' },
+  { id: 'galois-connection',   num: '60', zh: '伽罗瓦理论与可解性',        en: 'Galois & solvability' },
+  { id: 'growth-of-groups',    num: '61', zh: '群的增长',                  en: 'Growth of groups' },
+  { id: 'expander-ramanujan',  num: '62', zh: '扩张图与 Ramanujan 图',     en: 'Expanders & Ramanujan' },
   { id: 'refs',               num: 'REF', zh: '参考文献',                   en: 'References' },
 ];

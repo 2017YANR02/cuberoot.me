@@ -1,21 +1,28 @@
 'use client';
 
 /**
- * /recon/[id]/alt/[altIdx] — alternative view (STUB).
- *
- * TODO: Port full AltViewPage once TwistySection is ported.
- * Current behavior: fetch parent recon, show alternative solution as plain text.
+ * 另解只读查看页 —— /recon/[id]/alt/[altIdx]
+ * 左栏 TwistyPlayer 动画 + 右栏只读打乱 + SolutionView(点解法跟随动画)。
+ * Ported from packages/client/src/pages/recon/AltViewPage.tsx.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon } from '@/lib/recon-api';
+import { getPuzzleId } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import TwistySection from '@/components/TwistySection';
+import SolutionView from '@/components/SolutionView';
+import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { computeAllStats } from '@/lib/recon-stats';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../../recon.css';
+import '../../../submit/recon_submit.css';
+import '../../recon_detail.css';
 
 export default function AltViewPage() {
   const params = useParams<{ id: string; altIdx: string }>();
@@ -24,10 +31,14 @@ export default function AltViewPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('替代解', 'Alternative Solution');
+  const isMobile = useIsMobile();
 
   const [parent, setParent] = useState<ReconSolve | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!parentId) return;
@@ -39,8 +50,16 @@ export default function AltViewPage() {
   const idx = altIdxStr ? Number(altIdxStr) : -1;
   const alt = parent?.alternatives?.[idx];
   const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
+  const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
 
-  if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+  const stats = useMemo(
+    () => alt ? computeAllStats(alt.solution, parent?.rawTime ?? 0) : null,
+    [alt, parent?.rawTime],
+  );
+
+  if (loading) {
+    return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+  }
   if (error || !parent) {
     return (
       <div className="recon-page">
@@ -58,38 +77,66 @@ export default function AltViewPage() {
   }
 
   return (
-    <div className="recon-page">
-      <div className="recon-page-header">
-        <div>
-          <Link href={`/recon/${parentId}`} className="recon-back-link">
-            <ArrowLeft size={14} /> {isZh ? '返回详情' : 'Back to detail'}
-          </Link>
+    <div className="recon-page submit-page">
+      <div className="submit-header">
+        <div className="detail-header">
           <h1>{displayCuberName(alt.addedBy || '', isZh)}</h1>
         </div>
       </div>
 
-      <div className="recon-detail-stub">
-        <p style={{ color: 'var(--muted-foreground)', fontStyle: 'italic', marginBottom: 16 }}>
-          {isZh
-            ? '完整另解视图（TwistySection 动画 + SolutionView）尚未迁移。下面是只读视图。'
-            : 'Full alternative view (animation + caret-driven SolutionView) is not yet ported. Read-only fallback below.'}
-        </p>
-
-        {scramble && (
-          <section style={{ marginBottom: 16 }}>
-            <h3>{t('recon.scramble')}</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.9rem' }}>
-              {scramble}
-            </pre>
-          </section>
+      <div className="submit-layout">
+        {/* 桌面/平板: 左栏动画 */}
+        {!isMobile && (
+          <div className="submit-player-pane">
+            {scramble && parent.event && parent.event !== 'sq1' && (
+              <TwistySection
+                puzzle={puzzle}
+                scramble={scramble}
+                alg={cleanForPlayer(alt.solution)}
+                playerRef={playerRef}
+                fillPane
+              />
+            )}
+          </div>
         )}
 
-        <section>
-          <h3>{t('recon.solution')}</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.95rem' }}>
-            {alt.solution}
-          </pre>
-        </section>
+        {/* 内容栏 */}
+        <div className="submit-form-pane">
+          <div className="submit-form alt-submit-form">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.scramble')}</span>
+              <textarea
+                rows={1}
+                value={scramble}
+                readOnly
+                className="submit-input-locked alt-submit-scramble"
+              />
+            </label>
+
+            {/* 手机端: 动画在打乱与解法之间 */}
+            {isMobile && scramble && parent.event && parent.event !== 'sq1' && (
+              <div className="submit-inline-player">
+                <TwistySection
+                  puzzle={puzzle}
+                  scramble={scramble}
+                  alg={cleanForPlayer(alt.solution)}
+                  playerRef={playerRef}
+                  fillPane
+                />
+              </div>
+            )}
+
+            <div className="submit-field submit-block">
+              <span className="submit-label">
+                {t('recon.solution')}
+                {stats && stats.stm > 0 && (
+                  <span className="submit-label-stats"> ({stats.stm} STM)</span>
+                )}
+              </span>
+              <SolutionView text={alt.solution} playerRef={playerRef} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

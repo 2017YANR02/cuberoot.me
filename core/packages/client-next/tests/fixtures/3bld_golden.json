@@ -1,0 +1,5456 @@
+{
+  "$schema": "spooncuber-3bld-golden-oracle/v1",
+  "description": "Golden reference outputs from the ORIGINAL spooncuber 3BLD lettering engine (assets/js/reader.js + codetrans.js + min2phase.js), run in Node under a DOM shim. Use to verify the TS port. Each entry is self-describing (input + config + expected output).",
+  "source": "D:/cube/spooncuber.github.io/assets/js/{reader,codetrans,min2phase,scrambler,utils}.js",
+  "generatedBy": "core/.tmp/3bld-golden/generate.cjs",
+  "constants": {
+    "globalState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+    "eglobalState": "abcdefghijklmnopqrstwxyz",
+    "cglobalState": "ABCDEFGHIJKLWMNOPQRSTXYZ",
+    "defaultConfig": {
+      "edgebuffer": "A",
+      "edgeorder": "GECIKMOQSWY",
+      "edgeorientflag": false,
+      "edgeskipcyclenum": false,
+      "cornerbuffer": "J",
+      "cornerorder": "GADXWRO",
+      "cornerorientflag": false,
+      "cornerskipcyclenum": false
+    },
+    "htmlRoles": {
+      "blue": "start",
+      "green": "end",
+      "bare": "normal"
+    }
+  },
+  "readCode": {
+    "note": "edgeread/cornerread return HTML. tokens[] is one entry per letter in order (spaces dropped); role from span color (blue=start, green=end, bare=normal). plain = letters joined. spaced = markup-stripped with spaces preserved. raw = original HTML. edgeorientation/cornerorientation are plain pair strings.",
+    "entries": [
+      {
+        "scrambleName": "identity",
+        "scramble": "",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "identity",
+        "scramble": "",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "identity",
+        "scramble": "",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "identity",
+        "scramble": "",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "identity",
+        "scramble": "",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "R",
+        "scramble": "R",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQOYG",
+          "spaced": "GQ OY G",
+          "raw": "<span style='color:blue'>G</span>Q OY <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "R",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "YRH",
+          "spaced": "YR H",
+          "raw": "YR H"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "R",
+        "scramble": "R",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQOYG",
+          "spaced": "GQ OY G",
+          "raw": "<span style='color:blue'>G</span>Q OY <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "R",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "YRH",
+          "spaced": "YR H",
+          "raw": "YR H"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "R",
+        "scramble": "R",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQOYG",
+          "spaced": "GQ OY G",
+          "raw": "<span style='color:blue'>G</span>Q OY <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "R",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "YRH",
+          "spaced": "YR H",
+          "raw": "YR H<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "R",
+        "scramble": "R",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQOYG",
+          "spaced": "GQ OY G",
+          "raw": "<span style='color:blue'>G</span>Q OY <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "R",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "YRH",
+          "spaced": "YR H",
+          "raw": "YR H"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "R",
+        "scramble": "R",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQOYG",
+          "spaced": "GQ OY G",
+          "raw": "<span style='color:blue'>G</span>Q OY <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "R",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "JYRHJ",
+          "spaced": "JY RH J",
+          "raw": "<span style='color:blue'>J</span>Y RH <span style='color:green'>J</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sexy",
+        "scramble": "R U R' U'",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQEG",
+          "spaced": "GQ EG ",
+          "raw": "<span style='color:blue'>G</span>Q E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "end"
+            }
+          ],
+          "plain": "YGEH",
+          "spaced": "YG EH ",
+          "raw": "Y<span style='color:blue'>G</span> E<span style='color:green'>H</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sexy",
+        "scramble": "R U R' U'",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQEG",
+          "spaced": "GQ EG ",
+          "raw": "<span style='color:blue'>G</span>Q E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "YIDG",
+          "spaced": "YI DG ",
+          "raw": "Y<span style='color:blue'>I</span> D<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sexy",
+        "scramble": "R U R' U'",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQEG",
+          "spaced": "GQ EG",
+          "raw": "<span style='color:blue'>G</span>Q E<span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "YIDG",
+          "spaced": "YI DG",
+          "raw": "Y<span style='color:blue'>I</span> D<span style='color:green'>G</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sexy",
+        "scramble": "R U R' U'",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQEG",
+          "spaced": "GQ EG ",
+          "raw": "<span style='color:blue'>G</span>Q E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "end"
+            }
+          ],
+          "plain": "YGEH",
+          "spaced": "YG EH ",
+          "raw": "Y<span style='color:blue'>G</span> E<span style='color:green'>H</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sexy",
+        "scramble": "R U R' U'",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GQEG",
+          "spaced": "GQ EG ",
+          "raw": "<span style='color:blue'>G</span>Q E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "L",
+              "role": "end"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "end"
+            }
+          ],
+          "plain": "JYLGEH",
+          "spaced": "JY LG EH ",
+          "raw": "<span style='color:blue'>J</span>Y <span style='color:green'>L</span><span style='color:blue'>G</span> E<span style='color:green'>H</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Ttperm",
+        "scramble": "R U R' U' R' F R2 U' R' U' R U R' F'",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCG",
+          "spaced": "GC G",
+          "raw": "<span style='color:blue'>G</span>C <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "G",
+          "spaced": "G",
+          "raw": "G"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Ttperm",
+        "scramble": "R U R' U' R' F R2 U' R' U' R U R' F'",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCG",
+          "spaced": "GC G",
+          "raw": "<span style='color:blue'>G</span>C <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "G",
+          "spaced": "G",
+          "raw": "G"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Ttperm",
+        "scramble": "R U R' U' R' F R2 U' R' U' R U R' F'",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCG",
+          "spaced": "GC G",
+          "raw": "<span style='color:blue'>G</span>C <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "G",
+          "spaced": "G",
+          "raw": "G<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Ttperm",
+        "scramble": "R U R' U' R' F R2 U' R' U' R U R' F'",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "G",
+          "spaced": "G",
+          "raw": "G"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "G",
+          "spaced": "G",
+          "raw": "G"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Ttperm",
+        "scramble": "R U R' U' R' F R2 U' R' U' R U R' F'",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCG",
+          "spaced": "GC G",
+          "raw": "<span style='color:blue'>G</span>C <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "JGJ",
+          "spaced": "JG J",
+          "raw": "<span style='color:blue'>J</span>G <span style='color:green'>J</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Hperm",
+        "scramble": "M2 U M2 U2 M2 U M2",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "EGCG",
+          "spaced": "EG CG ",
+          "raw": "E<span style='color:blue'>G</span> C<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Hperm",
+        "scramble": "M2 U M2 U2 M2 U M2",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "EGCG",
+          "spaced": "EG CG ",
+          "raw": "E<span style='color:blue'>G</span> C<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Hperm",
+        "scramble": "M2 U M2 U2 M2 U M2",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "EGCG",
+          "spaced": "EG CG",
+          "raw": "E<span style='color:blue'>G</span> C<span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Hperm",
+        "scramble": "M2 U M2 U2 M2 U M2",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            }
+          ],
+          "plain": "GAEA",
+          "spaced": "GA EA ",
+          "raw": "G<span style='color:blue'>A</span> E<span style='color:green'>A</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Hperm",
+        "scramble": "M2 U M2 U2 M2 U M2",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "EGCG",
+          "spaced": "EG CG ",
+          "raw": "E<span style='color:blue'>G</span> C<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Uperm",
+        "scramble": "R U' R U R U R U' R' U' R2",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "CG",
+          "spaced": "CG ",
+          "raw": "CG "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Uperm",
+        "scramble": "R U' R U R U R U' R' U' R2",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "CG",
+          "spaced": "CG ",
+          "raw": "CG "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Uperm",
+        "scramble": "R U' R U R U R U' R' U' R2",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "CG",
+          "spaced": "CG ",
+          "raw": "CG <span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Uperm",
+        "scramble": "R U' R U R U R U' R' U' R2",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "normal"
+            }
+          ],
+          "plain": "GA",
+          "spaced": "GA ",
+          "raw": "GA "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Uperm",
+        "scramble": "R U' R U R U R U' R' U' R2",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "CG",
+          "spaced": "CG ",
+          "raw": "CG "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Aperm",
+        "scramble": "x R' U R' D2 R U' R' D2 R2 x'",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            }
+          ],
+          "plain": "GD",
+          "spaced": "GD ",
+          "raw": "GD "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Aperm",
+        "scramble": "x R' U R' D2 R U' R' D2 R2 x'",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            }
+          ],
+          "plain": "GD",
+          "spaced": "GD ",
+          "raw": "GD "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Aperm",
+        "scramble": "x R' U R' D2 R U' R' D2 R2 x'",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            }
+          ],
+          "plain": "GD",
+          "spaced": "GD ",
+          "raw": "GD <span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Aperm",
+        "scramble": "x R' U R' D2 R U' R' D2 R2 x'",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            }
+          ],
+          "plain": "GD",
+          "spaced": "GD ",
+          "raw": "GD "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Aperm",
+        "scramble": "x R' U R' D2 R U' R' D2 R2 x'",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "JGDJ",
+          "spaced": "JG DJ ",
+          "raw": "<span style='color:blue'>J</span>G D<span style='color:green'>J</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Eperm",
+        "scramble": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            }
+          ],
+          "plain": "GADA",
+          "spaced": "GA DA ",
+          "raw": "G<span style='color:blue'>A</span> D<span style='color:green'>A</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Eperm",
+        "scramble": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            }
+          ],
+          "plain": "GADA",
+          "spaced": "GA DA ",
+          "raw": "G<span style='color:blue'>A</span> D<span style='color:green'>A</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Eperm",
+        "scramble": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            }
+          ],
+          "plain": "GADA",
+          "spaced": "GA DA ",
+          "raw": "G<span style='color:blue'>A</span> D<span style='color:green'>A</span> <span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Eperm",
+        "scramble": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            }
+          ],
+          "plain": "GADA",
+          "spaced": "GA DA ",
+          "raw": "G<span style='color:blue'>A</span> D<span style='color:green'>A</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "Eperm",
+        "scramble": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "DJGJ",
+          "spaced": "DJ GJ ",
+          "raw": "D<span style='color:blue'>J</span> G<span style='color:green'>J</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "full20",
+        "scramble": "L2 D2 R2 B2 U2 R2 D2 F2 R2 U' B' D2 L' F' U' B2 R B' U' F",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            },
+            {
+              "letter": "E",
+              "role": "start"
+            },
+            {
+              "letter": "W",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "L",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "COGSGEWFILMYJ",
+          "spaced": "CO GS GE WF IL MY J",
+          "raw": "CO <span style='color:blue'>G</span>S <span style='color:green'>G</span><span style='color:blue'>E</span> W<span style='color:green'>F</span> <span style='color:blue'>I</span>L MY <span style='color:green'>J</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            },
+            {
+              "letter": "D",
+              "role": "start"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            }
+          ],
+          "plain": "ASADMXF",
+          "spaced": "AS AD MX F",
+          "raw": "<span style='color:blue'>A</span>S <span style='color:green'>A</span><span style='color:blue'>D</span> MX <span style='color:green'>F</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "full20",
+        "scramble": "L2 D2 R2 B2 U2 R2 D2 F2 R2 U' B' D2 L' F' U' B2 R B' U' F",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            },
+            {
+              "letter": "E",
+              "role": "start"
+            },
+            {
+              "letter": "W",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            },
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "K",
+              "role": "normal"
+            },
+            {
+              "letter": "N",
+              "role": "normal"
+            },
+            {
+              "letter": "Z",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "end"
+            }
+          ],
+          "plain": "COGSGEWFJKNZI",
+          "spaced": "CO GS GE WF JK NZ I",
+          "raw": "CO <span style='color:blue'>G</span>S <span style='color:green'>G</span><span style='color:blue'>E</span> W<span style='color:green'>F</span> <span style='color:blue'>J</span>K NZ <span style='color:green'>I</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "B",
+              "role": "start"
+            },
+            {
+              "letter": "T",
+              "role": "normal"
+            },
+            {
+              "letter": "B",
+              "role": "end"
+            },
+            {
+              "letter": "E",
+              "role": "start"
+            },
+            {
+              "letter": "N",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "end"
+            }
+          ],
+          "plain": "BTBENYD",
+          "spaced": "BT BE NY D",
+          "raw": "<span style='color:blue'>B</span>T <span style='color:green'>B</span><span style='color:blue'>E</span> NY <span style='color:green'>D</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "full20",
+        "scramble": "L2 D2 R2 B2 U2 R2 D2 F2 R2 U' B' D2 L' F' U' B2 R B' U' F",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "start"
+            },
+            {
+              "letter": "W",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "L",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "COGSEWFILMYJG",
+          "spaced": "CO GS EW FI LM YJ G",
+          "raw": "CO <span style='color:blue'>G</span>S <span style='color:blue'>E</span>W <span style='color:green'>F</span><span style='color:blue'>I</span> LM Y<span style='color:green'>J</span> <span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            },
+            {
+              "letter": "D",
+              "role": "start"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            }
+          ],
+          "plain": "ASADMXF",
+          "spaced": "AS AD MX F",
+          "raw": "<span style='color:blue'>A</span>S <span style='color:green'>A</span><span style='color:blue'>D</span> MX <span style='color:green'>F</span><span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "full20",
+        "scramble": "L2 D2 R2 B2 U2 R2 D2 F2 R2 U' B' D2 L' F' U' B2 R B' U' F",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            },
+            {
+              "letter": "E",
+              "role": "start"
+            },
+            {
+              "letter": "W",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "L",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "OAGSGEWFILMYJ",
+          "spaced": "OA GS GE WF IL MY J",
+          "raw": "OA <span style='color:blue'>G</span>S <span style='color:green'>G</span><span style='color:blue'>E</span> W<span style='color:green'>F</span> <span style='color:blue'>I</span>L MY <span style='color:green'>J</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            },
+            {
+              "letter": "D",
+              "role": "start"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            }
+          ],
+          "plain": "ASADMXF",
+          "spaced": "AS AD MX F",
+          "raw": "<span style='color:blue'>A</span>S <span style='color:green'>A</span><span style='color:blue'>D</span> MX <span style='color:green'>F</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "full20",
+        "scramble": "L2 D2 R2 B2 U2 R2 D2 F2 R2 U' B' D2 L' F' U' B2 R B' U' F",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            },
+            {
+              "letter": "E",
+              "role": "start"
+            },
+            {
+              "letter": "W",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "L",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            }
+          ],
+          "plain": "COGSGEWFILMYJ",
+          "spaced": "CO GS GE WF IL MY J",
+          "raw": "CO <span style='color:blue'>G</span>S <span style='color:green'>G</span><span style='color:blue'>E</span> W<span style='color:green'>F</span> <span style='color:blue'>I</span>L MY <span style='color:green'>J</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "S",
+              "role": "normal"
+            },
+            {
+              "letter": "D",
+              "role": "start"
+            },
+            {
+              "letter": "M",
+              "role": "normal"
+            },
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "F",
+              "role": "end"
+            }
+          ],
+          "plain": "SDMXF",
+          "spaced": "SD MX F",
+          "raw": "S<span style='color:blue'>D</span> MX <span style='color:green'>F</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": "LJ"
+      },
+      {
+        "scrambleName": "superflip",
+        "scramble": "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "HG FE DC JI LK NM PO RQ TS XW ZY",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "superflip",
+        "scramble": "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "HG FE DC JI LK NM PO RQ TS XW ZY",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "superflip",
+        "scramble": "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "edgeorientation": "HG FE DC JI LK NM PO RQ TS XW ZY",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "superflip",
+        "scramble": "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "BA HG FE JI LK NM PO RQ TS XW ZY",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "superflip",
+        "scramble": "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "HG FE DC JI LK NM PO RQ TS XW ZY",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sune",
+        "scramble": "R U R' U R U2 R'",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCEG",
+          "spaced": "GC EG ",
+          "raw": "<span style='color:blue'>G</span>C E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "A",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "end"
+            }
+          ],
+          "plain": "FGAI",
+          "spaced": "FG AI ",
+          "raw": "F<span style='color:blue'>G</span> A<span style='color:green'>I</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sune",
+        "scramble": "R U R' U R U2 R'",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCEG",
+          "spaced": "GC EG ",
+          "raw": "<span style='color:blue'>G</span>C E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "start"
+            },
+            {
+              "letter": "B",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "FHBG",
+          "spaced": "FH BG ",
+          "raw": "F<span style='color:blue'>H</span> B<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sune",
+        "scramble": "R U R' U R U2 R'",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCEG",
+          "spaced": "GC EG",
+          "raw": "<span style='color:blue'>G</span>C E<span style='color:green'>G</span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "start"
+            },
+            {
+              "letter": "B",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "FHBG",
+          "spaced": "FH BG",
+          "raw": "F<span style='color:blue'>H</span> B<span style='color:green'>G</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sune",
+        "scramble": "R U R' U R U2 R'",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "normal"
+            }
+          ],
+          "plain": "EG",
+          "spaced": "EG ",
+          "raw": "EG "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "A",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "end"
+            }
+          ],
+          "plain": "FGAI",
+          "spaced": "FG AI ",
+          "raw": "F<span style='color:blue'>G</span> A<span style='color:green'>I</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "sune",
+        "scramble": "R U R' U R U2 R'",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "GCEG",
+          "spaced": "GC EG ",
+          "raw": "<span style='color:blue'>G</span>C E<span style='color:green'>G</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "I",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "K",
+              "role": "end"
+            }
+          ],
+          "plain": "IJFK",
+          "spaced": "IJ FK ",
+          "raw": "I<span style='color:blue'>J</span> F<span style='color:green'>K</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "flippedEdges",
+        "scramble": "F R U R' U' F'",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "FH",
+          "spaced": "FH ",
+          "raw": "FH "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "end"
+            }
+          ],
+          "plain": "CGEH",
+          "spaced": "CG EH ",
+          "raw": "C<span style='color:blue'>G</span> E<span style='color:green'>H</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "flippedEdges",
+        "scramble": "F R U R' U' F'",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "FH",
+          "spaced": "FH ",
+          "raw": "FH "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "CIDG",
+          "spaced": "CI DG ",
+          "raw": "C<span style='color:blue'>I</span> D<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "flippedEdges",
+        "scramble": "F R U R' U' F'",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "FH",
+          "spaced": "FH ",
+          "raw": "FH <span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "I",
+              "role": "start"
+            },
+            {
+              "letter": "D",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "CIDG",
+          "spaced": "CI DG",
+          "raw": "C<span style='color:blue'>I</span> D<span style='color:green'>G</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "flippedEdges",
+        "scramble": "F R U R' U' F'",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            }
+          ],
+          "plain": "AFHA",
+          "spaced": "AF HA ",
+          "raw": "<span style='color:blue'>A</span>F H<span style='color:green'>A</span> "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "C",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "end"
+            }
+          ],
+          "plain": "CGEH",
+          "spaced": "CG EH ",
+          "raw": "C<span style='color:blue'>G</span> E<span style='color:green'>H</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "flippedEdges",
+        "scramble": "F R U R' U' F'",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "normal"
+            }
+          ],
+          "plain": "FH",
+          "spaced": "FH ",
+          "raw": "FH "
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "J",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "H",
+              "role": "end"
+            }
+          ],
+          "plain": "JGEH",
+          "spaced": "JG EH ",
+          "raw": "J<span style='color:blue'>G</span> E<span style='color:green'>H</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "twistedCorners",
+        "scramble": "R' D' R D R' D' R D",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "M",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "end"
+            }
+          ],
+          "plain": "MQOM",
+          "spaced": "MQ OM ",
+          "raw": "<span style='color:blue'>M</span>Q O<span style='color:green'>M</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": "ZX SR PO"
+      },
+      {
+        "scrambleName": "twistedCorners",
+        "scramble": "R' D' R D R' D' R D",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "M",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "end"
+            }
+          ],
+          "plain": "MQOM",
+          "spaced": "MQ OM ",
+          "raw": "<span style='color:blue'>M</span>Q O<span style='color:green'>M</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": "ZX SR PO"
+      },
+      {
+        "scrambleName": "twistedCorners",
+        "scramble": "R' D' R D R' D' R D",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "M",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "end"
+            }
+          ],
+          "plain": "MQOM",
+          "spaced": "MQ OM ",
+          "raw": "<span style='color:blue'>M</span>Q O<span style='color:green'>M</span> <span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": "ZX SR PO"
+      },
+      {
+        "scrambleName": "twistedCorners",
+        "scramble": "R' D' R D R' D' R D",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "M",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "end"
+            }
+          ],
+          "plain": "MQOM",
+          "spaced": "MQ OM ",
+          "raw": "<span style='color:blue'>M</span>Q O<span style='color:green'>M</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": "ZX SR PO"
+      },
+      {
+        "scrambleName": "twistedCorners",
+        "scramble": "R' D' R D R' D' R D",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "M",
+              "role": "start"
+            },
+            {
+              "letter": "Q",
+              "role": "normal"
+            },
+            {
+              "letter": "O",
+              "role": "normal"
+            },
+            {
+              "letter": "M",
+              "role": "end"
+            }
+          ],
+          "plain": "MQOM",
+          "spaced": "MQ OM ",
+          "raw": "<span style='color:blue'>M</span>Q O<span style='color:green'>M</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": "LJ ZX SR PO"
+      },
+      {
+        "scrambleName": "cornerTwist3",
+        "scramble": "U R U' R' U R U' R' U R U' R'",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "XGFG",
+          "spaced": "XG FG ",
+          "raw": "X<span style='color:blue'>G</span> F<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "cornerTwist3",
+        "scramble": "U R U' R' U R U' R' U R U' R'",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "XGFG",
+          "spaced": "XG FG ",
+          "raw": "X<span style='color:blue'>G</span> F<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "cornerTwist3",
+        "scramble": "U R U' R' U R U' R' U R U' R'",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "XGFG",
+          "spaced": "XG FG",
+          "raw": "X<span style='color:blue'>G</span> F<span style='color:green'>G</span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "cornerTwist3",
+        "scramble": "U R U' R' U R U' R' U R U' R'",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "XGFG",
+          "spaced": "XG FG ",
+          "raw": "X<span style='color:blue'>G</span> F<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "cornerTwist3",
+        "scramble": "U R U' R' U R U' R' U R U' R'",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "cornerread": {
+          "tokens": [
+            {
+              "letter": "J",
+              "role": "start"
+            },
+            {
+              "letter": "X",
+              "role": "normal"
+            },
+            {
+              "letter": "J",
+              "role": "end"
+            },
+            {
+              "letter": "G",
+              "role": "start"
+            },
+            {
+              "letter": "F",
+              "role": "normal"
+            },
+            {
+              "letter": "G",
+              "role": "end"
+            }
+          ],
+          "plain": "JXJGFG",
+          "spaced": "JX JG FG ",
+          "raw": "<span style='color:blue'>J</span>X <span style='color:green'>J</span><span style='color:blue'>G</span> F<span style='color:green'>G</span> "
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "parityScramble",
+        "scramble": "R2 U2 R2 U2 R2 U2",
+        "configName": "default",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "end"
+            }
+          ],
+          "plain": "EQYQ",
+          "spaced": "EQ YQ ",
+          "raw": "E<span style='color:blue'>Q</span> Y<span style='color:green'>Q</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "parityScramble",
+        "scramble": "R2 U2 R2 U2 R2 U2",
+        "configName": "keepHueOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": true,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": true,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "end"
+            }
+          ],
+          "plain": "EQYQ",
+          "spaced": "EQ YQ ",
+          "raw": "E<span style='color:blue'>Q</span> Y<span style='color:green'>Q</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "parityScramble",
+        "scramble": "R2 U2 R2 U2 R2 U2",
+        "configName": "skipCycleOn",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": true,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": true
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "end"
+            }
+          ],
+          "plain": "EQYQ",
+          "spaced": "EQ YQ ",
+          "raw": "E<span style='color:blue'>Q</span> Y<span style='color:green'>Q</span> <span style='color:green'></span>"
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": "<span style='color:green'></span>"
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "parityScramble",
+        "scramble": "R2 U2 R2 U2 R2 U2",
+        "configName": "customEdgeBuffer",
+        "config": {
+          "edgebuffer": "C",
+          "edgeorder": "AGEIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "J",
+          "cornerorder": "GADXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "A",
+              "role": "start"
+            },
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "A",
+              "role": "end"
+            },
+            {
+              "letter": "Q",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "end"
+            }
+          ],
+          "plain": "AEAQYQ",
+          "spaced": "AE AQ YQ ",
+          "raw": "<span style='color:blue'>A</span>E <span style='color:green'>A</span><span style='color:blue'>Q</span> Y<span style='color:green'>Q</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      },
+      {
+        "scrambleName": "parityScramble",
+        "scramble": "R2 U2 R2 U2 R2 U2",
+        "configName": "customCornerBuffer",
+        "config": {
+          "edgebuffer": "A",
+          "edgeorder": "GECIKMOQSWY",
+          "edgeorientflag": false,
+          "edgeskipcyclenum": false,
+          "cornerbuffer": "A",
+          "cornerorder": "JGDXWRO",
+          "cornerorientflag": false,
+          "cornerskipcyclenum": false
+        },
+        "edgeread": {
+          "tokens": [
+            {
+              "letter": "E",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "start"
+            },
+            {
+              "letter": "Y",
+              "role": "normal"
+            },
+            {
+              "letter": "Q",
+              "role": "end"
+            }
+          ],
+          "plain": "EQYQ",
+          "spaced": "EQ YQ ",
+          "raw": "E<span style='color:blue'>Q</span> Y<span style='color:green'>Q</span> "
+        },
+        "cornerread": {
+          "tokens": [],
+          "plain": "",
+          "spaced": "",
+          "raw": ""
+        },
+        "edgeorientation": "",
+        "cornerorientation": ""
+      }
+    ]
+  },
+  "helpers": {
+    "posChichu": [
+      {
+        "code": "A",
+        "pos": 0
+      },
+      {
+        "code": "B",
+        "pos": 0
+      },
+      {
+        "code": "C",
+        "pos": 0
+      },
+      {
+        "code": "D",
+        "pos": 1
+      },
+      {
+        "code": "E",
+        "pos": 1
+      },
+      {
+        "code": "F",
+        "pos": 1
+      },
+      {
+        "code": "G",
+        "pos": 2
+      },
+      {
+        "code": "H",
+        "pos": 2
+      },
+      {
+        "code": "I",
+        "pos": 2
+      },
+      {
+        "code": "J",
+        "pos": 3
+      },
+      {
+        "code": "K",
+        "pos": 3
+      },
+      {
+        "code": "L",
+        "pos": 3
+      },
+      {
+        "code": "W",
+        "pos": 4
+      },
+      {
+        "code": "M",
+        "pos": 4
+      },
+      {
+        "code": "N",
+        "pos": 4
+      },
+      {
+        "code": "O",
+        "pos": 5
+      },
+      {
+        "code": "P",
+        "pos": 5
+      },
+      {
+        "code": "Q",
+        "pos": 5
+      },
+      {
+        "code": "R",
+        "pos": 6
+      },
+      {
+        "code": "S",
+        "pos": 6
+      },
+      {
+        "code": "T",
+        "pos": 6
+      },
+      {
+        "code": "X",
+        "pos": 7
+      },
+      {
+        "code": "Y",
+        "pos": 7
+      },
+      {
+        "code": "Z",
+        "pos": 7
+      },
+      {
+        "code": "a",
+        "pos": 0
+      },
+      {
+        "code": "b",
+        "pos": 0
+      },
+      {
+        "code": "c",
+        "pos": 1
+      },
+      {
+        "code": "d",
+        "pos": 1
+      },
+      {
+        "code": "e",
+        "pos": 2
+      },
+      {
+        "code": "f",
+        "pos": 2
+      },
+      {
+        "code": "g",
+        "pos": 3
+      },
+      {
+        "code": "h",
+        "pos": 3
+      },
+      {
+        "code": "i",
+        "pos": 4
+      },
+      {
+        "code": "j",
+        "pos": 4
+      },
+      {
+        "code": "k",
+        "pos": 5
+      },
+      {
+        "code": "l",
+        "pos": 5
+      },
+      {
+        "code": "m",
+        "pos": 6
+      },
+      {
+        "code": "n",
+        "pos": 6
+      },
+      {
+        "code": "o",
+        "pos": 7
+      },
+      {
+        "code": "p",
+        "pos": 7
+      },
+      {
+        "code": "q",
+        "pos": 8
+      },
+      {
+        "code": "r",
+        "pos": 8
+      },
+      {
+        "code": "s",
+        "pos": 9
+      },
+      {
+        "code": "t",
+        "pos": 9
+      },
+      {
+        "code": "w",
+        "pos": 10
+      },
+      {
+        "code": "x",
+        "pos": 10
+      },
+      {
+        "code": "y",
+        "pos": 11
+      },
+      {
+        "code": "z",
+        "pos": 11
+      },
+      {
+        "code": "1",
+        "pos": 0
+      },
+      {
+        "code": "2",
+        "pos": 1
+      },
+      {
+        "code": "3",
+        "pos": 2
+      },
+      {
+        "code": "4",
+        "pos": 3
+      },
+      {
+        "code": "5",
+        "pos": 4
+      },
+      {
+        "code": "6",
+        "pos": 5
+      },
+      {
+        "code": "7",
+        "pos": -1
+      },
+      {
+        "code": "!",
+        "pos": -1
+      },
+      {
+        "code": "_",
+        "pos": -1
+      }
+    ],
+    "groupRecog": [
+      {
+        "code": "A",
+        "result": {
+          "div": 3,
+          "indexNum": 0
+        }
+      },
+      {
+        "code": "Z",
+        "result": {
+          "div": 3,
+          "indexNum": 0
+        }
+      },
+      {
+        "code": "a",
+        "result": {
+          "div": 2,
+          "indexNum": 24
+        }
+      },
+      {
+        "code": "z",
+        "result": {
+          "div": 2,
+          "indexNum": 24
+        }
+      },
+      {
+        "code": "1",
+        "result": {
+          "div": 1,
+          "indexNum": 48
+        }
+      },
+      {
+        "code": "6",
+        "result": {
+          "div": 1,
+          "indexNum": 48
+        }
+      },
+      {
+        "code": "W",
+        "result": {
+          "div": 3,
+          "indexNum": 0
+        }
+      },
+      {
+        "code": "w",
+        "result": {
+          "div": 2,
+          "indexNum": 24
+        }
+      }
+    ],
+    "reOrder": [
+      {
+        "num": 1,
+        "div": 3,
+        "order": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "num": 17,
+        "div": 3,
+        "order": [
+          17,
+          15,
+          16
+        ]
+      },
+      {
+        "num": 5,
+        "div": 2,
+        "order": [
+          5,
+          4
+        ]
+      },
+      {
+        "num": 0,
+        "div": 3,
+        "order": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "num": 2,
+        "div": 3,
+        "order": [
+          2,
+          0,
+          1
+        ]
+      },
+      {
+        "num": 23,
+        "div": 3,
+        "order": [
+          23,
+          21,
+          22
+        ]
+      },
+      {
+        "num": 24,
+        "div": 2,
+        "order": [
+          24,
+          25
+        ]
+      },
+      {
+        "num": 25,
+        "div": 2,
+        "order": [
+          25,
+          24
+        ]
+      },
+      {
+        "num": 46,
+        "div": 2,
+        "order": [
+          46,
+          47
+        ]
+      },
+      {
+        "num": 48,
+        "div": 1,
+        "order": [
+          48
+        ]
+      },
+      {
+        "num": 53,
+        "div": 1,
+        "order": [
+          53
+        ]
+      }
+    ],
+    "exCode": [
+      {
+        "code": [
+          "A",
+          "G"
+        ],
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "GHIDEFABCJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": [
+          "a",
+          "b"
+        ],
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZbacdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": [
+          "1",
+          "2"
+        ],
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz213456"
+      },
+      {
+        "code": [
+          "J",
+          "X"
+        ],
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIXYZWMNOPQRSTJKLabcdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": [
+          "o",
+          "w"
+        ],
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnwxqrstopyz123456"
+      },
+      {
+        "code": [
+          "A",
+          "A"
+        ],
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456"
+      }
+    ],
+    "codeTrans": [
+      {
+        "code": "AGN",
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "NWMDEFABCJKLHIGOPQRSTXYZabcdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": "abc",
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZcdbaefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": "JXR",
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIRSTWMNOPQXYZJKLabcdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": "A",
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": "AG",
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "GHIDEFABCJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456"
+      },
+      {
+        "code": "agqy",
+        "inputState": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "output": "ABCDEFGHIJKLWMNOPQRSTXYZyzcdefabijklmnopghstwxqr123456"
+      }
+    ],
+    "algSetGenerator": [
+      {
+        "excludeCodes": "AG",
+        "algSet": [
+          "DJ",
+          "DK",
+          "DL",
+          "DW",
+          "DM",
+          "DN",
+          "DO",
+          "DP",
+          "DQ",
+          "DR",
+          "DS",
+          "DT",
+          "DX",
+          "DY",
+          "DZ",
+          "EJ",
+          "EK",
+          "EL",
+          "EW",
+          "EM",
+          "EN",
+          "EO",
+          "EP",
+          "EQ",
+          "ER",
+          "ES",
+          "ET",
+          "EX",
+          "EY",
+          "EZ",
+          "FJ",
+          "FK",
+          "FL",
+          "FW",
+          "FM",
+          "FN",
+          "FO",
+          "FP",
+          "FQ",
+          "FR",
+          "FS",
+          "FT",
+          "FX",
+          "FY",
+          "FZ",
+          "JD",
+          "JE",
+          "JF",
+          "JW",
+          "JM",
+          "JN",
+          "JO",
+          "JP",
+          "JQ",
+          "JR",
+          "JS",
+          "JT",
+          "JX",
+          "JY",
+          "JZ",
+          "KD",
+          "KE",
+          "KF",
+          "KW",
+          "KM",
+          "KN",
+          "KO",
+          "KP",
+          "KQ",
+          "KR",
+          "KS",
+          "KT",
+          "KX",
+          "KY",
+          "KZ",
+          "LD",
+          "LE",
+          "LF",
+          "LW",
+          "LM",
+          "LN",
+          "LO",
+          "LP",
+          "LQ",
+          "LR",
+          "LS",
+          "LT",
+          "LX",
+          "LY",
+          "LZ",
+          "WD",
+          "WE",
+          "WF",
+          "WJ",
+          "WK",
+          "WL",
+          "WO",
+          "WP",
+          "WQ",
+          "WR",
+          "WS",
+          "WT",
+          "WX",
+          "WY",
+          "WZ",
+          "MD",
+          "ME",
+          "MF",
+          "MJ",
+          "MK",
+          "ML",
+          "MO",
+          "MP",
+          "MQ",
+          "MR",
+          "MS",
+          "MT",
+          "MX",
+          "MY",
+          "MZ",
+          "ND",
+          "NE",
+          "NF",
+          "NJ",
+          "NK",
+          "NL",
+          "NO",
+          "NP",
+          "NQ",
+          "NR",
+          "NS",
+          "NT",
+          "NX",
+          "NY",
+          "NZ",
+          "OD",
+          "OE",
+          "OF",
+          "OJ",
+          "OK",
+          "OL",
+          "OW",
+          "OM",
+          "ON",
+          "OR",
+          "OS",
+          "OT",
+          "OX",
+          "OY",
+          "OZ",
+          "PD",
+          "PE",
+          "PF",
+          "PJ",
+          "PK",
+          "PL",
+          "PW",
+          "PM",
+          "PN",
+          "PR",
+          "PS",
+          "PT",
+          "PX",
+          "PY",
+          "PZ",
+          "QD",
+          "QE",
+          "QF",
+          "QJ",
+          "QK",
+          "QL",
+          "QW",
+          "QM",
+          "QN",
+          "QR",
+          "QS",
+          "QT",
+          "QX",
+          "QY",
+          "QZ",
+          "RD",
+          "RE",
+          "RF",
+          "RJ",
+          "RK",
+          "RL",
+          "RW",
+          "RM",
+          "RN",
+          "RO",
+          "RP",
+          "RQ",
+          "RX",
+          "RY",
+          "RZ",
+          "SD",
+          "SE",
+          "SF",
+          "SJ",
+          "SK",
+          "SL",
+          "SW",
+          "SM",
+          "SN",
+          "SO",
+          "SP",
+          "SQ",
+          "SX",
+          "SY",
+          "SZ",
+          "TD",
+          "TE",
+          "TF",
+          "TJ",
+          "TK",
+          "TL",
+          "TW",
+          "TM",
+          "TN",
+          "TO",
+          "TP",
+          "TQ",
+          "TX",
+          "TY",
+          "TZ",
+          "XD",
+          "XE",
+          "XF",
+          "XJ",
+          "XK",
+          "XL",
+          "XW",
+          "XM",
+          "XN",
+          "XO",
+          "XP",
+          "XQ",
+          "XR",
+          "XS",
+          "XT",
+          "YD",
+          "YE",
+          "YF",
+          "YJ",
+          "YK",
+          "YL",
+          "YW",
+          "YM",
+          "YN",
+          "YO",
+          "YP",
+          "YQ",
+          "YR",
+          "YS",
+          "YT",
+          "ZD",
+          "ZE",
+          "ZF",
+          "ZJ",
+          "ZK",
+          "ZL",
+          "ZW",
+          "ZM",
+          "ZN",
+          "ZO",
+          "ZP",
+          "ZQ",
+          "ZR",
+          "ZS",
+          "ZT"
+        ]
+      },
+      {
+        "excludeCodes": "abc",
+        "algSet": [
+          "eg",
+          "eh",
+          "ei",
+          "ej",
+          "ek",
+          "el",
+          "em",
+          "en",
+          "eo",
+          "ep",
+          "eq",
+          "er",
+          "es",
+          "et",
+          "ew",
+          "ex",
+          "ey",
+          "ez",
+          "fg",
+          "fh",
+          "fi",
+          "fj",
+          "fk",
+          "fl",
+          "fm",
+          "fn",
+          "fo",
+          "fp",
+          "fq",
+          "fr",
+          "fs",
+          "ft",
+          "fw",
+          "fx",
+          "fy",
+          "fz",
+          "ge",
+          "gf",
+          "gi",
+          "gj",
+          "gk",
+          "gl",
+          "gm",
+          "gn",
+          "go",
+          "gp",
+          "gq",
+          "gr",
+          "gs",
+          "gt",
+          "gw",
+          "gx",
+          "gy",
+          "gz",
+          "he",
+          "hf",
+          "hi",
+          "hj",
+          "hk",
+          "hl",
+          "hm",
+          "hn",
+          "ho",
+          "hp",
+          "hq",
+          "hr",
+          "hs",
+          "ht",
+          "hw",
+          "hx",
+          "hy",
+          "hz",
+          "ie",
+          "if",
+          "ig",
+          "ih",
+          "ik",
+          "il",
+          "im",
+          "in",
+          "io",
+          "ip",
+          "iq",
+          "ir",
+          "is",
+          "it",
+          "iw",
+          "ix",
+          "iy",
+          "iz",
+          "je",
+          "jf",
+          "jg",
+          "jh",
+          "jk",
+          "jl",
+          "jm",
+          "jn",
+          "jo",
+          "jp",
+          "jq",
+          "jr",
+          "js",
+          "jt",
+          "jw",
+          "jx",
+          "jy",
+          "jz",
+          "ke",
+          "kf",
+          "kg",
+          "kh",
+          "ki",
+          "kj",
+          "km",
+          "kn",
+          "ko",
+          "kp",
+          "kq",
+          "kr",
+          "ks",
+          "kt",
+          "kw",
+          "kx",
+          "ky",
+          "kz",
+          "le",
+          "lf",
+          "lg",
+          "lh",
+          "li",
+          "lj",
+          "lm",
+          "ln",
+          "lo",
+          "lp",
+          "lq",
+          "lr",
+          "ls",
+          "lt",
+          "lw",
+          "lx",
+          "ly",
+          "lz",
+          "me",
+          "mf",
+          "mg",
+          "mh",
+          "mi",
+          "mj",
+          "mk",
+          "ml",
+          "mo",
+          "mp",
+          "mq",
+          "mr",
+          "ms",
+          "mt",
+          "mw",
+          "mx",
+          "my",
+          "mz",
+          "ne",
+          "nf",
+          "ng",
+          "nh",
+          "ni",
+          "nj",
+          "nk",
+          "nl",
+          "no",
+          "np",
+          "nq",
+          "nr",
+          "ns",
+          "nt",
+          "nw",
+          "nx",
+          "ny",
+          "nz",
+          "oe",
+          "of",
+          "og",
+          "oh",
+          "oi",
+          "oj",
+          "ok",
+          "ol",
+          "om",
+          "on",
+          "oq",
+          "or",
+          "os",
+          "ot",
+          "ow",
+          "ox",
+          "oy",
+          "oz",
+          "pe",
+          "pf",
+          "pg",
+          "ph",
+          "pi",
+          "pj",
+          "pk",
+          "pl",
+          "pm",
+          "pn",
+          "pq",
+          "pr",
+          "ps",
+          "pt",
+          "pw",
+          "px",
+          "py",
+          "pz",
+          "qe",
+          "qf",
+          "qg",
+          "qh",
+          "qi",
+          "qj",
+          "qk",
+          "ql",
+          "qm",
+          "qn",
+          "qo",
+          "qp",
+          "qs",
+          "qt",
+          "qw",
+          "qx",
+          "qy",
+          "qz",
+          "re",
+          "rf",
+          "rg",
+          "rh",
+          "ri",
+          "rj",
+          "rk",
+          "rl",
+          "rm",
+          "rn",
+          "ro",
+          "rp",
+          "rs",
+          "rt",
+          "rw",
+          "rx",
+          "ry",
+          "rz",
+          "se",
+          "sf",
+          "sg",
+          "sh",
+          "si",
+          "sj",
+          "sk",
+          "sl",
+          "sm",
+          "sn",
+          "so",
+          "sp",
+          "sq",
+          "sr",
+          "sw",
+          "sx",
+          "sy",
+          "sz",
+          "te",
+          "tf",
+          "tg",
+          "th",
+          "ti",
+          "tj",
+          "tk",
+          "tl",
+          "tm",
+          "tn",
+          "to",
+          "tp",
+          "tq",
+          "tr",
+          "tw",
+          "tx",
+          "ty",
+          "tz",
+          "we",
+          "wf",
+          "wg",
+          "wh",
+          "wi",
+          "wj",
+          "wk",
+          "wl",
+          "wm",
+          "wn",
+          "wo",
+          "wp",
+          "wq",
+          "wr",
+          "ws",
+          "wt",
+          "wy",
+          "wz",
+          "xe",
+          "xf",
+          "xg",
+          "xh",
+          "xi",
+          "xj",
+          "xk",
+          "xl",
+          "xm",
+          "xn",
+          "xo",
+          "xp",
+          "xq",
+          "xr",
+          "xs",
+          "xt",
+          "xy",
+          "xz",
+          "ye",
+          "yf",
+          "yg",
+          "yh",
+          "yi",
+          "yj",
+          "yk",
+          "yl",
+          "ym",
+          "yn",
+          "yo",
+          "yp",
+          "yq",
+          "yr",
+          "ys",
+          "yt",
+          "yw",
+          "yx",
+          "ze",
+          "zf",
+          "zg",
+          "zh",
+          "zi",
+          "zj",
+          "zk",
+          "zl",
+          "zm",
+          "zn",
+          "zo",
+          "zp",
+          "zq",
+          "zr",
+          "zs",
+          "zt",
+          "zw",
+          "zx"
+        ]
+      },
+      {
+        "excludeCodes": "J",
+        "algSet": [
+          "AD",
+          "AE",
+          "AF",
+          "AG",
+          "AH",
+          "AI",
+          "AW",
+          "AM",
+          "AN",
+          "AO",
+          "AP",
+          "AQ",
+          "AR",
+          "AS",
+          "AT",
+          "AX",
+          "AY",
+          "AZ",
+          "BD",
+          "BE",
+          "BF",
+          "BG",
+          "BH",
+          "BI",
+          "BW",
+          "BM",
+          "BN",
+          "BO",
+          "BP",
+          "BQ",
+          "BR",
+          "BS",
+          "BT",
+          "BX",
+          "BY",
+          "BZ",
+          "CD",
+          "CE",
+          "CF",
+          "CG",
+          "CH",
+          "CI",
+          "CW",
+          "CM",
+          "CN",
+          "CO",
+          "CP",
+          "CQ",
+          "CR",
+          "CS",
+          "CT",
+          "CX",
+          "CY",
+          "CZ",
+          "DA",
+          "DB",
+          "DC",
+          "DG",
+          "DH",
+          "DI",
+          "DW",
+          "DM",
+          "DN",
+          "DO",
+          "DP",
+          "DQ",
+          "DR",
+          "DS",
+          "DT",
+          "DX",
+          "DY",
+          "DZ",
+          "EA",
+          "EB",
+          "EC",
+          "EG",
+          "EH",
+          "EI",
+          "EW",
+          "EM",
+          "EN",
+          "EO",
+          "EP",
+          "EQ",
+          "ER",
+          "ES",
+          "ET",
+          "EX",
+          "EY",
+          "EZ",
+          "FA",
+          "FB",
+          "FC",
+          "FG",
+          "FH",
+          "FI",
+          "FW",
+          "FM",
+          "FN",
+          "FO",
+          "FP",
+          "FQ",
+          "FR",
+          "FS",
+          "FT",
+          "FX",
+          "FY",
+          "FZ",
+          "GA",
+          "GB",
+          "GC",
+          "GD",
+          "GE",
+          "GF",
+          "GW",
+          "GM",
+          "GN",
+          "GO",
+          "GP",
+          "GQ",
+          "GR",
+          "GS",
+          "GT",
+          "GX",
+          "GY",
+          "GZ",
+          "HA",
+          "HB",
+          "HC",
+          "HD",
+          "HE",
+          "HF",
+          "HW",
+          "HM",
+          "HN",
+          "HO",
+          "HP",
+          "HQ",
+          "HR",
+          "HS",
+          "HT",
+          "HX",
+          "HY",
+          "HZ",
+          "IA",
+          "IB",
+          "IC",
+          "ID",
+          "IE",
+          "IF",
+          "IW",
+          "IM",
+          "IN",
+          "IO",
+          "IP",
+          "IQ",
+          "IR",
+          "IS",
+          "IT",
+          "IX",
+          "IY",
+          "IZ",
+          "WA",
+          "WB",
+          "WC",
+          "WD",
+          "WE",
+          "WF",
+          "WG",
+          "WH",
+          "WI",
+          "WO",
+          "WP",
+          "WQ",
+          "WR",
+          "WS",
+          "WT",
+          "WX",
+          "WY",
+          "WZ",
+          "MA",
+          "MB",
+          "MC",
+          "MD",
+          "ME",
+          "MF",
+          "MG",
+          "MH",
+          "MI",
+          "MO",
+          "MP",
+          "MQ",
+          "MR",
+          "MS",
+          "MT",
+          "MX",
+          "MY",
+          "MZ",
+          "NA",
+          "NB",
+          "NC",
+          "ND",
+          "NE",
+          "NF",
+          "NG",
+          "NH",
+          "NI",
+          "NO",
+          "NP",
+          "NQ",
+          "NR",
+          "NS",
+          "NT",
+          "NX",
+          "NY",
+          "NZ",
+          "OA",
+          "OB",
+          "OC",
+          "OD",
+          "OE",
+          "OF",
+          "OG",
+          "OH",
+          "OI",
+          "OW",
+          "OM",
+          "ON",
+          "OR",
+          "OS",
+          "OT",
+          "OX",
+          "OY",
+          "OZ",
+          "PA",
+          "PB",
+          "PC",
+          "PD",
+          "PE",
+          "PF",
+          "PG",
+          "PH",
+          "PI",
+          "PW",
+          "PM",
+          "PN",
+          "PR",
+          "PS",
+          "PT",
+          "PX",
+          "PY",
+          "PZ",
+          "QA",
+          "QB",
+          "QC",
+          "QD",
+          "QE",
+          "QF",
+          "QG",
+          "QH",
+          "QI",
+          "QW",
+          "QM",
+          "QN",
+          "QR",
+          "QS",
+          "QT",
+          "QX",
+          "QY",
+          "QZ",
+          "RA",
+          "RB",
+          "RC",
+          "RD",
+          "RE",
+          "RF",
+          "RG",
+          "RH",
+          "RI",
+          "RW",
+          "RM",
+          "RN",
+          "RO",
+          "RP",
+          "RQ",
+          "RX",
+          "RY",
+          "RZ",
+          "SA",
+          "SB",
+          "SC",
+          "SD",
+          "SE",
+          "SF",
+          "SG",
+          "SH",
+          "SI",
+          "SW",
+          "SM",
+          "SN",
+          "SO",
+          "SP",
+          "SQ",
+          "SX",
+          "SY",
+          "SZ",
+          "TA",
+          "TB",
+          "TC",
+          "TD",
+          "TE",
+          "TF",
+          "TG",
+          "TH",
+          "TI",
+          "TW",
+          "TM",
+          "TN",
+          "TO",
+          "TP",
+          "TQ",
+          "TX",
+          "TY",
+          "TZ",
+          "XA",
+          "XB",
+          "XC",
+          "XD",
+          "XE",
+          "XF",
+          "XG",
+          "XH",
+          "XI",
+          "XW",
+          "XM",
+          "XN",
+          "XO",
+          "XP",
+          "XQ",
+          "XR",
+          "XS",
+          "XT",
+          "YA",
+          "YB",
+          "YC",
+          "YD",
+          "YE",
+          "YF",
+          "YG",
+          "YH",
+          "YI",
+          "YW",
+          "YM",
+          "YN",
+          "YO",
+          "YP",
+          "YQ",
+          "YR",
+          "YS",
+          "YT",
+          "ZA",
+          "ZB",
+          "ZC",
+          "ZD",
+          "ZE",
+          "ZF",
+          "ZG",
+          "ZH",
+          "ZI",
+          "ZW",
+          "ZM",
+          "ZN",
+          "ZO",
+          "ZP",
+          "ZQ",
+          "ZR",
+          "ZS",
+          "ZT"
+        ]
+      }
+    ]
+  },
+  "faceletBuild": {
+    "note": "m2p() builds this URFDLB facelet string then solves it. Only the facelet is portable/deterministic; the solver move output is NOT recorded. solvableSanityCheck confirms min2phase accepts the captured facelet.",
+    "colorConst": "uflulbubrurfdlfdbldrbdfrufuluburdfdldbdrfrflblbrudfbrl",
+    "orderConst": "DeGc1gAaJKhIr5zZpSBbLs3qNjYWiXk2oOmREdCx6tQlMHfFy4wTnP",
+    "entries": [
+      {
+        "stateName": "solved",
+        "state": "ABCDEFGHIJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "facelet": "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+        "solvableSanityCheck": true
+      },
+      {
+        "stateName": "cornerCycleAGN",
+        "state": "NWMDEFABCJKLHIGOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "facelet": "UUUUUUFUURRLRRRRRRDFFFFFUFFBDDDDDDDDLLLLLLLLRFBBBBBBBB",
+        "solvableSanityCheck": true
+      },
+      {
+        "stateName": "cornerCycleJGA",
+        "state": "GHIDEFJKLABCWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "facelet": "UUUUUUUUUFRFRRRRRRBFLFFFFFFDDDDDDDDDLLRLLLLLLRBBBBBBBB",
+        "solvableSanityCheck": true
+      },
+      {
+        "stateName": "edgeCycleagm",
+        "state": "ABCDEFGHIJKLWMNOPQRSTXYZmncdefabijklghopqrstwxyz123456",
+        "facelet": "UUUUUUUDURFRRRRRRRFBFFFFFFFDDDDDDDUDLLLLLLLLLBBBBBBBRB",
+        "solvableSanityCheck": true
+      },
+      {
+        "stateName": "mixedCornerEdge",
+        "state": "NWMDEFABCJKLHIGOPQRSTXYZmncdefabijklghopqrstwxyz123456",
+        "facelet": "UUUUUUFDURFLRRRRRRDBFFFFUFFBDDDDDDUDLLLLLLLLRFBBBBBBRB",
+        "solvableSanityCheck": true
+      },
+      {
+        "stateName": "cornerSwapAG_unsolvable",
+        "state": "GHIDEFABCJKLWMNOPQRSTXYZabcdefghijklmnopqrstwxyz123456",
+        "facelet": "UUUUUUUUURRLRRRRRRBFFFFFFFFDDDDDDDDDLLRLLLLLLFBBBBBBBB",
+        "solvableSanityCheck": false
+      }
+    ]
+  },
+  "randomGenerators": {
+    "note": "randomEdge/randomCorner/randomEdge1/randomCorner1 use Math.random (non- seedable). Outputs are NOT captured. The port's tests assert INVARIANTS instead (see invariants).",
+    "invariants": {
+      "randomEdge": [
+        "Output length === 54 (full globalState width).",
+        "Centers (indices 48..53) unchanged === '123456'.",
+        "Corner block (0..23) unchanged === globalState[0..23] (only edge stickers permuted).",
+        "Edge piece permutation parity === parity argument (0=even via 24 swaps, 1=odd via 25 swaps).",
+        "Result is a valid 12-edge permutation (each of the 12 edge positions present once when read by posChichu)."
+      ],
+      "randomCorner": [
+        "Output length === 54.",
+        "Centers unchanged === '123456'.",
+        "Edge block (24..47) unchanged.",
+        "Corner permutation parity === parity argument.",
+        "Valid 8-corner permutation."
+      ],
+      "randomEdge1": [
+        "Buffer (codeList[0]'s position, here pos0 = first non-excluded edge pos) is the only fixed exchange anchor.",
+        "All codes in codeList stay in place (their positions are excluded from the shuffle pool, never displaced).",
+        "Permutation parity === parity argument relative to the working subset.",
+        "Centers + corner block unchanged."
+      ],
+      "randomCorner1": [
+        "Codes in codeList stay in place (excluded from shuffle pool).",
+        "Permutation parity === parity argument.",
+        "Centers + edge block unchanged."
+      ]
+    }
+  }
+}
