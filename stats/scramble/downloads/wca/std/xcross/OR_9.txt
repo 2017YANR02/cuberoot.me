@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 9
-# Population in this bin: 285
+# Population in this bin: 286
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-30
+# Generated: 2026-06-03
 # Columns: id,scramble,bottom_color
 
 5055001,B2 U' R' U2 D' F' B U L' D F2 U2 D2 R' B2 U2 R L2 F2 U2,O
@@ -184,7 +184,7 @@
 3432346001,L2 F R2 F U2 B' L2 R2 F' U2 R' U' B' D' L' F' R2 B L2 R2,O
 3462465001,R2 D' F2 D' R2 U' L2 D' R2 U B' L' U' B' L' F L2 F2 D U,O
 3481411001,R B' D' R' F U L' F2 U2 L2 D' R2 F2 R2 D R2 U L' B',O
-3546325001,U B2 L2 D R2 U2 L2 U' B' D F D2 F' D F2 L F R2 D' R,O
+5670672013,F U' B2 F2 D2 U' R2 D B2 R' U' F' D R' U' R' U' R' B',O
 3965414028,L2 F' D2 B2 D2 F D2 F' D2 R B' D R U' R F' L B R B' L2 U2,O
 3570452001,D B U2 F U2 B2 D2 U R' B F2 R F2 D2 F' R2 D,O
 3573968001,D2 L U' B2 L2 B2 L D' R F B U' R2 U B2 R2 F2 D2 B2,O

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 468
+# Population in this bin: 469
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-30
+# Generated: 2026-06-03
 # Columns: id,scramble,bottom_color
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W
@@ -164,7 +164,7 @@
 4204162001,U2 F2 U2 B' D2 R2 D2 F2 R F2 R' B D F2 U' R2 U,W
 3060174001,F2 R2 F R D' L B' U F' L F2 D2 R L2 U2 F2 D2 B2 D2,R
 1327415027,B R2 F' L2 D2 B2 F' D2 L2 F D' B' L' R F' U B L' D L D2 B' L,R
-1341267001,B2 L2 R2 U' L2 U2 R2 B2 U' B2 F2 R' D' U2 B' R' F D2 F' L2 U2,R
+5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R
 1358238001,U D' R U L' F' D L2 B L B2 L2 D2 F' U2 L2 F' R2 F,O
 1381975001,D2 F' L2 B' L2 B2 D2 L2 B2 U' B' U2 L R U B D2 B2 L2 F,O
 1387348001,D2 R' D2 U2 L' D2 L D2 U2 F L D' F L2 B' U2 L R2,O
