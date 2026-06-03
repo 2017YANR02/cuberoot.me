@@ -2,7 +2,7 @@
 # Population in this bin: 8
 # Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-30
+# Generated: 2026-06-03
 # Columns: id,scramble,bottom_color
 
 3945007001,U2 R2 F D2 F' U2 L2 D2 L2 B' L F2 D' B D2 F' R B' D' L,W

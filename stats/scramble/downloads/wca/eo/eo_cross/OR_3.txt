@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / OR / bin 3
-# Population in this bin: 396
+# Population in this bin: 400
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-30
+# Generated: 2026-06-03
 # Columns: id,scramble,bottom_color
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O
@@ -14,7 +14,7 @@
 2944657001,U2 F' U' F' D R2 U' R2 F' D2 R2 D R2 D' F2 R2 L2 U' B R2,O
 84567001,U2 B F2 D2 F R2 B' D2 R2 F' U' L' D2 U' L B U' F D2 L' F,R
 91231001,B R2 D2 F' L2 R2 D2 F U2 L' F' D2 R2 F2 L2 R B D' B',R
-103542001,D R2 B2 D R2 U2 L2 B2 D2 R2 B U2 B D F2 R F2 D F2,O
+5679789001,L B R F2 B D2 R' B U2 B2 R2 B2 R2 D2 B2 R' B',O
 3168380013,B2 L U2 R2 B2 R' F2 R B2 U2 B' F' L2 B U R' D B R' B' L',R
 116647001,D2 B2 U2 L' U2 L' F2 L2 R U' R2 F2 R B2 D2 U F' L2,O
 131623001,F2 L F2 L D2 B2 L2 D U L R2 U B2 R2 U2 L' D' F2,R
@@ -112,7 +112,7 @@
 827193001,U2 L2 F L2 B F U2 R F L2 D2 B' D2 B2 R' U2 L2,O
 2872582001,D2 U2 F2 U2 L' B2 R2 F2 L' F2 U2 B' L2 U F2 U R' B',O
 4673146017,F2 D2 U2 L F2 R U2 L' U2 R D2 B2 F D' B' L' B2 L U' B' L2,O
-5073393001,U2 B2 U2 R U2 R U L' B2 L2 D' F2 U2 L2 R' D',R
+5642372001,F2 U2 R2 D2 U2 R' U2 L' D2 F' U' B U2 F2 D2 U L B' U',R
 841744012,L2 D' L2 D2 R2 D F' R' F R' D2 L F2 U B2 U F2 L2 U',R
 851005001,D' B' D B L' F2 L2 B' R' B D' L2 F2 B2 U2 D L2 D' B2,O
 2227316001,D2 L' F L R2 U2 L2 D2 F2 D2 R' F' R2 B' R' B' F' D',R

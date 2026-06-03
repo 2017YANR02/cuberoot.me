@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGWY / bin 4
-# Population in this bin: 656
+# Population in this bin: 657
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-05-30
+# Generated: 2026-06-03
 # Columns: id,scramble,bottom_color
 
 1882840001,U2 B2 R2 D U' L2 F2 U F R2 D' R2 B' D' L' U2 F U L,B
