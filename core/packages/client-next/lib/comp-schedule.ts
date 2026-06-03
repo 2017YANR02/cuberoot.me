@@ -386,6 +386,80 @@ export function computeDayColumns(data: ScheduleData, timeZone: string): {
   return { days, slotMinHour, slotMaxHour };
 }
 
+// ── Calendar (FullCalendar) layout ───────────────────────────────────
+// FullCalendar shares ONE slotMinTime/slotMaxTime across every day column, so
+// the bounds must be a time-of-day window — not a global minute clamped to 0,
+// which would make a comp whose only "early" activity is the small hours of a
+// later day show a dead 00:00→evening gap on the first day.
+
+export interface CalendarLayout {
+  slotMinTime: string;   // "HH:MM:SS"
+  slotMaxTime: string;   // "HH:MM:SS" — may exceed 24:00 for overnight comps
+  dayKeys: string[];     // venue-local column anchors, sorted
+  overnight: boolean;    // single continuous column running past midnight
+}
+
+const hms = (totalMin: number): string => {
+  const m = Math.round(totalMin);
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00`;
+};
+
+/** Add N calendar days to a "YYYY-MM-DD" key, timezone-independently. */
+export function addDaysToKey(dateKey: string, days: number): string {
+  const d = new Date(`${dateKey}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Slot bounds + columns for the FullCalendar view.
+ * - Normal comp: floor-to-hour of the earliest start to (latest end + buffer),
+ *   clamped to [0, 24], every local day a column.
+ * - Overnight comp (a single night straddling midnight — e.g. a New-Year
+ *   countdown): one continuous column anchored on the first day, slot times
+ *   running past 24:00 so the small hours sit below midnight with no dead gap.
+ */
+export function computeCalendarLayout(data: ScheduleData, timeZone: string): CalendarLayout {
+  const acts = data.activities.map(a => {
+    const s = localParts(a.startTime, timeZone);
+    const e = localParts(a.endTime, timeZone);
+    return { sKey: s.dateKey, sMin: s.minutesOfDay, eKey: e.dateKey, eMin: e.minutesOfDay };
+  });
+  if (acts.length === 0) {
+    return { slotMinTime: '08:00:00', slotMaxTime: '20:00:00', dayKeys: [], overnight: false };
+  }
+  const dayKeys = Array.from(new Set(acts.map(a => a.sKey))).sort();
+
+  if (dayKeys.length === 2) {
+    const [d1, d2] = dayKeys;
+    const day1 = acts.filter(a => a.sKey === d1);
+    const day2 = acts.filter(a => a.sKey === d2);
+    const day1LatestEnd = Math.max(...day1.map(a => (a.eKey === d1 ? a.eMin : 24 * 60)));
+    const day2EarliestStart = Math.min(...day2.map(a => a.sMin));
+    const day2LatestEnd = Math.max(...day2.map(a => (a.eKey === d2 ? a.eMin : 24 * 60)));
+    const crossesMidnight = acts.some(a => a.eKey !== a.sKey);
+    // A continuous night: day 1 runs into the late evening (or an activity
+    // crosses midnight) and day 2 both starts and ends before dawn.
+    if (day2EarliestStart < 6 * 60 && day2LatestEnd <= 8 * 60 && (day1LatestEnd >= 22 * 60 || crossesMidnight)) {
+      const earliest = Math.min(...day1.map(a => a.sMin));
+      const minMin = Math.floor(earliest / 60) * 60;
+      const maxMin = Math.min(30 * 60, Math.ceil((day2LatestEnd + 24 * 60 + 10) / 60) * 60);
+      return { slotMinTime: hms(minMin), slotMaxTime: hms(maxMin), dayKeys: [d1], overnight: true };
+    }
+  }
+
+  let minStart = Infinity;
+  let maxEnd = -Infinity;
+  for (const a of acts) {
+    if (a.sMin < minStart) minStart = a.sMin;
+    const end = a.eKey !== a.sKey || a.eMin <= a.sMin ? 24 * 60 : a.eMin;
+    if (end > maxEnd) maxEnd = end;
+  }
+  const minMin = Math.max(0, Math.floor(minStart / 60) * 60);
+  const maxMin = Math.min(24 * 60, Math.max(minMin + 60, Math.ceil((maxEnd + 10) / 60) * 60));
+  return { slotMinTime: hms(minMin), slotMaxTime: hms(maxMin), dayKeys, overnight: false };
+}
+
 // Readable text color over a room hex. WCAG luminance.
 export function readableTextColor(hex: string): string {
   const m = /^#?([0-9a-fA-F]{6})$/.exec(hex);
