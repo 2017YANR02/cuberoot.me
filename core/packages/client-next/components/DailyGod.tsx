@@ -6,7 +6,7 @@
 // build:daily-god, refreshed by the cross-stats pipeline). 1 hero card + top-5 list.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { VisualCube } from '@/components/VisualCube';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -55,11 +55,6 @@ const COLOR_NAME: Record<Color, { zh: string; en: string }> = {
 const COLOR_HEX: Record<Color, string> = {
   W: '#FFFFFF', Y: '#FEFE00', R: '#EE0000', O: '#FFA100', B: '#0000F2', G: '#00D800',
 };
-// visualcube 默认朝向是非标准黄顶(U=Y F=R R=G);追加 `z2 y'` 把整个打乱后的魔方转到
-// WCA 标准白顶绿前红右(playwright canvas 校准),与 /scramble/gen 一致。整体旋转不改解距离。
-// 底色 swatch 只切数据(哪个底色衡量步数),不再改朝向。
-const WCA_STANDARD = "z2 y'";
-
 function sourceLine(m: ScrMeta, isZh: boolean): string {
   const round = roundTypeName(m.r, isZh);
   const group = isZh ? `${m.g} 组` : `Group ${m.g}`;
@@ -162,11 +157,10 @@ export default function DailyGod({ lang }: Props) {
         const [id, steps] = hero;
         const scramble = data.scr[id] ?? '';
         const m = data.meta[id];
-        const setup = `${scramble} ${WCA_STANDARD}`.trim();
         return (
           <div className="dg-hero">
             <div className="dg-hero-cube">
-              <VisualCube algorithm="" setup={setup} view="iso" size={132} alt={isZh ? '打乱预览' : 'scramble preview'} />
+              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={isZh ? '查看大图' : 'View full size'} />
             </div>
             <div className="dg-hero-body">
               <div className="dg-hero-steps">
