@@ -873,15 +873,19 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
   );
   if (pers.length === 0) return c.json({ error: 'Person not found' }, 404);
 
-  const rows = await query<{ is_avg: boolean; best_rank: number; best_events: string }>(
-    `SELECT is_avg, best_rank, best_events FROM sor_player_best WHERE wca_id = ? AND scope = 'world'`,
+  const rows = await query<{ is_avg: boolean; best_rank: number; combo_count: number; best_events: string }>(
+    `SELECT is_avg, best_rank, combo_count, best_events FROM sor_player_best WHERE wca_id = ? AND scope = 'world'`,
     [wcaId],
   );
-  const best: Record<string, { rank: number; events: string[] }> = {};
+  // best_events = ';' 分隔的并列最优组合, 每组合内部 ',' 分隔 event id (项目数最少优先, 服务端已封顶).
+  // combo_count = 并列该名次的全部子集数(可能 > 列出的组合数).
+  const best: Record<string, { rank: number; combos: string[][]; comboCount: number }> = {};
   for (const r of rows) {
+    const combos = r.best_events ? r.best_events.split(';').map(c => c.split(',')) : [];
     best[r.is_avg ? 'average' : 'single'] = {
       rank: r.best_rank,
-      events: r.best_events ? r.best_events.split(',') : [],
+      combos,
+      comboCount: r.combo_count ?? combos.length,
     };
   }
 

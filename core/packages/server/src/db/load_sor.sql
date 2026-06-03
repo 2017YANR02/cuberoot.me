@@ -6,7 +6,8 @@
 --
 -- TSV 由本地 Rust 预计算产出 (吃 wca_person_ranks 同源的 21 项名次矩阵):
 --   sor_census.copy.tsv       列: is_avg scope country_id rank wca_id subsets_won
---   sor_player_best.copy.tsv  列: wca_id is_avg scope best_rank best_events
+--   sor_player_best.copy.tsv  列: wca_id is_avg scope best_rank combo_count best_events
+--                             (best_events = ';' 分隔的并列组合, 组内 ',' 分隔 event id; single+average 合并一个文件)
 -- 口径与 /v1/wca/sum-of-ranks 一致 (RANK_EVENTS = 17 活跃 + 4 废止). 仅世界口径 (scope='world').
 
 CREATE TABLE IF NOT EXISTS sor_census (
@@ -25,15 +26,18 @@ CREATE TABLE IF NOT EXISTS sor_player_best (
   is_avg       BOOLEAN NOT NULL,
   scope        VARCHAR(8) NOT NULL DEFAULT 'world',
   best_rank    INTEGER NOT NULL,
+  combo_count  INTEGER NOT NULL DEFAULT 1,
   best_events  TEXT NOT NULL,
   PRIMARY KEY (wca_id, is_avg, scope)
 );
+-- 既有表(老 schema 没 combo_count)补列; 与 migration 0022 同款, 幂等.
+ALTER TABLE sor_player_best ADD COLUMN IF NOT EXISTS combo_count INTEGER NOT NULL DEFAULT 1;
 
 TRUNCATE sor_census;
 TRUNCATE sor_player_best;
 
 \copy sor_census (is_avg, scope, country_id, rank, wca_id, subsets_won) FROM 'sor_census.copy.tsv';
-\copy sor_player_best (wca_id, is_avg, scope, best_rank, best_events) FROM 'sor_player_best.copy.tsv';
+\copy sor_player_best (wca_id, is_avg, scope, best_rank, combo_count, best_events) FROM 'sor_player_best.copy.tsv';
 
 ANALYZE sor_census;
 ANALYZE sor_player_best;

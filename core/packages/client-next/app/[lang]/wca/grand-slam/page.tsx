@@ -164,9 +164,9 @@ function GrandSlamPageInner() {
                     <td className="wse-rank-col">{i + 1}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">
+                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
-                      </a>
+                      </Link>
                     </td>
                     <td>{r.eventId}</td>
                     <td className="wse-value-col">{r.single != null ? formatWcaResult(r.single, r.eventId, 'single') : '—'}</td>

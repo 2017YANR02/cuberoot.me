@@ -410,6 +410,13 @@
 }
 .sor-pb-apply:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 .sor-pb-note { font-size: 12px; color: var(--faint-foreground); }
+.sor-pb-rank-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sor-pb-count { font-size: 12px; color: var(--muted-foreground); }
+.sor-pb-combos { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.sor-pb-combo { display: flex; align-items: center; gap: 10px; }
+
+/* SoR main table: flag + name inline in the person cell */
+.wse-person-cell { display: inline-flex; align-items: center; gap: 6px; }
 
 .sor-census { margin: 0 0 16px; }
 .sor-census-toggle {

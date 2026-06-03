@@ -178,9 +178,9 @@ function HistoricalRanksPageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
-                      <a href={`https://www.worldcubeassociation.org/persons/${r.wcaId}`} target="_blank" rel="noopener noreferrer">
+                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
-                      </a>
+                      </Link>
                     </td>
                     <td className="wse-value-col">
                       {r.value != null ? formatWcaResult(r.value, event, type) : '—'}
