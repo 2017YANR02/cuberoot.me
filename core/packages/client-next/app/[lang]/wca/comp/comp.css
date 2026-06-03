@@ -1419,37 +1419,75 @@ td.is-pr {
 .sched-fc .fc-theme-standard td,
 .sched-fc .fc-theme-standard th { border-color: var(--border-default); }
 
-/* Table view */
-.sched-table-section { width: fit-content; max-width: 100%; }
-.sched-day-title { font-size: 1.02rem; font-weight: 600; color: var(--foreground); margin: 18px 0 10px; }
-.sched-table-section .sched-day-title:first-of-type { margin-top: 0; }
-.sched-details-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.sched-details-toggle label { cursor: pointer; user-select: none; font-size: 0.9rem; color: var(--foreground); font-weight: 500; }
-.sched-details-toggle input { cursor: pointer; accent-color: var(--accent); }
-.sched-table-wrap { display: inline-block; border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 16px; }
-.sched-table { width: auto; border-collapse: collapse; font-size: 0.9rem; }
+/* Table view — 1:1 with the WCA competition schedule table */
+.sched-table-section { width: 100%; max-width: 100%; }
+
+/* "Show Round Details" toggle switch (Semantic-UI style slider) */
+.sched-details-toggle {
+  display: inline-flex; align-items: center; gap: 9px;
+  cursor: pointer; user-select: none; margin-bottom: 20px;
+}
+.sched-switch { position: relative; flex: none; width: 36px; height: 20px; display: inline-block; }
+.sched-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.sched-switch::before {
+  content: ''; position: absolute; inset: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+  transition: background 0.15s ease;
+}
+.sched-switch.is-on::before { background: var(--accent); }
+.sched-switch-knob {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  transition: transform 0.15s ease;
+}
+.sched-switch.is-on .sched-switch-knob { transform: translateX(16px); }
+.sched-switch-label { font-size: 0.92rem; color: var(--foreground); font-weight: 500; }
+
+/* Day heading: "Schedule for <full date>" + Google-Calendar icon link */
+.sched-day { margin-bottom: 28px; }
+.sched-day-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1.5rem; font-weight: 700; line-height: 1.2;
+  color: var(--foreground); margin: 0 0 12px;
+}
+.sched-cal-link {
+  display: inline-flex; align-items: center; color: var(--accent);
+  flex: none; line-height: 0;
+}
+.sched-cal-link:hover { color: color-mix(in srgb, var(--accent) 70%, var(--foreground)); }
+
+.sched-table-wrap { width: 100%; overflow-x: auto; }
+.sched-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .sched-table thead th {
-  position: sticky; top: 0; z-index: 2;
-  background: color-mix(in srgb, var(--muted) 80%, var(--background));
-  padding: 8px 10px; text-align: left; font-weight: 600; color: var(--foreground);
-  border-bottom: 1px solid var(--border-default); white-space: nowrap; font-size: 0.85rem;
+  padding: 10px 14px; text-align: left; font-weight: 400;
+  color: var(--foreground); white-space: nowrap;
+  border-bottom: 1px solid var(--border-default);
 }
+.sched-table thead th a { color: var(--accent); text-decoration: none; }
+.sched-table thead th a:hover { text-decoration: underline; }
 .sched-table tbody td {
-  padding: 7px 10px; white-space: nowrap;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
+  padding: 12px 14px; vertical-align: top; color: var(--foreground);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
 }
-.sched-table tbody tr:last-child td { border-bottom: none; }
-.sched-table tbody tr:nth-child(odd) { background: color-mix(in srgb, var(--foreground) 2.5%, transparent); }
-.sched-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .sched-table--details-hidden .sched-col-format,
 .sched-table--details-hidden .sched-col-timelimit,
 .sched-table--details-hidden .sched-col-cutoff,
 .sched-table--details-hidden .sched-col-proceed { display: none; }
-.sched-td-time { font-variant-numeric: tabular-nums; }
-.sched-td-activity { font-weight: 500; color: var(--foreground); }
+.sched-td-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sched-td-activity { display: flex; align-items: center; gap: 7px; }
 .sched-td-room, .sched-col-format, .sched-col-timelimit, .sched-col-cutoff, .sched-col-proceed {
-  color: var(--muted-foreground); font-size: 0.85rem;
+  color: var(--muted-foreground);
 }
+
+/* Legend below the tables (link targets for the column headers) */
+.sched-legend { margin-top: 6px; max-width: 760px; }
+.sched-legend h4 {
+  font-size: 1.05rem; font-weight: 700; color: var(--foreground);
+  margin: 18px 0 6px; scroll-margin-top: 80px;
+}
+.sched-legend p { margin: 0 0 4px; color: var(--muted-foreground); font-size: 0.9rem; line-height: 1.55; }
+.sched-legend a { color: var(--accent); text-decoration: none; }
+.sched-legend a:hover { text-decoration: underline; }
 
 /* Mobile <=480: calendar single-day (matches useIsMobile(480)) */
 @media (max-width: 480px) {
@@ -1463,24 +1501,40 @@ td.is-pr {
   .sched-hour-label { font-size: 0.66rem; }
 }
 
-/* Mobile <768: table -> cards */
-@media (max-width: 767px) {
-  .sched-table-section { width: 100%; }
-  .sched-table-wrap { display: block; border: none; }
+/* Phones + portrait tablets (<=860px): table collapses into per-activity cards.
+   8 columns can't fit a narrow viewport, so each row becomes a label/value card. */
+@media (max-width: 860px) {
+  .sched-table-wrap { overflow-x: visible; }
   .sched-table { width: 100%; }
   .sched-table thead { display: none; }
   .sched-table tbody tr {
-    display: block; border: 1px solid var(--border-default); border-radius: 6px;
-    margin-bottom: 10px; padding: 8px 10px; background: var(--card, var(--background));
+    display: block; border: 1px solid var(--border-default); border-radius: 8px;
+    margin-bottom: 12px; padding: 4px 14px;
   }
-  .sched-table tbody tr:nth-child(odd) { background: var(--card, var(--background)); }
   .sched-table tbody td {
-    display: flex; justify-content: space-between; gap: 12px; padding: 4px 0;
-    white-space: normal; border-bottom: none;
-    border-top: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 9px 0; text-align: right; white-space: normal;
+    border-bottom: none;
+    border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
   }
   .sched-table tbody td:first-child { border-top: none; }
   .sched-table tbody td::before {
-    content: attr(data-label); font-weight: 600; color: var(--muted-foreground); font-size: 0.78rem;
+    content: attr(data-label); flex: none; text-align: left;
+    font-weight: 600; color: var(--muted-foreground); font-size: 0.82rem;
   }
+  /* empty Format/Time limit/Cutoff/Proceed cells: no blank label row */
+  .sched-table tbody td.sched-cell-empty { display: none; }
+  /* Activity: keep its icon + name grouped on the right, label pushed left */
+  .sched-table tbody td.sched-td-activity {
+    justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 7px; font-weight: 600;
+  }
+  .sched-td-activity::before { margin-right: auto; }
+  .sched-td-room, .sched-col-format, .sched-col-timelimit,
+  .sched-col-cutoff, .sched-col-proceed { font-size: 0.88rem; }
+}
+
+@media (max-width: 600px) {
+  .sched-day-title { font-size: 1.2rem; }
+  .sched-day { margin-bottom: 22px; }
+  .sched-legend h4 { font-size: 1rem; }
 }

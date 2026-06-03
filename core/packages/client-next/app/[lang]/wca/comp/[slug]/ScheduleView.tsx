@@ -2,16 +2,25 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { CalendarDays, Table as TableIcon, Loader2 } from 'lucide-react';
+import { CalendarDays, Table as TableIcon, Loader2, CalendarPlus } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
-  fetchCompSchedule, computeDayColumns, computeCalendarLayout, localParts,
-  localizeActivityName, eventOfActivity, formatName, timeLimitText, cutoffText,
-  advancementText, dayHeaderLabel, roundIdOf,
+  fetchCompSchedule, computeDayColumns, computeCalendarLayout, simpleTimeLabel,
+  localizeActivityName, eventOfActivity, formatCell, timeLimitText, cutoffText,
+  advancementText, dayHeaderLabel, fullDateLabel, roundIdOf,
   type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
+
+const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
+
+// Google Calendar template link for a day's activities (text + UTC start/end).
+function gcalUrl(startIso: string, endIso: string, name: string): string {
+  const g = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d+/, '');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(name)}&dates=${g(startIso)}/${g(endIso)}`;
+}
 
 // FullCalendar (and luxon) is ~200KB; only pull it in when the calendar is
 // actually rendered, never on the results/psych tabs.
@@ -26,7 +35,7 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
 
 type View = 'calendar' | 'table';
 
-export default function ScheduleView({ slug, isZh }: { slug: string; isZh: boolean }) {
+export default function ScheduleView({ slug, isZh, compName }: { slug: string; isZh: boolean; compName: string }) {
   const [view, setView] = useState<View>('calendar');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ScheduleData | null>(null);
@@ -89,6 +98,7 @@ export default function ScheduleView({ slug, isZh }: { slug: string; isZh: boole
           days={cols.days}
           tz={tz}
           isZh={isZh}
+          compName={compName}
           detailsExpanded={detailsExpanded}
           onToggleDetails={() => setDetailsExpanded(v => !v)}
         />
@@ -163,32 +173,60 @@ function CalendarSection({ data, tz, isZh }: {
   );
 }
 
-function TableView({ data, days, tz, isZh, detailsExpanded, onToggleDetails }: {
+function TableView({ data, days, tz, isZh, compName, detailsExpanded, onToggleDetails }: {
   data: ScheduleData;
   days: DayColumn[];
   tz: string;
   isZh: boolean;
+  compName: string;
   detailsExpanded: boolean;
   onToggleDetails: () => void;
 }) {
+  // The "Cutoff" legend section only appears when at least one round has a cutoff,
+  // matching the WCA page (which links the column header to it conditionally).
+  const hasCutoff = Object.values(data.rounds).some(r => r.cutoff);
+
   return (
     <div className="sched-table-section">
-      <div className="sched-details-toggle">
-        <input
-          type="checkbox"
-          id="sched-details"
-          checked={detailsExpanded}
-          onChange={onToggleDetails}
-        />
-        <label htmlFor="sched-details">{isZh ? '显示轮次详情' : 'Show Round Details'}</label>
-      </div>
+      <label className="sched-details-toggle">
+        <span className={`sched-switch${detailsExpanded ? ' is-on' : ''}`}>
+          <input
+            type="checkbox"
+            checked={detailsExpanded}
+            onChange={onToggleDetails}
+            aria-label={isZh ? '显示轮次详情' : 'Show Round Details'}
+          />
+          <span className="sched-switch-knob" />
+        </span>
+        <span className="sched-switch-label">{isZh ? '显示轮次详情' : 'Show Round Details'}</span>
+      </label>
+
       {days.map(d => {
         const sorted = [...d.activities].sort(
           (a, b) => a.startMin - b.startMin || a.roomName.localeCompare(b.roomName),
         );
+        const firstStart = sorted[0]?.startTime;
+        const lastEnd = sorted.reduce(
+          (m, a) => (a.endTime > m ? a.endTime : m), sorted[0]?.endTime ?? '',
+        );
         return (
-          <div key={d.dateKey}>
-            <h3 className="sched-day-title">{dayHeaderLabel(d.dateKey, tz, isZh)}</h3>
+          <section key={d.dateKey} className="sched-day">
+            <h2 className="sched-day-title">
+              {firstStart && (
+                <a
+                  className="sched-cal-link"
+                  href={gcalUrl(firstStart, lastEnd, compName)}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={isZh ? '添加到 Google 日历' : 'Add to Google Calendar'}
+                >
+                  <CalendarPlus size={19} />
+                </a>
+              )}
+              {isZh
+                ? `${fullDateLabel(d.dateKey, true)} 赛程`
+                : `Schedule for ${fullDateLabel(d.dateKey, false)}`}
+            </h2>
             <div className="sched-table-wrap">
               <table className={`sched-table${detailsExpanded ? '' : ' sched-table--details-hidden'}`}>
                 <thead>
@@ -198,44 +236,109 @@ function TableView({ data, days, tz, isZh, detailsExpanded, onToggleDetails }: {
                     <th>{isZh ? '活动' : 'Activity'}</th>
                     <th>{isZh ? '场地' : 'Room or Stage'}</th>
                     <th className="sched-col-format">{isZh ? '赛制' : 'Format'}</th>
-                    <th className="sched-col-timelimit">{isZh ? '时间限制' : 'Time limit'}</th>
-                    <th className="sched-col-cutoff">{isZh ? '截断' : 'Cutoff'}</th>
+                    <th className="sched-col-timelimit">
+                      <a href="#sched-time-limit">{isZh ? '时间限制' : 'Time limit'}</a>
+                    </th>
+                    <th className="sched-col-cutoff">
+                      <a href="#sched-cutoff">{isZh ? '截断' : 'Cutoff'}</a>
+                    </th>
                     <th className="sched-col-proceed">{isZh ? '晋级' : 'Proceed'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sorted.map(a => {
-                    const start = localParts(a.startTime, tz);
-                    const end = localParts(a.endTime, tz);
                     const evId = eventOfActivity(a);
                     const name = localizeActivityName(a, data.rounds, isZh, eventDisplayName);
                     const round = data.rounds[roundIdOf(a.activityCode)];
-                    const fmt = round ? formatName(round.format, isZh) : '—';
-                    const tl = round ? (timeLimitText(round, data.rounds, isZh) || '—') : '—';
-                    const co = round ? (cutoffText(round, isZh) || '—') : '—';
-                    const adv = round ? (advancementText(round, isZh) || '—') : '—';
+                    const fmt = round ? formatCell(round) : '';
+                    const tl = round ? timeLimitText(round, data.rounds, isZh) : '';
+                    const co = round ? cutoffText(round, isZh) : '';
+                    const adv = round ? advancementText(round, isZh) : '';
+                    const detailCell = (cls: string, label: string, val: string) => (
+                      <td
+                        className={`${cls}${val ? '' : ' sched-cell-empty'}`}
+                        data-label={label}
+                      >{val}</td>
+                    );
                     return (
                       <tr key={a.id}>
-                        <td className="sched-td-time" data-label={isZh ? '开始' : 'Start'}>{start.hhmm}</td>
-                        <td className="sched-td-time" data-label={isZh ? '结束' : 'End'}>{end.hhmm}</td>
+                        <td className="sched-td-time" data-label={isZh ? '开始' : 'Start'}>
+                          {simpleTimeLabel(a.startTime, tz, isZh)}
+                        </td>
+                        <td className="sched-td-time" data-label={isZh ? '结束' : 'End'}>
+                          {simpleTimeLabel(a.endTime, tz, isZh)}
+                        </td>
                         <td className="sched-td-activity" data-label={isZh ? '活动' : 'Activity'}>
                           {evId && <EventIcon event={evId} className="sched-block-icon" />}
                           {name}
                         </td>
                         <td className="sched-td-room" data-label={isZh ? '场地' : 'Room or Stage'}>{a.roomName}</td>
-                        <td className="sched-col-format" data-label={isZh ? '赛制' : 'Format'}>{fmt}</td>
-                        <td className="sched-col-timelimit" data-label={isZh ? '时间限制' : 'Time limit'}>{tl}</td>
-                        <td className="sched-col-cutoff" data-label={isZh ? '截断' : 'Cutoff'}>{co}</td>
-                        <td className="sched-col-proceed" data-label={isZh ? '晋级' : 'Proceed'}>{adv}</td>
+                        {detailCell('sched-col-format', isZh ? '赛制' : 'Format', fmt)}
+                        {detailCell('sched-col-timelimit', isZh ? '时间限制' : 'Time limit', tl)}
+                        {detailCell('sched-col-cutoff', isZh ? '截断' : 'Cutoff', co)}
+                        {detailCell('sched-col-proceed', isZh ? '晋级' : 'Proceed', adv)}
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
         );
       })}
+
+      <ScheduleLegend isZh={isZh} hasCutoff={hasCutoff} />
+    </div>
+  );
+}
+
+// Explanatory legend below the tables — targets of the "Time limit" / "Cutoff"
+// column-header links, mirroring the WCA competition page.
+function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean }) {
+  const reg = (n: string) => (
+    <a href={`${WCA_REGS}#${n}`} target="_blank" rel="noreferrer">
+      {isZh ? `规则 ${n}` : `Regulation ${n}`}
+    </a>
+  );
+  return (
+    <div className="sched-legend">
+      <h4 id="sched-time-limit">{isZh ? '时间限制' : 'Time limit'}</h4>
+      <p>
+        {isZh ? (
+          <>若你在还原过程中达到时间限制,裁判会喊停,你的成绩将记为 DNF(见 {reg('A1a4')})。</>
+        ) : (
+          <>If you reach the time limit during your solve, the judge will stop you and your result will be DNF (see {reg('A1a4')}).</>
+        )}
+      </p>
+
+      {hasCutoff && (
+        <>
+          <h4 id="sched-cutoff">{isZh ? '截断' : 'Cutoff'}</h4>
+          <p>
+            {isZh ? (
+              <>进入截断轮第二阶段所需达到的成绩(见 {reg('9g')})。</>
+            ) : (
+              <>The result to beat to proceed to the second phase of a cutoff round (see {reg('9g')}).</>
+            )}
+          </p>
+        </>
+      )}
+
+      <h4 id="sched-format">{isZh ? '赛制' : 'Format'}</h4>
+      <p>
+        {isZh ? (
+          <>赛制规定如何依据成绩对选手排名。每个项目允许的赛制见 {reg('9b')},各赛制的说明见 {reg('9f')}。</>
+        ) : (
+          <>The format describes how to determine the ranking of competitors based on their results. The list of allowed formats per event is described in {reg('9b')}. See {reg('9f')} for a description of each format.</>
+        )}
+      </p>
+
+      <h4 id="sched-advancement">{isZh ? '晋级条件' : 'Advancement Condition'}</h4>
+      <p>
+        {isZh
+          ? '表中显示的晋级人数为计划上限。若实际参赛人数少于预期,或在晋级线上出现并列,实际晋级人数可能更少。'
+          : 'The number of competitors shown as advancing to the next round is the planned maximum. The actual number may be lower if there are fewer competitors than expected, or if there are ties at the boundary.'}
+      </p>
     </div>
   );
 }
