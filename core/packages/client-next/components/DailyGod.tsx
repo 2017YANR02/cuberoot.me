@@ -8,7 +8,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
 import { roundTypeName } from '@/lib/comp-schedule';
 import './daily_god.css';
@@ -68,6 +67,10 @@ export default function DailyGod({ lang }: Props) {
   const [variant, setVariant] = useState('std');
   const [metric, setMetric] = useState('cross');
   const [color, setColor] = useState<Color>('W');
+  const [expanded, setExpanded] = useState(false);
+
+  // 点比赛名跳 /scramble/gen?comp=<id>(comp tab 直链加载该比赛打乱),不是 /wca/comp。
+  const genHref = (ci: string) => `/${lang}/scramble/gen?comp=${encodeURIComponent(ci)}`;
 
   useEffect(() => {
     let on = true;
@@ -170,7 +173,7 @@ export default function DailyGod({ lang }: Props) {
               </div>
               <div className="dg-hero-scramble">{scramble}</div>
               {m && (
-                <Link {...compLinkProps(m.ci, { event: m.e, round: m.r }, lang)} className="dg-hero-src">
+                <Link href={genHref(m.ci)} prefetch={false} className="dg-hero-src">
                   <EventIcon event={m.e} className="dg-evt" />
                   <span className="dg-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
                   <span className="dg-src-meta">{sourceLine(m, isZh)}</span>
@@ -184,24 +187,35 @@ export default function DailyGod({ lang }: Props) {
       )}
 
       {rest.length > 0 && (
-        <ol className="dg-list">
-          {rest.map(([id, steps], i) => {
-            const m = data.meta[id];
-            return (
-              <li key={id} className="dg-row">
-                <span className="dg-row-rank">{i + 2}</span>
-                <span className="dg-row-steps">{steps}</span>
-                {m ? (
-                  <Link {...compLinkProps(m.ci, { event: m.e, round: m.r }, lang)} className="dg-row-comp">
-                    <EventIcon event={m.e} className="dg-evt" />
-                    <span className="dg-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                    <span className="dg-row-sub">{sourceLine(m, isZh)}</span>
-                  </Link>
-                ) : <span className="dg-row-comp">{id}</span>}
-              </li>
-            );
-          })}
-        </ol>
+        <>
+          <ol className="dg-list">
+            {(expanded ? rest : rest.slice(0, 4)).map(([id, steps], i) => {
+              const m = data.meta[id];
+              const scramble = data.scr[id] ?? '';
+              return (
+                <li key={id} className="dg-row">
+                  <span className="dg-row-rank">{i + 2}</span>
+                  <span className="dg-row-steps">{steps}</span>
+                  <div className="dg-row-main">
+                    <div className="dg-row-scramble">{scramble}</div>
+                    {m && (
+                      <Link href={genHref(m.ci)} prefetch={false} className="dg-row-comp">
+                        <EventIcon event={m.e} className="dg-evt" />
+                        <span className="dg-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
+                        <span className="dg-row-sub">{sourceLine(m, isZh)}</span>
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          {rest.length > 4 && (
+            <button type="button" className="dg-more" onClick={() => setExpanded(!expanded)}>
+              {expanded ? (isZh ? '收起' : 'Show less') : (isZh ? '更多' : 'More')}
+            </button>
+          )}
+        </>
       )}
     </div>
   );

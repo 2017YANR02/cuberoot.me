@@ -17,7 +17,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 
-const TOPK = 6; // 1 hero card + 5 ranking rows
+const TOPK = 25; // 1 hero card + up to 24 ranking rows ("更多" expands to 25 total)
 
 // metric (stage index) order — same keys as client SheetView METRIC_STAGE.
 const METRICS = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'] as const;
