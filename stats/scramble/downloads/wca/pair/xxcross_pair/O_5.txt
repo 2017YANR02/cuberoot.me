@@ -1,8 +1,25 @@
 # Scramble samples — pair / xxcross_pair / O / bin 5
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
+# Population in this bin: 18
+# Samples listed: 18 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-03
 # Columns: id,scramble,bottom_color
 
 52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,O
+629738001,R2 F2 R' F' U2 L D R' L2 B2 L2 F2 U2 L2 U' F2,O
+985184001,B R' B' R B' D' R' D2 R B U2 F2 U' R2 D' R2 D L2 D2,O
+1028964017,L2 R2 B' U2 B2 U2 L2 F U2 F D' B U' L F U2 L B' U F2 D2,O
+1747482001,U' B2 F2 D' F2 R2 D U2 L2 B' D2 L D' R' F2 R2 B2 R B2,O
+1926875001,L2 B L2 U2 B' D2 R2 F2 U2 D' L' F2 R' D' R F U2 L F' L B',O
+2615314001,D' U' B2 U' F2 L2 B2 L U2 F U2 R2 D R U F U' F2,O
+2639286015,L2 R B2 F2 U2 R F2 L' B2 U2 B' U B R2 D F L2 B' D L2,O
+2981268001,R2 U2 D R D2 B' R' L2 D R' L2 U' R2 F2 U F2 R2,O
+3405542001,L2 D' B R' F D2 B2 U' R' B U D' B2 U B2 R2 U L2 U',O
+3518977001,U R2 D' F R' L2 F' L2 D2 B2 U F2 R2 F2 B2 D R U' R',O
+3568005001,B F2 L D2 F2 D2 F2 R' B R' B F2 D' R D' B2 D2,O
+4020647001,L U F B R D R B' R' D' B2 L U2 B2 U2 B2 U2 R',O
+4207510001,D' R2 U2 L U2 L' B2 L2 F' R' F2 R2 D2 B2 L2 U' F D,O
+4393147059,D2 B2 L2 B' U F' B' R2 D B2 L2 U L2 F2 U R2 B2 D' R F' L' F',O
+4524332060,L2 U D B2 U R U2 R B' D2 L2 F U2 F D2 L2 U2 D,O
+4971948001,L F2 D2 F2 B2 R B' L R2 U B2 D B2 U L2 F2 L2 F',O
+5255046001,F D' L2 U2 R' D2 F2 L B2 L B2 F2 D2 U' L' F' U F R2 F',O
