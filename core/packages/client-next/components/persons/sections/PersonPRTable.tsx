@@ -101,7 +101,7 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               <th rowSpan={2} className="wp-th-event">{t('项目', 'Event')}</th>
               <th colSpan={showRanks ? 4 : 1} className="wp-th-group">{t('单次', 'Single')}</th>
               <th colSpan={showRanks ? 4 : 1} className="wp-th-group">{t('平均', 'Average')}</th>
-              {showPodium && <th rowSpan={2} className="wp-th-podium">{t('领奖台', 'Podium')}</th>}
+              {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium')}</th>}
             </tr>
             <tr>
               {showRanks && <th>{t('世界', 'World')}</th>}
@@ -112,6 +112,9 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               {showRanks && <th>{t('世界', 'World')}</th>}
               {showRanks && <th>{t('洲际', 'Continent')}</th>}
               {showRanks && <th>{t('地区', 'Country')}</th>}
+              {showPodium && <th className="wp-th-medal" title={t('金牌', 'Gold')}>🥇</th>}
+              {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver')}>🥈</th>}
+              {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze')}>🥉</th>}
             </tr>
           </thead>
           <tbody>
@@ -151,11 +154,9 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
                   {showRanks && <td><RankCell r={aRank.world} /></td>}
                   {showRanks && <td><RankCell r={aRank.continent} /></td>}
                   {showRanks && <td><RankCell r={aRank.country} /></td>}
-                  {showPodium && (
-                    <td className="wp-cell-podium">
-                      {pod ? <PodiumChips gold={pod.gold} silver={pod.silver} bronze={pod.bronze} /> : '—'}
-                    </td>
-                  )}
+                  {showPodium && <td className="wp-cell-podium-n">{pod?.gold ? pod.gold : <span className="wp-podium-zero">—</span>}</td>}
+                  {showPodium && <td className="wp-cell-podium-n">{pod?.silver ? pod.silver : <span className="wp-podium-zero">—</span>}</td>}
+                  {showPodium && <td className="wp-cell-podium-n">{pod?.bronze ? pod.bronze : <span className="wp-podium-zero">—</span>}</td>}
                 </tr>
               );
             })}
@@ -177,13 +178,3 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
   );
 }
 
-function PodiumChips({ gold, silver, bronze }: { gold: number; silver: number; bronze: number }) {
-  if (!gold && !silver && !bronze) return <span>—</span>;
-  return (
-    <span className="wp-podium-chips">
-      {gold > 0 && <span className="wp-podium-chip wp-podium-chip-gold" title="🥇">🥇{gold}</span>}
-      {silver > 0 && <span className="wp-podium-chip wp-podium-chip-silver" title="🥈">🥈{silver}</span>}
-      {bronze > 0 && <span className="wp-podium-chip wp-podium-chip-bronze" title="🥉">🥉{bronze}</span>}
-    </span>
-  );
-}

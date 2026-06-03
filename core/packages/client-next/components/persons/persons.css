@@ -149,15 +149,19 @@ html[data-theme=dark] .wp-page {
     font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1.6rem; font-weight: 500;
     color: var(--wp-text); letter-spacing: -0.01em;
-    text-align: center;
 }
-.wp-hero-name-row { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+/* identity: 国旗在名字左侧, WCA ID 在名字下方(左缘与名字对齐) */
+.wp-hero-name-row { display: inline-flex; align-items: center; justify-content: center; gap: 12px; }
+.wp-hero-name-flag { display: inline-flex; flex-shrink: 0; }
+.wp-hero-name-flag .wp-flag { width: 30px; height: 22px; }
+.wp-hero-name-col { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.wp-hero-name-line { display: inline-flex; align-items: center; gap: 8px; }
 .wp-hero-gender { flex-shrink: 0; }
 .wp-hero-gender-m { color: var(--wp-blue); }
 .wp-hero-gender-f { color: var(--wp-pink); }
 .wp-hero-table {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0;
     border: 1px solid var(--wp-border);
     border-radius: 10px;
@@ -183,11 +187,13 @@ html[data-theme=dark] .wp-page {
     font-variant-numeric: tabular-nums;
 }
 .wp-hero-id {
-    font-size: 1rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; letter-spacing: 0.01em;
+    color: var(--wp-text-sub);
+    font-variant-numeric: tabular-nums;
 }
-.wp-hero-id-link { display: inline-flex; }
+.wp-hero-id-link { display: inline-flex; color: var(--wp-text-mute); }
+.wp-hero-id-link:hover { color: var(--wp-accent); }
 .wp-hero-id-favicon { display: inline-block; vertical-align: middle; }
 
 .wp-flag { width: 24px; height: 18px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
@@ -306,16 +312,10 @@ html[data-theme=dark] .wp-page {
 .wp-rank-tier-4 { color: var(--wp-text-sub); }
 .wp-rank-tier-mute { color: var(--wp-text-mute); }
 
-/* podium count — medal glyph + count, plain colored text, no box */
-.wp-podium-chips { display: inline-flex; gap: 8px; }
-.wp-podium-chip {
-    display: inline-flex; align-items: center; gap: 2px;
-    font-size: 0.8rem; font-weight: 600;
-    font-variant-numeric: tabular-nums;
-}
-.wp-podium-chip-gold   { color: var(--wp-gold); }
-.wp-podium-chip-silver { color: var(--wp-silver); }
-.wp-podium-chip-bronze { color: var(--wp-bronze); }
+/* podium: 奖牌图标只出现在表头, 数据格只显示计数(0 显示淡色 —) */
+.wp-th-medal { font-size: 1rem; font-weight: 400; }
+.wp-cell-podium-n { font-variant-numeric: tabular-nums; text-align: center; color: var(--wp-text); }
+.wp-podium-zero { color: var(--wp-text-mute); }
 
 .wp-pr-footer {
     display: flex; gap: 16px; justify-content: flex-end;
