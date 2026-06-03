@@ -36,6 +36,12 @@ $Wizard = $Interactive -or ($PSBoundParameters.Count -eq 0 -and [Environment]::U
 # UTF-8 控制台输出: 否则中文 Windows 默认 GBK(936) 码页下 ›/■/●/◆ 等非 GBK 字形被编成 ?。
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
+# ---- 本机算力限额 (全局规则: 重计算最多 7 核 14 线程, 留 1 核给系统; 长跑进程低优先级) ----
+# solver 各 analyzer 走 rayon 全局池 (executor.rs par_iter), 无自建 ThreadPoolBuilder, 故 RAYON_NUM_THREADS 直接钉死线程数。
+# env 在本 session 持久, 此处设一次, 后续每个 `& $exe` 子进程都继承; 子进程也继承本 pwsh 的优先级类。
+$env:RAYON_NUM_THREADS = '14'
+try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
+
 # ---- 本机布局 ----
 $ScrambleDir = 'D:\cube\scramble\wca_scramble'
 $SolverDir   = 'D:\cube\cuberoot.me\solver'
@@ -60,8 +66,8 @@ $VARIANT_EXE = @{
 }
 
 # 每变体默认 chunk(显式 -ChunkSize 覆盖全部)。analyzer 攒完整块才写盘 + 追加 = 中断丢在飞的整块,
-# 故慢变体用小块换更密的 save point。实测速率(2026-05-30, 16 核): eo ~0.9/s(一块 2000≈37min)、pair ~2/s、
-# pseudo ~390/s、pseudo_pair ~47/s(2000 才几十秒,重启占比高,故快变体保持 20000≈数分钟)。
+# 故慢变体用小块换更密的 save point。实测速率(2026-05-30, 旧 16 核满核基准; 现钉 14 线程略低, 下方 chunk 仍适用):
+# eo ~0.9/s(一块 2000≈37min)、pair ~2/s、pseudo ~390/s、pseudo_pair ~47/s(2000 才几十秒,重启占比高,故快变体保持 20000≈数分钟)。
 $VARIANT_CHUNK = @{
   eo           = 2000
   pair         = 2000
@@ -71,7 +77,8 @@ $VARIANT_CHUNK = @{
   pseudo_f2leo = 20000
 }
 
-# 实测速率 (条/秒, 16 核 huge 表全模式; 仅向导估时用, 见 RUNBOOK)。std ~115/s。
+# 实测速率 (条/秒, 旧 16 核满核 huge 表全模式基准; 仅向导估时用, 见 RUNBOOK)。std ~115/s。
+# 注: 现钉 RAYON_NUM_THREADS=14, 实际略低于下列值, 向导估时偏乐观。
 $VARIANT_RATE = @{
   eo           = 0.9
   pair         = 2

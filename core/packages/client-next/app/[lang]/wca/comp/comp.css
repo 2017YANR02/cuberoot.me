@@ -1385,6 +1385,37 @@ td.is-pr {
   color: var(--foreground);
 }
 
+/* Calendar — FullCalendar timeGrid (same engine as the WCA site). Map FC's
+   CSS variables onto our theme tokens so it adapts to data-theme; event text
+   color stays the inline readable color computed from each room color. */
+.sched-fc {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  --fc-border-color: var(--border-default);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: color-mix(in srgb, var(--foreground) 4%, transparent);
+  --fc-today-bg-color: color-mix(in srgb, var(--accent) 7%, transparent);
+  --fc-small-font-size: 0.72rem;
+  --fc-event-border-color: transparent;
+}
+.sched-fc .fc { color: var(--foreground); }
+.sched-fc .fc a { color: inherit; text-decoration: none; }
+.sched-fc .fc-col-header-cell-cushion {
+  display: block; padding: 8px 4px; font-weight: 600; color: var(--foreground);
+}
+.sched-fc .fc-timegrid-slot-label-cushion,
+.sched-fc .fc-timegrid-axis-cushion {
+  color: var(--muted-foreground); font-variant-numeric: tabular-nums; font-size: 0.72rem;
+}
+.sched-fc .fc-timegrid-slot { height: 1.6em; }
+.sched-fc .fc-timegrid-event { border-radius: 5px; box-shadow: none; }
+.sched-fc .fc-timegrid-event .fc-event-main { padding: 1px 5px; }
+.sched-fc .fc-event-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.sched-fc .fc-event-title { font-weight: 500; }
+.sched-fc .fc-scrollgrid,
+.sched-fc .fc-theme-standard td,
+.sched-fc .fc-theme-standard th { border-color: var(--border-default); }
+
 /* Table view */
 .sched-table-section { width: fit-content; max-width: 100%; }
 .sched-day-title { font-size: 1.02rem; font-weight: 600; color: var(--foreground); margin: 18px 0 10px; }

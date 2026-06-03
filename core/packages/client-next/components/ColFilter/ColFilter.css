@@ -1,0 +1,107 @@
+.col-filter {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.col-filter-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 3px;
+  line-height: 0;
+}
+
+.col-filter-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.col-filter-btn.active {
+  color: #e8a27a;
+}
+
+/* Popover (rendered via portal to body) — desktop: position via inline style */
+.col-filter-pop {
+  z-index: 200;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px;
+  min-width: 220px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+  font-weight: normal;
+  color: #d4d4d4;
+  white-space: normal;
+}
+
+.col-filter-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 排序 section — 统一菜单顶端,Notion/Airtable 风格 */
+.col-filter-sort {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.col-filter-sort-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #d4d4d4;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+.col-filter-sort-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.col-filter-sort-btn.active {
+  background: rgba(232, 162, 122, 0.15);
+  border-color: rgba(232, 162, 122, 0.5);
+  color: #e8a27a;
+}
+
+.col-filter-clear {
+  margin-top: 8px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e8a27a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.col-filter-clear:hover {
+  background: rgba(232, 162, 122, 0.1);
+}
+
+/* 窄屏：popover 居中浮层 */
+.col-filter-pop-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90vw;
+  min-width: 280px;
+}

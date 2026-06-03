@@ -24,6 +24,7 @@ import {
   Eye, EyeOff, ListOrdered, LineChart, RefreshCw, X,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { petReact } from '@/lib/deskpet';
 import { type MoreMenuItem } from '../_components/MoreMenu';
@@ -1081,6 +1082,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
 
       {/* ── Topbar ──────────────────────────────────────────── */}
       <header className="shell-topbar surface-chrome">
+        <CubeRootLogo className="shell-topbar-brand" />
         <div className="shell-topbar-left">
           {modePill}
           <div className="shell-event-pick">
@@ -1169,6 +1171,21 @@ export default function SoloView({ modePill }: SoloViewProps) {
           }
           cornerSlot={settings.showCubePreview ? (
             <div className={`shell-corner-net${previewHidden ? ' hidden' : ''}`}>
+              {/* Reserve box keeps the cube's height even when hidden, so the
+                  toggle below stays put. Cube height = var(--cube-h). */}
+              <div className="shell-corner-net-imgbox">
+                {!previewHidden && (
+                  <button
+                    type="button"
+                    className="shell-corner-net-img"
+                    data-no-timer
+                    onClick={() => setPreviewEnlarged(true)}
+                    title={isZh ? '点击放大' : 'Tap to enlarge'}
+                  >
+                    <CubePreview event={event} scramble={scramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
                 className="cube-preview-toggle"
@@ -1179,17 +1196,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
               >
                 {previewHidden ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
-              {!previewHidden && (
-                <button
-                  type="button"
-                  className="shell-corner-net-img"
-                  data-no-timer
-                  onClick={() => setPreviewEnlarged(true)}
-                  title={isZh ? '点击放大' : 'Tap to enlarge'}
-                >
-                  <CubePreview event={event} scramble={scramble} size={isMobile ? 10 : 14} colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
-                </button>
-              )}
             </div>
           ) : undefined}
         >
@@ -1253,7 +1259,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
               <div className="timer-quick-actions">
                 <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} data-no-timer aria-pressed={lastPenalty === '+2'} aria-label={isZh ? '加 2 秒罚分' : 'Plus 2 penalty'} onClick={() => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2')}>+2</button>
                 <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} data-no-timer aria-pressed={lastPenalty === 'DNF'} aria-label="DNF" onClick={() => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF')}>DNF</button>
-                <button className="qa-btn" data-no-timer aria-label={isZh ? '换打乱' : 'New scramble'} onClick={nextScramble}>{isZh ? '换打乱' : 'Next'}</button>
                 <button className="qa-btn danger" data-no-timer aria-label={isZh ? '删除最后一次成绩' : 'Delete last solve'} onClick={deleteLastSolve}>{isZh ? '删除' : 'Delete'}</button>
               </div>
               <div className="shell-rank-slot">

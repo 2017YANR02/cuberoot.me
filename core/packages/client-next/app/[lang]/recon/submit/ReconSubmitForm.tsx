@@ -5,13 +5,8 @@
  * Full port of packages/client/src/pages/recon/ReconSubmitPage.tsx to Next.js.
  * Auto-fill (avg / single / record), duplicate check, WCIF round options,
  * BLD exec/memo derivation, scramble↔URL roundtrip, danger-zone delete,
- * collapsible sections, virtual keyboard, TwistyPlayer live preview.
- *
- * Intentionally deferred (Vite-only for now):
- *   - <AlgInput> with autoSpace + finger-trick contenteditable mode
- *     (we use a plain <textarea> instead — same data shape, simpler input)
- *   - <ReconAutofill> popup (Tab → cubedb-style comment + alg suggestions;
- *     depends on ~1.3k lines of cubing math deps)
+ * collapsible sections, virtual keyboard, TwistyPlayer live preview,
+ * <AlgInput> autoSpace input + <ReconAutofill> Tab suggestions.
  */
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
@@ -35,6 +30,7 @@ import TwistySection from '@/components/TwistySection';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
+import ReconAutofill from '@/components/ReconAutofill';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -1219,6 +1215,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     setField('solution', text);
                     if (solutionRef.current) handleCursorSync(solutionRef.current);
                   }}
+                  onCaretChange={() => {
+                    if (solutionRef.current) handleCursorSync(solutionRef.current);
+                  }}
                   onClick={() => {
                     if (solutionRef.current) handleCursorSync(solutionRef.current);
                   }}
@@ -1233,6 +1232,22 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }
                   }}
                   placeholder={isZh ? 'cross / F2L / OLL / PLL 每段一行,// 后面写注释' : 'cross / F2L / OLL / PLL one stage per line; // for comments'}
+                />
+              )}
+              {!normalized && (
+                <ReconAutofill
+                  textareaRef={solutionRef}
+                  value={form.solution || ''}
+                  setValue={(next) => {
+                    setField('solution', next);
+                    if (solutionRef.current) {
+                      solutionRef.current.value = next;
+                      autoResize(solutionRef.current);
+                      handleCursorSync(solutionRef.current);
+                    }
+                  }}
+                  scramble={form.wcaScramble || form.optimalScramble || ''}
+                  isMobile={isMobile}
                 />
               )}
             </div>

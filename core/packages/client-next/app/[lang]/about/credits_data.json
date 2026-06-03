@@ -139,5 +139,19 @@
     "zh": "桌面 AI 桌宠;右下角 Clawd 像素螃蟹的动画与交互移植自此(Clawd 形象版权归 Anthropic,非官方粉丝作品)",
     "en": "Desktop AI pet; the corner Clawd pixel crab ports its animations + interactions (Clawd character © Anthropic; unofficial fan use)",
     "long_en": "desktop pixel pet that reacts to AI coding agents; its Clawd crab artwork + the idle eye-tracking / state-machine interaction model are ported into the site-wide web desk pet. The Clawd character is the property of Anthropic — this is an unofficial fan use."
+  },
+  {
+    "name": "spooncuber/bldtrainer",
+    "url": "https://github.com/spooncuber/spooncuber.github.io",
+    "zh": "三盲训练器引擎 + 各模块移植(/trainer/3bld;作者 Zhi Qiao,GPL-3.0)",
+    "en": "3BLD trainer engine + modules ported (/trainer/3bld; author Zhi Qiao, GPL-3.0)",
+    "long_en": "3BLD trainer engine + modules ported — read-code engine, helper / memo / commutator / parity / flip / twist / float trainers and the resources list under `/trainer/3bld` (author Zhi Qiao, GPL-3.0)"
+  },
+  {
+    "name": "zhucidong/三盲助手",
+    "url": "https://github.com/zhucidong/blindfolded_hepler",
+    "zh": "盲拧助手 App;记忆回想训练器 + 换位子公式库 + 联想词表合并自此",
+    "en": "Blindfolded helper app; memo recall trainer + commutator library + association words merged",
+    "long_en": "blindfolded helper Android app; its memo recall trainer, commutator library, and association-word dictionary are merged into the `/trainer/3bld` modules"
   }
 ]

@@ -18,12 +18,14 @@
  * Token-only:背景 var(--accent-soft);顶尖名次用 var(--signal-success) + Trophy,
  * 其它用 var(--accent) + 地域图标.
  */
-import { useEffect, useState } from 'react';
-import { Globe, LogIn, Map as MapIcon, MapPin, Trophy } from 'lucide-react';
+import { Fragment, useEffect, useState } from 'react';
+import { Globe, LogIn } from 'lucide-react';
 import { fetchRankFor, type RankResult, type RegionRank } from '@/lib/rank-client';
 import { toWcaEventForRank, eventDisplayName } from '@/app/[lang]/timer/_shared/event-bridge';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { useAuthStore } from '@/lib/auth-store';
+import { ISO2_TO_CONTINENT, CONTINENT_RECORD_ABBR } from '@/lib/continent';
+import { RecordBadge } from '@/components/RecordBadge';
 
 export interface RankBadgeProps {
   /** 计时器内部 EventId */
@@ -38,8 +40,6 @@ export interface RankBadgeProps {
 }
 
 type Scope = 'WR' | 'CR' | 'NR';
-// 顶尖阈值(各档不同):到这个名次内换金杯 + 绿色
-const TOP_TIER: Record<Scope, number> = { WR: 100, CR: 20, NR: 3 };
 
 export default function RankBadge({
   eventId,
@@ -110,14 +110,21 @@ export default function RankBadge({
     ? type === 'average' ? '平均' : '单次'
     : type === 'average' ? 'average' : 'single';
 
-  const ICON: Record<Scope, typeof Globe> = { WR: Globe, CR: MapIcon, NR: MapPin };
   const SCOPE_ZH: Record<Scope, string> = { WR: '世界', CR: '大洲', NR: '全国' };
   const SCOPE_EN: Record<Scope, string> = { WR: 'World', CR: 'Continent', NR: 'National' };
 
-  const pills: { scope: Scope; data: RegionRank }[] = [];
-  if (result.world) pills.push({ scope: 'WR', data: result.world });
-  if (result.continental) pills.push({ scope: 'CR', data: result.continental });
-  if (result.national) pills.push({ scope: 'NR', data: result.national });
+  // CR 按登录用户的国家映射到大洲记录缩写(AsR / ER / NAR / OcR / SAR / AfR);
+  // 无国家或映射缺失时退回通用 'CR'.
+  const crLabel = (() => {
+    const cc = country ? ISO2_TO_CONTINENT[country.toUpperCase()] : undefined;
+    return (cc && CONTINENT_RECORD_ABBR[cc]) || 'CR';
+  })();
+
+  // label 同时作为「名次前缀」和「纪录代码」:WR / AsR / NR(RecordBadge 认这些).
+  const pills: { scope: Scope; label: string; data: RegionRank }[] = [];
+  if (result.world) pills.push({ scope: 'WR', label: 'WR', data: result.world });
+  if (result.continental) pills.push({ scope: 'CR', label: crLabel, data: result.continental });
+  if (result.national) pills.push({ scope: 'NR', label: 'NR', data: result.national });
   // Defensive: a malformed / partial rank payload (missing world) must not crash
   // the timer — just render nothing rather than read .rank off undefined.
   if (pills.length === 0) return null;
@@ -134,24 +141,25 @@ export default function RankBadge({
   return (
     <span className={`rank-badge-row${className ? ` ${className}` : ''}`}>
       <span className="rank-pills">
-        {pills.map(({ scope, data }) => {
-          const top = data.rank <= TOP_TIER[scope];
-          const Icon = top ? Trophy : ICON[scope];
-          return (
-            <button
-              key={scope}
-              type="button"
-              className={`rank-pill${top ? ' rank-pill--top' : ''}`}
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-              title={detail}
-            >
-              <Icon size="1em" aria-hidden />
-              {scope}
-              {data.rank.toLocaleString('en-US')}
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          className="rank-pill"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          title={detail}
+        >
+          {/* 单 chip:WR12/AsR9/NR9;名次为 1 即该档纪录,改用 RecordBadge(WR/AsR/NR) */}
+          <span className="rank-chip-inner">
+            {pills.map(({ scope, label, data }, i) => (
+              <Fragment key={scope}>
+                {i > 0 && <span className="rank-chip-sep">/</span>}
+                {data.rank === 1
+                  ? <RecordBadge record={label} variant="standalone" />
+                  : `${label}${data.rank.toLocaleString('en-US')}`}
+              </Fragment>
+            ))}
+          </span>
+        </button>
         {showLogin && (
           <button
             type="button"
