@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Flag } from './Flag';
 import { displayCuberName } from '@/lib/name-utils';
 import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '@/lib/wca-api';
+import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cuberoot/shared';
 import { ClearButton } from './ClearButton';
 import './wca-person-picker.css';
 
@@ -23,6 +24,20 @@ interface Props {
 const DEBOUNCE_MS = 300;
 const MAX_STATIC = 5;
 const MAX_API = 5;
+// 本地全量索引(28万选手)先扫这么多候选, 再按相关性排序取前 MAX_LOCAL.
+const LOCAL_SCAN = 60;
+const MAX_LOCAL = 8;
+
+// 相关性打分: 精确 0 > 前缀 1 > 子串 2;同档保持索引(wca_id 升)序.
+function localScore(p: WcaPersonLite, ql: string): number {
+  const name = p.name.toLowerCase();
+  const id = p.id.toLowerCase();
+  if (id === ql || name === ql) return 0;
+  const stripped = name.replace(/\s*[（(].*?[)）]\s*/g, '').trim();
+  if (stripped === ql) return 0;
+  if (name.startsWith(ql) || id.startsWith(ql)) return 1;
+  return 2;
+}
 
 export function WcaPersonPicker({
   value, onChange, staticCubers = [], matchCount, placeholder, isZh, className,
@@ -31,8 +46,15 @@ export function WcaPersonPicker({
   const [open, setOpen] = useState(false);
   const [apiResults, setApiResults] = useState<WcaPersonLite[]>([]);
   const [loading, setLoading] = useState(false);
+  const [indexReady, setIndexReady] = useState(() => isPersonsIndexReady());
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 后台预拉本地选手索引(全站共享, 拉过一次后即时命中)
+  useEffect(() => {
+    if (indexReady) return;
+    loadPersonsIndex().then(() => setIndexReady(true)).catch(() => {});
+  }, [indexReady]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,22 +85,40 @@ export function WcaPersonPicker({
   useEffect(() => {
     const q = query.trim();
     if (!q) { setApiResults([]); setLoading(false); return; }
+
+    // WCA ID → 直查(本地索引不含成绩页校验, 走 API 拿权威条目)
+    if (WCA_ID_REGEX.test(q.toUpperCase())) {
+      setLoading(true);
+      const handle = window.setTimeout(async () => {
+        try {
+          const p = await getPerson(q.toUpperCase());
+          setApiResults(p ? [p] : []);
+        } finally { setLoading(false); }
+      }, DEBOUNCE_MS);
+      return () => window.clearTimeout(handle);
+    }
+
+    // 本地全量索引秒搜(中文 / 单字符都行);未加载完返回 null → fallback WCA API
+    const local = searchLocalPersons(q, LOCAL_SCAN);
+    if (local) {
+      const ql = q.toLowerCase();
+      const mapped = local.map(p => ({ id: p.wcaId, name: p.name, country_iso2: p.iso2 }));
+      mapped.sort((a, b) => localScore(a, ql) - localScore(b, ql));
+      setApiResults(mapped.slice(0, MAX_LOCAL));
+      setLoading(false);
+      return;
+    }
+
+    // 索引未就绪 → WCA API 兜底(防抖)
     setLoading(true);
     const handle = window.setTimeout(async () => {
       try {
-        if (WCA_ID_REGEX.test(q.toUpperCase())) {
-          const p = await getPerson(q.toUpperCase());
-          setApiResults(p ? [p] : []);
-        } else {
-          const list = await searchPersons(q, MAX_API);
-          setApiResults(list);
-        }
-      } finally {
-        setLoading(false);
-      }
+        const list = await searchPersons(q, MAX_API);
+        setApiResults(list);
+      } finally { setLoading(false); }
     }, DEBOUNCE_MS);
     return () => window.clearTimeout(handle);
-  }, [query]);
+  }, [query, indexReady]);
 
   const apiFiltered = useMemo(() => {
     const staticIds = new Set(staticMatches.map(c => c.id));

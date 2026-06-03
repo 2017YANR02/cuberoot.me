@@ -10,6 +10,12 @@
   font-style: normal;
   font-display: swap;
 }
+/* Same scramble font as /scramble/gen sheet rows */
+@font-face {
+  font-family: 'LiberationMono';
+  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+  font-display: block;
+}
 
 .timer-root {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -167,7 +173,7 @@
 .scramble-strip {
   padding: 14px 24px;
   text-align: center;
-  font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   font-size: clamp(14px, 2vw, 20px);
   line-height: 1.5;
   word-spacing: 0.25em;
@@ -199,7 +205,7 @@
 }
 
 .timer-display {
-  font-family: 'Segment7Standard', 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-family: 'Segment7Standard', 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   font-size: clamp(64px, 14vw, 192px);
@@ -285,7 +291,7 @@
   border: 1px solid #2a2a2e;
   border-radius: 999px;
   padding: 4px 12px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 13px;
   color: #888;
   min-width: 56px;
@@ -320,7 +326,7 @@
   background: rgba(91, 157, 217, 0.08);
   border: 1px solid rgba(91, 157, 217, 0.35);
   border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 12px;
   color: #aac9e0;
   font-variant-numeric: tabular-nums;
@@ -497,7 +503,7 @@
 .case-stats-empty {
   font-size: 12px;
   color: #555;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
 }
 .case-stats-scroll {
   max-height: 220px;
@@ -506,7 +512,7 @@
 .case-stats-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 12px;
 }
 .case-stats-table th {
@@ -566,7 +572,7 @@
 .history-list {
   flex: 1;
   overflow-y: auto;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 13px;
 }
 .history-row {
@@ -734,7 +740,7 @@
   color: #ccc;
 }
 .timer-modal .modal-section .scramble-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   background: #0e0e10;
   padding: 8px 10px;
   border-radius: 4px;
@@ -849,7 +855,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 13px;
 }
 .stage-splits-table .stage-row {
@@ -1059,7 +1065,7 @@
   border-bottom-width: 2px;
   border-radius: 4px;
   padding: 2px 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 12px;
   color: #ededed;
   min-width: 18px;
@@ -1383,7 +1389,7 @@
   font-size: 11px;
   letter-spacing: 0;
   text-transform: none;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
 }
 .timer-collapse-body {
   /* Cap each expanded section so a single open section can't dominate the
@@ -1474,7 +1480,7 @@
 .bluetooth-modal .bt-row { display: contents; }
 .bluetooth-modal .bt-label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
 .bluetooth-modal .bt-value { color: #ededed; font-size: 13px; }
-.bluetooth-modal .bt-value.mono { font-family: 'JetBrains Mono', monospace; }
+.bluetooth-modal .bt-value.mono { font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
 .bluetooth-modal .bt-value.ok { color: #66bb6a; }
 .bluetooth-modal .bt-value.unsolved { color: #ef5350; }
 .bluetooth-modal .bt-install-btn,
@@ -1619,7 +1625,7 @@
   color: #cdebd0;
 }
 .trainer-case-chip-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
 }
 
 /* --- StatsModal --- */
@@ -1628,7 +1634,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 4px 14px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
 }
 .stats-modal-row {
   display: flex;
@@ -1641,7 +1647,7 @@
 .stats-modal-lbl { color: #888; }
 .stats-modal-val { color: #ededed; font-weight: 600; }
 .stats-modal-pb {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1687,7 +1693,7 @@
   border: 1px solid #2a2a2e;
   border-radius: 4px;
   color: #ededed;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 13px;
   resize: vertical;
   box-sizing: border-box;
@@ -1727,7 +1733,7 @@
   gap: 18px;
   flex-wrap: wrap;
 }
-.solver-input { font-family: 'JetBrains Mono', monospace; }
+.solver-input { font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
 .solver-loading {
   text-align: center;
   color: #888;
@@ -1773,7 +1779,7 @@
   border: 1px solid #2a2a2e;
   border-radius: 4px;
   padding: 8px 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   font-size: 12px;
 }
 .bulk-row {

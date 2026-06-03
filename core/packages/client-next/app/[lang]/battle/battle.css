@@ -15,6 +15,13 @@
     font-display: swap;
 }
 
+/* NOTE: 打乱记号字体 — 与 /scramble/gen 表格一致（自托管 LiberationMono） */
+@font-face {
+    font-family: 'LiberationMono';
+    src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+    font-display: block;
+}
+
 :root {
     --scramble-scale: 1;
 }
@@ -91,18 +98,15 @@
 /* NOTE: 红灯/绿灯状态 — 通过时间文字颜色传达，不覆盖自定义背景 */
 .player-area.state-ready .time-display {
     color: var(--timer-holding);
-    text-shadow: 0 0 20px color-mix(in srgb, var(--timer-holding) 55%, transparent);
 }
 
 .player-area.state-can-start .time-display {
     color: var(--timer-ready);
-    text-shadow: 0 0 20px color-mix(in srgb, var(--timer-ready) 55%, transparent);
 }
 
 /* NOTE: 观察中时间显示为警示色（warn token） */
 .player-area.state-inspecting .time-display {
     color: var(--signal-warning);
-    text-shadow: 0 0 20px color-mix(in srgb, var(--signal-warning) 55%, transparent);
 }
 
 /* ==========================================================
@@ -138,6 +142,7 @@
    ========================================================== */
 
 .scramble-text {
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: calc(clamp(0.8rem, 2.8vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
     color: var(--scramble-color, var(--player-text-color, var(--muted-foreground)));
     text-shadow: none;
@@ -176,9 +181,7 @@
     max-width: 90%;
     object-fit: contain;
     opacity: 0.9;
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-    padding: 4px;
+    /* 无背景框 — 与单人模式打乱预览一致(去掉了 background / border-radius / padding). */
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
@@ -574,11 +577,19 @@
     border-color: var(--border-strong);
 }
 
-/* 窄屏:键盘提示已隐藏,工具条收紧避免挤压比分 */
+/* 窄屏:键盘提示已隐藏,整条工具栏收紧 —— versus 布局这一条必须保持单行
+   (夹在上下两个旋转的玩家区中间,无法换行),故逐项压缩内边距/间距而非堆叠。 */
 @media (max-width: 480px) {
-    .middle-actions {
-        gap: 5px;
-    }
+    .middle-bar { padding: 4px 6px; }
+    .middle-actions { gap: 4px; }
+    .score-section { gap: 4px; }
+    /* 罚时下拉是单行最大头(默认 padding 6/14 + gap 8),收紧但保持 >=32px 触摸目标 */
+    .penalty-trigger { padding: 5px 8px; gap: 4px; font-size: 0.8rem; }
+    /* logo 在分隔条上纯装饰(导航走全站桌宠 + 浏览器返回),窄屏隐藏给比分/控件让位。
+       提高特异性盖过其后的基础 .middle-logo{display:flex},否则被源码顺序反超。 */
+    .middle-bar .middle-logo { display: none; }
+    /* 模式图标按钮收窄(默认 38px,窄屏 32px 仍够点) */
+    .middle-bar .shell-mode-opt { width: 32px; height: 32px; }
 }
 
 /* NOTE: CubeRoot logo — 限制尺寸与中间按钮对齐 */
@@ -601,7 +612,8 @@
     white-space: nowrap;
 }
 
-@media (hover: none) and (pointer: coarse) {
+/* 触屏(键盘提示无意义)或窄屏(否则 94px 把比分挤出屏幕)都隐藏 */
+@media (hover: none) and (pointer: coarse), (max-width: 480px) {
     .key-hint {
         display: none;
     }
@@ -1317,7 +1329,7 @@ body.solo .scramble-img {
 }
 
 .round-modal-scramble-text {
-    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: 1rem;
     line-height: 1.5;
     color: var(--foreground);

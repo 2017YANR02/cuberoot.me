@@ -16,6 +16,11 @@ export const CONTINENT_NAMES: Record<ContinentCode, { en: string; zh: string }> 
 
 export const CONTINENT_ORDER: ContinentCode[] = ['AS', 'EU', 'NA', 'SA', 'OC', 'AF'];
 
+/** Continental-record abbreviation per continent (WCA: AsR / ER / NAR / …). */
+export const CONTINENT_RECORD_ABBR: Record<ContinentCode, string> = {
+  AF: 'AfR', AS: 'AsR', EU: 'ER', NA: 'NAR', OC: 'OcR', SA: 'SAR',
+};
+
 export const CONTINENT_TO_ISO2S: Record<ContinentCode, string[]> = {
   AF: 'DZ AO BJ BW BF BI CM CV CF TD KM CG CD CI DJ EG GQ ER ET GA GM GH GN GW KE LS LR LY MG MW ML MR MU MA MZ NA NE NG RW ST SN SC SL SO ZA SS SD SZ TZ TG TN UG ZM ZW RE'.split(' '),
   AS: 'AF AM AZ BH BD BT BN KH CN CY GE IN ID IR IQ IL JP JO KZ KP KR KW KG LA LB MY MV MN MM NP OM PK PH QA SA SG LK SY TW TJ TH TL TR TM AE UZ VN YE HK MO PS'.split(' '),

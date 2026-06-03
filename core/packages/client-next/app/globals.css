@@ -70,7 +70,9 @@ body {
   --ring: var(--accent);
 
   --radius: 12px;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* 中文黑体放在 generic monospace 之前:拉丁/数字命中 JetBrains Mono(等宽),
+     汉字回退无衬线黑体(同首页),避免部分系统 monospace CJK 落到宋体 */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
 
   /* timer state colors (Solo + Battle) */
   --timer-idle: var(--foreground);
@@ -114,6 +116,7 @@ body {
    NOTE: Battle (.battle-container) is NO LONGER dark-locked — it now follows the
    user's chosen theme via the :root token set (chrome tokenized in battle.css). */
 html:has(.trainer-root),
+html:has(.bld-trainer-root),
 html:has(.vc-editor-page),
 html:has(.wca-stats-page),
 html:has(.wse-page),

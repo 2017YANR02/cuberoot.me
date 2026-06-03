@@ -35,8 +35,8 @@ const CARDS: Card[] = [
   {
     to: '/math/group',
     Icon: Sigma,
-    zh: { title: '魔方与群', desc: '群论长文 26 节,25 个互动面板,KaTeX 渲染' },
-    en: { title: 'Cube as a group', desc: '26-section group-theory essay, 25 interactive panels, KaTeX-rendered' },
+    zh: { title: '魔方与群', desc: '群论长文 62 节,100+ 互动可视化面板,KaTeX 渲染' },
+    en: { title: 'Cube as a group', desc: '62-section group-theory essay, 100+ interactive visual panels, KaTeX-rendered' },
   },
   {
     to: '/math/unit-distance',

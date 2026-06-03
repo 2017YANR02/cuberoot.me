@@ -1,18 +1,28 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { CalendarDays, Table as TableIcon, Loader2 } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
-  fetchCompSchedule, computeDayColumns, localParts, readableTextColor,
+  fetchCompSchedule, computeDayColumns, localParts,
   localizeActivityName, eventOfActivity, formatName, timeLimitText, cutoffText,
   advancementText, dayHeaderLabel, roundIdOf,
-  type ScheduleData, type DayColumn, type RoundInfo,
+  type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
 
-const HOUR_PX = 56;
+// FullCalendar (and luxon) is ~200KB; only pull it in when the calendar is
+// actually rendered, never on the results/psych tabs.
+const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
+  ssr: false,
+  loading: () => (
+    <div className="sched-loading">
+      <Loader2 className="sched-loading-spinner is-spinning" />
+    </div>
+  ),
+});
 
 type View = 'calendar' | 'table';
 
@@ -21,8 +31,9 @@ export default function ScheduleView({ slug, isZh }: { slug: string; isZh: boole
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ScheduleData | null>(null);
   const [error, setError] = useState(false);
-  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  // Default on so Format / Time limit / Cutoff / Proceed are visible like the
+  // WCA site; the toggle still lets users collapse to a simpler table.
+  const [detailsExpanded, setDetailsExpanded] = useState(true);
 
   useEffect(() => {
     let cancel = false;
@@ -52,15 +63,7 @@ export default function ScheduleView({ slug, isZh }: { slug: string; isZh: boole
     );
   }
 
-  if (error || !data || !cols) {
-    return (
-      <div className="sched-empty">
-        {isZh ? '暂无赛程' : 'No schedule available'}
-      </div>
-    );
-  }
-
-  if (cols.days.length === 0) {
+  if (error || !data || !cols || cols.days.length === 0) {
     return (
       <div className="sched-empty">
         {isZh ? '暂无赛程' : 'No schedule available'}
@@ -79,16 +82,7 @@ export default function ScheduleView({ slug, isZh }: { slug: string; isZh: boole
         </p>
       )}
       {view === 'calendar' ? (
-        <CalendarGrid
-          days={cols.days}
-          slotMinHour={cols.slotMinHour}
-          slotMaxHour={cols.slotMaxHour}
-          tz={tz}
-          rounds={data.rounds}
-          isZh={isZh}
-          selectedDayIdx={selectedDayIdx}
-          onSelectDay={setSelectedDayIdx}
-        />
+        <CalendarSection data={data} cols={cols} tz={tz} isZh={isZh} />
       ) : (
         <TableView
           data={data}
@@ -126,103 +120,46 @@ function ScheduleToolbar({ view, onChange, isZh }: {
   );
 }
 
-function CalendarGrid({ days, slotMinHour, slotMaxHour, tz, rounds, isZh, selectedDayIdx, onSelectDay }: {
-  days: DayColumn[];
-  slotMinHour: number;
-  slotMaxHour: number;
+// On a phone the multi-day grid is cramped, so show one day at a time with a
+// pill switcher; on wider screens FullCalendar lays out every day side by side.
+function CalendarSection({ data, cols, tz, isZh }: {
+  data: ScheduleData;
+  cols: { days: DayColumn[]; slotMinHour: number; slotMaxHour: number };
   tz: string;
-  rounds: Record<string, RoundInfo>;
   isZh: boolean;
-  selectedDayIdx: number;
-  onSelectDay: (i: number) => void;
 }) {
-  const isMobile = useIsMobile(480);
-  const hours: number[] = [];
-  for (let h = slotMinHour; h < slotMaxHour; h++) hours.push(h);
-  const colHeight = (slotMaxHour - slotMinHour) * HOUR_PX;
-  const activeIdx = Math.min(selectedDayIdx, days.length - 1);
+  const isMobile = useIsMobile(600);
+  const [dayIdx, setDayIdx] = useState(0);
+  const { days, slotMinHour, slotMaxHour } = cols;
+  const activeIdx = Math.min(dayIdx, days.length - 1);
+  const dayKeys = useMemo(() => days.map(d => d.dateKey), [days]);
+  const singleDay = isMobile && days.length > 1;
 
   return (
     <>
-      {isMobile && (
+      {singleDay && (
         <div className="sched-day-switcher">
           {days.map((d, i) => (
             <button
               key={d.dateKey}
               type="button"
               className={`sched-day-pill${i === activeIdx ? ' is-active' : ''}`}
-              onClick={() => onSelectDay(i)}
+              onClick={() => setDayIdx(i)}
             >
               {dayHeaderLabel(d.dateKey, tz, isZh)}
             </button>
           ))}
         </div>
       )}
-      <div className="sched-grid-container" style={{ maxWidth: days.length * 300 + 60 }}>
-        <div className="sched-time-gutter">
-          {hours.map(h => (
-            <div key={h} className="sched-hour-label">{String(h).padStart(2, '0')}:00</div>
-          ))}
-        </div>
-        <div>
-          <div
-            className="sched-day-headers"
-            style={{ gridTemplateColumns: `repeat(${days.length}, minmax(180px, 1fr))` }}
-          >
-            {days.map(d => (
-              <div key={d.dateKey} className="sched-day-header">
-                {dayHeaderLabel(d.dateKey, tz, isZh)}
-              </div>
-            ))}
-          </div>
-          <div
-            className="sched-days"
-            style={{ gridTemplateColumns: `repeat(${days.length}, minmax(180px, 1fr))` }}
-          >
-            {days.map((d, i) => (
-              <div
-                key={d.dateKey}
-                className={`sched-day-column${i === activeIdx ? ' is-active' : ''}`}
-                style={{ height: colHeight }}
-              >
-                {d.activities.map(a => {
-                  const start = localParts(a.startTime, tz);
-                  const end = localParts(a.endTime, tz);
-                  const evId = eventOfActivity(a);
-                  const isOther = evId === '';
-                  const name = localizeActivityName(a, rounds, isZh, eventDisplayName);
-                  const top = ((a.startMin - slotMinHour * 60) / 60) * HOUR_PX;
-                  const height = Math.max(18, ((a.endMin - a.startMin) / 60) * HOUR_PX);
-                  const left = (a.columnIndex / a.columnCount) * 100;
-                  const width = (1 / a.columnCount) * 100;
-                  const blockStyle: React.CSSProperties = {
-                    top, height, left: `${left}%`, width: `${width}%`,
-                  };
-                  if (!isOther) {
-                    blockStyle.backgroundColor = a.roomColor;
-                    blockStyle.color = readableTextColor(a.roomColor);
-                  }
-                  return (
-                    <div
-                      key={a.id}
-                      className={`sched-block${isOther ? ' sched-block--other' : ''}`}
-                      style={blockStyle}
-                      title={`${start.hhmm}–${end.hhmm} ${name} · ${a.roomName}`}
-                    >
-                      <span className="sched-block-time">{start.hhmm}</span>
-                      <span className="sched-block-name">
-                        {!isOther && <EventIcon event={evId} className="sched-block-icon" />}
-                        {name}
-                      </span>
-                      <span className="sched-block-room">{a.roomName}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ScheduleCalendar
+        data={data}
+        tz={tz}
+        isZh={isZh}
+        slotMinHour={slotMinHour}
+        slotMaxHour={slotMaxHour}
+        dayKeys={dayKeys}
+        mobileDayKey={singleDay ? days[activeIdx].dateKey : undefined}
+      />
     </>
   );
 }

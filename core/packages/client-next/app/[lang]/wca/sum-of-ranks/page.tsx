@@ -111,6 +111,7 @@ function SumOfRanksPageInner() {
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);
   const [pb, setPb] = useState<PlayerBest | null>(null);
   const [pbLoading, setPbLoading] = useState(false);
+  const [pbError, setPbError] = useState(false);
   // Q2: 名人堂(懒加载,展开才拉)
   const [census, setCensus] = useState<Census | null>(null);
   const [censusOpen, setCensusOpen] = useState(false);
@@ -135,20 +136,27 @@ function SumOfRanksPageInner() {
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
   }, [type, country, eventsParam, hidePodium, fourthKing, page, size, isZh]);
 
-  // 选手最优组合
+  // 选手最优组合(15s 超时, 防 dev proxy / 后端 stall 时永远转圈)
   useEffect(() => {
-    if (!picked) { setPb(null); return; }
-    setPbLoading(true);
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(picked.id)}`))
+    if (!picked) { setPb(null); setPbError(false); return; }
+    setPbLoading(true); setPbError(false);
+    let done = false;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    // v=2: bust 缓存里 average 半边还没灌时的旧 null 响应(浏览器 + nginx 都 24h 缓存)
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(picked.id)}&v=2`), { signal: ctrl.signal })
       .then(r => (r.ok ? r.json() : null))
-      .then(setPb).catch(() => setPb(null)).finally(() => setPbLoading(false));
+      .then(d => { if (!done) { setPb(d); setPbError(d == null); } })
+      .catch(() => { if (!done) { setPb(null); setPbError(true); } })
+      .finally(() => { clearTimeout(timer); if (!done) setPbLoading(false); });
+    return () => { done = true; clearTimeout(timer); ctrl.abort(); };
   }, [picked]);
 
   // 名人堂某年名单(展开时 + type/含废止/年份变化时拉)
   useEffect(() => {
     if (!censusOpen) return;
     setCensus(null); setCensusExpanded(false);
-    const qs = new URLSearchParams({ type });
+    const qs = new URLSearchParams({ type, v: '2' }); // v: bust 24h 缓存里缺 year/years 的旧响应
     if (censusCancelled) qs.set('cancelled', '1');
     if (censusYear != null) qs.set('year', String(censusYear));
     fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
@@ -169,6 +177,8 @@ function SumOfRanksPageInner() {
 
   // 时间线图 option(本页 dark-locked,echarts 不解析 CSS var → 运行时取 token 值)
   const selYear = census?.year ?? null;
+  // 显示年份: 优先 census.year, 回退到 years 末项(防 stale 缓存里旧响应缺 year 时显示 undefined)
+  const censusYearLabel = census ? (census.year ?? census.years?.[census.years.length - 1] ?? null) : null;
   const chartOption = useMemo(() => {
     if (!timeline || timeline.length === 0) return null;
     const css = typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null;
@@ -303,27 +313,38 @@ function SumOfRanksPageInner() {
           className="sor-tool-picker"
         />
         {pbLoading && <div className="sor-tool-hint">{isZh ? '计算中…' : 'Loading…'}</div>}
+        {pbError && !pbLoading && <div className="sor-tool-hint">{isZh ? '加载超时,请重试' : 'Timed out, try again'}</div>}
         {pb && !pbLoading && (
           <div className="sor-pb">
             <div className="sor-pb-head">
               {pb.iso2 && <Flag iso2={pb.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
               <a href={`https://www.worldcubeassociation.org/persons/${pb.wcaId}`} target="_blank" rel="noopener noreferrer">{displayCuberName(pb.name, isZh)}</a>
             </div>
-            {(['single', 'average'] as const).every(tk => !pb.best[tk]) ? (
-              <div className="sor-tool-hint">{isZh ? '该选手暂无有效成绩' : 'No ranked results'}</div>
-            ) : (['single', 'average'] as const).map(tk => {
-              const b = pb.best[tk];
-              if (!b) return null;
+            {(() => {
+              // 跟随顶部类型选择器: 选平均就看平均最优组合, 没有则提示(不再同时堆单次+平均).
+              const b = pb.best[type];
+              if (!b) {
+                const typeZh = type === 'average' ? '平均' : '单次';
+                const other = type === 'average' ? 'single' : 'average';
+                const hasOther = !!pb.best[other];
+                return (
+                  <div className="sor-tool-hint">
+                    {isZh
+                      ? `该选手在全部 21 个项目里都没有有效${typeZh}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
+                      : `No valid ${type} result in any of the 21 events${hasOther ? ` — but a ${other} combo exists, switch "Type" above` : ''}`}
+                  </div>
+                );
+              }
               return (
-                <div key={tk} className="sor-pb-row">
-                  <span className="sor-pb-type">{tk === 'single' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Average')}</span>
+                <div className="sor-pb-row">
+                  <span className="sor-pb-type">{type === 'single' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Average')}</span>
                   <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
                   <span className="sor-pb-events">{b.events.map(ev => <EventIcon key={ev} event={ev} />)}</span>
-                  <button type="button" className="sor-pb-apply" onClick={() => applyCombo(b.events, tk)}>{isZh ? '应用到榜单' : 'Apply'}</button>
+                  <button type="button" className="sor-pb-apply" onClick={() => applyCombo(b.events, type)}>{isZh ? '应用到榜单' : 'Apply'}</button>
                 </div>
               );
-            })}
-            <div className="sor-pb-note">{isZh ? '在所有项目组合里,这个组合让 TA 的名次和排名最靠前(世界口径)' : 'The combination that puts them highest on the world sum-of-ranks board'}</div>
+            })()}
+            {pb.best[type] && <div className="sor-pb-note">{isZh ? '在所有项目组合里,这个组合让 TA 的名次和排名最靠前(世界口径)' : 'The combination that puts them highest on the world sum-of-ranks board'}</div>}
           </div>
         )}
       </div>
@@ -341,7 +362,7 @@ function SumOfRanksPageInner() {
                 <input type="checkbox" checked={censusCancelled} onChange={e => setCensusCancelled(e.target.checked)} />
                 {isZh ? '含废止项' : 'Incl. cancelled'}
               </label>
-              {census && census.years.length > 1 && census.year != null && (
+              {census && (census.years?.length ?? 0) > 1 && census.year != null && (
                 <label className="sor-census-year">
                   {isZh ? '截至' : 'As of'}
                   <select value={census.year} onChange={e => setCensusYear(parseInt(e.target.value, 10))}>
@@ -360,8 +381,8 @@ function SumOfRanksPageInner() {
             {census && (
               <>
                 <p className="sor-census-lead">{isZh
-                  ? `截至 ${census.year} 年末,有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${censusCancelled ? ',含废止项' : ''},世界口径)。`
-                  : `As of end of ${census.year}, ${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${censusCancelled ? ', incl. cancelled' : ''}, world).`}</p>
+                  ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${censusCancelled ? ',含废止项' : ''},世界口径)。`
+                  : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${censusCancelled ? ', incl. cancelled' : ''}, world).`}</p>
                 <ol className="sor-census-list">
                   {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
                     const share = r.subsetsWon / census.totalSubsets * 100;

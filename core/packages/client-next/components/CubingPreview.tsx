@@ -12,7 +12,7 @@
  * ids (minx/pyram/333bf/...).
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 
@@ -22,6 +22,12 @@ interface CubingPreviewProps {
   scramble: string;
   /** Base unit (px). Final width/height is `size * facelets`. */
   size?: number;
+  /** When set, fixes the rendered HEIGHT and derives width from each puzzle's
+   *  natural aspect (via CSS aspect-ratio) — so every event previews at the
+   *  same height (a 7x7 just gets smaller facelets). A number is px; a string
+   *  is any CSS length (e.g. 'min(28vw, 26dvh, 260px)') for fluid sizing.
+   *  Overrides `size`. */
+  height?: number | string;
   className?: string;
   /** TwistyPlayer visualization mode. Defaults to '2D'. Inline-SVG puzzles
    *  (sq1 / mega) ignore this and always render 2D. */
@@ -71,7 +77,7 @@ function planFor(event: string): PuzzleSpec | null {
   }
 }
 
-export default function CubingPreview({ event, scramble, size = 14, className, visualization = '2D' }: CubingPreviewProps) {
+export default function CubingPreview({ event, scramble, size = 14, height, className, visualization = '2D' }: CubingPreviewProps) {
   const plan = planFor(event);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [Ctor, setCtor] = useState<TwistyPlayerCtor | null>(null);
@@ -150,14 +156,18 @@ export default function CubingPreview({ event, scramble, size = 14, className, v
     return <div className={className} style={{ display: 'none' }} aria-hidden />;
   }
 
-  const w = plan.w * size;
-  const h = plan.h * size;
+  // Fixed-height mode keeps every puzzle the same height; width follows the
+  // puzzle's natural w:h ratio via CSS aspect-ratio (so a string height like
+  // 'min(28vw,26dvh,260px)' stays fluid). Otherwise size drives both dims.
+  const boxStyle: CSSProperties = height != null
+    ? { height: typeof height === 'number' ? `${height}px` : height, aspectRatio: `${plan.w} / ${plan.h}`, display: 'block' }
+    : { width: plan.w * size, height: plan.h * size, display: 'block' };
 
   if (portedSvg) {
     return (
       <div
         className={className}
-        style={{ width: w, height: h, display: 'block' }}
+        style={boxStyle}
         role="img"
         aria-label={`${event} scramble preview`}
         dangerouslySetInnerHTML={{ __html: portedSvg }}
@@ -169,7 +179,7 @@ export default function CubingPreview({ event, scramble, size = 14, className, v
     <div
       ref={hostRef}
       className={className}
-      style={{ width: w, height: h, display: 'block' }}
+      style={boxStyle}
       role="img"
       aria-label={`${event} scramble preview`}
     />
