@@ -7,7 +7,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
-  fetchCompSchedule, computeDayColumns, localParts,
+  fetchCompSchedule, computeDayColumns, computeCalendarLayout, localParts,
   localizeActivityName, eventOfActivity, formatName, timeLimitText, cutoffText,
   advancementText, dayHeaderLabel, roundIdOf,
   type ScheduleData, type DayColumn,
@@ -82,7 +82,7 @@ export default function ScheduleView({ slug, isZh }: { slug: string; isZh: boole
         </p>
       )}
       {view === 'calendar' ? (
-        <CalendarSection data={data} cols={cols} tz={tz} isZh={isZh} />
+        <CalendarSection data={data} tz={tz} isZh={isZh} />
       ) : (
         <TableView
           data={data}
@@ -122,31 +122,30 @@ function ScheduleToolbar({ view, onChange, isZh }: {
 
 // On a phone the multi-day grid is cramped, so show one day at a time with a
 // pill switcher; on wider screens FullCalendar lays out every day side by side.
-function CalendarSection({ data, cols, tz, isZh }: {
+function CalendarSection({ data, tz, isZh }: {
   data: ScheduleData;
-  cols: { days: DayColumn[]; slotMinHour: number; slotMaxHour: number };
   tz: string;
   isZh: boolean;
 }) {
   const isMobile = useIsMobile(600);
   const [dayIdx, setDayIdx] = useState(0);
-  const { days, slotMinHour, slotMaxHour } = cols;
-  const activeIdx = Math.min(dayIdx, days.length - 1);
-  const dayKeys = useMemo(() => days.map(d => d.dateKey), [days]);
-  const singleDay = isMobile && days.length > 1;
+  const layout = useMemo(() => computeCalendarLayout(data, tz), [data, tz]);
+  const { dayKeys, slotMinTime, slotMaxTime } = layout;
+  const activeIdx = Math.min(dayIdx, dayKeys.length - 1);
+  const singleDay = isMobile && dayKeys.length > 1;
 
   return (
     <>
       {singleDay && (
         <div className="sched-day-switcher">
-          {days.map((d, i) => (
+          {dayKeys.map((k, i) => (
             <button
-              key={d.dateKey}
+              key={k}
               type="button"
               className={`sched-day-pill${i === activeIdx ? ' is-active' : ''}`}
               onClick={() => setDayIdx(i)}
             >
-              {dayHeaderLabel(d.dateKey, tz, isZh)}
+              {dayHeaderLabel(k, tz, isZh)}
             </button>
           ))}
         </div>
@@ -155,10 +154,10 @@ function CalendarSection({ data, cols, tz, isZh }: {
         data={data}
         tz={tz}
         isZh={isZh}
-        slotMinHour={slotMinHour}
-        slotMaxHour={slotMaxHour}
+        slotMinTime={slotMinTime}
+        slotMaxTime={slotMaxTime}
         dayKeys={dayKeys}
-        mobileDayKey={singleDay ? days[activeIdx].dateKey : undefined}
+        mobileDayKey={singleDay ? dayKeys[activeIdx] : undefined}
       />
     </>
   );
