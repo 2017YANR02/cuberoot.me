@@ -200,9 +200,12 @@ export default function PlayerControls({
       const effSetup = settings.playbackMode === 'algorithm'
         ? (setupDraft + ' ' + movesToString(invertSq1Moves(sq1Actions))).trim()
         : setupDraft;
+      // setup() applies the scramble as the base state; layer the first `target`
+      // solution moves on top WITHOUT resetting (applyMovesInstant would snap
+      // back to solved first, wiping the scramble). Mirrors the NxN path below.
       sq1Cube.twister.setup(effSetup);
       const target = Math.max(0, Math.min(n, sq1Actions.length));
-      sq1Cube.applyMovesInstant(sq1Actions.slice(0, target));
+      for (let i = 0; i < target; i++) sq1Cube.applyMoveInstant(sq1Actions[i]);
       setStep(target);
       return;
     }
