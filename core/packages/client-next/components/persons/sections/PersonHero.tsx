@@ -1,5 +1,5 @@
-// 顶部 hero:头像 + 姓名 + 信息表(国家/性别/WCA ID/比赛次数/复原次数 / 尝试次数).
-// 截图样式:头像居中,名字大字,下面 1 行 5 列的信息条.
+// 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 信息条(比赛次数 / 复原次数 / 尝试次数).
+// 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
 import { ExternalLink, Mars, Venus } from 'lucide-react';
 import { Flag } from '@/components/Flag';
@@ -48,32 +48,29 @@ export default function PersonHero({ profile, results, isZh }: Props) {
             : <div className="wp-hero-avatar-fb">{(displayName[0] ?? '?').toUpperCase()}</div>}
         </div>
         <div className="wp-hero-name-row">
-          <h1 className="wp-hero-name">{displayName}</h1>
-          {GenderIcon && (
-            <GenderIcon size={18} className={`wp-hero-gender wp-hero-gender-${p.gender}`} aria-label={genderLabel} />
-          )}
+          <span className="wp-hero-name-flag" title={p.country_iso2 ? countryName(p.country_iso2, isZh) : undefined}>
+            <Flag iso2={p.country_iso2} className="wp-flag" />
+          </span>
+          <div className="wp-hero-name-col">
+            <div className="wp-hero-name-line">
+              <h1 className="wp-hero-name">{displayName}</h1>
+              {GenderIcon && (
+                <GenderIcon size={18} className={`wp-hero-gender wp-hero-gender-${p.gender}`} aria-label={genderLabel} />
+              )}
+            </div>
+            <div className="wp-hero-id">
+              <span>{p.wca_id}</span>
+              <a
+                href={`https://www.worldcubeassociation.org/persons/${p.wca_id}`}
+                target="_blank" rel="noopener noreferrer"
+                className="wp-hero-id-link" title="WCA"
+              ><ExternalLink size={11} /></a>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="wp-hero-table">
-        <div className="wp-hero-cell">
-          <div className="wp-hero-cell-label">{t('国家 / 地区', 'Country / Region')}</div>
-          <div className="wp-hero-cell-value">
-            <Flag iso2={p.country_iso2} className="wp-flag" />
-            <span>{p.country_iso2 ? countryName(p.country_iso2, isZh) : '—'}</span>
-          </div>
-        </div>
-        <div className="wp-hero-cell">
-          <div className="wp-hero-cell-label">{t('WCA ID', 'WCA ID')}</div>
-          <div className="wp-hero-cell-value">
-            <span className="wp-hero-id">{p.wca_id}</span>
-            <a
-              href={`https://www.worldcubeassociation.org/persons/${p.wca_id}`}
-              target="_blank" rel="noopener noreferrer"
-              className="wp-hero-id-link" title="WCA"
-            ><ExternalLink size={12} /></a>
-          </div>
-        </div>
         <div className="wp-hero-cell">
           <div className="wp-hero-cell-label">{t('比赛次数', 'Competitions')}</div>
           <div className="wp-hero-cell-value">
