@@ -103,7 +103,6 @@
   padding: 0.4rem 0.6rem;
   font-size: 0.85rem;
   font-family: inherit;
-  min-width: 140px;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
@@ -113,6 +112,14 @@
 .scramble-stats-controls select:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.scramble-stats-color-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-sub);
 }
 
 .scramble-stats-toggle-group {
@@ -177,7 +184,6 @@
 }
 .scramble-hist-legend-select:hover { border-color: var(--border-strong); }
 .scramble-hist-legend-select:focus { outline: none; border-color: var(--accent); }
-.scramble-hist-legend-select-mode { min-width: 5.5rem; }
 
 .scramble-hist-legend-chips {
   display: inline-flex;
@@ -342,6 +348,13 @@
     min-width: 0;
     width: 100%;
   }
+  .scramble-stats-color-control {
+    grid-column: 1 / -1;
+  }
+  .scramble-stats-color-control .subset-picker-mode {
+    flex: 0 0 auto;
+    width: auto;
+  }
   /* Variant + Stage 自然 2 列 */
   .scramble-stats-toggle-group {
     flex-wrap: wrap;
@@ -414,7 +427,7 @@
 }
 .scramble-stats-examples-list li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.625rem;
   padding: 0.45rem 0.65rem;
   background: var(--bg);
@@ -427,6 +440,14 @@
   border-radius: 3px;
   border: 1px solid var(--border-strong);
   flex-shrink: 0;
+  margin-top: 0.12rem;
+}
+.scramble-stats-examples-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
 }
 .scramble-stats-examples-scramble {
   font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
@@ -434,6 +455,39 @@
   color: var(--text);
   word-break: break-word;
   line-height: 1.4;
+}
+.scramble-stats-examples-comp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  width: fit-content;
+  max-width: 100%;
+  text-decoration: none;
+}
+.scramble-stats-examples-comp-name {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.scramble-stats-examples-comp:hover .scramble-stats-examples-comp-name {
+  text-decoration: underline;
+}
+.scramble-stats-examples-comp-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+}
+.scramble-stats-examples-evt {
+  font-size: 0.95rem;
+  color: var(--text-sub);
 }
 
 /* ── 底部元信息 ── */

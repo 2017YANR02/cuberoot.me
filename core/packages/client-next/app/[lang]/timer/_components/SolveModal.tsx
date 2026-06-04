@@ -74,9 +74,12 @@ interface Props {
   onChangeComment: (text: string) => void;
   onDelete: () => void;
   onOpenReconstruct?: () => void;
+  /** Other sessions this solve can be moved into (excludes the active one). */
+  moveTargets?: { id: string; name: string }[];
+  onMoveToSession?: (targetSessionId: string) => void;
 }
 
-export default function SolveModal({ solve, index, isZh, onClose, onChangePenalty, onChangeComment, onDelete, onOpenReconstruct }: Props) {
+export default function SolveModal({ solve, index, isZh, onClose, onChangePenalty, onChangeComment, onDelete, onOpenReconstruct, moveTargets, onMoveToSession }: Props) {
   const [comment, setComment] = useState(solve.comment ?? '');
   const [editing, setEditing] = useState(false);
   const titleId = useId();
@@ -171,6 +174,21 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
             />
           </label>
         </div>
+        {moveTargets && moveTargets.length > 0 && onMoveToSession && (
+          <div className="modal-section">
+            <div className="solve-move-row">
+              <span className="solve-move-label">{isZh ? '移到分组' : 'Move to session'}</span>
+              <select
+                className="solve-move-select"
+                value=""
+                onChange={(e) => { const id = e.target.value; if (id) onMoveToSession(id); }}
+              >
+                <option value="">{isZh ? '选择分组…' : 'Choose…'}</option>
+                {moveTargets.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
         <div className="modal-actions" style={actionsStyle}>
           <button
             ref={firstButtonRef}

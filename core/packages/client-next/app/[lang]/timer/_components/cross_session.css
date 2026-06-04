@@ -1,0 +1,84 @@
+/* Cross-session aggregate stats table (cstimer "跨分组统计" style). */
+
+.xsess-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.xsess-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--foreground);
+}
+
+.xsess-table th {
+  text-align: right;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--shell-divider);
+  white-space: nowrap;
+}
+
+.xsess-table th.xsess-name-col {
+  text-align: left;
+}
+
+.xsess-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--shell-divider) 55%, transparent);
+  white-space: nowrap;
+}
+
+.xsess-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.xsess-num.muted {
+  color: var(--faint-foreground);
+}
+
+.xsess-name-col {
+  text-align: left;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted-foreground);
+}
+
+/* Active session highlight. */
+.xsess-table tbody tr.xsess-active td {
+  background: var(--accent-soft);
+}
+.xsess-table tbody tr.xsess-active td.xsess-name-col {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* "All" footer row. */
+.xsess-table tfoot tr.xsess-all td {
+  border-top: 2px solid var(--shell-divider);
+  border-bottom: none;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.xsess-table tfoot tr.xsess-all td.xsess-name-col {
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.xsess-empty {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted-foreground);
+  padding: 12px 8px;
+  text-align: center;
+}

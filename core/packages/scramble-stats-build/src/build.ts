@@ -4,6 +4,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { makeRng } from './prng';
+import { dateDisplay } from './comp_date';
 
 interface VariantSpec {
   key: string;
@@ -156,6 +157,58 @@ async function loadScrambleMap(txtPath: string): Promise<Map<string, string>> {
     map.set(line.slice(0, i), line.slice(i + 1));
   }
   return map;
+}
+
+// competitions.tsv: id\tname\tstart_date\tend_date  → compId → { name, 日期串 }
+async function loadCompNames(tsvPath: string): Promise<Map<string, [string, string]>> {
+  const map = new Map<string, [string, string]>();
+  if (!fs.existsSync(tsvPath)) return map;
+  const rl = readline.createInterface({ input: fs.createReadStream(tsvPath, 'utf-8'), crlfDelay: Infinity });
+  let first = true;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (first) { first = false; continue; }
+    const [id, name, start, end] = line.split('\t');
+    map.set(id, [name, dateDisplay(start, end)]);
+  }
+  return map;
+}
+
+// 给一个 set 的示例补充"来自哪场比赛":收集被示例引用到的 id,流式扫 split_mbf 取
+// comp/项目/打乱序号,再 join 比赛名。返回 { comps: ci→[名,日期], idMeta: id→[ci,项目,序号] }。
+// 仅 WCA set 有 split_mbf;自造打乱 set(xcross)无 → 两者都空。idMeta 按 id 引用 comps 去重比赛名。
+async function buildExampleCompMeta(
+  examplesOut: Record<string, unknown>,
+  metaCsv: string,
+  compTsv: string,
+): Promise<{ comps: Record<string, [string, string]>; idMeta: Record<string, [string, string, number]> }> {
+  const ids = new Set<string>();
+  for (const preview of Object.values(examplesOut)) {
+    const byStage = preview as Record<string, Record<string, Record<string, Sample[]>>>;
+    for (const stage of Object.values(byStage))
+      for (const subset of Object.values(stage))
+        for (const samples of Object.values(subset))
+          for (const s of samples) ids.add(s[0]);
+  }
+  const comps: Record<string, [string, string]> = {};
+  const idMeta: Record<string, [string, string, number]> = {};
+  if (ids.size === 0) return { comps, idMeta };
+  const compNames = await loadCompNames(compTsv);
+  const rl = readline.createInterface({ input: fs.createReadStream(metaCsv, 'utf-8'), crlfDelay: Infinity });
+  let first = true;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (first) { first = false; continue; }
+    const i0 = line.indexOf(',');
+    if (i0 === -1) continue;
+    const id = line.slice(0, i0);
+    if (!ids.has(id)) continue;
+    const c = line.split(',');
+    const ci = c[2];
+    idMeta[id] = [ci, c[3], Number(c[7])];
+    if (!(ci in comps)) comps[ci] = compNames.get(ci) ?? [ci, ''];
+  }
+  return { comps, idMeta };
 }
 
 // NOTE: 实际 UI 用到的 subset —— single (6), dual (3 对相反色), quad (3 种排除相反色对), cn (1)
@@ -491,7 +544,17 @@ async function main() {
       sample_count: maxCount,
       variants: variantsOut,
     };
-    examplesSetsOut[setSpec.key] = { variants: examplesOut };
+    // 示例补"来自哪场比赛"(仅有 split_mbf 的 WCA set;自造打乱 set 无 → comps/idMeta 空)
+    let comps: Record<string, [string, string]> = {};
+    let idMeta: Record<string, [string, string, number]> = {};
+    const dataRoot = path.dirname(setSpec.csv_dir);
+    const metaCsv = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
+    if (fs.existsSync(metaCsv)) {
+      console.log('Joining competition meta for examples...');
+      ({ comps, idMeta } = await buildExampleCompMeta(examplesOut, metaCsv, path.join(dataRoot, 'competitions.tsv')));
+      console.log(`  [examples] ${Object.keys(idMeta).length} ids across ${Object.keys(comps).length} comps`);
+    }
+    examplesSetsOut[setSpec.key] = { variants: examplesOut, comps, idMeta };
   }
 
   const out = {

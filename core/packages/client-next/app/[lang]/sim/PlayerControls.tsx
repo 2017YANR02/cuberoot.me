@@ -37,7 +37,7 @@ import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1St
 import { invertAlg, simplifyAlg, mirrorAlg } from '@/lib/cube3';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg } from '@/lib/sq1-svg';
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
   Slider, Toggle, KeymapModal,
@@ -46,7 +46,77 @@ import {
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
 import { WheelPicker } from '@/components/WheelPicker';
+import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import './player-controls.css';
+
+/** Convert SQ1 text while preserving per-line `// comments` and newlines. */
+function convertSq1Text(text: string, convert: (s: string) => string): string {
+  return text.split('\n').map(line => {
+    const commentIdx = line.indexOf('//');
+    const algPart = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
+    const comment = commentIdx >= 0 ? line.slice(commentIdx) : '';
+    const converted = algPart.trim() ? convert(algPart) : '';
+    return comment ? `${converted}  ${comment}` : converted;
+  }).join('\n');
+}
+
+const PUZZLE_TYPE_OPTIONS = [
+  { value: 'nxn',      iconClass: 'event-333', labelZh: 'NxN',    labelEn: 'NxN' },
+  { value: 'sq1',      iconClass: 'event-sq1', labelZh: 'Square-1', labelEn: 'Square-1' },
+  { value: 'pyraminx', iconClass: 'event-pyram', labelZh: '金字塔', labelEn: 'Pyraminx' },
+  { value: 'skewb',    iconClass: 'event-skewb', labelZh: '斜转',  labelEn: 'Skewb' },
+  { value: 'megaminx', iconClass: 'event-minx',  labelZh: '五魔',  labelEn: 'Megaminx' },
+] as const;
+
+function PuzzleTypeSelect({ value, onChange, isZh }: {
+  value: string;
+  onChange: (v: string) => void;
+  isZh: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const current = PUZZLE_TYPE_OPTIONS.find(o => o.value === value) ?? PUZZLE_TYPE_OPTIONS[0];
+
+  return (
+    <div ref={ref} className="sim-puzzle-type-select">
+      <button
+        type="button"
+        title={isZh ? current.labelZh : current.labelEn}
+        className="sim-puzzle-select sim-puzzle-type-trigger"
+        onClick={() => setOpen(o => !o)}
+      >
+        <CubingIcon icon={current.iconClass} className="sim-puzzle-type-icon" />
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="sim-puzzle-type-popup">
+          {PUZZLE_TYPE_OPTIONS.map(o => (
+            <button
+              key={o.value}
+              type="button"
+              title={isZh ? o.labelZh : o.labelEn}
+              className={`sim-puzzle-type-item${o.value === value ? ' sim-puzzle-type-item--active' : ''}`}
+              onClick={() => { onChange(o.value); setOpen(false); }}
+            >
+              <CubingIcon icon={o.iconClass} className="sim-puzzle-type-icon" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Random-move NxN scrambler for N≥8 (no solver). */
 const SCRAMBLE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
@@ -160,6 +230,7 @@ export default function PlayerControls({
 
   const [algDraft, setAlgDraft] = useState(alg);
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
+  const [sq1Format, setSq1Format] = useState<'compact' | 'wca'>('compact');
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -572,6 +643,27 @@ export default function PlayerControls({
             <option value="sarah">Sarah</option>
           </select>
         )}
+        {isSq1 && (
+          <select
+            className="sim-player-mode"
+            value={sq1Format}
+            onChange={(e) => {
+              const next = e.target.value as 'compact' | 'wca';
+              const convert = next === 'wca' ? canonicalSq1Alg : compactSq1Alg;
+              const newSetup = setupDraft.trim() ? convertSq1Text(setupDraft, convert) : '';
+              const newAlg = algDraft.trim() ? convertSq1Text(algDraft, convert) : '';
+              setSq1Format(next);
+              setSetupDraft(newSetup);
+              onSetupChange(newSetup);
+              setAlgDraft(newAlg);
+              onAlgChange(newAlg);
+            }}
+            title={t('SQ1 格式', 'SQ1 format')}
+          >
+            <option value="compact">{t('简化', 'Compact')}</option>
+            <option value="wca">WCA</option>
+          </select>
+        )}
       </div>
 
       {!isTwistyMode && (
@@ -732,6 +824,8 @@ function PuzzleSettings({
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
 }) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   const isSq1Local = puzzleKind === 'sq1';
   const isTwistyLocal = isTwistyPuzzle(puzzleKind);
   const isNxNLocal = !isSq1Local && !isTwistyLocal;
@@ -812,21 +906,14 @@ function PuzzleSettings({
           <div className="sim-puzzle-row">
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
-              <select
-                className="sim-puzzle-select"
+              <PuzzleTypeSelect
                 value={isTwistyLocal ? puzzleKind : (isSq1Local ? 'sq1' : 'nxn')}
-                onChange={(e) => {
-                  const v = e.target.value;
+                isZh={isZh}
+                onChange={(v) => {
                   if (v === 'sq1' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
                   else onPuzzleChange(order || 3);
                 }}
-              >
-                <option value="nxn">{t('NxN', 'NxN')}</option>
-                <option value="sq1">{t('Square-1', 'Square-1')}</option>
-                <option value="pyraminx">{t('金字塔', 'Pyraminx')}</option>
-                <option value="skewb">{t('斜转', 'Skewb')}</option>
-                <option value="megaminx">{t('五魔', 'Megaminx')}</option>
-              </select>
+              />
             </div>
             {isNxNLocal && (
               <div className="sim-puzzle-section">

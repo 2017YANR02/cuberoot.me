@@ -40,6 +40,9 @@ export interface TimerSettings {
   /** Scale factor for the big timer display (0.5..2). */
   timerFontScale: number;
 
+  /** Scale factor for the scramble strip text (0.6..2.5). */
+  scrambleFontScale: number;
+
   /** Hold-to-ready threshold in ms (cstimer default = 550). */
   holdMs: number;
 
@@ -70,11 +73,18 @@ export interface TimerSettings {
   /** Speech-synthesis voice for inspection cues. 'none' = beeps as before. */
   voiceInspection: 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female';
 
-  /** Custom average windows in addition to ao5/ao12 (e.g. [7, 25]). */
-  customAoWindows: number[];
+  /**
+   * Average windows shown in the cstimer-style current/best stats table
+   * (e.g. [5, 12]). User-editable inline on the Times panel — presets
+   * 5/12/25/50/100/200/1000/10000 plus a custom value. Sorted ascending.
+   */
+  statsAoWindows: number[];
 
   /** Action when user clicks the scramble strip. */
   scrambleClickAction: 'none' | 'next' | 'copy';
+
+  /** One-shot marker: the scramble-click default flipped to 'copy' (migrate legacy 'next'). */
+  scrambleClickMigrated?: boolean;
 
   /** Hide entire UI (topbar / scramble / charts) while timer is running. */
   hideAllUiWhileRunning: boolean;
@@ -82,6 +92,13 @@ export interface TimerSettings {
   /** Metronome on/off and tempo (BPM range 30..300). */
   metronomeOn: boolean;
   metronomeBpm: number;
+
+  /**
+   * Inspection seconds at which to play a short beep (cstimer "beep at"
+   * feature), e.g. [5, 10, 15]. Empty = off. Independent of the WCA 8s/12s
+   * voice/warn cues. Each value 1..60, sorted, de-duped.
+   */
+  inspectionBeepAt: number[];
 
   /** Sync seed: when set, scramble RNG is deterministic across devices. */
   syncSeed: string | null;
@@ -146,6 +163,7 @@ export const DEFAULTS: TimerSettings = {
   showCharts: true,
   precision: 2,
   timerFontScale: 1,
+  scrambleFontScale: 1,
   holdMs: 550,
   compactScramble: false,
   prefer3D: false,
@@ -154,11 +172,13 @@ export const DEFAULTS: TimerSettings = {
   bldMemo: true,
   cnMode: 'none',
   voiceInspection: 'none',
-  customAoWindows: [7],
-  scrambleClickAction: 'next',
+  statsAoWindows: [5, 12],
+  scrambleClickAction: 'copy',
+  scrambleClickMigrated: false,
   hideAllUiWhileRunning: false,
   metronomeOn: false,
   metronomeBpm: 120,
+  inspectionBeepAt: [],
   syncSeed: null,
   syncSeedCounter: 0,
   autoBackupEvery: 10,
@@ -235,7 +255,15 @@ function load(): TimerSettings {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULTS };
     const parsed = JSON.parse(raw) as Partial<TimerSettings>;
-    return { ...DEFAULTS, ...parsed };
+    const merged = { ...DEFAULTS, ...parsed };
+    // One-shot migration: scramble-click now copies by default. Flip the legacy
+    // 'next' default once (leave a deliberate 'none' alone), then persist the marker.
+    if (!merged.scrambleClickMigrated) {
+      if (merged.scrambleClickAction === 'next') merged.scrambleClickAction = 'copy';
+      merged.scrambleClickMigrated = true;
+      save(merged);
+    }
+    return merged;
   } catch {
     return { ...DEFAULTS };
   }

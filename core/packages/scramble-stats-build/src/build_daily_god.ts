@@ -16,6 +16,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { dateDisplay } from './comp_date';
 
 const TOPK = 25; // 1 hero card + up to 24 ranking rows ("更多" expands to 25 total)
 
@@ -27,6 +28,18 @@ const COLOR_ANGLE: Record<string, string> = {
   W: 'z2', Y: 'z0', R: 'z1', O: 'z3', B: 'x1', G: 'x3',
 };
 const COLORS = ['W', 'Y', 'R', 'O', 'B', 'G'];
+
+// 13 子集底色 = 单色 6 + 双色 3(相反色对)+ 四色 3(排除一对相反色)+ 六色 1。
+// key = 字母按字母序拼接,与 build.ts / distribution.json 的 subset_keys 一致;每子集排名取其颜色 min(色中性)。
+const OPPOSITE_PAIRS: [string, string][] = [['W', 'Y'], ['B', 'G'], ['O', 'R']];
+const ALL6 = ['B', 'G', 'O', 'R', 'W', 'Y'];
+const subsetKey = (letters: string[]) => [...letters].sort().join('');
+const SUBSETS: { key: string; colors: string[] }[] = [
+  ...ALL6.map((c) => ({ key: c, colors: [c] })),
+  ...OPPOSITE_PAIRS.map((p) => ({ key: subsetKey(p), colors: [...p] })),
+  ...OPPOSITE_PAIRS.map((p) => { const cs = ALL6.filter((c) => !p.includes(c)); return { key: subsetKey(cs), colors: cs }; }),
+  { key: subsetKey(ALL6), colors: [...ALL6] },
+];
 
 interface Variant { key: string; file: string; stages: string[] }
 // stages mirror build.ts VARIANTS; std/eo = 5 stages, the rest = 4 (no xxxxcross).
@@ -42,16 +55,6 @@ const VARIANTS: Variant[] = [
 
 interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number }
 type Entry = [string, number]; // [id, steps]
-
-function dateDisplay(start: string, end: string): string {
-  if (!start || start === 'NULL') return '';
-  if (!end || end === 'NULL' || end === start) return start;
-  const [sy, sm] = start.split('-');
-  const [ey, em, ed] = end.split('-');
-  if (sy === ey && sm === em) return `${start}~${ed}`;
-  if (sy === ey) return `${start}~${em}-${ed}`;
-  return `${start}~${end}`;
-}
 
 async function loadCompMeta(tsvPath: string): Promise<Map<string, { name: string; date: string }>> {
   const map = new Map<string, { name: string; date: string }>();
@@ -133,7 +136,7 @@ async function main() {
     const vr: Record<string, Record<string, Entry[]>> = {};
     for (let si = 0; si < v.stages.length; si++) {
       vr[METRICS[si]] = {};
-      for (const c of COLORS) vr[METRICS[si]][c] = [];
+      for (const s of SUBSETS) vr[METRICS[si]][s.key] = [];
     }
     const colIdx: Record<string, Record<string, number>> = {}; // metric -> color -> col index
     const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
@@ -164,9 +167,12 @@ async function main() {
       const id = parts[0];
       for (let si = 0; si < v.stages.length; si++) {
         const m = METRICS[si];
-        for (const c of COLORS) {
-          const val = Number(parts[colIdx[m][c]]);
-          if (Number.isFinite(val)) topInsert(vr[m][c], id, val);
+        const vals: Record<string, number> = {};
+        for (const c of COLORS) vals[c] = Number(parts[colIdx[m][c]]);
+        for (const s of SUBSETS) {
+          let best = Infinity;
+          for (const c of s.colors) { const x = vals[c]; if (Number.isFinite(x) && x < best) best = x; }
+          if (best !== Infinity) topInsert(vr[m][s.key], id, best);
         }
       }
       hit++;

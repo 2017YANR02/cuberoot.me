@@ -35,10 +35,12 @@ export type Sq1Token =
   | { kind: 'turn'; top: number; bot: number };
 
 export function parseSq1Tokens(alg: string): Sq1Token[] {
+  // Strip `// …` line comments first so they don't parse as two `/` slices.
+  const cleaned = alg.replace(/\/\/[^\n]*/g, ' ');
   const out: Sq1Token[] = [];
   const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
   let m: RegExpExecArray | null;
-  while ((m = re.exec(alg)) !== null) {
+  while ((m = re.exec(cleaned)) !== null) {
     if (m[1] === '/') out.push({ kind: 'slice' });
     else if (m[2] !== undefined) out.push({ kind: 'turn', top: parseInt(m[2], 10), bot: parseInt(m[3]!, 10) });
     else out.push({ kind: 'turn', top: parseInt(m[4]!, 10), bot: 0 });

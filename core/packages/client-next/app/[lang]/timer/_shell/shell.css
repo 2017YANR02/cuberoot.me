@@ -29,7 +29,15 @@
   --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
   --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
   --shell-chip: color-mix(in srgb, var(--foreground) 5%, transparent);
+  /* Scramble text: pure black/white (user request — not the gray muted token).
+     Flips with the GLOBAL theme so it always contrasts the shell background,
+     which also follows --background. Shared by Solo (here) and Battle. */
+  --scramble-fg: #000;
 }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) { --scramble-fg: #fff; }
+}
+html[data-theme=dark] { --scramble-fg: #fff; }
 
 .timer-shell {
   position: relative;
@@ -125,6 +133,10 @@
   transition: background 120ms;
 }
 .shell-event-btn:hover { background: var(--shell-hover); }
+/* Icon variant: CubingIcon is a 1em SVG, so bump font-size to make it read as an
+   icon button (matches the grid glyphs) and square up the padding. */
+.shell-event-btn.icon-only { padding: 5px 11px; font-size: 18px; line-height: 1; }
+.shell-event-btn.icon-only .cubing-icon { display: block; }
 .shell-event-backdrop {
   position: fixed;
   inset: 0;
@@ -139,7 +151,11 @@
      instead of shrink-wrapping to a single 40px column (the overflow bug). */
   width: min(92vw, 360px);
   max-height: min(440px, 70dvh);
-  overflow-y: auto;
+  /* visible (not auto) so a top-row icon's hover tooltip can escape the
+     popover's top edge instead of being clipped. Desktop content is ~4 short
+     rows, well under max-height, so it never needs to scroll. Mobile (touch,
+     no hover) re-enables overflow-y:auto below for tall full-width grids. */
+  overflow: visible;
   overscroll-behavior: contain;
   padding: 10px;
   border-radius: 12px;
@@ -187,15 +203,14 @@
   cursor: pointer;
 }
 .timing-surface-core {
-  /* Only the digits live in normal flow; sub-content is absolutely positioned
-     (see .timing-surface-sub) so the readout is the sole thing being centered
-     and never shifts vertically when the phase swaps its sub-content. */
-  position: relative;
+  /* digits → phase sub-content → scramble → cube net, as one centered column so
+     the whole group fits between top/bottom bars (no overflow on short screens).
+     The scramble + cube keep their box while running (see below) so the readout
+     never jumps when a solve starts. */
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* digits optically above true-center */
-  transform: translateY(-4%);
+  gap: clamp(10px, 2vh, 20px);
 }
 .timing-surface .timer-display {
   /* Segment7Standard = battle's 7-segment LCD digits; var(--font-mono) is the
@@ -211,21 +226,16 @@
   text-shadow: none;
   transition: color 120ms;
 }
-/* Sub-content (idle hint / running target / stopped quick-actions) floats just
-   below the digits without being part of the centered flow, so pressing space
-   (idle hint -> none) no longer makes the digits drop. */
+/* Sub-content (phase children: idle hint / running target / stopped
+   quick-actions / rank) sits between the digits and the scramble in the
+   centered column. */
 .timing-surface-sub {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   width: max-content;
-  max-width: min(92vw, 540px);
+  max-width: min(92vw, 640px);
 }
 .timing-surface .timer-display.holding         { color: var(--timer-holding); }
 .timing-surface .timer-display.ready           { color: var(--timer-ready); }
@@ -237,13 +247,9 @@
 .timing-surface .timer-display.inspection-plus2   { color: var(--timer-plus2); }
 .timing-surface .timer-display.inspection-dnf     { color: var(--timer-dnf); }
 
-/* Scramble slot (top, centered) */
+/* Scramble slot — sits in the sub stack directly above the cube net. */
 .timing-surface-scramble {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(94%, 900px);
+  width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -258,18 +264,19 @@
   border: 0;
   background: transparent;
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  font-size: clamp(13px, 2.2vw, 18px);
+  font-size: calc(clamp(13px, 2.2vw, 18px) * var(--scramble-scale, 1));
   line-height: 1.5;
-  color: var(--muted-foreground);
   text-align: center;
   cursor: pointer;
   flex-wrap: wrap;
 }
-.timing-surface-scramble .scramble-strip:hover { color: var(--foreground); }
-.timing-surface-scramble .scramble-strip.compact { font-size: clamp(12px, 1.8vw, 15px); }
-.timing-surface-scramble .scramble-text { word-break: break-word; }
+.timing-surface-scramble .scramble-strip.compact { font-size: calc(clamp(12px, 1.8vw, 15px) * var(--scramble-scale, 1)); }
+/* Visible text lives in .scramble-text; battle.css (co-loaded) paints it gray
+   via --muted-foreground, so set the pure token directly to win (0,2,0 > 0,1,0). */
+.timing-surface-scramble .scramble-text { word-break: break-word; color: var(--scramble-fg); }
 .timing-surface-scramble .scramble-empty { color: var(--faint-foreground); }
-.scramble-refresh {
+.scramble-refresh,
+.scramble-prev {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -283,7 +290,21 @@
   flex: none;
   transition: background 120ms, color 120ms;
 }
-.scramble-refresh:hover { background: var(--shell-hover); color: var(--foreground); }
+.scramble-refresh:hover,
+.scramble-prev:hover { background: var(--shell-hover); color: var(--foreground); }
+
+/* Click-to-copy flash badge, sits inline next to the scramble. */
+.scramble-copied-flash {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
 
 /* Cube net — centered directly under the digits (Battle-style). Lives inside
    the absolute .timing-surface-sub, so showing/hiding it never shifts the
@@ -597,9 +618,8 @@
 .surface-chrome { transition: opacity 120ms ease; }
 /* keep the digits + their immediate sub-content visible while running */
 .timer-shell.is-solving .timing-surface .surface-chrome { opacity: 0; }
-/* the cube net lives in flow under the digits — collapse it (not just fade) so
-   the running readout's sub-content sits right beneath the digits. */
-.timer-shell.is-solving .timing-surface-cube { display: none; }
+/* Scramble + cube fade (opacity:0) but KEEP their box while running, so the
+   centered column's height is constant and the readout never jumps on start. */
 
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
@@ -1009,6 +1029,7 @@
     right: 8px;
     width: auto;
     max-height: 68dvh;
+    overflow-y: auto;
   }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
   .shell-stat-rail { bottom: 8px; }
@@ -1018,6 +1039,9 @@
      orphaned line; bump it to a 40px touch target. */
   .timing-surface-scramble .scramble-strip { position: relative; padding-right: 40px; }
   .timing-surface-scramble .scramble-refresh { position: absolute; top: 0; right: 0; width: 40px; height: 40px; }
+  /* Prev button (only present when there's history) sits top-left, mirroring refresh. */
+  .timing-surface-scramble .scramble-strip.has-prev { padding-left: 40px; }
+  .timing-surface-scramble .scramble-prev { position: absolute; top: 0; left: 0; width: 40px; height: 40px; }
   /* Clear the bottom-left global auth avatar so the leftmost nav button
      (成绩 / Times) isn't under it; symmetric so the 3 flex:1 buttons stay centered. */
   .timer-shell .shell-bottombar { padding-left: 56px; padding-right: 56px; }

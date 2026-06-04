@@ -365,8 +365,7 @@ input:checked + .wca-stats-toggle-pill::after {
   white-space: nowrap;
 }
 
-/* fit-content:窄表贴内容,不留右侧大空白;max-width 兜底防溢出。
-   Top10HistoryPage 嵌入未迁到 Next,Vite 的 wr_metric 对齐约束不适用。 */
+/* fit-content:窄表贴内容,不留右侧大空白;max-width 兜底防溢出。 */
 .wca-stats-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
@@ -378,6 +377,12 @@ input:checked + .wca-stats-toggle-pill::after {
   /* Firefox: 细滚动条，默认透明 */
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
+}
+
+/* wr_metric 嵌入 top10 bar chart race 时,表格撑满让右沿与黑色舞台对齐;
+   :has 作用域只命中含嵌入的 metric-panels,其余窄表仍 fit-content。 */
+.wca-stats-metric-panels:has(.t10h-page) .wca-stats-table-wrapper {
+  width: 100%;
 }
 
 /* hover 时 Firefox 显示半透明滚动条 */

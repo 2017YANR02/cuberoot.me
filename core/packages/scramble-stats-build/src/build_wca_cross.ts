@@ -14,6 +14,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { makeRng } from './prng';
+import { dateDisplay } from './comp_date';
 
 const K = 200; // reservoir size per (color, bin)
 
@@ -44,16 +45,6 @@ async function loadScrambleMap(txtPath: string): Promise<Map<string, string>> {
     map.set(line.slice(0, i), line.slice(i + 1));
   }
   return map;
-}
-
-function dateDisplay(start: string, end: string): string {
-  if (!start || start === 'NULL') return '';
-  if (!end || end === 'NULL' || end === start) return start;
-  const [sy, sm] = start.split('-');
-  const [ey, em, ed] = end.split('-');
-  if (sy === ey && sm === em) return `${start}~${ed}`;
-  if (sy === ey) return `${start}~${em}-${ed}`;
-  return `${start}~${end}`;
 }
 
 interface CompMeta { name: string; date: string }

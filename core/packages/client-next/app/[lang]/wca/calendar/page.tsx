@@ -962,8 +962,6 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
           const c = it.comp;
           const endDate = c.end_date || c.start_date;
           const dateStr = formatDateRangeIso(c.start_date, endDate);
-          // 跨年(2026-12-31~2027-01-03)在列表 date 列(7.2rem mono)放不下,强制在 ~ 后换行;
-          // 每半行加 nowrap 防止 - 处再被切开
           const crossYear = c.start_date.slice(0, 4) !== endDate.slice(0, 4);
           const displayName = localizeName(c, isZh);
           const displayCity = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
@@ -1695,8 +1693,7 @@ function CalendarPageInner() {
               </button>
             );
           });
-          // 列表模式但 0 匹配时也走默认 flex-wrap — 表格列对齐(年份 cell + spacer + chips on the right)
-          // 在手机端会让 chips 落到 scrollLeft=460+ 视觉上消失。
+          // 列表模式：用 grid 把 chips 对齐到下方 21 列数字（年份 cell + 2 spacer + 21 chip）
           if (viewMode !== 'list' || displayedComps.length === 0) return chips;
           return (
             <div className="event-chips-grid">
@@ -1723,30 +1720,6 @@ function CalendarPageInner() {
         <div className="mode-status is-error">{allError}</div>
       )}
 
-      {(viewMode === 'calendar' || viewMode === 'compact') && (
-        <div className="legend">
-          {viewMode === 'calendar' && mode === 'all' && (
-            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
-          )}
-          {viewMode === 'calendar' && (
-            <>
-              <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
-              <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
-            </>
-          )}
-          {viewMode === 'calendar' && (
-            <>
-              <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
-              <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
-              <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
-            </>
-          )}
-          <span className="month-stats">
-            <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
-            <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
-          </span>
-        </div>
-      )}
 
       {viewMode === 'list' && (
         <CompList
@@ -1800,7 +1773,7 @@ function CalendarPageInner() {
                   const isClash = bar.comp.top_cubers.length >= 3;
                   const hasTop = bar.comp.top_cubers.length > 0;
                   const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
-                  const displayName = localizeName(bar.comp, isZh);
+                  const displayName = localizeName(bar.comp, isZh).replace(/ \d{4}$/, '');
                   const classes = [
                     'event-bar',
                     isClash ? 'is-clash' : '',
@@ -2023,6 +1996,31 @@ function CalendarPageInner() {
           isZh={isZh}
           onClose={() => setOnThisDayDate(null)}
         />
+      )}
+
+      {(viewMode === 'calendar' || viewMode === 'compact') && (
+        <div className="legend">
+          {viewMode === 'calendar' && mode === 'all' && (
+            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
+          )}
+          {viewMode === 'calendar' && (
+            <>
+              <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+            </>
+          )}
+          {viewMode === 'calendar' && (
+            <>
+              <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
+              <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
+              <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
+            </>
+          )}
+          <span className="month-stats">
+            <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
+            <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
+          </span>
+        </div>
       )}
 
     </div>

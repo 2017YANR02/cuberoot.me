@@ -71,7 +71,6 @@ export default function TimingSurface({
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
     >
-      {scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
       <div className="timing-surface-core">
         <div
           ref={digitsRef}
@@ -82,12 +81,11 @@ export default function TimingSurface({
         </div>
         {/* Sub-content floats below the digits (absolutely positioned in CSS)
             so the giant readout never shifts as the phase swaps what's here.
-            Order matches Battle (timer → rank/actions → cube): phase children
-            (rank / quick actions / target) sit right under the digits so they
-            stay visible, and the cube net trails at the bottom. When idle the
-            children are empty, so the cube still sits directly under the digits. */}
+            Order: phase children (rank / quick actions / target) → scramble →
+            cube net, so the scramble sits directly above its preview image. */}
         <div className="timing-surface-sub">
           {children}
+          {scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
           {cornerSlot && <div className="timing-surface-cube surface-chrome">{cornerSlot}</div>}
         </div>
       </div>

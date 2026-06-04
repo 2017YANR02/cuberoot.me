@@ -14,6 +14,8 @@ import {
   bestMeanOfN,
   bestBestOfN,
   eventDefaultFormat,
+  sdOfLastN,
+  sdOfBestAoN,
   formatMs,
 } from '../_lib/stats';
 import { bucketStats, bucketBoundaries, type BucketStats } from '../_lib/stats_buckets';
@@ -132,24 +134,29 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   lines.push([isZh ? '平均' : 'Mean', summary.mean]);
   lines.push(['σ', summary.sd]);
   lines.push(['CV', summary.cv]);
+  // σ suffix (cstimer-style): the std-dev of the times composing an average.
+  const sdSuffix = (ms: number | null): string =>
+    (ms === null || !Number.isFinite(ms)) ? '' : ` (σ ${formatMs(Math.round(ms))})`;
+  const curSd = (n: number) => sdSuffix(sdOfLastN(solves, n));
+  const bestSd = (n: number) => sdSuffix(sdOfBestAoN(solves, n));
   if (fmt.kind === 'mo3' || event === '333fm') {
-    lines.push(['mo3', summary.mo3]);
+    lines.push(['mo3', summary.mo3 + curSd(3)]);
     lines.push([isZh ? '最佳 mo3' : 'Best mo3', summary.bestMo3]);
   }
   if (fmt.kind === 'bo3') {
     lines.push(['bo3', summary.bo3]);
     lines.push([isZh ? '最佳 bo3' : 'Best bo3', summary.bestBo3]);
   }
-  lines.push(['ao5', summary.ao5]);
-  lines.push(['ao12', summary.ao12]);
-  lines.push(['ao50', summary.ao50]);
-  lines.push(['ao100', summary.ao100]);
-  lines.push(['ao1000', summary.ao1000]);
-  lines.push([isZh ? '最佳 ao5' : 'Best ao5', summary.bestAo5]);
-  lines.push([isZh ? '最佳 ao12' : 'Best ao12', summary.bestAo12]);
-  lines.push([isZh ? '最佳 ao50' : 'Best ao50', summary.bestAo50]);
-  lines.push([isZh ? '最佳 ao100' : 'Best ao100', summary.bestAo100]);
-  lines.push([isZh ? '最佳 ao1000' : 'Best ao1000', summary.bestAo1000]);
+  lines.push(['ao5', summary.ao5 + curSd(5)]);
+  lines.push(['ao12', summary.ao12 + curSd(12)]);
+  lines.push(['ao50', summary.ao50 + curSd(50)]);
+  lines.push(['ao100', summary.ao100 + curSd(100)]);
+  lines.push(['ao1000', summary.ao1000 + curSd(1000)]);
+  lines.push([isZh ? '最佳 ao5' : 'Best ao5', summary.bestAo5 + bestSd(5)]);
+  lines.push([isZh ? '最佳 ao12' : 'Best ao12', summary.bestAo12 + bestSd(12)]);
+  lines.push([isZh ? '最佳 ao50' : 'Best ao50', summary.bestAo50 + bestSd(50)]);
+  lines.push([isZh ? '最佳 ao100' : 'Best ao100', summary.bestAo100 + bestSd(100)]);
+  lines.push([isZh ? '最佳 ao1000' : 'Best ao1000', summary.bestAo1000 + bestSd(1000)]);
   if (streak > 0) lines.push([isZh ? '最长连续天数' : 'Longest streak', `${streak} ${isZh ? '天' : 'days'}`]);
 
   // Format helper for a single row of period stats (used by JSX + copy text).
