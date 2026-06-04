@@ -277,8 +277,9 @@
     padding: 6px 12px;
     box-sizing: border-box;
 }
-/* list 表头：把过滤 chip 做成 comp-detail 风格的方块 + 右下角轮次角标，
- * 并对齐到下方 21 列数字（calendar/compact 模式的 .event-chip 不受影响）。 */
+/* list 表头：未选纯图标无框；hover / 选中才显方块（comp-detail 风格 + 右下角轮次角标）。
+ * 列宽 1.3rem 放纯图标刚好对齐下方 21 列数字；选中方块 26px 略溢出列但相邻多为窄图标不重叠。
+ * calendar/compact 模式的 .event-chip 不受影响。 */
 .calendar-page .event-chips--list-header .event-chip {
     position: relative;
     flex-direction: row;
@@ -288,9 +289,20 @@
     padding: 0;
     gap: 0;
     justify-self: center;
+    border-color: transparent;
+    background: transparent;
+}
+.calendar-page .event-chips--list-header .event-chip:hover {
+    border-color: transparent;
+    background: var(--accent-soft);
+}
+.calendar-page .event-chips--list-header .event-chip.is-active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: none;
 }
 .calendar-page .event-chips--list-header .event-chip .cubing-icon {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
 }
 /* 右下角轮次角标 — 复刻 WcaEventSelector 的 .event-btn-badge 视觉 */
 .calendar-page .event-chips--list-header .event-chip-rounds {
@@ -974,10 +986,10 @@
  * name+city 列宽由 JS 测当前过滤集 max name+city 实际宽度后注入 --cl-name-width；
  * 默认 fallback 28rem。这样筛选短名（如"北京"）时 city 紧贴 events，不留多余空白；
  * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
- * comp-list-row（行）与 event-chips-grid（表头）共用 — 21 event 列宽要容下 26px 方块图标 */
+ * comp-list-row（行）与 event-chips-grid（表头）共用 */
 .calendar-page {
-    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) repeat(21, 1.7rem);
-    --cl-min-width: 73rem;
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) repeat(21, 1.3rem);
+    --cl-min-width: 65rem;
 }
 .calendar-page .comp-list {
     display: flex;
@@ -1369,13 +1381,13 @@
     .calendar-page--compact .compact-flag-tile { width: 16px; height: 12px; }
     /* 虚拟列表：行高固定，移动端横向滚动以保留 21 列对齐 */
     .calendar-page {
-        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.5rem);
-        --cl-min-width: 62rem;
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.1rem);
+        --cl-min-width: 53rem;
     }
     .calendar-page .comp-list { overflow-x: auto; }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
-    .calendar-page .event-chips--list-header .event-chip { width: 22px; height: 22px; }
-    .calendar-page .event-chips--list-header .event-chip .cubing-icon { font-size: 0.8rem; }
+    .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }
+    .calendar-page .event-chips--list-header .event-chip .cubing-icon { font-size: 0.85rem; }
     .calendar-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
     .calendar-page .comp-list-name-cell { margin-left: -4px; }
     .calendar-page .comp-list-date { font-size: 0.7rem; }

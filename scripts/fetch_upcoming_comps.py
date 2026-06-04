@@ -248,35 +248,6 @@ def fetch_with_retry(url: str, raw: bool = False):
     return {}
 
 
-def _aggregate_comps(comps_map, comps, wca_id, cuber_info):
-    """将某位选手的比赛列表聚合到全局 comps_map 中。"""
-    name = cuber_info["name"]
-    for comp in comps:
-        c_id = comp["id"]
-        if c_id not in comps_map:
-            comps_map[c_id] = {
-                "id": c_id,
-                "name": comp["name"],
-                "city": comp.get("city", "Unknown"),
-                "country": comp.get("country_iso2", ""),
-                "start_date": comp["start_date"],
-                "end_date": comp["end_date"],
-                "events": set(comp.get("event_ids", [])),
-                "competitor_limit": comp.get("competitor_limit", 0),
-                "registration_open": comp.get("registration_open"),
-                "registration_close": comp.get("registration_close"),
-                "top_cubers": []
-            }
-        else:
-            comps_map[c_id]["events"].update(comp.get("event_ids", []))
-
-        comps_map[c_id]["top_cubers"].append({
-            "id": wca_id,
-            "name": name,
-            "events": _build_event_tags(cuber_info),
-        })
-
-
 def _fetch_cubing_china_comps():
     """
     从 cubing.com API 获取即将举行的中国内地 WCA 比赛列表。
@@ -488,87 +459,6 @@ def build_cn_registrations() -> Dict[str, List[str]]:
     return out
 
 
-def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
-    """
-    遍历选手名单，请求 WCA API 获取近期比赛并聚合。
-    每个比赛的 top_cubers 包含选手的事件标签和 WR 标记。
-    """
-    comps_map = {}
-
-    cuber_items = list(cubers.items())
-    if DEBUG_LIMIT:
-        print(f"[DEBUG] 开启了 DEBUG_LIMIT={DEBUG_LIMIT}，仅抓取前 N 人！")
-        cuber_items = cuber_items[:DEBUG_LIMIT]
-
-    total = len(cuber_items)
-    CACHE_DIR.mkdir(exist_ok=True)
-    cache_hit = 0
-
-    for i, (wca_id, cuber_info) in enumerate(cuber_items, 1):
-        name = cuber_info["name"]
-        cache_file = CACHE_DIR / f"{wca_id}.json"
-
-        # NOTE: 缓存命中判断 — 文件存在且未过期
-        if cache_file.exists():
-            age = time.time() - cache_file.stat().st_mtime
-            if age < CACHE_TTL_SEC:
-                data = json.loads(cache_file.read_text(encoding="utf-8"))
-                cache_hit += 1
-                comps = data.get("upcoming_competitions", [])
-                print(f"[{i}/{total}] {wca_id} ({name}): {len(comps)} 场 [缓存]")
-                _aggregate_comps(comps_map, comps, wca_id, cuber_info)
-                continue
-
-        # 缓存未命中，走网络请求
-        url = f"{WCA_API_BASE}/users/{wca_id}?upcoming_competitions=true"
-        data = fetch_with_retry(url)
-
-        comps = data.get("upcoming_competitions", [])
-        n = len(comps)
-        if n > 0:
-            print(f"[{i}/{total}] {wca_id} ({name}): {n} 场")
-        elif not data:
-            print(f"[{i}/{total}] {wca_id} ({name}): 404 跳过")
-        else:
-            print(f"[{i}/{total}] {wca_id} ({name}): 0 场")
-
-        # NOTE: 写入缓存（包括空结果和 404，防止重复请求）
-        cache_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-
-        _aggregate_comps(comps_map, comps, wca_id, cuber_info)
-
-    # NOTE: 集成 cubing.com 上的中国内地比赛
-    _integrate_cubing_china(comps_map, cubers)
-
-    # NOTE: 过滤掉太遥远的比赛（仅保留到明年底），排除占位赛事如 2028 年欧锦赛
-    max_year = datetime.datetime.now().year + 1  # 2026 -> 最多展示到 2027
-    results = []
-    for c_id, info in comps_map.items():
-        if int(info["start_date"][:4]) > max_year:
-            continue
-        # NOTE: events 也用短名并按 WCA 官方顺序排序
-        info["events"] = sorted(
-            list(info["events"]),
-            key=lambda e: EVENT_ORDER_MAP.get(e, (999, e))[0]
-        )
-        info["events"] = [EVENT_ORDER_MAP.get(e, (999, e))[1] for e in info["events"]]
-        results.append(info)
-
-    results.sort(key=lambda x: x["start_date"])
-
-    # NOTE: 选手先按 current WR 数量排，再按 former WR 数量排，最后字母序
-    for info in results:
-        info["top_cubers"].sort(
-            key=lambda c: (
-                -sum(1 for e in c["events"] if e.get("wr") == "current"),
-                -sum(1 for e in c["events"] if e.get("wr") == "former"),
-                c["name"]
-            )
-        )
-
-    return results
-
-
 def build_upcoming_comps_from_wcif(
     cubers: CuberData, all_comps: List[Dict], wcif_map: Dict[str, Dict]
 ) -> List[Dict[str, Any]]:
@@ -621,7 +511,7 @@ def build_upcoming_comps_from_wcif(
         if info["start_date"][:4].isdigit() and int(info["start_date"][:4]) <= max_year
     ]
 
-    # events 统一从内部ID 按 WCA 官方顺序排序 → 转短名（同 build_upcoming_comps 旧逻辑）
+    # events 统一从内部ID 按 WCA 官方顺序排序 → 转短名
     for info in results:
         info["events"] = sorted(
             list(info["events"]),
@@ -819,7 +709,7 @@ def main():
         print("[ERROR] 提取到的选手列表为空，退出。")
         return
 
-    # NOTE: 缓存目录原由 build_upcoming_comps 建；新流程不再调它，需在此显式建
+    # NOTE: 在此显式建缓存目录（下游 fetch_wcif_batch / CN 集成写缓存前依赖它存在）
     CACHE_DIR.mkdir(exist_ok=True)
 
     # 2. 先拉全量 upcoming（Globe + All 模式），同时作 Top 模式的比赛来源

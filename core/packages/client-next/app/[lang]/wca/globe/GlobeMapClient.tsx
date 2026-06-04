@@ -3052,7 +3052,7 @@ export default function GlobeMapClient() {
           <input
             className="globe-search-input"
             type="text"
-            placeholder={isZh ? '搜索比赛 / 城市 / 地点' : 'Search comp / city / place'}
+            placeholder={isZh ? '搜索比赛 / 选手 / 城市 / 地点' : 'Search comp / cuber / city / place'}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
