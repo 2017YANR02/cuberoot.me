@@ -296,15 +296,21 @@ async function mapBounded<I, O>(
 
 // ─── 主扫描(对应 Python scan_and_push)──────────────────────────────────────
 
+// 进程级:warmBaseline 每进程只跑一次(对齐 Python 启动时一次性 warm_all)。否则 comp-less 周期
+// pushed-state 一直空 → countPushed 恒 0 → 每 60s 重灌 48 人基线 hammer WCA。静默吸收只在
+// 「进程首扫 且 历史从未推过」时(对齐 is_pr_first_run = known_pr_ids 空):首扫后不再吸收,新 PR 正常推。
+let processWarmed = false;
+
 async function runOnce(): Promise<void> {
   const watchedIds = await getWatchedWcaIds();
   if (watchedIds.size === 0) return;
 
-  const firstRun = (await countPushed(MONITOR)) === 0;
-  // 首跑先灌生涯 PR 基线,否则每个值都像新破 PR(对齐 Python is_first_run 前置)。
-  if (firstRun) {
+  let firstRun = false;
+  if (!processWarmed) {
+    processWarmed = true; // 先置位,防 runOnce 重入重复 warm
+    firstRun = (await countPushed(MONITOR)) === 0; // 历史从未推过 → 本次静默吸收当前快照,不发推
     const warmed = await warmBaseline([...watchedIds]);
-    console.log(`[wca-live-pr] first run, warmed ${warmed}/${watchedIds.size} baselines`);
+    console.log(`[wca-live-pr] first scan, warmed ${warmed}/${watchedIds.size} baselines (absorb=${firstRun})`);
   }
 
   // listOngoingComps 失败 → log + return,下轮重试(对齐 Python:扫失败不当作空)。
