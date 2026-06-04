@@ -9,6 +9,7 @@
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS } from './config.js';
+import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
 import type { RecordEvent } from '../utils/record_format.js';
@@ -214,8 +215,5 @@ async function runOnce(): Promise<void> {
 }
 
 export function startWcaLiveRecordMonitor(): void {
-  runOnce().catch((e) => console.error('[wca-live-record] runOnce error:', e));
-  setInterval(() => {
-    runOnce().catch((e) => console.error('[wca-live-record] runOnce error:', e));
-  }, POLL_INTERVAL_MS.wcaLiveRecord);
+  startPoller('wca-live-record', runOnce, POLL_INTERVAL_MS.wcaLiveRecord);
 }
