@@ -39,8 +39,9 @@ async function queryCompetitions(): Promise<WcaComp[]> {
   // 单次尝试(30s):WCA /competitions 慢且偶发 >30s,retry 也是 30s 没意义,靠 60s 轮询补。
   for (let attempt = 0; attempt < 1; attempt++) {
     const ctrl = new AbortController();
-    // WCA /competitions?sort=-announced_at 是重查询,服务器实测 ~19s;15s 会被 abort,给 30s。
-    const t = setTimeout(() => ctrl.abort(), 30000);
+    // WCA /competitions?sort=-announced_at 是重查询,服务器实测 19~40s 抖动(出口拥塞时更久);
+    // 45s 超时给足头寸,poll-guard 兜底不会与下一轮重叠。失败就靠 60s 轮询补。
+    const t = setTimeout(() => ctrl.abort(), 45000);
     try {
       const r = await fetch(url, { headers: UA, signal: ctrl.signal });
       if (r.ok) {
