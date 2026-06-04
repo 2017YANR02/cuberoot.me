@@ -93,6 +93,8 @@ EVENT_DISPLAY_ORDER = [
 ]
 # 内部ID -> (排序索引, 显示短名)
 EVENT_ORDER_MAP = {eid: (idx, short) for idx, (eid, short) in enumerate(EVENT_DISPLAY_ORDER)}
+# 显示短名 -> 内部ID（反查；all_comps 存短名，CN 集成存内部ID，统一回内部ID 再规范化）
+SHORT_TO_EVENT_ID = {short: eid for eid, short in EVENT_DISPLAY_ORDER}
 USER_AGENT = "WCA-Stats-Bot/1.0 (cuberoot.me)"
 # ==================================================
 
@@ -567,49 +569,22 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     return results
 
 
-def build_upcoming_comps_from_registrations(cubers: CuberData, all_comps: List[Dict]) -> List[Dict[str, Any]]:
+def build_upcoming_comps_from_wcif(
+    cubers: CuberData, all_comps: List[Dict], wcif_map: Dict[str, Dict]
+) -> List[Dict[str, Any]]:
     """
     WCA 限制 /users/:id?upcoming_competitions=true（返回 403）后的替代方案。
-    逐场拉 /competitions/:id/registrations，与 top cubers 交叉匹配。
-    registrations 端点仍为公开访问。
+    用每场 WCIF public 端点的 persons 数组（含 wcaId + registration.status）
+    与 top cubers 交叉匹配。wcif_map 由 fetch_wcif_batch 预拉好（rounds 复用同份）。
     """
     cuber_ids = set(cubers.keys())
     comps_map: Dict[str, Dict] = {}
-    total = len(all_comps)
-    CACHE_DIR.mkdir(exist_ok=True)
-    cache_hit = 0
 
-    for i, comp in enumerate(all_comps, 1):
+    for comp in all_comps:
         comp_id = comp["id"]
-        cache_file = CACHE_DIR / f"_reg_{comp_id}.json"
-
-        if _is_cache_valid(cache_file):
-            try:
-                registrations = json.loads(cache_file.read_text(encoding="utf-8"))
-                cache_hit += 1
-            except Exception:
-                registrations = []
-        else:
-            url = f"{WCA_API_BASE}/competitions/{comp_id}/registrations"
-            raw = fetch_with_retry(url)
-            if isinstance(raw, list):
-                registrations = raw
-                cache_file.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
-            else:
-                registrations = []
-
-        # 只保留已接受报名的选手
-        matched_ids = []
-        for reg in registrations:
-            # WCA registrations API 形如 {wca_id, user:{wca_id}, status}
-            wid = reg.get("wca_id") or (reg.get("user") or {}).get("wca_id")
-            status = reg.get("status", "accepted")
-            if wid and wid in cuber_ids and status == "accepted":
-                matched_ids.append(wid)
-
-        if not matched_ids:
-            if (i % 100 == 0):
-                print(f"[REG] 进度 {i}/{total} (缓存命中 {cache_hit})")
+        competitors = wcif_map.get(comp_id, {}).get("competitors", [])
+        matched = [w for w in competitors if w in cuber_ids]
+        if not matched:
             continue
 
         comps_map[comp_id] = {
@@ -619,30 +594,40 @@ def build_upcoming_comps_from_registrations(cubers: CuberData, all_comps: List[D
             "country": comp.get("country", ""),
             "start_date": comp.get("start_date", ""),
             "end_date": comp.get("end_date", ""),
-            "events": set(comp.get("events", [])),  # already shortified in all_comps
+            # NOTE: all_comps 存短名 → 转回内部ID，与 CN 集成统一，最后再规范化成短名
+            "events": set(SHORT_TO_EVENT_ID.get(e, e) for e in comp.get("events", [])),
             "competitor_limit": comp.get("competitor_limit", 0),
             "registration_open": comp.get("registration_open"),
             "registration_close": comp.get("registration_close"),
             "top_cubers": [],
         }
-        for wca_id in matched_ids:
+        for wca_id in matched:
             cuber_info = cubers[wca_id]
             comps_map[comp_id]["top_cubers"].append({
                 "id": wca_id,
                 "name": cuber_info["name"],
                 "events": _build_event_tags(cuber_info),
             })
-        if i % 100 == 0 or i == total:
-            print(f"[REG] 进度 {i}/{total} (缓存命中 {cache_hit}, 有 top cubers 的比赛: {len(comps_map)})")
+
+    print(f"[REG] {len(comps_map)} 场比赛有 top cubers 参赛")
 
     # 集成 cubing.com CN 比赛（不在 WCA all_comps 里）
     _integrate_cubing_china(comps_map, cubers)
 
-    # NOTE: all_comps 里 events 已经是 short names（如 "3" 而非 "333"），顺序已按 WCA 官方排好
-    # 直接转 list 保序即可，不需要再按 EVENT_ORDER_MAP 重排
-    results = list(comps_map.values())
+    # NOTE: 过滤太遥远的比赛（仅到明年底），排除占位赛事如 2028 年欧锦赛
+    max_year = datetime.datetime.now().year + 1
+    results = [
+        info for info in comps_map.values()
+        if info["start_date"][:4].isdigit() and int(info["start_date"][:4]) <= max_year
+    ]
+
+    # events 统一从内部ID 按 WCA 官方顺序排序 → 转短名（同 build_upcoming_comps 旧逻辑）
     for info in results:
-        info["events"] = list(info["events"])
+        info["events"] = sorted(
+            list(info["events"]),
+            key=lambda e: EVENT_ORDER_MAP.get(e, (999, e))[0]
+        )
+        info["events"] = [EVENT_ORDER_MAP.get(e, (999, e))[1] for e in info["events"]]
         info["top_cubers"].sort(
             key=lambda c: (
                 -sum(1 for e in c["events"] if e.get("wr") == "current"),
@@ -655,18 +640,25 @@ def build_upcoming_comps_from_registrations(cubers: CuberData, all_comps: List[D
     return results
 
 
-def fetch_wcif_rounds(comp_id: str) -> Dict[str, int]:
+def _wcif_cache_ok(cached) -> bool:
+    """新缓存格式必须含 rounds + competitors 两个键；旧的纯 rounds dict 视为失效。"""
+    return isinstance(cached, dict) and "rounds" in cached and "competitors" in cached
+
+
+def fetch_wcif(comp_id: str) -> Dict[str, Any]:
     """
-    拉取单场比赛 WCIF 公开端点，提取每个项目的轮次数。
-    返回 { 短名: rounds_count }。失败 / 无 events → 空 dict。
-    单文件缓存（24h），与全局 CACHE_TTL_SEC 共用。
+    拉取单场比赛 WCIF 公开端点，一次性提取轮次数 + 报名选手 wcaId。
+    返回 { "rounds": {短名: rounds_count}, "competitors": [wcaId, ...] }。
+    失败 / 无 events → {}（不缓存，下次重试）。单文件缓存（24h）。
     """
     cache_file = CACHE_DIR / f"_wcif_{comp_id}.json"
     if _is_cache_valid(cache_file):
         try:
-            return json.loads(cache_file.read_text(encoding="utf-8"))
+            cached = json.loads(cache_file.read_text(encoding="utf-8"))
+            if _wcif_cache_ok(cached):
+                return cached
         except Exception:
-            pass  # 缓存损坏 → 重新拉
+            pass  # 缓存损坏 / 旧格式 → 重新拉
 
     url = f"{WCA_API_BASE}/competitions/{comp_id}/wcif/public"
     data = fetch_with_retry(url)
@@ -675,30 +667,41 @@ def fetch_wcif_rounds(comp_id: str) -> Dict[str, int]:
     #       成功（哪怕 events 列表为空）才缓存。否则一次 429 → 缓存 24h 内永远空。
     if not isinstance(data, dict) or "events" not in data:
         return {}
-    out: Dict[str, int] = {}
+    rounds: Dict[str, int] = {}
     for ev in data["events"] or []:
         eid = ev.get("id")
         if not eid:
             continue
         n = len(ev.get("rounds") or [])
         _, short = EVENT_ORDER_MAP.get(eid, (999, eid))
-        out[short] = n
+        rounds[short] = n
+    # NOTE: persons[].registration 可能为 null（纯 staff/delegate）；只取 accepted 报名者
+    competitors: List[str] = []
+    for p in data.get("persons") or []:
+        wid = p.get("wcaId")
+        reg = p.get("registration") or {}
+        if wid and reg.get("status") == "accepted":
+            competitors.append(wid)
+    out = {"rounds": rounds, "competitors": competitors}
     cache_file.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     return out
 
 
-def fetch_wcif_rounds_batch(comp_ids: Iterable[str]) -> Dict[str, Dict[str, int]]:
+def fetch_wcif_batch(comp_ids: Iterable[str]) -> Dict[str, Dict[str, Any]]:
     """
-    并行拉一批比赛的 WCIF 轮次。已缓存的直接读，未缓存的多线程拉取。
+    并行拉一批比赛的 WCIF（轮次 + 报名名单）。已缓存的直接读，未缓存的多线程拉取。
+    返回 { comp_id: {"rounds": {...}, "competitors": [...]} }。
     """
-    out: Dict[str, Dict[str, int]] = {}
+    out: Dict[str, Dict[str, Any]] = {}
     pending: List[str] = []
     for cid in comp_ids:
         cache_file = CACHE_DIR / f"_wcif_{cid}.json"
         if _is_cache_valid(cache_file):
             try:
-                out[cid] = json.loads(cache_file.read_text(encoding="utf-8"))
-                continue
+                cached = json.loads(cache_file.read_text(encoding="utf-8"))
+                if _wcif_cache_ok(cached):
+                    out[cid] = cached
+                    continue
             except Exception:
                 pass
         pending.append(cid)
@@ -712,14 +715,14 @@ def fetch_wcif_rounds_batch(comp_ids: Iterable[str]) -> Dict[str, Dict[str, int]
     workers = 2
     done = 0
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(fetch_wcif_rounds, cid): cid for cid in pending}
+        futures = {executor.submit(fetch_wcif, cid): cid for cid in pending}
         for fut in as_completed(futures):
             cid = futures[fut]
             try:
-                out[cid] = fut.result()
+                out[cid] = fut.result() or {"rounds": {}, "competitors": []}
             except Exception as e:
                 print(f"[WCIF][WARN] {cid}: {e}")
-                out[cid] = {}
+                out[cid] = {"rounds": {}, "competitors": []}
             done += 1
             if done % 50 == 0 or done == len(pending):
                 print(f"[WCIF] {done}/{len(pending)} 已拉取")
@@ -816,34 +819,43 @@ def main():
         print("[ERROR] 提取到的选手列表为空，退出。")
         return
 
-    # 2. 先拉全量 upcoming（Globe + All 模式），顺便复用给 Top 模式的 registrations 匹配
+    # NOTE: 缓存目录原由 build_upcoming_comps 建；新流程不再调它，需在此显式建
+    CACHE_DIR.mkdir(exist_ok=True)
+
+    # 2. 先拉全量 upcoming（Globe + All 模式），同时作 Top 模式的比赛来源
     print("\n[ALL] 开始拉取 WCA 全球全量 upcoming 比赛...")
     all_comps = build_all_upcoming_comps()
 
-    # 3. 拉取和清洗 Top 模式比赛
-    # NOTE: WCA /users/:id?upcoming_competitions=true 现在返回 403（需要认证）。
-    #       改用 /competitions/:id/registrations（仍公开）逐场交叉匹配。
-    if all_comps:
-        print(f"\n[REG] 改用 registrations 模式（{len(all_comps)} 场比赛 × top {len(cubers)} 名选手）...")
-        comps_data = build_upcoming_comps_from_registrations(cubers, all_comps)
-    else:
-        print("[WARN] all_comps 为空，回退旧逻辑（可能因 /users 403 全跳过）")
-        comps_data = build_upcoming_comps(cubers)
-
-    # 4. 一次性批量拉每场比赛的 WCIF 轮次（两份输出共享缓存，避免重复请求）
-    all_ids = {c["id"] for c in comps_data}
-    if all_comps:
-        all_ids.update(c["id"] for c in all_comps)
+    # 3. 批量拉每场 WCIF（轮次 + 报名名单）。
+    # NOTE: WCA /users/:id?upcoming_competitions=true 现返回 403（端点级限流，非 IP 段封）。
+    #       改用 WCIF public 的 persons 数组拿报名 wcaId，同份请求顺带拿轮次，避免双拉。
+    all_ids = {c["id"] for c in all_comps} if all_comps else set()
     if all_ids:
-        print(f"\n[WCIF] 开始拉取 {len(all_ids)} 场比赛的轮次数据...")
-        rounds_map = fetch_wcif_rounds_batch(all_ids)
-        for c in comps_data:
-            c["rounds"] = rounds_map.get(c["id"], {})
-        if all_comps:
-            for c in all_comps:
-                c["rounds"] = rounds_map.get(c["id"], {})
+        print(f"\n[WCIF] 拉取 {len(all_ids)} 场比赛的 WCIF（轮次 + 报名名单）...")
+        wcif_map = fetch_wcif_batch(all_ids)
+    else:
+        wcif_map = {}
 
-    # 5. 写出 Top 模式 JSON
+    # 4. 用 WCIF 报名名单与 top cubers 交叉匹配，构建 Top 模式
+    if all_comps:
+        print(f"\n[REG] WCIF 报名名单匹配（{len(all_comps)} 场 × top {len(cubers)} 名选手）...")
+        comps_data = build_upcoming_comps_from_wcif(cubers, all_comps, wcif_map)
+    else:
+        print("[WARN] all_comps 为空，Top 模式无数据源")
+        comps_data = []
+
+    # 5. 补拉 CN 集成新建（不在 all_ids 里）的比赛 WCIF 轮次，再统一填 rounds
+    cn_only_ids = {c["id"] for c in comps_data} - all_ids
+    if cn_only_ids:
+        print(f"\n[WCIF] 补拉 {len(cn_only_ids)} 场 CN 比赛轮次...")
+        wcif_map.update(fetch_wcif_batch(cn_only_ids))
+    for c in comps_data:
+        c["rounds"] = wcif_map.get(c["id"], {}).get("rounds", {})
+    if all_comps:
+        for c in all_comps:
+            c["rounds"] = wcif_map.get(c["id"], {}).get("rounds", {})
+
+    # 6. 写出 Top 模式 JSON
     output_obj = {
         "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "total_cubers_tracked": len(cubers) if not DEBUG_LIMIT else DEBUG_LIMIT,
@@ -855,14 +867,14 @@ def main():
     print(f"\n[INFO] 成功！共找到 {len(comps_data)} 场即将举行的比赛。")
     print(f"[INFO] 数据已写入: {OUTPUT_JSON_PATH.relative_to(ROOT_DIR)}")
 
-    # 6. 写出 All 模式 JSON
+    # 7. 写出 All 模式 JSON
     if all_comps is not None:
         ALL_OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
         with ALL_OUTPUT_JSON_PATH.open("w", encoding="utf-8") as f:
             json.dump(all_comps, f, ensure_ascii=False, separators=(',', ':'))
         print(f"[ALL] 共 {len(all_comps)} 场 → {ALL_OUTPUT_JSON_PATH.relative_to(ROOT_DIR)}")
 
-    # 7. 写出 CN 全员注册名单（前端搜选手非 top 时的静态兜底）
+    # 8. 写出 CN 全员注册名单（前端搜选手非 top 时的静态兜底）
     print("\n[CN-REG] 开始构建中国内地比赛全员注册名单...")
     cn_reg = build_cn_registrations()
     if cn_reg:
