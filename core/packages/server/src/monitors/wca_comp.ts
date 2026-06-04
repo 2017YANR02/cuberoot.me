@@ -11,7 +11,9 @@ import { startPoller } from './poll.js';
 const MONITOR: MonitorId = 'wca_comp';
 const WCA_API = 'https://www.worldcubeassociation.org/api/v0/competitions';
 const UA: Record<string, string> = { 'User-Agent': 'WCA-Monitor/1.0', Accept: 'application/json' };
-const PER_PAGE = 50;
+// per_page=50 在 WCA /competitions?sort=-announced_at 服务端很重(实测 ~20-26s,并发拥塞时 >45s 被 abort);
+// per_page=10 仅 ~2s。60s 轮询不可能漏(一轮内不会公示 10 个新赛)。
+const PER_PAGE = 10;
 
 interface WcaComp {
   id: string;
@@ -39,9 +41,8 @@ async function queryCompetitions(): Promise<WcaComp[]> {
   // 单次尝试(30s):WCA /competitions 慢且偶发 >30s,retry 也是 30s 没意义,靠 60s 轮询补。
   for (let attempt = 0; attempt < 1; attempt++) {
     const ctrl = new AbortController();
-    // WCA /competitions?sort=-announced_at 是重查询,服务器实测 19~40s 抖动(出口拥塞时更久);
-    // 45s 超时给足头寸,poll-guard 兜底不会与下一轮重叠。失败就靠 60s 轮询补。
-    const t = setTimeout(() => ctrl.abort(), 45000);
+    // per_page=10 后该查询 ~2s,15s 超时足够;失败靠 60s 轮询补(poll-guard 兜底不重叠)。
+    const t = setTimeout(() => ctrl.abort(), 15000);
     try {
       const r = await fetch(url, { headers: UA, signal: ctrl.signal });
       if (r.ok) {
