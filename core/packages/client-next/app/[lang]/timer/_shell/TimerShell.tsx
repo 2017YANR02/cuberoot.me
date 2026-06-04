@@ -3,7 +3,7 @@
 /**
  * TimerShell — the mode host for /timer.
  *
- * Renders a top-left segmented [单人 Solo | 对战 Battle] pill and switches
+ * Renders a top-left segmented [单人 Solo | 双人 Duo] pill and switches
  * between SoloView and (Phase 3) BattleView. First paint is ALWAYS Solo so the
  * page stays SSG-safe: we NEVER call useSearchParams in render. Instead we read
  * window.location.search inside an effect under a `mounted` gate, then hydrate
@@ -17,7 +17,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Timer as TimerIcon, Swords } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 import SoloView from './SoloView';
 import BattleView from './BattleView';
 
@@ -29,12 +29,20 @@ export default function TimerShell() {
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<Mode>('solo');
 
-  // Read ?mode AFTER mount only — first paint is the calm Solo view.
+  // Read ?mode AFTER mount only — first paint is the calm Solo view. Both modes
+  // are reflected in the URL (?mode=solo | ?mode=battle); normalize on mount so
+  // solo (previously param-less) also shows its mode.
   useEffect(() => {
     setMounted(true);
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('mode') === 'battle') setMode('battle');
+      const m: Mode = params.get('mode') === 'battle' ? 'battle' : 'solo';
+      setMode(m);
+      if (params.get('mode') !== m) {
+        params.set('mode', m);
+        const qs = params.toString();
+        history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash);
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -43,8 +51,7 @@ export default function TimerShell() {
     if (typeof window === 'undefined') return;
     try {
       const params = new URLSearchParams(window.location.search);
-      if (next === 'battle') params.set('mode', 'battle');
-      else params.delete('mode');
+      params.set('mode', next);
       const qs = params.toString();
       const url = window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash;
       history.replaceState(null, '', url);
@@ -57,21 +64,23 @@ export default function TimerShell() {
         type="button"
         role="tab"
         aria-selected={mode === 'solo'}
+        aria-label={isZh ? '单人' : 'Solo'}
+        title={isZh ? '单人' : 'Solo'}
         className={`shell-mode-opt${mode === 'solo' ? ' active' : ''}`}
         onClick={() => switchMode('solo')}
       >
-        <TimerIcon size={14} />
-        <span>{isZh ? '单人' : 'Solo'}</span>
+        <User size={16} />
       </button>
       <button
         type="button"
         role="tab"
         aria-selected={mode === 'battle'}
+        aria-label={isZh ? '双人' : 'Duo'}
+        title={isZh ? '双人' : 'Duo'}
         className={`shell-mode-opt${mode === 'battle' ? ' active' : ''}`}
         onClick={() => switchMode('battle')}
       >
-        <Swords size={14} />
-        <span>{isZh ? '对战' : 'Battle'}</span>
+        <Users size={16} />
       </button>
     </div>
   );

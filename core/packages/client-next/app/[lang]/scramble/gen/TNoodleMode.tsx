@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { RefreshCw, Download, X, Trash2, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
+import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import NumberCommitInput from '@/components/NumberCommitInput';
@@ -67,10 +67,10 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
 const VARIANTS: { key: VariantKey; zh: string; en: string }[] = [
   { key: 'std', zh: '标准', en: 'Standard' },
-  { key: 'eo', zh: 'EO十字', en: 'EOCross' },
-  { key: 'pair', zh: '十字+基态', en: 'Cross + Pair' },
-  { key: 'pseudo', zh: '伪十字', en: 'Pseudo' },
-  { key: 'pseudo_pair', zh: '伪十字+基态', en: 'Pseudo + Pair' },
+  { key: 'eo', zh: 'EO', en: 'EO' },
+  { key: 'pair', zh: '基态', en: 'Pair' },
+  { key: 'pseudo', zh: '伪', en: 'Pseudo' },
+  { key: 'pseudo_pair', zh: '伪基态', en: 'Pseudo Pair' },
   { key: 'f2leo', zh: 'F2LEO', en: 'F2LEO' },
   { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO' },
 ];
@@ -914,13 +914,22 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           />
         </div>
       ) : loaded ? (
-        <input
-          type="text"
-          className="gen-tn-comp-input"
-          value={compInput || `Scrambles for ${todayIso()}`}
-          readOnly
-          onChange={() => { /* readonly */ }}
-        />
+        <div className="gen-tn-comp-display">
+          <span>{compInput || `Scrambles for ${todayIso()}`}</span>
+          <ClearButton
+            variant="standalone"
+            onClick={() => {
+              generateAbortRef.current = true;
+              setSheets(null);
+              setViewedEvent(null);
+              setViewedRoundIdx(null);
+              setEvents({});
+            }}
+            isZh={isZh}
+            ariaLabel={t('清空所有项目', 'Clear all events')}
+            title={t('清空所有项目', 'Clear all events')}
+          />
+        </div>
       ) : (
         <div className="gen-tn-comp-picker-row">
           <CompPicker
@@ -1016,7 +1025,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
             />
           )}
-          {!loadedCompId && (Object.keys(events).length > 0 || loaded || generating) && (
+          {!loadedCompId && !loaded && (Object.keys(events).length > 0 || generating) && (
             <button
               type="button"
               className="gen-btn"
@@ -1031,7 +1040,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               title={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
               aria-label={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
             >
-              <Trash2 size={14} />
+              <X size={14} />
             </button>
           )}
         </div>

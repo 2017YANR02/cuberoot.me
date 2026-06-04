@@ -15,7 +15,7 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } fr
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -34,6 +34,10 @@ import {
   fetchCompetitionDetail,
   fetchPersonByWcaId,
   WcaPersonPicker,
+  searchLocalPersons,
+  loadPersonsIndex,
+  isPersonsIndexReady,
+  searchPersons,
   type UpcomingCompRecord,
   type PastCompRecord,
   type WcaCompDetail,
@@ -45,6 +49,7 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { Flag, flagHtml } from '@/components/Flag';
 import { compHref, prefetchComp } from '@/lib/comp-link';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { exportTrailVideo, isVideoExportSupported } from './_lib/trail_video';
 import './globe.css';
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
@@ -60,9 +65,7 @@ type SavedShape = {
   createdAt: number;
 };
 
-// WCA 复办年份；slider 从 2003 开始（更紧凑，1982-2003 之间没有比赛）
-const HISTORY_MIN_YEAR = 2003;
-// WCA 第一场比赛 WC1982（世锦赛）；slider 拉到最左（2003）时自动把 1982 一并纳入
+// WCA 第一场比赛 WC1982（世锦赛）；月份过滤窗口下界 = 1982-01
 const HISTORY_ABSOLUTE_MIN = 1982;
 
 // MapLibre globe 投影要求 WebGL2，无 WebGL2 的老浏览器/设备只能走 mercator
@@ -256,6 +259,71 @@ function greatCircleArc(a: [number, number], b: [number, number]): [number, numb
     out[i] = [lng, lat];
   }
   return out;
+}
+
+// === 轨迹 arc / tip geojson 构建(纯函数,React useMemo 与视频导出共用) ===
+function buildCuberArcsFC(
+  arcFullCoords: Array<[number, number][]>,
+  currentIndex: number,
+  progress: number,
+): GeoJSON.FeatureCollection<GeoJSON.LineString> {
+  const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+  const totalArcs = Math.max(1, arcFullCoords.length);
+  for (let i = 0; i < currentIndex; i++) {
+    const coords = arcFullCoords[i];
+    if (!coords || coords.length < 2) continue;
+    const sliceEnd = i === currentIndex - 1
+      ? Math.max(2, Math.floor(coords.length * progress))
+      : coords.length;
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: coords.slice(0, sliceEnd) },
+      properties: { index: i, year_progress: totalArcs <= 1 ? 1 : i / (totalArcs - 1) },
+    });
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+function buildCuberTipFC(
+  arcFullCoords: Array<[number, number][]>,
+  currentIndex: number,
+  progress: number,
+): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  if (currentIndex < 1) return { type: 'FeatureCollection', features: [] };
+  const coords = arcFullCoords[currentIndex - 1];
+  if (!coords || coords.length < 2) return { type: 'FeatureCollection', features: [] };
+  const sliceEnd = Math.max(2, Math.floor(coords.length * progress));
+  const tip = coords[sliceEnd - 1];
+  const prev = coords[sliceEnd - 2];
+  const toRad = Math.PI / 180;
+  const lat1 = prev[1] * toRad, lat2 = tip[1] * toRad;
+  const dLng = (tip[0] - prev[0]) * toRad;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const bearing = Math.atan2(y, x) * 180 / Math.PI;
+  let lng = tip[0];
+  while (lng > 180) lng -= 360;
+  while (lng < -180) lng += 360;
+  return {
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lng, tip[1]] },
+      properties: { bearing },
+    }],
+  };
+}
+
+// 在某条 arc 上按进度 p 采样一个(已归一化经度的)坐标点,供视频导出相机跟随。
+function sampleArcPoint(coords: [number, number][], p: number): [number, number] | null {
+  if (!coords || coords.length < 1) return null;
+  const ix = Math.min(coords.length - 1, Math.max(0, Math.round(p * (coords.length - 1))));
+  const pt = coords[ix];
+  if (!pt) return null;
+  let lng = pt[0];
+  while (lng > 180) lng -= 360;
+  while (lng < -180) lng += 360;
+  return [lng, pt[1]];
 }
 function expandToGreatCircleLine(points: [number, number][]): [number, number][] {
   if (points.length < 2) return points;
@@ -558,6 +626,38 @@ async function mapWithConcurrency<T, R>(
   return out;
 }
 
+// 全量历史比赛 JSON(含坐标)单例:选手轨迹 / 比赛搜索 / includePast 共用,整页生命周期内只下载一次。
+let _pastCompsPromise: Promise<PastCompRecord[]> | null = null;
+function loadPastCompsOnce(): Promise<PastCompRecord[]> {
+  if (!_pastCompsPromise) _pastCompsPromise = fetchAllPastCompsJson();
+  return _pastCompsPromise;
+}
+
+// 比赛 id → 坐标详情 查表,从全量 JSON 构建一次后缓存。选手 /competitions 返回的都是已结束比赛,
+// 绝大多数能在此命中,无需逐场打 WCA API(Max Park 这类几百场的选手由此从「几百次请求」降到「一次本地 join」)。
+let _pastCoordMap: Map<string, WcaCompDetail> | null = null;
+async function loadPastCoordMap(): Promise<Map<string, WcaCompDetail>> {
+  if (_pastCoordMap) return _pastCoordMap;
+  const list = await loadPastCompsOnce();
+  const m = new Map<string, WcaCompDetail>();
+  for (const c of list) {
+    if (c.latitude_degrees == null || c.longitude_degrees == null) continue; // 多地代码(XW/XA)无真实坐标
+    m.set(c.id, {
+      id: c.id,
+      name: c.name,
+      city: c.city,
+      country_iso2: c.country,
+      start_date: c.start_date,
+      end_date: c.end_date,
+      latitude_degrees: c.latitude_degrees,
+      longitude_degrees: c.longitude_degrees,
+      url: `https://www.worldcubeassociation.org/competitions/${c.id}`,
+    });
+  }
+  _pastCoordMap = m;
+  return m;
+}
+
 export default function GlobeMapClient() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -624,11 +724,15 @@ export default function GlobeMapClient() {
   const [comps, setComps] = useState<UpcomingCompRecord[] | null>(null);
   const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(null);
 
-  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const CURRENT_YM = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const MONTH_FLOOR = `${HISTORY_ABSOLUTE_MIN}-01`; // 1982-01
   const [includePast, setIncludePast] = useState(false);
   const [pastComps, setPastComps] = useState<PastCompRecord[] | null>(null);
   const [pastLoading, setPastLoading] = useState(false);
-  const [yearRange, setYearRange] = useState<[number, number]>([HISTORY_MIN_YEAR, currentYear]);
+  // 年+月时间窗口(YYYY-MM);null = 全范围不过滤。作用于历史+近期比赛。
+  const [monthRange, setMonthRange] = useState<[string, string] | null>(null);
 
   const [cuber, setCuber] = useState<WcaPerson | null>(null);
   const [cuberComps, setCuberComps] = useState<WcaCompDetail[]>([]);
@@ -639,6 +743,10 @@ export default function GlobeMapClient() {
   const [speed, setSpeed] = useState<Speed>(1);
   const [cuberView, setCuberView] = useState<'arc' | 'pillar'>('arc');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordProgress, setRecordProgress] = useState(0);
+  const exportAbortRef = useRef(false);
+  const logoImgRef = useRef<HTMLImageElement | null>(null);
 
   const [cursorPos, setCursorPos] = useState<{ lat: number; lng: number } | null>(null);
   const [mobileSlot, setMobileSlot] = useState<'stats' | 'coords'>('stats');
@@ -688,22 +796,22 @@ export default function GlobeMapClient() {
   useEffect(() => { localizeCompNameRef.current = localizeCompName; }, [localizeCompName]);
 
   type GeoResult = { display_name: string; lat: string; lon: string; boundingbox?: [string, string, string, string] };
-  type SearchType = 'place' | 'comp';
-  const [searchType, setSearchType] = useState<SearchType>('place');
   const [searchQuery, setSearchQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<GeoResult[]>([]);
+  const [personResults, setPersonResults] = useState<WcaPerson[]>([]);
+  const [personsIndexReady, setPersonsIndexReady] = useState(() => isPersonsIndexReady());
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
+  // 统一搜索:地点(geocoding)+ 比赛 同时跑,下拉分两组
   useEffect(() => {
-    if (searchType !== 'place') { setPlaceResults([]); setSearchLoading(false); return; }
     const q = searchQuery.trim();
     if (q.length < 2) { setPlaceResults([]); setSearchLoading(false); return; }
     setSearchLoading(true);
     const ctrl = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q=${encodeURIComponent(q)}`;
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=${encodeURIComponent(q)}`;
         const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
         if (!r.ok) throw new Error('nominatim');
         const data = await r.json() as GeoResult[];
@@ -712,10 +820,9 @@ export default function GlobeMapClient() {
       finally { setSearchLoading(false); }
     }, 350);
     return () => { ctrl.abort(); clearTimeout(timer); };
-  }, [searchQuery, searchType]);
+  }, [searchQuery]);
   type CompResult = { id: string; name: string; city: string; country: string; lng: number; lat: number; date: string; tag: 'upcoming' | 'past' };
   const compResults = useMemo<CompResult[]>(() => {
-    if (searchType !== 'comp') return [];
     const raw = searchQuery.trim();
     const q = raw.toLowerCase();
     if (q.length < 2) return [];
@@ -745,16 +852,45 @@ export default function GlobeMapClient() {
       if (a.tag !== b.tag) return a.tag === 'upcoming' ? -1 : 1;
       return b.date.localeCompare(a.date);
     });
-    return matches.slice(0, 50);
-  }, [searchType, searchQuery, comps, pastComps]);
+    return matches.slice(0, 8);
+  }, [searchQuery, comps, pastComps]);
+  // 一旦开始搜索就把历史比赛拉进来(才能搜到 past comp);loadPastCompsOnce 整页只下一次
   useEffect(() => {
-    if (searchType !== 'comp' || pastComps !== null || pastLoading) return;
+    if (searchQuery.trim().length < 2 || pastComps !== null || pastLoading) return;
     setPastLoading(true);
-    fetchAllPastCompsJson()
+    loadPastCompsOnce()
       .then((list) => setPastComps(list))
       .catch(() => { /* */ })
       .finally(() => setPastLoading(false));
-  }, [searchType, pastComps, pastLoading]);
+  }, [searchQuery, pastComps, pastLoading]);
+  // 聚焦搜索时懒加载选手索引(28万,全站共享单例,不进首屏)
+  useEffect(() => {
+    if (!searchOpen || personsIndexReady) return;
+    loadPersonsIndex().then(() => setPersonsIndexReady(true)).catch(() => { /* */ });
+  }, [searchOpen, personsIndexReady]);
+  // 选手搜索:本地索引秒搜(haystack="id|name",中文/单字符/WCA ID 都行);未就绪走 API 兜底
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) { setPersonResults([]); return; }
+    const ql = q.toLowerCase();
+    const score = (p: WcaPerson): number => {
+      const name = p.name.toLowerCase(), id = p.wcaId.toLowerCase();
+      if (id === ql || name === ql) return 0;
+      if (name.replace(/\s*[（(].*?[)）]\s*/g, '').trim() === ql) return 0;
+      if (name.startsWith(ql) || id.startsWith(ql)) return 1;
+      return 2;
+    };
+    const local = searchLocalPersons(q, 40);
+    if (local) {
+      setPersonResults([...local].sort((a, b) => score(a) - score(b)).slice(0, 5));
+      return;
+    }
+    // 索引未就绪 → WCA API 兜底(防抖)
+    const timer = setTimeout(async () => {
+      try { setPersonResults((await searchPersons(q)).slice(0, 5)); } catch { /* */ }
+    }, 320);
+    return () => clearTimeout(timer);
+  }, [searchQuery, personsIndexReady]);
   useEffect(() => {
     if (!searchOpen) return;
     const onDoc = (e: MouseEvent) => {
@@ -787,10 +923,9 @@ export default function GlobeMapClient() {
     setMode('upcoming');
     if (c.tag === 'past') {
       setIncludePast(true);
-      const compYear = parseInt(c.date.slice(0, 4), 10);
-      if (Number.isFinite(compYear)) {
-        setYearRange(([lo, hi]) => [Math.min(lo, compYear), Math.max(hi, compYear)]);
-      }
+      const ym = c.date.slice(0, 7); // YYYY-MM
+      // 若已设了窗口,扩展到包含该场;null(全范围)无需动
+      setMonthRange((r) => (r ? [r[0] <= ym ? r[0] : ym, r[1] >= ym ? r[1] : ym] : r));
     }
     map.easeTo({ center: [c.lng, c.lat], zoom: 8, duration: 800 });
     setSearchOpen(false);
@@ -835,39 +970,64 @@ export default function GlobeMapClient() {
       .catch(() => setError(t('globe.loadFailed')));
   }, [t]);
 
+  // 进入轨迹模式即预热坐标表(与用户搜索 / 选选手并行下载),选好后 join 基本零等待。
+  useEffect(() => {
+    if (mode === 'cuber') loadPastCoordMap().catch(() => { /* loadCuberPath 内会兜底 */ });
+  }, [mode]);
+
   useEffect(() => {
     if (!includePast || pastComps !== null || pastLoading) return;
     setPastLoading(true);
-    fetchAllPastCompsJson()
+    loadPastCompsOnce()
       .then((list) => setPastComps(list))
       .catch(() => setError(t('globe.loadFailed')))
       .finally(() => setPastLoading(false));
   }, [includePast, pastComps, pastLoading, t]);
 
-  const filteredComps = useMemo(() => comps ?? [], [comps]);
+  // 月份窗口边界:min 固定 1982-01;max 取数据里最晚的近期比赛月(至少当前月)
+  const monthBounds = useMemo(() => {
+    let max = CURRENT_YM;
+    for (const c of (comps ?? [])) {
+      const ym = c.start_date.slice(0, 7);
+      if (ym > max) max = ym;
+    }
+    return { min: MONTH_FLOOR, max };
+  }, [comps, CURRENT_YM, MONTH_FLOOR]);
+  // 实际生效窗口:未设时 = 全范围。仅在历史模式(includePast)生效。
+  const activeRange = includePast ? monthRange : null;
+
+  const filteredComps = useMemo(() => {
+    const all = comps ?? [];
+    if (!activeRange) return all;
+    const [m0, m1] = activeRange;
+    return all.filter((c) => {
+      const ym = c.start_date.slice(0, 7);
+      return ym >= m0 && ym <= m1;
+    });
+  }, [comps, activeRange]);
 
   const upcomingStats = useMemo(() => {
     const countries = new Set(filteredComps.map((c) => c.country));
     return { comps: filteredComps.length, countries: countries.size };
   }, [filteredComps]);
 
+  const filteredPast = useMemo(() => {
+    if (!pastComps) return [];
+    const range = activeRange;
+    return pastComps.filter((c): c is PastCompRecord & { latitude_degrees: number; longitude_degrees: number } => {
+      if (c.latitude_degrees == null || c.longitude_degrees == null) return false;
+      if (!range) return true;
+      const ym = c.start_date.slice(0, 7);
+      return ym >= range[0] && ym <= range[1];
+    });
+  }, [pastComps, activeRange]);
+
   const combinedCountries = useMemo(() => {
     const s = new Set<string>();
     for (const c of filteredComps) s.add(c.country);
-    if (includePast) for (const c of (pastComps ?? [])) s.add(c.country);
+    if (includePast) for (const c of filteredPast) s.add(c.country);
     return s.size;
-  }, [filteredComps, includePast, pastComps]);
-
-  const filteredPast = useMemo(() => {
-    if (!pastComps) return [];
-    const [y0, y1] = yearRange;
-    const effectiveMin = y0 === HISTORY_MIN_YEAR ? HISTORY_ABSOLUTE_MIN : y0;
-    return pastComps.filter((c): c is PastCompRecord & { latitude_degrees: number; longitude_degrees: number } => {
-      if (c.latitude_degrees == null || c.longitude_degrees == null) return false;
-      const y = Number(c.start_date.slice(0, 4));
-      return y >= effectiveMin && y <= y1;
-    });
-  }, [pastComps, yearRange]);
+  }, [filteredComps, includePast, filteredPast]);
 
   const countryCounts = useMemo(() => {
     const m = new Map<string, number>();
@@ -1131,7 +1291,12 @@ export default function GlobeMapClient() {
     setCurrentIndex(0);
     setPlaying(false);
 
-    const comps = await fetchCompetitions(person.wcaId);
+    // 选手比赛列表 + 全量坐标表并行拉取;坐标表整页只构建一次,之后切换选手瞬时。
+    const compsP = fetchCompetitions(person.wcaId);
+    const coordMapP = loadPastCoordMap();
+    setLoadProgress({ done: 0, total: 0 }); // total=0 → 不确定进度(首次下载坐标表)
+
+    const comps = await compsP;
     if (!comps || comps.length === 0) {
       setLoadProgress(null);
       setCuberComps([]);
@@ -1139,14 +1304,29 @@ export default function GlobeMapClient() {
     }
 
     const sorted = [...comps].sort((a, b) => a.start_date.localeCompare(b.start_date));
-    setLoadProgress({ done: 0, total: sorted.length });
 
-    const details = await mapWithConcurrency(
-      sorted,
-      6,
-      (c) => fetchCompetitionDetail(c.id),
-      (done, total) => setLoadProgress({ done, total }),
-    );
+    let coordMap: Map<string, WcaCompDetail>;
+    try { coordMap = await coordMapP; }
+    catch { coordMap = new Map(); } // 坐标表挂了也能退回逐场 fetch
+
+    // 本地 join:命中坐标表的瞬时;只有缺失的少数(刚结束、未进周更 dump)才回退逐场 fetch。
+    const details: (WcaCompDetail | undefined)[] = new Array(sorted.length);
+    const missingIdx: number[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      const hit = coordMap.get(sorted[i].id);
+      if (hit) details[i] = hit;
+      else missingIdx.push(i);
+    }
+    if (missingIdx.length > 0) {
+      setLoadProgress({ done: 0, total: missingIdx.length });
+      const fetched = await mapWithConcurrency(
+        missingIdx,
+        6,
+        (i) => fetchCompetitionDetail(sorted[i].id),
+        (done, total) => setLoadProgress({ done, total }),
+      );
+      for (let k = 0; k < missingIdx.length; k++) details[missingIdx[k]] = fetched[k] ?? undefined;
+    }
 
     const valid: WcaCompDetail[] = [];
     const skipped: { id: string; name?: string }[] = [];
@@ -1287,54 +1467,15 @@ export default function GlobeMapClient() {
   const prevIndexRef = useRef(0);
 
   const cuberArcsGeojson = useMemo(() => {
-    const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
-    const totalArcs = Math.max(1, cuberArcFullCoords.length);
     const isFreshLeg = currentIndex > prevIndexRef.current;
     const safeProgress = isFreshLeg ? 0 : animProgress;
-    for (let i = 0; i < currentIndex; i++) {
-      const coords = cuberArcFullCoords[i];
-      if (!coords || coords.length < 2) continue;
-      const sliceEnd = i === currentIndex - 1
-        ? Math.max(2, Math.floor(coords.length * safeProgress))
-        : coords.length;
-      features.push({
-        type: 'Feature',
-        geometry: { type: 'LineString', coordinates: coords.slice(0, sliceEnd) },
-        properties: {
-          index: i,
-          year_progress: totalArcs <= 1 ? 1 : i / (totalArcs - 1),
-        },
-      });
-    }
-    return { type: 'FeatureCollection' as const, features };
+    return buildCuberArcsFC(cuberArcFullCoords, currentIndex, safeProgress);
   }, [cuberArcFullCoords, currentIndex, animProgress]);
 
   const cuberArcTipGeojson = useMemo(() => {
-    if (currentIndex < 1) return { type: 'FeatureCollection' as const, features: [] };
-    const coords = cuberArcFullCoords[currentIndex - 1];
-    if (!coords || coords.length < 2) return { type: 'FeatureCollection' as const, features: [] };
     const isFreshLeg = currentIndex > prevIndexRef.current;
     const safeProgress = isFreshLeg ? 0 : animProgress;
-    const sliceEnd = Math.max(2, Math.floor(coords.length * safeProgress));
-    const tip = coords[sliceEnd - 1];
-    const prev = coords[sliceEnd - 2];
-    const toRad = Math.PI / 180;
-    const lat1 = prev[1] * toRad, lat2 = tip[1] * toRad;
-    const dLng = (tip[0] - prev[0]) * toRad;
-    const y = Math.sin(dLng) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-    const bearing = Math.atan2(y, x) * 180 / Math.PI;
-    let lng = tip[0];
-    while (lng > 180) lng -= 360;
-    while (lng < -180) lng += 360;
-    return {
-      type: 'FeatureCollection' as const,
-      features: [{
-        type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: [lng, tip[1]] },
-        properties: { bearing },
-      }],
-    };
+    return buildCuberTipFC(cuberArcFullCoords, currentIndex, safeProgress);
   }, [cuberArcFullCoords, currentIndex, animProgress]);
 
   const themeRef = useRef<Theme>(theme);
@@ -1364,6 +1505,8 @@ export default function GlobeMapClient() {
         bearing: cam?.bearing ?? 0,
         pitch: cam?.pitch ?? 0,
         attributionControl: false,
+        // 轨迹视频导出需 drawImage 读 GL 画布(v5 把 preserveDrawingBuffer 移进 canvasContextAttributes)
+        canvasContextAttributes: { preserveDrawingBuffer: true },
       });
       mapRef.current = map;
       appliedThemeRef.current = initialTheme;
@@ -2273,8 +2416,10 @@ export default function GlobeMapClient() {
       setAnimProgress(p);
       if (needTrack && arcCoords && arcCoords.length >= 2) {
         const ix = Math.min(arcCoords.length - 1, Math.round(p * (arcCoords.length - 1)));
-        let lng = arcCoords[ix][0];
-        const lat = arcCoords[ix][1];
+        const pt = arcCoords[ix];
+        if (!pt) { if (p < 1) rafId = requestAnimationFrame(tick); return; }
+        let lng = pt[0];
+        const lat = pt[1];
         while (lng > 180) lng -= 360;
         while (lng < -180) lng += 360;
         const zoom = dipZoom !== null
@@ -2496,6 +2641,14 @@ export default function GlobeMapClient() {
     loadCuberPath(person);
   }, [loadCuberPath]);
 
+  // 统一搜索里选选手 → 切到轨迹模式播放该选手
+  const goToPerson = useCallback((person: WcaPerson) => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setMode('cuber');
+    onSelectCuber(person);
+  }, [onSelectCuber]);
+
   const clearCuber = useCallback(() => {
     setCuber(null);
     setCuberComps([]);
@@ -2504,8 +2657,162 @@ export default function GlobeMapClient() {
     setLoadProgress(null);
   }, []);
 
+  // === 轨迹视频导出 ===
+  const buildFrameState = useCallback((i: number) => {
+    const c = cuberComps[i];
+    const cityZh = c ? nameZhMap?.get(c.id)?.city_zh : undefined;
+    const city = c ? ((cityZh && isZh) ? cityZh : localizeCity(c.city, isZh)) : '';
+    const country = c ? countryName(c.country_iso2, isZh) : '';
+    return {
+      index: i,
+      total: cuberComps.length,
+      cuberName: cuber ? displayCuberName(cuber.name, isZh) : '',
+      compName: c ? localizeCompName(c.id, c.name) : '',
+      compMeta: c ? `${city}, ${country} · ${c.start_date}` : '',
+    };
+  }, [cuberComps, cuber, isZh, localizeCompName, nameZhMap]);
+
+  const cancelTrailExport = useCallback(() => {
+    exportAbortRef.current = true;
+  }, []);
+
+  const runTrailExport = useCallback(async () => {
+    const map = mapRef.current;
+    const N = cuberComps.length;
+    if (!map || N < 2 || recording) return;
+    if (!isVideoExportSupported()) {
+      setError(isZh ? '当前浏览器不支持视频导出(需 Chrome / Edge / Safari 16.4+)' : 'Video export needs Chrome / Edge / Safari 16.4+');
+      return;
+    }
+    exportAbortRef.current = false;
+    setRecording(true);
+    setRecordProgress(0);
+    setPlaying(false);
+
+    // logo 预加载(一次,失败不阻断)
+    if (!logoImgRef.current) {
+      try {
+        const img = new Image();
+        img.src = '/CubeRoot-dark.png';
+        await img.decode();
+        logoImgRef.current = img;
+      } catch { /* ignore */ }
+    }
+
+    const arcs = cuberArcFullCoords;
+    const FPS = 60;
+    const legFrames = Math.max(6, Math.round(FPS * (0.5 / speed))); // 每段帧数随速度
+    const introFrames = Math.round(FPS * 0.6);
+    const outroFrames = Math.round(FPS * 1.0);
+    const legTotal = (N - 1) * legFrames;
+    const totalFrames = introFrames + legTotal + outroFrames;
+
+    const arcSrc = map.getSource(CUBER_SOURCE_ARCS) as GeoJSONSource | undefined;
+    const tipSrc = map.getSource(CUBER_SOURCE_ARC_TIP) as GeoJSONSource | undefined;
+
+    // 导出结束后要还原的画面(导出前的 index + 相机),避免连累后续页面播放
+    const savedIndex = currentIndex;
+    const savedCam = { center: map.getCenter(), zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
+    // 视频开场:把镜头摆到第 0 站所在区域(之后只有远距离段才动,跟页面播放一致)
+    const c0 = cuberComps[0];
+    if (c0) map.jumpTo({ center: [c0.longitude_degrees, c0.latitude_degrees], zoom: 2.4 });
+
+    // 相机跟随判断按段计算一次(复用页面播放的 isInComfortableView 门控,近的不动,只有要飞出画面才平移/缩放)
+    let lastLeg = -1;
+    let legNeedTrack = false;
+    let legStartZoom = 2.4;
+    let legDipZoom: number | null = null;
+
+    const setupFrame = (f: number) => {
+      let li: number, p: number, idx: number;
+      if (f < introFrames) { li = 0; p = 0; idx = 0; }
+      else if (f >= introFrames + legTotal) { li = N - 2; p = 1; idx = N - 1; }
+      else {
+        const g = f - introFrames;
+        li = Math.min(N - 2, Math.floor(g / legFrames));
+        p = legFrames > 1 ? (g % legFrames) / (legFrames - 1) : 1;
+        idx = li + 1;
+      }
+      arcSrc?.setData(buildCuberArcsFC(arcs, idx, p) as unknown as GeoJSON.FeatureCollection);
+      tipSrc?.setData(buildCuberTipFC(arcs, idx, p) as unknown as GeoJSON.FeatureCollection);
+
+      // intro 阶段(idx=0,无真 leg)不计算跟随,免得把 lastLeg 提前占成 0 让首段被跳过
+      if (f >= introFrames && li !== lastLeg) {
+        lastLeg = li;
+        const cur = cuberComps[idx], prevComp = cuberComps[li];
+        legStartZoom = map.getZoom();
+        legNeedTrack = !!cur && (
+          !isInComfortableView(cur.longitude_degrees, cur.latitude_degrees) ||
+          (!!prevComp && !isInComfortableView(prevComp.longitude_degrees, prevComp.latitude_degrees))
+        );
+        legDipZoom = null;
+        if (legNeedTrack && cur && prevComp) {
+          const distKm = haversineKm([prevComp.longitude_degrees, prevComp.latitude_degrees], [cur.longitude_degrees, cur.latitude_degrees]);
+          if (distKm > 2500) {
+            const tgt = Math.max(0.7, Math.min(legStartZoom, 3 - Math.log10(distKm / 1000) * 1.4));
+            if (tgt < legStartZoom - 0.2) legDipZoom = tgt;
+          }
+        }
+      }
+      if (legNeedTrack) {
+        const center = sampleArcPoint(arcs[li], p);
+        if (center) {
+          const zoom = legDipZoom !== null ? legStartZoom + (legDipZoom - legStartZoom) * Math.sin(Math.PI * p) : undefined;
+          map.jumpTo({ center, ...(zoom !== undefined ? { zoom } : {}) });
+        }
+      }
+      return buildFrameState(idx);
+    };
+
+    // 等单个 'render' 事件(arc 矢量数据立即渲染;等 'idle' 会因相机持续跳动一直拖到上限)
+    const settle = () => new Promise<void>((resolve) => {
+      let done = false;
+      let timer = 0;
+      const finish = () => { if (done) return; done = true; clearTimeout(timer); map.off('render', finish); resolve(); };
+      map.once('render', finish);
+      map.triggerRepaint();
+      timer = window.setTimeout(finish, 50); // 安全上限
+    });
+
+    try {
+      const blob = await exportTrailVideo({
+        mapCanvas: map.getCanvas(),
+        totalFrames,
+        fps: FPS,
+        setupFrame,
+        settle,
+        logo: logoImgRef.current,
+        abortRef: { get aborted() { return exportAbortRef.current; } },
+        onProgress: (done, total) => {
+          const pct = total > 0 ? done / total : 0;
+          setRecordProgress((prev) => (Math.round(pct * 100) !== Math.round(prev * 100) ? pct : prev));
+        },
+      });
+      if (!exportAbortRef.current && blob.size > 0) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.href = url;
+        a.download = `trail_${cuber?.wcaId ?? 'cuber'}_${ts}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 8000);
+      }
+    } catch {
+      if (!exportAbortRef.current) setError(isZh ? '视频导出失败' : 'Video export failed');
+    } finally {
+      setRecording(false);
+      setRecordProgress(0);
+      // 还原导出前的画面:source 重置回导出前 index 的静止状态 + 相机复位(不连累后续页面播放)
+      arcSrc?.setData(buildCuberArcsFC(arcs, savedIndex, 1) as unknown as GeoJSON.FeatureCollection);
+      tipSrc?.setData(buildCuberTipFC(arcs, savedIndex, 1) as unknown as GeoJSON.FeatureCollection);
+      map.jumpTo(savedCam);
+    }
+  }, [cuberComps, cuberArcFullCoords, recording, speed, cuber, isZh, buildFrameState, currentIndex, isInComfortableView]);
+
   const currentComp = cuberComps[currentIndex];
-  const progressPct = loadProgress ? Math.round(loadProgress.done / loadProgress.total * 100) : 0;
+  const progressPct = loadProgress && loadProgress.total > 0 ? Math.round(loadProgress.done / loadProgress.total * 100) : 0;
   const flagIso2 = (cuber?.iso2 || '').toLowerCase();
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -2594,8 +2901,7 @@ export default function GlobeMapClient() {
               <div className="cuber-chip">
                 {flagIso2 && <Flag iso2={flagIso2} className="cuber-flag" />}
                 <span className="cuber-name">{displayCuberName(cuber.name, isZh)}</span>
-                <ClearButton onClick={clearCuber} isZh={isZh} preserveFocus />
-
+                <ClearButton onClick={clearCuber} isZh={isZh} variant="standalone" preserveFocus />
               </div>
             )}
             {!cuber && (
@@ -2606,7 +2912,9 @@ export default function GlobeMapClient() {
             {loadProgress && (
               <div className="cuber-progress">
                 <div className="cuber-progress-label">
-                  {t('globe.loadingPath', { done: loadProgress.done, total: loadProgress.total })}
+                  {loadProgress.total > 0
+                    ? t('globe.loadingPath', { done: loadProgress.done, total: loadProgress.total })
+                    : t('globe.loading')}
                 </div>
                 <div className="cuber-progress-bar">
                   <div className="cuber-progress-fill" style={{ width: `${progressPct}%` }} />
@@ -2677,6 +2985,15 @@ export default function GlobeMapClient() {
                     </button>
                   ))}
                 </div>
+                <button
+                  className="cuber-export-btn"
+                  onClick={runTrailExport}
+                  disabled={recording || cuberComps.length < 2}
+                  title={isZh ? '导出为视频' : 'Export as video'}
+                  aria-label={isZh ? '导出为视频' : 'Export as video'}
+                >
+                  <Download size={15} strokeWidth={1.75} />
+                </button>
               </div>
             )}
             {!loadProgress && cuber && cuberComps.length === 0 && (
@@ -2731,52 +3048,35 @@ export default function GlobeMapClient() {
         </h1>
 
         <div className="globe-search" ref={searchWrapRef}>
-          <button
-            className="globe-search-type"
-            onClick={() => { setSearchType((t) => t === 'place' ? 'comp' : 'place'); setSearchOpen(true); }}
-            title={searchType === 'place' ? (isZh ? '当前：地点（点击切换到比赛）' : 'Currently: Places (click to switch to Comps)') : (isZh ? '当前：比赛（点击切换到地点）' : 'Currently: Comps (click to switch to Places)')}
-          >
-            {searchType === 'place'
-              ? (isZh ? '地点' : 'Places')
-              : (isZh ? '比赛' : 'Comps')}
-          </button>
           <Search className="globe-search-icon" size={14} strokeWidth={1.75} />
           <input
             className="globe-search-input"
             type="text"
-            placeholder={searchType === 'place' ? (isZh ? '搜索地点' : 'Search places') : (isZh ? '搜索比赛 / 城市' : 'Search comp / city')}
+            placeholder={isZh ? '搜索比赛 / 城市 / 地点' : 'Search comp / city / place'}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                if (searchType === 'place' && placeResults[0]) goToPlaceResult(placeResults[0]);
-                else if (searchType === 'comp' && compResults[0]) goToCompResult(compResults[0]);
+                if (compResults[0]) goToCompResult(compResults[0]);
+                else if (personResults[0]) goToPerson(personResults[0]);
+                else if (placeResults[0]) goToPlaceResult(placeResults[0]);
               } else if (e.key === 'Escape') setSearchOpen(false);
             }}
           />
           {searchQuery && (
             <ClearButton
-              onClick={() => { setSearchQuery(''); setPlaceResults([]); }}
+              onClick={() => { setSearchQuery(''); setPlaceResults([]); setPersonResults([]); }}
             />
           )}
-          {searchOpen && (() => {
-            const showLoading = searchType === 'place' && searchLoading;
-            const items = searchType === 'place' ? placeResults : compResults;
-            const hasContent = showLoading || items.length > 0;
-            const showEmpty = !showLoading && items.length === 0 && searchQuery.trim().length >= 2;
-            if (!hasContent && !showEmpty) return null;
+          {searchOpen && searchQuery.trim().length >= 2 && (() => {
+            const empty = !searchLoading && compResults.length === 0 && personResults.length === 0 && placeResults.length === 0;
             return (
               <div className="globe-search-results">
-                {showLoading && <div className="globe-search-empty">{isZh ? '搜索中…' : 'Searching…'}</div>}
-                {showEmpty && <div className="globe-search-empty">{isZh ? '无结果' : 'No results'}</div>}
-                {!showLoading && searchType === 'place' && placeResults.map((r, i) => (
-                  <button key={i} className="globe-search-item" onClick={() => goToPlaceResult(r)}>
-                    <span className="globe-search-item-main">{r.display_name.split(',')[0]}</span>
-                    <span className="globe-search-item-sub">{r.display_name.split(',').slice(1).join(',').trim()}</span>
-                  </button>
-                ))}
-                {searchType === 'comp' && compResults.map((c) => (
+                {compResults.length > 0 && (
+                  <div className="globe-search-group">{isZh ? '比赛' : 'Competitions'}</div>
+                )}
+                {compResults.map((c) => (
                   <button key={c.id} className="globe-search-item" onClick={() => goToCompResult(c)}>
                     <span className="globe-search-item-main">
                       {localizeCompName(c.id, c.name)}
@@ -2785,6 +3085,31 @@ export default function GlobeMapClient() {
                     <span className="globe-search-item-sub">{c.city}, {countryName(c.country, isZh)} · {c.date}</span>
                   </button>
                 ))}
+                {personResults.length > 0 && (
+                  <div className="globe-search-group">{isZh ? '选手轨迹' : 'Cubers'}</div>
+                )}
+                {personResults.map((p) => (
+                  <button key={`u${p.wcaId}`} className="globe-search-item" onClick={() => goToPerson(p)}>
+                    <span className="globe-search-item-main globe-search-item-person">
+                      <Flag iso2={p.iso2} className="globe-search-person-flag" />
+                      <span>{displayCuberName(p.name, isZh)}</span>
+                    </span>
+                    <span className="globe-search-item-sub">{p.wcaId}</span>
+                  </button>
+                ))}
+                {placeResults.length > 0 && (
+                  <div className="globe-search-group">{isZh ? '地点' : 'Places'}</div>
+                )}
+                {placeResults.map((r, i) => (
+                  <button key={`p${i}`} className="globe-search-item" onClick={() => goToPlaceResult(r)}>
+                    <span className="globe-search-item-main">{r.display_name.split(',')[0]}</span>
+                    <span className="globe-search-item-sub">{r.display_name.split(',').slice(1).join(',').trim()}</span>
+                  </button>
+                ))}
+                {searchLoading && compResults.length === 0 && personResults.length === 0 && placeResults.length === 0 && (
+                  <div className="globe-search-empty">{isZh ? '搜索中…' : 'Searching…'}</div>
+                )}
+                {empty && <div className="globe-search-empty">{isZh ? '无结果' : 'No results'}</div>}
               </div>
             );
           })()}
@@ -2814,11 +3139,6 @@ export default function GlobeMapClient() {
         <div className="globe-topbar-spacer" />
 
         <div className="mode-toggle" role="tablist">
-          <button role="tab" aria-selected={false}
-            className="range-btn"
-            onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
-            {t('globe.modeCuber')}
-          </button>
           <button role="tab" aria-selected={mode === 'upcoming'}
             className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`}
             onClick={() => setMode('upcoming')}>
@@ -2858,41 +3178,37 @@ export default function GlobeMapClient() {
           </label>
         )}
         {mode === 'upcoming' && includePast && (
-          <div className="history-range">
-            <span className="history-range-label">{yearRange[0] === HISTORY_MIN_YEAR ? HISTORY_ABSOLUTE_MIN : yearRange[0]} — {yearRange[1]}</span>
-            <div className="history-range-track">
-              <div
-                className="history-range-fill"
-                style={{
-                  left: `${((yearRange[0] - HISTORY_MIN_YEAR) / (currentYear - HISTORY_MIN_YEAR)) * 100}%`,
-                  right: `${100 - ((yearRange[1] - HISTORY_MIN_YEAR) / (currentYear - HISTORY_MIN_YEAR)) * 100}%`,
-                }}
-              />
-              <input
-                type="range"
-                className="history-range-slider"
-                min={HISTORY_MIN_YEAR}
-                max={currentYear}
-                value={yearRange[0]}
-                onChange={(e) => {
-                  const v = Math.min(Number(e.target.value), yearRange[1]);
-                  setYearRange([v, yearRange[1]]);
-                }}
-                aria-label="Year from"
-              />
-              <input
-                type="range"
-                className="history-range-slider"
-                min={HISTORY_MIN_YEAR}
-                max={currentYear}
-                value={yearRange[1]}
-                onChange={(e) => {
-                  const v = Math.max(Number(e.target.value), yearRange[0]);
-                  setYearRange([yearRange[0], v]);
-                }}
-                aria-label="Year to"
-              />
-            </div>
+          <div className="month-range" title={isZh ? '按年月过滤比赛' : 'Filter competitions by month'}>
+            <input
+              type="month"
+              className="month-range-input"
+              min={monthBounds.min}
+              max={monthBounds.max}
+              value={(monthRange ?? [monthBounds.min, monthBounds.max])[0]}
+              onChange={(e) => {
+                const cur = monthRange ?? [monthBounds.min, monthBounds.max];
+                const from = e.target.value || monthBounds.min;
+                setMonthRange([from, from > cur[1] ? from : cur[1]]);
+              }}
+              aria-label={isZh ? '起始年月' : 'From month'}
+            />
+            <span className="month-range-sep">—</span>
+            <input
+              type="month"
+              className="month-range-input"
+              min={monthBounds.min}
+              max={monthBounds.max}
+              value={(monthRange ?? [monthBounds.min, monthBounds.max])[1]}
+              onChange={(e) => {
+                const cur = monthRange ?? [monthBounds.min, monthBounds.max];
+                const to = e.target.value || monthBounds.max;
+                setMonthRange([to < cur[0] ? to : cur[0], to]);
+              }}
+              aria-label={isZh ? '结束年月' : 'To month'}
+            />
+            {monthRange && (
+              <ClearButton onClick={() => setMonthRange(null)} isZh={isZh} variant="standalone" />
+            )}
           </div>
         )}
         {mode === 'wr' && wrData && (
@@ -3081,6 +3397,23 @@ export default function GlobeMapClient() {
               >↻</button>
             </div>
           )}
+        </div>
+      )}
+
+      {recording && (
+        <div className="cuber-record-overlay" role="status">
+          <span className="cuber-record-dot" aria-hidden="true" />
+          <span className="cuber-record-text">
+            {isZh ? `录制中 ${Math.round(recordProgress * 100)}%` : `Recording ${Math.round(recordProgress * 100)}%`}
+          </span>
+          <button
+            className="cuber-record-cancel"
+            onClick={cancelTrailExport}
+            aria-label={isZh ? '取消' : 'Cancel'}
+            title={isZh ? '取消' : 'Cancel'}
+          >
+            <X size={14} strokeWidth={2} />
+          </button>
         </div>
       )}
 

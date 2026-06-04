@@ -43,7 +43,7 @@ const METHODS: { key: Method; label: string }[] = [
   { key: 'eo', label: 'EO' },
   { key: 'pair', label: 'Pair' },
   { key: 'pseudo', label: 'Pseudo' },
-  { key: 'pseudo_pair', label: 'Pseudo + Pair' },
+  { key: 'pseudo_pair', label: 'Pseudo Pair' },
   { key: 'f2leo', label: 'F2LEO' },
   { key: 'pseudo_f2leo', label: 'Pseudo F2LEO' },
 ];

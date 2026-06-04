@@ -28,7 +28,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSettings } from './settings';
-import { play } from './sound';
+import { play, playInspectionBeep } from './sound';
 
 export type TimerPhase = 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
 
@@ -71,6 +71,8 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
   const holdTimerRef = useRef<number | null>(null);
   const warned8Ref = useRef(false);
   const warned12Ref = useRef(false);
+  // Inspection-second marks (cstimer "beep at") that have already fired this run.
+  const firedBeepsRef = useRef<Set<number>>(new Set());
   // inspectionTrigger='up': set on press-down in idle, consumed on press-up.
   const pendingInspectionStartRef = useRef(false);
   const onSolveRef = useRef(onSolve);
@@ -110,6 +112,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     setInspectionDisplayMs(0);
     warned8Ref.current = false;
     warned12Ref.current = false;
+    firedBeepsRef.current = new Set();
     play('inspection-start');
     stopInspectionTick();
     inspTickRef.current = window.setInterval(() => {
@@ -123,6 +126,17 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
       if (!warned12Ref.current && elapsed >= 12000) {
         warned12Ref.current = true;
         play('warn-12');
+      }
+      // cstimer-style "beep at N seconds" — fire each configured mark once.
+      const beepAt = getSettings().inspectionBeepAt;
+      if (beepAt.length) {
+        const fired = firedBeepsRef.current;
+        for (const sec of beepAt) {
+          if (sec > 0 && elapsed >= sec * 1000 && !fired.has(sec)) {
+            fired.add(sec);
+            playInspectionBeep();
+          }
+        }
       }
     }, 100);
   }, [setPhaseSafe, stopInspectionTick]);

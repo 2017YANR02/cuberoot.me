@@ -43,6 +43,8 @@ const CSS = `
 .deskpet-toolbar .header-toggles{gap:8px;padding:0 2px;}
 /* Auth dropdown opens upward — the toolbar sits at the bottom of the screen. */
 .deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
+/* toolbar button rule overrides border-radius + padding — restore circle for auth trigger */
+.deskpet-toolbar .wca-auth-trigger{border-radius:50%;padding:0;overflow:hidden;}
 @media (max-width:480px){
   .deskpet-search-backdrop{padding-bottom:12px;}
 }

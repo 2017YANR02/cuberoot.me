@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import { warmupSound, play } from '../_lib/sound';
+import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
 import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../_lib/storage/db';
@@ -110,7 +110,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
   const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
   useEffect(() => { setSeedDraft(s.syncSeed ?? ''); }, [s.syncSeed]);
-  const [aoInput, setAoInput] = useState<string>(() => s.customAoWindows.join(','));
 
   // Target-time input is a free-form string while editing; commit on blur /
   // Enter. Empty / invalid / non-positive → clear the per-event target.
@@ -150,6 +149,18 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     const parsed = parseDailySolveGoal(raw);
     updateSettings({ dailySolveGoal: parsed });
     setGoalInput(parsed === null ? '' : String(parsed));
+  }
+
+  const [beepAtInput, setBeepAtInput] = useState<string>(() => (s.inspectionBeepAt ?? []).join(','));
+  function commitBeepAtInput(raw: string): void {
+    const out: number[] = [];
+    for (const p of raw.split(/[,，\s]+/).map(x => x.trim()).filter(Boolean)) {
+      const n = Math.floor(Number(p));
+      if (Number.isFinite(n) && n >= 1 && n <= 60 && !out.includes(n)) out.push(n);
+    }
+    out.sort((a, b) => a - b);
+    updateSettings({ inspectionBeepAt: out });
+    setBeepAtInput(out.join(','));
   }
 
   // Tap-to-BPM: rolling window of timestamps; reset after 3s of inactivity.
@@ -196,17 +207,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-
-  function commitAoInput(raw: string): void {
-    const parts = raw.split(/[,，\s]+/).map(p => p.trim()).filter(Boolean);
-    const out: number[] = [];
-    for (const p of parts) {
-      const n = Math.floor(Number(p));
-      if (Number.isFinite(n) && n >= 3 && n <= 1000 && !out.includes(n)) out.push(n);
-    }
-    updateSettings({ customAoWindows: out });
-    setAoInput(out.join(','));
-  }
 
   // ── csTimer import state ──
   const cstimerFileRef = useRef<HTMLInputElement | null>(null);
@@ -602,19 +602,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             </select>
             <span className="hint">{isZh ? '仅 3x3 类项目生效' : '3x3 events only'}</span>
           </Row>
-          <Row label={isZh ? '自定义平均' : 'Custom averages'}>
-            <input
-              type="text"
-              value={aoInput}
-              placeholder={isZh ? '例：7,25（逗号分隔）' : 'e.g. 7,25 (comma-separated)'}
-              onChange={(e) => setAoInput(e.target.value)}
-              onBlur={(e) => commitAoInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitAoInput((e.target as HTMLInputElement).value); }}
-            />
-            <span className="hint">{isZh
-              ? `每个 3..1000；当前 ${s.customAoWindows.length === 0 ? '无' : s.customAoWindows.map(n => 'ao' + n).join(' / ')}`
-              : `each 3..1000; current ${s.customAoWindows.length === 0 ? 'none' : s.customAoWindows.map(n => 'ao' + n).join(' / ')}`}</span>
-          </Row>
         </AccordionSection>
 
         <AccordionSection
@@ -707,6 +694,22 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
             )}
             <span className="hint">{isZh ? '离开本页时自动停止' : 'auto-stops on page leave'}</span>
+          </Row>
+          <Row label={isZh ? '观察提示音（秒）' : 'Beep at (sec)'}>
+            <input
+              type="text"
+              value={beepAtInput}
+              placeholder={isZh ? '例：5,10,15（逗号分隔）' : 'e.g. 5,10,15 (comma-separated)'}
+              onChange={(e) => setBeepAtInput(e.target.value)}
+              onBlur={(e) => commitBeepAtInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitBeepAtInput((e.target as HTMLInputElement).value); }}
+            />
+            <button className="hint-btn" onClick={() => { warmupSound(); playInspectionBeep(); }} title={isZh ? '试听' : 'Test'}>
+              {isZh ? '试听' : 'Test'}
+            </button>
+            <span className="hint">{isZh
+              ? `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`
+              : `one beep at each inspection second (1..60, separate from 8/12s); current ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + 's' : 'off'}`}</span>
           </Row>
         </AccordionSection>
 
@@ -1009,6 +1012,14 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onChange={(e) => updateSettings({ timerFontScale: Number(e.target.value) })}
             />
             <span className="hint">{s.timerFontScale.toFixed(2)}×</span>
+          </Row>
+          <Row label={isZh ? '打乱字号' : 'Scramble font scale'}>
+            <input
+              type="range" min={0.6} max={2.5} step={0.05}
+              value={s.scrambleFontScale}
+              onChange={(e) => updateSettings({ scrambleFontScale: Number(e.target.value) })}
+            />
+            <span className="hint">{s.scrambleFontScale.toFixed(2)}×</span>
           </Row>
           <Row label={isZh ? '紧凑打乱' : 'Compact scramble'}>
             <input

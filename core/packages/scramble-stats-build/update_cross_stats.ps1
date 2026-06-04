@@ -39,7 +39,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 # ---- 本机算力限额 (全局规则: 重计算最多 7 核 14 线程, 留 1 核给系统; 长跑进程低优先级) ----
 # solver 各 analyzer 走 rayon 全局池 (executor.rs par_iter), 无自建 ThreadPoolBuilder, 故 RAYON_NUM_THREADS 直接钉死线程数。
 # env 在本 session 持久, 此处设一次, 后续每个 `& $exe` 子进程都继承; 子进程也继承本 pwsh 的优先级类。
-$env:RAYON_NUM_THREADS = '14'
+if (-not $env:RAYON_NUM_THREADS) { $env:RAYON_NUM_THREADS = '14' }  # 默认 14; 调用方可预设覆盖(如临时 10 线程)
 try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 
 # ---- 本机布局 ----
@@ -129,30 +129,43 @@ function Sync-Variant($Name){
   foreach($k in 'CUBE_RUN_FULL_STD','CUBE_EO_NO_DIAG','CUBE_PAIR_NO_DIAG','CUBE_PSEUDO_SKIP_XCROSS','CUBE_PSEUDO_SKIP_XXCROSS','CUBE_PSEUDO_SKIP_XXXCROSS'){
     if(Test-Path "Env:$k"){ Remove-Item "Env:$k" }
   }
-  # 4. 分块: 写块输入 -> analyzer (stdout 丢弃, 进度走 stderr) -> 校验行数 -> 追加 -> 删中间产物
+  # 4. 分块: 写块输入 -> analyzer (全部输出转存 $errLog, 终端零噪音) -> 校验行数 -> 追加 -> 删中间产物
   $inTxt  = Join-Path $IncrDir "sync_$Name.txt"
   $outCsv = Join-Path $IncrDir ("sync_{0}_{0}.csv" -f $Name)
-  $done=0; $chunksRun=0
+  $errLog = Join-Path $IncrDir "sync_$Name.analyzer.log"  # analyzer 的 banner/提示/非进度行转存于此, 不刷终端
+  $done=0; $chunksRun=0; $script:tick=Get-Date  # tick: 上次打印进度的时刻, 跨块保持 -> 每 5min 跳一行(按墙钟, 非按块)
   for($i=0; $i -lt $total; $i += $chunk){
     $cnt=[Math]::Min($chunk, $total-$i)
     $slice=$missing.GetRange($i, $cnt)
     [IO.File]::WriteAllText($inTxt, ([string]::Join("`n",$slice)+"`n"), [Text.UTF8Encoding]::new($false))
     if(Test-Path $outCsv){ Remove-Item $outCsv -Force }
-    $inTxt | & $exe | Out-Null
-    if($LASTEXITCODE -ne 0){ throw "[$Name] analyzer 失败 (块 @$i)" }
+    if(Test-Path $errLog){ Remove-Item $errLog -Force }
+    # analyzer: stdout 噪音丢弃; stderr([PROG] x/n + banner) 逐行过滤 -> 满 5min 打一行干净总进度(~已算/total), 其余进 $errLog。
+    $inTxt | & $exe 2>&1 | ForEach-Object {
+      if($_ -isnot [System.Management.Automation.ErrorRecord]){ return }  # stdout, 丢弃
+      $s = "$_"
+      $mm = [regex]::Match($s, '\[PROG\]\s+(\d+)')
+      if($mm.Success){
+        $now = Get-Date
+        if(($now - $script:tick).TotalMinutes -ge 5){
+          Write-Host "[$Name] ~$($done + [int]$mm.Groups[1].Value)/$total  $($now.ToString('HH:mm:ss'))"
+          $script:tick = $now
+        }
+      } else { Add-Content -LiteralPath $errLog -Value $s }
+    }
+    if($LASTEXITCODE -ne 0){ throw "[$Name] analyzer 失败 (块 @$i), 详见 $errLog" }
     if(-not (Test-Path $outCsv)){ throw "[$Name] 无输出 $outCsv" }
     $got=(Lc $outCsv)-1
     if($got -ne $cnt){ throw "[$Name] 块行数 $got != 输入 $cnt" }
     AppendData $csv $outCsv $true
     Remove-Item $outCsv -Force
     $done += $cnt; $chunksRun++
-    Write-Host "[$Name] $done/$total"
     if($MaxChunks -gt 0 -and $chunksRun -ge $MaxChunks){
       Write-Host "[$Name] 已达 -MaxChunks $MaxChunks, 停止 (还差 $($total-$done) 条, 下次 run 自动续)。" -ForegroundColor Yellow
       break
     }
   }
-  Remove-Item $inTxt -Force -ErrorAction SilentlyContinue
+  Remove-Item $inTxt,$errLog -Force -ErrorAction SilentlyContinue
   if($done -ge $total){ Write-Host "[$Name] 完成, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Green }
   else { Write-Host "[$Name] 部分补缺 $done/$total, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Yellow }
   return $true

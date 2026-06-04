@@ -25,7 +25,7 @@ export interface PastCompRecord {
   id: string;
   name: string;
   city: string;
-  country: string;
+  country: string;           // ISO 3166-1 alpha-2(多地代码为 XA/XE/.../XW)
   /** 多地代码（XW/XA/XE/...）为 null — 没有真实地理坐标，Globe 端按 != null 过滤 */
   latitude_degrees: number | null;
   longitude_degrees: number | null;

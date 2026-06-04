@@ -577,23 +577,23 @@ function AnalyzePageInner() {
 
       <div className="analyze-filters">
         <label className="analyze-control">
-          <span>{t('变体', 'Variant')}</span>
           <select
             value={variant}
+            aria-label={t('变体', 'Variant')}
             onChange={(e) => setVariant(e.target.value as Variant)}
             disabled={running}
           >
             <option value="std">{t('标准', 'Standard')}</option>
-            <option value="eo">EOCross</option>
-            <option value="pair">{t('十字+基态', 'Cross + Pair')}</option>
-            <option value="pseudo">{t('伪十字', 'Pseudo')}</option>
-            <option value="pseudo_pair">{t('伪十字+基态', 'Pseudo + Pair')}</option>
+            <option value="eo">EO</option>
+            <option value="pair">{t('基态', 'Pair')}</option>
+            <option value="pseudo">{t('伪', 'Pseudo')}</option>
+            <option value="pseudo_pair">{t('伪基态', 'Pseudo Pair')}</option>
           </select>
         </label>
         <label className="analyze-control">
-          <span>{t('阶段', 'Stage')}</span>
           <select
             value={stage}
+            aria-label={t('阶段', 'Stage')}
             onChange={(e) => setStage(e.target.value as Stage)}
             disabled={running}
           >

@@ -35,8 +35,10 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
 
 type View = 'calendar' | 'table';
 
-export default function ScheduleView({ slug, isZh, compName }: { slug: string; isZh: boolean; compName: string }) {
-  const [view, setView] = useState<View>('calendar');
+export default function ScheduleView({ slug, isZh, compName, view, onViewChange }: {
+  slug: string; isZh: boolean; compName: string;
+  view: View; onViewChange: (v: View) => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ScheduleData | null>(null);
   const [error, setError] = useState(false);
@@ -82,7 +84,7 @@ export default function ScheduleView({ slug, isZh, compName }: { slug: string; i
 
   return (
     <>
-      <ScheduleToolbar view={view} onChange={setView} isZh={isZh} />
+      <ScheduleToolbar view={view} onChange={onViewChange} isZh={isZh} />
       {data.venues.length > 1 && (
         <p className="sched-note">
           {isZh
@@ -116,15 +118,19 @@ function ScheduleToolbar({ view, onChange, isZh }: {
         type="button"
         className={`sched-subtoggle-btn${view === 'calendar' ? ' is-active' : ''}`}
         onClick={() => onChange('calendar')}
+        aria-label={isZh ? '日历' : 'Calendar'}
+        title={isZh ? '日历' : 'Calendar'}
       >
-        <CalendarDays size={15} /> {isZh ? '日历' : 'Calendar'}
+        <CalendarDays size={16} />
       </button>
       <button
         type="button"
         className={`sched-subtoggle-btn${view === 'table' ? ' is-active' : ''}`}
         onClick={() => onChange('table')}
+        aria-label={isZh ? '表格' : 'Table'}
+        title={isZh ? '表格' : 'Table'}
       >
-        <TableIcon size={15} /> {isZh ? '表格' : 'Table'}
+        <TableIcon size={16} />
       </button>
     </div>
   );
@@ -237,10 +243,10 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded, onToggleDe
                     <th>{isZh ? '场地' : 'Room or Stage'}</th>
                     <th className="sched-col-format">{isZh ? '赛制' : 'Format'}</th>
                     <th className="sched-col-timelimit">
-                      <a href="#sched-time-limit">{isZh ? '时间限制' : 'Time limit'}</a>
+                      <a href="#sched-time-limit">{isZh ? '还原时限' : 'Time limit'}</a>
                     </th>
                     <th className="sched-col-cutoff">
-                      <a href="#sched-cutoff">{isZh ? '截断' : 'Cutoff'}</a>
+                      <a href="#sched-cutoff">{isZh ? '及格线' : 'Cutoff'}</a>
                     </th>
                     <th className="sched-col-proceed">{isZh ? '晋级' : 'Proceed'}</th>
                   </tr>
@@ -274,8 +280,8 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded, onToggleDe
                         </td>
                         <td className="sched-td-room" data-label={isZh ? '场地' : 'Room or Stage'}>{a.roomName}</td>
                         {detailCell('sched-col-format', isZh ? '赛制' : 'Format', fmt)}
-                        {detailCell('sched-col-timelimit', isZh ? '时间限制' : 'Time limit', tl)}
-                        {detailCell('sched-col-cutoff', isZh ? '截断' : 'Cutoff', co)}
+                        {detailCell('sched-col-timelimit', isZh ? '还原时限' : 'Time limit', tl)}
+                        {detailCell('sched-col-cutoff', isZh ? '及格线' : 'Cutoff', co)}
                         {detailCell('sched-col-proceed', isZh ? '晋级' : 'Proceed', adv)}
                       </tr>
                     );
@@ -302,10 +308,10 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
   );
   return (
     <div className="sched-legend">
-      <h4 id="sched-time-limit">{isZh ? '时间限制' : 'Time limit'}</h4>
+      <h4 id="sched-time-limit">{isZh ? '还原时限' : 'Time limit'}</h4>
       <p>
         {isZh ? (
-          <>若你在还原过程中达到时间限制,裁判会喊停,你的成绩将记为 DNF(见 {reg('A1a4')})。</>
+          <>若你在还原过程中达到还原时限,裁判会喊停,你的成绩将记为 DNF(见 {reg('A1a4')})。</>
         ) : (
           <>If you reach the time limit during your solve, the judge will stop you and your result will be DNF (see {reg('A1a4')}).</>
         )}
@@ -313,10 +319,10 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
 
       {hasCutoff && (
         <>
-          <h4 id="sched-cutoff">{isZh ? '截断' : 'Cutoff'}</h4>
+          <h4 id="sched-cutoff">{isZh ? '及格线' : 'Cutoff'}</h4>
           <p>
             {isZh ? (
-              <>进入截断轮第二阶段所需达到的成绩(见 {reg('9g')})。</>
+              <>及格线是进入第二阶段所需达到的成绩(见 {reg('9g')})。</>
             ) : (
               <>The result to beat to proceed to the second phase of a cutoff round (see {reg('9g')}).</>
             )}

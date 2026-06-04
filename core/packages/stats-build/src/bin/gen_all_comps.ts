@@ -31,6 +31,7 @@ interface Row extends RowDataPacket {
   name: string;
   city_name: string;
   country_id: string;
+  iso2: string | null;
   latitude_degrees: number | string;
   longitude_degrees: number | string;
   start_date: Date | string;
@@ -62,12 +63,14 @@ async function main() {
       c.name,
       c.city_name,
       c.country_id,
+      co.iso2,
       c.latitude / 1000000.0 AS latitude_degrees,
       c.longitude / 1000000.0 AS longitude_degrees,
       c.start_date,
       c.end_date,
       GROUP_CONCAT(DISTINCT r.event_id) AS events_csv
     FROM competitions c
+    LEFT JOIN countries co ON co.id = c.country_id
     LEFT JOIN results r ON r.competition_id = c.id
     WHERE c.end_date < CURDATE()
     GROUP BY c.id
@@ -112,9 +115,11 @@ async function main() {
       // 多地代码无真实坐标 → 写 null，让 Globe consumer 通过 lat == null 干净地跳过
       return {
         id: r.id,
+        // country: ISO 3166-1 alpha-2(与 UpcomingCompRecord.country 一致,直接喂 <Flag> / countryName)。
+        // 多地代码(XA/XE/.../XW)的 iso2 在 WCA countries 表里就是代码本身,calendar 的 flag-multi 占位照常工作。
         name: r.name,
         city: r.city_name,
-        country: r.country_id,
+        country: r.iso2 ?? r.country_id,
         latitude_degrees: isMulti ? null : Number(r.latitude_degrees),
         longitude_degrees: isMulti ? null : Number(r.longitude_degrees),
         start_date: fmtDate(r.start_date),

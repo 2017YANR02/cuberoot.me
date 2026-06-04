@@ -321,6 +321,7 @@ export default function CompDetailPage() {
   const isSchedule = viewParam === 'schedule';
   const psychEventParam = searchParams?.get('psychEvent') || '';
   const sourceParam = searchParams?.get('source');
+  const schedView: 'calendar' | 'table' = searchParams?.get('layout') === 'calendar' ? 'calendar' : 'table';
 
   const load = useCallback((opts?: { fresh?: boolean }): { promise: Promise<void>; cancel: () => void } => {
     const fresh = opts?.fresh ?? false;
@@ -574,6 +575,16 @@ export default function CompDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, defaultRoundKey]);
 
+  // Schedule defaults to the table layout; force it into the URL so the choice is
+  // always explicit (only an explicit layout=calendar opts out).
+  useEffect(() => {
+    if (!isSchedule || searchParams?.get('layout')) return;
+    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
+    next.set('layout', 'table');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSchedule, explicitView]);
+
   const currentRound = useMemo(() => {
     if (!data || !eventParam || !roundParam) return null;
     const ev = data.events.find(e => e.i === eventParam);
@@ -699,6 +710,12 @@ export default function CompDetailPage() {
   const onChangeView = (value: 'live' | 'psych' | 'schedule') => {
     const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
     next.set('view', value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
+    setSearchParams(next);
+  };
+
+  const onChangeSchedView = (value: 'calendar' | 'table') => {
+    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
+    next.set('layout', value);
     setSearchParams(next);
   };
 
@@ -925,7 +942,13 @@ export default function CompDetailPage() {
         </div>
 
         {isSchedule ? (
-          <ScheduleView slug={slug} isZh={isZh} compName={compNameTitle} />
+          <ScheduleView
+            slug={slug}
+            isZh={isZh}
+            compName={compNameTitle}
+            view={schedView}
+            onViewChange={onChangeSchedView}
+          />
         ) : !isPsych ? (
           <>
             <div className="comp-selectors">

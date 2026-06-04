@@ -187,6 +187,23 @@ export function listSessions(): SessionMeta[] {
   return loadRaw().sessions.slice();
 }
 
+/** Read one session's byEvent map (empty object if the id is unknown). */
+export function loadSessionData(id: string): Record<string, Solve[]> {
+  return (loadRaw().dataBySession[id] ?? {}) as Record<string, Solve[]>;
+}
+
+/**
+ * Read every session's byEvent map keyed by session id — for cross-session
+ * aggregate stats. Order matches `listSessions()`.
+ */
+export function loadAllSessionData(): Array<{ session: SessionMeta; byEvent: Record<string, Solve[]> }> {
+  const db = loadRaw();
+  return db.sessions.map(session => ({
+    session,
+    byEvent: (db.dataBySession[session.id] ?? {}) as Record<string, Solve[]>,
+  }));
+}
+
 export function getActiveSessionId(): string {
   return loadRaw().activeSessionId;
 }
@@ -242,6 +259,44 @@ export function deleteSession(id: string): string | null {
   if (db.activeSessionId === id) db.activeSessionId = db.sessions[0].id;
   saveRaw(db);
   return db.activeSessionId;
+}
+
+/**
+ * Move a single solve out of the ACTIVE session into `targetSessionId` (same
+ * event). Removes it from the active session's event list and appends it to the
+ * target session's same-event list (kept chronologically sorted). Returns true
+ * if the solve was found and moved.
+ */
+export function moveSolveToSession(solveId: string, targetSessionId: string): boolean {
+  const db = loadRaw();
+  const fromId = db.activeSessionId;
+  if (targetSessionId === fromId) return false;
+  if (!db.sessions.some(s => s.id === targetSessionId)) return false;
+
+  const fromBe = db.dataBySession[fromId] ?? {};
+  let moved: Solve | null = null;
+  let movedEvent: EventId | null = null;
+  for (const ev of Object.keys(fromBe) as EventId[]) {
+    const list = fromBe[ev];
+    if (!list) continue;
+    const i = list.findIndex(s => s.id === solveId);
+    if (i >= 0) {
+      moved = list[i];
+      movedEvent = ev;
+      fromBe[ev] = list.slice(0, i).concat(list.slice(i + 1));
+      break;
+    }
+  }
+  if (!moved || !movedEvent) return false;
+  db.dataBySession[fromId] = fromBe;
+
+  const toBe = db.dataBySession[targetSessionId] ?? {};
+  const existing = toBe[movedEvent] ?? [];
+  toBe[movedEvent] = [...existing, moved].sort((a, b) => a.ts - b.ts);
+  db.dataBySession[targetSessionId] = toBe;
+
+  saveRaw(db);
+  return true;
 }
 
 /* ---------- Auto-backup ---------- */

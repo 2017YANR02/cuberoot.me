@@ -49,26 +49,6 @@
 .daily-god-select:hover { border-color: var(--border-strong); }
 .daily-god-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
-/* 底色 swatch */
-.daily-god-colors {
-  display: flex;
-  gap: 0.45rem;
-  align-items: center;
-}
-.dg-swatch {
-  width: 1.35rem;
-  height: 1.35rem;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--foreground) 30%, transparent);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.dg-swatch:hover { transform: scale(1.1); }
-.dg-swatch.is-active {
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
-}
-
 /* hero 卡 */
 .dg-hero {
   display: flex;
@@ -96,12 +76,14 @@
   align-items: baseline;
   gap: 0.4rem;
 }
+/* hero 底色标识:直接复用 picker swatch 的圆角方块视觉(非圆形) */
 .dg-hero-dot {
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 30%, transparent);
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   align-self: center;
+  overflow: hidden;
 }
 .dg-hero-steps b {
   font-size: 1.8rem;
@@ -115,7 +97,7 @@
   font-family: var(--font-mono);
   font-size: 0.82rem;
   line-height: 1.45;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   word-break: break-word;
 }
 .dg-hero-src {
@@ -167,7 +149,7 @@
   font-family: var(--font-mono);
   font-size: 0.76rem;
   line-height: 1.4;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   word-break: break-word;
 }
 .dg-row-rank {

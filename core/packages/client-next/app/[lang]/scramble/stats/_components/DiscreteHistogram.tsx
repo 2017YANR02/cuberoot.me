@@ -13,20 +13,11 @@ export interface HistSeries {
   legendHint?: string;
 }
 
-export interface LegendMode {
-  key: string;
-  label: string;
-}
-
 interface Props {
   series: HistSeries[];
   isZh?: boolean;
   yMode?: 'count' | 'percent';
   chartMode?: 'pdf' | 'cdf';
-  // NOTE: 模式切换 pills 画在图例上方；每个 pill 独立可点。不传则不渲染
-  modes?: LegendMode[];
-  activeMode?: string;
-  onModeChange?: (key: string) => void;
   // NOTE: 稀有 bin (极端步数) 可点击查看具体 scramble；当前选中的 bin 会被高亮
   clickableBins?: number[];
   selectedBin?: number | null;
@@ -39,6 +30,8 @@ interface Props {
   setOptions?: { value: string; label: string }[];
   activeSet?: string;
   onSetChange?: (v: string) => void;
+  // NOTE: 隐藏图例里的颜色 chip(外部已有底色 picker 时避免重复)
+  hideLegendColors?: boolean;
 }
 
 const W = 760, H = 400;
@@ -47,7 +40,7 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', modes, activeMode, onModeChange, clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange }: Props) {
+export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
@@ -249,18 +242,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             ))}
           </select>
         )}
-        {modes && modes.length > 0 && (
-          <select
-            className="scramble-hist-legend-select scramble-hist-legend-select-mode"
-            value={activeMode}
-            onChange={(e) => onModeChange?.(e.target.value)}
-          >
-            {modes.map((m) => (
-              <option key={m.key} value={m.key}>{m.label}</option>
-            ))}
-          </select>
-        )}
-        {series.map((s, i) => {
+        {!hideLegendColors && series.map((s, i) => {
           const chips = s.fillColors.length > 0 ? s.fillColors : ['#8B7D72'];
           const clickable = !!s.onLegendClick;
           return (

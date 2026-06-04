@@ -12,7 +12,8 @@
  *
  * Changes vs the old standalone page:
  *   - accepts the shell `modePill` and renders it into the battle middle-bar
- *   - default mode is 1v1 (the face of 对战); the internal solo/1v1 toggle stays
+ *   - mode is always 1v1 (the face of 双人/Duo); the internal solo/1v1 toggle was
+ *     removed — the top-level 单人/Solo (SoloView) covers single-player
  *   - per-player event picker uses components/WcaEventSelector (green active)
  *     instead of BattleEventPicker + the in-area overlay grid
  *   - the ⚔️ emoji opponent prefix + icon_timer.png nav icon are replaced with
@@ -369,6 +370,9 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const rankCountry = useRankCountry();
+  const scrambleRef = useRef<HTMLDivElement>(null);
+  const [scrambleCopied, setScrambleCopied] = useState(false);
+  const copiedTimerRef = useRef<number | null>(null);
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
@@ -429,6 +433,33 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       el.removeEventListener('pointerup', onUp);
       el.removeEventListener('pointercancel', onCancel);
     };
+  }, [playerId]);
+
+  // Tapping the scramble text copies it (handler below). Stop the pointer from
+  // reaching the area listener, which arms this player's timer on any pointerdown.
+  useEffect(() => {
+    const el = scrambleRef.current;
+    if (!el) return;
+    const stop = (e: PointerEvent) => e.stopPropagation();
+    el.addEventListener('pointerdown', stop);
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+    return () => {
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('pointerup', stop);
+      el.removeEventListener('pointercancel', stop);
+    };
+  }, []);
+  useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
+
+  const copyScramble = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const s = useBattleStore.getState().scrambles[playerId];
+    if (!s || s.startsWith('⚠️')) return;
+    try { void navigator.clipboard.writeText(s); } catch { /* ignore */ }
+    setScrambleCopied(true);
+    if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
   }, [playerId]);
 
   const areaClasses = [
@@ -496,13 +527,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       ref={areaRef}
       style={bgStyle}
     >
-      {/* 打乱文字 */}
-      <div
-        className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
-        style={{ '--scramble-auto': getScrambleAutoScale(myScramble || '') } as React.CSSProperties}
-        dangerouslySetInnerHTML={{ __html: scrambleContent }}
-      />
-
       {/* 计时数字 */}
       <div
         className={timeClasses}
@@ -531,6 +555,20 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
           </span>
           <span id={`opponent-${playerId}`} className="opponent-time" />
         </div>
+      )}
+
+      {/* 打乱文字 — 放在打乱图正上方;点击复制 */}
+      <div
+        ref={scrambleRef}
+        className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
+        data-no-timer
+        onClick={copyScramble}
+        title={isZh ? '点击复制打乱' : 'Click to copy'}
+        style={{ '--scramble-auto': getScrambleAutoScale(myScramble || ''), cursor: 'pointer' } as React.CSSProperties}
+        dangerouslySetInnerHTML={{ __html: scrambleContent }}
+      />
+      {scrambleCopied && (
+        <div className="battle-scramble-copied" data-no-timer>{isZh ? '已复制' : 'Copied'}</div>
       )}
 
       {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
@@ -814,20 +852,8 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
 
-        {/* 模式选择 */}
-        <div className="settings-group">
-          <div className="settings-label" data-i18n="mode">{isZh ? '模式' : 'MODE'}</div>
-          <div className="mode-seg">
-            <button
-              className={`mode-seg-btn${store.mode === 'solo' ? ' active' : ''}`}
-              onClick={() => store.setMode('solo')}
-            >{isZh ? '单人' : 'Solo'}</button>
-            <button
-              className={`mode-seg-btn${store.mode === '1v1' ? ' active' : ''}`}
-              onClick={() => store.setMode('1v1')}
-            >1v1</button>
-          </div>
-        </div>
+        {/* 双人模式恒为 1v1 — 顶层已有「单人」入口(SoloView),内部 solo 布局是
+            退役遗留,已移除 单人/1v1 切换。并排/对向布局由视口自动决定,无手动开关。 */}
 
         {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的项目按钮 */}
         {store.mode === 'solo' && (
@@ -1002,7 +1028,7 @@ export default function BattleView({ modePill }: BattleViewProps) {
 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('对战', 'Battle');
+  useDocumentTitle('双人', 'Duo');
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1014,7 +1040,7 @@ export default function BattleView({ modePill }: BattleViewProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  // NOTE: 进入对战模式默认 1v1(对战的主面;内部 solo/1v1 toggle 仍在 Settings 可切)
+  // NOTE: 双人模式恒为 1v1(单人/1v1 切换已移除,顶层 Solo 覆盖单人;持久化的旧 solo 强制翻 1v1)
   const defaultedRef = useRef(false);
   useEffect(() => {
     if (defaultedRef.current) return;

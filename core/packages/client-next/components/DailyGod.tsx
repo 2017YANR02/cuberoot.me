@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { SubsetColorPicker, SubsetSwatch, useSubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
 import { roundTypeName } from '@/lib/comp-schedule';
 import './daily_god.css';
@@ -24,13 +25,13 @@ interface DailyGodJson {
   rank: Record<string, Record<string, Record<string, Entry[]>>>;
 }
 
-const VARIANT_ORDER = ['std', 'eo', 'pseudo', 'pseudo_pair', 'pair', 'f2leo', 'pseudo_f2leo'];
+const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo'];
 const VARIANT_LABEL: Record<string, { zh: string; en: string }> = {
   std: { zh: '标准', en: 'Standard' },
-  eo: { zh: 'EO十字', en: 'EOCross' },
-  pseudo: { zh: '伪十字', en: 'Pseudo' },
-  pseudo_pair: { zh: '伪十字+基态', en: 'Pseudo + Pair' },
-  pair: { zh: '十字+基态', en: 'Cross + Pair' },
+  eo: { zh: 'EO', en: 'EO' },
+  pseudo: { zh: '伪', en: 'Pseudo' },
+  pseudo_pair: { zh: '伪基态', en: 'Pseudo Pair' },
+  pair: { zh: '基态', en: 'Pair' },
   f2leo: { zh: 'F2LEO', en: 'F2LEO' },
   pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO' },
 };
@@ -44,16 +45,6 @@ const METRIC_LABEL: Record<string, { zh: string; en: string }> = {
   xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
 };
 
-type Color = 'W' | 'Y' | 'R' | 'O' | 'B' | 'G';
-const COLOR_ORDER: Color[] = ['W', 'Y', 'R', 'O', 'B', 'G'];
-const COLOR_NAME: Record<Color, { zh: string; en: string }> = {
-  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow' }, R: { zh: '红', en: 'Red' },
-  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue' }, G: { zh: '绿', en: 'Green' },
-};
-// 魔方面固定色(lib/cube-colors 单一来源的颜色字母版),非主题色。
-const COLOR_HEX: Record<Color, string> = {
-  W: '#FFFFFF', Y: '#FEFE00', R: '#EE0000', O: '#FFA100', B: '#0000F2', G: '#00D800',
-};
 function sourceLine(m: ScrMeta, isZh: boolean): string {
   const round = roundTypeName(m.r, isZh);
   const group = isZh ? `${m.g} 组` : `Group ${m.g}`;
@@ -66,7 +57,7 @@ export default function DailyGod({ lang }: Props) {
   const [data, setData] = useState<DailyGodJson | null>(null);
   const [variant, setVariant] = useState('std');
   const [metric, setMetric] = useState('cross');
-  const [color, setColor] = useState<Color>('W');
+  const sel = useSubsetSelection('cn');
   const [expanded, setExpanded] = useState(false);
 
   // 点比赛名跳 /scramble/gen?comp=<id>(comp tab 直链加载该比赛打乱),不是 /wca/comp。
@@ -76,7 +67,7 @@ export default function DailyGod({ lang }: Props) {
     let on = true;
     const kick = () => {
       if (!on) return;
-      fetch('/stats/scramble/daily_god.json')
+      fetch('/stats/scramble/daily_god.json', { cache: 'no-cache' })
         .then((r) => (r.ok ? r.json() : null))
         .then((j: DailyGodJson | null) => { if (on) setData(j); })
         .catch(() => { if (on) setData(null); });
@@ -108,7 +99,7 @@ export default function DailyGod({ lang }: Props) {
     return r ? METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
-  const entries: Entry[] = data?.rank?.[curVariant]?.[curMetric]?.[color] ?? [];
+  const entries: Entry[] = data?.rank?.[curVariant]?.[curMetric]?.[sel.subsetKey] ?? [];
 
   if (!data || data.new_count === 0 || variants.length === 0) return null;
 
@@ -140,20 +131,7 @@ export default function DailyGod({ lang }: Props) {
             <option key={m} value={m}>{METRIC_LABEL[m]?.[isZh ? 'zh' : 'en'] ?? m}</option>
           ))}
         </select>
-      </div>
-
-      <div className="daily-god-colors" role="group" aria-label={isZh ? '底色' : 'Bottom color'}>
-        {COLOR_ORDER.map((c) => (
-          <button
-            key={c}
-            type="button"
-            className={`dg-swatch${c === color ? ' is-active' : ''}`}
-            style={{ background: COLOR_HEX[c] }}
-            onClick={() => setColor(c)}
-            title={COLOR_NAME[c][isZh ? 'zh' : 'en']}
-            aria-pressed={c === color}
-          />
-        ))}
+        <SubsetColorPicker sel={sel} isZh={isZh} />
       </div>
 
       {hero ? (() => {
@@ -167,7 +145,7 @@ export default function DailyGod({ lang }: Props) {
             </div>
             <div className="dg-hero-body">
               <div className="dg-hero-steps">
-                <span className="dg-hero-dot" style={{ background: COLOR_HEX[color] }} aria-hidden="true" />
+                <span className="dg-hero-dot" aria-hidden="true"><SubsetSwatch colors={sel.selectedColors} /></span>
                 <b>{steps}</b>
                 <span className="dg-hero-unit">{isZh ? '步' : steps === 1 ? 'move' : 'moves'}</span>
               </div>
