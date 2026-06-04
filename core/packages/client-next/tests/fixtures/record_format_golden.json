@@ -1,0 +1,973 @@
+[
+  {
+    "name": "wr_single_333",
+    "input": {
+      "events": [
+        {
+          "tag": "WR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 305,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡🇨🇳| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang🇨🇳| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        3
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡🇨🇳| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang🇨🇳| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "wr_double_333",
+    "input": {
+      "events": [
+        {
+          "tag": "WR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 305,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        },
+        {
+          "tag": "WR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 460,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 3.05单次, 4.60平均三阶魔方双世界纪录🇨🇳WR 王艺衡 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 Single, 4.60 Avg 3x3🇨🇳Double WR Yiheng Wang | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        3,
+        7
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 3.05单次, 4.60平均三阶魔方双世界纪录🇨🇳WR 王艺衡 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 Single, 4.60 Avg 3x3🇨🇳Double WR Yiheng Wang | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "nr_single_444_ranked",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "single",
+          "event_id": "444",
+          "attempt_result": 2148,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 21.48四阶魔方单次美国纪录🇺🇸NR/WR100 Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 21.48 4x4🇺🇸NR/WR100 Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 21.48四阶魔方单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 21.48 4x4🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "asr_single_555_ranked",
+    "input": {
+      "events": [
+        {
+          "tag": "AsR",
+          "rec_type": "single",
+          "event_id": "555",
+          "attempt_result": 4135,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 41.35五阶魔方单次亚洲纪录AsR/WR100 王艺衡🇨🇳| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Breaking News! 41.35 5x5 AsR/WR100 Single Yiheng Wang🇨🇳| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 41.35五阶魔方单次亚洲纪录AsR 王艺衡🇨🇳| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Breaking News! 41.35 5x5 AsR Single Yiheng Wang🇨🇳| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "cr_resolve_er_avg_333",
+    "input": {
+      "events": [
+        {
+          "tag": "CR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 595,
+          "person_name": "Lukas Müller",
+          "person_iso2": "DE",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 5.95三阶魔方平均欧洲纪录ER/WR100 Lukas Müller🇩🇪| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Breaking News! 5.95 3x3 ER/WR100 Avg Lukas Müller🇩🇪| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 5.95三阶魔方平均欧洲纪录ER Lukas Müller🇩🇪| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Breaking News! 5.95 3x3 ER Avg Lukas Müller🇩🇪| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "nr_double_333",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 440,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        },
+        {
+          "tag": "NR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 595,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 4.40单次WR98, 5.95平均WR100三阶魔方双美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 4.40 Single WR98, 5.95 Avg WR100 3x3🇺🇸Double NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        98,
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 4.40单次, 5.95平均三阶魔方双美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 4.40 Single, 5.95 Avg 3x3🇺🇸Double NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "wr_plus_nr_333",
+    "input": {
+      "events": [
+        {
+          "tag": "WR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 305,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        },
+        {
+          "tag": "NR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 595,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡 | 5.95平均美国纪录🇺🇸NR/WR100 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang | 5.95🇺🇸NR/WR100 Avg | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        3,
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡 | 5.95平均美国纪录🇺🇸NR | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang | 5.95🇺🇸NR Avg | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "wr_plus_asr_333",
+    "input": {
+      "events": [
+        {
+          "tag": "WR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 305,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        },
+        {
+          "tag": "AsR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 595,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡🇨🇳| 5.95平均亚洲纪录AsR/WR100 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang🇨🇳| 5.95 AsR/WR100 Avg | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        3,
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡🇨🇳| 5.95平均亚洲纪录AsR | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang🇨🇳| 5.95 AsR Avg | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "asr_plus_nr_555",
+    "input": {
+      "events": [
+        {
+          "tag": "AsR",
+          "rec_type": "single",
+          "event_id": "555",
+          "attempt_result": 4135,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        },
+        {
+          "tag": "NR",
+          "rec_type": "average",
+          "event_id": "555",
+          "attempt_result": 4675,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 41.35五阶魔方单次亚洲纪录AsR/WR100 王艺衡 | 46.75平均美国纪录🇺🇸NR/WR100 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Breaking News! 41.35 5x5 AsR/WR100 Single Yiheng Wang | 46.75🇺🇸NR/WR100 Avg | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        100,
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 41.35五阶魔方单次亚洲纪录AsR 王艺衡 | 46.75平均美国纪录🇺🇸NR | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Breaking News! 41.35 5x5 AsR Single Yiheng Wang | 46.75🇺🇸NR Avg | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "pr_break_333",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 700,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "PR快讯! 7.00三阶魔方单次个人纪录🇨🇳PR 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 7.00 3x3🇨🇳PR Single Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "PR快讯! 7.00三阶魔方单次个人纪录🇨🇳PR 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 7.00 3x3🇨🇳PR Single Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "pr_rank2_333",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 700,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 2
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "成绩快讯! 7.00三阶魔方单次PR2 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Result News! 7.00 PR2 Single 3x3 Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "成绩快讯! 7.00三阶魔方单次PR2 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Result News! 7.00 PR2 Single 3x3 Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "pr_tied_333",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 800,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1,
+          "previous_pr": 800
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "PR快讯! 8.00三阶魔方单次个人纪录🇨🇳PR(平) 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 8.00 3x3🇨🇳PR(Tied) Single Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "PR快讯! 8.00三阶魔方单次个人纪录🇨🇳PR(平) 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 8.00 3x3🇨🇳PR(Tied) Single Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "pr_tied_ranked_333",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 440,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1,
+          "previous_pr": 440
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "PR快讯! 4.40三阶魔方单次个人纪录🇨🇳PR(平)/WR98 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 4.40 3x3🇨🇳PR(Tied)/WR98 Single Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        98
+      ]
+    },
+    "no_rank": {
+      "cn": "PR快讯! 4.40三阶魔方单次个人纪录🇨🇳PR(平) 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 4.40 3x3🇨🇳PR(Tied) Single Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "pr_double_333",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 700,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        },
+        {
+          "tag": "PR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 900,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "PR快讯! 7.00单次, 9.00平均三阶魔方双个人纪录🇨🇳PR 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 7.00 Single, 9.00 Avg 3x3🇨🇳Double PR Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "PR快讯! 7.00单次, 9.00平均三阶魔方双个人纪录🇨🇳PR 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "PR News! 7.00 Single, 9.00 Avg 3x3🇨🇳Double PR Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "pr_double_rank2_333",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 700,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 3
+        },
+        {
+          "tag": "PR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 900,
+          "person_name": "Yusheng Du (杜宇生)",
+          "person_iso2": "CN",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 2
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "成绩快讯! 7.00单次PR3, 9.00平均PR2三阶魔方 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Result News! 7.00 PR3 Single, 9.00 PR2 Avg 3x3 Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "成绩快讯! 7.00单次PR3, 9.00平均PR2三阶魔方 杜宇生 | 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "Result News! 7.00 PR3 Single, 9.00 PR2 Avg 3x3 Yusheng Du | Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "fmc_single",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "single",
+          "event_id": "333fm",
+          "attempt_result": 19,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 19最少步单次美国纪录🇺🇸NR/WR43 Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 19 FMC🇺🇸NR/WR43 Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        43
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 19最少步单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 19 FMC🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "fmc_avg_mean",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "average",
+          "event_id": "333fm",
+          "attempt_result": 2433,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 24.33最少步平均美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 24.33 FMC🇺🇸NR Mean Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 24.33最少步平均美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 24.33 FMC🇺🇸NR Mean Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "mbld_single",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "single",
+          "event_id": "333mbf",
+          "attempt_result": 940111802,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 7/9 18:38多盲单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 7/9 18:38 3BLD🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 7/9 18:38多盲单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 7/9 18:38 3BLD🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "mean_666_avg",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "average",
+          "event_id": "666",
+          "attempt_result": 8712,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 1:27.12六阶魔方平均美国纪录🇺🇸NR/WR100 Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 1:27.12 6x6🇺🇸NR/WR100 Mean Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 1:27.12六阶魔方平均美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 1:27.12 6x6🇺🇸NR Mean Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "minute_time_555",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "single",
+          "event_id": "555",
+          "attempt_result": 6789,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 1:07.89五阶魔方单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 1:07.89 5x5🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 1:07.89五阶魔方单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 1:07.89 5x5🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "long_comp_name",
+    "input": {
+      "events": [
+        {
+          "tag": "WR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 305,
+          "person_name": "Yiheng Wang (王艺衡)",
+          "person_iso2": "CN",
+          "comp_name": "2026年第三届粤港澳大湾区超长名称魔方公开赛邀请赛",
+          "comp_name_en": "The Exceedingly Long Competition Name Spring Open 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡🇨🇳| 2026年第三届粤港澳大湾区超长名称魔方公开赛邀请赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang🇨🇳| The Exceedingly Long Competition Name Spring Open 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        3
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 3.05三阶魔方单次世界纪录WR 王艺衡🇨🇳| 2026年第三届粤港澳大湾区超长名称魔方公开赛邀请赛🇨🇳",
+      "en": "BREAKING NEWS! 3.05 3x3 WR Single Yiheng Wang🇨🇳| The Exceedingly Long Competition Name Spring Open 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "name_english_222",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "single",
+          "event_id": "222",
+          "attempt_result": 63,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 0.63二阶魔方单次美国纪录🇺🇸NR/WR99 Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 0.63 2x2🇺🇸NR/WR99 Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        99
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 0.63二阶魔方单次美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 0.63 2x2🇺🇸NR Single Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "name_my_cjk_333",
+    "input": {
+      "events": [
+        {
+          "tag": "WR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 460,
+          "person_name": "Lim Hung (林弘)",
+          "person_iso2": "MY",
+          "comp_name": "2026WCA泉州夏季魔方赛",
+          "comp_name_en": "Quanzhou Summer 2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 4.60三阶魔方平均世界纪录WR 林弘🇲🇾| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 4.60 3x3 WR Avg Lim Hung🇲🇾| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        7
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 4.60三阶魔方平均世界纪录WR 林弘🇲🇾| 2026WCA泉州夏季魔方赛🇨🇳",
+      "en": "BREAKING NEWS! 4.60 3x3 WR Avg Lim Hung🇲🇾| Quanzhou Summer 2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "mean_444bf",
+    "input": {
+      "events": [
+        {
+          "tag": "NR",
+          "rec_type": "average",
+          "event_id": "444bf",
+          "attempt_result": 23074,
+          "person_name": "Max Park",
+          "person_iso2": "US",
+          "comp_name": "Rubik's WCA World Championship 2025",
+          "comp_name_en": "Rubik's WCA World Championship 2025",
+          "comp_iso2": "US",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "纪录快讯! 3:50.74四盲平均美国纪录🇺🇸NR/WR100 Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 3:50.74 4BLD🇺🇸NR/WR100 Mean Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        100
+      ]
+    },
+    "no_rank": {
+      "cn": "纪录快讯! 3:50.74四盲平均美国纪录🇺🇸NR Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "en": "Breaking News! 3:50.74 4BLD🇺🇸NR Mean Max Park | Rubik's WCA World Championship 2025🇺🇸",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        null
+      ]
+    }
+  }
+]

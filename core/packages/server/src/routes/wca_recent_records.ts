@@ -3,8 +3,8 @@
  *
  * 数据流:
  *   1. 后台每 60s 拉 WCA Live GraphQL `recentRecords` (默认 10 天内 WR/CR/NR)
- *   2. 对每条新记录 spawn format_cli.py 拿 cn/en 文案 (走 wca_format 同款 Python 模板),
- *      按 record.id 缓存避免重复 spawn
+ *   2. 对每条新记录本地渲染 cn/en 文案 (wca_format.formatRecords,无 spawn/无联网),
+ *      按 record.id 缓存避免重复计算
  *   3. 端点直接吐快照 (含 formattedCn/En),不阻塞请求
  *   4. nginx proxy_cache 60s 兜底,上游负载 1 req/min
  */
@@ -12,7 +12,8 @@ import { Hono } from 'hono';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { runFormatCli } from './wca_format.js';
+import { formatRecords } from './wca_format.js';
+import type { RecordEvent } from '../utils/record_format.js';
 import { extractInferredRecords, type InferredRecord } from './cubing_live.js';
 import { query } from '../db/connection.js';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
@@ -50,7 +51,7 @@ export interface RecentRecord {
   countryIso2: string;
   countryName: string;
   competitionId: string;
-  /** 与 /v1/wca/format-record 同模板的 Bark 文案,Python 单一来源 */
+  /** 与 /v1/wca/format-record 同模板的纪录快讯文案(本地渲染) */
   formattedCn: string;
   formattedEn: string;
 }
@@ -157,26 +158,18 @@ async function getCompMeta(compId: string, compNameEn: string, personIso2: strin
   return meta;
 }
 
-// format_cli 熔断器 — 外部 Python (/opt/wca-monitor) 启动时会拉 WCA 官网排名,
-// 官网不可达时每条都卡满 spawn 超时 (67 条 × 5s ≈ 5.5min/轮,后台 60s 轮询永远跑不完一轮)。
-// 任一条失败即跳闸,冷却期内不再 spawn 直接返空;空文案不写缓存,client 已能降级渲染,
-// 网络恢复后下一轮自动补回花哨文案。
-const FORMAT_CLI_COOLDOWN_MS = 5 * 60_000;
-let formatCliDownUntil = 0;
-
-/** spawn format_cli 拿 cn/en,带 id 缓存 + 熔断 + 仅缓存非空结果。 */
-async function runFormatCached(id: string, event: Record<string, unknown>): Promise<{ cn: string; en: string }> {
+/** 本地渲染 cn/en(无 spawn / 无联网,见 wca_format.formatRecords),带 id 缓存 + 仅缓存非空结果。
+ *  无熔断:本地查 PG + 内存二分,不会卡;偶发异常返空,client 已能降级渲染,下轮重试。 */
+async function renderCached(id: string, event: RecordEvent): Promise<{ cn: string; en: string }> {
   const cached = formattedCache.get(id);
   if (cached) return cached;
-  if (Date.now() < formatCliDownUntil) return { cn: '', en: '' };
   try {
-    const r2 = await runFormatCli({ events: [event] });
+    const r2 = await formatRecords([event]);
     const out = { cn: r2.cn, en: r2.en };
     if (out.cn || out.en) formattedCache.set(id, out);  // 仅缓存有效文案,失败下轮重试
     return out;
   } catch (e) {
-    formatCliDownUntil = Date.now() + FORMAT_CLI_COOLDOWN_MS;
-    console.warn('[recent-records] format_cli failed for', id, '— breaker tripped:', (e as Error).message);
+    console.warn('[recent-records] format failed for', id, ':', (e as Error).message);
     return { cn: '', en: '' };
   }
 }
@@ -186,7 +179,7 @@ async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
   const compNameEn = r.result.round.competitionEvent.competition.name;
   const personIso2 = (r.result.person.country.iso2 || '').toUpperCase();
   const meta = await getCompMeta(compId, compNameEn, personIso2);
-  return runFormatCached(r.id, {
+  return renderCached(r.id, {
     tag: r.tag,
     rec_type: r.type,
     attempt_result: r.attemptResult,
@@ -207,7 +200,7 @@ async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
 async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: string }> {
   const personIso2 = rec.personIso2.toUpperCase();
   const meta = await getCompMeta(rec.compId, rec.compNameEn, personIso2);
-  return runFormatCached(rec.id, {
+  return renderCached(rec.id, {
     tag: rec.tag,
     rec_type: rec.type,
     attempt_result: rec.attemptResult,
