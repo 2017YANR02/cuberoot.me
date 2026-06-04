@@ -4,8 +4,9 @@
 #
 # 触发:
 #   workflow_dispatch — 手动,首次全量 bootstrap 传 limit=0(~1-2h)
-#   cron 每天 01:00 UTC — stats.yml 20:00 灌新 wca_competitions、dump_comps 23:30 跑完后,
-#     补新公示比赛 + 刷新「未来/进行中」比赛赛程(已结束的冻结不再拉)
+#   workflow_run(Update Stats 完成后)— stats.yml 重载 wca_competitions 的当下立刻暖,
+#     新公示比赛首个访问者也秒出(消除 stats→backfill 的数小时空窗)
+#   cron 每天 01:00 UTC — 安全网,补漏 + 刷新「未来/进行中」比赛赛程(已结束的冻结不再拉)
 #
 # 流程:esbuild bundle → 在 CI runner 上 fetch+trim(runner 直连 WCA 快)→ 经
 # SSH 本地转发隧道把 trim 后几十 KB 的行写进 prod PG。
@@ -37,12 +38,25 @@ on:
         description: 'DELAY_MS 每 worker 拉取间隔毫秒（默认 500，礼让 WCA）'
         required: false
         default: '500'
+  # stats.yml 跑完即重载 wca_competitions(新公示比赛入库的时刻)→ 立刻暖缓存,
+  # 堵住「stats 20:00 入库 → backfill 01:00 才暖」的 3.5~5h 空窗(新比赛首个访问者
+  # 否则要等服务器慢速拉 10MB WCIF)。下方 job if 排除 push-only 的 typecheck 跑。
+  workflow_run:
+    workflows: ['Update Stats']
+    types: [completed]
   schedule:
-    # UTC 01:00 — stats.yml(20:00) + dump_comps(23:30) 之后,错峰不与它们同时抢内存
+    # UTC 01:00 安全网 — 万一 workflow_run 没触发(stats 改名/禁用)仍每天兜底暖一次
     - cron: '0 1 * * *'
 
 jobs:
   backfill:
+    # workflow_run 仅认 schedule/dispatch 触发的成功 stats 跑(那时才重载了
+    # wca_competitions);push-only 的 typecheck 跑不碰表,跳过。cron/手动 dispatch 照常跑。
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.event == 'schedule' ||
+        github.event.workflow_run.event == 'workflow_dispatch'))
     runs-on: ubuntu-latest
     timeout-minutes: 300  # 全量 bootstrap ~20k 场估 1-2h,留余地
     steps:
