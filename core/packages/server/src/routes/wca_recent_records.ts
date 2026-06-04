@@ -303,7 +303,9 @@ async function fetchOnce(): Promise<void> {
   const seen = new Set<string>();
   const merged: RecentRecord[] = [];
   for (const r of [...inferred, ...records]) {
-    const k = `${r.competitionId}|${r.eventId}|${r.type}|${r.attemptResult}`;
+    // competitionId 小写归一:WCA Live feed 与本地 dump 偶尔大小写不同(StartOfSummer… vs
+    // Startof…),同一条纪录两源都出时需当成重复去掉。
+    const k = `${r.competitionId.toLowerCase()}|${r.eventId}|${r.type}|${r.attemptResult}`;
     if (seen.has(k)) continue;
     seen.add(k);
     merged.push(r);
