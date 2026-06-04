@@ -742,6 +742,30 @@
   color: #fff;
 }
 
+/* cstimer-style rolling-average columns (序号 | 时间 | ao5 | ao12). The grid
+   template itself is set inline (column count tracks the configured windows). */
+.history-cols-head {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #121214;
+  border-bottom: 1px solid #1f1f23;
+  font-size: 11px;
+  color: #888;
+}
+.history-cols-head .idx { text-align: right; }
+.history-cols-head .hao-head { text-align: right; color: #6aa3c8; }
+.history-row .hao {
+  text-align: right;
+  color: #9a9aa0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .history-empty {
   padding: 30px 20px;
   text-align: center;
@@ -1440,6 +1464,9 @@
 }
 :root[data-timer-theme="light"] .history-row { border-bottom-color: #eee; }
 :root[data-timer-theme="light"] .history-row:hover { background: #f0f0f3; }
+:root[data-timer-theme="light"] .history-cols-head { background: #f5f5f7; color: #666; border-bottom-color: #e6e6e9; }
+:root[data-timer-theme="light"] .history-cols-head .hao-head { color: #3a7bb5; }
+:root[data-timer-theme="light"] .history-row .hao { color: #555; }
 
 /* --- Live cube state mirror (smart cube): default desktop placement.
    Fixed to the bottom-right corner. Pointer-events disabled so it never

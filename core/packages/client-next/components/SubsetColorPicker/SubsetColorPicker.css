@@ -1,4 +1,4 @@
-/* SubsetColorPicker — /scramble/stats + 首页 DailyGod 共用。
+/* SubsetColorPicker — /scramble/stats + 首页 RecentScrambles 共用。
    主题无关:边框走 currentColor,选中态走 var(--accent)(两页都定义),不依赖 --background/--foreground。 */
 .subset-picker {
   display: flex;

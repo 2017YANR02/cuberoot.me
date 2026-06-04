@@ -42,30 +42,30 @@ export default function GlobeAboutPage() {
         <h1 className="gla-title">{t('WCA 地球视图是怎么工作的', 'How the WCA Globe works')}</h1>
         <p className="gla-intro">
           {t(
-            '/wca/globe 是 WCA 比赛的交互式 3D 地球。基于 MapLibre GL JS + 矢量瓦片构建,支持近期比赛分布、选手生涯足迹动画、历史赛事密度等多种模式。',
-            '/wca/globe is an interactive 3D globe of WCA competitions, built on MapLibre GL JS with vector tiles. Modes include upcoming-comp clusters, animated cuber career trajectories, and historical event density.',
+            '/wca/globe 是 WCA 比赛的交互式 3D 地球。基于 MapLibre GL JS + 矢量瓦片构建,顶部一个搜索框即可搜比赛 / 选手 / 城市 / 地点;支持近期比赛分布、选手生涯足迹动画、各国世界纪录等视图。',
+            '/wca/globe is an interactive 3D globe of WCA competitions, built on MapLibre GL JS with vector tiles. A single top search box finds competitions, cubers, cities and places; views include upcoming-comp clusters, animated cuber career trajectories, and world-records-by-country.',
           )}
         </p>
 
         <h2 className="gla-section-title">{t('三种模式', 'Three modes')}</h2>
         <p className="gla-section-intro">
           {t(
-            '顶部模式切换器可在以下三个模式间切换:',
-            'The mode selector at the top switches between:',
+            '顶部切换器在「比赛」「WR」之间切换;「选手足迹」通过搜索框搜选手进入:',
+            'The top selector toggles Upcoming and WR; the cuber trail is entered by searching for a person:',
           )}
         </p>
         <ul className="gla-list">
           <li>
-            <strong>{t('近期比赛 (Upcoming)', 'Upcoming')}</strong>
-            {t(' — 显示近期全球 WCA 比赛的聚合点。缩放后聚合点展开为单场比赛,点击查看日期 / 地点 / 项目。', ' — shows clustered upcoming WCA competitions worldwide. Zoom in to expand clusters to individual comps; click to see date / location / events.')}
+            <strong>{t('比赛 (Upcoming)', 'Upcoming')}</strong>
+            {t(' — 显示近期全球 WCA 比赛的聚合点,缩放展开为单场,点击查看日期 / 地点 / 项目。勾选「包含往期」可叠加历史比赛,并用年-月时间范围过滤;右上可切换 色阶 / 热力 / 分国 三种密度风格。', ' — shows clustered upcoming WCA competitions worldwide; zoom in to expand clusters and click for date / location / events. Toggle "Include past" to overlay historical comps with a year-month range filter; the top-right switches density styles: log-scale / heatmap / country choropleth.')}
           </li>
           <li>
-            <strong>{t('选手足迹 (Cuber)', 'Cuber')} </strong>
-            {t(' — 输入任意 WCA 选手 ID,播放其生涯参赛地点的时序动画。大圆弧连接每一场比赛,可 play / pause / scrub。', ' — type any WCA-ID to animate that person\'s career competition locations as a time-ordered arc sequence. Play / pause / scrub the timeline.')}
+            <strong>{t('世界纪录 (WR)', 'WR')} </strong>
+            {t(' — 以国家 choropleth 展示各国持有的世界纪录数量,可拖时间轴看特定年份的纪录版图。', ' — a country choropleth of how many world records each country holds; drag the timeline to inspect the record map for a given year.')}
           </li>
           <li>
-            <strong>{t('历史密度 (Density)', 'Density')} </strong>
-            {t(' — 以色阶 / 热力图 / 国家 choropleth 三种风格展示 WCA 比赛在全球的历史分布密度。可拖动时间滑杆看特定年份。', ' — shows historical WCA competition density across the globe in three styles: log-scale, heatmap, or country choropleth. Drag the year slider to inspect a specific time window.')}
+            <strong>{t('选手足迹 (Trail)', 'Trail')} </strong>
+            {t(' — 在顶部搜索框搜选手名或 WCA-ID 并选中,即播放其生涯参赛地点的时序动画。大圆弧逐场画出,可 play / pause / scrub、调速,并导出为视频。', ' — search a cuber name or WCA-ID in the top search box and select it to animate their career competition locations as a time-ordered arc sequence. Play / pause / scrub, change speed, and export as video.')}
           </li>
         </ul>
 
@@ -100,10 +100,10 @@ export default function GlobeAboutPage() {
           <Arrow />
           <Step
             step={4}
-            title={t('选手模式播放', 'Cuber mode playback')}
+            title={t('选手足迹与导出', 'Cuber trail & export')}
             body={t(
-              '输入选手 WCA-ID 后点 Play 开始动画,弧线按时间顺序逐条画出。时间轴可拖动到任意时刻,支持 0.5× / 1× / 2× 速度。',
-              'After entering a WCA-ID, click Play to start the animation — arcs draw chronologically. The timeline is scrub-able; playback speed is 0.5× / 1× / 2×.',
+              '在顶部搜索框搜选手名或 WCA-ID 并选中,即进入足迹模式;点 Play 弧线按时间逐条画出。时间轴可拖动,支持 0.5× / 1× / 2× 速度,还能一键导出 60fps mp4 视频(带选手 / 比赛字幕 + logo)。',
+              'Search a cuber name or WCA-ID in the top search box and select it to enter trail mode; click Play and arcs draw chronologically. The timeline is scrub-able, speed is 0.5× / 1× / 2×, and you can export a 60 fps mp4 (with cuber / comp captions + logo).',
             )}
             highlight
           />

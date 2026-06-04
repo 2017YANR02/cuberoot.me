@@ -74,14 +74,13 @@
 .t10h-event-bar {
   margin-bottom: 12px;
 }
-/* override:让 selector 用我们的暗色 + 稍大间距 */
+/* override:无框纯图标,仅留间距 */
 .t10h-event-bar .wca-stats-event-selector {
   margin: 0;
-  padding: 10px 12px;
+  padding: 0;
   gap: 8px;
-  background: #161616;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
+  background: transparent;
+  border: none;
 }
 .t10h-event-bar .wca-stats-event-selector .event-btn {
   width: 38px;

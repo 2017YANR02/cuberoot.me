@@ -130,6 +130,16 @@ export function roundTypeName(id: string, isZh: boolean): string {
   return ROUND_TYPE_NAME[id]?.[isZh ? 'zh' : 'en'] ?? id;
 }
 
+// 紧凑英文代号（来源行 / 标签用）：R1/R2/R3/Fi/Q/BF；中文保持完整名不变。
+const ROUND_TYPE_SHORT_EN: Record<string, string> = {
+  '0': 'Q', '1': 'R1', '2': 'R2', '3': 'R3',
+  'b': 'BF', 'c': 'Fi', 'd': 'R1', 'e': 'R2', 'f': 'Fi', 'g': 'R3', 'h': 'Q',
+};
+export function roundTypeShort(id: string, isZh: boolean): string {
+  if (isZh) return ROUND_TYPE_NAME[id]?.zh ?? id;
+  return ROUND_TYPE_SHORT_EN[id] ?? ROUND_TYPE_NAME[id]?.en ?? id;
+}
+
 const FORMAT_NAME: Record<string, { zh: string; enShort: string }> = {
   '1': { zh: '单次计最好', enShort: 'Bo1' },
   '2': { zh: '两次计最好', enShort: 'Bo2' },

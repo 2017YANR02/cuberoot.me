@@ -207,15 +207,17 @@
     align-items: center;
     gap: 4px;
 }
+/* 纯图标无框(calendar/compact/list 三视图统一)；选中=图标格子填充亮绿#4ade80,不加方块底/边框 */
 .calendar-page .event-chip {
+    position: relative;
     display: inline-flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 30px;
     min-height: 36px;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    border: 1px solid transparent;
+    background: transparent;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
@@ -224,26 +226,41 @@
     gap: 2px;
 }
 .calendar-page .event-chip:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
+    border-color: transparent;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 .calendar-page .event-chip.is-active {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    box-shadow: 0 0 0 2px var(--accent-soft);
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+.calendar-page .event-chip.is-active .cubing-icon {
+    color: #4ade80;
 }
 .calendar-page .event-chip .cubing-icon {
     font-size: 1.1rem;
 }
+/* 右下角白底圆角标(三视图统一,复刻 WcaEventSelector .event-btn-badge) */
 .calendar-page .event-chip-rounds {
-    font-size: 0.6rem;
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 7px;
+    background: #fff;
+    color: #333;
+    font-size: 9px;
     font-weight: 700;
+    line-height: 14px;
+    text-align: center;
     font-variant-numeric: tabular-nums;
-    color: var(--accent);
-    line-height: 1;
-    min-height: 0.7rem; /* 保留位置避免 chip 高度抖动 */
+    font-family: var(--font-mono);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
 }
-.calendar-page .event-chip-rounds.is-empty { visibility: hidden; }
+.calendar-page .event-chip-rounds.is-empty { display: none; }
 /* 列表模式下：chip 行同时承担表头 — 外层 sticky 到视口顶；内层 grid 与列表 21 列对齐 */
 .calendar-page .event-chips--list-header {
     /* month-bar 是 flex-wrap 容器，强占整行 */
@@ -277,9 +294,8 @@
     padding: 6px 12px;
     box-sizing: border-box;
 }
-/* list 表头：未选纯图标无框；hover / 选中才显方块（comp-detail 风格 + 右下角轮次角标）。
- * 列宽 1.3rem 放纯图标刚好对齐下方 21 列数字；选中方块 26px 略溢出列但相邻多为窄图标不重叠。
- * calendar/compact 模式的 .event-chip 不受影响。 */
+/* list 表头：仅覆写尺寸/行内布局/角标定位,使图标对齐下方 21 列数字。
+ * 无框/hover/选中绿都继承基础 .event-chip,不重复声明。 */
 .calendar-page .event-chips--list-header .event-chip {
     position: relative;
     flex-direction: row;
@@ -289,41 +305,11 @@
     padding: 0;
     gap: 0;
     justify-self: center;
-    border-color: transparent;
-    background: transparent;
-}
-.calendar-page .event-chips--list-header .event-chip:hover {
-    border-color: transparent;
-    background: var(--accent-soft);
-}
-.calendar-page .event-chips--list-header .event-chip.is-active {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    box-shadow: none;
 }
 .calendar-page .event-chips--list-header .event-chip .cubing-icon {
     font-size: 1.05rem;
 }
-/* 右下角轮次角标 — 复刻 WcaEventSelector 的 .event-btn-badge 视觉 */
-.calendar-page .event-chips--list-header .event-chip-rounds {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    min-width: 14px;
-    min-height: 0;
-    height: 14px;
-    padding: 0 3px;
-    border-radius: 7px;
-    background: #fff;
-    color: #333;
-    font-size: 9px;
-    line-height: 14px;
-    text-align: center;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    font-family: var(--font-mono);
-    pointer-events: none;
-}
-.calendar-page .event-chips--list-header .event-chip-rounds.is-empty { display: none; }
+/* 角标(白底圆)继承基础 .event-chip-rounds,此处不再重复 */
 .calendar-page .event-chips--list-header .cl-h-spacer {
     /* 占位列：date / flag / name，无内容；height 0 让 chip 行决定整体高度 */
     height: 0;
@@ -1397,30 +1383,4 @@
 }
 
 /* ── 年月选择浮层 ── */
-.calendar-page .ym-popover-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: transparent;
-}
-.calendar-page .ym-popover-panel {
-    position: fixed;
-    display: flex;
-    gap: 8px;
-    padding: 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-/* NOTE: 浅色主题覆盖（默认 dark） */
-.calendar-page .ym-popover-panel .wheel-picker {
-    --wp-bg: var(--surface);
-    --wp-text: #a8a69c;
-    --wp-text-active: var(--text);
-    --wp-highlight: var(--accent-soft);
-    --wp-text-fade-2: #b8b6ac;
-    --wp-text-fade-3: #d4d4d4;
-    --wp-text-fade-4: #e5e5e5;
-    min-height: 260px;
-}
+/* 年月滚筒浮层(.ym-popover-*)已移到共享 components/year-month-picker.css */

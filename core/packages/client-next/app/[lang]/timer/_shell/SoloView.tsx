@@ -831,11 +831,13 @@ export default function SoloView({ modePill }: SoloViewProps) {
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
       if (anyModalOpenRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      if (e.code === 'Space') { e.preventDefault(); warmupSound(); onPressDown(); return; }
+      // Holding Space auto-repeats keydown; swallow the page-scroll default on
+      // every repeat, but only arm the timer once (first non-repeat keydown).
+      if (e.code === 'Space') { e.preventDefault(); if (e.repeat) return; warmupSound(); onPressDown(); return; }
+      if (e.repeat) return;
       if (e.code === 'Escape') { reset(); return; }
       const ph = phaseRef.current;
       if (ph === 'running' && multiStageActive) {
@@ -1080,6 +1082,16 @@ export default function SoloView({ modePill }: SoloViewProps) {
             <StatsPanel solves={solves} isZh={isZh} event={event} />
             <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
           </div>
+          {/* 历史紧贴当前/最佳统计下方 (cstimer 式);完整统计 / 跨分组统计等次级入口移到列表之后。 */}
+          <HistoryPanel
+            solves={solves}
+            isZh={isZh}
+            aoWindows={settings.statsAoWindows}
+            onRowClick={(s, idx) => setModalSolve({ s, idx })}
+            onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
+            onQuickDelete={(id) => deleteSolve(id)}
+            onQuickComment={(s, idx) => setModalSolve({ s, idx })}
+          />
           <div className="shell-times-actions">
             <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
               {isZh ? '完整统计' : 'Full stats'}
@@ -1089,14 +1101,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
             </button>
           </div>
           {showCrossSession && <CrossSessionStats event={event} isZh={isZh} />}
-          <HistoryPanel
-            solves={solves}
-            isZh={isZh}
-            onRowClick={(s, idx) => setModalSolve({ s, idx })}
-            onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
-            onQuickDelete={(id) => deleteSolve(id)}
-            onQuickComment={(s, idx) => setModalSolve({ s, idx })}
-          />
         </>
       );
     }

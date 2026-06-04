@@ -1,15 +1,16 @@
-// Emits stats/scramble/daily_god.json — the "今日神打" (simplest scrambles of the
-// latest export batch), per variant × metric × bottom-color, top-6 each.
+// Emits stats/scramble/recent_scrambles.json — the "近期打乱" (simplest scrambles of the
+// latest export batch), per variant × metric × bottom-color, bucketed by step count.
 //
 // Reads incremental/new_split_mbf.csv (this batch's new ids + comp metadata) and each
-// variant CSV (std/eo/pseudo/pseudo_pair/...), finds the fewest-move scrambles among
-// the new batch for every (variant, metric, color), joins competition names, and writes
-// one small JSON consumed by the landing page DailyGod widget.
+// variant CSV (std/eo/pseudo/pseudo_pair/...), and for every (variant, metric, color)
+// keeps up to PER_STEP example ids at each distinct step count (so the landing widget can
+// let users pick any move count, not just the minimum), joins competition names, and writes
+// one JSON consumed by the landing page RecentScrambles widget.
 //
 // Deliberately standalone from build.ts / build_wca_cross.ts (which the live refresh
 // pipeline runs mid-flight) — duplicates a little variant/metadata boilerplate on purpose
 // to stay isolated from their in-progress runs.
-// Run: pnpm --filter @cuberoot/scramble-stats-build build:daily-god
+// Run: pnpm --filter @cuberoot/scramble-stats-build build:recent-scrambles
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
 
-const TOPK = 25; // 1 hero card + up to 24 ranking rows ("更多" expands to 25 total)
+const PER_STEP = 12; // examples kept per (variant, metric, color, step) — hero + up to 11 rows
 
 // metric (stage index) order — same keys as client SheetView METRIC_STAGE.
 const METRICS = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'] as const;
@@ -54,7 +55,8 @@ const VARIANTS: Variant[] = [
 ];
 
 interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number }
-type Entry = [string, number]; // [id, steps]
+// step(字符串) -> 该步数的样例 [id, 取最少步的底色字母] 列表（每桶 ≤ PER_STEP）
+type StepBuckets = Record<string, [string, string][]>;
 
 async function loadCompMeta(tsvPath: string): Promise<Map<string, { name: string; date: string }>> {
   const map = new Map<string, { name: string; date: string }>();
@@ -84,18 +86,18 @@ async function readNewMeta(p: string): Promise<Map<string, NewMeta>> {
   return m;
 }
 
-// keep top-K smallest [id, steps], ordered by steps asc then id asc (deterministic).
-function topInsert(arr: Entry[], id: string, steps: number) {
-  const last = arr.length - 1;
-  if (arr.length >= TOPK && steps > arr[last][1]) return;
+// keep the smallest-`cap` ids in a step bucket (id asc, deterministic regardless of CSV order).
+// each entry carries the bottom-color letter that attained this bucket's step count.
+function insertCapped(arr: [string, string][], id: string, color: string, cap: number) {
+  if (arr.length >= cap && id >= arr[arr.length - 1][0]) return;
   let lo = 0, hi = arr.length;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    const c = arr[mid][1] - steps || (arr[mid][0] < id ? -1 : arr[mid][0] > id ? 1 : 0);
-    if (c < 0) lo = mid + 1; else hi = mid;
+    if (arr[mid][0] < id) lo = mid + 1; else hi = mid;
   }
-  arr.splice(lo, 0, [id, steps]);
-  if (arr.length > TOPK) arr.pop();
+  if (arr[lo]?.[0] === id) return; // ids are unique; guard against accidental dup
+  arr.splice(lo, 0, [id, color]);
+  if (arr.length > cap) arr.pop();
 }
 
 async function main() {
@@ -111,11 +113,11 @@ async function main() {
   const newMbf = path.join(dataRoot, 'incremental', 'new_split_mbf.csv');
   const compTsv = wca.comp_csv ?? path.join(dataRoot, 'competitions.tsv');
 
-  const batchSnap = path.join(dataRoot, 'incremental', 'daily_god_batch.csv');
+  const batchSnap = path.join(dataRoot, 'incremental', 'recent_scrambles_batch.csv');
 
   // 1. batch source: prefer this run's new_split_mbf; if it's empty (a no-new-scramble run, e.g.
   //    a pure f2leo/pseudo_f2leo backfill that re-fetched and found nothing), fall back to the
-  //    last-batch snapshot so newly filled variants still join the most recent 今日神打 batch.
+  //    last-batch snapshot so newly filled variants still join the most recent 近期打乱 batch.
   let newMeta = await readNewMeta(newMbf);
   let fromSnapshot = false;
   if (newMeta.size > 0) {
@@ -125,18 +127,18 @@ async function main() {
     fromSnapshot = true;
   }
   const newCount = newMeta.size;
-  if (newCount === 0) { console.log('[daily-god] no batch (no new_split_mbf, no snapshot) — skipping.'); return; }
-  console.log(`[daily-god] ${newCount} scrambles ${fromSnapshot ? '(last-batch snapshot)' : '(new batch; snapshot updated)'}`);
+  if (newCount === 0) { console.log('[recent-scrambles] no batch (no new_split_mbf, no snapshot) — skipping.'); return; }
+  console.log(`[recent-scrambles] ${newCount} scrambles ${fromSnapshot ? '(last-batch snapshot)' : '(new batch; snapshot updated)'}`);
 
-  // 2. per variant: stream its full CSV, keep top-K per (metric, color) among the new ids
-  const rank: Record<string, Record<string, Record<string, Entry[]>>> = {};
+  // 2. per variant: stream its full CSV, bucket ids by step per (metric, color) among the new ids
+  const rank: Record<string, Record<string, Record<string, StepBuckets>>> = {};
   for (const v of VARIANTS) {
     const csvPath = path.join(csvDir, v.file);
-    if (!fs.existsSync(csvPath)) { console.log(`[daily-god] skip ${v.key} (no ${v.file})`); continue; }
-    const vr: Record<string, Record<string, Entry[]>> = {};
+    if (!fs.existsSync(csvPath)) { console.log(`[recent-scrambles] skip ${v.key} (no ${v.file})`); continue; }
+    const vr: Record<string, Record<string, StepBuckets>> = {};
     for (let si = 0; si < v.stages.length; si++) {
       vr[METRICS[si]] = {};
-      for (const s of SUBSETS) vr[METRICS[si]][s.key] = [];
+      for (const s of SUBSETS) vr[METRICS[si]][s.key] = {};
     }
     const colIdx: Record<string, Record<string, number>> = {}; // metric -> color -> col index
     const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
@@ -171,20 +173,27 @@ async function main() {
         for (const c of COLORS) vals[c] = Number(parts[colIdx[m][c]]);
         for (const s of SUBSETS) {
           let best = Infinity;
-          for (const c of s.colors) { const x = vals[c]; if (Number.isFinite(x) && x < best) best = x; }
-          if (best !== Infinity) topInsert(vr[m][s.key], id, best);
+          let bestColor = '';
+          for (const c of s.colors) { const x = vals[c]; if (Number.isFinite(x) && x < best) { best = x; bestColor = c; } }
+          if (best !== Infinity) {
+            const buckets = vr[m][s.key];
+            const k = String(best);
+            let arr = buckets[k];
+            if (!arr) arr = buckets[k] = [];
+            insertCapped(arr, id, bestColor, PER_STEP);
+          }
         }
       }
       hit++;
     }
     rank[v.key] = vr;
-    console.log(`[daily-god] ${v.key}: ${hit} new rows ranked`);
+    console.log(`[recent-scrambles] ${v.key}: ${hit} new rows ranked`);
   }
 
   // 3. collect referenced ids -> dedup scramble text + comp-name-joined metadata
   const compMeta = await loadCompMeta(compTsv);
   const usedIds = new Set<string>();
-  for (const vk in rank) for (const m in rank[vk]) for (const c in rank[vk][m]) for (const [id] of rank[vk][m][c]) usedIds.add(id);
+  for (const vk in rank) for (const m in rank[vk]) for (const c in rank[vk][m]) for (const k in rank[vk][m][c]) for (const [id] of rank[vk][m][c][k]) usedIds.add(id);
   const scr: Record<string, string> = {};
   const meta: Record<string, unknown> = {};
   for (const id of [...usedIds].sort()) {
@@ -198,9 +207,9 @@ async function main() {
   const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, meta, rank };
   const outDir = path.join(repoRoot, 'stats', 'scramble');
   fs.mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, 'daily_god.json');
+  const outPath = path.join(outDir, 'recent_scrambles.json');
   fs.writeFileSync(outPath, JSON.stringify(out));
-  console.log(`[daily-god] wrote ${outPath} (${(fs.statSync(outPath).size / 1024).toFixed(1)} KB, ${usedIds.size} distinct scrambles)`);
+  console.log(`[recent-scrambles] wrote ${outPath} (${(fs.statSync(outPath).size / 1024).toFixed(1)} KB, ${usedIds.size} distinct scrambles)`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

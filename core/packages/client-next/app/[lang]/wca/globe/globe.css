@@ -844,31 +844,36 @@
 .globe-page .month-range {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.4rem 0.25rem 0.55rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.78rem;
-    color: var(--text-sub);
+    gap: 0.35rem;
 }
-.globe-page .month-range-input {
-    background: transparent;
+/* 年月 chip(复用 wca/calendar 的 .date-range-pick 外观,token 自适配 globe 深色) */
+.globe-page .date-range-pick {
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border);
-    border-radius: 6px;
     color: var(--text);
-    font-family: inherit;
-    font-size: 0.74rem;
+    border-radius: 7px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.76rem;
+    font-family: 'Roboto Mono', ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
-    padding: 0.15rem 0.35rem;
     cursor: pointer;
+    min-width: 5.6rem;
+    text-align: center;
+    transition: all 0.15s;
 }
-.globe-page .month-range-input:focus {
-    outline: none;
+.globe-page .date-range-pick:hover,
+.globe-page .date-range-pick[aria-expanded="true"] {
     border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
 }
-.globe-page .month-range-sep {
+.globe-page .date-range-pick.is-empty {
     color: var(--text-sub);
+    font-family: inherit;
+}
+.globe-page .date-range-sep {
+    color: var(--text-sub);
+    font-size: 0.85rem;
 }
 
 .globe-page .reset-btn {

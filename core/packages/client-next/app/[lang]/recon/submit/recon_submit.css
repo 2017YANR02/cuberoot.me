@@ -586,15 +586,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.submit-solver-pill .submit-solver-clear {
-  background: transparent;
-  border: none;
-  color: #888888;
-  cursor: pointer;
-  padding: 0 4px;
-  font-size: 14px;
-}
-.submit-solver-pill .submit-solver-clear:hover { color: #ff8888; }
 
 /* --- 已选比赛 pill — 国旗 + 名称 + 灰色 WCA ID + ✕ --- */
 .submit-comp-pill {
@@ -617,15 +608,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.submit-comp-pill .submit-comp-clear {
-  background: transparent;
-  border: none;
-  color: #888888;
-  cursor: pointer;
-  padding: 0 4px;
-  font-size: 14px;
-}
-.submit-comp-pill .submit-comp-clear:hover { color: #ff8888; }
 
 .submit-btn-danger {
   background: rgba(248, 113, 113, 0.12);

@@ -1,28 +1,28 @@
 'use client';
 
-// Landing "今日神打" (Today's Easiest) — the fewest-move scrambles of the latest
-// export batch, sliceable by variant (std/eo/pseudo/...) × metric (cross/xc/...) ×
-// bottom color. Data: stats/scramble/daily_god.json (built by scramble-stats-build
-// build:daily-god, refreshed by the cross-stats pipeline). 1 hero card + top-5 list.
+// Landing "近期打乱" (Recent Scrambles) — the easiest scrambles of the latest export
+// batch, sliceable by variant (std/eo/pseudo/...) × metric (cross/xc/...) × bottom color
+// × move count. Data: stats/scramble/recent_scrambles.json (built by scramble-stats-build
+// build:recent-scrambles, refreshed by the cross-stats pipeline). 1 hero card + example list.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { SubsetColorPicker, SubsetSwatch, useSubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
+import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
-import { roundTypeName } from '@/lib/comp-schedule';
-import './daily_god.css';
+import { roundTypeShort } from '@/lib/comp-schedule';
+import './recent_scrambles.css';
 
 interface Props { lang: 'zh' | 'en' }
 
-type Entry = [string, number]; // [scrambleId, steps]
 interface ScrMeta { ci: string; cn: string; cd: string; r: string; g: string; n: number; e: string }
-interface DailyGodJson {
+interface RecentScramblesJson {
   export_date: string;
   new_count: number;
   scr: Record<string, string>;
   meta: Record<string, ScrMeta>;
-  rank: Record<string, Record<string, Record<string, Entry[]>>>;
+  // variant -> metric -> subsetKey -> step(字符串) -> [id, 取最少步的底色字母][]（每桶 ≤12 条）
+  rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
 }
 
 const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo'];
@@ -46,30 +46,33 @@ const METRIC_LABEL: Record<string, { zh: string; en: string }> = {
 };
 
 function sourceLine(m: ScrMeta, isZh: boolean): string {
-  const round = roundTypeName(m.r, isZh);
-  const group = isZh ? `${m.g} 组` : `Group ${m.g}`;
-  const attempt = isZh ? `第 ${m.n} 把` : `Solve ${m.n}`;
-  return `${round}  ${group}  ${attempt}`;
+  const round = roundTypeShort(m.r, isZh);
+  const grp = m.g ? (isZh ? `${m.g}组` : ` ${m.g}`) : '';
+  return isZh ? `${round}${grp}#${m.n}` : `${round}${grp} #${m.n}`;
 }
 
-export default function DailyGod({ lang }: Props) {
+export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
-  const [data, setData] = useState<DailyGodJson | null>(null);
+  const [data, setData] = useState<RecentScramblesJson | null>(null);
   const [variant, setVariant] = useState('std');
   const [metric, setMetric] = useState('cross');
+  const [step, setStep] = useState<number | null>(null); // null = 跟随当前切片最少步
   const sel = useSubsetSelection('cn');
   const [expanded, setExpanded] = useState(false);
 
   // 点比赛名跳 /scramble/gen?comp=<id>(comp tab 直链加载该比赛打乱),不是 /wca/comp。
   const genHref = (ci: string) => `/${lang}/scramble/gen?comp=${encodeURIComponent(ci)}`;
+  // 点打乱跳 /scramble/analyzer?scramble=<moves>(空格→_,与 analyzer 自身 URL 同格式)。
+  const analyzerHref = (scramble: string) =>
+    `/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') })}`;
 
   useEffect(() => {
     let on = true;
     const kick = () => {
       if (!on) return;
-      fetch('/stats/scramble/daily_god.json', { cache: 'no-cache' })
+      fetch('/stats/scramble/recent_scrambles.json', { cache: 'no-cache' })
         .then((r) => (r.ok ? r.json() : null))
-        .then((j: DailyGodJson | null) => { if (on) setData(j); })
+        .then((j: RecentScramblesJson | null) => { if (on) setData(j); })
         .catch(() => { if (on) setData(null); });
     };
     type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
@@ -89,7 +92,7 @@ export default function DailyGod({ lang }: Props) {
   const variants = useMemo(() => VARIANT_ORDER.filter((v) => {
     const r = data?.rank?.[v];
     if (!r) return false;
-    return Object.values(r).some((byColor) => Object.values(byColor).some((arr) => arr.length > 0));
+    return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
   }), [data]);
 
   // clamp selections to what's available (variant switch may drop a metric, etc.)
@@ -99,7 +102,11 @@ export default function DailyGod({ lang }: Props) {
     return r ? METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
-  const entries: Entry[] = data?.rank?.[curVariant]?.[curMetric]?.[sel.subsetKey] ?? [];
+  // 当前切片的步数分桶；步数选择器列出可选步数,默认跟随最少步
+  const byStep = data?.rank?.[curVariant]?.[curMetric]?.[sel.subsetKey];
+  const steps = useMemo(() => Object.keys(byStep ?? {}).map(Number).sort((a, b) => a - b), [byStep]);
+  const curStep = (step != null && steps.includes(step)) ? step : (steps[0] ?? null);
+  const entries = (curStep != null ? byStep?.[String(curStep)] : undefined) ?? [];
 
   if (!data || data.new_count === 0 || variants.length === 0) return null;
 
@@ -107,12 +114,13 @@ export default function DailyGod({ lang }: Props) {
   const rest = entries.slice(1);
 
   return (
-    <div className="daily-god">
-      <div className="daily-god-head">
-        <span className="daily-god-title">{isZh ? '今日神打' : "Today's Easiest"}</span>
-        <span className="daily-god-date">{data.export_date}</span>
+    <div className="recent-scrambles">
+      <div className="rs-head">
+        <span className="rs-title">{isZh ? '近期打乱' : 'Recent Scrambles'}</span>
+        <span className="rs-date">{data.export_date}</span>
+        <SubsetColorPicker sel={sel} isZh={isZh} />
         <select
-          className="daily-god-select"
+          className="rs-select"
           value={curVariant}
           onChange={(e) => setVariant(e.target.value)}
           aria-label={isZh ? '变体' : 'Variant'}
@@ -122,7 +130,7 @@ export default function DailyGod({ lang }: Props) {
           ))}
         </select>
         <select
-          className="daily-god-select"
+          className="rs-select"
           value={curMetric}
           onChange={(e) => setMetric(e.target.value)}
           aria-label={isZh ? '类型' : 'Type'}
@@ -131,56 +139,65 @@ export default function DailyGod({ lang }: Props) {
             <option key={m} value={m}>{METRIC_LABEL[m]?.[isZh ? 'zh' : 'en'] ?? m}</option>
           ))}
         </select>
-        <SubsetColorPicker sel={sel} isZh={isZh} />
+        <select
+          className="rs-select"
+          value={curStep ?? ''}
+          onChange={(e) => setStep(Number(e.target.value))}
+          aria-label={isZh ? '步数' : 'Moves'}
+        >
+          {steps.map((s) => (
+            <option key={s} value={s}>{isZh ? `${s} 步` : `${s}`}</option>
+          ))}
+        </select>
       </div>
 
       {hero ? (() => {
-        const [id, steps] = hero;
+        const [id, color] = hero;
         const scramble = data.scr[id] ?? '';
         const m = data.meta[id];
         return (
-          <div className="dg-hero">
-            <div className="dg-hero-cube">
+          <div className="rs-hero">
+            <div className="rs-hero-cube">
               <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={isZh ? '查看大图' : 'View full size'} />
             </div>
-            <div className="dg-hero-body">
-              <div className="dg-hero-steps">
-                <span className="dg-hero-dot" aria-hidden="true"><SubsetSwatch colors={sel.selectedColors} /></span>
-                <b>{steps}</b>
-                <span className="dg-hero-unit">{isZh ? '步' : steps === 1 ? 'move' : 'moves'}</span>
+            <div className="rs-hero-body">
+              <div className="rs-hero-steps">
+                <span className="rs-hero-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
+                <b>{curStep}</b>
+                <span className="rs-hero-unit">{isZh ? '步' : curStep === 1 ? 'move' : 'moves'}</span>
               </div>
-              <div className="dg-hero-scramble">{scramble}</div>
+              <Link href={analyzerHref(scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
               {m && (
-                <Link href={genHref(m.ci)} prefetch={false} className="dg-hero-src">
-                  <EventIcon event={m.e} className="dg-evt" />
-                  <span className="dg-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                  <span className="dg-src-meta">{sourceLine(m, isZh)}</span>
+                <Link href={genHref(m.ci)} prefetch={false} className="rs-hero-src">
+                  <EventIcon event={m.e} className="rs-evt" />
+                  <span className="rs-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
+                  <span className="rs-src-meta">{sourceLine(m, isZh)}</span>
                 </Link>
               )}
             </div>
           </div>
         );
       })() : (
-        <div className="dg-empty">{isZh ? '该组合本批暂无数据' : 'No data for this combination'}</div>
+        <div className="rs-empty">{isZh ? '该组合本批暂无数据' : 'No data for this combination'}</div>
       )}
 
       {rest.length > 0 && (
         <>
-          <ol className="dg-list">
-            {(expanded ? rest : rest.slice(0, 4)).map(([id, steps], i) => {
+          <ol className="rs-list">
+            {(expanded ? rest : rest.slice(0, 4)).map(([id, color], i) => {
               const m = data.meta[id];
               const scramble = data.scr[id] ?? '';
               return (
-                <li key={id} className="dg-row">
-                  <span className="dg-row-rank">{i + 2}</span>
-                  <span className="dg-row-steps">{steps}</span>
-                  <div className="dg-row-main">
-                    <div className="dg-row-scramble">{scramble}</div>
+                <li key={id} className="rs-row">
+                  <span className="rs-row-rank">{i + 2}</span>
+                  <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
+                  <div className="rs-row-main">
+                    <Link href={analyzerHref(scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
                     {m && (
-                      <Link href={genHref(m.ci)} prefetch={false} className="dg-row-comp">
-                        <EventIcon event={m.e} className="dg-evt" />
-                        <span className="dg-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                        <span className="dg-row-sub">{sourceLine(m, isZh)}</span>
+                      <Link href={genHref(m.ci)} prefetch={false} className="rs-row-comp">
+                        <EventIcon event={m.e} className="rs-evt" />
+                        <span className="rs-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
+                        <span className="rs-row-sub">{sourceLine(m, isZh)}</span>
                       </Link>
                     )}
                   </div>
@@ -189,7 +206,7 @@ export default function DailyGod({ lang }: Props) {
             })}
           </ol>
           {rest.length > 4 && (
-            <button type="button" className="dg-more" onClick={() => setExpanded(!expanded)}>
+            <button type="button" className="rs-more" onClick={() => setExpanded(!expanded)}>
               {expanded ? (isZh ? '收起' : 'Show less') : (isZh ? '更多' : 'More')}
             </button>
           )}

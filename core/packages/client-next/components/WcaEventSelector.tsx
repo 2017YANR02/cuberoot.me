@@ -3,6 +3,7 @@
 // Ported from packages/client/src/components/WcaEventSelector.tsx.
 
 import { useMemo, useState } from 'react';
+import { X } from 'lucide-react';
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
@@ -92,7 +93,7 @@ export default function WcaEventSelector({
                 role="button"
                 aria-label={isZh ? '移除' : 'Remove'}
                 onClick={(e) => { e.stopPropagation(); onRemove(id); }}
-              >×</span>
+              ><X size={10} strokeWidth={3} /></span>
             )}
           </button>
         );
@@ -137,7 +138,7 @@ export default function WcaEventSelector({
                 role="button"
                 aria-label={isZh ? '移除' : 'Remove'}
                 onClick={(e) => { e.stopPropagation(); onRemove(id); }}
-              >×</span>
+              ><X size={10} strokeWidth={3} /></span>
             )}
           </button>
         );
