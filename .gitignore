@@ -66,4 +66,9 @@ stats/scramble/comp_steps*/
 # git-bash (MSYS2) 崩溃栈转储,纯本机噪音
 *.stackdump
 
+# video-title 工具的本地缓存(WCA 排名 / 本地名,缺了会自动重拉)
+scripts/video-title/rankings_cache.json
+scripts/video-title/wca_local_names_cache.json
+scripts/video-title/__pycache__/
+
 .cc-connect/
