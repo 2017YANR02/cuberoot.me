@@ -44,6 +44,7 @@ import {
   type WcaPerson,
 } from '@cuberoot/shared';
 import { ClearButton } from '@/components/ClearButton';
+import { YearMonthPickerPopover } from '@/components/YearMonthPickerPopover';
 import { displayCuberName } from '@/lib/name-utils';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { Flag, flagHtml } from '@/components/Flag';
@@ -733,6 +734,9 @@ export default function GlobeMapClient() {
   const [pastLoading, setPastLoading] = useState(false);
   // 年+月时间窗口(YYYY-MM);null = 全范围不过滤。作用于历史+近期比赛。
   const [monthRange, setMonthRange] = useState<[string, string] | null>(null);
+  const [monthPickerOpen, setMonthPickerOpen] = useState<'from' | 'to' | null>(null);
+  const monthFromBtnRef = useRef<HTMLButtonElement>(null);
+  const monthToBtnRef = useRef<HTMLButtonElement>(null);
 
   const [cuber, setCuber] = useState<WcaPerson | null>(null);
   const [cuberComps, setCuberComps] = useState<WcaCompDetail[]>([]);
@@ -993,6 +997,20 @@ export default function GlobeMapClient() {
     }
     return { min: MONTH_FLOOR, max };
   }, [comps, CURRENT_YM, MONTH_FLOOR]);
+  // 年 → 有比赛的月份集,驱动 YearMonthPickerPopover 滚筒跳过空年/空月
+  const yearMonthsMap = useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    const add = (ym: string) => {
+      const y = Number(ym.slice(0, 4)), mo = Number(ym.slice(5, 7));
+      if (!y || !mo) return;
+      let set = map.get(y);
+      if (!set) { set = new Set(); map.set(y, set); }
+      set.add(mo);
+    };
+    for (const c of (comps ?? [])) add(c.start_date);
+    for (const c of (pastComps ?? [])) add(c.start_date);
+    return map;
+  }, [comps, pastComps]);
   // 实际生效窗口:未设时 = 全范围。仅在历史模式(includePast)生效。
   const activeRange = includePast ? monthRange : null;
 
@@ -3179,33 +3197,27 @@ export default function GlobeMapClient() {
         )}
         {mode === 'upcoming' && includePast && (
           <div className="month-range" title={isZh ? '按年月过滤比赛' : 'Filter competitions by month'}>
-            <input
-              type="month"
-              className="month-range-input"
-              min={monthBounds.min}
-              max={monthBounds.max}
-              value={(monthRange ?? [monthBounds.min, monthBounds.max])[0]}
-              onChange={(e) => {
-                const cur = monthRange ?? [monthBounds.min, monthBounds.max];
-                const from = e.target.value || monthBounds.min;
-                setMonthRange([from, from > cur[1] ? from : cur[1]]);
-              }}
+            <button
+              ref={monthFromBtnRef}
+              type="button"
+              className={`date-range-pick${monthRange ? '' : ' is-empty'}`}
+              onClick={() => setMonthPickerOpen((o) => o === 'from' ? null : 'from')}
+              aria-expanded={monthPickerOpen === 'from'}
               aria-label={isZh ? '起始年月' : 'From month'}
-            />
-            <span className="month-range-sep">—</span>
-            <input
-              type="month"
-              className="month-range-input"
-              min={monthBounds.min}
-              max={monthBounds.max}
-              value={(monthRange ?? [monthBounds.min, monthBounds.max])[1]}
-              onChange={(e) => {
-                const cur = monthRange ?? [monthBounds.min, monthBounds.max];
-                const to = e.target.value || monthBounds.max;
-                setMonthRange([to < cur[0] ? to : cur[0], to]);
-              }}
+            >
+              {monthRange ? monthRange[0] : (isZh ? '起始' : 'From')}
+            </button>
+            <span className="date-range-sep">~</span>
+            <button
+              ref={monthToBtnRef}
+              type="button"
+              className={`date-range-pick${monthRange ? '' : ' is-empty'}`}
+              onClick={() => setMonthPickerOpen((o) => o === 'to' ? null : 'to')}
+              aria-expanded={monthPickerOpen === 'to'}
               aria-label={isZh ? '结束年月' : 'To month'}
-            />
+            >
+              {monthRange ? monthRange[1] : (isZh ? '结束' : 'To')}
+            </button>
             {monthRange && (
               <ClearButton onClick={() => setMonthRange(null)} isZh={isZh} variant="standalone" />
             )}
@@ -3583,6 +3595,32 @@ export default function GlobeMapClient() {
           placeholder={isZh ? '搜索选手或 WCA ID...' : 'Search cuber or WCA ID...'}
         />
       )}
+
+      {(monthPickerOpen === 'from' || monthPickerOpen === 'to') && (() => {
+        const which = monthPickerOpen;
+        const cur = monthRange ?? [monthBounds.min, monthBounds.max];
+        const val = which === 'from' ? cur[0] : cur[1];
+        const anchorRef = which === 'from' ? monthFromBtnRef : monthToBtnRef;
+        return (
+          <YearMonthPickerPopover
+            year={Number(val.slice(0, 4))}
+            month={Number(val.slice(5, 7))}
+            yearMonthsMap={yearMonthsMap}
+            anchor={anchorRef.current?.getBoundingClientRect() ?? null}
+            onCommit={(yy, mm) => {
+              const ym = `${yy}-${String(mm).padStart(2, '0')}`;
+              setMonthRange((r) => {
+                const base = r ?? [monthBounds.min, monthBounds.max];
+                return which === 'from'
+                  ? [ym, ym > base[1] ? ym : base[1]]
+                  : [ym < base[0] ? ym : base[0], ym];
+              });
+              setMonthPickerOpen(null);
+            }}
+            isZh={isZh}
+          />
+        );
+      })()}
 
     </div>
   );

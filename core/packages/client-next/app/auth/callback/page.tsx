@@ -19,8 +19,16 @@ export default function AuthCallbackPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const isZh = typeof navigator !== 'undefined' && navigator.language.startsWith('zh');
 
+  // This page is a full-screen overlay over a background iframe — the outer
+  // document must not scroll. Restore on unmount (client-nav back to return URL).
   useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = 'hidden';
+    return () => { html.style.overflow = prev; };
+  }, []);
 
+  useEffect(() => {
     if (callbackProcessed) return;
     callbackProcessed = true;
     void handleOAuthCallback();

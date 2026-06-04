@@ -331,6 +331,9 @@ export default function ScrambleStatsPage() {
       </div>
 
       <div className="scramble-stats-controls">
+        <div className="scramble-stats-color-control">
+          <SubsetColorPicker sel={sel} isZh={isZh} />
+        </div>
         <label>
           <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={isZh ? '变体' : 'Variant'}>
             {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
@@ -345,9 +348,6 @@ export default function ScrambleStatsPage() {
             ))}
           </select>
         </label>
-        <div className="scramble-stats-color-control">
-          <SubsetColorPicker sel={sel} isZh={isZh} />
-        </div>
       </div>
 
       <div className="scramble-stats-chart-wrapper">

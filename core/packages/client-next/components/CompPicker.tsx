@@ -36,9 +36,12 @@ interface Props {
   disableSuggestions?: boolean;
   presets?: CompPickerPreset[];
   onUrlPaste?: (wcaId: string) => void;
+  /** Hide competitions that haven't started yet (start_date > today). For
+   *  reconstructing past solves, an upcoming comp is never a valid pick. */
+  hideFuture?: boolean;
 }
 
-export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste }: Props) {
+export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
@@ -72,10 +75,13 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
     (async () => {
       const data = await ensureLoaded();
       if (cancelled) return;
-      setResults(searchComps(value, data, 20));
+      const pool = hideFuture
+        ? data.filter(c => !c.start_date || c.start_date <= new Date().toISOString().slice(0, 10))
+        : data;
+      setResults(searchComps(value, pool, 20));
     })();
     return () => { cancelled = true; };
-  }, [value, open, ensureLoaded]);
+  }, [value, open, ensureLoaded, hideFuture]);
 
   const handlePick = (c: Comp) => {
     onPick(c);

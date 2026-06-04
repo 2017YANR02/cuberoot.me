@@ -160,15 +160,20 @@ export default class World {
 
     this.camera.aspect = this.width / this.height;
     this.camera.fov = fov;
-    const distance = Cubelet.SIZE * 3 * this.perspective;
+    // Frame reference half-extent (fov is size-agnostic, so the camera distance
+    // is what scales a puzzle to fit). SIZE*3 frames NxN order-3. SQ1 is a
+    // larger octagonal solid — corner vertices reach ≈(W,W) in xz and the
+    // stacked layers ≈SIZE*2.2 in y, bounding-sphere radius ≈250 (> NxN-3's
+    // ~166) — so at the NxN reference it overflows the viewport. SIZE*4.6 pulls
+    // it back to the same ~0.85 fill the NxN view has. NxN path unchanged.
+    const isSq1 = this.puzzleKind === 'sq1';
+    const refHalf = isSq1 ? Cubelet.SIZE * 4.6 : Cubelet.SIZE * 3;
+    const distance = refHalf * this.perspective;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
-    // SIZE*3 was the NxN order-3 half-width edge; tight for the axis-aligned
-    // cube but clips SQ1's bigger half-side (W=137.5; diagonal reach ≈ 238)
-    // at its closest corner. SIZE*4 = 256 covers SQ1 with margin and only
-    // costs a sliver of z-buffer precision for NxN.
-    this.camera.near = distance - Cubelet.SIZE * 4;
+    // near/far margins: SQ1's solid is deeper along view, so widen its near cut.
+    this.camera.near = distance - Cubelet.SIZE * (isSq1 ? 5 : 4);
     this.camera.far = distance + Cubelet.SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);

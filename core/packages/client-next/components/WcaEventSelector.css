@@ -3,16 +3,16 @@
    active 色锁死在组件里,避免 per-page specificity 战意外覆盖。 */
 
 .wca-stats-event-selector {
-  /* 容器 */
-  --evsel-bg: rgba(255, 255, 255, 0.03);
-  --evsel-border: rgba(255, 255, 255, 0.06);
-  --evsel-padding: 12px;
+  /* 容器 — 无框,纯图标行 */
+  --evsel-bg: transparent;
+  --evsel-border: transparent;
+  --evsel-padding: 0;
   --evsel-margin: 12px 0;
-  /* 按钮 */
-  --evbtn-bg: rgba(255, 255, 255, 0.05);
+  /* 按钮 — 纯图标无方块底/边框,仅 hover 淡叠加 */
+  --evbtn-bg: transparent;
   --evbtn-border: transparent;
-  --evbtn-bg-hover: rgba(255, 255, 255, 0.10);
-  --evbtn-border-hover: rgba(255, 255, 255, 0.12);
+  --evbtn-bg-hover: rgba(255, 255, 255, 0.08);
+  --evbtn-border-hover: transparent;
   --evbtn-icon: #aaa;
   --evbtn-icon-hover: #ddd;
   --evbtn-icon-disabled: #6e6050;
@@ -56,13 +56,13 @@
   color: var(--evbtn-icon-hover);
 }
 
-/* active 绿色锁死,per-page 不可覆盖 */
+/* active 绿色锁死,per-page 不可覆盖。图标本身(格子)填充绿,背景/边框保持默认 */
 .wca-stats-event-selector .event-btn.active {
-  background: #2e7d32;
-  border-color: #4caf50;
+  background: var(--evbtn-bg);
+  border-color: var(--evbtn-border);
 }
 .wca-stats-event-selector .event-btn.active .cubing-icon {
-  color: #fff;
+  color: #4ade80;
 }
 
 .wca-stats-event-selector .event-btn.disabled {
@@ -156,14 +156,7 @@
 .wca-stats-event-selector .event-btn-text:hover .event-text-label { color: var(--evbtn-icon-hover); }
 .wca-stats-event-selector .event-btn-text.active .event-text-label { color: #fff; }
 
-/* 展开 / 收起 toggle */
-.wca-stats-event-selector .event-btn-more {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.18);
-}
-.wca-stats-event-selector .event-btn-more:hover {
-  border-color: rgba(255, 255, 255, 0.32);
-}
+/* 展开 / 收起 toggle — 无框纯箭头,与项目图标一致(继承 .event-btn 的 transparent + hover 淡叠加) */
 .wca-stats-event-selector .event-more-arrow {
   font-size: 14px;
   font-weight: 700;

@@ -27,6 +27,7 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { RecordBadge } from '@/components/RecordBadge';
 import { RecordSelect } from '@/components/RecordSelect';
 import TwistySection from '@/components/TwistySection';
+import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
@@ -51,6 +52,7 @@ import {
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '@/lib/recon-norm-cross-extract';
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
 import { randomScrambleForEvent } from '@/lib/scramble-random';
+import { parseSq1Tokens } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { ArrowLeft, ArrowRightLeft, ChevronDown, ChevronRight, Home, Loader2, LogIn, LogOut, Shuffle } from 'lucide-react';
@@ -127,6 +129,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());
 
+  // auth-store reads localStorage synchronously, so the server renders the
+  // logged-out login gate while the hydrated client renders the form → DOM
+  // mismatch. Gate on mount so the first client render matches the server
+  // (login gate), then swap to real auth state. Same pattern as WcaAuth.tsx.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
     loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, [flagVer]);
@@ -170,6 +179,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [timeUserTouched, setTimeUserTouched] = useState(false);
   const [timeAutoSource, setTimeAutoSource] = useState<string | null>(null);
   const [timeLoading, setTimeLoading] = useState(false);
+  // 单次 (form.value) auto-fill is independent of 成绩 (timeInput): the user
+  // may type a precise headline time, which must not block the official single.
+  const [singleUserTouched, setSingleUserTouched] = useState(false);
+  const [singleAutoSource, setSingleAutoSource] = useState<string | null>(null);
   const [singleRecordUserTouched, setSingleRecordUserTouched] = useState(false);
   const [averageRecordUserTouched, setAverageRecordUserTouched] = useState(false);
   const [recordLoading, setRecordLoading] = useState(false);
@@ -179,6 +192,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const loadedRecordKeySnapshot = useRef<string | null>(null);
   const avgAutoFilledRef = useRef(false);
   const timeAutoFilledRef = useRef(false);
+  const singleAutoFilledRef = useRef(false);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   const isMobile = useIsMobile();
 
@@ -504,9 +518,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setAvgLoading(false); };
   }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh]);
 
-  // ── Single-time auto-fetch ──
+  // ── Single-time auto-fetch (fills 成绩 + 单次 independently) ──
   useEffect(() => {
-    if (timeUserTouched) return;
+    if (timeUserTouched && singleUserTouched) return;
     if (!form.personId || !form.event || !form.round || form.solveNum == null) return;
     if (!form.comp && !form.compWcaId) return;
 
@@ -559,24 +573,35 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         }
         if (cancelled) return;
         if (foundTime != null) {
-          setTimeInput(formatTimeInput(foundTime));
-          setField('value', formatTimeInput(foundTime));
-          setTimeAutoSource(foundSource);
-          timeAutoFilledRef.current = true;
-        } else {
-          if (timeAutoFilledRef.current) {
-            setTimeInput('');
-            setField('value', '');
+          const formatted = formatTimeInput(foundTime);
+          if (!timeUserTouched) {
+            setTimeInput(formatted);
+            setTimeAutoSource(foundSource);
+            timeAutoFilledRef.current = true;
           }
-          setTimeAutoSource(null);
-          timeAutoFilledRef.current = false;
+          if (!singleUserTouched) {
+            setField('value', formatted);
+            setSingleAutoSource(foundSource);
+            singleAutoFilledRef.current = true;
+          }
+        } else {
+          if (!timeUserTouched) {
+            if (timeAutoFilledRef.current) setTimeInput('');
+            setTimeAutoSource(null);
+            timeAutoFilledRef.current = false;
+          }
+          if (!singleUserTouched) {
+            if (singleAutoFilledRef.current) setField('value', '');
+            setSingleAutoSource(null);
+            singleAutoFilledRef.current = false;
+          }
         }
       } finally {
         if (!cancelled) setTimeLoading(false);
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, isEditing, editId, isZh, setField]);
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField]);
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
@@ -747,13 +772,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const playerRef = useRef<any>(null);
 
   const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
-    if (!playerRef.current) return;
+    const player = playerRef.current;
+    if (!player) return;
     const offset = el.selectionStart;
-    const fullText = el.value;
-    const textBefore = fullText.substring(0, offset);
+    const textBefore = el.value.substring(0, offset);
+    // SQ1 uses the cuber-engine player (Sq1ReconPlayer): count tuple/slice
+    // tokens directly — extractAlgFromText/cleanForPlayer would strip the
+    // `(t,b)` parens SQ1 notation depends on.
+    if (player.__kind === 'sq1') {
+      player.jumpToMoveCount?.(parseSq1Tokens(textBefore).length);
+      return;
+    }
     const algBefore = extractAlgFromText(textBefore);
     const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
-    syncPlayerToMoveCount(playerRef.current, moves.length);
+    syncPlayerToMoveCount(player, moves.length);
   }, [playerRef]);
 
   useEffect(() => {
@@ -805,6 +837,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
   };
 
+  // Pre-mount: render a neutral loading shell on both SSR and the first client
+  // render so they match (auth state isn't known until localStorage is read).
+  if (!mounted) {
+    return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+  }
+
   // ── Login gate ──
   if (!authUser) {
     return (
@@ -853,7 +891,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="submit-layout">
         {!isMobile && (
           <div className="submit-player-pane">
-            {form.event && form.event !== 'sq1' && (
+            {form.event === 'sq1' ? (
+              <Sq1ReconPlayer
+                scramble={debouncedScramble}
+                alg={debouncedSolution}
+                playerRef={playerRef}
+                fillPane
+              />
+            ) : form.event ? (
               <TwistySection
                 puzzle={puzzle}
                 scramble={debouncedScramble}
@@ -861,7 +906,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 playerRef={playerRef}
                 fillPane
               />
-            )}
+            ) : null}
           </div>
         )}
 
@@ -880,7 +925,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <div className={`submit-solver-pill${lockIdentity ? ' submit-solver-pill--locked' : ''}`}>
                       <Flag iso2={solverLite.country_iso2} />
                       <span className="submit-solver-name">{displayCuberName(solverLite.name, isZh)}</span>
-                      {!lockIdentity && <ClearButton onClick={clearSolver} isZh={isZh} preserveFocus />}
+                      {!lockIdentity && <ClearButton onClick={clearSolver} isZh={isZh} variant="standalone" preserveFocus />}
                     </div>
                   ) : (
                     <WcaPersonPicker
@@ -959,7 +1004,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <div className={`submit-comp-pill${lockIdentity ? ' submit-comp-pill--locked' : ''}`}>
                       <Flag iso2={form.country || ''} />
                       <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
-                      {!lockIdentity && <ClearButton onClick={clearPickedComp} isZh={isZh} preserveFocus />}
+                      {!lockIdentity && <ClearButton onClick={clearPickedComp} isZh={isZh} variant="standalone" preserveFocus />}
                     </div>
                   ) : lockIdentity ? (
                     <div className="submit-readonly-text">{form.comp || ''}</div>
@@ -970,6 +1015,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       onUrlPaste={(id) => setField('comp', id)}
                       onPick={applyPickedComp}
                       isZh={isZh}
+                      hideFuture
                       disableSuggestions={!form.official}
                       presets={!form.official ? [
                         { icon: <Home size={14} />, label: isZh ? '家' : 'Home', value: isZh ? '家' : 'Home' },
@@ -1046,18 +1092,18 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     value={form.value ?? ''}
                     onChange={e => {
                       setField('value', e.target.value);
-                      setTimeUserTouched(true);
-                      setTimeAutoSource(null);
-                      timeAutoFilledRef.current = false;
+                      setSingleUserTouched(true);
+                      setSingleAutoSource(null);
+                      singleAutoFilledRef.current = false;
                     }}
-                    readOnly={lockIdentity || !!timeAutoSource}
-                    className={(lockIdentity || timeAutoSource) ? 'submit-input-locked' : undefined}
+                    readOnly={lockIdentity || !!singleAutoSource}
+                    className={(lockIdentity || singleAutoSource) ? 'submit-input-locked' : undefined}
                     title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
-                      : timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
+                      : singleAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
                   />
                   {timeLoading
                     ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
-                    : timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
+                    : singleAutoSource ? <span className="submit-hint">{singleAutoSource}</span> : null}
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">{t('recon.badge.singleRecord')}</span>
@@ -1156,6 +1202,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </label>
 
             {/* Mobile: inline player between scramble and solution */}
+            {isMobile && form.event === 'sq1' && (
+              <div className="submit-inline-player">
+                <Sq1ReconPlayer
+                  scramble={debouncedScramble}
+                  alg={debouncedSolution}
+                  playerRef={playerRef}
+                  fillPane
+                />
+              </div>
+            )}
             {isMobile && form.event && form.event !== 'sq1' && (
               <div className="submit-inline-player">
                 <TwistySection
@@ -1336,7 +1392,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <div className="submit-solver-pill">
                       <Flag iso2={reconerCountry || ''} />
                       <span className="submit-solver-name">{displayCuberName(form.reconer || '', isZh)}</span>
-                      <ClearButton onClick={clearReconer} isZh={isZh} preserveFocus />
+                      <ClearButton onClick={clearReconer} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
                   ) : (
                     <WcaPersonPicker
