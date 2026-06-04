@@ -30,13 +30,13 @@ on:
         required: false
         default: '0'
       concurrency:
-        description: 'CONCURRENCY 并发 WCIF 拉取数（runner 直连 WCA，默认 6，单场最大 ~10MB）'
+        description: 'CONCURRENCY 并发 WCIF 拉取数（runner 直连 WCA，默认 3，单场最大 ~10MB）'
         required: false
-        default: '6'
+        default: '3'
       delay_ms:
-        description: 'DELAY_MS 每 worker 拉取间隔毫秒（默认 150，礼让 WCA）'
+        description: 'DELAY_MS 每 worker 拉取间隔毫秒（默认 500，礼让 WCA）'
         required: false
-        default: '150'
+        default: '500'
   schedule:
     # UTC 01:00 — stats.yml(20:00) + dump_comps(23:30) 之后,错峰不与它们同时抢内存
     - cron: '0 1 * * *'
@@ -93,8 +93,8 @@ jobs:
           LIMIT: ${{ github.event.inputs.limit || '3000' }}
           FORCE: ${{ github.event.inputs.force || '0' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
-          CONCURRENCY: ${{ github.event.inputs.concurrency || '6' }}
-          DELAY_MS: ${{ github.event.inputs.delay_ms || '150' }}
+          CONCURRENCY: ${{ github.event.inputs.concurrency || '3' }}
+          DELAY_MS: ${{ github.event.inputs.delay_ms || '500' }}
         run: |
           # 守卫:所有旋钮必须是纯数字,杜绝 dispatch 输入注入进 shell
           for v in "$LIMIT" "$FORCE" "$DRY_RUN" "$CONCURRENCY" "$DELAY_MS"; do
