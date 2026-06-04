@@ -39,7 +39,7 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsc --noEmit
 
-  # 定时/手动触发时才跑完整计算（~47分钟）
+  # 定时/手动触发时才跑完整计算（~2h）
   build:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
