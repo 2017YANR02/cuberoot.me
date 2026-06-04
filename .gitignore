@@ -70,5 +70,6 @@ stats/scramble/comp_steps*/
 scripts/video-title/rankings_cache.json
 scripts/video-title/wca_local_names_cache.json
 scripts/video-title/__pycache__/
+scripts/video-title/test_output.txt
 
 .cc-connect/

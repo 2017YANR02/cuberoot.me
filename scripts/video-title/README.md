@@ -34,6 +34,10 @@ uv run --with requests python gen_title.py "标题" --write "D:\cube\upload-vide
 | `build_channel_aliases.py` | 从 YouTube 订阅导出(subscriptions.txt)批量精确匹配 WCA 选手,填 `channel_aliases.json` |
 | `channel_aliases.json` | YouTube 频道名/ID → WCA ID 映射(命中即跳过搜人;运行时自动追加) |
 | `rankings_cache.json` `wca_local_names_cache.json` | 本地缓存(gitignored,缺了会重新拉) |
+| `run_tests.py` `test_input.csv` | 批量回归 `gen_title.py`(7 个真实用例,对比期望标题;`/WRn` 排名后缀做模糊匹配抗漂移) |
+| `test_rankings.py` | `wca_rankings` 初始化 + 查排名 冒烟测试 |
+
+测试跑法:`uv run --with requests python run_tests.py`(输出写 `test_output.txt`,gitignored)。
 
 ## 边界说明(重要)
 
