@@ -288,7 +288,16 @@ def main():
 
     # Step 2: WCA API → { wca_id: {name, short_name, start_date} }
     print("\n[Step 2] 从 WCA API 获取英文名...")
-    wca_id_to_names = fetch_wca_cn_comps()
+    try:
+        wca_id_to_names = fetch_wca_cn_comps()
+    except RuntimeError as e:
+        # NOTE: WCA API 对 CI runner IP 限流（403）时优雅降级：保留上次的 comp_names_zh.json，
+        #       不让本步骤崩溃阻断整个 workflow 的 commit（中文名映射是 best-effort）。
+        #       首次无旧数据才真失败。
+        if OUTPUT_PATH.exists():
+            print(f"[WARN] WCA API 拉取失败（{e}）；保留已有 {OUTPUT_PATH.name}，跳过本次更新。")
+            return
+        raise
 
     # 构建日期 → [wca_id, ...] 索引，作为 alias 匹配失败时的回退
     wca_by_date = {}
