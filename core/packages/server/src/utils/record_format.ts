@@ -18,7 +18,7 @@
 
 // === 项目名映射 ===
 
-const EVENT_CN_MAP: Record<string, string> = {
+export const EVENT_CN_MAP: Record<string, string> = {
   '3x3x3 Cube': '三阶魔方',
   '2x2x2 Cube': '二阶魔方',
   '4x4x4 Cube': '四阶魔方',
@@ -42,7 +42,7 @@ const EVENT_CN_MAP: Record<string, string> = {
   Team: '团体赛',
 };
 
-const EVENT_EN_MAP: Record<string, string> = {
+export const EVENT_EN_MAP: Record<string, string> = {
   '3x3x3 Cube': '3x3',
   '2x2x2 Cube': '2x2',
   '4x4x4 Cube': '4x4',
@@ -92,7 +92,7 @@ export const EVENT_NAME_BY_ID: Record<string, string> = {
 
 // === 洲际/国家映射 ===
 
-const CR_ABBR_CN: Record<string, string> = {
+export const CR_ABBR_CN: Record<string, string> = {
   AsR: '亚洲纪录',
   ER: '欧洲纪录',
   AfR: '非洲纪录',
@@ -171,7 +171,7 @@ const _CONTINENT_COUNTRIES: Record<string, string> = {
     + 'NI,PA,PR,SV,TC,TT,US,VC,VI',
 };
 
-const ISO2_TO_CR: Record<string, string> = {};
+export const ISO2_TO_CR: Record<string, string> = {};
 for (const [abbr, countries] of Object.entries(_CONTINENT_COUNTRIES)) {
   for (const iso2 of countries.split(',')) ISO2_TO_CR[iso2.trim()] = abbr;
 }
@@ -188,7 +188,7 @@ function hasCJK(s: string): boolean {
   return /[一-鿿]/.test(s);
 }
 
-function splitName(fullName: string): [string, string] {
+export function splitName(fullName: string): [string, string] {
   const m = NAME_PAREN_RE.exec(fullName);
   const enName = fullName.replace(NAME_PAREN_RE, '');
   if (m && hasCJK(m[1]!)) return [m[1]!, enName];
@@ -202,7 +202,7 @@ function typeEn(eventId: string, recType: string): string {
 
 // === 国旗 ===
 
-function countryFlag(iso2: string | null | undefined): string {
+export function countryFlag(iso2: string | null | undefined): string {
   if (!iso2 || iso2.length !== 2) return '';
   return [...iso2.toUpperCase()]
     .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
