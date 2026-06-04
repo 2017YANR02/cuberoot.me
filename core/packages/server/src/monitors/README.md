@@ -28,8 +28,9 @@
 | `region.ts` | `COUNTRY_EN_MAP`(英文国名→ISO2)+ `isContinentalTag`(纯常量) |
 | `seed_watched.ts` | 关注选手一次性灌库脚本(手动跑,读本地 gitignored cache) |
 
-> **本地视频工具** `gen_title.py`(标题生成器)2026-06-04 搬入 `scripts/video-title/`(解耦掉监控链,
-> 独立跑),`D:\cube\wca-monitor` 仓随后整体退役。Gmail `email_notifier.py`(WR 邮件)未移植 = 已废弃。
+> **本地视频工具** `gen_title`(标题生成器)2026-06-04 已 TS 化进 `../tools/gen_title.ts`(复用本目录同款
+> `../utils/record_format.ts`,不再有 Python 副本;`scripts/video-title/` Python 全删)。`D:\cube\wca-monitor`
+> 仓随后整体退役。Gmail `email_notifier.py`(WR 邮件)未移植 = 已废弃。
 
 ## 两张新表(0023 / 0024 migration)
 
